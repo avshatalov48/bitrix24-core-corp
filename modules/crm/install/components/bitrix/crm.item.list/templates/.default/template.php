@@ -19,13 +19,21 @@ use Bitrix\Main\Web\Json;
  * @var array $arResult
  */
 
-Extension::load(['ui.dialogs.messagebox', 'crm_common', 'crm.settings-button-extender']);
+Extension::load([
+	'ui.dialogs.messagebox',
+	'crm_common',
+	'crm.settings-button-extender',
+	'crm.entity-list.panel',
+	'crm.activity.grid-activities-manager',
+	'crm.badge',
+	'ui.design-tokens',
+]);
 
-Asset::getInstance()->addJs('/bitrix/js/crm/common.js');
-Asset::getInstance()->addJs('/bitrix/js/crm/progress_control.js');
+$assets = Asset::getInstance();
+$assets->addJs('/bitrix/js/crm/progress_control.js');
+$assets->addJs('/bitrix/js/crm/dialog.js');
+$assets->addCss('/bitrix/themes/.default/crm-entity-show.css');
 
-$bodyClass = $APPLICATION->GetPageProperty("BodyClass");
-$APPLICATION->SetPageProperty("BodyClass", ($bodyClass ? $bodyClass." " : "") . "no-all-paddings no-hidden no-background");
 if ($this->getComponent()->getErrors())
 {
 	foreach($this->getComponent()->getErrors() as $error)
@@ -63,6 +71,8 @@ $this->getComponent()->addToolbar($this);
 		<?php
 		if ($arResult['grid'])
 		{
+			echo '<div id="crm-type-item-list-progress-bar-container"></div>';
+
 			if (!empty($arResult['interfaceToolbar']))
 			{
 				$APPLICATION->IncludeComponent(
@@ -106,6 +116,8 @@ if (!empty($arResult['restrictedFieldsEngine']))
 
 		let params = <?=CUtil::PhpToJSObject($arResult['jsParams'], false, false, true);?>;
 		params.errorTextContainer = document.getElementById('crm-type-item-list-error-text-container');
+
+		params.progressBarContainerId = 'crm-type-item-list-progress-bar-container';
 
 		(new BX.Crm.ItemListComponent(params)).init();
 

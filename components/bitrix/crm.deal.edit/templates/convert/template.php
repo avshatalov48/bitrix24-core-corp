@@ -238,7 +238,7 @@ endforeach;
 ?>
 </table>
 </div>
-<script type="text/javascript">
+<script>
 	BX.ready(
 		function()
 		{
@@ -311,7 +311,7 @@ endforeach;
 	);
 </script><?
 if(!empty($arUserSearchFields)):
-?><script type="text/javascript">
+?><script>
 	BX.ready(
 		function()
 		{<?

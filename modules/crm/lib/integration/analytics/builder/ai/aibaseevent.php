@@ -4,12 +4,14 @@ namespace Bitrix\Crm\Integration\Analytics\Builder\AI;
 
 use Bitrix\Crm\Integration\Analytics\Builder\AbstractBuilder;
 use Bitrix\Crm\Integration\Analytics\Dictionary;
-use Bitrix\Main\Error;
 use Bitrix\Main\Result;
 use Bitrix\Main\Type\DateTime;
+use CCrmOwnerType;
 
 abstract class AIBaseEvent extends AbstractBuilder
 {
+	private string $tool = Dictionary::TOOL_AI;
+	private string $category = Dictionary::CATEGORY_CRM_OPERATIONS;
 	private string $type = Dictionary::TYPE_MANUAL;
 
 	private ?DateTime $createdTime = null;
@@ -18,58 +20,54 @@ abstract class AIBaseEvent extends AbstractBuilder
 	private ?int $activityOwnerTypeId = null;
 	private ?int $activityId = null;
 
-	final public function __construct()
+	final public function setTool(string $tool): self
 	{
-		$this->setSection(Dictionary::SECTION_CRM);
+		$this->tool = $tool;
+
+		return $this;
+	}
+
+	final public function setCategory(string $category): self
+	{
+		$this->category = $category;
+
+		return $this;
 	}
 
 	final protected function getTool(): string
 	{
-		return Dictionary::TOOL_AI;
+		return $this->tool;
 	}
 
 	final protected function customValidate(): Result
 	{
 		$result = new Result();
-		if ($this->getSection() !== Dictionary::SECTION_CRM)
-		{
-			$result->addError(
-				new Error(
-					'c_section should be crm',
-					[
-						'allowed' => [Dictionary::SECTION_CRM],
-					]
-				)
-			);
-		}
 
 		if (!$this->createdTime || !$this->finishedTime)
 		{
 			$result->addError(
-				new Error('createdTime and finishedTime are required'),
+				\Bitrix\Crm\Controller\ErrorCode::getRequiredArgumentMissingError('createdTime || finishedTime'),
 			);
 		}
 
 		if ($this->operationTypeId <= 0)
 		{
 			$result->addError(
-				new Error('operation type is required'),
+				\Bitrix\Crm\Controller\ErrorCode::getRequiredArgumentMissingError('operationTypeId'),
 			);
 		}
 
-		if (!\CCrmOwnerType::IsDefined($this->activityOwnerTypeId))
+		if (!CCrmOwnerType::IsDefined($this->activityOwnerTypeId))
 		{
 			$result->addError(
-				new Error(
-					'activity owner type id is required',
-				)
+				\Bitrix\Crm\Controller\ErrorCode::getRequiredArgumentMissingError('activityOwnerTypeId'),
 			);
 		}
 
 		if ($this->activityId <= 0)
 		{
 			$result->addError(
-				new Error('activity id is required')
+				\Bitrix\Crm\Controller\ErrorCode::getRequiredArgumentMissingError('activityId'),
 			);
 		}
 
@@ -78,17 +76,19 @@ abstract class AIBaseEvent extends AbstractBuilder
 
 	final protected function buildCustomData(): array
 	{
+		$this->setSection(Dictionary::SECTION_CRM);
+
 		$this->setP2('stepNumber', (string)$this->operationTypeId);
 
 		$durationInSeconds = $this->finishedTime->getTimestamp() - $this->createdTime->getTimestamp();
-		$this->setP4('stepDuration', $durationInSeconds);
+		$this->setP4('stepDuration', (string)$durationInSeconds);
 
 		$this->setSubSection(Dictionary::getAnalyticsEntityType($this->activityOwnerTypeId));
 		$this->setP5('idCall', (string)$this->activityId);
 
 		return [
 			'type' => $this->type,
-			'category' => Dictionary::CATEGORY_CRM_OPERATIONS,
+			'category' => $this->category,
 			'event' => $this->getEvent(),
 		];
 	}

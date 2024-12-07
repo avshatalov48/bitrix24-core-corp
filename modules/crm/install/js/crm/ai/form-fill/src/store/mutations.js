@@ -9,6 +9,9 @@ export default {
 	setActivityId: (state, val) => {
 		state.activityId = val;
 	},
+	setActivityDirection: (state, val) => {
+		state.activityDirection = val;
+	},
 	startLoading: (state) => {
 		state.isLoading = true;
 	},

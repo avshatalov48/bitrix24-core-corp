@@ -11,6 +11,7 @@ return [
 	'rel' => [
 		'main.polyfill.core',
 		'ui.tour',
+		'crm.integration.ui.banner-dispatcher',
 	],
 	'skip_core' => true,
 ];

@@ -2,6 +2,7 @@
  * @module imconnector/lib/ui/buttons/copy
  */
 jn.define('imconnector/lib/ui/buttons/copy', (require, exports, module) => {
+	const AppTheme = require('apptheme');
 	const { Type } = require('type');
 	const { withPressed } = require('utils/color');
 
@@ -22,7 +23,7 @@ jn.define('imconnector/lib/ui/buttons/copy', (require, exports, module) => {
 					flexDirection: 'row',
 					alignItems: 'center',
 					justifyContent: 'center',
-					backgroundColor: withPressed('#00A2E8'),
+					backgroundColor: withPressed(AppTheme.colors.accentMainPrimary),
 					borderRadius,
 					paddingVertical: 4,
 					paddingHorizontal: 25,
@@ -52,7 +53,7 @@ jn.define('imconnector/lib/ui/buttons/copy', (require, exports, module) => {
 			}),
 			Text({
 				style: {
-					color: '#FFFFFF',
+					color: AppTheme.colors.baseWhiteFixed,
 					fontSize: 16,
 					fontWeight: 400,
 					numberOfLines: 1,

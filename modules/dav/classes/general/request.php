@@ -163,8 +163,7 @@ class CDavRequest
 
 	public function GetPrincipalUrl()
 	{
-		$p = $this->GetPrincipal();
-		return $p->GetPrincipalUrl($this);
+		return $this->GetPrincipal()->GetPrincipalUrl($this);
 	}
 
 	public function GetParameter($parameterName)

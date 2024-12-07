@@ -1,6 +1,7 @@
 <?php
 namespace Bitrix\Crm\Controller\Action\Entity;
 
+use Bitrix\Crm\Item;
 use Bitrix\Main;
 use Bitrix\Crm;
 use Bitrix\Crm\Service\Container;
@@ -12,7 +13,7 @@ use Bitrix\Crm\Service\Container;
  */
 class MergeBatchAction extends Main\Engine\Action
 {
-	final public function run(array $params)
+	final public function run(array $params): ?array
 	{
 		if(!Crm\Security\EntityAuthorization::isAuthorized())
 		{
@@ -27,11 +28,7 @@ class MergeBatchAction extends Main\Engine\Action
 			return null;
 		}
 
-		$entity = Crm\Entity\EntityManager::resolveByTypeID($entityTypeID);
-
 		$entityIDs = isset($params['entityIds']) && is_array($params['entityIds']) ? $params['entityIds'] : null;
-		$effectiveEntityIDs = [];
-
 		if ($entityTypeID === \CCrmOwnerType::Deal)
 		{
 			$restriction = \Bitrix\Crm\Restriction\RestrictionManager::getWebFormResultsRestriction();
@@ -50,15 +47,16 @@ class MergeBatchAction extends Main\Engine\Action
 			}
 		}
 
-		foreach($entityIDs as $entityID)
+		$factory = Container::getInstance()->getFactory($entityTypeID);
+		if (!$factory)
 		{
-			if($entity->isExists($entityID))
-			{
-				$effectiveEntityIDs[] = $entityID;
-			}
+			$this->addError(Crm\Controller\ErrorCode::getOwnerNotFoundError());
+
+			return null;
 		}
 
-		if(empty($effectiveEntityIDs))
+		$effectiveEntityIDs = $this->filterExistsItems($factory, $entityIDs);
+		if (empty($effectiveEntityIDs))
 		{
 			$this->addError(new Main\Error('The parameter entityIds does not contains valid elements.'));
 			return null;
@@ -72,9 +70,7 @@ class MergeBatchAction extends Main\Engine\Action
 
 		//TODO: Resolve Root entity through API
 		$rootEntityID = array_shift($effectiveEntityIDs);
-
-		$entity = Crm\Entity\EntityManager::resolveByTypeID($entityTypeID);
-		if(!$entity->isExists($rootEntityID))
+		if($factory->getItem($rootEntityID) === null)
 		{
 			return [ 'STATUS' => 'NOT_FOUND' ];
 		}
@@ -112,5 +108,24 @@ class MergeBatchAction extends Main\Engine\Action
 			$this->addError(new Main\Error($e->getMessage()));
 		}
 		return $result;
+	}
+
+	private function filterExistsItems(Crm\Service\Factory $factory, array $ids): array
+	{
+		$ids = array_map(static fn (mixed $id) => (int)$id, $ids);
+		if (empty($ids))
+		{
+			return [];
+		}
+
+		$items = $factory->getItems([
+			'select' => ['ID'],
+			'filter' => ['@ID' => $ids],
+		]);
+
+		$existsIds = array_map(static fn (Item $item) => $item->getId(), $items);
+		$isExistsCallback = static fn (int $id) => in_array($id, $existsIds, true);
+
+		return array_filter($ids, $isExistsCallback);
 	}
 }

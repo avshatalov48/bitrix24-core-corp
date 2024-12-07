@@ -31,7 +31,7 @@ class Logs
 		// first get last viewed dates
 		$res = ViewedTable::getList([
 			'filter' => [
-				'USER_ID' => $this->userId,
+				'=USER_ID' => $this->userId,
 				'TASK_ID' => array_keys($items)
 			]
 		]);
@@ -49,7 +49,7 @@ class Logs
 			{
 				$filterLog[] = array(
 					'>CREATED_DATE' => $item['data']['date_view'],
-					'TASK_ID' => $id
+					'=TASK_ID' => $id
 				);
 			}
 			$item['data']['date_view'] = $item['data']['date_view'] ? $item['data']['date_view']->getTimestamp() : 0;
@@ -60,7 +60,7 @@ class Logs
 				'TASK_ID', 'FIELD', 'FROM_VALUE', 'TO_VALUE'
 			],
 			'filter' => [
-				'!USER_ID' => $this->userId,
+				'!=USER_ID' => $this->userId,
 				'=FIELD' => [
 					'COMMENT',
 					self::USER_WEBDAV_CODE,

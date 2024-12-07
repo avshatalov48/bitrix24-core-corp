@@ -2,18 +2,22 @@
 
 namespace Bitrix\Crm\Component\EntityDetails\TimelineMenuBar;
 
+use Bitrix\Main\Application;
+
 class Context
 {
-	private int $entityTypeId;
-	private int $entityId;
-	private ?int $entityCategoryId = null;
+	private string $region;
 	private bool $isReadonly = false;
+
 	protected string $guid = 'timeline';
 
-	public function __construct(int $entityTypeId, int $entityId)
+	public function __construct(
+		private readonly int $entityTypeId,
+		private readonly int $entityId,
+		private ?int $entityCategoryId = null
+	)
 	{
-		$this->entityTypeId = $entityTypeId;
-		$this->entityId = $entityId;
+		$this->region = Application::getInstance()->getContext()->getLanguage() ?? 'ru';
 	}
 
 	public function getEntityTypeId(): int
@@ -36,6 +40,11 @@ class Context
 		$this->entityCategoryId = $entityCategoryId;
 
 		return $this;
+	}
+
+	public function getRegion(): string
+	{
+		return $this->region;
 	}
 
 	public function getGuid(): string

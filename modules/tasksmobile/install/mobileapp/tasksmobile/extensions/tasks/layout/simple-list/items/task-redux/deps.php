@@ -2,8 +2,10 @@
 
 return [
 	'extensions' => [
+		'assets/icons',
+		'animation',
+		'tokens',
 		'loc',
-		'apptheme',
 		'utils/color',
 		'utils/date',
 		'utils/date/formats',
@@ -13,10 +15,15 @@ return [
 		'layout/ui/counter-view',
 		'layout/ui/simple-list/items/extended',
 		'layout/ui/user/avatar',
+		'ui-system/blocks/icon',
+		'ui-system/typography/text',
+		'statemanager/redux/store',
 		'statemanager/redux/connect',
 		'statemanager/redux/slices/users',
-		'tasks/enum',
+		'tasks:enum',
 		'tasks:layout/deadline-pill',
+		'tasks:statemanager/redux/slices/tasks',
+		'tasks:layout/fields/time-tracking/timer',
 	],
 	'bundle' => [
 		'./src/task-content',

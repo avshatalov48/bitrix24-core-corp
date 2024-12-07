@@ -50,7 +50,7 @@ foreach($arParams["BUTTONS"] as $index=>$item):
 
 	elseif(!empty($item["MENU"])):?>
 			<td>
-				<script type="text/javascript">
+				<script>
 				var jsMnu_<?=$arParams["TOOLBAR_ID"].'_'.$index?> = <?=CUtil::PhpToJSObject($item["MENU"])?>;
 				</script>
 				<a href="javascript:void(0);" hidefocus="true"
@@ -86,7 +86,7 @@ endforeach;?>
 	</tr>
 </table>
 
-<script type="text/javascript">
+<script>
 var jsPopup_<?=$arParams["TOOLBAR_ID"]?> = new PopupMenu('Popup<?=$arParams["TOOLBAR_ID"]?>');
 </script>
 
@@ -94,7 +94,7 @@ var jsPopup_<?=$arParams["TOOLBAR_ID"]?> = new PopupMenu('Popup<?=$arParams["TOO
 <?if (!empty($arMoreButtons)):?>
 
 			<div class="bx-context-more-buttons">
-			<script type="text/javascript">
+			<script>
 				var jsMnu_<?=$arParams["TOOLBAR_ID"].'_more_buttons'?> = <?=CUtil::PhpToJSObject($arMoreButtons)?>;
 				</script>
 				<a href="javascript:void(0);" hidefocus="true"

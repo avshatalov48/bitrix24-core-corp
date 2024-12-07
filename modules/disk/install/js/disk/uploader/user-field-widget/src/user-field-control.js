@@ -44,14 +44,24 @@ export default class UserFieldControl extends EventEmitter
 			Type.isStringFilled(options.allowDocumentFieldName) ? options.allowDocumentFieldName : null
 		);
 
+		this.#adapter.subscribe('Item:onAdd', (event: BaseEvent<{ item: TileWidgetItem }>): void => {
+			const item: TileWidgetItem = event.getData().item;
+
+			this.emit('Item:onAdd', { item });
+		});
+
 		this.#adapter.subscribe('Item:onComplete', (event: BaseEvent<{ item: TileWidgetItem }>): void => {
 			const item: TileWidgetItem = event.getData().item;
 			this.setDocumentEdit(item);
+
+			this.emit('Item:onComplete', { item });
 		});
 
 		this.#adapter.subscribe('Item:onRemove', (event: BaseEvent<{ item: TileWidgetItem }>): void => {
 			const item: TileWidgetItem = event.getData().item;
 			this.removeAllowDocumentEditInput(item);
+
+			this.emit('Item:onRemove', { item });
 		});
 
 		if (options.disableLocalEdit)
@@ -63,17 +73,31 @@ export default class UserFieldControl extends EventEmitter
 		if (this.#photoTemplateFieldName !== null && this.getUploader().getHiddenFieldsContainer() !== null)
 		{
 			this.#photoTemplateInput = Tag.render`
-					<input 
-						name="${this.#photoTemplateFieldName}" 
-						value="${Type.isStringFilled(options.photoTemplate) ? options.photoTemplate : 'grid'}"
-						type="hidden" 
-					/>
-				`;
+				<input 
+					name="${this.#photoTemplateFieldName}" 
+					value="${Type.isStringFilled(options.photoTemplate) ? options.photoTemplate : 'grid'}"
+					type="hidden" 
+				/>
+			`;
 
 			this.setPhotoTemplateMode(options.photoTemplateMode);
 
 			Dom.append(this.#photoTemplateInput, this.getUploader().getHiddenFieldsContainer());
 		}
+
+		if (
+			this.getUploader().getHiddenFieldsContainer() === null
+			&& (this.#photoTemplateFieldName !== null || this.#allowDocumentFieldName !== null)
+		)
+		{
+			// eslint-disable-next-line no-console
+			console.warn(
+				'DiskUserField: to use "photoTemplateFieldName" or "allowDocumentFieldName" options '
+				+ 'you have to set "hiddenFieldsContainer" in the uploader options.',
+			);
+		}
+
+		this.subscribeFromOptions(options.events);
 
 		const eventObject: ?HTMLElement = Type.isElementNode(options.eventObject) ? options.eventObject : null;
 		if (eventObject)
@@ -167,38 +191,18 @@ export default class UserFieldControl extends EventEmitter
 		return this.#widgetComponent.$nextTick();
 	}
 
-	show(): void
-	{
-		this.#widgetComponent.show(true);
-	}
-
 	hide(): void
 	{
-		this.#widgetComponent.hide(true);
-		this.hideUploaderPanel();
-		this.hideDocumentPanel();
+		this.#widgetComponent.priorityVisibility = 'hidden';
+		this.emit('onUploaderPanelToggle', { isOpen: false });
+		this.emit('onDocumentPanelToggle', { isOpen: false });
 	}
 
 	showUploaderPanel(): void
 	{
-		this.show();
-		this.hideDocumentPanel();
-		this.#widgetComponent.showUploaderPanel();
-
-		if (this.getMainPostForm())
-		{
-			this.getMainPostForm().selectFileButton();
-		}
-	}
-
-	hideUploaderPanel(): void
-	{
-		this.#widgetComponent.hideUploaderPanel();
-
-		if (this.getMainPostForm())
-		{
-			this.getMainPostForm().deselectFileButton();
-		}
+		this.#widgetComponent.priorityVisibility = 'uploader';
+		this.emit('onUploaderPanelToggle', { isOpen: true });
+		this.emit('onDocumentPanelToggle', { isOpen: false });
 	}
 
 	showDocumentPanel(): void
@@ -208,29 +212,9 @@ export default class UserFieldControl extends EventEmitter
 			return;
 		}
 
-		this.show();
-		this.hideUploaderPanel();
-		this.#widgetComponent.showDocumentPanel();
-
-		if (this.getMainPostForm())
-		{
-			this.getMainPostForm().selectCreateDocumentButton();
-		}
-	}
-
-	hideDocumentPanel(): void
-	{
-		if (!this.canCreateDocuments())
-		{
-			return;
-		}
-
-		this.#widgetComponent.hideDocumentPanel();
-
-		if (this.getMainPostForm())
-		{
-			this.getMainPostForm().deselectCreateDocumentButton();
-		}
+		this.#widgetComponent.priorityVisibility = 'documents';
+		this.emit('onUploaderPanelToggle', { isOpen: false });
+		this.emit('onDocumentPanelToggle', { isOpen: true });
 	}
 
 	clear(): void
@@ -252,8 +236,8 @@ export default class UserFieldControl extends EventEmitter
 	{
 		return (
 			this.canAllowDocumentEdit()
-			&& item.customData['isEditable'] === true
-			&& item.customData['canUpdate'] === true
+			&& item.customData.isEditable === true
+			&& item.customData.canUpdate === true
 		);
 	}
 
@@ -292,7 +276,7 @@ export default class UserFieldControl extends EventEmitter
 			Dom.append(input, this.getUploader().getHiddenFieldsContainer());
 		}
 
-		allowEdit = allowEdit === null ? item.customData['allowEdit'] === true : allowEdit;
+		allowEdit = allowEdit === null ? item.customData.allowEdit === true : allowEdit;
 		input.value = allowEdit ? 1 : 0;
 
 		const file: UploaderFile = this.getFile(item.id);
@@ -301,7 +285,7 @@ export default class UserFieldControl extends EventEmitter
 
 	canChangePhotoTemplate(): boolean
 	{
-		return this.#photoTemplateFieldName !== null;
+		return this.#photoTemplateInput !== null;
 	}
 
 	setPhotoTemplate(name: string): void
@@ -367,5 +351,19 @@ export default class UserFieldControl extends EventEmitter
 		}
 
 		return {};
+	}
+
+	canUseImportService(): boolean
+	{
+		const settings = Extension.getSettings('disk.uploader.user-field-widget');
+
+		return settings.get('canUseImport', true);
+	}
+
+	getImportFeatureId(): string
+	{
+		const settings = Extension.getSettings('disk.uploader.user-field-widget');
+
+		return settings.get('importFeatureId', '');
 	}
 }

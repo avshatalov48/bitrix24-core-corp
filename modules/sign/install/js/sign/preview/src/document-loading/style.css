@@ -1,0 +1,41 @@
+.sign-preview__document-loading {
+	display: block;
+	padding-top: 140%;
+}
+
+.sign-preview__document-loading_container {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%,-50%);
+	display: inline-flex;
+	flex-direction: column;
+	align-items: center;
+}
+
+.sign-preview__document-loading_message {
+
+}
+
+.sign-preview__loader {
+	display: inline-block;
+	position: relative;
+	width: 80px;
+	height: 80px;
+	margin-bottom: 10px;
+}
+
+.sign-preview__document-loading_logo {
+	display: inline-block;
+	width: 69px;
+	height: 14px;
+	margin-bottom: 10px;
+	background: url(../images/sign-preview-logo-b24-en.svg) center no-repeat;
+	background-size: cover;
+}
+
+.sign-preview__document-loading_logo.--ru {
+	width: 67px;
+	height: 13px;
+	background-image: url(../images/sign-preview-logo-b24-ru.svg);
+}

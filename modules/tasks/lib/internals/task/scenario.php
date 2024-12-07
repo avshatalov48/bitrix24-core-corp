@@ -2,9 +2,11 @@
 namespace Bitrix\Tasks\Internals\Task;
 
 use Bitrix\Main\Application;
+use Bitrix\Main\DB\SqlQueryException;
 use Bitrix\Main\ORM\Data\DataManager;
 use Bitrix\Main\ORM\Fields\IntegerField;
 use Bitrix\Main\ORM\Fields\StringField;
+use Bitrix\Main\SystemException;
 use Bitrix\Tasks\Internals\Task\Scenario\Scenario;
 
 /**
@@ -45,7 +47,6 @@ class ScenarioTable extends DataManager
 
 	/**
 	 * Returns valid scenarios
-	 * @return string[]
 	 */
 	public static function getValidScenarios(): array
 	{
@@ -61,7 +62,7 @@ class ScenarioTable extends DataManager
 	 *
 	 * @return string
 	 */
-	public static function getTableName()
+	public static function getTableName(): string
 	{
 		return 'b_tasks_scenario';
 	}
@@ -69,48 +70,26 @@ class ScenarioTable extends DataManager
 	/**
 	 * Returns entity map definition.
 	 *
-	 * @return array
+	 * @throws SystemException
 	 */
-	public static function getMap()
+	public static function getMap(): array
 	{
 		return [
-			new IntegerField(
-				'TASK_ID',
-				[
-					'primary' => true,
-				]
-			),
-			new StringField(
-				'SCENARIO',
-				[
-					'required' => true,
-					'default' => self::SCENARIO_DEFAULT,
-					'validation' => function() {
-						return [
-							function(string $value) {
-								if (!self::isValidScenario($value))
-								{
-									return 'Invalid scenario';
-								}
-								return true;
-							}
-						];
-					},
-				]
-			),
+			(new IntegerField('TASK_ID'))
+				->configurePrimary(),
+			(new StringField('SCENARIO'))
+				->configureRequired()
+				->configureDefaultValue(static::SCENARIO_DEFAULT)
+				->addValidator(static::getScenarioValidator()),
 		];
 	}
 
 	/**
-	 * @param int $taskId
-	 * @param array $scenarios
-	 * @return void
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\DB\SqlQueryException
+	 * @throws SqlQueryException
 	 */
 	public static function insertIgnore(int $taskId, array $scenarios): void
 	{
-		$connection = \Bitrix\Main\Application::getConnection();
+		$connection = Application::getConnection();
 		$helper = $connection->getSqlHelper();
 
 		foreach (self::filterByValidScenarios($scenarios) as $scenario)
@@ -137,5 +116,16 @@ class ScenarioTable extends DataManager
 			}
 		}
 		return array_unique($filtered);
+	}
+
+	private static function getScenarioValidator(): callable
+	{
+		return function(string $value) {
+			if (!self::isValidScenario($value))
+			{
+				return 'Invalid scenario';
+			}
+			return true;
+		};
 	}
 }

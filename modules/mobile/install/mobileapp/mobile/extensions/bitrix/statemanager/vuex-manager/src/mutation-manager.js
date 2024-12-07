@@ -1,11 +1,9 @@
 /* eslint-disable flowtype/require-return-type */
-/* eslint-disable bitrix-rules/no-pseudo-private */
 
 /**
  * @module statemanager/vuex-manager/mutation-manager
  */
 jn.define('statemanager/vuex-manager/mutation-manager', (require, exports, module) => {
-
 	/**
 	 * @class MutationManager
 	 * Designed to subscribe to individual store mutations.
@@ -14,22 +12,25 @@ jn.define('statemanager/vuex-manager/mutation-manager', (require, exports, modul
 	{
 		constructor()
 		{
-			this._listenerCollection = new Map();
+			/**
+			 * @protected
+			 */
+			this.listenerCollection = new Map();
 		}
 
 		on(mutationName, listener)
 		{
 			if (typeof listener !== 'function')
 			{
-				throw new Error('MutationManager: listener must be a function');
+				throw new TypeError('MutationManager: listener must be a function');
 			}
 
-			if (!this._listenerCollection.has(mutationName))
+			if (!this.listenerCollection.has(mutationName))
 			{
-				this._listenerCollection.set(mutationName, []);
+				this.listenerCollection.set(mutationName, []);
 			}
 
-			this._listenerCollection
+			this.listenerCollection
 				.get(mutationName)
 				.push(listener)
 			;
@@ -49,30 +50,29 @@ jn.define('statemanager/vuex-manager/mutation-manager', (require, exports, modul
 		{
 			if (typeof listener !== 'function')
 			{
-				throw new Error('MutationManager: listener must be a function');
+				throw new TypeError('MutationManager: listener must be a function');
 			}
 
-			if (!this._listenerCollection.has(mutationName))
+			if (!this.listenerCollection.has(mutationName))
 			{
 				return;
 			}
 
-			const listenerCollection =
-				this._listenerCollection
-					.get(mutationName)
-					.filter(handler => handler !== listener)
+			const listenerCollection = this.listenerCollection
+				.get(mutationName)
+				.filter((handler) => handler !== listener)
 			;
 
-			this._listenerCollection.set(mutationName, listenerCollection);
+			this.listenerCollection.set(mutationName, listenerCollection);
 
-			const hasNoListeners = this._listenerCollection.get(mutationName).length === 0;
+			const hasNoListeners = this.listenerCollection.get(mutationName).length === 0;
 			if (hasNoListeners)
 			{
-				this._listenerCollection.delete(mutationName);
+				this.listenerCollection.delete(mutationName);
 			}
 		}
 
-		_handle(mutation = {}, state = {})
+		async handle(mutation = {}, state = {})
 		{
 			const mutationName = mutation.type;
 
@@ -81,22 +81,36 @@ jn.define('statemanager/vuex-manager/mutation-manager', (require, exports, modul
 				return;
 			}
 
-			if (!this._listenerCollection.has(mutationName))
+			if (!this.listenerCollection.has(mutationName))
 			{
 				return;
 			}
 
-			this._listenerCollection
-				.get(mutationName)
-				.forEach(listener => listener(mutation, state))
-			;
+			const mutationListeners = this.listenerCollection.get(mutationName);
+			for (const listener of mutationListeners)
+			{
+				try
+				{
+					// eslint-disable-next-line no-await-in-loop
+					await listener(mutation, state);
+				}
+				catch (error)
+				{
+					// eslint-disable-next-line no-console
+					console.error('VuexManager: MutationManager.handle error', error, mutation, state);
+
+					// throw new Error(error.message);
+				}
+			}
 		}
 
 		getHandler()
 		{
-			return this._handle.bind(this);
+			return this.handle.bind(this);
 		}
 	}
 
-	module.exports = { MutationManager };
+	module.exports = {
+		MutationManager,
+	};
 });

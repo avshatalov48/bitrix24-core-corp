@@ -10,10 +10,9 @@ use Bitrix\Main\UI\Filter;
 use Bitrix\Tasks\Integration\Intranet\Settings;
 use Bitrix\Tasks\Internals\Effective;
 use Bitrix\Tasks\Util\Error\Collection;
-use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\TaskLimit;
+use Bitrix\Tasks\Integration\Bitrix24;
 use Bitrix\Tasks\Util\Type\DateTime;
 use Bitrix\Tasks\Util\User;
-use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\KpiLimit;
 
 Loc::loadMessages(__FILE__);
 
@@ -170,19 +169,20 @@ class TasksReportEffectiveComponent extends TasksBaseComponent
 		$this->arResult['FILTERS'] = static::getFilterList();
 		$this->arResult['PRESETS'] = static::getPresetList();
 
-		if (
-			TaskLimit::isLimitExceeded()
-			|| KpiLimit::isLimitExceeded()
-		)
+		$this->arResult['tasksEfficiencyEnabled'] = Bitrix24::checkFeatureEnabled(
+			Bitrix24\FeatureDictionary::TASK_EFFICIENCY
+		);
+
+		if (!$this->arResult['tasksEfficiencyEnabled'])
 		{
 			$this->arResult['TASK_LIMIT_EXCEEDED'] = true;
-			$this->arResult['KPI_LIMIT_EXCEEDED'] = true;
+
 			$efficiencyData = $this->getDefaultEfficiencyData();
 		}
 		else
 		{
 			$this->arResult['TASK_LIMIT_EXCEEDED'] = false;
-			$this->arResult['KPI_LIMIT_EXCEEDED'] = false;
+
 			$efficiencyData = (
 				$this->arParams['PLATFORM'] === 'mobile'
 					? $this->getEfficiencyDataForMobile($this->userId, $this->groupId)

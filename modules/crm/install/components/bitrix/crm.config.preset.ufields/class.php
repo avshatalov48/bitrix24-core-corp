@@ -284,8 +284,8 @@ class PresetEditComponent extends \CBitrixComponent
 			{
 				if (in_array($sortKey, $origFieldsNames, true))
 				{
-					$arSortBy[] = ToUpper($sortKey);
-					$arSortDir[] = (ToUpper($this->sort[$sortKey]) === 'DESC') ? SORT_DESC : SORT_ASC;
+					$arSortBy[] = mb_strtoupper($sortKey);
+					$arSortDir[] = (mb_strtoupper($this->sort[$sortKey]) === 'DESC') ? SORT_DESC : SORT_ASC;
 					$sortType = SORT_REGULAR;
 					switch ($this->fieldTypeList[$sortKey]['data_type'])
 					{

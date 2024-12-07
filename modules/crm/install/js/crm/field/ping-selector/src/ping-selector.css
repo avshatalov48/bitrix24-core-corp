@@ -1,0 +1,32 @@
+.crm-field-ping-selector-compact-icon {
+	display: block;
+	width: 20px;
+	height: 20px;
+	cursor: pointer;
+	background-size: contain;
+}
+
+.crm-field-ping-selector-compact-icon:hover {
+	opacity: var(--ui-opacity-80);
+}
+
+.crm-field-ping-selector-compact-icon.--bell {
+	background-image: url('./images/crm-field__ping-selector_compact-icon-bell.svg');
+}
+
+.crm-field-ping-selector-compact-icon.--bell.--empty {
+	background-image: url('./images/crm-field__ping-selector_compact-empty-icon-bell.svg');
+}
+
+.crm-field-ping-selector-arrow .menu-popup-item-text {
+	display: flex;
+	align-items: center;
+}
+
+.crm-field-ping-selector-arrow .menu-popup-item-text::after {
+	content: '';
+	display: inline-block;
+	width: 16px;
+	height: 20px;
+	background: url('./images/crm-field__ping-selector_arrow.svg') center center no-repeat;
+}

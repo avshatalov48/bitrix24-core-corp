@@ -104,7 +104,7 @@ export const BaseButton = {
 		this.$Bitrix.eventEmitter.subscribe('layout:updated', this.onLayoutUpdated);
 	},
 
-	beforeDestroy(): void
+	beforeUnmount(): void
 	{
 		this.$Bitrix.eventEmitter.unsubscribe('layout:updated', this.onLayoutUpdated);
 	},

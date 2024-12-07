@@ -3,27 +3,29 @@
 namespace Bitrix\Ml\Engine\Filter;
 
 use Bitrix\Main\Context;
+use Bitrix\Main\Engine\ActionFilter\Base;
 use Bitrix\Main\Error;
 use Bitrix\Main\Event;
-
 use Bitrix\Main\EventResult;
 use Bitrix\Ml\Client;
 
-class Authorization extends \Bitrix\Main\Engine\ActionFilter\Base
+class Authorization extends Base
 {
 	public function onBeforeAction(Event $event)
 	{
 		$request = Context::getCurrent()->getRequest()->toArray();
-		$serverSignature = $request["BX_HASH"];
-		unset($request["BX_HASH"]);
+		$serverSignature = $request['BX_HASH'];
+		unset($request['BX_HASH']);
+
 		$signature = Client::signRequest(
 			$request,
-			Client::getPortalType() === Client::TYPE_BITRIX24 ? Client::getLicenseCode() : ""
+			Client::getPortalType() === Client::TYPE_BITRIX24 ? Client::getLicenseCode() : ''
 		);
 
-		if(!$serverSignature || $serverSignature !== $signature)
+		if (!$serverSignature || $serverSignature !== $signature)
 		{
-			$this->errorCollection[] = new Error("Request verification failed");
+			$this->errorCollection[] = new Error('Request verification failed');
+
 			return new EventResult(EventResult::ERROR, null, null, $this);
 		}
 

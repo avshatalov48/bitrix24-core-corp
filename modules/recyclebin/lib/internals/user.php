@@ -98,8 +98,14 @@ class User
 		return ($isAdmin);
 	}
 
-	public static function isExternalUser($userID)
+	public static function isExternalUser($userID): bool
 	{
+		$userID = (int)$userID;
+		if ($userID <= 0)
+		{
+			return false;
+		}
+
 		static $result = [];
 
 		if (array_key_exists($userID, $result))
@@ -123,10 +129,7 @@ class User
 
 		$user = $dbResult->Fetch();
 
-		$result[$userID] = !(is_array($user) &&
-							 isset($user['UF_DEPARTMENT']) &&
-							 isset($user['UF_DEPARTMENT'][0]) &&
-							 $user['UF_DEPARTMENT'][0] > 0);
+		$result[$userID] = !(isset($user['UF_DEPARTMENT'][0]) && is_array($user) && $user['UF_DEPARTMENT'][0] > 0);
 
 		return $result[$userID];
 	}

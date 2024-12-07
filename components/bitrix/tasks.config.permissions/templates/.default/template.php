@@ -7,6 +7,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Extension;
 use Bitrix\Tasks\Helper\RestrictionUrl;
+use Bitrix\Tasks\Integration;
 
 $APPLICATION->SetTitle(GetMessage('TASKS_CONFIG_PERMISSIONS'));
 $bodyClass = $APPLICATION->GetPageProperty('BodyClass');
@@ -23,6 +24,39 @@ $openPopupEvent = 'tasks:onComponentOpen';
 \Bitrix\UI\Toolbar\Facade\Toolbar::deleteFavoriteStar();
 
 $hasFatals = false;
+
+$areTasksPermissionsRestricted = !Integration\Bitrix24::checkFeatureEnabled(
+	Integration\Bitrix24\FeatureDictionary::TASK_ACCESS_PERMISSIONS
+);
+if ($areTasksPermissionsRestricted)
+{
+	?>
+	<script>
+		BX.ready(async () => {
+			await BX.Runtime.loadExtension('ui.info-helper');
+			BX.UI.InfoHelper.show(
+				'limit_tasks_access_permissions',
+				{
+					isLimit: true,
+					limitAnalyticsLabels: {
+						module: 'tasks',
+						source: 'topMenu'
+					}
+				}
+			);
+
+			const onInfoHelperClose = () => {
+				BX.SidePanel.Instance.openSliders[BX.SidePanel.Instance.getOpenSlidersCount() - 2]?.close();
+				top.BX.Event.EventEmitter.unsubscribe('SidePanel.Slider:onClosing', onInfoHelperClose);
+			};
+
+			top.BX.Event.EventEmitter.subscribe('SidePanel.Slider:onClosing', onInfoHelperClose);
+		});
+	</script>
+	<?php
+
+	return;
+}
 
 /** intranet-settings-support */
 if (($arResult['IS_TOOL_AVAILABLE'] ?? null) === false)

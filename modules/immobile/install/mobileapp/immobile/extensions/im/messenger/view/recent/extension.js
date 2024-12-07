@@ -9,7 +9,7 @@ jn.define('im/messenger/view/recent', (require, exports, module) => {
 	const { EventType, FeatureFlag, ComponentCode } = require('im/messenger/const');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const AppTheme = require('apptheme');
-	const { openIntranetInviteWidget } = require('intranet/invite-opener');
+	const { openIntranetInviteWidget } = require('intranet/invite-opener-new');
 	const { AnalyticsEvent } = require('analytics');
 
 	class RecentView extends View
@@ -64,7 +64,7 @@ jn.define('im/messenger/view/recent', (require, exports, module) => {
 			const topMenuPopup = dialogs.createPopupMenu();
 			const topMenuButtons = [];
 
-			if (!this.isCopilotComponent())
+			if (this.isMessengerComponent())
 			{
 				topMenuButtons.push(
 					{
@@ -116,7 +116,7 @@ jn.define('im/messenger/view/recent', (require, exports, module) => {
 				);
 			}
 
-			if (!this.isCopilotComponent())
+			if (this.isMessengerComponent())
 			{
 				buttons.unshift({
 					type: 'search',
@@ -158,9 +158,23 @@ jn.define('im/messenger/view/recent', (require, exports, module) => {
 
 		isCopilotComponent()
 		{
-			const componentCode = MessengerParams.get('COMPONENT_CODE');
+			const componentCode = MessengerParams.getComponentCode();
 
 			return componentCode === ComponentCode.imCopilotMessenger;
+		}
+
+		isChannelComponent()
+		{
+			const componentCode = MessengerParams.getComponentCode();
+
+			return componentCode === ComponentCode.imChannelMessenger;
+		}
+
+		isMessengerComponent()
+		{
+			const componentCode = MessengerParams.getComponentCode();
+
+			return componentCode === ComponentCode.imMessenger;
 		}
 
 		getChatCreateButtonOption()
@@ -214,6 +228,9 @@ jn.define('im/messenger/view/recent', (require, exports, module) => {
 		setItems(items)
 		{
 			this.ui.setItems(items);
+			items.forEach((item) => {
+				this.itemCollection[item.id] = item;
+			});
 		}
 
 		addItems(items)
@@ -281,8 +298,11 @@ jn.define('im/messenger/view/recent', (require, exports, module) => {
 
 		hideLoader()
 		{
-			this.removeItem({ id: this.loadNextPageItemId });
-			this.loaderShown = false;
+			if (this.loaderShown)
+			{
+				this.removeItem({ id: this.loadNextPageItemId });
+				this.loaderShown = false;
+			}
 		}
 
 		showWelcomeScreen()
@@ -324,6 +344,15 @@ jn.define('im/messenger/view/recent', (require, exports, module) => {
 				};
 			}
 
+			if (this.isChannelComponent())
+			{
+				options = {
+					upperText: Loc.getMessage('IMMOBILE_RECENT_VIEW_EMPTY_CHANNEL_UPPER_TEXT'),
+					lowerText: Loc.getMessage('IMMOBILE_RECENT_VIEW_EMPTY_CHANNEL_LOWER_TEXT'),
+					iconName: 'ws_channels',
+				};
+			}
+
 			this.ui.welcomeScreen.show(options);
 		}
 
@@ -336,14 +365,14 @@ jn.define('im/messenger/view/recent', (require, exports, module) => {
 		{
 			this.emitCustomEvent(EventType.recent.createChat);
 
-			if (this.style.showLoader)
-			{
-				const chatCreateButton = this.getChatCreateButtonOption();
-				chatCreateButton.icon = Application.getPlatform() === 'ios' ? null : this.style.icon;
-				chatCreateButton.showLoader = this.style.showLoader;
-
-				this.setFloatingButton(chatCreateButton);
-			}
+			// if (this.style.showLoader) disable, because available copilot role control
+			// {
+			// 	const chatCreateButton = this.getChatCreateButtonOption();
+			// 	chatCreateButton.icon = Application.getPlatform() === 'ios' ? null : this.style.icon;
+			// 	chatCreateButton.showLoader = this.style.showLoader;
+			//
+			// 	this.setFloatingButton(chatCreateButton);
+			// }
 		}
 	}
 

@@ -14,19 +14,21 @@ use Bitrix\Main\Localization\Loc;
 
 class SmsStatus extends LogMessage
 {
+	private const WHATSAPP_PROVIDER_ID = 'ednaru';
+
 	private bool $isSmsChannel;
 	private array $messageInfo;
 
 	public function __construct(Context $context, Model $model)
 	{
-		$this->isSmsChannel = !empty($model->getAssociatedEntityModel()->get('SMS_INFO'));
+		$this->isSmsChannel = !empty($model->getAssociatedEntityModel()?->get('SMS_INFO'));
 		if ($this->isSmsChannel)
 		{
-			$this->messageInfo = $model->getAssociatedEntityModel()->get('SMS_INFO') ?? [];
+			$this->messageInfo = $model->getAssociatedEntityModel()?->get('SMS_INFO') ?? [];
 		}
 		else
 		{
-			$messageInfo = $model->getAssociatedEntityModel()->get('MESSAGE_INFO') ?? [];
+			$messageInfo = $model->getAssociatedEntityModel()?->get('MESSAGE_INFO') ?? [];
 			$this->messageInfo = $messageInfo['HISTORY_ITEMS'][0] ?? [];
 		}
 
@@ -40,49 +42,54 @@ class SmsStatus extends LogMessage
 
 	public function getIconCode(): ?string
 	{
-		switch ($this->getStatus())
+		return match ($this->getStatus())
 		{
-			case BaseMessage::MESSAGE_FAILURE:
-				return 'info';
-			case BaseMessage::MESSAGE_SUCCESS:
-				return 'comment';
-			case BaseMessage::MESSAGE_READ:
-				return 'view';
-		}
+			BaseMessage::MESSAGE_FAILURE => 'info',
+			BaseMessage::MESSAGE_SUCCESS => 'comment',
+			BaseMessage::MESSAGE_READ => 'view',
+			default => parent::getIconCode(),
+		};
 
-		return parent::getIconCode();
 	}
 
 	public function getTitle(): ?string
 	{
 		$messenger = $this->messageInfo['PROVIDER_DATA']['DESCRIPTION'] ?? '';
+		$isSmsChannel = $this->isSmsChannel;
+		$isWhatsApp = $this->isSmsChannel && $this->messageInfo['senderId'] === self::WHATSAPP_PROVIDER_ID;
 
-		switch ($this->getStatus())
+		return match ($this->getStatus())
 		{
-			case BaseMessage::MESSAGE_FAILURE:
-				return $this->isSmsChannel
-					? Loc::getMessage('CRM_TIMELINE_LOG_SMS_STATUS_TITLE_FAILURE')
-					: Loc::getMessage(
-						'CRM_TIMELINE_LOG_MSG_STATUS_TITLE_FAILURE',
-						['#MESSENGER#' => $messenger]
-					);
-			case BaseMessage::MESSAGE_SUCCESS:
-				return $this->isSmsChannel
-					? Loc::getMessage('CRM_TIMELINE_LOG_SMS_STATUS_TITLE_SUCCESS')
-					: Loc::getMessage(
-						'CRM_TIMELINE_LOG_MSG_STATUS_TITLE_SUCCESS',
-						['#MESSENGER#' =>$messenger]
-					);
-			case BaseMessage::MESSAGE_READ:
-				return $this->isSmsChannel
-					? Loc::getMessage('CRM_TIMELINE_LOG_SMS_STATUS_TITLE_READ')
-					: Loc::getMessage(
-						'CRM_TIMELINE_LOG_MSG_STATUS_TITLE_READ',
-						['#MESSENGER#' => $messenger]
-					);
-		}
+			BaseMessage::MESSAGE_FAILURE => $isSmsChannel
+				? Loc::getMessage($isWhatsApp
+					? 'CRM_TIMELINE_LOG_WHATSAPP_STATUS_TITLE_FAILURE'
+					: 'CRM_TIMELINE_LOG_SMS_STATUS_TITLE_FAILURE'
+				)
+				: Loc::getMessage(
+					'CRM_TIMELINE_LOG_MSG_STATUS_TITLE_FAILURE',
+					['#MESSENGER#' => $messenger]
+				),
+			BaseMessage::MESSAGE_SUCCESS => $isSmsChannel
+				? Loc::getMessage($isWhatsApp
+					? 'CRM_TIMELINE_LOG_WHATSAPP_STATUS_TITLE_SUCCESS'
+					: 'CRM_TIMELINE_LOG_SMS_STATUS_TITLE_SUCCESS'
+				)
+				: Loc::getMessage(
+					'CRM_TIMELINE_LOG_MSG_STATUS_TITLE_SUCCESS',
+					['#MESSENGER#' => $messenger]
+				),
+			BaseMessage::MESSAGE_READ => $isSmsChannel
+				? Loc::getMessage($isWhatsApp
+					? 'CRM_TIMELINE_LOG_WHATSAPP_STATUS_TITLE_READ'
+					: 'CRM_TIMELINE_LOG_SMS_STATUS_TITLE_READ'
+				)
+				: Loc::getMessage(
+					'CRM_TIMELINE_LOG_MSG_STATUS_TITLE_READ',
+					['#MESSENGER#' => $messenger]
+				),
+			default => Loc::getMessage('CRM_TIMELINE_LOG_SMS_STATUS_TITLE_UNKNOWN'),
+		};
 
-		return Loc::getMessage('CRM_TIMELINE_LOG_SMS_STATUS_TITLE_UNKNOWN');
 	}
 
 	public function getContentBlocks(): ?array

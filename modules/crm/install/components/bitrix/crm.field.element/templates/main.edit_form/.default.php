@@ -71,7 +71,7 @@ else
 
 			$entityTypesSelectorOptions = ElementType::getEnableEntityTypesForSelectorOptions(
 				$arParams['ENTITY_TYPE'],
-				$arResult['DYNAMIC_TYPE_TITLES']
+				$arResult['DYNAMIC_TYPE_TITLES'] ?? null
 			);
 			$selectorOptions = array_merge($selectorOptions, $entityTypesSelectorOptions);
 

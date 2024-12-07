@@ -126,12 +126,16 @@ class DefaultRequisite
 			$requisiteFields['SORT'] = 500;
 		}
 
-		return $this->entityRequisite->add($requisiteFields);
+		return $this->entityRequisite->add($requisiteFields, ['DISABLE_REQUIRED_USER_FIELD_CHECK' => true]);
 	}
 
 	protected function update(int $requisiteId, array $requisiteFields): Result
 	{
-		return $this->entityRequisite->update($requisiteId, $requisiteFields);
+		return $this->entityRequisite->update(
+			$requisiteId,
+			$requisiteFields,
+			['DISABLE_REQUIRED_USER_FIELD_CHECK' => true]
+		);
 	}
 
 	protected function getDefaultRequisiteData(): array

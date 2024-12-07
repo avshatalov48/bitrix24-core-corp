@@ -1,6 +1,7 @@
 <?
 $MESS["MENU_LIVE_FEED"] = "Живая лента";
 $MESS["MENU_LIVE_FEED2"] = "Новости";
+$MESS["MENU_LIVE_FEED3"] = "Лента";
 $MESS["MENU_TASKS"] = "Задачи";
 $MESS["MENU_BLOG"] = "Сообщения";
 $MESS["MENU_FILES"] = "Мой Диск";

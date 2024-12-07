@@ -20,6 +20,7 @@ $config = [
 		['code' => 'projects', 'class' => \Bitrix\Mobile\AppTabs\Projects::class],
 		['code' => 'calendar', 'class' => \Bitrix\Mobile\AppTabs\Calendar::class],
 		['code' => 'crmCustomSectionFactory', 'class' => CrmCustomSectionFactory::class],
+		['code' => 'disk', 'class' => \Bitrix\Mobile\AppTabs\Disk::class],
 	],
 	'required' => [
 		'chat' => 100,

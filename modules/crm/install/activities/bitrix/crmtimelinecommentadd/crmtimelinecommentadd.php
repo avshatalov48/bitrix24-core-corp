@@ -25,8 +25,7 @@ class CBPCrmTimelineCommentAdd extends CBPActivity
 		}
 
 		$documentId = $this->GetDocumentId();
-		[$ownerTypeName, $ownerId] = mb_split('_(?=[^_]*$)', $documentId[2]);
-		$ownerTypeId = \CCrmOwnerType::ResolveID($ownerTypeName);
+		[$ownerTypeId, $ownerId] = CCrmBizProcHelper::resolveEntityId($documentId);
 
 		$authorId = CBPHelper::ExtractUsers($this->CommentUser, $documentId, true);
 		$text = $this->getCommentText();

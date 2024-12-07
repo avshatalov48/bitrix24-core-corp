@@ -169,7 +169,8 @@ final class Entity
 			$defaultPresets
 		);
 		$presets = array_merge($defaultPresets, $filterOptions->getPresets());
-		$currentPreset = $strategy->getCurrentFilter()['presetId'];
+		$currentFilter = $strategy->getCurrentFilter();
+		$currentPreset = $currentFilter['presetId'] ?? null;
 
 		if (
 			$currentPreset

@@ -2,11 +2,23 @@
  * @module tasks/entry
  */
 jn.define('tasks/entry', (require, exports, module) => {
-	const { Loc } = require('loc');
 	const AppTheme = require('apptheme');
+	const { Loc } = require('loc');
 	const { Feature } = require('feature');
 	const { checkDisabledToolById } = require('settings/disabled-tools');
 	const { InfoHelper } = require('layout/ui/info-helper');
+	const { FeatureId } = require('tasks/enum');
+	const { getFeatureRestriction, tariffPlanRestrictionsReady } = require('tariff-plan-restriction');
+
+	/**
+	 * @typedef {{id?: string|number, taskId?: string|number, title?: string, taskInfo?: object }} OpenTaskData
+	 * @typedef {{
+	 * 	taskObject?: object,
+	 * 	userId?: number,
+	 * 	parentWidget?: object,
+	 * 	context?: 'tasks.dashboard'
+	 * }} OpenTaskParams
+	 */
 
 	class Entry
 	{
@@ -34,11 +46,20 @@ jn.define('tasks/entry', (require, exports, module) => {
 			return true;
 		}
 
-		static async openEfficiency(data)
+		static async openEfficiency(data, params = {})
 		{
 			const efficiencyAvailable = await Entry.checkToolAvailable('effective', 'limit_tasks_off');
 			if (!efficiencyAvailable)
 			{
+				return;
+			}
+
+			await tariffPlanRestrictionsReady();
+			const { isRestricted, showRestriction } = getFeatureRestriction(FeatureId.EFFICIENCY);
+			if (isRestricted())
+			{
+				showRestriction({ showInComponent: params.isBackground });
+
 				return;
 			}
 
@@ -58,6 +79,12 @@ jn.define('tasks/entry', (require, exports, module) => {
 			});
 		}
 
+		/**
+		 * @public
+		 * @param {OpenTaskData} data
+		 * @param {OpenTaskParams} params
+		 * @return {void}
+		 */
 		static async openTask(data, params = {})
 		{
 			const taskAvailable = await Entry.checkToolAvailable('tasks', 'limit_tasks_off');
@@ -66,6 +93,93 @@ jn.define('tasks/entry', (require, exports, module) => {
 				return;
 			}
 
+			if (Feature.isAirStyleSupported())
+			{
+				Entry.#openTaskDetailNew(data, params);
+			}
+			else
+			{
+				Entry.#openTaskDetailLegacy(data, params);
+			}
+		}
+
+		/**
+		 * @private
+		 * @param {OpenTaskData} data
+		 * @param {OpenTaskParams} params
+		 * @return {void}
+		 */
+		static async #openTaskDetailNew(data, params = {})
+		{
+			const {
+				userId = env.userId,
+				parentWidget,
+				context,
+				analyticsLabel,
+				shouldOpenComments = false,
+				view,
+				kanbanOwnerId,
+			} = params;
+			const taskId = data.id || data.taskId;
+			const guid = Entry.getGuid();
+
+			if (parentWidget)
+			{
+				const { TaskView } = await requireLazy('tasks:layout/task/view-new');
+
+				TaskView.open({
+					layoutWidget: parentWidget,
+					userId,
+					taskId,
+					guid,
+					context,
+					analyticsLabel,
+					shouldOpenComments,
+					view,
+					kanbanOwnerId,
+				});
+			}
+			else
+			{
+				PageManager.openComponent('JSStackComponent', {
+					name: 'JSStackComponent',
+					componentCode: 'tasks.task.view-new',
+					scriptPath: availableComponents['tasks:tasks.task.view-new'].publicUrl,
+					canOpenInDefault: true,
+					rootWidget: {
+						name: 'layout',
+						settings: {
+							titleParams: {
+								text: Loc.getMessage('TASKSMOBILE_ENTRY_TASK_DEFAULT_TITLE'),
+								type: 'entity',
+							},
+							objectName: 'layout',
+							swipeToClose: true,
+						},
+					},
+					params: {
+						COMPONENT_CODE: 'tasks.task.view-new',
+						TASK_ID: taskId,
+						USER_ID: (userId || env.userId),
+						GUID: guid,
+						CONTEXT: context,
+						VIEW: view,
+						SHOULD_OPEN_COMMENTS: shouldOpenComments,
+						analyticsLabel,
+						kanbanOwnerId,
+					},
+				});
+			}
+		}
+
+		/**
+		 * @private
+		 * @param {OpenTaskData} data
+		 * @param {OpenTaskParams} params
+		 * @return {void}
+		 */
+		static #openTaskDetailLegacy(data, params = {})
+		{
 			const { taskObject, userId, parentWidget } = params;
 			const taskId = data.id || data.taskId;
 			const defaultTitle = Loc.getMessage('TASKSMOBILE_ENTRY_TASK_DEFAULT_TITLE');
@@ -73,7 +187,7 @@ jn.define('tasks/entry', (require, exports, module) => {
 
 			if (Feature.isPreventBottomSheetDismissSupported())
 			{
-				return PageManager.openComponent('JSStackComponent', {
+				PageManager.openComponent('JSStackComponent', {
 					name: 'JSStackComponent',
 					componentCode: 'tasks.task.view',
 					scriptPath: availableComponents['tasks:tasks.task.view'].publicUrl,
@@ -103,9 +217,11 @@ jn.define('tasks/entry', (require, exports, module) => {
 						GUID: guid,
 					},
 				}, (parentWidget || null));
+
+				return;
 			}
 
-			return PageManager.openComponent('JSStackComponent', {
+			PageManager.openComponent('JSStackComponent', {
 				name: 'JSStackComponent',
 				componentCode: 'tasks.task.tabs',
 				scriptPath: availableComponents['tasks:tasks.task.tabs'].publicUrl,
@@ -232,9 +348,14 @@ jn.define('tasks/entry', (require, exports, module) => {
 			const { siteId, siteDir, languageId, userId } = env;
 			const extendedData = {
 				...data,
+				flowId: data.flowId || 0,
+				flowName: data.flowName || null,
+				flowEfficiency: data.flowEfficiency || null,
+				canCreateTask: data.canCreateTask ?? true,
 				groupId: data.groupId || 0,
 				ownerId: data.ownerId || userId,
 				getProjectData: data.getProjectData || true,
+				analyticsLabel: data.analyticsLabel || {},
 			};
 
 			PageManager.openComponent('JSStackComponent', {
@@ -247,11 +368,16 @@ jn.define('tasks/entry', (require, exports, module) => {
 					COMPONENT_CODE: Entry.getTaskListComponentCode(),
 					GROUP_ID: extendedData.groupId,
 					USER_ID: extendedData.ownerId,
+					FLOW_ID: extendedData.flowId,
+					FLOW_NAME: extendedData.flowName,
+					FLOW_EFFICIENCY: extendedData.flowEfficiency,
+					CAN_CREATE_TASK: extendedData.canCreateTask,
 					DATA: extendedData,
 					SITE_ID: siteId,
 					SITE_DIR: siteDir,
 					LANGUAGE_ID: languageId,
 					PATH_TO_TASK_ADD: `${siteDir}mobile/tasks/snmrouter/?routePage=#action#&TASK_ID=#taskId#`,
+					analyticsLabel: extendedData.analyticsLabel,
 				},
 			});
 		}
@@ -281,11 +407,18 @@ jn.define('tasks/entry', (require, exports, module) => {
 		}
 	}
 
+	setTimeout(() => requireLazy('tasks:layout/task/view-new', false), 1000);
+
 	if (typeof jnComponent?.preload === 'function')
 	{
-		const { publicUrl } = availableComponents['tasks:tasks.task.view'] || {};
+		const componentCode = Feature.isAirStyleSupported() ? 'tasks:tasks.task.view-new' : 'tasks:tasks.task.view';
 
-		setTimeout(() => jnComponent.preload(publicUrl), 1000);
+		const { publicUrl } = availableComponents[componentCode] || {};
+
+		if (publicUrl)
+		{
+			setTimeout(() => jnComponent.preload(publicUrl), 3000);
+		}
 	}
 
 	module.exports = { Entry };

@@ -1,16 +1,21 @@
 <?php
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/header.php");
 
+if (!\CModule::IncludeModule('intranet'))
+{
+	return;
+}
+
 IncludeModuleLangFile($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/extranet/public/index_b24.php');
 
 $APPLICATION->SetPageProperty("NOT_SHOW_NAV_CHAIN", "Y");
 $APPLICATION->SetPageProperty("title", htmlspecialcharsbx(COption::GetOptionString("main", "site_name", GetMessage("EXTRANET_INDEXB24_PAGE_TITLE"))));
-
+use Bitrix\Intranet;
 ?>
 <?php
 $APPLICATION->IncludeComponent(
-	"bitrix:socialnetwork.log.ex", 
-	"", 
+	"bitrix:socialnetwork.log.ex",
+	"",
 	Array(
 		"PATH_TO_SEARCH_TAG" => SITE_DIR."search/?tags=#tag#",
 		"SET_NAV_CHAIN" => "Y",
@@ -27,14 +32,14 @@ $APPLICATION->IncludeComponent(
 		"SET_LOG_CACHE" => "Y",
 		"USE_COMMENTS" => "Y",
 		"BLOG_ALLOW_POST_CODE" => "Y",
-		"BLOG_GROUP_ID" => "#BLOG_GROUP_ID#",
+		"BLOG_GROUP_ID" => Intranet\Integration\Wizards\Portal\Ids::getBlogId(),
 		"PHOTO_USER_IBLOCK_TYPE" => "photos",
-		"PHOTO_USER_IBLOCK_ID" => "#PHOTO_USER_IBLOCK_ID#",
+		"PHOTO_USER_IBLOCK_ID" => Intranet\Integration\Wizards\Portal\Ids::getIblockId('user_photogallery'),
 		"PHOTO_USE_COMMENTS" => "Y",
 		"PHOTO_COMMENTS_TYPE" => "FORUM",
-		"PHOTO_FORUM_ID" => "#PHOTOGALLERY_FORUM_ID#",
+		"PHOTO_FORUM_ID" => Intranet\Integration\Wizards\Portal\Ids::getForumId('PHOTOGALLERY_COMMENTS'),
 		"PHOTO_USE_CAPTCHA" => "N",
-		"FORUM_ID" => "#FORUM_ID#",
+		"FORUM_ID" => Intranet\Integration\Wizards\Portal\Ids::getForumId('USERS_AND_GROUPS'),
 		"PAGER_DESC_NUMBERING" => "N",
 		"AJAX_MODE" => "N",
 		"AJAX_OPTION_SHADOW" => "N",

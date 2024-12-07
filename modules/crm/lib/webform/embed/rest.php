@@ -51,13 +51,7 @@ class Rest
 			: null;
 		$trace = empty($query['trace']) ? null : $query['trace'];
 		$consents = $query['consents'] ?? '';
-		$consents = $consents ? Main\Web\Json::decode(
-			Main\Text\Encoding::convertEncoding(
-				$consents,
-				SITE_CHARSET,
-				'UTF-8'
-			)
-		) : [];
+		$consents = $consents ? Main\Web\Json::decode($consents) : [];
 		$consents = is_array($consents) ? $consents : [];
 		$recaptchaResponse = empty($query['recaptcha']) ? null : $query['recaptcha'];
 		$signString = empty($query['security_sign']) ? null : $query['security_sign'];
@@ -120,33 +114,16 @@ class Rest
 			$fill = $form->fill();
 
 			///////////////////
-			$values = $values ? Main\Web\Json::decode(
-				Main\Text\Encoding::convertEncoding(
-					$values,
-					SITE_CHARSET,
-					'UTF-8'
-				)
-			) : [];
+			$values = $values ? Main\Web\Json::decode($values) : [];
 
-			$properties = $properties ? Main\Web\Json::decode(
-				Main\Text\Encoding::convertEncoding(
-					$properties,
-					SITE_CHARSET,
-					'UTF-8'
-				)
-			) : [];
+			$properties = $properties ? Main\Web\Json::decode($properties) : [];
 
 			$fill
 				->setTrace($trace)
 				->setValues($values)
 				->setConsents($consents)
-				->setProperties($properties);
-
-			$signString = $signString ? Main\Text\Encoding::convertEncoding(
-				$signString,
-				SITE_CHARSET,
-				'UTF-8'
-			): null;
+				->setProperties($properties)
+			;
 
 			if ($signString)
 			{

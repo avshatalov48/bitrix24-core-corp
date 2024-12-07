@@ -1,6 +1,6 @@
 import { Reflection, Tag, Type } from 'main.core';
-import { PopupManager } from 'main.popup';
-import { Popup } from "main.popup";
+import { PopupManager, Popup } from 'main.popup';
+import { BannerDispatcher } from 'crm.integration.ui.banner-dispatcher';
 
 const namespaceCrmWhatsNew = Reflection.namespace('BX.Crm.WhatsNew');
 
@@ -17,10 +17,11 @@ class RichPopup
 	#popup: Popup;
 	#data: ContentConfig;
 	#options: Object;
+	#bannerDispatcher: BannerDispatcher;
 	#userOptionCategory: string;
 	#userOptionName: string;
 
-	constructor({ data, options,  userOptionCategory, userOptionName })
+	constructor({ data, options, userOptionCategory, userOptionName })
 	{
 		this.#popup = null;
 		this.#data = data;
@@ -29,8 +30,9 @@ class RichPopup
 		this.#userOptionName = Type.isString(userOptionName) ? userOptionName : '';
 		if (Type.isNumber(options.entityTypeId) && Type.isStringFilled(this.#userOptionName))
 		{
-			this.#userOptionName = this.#userOptionName + options.entityTypeId
+			this.#userOptionName = `${this.#userOptionName}${options.entityTypeId}`;
 		}
+		this.#bannerDispatcher = new BannerDispatcher();
 	}
 
 	show(): void
@@ -64,11 +66,17 @@ class RichPopup
 				width: 640,
 				height: 400,
 				events: {
-					onPopupClose: () => this.save()
-				}
+					onPopupClose: () => {
+						this.save();
+					},
+				},
 			});
 
-			this.#popup.show();
+			this.#bannerDispatcher.toQueue((onDone: Function): void => {
+				this.#popup.subscribe('onClose', onDone);
+
+				this.#popup.show();
+			});
 		}
 	}
 
@@ -91,7 +99,7 @@ class RichPopup
 			this.#userOptionCategory,
 			this.#userOptionName,
 			'count',
-			this.#options.checkpoint
+			this.#options.checkpoint,
 		);
 	}
 }

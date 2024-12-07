@@ -9,18 +9,20 @@ if (check_bitrix_sessid())
 
 	if ($IBLOCK_ID && $SECTION_ID && $USER_ID && CModule::IncludeModule('iblock'))
 	{
+		// TODO: This check will be in the "humanresources" module.
 		$perm = CIBlock::GetPermission($IBLOCK_ID);
 		if ($perm >= 'W')
 		{
-			$obS = new CIBlockSection();
-			
-			if ($obS->Update($SECTION_ID, array('UF_HEAD' => $USER_ID)))
+			$departmentRepository = \Bitrix\Intranet\Service\ServiceContainer::getInstance()
+				->departmentRepository();
+			try
 			{
+				$departmentRepository->setHead($SECTION_ID, $USER_ID);
 				echo '<script>BX.reload(true);</script>';
 			}
-			elseif ($obS->LAST_ERROR)
+			catch (\Exception $exception)
 			{
-				echo '<script>alert(\''.CUtil::JSEscape($obS->LAST_ERROR).'\');</script>';
+				echo '<script>alert(\''.CUtil::JSEscape($exception->getMessage()).'\');</script>';
 			}
 		}
 		else

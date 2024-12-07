@@ -1,6 +1,5 @@
 <?php
 
-$MESS['TASKS_STAGE_SELECTOR_NOTIFY_READONLY_TITLE'] = 'Смена стадии недоступна';
 $MESS['TASKS_STAGE_SELECTOR_NOTIFY_READONLY_TEXT'] = 'Недостаточно прав на редактирование задачи';
 
 $MESS['TASKS_STAGE_SELECTOR_UNAVAILABLE_STAGE_TEXT'] = 'Задача не может быть переведена в эту стадию';

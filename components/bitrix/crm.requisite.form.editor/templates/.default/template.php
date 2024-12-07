@@ -47,7 +47,7 @@ else if ($isRequisiteDataPresent)
 	$newPseudoIdStartNumber = count($arResult['REQUISITE_DATA_LIST']);
 }
 
-?><script type="text/javascript">
+?><script>
 	BX.ready(
 		function()
 		{

@@ -185,7 +185,7 @@ class CTaskMembers
 
 		$strSql .= $strSqlOrder;
 
-		return $DB->Query($strSql, false, "File: ".__FILE__."<br>Line: ".__LINE__);
+		return $DB->Query($strSql);
 	}
 
 

@@ -7,6 +7,7 @@ jn.define('crm/timeline/controllers/order-check', (require, exports, module) => 
 
 	const SupportedActions = {
 		ORDER_CHECK_OPEN_CHECK: 'OrderCheck:OpenCheck',
+		ORDER_CHECK_REPRINT_CHECK: 'OrderCheck:ReprintCheck',
 	};
 
 	/**
@@ -35,6 +36,8 @@ jn.define('crm/timeline/controllers/order-check', (require, exports, module) => 
 			{
 				case SupportedActions.ORDER_CHECK_OPEN_CHECK:
 					return this.openOrderCheck(actionParams);
+				case SupportedActions.ORDER_CHECK_REPRINT_CHECK:
+					return this.reprintOrderCheck(actionParams);
 			}
 		}
 
@@ -44,6 +47,17 @@ jn.define('crm/timeline/controllers/order-check', (require, exports, module) => 
 				title: `${actionParams.entityName} ${actionParams.shortTitle}`,
 				redirectUrl: actionParams.checkUrl,
 				hintText: Loc.getMessage('M_CRM_TIMELINE_ORDER_CHECK_QRAUTH_HINT'),
+			});
+		}
+
+		reprintOrderCheck(actionParams)
+		{
+			BX.ajax.runAction('crm.ordercheck.reprint', {
+				data: {
+					checkId: actionParams.checkId,
+				},
+			}).catch((response) => {
+				void ErrorNotifier.showError(response.errors[0].message);
 			});
 		}
 	}

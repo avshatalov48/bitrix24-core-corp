@@ -10,6 +10,7 @@ return [
 	'rel' => [
 		'main.core.events',
 		'main.core',
+		'ui.analytics',
 	],
 	'skip_core' => false,
 ];

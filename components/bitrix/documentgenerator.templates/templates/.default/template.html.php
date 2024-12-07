@@ -11,7 +11,7 @@ if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 <?
 if (isset($_REQUEST["IFRAME"]) && $_REQUEST["IFRAME"] === "Y")
 {
-$APPLICATION->RestartBuffer(); //сбрасываем весь вывод
+$APPLICATION->RestartBuffer(); //СЃР±СЂР°СЃС‹РІР°РµРј РІРµСЃСЊ РІС‹РІРѕРґ
 ?>
 
 <!DOCTYPE html>
@@ -25,7 +25,7 @@ $APPLICATION->RestartBuffer(); //сбрасываем весь вывод
 				<div class="docs-template-pagetitle-wrap">
 					<div class="docs-template-pagetitle-inner pagetitle-inner-container">
 						<div class="pagetitle">
-							<span class="docs-template-pagetitle-item pagetitle-item" id="pagetitle">Список шаблонов</span>
+							<span class="docs-template-pagetitle-item pagetitle-item" id="pagetitle">РЎРїРёСЃРѕРє С€Р°Р±Р»РѕРЅРѕРІ</span>
 						</div>
 						<div class="pagetitle-container pagetitle-flexible-space pagetitle-container-docs-template">
 							<? $APPLICATION->IncludeComponent(
@@ -38,14 +38,14 @@ $APPLICATION->RestartBuffer(); //сбрасываем весь вывод
 						</div>
 						<div class="pagetitle-container pagetitle-align-right-container">
 							<button class="ui-btn ui-btn-md ui-btn-light-border ui-btn-icon-setting"></button>
-							<button class="ui-btn ui-btn-md ui-btn-primary ui-btn-primary-docs-template">Загрузить</button>
+							<button class="ui-btn ui-btn-md ui-btn-primary ui-btn-primary-docs-template">Р—Р°РіСЂСѓР·РёС‚СЊ</button>
 						</div>
 					</div>
 				</div>
 			</div>
 			<div class="docs-template-info-inner">
-				<div class="docs-template-info-message">Узнайте как настроить и загрузить собственные шаблоны документов
-					<a class="docs-template-info-link" href="#">подробнее</a>
+				<div class="docs-template-info-message">РЈР·РЅР°Р№С‚Рµ РєР°Рє РЅР°СЃС‚СЂРѕРёС‚СЊ Рё Р·Р°РіСЂСѓР·РёС‚СЊ СЃРѕР±СЃС‚РІРµРЅРЅС‹Рµ С€Р°Р±Р»РѕРЅС‹ РґРѕРєСѓРјРµРЅС‚РѕРІ
+					<a class="docs-template-info-link" href="#">РїРѕРґСЂРѕР±РЅРµРµ</a>
 				</div>
 			</div>
 			<div class="docs-template-grid">
@@ -62,7 +62,7 @@ else
 			<div class="docs-template-pagetitle-wrap">
 				<div class="docs-template-pagetitle-inner pagetitle-inner-container">
 					<div class="pagetitle">
-						<span class="docs-template-pagetitle-item pagetitle-item" id="pagetitle">Список шаблонов</span>
+						<span class="docs-template-pagetitle-item pagetitle-item" id="pagetitle">РЎРїРёСЃРѕРє С€Р°Р±Р»РѕРЅРѕРІ</span>
 					</div>
 					<div class="pagetitle-container pagetitle-flexible-space pagetitle-container-docs-template">
 						<? $APPLICATION->IncludeComponent(
@@ -75,14 +75,14 @@ else
 					</div>
 					<div class="pagetitle-container pagetitle-align-right-container">
 						<button class="ui-btn ui-btn-md ui-btn-light-border ui-btn-icon-setting"></button>
-						<button class="ui-btn ui-btn-md ui-btn-primary ui-btn-primary-docs-template">Загрузить</button>
+						<button class="ui-btn ui-btn-md ui-btn-primary ui-btn-primary-docs-template">Р—Р°РіСЂСѓР·РёС‚СЊ</button>
 					</div>
 				</div>
 			</div>
 		</div>
 		<div class="docs-template-info-inner">
-			<div class="docs-template-info-message">Узнайте как настроить и загрузить собственные шаблоны документов
-				<a class="docs-template-info-link" href="#">подробнее</a>
+			<div class="docs-template-info-message">РЈР·РЅР°Р№С‚Рµ РєР°Рє РЅР°СЃС‚СЂРѕРёС‚СЊ Рё Р·Р°РіСЂСѓР·РёС‚СЊ СЃРѕР±СЃС‚РІРµРЅРЅС‹Рµ С€Р°Р±Р»РѕРЅС‹ РґРѕРєСѓРјРµРЅС‚РѕРІ
+				<a class="docs-template-info-link" href="#">РїРѕРґСЂРѕР±РЅРµРµ</a>
 			</div>
 		</div>
 		<div class="docs-template-grid">

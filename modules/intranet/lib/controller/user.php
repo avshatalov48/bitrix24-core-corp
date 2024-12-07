@@ -1,4 +1,4 @@
-<?
+<?php
 namespace Bitrix\Intranet\Controller;
 
 class User extends \Bitrix\Main\Engine\Controller

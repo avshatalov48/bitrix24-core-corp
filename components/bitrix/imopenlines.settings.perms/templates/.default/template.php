@@ -1,29 +1,28 @@
-<? if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
-use \Bitrix\Main\Page\Asset,
-	\Bitrix\Main\UI\Extension,
-	\Bitrix\Main\Localization\Loc;
+<?php
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
 
-use \Bitrix\Imopenlines\Limit;
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Imopenlines\Limit;
 
 /**
  * @var array $arResult
  * @var CMain $APPLICATION
  */
 
-Extension::load([
+\Bitrix\Main\UI\Extension::load([
 	'ui.design-tokens',
 	'ui.alerts',
 	'access',
 	'sidepanel',
 ]);
 
-Asset::getInstance()->addCss('/bitrix/css/main/table/style.css');
+\Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/css/main/table/style.css');
 
 $APPLICATION->IncludeComponent('bitrix:ui.info.helper', '', []);
 
 ?>
 
-<script type="text/javascript">
+<script>
 	function openTrialInfoHelper(dialogId)
 	{
 		BX.UI.InfoHelper.show(dialogId);

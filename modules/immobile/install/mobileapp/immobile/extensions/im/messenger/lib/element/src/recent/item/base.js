@@ -2,7 +2,7 @@
  * @module im/messenger/lib/element/recent/item/base
  */
 jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module) => {
-	const AppTheme = require('apptheme');
+	const { Theme } = require('im/lib/theme');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { ChatAvatar } = require('im/messenger/lib/element/chat-avatar');
 	const { ChatTitle } = require('im/messenger/lib/element/chat-title');
@@ -22,6 +22,7 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 		ProfileAction,
 		HideAction,
 	} = require('im/messenger/lib/element/recent/item/action/action');
+	const { parser } = require('im/messenger/lib/parser');
 
 	const RecentItemSectionCode = Object.freeze({
 		pinned: 'pinned',
@@ -73,6 +74,7 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 				},
 				counter: {},
 			};
+			this.isSuperEllipseIcon = false;
 
 			this
 				.initParams(modelItem, options)
@@ -136,9 +138,14 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 		createTitle()
 		{
 			const item = this.getModelItem();
-			this.title = ChatTitle.createFromDialogId(item.id, {
+			const title = ChatTitle.createFromDialogId(item.id, {
 				showItsYou: true,
 			}).getTitle();
+
+			if (title)
+			{
+				this.title = title;
+			}
 
 			return this;
 		}
@@ -183,7 +190,7 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 		 */
 		createDate()
 		{
-			const date = DateHelper.cast(this.getModelItem().message.date, new Date());
+			const date = DateHelper.cast(this.getModelItem().lastActivityDate, new Date());
 			this.date = Math.round(date.getTime() / 1000);
 
 			return this;
@@ -194,7 +201,7 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 		 */
 		createDisplayedDate()
 		{
-			const date = DateHelper.cast(this.getModelItem().message.date, null);
+			const date = DateHelper.cast(this.getModelItem().lastActivityDate, null);
 			this.displayedDate = DateFormatter.getRecentFormat(date);
 
 			return this;
@@ -421,8 +428,8 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 		{
 			const dialog = this.getDialogItem();
 			this.styles.counter.backgroundColor = dialog?.muteList?.includes(serviceLocator.get('core').getUserId())
-				? AppTheme.colors.base5
-				: AppTheme.colors.accentMainPrimaryalt
+				? Theme.colors.base5
+				: Theme.colors.accentMainPrimaryalt
 			;
 
 			return this;
@@ -442,7 +449,40 @@ jn.define('im/messenger/lib/element/recent/item/base', (require, exports, module
 		}
 
 		/**
-		 * @return {DialoguesModelState}
+		 * @param {RecentModelState} [item=this.getModelItem()]
+		 * @return {string}
+		 */
+		getMessageText(item = this.getModelItem())
+		{
+			const message = item.message;
+			let messageText = message.text;
+			const modelMessage = serviceLocator.get('core').getStore().getters['messagesModel/getById'](message.id);
+			if (modelMessage.id)
+			{
+				const messageFiles = serviceLocator.get('core').getStore().getters['messagesModel/getMessageFiles'](modelMessage.id);
+
+				messageText = parser.simplify({
+					text: modelMessage.text,
+					attach: modelMessage?.params?.ATTACH ?? false,
+					files: messageFiles,
+					showFilePrefix: false,
+				});
+			}
+			else
+			{
+				messageText = parser.simplify({
+					text: item.message.text,
+					attach: item.message?.params?.withAttach ?? false,
+					files: item.message?.params?.withFile ?? false,
+					showFilePrefix: false,
+				});
+			}
+
+			return messageText;
+		}
+
+		/**
+		 * @return {DialoguesModelState || undefined}
 		 */
 		getDialogItem()
 		{

@@ -14,5 +14,6 @@ return [
 		'im:messenger/lib/theme',
 		'im:chat/performance',
 		'im:chat/const/background',
+		'apptheme',
 	],
 ];

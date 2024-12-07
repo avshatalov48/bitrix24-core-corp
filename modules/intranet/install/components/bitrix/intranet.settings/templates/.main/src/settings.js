@@ -11,6 +11,7 @@ import { ConfigurationPage } from './pages/configuration-page';
 import { SchedulePage } from './pages/schedule-page';
 import { GdprPage } from './pages/gdpr-page';
 import { SecurityPage } from './pages/security-page';
+import { MainpagePage } from './pages/mainpage-page';
 import { ExternalTemporaryPage } from './pages/external-temporary-page';
 import { Type, Dom, Loc } from 'main.core';
 import { BaseEvent, EventEmitter } from 'main.core.events';
@@ -393,6 +394,7 @@ export {
 	ToolsPage,
 	EmployeePage,
 	PortalPage,
+	MainpagePage,
 	CommunicationPage,
 	RequisitePage,
 	ConfigurationPage,

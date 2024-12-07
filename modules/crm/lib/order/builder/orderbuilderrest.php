@@ -127,14 +127,6 @@ final class OrderBuilderRest extends \Bitrix\Sale\Helpers\Order\Builder\OrderBui
 	{
 		$requisite = new EntityRequisite();
 
-		if(isset($this->formData["REQUISITE_LINK"]) && empty($this->formData["REQUISITE_LINK"]))
-		{
-			if(!$this->removeRequisiteLink())
-			{
-				return $this;
-			}
-		}
-
 		if(isset($this->formData["REQUISITE_LINK"]) && is_array($this->formData["REQUISITE_LINK"]))
 		{
 			$hasCompany = false;
@@ -188,14 +180,6 @@ final class OrderBuilderRest extends \Bitrix\Sale\Helpers\Order\Builder\OrderBui
 		}
 
 		return $this;
-	}
-
-	protected function removeRequisiteLink()
-	{
-		if($this->getSettingsContainer()->getItemValue('deleteRequsiteLinkIfNotExists'))
-		{
-			//OrderRequisiteLink::unregister();
-		}
 	}
 
 	public function setProperties()

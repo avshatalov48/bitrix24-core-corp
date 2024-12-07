@@ -2,7 +2,6 @@
 if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
 use \Bitrix\Main\Localization\Loc;
-
 use \Bitrix\Main\UI;
 
 /**
@@ -130,7 +129,7 @@ $isStExport = is_array($arResult['STEXPORT_PARAMS']);
 if ($isStExport)
 {
 	?>
-	<script type="text/javascript">
+	<script>
 		BX.ready(
 			function()
 			{
@@ -166,7 +165,7 @@ UI\Extension::load([
 	'ui.notification'
 ]);
 ?>
-<script type="text/javascript">
+<script>
 	BX.ready(
 		function()
 		{

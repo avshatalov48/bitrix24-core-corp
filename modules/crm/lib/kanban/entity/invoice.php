@@ -2,11 +2,11 @@
 
 namespace Bitrix\Crm\Kanban\Entity;
 
+use Bitrix\Crm\Kanban\Entity;
 use Bitrix\Crm\PhaseSemantics;
 use Bitrix\Main\Error;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
-use Bitrix\Crm\Kanban\Entity;
 
 class Invoice extends Entity
 {
@@ -279,5 +279,10 @@ class Invoice extends Entity
 	public function isCategoriesSupported(): bool
 	{
 		return false;
+	}
+
+	public function havePermissionToDisplayColumnSum(string $stageId, \CCrmPerms $userPermissions): bool
+	{
+		return true;
 	}
 }

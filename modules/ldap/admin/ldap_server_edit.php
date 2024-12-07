@@ -1,12 +1,19 @@
-<?
+<?php
 /*
 ##############################################
 # Bitrix: SiteManager                        #
-# Copyright (c) 2002-2016 Bitrix             #
-# http://www.bitrixsoft.com                  #
+# Copyright (c) 2002-2024 Bitrix             #
+# https://www.bitrixsoft.com                 #
 # mailto:admin@bitrixsoft.com                #
 ##############################################
 */
+
+use Bitrix\Ldap\EncryptionType;
+
+/**
+ * @global CMain $APPLICATION
+ * @global CDatabase $DB
+ */
 
 require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_before.php");
 
@@ -25,10 +32,8 @@ if (!extension_loaded('ldap'))
 	require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/epilog_admin.php");
 }
 
-$err_mess = "File: ".__FILE__."<br>Line: ";
-
 $message = null;
-$ID = intval($ID);
+$ID = intval($_REQUEST['ID'] ?? 0);
 $defaultMaxPageSizeAD = 1000;
 $arSyncFields =	CLdapUtil::GetSynFields();
 
@@ -47,7 +52,6 @@ if(is_array($_REQUEST["MAP"]))
 	}
 }
 
-
 if($_SERVER['REQUEST_METHOD'] == "POST")
 {
 	// add not imported groups from select box
@@ -60,7 +64,6 @@ if($_SERVER['REQUEST_METHOD'] == "POST")
 			$noimportGroups[md5($ldapGroupId)] = $ldapGroupId;
 	}
 }
-
 
 if($_SERVER['REQUEST_METHOD'] == "POST" && ($save <> '' || $apply <> '') && $MOD_RIGHT=="W" && check_bitrix_sessid())
 {
@@ -141,14 +144,16 @@ if($_SERVER['REQUEST_METHOD'] == "POST" && ($save <> '' || $apply <> '') && $MOD
 		$arFields['GROUPS'] = $arGroups;
 	}
 
-	if (array_key_exists('ADMIN_PASSWORD', $_REQUEST))
+	if (!empty($_REQUEST['ADMIN_PASSWORD']))
 	{
 		$arFields['ADMIN_PASSWORD'] = $_REQUEST['ADMIN_PASSWORD'];
 	}
 
 	// apply form to server config
 	if($ID>0)
+	{
 		$res = CLdapServer::Update($ID, $arFields);
+	}
 	else
 	{
 		$ID = CLdapServer::Add($arFields);
@@ -159,13 +164,13 @@ if($_SERVER['REQUEST_METHOD'] == "POST" && ($save <> '' || $apply <> '') && $MOD
 	{
 		if($save <> '')
 		{
-			if(mb_substr($_REQUEST['back_url'], 0, 1) == '/')
+			if(str_starts_with($_REQUEST['back_url'], '/'))
 				LocalRedirect($_REQUEST['back_url'].'&ldapServer='.$ID);
 			else
 				LocalRedirect("ldap_server_admin.php?lang=".LANG);
 		}
 		else
-			LocalRedirect($APPLICATION->GetCurPage()."?lang=".LANG."&ID=".$ID."&tabControl_active_tab=".urlencode($tabControl_active_tab));
+			LocalRedirect($APPLICATION->GetCurPage()."?lang=".LANG."&ID=".$ID."&tabControl_active_tab=".urlencode($_REQUEST['tabControl_active_tab'] ?? ''));
 	}
 	else
 	{
@@ -183,18 +188,19 @@ $str_IMPORT_STRUCT="Y";
 $str_STRUCT_HAVE_DEFAULT = "Y";
 $str_SET_DEPARTMENT_HEAD = "Y";
 $str_DEFAULT_DEPARTMENT_NAME = (GetMessage('LDAP_DEFAULT_DEPARTMENT')!=''? GetMessage('LDAP_DEFAULT_DEPARTMENT') : 'My company');
-$str_PORT="389";
+$str_PORT = (string)EncryptionType::None->port();
 
 $arGroups = Array();
 
 ClearVars("str_");
+
 if($ID>0)
 {
 	$ld = CLdapServer::GetByID($ID);
 
 	if(!($arFields = $ld->ExtractFields("str_")))
 	{
-		$ID=0;
+		$ID = 0;
 	}
 	else
 	{
@@ -239,7 +245,6 @@ if($ID>0)
 				$noimportGroups[md5($arGroup['LDAP_GROUP_ID'])] = $arGroup['LDAP_GROUP_ID'];
 		}
 
-		//$ADMIN_PASSWORD = $arFields['ADMIN_PASSWORD'];
 		if(!$bPostback)
 			$arUserFieldMap = $arFields["FIELD_MAP"];
 	}
@@ -269,6 +274,7 @@ $APPLICATION->SetTitle($sDocTitle);
 ****************************************************************************/
 
 require($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/include/prolog_admin_after.php");
+
 $aMenu = array(
 	array(
 		"ICON" => "btn_list",
@@ -300,18 +306,17 @@ if($ID>0)
 }
 
 
-
 $context = new CAdminContextMenu($aMenu);
 $context->Show();
 
 if($SERVER <> '')
 {
 	$ADMIN_PASSWORD = '';
-	if (array_key_exists('ADMIN_PASSWORD', $_REQUEST))
+	if ($bPostback)
 	{
-		$ADMIN_PASSWORD = $_REQUEST['ADMIN_PASSWORD'];
+		$ADMIN_PASSWORD = $_REQUEST['ADMIN_PASSWORD'] ?? '';
 	}
-	elseif (isset($arFields) && array_key_exists('ADMIN_PASSWORD', $arFields))
+	elseif (isset($arFields['ADMIN_PASSWORD']))
 	{
 		$ADMIN_PASSWORD = $arFields['ADMIN_PASSWORD'];
 	}
@@ -372,12 +377,11 @@ if($bPostback)
 			)
 		);
 	}
-	elseif($_REQUEST['refresh_groups'] == '' && $_REQUEST['more_groups'] == '')
+	elseif($_REQUEST['check_server'] != '')
 	{
 		$message = new CAdminMessage(Array("MESSAGE" => GetMessage("LDAP_EDIT_OK_CON"), "TYPE"=>"OK"));
 	}
 }
-
 
 $aTabs = array(
 	array("DIV" => "edit1", "TAB" => GetMessage("LDAP_EDIT_TAB1"), "ICON"=>"main_user_edit", "TITLE"=>GetMessage("LDAP_EDIT_TAB1_TITLE")),
@@ -389,13 +393,15 @@ $aTabs = array(
 $tabControl = new CAdminTabControl("tabControl", $aTabs);
 
 if ($message)
+{
 	echo $message->Show();
+}
 else
 {
 	if($ID<=0 && !$bPostback)
 	{
 		?>
-		<script type="text/javascript">
+		<script>
 			setTimeout("OutLDSDefParams('AD')", 500);
 		</script>
 		<?
@@ -458,8 +464,23 @@ else
 	<tr class="adm-detail-required-field">
 		<td><?echo GetMessage("LDAP_EDIT_SERV_PORT")?></td>
 		<td>
-			<input type="text" name="SERVER" id="adm-ldap-srv-edit-server" size="42" maxlength="255" value="<?=$str_SERVER?>">:
-			<input type="text" name="PORT" id="adm-ldap-srv-edit-port" size="4" maxlength="5" value="<?=$str_PORT?>">
+			<?php
+				$encryptionType = EncryptionType::tryFrom((int)$str_CONNECTION_TYPE) ?? EncryptionType::None;
+			?>
+			<input
+				type="text"
+				name="SERVER"
+				id="adm-ldap-srv-edit-server"
+				size="42"
+				maxlength="255"
+				value="<?= (empty($str_SERVER) ? $encryptionType->scheme() . '://' : $str_SERVER); ?>">:
+			<input
+				type="text"
+				name="PORT"
+				id="adm-ldap-srv-edit-port"
+				size="4"
+				maxlength="5"
+				value="<?= (int)$str_PORT > 0 ? (int)$str_PORT : $encryptionType->port(); ?>">
 		</td>
 	</tr>
 
@@ -467,46 +488,40 @@ else
 		<td><?=GetMessage("LDAP_EDIT_CONNECTION_TYPE")?></td>
 		<td>
 			<select name="CONNECTION_TYPE" id="adm-ldap-srv-edit-conn-type" onchange="onLdapSrvEditConnType();">
-				<option value="<?=CLDAP::CONNECTION_TYPE_SIMPLE?>"<?=intval($str_CONNECTION_TYPE) == CLDAP::CONNECTION_TYPE_SIMPLE ? ' selected' : ''?>><?=GetMessage("LDAP_EDIT_NO_CRYPT")?></option>
-				<option value="<?=CLDAP::CONNECTION_TYPE_SSL?>"<?=intval($str_CONNECTION_TYPE) == CLDAP::CONNECTION_TYPE_SSL ? ' selected' : ''?>>SSL</option>
-				<option value="<?=CLDAP::CONNECTION_TYPE_TLS?>"<?=intval($str_CONNECTION_TYPE) == CLDAP::CONNECTION_TYPE_TLS ? ' selected' : ''?>>TLS</option>
+				<option value="<?= EncryptionType::None->value; ?>"<?= $encryptionType === EncryptionType::None ? ' selected' : ''; ?>><?=GetMessage("LDAP_EDIT_NO_CRYPT")?></option>
+				<option value="<?= EncryptionType::Ssl->value; ?>"<?= $encryptionType === EncryptionType::Ssl ? ' selected' : ''; ?>>SSL</option>
+				<option value="<?= EncryptionType::Tls->value; ?>"<?= $encryptionType === EncryptionType::Tls ? ' selected' : ''; ?>>TLS</option>
 			</select>
-			<script type="text/javascript">
+			<script>
 				function onLdapSrvEditConnType()
 				{
-					var type = BX('adm-ldap-srv-edit-conn-type'),
-						typeValue = 0;
+					const type = BX('adm-ldap-srv-edit-conn-type');
+					const server = BX('adm-ldap-srv-edit-server');
+					const port = BX('adm-ldap-srv-edit-port');
+					const typeValue = (type.selectedIndex > -1)
+						? type.options[type.selectedIndex].value
+						: '<?= EncryptionType::None->value; ?>';
 
-					if(type.selectedIndex != -1)
+					if (typeValue === '<?= EncryptionType::Ssl->value; ?>')
 					{
-						typeValue = type.options[type.selectedIndex].value;
-					}
-
-					var server = BX('adm-ldap-srv-edit-server'),
-						port = BX('adm-ldap-srv-edit-port');
-
-					if(typeValue == '<?=CLDAP::CONNECTION_TYPE_SSL?>')
-					{
-						port.value = 636;
-						server.value = setLdapScheeme(server.value, 'ldaps');
+						port.value = <?= EncryptionType::Ssl->port(); ?>;
+						server.value = setLdapScheme(server.value, '<?= EncryptionType::Ssl->scheme(); ?>');
 					}
 					else
 					{
-						port.value = 389;
-						server.value = setLdapScheeme(server.value, 'ldap');
+						port.value = <?= EncryptionType::None->port(); ?>;
+						server.value = setLdapScheme(server.value, '<?= EncryptionType::None->scheme(); ?>');
 					}
 				}
 
-				function setLdapScheeme(address, scheeme)
+				function setLdapScheme(address, scheme)
 				{
-					var result;
+					if (address.search('://') > -1)
+					{
+						return address.replace(/(.*):\/\/(.*)/, scheme + '://$2');
+					}
 
-					if(address.search('://') != -1)
-						result = address.replace(/(.*):\/\/(.*)/, scheeme+'://$2');
-					else
-						result = scheeme+'://'+address;
-
-					return result;
+					return scheme + '://' + address;
 				}
 			</script>
 		</td>
@@ -516,82 +531,47 @@ else
 		<td><?echo GetMessage("LDAP_EDIT_ADM_LOGIN")?></td>
 		<td><input type="text" name="ADMIN_LOGIN" size="53" maxlength="255" value="<?=$str_ADMIN_LOGIN?>"></td>
 	</tr>
-	<?php if ($ID > 0):?>
-		<tr class="adm-detail-required-field">
-			<td><?echo GetMessage("LDAP_EDIT_ADM_PASS")?></td>
-			<td>
-				<div id="ldap-password-change-input-placeholder"></div>
-				<input
-					type="button"
-					class="button"
-					id="ldap-password-change-button"
-					value="<?=GetMessage('LDAP_EDIT_ADM_PASS_CHANGE')?>">
-				<input
-					type="button"
-					class="button"
-					id="ldap-password-change-cancel-button"
-					style="display: none"
-					value="<?=GetMessage('LDAP_EDIT_ADM_PASS_CHANGE_CANCEL')?>">
-			</td>
-		</tr>
-	<?php else:?>
-		<tr class="adm-detail-required-field">
-			<td><?=GetMessage("LDAP_EDIT_ADM_PASS")?></td>
-			<td>
-				<input type="password" name="ADMIN_PASSWORD" size="53" maxlength="255" value="<?=$str_ADMIN_PASSWORD?>">
-			</td>
-		</tr>
-	<?php endif;?>
+<?php if ($ID > 0):?>
+	<tr>
+		<td><?= GetMessage('LDAP_EDIT_NEW_PASS') ?></td>
+		<td>
+			<input type="password" name="ADMIN_PASSWORD" size="53" maxlength="255" value="<?= htmlspecialcharsbx($_REQUEST['ADMIN_PASSWORD'] ?? '')?>">
+		</td>
+	</tr>
+<?php else:?>
+	<tr class="adm-detail-required-field">
+		<td><?=GetMessage("LDAP_EDIT_ADM_PASS")?></td>
+		<td>
+			<input type="password" name="ADMIN_PASSWORD" size="53" maxlength="255" value="<?= htmlspecialcharsbx($_REQUEST['ADMIN_PASSWORD'] ?? '')?>">
+		</td>
+	</tr>
+<?php endif;?>
 	<tr>
 		<td>&nbsp;</td>
 		<td><input type="submit" name="check_server" value="<?=GetMessage("LDAP_EDIT_CHECK_CONNECTION")?>" class="button"></td>
 	</tr>
-	<script type="text/javascript">
-		function LdapChangePasswordHandler()
-		{
-			const changeButton = document.getElementById('ldap-password-change-button');
-			const cancelButton = document.getElementById('ldap-password-change-cancel-button');
-			const inputPlaceholder = document.getElementById('ldap-password-change-input-placeholder');
-
-			if (!changeButton)
-			{
-				return;
-			}
-
-			changeButton.addEventListener('click', () => {
-				changeButton.style.display = 'none';
-				cancelButton.style.display = 'block';
-				inputPlaceholder.innerHTML = '<input type="password" id="ldap-password-change-input" name="ADMIN_PASSWORD" size="53" maxlength="255" value="">';
-				document.getElementById('ldap-password-change-input').focus();
-			});
-
-			cancelButton.addEventListener('click', () => {
-				changeButton.style.display = 'block';
-				cancelButton.style.display = 'none';
-				inputPlaceholder.innerHTML = '';
-			});
-		}
-
-		LdapChangePasswordHandler();
-	</script>
 	<tr class="adm-detail-required-field">
-		<td><?echo GetMessage("LDAP_EDIT_BASE_DN")?></td>
+		<td><?= GetMessage("LDAP_EDIT_BASE_DN"); ?></td>
 		<td>
-			<?
-			if($ldp):
-				$ar_rootdse = $ldp->RootDSE();
-				$rootDSEcount = count($ar_rootdse);
-				if($rootDSEcount>0):
+			<?php
+			if ($ldp):
+				$rootDseList = $ldp->RootDSE();
+				$rootDseCount = count($rootDseList);
+				if ($rootDseCount > 0):
 				?>
 					<select name="" onChange="document.getElementById('BASE_DN').value = this.value">
 						<option value=""> </option>
-						<?for($i=0; $i<$rootDSEcount; $i++):?>
-							<option value="<?=htmlspecialcharsbx($ar_rootdse[$i])?>" title="<?=htmlspecialcharsbx($ar_rootdse[$i])?>"><?=htmlspecialcharsbx($ar_rootdse[$i])?></option>
-						<?endfor;?>
+						<?php for($i = 0; $i < $rootDseCount; $i++):?>
+							<option
+								value="<?=htmlspecialcharsbx($rootDseList[$i]);?>"
+								title="<?=htmlspecialcharsbx($rootDseList[$i]);?>">
+								<?=htmlspecialcharsbx($rootDseList[$i]);?>
+							</option>
+						<?php endfor;?>
 					</select>
-				<?
+				<?php
 				endif;
-			endif; //if($ldp)
+			endif;
 			?>
 			<input type="text" name="BASE_DN" id="BASE_DN" size="53" maxlength="255" value="<?=$str_BASE_DN?>">
 		</td>
@@ -624,7 +604,7 @@ else
 		</tr>
 	<?endif;?>
 <?$tabControl->BeginNextTab();?>
-	<script type="text/javascript">
+	<script>
 		function OutLDSDefParams(t)
 		{
 			if(t=='AD')
@@ -769,7 +749,7 @@ else
 			<td><a href="javascript:void(0)" onClick="__UFAdd();"><?echo GetMessage("LDAP_EDIT_USER_FIELDS_ADD")?></a></td>
 		</tr>
 
-	<script type="text/javascript">
+	<script>
 	var nm = <?=$nm?>;
 	var arMas = {'_': '' <?foreach($arSyncFields as $k=>$p):?>, '<?=Cutil::JSEscape($k)?>': '<?=Cutil::JSEscape($p["AD"])?>'<?endforeach;?>};
 	var arMasLdap = {'_': '' <?foreach($arSyncFields as $k=>$p):?>, '<?=Cutil::JSEscape($k)?>': '<?=Cutil::JSEscape($p["LDAP"])?>'<?endforeach;?>};
@@ -859,7 +839,7 @@ else
 
 		$importEnabled = ($str_IMPORT_STRUCT=="Y");
 		?>
-			<script type="text/javascript">
+			<script>
 				function __importStateSwitch(disabled)
 				{
 					document.getElementById('ROOT_DEPARTMENT').disabled = disabled;
@@ -954,7 +934,7 @@ else
 	}
 
 	if(!is_array($arLDAPGroups) || count($arLDAPGroups)<=0):?>
-	<script type="text/javascript">
+	<script>
 	function CheckNAttr()
 	{
 		if(document.getElementById("GROUP_FILTER").value.length<=0 ||
@@ -1044,7 +1024,7 @@ else
 
 
 <?$tabControl->BeginNextTab();?>
-<script type="text/javascript">
+<script>
 function _SCh(c)
 {
 	document.getElementById('SYNC_PERIOD').disabled = !c;

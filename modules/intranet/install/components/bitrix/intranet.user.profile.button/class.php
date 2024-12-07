@@ -88,11 +88,17 @@ class IntranetUserProfileButton extends \CBitrixComponent implements Controllera
 		$this->arResult['IS_STRESSLEVEL_AVAILABLE'] = $this->isStressLevelAvailable($this->arResult['USER_STATUS']);
 		$this->arResult['IS_SOCIALNETWORK_ADMIN'] = $this->isUserSocialnetworkAdmin();
 		$this->arResult['B24NET_PANEL_AVAILABLE'] = $this->isB24NetPanelAvailable();
+		$this->arResult['IS_SIGN_DOCUMENT_AVAILABLE'] = $this->isSignDocumentAvailable();
 		$this->arResult['USER_PHOTO_ID'] = $this->currentUser->getPersonalPhotoId();
 		$this->arResult['USER_PERSONAL_PHOTO_SRC'] = $this->getUserPhotoSrc($this->arResult['USER_PHOTO_ID']);
 		$this->arResult['MASK'] = $this->getUserMaskData($this->arResult['USER_PHOTO_ID']);
 		$this->arResult['OTP'] = $this->getOtpData();
 		$this->arResult['BINDINGS'] = $this->getBindingData($this->arResult['USER_STATUS']);
+		$this->arResult['DESKTOP_DOWNLOAD_LINKS'] = array_map(
+			fn($link) => htmlspecialcharsbx($link),
+			\Bitrix\Intranet\Portal::getInstance()->getSettings()->getDesktopDownloadLinks()
+		);
+		$this->arResult['NETWORK_PROFILE_URL'] = $this->getNetworkProfileUrl();
 	}
 
 	protected function getUserPhotoSrc(?int $userPhotoId): string
@@ -123,7 +129,7 @@ class IntranetUserProfileButton extends \CBitrixComponent implements Controllera
 	{
 		if (
 			class_exists(Bitrix\UI\Avatar\Mask\Helper::class)
-			&& (Option::get('ui', 'avatar-editor-availability-delete-after-10.2022', 'N') === 'Y')
+			&& (Option::get('ui', 'avatar-editor-availability', 'N') === 'Y')
 		)
 		{
 			return Bitrix\UI\Avatar\Mask\Helper::getData($photoId);
@@ -159,7 +165,8 @@ class IntranetUserProfileButton extends \CBitrixComponent implements Controllera
 		$data = [
 			'url' => Intranet\Site\Sections\TimemanSection::getUserLoginHistoryUrl(),
 			'isCloud' => $this->isCloud,
-			'isHide' => $this->isCloud && (\CBitrix24::getPortalZone() === 'ua'),
+			'isHide' => ($this->isCloud && (\CBitrix24::getPortalZone() === 'ua'))
+				|| !\Bitrix\Intranet\Util::isIntranetUser($this->userId),
 		];
 
 		if ($this->isCloud)
@@ -210,5 +217,38 @@ class IntranetUserProfileButton extends \CBitrixComponent implements Controllera
 
 		return array_intersect_key($themePicker->getCurrentTheme() ?? [],
 			['title' => '', 'previewColor' => '', 'previewImage' => '', 'id' => '']);
+	}
+
+	private function isSignDocumentAvailable(): bool
+	{
+		if (!Loader::includeModule('sign'))
+		{
+			return false;
+		}
+		if (
+			!class_exists(\Bitrix\Sign\FeatureResolver::class)
+			|| !class_exists(\Bitrix\Sign\Config\Feature::class)
+		)
+		{
+			return false;
+		}
+
+		return !$this->isExtranet
+			&& \Bitrix\Sign\FeatureResolver::instance()->released('sendByEmployee')
+			&& \Bitrix\Sign\Config\Feature::instance()->isSendDocumentByEmployeeEnabled()
+		;
+	}
+
+	private function getNetworkProfileUrl(): ?string
+	{
+		if (
+			Loader::includeModule('bitrix24')
+			&& Loader::includeModule('socialservices')
+		)
+		{
+			return rtrim(CSocServBitrix24Net::NETWORK_URL, '/') . '/passport/view/';
+		}
+
+		return null;
 	}
 }

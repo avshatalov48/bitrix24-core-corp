@@ -373,8 +373,8 @@ class Grats
 						'CLEAR_SMILES' => 'Y',
 						'NL2BR' => 'N'
 					];
-					$title = preg_replace("/&nbsp;/is".BX_UTF_PCRE_MODIFIER, "", $parser->convertText($title));
-					$title = preg_replace("/\\<br \\/\\>/is".BX_UTF_PCRE_MODIFIER, " ", $title);
+					$title = preg_replace("/&nbsp;/isu", "", $parser->convertText($title));
+					$title = preg_replace("/\\<br \\/\\>/isu", " ", $title);
 
 					$postsData[$postFields['ID']]['TITLE'] = truncateText($title, 100);
 				}

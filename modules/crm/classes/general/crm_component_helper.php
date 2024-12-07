@@ -7,9 +7,12 @@ use Bitrix\Crm\EntityAddressType;
 use Bitrix\Crm\EntityBankDetail;
 use Bitrix\Crm\EntityPreset;
 use Bitrix\Crm\EntityRequisite;
+use Bitrix\Crm\Integration\BankDetailResolver;
 use Bitrix\Crm\Integration\ClientResolver;
 use Bitrix\Crm\Integration\OpenLineManager;
+use Bitrix\Crm\Integration\Rest\AppPlacement;
 use Bitrix\Crm\Integrity\DuplicateControl;
+use Bitrix\Crm\Item;
 use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\StatusTable;
@@ -396,7 +399,7 @@ class CCrmComponentHelper
 		return true;
 	}
 
-	public static function getFieldInfoData($entityTypeId, $fieldType)
+	public static function getFieldInfoData($entityTypeId, $fieldType, array $options = [])
 	{
 		$result = [];
 		switch ($fieldType)
@@ -406,7 +409,8 @@ class CCrmComponentHelper
 					'presets'=> \CCrmInstantEditorHelper::prepareRequisitesPresetList(
 						EntityRequisite::getDefaultPresetId($entityTypeId)
 					),
-					'feedback_form' => EntityRequisite::getRequisiteFeedbackFormParams()
+					'feedback_form' => EntityRequisite::getRequisiteFeedbackFormParams(),
+					'isEditMode' => $options['IS_EDIT_MODE'] ?? false,
 				];
 				break;
 			case "requisite_address":
@@ -419,7 +423,7 @@ class CCrmComponentHelper
 					'autocompleteEnabled' => $featureRestriction->hasPermission(),
 					'featureRestrictionCallback' => (
 						$featureRestriction ? $featureRestriction->prepareInfoHelperScript() : ''
-					)
+					),
 				];
 				break;
 		}
@@ -451,7 +455,7 @@ class CCrmComponentHelper
 			'autocompleteEnabled' => $featureRestriction->hasPermission(),
 			'featureRestrictionCallback' => $featureRestriction->prepareInfoHelperScript(),
 			'addressZoneConfig' => [
-				'defaultAddressType' => EntityAddressType::getDefaultIdByZone($addressZoneId),
+				'defaultAddressType' => EntityAddressType::getDefaultIdByEditorConfigOrByZone($entityTypeId),
 				'currentZoneAddressTypes' => EntityAddressType::getIdsByZonesOrValues([$addressZoneId]),
 				'countryAddressTypeMap' => $countryAddressTypeMap,
 			],
@@ -476,7 +480,6 @@ class CCrmComponentHelper
 	public static function getRequisiteAutocompleteFieldInfoData(int $countryId): array
 	{
 		$clientResolverPropertyType = ClientResolver::getClientResolverPropertyWithPlacements($countryId);
-		$placementParams = ClientResolver::getClientResolverPlacementParams($countryId);
 		$featureRestriction = ClientResolver::getRestriction($countryId);
 
 		return [
@@ -486,52 +489,19 @@ class CCrmComponentHelper
 			,
 			'placeholder' => ClientResolver::getClientResolverPlaceholderText($countryId),
 			'feedback_form' => EntityRequisite::getRequisiteFeedbackFormParams(),
-			'clientResolverPlacementParams' => $placementParams
+			'clientResolverPlacementParams' => ClientResolver::getClientResolverPlacementParams($countryId),
 		];
 	}
 
 	public static function getBankDetailsAutocompleteFieldInfoData(int $countryId): array
 	{
-		$enabled = false;
-		$title = '';
-
-		if (
-			$countryId === 1    // ru
-			&& RestrictionManager::isDetailsSearchByInnPermitted()
-		)
-		{
-			$enabled = true;
-			$bankDetailsEntity = new EntityBankDetail();
-			$titles = $bankDetailsEntity->getFieldsTitles($countryId);
-			$title = $titles['RQ_BIK'];
-		}
-
-		/*$featureRestriction = ClientResolver::getRestriction($countryId);*/
+		$clientResolverPropertyType = BankDetailResolver::getClientResolverPropertyWithPlacements($countryId);
 
 		return [
-			'enabled' => $enabled,
-			'featureRestrictionCallback' =>/*
-				$featureRestriction ? $featureRestriction->prepareInfoHelperScript() :*/ ''
-			,
-			'placeholder' => ClientResolver::getClientResolverPlaceholderTextByTitle($title),
-			/*'feedback_form' => EntityRequisite::getBankDetailsFeedbackFormParams(),*/
-			'clientResolverProperty' => [
-				'VALUE' => ClientResolver::PROP_BIC,
-				'TITLE' => $title,
-				'IS_PLACEMENT' => 'N',
-				'COUNTRY_ID' => $countryId,
-			],
-			'clientResolverPlacementParams' => [
-				'isPlacement' => false,
-				'numberOfPlacements' => 0,
-				'countryId' => $countryId,
-				'defaultAppInfo' => [
-					'code' => '',
-					'title' => '',
-					'isAvailable' => 'N',
-					'isInstalled' => 'N',
-				],
-			],
+			'enabled' => !!$clientResolverPropertyType,
+			'featureRestrictionCallback' => '',
+			'placeholder' => BankDetailResolver::getClientResolverPlaceholderText($countryId),
+			'clientResolverPlacementParams' => BankDetailResolver::getClientResolverPlacementParams($countryId),
 		];
 	}
 
@@ -756,6 +726,7 @@ class CCrmComponentHelper
 			if ($addToDataLevel)
 			{
 				$multiFieldID = $ID;
+				$countryCode = $phoneCountryList[$multiFieldID] ?? '';
 				if ($copyMode)
 				{
 					$multiFieldID = "n0{$multiFieldID}";
@@ -766,7 +737,7 @@ class CCrmComponentHelper
 					'VALUE' => $value,
 					'VALUE_TYPE' => $valueTypeID,
 					'VALUE_EXTRA' => [
-						'COUNTRY_CODE' => $phoneCountryList[$multiFieldID] ?? ''
+						'COUNTRY_CODE' => $countryCode,
 					],
 					'VIEW_DATA' => \CCrmViewHelper::PrepareMultiFieldValueItemData(
 						$typeID,
@@ -797,13 +768,41 @@ class CCrmComponentHelper
 	 */
 	private static function getOwnerTitles(int $entityTypeId, array $entityIds): array
 	{
+		if (empty($entityIds))
+		{
+			return [];
+		}
+
 		$factory = Container::getInstance()->getFactory($entityTypeId);
 		if (!$factory || !\CcrmOwnerType::isUseFactoryBasedApproach($entityTypeId))
 		{
 			return [];
 		}
 
+		$select = [
+			Item::FIELD_NAME_ID
+		];
+
+		if ($factory->isFieldExists(Item::FIELD_NAME_CATEGORY_ID))
+		{
+			$select[] = Item::FIELD_NAME_CATEGORY_ID;
+		}
+
+		if ($factory->isFieldExists(Item::FIELD_NAME_TITLE))
+		{
+			$select[] = Item::FIELD_NAME_TITLE;
+		}
+
+		if ($entityTypeId == CCrmOwnerType::Contact)
+		{
+			$select[] = Item::FIELD_NAME_LAST_NAME;
+			$select[] = Item::FIELD_NAME_SECOND_NAME;
+			$select[] = Item::FIELD_NAME_NAME;
+			$select[] = Item::FIELD_NAME_HONORIFIC;
+		}
+
 		$items = $factory->getItemsFilteredByPermissions([
+			'select' => $select,
 			'filter' => [
 				'@ID' => $entityIds,
 			],
@@ -963,7 +962,7 @@ class CCrmComponentHelper
 		$receiversJson = Main\Web\Json::encode($receivers);
 
 		return <<<JS
-<script type="text/javascript">
+<script>
 	BX.ready(() => {
 		BX.Crm.MessageSender.ReceiverRepository.onDetailsLoad({$entityTypeId}, {$entityId}, '{$receiversJson}');
 	});

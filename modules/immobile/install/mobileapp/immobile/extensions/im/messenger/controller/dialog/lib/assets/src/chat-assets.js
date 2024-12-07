@@ -3,7 +3,7 @@
  */
 jn.define('im/messenger/controller/dialog/lib/assets/chat-assets', (require, exports, module) => {
 	const { ReactionType } = require('im/messenger/const');
-	const { ReactionAssets } = require('im/messenger/assets/common');
+	const { ReactionAssets, headerIconsPath } = require('im/messenger/assets/common');
 	const { backgroundCache } = require('im/messenger/lib/background-cache');
 
 	/**
@@ -29,6 +29,8 @@ jn.define('im/messenger/controller/dialog/lib/assets/chat-assets', (require, exp
 				ReactionAssets.getSvgUrl(ReactionType.angry),
 				ReactionAssets.getSvgUrl(ReactionType.facepalm),
 				ReactionAssets.getSvgUrl(ReactionType.wonder),
+				headerIconsPath.subscribe,
+				headerIconsPath.unsubscribe,
 			]);
 
 			backgroundCache.downloadLottieAnimations([

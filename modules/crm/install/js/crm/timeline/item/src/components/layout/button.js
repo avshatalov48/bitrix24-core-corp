@@ -182,6 +182,11 @@ export const Button = BitrixVue.cloneComponent(BaseButton, {
 				&& rect.right <= (window.innerWidth || document.documentElement.clientWidth)
 			);
 		},
+
+		isPropEqual(propName: string, value: any): boolean
+		{
+			return this.getButtonOptions().props[propName] === value;
+		},
 	},
 
 	watch: {

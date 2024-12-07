@@ -1,0 +1,2 @@
+<?php
+$MESS['CATEGORY_OPERATIONS_API_NAME'] = 'Новое API';

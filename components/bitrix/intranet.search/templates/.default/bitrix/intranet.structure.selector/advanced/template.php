@@ -4,7 +4,7 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
 $formName = 'FILTER_'.$arParams['FILTER_NAME'].'_adv';
 ?>
 <?if ($arResult['CURRENT_USER']['DEPARTMENT_TOP']):?>
-<script type="text/javascript">
+<script>
 function BXChangeFilterTop_adv(ob)
 {
 	if (ob.checked) 

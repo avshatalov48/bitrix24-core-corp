@@ -48,7 +48,7 @@ class CEventCalendar
 		$page = preg_replace(array("/^(.*?)\&$/i","/^(.*?)\?$/i"), "\$1", $page);
 		$this->pageUrl = $page;
 		$this->fullUrl = (CMain::IsHTTPS() ? "https://" : "http://").$_SERVER['HTTP_HOST'].$page;
-		$this->outerUrl = $GLOBALS['APPLICATION']->GetCurPageParam('', array("action", "bx_event_calendar_request", "clear_cache", "bitrix_include_areas", "bitrix_show_mode", "back_url_admin", "SEF_APPLICATION_CUR_PAGE_URL"), false);
+		$this->outerUrl = $GLOBALS['APPLICATION']->GetCurPageParam('', array("action", "bx_event_calendar_request", "clear_cache", "bitrix_include_areas", "bitrix_show_mode", "back_url_admin"), false);
 
 		$this->userIblockId = $arParams['userIblockId'];
 		//$iblockId = COption::GetOptionInt("intranet", 'iblock_calendar'); // Get iblock id for users calendar from module-settings
@@ -178,7 +178,10 @@ class CEventCalendar
 
 		$this->GetPermissions(array('userId' => $curUserId));
 		if (!$this->bAccess)
-			return $APPLICATION->ThrowException(GetMessage("EC_ACCESS_DENIED"));
+		{
+			$APPLICATION->ThrowException(GetMessage("EC_ACCESS_DENIED"));
+			return;
+		}
 
 		if ($this->reserveMeetingReadonlyMode)
 			$this->bReadOnly = true;
@@ -530,7 +533,6 @@ class CEventCalendar
 	{
 		global $APPLICATION;
 		$sectionId = ($_REQUEST['section_id'] == 'none') ? 'none' : intval($_REQUEST['section_id']);
-		CUtil::JSPostUnEscape();
 
 		// Export calendar
 		if ($action == 'export')
@@ -570,7 +572,10 @@ class CEventCalendar
 			// First of all - CHECK ACCESS
 			$this->GetPermissions(array('userId' => $curUserId));
 			if (!$this->bAccess)
-				return $APPLICATION->ThrowException(GetMessage("EC_ACCESS_DENIED"));
+			{
+				$APPLICATION->ThrowException(GetMessage("EC_ACCESS_DENIED"));
+				return;
+			}
 
 			$APPLICATION->RestartBuffer();
 			if (!check_bitrix_sessid())
@@ -585,7 +590,10 @@ class CEventCalendar
 				case 'add':
 				case 'edit':
 					if ($this->bReadOnly)
-						return $this->ThrowError(GetMessage('EC_ACCESS_DENIED'));
+					{
+						$this->ThrowError(GetMessage('EC_ACCESS_DENIED'));
+						return;
+					}
 
 					$id = intval($_POST['id']);
 					// If other calendar was selected for event
@@ -718,14 +726,20 @@ class CEventCalendar
 						));
 
 						if ($res !== true)
-							return $this->ThrowError($res <> '' ? $res : GetMessage('EC_EVENT_DEL_ERROR'));
+						{
+							$this->ThrowError($res <> '' ? $res : GetMessage('EC_EVENT_DEL_ERROR'));
+							return;
+						}
 					}
 					break;
 
 				// * * * * * Delete event * * * * *
 				case 'delete':
 					if ($this->bReadOnly)
-						return $this->ThrowError(GetMessage('EC_ACCESS_DENIED'));
+					{
+						$this->ThrowError(GetMessage('EC_ACCESS_DENIED'));
+						return;
+					}
 
 					$res = CECEvent::Delete(array(
 						'id' => intval($_POST['id']),
@@ -743,7 +757,10 @@ class CEventCalendar
 					));
 
 					if ($res !== true)
-						return $this->ThrowError($res <> '' ? $res : GetMessage('EC_EVENT_DEL_ERROR'));
+					{
+						$this->ThrowError($res <> '' ? $res : GetMessage('EC_EVENT_DEL_ERROR'));
+						return;
+					}
 
 					?><script>window._bx_result = true;</script><?
 
@@ -778,7 +795,10 @@ class CEventCalendar
 				// * * * * * Edit calendar * * * * *
 				case 'calendar_edit':
 					if ($this->bReadOnly)
-						return $this->ThrowError(GetMessage('EC_ACCESS_DENIED'));
+					{
+						$this->ThrowError(GetMessage('EC_ACCESS_DENIED'));
+						return;
+					}
 
 					$id = intval($_POST['id']);
 					$bNew = (!isset($id) || $id == 0);
@@ -797,7 +817,10 @@ class CEventCalendar
 
 					$id = $this->SaveCalendar(array('sectionId' => $sectionId, 'arFields' => $arFields));
 					if (intval($id) <= 0)
-						return $this->ThrowError($res <> '' ? $res : GetMessage('EC_CALENDAR_SAVE_ERROR'));
+					{
+						$this->ThrowError($res <> '' ? $res : GetMessage('EC_CALENDAR_SAVE_ERROR'));
+						return;
+					}
 
 					$export_link = $arFields['EXPORT'] ? $this->GetExportLink($id, $this->ownerType, $this->ownerId, $this->iblockId) : '';
 					$outlookJs = CECCalendar::GetOutlookLink(array(
@@ -829,15 +852,24 @@ class CEventCalendar
 				// * * * * * Delete calendar * * * * *
 				case 'calendar_delete':
 					if ($this->bReadOnly)
-						return $this->ThrowError(GetMessage('EC_ACCESS_DENIED'));
+					{
+						$this->ThrowError(GetMessage('EC_ACCESS_DENIED'));
+						return;
+					}
 
 					$id = intval($_POST['id']);
 					if (!$this->CheckCalendar(array('calendarId' => $id, 'sectionId' => $sectionId)))
-						return $this->ThrowError(GetMessage('EC_CALENDAR_DEL_ERROR').' '.GetMessage('EC_CAL_INCORRECT_ERROR'));
+					{
+						$this->ThrowError(GetMessage('EC_CALENDAR_DEL_ERROR').' '.GetMessage('EC_CAL_INCORRECT_ERROR'));
+						return;
+					}
 
 					$res = $this->DeleteCalendar($id);
 					if ($res !== true)
-						return $this->ThrowError($res <> '' ? $res : GetMessage('EC_CALENDAR_DEL_ERROR'));
+					{
+						$this->ThrowError($res <> '' ? $res : GetMessage('EC_CALENDAR_DEL_ERROR'));
+						return;
+					}
 
 					// Clear cache
 					$this->ClearCache($this->cachePath.$this->iblockId."/calendars/".($this->bOwner ? $this->ownerId : 0)."/");
@@ -856,7 +888,10 @@ class CEventCalendar
 				case 'spcal_disp_save':
 					$spcl = is_array($_POST['spcl']) ? $_POST['spcl'] : Array();
 					if (!$this->SaveDisplayedSPCalendars($spcl))
-						return $this->ThrowError('Error! Cant save displayed superposed calendars');
+					{
+						$this->ThrowError('Error! Cant save displayed superposed calendars');
+						return;
+					}
 					?><script>window._bx_result = true;</script><?
 					break;
 
@@ -882,7 +917,10 @@ class CEventCalendar
 				// * * * * * Return info about user, and user calendars * * * * *
 				case 'spcal_del_user':
 					if (!$this->DeleteTrackingUser(intval($_POST['id'])))
-						return $this->ThrowError('Error! Cant delete tracking user!');
+					{
+						$this->ThrowError('Error! Cant delete tracking user!');
+						return;
+					}
 					?><script>window._bx_result = true;</script><?
 					break;
 
@@ -895,7 +933,10 @@ class CEventCalendar
 				// * * * * * Add calendar to Superposed * * * * *
 				case 'add_cal2sp':
 					if (!$this->AddCalendar2SP())
-						return $this->ThrowError('Error! Cant add calendar');
+					{
+						$this->ThrowError('Error! Cant add calendar');
+						return;
+					}
 
 					$this->ClearCache($this->cachePath.'sp_handle/'.($this->curUserId % 1000)."/");
 
@@ -1052,7 +1093,10 @@ class CEventCalendar
 
 				case 'connections_edit':
 					if ($this->bReadOnly || $this->ownerType != 'USER')
-						return $this->ThrowError(GetMessage('EC_ACCESS_DENIED'));
+					{
+						$this->ThrowError(GetMessage('EC_ACCESS_DENIED'));
+						return;
+					}
 
 					if (CEventCalendar::IsCalDAVEnabled())
 					{
@@ -1069,7 +1113,8 @@ class CEventCalendar
 								}
 								if (!CEventCalendar::CheckCalDavUrl($con['link'], $con['user_name'], $con['pass']))
 								{
-									return CEventCalendar::ThrowError(GetMessage("EC_CALDAV_URL_ERROR"));
+									CEventCalendar::ThrowError(GetMessage("EC_CALDAV_URL_ERROR"));
+									return;
 								}
 
 								$id = CDavConnection::Add(array(
@@ -1778,7 +1823,7 @@ class CEventCalendar
 
 		if (!$arParams['bSuperposed'] && !$arParams['bOnlyID'])
 		{
-			$outerUrl = $GLOBALS['APPLICATION']->GetCurPageParam('', array("action", "bx_event_calendar_request", "clear_cache", "bitrix_include_areas", "bitrix_show_mode", "back_url_admin", "SEF_APPLICATION_CUR_PAGE_URL"), false);
+			$outerUrl = $GLOBALS['APPLICATION']->GetCurPageParam('', array("action", "bx_event_calendar_request", "clear_cache", "bitrix_include_areas", "bitrix_show_mode", "back_url_admin"), false);
 		}
 
 		if ($ownerType != 'USER' && $ownerType != 'GROUP')
@@ -2753,7 +2798,10 @@ class CEventCalendar
 
 		$GLOBALS['APPLICATION']->RestartBuffer();
 		if (!$this->CheckSign($sign, $userId, $calendarId))
-			return CEventCalendar::ThrowError(GetMessage('EC_ACCESS_DENIED'));
+		{
+			CEventCalendar::ThrowError(GetMessage('EC_ACCESS_DENIED'));
+			return;
+		}
 
 		$this->bCurUserOwner = $ownerType != 'USER' || $ownerId == $userId;
 		$privateStatus = CECCalendar::GetPrivateStatus($iblockId, $calendarId, $ownerType);
@@ -2805,16 +2853,25 @@ class CEventCalendar
 					)
 				)
 			)
-				return CEventCalendar::ThrowError(GetMessage('EC_ACCESS_DENIED'));
+			{
+				CEventCalendar::ThrowError(GetMessage('EC_ACCESS_DENIED'));
+				return;
+			}
 
 			// === Fetch events from calendar ===
 			$r = CIBlockSection::GetList(Array(), Array("ID"=>$calendarId, "CHECK_PERMISSIONS"=>"N"));
 			if(!($arCal = $r->Fetch()))
-				return CEventCalendar::ThrowError('INCORRECT CALENDAR ID');
+			{
+				CEventCalendar::ThrowError('INCORRECT CALENDAR ID');
+				return;
+			}
 			$arExport = CECCalendar::GetExportParams($iblockId, $calendarId, $ownerType, $ownerId); // LINK is incorrect, but we dont need for LINK...
 
 			if (!$arExport['ALLOW']) // Calendar is not accessible for export
-				return CEventCalendar::ThrowError(GetMessage('EC_ACCESS_DENIED'));
+			{
+				CEventCalendar::ThrowError(GetMessage('EC_ACCESS_DENIED'));
+				return;
+			}
 			if ($arExport['SET'] == 'all') // Get all events
 			{
 				$bLoadAll =true;
@@ -2871,7 +2928,10 @@ class CEventCalendar
 
 		$GLOBALS['APPLICATION']->RestartBuffer();
 		if (!$this->CheckSign($sign, $userId, 'superposed_calendars') || !$this->allowSuperpose)
-			return CEventCalendar::ThrowError(GetMessage('EC_ACCESS_DENIED'));
+		{
+			CEventCalendar::ThrowError(GetMessage('EC_ACCESS_DENIED'));
+			return;
+		}
 
 		$this->HandleSuperpose($this->arSPIblIds);
 		$arCalenExTitle = array();
@@ -2994,8 +3054,7 @@ TRANSP:TRANSPARENT
 END:VEVENT'."\n";
 		}
 		$res .= 'END:VCALENDAR';
-		if (!defined('BX_UTF') || BX_UTF !== true)
-			$res = $GLOBALS["APPLICATION"]->ConvertCharset($res, LANG_CHARSET, 'UTF-8');
+
 		return $res;
 	}
 
@@ -3116,7 +3175,8 @@ END:VEVENT'."\n";
 				if (!is_array($exchRes) || !array_key_exists("XML_ID", $exchRes))
 				{
 					$DB->Rollback();
-					return CEventCalendar::ThrowError(CEventCalendar::CollectExchangeErros($exchRes));
+					CEventCalendar::ThrowError(CEventCalendar::CollectExchangeErros($exchRes));
+					return;
 				}
 
 				// It's ok, we successfuly save event to exchange calendar - and save it to DB
@@ -3158,7 +3218,10 @@ END:VEVENT'."\n";
 	{
 		global $DB;
 		if (!$this->CheckPermissionForEvent(array(), true))
-			return CEventCalendar::ThrowError('EC_ACCESS_DENIED');
+		{
+			CEventCalendar::ThrowError('EC_ACCESS_DENIED');
+			return;
+		}
 		@set_time_limit(0);
 
 		// Exchange
@@ -3347,7 +3410,10 @@ END:VEVENT'."\n";
 			), $bDisplayCalendar, $newSectionId);
 
 			if (!$calendarId)
-				return CEventCalendar::ThrowError('2'.GetMessage('EC_CALENDAR_CREATE_ERROR'));
+			{
+				CEventCalendar::ThrowError('2'.GetMessage('EC_CALENDAR_CREATE_ERROR'));
+				return;
+			}
 
 			if ($newSectionId != 'none')
 				$arParams['sectionId'] = $newSectionId;
@@ -3438,7 +3504,10 @@ END:VEVENT'."\n";
 				}
 
 				if (!is_array($exchRes) || !array_key_exists("XML_ID", $exchRes))
-					return CEventCalendar::ThrowError(CEventCalendar::CollectExchangeErros($exchRes));
+				{
+					CEventCalendar::ThrowError(CEventCalendar::CollectExchangeErros($exchRes));
+					return;
+				}
 
 				// It's ok, we successfuly save event to exchange calendar - and save it to DB
 				$arFields['XML_ID'] = $exchRes['XML_ID'];
@@ -3464,7 +3533,10 @@ END:VEVENT'."\n";
 				}
 
 				if (!is_array($DAVRes) || !array_key_exists("XML_ID", $DAVRes))
-					return CEventCalendar::ThrowError(CEventCalendar::CollectCalDAVErros($DAVRes));
+				{
+					CEventCalendar::ThrowError(CEventCalendar::CollectCalDAVErros($DAVRes));
+					return;
+				}
 
 				// // It's ok, we successfuly save event to caldav calendar - and save it to DB
 				$arFields['XML_ID'] = $DAVRes['XML_ID'];
@@ -3497,9 +3569,12 @@ END:VEVENT'."\n";
 		}
 
 		if(!$res)
-			return CEventCalendar::ThrowError('4'.$bs->LAST_ERROR);
-		else
-			CIBlockElement::RecalcSections($ID);
+		{
+			CEventCalendar::ThrowError('4'.$bs->LAST_ERROR);
+			return;
+		}
+
+		CIBlockElement::RecalcSections($ID);
 
 		if(!$bPeriodic && !$arParams["notDisplayCalendar"])
 		{
@@ -3776,8 +3851,7 @@ END:VEVENT'."\n";
 							$arFieldName[$arLanguage["LID"]] = $arProps[$i][1];
 						$arFields["EDIT_FORM_LABEL"] = $arFieldName;
 						$obUserField  = new CUserTypeEntity;
-						$r = $obUserField->Add($arFields);
-						$USER_FIELD_MANAGER->arFieldsCache = array();
+						$obUserField->Add($arFields);
 					}
 					$EC_UserFields = $USER_FIELD_MANAGER->GetUserFields($ent_id);
 				}
@@ -4045,7 +4119,10 @@ END:VEVENT'."\n";
 					'bJustDel' => true // Just delete iblock element  + exchange
 				));
 				if ($res !== true)
-					return $this->ThrowError($res <> '' ? $res : GetMessage('EC_EVENT_DEL_ERROR'));
+				{
+					$this->ThrowError($res <> '' ? $res : GetMessage('EC_EVENT_DEL_ERROR'));
+					return;
+				}
 
 				$arDeletedUsers[] = $arOldEvent["ID"];
 				if ($arOldEvent["PROPERTY_VALUES"]["CONFIRMED"] != "N") //User
@@ -4161,7 +4238,10 @@ END:VEVENT'."\n";
 
 								$exchRes = CDavExchangeCalendar::DoUpdateItem($guest_id, $eventXmlId, $eventModLabel, $arFields);
 								if (!is_array($exchRes) || !array_key_exists("XML_ID", $exchRes))
-									return CEventCalendar::ThrowError(CEventCalendar::CollectExchangeErros($exchRes));
+								{
+									CEventCalendar::ThrowError(CEventCalendar::CollectExchangeErros($exchRes));
+									return;
+								}
 
 								// It's ok, we successfuly save event to exchange calendar - and save it to DB
 								$arFields['XML_ID'] = $exchRes['XML_ID'];
@@ -4996,9 +5076,16 @@ END:VEVENT'."\n";
 			if(($iblock_id = COption::GetOptionInt('intranet', 'iblock_structure', 0)) > 0)
 			{
 				$structure = array();
-				$sec = CIBlockSection::GetList(Array("left_margin"=>"asc","SORT"=>"ASC"), Array("ACTIVE"=>"Y","CNT_ACTIVE"=>"Y","IBLOCK_ID"=>$iblock_id), true);
-				while($ar = $sec->GetNext())
-					$structure[] = $ar;
+				$departmentRepository = \Bitrix\Intranet\Service\ServiceContainer::getInstance()->departmentRepository();
+				$departmentCollection = $departmentRepository->getAllTree(
+					null,
+					\Bitrix\Intranet\Enum\DepthLevel::FULL,
+					\Bitrix\Intranet\Enum\DepartmentActiveFilter::ONLY_ACTIVE
+				);
+				foreach ($departmentCollection as $department)
+				{
+					$structure[] = $department->toIblockArray();
+				}
 
 				//get users in the structure
 				$usersInStructure = array();
@@ -8019,7 +8106,7 @@ class CECCalendar
 
 		if (!$arParams['bSuperposed'] && !$arParams['bOnlyID'])
 		{
-			$outerUrl = $GLOBALS['APPLICATION']->GetCurPageParam('', array("action", "bx_event_calendar_request", "clear_cache", "bitrix_include_areas", "bitrix_show_mode", "back_url_admin", "SEF_APPLICATION_CUR_PAGE_URL"), false);
+			$outerUrl = $GLOBALS['APPLICATION']->GetCurPageParam('', array("action", "bx_event_calendar_request", "clear_cache", "bitrix_include_areas", "bitrix_show_mode", "back_url_admin"), false);
 		}
 
 		while($arRes = $rsData->Fetch())
@@ -8141,7 +8228,10 @@ class CECCalendar
 	{
 		global $DB;
 		if (!$this->CheckPermissionForEvent(array(), true))
-			return CEventCalendar::ThrowError('EC_ACCESS_DENIED');
+		{
+			CEventCalendar::ThrowError('EC_ACCESS_DENIED');
+			return;
+		}
 		@set_time_limit(0);
 		$DB->StartTransaction();
 		if(!CIBlockSection::Delete($ID))

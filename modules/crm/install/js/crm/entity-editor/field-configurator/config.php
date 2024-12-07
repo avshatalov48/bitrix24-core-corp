@@ -9,8 +9,9 @@ return [
 	'css' => 'dist/field-configurator.bundle.css',
 	'js' => 'dist/field-configurator.bundle.js',
 	'rel' => [
-		'main.core',
 		'crm.entity-selector',
+		'main.core.events',
+		'main.core',
 	],
 	'skip_core' => false,
 ];

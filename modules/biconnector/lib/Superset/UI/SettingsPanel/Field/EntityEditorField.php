@@ -4,6 +4,14 @@ namespace Bitrix\BIConnector\Superset\UI\SettingsPanel\Field;
 
 abstract class EntityEditorField
 {
+	abstract public function getFieldInitialData(): array;
+
+	abstract public function getName(): string;
+
+	abstract public function getType(): string;
+
+	abstract protected function getFieldInfoData(): array;
+
 	public function __construct(private string $id)
 	{}
 
@@ -19,16 +27,8 @@ abstract class EntityEditorField
 		];
 	}
 
-	abstract public function getFieldInitialData(): array;
-
 	protected function getTitle(): ?string
 	{
 		return null;
 	}
-
-	abstract public function getName(): string;
-
-	abstract public function getType(): string;
-
-	abstract protected function getFieldInfoData(): array;
 }

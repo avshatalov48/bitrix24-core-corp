@@ -16,6 +16,7 @@ use Bitrix\Main\Config\Option;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Web\Json;
 use Bitrix\Main\Web\Uri;
+use Bitrix\Socialnetwork\Helper\Feature;
 use Bitrix\Socialnetwork\Item\Workgroup;
 use Bitrix\Socialnetwork\UserToGroupTable;
 use Bitrix\Main\UI;
@@ -37,6 +38,8 @@ if (Loader::includeModule('bitrix24'))
 {
 	CBitrix24::initLicenseInfoPopupJS();
 }
+
+$isProjectAccessEnabled = \Bitrix\Socialnetwork\Helper\Workgroup::isProjectAccessFeatureEnabled();
 
 $groupMember = in_array($arResult['CurrentUserPerms']['UserRole'], UserToGroupTable::getRolesMember());
 
@@ -110,7 +113,7 @@ if (
 			subscribedValue: <?= ($arResult['isSubscribed'] ? 'true' : 'false') ?>,
 
 			canInitiate: <?=($arResult["CurrentUserPerms"]["UserCanInitiate"] && !$arResult["HideArchiveLinks"] ? 'true' : 'false')?>,
-			canProcessRequestsIn: <?=($arResult["CurrentUserPerms"]["UserCanProcessRequestsIn"] && !$arResult["HideArchiveLinks"] ? 'true' : 'false')?>,
+			canProcessRequestsIn: <?=(($arResult["CurrentUserPerms"]["UserCanProcessRequestsIn"] ?? null) && !$arResult["HideArchiveLinks"] ? 'true' : 'false')?>,
 			canModify: <?=($arResult["CurrentUserPerms"]["UserCanModifyGroup"] ? 'true' : 'false')?>,
 
 			userRole: '<?=$arResult["CurrentUserPerms"]["UserRole"]?>',
@@ -118,7 +121,7 @@ if (
 			userIsAutoMember: <?=(isset($arResult["CurrentUserPerms"]["UserIsAutoMember"]) && $arResult["CurrentUserPerms"]["UserIsAutoMember"] ? 'true' : 'false')?>,
 			userIsScrumMaster: <?= (isset($arResult['CurrentUserPerms']['UserIsScrumMaster']) && $arResult['CurrentUserPerms']['UserIsScrumMaster'] ? 'true' : 'false') ?>,
 
-			editFeaturesAllowed: <?=(\Bitrix\Socialnetwork\Helper\Workgroup::getEditFeaturesAvailability() ? 'true' : 'false')?>,
+			editFeaturesAllowed: <?= CUtil::phpToJSObject($isProjectAccessEnabled) ?>,
 			copyFeatureAllowed: <?=(\Bitrix\Socialnetwork\Helper\Workgroup::isGroupCopyFeatureEnabled() ? 'true' : 'false')?>,
 			canPickTheme: <?= (
 				$arResult['inIframe']
@@ -228,17 +231,14 @@ if (
 							<span
 								id="tasks-scrum-methodology-button"
 								class="ui-btn ui-btn-light-border"
-								style="cursor: pointer;"
+								style="margin-right: 12px;"
 							><?= Loc::getMessage('SONET_TASKS_SCRUM_METHODOLOGY_LINK') ?></span>
 							<?php
 						}
 
-						if (
-							$arResult['CanView']['chat']
-							&& !$arResult['isScrumProject']
-						)
+						if ($arResult['CanView']['chat'])
 						{
-							?><span id="group-menu-control-button-cont" class="profile-menu-button-container"></span><?php
+							?><span id="group-menu-control-button-cont" class="profile-menu-button-container <?= $arResult['isScrumProject'] ? '--scrum' : ''?>"></span><?php
 						}
 
 						?><a href="<?= $arResult['Urls']['Card'] ?>" id="project-widget-button" class="ui-btn ui-btn-light-border" data-slider-ignore-autobinding="true" data-workgroup="<?= htmlspecialcharsbx(Json::encode($arResult['projectWidgetData'])) ?>"><?= $aboutTitle ?></a><?php
@@ -269,6 +269,7 @@ if (
 							<button
 								id="tasks-scrum-methodology-button"
 								class="ui-btn ui-btn-light-border ui-btn-themes"
+								style="margin-right: 12px;"
 							><?= Loc::getMessage('SONET_TASKS_SCRUM_METHODOLOGY_BUTTON') ?></button>
 							<?php
 						}
@@ -291,12 +292,9 @@ if (
 							}
 						}
 
-						if (
-							$arResult['CanView']['chat']
-							&& !$arResult['isScrumProject']
-						)
+						if ($arResult['CanView']['chat'])
 						{
-							?><span id="group-menu-control-button-cont" class="profile-menu-button-container"></span><?php
+							?><span id="group-menu-control-button-cont" class="profile-menu-button-container <?= $arResult['isScrumProject'] ? '--scrum' : ''?>"></span><?php
 						}
 
 						?><a href="<?= $arResult['Urls']['Card'] ?>" id="project-widget-button" class="ui-btn ui-btn-light-border ui-btn-themes" data-slider-ignore-autobinding="true" data-workgroup="<?= htmlspecialcharsbx(Json::encode($arResult['projectWidgetData'])) ?>"><?= $aboutTitle ?></a><?php
@@ -323,7 +321,7 @@ if (
 					if ($key === 'general')
 					{
 						$menuItems[] = [
-							'TEXT' => Loc::getMessage('SONET_UM_NEWS'),
+							'TEXT' => Loc::getMessage('SONET_UM_NEWS2'),
 							'URL' => !empty($arResult['Urls']['General']) ? $arResult['Urls']['General'] : ($arResult['Urls']['View'] ?? ''),
 							'ID' => 'general',
 							'IS_ACTIVE' => in_array($arParams['PAGE_ID'], ['group', 'group_general'], true),

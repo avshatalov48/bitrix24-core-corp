@@ -255,32 +255,43 @@
 .market-detail__app-rating_feedback-form {
 	display: flex;
 	flex-direction: column;
-	align-items: flex-end;
 	min-width: 361px;
-	margin-right: 17px;
+	margin-top: 42px;
 }
 
 .market-detail__app-rating_feedback-buttons {
-	display: flex;
-	align-items: center;
-	margin-top: 12px;
+	width: 100%;
+	margin-top: 19px;
+	text-align: center;
+}
+
+.market-detail__app-rating_feedback-btn {
+	flex-shrink: 0;
 }
 
 .ui-ctl-checkbox.market-detail__app-rating_feedback-checkbox {
 	margin-bottom: 0;
 	cursor: pointer;
+	min-height: auto;
 }
 
 .market-detail__app-rating_feedback-label {
 	font-family:  var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
-	font-size: var(--ui-font-size-5xs, 9px);
-	line-height: var(--ui-font-line-height-lg, 1.5);
-	color: var(--ui-color-base-35, #c9ccd0);
+	font-size: var(--ui-font-size-xs, 12px);
+	line-height: var(--ui-font-line-height-reset, 1);
+	color: #525c69;
 }
 
-.market-detail__app-rating_feedback-textarea {
+.ui-ctl-textarea .market-detail__app-rating_feedback-textarea.ui-ctl-element {
 	border-radius: var(--ui-border-radius-sm, 8px);
 	background: transparent;
+	padding: 13px;
+	height: 130px;
+}
+
+.market-detail__app-rating_feedback-form .ui-ctl-textarea {
+	height: 130px;
+	min-height: 130px;
 }
 
 .market-detail__app-rating_feedback-content .market-detail__app-rating_feedback-ready {
@@ -292,6 +303,7 @@
 
 .market-detail__feedback-item {
 	font-family:  var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	word-break: break-word;
 	width: 362px;
 	min-width: 362px;
 	min-height: 200px;
@@ -408,4 +420,99 @@
 
 .market-detail__feedback-item_text.--last-element {
 	margin-bottom: 6px;
+}
+
+.market-detail__app-rating_feedback-subtitle {
+	font-weight: var(--ui-font-weight-medium);
+	font-size: var(--ui-font-size-2xl);
+	color: var(--ui-color-base-default);
+	text-align: center;
+}
+
+.market-detail__app-rating_feedback-subtitle span {
+	font-weight: var(--ui-font-weight-semi-bold);
+}
+
+.market-detail__app-rating_feedback-text {
+	font-size: var(--ui-font-size-md);
+	color: var(--ui-color-base-70);
+	text-align: center;
+	margin: 12px auto 17px;
+}
+
+.market-detail__app-rating_feedback-form .market-rating__app-rating-info_stars-container {
+	margin: 0 auto 12px;
+	width: 165px;
+}
+
+.market-detail__app-rating_feedback-img {
+	border: 1px solid var(--ui-color-base-30);
+	border-radius: 16px;
+	box-shadow: 0 9px 18px 0 rgba(0, 0, 0, 0.12);
+	width: 104px;
+	height: 104px;
+	position: absolute;
+	top: -52px;
+	left: 50%;
+	transform: translateX(-50%);
+	background: var(--ui-color-background-primary);
+}
+
+.market-detail__app-rating_feedback-img img {
+	max-width: 100%;
+	width: 100%;
+	height: auto;
+	border-radius: 16px;
+}
+
+.market-detail__app-rating_feedback-checkbox.ui-ctl + .ui-ctl {
+	margin-left: 0;
+	margin-top: 10px;
+}
+
+.market-detail__app-rating_feedback-checkbox-wrapper {
+	margin-top: 13px;
+}
+
+.market-detail__app-rating_feedback-form .market-rating__app-rating_star path,
+.market-detail__app-rating_feedback-form .market-rating__app-rating_star:not(.--active):hover path {
+	stroke: #ffa900;
+}
+
+.market-rating__app-rating_star.--active path {
+	fill: #ffa900;
+	stroke: transparent;
+}
+
+.market-detail__app-rating_feedback-form .market-rating__app-rating_star path {
+	transform: scale(1.1);
+}
+
+.market-detail__app-rating_feedback-form .market-rating__app-rating_star:hover {
+	transform: scale(1.15);
+}
+
+.market-detail__feedback-item.--empty {
+	opacity: .9;
+}
+
+.market-detail__feedback-empty-wrapper {
+	width: 100%;
+	height: calc(100% - 45px);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex-direction: column;
+	margin-top: 4px;
+}
+
+.market-detail__feedback-empty-text {
+	font-size: var(--ui-font-size-xs);
+	color: var(--ui-color-base-35);
+}
+
+.market-detail__feedback-empty-icon {
+	width: 100px;
+	height: 90px;
+	background: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='101' height='90' fill='none'%3E%3Cpath opacity='.4' fill-rule='evenodd' clip-rule='evenodd' d='M97.852 41.263c0-5.51-4.512-9.975-10.077-9.975h-33.03c-5.564 0-10.076 4.466-10.076 9.975v19.2c0 5.51 4.512 9.976 10.077 9.976h18.73l8.85 9.016c1.47 1.498 4.037.467 4.037-1.623V70.44h1.412c5.565 0 10.077-4.466 10.077-9.975v-19.2zm-14.245 4.953c.343-.816 1.5-.816 1.844 0l.742 1.765a1 1 0 00.842.609l1.907.151c.89.07 1.248 1.183.567 1.76l-1.436 1.216a1 1 0 00-.326.998l.442 1.83c.208.864-.729 1.55-1.49 1.09l-1.653-.998a1 1 0 00-1.034 0l-1.654.999c-.76.459-1.698-.227-1.49-1.09l.442-1.831a1 1 0 00-.326-.998l-1.435-1.216c-.681-.577-.323-1.69.567-1.76l1.906-.151a1 1 0 00.843-.61l.742-1.764zm-24.45 0c-.342-.816-1.5-.816-1.843 0l-.742 1.765a1 1 0 01-.843.609l-1.906.151c-.89.07-1.248 1.183-.567 1.76l1.436 1.216a1 1 0 01.325.998l-.441 1.83c-.208.864.729 1.55 1.49 1.09l1.653-.998a1 1 0 011.034 0l1.654.999c.76.459 1.698-.227 1.49-1.09l-.442-1.831a1 1 0 01.326-.998l1.435-1.216c.681-.577.323-1.69-.567-1.76l-1.906-.151a1 1 0 01-.843-.61l-.742-1.764zm11.464-3.136c.335-.839 1.522-.839 1.857 0l1.217 3.045a1 1 0 00.846.626l3.228.27c.875.072 1.238 1.157.582 1.742l-2.517 2.245a1 1 0 00-.31.97l.76 3.311c.199.871-.758 1.547-1.512 1.067l-2.686-1.707a1 1 0 00-1.073 0l-2.686 1.707c-.754.48-1.71-.196-1.51-1.067l.758-3.311a1 1 0 00-.31-.97l-2.517-2.245c-.656-.584-.293-1.67.582-1.743l3.229-.27a1 1 0 00.845-.625l1.217-3.045z' fill='%23EAF3F5'/%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M3.156 22.275C3.156 14.943 9.16 9 16.566 9H60.52c7.406 0 13.41 5.943 13.41 13.275v25.551c0 7.332-6.004 13.275-13.41 13.275H35.594L23.818 73.1c-1.958 1.994-5.373.622-5.373-2.159v-9.839h-1.88c-7.405 0-13.409-5.943-13.409-13.275V22.275zm18.656 5.867c-.343-.817-1.5-.817-1.843 0l-1.37 3.258a1 1 0 01-.843.61l-3.538.28c-.89.07-1.248 1.183-.567 1.76l2.678 2.269a1 1 0 01.326.997l-.821 3.405c-.208.863.729 1.55 1.49 1.09l3.05-1.842a1 1 0 011.034 0l3.05 1.842c.76.46 1.698-.227 1.49-1.09l-.822-3.405a1 1 0 01.326-.997l2.678-2.27c.681-.576.323-1.688-.567-1.759l-3.537-.28a1 1 0 01-.843-.61l-1.37-3.258zm33.143 0c.343-.816 1.5-.816 1.843 0l1.37 3.259a1 1 0 00.843.609l3.538.28c.89.071 1.248 1.183.567 1.76l-2.678 2.27a1 1 0 00-.326.997l.821 3.404c.208.864-.729 1.55-1.49 1.09l-3.05-1.842a1 1 0 00-1.034 0l-3.05 1.843c-.76.459-1.697-.227-1.49-1.09l.822-3.405a1 1 0 00-.326-.998l-2.678-2.269c-.681-.577-.323-1.689.567-1.76l3.537-.28a1 1 0 00.843-.61l1.37-3.258zm-15.87-4.218c-.335-.838-1.522-.838-1.857 0l-2.003 5.012a1 1 0 01-.845.625l-5.268.44c-.875.073-1.237 1.158-.582 1.742l4.071 3.63a1 1 0 01.31.97l-1.234 5.383c-.2.871.757 1.547 1.511 1.067l4.432-2.817a1 1 0 011.073 0l4.431 2.817c.754.48 1.711-.196 1.511-1.067l-1.233-5.383a1 1 0 01.31-.97l4.07-3.63c.656-.584.293-1.67-.582-1.742l-5.267-.44a1 1 0 01-.846-.625l-2.002-5.012z' fill='%23D0EEF7'/%3E%3C/svg%3E") no-repeat center;
 }

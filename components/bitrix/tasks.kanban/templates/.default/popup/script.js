@@ -7,6 +7,7 @@ const showPopup = function ()
 
 	const closeHandler = () => {
 		BX.PopupWindowManager.getCurrentPopup().close();
+
 		BX.ajax({
 			method: "POST",
 			dataType: "json",

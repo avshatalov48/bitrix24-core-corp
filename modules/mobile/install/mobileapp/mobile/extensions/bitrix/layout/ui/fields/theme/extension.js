@@ -5,10 +5,9 @@ jn.define('layout/ui/fields/theme', (require, exports, module) => {
 	/**
 	 * @type {function(Class, function): function(props: object): object}
 	 */
-	const withTheme = (FieldComponentClass, ThemeComponent) => (props) => new FieldComponentClass({
-		...props,
-		ThemeComponent,
-	});
+	const withTheme = (FieldComponentClass, ThemeComponent) => {
+		return (props) => FieldComponentClass && new FieldComponentClass({ ...props, ThemeComponent });
+	};
 
 	module.exports = {
 		withTheme,

@@ -17,7 +17,7 @@ if($helper->checkHasFatals())
 $arResult['JS_DATA']['show_sl_effective_more']= !CUserOptions::GetOption('spotlight', 'view_date_tasks_sl_effective_more', false);
 $arResult['JS_DATA']['text_sl_effective_more']= GetMessage('TASKS_PANEL_TEXT_EFFECTIVE_MORE');
 $arResult['JS_DATA']['taskLimitExceeded'] = $arResult['TASK_LIMIT_EXCEEDED'];
-$arResult['JS_DATA']['kpiLimitExceeded'] = $arResult['KPI_LIMIT_EXCEEDED'];
+$arResult['JS_DATA']['tasksEfficiencyEnabled'] = $arResult['tasksEfficiencyEnabled'];
 $arResult['JS_DATA']['pathToTasks'] = str_replace('#user_id#', $arParams['USER_ID'], $arParams['PATH_TO_USER_TASKS']);
 
 $arResult['JS_DATA']['messages']['graph_title_kpi'] = GetMessageJS('TASKS_TITLE_GRAPH_KPI');

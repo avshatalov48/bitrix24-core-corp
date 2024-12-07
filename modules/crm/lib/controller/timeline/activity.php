@@ -2,12 +2,15 @@
 
 namespace Bitrix\Crm\Controller\Timeline;
 
+use Bitrix\Crm\Activity\BindIdentifier;
 use Bitrix\Crm\Controller\Base;
 use Bitrix\Crm\Controller\ErrorCode;
+use Bitrix\Crm\Controller\Validator;
+use Bitrix\Crm\Controller\Validator\Validation;
+use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Error;
 use CCrmActivity;
-use CCrmOwnerType;
 
 class Activity extends Base
 {
@@ -139,77 +142,51 @@ class Activity extends Base
 		}
 	}
 
-	final protected function loadActivity(int $activityId, int $ownerTypeId, int $ownerId): ?array
+	protected function loadActivity(int $activityId, int $ownerTypeId, int $ownerId): ?array
 	{
-		if ($activityId <= 0)
-		{
-			$this->addError(ErrorCode::getNotFoundError());
-
-			return null;
-		}
-
-		if (!$this->isBindingsValid($activityId, $ownerTypeId, $ownerId))
+		$itemIdentifier = ItemIdentifier::createByParams($ownerTypeId, $ownerId);
+		if ($itemIdentifier === null)
 		{
 			$this->addError(ErrorCode::getOwnerNotFoundError());
 
 			return null;
 		}
 
-		if (!CCrmActivity::CheckReadPermission($ownerTypeId, $ownerId))
+		$binding = new BindIdentifier($itemIdentifier, $activityId);
+
+		$validation = (new Validation())
+			->validate($binding->getActivityId(), [new Validator\Activity\ActivityExists()])
+			->validate($binding, [new Validator\Activity\BindingExists()])
+			->validate($itemIdentifier, [new Validator\Activity\ReadPermission()])
+		;
+
+		if (!$validation->isSuccess())
 		{
-			$this->addError(ErrorCode::getAccessDeniedError());
+			$this->addErrors($validation->getErrors());
 
 			return null;
 		}
 
-		$activity = Container::getInstance()->getActivityBroker()->getById($activityId);
-		if (!$activity)
-		{
-			$this->addError(ErrorCode::getNotFoundError());
-
-			return null;
-		}
-
-		return $activity;
+		return Container::getInstance()->getActivityBroker()->getById($activityId);
 	}
 
 	protected function isUpdateEnable(int $ownerTypeId, int $ownerId): bool
 	{
-		if (!CCrmActivity::CheckUpdatePermission($ownerTypeId, $ownerId))
+		$itemIdentifier = ItemIdentifier::createByParams($ownerTypeId, $ownerId);
+		if ($itemIdentifier === null)
 		{
-			$this->addError(ErrorCode::getAccessDeniedError());
+			$this->addError(ErrorCode::getOwnerNotFoundError());
 
 			return false;
 		}
 
-		return true;
-	}
+		$result = (new Validator\Activity\UpdatePermission())->validate($itemIdentifier);
 
-	private function isBindingsValid(int $activityId, int $ownerTypeId, int $ownerId): ?bool
-	{
-		if (
-			$ownerId <= 0
-			||!CCrmOwnerType::IsDefined($ownerTypeId)
-		)
+		if (!$result->isSuccess())
 		{
-			return false;
+			$this->addErrors($result->getErrors());
 		}
 
-		$isExistBinding = false;
-		$bindingsData = CCrmActivity::GetBindings($activityId);
-		foreach ($bindingsData as $binding)
-		{
-			if (
-				(int)$binding['OWNER_TYPE_ID'] === $ownerTypeId
-				&& (int)$binding['OWNER_ID'] === $ownerId
-			)
-			{
-				$isExistBinding = true;
-
-				break;
-			}
-		}
-
-		return $isExistBinding;
+		return $result->isSuccess();
 	}
 }

@@ -5,7 +5,6 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Disk\Internals\BaseComponent;
 use Bitrix\Main\Loader;
 use Bitrix\Main\SystemException;
-use Bitrix\Main\Web\PostDecodeFilter;
 use Bitrix\Bizproc;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
@@ -254,7 +253,7 @@ class CDiskBizprocEditComponent extends BaseComponent implements SidePanelWrappa
 		{
 			$serializeValue = serialize($_POST['USER_PARAMS']);
 			$maxLength = 16777215;//pow(2, 24) - 1; //mysql mediumtext column length
-			if (\Bitrix\Main\Text\BinaryString::getLength($serializeValue) > $maxLength)
+			if (strlen($serializeValue) > $maxLength)
 			{
 				$response = "
 					<script>
@@ -346,12 +345,28 @@ class CDiskBizprocEditComponent extends BaseComponent implements SidePanelWrappa
 			{
 				$this->arResult['ID'] = CBPWorkflowTemplateLoader::add($fields);
 			}
+
+			if (isset($_POST["workflowTemplateTrackOn"]))
+			{
+				if ($_POST["workflowTemplateTrackOn"] === 'Y')
+				{
+					$trackOn = (int)Bitrix\Main\Config\Option::get('bizproc', 'tpl_track_on_' . $this->arResult['ID'], 0);
+					if ((time() - (7 * 86400)) > $trackOn)
+					{
+						Bitrix\Main\Config\Option::set('bizproc', 'tpl_track_on_' . $this->arResult['ID'], time());
+					}
+				}
+				else
+				{
+					Bitrix\Main\Config\Option::delete('bizproc', ['name' => 'tpl_track_on_' . $this->arResult['ID']]);
+				}
+			}
 		}
 		catch (Exception $e)
 		{
 			$response = "
 				<script>
-					alert('". Loc::getMessage('BIZPROC_WFEDIT_SAVE_ERROR')."\\n ".preg_replace("#\.\W?#".BX_UTF_PCRE_MODIFIER, ".\\n", CUtil::JSEscape($e->getMessage()))."');
+					alert('". Loc::getMessage('BIZPROC_WFEDIT_SAVE_ERROR')."\\n ".preg_replace("#\.\W?#u", ".\\n", CUtil::JSEscape($e->getMessage()))."');
 				</script>
 			";
 			$this->sendResponse($response);

@@ -2,13 +2,14 @@
  * @module im/messenger/core/base/application
  */
 jn.define('im/messenger/core/base/application', (require, exports, module) => {
-	const { clone } = require('utils/object');
+	const { clone, mergeImmutable } = require('utils/object');
 
 	const { createStore } = require('statemanager/vuex');
 	const { VuexManager } = require('statemanager/vuex-manager');
 
 	const { updateDatabase } = require('im/messenger/db/update');
 	const { VuexModelWriter } = require('im/messenger/db/model-writer');
+	const { MessengerMutationManager } = require('im/messenger/lib/state-manager/vuex-manager/mutation-manager');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { Feature } = require('im/messenger/lib/feature');
 	const {
@@ -27,10 +28,14 @@ jn.define('im/messenger/core/base/application', (require, exports, module) => {
 		SmileRepository,
 		QueueRepository,
 		PinMessageRepository,
+		CopilotRepository,
+		// CounterRepository,
+		// SidebarFileRepository, TODO: The backend is not ready yet
 	} = require('im/messenger/db/repository');
 	const {
 		applicationModel,
 		recentModel,
+		counterModel,
 		messagesModel,
 		usersModel,
 		dialoguesModel,
@@ -38,6 +43,7 @@ jn.define('im/messenger/core/base/application', (require, exports, module) => {
 		sidebarModel,
 		draftModel,
 		queueModel,
+		commentModel,
 	} = require('im/messenger/model');
 
 	const {
@@ -55,10 +61,11 @@ jn.define('im/messenger/core/base/application', (require, exports, module) => {
 		 * @param {MessengerCoreInitializeOptions} config
 		 * @return {Promise<void>}
 		 */
-		constructor(config)
+		constructor(config = {})
 		{
 			/** @type {MessengerCoreInitializeOptions} */
-			this.config = config ?? {};
+			this.config = mergeImmutable(this.#getDefaultConfig(), config);
+
 			this.inited = false;
 
 			this.repository = {
@@ -69,6 +76,8 @@ jn.define('im/messenger/core/base/application', (require, exports, module) => {
 				reaction: null,
 				smile: null,
 				pinMessage: null,
+				copilot: null,
+				// sidebarFile: null, TODO: The backend is not ready yet
 			};
 
 			this.store = null;
@@ -85,6 +94,7 @@ jn.define('im/messenger/core/base/application', (require, exports, module) => {
 		{
 			await this.initDatabase();
 			this.initStore();
+			this.initMutationManager();
 			await this.initStoreManager();
 			this.initLocalStorageWriter();
 
@@ -93,9 +103,18 @@ jn.define('im/messenger/core/base/application', (require, exports, module) => {
 
 		async initDatabase()
 		{
-			if (!this.config.localStorageEnable)
+			if (!this.config.localStorage.enable)
 			{
 				Feature.disableLocalStorage();
+			}
+
+			if (this.config.localStorage.readOnly)
+			{
+				Feature.enableLocalStorageReadOnlyMode();
+			}
+			else
+			{
+				Feature.disableLocalStorageReadOnlyMode();
 			}
 
 			await this.updateDatabase();
@@ -119,7 +138,7 @@ jn.define('im/messenger/core/base/application', (require, exports, module) => {
 
 			if (!Feature.isLocalStorageEnabled)
 			{
-				if (this.config.localStorageEnable)
+				if (this.config.localStorage.enable)
 				{
 					// if the database is programmatically supported, but is disabled by the user
 					this.repository.drop();
@@ -131,7 +150,37 @@ jn.define('im/messenger/core/base/application', (require, exports, module) => {
 
 		createRepository()
 		{
-			this.repository = {
+			this.repository = this.getBaseRepository();
+
+			this.repository.drop = () => {
+				// TODO: temporary helper for development
+
+				this.repository.option.optionTable.drop();
+				this.repository.recent.recentTable.drop();
+				this.repository.dialog.dialogTable.drop();
+				this.repository.dialog.internal.dialogInternalTable.drop();
+				this.repository.user.userTable.drop();
+				this.repository.file.fileTable.drop();
+				this.repository.message.messageTable.drop();
+				this.repository.tempMessage.tempMessageTable.drop();
+				this.repository.reaction.reactionTable.drop();
+				this.repository.queue.queueTable.drop();
+				this.repository.smile.smileTable.drop();
+				this.repository.pinMessage.pinTable.drop();
+				this.repository.pinMessage.pinMessageTable.drop();
+				this.repository.copilot.copilotTable.drop();
+				// this.repository.counter.counterTable.drop();
+				// this.repository.sidebarFile.sidebarFileTable.drop(); TODO: The backend is not ready yet
+
+				Application.storageById(CacheNamespace + CacheName.draft).clear();
+
+				logger.warn('CoreApplication drop database complete');
+			};
+		}
+
+		getBaseRepository()
+		{
+			return {
 				option: new OptionRepository(),
 				recent: new RecentRepository(),
 				dialog: new DialogRepository(),
@@ -143,29 +192,9 @@ jn.define('im/messenger/core/base/application', (require, exports, module) => {
 				queue: new QueueRepository(),
 				smile: new SmileRepository(),
 				pinMessage: new PinMessageRepository(),
-			};
-
-			this.repository.drop = () => {
-				// TODO: temporary helper for development
-
-				this.repository.option.optionTable.drop();
-				this.repository.recent.recentTable.drop();
-				this.repository.dialog.dialogTable.drop();
-				this.repository.user.userTable.drop();
-				this.repository.file.fileTable.drop();
-				this.repository.message.messageTable.drop();
-				this.repository.tempMessage.tempMessageTable.drop();
-				this.repository.reaction.reactionTable.drop();
-				this.repository.queue.queueTable.drop();
-				this.repository.smile.smileTable.drop();
-				this.repository.pinMessage.pinTable.drop();
-				this.repository.pinMessage.pinMessageTable.drop();
-
-				Application.storageById(CacheNamespace + CacheName.chatRecent).clear();
-				Application.storageById(CacheNamespace + CacheName.copilotRecent).clear();
-				Application.storageById(CacheNamespace + CacheName.draft).clear();
-
-				logger.warn('CoreApplication drop database complete');
+				copilot: new CopilotRepository(),
+				// sidebarFile: new SidebarFileRepository(),
+				// counter: new CounterRepository(),
 			};
 		}
 
@@ -174,6 +203,7 @@ jn.define('im/messenger/core/base/application', (require, exports, module) => {
 			return clone({
 				applicationModel,
 				recentModel,
+				counterModel,
 				messagesModel,
 				usersModel,
 				dialoguesModel,
@@ -181,6 +211,7 @@ jn.define('im/messenger/core/base/application', (require, exports, module) => {
 				sidebarModel,
 				draftModel,
 				queueModel,
+				commentModel,
 			});
 		}
 
@@ -191,10 +222,15 @@ jn.define('im/messenger/core/base/application', (require, exports, module) => {
 			});
 		}
 
+		initMutationManager()
+		{
+			this.mutationManager = new MessengerMutationManager();
+		}
+
 		async initStoreManager()
 		{
 			this.storeManager = new VuexManager(this.getStore());
-			await this.storeManager.buildAsync();
+			await this.storeManager.buildAsync(this.getMutationManager());
 		}
 
 		initLocalStorageWriter()
@@ -241,19 +277,7 @@ jn.define('im/messenger/core/base/application', (require, exports, module) => {
 		}
 
 		/**
-		 * @return {{
-		 *  option: OptionRepository,
-		 *  recent: RecentRepository,
-		 *  dialog: DialogRepository,
-		 *  file: FileRepository,
-		 *  user: UserRepository,
-		 *  message: MessageRepository,
-		 *  tempMessage: TempMessageRepository,
-		 *  reaction: ReactionRepository
-		 *  queue: QueueRepository
-		 *  smile: SmileRepository,
-		 *  pinMessage: PinMessageRepository,
-		 * }}
+		 * @return {MessengerCoreRepository}
 		 */
 		getRepository()
 		{
@@ -269,6 +293,15 @@ jn.define('im/messenger/core/base/application', (require, exports, module) => {
 		}
 
 		/**
+		 * @protected
+		 * @return {MessengerMutationManager}
+		 */
+		getMutationManager()
+		{
+			return this.mutationManager;
+		}
+
+		/**
 		 * @return {MessengerCoreStoreManager}
 		 */
 		getStoreManager()
@@ -281,7 +314,7 @@ jn.define('im/messenger/core/base/application', (require, exports, module) => {
 			return this.store.getters['applicationModel/getStatus']();
 		}
 
-		setAppStatus(name, value)
+		async setAppStatus(name, value)
 		{
 			return this.store.dispatch('applicationModel/setStatus', { name, value });
 		}
@@ -291,6 +324,16 @@ jn.define('im/messenger/core/base/application', (require, exports, module) => {
 			this.inited = true;
 
 			logger.warn('CoreApplication.initComplete');
+		}
+
+		#getDefaultConfig()
+		{
+			return {
+				localStorage: {
+					enable: true,
+					readOnly: false,
+				},
+			};
 		}
 	}
 

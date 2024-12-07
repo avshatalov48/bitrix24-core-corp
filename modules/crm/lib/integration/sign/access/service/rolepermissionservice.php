@@ -332,7 +332,7 @@ abstract class RolePermissionService
 					{
 						$preparedPermissions[$roleId][$value] =
 							[
-								'VALUE' => $permission[$action]['-']
+								'VALUE' => is_array($permission[$action]['-']) ? $permission[$action]['-']['ATTR'] : $permission[$action]['-'],
 							]
 						;
 					}

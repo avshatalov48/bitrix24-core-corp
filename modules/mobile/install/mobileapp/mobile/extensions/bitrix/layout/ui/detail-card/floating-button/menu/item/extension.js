@@ -25,6 +25,7 @@ jn.define('layout/ui/detail-card/floating-button/menu/item', (require, exports, 
 	 * @property {?FloatingMenuItem} [parent]
 	 * @property {FloatingMenuItem[]} [nestedItems]
 	 * @property {?boolean} [shouldSaveInRecent]
+	 * @property {?boolean} [isAvailableRecentMenu]
 	 * @property {?string} [tabId]
 	 * @property {?boolean} [shouldLoadTab]
 	 * @property {bool} [disabled]
@@ -153,6 +154,14 @@ jn.define('layout/ui/detail-card/floating-button/menu/item', (require, exports, 
 		}
 
 		/**
+		 * @return {boolean}
+		 */
+		isAvailableRecentMenu()
+		{
+			return this.options.isAvailableRecentMenu ?? true;
+		}
+
+		/**
 		 * @public
 		 * @return {boolean}
 		 */
@@ -214,7 +223,7 @@ jn.define('layout/ui/detail-card/floating-button/menu/item', (require, exports, 
 		 */
 		getIcon()
 		{
-			return BX.prop.getString(this.options, 'icon', null);
+			return this.options?.icon || null;
 		}
 
 		/**
@@ -237,7 +246,7 @@ jn.define('layout/ui/detail-card/floating-button/menu/item', (require, exports, 
 				return 'recent';
 			}
 
-			return BX.prop.getString(this.options, 'sectionCode', ContextMenuSection.getDefaultSectionName());
+			return BX.prop.getString(this.options, 'sectionCode');
 		}
 
 		/**
@@ -254,12 +263,16 @@ jn.define('layout/ui/detail-card/floating-button/menu/item', (require, exports, 
 
 				if (this.getTabId() && this.shouldLoadTab())
 				{
-					promises.push(new Promise((resolve) => this.loadTab().then(resolve)));
+					promises.push(new Promise((resolve) => {
+						this.loadTab().then(resolve).catch(console.error);
+					}));
 				}
 
 				if (this.hasPreActionHandler())
 				{
-					promises.push(new Promise((resolve) => this.handlePreAction().then(resolve)));
+					promises.push(new Promise((resolve) => {
+						this.handlePreAction().then(resolve).catch(console.error);
+					}));
 				}
 
 				return (
@@ -351,8 +364,7 @@ jn.define('layout/ui/detail-card/floating-button/menu/item', (require, exports, 
 			const nestedItems = this.getNestedItems();
 
 			return nestedItems.reduce((acc, item) => {
-				acc.push(item);
-				acc.push(...item.getNestedItemsRecursive());
+				acc.push(item, ...item.getNestedItemsRecursive());
 
 				return acc;
 			}, []);
@@ -526,10 +538,14 @@ jn.define('layout/ui/detail-card/floating-button/menu/item', (require, exports, 
 
 			if (tabIsLoaded)
 			{
-				return promise.then(() => new Promise((resolve) => setTimeout(resolve, 500)));
+				return promise.then(() => new Promise((resolve) => {
+					setTimeout(resolve, 500);
+				}));
 			}
 
-			return promise.then(() => new Promise((resolve) => setTimeout(resolve, 200)));
+			return promise.then(() => new Promise((resolve) => {
+				setTimeout(resolve, 200);
+			}));
 		}
 
 		showSubMenu(items)

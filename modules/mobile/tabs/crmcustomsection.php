@@ -58,7 +58,8 @@ final class CrmCustomSection implements Tabable
 
 		foreach ($this->pages as $page)
 		{
-			if ($userPermissions->checkReadPermissions($page->getId()))
+			$entityTypeId = IntranetManager::getEntityTypeIdByPageSettings($page->getSettings());
+			if ($userPermissions->checkReadPermissions($entityTypeId))
 			{
 				return true;
 			}

@@ -478,7 +478,8 @@ class BizProcDocument
 			'disk_version',
 			'date',
 			'vote',
-			'url_preview'
+			'url_preview',
+			'snils',
 		);
 
 		$types = $USER_FIELD_MANAGER->getUserType();
@@ -1267,7 +1268,7 @@ class BizProcDocument
 			{
 				$GLOBALS['CBPVirtualDocumentCloneRowPrinted_'.$documentType] = 1;
 				?>
-				<script language="JavaScript">
+				<script>
 				function CBPVirtualDocumentCloneRow(tableId)
 				{
 					var tbl = document.getElementById(tableId);
@@ -2153,7 +2154,7 @@ class BizProcDocument
 			$result .= '<textarea id="WFSFormOptionsX" rows="5" cols="30">'.htmlspecialcharsbx($str).'</textarea><br />';
 			$result .= Loc::getMessage("DISK_IBD_DOCUMENT_XFORMOPTIONS1").'<br />';
 			$result .= Loc::getMessage("DISK_IBD_DOCUMENT_XFORMOPTIONS2").'<br />';
-			$result .= '<script type="text/javascript">
+			$result .= '<script>
 				function WFSFormOptionsXFunction()
 				{
 					var result = {};

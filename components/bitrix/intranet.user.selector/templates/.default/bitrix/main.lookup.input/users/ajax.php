@@ -18,7 +18,6 @@ __IncludeLang(__DIR__.'/lang/'.LANGUAGE_ID.'/'.basename(__FILE__));
 
 if ($_REQUEST['MODE'] == 'SEARCH')
 {
-	CUtil::JSPostUnescape();
 	$APPLICATION->RestartBuffer();
 	
 	$EXTERNAL = isset($_GET['EXTERNAL']) && $_GET['EXTERNAL'] != 'I' && CModule::IncludeModule('extranet') ? $_GET['EXTERNAL'] : 'I';

@@ -14,16 +14,19 @@ jn.define('communication/events/email', (require, exports, module) => {
 		{
 			let email;
 			let params;
+			let isEmailHidden;
 
 			if (Type.isPlainObject(value))
 			{
 				email = value.email;
 				params = value.params;
+				isEmailHidden = value.isEmailHidden;
 			}
 			else if (Type.isString(value))
 			{
 				email = value;
 				params = {};
+				isEmailHidden = false;
 			}
 
 			email = stringify(email).trim();
@@ -34,7 +37,7 @@ jn.define('communication/events/email', (require, exports, module) => {
 				return null;
 			}
 
-			return { email, params };
+			return { email, params, isEmailHidden };
 		}
 
 		async open()
@@ -53,7 +56,7 @@ jn.define('communication/events/email', (require, exports, module) => {
 
 			if (MailOpener)
 			{
-				const { email, params } = this.getValue();
+				const { email, params, isEmailHidden } = this.getValue();
 				const {
 					ownerId,
 					ownerType,
@@ -64,6 +67,7 @@ jn.define('communication/events/email', (require, exports, module) => {
 						email,
 						id: ownerId,
 						typeName: ownerType,
+						isEmailHidden,
 					}],
 					owner: params.owner,
 				});

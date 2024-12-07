@@ -42,6 +42,7 @@ $langAdditional = [
 	),
 	'MOBILE_EXT_LIVEFEED_USE_TASKS' => (
 		ModuleManager::isModuleInstalled('tasks')
+		&& ModuleManager::isModuleInstalled('tasksmobile')
 		&& (
 			!Loader::includeModule('bitrix24')
 			|| \CBitrix24BusinessTools::isToolAvailable($USER->getId(), 'tasks')
@@ -89,6 +90,7 @@ return [
 //	'css' => '/bitrix/js/mobile/livefeed/mobile.livefeed.css',
 	'lang_additional' => $langAdditional,
 	'rel' => [
+		'ui.analytics',
 		'main.core',
 		'main.core.events',
 		'mobile.utils',

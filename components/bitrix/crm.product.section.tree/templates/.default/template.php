@@ -14,7 +14,7 @@ $rootTitle = GetMessage('CRM_PRODUCT_SECTION_TREE_TITLE');
 ?>
 <div class="bx-crm-wf-section-name tal"><?php echo $rootTitle ?></div>
 <div id="crm-product-section-tree-<?= $component->getComponentId() ?>" style="display: none;"></div>
-<script type="text/javascript">
+<script>
 	BX.message({
 		"CRM_JS_STATUS_ACTION_SUCCESS": "<?=CUtil::JSEscape(GetMessage('CRM_JS_STATUS_ACTION_SUCCESS'))?>",
 		"CRM_JS_STATUS_ACTION_ERROR": "<?=CUtil::JSEscape(GetMessage('CRM_JS_STATUS_ACTION_ERROR'))?>",

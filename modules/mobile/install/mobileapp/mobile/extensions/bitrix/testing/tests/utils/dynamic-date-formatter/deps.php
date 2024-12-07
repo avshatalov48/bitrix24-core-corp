@@ -3,7 +3,7 @@
 return [
 	'extensions' => [
 		'testing',
-		'utils/date/dynamic-date-formatter',
+		'utils/date',
 		'utils/date/moment',
 		'utils/date/formats',
 	],

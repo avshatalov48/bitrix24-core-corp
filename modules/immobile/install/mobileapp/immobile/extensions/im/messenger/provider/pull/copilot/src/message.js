@@ -5,7 +5,7 @@
  */
 jn.define('im/messenger/provider/pull/copilot/message', (require, exports, module) => {
 	const { clone } = require('utils/object');
-	const { MessageBasePullHandler } = require('im/messenger/provider/pull/lib');
+	const { BaseMessagePullHandler } = require('im/messenger/provider/pull/base');
 	const { ChatTitle, ChatAvatar } = require('im/messenger/lib/element');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { Counters } = require('im/messenger/lib/counters');
@@ -20,7 +20,7 @@ jn.define('im/messenger/provider/pull/copilot/message', (require, exports, modul
 	/**
 	 * @class CopilotMessagePullHandler
 	 */
-	class CopilotMessagePullHandler extends MessageBasePullHandler
+	class CopilotMessagePullHandler extends BaseMessagePullHandler
 	{
 		constructor()
 		{
@@ -74,6 +74,7 @@ jn.define('im/messenger/provider/pull/copilot/message', (require, exports, modul
 				message: recentParams.message,
 				counter: recentParams.counter,
 				liked: false,
+				lastActivityDate: recentParams.dateLastActivity,
 			});
 
 			this.updateDialog(params)
@@ -103,62 +104,37 @@ jn.define('im/messenger/provider/pull/copilot/message', (require, exports, modul
 					this.saveShareDialogCache();
 				})
 			;
+			this.setCopilotModel(params);
 
 			const dialog = this.getDialog(dialogId);
-			if (!dialog || dialog.hasNextPage)
-			{
-				return;
-			}
-
-			const hasUnloadMessages = dialog.hasNextPage;
-			if (hasUnloadMessages)
+			if (!dialog)
 			{
 				return;
 			}
 
 			this.setUsers(params).then(() => {
 				this.setFiles(params).then(() => {
-					this.setMessage(params);
+					const hasUnloadMessages = dialog.hasNextPage;
+					if (hasUnloadMessages)
+					{
+						this.storeMessage(params);
+					}
+					else
+					{
+						this.setMessage(params);
+					}
+
 					this.checkWritingTimer(dialogId, userData);
 				});
 			});
 		}
 
-		handleMessageDelete(params, extra, command)
+		setCopilotModel(params)
 		{
-			logger.info(`${this.getClassName()}.handleMessageDelete and nothing happened`, params, extra);
-		}
-
-		/**
-		 * @param {MessagePullHandlerMessageDeleteCompleteParams} params
-		 * @param extra
-		 * @param command
-		 */
-		handleMessageDeleteComplete(params, extra, command)
-		{
-			logger.info(`${this.getClassName()}.handleMessageDeleteComplete and nothing happened`, params, extra);
-		}
-
-		/**
-		 * @param {AddReactionParams} params
-		 * @param extra
-		 * @param command
-		 */
-		handleAddReaction(params, extra, command)
-		{
-			logger.info(`${this.getClassName()}.handleAddReaction and nothing happened`, params);
-			// TODO add reaction action is not available now for copilot chat
-		}
-
-		/**
-		 * @param {DeleteReactionParams} params
-		 * @param extra
-		 * @param command
-		 */
-		handleDeleteReaction(params, extra, command)
-		{
-			logger.info(`${this.getClassName()}.handleDeleteReaction and nothing happened`, params);
-			// TODO delete reaction is not available now for copilot chat
+			this.store.dispatch('dialoguesModel/copilotModel/setCollection', {
+				dialogId: params.dialogId,
+				...params.copilot,
+			}).catch((err) => this.logger.error(`${this.getClassName()}.setCopilotModel.catch:`, err));
 		}
 
 		handleReadMessage(params, extra, command)

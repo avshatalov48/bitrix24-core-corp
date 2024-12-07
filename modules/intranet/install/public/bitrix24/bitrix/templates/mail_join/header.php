@@ -1,10 +1,10 @@
 <?php if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
 
 $site = LANGUAGE_ID == 'de'
-	? 'http://www.bitrix24.de'
+	? 'https://www.bitrix24.de'
 	: (\Bitrix\Main\Localization\Loc::getDefaultLang(LANGUAGE_ID) == 'ru'
-		? 'http://www.bitrix24.ru'
-		: 'http://www.bitrix24.com'
+		? 'https://www.bitrix24.ru'
+		: 'https://www.bitrix24.com'
 	);
 ?>
 <!DOCTYPE HTML>

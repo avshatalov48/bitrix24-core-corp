@@ -1,3 +1,4 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 (function (exports,ui_manual,ui_popupcomponentsmaker,main_core,ui_dialogs_messagebox,main_core_events) {

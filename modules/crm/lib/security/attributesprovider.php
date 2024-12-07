@@ -2,6 +2,7 @@
 
 namespace Bitrix\Crm\Security;
 
+use Bitrix\Crm\Integration\HumanResources\DepartmentQueries;
 use Bitrix\Crm\Service\UserPermissions;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Item;
@@ -287,12 +288,7 @@ class AttributesProvider
 
 	protected function getSubDepartmentsIds($departmentId): array
 	{
-		if (\Bitrix\Main\Loader::includeModule('intranet'))
-		{
-			return \CIntranetUtils::GetDeparmentsTree($departmentId, true);
-		}
-
-		return [];
+		return DepartmentQueries::getInstance()->getSubDepartmentsAccessCodesIds($departmentId);
 	}
 
 	protected function getEntityStatusIds(string $permissionEntityType, string $statusFieldName): array

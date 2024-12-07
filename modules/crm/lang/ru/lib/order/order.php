@@ -1,3 +1,3 @@
-<?
-$MESS["CRM_ORDER_ORDER_CREATED"] = "Заказ оформлен.";
-$MESS["CRM_ORDER_ORDER_CREATED_QUESTIONS_LEFT"] = "Остались вопросы? Пишите: #FEEDBACK_LINK#";
+<?php
+$MESS["CRM_ORDER_ORDER_CREATED_WITH_FEEDBACK_LINK"] = "Заказ оформлен. Остались вопросы? Пишите: #FEEDBACK_LINK#";
+$MESS["CRM_ORDER_ORDER_CREATED_WITHOUT_FEEDBACK_LINK"] = "Заказ оформлен.";

@@ -1,0 +1,10 @@
+<?php
+$MESS['TASKS_FLOW_FILTER_CREATOR_ID'] = 'Создатель';
+$MESS['TASKS_FLOW_FILTER_OWNER_ID'] = 'Администратор потока';
+$MESS['TASKS_FLOW_FILTER_ID'] = 'ID';
+$MESS['TASKS_FLOW_FILTER_GROUP_ID'] = 'Проект';
+$MESS['TASKS_FLOW_FILTER_EFFICIENCY'] = 'Эффективность';
+$MESS['TASKS_FLOW_FILTER_ACTIVE'] = 'Активный';
+$MESS['TASKS_FLOW_FILTER_PROBLEM'] = 'Требуют внимания';
+$MESS['TASKS_FLOW_FILTER_PRESET_MY'] = 'Мои';
+$MESS['TASKS_FLOW_FILTER_PRESET_ACTIVE'] = 'Активные';

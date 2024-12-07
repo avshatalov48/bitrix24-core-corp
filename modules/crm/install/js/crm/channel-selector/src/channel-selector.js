@@ -18,6 +18,8 @@ const CHANNEL_TYPE_IM = 'IM';
 const MAX_VISIBLE_ITEMS = 4;
 const MARKET_LINK = 'category/crm_robot_sms/';
 
+const LINK_IN_MESSAGE_PLACEHOLDER = '#LINK#';
+
 export type ChannelSelectorParameters = {
 	id: ?string,
 	title: ?string,
@@ -34,6 +36,8 @@ export type ChannelSelectorParameters = {
 	storageTypeId: ?number,
 	activityEditorId: ?string,
 	smsUrl: ?string,
+	isCombineMessageWithLink?: boolean,
+	isInsertLinkInMessage?: boolean,
 	hasVisibleChannels: boolean,
 	channelIcons: Array<string>,
 	contactCenterUrl: ?string,
@@ -89,6 +93,8 @@ export class List extends EventEmitter
 	storageTypeId: number;
 	activityEditorId: string;
 	smsUrl: string;
+	isCombineMessageWithLink: boolean = true;
+	#isInsertLinkInMessage: boolean = false;
 	communications: Object<string, CommunicationData>;
 	#loader: ?Loader;
 	#getLinkPromise: ?Promise;
@@ -111,6 +117,8 @@ export class List extends EventEmitter
 		this.files = Type.isArray(parameters.files) ? parameters.files : [];
 		this.activityEditorId = String(parameters.activityEditorId);
 		this.smsUrl = String(parameters.smsUrl);
+		this.isCombineMessageWithLink = Type.isBoolean(parameters.isCombineMessageWithLink) ? parameters.isCombineMessageWithLink : true;
+		this.#isInsertLinkInMessage = Type.isBoolean(parameters.isInsertLinkInMessage) ? parameters.isInsertLinkInMessage : false;
 		this.templateCode = parameters.templateCode ?? null;
 		this.setChannels(parameters.channels);
 		this.communications = Type.isPlainObject(parameters.communications) ? parameters.communications : {};
@@ -646,12 +654,9 @@ export class List extends EventEmitter
 			const requestParams = {
 				entityTypeId: this.entityTypeId,
 				entityId: this.entityId,
-				text: Loc.getMessage('CRM_CHANNEL_SELECTOR_MESSAGE_WITH_LINK', {
-					'#MESSAGE#': (channel.id === 'bitrix24' && this.fullBody) ? this.fullBody : this.body,
-					'#LINK#': link,
-				}),
+				text: this.#getSmsText(channel, link),
 				providerId: channel.id,
-				isProviderFixed: 'Y',
+				isProviderFixed: 'N',
 				canUseBitrix24Provider: 'Y',
 			};
 
@@ -671,6 +676,25 @@ export class List extends EventEmitter
 		}).catch((reason) => {
 			this.#showGetLinkErrorNotification(channelNode, reason);
 		});
+	}
+
+	#getSmsText(channel: ChannelData, link: string): string
+	{
+		const message = (channel.id === 'bitrix24' && this.fullBody) ? this.fullBody : this.body;
+		if (this.isCombineMessageWithLink)
+		{
+			return Loc.getMessage('CRM_CHANNEL_SELECTOR_MESSAGE_WITH_LINK', {
+				'#MESSAGE#': message,
+				'#LINK#': link,
+			});
+		}
+
+		if (this.#isInsertLinkInMessage)
+		{
+			return message.replace(LINK_IN_MESSAGE_PLACEHOLDER, link);
+		}
+
+		return message;
 	}
 
 	openMessenger(channel: ChannelData): void

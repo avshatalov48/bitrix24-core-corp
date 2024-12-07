@@ -2,6 +2,7 @@
 
 namespace Bitrix\Crm\Category\Entity;
 
+use Bitrix\Crm\CategoryIdentifier;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Result;
 
@@ -18,6 +19,11 @@ abstract class Category implements \JsonSerializable
 	public function getSingleName(): ?string
 	{
 		return null;
+	}
+
+	public function getCategoryIdentifier(): CategoryIdentifier
+	{
+		return new CategoryIdentifier($this->getEntityTypeId(), $this->getId());
 	}
 
 	public function getSingleNameIfPossible(): string

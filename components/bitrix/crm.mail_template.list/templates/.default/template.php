@@ -118,7 +118,7 @@ $APPLICATION->IncludeComponent(
 	),
 	$component
 );
-?><script type="text/javascript">
+?><script>
 	function crm_mail_template_delete_grid(title, message, btnTitle, path)
 	{
 		var d = new BX.PopupWindow(

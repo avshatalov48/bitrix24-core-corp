@@ -150,7 +150,7 @@ jn.define('crm/category-list', (require, exports, module) => {
 
 		isCategoryEnabled(category)
 		{
-			return this.state.enabled && !this.disabledCategoryIds.includes(category.categoryId);
+			return this.state.enabled && !this.disabledCategoryIds.includes(category.id);
 		}
 
 		get disabledCategoryIds()

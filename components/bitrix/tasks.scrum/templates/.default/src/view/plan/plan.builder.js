@@ -471,6 +471,11 @@ export class PlanBuilder extends EventEmitter
 		;
 	}
 
+	clearLoadItemsRepeatCounter(): void
+	{
+		this.loadItemsRepeatCounter.clear();
+	}
+
 	loadAllItems(entity: Entity): Promise
 	{
 		const requestData = {

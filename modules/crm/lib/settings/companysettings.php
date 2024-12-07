@@ -35,7 +35,7 @@ class CompanySettings
 		$this->enableOutmodedRequisites = new BooleanSetting('~CRM_ENABLE_COMPANY_OUTMODED_FIELDS', false);
 		$this->enableDeferredCleaning = new BooleanSetting('enable_company_deferred_cleaning', true);
 		$this->enableRecycleBin = new BooleanSetting('enable_company_recycle_bin', true);
-		$this->initIsFactoryEnabledSetting(\CCrmOwnerType::Company, false);
+		$this->initIsFactoryEnabledSetting(\CCrmOwnerType::Company);
 	}
 	/**
 	 * Get current instance

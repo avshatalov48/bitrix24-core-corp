@@ -1,4 +1,5 @@
-<?if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
+<?
+if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 {
 	die();
 }
@@ -12,8 +13,8 @@ $detailurl = $_REQUEST["detail_url"];
 $cache_path = '/mobile_cache/' . $action;
 $data = null;
 $action = $_REQUEST["mobile_action"];
-$arStructure = array();
-$arSections = array();
+$arStructure = [];
+$arSections = [];
 $curUserId = (int)$GLOBALS["USER"]->GetID();
 
 CModule::IncludeModule('tasks');
@@ -42,23 +43,14 @@ else
 	$GLOBALS["CACHE_MANAGER"]->RegisterTag("USER_CARD");
 	$GLOBALS["CACHE_MANAGER"]->RegisterTag("iblock_id_" . $IBlockID);
 
-	$tmpData = array(
+	$tmpData = [
 		"NAME" => GetMessage("MD_EMPLOYEES_ALL"),
 		"ID" => 0,
-		"OUTSECTION" => true
-	);
+		"OUTSECTION" => true,
+	];
 
-	if (SITE_CHARSET != "utf-8")
-	{
-		$tmpData = $APPLICATION->ConvertCharsetArray($tmpData, SITE_CHARSET, "utf-8");
-	}
-
-	$data = Array(
-		$tmpData
-	);
-	$filter = array(
-		"ACTIVE" => "Y"
-	);
+	$data = [$tmpData];
+	$filter = ["ACTIVE" => "Y"];
 
 	/*
 	if (IsModuleInstalled('bitrix24'))
@@ -67,29 +59,40 @@ else
 
 	$filter['UF_DEPARTMENT'] = $arSubDeps;
 
-	$arParams = Array("FIELDS" => Array("NAME", "ID", "PERSONAL_PHOTO", "LAST_NAME", "WORK_POSITION"));
-	if ($withTags == "Y")
+	$arParams = [
+		"FIELDS" => [
+			"NAME",
+			"ID",
+			"PERSONAL_PHOTO",
+			"LAST_NAME",
+			"WORK_POSITION",
+		],
+	];
+	if ($withTags === "Y")
 	{
-		$arDepartaments = array();
-		$arSectionFilter = array(
+		$arDepartaments = [];
+		$arSectionFilter = [
 			'IBLOCK_ID' => $IBlockID,
-			'ID' => $arSubDeps
-		);
+			'ID' => $arSubDeps,
+		];
 
 		$dbRes = CIBlockSection::GetList(
-			array('LEFT_MARGIN' => 'DESC'),
+			['LEFT_MARGIN' => 'DESC'],
 			$arSectionFilter,
 			false,
-			array('ID', 'NAME')
+			['ID', 'NAME']
 		);
 
 		while ($arRes = $dbRes->Fetch())
 			$arDepartaments[$arRes["ID"]] = $arRes["NAME"];
-		$arParams["SELECT"] = Array("UF_DEPARTMENT");
+		$arParams["SELECT"] = ["UF_DEPARTMENT"];
 	}
 
 	$dbUsers = CUser::GetList(
-		array("last_name" => "asc", "name" => "asc"),
+		[
+			"last_name" => "asc",
+			"name" => "asc",
+		],
 		'',
 		$filter,
 		$arParams
@@ -106,7 +109,10 @@ else
 		{
 			$arImage = CFile::ResizeImageGet(
 				$userData["PERSONAL_PHOTO"],
-				array("width" => 64, "height" => 64),
+				[
+					"width" => 64,
+					"height" => 64,
+				],
 				BX_RESIZE_IMAGE_EXACT,
 				false,
 				false,
@@ -119,27 +125,24 @@ else
 			$img_src = false;
 		}
 
-		$tmpData = Array(
+		$tmpData = [
 			"NAME" => CUser::FormatName(CSite::GetNameFormat(false), $userData, true),
 			"ID" => $userData["ID"],
 			"IMAGE" => $img_src,
 			"URL" => $detailurl . $userData["ID"],
-			"TAGS" => ""
-		);
-		if ($withTags == "Y")
+			"TAGS" => "",
+		];
+		if ($withTags === "Y")
 		{
-			$tmpTags = Array($userData["WORK_POSITION"]);
-			for ($i = 0; $i < count($userData["UF_DEPARTMENT"]); $i++)
+			$tmpTags = [$userData["WORK_POSITION"]];
+			$departmentCount = count($userData["UF_DEPARTMENT"]);
+			for ($i = 0; $i < $departmentCount; $i++)
 			{
 				$tmpTags[] = $arDepartaments[$userData["UF_DEPARTMENT"][$i]];
 			}
 			$tmpData["TAGS"] = implode(",", $tmpTags);
 		}
 
-		if (SITE_CHARSET != "utf-8")
-		{
-			$tmpData = $APPLICATION->ConvertCharsetArray($tmpData, SITE_CHARSET, "utf-8");
-		}
 		$data[] = $tmpData;
 	}
 
@@ -150,10 +153,10 @@ else
 	if ($cache->StartDataCache())
 	{
 		$cache->EndDataCache(
-			array(
+			[
 				"DATA" => $data,
-				"TYPE" => $tableType
-			)
+				"TYPE" => $tableType,
+			]
 		);
 	}
 }
@@ -161,4 +164,3 @@ $tableTitle = GetMessage("MD_EMPLOYEES_TITLE");
 $tableData = AddTableData($tableData, $data, $tableTitle, $tableType);
 
 return $tableData;
-					

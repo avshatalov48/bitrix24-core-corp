@@ -32,21 +32,20 @@ BX.Tasks.KanbanComponent.enableCustomSort = function(event, item)
 		return;
 	}
 	BX.addClass(BX(sortDescItem.layout.item), "menu-popup-item-accept");
-	BX.ajax({
-		method: "POST",
-		dataType: "json",
-		url: ajaxHandlerPath,
+
+	BX.ajax.runComponentAction('bitrix:tasks.kanban', 'setNewTaskOrder', {
+		mode: 'class',
 		data: {
-			action: "setNewTaskOrder",
 			order: sortDescItem.params.order,
-			sessid: BX.bitrix_sessid(),
 			params: ajaxParams
 		},
-		onsuccess: function(data)
-		{
-			BX.onCustomEvent(this, "onTaskSortChanged", [data]);
-		}
-	});
+	}).then(
+		(response) => {
+			const data = response.data;
+			BX.onCustomEvent(this, 'onTaskSortChanged', [data]);
+		},
+	);
+
 	BX.Tasks.KanbanComponent.openedCustomSort = true;
 }
 
@@ -106,33 +105,30 @@ BX.Tasks.KanbanComponent.ClickSort = function(event, item)
 	// refresh icons and save selected
 	if (!BX.hasClass(BX(item.layout.item), "menu-popup-item-accept"))
 	{
-			var menuItems = item.menuWindow.menuItems;
-			for (var i = 0, c = menuItems.length; i < c; i++)
-			{
-				BX.removeClass(BX(menuItems[i].layout.item), 'menu-popup-item-accept');
-			}
-			BX.addClass(BX(item.layout.item), "menu-popup-item-accept");
-			if (order === 'asc' || order === 'desc')
-			{
-				var sortMenuItem = BX.Tasks.KanbanComponent.getMySortButton(event, item);
-				sortMenuItem && BX.addClass(BX(sortMenuItem.layout.item), "menu-popup-item-accept");
-			}
+		var menuItems = item.menuWindow.menuItems;
+		for (var i = 0, c = menuItems.length; i < c; i++)
+		{
+			BX.removeClass(BX(menuItems[i].layout.item), 'menu-popup-item-accept');
+		}
+		BX.addClass(BX(item.layout.item), "menu-popup-item-accept");
+		if (order === 'asc' || order === 'desc')
+		{
+			var sortMenuItem = BX.Tasks.KanbanComponent.getMySortButton(event, item);
+			sortMenuItem && BX.addClass(BX(sortMenuItem.layout.item), "menu-popup-item-accept");
+		}
 
-		BX.ajax({
-			method: "POST",
-			dataType: "json",
-			url: ajaxHandlerPath,
+		BX.ajax.runComponentAction('bitrix:tasks.kanban', 'setNewTaskOrder', {
+			mode: 'class',
 			data: {
-				action: "setNewTaskOrder",
 				order: order,
-				sessid: BX.bitrix_sessid(),
-				params: ajaxParams
+				params: ajaxParams,
 			},
-			onsuccess: function(data)
-			{
-				BX.onCustomEvent(this, "onTaskSortChanged", [data]);
-			}
-		});
+		}).then(
+			(response) => {
+				const data = response.data;
+				BX.onCustomEvent(this, 'onTaskSortChanged', [data]);
+			},
+		);
 	}
 };
 

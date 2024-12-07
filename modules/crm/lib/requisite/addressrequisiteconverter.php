@@ -119,14 +119,15 @@ class AddressRequisiteConverter extends EntityRequisiteConverter
 		if(!$isFound && $processedQty === 0)
 		{
 			$requisiteAddResult = $requisiteEntity->add(
-				array(
+				[
 					'ENTITY_TYPE_ID' => $this->entityTypeID,
 					'ENTITY_ID' => $entityID,
 					'PRESET_ID' => $this->presetID,
 					'NAME' => \CCrmOwnerType::GetCaption($this->entityTypeID, $entityID, false),
 					'SORT' => 500,
-					'ACTIVE' => 'Y'
-				)
+					'ACTIVE' => 'Y',
+					'ADDRESS_ONLY' => 'Y',
+				]
 			);
 			if($requisiteAddResult->isSuccess())
 			{

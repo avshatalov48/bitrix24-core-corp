@@ -21,13 +21,19 @@ $arExcelFields = array(
 	"ADD_IN_REPORT",
 	"GROUP_ID"
 );
+$locMap = [
+	'START_DATE_PLAN' => 'START_DATE_PLAN',
+	'END_DATE_PLAN' => 'END_DATE_PLAN',
+];
 ?>
 <meta http-equiv="Content-type" content="text/html;charset=<?echo LANG_CHARSET?>" />
 <table border="1">
 	<thead>
 		<tr>
-			<?php foreach($arExcelFields as $field):?>
-				<th><?php echo GetMessage("TASKS_EXCEL_".$field)?></th>
+			<?php foreach($arExcelFields as $field):
+				$field = $locMap[$field] ?? $field;
+				$header = GetMessage("TASKS_EXCEL_".$field);
+			?><th><?php echo $header?></th>
 			<?php endforeach?>
 		</tr>
 	</thead>
@@ -57,7 +63,11 @@ $arExcelFields = array(
 								$arResult["TASKS"][$i][$field] = GetMessage("TASKS_PRIORITY_".$arResult["TASKS"][$i][$field]);
 								break;
 							case "REAL_STATUS":
-								$arResult["TASKS"][$i][$field] = GetMessage("TASKS_STATUS_".$arResult["TASKS"][$i][$field]);
+								$arResult['TASKS'][$i][$field] =
+									GetMessage('TASKS_STATUS_' . $arResult['TASKS'][$i][$field] . '_MSGVER_1')
+									?? GetMessage('TASKS_STATUS_' . $arResult['TASKS'][$i][$field])
+								;
+
 								break;
 							case "MARK":
 								$arResult["TASKS"][$i][$field] = $arResult["TASKS"][$i][$field] ? GetMessage("TASKS_MARK_".$arResult["TASKS"][$i][$field]) : GetMessage("TASKS_MARK_NONE");

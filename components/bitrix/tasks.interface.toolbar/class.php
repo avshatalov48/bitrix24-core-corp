@@ -59,7 +59,7 @@ class TasksToolbarComponent extends TasksBaseComponent
 		$this->listCtrl = Filter\Task::getListCtrlInstance();
 		$this->listCtrl->useState($this->listState);
 
-		$this->arResult['SHOW_COUNTERS'] = $this->hasAccessToCounters();
+		$this->arResult['SHOW_COUNTERS'] = $this->showCounters() && $this->hasAccessToCounters();
 		$this->arResult['SPOTLIGHT_SIMPLE_COUNTERS'] = (
 			isset($this->arParams['SHOW_VIEW_MODE'])
 			&& $this->arParams['SHOW_VIEW_MODE'] === 'Y'
@@ -130,6 +130,11 @@ class TasksToolbarComponent extends TasksBaseComponent
 			|| User::isSuper($userId)
 			|| CTasks::IsSubordinate($ownerId, $userId)
 		;
+	}
+
+	private function showCounters(): bool
+	{
+		return ($this->arParams['SHOW_COUNTERS_TOOLBAR'] ?? 'Y') === 'Y';
 	}
 
 	/**

@@ -7,8 +7,8 @@
  */
 namespace Bitrix\Crm;
 
-use Bitrix\Crm\Attribute\Entity\FieldAttributeTable;
 use Bitrix\Crm\Attribute\FieldAttributeManager;
+use Bitrix\Crm\Security\StagePermissions;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Factory;
 use Bitrix\Main\Entity;
@@ -88,7 +88,7 @@ class StatusTable extends Entity\DataManager
 				->configureDefaultValue('N'),
 			(new ORM\Fields\StringField('COLOR'))
 				->configureSize(10)
-				->addFetchDataModifier([self::class, 'colorFetchModifier'],),
+				->addFetchDataModifier([self::class, 'colorFetchModifier']),
 			(new ORM\Fields\EnumField('SEMANTICS'))
 				->configureValues([
 					PhaseSemantics::PROCESS,
@@ -103,27 +103,71 @@ class StatusTable extends Entity\DataManager
 	{
 		$result = new ORM\EventResult();
 		$fields = $event->getParameter('fields');
+		$sort = (int)$fields['SORT'];
+		$successStageSort = static::getSuccessStageSort($fields['ENTITY_ID']);
 
-		if(isset($fields['SEMANTICS']) && $fields['SEMANTICS'] === PhaseSemantics::SUCCESS)
+		if (isset($fields['SEMANTICS']))
 		{
-			$existingSuccessStatus = static::getList([
-				'select' => ['ID'],
-				'filter' => [
-					'=ENTITY_ID' => $fields['ENTITY_ID'],
-					'=SEMANTICS' => PhaseSemantics::SUCCESS,
-				],
-				'limit' => 1,
-			])->fetch();
-			if($existingSuccessStatus)
+			if ($fields['SEMANTICS'] === PhaseSemantics::SUCCESS)
 			{
-				$result->addError(new ORM\EntityError(Loc::getMessage('CRM_STATUS_MORE_THAN_ONE_SUCCESS_ERROR')));
+				$existingSuccessStatus = static::getList([
+					'select' => ['ID'],
+					'filter' => [
+						'=ENTITY_ID' => $fields['ENTITY_ID'],
+						'=SEMANTICS' => PhaseSemantics::SUCCESS,
+					],
+					'limit' => 1,
+				])->fetch();
+				if ($existingSuccessStatus)
+				{
+					$result->addError(
+						new ORM\EntityError(Loc::getMessage('CRM_STATUS_MORE_THAN_ONE_SUCCESS_ERROR'))
+					);
+				}
+			}
+			else if ($fields['SEMANTICS'] === PhaseSemantics::FAILURE)
+			{
+				if (isset($successStageSort) && $sort <= $successStageSort)
+				{
+					$result->addError(
+						new ORM\EntityError(Loc::getMessage('CRM_STATUS_INCORRECT_SEMANTIC_SORT_ERROR'))
+					);
+				}
+			}
+			else if ($fields['SEMANTICS'] === PhaseSemantics::PROCESS)
+			{
+				$result->modifyFields([
+					'SEMANTICS' => null,
+				]);
+				if (isset($successStageSort) && $sort >= $successStageSort)
+				{
+					$result->addError(
+						new ORM\EntityError(Loc::getMessage('CRM_STATUS_INCORRECT_PROCESS_SEMANTIC_SORT_ERROR'))
+					);
+				}
+			}
+			else
+			{
+				$result->addError(
+					new ORM\EntityError(Loc::getMessage('CRM_STATUS_UNSUPPORTED_SEMANTIC_ERROR'))
+				);
+			}
+		}
+		else
+		{
+			$successStageSort = static::getSuccessStageSort($fields['ENTITY_ID']);
+			if (isset($successStageSort) && $sort > $successStageSort)
+			{
+				$result->modifyFields([
+					'SEMANTICS' => PhaseSemantics::FAILURE,
+				]);
 			}
 		}
 
 		return $result;
 	}
 
-	public static function onAfterAdd(Event $event)
+	public static function onAfterAdd(Event $event): void
 	{
 		/** @var EO_Status $status */
 		$status = $event->getParameter('object');
@@ -429,6 +473,20 @@ class StatusTable extends Entity\DataManager
 		static::$statusesCache = [];
 	}
 
+	protected static function getSuccessStageSort(string $entityId): ?int
+	{
+		$statuses = static::getStatusesByEntityId($entityId);
+		$list = array_column(
+			array_filter(
+				$statuses,
+				static fn(array $row) => in_array($row['SEMANTICS'], [PhaseSemantics::SUCCESS], true)
+			),
+			'SORT'
+		);
+
+		return empty($list) ? null : (int)min($list);
+	}
+
 	/**
 	 * @param string $entityId
 	 *
@@ -455,6 +513,8 @@ class StatusTable extends Entity\DataManager
 		{
 			$result[$status['STATUS_ID']] = $status;
 		}
+
+		StagePermissions::fillAllPermissionsByStages($result);
 
 		return $result;
 	}

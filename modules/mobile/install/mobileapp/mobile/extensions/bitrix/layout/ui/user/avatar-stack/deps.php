@@ -2,7 +2,7 @@
 
 return [
 	'extensions' => [
-		'utils/object',
-		'layout/ui/user/avatar',
+		'tokens',
+		'ui-system/blocks/avatar-stack'
 	]
 ];

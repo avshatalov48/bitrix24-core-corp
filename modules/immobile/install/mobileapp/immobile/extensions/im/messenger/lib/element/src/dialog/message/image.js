@@ -2,9 +2,9 @@
  * @module im/messenger/lib/element/dialog/message/image
  */
 jn.define('im/messenger/lib/element/dialog/message/image', (require, exports, module) => {
-	const { Type } = require('type');
-
+	const { MessageType } = require('im/messenger/const');
 	const { Message } = require('im/messenger/lib/element/dialog/message/base');
+	const { Image } = require('im/messenger/lib/element/dialog/message/element/image/image');
 
 	/**
 	 * @class ImageMessage
@@ -20,93 +20,31 @@ jn.define('im/messenger/lib/element/dialog/message/image', (require, exports, mo
 		{
 			super(modelMessage, options);
 
-			/* region deprecated properties */
-			this.imageUrl = null;
-			this.previewParams = {
-				height: 0,
-				width: 0,
-			};
-			/* end region */
-
-			this.image = {
-				id: 0,
-				url: null,
-				previewParams: {
-					height: 0,
-					width: 0,
-				},
-			};
-
-			this.setImageId(file.id);
-			this.setImageUrl(file.urlShow);
 			this.setShowUsername(modelMessage, false);
 
 			if (modelMessage.text)
 			{
-				this.setMessage(modelMessage.text);
+				this.setMessage(modelMessage.text, { dialogId: options.dialogId });
 			}
 
-			this.setPreviewParams(file.image);
 			this.setLoadText();
+
+			this.image = Image.createByFileModel(file).toMessageFormat();
+
+			/* region deprecated properties */
+			this.imageUrl = this.image.url;
+			this.previewParams = this.image.previewParams;
+			/* end region */
 		}
 
 		getType()
 		{
-			return 'image';
+			return MessageType.image;
 		}
 
 		setShowTail()
 		{
 			return this;
-		}
-
-		setImageId(imageId)
-		{
-			if (!Type.isNumber(imageId))
-			{
-				return;
-			}
-
-			this.image.id = imageId.toString();
-		}
-
-		setImageUrl(imageUrl)
-		{
-			if (!Type.isStringFilled(imageUrl))
-			{
-				return;
-			}
-
-			this.imageUrl = imageUrl;
-			this.image.url = imageUrl;
-		}
-
-		setPreviewParams(param)
-		{
-			if (Type.isObject(param))
-			{
-				this.previewParams = {
-					height: param.height || 0,
-					width: param.width || 0,
-				};
-
-				this.image.previewParams = {
-					height: param.height || 0,
-					width: param.width || 0,
-				};
-			}
-			else
-			{
-				this.previewParams = {
-					height: 0,
-					width: 0,
-				};
-
-				this.image.previewParams = {
-					height: 0,
-					width: 0,
-				};
-			}
 		}
 	}
 

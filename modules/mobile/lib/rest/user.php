@@ -142,7 +142,7 @@ class User extends \IRestService
 				if($status)
 				{
 					$users[$index]['STATUS'] = $status;
-					$status = toUpper($status);
+					$status = mb_strtoupper($status);
 					$users[$index]['STATUS_NAME'] = Loc::getMessage("MOBILE_REST_USER_STATUS_{$status}");
 				}
 			}

@@ -1,11 +1,11 @@
 (() => {
 	const require = (ext) => jn.require(ext);
 
-	const AppTheme = require('apptheme');
 	const { CalendarEventListView } = require('calendar/event-list-view');
 	const { EventAjax } = require('calendar/ajax');
 	const { CalendarLoader } = require('calendar/layout/ui/loader');
 	const { Search } = require('calendar/event-list-view/search');
+	const { Color } = require('tokens');
 
 	/**
 	 * @class CalendarEventList
@@ -85,7 +85,7 @@
 			return View(
 				{
 					style: {
-						backgroundColor: AppTheme.colors.base8,
+						backgroundColor: Color.bgContentPrimary.toHex(),
 					},
 				},
 				this.state.loading ? CalendarLoader() : this.renderContent(),

@@ -1,4 +1,6 @@
 <?php
+$MESS["IMMOBILE_RECENT_VIEW_EMPTY_CHANNEL_LOWER_TEXT"] = "There are no channels.\nYou can create your channel now.";
+$MESS["IMMOBILE_RECENT_VIEW_EMPTY_CHANNEL_UPPER_TEXT"] = "Channels";
 $MESS["IMMOBILE_RECENT_VIEW_EMPTY_COPILOT_LOWER_TEXT"] = "Hello! I'm your AI aid. I'm here to discuss ideas, create or rewrite a text.";
 $MESS["IMMOBILE_RECENT_VIEW_EMPTY_COPILOT_UPPER_TEXT"] = "CoPilot";
 $MESS["IMMOBILE_RECENT_VIEW_EMPTY_EMPTY_BUTTON"] = "Start Communicating";

@@ -5,7 +5,6 @@ jn.define('layout/list-view-queue-worker', (require, exports, module) => {
 	/**
 	 * @class ListViewQueueWorker
 	 */
-
 	const DEFAULT_ANIMATION = 'automatic';
 
 	class ListViewQueueWorker
@@ -16,10 +15,11 @@ jn.define('layout/list-view-queue-worker', (require, exports, module) => {
 
 			this.inProgress = false;
 			this.listViewRef = null;
+			this.result = new Set();
 		}
 
 		/**
-		 * @return ListView
+		 * @return ListViewMethods
 		 */
 		getListViewRef()
 		{
@@ -158,7 +158,9 @@ jn.define('layout/list-view-queue-worker', (require, exports, module) => {
 			return this.add({
 				name: 'deleteRowsByKeys',
 				task: () => new Promise((resolve) => {
-					this.listViewRef.deleteRowsByKeys(preparedKeys, animation, resolve);
+					this.listViewRef.deleteRowsByKeys(preparedKeys, animation, () => {
+						resolve(keys);
+					});
 				}),
 			}).run();
 		}
@@ -194,27 +196,22 @@ jn.define('layout/list-view-queue-worker', (require, exports, module) => {
 
 		/**
 		 * @public
-		 * @return {void}
+		 * @return {Promise<void>}
 		 */
-		run()
+		async run()
 		{
 			if (!this.inProgress && this.queueList.length > 0)
 			{
 				this.inProgress = true;
-				const executablePromise = this.queueList.shift();
+				const executableTask = this.queueList.shift();
+				const promiseResult = await executableTask.task().catch(console.error);
+				this.result.add({ name: executableTask.name, result: promiseResult });
+				this.inProgress = false;
 
-				return executablePromise.task()
-					.then(() => {
-						this.inProgress = false;
-
-						return this.run();
-					}).catch(() => {
-						this.inProgress = false;
-						throw new Error(`Error in queue execution ${executablePromise.name}`);
-					});
+				return this.run();
 			}
 
-			return Promise.resolve();
+			return Promise.resolve(this.#getResult(true));
 		}
 
 		/**
@@ -225,6 +222,27 @@ jn.define('layout/list-view-queue-worker', (require, exports, module) => {
 		prepareAddArray(values)
 		{
 			return Array.isArray(values) ? values : [values];
+		}
+
+		#clearResult()
+		{
+			this.result.clear();
+		}
+
+		/**
+		 * @param {boolean} clear
+		 * @returns {Object[]}
+		 */
+		#getResult(clear = false)
+		{
+			const result = [...this.result.values()];
+
+			if (clear)
+			{
+				this.#clearResult();
+			}
+
+			return result;
 		}
 	}
 

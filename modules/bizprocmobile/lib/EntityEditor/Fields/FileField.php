@@ -96,7 +96,13 @@ class FileField extends BaseField
 
 		if ($this->controller && is_array($value))
 		{
-			$ids = array_column(array_filter($value, static fn($singleValue) => is_numeric($singleValue['id'])), 'id');
+			$ids = array_column(
+				array_filter(
+					$value,
+					static fn($singleValue) => is_array($singleValue) && is_numeric($singleValue['id'] ?? null)
+				),
+				'id'
+			);
 
 			$uploader = new \Bitrix\UI\FileUploader\Uploader($this->controller);
 			$pendingFiles = $uploader->getPendingFiles(

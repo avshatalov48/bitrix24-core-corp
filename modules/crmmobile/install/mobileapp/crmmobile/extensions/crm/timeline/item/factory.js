@@ -11,6 +11,7 @@ jn.define('crm/timeline/item/factory', (require, exports, module) => {
 		Modification,
 		OpenlineChat,
 		VisitActivity,
+		TaskActivity,
 	} = require('crm/timeline/item/custom-types');
 
 	/**
@@ -44,6 +45,7 @@ jn.define('crm/timeline/item/factory', (require, exports, module) => {
 		'Activity:Payment',
 		'Activity:Sms',
 		'Activity:Notification',
+		'Activity:Whatsapp',
 		'PaymentPaid',
 		'PaymentViewed',
 		'PaymentNotViewed',
@@ -86,6 +88,7 @@ jn.define('crm/timeline/item/factory', (require, exports, module) => {
 		'Activity:Call': CallActivity,
 		'Activity:OpenLine': OpenlineChat,
 		'Activity:Visit': VisitActivity,
+		'Activity:TasksTask': TaskActivity,
 	};
 
 	/**

@@ -3,6 +3,7 @@
 return [
 	'extensions' => [
 		'utils/uuid',
+		'analytics',
 		'im:messenger/const',
 		'im:messenger/lib/params',
 		'im:messenger/lib/logger',

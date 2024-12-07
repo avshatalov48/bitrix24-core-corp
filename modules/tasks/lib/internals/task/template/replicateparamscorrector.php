@@ -270,7 +270,7 @@ final class ReplicateParamsCorrector
 		{
 			return '';
 		}
-		$nextExecutionTime = $result->getData()['time'] -  User::getTimeZoneOffsetCurrentUser();
+		$nextExecutionTime = $result->getData()['time'];
 		return DateTime::createFromTimestamp($nextExecutionTime)->disableUserTime()->toString();
 	}
 

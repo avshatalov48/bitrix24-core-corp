@@ -89,7 +89,7 @@ Extension::load([
 	'ui.counter',
 	'ui.label',
 	'ui.tour',
-	'tasks.runtime',
+	'pull.queuemanager',
 ]);
 
 $APPLICATION->SetAdditionalCSS("/bitrix/js/intranet/intranet-common.css");
@@ -142,7 +142,7 @@ if (isset($arParams['INCLUDE_INTERFACE_HEADER']) && $arParams['INCLUDE_INTERFACE
 		)
 		|| $isMyPlan
 		|| $isTimeline
-		|| !($workMode == StagesTable::WORK_MODE_GROUP && $arParams['GROUP_ID'] > 0)
+		|| !($workMode === StagesTable::WORK_MODE_GROUP && $arParams['GROUP_ID'] > 0)
 	);
 
 	$group = Bitrix\Socialnetwork\Item\Workgroup::getById($arParams['GROUP_ID']);
@@ -334,7 +334,7 @@ else
 	endif; ?>
 </div>
 
-<script type="text/javascript">
+<script>
 	BX.Tasks.KanbanComponent.defaultPresetId = '<?=$arResult['DEFAULT_PRESET_KEY']?>';
 	var ajaxHandlerPath = "<?= $this->GetComponent()->getPath()?>/ajax.php";
 

@@ -1,0 +1,3 @@
+<?php
+$MESS['SIGN_B2E_EMPLOYEE_TEMPLATE_LIST_ADD_NEW_TITLE'] = 'Добавить';
+$MESS['SIGN_B2E_EMPLOYEE_TEMPLATE_LIST_TITLE'] = 'Шаблоны документов';

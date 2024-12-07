@@ -5,6 +5,7 @@
  */
 jn.define('im/messenger/provider/service/classes/chat-data-extractor', (require, exports, module) => {
 	const { UserManager } = require('im/messenger/lib/user-manager');
+	const { DialogType } = require('im/messenger/const');
 
 	/**
 	 * @class ChatDataExtractor
@@ -30,7 +31,7 @@ jn.define('im/messenger/provider/service/classes/chat-data-extractor', (require,
 
 		isOpenlinesChat()
 		{
-			return this.restResult.chat.type === ChatType.lines;
+			return this.restResult.chat.type === DialogType.lines;
 		}
 
 		getMainChat()
@@ -46,6 +47,7 @@ jn.define('im/messenger/provider/service/classes/chat-data-extractor', (require,
 		{
 			const mainChat = {
 				...this.restResult.chat,
+				tariffRestrictions: this.getTariffRestrictions(),
 				hasPrevPage: this.restResult.hasPrevPage,
 				hasNextPage: this.restResult.hasNextPage,
 			};
@@ -64,6 +66,11 @@ jn.define('im/messenger/provider/service/classes/chat-data-extractor', (require,
 			});
 
 			return Object.values(chats);
+		}
+
+		getTariffRestrictions()
+		{
+			return this.restResult?.tariffRestrictions;
 		}
 
 		getFiles()
@@ -86,9 +93,6 @@ jn.define('im/messenger/provider/service/classes/chat-data-extractor', (require,
 			return this.restResult.messages ?? [];
 		}
 
-		/**
-		 * @return {Array<RawMessage>}
-		 */
 		getMessagesToStore()
 		{
 			return this.restResult.additionalMessages ?? [];
@@ -131,9 +135,19 @@ jn.define('im/messenger/provider/service/classes/chat-data-extractor', (require,
 			return pinnedMessageIds;
 		}
 
+		getCommentInfo()
+		{
+			return this.restResult.commentInfo ?? [];
+		}
+
 		getReactions()
 		{
 			return this.restResult.reactions ?? [];
+		}
+
+		getCopilot()
+		{
+			return this.restResult.copilot ?? {};
 		}
 	}
 

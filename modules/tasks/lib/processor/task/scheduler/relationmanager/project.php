@@ -153,7 +153,7 @@ final class Project extends \Bitrix\Tasks\Processor\Task\Scheduler\RelationManag
 	 */
 	private function updateRelatedTasks($id, array $relations)
 	{
-		if(is_array($relations[$id]))
+		if(is_array($relations[$id] ?? null))
 		{
 			foreach($relations[$id] as $relation)
 			{
@@ -216,7 +216,7 @@ final class Project extends \Bitrix\Tasks\Processor\Task\Scheduler\RelationManag
 		{
 			$limit++;
 			$nextId = array_shift($queue);
-			if($met[$nextId])
+			if($met[$nextId] ?? null)
 			{
 				//$result->addError('ILLEGAL_STRUCTURE.DEPTH', 'Oops, there is a structure loop ('.$nextId.' met twice)');
 				//break;
@@ -224,7 +224,7 @@ final class Project extends \Bitrix\Tasks\Processor\Task\Scheduler\RelationManag
 			}
 			$met[$nextId] = true;
 
-			if(is_array($tasks[$nextId]))
+			if(is_array($tasks[$nextId] ?? null))
 			{
 				foreach($tasks[$nextId] as $nextSubId => $nextSub)
 				{

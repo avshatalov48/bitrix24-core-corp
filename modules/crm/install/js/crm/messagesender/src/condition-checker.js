@@ -248,7 +248,7 @@ export class ConditionChecker
 
 			ajax.runAction('imconnector.Openlines.list', { data: ajaxParameters })
 				.then(({ data }) => {
-					if (data.length > 0)
+					if (Type.isArrayFilled(data))
 					{
 						const { lineId } = data[data.length - 1];
 						resolve(lineId);

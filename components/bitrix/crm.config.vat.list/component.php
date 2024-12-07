@@ -45,7 +45,6 @@ if ($arResult['VAT_MODE'])
 		$APPLICATION->RestartBuffer();
 		header('Content-type: application/x-www-form-urlencoded; charset=UTF-8');
 		$errNumber = 0;
-		CUtil::JSPostUnescape();
 		$arResult['PRODUCT_ROW_TAX_UNIFORM'] = ($_POST[$arResult['AJAX_PARAM_NAME']] === 'Y') ? 'Y' : 'N';
 		COption::SetOptionString('crm', 'product_row_tax_uniform', $arResult['PRODUCT_ROW_TAX_UNIFORM']);
 		$result = array('ERROR' => $errNumber);

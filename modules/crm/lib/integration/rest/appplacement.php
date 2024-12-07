@@ -20,6 +20,7 @@ class AppPlacement
 	public const ONEC_PAGE = '1C_PAGE';
 	public const DETAIL_SEARCH = 'CRM_DETAIL_SEARCH';
 	public const REQUISITE_AUTOCOMPLETE = 'CRM_REQUISITE_AUTOCOMPLETE';
+	public const BANK_DETAIL_AUTOCOMPLETE = 'CRM_BANK_DETAIL_AUTOCOMPLETE';
 
 	//region Grid context actions
 	/**
@@ -178,6 +179,7 @@ class AppPlacement
 				self::ONEC_PAGE,
 				self::DETAIL_SEARCH,
 				self::REQUISITE_AUTOCOMPLETE,
+				self::BANK_DETAIL_AUTOCOMPLETE,
 			],
 		);
 	}

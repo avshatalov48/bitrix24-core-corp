@@ -23,6 +23,8 @@
 				entityId: BX.componentParameters.get('entityId'),
 				uid: BX.componentParameters.get('uid'),
 				productCount: BX.componentParameters.get('productCount', 0),
+				isPhoneConfirmed: BX.componentParameters.get('isPhoneConfirmed', true),
+				connectedSiteId: BX.componentParameters.get('connectedSiteId', ''),
 				layout: this.layout,
 			});
 		}

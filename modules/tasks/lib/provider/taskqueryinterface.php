@@ -2,15 +2,14 @@
 
 namespace Bitrix\Tasks\Provider;
 
-interface TaskQueryInterface
+interface TaskQueryInterface extends QueryInterface
 {
 	public const SORT_ASC = 'ASC';
 	public const SORT_DESC = 'DESC';
 
 	public function getId(): string;
-	public function getSelect(): array;
-	public function getWhere(): array;
-	public function getOrderBy(): array;
-	public function getLimit(): int;
-	public function getOffset(): int;
+
+	public function needAccessCheck(): bool;
+	public function getUserId(): int;
+	public function getCountTotal(): int;
 }

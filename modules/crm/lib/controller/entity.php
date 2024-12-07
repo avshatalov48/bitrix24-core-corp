@@ -2,11 +2,11 @@
 
 namespace Bitrix\Crm\Controller;
 
+use Bitrix\Crm;
 use Bitrix\Crm\Order\Order;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\UI\EntitySelector;
 use Bitrix\Main;
-use Bitrix\Crm;
 use Bitrix\UI\EntitySelector\Dialog;
 
 class Entity extends Main\Engine\Controller
@@ -15,29 +15,41 @@ class Entity extends Main\Engine\Controller
 
 	public function configureActions()
 	{
-		return array(
-			'search' => array(
+		return [
+			'search' => [
 				'class' => Crm\Controller\Action\Entity\SearchAction::class,
 				'+prefilters' => [new Main\Engine\ActionFilter\CloseSession()]
-			),
-			'mergeBatch' => array('class' => Crm\Controller\Action\Entity\MergeBatchAction::class),
-			'prepareMerge' => array('class' => Crm\Controller\Action\Entity\PrepareMergeAction::class),
-			'processMerge' => array('class' => Crm\Controller\Action\Entity\ProcessMergeAction::class),
-			'processMergeByMap' => array('class' => Crm\Controller\Action\Entity\ProcessMergeByMapAction::class),
-			'prepareDeletion' => array('class' => Crm\Controller\Action\Entity\PrepareDeletionAction::class),
-			'cancelDeletion' => array('class' => Crm\Controller\Action\Entity\CancelDeletionAction::class),
-			'processDeletion' => array('class' => Crm\Controller\Action\Entity\ProcessDeletionAction::class),
-			'fetchPaymentDocuments' => array(
+			],
+			'mergeBatch' => ['class' => Crm\Controller\Action\Entity\MergeBatchAction::class],
+			'prepareMerge' => ['class' => Crm\Controller\Action\Entity\PrepareMergeAction::class],
+			'processMerge' => ['class' => Crm\Controller\Action\Entity\ProcessMergeAction::class],
+			'processMergeByMap' => ['class' => Crm\Controller\Action\Entity\ProcessMergeByMapAction::class],
+			'prepareDeletion' => [
+				'class' => Crm\Controller\Action\Entity\PrepareDeletionAction::class,
+			],
+			'cancelDeletion' => [
+				'class' => Crm\Controller\Action\Entity\CancelDeletionAction::class,
+			],
+			'processDeletion' => [
+				'class' => Crm\Controller\Action\Entity\ProcessDeletionAction::class,
+			],
+			'fetchPaymentDocuments' => [
 				'class' => Crm\Controller\Action\Entity\FetchPaymentDocumentsAction::class,
 				'+prefilters' => [new Main\Engine\ActionFilter\Authentication()]
-			),
+			],
 			'renderImageInput' => [
 				'class' =>  Crm\Controller\Action\Entity\RenderImageInputAction::class,
 			],
 			'canChangeCurrency' => [
 				'class' => Crm\Controller\Action\Entity\CanChangeCurrencyAction::class,
 			],
-		);
+			'processWhatsAppMessage' => [
+				'class' => Crm\Controller\Action\Entity\ProcessWhatsAppMessageAction::class,
+			],
+			'prepareWhatsAppMessage' => [
+				'class' => Crm\Controller\Action\Entity\PrepareWhatsAppMessageAction::class,
+			],
+		];
 	}
 
 	//region LRU
@@ -184,6 +196,7 @@ class Entity extends Main\Engine\Controller
 			];
 		}
 
+		$currentItems = $items;
 		$qty = count($items);
 		if ($qty < static::ITEMS_LIMIT && isset($options['EXPAND_ENTITY_TYPE_ID']))
 		{
@@ -194,9 +207,31 @@ class Entity extends Main\Engine\Controller
 				$actualCategoryId,
 				static::ITEMS_LIMIT - $qty
 			);
+
+			$currentItemsHashes = array_map(fn ($item) => self::itemToStringKey($item), $currentItems);
+
+			$newlyItems = array_filter($items, function (array $item) use ($currentItemsHashes) {
+				$itemHash = self::itemToStringKey($item);
+
+				return !in_array($itemHash, $currentItemsHashes);
+			});
+
+			if (!empty($newlyItems))
+			{
+				self::addLastRecentlyUsedItems($category, $code, $items);
+			}
 		}
 
 		return $items;
+	}
+
+	private static function itemToStringKey(array $item): string
+	{
+		$entityTypeId = isset($item['ENTITY_TYPE_ID']) ? (int)$item['ENTITY_TYPE_ID'] : 0;
+		$entityId = isset($item['ENTITY_ID']) ? (int)$item['ENTITY_ID'] : 0;
+		$categoryId = isset($item['CATEGORY_ID']) ? (int)$item['CATEGORY_ID'] : 0;
+
+		return "{$entityTypeId}:{$entityId}:{$categoryId}";
 	}
 
 	/**

@@ -189,9 +189,7 @@ class CCrmUserCounter
 					"SELECT COUNT(l.ID) AS CNT
 						FROM {$leadTable} l
 						LEFT JOIN {$activityTable} a ON a.OWNER_ID = l.ID AND a.OWNER_TYPE_ID = {$ownerTypeID} AND a.USER_ID = 0
-						WHERE l.ASSIGNED_BY_ID = {$this->userID} AND l.STATUS_SEMANTIC_ID = 'P' AND a.OWNER_ID IS NULL",
-					false,
-					'File: '.__FILE__.'<br/>Line: '.__LINE__
+						WHERE l.ASSIGNED_BY_ID = {$this->userID} AND l.STATUS_SEMANTIC_ID = 'P' AND a.OWNER_ID IS NULL"
 				);
 				$result = $dbResult->Fetch();
 				$count += is_array($result) ? intval($result['CNT']) : 0;
@@ -212,9 +210,7 @@ class CCrmUserCounter
 					"SELECT COUNT(d.ID) AS CNT
 						FROM {$dealTable} d
 						LEFT JOIN {$activityTable} a ON a.OWNER_ID = d.ID AND a.OWNER_TYPE_ID = {$ownerTypeID} AND a.USER_ID = 0
-						WHERE d.ASSIGNED_BY_ID = {$this->userID} AND d.STAGE_SEMANTIC_ID = 'P' AND a.OWNER_ID IS NULL",
-					false,
-					'File: '.__FILE__.'<br/>Line: '.__LINE__
+						WHERE d.ASSIGNED_BY_ID = {$this->userID} AND d.STAGE_SEMANTIC_ID = 'P' AND a.OWNER_ID IS NULL"
 				);
 				$result = $dbResult->Fetch();
 				$count += is_array($result) ? intval($result['CNT']) : 0;
@@ -240,9 +236,7 @@ class CCrmUserCounter
 					AND a.ACTIVITY_TIME <= {$currentDayEnd}";
 
 			$dbResult = $DB->Query(
-				$sql,
-				false,
-				'File: '.__FILE__.'<br/>Line: '.__LINE__
+				$sql
 			);
 			$result = $dbResult->Fetch();
 			$count = is_array($result) ? (int)$result['CNT'] : 0;
@@ -254,9 +248,7 @@ class CCrmUserCounter
 					"SELECT COUNT(d.ID) AS CNT
 						FROM {$dealTable} d
 						LEFT JOIN {$activityTable} a ON a.OWNER_ID = d.ID AND a.OWNER_TYPE_ID = {$ownerTypeID} AND a.USER_ID = 0
-						WHERE d.ASSIGNED_BY_ID = {$this->userID} AND d.STAGE_SEMANTIC_ID = 'P' AND d.CATEGORY_ID = {$categoryID} AND a.OWNER_ID IS NULL",
-					false,
-					'File: '.__FILE__.'<br/>Line: '.__LINE__
+						WHERE d.ASSIGNED_BY_ID = {$this->userID} AND d.STAGE_SEMANTIC_ID = 'P' AND d.CATEGORY_ID = {$categoryID} AND a.OWNER_ID IS NULL"
 				);
 				$result = $dbResult->Fetch();
 				$count += is_array($result) ? intval($result['CNT']) : 0;
@@ -300,9 +292,7 @@ class CCrmUserCounter
 				$currentDayEnd = $DB->CharToDateFunction($DB->ForSql($currentDayEnd), 'FULL');
 
 				$dbResult = $DB->Query(
-					"SELECT COUNT(q.ID) AS CNT FROM {$quoteTable} q WHERE q.ASSIGNED_BY_ID = {$this->userID} AND q.CLOSEDATE IS NOT NULL AND q.CLOSEDATE <= {$currentDayEnd} AND q.STATUS_ID NOT IN ({$statusStr})",
-					false,
-					'File: '.__FILE__.'<br/>Line: '.__LINE__
+					"SELECT COUNT(q.ID) AS CNT FROM {$quoteTable} q WHERE q.ASSIGNED_BY_ID = {$this->userID} AND q.CLOSEDATE IS NOT NULL AND q.CLOSEDATE <= {$currentDayEnd} AND q.STATUS_ID NOT IN ({$statusStr})"
 				);
 				$result = $dbResult->Fetch();
 				$count += is_array($result) ? intval($result['CNT']) : 0;

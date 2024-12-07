@@ -1,4 +1,5 @@
-<?
+<?php
+
 define("GW_DEBUG", false); // Debug
 define("DAV_EXCH_DEBUG", false); // Log
 
@@ -55,4 +56,3 @@ $arClasses = array(
 	"CDavWebDavServerRequest" => "classes/general/webdavserverrequest.php",
 );
 CModule::AddAutoloadClasses("dav", $arClasses);
-?>

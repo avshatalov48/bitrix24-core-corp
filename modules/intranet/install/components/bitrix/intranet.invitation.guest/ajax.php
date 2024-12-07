@@ -1,7 +1,6 @@
 <?
 
 use Bitrix\Main\HttpResponse;
-use Bitrix\Main\Text\Encoding;
 use Bitrix\Main\Web\Json;
 use Bitrix\Main\Engine;
 use Bitrix\Main\Engine\Action;
@@ -34,7 +33,7 @@ class IntranetInvitationGuestController extends Engine\Controller
 	{
 		$params =
 			$componentParams
-				? Json::decode(Encoding::convertEncoding($componentParams, SITE_CHARSET, 'UTF-8'))
+				? Json::decode($componentParams)
 				: []
 		;
 

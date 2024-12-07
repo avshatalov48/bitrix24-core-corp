@@ -37,20 +37,23 @@ class Stage extends Field
 
 		if (!$isCategoryChanged && !$item->isNew())
 		{
-			$result->addError($this->getValueNotValidError());
+			$remindValue = $item->remindActual($this->getName());
+			$item->set($this->getName(), $remindValue);
 
 			return $result;
 		}
 
 		$newStageId = $this->pickFirstStageIdInCurrentCategory($factory, $item);
+		if (!$newStageId)
+		{
+			return $result->addError(new Error('Stage in new category is not found'));
+		}
 
-		if($newStageId)
+		if ($isCategoryChanged || $item->isNew())
 		{
 			$item->set($this->getName(), $newStageId);
-		}
-		else
-		{
-			$result->addError(new Error('Stage in new category is not found'));
+
+			return $result;
 		}
 
 		return $result;

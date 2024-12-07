@@ -65,9 +65,15 @@ if ($arParams['EVENT_LIST_MODE'] == 'Y')
 }
 
 if (!CModule::IncludeModule("intranet"))
-	return ShowError(GetMessage("EC_INTRANET_MODULE_NOT_INSTALLED"));
+{
+	ShowError(GetMessage("EC_INTRANET_MODULE_NOT_INSTALLED"));
+	return;
+}
 if(!CModule::IncludeModule("iblock"))
-	return ShowError(GetMessage("EC_IBLOCK_MODULE_NOT_INSTALLED"));
+{
+	ShowError(GetMessage("EC_IBLOCK_MODULE_NOT_INSTALLED"));
+	return;
+}
 CModule::IncludeModule("socialnetwork");
 
 
@@ -165,7 +171,10 @@ else
 	));
 
 if($ex = $APPLICATION->GetException())
-	return ShowError($ex->GetString());
+{
+	ShowError($ex->GetString());
+	return;
+}
 
 // Set title and navigation
 $arParams["SET_TITLE"] = $arParams["SET_TITLE"] == "Y" ? "Y" : "N";
@@ -195,7 +204,10 @@ if ($arParams["SET_TITLE"] == "Y" || ($EC->bOwner && $arParams["SET_NAV_CHAIN"] 
 		if($EC->ownerType == 'GROUP')
 		{
 			if (!$arGroup = CSocNetGroup::GetByID($EC->ownerId))
-				return ShowError(GetMessage("EC_GROUP_NOT_FOUND"));
+			{
+				ShowError(GetMessage("EC_GROUP_NOT_FOUND"));
+				return;
+			}
 			$ownerName = $arGroup["NAME"];
 		}
 		else
@@ -213,7 +225,10 @@ if ($arParams["SET_TITLE"] == "Y" || ($EC->bOwner && $arParams["SET_NAV_CHAIN"] 
 			{
 				$dbUser = CUser::GetByID($EC->ownerId);
 				if (!$arUser = $dbUser->Fetch())
-					return ShowError(GetMessage("EC_USER_NOT_FOUND"));
+				{
+					ShowError(GetMessage("EC_USER_NOT_FOUND"));
+					return;
+				}
 
 				$arTmpUser = array(
 					"NAME" => $arUser["NAME"],

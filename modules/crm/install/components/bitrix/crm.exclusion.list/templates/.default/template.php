@@ -128,7 +128,7 @@ $APPLICATION->IncludeComponent(
 
 
 ?>
-	<script type="text/javascript">
+	<script>
 		BX.ready(function () {
 			BX.Crm.Exclusion.Grid.init(<?=Json::encode([
 				'messages' => $arResult['MESSAGES'],

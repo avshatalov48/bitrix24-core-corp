@@ -83,7 +83,7 @@ if (empty($arResult['RELOAD']) && empty($arResult['URL_RELOAD']))
 			<div class="imconnector-field-container" id="bx-connector-user-list">
 				<div class="imconnector-field-section">
 					<div class="imconnector-field-main-title">
-						<?= Loc::getMessage('IMCONNECTOR_COMPONENT_CONNECTOR_SETTINGS_CONFIGURE_CHANNEL') ?>
+						<?= Loc::getMessage('IMCONNECTOR_COMPONENT_CONNECTOR_SETTINGS_CONFIGURE_CHANNEL_MSGVER_1') ?>
 					</div>
 
 					<?
@@ -93,6 +93,7 @@ if (empty($arResult['RELOAD']) && empty($arResult['URL_RELOAD']))
 						<div class="imconnector-field-box">
 							<div class="imconnector-field-box-subtitle">
 								<?= Loc::getMessage('IMCONNECTOR_COMPONENT_CONNECTOR_SETTINGS_OPEN_LINE') ?>
+								<span data-hint="<?=Loc::getMessage('IMCONNECTOR_COMPONENT_CONNECTOR_SETTINGS_OPEN_LINE_TIP')?>"></span>
 							</div>
 							<div class="imconnector-field-control-box">
 								<?
@@ -162,7 +163,7 @@ if (empty($arResult['RELOAD']) && empty($arResult['URL_RELOAD']))
 					}
 					?>
 					<div class="tel-set-destination-container" id="users_for_queue"></div>
-					<script type="text/javascript">
+					<script>
 						BX.ready(function () {
 							BX.message({
 								LM_ADD: '<?=GetMessageJS('IMCONNECTOR_COMPONENT_CONNECTOR_SETTINGS_LM_ADD')?>',
@@ -185,6 +186,7 @@ if (empty($arResult['RELOAD']) && empty($arResult['URL_RELOAD']))
 						<div class="imconnector-field-box imconnector-field-user-box box-rights">
 							<div class="imconnector-field-box-subtitle box-rights">
 								<?= Loc::getMessage('IMCONNECTOR_COMPONENT_CONNECTOR_SETTINGS_PERMISSIONS') ?>
+								<span data-hint="<?=Loc::getMessage('IMCONNECTOR_COMPONENT_CONNECTOR_SETTINGS_PERMISSIONS_TIP')?>"></span>
 							</div>
 							<a href="javascript:void(0)"
 							   onclick="BX.SidePanel.Instance.open('<?=ImOpenLines\Common::getContactCenterPublicFolder() . 'permissions/'?>', {allowChangeHistory: false, cacheable: false})"

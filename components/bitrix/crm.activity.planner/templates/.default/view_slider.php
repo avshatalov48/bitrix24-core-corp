@@ -237,7 +237,7 @@ $APPLICATION->restartBuffer();
 		</div><!--crm-task-list-container-->
 	</div><!--crm-task-list-wrapper-->
 
-	<script type="text/javascript">
+	<script>
 		BX.ready(function() {
 
 			<? if (\CCrmActivityType::Email == $activity['TYPE_ID'] && \CCrmOwnerType::Lead != $activity['OWNER_TYPE_ID']):

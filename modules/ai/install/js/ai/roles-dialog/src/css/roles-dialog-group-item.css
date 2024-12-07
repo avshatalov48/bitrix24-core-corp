@@ -1,0 +1,75 @@
+.ai__roles-dialog_group-item-wrapper {
+	background-color: var(--ui-color-background-primary);
+	display: flex;
+}
+
+.ai__roles-dialog_group-item {
+	--ui-icon-set__icon-color: rgba(var(--ui-color-base-90-rgb), 0.3);
+
+	box-sizing: border-box;
+	min-height: 51px;
+	width: 100%;
+	display: flex;
+	padding: 16px 16px 0 16px;
+	color: var(--ui-color-text-primary);
+	background-color: var(--ui-color-background-primary);
+	cursor: pointer;
+	transition: color 0.2s linear;
+}
+
+.ai__roles-dialog_group-item:hover {
+	--ui-icon-set__icon-color: var(--ui-color-copilot-soft, #B095DC);
+
+	color: var(--ui-color-copilot-primary, #8E52EC);
+	transition-duration: 0s;
+}
+
+.ai__roles-dialog_group-item:focus,
+.ai__roles-dialog_group-item:active {
+	--ui-icon-set__icon-color: var(--ui-color-copilot-primary, #8E52EC);
+
+	color: var(--ui-color-copilot-dark, #682AC6);
+	transition-duration: 0s;
+}
+
+.ai__roles-dialog_group-item-inner {
+	width: 100%;
+	padding-bottom: 16px;
+	display: flex;
+	flex-direction: row;
+	justify-content: space-between;
+	align-items: center;
+	flex-basis: 100%;
+	border-bottom: var(--ui-border-width-thin) solid rgba(var(--ui-color-base-90-rgb), 0.05);
+}
+
+.ai__roles-dialog_group-item-wrapper:last-child .ai__roles-dialog_group-item-inner,
+.ai__roles-dialog_group-item.--selected .ai__roles-dialog_group-item-inner {
+	border-bottom-color: transparent;
+}
+
+.ai__roles-dialog_group-item.--selected {
+	--ui-icon-set__icon-color: var(--ui-color-on-primary);
+
+	background-color: var(--ui-color-copilot-primary, #8E52EC);
+	color: var(--ui-color-on-primary);
+	border-radius: var(--ui-border-radius-sm);
+}
+
+.ai__roles-dialog_group-item-title-wrapper {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: flex-start;
+}
+
+.ai__roles-dialog_group-item-title {
+	font-size: var(--ui-font-size-lg);
+	font-weight: var(--ui-font-weight-medium);
+	line-height: var(--ui-font-line-height-3xs);
+	letter-spacing: 0;
+}
+
+.ai__roles-dialog_group-item-label-new {
+	margin-left: 7px;
+}

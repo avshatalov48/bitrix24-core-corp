@@ -7,6 +7,12 @@ export type SettingsWidgetHoldingOptions = {
 	canBeAffiliate: boolean;
 }
 
+export type MainPageConfiguration = {
+	isAvailable?: boolean,
+	isNew?: boolean,
+	settingsPath?: string,
+}
+
 export type SettingsWidgetOptions = {
 	popup: PopupComponentsMaker;
 	button?: HTMLElement,
@@ -21,4 +27,5 @@ export type SettingsWidgetOptions = {
 	settingsPath?: string;
 	holding?: SettingsWidgetHoldingOptions;
 	isRenameable?: boolean;
+	mainPage?: MainPageConfiguration;
 }

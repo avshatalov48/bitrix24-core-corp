@@ -110,6 +110,7 @@ jn.define('lists/element-creation-guide/description-step/view', (require, export
 						icon: { marginBottom: 24 },
 					},
 					description: Loc.getMessage('LISTSMOBILE_EXT_ELEMENT_CREATION_GUIDE_DESCRIPTION_STEP_EMPTY_DESCRIPTION_STUB_TITLE'),
+					backgroundColor: AppTheme.colors.bgContentPrimary,
 				}),
 			);
 		}

@@ -1,0 +1,9 @@
+.ai__roles-dialog_items {
+	display: flex;
+}
+
+.popup-window.ai_roles-dialog_popup {
+	--entity-catalog__gray_lighter: #F5F1FB;
+	--entity-catalog__gray_light: #fff;
+	--ui-field-color-primary: var(--ui-color-copilot-soft, #B095DC);
+}

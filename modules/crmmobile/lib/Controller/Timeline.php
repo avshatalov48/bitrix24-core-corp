@@ -16,9 +16,8 @@ use Bitrix\CrmMobile\Timeline\ScheduledItemsQuery;
 use Bitrix\Crm\Service\Timeline\Repository;
 use Bitrix\Crm\Timeline\TimelineEntry;
 use Bitrix\Main\Engine\CurrentUser;
+use Bitrix\Main\Error;
 use Bitrix\Main\Loader;
-use Bitrix\Main\ObjectNotFoundException;
-use Bitrix\Main\Config\Option;
 
 class Timeline extends Controller
 {
@@ -86,15 +85,16 @@ class Timeline extends Controller
 	/**
 	 * @param int $activityId
 	 * @param Item $entity Required to auto-check read permissions
-	 * @return array
-	 * @throws ObjectNotFoundException
+	 * @return array|null
 	 */
-	public function loadActivityAction(int $activityId, Item $entity): array
+	public function loadActivityAction(int $activityId, Item $entity): ?array
 	{
 		$activity = \CCrmActivity::GetByID($activityId);
 		if (!is_array($activity))
 		{
-			throw new ObjectNotFoundException("Activity $activityId not found");
+			$this->addError(new Error("Activity $activityId not found"));
+
+			return null;
 		}
 
 		return [

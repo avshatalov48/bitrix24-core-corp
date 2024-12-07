@@ -1,0 +1,23 @@
+<?php
+$MESS['SIGN_CORE_BLOCK_TEXT_TITLE'] = 'Текст';
+$MESS['SIGN_CORE_BLOCK_TEXT_HINT'] = 'Поле для ввода любой текстовой информации, например, условий договора';
+$MESS['SIGN_CORE_BLOCK_DATE_TITLE'] = 'Дата';
+$MESS['SIGN_CORE_BLOCK_DATE_HINT'] = 'Поле для ввода информации в формате даты, например, сроков действия или даты создания договора';
+$MESS['SIGN_CORE_BLOCK_NUMBER_TITLE'] = 'Номер';
+$MESS['SIGN_CORE_BLOCK_NUMBER_HINT'] = 'Поле для ввода номера документа. В поле можно ввести номер вручную или использовать автоматический нумератор. Например, можно указать, с какого номера начать нумерацию, а также задать шаг увеличения';
+$MESS['SIGN_CORE_BLOCK_REFERENCE_TITLE'] = 'Поле CRM';
+$MESS['SIGN_CORE_BLOCK_REFERENCE_BLOCK_HINT'] = 'Поле, которое автоматически заполнится данными из вашей CRM. Если в CRM нет нужных данных и поле останется пустым, то после заполнения поля любым из подписантов эта информация сохранится в вашей CRM';
+$MESS['SIGN_CORE_BLOCK_MYREQUISITES_TITLE'] = 'Реквизиты';
+$MESS['SIGN_CORE_BLOCK_MYREQUISITES_HINT'] = 'Поле для ввода реквизитов вашей компании';
+$MESS['SIGN_CORE_BLOCK_MYSTAMP_TITLE'] = 'Печать';
+$MESS['SIGN_CORE_BLOCK_MYSTAMP_HINT'] = 'Поле для печати вашей компании';
+$MESS['SIGN_CORE_BLOCK_MYSIGN_TITLE'] = 'Подпись';
+$MESS['SIGN_CORE_BLOCK_MYSIGN_BLOCK_HINT'] = 'Поле, в котором будет подпись вашей стороны';
+$MESS['SIGN_CORE_BLOCK_REQUISITES_TITLE'] = 'Реквизиты';
+$MESS['SIGN_CORE_BLOCK_REQUISITES_HINT'] = 'Поле для ввода реквизитов контрагента';
+$MESS['SIGN_CORE_BLOCK_MYSTAMP_ERROR_EMPTY'] = 'Добавлен блок печати компании, но в реквизитах компании печать не загружена.';
+$MESS['SIGN_CORE_BLOCK_REQUISITES_ERROR_EMPTY'] = 'Блок "Поле CRM" не настроен.';
+$MESS['SIGN_CORE_BLOCK_STAMP_TITLE'] = 'Печать';
+$MESS['SIGN_CORE_BLOCK_STAMP_HINT'] = 'Поле для печати контрагента';
+$MESS['SIGN_CORE_BLOCK_SIGN_TITLE'] = 'Подпись';
+$MESS['SIGN_CORE_BLOCK_SIGN_BLOCK_HINT'] = 'Поле, в котором будет подпись контрагента';

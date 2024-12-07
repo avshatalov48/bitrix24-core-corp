@@ -6,6 +6,16 @@ declare type ContextParams = {
 	entityCategoryId: ?Number,
 	isReadonly: Boolean,
 	menuBarContainer: HTMLElement,
+	extras: Extras,
+}
+
+declare type Extras = {
+	analytics: Analytics;
+}
+
+type Analytics = {
+	c_section?: string;
+	c_sub_section?: string;
 }
 
 export default class Context
@@ -15,6 +25,7 @@ export default class Context
 	#entityCategoryId: ?Number = null;
 	#isReadonly: Boolean = false;
 	#menuBarContainer: HTMLElement = null;
+	#extras: Extras = {};
 
 	constructor(params: ContextParams)
 	{
@@ -23,6 +34,7 @@ export default class Context
 		this.#entityCategoryId = Type.isNumber(params.entityCategoryId) ? params.entityCategoryId : null;
 		this.#isReadonly = params.isReadonly;
 		this.#menuBarContainer = params.menuBarContainer;
+		this.#extras = params.extras ?? {};
 	}
 
 	getEntityTypeId(): Number
@@ -48,5 +60,10 @@ export default class Context
 	getMenuBarContainer(): HTMLElement
 	{
 		return this.#menuBarContainer;
+	}
+
+	getExtras(): Extras
+	{
+		return this.#extras;
 	}
 }

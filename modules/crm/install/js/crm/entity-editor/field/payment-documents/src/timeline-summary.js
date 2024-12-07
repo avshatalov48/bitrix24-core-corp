@@ -157,13 +157,13 @@ export class TimelineSummaryDocuments extends EntityEditorPaymentDocuments
 	_renderPaymentDocument(doc: PaymentDocument): HTMLElement
 	{
 		const title = Loc.getMessage(
-			'CRM_ENTITY_ED_PAYMENT_DOCUMENTS_PAYMENT_DATE_MSGVER_1',
+			'CRM_ENTITY_ED_PAYMENT_DOCUMENTS_PAYMENT_DATE_MSGVER_2',
 			{
 				'#DATE#': doc.FORMATTED_DATE,
 				'#ACCOUNT_NUMBER#': doc.ACCOUNT_NUMBER,
+				'#SUM#': this._renderMoney(doc.SUM),
 			},
 		);
-		const sum = Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_PAYMENT_AMOUNT').replace(/#SUM#/gi, this._renderMoney(doc.SUM));
 		const labelOptions = {
 			text: Loc.getMessage(`CRM_ENTITY_ED_PAYMENT_DOCUMENTS_STAGE_${doc.STAGE}`),
 			customClass: 'crm-entity-widget-payment-label',
@@ -191,7 +191,7 @@ export class TimelineSummaryDocuments extends EntityEditorPaymentDocuments
 		return Tag.render`
 			<div class="crm-entity-stream-content-detail-table-row">
 				<div class="crm-entity-stream-content-document-description">
-					<a class="ui-link" onclick="${openSlider}">${title} (${sum})</a>
+					<a class="ui-link" onclick="${openSlider}">${title}</a>
 					<span class="crm-entity-stream-content-document-description__label">
 						${(new Label(labelOptions)).render()}
 					</span>
@@ -214,13 +214,14 @@ export class TimelineSummaryDocuments extends EntityEditorPaymentDocuments
 			labelOptions.color = LabelColor.LIGHT_GREEN;
 		}
 		const title = Loc.getMessage(
-			'CRM_ENTITY_ED_PAYMENT_DOCUMENTS_DELIVERY_DATE_MSGVER_1',
+			'CRM_ENTITY_ED_PAYMENT_DOCUMENTS_DELIVERY_DATE_MSGVER_2',
 			{
 				'#DATE#': doc.FORMATTED_DATE,
 				'#ACCOUNT_NUMBER#': doc.ACCOUNT_NUMBER,
+				'#SUM#': this._renderMoney(doc.SUM),
+				'#DELIVERY_NAME#': doc.DELIVERY_NAME,
 			},
 		);
-		const sum = Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_PAYMENT_AMOUNT').replace(/#SUM#/gi, this._renderMoney(doc.SUM));
 
 		const openSlider = () => this._viewDeliverySlider(doc.ORDER_ID, doc.ID);
 
@@ -228,7 +229,7 @@ export class TimelineSummaryDocuments extends EntityEditorPaymentDocuments
 			<div class="crm-entity-stream-content-detail-table-row">
 				<div class="crm-entity-stream-content-document-description">
 					<a class="ui-link" onclick="${openSlider}">
-						${title} (${doc.DELIVERY_NAME}, ${sum})
+						${title}
 					</a>
 					<span class="crm-entity-stream-content-document-description__label">
 						${(new Label(labelOptions)).render()}
@@ -263,11 +264,15 @@ export class TimelineSummaryDocuments extends EntityEditorPaymentDocuments
 			}
 		}
 
-		let title = Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_SHIPMENT_DOCUMENT_DATE_MSGVER_1').replace(/#DATE#/gi, doc.FORMATTED_DATE);
-		title = title.replace(/#DOCUMENT_ID#/gi, doc.ACCOUNT_NUMBER);
+		let title = Loc.getMessage(
+			'CRM_ENTITY_ED_PAYMENT_DOCUMENTS_SHIPMENT_DOCUMENT_DATE_MSGVER_2',
+			{
+				'#DATE#': doc.FORMATTED_DATE,
+				'#DOCUMENT_ID#': doc.ACCOUNT_NUMBER,
+			},
+		);
 		title = BX.util.htmlspecialchars(title);
-
-		const sum = Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_SHIPMENT_DOCUMENT_AMOUNT').replace(/#SUM#/gi, this._renderMoney(doc.SUM));
+		title = title.replaceAll(/#sum#/gi, this._renderMoney(doc.SUM));
 
 		const openSlider = () => this._viewRealizationSlider(doc.ID);
 
@@ -275,7 +280,7 @@ export class TimelineSummaryDocuments extends EntityEditorPaymentDocuments
 			<div class="crm-entity-stream-content-detail-table-row">
 				<div class="crm-entity-stream-content-document-description">
 					<a class="ui-link" onclick="${openSlider}">
-						${title} (${sum})
+						${title}
 					</a>
 					<span class="crm-entity-stream-content-document-description__label">
 						${(new Label(labelOptions)).render()}

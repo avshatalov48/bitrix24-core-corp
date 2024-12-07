@@ -1,6 +1,7 @@
 <?php
 
 use Bitrix\Main\UI\Extension;
+use Bitrix\Main\Web\Json;
 use Bitrix\Tasks\Helper\RestrictionUrl;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
@@ -50,6 +51,11 @@ $APPLICATION->IncludeComponent(
 	['HIDE_ICONS' => true]
 );
 $isIframe = (isset($_REQUEST['IFRAME']) && $_REQUEST['IFRAME'] === 'Y');
+
+?>
+<div class="<?= !$arResult['tasksReportEnabled'] ? 'task-report-locked' : '' ?>">
+<?php
+
 $APPLICATION->IncludeComponent(
 	'bitrix:report.list',
 	'',
@@ -64,4 +70,33 @@ $APPLICATION->IncludeComponent(
 	false
 );
 
+$pathToTasks = (preg_match('#^/\w#', $arResult['pathToTasks']) ? $arResult['pathToTasks']: '/');
 ?>
+</div>
+
+<script>
+	BX.ready(function() {
+		const tasksReportEnabled = <?= Json::encode($arResult['tasksReportEnabled']) ?>;
+
+		if (!tasksReportEnabled)
+		{
+			BX.addCustomEvent('SidePanel.Slider:onClose', (event) => {
+				if (event.getSlider().getUrl() === 'ui:info_helper')
+				{
+					window.location.href = '<?= CUtil::JSEscape($pathToTasks) ?>';
+				}
+			});
+
+			BX.Runtime.loadExtension('tasks.limit').then((exports) => {
+				const { Limit } = exports;
+				Limit.showInstance({
+					featureId: '<?= $arResult['tasksReportFeatureId'] ?>',
+					limitAnalyticsLabels: {
+						module: 'tasks',
+						source: 'list',
+					},
+				});
+			});
+		}
+	});
+</script>

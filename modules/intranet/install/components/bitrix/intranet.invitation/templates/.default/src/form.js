@@ -31,6 +31,8 @@ export default class Form extends EventEmitter
 		this.firstInvitationBlock = params.firstInvitationBlock;
 		this.isSelfRegisterEnabled = params.isSelfRegisterEnabled;
 		this.analyticsLabel = params.analyticsLabel;
+		this.projectLimitExceeded = Type.isBoolean(params.projectLimitExceeded) ? params.projectLimitExceeded : true;
+		this.projectLimitFeatureId = Type.isString(params.projectLimitFeatureId) ? params.projectLimitFeatureId : '';
 
 		if (Type.isDomNode(this.contentContainer))
 		{
@@ -94,10 +96,23 @@ export default class Form extends EventEmitter
 		this.selector.render();
 	}
 
+	getSubSection()
+	{
+		const regex = /analyticsLabel\[source]=(\w*)&/gm;
+		let match = regex.exec(decodeURI(window.location));
+		if (match?.length > 1)
+		{
+			return match[1];
+		}
+		return null;
+	}
+
 	changeContent(action)
 	{
 		this.hideErrorMessage();
 		this.hideSuccessMessage();
+		let section = this.getSubSection();
+		let subSection = "";
 
 		if (action.length > 0)
 		{
@@ -109,6 +124,7 @@ export default class Form extends EventEmitter
 				}
 
 				this.activeDirectory.showForm();
+				this.analytics.sendTabData(Analytics.TAB_AD);
 
 				return;
 			}
@@ -135,10 +151,12 @@ export default class Form extends EventEmitter
 
 					if (action === 'invite')
 					{
+						subSection = Analytics.TAB_EMAIL;
 						row.renderInviteInputs(5);
 					}
 					else if (action === 'invite-with-group-dp')
 					{
+						subSection = Analytics.TAB_DEPARTMENT;
 						row.renderInviteInputs(3);
 
 						const selectorParams = {
@@ -149,6 +167,8 @@ export default class Form extends EventEmitter
 								project: true,
 								projectId: projectId,
 								isAdmin: this.isAdmin,
+								projectLimitExceeded: this.projectLimitExceeded,
+								projectLimitFeatureId: this.projectLimitFeatureId,
 							}
 						};
 						this.renderSelector(selectorParams);
@@ -165,12 +185,15 @@ export default class Form extends EventEmitter
 								project: "extranet",
 								projectId: projectId,
 								isAdmin: this.isAdmin,
+								projectLimitExceeded: this.projectLimitExceeded,
+								projectLimitFeatureId: this.projectLimitFeatureId,
 							}
 						};
 						this.renderSelector(selectorParams);
 					}
 					else if (action === "add")
 					{
+						subSection = Analytics.TAB_REGISTRATION;
 						row.renderRegisterInputs();
 
 						const selectorParams = {
@@ -181,13 +204,24 @@ export default class Form extends EventEmitter
 								project: true,
 								projectId: projectId,
 								isAdmin: this.isAdmin,
+								projectLimitExceeded: this.projectLimitExceeded,
+								projectLimitFeatureId: this.projectLimitFeatureId,
 							}
 						};
 						this.renderSelector(selectorParams);
 					}
 					else if (action === "integrator")
 					{
+						subSection = Analytics.TAB_INTEGRATOR;
 						row.renderIntegratorInput();
+					}
+					else if (action === "self")
+					{
+						subSection = Analytics.TAB_LINK;
+					}
+					else if (action === "mass-invite")
+					{
+						subSection = Analytics.TAB_MASS;
 					}
 				}
 				else
@@ -197,6 +231,10 @@ export default class Form extends EventEmitter
 				}
 			}
 
+			if (this.analytics)
+			{
+				this.analytics.sendTabData(section, subSection);
+			}
 			this.changeButton(action);
 		}
 	}
@@ -220,7 +258,9 @@ export default class Form extends EventEmitter
 			this.button.innerText = Loc.getMessage('BX24_INVITE_DIALOG_ACTION_INVITE');
 
 			Event.bind(this.button, 'click',() => {
-				this.submit.submitInvite();
+				if (!this.submit.waitingResponse) {
+					this.submit.submitInvite();
+				}
 			});
 		}
 		else if (action === "mass-invite")
@@ -228,15 +268,19 @@ export default class Form extends EventEmitter
 			this.button.innerText = Loc.getMessage('BX24_INVITE_DIALOG_ACTION_INVITE');
 
 			Event.bind(this.button, 'click',() => {
-				this.submit.submitMassInvite();
+				if (!this.submit.waitingResponse) {
+					this.submit.submitMassInvite();
+				}
 			});
 		}
 		else if (action === "invite-with-group-dp")
 		{
 			this.button.innerText = Loc.getMessage('BX24_INVITE_DIALOG_ACTION_INVITE');
 
-			Event.bind(this.button, 'click',() => {
-				this.submit.submitInviteWithGroupDp();
+			Event.bind(this.button, 'click', () => {
+				if (!this.submit.waitingResponse) {
+					this.submit.submitInviteWithGroupDp();
+				}
 			});
 		}
 		else if (action === "add")
@@ -244,7 +288,9 @@ export default class Form extends EventEmitter
 			this.button.innerText = Loc.getMessage('BX24_INVITE_DIALOG_ACTION_ADD');
 
 			Event.bind(this.button, 'click', () => {
-				this.submit.submitAdd();
+				if (!this.submit.waitingResponse) {
+					this.submit.submitAdd();
+				}
 			});
 		}
 		else if (action === "self")
@@ -264,7 +310,9 @@ export default class Form extends EventEmitter
 			this.button.innerText = Loc.getMessage('BX24_INVITE_DIALOG_ACTION_INVITE');
 
 			Event.bind(this.button, 'click', () => {
-				this.submit.submitIntegrator();
+				if (!this.submit.waitingResponse) {
+					this.submit.submitIntegrator();
+				}
 			});
 		}
 		else if (action === "extranet")
@@ -272,7 +320,9 @@ export default class Form extends EventEmitter
 			this.button.innerText = Loc.getMessage('BX24_INVITE_DIALOG_ACTION_INVITE');
 
 			Event.bind(this.button, 'click', () => {
-				this.submit.submitExtranet();
+				if (!this.submit.waitingResponse) {
+					this.submit.submitExtranet();
+				}
 			});
 		}
 		else if (action === "success")

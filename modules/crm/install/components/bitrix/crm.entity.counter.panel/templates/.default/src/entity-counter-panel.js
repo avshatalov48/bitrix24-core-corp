@@ -1,11 +1,11 @@
 import { Loc, Reflection, Text, Type } from 'main.core';
 import { BaseEvent, EventEmitter } from 'main.core.events';
 import { CounterItem, CounterPanel } from 'ui.counterpanel';
-import EntityCounterManager from './entity-counter-manager';
-import EntityCounterType from './entity-counter-type';
 import EntityCounterFilterManager from './entity-counter-filter-manager';
+import EntityCounterManager from './entity-counter-manager';
 
 import type { EntityCounterPanelOptions } from './entity-counter-panel-options';
+import EntityCounterType from './entity-counter-type';
 
 const namespace = Reflection.namespace('BX.Crm');
 
@@ -58,10 +58,9 @@ class EntityCounterPanel extends CounterPanel
 			this.#counterManager = new EntityCounterManager({
 				id: this.#id,
 				entityTypeId: this.#entityTypeId,
-				serviceUrl: Type.isString(options.serviceUrl) ? options.serviceUrl : '',
 				codes: this.#codes,
 				extras: Type.isObject(options.extras) ? options.extras : {},
-				withExcludeUsers: withExcludeUsers,
+				withExcludeUsers,
 			});
 		}
 

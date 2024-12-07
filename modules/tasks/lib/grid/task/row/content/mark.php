@@ -5,6 +5,9 @@ use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Web\Json;
 use Bitrix\Tasks\Grid\Task\Row\Content;
+use Bitrix\Tasks\Integration\Bitrix24;
+use Bitrix\Tasks\Integration\Bitrix24\FeatureDictionary;
+use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit;
 
 /**
  * Class Mark
@@ -42,16 +45,23 @@ class Mark extends Content
 
 		if ($row['ACTION']['EDIT'])
 		{
-			$encodedValue = Json::encode(['listValue' => $mark]);
-			?>
-			<a class="task-grade-and-report <?=$markClass?> <?=$addInReportClass?>" href="javascript: void(0)"
-			   onclick='event.stopPropagation(); return BX.Tasks.GridActions.onMarkChangeClick(<?=$row["ID"]?>, this, <?=$encodedValue?>);'
-			   title="<?=Loc::getMessage($markText)?>">
+			if ($this->isRestricted())
+			{
+				$this->renderLock();
+			}
+			else
+			{
+				$encodedValue = Json::encode(['listValue' => $mark]);
+				?>
+				<a class="task-grade-and-report <?= $markClass ?> <?= $addInReportClass ?>" href="javascript: void(0)"
+				   onclick='event.stopPropagation(); return BX.Tasks.GridActions.onMarkChangeClick(<?= $row["ID"] ?>, this, <?= $encodedValue ?>);'
+				   title="<?= Loc::getMessage($markText) ?>">
 				<span class="task-grade-and-report-inner">
 					<i class="task-grade-and-report-icon"></i>
 				</span>
-			</a>
+				</a>
 			<?php
+			}
 		}
 		else
 		{
@@ -66,5 +76,23 @@ class Mark extends Content
 		}
 
 		return ob_get_clean();
+	}
+
+	private function isRestricted(): bool
+	{
+		return !Bitrix24::checkFeatureEnabled(FeatureDictionary::TASK_RATE);
+	}
+
+	private function renderLock(): void
+	{
+		?>
+			<div
+				style="cursor: pointer"
+				class='tasks-list-tariff-lock-container'
+				onclick="<?=Limit::getLimitLockClick(FeatureDictionary::TASK_RATE, null)?>"
+			>
+				<span class='task-list-tariff-lock'></span>
+			</div>
+		<?php
 	}
 }

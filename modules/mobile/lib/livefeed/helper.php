@@ -460,12 +460,12 @@ class Helper
 		{
 			$commentObjectId = $commentAttachedObjectId = array();
 
-			if (preg_match_all("#\\[disk file id=(n\\d+)\\]#is" . BX_UTF_PCRE_MODIFIER, $text, $matches))
+			if (preg_match_all("#\\[disk file id=(n\\d+)\\]#isu", $text, $matches))
 			{
 				$commentObjectId = array_map(static function($a) { return (int)mb_substr($a, 1); }, $matches[1]);
 			}
 
-			if (preg_match_all("#\\[disk file id=(\\d+)\\]#is" . BX_UTF_PCRE_MODIFIER, $text, $matches))
+			if (preg_match_all("#\\[disk file id=(\\d+)\\]#isu", $text, $matches))
 			{
 				$commentAttachedObjectId = array_map(static function($a) { return (int)$a; }, $matches[1]);
 			}

@@ -2,6 +2,8 @@
 
 namespace Bitrix\Crm\Integration\Analytics;
 
+use CCrmOwnerType;
+
 final class Dictionary
 {
 	public const TOOL_CRM = 'crm';
@@ -9,6 +11,8 @@ final class Dictionary
 
 	public const CATEGORY_ENTITY_OPERATIONS = 'entity_operations';
 	public const CATEGORY_CRM_OPERATIONS = 'crm_operations';
+	public const CATEGORY_AI_OPERATIONS = 'ai_operations';
+	public const CATEGORY_AUTOMATION_OPERATIONS = 'automation_operations';
 
 	// region Event const
 	public const EVENT_ENTITY_ADD_OPEN = 'entity_add_open';
@@ -19,20 +23,31 @@ final class Dictionary
 	public const EVENT_ENTITY_CONVERT = 'entity_convert';
 	public const EVENT_ENTITY_CONVERT_BATCH = 'entity_convert_batch';
 	public const EVENT_ENTITY_CONVERT_OPEN = 'entity_convert_open';
+	public const EVENT_ENTITY_CLOSE = 'entity_close';
 
 	public const EVENT_CALL_PARSING = 'call_parsing';
 	public const EVENT_AUDIO_TO_TEXT = 'audio_to_text';
 	public const EVENT_SUMMARY = 'summary';
 	public const EVENT_EXTRACT_FIELDS = 'extract_fields';
+	public const EVENT_CALL_ACTIVITY_WITH_AUDIO_RECORDING = 'activity_call_with_audio_recording';
+
+	public const EVENT_AUTOMATION_CREATE = 'automation_create';
+	public const EVENT_AUTOMATION_EDIT = 'automation_edit';
+	public const EVENT_AUTOMATION_DELETE = 'automation_delete';
 	// endregion
 
 	// region Type const
 	public const TYPE_MANUAL = 'manual';
 	public const TYPE_AUTO = 'auto';
+	public const TYPE_AUTOMATED_SOLUTION = 'automated_solution';
+	public const TYPE_DYNAMIC = 'dynamic';
+
 	// endregion
 
 	// region Section const
 	public const SECTION_CRM = 'crm';
+	public const SECTION_AUTOMATION = 'automation';
+	public const SECTION_REST = 'rest';
 	public const SECTION_LEAD = 'lead_section';
 	public const SECTION_DEAL = 'deal_section';
 	public const SECTION_CONTACT = 'contact_section';
@@ -63,6 +78,8 @@ final class Dictionary
 	public const SUB_SECTION_CALENDAR = 'calendar';
 	public const SUB_SECTION_DEADLINES = 'deadlines';
 	public const SUB_SECTION_DETAILS = 'details';
+	public const SUB_SECTION_KANBAN_DROPZONE = 'kanban_dropzone';
+	public const SUB_SECTION_ACTION_BUTTON = 'action_button';
 
 	public const SUB_SECTION_DEAL = 'deal';
 	public const SUB_SECTION_LEAD = 'lead';
@@ -86,6 +103,9 @@ final class Dictionary
 	public const ELEMENT_FEEDBACK_REFUSED = 'feedback_refused';
 	public const ELEMENT_CONFLICT_ACCEPT_CHANGES = 'conflict_accept_changes';
 	public const ELEMENT_CONFLICT_CANCEL_CHANGES = 'conflict_cancel_changes';
+	public const ELEMENT_CANCEL_BUTTON = 'cancel_button';
+	public const ELEMENT_GRID_GROUP_ACTIONS_WON_STAGE = 'grid_group_actions_won_stage';
+	public const ELEMENT_GRID_GROUP_ACTIONS_LOSE_STAGE = 'grid_group_actions_lose_stage';
 	// endregion
 
 	// region Status const
@@ -97,7 +117,11 @@ final class Dictionary
 	public const STATUS_SUCCESS_FIELDS = 'success_fields';
 	public const STATUS_SUCCESS_COMMENT = 'success_comment_only';
 	public const STATUS_ERROR_NO_LIMITS = 'error_no_limits';
-	public const STATUS_ERROR_GPT = 'error_gpt';
+	public const STATUS_ERROR_AGREEMENT = 'error_agreement';
+	public const STATUS_ERROR_LIMIT_DAILY = 'error_limit_daily';
+	public const STATUS_ERROR_LIMIT_MONTHLY = 'error_limit_monthly';
+	public const STATUS_ERROR_LIMIT_BAAS = 'error_limit_baas';
+	public const STATUS_ERROR_PROVIDER = 'error_provider';
 	public const STATUS_ERROR_B24 = 'error_b24';
 	// endregion
 
@@ -110,18 +134,18 @@ final class Dictionary
 		$entityTypeId = $entityType;
 		if (is_string($entityType))
 		{
-			$entityTypeId = \CCrmOwnerType::ResolveID($entityType);
+			$entityTypeId = CCrmOwnerType::ResolveID($entityType);
 		}
 
-		if (!\CCrmOwnerType::IsDefined($entityTypeId))
+		if (!CCrmOwnerType::IsDefined($entityTypeId))
 		{
 			return null;
 		}
 
 		return mb_strtolower(
-			\CCrmOwnerType::isPossibleDynamicTypeId($entityTypeId)
-				? \CCrmOwnerType::CommonDynamicName
-				: \CCrmOwnerType::ResolveName($entityTypeId)
+			CCrmOwnerType::isPossibleDynamicTypeId($entityTypeId)
+				? CCrmOwnerType::CommonDynamicName
+				: CCrmOwnerType::ResolveName($entityTypeId)
 		);
 	}
 

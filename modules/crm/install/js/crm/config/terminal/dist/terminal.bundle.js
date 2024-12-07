@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
 this.BX.Crm.Config = this.BX.Crm.Config || {};
-(function (exports,ui_dialogs_messagebox,ui_vue3,ui_switcher,main_popup,ui_label,main_core,ui_vue3_vuex) {
+(function (exports,ui_vue3,ui_switcher,main_popup,rest_client,bitrix24_phoneverify,ui_dialogs_messagebox,ui_label,main_core,landing_backend,landing_pageobject,ui_vue3_vuex) {
 	'use strict';
 
 	var SettingsContainer = {
@@ -121,7 +121,7 @@ this.BX.Crm.Config = this.BX.Crm.Config || {};
 	    }
 	  }),
 	  // language=Vue
-	  template: "\n\t\t<div style=\"display: inline-block; vertical-align: top; position: relative;\">\n\t\t\t<span class=\"sms-provider-selector\" @click.stop=\"switchVisibility\">{{ $Bitrix.Loc.getMessage('CRM_CFG_TERMINAL_SETTINGS_SECTION_SMS_CHANGE') }}</span>\n\t\t\t<ul :class=\"getListClassname\" @click.stop>\n\t\t\t\t<li v-for=\"provider in getActiveSmsServices()\" @click=\"switchService(provider['ID'])\" v-show=\"provider['ID'] !== getSelectedService['ID']\">{{ provider['NAME'] }}</li>\n\t\t\t\t<li @click=\"openSmsServicesSlider\">{{ $Bitrix.Loc.getMessage('CRM_CFG_TERMINAL_SETTINGS_SECTION_SMS_SERVICE_PROVIDER_CONNECT_MORE') }}</li>\n\t\t\t</ul>\n\t\t</div>\n\t"
+	  template: "\n\t\t<div style=\"display: inline-block; vertical-align: top; position: relative;\">\n\t\t\t<span class=\"sms-provider-selector\" @click.stop=\"switchVisibility\">{{ $Bitrix.Loc.getMessage('CRM_CFG_TERMINAL_SETTINGS_SECTION_SMS_CHANGE_MSGVER_1') }}</span>\n\t\t\t<ul :class=\"getListClassname\" @click.stop>\n\t\t\t\t<li v-for=\"provider in getActiveSmsServices()\" @click=\"switchService(provider['ID'])\" v-show=\"provider['ID'] !== getSelectedService['ID']\">{{ provider['NAME'] }}</li>\n\t\t\t\t<li @click=\"openSmsServicesSlider\">{{ $Bitrix.Loc.getMessage('CRM_CFG_TERMINAL_SETTINGS_SECTION_SMS_SERVICE_PROVIDER_CONNECT_MORE') }}</li>\n\t\t\t</ul>\n\t\t</div>\n\t"
 	};
 
 	function ownKeys$1(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
@@ -178,11 +178,6 @@ this.BX.Crm.Config = this.BX.Crm.Config || {};
 	      var link = "<br /><span class=\"sms-link-path\">".concat(this.getPaymentSlipLinkScheme(), "</span><span class=\"sms-link-plug\">xxxxx</span> ");
 	      var text = this.$Bitrix.Loc.getMessage('CRM_CFG_TERMINAL_SETTINGS_SECTION_SMS_MESSAGE_TEMPLATE');
 	      return main_core.Text.encode(text).replaceAll('#PAYMENT_SLIP_LINK#', link);
-	    },
-	    getSmsProviderMessage: function getSmsProviderMessage() {
-	      var providerSelect = '<span>Dummy SMS</span>';
-	      var text = this.$Bitrix.Loc.getMessage('CRM_CFG_TERMINAL_SETTINGS_SECTION_SMS_SERVICE_SELECT');
-	      return main_core.Text.encode(text).replaceAll('#SMS_SERVICE#', providerSelect);
 	    },
 	    onSmsMouseenter: function onSmsMouseenter(event) {
 	      var _this2 = this;
@@ -248,7 +243,7 @@ this.BX.Crm.Config = this.BX.Crm.Config || {};
 	    }
 	  }),
 	  // language=Vue
-	  template: "\n\t\t<div v-if=\"isAnyServiceEnabled\" style=\"display: flex; justify-content: space-between; margin-bottom: 24px;\">\n\t\t\t<div>\n\t\t\t\t<SettingsSection\n\t\t\t\t\t:title=\"getSectionTitle\"\n\t\t\t\t\t:switchable=\"true\"\n\t\t\t\t\tv-on:toggle=\"onSectionToggled\"\n\t\t\t\t\t:active=\"isSmsSendingActive\"\n\t\t\t\t\t:hint=\"getSectionHint\"\n\t\t\t\t/>\n\t\t\t\t<div style=\"margin-left: 53px;\">\n\t\t\t\t\t<div\n\t\t\t\t\t\tv-html=\"getNotificationConnectHint\"\n\t\t\t\t\t\tv-if=\"isNotificationsEnabled\"\n\t\t\t\t\t\tclass=\"sms-provider-name\"\n\t\t\t\t\t></div>\n\t\t\t\t\t<div v-else>\n\t\t\t\t\t\t<div class=\"sms-provider-name\" style=\"padding: 3px 0;\">\n\t\t\t\t\t\t\t{{ $Bitrix.Loc.getMessage('CRM_CFG_TERMINAL_SETTINGS_SECTION_SMS_SERVICE_SELECT_MSGVER_1') + ' ' + getSelectedService['NAME'] }}\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<SmsProviderSelect v-on:onConnectSliderClosed=\"onServiceConnectSliderClosed\"/>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t<div>\n\t\t\t\t<div class=\"sms-provider-message-title\">\n\t\t\t\t\t{{ $Bitrix.Loc.getMessage('CRM_CFG_TERMINAL_SETTINGS_SECTION_SMS_MESSAGE_TITLE') }}\n\t\t\t\t</div>\n\t\t\t\t<div>\n\t\t\t\t\t<Sms>\n\t\t\t\t\t\t<span\n\t\t\t\t\t\t\tv-html=\"getSmsMessage()\"\n\t\t\t\t\t\t\tv-on:mouseenter=\"onSmsMouseenter($event)\"\n\t\t\t\t\t\t\tv-on:mouseleave=\"onSmsMouseleave\"\n\t\t\t\t\t\t></span>\n\t\t\t\t\t</Sms>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</div>\n\t\t<div style=\"margin-bottom: 24px;\" v-else>\n\t\t\t<span class=\"sms-provider-empty-provider-list-text\" v-if=\"(getNotificationsLink() !== null) && (getServiceLink() !== '')\">\n\t\t\t\t{{ $Bitrix.Loc.getMessage('CRM_CFG_TERMINAL_SETTINGS_SECTION_SMS_ONBOARDING_TEXT') }}\n\t\t\t</span>\n\t\t\t<span class=\"sms-provider-empty-provider-list-text\" v-else-if=\"(getNotificationsLink() === null) && (getServiceLink() !== '')\">\n\t\t\t\t{{ $Bitrix.Loc.getMessage('CRM_CFG_TERMINAL_SETTINGS_SECTION_SMS_ONBOARDING_ONLY_SMS_SERVICES_TEXT') }}\n\t\t\t</span>\n\t\t\t<button class=\"ui-btn ui-btn-md ui-btn-primary\" @click=\"onNotificationsConnectLinkClick\" v-if=\"getNotificationsLink() !== null\">\n\t\t\t\t{{ $Bitrix.Loc.getMessage('CRM_CFG_TERMINAL_SETTINGS_SECTION_SMS_SERVICE_UNC_CONNECT_BTN') }}\n\t\t\t</button>\n\n\t\t\t<button class=\"ui-btn ui-btn-md ui-btn-light-border\" @click=\"onProviderSmsNotificationClick\" v-if=\"(getNotificationsLink() !== null) && (getServiceLink() !== '')\">\n\t\t\t\t{{ $Bitrix.Loc.getMessage('CRM_CFG_TERMINAL_SETTINGS_SECTION_SMS_SERVICE_PROVIDER_CONNECT_BTN') }}\n\t\t\t</button>\n\t\t\t<button class=\"ui-btn ui-btn-md ui-btn-primary\" @click=\"onProviderSmsNotificationClick\" v-else-if=\"(getNotificationsLink() === null) && (getServiceLink() !== '')\">\n\t\t\t\t{{ $Bitrix.Loc.getMessage('CRM_CFG_TERMINAL_SETTINGS_SECTION_SMS_SERVICE_PROVIDER_CONNECT_BTN') }}\n\t\t\t</button>\n\t\t</div>\n\t"
+	  template: "\n\t\t<div v-if=\"isAnyServiceEnabled\" style=\"display: flex; justify-content: space-between; margin-bottom: 24px;\">\n\t\t\t<div>\n\t\t\t\t<SettingsSection\n\t\t\t\t\t:title=\"getSectionTitle\"\n\t\t\t\t\t:switchable=\"true\"\n\t\t\t\t\tv-on:toggle=\"onSectionToggled\"\n\t\t\t\t\t:active=\"isSmsSendingActive\"\n\t\t\t\t\t:hint=\"getSectionHint\"\n\t\t\t\t/>\n\t\t\t\t<div style=\"margin-left: 53px;\">\n\t\t\t\t\t<div\n\t\t\t\t\t\tv-html=\"getNotificationConnectHint\"\n\t\t\t\t\t\tv-if=\"isNotificationsEnabled\"\n\t\t\t\t\t\tclass=\"sms-provider-name\"\n\t\t\t\t\t></div>\n\t\t\t\t\t<div v-else>\n\t\t\t\t\t\t<div class=\"sms-provider-name\" style=\"padding: 3px 0;\">\n\t\t\t\t\t\t\t{{ $Bitrix.Loc.getMessage('CRM_CFG_TERMINAL_SETTINGS_SECTION_SMS_SERVICE_SELECT_MSGVER_2', {'%PROVIDER_NAME%': getSelectedService['NAME']}) }}\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<SmsProviderSelect v-on:onConnectSliderClosed=\"onServiceConnectSliderClosed\"/>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t<div>\n\t\t\t\t<div class=\"sms-provider-message-title\">\n\t\t\t\t\t{{ $Bitrix.Loc.getMessage('CRM_CFG_TERMINAL_SETTINGS_SECTION_SMS_MESSAGE_TITLE') }}\n\t\t\t\t</div>\n\t\t\t\t<div>\n\t\t\t\t\t<Sms>\n\t\t\t\t\t\t<span\n\t\t\t\t\t\t\tv-html=\"getSmsMessage()\"\n\t\t\t\t\t\t\tv-on:mouseenter=\"onSmsMouseenter($event)\"\n\t\t\t\t\t\t\tv-on:mouseleave=\"onSmsMouseleave\"\n\t\t\t\t\t\t></span>\n\t\t\t\t\t</Sms>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</div>\n\t\t<div style=\"margin-bottom: 24px;\" v-else>\n\t\t\t<span class=\"sms-provider-empty-provider-list-text\" v-if=\"(getNotificationsLink() !== null) && (getServiceLink() !== '')\">\n\t\t\t\t{{ $Bitrix.Loc.getMessage('CRM_CFG_TERMINAL_SETTINGS_SECTION_SMS_ONBOARDING_TEXT') }}\n\t\t\t</span>\n\t\t\t<span class=\"sms-provider-empty-provider-list-text\" v-else-if=\"(getNotificationsLink() === null) && (getServiceLink() !== '')\">\n\t\t\t\t{{ $Bitrix.Loc.getMessage('CRM_CFG_TERMINAL_SETTINGS_SECTION_SMS_ONBOARDING_ONLY_SMS_SERVICES_TEXT') }}\n\t\t\t</span>\n\t\t\t<button class=\"ui-btn ui-btn-md ui-btn-primary\" @click=\"onNotificationsConnectLinkClick\" v-if=\"getNotificationsLink() !== null\">\n\t\t\t\t{{ $Bitrix.Loc.getMessage('CRM_CFG_TERMINAL_SETTINGS_SECTION_SMS_SERVICE_UNC_CONNECT_BTN') }}\n\t\t\t</button>\n\n\t\t\t<button class=\"ui-btn ui-btn-md ui-btn-light-border\" @click=\"onProviderSmsNotificationClick\" v-if=\"(getNotificationsLink() !== null) && (getServiceLink() !== '')\">\n\t\t\t\t{{ $Bitrix.Loc.getMessage('CRM_CFG_TERMINAL_SETTINGS_SECTION_SMS_SERVICE_PROVIDER_CONNECT_BTN') }}\n\t\t\t</button>\n\t\t\t<button class=\"ui-btn ui-btn-md ui-btn-primary\" @click=\"onProviderSmsNotificationClick\" v-else-if=\"(getNotificationsLink() === null) && (getServiceLink() !== '')\">\n\t\t\t\t{{ $Bitrix.Loc.getMessage('CRM_CFG_TERMINAL_SETTINGS_SECTION_SMS_SERVICE_PROVIDER_CONNECT_BTN') }}\n\t\t\t</button>\n\t\t</div>\n\t"
 	};
 
 	function ownKeys$2(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
@@ -305,7 +300,11 @@ this.BX.Crm.Config = this.BX.Crm.Config || {};
 	    getIsAnyPaysystemActive: 'getIsAnyPaysystemActive',
 	    getPaysystemPanelPath: 'getPaysystemPanelPath',
 	    getIsPaysystemsCollapsed: 'getIsPaysystemsCollapsed',
-	    getPaysystemsArticleUrl: 'getPaysystemsArticleUrl'
+	    getPaysystemsArticleUrl: 'getPaysystemsArticleUrl',
+	    getIsPhoneConfirmed: 'getIsPhoneConfirmed',
+	    getConnectedSiteId: 'getConnectedSiteId',
+	    getIsConnectedSitePublished: 'getIsConnectedSitePublished',
+	    getIsConnectedSiteExists: 'getIsConnectedSiteExists'
 	  })), {}, {
 	    getRequiredPaysystemCodes: function getRequiredPaysystemCodes() {
 	      return RequiredPaysystemCodes;
@@ -314,7 +313,7 @@ this.BX.Crm.Config = this.BX.Crm.Config || {};
 	      return this.$Bitrix.Loc.getMessage('CRM_CFG_TERMINAL_SETTINGS_SECTION_PS_LINK_PAYMENT_HINT');
 	    }
 	  }),
-	  methods: _objectSpread$3(_objectSpread$3({}, ui_vue3_vuex.mapMutations(['setTerminalPaysystemDisabled', 'setLinkPaymentEnabled', 'setRequiredPaysystemDisabled', 'updateSbpConnectPath', 'updateSberQrConnectPath', 'updateIsSbpConnected', 'updateIsSberQrConnected', 'updateIsPaysystemsCollapsed', 'updateIsAnyPaysystemActive', 'updateAvailablePaysystems'])), {}, {
+	  methods: _objectSpread$3(_objectSpread$3({}, ui_vue3_vuex.mapMutations(['setTerminalPaysystemDisabled', 'setLinkPaymentEnabled', 'setRequiredPaysystemDisabled', 'updateSbpConnectPath', 'updateSberQrConnectPath', 'updateIsSbpConnected', 'updateIsSberQrConnected', 'updateIsPaysystemsCollapsed', 'updateIsAnyPaysystemActive', 'updateAvailablePaysystems', 'updateIsPhoneConfirmed', 'updateConnectedSiteId', 'updateIsConnectedSitePublished', 'updateIsConnectedSiteExists'])), {}, {
 	    onPaysystemToggled: function onPaysystemToggled(paysystemId) {
 	      this.setTerminalPaysystemDisabled(paysystemId);
 	    },
@@ -364,6 +363,18 @@ this.BX.Crm.Config = this.BX.Crm.Config || {};
 	        _this2.updateAvailablePaysystems(response.data.availablePaysystems);
 	      })["catch"](function () {});
 	    },
+	    onSiteSliderClosed: function onSiteSliderClosed() {
+	      var _this3 = this;
+	      this.loader.show(document.body);
+	      main_core.ajax.runComponentAction('bitrix:crm.config.terminal.settings', 'updateConnectedSiteParams').then(function (response) {
+	        _this3.loader.hide();
+	        _this3.updateIsConnectedSiteExists(response.data.isConnectedSiteExists);
+	        _this3.updateConnectedSiteId(response.data.connectedSiteId);
+	        _this3.updateIsPhoneConfirmed(response.data.isPhoneConfirmed);
+	        _this3.updateIsConnectedSitePublished(response.data.isConnectedSitePublished);
+	        _this3.connectSite();
+	      })["catch"](function () {});
+	    },
 	    getStatusLabel: function getStatusLabel() {
 	      var connected = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
 	      var text = this.$Bitrix.Loc.getMessage(connected ? 'CRM_CFG_TERMINAL_SETTINGS_SECTION_PS_CONNECTED' : 'CRM_CFG_TERMINAL_SETTINGS_SECTION_PS_NOT_CONNECTED').toUpperCase();
@@ -382,10 +393,118 @@ this.BX.Crm.Config = this.BX.Crm.Config || {};
 	          collapsed: this.getIsPaysystemsCollapsed
 	        }
 	      });
+	    },
+	    connectSite: function connectSite() {
+	      if (!this.loader) {
+	        this.loader = new BX.Loader({
+	          size: 200
+	        });
+	      }
+	      if (!this.getIsConnectedSiteExists) {
+	        this.createSite();
+	        return;
+	      }
+	      if (!this.getIsConnectedSitePublished) {
+	        this.publishSite();
+	        return;
+	      }
+	      if (!this.getIsPhoneConfirmed) {
+	        this.showPhoneConfirmationPopup();
+	      }
+	    },
+	    createSite: function createSite() {
+	      var _this4 = this;
+	      this.loader.show(document.body);
+	      rest_client.rest.callMethod('salescenter.manager.getConfig').then(function (result) {
+	        var _result$answer$result = result.answer.result,
+	          connectedSiteId = _result$answer$result.connectedSiteId,
+	          isSiteExists = _result$answer$result.isSiteExists,
+	          isPhoneConfirmed = _result$answer$result.isPhoneConfirmed,
+	          siteTemplateCode = _result$answer$result.siteTemplateCode;
+	        _this4.loader.hide();
+	        if (isSiteExists && connectedSiteId > 0) {
+	          _this4.updateIsConnectedSiteExists(isSiteExists);
+	          _this4.updateConnectedSiteId(connectedSiteId);
+	          _this4.updateIsPhoneConfirmed(isPhoneConfirmed);
+	          if (isPhoneConfirmed) {
+	            _this4.publishSite();
+	            return;
+	          }
+	          _this4.showPhoneConfirmationPopup();
+	        } else {
+	          var url = new main_core.Uri('/shop/stores/site/edit/0/');
+	          var params = {
+	            context: 'terminal',
+	            tpl: siteTemplateCode,
+	            no_redirect: 'Y'
+	          };
+	          url.setQueryParams(params);
+	          var options = {
+	            events: {
+	              onClose: function onClose() {
+	                _this4.onSiteSliderClosed();
+	              }
+	            }
+	          };
+	          BX.SidePanel.Instance.open(url.toString(), options);
+	        }
+	      })["catch"](function () {
+	        return _this4.loader.hide();
+	      });
+	    },
+	    publishSite: function publishSite() {
+	      var _this5 = this;
+	      this.loader.show(document.body);
+	      landing_backend.Backend.getInstance().action('Site::publication', {
+	        id: this.getConnectedSiteId
+	      }).then(function (publishedSiteId) {
+	        _this5.loader.hide();
+	        if (publishedSiteId) {
+	          _this5.updateIsConnectedSitePublished(true);
+	        }
+	      })["catch"](function (data) {
+	        _this5.loader.hide();
+	        if (data.type === 'error' && !main_core.Type.isUndefined(data.result[0])) {
+	          var errorCode = data.result[0].error;
+	          if (errorCode === 'PHONE_NOT_CONFIRMED') {
+	            _this5.showPhoneConfirmationPopup();
+	          } else if (errorCode === 'EMAIL_NOT_CONFIRMED') {
+	            BX.UI.InfoHelper.show('limit_sites_confirm_email');
+	          } else {
+	            ui_dialogs_messagebox.MessageBox.alert(data.result[0].error_description);
+	          }
+	        }
+	      });
+	    },
+	    confirmPhoneNumber: function confirmPhoneNumber() {
+	      var _this6 = this;
+	      this.loader.show(document.body);
+	      bitrix24_phoneverify.PhoneVerify.getInstance().setEntityType('landing_site').setEntityId(this.getConnectedSiteId).startVerify({
+	        mandatory: false,
+	        callback: function callback(verified) {
+	          _this6.loader.hide();
+	          if (!verified) {
+	            return;
+	          }
+	          _this6.updateIsPhoneConfirmed(verified);
+	          if (!_this6.getIsConnectedSitePublished) {
+	            _this6.publishSite();
+	          }
+	        }
+	      });
+	    },
+	    showPhoneConfirmationPopup: function showPhoneConfirmationPopup() {
+	      var _this7 = this;
+	      ui_dialogs_messagebox.MessageBox.confirm(this.$Bitrix.Loc.getMessage('CRM_CFG_TERMINAL_SETTINGS_SECTION_PS_PHONE_CONFIRMATION_POPUP_MESSAGE'), this.$Bitrix.Loc.getMessage('CRM_CFG_TERMINAL_SETTINGS_SECTION_PS_PHONE_CONFIRMATION_POPUP_TITLE'), function (messageBox) {
+	        messageBox.close();
+	        _this7.confirmPhoneNumber();
+	      }, this.$Bitrix.Loc.getMessage('CRM_CFG_TERMINAL_SETTINGS_SECTION_PS_PHONE_CONFIRMATION_POPUP_OK_CAPTION'), function (messageBox) {
+	        return messageBox.close();
+	      }, this.$Bitrix.Loc.getMessage('CRM_CFG_TERMINAL_SETTINGS_SECTION_PS_PHONE_CONFIRMATION_POPUP_CANCEL_CAPTION'));
 	    }
 	  }),
 	  // language=Vue
-	  template: "\n\t\t<SettingsContainer\n\t\t\t:title=\"$Bitrix.Loc.getMessage('CRM_CFG_TERMINAL_SETTINGS_SECTION_PS_TITLE_MSGVER_1')\"\n\t\t\ticonStyle=\"settings-section-icon-payment-methods\"\n\t\t\t:collapsed=\"getIsPaysystemsCollapsed\"\n\t\t\tv-on:titleClick=\"onTitleClick\"\n\t\t\tv-bind:style=\"{ 'padding-bottom: 0px;' : !getIsPaysystemsCollapsed }\"\n\t\t>\n\n\t\t\t<div\n\t\t\t\tclass=\"payment-systems-subtitle\"\n\t\t\t\tv-html=\"$Bitrix.Loc.getMessage(\n\t\t\t\t\t'CRM_CFG_TERMINAL_SETTINGS_SECTION_PS_SUBTITLE',\n\t\t\t\t\t{'#MORE_INFO_LINK#': getPaysystemsArticleUrl})\"\n\t\t\t></div>\n\n\t\t\t<div class=\"payment-systems-section-container\">\n\t\t\t\t<div class=\"payment-systems-container\">\n\t\t\t\t\t<div v-if=\"getIsRuZone\" class=\"payment-system-wrapper\">\n\t\t\t\t\t\t<SettingsSection\n\t\t\t\t\t\t\t:title=\"$Bitrix.Loc.getMessage('CRM_CFG_TERMINAL_SETTINGS_SECTION_PS_SBP')\"\n\t\t\t\t\t\t\t:switchable=\"true\"\n\t\t\t\t\t\t\t:active=\"getIsSbpEnabled\"\n\t\t\t\t\t\t\tleftIconClass=\"payment-method-icon-sbp\"\n\t\t\t\t\t\t\tv-on:toggle=\"onRequiredPaysystemToggled(getRequiredPaysystemCodes.sbp)\"\n\t\t\t\t\t\t\tv-on:titleClick=\"openPaysystemSlider(getRequiredPaysystemCodes.sbp)\"\n\t\t\t\t\t\t/>\n\t\t\t\t\t\t<div class=\"payment-system-status-container\">\n\t\t\t\t\t\t\t<span v-html=\"getStatusLabel(this.getIsSbpConnected)\"></span>\n\t\t\t\t\t\t\t<span\n\t\t\t\t\t\t\t\tclass=\"payment-system-set\"\n\t\t\t\t\t\t\t\t:class=\"getIsSbpConnected ? 'payment-system-set-connected' : 'payment-system-set-not-connected'\"\n\t\t\t\t\t\t\t\tv-on:click=\"openPaysystemSlider(getRequiredPaysystemCodes.sbp)\"\n\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t{{ $Bitrix.Loc.getMessage(this.getIsSbpConnected\n\t\t\t\t\t\t\t\t? 'CRM_CFG_TERMINAL_SETTINGS_SECTION_PS_SET'\n\t\t\t\t\t\t\t\t: 'CRM_CFG_TERMINAL_SETTINGS_SECTION_PS_CONNECT') }}\n\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\n\t\t\t\t\t<div v-if=\"getIsRuZone\" class=\"payment-system-wrapper\">\n\t\t\t\t\t\t<SettingsSection\n\t\t\t\t\t\t\t:title=\"$Bitrix.Loc.getMessage('CRM_CFG_TERMINAL_SETTINGS_SECTION_PS_SBER_QR')\"\n\t\t\t\t\t\t\t:switchable=\"true\"\n\t\t\t\t\t\t\t:active=\"getIsSberQrEnabled\"\n\t\t\t\t\t\t\tleftIconClass=\"payment-method-icon-sber\"\n\t\t\t\t\t\t\tv-on:toggle=\"onRequiredPaysystemToggled(getRequiredPaysystemCodes.sberQr)\"\n\t\t\t\t\t\t\tv-on:titleClick=\"openPaysystemSlider(getRequiredPaysystemCodes.sberQr)\"\n\t\t\t\t\t\t/>\n\t\t\t\t\t\t<div class=\"payment-system-status-container\">\n\t\t\t\t\t\t\t<span v-html=\"getStatusLabel(this.getIsSberQrConnected)\"></span>\n\t\t\t\t\t\t\t<span\n\t\t\t\t\t\t\t\tclass=\"payment-system-set\"\n\t\t\t\t\t\t\t\t:class=\"getIsSberQrConnected ? 'payment-system-set-connected' : 'payment-system-set-not-connected'\"\n\t\t\t\t\t\t\t\tv-on:click=\"openPaysystemSlider(getRequiredPaysystemCodes.sberQr)\"\n\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t{{ $Bitrix.Loc.getMessage(this.getIsSberQrConnected\n\t\t\t\t\t\t\t\t? 'CRM_CFG_TERMINAL_SETTINGS_SECTION_PS_SET'\n\t\t\t\t\t\t\t\t: 'CRM_CFG_TERMINAL_SETTINGS_SECTION_PS_CONNECT') }}\n\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\n\t\t\t\t\t<div\n\t\t\t\t\t\tv-if=\"getAvailablePaysystems.length > 0\"\n\t\t\t\t\t\tv-for=\"paysystem in getAvailablePaysystems\"\n\t\t\t\t\t\tclass=\"payment-system-wrapper\"\n\t\t\t\t\t>\n\t\t\t\t\t\t<SettingsSection\n\t\t\t\t\t\t\t:key=\"paysystem.type\"\n\t\t\t\t\t\t\t:title=\"paysystem.title\"\n\t\t\t\t\t\t\t:switchable=\"paysystem.id > 0\"\n\t\t\t\t\t\t\t:active=\"paysystem.id > 0 && !getTerminalDisabledPaysystems.includes(paysystem.id)\"\n\t\t\t\t\t\t\tv-on:toggle=\"onPaysystemToggled(paysystem.id)\"\n\t\t\t\t\t\t/>\n\t\t\t\t\t\t<div class=\"payment-system-status-container\">\n\t\t\t\t\t\t\t<span v-html=\"getStatusLabel(paysystem.isConnected)\"></span>\n\t\t\t\t\t\t\t<span\n\t\t\t\t\t\t\t\tclass=\"payment-system-set\"\n\t\t\t\t\t\t\t\t:class=\"paysystem.isConnected ? 'payment-system-set-connected' : 'payment-system-set-not-connected'\"\n\t\t\t\t\t\t\t\tv-on:click=\"openPaysystemSlider(getRequiredPaysystemCodes.rest, paysystem.path)\"\n\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t{{ $Bitrix.Loc.getMessage(paysystem.isConnected\n\t\t\t\t\t\t\t\t? 'CRM_CFG_TERMINAL_SETTINGS_SECTION_PS_SET'\n\t\t\t\t\t\t\t\t: 'CRM_CFG_TERMINAL_SETTINGS_SECTION_PS_CONNECT') }}\n\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\n\t\t\t\t\t<div class=\"payment-system-wrapper\">\n\t\t\t\t\t\t<SettingsSection\n\t\t\t\t\t\t\t:title=\"$Bitrix.Loc.getMessage('CRM_CFG_TERMINAL_SETTINGS_SECTION_PS_LINK_PAYMENT')\"\n\t\t\t\t\t\t\t:switchable=\"true\"\n\t\t\t\t\t\t\t:active=\"getIsLinkPaymentEnabled\"\n\t\t\t\t\t\t\tv-on:toggle=\"onLinkPaymentToggled()\"\n\t\t\t\t\t\t\t:hint=\"getLinkPaymentHint\"\n\t\t\t\t\t\t/>\n\t\t\t\t\t\t<div class=\"payment-system-status-container\">\n\t\t\t\t\t\t\t<span v-html=\"getStatusLabel(this.getIsAnyPaysystemActive)\"></span>\n\t\t\t\t\t\t\t<span\n\t\t\t\t\t\t\t\tclass=\"payment-system-set payment-system-set-connected\"\n\t\t\t\t\t\t\t\tv-on:click=\"openPaysystemSlider(getRequiredPaysystemCodes.paysystemPanel)\"\n\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t{{ $Bitrix.Loc.getMessage('CRM_CFG_TERMINAL_SETTINGS_SECTION_PS_PAYMENT_METHOD') }}\n\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"terminal-image-wrapper\"></div>\n\t\t\t</div>\n\n\t\t</SettingsContainer>\n\t"
+	  template: "\n\t\t<SettingsContainer\n\t\t\t:title=\"$Bitrix.Loc.getMessage('CRM_CFG_TERMINAL_SETTINGS_SECTION_PS_TITLE_MSGVER_1')\"\n\t\t\ticonStyle=\"settings-section-icon-payment-methods\"\n\t\t\t:collapsed=\"getIsPaysystemsCollapsed\"\n\t\t\tv-on:titleClick=\"onTitleClick\"\n\t\t\tv-bind:style=\"{ 'padding-bottom: 0px;' : !getIsPaysystemsCollapsed }\"\n\t\t>\n\n\t\t\t<div\n\t\t\t\tclass=\"payment-systems-subtitle\"\n\t\t\t\tv-html=\"$Bitrix.Loc.getMessage(\n\t\t\t\t\t'CRM_CFG_TERMINAL_SETTINGS_SECTION_PS_SUBTITLE_MSGVER_1',\n\t\t\t\t\t{'#MORE_INFO_LINK#': getPaysystemsArticleUrl})\"\n\t\t\t></div>\n\n\t\t\t<div class=\"payment-systems-section-container\">\n\t\t\t\t<div class=\"payment-systems-container\">\n\t\t\t\t\t<div v-if=\"getIsRuZone\" class=\"payment-system-wrapper\">\n\t\t\t\t\t\t<SettingsSection\n\t\t\t\t\t\t\t:title=\"$Bitrix.Loc.getMessage('CRM_CFG_TERMINAL_SETTINGS_SECTION_PS_SBP')\"\n\t\t\t\t\t\t\t:switchable=\"true\"\n\t\t\t\t\t\t\t:active=\"getIsSbpEnabled\"\n\t\t\t\t\t\t\tleftIconClass=\"payment-method-icon-sbp\"\n\t\t\t\t\t\t\tv-on:toggle=\"onRequiredPaysystemToggled(getRequiredPaysystemCodes.sbp)\"\n\t\t\t\t\t\t\tv-on:titleClick=\"openPaysystemSlider(getRequiredPaysystemCodes.sbp)\"\n\t\t\t\t\t\t/>\n\t\t\t\t\t\t<div class=\"payment-system-status-container\">\n\t\t\t\t\t\t\t<span v-html=\"getStatusLabel(this.getIsSbpConnected)\"></span>\n\t\t\t\t\t\t\t<span\n\t\t\t\t\t\t\t\tclass=\"payment-system-set\"\n\t\t\t\t\t\t\t\t:class=\"getIsSbpConnected ? 'payment-system-set-connected' : 'payment-system-set-not-connected'\"\n\t\t\t\t\t\t\t\tv-on:click=\"openPaysystemSlider(getRequiredPaysystemCodes.sbp)\"\n\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t{{ $Bitrix.Loc.getMessage(this.getIsSbpConnected\n\t\t\t\t\t\t\t\t? 'CRM_CFG_TERMINAL_SETTINGS_SECTION_PS_SET'\n\t\t\t\t\t\t\t\t: 'CRM_CFG_TERMINAL_SETTINGS_SECTION_PS_CONNECT') }}\n\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\n\t\t\t\t\t<div v-if=\"getIsRuZone\" class=\"payment-system-wrapper\">\n\t\t\t\t\t\t<SettingsSection\n\t\t\t\t\t\t\t:title=\"$Bitrix.Loc.getMessage('CRM_CFG_TERMINAL_SETTINGS_SECTION_PS_SBER_QR_MSGVER_1')\"\n\t\t\t\t\t\t\t:switchable=\"true\"\n\t\t\t\t\t\t\t:active=\"getIsSberQrEnabled\"\n\t\t\t\t\t\t\tleftIconClass=\"payment-method-icon-sber\"\n\t\t\t\t\t\t\tv-on:toggle=\"onRequiredPaysystemToggled(getRequiredPaysystemCodes.sberQr)\"\n\t\t\t\t\t\t\tv-on:titleClick=\"openPaysystemSlider(getRequiredPaysystemCodes.sberQr)\"\n\t\t\t\t\t\t/>\n\t\t\t\t\t\t<div class=\"payment-system-status-container\">\n\t\t\t\t\t\t\t<span v-html=\"getStatusLabel(this.getIsSberQrConnected)\"></span>\n\t\t\t\t\t\t\t<span\n\t\t\t\t\t\t\t\tclass=\"payment-system-set\"\n\t\t\t\t\t\t\t\t:class=\"getIsSberQrConnected ? 'payment-system-set-connected' : 'payment-system-set-not-connected'\"\n\t\t\t\t\t\t\t\tv-on:click=\"openPaysystemSlider(getRequiredPaysystemCodes.sberQr)\"\n\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t{{ $Bitrix.Loc.getMessage(this.getIsSberQrConnected\n\t\t\t\t\t\t\t\t? 'CRM_CFG_TERMINAL_SETTINGS_SECTION_PS_SET'\n\t\t\t\t\t\t\t\t: 'CRM_CFG_TERMINAL_SETTINGS_SECTION_PS_CONNECT') }}\n\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\n\t\t\t\t\t<div\n\t\t\t\t\t\tv-if=\"getAvailablePaysystems.length > 0\"\n\t\t\t\t\t\tv-for=\"paysystem in getAvailablePaysystems\"\n\t\t\t\t\t\tclass=\"payment-system-wrapper\"\n\t\t\t\t\t>\n\t\t\t\t\t\t<SettingsSection\n\t\t\t\t\t\t\t:key=\"paysystem.type\"\n\t\t\t\t\t\t\t:title=\"paysystem.title\"\n\t\t\t\t\t\t\t:switchable=\"paysystem.id > 0\"\n\t\t\t\t\t\t\t:active=\"paysystem.id > 0 && !getTerminalDisabledPaysystems.includes(paysystem.id)\"\n\t\t\t\t\t\t\tv-on:toggle=\"onPaysystemToggled(paysystem.id)\"\n\t\t\t\t\t\t/>\n\t\t\t\t\t\t<div class=\"payment-system-status-container\">\n\t\t\t\t\t\t\t<span v-html=\"getStatusLabel(paysystem.isConnected)\"></span>\n\t\t\t\t\t\t\t<span\n\t\t\t\t\t\t\t\tclass=\"payment-system-set\"\n\t\t\t\t\t\t\t\t:class=\"paysystem.isConnected ? 'payment-system-set-connected' : 'payment-system-set-not-connected'\"\n\t\t\t\t\t\t\t\tv-on:click=\"openPaysystemSlider(getRequiredPaysystemCodes.rest, paysystem.path)\"\n\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t{{ $Bitrix.Loc.getMessage(paysystem.isConnected\n\t\t\t\t\t\t\t\t? 'CRM_CFG_TERMINAL_SETTINGS_SECTION_PS_SET'\n\t\t\t\t\t\t\t\t: 'CRM_CFG_TERMINAL_SETTINGS_SECTION_PS_CONNECT') }}\n\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\n\t\t\t\t\t<div class=\"payment-system-wrapper\">\n\t\t\t\t\t\t<SettingsSection\n\t\t\t\t\t\t\t:title=\"$Bitrix.Loc.getMessage('CRM_CFG_TERMINAL_SETTINGS_SECTION_PS_LINK_PAYMENT')\"\n\t\t\t\t\t\t\t:switchable=\"true\"\n\t\t\t\t\t\t\t:active=\"getIsLinkPaymentEnabled\"\n\t\t\t\t\t\t\tv-on:toggle=\"onLinkPaymentToggled()\"\n\t\t\t\t\t\t\t:hint=\"getLinkPaymentHint\"\n\t\t\t\t\t\t/>\n\t\t\t\t\t\t<div class=\"payment-system-status-container\">\n\t\t\t\t\t\t\t<span v-html=\"getStatusLabel(this.getIsAnyPaysystemActive && this.getIsConnectedSitePublished && getIsPhoneConfirmed)\"></span>\n\t\t\t\t\t\t\t<span\n\t\t\t\t\t\t\t\tclass=\"payment-system-set payment-system-set-connected\"\n\t\t\t\t\t\t\t\tv-on:click=\"openPaysystemSlider(getRequiredPaysystemCodes.paysystemPanel)\"\n\t\t\t\t\t\t\t\tv-if=\"getIsConnectedSitePublished && getIsPhoneConfirmed\"\n\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t{{ $Bitrix.Loc.getMessage('CRM_CFG_TERMINAL_SETTINGS_SECTION_PS_PAYMENT_METHOD') }}\n\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t<span\n\t\t\t\t\t\t\t\tclass=\"payment-system-set payment-system-set-not-connected\"\n\t\t\t\t\t\t\t\tv-on:click=\"connectSite()\"\n\t\t\t\t\t\t\t\tv-else\n\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t{{ $Bitrix.Loc.getMessage('CRM_CFG_TERMINAL_SETTINGS_SECTION_PS_CONNECT') }}\n\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"terminal-image-wrapper\"></div>\n\t\t\t</div>\n\n\t\t</SettingsContainer>\n\t"
 	};
 
 	function ownKeys$4(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
@@ -515,7 +634,7 @@ this.BX.Crm.Config = this.BX.Crm.Config || {};
 	          }
 	        }),
 	        // language=Vue
-	        template: "\n\t\t\t\t<div style=\"position: relative; overflow: hidden;\">\n\t\t\t\t\t<div class=\"ui-side-panel-wrap-workarea payment-methods-settings-wrapper\">\n\t\t\t\t\t\t<PaymentMethodsSettings/>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div\n\t\t\t\t\t\tclass=\"terminal-image\"\n\t\t\t\t\t\tv-bind:class=\"{ 'terminal-image-collapsed': this.getIsPaysystemsCollapsed }\"\n\t\t\t\t\t>\n\t\t\t\t\t\t<div class=\"terminal-image-title\">{{ $Bitrix.Loc.getMessage('CRM_CFG_TERMINAL_SETTINGS_IMAGE_TITLE') }}</div>\n\t\t\t\t\t\t<div class=\"terminal-image-paysystems-container\">\n\t\t\t\t\t\t\t<div v-if=\"getIsSbpEnabled\" class=\"terminal-image-paysystem terminal-image-paysystem-sbp\">\n\t\t\t\t\t\t\t\t<span>{{ $Bitrix.Loc.getMessage('CRM_CFG_TERMINAL_SETTINGS_SECTION_PS_SBP') }}</span>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<div v-if=\"getIsSberQrEnabled\" class=\"terminal-image-paysystem terminal-image-paysystem-sber-qr\">\n\t\t\t\t\t\t\t\t<span>{{ $Bitrix.Loc.getMessage('CRM_CFG_TERMINAL_SETTINGS_SECTION_PS_SBER_QR') }}</span>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<template v-if=\"getAvailablePaysystems.length > 0\" v-for=\"paysystem in getAvailablePaysystems\">\n\t\t\t\t\t\t\t\t<div class=\"terminal-image-paysystem terminal-image-paysystem-wallet\" v-if=\"getTerminalDisabledPaysystems.indexOf(paysystem.id) === -1\">\n\t\t\t\t\t\t\t\t\t<span>{{ paysystem.title }}</span>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t<div v-if=\"getIsLinkPaymentEnabled\" class=\"terminal-image-paysystem terminal-image-paysystem-link\">\n\t\t\t\t\t\t\t\t<span>{{ $Bitrix.Loc.getMessage('CRM_CFG_TERMINAL_SETTINGS_SECTION_PS_LINK_PAYMENT') }}</span>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<div class=\"terminal-image-no-paysystems-stub\" v-if=\"!getIsAnyPaysystemEnabled\">\n\t\t\t\t\t\t\t\t{{ $Bitrix.Loc.getMessage('CRM_CFG_TERMINAL_SETTINGS_SECTION_PS_NO_PAY_METHODS') }}\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\n\t\t\t\t<div class=\"ui-side-panel-wrap-workarea\" style=\"margin-bottom: 70px;\">\n\t\t\t\t\t<SmsSettings/>\n\t\t\t\t</div>\n\n\t\t\t\t<ButtonsPanel/>\n\t\t\t"
+	        template: "\n\t\t\t\t<div style=\"position: relative; overflow: hidden;\">\n\t\t\t\t\t<div class=\"ui-side-panel-wrap-workarea payment-methods-settings-wrapper\">\n\t\t\t\t\t\t<PaymentMethodsSettings/>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div\n\t\t\t\t\t\tclass=\"terminal-image\"\n\t\t\t\t\t\tv-bind:class=\"{ 'terminal-image-collapsed': this.getIsPaysystemsCollapsed }\"\n\t\t\t\t\t>\n\t\t\t\t\t\t<div class=\"terminal-image-title\">{{ $Bitrix.Loc.getMessage('CRM_CFG_TERMINAL_SETTINGS_IMAGE_TITLE') }}</div>\n\t\t\t\t\t\t<div class=\"terminal-image-paysystems-container\">\n\t\t\t\t\t\t\t<div v-if=\"getIsSbpEnabled\" class=\"terminal-image-paysystem terminal-image-paysystem-sbp\">\n\t\t\t\t\t\t\t\t<span>{{ $Bitrix.Loc.getMessage('CRM_CFG_TERMINAL_SETTINGS_SECTION_PS_SBP') }}</span>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<div v-if=\"getIsSberQrEnabled\" class=\"terminal-image-paysystem terminal-image-paysystem-sber-qr\">\n\t\t\t\t\t\t\t\t<span>{{ $Bitrix.Loc.getMessage('CRM_CFG_TERMINAL_SETTINGS_SECTION_PS_SBER_QR_MSGVER_1') }}</span>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<template v-if=\"getAvailablePaysystems.length > 0\" v-for=\"paysystem in getAvailablePaysystems\">\n\t\t\t\t\t\t\t\t<div class=\"terminal-image-paysystem terminal-image-paysystem-wallet\" v-if=\"getTerminalDisabledPaysystems.indexOf(paysystem.id) === -1\">\n\t\t\t\t\t\t\t\t\t<span>{{ paysystem.title }}</span>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t<div v-if=\"getIsLinkPaymentEnabled\" class=\"terminal-image-paysystem terminal-image-paysystem-link\">\n\t\t\t\t\t\t\t\t<span>{{ $Bitrix.Loc.getMessage('CRM_CFG_TERMINAL_SETTINGS_SECTION_PS_LINK_PAYMENT') }}</span>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<div class=\"terminal-image-no-paysystems-stub\" v-if=\"!getIsAnyPaysystemEnabled\">\n\t\t\t\t\t\t\t\t{{ $Bitrix.Loc.getMessage('CRM_CFG_TERMINAL_SETTINGS_SECTION_PS_NO_PAY_METHODS') }}\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\n\t\t\t\t<div class=\"ui-side-panel-wrap-workarea\" style=\"margin-bottom: 70px;\">\n\t\t\t\t\t<SmsSettings/>\n\t\t\t\t</div>\n\n\t\t\t\t<ButtonsPanel/>\n\t\t\t"
 	      }));
 	      babelHelpers.classPrivateFieldGet(this, _application).use(this.store);
 	      babelHelpers.classPrivateFieldGet(this, _application).mount(this.rootNode);
@@ -647,6 +766,18 @@ this.BX.Crm.Config = this.BX.Crm.Config || {};
 	      },
 	      getIsRuZone: function getIsRuZone(state) {
 	        return state.isRuZone;
+	      },
+	      getIsPhoneConfirmed: function getIsPhoneConfirmed(state) {
+	        return state.isPhoneConfirmed;
+	      },
+	      getConnectedSiteId: function getConnectedSiteId(state) {
+	        return state.connectedSiteId;
+	      },
+	      getIsConnectedSitePublished: function getIsConnectedSitePublished(state) {
+	        return state.isConnectedSitePublished;
+	      },
+	      getIsConnectedSiteExists: function getIsConnectedSiteExists(state) {
+	        return state.isConnectedSiteExists;
 	      }
 	    },
 	    mutations: {
@@ -757,6 +888,18 @@ this.BX.Crm.Config = this.BX.Crm.Config || {};
 	      },
 	      updateAvailablePaysystems: function updateAvailablePaysystems(state, value) {
 	        state.availablePaysystems = value;
+	      },
+	      updateIsPhoneConfirmed: function updateIsPhoneConfirmed(state, value) {
+	        state.isPhoneConfirmed = value;
+	      },
+	      updateConnectedSiteId: function updateConnectedSiteId(state, value) {
+	        state.connectedSiteId = value;
+	      },
+	      updateIsConnectedSitePublished: function updateIsConnectedSitePublished(state, value) {
+	        state.isConnectedSitePublished = value;
+	      },
+	      updateIsConnectedSiteExists: function updateIsConnectedSiteExists(state, value) {
+	        state.isConnectedSiteExists = value;
 	      }
 	    }
 	  };
@@ -765,5 +908,5 @@ this.BX.Crm.Config = this.BX.Crm.Config || {};
 
 	exports.App = App;
 
-}((this.BX.Crm.Config.Terminal = this.BX.Crm.Config.Terminal || {}),BX.UI.Dialogs,BX.Vue3,BX.UI,BX.Main,BX.UI,BX,BX.Vue3.Vuex));
+}((this.BX.Crm.Config.Terminal = this.BX.Crm.Config.Terminal || {}),BX.Vue3,BX.UI,BX.Main,BX,BX.Bitrix24,BX.UI.Dialogs,BX.UI,BX,BX.Landing,BX.Landing,BX.Vue3.Vuex));
 //# sourceMappingURL=terminal.bundle.js.map

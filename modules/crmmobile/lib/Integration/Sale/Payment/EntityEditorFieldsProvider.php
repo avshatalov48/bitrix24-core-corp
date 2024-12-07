@@ -268,7 +268,7 @@ class EntityEditorFieldsProvider
 				'title' => Loc::getMessage('M_CRM_TL_FIELD_NAME_RESPONSIBLE'),
 				'type' => 'user',
 			],
-			$displayItemValues[$fieldName]
+			$displayItemValues[$fieldName] ?? []
 		);
 
 		return $this->mergeProps(

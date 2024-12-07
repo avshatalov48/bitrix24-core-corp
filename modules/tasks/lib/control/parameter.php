@@ -118,6 +118,7 @@ class Parameter
 			)
 			{
 				unset($params[$k]);
+				continue;
 			}
 
 			if (

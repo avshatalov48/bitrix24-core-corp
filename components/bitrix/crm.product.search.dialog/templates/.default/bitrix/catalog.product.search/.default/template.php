@@ -232,7 +232,7 @@ foreach ($arResult['PRODUCTS'] as $productId => $arItems)
 			/** @global array $_GLOBALS */
 			global $_GLOBALS;
 			?>
-			<script type="text/javascript">
+			<script>
 				// double click patch
 				var rows = BX.findChildren(BX('<?= CUtil::JSEscape($_GLOBALS['CRM_PRODUCT_SEARCH_DIALOG_GRID_EPILOG_HANDLER_PARAM_1']) ?>'), {tag: 'tr'}, true);
 				if (rows) {
@@ -292,7 +292,7 @@ foreach ($arResult['PRODUCTS'] as $productId => $arItems)
 		?>
 	</div>
 </div>
-<script type="text/javascript">
+<script>
 	<?= CUtil::JSEscape($arResult['TABLE_ID']) ?>_helper = new BX.Crm.ProductSearchDialog({
 		tableId: '<?= CUtil::JSEscape($arResult['TABLE_ID']) ?>',
 		callback: '<?= $arResult['JS_CALLBACK'] ?>',

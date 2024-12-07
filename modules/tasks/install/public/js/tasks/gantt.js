@@ -2952,7 +2952,6 @@ GanttTask.prototype.onFoldingClick = function(event)
 
 GanttTask.prototype.onItemNameClick = function(event)
 {
-	debugger
 	event = event || window.event;
 
 	if (!BX.GanttChart.isLeftClick(event))

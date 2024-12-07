@@ -609,7 +609,7 @@ class DataInstallStep extends CWizardStep
 
 
 		$this->content .= '
-		<script type="text/javascript">
+		<script>
 			var ajaxForm = new CAjaxForm("'.$formName.'", "iframe-post-form", "'.$NextStepVarName.'");
 			ajaxForm.Post("'.$firstService.'", "'.$stage.'", "'.$status.'");
 		</script>';

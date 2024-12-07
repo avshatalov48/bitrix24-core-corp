@@ -2,6 +2,7 @@
  * @module imconnector/lib/ui/buttons/complete
  */
 jn.define('imconnector/lib/ui/buttons/complete', (require, exports, module) => {
+	const AppTheme = require('apptheme');
 	const { Type } = require('type');
 	const { withPressed } = require('utils/color');
 
@@ -13,7 +14,7 @@ jn.define('imconnector/lib/ui/buttons/complete', (require, exports, module) => {
 	function CompleteButton(props)
 	{
 		const borderRadius = BX.prop.getNumber(props.style, 'borderRadius', 6);
-		const color = BX.prop.getString(props.style, 'color', '#FFFFFF');
+		const color = BX.prop.getString(props.style, 'color', AppTheme.colors.baseWhiteFixed);
 		const width = BX.prop.getNumber(props.style, 'width', null);
 		const height = BX.prop.getNumber(props.style, 'height', null);
 
@@ -23,7 +24,7 @@ jn.define('imconnector/lib/ui/buttons/complete', (require, exports, module) => {
 					flexDirection: 'row',
 					alignItems: 'center',
 					justifyContent: 'center',
-					backgroundColor: withPressed('#9DCF00'),
+					backgroundColor: withPressed(AppTheme.colors.accentMainSuccess),
 					borderRadius,
 					width,
 					height,

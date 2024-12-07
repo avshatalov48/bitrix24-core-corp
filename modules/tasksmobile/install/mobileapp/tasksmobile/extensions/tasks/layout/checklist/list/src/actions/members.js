@@ -5,13 +5,13 @@ jn.define('tasks/layout/checklist/list/src/actions/members', (require, exports, 
 	const { Color, Indent } = require('tokens');
 	const { Avatar } = require('layout/ui/user/avatar');
 	const { ElementsStack } = require('elements-stack');
-	const { IconView, iconTypes } = require('ui-system/blocks/icon');
+	const { IconView, Icon } = require('ui-system/blocks/icon');
+	const {
+		MEMBER_TYPE_ICONS,
+		MEMBER_TYPE_RESTRICTION_FEATURE_META,
+	} = require('tasks/layout/checklist/list/src/constants');
 
 	const IMAGE_SIZE = 22;
-	const MEMBER_TYPE_ICONS = {
-		A: iconTypes.outline.group,
-		U: iconTypes.outline.observer,
-	};
 
 	/**
 	 * @class ItemMembers
@@ -47,7 +47,7 @@ jn.define('tasks/layout/checklist/list/src/actions/members', (require, exports, 
 			const { item, onClick } = this.props;
 			const memberSections = {};
 
-			Object.values(item.getMembers()).forEach((member) => {
+			item.getPrepareMembers().forEach((member) => {
 				const type = member.type;
 
 				if (memberSections[type])
@@ -62,31 +62,31 @@ jn.define('tasks/layout/checklist/list/src/actions/members', (require, exports, 
 
 			const memberSectionsKeys = Object.keys(memberSections).sort();
 
-			return memberSectionsKeys.map((type, i) => {
-				const memberType = item.getMemberType(type);
-
-				return View(
-					{
-						testId: `${memberType}_user`,
-						style: {
-							flexDirection: 'row',
-							marginRight: memberSectionsKeys.length - 1 === i ? 0 : Indent.XS,
-						},
-						onClick: () => {
-							if (onClick)
-							{
-								onClick(item.getId(), memberType);
-							}
-						},
+			return memberSectionsKeys.map((memberType, i) => View(
+				{
+					testId: `${memberType}_user`,
+					style: {
+						flexDirection: 'row',
+						marginRight: memberSectionsKeys.length - 1 === i ? 0 : Indent.M.toNumber(),
 					},
-					IconView({
-						icon: MEMBER_TYPE_ICONS[type],
-						iconSize: IMAGE_SIZE,
-						iconColor: Color.base3,
-					}),
-					this.membersStack(memberSections[type], type),
-				);
-			});
+					onClick: () => {
+						if (onClick)
+						{
+							onClick(item.getId(), memberType);
+						}
+					},
+				},
+				IconView({
+					icon: (
+						MEMBER_TYPE_RESTRICTION_FEATURE_META[memberType].isRestricted()
+							? Icon.LOCK
+							: MEMBER_TYPE_ICONS[memberType]
+					),
+					size: IMAGE_SIZE,
+					color: Color.base3,
+				}),
+				this.membersStack(memberSections[memberType]),
+			));
 		}
 
 		membersStack(children)
@@ -95,8 +95,8 @@ jn.define('tasks/layout/checklist/list/src/actions/members', (require, exports, 
 
 			return ElementsStack({
 				testId,
-				indent: 1,
-				maxElements: 3,
+				maxElements: 1,
+				textColor: Color.base3,
 			}, ...children);
 		}
 

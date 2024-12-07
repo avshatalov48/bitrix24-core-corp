@@ -21,7 +21,7 @@ class CounterController
 {
 	use CommandTrait;
 
-	public const STEP_LIMIT = 2000;
+	private const STEP_LIMIT = 2000;
 
 	private $userId;
 
@@ -34,6 +34,11 @@ class CounterController
 	{
 		(new self($userId))->recount(CounterDictionary::COUNTER_EXPIRED);
 		(new PushSender())->sendUserCounters([$userId]);
+	}
+
+	public static function getStepLimit(): int
+	{
+		return (int)Main\Config\Option::get('tasks', 'tasks_counter_step_limit', self::STEP_LIMIT);
 	}
 
 	/**
@@ -56,7 +61,7 @@ class CounterController
 	{
 		$projectCounters = [
 			CounterDictionary::COUNTER_GROUP_COMMENTS,
-			CounterDictionary::COUNTER_GROUP_EXPIRED
+			CounterDictionary::COUNTER_GROUP_EXPIRED,
 		];
 
 		if (in_array($counter, $projectCounters))

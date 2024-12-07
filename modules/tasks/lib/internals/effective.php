@@ -11,10 +11,14 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ORM\Query\Join;
 use Bitrix\Main\UI\Filter;
 
+use Bitrix\Tasks\Flow\Efficiency\Efficiency;
+use Bitrix\Tasks\Flow\Efficiency\LastMonth;
+use Bitrix\Tasks\Flow\Notification\NotificationService;
 use Bitrix\Tasks\Integration\Pull\PushCommand;
 use Bitrix\Tasks\Integration\Pull\PushService;
 use Bitrix\Tasks\Internals\Counter\Deadline;
 use Bitrix\Tasks\Internals\Counter\EffectiveTable;
+use Bitrix\Tasks\Internals\Registry\TaskRegistry;
 use Bitrix\Tasks\Internals\Task\MemberTable;
 use Bitrix\Tasks\Internals\Task\Status;
 use Bitrix\Tasks\Update\EfficiencyRecount;
@@ -35,7 +39,7 @@ class Effective
 	 */
 	public static function isEnabled(): bool
 	{
-		return Option::get('tasks', self::TASKS_EFFECTIVE_DISABLE_KEY, 'null', '-') === 'null';
+		return Option::get('tasks', self::TASKS_EFFECTIVE_DISABLE_KEY, 'null') === 'null';
 	}
 
 	/**
@@ -60,23 +64,23 @@ class Effective
 				'name' => Loc::getMessage('TASKS_PRESET_CURRENT_DAY'),
 				'default' => false,
 				'fields' => array(
-					"DATETIME_datesel" => Filter\DateType::CURRENT_DAY
-				)
+					"DATETIME_datesel" => Filter\DateType::CURRENT_DAY,
+				),
 			),
 			'filter_tasks_range_month' => array(
 				'name' => Loc::getMessage('TASKS_PRESET_CURRENT_MONTH'),
 				'default' => true,
 				'fields' => array(
-					"DATETIME_datesel" => Filter\DateType::CURRENT_MONTH
-				)
+					"DATETIME_datesel" => Filter\DateType::CURRENT_MONTH,
+				),
 			),
 			'filter_tasks_range_quarter' => array(
 				'name' => Loc::getMessage('TASKS_PRESET_CURRENT_QUARTER'),
 				'default' => false,
 				'fields' => array(
-					"DATETIME_datesel" => Filter\DateType::CURRENT_QUARTER
-				)
-			)
+					"DATETIME_datesel" => Filter\DateType::CURRENT_QUARTER,
+				),
+			),
 		);
 	}
 
@@ -88,12 +92,12 @@ class Effective
 		return [
 			'GROUP_ID' => [
 				'id' => 'GROUP_ID',
-				'type' => 'custom_entity'
+				'type' => 'custom_entity',
 			],
 			'DATETIME' => [
 				'id' => 'DATETIME',
-				'type' => 'date'
-			]
+				'type' => 'date',
+			],
 		];
 	}
 
@@ -158,7 +162,7 @@ class Effective
 
 		return [
 			'FROM' => $dateFrom,
-			'TO' => $dateTo
+			'TO' => $dateTo,
 		];
 	}
 
@@ -188,7 +192,7 @@ class Effective
 		$baseResult = [
 			'FROM' => 0,
 			'TO' => 0,
-			'GROUP_ID' => 0
+			'GROUP_ID' => 0,
 		];
 		$result = $baseResult;
 
@@ -310,6 +314,8 @@ class Effective
 			static::recountEfficiencyUserCounter($userId);
 		}
 
+		static::recountFlowEfficiency((int)$taskData['ID'], $userId);
+
 		return true;
 	}
 
@@ -341,6 +347,29 @@ class Effective
 				],
 			]
 		);
+	}
+
+	protected static function recountFlowEfficiency(int $taskId, int $userId): void
+	{
+		if ($taskId <= 0)
+		{
+			return;
+		}
+
+		$task = TaskRegistry::getInstance()->getObject($taskId);
+		if ($task === null)
+		{
+			return;
+		}
+
+		if ($task->onFlow())
+		{
+			(new Efficiency(new LastMonth()))
+				->invalidate($task->getFlowId());
+
+			(new NotificationService())
+				->onEfficiencyChanged($task->getFlowId());
+		}
 	}
 
 	/**
@@ -481,7 +510,7 @@ class Effective
 					'GROUP_ID' => 0,
 					'EFFECTIVE' => static::getEfficiencyForNow($userId),
 					'TASK_ID' => '',
-					'IS_VIOLATION' => 'N'
+					'IS_VIOLATION' => 'N',
 				]);
 			}
 		}
@@ -525,7 +554,7 @@ class Effective
 		$expressions = [
 			'EFFECTIVE' => new Entity\ExpressionField('EFFECTIVE', 'AVG(EFFECTIVE)'),
 			'DATE' => new Entity\ExpressionField('DATE', $helper->getDatetimeToDateFunction('DATETIME')),
-			'HOUR' => new Entity\ExpressionField('HOUR', $helper->formatDate('%%Y-%%m-%%d %%H:00:01', 'DATETIME'))
+			'HOUR' => new Entity\ExpressionField('HOUR', $helper->formatDate('%%Y-%%m-%%d %%H:00:01', 'DATETIME')),
 		];
 		$select = [$expressions['EFFECTIVE'], $expressions[$groupBy]];
 		$group = [$groupBy];
@@ -648,7 +677,7 @@ class Effective
 		$expressions = [
 			'COUNT' => new Entity\ExpressionField('COUNT', 'COUNT(%s)', 'ID'),
 			'DATE' => new Entity\ExpressionField('DATE', $helper->getDatetimeToDateFunction('%s'), 'CLOSED_DATE'),
-			'NOW' => new Main\DB\SqlExpression($helper->getCurrentDateFunction())
+			'NOW' => new Main\DB\SqlExpression($helper->getCurrentDateFunction()),
 		];
 
 		$query = new Query(TaskTable::getEntity());
@@ -782,7 +811,7 @@ class Effective
 			return [
 				'VIOLATIONS' => 0,
 				'IN_PROGRESS' => 0,
-				'COMPLETED' => 0
+				'COMPLETED' => 0,
 			];
 		}
 
@@ -792,7 +821,7 @@ class Effective
 		return [
 			'VIOLATIONS' => static::getViolationsCount($dateFrom, $dateTo, $userId, $groupId),
 			'IN_PROGRESS' => static::getInProgressCount($dateFrom, $dateTo, $userId, $groupId),
-			'COMPLETED' => static::getCompletedCount($dateFrom, $dateTo, $userId, $groupId)
+			'COMPLETED' => static::getCompletedCount($dateFrom, $dateTo, $userId, $groupId),
 		] ;
 	}
 
@@ -806,9 +835,19 @@ class Effective
 	 * @throws Main\ObjectPropertyException
 	 * @throws Main\SystemException
 	 */
-	private static function getViolationsCount(DateTime $dateFrom, DateTime $dateTo, $userId, $groupId)
+	public static function getViolationsCount(DateTime $dateFrom, DateTime $dateTo, $userId, $groupId)
 	{
-		$query = new Query(EffectiveTable::getEntity());
+		$count = static::getViolationsQuery($dateFrom, $dateTo, $userId, $groupId)
+			->where('T.RESPONSIBLE_ID', '>', 0)
+			->exec()
+			->fetch();
+
+		return $count['COUNT'];
+	}
+
+	protected static function getViolationsQuery(DateTime $dateFrom, DateTime $dateTo, $userId = null, $groupId = null): Query
+	{
+		$query = EffectiveTable::query();
 
 		$query->setSelect([new Entity\ExpressionField('COUNT', 'COUNT(%s)', 'TASK_ID')]);
 		$query->registerRuntimeField('T', new Entity\ReferenceField(
@@ -833,9 +872,7 @@ class Effective
 					)
 			);
 
-		$count = $query->exec()->fetch();
-
-		return $count['COUNT'];
+		return $query;
 	}
 
 	/**
@@ -850,7 +887,14 @@ class Effective
 	 */
 	private static function getInProgressCount(DateTime $dateFrom, DateTime $dateTo, $userId, $groupId)
 	{
-		$query = new Query(TaskTable::getEntity());
+		$count = static::getInProgressQuery($dateFrom, $dateTo, $userId, $groupId)->exec()->fetch();
+
+		return $count['COUNT'];
+	}
+
+	protected static function getInProgressQuery(DateTime $dateFrom, DateTime $dateTo, $userId = null, $groupId = null): Query
+	{
+		$query = TaskTable::query();
 
 		$query->setSelect([new Entity\ExpressionField('COUNT', 'COUNT(%s)', 'ID')]);
 
@@ -861,7 +905,7 @@ class Effective
 				MemberTable::getEntity(),
 				Join::on('this.ID', 'ref.TASK_ID')
 					->where('ref.USER_ID', $userId)
-					->whereIn('ref.TYPE', ['R', 'A']),
+				    ->whereIn('ref.TYPE', ['R', 'A']),
 				['join_type' => 'inner']
 			));
 
@@ -898,9 +942,7 @@ class Effective
 			->where('STATUS', '<>', Status::DEFERRED)
 			->where(($groupId? Query::filter()->where('GROUP_ID', $groupId) : []));
 
-		$count = $query->exec()->fetch();
-
-		return $count['COUNT'];
+		return $query;
 	}
 
 	/**

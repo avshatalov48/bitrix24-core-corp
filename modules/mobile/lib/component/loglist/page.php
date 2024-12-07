@@ -132,6 +132,7 @@ class Page
 			}
 			elseif (
 				$groupCode !== '**'
+				|| !isset($result['MY_GROUPS_ONLY'])
 				|| $result['MY_GROUPS_ONLY'] !== 'Y'
 			)
 			{

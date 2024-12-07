@@ -52,6 +52,17 @@
 	transition: none;
 	opacity: .95;
 }
+
+.ui-alert-message a.catalog-settings-helper-link {
+	border-bottom: 1px dashed var(--ui-link-border-color);
+	cursor: pointer;
+	font: 13px/22px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	color: var(--ui-link-color);
+	-webkit-transition: 250ms linear color, 250ms linear border-color;
+	-o-transition: 250ms linear color, 250ms linear border-color;
+	transition: 250ms linear color, 250ms linear border-color;
+}
+
 .popup-window-content a.catalog-settings-helper-link {
 	color: #2fc6f6 !important;
 	position: relative;

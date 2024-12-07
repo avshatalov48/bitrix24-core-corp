@@ -9,6 +9,7 @@ use Bitrix\Crm\MessageSender\Channel\Correspondents\To;
 use Bitrix\Crm\MessageSender\SenderRepository;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main\ArgumentException;
+use Bitrix\Main\InvalidOperationException;
 
 final class ChannelRepository
 {
@@ -191,12 +192,33 @@ final class ChannelRepository
 	private static function fetchItem(int $entityTypeId, int $id): ?Item
 	{
 		$factory = Container::getInstance()->getFactory($entityTypeId);
-		if ($factory && \CCrmOwnerType::isUseFactoryBasedApproach($entityTypeId))
+		if (!$factory || !\CCrmOwnerType::isUseFactoryBasedApproach($entityTypeId))
 		{
-			return $factory->getItem($id);
+			return null;
 		}
 
-		return null;
+		$possibleSelect = [
+			Item::FIELD_NAME_ID,
+			Item::FIELD_NAME_CONTACT_ID,
+			Item::FIELD_NAME_CONTACT_IDS,
+			Item::FIELD_NAME_COMPANY_ID,
+			Item\Contact::FIELD_NAME_COMPANY_IDS,
+		];
+
+		$filteredSelect = array_filter($possibleSelect, $factory->isFieldExists(...));
+		if (empty($filteredSelect))
+		{
+			throw new InvalidOperationException('We have no fields to select, it should be impossible');
+		}
+
+		$items = $factory->getItems([
+			'select' => $filteredSelect,
+			'filter' => [
+				'=ID' => $id,
+			],
+		]);
+
+		return array_shift($items);
 	}
 
 	public function getAll(): array

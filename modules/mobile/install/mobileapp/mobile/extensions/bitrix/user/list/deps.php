@@ -8,5 +8,6 @@ return [
 		'apptheme',
 		'recipient',
 		'user/utils',
+		'utils/string',
 	],
 ];

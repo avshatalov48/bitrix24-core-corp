@@ -13,6 +13,9 @@ use Bitrix\Mobile\Tab\Tabable;
 use Bitrix\Mobile\Tab\Utils;
 use Bitrix\MobileApp\Janative\Manager;
 use Bitrix\Socialnetwork\Component\WorkgroupList;
+use Bitrix\Socialnetwork\Helper\Feature;
+use Bitrix\TasksMobile\Provider\TariffPlanRestrictionProvider;
+use Bitrix\TasksMobile\Settings;
 
 class Task implements Tabable
 {
@@ -42,15 +45,16 @@ class Task implements Tabable
 			'useLetterImage' => true,
 			'color' => '#fabb3f',
 			'imageUrl' => 'favorite/icon-tasks.png',
+			'params' => [
+				'id' => 'tasks_tabs',
+			],
 		];
 
 		$data = $this->getDataInternal();
 		if (!empty($data['component']))
 		{
-			$result['params'] = [
-				'onclick' => Utils::getComponentJSCode($data['component']),
-				'counter' => 'tasks_total',
-			];
+			$result['params']['onclick'] = Utils::getComponentJSCode($data['component']);
+			$result['params']['counter'] =' tasks_total';
 		}
 		elseif (!empty($data['page']))
 		{
@@ -66,27 +70,37 @@ class Task implements Tabable
 	 */
 	public function isAvailable(): bool
 	{
+		if (!Loader::includeModule('tasks') || !Loader::includeModule('tasksmobile'))
+		{
+			return false;
+		}
+
 		if (Loader::includeModule('socialnetwork'))
 		{
 			$userActiveFeatures = \CSocNetFeatures::getActiveFeatures(SONET_ENTITY_USER, $this->context->userId);
 			$socNetFeatures = \CSocNetAllowed::getAllowedFeatures();
 
-			$enabled = true;
-			if (Loader::includeModule('intranet'))
-			{
-				$enabled = ToolsManager::getInstance()->checkAvailabilityByToolId('tasks');
-			}
-
-			return
-				$enabled
+			return (
+				$this->isToolAvailable('tasks')
 				&& array_key_exists('tasks', $socNetFeatures)
 				&& array_key_exists('allowed', $socNetFeatures['tasks'])
 				&& in_array(SONET_ENTITY_USER, $socNetFeatures['tasks']['allowed'])
 				&& is_array($userActiveFeatures)
-				&& in_array('tasks', $userActiveFeatures);
+				&& in_array('tasks', $userActiveFeatures)
+			);
 		}
 
 		return false;
+	}
+
+	private function isToolAvailable(string $toolId): bool
+	{
+		if (Loader::includeModule('intranet'))
+		{
+			return ToolsManager::getInstance()->checkAvailabilityByToolId($toolId);
+		}
+
+		return true;
 	}
 
 	/**
@@ -108,18 +122,72 @@ class Task implements Tabable
 	 */
 	private function getTabsComponent(): array
 	{
-		$taskListTab = [
-			'id' => $this->getTaskListComponentCode(),
+		return [
+			'name' => 'JSStackComponent',
+			'title' => Loc::getMessage('TAB_TASKS_NAVIGATION_HEADER'),
+			'componentCode' => 'tasks.tabs',
+			'scriptPath' => Manager::getComponentPath('tasks:tasks.tabs'),
+			'rootWidget' => [
+				'name' => 'tabs',
+				'settings' => [
+					'objectName' => 'tabs',
+					'grabTitle' => true,
+					'grabButtons' => true,
+					'grabSearch' => true,
+					'useLargeTitleMode' => true,
+					'tabs' => [
+						'items' => array_values(
+							array_filter([
+								$this->getTaskListTab(),
+								$this->getProjectListTab(),
+								$this->getFlowListTab(),
+								$this->getScrumListTab(),
+								$this->getEfficiencyTab(),
+							]),
+						),
+					],
+				],
+			],
+			'params' => [
+				'COMPONENT_CODE' => 'tasks.tabs',
+				'USER_ID' => $this->context->userId,
+				'SITE_ID' => $this->context->siteId,
+				'SHOW_SCRUM_LIST' => Option::get('tasksmobile', 'showScrumList', 'N') === 'Y',
+				'TAB_CODES' => [
+					'TASKS' => 'tasks.dashboard',
+					'FLOW' => 'tasks.flow.list',
+					'PROJECTS' => 'tasks.project.list',
+					'SCRUM' => 'tasks.scrum.list',
+					'EFFICIENCY' => 'tasks.efficiency',
+				],
+			],
+		];
+	}
+
+	private function getTaskListTab(): array
+	{
+		return [
+			'id' => 'tasks.dashboard',
 			'testId' => 'tasks_list',
 			'title' => Loc::getMessage('TAB_TASKS_NAVIGATION_TAB_TASKS'),
 			'component' => [
 				'name' => 'JSStackComponent',
 				'title' => Loc::getMessage('TAB_TASKS_NAVIGATION_HEADER'),
-				'componentCode' => $this->getTaskListComponentCode(),
-				'scriptPath' => $this->getTaskListScriptPath(),
-				'rootWidget' => $this->getTaskListRootWidget(),
+				'componentCode' => 'tasks.dashboard',
+				'scriptPath' => Manager::getComponentPath('tasks:tasks.dashboard'),
+				'settings' => [
+					'preload' => true,
+				],
+				'rootWidget' => [
+					'name' => 'layout',
+					'settings' => [
+						'objectName' => 'layout',
+						'useSearch' => true,
+						'useLargeTitleMode' => true,
+					],
+				],
 				'params' => [
-					'COMPONENT_CODE' => $this->getTaskListComponentCode(),
+					'COMPONENT_CODE' => 'tasks.dashboard',
 					'USER_ID' => $this->context->userId,
 					'SITE_ID' => $this->context->siteId,
 					'SITE_DIR' => $this->context->siteDir,
@@ -137,10 +205,26 @@ class Task implements Tabable
 				],
 			],
 		];
-		$projectListTab = [
+	}
+
+	private function getProjectListTab(): ?array
+	{
+		if (!$this->isToolAvailable('projects'))
+		{
+			return null;
+		}
+
+		$isProjectRestricted = (
+			!Feature::isFeatureEnabled(Feature::PROJECTS_GROUPS)
+			&& !Feature::canTurnOnTrial(Feature::PROJECTS_GROUPS)
+		);
+
+		return [
 			'id' => 'tasks.project.list',
 			'testId' => 'tasks_project',
 			'title' => Loc::getMessage('TAB_TASKS_NAVIGATION_TAB_PROJECTS'),
+			'icon' => ($isProjectRestricted ? 'lock' : null),
+			'selectable' => !$isProjectRestricted,
 			'component' => [
 				'name' => 'JSStackComponent',
 				'title' => Loc::getMessage('TAB_TASKS_NAVIGATION_HEADER'),
@@ -171,7 +255,51 @@ class Task implements Tabable
 				],
 			],
 		];
-		$scrumTab = [
+	}
+
+	private function getFlowListTab(): ?array
+	{
+		if (!Settings::getInstance()->isTaskFlowAvailable())
+		{
+			return null;
+		}
+
+		return [
+			'id' => 'tasks.flow.list',
+			'testId' => 'tasks_flow',
+			'title' => Loc::getMessage('TAB_TASKS_NAVIGATION_TAB_FLOW'),
+			'component' => [
+				'name' => 'JSStackComponent',
+				'title' => Loc::getMessage('TAB_TASKS_NAVIGATION_HEADER'),
+				'componentCode' => 'tasks.flow.list',
+				'scriptPath' => Manager::getComponentPath('tasks:tasks.flow.list'),
+				'rootWidget' => [
+					'name' => 'layout',
+					'settings' => [
+						'objectName' => 'layout',
+						'useSearch' => true,
+						'useLargeTitleMode' => true,
+					],
+				],
+				'params' => [
+					'COMPONENT_CODE' => 'tasks.flow.list',
+					'USER_ID' => $this->context->userId,
+					'SITE_ID' => $this->context->siteId,
+					'SITE_DIR' => $this->context->siteDir,
+					'LANGUAGE_ID' => LANGUAGE_ID,
+				],
+			],
+		];
+	}
+
+	private function getScrumListTab(): ?array
+	{
+		if (!$this->isToolAvailable('scrum'))
+		{
+			return null;
+		}
+
+		return [
 			'id' => 'tasks.scrum.list',
 			'testId' => 'tasks_scrum',
 			'title' => Loc::getMessage('TAB_TASKS_NAVIGATION_TAB_SCRUM'),
@@ -204,87 +332,23 @@ class Task implements Tabable
 					'MODE' => WorkgroupList::MODE_TASKS_SCRUM,
 				],
 			],
-			'selectable' => false,
+			'selectable' => Option::get('tasksmobile', 'showScrumList', 'N') === 'Y',
 		];
-		$showScrumList = (Option::get('tasksmobile', 'showScrumList', 'N') === 'Y');
-		if ($showScrumList)
+	}
+
+	private function getEfficiencyTab(): ?array
+	{
+		if (!$this->isToolAvailable('effective'))
 		{
-			unset($scrumTab['selectable']);
+			return null;
 		}
-		$efficiencyTab = [
+
+		return [
 			'id' => 'tasks.efficiency',
 			'testId' => 'tasks_efficiency',
 			'title' => Loc::getMessage('TAB_TASKS_NAVIGATION_TAB_EFFICIENCY'),
+			'icon' => (TariffPlanRestrictionProvider::isEfficiencyRestricted() ? 'lock' : null),
 			'selectable' => false,
-		];
-
-
-		$projectsEnabled = $scrumEnabled = $effectiveEnabled = true;
-		if (Loader::includeModule('intranet'))
-		{
-			$projectsEnabled = ToolsManager::getInstance()->checkAvailabilityByToolId('projects');
-			$scrumEnabled = ToolsManager::getInstance()->checkAvailabilityByToolId('scrum');
-			$effectiveEnabled = ToolsManager::getInstance()->checkAvailabilityByToolId('effective');
-		}
-
-		$tabsItems = array_values(array_filter([
-			$taskListTab,
-			$projectsEnabled ? $projectListTab : null,
-			$scrumEnabled ? $scrumTab : null,
-			$effectiveEnabled ? $efficiencyTab: null,
-		]));
-
-		return [
-			'name' => 'JSStackComponent',
-			'title' => Loc::getMessage('TAB_TASKS_NAVIGATION_HEADER'),
-			'componentCode' => 'tasks.tabs',
-			'scriptPath' => Manager::getComponentPath('tasks:tasks.tabs'),
-			'rootWidget' => [
-				'name' => 'tabs',
-				'settings' => [
-					'objectName' => 'tabs',
-					'grabTitle' => true,
-					'grabButtons' => true,
-					'grabSearch' => true,
-					'tabs' => [
-						'items' => $tabsItems
-					],
-				],
-			],
-			'params' => [
-				'COMPONENT_CODE' => 'tasks.tabs',
-				'USER_ID' => $this->context->userId,
-				'SITE_ID' => $this->context->siteId,
-				'SHOW_SCRUM_LIST' => $showScrumList,
-				'TAB_CODES' => [
-					'TASKS' => $this->getTaskListComponentCode(),
-					'PROJECTS' => 'tasks.project.list',
-					'SCRUM' => 'tasks.scrum.list',
-					'EFFICIENCY' => 'tasks.efficiency',
-				],
-			],
-		];
-	}
-
-	private function getTaskListComponentCode(): string
-	{
-		return 'tasks.dashboard';
-	}
-
-	private function getTaskListScriptPath(): string
-	{
-		return Manager::getComponentPath('tasks:tasks.dashboard');
-	}
-
-	private function getTaskListRootWidget(): array
-	{
-		return [
-			'name' => 'layout',
-			'settings' => [
-				'objectName' => 'layout',
-				'useSearch' => true,
-				'useLargeTitleMode' => true,
-			],
 		];
 	}
 
@@ -305,9 +369,7 @@ class Task implements Tabable
 
 	public function shouldShowInMenu(): bool
 	{
-		return
-			!Loader::includeModule('intranet')
-			|| ToolsManager::getInstance()->checkAvailabilityByToolId('tasks');
+		return $this->isToolAvailable('tasks');
 	}
 
 	public function canBeRemoved(): bool

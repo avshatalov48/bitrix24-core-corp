@@ -2,7 +2,7 @@
 if (!CModule::IncludeModule("mobileapp"))
 	die();
 global $APPLICATION;
-$APPLICATION->AddHeadString('<script type="text/javascript" src="'
+$APPLICATION->AddHeadString('<script src="'
 	.CUtil::GetAdditionalFileURL(SITE_TEMPLATE_PATH . '/bizproc_mobile.js')
 	.'"></script>', true, \Bitrix\Main\Page\AssetLocation::AFTER_JS_KERNEL);
 $APPLICATION->SetPageProperty('BodyClass', 'task-card-page');
@@ -153,7 +153,7 @@ endif;
 </div>
 </div>
 
-<script type="text/javascript">
+<script>
 	BX.ready(function(){
 
 		BX.message({'MB_BP_DETAIL_ALERT': '<?=GetMessageJS('MB_BP_DETAIL_ALERT')?>'});

@@ -1,3 +1,5 @@
+/* eslint-disable */
+
 import { Item } from 'crm.timeline.item';
 import Expand from './animations/expand';
 import Scheduled from './items/scheduled';
@@ -33,6 +35,8 @@ export default class Manager
 		this._readOnly = false;
 		this._currentUser = null;
 		this._pingSettings = null;
+		this._calendarSettings = null;
+		this._colorSettings = null;
 		this._pullTagName = "";
 	}
 
@@ -64,6 +68,8 @@ export default class Manager
 		this._readOnly = BX.prop.getBoolean(this._settings, "readOnly", false);
 		this._currentUser = BX.prop.getObject(this._settings, "currentUser", null);
 		this._pingSettings = BX.prop.getObject(this._settings, "pingSettings", null);
+		this._calendarSettings = BX.prop.getObject(this._settings, "calendarSettings", null);
+		this._colorSettings = BX.prop.getObject(this._settings, "colorSettings", null);
 
 		const activityEditorId = this.getSetting("activityEditorId");
 		if (BX.type.isNotEmptyString(activityEditorId))
@@ -829,6 +835,26 @@ export default class Manager
 		if (BX.type.isObjectLike(this._pingSettings) && Object.keys(this._pingSettings).length > 0)
 		{
 			return this._pingSettings;
+		}
+
+		return null;
+	}
+
+	getCalendarSettings(): ?Object
+	{
+		if (BX.type.isObjectLike(this._calendarSettings) && Object.keys(this._calendarSettings).length > 0)
+		{
+			return this._calendarSettings;
+		}
+
+		return null;
+	}
+
+	getColorSettings(): ?Object
+	{
+		if (BX.type.isObjectLike(this._colorSettings) && Object.keys(this._colorSettings).length > 0)
+		{
+			return this._colorSettings;
 		}
 
 		return null;

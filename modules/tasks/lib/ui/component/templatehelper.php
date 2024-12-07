@@ -81,7 +81,7 @@ final class TemplateHelper
 
 			Loc::loadMessages($_SERVER['DOCUMENT_ROOT'].'/'.$this->template->getFolder().'/js.php'); // make all js-messages available in php also
 
-			$title = Loc::getMessage('TASKS_'.ToUpper($this->name).'_TEMPLATE_TITLE');
+			$title = Loc::getMessage('TASKS_'.mb_strtoupper($this->name).'_TEMPLATE_TITLE');
 			if($title != '')
 			{
 				$this->setTitle($title);
@@ -170,7 +170,7 @@ final class TemplateHelper
 		$id = trim((string) ($this->template->__component->arParams['TEMPLATE_CONTROLLER_ID'] ?? ''));
 		if($id)
 		{
-			$id = ToLower($id);
+			$id = mb_strtolower($id);
 			if(!preg_match('#^[a-z0-9_-]+$#', $id))
 			{
 				$this->template->__component->getErrors()->addWarning('ILLEGAL_CALL_ID', 'Illegal CALL_ID passed');
@@ -354,7 +354,7 @@ final class TemplateHelper
 			// todo: also, when we move to php 5.4, there closure bindTo() can be done, in case of closure passed
 			$this->methods[$name] = $cb;
 
-			if(ToLower(mb_substr($name, 0, 14)) == 'templateaction')
+			if(mb_strtolower(mb_substr($name, 0, 14)) == 'templateaction')
 			{
 				$this->runtimeActions[$name] = $cb;
 			}

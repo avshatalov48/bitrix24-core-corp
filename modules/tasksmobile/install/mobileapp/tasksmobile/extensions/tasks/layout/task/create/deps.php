@@ -7,6 +7,7 @@ return [
 		'loc',
 		'notify',
 		'rest',
+		'rest/run-action-executor',
 		'type',
 		'analytics-label',
 		'assets/common',

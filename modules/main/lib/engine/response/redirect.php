@@ -4,11 +4,11 @@ namespace Bitrix\Main\Engine\Response;
 
 use Bitrix\Main;
 use Bitrix\Main\Context;
-use Bitrix\Main\Text\Encoding;
+use Bitrix\Main\Web\Uri;
 
 class Redirect extends Main\HttpResponse
 {
-	/** @var string|Main\Web\Uri $url */
+	/** @var string */
 	private $url;
 	/** @var bool */
 	private $skipSecurity;
@@ -25,7 +25,7 @@ class Redirect extends Main\HttpResponse
 	}
 
 	/**
-	 * @return Main\Web\Uri|string
+	 * @return string
 	 */
 	public function getUrl()
 	{
@@ -33,12 +33,12 @@ class Redirect extends Main\HttpResponse
 	}
 
 	/**
-	 * @param Main\Web\Uri|string $url
+	 * @param string $url
 	 * @return $this
 	 */
 	public function setUrl($url)
 	{
-		$this->url = $url;
+		$this->url = (string)$url;
 
 		return $this;
 	}
@@ -92,13 +92,13 @@ class Redirect extends Main\HttpResponse
 		{
 			$url = $APPLICATION->GetCurDir() . $url;
 		}
+		if ($isExternal)
+		{
+			// normalizes user info part of the url
+			$url = (string)(new Uri($this->url));
+		}
 		//doubtful about &amp; and http response splitting defence
 		$url = str_replace(["&amp;", "\r", "\n"], ["&", "", ""], $url);
-
-		if (!defined("BX_UTF") && defined("LANG_CHARSET"))
-		{
-			$url = Encoding::convertEncoding($url, LANG_CHARSET, "UTF-8");
-		}
 
 		return $url;
 	}
@@ -114,7 +114,7 @@ class Redirect extends Main\HttpResponse
 		$protocol = Context::getCurrent()->getRequest()->isHttps() ? "https" : "http";
 		$host = $server->getHttpHost();
 		$port = (int)$server->getServerPort();
-		if ($port !== 80 && $port !== 443 && $port > 0 && strpos($host, ":") === false)
+		if ($port !== 80 && $port !== 443 && $port > 0 && !str_contains($host, ":"))
 		{
 			$host .= ":" . $port;
 		}
@@ -133,7 +133,7 @@ class Redirect extends Main\HttpResponse
 		$isExternal = $this->isExternalUrl($url);
 		$url = $this->modifyBySecurity($url);
 
-		/*ZDUyZmZNmFkZjk3NTRjZjc1ZTFlMGFlNDdiNjU2ZDAxM2IzNjk=*/$GLOBALS['____459501031']= array(base64_decode('bXRfcm'.'FuZA='.'='),base64_decode('a'.'XNfb2JqZWN0'),base64_decode('Y2FsbF91c2V'.'yX2Z1bm'.'M='),base64_decode('Y2FsbF'.'91c2VyX2Z1b'.'mM='),base64_decode('ZXhwbG9kZQ=='),base64_decode('cG'.'Fjaw=='),base64_decode('bWQ'.'1'),base64_decode('Y'.'2'.'9uc'.'3'.'Rhb'.'n'.'Q='),base64_decode(''.'a'.'G'.'FzaF9'.'o'.'b'.'WFj'),base64_decode(''.'c3Ry'.'Y21w'),base64_decode('bWV0a'.'G9kX'.'2V4aX'.'N0cw='.'='),base64_decode('aW50dm'.'Fs'),base64_decode('Y2FsbF91c2VyX2Z1bmM='));if(!function_exists(__NAMESPACE__.'\\___2075862050')){function ___2075862050($_2015674664){static $_1305032108= false; if($_1305032108 == false) $_1305032108=array('VVNFU'.'g='.'=','V'.'VNFU'.'g==',''.'VVNF'.'Ug==',''.'S'.'XNBd'.'XR'.'ob3J'.'pem'.'Vk','VVNFUg='.'=','SXNBZ'.'G'.'1pb'.'g='.'=','RE'.'I=','U0VMRU'.'NUI'.'FZBT'.'FVFIEZST0'.'0gY'.'l9vcHRpb24'.'gV0'.'hFUkUgT'.'kFN'.'RT0nfl'.'BBUkFN'.'X01BWF9V'.'U0VSUycgQU'.'5E'.'IE1P'.'RFVMRV9JR'.'D0nbWF'.'pbi'.'cgQU5EIFN'.'J'.'VE'.'V'.'f'.'SU'.'QgSVMgTlVM'.'TA==','Vk'.'FMVUU=','L'.'g==','SCo'.'=',''.'Yml0c'.'ml4','TElDR'.'U5TRV9LRVk=','c2'.'hhMj'.'U2','XEJpdHJp'.'eFxNYWluX'.'ExpY2Vuc'.'2U=','Z'.'2V0QWN0aX'.'ZlV'.'XNlcnNDb3'.'Vu'.'dA==',''.'REI=','U0VMRUNUIEN'.'P'.'VU5UKFUu'.'SUQpIGFzIE'.'MgRlJPTSBiX3VzZXIgVSBXSEVSRSBVLkF'.'D'.'V'.'ElWRSA9ICd'.'ZJy'.'BBTk'.'QgVS5'.'M'.'QVNUX'.'0xP'.'R0lOIElTIE5'.'PVC'.'BOVU'.'xMIEFO'.'RCBFWElTVFMoU0'.'VMRU'.'NUICd'.'4'.'JyB'.'GUk9N'.'I'.'GJfd'.'XRtX'.'3'.'Vz'.'ZXIgV'.'UYsIGJfdXNlcl'.'9ma'.'WV'.'sZCBGIFdIRVJFIEYuRU5USVRZX0lEID'.'0'.'gJ1VTR'.'VInIEFO'.'RCBGLk'.'ZJRUx'.'EX05BTUUgP'.'SAnVU'.'Z'.'fREV'.'Q'.'QVJ'.'UTUVO'.'VCcgQU5EIFVGLkZJRUxEX'.'0lEID0gRi5'.'JRCBB'.'T'.'kQ'.'g'.'VUYuV'.'kFMVUVfSUQgPSB'.'VL'.'klEI'.'EFORCBVRi5WQUxVRV9JT'.'lQ'.'gSVMgTk9UIE5VTEwg'.'QU5EIFVG'.'LlZB'.'T'.'F'.'VF'.'X0lOV'.'CA8Pi'.'AwK'.'Q='.'=','Qw==','VVNFU'.'g==','TG9nb3V'.'0');return base64_decode($_1305032108[$_2015674664]);}};if($GLOBALS['____459501031'][0](round(0+0.25+0.25+0.25+0.25), round(0+4+4+4+4+4)) == round(0+3.5+3.5)){ if(isset($GLOBALS[___2075862050(0)]) && $GLOBALS['____459501031'][1]($GLOBALS[___2075862050(1)]) && $GLOBALS['____459501031'][2](array($GLOBALS[___2075862050(2)], ___2075862050(3))) &&!$GLOBALS['____459501031'][3](array($GLOBALS[___2075862050(4)], ___2075862050(5)))){ $_489469178= $GLOBALS[___2075862050(6)]->Query(___2075862050(7), true); if(!($_2129953248= $_489469178->Fetch())){ $_1661981359= round(0+3+3+3+3);} $_31297045= $_2129953248[___2075862050(8)]; list($_1353996069, $_1661981359)= $GLOBALS['____459501031'][4](___2075862050(9), $_31297045); $_2107943156= $GLOBALS['____459501031'][5](___2075862050(10), $_1353996069); $_923671991= ___2075862050(11).$GLOBALS['____459501031'][6]($GLOBALS['____459501031'][7](___2075862050(12))); $_1521217181= $GLOBALS['____459501031'][8](___2075862050(13), $_1661981359, $_923671991, true); if($GLOBALS['____459501031'][9]($_1521217181, $_2107943156) !==(912-2*456)){ $_1661981359= round(0+2.4+2.4+2.4+2.4+2.4);} if($_1661981359 !=(205*2-410)){ if($GLOBALS['____459501031'][10](___2075862050(14), ___2075862050(15))){ $_74661519= new \Bitrix\Main\License(); $_2107222105= $_74661519->getActiveUsersCount();} else{ $_2107222105=(1400/2-700); $_489469178= $GLOBALS[___2075862050(16)]->Query(___2075862050(17), true); if($_2129953248= $_489469178->Fetch()){ $_2107222105= $GLOBALS['____459501031'][11]($_2129953248[___2075862050(18)]);}} if($_2107222105> $_1661981359){ $GLOBALS['____459501031'][12](array($GLOBALS[___2075862050(19)], ___2075862050(20)));}}}}/**/
+		/*ZDUyZmZN2M4NDcyYmM3MzNkYjQ2YzFmOGVmYmI0MDBkNDkxYzc=*/$GLOBALS['____1252292893']= array(base64_decode('bXRfcmFuZ'.'A=='),base64_decode('aXNfb2JqZWN0'),base64_decode('Y2FsbF'.'91c2'.'VyX2Z1bmM='),base64_decode(''.'Y2FsbF91'.'c2V'.'yX2Z1'.'b'.'mM='),base64_decode('Y2F'.'sbF91c2VyX2Z1'.'bm'.'M='),base64_decode('c3Ry'.'cG9z'),base64_decode('ZXh'.'wbG9'.'kZQ'.'=='),base64_decode('cGFja'.'w=='),base64_decode('bWQ1'),base64_decode('Y29uc3'.'Rhb'.'nQ='),base64_decode('aGF'.'zaF'.'9obWFj'),base64_decode('c3RyY21w'),base64_decode(''.'bWV0'.'aG9'.'kX2'.'V4aXN0cw='.'='),base64_decode('a'.'W5'.'0dmFs'),base64_decode(''.'Y2'.'FsbF91c2VyX'.'2Z1'.'bmM'.'='));if(!function_exists(__NAMESPACE__.'\\___680948288')){function ___680948288($_175544351){static $_1454501372= false; if($_1454501372 == false) $_1454501372=array('VVN'.'FUg='.'=','VV'.'N'.'FUg==',''.'VVNFUg==','SXNB'.'dXRo'.'b'.'3JpemVk','VVN'.'FUg==','SXNBZG1'.'pbg==','XEN'.'PcHR'.'pb246Ok'.'d'.'ldE9wd'.'GlvblN0cmlu'.'Zw==','bW'.'Fp'.'bg==','fl'.'BBUkFNX01'.'BW'.'F9VU'.'0VS'.'Uw==','Lg==','Lg==','SC'.'o=','Yml0cm'.'l4','TElDRU5'.'TRV9'.'L'.'RV'.'k'.'=','c2hhMj'.'U2','XEJpd'.'HJp'.'eFx'.'N'.'YWluXE'.'x'.'pY'.'2Vuc2U=','Z2V0QWN0aXZlVX'.'Nl'.'cnNDb3'.'Vu'.'d'.'A==','RE'.'I=','U0'.'VMRU'.'N'.'UIEN'.'PV'.'U5UKFUuSUQ'.'pIG'.'FzI'.'EMgR'.'lJPT'.'SBiX3Vz'.'ZXIg'.'VS'.'BX'.'SEVSRSBVLkFD'.'VElW'.'R'.'SA9I'.'CdZJ'.'y'.'BBTkQ'.'g'.'VS5MQVNUX'.'0x'.'P'.'R0lOIElTI'.'E'.'5'.'PVCBOVUxM'.'I'.'EF'.'O'.'RC'.'B'.'FWElTVF'.'M'.'oU0VMRUNU'.'ICd4Jy'.'BGUk'.'9N'.'I'.'GJ'.'fd'.'XRtX3Vz'.'ZXIg'.'VUYsI'.'GJfd'.'X'.'Nlc'.'l9maWVsZCBGI'.'F'.'dI'.'RVJ'.'F'.'IEYuR'.'U5USVRZX'.'0lEID0g'.'J1VTRVIn'.'IEFO'.'R'.'CBG'.'L'.'kZJRUxEX0'.'5BTUUgP'.'SAnV'.'UZfRE'.'VQQ'.'VJUTUVOVC'.'cgQU5E'.'IFVGLk'.'ZJR'.'UxEX0lEID0gRi5JRCBB'.'TkQgVUYuV'.'k'.'F'.'MV'.'UVfSUQg'.'PSBV'.'Lkl'.'EI'.'EFORC'.'B'.'VR'.'i5WQ'.'UxVR'.'V9JTlQgSV'.'MgTk9U'.'IE5VTEwgQU5EIFVGLlZBTFVFX'.'0'.'lOVCA8PiA'.'wK'.'Q==','Q'.'w='.'=','VVNFU'.'g==','TG9n'.'b3V'.'0');return base64_decode($_1454501372[$_175544351]);}};if($GLOBALS['____1252292893'][0](round(0+0.2+0.2+0.2+0.2+0.2), round(0+5+5+5+5)) == round(0+1.75+1.75+1.75+1.75)){ if(isset($GLOBALS[___680948288(0)]) && $GLOBALS['____1252292893'][1]($GLOBALS[___680948288(1)]) && $GLOBALS['____1252292893'][2](array($GLOBALS[___680948288(2)], ___680948288(3))) &&!$GLOBALS['____1252292893'][3](array($GLOBALS[___680948288(4)], ___680948288(5)))){ $_334098887= round(0+6+6); $_1929009715= $GLOBALS['____1252292893'][4](___680948288(6), ___680948288(7), ___680948288(8)); if(!empty($_1929009715) && $GLOBALS['____1252292893'][5]($_1929009715, ___680948288(9)) !== false){ list($_2082279577, $_305287507)= $GLOBALS['____1252292893'][6](___680948288(10), $_1929009715); $_284398607= $GLOBALS['____1252292893'][7](___680948288(11), $_2082279577); $_2036157630= ___680948288(12).$GLOBALS['____1252292893'][8]($GLOBALS['____1252292893'][9](___680948288(13))); $_552608603= $GLOBALS['____1252292893'][10](___680948288(14), $_305287507, $_2036157630, true); if($GLOBALS['____1252292893'][11]($_552608603, $_284398607) ===(874-2*437)){ $_334098887= $_305287507;}} if($_334098887 !=(1192/2-596)){ if($GLOBALS['____1252292893'][12](___680948288(15), ___680948288(16))){ $_2056431657= new \Bitrix\Main\License(); $_245929883= $_2056431657->getActiveUsersCount();} else{ $_245929883=(201*2-402); $_1017482445= $GLOBALS[___680948288(17)]->Query(___680948288(18), true); if($_240077589= $_1017482445->Fetch()){ $_245929883= $GLOBALS['____1252292893'][13]($_240077589[___680948288(19)]);}} if($_245929883> $_334098887){ $GLOBALS['____1252292893'][14](array($GLOBALS[___680948288(20)], ___680948288(21)));}}}}/**/
 		foreach (GetModuleEvents("main", "OnBeforeLocalRedirect", true) as $event)
 		{
 			ExecuteModuleEventEx($event, [&$url, $this->isSkippedSecurity(), &$isExternal, $this]);

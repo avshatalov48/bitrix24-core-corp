@@ -6,14 +6,12 @@ use Bitrix\Disk\Document\Language;
 use Bitrix\Disk\Document\OnlyOffice\Models\DocumentSession;
 use Bitrix\Disk\File;
 use Bitrix\Disk\User;
-use Bitrix\Main\Application;
 use Bitrix\Main\ArgumentOutOfRangeException;
 use Bitrix\Main\Context;
 use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Engine\UrlManager;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Main\Text\Encoding;
 use Bitrix\Main\Web\JWT;
 use Bitrix\Main\Web\Uri;
 
@@ -328,17 +326,7 @@ final class ConfigBuilder
 			'events' => [],
 		];
 
-		if (!Application::getInstance()->isUtfMode())
-		{
-			$editorOptions['token'] = JWT::encode(
-				Encoding::convertEncoding($editorOptions, SITE_CHARSET, 'UTF-8'),
-				$this->getSecretKey()
-			);
-		}
-		else
-		{
-			$editorOptions['token'] = JWT::encode($editorOptions, $this->getSecretKey());
-		}
+		$editorOptions['token'] = JWT::encode($editorOptions, $this->getSecretKey());
 
 		return $editorOptions;
 	}

@@ -549,7 +549,7 @@ final class Cleaner
 		}
 		else
 		{
-			$startTime = getmicrotime();
+			$startTime = microtime(true);
 		}
 
 		$connection = Application::getConnection();
@@ -578,7 +578,7 @@ final class Cleaner
 
 			if ($timeLimit > 0)
 			{
-				$currentTime = getmicrotime();
+				$currentTime = microtime(true);
 				if (($currentTime - $startTime) >= $timeLimit)
 				{
 					break;

@@ -172,7 +172,7 @@ elseif(isset($arResult['ELEMENT']['DISK_FILES']))
 	$editorSettings['filesFieldSettings']['diskfiles'] = $arResult['ELEMENT']['DISK_FILES'];
 }
 
-?><script type="text/javascript">
+?><script>
 
 	window.CrmProductRowSetLocation = function(){ BX.onCustomEvent('CrmProductRowSetLocation', ['LOC_CITY']); };
 
@@ -184,7 +184,7 @@ elseif(isset($arResult['ELEMENT']['DISK_FILES']))
 	});
 </script>
 <?if($arResult['CONVERSION_PERMITTED'] && $arResult['CAN_CONVERT'] && isset($arResult['CONVERSION_CONFIG'])):?>
-	<script type="text/javascript">
+	<script>
 		BX.ready(
 			function()
 			{

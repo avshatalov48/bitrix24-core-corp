@@ -9,12 +9,13 @@ return [
 	'js' => 'dist/list-apps.bundle.js',
 	'rel' => [
 		'main.polyfill.core',
-		'ui.vue3',
 		'market.list-item',
 		'market.categories',
 		'market.install-store',
 		'ui.vue3.pinia',
 		'main.core.events',
+		'market.market-links',
+		'ui.vue3',
 	],
 	'skip_core' => true,
 ];

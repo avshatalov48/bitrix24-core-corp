@@ -10,9 +10,6 @@ if (!CModule::IncludeModule(CRM_MODULE_CALENDAR_ID))
 
 CModule::IncludeModule('fileman');
 
-if ('POST' == $_SERVER['REQUEST_METHOD'])
-	CUtil::JSPostUnescape();
-
 global $USER, $APPLICATION, $DB;
 
 $CCrmPerms = new CCrmPerms($USER->GetID());
@@ -40,10 +37,10 @@ elseif ($arParams['ENTITY_ID'] == 'all')
 }
 
 $arParams['RESULT_TAB'] = trim($arParams['RESULT_TAB']);
-$arResult['FORM_TYPE'] = ToUpper($arParams['FORM_TYPE']);
+$arResult['FORM_TYPE'] = mb_strtoupper($arParams['FORM_TYPE']);
 if (!in_array($arResult['FORM_TYPE'],array('LIST','SHOW','EDIT')))
 	$arResult['FORM_TYPE'] = 'LIST';
-$arResult['ENTITY_TYPE'] = ToUpper($arParams['ENTITY_TYPE']);
+$arResult['ENTITY_TYPE'] = mb_strtoupper($arParams['ENTITY_TYPE']);
 $arResult['ENTITY_ID'] = $arParams['ENTITY_ID'];
 
 $arResult['ENTITY_ID'] = (is_array($arResult['ENTITY_ID']) ? $arResult['ENTITY_ID'] : array($arResult['ENTITY_ID']));
@@ -159,7 +156,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 	if ('Y' == $arResult['VALUES']['REMIND_FLAG'])
 	{
 		if (isset($_POST['REMIND_TYPE']))
-			$strRemType = ToLower($_POST['REMIND_TYPE']);
+			$strRemType = mb_strtolower($_POST['REMIND_TYPE']);
 		if (!in_array($strRemType,$arRemType))
 			$strRemType = 'min';
 		if (isset($_POST['REMIND_LEN']))
@@ -169,7 +166,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 	}
 	$strPriority = '';
 	if (isset($_POST['PRIORITY']))
-		$strPriority = ToLower($_POST['PRIORITY']);
+		$strPriority = mb_strtolower($_POST['PRIORITY']);
 	if (!in_array($strPriority,$arPriorityType))
 		$strPriority = 'normal';
 	$arResult['VALUES']['REMIND_LEN'] = $intRemLen;

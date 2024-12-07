@@ -67,7 +67,7 @@ final class PaymentSlipConfig
 
 			if ($firstRegisteredSender)
 			{
-				Option::set('salescenter', self::OPTION_SELECTED_SMS_SERVICE, $firstRegisteredSender['ID']);
+				Option::set('salescenter', self::OPTION_SELECTED_SMS_SERVICE, $firstRegisteredSender['id']);
 				$selectedServiceId = $firstRegisteredSender['id'];
 			}
 		}

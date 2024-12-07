@@ -18,10 +18,14 @@ use CAgent;
 
 class ExecutionService
 {
+	public const PRIORITY_TEMPLATE = 0;
+	public const PRIORITY_AGENT = 1;
+
 	private AbstractParameter $replicateParameter;
 	private Result $currentResult;
 	private string $agent;
 	private int $nextExecutionTimeTS;
+	private ?array $agentData = null;
 
 	public function __construct(private RepositoryInterface $repository)
 	{
@@ -35,30 +39,36 @@ class ExecutionService
 		$this->currentResult = new Result();
 	}
 
-	public function getTemplateCurrentExecutionTime(): string
+	public function getTemplateCurrentExecutionTime(int $priority = self::PRIORITY_TEMPLATE): string
 	{
 		$executionTime = (string)$this->replicateParameter->get('NEXT_EXECUTION_TIME');
-		if (!empty($executionTime))
+		$agent = $this->getAgent();
+		$agentNextExec = $agent['NEXT_EXEC'] ?? '';
+
+		if ($priority === self::PRIORITY_AGENT && !empty($agentNextExec))
 		{
-			return $executionTime;
+			return $agentNextExec;
 		}
 
-		$agent = CAgent::getList([], ['NAME' => $this->agent])->fetch();
-		if ($agent)
+		return empty($executionTime) ? $agentNextExec : $executionTime;
+	}
+
+	public function getAgent(): array
+	{
+		if (is_null($this->agentData))
 		{
-			return $agent['NEXT_EXEC'];
+			$agent = CAgent::getList([], ['NAME' => $this->agent])->fetch();
+			$this->agentData = is_array($agent) ? $agent : [];
 		}
 
-		return '';
+		return $this->agentData;
 	}
 
 	public function getTemplateNextExecutionTime(string $lastExecutionTime): Result
 	{
 		$template = $this->repository->getEntity();
 
-		// get users and their time zone offsets
-		$currentUserTimeZoneOffsetTS = User::getTimeZoneOffsetCurrentUser();
-
+		// deprecated, TIMEZONE_OFFSET parameter is always 0 in new templates
 		$timeZoneOffsetTS = $this->replicateParameter->get('TIMEZONE_OFFSET');
 		$creatorTimeZoneOffsetTS = $timeZoneOffsetTS ?? User::getTimeZoneOffset($template->getCreatedBy());
 
@@ -76,8 +86,6 @@ class ExecutionService
 			$lastExecutionTimeTS = (int)MakeTimeStamp($lastExecutionTime);
 			if ($lastExecutionTimeTS > 0)
 			{
-				// $agentTime is in current user`s time, but we want server time here
-				$lastExecutionTimeTS -= $currentUserTimeZoneOffsetTS;
 				$baseExecutionTimeTS = $lastExecutionTimeTS;
 			}
 		}
@@ -116,7 +124,6 @@ class ExecutionService
 
 		if (!$repeatTill || $repeatTill === RepeatType::ENDLESS)
 		{
-			$this->nextExecutionTimeTS += $currentUserTimeZoneOffsetTS;
 			return $this->continueReplication();
 		}
 
@@ -141,8 +148,6 @@ class ExecutionService
 				return $this->stopReplication();
 			}
 		}
-
-		$this->nextExecutionTimeTS += $currentUserTimeZoneOffsetTS;
 
 		return $this->continueReplication();
 	}

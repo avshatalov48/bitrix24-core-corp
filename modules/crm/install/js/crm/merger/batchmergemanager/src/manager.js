@@ -1,4 +1,5 @@
-import {Loc, Type} from "main.core";
+/* eslint-disable @bitrix24/bitrix24-rules/no-pseudo-private, no-underscore-dangle */
+import { Loc, Type, Uri } from 'main.core';
 
 export class BatchMergeManager
 {
@@ -43,39 +44,89 @@ export class BatchMergeManager
 	{
 		return this._id;
 	}
-	getMessage (name)
+
+	getMessage(name: string): ?string
 	{
-		const entityTypeName = BX.CrmEntityType.resolveName(this._entityTypeId).toUpperCase();
-		return BX.prop.getString(
-			BX.prop.getObject(this._settings, "messages", BX.Crm.BatchMergeManager.messages),
-			name,
-			Loc.getMessage('CRM_BATCH_MERGER_MANAGER_' + entityTypeName + '_' + name.toUpperCase())
-			// CRM_BATCH_MERGER_MANAGER_LEAD_TITLE
-			// CRM_BATCH_MERGER_MANAGER_LEAD_CONFIRMATION
-			// CRM_BATCH_MERGER_MANAGER_LEAD_SUMMARYCAPTION
-			// CRM_BATCH_MERGER_MANAGER_LEAD_SUMMARYSUCCEEDED
-			// CRM_BATCH_MERGER_MANAGER_LEAD_SUMMARYFAILED
-			// CRM_BATCH_MERGER_MANAGER_DEAL_TITLE
-			// CRM_BATCH_MERGER_MANAGER_DEAL_CONFIRMATION
-			// CRM_BATCH_MERGER_MANAGER_DEAL_SUMMARYCAPTION
-			// CRM_BATCH_MERGER_MANAGER_DEAL_SUMMARYSUCCEEDED
-			// CRM_BATCH_MERGER_MANAGER_DEAL_SUMMARYFAILED
-			// CRM_BATCH_MERGER_MANAGER_CONTACT_TITLE
-			// CRM_BATCH_MERGER_MANAGER_CONTACT_CONFIRMATION
-			// CRM_BATCH_MERGER_MANAGER_CONTACT_SUMMARYCAPTION
-			// CRM_BATCH_MERGER_MANAGER_CONTACT_SUMMARYSUCCEEDED
-			// CRM_BATCH_MERGER_MANAGER_CONTACT_SUMMARYFAILED
-			// CRM_BATCH_MERGER_MANAGER_COMPANY_TITLE
-			// CRM_BATCH_MERGER_MANAGER_COMPANY_CONFIRMATION
-			// CRM_BATCH_MERGER_MANAGER_COMPANY_SUMMARYCAPTION
-			// CRM_BATCH_MERGER_MANAGER_COMPANY_SUMMARYSUCCEEDED
-			// CRM_BATCH_MERGER_MANAGER_COMPANY_SUMMARYFAILED
-		);
+		return this.getMessageFromSettings(name)
+			?? this.getMessageFromLocalization(name)
+		;
 	}
+
 	getEntityIds()
 	{
 		return this._entityIds;
 	}
+
+	getEntityTypeId(): number
+	{
+		return this._entityTypeId;
+	}
+
+	getMessageFromSettings(name: string): ?string
+	{
+		return this._settings?.messages?.[name] ?? null;
+	}
+
+	/**
+	 * CRM_BATCH_MERGER_MANAGER_LEAD_TITLE
+	 * CRM_BATCH_MERGER_MANAGER_LEAD_CONFIRMATION
+	 * CRM_BATCH_MERGER_MANAGER_LEAD_SUMMARYCAPTION
+	 * CRM_BATCH_MERGER_MANAGER_LEAD_SUMMARYSUCCEEDED
+	 * CRM_BATCH_MERGER_MANAGER_LEAD_SUMMARYFAILED
+	 * CRM_BATCH_MERGER_MANAGER_DEAL_TITLE
+	 * CRM_BATCH_MERGER_MANAGER_DEAL_CONFIRMATION
+	 * CRM_BATCH_MERGER_MANAGER_DEAL_SUMMARYCAPTION
+	 * CRM_BATCH_MERGER_MANAGER_DEAL_SUMMARYSUCCEEDED
+	 * CRM_BATCH_MERGER_MANAGER_DEAL_SUMMARYFAILED
+	 * CRM_BATCH_MERGER_MANAGER_CONTACT_TITLE
+	 * CRM_BATCH_MERGER_MANAGER_CONTACT_CONFIRMATION
+	 * CRM_BATCH_MERGER_MANAGER_CONTACT_SUMMARYCAPTION
+	 * CRM_BATCH_MERGER_MANAGER_CONTACT_SUMMARYSUCCEEDED
+	 * CRM_BATCH_MERGER_MANAGER_CONTACT_SUMMARYFAILED
+	 * CRM_BATCH_MERGER_MANAGER_COMPANY_TITLE
+	 * CRM_BATCH_MERGER_MANAGER_COMPANY_CONFIRMATION
+	 * CRM_BATCH_MERGER_MANAGER_COMPANY_SUMMARYCAPTION
+	 * CRM_BATCH_MERGER_MANAGER_COMPANY_SUMMARYSUCCEEDED
+	 * CRM_BATCH_MERGER_MANAGER_COMPANY_SUMMARYFAILED
+	 * CRM_BATCH_MERGER_MANAGER_SMART_INVOICE_TITLE
+	 * CRM_BATCH_MERGER_MANAGER_SMART_INVOICE_CONFIRMATION
+	 * CRM_BATCH_MERGER_MANAGER_SMART_INVOICE_SUMMARYCAPTION
+	 * CRM_BATCH_MERGER_MANAGER_SMART_INVOICE_SUMMARYSUCCEEDED
+	 * CRM_BATCH_MERGER_MANAGER_SMART_INVOICE_SUMMARYFAILED
+	 * CRM_BATCH_MERGER_MANAGER_QUOTE_TITLE
+	 * CRM_BATCH_MERGER_MANAGER_QUOTE_CONFIRMATION
+	 * CRM_BATCH_MERGER_MANAGER_QUOTE_SUMMARYCAPTION
+	 * CRM_BATCH_MERGER_MANAGER_QUOTE_SUMMARYSUCCEEDED
+	 * CRM_BATCH_MERGER_MANAGER_QUOTE_SUMMARYFAILED
+	 * CRM_BATCH_MERGER_MANAGER_DYNAMIC_TITLE
+	 * CRM_BATCH_MERGER_MANAGER_DYNAMIC_CONFIRMATION
+	 * CRM_BATCH_MERGER_MANAGER_DYNAMIC_SUMMARYCAPTION
+	 * CRM_BATCH_MERGER_MANAGER_DYNAMIC_SUMMARYSUCCEEDED
+	 * CRM_BATCH_MERGER_MANAGER_DYNAMIC_SUMMARYFAILED
+	 *
+	 * @param name
+	 * @returns {string|null}
+	 */
+	getMessageFromLocalization(name: string): ?string
+	{
+		const phraseCode = ('CRM_BATCH_MERGER_MANAGER_#ENTITY_TYPE_NAME#_#NAME#')
+			.replace('#ENTITY_TYPE_NAME#', this.getMessageEntityTypeName())
+			.replace('#NAME#', name.toUpperCase())
+		;
+
+		return Loc.getMessage(phraseCode);
+	}
+
+	getMessageEntityTypeName(): string
+	{
+		const entityTypeName = BX.CrmEntityType.isDynamicTypeByTypeId(this.getEntityTypeId())
+			? BX.CrmEntityType.names.dynamic
+			: BX.CrmEntityType.resolveName(this.getEntityTypeId())
+		;
+
+		return entityTypeName.toUpperCase();
+	}
+
 	setEntityIds(entityIds)
 	{
 		this._entityIds = Type.isArray(entityIds) ? entityIds : [];
@@ -247,15 +298,7 @@ export class BatchMergeManager
 	{
 		this._contextId = this._id + "_" + BX.util.getRandomString(6).toUpperCase();
 
-		BX.Crm.Page.open(
-			BX.util.add_url_param(
-				BX.prop.getString(this._settings, "mergerUrl", ""),
-				{
-					externalContextId: this._contextId,
-					id: this._entityIds
-				}
-			)
-		);
+		BX.Crm.Page.open(this.#getMergerUrl());
 
 		if(!this._externalEventHandler)
 		{
@@ -263,6 +306,27 @@ export class BatchMergeManager
 			BX.addCustomEvent(window, "onLocalStorageSet", this._externalEventHandler);
 		}
 	}
+
+	#getMergerUrl(): string
+	{
+		const mergerBaseUrl = BX.prop.getString(this._settings, 'mergerUrl', this.#getDefaultMergerUrl());
+
+		const uri = new Uri(mergerBaseUrl);
+		uri.setQueryParams({
+			externalContextId: this._contextId,
+			id: this._entityIds,
+		});
+
+		return uri.toString();
+	}
+
+	#getDefaultMergerUrl(): string
+	{
+		const lowerEntityTypeName = BX.CrmEntityType.resolveName(this._entityTypeId).toLowerCase();
+
+		return `/crm/${lowerEntityTypeName}/merge/`;
+	}
+
 	complete()
 	{
 		BX.onCustomEvent(

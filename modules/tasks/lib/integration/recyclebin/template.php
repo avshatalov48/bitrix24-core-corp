@@ -18,9 +18,8 @@ use Bitrix\Tasks\Internals\Task\TemplateTable;
 
 use Bitrix\Recyclebin\Internals\Entity;
 use Bitrix\Recyclebin\Internals\Contracts\Recyclebinable;
+use Bitrix\Tasks\Replication\Replicator\RegularTemplateTaskReplicator;
 use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\TaskLimit;
-use CAgent;
-use CTasks;
 use CTaskTemplates;
 use Exception;
 
@@ -72,14 +71,8 @@ class Template implements Recyclebinable
 
 			if ($template && $template["REPLICATE"] == "Y")
 			{
-				$name = 'CTasks::RepeatTaskByTemplateId(' . $templateId . ');';
-
-				$nextTime = CTasks::getNextTime(unserialize($template['REPLICATE_PARAMS'],
-					['allowed_classes' => false]), $template); // localtime
-				if ($nextTime)
-				{
-					CAgent::AddAgent($name, 'tasks', 'N', 86400, $nextTime, 'Y', $nextTime);
-				}
+				$replicator = new RegularTemplateTaskReplicator();
+				$replicator->startReplication($templateId);
 			}
 		}
 		catch (Exception $e)
@@ -135,7 +128,8 @@ class Template implements Recyclebinable
 		return [
 			'LIMIT_DATA' => [
 				'RESTORE' => [
-					'DISABLE' => TaskLimit::isLimitExceeded() || !Bitrix24::checkFeatureEnabled(FeatureDictionary::TASKS_RECYCLEBIN),
+					'DISABLE' => !Bitrix24::checkFeatureEnabled(FeatureDictionary::TASK_RECYCLE_BIN_RESTORE),
+					'FEATURE_ID' => FeatureDictionary::TASK_RECYCLE_BIN_RESTORE,
 					'SLIDER_CODE' => 'limit_tasks_recycle_bin_restore',
 				],
 			],

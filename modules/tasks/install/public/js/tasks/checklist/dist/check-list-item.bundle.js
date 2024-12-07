@@ -982,7 +982,7 @@ this.BX = this.BX || {};
 	          {
 	            var image = '';
 	            if (data.avatar) {
-	              image = main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t\t<img class=\"tasks-checklist-notification-balloon-avatar-img\" src=\"", "\" alt=\"\"/>\n\t\t\t\t\t"])), data.avatar);
+	              image = main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t\t<img class=\"tasks-checklist-notification-balloon-avatar-img\" src=\"", "\" alt=\"\"/>\n\t\t\t\t\t"])), encodeURI(data.avatar));
 	            }
 	            content = main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"tasks-checklist-notification-balloon-message-container\">\n\t\t\t\t\t\t<div class=\"tasks-checklist-notification-balloon-avatar\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<span class=\"tasks-checklist-notification-balloon-message\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</span>\n\t\t\t\t\t</div>\n\t\t\t\t"])), image, main_core.Loc.getMessage("TASKS_CHECKLIST_NOTIFICATION_BALLOON_ACTION_".concat(action)));
 	            break;
@@ -1213,7 +1213,8 @@ this.BX = this.BX || {};
 	              inviteEmployeeLink: false,
 	              emailUsers: true,
 	              networkUsers: _this6.optionManager.isNetworkEnabled,
-	              extranetUsers: true
+	              extranetUsers: true,
+	              analyticModuleName: 'task'
 	            }
 	          }],
 	          events: {

@@ -11,6 +11,7 @@ jn.define('calendar/event-list-view/layout/event-list', (require, exports, modul
 	const { clone } = require('utils/object');
 	const { Type } = require('type');
 	const { Loc } = require('loc');
+	const { Color } = require('tokens');
 
 	const EventListItemType = {
 		TYPE_EVENT: 'event',
@@ -50,7 +51,7 @@ jn.define('calendar/event-list-view/layout/event-list', (require, exports, modul
 				{
 					style: {
 						flex: 1,
-						backgroundColor: AppTheme.colors.bgContentPrimary,
+						backgroundColor: Color.bgContentPrimary.toHex(),
 					},
 				},
 				this.isFilledList() ? this.renderList() : this.renderEmptyState(),
@@ -153,7 +154,7 @@ jn.define('calendar/event-list-view/layout/event-list', (require, exports, modul
 							ref?.animate({ duration: 200, opacity: 1, delay: 500 });
 						}
 					},
-					testId: `calendar_event_list_empty_state`,
+					testId: 'calendar_event_list_empty_state',
 				},
 				!this.state.search && !this.state.searchByPreset && this.renderEmptyEventsState(),
 				this.state.search && this.renderEmptySearchState(),
@@ -172,8 +173,8 @@ jn.define('calendar/event-list-view/layout/event-list', (require, exports, modul
 							fontSize: 20,
 							fontWeight: '600',
 						},
-						testId: `calendar_event_list_empty_state_events`,
-					}
+						testId: 'calendar_event_list_empty_state_events',
+					},
 				),
 			);
 		}
@@ -186,7 +187,7 @@ jn.define('calendar/event-list-view/layout/event-list', (require, exports, modul
 						alignItems: 'center',
 						justifyContent: 'center',
 					},
-					testId: `calendar_event_list_empty_state_search`,
+					testId: 'calendar_event_list_empty_state_search',
 				},
 				Text({
 					style: {
@@ -218,7 +219,7 @@ jn.define('calendar/event-list-view/layout/event-list', (require, exports, modul
 						alignItems: 'center',
 						justifyContent: 'center',
 					},
-					testId: `calendar_event_list_empty_state_preset`,
+					testId: 'calendar_event_list_empty_state_preset',
 				},
 				Image({
 					style: {
@@ -260,7 +261,6 @@ jn.define('calendar/event-list-view/layout/event-list', (require, exports, modul
 				this.listRef?.scrollToBegin(true);
 			});
 		}
-
 
 		getEventsForDay(day)
 		{

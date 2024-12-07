@@ -14,10 +14,14 @@ class ItemSettings extends EntitySettings implements ISettingsSupportsCategory
 	public function __construct(array $params, Type $type)
 	{
 		parent::__construct($params);
-		if(isset($params['categoryId']))
-		{
-			$this->categoryId = (int)$params['categoryId'];
-		}
+
+		$this->categoryId = (int)(
+			$params['categoryId']
+			?? $params['categoryID']
+			?? $params['CATEGORY_ID']
+			?? $this->categoryId
+		);
+
 		$this->type = $type;
 	}
 

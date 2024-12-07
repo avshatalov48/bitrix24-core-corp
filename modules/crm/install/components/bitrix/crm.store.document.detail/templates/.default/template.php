@@ -24,6 +24,7 @@ Extension::load([
 	'ui.fonts.opensans',
 	'catalog.entity-card',
 	'catalog.document-card',
+	'catalog.store-enable-wizard',
 	'crm.entity-selector',
 	'spotlight',
 ]);
@@ -227,6 +228,7 @@ $tabContainerClassName .= ' ui-entity-stream-section-planned-above-overlay';
 				tabContainerId: '<?=CUtil::JSEscape($tabContainerId)?>',
 				tabMenuContainerId: '<?=CUtil::JSEscape($tabMenuContainerId)?>',
 				isDeductLocked: <?= CUtil::PhpToJSObject($arResult['IS_DEDUCT_LOCKED']) ?>,
+				isOnecMode: <?= CUtil::PhpToJSObject($arResult['IS_ONEC_MODE']) ?>,
 				permissions: <?= CUtil::PhpToJSObject($arResult['DOCUMENT_PERMISSIONS']) ?>,
 				masterSliderUrl: <?= CUtil::PhpToJSObject($arResult['MASTER_SLIDER_URL']) ?>,
 				isInventoryManagementDisabled: <?= CUtil::PhpToJSObject($arResult['IS_INVENTORY_MANAGEMENT_DISABLED']) ?>,

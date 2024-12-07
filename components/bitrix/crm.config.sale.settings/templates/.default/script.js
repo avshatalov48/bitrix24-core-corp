@@ -1,4 +1,3 @@
-
 BX.CrmSaleSettings = (function ()
 {
 	var CrmSaleSettings = function (parameters)
@@ -1762,18 +1761,46 @@ BX.CrmSaleSettings = (function ()
 
 	BX.Crm.CommonSaleSettings.prototype.clickUseStoreMasterButton = function()
 	{
-		this.slider.open('/bitrix/components/bitrix/catalog.warehouse.master.clear/slider.php')
-			.then(function()
+		BX.Runtime.loadExtension('catalog.store-enable-wizard').then((exports) => {
+			const { EnableWizardOpener, AnalyticsContextList, Disabler } = exports;
+
+			const isStoreControlUsed = this.useStoreMasterControl.dataset.useStoreControl === 'Y';
+			if (isStoreControlUsed)
 			{
-				window.top.BX.ajax.runAction(
-					'catalog.config.isUsedInventoryManagement',
-					{}
-				).then(function(response)
-				{
-					this.checkedReservationControl(response.data === true);
-					this.saveSettingsComponentAction()
-				}.bind(this));
-			}.bind(this))
+				(new Disabler({
+					events: {
+						onDisabled: () => {
+							this.saveSettings();
+						},
+					},
+				})).open();
+			}
+			else
+			{
+				(new EnableWizardOpener())
+					.open(
+						'/bitrix/components/bitrix/catalog.store.enablewizard/slider.php',
+						{
+							urlParams: {
+								analyticsContextSection: AnalyticsContextList.OLD_SETTINGS,
+							},
+						},
+					)
+					.then(() => {
+						return window.top.BX.ajax.runAction(
+							'catalog.config.isUsedInventoryManagement',
+							{},
+						);
+					})
+					.then((response) => {
+						if (response.data === true)
+						{
+							this.checkedReservationControl(response.data);
+							this.saveSettings();
+						}
+					});
+			}
+		});
 	};
 
 	BX.Crm.CommonSaleSettings.prototype.clickHideNumeratorSettingsControl = function()
@@ -1899,11 +1926,15 @@ BX.CrmSaleSettings = (function ()
 			top.BX.UI.Notification.Center.notify({
 				content: BX.message("CRM_SALE_SETTINGS_SAVE_SUCCESS")
 			});
-			if (this.slider)
+			if (this.slider && window.top.BX.SidePanel.Instance.getTopSlider())
 			{
 				this.slider.close(function () {
 					top.location.reload();
 				});
+			}
+			else
+			{
+				location.reload();
 			}
 		}.bind(this), function (response) {
 

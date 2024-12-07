@@ -7,7 +7,7 @@ jn.define('tasks/statemanager/redux/slices/tasks', (require, exports, module) =>
 	const { isOffline } = require('device/connection');
 
 	const { ExpirationRegistry } = require('tasks/statemanager/redux/slices/tasks/expiration-registry');
-	const { sliceName, tasksAdapter } = require('tasks/statemanager/redux/slices/tasks/meta');
+	const { sliceName, tasksAdapter, initialState } = require('tasks/statemanager/redux/slices/tasks/meta');
 	const { TaskModel } = require('tasks/statemanager/redux/slices/tasks/model/task');
 	const { mapStateToTaskModel } = require('tasks/statemanager/redux/slices/tasks/mapper');
 	const {
@@ -16,20 +16,40 @@ jn.define('tasks/statemanager/redux/slices/tasks', (require, exports, module) =>
 		selectEntities,
 		selectIds,
 		selectTotal,
+		selectByTaskIdOrGuid,
 		selectIsMember,
 		selectIsCreator,
 		selectIsResponsible,
+		selectIsPureCreator,
 		selectIsAccomplice,
 		selectIsAuditor,
+		selectIsCreating,
+		selectIsSupposedlyCompleted,
 		selectIsCompleted,
+		selectInProgress,
 		selectIsDeferred,
+		selectIsExpiredSoon,
+		selectIsExpired,
+		selectMarkedAsRemoved,
 		selectWillExpire,
 		selectCounter,
+		selectHasChecklist,
+		selectIsSubTasksLoaded,
+		selectIsRelatedTasksLoaded,
+		selectSubTasksById,
+		selectSubTasksIdsByTaskId,
+		selectRelatedTasksById,
+		selectWithCreationError,
 		selectActions,
+		selectTimerState,
+		selectDatePlan,
 	} = require('tasks/statemanager/redux/slices/tasks/selector');
 	const {
+		create,
+		update,
 		updateDeadline,
 		delegate,
+		follow,
 		unfollow,
 		startTimer,
 		pauseTimer,
@@ -37,6 +57,7 @@ jn.define('tasks/statemanager/redux/slices/tasks', (require, exports, module) =>
 		pause,
 		complete,
 		renew,
+		defer,
 		approve,
 		disapprove,
 		ping,
@@ -50,12 +71,25 @@ jn.define('tasks/statemanager/redux/slices/tasks', (require, exports, module) =>
 		read,
 		readAllForRole,
 		readAllForProject,
+		updateSubTasks,
+		updateRelatedTasks,
 	} = require('tasks/statemanager/redux/slices/tasks/thunk');
 	const {
+		fetch: taskResultFetched,
+		create: taskResultCreate,
+		remove: taskResultRemove,
+	} = require('tasks/statemanager/redux/slices/tasks-results/thunk');
+	const {
+		createPending,
+		createFulfilled,
+		updatePending,
+		updateFulfilled,
 		updateDeadlinePending,
 		updateDeadlineFulfilled,
 		delegatePending,
 		delegateFulfilled,
+		followPending,
+		followFulfilled,
 		unfollowPending,
 		unfollowFulfilled,
 		startTimerPending,
@@ -70,6 +104,8 @@ jn.define('tasks/statemanager/redux/slices/tasks', (require, exports, module) =>
 		completeFulfilled,
 		renewPending,
 		renewFulfilled,
+		deferPending,
+		deferFullfilled,
 		approvePending,
 		approveFulfilled,
 		disapprovePending,
@@ -93,12 +129,30 @@ jn.define('tasks/statemanager/redux/slices/tasks', (require, exports, module) =>
 		readAllForRoleFulfilled,
 		readAllForProjectPending,
 		readAllForProjectFulfilled,
+		taskResultFetchedFulfilled,
+		taskResultCreatedFulfilled,
+		taskResultRemovedFulfilled,
+		updateSubTasksPending,
+		updateSubTasksFulfilled,
+		updateRelatedTasksPending,
+		updateRelatedTasksFulfilled,
+		updateTaskStagePending,
+		updateTaskStageFulfilled,
+		updateTaskStageRejected,
 	} = require('tasks/statemanager/redux/slices/tasks/extra-reducer');
+	const { updateTaskStage } = require('tasks/statemanager/redux/slices/tasks-stages/thunk');
 
 	const tasksSlice = createSlice({
 		name: sliceName,
-		initialState: tasksAdapter.getInitialState(),
+		initialState,
 		reducers: {
+			tasksAdded: (state, { payload }) => {
+				const tasks = payload.map((task) => {
+					return TaskModel.prepareReduxTaskFromServerTask(task, state.entities[task.id]);
+				});
+
+				tasksAdapter.addMany(state, tasks);
+			},
 			tasksUpserted: (state, { payload }) => {
 				const tasks = payload.map((task) => {
 					return TaskModel.prepareReduxTaskFromServerTask(task, state.entities[task.id]);
@@ -106,12 +160,17 @@ jn.define('tasks/statemanager/redux/slices/tasks', (require, exports, module) =>
 
 				tasksAdapter.upsertMany(state, tasks);
 			},
-			tasksAdded: (state, { payload }) => {
-				const tasks = payload.map((task) => {
-					return TaskModel.prepareReduxTaskFromServerTask(task, state.entities[task.id]);
-				});
+			setRelatedTasks: (state, { payload }) => {
+				const { taskId, relatedTasks } = payload;
 
-				tasksAdapter.addMany(state, tasks);
+				const task = state.entities[taskId];
+				if (task)
+				{
+					tasksAdapter.upsertOne(state, {
+						...task,
+						relatedTasks,
+					});
+				}
 			},
 			taskUpdatedFromOldTaskModel: (state, { payload }) => {
 				const { task: oldTaskModel } = payload;
@@ -123,11 +182,17 @@ jn.define('tasks/statemanager/redux/slices/tasks', (require, exports, module) =>
 			taskExpired: (state, { payload }) => {
 				const { taskId } = payload;
 				const task = state.entities[taskId];
+
 				tasksAdapter.upsertOne(state, {
 					...task,
 					isExpired: true,
 					isConsideredForCounterChange: true,
 				});
+			},
+			taskRemoved: (state, { payload }) => {
+				const { taskId } = payload;
+
+				tasksAdapter.removeOne(state, taskId);
 			},
 			markAsRemoved: (state, { payload }) => {
 				if (isOffline())
@@ -137,6 +202,7 @@ jn.define('tasks/statemanager/redux/slices/tasks', (require, exports, module) =>
 
 				const { taskId } = payload;
 				const task = state.entities[taskId];
+
 				tasksAdapter.upsertOne(state, {
 					...task,
 					isConsideredForCounterChange: true,
@@ -151,19 +217,74 @@ jn.define('tasks/statemanager/redux/slices/tasks', (require, exports, module) =>
 
 				const { taskId } = payload;
 				const task = state.entities[taskId];
+
 				tasksAdapter.upsertOne(state, {
 					...task,
 					isConsideredForCounterChange: true,
 					isRemoved: false,
 				});
 			},
+			updateChecklist: (state, { payload }) => {
+				const { taskId, checklist, checklistDetails } = payload;
+				const task = state.entities[taskId];
+
+				tasksAdapter.upsertOne(state, {
+					...task,
+					checklist,
+					checklistDetails,
+				});
+			},
+			updateUploadingFiles: (state, { payload }) => {
+				const { taskId, uploadedFiles } = payload;
+				const task = state.entities[taskId];
+
+				tasksAdapter.upsertOne(state, {
+					...task,
+					uploadedFiles,
+				});
+			},
+			tasksRead: (state, { payload }) => {
+				const { taskIds } = payload;
+				const readTasks = (
+					Object.values(state.entities)
+						.filter((task) => taskIds.includes(task.id))
+						.map((task) => ({ ...task, newCommentsCount: 0 }))
+				);
+
+				tasksAdapter.upsertMany(state, readTasks);
+			},
+			setTimeElapsed: (state, { payload }) => {
+				const { taskId, timeElapsed } = payload;
+				const task = state.entities[taskId];
+
+				tasksAdapter.upsertOne(state, {
+					...task,
+					timeElapsed,
+				});
+			},
+			setAttachedFiles: (state, { payload }) => {
+				const { taskId, files } = payload;
+
+				const task = state.entities[taskId];
+
+				tasksAdapter.upsertOne(state, {
+					...task,
+					files,
+				});
+			},
 		},
 		extraReducers: (builder) => {
 			builder
+				.addCase(create.pending, createPending)
+				.addCase(create.fulfilled, createFulfilled)
+				.addCase(update.pending, updatePending)
+				.addCase(update.fulfilled, updateFulfilled)
 				.addCase(updateDeadline.pending, updateDeadlinePending)
 				.addCase(updateDeadline.fulfilled, updateDeadlineFulfilled)
 				.addCase(delegate.pending, delegatePending)
 				.addCase(delegate.fulfilled, delegateFulfilled)
+				.addCase(follow.pending, followPending)
+				.addCase(follow.fulfilled, followFulfilled)
 				.addCase(unfollow.pending, unfollowPending)
 				.addCase(unfollow.fulfilled, unfollowFulfilled)
 				.addCase(startTimer.pending, startTimerPending)
@@ -178,6 +299,8 @@ jn.define('tasks/statemanager/redux/slices/tasks', (require, exports, module) =>
 				.addCase(complete.fulfilled, completeFulfilled)
 				.addCase(renew.pending, renewPending)
 				.addCase(renew.fulfilled, renewFulfilled)
+				.addCase(defer.pending, deferPending)
+				.addCase(defer.fulfilled, deferFullfilled)
 				.addCase(approve.pending, approvePending)
 				.addCase(approve.fulfilled, approveFulfilled)
 				.addCase(disapprove.pending, disapprovePending)
@@ -201,18 +324,35 @@ jn.define('tasks/statemanager/redux/slices/tasks', (require, exports, module) =>
 				.addCase(readAllForRole.fulfilled, readAllForRoleFulfilled)
 				.addCase(readAllForProject.pending, readAllForProjectPending)
 				.addCase(readAllForProject.fulfilled, readAllForProjectFulfilled)
+				.addCase(taskResultFetched.fulfilled, taskResultFetchedFulfilled)
+				.addCase(taskResultCreate.fulfilled, taskResultCreatedFulfilled)
+				.addCase(taskResultRemove.fulfilled, taskResultRemovedFulfilled)
+				.addCase(updateSubTasks.pending, updateSubTasksPending)
+				.addCase(updateSubTasks.fulfilled, updateSubTasksFulfilled)
+				.addCase(updateRelatedTasks.pending, updateRelatedTasksPending)
+				.addCase(updateRelatedTasks.fulfilled, updateRelatedTasksFulfilled)
+				.addCase(updateTaskStage.pending, updateTaskStagePending)
+				.addCase(updateTaskStage.fulfilled, updateTaskStageFulfilled)
+				.addCase(updateTaskStage.rejected, updateTaskStageRejected)
 			;
 		},
 	});
 
 	const { reducer: tasksReducer, actions } = tasksSlice;
 	const {
-		tasksUpserted,
 		tasksAdded,
+		tasksUpserted,
+		setRelatedTasks,
 		taskUpdatedFromOldTaskModel,
 		taskExpired,
+		taskRemoved,
 		markAsRemoved,
 		unmarkAsRemoved,
+		updateChecklist,
+		updateUploadingFiles,
+		tasksRead,
+		setTimeElapsed,
+		setAttachedFiles,
 	} = actions;
 
 	ExpirationRegistry.setReducers({ taskExpired });
@@ -223,31 +363,58 @@ jn.define('tasks/statemanager/redux/slices/tasks', (require, exports, module) =>
 		tasksReducer,
 		mapStateToTaskModel,
 
-		tasksUpserted,
 		tasksAdded,
+		tasksUpserted,
+		setRelatedTasks,
 		taskUpdatedFromOldTaskModel,
 		taskExpired,
+		taskRemoved,
 		markAsRemoved,
 		unmarkAsRemoved,
+		updateChecklist,
+		updateUploadingFiles,
+		tasksRead,
+		setTimeElapsed,
+		setAttachedFiles,
 
 		selectAll,
 		selectById,
 		selectEntities,
 		selectIds,
 		selectTotal,
+		selectByTaskIdOrGuid,
 		selectIsMember,
 		selectIsCreator,
 		selectIsResponsible,
+		selectIsPureCreator,
 		selectIsAccomplice,
 		selectIsAuditor,
+		selectIsCreating,
+		selectIsSupposedlyCompleted,
 		selectIsCompleted,
+		selectInProgress,
 		selectIsDeferred,
+		selectIsExpiredSoon,
+		selectIsExpired,
+		selectMarkedAsRemoved,
 		selectWillExpire,
 		selectCounter,
 		selectActions,
+		selectHasChecklist,
+		selectIsSubTasksLoaded,
+		selectIsRelatedTasksLoaded,
+		selectSubTasksById,
+		selectSubTasksIdsByTaskId,
+		selectRelatedTasksById,
+		selectTimerState,
+		selectDatePlan,
+		selectWithCreationError,
 
+		create,
+		update,
 		updateDeadline,
 		delegate,
+		follow,
 		unfollow,
 		startTimer,
 		pauseTimer,
@@ -255,6 +422,7 @@ jn.define('tasks/statemanager/redux/slices/tasks', (require, exports, module) =>
 		pause,
 		complete,
 		renew,
+		defer,
 		approve,
 		disapprove,
 		ping,
@@ -268,5 +436,7 @@ jn.define('tasks/statemanager/redux/slices/tasks', (require, exports, module) =>
 		read,
 		readAllForRole,
 		readAllForProject,
+		updateSubTasks,
+		updateRelatedTasks,
 	};
 });

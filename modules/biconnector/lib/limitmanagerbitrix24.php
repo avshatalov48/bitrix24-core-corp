@@ -9,45 +9,6 @@ use Bitrix\Main\Type\DateTime;
 class LimitManagerBitrix24 extends LimitManager
 {
 	/**
-	 * Called on data export end.
-	 *
-	 * @param int $rowsCount How many data rows was exported.
-	 * @return bool Limit was exceeded or not.
-	 */
-	public function fixLimit(int $rowsCount): bool
-	{
-		$limit = $this->getLimit();
-		if ($limit > 0 && $rowsCount > $limit)
-		{
-			$this->setLastOverLimitDate();
-			$firstOverLimitDate = $this->getFirstOverLimitDate();
-			if (!$firstOverLimitDate)
-			{
-				$this->setFirstOverLimitDate();
-			}
-			elseif (new DateTime() > $firstOverLimitDate->add("{$this->getGracePeriodDays()} days"))
-			{
-				if (!$this->isDataConnectionDisabled())
-				{
-					$this->setDisabledDataConnection();
-				}
-			}
-
-			return true;
-		}
-		else
-		{
-			$lastOverLimitDate = $this->getLastOverLimitDate();
-			if (new DateTime() > $lastOverLimitDate?->add($this->getAutoReleaseDays() * 24 . ' hours'))
-			{
-				$this->clearOverLimitTimestamps();
-			}
-
-			return false;
-		}
-	}
-
-	/**
 	 * Returns maximum allowed records count.
 	 * 0 - unlimited.
 	 *

@@ -5,7 +5,6 @@
 
 $HTTP_ACCEPT_ENCODING = "";
 $_SERVER["HTTP_ACCEPT_ENCODING"] = "";
-include_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/classes/general/captcha.php");
 
 $cpt = new CCaptcha();
 $cpt->setImageSize(240, 80);
@@ -16,7 +15,7 @@ $cpt->textStartX = 45;
 $cpt->textFontSize = 50;
 
 
-if (isset($_GET["captcha_sid"]))
+if (isset($_GET["captcha_sid"]) && is_string($_GET["captcha_sid"]))
 {
 	if ($cpt->InitCode($_GET["captcha_sid"]))
 	{
@@ -27,11 +26,9 @@ if (isset($_GET["captcha_sid"]))
 		$cpt->OutputError();
 	}
 }
-elseif (isset($_GET["captcha_code"]))
+elseif (isset($_GET["captcha_code"]) && is_string($_GET["captcha_code"]))
 {
-	$captchaPass = COption::GetOptionString("main", "captcha_password", "");
-
-	if ($cpt->InitCodeCrypt($_GET["captcha_code"], $captchaPass))
+	if ($cpt->InitCodeCrypt($_GET["captcha_code"]))
 	{
 		$cpt->Output();
 	}
@@ -46,4 +43,3 @@ else
 }
 
 require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/epilog_after.php");
-?>

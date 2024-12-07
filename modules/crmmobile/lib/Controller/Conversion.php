@@ -2,14 +2,12 @@
 
 namespace Bitrix\CrmMobile\Controller;
 
-use Bitrix\Crm\Item;
-use Bitrix\Main\Engine\ActionFilter\CloseSession;
-use \Bitrix\Crm\Settings\Mode;
-use Bitrix\Crm\Service\Container;
-use Bitrix\CrmMobile\Controller\Base;
-use Bitrix\Main\Engine\ActionFilter;
 use Bitrix\Crm\Conversion\ConversionManager;
 use Bitrix\Crm\Engine\ActionFilter\CheckReadPermission;
+use Bitrix\Crm\Item;
+use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Settings\Mode;
+use Bitrix\Main\Engine\ActionFilter;
 
 class Conversion extends Base
 {
@@ -39,11 +37,17 @@ class Conversion extends Base
 
 		$existActiveLeads = false;
 
-		$dbRes = \CCrmLead::GetListEx(['DATE_CREATE' => 'desc'],
-			["STATUS_SEMANTIC_ID" => \Bitrix\Crm\PhaseSemantics::PROCESS],
-			false, ["nPageSize" => 1], ["ID"]);
-		$dbRes->NavStart(1, false);
-		if ($dbRes->GetNext())
+		$dbResult = \CCrmLead::GetListEx(
+			[],
+			[
+				"STATUS_SEMANTIC_ID" => \Bitrix\Crm\PhaseSemantics::PROCESS,
+				'CHECK_PERMISSIONS' => 'N'
+			],
+			false,
+			["nTopCount" => 1],
+			["ID"]
+		);
+		if ($dbResult->Fetch())
 		{
 			$existActiveLeads = true;
 		}
@@ -63,7 +67,7 @@ class Conversion extends Base
 		//remove from conversion to old invoices and documents
 		$conversionData['items'] = array_values(
 			array_filter($conversionData['items'],
-				fn ($item) => $item['name'] !== \CCrmOwnerType::InvoiceName
+				fn($item) => $item['name'] !== \CCrmOwnerType::InvoiceName
 					&& $item['name'] !== \CCrmOwnerType::SmartDocumentName
 			)
 		);

@@ -45,8 +45,11 @@ export default class TextPopup
 			);
 
 			this.#popup.subscribe('onShow', () => {
-				this.#input.focus();
-				this.#setCursorToEnd();
+				// Give time for input to render before setting focus.
+				setTimeout(() => {
+					this.#input.focus();
+					this.#setCursorToEnd();
+				}, 0);
 			});
 		}
 
@@ -61,6 +64,7 @@ export default class TextPopup
 			<input 
 				type="text" 
 				value="${Text.encode(this.#value)}"
+				maxlength="255"
 				placeholder="${Loc.getMessage('CRM_TEMPLATE_EDITOR_SELECT_FIELD_PLACEHOLDER')}
 			">
 		`;

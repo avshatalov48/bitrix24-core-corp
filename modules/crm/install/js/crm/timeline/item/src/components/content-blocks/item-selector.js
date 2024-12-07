@@ -1,6 +1,6 @@
-import { Runtime } from 'main.core';
-import { BaseEvent, EventEmitter } from 'main.core.events';
 import { Events, ItemSelector } from 'crm.field.item-selector';
+import { Runtime, Type } from 'main.core';
+import { BaseEvent, EventEmitter } from 'main.core.events';
 
 import { Action } from '../../action';
 
@@ -20,6 +20,15 @@ export default {
 		saveAction: {
 			type: Object,
 			required: true,
+		},
+		compactMode: {
+			type: Boolean,
+			default: false,
+		},
+		icon: {
+			type: String,
+			default: null,
+			required: false,
 		},
 	},
 
@@ -69,15 +78,39 @@ export default {
 			target: this.$el,
 			valuesList: this.valuesList,
 			selectedValues: this.value,
+			compactMode: this.compactMode ?? false,
+			icon: Type.isStringFilled(this.icon) ? this.icon : null,
 		});
 
-		EventEmitter.subscribe(this.itemSelector, Events.EVENT_ITEMSELECTOR_VALUE_CHANGE, this.onItemSelectorValueChange);
+		EventEmitter.subscribe(
+			this.itemSelector,
+			Events.EVENT_ITEMSELECTOR_VALUE_CHANGE,
+			this.onItemSelectorValueChange,
+		);
 	},
 
 	beforeUnmount()
 	{
-		EventEmitter.unsubscribe(this.itemSelector, Events.EVENT_ITEMSELECTOR_VALUE_CHANGE, this.onItemSelectorValueChange);
+		EventEmitter.unsubscribe(
+			this.itemSelector,
+			Events.EVENT_ITEMSELECTOR_VALUE_CHANGE,
+			this.onItemSelectorValueChange,
+		);
 	},
 
-	template: `<div style="width: 100%;"></div>`,
+	computed: {
+		styles(): Object
+		{
+			if (this.compactMode)
+			{
+				return {};
+			}
+
+			return {
+				width: '100%',
+			};
+		},
+	},
+
+	template: '<div :style="styles"></div>',
 };

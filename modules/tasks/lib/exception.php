@@ -212,7 +212,7 @@ abstract class ActionException extends Exception
 {
 	public function __construct($message = false, array $data = array(), array $additional = array())
 	{
-		$data['AUX']['ERROR']['USER'] = $GLOBALS['USER']->GetId();
+		$data['AUX']['ERROR']['USER'] = $GLOBALS['USER']?->GetId();
 
 		parent::__construct($message, $data, $additional);
 	}

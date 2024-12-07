@@ -288,16 +288,18 @@ class Absence
 		}
 	}
 
-	public static function getOptionReportListFullUsers()
+	public static function getOptionReportListFullUsers(): array
 	{
 		if (self::getOptionReportListFullType() == self::TYPE_FOR_USER)
 		{
 			$requestReport = \Bitrix\Main\Config\Option::get('timeman', 'request_report_list_full', "0");
-			return Json::decode($requestReport);
+			$data = Json::decode($requestReport);
+
+			return is_array($data) ? $data : [$data];
 		}
 		else
 		{
-			return Array();
+			return [];
 		}
 	}
 

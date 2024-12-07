@@ -1,6 +1,7 @@
 <?php
 
 use Bitrix\Catalog\Access\AccessController;
+use Bitrix\Catalog\Config\State;
 use Bitrix\Catalog\Url\InventoryManagementSourceBuilder;
 use Bitrix\Catalog\Access\ActionDictionary;
 use Bitrix\Catalog\StoreDocumentTable;
@@ -15,6 +16,7 @@ use Bitrix\Main\Web\Uri;
 use Bitrix\Crm;
 use Bitrix\Main\Web\Json;
 use Bitrix\Sale\Internals\ShipmentTable;
+use Bitrix\Sale\Tax\VatCalculator;
 use Bitrix\UI;
 use Bitrix\Catalog;
 use Bitrix\Catalog\Access\Model\StoreDocument;
@@ -217,7 +219,9 @@ class CrmStoreDocumentListComponent extends CBitrixComponent implements Controll
 			->setOffset($pageNavigation->getOffset())
 			->setLimit($pageNavigation->getLimit())
 			->setFilter($listFilter)
-			->setSelect($select);
+			->setSelect($select)
+			->setDistinct()
+		;
 
 		foreach ($this->getListRuntime() as $field)
 		{
@@ -268,6 +272,10 @@ class CrmStoreDocumentListComponent extends CBitrixComponent implements Controll
 		$result['PAGE_SIZES'] = [['NAME' => 10, 'VALUE' => '10'], ['NAME' => 20, 'VALUE' => '20'], ['NAME' => 50, 'VALUE' => '50']];
 		$result['SHOW_ROW_CHECKBOXES'] = true;
 		$result['SHOW_CHECK_ALL_CHECKBOXES'] = true;
+		$result['USE_CHECKBOX_LIST_FOR_SETTINGS_POPUP'] = (bool)(
+			$this->arParams['USE_CHECKBOX_LIST_FOR_SETTINGS_POPUP'] ?? \Bitrix\Main\ModuleManager::isModuleInstalled('ui')
+		);
+		$result['ENABLE_FIELDS_SEARCH'] = 'Y';
 
 
 		$result['ACTION_PANEL'] = $this->getGroupActionPanel();
@@ -492,7 +500,6 @@ class CrmStoreDocumentListComponent extends CBitrixComponent implements Controll
 
 		$actions = [
 			[
-				'TITLE' => Loc::getMessage('CRM_DOCUMENT_LIST_ACTION_OPEN_TITLE'),
 				'TEXT' => Loc::getMessage('CRM_DOCUMENT_LIST_ACTION_OPEN_TEXT'),
 				'ONCLICK' => "BX.SidePanel.Instance.open('" . $urlToDocumentDetail . "', {cacheable: false, customLeftBoundary: 0, loader: 'crm-entity-details-loader'})",
 				'DEFAULT' => true,
@@ -504,8 +511,7 @@ class CrmStoreDocumentListComponent extends CBitrixComponent implements Controll
 			if ($canConduct)
 			{
 				$actions[] = [
-					'TITLE' => Loc::getMessage('CRM_DOCUMENT_LIST_ACTION_CONDUCT_TITLE'),
-					'TEXT' => Loc::getMessage('CRM_DOCUMENT_LIST_ACTION_CONDUCT_TEXT'),
+					'TEXT' => Loc::getMessage('CRM_DOCUMENT_LIST_ACTION_CONDUCT_TEXT_2'),
 					'ONCLICK' => "BX.Crm.StoreDocumentGridManager.Instance.conductDocument(" . $item['ID'] . ")",
 				];
 			}
@@ -513,7 +519,6 @@ class CrmStoreDocumentListComponent extends CBitrixComponent implements Controll
 			if ($canDelete)
 			{
 				$actions[] = [
-					'TITLE' => Loc::getMessage('CRM_DOCUMENT_LIST_ACTION_DELETE_TITLE'),
 					'TEXT' => Loc::getMessage('CRM_DOCUMENT_LIST_ACTION_DELETE_TEXT'),
 					'ONCLICK' => "BX.Crm.StoreDocumentGridManager.Instance.deleteDocument(" . $item['ID'] . ")",
 				];
@@ -524,8 +529,7 @@ class CrmStoreDocumentListComponent extends CBitrixComponent implements Controll
 			if ($canCancel)
 			{
 				$actions[] = [
-					'TITLE' => Loc::getMessage('CRM_DOCUMENT_LIST_ACTION_CANCEL_TITLE'),
-					'TEXT' => Loc::getMessage('CRM_DOCUMENT_LIST_ACTION_CANCEL_TEXT'),
+					'TEXT' => Loc::getMessage('CRM_DOCUMENT_LIST_ACTION_CANCEL_TEXT_2'),
 					'ONCLICK' => "BX.Crm.StoreDocumentGridManager.Instance.cancelDocument(" . $item['ID'] . ")",
 				];
 			}
@@ -906,7 +910,10 @@ class CrmStoreDocumentListComponent extends CBitrixComponent implements Controll
 			'THEME' => Bitrix\Main\UI\Filter\Theme::LIGHT,
 			'CONFIG' => [
 				'AUTOFOCUS' => false,
-			]
+				'popupWidth' => 800,
+			],
+			'USE_CHECKBOX_LIST_FOR_SETTINGS_POPUP' => \Bitrix\Main\ModuleManager::isModuleInstalled('ui'),
+			'ENABLE_FIELDS_SEARCH' => 'Y',
 		];
 		UI\Toolbar\Facade\Toolbar::addFilter($filterOptions);
 
@@ -1106,12 +1113,12 @@ class CrmStoreDocumentListComponent extends CBitrixComponent implements Controll
 		$request = $context->getRequest();
 
 		$this->arResult['OPEN_INVENTORY_MANAGEMENT_SLIDER'] =
-			Catalog\Component\UseStore::needShowSlider()
-			&& $request->get(Catalog\Component\UseStore::URL_PARAM_STORE_MASTER_HIDE) !== 'Y'
+			State::isUsedInventoryManagement() === false
+			&& $request->get('STORE_MASTER_HIDE') !== 'Y'
 		;
-		$this->arResult['OPEN_INVENTORY_MANAGEMENT_SLIDER_ON_ACTION'] = !Catalog\Component\UseStore::isUsed();
+		$this->arResult['OPEN_INVENTORY_MANAGEMENT_SLIDER_ON_ACTION'] = !State::isUsedInventoryManagement();
 
-		$sliderPath = \CComponentEngine::makeComponentPath('bitrix:catalog.warehouse.master.clear');
+		$sliderPath = \CComponentEngine::makeComponentPath('bitrix:catalog.store.enablewizard');
 		$sliderPath = getLocalPath('components' . $sliderPath . '/slider.php');
 		$this->arResult['MASTER_SLIDER_URL'] = $sliderPath;
 	}
@@ -1158,7 +1165,13 @@ class CrmStoreDocumentListComponent extends CBitrixComponent implements Controll
 	{
 		$shipmentIds = array_column($documentList, 'ID');
 		$shipmentBasketResult = Sale\ShipmentItem::getList([
-			'select' => ['PRICE' => 'BASKET.PRICE', 'ORDER_DELIVERY_ID', 'QUANTITY'],
+			'select' => [
+				'PRICE' => 'BASKET.PRICE',
+				'VAT_RATE' => 'BASKET.VAT_RATE',
+				'VAT_INCLUDED' => 'BASKET.VAT_INCLUDED',
+				'ORDER_DELIVERY_ID',
+				'QUANTITY',
+			],
 			'filter' => ['=ORDER_DELIVERY_ID' => $shipmentIds]
 		]);
 		while ($shipmentItem = $shipmentBasketResult->fetch())
@@ -1167,7 +1180,18 @@ class CrmStoreDocumentListComponent extends CBitrixComponent implements Controll
 			{
 				$this->documentTotals[$shipmentItem['ORDER_DELIVERY_ID']] = 0;
 			}
-			$this->documentTotals[$shipmentItem['ORDER_DELIVERY_ID']] += (float)$shipmentItem['PRICE'] * $shipmentItem['QUANTITY'];
+
+			$priceWithVat = (float)$shipmentItem['PRICE'];
+			if ($shipmentItem['VAT_RATE'] !== null)
+			{
+				$vatCalculator = new VatCalculator((float)$shipmentItem['VAT_RATE']);
+
+				$priceWithVat = ($shipmentItem['VAT_INCLUDED'] === 'Y')
+					? $priceWithVat
+					: $vatCalculator->accrue($priceWithVat);
+			}
+
+			$this->documentTotals[$shipmentItem['ORDER_DELIVERY_ID']] += $priceWithVat * $shipmentItem['QUANTITY'];
 		}
 	}
 

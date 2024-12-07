@@ -1,6 +1,4 @@
-/* eslint-disable flowtype/require-return-type */
-/* eslint-disable bitrix-rules/no-bx */
-/* eslint-disable bitrix-rules/no-pseudo-private */
+/* eslint-disable no-param-reassign */
 
 /**
  * @module im/messenger/lib/parser/functions/common
@@ -8,6 +6,13 @@
 jn.define('im/messenger/lib/parser/functions/common', (require, exports, module) => {
 
 	const parserCommon = {
+		decodeNewLine(text)
+		{
+			text = text.replace(/\[br]/gi, '\n');
+
+			return text;
+		},
+
 		simplifyBreakLine(text, replaceLetter = ' ')
 		{
 			text = text.replace(/<br><br \/>/ig, '<br />');

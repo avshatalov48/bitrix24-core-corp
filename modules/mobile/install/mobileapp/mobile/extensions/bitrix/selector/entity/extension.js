@@ -24,14 +24,10 @@
 			this.updateList = (items) => {
 				if (this.singleSelection === true)
 				{
-					const modifiedItems = items.map((item) => {
-						if (typeof (item.type) === 'undefined')
-						{
-							item.type = 'info';
-						}
-
-						return item;
-					});
+					const modifiedItems = items.map((item) => ({
+						...item,
+						type: typeof item.type === 'undefined' ? 'info' : item.type,
+					}));
 
 					this.ui.setItems(modifiedItems, null, false);
 				}
@@ -71,7 +67,9 @@
 
 			this.items = items;
 
-			this.items.forEach((item) => item.sectionCode = 'common');
+			this.items.forEach((item) => {
+				item.sectionCode = 'common';
+			});
 			this.scopeFilter(this.items, cache);
 		}
 

@@ -147,7 +147,7 @@ if ($arResult['ELEMENT']['ID'] == 0 && $crmEmail != ''):
 ?><div class="crm_notice_message"><?=GetMessage('CRM_IMPORT_SNS', Array('%EMAIL%' => $crmEmail, '%ARROW%' => '<span class="crm_notice_arrow"></span>'));?></div><?
 endif;
 if($arResult['DUPLICATE_CONTROL']['ENABLED']):?>
-<script type="text/javascript">
+<script>
 	BX.ready(
 		function()
 		{

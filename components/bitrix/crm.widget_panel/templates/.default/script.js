@@ -8755,6 +8755,7 @@ if(typeof(BX.CrmWidgetDragDropController) === "undefined")
 		},
 		dragEnd: function()
 		{
+			console.log("dragEnd");
 			this.hideDropZone();
 			this.hideDropBlock();
 			this.isDropBlockShow = false;

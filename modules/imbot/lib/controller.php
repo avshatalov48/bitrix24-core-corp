@@ -53,7 +53,7 @@ class Controller
 	 */
 	public static function sendToService($serviceName, $command, $params)
 	{
-		$serviceName = trim(preg_replace("/[^a-z]/", "", mb_strtolower($serviceName)));
+		$serviceName = trim(preg_replace("/[^a-z0-9]/", "", mb_strtolower($serviceName)));
 		if ($serviceName)
 		{
 			$className = '\\Bitrix\\ImBot\\Service\\'.ucfirst($serviceName);

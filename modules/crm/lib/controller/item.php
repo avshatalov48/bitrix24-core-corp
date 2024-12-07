@@ -3,6 +3,7 @@
 namespace Bitrix\Crm\Controller;
 
 use Bitrix\Crm\Component\EntityDetails\FactoryBased;
+use Bitrix\Crm\Entity\EntityEditorConfigScope;
 use Bitrix\Crm\Field;
 use Bitrix\Crm\Kanban\Entity\Deadlines;
 use Bitrix\Crm\Kanban\ViewMode;
@@ -15,10 +16,12 @@ use Bitrix\Main\Component\ParameterSigner;
 use Bitrix\Main\Engine\ActionFilter\Csrf;
 use Bitrix\Main\Engine\Response\BFile;
 use Bitrix\Main\Engine\Response\Component;
+use Bitrix\Main\Engine\Response\Converter;
 use Bitrix\Main\Engine\Response\DataType\Page;
 use Bitrix\Main\Error;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\NotSupportedException;
+use Bitrix\Main\ORM\Fields\Relations\Relation;
 use Bitrix\Main\Type\Collection;
 use Bitrix\Main\UI\PageNavigation;
 
@@ -133,9 +136,37 @@ class Item extends Base
 		$parameters['select'] = $select;
 		$parameters['filter'] = $this->convertKeysToUpper((array)$filter);
 		$parameters['filter'] = $this->prepareFilter($factory, $parameters['filter']);
+
+		$allowedFields = $factory->getFieldsCollection()->getFieldNameList();
+
+		$dataClassFields = $factory->getDataClass()::getEntity()->getFields();
+		foreach ($dataClassFields as $field)
+		{
+			if (!($field instanceof Relation) && !in_array($field->getName(), $allowedFields))
+			{
+				$allowedFields[] = $field->getName();
+			}
+		}
+
+		if (!$this->validateFilter($parameters['filter'], $allowedFields))
+		{
+			return null;
+		}
+
+		if ($factory->isObserversEnabled() && array_key_exists('OBSERVERS', $parameters['filter']))
+		{
+			$parameters['filter']['OBSERVERS.USER_ID'] = is_null($parameters['filter']['OBSERVERS']) ? null : (array)$parameters['filter']['OBSERVERS'];
+			unset($parameters['filter']['OBSERVERS']);
+		}
+
 		if(is_array($order))
 		{
 			$parameters['order'] = $this->convertKeysToUpper($order);
+			$parameters['order'] = $this->convertValuesToUpper($parameters['order'], Converter::TO_UPPER | Converter::VALUES);
+			if (!$this->validateOrder($parameters['order'], $allowedFields))
+			{
+				return null;
+			}
 		}
 
 		if($pageNavigation)
@@ -626,12 +657,13 @@ class Item extends Base
 		}
 
 		$componentClassName = \CBitrixComponent::includeComponentClass($componentName);
-		$component = new $componentClassName;
+		$component = new $componentClassName();
 		if (!($component instanceof FactoryBased))
 		{
 			$this->addError(new Error('Component for entity ' . $entityTypeId . ' not found'));
 			return null;
 		}
+		//@codingStandardsIgnoreStart
 		$component->initComponent($componentName);
 		$component->arParams = [
 			'ENTITY_TYPE_ID' => $entityTypeId,
@@ -639,6 +671,7 @@ class Item extends Base
 			'categoryId' => $categoryId,
 			'skipFields' => [$factory->getEntityFieldNameByMap(\Bitrix\Crm\Item::FIELD_NAME_STAGE_ID)],
 		];
+		//@codingStandardsIgnoreEnd
 
 		$component->init();
 		if (!empty($component->getErrors()))
@@ -681,10 +714,12 @@ class Item extends Base
 		$editorConfig['CONFIG_ID'] = $configId ?? $editorConfig['CONFIG_ID'];
 		$enableSingleSectionCombining = ($params['enableSingleSectionCombining'] ?? 'Y') === 'Y';
 
+		//@codingStandardsIgnoreStart
 		$editorConfig['COMPONENT_AJAX_DATA']['SIGNED_PARAMETERS'] = ParameterSigner::signParameters(
 			$component->getName(),
 			$component->arParams
 		);
+		//@codingStandardsIgnoreEnd
 
 		if (isset($params['ANALYTICS_CONFIG']) && is_array($params['ANALYTICS_CONFIG']))
 		{
@@ -710,20 +745,35 @@ class Item extends Base
 		];
 		foreach ($disabledOptions as $option)
 		{
-			$editorConfig[$option] = $params[$option] ?? false;
-			if ($editorConfig[$option] === 'true')
-			{
-				$editorConfig[$option] = true;
-			}
-			else if ($editorConfig[$option] === 'false')
-			{
-				$editorConfig[$option] = false;
-			}
+			$value = $params[$option] ?? false;
+			$editorConfig[$option] = match (true){
+				in_array($value, ['true', 'Y'], true) => true,
+				in_array($value, ['false', 'N'], true) => false,
+				default => $value,
+			};
 		}
 
 		$editorConfig['ENABLE_USER_FIELD_MANDATORY_CONTROL'] = true;
 		$editorConfig['ENABLE_AJAX_FORM'] = true;
-		$editorConfig['INITIAL_MODE'] = 'edit';
+		$editorConfig['ENABLE_COMMUNICATION_CONTROLS'] = ($params['ENABLE_COMMUNICATION_CONTROLS'] ?? 'Y') === 'Y';
+		$editorConfig['ENABLE_VISIBILITY_POLICY'] = ($params['ENABLE_VISIBILITY_POLICY'] ?? 'Y') === 'Y';
+		$editorConfig['ENABLE_AVAILABLE_FIELDS_INJECTION'] = ($params['ENABLE_AVAILABLE_FIELDS_INJECTION'] ?? 'N') === 'Y';
+		$editorConfig['ENABLE_EXTERNAL_LAYOUT_RESOLVERS'] = ($params['ENABLE_EXTERNAL_LAYOUT_RESOLVERS'] ?? 'N') === 'Y';
+		$editorConfig['SHOW_EMPTY_FIELDS'] = ($params['SHOW_EMPTY_FIELDS'] ?? 'N') === 'Y';
+		$editorConfig['READ_ONLY'] = ($params['READ_ONLY'] ?? 'N') === 'Y';
+		$editorConfig['ENABLE_CONFIGURATION_UPDATE'] = ($params['ENABLE_CONFIGURATION_UPDATE'] ?? 'Y') === 'Y';
+		$editorConfig['ENABLE_REQUIRED_USER_FIELD_CHECK'] = ($params['ENABLE_REQUIRED_USER_FIELD_CHECK'] ?? 'Y') === 'Y';
+
+		$allowedInitialModes = ['view', 'edit'];
+		$editorConfig['INITIAL_MODE'] = in_array($params['INITIAL_MODE'] ?? null, $allowedInitialModes, true)
+			? $params['INITIAL_MODE']
+			: 'edit'
+		;
+
+		if (isset($params['SCOPE']) && EntityEditorConfigScope::isDefined($params['SCOPE']))
+		{
+			$editorConfig['SCOPE'] = $params['SCOPE'];
+		}
 
 		$requiredFields = array_unique($params['requiredFields'] ?? []);
 		$entityConfig = $editorConfig['ENTITY_CONFIG'];

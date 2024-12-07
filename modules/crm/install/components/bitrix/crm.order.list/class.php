@@ -912,14 +912,14 @@ class CCrmOrderListComponent extends \CBitrixComponent
 	{
 		foreach($filter as $k => $v)
 		{
-			if (preg_match('/(.*)_from$/i'.BX_UTF_PCRE_MODIFIER, $k, $arMatch))
+			if (preg_match('/(.*)_from$/iu', $k, $arMatch))
 			{
 				\Bitrix\Crm\UI\Filter\Range::prepareFrom($filter, $arMatch[1], $v);
 			}
-			elseif (preg_match('/(.*)_to$/i'.BX_UTF_PCRE_MODIFIER, $k, $arMatch))
+			elseif (preg_match('/(.*)_to$/iu', $k, $arMatch))
 			{
 				$dateFieldNames = ['DATE_INSERT', 'DATE_UPDATE', 'SHIPMENT_DELIVERY_DOC_DATE'];
-				if ($v != '' && in_array($arMatch[1], $dateFieldNames) && !preg_match('/\d{1,2}:\d{1,2}(:\d{1,2})?$/'.BX_UTF_PCRE_MODIFIER, $v))
+				if ($v != '' && in_array($arMatch[1], $dateFieldNames) && !preg_match('/\d{1,2}:\d{1,2}(:\d{1,2})?$/u', $v))
 				{
 					$v = CCrmDateTimeHelper::SetMaxDayTime($v);
 				}
@@ -1006,8 +1006,6 @@ class CCrmOrderListComponent extends \CBitrixComponent
 			$controls = isset($_POST['controls']) && is_array($_POST['controls']) ? $_POST['controls'] : array();
 			if ($actionData['METHOD'] == 'POST' && (isset($controls[$postAction]) || isset($_POST[$postAction])))
 			{
-				CUtil::JSPostUnescape();
-
 				$actionData['ACTIVE'] = true;
 
 				if(isset($controls[$postAction]))

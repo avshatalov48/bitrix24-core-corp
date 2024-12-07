@@ -5,6 +5,7 @@
  */
 jn.define('im/messenger/lib/converter/search', (require, exports, module) => {
 	const AppTheme = require('apptheme');
+	const { Feature } = require('im/messenger/lib/feature');
 	const { ChatTitle, ChatAvatar } = require('im/messenger/lib/element');
 
 	/**
@@ -36,7 +37,7 @@ jn.define('im/messenger/lib/converter/search', (require, exports, module) => {
 
 			if (!item.imageUrl && !preparedUser.lastActivityDate)
 			{
-				item.imageUrl = '/bitrix/mobileapp/immobile/extensions/im/messenger/assets/common/png/avatar_wait_x3.png';
+				item.imageUrl = '/bitrix/mobileapp/immobile/extensions/im/messenger/assets/common/png/avatar_wait_air.png';
 			}
 
 			item.color = preparedUser.color;
@@ -115,11 +116,12 @@ jn.define('im/messenger/lib/converter/search', (require, exports, module) => {
 		toDialogSearchItem(dialog, sectionCode)
 		{
 			const chatTitle = ChatTitle.createFromDialogId(dialog.dialogId);
+			const chatAvatar = ChatAvatar.createFromDialogId(dialog.dialogId);
 			const item = {
 				title: dialog.name,
 				subtitle: chatTitle.getDescription(),
 				sectionCode,
-				height: 64,
+				height: 60,
 				color: dialog.color,
 				styles: {
 					title: { font: { size: 16 } },
@@ -127,7 +129,8 @@ jn.define('im/messenger/lib/converter/search', (require, exports, module) => {
 				},
 				useLetterImage: true,
 				id: `chat/${dialog.dialogId}`,
-				imageUrl: ChatAvatar.createFromDialogId(dialog.dialogId).getAvatarUrl(),
+				imageUrl: chatAvatar.getAvatarUrl(),
+				isSuperEllipseIcon: chatAvatar.getIsSuperEllipseIcon(),
 				params: {
 					id: dialog.dialogId,
 				},
@@ -147,6 +150,11 @@ jn.define('im/messenger/lib/converter/search', (require, exports, module) => {
 					},
 				},
 			};
+			// for native support styles (isSuperEllipseIcon key will be deleted)
+			if (item.isSuperEllipseIcon && Feature.isAvatarBorderStylesSupported)
+			{
+				item.styles.image = { image: { borderRadius: 15 } }; // borderRadius - is percent, no int
+			}
 
 			return item;
 		}

@@ -126,7 +126,7 @@ $userBlockController = new CrmWebFormEditUserBlockController(
 				'dlgEditorChoiseNew' => Loc::getMessage('CRM_WEBFORM_EDIT_EDITOR_CHOISE_NEW'),
 				'dlgEditorChoiseOld' => Loc::getMessage('CRM_WEBFORM_EDIT_EDITOR_CHOISE_OLD'),
 				'dlgEditorChoiseH1' => Loc::getMessage('CRM_WEBFORM_EDIT_EDITOR_H1'),
-				'dlgEditorChoiseH2' => Loc::getMessage('CRM_WEBFORM_EDIT_EDITOR_H2'),
+				'dlgEditorChoiseH2' => Loc::getMessage('CRM_WEBFORM_EDIT_EDITOR_H2_MSGVER_1'),
 				'dlgEditorChoiseH3' => Loc::getMessage('CRM_WEBFORM_EDIT_EDITOR_H3'),
 				'dlgEditorChoiseNotice' => Loc::getMessage('CRM_WEBFORM_EDIT_EDITOR_NOTICE'),
 			))?>

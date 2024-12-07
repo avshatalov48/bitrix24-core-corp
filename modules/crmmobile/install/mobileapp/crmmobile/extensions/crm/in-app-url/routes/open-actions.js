@@ -51,6 +51,7 @@ jn.define('crm/in-app-url/routes/open-actions', (require, exports, module) => {
 			canOpenInDefault,
 			queryParams,
 			parentWidget,
+			analytics,
 			...restPayload
 		} = {},
 	) => {
@@ -85,13 +86,13 @@ jn.define('crm/in-app-url/routes/open-actions', (require, exports, module) => {
 		}
 
 		const { EntityDetailOpener } = await requireLazy('crm:entity-detail/opener');
-
+		const preparedAnalytics = analytics ?? new AnalyticsEvent(BX.componentParameters.get('analytics', {}))
 		EntityDetailOpener.open({
 			payload,
 			widgetParams,
 			parentWidget: parentWidget || null,
 			canOpenInDefault,
-			analytics: new AnalyticsEvent().setSection('text_link'),
+			analytics: preparedAnalytics,
 		});
 	};
 

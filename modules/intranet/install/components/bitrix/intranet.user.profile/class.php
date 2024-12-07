@@ -2,6 +2,7 @@
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
 use Bitrix\Bitrix24\Feature;
+use Bitrix\Main\Analytics\AnalyticsEvent;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Intranet\Component\UserProfile;
 use Bitrix\Main\Loader;
@@ -56,11 +57,12 @@ class CIntranetUserProfileComponent extends UserProfile
 			$licensePrefix = \CBitrix24::getLicensePrefix();
 			$this->arResult["isRusCloud"] = in_array($licensePrefix, array("ru", "by", "kz", "ua"));
 			$this->arResult["isAvailableUserLoginHistory"] = Feature::isFeatureEnabled("user_login_history");
-            $this->arResult["isConfiguredUserLoginHistory"] = true;
+			$this->arResult["isConfiguredUserLoginHistory"] = true;
+			$this->sendAnalytics();
 		}
 		else
 		{
-            $this->arResult["isAvailableUserLoginHistory"] = true;
+			$this->arResult["isAvailableUserLoginHistory"] = true;
 			$this->arResult["isConfiguredUserLoginHistory"] = \Bitrix\Main\Config\Option::get('main', 'user_device_history', 'N') === 'Y';
 		}
 
@@ -163,6 +165,13 @@ class CIntranetUserProfileComponent extends UserProfile
 		$APPLICATION->SetTitle($title);
 
 		$this->includeComponentTemplate();
+	}
+
+	private function sendAnalytics()
+	{
+		$event = new AnalyticsEvent('profile_view', 'intranet', 'user_profile');
+		$event->setP5('profileId_' . $this->arParams['ID']);
+		$event->send();
 	}
 
 	private function filterHiddenFields()

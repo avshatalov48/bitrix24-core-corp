@@ -10,12 +10,13 @@ if (!isset($arParams['MENU_GROUP_ID']))
 {
 	$arParams['MENU_GROUP_ID'] = $arParams['GROUP_ID'];
 }
-?>
 
-<?php $APPLICATION->IncludeComponent(
+$request = \Bitrix\Main\Context::getCurrent()->getRequest();
+
+$APPLICATION->IncludeComponent(
 	'bitrix:tasks.interface.topmenu',
 	'',
-	array(
+	[
 		'GRID_ID' => $arParams['GRID_ID'],
 		'FILTER_ID' => $arParams['FILTER_ID'],
 		'USER_ID' => $arParams['USER_ID'],
@@ -45,11 +46,12 @@ if (!isset($arParams['MENU_GROUP_ID']))
 		'PATH_TO_CONPANY_DEPARTMENT' => $arParams[ 'PATH_TO_CONPANY_DEPARTMENT' ],
 		'DEFAULT_ROLEID' => $arParams[ 'DEFAULT_ROLEID' ],
 		'SCOPE' => $arParams['SCOPE'],
-	),
+	],
 	$component,
-	array('HIDE_ICONS' => true)
+	[
+		'HIDE_ICONS' => true
+	]
 );
-
 
 $showQuickForm = $arParams['SHOW_QUICK_FORM'] === "Y" && \Bitrix\Tasks\Util\Restriction::canManageTask();
 
@@ -123,6 +125,8 @@ if ($arParams['SHOW_FILTER'] === 'Y')
 		'PROJECT_VIEW' => $arParams['PROJECT_VIEW'] ?? null,
 		'VIEW_MODE_LIST' => (isset($arParams['PROJECT_VIEW']) && $arParams['PROJECT_VIEW'] === 'Y') ? ['VIEW_MODE_KANBAN', 'VIEW_MODE_LIST', 'VIEW_MODE_TIMELINE', 'VIEW_MODE_CALENDAR', 'VIEW_MODE_GANTT'] : [],
 		'SCOPE' => $arParams['SCOPE'] ?? null,
+
+		'SHOW_COUNTERS_TOOLBAR' => $arParams['SHOW_COUNTERS_TOOLBAR'] ?? null,
 	),
 	$component,
 	array('HIDE_ICONS' => true)

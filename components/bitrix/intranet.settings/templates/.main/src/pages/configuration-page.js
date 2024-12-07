@@ -4,6 +4,7 @@ import { BaseSettingsPage, SettingsRow, SettingsSection } from 'ui.form-elements
 import { Checker, InlineChecker, Selector, TextInput, TextInputInline } from 'ui.form-elements.view';
 import { Row, Section, SeparatorRow } from 'ui.section';
 import { AnalyticSettingsEvent } from '../analytic';
+import { PortalDeleteSection } from  '../configuration/portal-delete-section';
 
 export class ConfigurationPage extends BaseSettingsPage
 {
@@ -22,7 +23,7 @@ export class ConfigurationPage extends BaseSettingsPage
 	headerWidgetRender(): HTMLElement
 	{
 		let timeFormat = '';
-		if (this.getValue('isFormat24Hour') === 'Y')
+		if (this.getValue('isFormat24Hour')?.current === 'Y')
 		{
 			timeFormat = this.getValue('format24HourTime');
 		}
@@ -65,6 +66,18 @@ export class ConfigurationPage extends BaseSettingsPage
 
 		let additionalSettingsSection = this.#buildAdditionalSettingsSection();
 		additionalSettingsSection?.renderTo(contentNode);
+
+		if (this.hasValue('deletePortalOptions') && this.hasValue('sectionDeletePortal'))
+		{
+			const deletePortalSection = new Section(this.getValue('sectionDeletePortal'));
+
+			const settingsSection = new PortalDeleteSection({
+				section: deletePortalSection,
+				parent: this,
+				options: this.getValue('deletePortalOptions'),
+			});
+			settingsSection.renderTo(contentNode);
+		}
 	}
 
 	#buildDateTimeSection(): ?SettingsSection

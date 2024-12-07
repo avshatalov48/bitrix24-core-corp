@@ -2,7 +2,8 @@
 
 namespace Bitrix\Crm\FileUploader;
 
-use Bitrix\Crm\Activity\Entity\ToDo;
+use Bitrix\Crm\Activity\Entity;
+use Bitrix\Crm\Activity\Provider;
 use Bitrix\Crm\Integration\Disk\HiddenStorage;
 use Bitrix\Crm\ItemIdentifier;
 use Bitrix\UI\FileUploader\Configuration;
@@ -58,7 +59,8 @@ class TodoActivityUploaderController extends ActivityUploaderController
 
 		if (isset($entityId, $entityTypeId, $this->activityId))
 		{
-			$todo = ToDo::load(new ItemIdentifier($entityTypeId, $entityId), $this->activityId);
+			$todo = (new Entity\ToDo(new ItemIdentifier($entityTypeId, $entityId), new Provider\ToDo\ToDo()))
+				->load($this->activityId);
 			if ($todo)
 			{
 				$storageElementIds = $todo->getStorageElementIds() ?? [];

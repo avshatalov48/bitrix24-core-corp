@@ -2,6 +2,7 @@
 
 namespace Bitrix\Crm\Integration\Analytics\Builder\Entity;
 
+use Bitrix\Crm\Controller\ErrorCode;
 use Bitrix\Crm\Integration\Analytics\Builder\AbstractBuilder;
 use Bitrix\Crm\Integration\Analytics\Dictionary;
 use Bitrix\Main\Error;
@@ -43,12 +44,16 @@ final class ConvertEvent extends AbstractBuilder
 	{
 		$result = new Result();
 
-		if (
-			!\CCrmOwnerType::IsDefined($this->dstEntityTypeId)
-			|| ($this->srcEntityTypeId && !\CCrmOwnerType::IsDefined($this->srcEntityTypeId))
-		)
+		if (!\CCrmOwnerType::IsDefined($this->dstEntityTypeId))
 		{
-			return $result->addError(new Error('Entity type id is unknown'));
+			return $result->addError(
+				ErrorCode::getRequiredArgumentMissingError('dstEntityTypeId'),
+			);
+		}
+
+		if ($this->srcEntityTypeId && !\CCrmOwnerType::IsDefined($this->srcEntityTypeId))
+		{
+			return $result->addError(new Error('Unknown src entity type', ErrorCode::INVALID_ARG_VALUE));
 		}
 
 		return $result;

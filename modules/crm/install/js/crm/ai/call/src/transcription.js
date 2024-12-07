@@ -17,6 +17,11 @@ export class Transcription extends Base
 		this.textboxTitle = Loc.getMessage('CRM_COPILOT_CALL_TRANSCRIPT_TITLE');
 	}
 
+	getNotAccuratePhraseCode(): string
+	{
+		return 'CRM_COPILOT_CALL_TRANSCRIPT_NOT_BE_ACCURATE';
+	}
+
 	prepareAiJobResult(response: Object): string
 	{
 		return response.data.aiJobResult.transcription;

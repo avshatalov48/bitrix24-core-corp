@@ -9,6 +9,7 @@ use Bitrix\Crm\Integration\SalesCenterManager;
 use Bitrix\Crm\Terminal\Config\TerminalPaysystemManager;
 use Bitrix\Main;
 use Bitrix\SalesCenter\Component\PaymentSlip;
+use Bitrix\SalesCenter\Integration\LandingManager;
 use Bitrix\SalesCenter\Integration\SaleManager;
 use Bitrix\Salescenter\PaymentSlip\PaymentSlipManager;
 use Bitrix\UI\Util;
@@ -101,6 +102,10 @@ final class CrmConfigTerminalSettings extends CBitrixComponent
 		$settings['paysystemsArticleUrl'] = Util::getArticleUrlByCode(19342732);
 		$settings['paysystemPanelPath'] = $paysystemManager->getPaysystemPanelPath();
 		$settings['isAnyPaysystemActive'] = $paysystemManager->isAnyPaysystemActive();
+		$settings['isPhoneConfirmed'] = LandingManager::getInstance()->isPhoneConfirmed();
+		$settings['connectedSiteId'] = LandingManager::getInstance()->getConnectedSiteId();
+		$settings['isConnectedSitePublished'] = LandingManager::getInstance()->isSitePublished();
+		$settings['isConnectedSiteExists'] = LandingManager::getInstance()->isSiteExists();
 
 		$this->arResult['SETTINGS_PARAMS'] = $settings;
 	}

@@ -241,7 +241,7 @@ $APPLICATION->IncludeComponent(
 	$component, array('HIDE_ICONS' => 'Y')
 );
 ?>
-<script type="text/javascript">
+<script>
 	BX.ready(function(){
 		BX.Crm.PartialEditorDialog.registerEntityEditorUrl(
 			"<?=CCrmOwnerType::DealName?>",
@@ -276,7 +276,7 @@ $APPLICATION->IncludeComponent(
 </script>
 
 <?if($arResult['ENABLE_INSTANT_EDIT']):?>
-<script type="text/javascript">
+<script>
 	BX.ready(
 		function()
 		{
@@ -376,7 +376,7 @@ $APPLICATION->IncludeComponent(
 <?endif;?>
 
 <?if(isset($arResult['ENABLE_LIVE_FEED_LAZY_LOAD']) && $arResult['ENABLE_LIVE_FEED_LAZY_LOAD'] === true):?>
-<script type="text/javascript">
+<script>
 	(function()
 	{
 		var liveFeedContainerId = "<?=CUtil::JSEscape($arResult['LIVE_FEED_CONTAINER_ID'])?>";
@@ -431,7 +431,7 @@ $APPLICATION->IncludeComponent(
 </script>
 <?endif;?>
 <?if($arResult['CONVERSION_PERMITTED'] && $arResult['CAN_CONVERT'] && isset($arResult['CONVERSION_CONFIG'])):?>
-	<script type="text/javascript">
+	<script>
 		BX.ready(
 			function()
 			{

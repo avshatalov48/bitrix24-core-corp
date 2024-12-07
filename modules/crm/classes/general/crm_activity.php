@@ -3,6 +3,7 @@
  * CRM Activity
  */
 IncludeModuleLangFile(__FILE__);
+//@codingStandardsIgnoreFile
 
 use Bitrix\Crm;
 use Bitrix\Crm\Activity\FastSearch;
@@ -11,7 +12,10 @@ use Bitrix\Crm\Activity\LightCounter\ActCounterLightTimeRepo;
 use Bitrix\Crm\Activity\Provider;
 use Bitrix\Crm\Activity\Provider\Eventable\PingOffset;
 use Bitrix\Crm\Activity\Provider\Eventable\PingQueue;
+use Bitrix\Crm\Activity\Provider\ToDo\ToDo;
+use Bitrix\Crm\ActivityTable;
 use Bitrix\Crm\Automation\Trigger\ResourceBookingTrigger;
+use Bitrix\Crm\Comparer\ComparerBase;
 use Bitrix\Crm\Entity\Traits\EntityFieldsNormalizer;
 use Bitrix\Crm\Integration\Disk\HiddenStorage;
 use Bitrix\Crm\Integration\StorageFileType;
@@ -47,8 +51,8 @@ class CAllCrmActivity
 	private static $STORAGE_TYPE_ID = StorageType::Undefined;
 	protected static $errors = array();
 	private static $URN_REGEX = '/\[\s*(?:CRM\s*\:)\s*(?P<urn>[0-9]+\s*[-]\s*[0-9A-Z]+)\s*\]/i';
-	private static $URN_BODY_REGEX = '/\[\s*(?:msg\s*\:)\s*(?P<urn>[0-9]+\s*[-]\s*[0-9A-Z]+)\s*\]/i';
-	private static $URN_BODY_HTML_ENTITY_REGEX = '/\&\#91\;\s*(?:msg\s*\:)\s*(?P<urn>[0-9]+\s*[-]\s*[0-9A-Z]+)\s*\&\#93\;/i';
+	private static $URN_BODY_REGEX = '/\[\s*(?:msg\s*\:)\s*(?P<urn>[0-9]+\s*[-]\s*[0-9A-Z]+)\s*\]/iu';
+	private static $URN_BODY_HTML_ENTITY_REGEX = '/\&\#91\;\s*(?:msg\s*\:)\s*(?P<urn>[0-9]+\s*[-]\s*[0-9A-Z]+)\s*\&\#93\;/iu';
 	protected static $LAST_UPDATE_FIELDS = null;
 
 	private static $IGNORE_CALENDAR_EVENTS = false;
@@ -74,26 +78,22 @@ class CAllCrmActivity
 
 		$isRestoration = isset($options['IS_RESTORATION']) && $options['IS_RESTORATION'];
 
-		// Setup ownership data if need
-		if((empty($arFields['OWNER_ID']) || empty($arFields['OWNER_TYPE_ID']))
-			&& isset($arFields['BINDINGS'])
-			&& is_array($arFields['BINDINGS'])
-			&& !empty($arFields['BINDINGS']))
-		{
-			$arFields['OWNER_ID'] = $arFields['BINDINGS'][0]['OWNER_ID'];
-			$arFields['OWNER_TYPE_ID'] = $arFields['BINDINGS'][0]['OWNER_TYPE_ID'];
-		}
+		self::appendOwnerFromBindings($arFields);
 
 		if(!isset($arFields['STORAGE_TYPE_ID']))
 		{
 			$arFields['STORAGE_TYPE_ID'] = StorageType::getDefaultTypeID();
 		}
 
-		$params = array();
+		$params = [
+			'INITIATED_BY_CALENDAR' => (bool) ($options['INITIATED_BY_CALENDAR'] ?? false),
+		];
+
 		if(isset($options['PRESERVE_CREATION_TIME']))
 		{
 			$params['PRESERVE_CREATION_TIME'] = $options['PRESERVE_CREATION_TIME'];
 		}
+
 		if (!self::rebuildFieldsForDataBase('ADD', $arFields, 0, $params))
 		{
 			return false;
@@ -243,14 +243,6 @@ class CAllCrmActivity
 			self::SaveCommunications($ID, $arFields['COMMUNICATIONS'], $arFields, false, false);
 		}
 
-		$needSynchronizePingQueue = false;
-		$arPingOffsets = self::fetchActivityPingOffsets($arFields);
-		if (!empty($arPingOffsets))
-		{
-			PingOffset::getInstance()->register($ID, $arPingOffsets);
-			$needSynchronizePingQueue = true;
-		}
-
 		$completed = isset($arFields['COMPLETED']) && $arFields['COMPLETED'] === 'Y';
 		if($completed && isset($arFields['STATUS']))
 		{
@@ -261,17 +253,17 @@ class CAllCrmActivity
 		{
 			$deadline = \Bitrix\Main\Type\DateTime::createFromUserTime($deadline);
 			$deadline->setTime(0, 0, 0);
-			foreach($arBindings as $arBinding)
+			foreach ($arBindings as $arBinding)
 			{
 				$curOwnerTypeID = isset($arBinding['OWNER_TYPE_ID']) ? intval($arBinding['OWNER_TYPE_ID']) : 0;
 				$curOwnerID = isset($arBinding['OWNER_ID']) ? intval($arBinding['OWNER_ID']) : 0;
-				if($curOwnerID > 0)
+				if ($curOwnerID > 0 && !CCrmDateTimeHelper::IsMaxDatabaseDate($deadline))
 				{
-					if($curOwnerTypeID === CCrmOwnerType::Deal)
+					if ($curOwnerTypeID === CCrmOwnerType::Deal)
 					{
 						Bitrix\Crm\Statistics\DealActivityStatisticEntry::register($curOwnerID, null, array('DATE' => $deadline));
 					}
-					elseif($curOwnerTypeID === CCrmOwnerType::Lead)
+					elseif ($curOwnerTypeID === CCrmOwnerType::Lead)
 					{
 						Bitrix\Crm\Statistics\LeadActivityStatisticEntry::register($curOwnerID, null, array('DATE' => $deadline));
 					}
@@ -279,6 +271,8 @@ class CAllCrmActivity
 			}
 			unset($arBinding);
 		}
+
+		$arPingOffsets = self::fetchActivityPingOffsets($arFields);
 
 		$lightTimeDate = (new FillActLightCounter())->onActAdd($arFields, $arPingOffsets);
 		$arFields['LIGHT_COUNTER_AT'] = $lightTimeDate;
@@ -296,27 +290,12 @@ class CAllCrmActivity
 					$lightTimeDate
 				)
 			);
-
-			if ($needSynchronizePingQueue)
-			{
-				PingQueue::getInstance()->register($ID, $completed, $arFields['DEADLINE']);
-			}
 		}
 
 		\Bitrix\Crm\Activity\CommunicationStatistics::registerActivity($arFields);
 		if ($deadline)
-			\Bitrix\Crm\Statistics\ActivityStatisticEntry::register($ID, $arFields);
-
-		if(!$isRestoration)
 		{
-			\Bitrix\Crm\Timeline\ActivityController::getInstance()->onCreate(
-				$ID,
-				array(
-					'FIELDS' => $arFields,
-					'PRESERVE_CREATION_TIME' => isset($options['PRESERVE_CREATION_TIME']) && $options['PRESERVE_CREATION_TIME'] === true,
-					'CURRENT_USER' => $options['CURRENT_USER'] ?? null,
-				)
-			);
+			\Bitrix\Crm\Statistics\ActivityStatisticEntry::register($ID, $arFields);
 		}
 
 		//region Search content index
@@ -353,25 +332,53 @@ class CAllCrmActivity
 		$providerTypeId = isset($arFields['PROVIDER_TYPE_ID']) ? (string) $arFields['PROVIDER_TYPE_ID'] : null;
 		if (
 			$provider !== null
-			&& $provider::canUseCalendarEvents($providerTypeId)
+			&& $provider::canAddCalendarEvents($providerTypeId)
 			&& !$provider::skipCalendarSync($arFields, $options)
 		)
 		{
 			$skipCalendarEvent = isset($options['SKIP_CALENDAR_EVENT']) ? (bool)$options['SKIP_CALENDAR_EVENT'] : null;
 			$calendarEventId =  isset($arFields['CALENDAR_EVENT_ID']) ? (int)$arFields['CALENDAR_EVENT_ID'] : 0;
-			$completed = isset($arFields['COMPLETED']) && $arFields['COMPLETED'] === 'Y';
+			$isCompleted = isset($arFields['COMPLETED']) && $arFields['COMPLETED'] === 'Y';
 			if (
 				!$skipCalendarEvent
 				&& $calendarEventId <= 0
-				&& (!$completed || $provider::canKeepCompletedInCalendar($providerTypeId))
+				&& (!$isCompleted || $provider::canKeepCompletedInCalendar($providerTypeId))
 			)
 			{
+				if (!self::isLocationFeatureEnabled())
+				{
+					unset($arFields['LOCATION']);
+				}
+
 				$eventID = self::SaveCalendarEvent($arFields);
 				if(is_int($eventID) && $eventID > 0)
 				{
 					self::SetCalendarEventId($eventID, $ID);
+
+					$arFields['CALENDAR_EVENT_ID'] = $eventID;
 				}
 			}
+		}
+
+		if (!$completed && !empty($arPingOffsets))
+		{
+			PingOffset::getInstance()->register($ID, $arPingOffsets);
+			if ($provider === null || $provider::needSynchronizePingQueue($arFields))
+			{
+				PingQueue::getInstance()->register($ID, false, $arFields['DEADLINE']);
+			}
+		}
+
+		if(!$isRestoration)
+		{
+			\Bitrix\Crm\Timeline\ActivityController::getInstance()->onCreate(
+				$ID,
+				array(
+					'FIELDS' => $arFields,
+					'PRESERVE_CREATION_TIME' => isset($options['PRESERVE_CREATION_TIME']) && $options['PRESERVE_CREATION_TIME'] === true,
+					'CURRENT_USER' => $options['CURRENT_USER'] ?? null,
+				)
+			);
 		}
 
 		if($storageElementsSerialized)
@@ -505,13 +512,16 @@ class CAllCrmActivity
 			$arRecordBindings['STORAGE_ELEMENT_IDS'] = $arFields['STORAGE_ELEMENT_IDS'];
 		}
 
-		if(isset($arFields['SETTINGS']))
+		$settings = $arFields['SETTINGS'] ?? null;
+
+		if (isset($arFields['SETTINGS']))
 		{
-			if(is_array($arFields['SETTINGS']))
+			if (is_array($arFields['SETTINGS']))
 			{
 				$arFields['SETTINGS'] = serialize($arFields['SETTINGS']);
 			}
-			$arRecordBindings['SETTINGS'] = $arFields['SETTINGS'];
+
+			$arRecordBindings['SETTINGS'] = $settings;
 		}
 
 		if(isset($arFields['DESCRIPTION']))
@@ -532,18 +542,22 @@ class CAllCrmActivity
 		if(is_array($arBindings))
 		{
 			$bindingQty = count($arBindings);
-			if($bindingQty === 1)
+			if ($bindingQty === 1)
 			{
 				// Change activity ownership if only one binding defined
 				$arBinding = $arBindings[0];
 				$arFields['OWNER_ID'] = $arBinding['OWNER_ID'];
 				$arFields['OWNER_TYPE_ID'] = $arBinding['OWNER_TYPE_ID'];
 			}
-			elseif($bindingQty === 0)
+			elseif ($bindingQty === 0)
 			{
 				// Clear activity ownership if only no bindings are defined
 				$arFields['OWNER_ID'] = 0;
 				$arFields['OWNER_TYPE_ID'] = CCrmOwnerType::Undefined;
+			}
+			else
+			{
+				self::appendOwnerFromBindings($arFields);
 			}
 		}
 
@@ -577,8 +591,7 @@ class CAllCrmActivity
 		}
 		else
 		{
-			unset($arFields['PARENT_ID']);
-			unset($arFields['THREAD_ID']);
+			unset($arFields['PARENT_ID'], $arFields['THREAD_ID']);
 		}
 
 		self::NormalizeDateTimeFields($arFields);
@@ -612,7 +625,7 @@ class CAllCrmActivity
 		}
 		else
 		{
-			$DB->Query($sql, false, 'File: '.__FILE__.'<br>Line: '.__LINE__);
+			$DB->Query($sql);
 		}
 
 		self::$LAST_UPDATE_FIELDS = $arFields;
@@ -727,8 +740,8 @@ class CAllCrmActivity
 			}
 		}
 
-		$prevDeadline = isset($arPrevEntity['DEADLINE']) ? $arPrevEntity['DEADLINE'] : '';
-		$curDeadline = isset($arCurEntity['DEADLINE']) ? $arCurEntity['DEADLINE'] : '';
+		$prevDeadline = $arPrevEntity['DEADLINE'] ?? '';
+		$curDeadline = $arCurEntity['DEADLINE'] ?? '';
 
 		if ($prevDeadline !== $curDeadline)
 		{
@@ -744,23 +757,25 @@ class CAllCrmActivity
 			$needRegisterUncompletedActivities = true;
 		}
 
-		if($prevCompletedForStatistics
+		if (
+			$prevCompletedForStatistics
 			&& $prevDeadline
-			&& ($bindingsChanged || $prevCompletedForStatistics != $curCompletedForStatistics || $prevDeadline !== $curDeadline))
+			&& ($bindingsChanged || $prevCompletedForStatistics != $curCompletedForStatistics || $prevDeadline !== $curDeadline)
+		)
 		{
 			$deadline = \Bitrix\Main\Type\DateTime::createFromUserTime($prevDeadline);
 			$deadline->setTime(0, 0, 0);
-			foreach($arPrevBindings as $arBinding)
+			foreach ($arPrevBindings as $arBinding)
 			{
 				$curOwnerTypeID = isset($arBinding['OWNER_TYPE_ID']) ? intval($arBinding['OWNER_TYPE_ID']) : 0;
 				$curOwnerID = isset($arBinding['OWNER_ID']) ? intval($arBinding['OWNER_ID']) : 0;
-				if($curOwnerID > 0)
+				if ($curOwnerID > 0 && !CCrmDateTimeHelper::IsMaxDatabaseDate($deadline))
 				{
-					if($curOwnerTypeID === CCrmOwnerType::Deal)
+					if ($curOwnerTypeID === CCrmOwnerType::Deal)
 					{
 						Bitrix\Crm\Statistics\DealActivityStatisticEntry::register($curOwnerID, null, array('DATE' => $deadline));
 					}
-					elseif($curOwnerTypeID === CCrmOwnerType::Lead)
+					elseif ($curOwnerTypeID === CCrmOwnerType::Lead)
 					{
 						Bitrix\Crm\Statistics\LeadActivityStatisticEntry::register($curOwnerID, null, array('DATE' => $deadline));
 					}
@@ -768,21 +783,21 @@ class CAllCrmActivity
 			}
 		}
 
-		if($curCompletedForStatistics && $curDeadline !== '')
+		if ($curCompletedForStatistics && $curDeadline !== '')
 		{
 			$deadline = \Bitrix\Main\Type\DateTime::createFromUserTime($curDeadline);
 			$deadline->setTime(0, 0, 0);
-			foreach($arBindings as $arBinding)
+			foreach ($arBindings as $arBinding)
 			{
 				$curOwnerTypeID = isset($arBinding['OWNER_TYPE_ID']) ? (int)$arBinding['OWNER_TYPE_ID'] : 0;
 				$curOwnerID = isset($arBinding['OWNER_ID']) ? (int)$arBinding['OWNER_ID'] : 0;
-				if($curOwnerID > 0)
+				if ($curOwnerID > 0 && !CCrmDateTimeHelper::IsMaxDatabaseDate($deadline))
 				{
-					if($curOwnerTypeID === CCrmOwnerType::Deal)
+					if ($curOwnerTypeID === CCrmOwnerType::Deal)
 					{
 						Bitrix\Crm\Statistics\DealActivityStatisticEntry::register($curOwnerID, null, array('DATE' => $deadline));
 					}
-					elseif($curOwnerTypeID === CCrmOwnerType::Lead)
+					elseif ($curOwnerTypeID === CCrmOwnerType::Lead)
 					{
 						Bitrix\Crm\Statistics\LeadActivityStatisticEntry::register($curOwnerID, null, array('DATE' => $deadline));
 					}
@@ -866,16 +881,29 @@ class CAllCrmActivity
 		}
 		// <-- Synchronize user activity
 
-		if ($needSynchronizePingQueue)
-		{
-			PingQueue::getInstance()->register($ID, $curCompleted, $curDeadline);
-		}
-
 		Crm\Activity\Provider\ProviderManager::syncBadgesOnActivityUpdate(
 			$ID,
 			$arCurEntity,
 			$bindingsChanged ? array_intersect($arPrevBindings, $arBindings) : $arPrevBindings,
 		);
+
+		if (!empty($options['MOVE_BINDINGS_MAP']))
+		{
+			$sourceIdentifier = $options['MOVE_BINDINGS_MAP']['source'] ?? null;
+			if ($sourceIdentifier instanceof Crm\ItemIdentifier)
+			{
+				Crm\Activity\Provider\ProviderManager::syncBadgesOnBindingsChange(
+					$ID,
+					[],
+					[
+						[
+							'OWNER_TYPE_ID' => $sourceIdentifier->getEntityTypeId(),
+							'OWNER_ID' => $sourceIdentifier->getEntityId()
+						],
+					],
+				);
+			}
+		}
 
 		\Bitrix\Crm\Counter\Monitor::getInstance()->onActivityUpdate(
 			$arPrevEntity,
@@ -911,7 +939,7 @@ class CAllCrmActivity
 
 		if (
 			$provider !== null
-			&& $provider::canUseCalendarEvents($providerTypeId)
+			&& $provider::canAddCalendarEvents($providerTypeId)
 			&& !$provider::skipCalendarSync($arFields, $options)
 		)
 		{
@@ -924,13 +952,90 @@ class CAllCrmActivity
 				if (!$completed || $provider::canKeepCompletedInCalendar($providerTypeId))
 				{
 					$arCurEntity['BINDINGS'] = $arBindings;
-					$eventID = self::SaveCalendarEvent($arCurEntity);
+
+					if (!empty($arFields['SECTION_ID']))
+					{
+						$arCurEntity['SECTION_ID'] = $arFields['SECTION_ID'];
+					}
+					if (isset($arFields['ATTENDEES_CODES']) && is_array($arFields['ATTENDEES_CODES']))
+					{
+						$arCurEntity['ATTENDEES_CODES'] = $arFields['ATTENDEES_CODES'];
+					}
+					if (isset($arFields['IS_MEETING']))
+					{
+						$arCurEntity['IS_MEETING'] = $arFields['IS_MEETING'];
+					}
+					if (isset($arFields['UF_CRM_CAL_EVENT']) && is_array($arFields['UF_CRM_CAL_EVENT']))
+					{
+						$arCurEntity['UF_CRM_CAL_EVENT'] = $arFields['UF_CRM_CAL_EVENT'];
+					}
+					if (isset($arFields['DESCRIPTION']))
+					{
+						$arCurEntity['DESCRIPTION'] = $arFields['DESCRIPTION'];
+					}
+					if (isset($arFields['ENRICHED_DESCRIPTION']))
+					{
+						$arCurEntity['ENRICHED_DESCRIPTION'] = $arFields['ENRICHED_DESCRIPTION'];
+					}
+					if (isset($arFields['PREV_ENRICHED_DESCRIPTION']))
+					{
+						$arCurEntity['PREV_ENRICHED_DESCRIPTION'] = $arFields['PREV_ENRICHED_DESCRIPTION'];
+					}
+					if (isset($arFields['SETTINGS']['ADDRESS_FORMATTED']))
+					{
+						$arCurEntity['LOCATION'] = $arFields['SETTINGS']['ADDRESS_FORMATTED'];
+					}
+					elseif (isset($arFields['LOCATION']))
+					{
+						if (self::isLocationFeatureEnabled())
+						{
+							$arCurEntity['LOCATION'] = $arFields['LOCATION'];
+						}
+						elseif (isset($arPrevEntity['LOCATION']))
+						{
+							$arCurEntity['LOCATION'] = $arPrevEntity['LOCATION'];
+						}
+					}
+					else
+					{
+						$arCurEntity['LOCATION'] = '';
+					}
+
+					if (isset($arFields['SETTINGS']['COLOR']))
+					{
+						$arCurEntity['SETTINGS']['COLOR'] = $arFields['SETTINGS']['COLOR'];
+					}
+
+					if (isset($arFields['CALENDAR_ADDITIONAL_DESCRIPTION_DATA']))
+					{
+						$arCurEntity['CALENDAR_ADDITIONAL_DESCRIPTION_DATA'] = $arFields['CALENDAR_ADDITIONAL_DESCRIPTION_DATA'];
+					}
+
+					$eventID = self::SaveCalendarEvent($arCurEntity, $arPrevEntity);
 				}
 				else
+				{
 					self::DeleteCalendarEvent($arCurEntity);
+				}
 
 				if (is_int($eventID))
+				{
 					self::SetCalendarEventId($eventID, $ID);
+
+					$arCurEntity['CALENDAR_EVENT_ID'] = $eventID;
+				}
+			}
+		}
+
+		if ($needSynchronizePingQueue)
+		{
+			if ($provider === null || $provider::needSynchronizePingQueue($arCurEntity))
+			{
+				PingQueue::getInstance()->register($ID, $curCompleted, $curDeadline);
+			}
+			else
+			{
+				PingQueue::getInstance()->unregister($ID);
 			}
 		}
 
@@ -952,15 +1057,16 @@ class CAllCrmActivity
 
 		\Bitrix\Crm\Timeline\ActivityController::getInstance()->onModify(
 			$ID,
-			array(
+			[
 				'CURRENT_FIELDS' => $arCurEntity,
 				'CURRENT_BINDINGS' => $arBindings,
 				'PREVIOUS_FIELDS' => $arPrevEntity,
 				'CURRENT_USER' => $options['CURRENT_USER'] ?? null,
 				'ADDITIONAL_PARAMS' => [
-					'CUSTOM_CREATION_TIME' => $options['CUSTOM_CREATION_TIME'] ?? null
-				]
-			)
+					'CUSTOM_CREATION_TIME' => $options['CUSTOM_CREATION_TIME'] ?? null,
+					'MOVE_BINDINGS_MAP' => $options['MOVE_BINDINGS_MAP'] ?? [],
+				],
+			],
 		);
 
 		if($registerSonetEvent)
@@ -1066,6 +1172,33 @@ class CAllCrmActivity
 
 		return true;
 	}
+
+	protected static function appendOwnerFromBindings(array &$fields): void
+	{
+		if (
+			(empty($fields['OWNER_ID']) || empty($fields['OWNER_TYPE_ID']))
+			&& !empty($fields['BINDINGS'])
+			&& is_array($fields['BINDINGS'])
+		)
+		{
+			$bindingsFound = false;
+			foreach ($fields['BINDINGS'] as $binding)
+			{
+				if ($binding['OWNER_TYPE_ID'] != CCrmOwnerType::Contact && $binding['OWNER_TYPE_ID'] != CCrmOwnerType::Company)
+				{
+					$fields['OWNER_ID'] = $binding['OWNER_ID'];
+					$fields['OWNER_TYPE_ID'] = $binding['OWNER_TYPE_ID'];
+					$bindingsFound = true;
+				}
+			}
+			if (!$bindingsFound)
+			{
+				$fields['OWNER_ID'] = $fields['BINDINGS'][0]['OWNER_ID'];
+				$fields['OWNER_TYPE_ID'] = $fields['BINDINGS'][0]['OWNER_TYPE_ID'];
+			}
+		}
+	}
+
 	public static function Delete($ID, $checkPerms = true, $regEvent = true, $options = array())
 	{
 		global $USER_FIELD_MANAGER;
@@ -1107,9 +1240,25 @@ class CAllCrmActivity
 
 			if($enableRecycleBin)
 			{
+				$provider = self::GetActivityProvider($ary);
+
+				if ($provider)
+				{
+					$ary['SUBJECT'] = $provider::getActivityTitle($ary);
+				}
+
+				$moveToBinOpts = [
+					'FIELDS' => $ary
+				];
+
+				if (isset($options['RECYCLE_BIN_FORCE_USER_ID']))
+				{
+					$moveToBinOpts['FORCE_USER_ID'] = $options['RECYCLE_BIN_FORCE_USER_ID'];
+				}
+
 				$recycleBinResult = \Bitrix\Crm\Recycling\ActivityController::getInstance()->moveToBin(
 					$ID,
-					array('FIELDS' => $ary)
+					$moveToBinOpts,
 				);
 
 				if($recycleBinResult->isSuccess())
@@ -1143,7 +1292,11 @@ class CAllCrmActivity
 			$monitor = Crm\Service\Timeline\Monitor::getInstance();
 			foreach ($arBindings as $singleBinding)
 			{
-				$monitor->onActivityRemoveIfSuitable(new Crm\ItemIdentifier((int)$singleBinding['OWNER_TYPE_ID'], (int)$singleBinding['OWNER_ID']), $ID);
+				$itemIdentifier = Crm\ItemIdentifier::createFromArray($singleBinding);
+				if ($itemIdentifier)
+				{
+					$monitor->onActivityRemoveIfSuitable($itemIdentifier, $ID);
+				}
 			}
 		}
 
@@ -1219,20 +1372,19 @@ class CAllCrmActivity
 				{
 					$deadline = \Bitrix\Main\Type\DateTime::createFromUserTime($deadline);
 					$deadline->setTime(0, 0, 0);
-					foreach($arBindings as $arBinding)
+					foreach ($arBindings as $arBinding)
 					{
 						$curOwnerTypeID = isset($arBinding['OWNER_TYPE_ID']) ? intval($arBinding['OWNER_TYPE_ID']) : 0;
 						$curOwnerID = isset($arBinding['OWNER_ID']) ? intval($arBinding['OWNER_ID']) : 0;
-						if($curOwnerID > 0)
+						if ($curOwnerID > 0 && !CCrmDateTimeHelper::IsMaxDatabaseDate($deadline))
 						{
-							if($curOwnerTypeID === CCrmOwnerType::Deal)
+							if ($curOwnerTypeID === CCrmOwnerType::Deal)
 							{
 								Bitrix\Crm\Statistics\DealActivityStatisticEntry::register($curOwnerID, null, array('DATE' => $deadline));
 							}
-							elseif($curOwnerTypeID === CCrmOwnerType::Lead)
+							elseif ($curOwnerTypeID === CCrmOwnerType::Lead)
 							{
 								Bitrix\Crm\Statistics\LeadActivityStatisticEntry::register($curOwnerID, null, array('DATE' => $deadline));
-								//Bitrix\Crm\Statistics\LeadProcessStatisticsEntry::register($curOwnerID, null, array('IS_NEW' => false, 'DATE' => $deadline));
 							}
 						}
 					}
@@ -1355,9 +1507,7 @@ class CAllCrmActivity
 			if($result)
 			{
 				$result = $DB->Query(
-					'DELETE FROM '.CCrmActivity::ELEMENT_TABLE_NAME.' WHERE ACTIVITY_ID = '.$ID,
-					false,
-					'File: '.__FILE__.'<br/>Line: '.__LINE__
+					'DELETE FROM '.CCrmActivity::ELEMENT_TABLE_NAME.' WHERE ACTIVITY_ID = '.$ID
 				);
 			}
 		}
@@ -1626,9 +1776,7 @@ class CAllCrmActivity
 		$elementID = (int)$elementID;
 
 		$dbResult = $DB->Query(
-			'SELECT 1 FROM '.CCrmActivity::ELEMENT_TABLE_NAME.' WHERE ACTIVITY_ID = '.$activityID.' AND STORAGE_TYPE_ID = '.$storageTypeID.' AND ELEMENT_ID = '.$elementID,
-			false,
-			'File: '.__FILE__.'<br/>Line: '.__LINE__
+			'SELECT 1 FROM '.CCrmActivity::ELEMENT_TABLE_NAME.' WHERE ACTIVITY_ID = '.$activityID.' AND STORAGE_TYPE_ID = '.$storageTypeID.' AND ELEMENT_ID = '.$elementID
 		);
 		return is_array($dbResult->Fetch());
 	}
@@ -1640,9 +1788,7 @@ class CAllCrmActivity
 		$elementID = (int)$elementID;
 
 		$dbResult = $DB->Query(
-			'SELECT ACTIVITY_ID FROM '.CCrmActivity::ELEMENT_TABLE_NAME.' WHERE STORAGE_TYPE_ID = '.$storageTypeID.' AND ELEMENT_ID = '.$elementID,
-			false,
-			'File: '.__FILE__.'<br/>Line: '.__LINE__
+			'SELECT ACTIVITY_ID FROM '.CCrmActivity::ELEMENT_TABLE_NAME.' WHERE STORAGE_TYPE_ID = '.$storageTypeID.' AND ELEMENT_ID = '.$elementID
 		);
 
 		while($arResult = $dbResult->Fetch())
@@ -1957,7 +2103,7 @@ class CAllCrmActivity
 			}
 		}
 
-		$provider = self::GetActivityProvider($action == 'ADD' ? $fields : $prevFields);
+		$provider = self::GetActivityProvider($action === 'ADD' ? $fields : $prevFields);
 		if ($provider !== null)
 		{
 			$result = $provider::checkFields($action, $fields, $ID, $params);
@@ -1969,11 +2115,16 @@ class CAllCrmActivity
 					self::RegisterError(array('text' => $error->getMessage()));
 				}
 			}
+
 			if (empty($fields['PROVIDER_ID']))
+			{
 				$fields['PROVIDER_ID'] = $provider::getId();
+			}
 
 			if (empty($fields['PROVIDER_TYPE_ID']))
-				$fields['PROVIDER_TYPE_ID'] = $provider::getTypeId($action == 'ADD' ? $fields : $prevFields);
+			{
+				$fields['PROVIDER_TYPE_ID'] = $provider::getTypeId($action === 'ADD' ? $fields : $prevFields);
+			}
 		}
 
 		if (isset($fields['PROVIDER_PARAMS']) && !is_array($fields['PROVIDER_PARAMS']))
@@ -2056,9 +2207,7 @@ class CAllCrmActivity
 		);
 
 		$DB->Query(
-			'DELETE FROM '.CCrmActivity::BINDING_TABLE_NAME.' WHERE ACTIVITY_ID = '.$activityID,
-			false,
-			'File: '.__FILE__.'<br/>Line: '.__LINE__
+			'DELETE FROM '.CCrmActivity::BINDING_TABLE_NAME.' WHERE ACTIVITY_ID = '.$activityID
 		);
 
 		if ($registerBindingsChanges)
@@ -2099,9 +2248,7 @@ class CAllCrmActivity
 		$commTableName = CCrmActivity::COMMUNICATION_TABLE_NAME;
 
 		$DB->Query(
-			"DELETE FROM {$commTableName} WHERE ACTIVITY_ID = {$activityID}",
-			false,
-			'File: '.__FILE__.'<br/>Line: '.__LINE__
+			"DELETE FROM {$commTableName} WHERE ACTIVITY_ID = {$activityID}"
 		);
 
 		return true;
@@ -2674,9 +2821,7 @@ class CAllCrmActivity
 		}
 
 		$dbRes = $DB->Query(
-			'SELECT ID, OWNER_ID, OWNER_TYPE_ID FROM '.CCrmActivity::BINDING_TABLE_NAME.' WHERE ACTIVITY_ID = '.$DB->ForSql($ID),
-			false,
-			'FILE: '.__FILE__.'<br /> LINE: '.__LINE__
+			'SELECT ID, OWNER_ID, OWNER_TYPE_ID FROM '.CCrmActivity::BINDING_TABLE_NAME.' WHERE ACTIVITY_ID = '.$DB->ForSql($ID)
 		);
 
 		$result = array();
@@ -2757,9 +2902,7 @@ class CAllCrmActivity
 		$bindingTableName = CCrmActivity::BINDING_TABLE_NAME;
 
 		$dbRes = $DB->Query(
-			"SELECT ACTIVITY_ID FROM {$bindingTableName} WHERE OWNER_ID = {$ownerID} AND OWNER_TYPE_ID = {$ownerTypeID}",
-			false,
-			'FILE: '.__FILE__.'<br /> LINE: '.__LINE__
+			"SELECT ACTIVITY_ID FROM {$bindingTableName} WHERE OWNER_ID = {$ownerID} AND OWNER_TYPE_ID = {$ownerTypeID}"
 		);
 
 		$result = array();
@@ -2813,7 +2956,7 @@ class CAllCrmActivity
 		$items = array();
 		$responsibleIDs = array();
 		$sql= "SELECT A.ID, A.TYPE_ID, A.PROVIDER_ID, A.ASSOCIATED_ENTITY_ID, A.RESPONSIBLE_ID FROM {$bindingTableName} B INNER JOIN {$tableName} A ON A.ID = B.ACTIVITY_ID AND B.OWNER_TYPE_ID = {$ownerTypeID} AND B.OWNER_ID = {$oldOwnerID}";
-		$dbResult = $DB->Query($sql, false, 'File: '.__FILE__.'<br>Line: '.__LINE__);
+		$dbResult = $DB->Query($sql);
 		if(is_object($dbResult))
 		{
 			while($item = $dbResult->Fetch())
@@ -2834,7 +2977,7 @@ class CAllCrmActivity
 		$enableCalendarEvents = false;
 		$sql =  "SELECT B.ACTIVITY_ID FROM {$bindingTableName} B INNER JOIN {$tableName} A ON A.ID = B.ACTIVITY_ID AND B.OWNER_TYPE_ID = {$ownerTypeID} AND B.OWNER_ID = {$oldOwnerID} WHERE A.CALENDAR_EVENT_ID > 0";
 		CSqlUtil::PrepareSelectTop($sql, 1, CCrmActivity::DB_TYPE);
-		$dbResult = $DB->Query($sql, false, 'File: '.__FILE__.'<br>Line: '.__LINE__);
+		$dbResult = $DB->Query($sql);
 		if(is_object($dbResult) && is_array($dbResult->Fetch()))
 		{
 			$enableCalendarEvents = true;
@@ -2845,27 +2988,19 @@ class CAllCrmActivity
 		$entityCommSettings = isset($comm['ENTITY_SETTINGS']) ? $DB->ForSql(serialize($comm['ENTITY_SETTINGS'])) : '';
 
 		$DB->Query(
-			"UPDATE {$communicationTableName} SET ENTITY_ID = {$newOwnerID}, ENTITY_SETTINGS = '{$entityCommSettings}' WHERE ENTITY_TYPE_ID = {$ownerTypeID} AND ENTITY_ID = {$oldOwnerID}",
-			false,
-			'File: '.__FILE__.'<br>Line: '.__LINE__
+			"UPDATE {$communicationTableName} SET ENTITY_ID = {$newOwnerID}, ENTITY_SETTINGS = '{$entityCommSettings}' WHERE ENTITY_TYPE_ID = {$ownerTypeID} AND ENTITY_ID = {$oldOwnerID}"
 		);
 
 		$DB->Query(
-			"UPDATE {$communicationTableName} SET OWNER_ID = {$newOwnerID} WHERE OWNER_TYPE_ID = {$ownerTypeID} AND OWNER_ID = {$oldOwnerID}",
-			false,
-			'File: '.__FILE__.'<br>Line: '.__LINE__
+			"UPDATE {$communicationTableName} SET OWNER_ID = {$newOwnerID} WHERE OWNER_TYPE_ID = {$ownerTypeID} AND OWNER_ID = {$oldOwnerID}"
 		);
 
 		$DB->Query(
-			"UPDATE {$bindingTableName} SET OWNER_ID = {$newOwnerID} WHERE OWNER_TYPE_ID = {$ownerTypeID} AND OWNER_ID = {$oldOwnerID}",
-			false,
-			'File: '.__FILE__.'<br>Line: '.__LINE__
+			"UPDATE {$bindingTableName} SET OWNER_ID = {$newOwnerID} WHERE OWNER_TYPE_ID = {$ownerTypeID} AND OWNER_ID = {$oldOwnerID}"
 		);
 
 		$DB->Query(
-			"UPDATE {$tableName} SET OWNER_ID = {$newOwnerID} WHERE OWNER_TYPE_ID = {$ownerTypeID} AND OWNER_ID = {$oldOwnerID}",
-			false,
-			'File: '.__FILE__.'<br>Line: '.__LINE__
+			"UPDATE {$tableName} SET OWNER_ID = {$newOwnerID} WHERE OWNER_TYPE_ID = {$ownerTypeID} AND OWNER_ID = {$oldOwnerID}"
 		);
 
 		foreach($items as $item)
@@ -3044,7 +3179,7 @@ class CAllCrmActivity
 
 		$sql= "SELECT ID FROM ".CCrmActivity::BINDING_TABLE_NAME." WHERE OWNER_TYPE_ID = {$oldOwnerTypeID} AND OWNER_ID = {$oldOwnerID}";
 		CSqlUtil::PrepareSelectTop($sql, 1, CCrmActivity::DB_TYPE);
-		$dbResult = $DB->Query($sql, false, 'File: '.__FILE__.'<br>Line: '.__LINE__);
+		$dbResult = $DB->Query($sql);
 		if(!(is_object($dbResult) && is_array($dbResult->Fetch())))
 		{
 			return;
@@ -3053,7 +3188,7 @@ class CAllCrmActivity
 		$responsibleIDs = [];
 		$activityIDs = [];
 		$sql =  "SELECT B.ACTIVITY_ID, A.RESPONSIBLE_ID FROM {$bindingTableName} B INNER JOIN {$tableName} A ON A.ID = B.ACTIVITY_ID AND B.OWNER_TYPE_ID = {$oldOwnerTypeID} AND B.OWNER_ID = {$oldOwnerID}";
-		$dbResult = $DB->Query($sql, false, 'File: '.__FILE__.'<br>Line: '.__LINE__);
+		$dbResult = $DB->Query($sql);
 		if(is_object($dbResult))
 		{
 			while($fields = $dbResult->Fetch())
@@ -3077,27 +3212,19 @@ class CAllCrmActivity
 		$entityCommSettings = isset($comm['ENTITY_SETTINGS']) ? $DB->ForSql(serialize($comm['ENTITY_SETTINGS'])) : '';
 
 		$DB->Query(
-			"UPDATE {$communicationTableName} SET ENTITY_TYPE_ID = {$newOwnerTypeID}, ENTITY_ID = {$newOwnerID}, ENTITY_SETTINGS = '{$entityCommSettings}' WHERE ENTITY_TYPE_ID = {$oldOwnerTypeID} AND ENTITY_ID = {$oldOwnerID}",
-			false,
-			'File: '.__FILE__.'<br>Line: '.__LINE__
+			"UPDATE {$communicationTableName} SET ENTITY_TYPE_ID = {$newOwnerTypeID}, ENTITY_ID = {$newOwnerID}, ENTITY_SETTINGS = '{$entityCommSettings}' WHERE ENTITY_TYPE_ID = {$oldOwnerTypeID} AND ENTITY_ID = {$oldOwnerID}"
 		);
 
 		$DB->Query(
-			"UPDATE {$communicationTableName} SET OWNER_TYPE_ID = {$newOwnerTypeID}, OWNER_ID = {$newOwnerID} WHERE OWNER_TYPE_ID = {$oldOwnerTypeID} AND OWNER_ID = {$oldOwnerID}",
-			false,
-			'File: '.__FILE__.'<br>Line: '.__LINE__
+			"UPDATE {$communicationTableName} SET OWNER_TYPE_ID = {$newOwnerTypeID}, OWNER_ID = {$newOwnerID} WHERE OWNER_TYPE_ID = {$oldOwnerTypeID} AND OWNER_ID = {$oldOwnerID}"
 		);
 
 		$DB->Query(
-			"UPDATE {$bindingTableName} SET OWNER_TYPE_ID = {$newOwnerTypeID}, OWNER_ID = {$newOwnerID} WHERE OWNER_TYPE_ID = {$oldOwnerTypeID} AND OWNER_ID = {$oldOwnerID}",
-			false,
-			'File: '.__FILE__.'<br>Line: '.__LINE__
+			"UPDATE {$bindingTableName} SET OWNER_TYPE_ID = {$newOwnerTypeID}, OWNER_ID = {$newOwnerID} WHERE OWNER_TYPE_ID = {$oldOwnerTypeID} AND OWNER_ID = {$oldOwnerID}"
 		);
 
 		$DB->Query(
-			"UPDATE {$tableName} SET OWNER_TYPE_ID = {$newOwnerTypeID}, OWNER_ID = {$newOwnerID} WHERE OWNER_TYPE_ID = {$oldOwnerTypeID} AND OWNER_ID = {$oldOwnerID}",
-			false,
-			'File: '.__FILE__.'<br>Line: '.__LINE__
+			"UPDATE {$tableName} SET OWNER_TYPE_ID = {$newOwnerTypeID}, OWNER_ID = {$newOwnerID} WHERE OWNER_TYPE_ID = {$oldOwnerTypeID} AND OWNER_ID = {$oldOwnerID}"
 		);
 
 		if(!empty($responsibleIDs))
@@ -3431,7 +3558,7 @@ class CAllCrmActivity
 
 		$enableSettings = !isset($options['ENABLE_SETTINGS']) || $options['ENABLE_SETTINGS'];
 
-		$dbRes = $DB->Query($sql, false, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
+		$dbRes = $DB->Query($sql);
 		$result = array();
 		while($arRes = $dbRes->Fetch())
 		{
@@ -4224,7 +4351,7 @@ class CAllCrmActivity
 			$provider = self::GetActivityProvider($fields);
 			if ($provider !== null)
 			{
-				$provider::onBeforeComplete($ID, $fields);
+				$provider::onBeforeComplete($ID, $fields, ['CURRENT_USER' => $options['CURRENT_USER'] ?? \CCrmSecurityHelper::GetCurrentUserID()]);
 			}
 		}
 
@@ -4242,41 +4369,57 @@ class CAllCrmActivity
 
 		return self::Update($ID, array('COMPLETED' => 'Y', 'STATUS' => CCrmActivityStatus::AutoCompleted), true, true, $options);
 	}
-	public static function SetAutoCompletedByOwner($ownerTypeID, $ownerID, array $providerIDs = null, array $options = null)
+
+	public static function SetAutoCompletedByOwner($ownerTypeId, $ownerId, array $providerIds = null, array $options = null)
 	{
-		$ownerID = (int)$ownerID;
-		$ownerTypeID = (int)$ownerTypeID;
-		if($ownerID <= 0 || $ownerTypeID <= 0)
+		$ownerTypeId = (int)$ownerTypeId;
+		$ownerId = (int)$ownerId;
+		if ($ownerId <= 0 || $ownerTypeId <= 0)
 		{
 			return;
 		}
 
-		$query = new \Bitrix\Main\Entity\Query(\Bitrix\Crm\ActivityTable::getEntity());
-		$query->addSelect('ID');
-		$query->registerRuntimeField('',
-			new \Bitrix\Main\Entity\ReferenceField('B',
-				\Bitrix\Crm\ActivityBindingTable::getEntity(),
-				array(
-					'=ref.ACTIVITY_ID' => 'this.ID',
-					'=ref.OWNER_ID' => new \Bitrix\Main\DB\SqlExpression($ownerID),
-					'=ref.OWNER_TYPE_ID' => new \Bitrix\Main\DB\SqlExpression($ownerTypeID)
-				),
-				array('join_type' => 'INNER')
-			)
-		);
-
-		$query->addFilter('=COMPLETED', 'N');
-		if(is_array($providerIDs) && !empty($providerIDs))
+		$filter = [
+			'=COMPLETED' => 'N',
+			'=BINDINGS.OWNER_TYPE_ID' => $ownerTypeId,
+			'=BINDINGS.OWNER_ID' => $ownerId,
+		];
+		if (is_array($providerIds) && !empty($providerIds))
 		{
-			$query->addFilter('@PROVIDER_ID', $providerIDs);
+			$filter['@PROVIDER_ID']	= $providerIds;
 		}
 
-		$dbResult = $query->exec();
-		while($fields = $dbResult->fetch())
+		$fields = ActivityTable::getList([
+			'select' => ['ID'],
+			'filter' => $filter,
+		])->fetchAll();
+		$activityIds = array_column($fields, 'ID');
+		if (empty($activityIds))
 		{
-			self::SetAutoCompleted($fields['ID'], $options);
+			return;
+		}
+
+		// additional filter
+		if (ActivitySettings::getValue(ActivitySettings::CHECK_BINDINGS_BEFORE_AUTO_COMPLETE))
+		{
+			$bindings = Crm\ActivityBindingTable::getList([
+				'select' => ['ACTIVITY_ID', 'OWNER_TYPE_ID', 'OWNER_ID'],
+				'filter' => ['@ACTIVITY_ID' => $activityIds],
+			])->fetchAll();
+			$notClosedBindings = array_filter(
+				$bindings,
+				static fn($item) => !ComparerBase::isClosed(new Bitrix\Crm\ItemIdentifier($item['OWNER_TYPE_ID'], $item['OWNER_ID']))
+			);
+			$filteredActivityIds = array_unique(array_column($notClosedBindings, 'ACTIVITY_ID'));
+			$activityIds = array_diff($activityIds, $filteredActivityIds);
+		}
+
+		foreach ($activityIds as $activityId)
+		{
+			self::SetAutoCompleted($activityId, $options);
 		}
 	}
+
 	public static function SetPriority($ID, $priority, $options = array())
 	{
 		$ID = intval($ID);
@@ -4602,7 +4745,7 @@ class CAllCrmActivity
 			else
 			{
 				//Try to load if not found CRM bindings
-				$arReloadedEventFields = CCalendarEvent::GetById($eventID, false);
+				$arReloadedEventFields = \Bitrix\Crm\Integration\Calendar::getEvent($eventID);
 				if(isset($arReloadedEventFields['UF_CRM_CAL_EVENT']))
 				{
 					$arEventOwners = $arReloadedEventFields['UF_CRM_CAL_EVENT'];
@@ -4663,11 +4806,11 @@ class CAllCrmActivity
 
 			if($isNew)
 			{
-				//Meeting by default
-				$arFields['TYPE_ID'] = CCrmActivityType::Meeting;
+				$arFields['TYPE_ID'] = CCrmActivityType::Provider;
+				$arFields['PROVIDER_ID'] = ToDo::PROVIDER_ID;
+
 				//Not completed for new activities. Do not change existed activities.
 				$arFields['COMPLETED'] = 'N';
-				$arFields['ASSOCIATED_ENTITY_ID'] = $eventID;
 			}
 
 			if($isNew || isset($arEventFields['NAME']))
@@ -4690,7 +4833,8 @@ class CAllCrmActivity
 				$userID = (int)$arEventFields['CREATED_BY'];
 			}
 
-			if($userID > 0)
+			global $USER;
+			if ($userID > 0 && !$USER?->getId())
 			{
 				//Try to use event owner timezone strictly. In case of work under agent.
 				$arFields['TIME_ZONE_OFFSET'] = CTimeZone::GetOffset($userID, true);
@@ -4752,6 +4896,11 @@ class CAllCrmActivity
 						$arFields['NOTIFY_VALUE'] = $remindValue;
 					}
 				}
+			}
+
+			if (isset($arEventFields['SECTION_ID'], $arFields['SETTINGS']['CALENDAR_SECTION_ID']))
+			{
+				$arFields['SETTINGS']['CALENDAR_SECTION_ID'] = (int) $arEventFields['SECTION_ID'];
 			}
 		}
 		else
@@ -4882,7 +5031,15 @@ class CAllCrmActivity
 				self::SetFromCalendarEvent($eventID, $arEventFields, $arFields);
 				if (isset($arFields['BINDINGS']) && !empty($arFields['BINDINGS']))
 				{
-					self::Add($arFields, false, true, array('SKIP_CALENDAR_EVENT' => true, 'REGISTER_SONET_EVENT' => true));
+					self::Add(
+						$arFields,
+						false,
+						true, [
+							'SKIP_CALENDAR_EVENT' => true,
+							'REGISTER_SONET_EVENT' => true,
+							'INITIATED_BY_CALENDAR' => true,
+						]
+					);
 				}
 			}
 		}
@@ -4909,7 +5066,7 @@ class CAllCrmActivity
 		}
 	}
 	// <-- Event handlers
-	public static function DeleteByOwner($ownerTypeID, $ownerID)
+	public static function DeleteByOwner($ownerTypeID, $ownerID, array $delOptions = [])
 	{
 		$ownerID = (int)$ownerID;
 		$ownerTypeID = (int)$ownerTypeID;
@@ -4961,11 +5118,11 @@ class CAllCrmActivity
 		}
 
 		$itemIDs = array_keys($deleteMap);
-		$delOptions = array(
+		$delOptions = array_merge($delOptions, [
 			'SKIP_BINDINGS' => true,
 			'SKIP_USER_ACTIVITY_SYNC' => true,
 			'SKIP_STATISTICS' => true
-		);
+		]);
 
 		if(ActivitySettings::getValue(ActivitySettings::KEEP_UNBOUND_TASKS))
 		{
@@ -5050,9 +5207,7 @@ class CAllCrmActivity
 		global $DB;
 
 		$dbRes = $DB->Query(
-			"SELECT ACTIVITY_ID FROM {$bindingTableName} WHERE OWNER_ID = {$ownerID} AND OWNER_TYPE_ID = {$ownerTypeID}",
-			false,
-			'File: '.__FILE__.'<br/>Line: '.__LINE__
+			"SELECT ACTIVITY_ID FROM {$bindingTableName} WHERE OWNER_ID = {$ownerID} AND OWNER_TYPE_ID = {$ownerTypeID}"
 		);
 
 		$processedIDs = array();
@@ -5073,9 +5228,7 @@ class CAllCrmActivity
 		if(!empty($processedIDs))
 		{
 			$DB->Query(
-				"DELETE FROM {$bindingTableName} WHERE OWNER_ID = {$ownerID} AND OWNER_TYPE_ID = {$ownerTypeID}",
-				false,
-				'File: '.__FILE__.'<br/>Line: '.__LINE__
+				"DELETE FROM {$bindingTableName} WHERE OWNER_ID = {$ownerID} AND OWNER_TYPE_ID = {$ownerTypeID}"
 			);
 
 			foreach ($processedIDs as $activityId)
@@ -5112,9 +5265,7 @@ class CAllCrmActivity
 		$bindingTableName = CCrmActivity::BINDING_TABLE_NAME;
 		global $DB;
 		$dbRes = $DB->Query(
-			"SELECT ID FROM {$tableName} WHERE ID NOT IN (SELECT ACTIVITY_ID FROM {$bindingTableName})",
-			false,
-			'File: '.__FILE__.'<br/>Line: '.__LINE__
+			"SELECT ID FROM {$tableName} WHERE ID NOT IN (SELECT ACTIVITY_ID FROM {$bindingTableName})"
 		);
 
 		$delOptions = array(
@@ -5324,6 +5475,18 @@ class CAllCrmActivity
 					$oldText = \CCalendar::GetTextLocation($oldText);
 					$newText = \CCalendar::GetTextLocation($newText);
 				}
+				elseif($fieldName === 'DESCRIPTION')
+				{
+					$parser = new CTextParser();
+					if ($arOldRow['DESCRIPTION_TYPE'] == CCrmContentType::BBCode)
+					{
+						$oldText = $parser->convertText($oldText);
+					}
+					if ($arNewRow['DESCRIPTION_TYPE'] == CCrmContentType::BBCode)
+					{
+						$newText = $parser->convertText($newText);
+					}
+				}
 			}
 		}
 
@@ -5350,6 +5513,7 @@ class CAllCrmActivity
 
 		return $changed;
 	}
+
 	private static function RegisterAddEvent($ownerTypeID, $ownerID, $arRow, $checkPerms)
 	{
 		$typeID = self::GetActivityType($arRow);
@@ -5362,7 +5526,7 @@ class CAllCrmActivity
 		$descriptionType = isset($arRow['DESCRIPTION_TYPE']) ? (int)$arRow['DESCRIPTION_TYPE'] : CCrmContentType::PlainText;
 
 		$eventText = '';
-		if($subject !== '' && $providerID != \Bitrix\Crm\Activity\Provider\ToDo::getId())
+		if($subject !== '' && $providerID !== ToDo::getId())
 		{
 			$eventText .= GetMessage('CRM_ACTIVITY_SUBJECT').': '.$subject.PHP_EOL;
 		}
@@ -5386,23 +5550,37 @@ class CAllCrmActivity
 			$eventText .= $description;
 		}
 
-		$arEvents = array(
-			array(
-				'EVENT_NAME' => GetMessage("CRM_ACTIVITY_{$typeName}_ADD"),
+		if ($providerID === ToDo::getId())
+		{
+			$subject = ToDo::getActivityTitle($arRow);
+			if (empty($eventText))
+			{
+				$eventText = $subject;
+			}
+			else
+			{
+				$eventText = $subject . ': ' . $eventText;
+			}
+		}
+
+		$arEvents = [
+			[
+				'EVENT_NAME' => Loc::getMessage("CRM_ACTIVITY_{$typeName}_ADD"),
 				'EVENT_TEXT_1' => $eventText,
 				'EVENT_TEXT_2' => '',
-				'USER_ID' => isset($arRow['EDITOR_ID']) ? $arRow['EDITOR_ID'] : 0
-			)
-		);
+				'USER_ID' => (int)($arRow['EDITOR_ID'] ?? 0),
+			],
+		];
 
 		return self::RegisterEvents($ownerTypeID, $ownerID, $arEvents, $checkPerms);
 	}
+
 	private static function RegisterUpdateEvent($ownerTypeID, $ownerID, $arNewRow, $arOldRow, $checkPerms)
 	{
 		$arEvents = array();
 
 		$providerId = $arNewRow['PROVIDER_ID'] ?? $arOldRow['PROVIDER_ID'];
-		if ($providerId != \Bitrix\Crm\Activity\Provider\ToDo::getId())
+		if ($providerId !== ToDo::getId())
 		{
 			self::PrepareUpdateEvent('SUBJECT', $arNewRow, $arOldRow, $arEvents);
 		}
@@ -5418,6 +5596,7 @@ class CAllCrmActivity
 
 		return count($arEvents) > 0 ? self::RegisterEvents($ownerTypeID, $ownerID, $arEvents, $checkPerms) : false;
 	}
+
 	private static function RegisterRemoveEvent($ownerTypeID, $ownerID, $arRow, $checkPerms, $userID = 0)
 	{
 		$typeID = self::GetActivityType($arRow);
@@ -5438,6 +5617,21 @@ class CAllCrmActivity
 		if($userID <= 0)
 		{
 			$userID = CCrmSecurityHelper::GetCurrentUserID();
+		}
+
+		$description = $arRow['DESCRIPTION'] ?? '';
+		if ($arRow['DESCRIPTION_TYPE'] == CCrmContentType::BBCode)
+		{
+			$parser = new \CTextParser();
+			$description = $parser->convertText($description);
+		}
+		if ($providerID === ToDo::getId())
+		{
+			$name = ToDo::getActivityTitle($arRow);
+			if (!empty($description))
+			{
+				$name .= ': ' . $description;
+			}
 		}
 
 		return self::RegisterEvents(
@@ -5649,10 +5843,16 @@ class CAllCrmActivity
 	}
 	public static function CheckItemUpdatePermission(array $fields, $userPermissions = null)
 	{
+		static $cache = [];
+
 		$ID = isset($fields['ID']) ? (int)$fields['ID'] : 0;
 		if($ID <=  0)
 		{
 			return false;
+		}
+		if (isset($cache[$ID]))
+		{
+			return $cache[$ID];
 		}
 
 		$bindings = self::GetBindings($ID);
@@ -5662,19 +5862,27 @@ class CAllCrmActivity
 			{
 				if(self::CheckUpdatePermission($binding['OWNER_TYPE_ID'], $binding['OWNER_ID'], $userPermissions))
 				{
+					$cache[$ID] = true;
+
 					return true;
 				}
 			}
 			unset($binding);
+			$cache[$ID] = false;
+
 			return false;
 		}
 
 		$ownerTypeID = isset($fields['OWNER_TYPE_ID']) ? (int)$fields['OWNER_TYPE_ID'] : CCrmOwnerType::Undefined;
 		$ownerID = isset($fields['OWNER_ID']) ? (int)$fields['OWNER_ID'] : 0;
 
-		return $ownerID > 0
+		$result = $ownerID > 0
 			&& CCrmOwnerType::IsDefined($ownerTypeID)
 			&& self::CheckUpdatePermission($ownerTypeID, $ownerID, $userPermissions);
+
+		$cache[$ID] = $result;
+
+		return $result;
 	}
 	public static function CheckCompletePermission($ownerType, $ownerID, $userPermissions = null, $params = null)
 	{
@@ -5918,9 +6126,7 @@ class CAllCrmActivity
 		$sql = "SELECT ID, ENTITY_ID, ENTITY_TYPE_ID, VALUE FROM {$commTableName} WHERE OWNER_ID = {$entityID} AND OWNER_TYPE_ID = {$entityTypeID} AND TYPE = '{$DB->ForSql($communicationType)}' ORDER BY ID DESC";
 
 		$dbRes = $DB->Query(
-			$sql,
-			false,
-			'FILE: '.__FILE__.'<br /> LINE: '.__LINE__
+			$sql
 		);
 
 		$result = array();
@@ -6003,9 +6209,7 @@ class CAllCrmActivity
 			}
 
 			$dbRes = $DB->Query(
-				$sql,
-				false,
-				'FILE: '.__FILE__.'<br /> LINE: '.__LINE__
+				$sql
 			);
 
 			while($arRes = $dbRes->Fetch())
@@ -6040,9 +6244,7 @@ class CAllCrmActivity
 		}
 
 		$dbRes = $DB->Query(
-			$sql,
-			false,
-			'FILE: '.__FILE__.'<br /> LINE: '.__LINE__
+			$sql
 		);
 
 		while($arRes = $dbRes->Fetch())
@@ -6058,9 +6260,7 @@ class CAllCrmActivity
 		}
 
 		$dbRes = $DB->Query(
-			$sql,
-			false,
-			'FILE: '.__FILE__.'<br /> LINE: '.__LINE__
+			$sql
 		);
 
 		while($arRes = $dbRes->Fetch())
@@ -6098,9 +6298,7 @@ class CAllCrmActivity
 			}
 
 			$dbRes = $DB->Query(
-				$sql,
-				false,
-				'FILE: '.__FILE__.'<br /> LINE: '.__LINE__
+				$sql
 			);
 
 			while($arRes = $dbRes->Fetch())
@@ -6119,9 +6317,7 @@ class CAllCrmActivity
 		}
 
 		$dbRes = $DB->Query(
-			$sql,
-			false,
-			'FILE: '.__FILE__.'<br /> LINE: '.__LINE__
+			$sql
 		);
 
 		while($arRes = $dbRes->Fetch())
@@ -6137,9 +6333,7 @@ class CAllCrmActivity
 		}
 
 		$dbRes = $DB->Query(
-			$sql,
-			false,
-			'FILE: '.__FILE__.'<br /> LINE: '.__LINE__
+			$sql
 		);
 
 		while($arRes = $dbRes->Fetch())
@@ -6202,9 +6396,7 @@ class CAllCrmActivity
 			}
 
 			$dbRes = $DB->Query(
-				$sql,
-				false,
-				'FILE: '.__FILE__.'<br /> LINE: '.__LINE__
+				$sql
 			);
 
 			while($arRes = $dbRes->Fetch())
@@ -6230,9 +6422,7 @@ class CAllCrmActivity
 		}
 
 		$dbRes = $DB->Query(
-			$sql,
-			false,
-			'FILE: '.__FILE__.'<br /> LINE: '.__LINE__
+			$sql
 		);
 
 		while($arRes = $dbRes->Fetch())
@@ -6248,9 +6438,7 @@ class CAllCrmActivity
 		}
 
 		$dbRes = $DB->Query(
-			$sql,
-			false,
-			'FILE: '.__FILE__.'<br /> LINE: '.__LINE__
+			$sql
 		);
 
 		while($arRes = $dbRes->Fetch())
@@ -6306,9 +6494,7 @@ class CAllCrmActivity
 		}
 
 		$dbRes = $DB->Query(
-			$sql,
-			false,
-			'FILE: '.__FILE__.'<br /> LINE: '.__LINE__
+			$sql
 		);
 
 		$result = array();
@@ -6467,7 +6653,7 @@ class CAllCrmActivity
 		if($type === 'html')
 		{
 			//URN already encoded
-			$str = rtrim(preg_replace(self::$URN_BODY_HTML_ENTITY_REGEX.BX_UTF_PCRE_MODIFIER, '', $str));
+			$str = rtrim(preg_replace(self::$URN_BODY_HTML_ENTITY_REGEX, '', $str));
 			if($str !== '')
 			{
 				$index = mb_stripos($str, '</body>');
@@ -6490,7 +6676,7 @@ class CAllCrmActivity
 		}
 		else
 		{
-			$str = rtrim(preg_replace(self::$URN_BODY_REGEX.BX_UTF_PCRE_MODIFIER, '', $str));
+			$str = rtrim(preg_replace(self::$URN_BODY_REGEX, '', $str));
 			if($str !== '')
 			{
 				$str .= CCrmEMail::GetEOL();
@@ -6561,7 +6747,7 @@ class CAllCrmActivity
 		}
 
 		$matches = array();
-		if(preg_match(self::$URN_BODY_REGEX.BX_UTF_PCRE_MODIFIER, $str, $matches) !== 1)
+		if(preg_match(self::$URN_BODY_REGEX, $str, $matches) !== 1)
 		{
 			return '';
 		}
@@ -6643,9 +6829,7 @@ class CAllCrmActivity
 		}
 
 		$dbResult = $DB->Query(
-			$DB->TopSql($sql, 1),
-			false,
-			'File: '.__FILE__.'<br/>Line: '.__LINE__
+			$DB->TopSql($sql, 1)
 		);
 
 		$arResult = $dbResult ? $dbResult->Fetch() : null;
@@ -6703,9 +6887,7 @@ class CAllCrmActivity
 			global $DB;
 			$tableName = CCrmActivity::USER_ACTIVITY_TABLE_NAME;
 			$DB->Query(
-				"DELETE FROM {$tableName} WHERE USER_ID = {$userID} AND OWNER_TYPE_ID = {$ownerTypeID} AND OWNER_ID = {$ownerID}",
-				false,
-				'File: '.__FILE__.'<br/>Line: '.__LINE__
+				"DELETE FROM {$tableName} WHERE USER_ID = {$userID} AND OWNER_TYPE_ID = {$ownerTypeID} AND OWNER_ID = {$ownerID}"
 			);
 		}
 
@@ -6716,31 +6898,128 @@ class CAllCrmActivity
 	{
 		return \Bitrix\Crm\Integration\StorageManager::makeFileArray($arFileIDs, $storageTypeID);
 	}
-	protected static function SaveCalendarEvent(&$arFields)
+	protected static function SaveCalendarEvent(&$arFields, $prevFields = [])
 	{
-		$responsibleID =  isset($arFields['RESPONSIBLE_ID']) ? (int)$arFields['RESPONSIBLE_ID'] : 0;
+		$responsibleID = (int)($arFields['RESPONSIBLE_ID'] ?? 0);
 		$provider = self::GetActivityProvider($arFields);
 		$providerTypeId = isset($arFields['PROVIDER_TYPE_ID']) ? (string) $arFields['PROVIDER_TYPE_ID'] : null;
-		$completed = (isset($arFields['COMPLETED']) && $arFields['COMPLETED'] == 'Y');
+		$completed = (($arFields['COMPLETED'] ?? null) === 'Y');
 
-		if ($provider === null || $responsibleID <= 0 || !CModule::IncludeModule('calendar'))
+		if (
+			$provider === null
+			|| $responsibleID <= 0
+			|| !\Bitrix\Main\Loader::includeModule('calendar')
+		)
 		{
 			return false;
 		}
 
-		$arCalEventFields = array(
+		$enrichedDescription = $arFields['ENRICHED_DESCRIPTION'] ?? null;
+		$description = $arFields['DESCRIPTION'] ?? '';
+		$description = $enrichedDescription ?? $description;
+		$prevEnrichedDescription = $arFields['PREV_ENRICHED_DESCRIPTION'] ?? null;
+
+		$arCalEventFields = [
 			'CAL_TYPE' => 'user',
 			'OWNER_ID' => $responsibleID,
-			'NAME' => isset($arFields['SUBJECT']) ? $arFields['SUBJECT'] : '',
-			'DATE_FROM' => isset($arFields['START_TIME']) ? $arFields['START_TIME'] : '',
-			'DATE_TO' => isset($arFields['END_TIME']) ? $arFields['END_TIME'] : '',
+			'NAME' => $arFields['SUBJECT'] ?? '',
+			'DATE_FROM' => $arFields['START_TIME'] ?? '',
+			'DATE_TO' => $arFields['END_TIME'] ?? '',
 			'IMPORTANCE' => CCrmActivityPriority::ToCalendarEventImportance(
-				isset($arFields['PRIORITY'])
-					? intval($arFields['PRIORITY'])
-					: CCrmActivityPriority::Low
+				(int)($arFields['PRIORITY'] ?? CCrmActivityPriority::Low)
 			),
-			'DESCRIPTION' => isset($arFields['DESCRIPTION']) ? $arFields['DESCRIPTION'] : ''
-		);
+			'DESCRIPTION' => $description,
+			'SKIP_TIME' => false,
+		];
+
+		if (!empty($arFields['SECTION_ID']))
+		{
+			if (self::isCalendarSectionAvailable((int)$arFields['AUTHOR_ID'], (int)$arFields['SECTION_ID']))
+			{
+				$arCalEventFields['SECTION_ID'] = (int)$arFields['SECTION_ID'];
+			}
+
+			unset($arFields['SECTION_ID']);
+		}
+		elseif (!empty($arFields['SETTINGS']['CALENDAR_SECTION_ID']))
+		{
+			$arCalEventFields['SECTION_ID'] = (int)$arFields['SETTINGS']['CALENDAR_SECTION_ID'];
+		}
+
+		if (isset($arFields['ATTENDEES_CODES']))
+		{
+			if (is_array($arFields['ATTENDEES_CODES']))
+			{
+				$arCalEventFields['ATTENDEES_CODES'] = $arFields['ATTENDEES_CODES'];
+			}
+			unset($arFields['ATTENDEES_CODES']);
+		}
+
+		if (isset($arFields['UF_CRM_CAL_EVENT']))
+		{
+			if (is_array($arFields['UF_CRM_CAL_EVENT']))
+			{
+				$arCalEventFields['UF_CRM_CAL_EVENT'] = $arFields['UF_CRM_CAL_EVENT'];
+			}
+			unset($arFields['UF_CRM_CAL_EVENT']);
+		}
+
+		if (isset($arFields['IS_MEETING']))
+		{
+			$arCalEventFields['IS_MEETING'] = $arFields['IS_MEETING'];
+			$arCalEventFields['MEETING_HOST'] = $responsibleID;
+
+			if ($arCalEventFields['IS_MEETING'] === true)
+			{
+				$arCalEventFields['MEETING'] = [
+					'NOTIFY' => true,
+					'REINVITE' => false,
+					'ALLOW_INVITE' => false,
+					'MEETING_CREATOR' => $responsibleID,
+					'HIDE_GUESTS' => true,
+				];
+			}
+
+			unset($arFields['IS_MEETING']);
+		}
+
+		if (isset($arFields['LOCATION']))
+		{
+			$arCalEventFields['LOCATION'] = $arFields['LOCATION'];
+			unset($arFields['LOCATION']);
+		}
+
+		if (isset($arFields['SETTINGS']['ADDRESS_FORMATTED']))
+		{
+			$arCalEventFields['LOCATION'] = $arFields['SETTINGS']['ADDRESS_FORMATTED'];
+		}
+
+		if (isset($arFields['SETTINGS']['COLOR']))
+		{
+			$colorSettingsProvider = new Crm\Activity\ToDo\ColorSettings\ColorSettingsProvider();
+			$colorSettings =  $colorSettingsProvider->getByColorId($arFields['SETTINGS']['COLOR']);
+			if ($colorSettings)
+			{
+				$arCalEventFields['COLOR'] = $colorSettings['color'];
+			}
+		}
+
+		if (empty($prevFields) && !empty($arFields['PING_OFFSETS'])) // only for create new calendar event
+		{
+			$arCalEventFields['REMIND'] = [];
+			foreach ($arFields['PING_OFFSETS'] as $offset)
+			{
+				if (!is_numeric($offset) || $offset < 0)
+				{
+					continue;
+				}
+
+				$arCalEventFields['REMIND'][] = [
+					'type' => 'min',
+					'count' => $offset,
+				];
+			}
+		}
 
 		//convert current user time to calendar owner time
 		if ($userTzName = \CCalendar::GetUserTimezoneName($responsibleID, true))
@@ -6764,16 +7043,13 @@ class CAllCrmActivity
 			}
 		}
 
-		if (method_exists('CCalendar', 'GetCrmSection'))
-		{
-			$arCalEventFields['SECTIONS'] = [CCalendar::GetCrmSection($responsibleID, true)];
-		}
+		$arCalEventFields['SECTIONS'] = [\CCalendar::GetCrmSection($responsibleID, true)];
 
 		$calendarEventId = isset($arFields['CALENDAR_EVENT_ID']) ? (int)$arFields['CALENDAR_EVENT_ID'] : 0;
 
 		if($calendarEventId > 0)
 		{
-			$arPresentEventFields = CCalendarEvent::GetById($calendarEventId, false);
+			$arPresentEventFields = \Bitrix\Crm\Integration\Calendar::getEvent($calendarEventId);
 			if(is_array($arPresentEventFields))
 			{
 				$presentResponsibleID = isset($arPresentEventFields['OWNER_ID']) ? (int)$arPresentEventFields['OWNER_ID'] : 0;
@@ -6782,20 +7058,45 @@ class CAllCrmActivity
 					$arCalEventFields['ID'] = $calendarEventId;
 				}
 
-				if(isset($arPresentEventFields['RRULE']) && $arPresentEventFields['RRULE'] != '')
+				if(!empty($arPresentEventFields['RRULE']))
 				{
 					$arCalEventFields['RRULE'] = CCalendarEvent::ParseRRULE($arPresentEventFields['RRULE']);
 				}
 			}
+
+			if (
+				!empty($prevEnrichedDescription)
+				&& trim($description) !== trim($prevEnrichedDescription)
+			)
+			{
+				$culture = \Bitrix\Main\Context::getCurrent()?->getCulture();
+				$date = new DateTime();
+				if ($culture)
+				{
+					$date->format($culture->getShortDateFormat() . ' ' . $culture->getShortTimeFormat());
+				}
+				$descriptionSubtitle = Loc::getMessage(
+					'CRM_ACTIVITY_CALENDAR_SUBTITLE',
+					['#DATE#' => $date]
+				);
+				$arCalEventFields['DESCRIPTION'] =
+					$arPresentEventFields['DESCRIPTION']
+					. PHP_EOL
+					. PHP_EOL
+					. $descriptionSubtitle
+					. PHP_EOL
+					. $arCalEventFields['DESCRIPTION']
+				;
+			}
 		}
-		if(isset($arFields['NOTIFY_TYPE']) && $arFields['NOTIFY_TYPE'] != CCrmActivityNotifyType::None)
+		if(isset($arFields['NOTIFY_TYPE']) && (int)$arFields['NOTIFY_TYPE'] !== CCrmActivityNotifyType::None)
 		{
-			$arCalEventFields['REMIND'] = array(
-				array(
+			$arCalEventFields['REMIND'] = [
+				[
 					'type' => CCrmActivityNotifyType::ToCalendarEventRemind($arFields['NOTIFY_TYPE']),
-					'count' => isset($arFields['NOTIFY_VALUE']) ? intval($arFields['NOTIFY_VALUE']) : 15
-				)
-			);
+					'count' => isset($arFields['NOTIFY_VALUE']) ? (int)$arFields['NOTIFY_VALUE'] : 15
+				]
+			];
 		}
 
 		// Clear notification for completed activity
@@ -6805,31 +7106,23 @@ class CAllCrmActivity
 		}
 
 		self::$IGNORE_CALENDAR_EVENTS = true;
-		// We must initialize CCalendar!
-		$calendar = new CCalendar();
-		$calendar->Init(
-			array(
-				'type'=>'user',
-				'userId' => $responsibleID,
-				'ownerId' => $responsibleID
-			)
-		);
 
-		$result = $calendar->SaveEvent(
-			array(
-				'arFields' => $arCalEventFields,
-				'userId' => $responsibleID,
-				'autoDetectSection' => true,
-				'autoCreateSection' => true
-			)
-		);
+		$result = \CCalendar::SaveEvent([
+			'arFields' => $arCalEventFields,
+			'userId' => $responsibleID,
+			'autoDetectSection' => true,
+			'autoCreateSection' => true
+		]);
 
 		$ownerID = (int)$arFields['OWNER_ID'];
 		$ownerTypeID = (int)$arFields['OWNER_TYPE_ID'];
-		$arBindings = isset($arFields['BINDINGS']) ? $arFields['BINDINGS'] : array();
+		$arBindings = $arFields['BINDINGS'] ?? [];
 		if(empty($arBindings) && $ownerID > 0 && $ownerTypeID > 0)
 		{
-			$arBindings[] = array('OWNER_TYPE_ID' => $ownerTypeID, 'OWNER_ID' => $ownerID);
+			$arBindings[] = [
+				'OWNER_TYPE_ID' => $ownerTypeID,
+				'OWNER_ID' => $ownerID
+			];
 		}
 
 		$entityID = (int)$result;
@@ -6837,7 +7130,7 @@ class CAllCrmActivity
 		{
 			if(!empty($arBindings))
 			{
-				$arUserFields = array();
+				$arUserFields = $arCalEventFields['UF_CRM_CAL_EVENT'] ?? [];
 				foreach($arBindings as &$arBinding)
 				{
 					$entityTypeName = CCrmOwnerType::ResolveName($arBinding['OWNER_TYPE_ID']);
@@ -6877,6 +7170,20 @@ class CAllCrmActivity
 		return $result;
 	}
 
+	protected static function isCalendarSectionAvailable(int $userId, int $sectionId): bool
+	{
+		$availableSections = \Bitrix\Crm\Integration\Calendar::getSectionListAvailableForUser($userId);
+		foreach ($availableSections as $section)
+		{
+			if ((int)$section['ID'] === $sectionId)
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
+
 	public static function SetCalendarEventId($eventId, $activityId)
 	{
 		global $DB;
@@ -6887,9 +7194,7 @@ class CAllCrmActivity
 		$toUpdate = array('CALENDAR_EVENT_ID' => $eventId);
 
 		$DB->Query(
-			'UPDATE '.CCrmActivity::TABLE_NAME.' SET '.$DB->PrepareUpdate(CCrmActivity::TABLE_NAME, $toUpdate).' WHERE ID = '.$activityId,
-			false,
-			'File: '.__FILE__.'<br>Line: '.__LINE__
+			'UPDATE '.CCrmActivity::TABLE_NAME.' SET '.$DB->PrepareUpdate(CCrmActivity::TABLE_NAME, $toUpdate).' WHERE ID = '.$activityId
 		);
 
 		return true;
@@ -6963,9 +7268,7 @@ class CAllCrmActivity
 
 		global $DB;
 		$dbResult = $DB->Query(
-			'SELECT OWNER_ID, OWNER_TYPE_ID, ASSOCIATED_ENTITY_ID FROM '.CCrmActivity::TABLE_NAME.' WHERE OWNER_ID > 0 AND OWNER_TYPE_ID > 0 AND ASSOCIATED_ENTITY_ID > 0 AND TYPE_ID IN ('.CCrmActivityType::Call.', '.CCrmActivityType::Meeting.')',
-			false,
-			'File: '.__FILE__.'<br>Line: '.__LINE__
+			'SELECT OWNER_ID, OWNER_TYPE_ID, ASSOCIATED_ENTITY_ID FROM '.CCrmActivity::TABLE_NAME.' WHERE OWNER_ID > 0 AND OWNER_TYPE_ID > 0 AND ASSOCIATED_ENTITY_ID > 0 AND TYPE_ID IN ('.CCrmActivityType::Call.', '.CCrmActivityType::Meeting.')'
 		);
 
 		if(!$dbResult)
@@ -7017,25 +7320,22 @@ class CAllCrmActivity
 				$tag = sprintf('crm_email_%s', md5($url));
 			}
 
-			$messageTemplate = getMessage(
-				'CRM_ACTIVITY_NOTIFY_MESSAGE_INCOMING_MULTI',
-				[
+			$getMessageCallback = static function (string $url) use ($count) {
+				$code = 'CRM_ACTIVITY_NOTIFY_MESSAGE_INCOMING_MULTI';
+				$replace = [
 					'#COUNT#' => $count,
-				],
-			);
+					'#VIEW_URL#' => $url,
+				];
+
+				return static fn (?string $languageId = null) =>
+					Loc::getMessage($code, $replace, $languageId)
+				;
+			};
 
 			return CCrmNotifier::Notify(
 				$userId,
-				str_replace(
-					'#VIEW_URL#',
-					$url,
-					$messageTemplate
-				),
-				str_replace(
-					'#VIEW_URL#',
-					$absoluteUrl,
-					$messageTemplate
-				),
+				$getMessageCallback($url),
+				$getMessageCallback($absoluteUrl),
 				$schemeTypeID,
 				$tag
 			);
@@ -7066,7 +7366,7 @@ class CAllCrmActivity
 		if ($isForced)
 		{
 			global $USER;
-			if ($responsibleID == $USER->getId())
+			if ($responsibleID == $USER?->getId())
 			{
 				return false;
 			};
@@ -7104,38 +7404,37 @@ class CAllCrmActivity
 				$tag = sprintf('crm_email_%s', md5($url));
 			}
 
-			if ($fields['SUBJECT'])
-			{
-				$messageTemplate = getMessage(
-					'CRM_ACTIVITY_NOTIFY_MESSAGE_INCOMING_1',
-					[
+			$getMessageCallback = static function (string $url) use (
+				$entityTitle,
+				$fields,
+			){
+				if ($fields['SUBJECT'])
+				{
+					$code = 'CRM_ACTIVITY_NOTIFY_MESSAGE_INCOMING_1';
+					$replace = [
 						'#ENTITY_TITLE#' => $entityTitle,
 						'#SUBJECT#' => $fields['SUBJECT'],
-					],
-				);
-			}
-			else
-			{
-				$messageTemplate = getMessage(
-					'CRM_ACTIVITY_NOTIFY_MESSAGE_INCOMING_EMPTY_SUBJECT_1',
-					[
+					];
+				}
+				else
+				{
+					$code = 'CRM_ACTIVITY_NOTIFY_MESSAGE_INCOMING_EMPTY_SUBJECT_1';
+					$replace = [
 						'#ENTITY_TITLE#' => $entityTitle,
-					],
-				);
-			}
+					];
+				}
+
+				$replace['#VIEW_URL#'] = $url;
+
+				return static fn (?string $languageId = null) =>
+					Loc::getMessage($code, $replace, $languageId)
+				;
+			};
 
 			return CCrmNotifier::Notify(
 				$responsibleID,
-				str_replace(
-					'#VIEW_URL#',
-					$url,
-					$messageTemplate
-				),
-				str_replace(
-					'#VIEW_URL#',
-					$absoluteUrl,
-					$messageTemplate
-				),
+				$getMessageCallback($url),
+				$getMessageCallback($absoluteUrl),
 				$schemeTypeID,
 				$tag
 			);
@@ -7210,9 +7509,7 @@ class CAllCrmActivity
 		$sql = "SELECT COUNT(DISTINCT a.OWNER_ID) AS CNT FROM {$activityTable} a WHERE a.USER_ID = {$userID} AND a.OWNER_TYPE_ID = {$ownerTypeID} AND a.ACTIVITY_TIME <= {$currentDayEnd}";
 
 		$dbResult = $DB->Query(
-			$sql,
-			false,
-			'File: '.__FILE__.'<br/>Line: '.__LINE__
+			$sql
 		);
 		$result = $dbResult->Fetch();
 		return is_array($result) ? intval($result['CNT']) : 0;
@@ -7435,6 +7732,25 @@ class CAllCrmActivity
 				if ($type)
 				{
 					$url = CCrmOwnerType::GetEntityShowPath(CCrmOwnerType::Activity, $ID);
+					$absoluteUrl = CCrmUrlUtil::ToAbsoluteUrl($url);
+
+					$notifyMessage = static fn (?string $languageId = null) =>
+						Loc::getMessage(
+							"CRM_ACTIVITY_{$type}_RESPONSIBLE_IM_NOTIFY",
+							[ "#title#" => '<a href="' . $url . '">' . htmlspecialcharsbx($arFields['SUBJECT']) . '</a>' ],
+							$languageId,
+						)
+					;
+
+					$notifyMessageOut = static function (?string $languageId = null) use ($arFields, $type, $absoluteUrl) {
+						$message = Loc::getMessage(
+							"CRM_ACTIVITY_{$type}_RESPONSIBLE_IM_NOTIFY",
+							[ "#title#" => htmlspecialcharsbx($arFields['SUBJECT']) ],
+							$languageId,
+						);
+
+						return "{$message} ({$absoluteUrl})";
+					};
 
 					$arMessageFields = array(
 						"MESSAGE_TYPE" => IM_MESSAGE_SYSTEM,
@@ -7445,15 +7761,23 @@ class CAllCrmActivity
 						"LOG_ID" => $eventID,
 						"NOTIFY_EVENT" => "changeAssignedBy",
 						"NOTIFY_TAG" => "CRM|ACTIVITY|".$ID,
-						"NOTIFY_MESSAGE" => GetMessage("CRM_ACTIVITY_".$type."_RESPONSIBLE_IM_NOTIFY", Array("#title#" => '<a href="'.$url.'">'.htmlspecialcharsbx($arFields['SUBJECT']).'</a>')),
-						"NOTIFY_MESSAGE_OUT" => GetMessage("CRM_ACTIVITY_".$type."_RESPONSIBLE_IM_NOTIFY", Array("#title#" => htmlspecialcharsbx($arFields['SUBJECT'])))." (".CCrmUrlUtil::ToAbsoluteUrl($url).")"
+						"NOTIFY_MESSAGE" => $notifyMessage,
+						"NOTIFY_MESSAGE_OUT" => $notifyMessageOut,
 					);
 
 					if(!$bHasPermissions)
 					{
 						//TODO: Add  message 'Need for permissions'
-						$arMessageFields["NOTIFY_MESSAGE"] = GetMessage("CRM_ACTIVITY_".$type."_RESPONSIBLE_IM_NOTIFY", Array("#title#" => htmlspecialcharsbx($arFields['SUBJECT'])));
-						$arMessageFields["NOTIFY_MESSAGE_OUT"] = GetMessage("CRM_ACTIVITY_".$type."_RESPONSIBLE_IM_NOTIFY", Array("#title#" => htmlspecialcharsbx($arFields['SUBJECT'])));
+						$message = static fn (?string $languageId = null) =>
+							Loc::getMessage(
+								"CRM_ACTIVITY_{$type}_RESPONSIBLE_IM_NOTIFY",
+								[ "#title#" => htmlspecialcharsbx($arFields['SUBJECT']) ],
+								$languageId,
+							)
+						;
+
+						$arMessageFields["NOTIFY_MESSAGE"] = $message;
+						$arMessageFields["NOTIFY_MESSAGE_OUT"] = $message;
 					}
 
 					CIMNotify::Add($arMessageFields);
@@ -7465,6 +7789,16 @@ class CAllCrmActivity
 	}
 	private static function SynchronizeLiveFeedEvent($activityID, $params)
 	{
+		if (\Bitrix\Crm\DbHelper::isPgSqlDb())
+		{
+			return true;
+		}
+
+		if (!Crm\Integration\Socialnetwork\Livefeed\AvailabilityHelper::isAvailable())
+		{
+			return false;
+		}
+
 		if(!is_array($params))
 		{
 			$params = array();
@@ -7547,6 +7881,7 @@ class CAllCrmActivity
 				if ($type)
 				{
 					$url = CCrmOwnerType::GetEntityShowPath(CCrmOwnerType::Activity, $activityID);
+					$absoluteUrl = CCrmUrlUtil::ToAbsoluteUrl($url);
 
 					$arMessageFields = array(
 						"MESSAGE_TYPE" => IM_MESSAGE_SYSTEM,
@@ -7575,8 +7910,23 @@ class CAllCrmActivity
 						if ($bHasPermissions)
 						{
 							$arMessageFields["TO_USER_ID"] = $params['START_RESPONSIBLE_ID'];
-							$arMessageFields["NOTIFY_MESSAGE"] = GetMessage("CRM_ACTIVITY_".$type."_NOT_RESPONSIBLE_IM_NOTIFY", Array("#title#" => '<a href="'.$url.'">'.htmlspecialcharsbx($params['SUBJECT']).'</a>'));
-							$arMessageFields["NOTIFY_MESSAGE_OUT"] = GetMessage("CRM_ACTIVITY_".$type."_NOT_RESPONSIBLE_IM_NOTIFY", Array("#title#" => htmlspecialcharsbx($params['SUBJECT'])))." (".CCrmUrlUtil::ToAbsoluteUrl($url).")";
+							$arMessageFields["NOTIFY_MESSAGE"] = static fn (?string $languageId = null) =>
+								Loc::getMessage(
+									"CRM_ACTIVITY_{$type}_NOT_RESPONSIBLE_IM_NOTIFY",
+									[ "#title#" => '<a href="' . $url . '">' . htmlspecialcharsbx($params['SUBJECT']) . '</a>' ],
+									$languageId,
+								)
+							;
+
+							$arMessageFields["NOTIFY_MESSAGE_OUT"] = static function (?string $languageId = null) use ($type, $params, $absoluteUrl) {
+								$message = Loc::getMessage(
+									"CRM_ACTIVITY_{$type}_NOT_RESPONSIBLE_IM_NOTIFY",
+									[ "#title#" => htmlspecialcharsbx($params['SUBJECT']) ],
+									$languageId,
+								);
+
+								return "{$message} ({$absoluteUrl})";
+							};
 
 							CIMNotify::Add($arMessageFields);
 						}
@@ -7598,14 +7948,36 @@ class CAllCrmActivity
 						$arMessageFields["TO_USER_ID"] = $params['FINAL_RESPONSIBLE_ID'];
 						if ($bHasPermissions)
 						{
-							$arMessageFields["NOTIFY_MESSAGE"] = GetMessage("CRM_ACTIVITY_".$type."_RESPONSIBLE_IM_NOTIFY", Array("#title#" => '<a href="'.$url.'">'.htmlspecialcharsbx($params['SUBJECT']).'</a>'));
-							$arMessageFields["NOTIFY_MESSAGE_OUT"] = GetMessage("CRM_ACTIVITY_".$type."_RESPONSIBLE_IM_NOTIFY", Array("#title#" => htmlspecialcharsbx($params['SUBJECT'])))." (".CCrmUrlUtil::ToAbsoluteUrl($url).")";
+							$arMessageFields["NOTIFY_MESSAGE"] = static fn (?string $languageId = null) =>
+								Loc::getMessage(
+									"CRM_ACTIVITY_{$type}_RESPONSIBLE_IM_NOTIFY",
+									[ "#title#" => '<a href="' . $url . '">' . htmlspecialcharsbx($params['SUBJECT']) . '</a>' ],
+									$languageId,
+								)
+							;
+							$arMessageFields["NOTIFY_MESSAGE_OUT"] = static function (?string $languageId = null) use ($type, $params, $absoluteUrl){
+								$message = Loc::getMessage(
+									"CRM_ACTIVITY_{$type}_RESPONSIBLE_IM_NOTIFY",
+									[ "#title#" => htmlspecialcharsbx($params['SUBJECT']) ],
+									$languageId,
+								);
+
+								return "{$message} ({$absoluteUrl})";
+							};
 						}
 						else
 						{
 							//TODO: Add  message 'Need for permissions'
-							$arMessageFields["NOTIFY_MESSAGE"] = GetMessage("CRM_ACTIVITY_".$type."_RESPONSIBLE_IM_NOTIFY", Array("#title#" => htmlspecialcharsbx($params['SUBJECT'])));
-							$arMessageFields["NOTIFY_MESSAGE_OUT"] = GetMessage("CRM_ACTIVITY_".$type."_RESPONSIBLE_IM_NOTIFY", Array("#title#" => htmlspecialcharsbx($params['SUBJECT'])));
+							$message = static fn (?string $languageId = null) =>
+								Loc::getMessage(
+									"CRM_ACTIVITY_{$type}_RESPONSIBLE_IM_NOTIFY",
+									[ "#title#" => htmlspecialcharsbx($params['SUBJECT']) ],
+									$languageId,
+								)
+							;
+
+							$arMessageFields["NOTIFY_MESSAGE"] = $message;
+							$arMessageFields["NOTIFY_MESSAGE_OUT"] = $message;
 						}
 
 						CIMNotify::Add($arMessageFields);
@@ -7634,6 +8006,11 @@ class CAllCrmActivity
 	}
 	private static function UnregisterLiveFeedEvent($activityID)
 	{
+		if (\Bitrix\Crm\DbHelper::isPgSqlDb())
+		{
+			return;
+		}
+
 		$slEntities = CCrmLiveFeed::GetLogEvents(
 			array(),
 			array(
@@ -7694,7 +8071,7 @@ class CAllCrmActivity
 		global $DB;
 		$result = array();
 		$table = CCrmActivity::ELEMENT_TABLE_NAME;
-		$dbResult = $DB->Query("SELECT ELEMENT_ID FROM {$table} WHERE ACTIVITY_ID = {$ID}", false, 'File: '.__FILE__.'<br/>Line: '.__LINE__);
+		$dbResult = $DB->Query("SELECT ELEMENT_ID FROM {$table} WHERE ACTIVITY_ID = {$ID}");
 		while($arResult = $dbResult->Fetch())
 		{
 			$elementID = isset($arResult['ELEMENT_ID']) ? (int)$arResult['ELEMENT_ID'] : 0;
@@ -7831,7 +8208,7 @@ class CAllCrmActivity
 			$description = preg_replace('/<script[^>]*>.*?<\/script>/is', '', $description);
 			$fields['DESCRIPTION_RAW'] = strip_tags(
 					preg_replace(
-						'/(<br[^>]*>)+/is'.BX_UTF_PCRE_MODIFIER,
+						'/(<br[^>]*>)+/isu',
 						"\n",
 						html_entity_decode($description, ENT_QUOTES)
 					)
@@ -7856,9 +8233,9 @@ class CAllCrmActivity
 			$fields['DESCRIPTION_RAW'] = strip_tags(
 				preg_replace(
 					array(
-						'/(<br[^>]*>)+/is'.BX_UTF_PCRE_MODIFIER,
-						'/(&nbsp;)+/is'.BX_UTF_PCRE_MODIFIER,
-						'/\[[0-9a-z\W\=]+\]/iUs'.BX_UTF_PCRE_MODIFIER
+						'/(<br[^>]*>)+/isu',
+						'/(&nbsp;)+/isu',
+						'/\[[0-9a-z\W\=]+\]/iUsu'
 					),
 					array(
 						"\n",
@@ -7878,7 +8255,7 @@ class CAllCrmActivity
 
 			if($enableHtml)
 			{
-				$fields['DESCRIPTION_HTML'] = preg_replace("/[\r\n]+/".BX_UTF_PCRE_MODIFIER, "<br/>", htmlspecialcharsbx($description));
+				$fields['DESCRIPTION_HTML'] = preg_replace("/[\r\n]+/u", "<br/>", htmlspecialcharsbx($description));
 			}
 
 			$fields['DESCRIPTION_RAW'] = $description;
@@ -7950,6 +8327,43 @@ class CAllCrmActivity
 		/** @var ActCounterLightTimeRepo $lightCounterRepo */
 		$lightCounterRepo = ServiceLocator::getInstance()->get('crm.activity.actcounterlighttimerepo');
 		return $lightCounterRepo->queryLightTimeByActivityId($ID);
+	}
+
+	/**
+	 * @param array $activity - activity fields
+	 *
+	 * @return int[]|null
+	 */
+	final public static function extractStorageElementIds(array $activity): ?array
+	{
+		if (!isset($activity['STORAGE_ELEMENT_IDS']))
+		{
+			return null;
+		}
+
+		if (is_string($activity['STORAGE_ELEMENT_IDS']))
+		{
+			$storageElementIds = unserialize($activity['STORAGE_ELEMENT_IDS'], ['allowed_classes' => false]);
+		}
+		elseif (is_array($activity['STORAGE_ELEMENT_IDS']))
+		{
+			$storageElementIds = $activity['STORAGE_ELEMENT_IDS'];
+		}
+		else
+		{
+			$storageElementIds = [];
+		}
+
+		$intStorageElementIds = array_map('intval', $storageElementIds);
+		$validIdStorageElementIds = array_filter($intStorageElementIds, fn(int $id) => $id > 0);
+
+		// reindex array
+		return array_values($validIdStorageElementIds);
+	}
+
+	private static function isLocationFeatureEnabled(): bool
+	{
+		return \Bitrix\Crm\Integration\Bitrix24Manager::isFeatureEnabled('calendar_location');
 	}
 }
 
@@ -8055,11 +8469,29 @@ class CCrmActivityStatus
 
 class CCrmActivityDirection
 {
-	const Undefined = 0;
-	const Incoming = 1;
-	const Outgoing = 2;
+	public const Undefined = 0;
+	public const Incoming = 1;
+	public const Outgoing = 2;
+
+	public const IncomingName = 'INCOMING';
+	public const OutgoingName = 'OUTGOING';
 
 	private static $ALL_DESCRIPTIONS = array();
+
+	public static function IsDefined($typeId): bool
+	{
+		return in_array((int)$typeId, [self::Incoming, self::Outgoing], true);
+	}
+
+	public static function ResolveName($typeId): string
+	{
+		return match ((int)$typeId)
+		{
+			self::Incoming => self::IncomingName,
+			self::Outgoing => self::OutgoingName,
+			default => '',
+		};
+	}
 
 	public static function GetAllDescriptions($typeID = CCrmActivityType::Undefined)
 	{

@@ -23,7 +23,7 @@ if(!CCrmPerms::IsAuthorized() || !Permissions\Order::checkReadPermission(0, $use
 }
 
 $entityId = $_GET['USER_ID'];
-$_GET['USER_ID'] = preg_replace('/^(ORDER)_/i'.BX_UTF_PCRE_MODIFIER, '', $_GET['USER_ID']);
+$_GET['USER_ID'] = preg_replace('/^(ORDER)_/iu', '', $_GET['USER_ID']);
 $orderId = (int) $_GET['USER_ID'];
 
 if ($orderId > 0)

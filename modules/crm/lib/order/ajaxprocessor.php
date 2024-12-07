@@ -182,7 +182,7 @@ class AjaxProcessor
 
 		if($action === 'SAVE' || $action === 'DELETE')
 		{
-			$action = ToLower($action);
+			$action = mb_strtolower($action);
 		}
 		elseif($action === 'GET_FORMATTED_SUM')
 		{

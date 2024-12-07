@@ -15,7 +15,7 @@ define("BX_SOCSERV_POPUP", true);
 		<?endif?>
 
 		<?if(($arParams["~CURRENT_SERVICE"] <> '') && $arParams["~FOR_SPLIT"] != 'Y'):?>
-			<script type="text/javascript">
+			<script>
 				BX.ready(function(){BxShowAuthService('<?=CUtil::JSEscape($arParams["~CURRENT_SERVICE"])?>', '<?=$arParams["~SUFFIX"]?>')});
 			</script>
 		<?endif?>

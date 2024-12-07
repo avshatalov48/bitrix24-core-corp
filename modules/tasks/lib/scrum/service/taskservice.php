@@ -251,6 +251,11 @@ class TaskService implements Errorable
 
 	public function updateTaskLinks(int $parentTaskId, int $childTaskId): void
 	{
+		if (!$parentTaskId)
+		{
+			return;
+		}
+
 		$taskItem = $this->getTaskItemObject($parentTaskId);
 
 		$parentTask = $taskItem->getData(false, [
@@ -489,6 +494,11 @@ class TaskService implements Errorable
 
 	public function changeTask(int $taskId, array $taskFields): bool
 	{
+		if (!$taskId)
+		{
+			return false;
+		}
+
 		try
 		{
 			$task = $this->getTaskItemObject($taskId);
@@ -510,6 +520,11 @@ class TaskService implements Errorable
 
 	public function hasAccessToCounters(): bool
 	{
+		if (!$this->getOwnerId())
+		{
+			return false;
+		}
+
 		if (!self::$isSubordinate)
 		{
 			self::$isSubordinate = \CTasks::isSubordinate($this->getOwnerId(), $this->executiveUserId);
@@ -547,6 +562,11 @@ class TaskService implements Errorable
 	 */
 	public function getTaskClosedDate($taskId)
 	{
+		if (!$taskId)
+		{
+			return null;
+		}
+
 		try
 		{
 			$taskItemObject = $this->getTaskItemObject($taskId);
@@ -662,6 +682,11 @@ class TaskService implements Errorable
 
 	public function isCompletedTask(int $taskId): bool
 	{
+		if (!$taskId)
+		{
+			return false;
+		}
+
 		try
 		{
 			$queryObject = \CTasks::getList(
@@ -738,6 +763,11 @@ class TaskService implements Errorable
 		bool $notCompleted = true
 	): array
 	{
+		if (!$taskId || !$groupId)
+		{
+			return [];
+		}
+
 		$taskIds = [];
 
 		try
@@ -814,6 +844,11 @@ class TaskService implements Errorable
 
 	public function getLinkedTasks(int $taskId): array
 	{
+		if (!$taskId)
+		{
+			return [];
+		}
+
 		try
 		{
 			$taskItem = $this->getTaskItemObject($taskId);
@@ -1088,9 +1123,14 @@ class TaskService implements Errorable
 		}
 	}
 
-	public static function onAfterTaskUpdate(int $taskId, array &$fields, array &$previousFields)
+	public static function onAfterTaskUpdate(int $taskId, array &$fields, ?array &$previousFields)
 	{
 		if (!Loader::includeModule('socialnetwork'))
+		{
+			return;
+		}
+
+		if (is_null($previousFields))
 		{
 			return;
 		}
@@ -1126,6 +1166,7 @@ class TaskService implements Errorable
 					(new CacheService($taskId, CacheService::ITEM_TASKS))->clean();
 
 					self::deleteScrumItem($taskId);
+					self::deleteFromKanban($taskId, $previousGroupId);
 				}
 
 				return;
@@ -1394,6 +1435,7 @@ class TaskService implements Errorable
 		{
 			self::$taskItemObject[$taskId] = \CTaskItem::getInstance($taskId, $this->executiveUserId);
 		}
+
 		return self::$taskItemObject[$taskId];
 	}
 
@@ -1517,6 +1559,11 @@ class TaskService implements Errorable
 
 	private function isLinkedTask(int $taskId): bool
 	{
+		if (!$taskId)
+		{
+			return false;
+		}
+
 		try
 		{
 			$taskItem = $this->getTaskItemObject($taskId);
@@ -1743,6 +1790,16 @@ class TaskService implements Errorable
 		{
 			$itemService->removeItem($scrumItem, $pushService);
 		}
+	}
+
+	private static function deleteFromKanban(int $taskId, int $groupId): void
+	{
+		$sprintService = new SprintService();
+		$kanbanService = new KanbanService();
+
+		$sprint = $sprintService->getActiveSprintByGroupId($groupId);
+
+		$kanbanService->removeTasksFromKanban($sprint->getId(), [$taskId]);
 	}
 
 	private static function isTaskInActiveSprint(int $taskId, int $groupId): bool

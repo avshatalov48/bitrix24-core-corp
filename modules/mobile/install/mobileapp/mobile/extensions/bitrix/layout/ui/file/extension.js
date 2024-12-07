@@ -13,7 +13,9 @@
 		openNativeViewer,
 		NativeViewerMediaTypes,
 	} = require('utils/file');
+	const { Line } = require('utils/skeleton');
 	const { Loc } = require('loc');
+	const { ShimmedSafeImage } = require('layout/ui/safe-image');
 
 	const throttledNativeViewer = throttle(openNativeViewer, 500);
 
@@ -120,6 +122,8 @@
 			styles,
 			attachmentCloseIcon,
 			onDeleteAttachmentItem,
+			textLines,
+			onFilePreviewMenuClick,
 		} = options;
 
 		let { url, imageUri, files } = options;
@@ -132,6 +136,11 @@
 
 		files = Array.isArray(files) ? clone(files) : [];
 		const images = prepareImageCollection(files, id, url);
+		let ellipsize = 'middle';
+		if (Application.getPlatform() === 'android' && textLines > 1)
+		{
+			ellipsize = 'end';
+		}
 
 		return View(
 			{
@@ -147,7 +156,7 @@
 						alignItems: 'center',
 					},
 				},
-				Image({
+				ShimmedSafeImage({
 					testId: 'pinnedFileImage',
 					style: styles.imagePreview,
 					uri: imageUri,
@@ -171,8 +180,8 @@
 							textAlign: 'center',
 						},
 						text: name,
-						numberOfLines: 2,
-						ellipsize: Application.getPlatform() === 'android' ? 'end' : 'middle',
+						numberOfLines: textLines,
+						ellipsize,
 					}),
 				),
 			),
@@ -201,7 +210,36 @@
 					style: styles.imageOutline(hasError),
 				},
 			),
-			onDeleteAttachmentItem && View(
+			onFilePreviewMenuClick && View(
+				{
+					style: {
+						...styles.menuButtonWrapper,
+						width: styles.menuButtonWrapper.width + 8,
+						height: styles.menuButtonWrapper.height + 8,
+					},
+					onClick: () => {
+						onFilePreviewMenuClick({
+							...options,
+							imageUri,
+							url,
+							files,
+							images,
+						});
+					},
+				},
+				Image({
+					testId: 'filePreviewMenu',
+					svg: {
+						content: DEFAULT_FILE_MENU_ICON,
+					},
+					resizeMode: 'cover',
+					style: {
+						width: styles.menuButtonWrapper.width,
+						height: styles.menuButtonWrapper.height,
+					},
+				}),
+			),
+			!onFilePreviewMenuClick && onDeleteAttachmentItem && View(
 				{
 					style: {
 						...styles.deleteButtonWrapper,
@@ -235,6 +273,8 @@
 			styles,
 			attachmentCloseIcon,
 			onDeleteAttachmentItem,
+			textLines,
+			onFilePreviewMenuClick,
 		} = options;
 
 		let { url, attachmentFileIconFolder } = options;
@@ -300,7 +340,7 @@
 							textAlign: 'center',
 						},
 						text: name,
-						numberOfLines: 2,
+						numberOfLines: textLines,
 						ellipsize: Application.getPlatform() === 'android' ? 'end' : 'middle',
 					}),
 				),
@@ -331,7 +371,36 @@
 					style: styles.imageOutline(hasError),
 				},
 			),
-			onDeleteAttachmentItem && Image({
+			onFilePreviewMenuClick && View(
+				{
+					style: {
+						...styles.menuButtonWrapper,
+						width: styles.menuButtonWrapper.width + 8,
+						height: styles.menuButtonWrapper.height + 8,
+					},
+					onClick: () => {
+						onFilePreviewMenuClick({
+							...options,
+							url,
+							attachmentFileIconFolder,
+							extension,
+							icon,
+						});
+					},
+				},
+				Image({
+					testId: 'filePreviewMenu',
+					svg: {
+						content: DEFAULT_FILE_MENU_ICON,
+					},
+					resizeMode: 'cover',
+					style: {
+						width: styles.menuButtonWrapper.width,
+						height: styles.menuButtonWrapper.height,
+					},
+				}),
+			),
+			!onFilePreviewMenuClick && onDeleteAttachmentItem && Image({
 				testId: 'pinnedFileDetach',
 				svg: {
 					content: attachmentCloseIcon,
@@ -424,11 +493,49 @@
 		);
 	}
 
+	function renderShimmedFile(options)
+	{
+		const { styles, textLines } = options;
+
+		return View(
+			{
+				style: styles.wrapper,
+			},
+			View(
+				{
+					style: {
+						flexDirection: 'column',
+						justifyContent: 'center',
+						alignItems: 'center',
+					},
+				},
+				ShimmedSafeImage({
+					style: styles.imagePreview,
+					uri: '',
+					resizeMode: 'cover',
+				}),
+				View(
+					{
+						style: {
+							marginTop: 2,
+							width: 58,
+							justifyContent: 'center',
+							alignItems: 'center',
+						},
+					},
+					...Array.from({ length: textLines }).fill(
+						Line('100%', 8, 4),
+					),
+				),
+			),
+		);
+	}
+
 	function deleteItem(onDeleteAttachmentItem)
 	{
 		confirmDestructiveAction({
 			title: '',
-			description: Loc.getMessage('UI_FILE_ATTACHMENT_DELETE_CONFIRM_TITLE'),
+			description: Loc.getMessage('UI_FILE_ATTACHMENT_DELETE_CONFIRM_TITLE_MSGVER_1'),
 			onDestruct: onDeleteAttachmentItem,
 		});
 	}
@@ -466,6 +573,13 @@
 				justifyContent: 'flex-start',
 				alignItems: 'flex-end',
 			},
+			menuButtonWrapper: {
+				position: 'absolute',
+				top: 0,
+				right: 0,
+				justifyContent: 'flex-start',
+				alignItems: 'flex-end',
+			},
 		};
 
 		if (externalStyles)
@@ -478,6 +592,7 @@
 
 	const DEFAULT_CLOSE_ICON = `<svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="9" cy="9" r="8.5" fill="${AppTheme.colors.base6}" stroke="${AppTheme.colors.bgContentPrimary}"/><path fill-rule="evenodd" clip-rule="evenodd" d="M10.125 9L12.375 11.25L11.25 12.375L9 10.125L6.75 12.375L5.625 11.25L7.875 9L5.625 6.75L6.75 5.625L9 7.875L11.25 5.625L12.375 6.75L10.125 9Z" fill="${AppTheme.colors.bgContentPrimary}"/></svg>`;
 	const DEFAULT_FILE_ICONS_FOLDER = '/bitrix/mobileapp/mobile/extensions/bitrix/layout/ui/file/images/file/';
+	const DEFAULT_FILE_MENU_ICON = `	<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="10" cy="10" r="8.5" fill="${AppTheme.colors.base6}" stroke="${AppTheme.colors.bgContentPrimary}"/><path fill-rule="evenodd" clip-rule="evenodd" d="M7.73416 9.99977C7.73416 10.8675 7.03072 11.571 6.16298 11.571C5.29524 11.571 4.5918 10.8675 4.5918 9.99977C4.5918 9.13203 5.29524 8.42859 6.16298 8.42859C7.03072 8.42859 7.73416 9.13203 7.73416 9.99977ZM6.16298 10.7376C6.57048 10.7376 6.90082 10.4073 6.90082 9.99977C6.90082 9.59227 6.57048 9.26192 6.16298 9.26192C5.75548 9.26192 5.42513 9.59227 5.42513 9.99977C5.42513 10.4073 5.75548 10.7376 6.16298 10.7376ZM11.5709 9.99977C11.5709 10.8675 10.8675 11.571 9.99975 11.571C9.13201 11.571 8.42857 10.8675 8.42857 9.99977C8.42857 9.13203 9.13201 8.42859 9.99975 8.42859C10.8675 8.42859 11.5709 9.13203 11.5709 9.99977ZM9.99975 10.7376C10.4073 10.7376 10.7376 10.4073 10.7376 9.99977C10.7376 9.59227 10.4073 9.26192 9.99975 9.26192C9.59225 9.26192 9.2619 9.59227 9.2619 9.99977C9.2619 10.4073 9.59225 10.7376 9.99975 10.7376ZM15.4078 9.99977C15.4078 10.8675 14.7043 11.571 13.8366 11.571C12.9688 11.571 12.2654 10.8675 12.2654 9.99977C12.2654 9.13203 12.9688 8.42859 13.8366 8.42859C14.7043 8.42859 15.4078 9.13203 15.4078 9.99977ZM13.8366 10.7376C14.2441 10.7376 14.5744 10.4073 14.5744 9.99977C14.5744 9.59227 14.2441 9.26192 13.8366 9.26192C13.4291 9.26192 13.0987 9.59227 13.0987 9.99977C13.0987 10.4073 13.4291 10.7376 13.8366 10.7376Z" fill="${AppTheme.colors.bgContentPrimary}"/></svg>`;
 
 	/**
 	 * @function UI.File
@@ -491,6 +606,7 @@
 	 * @param {Boolean} options.showName
 	 * @param {Boolean} options.isInLine
 	 * @param {Boolean} options.isLoading
+	 * @param {Boolean} options.isShimmed
 	 * @param {Object} options.styles
 	 * @param {String} options.attachmentCloseIcon
 	 * @param {String} options.attachmentFileIconFolder
@@ -500,12 +616,17 @@
 	 */
 	function File(options)
 	{
-		const { url, type, name, showName, isInLine } = options;
+		const { url, type, name, showName, isInLine, isShimmed, textLines, onFilePreviewMenuClick } = options;
 		let { imageUri, attachmentCloseIcon, attachmentFileIconFolder, styles } = options;
 
 		styles = buildStyles(styles);
 		attachmentCloseIcon = attachmentCloseIcon || DEFAULT_CLOSE_ICON;
 		attachmentFileIconFolder = attachmentFileIconFolder || DEFAULT_FILE_ICONS_FOLDER;
+
+		if (isShimmed)
+		{
+			return renderShimmedFile({ ...options, styles });
+		}
 
 		const fileType = getNativeViewerMediaType(getMimeType(type, name));
 
@@ -527,6 +648,8 @@
 				attachmentCloseIcon,
 				attachmentFileIconFolder,
 				fileType,
+				textLines,
+				onFilePreviewMenuClick,
 			});
 		}
 
@@ -547,6 +670,8 @@
 			attachmentCloseIcon,
 			attachmentFileIconFolder,
 			fileType,
+			textLines,
+			onFilePreviewMenuClick,
 		});
 	}
 

@@ -1,4 +1,4 @@
-import {Loc, Type, ajax, Event} from "main.core";
+import { Loc, Type, ajax, Event } from "main.core";
 
 class Ajax
 {
@@ -60,7 +60,7 @@ class Ajax
 				}
 				else if (this.type == 'html')
 				{
-					failed = (response == '{"status":"failed"}');
+					failed = (response === '{"status":"failed"}');
 				}
 
 				if (failed)
@@ -338,7 +338,7 @@ class Ajax
 						}
 						else if (this.type === 'html')
 						{
-							failed = (response_ii == '{"status":"failed"}');
+							failed = (response_ii === '{"status":"failed"}');
 						}
 
 						if (failed)
@@ -378,22 +378,27 @@ class Ajax
 		{
 			Event.bind(this.xhr, 'progress', this.progress_callback);
 		}
+
 		if (Type.isFunction(this.load_callback))
 		{
 			Event.bind(this.xhr, 'load', this.load_callback);
 		}
+
 		if (Type.isFunction(this.loadstart_callback))
 		{
 			Event.bind(this.xhr, 'loadstart', this.loadstart_callback);
 		}
+
 		if (Type.isFunction(this.loadend_callback))
 		{
 			Event.bind(this.xhr, 'loadend', this.loadend_callback);
 		}
+
 		if (Type.isFunction(this.error_callback))
 		{
 			Event.bind(this.xhr, 'error', this.error_callback);
 		}
+
 		if (Type.isFunction(this.abort_callback))
 		{
 			Event.bind(this.xhr, 'abort', this.abort_callback);

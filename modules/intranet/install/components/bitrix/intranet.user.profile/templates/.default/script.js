@@ -231,9 +231,13 @@
 								this.showConfirmPopup(BX.message("INTRANET_USER_PROFILE_MOVE_ADMIN_RIGHTS_CONFIRM"), this.setAdminRights.bind(this));
 							}
 						}
-						else
+						else if (this.isCloud)
 						{
 							this.getAdminConfirmPopup().show();
+						}
+						else
+						{
+							this.setAdminRights();
 						}
 					}, this),
 				});
@@ -242,6 +246,7 @@
 			if (
 				this.isCurrentUserAdmin === 'Y'
 				&& this.userStatus !== "fired"
+				&& this.userStatus !== "waiting"
 				&& !this.isOwnProfile
 				&& !BX.util.in_array(this.userStatus, ['email', 'shop' ])
 			)
@@ -277,6 +282,27 @@
 					onclick: BX.proxy(function () {
 						BX.proxy_context.popupWindow.close();
 						this.showConfirmPopup(BX.message("INTRANET_USER_PROFILE_HIRE_CONFIRM"), this.hireUser.bind(this));
+					}, this)
+				});
+			}
+
+			if (this.isCurrentUserAdmin === 'Y' && this.userStatus === "waiting" && !this.isOwnProfile)
+			{
+				menuItems.push({
+					text: BX.message("INTRANET_USER_PROFILE_ACTION_CONFIRM"),
+					className: "menu-popup-no-icon",
+					onclick: BX.proxy(function () {
+						BX.proxy_context.popupWindow.close();
+						this.confirmUserRequest('Y');
+					}, this)
+				});
+
+				menuItems.push({
+					text: BX.message("INTRANET_USERPROFILE_ACTION_REFUSE"),
+					className: "menu-popup-no-icon",
+					onclick: BX.proxy(function () {
+						BX.proxy_context.popupWindow.close();
+						this.confirmUserRequest('N');
 					}, this)
 				});
 			}
@@ -319,6 +345,7 @@
 				&& this.canEditProfile && !this.isOwnProfile
 				&& !this.isIntegratorUser
 				&& this.userStatus !== "fired"
+				&& this.userStatus !== "waiting"
 			)
 			{
 				menuItems.push({
@@ -399,7 +426,7 @@
 						props : {
 							style : "max-width: 450px"
 						},
-						html: BX.message('INTRANET_USER_PROFILE_MOVE_ADMIN_RIGHTS_SECURITY_CONFIRM_DESCRIPTION'),
+						html: BX.message('INTRANET_USER_PROFILE_MOVE_ADMIN_RIGHTS_SECURITY_CONFIRM_DESCRIPTION_MSGVER_1'),
 					}),
 				closeIcon : false,
 				lightShadow : true,
@@ -409,7 +436,7 @@
 				contentPadding: 10,
 				buttons: [
 					new BX.UI.CreateButton({
-						text: BX.message("INTRANET_USER_PROFILE_CONFIRM_YES"),
+						text: BX.message('INTRANET_USER_PROFILE_CONFIRM_YES_MSGVER_1'),
 						events: {
 							click: (button, event) => {
 								this.setAdminRights()
@@ -418,8 +445,17 @@
 							}
 						}
 					}),
+					new BX.UI.CreateButton({
+						text : BX.message('INTRANET_USER_PROFILE_CONFIRM_YES_INTEGRATOR'),
+						events : {
+							click: () => {
+								this.setIntegratorRights();
+								popup.close();
+							},
+						},
+					}),
 					new BX.UI.CancelButton({
-						text : BX.message("INTRANET_USER_PROFILE_CONFIRM_NO"),
+						text : BX.message('INTRANET_USER_PROFILE_CONFIRM_NO_MSGVER_1'),
 						events : {
 							click: () => {
 								popup.close();
@@ -475,6 +511,37 @@
 					})
 				]
 			}).show();
+		},
+
+		showIntegratorPartnerErrorPopup: function()
+		{
+			const popup = BX.PopupWindowManager.create('popup-message', null, {
+				id: 'intranet-user-profile-error-popup',
+				content:
+					BX.create('div', {
+						props: {
+							style: 'max-width: 450px',
+						},
+						html: BX.message('INTRANET_USER_PROFILE_INTEGRATOR_ERROR_NOT_PARTNER'),
+					}),
+				closeIcon: false,
+				lightShadow: true,
+				offsetLeft: 100,
+				overlay: true,
+				contentPadding: 10,
+				buttons: [
+					new BX.UI.CreateButton({
+						text: BX.message('INTRANET_USER_PROFILE_INTEGRATOR_ERROR_NOT_PARTNER_CLOSE'),
+						events: {
+							click()
+							{
+								this.context.close();
+							},
+						},
+					}),
+				],
+			});
+			popup.show();
 		},
 
 		showErrorPopup: function(error)
@@ -636,7 +703,14 @@
 				}
 			}, function (response) {
 				this.hideLoader({loader: loader});
-				this.showErrorPopup(response["errors"][0].message);
+				if (response["errors"][0].code === 'INTEGRATOR_ERROR_NOT_PARTNER')
+				{
+					this.showIntegratorPartnerErrorPopup();
+				}
+				else
+				{
+					this.showErrorPopup(response["errors"][0].message);
+				}
 			}.bind(this));
 		},
 
@@ -702,6 +776,39 @@
 				if (response.data === true)
 				{
 					location.reload();
+				}
+				else
+				{
+					this.hideLoader({loader: loader});
+					this.showErrorPopup("Error");
+				}
+			}, function (response) {
+
+				this.hideLoader({loader: loader});
+			}.bind(this));
+		},
+
+		confirmUserRequest: function(confirm)
+		{
+			const loader = this.showLoader({node: BX("intranet-user-profile-wrap"), loader: null, size: 100});
+			BX.ajax.runAction('intranet.controller.invite.confirmUserRequest', {
+				signedParameters: this.signedParameters,
+				data: {
+					userId: this.userId,
+					isAccept: confirm
+				}
+			}).then(function (response) {
+				if (response.data === true)
+				{
+					if (confirm !== 'Y')
+					{
+						BX.SidePanel.Instance.postMessageTop(window, 'userProfileSlider::reloadList', {});
+						BX.SidePanel.Instance.close();
+					}
+					else
+					{
+						location.reload();
+					}
 				}
 				else
 				{

@@ -19,7 +19,7 @@ If you use multiple Bitrix24's, make sure the code is for a correct Bitrix24 bef
 <div class=\"login-text-img\"><img src=\"#PATH#/images/en/img4.png\"></div>
 <br/>
 In case you never had a chance to enable and configure two-step authentication or lost your phone, please contact your administrator to restore access to your Bitrix24.<br/><br/>
-If you are the administrator, please contact <a href=\"http://www.bitrix24.com/support/helpdesk/\">Bitrix Helpdesk</a> to restore access.";
+If you are the administrator, please contact <a href=\"https://www.bitrix24.com/support/helpdesk/\">Bitrix Helpdesk</a> to restore access.";
 $MESS["B24_NEW_USER_MENTION"] = "has mentioned you in a comment in a message about a newly added user #title#.";
 $MESS["B24_NEW_USER_MENTION_F"] = "has mentioned you in a comment in a message about a newly added user #title#.";
 $MESS["B24_NEW_USER_MENTION_M"] = "has mentioned you in a comment in a message about a newly added user #title#.";

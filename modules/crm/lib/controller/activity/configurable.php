@@ -107,8 +107,9 @@ class Configurable extends Base
 	{
 		if ($server->getAuthType() !== \Bitrix\Rest\OAuth\Auth::AUTH_TYPE)
 		{
-			$this->addError(new Error(Loc::getMessage('CRM_CONFIGURABLE_REST_APP_ERROR_WRONG_CONTEXT'), 'ERROR_WRONG_CONTEXT'));
+			$this->addError(static::getWrongContextError());
 		}
+
 		$restAppClientId = $server->getClientId();
 		if ($activity->getId())
 		{
@@ -124,7 +125,7 @@ class Configurable extends Base
 		}
 		else
 		{
-			$this->addError(new Error(Loc::getMessage('CRM_CONFIGURABLE_REST_APP_ERROR_WRONG_CONTEXT'), 'ERROR_WRONG_CONTEXT'));
+			$this->addError(static::getWrongContextError());
 		}
 
 		$validateFieldsResult = $this->validateFields($fields);
@@ -201,6 +202,14 @@ class Configurable extends Base
 				}
 			}
 		}
+	}
+
+	public static function getWrongContextError(): Error
+	{
+		return new Error(
+			Loc::getMessage('CRM_CONFIGURABLE_REST_APP_ERROR_WRONG_CONTEXT'),
+			'ERROR_WRONG_CONTEXT',
+		);
 	}
 
 	private function validateConfigurableType(?array $fields, Result $result)

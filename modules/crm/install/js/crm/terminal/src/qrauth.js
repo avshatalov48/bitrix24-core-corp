@@ -3,7 +3,7 @@ import {QrAuthorization} from "ui.qrauthorization";
 
 export class QrAuth
 {
-	qr;
+	intent;
 	title;
 	content;
 	popup;
@@ -12,7 +12,7 @@ export class QrAuth
 	{
 		this.settingsCollection = Extension.getSettings('crm.terminal');
 
-		this.qr = options.qr || this.settingsCollection.get('qr');
+		this.intent = options.intent || this.settingsCollection.get('intent');
 		this.title = options.title || Loc.getMessage('TERMINAL_QR_AUTH_TITLE');
 		this.content = options.content || Loc.getMessage('TERMINAL_QR_AUTH_CONTENT_MSGVER_1');
 
@@ -26,12 +26,12 @@ export class QrAuth
 		if (!this.popup)
 		{
 			this.popup = new QrAuthorization({
-				qr: this.qr,
+				intent: this.intent,
 				title: this.title,
 				content: this.content,
 				popupParam: {
-					overlay: true
-				}
+					overlay: true,
+				},
 			});
 		}
 	}

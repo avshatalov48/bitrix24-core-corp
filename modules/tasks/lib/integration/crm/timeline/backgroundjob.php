@@ -8,6 +8,5 @@ interface BackGroundJob
 		array $payload,
 		string $endpoint = '',
 		int $priority = 0,
-		bool $isImmediately = false
 	): void;
 }

@@ -16,22 +16,33 @@ class PortalSettings extends AbstractSettings
 	public const TYPE = 'portal';
 
 	private bool $isBitrix24;
-	private Intranet\PortalSettings $portalSettings;
-	private const LOGO_PRESETS = ['logo' => [222, 55], '2x' => [444, 110]];
+	private Intranet\Service\PortalSettings $portalSettings;
+	private Intranet\Portal\PortalLogo $portalLogo;
+
+	private const EXAMPLE_DNS = [
+		'ns-1277.awsdns-31.org', 'ns-310.awsdns-38.com', 'ns-581.awsdns-08.net', 'ns-1613.awsdns-09.co.uk'
+	];
+
+	private const EXAMPLE_DNS_RU = [
+		'a.ns.selectel.ru', 'b.ns.selectel.ru', 'c.ns.selectel.ru', 'd.ns.selectel.ru'
+	];
 
 	public function __construct(array $data = [])
 	{
 		parent::__construct($data);
 		$this->isBitrix24 = Main\Loader::includeModule('bitrix24');
-		$this->portalSettings = ($this->isBitrix24 ? Bitrix24\PortalSettings::getInstance() :
-			Intranet\PortalSettings::getInstance());
+		$this->portalSettings = $this->isBitrix24
+			? Bitrix24\Service\PortalSettings::getInstance()
+			: Intranet\Service\PortalSettings::getInstance()
+		;
+		$this->portalLogo = new Intranet\Portal\PortalLogo($this->portalSettings);
 	}
 
 	public function validate(): ErrorCollection
 	{
 		$errors = new ErrorCollection();
 
-		if (isset($this->data['title']) && !$this->portalSettings->canCurrentUserEditTitle())
+		if (isset($this->data['title']) && !$this->portalSettings->titleSettings()->canCurrentUserEdit())
 		{
 			$errors->add([new Error(
 				'Access denied.', 
@@ -46,7 +57,9 @@ class PortalSettings extends AbstractSettings
 		//region Logo
 		if (isset($this->data['logo']))
 		{
-			if (!$this->portalSettings->canCurrentUserEditLogo())
+			$logoSettings = $this->portalSettings->logoSettings();
+
+			if (!$logoSettings->canCurrentUserEdit())
 			{
 				$errors->add([new Error(
 					'Access denied.',
@@ -60,10 +73,12 @@ class PortalSettings extends AbstractSettings
 			else if ($files = Main\Context::getCurrent()->getRequest()->getFile('portal'))
 			{
 				$logo = array_combine(array_keys($files), array_column($files, 'logo_file'));
+
 				if (!empty($logo))
 				{
-					if (($error = \CFile::CheckFile($logo, 0, 'image/png', 'png'))
-						|| ($error = \CFile::CheckImageFile($logo, 0, self::LOGO_PRESETS['2x'][0], self::LOGO_PRESETS['2x'][1]))
+					if (
+						($error = \CFile::CheckFile($logo, 0, 'image/png', 'png'))
+						|| ($error = \CFile::CheckImageFile($logo, 0, Intranet\Portal\PortalLogo::LOGO_PRESETS['2x'][0], Intranet\Portal\PortalLogo::LOGO_PRESETS['2x'][1]))
 					)
 					{
 						$errors->setError(new Error($error, 400,
@@ -80,10 +95,11 @@ class PortalSettings extends AbstractSettings
 
 		if (!empty($this->data['subDomainName'])
 			&& $this->isBitrix24
-			&& $this->data['subDomainName'] !== $this->portalSettings->getDomain()->getSubDomain()
+			&& $this->data['subDomainName'] !== $this->portalSettings->domainSettings()->getSubDomain()
 		)
 		{
-			$domainSettings = $this->portalSettings->getDomain();
+			$domainSettings = $this->portalSettings->domainSettings();
+
 			if (!$domainSettings->canCurrentUserEdit())
 			{
 				$errors->add([new Error(
@@ -157,42 +173,37 @@ class PortalSettings extends AbstractSettings
 
 		if (isset($this->data['name']))
 		{
-			$this->portalSettings->setName($this->data['name']);
+			$this->portalSettings->nameSettings()->setName($this->data['name']);
 		}
 
 		if (isset($this->data['title']))
 		{
-			$this->portalSettings->setTitle($this->data['title']);
+			$this->portalSettings->titleSettings()->setTitle($this->data['title']);
 		}
 
 		if (isset($this->data['logo']))
 		{
 			if ($this->data['logo'] === 'remove')
 			{
-				$this->portalSettings->removeLogo();
+				$this->portalLogo->removeLogo();
 			}
 			else if ($files = Main\Context::getCurrent()->getRequest()->getFile('portal'))
 			{
-				$file = array_combine(array_keys($files), array_column($files, 'logo_file'));
-				$result = $this->saveLogo($file);
-				if ($result->isSuccess())
-				{
-					$this->portalSettings->setLogo(...array_values($result->getId()));
-				}
+				$this->portalLogo->saveLogo($files);
 			}
 		}
 
 		if (isset($this->data['logo24']))
 		{
-			$this->portalSettings->setLogo24($this->data['logo24']);
+			$this->portalSettings->logo24Settings()->setLogo24($this->data['logo24']);
 		}
 
 		if (!empty($this->data['subDomainName'])
 			&& $this->isBitrix24
-			&& $this->data['subDomainName'] !== $this->portalSettings->getDomain()->getSubDomain()
+			&& $this->data['subDomainName'] !== $this->portalSettings->domainSettings()->getSubDomain()
 		)
 		{
-			$renameResult = $this->portalSettings->getDomain()->rename(
+			$renameResult = $this->portalSettings->domainSettings()->rename(
 				$this->data['subDomainName']
 			);
 			if (!$renameResult->isSuccess())
@@ -228,56 +239,6 @@ class PortalSettings extends AbstractSettings
 		return $result;
 	}
 
-	private function saveLogo(array $file): Main\ORM\Data\AddResult
-	{
-		$result = new Main\ORM\Data\AddResult();
-
-		$file['MODULE_ID'] = 'bitrix24';
-		$ids = [];
-		foreach (self::LOGO_PRESETS as $presetId => [$width, $height])
-		{
-			$saveFile = $file;
-			$saveFile['name'] = 'logo_' . Main\Security\Random::getString(10) . '.png';
-			$enough = true;
-
-			if (\CFile::CheckImageFile($saveFile, 0, $width, $height) !== null)
-			{
-				$enough = false;
-				\CFile::ResizeImage($saveFile, ['width' => $width, 'height' => $height]);
-			}
-
-			if (!($id = (int)\CFile::SaveFile($saveFile, 'bitrix24')))
-			{
-				global $APPLICATION;
-				$result->addError(new Error($APPLICATION->GetException()?->GetString()));
-				break;
-			}
-			else
-			{
-				$ids[$presetId] = $id;
-			}
-
-			if ($enough)
-			{
-				break;
-			}
-		}
-
-		if ($result->isSuccess())
-		{
-			$result->setId($ids);
-		}
-		else
-		{
-			foreach ($ids as $id)
-			{
-				\CFile::Delete($id);
-			}
-		}
-
-		return $result;
-	}
-
 	private function getThemePicker(): Intranet\Integration\Templates\Bitrix24\ThemePicker
 	{
 		static $themePicker;
@@ -307,14 +268,14 @@ class PortalSettings extends AbstractSettings
 		);
 
 		$data['portalSettings'] = [
-			'name' => $this->portalSettings->getName(),
-			'canUserEditName' => $this->portalSettings->canCurrentUserEditName(),
-			'title' => $this->portalSettings->getTitle(),
-			'canUserEditTitle' => $this->portalSettings->canCurrentUserEditTitle(),
-			'logo24' => $this->portalSettings->getLogo24(),
-			'canUserEditLogo24' => $this->portalSettings->canCurrentUserEditLogo24(),
-			'logo' => $this->portalSettings->getLogo(),
-			'canUserEditLogo' => $this->portalSettings->canCurrentUserEditLogo(),
+			'name' => $this->portalSettings->nameSettings()->getName(),
+			'canUserEditName' => $this->portalSettings->nameSettings()->canCurrentUserEdit(),
+			'title' => $this->portalSettings->titleSettings()->getTitle(),
+			'canUserEditTitle' =>  $this->portalSettings->titleSettings()->canCurrentUserEdit(),
+			'logo24' => $this->portalSettings->logo24Settings()->getLogo24(),
+			'canUserEditLogo24' => $this->portalSettings->logo24Settings()->canCurrentUserEdit(),
+			'logo' => $this->portalLogo->getLogo(),
+			'canUserEditLogo' => $this->portalSettings->logoSettings()->canCurrentUserEdit(),
 		];
 
 		$data['portalSettingsLabels'] = [
@@ -335,13 +296,13 @@ class PortalSettings extends AbstractSettings
 			[
 				'title' => Loc::getMessage('INTRANET_SETTINGS_SECTION_TAB_TITLE_WIDGET_LOGO')
 			],
-			restricted: ($this->portalSettings->canCurrentUserEditLogo24() === false),
+			restricted: ($this->portalSettings->logo24Settings()->canCurrentUserEdit() === false),
 			bannerCode: 'limit_admin_logo',
 		);
 
 		if ($this->isBitrix24)
 		{
-			$domain = Bitrix24\Domain::getCurrent();
+			$domain = $this->portalSettings->domainSettings();
 			$data['portalDomainSettings'] = [
 				'label' => Loc::getMessage('INTRANET_SETTINGS_SECTION_TITLE_SITE_DOMAIN'),
 				'hostname' => $domain->getValue(),
@@ -351,6 +312,7 @@ class PortalSettings extends AbstractSettings
 				'isCustomizable' => $domain->isCustomizable(),
 				'canUserEdit' => $domain->canCurrentUserEdit(),
 				'occupiedDomains' => $domain::RESERVED_SUBDOMAIN_NAME,
+				'exampleDns' => $this->getExampleDns(),
 			];
 
 			$data['sectionSiteDomain'] = new Intranet\Settings\Controls\Section(
@@ -432,5 +394,17 @@ class PortalSettings extends AbstractSettings
 		]);
 
 		return $searchEngine->find($query);
+	}
+
+	private function getExampleDns(): array
+	{
+		$license = \Bitrix\Main\Application::getInstance()->getLicense();
+
+		if (in_array($license->getRegion(), ['ru', 'by']))
+		{
+			return self::EXAMPLE_DNS_RU;
+		}
+
+		return self::EXAMPLE_DNS;
 	}
 }

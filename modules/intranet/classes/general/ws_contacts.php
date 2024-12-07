@@ -111,7 +111,7 @@ class CIntranetContactsWS extends IWebService
 			);
 		}
 
-		$listName = ToUpper(CIntranetUtils::makeGUID($listName_original));
+		$listName = mb_strtoupper(CIntranetUtils::makeGUID($listName_original));
 
 		/*
 		$obRes = CIBlockSection::GetList(array('SORT' => 'ASC'), array('XML_ID' => $listName_original));
@@ -296,7 +296,7 @@ class CIntranetContactsWS extends IWebService
 			}
 		}
 
-		$listName = ToUpper(CIntranetUtils::makeGUID($listName_original));
+		$listName = mb_strtoupper(CIntranetUtils::makeGUID($listName_original));
 
 		$arFilter = array('ACTIVE' => 'Y');
 
@@ -436,19 +436,19 @@ class CIntranetContactsWS extends IWebService
 				}
 				else
 				{
-					$dbRes = CIBlockSection::GetByID($arUser['UF_DEPARTMENT'][0]);
-					if ($arRes = $dbRes->Fetch())
+					$departmentRepository = \Bitrix\Intranet\Service\ServiceContainer::getInstance()
+						->departmentRepository();
+					if ($department = $departmentRepository->getById((int)$arUser['UF_DEPARTMENT'][0]))
 					{
 						if ((!defined("IS_EXTRANET") || IS_EXTRANET != "Y") || (defined("IS_EMPLOYEES") && IS_EMPLOYEES == "Y"))
 						{
-							$arUser['DEPARTMENT'] = $this->arDepartmentsCache[$arUser['UF_DEPARTMENT'][0]] = $arRes['NAME'];
+							$arUser['DEPARTMENT'] = $this->arDepartmentsCache[$arUser['UF_DEPARTMENT'][0]] = $department->getName();
 						}
 						if ($top_section = CIntranetUtils::GetIBlockTopSection($arUser['UF_DEPARTMENT']))
 						{
-							$dbRes = CIBlockSection::GetByID($top_section);
-							if ($arRes = $dbRes->Fetch())
+							if ($topDepartment = $departmentRepository->getById((int)$top_section))
 							{
-								$arUser['WORK_COMPANY'] = $this->arDepartmentsTopCache[$arUser['UF_DEPARTMENT'][0]] = $arRes['NAME'];
+								$arUser['WORK_COMPANY'] = $this->arDepartmentsTopCache[$arUser['UF_DEPARTMENT'][0]] = $topDepartment->getName();
 							}
 						}
 
@@ -501,7 +501,7 @@ class CIntranetContactsWS extends IWebService
 			return new CSoapFault('Data error', 'Wrong GUID - '.$listName);
 		}
 
-		$listName = ToUpper(CIntranetUtils::makeGUID($listName_original));
+		$listName = mb_strtoupper(CIntranetUtils::makeGUID($listName_original));
 		$listItemID = intval($listItemID);
 
 		$dbRes = CUser::GetByID($listItemID);

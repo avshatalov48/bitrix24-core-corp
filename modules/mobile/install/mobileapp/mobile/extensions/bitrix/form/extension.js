@@ -10,13 +10,13 @@
  * @type {{BUTTON: string, INPUT: string, CHECK: string, SWITCH: string, SELECTOR: string, MULTICHECK: string, DATE: string}}
  */
 var FormItemType = {
-	BUTTON: "button",
-	INPUT: "input",
-	CHECK: "check",
-	SWITCH: "switch",
-	SELECTOR: "selector",
-	MULTICHECK: "multicheck",
-	DATE: "date",
+	BUTTON: 'button',
+	INPUT: 'input',
+	CHECK: 'check',
+	SWITCH: 'switch',
+	SELECTOR: 'selector',
+	MULTICHECK: 'multicheck',
+	DATE: 'date',
 };
 
 /**
@@ -52,10 +52,10 @@ var FormItemDateType = {
 		 */
 		constructor(id, title, items = null, sections = null)
 		{
-			let variables = {id, title};
-			for (let name in variables)
+			const variables = { id, title };
+			for (const name in variables)
 			{
-				if (typeof variables[name] != 'string')
+				if (typeof variables[name] !== 'string')
 				{
 					console.error(`%cForm.constructor: field '%c${name}%c' is not a string (%c${typeof variables[name]}%c)`, "color: black;", "font-weight: bold; color: red", "color: black", "font-weight: bold; color: red", "color: black");
 				}
@@ -65,12 +65,12 @@ var FormItemDateType = {
 			this.title = title;
 
 			this.items = {
-				[Symbol.iterator]() { return new ObjectIterator(this); }
+				[Symbol.iterator]() { return new ObjectIterator(this); },
 			};
 			this.addItems(items);
 
 			this.sections = {
-				[Symbol.iterator]() { return new ObjectIterator(this); }
+				[Symbol.iterator]() { return new ObjectIterator(this); },
 			};
 			this.addSections(sections);
 		}
@@ -82,9 +82,10 @@ var FormItemDateType = {
 		 */
 		setTitle(text = '')
 		{
-			if (typeof text != 'string')
+			if (typeof text !== 'string')
 			{
-				console.warn(`%cForm.setTitle: text is not a string, action skipped. (%c${typeof text}%c)`, "color: black;", "font-weight: bold; color: red", "color: black");
+				console.warn(`%cForm.setTitle: text is not a string, action skipped. (%c${typeof text}%c)`, 'color: black;', 'font-weight: bold; color: red', 'color: black');
+
 				return this;
 			}
 
@@ -101,7 +102,8 @@ var FormItemDateType = {
 		{
 			if (!(item instanceof FormItem))
 			{
-				console.warn(`%cForm.addItem: item is not a %cFormItem%c instance, action skipped.`, "color: black;", "font-weight: bold;", "color: black;", item);
+				console.warn('%cForm.addItem: item is not a %cFormItem%c instance, action skipped.', 'color: black;', 'font-weight: bold;', 'color: black;', item);
+
 				return this;
 			}
 
@@ -123,14 +125,16 @@ var FormItemDateType = {
 
 			if (!(Symbol.iterator in Object(items)))
 			{
-				console.warn('%cForm.addItems: items is not iterable, action skipped.', "color: black;", items);
+				console.warn('%cForm.addItems: items is not iterable, action skipped.', 'color: black;', items);
+
 				return this;
 			}
 
 			items.forEach((item) => {
 				if (!(item instanceof FormItem))
 				{
-					console.warn(`%cForm.addItems: item is not a %cFormItem%c instance, action skipped.`, "color: black;", "font-weight: bold;", "color: black;", item);
+					console.warn('%cForm.addItems: item is not a %cFormItem%c instance, action skipped.', 'color: black;', 'font-weight: bold;', 'color: black;', item);
+
 					return false;
 				}
 
@@ -161,7 +165,8 @@ var FormItemDateType = {
 		{
 			if (!this.items[id])
 			{
-				console.info(`%cForm.getItem: item (%c${id}%c) not found.`, "color: black;", "font-weight: bold", "color: black");
+				console.info(`%cForm.getItem: item (%c${id}%c) not found.`, 'color: black;', 'font-weight: bold', 'color: black');
+
 				return false;
 			}
 
@@ -182,11 +187,12 @@ var FormItemDateType = {
 
 			if (!(section instanceof FormSection))
 			{
-				console.warn(`%cForm.addSection: section is not a %cFormSection%c instance, action skipped.`, "color: black;", "font-weight: bold;", "color: black;", section);
+				console.warn('%cForm.addSection: section is not a %cFormSection%c instance, action skipped.', 'color: black;', 'font-weight: bold;', 'color: black;', section);
+
 				return this;
 			}
 
-			for (let item of section.items)
+			for (const item of section.items)
 			{
 				this.items[item.id] = item;
 			}
@@ -212,19 +218,20 @@ var FormItemDateType = {
 
 			if (!(Symbol.iterator in Object(sections)))
 			{
-				console.warn('%cForm.addSections: sections is not iterable, action skipped.', "color: black;", sections);
+				console.warn('%cForm.addSections: sections is not iterable, action skipped.', 'color: black;', sections);
+
 				return this;
 			}
 
-			sections.forEach((section) =>
-			{
+			sections.forEach((section) => {
 				if (!(section instanceof FormSection))
 				{
-					console.warn(`%cForm.addSections: section is not a %cFormSection%c instance, action skipped.`, "color: black;", "font-weight: bold;", "color: black;", section);
+					console.warn('%cForm.addSections: section is not a %cFormSection%c instance, action skipped.', 'color: black;', 'font-weight: bold;', 'color: black;', section);
+
 					return false;
 				}
 
-				for (let item of section.items)
+				for (const item of section.items)
 				{
 					this.items[item.id] = item;
 				}
@@ -259,7 +266,8 @@ var FormItemDateType = {
 		{
 			if (!this.sections[id])
 			{
-				console.info(`%cForm.getSection: item (%c${id}%c) not found.`, "color: black;", "font-weight: bold", "color: black");
+				console.info(`%cForm.getSection: item (%c${id}%c) not found.`, 'color: black;', 'font-weight: bold', 'color: black');
+
 				return false;
 			}
 
@@ -282,7 +290,7 @@ var FormItemDateType = {
 		hasItems()
 		{
 			let result = false;
-			for (let item of this.items)
+			for (const item of this.items)
 			{
 				result = true;
 			}
@@ -296,10 +304,10 @@ var FormItemDateType = {
 		 */
 		compile()
 		{
-			let items = [];
-			let sections = [];
+			const items = [];
+			const sections = [];
 
-			for (let item of this.items)
+			for (const item of this.items)
 			{
 				if (!this.sections[item.sectionCode])
 				{
@@ -310,12 +318,12 @@ var FormItemDateType = {
 
 			if (items.length <= 0)
 			{
-				console.info(`%cForm.compile: form (%c${this.id+(this.title? ' - '+this.title: '')}%c) compiled with empty items.`, "color: black;", "font-weight: bold", "color: black");
+				console.info(`%cForm.compile: form (%c${this.id + (this.title ? ` - ${this.title}` : '')}%c) compiled with empty items.`, 'color: black;', 'font-weight: bold', 'color: black');
 			}
 
-			for (let item of this.sections)
+			for (const item of this.sections)
 			{
-				let section = item.compile();
+				const section = item.compile();
 				delete section.items;
 				sections.push(section);
 			}
@@ -323,9 +331,9 @@ var FormItemDateType = {
 			return {
 				id: this.id,
 				title: this.title,
-				items: items,
-				sections: sections,
-			}
+				items,
+				sections,
+			};
 		}
 	};
 
@@ -354,12 +362,12 @@ var FormItemDateType = {
 		 */
 		constructor(id, type, title, subtitle = '', sectionCode = 'main')
 		{
-			let variables = {id, type, title, subtitle, sectionCode};
-			for (let name in variables)
+			const variables = { id, type, title, subtitle, sectionCode };
+			for (const name in variables)
 			{
-				if (typeof variables[name] != 'string')
+				if (typeof variables[name] !== 'string')
 				{
-					console.error(`%cFormItem.constructor: field '%c${name}%c' is not a string (%c${typeof variables[name]}%c)`, "color: black;", "font-weight: bold; color: red", "color: black", "font-weight: bold; color: red", "color: black");
+					console.error(`%cFormItem.constructor: field '%c${name}%c' is not a string (%c${typeof variables[name]}%c)`, 'color: black;', 'font-weight: bold; color: red', 'color: black', 'font-weight: bold; color: red', 'color: black');
 				}
 			}
 
@@ -395,7 +403,8 @@ var FormItemDateType = {
 		{
 			if (typeof testId !== 'string')
 			{
-				console.warn(`%cForm.setTestId: testId is not a string, action skipped. (%c${typeof testId}%c)`, "color: black;", "font-weight: bold; color: red", "color: black");
+				console.warn(`%cForm.setTestId: testId is not a string, action skipped. (%c${typeof testId}%c)`, 'color: black;', 'font-weight: bold; color: red', 'color: black');
+
 				return this;
 			}
 
@@ -411,9 +420,10 @@ var FormItemDateType = {
 		 */
 		setTitle(text = '')
 		{
-			if (typeof text != 'string')
+			if (typeof text !== 'string')
 			{
-				console.warn(`%cFormItem.setTitle: text is not a string, action skipped. (%c${typeof text}%c)`, "color: black;", "font-weight: bold; color: red", "color: black");
+				console.warn(`%cFormItem.setTitle: text is not a string, action skipped. (%c${typeof text}%c)`, 'color: black;', 'font-weight: bold; color: red', 'color: black');
+
 				return this;
 			}
 
@@ -431,7 +441,7 @@ var FormItemDateType = {
 		{
 			if (typeof text != 'string')
 			{
-				console.warn(`%cFormItem.setSubTitle: text is not a string, action skipped. (%c${typeof text}%c)`, "color: black;", "font-weight: bold; color: red", "color: black");
+				console.warn(`%cFormItem.setSubTitle: text is not a string, action skipped. (%c${typeof text}%c)`, 'color: black;', 'font-weight: bold; color: red', 'color: black');
 				return this;
 			}
 
@@ -449,7 +459,7 @@ var FormItemDateType = {
 		{
 			if (typeof code != 'string')
 			{
-				console.warn(`%cFormItem.setSectionCode: code is not a string, action skipped. (%c${typeof code}%c)`, "color: black;", "font-weight: bold; color: red", "color: black");
+				console.warn(`%cFormItem.setSectionCode: code is not a string, action skipped. (%c${typeof code}%c)`, 'color: black;', 'font-weight: bold; color: red', 'color: black');
 				return this;
 			}
 
@@ -477,9 +487,10 @@ var FormItemDateType = {
 		 */
 		setImageUrl(url = '')
 		{
-			if (typeof url != 'string')
+			if (typeof url !== 'string')
 			{
-				console.warn(`%cFormItem.setImageUrl: url is not a string, action skipped. (%c${typeof url}%c)`, "color: black;", "font-weight: bold; color: red", "color: black");
+				console.warn(`%cFormItem.setImageUrl: url is not a string, action skipped. (%c${typeof url}%c)`, 'color: black;', 'font-weight: bold; color: red', 'color: black');
+
 				return this;
 			}
 
@@ -496,9 +507,10 @@ var FormItemDateType = {
 		 */
 		setCustomParam(name, value)
 		{
-			if (!name || typeof name != 'string')
+			if (!name || typeof name !== 'string')
 			{
-				console.warn(`%cFormItem.setCustomParam: name is not a string, action skipped. (%c${typeof name}%c)`, "color: black;", "font-weight: bold; color: red", "color: black");
+				console.warn(`%cFormItem.setCustomParam: name is not a string, action skipped. (%c${typeof name}%c)`, 'color: black;', 'font-weight: bold; color: red', 'color: black');
+
 				return this;
 			}
 
@@ -567,7 +579,8 @@ var FormItemDateType = {
 		{
 			if (this.type != FormItemType.BUTTON)
 			{
-				console.warn(`%cFormItem.setButtonTransition: action not permitted to current item type (%c${this.type}%c)`, "color: black;", "font-weight: bold; color: red", "color: black");
+				console.warn(`%cFormItem.setButtonTransition: action not permitted to current item type (%c${this.type}%c)`, 'color: black;', 'font-weight: bold; color: red', 'color: black');
+
 				return this;
 			}
 
@@ -585,13 +598,15 @@ var FormItemDateType = {
 		{
 			if (this.type != FormItemType.INPUT)
 			{
-				console.warn(`%cFormItem.setInputHint: action not permitted to current item type (%c${this.type}%c)`, "color: black;", "font-weight: bold; color: red", "color: black");
+				console.warn(`%cFormItem.setInputHint: action not permitted to current item type (%c${this.type}%c)`, 'color: black;', 'font-weight: bold; color: red', 'color: black');
+
 				return this;
 			}
 
-			if (typeof value != 'string')
+			if (typeof value !== 'string')
 			{
-				console.warn(`%cFormItem.setInputHint: value is not a string, action skipped. (%c${typeof value}%c)`, "color: black;", "font-weight: bold; color: red", "color: black");
+				console.warn(`%cFormItem.setInputHint: value is not a string, action skipped. (%c${typeof value}%c)`, 'color: black;', 'font-weight: bold; color: red', 'color: black');
+
 				return this;
 			}
 
@@ -613,10 +628,11 @@ var FormItemDateType = {
 			))
 			{
 				console.warn(`%cFormItem.setSelectorItems: action not permitted to current item type (%c${this.type}%c)`, "color: black;", "font-weight: bold; color: red", "color: black");
+
 				return this;
 			}
 
-			this.params.items = value && Symbol.iterator in Object(value)? value: [];
+			this.params.items = value && Symbol.iterator in Object(value) ? value : [];
 
 			return this;
 		}

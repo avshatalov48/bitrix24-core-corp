@@ -14,6 +14,8 @@ use Bitrix\Tasks\Access\Permission\PermissionDictionary;
 use Bitrix\Main\Access\AccessibleItem;
 use Bitrix\Tasks\Access\Role\RoleDictionary;
 use Bitrix\Tasks\Access\Rule\Traits\AssignTrait;
+use Bitrix\Tasks\Flow\Option\OptionDictionary;
+use Bitrix\Tasks\Flow\Option\OptionService;
 
 class TaskChangeResponsibleRule extends \Bitrix\Main\Access\Rule\AbstractRule
 {
@@ -93,6 +95,16 @@ class TaskChangeResponsibleRule extends \Bitrix\Main\Access\Rule\AbstractRule
 		if (array_intersect($task->getMembers(RoleDictionary::ROLE_DIRECTOR), $this->user->getAllSubordinates()))
 		{
 			return true;
+		}
+
+		if ($task->getFlowId())
+		{
+			$option = OptionService::getInstance()->getOption($task->getFlowId(), OptionDictionary::MANUAL_DISTRIBUTOR_ID->value);
+
+			if ($option?->getValue() > 0 && (int)$option->getValue() === $this->user->getUserId())
+			{
+				return true;
+			}
 		}
 
 		return false;

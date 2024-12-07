@@ -60,17 +60,23 @@ jn.define('catalog/store/product-list', (require, exports, module) => {
 				};
 			}
 
+			const isProductCreationPermitted = Boolean(this.props.permissions.catalog_product_add);
+			const isCatalogHidden = Boolean(this.props.config.isCatalogHidden);
+			const isOnecRestrictedByPlan = Boolean(this.props.config.isOnecRestrictedByPlan);
+
 			this.productSelectorAdapter = new StoreProductSelectorAdapter({
 				root: this,
 				iblockId: this.state.catalog.id,
 				restrictedProductTypes: this.state.catalog.restricted_product_types,
 				basePriceId: this.state.catalog.base_price_id,
 				currency: this.state.catalog.currency_id,
-				enableCreation: Boolean(this.props.permissions.catalog_product_add),
+				enableCreation: isProductCreationPermitted,
 				onCreate: (productName) => this.wizardAdapter.openWizard(productName),
 				onSelect: (productId) => {
 					this.addProductById(productId);
 				},
+				isCatalogHidden,
+				isOnecRestrictedByPlan,
 			});
 
 			this.barcodeScannerAdapter = new BarcodeScanner({
@@ -141,6 +147,8 @@ jn.define('catalog/store/product-list', (require, exports, module) => {
 				total: {
 					totalRows: props.items.length,
 					totalCost: props.document.total.amount,
+					totalTax: props.document.total.totalTax,
+					taxIncluded: props.document.total.taxIncluded,
 					currency: props.document.currency,
 					totalDiscount: 0,
 				},
@@ -245,6 +253,7 @@ jn.define('catalog/store/product-list', (require, exports, module) => {
 				catalog: this.state.catalog,
 				permissions: this.props.permissions,
 				measures: this.props.measures,
+				config: this.props.config,
 				onChange: (productRow) => {
 					this.notifyGridChanged();
 					this.updateTotal();
@@ -309,12 +318,14 @@ jn.define('catalog/store/product-list', (require, exports, module) => {
 
 		calculateTotal()
 		{
+			let totalTax = 0;
 			let documentTotal = 0;
+			let taxIncluded;
 			this.getItems().map((productRow) => {
 				let price;
 				if (this.state.document.type === DocumentType.SalesOrders)
 				{
-					price = productRow.getSellPrice().amount || 0;
+					price = productRow.getPriceWithVat() || 0;
 				}
 				else
 				{
@@ -322,14 +333,22 @@ jn.define('catalog/store/product-list', (require, exports, module) => {
 				}
 				const quantity = parseFloat(productRow.getAmount() || 0);
 
+				totalTax += (productRow.getVatValue() * quantity);
 				documentTotal += (price * quantity);
+
+				if (taxIncluded === undefined && productRow.getVatValue() > 0)
+				{
+					taxIncluded = productRow.isVatIncluded()
+				}
 			});
 
 			return {
 				totalRows: this.getItems().length,
 				totalCost: documentTotal,
+				totalTax: totalTax,
 				currency: this.getDocumentCurrency(),
 				totalDiscount: 0,
+				taxIncluded: taxIncluded,
 			};
 		}
 
@@ -338,7 +357,7 @@ jn.define('catalog/store/product-list', (require, exports, module) => {
 			return {
 				summary: true,
 				discount: false,
-				taxes: false,
+				taxes: true,
 			};
 		}
 
@@ -370,6 +389,7 @@ jn.define('catalog/store/product-list', (require, exports, module) => {
 		showAddProductMenu()
 		{
 			const menu = new StoreDocumentAddProductMenu({
+				enableCreation: !Boolean(this.props.config.isCatalogHidden),
 				onChooseBarcode: () => this.barcodeScannerAdapter.open(),
 				onChooseDb: () => this.productSelectorAdapter.openSelector(),
 			});

@@ -129,7 +129,7 @@ else
 $minColumnWidth     = CTaskColumnPresetManager::MINIMAL_COLUMN_WIDTH;
 $lastColumnMinWidth = 29;
 ?>
-<script type="text/javascript">
+<script>
 BX.message({
 	TASKS_PRIORITY : '<?php echo GetMessageJS('TASKS_PRIORITY')?>',
 	TASKS_APPLY : '<?php echo GetMessageJS('TASKS_APPLY')?>',
@@ -606,7 +606,7 @@ if (
 	</div>
 </div>
 
-<script type="text/javascript">
+<script>
 <?php
 // This js-code MUST be inline
 ?>

@@ -8,8 +8,6 @@ if($siteID !== '')
 require($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/prolog_before.php');
 \Bitrix\Main\Localization\Loc::loadMessages(__FILE__);
 
-CUtil::JSPostUnescape();
-
 /** @var array $arParams */
 /** @var array $arResult */
 /** @global CMain $APPLICATION */
@@ -21,7 +19,7 @@ $APPLICATION->RestartBuffer();
 ?><!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="<?=LANGUAGE_ID ?>" lang="<?=LANGUAGE_ID ?>">
 <head>
-	<script type="text/javascript">
+	<script>
 		// Prevent loading page without header and footer
 		if(window === window.top)
 		{

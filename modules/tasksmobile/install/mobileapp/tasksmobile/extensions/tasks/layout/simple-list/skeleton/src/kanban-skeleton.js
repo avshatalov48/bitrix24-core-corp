@@ -2,7 +2,7 @@
  * @module tasks/layout/simple-list/skeleton/src/kanban-skeleton
  */
 jn.define('tasks/layout/simple-list/skeleton/src/kanban-skeleton', (require, exports, module) => {
-	const AppTheme = require('apptheme');
+	const { Color } = require('tokens');
 	const { Line, Circle } = require('utils/skeleton');
 	const { TaskBaseItemSkeleton } = require('tasks/layout/simple-list/skeleton/src/base-skeleton');
 
@@ -20,14 +20,14 @@ jn.define('tasks/layout/simple-list/skeleton/src/kanban-skeleton', (require, exp
 					style: {
 						paddingTop: index === 0 ? 16 : 0,
 						paddingBottom: index === count - 1 ? 0 : 10,
-						backgroundColor: AppTheme.colors.bgPrimary,
+						backgroundColor: Color.bgPrimary.toHex(),
 					},
 				},
 				View(
 					{
 						style: {
 							borderRadius: 12,
-							backgroundColor: AppTheme.colors.bgContentPrimary,
+							backgroundColor: Color.bgContentPrimary.toHex(),
 							flexGrow: 1,
 							flexDirection: 'column',
 						},

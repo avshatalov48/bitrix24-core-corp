@@ -71,3 +71,19 @@
 .crm-timeline__text-block.--size-xl {
 	font-size: var(--ui-font-size-xl, 16px);
 }
+
+.crm-timeline__text-block.--decoration-none {
+	text-decoration: none;
+}
+
+.crm-timeline__text-block.--decoration-underline {
+	text-decoration: var(--ui-text-decoration-line-underline);
+}
+
+.crm-timeline__text-block.--decoration-dotted {
+	text-decoration: var(--ui-text-decoration-line-underline) var(--ui-text-decoration-style-dotted);
+}
+
+.crm-timeline__text-block.--decoration-dashed {
+	border-bottom: var(--ui-border-width-thin) var(--ui-text-decoration-style-dashed);
+}

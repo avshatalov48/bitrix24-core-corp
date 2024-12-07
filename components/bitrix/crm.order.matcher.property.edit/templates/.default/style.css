@@ -78,3 +78,16 @@
 	content: '';
 	opacity: .4;
 }
+
+.crm-table {
+	padding-bottom: 20px;
+}
+
+.crm-entity-widget-content .crm-entity-widget-content-block:last-child {
+	padding-bottom: 10px;
+}
+
+.crm-entity-widget-content .crm-entity-widget-content-block {
+	padding-top: 10px;
+	margin: 0;
+}

@@ -2,6 +2,7 @@
 
 namespace Bitrix\Crm\Service\Timeline\Layout;
 
+use Bitrix\Crm\Activity\ToDo\ColorSettings\ColorSettingsProvider;
 use Bitrix\Crm\Integration\Intranet\BindingMenu\CodeBuilder;
 use Bitrix\Crm\Integration\Intranet\BindingMenu\SectionCode;
 use Bitrix\Crm\Service\Container;
@@ -55,6 +56,17 @@ class Builder
 				: (new Layout\Header())
 			;
 
+			$isScheduled = $this->item->isScheduled();
+			$colorSettings = null;
+			if ($this->item->canUseColorSelector())
+			{
+				$color = $this->item->getColor();
+				$colorSettings = (new ColorSettingsProvider($color['id'] ?? null))
+					->setReadOnlyMode(!$isScheduled)
+					->fetchForJsComponent()
+				;
+			}
+
 			return $header
 				->setChangeStreamButton($changeStreamButton)
 				->setTitle($title)
@@ -64,6 +76,7 @@ class Builder
 				->setTags($tags ?? [])
 				->setUser($this->createLayoutUser($userId))
 				->setInfoHelper($infoHelper)
+				->setColorSettings($colorSettings)
 			;
 		}
 
@@ -207,10 +220,10 @@ class Builder
 
 	private function applyLayoutPartsDependencies(Layout $layout): void
 	{
-		$noteBlock = $layout->getBody()->getContentBlocks()['note'] ?? null;
+		$noteBlock = $layout->getBody()?->getContentBlocks()['note'] ?? null;
 		if ($noteBlock && !is_null($noteBlock->getId()))
 		{
-			$footerNoteAdditionalButton = $layout->getFooter()->getAdditionalButtons()['notes'] ?? null;
+			$footerNoteAdditionalButton = $layout->getFooter()?->getAdditionalButtons()['notes'] ?? null;
 			if ($footerNoteAdditionalButton)
 			{
 				$footerNoteAdditionalButton->setColor(Layout\Footer\IconButton::COLOR_PRIMARY);

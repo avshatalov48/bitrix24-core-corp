@@ -259,10 +259,10 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 
 		$request = Context::getCurrent()->getRequest();
 
-		$this->debugMode = ($request->get('debug') == 'y');
-		$this->frameMode = ($request->get('IFRAME') == 'Y');
+		$this->debugMode = ($request->get('debug') === 'y');
+		$this->frameMode = ($request->get('IFRAME') === 'Y');
 
-		$viewHelper = new ViewHelper();
+		$viewHelper = new ViewHelper($this->getSiteId());
 		$viewHelper->saveActiveView($request->get('tab'), $groupId);
 		$activeTab = $viewHelper->getActiveView($groupId);
 
@@ -282,7 +282,7 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 				$this->includeActiveSprintTemplate($groupId);
 				break;
 			case 'completed_sprint':
-				$sprintId = (int) $request->get('sprintId');
+				$sprintId = (int)$request->get('sprintId');
 				$this->includeCompletedSprintTemplate($groupId, $sprintId);
 				break;
 		}
@@ -839,6 +839,7 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 		$pushService = (Loader::includeModule('pull') ? new PushService() : null);
 
 		$epic = $epicService->getEpic($epicId);
+		$epicId = $epic->getId() ?: 0;
 
 		foreach ($itemIds as $itemId)
 		{
@@ -849,15 +850,24 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 				!$item->isEmpty()
 				&& TaskAccessController::can(
 					$this->userId,
-					ActionDictionary::ACTION_TASK_EDIT,
+					ActionDictionary::ACTION_TASK_READ,
 					$item->getSourceId()
 				)
 			)
 			{
-				$item->setEpicId($epic->getId());
+				$item->setEpicId($epicId);
 
 				$itemService->changeItem($item, $pushService);
 			}
+			else
+			{
+				$this->setError(Loc::getMessage('TASKS_SCRUM_SYSTEM_ERROR'));
+			}
+		}
+
+		if (!$this->errorCollection->isEmpty())
+		{
+			return null;
 		}
 
 		return [
@@ -1242,14 +1252,7 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 		$pushService = (Loader::includeModule('pull') ? new PushService() : null);
 
 		$item = $itemService->getItemById($itemId);
-		if (
-			$item->isEmpty()
-			|| !TaskAccessController::can(
-				$this->userId,
-				ActionDictionary::ACTION_TASK_EDIT,
-				$item->getSourceId()
-			)
-		)
+		if ($item->isEmpty())
 		{
 			$this->setError(Loc::getMessage('TASKS_SCRUM_ITEM_UPDATE_ERROR'));
 
@@ -1258,6 +1261,19 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 
 		if (strlen($name) > 0)
 		{
+			if (
+				!TaskAccessController::can(
+					$this->userId,
+					ActionDictionary::ACTION_TASK_EDIT,
+					$item->getSourceId()
+				)
+			)
+			{
+				$this->setError(Loc::getMessage('TASKS_SCRUM_ITEM_UPDATE_ERROR'));
+
+				return null;
+			}
+
 			$userId = Util\User::getId();
 			$taskService = new TaskService($userId, $this->application);
 			$taskService->changeTask($item->getSourceId(), [
@@ -1890,7 +1906,7 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 		return [];
 	}
 
-	public function showLinkedTasksAction()
+	public function showLinkedTasksAction(): array
 	{
 		$this->checkModules();
 
@@ -1901,39 +1917,25 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 		$this->userId = Util\User::getId();
 
 		$taskId = (is_numeric($post['taskId'] ?? null) ? (int) $post['taskId'] : 0);
-
 		$groupId = (int) $this->arParams['GROUP_ID'];
 
-		$sprintService = new SprintService($this->userId);
-
-		$backlog = $this->getBacklog($groupId);
-		$backlogItems = $this->getEntityItems($groupId, [$backlog->getId()]);
-
-		$sprintIds = [];
-		foreach ($sprintService->getUncompletedSprints($groupId) as $sprint)
-		{
-			$sprintIds[] = $sprint->getId();
-		}
-
-		$sprintItems = $this->getEntityItems($groupId, $sprintIds);
-
-		$items = array_merge($backlogItems, $sprintItems);
+		$itemService = new ItemService($this->userId);
 
 		$linkedTaskIds = $this->getLinkedTasks($taskId);
-
-		$linkedItemIds = [];
-		foreach ($items as $item)
+		if ($linkedTaskIds)
 		{
-			if (in_array($item['sourceId'], $linkedTaskIds))
-			{
-				$linkedItemIds[] = $item['id'];
-			}
+			$itemIds = $itemService->getItemIdsBySourceIds($linkedTaskIds);
+
+			return $this->getItemsData(
+				$groupId,
+				$itemIds,
+				$itemService,
+				new TaskService($this->userId),
+				new UserService()
+			);
 		}
 
-		return [
-			'items' => $items,
-			'linkedItemIds' => $linkedItemIds,
-		];
+		return [];
 	}
 
 	public function getItemDataAction(array $itemIds, string $debugMode = 'N'): ?array
@@ -2227,16 +2229,17 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 		$this->arResult['taskLimitExceeded'] = false;
 		$this->arResult['canUseAutomation'] = false;
 		$this->arResult['canCompleteSprint'] = false;
+		$this->arResult['isAutomationEnabled'] = false;
 
 		if ($sprint->isActiveSprint())
 		{
-
 			$this->arResult['activeSprintId'] = ($sprintService->getErrors() ? 0 : $sprint->getId());
 
 			$this->restoreStagesLastCompletedSprint($this->userId, $groupId, $sprint->getId());
 
 			$this->arResult['taskLimitExceeded'] = Bitrix24Restriction\Limit\TaskLimit::isLimitExceeded();
 			$this->arResult['canUseAutomation'] = Factory::canUseAutomation();
+			$this->arResult['isAutomationEnabled'] = Factory::isAutomationEnabled();
 
 			$this->arResult['canCompleteSprint'] = $sprintService->canCompleteSprint($this->userId, $groupId);
 
@@ -2635,7 +2638,7 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 		$uri->addParams(['tab' => 'completed_sprint']);
 		$completedSprintUrl = $uri->getUri();
 
-		$viewHelper = new ViewHelper();
+		$viewHelper = new ViewHelper($this->getSiteId());
 
 		return [
 			'plan' => [
@@ -3011,7 +3014,7 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 
 		$pullService->addSubscriber($userId);
 
-		$viewHelper = new ViewHelper();
+		$viewHelper = new ViewHelper($this->getSiteId());
 		if ($viewHelper->getActiveView($groupId) === 'plan')
 		{
 			$pullService->subscribeToEntityActions();
@@ -3141,19 +3144,18 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 		return $nav;
 	}
 
-	private function getLinkedTasks(int $taskId, array $linkedTaskIds = []): array
+	private function getLinkedTasks(int $taskId, array &$linkedTaskIds = []): array
 	{
-		$linkedTaskIds[] = $taskId;
-
-		$taskService = new TaskService($this->userId, $this->application);
-
-		$linkedTasks = $taskService->getLinkedTasks($taskId);
-
-		foreach ($linkedTasks as $linkedTaskId)
+		if (!in_array($taskId, $linkedTaskIds))
 		{
-			if (!in_array($linkedTaskId, $linkedTaskIds))
+			$linkedTaskIds[] = $taskId;
+
+			$taskService = new TaskService($this->userId, $this->application);
+			$linkedTasks = $taskService->getLinkedTasks($taskId);
+
+			foreach ($linkedTasks as $linkedTaskId)
 			{
-				$linkedTaskIds = array_merge($linkedTaskIds, $this->getLinkedTasks($linkedTaskId, $linkedTaskIds));
+				$this->getLinkedTasks($linkedTaskId, $linkedTaskIds);
 			}
 		}
 

@@ -33,7 +33,7 @@ jn.define('layout/ui/simple-list/skeleton', (require, exports, module) => {
 						height: 80,
 					},
 				},
-				new LoadingScreenComponent(),
+				new LoadingScreenComponent(props),
 			);
 		}
 

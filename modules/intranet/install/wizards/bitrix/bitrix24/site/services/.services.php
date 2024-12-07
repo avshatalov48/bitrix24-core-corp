@@ -126,6 +126,12 @@ $arServices = Array(
 	),
 	"socialservices" => Array(
 		"NAME" => GetMessage("SERVICE_SOCIALSERVICES"),
+	),
+	"salescenter" => Array(
+		"NAME" => GetMessage("SERVICE_SALESCENTER"),
+	),
+	"biconnector" => Array(
+		"NAME" => GetMessage("SERVICE_BICONNECTOR"),
 	)
 );
 ?>

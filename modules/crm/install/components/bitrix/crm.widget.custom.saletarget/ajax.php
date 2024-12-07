@@ -1,4 +1,7 @@
 <?php
+
+use Bitrix\Main\Localization\Loc;
+
 define("NOT_CHECK_PERMISSIONS", true);
 define("STOP_STATISTICS", true);
 define("NO_KEEP_STATISTIC", "Y");
@@ -56,8 +59,6 @@ if (!$curUser || !$curUser->IsAuthorized() || !check_bitrix_sessid() || $_SERVER
 {
 	$sendError('Access denied.');
 }
-
-CUtil::JSPostUnescape();
 
 $action = !empty($_REQUEST['action'])? mb_strtoupper($_REQUEST['action']) : null;
 
@@ -150,16 +151,22 @@ switch ($action)
 			$admins = $saleTargetWidget->getAdmins();
 			if (isset($admins[$userId]))
 			{
-				\Bitrix\Main\Localization\Loc::loadMessages(__FILE__);
+				Loc::loadMessages(__FILE__);
+				$notifyMessageCallback = static fn (?string $languageId = null) =>
+					Loc::getMessage(
+						'CRM_WIDGET_SALETARGET_AJAX_NOTIFY_TEXT',
+						[ '#URL#' => '/crm/start' ],
+						$languageId,
+					)
+				;
+
 				\CIMNotify::Add(array(
 					'TO_USER_ID' => $userId,
 					'FROM_USER_ID' => $curUser->GetID(),
 					'NOTIFY_TYPE' => IM_NOTIFY_FROM,
 					'NOTIFY_MODULE' => 'crm',
 					'NOTIFY_TAG' => 'CRM|NOTIFY_ADMIN|'.$userId.'|'.$curUser->GetID(),
-					'NOTIFY_MESSAGE' => \Bitrix\Main\Localization\Loc::getMessage('CRM_WIDGET_SALETARGET_AJAX_NOTIFY_TEXT', array(
-						'#URL#' => '/crm/start'
-					))
+					'NOTIFY_MESSAGE' => $notifyMessageCallback,
 				));
 			}
 		}

@@ -5,7 +5,7 @@ return [
 		'loc',
 		'type',
 		'haptics',
-		'tokens',
+		'apptheme',
 		'crm:communication/communication-selector',
 		'crm:loc',
 		'crm:multi-field-drawer',
@@ -22,6 +22,7 @@ return [
 		'utils/function',
 		'utils/object',
 		'utils/skeleton',
+		'assets/icons',
 	],
 	'bundle' => [
 		'./src/clients-selector',

@@ -177,7 +177,7 @@ class Connector
 			$connectors[Library::ID_FBINSTAGRAM_CONNECTOR] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_FBINSTAGRAM');
 		}
 
-		$connectors[Library::ID_NETWORK_CONNECTOR] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_NETWORK');
+		$connectors[Library::ID_NETWORK_CONNECTOR] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_NETWORK_MSGVER_1');
 		if ($serviceLocator->has('ImConnector.toolsNotifications'))
 		{
 			/** @var \Bitrix\ImConnector\Tools\Connectors\Notifications $toolsNotifications */

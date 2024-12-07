@@ -43,7 +43,7 @@ class Path
 
 		Util::checkEmptyParamString($componentParams, 'PATH_TO_SMILE', '/bitrix/images/socialnetwork/smile/');
 
-		if($componentParams['PATH_TO_USER_BLOG_POST'] <> '')
+		if (!empty($componentParams['PATH_TO_USER_BLOG_POST']))
 		{
 			$componentParams["PATH_TO_USER_MICROBLOG_POST"] = $componentParams['PATH_TO_USER_BLOG_POST'];
 		}

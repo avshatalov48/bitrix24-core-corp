@@ -4,7 +4,6 @@ namespace Bitrix\Crm\Agent\Duplicate\Automatic;
 
 use Bitrix\Crm\Integrity\AutoSearchUserSettings;
 use Bitrix\Crm\Integrity\DedupeConfig;
-use Bitrix\Crm\Integrity\DuplicateIndexBuildStrategy\FastStrategy;
 use Bitrix\Crm\Integrity\DuplicateIndexType;
 use Bitrix\Crm\Integrity\AutomaticDuplicateList;
 use Bitrix\Crm\Integrity\DuplicateManager;
@@ -12,6 +11,7 @@ use Bitrix\Crm\Integrity\Entity\AutosearchUserSettingsTable;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Loader;
+use Bitrix\Main\Security\Random;
 use Bitrix\Main\Type\DateTime;
 
 class RebuildUserDuplicateIndexAgent
@@ -120,6 +120,7 @@ class RebuildUserDuplicateIndexAgent
 				'FOUND_CHANGED_ITEMS' => 0,
 				'FOUND_ITEMS' => 0,
 				'TOTAL_ENTITIES' => 0,
+				'CONTEXT_ID' => Random::getStringByCharsets(8, 'abcdefghijklmnopqrstuvwxyz'),
 				'STARTED_TIMESTAMP' => time(),
 			];
 
@@ -166,6 +167,7 @@ class RebuildUserDuplicateIndexAgent
 				'SCOPE' => $effectiveScope,
 				'LAST_INDEX_DATE' => $userSettings->getLastExecTime(),
 				'CHECK_CHANGED_ONLY' => $checkChangedOnly,
+				'CONTEXT_ID' => $progressData['CONTEXT_ID'] ?? '',
 			]
 		);
 
@@ -184,6 +186,7 @@ class RebuildUserDuplicateIndexAgent
 		}
 
 		$isInProgress = $builder->build($buildData);
+
 		if (isset($buildData['PROCESSED_ITEM_COUNT']))
 		{
 			$progressData['PROCESSED_ITEMS'] = (int)($progressData['PROCESSED_ITEMS'] ?? 0);
@@ -201,6 +204,7 @@ class RebuildUserDuplicateIndexAgent
 		$isFinal = false;
 		if (!$isInProgress)
 		{
+			$builder->dropDataSourceCache();
 			$isFinal = $currentTypeIndex === ($effectiveTypeQty - 1);
 			if (!$isFinal)
 			{

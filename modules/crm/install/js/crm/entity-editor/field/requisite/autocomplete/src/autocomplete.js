@@ -71,6 +71,7 @@ export class RequisiteAutocompleteField extends EventEmitter
 
 		return {
 			isPlacement: BX.prop.getBoolean(params, "isPlacement", false),
+			placementCode: BX.prop.getString(params, "placementCode", ""),
 			numberOfPlacements: BX.prop.getInteger(params, "numberOfPlacements", 0),
 			countryId: BX.prop.getInteger(params, "countryId", 0),
 			defaultAppInfo: BX.prop.getObject(params, "defaultAppInfo", {}),
@@ -345,6 +346,13 @@ export class RequisiteAutocompleteField extends EventEmitter
 		}
 	}
 
+	getPlacementCode()
+	{
+		const placementCode = BX.prop.getString(this.clientResolverPlacementParams, "placementCode", "");
+
+		return (placementCode === "" ? "CRM_REQUISITE_AUTOCOMPLETE" : placementCode);
+	}
+
 	onSearchStringClear()
 	{
 		this.emit('onClear');
@@ -474,7 +482,7 @@ export class RequisiteAutocompleteField extends EventEmitter
 
 			if (isAutocompletePlacementEnabled)
 			{
-				this.detailAutocompletePlacement = new DetailSearchPlacement("CRM_REQUISITE_AUTOCOMPLETE");
+				this.detailAutocompletePlacement = new DetailSearchPlacement(this.getPlacementCode());
 			}
 
 			if (this.detailAutocompletePlacement)

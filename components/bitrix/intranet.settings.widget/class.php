@@ -5,14 +5,15 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use Bitrix\Intranet\MainPage\Publisher;
 use Bitrix\Main\Loader;
 use Bitrix\Intranet;
+use Bitrix\Main\UI\Spotlight;
 use Bitrix\Security\Mfa\Otp;
-use Bitrix\Intranet\Settings\Requisite;
+use Bitrix\Intranet\Settings\Widget\Requisite;
 use Bitrix\Main\Engine\Response\AjaxJson;
-use Bitrix\Main\Localization\Loc;
 use Bitrix\Bitrix24;
-use Bitrix\Main;
+use Bitrix\Intranet\MainPage;
 
 class IntranetSettingsWidgetComponent extends CBitrixComponent implements \Bitrix\Main\Engine\Contract\Controllerable
 {
@@ -28,8 +29,9 @@ class IntranetSettingsWidgetComponent extends CBitrixComponent implements \Bitri
 
 	private Intranet\CurrentUser $user;
 
-	private $requisites;
+	private bool $isRequisiteAvailable = false;
 
+	private static array $cachedResult = [];
 	private static int $number = 0;
 	private static array $cachedAffiliates = [];
 
@@ -42,18 +44,12 @@ class IntranetSettingsWidgetComponent extends CBitrixComponent implements \Bitri
 	{
 		parent::__construct($component);
 		self::$number++;
-
-		$this->user = Intranet\CurrentUser::get();
-
-		if (Loader::includeModule('bitrix24'))
-		{
-			$this->isBitrix24 = true;
-			$this->initAffiliates();
-		}
 	}
 
 	private function getUser(): Intranet\CurrentUser
 	{
+		$this->user ??= Intranet\CurrentUser::get();
+
 		return $this->user;
 	}
 
@@ -136,38 +132,6 @@ class IntranetSettingsWidgetComponent extends CBitrixComponent implements \Bitri
 		[$this->isHolding, $this->affiliates, $this->canBeHolding, $this->canBeAffiliate] = self::$cachedAffiliates[$this->getUser()->getId()];
 	}
 
-	private function getRequisites(): ?array
-	{
-		if (
-			!Loader::includeModule('crm')
-			|| !class_exists('Bitrix\Crm\Integration\Landing\RequisitesLanding')
-		)
-		{
-			return null;
-		}
-
-		$companyId = \Bitrix\Crm\Requisite\EntityLink::getDefaultMyCompanyId();
-		$company = new Requisite\CompanyList(['=ID' => $companyId], ['DATE_CREATE' => 'DESC'], ['ID'], ['ID', 'ENTITY_ID']);
-
-		if ($companyId)
-		{
-			if ($this->requisites = $company->getLandingList()->toArray()[$companyId])
-			{
-				return [
-					'isCompanyCreated' => true,
-					'isConnected' => $this->requisites->isLandingConnected(),
-					'isPublic' => $this->requisites->isLandingPublic(),
-					'publicUrl' => $this->requisites->getLandingPublicUrl(),
-					'editUrl' => $this->requisites->getLandingEditUrl(),
-				];
-			}
-		}
-
-		return [
-			'isCompanyCreated' => false,
-		];
-	}
-
 	public function getDataAction(): Bitrix\Main\Response
 	{
 		if (!$this->showWidget)
@@ -184,10 +148,10 @@ class IntranetSettingsWidgetComponent extends CBitrixComponent implements \Bitri
 
 	public function getRequisitesAction(): Bitrix\Main\Response
 	{
-		if ($this->showWidget)
+		if (Loader::includeModule('crm') && $this->getUser()->isAdmin())
 		{
 			return AjaxJson::createSuccess([
-				'requisite' => $this->getRequisites(),
+				'requisite' => Requisite::getInstance()->getRequisitesData(),
 			]);
 		}
 
@@ -196,49 +160,53 @@ class IntranetSettingsWidgetComponent extends CBitrixComponent implements \Bitri
 
 	public function createRequisiteLandingAction(): Bitrix\Main\Response
 	{
-		if (
-			$this->requisites
-			&& $this->showWidget
-		)
+		if (Loader::includeModule('crm') && $this->getUser()->isAdmin())
 		{
-			$this->requisites->connectLanding();
+			if ($requisites = Requisite::getInstance()->getRequisites())
+			{
+				$requisites->connectLanding();
 
-			return AjaxJson::createSuccess([
-				'isConnected' => $this->requisites->isLandingConnected(),
-				'isPublic' => $this->requisites->isLandingPublic(),
-				'publicUrl' => $this->requisites->getLandingPublicUrl(),
-				'editUrl' => $this->requisites->getLandingEditUrl(),
-			]);
+				return AjaxJson::createSuccess([
+					'isConnected' => $requisites->isLandingConnected(),
+					'isPublic' => $requisites->isLandingPublic(),
+					'publicUrl' => $requisites->getLandingPublicUrl(),
+					'editUrl' => $requisites->getLandingEditUrl(),
+				]);
+			}
 		}
 
 		return AjaxJson::createDenied();
 	}
 
-	public function onPrepareComponentParams($arParams): array
+	public function getAdditionalArguments(): array
 	{
-		// for now show widget only for admin or users with affiliate
-		$this->showWidget = $this->getUser()->isAdmin() || count($this->affiliates) > 1;
-
 		if (!$this->showWidget)
 		{
 			return [];
 		}
 
-		$arParams['SETTINGS_PATH'] = Intranet\Portal::getInstance()->getSettings()->getSettingsUrl();
-		$arParams['REQUISITE'] = $this->getRequisites();
-		$arParams['IS_BITRIX24'] = $this->isBitrix24;
-		$arParams['IS_FREE_LICENSE'] = false;
-		$arParams['IS_ADMIN'] = $this->getUser()->isAdmin();
-		$arParams['MARKET_URL'] = Intranet\Binding\Marketplace::getMainDirectory();
-		$arParams['THEME'] = Intranet\Integration\Templates\Bitrix24\ThemePicker::getInstance()->getCurrentTheme();
-		$arParams['OTP'] = $this->getOtpData();
-		$arParams['HOLDING'] = null;
+		$result['SETTINGS_PATH'] = Intranet\Portal::getInstance()->getSettings()->getSettingsUrl();
+		$result['IS_FREE_LICENSE'] = false;
+		$result['MARKET_URL'] = Intranet\Binding\Marketplace::getMainDirectory();
+		$result['THEME'] = Intranet\Integration\Templates\Bitrix24\ThemePicker::getInstance()->getCurrentTheme();
+		$result['OTP'] = $this->getOtpData();
+		$result['HOLDING'] = null;
+		$result['MAIN_PAGE'] = [
+			'isAvailable' => self::$cachedResult['IS_WIDGET_MENU_ITEM_SHOW'],
+			'isNew' => self::$cachedResult['IS_WIDGET_MENU_ITEM_SHOW'] && time() < mktime(23, 59, 59, 9, 30, 2024),
+			'settingsPath' => (new Intranet\Site\FirstPage\MainFirstPage())->getSettingsPath() . '&analyticContext=widget_settings_settings',
+		];
+
+		if ($this->isRequisiteAvailable)
+		{
+			$result['REQUISITE'] = Requisite::getInstance()->getRequisitesData();
+		}
 
 		if ($this->isBitrix24)
 		{
-			$arParams['IS_RENAMEABLE'] = Bitrix24\Domain::getCurrent()->isRenameable() && $this->user->isAdmin();
-			$arParams['IS_FREE_LICENSE'] = \CBitrix24::isFreeLicense();
-			$arParams['HOLDING'] = [
+			$result['IS_RENAMEABLE'] = Bitrix24\Domain::getCurrent()->isRenameable() && $this->user->isAdmin();
+			$result['IS_FREE_LICENSE'] = \CBitrix24::isFreeLicense();
+			$result['HOLDING'] = [
 				'isHolding' => $this->isHolding,
 				'affiliate' => $this->getAffiliate(),
 				'canBeHolding' => $this->canBeHolding,
@@ -246,7 +214,7 @@ class IntranetSettingsWidgetComponent extends CBitrixComponent implements \Bitri
 			];
 		}
 
-		return $arParams;
+		return $result;
 	}
 
 	public function getWidgetComponentAction()
@@ -259,9 +227,59 @@ class IntranetSettingsWidgetComponent extends CBitrixComponent implements \Bitri
 
 	public function executeComponent(): void
 	{
-		if ($this->showWidget)
+		if (empty(self::$cachedResult))
 		{
-			$this->arResult['NUMBER'] = self::$number;
+			if (Loader::includeModule('bitrix24'))
+			{
+				$this->isBitrix24 = true;
+				$this->initAffiliates();
+			}
+
+			if (Loader::includeModule('crm') && $this->getUser()->isAdmin())
+			{
+				$this->isRequisiteAvailable = true;
+			}
+
+			$this->showWidget = $this->getUser()->isAdmin() || count($this->affiliates) > 1;
+			self::$cachedResult['SHOW_WIDGET'] = $this->showWidget;
+
+			if ($this->showWidget)
+			{
+				self::$cachedResult['IS_ADMIN'] = $this->getUser()->isAdmin();
+				self::$cachedResult['IS_REQUISITE'] = $this->isRequisiteAvailable;
+				self::$cachedResult['IS_BITRIX24'] = $this->isBitrix24;
+				self::$cachedResult['SPOTLIGHT'] = false;
+				self::$cachedResult['SPOTLIGHT_AFTER_CREATE'] = false;
+				$mainPageAccess = new MainPage\Access();
+				self::$cachedResult['IS_MAIN_PAGE_AVAILABLE'] = $mainPageAccess->canEdit();
+				self::$cachedResult['IS_WIDGET_MENU_ITEM_SHOW'] = $mainPageAccess->canEdit(false);
+				$spotlight = new Spotlight('intranet-main-page');
+				$spotlightAfterFirstCreate = new Spotlight('intranet-main-page-after-create');
+
+				if (self::$cachedResult['IS_MAIN_PAGE_AVAILABLE'])
+				{
+					if ($spotlight->isAvailable())
+					{
+						self::$cachedResult['SPOTLIGHT'] = true;
+					}
+					if (
+						$spotlightAfterFirstCreate->isAvailable()
+						&& Loader::includeModule('landing')
+						&& (new Bitrix\Landing\Mainpage\Manager)->isReady()
+						&& !((new Publisher)->isPublished())
+					)
+					{
+						self::$cachedResult['SPOTLIGHT_AFTER_CREATE'] = true;
+					}
+				}
+			}
+		}
+
+		$this->arResult = self::$cachedResult;
+		$this->arResult['NUMBER'] = self::$number;
+
+		if ($this->arResult['SHOW_WIDGET'])
+		{
 			$this->includeComponentTemplate();
 		}
 	}

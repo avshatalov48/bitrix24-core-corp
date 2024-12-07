@@ -4,6 +4,7 @@ namespace Bitrix\Crm\Field;
 
 use Bitrix\Crm\Field;
 use Bitrix\Crm\Item;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Context;
 use Bitrix\Crm\Service\Operation\FieldAfterSaveResult;
 use Bitrix\Main\ORM\Objectify\Values;
@@ -20,6 +21,16 @@ class Observers extends Field
 
 		$addedObservers = array_diff($currentObservers, $previousObservers);
 		$removedObservers = array_diff($previousObservers, $currentObservers);
+
+		$pullManager = Container::getInstance()->getPullManager();
+		foreach ($removedObservers as $removedObserverId)
+		{
+			$pullManager->unSubscribeUserPullEvents(
+				$removedObserverId,
+				$item->getEntityTypeId(),
+				$item->getId(),
+			);
+		}
 
 		$this->integrationClassName::onEntityModification(
 			$item->getEntityTypeId(),

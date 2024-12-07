@@ -7,6 +7,8 @@ define('DisableEventsCheck', true);
 use Bitrix\Crm\Integration\StorageManager;
 use Bitrix\Crm\Integration\StorageType;
 use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Activity\Mail\MailEntitiesDiskHelper;
+use Bitrix\Disk\Folder;
 use Bitrix\Disk\Internals\FolderTable;
 use Bitrix\Disk\Uf\FileUserType;
 use Bitrix\Disk\Uf\Integration\DiskUploaderController;
@@ -15,6 +17,7 @@ use Bitrix\Main\Mail;
 use Bitrix\Main\Loader;
 use Bitrix\Mail\Helper;
 use Bitrix\Disk\File;
+use Bitrix\Main;
 
 require_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/prolog_before.php');
 
@@ -47,7 +50,6 @@ IncludeModuleLangFile(__FILE__);
 global $DB, $APPLICATION;
 
 \Bitrix\Main\Localization\Loc::loadMessages(__FILE__);
-CUtil::JSPostUnescape();
 if(!function_exists('__CrmActivityEditorEndResponse'))
 {
 	function __CrmActivityEditorEndResponse($result)
@@ -840,117 +842,6 @@ function GetCrmEntityCommunications($entityType, $entityID, $communicationType)
 	return array('ERROR' => 'Invalid data');
 }
 
-function GetCrmEntitiesDisk($desiredFileIds, $userId, bool $saveAsTemplate = false)
-{
-	if (!Loader::requireModule('disk'))
-	{
-		return null;
-	}
-
-	$shouldForkFile = [];
-	$attachedObjectIds = [];
-	$notFilteredFiles = [];
-	foreach ($desiredFileIds as $value)
-	{
-		[$type, $realValue] = FileUserType::detectType($value);
-		if ($type === FileUserType::TYPE_NEW_OBJECT)
-		{
-			$file = File::getById($realValue);
-			if (!$file)
-			{
-				continue;
-			}
-
-			$storage = $file->getStorage();
-			if (!$storage)
-			{
-				continue;
-			}
-
-			$securityContext = $file->getStorage()->getSecurityContext($userId);
-
-			//make copy only when message will save as template
-			if (
-				($file->canRead($securityContext) || $storage->getEntityId() === 'documentgenerator')
-				&& $saveAsTemplate
-			)
-			{
-				$shouldForkFile[$file->getId()] = $file;
-
-				continue;
-			}
-
-			$notFilteredFiles[$file->getId()] = $file->getId();
-		}
-		elseif ($type === FileUserType::TYPE_ALREADY_ATTACHED)
-		{
-			$attachedObjectIds[] = $realValue;
-		}
-	}
-
-	$fileToAttachObjectIds = [];
-	if ($attachedObjectIds)
-	{
-		$userFieldManager = \Bitrix\Disk\Driver::getInstance()->getUserFieldManager();
-		$userFieldManager->loadBatchAttachedObject($attachedObjectIds);
-		foreach ($attachedObjectIds as $attachedObjectId)
-		{
-			$attachedObject = $userFieldManager->getAttachedObjectById($attachedObjectId);
-			if (!$attachedObject)
-			{
-				continue;
-			}
-
-			if (!$attachedObject->canRead($userId))
-			{
-				continue;
-			}
-
-			$file = $attachedObject->getFile();
-			if (!$file)
-			{
-				continue;
-			}
-
-			$shouldForkFile[$file->getId()] = $file;
-			$fileToAttachObjectIds[$file->getId()] = $attachedObjectId;
-		}
-	}
-
-	$storage = \Bitrix\Crm\Integration\DiskManager::getStorage();
-	$folder = $storage->getChild([
-		'=NAME' => date('Y-m'),
-		'=TYPE' => \Bitrix\Disk\Internals\FolderTable::TYPE,
-	]);
-
-	if (!$folder)
-	{
-		$folder = $storage->addFolder([
-			'NAME' => date('Y-m'),
-			'CREATED_BY' => 1,
-		]);
-	}
-
-	if (!$folder)
-	{
-		$folder = $storage;
-	}
-
-	$attachToFileIds = [];
-	$createdFiles = [];
-	foreach ($shouldForkFile as $file)
-	{
-		$forkedFile = $file->copyTo($folder, $userId, true);
-		$createdFiles[$file->getId()] = $forkedFile->getId();
-		if (isset($fileToAttachObjectIds[$file->getId()]))
-		{
-			$attachToFileIds[$forkedFile->getId()] = $fileToAttachObjectIds[$file->getId()];
-		}
-	}
-
-	return [$createdFiles, $attachToFileIds, $notFilteredFiles];
-}
-
 if($action == 'DELETE')
 {
 	$ID = isset($_POST['ITEM_ID']) ? intval($_POST['ITEM_ID']) : 0;
@@ -1653,7 +1544,7 @@ elseif($action == 'SAVE_ACTIVITY')
 	$responsibleName = $responsibleID > 0 ? CCrmViewHelper::GetFormattedUserName($responsibleID) : '';
 
 	$descrRaw = isset($arFields['DESCRIPTION']) ? $arFields['DESCRIPTION'] : '';
-	$descrHtml = preg_replace("/[\r\n]+/".BX_UTF_PCRE_MODIFIER, "<br/>", htmlspecialcharsbx($descrRaw));
+	$descrHtml = preg_replace("/[\r\n]+/u", "<br/>", htmlspecialcharsbx($descrRaw));
 
 	CCrmActivity::PrepareStorageElementIDs($arFields);
 	CCrmActivity::PrepareStorageElementInfo($arFields);
@@ -1719,7 +1610,6 @@ elseif($action == 'SAVE_EMAIL')
 	$rawData = (array) \Bitrix\Main\Application::getInstance()->getContext()->getRequest()->getPostList()->getRaw('DATA');
 
 	$decodedData = $rawData;
-	\CUtil::decodeURIComponent($decodedData);
 
 	$ID = isset($data['ID']) ? (int)$data['ID'] : 0;
 	$isNew = $ID <= 0;
@@ -2316,7 +2206,7 @@ elseif($action == 'SAVE_EMAIL')
 		{
 			$messageBody = sprintf(
 				'<html><body>%s</body></html>',
-				preg_replace('/[\r\n]+/'.BX_UTF_PCRE_MODIFIER, '<br>', htmlspecialcharsbx($messageBody))
+				preg_replace('/[\r\n]+/u', '<br>', htmlspecialcharsbx($messageBody))
 			);
 		}
 		else if (\CCrmContentType::BBCode == $contentType)
@@ -2405,8 +2295,9 @@ elseif($action == 'SAVE_EMAIL')
 	}
 
 	$arFileIDs = [];
-	$copiedFiles = [];
 	$attachToFileIds = [];
+	$templateArFileIDs = [];
+	$templateAttachToFileIds = [];
 	$arFields['STORAGE_TYPE_ID'] = $storageTypeID;
 	$saveAsTemplate = !empty($_REQUEST['save_as_template']);
 	if($storageTypeID === StorageType::File)
@@ -2486,19 +2377,46 @@ elseif($action == 'SAVE_EMAIL')
 				: []
 			;
 			$arFileIDs = $diskFiles;
-
+			$filesWithoutPermissionCheck = [];
 			if (isset($data['__diskfiles']) && is_array($data['__diskfiles']))
 			{
-				[$storageFilesFromTemplate, $attachToFileIds, $arFileIDs] = GetCrmEntitiesDisk($data['__diskfiles'], $curUserId, $saveAsTemplate ?? false);
-				$copiedFiles = empty($storageFilesFromTemplate)
-					? []
-					: array_map(
-						fn ($diskItem) => !is_scalar($diskItem)
-							? $diskItem
-							: ltrim($diskItem, join([FileUserType::NEW_FILE_PREFIX]))
-					,
-					$storageFilesFromTemplate
-				);
+				$storageElementsActivityId = 0;
+				$data['FORWARDED_ID'] = (int)($data['FORWARDED_ID'] ?? 0);
+				$data['REPLIED_ID'] = (int)($data['REPLIED_ID'] ?? 0);
+
+				if ($data['FORWARDED_ID'] > 0)
+				{
+					$storageElementsActivityId = $data['FORWARDED_ID'];
+				}
+				elseif ($data['REPLIED_ID'] > 0)
+				{
+					$storageElementsActivityId = $data['REPLIED_ID'];
+				}
+
+				if ($storageElementsActivityId > 0)
+				{
+					$filesToCheck = FileUserType::getItemsInfo($data['__diskfiles']);
+					foreach ($filesToCheck as $file)
+					{
+						$file['fileId'] = (int)($file['fileId'] ?? 0);
+						$file['id'] = $file['id'] ?? '';
+						if (
+							$file['fileId'] > 0
+							&& !empty($file['id'])
+							&& CCrmActivity::CheckStorageElementExists($storageElementsActivityId, $storageTypeID, $file['fileId'])
+						)
+						{
+							$filesWithoutPermissionCheck[] = $file['id'];
+						}
+					}
+				}
+
+				$messageEntityDiskHelper = new MailEntitiesDiskHelper($data['__diskfiles'], $saveAsTemplate, $filesWithoutPermissionCheck);
+				$messageEntityDiskHelper->prepareCrmEntitiesFiles();
+				$arFileIDs = $messageEntityDiskHelper->getArFileIds();
+				$attachToFileIds = $messageEntityDiskHelper->getAttachToFileIds();
+				$templateArFileIDs = $messageEntityDiskHelper->getTemplateArFileIds();
+				$templateAttachToFileIds = $messageEntityDiskHelper->getTemplateAttachToFileIds();
 			}
 		}
 		else
@@ -2513,11 +2431,9 @@ elseif($action == 'SAVE_EMAIL')
 		if (
 			!empty($arFileIDs)
 			|| !$isNew
-			|| !empty($copiedFiles)
 		)
 		{
-			$filteredFiles = StorageManager::filterFiles($arFileIDs, $storageTypeID, $userID);
-			$arFields['STORAGE_ELEMENT_IDS'] = array_merge($filteredFiles, $copiedFiles);
+			$arFields['STORAGE_ELEMENT_IDS'] = StorageManager::filterFiles($arFileIDs, $storageTypeID, $userID);
 
 			if (count($arFileIDs) > count($arFields['STORAGE_ELEMENT_IDS']))
 			{
@@ -2536,14 +2452,27 @@ elseif($action == 'SAVE_EMAIL')
 
 	$totalSize = 0;
 
-
-	$maxSize = Helper\Message::getMaxAttachedFilesSize();
-	if ($maxSize > 0 && $maxSize <= ceil($totalSize / 3) * 4) // base64 coef.
+	$arRawFiles = [];
+	if (
+		isset($arFields['STORAGE_ELEMENT_IDS'])
+		&& !empty($arFields['STORAGE_ELEMENT_IDS'])
+		&& is_array($arFields['STORAGE_ELEMENT_IDS'])
+	)
 	{
-		__CrmActivityEditorEndResponse(array('ERROR' => getMessage(
-			'CRM_ACTIVITY_EMAIL_MAX_SIZE_EXCEED',
-			['#SIZE#' => \CFile::formatSize(Helper\Message::getMaxAttachedFilesSizeAfterEncoding())]
-		)));
+		foreach ($arFields['STORAGE_ELEMENT_IDS'] as $item)
+		{
+			$arRawFiles[$item] = StorageManager::makeFileArray($item, $storageTypeID);
+			$totalSize += $arRawFiles[$item]['size'];
+		}
+
+		$maxSize = Helper\Message::getMaxAttachedFilesSize();
+		if ($maxSize > 0 && $maxSize <= ceil($totalSize / 3) * 4) // base64 coef.
+		{
+			__CrmActivityEditorEndResponse(array('ERROR' => getMessage(
+				'CRM_ACTIVITY_EMAIL_MAX_SIZE_EXCEED',
+				['#SIZE#' => \CFile::formatSize(Helper\Message::getMaxAttachedFilesSizeAfterEncoding())]
+			)));
+		}
 	}
 
 	if ($isNew)
@@ -2558,34 +2487,25 @@ elseif($action == 'SAVE_EMAIL')
 		__CrmActivityEditorEndResponse(array('ERROR' => CCrmActivity::GetLastErrorMessage()));
 	}
 
-	$arRawFiles = [];
 	if (
 		isset($arFields['STORAGE_ELEMENT_IDS'])
 		&& !empty($arFields['STORAGE_ELEMENT_IDS'])
 		&& is_array($arFields['STORAGE_ELEMENT_IDS'])
 	)
 	{
-		$storageFilesFromTemplateFlip = array_flip($storageFilesFromTemplate);
 		foreach ($arFields['STORAGE_ELEMENT_IDS'] as $item)
 		{
-			$arRawFiles[$item] = StorageManager::makeFileArray($item, $storageTypeID);
-
-			$totalSize += $arRawFiles[$item]['size'];
-
 			if (\CCrmContentType::Html == $contentType)
 			{
 				if (array_key_exists($item, $attachToFileIds))
 				{
 					$fileID = $attachToFileIds[$item];
 				}
-				elseif (array_key_exists($item, $storageFilesFromTemplateFlip))
-				{
-					$fileID = $storageFilesFromTemplateFlip[$item];
-				}
 				else
 				{
 					$fileID = $item;
 				}
+
 				$fileInfo = StorageManager::getFileInfo(
 					$item,
 					$storageTypeID,
@@ -2604,7 +2524,6 @@ elseif($action == 'SAVE_EMAIL')
 			}
 		}
 	}
-
 
 	$hostname = \COption::getOptionString('main', 'server_name', '') ?: 'localhost';
 	if (defined('BX24_HOST_NAME') && BX24_HOST_NAME != '')
@@ -2641,15 +2560,18 @@ elseif($action == 'SAVE_EMAIL')
 
 	if (!empty($_REQUEST['save_as_template']))
 	{
+		$storageElementIds = empty($templateArFileIDs) ? $arFields['STORAGE_ELEMENT_IDS'] : $templateArFileIDs;
 		$templateBody = $messageBody;
 		//preparing the message body for the copied files for the template
-		if ($storageFilesFromTemplate)
+		if (is_array($templateArFileIDs))
 		{
-			foreach ($storageFilesFromTemplate as $item => $key)
+			foreach ($templateArFileIDs as $key => $item)
 			{
+				$templateFileID = $templateAttachToFileIds[$item] ?? $key;
+
 				$templateBody = preg_replace(
-					sprintf('/(https?:\/\/)?bxacid:n?%u/i', $item),
-					sprintf('bxacid:n%s', $key),
+					sprintf('/(https?:\/\/)?bxacid:n?%u/i', $templateFileID),
+					sprintf('bxacid:n%s', $item),
 					$templateBody
 				);
 			}
@@ -2670,7 +2592,7 @@ elseif($action == 'SAVE_EMAIL')
 				{
 					return is_scalar($item) ? sprintf('n%u', $item) : $item;
 				},
-				$arFields['STORAGE_ELEMENT_IDS'],
+				$storageElementIds,
 			),
 			'SORT'           => 100,
 		];
@@ -2751,14 +2673,6 @@ elseif($action == 'SAVE_EMAIL')
 		{
 			$outgoingBody = preg_replace(
 				sprintf('/(https?:\/\/)?bxacid:n?%u/i', $attachToFileIds[$key]),
-				sprintf('cid:%s', $contentId),
-				$outgoingBody
-			);
-		}
-		elseif (array_key_exists($key, $storageFilesFromTemplateFlip))
-		{
-			$outgoingBody = preg_replace(
-				sprintf('/(https?:\/\/)?bxacid:n?%u/i', $storageFilesFromTemplateFlip[$key]),
 				sprintf('cid:%s', $contentId),
 				$outgoingBody
 			);
@@ -3734,11 +3648,11 @@ elseif($action == 'PREPARE_MAIL_TEMPLATE')
 	$templateOwnerID = isset($fields['OWNER_ID']) ? intval($fields['OWNER_ID']) : 0;
 	$templateScope = isset($fields['SCOPE']) ? intval($fields['SCOPE']) : CCrmMailTemplateScope::Undefined;
 
-	$availableTemplatesId = \Bitrix\Crm\MailTemplate\MailTemplateAccess::getAllAvailableSharedTemplatesId($curUser->GetID());
-
-	if($templateScope !== CCrmMailTemplateScope::Common
-		&& $templateOwnerID !== (int)($curUser->GetID())
-		&& !in_array($templateID, $availableTemplatesId,true))
+	if(
+		$templateOwnerID !== (int)($curUser->GetID())
+		&& $templateScope !== CCrmMailTemplateScope::Common
+		&& !\Bitrix\Crm\MailTemplate\MailTemplateAccess::checkAccessToLimitedTemplate($templateID)
+	)
 	{
 		__CrmActivityEditorEndResponse(array('ERROR' => 'Invalid data'));
 	}
@@ -3878,7 +3792,7 @@ elseif($action == 'UPDATE_DOCS')
 
 		if (!in_array($itemOwnerTypeId, $docsTypes) || $itemOwnerId <= 0)
 		{
-			$errors[] = __CrmActivityEditorEndResponse(array('ERROR' => 'Invalid parameters!'));
+			__CrmActivityEditorEndResponse(array('ERROR' => 'Invalid parameters!'));
 			continue;
 		}
 

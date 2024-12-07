@@ -33,7 +33,6 @@ class ExecutionService
 	{
 		$this->parameter = new RegularParameter($this->repository);
 
-		$currentUserTimeZoneOffsetTS = User::getTimeZoneOffsetCurrentUser();
 		$timeZoneOffsetTS = $this->parameter->get('TIMEZONE_OFFSET');
 		$creatorTimeZoneOffsetTS = $timeZoneOffsetTS ?? User::getTimeZoneOffset($this->repository->getEntity()->getCreatedBy());
 
@@ -52,7 +51,6 @@ class ExecutionService
 			if ($lastExecutionTimeTS > 0)
 			{
 				// $agentTime is in current user`s time, but we want server time here
-				$lastExecutionTimeTS -= $currentUserTimeZoneOffsetTS;
 				$baseExecutionTimeTS = $lastExecutionTimeTS;
 			}
 		}
@@ -73,13 +71,6 @@ class ExecutionService
 			$this->parameter
 		);
 
-		$repeatTill = $this->parameter->get('REPEAT_TILL');
-
-		if (!$repeatTill || $repeatTill === RepeatType::ENDLESS)
-		{
-			$startTimeTS += $currentUserTimeZoneOffsetTS;
-		}
-
 		try
 		{
 			$startTime = DateTime::createFromTimestamp($startTimeTS);
@@ -97,7 +88,6 @@ class ExecutionService
 	 */
 	public function getNextRegularityDateTime(?DateTime $lastStartTime = null): DateTime
 	{
-		$currentUserTimezoneTS = User::getTimeZoneOffsetCurrentUser();
 		$iterationCount = 0;
 		$lastExecutionTimeTS = time();
 
@@ -123,12 +113,12 @@ class ExecutionService
 			}
 
 			$lastStartTime = clone $startTime;
-			$currentUserTimeTS = time() + $currentUserTimezoneTS;
+			$currentUserTimeTS = time();
 
 			$iterationCount++;
 		}
 		while ($startTime->getTimestamp() < $currentUserTimeTS);
 
-		return DateTime::createFromTimestamp($startTime->getTimestamp() - $currentUserTimezoneTS);
+		return DateTime::createFromTimestamp($startTime->getTimestamp());
 	}
 }

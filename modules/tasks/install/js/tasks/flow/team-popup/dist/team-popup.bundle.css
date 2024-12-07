@@ -1,0 +1,99 @@
+.tasks-flow__team-popup_container {
+	padding: 9px 0px 0px 12px;
+	-webkit-user-select: none;
+	        user-select: none;
+}
+
+.tasks-flow__team-popup_label {
+	display: flex;
+	padding-right: 22px;
+	margin-bottom: 9px;
+	font-size: var(--ui-font-size-5xs);
+	font-weight: var(--ui-font-weight-bold);
+	text-transform: uppercase;
+	color: rgba(var(--ui-color-palette-black-solid-rgb), var(--ui-opacity-40));
+}
+
+.tasks-flow__team-popup_label:after {
+	content: '';
+	position: relative;
+	display: block;
+	flex: 1;
+	min-width: 15px;
+	height: 1px;
+	background-color: rgba(var(--ui-color-palette-black-solid-rgb), var(--ui-opacity-5));
+	margin: auto 0 auto 5px;
+}
+
+.tasks-flow__team-popup_label-text {
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	overflow: hidden;
+}
+
+.tasks-flow__team-popup_members {
+	display: block;
+	min-height: 26px;
+	max-height: 180px;
+	padding-right: 10px;
+	scrollbar-track-color: var(--ui-color-base-10);
+	scrollbar-base-color: var(--ui-color-base-40);
+	scrollbar-shadow-color: var(--ui-color-base-40);
+	scrollbar-highlight-color: var(--ui-color-base-40);
+	overflow-y: auto;
+}
+
+.tasks-flow__team-popup_members::-webkit-scrollbar {
+	width: 6px;
+}
+
+.tasks-flow__team-popup_members::-webkit-scrollbar-thumb {
+	border-radius: var(--ui-border-radius-2xs);
+	background: var(--ui-color-base-40);
+}
+
+.tasks-flow__team-popup_members::-webkit-scrollbar-track {
+	margin-bottom: 12px;
+	border-radius: var(--ui-border-radius-2xs);
+	background: var(--ui-color-base-10);
+}
+
+.tasks-flow__team-popup_member {
+	display: flex;
+	align-items: center;
+	padding: 7px 0;
+	gap: 6px;
+	white-space: nowrap;
+}
+
+.tasks-flow__team-popup_member-avatar {
+	width: 24px;
+}
+
+.tasks-flow__team-popup_member-name-content {
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+}
+
+.tasks-flow__team-popup_member-name {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	font-size: var(--ui-font-size-xs);
+	color: var(--ui-color-link-primary-base);
+	cursor: pointer;
+	transition: .2s;
+}
+
+.tasks-flow__team-popup_member-name:hover {
+	color: rgba(var(--ui-color-link-primary-base-rgb), var(--ui-opacity-80));
+	text-decoration: none;
+}
+
+.tasks-flow__team-popup_member-position {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	font-size: var(--ui-font-size-4xs);
+	color: var(--ui-color-base-50);
+}

@@ -105,6 +105,20 @@ class HiddenStorage
 			: [];
 	}
 
+	public function copyFilesToFolder(array $fileIds, string $folderCode): array
+	{
+		if (!$this->isAvailableAddFiles($fileIds))
+		{
+			return [];
+		}
+
+		$folder = $this->findOrCreateFolder($folderCode);
+
+		return isset($folder)
+			? $this->copyFiles($fileIds, $folder)
+			: [];
+	}
+
 	public function deleteFiles(array $fileIds): void
 	{
 		if (empty($fileIds))
@@ -146,6 +160,29 @@ class HiddenStorage
 		return ($options & self::USE_DISK_OBJ_ID_AS_KEY)
 			? array_column($rows->fetchAll(), 'FILE_ID', 'ID')
 			: array_values(array_column($rows->fetchAll(), 'FILE_ID'));
+	}
+
+	private function copyFiles(array $fileIds, Folder $folder): array
+	{
+		$result = [];
+		foreach ($fileIds as $fileId)
+		{
+			$sourceFile = (\Bitrix\Disk\File::load(['FILE_ID' => $fileId], ['STORAGE']));
+
+			if (!$sourceFile)
+			{
+				continue;
+			}
+
+			$file = $sourceFile->copyTo($folder, $this->userId, true);
+
+			if ($file instanceof File)
+			{
+				$result[] = $file;
+			}
+		}
+
+		return $result;
 	}
 
 	private function addFiles(array $fileIds, Folder $folder): array

@@ -1,7 +1,7 @@
 <?php
 $MESS["IMCONNECTOR_COMPONENT_NETWORK_CODE"] = "Code";
 $MESS["IMCONNECTOR_COMPONENT_NETWORK_CONNECT"] = "Connect";
-$MESS["IMCONNECTOR_COMPONENT_NETWORK_CONNECTED"] = "Bitrix24.Network connected";
+$MESS["IMCONNECTOR_COMPONENT_NETWORK_CONNECTED_MSGVER_1"] = "Bitrix24 Network connected";
 $MESS["IMCONNECTOR_COMPONENT_NETWORK_CONNECTION"] = "Connection";
 $MESS["IMCONNECTOR_COMPONENT_NETWORK_CONNECTOR_ERROR_STATUS"] = "Bot processing error. Please check all settings and test your bot again.";
 $MESS["IMCONNECTOR_COMPONENT_NETWORK_COPY"] = "Copy";
@@ -23,13 +23,13 @@ $MESS["IMCONNECTOR_COMPONENT_NETWORK_INDEX_LIST_ITEM_1"] = "Save contacts and co
 $MESS["IMCONNECTOR_COMPONENT_NETWORK_INDEX_LIST_ITEM_2"] = "Guide the customer through the sales funnel in the CRM";
 $MESS["IMCONNECTOR_COMPONENT_NETWORK_INDEX_LIST_ITEM_3"] = "Reply to your customers when and where they prefer";
 $MESS["IMCONNECTOR_COMPONENT_NETWORK_INDEX_LIST_ITEM_4"] = "Customer inquiries are distributed among the sales agents as per queue rules";
-$MESS["IMCONNECTOR_COMPONENT_NETWORK_INDEX_SUBTITLE"] = "Connect Bitrix24.Network to receive inquiries from those of your customers, partners and colleagues who also use Bitrix24.";
-$MESS["IMCONNECTOR_COMPONENT_NETWORK_INDEX_TITLE"] = "Use Bitrix24.Network to communicate with customers that also use Bitrix24";
+$MESS["IMCONNECTOR_COMPONENT_NETWORK_INDEX_SUBTITLE_MSGVER_1"] = "Connect Bitrix24 Network to receive inquiries from those of your customers, partners and colleagues who also use Bitrix24.";
+$MESS["IMCONNECTOR_COMPONENT_NETWORK_INDEX_TITLE_MSGVER_1"] = "Use Bitrix24 Network to communicate with customers that also use Bitrix24";
 $MESS["IMCONNECTOR_COMPONENT_NETWORK_INFO"] = "Information";
 $MESS["IMCONNECTOR_COMPONENT_NETWORK_MAX_DIALOGS_INFINITE"] = "Unlimited";
 $MESS["IMCONNECTOR_COMPONENT_NETWORK_NAME"] = "Name";
 $MESS["IMCONNECTOR_COMPONENT_NETWORK_REST_HELP"] = "You can create non-searchable private support channel.<br> Please provide the code to your clients so that they are able to contact you or connect the channel via REST API.<br> Open channels REST API details are available at #LINK_START#documentation#LINK_END#";
 $MESS["IMCONNECTOR_COMPONENT_NETWORK_REST_LINK"] = "https://bitrix24.com/~rest-join-network-en";
-$MESS["IMCONNECTOR_COMPONENT_NETWORK_SIMPLE_FORM_DESCRIPTION_1"] = "Open channel is already connected to Bitrix24.Network.
+$MESS["IMCONNECTOR_COMPONENT_NETWORK_SIMPLE_FORM_DESCRIPTION_1_MSGVER_1"] = "Open channel is already connected to Bitrix24 Network.
 <br>You can change settings, if necessary.";
 $MESS["IMCONNECTOR_COMPONENT_NETWORK_URL"] = "Link";

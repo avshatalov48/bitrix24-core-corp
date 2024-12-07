@@ -40,6 +40,10 @@ class FieldSynchronizer
 	const FIELD_TYPE_DATETIME = 'datetime';
 	const FIELD_TYPE_LOCATION = 'location';
 	const FIELD_TYPE_ADDRESS = 'address';
+	const MULTI_FIELD_WITH_TYPE_CHOICE_CLASS_LIST = [
+		\CCrmFieldMulti::PHONE => '\Bitrix\Crm\FieldSynchronizer\Phone',
+		\CCrmFieldMulti::EMAIL => '\Bitrix\Crm\FieldSynchronizer\Email',
+	];
 
 	protected static $statusTypes = null;
 	protected static $countryId = null;
@@ -47,7 +51,6 @@ class FieldSynchronizer
 	protected static $relations = null;
 
 	protected static $fieldsTree = [];
-
 	protected static function clearFieldsCache()
 	{
 		static::$fieldsTree = [];
@@ -86,6 +89,10 @@ class FieldSynchronizer
 			self::FIELD_TYPE_FLOAT,
 		);
 
+		$additionalMultiFieldTypes = static::getAdditionalMultiFieldTypes();
+
+		$types = array_merge($types, $additionalMultiFieldTypes);
+
 		$names = static::getTypeList();
 
 		$result = array();
@@ -93,6 +100,25 @@ class FieldSynchronizer
 		foreach($types as $type)
 		{
 			$result[$type] = $names[$type];
+		}
+
+		return $result;
+	}
+
+	protected static function getAdditionalMultiFieldTypes(): array
+	{
+		$result = [];
+
+		foreach (static::MULTI_FIELD_WITH_TYPE_CHOICE_CLASS_LIST as $className)
+		{
+			$fieldsFunction = [$className, 'getTypeList'];
+
+			if (!is_callable($fieldsFunction))
+			{
+				throw new SystemException('Provider fields method not found in "' . $className . '".');
+			}
+
+			$result = array_merge($result, call_user_func_array($fieldsFunction, []));
 		}
 
 		return $result;
@@ -143,6 +169,13 @@ class FieldSynchronizer
 				break;
 
 			case BaseEntityMatcher::MULTI_FIELD_TYPE:
+				if (static::isMultiFieldType($field['CRM_FIELD_CODE']))
+				{
+					$code .= '_' . $field['CRM_FIELD_CODE'];
+
+					break;
+				}
+
 				$parsedName = \CCrmFieldMulti::ParseComplexName($field['CRM_FIELD_CODE'], true);
 
 				if (!empty($parsedName))
@@ -445,7 +478,7 @@ class FieldSynchronizer
 
 		if ($entity['HAS_MULTI_FIELDS'])
 		{
-			self::prepareMultiFieldsInfo($fieldsInfo);
+			self::prepareMultiFieldsInfo($entityName, $fieldsInfo);
 		}
 
 		if ($entity['HAS_REQUISITES'])
@@ -485,6 +518,23 @@ class FieldSynchronizer
 		elseif ($entityName === 'ADDRESS')
 		{
 			$captionInfo = RequisiteAddress::getLabels();
+
+			if (isset($captionInfo[$fieldId]))
+			{
+				$caption = $captionInfo[$fieldId];
+			}
+		}
+		elseif (in_array($entityName, array_keys(static::MULTI_FIELD_WITH_TYPE_CHOICE_CLASS_LIST)))
+		{
+			$entityClass = static::MULTI_FIELD_WITH_TYPE_CHOICE_CLASS_LIST[$entityName];
+			$fieldsFunction = [$entityClass, 'getCaption'];
+
+			if (!is_callable($fieldsFunction))
+			{
+				throw new SystemException('Provider fields method not found in "' . $entityClass . '".');
+			}
+
+			$captionInfo = call_user_func_array($fieldsFunction, []);
 
 			if (isset($captionInfo[$fieldId]))
 			{
@@ -829,17 +879,71 @@ class FieldSynchronizer
 		$userType->PrepareFieldsInfo($fieldsInfo);
 	}
 
-	protected static function prepareMultiFieldsInfo(&$fieldsInfo)
+	protected static function prepareMultiFieldsInfo(string $entityName, &$fieldsInfo)
 	{
 		$typesId = array_keys(\CCrmFieldMulti::GetEntityTypeInfos());
 
 		foreach ($typesId as $typeId)
 		{
-			$fieldsInfo[$typeId] = [
-				'TYPE' => 'crm_multifield',
-				'ATTRIBUTES' => [\CCrmFieldInfoAttr::Multiple]
+			if (!in_array($typeId, array_keys(static::MULTI_FIELD_WITH_TYPE_CHOICE_CLASS_LIST)))
+			{
+				$fieldsInfo[$typeId] = [
+					'TYPE' => 'crm_multifield',
+					'ATTRIBUTES' => [\CCrmFieldInfoAttr::Multiple],
+				];
+
+				continue;
+			}
+
+			$fieldsInfo[$typeId . '_TREE'] = [
+				'type' => 'tree',
+				'tree' => [
+					$typeId => [
+						'CAPTION' => \CCrmFieldMulti::GetEntityTypeCaption($typeId),
+						'FIELDS' => static::getMultiFieldInfo($entityName, $typeId),
+					]
+				],
+				'ATTRIBUTES' => [\CCrmFieldInfoAttr::Multiple],
 			];
 		}
+	}
+
+	protected static function getMultiFieldInfo(string $entityName, string $typeId): array
+	{
+		$className = static::MULTI_FIELD_WITH_TYPE_CHOICE_CLASS_LIST[$typeId] ?? '';
+
+		if (empty($className))
+		{
+			return [];
+		}
+
+		$selectedTypeFields = static::getFieldsInternal(
+			$typeId,
+			[
+				'CLASS_NAME' => $className,
+				'HAS_USER_FIELDS' => false,
+				'HAS_MULTI_FIELDS' => false,
+				'HAS_REQUISITES' => false
+			]
+		);
+
+		$result = [];
+
+		foreach ($selectedTypeFields as $selectedTypeField)
+		{
+			$selectedTypeField['value_type'] = [
+				[
+					'ID' => $selectedTypeField['entity_field_name'],
+					'VALUE' => $selectedTypeField['caption'],
+				]
+			];
+			$selectedTypeField['entity_field_name'] = $selectedTypeField['name'];
+			$selectedTypeField['name'] = $entityName . '_' . $selectedTypeField['name'];
+
+			$result[] = $selectedTypeField;
+		}
+
+		return $result;
 	}
 
 	protected static function prepareRequisitesInfo($entityName, &$fieldsInfo)
@@ -1330,6 +1434,14 @@ class FieldSynchronizer
 			$fieldCode = $matchEntityFieldCode.'_'.$multiFieldType;
 			$settings = [];
 		}
+		elseif (static::isMultiFieldType($matchEntityFieldCode))
+		{
+			unset($itemFields['MULTI_FIELD_TYPE']);
+
+			$fieldType = BaseEntityMatcher::MULTI_FIELD_TYPE;
+			$fieldCode = $matchEntityFieldCode;
+			$settings = [];
+		}
 		elseif ($requisitePresetId)
 		{
 			$presets = static::getRequisitePresetsInfo();
@@ -1379,6 +1491,28 @@ class FieldSynchronizer
 			'CRM_FIELD_CODE' => $fieldCode,
 			'SETTINGS' => $settings
 		];
+	}
+
+	protected static function isMultiFieldType(string $type): bool
+	{
+		foreach (static::MULTI_FIELD_WITH_TYPE_CHOICE_CLASS_LIST as $className)
+		{
+			$fieldsFunction = [$className, 'isOwnType'];
+
+			if (!is_callable($fieldsFunction))
+			{
+				throw new SystemException('Provider fields method not found in "' . $className . '".');
+			}
+
+			$result = call_user_func_array($fieldsFunction, [$type]);
+
+			if ($result)
+			{
+				return $result;
+			}
+		}
+
+		return false;
 	}
 
 	private static function extractItems(&$itemFields)

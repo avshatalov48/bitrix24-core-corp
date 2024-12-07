@@ -27,6 +27,11 @@ class CrmField extends BaseLinkedEntitiesField
 		$fieldType = $this->getType();
 		foreach ((array)$fieldValue as $value)
 		{
+			if (!is_scalar($value))
+			{
+				continue;
+			}
+
 			if ($this->needExplodeValue($value))
 			{
 				$valueParts = explode('_', $value);
@@ -65,6 +70,11 @@ class CrmField extends BaseLinkedEntitiesField
 		$fieldValue = is_array($fieldValue) ? $fieldValue : [$fieldValue];
 		foreach ($fieldValue as $entityElement)
 		{
+			if (!is_scalar($entityElement))
+			{
+				continue;
+			}
+
 			if ($this->needExplodeValue($entityElement))
 			{
 				[$entityTypePrefix, $entityElementId] = explode('_', $entityElement);

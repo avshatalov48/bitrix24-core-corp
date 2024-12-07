@@ -1,28 +1,32 @@
-<?
+<?php
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)
 {
 	die();
 }
 
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Tasks\Helper\RestrictionUrl;
+use Bitrix\Tasks\Integration\Bitrix24\FeatureDictionary;
+use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit;
 
-/** @var array $arResult*/
+	/** @var array $arResult*/
 /** @global $APPLICATION*/
 
 Loc::loadMessages(__FILE__);
 
 $helper = $arResult['HELPER'];
-$APPLICATION->IncludeComponent('bitrix:ui.info.helper', '', []);
+\Bitrix\Main\UI\Extension::load('ui.info-helper');
 ?>
 
 <?if (!$arResult['DATA']['FEATURE_ENABLED']):?>
-	<div class="tasks-btn-restricted tasks-uf-panel-restricted"
-		 onclick="top.BX.UI.InfoHelper.show('<?= RestrictionUrl::TEMPLATE_ACCESS_PERMISSIONS_SLIDER_URL ?>',{isLimit: true,limitAnalyticsLabels: {module: 'tasks'}});"
-		 style="cursor:pointer;">
+	<div
+		class="tasks-btn-restricted tasks-uf-panel-restricted"
+		onclick="<?=Limit::getLimitLockClick(FeatureDictionary::TASK_TEMPLATE_ACCESS_PERMISSIONS, null)?>"
+		style="cursor:pointer;"
+	>
 		<?= Loc::getMessage("TASKS_TWR_TEMPLATE_FEATURE_ACCESS_RESTRICTED");?>
-		<a href="javascript:void(0);"
-		   onclick="top.BX.UI.InfoHelper.show('<?= RestrictionUrl::TEMPLATE_ACCESS_PERMISSIONS_SLIDER_URL ?>',{isLimit: true,limitAnalyticsLabels: {module: 'tasks',}});"
+		<a
+			href="javascript:void(0);"
+			onclick="<?=Limit::getLimitLockClick(FeatureDictionary::TASK_TEMPLATE_ACCESS_PERMISSIONS, null)?>"
 		><?=Loc::getMessage('TASKS_TWR_TEMPLATE_FEATURE_ACCESS_RESTRICTED_MORE');?></a>
 	</div>
 <?else:?>
@@ -87,7 +91,7 @@ $APPLICATION->IncludeComponent('bitrix:ui.info.helper', '', []);
 			<?endif?>
 		</div>
 
-		<script type="text/javascript">
+		<script>
 			BX.message({
 				'path_user': '<?= $arResult['PATHS']['USER'];?>',
 				'path_group': '<?= $arResult['PATHS']['GROUP']?>',

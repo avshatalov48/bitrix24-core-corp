@@ -61,6 +61,7 @@ abstract class Item extends LazyAccess
 	private $dataContextFlags = array();
 
 	protected $immutable = false;
+	protected bool $skipAccessCheck = false;
 
 	protected static $cache = array();
 
@@ -163,6 +164,12 @@ abstract class Item extends LazyAccess
 		}
 
 		return $data;
+	}
+
+	public function skipAccessCheck($skip = true): static
+	{
+		$this->skipAccessCheck = $skip;
+		return $this;
 	}
 
 	/**
@@ -1901,11 +1908,16 @@ abstract class Item extends LazyAccess
 
 	public function __call($name, array $arguments)
 	{
-		$name = ToLower(trim((string) $name));
+		$name = mb_strtolower(trim((string) $name));
 
 		// can*() methods stand for rights checking
 		if(mb_strpos($name, 'can') === 0)
 		{
+			if ($this->skipAccessCheck)
+			{
+				return true;
+			}
+
 			return $this->callCanMethod($name, $arguments);
 		}
 		else

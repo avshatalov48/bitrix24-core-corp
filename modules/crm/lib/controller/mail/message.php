@@ -872,7 +872,7 @@ class Message extends Controller
 				{
 					$messageBody = sprintf(
 						'<html><body>%s</body></html>',
-						preg_replace('/[\r\n]+/' . BX_UTF_PCRE_MODIFIER, '<br>', htmlspecialcharsbx($messageBody))
+						preg_replace('/[\r\n]+/u', '<br>', htmlspecialcharsbx($messageBody))
 					);
 				}
 				elseif (\CCrmContentType::BBCode == $contentType)

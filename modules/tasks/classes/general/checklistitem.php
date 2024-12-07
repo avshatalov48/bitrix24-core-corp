@@ -687,7 +687,7 @@ final class CTaskCheckListItem extends CTaskSubItemAbstract
 				];
 			}
 
-			$sort = ToLower($sort);
+			$sort = mb_strtolower($sort);
 			if ($sort !== 'desc' && $sort !== 'asc')
 			{
 				$errorsFound = true;

@@ -15,6 +15,7 @@ class Icon extends Base
 	protected ?string $backgroundUri = null;
 	protected ?string $counterType = null;
 	protected ?string $backgroundColorToken = null;
+	protected ?string $backgroundColor = null;
 
 	public function getCode(): string
 	{
@@ -65,6 +66,18 @@ class Icon extends Base
 		return $this;
 	}
 
+	public function getBackgroundColor(): ?string
+	{
+		return $this->backgroundColor;
+	}
+
+	public function setBackgroundColor(?string $backgroundColor): Icon
+	{
+		$this->backgroundColor = $backgroundColor;
+
+		return $this;
+	}
+
 	public function toArray(): array
 	{
 		return [
@@ -72,6 +85,7 @@ class Icon extends Base
 			'counterType' => $this->getCounterType(),
 			'backgroundColorToken' => $this->getBackgroundColorToken(),
 			'backgroundUri' => $this->getBackgroundUri(),
+			'backgroundColor' => $this->getBackgroundColor(),
 		];
 	}
 }

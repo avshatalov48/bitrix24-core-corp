@@ -191,9 +191,9 @@ $APPLICATION->IncludeComponent("bitrix:calendar.interface.grid", "", Array(
 //endregion
 ?>
 
-<script type="text/javascript">
+<script>
 BX.message({
-	TASKS_DELETE_SUCCESS: '<?= Task::getDeleteMessage((int)$arParams['USER_ID']) ?>',
+	TASKS_DELETE_SUCCESS: '<?= Loader::includeModule('recyclebin') ? Task::getDeleteMessage((int)$arParams['USER_ID']) : Loc::getMessage('TASKS_DELETE_SUCCESS') ?>',
 	TASKS_CALENDAR_NOTIFY_CHANGE_DEADLINE: '<?= Loc::getMessage('TASKS_CALENDAR_NOTIFY_CHANGE_DEADLINE')?>'
 });
 

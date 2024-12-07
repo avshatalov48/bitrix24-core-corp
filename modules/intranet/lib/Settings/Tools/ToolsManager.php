@@ -42,6 +42,7 @@ class ToolsManager
 			'menu_automation' => new Automation(),
 			'menu_sign' => new Sign(),
 			'menu_crm_store' => new Inventory(),
+			'menu_bi_constructor' => new BIConstructor(),
 			'menu_company' => new Company(),
 		];
 
@@ -127,6 +128,12 @@ class ToolsManager
 				if (!$tool->isEnabled() && $tool->getMenuItemId())
 				{
 					$this->disabledMenuItemListId[$tool->getId()] = $tool->getMenuItemId();
+					$additionalMenuItemIds = $tool->getAdditionalMenuItemIds();
+
+					foreach ($additionalMenuItemIds as $menuItemId)
+					{
+						$this->disabledMenuItemListId[] = $menuItemId;
+					}
 				}
 
 				$subgroups = $tool->getSubgroups();

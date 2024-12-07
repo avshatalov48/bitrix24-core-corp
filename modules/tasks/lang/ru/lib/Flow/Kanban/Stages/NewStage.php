@@ -1,0 +1,3 @@
+<?php
+
+$MESS['TASKS_FLOW_AUTO_CREATED_GROUP_STAGE_NEW'] = 'Новые';

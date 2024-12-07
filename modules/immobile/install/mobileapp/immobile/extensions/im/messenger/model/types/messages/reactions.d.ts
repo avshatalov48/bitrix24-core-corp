@@ -1,4 +1,5 @@
-import {PayloadData} from "../base";
+import {MessengerModel, PayloadData} from "../base";
+import {MessagesModelCollection} from "../messages";
 
 export enum ReactionType
 {
@@ -41,6 +42,10 @@ type ReactionsModelRemoveReactionPayload = {
 	reaction: ReactionType,
 }
 
+type ReactionsDeleteByChatIdPayload = {
+	chatId: number
+}
+
 type ReactionsModelState = {
 	messageId: number,
 	// @ts-ignore
@@ -50,6 +55,14 @@ type ReactionsModelState = {
 	reactionUsers: Map<ReactionType, number[]>,
 }
 
+type MessageId = number | string
+
+export type ReactionsMessengerModel = MessengerModel<ReactionsModelCollection>;
+
+declare type ReactionsModelCollection = {
+	collection: Record<MessageId, ReactionsModelState>
+}
+
 export type ReactionsModelActions =
 	'messagesModel/reactionsModel/store'
 	| 'messagesModel/reactionsModel/set'
@@ -57,6 +70,7 @@ export type ReactionsModelActions =
 	| 'messagesModel/reactionsModel/setFromPullEvent'
 	| 'messagesModel/reactionsModel/setReaction'
 	| 'messagesModel/reactionsModel/removeReaction'
+	| 'messagesModel/reactionsModel/deleteByChatId'
 
 
 export type ReactionsModelMutation =
@@ -64,6 +78,7 @@ export type ReactionsModelMutation =
 	| 'messagesModel/reactionsModel/set'
 	| 'messagesModel/reactionsModel/add'
 	| 'messagesModel/reactionsModel/updateWithId'
+	| 'messagesModel/reactionsModel/deleteByChatId'
 
 
 export interface ReactionsStoreData extends PayloadData
@@ -96,4 +111,10 @@ export type ReactionsUpdateWithIdActions =
 export interface ReactionsUpdateWithIdData extends PayloadData
 {
 	reaction: ReactionsModelState;
+}
+
+export type ReactionsDeleteByChatIdActions = 'deleteByChatId';
+export interface ReactionsDeleteByChatIdData extends PayloadData
+{
+	messageIdList: Array<MessageId>;
 }

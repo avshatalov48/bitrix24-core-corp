@@ -3,6 +3,7 @@
  */
 jn.define('layout/ui/audio-player/speed-button', (require, exports, module) => {
 	const AppTheme = require('apptheme');
+	const { ContextMenu } = require('layout/ui/context-menu');
 
 	/**
 	 * @class SpeedButton

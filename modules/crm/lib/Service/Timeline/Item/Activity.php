@@ -4,8 +4,12 @@ namespace Bitrix\Crm\Service\Timeline\Item;
 
 use Bitrix\Crm\Integration\StorageManager;
 use Bitrix\Crm\Service\Timeline\Config;
+use Bitrix\Crm\Service\Timeline\Item\Interfaces\Deadlinable;
 use Bitrix\Crm\Service\Timeline\Layout;
+use Bitrix\Crm\Service\Timeline\Layout\Action\JsEvent;
+use Bitrix\Crm\Service\Timeline\Layout\Footer\Button;
 use Bitrix\Crm\Service\Timeline\Layout\Menu\MenuItemFactory;
+use Bitrix\Crm\Settings\WorkTime;
 use Bitrix\Crm\Timeline\Entity\NoteTable;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Type\DateTime;
@@ -13,8 +17,11 @@ use CCrmActivity;
 use CCrmDateTimeHelper;
 use CCrmOwnerType;
 
-abstract class Activity extends Configurable
+abstract class Activity extends Configurable implements Deadlinable
 {
+	protected const NEAREST_WORK_DATE_DAYS = 3;
+	protected const NEAREST_WORK_DATE_HOURS = 1;
+
 	/**
 	 * Should return unique identifier of an activity template
 	 *
@@ -126,14 +133,15 @@ abstract class Activity extends Configurable
 			;
 		}
 
+		$moveToMenuItem = $this->createMoveToMenuItem($activityId);
+		if ($moveToMenuItem)
+		{
+			$menuItems['moveTo'] = $moveToMenuItem;
+		}
+
 		$menuItems['delete'] = $this->createDeleteMenuItem($activityId);
 
 		return $menuItems;
-	}
-
-	protected function isScheduled(): bool
-	{
-		return ($this->getModel()->isScheduled());
 	}
 
 	protected function isOverdue(): bool
@@ -160,6 +168,23 @@ abstract class Activity extends Configurable
 		return is_null($this->getAssociatedEntityModel()?->get('ORIGIN_ID'));
 	}
 
+	final protected function getScheduleButton(string $jsEventName, string $buttonType = Button::TYPE_SECONDARY): Button
+	{
+		$nearestWorkday = (new WorkTime())
+			->detectNearestWorkDateTime(self::NEAREST_WORK_DATE_DAYS, self::NEAREST_WORK_DATE_HOURS)
+		;
+
+		return (new Button(Loc::getMessage('CRM_COMMON_ACTION_SCHEDULE'), $buttonType))
+			->setAction(
+				(new JsEvent($jsEventName))
+					->addActionParamInt('activityId', $this->getActivityId())
+					->addActionParamString('scheduleDate', $nearestWorkday->toString())
+					->addActionParamInt('scheduleTs', $nearestWorkday->getTimestamp()
+				)
+			)
+		;
+	}
+
 	protected function getCompleteButton(): ?Layout\Header\ChangeStreamButton
 	{
 		if (!$this->isScheduled())
@@ -184,7 +209,7 @@ abstract class Activity extends Configurable
 		;
 	}
 
-	protected function getChangeDeadlineAction(): Layout\Action\RunAjaxAction
+	public function getChangeDeadlineAction(): Layout\Action\RunAjaxAction
 	{
 		return (new Layout\Action\RunAjaxAction('crm.timeline.activity.setDeadline'))
 			->addActionParamInt('activityId', $this->getActivityId())
@@ -198,8 +223,16 @@ abstract class Activity extends Configurable
 		return $this->getModel()->getAssociatedEntityId();
 	}
 
-	protected function getDeadline(): ?DateTime
+	public function getDeadline(): ?DateTime
 	{
+//		$model = $this->getAssociatedEntityModel();
+//		if (!$model)
+//		{
+//			return null;
+//		}
+//
+//		$deadline = $model->get('START_TIME') ?? $model->get('DEADLINE');
+
 		$deadline = $this->getAssociatedEntityModel()?->get('DEADLINE');
 
 		return ($deadline && !CCrmDateTimeHelper::IsMaxDatabaseDate($deadline))
@@ -300,6 +333,29 @@ abstract class Activity extends Configurable
 		;
 	}
 
+	private function createMoveToMenuItem(int $activityId): ?Layout\Menu\MenuItem
+	{
+		if (
+			$this->hasUpdatePermission()
+			&& $this->isIncomingChannel()
+			&& $this->canMoveTo()
+		)
+		{
+			return MenuItemFactory::createMoveToMenuItem()
+				->setAction(
+					(new Layout\Action\JsEvent('Activity:MoveTo'))
+						->addActionParamInt('activityId', $activityId)
+						->addActionParamInt('ownerTypeId', $this->getContext()->getEntityTypeId())
+						->addActionParamInt('ownerId', $this->getContext()->getEntityId())
+						->addActionParamInt('categoryId', $this->getContext()->getEntityCategoryId())
+				)
+				->setScopeWeb() // temporary disable action for mobile app
+			;
+		}
+
+		return null;
+	}
+
 	private function canEdit(): bool
 	{
 		$provider = CCrmActivity::GetActivityProvider($this->getAssociatedEntityModel()?->toArray());
@@ -312,6 +368,11 @@ abstract class Activity extends Configurable
 		}
 
 		return $this->hasUpdatePermission();
+	}
+
+	protected function canMoveTo(): bool
+	{
+		return false;
 	}
 
 	protected function hasUpdatePermission(): bool

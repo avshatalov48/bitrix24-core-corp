@@ -513,6 +513,7 @@ if(typeof BX.Crm.EntityEditorMoneyPay === 'undefined')
 				IS_USED_INVENTORY_MANAGEMENT: this._model.getField('IS_USED_INVENTORY_MANAGEMENT', false),
 				SALES_ORDERS_RIGHTS: this._model.getField('SALES_ORDERS_RIGHTS', {}),
 				IS_INVENTORY_MANAGEMENT_RESTRICTED: this._model.getField('IS_INVENTORY_MANAGEMENT_RESTRICTED', false),
+				IS_1C_PLAN_RESTRICTED: this._model.getField('IS_1C_PLAN_RESTRICTED', false),
 				OWNER_TYPE_ID: ownerTypeId,
 				OWNER_ID: this._model.getField('ID') ? parseInt(this._model.getField('ID')) : 0,
 				CONTEXT: this.getModel().getOwnerInfo().ownerType.toLowerCase(),
@@ -524,7 +525,10 @@ if(typeof BX.Crm.EntityEditorMoneyPay === 'undefined')
 				PARENT_CONTEXT: this,
 				PHRASES: this._schemeElement.getDataObjectParam('paymentDocumentsPhrases', {}),
 				IS_WITH_ORDERS_MODE: this._schemeElement.getDataBooleanParam('isWithOrdersMode', false),
+				IS_ONEC_MODE: this._schemeElement.getDataBooleanParam('isOnecMode', false),
 				SHOULD_SHOW_CASHBOX_CHECKS: this._schemeElement.getDataBooleanParam('shouldShowCashboxChecks', false),
+				IS_PHONE_CONFIRMED: this._schemeElement.getDataBooleanParam('isPhoneConfirmed', true),
+				CONNECTED_SITE_ID: this._schemeElement.getDataBooleanParam('connectedSiteId', true),
 			};
 			this._paymentDocumentsControl = new BX.Crm.EntityEditorPaymentDocuments(paymentDocumentsOptions);
 			this._paymentDocumentsControl.setVisible(this._isPaymentDocumentsVisible);
@@ -662,10 +666,19 @@ if(typeof BX.Crm.EntityEditorMoneyPay === 'undefined')
 				context: 'deal',
 				templateMode: 'create',
 				mode: entityTypeId === BX.CrmEntityType.enumeration.deal ? mode : 'payment',
+				// old analytics label; to be removed eventually
 				analyticsLabel: 'salescenterClickButtonPay',
 				ownerTypeId: entityTypeId,
 				ownerId: ownerInfo.ownerID,
 				orderId: orderId,
+				st: {
+					tool: 'crm',
+					category: 'payments',
+					event: 'payment_create_click',
+					c_section: 'crm',
+					c_sub_section: 'web',
+					type: 'payment',
+				}
 			};
 		}
 
@@ -2456,7 +2469,8 @@ if(typeof BX.Crm.EntityEditorFileStorage === "undefined")
 	BX.Crm.EntityEditorFileStorage.prototype.getDiskUploaderValues = function()
 	{
 		var uploader = BX.CrmDiskUploader.items[this._uploaderName];
-		return uploader ? uploader.getFileIds() : [];
+
+		return uploader ? uploader.getFileRawIds() : [];
 	};
 	BX.Crm.EntityEditorFileStorage.prototype.getMessage = function(name)
 	{
@@ -9600,6 +9614,7 @@ if(typeof BX.Crm.EntityEditorEntity === "undefined")
 			this._wrapper = BX.create("div", { props: { className: "ui-entity-editor-content-block" } });
 		}
 		this.adjustWrapper();
+		this.createAdditionalWrapperBlock();
 
 		if(this.isDragEnabled())
 		{
@@ -9807,6 +9822,10 @@ if(typeof BX.Crm.EntityEditorEntity === "undefined")
 			data[this._requisiteFieldNames.requisiteId] = this._model.getField(this._requisiteFieldNames.requisiteId, "");
 			data[this._requisiteFieldNames.bankDetailId] = this._model.getField(this._requisiteFieldNames.bankDetailId, "");
 		}
+	}
+	BX.Crm.EntityEditorEntity.prototype.getRelatedDataKeys = function()
+	{
+		return [this.getName(), `${this.getName()}_INFO`];
 	}
 	BX.Crm.EntityEditorEntity.prototype.getMessage = function(name)
 	{

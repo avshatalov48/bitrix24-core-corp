@@ -28,7 +28,7 @@ class File
 			return;
 		}
 
-		if(is_int($file))
+		if(is_numeric($file))
 		{
 			$this->createByCFileId($file);
 		}
@@ -109,14 +109,7 @@ class File
 			if(mb_strpos($uri->getHost(), \CBXPunycode::PREFIX) === false)
 			{
 				$errors = array();
-				if(defined("BX_UTF"))
-				{
-					$punicodedPath = \CBXPunycode::ToUnicode($uri->getHost(), $errors);
-				}
-				else
-				{
-					$punicodedPath = \CBXPunycode::ToASCII($uri->getHost(), $errors);
-				}
+				$punicodedPath = \CBXPunycode::ToUnicode($uri->getHost(), $errors);
 
 				if($punicodedPath != $uri->getHost())
 				{

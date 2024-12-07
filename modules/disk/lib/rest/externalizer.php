@@ -101,7 +101,10 @@ final class Externalizer
 			throw new RestException('Unknown object ' . get_class($model));
 		}
 
-		$toArray = array_intersect_key($model->toArray(), $entity->getFieldsForShow());
+		$fieldsForShow = $entity->getFieldsForShow();
+		$modelData = $model->toArray([], array_keys($fieldsForShow));
+
+		$toArray = array_intersect_key($modelData, $fieldsForShow);
 		foreach($entity->getFieldsForMap() as $fieldName => $modifiers)
 		{
 			if(!isset($toArray[$fieldName]))

@@ -2148,17 +2148,17 @@ this.BX.Crm = this.BX.Crm || {};
 	          onclick: onSubMenuItemClick
 	        };
 	      });
-	      var myItemsText = this.entityTypeId === BX.CrmEntityType.enumeration.deal ? main_core.Loc.getMessage('CRM_MENU_RIGHTS_CATEGORY_OWN_FOR_ALL') : main_core.Loc.getMessage('CRM_MENU_RIGHTS_CATEGORY_OWN_FOR_ELEMENT');
+	      var myItemsText = this.entityTypeId === BX.CrmEntityType.enumeration.deal ? main_core.Loc.getMessage('CRM_MENU_RIGHTS_CATEGORY_OWN_FOR_ALL_MSGVER_1') : main_core.Loc.getMessage('CRM_MENU_RIGHTS_CATEGORY_OWN_FOR_ELEMENT_MSGVER_1');
 	      this.menuWindow = new main_popup.Menu({
 	        id: "crm-tunnels-menu-".concat(main_core.Text.getRandom().toLowerCase()),
 	        bindElement: this.getOptionButton(),
 	        items: [{
-	          text: main_core.Loc.getMessage('CRM_MENU_RIGHTS_CATEGORY_ALL_FOR_ALL'),
+	          text: main_core.Loc.getMessage('CRM_MENU_RIGHTS_CATEGORY_ALL_FOR_ALL_MSGVER_1'),
 	          dataset: {
 	            access: 'X'
 	          }
 	        }, {
-	          text: main_core.Loc.getMessage('CRM_MENU_RIGHTS_CATEGORY_NONE_FOR_ALL'),
+	          text: main_core.Loc.getMessage('CRM_MENU_RIGHTS_CATEGORY_NONE_FOR_ALL_MSGVER_1'),
 	          dataset: {
 	            access: ''
 	          }

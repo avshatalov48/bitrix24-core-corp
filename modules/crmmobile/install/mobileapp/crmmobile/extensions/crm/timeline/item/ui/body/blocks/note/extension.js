@@ -6,7 +6,7 @@ jn.define('crm/timeline/item/ui/body/blocks/note', (require, exports, module) =>
 	const { TimelineItemUserAvatar } = require('crm/timeline/item/ui/user-avatar');
 	const { TextEditor } = require('layout/ui/text-editor');
 	const { EditableTextBlock } = require('layout/ui/editable-text-block');
-	const { Color } = require('tokens');
+	const AppTheme = require('apptheme');
 	const { Loc } = require('loc');
 	const { confirmDestructiveAction } = require('alert');
 
@@ -65,7 +65,7 @@ jn.define('crm/timeline/item/ui/body/blocks/note', (require, exports, module) =>
 				},
 				Shadow(
 					{
-						color: Color.shadowPrimary,
+						color: AppTheme.colors.shadowPrimary,
 						radius: 2,
 						offset: {
 							y: 2,
@@ -77,7 +77,7 @@ jn.define('crm/timeline/item/ui/body/blocks/note', (require, exports, module) =>
 					View(
 						{
 							style: {
-								backgroundColor: Color.accentSoftOrange1,
+								backgroundColor: AppTheme.colors.accentSoftOrange1,
 								flexDirection: 'row',
 							},
 						},
@@ -117,7 +117,7 @@ jn.define('crm/timeline/item/ui/body/blocks/note', (require, exports, module) =>
 				style: {
 					fontSize: 14,
 					fontWeight: '400',
-					color: Color.base1,
+					color: AppTheme.colors.base1,
 				},
 				containerStyle: {
 					flexGrow: 1,

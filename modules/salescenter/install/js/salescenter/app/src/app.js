@@ -5,9 +5,11 @@ import { MenuManager, Popup } from 'main.popup';
 import { rest as Rest } from 'rest.client';
 import { Manager } from 'salescenter.manager';
 import { Button } from 'ui.buttons';
+import { PhoneVerify } from 'bitrix24.phoneverify';
 import 'ui.design-tokens';
 import 'ui.fonts.opensans';
 import 'ui.notification';
+import { MessageBox } from 'ui.dialogs.messagebox';
 import { Vue } from 'ui.vue';
 import { VuexBuilder } from 'ui.vue.vuex';
 import Chat from './chat';
@@ -15,10 +17,12 @@ import { ContextDictionary } from './const/context-dictionary';
 import './css/component.css';
 import Deal from './deal';
 import { ApplicationModel } from './models/application';
+import { Backend } from 'landing.backend';
+import { PageObject } from 'landing.pageobject';
 import { DocumentSelectorModel } from './models/document-selector';
 import { OrderCreationModel } from './models/ordercreation';
 import 'ui.icon-set.actions';
-import { MobileAppInstallPopup } from './components/deal-terminal-payment/mobile-app-install-popup'
+import { MobileAppInstallPopup } from './components/deal-terminal-payment/mobile-app-install-popup';
 
 const instances = new Map();
 
@@ -73,6 +77,7 @@ export class App
 		this.compilation = null;
 		this.newCompilationId = null;
 		this.assignedById = options.assignedById;
+		this.isPhoneConfirmed = options.isPhoneConfirmed;
 
 		if(Type.isString(options.stageOnOrderPaid))
 		{
@@ -714,6 +719,124 @@ export class App
 				});
 			}
 		});
+	}
+
+	publishShop(): void
+	{
+		if (!this.isPhoneConfirmed)
+		{
+			return;
+		}
+
+		this.showLoader();
+
+		Backend.getInstance().action('Site::publication', {
+			id: Manager.connectedSiteId,
+		})
+			.then(() => {
+				this.slider.reload();
+			})
+			.catch((data) => {
+				this.getLoader().hide();
+
+				if (data.type === 'error' && !Type.isUndefined(data.result[0]))
+				{
+					const errorCode = data.result[0].error;
+
+					switch (errorCode)
+					{
+						case 'PUBLIC_SITE_REACHED': {
+							Manager.openLimitShopNumberInfoHelper();
+
+							break;
+						}
+
+						case 'PUBLIC_SITE_REACHED_FREE': {
+							Manager.openFreeTarifInfoHelper();
+
+							break;
+						}
+
+						case 'FREE_DOMAIN_IS_NOT_ALLOWED': {
+							Manager.openFreeDomenInfoHelper();
+
+							break;
+						}
+
+						case 'PHONE_NOT_CONFIRMED': {
+							this.showPhoneConfirmPopup();
+
+							break;
+						}
+
+						case 'EMAIL_NOT_CONFIRMED': {
+							this.showEmailConfirmPopup();
+
+							break;
+						}
+
+						default: {
+							MessageBox.alert(
+								data.result[0].error_description,
+							);
+						}
+					}
+				}
+			});
+	}
+
+	confirmPhoneNumber()
+	{
+		if (!BX.Type.isObject(PhoneVerify))
+		{
+			return;
+		}
+
+		PhoneVerify
+			.getInstance()
+			.setEntityType('landing_site')
+			.setEntityId(Manager.connectedSiteId)
+			.startVerify({
+				mandatory: false,
+				callback: (verified) => {
+					if (verified)
+					{
+						this.isPhoneConfirmed = true;
+						EventEmitter.emit('BX.Salescenter.App::onPhoneConfirmed');
+					}
+				},
+			})
+		;
+	}
+
+	showPhoneConfirmPopup()
+	{
+		MessageBox.confirm(
+			Loc.getMessage('SALESCENTER_PHONE_CONFIRMATION_POPUP_MESSAGE'),
+			Loc.getMessage('SALESCENTER_PHONE_CONFIRMATION_POPUP_TITLE'),
+			(messageBox) => {
+				messageBox.close();
+				this.confirmPhoneNumber();
+			},
+			Loc.getMessage('SALESCENTER_CONFIRMATION_POPUP_OK_CAPTION'),
+			(messageBox) => messageBox.close(),
+			Loc.getMessage('SALESCENTER_CONFIRMATION_POPUP_CANCEL_CAPTION'),
+		);
+	}
+
+	showEmailConfirmPopup()
+	{
+		MessageBox.confirm(
+			Loc.getMessage('SALESCENTER_EMAIL_CONFIRMATION_POPUP_MESSAGE'),
+			Loc.getMessage('SALESCENTER_EMAIL_CONFIRMATION_POPUP_TITLE'),
+			(messageBox) => {
+				messageBox.close();
+				Manager.openConfirmEmailInfoHelper();
+			},
+			Loc.getMessage('SALESCENTER_CONFIRMATION_POPUP_OK_CAPTION'),
+			(messageBox) => messageBox.close(),
+			Loc.getMessage('SALESCENTER_CONFIRMATION_POPUP_CANCEL_CAPTION'),
+		);
 	}
 
 	showFacebookCatalogConnectionPopup(buttonEvent, facebookSettingsPath)

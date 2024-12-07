@@ -15,6 +15,7 @@ $MESS['SALESCENTER_SP_PARAMS_FORM_TITLE'] = 'Параметры';
 $MESS['SALESCENTER_SP_PARAMS_FORM_ADDITIONAL_TITLE'] = 'Дополнительные параметры';
 $MESS['SALESCENTER_SP_PARAMS_FORM_NAME'] = 'Название';
 $MESS['SALESCENTER_SP_PARAMS_FORM_ACTIVE'] = 'Активность';
+$MESS['SALESCENTER_SP_PARAMS_FORM_ACTIVE_DESC'] = 'Включает и отключает этот способ оплаты';
 $MESS['SALESCENTER_SP_PARAMS_FORM_NAME_HINT'] = 'Например &laquoОплата картами Visa и MasterCard на сайте&raquo. Название будет отображаться для посетителей Вашего сайта в перечне способов оплаты';
 $MESS['SALESCENTER_SP_PARAMS_FORM_NAME_HINT_V2'] = 'Например, &laquo;Оплата картами Visa и MasterCard на сайте&raquo;. Посетители вашего сайта увидят это название в списке способов оплаты';
 $MESS['SALESCENTER_SP_PARAMS_FORM_DESCRIPTION'] = 'Описание';
@@ -28,7 +29,7 @@ $MESS["SALESCENTER_SP_PARAMS_FORM_IS_CASH_ACQUIRING"] = "Эквайрингов�
 $MESS['SALESCENTER_SP_PARAMS_FORM_CASHBOX_TITLE'] = 'ФЗ-54';
 $MESS['SALESCENTER_SP_PARAMS_FORM_CASHBOX'] = 'Кассы';
 $MESS['SALESCENTER_SP_PARAMS_FORM_CAN_PRINT_CHECK'] = 'Разрешить печать чеков';
-$MESS["SALESCENTER_SP_YANDEX_LOGOUT"] = "Отключить";
+$MESS["SALESCENTER_SP_YANDEX_LOGOUT_MSGVER_1"] = "Выйти";
 $MESS["SALESCENTER_SP_ERROR_POPUP_TITLE"] = "Ошибка";
 $MESS["SALESCENTER_SP_CASHBOX_HINT"] = "У вас нет настроенной кассы. <a href='#CASHBOX_SETTINGS_LINK#' target='_blank'>Как настроить кассу</a>";
 $MESS["SALESCENTER_SP_CASHBOX_HINT_CASHBOXYOOKASSA"] = "У вас нет настроенной кассы. Вы можете использовать чеки от ЮKassa (опция ниже) или подключить другую онлайн-кассу. <br><a href='#CASHBOX_SETTINGS_LINK#' target='_blank'>Как настроить онлайн-кассу</a>";
@@ -45,4 +46,9 @@ $MESS["SALESCENTER_SP_CASHBOX_PAYSYSTEM_CASHBOXYOOKASSA_LINK_TEXT"] = "Как п
 $MESS["SALESCENTER_SP_PAYSYSTEM_SETTINGS_ADD_NOTIFICATION"] = "Регистрация успешно завершена";
 $MESS["SALESCENTER_SP_SAVE_NEW_BUTTON_CAPTION"] = "Подключить";
 $MESS["SALESCENTER_SP_PAY_SYSTEM_EXPERT_SETTINGS"] = "Экспертные настройки";
+$MESS["SALESCENTER_SP_PAY_SYSTEM_DELETE"] = "Удалить";
 $MESS["SALESCENTER_SP_PAY_SYSTEM_SETTINGS_LOGOUT"] = "Отключить";
+$MESS["SALESCENTER_SP_LOGOUT_CONFIRMATION_TITLE"] = "Выйти из личного кабинета ЮKassa?";
+$MESS["SALESCENTER_SP_LOGOUT_CONFIRMATION_TEXT"] = "Все способы оплаты сервиса ЮKassa будут отключены. Они подключатся, когда вы снова войдёте в личный кабинет";
+$MESS["SALESCENTER_SP_LOGOUT_CONFIRMATION_OK"] = "Да, выйти";
+$MESS["SALESCENTER_SP_LOGOUT_CONFIRMATION_CANCEL"] = "Отмена";

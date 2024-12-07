@@ -50,7 +50,7 @@ elseif ($payment['PAID'] === 'Y')
 	?>
 	<div class="order-payment-container <?= $additionalContainerClasses ?>">
 		<div class="order-payment-title"><?= $title ?></div>
-		<div class="order-payment-inner d-flex align-items-center justify-content-between">
+		<div class="order-payment-inner d-flex flex-wrap align-items-center justify-content-between">
 			<div class="order-payment-operator">
 				<?php if ($currentPaySystem['LOGOTIP']): ?>
 					<img src="<?= $currentPaySystem['LOGOTIP'] ?>" alt="">

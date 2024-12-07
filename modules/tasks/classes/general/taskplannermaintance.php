@@ -1,5 +1,6 @@
 <?php
 
+use Bitrix\Main\Loader;
 use Bitrix\Tasks\Integration\Intranet\Settings;
 use Bitrix\Tasks\Internals\TaskTable;
 
@@ -55,7 +56,7 @@ class CTaskPlannerMaintance
 			],
 			'css' => '/bitrix/js/tasks/css/tasks.css',
 			'lang' => BX_ROOT.'/modules/tasks/lang/'.LANGUAGE_ID.'/core_planner_handler.php',
-			'rel' => ['ui.design-tokens', 'ui.fonts.opensans', 'popup', 'tooltip'],
+			'rel' => ['ui.design-tokens', 'ui.fonts.opensans', 'popup'],
 		]);
 
 		if (self::$USER_ID > 0)
@@ -87,7 +88,13 @@ class CTaskPlannerMaintance
 					if (!empty($neededTasks))
 					{
 						$neededTask = $neededTasks[0];
-						if (isset($neededTask) && (int)$neededTask['RESPONSIBLE_ID'] === (int)self::$USER_ID)
+						if (
+							isset($neededTask)
+							&& (
+								(int)$neededTask['RESPONSIBLE_ID'] === (int)self::$USER_ID
+								|| (int)$neededTask['CREATED_BY'] === (int)self::$USER_ID
+							)
+						)
 						{
 							$taskOnTimer = $neededTask;
 						}
@@ -117,7 +124,7 @@ class CTaskPlannerMaintance
 				'TASK_ADD_URL' => $taskAddUrl,
 			],
 			'STYLES' => ['/bitrix/js/tasks/css/tasks.css'],
-			'SCRIPTS' => ['CJSTask', 'taskQuickPopups', 'tasks_planner_handler'],
+			'SCRIPTS' => ['CJSTask', 'tasks_planner_handler'],
 		];
 
 		return ($arResult);
@@ -155,15 +162,12 @@ class CTaskPlannerMaintance
 		return $res;
 	}
 
-
 	protected static function getTimemanCloseDayData($arParams)
 	{
 		if(CModule::IncludeModule('timeman'))
 		{
 			$arTasks       = array();
 			$userId        = \Bitrix\Tasks\Util\User::getId();
-			$runningTaskId = null;
-			$taskRunTime   = null;
 
 			// key features of that info:
 			// [REPORT_REQ] => 'A' means that day will be closed right now. other variants - just form show.
@@ -171,6 +175,7 @@ class CTaskPlannerMaintance
 			// [INFO][TIME_START] => 46136 - short timestamp of day start
 			// [DURATION]
 			// [TIME_LEAKS]
+
 			$arTimemanInfo = CTimeMan::GetRunTimeInfo(true);
 
 			if ( ! ($userId > 0) )
@@ -186,47 +191,63 @@ class CTaskPlannerMaintance
 
 			$unixTsDateStart = (int) $arTimemanInfo['INFO']['DATE_START'];
 
-			$oTimer  = CTaskTimerManager::getInstance($userId);
-			$arTimer = $oTimer->getLastTimer();
-
-			if ($arTimer && ($arTimer['TIMER_STARTED_AT'] > 0))
-			{
-				$runningTaskId = $arTimer['TASK_ID'];
-
-				if ($arTimer['TIMER_STARTED_AT'] >= $unixTsDateStart)
-					$taskRunTime = max(0, time() - (int) $arTimer['TIMER_STARTED_AT']);
-				else
-					$taskRunTime = max(0, time() - $unixTsDateStart);
-			}
-
-			$bitrixTimestampDateStart = $unixTsDateStart + CTasksTools::getTimeZoneOffset();
-			$dateStartAsString        = ConvertTimeStamp($bitrixTimestampDateStart, 'FULL');
-
-			foreach($arTimemanInfo['PLANNER']['DATA']['TASKS'] as $arTask)
-			{
-				$rsElapsedTime = CTaskElapsedTime::getList(
-					array('ID' => 'ASC'),
-					array(
-						'TASK_ID'        => $arTask['ID'],
-						'USER_ID'        => $userId,
-						'>=CREATED_DATE' => $dateStartAsString
-					),
-					array('skipJoinUsers' => true)
-				);
-
-				$arTask['TIME'] = 0;
-
-				while ($arElapsedTime = $rsElapsedTime->fetch())
-					$arTask['TIME'] += max(0, $arElapsedTime['SECONDS']);
-
-				if ($runningTaskId && ($arTask['ID'] == $runningTaskId))
-					$arTask['TIME'] += $taskRunTime;
-
-				$arTasks[] = $arTask;
-			}
+			$arTasks = self::getActualTimeSpentOnTask(
+				$arTimemanInfo['PLANNER']['DATA']['TASKS'],
+				$unixTsDateStart
+			);
 
 			return array('TASKS' => $arTasks);
 		}
+	}
+
+	private static function getActualTimeSpentOnTask(array $listTasks, int $unixTsDateStart): array
+	{
+		$arTasks = [];
+		$runningTaskId = null;
+		$taskRunTime   = null;
+
+		$userId = \Bitrix\Tasks\Util\User::getId();
+
+		$oTimer  = CTaskTimerManager::getInstance($userId);
+		$arTimer = $oTimer->getLastTimer();
+
+		if ($arTimer && ($arTimer['TIMER_STARTED_AT'] > 0))
+		{
+			$runningTaskId = $arTimer['TASK_ID'];
+
+			if ($arTimer['TIMER_STARTED_AT'] >= $unixTsDateStart)
+				$taskRunTime = max(0, time() - (int) $arTimer['TIMER_STARTED_AT']);
+			else
+				$taskRunTime = max(0, time() - $unixTsDateStart);
+		}
+
+		$bitrixTimestampDateStart = $unixTsDateStart + CTasksTools::getTimeZoneOffset();
+		$dateStartAsString        = ConvertTimeStamp($bitrixTimestampDateStart, 'FULL');
+
+		foreach($listTasks as $arTask)
+		{
+			$rsElapsedTime = CTaskElapsedTime::getList(
+				array('ID' => 'ASC'),
+				array(
+					'TASK_ID'        => $arTask['ID'],
+					'USER_ID'        => $userId,
+					'>=CREATED_DATE' => $dateStartAsString
+				),
+				array('skipJoinUsers' => true)
+			);
+
+			$arTask['TIME'] = 0;
+
+			while ($arElapsedTime = $rsElapsedTime->fetch())
+				$arTask['TIME'] += max(0, $arElapsedTime['SECONDS']);
+
+			if ($runningTaskId && ($arTask['ID'] == $runningTaskId))
+				$arTask['TIME'] += $taskRunTime;
+
+			$arTasks[] = $arTask;
+		}
+
+		return $arTasks;
 	}
 
 	public static function plannerActions($arActions, $site_id = SITE_ID)
@@ -341,16 +362,22 @@ class CTaskPlannerMaintance
 				$arFilter['!STATUS'] = self::$arTaskStatusOpened;
 			}
 
-			$tasks = array();
-			$task2member = array();
+			$tasks = [];
+			$task2member = [];
 			$dbRes = CTasks::GetList(
-				array(),
-				$arFilter,
-				array(
-					'ID', 'RESPONSIBLE_ID', 'PRIORITY', 'STATUS', 'TITLE',
-					'TASK_CONTROL', 'TIME_SPENT_IN_LOGS', 'TIME_ESTIMATE',
-					'ALLOW_TIME_TRACKING'
-				)
+				[],
+				$arFilter, [
+					'ID',
+					'RESPONSIBLE_ID',
+					'PRIORITY',
+					'STATUS',
+					'TITLE',
+					'TASK_CONTROL',
+					'TIME_SPENT_IN_LOGS',
+					'TIME_ESTIMATE',
+					'ALLOW_TIME_TRACKING',
+					'CREATED_BY',
+				]
 			);
 			while ($arRes = $dbRes->Fetch())
 			{
@@ -381,9 +408,13 @@ class CTaskPlannerMaintance
 
 				foreach($tasks as $id => $data)
 				{
-					// Permit only for responsible user and accomplices
-					if ($data['RESPONSIBLE_ID'] !== $USER_ID &&
-						!in_array($USER_ID, $task2member[$id]['ACCOMPLICES']))
+					// Permit only for responsible, creator and accomplices
+					if (
+						$data['RESPONSIBLE_ID'] !== $USER_ID
+						&& $data['CREATED_BY'] !== $USER_ID
+						&& !in_array($USER_ID, $task2member[$id]['ACCOMPLICES'])
+
+					)
 					{
 						continue;
 					}
@@ -391,6 +422,7 @@ class CTaskPlannerMaintance
 					$res[] = array(
 						'ID' => $data['ID'],
 						'RESPONSIBLE_ID' => $data['RESPONSIBLE_ID'],
+						'CREATED_BY' => $data['CREATED_BY'],
 						'PRIORITY' => $data['PRIORITY'],
 						'STATUS' => $data['STATUS'],
 						'TITLE' => $data['TITLE'],
@@ -400,6 +432,21 @@ class CTaskPlannerMaintance
 						'TIME_ESTIMATE' => $data['TIME_ESTIMATE'],
 						'URL' => \Bitrix\Tasks\UI\Task::makeActionUrl($pathTemplate, $data['ID'], 'view', $USER_ID)
 					);
+				}
+
+				if (Loader::includeModule('timeman'))
+				{
+					$timeManUser = new \CTimeManUser($USER_ID);
+					$currentInfo = $timeManUser->GetCurrentInfo(true);
+					if ($currentInfo)
+					{
+						$unixTsDateStart = (int) MakeTimeStamp($currentInfo['DATE_START']) - CTimeZone::GetOffset();
+
+						$res = self::getActualTimeSpentOnTask(
+							$res,
+							$unixTsDateStart
+						);
+					}
 				}
 			}
 		}

@@ -165,6 +165,11 @@ final class Controller extends Timeline\Controller
 			$result['CHANNEL_NAME'] = $eventData->getChannelName();
 		}
 
+		if ($eventData->getMemberIds())
+		{
+			$result['MEMBER_IDS'] = $eventData->getMemberIds();
+		}
+
 		return $result;
 	}
 

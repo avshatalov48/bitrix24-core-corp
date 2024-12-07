@@ -9,7 +9,7 @@ $CONTAINER_ID = trim($arParams['~CONTAINER_ID']);
 if($CONTAINER_ID === '')
 	$CONTAINER_ID = 'title-search';
 
-?><script type="text/javascript">
+?><script>
 if(typeof(BX.CrmSearchControl) === "undefined")
 {
 	BX.CrmSearchControl = { items: {} };

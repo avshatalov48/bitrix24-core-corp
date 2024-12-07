@@ -16,9 +16,11 @@ Loc::loadMessages(__FILE__);
 $bodyClass = $APPLICATION->GetPageProperty('BodyClass');
 $APPLICATION->SetPageProperty(
 	'BodyClass',
-	($bodyClass ? $bodyClass . ' ' : '') . ' no-background no-all-paddings pagetitle-toolbar-field-view '
+	($bodyClass ? $bodyClass . ' ' : '') . ' no-all-paddings pagetitle-toolbar-field-view '
 );
 $isBitrix24Template = SITE_TEMPLATE_ID === "bitrix24";
+
+\Bitrix\Main\UI\Extension::load('recyclebin.deletion-manager');
 ?>
 
 <?php
@@ -97,7 +99,7 @@ if (CModule::IncludeModule('bitrix24'))
 	);
 }
 ?>
-
+<div id="batchDeletionWrapper"></div>
 <?php
 $APPLICATION->IncludeComponent(
 	'bitrix:main.ui.grid',
@@ -190,7 +192,7 @@ if (!empty($selectors))
 if (!empty($selectors))
 {
 	?>
-	<script type="text/javascript"><?php
+	<script><?php
 		foreach ($selectors as $groupSelector)
 		{
 		$selectorID = $groupSelector['ID'];
@@ -241,7 +243,17 @@ foreach ($arResult['ENTITY_MESSAGES'] as $type => $data)
 			<?=implode(", \n", $messages)?>
 		});
 
-		BX.Recyclebin.List.gridId = '<?=$arParams['GRID_ID']?>';
+		const gridId = '<?= CUtil::JSEscape($arParams['GRID_ID']) ?>';
+		const moduleId = '<?= CUtil::JSEscape($arParams['MODULE_ID']) ?>';
+		BX.Recyclebin.List.gridId = gridId;
+
+		BX.Recyclebin.DeletionManager.getInstance(
+			gridId,
+			{
+				moduleId,
+				containerId: 'batchDeletionWrapper',
+			}
+		);
 
 	});
 </script>

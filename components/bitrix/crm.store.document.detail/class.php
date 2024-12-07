@@ -4,6 +4,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)
 	die();
 }
 
+use Bitrix\Catalog\Config\State;
 use Bitrix\Catalog\Product\Store\BatchManager;
 use Bitrix\Catalog\StoreBatchDocumentElementTable;
 use Bitrix\Catalog\Url\InventoryManagementSourceBuilder;
@@ -22,6 +23,7 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Crm\Component\ComponentError;
 use Bitrix\Crm\Component\EntityDetails\ComponentMode;
 use Bitrix\Catalog;
+use Bitrix\Sale\Tax\VatCalculator;
 use Bitrix\UI;
 use Bitrix\Crm\Integration\DocumentGeneratorManager;
 use Bitrix\Crm\Integration\DocumentGenerator\DataProvider\ShipmentDocumentRealization;
@@ -302,7 +304,7 @@ class CrmStoreDocumentDetailComponent extends Crm\Component\EntityDetails\BaseCo
 			'DOCUMENT_ID' => $this->entityID,
 			'ENTITY_ID' => $this->entityID,
 			'ENTITY_TYPE_ID' => CCrmOwnerType::ShipmentDocument,
-			'ENTITY_TYPE_NAME' => CCrmOwnerType::ShipmentDocument,
+			'ENTITY_TYPE_NAME' => CCrmOwnerType::ShipmentDocumentName,
 			'TITLE' => $this->entityData['TITLE'],
 			'SHOW_URL' => CCrmOwnerType::GetEntityShowPath(CCrmOwnerType::OrderShipment, $this->entityID, false),
 		];
@@ -383,6 +385,7 @@ class CrmStoreDocumentDetailComponent extends Crm\Component\EntityDetails\BaseCo
 		$this->arResult['INVENTORY_MANAGEMENT_SOURCE'] =
 			InventoryManagementSourceBuilder::getInstance()->getInventoryManagementSource()
 		;
+		$this->arResult['IS_ONEC_MODE'] = Catalog\Store\EnableWizard\Manager::isOnecMode();
 
 		$this->includeComponentTemplate();
 	}
@@ -1185,7 +1188,7 @@ class CrmStoreDocumentDetailComponent extends Crm\Component\EntityDetails\BaseCo
 			{
 				$basketItem = $shipmentItem->getBasketItem();
 				$documentProducts[] = [
-					'PRICE' => $basketItem->getPrice(),
+					'PRICE' => $basketItem->getPriceWithVat(),
 					'PRODUCT_NAME' => $basketItem->getField('NAME'),
 					'CURRENCY' => $basketItem->getCurrency(),
 					'QUANTITY' => $shipmentItem->getQuantity(),
@@ -1193,7 +1196,7 @@ class CrmStoreDocumentDetailComponent extends Crm\Component\EntityDetails\BaseCo
 					'PRODUCT_ID' => $basketItem->getProductId()
 				];
 
-				$total += $basketItem->getPrice() * $shipmentItem->getQuantity();
+				$total += $basketItem->getPriceWithVat() * $shipmentItem->getQuantity();
 			}
 		}
 
@@ -1289,10 +1292,10 @@ class CrmStoreDocumentDetailComponent extends Crm\Component\EntityDetails\BaseCo
 
 	private function checkIfInventoryManagementIsUsed()
 	{
-		$this->arResult['IS_DEDUCT_LOCKED'] = !Catalog\Component\UseStore::isUsed();
+		$this->arResult['IS_DEDUCT_LOCKED'] = !State::isUsedInventoryManagement();
 		if ($this->arResult['IS_DEDUCT_LOCKED'])
 		{
-			$sliderPath = \CComponentEngine::makeComponentPath('bitrix:catalog.warehouse.master.clear');
+			$sliderPath = \CComponentEngine::makeComponentPath('bitrix:catalog.store.enablewizard');
 			$sliderPath = getLocalPath('components' . $sliderPath . '/slider.php');
 			$this->arResult['MASTER_SLIDER_URL'] = $sliderPath;
 		}
@@ -1300,7 +1303,8 @@ class CrmStoreDocumentDetailComponent extends Crm\Component\EntityDetails\BaseCo
 
 	private function checkIfInventoryManagementIsDisabled(): void
 	{
-		$this->arResult['IS_INVENTORY_MANAGEMENT_DISABLED'] = !\Bitrix\Catalog\Config\Feature::isInventoryManagementEnabled();
+		$this->arResult['IS_INVENTORY_MANAGEMENT_DISABLED'] = !\Bitrix\Catalog\Config\Feature::checkInventoryManagementFeatureByCurrentMode();
+
 		if ($this->arResult['IS_INVENTORY_MANAGEMENT_DISABLED'])
 		{
 			$this->arResult['INVENTORY_MANAGEMENT_FEATURE_SLIDER_CODE'] = \Bitrix\Catalog\Config\Feature::getInventoryManagementHelpLink()['FEATURE_CODE'] ?? null;
@@ -1331,7 +1335,6 @@ class CrmStoreDocumentDetailComponent extends Crm\Component\EntityDetails\BaseCo
 		foreach ($this->shipment->getShipmentItemCollection() as $shipmentItem)
 		{
 			$basketItem = $shipmentItem->getBasketItem();
-
 			$documentProduct = [
 				'ID' => uniqid('bx_', true),
 				'STORE_TO' => 0,
@@ -1344,7 +1347,20 @@ class CrmStoreDocumentDetailComponent extends Crm\Component\EntityDetails\BaseCo
 				'BASKET_ID' => $basketItem->getId(),
 				'AMOUNT' => 0,
 				'BARCODE' => '',
+				'TAX_RATE' => $basketItem->getVatRate() === null ? null : $basketItem->getVatRate() * 100,
+				'TAX_INCLUDED' => $basketItem->getField('VAT_INCLUDED'),
+				'QUANTITY' => $basketItem->getQuantity(),
 			];
+
+			$pricesConverter = new Order\ProductManager\ProductConverter\PricesConverter();
+			$productRowPrices = $pricesConverter->convertToProductRowPrices(
+				$basketItem->getPrice(),
+				$basketItem->getBasePrice(),
+				$basketItem->getVatRate() ?? 0,
+				$basketItem->isVatInPrice()
+			);
+
+			$documentProduct += $productRowPrices;
 
 			$shipmentItemStoreCollection = $shipmentItem->getShipmentItemStoreCollection();
 			$batchManager = new BatchManager($basketItem->getProductId());
@@ -1446,6 +1462,7 @@ class CrmStoreDocumentDetailComponent extends Crm\Component\EntityDetails\BaseCo
 
 		$ownerTypeId = $bindingEntity->getEntityTypeId();
 		$ownerId = $bindingEntity->getId();
+		$currency = $bindingEntity->getCurrencyId();
 
 		$orderIds = Crm\Binding\OrderEntityTable::getOrderIdsByOwner($ownerId, $ownerTypeId);
 
@@ -1478,7 +1495,7 @@ class CrmStoreDocumentDetailComponent extends Crm\Component\EntityDetails\BaseCo
 				{
 					continue;
 				}
-				
+
 				if (
 					!empty($basketIdsFilter)
 					&& !in_array($deliverableProduct['BASKET_CODE'], $basketIdsFilter, true)
@@ -1508,10 +1525,11 @@ class CrmStoreDocumentDetailComponent extends Crm\Component\EntityDetails\BaseCo
 				$costPrice = $batchManager->calculateCostPrice(
 					$quantity,
 					$deliverableProduct['STORE_ID'],
-					$deliverableProduct['CURRENCY']
+					$currency
 				);
+				$vatRate = $deliverableProduct['VAT_RATE'] ?? null;
 
-				$products[] = [
+				$product = [
 					'ID' => uniqid('bx_', true),
 					'STORE_FROM' => $deliverableProduct['STORE_ID'],
 					'STORE_TO' => 0,
@@ -1523,7 +1541,20 @@ class CrmStoreDocumentDetailComponent extends Crm\Component\EntityDetails\BaseCo
 					'BASE_PRICE_EXTRA' => '',
 					'BASE_PRICE_EXTRA_RATE' => '',
 					'BARCODE' => '',
+					'TAX_RATE' => $vatRate === null ? $vatRate : ($vatRate * 100),
+					'TAX_INCLUDED' => $deliverableProduct['VAT_INCLUDED'],
+					'QUANTITY' => $quantity,
 				];
+
+				$pricesConverter = new Order\ProductManager\ProductConverter\PricesConverter();
+				$productRowPrices = $pricesConverter->convertToProductRowPrices(
+					$deliverableProduct['PRICE'],
+					$deliverableProduct['BASE_PRICE'],
+					$vatRate ?? 0,
+					$deliverableProduct['VAT_INCLUDED'] === 'Y'
+				);
+
+				$products[] = $product + $productRowPrices;
 			}
 		}
 

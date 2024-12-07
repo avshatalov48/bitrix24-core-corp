@@ -179,6 +179,7 @@ class Action
 			'ta_sub' => Analytics::SUB_SECTION['list'],
 			'ta_el' => Analytics::ELEMENT['context_menu'],
 		]);
+
 		$taskRowActions[] = [
 			'text' => GetMessageJS('TASKS_GRID_TASK_ROW_ACTION_COPY'),
 			'href' => $copyTaskPath->getUri(),

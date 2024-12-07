@@ -1,3 +1,5 @@
+// jn.require('im/messenger/lib/dev/action-timer');
+
 // eslint-disable-next-line no-var,no-implicit-globals
 var REVISION = 19; // API revision - sync with im/lib/revision.php
 
@@ -10,9 +12,9 @@ BX.message.LIMIT_ONLINE = BX.componentParameters.get('LIMIT_ONLINE', 1380);
 
 /* region Clearing session variables after script reload */
 
-if (typeof window.copilotMessenger !== 'undefined' && typeof window.copilotMessenger.destructor !== 'undefined')
+if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructor !== 'undefined')
 {
-	window.copilotMessenger.destructor();
+	window.messenger.destructor();
 }
 
 /* endregion Clearing session variables after script reload */
@@ -31,12 +33,21 @@ if (typeof window.copilotMessenger !== 'undefined' && typeof window.copilotMesse
 	const { CopilotApplication } = require('im/messenger/core/copilot');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { EntityReady } = require('entity-ready');
-
-	// Copilot uses the immobile-messenger-store and must be initialized after chat
-	await EntityReady.wait('chat');
+	const { MessengerInitService } = require('im/messenger/provider/service/messenger-init');
+	const {
+		AppStatus,
+		EventType,
+		RestMethod,
+		FeatureFlag,
+		ComponentCode,
+		MessengerInitRestMethod,
+	} = require('im/messenger/const');
 
 	const core = new CopilotApplication({
-		localStorageEnable: true,
+		localStorage: {
+			enable: true,
+			readOnly: false,
+		},
 	});
 	try
 	{
@@ -48,7 +59,11 @@ if (typeof window.copilotMessenger !== 'undefined' && typeof window.copilotMesse
 	}
 	serviceLocator.add('core', core);
 
-	const { restManager } = require('im/messenger/lib/rest-manager');
+	const copilotInitService = new MessengerInitService({
+		actionName: RestMethod.immobileTabCopilotLoad,
+	});
+	serviceLocator.add('messenger-init-service', copilotInitService);
+
 	const { Feature } = require('im/messenger/lib/feature');
 
 	const {
@@ -57,14 +72,7 @@ if (typeof window.copilotMessenger !== 'undefined' && typeof window.copilotMesse
 		CopilotFilePullHandler,
 		CopilotUserPullHandler,
 	} = require('im/messenger/provider/pull/copilot');
-
-	const {
-		AppStatus,
-		EventType,
-		RestMethod,
-		FeatureFlag,
-		ComponentCode,
-	} = require('im/messenger/const');
+	const { PlanLimitsPullHandler } = require('im/messenger/provider/pull/plan-limits');
 
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 
@@ -75,13 +83,11 @@ if (typeof window.copilotMessenger !== 'undefined' && typeof window.copilotMesse
 	const { ChatCreator } = require('im/messenger/controller/chat-creator');
 	const { Counters } = require('im/messenger/lib/counters');
 	const { Communication } = require('im/messenger/lib/integration/mobile/communication');
-	const { Promotion } = require('im/messenger/lib/promotion');
 	const { DialogCreator } = require('im/messenger/controller/dialog-creator');
 	const { RecentSelector } = require('im/messenger/controller/search/experimental');
 	const { SmileManager } = require('im/messenger/lib/smile-manager');
 	const { MessengerBase } = require('im/messenger/component/messenger-base');
 	const { SyncFillerCopilot } = require('im/messenger/provider/service');
-	const { SidebarController } = require('im/messenger/controller/sidebar/sidebar-controller');
 	const AppTheme = require('apptheme');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	/* endregion import */
@@ -108,7 +114,6 @@ if (typeof window.copilotMessenger !== 'undefined' && typeof window.copilotMesse
 		constructor()
 		{
 			super();
-			this.refreshAfterErrorInterval = 10000;
 
 			this.communication = new Communication();
 			EntityReady.addCondition('copilot-messenger', () => this.isReady);
@@ -123,6 +128,11 @@ if (typeof window.copilotMessenger !== 'undefined' && typeof window.copilotMesse
 			 */
 			this.core = this.serviceLocator.get('core');
 			this.repository = this.core.getRepository();
+
+			/**
+			 * @type {MessengerInitService}
+			 */
+			this.copilotInitService = this.serviceLocator.get('messenger-init-service');
 
 			/**
 			 * @type {MessengerCoreStore}
@@ -145,7 +155,7 @@ if (typeof window.copilotMessenger !== 'undefined' && typeof window.copilotMesse
 
 		initRequests()
 		{
-			restManager.on(RestMethod.imRevisionGet, {}, this.checkRevision.bind(this));
+			this.copilotInitService.onInit(this.checkRevision.bind(this));
 		}
 
 		/**
@@ -162,7 +172,10 @@ if (typeof window.copilotMessenger !== 'undefined' && typeof window.copilotMesse
 					},
 				}),
 			});
-			await this.recent.init();
+
+			await this.recent.init().catch((error) => {
+				Logger.error('CopilotRecent.init error: ', error);
+			});
 
 			this.searchSelector = new RecentSelector(DialogList);
 			this.chatCreator = new ChatCreator();
@@ -178,7 +191,7 @@ if (typeof window.copilotMessenger !== 'undefined' && typeof window.copilotMesse
 		 */
 		bindMethods()
 		{
-			this.onApplicationSetStatus = this.applicationSetStatusHandler.bind(this);
+			super.bindMethods();
 			this.openDialog = this.openDialog.bind(this);
 			this.getOpenDialogParams = this.getOpenDialogParams.bind(this);
 			this.openChatSearch = this.openChatSearch.bind(this);
@@ -186,15 +199,13 @@ if (typeof window.copilotMessenger !== 'undefined' && typeof window.copilotMesse
 			this.openChatCreate = this.openChatCreate.bind(this);
 			this.refresh = this.refresh.bind(this);
 
-			this.onChatDialogInitComplete = this.onChatDialogInitComplete.bind(this);
 			this.onChatDialogCounterChange = this.onChatDialogCounterChange.bind(this);
-			this.onChatDialogAccessError = this.onChatDialogAccessError.bind(this);
 			this.onTaskStatusSuccess = this.onTaskStatusSuccess.bind(this);
 			this.onNotificationReload = this.onNotificationReload.bind(this);
 			this.onAppActiveBefore = this.onAppActiveBefore.bind(this);
 			this.onChatSettingChange = this.onChatSettingChange.bind(this);
 			this.onAppStatusChange = this.onAppStatusChange.bind(this);
-			this.openSidebar = this.openSidebar.bind(this);
+			this.updatePlanLimitsData = this.updatePlanLimitsData.bind(this);
 		}
 
 		/**
@@ -221,7 +232,7 @@ if (typeof window.copilotMessenger !== 'undefined' && typeof window.copilotMesse
 			BX.addCustomEvent(EventType.messenger.createChat, this.openChatCreate);
 			BX.addCustomEvent(EventType.messenger.refresh, this.refresh);
 			BX.addCustomEvent(EventType.messenger.openDialog, this.openDialog);
-			BX.addCustomEvent(EventType.messenger.openSidebar, this.openSidebar);
+			BX.addCustomEvent(EventType.messenger.updatePlanLimitsData, this.updatePlanLimitsData);
 		}
 
 		unsubscribeMessengerEvents()
@@ -232,7 +243,7 @@ if (typeof window.copilotMessenger !== 'undefined' && typeof window.copilotMesse
 			BX.removeCustomEvent(EventType.messenger.hideSearch, this.closeChatSearch);
 			BX.removeCustomEvent(EventType.messenger.createChat, this.openChatCreate);
 			BX.removeCustomEvent(EventType.messenger.refresh, this.refresh);
-			BX.removeCustomEvent(EventType.messenger.openSidebar, this.openSidebar);
+			BX.removeCustomEvent(EventType.messenger.updatePlanLimitsData, this.updatePlanLimitsData);
 		}
 
 		/**
@@ -240,9 +251,8 @@ if (typeof window.copilotMessenger !== 'undefined' && typeof window.copilotMesse
 		 */
 		subscribeExternalEvents()
 		{
-			BX.addCustomEvent(EventType.chatDialog.initComplete, this.onChatDialogInitComplete);
+			super.subscribeExternalEvents();
 			BX.addCustomEvent(EventType.chatDialog.counterChange, this.onChatDialogCounterChange);
-			BX.addCustomEvent(EventType.chatDialog.accessError, this.onChatDialogAccessError);
 			BX.addCustomEvent(EventType.chatDialog.taskStatusSuccess, this.onTaskStatusSuccess);
 			BX.addCustomEvent(EventType.notification.reload, this.onNotificationReload);
 			BX.addCustomEvent(EventType.app.activeBefore, this.onAppActiveBefore);
@@ -256,9 +266,8 @@ if (typeof window.copilotMessenger !== 'undefined' && typeof window.copilotMesse
 		 */
 		unsubscribeExternalEvents()
 		{
-			BX.removeCustomEvent(EventType.chatDialog.initComplete, this.onChatDialogInitComplete);
+			super.unsubscribeExternalEvents();
 			BX.removeCustomEvent(EventType.chatDialog.counterChange, this.onChatDialogCounterChange);
-			BX.removeCustomEvent(EventType.chatDialog.accessError, this.onChatDialogAccessError);
 			BX.removeCustomEvent(EventType.chatDialog.taskStatusSuccess, this.onTaskStatusSuccess);
 			BX.removeCustomEvent(EventType.notification.reload, this.onNotificationReload);
 			BX.removeCustomEvent(EventType.app.activeBefore, this.onAppActiveBefore);
@@ -302,7 +311,8 @@ if (typeof window.copilotMessenger !== 'undefined' && typeof window.copilotMesse
 					break;
 
 				default:
-					headerTitle = Loc.getMessage('IMMOBILE_COMMON_MESSENGER_HEADER');
+					// headerTitle = Loc.getMessage('IMMOBILE_COMMON_MESSENGER_HEADER');
+					headerTitle = MessengerParams.getMessengerTitle();
 					useProgress = false;
 					break;
 			}
@@ -331,6 +341,7 @@ if (typeof window.copilotMessenger !== 'undefined' && typeof window.copilotMesse
 			BX.PULL.subscribe(new CopilotMessagePullHandler());
 			BX.PULL.subscribe(new CopilotFilePullHandler());
 			BX.PULL.subscribe(new CopilotUserPullHandler());
+			BX.PULL.subscribe(new PlanLimitsPullHandler());
 		}
 
 		/**
@@ -384,11 +395,18 @@ if (typeof window.copilotMessenger !== 'undefined' && typeof window.copilotMesse
 			await SmileManager.init();
 
 			await this.queueCallBatch();
+			const methodList = [
+				...this.getBaseInitRestMethods(),
+				MessengerInitRestMethod.userData,
+			];
 
-			return restManager.callBatch()
-				.then(() => this.afterRefresh())
-				.catch((response) => this.afterRefreshError(response))
-			;
+			return this.copilotInitService.runAction(methodList)
+				.then(() => {
+					this.afterRefresh();
+				})
+				.catch((response) => {
+					this.afterRefreshError(response);
+				});
 		}
 
 		queueCallBatch()
@@ -416,14 +434,13 @@ if (typeof window.copilotMessenger !== 'undefined' && typeof window.copilotMesse
 
 		async afterRefreshError(response)
 		{
-			const firstErrorKey = Object.keys(response)[0];
-			if (firstErrorKey)
-			{
-				const firstError = response[firstErrorKey].error();
-				if (firstError.ex.error === 'REQUEST_CANCELED')
-				{
-					Logger.error('CopilotMessenger.afterRefreshError', firstError.ex);
+			Logger.error('CopilotMessenger.afterRefreshError', response);
+			const errorList = Type.isArray(response) ? response : [response];
 
+			for (const error of errorList)
+			{
+				if (error?.code === 'REQUEST_CANCELED')
+				{
 					return;
 				}
 			}
@@ -484,6 +501,7 @@ if (typeof window.copilotMessenger !== 'undefined' && typeof window.copilotMesse
 		{
 			Logger.info('CopilotMessenger.openDialog', options);
 			const openDialogOptions = options;
+			openDialogOptions.isNew = Type.isBoolean(options.isNew) ? options.isNew : false;
 			if (openDialogOptions.dialogId)
 			{
 				openDialogOptions.dialogId = openDialogOptions.dialogId.toString();
@@ -598,53 +616,29 @@ if (typeof window.copilotMessenger !== 'undefined' && typeof window.copilotMesse
 			this.store.dispatch('recentModel/set', [recentItem]);
 		}
 
-		onChatDialogAccessError()
-		{
-			Logger.warn('CopilotMessenger.chatDialog.accessError');
-
-			InAppNotifier.showNotification({
-				title: Loc.getMessage('IMMOBILE_COMMON_MESSENGER_DIALOG_ACCESS_ERROR_TITLE'),
-				message: Loc.getMessage('IMMOBILE_COMMON_MESSENGER_DIALOG_ACCESS_ERROR_TEXT'),
-				backgroundColor: '#E6000000',
-				time: 3,
-			});
-
-			this.dialog.deleteCurrentDialog();
-		}
-
 		/**
-		 * desc Handler call open sidebar event
-		 * @param {{dialogId: string|number}} params
-		 * @override
+		 * @param {PlanLimits} planLimits
+		 * @void
 		 */
-		openSidebar(params)
+		updatePlanLimitsData(planLimits)
 		{
-			Logger.info('CopilotMessenger.openSidebar', params);
-			const isOpenSidebarEnabled = MessengerParams.isCopilotAddUsersEnabled();
-			if (isOpenSidebarEnabled)
-			{
-				this.sidebar = new SidebarController(params);
-				this.sidebar.open();
-			}
+			Logger.log(`${this.constructor.name}.updatePlanLimitsData`, planLimits);
+			MessengerParams.setPlanLimits(planLimits);
 		}
 		/* endregion legacy dialog integration */
 
 		/* endregion event handlers */
 
-		checkRevision(response)
+		/**
+		 * @param {immobileTabCopilotLoadResult} data
+		 */
+		checkRevision(data)
 		{
-			const error = response.error();
-			if (error)
-			{
-				Logger.error('CopilotMessenger.checkRevision', error);
+			const revision = data?.mobileRevision;
 
-				return true;
-			}
-
-			const actualRevision = response.data().mobile;
-			if (!Type.isNumber(actualRevision) || REVISION >= actualRevision)
+			if (!Type.isNumber(revision) || REVISION >= revision)
 			{
-				Logger.log('CopilotMessenger.checkRevision: current', REVISION, 'actual', actualRevision);
+				Logger.log('CopilotMessenger.checkRevision: current', REVISION, 'actual', revision);
 
 				return true;
 			}
@@ -653,7 +647,7 @@ if (typeof window.copilotMessenger !== 'undefined' && typeof window.copilotMesse
 				'CopilotMessenger.checkRevision: reload scripts because revision up',
 				REVISION,
 				' -> ',
-				actualRevision,
+				revision,
 			);
 
 			reloadAllScripts();
@@ -688,5 +682,7 @@ if (typeof window.copilotMessenger !== 'undefined' && typeof window.copilotMesse
 		}
 	}
 
-	window.copilotMessenger = new CopilotMessenger();
-})();
+	window.messenger = new CopilotMessenger();
+})().catch((error) => {
+	console.error('Messenger init error', error);
+});

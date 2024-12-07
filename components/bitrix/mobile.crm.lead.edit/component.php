@@ -147,82 +147,68 @@ else
 	if (isset($_GET['title']))
 	{
 		$arFields['~TITLE'] = $_GET['title'];
-		CUtil::decodeURIComponent($arFields['~TITLE']);
 		$arFields['TITLE'] = htmlspecialcharsbx($arFields['~TITLE']);
 	}
 	if (isset($_GET['honorific']))
 	{
 		$arFields['~HONORIFIC'] = $_GET['honorific'];
-		CUtil::decodeURIComponent($arFields['~HONORIFIC']);
 		$arFields['HONORIFIC'] = htmlspecialcharsbx($arFields['~HONORIFIC']);
 	}
 	if (isset($_GET['name']))
 	{
 		$arFields['~NAME'] = $_GET['name'];
-		CUtil::decodeURIComponent($arFields['~NAME']);
 		$arFields['NAME'] = htmlspecialcharsbx($arFields['~NAME']);
 	}
 	if (isset($_GET['second_name']))
 	{
 		$arFields['~SECOND_NAME'] = $_GET['second_name'];
-		CUtil::decodeURIComponent($arFields['~SECOND_NAME']);
 		$arFields['SECOND_NAME'] = htmlspecialcharsbx($arFields['~SECOND_NAME']);
 	}
 	if (isset($_GET['last_name']))
 	{
 		$arFields['~LAST_NAME'] = $_GET['last_name'];
-		CUtil::decodeURIComponent($arFields['~LAST_NAME']);
 		$arFields['LAST_NAME'] = htmlspecialcharsbx($arFields['~LAST_NAME']);
 	}
 	if (isset($_GET['address']))
 	{
 		$arFields['~ADDRESS'] = $_GET['address'];
-		CUtil::decodeURIComponent($arFields['~ADDRESS']);
 		$arFields['ADDRESS'] = htmlspecialcharsbx($arFields['~ADDRESS']);
 	}
 	if (isset($_GET['address_2']))
 	{
 		$arFields['~ADDRESS_2'] = $_GET['address_2'];
-		CUtil::decodeURIComponent($arFields['~ADDRESS_2']);
 		$arFields['ADDRESS_2'] = htmlspecialcharsbx($arFields['~ADDRESS_2']);
 	}
 	if (isset($_GET['address_city']))
 	{
 		$arFields['~ADDRESS_CITY'] = $_GET['address_city'];
-		CUtil::decodeURIComponent($arFields['~ADDRESS_CITY']);
 		$arFields['ADDRESS_CITY'] = htmlspecialcharsbx($arFields['~ADDRESS_CITY']);
 	}
 	if (isset($_GET['address_postal_code']))
 	{
 		$arFields['~ADDRESS_POSTAL_CODE'] = $_GET['address_postal_code'];
-		CUtil::decodeURIComponent($arFields['~ADDRESS_POSTAL_CODE']);
 		$arFields['ADDRESS_POSTAL_CODE'] = htmlspecialcharsbx($arFields['~ADDRESS_POSTAL_CODE']);
 	}
 	if (isset($_GET['address_region']))
 	{
 		$arFields['~ADDRESS_REGION'] = $_GET['address_region'];
-		CUtil::decodeURIComponent($arFields['~ADDRESS_REGION']);
 		$arFields['ADDRESS_REGION'] = htmlspecialcharsbx($arFields['~ADDRESS_REGION']);
 	}
 	if (isset($_GET['address_province']))
 	{
 		$arFields['~ADDRESS_PROVINCE'] = $_GET['address_province'];
-		CUtil::decodeURIComponent($arFields['~ADDRESS_PROVINCE']);
 		$arFields['ADDRESS_PROVINCE'] = htmlspecialcharsbx($arFields['~ADDRESS_PROVINCE']);
 	}
 	if (isset($_GET['address_country']))
 	{
 		$arFields['~ADDRESS_COUNTRY'] = $_GET['address_country'];
-		CUtil::decodeURIComponent($arFields['~ADDRESS_COUNTRY']);
 		$arFields['ADDRESS_COUNTRY'] = htmlspecialcharsbx($arFields['~ADDRESS_COUNTRY']);
 	}
 	if (isset($_GET['email']) || isset($_GET['phone']) || isset($_GET['tel']))
 	{
 		if(isset($_GET['email']))
 		{
-			$email = $_GET['email'];
-			CUtil::decodeURIComponent($email);
-			trim($email);
+			$email = trim($_GET['email']);
 		}
 		else
 		{
@@ -232,8 +218,7 @@ else
 		if(isset($_GET['phone']) || isset($_GET['tel']))
 		{
 			$phone = isset($_GET['phone']) ? $_GET['phone'] : $_GET['tel'];
-			CUtil::decodeURIComponent($phone);
-			trim($phone);
+			$phone = trim($phone);
 		}
 		else
 		{
@@ -272,8 +257,6 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid() && $arResult["I
 	$bVarsFromForm = true;
 	if(isset($_POST['save']) || isset($_POST['apply']))
 	{
-		CUtil::JSPostUnescape();
-
 		$arFields = array();
 
 		if(isset($_POST['TITLE']))

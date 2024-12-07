@@ -222,7 +222,7 @@ if(!empty($arResult['BUILDERS'])):
 	?><div id="rebuildMessageWrapper" ></div><?
 endif;
 ?><div class="crm-widget" id="<?=htmlspecialcharsbx($containerID)?>"></div>
-<script type="text/javascript">
+<script>
 	BX.ready(
 		function()
 		{
@@ -584,7 +584,7 @@ endif;
 	);
 </script>
 <?if(!empty($arResult['BUILDERS'])):?>
-    <script type="text/javascript">
+    <script>
 		BX.ready(
 			function()
 			{

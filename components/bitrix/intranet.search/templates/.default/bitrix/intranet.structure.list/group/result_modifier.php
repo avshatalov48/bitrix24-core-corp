@@ -13,14 +13,15 @@ if (!empty($arRes))
 		$arResult['USER_PROP'][$val["FIELD_NAME"]] = ($val["EDIT_FORM_LABEL"] <> '' ? $val["EDIT_FORM_LABEL"] : $val["FIELD_NAME"]);
 	}
 }
-
-$dbRes = CIBlockSection::GetTreeList(array('IBLOCK_ID' => COption::GetOptionInt('intranet', 'iblock_structure')));
-while ($arRes = $dbRes->Fetch())
+$departmentRepository = \Bitrix\Intranet\Service\ServiceContainer::getInstance()
+	->departmentRepository();
+$departmentCollection = $departmentRepository->getAllTree();
+foreach ($departmentCollection as $department)
 {
-	$arRes['USERS'] = array();
-	$arResult['DEPARTMENTS'][$arRes['ID']] = $arRes;
+	$iblockFomatt = $department->toIblockArray();
+	$iblockFomatt['USERS'] = [];
+	$arResult['DEPARTMENTS'][$iblockFomatt['ID']] = $iblockFomatt;
 }
-
 
 foreach ($arResult['USERS'] as $arUser)
 {

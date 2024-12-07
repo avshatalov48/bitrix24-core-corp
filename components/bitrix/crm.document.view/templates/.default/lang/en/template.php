@@ -1,5 +1,8 @@
 <?php
 $MESS["CRM_DOCUMENT_VIEW_COPY_PUBLIC_URL_MESSAGE"] = "Public link has been copied to the Clipboard";
+$MESS["CRM_DOCUMENT_VIEW_CURRENT_SPEED"] = "Processing speed:";
+$MESS["CRM_DOCUMENT_VIEW_CURRENT_SPEED_VALUE_FAST"] = "maximum";
+$MESS["CRM_DOCUMENT_VIEW_CURRENT_SPEED_VALUE_REGULAR"] = "normal";
 $MESS["CRM_DOCUMENT_VIEW_DOWNLOAD_IN"] = "Download as:";
 $MESS["CRM_DOCUMENT_VIEW_EDIT_DOCUMENT"] = "Edit Document";
 $MESS["CRM_DOCUMENT_VIEW_EDIT_TEMPLATE"] = "Edit Template";
@@ -7,8 +10,8 @@ $MESS["CRM_DOCUMENT_VIEW_FEEDBACK"] = "Feedback";
 $MESS["CRM_DOCUMENT_VIEW_NO_AVAILABLE_FILES"] = "No files to send available";
 $MESS["CRM_DOCUMENT_VIEW_PAYMENT_BUTTON"] = "Receive payment";
 $MESS["CRM_DOCUMENT_VIEW_PREVIEW_GENERATION_MESSAGE"] = "Generating document";
-$MESS["CRM_DOCUMENT_VIEW_PREVIEW_MESSAGE_PREPARE"] = "PDF preview is being created";
-$MESS["CRM_DOCUMENT_VIEW_PREVIEW_MESSAGE_READY"] = "You can download the document as a DOCX file now, or send the link to the customer";
+$MESS["CRM_DOCUMENT_VIEW_PREVIEW_MESSAGE_PREPARE_MSGVER_1"] = "Creating PDF file";
+$MESS["CRM_DOCUMENT_VIEW_PREVIEW_MESSAGE_READY_MSGVER_1"] = "The DOCX file is ready. You can download it, send it to the customer or copy the document link.";
 $MESS["CRM_DOCUMENT_VIEW_PREVIEW_READY_MESSAGE"] = "The document is now available in DOCX format. You can get a document link, download it or send it to your customer.";
 $MESS["CRM_DOCUMENT_VIEW_PREVIEW_TIME_MESSAGE"] = "The document image and PDF version will take approx. 20 seconds";
 $MESS["CRM_DOCUMENT_VIEW_PUBLIC_LINK"] = "Public link";
@@ -36,6 +39,7 @@ $MESS["CRM_DOCUMENT_VIEW_SIGN_POPUP_CLOSE"] = "Close";
 $MESS["CRM_DOCUMENT_VIEW_SIGN_POPUP_TITLE_MSGVER_1"] = "Signing";
 $MESS["CRM_DOCUMENT_VIEW_SIGN_POPUP_TITLE_MSGVER_2"] = "Previous template found";
 $MESS["CRM_DOCUMENT_VIEW_SMS_PUBLIC_URL_NECESSARY"] = "Public link is required to send SMS";
+$MESS["CRM_DOCUMENT_VIEW_SPEEDUP"] = "Increase processing speed";
 $MESS["CRM_DOCUMENT_VIEW_TRANSFORMATION_NO_PDF_ERROR"] = "Cannot find PDF version of the document. The file may not have been converted successfully.";
 $MESS["CRM_DOCUMENT_VIEW_TRANSFORMATION_PROGRESS"] = "Please wait until the conversion has completed";
 $MESS["CRM_DOCUMENT_VIEW_TRANSFORM_ERROR"] = "Cannot generate PDF file for the document.";

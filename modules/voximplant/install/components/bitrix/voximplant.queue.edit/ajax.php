@@ -53,7 +53,7 @@ $sendResult = function(\Bitrix\Main\Result $result)
 if($action == 'save')
 {
 	CBitrixComponent::includeComponentClass('bitrix:voximplant.queue.edit');
-	$request = \Bitrix\Main\Text\Encoding::convertEncoding($_POST, 'utf8', SITE_CHARSET);
+	$request = $_POST;
 	$result = CVoximplantQueueEditComponent::save($request);
 	$sendResult($result);
 }

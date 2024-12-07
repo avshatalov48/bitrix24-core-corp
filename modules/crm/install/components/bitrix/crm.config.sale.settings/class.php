@@ -9,8 +9,7 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
  * @global CMain $APPLICATION
  */
 
-use Bitrix\Catalog\Access\AccessController;
-use Bitrix\Catalog\Access\ActionDictionary;
+use Bitrix\Catalog\Config\State;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\SystemException;
@@ -1190,16 +1189,17 @@ class CCrmConfigSaleSettings extends \CBitrixComponent implements Controllerable
 			"name" => Loc::getMessage("CRM_CF_STORE"),
 			"type" => "section"
 		);
-		if (Catalog\Config\Feature::isInventoryManagementEnabled())
+		if (
+			Catalog\Config\Feature::isInventoryManagementEnabled()
+			&& State::isUsedInventoryManagement()
+		)
 		{
-			$useStore = Catalog\Component\UseStore::isUsed() ?'Y':'N';
-
 			$options[] = array(
 				"id" => "default_use_store_control",
 				"name" => Loc::getMessage("CRM_CF_USE_STORE_CONTROL_1"),
 				"type" => "label",
-				"value" => "<input class='' type='button' data-use-store-control='".$useStore."' id='store_use_settings' value='".
-					Loc::getMessage('CRM_CF_PRODUCT_SETTINGS_CHANGE')."'>",
+				"value" => "<input class='' type='button' data-use-store-control='Y' id='store_use_settings' value='".
+					Loc::getMessage('CRM_CF_PRODUCT_SETTINGS_DISABLE')."'>",
 			);
 		}
 		else

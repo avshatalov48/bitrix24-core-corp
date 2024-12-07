@@ -74,7 +74,8 @@ final class DocumentSessionTable extends DataManager
 				->configureRequired()
 			,
 			(new BooleanField('IS_EXCLUSIVE'))
-				->configureDefaultValue(false),
+				->configureDefaultValue(0)
+				->configureStorageValues(0, 1),
 			(new StringField('EXTERNAL_HASH'))
 				->configureRequired()
 				->configureSize(self::EXTERNAL_HASH_LENGTH)

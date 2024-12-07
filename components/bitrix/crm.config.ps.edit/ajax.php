@@ -203,7 +203,7 @@ if(!isset($arReturn['ERROR']))
 
 					if (is_string($typeTmp) && $typeTmp == '' || $typeTmp === 'CHECKBOX')
 					{
-						$arActParams[$val] = \Bitrix\Main\Text\Encoding::convertEncoding($valueTmp, 'utf-8', SITE_CHARSET);
+						$arActParams[$val] = $valueTmp;
 					}
 					else if ($typeTmp === 'USER_COLUMN_LIST')
 					{
@@ -211,7 +211,7 @@ if(!isset($arReturn['ERROR']))
 						{
 							foreach ($valueTmp as $id => $columns)
 								$arActParams['USER_COLUMNS']['PROPERTY_'.$id] = array(
-									'NAME' => \Bitrix\Main\Text\Encoding::convertEncoding($columns['NAME'], 'utf-8', SITE_CHARSET),
+									'NAME' => $columns['NAME'],
 									'SORT' => $columns['SORT']
 								);
 						}
@@ -291,7 +291,6 @@ if(!isset($arReturn['ERROR']))
 
 header('Content-Type: application/json');
 
-$arReturn = \Bitrix\Main\Text\Encoding::convertEncoding($arReturn, SITE_CHARSET, 'utf-8');
 echo json_encode($arReturn);
 
 \CMain::FinalActions();

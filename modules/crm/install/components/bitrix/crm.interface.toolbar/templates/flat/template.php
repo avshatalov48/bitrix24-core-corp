@@ -75,7 +75,7 @@ $labelText = '';
 					<span class="bx-crm-context-button-icon btn-settings"></span>
 				</span>
 			</td>
-			<script type="text/javascript">
+			<script>
 				BX.ready(
 					function ()
 					{

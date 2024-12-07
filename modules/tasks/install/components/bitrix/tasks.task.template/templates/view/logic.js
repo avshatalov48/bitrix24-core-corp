@@ -19,6 +19,7 @@ BX.namespace('Tasks.Component');
 		methods: {
 			construct: function()
 			{
+				this.onOpenWithContext();
 				this.callConstruct(BX.Tasks.Component);
 				this.initFileView();
 
@@ -260,12 +261,16 @@ BX.namespace('Tasks.Component');
 				)
 				{
 					e.preventDefault();
-					BX.UI.InfoHelper.show('limit_tasks_templates_subtasks', {
-						isLimit: true,
-						limitAnalyticsLabels: {
-							module: 'tasks',
-							source: 'templateView'
-						}
+					BX.Runtime.loadExtension('tasks.limit').then((exports) => {
+						const { Limit } = exports;
+						Limit.showInstance({
+							featureId: 'tasks_templates_subtasks',
+							bindElement: null,
+							limitAnalyticsLabels: {
+								module: 'tasks',
+								source: 'templateView',
+							},
+						});
 					});
 				}
 			},
@@ -472,7 +477,18 @@ BX.namespace('Tasks.Component');
 				);
 
 				menu.popupWindow.show();
-			}
+			},
+
+			onOpenWithContext: function()
+			{
+				if (this.option('context') === 'flow')
+				{
+					const topSlider = window.top.BX.SidePanel.Instance.getTopSlider();
+					window.top.BX.SidePanel.Instance.close(false, () => {
+						topSlider.destroy();
+					});
+				}
+			},
 		}
 	});
 

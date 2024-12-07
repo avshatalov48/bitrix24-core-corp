@@ -87,11 +87,12 @@ jn.define('im/messenger/lib/smile-manager', (require, exports, module) => {
 		 */
 		async initSmileList()
 		{
-			const shouldRequestFromServer = await this.shouldRequestFromServer();
 			/**
 			 * @type {Array<SmileRow>}
 			 */
-			let smileList = [];
+			let smileList = await this.fetchSmilesFromStorage();
+
+			const shouldRequestFromServer = await this.shouldRequestFromServer(smileList);
 
 			if (shouldRequestFromServer)
 			{
@@ -99,17 +100,23 @@ jn.define('im/messenger/lib/smile-manager', (require, exports, module) => {
 
 				void this.fillStorage(smileList);
 			}
-			else
-			{
-				smileList = await this.fetchSmilesFromStorage();
-			}
 
 			this.smileCollection = this.prepareSmiles(smileList);
 			this.pattern = this.preparePattern();
 		}
 
-		async shouldRequestFromServer()
+		/**
+		 *
+		 * @param {Array<SmileRow>} smileList
+		 * @return {Promise<boolean>}
+		 */
+		async shouldRequestFromServer(smileList)
 		{
+			if (smileList.length === 0)
+			{
+				return true;
+			}
+
 			const localLastUpdate = await this.repository.option.get(LAST_UPDATE_OPTION_NAME, 0);
 
 			return Number(localLastUpdate) !== this.lastUpdateDate;

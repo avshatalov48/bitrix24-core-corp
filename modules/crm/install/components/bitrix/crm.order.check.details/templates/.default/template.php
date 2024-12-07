@@ -6,6 +6,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 /** @var \CCrmRequisiteFormEditorComponent $component */
+/** @var \CCrmRequisiteFormEditorComponent $arResult */
 
 global $APPLICATION;
 
@@ -30,18 +31,18 @@ $containerId = "{$guid}_container";
 
 $wrapperId = "wrapper_".mb_strtolower($prefix);
 
-$editorContext = array(
+$editorContext = [
 	'CATEGORY_ID' => $arResult['CATEGORY_ID'] ?? null,
 	'PARAMS' => $arResult['CONTEXT_PARAMS'] ?? null
-);
+];
 
 ?>
-<div id="<?=htmlspecialcharsbx($wrapperId)?>">
-	<?
+<div id="<?=htmlspecialcharsbx($wrapperId)?>" class="crm-order-check-wrapper">
+	<?php
 	$APPLICATION->IncludeComponent(
 		'bitrix:crm.entity.editor',
 		'',
-		array(
+		[
 			'ENTITY_TYPE_ID' => \CCrmOwnerType::OrderCheck,
 			'ENTITY_ID' => $arResult['ENTITY_ID'],
 			'READ_ONLY' => true,
@@ -64,8 +65,31 @@ $editorContext = array(
 			'SERVICE_URL' => '/bitrix/components/bitrix/crm.order.check.details/ajax.php?'.bitrix_sessid_get(),
 			'EXTERNAL_CONTEXT_ID' => $arResult['EXTERNAL_CONTEXT_ID'],
 			'CONTEXT_ID' => $arResult['CONTEXT_ID'],
-			'CONTEXT' => $editorContext
-		)
+			'CONTEXT' => $editorContext,
+			'CUSTOM_TOOL_PANEL_BUTTONS' => $arResult['CUSTOM_TOOL_PANEL_BUTTONS'],
+			'TOOL_PANEL_BUTTONS_ORDER' => $arResult['TOOL_PANEL_BUTTONS_ORDER'],
+			'COMPONENT_AJAX_DATA' => $arResult['COMPONENT_AJAX_DATA'],
+			'IS_TOOL_PANEL_ALWAYS_VISIBLE' => $arResult['IS_TOOL_PANEL_ALWAYS_VISIBLE'],
+		]
 	);
 	?>
 </div>
+<script>
+	BX.Event.EventEmitter.subscribe('BX.Crm.EntityEditor:onDirectAction', (event) => {
+		let data = event.getData();
+		if (data[1].actionId === 'REPRINT')
+		{
+			data[1].cancel = true;
+			BX.ajax.runAction('crm.ordercheck.reprint', {
+					data: {
+						checkId: data[1].entityId,
+					},
+				},
+			).then((response) => {
+				data[0]._toolPanel?.setLocked(false);
+			}).catch((response) => {
+				data[0]._toolPanel?.setLocked(false);
+			});
+		}
+	});
+</script>

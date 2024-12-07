@@ -190,6 +190,14 @@ class UncompletedActivityChange
 		return $oldLt !== $newLt;
 	}
 
+	public function isBindingsChanges(): bool
+	{
+		$bOld = array_map(fn(?ItemIdentifier $b) => $b?->getHash(), $this->getOldBindings());
+		$bNew = array_map(fn(?ItemIdentifier $b) => $b?->getHash(), $this->getNewBindings());
+
+		return count($bOld) !== count($bNew) || array_diff($bOld, $bNew) !== array_diff($bNew, $bOld);
+	}
+
 	/**
 	 * @return ItemIdentifier[]
 	 */
@@ -219,6 +227,7 @@ class UncompletedActivityChange
 			|| $this->isResponsibleIdChanged()
 			|| $this->isCompletedChanged()
 			|| $this->isLightTimeChanges()
+			|| $this->isBindingsChanges()
 		;
 	}
 

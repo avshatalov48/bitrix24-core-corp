@@ -23,7 +23,7 @@ class Livefeed extends Base
 	{
 		return Loc::getMessage('CRM_ACTIVITY_PROVIDER_LIVEFEED_NAME');
 	}
-	
+
 	/**
 	 * @param null|string $providerTypeId Provider type id.
 	 * @param int $direction Activity direction.

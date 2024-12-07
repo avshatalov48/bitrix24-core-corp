@@ -3,5 +3,6 @@
 return [
 	'extensions' => [
 		'apptheme',
+		'qrauth/utils',
 	],
 ];

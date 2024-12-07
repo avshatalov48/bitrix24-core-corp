@@ -837,9 +837,9 @@ else: /*$arResult('GET_FROM_TO_MODE') == 'Y')*/?>
 					'		<div class="cal-delete-right-btn"><?= GetMessageJS('MBCAL_EDEV_REMOVE');?></div>' +
 					'	</div>' +
 					'</div>' +
-					'<a href="#" class="calendar-addevent-participant-row-link">' + userName + '</a>' +
+					'<a href="#" class="calendar-addevent-participant-row-link">' + BX.Text.encode(userName) + '</a>' +
 					'</div>' +
-					'<div class="calendar-addevent-participant-row-post">' + work + '</div>' +
+					'<div class="calendar-addevent-participant-row-post">' + BX.Text.encode(work) + '</div>' +
 					'<div class="calendar-addevent-participant-btn"><i class="cal-delete-minus"></i>' +
 					'</div>';
 

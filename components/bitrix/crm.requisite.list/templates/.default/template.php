@@ -32,7 +32,7 @@ $prefix = $arResult['GRID_ID'];
 $requisiteGridEditorId = 'RequisiteGridEditor_'.$arResult['GRID_ID'];
 
 ?>
-<script type="text/javascript">
+<script>
 function crm_requisite_delete_grid(id, message)
 {
 	var f = BX.delegate(<?='bxGrid_'.$arResult['GRID_ID']?>.DeleteItem, <?='bxGrid_'.$arResult['GRID_ID']?>);
@@ -316,7 +316,7 @@ $APPLICATION->IncludeComponent(
 );
 
 ?>
-<script type="text/javascript">
+<script>
 	BX.namespace("BX.Crm");
 	BX.Crm["<?= CUtil::JSEscape($requisiteGridEditorId) ?>"] = new BX.Crm.RequisiteGridEditorClass({
 		gridId: "<?= CUtil::JSEscape($arResult['GRID_ID']) ?>",

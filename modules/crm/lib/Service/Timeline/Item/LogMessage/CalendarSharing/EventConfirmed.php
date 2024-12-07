@@ -4,6 +4,7 @@ namespace Bitrix\Crm\Service\Timeline\Item\LogMessage\CalendarSharing;
 
 use Bitrix\Crm\Service\Timeline\Item\LogMessage;
 use Bitrix\Crm\Service\Timeline\Item\Mixin\CalendarSharing;
+use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\ContentBlockFactory;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\Date;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\LineOfTextBlocks;
@@ -12,7 +13,10 @@ use Bitrix\Crm\Service\Timeline\Layout\Header\Tag;
 
 class EventConfirmed extends LogMessage
 {
-	use CalendarSharing;
+	use CalendarSharing\DateTrait;
+	use CalendarSharing\ModelDataTrait;
+	use CalendarSharing\PlannedEventContentBlockTrait;
+	use CalendarSharing\MessageTrait;
 
 	public function getType(): string
 	{
@@ -38,8 +42,29 @@ class EventConfirmed extends LogMessage
 	{
 
 		return [
-			'planned' => $this->getPlannedEventContentBlock(),
+			'planned' => $this->getPlannedEventContentBlock($this->getContactTypeId(), $this->getContactId()),
 			'eventDate' => $this->getEventStartDateBlock(),
 		];
+	}
+
+	public function getEventStartDateBlock(): ContentBlock
+	{
+		$result = new LineOfTextBlocks();
+
+		$result->addContentBlock('title',
+			ContentBlockFactory::createTitle(
+				$this->getMessage('CRM_TIMELINE_CALENDAR_SHARING_DATE_AND_TIME_EVENT') . ':'
+			)
+		);
+
+		$date = $this->getDateContent($this->getTimestamp());
+		$result->addContentBlock(
+			'linkCreationDate',
+			(new Date())
+				->setDate($date)
+				->setColor(Text::COLOR_BASE_90)
+		);
+
+		return $result;
 	}
 }

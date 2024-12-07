@@ -10,7 +10,9 @@ namespace Bitrix\Crm;
 
 
 use Bitrix\Crm\Category\Entity\ItemCategory;
+use Bitrix\Crm\Entity\EntityEditorConfig;
 use Bitrix\Crm\Service\Container;
+use Bitrix\Main\Loader;
 use CCrmOwnerType;
 
 class EntityAddressType
@@ -56,6 +58,23 @@ class EntityAddressType
 			$typeID = (int)$typeID;
 		}
 		return $typeID >= self::First && $typeID <= self::Last;
+	}
+
+	public static function isValidByZone(?int $typeId, string $zoneId = null): bool
+	{
+		if (!self::isDefined($typeId))
+		{
+			return false;
+		}
+
+		if ($zoneId === null)
+		{
+			$zoneId = EntityAddress::getZoneId();
+		}
+
+		$availableTypesByZone = self::getZoneMap()[$zoneId]['types'] ?? [];
+
+		return in_array($typeId, $availableTypesByZone, true);
 	}
 
 	public static function getAllIDs()
@@ -446,6 +465,40 @@ class EntityAddressType
 		}
 
 		return self::$zoneMap;
+	}
+
+	public static function getDefaultIdByEditorConfigOrByZone(int $entityTypeId): int
+	{
+		return
+			self::getDefaultIdByEditorConfig($entityTypeId)
+			?? self::getDefaultIdByZone(EntityAddress::getZoneId())
+		;
+	}
+
+	public static function getDefaultIdByEditorConfig(int $entityTypeId): ?int
+	{
+		//getting an default address type via EntityConfig is only available in Companies and Contacts
+		$availableEntities = [CCrmOwnerType::Contact, CCrmOwnerType::Company];
+		if (!in_array($entityTypeId, $availableEntities, true))
+		{
+			return null;
+		}
+
+		if (!Loader::includeModule('ui'))
+		{
+			return null;
+		}
+
+		$config = EntityEditorConfig::createWithCurrentScope($entityTypeId);
+		$fieldConfig = $config->getFormField('ADDRESS');
+
+		$defaultTypeId = (int)($fieldConfig['options']['defaultAddressType'] ?? null);
+		if (!self::isValidByZone($defaultTypeId))
+		{
+			return null;
+		}
+
+		return $defaultTypeId;
 	}
 
 	public static function getDefaultIdByZone(string $addressZoneId) : int

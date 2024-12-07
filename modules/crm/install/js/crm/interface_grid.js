@@ -1093,64 +1093,18 @@ if(typeof(BX.CrmUIGridExtension) === "undefined")
 
 		applyEditAction: function(grid)
 		{
-			const fieldNames = this.getEmptyItemsFieldNames();
-			if (fieldNames.length === 0)
-			{
-				grid.editSelected();
+			BX.Runtime.loadExtension('crm.entity-list.panel')
+				.then(({loadEnumsGridEditData}) => {
 
-				return;
-			}
-
-			const entityTypeId = BX.CrmEntityType.resolveId(this.getSetting('ownerTypeName'));
-			const categoryId = this.getSetting('categoryId', 0);
-			BX.ajax.runAction('crm.controller.list.userField.getData', {
-				data: {
-					entityTypeId,
-					fieldNames,
-					categoryId,
-				},
-			}).then(({ data: { fields } }) => {
-				const { cells } = grid.getRows().getHeadFirstChild().getNode();
-				[].forEach.call(cells, (current, index) => {
-					const { name } = current.dataset;
-					if (!fields[name])
-					{
-						return;
-					}
-
-					cells[index].dataset.edit = `(${fields[name]})`;
-					this.typeListFields.push(name);
-				});
-
-				grid.editSelected();
-			}).catch((response) => grid.editSelected());
-		},
-
-		getEmptyItemsFieldNames: function()
-		{
-			const grid = this.getGrid();
-			const { cells } = grid.getRows().getHeadFirstChild().getNode();
-			const columnsAll = grid.getParam('COLUMNS_ALL');
-
-			const fields = [];
-
-			[].forEach.call(cells, (current) => {
-				const name = current.dataset.name ?? null;
-				const columnData = columnsAll[name];
-
-				const isListColumnWithEmptyData = (
-					BX.Type.isObjectLike(columnData?.editable)
-					&& !columnData.editable.DATA
-					&& columnData.type === 'list'
-				);
-
-				if (isListColumnWithEmptyData && !this.typeListFields.includes(name))
-				{
-					fields.push(name);
-				}
-			});
-
-			return fields;
+					/** @see BX.Crm.EntityList.Panel.loadEnumsGridEditData */
+					return loadEnumsGridEditData(
+						grid,
+						BX.CrmEntityType.resolveId(this.getSetting('ownerTypeName')),
+						this.getSetting('categoryId', null)
+					);
+				})
+				.finally(() => grid.editSelected())
+			;
 		},
 
 		applyMergeAction: function(selectedIds)
@@ -1196,90 +1150,28 @@ if(typeof(BX.CrmUIGridExtension) === "undefined")
 			);
 		},
 
+		/**
+		 * @deprecated
+		 */
 		applySenderLetterAddAction(grid, selectedIds, forAll)
 		{
-			const letterValues = grid.actionPanel.getValues();
-			const availableCodes = (letterValues.SENDER_LETTER_AVAILABLE_CODES || '').split(',');
-			if (
-				!BX.util.in_array(letterValues.SENDER_LETTER_CODE, availableCodes)
-				&& BX.getClass('BX.Sender.B24License')
-			)
-			{
-				BX.Sender.B24License.showMailingPopup();
-
-				return;
-			}
-
-			this.saveEntitiesToSegment(
-				null,
-				this.getOwnerTypeName(),
-				selectedIds,
-				forAll ? grid.getId() : null,
-				(segment) => {
-					const url = letterValues.SENDER_PATH_TO_LETTER_ADD
-						.replace('#code#', letterValues.SENDER_LETTER_CODE)
-						.replace('#segment_id#', segment.id)
-					;
-					BX.SidePanel.Instance.open(url, { cacheable: false });
-				}
-			);
+			console.error('applySenderLetterAddAction is deprecated', this);
 		},
 
+		/**
+		 * @deprecated
+		 */
 		applySenderSegmentAddAction: function(grid, selectedIds, forAll)
 		{
-			const segmentValues = grid.actionPanel.getValues();
-			if (segmentValues.SENDER_SEGMENT_ID === 'undefined')
-			{
-				segmentValues.SENDER_SEGMENT_ID = '';
-			}
-
-			this.saveEntitiesToSegment(
-				segmentValues.SENDER_SEGMENT_ID,
-				this.getOwnerTypeName(),
-				selectedIds,
-				forAll ? grid.getId() : null,
-				(segment) => {
-					if (!BX.UI && !BX.UI.Notification)
-					{
-						return;
-					}
-
-					if (!segment.textSuccess)
-					{
-						return;
-					}
-
-					BX.UI.Notification.Center.notify({
-						content: segment.textSuccess,
-						autoHideDelay: 5000
-					});
-				}
-			);
-
-			grid.disableActionsPanel();
+			console.error('applySenderSegmentAddAction is deprecated', this);
 		},
 
+		/**
+		 * @deprecated
+		 */
 		applyConvertAction: function(selectedIds, forAll)
 		{
-			const manager = BX.Crm.BatchConversionManager.getItem(this.getGridId());
-			if (!manager)
-			{
-				return;
-			}
-
-			let schemeName = BX.CrmLeadConversionScheme.dealcontactcompany;
-			const elements = document.getElementsByName('CONVERSION_SCHEME_ID');
-			if (elements.length > 0)
-			{
-				schemeName = BX.data(elements[0], 'value');
-			}
-
-			manager.setConfig(BX.CrmLeadConversionScheme.createConfig(schemeName));
-			if (!forAll)
-			{
-				manager.setEntityIds(selectedIds);
-			}
-			manager.execute();
+			console.error('applyConvertAction is deprecated', this);
 		},
 
 		applyRefreshAccountAction: function(grid, forAll)
@@ -1310,79 +1202,13 @@ if(typeof(BX.CrmUIGridExtension) === "undefined")
 				BX.data(this.getPanelControl("action_button"), "value")
 			);
 		},
+
 		/**
-		 * Opens long running process dialog.
-		 * @return void
+		 * @deprecated
 		 */
 		setAllContactsExport: function()
 		{
-			var grid = this.getGrid();
-			if(!grid)
-			{
-				return;
-			}
-
-			var gridId = grid.getId();
-
-			var url = grid.prepareSortUrl({});
-			url = BX.util.add_url_param(url, {
-				grid_id: gridId,
-				internal: 'true',
-				grid_action: 'showpage',
-				bxajaxid: grid.getAjaxId(),
-				sessid: BX.bitrix_sessid(),
-				AJAX_CALL: 'Y'
-			});
-
-			var forAll = this.getCheckBoxValue("actallrows");
-			var selectedIds = grid.getRows().getSelectedIds();
-			var controls = [];
-			controls['action_button_'+ gridId] = 'export';
-			controls['action_token_' + gridId] = "c" + Date.now();
-			controls['action_all_rows_' + gridId] = forAll ? 'Y' : 'N';
-
-			var actionValues = grid.getActionsPanel().getValues();
-			controls['ACTION_EXPORT'] = typeof(actionValues['ACTION_EXPORT']) != 'undefined' ? actionValues['ACTION_EXPORT'] : 'Y';
-
-			var key = "processContactsExport" + gridId + "Dialog";
-
-			this._processDialog = BX.CrmLongRunningProcessDialog.create(
-				key,
-				{
-					serviceUrl: url,
-					action: "EXPORT",
-					params:
-						{
-							"rows": selectedIds,
-							"controls": controls
-						},
-					title: this.getMessage("processExportDialogTitle"),
-					summary: this.getMessage("processExportDialogSummary"),
-					isSummaryHtml: false
-				}
-			);
-
-			BX.addCustomEvent(this._processDialog, "ON_STATE_CHANGE", BX.delegate(this.onStateChangeAllContactsExport, this));
-
-			this._processDialog.show();
-		},
-
-		/**
-		 * Event handler for BX.CrmLongRunningProcessDialog::ON_STATE_CHANGE.
-		 * @param {BX.CrmLongRunningProcessDialog} sender
-		 * @return void
-		 */
-		onStateChangeAllContactsExport: function(sender)
-		{
-			if(sender.getState() === BX.CrmLongRunningProcessState.completed)
-			{
-				if(this._processDialog)
-				{
-					this._processDialog.close();
-					this._processDialog = null;
-				}
-				this.reloadGrid();
-			}
+			console.error('setAllContactsExport is deprecated', this);
 		},
 
 		saveEntitiesToSegment: function(segmentId, entityTypeName, entityIds, gridId, callback)
@@ -1415,61 +1241,21 @@ if(typeof(BX.CrmUIGridExtension) === "undefined")
 		{
 			var grid = this.getGrid();
 			if(!grid)
+			{
 				return;
+			}
 
-			var forAll = this.getCheckBoxValue("actallrows");
-			var selectedIds = grid.getRows().getSelectedIds();
+			BX.Runtime.loadExtension('crm.entity-list.panel').then(({ createCallListAndShowAlertOnErrors }) => {
+				/** @see BX.Crm.EntityList.Panel.createCallListAndShowAlertOnErrors */
 
-			BX.CrmCallListHelper.createCallList(
-				{
-					entityType: this.getOwnerTypeName(),
-					entityIds: (forAll ? [] :  selectedIds),
-					gridId: this.getGridId(),
-					createActivity: createActivity
-				},
-				function(response)
-				{
-					if(!BX.type.isPlainObject(response))
-						return;
-
-					if(!response.SUCCESS && response.ERRORS)
-					{
-						var error = response.ERRORS.join('. \n');
-						window.alert(error);
-					}
-					else if(response.SUCCESS && response.DATA)
-					{
-						var data = response.DATA;
-						if(data.RESTRICTION)
-						{
-							if (BX.Type.isPlainObject(data.RESTRICTION) && B24 && B24.licenseInfoPopup)
-							{
-								B24.licenseInfoPopup.show('ivr-limit-popup', data.RESTRICTION.HEADER, data.RESTRICTION.CONTENT);
-							}
-							else if (BX.Type.isStringFilled(data.RESTRICTION))
-							{
-								eval(data.RESTRICTION);
-							}
-						}
-						else
-						{
-							var callListId = data.ID;
-							if(createActivity && top.BXIM)
-							{
-								top.BXIM.startCallList(callListId, {});
-							}
-							else
-							{
-								(new BX.Crm.Activity.Planner()).showEdit({
-									'PROVIDER_ID': 'CALL_LIST',
-									'PROVIDER_TYPE_ID': 'CALL_LIST',
-									'ASSOCIATED_ENTITY_ID': callListId
-								});
-							}
-						}
-					}
-				}
-			);
+				createCallListAndShowAlertOnErrors(
+					BX.CrmEntityType.resolveId(this.getOwnerTypeName()),
+					grid.getRows().getSelectedIds(),
+					createActivity,
+					this.getGridId(),
+					this.getCheckBoxValue("actallrows"),
+				);
+			});
 		},
 		updateCallList: function(callListId, context)
 		{
@@ -1859,24 +1645,55 @@ if(typeof(BX.CrmUIGridExtension) === "undefined")
 			this.items[extensionId].viewActivity(activityId, options);
 		}
 	};
-	BX.CrmUIGridExtension.showActivityAddingPopupFromMenu = function(gridManagerId, entityTypeId, entityId, currentUser, pingSettings)
+	BX.CrmUIGridExtension.showActivityAddingPopupFromMenu = function(
+		gridManagerId,
+		entityTypeId,
+		entityId,
+		currentUser,
+		settings,
+		analytics
+	)
 	{
 		if (!BX.Main || !BX.Main.MenuManager || !BX.Main.MenuManager.Data)
 		{
 			return;
 		}
-		var menus = Object.keys(BX.Main.MenuManager.Data);
-		var menu = menus.length ? BX.Main.MenuManager.Data[menus[0]] : null;
+
+		const menus = Object.keys(BX.Main.MenuManager.Data);
+		if (!BX.Type.isArrayFilled(menus))
+		{
+			return;
+		}
+
+		const menu = BX.Main.MenuManager.Data[menus[0]];
+
 		if (menu && menu.bindElement)
 		{
-			BX.CrmUIGridExtension.showActivityAddingPopup(menu.bindElement, gridManagerId, entityTypeId, entityId, currentUser, pingSettings);
+			BX.CrmUIGridExtension.showActivityAddingPopup(
+				menu.bindElement,
+				gridManagerId,
+				entityTypeId,
+				entityId,
+				currentUser,
+				settings,
+				analytics,
+			);
 			menu.close();
 		}
 	};
-	BX.CrmUIGridExtension.showActivityAddingPopup = function(bindElement, gridManagerId, entityTypeId, entityId, currentUser, pingSettings)
+
+	BX.CrmUIGridExtension.showActivityAddingPopup = function(
+		bindElement,
+		gridManagerId,
+		entityTypeId,
+		entityId,
+		currentUser,
+		settings,
+		analytics
+	)
 	{
 		BX.Dom.addClass(bindElement, '--active');
-		var key = entityTypeId + '_' + entityId;
+		const key = `${entityTypeId}_${entityId}`;
 		BX.Runtime.loadExtension('crm.activity.adding-popup').then(function(exports) {
 			if (!BX.CrmUIGridExtension.activityAddingPopup.hasOwnProperty(key))
 			{
@@ -1884,7 +1701,7 @@ if(typeof(BX.CrmUIGridExtension) === "undefined")
 					entityTypeId,
 					entityId,
 					currentUser,
-					pingSettings,
+					settings,
 					{
 						events: {
 							onClose: function() {
@@ -1897,12 +1714,16 @@ if(typeof(BX.CrmUIGridExtension) === "undefined")
 									gridExtension.reloadGrid();
 								}
 							}
-						}
+						},
+						context: {
+							analytics,
+							source: BX.Crm.Activity.TodoEditorV2.AnalyticsSubSection.list,
+						},
 					}
 				);
 
 			}
-			BX.CrmUIGridExtension.activityAddingPopup[key].show(bindElement);
+			BX.CrmUIGridExtension.activityAddingPopup[key].show();
 		});
 	};
 	//endregion
@@ -1968,6 +1789,7 @@ if(typeof(BX.CrmUIGridExtension) === "undefined")
 
 		return null;
 	}
+
 	//endregion
 }
 //endregion

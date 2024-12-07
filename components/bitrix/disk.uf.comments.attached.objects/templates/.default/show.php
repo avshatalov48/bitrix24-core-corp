@@ -112,7 +112,7 @@ include_once(str_replace(array("\\", "//"), "/", __DIR__."/messages.php"));
 					?>><?=htmlspecialcharsbx($file['NAME'])?><?
 					?></a><?
 					?><span class="feed-com-file-size"><?=$file['SIZE']?></span><?
-					?><script type="text/javascript">
+					?><script>
 						BX.namespace("BX.Disk.Files");
 						BX.Disk.Files['<?= $file['ID'] ?>'] = [
 							{text : BX.message('JS_CORE_VIEWER_VIEW_ELEMENT'), className : "bx-viewer-popup-item item-view", href : "#", onclick: function(e){
@@ -179,7 +179,7 @@ include_once(str_replace(array("\\", "//"), "/", __DIR__."/messages.php"));
 		</div>
 	<? } ?>
 </div>
-<script type="text/javascript">
+<script>
 	BX.ready(function () {
 		BX.Disk['CommentsAttachedObjectClass_<?= $component->getComponentId() ?>'] = new BX.Disk.CommentsAttachedObjectClass({
 			containerId: "disk-attached-objects-block-<?=$arResult['UID']?>",

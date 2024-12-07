@@ -61,10 +61,8 @@ class FilterLimit extends Limit
 		$helpdeskUrl = UI\Util::getArticleUrlByCode('9745327');
 		$helpdeskLink = '<a href="'.$helpdeskUrl.'">'.Loc::getMessage("{$prefix}_HELPDESK_LINK").'</a>';
 
-		$params['TITLE'] = ($params['TITLE'] ?: Loc::getMessage("{$prefix}_TITLE_V2"));
-		$params['CONTENT'] = (
-			$params['CONTENT'] ?: Loc::getMessage("{$prefix}_CONTENT_V2", ['#HELPDESK_LINK#' => $helpdeskLink])
-		);
+		$params['TITLE'] = $params['TITLE'] ?? Loc::getMessage("{$prefix}_TITLE_V2");
+		$params['CONTENT'] = $params['CONTENT'] ?? Loc::getMessage("{$prefix}_CONTENT_V2", ['#HELPDESK_LINK#' => $helpdeskLink]);
 
 		return Bitrix24::prepareStubInfo($params);
 	}

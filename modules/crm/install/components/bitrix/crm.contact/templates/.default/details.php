@@ -5,6 +5,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use Bitrix\Crm\Integration\Analytics\Dictionary;
 use Bitrix\Crm\Service\Container;
 
 /** @global CMain $APPLICATION */
@@ -34,7 +35,13 @@ if (isset($_REQUEST['IFRAME']) && $_REQUEST['IFRAME'] === 'Y')
 			'ENTITY_TYPE_ID' => CCrmOwnerType::Contact,
 			'ENTITY_ID' => $entityId,
 			'ENABLE_TITLE_EDIT' => false,
-			'EXTRAS' => ['CATEGORY_ID' => $categoryId],
+			'EXTRAS' => [
+				'CATEGORY_ID' => $categoryId,
+				'ANALYTICS' => [
+					'c_section' => $categoryId === 0 ? Dictionary::SECTION_CONTACT : Dictionary::SECTION_CATALOG_CONTRACTOR_CONTACT,
+					'c_sub_section' => Dictionary::SUB_SECTION_DETAILS,
+				],
+			],
 		]
 	);
 }

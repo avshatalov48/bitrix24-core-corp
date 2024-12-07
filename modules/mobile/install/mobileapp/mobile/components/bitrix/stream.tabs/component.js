@@ -21,7 +21,7 @@
 			return {
 				livefeed: '**',
 				bp: 'bp_tasks',
-				bp2: 'bp_tasks',
+				bp2: 'bp_workflow',
 			};
 		}
 
@@ -46,7 +46,7 @@
 			BX.addCustomEvent('project.background::showLoadingIndicator', dialogs.showLoadingIndicator);
 			BX.addCustomEvent('project.background::hideLoadingIndicator', dialogs.hideLoadingIndicator);
 
-			this.tabs.on('onTabSelected', (tab, changed) => this.onTabSelected(tab,  changed));
+			this.tabs.on('onTabSelected', (tab, changed) => this.onTabSelected(tab, changed));
 
 			BX.addCustomEvent('onStreamTabsCalendarEventAddButtonPushed', () => {
 				PageManager.openPage({
@@ -54,7 +54,7 @@
 					modal: true,
 					data: {
 						modal: 'Y',
-					}
+					},
 				});
 			});
 
@@ -189,20 +189,26 @@
 			{
 				this.updateLivefeedCounter(counters[StreamTabs.counterKeys.livefeed]);
 			}
+
 			if (typeof counters[StreamTabs.counterKeys.bp] !== 'undefined')
 			{
 				this.updateBPCounter(counters[StreamTabs.counterKeys.bp]);
 			}
+
 			if (typeof counters[StreamTabs.counterKeys.bp2] !== 'undefined')
 			{
 				this.updateBP2Counter(counters[StreamTabs.counterKeys.bp2]);
+			}
+			else if (typeof counters[StreamTabs.counterKeys.bp] !== 'undefined')
+			{
+				this.updateBP2Counter(counters[StreamTabs.counterKeys.bp]);
 			}
 		}
 
 		updateLivefeedCounter(value)
 		{
 			this.tabs.updateItem(StreamTabs.tabNames.stream, {
-				title: BX.message('MOBILE_STREAM_TABS_STREAM_TITLE'),
+				title: BX.message('MOBILE_STREAM_TABS_STREAM_TITLE2'),
 				counter: Number(value),
 				label: (value > 0 ? String(value) : ''),
 			});
@@ -333,6 +339,7 @@
 				if (typeof data[SITE_ID] === 'undefined')
 				{
 					resolve();
+
 					return;
 				}
 

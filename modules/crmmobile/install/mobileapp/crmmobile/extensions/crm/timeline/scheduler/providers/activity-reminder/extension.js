@@ -3,7 +3,7 @@
  */
 jn.define('crm/timeline/scheduler/providers/activity-reminder', (require, exports, module) => {
 	const { Loc } = require('loc');
-	const { Color } = require('tokens');
+	const AppTheme = require('apptheme');
 	const { Haptics } = require('haptics');
 	const { settingsOutline } = require('assets/common');
 	const { ContextMenu } = require('layout/ui/context-menu');
@@ -81,7 +81,7 @@ jn.define('crm/timeline/scheduler/providers/activity-reminder', (require, export
 					{
 						style: {
 							flex: 1,
-							backgroundColor: Color.bgContentPrimary,
+							backgroundColor: AppTheme.colors.bgContentPrimary,
 							maxHeight: '100%',
 						},
 						onLayout: ({ height }) => this.setMaxHeight(height),
@@ -115,7 +115,7 @@ jn.define('crm/timeline/scheduler/providers/activity-reminder', (require, export
 						marginTop: 12,
 						borderRadius: 8,
 						borderWidth: 1,
-						borderColor: Color.bgSeparatorPrimary,
+						borderColor: AppTheme.colors.bgSeparatorPrimary,
 						flexDirection: 'row',
 						alignItems: 'center',
 						justifyContent: 'space-between',
@@ -129,7 +129,7 @@ jn.define('crm/timeline/scheduler/providers/activity-reminder', (require, export
 							style: {
 								fontSize: 14,
 								fontWeight: 600,
-								color: Color.base1,
+								color: AppTheme.colors.base1,
 							},
 							text: Loc.getMessage('M_CRM_TIMELINE_SCHEDULER_ACTIVITY_REMINDER_BANNER_TITLE_MSGVER_1'),
 						},
@@ -140,7 +140,7 @@ jn.define('crm/timeline/scheduler/providers/activity-reminder', (require, export
 								marginTop: 4,
 								fontSize: 12,
 								fontWeight: 400,
-								color: Color.base4,
+								color: AppTheme.colors.base4,
 							},
 							text: Loc.getMessage('M_CRM_TIMELINE_SCHEDULER_ACTIVITY_REMINDER_BANNER_DESCRIPTION_MSGVER_1'),
 						},
@@ -170,7 +170,7 @@ jn.define('crm/timeline/scheduler/providers/activity-reminder', (require, export
 						height: 17,
 					},
 					resizeMode: 'contain',
-					tintColor: Color.base4,
+					tintColor: AppTheme.colors.base4,
 					svg: {
 						content: settingsOutline(),
 					},

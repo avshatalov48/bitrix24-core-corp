@@ -110,7 +110,7 @@ echo CIntranetSharepoint::GetTypesCreateHTML('bx_field_create');
 	</table>
 
 </div>
-<script type="text/javascript">
+<script>
 BX.WindowManager.Get().SetTitle('<?=CUtil::JSEscape(GetMessage('SL_FORM_LIST_STEP_TITLE'))?>');
 var editRow = null, editTable = null, selSP = null, selField = null, createField = null, checkField = null;
 

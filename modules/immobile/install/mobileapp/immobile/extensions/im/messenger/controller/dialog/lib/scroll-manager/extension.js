@@ -91,7 +91,7 @@ jn.define('im/messenger/controller/dialog/lib/scroll-manager', (require, exports
 
 			const status = serviceLocator.get('core').getStore().getters['applicationModel/getStatus']();
 			logger.log(`${this.constructor.name}.onScrollToBottom status`, status);
-			if (status !== AppStatus.running)
+			if (![AppStatus.running, AppStatus.backgroundSync].includes(status))
 			{
 				return;
 			}

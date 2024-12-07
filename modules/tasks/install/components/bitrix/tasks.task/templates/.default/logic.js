@@ -32,6 +32,19 @@ BX.namespace('Tasks.Component');
 
 				this.analyticsData = {};
 
+				this.isFlowForm = (this.option('isFlowForm') === true);
+				this.isFeatureEnabled = (this.option('isFeatureEnabled') === true);
+				this.isFeatureTrialable = (this.option('isFeatureTrialable') === true);
+				this.flowId = (parseInt(this.option('flowId'), 10));
+				this.flowLimitCode = this.option('flowLimitCode');
+				this.flowSelectedItem = null;
+				this.isProjectLimitExceeded = (this.option('isProjectLimitExceeded') === true);
+				this.projectLimitCode = this.option('projectLimitCode');
+
+				this.taskStatusSummaryEnabled = (this.option('taskStatusSummaryEnabled') === true);
+				this.relatedSubTaskDeadlinesEnabled = (this.option('relatedSubTaskDeadlinesEnabled') === true);
+				this.taskRecurringEnabled = (this.option('taskRecurringEnabled') === true);
+
 				this.fireTaskEvent();
 
 				if(this.option('doInit'))
@@ -56,6 +69,8 @@ BX.namespace('Tasks.Component');
 				this.calendarSettings = this.option('calendarSettings');
 
 				this.aiCommandExecutor = null;
+
+				this.changingFlow = false;
 			},
 
 			getUser: function()
@@ -188,13 +203,47 @@ BX.namespace('Tasks.Component');
 
 			fireTaskEvent: function()
 			{
-				var eType = this.option('componentData').EVENT_TYPE.toString().toUpperCase();
-				var task = this.option('data').EVENT_TASK;
-				var uglyTask = this.option('data').EVENT_TASK_UGLY;
+				const eType = this.option('componentData').EVENT_TYPE.toString().toUpperCase();
+				const task = this.option('data').EVENT_TASK;
+				const uglyTask = this.option('data').EVENT_TASK_UGLY;
+				const eventOptions = this.option('componentData').EVENT_OPTIONS;
 
-				if(eType && (task || uglyTask))
+				if (eType && (task || uglyTask))
 				{
-					BX.Tasks.Util.fireGlobalTaskEvent(eType, task, this.option('componentData').EVENT_OPTIONS, uglyTask);
+					if (eType === 'ADD')
+					{
+						var top = window.top;
+						top.BX.UI.Notification.Center.notify({
+							content: BX.message('TASKS_NOTIFY_TASK_CREATED'),
+							actions: [{
+								title: BX.message('TASKS_NOTIFY_TASK_DO_VIEW'),
+								events: {
+									click: function(event, balloon, action) {
+										balloon.close();
+										top.BX.SidePanel.Instance.open(uglyTask.url);
+									},
+								},
+							}],
+						});
+
+						const analyticsLabels = {
+							action: 'taskAdding',
+							source: 'addButton',
+						};
+						if (eventOptions.FIRST_GRID_TASK_CREATION_TOUR_GUIDE)
+						{
+							analyticsLabels.tourGuide = 'firstGridTaskCreation';
+						}
+
+						if (eventOptions.SCOPE)
+						{
+							analyticsLabels.scope = eventOptions.SCOPE;
+						}
+
+						BX.ajax.runAction('tasks.analytics.hit', { analyticsLabel: analyticsLabels });
+					}
+
+					BX.Tasks.Util.fireGlobalTaskEvent(eType, task, eventOptions, uglyTask);
 				}
 			},
 
@@ -274,6 +323,7 @@ BX.namespace('Tasks.Component');
 						{
 							this.bindEditorEvents(editor, handler);
 							this.setFocusOnTitle(editor, handler);
+							this.setEditorTextFromHash();
 						}
 						else
 						{
@@ -286,12 +336,19 @@ BX.namespace('Tasks.Component');
 									{
 										this.bindEditorEvents(eventEditor, handler);
 										this.setFocusOnTitle(editor, handler);
+										this.setEditorTextFromHash();
 									}
 								}, this)
 							);
 						}
 
 					}, this));
+				}
+
+				const flowSelectorNode = document.getElementById('tasks-flow-selector');
+				if (flowSelectorNode)
+				{
+					BX.bind(flowSelectorNode, 'click', this.showFlowSelector.bind(this, flowSelectorNode));
 				}
 
 				// all block togglers
@@ -442,9 +499,20 @@ BX.namespace('Tasks.Component');
 			{
 				return this.option('data').TASK;
 			},
+
 			getTaskActions: function()
 			{
 				return this.getTaskData().ACTION;
+			},
+
+			getTaskId: function()
+			{
+				return this.getTaskData().ID ?? 0;
+			},
+
+			getTaskDescription: function()
+			{
+				return (this.option('data').TASK.DESCRIPTION ?? '').trim();
 			},
 
 			initProjectDependence: function()
@@ -692,6 +760,266 @@ BX.namespace('Tasks.Component');
 				;
 			},
 
+			showFlowSelector(node)
+			{
+				if (!this.isFeatureEnabled)
+				{
+					BX.UI.InfoHelper.show(this.flowLimitCode);
+
+					return;
+				}
+
+				if (!this.flowSelectorDialog)
+				{
+					this.flowSelectorDialog = new BX.UI.EntitySelector.Dialog({
+						targetNode: node,
+						width: 350,
+						height: 400,
+						multiple: false,
+						dropdownMode: true,
+						enableSearch: true,
+						cacheable: true,
+						preselectedItems: [['flow', this.flowId]],
+						entities: [
+							{
+								id: 'flow',
+								options: {
+									onlyActive: true,
+								},
+								dynamicLoad: true,
+								dynamicSearch: true,
+							},
+						],
+						events: {
+							'Item:onBeforeSelect': (baseEvent) => {
+								const dialog = baseEvent.getTarget();
+								this.flowSelectedItem = dialog.getSelectedItems()[0];
+							},
+							'Item:onBeforeDeselect': (baseEvent) => {
+								const dialog = baseEvent.getTarget();
+								this.flowSelectedItem = dialog.getSelectedItems()[0];
+							},
+							'Item:onSelect': this.changeFlow.bind(this),
+							'Item:onDeselect': BX.Runtime.debounce(this.unChangeFlow, 100, this),
+							'Search:onItemCreateAsync': (event) => {
+								return new Promise((resolve) => {
+									/** @type  {BX.UI.EntitySelector.Item} */
+									const { searchQuery } = event.getData();
+									/** @type  {BX.UI.EntitySelector.Dialog} */
+									const dialog = event.getTarget();
+
+									this.createFlow(searchQuery.getQuery())
+										.then((createdFlowData) => {
+											if (createdFlowData)
+											{
+												const item = dialog.addItem({
+													tabs: 'recents',
+													id: createdFlowData.id,
+													entityId: 'flow',
+													title: createdFlowData.name,
+													customData: {
+														groupId: createdFlowData.groupId,
+														templateId: createdFlowData.templateId,
+													},
+												});
+												item.select();
+
+												resolve();
+											}
+											else
+											{
+												resolve();
+											}
+										})
+									;
+								});
+							},
+						},
+						searchOptions: {
+							allowCreateItem: true,
+							footerOptions: {
+								label: BX.message('TASKS_TASK_FLOW_SELECTOR_CREATE_BUTTON'),
+							},
+						},
+					});
+				}
+
+				this.flowSelectorDialog.show();
+			},
+
+			changeFlow(baseEvent)
+			{
+				const dialog = baseEvent.getTarget();
+
+				this.changingFlow = true;
+
+				const selectedItem = baseEvent.getData().item;
+
+				const flowId = parseInt(selectedItem.id, 10);
+				const groupId = parseInt(selectedItem.customData.get('groupId'), 10);
+				const templateId = parseInt(selectedItem.customData.get('templateId'), 10);
+				const shouldShowConfirmChangeFlow = this.shouldShowConfirmChangeFlow(templateId);
+
+				window.onbeforeunload = () => {};
+
+				const reloadForm = () => {
+					const currentUri = new BX.Uri(decodeURI(location.href));
+
+					currentUri.setQueryParam('FLOW_ID', flowId);
+					currentUri.setQueryParam('GROUP_ID', groupId);
+					if (templateId)
+					{
+						currentUri.setQueryParam('TEMPLATE', templateId);
+					}
+					else
+					{
+						currentUri.removeQueryParam('TEMPLATE');
+					}
+
+					currentUri.removeQueryParam('EVENT_TYPE');
+					currentUri.removeQueryParam('EVENT_TASK_ID');
+					currentUri.removeQueryParam('EVENT_OPTIONS');
+					currentUri.removeQueryParam('NO_FLOW');
+
+					const immutable = this.option('immutable');
+					Object.entries(immutable).forEach(([key, value]) => {
+						currentUri.setQueryParam(key, value);
+					})
+
+					const demoSuffix = this.isFeatureTrialable ? 'Y' : 'N';
+
+					currentUri.setQueryParams({
+						ta_cat: 'task_operations',
+						ta_sec: 'flows',
+						ta_sub: 'flows_grid',
+						ta_el: 'flow_selector',
+						p1: `isDemo_${demoSuffix}`,
+					});
+
+					location.href = currentUri.getPath() + currentUri.getQuery();
+				};
+
+				const rollback = () => {
+					dialog.getItem(this.flowSelectedItem).select(true);
+				};
+
+				if (shouldShowConfirmChangeFlow)
+				{
+					this.showConfirmChangeFlow(reloadForm, rollback);
+				}
+				else
+				{
+					reloadForm();
+				}
+			},
+
+			unChangeFlow(baseEvent)
+			{
+				if (this.changingFlow)
+				{
+					return;
+				}
+
+				const dialog = baseEvent.getTarget();
+				const shouldShowConfirmChangeFlow = this.shouldShowConfirmChangeFlow();
+
+				window.onbeforeunload = () => {};
+
+				const reloadForm = () => {
+					const currentUri = new BX.Uri(decodeURI(location.href));
+
+					currentUri.removeQueryParam('FLOW_ID', 'GROUP_ID', 'TEMPLATE');
+
+					currentUri.removeQueryParam('EVENT_TYPE');
+					currentUri.removeQueryParam('EVENT_TASK_ID');
+					currentUri.removeQueryParam('EVENT_OPTIONS');
+
+					currentUri.setQueryParam('NO_FLOW', 1);
+
+					const immutable = this.option('immutable');
+					Object.entries(immutable).forEach(([key, value]) => {
+						currentUri.setQueryParam(key, value);
+					})
+
+					location.href = currentUri.getPath() + currentUri.getQuery();
+				};
+
+				const rollback = () => {
+					dialog.getItem(this.flowSelectedItem).select(true);
+				};
+
+				if (shouldShowConfirmChangeFlow)
+				{
+					this.showConfirmChangeFlow(reloadForm, rollback);
+				}
+				else
+				{
+					reloadForm();
+				}
+			},
+
+			showConfirmChangeFlow(doneCallback, cancelCallback)
+			{
+				BX.UI.Dialogs.MessageBox.show({
+					message: BX.message('TASKS_TASK_FLOW_CHANGE_MESSAGE'),
+					title: BX.message('TASKS_TASK_FLOW_CHANGE_TITLE'),
+					onOk: () => {
+						doneCallback();
+					},
+					okCaption: BX.message('TASKS_TASK_FLOW_CHANGE_OK_CAPTION'),
+					cancelCallback: (messageBox) => {
+						cancelCallback();
+						messageBox.close();
+					},
+					cancelCaption: BX.message('TASKS_TASK_FLOW_CHANGE_CANCEL_CAPTION'),
+					buttons: BX.UI.Dialogs.MessageBoxButtons.OK_CANCEL,
+					popupOptions: {
+						events: {
+							onPopupClose: () => {
+								cancelCallback();
+							},
+						},
+					},
+				});
+			},
+
+			shouldShowConfirmChangeFlow(templateId = 0)
+			{
+				const description = this.getEditorText().trim();
+				const hasDescription = description.length > 0;
+
+				if (!hasDescription)
+				{
+					return false;
+				}
+
+				if (templateId > 0)
+				{
+					return true;
+				}
+
+				return description !== this.getTaskDescription();
+			},
+
+			createFlow(inputFlowName)
+			{
+				return new Promise((resolve, reject) => {
+					top.BX.Runtime.loadExtension('tasks.flow.edit-form')
+						.then((exports) => {
+							const editForm = exports.EditForm.createInstance({
+								flowName: inputFlowName,
+							});
+							editForm.subscribe('afterSave', (baseEvent) => {
+								resolve(baseEvent.getData());
+							});
+							editForm.subscribe('afterClose', (baseEvent) => {
+								resolve();
+							});
+						})
+					;
+				});
+			},
+
 			submit: function()
 			{
 				BX.Tasks.CheckListInstance.getTreeStructure().appendRequestLayout();
@@ -864,31 +1192,96 @@ BX.namespace('Tasks.Component');
 						flagNode.value = node.checked ? 'Y' : 'N';
 					}
 
-					if (
-						(flagName === 'SAVE_AS_TEMPLATE' || flagName === 'REPLICATE')
-						&& flagNode.value === 'Y'
-						&& (
+					const limitExceeded = this.isLimitExceeded(flagName);
+					if (limitExceeded)
+					{
+						this.performExceededActions(flagName, flagNode, node);
+
+						this.showLimitDialog(
+							this.getFeatureId(flagName),
+							null,
+							{
+								module: 'tasks',
+								source: 'taskEdit',
+							}
+						);
+					}
+					else
+					{
+						this.processToggleFlag(flagName, flagNode.value === 'Y');
+					}
+				}
+			},
+
+			isLimitExceeded(flagName)
+			{
+				switch (flagName)
+				{
+					case 'REPLICATE':
+					case 'SAVE_AS_TEMPLATE':
+						return Boolean(
 							this.option('auxData').TASK_LIMIT_EXCEEDED
 							|| this.option('auxData').TASK_RECURRENT_RESTRICT
-						)
-					)
-					{
-						flagNode.value = 'N';
-						node.checked = false;
-
-						var code = (flagName === 'REPLICATE' ? 'limit_tasks_recurring_tasks' : 'limit_tasks_template');
-						BX.UI.InfoHelper.show(code, {
-							isLimit: true,
-							limitAnalyticsLabels: {
-								module: 'tasks',
-								source: 'taskEdit'
-							}
-						});
-						return;
-					}
-
-					this.processToggleFlag(flagName, flagNode.value === 'Y');
+						);
+					case 'TASK_PARAM_1':
+					case 'TASK_PARAM_2':
+						return !this.relatedSubTaskDeadlinesEnabled;
+					case 'TASK_PARAM_3':
+						return !this.taskStatusSummaryEnabled;
+					default:
+						return false;
 				}
+			},
+
+			performExceededActions(flagName, flagNode, parenNode)
+			{
+				switch (flagName)
+				{
+					case 'REPLICATE':
+					case 'SAVE_AS_TEMPLATE':
+					case 'TASK_PARAM_1':
+					case 'TASK_PARAM_2':
+					case 'TASK_PARAM_3':
+						if (flagNode.value === 'Y')
+						{
+							flagNode.value = 'N';
+							parenNode.checked = false;
+						}
+				}
+			},
+
+			getFeatureId(flagName)
+			{
+				switch (flagName)
+				{
+					case 'REPLICATE':
+						return 'tasks_recurring_tasks';
+					case 'SAVE_AS_TEMPLATE':
+						return 'tasks_template';
+					case 'TASK_PARAM_1':
+					case 'TASK_PARAM_2':
+						return 'tasks_related_subtask_deadlines';
+					case 'TASK_PARAM_3':
+						return 'tasks_status_summary';
+					default:
+						return '';
+				}
+			},
+
+			showLimitDialog(featureId, bindElement, limitAnalyticsLabels)
+			{
+				return new Promise((resolve, reject) => {
+					BX.Runtime.loadExtension('tasks.limit').then((exports) => {
+						const { Limit } = exports;
+						Limit.showInstance({
+							featureId,
+							bindElement,
+							limitAnalyticsLabels,
+						});
+
+						resolve();
+					});
+				});
 			},
 
 			processToggleFlag: function(name, value)
@@ -898,8 +1291,8 @@ BX.namespace('Tasks.Component');
 					var taskLimitExceeded = this.option('auxData').TASK_LIMIT_EXCEEDED;
 					var taskRecurrentRestrict = this.option('auxData').TASK_RECURRENT_RESTRICT;
 					if (
-						!taskLimitExceeded
-						|| (taskLimitExceeded && !value)
+						(!taskLimitExceeded || (taskLimitExceeded && !value))
+						|| (!taskRecurrentRestrict || (taskRecurrentRestrict && !value))
 					)
 					{
 						BX.Tasks.Util.fadeSlideToggleByClass(this.control('replication-panel'));
@@ -967,7 +1360,7 @@ BX.namespace('Tasks.Component');
 						BX.Tasks.Util.hintManager.hide('TASK_EDIT_MULTIPLE_RESPONSIBLES');
 					}
 
-					if (ctrl.count() > 0)
+					if (ctrl.count() > 0 && !this.isFlowForm)
 					{
 						var absenceNode = this.control('absence-message');
 
@@ -1139,6 +1532,23 @@ BX.namespace('Tasks.Component');
 				}, 2000);
 			},
 
+			setEditorTextFromHash: function()
+			{
+				const text = decodeURIComponent(location.hash.slice(1));
+				history.replaceState(null, null, ' ');
+				this.setEditorText(text.trim());
+			},
+
+			setEditorText: function(text)
+			{
+				const editorId = this.option('template').ID;
+				const editor = BXHtmlEditor.Get(editorId);
+				if (BX.Type.isStringFilled(text))
+				{
+					editor.SetContent(text);
+				}
+			},
+
 			getEditorSelectedText: function()
 			{
 				var text = '';
@@ -1243,7 +1653,8 @@ BX.namespace('Tasks.Component');
 			{
 				if (this.option('canUseAIChecklistButton'))
 				{
-					const commandExecutor = await this.getAiCommandExecutor();
+					this.getAiCommandExecutorPromise ??= this.getAiCommandExecutor();
+					const commandExecutor = await this.getAiCommandExecutorPromise;
 					if (commandExecutor.isProcessing)
 					{
 						return;
@@ -1263,8 +1674,17 @@ BX.namespace('Tasks.Component');
 						});
 
 						this.openCheckLists();
-					}).catch((err) => {
-						console.log(err);
+					}).catch(async (err) => {
+						const { AjaxErrorHandler } = await BX.Runtime.loadExtension('ai.ajax-error-handler');
+
+						AjaxErrorHandler?.handleTextGenerateError({
+							baasOptions: {
+								bindElement: makeChecklistBtn,
+								context: 'tasks_field_checklist',
+								useAngle: false,
+							},
+							errorCode: err?.errors?.[0]?.code ?? 'undefined_error',
+						});
 					}).finally(() => {
 						BX.Dom.removeClass(makeChecklistBtn, 'tasks-btn-ai-checklist-wait');
 						commandExecutor.isProcessing = false;
@@ -1285,9 +1705,9 @@ BX.namespace('Tasks.Component');
 				{
 					const { CommandExecutor } = await BX.Runtime.loadExtension('ai.command-executor');
 
-					this.aiCommandExecutor = await new CommandExecutor({
-						moduleId: 'main',
-						contextId: 'tasks_field',
+					this.aiCommandExecutor = new CommandExecutor({
+						moduleId: 'tasks',
+						contextId: 'tasks_field_checklist',
 					});
 				}
 
@@ -1461,7 +1881,8 @@ BX.namespace('Tasks.Component');
 				BX.ajax.runComponentAction('bitrix:tasks.task', 'setState', {
 					mode: 'class',
 					data: {
-						state:st
+						state:st,
+						isFlowForm: this.isFlowForm,
 					}
 				}).then(
 					function(response)
@@ -1533,13 +1954,20 @@ BX.namespace('Tasks.Component');
 
 				if (section)
 				{
+					url.searchParams.delete('ta_cat');
 					url.searchParams.delete('ta_sec');
 					url.searchParams.delete('ta_sub');
 					url.searchParams.delete('ta_el');
+					url.searchParams.delete('p1');
+					url.searchParams.delete('p2');
+					url.searchParams.delete('p3');
+					url.searchParams.delete('p4');
+					url.searchParams.delete('p5');
+
 					window.history.replaceState(null, null, url.toString());
 				}
-			}
-		}
+			},
+		},
 	});
 
 	BX.Tasks.Component.Task.UserItemSet = BX.Tasks.UserItemSet.extend({

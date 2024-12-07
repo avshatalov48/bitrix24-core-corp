@@ -1,9 +1,7 @@
-import { ajax } from 'main.core';
 import { KanbanAjaxComponent } from '../kanban-component/kanban-ajax-component';
 
 export class RequestSender
 {
-	static #ACTION = 'setNewTaskOrder';
 	#ajaxComponent: KanbanAjaxComponent;
 
 	constructor()
@@ -13,20 +11,18 @@ export class RequestSender
 
 	setOrder(order: string = '')
 	{
-		ajax({
-			method: 'POST',
-			dataType: 'json',
-			url: this.#ajaxComponent.getPath(),
+		BX.ajax.runComponentAction('bitrix:tasks.kanban', 'setNewTaskOrder', {
+			mode: 'class',
 			data: {
-				action: RequestSender.#ACTION,
 				order: order,
 				params: this.#ajaxComponent.getParams(),
-				sessid: BX.bitrix_sessid(),
 			},
-			onsuccess: function(data) {
+		}).then(
+			(response) => {
+				const data = response.data;
 				BX.onCustomEvent(this, 'onTaskSortChanged', [data]);
 			},
-		});
+		);
 	}
 
 	#init()

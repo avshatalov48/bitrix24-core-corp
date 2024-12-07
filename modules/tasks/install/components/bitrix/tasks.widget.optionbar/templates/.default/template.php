@@ -3,6 +3,8 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Tasks\Helper\RestrictionUrl;
+use Bitrix\Tasks\Integration\Bitrix24;
+use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit;
 
 /** @var array $arResult */
 /** @global $APPLICATION */
@@ -11,6 +13,7 @@ Loc::loadMessages(__FILE__);
 
 $helper = $arResult['HELPER'];
 $arParams =& $helper->getComponent()->arParams; // make $arParams the same variable as $this->__component->arParams, as it really should be
+
 ?>
 
 <?//$helper->displayFatals();?>
@@ -19,7 +22,39 @@ $arParams =& $helper->getComponent()->arParams; // make $arParams the same varia
 	<div id="<?=$helper->getScopeId()?>" class="tasks">
 
 		<?foreach($arParams['OPTIONS'] as $option):?>
-			<?$optionJs = ToLower(str_replace('_', '-', $option['CODE']));?>
+			<?php
+				$limitedCodes = [
+					'MATCH_WORK_TIME' => [
+						'limitExceeded' => $arResult['TASK_SKIP_WEEKENDS_LIMIT_EXCEEDED'],
+						'clickHandler' => Limit::getLimitLockClick(
+							Bitrix24\FeatureDictionary::TASK_SKIP_WEEKENDS,
+							null,
+						),
+					],
+					'TASK_CONTROL' => [
+						'limitExceeded' => $arResult['TASK_CONTROL_LIMIT_EXCEEDED'],
+						'clickHandler' => Limit::getLimitLockClick(
+							Bitrix24\FeatureDictionary::TASK_CONTROL,
+							null,
+						),
+					],
+				];
+				$limitExceeded = false;
+				$onOptionLockClick = null;
+				$lockClassStyle = "cursor: pointer;";
+				$lockClassName = 'task-field-locked';
+				if (array_key_exists($option['CODE'], $limitedCodes))
+				{
+					$limitData = $limitedCodes[$option['CODE']];
+					if ($limitData['limitExceeded'])
+					{
+						$limitExceeded = true;
+						$onOptionLockClick = $limitData['clickHandler'];
+						$option['VALUE'] = 'N';
+					}
+				}
+			?>
+			<?$optionJs = mb_strtolower(str_replace('_', '-', $option['CODE']));?>
 			<div class="task-options-field">
 				<div class="task-options-field-inner">
 					<label
@@ -57,26 +92,20 @@ $arParams =& $helper->getComponent()->arParams; // make $arParams the same varia
 
 						<?=($option['DISABLED'] ? 'disabled' : '')?>
 					/>
-					<?php
-						if ($option['CODE'] === 'TASK_CONTROL' && $arResult['TASK_LIMIT_EXCEEDED'])
-						{
-							$lockClassName = 'task-field-locked';
-							$onLockClick =
-								"top.BX.UI.InfoHelper.show('"
-								. RestrictionUrl::TASK_CONTROL_SLIDER_URL
-								. "',{isLimit: true,limitAnalyticsLabels: {module: 'tasks',}});"
-							;
-							$lockClassStyle = "cursor: pointer;";
-					?>
-							<span class="<?=$lockClassName?>" onclick="<?=$onLockClick?>" style="<?=$lockClassStyle?>"></span>
-					<?php
-						}
-					?>
+					<?php if (array_key_exists($option['CODE'], $limitedCodes)): ?>
+						<?php if ($onOptionLockClick): ?>
+							<span
+								class="<?=$lockClassName?>"
+								onclick="<?=$onOptionLockClick?>"
+								style="<?=$lockClassStyle?>"
+							></span>
+						<?php endif; ?>
+					<?php endif; ?>
 
-					<?if($option['LINK']):?>
+					<?if($option['LINK'] && !$limitExceeded):?>
                         <a href="<?=htmlspecialcharsbx($option['LINK']['URL'])?>" target="_blank"><?=htmlspecialcharsbx($option['LINK']['TEXT'])?></a>
 					<?endif?>
-					<?if ($option['LINKS'] ?? null):?>
+					<?if (($option['LINKS'] ?? null) && !$limitExceeded):?>
                         <?foreach($option['LINKS'] as $link):?>
                             <a href="<?=htmlspecialcharsbx($link['URL'])?>" target="_blank"><?=htmlspecialcharsbx($link['TEXT'])?></a>
                         <?endforeach?>

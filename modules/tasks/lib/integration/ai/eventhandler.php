@@ -2,8 +2,11 @@
 
 namespace Bitrix\Tasks\Integration\AI;
 
+use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Event;
 use Bitrix\Main\Loader;
+use Bitrix\Tasks\Access\ActionDictionary;
+use Bitrix\Tasks\Access\TaskAccessController;
 use Bitrix\Tasks\Integration\AI\Event\Factory\EventControllerFactory;
 use Bitrix\Tasks\Integration\AI\Event\Message\MessageCollection;
 use Bitrix\Tasks\Internals\Log\LogFacade;
@@ -18,7 +21,7 @@ final class EventHandler
 	{
 		$handler = new self($event);
 		$response = $handler->makeResponse();
-		if (!$handler->isForMe())
+		if (!$handler->isForMe() || !$handler->canRead())
 		{
 			return $response;
 		}
@@ -74,5 +77,16 @@ final class EventHandler
 	public function __construct(private Event $event)
 	{
 
+	}
+
+	private function canRead(): bool
+	{
+		$userId = (int)CurrentUser::get()->getId();
+		if ($userId <= 0)
+		{
+			return false;
+		}
+
+		return TaskAccessController::can($userId, ActionDictionary::ACTION_TASK_READ, $this->getTaskId());
 	}
 }

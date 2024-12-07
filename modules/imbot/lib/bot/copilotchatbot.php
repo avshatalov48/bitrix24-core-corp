@@ -2,7 +2,7 @@
 
 namespace Bitrix\Imbot\Bot;
 
-use Bitrix\ImBot\Service\CopilotAnalytics;
+use Bitrix\Im\V2\Analytics\CopilotAnalytics;
 use Bitrix\Main;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Error;
@@ -48,6 +48,12 @@ class CopilotChatBot extends Base
 		MESSAGE_PARAMS_MORE = 'COPILOT_HAS_MORE'
 	;
 
+	public const ALL_COPILOT_MESSAGE_COMPONENTS = [
+		self::MESSAGE_COMPONENT_ID,
+		self::MESSAGE_COMPONENT_START,
+		self::MESSAGE_COMPONENT_COLLECTIVE,
+	];
+
 	public const
 		ERROR_SYSTEM = 'SYSTEM_ERROR',
 		ERROR_AGREEMENT = 'AGREEMENT_ERROR',
@@ -55,7 +61,9 @@ class CopilotChatBot extends Base
 		ERROR_NETWORK = 'NETWORK',
 		AI_ENGINE_ERROR_PROVIDER = 'AI_ENGINE_ERROR_PROVIDER',
 		LIMIT_IS_EXCEEDED_DAILY = 'LIMIT_IS_EXCEEDED_DAILY',
-		LIMIT_IS_EXCEEDED_MONTHLY = 'LIMIT_IS_EXCEEDED_MONTHLY'
+		LIMIT_IS_EXCEEDED_MONTHLY = 'LIMIT_IS_EXCEEDED_MONTHLY',
+		/** @see \Bitrix\AI\Limiter\Enums\ErrorLimit::BAAS_LIMIT */
+		LIMIT_IS_EXCEEDED_BAAS = 'LIMIT_IS_EXCEEDED_BAAS'
 	;
 
 	protected const BOT_PROPERTIES = [
@@ -320,17 +328,11 @@ class CopilotChatBot extends Base
 			$serviceRestrictionError = $serviceRestriction->getErrors()[0];
 			self::sendError($messageFields['DIALOG_ID'], $serviceRestrictionError->getMessage());
 
-			CopilotAnalytics::sendAnalyticsEvent(
+			(new CopilotAnalytics())->addGenerate(
 				$chat,
-				$engine,
-				$messageFields['PARAMS']['COPILOT_PROMPT_CODE'] ?? null);
-
-			CopilotAnalytics::sendAnalyticsEvent(
-				$chat,
+				$serviceRestriction,
 				$engine,
 				$messageFields['PARAMS']['COPILOT_PROMPT_CODE'] ?? null,
-				null,
-				CopilotAnalytics::getCopilotStatusByResult($serviceRestriction)
 			);
 
 			return false;
@@ -515,25 +517,31 @@ class CopilotChatBot extends Base
 	{
 		$result = new Result();
 
-		$contextParams = ['chat_id' => $params['DIALOG_ID']];
+		$contextParams = [
+			'chat_id' => $params['DIALOG_ID'],
+			'message_id' => $params['MESSAGE_ID'],
+		];
 
 		$context = new AI\Context(self::CONTEXT_MODULE, self::CONTEXT_ID);
-
-		if ($params['CHAT_TYPE'] === Im\V2\Chat::IM_TYPE_COPILOT)
-		{
-			$context->setParameters($contextParams);
-		}
+		$context->setParameters($contextParams);
 
 		$engineItem = (new AI\Tuning\Manager())->getItem(Im\V2\Integration\AI\Restriction::SETTING_COPILOT_CHAT_PROVIDER);
 		$engine = AI\Engine::getByCode(isset($engineItem) ? $engineItem->getValue() : '', $context, AI\Engine::CATEGORIES['text']);
 		if ($engine instanceof AI\Engine)
 		{
-			CopilotAnalytics::sendAnalyticsEvent($params['CHAT'], $engine, $params['PROMPT_CODE']);
-
 			$payload = self::fillPayload($params);
+
+			if (self::isMemoryContextEnabled())
+			{
+				$engine->useMemoryContextService();
+			}
+			else
+			{
+				$engine->setParameters(['collect_context' => true]);
+			}
+
 			$engine
 				->setPayload($payload)
-				->setParameters(['collect_context' => true])
 				->setHistoryState(false)
 				->onSuccess(function (AI\Result $queueResult, ?string $queueHash = null) use($engine, &$result) {
 					$isQueueable = $engine instanceof AI\Engine\IQueue;
@@ -566,8 +574,12 @@ class CopilotChatBot extends Base
 			}
 		}
 
-		$copilotStatus = CopilotAnalytics::getCopilotStatusByResult($result);
-		CopilotAnalytics::sendAnalyticsEvent($params['CHAT'], $engine, $params['PROMPT_CODE'], null, $copilotStatus);
+		(new CopilotAnalytics())->addGenerate(
+			$params['CHAT'],
+			$result,
+			$engine,
+			$params['PROMPT_CODE'],
+		);
 
 		return $result;
 	}
@@ -575,24 +587,9 @@ class CopilotChatBot extends Base
 	protected static function fillPayload(array $params): AI\Payload\Payload
 	{
 		$payload = new AI\Payload\Text($params['MESSAGE_TEXT']);
+		$roleManager = new Im\V2\Integration\AI\RoleManager();
 
-		return $payload->setRole(AI\Prompt\Role::get(self::ASSISTANT_ROLE_ID));
-	}
-
-	protected static function checkPrompts(string $code): bool
-	{
-		$prompts = \Bitrix\AI\Prompt\Manager::getCachedTree('chat');
-
-		$isMatch = false;
-		foreach ($prompts as $prompt)
-		{
-			if ($prompt['code'] === $code)
-			{
-				$isMatch = true;
-			}
-		}
-
-		return $isMatch;
+		return $payload->setRole(AI\Prompt\Role::get($roleManager->getMainRole($params['CHAT']->getChatId())));
 	}
 
 	/**
@@ -620,7 +617,7 @@ class CopilotChatBot extends Base
 				$payload = new AI\Payload\Prompt(self::SUMMARY_PROMPT_ID);
 				$payload
 					->setMarkers(['original_message' => $text])
-					->setRole(AI\Prompt\Role::get(self::ASSISTANT_ROLE_ID))
+					->setRole(AI\Prompt\Role::get(Im\V2\Integration\AI\RoleManager::getDefaultRoleCode()))
 				;
 
 				$engine
@@ -683,6 +680,14 @@ class CopilotChatBot extends Base
 		}
 
 		$chatId = Im\Dialog::getChatId($parameters['chat_id']);
+
+		if (is_int($chatId) && self::isMemoryContextEnabled())
+		{
+			return [
+				'memoryContext' => (new Im\V2\Integration\AI\HistoryBuilder($chatId)),
+			];
+		}
+
 		$chat = Im\V2\Chat::getInstance($chatId);
 
 		$result = self::fillContextMessages($chat, $result);
@@ -811,17 +816,42 @@ class CopilotChatBot extends Base
 		}
 
 		$dialogId = $parameters['chat_id'];
+		$messageId = $parameters['message_id'] ?? null;
 
 		if (!empty($result->getPrettifiedData()))
 		{
+			$chat = Im\V2\Chat::getInstance(Im\Dialog::getChatId($dialogId));
+
 			if ($contextId == self::CONTEXT_SUMMARY)
 			{
-				$chat = Im\V2\Chat::getInstance(Im\Dialog::getChatId($dialogId));
 				self::renameChat($chat, $result->getPrettifiedData());
+
+				return;
 			}
-			else
+
+			self::sendMessage($dialogId, $result->getPrettifiedData());
+
+			if (!isset($messageId))
 			{
-				self::sendMessage($dialogId, $result->getPrettifiedData());
+				return;
+			}
+			if (!self::isDialogHasDefaultTitle($chat))
+			{
+				return;
+			}
+
+			$message = new Im\V2\Message((int)$messageId);
+			$messageText = $message->getMessage();
+
+			if (is_string($messageText) && strlen($messageText) >= 30)
+			{
+				Main\Application::getInstance()->addBackgroundJob(
+					[self::class, 'getDialogMeaning'],
+					[
+						['DIALOG_ID' => $dialogId, 'MESSAGE' => $messageText, 'MESSAGE_ID' => (int)$messageId],
+						$chat,
+					]
+				);
 			}
 		}
 	}
@@ -891,6 +921,13 @@ class CopilotChatBot extends Base
 				case $error->getCode() == 'HASH_EXPIRED':
 					break;
 
+				case $error->getCode() === self::LIMIT_IS_EXCEEDED_BAAS;
+					$errorMessage = Loc::getMessage(
+						'IMBOT_COPILOT_ERROR_LIMIT_BAAS',
+						['#LINK#' => '/online/?FEATURE_PROMOTER=limit_boost_copilot',]
+					);
+					break;
+
 				case ($errorDesc = Loc::getMessage('IMBOT_COPILOT_ERROR_' . $error->getCode() . '_MSGVER_1')):
 					$errorMessage = $errorDesc;
 					break;
@@ -921,10 +958,28 @@ class CopilotChatBot extends Base
 			{
 				if (!$engine->isAvailableByAgreement())
 				{
-					$checkResult->addError(new Error(
-						Loc::getMessage('IMBOT_COPILOT_AGREEMENT_RESTRICTION') ?? 'AI service agreement must be accepted',
-						self::ERROR_AGREEMENT
-					));
+					$isB24 = Main\ModuleManager::isModuleInstalled('bitrix24');
+					if (method_exists(AI\Facade\Bitrix24::class, 'shouldUseB24'))
+					{
+						$isB24 = AI\Facade\Bitrix24::shouldUseB24();
+					}
+
+					if ($isB24)
+					{
+						$checkResult->addError(new Error(
+							Loc::getMessage('IMBOT_COPILOT_AGREEMENT_RESTRICTION') ?? 'AI service agreement must be accepted',
+							self::ERROR_AGREEMENT
+						));
+					}
+					else
+					{
+						$checkResult->addError(new Error(
+							Loc::getMessage('IMBOT_COPILOT_AGREEMENT_RESTRICTION_BOX', [
+								'#LINK#' => '/online/?AI_UX_TRIGGER=box_agreement',
+							]) ?? 'AI service agreement must be accepted',
+							self::ERROR_AGREEMENT
+						));
+					}
 				}
 				elseif (!$engine->isAvailableByTariff())
 				{
@@ -1094,7 +1149,10 @@ class CopilotChatBot extends Base
 		{
 			$message['PARAMS'] = [];
 		}
+
+		$chatId = Im\Dialog::getChatId($dialogId);
 		$message['PARAMS'][Im\V2\Message\Params::COMPONENT_ID] = self::MESSAGE_COMPONENT_ID;
+		$message['PARAMS'][Im\V2\Message\Params::COPILOT_ROLE] = (new Im\V2\Integration\AI\RoleManager())->getMainRole($chatId);
 
 		\CIMMessenger::add($message);
 	}
@@ -1127,10 +1185,12 @@ class CopilotChatBot extends Base
 			$message['PARAMS'] = [];
 		}
 
+		$chatId = Im\Dialog::getChatId($dialogId);
 		$message['PARAMS'][Im\V2\Message\Params::COMPONENT_ID] = self::MESSAGE_COMPONENT_ID;
 		$message['PARAMS'][Im\V2\Message\Params::COMPONENT_PARAMS] = [
 			self::MESSAGE_PARAMS_ERROR => true
 		];
+		$message['PARAMS'][Im\V2\Message\Params::COPILOT_ROLE] = (new Im\V2\Integration\AI\RoleManager())->getMainRole($chatId);
 
 		\CIMMessenger::add($message);
 	}
@@ -1195,6 +1255,11 @@ class CopilotChatBot extends Base
 		}
 
 		return $amount;
+	}
+
+	public static function isMemoryContextEnabled(): bool
+	{
+		return Option::get(self::MODULE_ID, 'enableCopilotMemoryContext', 'N') === 'Y';
 	}
 
 	//endregion

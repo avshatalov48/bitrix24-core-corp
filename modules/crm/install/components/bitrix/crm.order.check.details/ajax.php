@@ -59,7 +59,6 @@ if (!$currentUser || !$currentUser->IsAuthorized() || !check_bitrix_sessid() || 
 	return;
 }
 
-CUtil::JSPostUnescape();
 $APPLICATION->RestartBuffer();
 Header('Content-Type: application/x-javascript; charset='.LANG_CHARSET);
 

@@ -4,6 +4,7 @@ namespace Bitrix\Crm\Service;
 
 use Bitrix\Crm\EO_Status;
 use Bitrix\Crm\Item;
+use Bitrix\Crm\Model\Dynamic\EO_Type_Collection;
 use Bitrix\Crm\Model\Dynamic\Type;
 use Bitrix\Crm\Model\Dynamic\TypeTable;
 use Bitrix\Crm\Model\ItemCategoryTable;
@@ -44,6 +45,9 @@ class DynamicTypesMap
 	protected $stageEntityIds = [];
 	protected $stageFieldNames = [];
 	protected $isAutomationEnabled = [];
+	protected $isStagesEnabled = [];
+
+	private ?EO_Type_Collection $typesCollection = null;
 
 	public function __construct()
 	{
@@ -62,7 +66,7 @@ class DynamicTypesMap
 	{
 		$isLoadStages = $params['isLoadStages'] ?? true;
 		$isLoadCategories = $params['isLoadCategories'] ?? true;
-		if($isLoadStages)
+		if ($isLoadStages)
 		{
 			// we have to load categories to properly load stages
 			$isLoadCategories = true;
@@ -84,24 +88,28 @@ class DynamicTypesMap
 			return $this;
 		}
 
-		if(!$this->isTypesLoaded)
+		if (!$this->isTypesLoaded)
 		{
 			$this->isTypesLoaded = true;
 			foreach ($this->getTypesCollection() as $type)
 			{
-				if (!\CCrmOwnerType::isPossibleDynamicTypeId($type->getEntityTypeId()))
+				$entityTypeId = $type->getEntityTypeId();
+
+				if (!\CCrmOwnerType::isPossibleDynamicTypeId($entityTypeId))
 				{
 					continue;
 				}
+
 				$factory = Container::getInstance()->getDynamicFactoryByType($type);
 				$stagesFieldName = null;
 				if ($factory->isStagesSupported())
 				{
 					$stagesFieldName = $factory->getEntityFieldNameByMap(Item::FIELD_NAME_STAGE_ID);
 				}
-				$this->types[$type->getEntityTypeId()] = $type;
-				$this->stageFieldNames[$type->getEntityTypeId()] = $stagesFieldName;
-				$this->isAutomationEnabled[$type->getEntityTypeId()] = $factory->isAutomationEnabled();
+				$this->types[$entityTypeId] = $type;
+				$this->stageFieldNames[$entityTypeId] = $stagesFieldName;
+				$this->isAutomationEnabled[$entityTypeId] = $factory->isAutomationEnabled();
+				$this->isStagesEnabled[$entityTypeId] = $factory->isStagesEnabled();
 			}
 		}
 		$entityTypeIds = array_keys($this->types);
@@ -149,7 +157,7 @@ class DynamicTypesMap
 			return $this;
 		}
 
-		if(!$this->isStagesLoaded)
+		if (!$this->isStagesLoaded)
 		{
 			foreach (static::$stagesDataClass::getList([
 					'order' => [
@@ -157,7 +165,7 @@ class DynamicTypesMap
 					],
 					'filter' => [
 						'@ENTITY_ID' => array_keys($this->stageEntityIds),
-					]
+					],
 				])->fetchCollection() as $stage)
 			{
 				$this->stages[$stage->getEntityId()][$stage->getStatusId()] = $stage;
@@ -185,6 +193,14 @@ class DynamicTypesMap
 		}
 
 		return $this->types;
+	}
+
+	final public function getBunchOfTypesByIds(array $typeIds): array
+	{
+		return array_filter(
+			$this->getTypes(),
+			fn(Type $type) => in_array($type->getId(), $typeIds, true),
+		);
 	}
 
 	/**
@@ -278,6 +294,11 @@ class DynamicTypesMap
 		return $this->isAutomationEnabled[$entityTypeId] ?? false;
 	}
 
+	public function isStagesEnabled(int $entityTypeId): bool
+	{
+		return $this->isStagesEnabled[$entityTypeId] ?? false;
+	}
+
 	/**
 	 * Load types collection from cache of possible.
 	 * If cache is not valid - loads it from database and stores new value.
@@ -286,6 +307,11 @@ class DynamicTypesMap
 	 */
 	public function getTypesCollection(): Collection
 	{
+		if ($this->typesCollection)
+		{
+			return $this->typesCollection;
+		}
+
 		$typesData = null;
 
 		$cache = Application::getInstance()->getCache();
@@ -333,7 +359,9 @@ class DynamicTypesMap
 			}
 		}
 
-		return $this->typeDataClass::wakeUpCollection($typesData);
+		$this->typesCollection = $this->typeDataClass::wakeUpCollection($typesData);
+
+		return $this->typesCollection;
 	}
 
 	public function invalidateTypesCollectionCache(): void
@@ -341,5 +369,6 @@ class DynamicTypesMap
 		$cache = Application::getInstance()->getCache();
 		$cache->clean(static::DYNAMIC_COLLECTION_CACHE_ID, static::DYNAMIC_COLLECTION_CACHE_PATH);
 		$this->isTypesLoaded = false;
+		$this->typesCollection = null;
 	}
 }

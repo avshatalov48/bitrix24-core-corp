@@ -22,11 +22,13 @@ class CleaningAgent extends Crm\Agent\AgentBase
 		{
 			$entityTypeID = (int)$item['ENTITY_TYPE_ID'];
 			$entityID = (int)$item['ENTITY_ID'];
+			$forceUserId = isset($item['FORCE_USER_ID']) ? (int)$item['FORCE_USER_ID'] : null;
 
 			if (\CCrmOwnerType::isUseFactoryBasedApproach($entityTypeID))
 			{
 				$cleaner = Crm\Cleaning\CleaningManager::getCleaner($entityTypeID, $entityID);
 				$cleaner->getOptions()->setEnvironment(Crm\Cleaning\Cleaner\Options::ENVIRONMENT_AGENT);
+				$cleaner->getOptions()->setForceUserId($forceUserId);
 
 				try
 				{

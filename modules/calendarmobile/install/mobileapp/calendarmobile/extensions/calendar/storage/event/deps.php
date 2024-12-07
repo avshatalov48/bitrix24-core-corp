@@ -2,9 +2,7 @@
 return [
 	'extensions' => [
 		'utils/hash',
-		'calendar:ajax/event',
+		'calendar:ajax',
 		'calendar:storage/inmemory/event',
-	],
-	'bundle' => [
 	],
 ];

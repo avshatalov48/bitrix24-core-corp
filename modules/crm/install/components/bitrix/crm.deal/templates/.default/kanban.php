@@ -5,6 +5,7 @@ if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use Bitrix\Crm\Integration\Analytics\Dictionary;
 use Bitrix\Crm\Kanban\ViewMode;
 use Bitrix\Crm\UI\NavigationBarPanel;
 use Bitrix\Main\Localization\Loc;
@@ -69,9 +70,10 @@ if (in_array($request->get('type'), array('csv', 'excel')))
 
 $kanbanViewMode = $arResult['KANBAN_VIEW_MODE'] ?? null;
 
+$subSection = $kanbanViewMode === ViewMode::MODE_ACTIVITIES ? Dictionary::SUB_SECTION_ACTIVITIES : Dictionary::SUB_SECTION_KANBAN;
 $analytics = [
-	'c_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SECTION_DEAL,
-	'c_sub_section' => $kanbanViewMode === ViewMode::MODE_ACTIVITIES ? \Bitrix\Crm\Integration\Analytics\Dictionary::SUB_SECTION_ACTIVITIES : \Bitrix\Crm\Integration\Analytics\Dictionary::SUB_SECTION_KANBAN,
+	'c_section' => Dictionary::SECTION_DEAL,
+	'c_sub_section' => $subSection,
 ];
 
 // main menu
@@ -259,18 +261,21 @@ else
 
 	\Bitrix\Crm\Service\Container::getInstance()->getLocalization()->loadMessages();
 
-	$viewMode = ($arResult['KANBAN_VIEW_MODE'] ?? ViewMode::MODE_STAGES);
 	$APPLICATION->IncludeComponent(
 		'bitrix:crm.kanban',
 		'',
 		array(
 			'ENTITY_TYPE' => $entityType,
-			'VIEW_MODE' => $viewMode,
-			'USE_ITEM_PLANNER' => ($viewMode === ViewMode::MODE_ACTIVITIES ? 'Y' : 'N'),
+			'VIEW_MODE' => $kanbanViewMode ?? ViewMode::MODE_STAGES,
+			'USE_ITEM_PLANNER' => ($kanbanViewMode === ViewMode::MODE_ACTIVITIES ? 'Y' : 'N'),
 			'SHOW_ACTIVITY' => 'Y',
-			'EXTRA' => array(
-				'CATEGORY_ID' => $categoryID
-			),
+			'EXTRA' => [
+				'CATEGORY_ID' => $categoryID,
+				'ANALYTICS' => [
+					'c_section' => Dictionary::SECTION_DEAL,
+					'c_sub_section' => $subSection,
+				],
+			],
 			'PATH_TO_IMPORT' => $arResult['PATH_TO_DEAL_IMPORT'],
 			'PATH_TO_DEAL_KANBANCATEGORY' => $arResult['PATH_TO_DEAL_KANBANCATEGORY'],
 			'PATH_TO_MERGE' => $arResult['PATH_TO_DEAL_MERGE'],

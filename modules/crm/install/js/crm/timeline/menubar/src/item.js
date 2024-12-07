@@ -1,5 +1,7 @@
-import { Dom } from 'main.core';
+import { Dom, Type } from 'main.core';
 import { EventEmitter } from 'main.core.events';
+import { UI } from 'ui.notification';
+
 import Context from './context';
 
 export default class Item
@@ -51,9 +53,33 @@ export default class Item
 		return this.#context.getMenuBarContainer();
 	}
 
+	getExtras(): Object
+	{
+		return this.#context.getExtras();
+	}
+
 	getContainer(): ?HTMLElement
 	{
 		return this.#container;
+	}
+
+	setContainer(container: HTMLElement): void
+	{
+		if (
+			Type.isDomNode(container)
+			&& !this.#context.isReadonly()
+			&& this.supportsLayout()
+		)
+		{
+			if (this.#container)
+			{
+				Dom.remove(this.#container);
+			}
+
+			this.#container = container;
+			Dom.prepend(this.#container, this.getMenuBarContainer());
+			this.initializeLayout();
+		}
 	}
 
 	supportsLayout(): Boolean
@@ -86,6 +112,11 @@ export default class Item
 	getSetting(setting: String, defaultValue = null)
 	{
 		return this.#settings[setting] ?? defaultValue;
+	}
+
+	setSettings(settings: ?Object): void
+	{
+		this.#settings = settings;
 	}
 
 	getSettings(): ?Object
@@ -200,4 +231,9 @@ export default class Item
 
 	showTour(): void
 	{}
+
+	showNotify(content: string): void
+	{
+		UI.Notification.Center.notify({ content });
+	}
 }

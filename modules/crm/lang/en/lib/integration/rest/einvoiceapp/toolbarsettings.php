@@ -1,0 +1,4 @@
+<?php
+$MESS["CRM_INTEGRATION_REST_EINVOICE_CHOOSE_INVOICE_SERVICE"] = "Select invoicing service";
+$MESS["CRM_INTEGRATION_REST_EINVOICE_GO_TO_MARKET"] = "Select e-invoice app from Market";
+$MESS["CRM_INTEGRATION_REST_EINVOICE_TITLE"] = "E-invoice";

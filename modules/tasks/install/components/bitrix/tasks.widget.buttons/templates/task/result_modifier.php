@@ -1,5 +1,6 @@
 <?
 
+use Bitrix\Tasks\Integration\Bitrix24;
 use Bitrix\Tasks\Internals\Task\Status;
 use Bitrix\Tasks\UI;
 use Bitrix\Tasks\Util;
@@ -186,6 +187,8 @@ if (\Bitrix\Main\ModuleManager::isModuleInstalled('rest'))
 }
 //endregion
 
+$taskDelegatingExceeded = !Bitrix24::checkFeatureEnabled(Bitrix24\FeatureDictionary::TASK_DELEGATING);
+
 $arResult['JS_DATA'] = [
 	'can'                => $can,
 	'taskId'             => $taskId,
@@ -205,4 +208,8 @@ $arResult['JS_DATA'] = [
 	'groupId' => $arParams['TASK']['GROUP_ID'],
 	'parentId' => (int) $arParams['TASK']['PARENT_ID'],
 	'isScrumTask' => (bool) $arParams['IS_SCRUM_TASK'],
+	'showAhaStartFlowTask' => (bool) $arParams['SHOW_AHA_START_FLOW_TASK'],
+	'currentUserId' => Util\User::getId(),
+	'taskDelegatingExceeded' => $taskDelegatingExceeded,
+	'taskDelegatingFeatureId' => Bitrix24\FeatureDictionary::TASK_DELEGATING,
 ];

@@ -94,7 +94,7 @@ class CCrmBizProc
 
 		if ($bresult)
 		{
-			$bizprocIndex = (int) $_REQUEST['bizproc_index'];
+			$bizprocIndex = (int)($_REQUEST['bizproc_index'] ?? null);
 			if ($bizprocIndex > 0)
 			{
 				for ($i = 1; $i <= $bizprocIndex; $i++)

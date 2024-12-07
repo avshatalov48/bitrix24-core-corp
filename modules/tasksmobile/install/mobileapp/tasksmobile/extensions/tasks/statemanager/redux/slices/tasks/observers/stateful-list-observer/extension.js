@@ -11,10 +11,10 @@ jn.define('tasks/statemanager/redux/slices/tasks/observers/stateful-list-observe
 		return store.subscribe(() => {
 			const nextTasks = selectEntities(store.getState());
 
-			const { moved, removed, added } = getDiffForTasksObserver(prevTasks, nextTasks);
-			if (moved.length > 0 || removed.length > 0 || added.length > 0)
+			const { moved, removed, added, created } = getDiffForTasksObserver(prevTasks, nextTasks);
+			if (moved.length > 0 || removed.length > 0 || added.length > 0 || created.length > 0)
 			{
-				onChange({ moved, removed, added });
+				onChange({ moved, removed, added, created });
 			}
 
 			prevTasks = nextTasks;
@@ -33,17 +33,18 @@ jn.define('tasks/statemanager/redux/slices/tasks/observers/stateful-list-observe
 		const moved = [];
 		const removed = [];
 		const added = [];
+		const created = [];
 
 		if (prevTasks === nextTasks)
 		{
-			return { moved, removed, added };
+			return { moved, removed, added, created };
 		}
 
 		// Find added or restored tasks
 		Object.values(nextTasks).forEach((nextTask) => {
 			if (!nextTask.isRemoved)
 			{
-				const prevTask = prevTasks[Number(nextTask.id)];
+				const prevTask = prevTasks[nextTask.id];
 				if (!prevTask || prevTask.isRemoved)
 				{
 					added.push(nextTask);
@@ -55,7 +56,7 @@ jn.define('tasks/statemanager/redux/slices/tasks/observers/stateful-list-observe
 		Object.values(prevTasks).forEach((prevTask) => {
 			if (!prevTask.isRemoved)
 			{
-				const nextTask = nextTasks[Number(prevTask.id)];
+				const nextTask = nextTasks[prevTask.id];
 				if (!nextTask || nextTask.isRemoved)
 				{
 					// Add the removed task to the array, or a new task if it exists in nextTasks
@@ -66,7 +67,7 @@ jn.define('tasks/statemanager/redux/slices/tasks/observers/stateful-list-observe
 
 		const processedTaskIds = new Set([...removed, ...added].map(({ id }) => id));
 		Object.values(nextTasks).forEach((nextTask) => {
-			const prevTask = prevTasks[Number(nextTask.id)];
+			const prevTask = prevTasks[nextTask.id];
 			if (!prevTask || processedTaskIds.has(nextTask.id))
 			{
 				return;
@@ -81,7 +82,20 @@ jn.define('tasks/statemanager/redux/slices/tasks/observers/stateful-list-observe
 			}
 		});
 
-		return { moved, removed, added };
+		added.forEach((addedTask, index) => {
+			if (addedTask.guid)
+			{
+				const removedIndex = removed.findIndex((removedTask) => removedTask.id === addedTask.guid);
+				if (removedIndex !== -1)
+				{
+					created.push(addedTask);
+					added.splice(index, 1);
+					removed.splice(removedIndex, 1);
+				}
+			}
+		});
+
+		return { moved, removed, added, created };
 	};
 
 	module.exports = { observeListChange, getDiffForTasksObserver };

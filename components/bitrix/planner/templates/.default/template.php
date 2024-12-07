@@ -10,7 +10,7 @@ if (is_array($arResult['DATA']) && count($arResult['DATA']) > 0)
 {
 ?>
 <span class="site-selector-separator"></span><span class="tm-dashboard"><span id="bx_tm" class="tm-dashboard-inner"></span></span>
-<script type="text/javascript">
+<script>
 (function(){
 	var BXPLANNER = new BX.CPlanner(<?=CUtil::PhpToJsObject($arResult['DATA']);?>),
 		BXPLANNERWND = null,

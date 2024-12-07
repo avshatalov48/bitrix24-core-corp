@@ -3,6 +3,7 @@
 namespace Bitrix\Crm\Service;
 
 use Bitrix\Crm\Category\ItemCategoryUserField;
+use Bitrix\Crm\Entry\AddException;
 use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\DI\ServiceLocator;
@@ -49,7 +50,17 @@ final class EventHandler
 			$fieldName = $field['FIELD_NAME'];
 			if(isset($fieldName))
 			{
-				(new ItemCategoryUserField($entityTypeId))->add($categoryId, $fieldName);
+				try
+				{
+					(new ItemCategoryUserField($entityTypeId))->add($categoryId, $fieldName);
+				}
+				catch (AddException $e)
+				{
+					global $APPLICATION;
+					$APPLICATION->ThrowException($e->getMessage());
+
+					return false;
+				}
 			}
 		}
 

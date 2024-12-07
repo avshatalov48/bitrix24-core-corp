@@ -123,7 +123,7 @@ class TasksImportComponent extends TasksBaseComponent
 
 			$headers[] = $headerName;
 			$fields[$headerId] = $headerName;
-			$upperFields[$headerId] = ToUpper($headerName);
+			$upperFields[$headerId] = mb_strtoupper($headerName);
 			if (($header['mandatory'] ?? null) === 'Y')
 			{
 				$requiredFields[$headerId] = $headerName;
@@ -589,7 +589,7 @@ class TasksImportComponent extends TasksBaseComponent
 			$headerName = $header['name'];
 
 			$fields[$headerId] = $headerName;
-			$upperFields[$headerId] = ToUpper($headerName);
+			$upperFields[$headerId] = mb_strtoupper($headerName);
 			if (($header['mandatory'] ?? null) === 'Y')
 			{
 				$requiredFields[$headerId] = $headerName;
@@ -874,10 +874,7 @@ class TasksImportComponent extends TasksBaseComponent
 		Header("Content-Transfer-Encoding: binary");
 
 		// add UTF-8 BOM marker
-		if (defined('BX_UTF') && BX_UTF)
-		{
-			echo chr(239).chr(187).chr(191);
-		}
+		echo chr(239).chr(187).chr(191);
 
 		foreach ($this->arResult['HEADERS'] as $header)
 		{

@@ -515,7 +515,7 @@ $tabControl->BeginNextTab();
 		<td><?=GetMessage("LFP_SCHEME_EDIT_SITE")?>:</td>
 		<td>
 			<?=CLang::SelectBox("LID", $arRes["LID"])?>
-			<script type="text/javascript">
+			<script>
 				BX.ready(function()
 					{
 						var LIDInput = BX.findChild(BX('LID_ROW'), { 'tag': 'select'}, true);
@@ -573,7 +573,7 @@ $tabControl->BeginNextTab();
 				?><option value="<?=$entity_type?>"<?=($entity_type == $arRes["ENTITY_TYPE"] ? " selected" : "")?>><?=$entity_type_title?></option><?
 			endforeach;
 		?></select>
-		<script type="text/javascript">
+		<script>
 			var arSchemeEventTypes = [];
 			var arSchemeEvents = [];
 			var arEventsCnt = [];
@@ -709,7 +709,7 @@ $tabControl->BeginNextTab();
 		<td><?=GetMessage("LFP_SCHEME_EDIT_ENTITY_ID")?>:</td>
 		<td>
 		<input type="text" size="3" name="ENTITY_ID" id="LF_ENTITY_ID" value="<?=intval($arRes["ENTITY_ID"])?>">
-		<script type="text/javascript">
+		<script>
 
 			function __RecalcEntityDesc(e)
 			{
@@ -745,7 +745,7 @@ $tabControl->BeginNextTab();
 			);
 		</script>
 		<? if (intval($arRes["ENTITY_ID"]) > 0 && !in_array($arRes["ENTITY_TYPE"], array(SONET_SUBSCRIBE_ENTITY_GROUP, SONET_SUBSCRIBE_ENTITY_USER, SONET_SUBSCRIBE_ENTITY_NEWS, SONET_SUBSCRIBE_ENTITY_PROVIDER))):?>
-			<script type="text/javascript">
+			<script>
 				BX.ready(function()
 					{
 						if (BX('LF_ENTITY_ID')) __RecalcEntityDesc();
@@ -851,7 +851,7 @@ $tabControl->BeginNextTab();
 						<option value="US" <?=(is_array($arRes["RIGHTS_USER_ID"] ?? null) && !in_array($arRes["RIGHTS_USER_ID"][0] ?? null, array("UA", "UN")) ? "selected" : "")?>><?=GetMessage("LFP_SCHEME_EDIT_RIGHTS_P_USERS_SELECTED")?></option>
 					</select>
 
-					<script type="text/javascript">
+					<script>
 						if ('__LFPSchemeChangeUserRightsType' != typeof window.noFunc)
 						{
 							function __LFPSchemeChangeUserRightsType(el)
@@ -884,7 +884,7 @@ $tabControl->BeginNextTab();
 										}
 										echo FindUserID("RIGHTS_USER_ID_".$key, ($user_id_tmp > 0 ? $user_id_tmp : ""), $sUser, "editform", "10", "", "...", "xdimport-finduser-input", "");
 										?>
-										<script type="text/javascript">
+										<script>
 											BX.ready(function() {
 												setTimeout(function(){
 													if (BX('RIGHTS_USER_ID_<?=$key?>')) BX.adjust(BX('RIGHTS_USER_ID_<?=$key?>'), { props: {'name': 'RIGHTS_USER_ID[]'} });
@@ -902,7 +902,7 @@ $tabControl->BeginNextTab();
 								<td>
 									<span style="display: inline-block; width: 20px; height: 20px;"></span><?
 									echo FindUserID("RIGHTS_USER_ID_0", "", "", "editform", "10", "", "...", "xdimport-finduser-input", "");?>
-									<script type="text/javascript">
+									<script>
 										BX.ready(function() {
 											setTimeout(function(){
 												if (BX('RIGHTS_USER_ID_0')) BX.adjust(BX('RIGHTS_USER_ID_0'), { props: {'name': 'RIGHTS_USER_ID[]'} });
@@ -920,7 +920,7 @@ $tabControl->BeginNextTab();
 						</tbody>
 						</table>
 					</span>
-					<script type="text/javascript">
+					<script>
 						BX.CRightsUserRow = function(arParams)
 						{
 							this.row = arParams.row;
@@ -1089,7 +1089,7 @@ $tabControl->BeginNextTab();
 			<tr>
 				<td><?=GetMessage("LFP_SCHEME_EDIT_XML_PREDEFINED")?></td>
 				<td>
-					<script type="text/javascript">
+					<script>
 						if ('___LFPChangePredefined' != typeof window.noFunc)
 						{
 							function ___LFPChangePredefined(el)
@@ -1193,7 +1193,7 @@ $tabControl->BeginNextTab();
 					<tr>
 						<td><b>hash</b></td>
 						<td>
-							<script type="text/javascript">
+							<script>
 							if ('__LFPSchemeClearHash' != typeof window.noFunc)
 							{
 								function __LFPSchemeClearHash(el)

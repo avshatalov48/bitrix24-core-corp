@@ -14,6 +14,9 @@ export default {
 	activityId(state): number {
 		return state.activityId;
 	},
+	activityDirection(state): string {
+		return state.activityDirection;
+	},
 	getEntityInfo(state): ?EntityInfo {
 		return state.entityInfo;
 	},

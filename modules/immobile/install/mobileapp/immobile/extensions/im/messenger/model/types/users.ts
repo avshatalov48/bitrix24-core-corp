@@ -1,4 +1,4 @@
-import {PayloadData} from "./base";
+import {MessengerModel, PayloadData} from "./base";
 
 export type UsersModelState = {
 	id: number,
@@ -82,3 +82,9 @@ export interface UsersDeleteData extends PayloadData
 {
 	id: number;
 }
+
+export type UsersModelCollection = {
+	collection: Record<number, UsersModelState>
+}
+
+export type UsersMessengerModel = MessengerModel<UsersModelCollection>;

@@ -1,3 +1,4 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 (function (exports,main_core) {
 	'use strict';
@@ -8,11 +9,8 @@ this.BX = this.BX || {};
 	    this.type = null;
 	    this.method = null;
 	    this.url = null;
-
 	    this.callback = function () {};
-
 	    this.failure_callback = function () {};
-
 	    this.progress_callback = null;
 	    this.loadstart_callback = null;
 	    this.loadend_callback = null;
@@ -24,12 +22,10 @@ this.BX = this.BX || {};
 	    this.aborted = null;
 	    this.formData = null;
 	  }
-
 	  babelHelpers.createClass(Ajax, [{
 	    key: "instanceWrap",
 	    value: function instanceWrap(params) {
 	      var _this = this;
-
 	      this.init(params);
 	      this.xhr = main_core.ajax({
 	        timeout: 30,
@@ -43,17 +39,14 @@ this.BX = this.BX || {};
 	        processData: this.processData,
 	        onsuccess: function onsuccess(response) {
 	          var failed = false;
-
 	          if (_this.xhr.status === 0) {
 	            _this.failure_callback();
-
 	            return;
 	          } else if (_this.type == 'json') {
 	            failed = main_core.Type.isPlainObject(response) && !main_core.Type.isNull(response) && main_core.Type.isStringFilled(response.status) && response.status === 'failed';
 	          } else if (_this.type == 'html') {
-	            failed = response == '{"status":"failed"}';
+	            failed = response === '{"status":"failed"}';
 	          }
-
 	          if (failed) {
 	            if (!_this.aborted) {
 	              _this.repeatRequest();
@@ -82,7 +75,6 @@ this.BX = this.BX || {};
 	      if (!main_core.Type.isPlainObject(params)) {
 	        params = {};
 	      }
-
 	      this.type = params.type !== 'json' ? 'html' : 'json';
 	      this.method = params.method !== 'POST' ? 'GET' : 'POST';
 	      this.url = params.url;
@@ -92,23 +84,18 @@ this.BX = this.BX || {};
 	      this.start = params.start;
 	      this.preparePost = params.preparePost;
 	      this.callback = params.callback;
-
 	      if (main_core.Type.isFunction(params.callback_failure)) {
 	        this.failure_callback = params.callback_failure;
 	      }
-
 	      if (main_core.Type.isFunction(params.callback_progress)) {
 	        this.progress_callback = params.callback_progress;
 	      }
-
 	      if (main_core.Type.isFunction(params.callback_loadstart)) {
 	        this.loadstart_callback = params.callback_loadstart;
 	      }
-
 	      if (main_core.Type.isFunction(params.callback_loadend)) {
 	        this.loadend_callback = params.callback_loadend;
 	      }
-
 	      if (typeof params.formData !== 'undefined') {
 	        this.formData = params.formData;
 	      }
@@ -117,21 +104,17 @@ this.BX = this.BX || {};
 	    key: "instanceRunComponentAction",
 	    value: function instanceRunComponentAction(component, action, config, callbacks) {
 	      var _this2 = this;
-
 	      if (!main_core.Type.isPlainObject(callbacks)) {
 	        callbacks = {};
 	      }
-
 	      return new Promise(function (resolve, reject) {
 	        config.onrequeststart = function (requestXhr) {
 	          _this2.xhr = requestXhr;
 	        };
-
 	        main_core.ajax.runComponentAction(component, action, config).then(function (response) {
 	          if (main_core.Type.isFunction(callbacks.success)) {
 	            callbacks.success(response);
 	          }
-
 	          resolve(response);
 	        }, function (response) {
 	          if (_this2.xhr.status == 401) {
@@ -140,25 +123,21 @@ this.BX = this.BX || {};
 	            if (main_core.Type.isFunction(callbacks.failure)) {
 	              callbacks.failure(response);
 	            }
-
 	            reject(response);
 	          }
 	        });
-
 	        _this2.bindHandlers();
 	      });
 	    }
 	    /**
 	     * @private
 	     */
-
 	  }, {
 	    key: "repeatComponentAction",
 	    value: function repeatComponentAction(component, action, config, callbacks) {
 	      if (!main_core.Type.isPlainObject(callbacks)) {
 	        callbacks = {};
 	      }
-
 	      return new Promise(function (resolve, reject) {
 	        app.BasicAuth({
 	          success: function success(auth_data) {
@@ -166,13 +145,11 @@ this.BX = this.BX || {};
 	              if (main_core.Type.isFunction(callbacks.success)) {
 	                callbacks.success(response);
 	              }
-
 	              resolve(response);
 	            }, function (response) {
 	              if (main_core.Type.isFunction(callbacks.failure)) {
 	                callbacks.failure(response);
 	              }
-
 	              reject(response);
 	            });
 	          },
@@ -180,7 +157,6 @@ this.BX = this.BX || {};
 	            if (main_core.Type.isFunction(callbacks.failure)) {
 	              callbacks.failure();
 	            }
-
 	            reject();
 	          }
 	        });
@@ -190,21 +166,17 @@ this.BX = this.BX || {};
 	    key: "instanceRunAction",
 	    value: function instanceRunAction(action, config, callbacks) {
 	      var _this3 = this;
-
 	      if (!main_core.Type.isPlainObject(callbacks)) {
 	        callbacks = {};
 	      }
-
 	      return new Promise(function (resolve, reject) {
 	        config.onrequeststart = function (requestXhr) {
 	          _this3.xhr = requestXhr;
 	        };
-
 	        main_core.ajax.runAction(action, config).then(function (response) {
 	          if (main_core.Type.isFunction(callbacks.success)) {
 	            callbacks.success(response);
 	          }
-
 	          resolve(response);
 	        }, function (response) {
 	          if (_this3.xhr.status == 401) {
@@ -213,11 +185,9 @@ this.BX = this.BX || {};
 	            if (main_core.Type.isFunction(callbacks.failure)) {
 	              callbacks.failure(response);
 	            }
-
 	            reject(response);
 	          }
 	        });
-
 	        _this3.bindHandlers();
 	      });
 	    }
@@ -227,7 +197,6 @@ this.BX = this.BX || {};
 	      if (!main_core.Type.isPlainObject(callbacks)) {
 	        callbacks = {};
 	      }
-
 	      return new Promise(function (resolve, reject) {
 	        app.BasicAuth({
 	          success: function success(auth_data) {
@@ -235,13 +204,11 @@ this.BX = this.BX || {};
 	              if (main_core.Type.isFunction(callbacks.success)) {
 	                callbacks.success(response);
 	              }
-
 	              resolve(response);
 	            }, function (response) {
 	              if (main_core.Type.isFunction(callbacks.failure)) {
 	                callbacks.failure(response);
 	              }
-
 	              reject(response);
 	            });
 	          },
@@ -249,7 +216,6 @@ this.BX = this.BX || {};
 	            if (main_core.Type.isFunction(callbacks.failure)) {
 	              callbacks.failure();
 	            }
-
 	            reject();
 	          }
 	        });
@@ -259,15 +225,12 @@ this.BX = this.BX || {};
 	    key: "repeatRequest",
 	    value: function repeatRequest() {
 	      var _this4 = this;
-
 	      app.BasicAuth({
 	        success: function success(auth_data) {
 	          _this4.data.sessid = auth_data.sessid_md5;
-
 	          if (_this4.formData !== null && _this4.formData.get('sessid') !== null) {
 	            _this4.formData.set('sessid', auth_data.sessid_md5);
 	          }
-
 	          _this4.xhr = main_core.ajax({
 	            timeout: 30,
 	            preparePost: _this4.preparePost,
@@ -278,15 +241,13 @@ this.BX = this.BX || {};
 	            data: _this4.data,
 	            onsuccess: function onsuccess(response_ii) {
 	              var failed = false;
-
 	              if (_this4.xhr.status === 0) {
 	                failed = true;
 	              } else if (_this4.type === 'json') {
 	                failed = main_core.Type.isPlainObject(response_ii) && main_core.Type.isStringFilled(response_ii.status) && response_ii.status === 'failed';
 	              } else if (_this4.type === 'html') {
-	                failed = response_ii == '{"status":"failed"}';
+	                failed = response_ii === '{"status":"failed"}';
 	              }
-
 	              if (failed) {
 	                _this4.failure_callback();
 	              } else {
@@ -297,7 +258,6 @@ this.BX = this.BX || {};
 	              _this4.failure_callback();
 	            }
 	          });
-
 	          if (!_this4.start && _this4.formData !== null) {
 	            _this4.xhr.send(_this4.formData);
 	          }
@@ -310,30 +270,24 @@ this.BX = this.BX || {};
 	    /**
 	     * @private
 	     */
-
 	  }, {
 	    key: "bindHandlers",
 	    value: function bindHandlers() {
 	      if (main_core.Type.isFunction(this.progress_callback)) {
 	        main_core.Event.bind(this.xhr, 'progress', this.progress_callback);
 	      }
-
 	      if (main_core.Type.isFunction(this.load_callback)) {
 	        main_core.Event.bind(this.xhr, 'load', this.load_callback);
 	      }
-
 	      if (main_core.Type.isFunction(this.loadstart_callback)) {
 	        main_core.Event.bind(this.xhr, 'loadstart', this.loadstart_callback);
 	      }
-
 	      if (main_core.Type.isFunction(this.loadend_callback)) {
 	        main_core.Event.bind(this.xhr, 'loadend', this.loadend_callback);
 	      }
-
 	      if (main_core.Type.isFunction(this.error_callback)) {
 	        main_core.Event.bind(this.xhr, 'error', this.error_callback);
 	      }
-
 	      if (main_core.Type.isFunction(this.abort_callback)) {
 	        main_core.Event.bind(this.xhr, 'abort', this.abort_callback);
 	      }

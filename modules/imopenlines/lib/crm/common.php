@@ -720,7 +720,13 @@ class Common
 
 	public static function getChatsByCrmEntity($crmEntityType, $crmEntityId): array
 	{
+		$result = [];
+
 		$crmEntityIdByTypeCode = self::getCrmEntityIdByTypeCode($crmEntityType);
+		if (!$crmEntityIdByTypeCode)
+		{
+			return $result;
+		}
 
 		$query = "
 			SELECT session.CHAT_ID, act.RESULT_SOURCE_ID
@@ -741,7 +747,6 @@ class Common
 
 		$connectors = Connector::getListActiveConnectorReal();
 
-		$result = [];
 		foreach ($actions as $action)
 		{
 			if (!isset($connectors[$action['RESULT_SOURCE_ID']]))

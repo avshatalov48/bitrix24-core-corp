@@ -73,6 +73,34 @@ abstract class BaseBuilder
 		return $result;
 	}
 
+	public function getMessageCallback(array $replace = []): callable
+	{
+		$replaceList = [...$this->replaceList, ...$replace];
+		$code = $this->calculateExistsCode();
+
+		return static function (?string $languageId = null) use ($code, $replaceList) {
+			Loc::loadLanguageFile(static::getFilePath(), $languageId);
+
+			return Loc::getMessage($code, $replaceList, $languageId);
+		};
+	}
+
+	protected function calculateExistsCode(): string
+	{
+		$code = $this->buildCode();
+		$msgverCode = "{$code}_MSGVER_1";
+		$defaultCode = $this->buildDefaultCode();
+
+		return match (true)
+		{
+			Loc::getMessage($code) !== null => $code,
+			Loc::getMessage($msgverCode) !== null => $msgverCode,
+			default => $defaultCode,
+		};
+	}
+
+	abstract public static function getFilePath(): string;
+
 	final protected function fetchEntityTypeName(): string
 	{
 		return CCrmOwnerType::isPossibleDynamicTypeId($this->entityTypeId)

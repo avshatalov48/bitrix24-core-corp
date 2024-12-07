@@ -2,40 +2,36 @@
 
 namespace Bitrix\TasksMobile\Controller;
 
-use Bitrix\Main\Engine\ActionFilter\CloseSession;
-use Bitrix\Main\Engine\Controller;
+use Bitrix\Mobile\Provider\UserRepository;
 use Bitrix\Tasks\Ui\Avatar;
 
-class User extends Controller
+class User extends Base
 {
-	public function configureActions(): array
+	protected function getQueryActionNames(): array
 	{
 		return [
-			'getUsersData' => [
-				'+prefilters' => [
-					new CloseSession(),
-				],
-			],
+			'getCurrentUserData',
+			'getCurrentUserDataLegacy',
 		];
 	}
 
-	public function getUsersDataAction(array $userIds): array
+	public function getCurrentUserDataAction(): array
 	{
-		if (empty($userIds))
-		{
-			return [];
-		}
+		return UserRepository::getByIds([$this->getCurrentUser()->getId()]);
+	}
 
-		$users = [];
+	public function getCurrentUserDataLegacyAction(): array
+	{
+		$currentUserId = (int)$this->getCurrentUser()->getId();
+
 		$userResult = \CUser::GetList(
 			'id',
 			'asc',
-			['ID' => implode('|', $userIds)],
+			['ID' => $currentUserId],
 			['FIELDS' => ['ID', 'NAME', 'SECOND_NAME', 'LAST_NAME', 'LOGIN', 'PERSONAL_PHOTO', 'WORK_POSITION']]
 		);
-		while ($user = $userResult->Fetch())
+		if ($user = $userResult->Fetch())
 		{
-			$userId = (int)$user['ID'];
 			$userName = \CUser::FormatName(
 				\CSite::GetNameFormat(),
 				[
@@ -45,17 +41,17 @@ class User extends Controller
 					'SECOND_NAME' => $user['SECOND_NAME'],
 				],
 				true,
-				false
+				false,
 			);
 
-			$users[$userId] = [
-				'id' => $userId,
+			return [
+				'id' => $currentUserId,
 				'name' => $userName,
 				'icon' => Avatar::getPerson($user['PERSONAL_PHOTO']),
 				'workPosition' => $user['WORK_POSITION'],
 			];
 		}
 
-		return $users;
+		return [];
 	}
 }

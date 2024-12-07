@@ -128,6 +128,8 @@ class MultiFieldBase extends BaseType\Base
 	{
 		global $APPLICATION;
 
+		\CCrmDocument::prepareEntityMultiFieldsValue($value, mb_strtoupper($fieldType->getType()));
+
 		$selectorValue = null;
 		$typeValue = array();
 		$value = (array) $value;

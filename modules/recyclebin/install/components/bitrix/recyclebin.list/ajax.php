@@ -21,6 +21,7 @@ if (isset($_POST['SITE_ID']) && (string)$_POST['SITE_ID'] != '')
 
 use Bitrix\Main\Error;
 use Bitrix\Main\Loader;
+use Bitrix\Main\Result;
 use Bitrix\Recyclebin\Internals\Models\RecyclebinTable;
 use Bitrix\Recyclebin\Recyclebin;
 
@@ -68,13 +69,18 @@ class RecyclebinListAjaxController extends \Bitrix\Main\Engine\Controller
 				{
 					foreach ($ids as $id)
 					{
-						$result[] = Recyclebin::$action((int)$id);
+						$resultItem = Recyclebin::$action((int)$id);
+						$result[] = $resultItem;
+
+						$this->checkResult($resultItem);
 					}
 				}
 			}
 			else
 			{
 				$result = Recyclebin::$action((int)$recyclebinId);
+
+				$this->checkResult($result);
 			}
 
 			return $result;
@@ -84,6 +90,17 @@ class RecyclebinListAjaxController extends \Bitrix\Main\Engine\Controller
 			$this->errorCollection[] = new Error($e->getMessage(), $e->getCode());
 
 			return null;
+		}
+	}
+
+	private function checkResult(mixed $result): void
+	{
+		if ($result instanceof Result && !$result->isSuccess())
+		{
+			foreach ($result->getErrors() as $error)
+			{
+				$this->errorCollection[] = $error;
+			}
 		}
 	}
 

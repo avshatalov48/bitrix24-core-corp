@@ -9,6 +9,7 @@ declare type Config = {
 	currentSender: string,
 	openLineItems: OpenLinesList,
 	region?: string,
+	services: {[key: string]: string},
 }
 
 declare type Channel = {
@@ -53,7 +54,7 @@ declare type Entity = {
 
 declare type ChatService = {
 	id: string,
-	available: boolean,
+	connectorId: string,
 	connectLabel: string,
 	inviteLabel: string,
 	soonLabel?: string,
@@ -62,6 +63,7 @@ declare type ChatService = {
 	commonClass: string,
 	iconClass: string,
 	iconColor: string,
+	checkServiceId?: string,
 }
 
 declare type ChatServiceRegion = {

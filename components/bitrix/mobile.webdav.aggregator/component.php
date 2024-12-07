@@ -181,7 +181,7 @@ if ($mode == 'root')
 
 if (intval($mode) > 0)
 {
-    $obOther = new CWebDavIblock($mode, _uencode($localPath), $arParams);
+    $obOther = new CWebDavIblock($mode, $localPath, $arParams);
     if (!empty($obOther->arError))
     {
         ShowError($obOther->arError['text']);

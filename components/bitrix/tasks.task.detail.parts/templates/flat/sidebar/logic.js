@@ -31,6 +31,9 @@ BX.namespace("Tasks.Component");
 		this.stageId = parseInt(this.parameters.stageId);
 		this.stages = this.parameters.stages || {};
 		this.taskLimitExceeded = this.parameters.taskLimitExceeded;
+		this.taskRateExceeded = this.parameters.taskRateExceeded;
+		this.taskObserversParticipantsEnabled = this.parameters.taskObserversParticipantsEnabled;
+		this.taskRateFeatureId = this.parameters.taskRateFeatureId;
 		this.calendarSettings = (this.parameters.calendarSettings ? this.parameters.calendarSettings : {});
 		this.isScrumTask = this.parameters.isScrumTask === 'Y';
 
@@ -59,7 +62,18 @@ BX.namespace("Tasks.Component");
 				new BX.Intranet.ControlButton({
 					container: BX('task-detail-sidebar-item-videocall'),
 					entityType: 'task',
-					entityId: this.taskId
+					entityId: this.taskId,
+					analytics: {
+						startVideoCall: {
+							tool: 'im',
+							category: 'tasks',
+							event: 'click_call_button',
+							type: 'group',
+							c_section: 'task_card',
+							c_sub_section: 'card',
+							p5: `taskId_${this.taskId}`,
+						},
+					},
 				});
 			}
 		}.bind(this));
@@ -71,7 +85,11 @@ BX.namespace("Tasks.Component");
 		{
 			BX.Tasks.Util.Dispatcher.find('auditor-selector').then(function(ctrl){
 				this.auditorCtrl = ctrl;
-				ctrl.bindControl('header-button', 'click', this.onToggleImAuditor.bind(this));
+				ctrl.bindControl(
+					'header-button',
+					'click',
+					this.onToggleImAuditor.bind(this, ctrl.control('header-button')),
+				);
 			}.bind(this));
 		}
 	};
@@ -495,7 +513,7 @@ BX.namespace("Tasks.Component");
 		return ( y < 145 ) ? "#fff" : "#333";
 	};
 
-	BX.Tasks.Component.TaskViewSidebar.prototype.onToggleImAuditor = function()
+	BX.Tasks.Component.TaskViewSidebar.prototype.onToggleImAuditor = function(node)
 	{
 		if (this.isAmAuditor) // i am auditor now, it will be leaving
 		{
@@ -503,15 +521,18 @@ BX.namespace("Tasks.Component");
 				this.syncAuditor();
 			}.bind(this));
 		}
-		else if (this.taskLimitExceeded)
+		else if (!this.taskObserversParticipantsEnabled)
 		{
-			BX.UI.InfoHelper.show('limit_tasks_observers_participants', {
-				isLimit: true,
-				limitAnalyticsLabels: {
-					module: 'tasks',
-					source: 'sidebar',
-					subject: 'auditor'
-				}
+			BX.Runtime.loadExtension('tasks.limit').then((exports) => {
+				const { Limit } = exports;
+				Limit.showInstance({
+					featureId: 'tasks_observers_participants',
+					limitAnalyticsLabels: {
+						module: 'tasks',
+						source: 'sidebar',
+					},
+					bindElement: node,
+				});
 			});
 		}
 		else
@@ -617,7 +638,12 @@ BX.namespace("Tasks.Component");
 		var statusName = BX("task-detail-status-name");
 		var statusDate = BX("task-detail-status-date");
 
-		statusName.innerHTML = BX.message("TASKS_STATUS_" + status);
+		statusName.innerHTML =
+			BX.Loc.hasMessage("TASKS_STATUS_" + status + "_MSGVER_1")
+				? BX.message("TASKS_STATUS_" + status + "_MSGVER_1")
+				: BX.message("TASKS_STATUS_" + status)
+		;
+
 		statusDate.innerHTML = (status != 4 && status != 5 ?
 			BX.message("TASKS_SIDEBAR_START_DATE") + " " : "") +
 			BX.util.htmlspecialchars(time);
@@ -745,15 +771,19 @@ BX.namespace("Tasks.Component");
 
 	BX.Tasks.Component.TaskViewSidebar.prototype.onMarkClick = function()
 	{
-		if (this.taskLimitExceeded)
+		if (this.taskRateExceeded)
 		{
-			BX.UI.InfoHelper.show('limit_tasks_rate', {
-				isLimit: true,
-				limitAnalyticsLabels: {
-					module: 'tasks',
-					source: 'taskSidebar'
-				}
+			BX.Runtime.loadExtension('tasks.limit').then((exports) => {
+				const { Limit } = exports;
+				Limit.showInstance({
+					featureId: this.taskRateFeatureId,
+					limitAnalyticsLabels: {
+						module: 'tasks',
+						source: 'taskSidebar',
+					},
+				});
 			});
+
 			return;
 		}
 

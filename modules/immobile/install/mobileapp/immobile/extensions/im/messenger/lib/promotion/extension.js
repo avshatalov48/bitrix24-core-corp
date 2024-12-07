@@ -3,13 +3,12 @@
  */
 jn.define('im/messenger/lib/promotion', (require, exports, module) => {
 	const { Loc } = require('loc');
-	const { restManager } = require('im/messenger/lib/rest-manager');
-	const { RestMethod, Promo, PromoType, EventType } = require('im/messenger/const');
+	const { Promo, PromoType, EventType } = require('im/messenger/const');
 	const { Logger } = require('im/messenger/lib/logger');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { PromotionRest } = require('im/messenger/provider/rest');
-	const { Feature } = require('im/messenger/lib/feature');
 	const { ReleaseView } = require('im/messenger/lib/promotion/release-view');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { Type } = require('type');
 
 	/**
@@ -35,29 +34,28 @@ jn.define('im/messenger/lib/promotion', (require, exports, module) => {
 
 			this.activePromoList = [];
 			this.currentActivePromo = '';
-
-			restManager.once(RestMethod.imPromotionGet, { DEVICE_TYPE: 'mobile' }, this.handlePromotionGet.bind(this));
+			this.messagerInitService = serviceLocator.get('messenger-init-service');
+			this.bindMethods();
+			this.subscribeInitMessengerEvent();
 
 			this.onCloseWidget = this.onCloseWidget.bind(this);
 		}
 
-		handlePromotionGet(response)
+		bindMethods()
 		{
-			const error = response.error();
-			if (error)
+			this.handlePromotionGet = this.handlePromotionGet.bind(this);
+		}
+
+		subscribeInitMessengerEvent()
+		{
+			this.messagerInitService.onInit(this.handlePromotionGet);
+		}
+
+		handlePromotionGet(data)
+		{
+			if (data?.promotion)
 			{
-				Logger.error('Promotion.handlePromotionGet', error);
-
-				return;
-			}
-
-			Logger.info('Promotion.handlePromotionGet', response.data());
-
-			this.activePromoList = response.data();
-
-			if (Feature.isChatV2Enabled && response.data().includes(Promo.immobileRelease2023))
-			{
-				this.show(Promo.immobileRelease2023);
+				this.activePromoList = data.promotion;
 			}
 		}
 
@@ -183,6 +181,6 @@ jn.define('im/messenger/lib/promotion', (require, exports, module) => {
 	}
 
 	module.exports = {
-		Promotion: new Promotion(),
+		Promotion,
 	};
 });

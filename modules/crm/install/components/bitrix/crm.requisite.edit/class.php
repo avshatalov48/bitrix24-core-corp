@@ -1098,6 +1098,12 @@ class CCrmRequisiteEditComponent extends \CBitrixComponent
 				if(is_array($this->bankDetailFieldsList) && !empty($this->bankDetailFieldsList))
 				{
 					$bankDetail = new \Bitrix\Crm\EntityBankDetail();
+					$bankDetailOptions = [];
+					$presetId = $this->requisite->getPresetIdFromFields($this->fields);
+					if ($presetId > 0)
+					{
+						$bankDetailOptions['FIELD_CHECK_OPTIONS'] = ['PRESET_ID' => $presetId];
+					}
 					foreach($this->bankDetailFieldsList as $pseudoId => &$bankDetailFields)
 					{
 						$bankDetailResult = null;
@@ -1112,13 +1118,17 @@ class CCrmRequisiteEditComponent extends \CBitrixComponent
 							}
 							elseif($pseudoId > 0)
 							{
-								$bankDetailResult = $bankDetail->update($pseudoId, $bankDetailFields);
+								$bankDetailResult = $bankDetail->update(
+									$pseudoId,
+									$bankDetailFields,
+									$bankDetailOptions
+								);
 							}
 							else
 							{
 								$bankDetailFields['ENTITY_TYPE_ID'] = \CCrmOwnerType::Requisite;
 								$bankDetailFields['ENTITY_ID'] = $this->elementId;
-								$bankDetailResult = $bankDetail->add($bankDetailFields);
+								$bankDetailResult = $bankDetail->add($bankDetailFields, $bankDetailOptions);
 								if($bankDetailResult && $bankDetailResult->isSuccess())
 									$bankDetailFields['ID'] = $bankDetailResult->getId();
 							}
@@ -1127,11 +1137,18 @@ class CCrmRequisiteEditComponent extends \CBitrixComponent
 						{
 							if($pseudoId > 0)
 							{
-								$bankDetailResult = $bankDetail->checkBeforeUpdate($pseudoId, $bankDetailFields);
+								$bankDetailResult = $bankDetail->checkBeforeUpdate(
+									$pseudoId,
+									$bankDetailFields,
+									$bankDetailOptions
+								);
 							}
 							else
 							{
-								$bankDetailResult = $bankDetail->checkBeforeAdd($bankDetailFields);
+								$bankDetailResult = $bankDetail->checkBeforeAdd(
+									$bankDetailFields,
+									$bankDetailOptions
+								);
 							}
 						}
 

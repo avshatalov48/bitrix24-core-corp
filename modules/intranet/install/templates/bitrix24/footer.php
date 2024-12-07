@@ -4,7 +4,8 @@
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Loader;
 \Bitrix\Main\UI\Extension::load([
-	'ui.icon-set.main'
+	'ui.icon-set.main',
+	'ui.banner-dispatcher',
 ]);
 
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
@@ -47,12 +48,6 @@ if ($isCompositeMode)
 									<?
 									$b24Languages = [];
 									include($_SERVER["DOCUMENT_ROOT"].SITE_TEMPLATE_PATH."/languages.php");
-									if (!\Bitrix\Main\Application::getInstance()->isUtfMode())
-									{
-										array_walk($b24Languages, function(&$lang) {
-											$lang["NAME"] = mb_convert_encoding($lang["NAME"], "HTML-ENTITIES", "UTF-8");
-										});
-									}
 									if (!\Bitrix\Main\Loader::includeModule('bitrix24') && false)
 									{
 										$cultures = Bitrix\Main\Localization\LanguageTable::getList([
@@ -211,6 +206,19 @@ $APPLICATION->IncludeComponent(
 		"BITRIX24_CS_RELOAD" : "<?=GetMessageJS("BITRIX24_CS_RELOAD")?>",
 		"BITRIX24_SEARCHTITLE_ALL" : "<?=GetMessageJS("BITRIX24_SEARCHTITLE_ALL")?>"
 	});
+	<?php
+		if ($isBitrix24Cloud
+			&& defined('FORBID_ADVERTISE')
+			&& FORBID_ADVERTISE === true
+		):
+	?>
+		BX.UI.BannerDispatcher.only([
+			BX.UI.AutoLaunch.LaunchPriority.HIGH,
+			BX.UI.AutoLaunch.LaunchPriority.CRITICAL,
+		]);
+	<?php
+		endif;
+	?>
 </script>
-<script type="text/javascript">BX.onCustomEvent(window, "onScriptsLoaded");</script>
+<script>BX.onCustomEvent(window, "onScriptsLoaded");</script>
 </body></html>

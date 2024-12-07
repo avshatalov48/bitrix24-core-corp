@@ -1,13 +1,13 @@
 <?php
-global $MESS;
-$PathInstall = str_replace("\\", "/", __FILE__);
-$PathInstall = mb_substr($PathInstall, 0, mb_strlen($PathInstall) - mb_strlen("/index.php"));
 
-IncludeModuleLangFile($PathInstall."/install.php");
+if(class_exists("transformer"))
+{
+	return;
+}
 
-if(class_exists("transformer")) return;
+IncludeModuleLangFile(__FILE__);
 
-Class transformer extends CModule
+class transformer extends CModule
 {
 	var $MODULE_ID = "transformer";
 	var $MODULE_VERSION;
@@ -101,18 +101,18 @@ Class transformer extends CModule
 
 	function DoUninstall()
 	{
-		global $DOCUMENT_ROOT, $APPLICATION, $step;
+		global $APPLICATION, $step;
+
 		$step = intval($step);
 		if($step<2)
 		{
-			$APPLICATION->IncludeAdminFile(GetMessage("TRANSFORMER_UNINSTALL_TITLE"), $DOCUMENT_ROOT."/bitrix/modules/transformer/install/unstep1.php");
+			$APPLICATION->IncludeAdminFile(GetMessage("TRANSFORMER_UNINSTALL_TITLE"), $_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/transformer/install/unstep1.php");
 		}
 		elseif($step==2)
 		{
 			$this->UnInstallDB(array("savedata" => $_REQUEST["savedata"]));
-			$this->UnInstallFiles();
 
-			$APPLICATION->IncludeAdminFile(GetMessage("TRANSFORMER_UNINSTALL_TITLE"), $DOCUMENT_ROOT."/bitrix/modules/transformer/install/unstep2.php");
+			$APPLICATION->IncludeAdminFile(GetMessage("TRANSFORMER_UNINSTALL_TITLE"), $_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/transformer/install/unstep2.php");
 		}
 
 		return true;
@@ -121,6 +121,7 @@ Class transformer extends CModule
 	function UnInstallDB($params = array())
 	{
 		global $DB, $APPLICATION;
+
 		$connection = \Bitrix\Main\Application::getConnection();
 		$errors = false;
 
@@ -137,20 +138,4 @@ Class transformer extends CModule
 		UnRegisterModule("transformer");
 		return true;
 	}
-
-	function UnInstallFiles()
-	{
-		return true;
-	}
-
-	function InstallEvents()
-	{
-		return true;
-	}
-
-	function UnInstallEvents()
-	{
-		return true;
-	}
-
 }

@@ -1,0 +1,4 @@
+<?php
+
+$MESS['IMMOBILE_ELEMENT_DIALOG_MESSAGE_COPILOT_BAAS_LIMIT_TITLE'] = 'Бусты для CoPilot';
+$MESS['IMMOBILE_ELEMENT_DIALOG_MESSAGE_COPILOT_BAAS_LIMIT_HINT'] = 'Купить бусты можно только в веб-версии';

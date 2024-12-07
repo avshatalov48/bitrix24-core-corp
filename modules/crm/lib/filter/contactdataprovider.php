@@ -484,30 +484,6 @@ class ContactDataProvider extends EntityDataProvider implements FactoryOptionabl
 		return null;
 	}
 
-	/**
-	 * Prepare field parameter for specified field.
-	 * @param array $filter Filter params.
-	 * @param string $fieldID Field ID.
-	 * @return void
-	 */
-	public function prepareListFilterParam(array &$filter, $fieldID)
-	{
-		if($fieldID === 'NAME'
-			|| $fieldID === 'LAST_NAME'
-			|| $fieldID ===  'SECOND_NAME'
-			|| $fieldID ===  'POST'
-			|| $fieldID ===  'COMMENTS'
-		)
-		{
-			$value = isset($filter[$fieldID]) ? trim($filter[$fieldID]) : '';
-			if($value !== '')
-			{
-				$filter["?{$fieldID}"] = $value;
-			}
-			unset($filter[$fieldID]);
-		}
-	}
-
 	protected function applySettingsDependantFilter(array &$filterFields): void
 	{
 		// filter by category should be always set

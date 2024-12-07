@@ -310,7 +310,8 @@ class ImportHelper
 				'PRESET_ID' => $presetId,
 				'NAME' => $presetName,
 				'SORT' => 500,
-				'ACTIVE' => 'Y'
+				'ACTIVE' => 'Y',
+				'ADDRESS_ONLY' => 'Y',
 			);
 			foreach (array_keys($fieldsInPreset) as $fieldName)
 			{
@@ -514,7 +515,7 @@ class ImportHelper
 										'id' => $rqPrefix."{$fieldName}_{$addrFieldName}|$countryId",
 										'name' => GetMessage('CRM_REQUISITE_FILTER_PREFIX').
 											' ('.$countryList[$countryId].')'.': '.$fieldTitle.' - '.
-											ToLower($addressLabels[$addrFieldName]),
+											mb_strtolower($addressLabels[$addrFieldName]),
 										'group' => 'address',
 										'field' => $addrFieldName,
 										'fieldType' => isset($addrFieldTypeMap[$addrFieldName]) ?
@@ -1432,8 +1433,8 @@ class ImportHelper
 												'CRM_RQ_IMP_HLPR_ERR_'.$entityTypeName.'_GENITIVE'
 											),
 											'#ID#' => $entityId,
-										).': '.$errMsg
-									),
+										)
+									) . ': ' . $errMsg,
 									self::ERR_UPDATE_REQUISITE
 								)
 							);
@@ -1665,8 +1666,8 @@ class ImportHelper
 																'CRM_RQ_IMP_HLPR_ERR_'.$entityTypeName.'_GENITIVE'
 															),
 															'#ID#' => $entityId,
-														).': '.$errMsg
-													),
+														)
+													) . ': ' . $errMsg,
 													self::ERR_UPDATE_BANK_DETAIL
 												)
 											);
@@ -1722,7 +1723,7 @@ class ImportHelper
 													),
 													'#ID#' => $entityId,
 												)
-											).': '.$errMsg,
+											) . ': ' . $errMsg,
 											self::ERR_CREATE_BANK_DETAIL
 										)
 									);
@@ -1780,7 +1781,7 @@ class ImportHelper
 									),
 									'#ID#' => $entityId,
 								)
-							).': '.$errMsg,
+							) . ': ' . $errMsg,
 							self::ERR_CREATE_REQUISITE
 						)
 					);
@@ -1855,7 +1856,7 @@ class ImportHelper
 											),
 											'#ID#' => $entityId,
 										)
-									).': '.$errMsg,
+									) . ': ' . $errMsg,
 									self::ERR_CREATE_BANK_DETAIL
 								)
 							);
@@ -2390,8 +2391,8 @@ class ImportHelper
 				}
 				else if ($fieldType === 'boolean')
 				{
-					$value = ToUpper($value);
-					$yesStr = ToUpper(Loc::getMessage('MAIN_YES'));
+					$value = mb_strtoupper($value);
+					$yesStr = mb_strtoupper(Loc::getMessage('MAIN_YES'));
 					$value = ($value === 'Y' || $value === $yesStr || $value == 1) ? 'Y' : 'N';
 					if ($isUF)
 						$value = $value === 'Y' ? 1 : 0;
@@ -2568,8 +2569,8 @@ class ImportHelper
 				}
 				else if ($fieldType === 'boolean')
 				{
-					$value = ToUpper($value);
-					$yesStr = ToUpper(Loc::getMessage('MAIN_YES'));
+					$value = mb_strtoupper($value);
+					$yesStr = mb_strtoupper(Loc::getMessage('MAIN_YES'));
 					$value = ($value === 'Y' || $value === $yesStr || $value == 1) ? 'Y' : 'N';
 				}
 

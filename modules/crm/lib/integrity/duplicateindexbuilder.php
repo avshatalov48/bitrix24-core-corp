@@ -52,6 +52,10 @@ class DuplicateIndexBuilder
 		}
 		return $this->dataSource;
 	}
+	public function dropDataSourceCache()
+	{
+		$this->getDataSource()->dropDedupeCache();
+	}
 	public function isExists()
 	{
 		$params = array(
@@ -131,8 +135,14 @@ class DuplicateIndexBuilder
 			return;
 		}
 
-		$quantity = $criterion->getActualCount($this->getEntityTypeID(), $entityID, $this->getUserID(), $this->isPermissionCheckEnabled(), 100);
-		if($quantity === 0)
+		if (
+			$criterion->isEmpty(
+				$this->getEntityTypeID(),
+				$entityID,
+				$this->getUserID(),
+				$this->isPermissionCheckEnabled()
+			)
+		)
 		{
 			$this->deleteDuplicateIndexByFilter(
 				array(
@@ -170,8 +180,14 @@ class DuplicateIndexBuilder
 			$actualRootEntityID = $rootEntityID;
 		}
 
-		$quantity = $criterion->getActualCount($entityTypeID, $actualRootEntityID, $userID, $enablePermissionCheck, 100);
-		if($quantity === 0)
+		if (
+			$criterion->isEmpty(
+				$entityTypeID,
+				$actualRootEntityID,
+				$userID,
+				$enablePermissionCheck
+			)
+		)
 		{
 			$this->deleteDuplicateIndexByFilter(
 				array(

@@ -3,11 +3,9 @@
 namespace Bitrix\Crm\Security\QueryBuilder\Result;
 
 use Bitrix\Crm\Observer\Entity\ObserverTable;
-use Bitrix\Crm\Security\Controller\QueryBuilder\Conditions\Condition;
-use Bitrix\Crm\Security\Controller\QueryBuilder\Conditions\ObserversCondition;
+use Bitrix\Crm\Security\QueryBuilder\Result\Traits\UnionUtils;
 use Bitrix\Main\ORM\Entity;
 use Bitrix\Crm\Security\Controller\QueryBuilder\Conditions\RestrictedConditionsList;
-use Bitrix\Main\ORM\Query\Filter\ConditionTree;
 use Bitrix\Main\ORM\Query\Query;
 
 /**
@@ -17,6 +15,8 @@ use Bitrix\Main\ORM\Query\Query;
  */
 final class JoinWithUnionResult implements ResultOption
 {
+	use UnionUtils;
+
 	public function __construct(
 		private string $identityColumnName = 'ID',
 	)
@@ -51,50 +51,6 @@ final class JoinWithUnionResult implements ResultOption
 
 		$identity = $this->getIdentityColumnName();
 		return "INNER JOIN ($union) PERM ON PERM.ENTITY_ID = $prefix.$identity";
-	}
-
-	/**
-	 * @param Condition[] $conditions
-	 * @return array
-	 */
-	private function separateConditions(array $conditions): array
-	{
-		$observerCondition = null;
-		$otherConditions = [];
-		foreach ($conditions as $condition)
-		{
-			if ($condition instanceof ObserversCondition)
-			{
-				$observerCondition = $condition;
-			}
-			else
-			{
-				$otherConditions[] = $condition;
-			}
-		}
-
-		return [$otherConditions, $observerCondition];
-	}
-
-	/**
-	 * @param array $conditions
-	 * @return ConditionTree
-	 * @throws \Bitrix\Main\ArgumentException
-	 */
-	private function makeOrmConditions(array $conditions): ConditionTree
-	{
-		$ct = new ConditionTree();
-		$ct->logic(ConditionTree::LOGIC_OR);
-
-		foreach ($conditions as $condition)
-		{
-			$ct->addCondition($condition->toOrmCondition(false));
-		}
-
-		$joinCt = new ConditionTree();
-		$joinCt->logic(ConditionTree::LOGIC_AND);
-		$joinCt->where($ct);
-		return $joinCt;
 	}
 
 	public function makeCompatible(string $querySql, string $prefix = ''): string

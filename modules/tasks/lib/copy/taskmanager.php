@@ -17,7 +17,6 @@ use Bitrix\Tasks\Copy\Implement\Robots;
 use Bitrix\Tasks\Copy\Implement\Stage as StageImplementer;
 use Bitrix\Tasks\Copy\Implement\TaskCheckList as CheckListImplementer;
 use Bitrix\Tasks\Copy\Implement\TaskParams;
-use Bitrix\Tasks\Copy\Implement;
 use Bitrix\Tasks\Copy\Implement\Template as TemplateImplementer;
 use Bitrix\Tasks\Copy\Stage as StageCopier;
 use Bitrix\Tasks\Copy\Task as TaskCopier;
@@ -170,6 +169,7 @@ class TaskManager
 
 		if ($this->markerComment && Loader::includeModule("forum"))
 		{
+			$taskImplementer->setTopicCopier($this->getTopicCopier());
 			$taskImplementer->setCommentCopier($this->getCommentCopier());
 		}
 
@@ -196,6 +196,11 @@ class TaskManager
 		return new CheckListCopier($checklistImplementer, $this->executiveUserId);
 	}
 
+	protected function getTopicCopier()
+	{
+		return new EntityCopier($this->getTopicImplementer());
+	}
+
 	protected function getCommentCopier()
 	{
 		return new EntityCopier($this->getCommentImplementer());
@@ -209,6 +214,17 @@ class TaskManager
 	protected function getParamsCopier(): EntityCopier
 	{
 		return new EntityCopier(new TaskParams());
+	}
+
+	protected function getTopicImplementer()
+	{
+		global $USER_FIELD_MANAGER;
+
+		$topicImplementer = new TopicImplementer();
+		$topicImplementer->setUserFieldManager($USER_FIELD_MANAGER);
+		$topicImplementer->setExecutiveUserId($this->executiveUserId);
+
+		return $topicImplementer;
 	}
 
 	protected function getCommentImplementer()

@@ -56,14 +56,16 @@ final class MessengerCallConnector extends StubConnector
 			return $this->canRead;
 		}
 
+		$this->canRead = false;
+
 		$call = $this->getCall();
-		if (!$call)
+		if ($call)
 		{
-			$this->canRead = false;
-		}
-		else
-		{
-			$this->canRead = $call->getAssociatedEntity()->checkAccess($userId);
+			$associatedEntity = $call->getAssociatedEntity();
+			if ($associatedEntity)
+			{
+				$this->canRead = $associatedEntity->checkAccess((int)$userId);
+			}
 		}
 
 		return $this->canRead;

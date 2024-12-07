@@ -5,6 +5,8 @@
  */
 jn.define('im/messenger/db/model-writer/vuex/message', (require, exports, module) => {
 	const { Type } = require('type');
+	const { DialogType } = require('im/messenger/const');
+	const { DialogHelper } = require('im/messenger/lib/helper');
 
 	const { Logger } = require('im/messenger/lib/logger');
 	const { Writer } = require('im/messenger/db/model-writer/vuex/writer');
@@ -14,16 +16,16 @@ jn.define('im/messenger/db/model-writer/vuex/message', (require, exports, module
 		initRouters()
 		{
 			super.initRouters();
-			this.deleteByChatIdRouter = this.deleteByChatIdRouter.bind(this);
+			this.storeRouter = this.storeRouter.bind(this);
 		}
 
 		subscribeEvents()
 		{
 			this.storeManager
 				.on('messagesModel/setChatCollection', this.addRouter)
+				.on('messagesModel/store', this.storeRouter)
 				.on('messagesModel/update', this.updateRouter)
 				.on('messagesModel/updateWithId', this.updateWithIdRouter)
-				.on('messagesModel/deleteByChatId', this.deleteByChatIdRouter)
 				.on('messagesModel/delete', this.deleteRouter)
 			;
 		}
@@ -32,17 +34,17 @@ jn.define('im/messenger/db/model-writer/vuex/message', (require, exports, module
 		{
 			this.storeManager
 				.off('messagesModel/setChatCollection', this.addRouter)
+				.off('messagesModel/store', this.storeRouter)
 				.off('messagesModel/update', this.updateRouter)
 				.off('messagesModel/updateWithId', this.updateWithIdRouter)
-				.off('messagesModel/deleteByChatId', this.deleteByChatIdRouter)
 				.off('messagesModel/delete', this.deleteRouter)
 			;
 		}
 
 		/**
-		 * @param {MutationPayload<MessagesStoreData, MessagesStoreActions>} mutation.payload
+		 * @param {MutationPayload<MessagesSetChatCollectionData, MessagesSetChatCollectionActions>} mutation.payload
 		 */
-		addRouter(mutation)
+		async addRouter(mutation)
 		{
 			if (this.checkIsValidMutation(mutation) === false)
 			{
@@ -61,33 +63,37 @@ jn.define('im/messenger/db/model-writer/vuex/message', (require, exports, module
 				return;
 			}
 
-			if (!Type.isArrayFilled(data.messageList))
+			await this.#saveMessageData(data);
+		}
+
+		/**
+		 * @param {MutationPayload<MessagesStoreData, MessagesStoreActions>} mutation.payload
+		 */
+		async storeRouter(mutation)
+		{
+			if (this.checkIsValidMutation(mutation) === false)
 			{
 				return;
 			}
 
-			const messageList = [];
-			data.messageList.forEach((message) => {
-				const modelMessage = this.store.getters['messagesModel/getById'](message.id);
-				if (modelMessage && modelMessage.id && Type.isNumber(modelMessage.id))
-				{
-					messageList.push(modelMessage);
-				}
-			});
+			const actionName = mutation?.payload?.actionName;
+			const data = mutation?.payload?.data || {};
+			const saveActions = [
+				'storeToLocalDatabase',
+			];
 
-			if (!Type.isArrayFilled(messageList))
+			if (!saveActions.includes(actionName))
 			{
 				return;
 			}
 
-			this.repository.message.saveFromModel(messageList)
-				.catch((error) => Logger.error('MessageWriter.addRouter.saveFromModel.catch:', error));
+			await this.#saveMessageData(data);
 		}
 
 		/**
 		 * @param {MutationPayload<MessagesUpdateData, MessagesUpdateActions>} mutation.payload
 		 */
-		updateRouter(mutation)
+		async updateRouter(mutation)
 		{
 			if (this.checkIsValidMutation(mutation) === false)
 			{
@@ -121,14 +127,22 @@ jn.define('im/messenger/db/model-writer/vuex/message', (require, exports, module
 				return;
 			}
 
-			this.repository.message.saveFromModel([message])
-				.catch((error) => Logger.error('MessageWriter.updateRouter.saveFromModel.catch:', error));
+			const chatId = message.chatId;
+			const dialog = this.store.getters['dialoguesModel/getByChatId'](chatId);
+			if (DialogType.comment === dialog?.type)
+			{
+				return;
+			}
+
+			await this.repository.message.saveFromModel([message])
+				.catch((error) => Logger.error('MessageWriter.updateRouter.saveFromModel.catch:', error))
+			;
 		}
 
 		/**
 		 * @param {MutationPayload<MessagesUpdateWithIdData, MessagesUpdateWithIdActions>} mutation.payload
 		 */
-		updateWithIdRouter(mutation)
+		async updateWithIdRouter(mutation)
 		{
 			if (this.checkIsValidMutation(mutation) === false)
 			{
@@ -159,14 +173,21 @@ jn.define('im/messenger/db/model-writer/vuex/message', (require, exports, module
 				return;
 			}
 
-			this.repository.message.saveFromModel([message])
+			const chatId = message.chatId;
+			const dialogHelper = DialogHelper.createByChatId(chatId);
+			if (!dialogHelper?.isLocalStorageSupported)
+			{
+				return;
+			}
+
+			await this.repository.message.saveFromModel([message])
 				.catch((error) => Logger.error('MessageWriter.updateWithIdRouter.saveFromModel.catch:', error));
 		}
 
 		/**
 		 * @param {MutationPayload<MessagesDeleteData, MessagesDeleteActions>} mutation.payload
 		 */
-		deleteRouter(mutation)
+		async deleteRouter(mutation)
 		{
 			if (this.checkIsValidMutation(mutation) === false)
 			{
@@ -187,35 +208,42 @@ jn.define('im/messenger/db/model-writer/vuex/message', (require, exports, module
 			const messageId = data.id;
 			if (messageId)
 			{
-				this.repository.message.deleteByIdList([data.id]);
+				await this.repository.message.deleteByIdList([data.id]);
 			}
 		}
 
-		/**
-		 * @param {MutationPayload<MessagesDeleteByChatIdData, MessagesDeleteByChatIdActions>} mutation.payload
-		 */
-		deleteByChatIdRouter(mutation)
+		async #saveMessageData(data)
 		{
-			if (this.checkIsValidMutation(mutation) === false)
+			if (!Type.isArrayFilled(data.messageList))
 			{
 				return;
 			}
 
-			const actionName = mutation?.payload?.actionName;
-			const data = mutation?.payload?.data || {};
-			const deleteActions = [
-				'deleteByChatId',
-			];
-			if (!deleteActions.includes(actionName))
+			const messageList = [];
+			data.messageList.forEach((message) => {
+				const modelMessage = this.store.getters['messagesModel/getById'](message.id);
+
+				const chatId = modelMessage.chatId;
+
+				const dialogHelper = DialogHelper.createByChatId(chatId);
+				if (!dialogHelper?.isLocalStorageSupported)
+				{
+					return;
+				}
+
+				if (modelMessage && modelMessage.id && Type.isNumber(modelMessage.id))
+				{
+					messageList.push(modelMessage);
+				}
+			});
+
+			if (!Type.isArrayFilled(messageList))
 			{
 				return;
 			}
 
-			const chatId = data.chatId;
-			if (chatId)
-			{
-				this.repository.message.deleteByChatId(chatId);
-			}
+			await this.repository.message.saveFromModel(messageList)
+				.catch((error) => Logger.error('MessageWriter.addRouter.saveFromModel.catch:', error));
 		}
 	}
 

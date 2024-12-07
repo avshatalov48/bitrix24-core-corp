@@ -15,7 +15,7 @@ if (!(CCrmPerms::IsAuthorized() && CCrmDeal::CheckReadPermission(0, $CCrmPerms))
 
 $arResult = array();
 $entityId = $_GET['USER_ID'];
-$_GET['USER_ID'] = preg_replace('/^(CONTACT|COMPANY|LEAD|DEAL)_/i'.BX_UTF_PCRE_MODIFIER, '', $_GET['USER_ID']);
+$_GET['USER_ID'] = preg_replace('/^(CONTACT|COMPANY|LEAD|DEAL)_/iu', '', $_GET['USER_ID']);
 $iDealId = (int) $_GET['USER_ID'];
 $iVersion = (!empty($_GET["version"]) ? intval($_GET["version"]) : 1);
 

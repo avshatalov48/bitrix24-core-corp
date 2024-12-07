@@ -810,7 +810,7 @@ class CMobileHelper
 
 						if ($taskId > 0)
 						{
-							return self::getTaskLink($taskId);
+							return self::getTaskLink($taskId, true);
 						}
 					}
 				}
@@ -898,7 +898,7 @@ class CMobileHelper
 			$params = explode("|", $tag);
 			if (!empty(($taskId = $params[2]) && Loader::includeModule('tasks')))
 			{
-				return self::getTaskLink($taskId);
+				return self::getTaskLink($taskId, ($params[1] === 'COMMENT'));
 			}
 
 			// after task detail page supports reloading only by TASK_ID, use the following:
@@ -982,30 +982,32 @@ class CMobileHelper
 
 	/**
 	 * @param $taskId
+	 * @param boolean $shouldOpenComments
 	 * @return string
 	 */
-	public static function getTaskLink($taskId): string
+	public static function getTaskLink($taskId, bool $shouldOpenComments = false): string
 	{
-		$taskId = (int)$taskId;
+		if (!Loader::includeModule('tasks'))
+		{
+			return '';
+		}
 
 		try
 		{
-			if (!Loader::includeModule('tasks'))
-			{
-				return '';
-			}
+			$taskId = (int)$taskId;
 			$taskData = \CTaskItem::getInstanceFromPool($taskId, $GLOBALS["USER"]->GetID())->getData(false);
 
 			$creatorIcon = Bitrix\Tasks\UI\Avatar::getPerson($taskData['CREATED_BY_PHOTO']);
 			$responsibleIcon = Bitrix\Tasks\UI\Avatar::getPerson($taskData['RESPONSIBLE_PHOTO']);
 			$title = addslashes(htmlspecialcharsbx($taskData['TITLE']));
 
-			$taskInfoParameter = "{title: '{$title}', creatorIcon: '{$creatorIcon}', responsibleIcon: '{$responsibleIcon}'}";
+			$taskInfoParameter = "{title: '$title', creatorIcon: '$creatorIcon', responsibleIcon: '$responsibleIcon'}";
+			$shouldOpenComments = ($shouldOpenComments ? 'true' : 'false');
 
 			return "BXMobileApp.Events.postToComponent('taskbackground::task::open',"
 				. '['
-					. "{id: {$taskId}, taskId: {$taskId}, title: 'TASK', taskInfo: {$taskInfoParameter}},"
-					. "{taskId: {$taskId}, getTaskInfo: true}"
+					. "{id: $taskId, taskId: $taskId, title: 'TASK', taskInfo: $taskInfoParameter},"
+					. "{taskId: $taskId, getTaskInfo: true, shouldOpenComments: $shouldOpenComments}"
 				. ']'
 			. ');';
 		}

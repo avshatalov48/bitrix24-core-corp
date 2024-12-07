@@ -38,9 +38,9 @@ Loc::loadMessages(__FILE__);
  *
  * <<< ORMENTITYANNOTATION
  * @method static EO_Config_Query query()
- * @method static EO_Config_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_Config_Result getByPrimary($primary, array $parameters = [])
  * @method static EO_Config_Result getById($id)
- * @method static EO_Config_Result getList(array $parameters = array())
+ * @method static EO_Config_Result getList(array $parameters = [])
  * @method static EO_Config_Entity getEntity()
  * @method static \Bitrix\Voximplant\EO_Config createObject($setDefaultValues = true)
  * @method static \Bitrix\Voximplant\EO_Config_Collection createCollection()

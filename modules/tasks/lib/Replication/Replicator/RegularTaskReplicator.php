@@ -29,7 +29,7 @@ class RegularTaskReplicator extends AbstractReplicator
 
 	public static function isEnabled(): bool
 	{
-		return Option::get('tasks', static::ENABLED_KEY, 'N', '-') === 'Y';
+		return Option::get('tasks', static::ENABLED_KEY, 'N') === 'Y';
 	}
 
 	protected function getProducer(): ProducerInterface
@@ -93,7 +93,7 @@ class RegularTaskReplicator extends AbstractReplicator
 
 	public function isDebug(): bool
 	{
-		return Option::get('tasks', static::DEBUG_KEY, 'Y', '-') === 'Y';
+		return Option::get('tasks', static::DEBUG_KEY, 'Y') === 'Y';
 	}
 
 	protected function sendRegularTaskReplicatedNotifications(): Result

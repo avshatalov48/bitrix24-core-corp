@@ -8,7 +8,6 @@ use Bitrix\DocumentGenerator\DataProvider\HashDataProvider;
 use Bitrix\DocumentGenerator\DataProviderManager;
 use Bitrix\Main\IO\Path;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Main\Text\Encoding;
 
 class Tax extends HashDataProvider
 {
@@ -48,10 +47,6 @@ class Tax extends HashDataProvider
 					else
 					{
 						$name = $this->data['NAME'];
-					}
-					if(ToUpper(SITE_CHARSET) !== 'UTF-8')
-					{
-						$name = Encoding::convertEncoding($name, SITE_CHARSET, 'UTF-8');
 					}
 
 					if($this->data['TAX_INCLUDED'] == 'Y')

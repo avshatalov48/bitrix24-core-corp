@@ -63,7 +63,6 @@ if (!CCrmSecurityHelper::IsAuthorized() || !check_bitrix_sessid() || $_SERVER['R
 	return;
 }
 
-CUtil::JSPostUnescape();
 $APPLICATION->RestartBuffer();
 Header('Content-Type: application/x-javascript; charset='.LANG_CHARSET);
 
@@ -262,9 +261,7 @@ elseif($action === 'SAVE')
 	{
 		try
 		{
-			$clientData = Main\Web\Json::decode(
-				Main\Text\Encoding::convertEncoding($_POST['CLIENT_DATA'], LANG_CHARSET, 'UTF-8')
-			);
+			$clientData = Main\Web\Json::decode($_POST['CLIENT_DATA']);
 		}
 		catch (Main\SystemException $e)
 		{

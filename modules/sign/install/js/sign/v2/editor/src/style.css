@@ -1,0 +1,208 @@
+.sign-editor {
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+}
+
+.sign-editor:not(.--editable) .sign-editor__content {
+	opacity: .4;
+	pointer-events: none;
+}
+
+.sign-editor.--editable .sign-editor__header_edit-btn {
+	display: none;
+}
+
+.sign-editor__header {
+	background: var(--ui-color-palette-white-base);
+	box-sizing: border-box;
+	display: flex;
+	flex-wrap: wrap;
+	padding: 15px 15px 10px 15px;
+	width: 100%;
+}
+
+.sign-editor__header_title {
+	color: var(--ui-color-palette-black-base);
+	font: 24px/26px var(--ui-font-family-helvetica);
+	flex-grow: 1;
+	margin: 0 0 10px 0;
+}
+
+.sign-editor__header_right {
+	white-space: nowrap;
+}
+
+.sign-editor__header_help {
+	background: var(--color-7) url(/bitrix/js/ui/icons/b24/images/ui-question.svg);
+	border-radius: 50%;
+	cursor: pointer;
+	display: inline-block;
+	height: 26px;
+	width: 26px;
+	margin-right: 20px;
+	vertical-align: middle;
+}
+
+.sign-editor__content {
+	overflow-y: auto;
+	overflow-x: hidden;
+	position: relative;
+}
+
+.sign-editor__document-container {
+	display: inline-block;
+	width: calc(100% - 300px);
+	box-sizing: border-box;
+	padding: 40px;
+}
+
+.sign-editor__document {
+	position: relative;
+	margin: 0 auto;
+	max-width: 750px;
+	z-index: 1;
+}
+
+.sign-editor__document_page {
+	margin-bottom: 20px;
+	background: var(--ui-color-palette-white-base);
+	border-radius: 2px;
+	box-shadow: 0 4px 16px rgba(0, 0, 0, .12);
+}
+
+.sign-editor__document_page:last-of-type {
+	margin-bottom: 0;
+}
+
+.sign-editor__document_page img {
+	width: 100%;
+	display: block;
+}
+
+.sign-editor__sections {
+	display: inline-block;
+	background: var(--color-5-1);
+	box-sizing: border-box;
+	width: 300px;
+	padding: 0 20px 15px 20px;
+	position: sticky;
+	top: 0;
+	vertical-align: top;
+}
+
+.sign-editor__section {
+	background: var(--ui-color-palette-white-base);
+	border-radius: 6px;
+	font: 13px var(--font_os_semibold);
+	margin-top: 15px;
+}
+
+.sign-editor__section_title {
+	color: var(--ui-color-palette-gray-90);
+	margin: 0;
+}
+
+.sign-editor__section_block {
+	color: var(--ui-color-palette-black-base);
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+
+.sign-editor__section_block .ui-hint-icon {
+	visibility: hidden;
+}
+
+.sign-editor__section_block:hover .ui-hint-icon {
+	visibility: visible;
+}
+
+.sign-editor__section_block [data-hint] {
+	height: auto;
+}
+
+.sign-editor__section_title,
+.sign-editor__section_block {
+	border-bottom: 1px solid var(--color-8);
+	padding: 10px;
+}
+
+.sign-editor__section_add-block-btn {
+	border-bottom: 1px dashed var(--ui-color-palette-gray-50);
+	color: var(--ui-color-palette-gray-50);
+	cursor: pointer;
+	font-size: 12px;
+}
+
+.sign-editor__section_add-block-btn:hover {
+	border-bottom-color: transparent;
+}
+
+.sign-document__block-wrapper {
+	position: absolute;
+	border-radius: 4px;
+	box-sizing: border-box;
+	cursor: pointer;
+}
+
+.sign-document__block-wrapper.--invalid .sign-document__block-content_member-nodata {
+	background-color: var(--ui-color-palette-red-solid);
+}
+
+.sign-document__block-wrapper[data-active="1"] {
+	background: none;
+}
+
+.sign-document__block-panel--wrapper {
+	position: absolute;
+	bottom: calc(100% + 15px);
+	left: 50%;
+	transform: translateX(-50%);
+	box-shadow: 0 3px 5px 0 rgb(0, 0, 0, .18);
+	border-radius: 2px;
+	padding: 6px 12px;
+}
+
+.sign-document__block-actions {
+	position: absolute;
+	top: 100%;
+	left: 0;
+	right: 10px;
+	padding-top: 3px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	pointer-events: none;
+	opacity: 0;
+}
+
+.sign-document__block-actions--wrapper {
+	display: flex;
+	padding: 4px 1px;
+	background: #fff;
+	border: 1px solid #2fc6f6;
+	box-sizing: border-box;
+	box-shadow: 0 2px 4px 0 rgba(0,0,0,.1);
+	border-radius: 40px
+}
+
+.sign-document__block-actions-btn {
+	display: inline-flex;
+	justify-content: center;
+	align-items: center;
+	width: 32px;
+	height: 24px;
+	text-decoration: none;
+	user-select: none;
+	border-radius: 40px;
+	position: relative;
+	box-sizing: border-box;
+	margin: 0 4px;
+	outline: 0;
+	border: 0;
+	background-color: rgba(82, 92, 105, .12);
+	background-position: center;
+	background-repeat: no-repeat;
+	cursor: pointer;
+}

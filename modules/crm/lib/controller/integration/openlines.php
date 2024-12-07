@@ -3,6 +3,7 @@
 namespace Bitrix\Crm\Controller\Integration;
 
 use Bitrix\Crm\Controller\Base;
+use Bitrix\Crm\Settings\Crm;
 use Bitrix\Intranet\ContactCenter;
 use Bitrix\Main\Error;
 use Bitrix\Main\Loader;
@@ -23,7 +24,11 @@ class OpenLines extends Base
 			return null;
 		}
 
-		$itemsList = (new ContactCenter())->imopenlinesGetItems()->getData();
+		$filter = [
+			'PRESERVE_NOTIFICATIONS_CONNECTOR' => Crm::isWhatsAppGoToChatEnabled(),
+		];
+
+		$itemsList = (new ContactCenter())->imopenlinesGetItems($filter)->getData();
 
 		$result = [];
 		foreach ($itemsList as $itemCode => $item)

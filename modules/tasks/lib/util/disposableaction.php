@@ -18,6 +18,7 @@ namespace Bitrix\Tasks\Util;
 
 use Bitrix\Tasks\Integration\Disk;
 use Bitrix\Main\Config\Option;
+use Bitrix\Tasks\Replication\Replicator\RegularTemplateTaskReplicator;
 
 class DisposableAction
 {
@@ -90,24 +91,8 @@ class DisposableAction
 			{
 				if(!array_key_exists($taskData['TT_ID'], $agents))
 				{
-					$nextTime = \CTasks::getNextTime($rParams, array(
-						'ID' => $taskData['TT_ID'],
-						'CREATED_BY' => $taskData['TT_CREATED_BY'],
-						'TPARAM_REPLICATION_COUNT' => $taskData['TT_TPARAM_REPLICATION_COUNT'],
-					));
-
-					if ($nextTime) // task will be repeated, so add agent, if there is no such
-					{
-						\CAgent::AddAgent(
-							$name,
-							'tasks',
-							'N', 		// is periodic?
-							86400, 		// interval (24 hours)
-							$nextTime, 	// datecheck
-							'Y', 		// is active?
-							$nextTime	// next_exec
-						);
-					}
+					$replicator = new RegularTemplateTaskReplicator(0);
+					$replicator->startReplication($taskData['TT_ID']);
 				}
 			}
 		}

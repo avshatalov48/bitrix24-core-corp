@@ -513,7 +513,7 @@ if(!function_exists('__CrmQuickPanelViewRenderSection'))
 
 $sipData = isset($entityContext['SIP_MANAGER_CONFIG']) ? $entityContext['SIP_MANAGER_CONFIG'] : array();
 if(!empty($sipData)):
-?><script type="text/javascript">
+?><script>
 	BX.ready(
 			function()
 			{
@@ -538,7 +538,7 @@ if(!empty($sipData)):
 	);
 </script><?
 endif;
-?><script type="text/javascript">
+?><script>
 	BX.ready(
 		function() {
 			BX.CrmQuickPanelModel.messages =

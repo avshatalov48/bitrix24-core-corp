@@ -146,6 +146,7 @@ final class FactoryProvider
 	{
 		return (
 			$factory->getEntityTypeId() === \CCrmOwnerType::Contact
+			|| $factory->getEntityTypeId() === \CCrmOwnerType::Company
 				? $factory->getDefaultCategory()->getId()
 				: null
 		);

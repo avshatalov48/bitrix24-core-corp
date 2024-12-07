@@ -21,7 +21,7 @@ else
 	$APPLICATION->AddHeadScript('/bitrix/components/bitrix/intranet.reserve_meeting.list/js/dialogs.js');
 	?>
 
-	<script type="text/javascript">
+	<script>
 	//<![CDATA[
 		if (typeof(phpVars) != "object")
 			phpVars = {};

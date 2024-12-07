@@ -247,7 +247,7 @@ class CompanyMerger extends EntityMerger
 				EntityMergerException::UPDATE_FAILED,
 				'',
 				0,
-				new Main\SystemException($entity->LAST_ERROR)
+				new Main\SystemException($entity->getLastError())
 			);
 		}
 	}
@@ -271,7 +271,7 @@ class CompanyMerger extends EntityMerger
 				EntityMergerException::DELETE_FAILED,
 				'',
 				0,
-				new Main\SystemException($entity->LAST_ERROR)
+				new Main\SystemException($entity->getLastError())
 			);
 		}
 	}
@@ -348,54 +348,76 @@ class CompanyMerger extends EntityMerger
 			$results[EntityMergeCollision::SEED_EXTERNAL_OWNERSHIP] = new EntityMergeCollision(\CCrmOwnerType::Company, $seedID, $targID, EntityMergeCollision::SEED_EXTERNAL_OWNERSHIP);
 		}
 	}
+
 	/**
 	 * Prepare collision messages
 	 * @param array &$collisions Collisions.
 	 * @param array &$seed Seed entity fields.
 	 * @param array &$targ Target entity fields.
-	 * @return array|null
+	 * @return array
 	 */
-	protected function prepareCollisionMessageFields(array &$collisions, array &$seed, array &$targ)
+	protected function prepareCollisionMessageFields(array &$collisions, array &$seed, array &$targ): array
 	{
-		self::includeLangFile();
-
-		$replacements = array(
-			'#USER_NAME#' => $this->getUserName(),
-			'#SEED_TITLE#' => isset($seed['TITLE']) ? $seed['TITLE'] : '',
-			'#SEED_ID#' => isset($seed['ID']) ? $seed['ID'] : '',
-			'#TARG_TITLE#' => isset($targ['TITLE']) ? $targ['TITLE'] : '',
-			'#TARG_ID#' => isset($targ['ID']) ? $targ['ID'] : '',
-		);
-
-		$messages = array();
-		if(isset($collisions[EntityMergeCollision::READ_PERMISSION_LACK])
-			&& isset($collisions[EntityMergeCollision::UPDATE_PERMISSION_LACK]))
+		$notifyMessageCallback = function (?string $languageId = null) use (
+			$collisions,
+			$seed,
+			$targ,
+		): ?string
 		{
-			$messages[] = GetMessage('CRM_COMPANY_MERGER_COLLISION_READ_UPDATE_PERMISSION', $replacements);
-		}
-		elseif(isset($collisions[EntityMergeCollision::READ_PERMISSION_LACK]))
-		{
-			$messages[] = GetMessage('CRM_COMPANY_MERGER_COLLISION_READ_PERMISSION', $replacements);
-		}
-		elseif(isset($collisions[EntityMergeCollision::UPDATE_PERMISSION_LACK]))
-		{
-			$messages[] = GetMessage('CRM_COMPANY_MERGER_COLLISION_UPDATE_PERMISSION', $replacements);
-		}
+			self::includeLangFile();
+			$replacements = [
+				'#USER_NAME#' => $this->getUserName(),
+				'#SEED_TITLE#' => $seed['TITLE'] ?? '',
+				'#SEED_ID#' => $seed['ID'] ?? '',
+				'#TARG_TITLE#' => $targ['TITLE'] ?? '',
+				'#TARG_ID#' => $targ['ID'] ?? '',
+			];
 
-		if(empty($messages))
-		{
-			return null;
-		}
+			$messages = [];
+			if (isset(
+				$collisions[EntityMergeCollision::READ_PERMISSION_LACK],
+				$collisions[EntityMergeCollision::UPDATE_PERMISSION_LACK],
+			))
+			{
+				$messages[] = Loc::getMessage(
+					'CRM_COMPANY_MERGER_COLLISION_READ_UPDATE_PERMISSION',
+					$replacements,
+					$languageId,
+				);
+			}
+			elseif (isset($collisions[EntityMergeCollision::READ_PERMISSION_LACK]))
+			{
+				$messages[] = Loc::getMessage(
+					'CRM_COMPANY_MERGER_COLLISION_READ_PERMISSION',
+					$replacements,
+					$languageId,
+				);
+			}
+			elseif (isset($collisions[EntityMergeCollision::UPDATE_PERMISSION_LACK]))
+			{
+				$messages[] = Loc::getMessage(
+					'CRM_COMPANY_MERGER_COLLISION_UPDATE_PERMISSION',
+					$replacements,
+					$languageId,
+				);
+			}
 
-		$html = implode('<br/>', $messages);
+			if (empty($messages))
+			{
+				return null;
+			}
+
+			return implode('<br/>', $messages);
+		};
+
 		return array(
 			'TO_USER_ID' => isset($seed['ASSIGNED_BY_ID']) ? (int)$seed['ASSIGNED_BY_ID'] : 0,
-			'NOTIFY_MESSAGE' => $html,
-			'NOTIFY_MESSAGE_OUT' => $html
+			'NOTIFY_MESSAGE' => $notifyMessageCallback,
+			'NOTIFY_MESSAGE_OUT' => $notifyMessageCallback,
 		);
 	}
 
-	protected static function getFieldConflictResolver(string $fieldId, string $type): ConflictResolver\Base
+	protected function getFieldConflictResolver(string $fieldId, string $type): ConflictResolver\Base
 	{
 		$userDefinedResolver = static::getUserDefinedConflictResolver(
 			\CCrmOwnerType::Company,

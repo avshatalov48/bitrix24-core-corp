@@ -316,7 +316,7 @@ $APPLICATION->IncludeComponent(
 );
 ?></div>
 </div>
-<script type="text/javascript">
+<script>
 	BX.ready(
 		function()
 		{
@@ -352,7 +352,7 @@ $APPLICATION->IncludeComponent(
 	);
 </script>
 <?if($arResult['ALLOW_FUNNEL_TYPE_CHANGE'] === 'Y'):?>
-<script type="text/javascript">
+<script>
 	BX.ready(
 		function()
 		{
@@ -388,7 +388,7 @@ $APPLICATION->IncludeComponent(
 </script>
 <?endif;?>
 <? if ($bUseAmCharts): ?>
-<script type="text/javascript">
+<script>
 	function reportChartShowHide()
 	{
 		var chartContainer = BX.findNextSibling(BX.findParent(this, {"tag": "div"}), {"tag": "div", "class": "funnel-chart"});

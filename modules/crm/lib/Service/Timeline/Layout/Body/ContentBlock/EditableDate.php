@@ -10,9 +10,11 @@ class EditableDate extends Date
 
 	public const STYLE_TEXT = 'text';
 	public const STYLE_PILL = 'pill';
+	public const STYLE_PILL_INLINE_GROUP = 'pill-inline-group';
 
 	public const BACKGROUND_COLOR_WARNING = 'warning';
 	public const BACKGROUND_COLOR_DEFAULT = 'default';
+	public const BACKGROUND_COLOR_NONE = 'none';
 
 	private string $style = self::STYLE_TEXT;
 	private ?string $backgroundColor = null;
@@ -21,9 +23,9 @@ class EditableDate extends Date
 	public function getRendererName(): string
 	{
 		return
-			$this->getStyle() === self::STYLE_PILL
-				? 'DatePill'
-				: 'EditableDate'
+			$this->getStyle() === self::STYLE_TEXT
+				? 'EditableDate'
+				: 'DatePill'
 		;
 	}
 
@@ -71,6 +73,7 @@ class EditableDate extends Date
 				'action' => $this->getAction(),
 				'backgroundColor' => $this->getBackgroundColor(),
 				'isReadonly' => $this->isReadonly(),
+				'styleValue' => $this->getStyle(),
 			]
 		);
 	}

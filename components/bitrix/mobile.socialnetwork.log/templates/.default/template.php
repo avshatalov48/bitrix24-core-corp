@@ -14,7 +14,7 @@ else
 		&& !$arResult["AJAX_CALL"]
 	)
 	{
-		?><script type="text/javascript">
+		?><script>
 
 		var arLogTs = {};
 		var arLikeRandomID = {};
@@ -246,7 +246,7 @@ else
 	elseif ($arParams["LOG_ID"] > 0)
 	{
 		?><div style="display: none;" id="comment_send_button_waiter" class="send-message-button-waiter"></div>
-		<script type="text/javascript">
+		<script>
 			BXMobileApp.onCustomEvent('onLogEntryRead', { log_id: <?=$arParams["LOG_ID"]?>, ts: <?=time()?>, bPull: false }, true);
 
 			if (window.platform != "android")
@@ -275,7 +275,7 @@ else
 
 	if (!$arResult["AJAX_CALL"])
 	{
-		?><script type="text/javascript">
+		?><script>
 			var arBlockToCheck = [];
 		</script><?
 	}
@@ -307,7 +307,7 @@ else
 	{
 		$GLOBALS["APPLICATION"]->RestartBuffer();
 
-		?><script type="text/javascript">
+		?><script>
 			arBlockToCheck = []; // empty array to check height
 		</script><?
 	}
@@ -318,7 +318,7 @@ else
 		&& count($arResult["EventsNew"]) > 0
 	)
 	{
-		?><script type="text/javascript">
+		?><script>
 			if (BX("lenta_block_empty", true))
 				BX("lenta_block_empty", true).style.display = "none";
 		</script><?
@@ -439,7 +439,7 @@ else
 
 				if ($arParams["LOG_ID"] <= 0)
 				{
-					?><script type="text/javascript">
+					?><script>
 						arLogTs.entry_<?=intval($arEvent["EVENT"]["ID"])?> = <?=intval($arResult["LAST_LOG_TS"])?>;
 					</script><?
 				}
@@ -595,7 +595,7 @@ else
 								&& intval($arResultVote["VOTE_RAND"]) > 0
 							)
 							{
-								?><script type="text/javascript">
+								?><script>
 									arLikeRandomID.entry_<?=intval($arEvent["EVENT"]["ID"])?> = <?=intval($arResultVote["VOTE_RAND"])?>;
 								</script><?
 							}
@@ -1003,7 +1003,7 @@ else
 
 				?></div><? // post-wrap / lenta-item
 				
-				?><script type="text/javascript">
+				?><script>
 				arBlockToCheck[arBlockToCheck.length] = {
 					lenta_item_id: 'lenta_item_<?=$arEvent["EVENT"]["ID"]?>',
 					text_block_id: 'post_block_check_cont_<?=$arEvent["EVENT"]["ID"]?>',
@@ -1335,7 +1335,7 @@ else
 	{
 		$strParams = "LAST_LOG_TS=".$arResult["LAST_LOG_TS"]."&AJAX_CALL=Y&PAGEN_".$arResult["PAGE_NAVNUM"]."=".($arResult["PAGE_NUMBER"] + 1);
 
-		?><script type="text/javascript">
+		?><script>
 			<?
 			if (
 				$event_cnt > 0
@@ -1369,7 +1369,7 @@ else
 	$strParams = "LAST_LOG_TS=".$arResult["LAST_LOG_TS"]."&AJAX_CALL=Y&PAGEN_".$arResult["PAGE_NAVNUM"]."=".($arResult["PAGE_NUMBER"] + 1);
 
 	// sonet_log_content
-	?><script type="text/javascript">
+	?><script>
 		var maxScroll = 0;
 		var isPullDownEnabled = false;
 		var url_next = '<?=$APPLICATION->GetCurPageParam($strParams, array("LAST_LOG_TS", "AJAX_CALL", "PAGEN_".$arResult["PAGE_NAVNUM"]));?>';

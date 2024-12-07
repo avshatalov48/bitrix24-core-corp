@@ -27,8 +27,9 @@ jn.define('tasks/deadline-picker', (require, exports, module) => {
 
 	class DeadlinePicker
 	{
-		constructor(params)
+		constructor(params = {})
 		{
+			this.parentWidget = (params.parentWidget || PageManager);
 			this.canSetNoDeadline = BX.prop.getBoolean(params, 'canSetNoDeadline', false);
 		}
 
@@ -39,28 +40,32 @@ jn.define('tasks/deadline-picker', (require, exports, module) => {
 		 */
 		show(deadline)
 		{
-			return new Promise((resolve) => {
-				this.getItems(deadline, resolve).then((items) => {
+			return new Promise((resolve, reject) => {
+				this.getItems(deadline, resolve, reject).then((items) => {
 					this.picker = new ContextMenu({
 						params: {
 							title: Loc.getMessage('TASKSMOBILE_DEADLINE_PICKER_TITLE'),
 							isRawIcon: true,
 							showCancelButton: true,
 						},
+						onCancel: () => {
+							reject();
+						},
 						actions: items,
 					});
-					this.picker.show();
+					this.picker.show(this.parentWidget);
 				}).catch(console.error);
 			});
 		}
 
 		/**
 		 * @private
-		 * @param deadline
-		 * @param onDeadlineSelect
+		 * @param {number} deadline
+		 * @param {function} onDeadlineSelect
+		 * @param {function} onCancel
 		 * @returns {Promise<[Array]>}
 		 */
-		async getItems(deadline, onDeadlineSelect)
+		async getItems(deadline, onDeadlineSelect, onCancel)
 		{
 			await CalendarSettings.loadSettings();
 
@@ -81,7 +86,16 @@ jn.define('tasks/deadline-picker', (require, exports, module) => {
 								value: deadline,
 								items: [],
 							},
-							(eventName, ts) => ts && onDeadlineSelect(ts),
+							(eventName, ts) => {
+								if (eventName === 'onPick' && ts)
+								{
+									onDeadlineSelect(ts);
+								}
+								else
+								{
+									onCancel();
+								}
+							},
 						);
 					},
 				},

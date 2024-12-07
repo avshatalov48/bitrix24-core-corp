@@ -4,6 +4,7 @@
 jn.define('crm/timeline/scheduler/providers/go-to-chat/clients-selector', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const { Type } = require('type');
+	const { ContextMenu } = require('layout/ui/context-menu');
 	const AppTheme = require('apptheme');
 	const { CommunicationSelector } = require('crm/communication/communication-selector');
 	const { Line } = require('utils/skeleton');
@@ -160,8 +161,8 @@ jn.define('crm/timeline/scheduler/providers/go-to-chat/clients-selector', (requi
 				communications,
 				ownerInfo,
 				typeId,
-				selectedPhoneId,
-				onPhoneSelectCallback,
+				selectedId: selectedPhoneId,
+				onSelectCallback: onPhoneSelectCallback,
 			});
 		}
 

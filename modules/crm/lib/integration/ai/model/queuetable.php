@@ -15,6 +15,7 @@ use Bitrix\Main\ORM\Fields\EnumField;
 use Bitrix\Main\ORM\Fields\IntegerField;
 use Bitrix\Main\ORM\Fields\StringField;
 use Bitrix\Main\ORM\Fields\TextField;
+use Bitrix\Main\ORM\Fields\Validators\LengthValidator;
 use Bitrix\Main\ORM\Objectify\State;
 use Bitrix\Main\Result;
 use Bitrix\Main\Type\DateTime;
@@ -62,10 +63,13 @@ final class QueueTable extends DataManager
 			(new IntegerField('ENTITY_ID'))
 				->configureRequired()
 			,
+			/**
+			 * @see \Bitrix\AI\Model\QueueTable::generateHash
+			 */
 			(new StringField('HASH'))
 				->configureRequired()
 				->configureSize(32)
-				->configureFormat('#^[a-fA-F0-9]{32}$#i') // md5 hash regex
+				->addValidator(new LengthValidator(1))
 			,
 			(new EnumField('TYPE_ID'))
 				->configureRequired()
@@ -137,6 +141,14 @@ final class QueueTable extends DataManager
 			,
 			(new DatetimeField('FINISHED_TIME'))
 				->configureNullable()
+			,
+			(new StringField('LANGUAGE_ID'))
+				->configureSize(2)
+				->configureNullable()
+			,
+			(new IntegerField('ENGINE_ID'))
+				->configureRequired()
+				->configureDefaultValue(0)
 			,
 		];
 	}

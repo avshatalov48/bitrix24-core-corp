@@ -24,11 +24,13 @@ Extension::load([
 	"ui.viewer",
 	"ui.notification",
 	"ui.info-helper",
-	"loader",
 	"popup",
 	"sidepanel",
 	"documentpreview",
 	"ui.icons.disk",
+	"ui.progressbar",
+	"ui.icon-set.main",
+	"crm.integration.ui.banner-dispatcher",
 ]);
 Asset::getInstance()->addJs('/bitrix/js/crm/activity.js');
 
@@ -148,9 +150,21 @@ $shouldDisplayTransformationError =
 				</div>
 				<div class="crm__document-view--upload crm__document-view--upload-img" id="crm__document-view--node"<?php if (!$arResult['isTransformationError'] && empty($arResult['pdfUrl'])):?> style="display: block;"<?php endif;?>>
 					<div class="crm__document-view--upload-message">
-						<span class="crm__document-view--upload-message-text" id="crm__document-view--node-message"><?=Loc::getMessage('CRM_DOCUMENT_VIEW_PREVIEW_MESSAGE_PREPARE');?></span>
+						<div class="crm__document-view--upload-logo">
+							<div class="ui-icon-set --document"></div>
+						</div>
+						<span class="crm__document-view--upload-message-text" id="crm__document-view--node-message"><?=Loc::getMessage('CRM_DOCUMENT_VIEW_PREVIEW_MESSAGE_PREPARE_MSGVER_1');?></span>
+						<span class="crm__document-view--upload-detail" id="crm__document-view--node-detail"><?=Loc::getMessage('CRM_DOCUMENT_VIEW_PREVIEW_MESSAGE_READY_MSGVER_1');?></span>
 						<div class="crm__document-view--upload-progress" id="docs-progress-bar"></div>
-						<span class="crm__document-view--upload-detail" id="crm__document-view--node-detail"><?=Loc::getMessage('CRM_DOCUMENT_VIEW_PREVIEW_MESSAGE_READY');?></span>
+
+						<?php if ($arResult['baas']['fastTransform']['isAvailable']): ?>
+							<div id="crm-document-speedup-in-placeholder" <?= $arResult['baas']['fastTransform']['isActive'] ? 'hidden' : '' ?>>
+								<button class="crm__document-view--upload-btn">
+									<span class="ui-icon-set --sort-activity"></span>
+									<span class="crm__document-view--upload-btn-text"><?=Loc::getMessage('CRM_DOCUMENT_VIEW_SPEEDUP');?></span>
+								</button>
+							</div>
+						<?php endif; ?>
 					</div>
 				</div>
 				<div class="crm__document-view--pdf" id="crm-document-pdf" data-viewer-type="document"></div>
@@ -256,6 +270,20 @@ $shouldDisplayTransformationError =
 				<?php endif; ?>
 			</div>
 			<?php if (!empty($arResult['editDocumentUrl'])):?>
+				<?php if ($arResult['baas']['fastTransform']['isAvailable']): ?>
+					<div class="crm__document-view--speed-btn" id="crm-document-speedup-in-sidebar">
+						<span class="ui-icon-set --speed-meter"></span>
+						<span class="crm__document-view--speed-btn-text">
+							<?= Loc::getMessage('CRM_DOCUMENT_VIEW_CURRENT_SPEED') ?>
+							<span id="crm-document-speedup-value"><?=
+								$arResult['baas']['fastTransform']['isActive']
+									? Loc::getMessage('CRM_DOCUMENT_VIEW_CURRENT_SPEED_VALUE_FAST')
+									: Loc::getMessage('CRM_DOCUMENT_VIEW_CURRENT_SPEED_VALUE_REGULAR')
+							?></span>
+						</span>
+						<span class="crm__document-view--arrow"></span>
+					</div>
+				<?php endif; ?>
 				<div class="crm__document-view--link-inner">
 					<div class="crm__document-view--link-block">
 						<span class="crm__document-view--link-text" id="crm-document-edit-document"><?=Loc::getMessage('CRM_DOCUMENT_VIEW_EDIT_DOCUMENT');?></span>

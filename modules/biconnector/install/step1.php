@@ -25,11 +25,11 @@ if (is_array($configParams))
 	<input type="hidden" name="install" value="Y">
 	<input type="hidden" name="step" value="2">
 	<p>
-		<input type="checkbox" name="install_public" value="Y" id="id_install_public">
+		<input type="checkbox" name="install_public" value="Y" id="id_install_public" checked>
 		<label for="id_install_public"><?= GetMessage('COPY_PUBLIC_FILES') ?></label>
 	</p>
 	<p>
-		<input type="checkbox" name="public_rewrite" value="Y" id="id_public_rewrite">
+		<input type="checkbox" name="public_rewrite" value="Y" id="id_public_rewrite" checked>
 		<label for="id_public_rewrite"><?= GetMessage('INSTALL_PUBLIC_REW') ?></label>
 	</p>
 	<?php

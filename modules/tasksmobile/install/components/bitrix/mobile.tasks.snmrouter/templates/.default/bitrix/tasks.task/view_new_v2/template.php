@@ -141,7 +141,7 @@ $url = CComponentEngine::MakePathFromTemplate($arParams["~PATH_TO_USER_TASKS_EDI
 	<div style="display: none;"><input type="text" name="AJAX_POST" value="Y" /></div><?//hack to not submit form?>
 
 	<?php
-	$favoriteButton = '';
+	$favoriteButton = "";
 	if ($can['FAVORITE.ADD'] || $can['FAVORITE.DELETE'])
 	{
 		$isActive = ($can['FAVORITE.DELETE'] ? 'active' : '');
@@ -268,7 +268,7 @@ $url = CComponentEngine::MakePathFromTemplate($arParams["~PATH_TO_USER_TASKS_EDI
 						array(
 							"type" => (($can["EDIT.RESPONSIBLE"] || $can['EDIT']) ? "select-user" : "user"),
 							"id" => "data[SE_RESPONSIBLE][0][ID]",
-							"name" => GetMessage("MB_TASKS_TASK_SETTINGS_RESPONSIBLE"),
+							"name" => GetMessage("MB_TASKS_TASK_SETTINGS_RESPONSIBLE_MSGVER_1"),
 							"item" => $task["SE_RESPONSIBLE"],
 							"value" => $task["RESPONSIBLE_ID"],
 							"canDrop" => false
@@ -519,7 +519,7 @@ $APPLICATION->IncludeComponent(
 	</div>
 </div>
 
-<script type="text/javascript">
+<script>
 	BX.message({
 		PAGE_TITLE: '<?=GetMessageJS("MB_TASKS_GENERAL_TITLE")?>',
 		MB_TASKS_TASK_PLACEHOLDER: '<span class="placeholder"><?=GetMessageJS("MB_TASKS_TASK_PLACEHOLDER")?></span>',

@@ -200,7 +200,7 @@ $productEditorCfg['enableDiscount'] = $arResult['ENABLE_DISCOUNT'];
 	<?endforeach?>
 <?endif?>
 
-<script type="text/javascript">
+<script>
 	var productEditorParams = {
 		isEditMode: '<?=($arParams["RESTRICTED_MODE"] ? "N" : "Y")?>',
 		onProductSelectEventName: "<?=$arParams["ON_PRODUCT_SELECT_EVENT_NAME"]?>",

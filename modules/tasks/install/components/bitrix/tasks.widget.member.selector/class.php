@@ -3,11 +3,15 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
 
 use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Type\Collection;
 use Bitrix\Socialnetwork\WorkgroupTable;
 use Bitrix\Tasks\Access\ActionDictionary;
 use Bitrix\Tasks\Access\Model\TaskModel;
 use Bitrix\Tasks\Access\Role\RoleDictionary;
 use Bitrix\Tasks\Access\TaskAccessController;
+use Bitrix\Tasks\Internals\Log\LogFacade;
+use Bitrix\Tasks\Internals\Registry\TaskRegistry;
+use Bitrix\Tasks\Ui\Avatar;
 use Bitrix\Tasks\Util\Type;
 use Bitrix\Tasks\Util\User;
 use Bitrix\Tasks\Access\TemplateAccessController;
@@ -50,6 +54,7 @@ class TasksWidgetMemberSelectorComponent extends TasksBaseComponent
 			}
 		}
 
+		static::tryParseBooleanParameter($this->arParams['IS_FLOW_FORM']);
 
 		static::tryParseArrayParameter($this->arParams['INPUT_TEMPLATE_SET']);
 		static::tryParseIntegerParameter($this->arParams['MIN'], 0);
@@ -66,6 +71,12 @@ class TasksWidgetMemberSelectorComponent extends TasksBaseComponent
 		$this->arParams['ATTRIBUTE_PASS'] = array_intersect($this->arParams['ATTRIBUTE_PASS'], $supportedAttributes);
 
 		$this->arResult['TASK_LIMIT_EXCEEDED'] = static::tryParseBooleanParameter($this->arParams['TASK_LIMIT_EXCEEDED']);
+		$this->arResult['taskMailUserIntegrationEnabled'] = static::tryParseBooleanParameter($this->arParams['taskMailUserIntegrationEnabled'], true);
+		$this->arResult['taskMailUserIntegrationFeatureId'] = static::tryParseStringParameterStrict($this->arParams['taskMailUserIntegrationFeatureId'], '');
+		$this->arResult['viewSelectorEnabled'] = static::tryParseBooleanParameter($this->arParams['viewSelectorEnabled'], true);
+
+		$this->arResult['isProjectLimitExceeded'] = static::tryParseBooleanParameter($this->arParams['isProjectLimitExceeded']);
+		$this->arResult['projectFeatureId'] = static::tryParseStringParameterStrict($this->arParams['projectFeatureId'], '');
 
 		return $this->errors->checkNoFatals();
 	}
@@ -742,6 +753,7 @@ class TasksWidgetMemberSelectorComponent extends TasksBaseComponent
 		}
 		catch (TasksException $e)
 		{
+			LogFacade::logThrowable($e, 'TASKS_DEBUG_MEMBER_SELECTOR');
 			$messages = @unserialize($e->getMessage(), ['allowed_classes' => false]);
 			if (is_array($messages))
 			{
@@ -753,8 +765,79 @@ class TasksWidgetMemberSelectorComponent extends TasksBaseComponent
 		}
 		catch (\Exception $e)
 		{
+			LogFacade::logThrowable($e, 'TASKS_DEBUG_MEMBER_SELECTOR');
 			$this->errorCollection->add('UNKNOWN_EXCEPTION', Loc::getMessage('TASKS_WMS_UNEXPECTED_ERROR'), false, ['ui' => 'notification']);
 		}
+	}
+
+	public function getMemberAction(array $userIds, int $taskId): ?array
+	{
+		Collection::normalizeArrayValuesByInt($userIds, false);
+
+		if (empty($userIds) || $taskId <= 0)
+		{
+			return [];
+		}
+
+		if (!TaskAccessController::can($this->userId, ActionDictionary::ACTION_TASK_READ, $taskId))
+		{
+			$this->addForbiddenError();
+			return null;
+		}
+
+		if (\Bitrix\Tasks\Integration\Extranet\User::isExtranet($this->userId))
+		{
+			return [];
+		}
+
+		$task = TaskRegistry::getInstance()->getObject($taskId);
+		if (null === $task)
+		{
+			return [];
+		}
+
+		if (
+			!in_array($this->userId, $task->getAllMemberIds(), true)
+		)
+		{
+			return [];
+		}
+
+		foreach ($userIds as $userId)
+		{
+			if (!in_array($userId, $task->getAuditorMembersIds(), true))
+			{
+				return [];
+			}
+		}
+
+		$users = User::getData($userIds, [
+			'ID',
+			'NAME',
+			'LAST_NAME',
+			'EMAIL',
+			'SECOND_NAME',
+			'WORK_POSITION',
+			'PERSONAL_PHOTO',
+		]);
+
+		$response = [];
+		foreach ($users as $user)
+		{
+			$response[] = [
+				'id' => $user['ID'],
+				'nameFormatted' => User::formatName($user),
+				'entityType' => RoleDictionary::ROLE_AUDITOR,
+				'nameTemplate' => 'default',
+				'WORK_POSITION' => $user['WORK_POSITION'],
+				'AVATAR' => Avatar::getSrc($user['PERSONAL_PHOTO']),
+				'type' => [
+					'extranet' => \Bitrix\Tasks\Integration\Extranet\User::isExtranet($user['ID']),
+				],
+			];
+		}
+
+		return $response;
 	}
 
 	/**

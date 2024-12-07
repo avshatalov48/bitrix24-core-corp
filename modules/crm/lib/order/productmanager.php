@@ -212,6 +212,7 @@ class ProductManager
 			'QUANTITY' => (float)$basketItem->getField('QUANTITY'),
 			'CURRENCY' => $basketItem->getCurrency(),
 			'TYPE' => (int)$basketItem->getField('TYPE'),
+			'XML_ID' => $basketItem->getField('XML_ID'),
 		];
 	}
 
@@ -350,7 +351,7 @@ class ProductManager
 		foreach ($rows as &$row)
 		{
 			$id = $row['ID'];
-			if (is_array($reserveRowMap[$id]))
+			if (isset($reserveRowMap[$id]) && is_array($reserveRowMap[$id]))
 			{
 				$row += $reserveRowMap[$id];
 			}
@@ -523,14 +524,14 @@ class ProductManager
 			$productId = (int)($product['skuId'] ?? $product['productId']);
 			$basketId = (int)($product['additionalFields']['originBasketId'] ?? 0);
 
-			$orderBaskerProduct = null;
+			$orderBasketProduct = null;
 			if (!$basketId)
 			{
-				$orderBaskerProduct =
+				$orderBasketProduct =
 					$this->getOrderProductByXmlId($orderProducts, $product['innerId'])
 					?? $this->getOrderProductByBasketCode($orderProducts, $product['code'])
 				;
-				$basketId = (int)($orderBaskerProduct['ID'] ?? 0);
+				$basketId = (int)($orderBasketProduct['ID'] ?? 0);
 			}
 
 			// if change basket item
@@ -605,7 +606,7 @@ class ProductManager
 				if ($index !== false)
 				{
 					$basketProduct =
-						$orderBaskerProduct
+						$orderBasketProduct
 						?? $this->getOrderProductByBasketId($orderProducts, $basketId)
 						?? $this->getOrderProductByXmlId($orderProducts, $product['innerId'])
 					;
@@ -672,7 +673,9 @@ class ProductManager
 
 			$resultProductList[] = $item;
 
-			$usedIndexes[$productId][] = end(array_keys($resultProductList));
+			$keyList = array_keys($resultProductList);
+			$usedIndexes[$productId][] = end($keyList);
+			unset($keyList);
 		}
 
 		return $resultProductList;

@@ -6531,6 +6531,36 @@ window._main_polyfill_core = true;
 	  }
 	}
 
+	var extensionsStorage = new Map();
+
+	var ajaxController = 'main.bitrix.main.controller.loadext.getextensions';
+	function loadAssets(options) {
+	  return new Promise(function (resolve) {
+	    // eslint-disable-next-line
+	    BX.ajax.runAction(ajaxController, {
+	      data: options
+	    }).then(resolve);
+	  });
+	}
+
+	function fetchInlineScripts(acc, item) {
+	  if (item.isInternal) {
+	    acc.push(item.JS);
+	  }
+	  return acc;
+	}
+	function fetchExternalScripts(acc, item) {
+	  if (!item.isInternal) {
+	    acc.push(item.JS);
+	  }
+	  return acc;
+	}
+	function fetchExternalStyles(acc, item) {
+	  if (Type.isString(item) && item !== '') {
+	    acc.push(item);
+	  }
+	  return acc;
+	}
 	function fetchExtensionSettings(html) {
 	  if (Type.isStringFilled(html)) {
 	    var scripts = html.match(/<script type="extension\/settings" \b[^>]*>([\s\S]*?)<\/script>/g);
@@ -6548,124 +6578,8 @@ window._main_polyfill_core = true;
 	  }
 	  return [];
 	}
-
-	var Extension = /*#__PURE__*/function () {
-	  function Extension(options) {
-	    babelHelpers.classCallCheck(this, Extension);
-	    this.config = options.config || {};
-	    this.name = options.extension;
-	    this.state = 'scheduled';
-
-	    // eslint-disable-next-line
-	    var result = BX.processHTML(options.html || '');
-	    this.inlineScripts = result.SCRIPT.reduce(inlineScripts, []);
-	    this.externalScripts = result.SCRIPT.reduce(externalScripts, []);
-	    this.externalStyles = result.STYLE.reduce(externalStyles, []);
-	    this.settingsScripts = fetchExtensionSettings(result.HTML);
-	  }
-	  babelHelpers.createClass(Extension, [{
-	    key: "load",
-	    value: function load() {
-	      var _this = this;
-	      if (this.state === 'error') {
-	        this.loadPromise = this.loadPromise || Promise.resolve(this);
-	        console.warn('Extension', this.name, 'not found');
-	      }
-	      if (!this.loadPromise && this.state) {
-	        this.state = 'load';
-	        this.settingsScripts.forEach(function (entry) {
-	          var isLoaded = !!document.querySelector("script[data-extension=\"".concat(entry.extension, "\"]"));
-	          if (!isLoaded) {
-	            document.body.insertAdjacentHTML('beforeend', entry.script);
-	          }
-	        });
-	        this.inlineScripts.forEach(BX.evalGlobal);
-	        this.loadPromise = Promise.all([loadAll(this.externalScripts), loadAll(this.externalStyles)]).then(function () {
-	          _this.state = 'loaded';
-	          if (Type.isPlainObject(_this.config) && _this.config.namespace) {
-	            return Reflection.getClass(_this.config.namespace);
-	          }
-	          return window;
-	        });
-	      }
-	      return this.loadPromise;
-	    }
-	  }]);
-	  return Extension;
-	}();
-
-	var initialized = {};
-	var ajaxController = 'main.bitrix.main.controller.loadext.getextensions';
-
-	function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
-	function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
-	function makeIterable(value) {
-	  return Type.isArray(value) ? value : [value];
-	}
-	function isInitialized(extension) {
-	  return extension in initialized;
-	}
-	function getInitialized(extension) {
-	  return initialized[extension];
-	}
-	function isAllInitialized(extensions) {
-	  return extensions.every(isInitialized);
-	}
-	function loadExtensions(extensions) {
-	  return Promise.all(extensions.map(function (item) {
-	    return item.load();
-	  }));
-	}
-	function mergeExports(exports) {
-	  return exports.reduce(function (acc, currentExports) {
-	    if (Type.isObject(currentExports)) {
-	      return _objectSpread({}, currentExports);
-	    }
-	    return currentExports;
-	  }, {});
-	}
-	function inlineScripts(acc, item) {
-	  if (item.isInternal) {
-	    acc.push(item.JS);
-	  }
-	  return acc;
-	}
-	function externalScripts(acc, item) {
-	  if (!item.isInternal) {
-	    acc.push(item.JS);
-	  }
-	  return acc;
-	}
-	function externalStyles(acc, item) {
-	  if (Type.isString(item) && item !== '') {
-	    acc.push(item);
-	  }
-	  return acc;
-	}
-	function request(options) {
-	  return new Promise(function (resolve) {
-	    // eslint-disable-next-line
-	    BX.ajax.runAction(ajaxController, {
-	      data: options
-	    }).then(resolve);
-	  });
-	}
-	function prepareExtensions(response) {
-	  if (response.status !== 'success') {
-	    response.errors.map(console.warn);
-	    return [];
-	  }
-	  return response.data.map(function (item) {
-	    var initializedExtension = getInitialized(item.extension);
-	    if (initializedExtension) {
-	      return initializedExtension;
-	    }
-	    initialized[item.extension] = new Extension(item);
-	    return initialized[item.extension];
-	  });
-	}
 	function loadAll(items) {
-	  var itemsList = makeIterable(items);
+	  var itemsList = Type.isArray(items) ? items : [items];
 	  if (!itemsList.length) {
 	    return Promise.resolve();
 	  }
@@ -6675,21 +6589,143 @@ window._main_polyfill_core = true;
 	  });
 	}
 
-	/**
-	 * Loads extensions asynchronously
-	 * @param {string|Array<string>} extension
-	 * @return {Promise<Array<Extension>>}
-	 */
-	function loadExtension(extension) {
-	  var extensions = makeIterable(extension);
-	  var isAllInitialized$$1 = isAllInitialized(extensions);
-	  if (isAllInitialized$$1) {
-	    var initializedExtensions = extensions.map(getInitialized);
-	    return loadExtensions(initializedExtensions).then(mergeExports);
+	function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+	function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
+	function _classPrivateFieldInitSpec(obj, privateMap, value) { _checkPrivateRedeclaration(obj, privateMap); privateMap.set(obj, value); }
+	function _checkPrivateRedeclaration(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	var defaultOptions = {
+	  loaded: false
+	};
+	var _state = /*#__PURE__*/new WeakMap();
+	var _name = /*#__PURE__*/new WeakMap();
+	var _namespace = /*#__PURE__*/new WeakMap();
+	var _promise = /*#__PURE__*/new WeakMap();
+	var Extension = /*#__PURE__*/function () {
+	  function Extension(options) {
+	    babelHelpers.classCallCheck(this, Extension);
+	    _classPrivateFieldInitSpec(this, _state, {
+	      writable: true,
+	      value: Extension.State.LOADING
+	    });
+	    _classPrivateFieldInitSpec(this, _name, {
+	      writable: true,
+	      value: ''
+	    });
+	    _classPrivateFieldInitSpec(this, _namespace, {
+	      writable: true,
+	      value: ''
+	    });
+	    _classPrivateFieldInitSpec(this, _promise, {
+	      writable: true,
+	      value: null
+	    });
+	    var preparedOptions = _objectSpread(_objectSpread({}, defaultOptions), options);
+	    babelHelpers.classPrivateFieldSet(this, _name, preparedOptions.name);
+	    babelHelpers.classPrivateFieldSet(this, _namespace, Type.isStringFilled(preparedOptions.namespace) ? preparedOptions.namespace : 'window');
+	    if (preparedOptions.loaded) {
+	      babelHelpers.classPrivateFieldSet(this, _state, Extension.State.LOADED);
+	    }
 	  }
-	  return request({
-	    extension: extensions
-	  }).then(prepareExtensions).then(loadExtensions).then(mergeExports);
+	  babelHelpers.createClass(Extension, [{
+	    key: "load",
+	    value: function load() {
+	      var _this = this;
+	      if (babelHelpers.classPrivateFieldGet(this, _state) === Extension.State.LOADED && !babelHelpers.classPrivateFieldGet(this, _promise)) {
+	        babelHelpers.classPrivateFieldSet(this, _promise, Promise.resolve(Reflection.getClass(babelHelpers.classPrivateFieldGet(this, _namespace))));
+	      }
+	      if (babelHelpers.classPrivateFieldGet(this, _promise)) {
+	        return babelHelpers.classPrivateFieldGet(this, _promise);
+	      }
+	      babelHelpers.classPrivateFieldSet(this, _state, Extension.State.LOADING);
+	      babelHelpers.classPrivateFieldSet(this, _promise, new Promise(function (resolve) {
+	        void loadAssets({
+	          extension: [babelHelpers.classPrivateFieldGet(_this, _name)]
+	        }).then(function (assetsResult) {
+	          if (!Type.isArrayFilled(assetsResult.data)) {
+	            resolve(window);
+	          }
+	          var extensionData = assetsResult.data.at(0);
+	          if (Type.isPlainObject(extensionData.config) && Type.isStringFilled(extensionData.config.namespace)) {
+	            babelHelpers.classPrivateFieldSet(_this, _namespace, extensionData.config.namespace);
+	          }
+	          var result = BX.processHTML(extensionData.html || '');
+	          var inlineScripts = result.SCRIPT.reduce(fetchInlineScripts, []);
+	          var externalScripts = result.SCRIPT.reduce(fetchExternalScripts, []);
+	          var externalStyles = result.STYLE.reduce(fetchExternalStyles, []);
+	          var settingsScripts = fetchExtensionSettings(result.HTML);
+	          settingsScripts.forEach(function (entry) {
+	            document.body.insertAdjacentHTML('beforeend', entry.script);
+	          });
+	          inlineScripts.forEach(function (script) {
+	            BX.evalGlobal(script);
+	          });
+	          void Promise.all([loadAll(externalScripts), loadAll(externalStyles)]).then(function () {
+	            babelHelpers.classPrivateFieldSet(_this, _state, Extension.State.LOADED);
+	            if (babelHelpers.classPrivateFieldGet(_this, _namespace)) {
+	              return Reflection.getClass(babelHelpers.classPrivateFieldGet(_this, _namespace));
+	            }
+	            return window;
+	          }).then(function (exports) {
+	            resolve(exports);
+	          });
+	        });
+	      }));
+	      return babelHelpers.classPrivateFieldGet(this, _promise);
+	    }
+	  }]);
+	  return Extension;
+	}();
+	babelHelpers.defineProperty(Extension, "State", {
+	  LOADED: 'LOADED',
+	  LOADING: 'LOADING'
+	});
+
+	function _regeneratorRuntime() { /*! regenerator-runtime -- Copyright (c) 2014-present, Facebook, Inc. -- license (MIT): https://github.com/facebook/regenerator/blob/main/LICENSE */ _regeneratorRuntime = function _regeneratorRuntime() { return exports; }; var exports = {}, Op = Object.prototype, hasOwn = Op.hasOwnProperty, defineProperty = Object.defineProperty || function (obj, key, desc) { obj[key] = desc.value; }, $Symbol = "function" == typeof Symbol ? Symbol : {}, iteratorSymbol = $Symbol.iterator || "@@iterator", asyncIteratorSymbol = $Symbol.asyncIterator || "@@asyncIterator", toStringTagSymbol = $Symbol.toStringTag || "@@toStringTag"; function define(obj, key, value) { return Object.defineProperty(obj, key, { value: value, enumerable: !0, configurable: !0, writable: !0 }), obj[key]; } try { define({}, ""); } catch (err) { define = function define(obj, key, value) { return obj[key] = value; }; } function wrap(innerFn, outerFn, self, tryLocsList) { var protoGenerator = outerFn && outerFn.prototype instanceof Generator ? outerFn : Generator, generator = Object.create(protoGenerator.prototype), context = new Context(tryLocsList || []); return defineProperty(generator, "_invoke", { value: makeInvokeMethod(innerFn, self, context) }), generator; } function tryCatch(fn, obj, arg) { try { return { type: "normal", arg: fn.call(obj, arg) }; } catch (err) { return { type: "throw", arg: err }; } } exports.wrap = wrap; var ContinueSentinel = {}; function Generator() {} function GeneratorFunction() {} function GeneratorFunctionPrototype() {} var IteratorPrototype = {}; define(IteratorPrototype, iteratorSymbol, function () { return this; }); var getProto = Object.getPrototypeOf, NativeIteratorPrototype = getProto && getProto(getProto(values([]))); NativeIteratorPrototype && NativeIteratorPrototype !== Op && hasOwn.call(NativeIteratorPrototype, iteratorSymbol) && (IteratorPrototype = NativeIteratorPrototype); var Gp = GeneratorFunctionPrototype.prototype = Generator.prototype = Object.create(IteratorPrototype); function defineIteratorMethods(prototype) { ["next", "throw", "return"].forEach(function (method) { define(prototype, method, function (arg) { return this._invoke(method, arg); }); }); } function AsyncIterator(generator, PromiseImpl) { function invoke(method, arg, resolve, reject) { var record = tryCatch(generator[method], generator, arg); if ("throw" !== record.type) { var result = record.arg, value = result.value; return value && "object" == babelHelpers["typeof"](value) && hasOwn.call(value, "__await") ? PromiseImpl.resolve(value.__await).then(function (value) { invoke("next", value, resolve, reject); }, function (err) { invoke("throw", err, resolve, reject); }) : PromiseImpl.resolve(value).then(function (unwrapped) { result.value = unwrapped, resolve(result); }, function (error) { return invoke("throw", error, resolve, reject); }); } reject(record.arg); } var previousPromise; defineProperty(this, "_invoke", { value: function value(method, arg) { function callInvokeWithMethodAndArg() { return new PromiseImpl(function (resolve, reject) { invoke(method, arg, resolve, reject); }); } return previousPromise = previousPromise ? previousPromise.then(callInvokeWithMethodAndArg, callInvokeWithMethodAndArg) : callInvokeWithMethodAndArg(); } }); } function makeInvokeMethod(innerFn, self, context) { var state = "suspendedStart"; return function (method, arg) { if ("executing" === state) throw new Error("Generator is already running"); if ("completed" === state) { if ("throw" === method) throw arg; return doneResult(); } for (context.method = method, context.arg = arg;;) { var delegate = context.delegate; if (delegate) { var delegateResult = maybeInvokeDelegate(delegate, context); if (delegateResult) { if (delegateResult === ContinueSentinel) continue; return delegateResult; } } if ("next" === context.method) context.sent = context._sent = context.arg;else if ("throw" === context.method) { if ("suspendedStart" === state) throw state = "completed", context.arg; context.dispatchException(context.arg); } else "return" === context.method && context.abrupt("return", context.arg); state = "executing"; var record = tryCatch(innerFn, self, context); if ("normal" === record.type) { if (state = context.done ? "completed" : "suspendedYield", record.arg === ContinueSentinel) continue; return { value: record.arg, done: context.done }; } "throw" === record.type && (state = "completed", context.method = "throw", context.arg = record.arg); } }; } function maybeInvokeDelegate(delegate, context) { var methodName = context.method, method = delegate.iterator[methodName]; if (undefined === method) return context.delegate = null, "throw" === methodName && delegate.iterator["return"] && (context.method = "return", context.arg = undefined, maybeInvokeDelegate(delegate, context), "throw" === context.method) || "return" !== methodName && (context.method = "throw", context.arg = new TypeError("The iterator does not provide a '" + methodName + "' method")), ContinueSentinel; var record = tryCatch(method, delegate.iterator, context.arg); if ("throw" === record.type) return context.method = "throw", context.arg = record.arg, context.delegate = null, ContinueSentinel; var info = record.arg; return info ? info.done ? (context[delegate.resultName] = info.value, context.next = delegate.nextLoc, "return" !== context.method && (context.method = "next", context.arg = undefined), context.delegate = null, ContinueSentinel) : info : (context.method = "throw", context.arg = new TypeError("iterator result is not an object"), context.delegate = null, ContinueSentinel); } function pushTryEntry(locs) { var entry = { tryLoc: locs[0] }; 1 in locs && (entry.catchLoc = locs[1]), 2 in locs && (entry.finallyLoc = locs[2], entry.afterLoc = locs[3]), this.tryEntries.push(entry); } function resetTryEntry(entry) { var record = entry.completion || {}; record.type = "normal", delete record.arg, entry.completion = record; } function Context(tryLocsList) { this.tryEntries = [{ tryLoc: "root" }], tryLocsList.forEach(pushTryEntry, this), this.reset(!0); } function values(iterable) { if (iterable) { var iteratorMethod = iterable[iteratorSymbol]; if (iteratorMethod) return iteratorMethod.call(iterable); if ("function" == typeof iterable.next) return iterable; if (!isNaN(iterable.length)) { var i = -1, next = function next() { for (; ++i < iterable.length;) if (hasOwn.call(iterable, i)) return next.value = iterable[i], next.done = !1, next; return next.value = undefined, next.done = !0, next; }; return next.next = next; } } return { next: doneResult }; } function doneResult() { return { value: undefined, done: !0 }; } return GeneratorFunction.prototype = GeneratorFunctionPrototype, defineProperty(Gp, "constructor", { value: GeneratorFunctionPrototype, configurable: !0 }), defineProperty(GeneratorFunctionPrototype, "constructor", { value: GeneratorFunction, configurable: !0 }), GeneratorFunction.displayName = define(GeneratorFunctionPrototype, toStringTagSymbol, "GeneratorFunction"), exports.isGeneratorFunction = function (genFun) { var ctor = "function" == typeof genFun && genFun.constructor; return !!ctor && (ctor === GeneratorFunction || "GeneratorFunction" === (ctor.displayName || ctor.name)); }, exports.mark = function (genFun) { return Object.setPrototypeOf ? Object.setPrototypeOf(genFun, GeneratorFunctionPrototype) : (genFun.__proto__ = GeneratorFunctionPrototype, define(genFun, toStringTagSymbol, "GeneratorFunction")), genFun.prototype = Object.create(Gp), genFun; }, exports.awrap = function (arg) { return { __await: arg }; }, defineIteratorMethods(AsyncIterator.prototype), define(AsyncIterator.prototype, asyncIteratorSymbol, function () { return this; }), exports.AsyncIterator = AsyncIterator, exports.async = function (innerFn, outerFn, self, tryLocsList, PromiseImpl) { void 0 === PromiseImpl && (PromiseImpl = Promise); var iter = new AsyncIterator(wrap(innerFn, outerFn, self, tryLocsList), PromiseImpl); return exports.isGeneratorFunction(outerFn) ? iter : iter.next().then(function (result) { return result.done ? result.value : iter.next(); }); }, defineIteratorMethods(Gp), define(Gp, toStringTagSymbol, "Generator"), define(Gp, iteratorSymbol, function () { return this; }), define(Gp, "toString", function () { return "[object Generator]"; }), exports.keys = function (val) { var object = Object(val), keys = []; for (var key in object) keys.push(key); return keys.reverse(), function next() { for (; keys.length;) { var key = keys.pop(); if (key in object) return next.value = key, next.done = !1, next; } return next.done = !0, next; }; }, exports.values = values, Context.prototype = { constructor: Context, reset: function reset(skipTempReset) { if (this.prev = 0, this.next = 0, this.sent = this._sent = undefined, this.done = !1, this.delegate = null, this.method = "next", this.arg = undefined, this.tryEntries.forEach(resetTryEntry), !skipTempReset) for (var name in this) "t" === name.charAt(0) && hasOwn.call(this, name) && !isNaN(+name.slice(1)) && (this[name] = undefined); }, stop: function stop() { this.done = !0; var rootRecord = this.tryEntries[0].completion; if ("throw" === rootRecord.type) throw rootRecord.arg; return this.rval; }, dispatchException: function dispatchException(exception) { if (this.done) throw exception; var context = this; function handle(loc, caught) { return record.type = "throw", record.arg = exception, context.next = loc, caught && (context.method = "next", context.arg = undefined), !!caught; } for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i], record = entry.completion; if ("root" === entry.tryLoc) return handle("end"); if (entry.tryLoc <= this.prev) { var hasCatch = hasOwn.call(entry, "catchLoc"), hasFinally = hasOwn.call(entry, "finallyLoc"); if (hasCatch && hasFinally) { if (this.prev < entry.catchLoc) return handle(entry.catchLoc, !0); if (this.prev < entry.finallyLoc) return handle(entry.finallyLoc); } else if (hasCatch) { if (this.prev < entry.catchLoc) return handle(entry.catchLoc, !0); } else { if (!hasFinally) throw new Error("try statement without catch or finally"); if (this.prev < entry.finallyLoc) return handle(entry.finallyLoc); } } } }, abrupt: function abrupt(type, arg) { for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i]; if (entry.tryLoc <= this.prev && hasOwn.call(entry, "finallyLoc") && this.prev < entry.finallyLoc) { var finallyEntry = entry; break; } } finallyEntry && ("break" === type || "continue" === type) && finallyEntry.tryLoc <= arg && arg <= finallyEntry.finallyLoc && (finallyEntry = null); var record = finallyEntry ? finallyEntry.completion : {}; return record.type = type, record.arg = arg, finallyEntry ? (this.method = "next", this.next = finallyEntry.finallyLoc, ContinueSentinel) : this.complete(record); }, complete: function complete(record, afterLoc) { if ("throw" === record.type) throw record.arg; return "break" === record.type || "continue" === record.type ? this.next = record.arg : "return" === record.type ? (this.rval = this.arg = record.arg, this.method = "return", this.next = "end") : "normal" === record.type && afterLoc && (this.next = afterLoc), ContinueSentinel; }, finish: function finish(finallyLoc) { for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i]; if (entry.finallyLoc === finallyLoc) return this.complete(entry.completion, entry.afterLoc), resetTryEntry(entry), ContinueSentinel; } }, "catch": function _catch(tryLoc) { for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i]; if (entry.tryLoc === tryLoc) { var record = entry.completion; if ("throw" === record.type) { var thrown = record.arg; resetTryEntry(entry); } return thrown; } } throw new Error("illegal catch attempt"); }, delegateYield: function delegateYield(iterable, resultName, nextLoc) { return this.delegate = { iterator: values(iterable), resultName: resultName, nextLoc: nextLoc }, "next" === this.method && (this.arg = undefined), ContinueSentinel; } }, exports; }
+	function ownKeys$1(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+	function _objectSpread$1(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$1(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$1(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
+	function loadExtension() {
+	  return _loadExtension.apply(this, arguments);
+	}
+	function _loadExtension() {
+	  _loadExtension = babelHelpers.asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee() {
+	    var _len,
+	      extensionName,
+	      _key,
+	      extensionNames,
+	      result,
+	      _args = arguments;
+	    return _regeneratorRuntime().wrap(function _callee$(_context) {
+	      while (1) switch (_context.prev = _context.next) {
+	        case 0:
+	          for (_len = _args.length, extensionName = new Array(_len), _key = 0; _key < _len; _key++) {
+	            extensionName[_key] = _args[_key];
+	          }
+	          extensionNames = extensionName.flat();
+	          result = extensionNames.map(function (name) {
+	            if (extensionsStorage.has(name)) {
+	              return extensionsStorage.get(name).load();
+	            }
+	            var extension = new Extension({
+	              name: name
+	            });
+	            extensionsStorage.set(name, extension);
+	            return extension.load();
+	          });
+	          return _context.abrupt("return", Promise.all(result).then(function (exports) {
+	            return exports.reduce(function (acc, currentExports) {
+	              if (Type.isObject(currentExports)) {
+	                return _objectSpread$1(_objectSpread$1({}, acc), currentExports);
+	              }
+	              return acc;
+	            }, {});
+	          }));
+	        case 4:
+	        case "end":
+	          return _context.stop();
+	      }
+	    }, _callee);
+	  }));
+	  return _loadExtension.apply(this, arguments);
 	}
 
 	var cloneableTags = ['[object Object]', '[object Array]', '[object RegExp]', '[object Arguments]', '[object Date]', '[object Error]', '[object Map]', '[object Set]', '[object ArrayBuffer]', '[object DataView]', '[object Float32Array]', '[object Float64Array]', '[object Int8Array]', '[object Int16Array]', '[object Int32Array]', '[object Uint8Array]', '[object Uint16Array]', '[object Uint32Array]', '[object Uint8ClampedArray]'];
@@ -6800,6 +6836,12 @@ window._main_polyfill_core = true;
 	  };
 	}
 
+	function registerExtension(options) {
+	  if (!extensionsStorage.has(options.name)) {
+	    extensionsStorage.set(options.name, new Extension(options));
+	  }
+	}
+
 	/**
 	 * @memberOf BX
 	 */
@@ -6862,9 +6904,9 @@ window._main_polyfill_core = true;
 
 	      // eslint-disable-next-line
 	      var parsedHtml = BX.processHTML(_html);
-	      var externalCss = parsedHtml.STYLE.reduce(externalStyles, []);
-	      var externalJs = parsedHtml.SCRIPT.reduce(externalScripts, []);
-	      var inlineJs = parsedHtml.SCRIPT.reduce(inlineScripts, []);
+	      var externalCss = parsedHtml.STYLE.reduce(fetchExternalStyles, []);
+	      var externalJs = parsedHtml.SCRIPT.reduce(fetchExternalScripts, []);
+	      var inlineJs = parsedHtml.SCRIPT.reduce(fetchInlineScripts, []);
 	      if (Type.isDomNode(node)) {
 	        if (params.htmlFirst || !externalJs.length && !externalCss.length) {
 	          if (params.useAdjacentHTML) {
@@ -6955,6 +6997,7 @@ window._main_polyfill_core = true;
 	}();
 	babelHelpers.defineProperty(Runtime, "debug", debug);
 	babelHelpers.defineProperty(Runtime, "loadExtension", loadExtension);
+	babelHelpers.defineProperty(Runtime, "registerExtension", registerExtension);
 	babelHelpers.defineProperty(Runtime, "clone", clone);
 
 	var _isError = Symbol["for"]('BX.BaseError.isError');
@@ -7413,6 +7456,12 @@ window._main_polyfill_core = true;
 	    key: "subscribeFromOptions",
 	    value: function subscribeFromOptions(options, aliases, compatMode) {
 	      var _this = this;
+	      if (Type.isArrayFilled(options)) {
+	        options.forEach(function (events) {
+	          _this.subscribeFromOptions(events);
+	        });
+	        return;
+	      }
 	      if (!Type.isPlainObject(options)) {
 	        return;
 	      }
@@ -8284,26 +8333,21 @@ window._main_polyfill_core = true;
 	// eslint-disable-next-line
 	exports.isReady = false;
 	function ready(handler) {
-	  switch (document.readyState) {
-	    case 'loading':
-	      stack.push(handler);
-	      break;
-	    case 'interactive':
-	    case 'complete':
-	      if (Type.isFunction(handler)) {
-	        handler();
-	      }
-	      exports.isReady = true;
-	      break;
-	    default:
-	      break;
+	  if (!Type.isFunction(handler)) {
+	    return;
+	  }
+	  if (exports.isReady) {
+	    handler();
+	  } else {
+	    stack.push(handler);
 	  }
 	}
-	document.addEventListener('readystatechange', function () {
-	  if (!exports.isReady) {
-	    stack.forEach(ready);
-	    stack = [];
-	  }
+	bindOnce(document, 'DOMContentLoaded', function () {
+	  exports.isReady = true;
+	  stack.forEach(function (handler) {
+	    handler();
+	  });
+	  stack = [];
 	});
 
 	/**
@@ -9144,8 +9188,8 @@ window._main_polyfill_core = true;
 	  return Browser;
 	}();
 
-	function ownKeys$1(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
-	function _objectSpread$1(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$1(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$1(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
+	function ownKeys$2(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+	function _objectSpread$2(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$2(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$2(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 	var Cookie = /*#__PURE__*/function () {
 	  function Cookie() {
 	    babelHelpers.classCallCheck(this, Cookie);
@@ -9195,7 +9239,7 @@ window._main_polyfill_core = true;
 	    key: "set",
 	    value: function set(name, value) {
 	      var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
-	      var attributes = _objectSpread$1({
+	      var attributes = _objectSpread$2({
 	        expires: ''
 	      }, options);
 	      if (Type.isNumber(attributes.expires)) {
@@ -9239,7 +9283,7 @@ window._main_polyfill_core = true;
 	    key: "remove",
 	    value: function remove(name) {
 	      var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
-	      Cookie.set(name, '', _objectSpread$1(_objectSpread$1({}, options), {}, {
+	      Cookie.set(name, '', _objectSpread$2(_objectSpread$2({}, options), {}, {
 	        expires: -1
 	      }));
 	    }
@@ -9943,8 +9987,8 @@ window._main_polyfill_core = true;
 	babelHelpers.defineProperty(Tag, "render", render);
 	babelHelpers.defineProperty(Tag, "attr", Tag.attrs);
 
-	function ownKeys$2(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
-	function _objectSpread$2(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$2(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$2(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
+	function ownKeys$3(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+	function _objectSpread$3(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$3(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$3(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 	function getParser(format) {
 	  switch (format) {
 	    case 'index':
@@ -10001,7 +10045,7 @@ window._main_polyfill_core = true;
 	  if (!url) {
 	    return {};
 	  }
-	  return _objectSpread$2({}, url.split('&').reduce(function (acc, param) {
+	  return _objectSpread$3({}, url.split('&').reduce(function (acc, param) {
 	    var _param$replace$split = param.replace(/\+/g, ' ').split('='),
 	      _param$replace$split2 = babelHelpers.slicedToArray(_param$replace$split, 2),
 	      key = _param$replace$split2[0],
@@ -10014,7 +10058,7 @@ window._main_polyfill_core = true;
 	    return acc;
 	  }, Object.create(null)));
 	}
-	var urlExp = /^((\w+):)?(\/\/((\w+)?(:(\w+))?@)?([^\/\?:]+)(:(\d+))?)?(\/?([^\/\?#][^\?#]*)?)?(\?([^#]+))?(#(\w*))?/;
+	var urlExp = /^((\w+):)?(\/\/((\w+)?(:(\w+))?@)?([^\/\?:]+)(:(\d+))?)?(\/?([^\/\?#][^\?#]*)?)?(\?([^#]+))?(#((?:[\w-?/:@.~!$&'()*+,;=]|%\w{2})*))?/;
 	function parseUrl(url) {
 	  var result = url.match(urlExp);
 	  if (Type.isArray(result)) {
@@ -10061,8 +10105,8 @@ window._main_polyfill_core = true;
 	  return queryString;
 	}
 
-	function ownKeys$3(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
-	function _objectSpread$3(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$3(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$3(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
+	function ownKeys$4(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+	function _objectSpread$4(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$4(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$4(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 	function prepareParamValue(value) {
 	  if (Type.isArray(value)) {
 	    return value.map(function (item) {
@@ -10070,13 +10114,13 @@ window._main_polyfill_core = true;
 	    });
 	  }
 	  if (Type.isPlainObject(value)) {
-	    return _objectSpread$3({}, value);
+	    return _objectSpread$4({}, value);
 	  }
 	  return String(value);
 	}
 
-	function ownKeys$4(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
-	function _objectSpread$4(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$4(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$4(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
+	function ownKeys$5(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+	function _objectSpread$5(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$5(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$5(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 	var map = new WeakMap();
 
 	/**
@@ -10231,7 +10275,7 @@ window._main_polyfill_core = true;
 	  }, {
 	    key: "getQueryParams",
 	    value: function getQueryParams() {
-	      return _objectSpread$4({}, map.get(this).queryParams);
+	      return _objectSpread$5({}, map.get(this).queryParams);
 	    }
 	    /**
 	     * Sets query params
@@ -10243,7 +10287,7 @@ window._main_polyfill_core = true;
 	    value: function setQueryParams() {
 	      var params = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 	      var currentParams = this.getQueryParams();
-	      var newParams = _objectSpread$4(_objectSpread$4({}, currentParams), params);
+	      var newParams = _objectSpread$5(_objectSpread$5({}, currentParams), params);
 	      Object.keys(newParams).forEach(function (key) {
 	        newParams[key] = prepareParamValue(newParams[key]);
 	      });
@@ -10258,7 +10302,7 @@ window._main_polyfill_core = true;
 	  }, {
 	    key: "removeQueryParam",
 	    value: function removeQueryParam() {
-	      var currentParams = _objectSpread$4({}, map.get(this).queryParams);
+	      var currentParams = _objectSpread$5({}, map.get(this).queryParams);
 	      for (var _len = arguments.length, keys = new Array(_len), _key = 0; _key < _len; _key++) {
 	        keys[_key] = arguments[_key];
 	      }
@@ -10297,7 +10341,7 @@ window._main_polyfill_core = true;
 	  }, {
 	    key: "serialize",
 	    value: function serialize() {
-	      var serialized = _objectSpread$4({}, map.get(this));
+	      var serialized = _objectSpread$5({}, map.get(this));
 	      serialized.href = this.toString();
 	      return serialized;
 	    }
@@ -10308,7 +10352,7 @@ window._main_polyfill_core = true;
 	  }, {
 	    key: "toString",
 	    value: function toString() {
-	      var data = _objectSpread$4({}, map.get(this));
+	      var data = _objectSpread$5({}, map.get(this));
 	      var protocol = data.schema ? "".concat(data.schema, "://") : '';
 	      if (data.useShort) {
 	        protocol = '//';
@@ -10568,8 +10612,8 @@ window._main_polyfill_core = true;
 	babelHelpers.defineProperty(Cache, "LocalStorageCache", LocalStorageCache);
 
 	var _Symbol$iterator;
-	function _classPrivateMethodInitSpec(obj, privateSet) { _checkPrivateRedeclaration(obj, privateSet); privateSet.add(obj); }
-	function _checkPrivateRedeclaration(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	function _classPrivateMethodInitSpec(obj, privateSet) { _checkPrivateRedeclaration$1(obj, privateSet); privateSet.add(obj); }
+	function _checkPrivateRedeclaration$1(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 	function _classPrivateMethodGet(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 	var _searchIndexToInsert = /*#__PURE__*/new WeakSet();
 	_Symbol$iterator = Symbol.iterator;
@@ -11145,8 +11189,8 @@ window._main_polyfill_core = true;
 	  return window;
 	}
 
-	function ownKeys$5(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
-	function _objectSpread$5(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$5(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$5(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
+	function ownKeys$6(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+	function _objectSpread$6(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$6(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$6(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 
 	// BX.*
 	var getClass = Reflection.getClass,
@@ -11194,7 +11238,7 @@ window._main_polyfill_core = true;
 	var getCookie = Http.Cookie.get;
 	var setCookie = function setCookie(name, value) {
 	  var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
-	  var attributes = _objectSpread$5({}, options);
+	  var attributes = _objectSpread$6({}, options);
 	  if (Type.isNumber(attributes.expires)) {
 	    attributes.expires /= 3600 * 24;
 	  }
@@ -11220,7 +11264,7 @@ window._main_polyfill_core = true;
 	  debounce = Runtime.debounce,
 	  throttle = Runtime.throttle,
 	  html = Runtime.html;
-	var type = _objectSpread$5(_objectSpread$5({}, Object.getOwnPropertyNames(Type).filter(function (key) {
+	var type = _objectSpread$6(_objectSpread$6({}, Object.getOwnPropertyNames(Type).filter(function (key) {
 	  return !['name', 'length', 'prototype', 'caller', 'arguments'].includes(key);
 	}).reduce(function (acc, key) {
 	  acc[key] = Type[key];
@@ -11295,7 +11339,7 @@ window._main_polyfill_core = true;
 	}
 	function GetWindowSize() {
 	  var doc = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : document;
-	  return _objectSpread$5(_objectSpread$5(_objectSpread$5({}, GetWindowInnerSize(doc)), GetWindowScrollPos(doc)), GetWindowScrollSize(doc));
+	  return _objectSpread$6(_objectSpread$6(_objectSpread$6({}, GetWindowInnerSize(doc)), GetWindowScrollPos(doc)), GetWindowScrollSize(doc));
 	}
 	function GetContext(node) {
 	  return getWindow(node);
@@ -11738,7 +11782,7 @@ window._main_polyfill_core = true;
 	        get: function get() {
 	          var _this$instance2;
 
-	          return (_this$instance2 = this.instance) !== null && _this$instance2 !== void 0 ? _this$instance2 : pull_client.PULL;
+	          return (_this$instance2 = this.instance) !== null && _this$instance2 !== void 0 ? _this$instance2 : pull_client.WidgetPULL;
 	        },
 	        set: function set(instance) {
 	          this.instance = instance;
@@ -29398,8 +29442,7 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 
 
 // file: /bitrix/js/pull/client/pull.client.js
-;(function ()
-{
+;(function () {
 	/**
 	 * Bitrix Push & Pull
 	 * Pull client
@@ -29418,7 +29461,7 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 	{
 		window.BX = {};
 	}
-	else if (window.BX.PullClient)
+	else if (window.BX.WidgetPullClient)
 	{
 		return;
 	}
@@ -29753,10 +29796,8 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 
 					this._subscribers[params.type][params.moduleId]['commands'][params.command].push(params.callback);
 
-					return function ()
-					{
-						this._subscribers[params.type][params.moduleId]['commands'][params.command] = this._subscribers[params.type][params.moduleId]['commands'][params.command].filter((element) =>
-						{
+					return function () {
+						this._subscribers[params.type][params.moduleId]['commands'][params.command] = this._subscribers[params.type][params.moduleId]['commands'][params.command].filter((element) => {
 							return element !== params.callback;
 						});
 					}.bind(this);
@@ -29765,10 +29806,8 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 				{
 					this._subscribers[params.type][params.moduleId]['callbacks'].push(params.callback);
 
-					return function ()
-					{
-						this._subscribers[params.type][params.moduleId]['callbacks'] = this._subscribers[params.type][params.moduleId]['callbacks'].filter((element) =>
-						{
+					return function () {
+						this._subscribers[params.type][params.moduleId]['callbacks'] = this._subscribers[params.type][params.moduleId]['callbacks'].filter((element) => {
 							return element !== params.callback;
 						});
 					}.bind(this);
@@ -29783,10 +29822,8 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 
 				this._subscribers[params.type].push(params.callback);
 
-				return function ()
-				{
-					this._subscribers[params.type] = this._subscribers[params.type].filter((element) =>
-					{
+				return function () {
+					this._subscribers[params.type] = this._subscribers[params.type].filter((element) => {
 						return element !== params.callback;
 					});
 				}.bind(this);
@@ -29814,8 +29851,7 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 			return this.subscribe({
 				type: type,
 				moduleId: handler.getModuleId(),
-				callback: function (data)
-				{
+				callback: function (data) {
 					let method = null;
 
 					if (typeof handler.getMap === 'function')
@@ -29885,8 +29921,7 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 
 				if (this._subscribers[params.type][params.moduleId]['callbacks'].length > 0)
 				{
-					this._subscribers[params.type][params.moduleId]['callbacks'].forEach(function (callback)
-					{
+					this._subscribers[params.type][params.moduleId]['callbacks'].forEach(function (callback) {
 						callback(params.data, {type: params.type, moduleId: params.moduleId});
 					});
 				}
@@ -29895,8 +29930,7 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 					this._subscribers[params.type][params.moduleId]['commands'][params.data.command]
 					&& this._subscribers[params.type][params.moduleId]['commands'][params.data.command].length > 0)
 				{
-					this._subscribers[params.type][params.moduleId]['commands'][params.data.command].forEach(function (callback)
-					{
+					this._subscribers[params.type][params.moduleId]['commands'][params.data.command].forEach(function (callback) {
 						callback(params.data.params, params.data.extra, params.data.command, {
 							type: params.type,
 							moduleId: params.moduleId
@@ -29918,8 +29952,7 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 					return true;
 				}
 
-				this._subscribers[params.type].forEach(function (callback)
-				{
+				this._subscribers[params.type].forEach(function (callback) {
 					callback(params.data, {type: params.type});
 				});
 
@@ -29958,14 +29991,13 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 
 			if (BX && BX.desktop)
 			{
-				BX.addCustomEvent("onDesktopReload", () =>
-				{
+				BX.addCustomEvent("onDesktopReload", () => {
 					this.session.mid = null;
 					this.session.tag = null;
 					this.session.time = null;
 				});
 
-				BX.desktop.addCustomEvent("BXLoginSuccess", () => this.restart(1000, "Desktop login"));
+				BX.desktop.addCustomEvent("BXLoginSuccess", () => this.restart(1000, "desktop login"));
 			}
 
 			this.jsonRpcAdapter = new JsonRpc({
@@ -30037,12 +30069,10 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 			}
 
 			this.starting = true;
-			return new Promise((resolve, reject) =>
-			{
+			return new Promise((resolve, reject) => {
 				this._startingPromise = {resolve, reject};
-				this.loadConfig().then(
-					(config) =>
-					{
+				this.loadConfig("client_start").then(
+					(config) => {
 						this.setConfig(config, allowConfigCaching);
 						this.init();
 						this.updateWatch();
@@ -30052,8 +30082,7 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 							error => reject(error)
 						);
 					},
-					(error) =>
-					{
+					(error) => {
 						this.starting = false;
 						this.status = PullStatus.Offline;
 						this.stopCheckConfig();
@@ -30198,8 +30227,7 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 						}
 					}
 				}
-				this.channelManager.getPublicIds(Object.keys(userIds)).then((publicIds) =>
-				{
+				this.channelManager.getPublicIds(Object.keys(userIds)).then((publicIds) => {
 					return this.connector.send(this.encodeMessageBatch(messageBatch, publicIds));
 				})
 			}
@@ -30208,8 +30236,7 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 		encodeMessageBatch(messageBatch, publicIds)
 		{
 			let messages = [];
-			messageBatch.forEach(function (messageFields)
-			{
+			messageBatch.forEach(function (messageFields) {
 				const messageBody = messageFields.body;
 
 				let receivers;
@@ -30228,8 +30255,7 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 					{
 						throw new Error('messageFields.publicChannels must be an array');
 					}
-					messageFields.channelList.forEach(function (publicChannel)
-					{
+					messageFields.channelList.forEach(function (publicChannel) {
 						let publicId;
 						let signature;
 						if (typeof (publicChannel) === 'string' && publicChannel.includes('.'))
@@ -30300,7 +30326,7 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 		 */
 		subscribeUserStatusChange(userId, callback)
 		{
-			if (typeof(userId) !== 'number')
+			if (typeof (userId) !== 'number')
 			{
 				throw new Error('userId must be a number');
 			}
@@ -30328,7 +30354,7 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 		 */
 		unsubscribeUserStatusChange(userId, callback)
 		{
-			if (typeof(userId) !== 'number')
+			if (typeof (userId) !== 'number')
 			{
 				throw new Error('userId must be a number');
 			}
@@ -30374,7 +30400,7 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 		 */
 		getUsersLastSeen(userList)
 		{
-			if (!Utils.isArray(userList) || !userList.every(item => typeof(item) === 'number'))
+			if (!Utils.isArray(userList) || !userList.every(item => typeof (item) === 'number'))
 			{
 				throw new Error('userList must be an array of numbers');
 			}
@@ -30454,6 +30480,10 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 			{
 				disconnectCode = CloseReasons.NORMAL_CLOSURE;
 			}
+			if (!disconnectReason)
+			{
+				disconnectReason = 'manual restart'
+			}
 			clearTimeout(this.restartTimeout);
 			console.warn(Utils.getDateForLog() + ': Pull: restarting with code ' + disconnectCode)
 			this.disconnect(disconnectCode, disconnectReason);
@@ -30463,16 +30493,15 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 			}
 			this.config = null;
 
-			this.loadConfig().then(
-				(config) =>
-				{
+			const loadConfigReason = disconnectCode + '_' + disconnectReason.replaceAll(' ', '_');
+			this.loadConfig(loadConfigReason).then(
+				(config) => {
 					this.setConfig(config, true);
 					this.updateWatch();
 					this.startCheckConfig();
 					this.connect().catch(error => console.error(error));
 				},
-				(error) =>
-				{
+				(error) => {
 					console.error(Utils.getDateForLog() + ': Pull: could not read push-server config', error);
 					this.status = PullStatus.Offline;
 
@@ -30490,7 +30519,7 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 			);
 		}
 
-		loadConfig()
+		loadConfig(logTag)
 		{
 			if (!this.config)
 			{
@@ -30519,10 +30548,8 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 				this.config = Object.assign({}, EmptyConfig);
 			}
 
-			return new Promise((resolve, reject) =>
-			{
-				this.restClient.callMethod(this.configGetMethod, {'CACHE': 'N'}).then((response) =>
-				{
+			return new Promise((resolve, reject) => {
+				this.restClient.callMethod(this.configGetMethod, {'CACHE': 'N'}, undefined, undefined, logTag).then((response) => {
 					const data = response.data();
 					let timeShift;
 
@@ -30533,8 +30560,7 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 					config.server.timeShift = timeShift;
 
 					resolve(config);
-				}).catch((response) =>
-				{
+				}).catch((response) => {
 					const error = response.error();
 					if (error.getError().error == "AUTHORIZE_ERROR" || error.getError().error == "WRONG_AUTH_TYPE")
 					{
@@ -30620,7 +30646,7 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 			else
 			{
 				this.logToConsole("Stale config detected. Restarting");
-				this.restart(CloseReasons.CONFIG_EXPIRED, "Config update required");
+				this.restart(CloseReasons.CONFIG_EXPIRED, "config expired");
 			}
 		}
 
@@ -30776,10 +30802,8 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 			this.logToConsole('Pull: scheduling reconnection in ' + connectionDelay + ' seconds; attempt # ' + this.connectionAttempt);
 
 			this.reconnectTimeout = setTimeout(
-				() =>
-				{
-					this.connect().catch(error =>
-					{
+				() => {
+					this.connect().catch(error => {
 						console.error(error)
 					})
 				},
@@ -30795,8 +30819,7 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 				return;
 			}
 
-			this.restoreWebSocketTimeout = setTimeout(() =>
-			{
+			this.restoreWebSocketTimeout = setTimeout(() => {
 				this.restoreWebSocketTimeout = 0;
 				this.restoreWebSocketConnection();
 			}, RESTORE_WEBSOCKET_TIMEOUT * 1000);
@@ -30823,8 +30846,7 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 
 			this.status = PullStatus.Connecting;
 			this.connectionAttempt++;
-			return new Promise((resolve, reject) =>
-			{
+			return new Promise((resolve, reject) => {
 				this._connectPromise = {resolve, reject}
 				this.connector.connect();
 			})
@@ -31332,7 +31354,7 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 			{
 				if (e.code == CloseReasons.WRONG_CHANNEL_ID)
 				{
-					this.scheduleRestart(CloseReasons.WRONG_CHANNEL_ID, "restarting to reload config");
+					this.scheduleRestart(CloseReasons.WRONG_CHANNEL_ID, "wrong channel signature");
 				}
 				else
 				{
@@ -31452,13 +31474,13 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 					}
 					else
 					{
-						this.restart(CloseReasons.CHANNEL_EXPIRED, "channel expired");
+						this.restart(CloseReasons.CHANNEL_EXPIRED, "channel expired received");
 					}
 					break;
 				}
 				case SystemCommands.CONFIG_EXPIRE:
 				{
-					this.restart(CloseReasons.CONFIG_EXPIRED, "config expired");
+					this.restart(CloseReasons.CONFIG_EXPIRED, "config expired received");
 					break;
 				}
 				case SystemCommands.SERVER_RESTART:
@@ -31533,8 +31555,8 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 					})
 				],
 				events: {
-					onPopupClose: () =>	this.notificationPopup.destroy(),
-					onPopupDestroy: () =>this.notificationPopup = null,
+					onPopupClose: () => this.notificationPopup.destroy(),
+					onPopupDestroy: () => this.notificationPopup = null,
 				}
 			});
 			this.notificationPopup.show();
@@ -31667,8 +31689,7 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 			else
 			{
 				let channels = [];
-				['private', 'shared'].forEach((type) =>
-				{
+				['private', 'shared'].forEach((type) => {
 					if (typeof this.config.channels[type] !== 'undefined')
 					{
 						channels.push(this.config.channels[type].id);
@@ -31780,8 +31801,7 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 				clearTimeout(this.offlineTimeout)
 			}
 			this.offlineTimeout = setTimeout(
-				() =>
-				{
+				() => {
 					this.offlineTimeout = null;
 					this.sendPullStatus(status);
 				},
@@ -31826,13 +31846,11 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 		updateWatch(force)
 		{
 			clearTimeout(this.watchUpdateTimeout);
-			this.watchUpdateTimeout = setTimeout(() =>
-			{
+			this.watchUpdateTimeout = setTimeout(() => {
 				const watchTags = Object.keys(this.watchTagsQueue);
 				if (watchTags.length > 0)
 				{
-					this.restClient.callMethod('pull.watch.extend', {tags: watchTags}, (result) =>
-					{
+					this.restClient.callMethod('pull.watch.extend', {tags: watchTags}, (result) => {
 						if (result.error())
 						{
 							this.updateWatch();
@@ -32433,10 +32451,8 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 				return Promise.resolve(result);
 			}
 
-			return new Promise((resolve) =>
-			{
-				this.restClient.callMethod(this.getPublicListMethod, {users: unknownUsers}).then((response) =>
-				{
+			return new Promise((resolve) => {
+				this.restClient.callMethod(this.getPublicListMethod, {users: unknownUsers}).then((response) => {
 					if (response.error())
 					{
 						return resolve({});
@@ -32444,8 +32460,7 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 
 					const data = response.data();
 					this.setPublicIds(Utils.objectValues(data));
-					unknownUsers.forEach((userId) =>
-					{
+					unknownUsers.forEach((userId) => {
 						result[userId] = this.publicIds[userId];
 					});
 
@@ -32584,8 +32599,7 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 			{
 				timeout = 5;
 			}
-			return new Promise((resolve, reject) =>
-			{
+			return new Promise((resolve, reject) => {
 				const request = this.createRequest(method, params);
 
 				if (!this.connector.send(JSON.stringify(request)))
@@ -32593,8 +32607,7 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 					reject(new ErrorNotConnected('websocket is not connected'));
 				}
 
-				const t = setTimeout(() =>
-				{
+				const t = setTimeout(() => {
 					this.rpcResponseAwaiters.delete(request.id);
 					reject(new ErrorTimeout('no response'));
 				}, timeout * 1000);
@@ -32612,8 +32625,7 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 		{
 			let requests = [];
 			let promises = [];
-			batch.forEach(({method, params, id}) =>
-			{
+			batch.forEach(({method, params, id}) => {
 				const request = this.createRequest(method, params, id);
 				requests.push(request);
 				promises.push(new Promise((resolve, reject) => this.rpcResponseAwaiters.set(request.id, {
@@ -32790,21 +32802,17 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 
 	const Utils = {
 		browser: {
-			IsChrome: function ()
-			{
+			IsChrome: function () {
 				return navigator.userAgent.toLowerCase().indexOf('chrome') != -1;
 			},
-			IsFirefox: function ()
-			{
+			IsFirefox: function () {
 				return navigator.userAgent.toLowerCase().indexOf('firefox') != -1;
 			},
-			IsIe: function ()
-			{
+			IsIe: function () {
 				return navigator.userAgent.match(/(Trident\/|MSIE\/)/) !== null;
 			}
 		},
-		getTimestamp: function ()
-		{
+		getTimestamp: function () {
 			return (new Date()).getTime();
 		},
 		/**
@@ -32812,16 +32820,14 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 		 * @param {array} errors
 		 * @return {string}
 		 */
-		errorsToString: function (errors)
-		{
+		errorsToString: function (errors) {
 			if (!this.isArray(errors))
 			{
 				return "";
 			}
 			else
 			{
-				return errors.reduce(function (result, currentValue)
-				{
+				return errors.reduce(function (result, currentValue) {
 					if (result != "")
 					{
 						result += "; ";
@@ -32830,28 +32836,22 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 				}, "");
 			}
 		},
-		isString: function (item)
-		{
+		isString: function (item) {
 			return item === '' ? true : (item ? (typeof (item) == "string" || item instanceof String) : false);
 		},
-		isArray: function (item)
-		{
+		isArray: function (item) {
 			return item && Object.prototype.toString.call(item) == "[object Array]";
 		},
-		isFunction: function (item)
-		{
+		isFunction: function (item) {
 			return item === null ? false : (typeof (item) == "function" || item instanceof Function);
 		},
-		isDomNode: function (item)
-		{
+		isDomNode: function (item) {
 			return item && typeof (item) == "object" && "nodeType" in item;
 		},
-		isDate: function (item)
-		{
+		isDate: function (item) {
 			return item && Object.prototype.toString.call(item) == "[object Date]";
 		},
-		isPlainObject: function (item)
-		{
+		isPlainObject: function (item) {
 			if (!item || typeof (item) !== "object" || item.nodeType)
 			{
 				return false;
@@ -32875,12 +32875,10 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 			}
 			return typeof (key) === "undefined" || hasProp.call(item, key);
 		},
-		isNotEmptyString: function (item)
-		{
+		isNotEmptyString: function (item) {
 			return this.isString(item) ? item.length > 0 : false;
 		},
-		isJsonRpcRequest: function (item)
-		{
+		isJsonRpcRequest: function (item) {
 			return (
 				typeof (item) === "object"
 				&& item
@@ -32890,8 +32888,7 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 				&& Utils.isNotEmptyString(item.method)
 			);
 		},
-		isJsonRpcResponse: function (item)
-		{
+		isJsonRpcResponse: function (item) {
 			return (
 				typeof (item) === "object"
 				&& item
@@ -32905,8 +32902,7 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 			);
 
 		},
-		buildQueryString: function (params)
-		{
+		buildQueryString: function (params) {
 			let result = '';
 			for (let key in params)
 			{
@@ -32917,8 +32913,7 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 				const value = params[key];
 				if (Utils.isArray(value))
 				{
-					value.forEach((valueElement, index) =>
-					{
+					value.forEach((valueElement, index) => {
 						result += encodeURIComponent(key + "[" + index + "]") + "=" + encodeURIComponent(valueElement) + "&";
 					});
 				}
@@ -32935,8 +32930,7 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 
 			return result;
 		},
-		objectValues: function values(obj)
-		{
+		objectValues: function values(obj) {
 			let result = [];
 			for (let key in obj)
 			{
@@ -32947,8 +32941,7 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 			}
 			return result;
 		},
-		clone: function (obj, bCopyObj)
-		{
+		clone: function (obj, bCopyObj) {
 			let _obj, i, l;
 			if (bCopyObj !== false)
 			{
@@ -33022,15 +33015,13 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 			return _obj;
 		},
 
-		getDateForLog: function ()
-		{
+		getDateForLog: function () {
 			const d = new Date();
 
 			return d.getFullYear() + "-" + Utils.lpad(d.getMonth(), 2, '0') + "-" + Utils.lpad(d.getDate(), 2, '0') + " " + Utils.lpad(d.getHours(), 2, '0') + ":" + Utils.lpad(d.getMinutes(), 2, '0');
 		},
 
-		lpad: function (str, length, chr)
-		{
+		lpad: function (str, length, chr) {
 			str = str.toString();
 			chr = chr || ' ';
 
@@ -33051,17 +33042,17 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 
 	if (
 		typeof BX.namespace !== 'undefined'
-		&& typeof BX.PULL === 'undefined'
+		&& typeof BX.WidgetPULL === 'undefined'
 	)
 	{
-		BX.PULL = new PullClient();
+		BX.WidgetPULL = new PullClient();
 	}
 
-	BX.PullClient = PullClient;
-	BX.PullClient.PullStatus = PullStatus;
-	BX.PullClient.SubscriptionType = SubscriptionType;
-	BX.PullClient.CloseReasons = CloseReasons;
-	BX.PullClient.StorageManager = StorageManager;
+	BX.WidgetPullClient = PullClient;
+	BX.WidgetPullClient.PullStatus = PullStatus;
+	BX.WidgetPullClient.SubscriptionType = SubscriptionType;
+	BX.WidgetPullClient.CloseReasons = CloseReasons;
+	BX.WidgetPullClient.StorageManager = StorageManager;
 })();
 
 
@@ -33090,7 +33081,7 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 	  },
 	  data: function data() {
 	    return {
-	      status: pull_client.PullClient.PullStatus.Online,
+	      status: pull_client.WidgetPullClient.PullStatus.Online,
 	      showed: null
 	    };
 	  },
@@ -33115,7 +33106,7 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 	      var _this2 = this;
 	      this.pullUnSubscribe();
 	      this.pullUnSubscribe = this.$Bitrix.PullClient.get().subscribe({
-	        type: pull_client.PullClient.SubscriptionType.Status,
+	        type: pull_client.WidgetPullClient.SubscriptionType.Status,
 	        callback: function callback(event) {
 	          return _this2.statusChange(event.status);
 	        }
@@ -33134,14 +33125,14 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 	      if (this.status === status) {
 	        return false;
 	      }
-	      var validStatus = [pull_client.PullClient.PullStatus.Online, pull_client.PullClient.PullStatus.Offline, pull_client.PullClient.PullStatus.Connecting];
+	      var validStatus = [pull_client.WidgetPullClient.PullStatus.Online, pull_client.WidgetPullClient.PullStatus.Offline, pull_client.WidgetPullClient.PullStatus.Connecting];
 	      if (validStatus.indexOf(status) < 0) {
 	        return false;
 	      }
 	      var timeout = 500;
-	      if (status === pull_client.PullClient.PullStatus.Connecting) {
+	      if (status === pull_client.WidgetPullClient.PullStatus.Connecting) {
 	        timeout = 5000;
-	      } else if (status === pull_client.PullClient.PullStatus.Offline) {
+	      } else if (status === pull_client.WidgetPullClient.PullStatus.Offline) {
 	        timeout = 2000;
 	      }
 	      this.setStatusTimeout = setTimeout(function () {
@@ -33158,7 +33149,7 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 	    status: function status() {
 	      var _this4 = this;
 	      clearTimeout(this.hideTimeout);
-	      if (this.status === pull_client.PullClient.PullStatus.Online) {
+	      if (this.status === pull_client.WidgetPullClient.PullStatus.Online) {
 	        clearTimeout(this.hideTimeout);
 	        this.hideTimeout = setTimeout(function () {
 	          return _this4.showed = false;
@@ -33174,22 +33165,22 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 	      } else if (this.showed === false) {
 	        result = "bx-pull-status-hide";
 	      }
-	      if (this.status === pull_client.PullClient.PullStatus.Online) {
+	      if (this.status === pull_client.WidgetPullClient.PullStatus.Online) {
 	        result += " bx-pull-status-online";
-	      } else if (this.status === pull_client.PullClient.PullStatus.Offline) {
+	      } else if (this.status === pull_client.WidgetPullClient.PullStatus.Offline) {
 	        result += " bx-pull-status-offline";
-	      } else if (this.status === pull_client.PullClient.PullStatus.Connecting) {
+	      } else if (this.status === pull_client.WidgetPullClient.PullStatus.Connecting) {
 	        result += " bx-pull-status-connecting";
 	      }
 	      return result;
 	    },
 	    connectionText: function connectionText() {
 	      var result = '';
-	      if (this.status === pull_client.PullClient.PullStatus.Online) {
+	      if (this.status === pull_client.WidgetPullClient.PullStatus.Online) {
 	        result = this.localize.BX_PULL_STATUS_ONLINE;
-	      } else if (this.status === pull_client.PullClient.PullStatus.Offline) {
+	      } else if (this.status === pull_client.WidgetPullClient.PullStatus.Offline) {
 	        result = this.localize.BX_PULL_STATUS_OFFLINE;
-	      } else if (this.status === pull_client.PullClient.PullStatus.Connecting) {
+	      } else if (this.status === pull_client.WidgetPullClient.PullStatus.Connecting) {
 	        result = this.localize.BX_PULL_STATUS_CONNECTING;
 	      }
 	      return result;
@@ -43494,6 +43485,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 
 
 // file: /bitrix/js/main/date/main.date.js
+/* eslint-disable */
 this.BX = this.BX || {};
 (function (exports,main_core) {
 	'use strict';
@@ -44411,7 +44403,6 @@ this.BX = this.BX || {};
 	babelHelpers.defineProperty(DateTimeFormat, "getFormat", getFormat);
 
 	const cache = new main_core.Cache.MemoryCache();
-
 	/**
 	 * @memberOf BX.Main.Timezone
 	 *
@@ -44434,14 +44425,35 @@ this.BX = this.BX || {};
 	  // By convention Bitrix uses the opposite approach, so change offset sign.
 	  get BROWSER_TO_UTC() {
 	    return cache.remember('BROWSER_TO_UTC', () => {
-	      return main_core.Text.toInteger(new Date().getTimezoneOffset() * 60);
+	      const offset = main_core.Text.toInteger(new Date().getTimezoneOffset() * 60);
+	      return -offset;
 	    });
 	  }
 	};
 	Object.freeze(Offset);
 
-	function _classStaticPrivateMethodGet(receiver, classConstructor, method) { _classCheckPrivateStaticAccess(receiver, classConstructor); return method; }
-	function _classCheckPrivateStaticAccess(receiver, classConstructor) { if (receiver !== classConstructor) { throw new TypeError("Private static access of wrong provenance"); } }
+	function normalizeTimeValue(timeValue) {
+	  if (main_core.Type.isDate(timeValue)) {
+	    return getTimestampFromDate(timeValue);
+	  }
+	  return main_core.Text.toInteger(timeValue);
+	}
+	function createDateFromTimestamp(timestampInSeconds) {
+	  return new Date(timestampInSeconds * 1000);
+	}
+	function getTimestampFromDate(date) {
+	  return Math.floor(date.getTime() / 1000);
+	}
+
+	let offset = Offset;
+	let now = null;
+	function getOffset() {
+	  return offset;
+	}
+	function getNowTimestamp() {
+	  var _now;
+	  return (_now = now) !== null && _now !== void 0 ? _now : getTimestampFromDate(new Date());
+	}
 
 	/**
 	 * @memberOf BX.Main.Timezone
@@ -44454,53 +44466,198 @@ this.BX = this.BX || {};
 	    babelHelpers.classCallCheck(this, BrowserTime);
 	  }
 	  babelHelpers.createClass(BrowserTime, null, [{
-	    key: "getTimestamp",
+	    key: "getDate",
 	    /**
-	     * Returns timestamp with current time in browser timezone.
+	     * Returns a Date object with time and date that represent a specific moment in Browser (device) timezone.
 	     *
-	     * @returns {number} timestamp in seconds
+	     * @param utcTimestamp - normal utc timestamp in seconds. 'now' by default
+	     * @returns {Date}
 	     */
-	    value: function getTimestamp() {
-	      return Math.round(Date.now() / 1000);
+	    value: function getDate(utcTimestamp = null) {
+	      const timestamp = main_core.Type.isNumber(utcTimestamp) ? utcTimestamp : this.getTimestamp();
+	      return createDateFromTimestamp(timestamp);
 	    }
 	    /**
-	     * Returns Date object with current time in browser timezone.
+	     * Transforms a moment in Browser (device) timezone to a moment in User timezone.
 	     *
+	     * ATTENTION! Date.getTime() and Date.getTimezoneOffset() will return inaccurate data. Since a native Date object
+	     * doesn't support timezone other that device timezone, we have to manually change timestamp to shift time value in
+	     * a Date object.
+	     *
+	     * @param browserTime - a moment in Browser (device) timezone. Either a Date object (recommended way). Or timestamp
+	     * in seconds in Browser timezone (see this.getTimestamp for details).
 	     * @returns {Date}
 	     */
 	  }, {
-	    key: "getDate",
-	    value: function getDate() {
-	      return new Date(this.getTimestamp() * 1000);
+	    key: "toUserDate",
+	    value: function toUserDate(browserTime) {
+	      return createDateFromTimestamp(this.toUser(browserTime));
 	    }
 	    /**
-	     * Converts timestamp in browser timezone to timestamp in user timezone.
+	     * Transforms a moment in Browser (device) timezone to a moment in Server timezone.
 	     *
-	     * @param browserTimestamp timestamp in browser timezone in seconds
-	     * @returns {number} timestamp in user timezone in seconds
+	     * ATTENTION! Date.getTime() and Date.getTimezoneOffset() will return inaccurate data. Since a native Date object
+	     * doesn't support timezone other that device timezone, we have to manually change timestamp to shift time value in
+	     * a Date object.
+	     *
+	     * @param browserTime - a moment in Browser (device) timezone. Either a Date object (recommended way). Or timestamp
+	     * in seconds in Browser timezone (see this.getTimestamp for details).
+	     * @returns {Date}
+	     */
+	  }, {
+	    key: "toServerDate",
+	    value: function toServerDate(browserTime) {
+	      return createDateFromTimestamp(this.toServer(browserTime));
+	    }
+	    /**
+	     * Transforms a moment in Browser (device) timezone to a timestamp in User timezone.
+	     * It's recommended to use this.toUserDate for more clear code.
+	     *
+	     * @param browserTime - a moment in Browser timezone. Either a Date object (recommended way). Or timestamp in seconds
+	     * in Browser timezone (see this.getTimestamp for details).
+	     * @returns {number} - timestamp that when passed to 'new Date' will create an object with absolute time matching
+	     * the time in User timezone
 	     */
 	  }, {
 	    key: "toUser",
-	    value: function toUser(browserTimestamp) {
-	      return main_core.Text.toInteger(browserTimestamp) + Offset.USER_TO_SERVER;
+	    value: function toUser(browserTime) {
+	      return this.toServer(browserTime) + getOffset().USER_TO_SERVER;
 	    }
 	    /**
-	     * Converts timestamp in browser timezone to timestamp in server timezone.
+	     * Transforms a moment in Browser (device) timezone to a timestamp in Server timezone.
+	     * It's recommended to use this.toServerDate for more clear code.
 	     *
-	     * @param browserTimestamp timestamp in browser timezone in seconds
-	     * @returns {number} timestamp in server timezone in seconds
+	     * @param browserTime - a moment in Browser timezone. Either a Date object (recommended way). Or timestamp in seconds
+	     * in Browser timezone (see this.getTimestamp for details).
+	     * @returns {number} - timestamp that when passed to 'new Date' will create an object with absolute time matching
+	     * the time in Server timezone
 	     */
 	  }, {
 	    key: "toServer",
-	    value: function toServer(browserTimestamp) {
-	      return _classStaticPrivateMethodGet(this, BrowserTime, _toUTC).call(this, browserTimestamp) + Offset.SERVER_TO_UTC;
+	    value: function toServer(browserTime) {
+	      return normalizeTimeValue(browserTime) - getOffset().BROWSER_TO_UTC + getOffset().SERVER_TO_UTC;
+	    }
+	    /**
+	     * Returns 'now' timestamp in Browser (device) timezone - when it's passed to a 'new Date', it will create an object
+	     * with absolute time matching the time as if it was in Browser (device) timezone.
+	     *
+	     * @returns {number}
+	     */
+	  }, {
+	    key: "getTimestamp",
+	    value: function getTimestamp() {
+	      // since 'Date' class in JS is hardcoded to use device timezone, 'browser timestamp' is just normal UTC timestamp :)
+
+	      return getNowTimestamp();
 	    }
 	  }]);
 	  return BrowserTime;
 	}();
-	function _toUTC(browserTimestamp) {
-	  return main_core.Text.toInteger(browserTimestamp) - Offset.BROWSER_TO_UTC;
-	}
+
+	/**
+	 * @memberOf BX.Main.Timezone
+	 *
+	 * WARNING! Don't use this class or any classes from Timezone namespace on sites without Bitrix Framework.
+	 * It is not designed to handle this case and will definitely break.
+	 */
+	let ServerTime = /*#__PURE__*/function () {
+	  function ServerTime() {
+	    babelHelpers.classCallCheck(this, ServerTime);
+	  }
+	  babelHelpers.createClass(ServerTime, null, [{
+	    key: "getDate",
+	    /**
+	     * Returns a Date object with time and date that represent a specific moment in Server timezone.
+	     *
+	     * ATTENTION! Date.getTime() and Date.getTimezoneOffset() will return inaccurate data. Since a native Date object
+	     * doesn't support timezone other that device timezone, we have to manually change timestamp to shift time value in
+	     * a Date object.
+	     *
+	     * @param utcTimestamp - normal utc timestamp in seconds. 'now' by default
+	     * @returns {Date}
+	     */
+	    value: function getDate(utcTimestamp = null) {
+	      if (main_core.Type.isNumber(utcTimestamp)) {
+	        const browserToServerOffset = getOffset().SERVER_TO_UTC - getOffset().BROWSER_TO_UTC;
+	        return createDateFromTimestamp(utcTimestamp + browserToServerOffset);
+	      }
+	      return BrowserTime.toServerDate(BrowserTime.getDate());
+	    }
+	    /**
+	     * Transforms a moment in Server timezone to a moment in User timezone.
+	     *
+	     * ATTENTION! Date.getTime() and Date.getTimezoneOffset() will return inaccurate data. Since a native Date object
+	     * doesn't support timezone other that device timezone, we have to manually change timestamp to shift time value in
+	     * a Date object.
+	     *
+	     * @param serverTime - a moment in Server timezone. Either a Date object (recommended way). Or timestamp in seconds in
+	     * Server timezone (see this.getTimestamp for details).
+	     * @returns {Date}
+	     */
+	  }, {
+	    key: "toUserDate",
+	    value: function toUserDate(serverTime) {
+	      return createDateFromTimestamp(this.toUser(serverTime));
+	    }
+	    /**
+	     * Transforms a moment in Server timezone to a moment in Browser (device) timezone.
+	     *
+	     * @param serverTime - a moment in Server timezone. Either a Date object (recommended way). Or timestamp in seconds in
+	     * Server timezone (see this.getTimestamp for details).
+	     * @returns {Date}
+	     */
+	  }, {
+	    key: "toBrowserDate",
+	    value: function toBrowserDate(serverTime) {
+	      return createDateFromTimestamp(this.toBrowser(serverTime));
+	    }
+	    /**
+	     * Transforms a moment in Server timezone to a timestamp in User timezone.
+	     * It's recommended to use this.toServerDate for more clear code.
+	     *
+	     * @param serverTime - a moment in Server timezone. Either a Date object (recommended way). Or timestamp in seconds in
+	     * Server timezone (see this.getTimestamp for details).
+	     * @returns {number} - timestamp that when passed to 'new Date' will create an object with absolute time matching
+	     * the time in User timezone
+	     */
+	  }, {
+	    key: "toUser",
+	    value: function toUser(serverTime) {
+	      return normalizeTimeValue(serverTime) + getOffset().USER_TO_SERVER;
+	    }
+	    /**
+	     * Transforms a moment in Server timezone to a timestamp in Browser (device) timezone.
+	     * It's recommended to use this.toBrowserDate for more clear code.
+	     *
+	     * @param serverTime - a moment in Server timezone. Either a Date object (recommended way). Or timestamp in seconds in
+	     * Server timezone (see this.getTimestamp for details).
+	     * @returns {number} - timestamp that when passed to 'new Date' will create an object with absolute time matching
+	     * the time in Browser (device) timezone
+	     */
+	  }, {
+	    key: "toBrowser",
+	    value: function toBrowser(serverTime) {
+	      return normalizeTimeValue(serverTime) + getOffset().BROWSER_TO_UTC - getOffset().SERVER_TO_UTC;
+	    }
+	    /**
+	     * Returns 'now' timestamp in Server timezone - when it's passed to a 'new Date', it will create an object with
+	     * absolute time matching the time as if it was in Server timezone.
+	     *
+	     * @returns {number}
+	     */
+	  }, {
+	    key: "getTimestamp",
+	    value: function getTimestamp() {
+	      return BrowserTime.toServer(BrowserTime.getTimestamp());
+	    }
+	  }]);
+	  return ServerTime;
+	}();
+
+	function _classStaticPrivateFieldSpecGet(receiver, classConstructor, descriptor) { _classCheckPrivateStaticAccess(receiver, classConstructor); _classCheckPrivateStaticFieldDescriptor(descriptor, "get"); return _classApplyDescriptorGet(receiver, descriptor); }
+	function _classCheckPrivateStaticFieldDescriptor(descriptor, action) { if (descriptor === undefined) { throw new TypeError("attempted to " + action + " private static field before its declaration"); } }
+	function _classCheckPrivateStaticAccess(receiver, classConstructor) { if (receiver !== classConstructor) { throw new TypeError("Private static access of wrong provenance"); } }
+	function _classApplyDescriptorGet(receiver, descriptor) { if (descriptor.get) { return descriptor.get.call(receiver); } return descriptor.value; }
 
 	/**
 	 * @memberOf BX.Main.Timezone
@@ -44516,113 +44673,108 @@ this.BX = this.BX || {};
 	    babelHelpers.classCallCheck(this, UserTime);
 	  }
 	  babelHelpers.createClass(UserTime, null, [{
-	    key: "getTimestamp",
+	    key: "getDate",
 	    /**
-	     * Returns timestamp with current time in user timezone.
+	     * Returns a Date object with time and date that represent a specific moment in User timezone.
 	     *
-	     * @returns {number} timestamp in seconds
+	     * ATTENTION! Date.getTime() and Date.getTimezoneOffset() will return inaccurate data. Since a native Date object
+	     * doesn't support timezone other that device timezone, we have to manually change timestamp to shift time value in
+	     * a Date object.
+	     *
+	     * @param utcTimestamp - normal utc timestamp in seconds. 'now' by default
+	     * @returns {Date}
 	     */
-	    value: function getTimestamp() {
-	      return BrowserTime.toUser(BrowserTime.getTimestamp());
+	    value: function getDate(utcTimestamp = null) {
+	      if (main_core.Type.isNumber(utcTimestamp)) {
+	        return createDateFromTimestamp(utcTimestamp + _classStaticPrivateFieldSpecGet(this, UserTime, _userToBrowserOffset));
+	      }
+	      return createDateFromTimestamp(this.getTimestamp());
+	    }
+	  }, {
+	    key: "toBrowserDate",
+	    /**
+	     * Transforms a moment in User timezone to a moment in Browser (device) timezone.
+	     *
+	     * @param userTime - a moment in User timezone. Either a Date object (recommended way). Or timestamp in seconds in
+	     * User timezone (see this.getTimestamp for details).
+	     * @returns {Date}
+	     */
+	    value: function toBrowserDate(userTime) {
+	      return createDateFromTimestamp(this.toBrowser(userTime));
 	    }
 	    /**
-	     * Returns Date object with current time in user timezone. If you need to get 'now' in a user's perspective,
-	     * use this method instead of 'new Date()'.
+	     * Transforms a moment in User timezone to a moment in Server timezone.
 	     *
-	     * Note that 'getTimezoneOffset' will not return correct user timezone, its always returns browser offset
+	     * ATTENTION! Date.getTime() and Date.getTimezoneOffset() will return inaccurate data. Since a native Date object
+	     * doesn't support timezone other that device timezone, we have to manually change timestamp to shift time value in
+	     * a Date object.
 	     *
+	     * @param userTime - a moment in User timezone. Either a Date object (recommended way). Or timestamp in seconds in
+	     * User timezone (see this.getTimestamp for details).
 	     * @returns {Date}
 	     */
 	  }, {
-	    key: "getDate",
-	    value: function getDate() {
-	      return new Date(this.getTimestamp() * 1000);
+	    key: "toServerDate",
+	    value: function toServerDate(userTime) {
+	      return createDateFromTimestamp(this.toServer(userTime));
+	    }
+	  }, {
+	    key: "toUTCTimestamp",
+	    value: function toUTCTimestamp(userTime) {
+	      return normalizeTimeValue(userTime) - _classStaticPrivateFieldSpecGet(this, UserTime, _userToBrowserOffset);
 	    }
 	    /**
-	     * Converts timestamp in user timezone to timestamp in browser timezone.
+	     * Transforms a moment in User timezone to a timestamp in Browser timezone.
+	     * It's recommended to use this.toBrowserDate for more clear code.
 	     *
-	     * @param userTimestamp timestamp in user timezone in seconds
-	     * @returns {number} timestamp in browser timezone in seconds
+	     * @param userTime - a moment in User timezone. Either a Date object (recommended way). Or timestamp in seconds in
+	     * User timezone (see this.getTimestamp for details).
+	     * @returns {number} - timestamp that when passed to 'new Date' will create an object with absolute time matching
+	     * the time in Browser (device) timezone
 	     */
 	  }, {
 	    key: "toBrowser",
-	    value: function toBrowser(userTimestamp) {
-	      return main_core.Text.toInteger(userTimestamp) + Offset.BROWSER_TO_UTC - Offset.SERVER_TO_UTC - Offset.USER_TO_SERVER;
+	    value: function toBrowser(userTime) {
+	      return normalizeTimeValue(userTime) + getOffset().BROWSER_TO_UTC - getOffset().SERVER_TO_UTC - getOffset().USER_TO_SERVER;
 	    }
 	    /**
-	     * Converts timestamp in user timezone to timestamp in server timezone.
+	     * Transforms a moment in User timezone to a timestamp in Server timezone.
+	     * It's recommended to use this.toServerDate for more clear code.
 	     *
-	     * @param userTimestamp timestamp in user timezone in seconds
-	     * @returns {number} timestamp in server timezone in seconds
+	     * @param userTime - a moment in User timezone. Either a Date object (recommended way). Or timestamp in seconds in
+	     * User timezone (see this.getTimestamp for details).
+	     * @returns {number} - timestamp that when passed to 'new Date' will create an object with absolute time matching
+	     * the time in Server timezone
 	     */
 	  }, {
 	    key: "toServer",
-	    value: function toServer(userTimestamp) {
-	      return main_core.Text.toInteger(userTimestamp) - Offset.USER_TO_SERVER;
+	    value: function toServer(userTime) {
+	      return normalizeTimeValue(userTime) - getOffset().USER_TO_SERVER;
+	    }
+	    /**
+	     * Returns 'now' timestamp in User timezone - when it's passed to a 'new Date', it will create an object with absolute
+	     * time matching the time as if it was in User timezone.
+	     *
+	     * @returns {number}
+	     */
+	  }, {
+	    key: "getTimestamp",
+	    value: function getTimestamp() {
+	      return BrowserTime.toUser(BrowserTime.getTimestamp());
 	    }
 	  }]);
 	  return UserTime;
 	}();
+	function _get_userToBrowserOffset() {
+	  const userToUTCOffset = getOffset().SERVER_TO_UTC + getOffset().USER_TO_SERVER;
+	  return userToUTCOffset - getOffset().BROWSER_TO_UTC;
+	}
+	var _userToBrowserOffset = {
+	  get: _get_userToBrowserOffset,
+	  set: void 0
+	};
 
-	/**
-	 * @memberOf BX.Main.Timezone
-	 *
-	 * WARNING! Don't use this class or any classes from Timezone namespace on sites without Bitrix Framework.
-	 * It is not designed to handle this case and will definitely break.
-	 */
-	let ServerTime = /*#__PURE__*/function () {
-	  function ServerTime() {
-	    babelHelpers.classCallCheck(this, ServerTime);
-	  }
-	  babelHelpers.createClass(ServerTime, null, [{
-	    key: "getTimestamp",
-	    /**
-	     * Returns timestamp with current time in server timezone.
-	     *
-	     * @returns {number} timestamp in seconds
-	     */
-	    value: function getTimestamp() {
-	      return BrowserTime.toServer(BrowserTime.getTimestamp());
-	    }
-	    /**
-	     * Returns Date object with current time in server timezone.
-	     *
-	     * Note that 'getTimezoneOffset' will not return correct server timezone, its always returns browser offset
-	     *
-	     * @returns {Date}
-	     */
-	  }, {
-	    key: "getDate",
-	    value: function getDate() {
-	      return new Date(this.getTimestamp() * 1000);
-	    }
-	    /**
-	     * Converts timestamp in server timezone to timestamp in user timezone.
-	     *
-	     * @param serverTimestamp timestamp in server timezone in seconds
-	     * @returns {number} timestamp in user timezone in seconds
-	     */
-	  }, {
-	    key: "toUser",
-	    value: function toUser(serverTimestamp) {
-	      return main_core.Text.toInteger(serverTimestamp) + Offset.USER_TO_SERVER;
-	    }
-	    /**
-	     * Converts timestamp in server timezone to timestamp in browser timezone.
-	     *
-	     * @param serverTimestamp timestamp in server timezone in seconds
-	     * @returns {number} timestamp in browser timezone in seconds
-	     */
-	  }, {
-	    key: "toBrowser",
-	    value: function toBrowser(serverTimestamp) {
-	      return main_core.Text.toInteger(serverTimestamp) + Offset.BROWSER_TO_UTC - Offset.SERVER_TO_UTC;
-	    }
-	  }]);
-	  return ServerTime;
-	}();
-
-	//compatibility alias
+	// compatibility alias
 	const Date$1 = DateTimeFormat;
 	const Timezone = Object.freeze({
 	  Offset,
@@ -58062,7 +58214,7 @@ this.BX.Messenger.Provider = this.BX.Messenger.Provider || {};
 	  }, {
 	    key: "getSubscriptionType",
 	    value: function getSubscriptionType() {
-	      return pull_client.PullClient.SubscriptionType.Server;
+	      return pull_client.WidgetPullClient.SubscriptionType.Server;
 	    }
 	  }, {
 	    key: "skipExecute",
@@ -58573,7 +58725,7 @@ this.BX.Messenger.Provider = this.BX.Messenger.Provider || {};
 	  }, {
 	    key: "getSubscriptionType",
 	    value: function getSubscriptionType() {
-	      return pull_client.PullClient.SubscriptionType.Server;
+	      return pull_client.WidgetPullClient.SubscriptionType.Server;
 	    }
 	  }, {
 	    key: "handleChatUserAdd",
@@ -58716,7 +58868,7 @@ this.BX.Messenger.Provider = this.BX.Messenger.Provider || {};
 	  }, {
 	    key: "getSubscriptionType",
 	    value: function getSubscriptionType() {
-	      return pull_client.PullClient.SubscriptionType.Server;
+	      return pull_client.WidgetPullClient.SubscriptionType.Server;
 	    }
 	  }, {
 	    key: "handleNotifyAdd",
@@ -59670,8 +59822,8 @@ this.BX = this.BX || {};
 	      } else {
 	        this.languageId = this.getLocalize('LANGUAGE_ID') || 'en';
 	      }
-	      this.pullInstance = pull_client.PullClient;
-	      this.pullClient = pull_client.PULL;
+	      this.pullInstance = pull_client.WidgetPullClient;
+	      this.pullClient = pull_client.WidgetPULL;
 	      if (typeof params.pull !== 'undefined') {
 	        if (typeof params.pull.instance !== 'undefined') {
 	          this.pullInstance = params.pull.instance;
@@ -66489,7 +66641,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  }, {
 	    key: "initPullClient",
 	    value: function initPullClient() {
-	      this.pullClient = new pull_client.PullClient({
+	      this.pullClient = new pull_client.WidgetPullClient({
 	        serverEnabled: true,
 	        userId: 0,
 	        siteId: this.getSiteId(),
@@ -67056,7 +67208,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        _this9.pullClient.userId = _this9.getUserId();
 	        _this9.pullClient.configTimestamp = config ? config.server.config_timestamp : 0;
 	        _this9.pullClient.skipStorageInit = false;
-	        _this9.pullClient.storage = new pull_client.PullClient.StorageManager({
+	        _this9.pullClient.storage = new pull_client.WidgetPullClient.StorageManager({
 	          userId: _this9.getUserId(),
 	          siteId: _this9.getSiteId()
 	        });
@@ -67071,13 +67223,13 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          widget: _this9
 	        }));
 	        _this9.pullClient.subscribe({
-	          type: pull_client.PullClient.SubscriptionType.Status,
+	          type: pull_client.WidgetPullClient.SubscriptionType.Status,
 	          callback: _this9.eventStatusInteraction.bind(_this9)
 	        });
 	        _this9.pullConnectedFirstTime = _this9.pullClient.subscribe({
-	          type: pull_client.PullClient.SubscriptionType.Status,
+	          type: pull_client.WidgetPullClient.SubscriptionType.Status,
 	          callback: function callback(result) {
-	            if (result.status === pull_client.PullClient.PullStatus.Online) {
+	            if (result.status === pull_client.WidgetPullClient.PullStatus.Online) {
 	              resolve(true);
 	              _this9.pullConnectedFirstTime();
 	            }
@@ -67103,21 +67255,21 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    key: "stopPullClient",
 	    value: function stopPullClient() {
 	      if (this.pullClient) {
-	        this.pullClient.stop(pull_client.PullClient.CloseReasons.MANUAL, 'Closed manually');
+	        this.pullClient.stop(pull_client.WidgetPullClient.CloseReasons.MANUAL, 'Closed manually');
 	      }
 	    }
 	  }, {
 	    key: "recoverPullConnection",
 	    value: function recoverPullConnection() {
 	      // this.pullClient.session.mid = 0; // TODO specially for disable pull history, remove after recode im
-	      this.pullClient.restart(pull_client.PullClient.CloseReasons.MANUAL, 'Restart after click by connection status button.');
+	      this.pullClient.restart(pull_client.WidgetPullClient.CloseReasons.MANUAL, 'Restart after click by connection status button.');
 	    }
 	  }, {
 	    key: "eventStatusInteraction",
 	    value: function eventStatusInteraction(data) {
-	      if (data.status === pull_client.PullClient.PullStatus.Online) {
+	      if (data.status === pull_client.WidgetPullClient.PullStatus.Online) {
 	        this.onPullOnlineStatus();
-	      } else if (data.status === pull_client.PullClient.PullStatus.Offline) {
+	      } else if (data.status === pull_client.WidgetPullClient.PullStatus.Offline) {
 	        this.pullRequestMessage = true;
 	        this.offline = true;
 	      }

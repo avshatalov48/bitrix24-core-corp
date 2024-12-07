@@ -33,6 +33,7 @@ jn.define('communication/events/phone', (require, exports, module) => {
 					...params,
 					AUTO_FOLD: true,
 				},
+				isNumberHidden: this.props.isNumberHidden,
 			};
 		}
 

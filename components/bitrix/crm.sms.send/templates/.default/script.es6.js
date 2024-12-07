@@ -83,6 +83,7 @@ class CrmSmsSend
 		this._templateCode = BX.prop.getString(settings, 'templateCode');
 		this._templatePlaceholders = BX.prop.getObject(settings, 'templatePlaceholders');
 		this._linkToMarket = BX.prop.getString(settings, 'linkToMarket');
+		this._selectedProviderId = BX.prop.getString(settings, 'selectedProviderId', null);
 
 		this._title = this._container.querySelector('[data-role="sender-title"]');
 		this._senderContainerNode = this._container.querySelector('[data-role="sender-container"]');
@@ -129,7 +130,7 @@ class CrmSmsSend
 
 	initSenderSelector()
 	{
-		const defaultSenderId = this._senderId ?? this._defaults.senderId;
+		const defaultSenderId = this._selectedProviderId ?? this._senderId ?? this._defaults.senderId;
 		let defaultSender = this._senders[0].canUse ? this._senders[0] : null;
 		let restSender = null;
 		const menuItems = [];
@@ -229,7 +230,7 @@ class CrmSmsSend
 	{
 		if (this._fromList.length > 0)
 		{
-			const defaultFromId = this._defaults.from || this._fromList[0].id;
+			const defaultFromId = this._selectedProviderId || this._defaults.from || this._fromList[0].id;
 			let defaultFrom = null;
 			for (let i = 0; i < this._fromList.length; ++i)
 			{

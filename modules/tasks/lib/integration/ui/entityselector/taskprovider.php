@@ -38,7 +38,11 @@ class TaskProvider extends BaseProvider
 	public function doSearch(SearchQuery $searchQuery, Dialog $dialog): void
 	{
 		$dialog->addItems(
-			$this->getTaskItems(['searchQuery' => $searchQuery->getQuery()])
+			$this->getTaskItems([
+				'searchQuery' => $searchQuery->getQuery(),
+				'parentId' => $this->getParentId($dialog),
+				'excludeIds' => $this->getExcludeIds($dialog),
+			])
 		);
 	}
 
@@ -48,7 +52,12 @@ class TaskProvider extends BaseProvider
 
 		if ($dialog->getItemCollection()->count() < self::$maxCount)
 		{
-			$taskItems = $this->getTaskItems(['excludeIds' => $this->getRecentItemsIds($dialog)]);
+			$taskItems = $this->getTaskItems([
+				'excludeIds' => array_unique(
+					array_merge($this->getRecentItemsIds($dialog), $this->getExcludeIds($dialog))
+				),
+				'parentId' => $this->getParentId($dialog),
+			]);
 			foreach ($taskItems as $item)
 			{
 				/** @var Item $item */
@@ -70,7 +79,11 @@ class TaskProvider extends BaseProvider
 			return;
 		}
 
-		$tasks = $this->getTasks(['ids' => $this->getRecentItemsIds($dialog)]);
+		$tasks = $this->getTasks([
+			'ids' => $this->getRecentItemsIds($dialog),
+			'parentId' => $this->getParentId($dialog),
+			'excludeIds' => $this->getExcludeIds($dialog),
+		]);
 		foreach ($dialog->getRecentItems()->getAll() as $item)
 		{
 			/** @var RecentItem $item */
@@ -171,6 +184,14 @@ class TaskProvider extends BaseProvider
 			$filter['!ID'] = $options['excludeIds'];
 		}
 
+		if (
+			array_key_exists('parentId', $options)
+			&& is_numeric($options['parentId'])
+		)
+		{
+			$filter['PARENT_ID'] = [$options['parentId'], 0];
+		}
+
 		return $filter;
 	}
 
@@ -196,5 +217,39 @@ class TaskProvider extends BaseProvider
 		}
 
 		return $result;
+	}
+
+	private function getParentId(Dialog $dialog): ?int
+	{
+		$parentId = null;
+		$entity = $dialog->getEntity('task');
+		if (!empty($entity))
+		{
+			$taskOptions = $entity->getOptions();
+
+			if (!empty($taskOptions['parentId']) && is_numeric($taskOptions['parentId']))
+			{
+				$parentId = (int)$taskOptions['parentId'];
+			}
+		}
+
+		return $parentId;
+	}
+
+	private function getExcludeIds(Dialog $dialog): array
+	{
+		$excludeIds = [];
+		$entity = $dialog->getEntity('task');
+		if (!empty($entity))
+		{
+			$taskOptions = $entity->getOptions();
+
+			if (!empty($taskOptions['excludeIds']) && is_array($taskOptions['excludeIds']))
+			{
+				$excludeIds = array_filter($taskOptions['excludeIds'], 'is_numeric');
+			}
+		}
+
+		return $excludeIds;
 	}
 }

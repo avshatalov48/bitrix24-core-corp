@@ -357,7 +357,7 @@
 	min-height: 51px;
 }
 
-.crm-kanban-preloader-wapper {
+.crm-kanban-preloader-wrapper {
 	position: absolute;
 	left: 50%;
 	-webkit-transform: translate(-50%,0%);
@@ -400,7 +400,7 @@
 	stroke-linecap: round;
 }
 
-.crm-kanban-item-connect {
+.crm-kanban-item-aside {
 	position: absolute;
 	top: 5px;
 	right: 5px;
@@ -414,13 +414,13 @@
 	z-index: 9;
 }
 
-.crm-kanban-multi-select-mode .crm-kanban-item-connect,
-.crm-kanban-item-selected .crm-kanban-item-connect {
+.crm-kanban-multi-select-mode .crm-kanban-item-aside,
+.crm-kanban-item-selected .crm-kanban-item-aside {
 	opacity: 0;
 	pointer-events: none;
 }
 
-.crm-kanban-item-event .crm-kanban-item-connect {
+.crm-kanban-item-event .crm-kanban-item-aside {
 	pointer-events: auto;
 }
 
@@ -696,7 +696,6 @@
 .crm-kanban-total-price-total {
 	width: 100%;
 	overflow: hidden;
-	display: inline-block;
 	font-size: 26px;
 	white-space: nowrap;
 	-ms-text-overflow: ellipsis;
@@ -1283,6 +1282,7 @@ a.crm-kanban-sidepanel:hover {
 	display: block;
 	overflow: hidden;
 	padding-bottom: 10px;
+	flex-grow: 1;
 }
 
 .crm-kanban-item-fields-item {

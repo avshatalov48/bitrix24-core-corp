@@ -48,7 +48,7 @@ if ($arResult['RESTRICTED_LICENCE'] == 'Y')
 		<span class="tariff-lock"></span>
 	</label>
 	</div>
-	<script type="text/javascript">
+	<script>
 		BX.bind(BX('crm-recur-edit-replication-block'), 'click', function(e){
 			<?=$arResult["TRIAL_TEXT"]['LOCK_SCRIPT']?>
 		});

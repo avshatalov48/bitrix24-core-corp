@@ -1,6 +1,7 @@
 <?php
 $MESS["SONET_UM_GENERAL"] = "Основное";
 $MESS["SONET_UM_NEWS"] = "Новости";
+$MESS["SONET_UM_NEWS2"] = "Лента";
 $MESS["SONET_UM_MODS"] = "Модераторы";
 $MESS["SONET_UM_PHOTO"] = "Фото";
 $MESS["SONET_UM_FORUM"] = "Форум";

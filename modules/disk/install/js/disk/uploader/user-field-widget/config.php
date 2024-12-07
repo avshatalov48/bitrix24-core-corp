@@ -1,6 +1,7 @@
 <?php
 
 use Bitrix\Disk\Document\LocalDocumentController;
+use Bitrix\Disk\Integration\Bitrix24Manager;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
@@ -38,6 +39,9 @@ if ($canCreateDocuments)
 	];
 }
 
+$importFeatureId = 'disk_import_cloud_files';
+$isFeatureImportEnabled = Bitrix24Manager::isFeatureEnabled($importFeatureId);
+
 return [
 	'js' => 'dist/disk.uploader.uf-file.bundle.js',
 	'css' => 'dist/disk.uploader.uf-file.bundle.css',
@@ -47,9 +51,9 @@ return [
 		'ui.uploader.vue',
 		'ui.uploader.tile-widget',
 		'main.popup',
+		'ui.info-helper',
 
 		// it would be better to load these extensions on demand
-		'disk.google-drive-picker',
 		'disk.document',
 		'disk.viewer.actions',
 	],
@@ -58,5 +62,7 @@ return [
 		'canCreateDocuments' => $canCreateDocuments,
 		'documentHandlers' => $documentHandlers,
 		'importHandlers' => $importHandlers,
+		'canUseImport' => $isFeatureImportEnabled,
+		'importFeatureId' => 'disk_import_cloud_files',
 	],
 ];

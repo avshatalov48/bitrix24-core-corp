@@ -127,6 +127,29 @@ BX.CrmDiskUploader.prototype =
 		}
 		return result;
 	},
+	getFileRawIds: function()
+	{
+		let result = [];
+		for(var i = 0; i < this._items.length; i++)
+		{
+			const id = this._items[i].getId();
+			const attachId = this._items[i].getAttachId();
+
+			if(!Number.isNaN(id) && id > 0) // already attached file has numuric id
+			{
+				result.push(id);
+			}
+			else if (BX.Type.isString(id) && id.length > 0 && id[0] === 'n') // uploaded from disk module has 'n' prefix
+			{
+				result.push(id);
+			}
+			else if (attachId) // uploaded from device has attachId
+			{
+				result.push(attachId);
+			}
+		}
+		return result;
+	},
 	getValues: function()
 	{
 		return this.getFileIds();
@@ -644,7 +667,8 @@ BX.CrmDiskUploader.prototype =
 		BX.removeCustomEvent(queueItem, "onUploadDone", this._fileUploadCompleteHandler);
 		BX.removeCustomEvent(queueItem, "onUploadError", this._fileUploadErrorHandler);
 
-		var fileId = 0;
+		let fileId = 0;
+		let attachId = null;
 		if(typeof(params.file) !== "undefined")
 		{
 			if(typeof(params.file["fileId"]) !== "undefined")
@@ -655,10 +679,16 @@ BX.CrmDiskUploader.prototype =
 			{
 				fileId = parseInt(params.file["originalId"]);
 			}
+
+			if(params.file.attachId)
+			{
+				attachId = params.file.attachId || null;
+			}
 		}
 
 		if(fileId > 0 )
 		{
+			item.setAttachId(attachId);
 			item.setFileId(fileId);
 		}
 
@@ -765,6 +795,7 @@ BX.CrmDiskUploaderItem = function()
 	this._size = "";
 	this._viewUrl = "";
 	this._progress = 0;
+	this._attachId = null;
 
 	this._uploader = this._container = this._wrapper = null;
 	this._progressContainer = this._progressWrap = this._progressTerminateBtn = this._progressBar = this._progressText = this._deleteButton = null;
@@ -804,6 +835,14 @@ BX.CrmDiskUploaderItem.prototype =
 	setFileId: function(fileId)
 	{
 		this._fileId = fileId;
+	},
+	getAttachId: function()
+	{
+		return this._attachId;
+	},
+	setAttachId: function(attachId)
+	{
+		this._attachId = attachId;
 	},
 	getName: function()
 	{
@@ -869,7 +908,19 @@ BX.CrmDiskUploaderItem.prototype =
 
 		if(this._viewUrl !== "")
 		{
-			cell.appendChild(BX.create("A", { attrs: { className: "files-text", href: this._viewUrl }, text: this._name }));
+			cell.appendChild(
+				BX.create(
+					"A",
+					{
+						attrs: {
+							download: this._name,
+							className: "files-text",
+							href: this._viewUrl,
+						},
+						text: this._name
+					}
+				)
+			);
 		}
 		else
 		{

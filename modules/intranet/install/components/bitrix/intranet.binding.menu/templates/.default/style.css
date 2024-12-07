@@ -26,14 +26,42 @@
 	background: none;
 }
 
-.intranet-binding-menu-btn {
-	margin-right: 10px;
+.intranet-binding-menu-page.crm-iframe-popup .intranet-binding-menu-btn {
 	display: inline-flex !important;
+	margin-right: 16px;
+	padding-top: 10px;
+	padding-bottom: 10px;
 }
 
-.intranet-binding-menu-btn + script + .ui-btn {
-	margin-left: 0;
+.intranet-binding-menu-page.crm-iframe-popup .intranet-binding-menu-btn .ui-btn-main {
+	max-width: 400px;
+	height: auto;
+	min-height: var(--ui-btn-height);
+	margin: -10px 0 -10px 0;
+	padding: 0 20px;
 }
+
+.intranet-binding-menu-page.crm-iframe-popup .intranet-binding-menu-btn .ui-btn-main span {
+	white-space: normal;
+	line-height: 1.5;
+	overflow: hidden;
+	text-align: left;
+	text-overflow: ellipsis;
+	display: -moz-box;
+	-moz-box-orient: vertical;
+	display: -webkit-box;
+	-webkit-line-clamp: 3;
+	-webkit-box-orient: vertical;
+	line-clamp: 3;
+}
+
+.intranet-binding-menu-page.crm-iframe-popup .intranet-binding-menu-btn .ui-btn-menu {
+	height: auto;
+}
+
+/*.intranet-binding-menu-btn + script + .ui-btn {*/
+/*	margin-left: 0;*/
+/*}*/
 
 #crm_invoice_toolbar .intranet-binding-menu-btn,
 #toolbar_quote_show_1 .intranet-binding-menu-btn {

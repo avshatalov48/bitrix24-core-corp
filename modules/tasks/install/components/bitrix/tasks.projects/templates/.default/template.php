@@ -251,7 +251,7 @@ $APPLICATION->IncludeComponent(
 $navigationHtml = ob_get_clean();
 ?>
 
-<script type="text/javascript">
+<script>
 	var actionsPanel;
 	BX.ready(function() {
 		BX.addCustomEvent('BX.UI.ActionPanel:created', function(panel) {
@@ -364,7 +364,7 @@ $APPLICATION->IncludeComponent(
 );
 ?>
 
-<script type="text/javascript">
+<script>
 	BX.ready(function() {
 		BX.message({
 			TASKS_PROJECTS_MEMBERS_POPUP_TITLE_ALL: '<?= GetMessageJS('TASKS_PROJECTS_MEMBERS_POPUP_TITLE_ALL') ?>',

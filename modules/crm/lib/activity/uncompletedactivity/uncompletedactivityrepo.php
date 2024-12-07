@@ -74,21 +74,30 @@ class UncompletedActivityRepo
 			{
 				if (mb_strpos($e->getMessage(), 'Duplicate entry') !== false)
 				{
-					$existedMoreActualRecord = EntityUncompletedActivityTable::query()
+					$existedRecords = EntityUncompletedActivityTable::query()
 						->where('ENTITY_TYPE_ID', $dto->itemIdentifier()->getEntityTypeId())
 						->where('ENTITY_ID', $dto->itemIdentifier()->getEntityId())
 						->where('RESPONSIBLE_ID', $dto->responsibleId())
-						->where('MIN_DEADLINE', $fields['MIN_DEADLINE'])
-						->setLimit(1)
+						->setLimit(10)
 						->setSelect(['ID'])
-						->fetch()
+						->fetchAll()
 					;
-					if (!$existedMoreActualRecord || (int)$existedMoreActualRecord['ID'] === (int)$existedRecord['ID'])
+
+					$existedRecordsIds = array_column($existedRecords, 'ID');
+
+					if (empty($existedRecordsIds))
 					{
 						throw $e;
 					}
-					EntityUncompletedActivityTable::update((int)$existedMoreActualRecord['ID'], $fields);
-					EntityUncompletedActivityTable::delete((int)$existedRecord['ID']);
+
+					$lastId = array_pop($existedRecordsIds);
+
+					if (count($existedRecordsIds) > 0)
+					{
+						EntityUncompletedActivityTable::deleteByIds($existedRecordsIds);
+					}
+
+					EntityUncompletedActivityTable::update((int)$lastId, $fields);
 				}
 			}
 		}

@@ -228,7 +228,14 @@ class TelegramBot extends Base implements MessengerUrl
 		{
 			return null;
 		}
-		$entityData = ImOpenLines\Crm\Common::get($crmEntityType, $crmEntityId, true);
+		$entityData = ImOpenLines\Crm\Common::get(
+			$crmEntityType,
+			$crmEntityId,
+			true,
+			[
+				'ID',
+			]
+		);
 
 		$lastTelegramImol = null;
 		if (isset($entityData['FM']['IM']['TELEGRAM']) && is_array($entityData['FM']['IM']['TELEGRAM']))

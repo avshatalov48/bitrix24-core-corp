@@ -103,33 +103,57 @@ class Helper
 			return $result;
 		}
 
+		$lineId = null;
 		if (isset($fields['LINE_NUMBER']))
 		{
 			$fields['LINE_NUMBER'] = trim($fields['LINE_NUMBER']);
 			if ($fields['LINE_NUMBER'] != '')
 			{
-				$lineNumber = trim($fields['LINE_NUMBER']);
-				$row = ExternalLineTable::getRow([
-					'filter' => [
-						'=NUMBER' => $lineNumber,
-						'=REST_APP_ID' => $fields['REST_APP_ID']
-					]
-				]);
-				if ($row)
+				$lineNumber = substr($fields['LINE_NUMBER'], 0, 50);// field length in db
+
+				$retry = 0;
+				do
 				{
-					$lineId = $row['ID'];
-				}
-				else
-				{
-					$insertResult = ExternalLineTable::add([
-						'NUMBER' => $lineNumber,
-						'REST_APP_ID' => $fields['REST_APP_ID']
+					$row = ExternalLineTable::getRow([
+						'cache' => ['ttl' => 0],
+						'select' => ['ID'],
+						'filter' => [
+							'=REST_APP_ID' => $fields['REST_APP_ID'],
+							'=NUMBER' => $lineNumber,
+						],
 					]);
-					if ($insertResult->isSuccess())
+					if ($row)
 					{
-						$lineId = $insertResult->getId();
+						$lineId = $row['ID'];
+						break;
+					}
+					else
+					{
+						try
+						{
+							$insertResult = ExternalLineTable::add([
+								'REST_APP_ID' => $fields['REST_APP_ID'],
+								'NUMBER' => $lineNumber,
+							]);
+							if ($insertResult->isSuccess())
+							{
+								$lineId = $insertResult->getId();
+								break;
+							}
+						}
+						catch (SqlQueryException $exception) // todo: Replace with \Bitrix\Main\DB\DuplicateEntryException
+						{
+							// Ignore error (1062) Duplicate entry for key 'IX_VI_EXTERNAL_LINE_1'
+							if (!str_contains($exception->getMessage(), 'Duplicate entry'))
+							{
+								throw $exception;
+							}
+							$retry ++;
+							usleep(10);
+						}
 					}
 				}
+				while ($retry <= 2);
 			}
 		}
 
@@ -283,7 +307,7 @@ class Helper
 				$activityBindings = \CVoxImplantCrmHelper::getActivityBindings($call);
 			}
 
-			if (is_array($activityBindings))
+			if (is_array($activityBindings) && !empty($activityBindings))
 			{
 				$call->updateCrmBindings($activityBindings);
 			}
@@ -293,7 +317,7 @@ class Helper
 			$crmData = \CVoxImplantCrmHelper::getCrmEntities($call);
 			$call->updateCrmEntities($crmData);
 			$activityBindings = \CVoxImplantCrmHelper::getActivityBindings($call);
-			if (is_array($activityBindings))
+			if (is_array($activityBindings) && !empty($activityBindings))
 			{
 				$call->updateCrmBindings($activityBindings);
 			}
@@ -571,7 +595,7 @@ class Helper
 		$hasRecord = ($fields['RECORD_URL'] != '');
 		if ($hasRecord)
 		{
-			if (defined('BX_UTF') && !mb_check_encoding($fields['RECORD_URL'], 'UTF-8'))
+			if (!mb_check_encoding($fields['RECORD_URL'], 'UTF-8'))
 			{
 				$result->addError(new Error('RECORD_URL contains invalid symbols for UTF-8 encoding'));
 				return $result;

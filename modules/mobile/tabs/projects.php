@@ -21,6 +21,11 @@ class Projects implements Tabable
 
 	public function isAvailable(): bool
 	{
+		if (!Loader::includeModule('tasks') || !Loader::includeModule('tasksmobile'))
+		{
+			return false;
+		}
+
 		if (Loader::includeModule('socialnetwork'))
 		{
 			$arUserActiveFeatures = \CSocNetFeatures::getActiveFeatures(SONET_ENTITY_USER, $this->context->userId);

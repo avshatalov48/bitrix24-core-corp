@@ -8,12 +8,10 @@ use Bitrix\Main\Config\Option;
 use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Result;
 
-/**
- *
- */
 class KeyManager extends BIConnector\KeyManager
 {
 	public const SUPERSET_KEY_OPTION_NAME = '~superset_key';
+
 	public static function getAccessKey(): ?string
 	{
 		$key = BIConnector\KeyTable::getList([

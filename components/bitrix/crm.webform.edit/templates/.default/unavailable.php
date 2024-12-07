@@ -10,9 +10,22 @@ use Bitrix\Main\Localization\Loc;
 ?>
 
 <div class="ui-slider-no-access-inner">
-	<div class="ui-slider-no-access-title"><?php echo $arResult['ERRORS'][0] ?? '' ?></div>
-	<div class="ui-slider-no-access-subtitle"><?php echo Loc::getMessage('CRM_WEBFORM_UNAVAILABLE_ASK_ADMIN'); ?></div>
+	<div class="ui-slider-no-access-title"><?php echo htmlspecialcharsbx($arResult['ERRORS'][0] ?? '') ?></div>
+	<div class="ui-slider-no-access-subtitle"><?php echo htmlspecialcharsbx(Loc::getMessage('CRM_WEBFORM_UNAVAILABLE_ASK_ADMIN')); ?></div>
 	<div class="ui-slider-no-access-img">
 		<div class="ui-slider-no-access-img-inner"></div>
 	</div>
 </div>
+
+<?php
+
+if (($arResult['TARIFF_RESTRICTED'] ?? 'N') === 'Y')
+{
+?>
+	<script>
+		BX.ready(function() {
+			BX.UI.InfoHelper.show('limit_crm_webform_edit');
+		});
+	</script>
+<?php
+}

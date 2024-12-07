@@ -443,6 +443,7 @@ class CVoximplantStatisticDetailComponent extends \CBitrixComponent implements \
 				$filter["<ID"] = (int)$this->arParams['STEXPORT_LAST_EXPORTED_ID'];
 			}
 
+			\CTimeZone::Disable();
 			$idRows = Voximplant\StatisticTable::getList([
 				"select" => ["ID"],
 				"runtime" => $this->getRuntimeFields($this->arResult['FILTER']),
@@ -450,6 +451,7 @@ class CVoximplantStatisticDetailComponent extends \CBitrixComponent implements \
 				"order" => ['ID' => 'DESC'],
 				"limit" => $this->pageSize
 			])->fetchAll();
+			\CTimeZone::Enable();
 
 			$this->arResult['LAST_EXPORTED_ID'] = $idRows[(count($idRows) - 1)]["ID"];
 			$this->arResult['PROCESSED_ITEMS'] = count($idRows);
@@ -458,6 +460,7 @@ class CVoximplantStatisticDetailComponent extends \CBitrixComponent implements \
 			{
 				$this->arResult['FIRST_EXPORT_PAGE'] = true;
 
+				\CTimeZone::Disable();
 				$rowsCountRecord = Voximplant\StatisticTable::getList([
 					"select" => [
 						"CNT" => Query::expr()->count("ID")
@@ -465,6 +468,7 @@ class CVoximplantStatisticDetailComponent extends \CBitrixComponent implements \
 					"runtime" => $this->getRuntimeFields($this->arResult['FILTER']),
 					"filter" => $filter,
 				])->fetch();
+				\CTimeZone::Enable();
 
 				$this->arResult['TOTAL_ITEMS'] = $rowsCountRecord["CNT"];
 
@@ -484,6 +488,7 @@ class CVoximplantStatisticDetailComponent extends \CBitrixComponent implements \
 		{
 			if (!$this->isExternalFilter)
 			{
+				\CTimeZone::Disable();
 				$idRows = Voximplant\StatisticTable::getList(
 					[
 						"select" => ["ID"],
@@ -494,6 +499,7 @@ class CVoximplantStatisticDetailComponent extends \CBitrixComponent implements \
 						"limit" => $nav->getLimit() + 1
 					]
 				)->fetchAll();
+				\CTimeZone::Enable();
 			}
 			else
 			{
@@ -616,7 +622,7 @@ class CVoximplantStatisticDetailComponent extends \CBitrixComponent implements \
 		$this->arResult["NAV_OBJECT"] = $nav;
 		$this->arResult["HEADERS"] = array(
 			array("id" => "USER_NAME", "name" => GetMessage("TELEPHONY_HEADER_USER"), "default" => true, "editable" => false),
-			array("id" => "PORTAL_NUMBER", "name" => GetMessage("TELEPHONY_HEADER_PORTAL_PHONE"), "default" => false, "editable" => false),
+			array("id" => "PORTAL_NUMBER", "name" => GetMessage("TELEPHONY_HEADER_PORTAL_PHONE_MSGVER_1"), "default" => false, "editable" => false),
 			array("id" => "PHONE_NUMBER", "name" => GetMessage("TELEPHONY_HEADER_PHONE"), "sort" => "PHONE_NUMBER", "default" => true, "editable" => false),
 			array("id" => "INCOMING_TEXT", "name" => GetMessage("TELEPHONY_HEADER_INCOMING"), "default" => true, "editable" => false),
 			array("id" => "CALL_DURATION_TEXT", "name" => GetMessage("TELEPHONY_HEADER_DURATION"), "default" => true, "editable" => false),
@@ -746,6 +752,8 @@ class CVoximplantStatisticDetailComponent extends \CBitrixComponent implements \
 				"TEXT" => GetMessage("TEL_STAT_ACTION_DOWNLOAD"),
 				"ONCLICK" => "window.open('".CUtil::JSEscape($row["CALL_RECORD_DOWNLOAD_URL"])."')",
 			);
+
+			$this->addDeleteRecordAction($result, $row);
 		}
 		elseif (
 			!is_null($row['CALL_START_DATE_RAW']) &&
@@ -760,6 +768,8 @@ class CVoximplantStatisticDetailComponent extends \CBitrixComponent implements \
 				"ONCLICK" =>
 					"BX.VoximplantStatisticDetail.Instance.downloadVoxRecords([{historyId: ".CUtil::JSEscape($row["ID"])."}]);"
 			);
+
+			$this->addDeleteRecordAction($result, $row);
 		}
 
 		if($row["TRANSCRIPT_ID"] > 0)
@@ -781,6 +791,65 @@ class CVoximplantStatisticDetailComponent extends \CBitrixComponent implements \
 		}
 
 		return $result;
+	}
+
+	protected function checkModifyAccess($callHistory)
+	{
+		$allowedUserIdsToModifyRecord = Helper::getAllowedUserIds(
+			Helper::getCurrentUserId(),
+			$this->userPermissions->getPermission(Permissions::ENTITY_CALL_RECORD, Permissions::ACTION_MODIFY)
+		);
+
+		return !is_array($allowedUserIdsToModifyRecord) || in_array($callHistory['PORTAL_USER_ID'], $allowedUserIdsToModifyRecord);
+	}
+
+	protected function addDeleteRecordAction(&$result, $row)
+	{
+		if ($this->checkModifyAccess($row))
+		{
+			$result[] = array(
+				"TITLE" => Loc::getMessage("TEL_STAT_ACTION_DELETE_RECORD"),
+				"TEXT" => Loc::getMessage("TEL_STAT_ACTION_DELETE_RECORD"),
+				"ONCLICK" => "BX.VoximplantStatisticDetail.Instance.openDeleteConfirm(false, [{historyId: ".CUtil::JSEscape($row["ID"])."}]);"
+			);
+		}
+	}
+
+	public function deleteRecordAction(int $historyId)
+	{
+		if (!isset($historyId))
+		{
+			return;
+		}
+
+		$this->init();
+
+		$callHistory = \Bitrix\Voximplant\StatisticTable::getRow([
+			'select' => [
+				'CALL_RECORD_ID',
+				'PORTAL_USER_ID',
+			],
+			'filter' => [
+				'=ID' => $historyId
+			]
+		]);
+
+		if (!$this->checkModifyAccess($callHistory))
+		{
+			return;
+		}
+
+		if (!empty($callHistory['CALL_RECORD_ID']))
+		{
+			\CFile::Delete($callHistory['CALL_RECORD_ID']);
+		}
+
+		\Bitrix\Voximplant\StatisticTable::update($historyId, [
+			'CALL_RECORD_ID' => null,
+			'CALL_RECORD_URL' => null,
+			'RECORD_DURATION' => null,
+			'CALL_WEBDAV_ID' => null,
+		]);
 	}
 
 	public function isRecordsAlreadyUploadedAction(array $historyIds): bool
@@ -1078,6 +1147,7 @@ class CVoximplantStatisticDetailComponent extends \CBitrixComponent implements \
 		if (!$this->isExternalFilter)
 		{
 			$filterDefinition = $this->getFilterDefinition();
+			\CTimeZone::Disable();
 			$cursor = Voximplant\StatisticTable::getList([
 				"select" => [
 					"CNT" => Query::expr()->count("ID")
@@ -1085,6 +1155,7 @@ class CVoximplantStatisticDetailComponent extends \CBitrixComponent implements \
 				"runtime" => $this->getRuntimeFields($filterDefinition),
 				"filter" => $this->getFilter($filterDefinition),
 			]);
+			\CTimeZone::Enable();
 			$row = $cursor->fetch();
 		}
 		else

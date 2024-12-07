@@ -1,0 +1,2 @@
+<?php
+$MESS["M_STAFFTRACK_MONTH_PICKER_SELECT_MONTH"] = "Select month";

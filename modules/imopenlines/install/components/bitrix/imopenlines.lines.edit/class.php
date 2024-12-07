@@ -24,6 +24,7 @@ use Bitrix\ImOpenLines\QueueManager;
 use Bitrix\ImOpenlines\QuickAnswers;
 use Bitrix\ImOpenLines\Model\ConfigTable;
 use Bitrix\ImOpenlines\Security\Permissions;
+use Bitrix\ImOpenLines\Integrations\HumanResources\StructureService;
 
 class ImOpenLinesComponentLinesEdit extends CBitrixComponent implements Controllerable
 {
@@ -1166,10 +1167,10 @@ class ImOpenLinesComponentLinesEdit extends CBitrixComponent implements Controll
 				}
 				elseif($queue['type'] === 'department')
 				{
-					$usersDepartment = QueueManager::getUsersDepartment($queue['id']);
-					while ($userId = $usersDepartment->fetch()['ID'])
+					$usersDepartment = StructureService::getInstance()->getDepartmentUserIds($queue['id']);
+					foreach ($usersDepartment as $userId)
 					{
-						if(in_array($userId, $usersId, false) === false)
+						if (!in_array($userId, $usersId))
 						{
 							$usersId[] = $userId;
 						}

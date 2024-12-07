@@ -102,3 +102,4 @@ $MESS["MENU_DELETE_FROM_FAVORITE_ALL"] = "Удалить из избранног
 $MESS["MENU_SITE_MAP"] = "Карта сайта";
 $MESS["MENU_HELP"] = "Помощь";
 $MESS["MENU_UNAVAILABLE_TOOL_POPUP_DESCRIPTION"] = "Доступ к этому инструменту закрыт для всех сотрудников. Обратитесь к администратору, чтобы он включил инструмент в настройках вашего Битрикс24";
+$MESS["MENU_OPEN_SETTINGS_MAIN_PAGE"] = "Открыть настройки главной страницы";

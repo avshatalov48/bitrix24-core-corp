@@ -207,10 +207,10 @@ CJSCore::RegisterExt('disk_external_loader', [
 	],
 ]);
 
-CJSCore::RegisterExt('disk_information_popups', array(
+CJSCore::RegisterExt('disk_information_popups', [
 	'js' => '/bitrix/js/disk/information_popups.js',
 	'lang' => '/bitrix/modules/disk/lang/'.LANGUAGE_ID.'/install/js/information_popups.php',
-	'rel' => array('core', 'disk', 'helper'),
-));
+	'rel' => ['core', 'disk', 'helper', 'intranet.desktop-download'],
+]);
 
 \Bitrix\Disk\Internals\Engine\Binder::registerDefaultAutoWirings();

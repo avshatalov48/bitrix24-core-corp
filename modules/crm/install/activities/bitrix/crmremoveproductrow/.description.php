@@ -8,8 +8,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 use Bitrix\Main\Localization\Loc;
 
 $arActivityDescription = [
-	'NAME' => Loc::getMessage('CRM_RMPR_NAME'),
-	'DESCRIPTION' => Loc::getMessage('CRM_RMPR_DESC_2'),
+	'NAME' => Loc::getMessage('CRM_RMPR_NAME_MSGVER_1'),
+	'DESCRIPTION' => Loc::getMessage('CRM_RMPR_DESC_2_MSGVER_1'),
 	'TYPE' => ['activity', 'robot_activity'],
 	'CLASS' => 'CrmRemoveProductRow',
 	'JSCLASS' => 'BizProcActivity',

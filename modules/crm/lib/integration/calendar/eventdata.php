@@ -21,6 +21,7 @@ class EventData
 	private ?string $contactCommunication = null;
 	private ?string $channelName = null;
 	private ?array $sharingRuleArray = null;
+	private ?array $memberIds = null;
 
 	public const SHARING_ON_NOT_VIEWED = 'SHARING_ON_NOT_VIEWED';
 	public const SHARING_ON_VIEWED = 'SHARING_ON_VIEWED';
@@ -94,6 +95,18 @@ class EventData
 	public function getChannelName(): ?string
 	{
 		return $this->channelName;
+	}
+
+	public function getMemberIds(): ?array
+	{
+		return $this->memberIds;
+	}
+
+	public function setMemberIds(?array $memberIds): self
+	{
+		$this->memberIds = $memberIds;
+
+		return $this;
 	}
 
 	public function setEventType(?string $eventType)
@@ -230,6 +243,7 @@ class EventData
 			->setLinkHash($crmDealLink->getHash())
 			->setLinkId($crmDealLink->getId())
 			->setSharingRuleArray($sharingRuleArray)
+			->setMemberIds(array_map(static fn($member) => $member->getId(), $crmDealLink->getMembers()))
 		;
 
 		return $eventData;

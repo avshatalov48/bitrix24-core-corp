@@ -13,6 +13,8 @@ return [
 		'main.core.events',
 		'ui.design-tokens',
 		'ui.entity-selector',
+		'ui.progressbar',
+		'ui.notification',
 		'main.core',
 		'main.popup',
 		'ui.buttons',

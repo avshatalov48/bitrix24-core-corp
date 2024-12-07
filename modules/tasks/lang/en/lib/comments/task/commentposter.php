@@ -8,6 +8,7 @@ The task requires review upon completion.
 Deadline is required.";
 $MESS["COMMENT_POSTER_COMMENT_TASK_ADD_SOMEONE_DEADLINE"] = "A task was created and assigned to #RESPONSIBLE#.
 Deadline is required.";
+$MESS["COMMENT_POSTER_COMMENT_TASK_ADD_TO_FLOW_WITH_MANUAL_DISTRIBUTION"] = "#RESPONSIBLE#, select an #TASK_CHANGE_RESPONSIBLE_START#assignee#TASK_CHANGE_RESPONSIBLE_END# for this task.";
 $MESS["COMMENT_POSTER_COMMENT_TASK_EXPIRED"] = "Task is overdue.
 Efficiency KPI lowered.
 Consider changing the deadline or closing the task.";
@@ -87,8 +88,7 @@ $MESS["COMMENT_POSTER_COMMENT_TASK_UPDATE_STATUS_2_RENEW_V2_NO_MEMBERS"] = "Task
 $MESS["COMMENT_POSTER_COMMENT_TASK_UPDATE_STATUS_3"] = "#AUTHOR# started the task.";
 $MESS["COMMENT_POSTER_COMMENT_TASK_UPDATE_STATUS_3_V2"] = "Task started.";
 $MESS["COMMENT_POSTER_COMMENT_TASK_UPDATE_STATUS_4"] = "Task has been completed. Review is required.";
-$MESS["COMMENT_POSTER_COMMENT_TASK_UPDATE_STATUS_4_V2"] = "Task closed.
-#CREATOR# must #TASK_APPROVE_START#accept the task#TASK_APPROVE_END# or #TASK_DISAPPROVE_START#return it for revision#TASK_DISAPPROVE_END#.";
+$MESS["COMMENT_POSTER_COMMENT_TASK_UPDATE_STATUS_4_V2"] = "Task closed.\n#CREATOR# must #TASK_APPROVE_START#accept the task#TASK_APPROVE_END# or #TASK_DISAPPROVE_START#return it for revision#TASK_DISAPPROVE_END#.";
 $MESS["COMMENT_POSTER_COMMENT_TASK_UPDATE_STATUS_5"] = "Task has been completed.";
 $MESS["COMMENT_POSTER_COMMENT_TASK_UPDATE_STATUS_5_APPROVE_V2"] = "Task closed.";
 $MESS["COMMENT_POSTER_COMMENT_TASK_UPDATE_STATUS_5_V2"] = "Task closed.";

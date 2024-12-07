@@ -249,12 +249,17 @@ export class CopilotTextarea
 			return;
 		}
 
+		if (this.#copilotBtnPopup?.isShown())
+		{
+			return;
+		}
+
 		this.#currentSelectedText = target.value.slice(target.selectionStart, target.selectionEnd);
 		if (Type.isStringFilled(this.#currentSelectedText))
 		{
 			this.#logEventInfo('Text selected', event);
 
-			this.#showCopilotButton();
+			setTimeout(() => this.#showCopilotButton(), 100);
 		}
 	}
 

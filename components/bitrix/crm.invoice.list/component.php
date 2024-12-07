@@ -415,8 +415,6 @@ if(check_bitrix_sessid())
 	$controls = isset($_POST['controls']) && is_array($_POST['controls']) ? $_POST['controls'] : array();
 	if ($actionData['METHOD'] == 'POST' && (isset($controls[$postAction]) || isset($_POST[$postAction])))
 	{
-		CUtil::JSPostUnescape();
-
 		$actionData['ACTIVE'] = true;
 
 		if(isset($controls[$postAction]))
@@ -579,13 +577,13 @@ foreach ($arFilter as $k => $v)
 {
 	$arMatch = array();
 
-	if (preg_match('/(.*)_from$/i'.BX_UTF_PCRE_MODIFIER, $k, $arMatch))
+	if (preg_match('/(.*)_from$/iu', $k, $arMatch))
 	{
 		\Bitrix\Crm\UI\Filter\Range::prepareFrom($arFilter, $arMatch[1], $v);
 	}
-	elseif (preg_match('/(.*)_to$/i'.BX_UTF_PCRE_MODIFIER, $k, $arMatch))
+	elseif (preg_match('/(.*)_to$/iu', $k, $arMatch))
 	{
-		if ($v != '' && ($arMatch[1] == 'DATE_PAY_BEFORE' || $arMatch[1] == 'DATE_INSERT') && !preg_match('/\d{1,2}:\d{1,2}(:\d{1,2})?$/'.BX_UTF_PCRE_MODIFIER, $v))
+		if ($v != '' && ($arMatch[1] == 'DATE_PAY_BEFORE' || $arMatch[1] == 'DATE_INSERT') && !preg_match('/\d{1,2}:\d{1,2}(:\d{1,2})?$/u', $v))
 		{
 			$v = CCrmDateTimeHelper::SetMaxDayTime($v);
 		}
@@ -1818,8 +1816,7 @@ else
 		Header('Content-Transfer-Encoding: binary');
 
 		// add UTF-8 BOM marker
-		if (defined('BX_UTF') && BX_UTF)
-			echo chr(239).chr(187).chr(191);
+		echo chr(239).chr(187).chr(191);
 
 		$this->IncludeComponentTemplate($sExportType);
 

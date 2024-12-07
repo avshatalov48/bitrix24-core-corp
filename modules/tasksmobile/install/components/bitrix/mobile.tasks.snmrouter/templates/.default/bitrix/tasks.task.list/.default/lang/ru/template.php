@@ -1,6 +1,6 @@
 <?
 $MESS["TASK_COLUMN_CREATED_BY"] = "постановщик";
-$MESS["TASK_COLUMN_RESPONSIBLE_ID"] = "ответственный";
+$MESS["TASK_COLUMN_RESPONSIBLE_ID_MSGVER_1"] = "исполнитель";
 $MESS["TASK_COLUMN_DEADLINE"] = "срок";
 $MESS["TASK_COLUMN_TIMETRACKING"] = "учёт времени";
 $MESS["TASK_COLUMN_MARK"] = "оценка";
@@ -10,7 +10,7 @@ $MESS["TASK_COLUMN_GROUP_ID"] = "группа";
 $MESS["TASK_COLUMN_TIME_ESTIMATE"] = "плановые трудозатраты";
 $MESS["TASK_COLUMN_ALLOW_TIME_TRACKING"] = "учитывать время";
 $MESS["TASK_COLUMN_TIME_SPENT_IN_LOGS"] = "затраченное время";
-$MESS["TASK_COLUMN_ALLOW_CHANGE_DEADLINE"] = "разрешить менять крайний срок ответственному";
+$MESS["TASK_COLUMN_ALLOW_CHANGE_DEADLINE_MSGVER_1"] = "разрешить менять крайний срок исполнителю";
 $MESS["TASK_COLUMN_CREATED_DATE"] = "дата создания";
 $MESS["TASK_COLUMN_CHANGED_DATE"] = "дата изменения";
 $MESS["TASK_COLUMN_CLOSED_DATE"] = "дата завершения";

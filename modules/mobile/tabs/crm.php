@@ -95,6 +95,7 @@ class Crm implements Tabable
 			'color' => '#00ace3',
 			'imageUrl' => 'favorite/icon-crm.png',
 			'params' => [
+				'id' => 'crm_tabs',
 				'onclick' => Utils::getComponentJSCode($this->getComponentParams()),
 				'counter' => 'crm_all_no_orders',
 			],

@@ -61,6 +61,11 @@ final class DateTime extends \Bitrix\Main\Type\DateTime
 		return $day;
 	}
 
+	public function getWeekDay(): int
+	{
+		return (int)$this->format('w');
+	}
+
 	public function getYearGmt()
 	{
 		return (int) gmdate("Y", $this->getTimeStamp());
@@ -76,9 +81,19 @@ final class DateTime extends \Bitrix\Main\Type\DateTime
 		return intval(gmdate("H", $this->getTimeStamp()));
 	}
 
+	public function getHour(): int
+	{
+		return (int)$this->format('H');
+	}
+
 	public function getMinuteGmt()
 	{
 		return (int) gmdate("i", $this->getTimeStamp());
+	}
+
+	public function getMinute(): int
+	{
+		return (int)$this->format('i');
 	}
 
 	public function getSecondGmt()
@@ -114,6 +129,14 @@ final class DateTime extends \Bitrix\Main\Type\DateTime
 		}
 
 		return $value;
+	}
+
+	public static function createFromDateTime(\Bitrix\Main\Type\DateTime $dateTime): self
+	{
+		return (new self())
+			->setDate((int)$dateTime->format('Y'), (int)$dateTime->format('n'), (int)$dateTime->format('j'))
+			->setTime((int)$dateTime->format('H'), (int)$dateTime->format('i'), (int)$dateTime->format('s'))
+			->setTimeZone($dateTime->getTimeZone());
 	}
 
 	/**

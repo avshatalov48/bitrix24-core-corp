@@ -715,7 +715,7 @@ include('InAppNotifier');
 		{
 			(new RecipientSelector('TASKS_MEMBER_SELECTOR_EDIT_responsible', ['user']))
 				.setSingleChoose(true)
-				.setTitle(BX.message('TASKS_TASK_DETAIL_TITLE_RESPONSIBLE'))
+				.setTitle(BX.message('TASKS_TASK_DETAIL_TITLE_RESPONSIBLE_MSGVER_1'))
 				.setSelected({
 					user: [{
 						id: this.task.responsible.id,
@@ -747,7 +747,7 @@ include('InAppNotifier');
 		{
 			(new RecipientSelector('TASKS_MEMBER_SELECTOR_EDIT_responsible', ['user']))
 				.setSingleChoose(true)
-				.setTitle(BX.message('TASKS_TASK_DETAIL_TITLE_RESPONSIBLE'))
+				.setTitle(BX.message('TASKS_TASK_DETAIL_TITLE_RESPONSIBLE_MSGVER_1'))
 				.setSelected({
 					user: [{
 						id: this.task.responsible.id,

@@ -601,7 +601,7 @@ abstract class CDavAddressbookBase
 		{
 			$result .= ($i % 2)
 				? $part
-				: rawurlencode(\Bitrix\Main\Text\Encoding::convertEncoding($part, LANG_CHARSET, 'UTF-8'));
+				: rawurlencode($part);
 		}
 
 		return $result;

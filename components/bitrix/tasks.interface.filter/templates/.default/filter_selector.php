@@ -45,7 +45,7 @@ if (!empty($selectors))
 ?>
 
 <?php if (!empty($selectors)):?>
-	<script type="text/javascript">
+	<script>
 		<?php foreach ($selectors as $groupSelector):?>
 		<?php
 			$selectorID = $groupSelector['ID'];

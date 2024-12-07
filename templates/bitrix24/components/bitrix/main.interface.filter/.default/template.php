@@ -20,7 +20,7 @@ $this->SetViewTarget("pagetitle", 100);
 
 <span class="webform-small-button filter-button" onclick="B24SidebarFilter.show(this)"><span class="webform-small-button-left"></span><span class="webform-small-button-text"><?=GetMessage("interface_grid_search")?></span><span class="webform-small-button-icon"></span><span class="webform-small-button-right"></span></span>
 
-<script type="text/javascript">
+<script>
 	var B24SidebarFilter = {
 		popup : null,
 
@@ -196,7 +196,7 @@ foreach($arParams["FILTER"] as $field):
 				array("HIDE_ICONS"=>true)
 			);
 ?>
-<script type="text/javascript">
+<script>
 BX.ready(function(){bxCalendarInterval.OnDateChange(document.forms['filter_<?=$arParams["GRID_ID"]?>'].<?=$field["id"]?>_datesel)});
 </script>
 <?

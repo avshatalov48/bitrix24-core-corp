@@ -18,7 +18,7 @@
 if (is_array($arResult['DATA']) && count($arResult['DATA']) > 0)
 {
 ?>
-<script type="text/javascript">
+<script>
 (function(){
 	var formatTime = function(ts, bSec)
 	{

@@ -3,6 +3,8 @@
 namespace Bitrix\Crm\MailTemplate;
 
 use Bitrix\Crm\Dto\MailTemplate\AccessEntity;
+use Bitrix\Main\Engine\CurrentUser;
+use Bitrix\Crm\Model\UserMailTemplateAccessTable;
 
 class MailTemplateAccess
 {
@@ -166,10 +168,44 @@ class MailTemplateAccess
 	{
 		if($userId <= 0)
 		{
-			$userId = \Bitrix\Crm\Service\Container::getInstance()->getContext()->getUserId();
+			$userId = (int)CurrentUser::get()->getId();
 		}
 
-		$availableSharedTemplatesId = self::getAllAvailableSharedTemplatesId($userId);
-		return in_array($templateId, $availableSharedTemplatesId);
+		if($userId <= 0)
+		{
+			return false;
+		}
+
+		$userDepartments = \CIntranetUtils::GetUserDepartments($userId);
+		$filter = [
+			'LOGIC' => 'AND',
+			'=TEMPLATE_ID' => $templateId,
+			[
+				'LOGIC' => 'OR',
+				[
+					'LOGIC' => 'AND',
+					'=ENTITY_ID' => $userId,
+					'=ENTITY_TYPE' => self::USER_ENTITY_TYPE_CODE,
+				],
+				[
+					'LOGIC' => 'AND',
+					'@ENTITY_ID' => $userDepartments,
+					'=ENTITY_TYPE' => self::DEPARTMENT_ENTITY_TYPE_CODE,
+				]
+			]
+		];
+
+		$template = \Bitrix\Crm\Model\UserMailTemplateAccessTable::getList([
+			'select' => ['ID'],
+			'filter' => $filter,
+			'limit' => 1
+		])->fetch();
+
+		if ($template)
+		{
+			return true;
+		}
+
+		return false;
 	}
 }

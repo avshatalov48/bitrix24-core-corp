@@ -6,6 +6,7 @@ return [
 		'apptheme',
 		'type',
 		'utils/logger',
+		'require-lazy',
 		'layout/ui/banners/banner-button',
 		'statemanager/vuex',
 		'statemanager/vuex-manager',

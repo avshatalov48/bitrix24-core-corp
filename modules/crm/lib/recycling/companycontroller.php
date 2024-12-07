@@ -319,47 +319,29 @@ class CompanyController extends BaseController
 		\CCrmEntitySelectorHelper::clearPrepareRequisiteDataCacheByEntity(\CCrmOwnerType::Company, $entityID);
 	}
 
-	/**
-	 * Recover entity from Recycle Bin.
-	 * @param int $entityID Entity ID.
-	 * @param array $params Additional operation parameters.
-	 * @return bool
-	 * @throws Crm\Synchronization\UserFieldSynchronizationException
-	 * @throws Main\AccessDeniedException
-	 * @throws Main\ArgumentException
-	 * @throws Main\ArgumentOutOfRangeException
-	 * @throws Main\Db\SqlQueryException
-	 * @throws Main\InvalidOperationException
-	 * @throws Main\LoaderException
-	 * @throws Main\NotSupportedException
-	 * @throws Main\ObjectException
-	 * @throws Main\ObjectNotFoundException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
-	 */
-	public function recover($entityID, array $params = array())
+	public function recover(int $entityID, array $params = []): ?int
 	{
 		if($entityID <= 0)
 		{
-			return false;
+			return null;
 		}
 
 		$recyclingEntityID = isset($params['ID']) ? (int)$params['ID'] : 0;
 		if($recyclingEntityID <= 0)
 		{
-			return false;
+			return null;
 		}
 
 		$slots = isset($params['SLOTS']) ? $params['SLOTS'] : null;
 		if(!is_array($slots))
 		{
-			return false;
+			return null;
 		}
 
 		$fields = isset($slots['FIELDS']) ? $slots['FIELDS'] : null;
 		if(!(is_array($fields) && !empty($fields)))
 		{
-			return false;
+			return null;
 		}
 
 		unset($fields['ID'], $fields['CONTACT_ID'], $fields['LEAD_ID']);
@@ -388,7 +370,7 @@ class CompanyController extends BaseController
 		);
 		if($newEntityID <= 0)
 		{
-			return false;
+			return null;
 		}
 
 		//region Relations
@@ -479,7 +461,7 @@ class CompanyController extends BaseController
 		$this->rebuildSearchIndex($newEntityID);
 		$this->startRecoveryWorkflows($newEntityID);
 
-		return true;
+		return $newEntityID;
 	}
 
 	/**

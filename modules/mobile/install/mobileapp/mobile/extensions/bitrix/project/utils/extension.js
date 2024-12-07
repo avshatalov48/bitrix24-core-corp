@@ -1,9 +1,16 @@
 /**
  * @bxjs_lang_path extension.php
  */
-
 (() => {
+	const require = (extension) => jn.require(extension);
+	const { getFeatureRestriction, tariffPlanRestrictionsReady } = require('tariff-plan-restriction');
+	const { qrauth } = require('qrauth/utils');
+
 	const pathToExtension = '/bitrix/mobileapp/mobile/extensions/bitrix/project/utils';
+	const projectCache = new Map();
+	const projectKeys = new Set([
+		'ID', 'NAME', 'OPENED', 'NUMBER_OF_MEMBERS', 'AVATAR', 'AVATAR_TYPE', 'AVATAR_TYPES', 'ADDITIONAL_DATA',
+	]);
 
 	class WorkgroupUtil
 	{
@@ -24,10 +31,13 @@
 			const siteId = additionalData.siteId || env.siteId;
 			const siteDir = additionalData.siteDir || env.siteDir;
 			const guid = additionalData.guid || WorkgroupUtil.createGuid();
+			const { analyticsLabel = {} } = additionalData;
 
 			const result = [];
 
-			if (availableFeatures.includes('tasks'))
+			const isTasksMobileInstalled = BX.prop.getBoolean(jnExtensionData.get('project/utils'), 'isTasksMobileInstalled', false);
+
+			if (availableFeatures.includes('tasks') && isTasksMobileInstalled)
 			{
 				result.push(
 					WorkgroupUtil.getTasksTab({
@@ -35,6 +45,10 @@
 						siteDir,
 						guid,
 						item,
+						analyticsLabel: {
+							c_section: 'tasks',
+							...analyticsLabel,
+						},
 						currentUserId: env.userId,
 					}),
 				);
@@ -68,7 +82,7 @@
 		{
 			return {
 				id: WorkgroupUtil.tabNames.news,
-				title: BX.message('MOBILE_PROJECT_TAB_NEWS'),
+				title: BX.message('MOBILE_PROJECT_TAB_NEWS2'),
 				component: {
 					name: 'JSStackComponent',
 					componentCode: `web: ${newsWebPath}`,
@@ -100,12 +114,19 @@
 				title: BX.message('MOBILE_PROJECT_TAB_TASKS'),
 				component: {
 					name: 'JSStackComponent',
-					componentCode: WorkgroupUtil.getTaskListComponentCode(),
+					componentCode: 'tasks.dashboard',
 					canOpenInDefault: true,
-					scriptPath: WorkgroupUtil.getTaskListScriptPath(),
-					rootWidget: WorkgroupUtil.getTaskListRootWidget(),
+					scriptPath: availableComponents['tasks:tasks.dashboard'].publicUrl,
+					rootWidget: {
+						name: 'layout',
+						settings: {
+							objectName: 'layout',
+							useSearch: true,
+							useLargeTitleMode: true,
+						},
+					},
 					params: {
-						COMPONENT_CODE: WorkgroupUtil.getTaskListComponentCode(),
+						COMPONENT_CODE: 'tasks.dashboard',
 						GROUP_ID: item.id,
 						USER_ID: currentUserId,
 						DATA: {
@@ -124,31 +145,8 @@
 						SITE_DIR: siteDir,
 						LANGUAGE_ID: env.languageId,
 						PATH_TO_TASK_ADD: `${siteDir}mobile/tasks/snmrouter/?routePage=#action#&TASK_ID=#taskId#`,
+						analyticsLabel: params.analyticsLabel,
 					},
-				},
-			};
-		}
-
-		static getTaskListComponentCode()
-		{
-			return 'tasks.dashboard';
-		}
-
-		static getTaskListScriptPath()
-		{
-			const componentName = 'tasks:tasks.dashboard';
-
-			return availableComponents[componentName].publicUrl;
-		}
-
-		static getTaskListRootWidget()
-		{
-			return {
-				name: 'layout',
-				settings: {
-					objectName: 'layout',
-					useSearch: true,
-					useLargeTitleMode: true,
 				},
 			};
 		}
@@ -268,7 +266,231 @@
 				title: BX.message('MOBILE_PROJECT_TAB_CALENDAR_QR_TITLE'),
 			});
 		}
+
+		static async openProject(item, initialParams)
+		{
+			const params = {
+				projectId: initialParams.projectId ? parseInt(initialParams.projectId, 10) : 0,
+				siteId: initialParams.siteId || null,
+				siteDir: initialParams.siteDir || null,
+				newsPathTemplate: initialParams.newsPathTemplate || '',
+				calendarWebPathTemplate: initialParams.calendarWebPathTemplate || '',
+				currentUserId: initialParams.currentUserId || env.userId,
+				analyticsLabel: {
+					c_section: 'project',
+				},
+			};
+
+			if (params.projectId <= 0)
+			{
+				return;
+			}
+
+			await tariffPlanRestrictionsReady();
+			const { isRestricted, showRestriction } = getFeatureRestriction('socialnetwork_projects_groups');
+			if (isRestricted())
+			{
+				showRestriction({ showInComponent: true });
+
+				return;
+			}
+
+			if (item === null)
+			{
+				BX.postComponentEvent('project.background::showLoadingIndicator');
+
+				WorkgroupUtil.getProjectData(params)
+					.then((result) => {
+						BX.postComponentEvent('project.background::hideLoadingIndicator');
+
+						const data = result.data || null;
+						if (!data)
+						{
+							return;
+						}
+
+						const item = {
+							id: params.projectId,
+							title: (data.NAME || ''),
+							params: {
+								avatar: WorkgroupUtil.getAvatarUrl(data),
+								initiatedByType: data.ADDITIONAL_DATA.INITIATED_BY_TYPE,
+								features: data.ADDITIONAL_DATA.FEATURES,
+								membersCount: parseInt(data.NUMBER_OF_MEMBERS || 0),
+								role: data.ADDITIONAL_DATA.ROLE,
+								opened: (data.OPENED || 'N'),
+							},
+						};
+
+						params.newsPathTemplate = (data.ADDITIONAL_DATA.projectNewsPathTemplate || '');
+						params.calendarWebPathTemplate = (data.ADDITIONAL_DATA.projectCalendarWebPathTemplate || '');
+
+						WorkgroupUtil.openComponent(item, params);
+					})
+					.catch(() => {
+						BX.postComponentEvent('project.background::hideLoadingIndicator');
+					});
+			}
+			else
+			{
+				WorkgroupUtil.openComponent(item, params);
+			}
+		}
+
+		static openComponent(item, params)
+		{
+			const {
+				siteId,
+				siteDir,
+				newsPathTemplate,
+				calendarWebPathTemplate,
+				currentUserId,
+				analyticsLabel,
+			} = params;
+
+			const subtitle = WorkgroupUtil.getSubtitle(item.params.membersCount);
+			const guid = WorkgroupUtil.createGuid();
+			const tabs = WorkgroupUtil.getTabsItems(
+				{
+					siteId,
+					siteDir,
+					guid,
+					availableFeatures: item.params.features,
+					projectNewsPathTemplate: (newsPathTemplate || ''),
+					analyticsLabel,
+				},
+				item,
+			);
+
+			PageManager.openComponent('JSStackComponent', {
+				scriptPath: availableComponents['project.tabs'].publicUrl,
+				componentCode: 'project.tabs',
+				canOpenInDefault: true,
+				params: {
+					id: item.id,
+					subtitle,
+					item,
+					calendarWebPathTemplate: (calendarWebPathTemplate || ''),
+					currentUserId: (currentUserId || env.userId),
+					siteId,
+					guid,
+				},
+				title: item.title,
+				rootWidget: {
+					name: 'tabs',
+					settings: {
+						objectName: 'tabs',
+						titleParams: {
+							text: item.title,
+							detailText: subtitle,
+							imageUrl: item.params.avatar,
+							userLargeTitleMode: true,
+						},
+						grabTitle: false,
+						tabs: {
+							items: tabs,
+						},
+					},
+				},
+			});
+		}
+
+		static getProjectData(params)
+		{
+			const {
+				projectId,
+				siteId,
+				siteDir,
+			} = params;
+
+			return new Promise((resolve, reject) => {
+				if (projectCache.has(projectId))
+				{
+					resolve({
+						data: projectCache.get(projectId),
+					});
+				}
+				else
+				{
+					BX.ajax.runAction('socialnetwork.api.workgroup.get', {
+						data: {
+							params: {
+								groupId: projectId,
+								mode: 'mobile',
+								select: ['AVATAR', 'AVATAR_TYPES'],
+								features: [
+									'tasks',
+									'blog',
+									'files',
+									'calendar',
+								],
+								mandatoryFeatures: ['blog'],
+								siteId,
+								siteDir,
+							},
+						},
+					}).then((response) => {
+						if (!response.data)
+						{
+							response.data = {};
+						}
+
+						for (const key in response.data)
+						{
+							if (!projectKeys.has(key))
+							{
+								delete response.data[key];
+							}
+						}
+
+						projectCache.set(projectId, response.data);
+
+						return {
+							data: response.data,
+						};
+					}).then((result) => {
+						const data = result.data;
+
+						BX.ajax.runAction('mobile.option.get', {
+							data: {
+								params: {
+									name: [
+										'projectNewsPathTemplate',
+										'projectCalendarWebPathTemplate',
+									],
+									siteId,
+									siteDir,
+								},
+							},
+						}).then((result) => {
+							const optionData = result.data;
+							data.ADDITIONAL_DATA.projectNewsPathTemplate = optionData.projectNewsPathTemplate;
+							data.ADDITIONAL_DATA.projectCalendarWebPathTemplate = optionData.projectCalendarWebPathTemplate;
+
+							resolve({
+								data,
+							});
+						}).catch(() => {
+							reject({
+								errors: result.errors,
+							});
+						});
+					}).catch((response) => {
+						reject({
+							errors: result.errors,
+						});
+					});
+				}
+			});
+		}
 	}
 
 	this.WorkgroupUtil = WorkgroupUtil;
+
+	/**
+	 * @module project/utils
+	 */
+	jn.define('project/utils', (require, exports, module) => {
+		module.exports = { WorkgroupUtil };
+	});
 })();

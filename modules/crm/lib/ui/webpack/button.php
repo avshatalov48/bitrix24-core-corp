@@ -95,7 +95,7 @@ class Button extends Base
 
 		$parameter = [
 			'isActivated' => $data['ACTIVE'] !== 'N',
-			'id' => $data['ID'],
+			'id' => $data['ID'] ?? null,
 			'tracking' => [
 				'channel' => [
 					'code' => Tracking\Channel\Base::Button,

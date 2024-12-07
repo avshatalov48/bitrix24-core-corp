@@ -3,7 +3,9 @@
 namespace Bitrix\Crm\Integration\Rest\Configuration\Entity;
 
 use Bitrix\Crm\Category\DealCategory;
+use Bitrix\Crm\EO_Status;
 use Bitrix\Crm\PhaseSemantics;
+use Bitrix\Crm\Status\FunnelStatusCollectionRevalidator;
 use Bitrix\Crm\StatusTable;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentOutOfRangeException;
@@ -533,14 +535,20 @@ class Status
 						{
 						}
 					}
-					$oldData = array_column($entity->GetStatus($entityID), null, 'STATUS_ID');
+
+					$existsStatuses = static::getExistsStatuses($entityID);
+					$resultCollection = StatusTable::createCollection();
+
 					foreach ($itemList['ITEMS'] as $item)
 					{
+						$existingCouple = $existsStatuses[$item['STATUS_ID']] ?? null;
+
 						if(!$item['NAME'])
 						{
 							continue;
 						}
-						$color = $item['COLOR'] ?? $oldData['COLOR'] ?? null;
+
+						$color = $item['COLOR'] ?? $existingCouple?->getColor();
 						if(
 							empty($color)
 							&& is_array($itemList['COLOR_SETTING'])
@@ -549,55 +557,58 @@ class Status
 						{
 							$color = $itemList['COLOR_SETTING'][$item['STATUS_ID']]['COLOR'];
 						}
+
 						$semantics = static::getSemanticsByStatus($item);
-						if(!empty($oldData[$item['STATUS_ID']]))
+
+						if($existingCouple !== null)
 						{
-							$saveData = [
-								'SORT' => intVal($item['SORT']),
-								'NAME' => $item['NAME'],
-								'COLOR' => $color,
-								'SEMANTICS' => $semantics,
-							];
-							if(!empty($saveData))
-							{
-								$entity->update(
-									$oldData[$item['STATUS_ID']]['ID'],
-									$saveData
-								);
-							}
-							unset($oldData[$item['STATUS_ID']]);
+							$existingCouple
+								->setSort(intVal($item['SORT']))
+								->setName($item['NAME'])
+								->setColor($color)
+								->setSemantics($semantics)
+							;
+
+							$resultCollection->add($existingCouple);
+							unset($existsStatuses[$item['STATUS_ID']]);
+
+							continue;
 						}
-						else
+
+						$newStatus = (StatusTable::createObject(false))
+							->setEntityId($entityID)
+							->setStatusId($item['STATUS_ID'])
+							->setName($item['NAME'])
+							->setNameInit($item['NAME_INIT'])
+							->setSort(intVal($item['SORT']))
+							->setSystem(false)
+							->setColor($color)
+							->setSemantics($semantics)
+						;
+
+						$resultCollection->add($newStatus);
+					}
+
+					if(!empty($existsStatuses))
+					{
+						foreach ($existsStatuses as $existsStatus)
 						{
-							$entity->add(
-								[
-									'ENTITY_ID' => $entityID,
-									'STATUS_ID' => $item['STATUS_ID'],
-									'NAME' => $item['NAME'],
-									'NAME_INIT' => $item['NAME_INIT'],
-									'SORT' => intVal($item['SORT']),
-									'SYSTEM' => 'N',
-									'COLOR' => $color,
-									'SEMANTICS' => $semantics,
-								]
-							);
+							if ($existsStatus->getSystem())
+							{
+								$resultCollection->add($existsStatus);
+							}
+							else
+							{
+								$existsStatus->delete();
+							}
 						}
 					}
 
-					if(!empty($oldData))
-					{
-						foreach ($oldData as $item)
-						{
-							if ($item['SYSTEM'] === 'N')
-							{
-								$entity->delete($item['ID']);
-							}
-						}
-					}
+					(new FunnelStatusCollectionRevalidator($resultCollection))->save();
 				}
 				//end region standard funnel
 				//region custom deal funnel
-				elseif(mb_strpos($entityID, static::$customDealStagePrefix) !== false)
+				elseif (str_contains($entityID, static::$customDealStagePrefix))
 				{
 					try
 					{
@@ -752,6 +763,26 @@ class Status
 				}
 				//end region dictionary
 			}
+		}
+
+		return $result;
+	}
+
+	/**
+	 * @param string $entityId
+	 * @return Array<string, EO_Status>
+	 */
+	private static function getExistsStatuses(string $entityId): array
+	{
+		$statusCollection = StatusTable::query()
+			->where('ENTITY_ID', $entityId)
+			->fetchCollection()
+		;
+
+		$result = [];
+		foreach ($statusCollection as $status)
+		{
+			$result[$status->getStatusId()] = $status;
 		}
 
 		return $result;

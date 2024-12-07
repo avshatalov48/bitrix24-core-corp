@@ -26,7 +26,7 @@ $APPLICATION->SetTitle(Loc::getMessage('TASKS_IMPORT_FORM_TITLE'));
 
 if ($arResult['IFRAME'])
 {
-	$APPLICATION->RestartBuffer(); //ñáðàñûâàåì âåñü âûâîä
+	$APPLICATION->RestartBuffer(); //ÑÐ±Ñ€Ð°ÑÑ‹Ð²Ð°ÐµÐ¼ Ð²ÐµÑÑŒ Ð²Ñ‹Ð²Ð¾Ð´
 	CJSCore::Init("sidepanel");
 	?>
 	<!DOCTYPE html>
@@ -400,8 +400,8 @@ if ($arResult['IFRAME'])
 																			<div class="tasks-entity-widget-content-block-select">
 																				<select class="tasks-entity-widget-content-select" id="<?= HtmlFilter::encode("field_{$key}")?>" name="<?= HtmlFilter::encode("field_{$key}")?>">
 																					<?
-																					$selectedValue = isset($arResult['IMPORT_FILE_PARAMETERS']['FIELDS'][ToUpper($value)]) ?
-																						ToUpper($value) : array_search(ToUpper($value), $arResult['IMPORT_FILE_PARAMETERS']['UPPER_FIELDS']);
+																					$selectedValue = isset($arResult['IMPORT_FILE_PARAMETERS']['FIELDS'][mb_strtoupper($value)]) ?
+																						mb_strtoupper($value) : array_search(mb_strtoupper($value), $arResult['IMPORT_FILE_PARAMETERS']['UPPER_FIELDS']);
 
 																					foreach ($arResult['IMPORT_FILE_PARAMETERS']['FIELDS'] as $id => $name)
 																					{
@@ -448,7 +448,7 @@ if ($arResult['IFRAME'])
 														<?}?>
 													</table>
 												</div>
-												<script type="text/javascript">
+												<script>
 													formWidth = BX('<?= CUtil::JSEscape($arResult['FORM_ID']) ?>').offsetWidth;
 													rightColumnWidth = formWidth - 40;
 													BX('tasks_import_example_table_container').style.width = rightColumnWidth + 'px';
@@ -483,7 +483,7 @@ if ($arResult['IFRAME'])
 				</form>
 			</div>
 
-			<script type="text/javascript">
+			<script>
 				BX.ready(
 					function ()
 					{

@@ -106,7 +106,7 @@
 			ref: onRef,
 			autoExpand: !coloredMessage,
 			value: postText,
-			placeholder: BX.message('MOBILE_EXT_LAYOUT_POSTFORM_TEXT_PLACEHOLDER_MSGVER_1'),
+			placeholder: BX.message('MOBILE_EXT_LAYOUT_POSTFORM_TEXT_PLACEHOLDER_MSGVER_2'),
 			placeholderTextColor,
 			style: {
 				color: inputTextColor,
@@ -140,7 +140,7 @@
 					color: placeholderTextColor,
 					fontSize: 14,
 				},
-				text: BX.message('MOBILE_EXT_LAYOUT_POSTFORM_MENTION_PLACEHOLDER'),
+				text: BX.message('MOBILE_EXT_LAYOUT_POSTFORM_MENTION_PLACEHOLDER_MSGVER_1'),
 				onTouchesEnded: onScrollViewClick,
 			},
 		);

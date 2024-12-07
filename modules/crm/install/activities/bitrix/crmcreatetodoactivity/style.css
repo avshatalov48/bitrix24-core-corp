@@ -1,0 +1,42 @@
+.bizproc-automation-create-todo-activity-color-selector-wrapper {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	grid-gap: 8px;
+	padding: 8px 12px;
+	background-color: var(--ui-color-palette-white-base);
+	border: 1px solid #C6CDD3;
+	border-radius: 4px;
+}
+
+.bizproc-automation-popup-todo-activity-settings .bizproc-automation-popup-settings {
+	margin-bottom: 18px;
+}
+
+.bizproc-automation-popup-todo-activity-settings .bizproc-automation-popup-settings:last-child {
+	margin-bottom: 0;
+}
+
+.bizproc-automation-popup-todo-activity-settings-separator {
+	width: 100%;
+	height: 1px;
+	background-color: var(--ui-color-palette-gray-20);
+	margin: 18px 0;
+}
+
+.crm-activity__todo-editor-v2-actions-menu-item {
+	display: flex;
+	align-items: center;
+}
+
+.bizproc_automation-todo-activity-actions-menu-item {
+	display: flex;
+	align-items: center;
+}
+
+.bizproc_automation-todo-activity-actions-menu-item-icon{
+	display:inline-block;
+	width: 25px;
+	height: 25px;
+	margin-right: 8px;
+}

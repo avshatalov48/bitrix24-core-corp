@@ -5,10 +5,10 @@ if(!defined('CACHED_b_crm_status')) define('CACHED_b_crm_status', 360000);
 IncludeModuleLangFile(__FILE__);
 
 use Bitrix\Crm\Attribute\FieldAttributeManager;
+use Bitrix\Crm\Category\DealCategory;
 use Bitrix\Crm\EntityRequisite;
 use Bitrix\Crm\StatusTable;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Crm\Category\DealCategory;
 use Bitrix\Main\SystemException;
 
 class CCrmStatus
@@ -16,6 +16,7 @@ class CCrmStatus
 	protected const PREFIX_SEPARATOR = ':';
 
 	public const PREFIX_USER_CREATED = 'UC';
+	public const DEFAULT_SORT = 10;
 
 	protected $entityId = '';
 	private static $FIELD_INFOS;
@@ -210,7 +211,6 @@ class CCrmStatus
 					'ENTITY_TYPE_ID' => \CCrmOwnerType::Quote,
 				],
 				'HONORIFIC' => ['ID' =>'HONORIFIC', 'NAME' => GetMessage('CRM_STATUS_TYPE_HONORIFIC')],
-				'EVENT_TYPE' => ['ID' =>'EVENT_TYPE', 'NAME' => GetMessage('CRM_STATUS_TYPE_EVENT_TYPE')],
 				'CALL_LIST' => ['ID' => 'CALL_LIST', 'NAME' => GetMessage('CRM_STATUS_TYPE_CALL_LIST')]
 			]
 		);
@@ -240,6 +240,7 @@ class CCrmStatus
 
 		if(self::IsDepricatedTypesEnabled())
 		{
+			$arEntityType['EVENT_TYPE'] = ['ID' =>'EVENT_TYPE', 'NAME' => GetMessage('CRM_STATUS_TYPE_EVENT_TYPE')];
 			$arEntityType['PRODUCT'] = ['ID' => 'PRODUCT', 'NAME' => GetMessage('CRM_STATUS_TYPE_PRODUCT')];
 		}
 
@@ -392,12 +393,14 @@ class CCrmStatus
 		$this->LAST_ERROR = '';
 
 		if (!$this->CheckFields($arFields, $bCheckStatusId))
-			return false;
-
-		$arFields['SORT'] = (int)$arFields['SORT'];
-		if($arFields['SORT'] <= 0)
 		{
-			$arFields['SORT'] = 10;
+			return false;
+		}
+
+		$arFields['SORT'] = (int)($arFields['SORT'] ?? 0);
+		if ($arFields['SORT'] <= 0)
+		{
+			$arFields['SORT'] = self::DEFAULT_SORT;
 		}
 
 		if (!is_set($arFields, 'SYSTEM'))
@@ -414,7 +417,7 @@ class CCrmStatus
 		{
 			$categoryId = (int)$arFields['CATEGORY_ID'];
 		}
-		elseif(DealCategory::hasStatusEntity($this->entityId))
+		elseif (DealCategory::hasStatusEntity($this->entityId))
 		{
 			$categoryId = DealCategory::convertFromStatusEntityID($this->entityId);
 		}
@@ -423,34 +426,36 @@ class CCrmStatus
 			$categoryId = 0;
 		}
 
-		$statusID = $arFields['STATUS_ID'];
-		if(empty($statusID))
+		$statusId = $arFields['STATUS_ID'];
+		if (empty($statusId))
 		{
-			$statusID = $this->getUniqueRandomStatusId();
+			$statusId = $this->getUniqueRandomStatusId();
 		}
 
-		$statusID = $this->addPrefixToStatusId($statusID);
-
-		if(!empty($arFields['COLOR']) && mb_strpos($arFields['COLOR'], '#') !== 0)
+		if (!empty($arFields['COLOR']) && !str_starts_with($arFields['COLOR'], '#'))
 		{
 			$arFields['COLOR'] = '#' . $arFields['COLOR'];
 		}
 
+		$name = trim($arFields['NAME'] ?? '');
+		$semantics = empty($arFields['SEMANTICS']) ? \Bitrix\Crm\PhaseSemantics::PROCESS : $arFields['SEMANTICS'];
+
 		$result = StatusTable::add([
-			'ENTITY_ID'	=> $this->entityId,
-			'STATUS_ID'	=> $statusID,
-			'NAME'		=> $arFields['NAME'],
-			'NAME_INIT'	=> $arFields['SYSTEM'] === 'Y' ? $arFields['NAME'] : '',
-			'SORT'		=> $arFields['SORT'],
-			'SYSTEM'	=> $arFields['SYSTEM'] === 'Y'? 'Y': 'N',
+			'ENTITY_ID' => $this->entityId,
+			'STATUS_ID' => $this->addPrefixToStatusId($statusId),
+			'NAME' => $name,
+			'NAME_INIT' => $arFields['SYSTEM'] === 'Y' ? $name : '',
+			'SORT' => $arFields['SORT'],
+			'SYSTEM' => $arFields['SYSTEM'] === 'Y'? 'Y': 'N',
 			'CATEGORY_ID' => $categoryId,
-			'COLOR' => $arFields['COLOR'],
-			'SEMANTICS' => $arFields['SEMANTICS'] ?? null,
+			'COLOR' => $arFields['COLOR'] ?? null,
+			'SEMANTICS' => $semantics,
 		]);
 
-		if(!$result->isSuccess())
+		if (!$result->isSuccess())
 		{
 			$this->LAST_ERROR = $result->getErrorMessages()[0];
+
 			return false;
 		}
 
@@ -466,9 +471,9 @@ class CCrmStatus
 	 * @return bool|int
 	 * @throws Exception
 	 */
-	public function Update($ID, array $arFields, array $arOptions = array())
+	public function Update($ID, array $arFields, array $arOptions = [])
 	{
-		$ID = (int) $ID;
+		$ID = (int)$ID;
 		$this->LAST_ERROR = '';
 
 		if (!$this->CheckFields($arFields))
@@ -476,16 +481,18 @@ class CCrmStatus
 			return false;
 		}
 
-		$arFields['SORT'] = (int)$arFields['SORT'];
-		if($arFields['SORT'] <= 0)
+		$arFields['SORT'] = (int)($arFields['SORT'] ?? 0);
+		if ($arFields['SORT'] <= 0)
 		{
-			$arFields['SORT'] = 10;
+			$arFields['SORT'] = self::DEFAULT_SORT;
 		}
 
 		$arFields_u['SORT'] = $arFields['SORT'];
-		if(!empty($arFields['NAME']))
+
+		$name = trim($arFields['NAME'] ?? '');
+		if (!empty($name))
 		{
-			$arFields_u['NAME'] = $arFields['NAME'];
+			$arFields_u['NAME'] = $name;
 		}
 
 		if (isset($arFields['SYSTEM']))
@@ -493,37 +500,39 @@ class CCrmStatus
 			$arFields_u['SYSTEM'] = ($arFields['SYSTEM'] === 'Y' ? 'Y' : 'N');
 		}
 
-		if(
-			isset($arOptions['ENABLE_STATUS_ID'])
+		if (
+			isset($arOptions['ENABLE_STATUS_ID'], $arFields['STATUS_ID'])
 			&& $arOptions['ENABLE_STATUS_ID']
-			&& isset($arFields['STATUS_ID']))
+		)
 		{
 			$arFields_u['STATUS_ID'] = $arFields['STATUS_ID'];
 		}
 
-		if(
-			isset($arOptions['ENABLE_NAME_INIT'])
+		if (
+			isset($arOptions['ENABLE_NAME_INIT'], $arFields['NAME_INIT'])
 			&& $arOptions['ENABLE_NAME_INIT']
-			&& isset($arFields['NAME_INIT']))
+		)
 		{
 			$arFields_u['NAME_INIT'] = $arFields['NAME_INIT'];
 		}
 
-		if(isset($arFields['COLOR']))
+		if (isset($arFields['COLOR']))
 		{
-			if(mb_strpos($arFields['COLOR'], '#') !== 0)
+			if(!str_starts_with($arFields['COLOR'], '#'))
 			{
 				$arFields['COLOR'] = '#' . $arFields['COLOR'];
 			}
+
 			$arFields_u['COLOR'] = $arFields['COLOR'];
 		}
-		if(isset($arFields['SEMANTICS']))
+
+		if (isset($arFields['SEMANTICS']))
 		{
 			$arFields_u['SEMANTICS'] = $arFields['SEMANTICS'];
 		}
 
 		$result = StatusTable::update($ID, $arFields_u);
-		if(!$result->isSuccess())
+		if (!$result->isSuccess())
 		{
 			$this->LAST_ERROR = $result->getErrorMessages()[0];
 		}
@@ -640,11 +649,11 @@ class CCrmStatus
 		if ($sOrder == '')
 			$sOrder = 'CS.ID DESC';
 
-		$strSqlOrder = ' ORDER BY '.TrimEx($sOrder,',');
+		$strSqlOrder = ' ORDER BY '.trim($sOrder, ', ');
 		$strSqlSearch = GetFilterSqlSearch($arSqlSearch);
 
 		$strSql = "SELECT CS.* FROM b_crm_status CS WHERE {$strSqlSearch} {$strSqlOrder}";
-		$res = $DB->Query($strSql, false, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
+		$res = $DB->Query($strSql);
 
 		return $res;
 	}
@@ -780,7 +789,7 @@ class CCrmStatus
 			$sql = "SELECT STATUS_ID AS MAX_STATUS_ID FROM b_crm_status WHERE ENTITY_ID = '{$DB->ForSql($this->entityId)}' AND $castedStatus > 0 ORDER BY $castedStatus DESC LIMIT 1";
 		}
 
-		$res = $DB->Query($sql, false, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
+		$res = $DB->Query($sql);
 		$fields = is_object($res) ? $res->Fetch() : array();
 
 		return (isset($fields['MAX_STATUS_ID']) ? intval($fields['MAX_STATUS_ID']) : 0) + 1;
@@ -856,7 +865,7 @@ class CCrmStatus
 	public static function GetEntityID($statusId)
 	{
 		global $DB;
-		$res = $DB->Query("SELECT ENTITY_ID FROM b_crm_status WHERE STATUS_ID ='{$DB->ForSql($statusId)}'", false, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
+		$res = $DB->Query("SELECT ENTITY_ID FROM b_crm_status WHERE STATUS_ID ='{$DB->ForSql($statusId)}'");
 		$fields = is_object($res) ? $res->Fetch() : array();
 		return isset($fields['ENTITY_ID']) ? $fields['ENTITY_ID'] : '';
 	}
@@ -900,7 +909,7 @@ class CCrmStatus
 	 * @param string $entityId
 	 * @return array
 	 */
-	public static function GetStatusListEx($entityId): array
+	public static function GetStatusListEx($entityId, bool $isEscapeName = true): array
 	{
 		if(!is_string($entityId))
 		{
@@ -910,7 +919,12 @@ class CCrmStatus
 		$escapedList = [];
 		foreach (static::GetStatusList($entityId) as $statusId => $statusName)
 		{
-			$escapedList[htmlspecialcharsbx($statusId)] = htmlspecialcharsbx($statusName);
+			if ($isEscapeName)
+			{
+				$statusName = htmlspecialcharsbx($statusName);
+			}
+
+			$escapedList[htmlspecialcharsbx($statusId)] = $statusName;
 		}
 
 		return $escapedList;

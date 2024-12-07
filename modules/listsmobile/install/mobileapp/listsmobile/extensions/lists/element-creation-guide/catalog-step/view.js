@@ -75,6 +75,7 @@ jn.define('lists/element-creation-guide/catalog-step/view', (require, exports, m
 		{
 			return new Stub({
 				description: Loc.getMessage('LISTSMOBILE_EXT_ELEMENT_CREATION_GUIDE_CATALOG_STEP_EMPTY_STATE_TITLE'),
+				backgroundColor: AppTheme.colors.bgContentPrimary,
 			});
 		}
 

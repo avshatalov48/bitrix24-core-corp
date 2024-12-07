@@ -101,9 +101,6 @@ if (check_bitrix_sessid())
 		&& $arResult["IS_EDIT_PERMITTED"]
 	)
 	{
-		CUtil::JSPostUnescape();
-		CUtil::decodeURIComponent($_FILES);
-
 		$productID = $entityID;
 		if (isset($_POST['NAME']))
 		{

@@ -3,9 +3,10 @@
  */
 jn.define('utils/skeleton', (require, exports, module) => {
 	const AppTheme = require('apptheme');
+	const { Feature } = require('feature');
 	const { ShimmerView } = require('layout/polyfill');
 
-	const DEFAULT_BG = AppTheme.colors.base6;
+	const DEFAULT_BG = Feature.isAirStyleSupported() ? AppTheme.realColors.base6 : AppTheme.colors.base6;
 
 	function Line(width, height, marginTop = 0, marginBottom = 0, borderRadius = null)
 	{

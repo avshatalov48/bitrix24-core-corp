@@ -72,5 +72,33 @@ jn.define('layout/ui/fields/base-select', (require, exports, module) => {
 		}
 	}
 
+	BaseSelectField.propTypes = {
+		...BaseField.propTypes,
+		config: PropTypes.shape({
+			showAll: PropTypes.bool, // show more button with count if it's multiple
+			styles: PropTypes.shape({
+				externalWrapperBorderColor: PropTypes.string,
+				externalWrapperBorderColorFocused: PropTypes.string,
+				externalWrapperBackgroundColor: PropTypes.string,
+				externalWrapperMarginHorizontal: PropTypes.number,
+			}),
+			deepMergeStyles: PropTypes.object, // override styles
+			parentWidget: PropTypes.object, // parent layout widget
+			copyingOnLongClick: PropTypes.bool,
+			titleIcon: PropTypes.object,
+
+			items: PropTypes.arrayOf(PropTypes.shape({
+				value: PropTypes.any,
+			})),
+		}),
+	};
+
+	BaseSelectField.defaultProps = {
+		...BaseField.defaultProps,
+		config: {
+			...BaseField.defaultProps.config,
+		},
+	};
+
 	module.exports = { BaseSelectField };
 });

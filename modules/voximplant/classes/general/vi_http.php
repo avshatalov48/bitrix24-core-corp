@@ -84,6 +84,20 @@ class CVoxImplantHttp
 		return $query;
 	}
 
+	public function GetAccountNode(array $params = [])
+	{
+		$query = $this->Query('GetAccountNode', $params);
+		if (isset($query->error))
+		{
+			$error = (array)$query->error;
+			$this->error = new CVoxImplantError(__METHOD__, $error['code'] ?? '', $error['msg'] ?? '');
+
+			return false;
+		}
+
+		return $query;
+	}
+
 	public function GetPhoneNumberCategories($countryCode = '')
 	{
 		$query = $this->Query(
@@ -980,8 +994,10 @@ class CVoxImplantHttp
 
 		foreach ($params as $k => $v)
 		{
-			if(is_null($params[$k]))
+			if (is_null($params[$k]))
+			{
 				$params[$k] = '';
+			}
 		}
 
 		$params["BX_HASH"] = self::RequestSign($this->type, md5(implode("|", $params)));
@@ -991,30 +1007,53 @@ class CVoxImplantHttp
 			'streamTimeout' => (int)($options['streamTimeout'] ?? 30),
 			'disableSslVerification' => true,
 		]);
-		$httpClient->setHeader('User-Agent', 'Bitrix Telephony');
-		$httpClient->setCharset(\Bitrix\Main\Context::getCurrent()->getCulture()->getCharset());
-		$result = $httpClient->query('POST', static::GetControllerUrl(), $params);
+		$httpClient
+			->setHeader('User-Agent', 'Bitrix Telephony')
+			->setHeader('Referer', $this->domain)
+			->setCharset(\Bitrix\Main\Context::getCurrent()->getCulture()->getCharset())
+		;
 
-		if (!$result)
+		$controllerUrl = static::GetControllerUrl();
+		$result = $httpClient->post($controllerUrl, $params);
+
+		$failResult = (object)array('error' => ['code' => 'CONNECT_ERROR', 'msg' => 'Parse error or connect error from server']);
+		$decodedResponse = null;
+
+		// Network errors workaround.
+		if ($result === false)
 		{
-			CVoxImplantHistory::WriteToLog($result, 'ERROR QUERY EXECUTE');
-			return (object)array('error' => array('code' => 'CONNECT_ERROR', 'msg' => 'Parse error or connect error from server'));
+			// check for network errors
+			$errors = $httpClient->getError();
+			if (!empty($errors))
+			{
+				$errors[] = 'url:'.$controllerUrl;
+				$systemException = new \Bitrix\Main\SystemException('Network connection error: '.implode('; ', $errors));
+				\Bitrix\Main\Application::getInstance()->getExceptionHandler()->writeToLog($systemException);
+
+				CVoxImplantHistory::WriteToLog($errors, 'ERROR QUERY EXECUTE');
+			}
+			else
+			{
+				CVoxImplantHistory::WriteToLog('Network connection error', 'ERROR QUERY EXECUTE');
+			}
+
+			return $failResult;
 		}
 
 		if ($httpClient->getStatus() !== 200)
 		{
 			CVoxImplantHistory::WriteToLog($result, 'ERROR QUERYING CONTROLLER, RESPONSE STATUS ' . $httpClient->getStatus());
-			return (object)array('error' => array('code' => 'CONNECT_ERROR', 'msg' => 'Parse error or connect error from server'));
+
+			return $failResult;
 		}
 
 		$response = $httpClient->getResult();
-		if($returnRaw)
+		if ($returnRaw)
 		{
 			// check for errors
-
 			try
 			{
-				if($response != "" && $response[0] == "{")
+				if ($response != "" && $response[0] == "{")
 				{
 					$decodedResponse = \Bitrix\Main\Web\Json::decode($response);
 					if(isset($decodedResponse['error']))
@@ -1030,7 +1069,7 @@ class CVoxImplantHttp
 
 			return $response;
 		}
-		else if($returnArray)
+		elseif ($returnArray)
 		{
 			try
 			{
@@ -1048,7 +1087,7 @@ class CVoxImplantHttp
 			if (!$decodedResponse)
 			{
 				CVoxImplantHistory::WriteToLog($response, 'ERROR QUERY EXECUTE');
-				return (object)array('error' => array('code' => 'CONNECT_ERROR', 'msg' => 'Parse error or connect error from server'));
+				return $failResult;
 			}
 		}
 
@@ -1061,7 +1100,7 @@ class CVoxImplantHttp
 			$decodedResponse->error->code = '';
 		}
 
-		return $decodedResponse;
+		return $decodedResponse ?? $failResult;
 	}
 
 	public static function RequestSign($type, $str)

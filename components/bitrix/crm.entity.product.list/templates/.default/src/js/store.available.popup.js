@@ -1,11 +1,13 @@
 import { Event, Loc, Tag, Uri, Dom } from 'main.core';
 import { Popup, PopupManager } from 'main.popup';
-import { ProductModel } from "catalog.product-model";
+import { ProductModel } from 'catalog.product-model';
+import { ModeList } from 'catalog.store-enable-wizard';
 
 export default class StoreAvailablePopup
 {
 	#rowId;
 	#model: ProductModel;
+	#inventoryManagementMode: ?string;
 	#node: HTMLElement;
 	#popup: ?Popup;
 
@@ -13,6 +15,7 @@ export default class StoreAvailablePopup
 	{
 		this.#rowId = options.rowId
 		this.#model = options.model;
+		this.#inventoryManagementMode = options.inventoryManagementMode;
 		this.setNode(options.node);
 	}
 
@@ -82,15 +85,15 @@ export default class StoreAvailablePopup
 			</td>`;
 		};
 
-		let reservedQuantityLink =
-			reservedQuantity > 0
+		const isReservedQuantityLink = reservedQuantity > 0 && this.#inventoryManagementMode !== ModeList.MODE_1C;
+
+		const reservedQuantityContent = isReservedQuantityLink
 			? `<a href="#" class="store-available-popup-reserves-slider-link">${reservedQuantity}</a>`
 			: reservedQuantity
 		;
-		const viewAvailableQuantity =
-			availableQuantity <= 0
-				? `<span class="text--danger">${availableQuantity}`
-				: availableQuantity
+		const viewAvailableQuantity = availableQuantity <= 0
+			? `<span class="text--danger">${availableQuantity}`
+			: availableQuantity
 		;
 
 		const result = Tag.render`
@@ -106,7 +109,7 @@ export default class StoreAvailablePopup
 					<tbody>
 						<tr class="main-grid-row main-grid-row-body">
 							${renderRow(storeQuantity)}
-							${renderRow(reservedQuantityLink)}
+							${renderRow(reservedQuantityContent)}
 							${renderRow(viewAvailableQuantity)}
 						</tr>
 					</tbody>
@@ -114,13 +117,16 @@ export default class StoreAvailablePopup
 			</div>
 		`;
 
-		if (reservedQuantity > 0)
+		if (isReservedQuantityLink)
 		{
-			reservedQuantityLink = result.querySelector('.store-available-popup-reserves-slider-link');
-			Event.bind(reservedQuantityLink, 'click', (e) => {
-				e.preventDefault();
-				this.openDealsWithReservedProductSlider();
-			});
+			Event.bind(
+				result.querySelector('.store-available-popup-reserves-slider-link'),
+				'click',
+				(e) => {
+					e.preventDefault();
+					this.openDealsWithReservedProductSlider();
+				},
+			);
 		}
 
 		return result;

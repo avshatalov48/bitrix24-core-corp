@@ -10,6 +10,7 @@ use Bitrix\Crm\Service\Container;
 
 final class AddDefaultTriggersAgent extends AgentBase
 {
+	public const IS_DISABLED = true;
 	private const DEFAULT_TRIGGERS = [
 		SigningDoneTrigger::class => 'SENT',
 		SigningStartedTrigger::class => 'SEMISIGNED',
@@ -18,6 +19,11 @@ final class AddDefaultTriggersAgent extends AgentBase
 
 	public static function doRun(): bool
 	{
+		if (self::IS_DISABLED)
+		{
+			return false;
+		}
+
 		$typeService = Container::getInstance()->getSignB2eTypeService();
 		$statusService = Container::getInstance()->getSignB2eStatusService();
 		$triggerService = Container::getInstance()->getSignB2eTriggerService();

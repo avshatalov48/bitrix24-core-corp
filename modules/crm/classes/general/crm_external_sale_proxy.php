@@ -109,10 +109,6 @@ class CCrmExternalSaleProxy
 		{
 			//Force UTF encoding
 			$this->client->setCharset('UTF-8');
-			if ((!isset($request['UTF']) || !$request['UTF']) && !defined('BX_UTF'))
-			{
-				$postData = \Bitrix\Main\Text\Encoding::convertEncodingArray($postData, SITE_CHARSET, 'UTF-8');
-			}
 		}
 
 		$headers = isset($request['HEADERS']) ? $request['HEADERS'] : null;

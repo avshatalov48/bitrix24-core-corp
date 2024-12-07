@@ -3,6 +3,7 @@ namespace Bitrix\Crm\Automation\Target;
 
 use Bitrix\Crm\Automation\Factory;
 use Bitrix\Crm\PhaseSemantics;
+use Bitrix\Crm\StatusTable;
 
 class LeadTarget extends BaseTarget
 {
@@ -23,52 +24,46 @@ class LeadTarget extends BaseTarget
 		return \CCrmOwnerType::Lead;
 	}
 
-	public function getEntityId()
+	protected function getEntityIdByDocumentId(string $documentId): int
 	{
-		$entity = $this->getEntity();
-		return isset($entity['ID']) ? (int)$entity['ID'] : 0;
+		return (int)str_replace('LEAD_', '', $documentId);
+	}
+
+	protected function getEntityFields(array $select): array
+	{
+		$id = $this->getEntityId();
+		if (empty($id))
+		{
+			return [];
+		}
+
+		return \Bitrix\Crm\LeadTable::query()
+			->setSelect($select)
+			->where('ID', $id)
+			->fetch() ?: [];
 	}
 
 	public function getResponsibleId()
 	{
-		$entity = $this->getEntity();
-		return isset($entity['ASSIGNED_BY_ID']) ? (int)$entity['ASSIGNED_BY_ID'] : 0;
-	}
+		$entity = $this->getEntityFields(['ASSIGNED_BY_ID']);
 
-	public function setEntityById($id)
-	{
-		$id = (int)$id;
-		if ($id > 0)
-		{
-			$entity = \CCrmLead::GetByID($id, false);
-			if ($entity)
-			{
-				$this->setEntity($entity);
-				$this->setDocumentId('LEAD_'.$id);
-			}
-		}
-	}
-
-	public function getEntity()
-	{
-		if ($this->entity === null && $id = $this->getDocumentId())
-		{
-			$id = (int) str_replace('LEAD_', '', $id);
-			$this->setEntityById($id);
-		}
-
-		return parent::getEntity();
+		return (int)$entity['ASSIGNED_BY_ID'];
 	}
 
 	public function getEntityStatus()
 	{
-		$entity = $this->getEntity();
-		return isset($entity['STATUS_ID']) ? $entity['STATUS_ID'] : '';
+		$entity = $this->getEntityFields(['STATUS_ID']);
+
+		return $entity['STATUS_ID'] ?? '';
 	}
 
 	public function setEntityStatus($statusId, $executeBy = null)
 	{
 		$id = $this->getEntityId();
+		if (empty($id))
+		{
+			return false;
+		}
 
 		$fields = ['STATUS_ID' => $statusId];
 		if ($executeBy)
@@ -77,13 +72,13 @@ class LeadTarget extends BaseTarget
 		}
 
 		$CCrmLead = new \CCrmLead(false);
-		$CCrmLead->Update($id, $fields, true, true, array(
+		$result = $CCrmLead->Update($id, $fields, true, true, [
 			'DISABLE_USER_FIELD_CHECK' => true,
 			'REGISTER_SONET_EVENT' => true,
-			'CURRENT_USER' => $executeBy ?? 0 //System user
-		));
+			'CURRENT_USER' => $executeBy ?? 0, //System user
+		]);
 
-		$this->setEntityField('STATUS_ID', $statusId);
+		return $result;
 	}
 
 	public function getEntityStatuses()
@@ -102,8 +97,7 @@ class LeadTarget extends BaseTarget
 		$successColor = \CCrmViewHelper::SUCCESS_COLOR;
 		$failureColor = \CCrmViewHelper::FAILURE_COLOR;
 
-		$statuses = \CCrmViewHelper::GetLeadStatusInfos();
-
+		$statuses = StatusTable::getStatusesByEntityId('STATUS');
 		foreach ($statuses as $id => $statusInfo)
 		{
 			if (!empty($statusInfo['COLOR']))

@@ -432,11 +432,13 @@ $arResult['FILTER_PRESETS'] = array();
 $arResult['PERMS']['ADD'] = !$userPermissions->HavePerm('LEAD', BX_CRM_PERM_NONE, 'ADD');
 $arResult['PERMS']['WRITE'] = !$userPermissions->HavePerm('LEAD', BX_CRM_PERM_NONE, 'WRITE');
 $arResult['PERMS']['DELETE'] = !$userPermissions->HavePerm('LEAD', BX_CRM_PERM_NONE, 'DELETE');
-$arResult['CALL_LIST_UPDATE_MODE'] = isset($_REQUEST['call_list_context']) && isset($_REQUEST['call_list_id']) && IsModuleInstalled('voximplant');
-$arResult['CALL_LIST_CONTEXT'] = (string)($_REQUEST['call_list_context'] ?? '');
-$arResult['CALL_LIST_ID'] = (int)($_REQUEST['call_list_id'] ?? 0);
 
-if ($arResult['CALL_LIST_UPDATE_MODE'])
+[$callListId, $callListContext] = \CCrmViewHelper::getCallListIdAndContextFromRequest();
+$arResult['CALL_LIST_ID'] = $callListId;
+$arResult['CALL_LIST_CONTEXT'] = $callListContext;
+unset($callListId, $callListContext);
+
+if (\CCrmViewHelper::isCallListUpdateMode(\CCrmOwnerType::Lead))
 {
 	AddEventHandler('crm', 'onCrmLeadListItemBuildMenu', array('\Bitrix\Crm\CallList\CallList', 'handleOnCrmLeadListItemBuildMenu'));
 }
@@ -813,6 +815,22 @@ unset($arHeader);
 
 //endregion Headers initialization
 
+$settings = \CCrmViewHelper::initGridSettings(
+	$arResult['GRID_ID'],
+	$gridOptions,
+	$arResult['HEADERS'],
+	$isInExportMode,
+	columnNameToEditableFieldNameMap: [
+		'LEAD_SUMMARY' => 'TITLE',
+	],
+);
+
+$arResult['PANEL'] = \CCrmViewHelper::initGridPanel(
+	\CCrmOwnerType::Lead,
+	$settings,
+);
+unset($settings);
+
 //region Try to extract user action data
 // We have to extract them before call of CGridOptions::GetFilter() or the custom filter will be corrupted.
 $actionData = array(
@@ -821,106 +839,9 @@ $actionData = array(
 );
 if(check_bitrix_sessid())
 {
-	$postAction = 'action_button_'.$arResult['GRID_ID'];
 	$getAction = 'action_'.$arResult['GRID_ID'];
 	//We need to check grid 'controls'
-	$controls = isset($_POST['controls']) && is_array($_POST['controls']) ? $_POST['controls'] : array();
-	if ($actionData['METHOD'] == 'POST' && (isset($controls[$postAction]) || isset($_POST[$postAction])))
-	{
-		CUtil::JSPostUnescape();
-
-		$actionData['ACTIVE'] = true;
-
-		if(isset($controls[$postAction]))
-		{
-			$actionData['NAME'] = $controls[$postAction];
-		}
-		else
-		{
-			$actionData['NAME'] = $_POST[$postAction];
-			unset($_POST[$postAction], $_REQUEST[$postAction]);
-		}
-
-		$allRows = 'action_all_rows_'.$arResult['GRID_ID'];
-		$actionData['ALL_ROWS'] = false;
-		if(isset($controls[$allRows]))
-		{
-			$actionData['ALL_ROWS'] = $controls[$allRows] == 'Y';
-		}
-		elseif(isset($_POST[$allRows]))
-		{
-			$actionData['ALL_ROWS'] = $_POST[$allRows] == 'Y';
-			unset($_POST[$allRows], $_REQUEST[$allRows]);
-		}
-
-		if(isset($_POST['rows']) && is_array($_POST['rows']))
-		{
-			$actionData['ID'] = $_POST['rows'];
-		}
-		elseif(isset($_POST['ID']))
-		{
-			$actionData['ID'] = $_POST['ID'];
-			unset($_POST['ID'], $_REQUEST['ID']);
-		}
-
-		if(isset($_POST['FIELDS']))
-		{
-			$actionData['FIELDS'] = $_POST['FIELDS'];
-			unset($_POST['FIELDS'], $_REQUEST['FIELDS']);
-		}
-
-		if(isset($_POST['ACTION_STATUS_ID']) || isset($controls['ACTION_STATUS_ID']))
-		{
-			if(isset($_POST['ACTION_STATUS_ID']))
-			{
-				$actionData['STATUS_ID'] = trim($_POST['ACTION_STATUS_ID']);
-				unset($_POST['ACTION_STATUS_ID'], $_REQUEST['ACTION_STATUS_ID']);
-			}
-			else
-			{
-				$actionData['STATUS_ID'] = trim($controls['ACTION_STATUS_ID']);
-			}
-		}
-
-		if(isset($_POST['ACTION_ASSIGNED_BY_ID']) || isset($controls['ACTION_ASSIGNED_BY_ID']))
-		{
-			$assignedByID = 0;
-			if(isset($_POST['ACTION_ASSIGNED_BY_ID']))
-			{
-				if(!is_array($_POST['ACTION_ASSIGNED_BY_ID']))
-				{
-					$assignedByID = intval($_POST['ACTION_ASSIGNED_BY_ID']);
-				}
-				elseif(count($_POST['ACTION_ASSIGNED_BY_ID']) > 0)
-				{
-					$assignedByID = intval($_POST['ACTION_ASSIGNED_BY_ID'][0]);
-				}
-				unset($_POST['ACTION_ASSIGNED_BY_ID'], $_REQUEST['ACTION_ASSIGNED_BY_ID']);
-			}
-			else
-			{
-				$assignedByID = (int)$controls['ACTION_ASSIGNED_BY_ID'];
-			}
-
-			$actionData['ASSIGNED_BY_ID'] = $assignedByID;
-		}
-
-		if(isset($_POST['ACTION_OPENED']) || isset($controls['ACTION_OPENED']))
-		{
-			if(isset($_POST['ACTION_OPENED']))
-			{
-				$actionData['OPENED'] = mb_strtoupper($_POST['ACTION_OPENED']) === 'Y' ? 'Y' : 'N';
-				unset($_POST['ACTION_OPENED'], $_REQUEST['ACTION_OPENED']);
-			}
-			else
-			{
-				$actionData['OPENED'] = mb_strtoupper($controls['ACTION_OPENED']) === 'Y' ? 'Y' : 'N';
-			}
-		}
-
-		$actionData['AJAX_CALL'] = $arResult['IS_AJAX_CALL'];
-	}
-	elseif ($actionData['METHOD'] == 'GET' && isset($_GET[$getAction]))
+	if ($actionData['METHOD'] == 'GET' && isset($_GET[$getAction]))
 	{
 		$actionData['ACTIVE'] = true;
 
@@ -1037,7 +958,7 @@ foreach ($arFilter as $k => $v)
 		$arFilter["=%{$k}"] = "{$v}%";
 		unset($arFilter[$k]);
 	}
-	elseif (preg_match('/(.*)_from$/i'.BX_UTF_PCRE_MODIFIER, $k, $arMatch))
+	elseif (preg_match('/(.*)_from$/iu', $k, $arMatch))
 	{
 		if ($arMatch[1] === 'ACTIVE_TIME_PERIOD')
 		{
@@ -1046,14 +967,14 @@ foreach ($arFilter as $k => $v)
 
 		\Bitrix\Crm\UI\Filter\Range::prepareFrom($arFilter, $arMatch[1], $v);
 	}
-	elseif (preg_match('/(.*)_to$/i'.BX_UTF_PCRE_MODIFIER, $k, $arMatch))
+	elseif (preg_match('/(.*)_to$/iu', $k, $arMatch))
 	{
 		if ($arMatch[1] === 'ACTIVE_TIME_PERIOD')
 		{
 			continue;
 		}
 
-		if ($v != '' && ($arMatch[1] == 'DATE_CREATE' || $arMatch[1] == 'DATE_MODIFY') && !preg_match('/\d{1,2}:\d{1,2}(:\d{1,2})?$/'.BX_UTF_PCRE_MODIFIER, $v))
+		if ($v != '' && ($arMatch[1] == 'DATE_CREATE' || $arMatch[1] == 'DATE_MODIFY') && !preg_match('/\d{1,2}:\d{1,2}(:\d{1,2})?$/u', $v))
 		{
 			$v = CCrmDateTimeHelper::SetMaxDayTime($v);
 		}
@@ -1106,502 +1027,12 @@ foreach ($arFilter as $k => $v)
 \Bitrix\Crm\UI\Filter\EntityHandler::internalize($arResult['FILTER'], $arFilter);
 
 //region POST & GET actions processing
+\CCrmViewHelper::processGridRequest(\CCrmOwnerType::Lead, $arResult['GRID_ID'], $arResult['PANEL']);
+
 if($actionData['ACTIVE'])
 {
 	$arErrors = array();
-	$arCurrentUserGroups = $USER->GetUserGroupArray();
-	if ($actionData['METHOD'] == 'POST')
-	{
-		if($actionData['NAME'] == 'delete')
-		{
-			if ((isset($actionData['ID']) && is_array($actionData['ID'])) || $actionData['ALL_ROWS'])
-			{
-				$arFilterDel = array();
-				if (!$actionData['ALL_ROWS'])
-				{
-					$arFilterDel = array('ID' => $actionData['ID']);
-				}
-				else
-				{
-					// Fix for issue #26628
-					$arFilterDel += $arFilter;
-				}
-
-				$obRes = CCrmLead::GetListEx(array(), $arFilterDel, false, false, array('ID'));
-				while($arLead = $obRes->Fetch())
-				{
-					$ID = $arLead['ID'];
-					$arEntityAttr = $userPermissions->GetEntityAttr('LEAD', array($ID));
-					if (!$userPermissions->CheckEnityAccess('LEAD', 'DELETE', $arEntityAttr[$ID]))
-					{
-						continue ;
-					}
-
-					$DB->StartTransaction();
-
-					if ($CCrmBizProc->Delete($ID, $arEntityAttr)
-						&& $CCrmLead->Delete($ID, array('CHECK_DEPENDENCIES' => true, 'PROCESS_BIZPROC' => false)))
-					{
-						$DB->Commit();
-					}
-					else
-					{
-						$arErrors[] = $CCrmLead->LAST_ERROR;
-						$DB->Rollback();
-					}
-				}
-			}
-		}
-		if($actionData['NAME'] == 'exclude')
-		{
-			if ((isset($actionData['ID']) && is_array($actionData['ID'])) || $actionData['ALL_ROWS'])
-			{
-				$arFilterDel = array();
-				if (!$actionData['ALL_ROWS'])
-				{
-					$arFilterDel = array('ID' => $actionData['ID']);
-				}
-				else
-				{
-					// Fix for issue #26628
-					$arFilterDel += $arFilter;
-				}
-
-				$obRes = CCrmLead::GetListEx(array(), $arFilterDel, false, false, array('ID'));
-				while($arLead = $obRes->Fetch())
-				{
-					$ID = $arLead['ID'];
-
-					if(!\Bitrix\Crm\Exclusion\Access::current()->canWrite())
-					{
-						continue;
-					}
-
-					\Bitrix\Crm\Exclusion\Store::addFromEntity(CCrmOwnerType::Lead, $ID);
-
-					$arEntityAttr = $userPermissions->GetEntityAttr('LEAD', array($ID));
-					if(CCrmLead::CheckDeletePermission($ID, $userPermissions, array('ENTITY_ATTRS' => $arEntityAttr)))
-					{
-						$DB->StartTransaction();
-
-						if ($CCrmBizProc->Delete($ID, $arEntityAttr)
-							&& $CCrmLead->Delete($ID, array('CHECK_DEPENDENCIES' => true, 'PROCESS_BIZPROC' => false)))
-						{
-							$DB->Commit();
-						}
-						else
-						{
-							$arErrors[] = $CCrmLead->LAST_ERROR;
-							$DB->Rollback();
-						}
-					}
-				}
-			}
-		}
-		elseif($actionData['NAME'] == 'edit')
-		{
-			if(isset($actionData['FIELDS']) && is_array($actionData['FIELDS']))
-			{
-				foreach($actionData['FIELDS'] as $ID => $arSrcData)
-				{
-					$arEntityAttr = $userPermissions->GetEntityAttr('LEAD', array($ID));
-					if (!$userPermissions->CheckEnityAccess('LEAD', 'WRITE', $arEntityAttr[$ID]))
-					{
-						continue ;
-					}
-
-					$dbLead = CCrmLead::GetListEx(
-						array(),
-						array('ID' => $ID, 'CHECK_PERMISSIONS' => 'N'),
-						false,
-						false,
-						array('STATUS_ID'),
-						array()
-					);
-					$arLead = $dbLead ? $dbLead->Fetch() : null;
-					if(!is_array($arLead))
-					{
-						continue;
-					}
-
-					$arUpdateData = array();
-					reset($arResult['HEADERS']);
-					foreach ($arResult['HEADERS'] as $arHead)
-					{
-						if (isset($arHead['editable']) && (is_array($arHead['editable']) || $arHead['editable'] === true) && isset($arSrcData[$arHead['id']]))
-						{
-							$key = $arHead['id'];
-							$arUpdateData[$key] = $arSrcData[$key];
-						}
-						if(isset($arUpdateData['LEAD_SUMMARY']))
-						{
-							if(!isset($arUpdateData['TITLE']))
-							{
-								$arUpdateData['TITLE'] = $arUpdateData['LEAD_SUMMARY'];
-							}
-							unset($arUpdateData['LEAD_SUMMARY']);
-						}
-
-					}
-
-					// Skip leads in status 'CONVERTED'. 'CONVERTED' is system status and it can not be changed.
-					if(isset($arUpdateData['STATUS_ID']) && $arLead['STATUS_ID'] === 'CONVERTED')
-					{
-						unset($arUpdateData['STATUS_ID']);
-					}
-
-					if (!empty($arUpdateData))
-					{
-						$DB->StartTransaction();
-
-						if($CCrmLead->Update($ID, $arUpdateData))
-						{
-							$DB->Commit();
-
-							CCrmBizProcHelper::AutoStartWorkflows(
-								CCrmOwnerType::Lead,
-								$ID,
-								CCrmBizProcEventType::Edit,
-								$arErrors
-							);
-
-							//Region automation
-							$starter = new \Bitrix\Crm\Automation\Starter(\CCrmOwnerType::Lead, $ID);
-							$starter->setUserIdFromCurrent()->runOnUpdate($arUpdateData, $arLead);
-							//end region
-						}
-						else
-						{
-							$arResult['ERRORS'][] = [
-								'TITLE' => Main\Text\HtmlFilter::encode($arUpdateData['TITLE'] ?? $ID),
-								'TEXT' => Main\Text\HtmlFilter::encode(strip_tags($CCrmLead->LAST_ERROR)),
-							];
-							$DB->Rollback();
-						}
-					}
-				}
-			}
-		}
-		elseif ($actionData['NAME'] == 'tasks')
-		{
-			if (isset($actionData['ID']) && is_array($actionData['ID']))
-			{
-				$arTaskID = array();
-				foreach($actionData['ID'] as $ID)
-				{
-					$arTaskID[] = 'L_'.$ID;
-				}
-
-				$APPLICATION->RestartBuffer();
-
-				$taskUrl = CHTTP::urlAddParams(
-					CComponentEngine::MakePathFromTemplate(
-						COption::GetOptionString('tasks', 'paths_task_user_edit', ''),
-						array(
-							'task_id' => 0,
-							'user_id' => $userID
-						)
-					),
-					array(
-						'UF_CRM_TASK' => implode(';', $arTaskID),
-						'TITLE' => urlencode(GetMessage('CRM_TASK_TITLE_PREFIX')),
-						'TAGS' => urlencode(GetMessage('CRM_TASK_TAG')),
-						'back_url' => urlencode($arParams['PATH_TO_LEAD_LIST'])
-					)
-				);
-				if ($actionData['AJAX_CALL'])
-				{
-					echo '<script> parent.window.location = "'.CUtil::JSEscape($taskUrl).'";</script>';
-					exit();
-				}
-				else
-				{
-					LocalRedirect($taskUrl);
-				}
-			}
-		}
-		elseif ($actionData['NAME'] == 'set_status')
-		{
-			if(isset($actionData['STATUS_ID']) && $actionData['STATUS_ID'] != '') // Fix for issue #26628
-			{
-				$arIDs = array();
-				if ($actionData['ALL_ROWS'])
-				{
-					$arActionFilter = $arFilter;
-					$arActionFilter['CHECK_PERMISSIONS'] = 'N'; // Ignore 'WRITE' permission - we will check it before update.
-
-					$dbRes = CCrmLead::GetListEx(
-						array(),
-						$arActionFilter,
-						false,
-						false,
-						array('ID', 'STATUS_ID')
-					);
-
-					while($arLead = $dbRes->Fetch())
-					{
-						$arIDs[] = $arLead['ID'];
-					}
-				}
-				elseif (isset($actionData['ID']) && is_array($actionData['ID']))
-				{
-					$dbRes = CCrmLead::GetListEx(
-						array(),
-						array(
-							'@ID'=> $actionData['ID'],
-							'CHECK_PERMISSIONS' => 'N'
-						),
-						false,
-						false,
-						array('ID', 'STATUS_ID')
-					);
-
-					while($arLead = $dbRes->Fetch())
-					{
-						$arIDs[] = $arLead['ID'];
-					}
-				}
-
-				$hasErrors = false;
-				$arEntityAttr = $userPermissions->GetEntityAttr('LEAD', $arIDs);
-				foreach($arIDs as $ID)
-				{
-					if (!$userPermissions->CheckEnityAccess('LEAD', 'WRITE', $arEntityAttr[$ID]))
-					{
-						continue;
-					}
-
-					$arUpdateData = array('STATUS_ID' => $actionData['STATUS_ID']);
-
-					if($CCrmLead->Update($ID, $arUpdateData))
-					{
-						CCrmBizProcHelper::AutoStartWorkflows(
-							CCrmOwnerType::Lead,
-							$ID,
-							CCrmBizProcEventType::Edit,
-							$arErrors
-						);
-
-						//Region automation
-						$starter = new \Bitrix\Crm\Automation\Starter(\CCrmOwnerType::Lead, $ID);
-						$starter->setUserIdFromCurrent()->runOnUpdate(['STATUS_ID' => $actionData['STATUS_ID']], []);
-						//end region
-					}
-					else
-					{
-						$hasErrors = true;
-					}
-				}
-
-				if($hasErrors)
-				{
-					$arResult['MESSAGES'][] = array(
-						'TITLE' => GetMessage('CRM_SET_STATUS_NOT_COMPLETED_TITLE'),
-						'TEXT' => GetMessage('CRM_SET_STATUS_NOT_COMPLETED_TEXT_MSGVER_1')
-					);
-				}
-			}
-		}
-		elseif ($actionData['NAME'] == 'assign_to')
-		{
-			if(isset($actionData['ASSIGNED_BY_ID']))
-			{
-				$arIDs = array();
-				if ($actionData['ALL_ROWS'])
-				{
-					$arActionFilter = $arFilter;
-					$arActionFilter['CHECK_PERMISSIONS'] = 'N'; // Ignore 'WRITE' permission - we will check it before update.
-					$dbRes = CCrmLead::GetListEx(array(), $arActionFilter, false, false, array('ID'));
-					while($arLead = $dbRes->Fetch())
-					{
-						$arIDs[] = $arLead['ID'];
-					}
-				}
-				elseif (isset($actionData['ID']) && is_array($actionData['ID']))
-				{
-					$arIDs = $actionData['ID'];
-				}
-
-				$arEntityAttr = $userPermissions->GetEntityAttr('LEAD', $arIDs);
-
-
-				foreach($arIDs as $ID)
-				{
-					if (!$userPermissions->CheckEnityAccess('LEAD', 'WRITE', $arEntityAttr[$ID]))
-					{
-						continue;
-					}
-
-					$DB->StartTransaction();
-
-					$arUpdateData = array(
-						'ASSIGNED_BY_ID' => $actionData['ASSIGNED_BY_ID']
-					);
-
-					if (
-						$CCrmLead->Update(
-							$ID,
-							$arUpdateData,
-							true,
-							true,
-							[
-								'REGISTER_SONET_EVENT' => true,
-								'DISABLE_USER_FIELD_CHECK' => true,
-							]
-						)
-					)
-					{
-						$DB->Commit();
-
-						CCrmBizProcHelper::AutoStartWorkflows(
-							CCrmOwnerType::Lead,
-							$ID,
-							CCrmBizProcEventType::Edit,
-							$arErrors
-						);
-						$starter = new \Bitrix\Crm\Automation\Starter(\CCrmOwnerType::Lead, $ID);
-						$starter->setUserIdFromCurrent()->runOnUpdate(
-							['ASSIGNED_BY_ID' => $actionData['ASSIGNED_BY_ID']],
-							[]
-						);
-					}
-					else
-					{
-						$DB->Rollback();
-					}
-				}
-			}
-		}
-		elseif ($actionData['NAME'] == 'mark_as_opened')
-		{
-			if(isset($actionData['OPENED']) && $actionData['OPENED'] != '')
-			{
-				$isOpened = mb_strtoupper($actionData['OPENED']) === 'Y' ? 'Y' : 'N';
-				$arIDs = array();
-				if ($actionData['ALL_ROWS'])
-				{
-					$arActionFilter = $arFilter;
-					$arActionFilter['CHECK_PERMISSIONS'] = 'N'; // Ignore 'WRITE' permission - we will check it before update.
-
-					$dbRes = CCrmLead::GetListEx(
-						array(),
-						$arActionFilter,
-						false,
-						false,
-						array('ID', 'OPENED')
-					);
-
-					while($arLead = $dbRes->Fetch())
-					{
-						if(isset($arLead['OPENED']) && $arLead['OPENED'] === $isOpened)
-						{
-							continue;
-						}
-
-						$arIDs[] = $arLead['ID'];
-					}
-				}
-				elseif (isset($actionData['ID']) && is_array($actionData['ID']))
-				{
-					$dbRes = CCrmLead::GetListEx(
-						array(),
-						array(
-							'@ID'=> $actionData['ID'],
-							'CHECK_PERMISSIONS' => 'N'
-						),
-						false,
-						false,
-						array('ID', 'OPENED')
-					);
-
-					while($arLead = $dbRes->Fetch())
-					{
-						if(isset($arLead['OPENED']) && $arLead['OPENED'] === $isOpened)
-						{
-							continue;
-						}
-
-						$arIDs[] = $arLead['ID'];
-					}
-				}
-
-				$arEntityAttr = $userPermissions->GetEntityAttr('LEAD', $arIDs);
-				foreach($arIDs as $ID)
-				{
-					if (!$userPermissions->CheckEnityAccess('LEAD', 'WRITE', $arEntityAttr[$ID]))
-					{
-						continue;
-					}
-
-					$DB->StartTransaction();
-					$arUpdateData = array('OPENED' => $isOpened);
-					if($CCrmLead->Update($ID, $arUpdateData, true, true, array('DISABLE_USER_FIELD_CHECK' => true)))
-					{
-						$DB->Commit();
-
-						CCrmBizProcHelper::AutoStartWorkflows(
-							CCrmOwnerType::Lead,
-							$ID,
-							CCrmBizProcEventType::Edit,
-							$arErrors
-						);
-						$starter = new \Bitrix\Crm\Automation\Starter(\CCrmOwnerType::Lead, $ID);
-						$starter->setUserIdFromCurrent()->runOnUpdate(['OPENED' => $isOpened], []);
-					}
-					else
-					{
-						$DB->Rollback();
-					}
-				}
-			}
-		}
-		elseif($actionData['NAME'] == 'refresh_account')
-		{
-			$agent = \Bitrix\Crm\Agent\Accounting\LeadAccountSyncAgent::getInstance();
-			if ($actionData['ALL_ROWS'])
-			{
-				$agent->register();
-				$agent->enable(true);
-			}
-			elseif(isset($actionData['ID']) && is_array($actionData['ID']))
-			{
-				$dbRes = CCrmLead::GetListEx(
-					array(),
-					array('@ID'=> $actionData['ID'], 'CHECK_PERMISSIONS' => 'N'),
-					false,
-					false,
-					array('ID')
-				);
-
-				$arIDs = array();
-				while($arLead = $dbRes->Fetch())
-				{
-					$ID = (int)$arLead['ID'];
-					if(CCrmLead::CheckUpdatePermission($ID, $userPermissions))
-					{
-						$arIDs[] = $ID;
-					}
-				}
-
-				if(!empty($arIDs))
-				{
-					$agent->process($arIDs);
-				}
-			}
-		}
-		if (!$actionData['AJAX_CALL'])
-		{
-			$redirectUrl = $arParams['PATH_TO_LEAD_LIST'];
-			if(!empty($arErrors))
-			{
-				$errorID = uniqid('crm_err_');
-				$_SESSION[$errorID] = $arErrors;
-				$redirectUrl = CHTTP::urlAddParams($redirectUrl, array('error' => $errorID));
-			}
-			LocalRedirect($redirectUrl);
-		}
-	}
-	else//if ($actionData['METHOD'] == 'GET')
+	if ($actionData['METHOD'] == 'GET')
 	{
 		$arErrors = array();
 		if ($actionData['NAME'] == 'delete' && isset($actionData['ID']))
@@ -1629,21 +1060,33 @@ if($actionData['ACTIVE'])
 			$ID = intval($actionData['ID']);
 			if(\Bitrix\Crm\Exclusion\Access::current()->canWrite())
 			{
-				\Bitrix\Crm\Exclusion\Store::addFromEntity(CCrmOwnerType::Lead, $ID);
+				$DB->StartTransaction();
 
-				if(CCrmLead::CheckDeletePermission($ID, $userPermissions))
+				try
 				{
-					$DB->StartTransaction();
-					if($CCrmBizProc->Delete($ID, $arEntityAttr)
-						&& $CCrmLead->Delete($ID, array('CHECK_DEPENDENCIES' => true, 'PROCESS_BIZPROC' => false)))
-					{
-						$DB->Commit();
-					}
-					else
-					{
-						$arErrors[] = $CCrmLead->LAST_ERROR;
-						$DB->Rollback();
-					}
+					\Bitrix\Crm\Exclusion\Manager::excludeEntity(
+						\CCrmOwnerType::Lead,
+						$ID,
+						true,
+						['PERMISSIONS' => $userPermissions],
+					);
+
+					$isSuccess = true;
+				}
+				catch (Main\ObjectException $deleteException)
+				{
+					$arErrors[] = $deleteException->getMessage();
+
+					$isSuccess = false;
+				}
+
+				if ($isSuccess)
+				{
+					$DB->Commit();
+				}
+				else
+				{
+					$DB->Rollback();
 				}
 			}
 		}
@@ -2939,26 +2382,30 @@ if (isset($arResult['LEAD_ID']) && !empty($arResult['LEAD_ID']))
 			}
 		}
 	}
+
+	$entityBadges = new Bitrix\Crm\Kanban\EntityBadge(CCrmOwnerType::Lead, $arResult['LEAD_ID']);
+	$entityBadges->appendToEntityItems($arResult['LEAD']);
 }
 
 if (!$isInExportMode)
 {
 	$arResult['CONVERSION'] = array();
+	foreach(LeadConversionDispatcher::getAllConfigurations() as $conversionTypeID => $conversionConfig)
+	{
+		/** @var Bitrix\Crm\Conversion\LeadConversionConfig  $conversionConfig */
+		$schemeID = $conversionConfig->getCurrentSchemeID();
+
+		// we always need schemes for termination control rendering
+		$arResult['CONVERSION']['SCHEMES'][$conversionTypeID] = array(
+			'ORIGIN_URL' => $currentPage,
+			'SCHEME_ID' => $schemeID,
+			'SCHEME_NAME' => \Bitrix\Crm\Conversion\LeadConversionScheme::resolveName($schemeID),
+			'SCHEME_DESCRIPTION' => \Bitrix\Crm\Conversion\LeadConversionScheme::getDescription($schemeID),
+			'SCHEME_CAPTION' => GetMessage('CRM_LEAD_CREATE_ON_BASIS')
+		);
+	}
 	if($arResult['CAN_CONVERT'])
 	{
-		foreach(LeadConversionDispatcher::getAllConfigurations() as $conversionTypeID => $conversionConfig)
-		{
-			/** @var Bitrix\Crm\Conversion\LeadConversionConfig  $conversionConfig */
-			$schemeID = $conversionConfig->getCurrentSchemeID();
-
-			$arResult['CONVERSION']['SCHEMES'][$conversionTypeID] = array(
-				'ORIGIN_URL' => $currentPage,
-				'SCHEME_ID' => $schemeID,
-				'SCHEME_NAME' => \Bitrix\Crm\Conversion\LeadConversionScheme::resolveName($schemeID),
-				'SCHEME_DESCRIPTION' => \Bitrix\Crm\Conversion\LeadConversionScheme::getDescription($schemeID),
-				'SCHEME_CAPTION' => GetMessage('CRM_LEAD_CREATE_ON_BASIS')
-			);
-		}
 		$arResult['CONVERSION']['CONFIGS'] = LeadConversionDispatcher::getJavaScriptConfigurations();
 		$arResult['CONVERTER_ID_PREFIX'] = $arResult['GRID_ID'];
 	}
@@ -3102,8 +2549,7 @@ else
 		Header('Content-Transfer-Encoding: binary');
 
 		// add UTF-8 BOM marker
-		if (defined('BX_UTF') && BX_UTF)
-			echo chr(239).chr(187).chr(191);
+		echo chr(239).chr(187).chr(191);
 
 		$this->IncludeComponentTemplate($sExportType);
 

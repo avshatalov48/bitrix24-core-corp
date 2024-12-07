@@ -166,7 +166,7 @@ if ($arResult["IS_COMPLETED"])
 }
 */
 ?>
-<script type="text/javascript">
+<script>
 	BX.ready(
 			function()
 			{

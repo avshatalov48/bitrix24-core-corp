@@ -57,7 +57,6 @@ if (isset($_REQUEST['MODE']) && $_REQUEST['MODE'] === 'SEARCH')
 		__CrmOrderListEndResponse(array('ERROR' => 'Access denied.'));
 	}
 
-	CUtil::JSPostUnescape();
 	$APPLICATION->RestartBuffer();
 
 	// Limit count of items to be found
@@ -83,7 +82,7 @@ if (isset($_REQUEST['MODE']) && $_REQUEST['MODE'] === 'SEARCH')
 			$filter['%ACCOUNT_NUMBER'] = $search;
 			$filter['LOGIC'] = 'OR';
 		}
-		else if (preg_match('/(.*)\[(\d+?)\]/i' . BX_UTF_PCRE_MODIFIER, $search, $arMatches))
+		else if (preg_match('/(.*)\[(\d+?)\]/iu', $search, $arMatches))
 		{
 			$filter['ID'] = (int)$arMatches[2];
 			$filter['%ACCOUNT_NUMBER'] = trim($arMatches[1]);
@@ -150,7 +149,6 @@ elseif ($action === 'REBUILD_SEARCH_CONTENT')
 }
 elseif ($action === 'SAVE_PROGRESS' && check_bitrix_sessid())
 {
-	CUtil::JSPostUnescape();
 	$ID = isset($_REQUEST['ID']) ? intval($_REQUEST['ID']) : 0;
 	$typeName = isset($_REQUEST['TYPE']) ? $_REQUEST['TYPE'] : '';
 	$statusId = isset($_REQUEST['VALUE']) ? $_REQUEST['VALUE'] : '';

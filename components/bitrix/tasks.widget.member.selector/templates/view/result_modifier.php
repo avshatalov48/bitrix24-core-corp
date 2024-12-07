@@ -78,6 +78,9 @@ $arResult['JS_DATA'] = array(
 		'U' => $uUrl,
 	),
 	'taskLimitExceeded' => $arResult['TASK_LIMIT_EXCEEDED'],
+	'viewSelectorEnabled' => $arResult['viewSelectorEnabled'],
+	'taskMailUserIntegrationEnabled' => $arResult['taskMailUserIntegrationEnabled'],
+	'taskMailUserIntegrationFeatureId' => $arResult['taskMailUserIntegrationFeatureId'],
 	'networkEnabled' => \Bitrix\Tasks\Integration\Network\MemberSelector::isNetworkEnabled(),
 	'context' => $arParams['CONTEXT'],
 );

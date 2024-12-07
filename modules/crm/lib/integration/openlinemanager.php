@@ -222,10 +222,10 @@ class OpenLineManager
 		return $session ?: [];
 	}
 
-	public static function getChatUnReadMessages(?string $code, ?int $userId): int
+	public static function getChatUnReadMessages(?string $userCode, ?int $userId): int
 	{
 		if (
-			!isset($code)
+			!isset($userCode)
 			|| !Loader::includeModule('im')
 			|| !Loader::includeModule('imopenlines')
 		)
@@ -233,7 +233,7 @@ class OpenLineManager
 			return 0;
 		}
 
-		$chatId = Chat::getChatIdByUserCode($code);
+		$chatId = Chat::getChatIdByUserCode($userCode);
 		if ($chatId > 0)
 		{
 			$counters = Counter::get($userId);
@@ -244,10 +244,10 @@ class OpenLineManager
 		return 0;
 	}
 
-	public static function closeDialog(?string $code): ?Result
+	public static function closeDialog(?string $userCode, ?int $userId = null): ?Result
 	{
 		if (
-			!isset($code)
+			!isset($userCode)
 			|| !Loader::includeModule('im')
 			|| !Loader::includeModule('imopenlines')
 		)
@@ -255,10 +255,10 @@ class OpenLineManager
 			return null;
 		}
 
-		$chatId = Chat::getChatIdByUserCode($code);
+		$chatId = Chat::getChatIdByUserCode($userCode);
 		if (isset($chatId))
 		{
-			$control = new Operator($chatId);
+			$control = new Operator($chatId, $userId ?: null);
 
 			return $control->closeDialog();
 		}

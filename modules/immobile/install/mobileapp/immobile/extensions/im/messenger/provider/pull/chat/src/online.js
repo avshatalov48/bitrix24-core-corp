@@ -4,7 +4,7 @@
 jn.define('im/messenger/provider/pull/chat/online', (require, exports, module) => {
 	const { Type } = require('type');
 	const { clone } = require('utils/object');
-	const { BasePullHandler } = require('im/messenger/provider/pull/lib');
+	const { BasePullHandler } = require('im/messenger/provider/pull/base');
 	const { LoggerManager } = require('im/messenger/lib/logger');
 	const logger = LoggerManager.getInstance().getLogger('pull-handler--online');
 

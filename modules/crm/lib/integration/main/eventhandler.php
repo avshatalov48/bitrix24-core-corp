@@ -214,17 +214,24 @@ class EventHandler
 						$users = array_unique(
 							array_filter([$activity["AUTHOR_ID"],$activity["EDITOR_ID"]])
 						);
-						$message = 	Loc::getMessage(
-							"CRM_EMAIL_ERROR_MESSAGE_NOTIFICATION",
-							array(
-								"%mail_link_start%" => "<a href=\"/crm/activity/?ID={$activity['ID']}&open_view={$activity['ID']}\">",
-								"%mail_link_end%" => "</a>",
-								"%blacklist_link_start%" => "<a href=\"/settings/configs/mail_blacklist.php\">",
-								"%blacklist_link_end%" => "</a>",
-								"%subject%" => $activity["SUBJECT"],
-								"%emails%" => $emails
+						$activityId = $activity['ID'] ?? 0;
+						$activitySubject = $activity['SUBJECT'] ?? '';
+
+						$notifyMessageCallback = static fn (?string $languageId = null) =>
+							Loc::getMessage(
+								"CRM_EMAIL_ERROR_MESSAGE_NOTIFICATION",
+								[
+									"%mail_link_start%" => "<a href=\"/crm/activity/?ID={$activityId}&open_view={$activityId}\">",
+									"%mail_link_end%" => "</a>",
+									"%blacklist_link_start%" => "<a href=\"/settings/configs/mail_blacklist.php\">",
+									"%blacklist_link_end%" => "</a>",
+									"%subject%" => $activitySubject,
+									"%emails%" => $emails,
+								],
+								$languageId,
 							)
-						);
+						;
+
 						foreach ($users as $userId)
 						{
 							\CIMNotify::Add([
@@ -232,7 +239,7 @@ class EventHandler
 								"FROM_USER_ID" => 0,
 								"NOTIFY_TYPE" => IM_NOTIFY_SYSTEM,
 								"NOTIFY_MODULE" => "crm",
-								"NOTIFY_MESSAGE" => $message
+								"NOTIFY_MESSAGE" => $notifyMessageCallback,
 							]);
 						}
 					}

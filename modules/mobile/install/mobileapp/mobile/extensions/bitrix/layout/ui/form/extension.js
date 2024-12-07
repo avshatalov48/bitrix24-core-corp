@@ -2,24 +2,24 @@
  * @module layout/ui/form
  */
 jn.define('layout/ui/form', (require, exports, module) => {
+	const { validateProps, defaultProps, propTypes } = require('layout/ui/form/src/props-validator');
+	const { CompactMode, SubmitFailureReason } = require('layout/ui/form/src/enums');
+	const { FieldSchema } = require('layout/ui/form/src/field-schema');
+	const { animate } = require('animation');
+	const { Type } = require('type');
+
 	const { PureComponent } = require('layout/pure-component');
 	const { FieldFactory } = require('layout/ui/fields');
-	const { clone, mergeImmutable } = require('utils/object');
+	const { Card } = require('ui-system/layout/card');
+
+	const { clone, isEqual, isEmpty, mergeImmutable } = require('utils/object');
 	const { debounce, useCallback } = require('utils/function');
-	const { assertDefined, assertUnique, PropTypes } = require('utils/validation');
 
-	const ErrorCodes = {
-		VALIDATION: 'VALIDATION',
-		FILES_NOT_UPLOADED: 'FILES_NOT_UPLOADED',
-	};
-
-	const CompactMode = {
-		NONE: 'NONE',
-		ONLY: 'ONLY',
-		BOTH: 'BOTH',
-		FILL_COMPACT_AND_HIDE: 'FILL_COMPACT_AND_HIDE',
-		FILL_COMPACT_AND_KEEP: 'FILL_COMPACT_AND_KEEP',
-	};
+	const { Logger, LogType } = require('utils/logger');
+	const logger = new Logger([
+		// LogType.INFO,
+		LogType.ERROR,
+	]);
 
 	class Form extends PureComponent
 	{
@@ -29,57 +29,255 @@ jn.define('layout/ui/form', (require, exports, module) => {
 		{
 			super(props);
 
-			/** @type {Object.<string, BaseField>} */
+			validateProps(props);
+
+			this.state = this.initState(props);
+			this.prevState = this.state;
+
+			/** @type {Object.<string, UIFormBaseField>} */
 			this.fieldRefs = {};
 
-			/** @type {Object.<string, BaseField>} */
+			/** @type {Object.<string, UIFormBaseField>} */
 			this.compactFieldRefs = {};
 
-			this.validateProps(props);
+			/** @type {Object.<string, object>} */
+			this.compactFieldContainerRefs = {};
 
-			const values = this.initValues();
+			/** @type {Object.<string, object>} */
+			this.secondaryFieldContainerRefs = {};
 
-			this.state = {
+			this.nextTick = {
+				animations: [],
+				nextState: false,
+			};
+
+			this.setStateQueue = Promise.resolve();
+		}
+
+		componentWillReceiveProps(props)
+		{
+			logger.info('layout/ui/form: componentWillReceiveProps');
+
+			super.componentWillReceiveProps(props);
+
+			this.state = this.initState(props);
+		}
+
+		shouldComponentUpdate(nextProps, nextState)
+		{
+			logger.info('layout/ui/form: shouldComponentUpdate');
+
+			this.prevState = this.state;
+
+			return super.shouldComponentUpdate(nextProps, nextState);
+		}
+
+		componentDidUpdate(prevProps, prevState)
+		{
+			logger.info('layout/ui/form: componentDidUpdate');
+
+			super.componentDidUpdate(prevProps, prevState);
+
+			const animations = this.nextTick.animations.map((item) => item.animation());
+			if (animations.length > 0)
+			{
+				Promise.all(animations)
+					.then(() => {
+						if (this.nextTick.nextState)
+						{
+							this.setState(this.nextTick.nextState);
+							this.nextTick.nextState = null;
+						}
+					})
+					.catch((err) => logger.error('layout/ui/form: animations in componentDidUpdate', err));
+			}
+		}
+
+		/**
+		 * @private
+		 * @return {{
+		 *     values: Object.<string, any>,
+		 *     extendedValues: Object.<string, any>,
+		 *     originalValues: Object.<string, any>,
+		 *     originalExtendedValues: Object.<string, any>,
+		 *     schema: Object.<string, FieldSchema>
+		 * }}
+		 */
+		initState(props)
+		{
+			const values = {};
+			const extendedValues = {};
+			const schema = {};
+
+			const processField = (field, isPrimary) => {
+				const id = field.props.id;
+
+				values[id] = field.props.value;
+				extendedValues[id] = field.props.config?.items;
+				schema[id] = new FieldSchema({
+					...field,
+					isPrimary,
+					defaultCompactMode: props.compactMode,
+				});
+			};
+
+			[...props.primaryFields].forEach((field) => processField(field, true));
+			[...props.secondaryFields].forEach((field) => processField(field, false));
+
+			return {
 				values,
+				extendedValues,
+				schema,
 				originalValues: clone(values),
+				originalExtendedValues: clone(extendedValues),
 			};
 		}
 
-		/**
-		 * @private
-		 * @param {object} formProps
-		 */
-		validateProps(formProps)
+		// endregion
+
+		// region animation API
+
+		setState(nextState, callback)
 		{
-			const { fields = [] } = formProps;
+			logger.info('layout/ui/form: add to setState queue');
 
-			const ids = [];
+			this.setStateQueue = this.setStateQueue.then(() => {
+				return new Promise((resolve) => {
+					logger.info('layout/ui/form: setState');
 
-			fields.forEach((field) => {
-				const { type, factory, props = {} } = field;
-
-				if (!factory)
-				{
-					assertDefined(type, 'layout/ui/form: type or factory must be defined for every field');
-				}
-
-				assertDefined(props.id, 'layout/ui/form: id property must be defined for every field');
-
-				ids.push(props.id);
+					super.setState(nextState, () => {
+						resolve();
+						callback?.();
+					});
+				});
 			});
-
-			assertUnique(ids, 'layout/ui/form: field ids must me unique');
 		}
 
-		/**
-		 * @private
-		 */
-		initValues()
+		fillAnimations()
 		{
-			return Object.fromEntries(this.props.fields.map((field) => [
-				field.props.id,
-				field.props.value,
-			]));
+			if (isEqual(this.prevState, this.state))
+			{
+				return;
+			}
+
+			const { schema } = this.state;
+
+			let { values: prevValues, extendedValues: prevExtendedValues } = this.prevState;
+			prevValues = clone(prevValues);
+			prevExtendedValues = clone(prevExtendedValues);
+
+			let { values: nextValues, extendedValues: nextExtendedValues } = this.state;
+			nextValues = clone(nextValues);
+			nextExtendedValues = clone(nextExtendedValues);
+
+			const animations = [];
+
+			Object.values(schema).forEach((fieldSchema) => {
+				if (fieldSchema.isPrimary())
+				{
+					return;
+				}
+
+				const fieldId = fieldSchema.getId();
+
+				if (isEqual(prevValues[fieldId], nextValues[fieldId]))
+				{
+					return;
+				}
+
+				const hasPreviousValue = Type.isArray(prevValues[fieldId]) || Type.isObjectLike(prevValues[fieldId])
+					? !isEmpty(prevValues[fieldId])
+					: Boolean(prevValues[fieldId]);
+
+				const hasUpcomingValue = Type.isArray(nextValues[fieldId]) || Type.isObjectLike(nextValues[fieldId])
+					? !isEmpty(nextValues[fieldId])
+					: Boolean(nextValues[fieldId]);
+
+				// todo refactor to different methods
+				const needHideCompactField = (
+					fieldSchema.getCompactMode() === CompactMode.FILL_COMPACT_AND_HIDE
+					&& !hasPreviousValue
+					&& hasUpcomingValue
+					&& !this.hasFieldAnimation(fieldId)
+				);
+
+				if (needHideCompactField)
+				{
+					this.state.values[fieldId] = prevValues[fieldId];
+					this.state.extendedValues[fieldId] = prevExtendedValues[fieldId];
+
+					animations.push({
+						id: fieldId,
+						type: 'hide',
+						animation: () => animate(
+							this.compactFieldContainerRefs[fieldId],
+							{ width: 0, opacity: 0, duration: 100 },
+						),
+					});
+				}
+
+				const needShowSecondaryField = (
+					!hasPreviousValue
+					&& hasUpcomingValue
+					&& !this.hasFieldShowAnimation(fieldId)
+				);
+
+				if (needShowSecondaryField)
+				{
+					animations.push({
+						id: fieldId,
+						type: 'show',
+						animation: () => animate(
+							this.secondaryFieldContainerRefs[fieldId],
+							{ opacity: 1, duration: 250 },
+						),
+					});
+				}
+
+				const needHideSecondaryField = (
+					hasPreviousValue
+					&& !hasUpcomingValue
+					&& !this.hasFieldHideAnimation(fieldId)
+				);
+
+				if (needHideSecondaryField)
+				{
+					this.state.values[fieldId] = prevValues[fieldId];
+					this.state.extendedValues[fieldId] = prevExtendedValues[fieldId];
+
+					animations.push({
+						id: fieldId,
+						type: 'hide',
+						animation: () => animate(
+							this.secondaryFieldContainerRefs[fieldId],
+							{ opacity: 0, duration: 250 },
+						),
+					});
+				}
+			});
+
+			this.nextTick.animations = animations;
+			this.nextTick.nextState = {
+				values: nextValues,
+				extendedValues: nextExtendedValues,
+			};
+
+			logger.info('layout/ui/form: fillAnimations - nextTick.animations', this.nextTick.animations);
+		}
+
+		hasFieldAnimation(fieldId)
+		{
+			return this.nextTick.animations.some((item) => item.id === fieldId);
+		}
+
+		hasFieldShowAnimation(fieldId)
+		{
+			return this.nextTick.animations.some((item) => item.id === fieldId && item.type === 'show');
+		}
+
+		hasFieldHideAnimation(fieldId)
+		{
+			return this.nextTick.animations.some((item) => item.id === fieldId && item.type === 'hide');
 		}
 
 		// endregion
@@ -146,14 +344,14 @@ jn.define('layout/ui/form', (require, exports, module) => {
 
 			if (!this.validate())
 			{
-				emitFailure(ErrorCodes.VALIDATION);
+				emitFailure(SubmitFailureReason.VALIDATION);
 
 				return;
 			}
 
 			if (this.hasUploadingFiles())
 			{
-				emitFailure(ErrorCodes.FILES_NOT_UPLOADED);
+				emitFailure(SubmitFailureReason.FILES_NOT_UPLOADED);
 
 				return;
 			}
@@ -161,16 +359,14 @@ jn.define('layout/ui/form', (require, exports, module) => {
 			if (this.props.onSubmit)
 			{
 				Promise.resolve(this.props.onSubmit(this))
-					.then(() => {
-						this.state.originalValues = clone(this.state.values);
-					})
-					.catch(() => {});
+					.then(() => this.flushOriginalValues())
+					.catch((err) => logger.error('layout/ui/form: submit', err));
 			}
 		}
 
 		/**
 		 * @public
-		 * @return {Object.<string, any>}}
+		 * @return {Object.<string, any>}
 		 */
 		serialize()
 		{
@@ -185,13 +381,22 @@ jn.define('layout/ui/form', (require, exports, module) => {
 		{
 			return Object.keys(this.state.values).map((id) => ({
 				id,
-				value: this.state.values[id],
+				value: clone(this.state.values[id]),
 			}));
 		}
 
 		/**
 		 * @public
-		 * @return {BaseField[]}
+		 * @return {Object.<string, any>}
+		 */
+		serializeExtended()
+		{
+			return clone(this.state.extendedValues);
+		}
+
+		/**
+		 * @public
+		 * @return {UIFormBaseField[]}
 		 */
 		getFields()
 		{
@@ -201,11 +406,21 @@ jn.define('layout/ui/form', (require, exports, module) => {
 		/**
 		 * @public
 		 * @param {string} id
-		 * @return {BaseField|undefined}
+		 * @return {UIFormBaseField|undefined}
 		 */
 		getField(id)
 		{
 			return this.fieldRefs[id];
+		}
+
+		/**
+		 * @public
+		 * @param {string} id
+		 * @return {UIFormBaseField|undefined}
+		 */
+		getCompactField(id)
+		{
+			return this.compactFieldRefs[id];
 		}
 
 		/**
@@ -215,10 +430,49 @@ jn.define('layout/ui/form', (require, exports, module) => {
 		reset()
 		{
 			return new Promise((resolve) => {
-				const values = clone(this.state.originalValues);
+				this.setState(
+					() => {
+						const values = clone(this.state.originalValues);
+						const extendedValues = clone(this.state.originalExtendedValues);
 
-				this.setState({ values }, resolve);
+						return { values, extendedValues };
+					},
+					resolve,
+				);
 			});
+		}
+
+		/**
+		 * @public
+		 * @param {string} fieldId
+		 * @return {Promise}
+		 */
+		resetField(fieldId)
+		{
+			return new Promise((resolve) => {
+				this.setState(
+					(state) => {
+						const values = clone(state.values);
+						const extendedValues = clone(state.extendedValues);
+
+						values[fieldId] = clone(state.originalValues[fieldId]);
+						extendedValues[fieldId] = clone(state.originalExtendedValues[fieldId]);
+
+						return { values, extendedValues };
+					},
+					() => resolve(this.state.values[fieldId], this.state.extendedValues[fieldId]),
+				);
+			});
+		}
+
+		/**
+		 * @public
+		 * @return {void}
+		 */
+		flushOriginalValues()
+		{
+			this.state.originalValues = clone(this.state.values);
+			this.state.originalExtendedValues = clone(this.state.extendedValues);
 		}
 
 		// endregion
@@ -227,7 +481,7 @@ jn.define('layout/ui/form', (require, exports, module) => {
 
 		/**
 		 * @private
-		 * @return {{ create: (type: string, props: {}) => BaseField|null }}
+		 * @return {{ create: (type: string, props: {}) => UIFormBaseField|null }}
 		 */
 		getRegularFieldFactory()
 		{
@@ -236,7 +490,7 @@ jn.define('layout/ui/form', (require, exports, module) => {
 
 		/**
 		 * @private
-		 * @return {{ create: (type: string, props: {}) => BaseField|null }|undefined}
+		 * @return {{ create: (type: string, props: {}) => UIFormBaseField|null }|undefined}
 		 */
 		getCompactFieldFactory()
 		{
@@ -251,7 +505,7 @@ jn.define('layout/ui/form', (require, exports, module) => {
 		{
 			const scrollable = this.props?.scrollableProvider();
 			const field = this.getField(fieldId);
-			if (scrollable && field && field.fieldContainerRef)
+			if (scrollable && field?.fieldContainerRef)
 			{
 				const position = scrollable.getPosition(field.fieldContainerRef);
 				scrollable.scrollTo({ ...position, animated: true });
@@ -261,108 +515,207 @@ jn.define('layout/ui/form', (require, exports, module) => {
 		/**
 		 * @private
 		 * @param {string} fieldId
-		 * @return {{}|undefined}
+		 * @return {FieldSchema}
 		 */
 		getFieldSchema(fieldId)
 		{
-			return this.props.fields.find((schema) => schema.props.id === fieldId);
-		}
-
-		/**
-		 * @private
-		 * @param {string} id
-		 * @param {any} value
-		 * @param {...any} rest
-		 */
-		onChangeRegularField(id, value, ...rest)
-		{
-			this.updateFieldValue(id, value)
-				.then(() => this.invokeCustomOnChangeHandler(id, value, ...rest))
-				.catch((err) => console.error(err));
-		}
-
-		/**
-		 * @private
-		 * @param {string} id
-		 * @param {any} value
-		 * @param {...any} rest
-		 */
-		onChangeCompactField(id, value, ...rest)
-		{
-			const regularField = this.getField(id);
-			const wasVisible = regularField && this.isFieldVisible(regularField);
-
-			this.updateFieldValue(id, value)
-				.then(() => {
-					const nowVisible = regularField && this.isFieldVisible(regularField);
-					if (!wasVisible && nowVisible && this.props.scrollToAppearedField)
-					{
-						this.scrollToField(id);
-					}
-
-					this.invokeCustomOnChangeHandler(id, value, ...rest);
-				})
-				.catch(() => {});
-		}
-
-		/**
-		 * @private
-		 * @param {string} id
-		 * @param {any} value
-		 * @return {Promise}
-		 */
-		updateFieldValue(id, value)
-		{
-			return new Promise((resolve) => {
-				const values = {
-					...this.state.values,
-					[id]: value,
-				};
-				this.setState({ values }, resolve);
-			});
-		}
-
-		/**
-		 * @private
-		 * @param {string} id
-		 * @param {any} value
-		 * @param {...any} rest
-		 * @return {void}
-		 */
-		invokeCustomOnChangeHandler(id, value, ...rest)
-		{
-			const schema = this.getFieldSchema(id) || {};
-			if (schema.props && schema.props.onChange)
-			{
-				schema.props.onChange(value, ...rest);
-			}
+			return this.state.schema[fieldId];
 		}
 
 		/**
 		 * @private
 		 * @param {string} fieldId
-		 * @param {BaseField|undefined} ref
+		 * @param {any} value
+		 */
+		onBlurRegularField(fieldId, value)
+		{
+			this.getFieldSchema(fieldId).onBlur(value);
+
+			const originalValue = this.state.originalValues[fieldId];
+
+			this.props.onBlur?.({
+				fieldId,
+				value,
+				changed: !isEqual(value, originalValue),
+				field: this.getField(fieldId),
+				form: this,
+			});
+		}
+
+		/**
+		 * @private
+		 * @param {string} fieldId
+		 * @param {any} value
+		 * @param {any} extendedValue
+		 * @param {...any} rest
+		 */
+		onChangeRegularField(fieldId, value, extendedValue, ...rest)
+		{
+			this.updateFieldValue(fieldId, value, extendedValue)
+				.then(() => this.invokeCustomOnChangeHandler(fieldId, value, extendedValue, ...rest))
+				.catch((err) => logger.error('layout/ui/form: onChangeRegularField', err));
+		}
+
+		/**
+		 * @private
+		 * @param {string} fieldId
+		 * @param {any} value
+		 * @param {any} extendedValue
+		 * @param {...any} rest
+		 */
+		onChangeCompactField(fieldId, value, extendedValue, ...rest)
+		{
+			const secondaryField = this.getField(fieldId);
+			const wasVisible = secondaryField && this.isFieldVisible(secondaryField);
+
+			const compactFieldRef = this.compactFieldRefs[fieldId];
+			const schema = this.getFieldSchema(fieldId);
+			const needHide = (
+				schema.getCompactMode() === CompactMode.FILL_COMPACT_AND_HIDE
+				&& compactFieldRef
+				&& !compactFieldRef.isEmpty()
+			);
+
+			const handleUpdate = () => {
+				this.updateFieldValue(fieldId, value, extendedValue, ...rest)
+					.then(() => {
+						const nowVisible = secondaryField && this.isFieldVisible(secondaryField);
+						if (!wasVisible && nowVisible && this.props.scrollToAppearedField)
+						{
+							this.scrollToField(fieldId);
+						}
+
+						this.invokeCustomOnChangeHandler(fieldId, value, extendedValue, ...rest);
+					})
+					.catch(() => {});
+			};
+
+			if (needHide)
+			{
+				const container = this.compactFieldContainerRefs[fieldId];
+
+				container?.animate({ width: 0, duration: 100 }, () => handleUpdate());
+			}
+			else
+			{
+				handleUpdate();
+			}
+		}
+
+		get useState()
+		{
+			return this.props.useState ?? true;
+		}
+
+		/**
+		 * @private
+		 * @param {string} fieldId
+		 * @param {any} value
+		 * @param {any} extendedValue
+		 * @return {Promise}
+		 */
+		updateFieldValue(fieldId, value, extendedValue)
+		{
+			return new Promise((resolve) => {
+				if (this.useState)
+				{
+					this.setState(
+						(state) => ({
+							values: {
+								...state.values,
+								[fieldId]: value,
+							},
+							extendedValues: {
+								...state.extendedValues,
+								[fieldId]: extendedValue,
+							},
+						}),
+						resolve,
+					);
+				}
+				else
+				{
+					resolve();
+				}
+			});
+		}
+
+		/**
+		 * @private
+		 * @param {string} fieldId
+		 * @param {any} value
+		 * @param {any} extendedValue
+		 * @param {...any} rest
+		 * @return {void}
+		 */
+		invokeCustomOnChangeHandler(fieldId, value, extendedValue, ...rest)
+		{
+			this.getFieldSchema(fieldId).onChange(value, extendedValue, ...rest);
+
+			this.props.onChange?.({
+				fieldId,
+				value,
+				extendedValue,
+				field: this.getField(fieldId),
+				form: this,
+			});
+		}
+
+		/**
+		 * @private
+		 * @param {string} fieldId
+		 * @param {UIFormBaseField|undefined} ref
+		 * @return {void}
 		 */
 		bindRegularFieldRef(fieldId, ref)
 		{
 			this.fieldRefs[fieldId] = ref;
 
-			const schema = this.getFieldSchema(fieldId) || {};
-
-			if (schema.props && schema.props.ref)
-			{
-				schema.props.ref(ref);
-			}
+			// we can get empty ref of already removed field here,
+			// so we have to check if schema exists.
+			this.getFieldSchema(fieldId)?.ref(ref);
 		}
 
 		/**
 		 * @private
 		 * @param {string} id
-		 * @param {BaseField|undefined} ref
+		 * @param {UIFormBaseField|undefined} ref
 		 */
 		bindCompactFieldRef(id, ref)
 		{
 			this.compactFieldRefs[id] = ref;
+		}
+
+		/**
+		 * @private
+		 * @param {UIFormBaseField} field
+		 * @param {object} containerRef
+		 */
+		bindCompactFieldContainerRef(field, containerRef)
+		{
+			this.compactFieldContainerRefs[field.getId()] = containerRef;
+		}
+
+		/**
+		 * @private
+		 * @param {UIFormBaseField} field
+		 * @param {object} containerRef
+		 */
+		bindSecondaryFieldContainerRef(field, containerRef)
+		{
+			this.secondaryFieldContainerRefs[field.getId()] = containerRef;
+		}
+
+		/**
+		 * @private
+		 * @param {string} code
+		 * @return {string}
+		 */
+		getTestId(code)
+		{
+			const prefix = this.props.testId || 'UIForm';
+
+			return `${prefix}_${code}`;
 		}
 
 		// endregion
@@ -371,138 +724,311 @@ jn.define('layout/ui/form', (require, exports, module) => {
 
 		render()
 		{
+			logger.info('layout/ui/form: render');
+
+			this.fillAnimations();
+
 			return View(
 				{
+					testId: this.getTestId('Container'),
 					style: this.getStyle().container,
 				},
 				this.renderBeforeFieldsSlot(),
-				this.renderFields(),
+				this.renderPrimaryFields(),
+				this.renderAfterPrimaryFieldsSlot(),
 				this.renderCompactBar(),
+				this.renderAfterCompactBarSlot(),
+				this.renderSecondaryFields(),
 				this.renderAfterFieldsSlot(),
 			);
 		}
 
-		renderFields()
+		renderPrimaryFields()
 		{
 			return View(
-				{},
-				...this.props.fields.map((schema, index) => {
+				{
+					testId: this.getTestId('PrimaryContainer'),
+					style: {
+						paddingBottom: 10,
+						...this.getStyle().primaryContainer,
+					},
+				},
+				...this.props.primaryFields.map((item, index) => {
+					const schema = this.getFieldSchema(item.props.id);
 					const field = this.renderField(schema);
 					if (!field)
 					{
 						return null;
 					}
 
-					const isVisible = this.isFieldVisible(field);
+					const fieldStyle = this.getStyle().primaryField;
 
 					return View(
 						{
+							testId: this.getTestId('PrimaryFieldContainer'),
+							style: (typeof fieldStyle === 'function' ? fieldStyle(field) : fieldStyle),
+						},
+						this.renderBeforeFieldSlot(field, index, schema.isPrimary()),
+						field,
+						this.renderAfterFieldSlot(field, index, schema.isPrimary()),
+					);
+				}),
+			);
+		}
+
+		renderSecondaryFields()
+		{
+			return View(
+				{
+					testId: this.getTestId('SecondaryContainer'),
+					style: this.getStyle().secondaryContainer,
+				},
+				...this.props.secondaryFields.map((item, index) => {
+					const fieldId = item.props.id;
+					const schema = this.getFieldSchema(fieldId);
+					const field = this.renderField(schema);
+					if (!field)
+					{
+						return null;
+					}
+
+					const fieldStyle = this.getStyle().secondaryField;
+					const display = this.isFieldVisible(field) || this.hasFieldAnimation(fieldId)
+						? 'flex'
+						: 'none';
+					const opacity = this.hasFieldShowAnimation(fieldId) ? 0 : 1;
+
+					return Card(
+						{
+							testId: this.getTestId('SecondaryFieldContainer'),
 							style: {
-								display: isVisible ? 'flex' : 'none',
+								...(typeof fieldStyle === 'function' ? fieldStyle(field) : fieldStyle),
+								display,
+								opacity,
+							},
+							ref: (ref) => {
+								this.bindSecondaryFieldContainerRef(field, ref);
 							},
 						},
-						this.renderBeforeFieldSlot(field, index),
+						this.renderBeforeFieldSlot(field, index, schema.isPrimary()),
 						field,
-						this.renderAfterFieldSlot(field, index),
+						this.renderAfterFieldSlot(field, index, schema.isPrimary()),
 					);
 				}),
 			);
 		}
 
 		/**
-		 * @param {object} data
-		 * @return {BaseField|null}
+		 * @param {FieldSchema} schema
+		 * @return {UIFormBaseField|null}
 		 */
-		renderField(data)
+		renderField(schema)
 		{
-			const { type, props, factory, debounceTimeout = 0 } = data;
+			const fieldId = schema.getId();
 
-			const { id } = props;
+			const changeHandler = async (nextValue, extendedValue, ...rest) => {
+				if (!schema.isPrimary())
+				{
+					await this.animateFieldAppearance(fieldId, nextValue);
+				}
 
-			const debouncedChangeHandler = debounce(
-				(nextVal, ...rest) => this.onChangeRegularField(id, nextVal, ...rest),
-				debounceTimeout,
-			);
-
-			const decoratedProps = {
-				...props,
-				value: this.state.values[id],
-				ref: useCallback((r) => this.bindRegularFieldRef(id, r), [id]),
-				onChange: useCallback(debouncedChangeHandler, [id]),
+				this.onChangeRegularField(fieldId, nextValue, extendedValue, ...rest);
 			};
 
-			if (factory)
-			{
-				return factory(decoratedProps);
-			}
+			const debouncedChangeHandler = debounce(changeHandler, schema.getDebounceTimeout());
 
-			return this.getRegularFieldFactory().create(type, decoratedProps);
+			const decoratedProps = mergeImmutable(schema.getProps(), {
+				value: this.state.values[fieldId],
+				config: {
+					items: this.state.extendedValues[fieldId],
+					reloadEntityListFromProps: true,
+					parentWidget: this.props.parentWidget,
+				},
+				ref: useCallback((ref) => this.bindRegularFieldRef(fieldId, ref), [fieldId]),
+				onChange: useCallback(debouncedChangeHandler, [fieldId]),
+				onBlur: useCallback((value) => this.onBlurRegularField(fieldId, value), [fieldId]),
+			});
+
+			const factory = schema.getFactory(this.getRegularFieldFactory());
+
+			return factory(decoratedProps);
+		}
+
+		async animateFieldAppearance(fieldId, nextValue)
+		{
+			const prevValue = this.state.values[fieldId];
+			const hasPreviousValue = Type.isArray(prevValue) || Type.isObjectLike(prevValue)
+				? !isEmpty(prevValue)
+				: Boolean(prevValue);
+
+			const hasUpcomingValue = Type.isArray(nextValue) || Type.isObjectLike(nextValue)
+				? !isEmpty(nextValue)
+				: Boolean(nextValue);
+
+			const needHideSecondaryField = (
+				hasPreviousValue
+				&& !hasUpcomingValue
+				&& !this.hasFieldHideAnimation(fieldId)
+			);
+
+			if (needHideSecondaryField)
+			{
+				const animation = async () => animate(
+					this.secondaryFieldContainerRefs[fieldId],
+					{ opacity: 0, duration: 250 },
+				);
+
+				this.nextTick.animations.push({
+					id: fieldId,
+					type: 'hide',
+					animation,
+				});
+
+				await animation();
+			}
+		}
+
+		/**
+		 * @public
+		 * @return {boolean}
+		 */
+		hasCompactVisibleFields()
+		{
+			return this.props.secondaryFields.some((item) => {
+				const schema = this.getFieldSchema(item.props.id);
+				const field = this.renderCompactField(schema);
+
+				return this.isCompactFieldVisible(field);
+			});
 		}
 
 		renderCompactBar()
 		{
-			const nodes = [
-				this.renderBeforeCompactBarSlot(),
-				...this.props.fields.map((props) => this.renderCompactField(props)),
-				this.renderAfterCompactBarSlot(),
-			].filter(Boolean);
+			const slotBefore = this.renderBeforeCompactFieldsSlot();
+			const slotAfter = this.renderAfterCompactFieldsSlot();
+			const visibleFieldIds = [];
+			const order = this.#calculateCompactFieldsOrder();
 
-			if (nodes.length === 0)
+			const fields = order.map((fieldId) => {
+				const schema = this.getFieldSchema(fieldId);
+				const field = this.renderCompactField(schema);
+				if (field && this.isCompactFieldVisible(field))
+				{
+					visibleFieldIds.push(field.getId());
+				}
+
+				return field;
+			}).filter(Boolean);
+
+			if (!slotBefore && !slotAfter && visibleFieldIds.length === 0)
 			{
 				return null;
 			}
 
-			return ScrollView(
-				{
-					horizontal: true,
-					style: {
-						width: '100%',
-						height: 68,
-						marginBottom: 18,
-					},
-				},
-				View(
+			const { compactContainer, compactInnerContainer, compactField } = this.getStyle();
+
+			return View(
+				{},
+				ScrollView(
 					{
+						horizontal: true,
+						showsHorizontalScrollIndicator: false,
 						style: {
-							paddingVertical: 18,
-							flexDirection: 'row',
-							justifyContent: 'flex-start',
-							alignItems: 'center',
+							height: 58,
+							width: '100%',
+							...compactContainer,
 						},
 					},
-					...nodes,
+					View(
+						{
+							testId: this.getTestId('CompactBarContainer'),
+							style: {
+								paddingBottom: 18, // todo replace with token?
+								paddingTop: 0,
+								flexDirection: 'row',
+								justifyContent: 'flex-start',
+								alignItems: 'center',
+								...compactInnerContainer,
+							},
+						},
+						View(
+							{
+								testId: this.getTestId('CompactBarContainer_SlotBefore'),
+								style: {
+									marginRight: 8, // todo replace with indent token
+									...compactField,
+									display: slotBefore ? 'flex' : 'none',
+								},
+							},
+							slotBefore,
+						),
+						...fields.map((field, index) => {
+							const isVisible = visibleFieldIds.includes(field.getId());
+							const isLast = index === fields.length - 1;
+
+							return View(
+								{
+									testId: this.getTestId('CompactBarContainer_Field'),
+									style: {
+										...compactField,
+										width: isVisible ? undefined : 0,
+										display: isVisible ? 'flex' : 'none',
+										flexDirection: 'row',
+										marginRight: isLast ? 0 : 8,
+									},
+									ref: (ref) => {
+										this.bindCompactFieldContainerRef(field, ref);
+									},
+								},
+								field,
+							);
+						}),
+						View(
+							{
+								testId: this.getTestId('CompactBarContainer_SlotAfter'),
+								style: {
+									marginRight: 8, // todo replace with indent token
+									...compactField,
+									display: slotAfter ? 'flex' : 'none',
+								},
+							},
+							slotAfter,
+						),
+					),
 				),
 			);
 		}
 
-		renderCompactField(data)
+		/**
+		 * @param {FieldSchema} schema
+		 * @return {UIFormBaseField|null}
+		 */
+		renderCompactField(schema)
 		{
-			const { type, props, compact = {} } = data;
+			const fieldId = schema.getId();
 
-			const { factory, extraProps = {}, mode = CompactMode.NONE } = compact;
+			const changeHandler = (nextValue, extendedValue, ...rest) => {
+				this.onChangeCompactField(fieldId, nextValue, extendedValue, ...rest);
+			};
 
-			if (mode === CompactMode.NONE)
-			{
-				return null;
-			}
-
-			const { id } = props;
-
-			const decoratedProps = mergeImmutable(props, extraProps, {
-				value: this.state.values[id],
-				ref: useCallback((r) => this.bindCompactFieldRef(id, r), [id]),
-				onChange: useCallback(
-					(nextVal, ...rest) => this.onChangeCompactField(id, nextVal, ...rest),
-					[id],
-				),
+			const decoratedProps = mergeImmutable(schema.getCompactProps(), {
+				value: this.state.values[fieldId],
+				config: {
+					items: this.state.extendedValues[fieldId],
+					reloadEntityListFromProps: true,
+					showValue: schema.getCompactMode() !== CompactMode.FILL_COMPACT_AND_HIDE,
+					parentWidget: this.props.parentWidget,
+				},
+				ref: useCallback((r) => this.bindCompactFieldRef(fieldId, r), [fieldId]),
+				onChange: useCallback(changeHandler, [fieldId]),
 			});
 
-			/** @type {BaseField} */
-			const field = factory
-				? factory(decoratedProps)
-				: this.getCompactFieldFactory()?.create(type, decoratedProps);
+			const factory = schema.getCompactFactory(this.getCompactFieldFactory());
 
-			if (mode === CompactMode.FILL_COMPACT_AND_HIDE && !field.isEmpty())
+			/** @type {UIFormBaseField|null|undefined} */
+			const field = factory(decoratedProps);
+
+			if (!field)
 			{
 				return null;
 			}
@@ -530,14 +1056,29 @@ jn.define('layout/ui/form', (require, exports, module) => {
 			return null;
 		}
 
-		renderBeforeFieldSlot(field, index)
+		renderAfterPrimaryFieldsSlot()
+		{
+			if (this.props.renderAfterPrimaryFields)
+			{
+				return this.props.renderAfterPrimaryFields(this);
+			}
+
+			return null;
+		}
+
+		renderBeforeFieldSlot(field, index, isPrimary)
 		{
 			if (this.props.renderBeforeField)
 			{
+				const isSecondary = !isPrimary;
+
 				return this.props.renderBeforeField(field, {
 					index,
-					isFirst: index === 0,
-					isLast: index === this.props.fields.length - 1,
+					isPrimary,
+					isFirstPrimary: isPrimary && index === 0,
+					isLastPrimary: isPrimary && (index === this.props.primaryFields.length - 1),
+					isFirstSecondary: isSecondary && index === 0,
+					isLastSecondary: isSecondary && (index === this.props.secondaryFields.length - 1),
 					form: this,
 				});
 			}
@@ -545,26 +1086,21 @@ jn.define('layout/ui/form', (require, exports, module) => {
 			return null;
 		}
 
-		renderAfterFieldSlot(field, index)
+		renderAfterFieldSlot(field, index, isPrimary)
 		{
 			if (this.props.renderAfterField)
 			{
+				const isSecondary = !isPrimary;
+
 				return this.props.renderAfterField(field, {
 					index,
-					isFirst: index === 0,
-					isLast: index === this.props.fields.length - 1,
+					isPrimary,
+					isFirstPrimary: isPrimary && index === 0,
+					isLastPrimary: isPrimary && (index === this.props.primaryFields.length - 1),
+					isFirstSecondary: isSecondary && index === 0,
+					isLastSecondary: isSecondary && (index === this.props.secondaryFields.length - 1),
 					form: this,
 				});
-			}
-
-			return null;
-		}
-
-		renderBeforeCompactBarSlot()
-		{
-			if (this.props.renderBeforeCompactBar)
-			{
-				return this.props.renderBeforeCompactBar(this);
 			}
 
 			return null;
@@ -580,14 +1116,60 @@ jn.define('layout/ui/form', (require, exports, module) => {
 			return null;
 		}
 
+		renderBeforeCompactFieldsSlot()
+		{
+			if (this.props.renderBeforeCompactFields)
+			{
+				return this.props.renderBeforeCompactFields(this);
+			}
+
+			return null;
+		}
+
+		renderAfterCompactFieldsSlot()
+		{
+			if (this.props.renderAfterCompactFields)
+			{
+				return this.props.renderAfterCompactFields(this);
+			}
+
+			return null;
+		}
+
+		#calculateCompactFieldsOrder()
+		{
+			const defaultOrder = this.props.secondaryFields.map((item) => item.props.id);
+			const placeholder = '...';
+
+			if (Array.isArray(this.props.compactOrder))
+			{
+				const uniq = (val) => [...new Set(val)];
+				const validCompactOrder = uniq(this.props.compactOrder.filter((item) => {
+					return item === placeholder || defaultOrder.includes(item);
+				}));
+				const restFields = defaultOrder.filter((item) => !validCompactOrder.includes(item));
+
+				if (restFields.length > 0)
+				{
+					const placeholderPosition = validCompactOrder.indexOf(placeholder);
+					const injectPosition = placeholderPosition > -1 ? placeholderPosition : validCompactOrder.length;
+
+					validCompactOrder.splice(injectPosition, 1, ...restFields);
+				}
+
+				return validCompactOrder;
+			}
+
+			return defaultOrder;
+		}
+
 		/**
 		 * @private
-		 * @param {BaseField} field
+		 * @param {UIFormBaseField} field
 		 */
 		isFieldVisible(field)
 		{
-			const { compact = {} } = this.getFieldSchema(field.getId()) || {};
-			const { mode } = compact;
+			const mode = this.getFieldSchema(field.getId()).getCompactMode();
 
 			if (mode === CompactMode.ONLY && !field.isRequired())
 			{
@@ -610,59 +1192,75 @@ jn.define('layout/ui/form', (require, exports, module) => {
 
 		/**
 		 * @private
-		 * @return {{ container: {} }}
+		 * @param {UIFormBaseField} field
+		 */
+		isCompactFieldVisible(field)
+		{
+			const mode = this.getFieldSchema(field.getId()).getCompactMode();
+
+			if (this.props.hideCompactReadonly && field.isReadOnly())
+			{
+				return false;
+			}
+
+			if (mode === CompactMode.NONE)
+			{
+				return false;
+			}
+
+			// eslint-disable-next-line sonarjs/prefer-single-boolean-return
+			if (mode === CompactMode.FILL_COMPACT_AND_HIDE && !field.isEmpty())
+			{
+				return false;
+			}
+
+			return true;
+		}
+
+		/**
+		 * @private
+		 * @return {{
+		 * 	container: {},
+		 * 	primaryContainer: {},
+		 * 	primaryField: {}
+		 * 	secondaryContainer: {},
+		 * 	secondaryField: {} | function(UIFormBaseField):{},
+		 * 	compactContainer: {},
+		 * 	compactInnerContainer: {},
+		 * 	compactField: {},
+		 * }}
 		 */
 		getStyle()
 		{
+			const styles = this.props.style || {};
+			const {
+				primaryContainer = {},
+				primaryField = {},
+				secondaryContainer = {},
+				secondaryField = {},
+				compactContainer = {},
+				compactInnerContainer = {},
+				compactField = {},
+				...rest
+			} = styles;
+
 			return {
-				container: this.props.style || {},
+				primaryContainer,
+				primaryField,
+				secondaryContainer,
+				secondaryField,
+				compactContainer,
+				compactInnerContainer,
+				compactField,
+				container: { ...rest },
 			};
 		}
 
 		// endregion
 	}
 
-	Form.defaultProps = {
-		scrollToInvalidField: true,
-		scrollToAppearedField: true,
-	};
+	Form.defaultProps = defaultProps;
+	Form.propTypes = propTypes;
 
-	Form.propTypes = {
-		style: PropTypes.object,
-		ref: PropTypes.func,
-		fieldFactory: PropTypes.shape({
-			create: PropTypes.func,
-		}),
-		compactFieldFactory: PropTypes.shape({
-			create: PropTypes.func,
-		}),
-		scrollableProvider: PropTypes.func,
-		scrollToInvalidField: PropTypes.bool,
-		scrollToAppearedField: PropTypes.bool,
-		onSubmit: PropTypes.func,
-		onSubmitFailure: PropTypes.func,
-		onFieldValidationFailure: PropTypes.func,
-		renderBeforeFields: PropTypes.func,
-		renderAfterFields: PropTypes.func,
-		renderBeforeField: PropTypes.func,
-		renderAfterField: PropTypes.func,
-		renderBeforeCompactBar: PropTypes.func,
-		renderAfterCompactBar: PropTypes.func,
-		fields: PropTypes.arrayOf(PropTypes.shape({
-			type: PropTypes.string,
-			factory: PropTypes.func,
-			props: PropTypes.shape({
-				id: PropTypes.string,
-				value: PropTypes.any,
-			}),
-			compact: PropTypes.shape({
-				mode: PropTypes.string,
-				factory: PropTypes.func,
-				extraProps: PropTypes.object,
-			}),
-			debounceTimeout: PropTypes.number,
-		})),
-	};
-
-	module.exports = { Form, CompactMode };
+	module.exports = { Form, CompactMode, SubmitFailureReason };
 });

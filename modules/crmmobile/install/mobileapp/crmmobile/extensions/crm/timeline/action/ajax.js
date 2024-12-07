@@ -9,19 +9,27 @@ jn.define('crm/timeline/action/ajax', (require, exports, module) => {
 	{
 		execute()
 		{
-			this.source.showLoader();
+			void this.source.showLoader();
 			Haptics.vibrate(5);
 
 			BX.ajax.runAction(this.value, { data: this.actionParams })
 				.then(() => {
-					this.source.hideLoader();
+					void this.source.hideLoader();
 					Haptics.impactLight();
 					this.sendAnalytics();
 				})
-				.catch((response) => {
-					ErrorNotifier.showError(response.errors[0].message).finally(() => this.source.hideLoader());
-					Haptics.notifyFailure();
-				});
+				.catch((response) => this.#handleError(response));
+		}
+
+		#handleError(response)
+		{
+			// eslint-disable-next-line no-undef
+			ErrorNotifier.showError(response.errors[0].message)
+				.then(() => this.source.hideLoader())
+				.then(() => this.source.refresh())
+				.catch(console.error);
+
+			Haptics.notifyFailure();
 		}
 	}
 

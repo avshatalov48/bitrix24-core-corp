@@ -9,6 +9,8 @@ use Bitrix\Crm;
 use Bitrix\Main;
 use Bitrix\Main\Config;
 use Bitrix\Main\Mail;
+use Bitrix\Crm\Automation\ClientCommunications\ClientCommunications;
+use Bitrix\Mail\Helper;
 
 class CBPCrmSendEmailActivity extends CBPActivity
 {
@@ -221,6 +223,7 @@ class CBPCrmSendEmailActivity extends CBPActivity
 				foreach ($attachmentFiles as $fileId)
 				{
 					$arRawFile = CFile::MakeFileArray($fileId);
+
 					if (is_array($arRawFile))
 					{
 						$fileId = (int)CFile::SaveFile($arRawFile, 'crm');
@@ -243,6 +246,31 @@ class CBPCrmSendEmailActivity extends CBPActivity
 			'REGISTER_SONET_EVENT' => true,
 		];
 
+		$arRawFiles =
+			isset($activityFields['STORAGE_ELEMENT_IDS']) && !empty($activityFields['STORAGE_ELEMENT_IDS'])
+				? \Bitrix\Crm\Integration\StorageManager::makeFileArray(
+				$activityFields['STORAGE_ELEMENT_IDS'],
+				$activityFields['STORAGE_TYPE_ID']
+			)
+				: []
+		;
+		$totalSize = 0;
+
+		foreach ($arRawFiles as $arRawFile)
+		{
+			$totalSize += $arRawFile['size'];
+		}
+
+		$maxSize = Helper\Message::getMaxAttachedFilesSize();
+		if ($maxSize > 0 && $maxSize <= ceil($totalSize / 3) * 4) // base64 coef.
+		{
+			$this->writeError(GetMessage('CRM_SEMA_ACTIVITY_EMAIL_MAX_SIZE_EXCEED',
+										 ['#SIZE#' => \CFile::formatSize(Helper\Message::getMaxAttachedFilesSizeAfterEncoding())]
+							  ), $userId);
+
+			return CBPActivityExecutionStatus::Closed;
+		}
+
 		Crm\Activity\Provider\Email::compressActivity($activityFields);
 
 		$id = CCrmActivity::Add($activityFields, false, false, $addOptions);
@@ -252,15 +280,6 @@ class CBPCrmSendEmailActivity extends CBPActivity
 
 			return CBPActivityExecutionStatus::Closed;
 		}
-
-		$arRawFiles =
-			isset($activityFields['STORAGE_ELEMENT_IDS']) && !empty($activityFields['STORAGE_ELEMENT_IDS'])
-				? \Bitrix\Crm\Integration\StorageManager::makeFileArray(
-				$activityFields['STORAGE_ELEMENT_IDS'],
-				$activityFields['STORAGE_TYPE_ID']
-			)
-				: []
-		;
 
 		$urn = CCrmActivity::PrepareUrn($activityFields);
 		$messageId = sprintf(
@@ -531,207 +550,28 @@ class CBPCrmSendEmailActivity extends CBPActivity
 		$to = '';
 		$comEntityTypeId = $entityTypeId;
 		$comEntityId = $entityId;
+
 		$emailType = $this->EmailType;
-		$emailSelectRule = $this->EmailSelectRule;
 
-		if ($entityTypeId == \CCrmOwnerType::Deal)
+		$clientCommunications = new ClientCommunications((int)$entityTypeId, (int)$entityId, CCrmFieldMulti::EMAIL);
+		$communications = (
+			$this->EmailSelectRule === self::SELECT_RULE_LAST
+				? $clientCommunications->getLastFilled($emailType ? (string)$emailType : null)
+				: $clientCommunications->getFirstFilled($emailType ? (string)$emailType : null)
+		);
+
+		if ($communications)
 		{
-			$entity = \CCrmDeal::GetByID($entityId, false);
-			$contactId = isset($entity['CONTACT_ID']) ? intval($entity['CONTACT_ID']) : 0;
-			$companyId = isset($entity['COMPANY_ID']) ? intval($entity['COMPANY_ID']) : 0;
-
-			if ($contactId > 0)
+			$email = $communications[0] ?? [];
+			if ($email)
 			{
-				$to = $this->getEntityEmail(
-					\CCrmOwnerType::Contact,
-					$contactId,
-					$emailType,
-					$emailSelectRule
-				);
-				$comEntityTypeId = \CCrmOwnerType::Contact;
-				$comEntityId = $contactId;
-			}
-
-			if (empty($to))
-			{
-				$dealContactIds = \Bitrix\Crm\Binding\DealContactTable::getDealContactIDs($entityId);
-				if ($dealContactIds)
-				{
-					foreach ($dealContactIds as $contId)
-					{
-						if ($contId !== $contactId)
-						{
-							$to = $this->getEntityEmail(
-								\CCrmOwnerType::Contact,
-								$contId,
-								$emailType,
-								$emailSelectRule
-							);
-							$comEntityTypeId = \CCrmOwnerType::Contact;
-							$comEntityId = $contId;
-							if ($to)
-							{
-								break;
-							}
-						}
-					}
-				}
-			}
-
-			if (empty($to) && $companyId > 0)
-			{
-				$to = $this->getEntityEmail(
-					\CCrmOwnerType::Company,
-					$companyId,
-					$emailType,
-					$emailSelectRule
-				);
-				$comEntityTypeId = \CCrmOwnerType::Company;
-				$comEntityId = $companyId;
-			}
-		}
-		elseif ($entityTypeId == \CCrmOwnerType::Order)
-		{
-			$dbRes = \Bitrix\Crm\Order\ContactCompanyCollection::getList([
-				'select' => ['ENTITY_ID', 'ENTITY_TYPE_ID'],
-				'filter' => [
-					'=ORDER_ID' => $entityId,
-					'@ENTITY_TYPE_ID' => [\CCrmOwnerType::Contact, \CCrmOwnerType::Company],
-					'IS_PRIMARY' => 'Y'
-				],
-				'order' => ['ENTITY_TYPE_ID' => 'ASC']
-			]);
-			while ($row = $dbRes->fetch())
-			{
-				$to = $this->getEntityEmail(
-					$row['ENTITY_TYPE_ID'],
-					$row['ENTITY_ID'],
-					$emailType,
-					$emailSelectRule
-				);
-				if ($to)
-				{
-					$comEntityTypeId = (int)$row['ENTITY_TYPE_ID'];
-					$comEntityId = (int)$row['ENTITY_ID'];
-					break;
-				}
-			}
-		}
-		elseif ($entityTypeId == \CCrmOwnerType::Lead)
-		{
-			$to = $this->getEntityEmail(
-				$entityTypeId,
-				$entityId,
-				$emailType,
-				$emailSelectRule
-			);
-
-			if (empty($to))
-			{
-				$entity = \CCrmLead::GetByID($entityId, false);
-				$entityContactID = isset($entity['CONTACT_ID']) ? intval($entity['CONTACT_ID']) : 0;
-				$entityCompanyID = isset($entity['COMPANY_ID']) ? intval($entity['COMPANY_ID']) : 0;
-
-				if ($entityContactID > 0)
-				{
-					$to = $this->getEntityEmail(
-						\CCrmOwnerType::Contact,
-						$entityContactID,
-						$emailType,
-						$emailSelectRule
-					);
-					$comEntityTypeId = \CCrmOwnerType::Contact;
-					$comEntityId = $entityContactID;
-				}
-				if (empty($to) && $entityCompanyID > 0)
-				{
-					$to = $this->getEntityEmail(
-						\CCrmOwnerType::Company,
-						$entityCompanyID,
-						$emailType,
-						$emailSelectRule
-					);
-					$comEntityTypeId = \CCrmOwnerType::Company;
-					$comEntityId = $entityCompanyID;
-				}
-			}
-		}
-		elseif ($entityTypeId === \CCrmOwnerType::Contact || $entityTypeId === \CCrmOwnerType::Company)
-		{
-			$to = $this->getEntityEmail($entityTypeId, $entityId, $emailType, $emailSelectRule);
-		}
-		else
-		{
-			$factory = Crm\Service\Container::getInstance()->getFactory($entityTypeId);
-			if ($factory)
-			{
-				$item = $factory->getItem((int)$entityId);
-				if ($item)
-				{
-					$contactBindings = $item->getContactBindings();
-					foreach ($contactBindings as $binding)
-					{
-						$contactId = (int)($binding['CONTACT_ID'] ?? 0);
-						if ($contactId > 0)
-						{
-							$to = $this->getEntityEmail(
-								\CCrmOwnerType::Contact,
-								$contactId,
-								$emailType,
-								$emailSelectRule
-							);
-							if (!empty($to))
-							{
-								break;
-							}
-						}
-					}
-
-					if (empty($to) && $item->getCompanyId() > 0)
-					{
-						$to = $this->getEntityEmail(
-							\CCrmOwnerType::Company,
-							$item->getCompanyId(),
-							$emailType,
-							$emailSelectRule
-						);
-					}
-				}
+				$to = $email['VALUE'];
+				$comEntityTypeId = $email['ENTITY_TYPE_ID'];
+				$comEntityId = $email['ENTITY_ID'];
 			}
 		}
 
 		return [$to, $comEntityTypeId, $comEntityId];
-	}
-
-	private function getEntityEmail($entityTypeId, $entityId, $emailType, $emailSelectRule)
-	{
-		$result = '';
-		$filter = [
-			'ENTITY_ID' => \CCrmOwnerType::ResolveName($entityTypeId),
-			'ELEMENT_ID' => $entityId,
-			'TYPE_ID' => \CCrmFieldMulti::EMAIL
-		];
-
-		if ($emailType)
-		{
-			$filter['VALUE_TYPE'] = $emailType;
-		}
-
-		$idDirection = $emailSelectRule === self::SELECT_RULE_LAST ? 'desc' : 'asc';
-		$listResult = CCrmFieldMulti::GetList(['ID' => $idDirection], $filter);
-
-		while ($arField = $listResult->Fetch())
-		{
-			if (empty($arField['VALUE']))
-			{
-				continue;
-			}
-
-			$result = $arField['VALUE'];
-			break;
-		}
-
-		return $result;
 	}
 
 	private function parseFromString($from)
@@ -827,16 +667,16 @@ class CBPCrmSendEmailActivity extends CBPActivity
 				'Default' => 0
 			],
 			'AttachmentType' => [
-				'Name' => GetMessage('CRM_SEMA_ATTACHMENT_TYPE'),
+				'Name' => GetMessage('CRM_SEMA_ATTACHMENT_TYPE_1'),
 				'FieldName' => 'attachment_type',
 				'Type' => 'select',
 				'Options' => [
-					static::ATTACHMENT_TYPE_FILE => GetMessage('CRM_SEMA_ATTACHMENT_FILE_1'),
+					static::ATTACHMENT_TYPE_FILE => GetMessage('CRM_SEMA_ATTACHMENT_FILE_2'),
 					static::ATTACHMENT_TYPE_DISK => GetMessage('CRM_SEMA_ATTACHMENT_DISK')
 				]
 			],
 			'Attachment' => [
-				'Name' => GetMessage('CRM_SEMA_ATTACHMENT'),
+				'Name' => GetMessage('CRM_SEMA_ATTACHMENT_1'),
 				'FieldName' => 'attachment',
 				'Type' => 'file',
 				'Multiple' => true
@@ -877,19 +717,23 @@ class CBPCrmSendEmailActivity extends CBPActivity
 		$errors = [];
 
 		$properties = [
-			'Subject' => (string)$arCurrentValues["subject"],
-			'MessageText' => (string)$arCurrentValues["message_text"],
-			'MessageTextType' => (string)$arCurrentValues["message_text_type"],
-			'AttachmentType' => (string)$arCurrentValues["attachment_type"],
-			'MessageFrom' => (string)$arCurrentValues["message_from"],
-			'EmailType' => (string)$arCurrentValues["email_type"],
-			'EmailSelectRule' => (string)$arCurrentValues["email_select_rule"],
-			'UseLinkTracker' => $arCurrentValues["use_link_tracker"] === 'Y' ? 'Y' : 'N',
+			'Subject' => (string)($arCurrentValues['subject'] ?? ''),
+			'MessageText' => (string)($arCurrentValues['message_text'] ?? ''),
+			'MessageTextType' => (string)($arCurrentValues['message_text_type'] ?? ''),
+			'AttachmentType' => (string)($arCurrentValues['attachment_type'] ?? ''),
+			'MessageFrom' => (string)($arCurrentValues['message_from'] ?? ''),
+			'EmailType' => (string)($arCurrentValues['email_type'] ?? ''),
+			'EmailSelectRule' => (string)($arCurrentValues['email_select_rule'] ?? ''),
+			'UseLinkTracker' => $arCurrentValues['use_link_tracker'] === 'Y' ? 'Y' : 'N',
 			'MessageTextEncoded' => 0,
 			'Attachment' => []
 		];
 
-		if ($arCurrentValues['message_from'] === '' && static::isExpression($arCurrentValues['message_from_text']))
+		if (
+			isset($arCurrentValues['message_from'])
+			&& $arCurrentValues['message_from'] === ''
+			&& static::isExpression(($arCurrentValues['message_from_text'] ?? null))
+		)
 		{
 			$properties['MessageFrom'] = $arCurrentValues['message_from_text'];
 		}
@@ -907,8 +751,7 @@ class CBPCrmSendEmailActivity extends CBPActivity
 		}
 		else
 		{
-			$properties['Attachment'] = isset($arCurrentValues["attachment"])
-				? $arCurrentValues["attachment"] : $arCurrentValues["attachment_text"];
+			$properties['Attachment'] = $arCurrentValues["attachment"] ?? ($arCurrentValues["attachment_text"] ?? '');
 		}
 
 		if (
@@ -929,10 +772,6 @@ class CBPCrmSendEmailActivity extends CBPActivity
 				$rawData = $rawData['message_text'];
 			}
 
-			if ($request->isAjaxRequest())
-			{
-				\CUtil::decodeURIComponent($rawData);
-			}
 			//TODO: fix for WAF, needs refactoring.
 			$rawData = \Bitrix\Crm\Automation\Helper::unConvertExpressions($rawData, $documentType);
 
@@ -1028,6 +867,11 @@ class CBPCrmSendEmailActivity extends CBPActivity
 
 	private function logDebug(array $values = [])
 	{
+		if (!$this->workflow->isDebug())
+		{
+			return;
+		}
+
 		$fullMap = static::getPropertiesMap($this->getDocumentType());
 		$map = [
 			'MessageFrom' => $fullMap['MessageFrom']['Name'],
@@ -1041,6 +885,11 @@ class CBPCrmSendEmailActivity extends CBPActivity
 
 	private function logDebugActivity($id)
 	{
+		if (!$this->workflow->isDebug())
+		{
+			return;
+		}
+
 		$value = sprintf(
 			'/bitrix/components/bitrix/crm.activity.planner/slider.php?site_id='
 			. SITE_ID . '&ajax_action=ACTIVITY_VIEW&activity_id=%d',

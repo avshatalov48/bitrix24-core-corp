@@ -531,6 +531,10 @@ class Dynamic extends Service\Factory
 					"crm_dynamic_type_{$this->getEntityTypeId()}",
 				),
 			)
+			->addAction(
+				OPERATION::ACTION_AFTER_SAVE,
+				new Action\Compatible\SocialNetwork\ProcessSendNotification\WhenAddingEntity(),
+			)
 		;
 	}
 
@@ -561,6 +565,10 @@ class Dynamic extends Service\Factory
 			->addAction(
 				Operation::ACTION_AFTER_SAVE,
 				new Operation\Action\FillEntityFieldsContext()
+			)
+			->addAction(
+				OPERATION::ACTION_AFTER_SAVE,
+				new Action\Compatible\SocialNetwork\ProcessSendNotification\WhenUpdatingEntity(),
 			)
 		;
 	}
@@ -622,5 +630,10 @@ class Dynamic extends Service\Factory
 	public function isInCustomSection(): bool
 	{
 		return CustomSectionProvider::hasCustomSection($this);
+	}
+
+	public function isCommunicationRoutingSupported(): bool
+	{
+		return true;
 	}
 }

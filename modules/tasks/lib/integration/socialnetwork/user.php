@@ -44,8 +44,8 @@ final class User extends \Bitrix\Tasks\Integration\SocialNetwork
 		$usersRes = UserToGroupTable::getList([
 			'select' => ['USER_ID'],
 			'filter' => [
-				'GROUP_ID' => $groupId,
-				'USER.ACTIVE' => 'Y',
+				'=GROUP_ID' => $groupId,
+				'=USER.ACTIVE' => 'Y',
 				'<=ROLE' => $role,
 			],
 			'order' => ['DATE_CREATE' => 'ASC'],

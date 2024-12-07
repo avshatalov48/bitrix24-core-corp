@@ -16,15 +16,14 @@ use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\Mail\ContactList;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\Text;
 use Bitrix\Crm\Service\Timeline\Layout\Body\Logo;
 use Bitrix\Crm\Service\Timeline\Layout\Footer\Button;
-use Bitrix\Crm\Settings\WorkTime;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Web\Uri;
 use CCrmActivityDirection;
 
 class Email extends Activity
 {
-	const TIMELINE_SHORT_LIMIT_LENGTH = 57;
-	const TIMELINE_LONG_LIMIT_LENGTH = 155;
+	private const TIMELINE_SHORT_LIMIT_LENGTH = 57;
+	private const TIMELINE_LONG_LIMIT_LENGTH = 155;
 
 	final protected function getActivityTypeId(): string
 	{
@@ -134,10 +133,14 @@ class Email extends Activity
 		if ($name)
 		{
 			$textOrLink = ContentBlockFactory::createTextOrLink($name, $url ? new Redirect($url) : null);
-			$lineOfTextBlock->addContentBlock('name',
-				($textOrLink)->setFontWeight(Text::FONT_WEIGHT_NORMAL)
-					->setColor(ContentBlock\Text::COLOR_BASE_70)
-					->setFontSize(Text::FONT_SIZE_SM));
+			$textOrLink->setFontWeight(Text::FONT_WEIGHT_NORMAL);
+			if (!$url)
+			{
+				$textOrLink->setColor(ContentBlock\Text::COLOR_BASE_70);
+			}
+			$textOrLink->setFontSize(Text::FONT_SIZE_SM);
+
+			$lineOfTextBlock->addContentBlock('name', $textOrLink);
 		}
 
 		return $lineOfTextBlock->addContentBlock('email',
@@ -162,7 +165,7 @@ class Email extends Activity
 
 		if ($withWrapper)
 		{
-			return ((new ContentBlockWithTitle())->setInline()->setWordWrap(true)->setTitle($title)
+			return ((new ContentBlockWithTitle())->setInline()->setWordWrap()->setTitle($title)
 				->setContentBlock($contactList));
 		}
 		else
@@ -186,10 +189,18 @@ class Email extends Activity
 	private function buildSenderBlock($withWrapper = true): ?ContentBlock
 	{
 		$header = $this->getHeader() ?? [];
-
 		if (empty($header['from']))
 		{
 			return null;
+		}
+
+		$direction = (int)$this->getAssociatedEntityModel()->get('DIRECTION');
+		if (
+			$direction === CCrmActivityDirection::Outgoing
+			&& count($header['from']) === 1
+			&& $header['from'][0]['senderName'])
+		{
+			$header['from'][0]['name'] = $header['from'][0]['senderName'];
 		}
 
 		return $this->buildContactsBlock(Loc::getMessage("CRM_TIMELINE_BLOCK_EMAIL_TITLE_SENDER"), $header['from'], $withWrapper);
@@ -272,17 +283,9 @@ class Email extends Activity
 			$type = Button::TYPE_SECONDARY;
 		}
 
-		$nearestWorkday = (new WorkTime())->detectNearestWorkDateTime(3, 1);
-		$scheduleButton = (new Button(Loc::getMessage('CRM_TIMELINE_BUTTON_EMAIL_SCHEDULE'), Button::TYPE_SECONDARY))
-			->setAction((new JsEvent('Email::Schedule'))
-				->addActionParamInt('activityId', $this->getActivityId())
-				->addActionParamString('scheduleDate', $nearestWorkday->toString())
-				->addActionParamInt('scheduleTs', $nearestWorkday->getTimestamp()));
-
 		return [
-			'openButton' => (new Button(Loc::getMessage('CRM_TIMELINE_BUTTON_EMAIL_OPEN'), $type))
-				->setAction(($this->getTitleAction())),
-			'scheduleButton' => $scheduleButton,
+			'openButton' => (new Button(Loc::getMessage('CRM_TIMELINE_BUTTON_EMAIL_OPEN'), $type))->setAction(($this->getTitleAction())),
+			'scheduleButton' => $this->getScheduleButton('Email::Schedule'),
 		];
 	}
 
@@ -307,6 +310,11 @@ class Email extends Activity
 		$title = $this->getAssociatedEntityModel()->get('SUBJECT') ?? '';
 
 		return Loc::getMessage('CRM_TIMELINE_INCOMING_EMAIL_DELETION_CONFIRM', ['#TITLE#' => $title]);
+	}
+
+	protected function canMoveTo(): bool
+	{
+		return $this->isScheduled();
 	}
 
 	public function needShowNotes(): bool

@@ -2,13 +2,9 @@
 
 return [
 	'extensions' => [
-		'layout/ui/fields/base',
-		'layout/ui/fields/string',
-		'utils/url',
-		'utils/string',
 		'loc',
-	],
-	'bundle' => [
-		'./domains',
+		'utils/email',
+		'utils/string',
+		'layout/ui/fields/string',
 	],
 ];

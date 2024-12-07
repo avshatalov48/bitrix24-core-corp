@@ -25,9 +25,8 @@ class CIntranetPlanner
 		$today = ConvertTimeStamp();
 
 		$cache_dir = '/intranet/planner/'.$userId;
-		$cache_id = 'intranet|planner|'.$userId.'|'.$SITE_ID.'|'.intval($bFull).'|'.$today.'|'.FORMAT_DATETIME.'|'.FORMAT_DATE.'|'.LANGUAGE_ID;
+		$cache_id = 'intranet|planner|'.$userId.'|'.$SITE_ID.'|'.intval($bFull).'|'.$today.'|'.FORMAT_DATETIME.'|'.FORMAT_DATE.'|'.LANGUAGE_ID.'|v2';
 
-		$arData = null;
 		$cacheEnabled = COption::GetOptionString('main', 'component_cache_on', 'N') === 'Y'
 			&& COption::GetOptionString('main', 'component_managed_cache_on', 'N') === 'Y';
 		if ($obCache->InitCache(self::CACHE_TTL, $cache_id, $cache_dir) && $cacheEnabled)
@@ -38,11 +37,11 @@ class CIntranetPlanner
 			{
 				foreach($arData['SCRIPTS'] as $key => $script)
 				{
-					if(is_array($script))
+					if(is_array($script) && !CJSCore::IsExtRegistered($key))
 					{
-						$arData['SCRIPTS'][$key] = self::JS_CORE_EXT_RANDOM_NAME.RandString(5);
-						CJSCore::RegisterExt($arData['SCRIPTS'][$key], $script);
+						CJSCore::RegisterExt($key, $script);
 					}
+					$arData['SCRIPTS'][$key] = $key;
 				}
 			}
 		}
@@ -94,7 +93,8 @@ class CIntranetPlanner
 				{
 					if(CJSCore::IsExtRegistered($script))
 					{
-						$arCacheData['SCRIPTS'][$key] = CJSCore::getExtInfo($script);
+						$arCacheData['SCRIPTS'][$script] = CJSCore::getExtInfo($script);
+						unset($arCacheData['SCRIPTS'][$key]);
 					}
 				}
 			}

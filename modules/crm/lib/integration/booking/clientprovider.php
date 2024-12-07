@@ -1,0 +1,390 @@
+<?php
+
+namespace Bitrix\Crm\Integration\Booking;
+
+use Bitrix\Booking\Entity\Booking\Client;
+use Bitrix\Booking\Entity\Booking\ClientCollection;
+use Bitrix\Booking\Entity\Booking\ClientType;
+use Bitrix\Booking\Entity\Booking\ClientTypeCollection;
+use Bitrix\Booking\Integration\Booking\ClientProviderInterface;
+use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Service\Factory;
+use Bitrix\Main\Error;
+use Bitrix\Main\Result;
+use Bitrix\Crm\ItemIdentifier;
+use CCrmOwnerType;
+use Bitrix\Crm\MessageSender\Channel\ChannelRepository;
+use Bitrix\Crm\Integration\SmsManager;
+use Bitrix\Crm\MessageSender\SendFacilitator\Sms;
+use DateTimeImmutable;
+
+class ClientProvider implements ClientProviderInterface
+{
+	private const MODULE_ID = 'crm';
+
+	public function getModuleId(): string
+	{
+		return self::MODULE_ID;
+	}
+
+	public function getClientTypeCollection(): ClientTypeCollection
+	{
+		return new ClientTypeCollection(
+			(new ClientType())
+				->setModuleId($this->getModuleId())
+				->setCode(CCrmOwnerType::ContactName),
+			(new ClientType())
+				->setModuleId($this->getModuleId())
+				->setCode(CCrmOwnerType::CompanyName),
+		);
+	}
+
+	public function sendMessage(ClientCollection $clientCollection, string $message): Result
+	{
+		$primaryClient = $this->pickPrimaryClient($clientCollection);
+		if (!$primaryClient)
+		{
+			return (new Result())->addError(new Error('Primary client has not been found'));
+		}
+
+		$entityTypeId = $this->getEntityTypeIdByCode($primaryClient->getType()?->getCode());
+		if (!$entityTypeId)
+		{
+			return (new Result())->addError(new Error('Unexpected entity type'));
+		}
+
+		$channel = ChannelRepository
+			::create(
+				new ItemIdentifier($entityTypeId, $primaryClient->getId())
+			)
+			->getBestUsableBySender(SmsManager::getSenderCode());
+
+		if (is_null($channel))
+		{
+			return (new Result())->addError(new Error('Channel has not been found'));
+		}
+
+		return (new Sms($channel))
+			->setMessageBody($message)
+			->send();
+	}
+
+	public function pickPrimaryClient(ClientCollection $clientCollection): Client|null
+	{
+		foreach ($clientCollection as $client)
+		{
+			if ($client->getType()?->getCode() === CCrmOwnerType::ContactName)
+			{
+				return $client;
+			}
+		}
+
+		return $clientCollection->getFirstCollectionItem();
+	}
+
+	public function isClientNew(Client $client): bool
+	{
+		$factory = $this->getFactoryByClient($client);
+		if (!$factory)
+		{
+			return false;
+		}
+
+		$item = $factory->getItem($client->getId(), ['ID']);
+		if (!$item)
+		{
+			return false;
+		}
+
+		$createdTime = $item->getCreatedTime();
+		if (!$createdTime)
+		{
+			return false;
+		}
+
+		$createdAgo = (new DateTimeImmutable())->getTimestamp() - $item->getCreatedTime()->getTimestamp();
+
+		//@todo confirm if this time is okay with product manager
+		return $createdAgo <= 86400;
+	}
+
+	public function doesClientExist(Client $client): bool
+	{
+		$factory = $this->getFactoryByClient($client);
+		if (!$factory)
+		{
+			return false;
+		}
+
+		return (bool)$factory->getItem($client->getId(), ['ID']);
+	}
+
+	public function loadClientDataForCollection(...$clientCollections): void
+	{
+		$contactIds = [];
+		$companyIds = [];
+
+		foreach ($clientCollections as $clientCollection)
+		{
+			foreach ($clientCollection as $client)
+			{
+				$clientId = $client->getId();
+				$clientTypeCode = $client->getType()?->getCode();
+
+				if ($clientTypeCode === CCrmOwnerType::ContactName)
+				{
+					$contactIds[$clientId] = $clientId;
+				}
+
+				if ($clientTypeCode === CCrmOwnerType::CompanyName)
+				{
+					$companyIds[$clientId] = $clientId;
+				}
+			}
+		}
+
+		$clientData = [
+			CCrmOwnerType::ContactName => $this->getContacts($contactIds),
+			CCrmOwnerType::CompanyName => $this->getCompanies($companyIds),
+		];
+
+		foreach ($clientCollections as $clientCollection)
+		{
+			foreach ($clientCollection as $client)
+			{
+				$clientId = $client->getId();
+				$clientTypeCode = $client->getType()?->getCode();
+
+				if ($clientTypeCode === CCrmOwnerType::ContactName)
+				{
+					if (isset($clientData[CCrmOwnerType::ContactName][$clientId]))
+					{
+						$client->setData($clientData[CCrmOwnerType::ContactName][$clientId]);
+					}
+				}
+
+				if ($clientTypeCode === CCrmOwnerType::CompanyName)
+				{
+					if (isset($clientData[CCrmOwnerType::CompanyName][$clientId]))
+					{
+						$client->setData($clientData[CCrmOwnerType::CompanyName][$clientId]);
+					}
+				}
+			}
+		}
+	}
+
+	public function getClientDataRecent(): array
+	{
+		$contactIds = [];
+		$companyIds = [];
+
+		//@todo why do we take it from deal?
+		$lastContacts = \CUserOptions::GetOption('crm.deal.details', 'contact', []);
+		$lastCompanies = \CUserOptions::GetOption('crm.deal.details', 'company', []);
+		foreach ($lastContacts as $lastContact)
+		{
+			$parts = explode(':', $lastContact);
+			$contactId = (int)($parts[1] ?? 0);
+			if (!empty($contactId))
+			{
+				$contactIds[$contactId] = $contactId;
+			}
+		}
+
+		foreach ($lastCompanies as $lastCompany)
+		{
+			$parts = explode(':', $lastCompany);
+			$companyId = (int)($parts[1] ?? 0);
+			if (!empty($companyId))
+			{
+				$companyIds[$companyId] = $companyId;
+			}
+		}
+
+		return [
+			CCrmOwnerType::ContactName => $this->getContacts($contactIds),
+			CCrmOwnerType::CompanyName => $this->getCompanies($companyIds),
+		];
+	}
+
+	private function getContacts(array $contactIds): array
+	{
+		if (empty($contactIds))
+		{
+			return [];
+		}
+
+		$contactIds = array_keys($contactIds);
+
+		$result = \CCrmContact::GetListEx(
+			[],
+			[
+				'@ID' => $contactIds,
+				//@todo review later
+				'CHECK_PERMISSIONS' => 'N',
+			],
+			false,
+			false,
+			[
+				'ID',
+				'HONORIFIC',
+				'NAME',
+				'SECOND_NAME',
+				'LAST_NAME',
+				'CATEGORY_ID',
+				'PHOTO',
+			],
+		);
+
+		$contacts = [];
+		while ($row = $result->fetch())
+		{
+			$id = (int)$row['ID'];
+
+			$contacts[$id] = [
+				'id' => $id,
+				'name' => \CCrmContact::PrepareFormattedName($row),
+				'image' => $this->getImageSrc((int)($row['PHOTO'] ?? 0)),
+				'phones' => [],
+				'emails' => [],
+			];
+		}
+
+		$communicationsResult = \CCrmFieldMulti::GetListEx(
+			[],
+			[
+				'=ENTITY_ID' => CCrmOwnerType::ContactName,
+				'@ELEMENT_ID' => $contactIds,
+				'@TYPE_ID' => ['PHONE', 'EMAIL'],
+			],
+		);
+		while ($communication = $communicationsResult->fetch())
+		{
+			if (empty($contacts[$communication['ELEMENT_ID']]))
+			{
+				continue;
+			}
+
+			if ($communication['TYPE_ID'] === 'PHONE')
+			{
+				$contacts[$communication['ELEMENT_ID']]['phones'][] = $communication['VALUE'];
+			}
+			if ($communication['TYPE_ID'] === 'EMAIL')
+			{
+				$contacts[$communication['ELEMENT_ID']]['emails'][] = $communication['VALUE'];
+			}
+		}
+
+		return $contacts;
+	}
+
+	private function getCompanies(array $companyIds): array
+	{
+		if (empty($companyIds))
+		{
+			return [];
+		}
+
+		$companyIds = array_keys($companyIds);
+
+		$result = \CCrmCompany::GetListEx(
+			[],
+			[
+				'@ID' => $companyIds,
+				//@todo review later
+				'CHECK_PERMISSIONS' => 'N',
+			],
+			false,
+			false,
+			[
+				'ID',
+				'TITLE',
+				'CATEGORY_ID',
+				'LOGO',
+			]
+		);
+
+		$companies = [];
+		while ($row = $result->fetch())
+		{
+			$id = (int)$row['ID'];
+
+			$companies[$id] = [
+				'id' => $id,
+				'name' => $row['TITLE'],
+				'image' => $this->getImageSrc((int)($row['LOGO'] ?? 0)),
+				'phones' => [],
+				'emails' => [],
+			];
+		}
+
+		$communicationsResult = \CCrmFieldMulti::GetListEx(
+			[],
+			[
+				'=ENTITY_ID' => CCrmOwnerType::CompanyName,
+				'@ELEMENT_ID' => $companyIds,
+				'@TYPE_ID' => ['PHONE', 'EMAIL'],
+			],
+		);
+		while ($communication = $communicationsResult->Fetch())
+		{
+			if (empty($companies[$communication['ELEMENT_ID']]))
+			{
+				continue;
+			}
+
+			if ($communication['TYPE_ID'] === 'PHONE')
+			{
+				$companies[$communication['ELEMENT_ID']]['phones'][] = $communication['VALUE'];
+			}
+			if ($communication['TYPE_ID'] === 'EMAIL')
+			{
+				$companies[$communication['ELEMENT_ID']]['emails'][] = $communication['VALUE'];
+			}
+		}
+
+		return $companies;
+	}
+
+	private function getFactoryByClient(Client $client): Factory|null
+	{
+		$entityTypeId = $this->getEntityTypeIdByCode($client->getType()?->getCode());
+		if (!$entityTypeId)
+		{
+			return null;
+		}
+
+		$factory = Container::getInstance()->getFactory($entityTypeId);
+		if (!$factory)
+		{
+			return null;
+		}
+
+		return $factory;
+	}
+
+	private function getEntityTypeIdByCode(string|null $code): int|null
+	{
+		$result = CCrmOwnerType::ResolveID($code);
+
+		return $result === CCrmOwnerType::Undefined ? null : $result;
+	}
+
+	private function getImageSrc(int $imageId): string
+	{
+		$tmpData = \CFile::resizeImageGet(
+			$imageId,
+			[
+				'width' => 100,
+				'height' => 100,
+			],
+			BX_RESIZE_IMAGE_EXACT,
+			false,
+			false,
+			true
+		);
+
+		return (!empty($tmpData['src']) ? $tmpData['src'] : '');
+	}
+}

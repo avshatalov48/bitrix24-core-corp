@@ -416,6 +416,53 @@
 				}.bind(this))
 			}
 		}.bind(this));
+
+		this.initBaasButtons();
+	};
+
+	/**
+	 * @private
+	 */
+	BX.Crm.DocumentView.initBaasButtons = function()
+	{
+		const featureCode = 'documentgenerator_fast_transform';
+
+		const speedupButtonInSidebar = document.getElementById('crm-document-speedup-in-sidebar');
+		const speedupButtonInPlaceholder = document.getElementById('crm-document-speedup-in-placeholder');
+
+		for (const button of [speedupButtonInPlaceholder, speedupButtonInSidebar])
+		{
+			BX.Event.bind(button, 'click', () => {
+				BX.Runtime.loadExtension('baas.store').then(() => {
+					BX.Baas.Store.ServiceWidget.getInstanceByCode(featureCode)
+						.bind(button)
+						.toggle()
+					;
+				});
+			});
+		}
+
+		top.BX.Event.EventEmitter.subscribe('onPullEvent-baas', (event) => {
+			const [command, params] = event.getData();
+
+			if (command !== 'updateService' || params.service.code !== featureCode)
+			{
+				return;
+			}
+
+			const captionContainer = document.getElementById('crm-document-speedup-value');
+
+			if (params.service.isActive)
+			{
+				BX.Dom.hide(speedupButtonInPlaceholder);
+				captionContainer.textContent = BX.Loc.getMessage('CRM_DOCUMENT_VIEW_CURRENT_SPEED_VALUE_FAST');
+			}
+			else
+			{
+				BX.Dom.show(speedupButtonInPlaceholder);
+				captionContainer.textContent = BX.Loc.getMessage('CRM_DOCUMENT_VIEW_CURRENT_SPEED_VALUE_REGULAR');
+			}
+		});
 	};
 
 	BX.Crm.DocumentView.showMessage = function(content, buttons, title, onclose)
@@ -651,8 +698,8 @@
 		}
 		else
 		{
-			document.getElementById('crm__document-view--node-message').innerText = BX.message('CRM_DOCUMENT_VIEW_PREVIEW_MESSAGE_PREPARE');
-			document.getElementById('crm__document-view--node-detail').innerText = BX.message('CRM_DOCUMENT_VIEW_PREVIEW_MESSAGE_READY');
+			document.getElementById('crm__document-view--node-message').innerText = BX.message('CRM_DOCUMENT_VIEW_PREVIEW_MESSAGE_PREPARE_MSGVER_1');
+			document.getElementById('crm__document-view--node-detail').innerText = BX.message('CRM_DOCUMENT_VIEW_PREVIEW_MESSAGE_READY_MSGVER_1');
 			BX.show(document.getElementById('crm__document-view--node-message'));
 			BX.show(document.getElementById('crm__document-view--node-detail'));
 			this.startProgressBar();
@@ -663,12 +710,16 @@
 	{
 		if (!this.loader)
 		{
-			this.loader = new BX.Loader({
-				color: '#2fc6f6',
+			this.loader = new BX.UI.ProgressBar({
+				color: BX.UI.ProgressBar.Color.PRIMARY,
+				size: 10,
+				maxValue: 100,
+				value: 30,
+				infiniteLoading: true,
 			});
-		}
 
-		this.loader.show(document.getElementById('docs-progress-bar'));
+			this.loader.renderTo(BX('docs-progress-bar'));
+		}
 	};
 
 	BX.Crm.DocumentView.getViewer = function()

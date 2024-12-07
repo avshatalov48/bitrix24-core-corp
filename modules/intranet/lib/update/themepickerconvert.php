@@ -92,7 +92,7 @@ final class ThemePickerConvert extends Stepper
 					$userId = (int)$themeId['userId'];
 				}
 
-				if (preg_match('/^bitrix24\_theme\_(.+)/is' . BX_UTF_PCRE_MODIFIER, $record['NAME'], $matches))
+				if (preg_match('/^bitrix24\_theme\_(.+)/isu', $record['NAME'], $matches))
 				{
 					ThemeTable::set([
 						'THEME_ID' => $themeId,

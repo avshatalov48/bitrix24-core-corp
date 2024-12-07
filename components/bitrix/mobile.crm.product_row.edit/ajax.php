@@ -46,8 +46,6 @@ if (!$curUser || !$curUser->IsAuthorized() || !check_bitrix_sessid() || !CCrmPer
 //$langID = isset($_REQUEST['lang_id'])? $_REQUEST['lang_id']: LANGUAGE_ID;
 //__IncludeLang(dirname(__FILE__).'/lang/'.$langID.'/'.basename(__FILE__));
 
-CUtil::JSPostUnescape();
-
 if(!function_exists('__CrmMobileProductRowEditEndResponse'))
 {
 	function __CrmMobileProductRowEditEndResponse($result)

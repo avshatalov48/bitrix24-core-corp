@@ -689,19 +689,14 @@ class Order extends Sale\Order
 					],
 					Crm\Integration\SmsManager::getSenderCode() => [
 						'ACTIVITY_PROVIDER_TYPE_ID' => BaseMessage::PROVIDER_TYPE_CRM_ORDER_COMPLETED,
-						'MESSAGE_BODY' => Main\Localization\Loc::getMessage('CRM_ORDER_ORDER_CREATED')
-							. (
-							$feedbackPage
-								? (
-								' ' . Main\Localization\Loc::getMessage(
-									'CRM_ORDER_ORDER_CREATED_QUESTIONS_LEFT',
-									[
-										'#FEEDBACK_LINK#' => UrlManager::getInstance()->getHostUrl() . \CBXShortUri::GetShortUri($feedbackPage),
-									]
-								)
+						'MESSAGE_BODY' => !empty($feedbackPage)
+							? Main\Localization\Loc::getMessage(
+								'CRM_ORDER_ORDER_CREATED_WITH_FEEDBACK_LINK',
+								[
+									'#FEEDBACK_LINK#' => UrlManager::getInstance()->getHostUrl() . \CBXShortUri::GetShortUri($feedbackPage),
+								]
 							)
-								: ''
-							),
+							: Main\Localization\Loc::getMessage('CRM_ORDER_ORDER_CREATED_WITHOUT_FEEDBACK_LINK'),
 					]
 				],
 				[

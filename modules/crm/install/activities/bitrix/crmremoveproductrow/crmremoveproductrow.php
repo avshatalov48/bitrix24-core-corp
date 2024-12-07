@@ -127,17 +127,20 @@ class CBPCrmRemoveProductRow extends CBPActivity
 
 	private function logDebug(array $ids)
 	{
-		$this->writeDebugInfo(
-			$this->getDebugInfo(
-				['DeletedId' => $ids],
-				[
-					'DeletedId' => [
-						'Name' => GetMessage('CRM_RMPR_DELETED_IDS'),
-						'Type' => 'string',
-						'Multiple' => true,
-					],
-				]
-			)
-		);
+		if ($this->workflow->isDebug())
+		{
+			$this->writeDebugInfo(
+				$this->getDebugInfo(
+					['DeletedId' => $ids],
+					[
+						'DeletedId' => [
+							'Name' => GetMessage('CRM_RMPR_DELETED_IDS'),
+							'Type' => 'string',
+							'Multiple' => true,
+						],
+					]
+				)
+			);
+		}
 	}
 }

@@ -89,7 +89,7 @@ if (
 	|| $arResult['NEED_FOR_REBUILD_QUOTE_ATTRS']
 	|| $arResult['NEED_FOR_REBUILD_INVOICE_ATTRS']
 ):
-?><script type="text/javascript">
+?><script>
 BX.ready(
 	function()
 	{

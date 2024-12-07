@@ -19,6 +19,24 @@ export type DraftModelState = {
 		type: string,
 		text: string,
 	}>
+	image?: {
+		id: number,
+		url: null | string,
+		previewParams: {
+			height: number,
+			width: number,
+		},
+	},
+	video?: {
+		id: number,
+		localUrl: null | string,
+		url: null | string,
+		previewParams: {
+			height: number,
+			width: number,
+		},
+		size: number,
+	}
 };
 
 export type DraftModelActions =

@@ -98,7 +98,7 @@
 	const useCallback = (callback, deps = null) => {
 		deps = deps === undefined ? null : deps;
 
-		if (!callback.hasOwnProperty(hashIdSymbol))
+		if (callback && !callback.hasOwnProperty(hashIdSymbol))
 		{
 			callback[hashIdSymbol] = hashCode(JSON.stringify([stringify(callback), deps]));
 		}
@@ -107,6 +107,19 @@
 	};
 
 	useCallback.hashIdSymbol = hashIdSymbol;
+
+	const refSubstitution = (Component) => (props) => {
+		const { ref, ...restProps } = props;
+
+		const handleOnInnerRef = useCallback((innerRef) => {
+			ref?.(innerRef);
+		});
+
+		return new Component({
+			innerRef: handleOnInnerRef,
+			...restProps,
+		});
+	};
 
 	/**
 	 * @class FunctionUtils
@@ -139,7 +152,8 @@
 				return object[targetFunction].apply(context, arguments);
 			}
 
-			return function() {};
+			return function() {
+			};
 		};
 	};
 
@@ -155,6 +169,7 @@
 			once,
 			mapPromise,
 			useCallback,
+			refSubstitution,
 		};
 	});
 })();

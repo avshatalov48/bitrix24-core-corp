@@ -7,10 +7,28 @@ jn.define('im/messenger/lib/permission-manager/chat-permission', (require, expor
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { UserRole, DialogActionType, DialogType } = require('im/messenger/const');
 
+	const MinimalRoleForAction = {
+		[DialogActionType.readMessage]: UserRole.member,
+		[DialogActionType.partialQuote]: UserRole.member,
+		[DialogActionType.setReaction]: UserRole.member,
+		[DialogActionType.openMessageMenu]: UserRole.member,
+		[DialogActionType.openAvatarMenu]: UserRole.member,
+		[DialogActionType.openSidebarMenu]: UserRole.member,
+		[DialogActionType.followComments]: UserRole.member,
+		[DialogActionType.reply]: UserRole.member,
+		[DialogActionType.mention]: UserRole.member,
+
+		[DialogActionType.openComments]: UserRole.guest,
+		[DialogActionType.openSidebar]: UserRole.guest,
+	};
+
 	class ChatPermission
 	{
 		constructor()
 		{
+			/**
+			 * @type {DialoguesModelState}
+			 */
 			this.dialogData = Object.create(null);
 		}
 
@@ -87,7 +105,7 @@ jn.define('im/messenger/lib/permission-manager/chat-permission', (require, expor
 		 */
 		iaCanAddByTypeChat()
 		{
-			const rolesByChatType = this.getInstalledRolesByChatType();
+			const rolesByChatType = this.getDefaultRolesByChatType();
 			const installedMinimalRole = rolesByChatType[DialogActionType.extend];
 
 			return this.getRightByLowRole(installedMinimalRole);
@@ -97,17 +115,25 @@ jn.define('im/messenger/lib/permission-manager/chat-permission', (require, expor
 		 * @desc Get object with minimal installed roles by chat type
 		 * @return {object}
 		 */
-		getInstalledRolesByChatType()
+		getDefaultRolesByChatType()
+		{
+			return this.getPermissionByChatType(this.dialogData.type);
+		}
+
+		getPermissionByChatType(chatType)
 		{
 			const chatPermissions = this.getChatPermissions();
-			let chatType = this.dialogData.type;
+			// we can have a "user" type for "private" chats
+			const currentChatType = chatType === DialogType.user ? DialogType.private : chatType;
 
-			if (Type.isUndefined(chatPermissions.byChatType[chatType]))
-			{
-				chatType = DialogType.default;
-			}
+			return chatPermissions.byChatType[currentChatType] ?? chatPermissions.byChatType[DialogType.default];
+		}
 
-			return chatPermissions.byChatType[chatType] || {};
+		getActionGroupsByChatType(chatType)
+		{
+			const chatPermissions = this.getChatPermissions();
+
+			return chatPermissions.actionGroupsDefaults[chatType] ?? chatPermissions.actionGroupsDefaults[DialogType.default];
 		}
 
 		/**
@@ -147,7 +173,7 @@ jn.define('im/messenger/lib/permission-manager/chat-permission', (require, expor
 		 */
 		isCanRemoveByTypeChat()
 		{
-			const rolesByChatType = this.getInstalledRolesByChatType();
+			const rolesByChatType = this.getDefaultRolesByChatType();
 			const installedMinimalRole = rolesByChatType[DialogActionType.leave]; // leave equal kick
 
 			return this.getRightByLowRole(installedMinimalRole);
@@ -180,7 +206,7 @@ jn.define('im/messenger/lib/permission-manager/chat-permission', (require, expor
 		 */
 		iaCanLeaveByTypeChat()
 		{
-			const rolesByChatType = this.getInstalledRolesByChatType();
+			const rolesByChatType = this.getDefaultRolesByChatType();
 			let actionType = DialogActionType.leave;
 
 			const isOwner = this.isOwner();
@@ -223,6 +249,11 @@ jn.define('im/messenger/lib/permission-manager/chat-permission', (require, expor
 		 */
 		getRightByLowRole(compareRole)
 		{
+			if (compareRole === UserRole.none)
+			{
+				return false;
+			}
+
 			const currentRole = this.dialogData.role;
 
 			switch (currentRole)
@@ -286,6 +317,11 @@ jn.define('im/messenger/lib/permission-manager/chat-permission', (require, expor
 
 			if (Type.isObject(dialogData))
 			{
+				if (Type.isUndefined(dialogData.permissions))
+				{
+					return false;
+				}
+
 				this.dialogData = dialogData;
 			}
 
@@ -352,19 +388,27 @@ jn.define('im/messenger/lib/permission-manager/chat-permission', (require, expor
 		 */
 		isCanCallByDialogType(type)
 		{
-			return type !== DialogType.copilot;
+			return ![
+				DialogType.copilot,
+				DialogType.channel,
+				DialogType.openChannel,
+				DialogType.generalChannel,
+				DialogType.comment,
+			].includes(type)
+			;
 		}
 
 		/**
 		 * @desc Returns is owner chat
+		 * @param {?DialoguesModelState} dialogData
 		 * @return {boolean}
-		 * @private
 		 */
-		isOwner()
+		isOwner(dialogData = null)
 		{
 			const currentUserId = MessengerParams.getUserId();
+			const dialogModelState = dialogData || this.dialogData;
 
-			return this.dialogData.owner === currentUserId;
+			return dialogModelState.owner === currentUserId;
 		}
 
 		/**
@@ -379,15 +423,108 @@ jn.define('im/messenger/lib/permission-manager/chat-permission', (require, expor
 				return false;
 			}
 
-			if (Type.isUndefined(this.dialogData.permissions)
-				|| Type.isUndefined(this.dialogData.permissions.canPost)
-				|| this.dialogData.permissions.canPost === UserRole.none
+			if (
+				Type.isUndefined(this.dialogData.permissions)
+				|| Type.isUndefined(this.dialogData.permissions.manageMessages)
 			)
 			{
 				return true;
 			}
 
-			return this.getRightByLowRole(this.dialogData.permissions.canPost);
+			return this.getRightByLowRole(this.dialogData.permissions.manageMessages);
+		}
+
+		isCanReply(dialogData)
+		{
+			if (!this.setDialogData(dialogData))
+			{
+				return false;
+			}
+			const minimalRole = MinimalRoleForAction[DialogActionType.reply];
+			if (!this.#checkMinimalRole(minimalRole, this.dialogData.role))
+			{
+				return false;
+			}
+
+			return this.isCanPost(dialogData);
+		}
+
+		isCanMention(dialogData)
+		{
+			if (!this.setDialogData(dialogData))
+			{
+				return false;
+			}
+			const minimalRole = MinimalRoleForAction[DialogActionType.mention];
+			if (!this.#checkMinimalRole(minimalRole, this.dialogData.role))
+			{
+				return false;
+			}
+
+			return this.isCanPost(dialogData);
+		}
+
+		isCanOpenMessageMenu(dialogData)
+		{
+			if (!this.setDialogData(dialogData))
+			{
+				return false;
+			}
+			const minimalRole = MinimalRoleForAction[DialogActionType.openMessageMenu];
+
+			return this.#checkMinimalRole(minimalRole, this.dialogData.role);
+		}
+
+		isCanOpenAvatarMenu(dialogData)
+		{
+			if (!this.setDialogData(dialogData))
+			{
+				return false;
+			}
+			const minimalRole = MinimalRoleForAction[DialogActionType.openAvatarMenu];
+
+			return this.#checkMinimalRole(minimalRole, this.dialogData.role);
+		}
+
+		isCanDeleteOtherMessage(dialogData)
+		{
+			if (!this.setDialogData(dialogData))
+			{
+				return false;
+			}
+
+			const rolesByChatType = this.getDefaultRolesByChatType();
+			const installedMinimalRole = rolesByChatType[DialogActionType.deleteOthersMessage];
+
+			return this.getRightByLowRole(installedMinimalRole);
+		}
+
+		isCanDeleteChat(dialogData)
+		{
+			if (!this.setDialogData(dialogData))
+			{
+				return false;
+			}
+
+			const rolesByChatType = this.getDefaultRolesByChatType();
+			const installedMinimalRole = rolesByChatType[DialogActionType.delete];
+
+			return this.getRightByLowRole(installedMinimalRole);
+		}
+
+		#checkMinimalRole(minimalRole, roleToCheck)
+		{
+			if (minimalRole === UserRole.none)
+			{
+				return false;
+			}
+
+			const roleWeights = {};
+			Object.values(UserRole).forEach((role, index) => {
+				roleWeights[role] = index;
+			});
+
+			return roleWeights[roleToCheck] >= roleWeights[minimalRole];
 		}
 	}
 

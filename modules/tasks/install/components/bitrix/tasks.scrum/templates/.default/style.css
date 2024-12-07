@@ -1701,6 +1701,11 @@
 	pointer-events: none;
 }
 
+.tasks-scrum__item-sub-tasks .tasks-scrum__item--substrate {
+	left: 10px;
+	width: calc(100% - 10px);
+}
+
 .tasks-scrum__item.--parent-tasks .tasks-scrum__item--substrate {
 	display: block;
 }
@@ -1747,10 +1752,6 @@
 	margin-bottom: 1px;
 }
 
-.tasks-scrum__sprints .tasks-scrum__item.--parent-tasks + .tasks-scrum__item {
-	margin-top: 15px;
-}
-
 .tasks-scrum__sprints .tasks-scrum__item.--parent-tasks.--many + .tasks-scrum__item {
 	margin-top: 20px;
 }
@@ -1787,6 +1788,10 @@
 
 .tasks-scrum__item-sub-tasks .tasks-scrum__item.--subtasks.--short-view {
 	margin-top: 1px;
+}
+
+.tasks-scrum__sprints .tasks-scrum__item.--parent-tasks + .tasks-scrum__item {
+	margin-top: 15px;
 }
 
 .tasks-scrum__item.--subtasks .tasks-scrum__item--info {
@@ -2177,19 +2182,35 @@
 }
 
 .tasks-scrum__item--story-points-element {
-	background: var(--tasks_scrum-blue_alpha_20);
-	border-radius: var(--ui-border-radius-md, 10px);
-	padding: 2px 5px;
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	-webkit-box-align: center;
+	    -ms-flex-align: center;
+	        align-items: center;
+	-webkit-box-pack: center;
+	    -ms-flex-pack: center;
+	        justify-content: center;
 	min-width: 26px;
+	max-width: 50px;
+	min-height: 19px;
 	-webkit-box-sizing: border-box;
 	        box-sizing: border-box;
-	font-size: 13px;
+	padding: 1px 5px;
+	border-radius: var(--ui-border-radius-md, 10px);
+	font-size: var(--ui-font-size-sm);
 	color: var(--tasks_scrum-dark-grey);
 	text-align: center;
+	background: var(--tasks_scrum-blue_alpha_20);
 	cursor: pointer;
+}
+
+.tasks-scrum__item--story-points-element-text {
 	overflow: hidden;
+	max-width: 100%;
 	-o-text-overflow: ellipsis;
 	   text-overflow: ellipsis;
+	white-space: nowrap;
 }
 
 .tasks-scrum__item--story-points.--empty .tasks-scrum__item--story-points-element {
@@ -2376,7 +2397,7 @@
 .tasks-scrum__item.--many.--group-mode .tasks-scrum__item--substrate::after,
 .tasks-scrum__item.--group-mode .tasks-scrum__item--substrate::before {
 	background: var(--tasks_scrum-blue-3);
-	border: 1px solid var(--tasks_scrum-blue);
+	border: 1px solid var(--tasks_scrum-blue-3);
 }
 
 .tasks-scrum__item.--group-mode .tasks-scrum__item--bg::before {
@@ -2386,9 +2407,12 @@
 	border-radius: var(--ui-border-radius-xs, 6px);
 }
 
-.tasks-scrum__item.--linked-mode-current::before {
+.tasks-scrum__item.--linked-mode-current .tasks-scrum__item--bg {
+	background: var(--tasks_scrum-blue-2)!important;
+}
+
+.tasks-scrum__item.--linked-mode-current .tasks-scrum__item--bg::before {
 	background: var(--tasks_scrum-blue-6);
-	border: 1px solid var(--tasks_scrum-blue-2);
 }
 
 .tasks-scrum__item-sub-tasks {

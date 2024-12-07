@@ -4,7 +4,7 @@
 jn.define('im/messenger/lib/ui/base/carousel', (require, exports, module) => {
 	const { CarouselItem } = require('im/messenger/lib/ui/base/carousel/carousel-item');
 	const { Type } = require('type');
-	const AppTheme = require('apptheme');
+	const { Theme } = require('im/lib/theme');
 	class Carousel extends LayoutComponent
 	{
 		/**
@@ -13,6 +13,7 @@ jn.define('im/messenger/lib/ui/base/carousel', (require, exports, module) => {
 		 * @param {array} props.itemList
 		 * @param {string} props.size
 		 * @param {Function} [props.ref]
+		 * @param {boolean} [props.isSuperEllipseAvatar]
 		 */
 		constructor(props)
 		{
@@ -32,7 +33,7 @@ jn.define('im/messenger/lib/ui/base/carousel', (require, exports, module) => {
 			return GridView({
 				style: {
 					height: this.state.isVisible === true ? 100 : 0,
-					backgroundColor: AppTheme.colors.bgContentTertiary,
+					backgroundColor: Theme.isDesignSystemSupported ? Theme.colors.bgContentPrimary : Theme.colors.bgContentTertiary,
 					paddingLeft: 12,
 				},
 				params: {
@@ -45,6 +46,7 @@ jn.define('im/messenger/lib/ui/base/carousel', (require, exports, module) => {
 				renderItem: (props) => {
 					return new CarouselItem({
 						...props,
+						isSuperEllipseAvatar: this.props.isSuperEllipseAvatar,
 						onClick: (itemData) => {
 							this.removeItem(itemData);
 							this.props.onItemSelected(itemData);

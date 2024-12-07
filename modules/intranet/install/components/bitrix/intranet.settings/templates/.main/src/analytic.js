@@ -150,10 +150,26 @@ export class Analytic
 		const options = {
 			event: event,
 			tool: this.#tool,
-			category: 'portal'
+			category: AnalyticSettingsCategory.PORTAL,
 		};
 
 		this.addEvent('portal_' + event, options);
+	}
+
+	addEventChangeTheme(themeId: string): void
+	{
+		const regex = /custom_\d+/;
+		const preparedThemeId = regex.test(themeId) ? 'themeName_custom' : 'themeName_' + themeId;
+		const options = {
+			event: AnalyticSettingsEvent.CHANGE_PORTAL_THEME,
+			tool: this.#tool,
+			category: AnalyticSettingsCategory.PORTAL,
+			type: AnalyticSettingsType.COMMON,
+			c_section: AnalyticSettingsSection.SETTINGS,
+			p1: preparedThemeId,
+		};
+
+		this.addEvent('portal_' + AnalyticSettingsEvent.CHANGE_PORTAL_THEME, options);
 	}
 
 	addEventConfigEmployee(event: string, state: boolean): void
@@ -228,6 +244,16 @@ export class AnalyticSettingsEvent
 	static CHANGE_QUICK_REG = 'change_quick_reg';
 	static CHANGE_REG_ALL = 'change_reg_all';
 	static CHANGE_EXTRANET_INVITE = 'change_extranet_invite';
+}
+
+export class AnalyticSettingsSection
+{
+	static SETTINGS = 'settings';
+}
+
+export class AnalyticSettingsType
+{
+	static COMMON = 'common';
 }
 
 export class AnalyticSettingsUserRole

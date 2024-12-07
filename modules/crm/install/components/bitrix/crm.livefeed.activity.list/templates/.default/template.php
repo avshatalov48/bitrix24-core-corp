@@ -88,7 +88,7 @@ $wrapperID = "{$prefix}_activities";
 	endforeach;
 	unset($item);
 ?></div>
-<script type="text/javascript">
+<script>
 	BX.ready(
 		function()
 		{

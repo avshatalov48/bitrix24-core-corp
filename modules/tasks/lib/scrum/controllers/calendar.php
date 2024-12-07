@@ -232,6 +232,8 @@ class Calendar extends Controller
 
 		$defaultSprintDuration = $this->getDefaultSprintDuration($groupId) + 86400;
 
+		$eventSelect = array_merge(\CCalendarEvent::$defaultSelectEvent, ['COLOR']);
+
 		$sections = \CCalendarSect::getList([
 			'arFilter' => [
 				'OWNER_ID'=> $groupId,
@@ -252,6 +254,7 @@ class Calendar extends Controller
 						'FROM_LIMIT' => \CCalendar::date(time(), false),
 						'TO_LIMIT' => \CCalendar::date(time() + $defaultSprintDuration, false),
 					],
+					'arSelect' => $eventSelect,
 					'parseRecursion' => true,
 					'preciseLimits' => true,
 					'fetchAttendees' => true,

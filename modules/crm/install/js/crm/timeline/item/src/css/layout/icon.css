@@ -13,10 +13,11 @@
 	justify-content: center;
 	width: calc(var(--crm-timeline-card-icon-size) - 2px);
 	height: calc(var(--crm-timeline-card-icon-size) - 2px);
-	background-color: var(--ui-color-primary, #2fc6f6);
+	--crm-timeline-card-icon-background: var(--ui-color-primary);
+	background-color: var(--crm-timeline-card-icon-background);
 	background-repeat: no-repeat;
 	background-position: center center;
-	border: 1px solid var(--ui-color-primary, #2fc6f6);
+	border: 1px solid var(--crm-timeline-card-icon-background);
 	border-radius: 50%;
 	z-index: 1000;
 }
@@ -177,6 +178,10 @@
 	mask-image: url('../../images/timeline-card-icons/crm-timeline__chat-icon.svg');
 }
 
+.crm-timeline__card_icon.--code-whatsapp i {
+	mask-image: url('../../images/timeline-card-icons/crm-timeline__whatsapp-icon.svg');
+}
+
 .crm-timeline__card_icon.--code-zoom i {
 	mask-image: url('../../images/timeline-card-icons/crm-timeline__zoom-icon.svg');
 }
@@ -265,6 +270,10 @@
 
 .crm-timeline__card_icon.--code-conversion i {
 	mask-image: url('../../images/timeline-card-icons/crm-timeline__conversion-icon.svg');
+}
+
+.crm-timeline__card_icon.--code-camera i {
+	mask-image: url('../../images/timeline-card-icons/crm-timeline__camera-icon.svg');
 }
 
 .crm-timeline__card_icon.--code-calendar i {

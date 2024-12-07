@@ -60,7 +60,7 @@ class CDavICalendarTimeZone
 		global $USER;
 		$dateKey = $date ?? 0;
 		$userIdKey = $userId ?? 0;
-		if ($userId === null)
+		if ($userId === null && is_object($USER))
 		{
 			$userId = $USER->GetID();
 		}
@@ -81,14 +81,14 @@ class CDavICalendarTimeZone
 
 		static $userCache = [];
 
-		if ($userId === null)
+		if (empty($userId))
 		{
-			$autoTimeZone = trim($USER->GetParam("AUTO_TIME_ZONE"));
-			$userZone = $USER->GetParam("TIME_ZONE");
+			$autoTimeZone = COption::GetOptionString("main", "auto_time_zone", "N") === "Y";
+			$userZone = COption::GetOptionString("main", "default_time_zone", "");
 		}
 		else
 		{
-			if (!isset($userCache[$userId]))
+			if (!isset($userCache[$userIdKey]))
 			{
 				$dbUser = CUser::GetList(
 					"id",
@@ -98,11 +98,11 @@ class CDavICalendarTimeZone
 				);
 				if (($arUser = $dbUser->Fetch()))
 				{
-					$userCache[$userId] = array(
+					$userCache[$userIdKey] = [
 						"AUTO_TIME_ZONE" => trim($arUser["AUTO_TIME_ZONE"] ?? ''),
 						"TIME_ZONE" => $arUser["TIME_ZONE"],
 						"TIME_ZONE_OFFSET" => $arUser["TIME_ZONE_OFFSET"]
-					);
+					];
 				}
 			}
 
@@ -118,7 +118,7 @@ class CDavICalendarTimeZone
 		{
 			static $userOffsetCache = array();
 
-			if (!isset($userOffsetCache[$userId ?? 0]))
+			if (!isset($userOffsetCache[$userIdKey]))
 			{
 				$userOffsetCache[$userIdKey] = CTimeZone::GetOffset($userId);
 			}
@@ -130,19 +130,16 @@ class CDavICalendarTimeZone
 
 			$timezoneCache[$userIdKey][$dateKey] = self::getTimezoneByOffset($date, $userOffset + $localOffset);
 		}
+		else if ($userZone && isset(self::$arTimeZones[$userZone]))
+		{
+			$timezoneCache[$userIdKey][$dateKey] = $userZone;
+		}
 		else
 		{
-			if ($userZone && isset(self::$arTimeZones[$userZone]))
-			{
-				$timezoneCache[$userIdKey][$dateKey] = $userZone;
-			}
-			else
-			{
-				$localTime = new DateTime();
-				$localOffset = $localTime->getOffset();
+			$localTime = new DateTime();
+			$localOffset = $localTime->getOffset();
 
-				$timezoneCache[$userIdKey][$dateKey] = self::getTimezoneByOffset($date, $factOffset + $localOffset);
-			}
+			$timezoneCache[$userIdKey][$dateKey] = self::getTimezoneByOffset($date, $factOffset + $localOffset);
 		}
 
 		return $timezoneCache[$userIdKey][$dateKey];

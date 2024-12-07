@@ -3,6 +3,7 @@
  */
 jn.define('calendar/sync-page/settings/menu', (require, exports, module) => {
 	const { Loc } = require('loc');
+	const { ContextMenu } = require('layout/ui/context-menu');
 
 	/**
 	 * @class SyncSettingsMenu
@@ -13,7 +14,6 @@ jn.define('calendar/sync-page/settings/menu', (require, exports, module) => {
 		{
 			this.props = props || {};
 
-			// eslint-disable-next-line no-undef
 			this.menuInstance = new ContextMenu({
 				actions: this.getActions(),
 				params: {

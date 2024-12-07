@@ -6,3 +6,13 @@ $MESS['CRM_SETTINGS_BUTTON_EXTENDER_COPILOT_AUTO_CALLS_PROCESSING'] = 'Авто�
 $MESS['CRM_SETTINGS_BUTTON_EXTENDER_COPILOT_AUTO_CALLS_PROCESSING_FIRST_INCOMING'] = 'Автоматически обрабатывать первый входящий звонок';
 $MESS['CRM_SETTINGS_BUTTON_EXTENDER_COPILOT_AUTO_CALLS_PROCESSING_ALL'] = 'Автоматически обрабатывать все входящие звонки';
 $MESS['CRM_SETTINGS_BUTTON_EXTENDER_COPILOT_MANUAL_CALLS_PROCESSING'] = 'Запускать обработку звонков вручную';
+$MESS['CRM_SETTINGS_BUTTON_EXTENDER_COPILOT_LANGUAGE'] = 'Выбрать язык ответа';
+
+$MESS['CRM_SETTINGS_BUTTON_EXTENDER_COPILOT_IN_CALLS'] = 'CoPilot в звонках';
+$MESS['CRM_SETTINGS_BUTTON_EXTENDER_COPILOT_AUTO_CALLS'] = 'Автоматическая расшифровка';
+$MESS['CRM_SETTINGS_BUTTON_EXTENDER_COPILOT_AUTO_CALLS_PROCESSING_FIRST_INCOMING_MSGVER_1'] = 'Первый входящий звонок';
+$MESS['CRM_SETTINGS_BUTTON_EXTENDER_COPILOT_AUTO_CALLS_PROCESSING_INCOMING'] = 'Все входящие';
+$MESS['CRM_SETTINGS_BUTTON_EXTENDER_COPILOT_AUTO_CALLS_PROCESSING_OUTGOING'] = 'Все исходящие';
+$MESS['CRM_SETTINGS_BUTTON_EXTENDER_COPILOT_AUTO_CALLS_PROCESSING_ALL_MSGVER_1'] = 'Все звонки';
+$MESS['CRM_SETTINGS_BUTTON_EXTENDER_COPILOT_MANUAL_CALLS_PROCESSING_MSGVER_1'] = 'Отключить автоматическую расшифровку';
+$MESS['CRM_SETTINGS_BUTTON_EXTENDER_COPILOT_LANGUAGE_MSGVER_1'] = 'Язык ответа';

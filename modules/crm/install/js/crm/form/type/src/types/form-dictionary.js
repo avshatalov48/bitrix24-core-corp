@@ -190,6 +190,9 @@ export type FormDictionary = {
 		form: {
 			edit: boolean;
 		},
+		tariff: {
+			restricted: boolean;
+		},
 	};
 	contentTypes: Array<EnumString>;
 	defaultMaxFileFieldSizeMbValue: number;

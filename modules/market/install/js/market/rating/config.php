@@ -11,7 +11,7 @@ return [
 		'main.polyfill.core',
 		'ui.vue3',
 		'market.install-store',
-		'market.rating-item',
+		'main.popup',
 		'ui.design-tokens',
 		'ui.vue3.pinia',
 	],

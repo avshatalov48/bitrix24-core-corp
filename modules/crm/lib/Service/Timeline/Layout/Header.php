@@ -20,6 +20,7 @@ class Header extends Base
 	protected array $tags = [];
 	protected ?User $user = null;
 	protected ?InfoHelper $infoHelper = null;
+	protected ?array $colorSettings = null;
 
 	public function getChangeStreamButton(): ?ChangeStreamButton
 	{
@@ -141,6 +142,13 @@ class Header extends Base
 		return $this;
 	}
 
+	public function setColorSettings(?array $colorSettings): Header
+	{
+		$this->colorSettings = $colorSettings;
+
+		return $this;
+	}
+
 	public function toArray(): array
 	{
 		return [
@@ -152,6 +160,7 @@ class Header extends Base
 			'tags' => $this->getTags(),
 			'user' => $this->getUser(),
 			'infoHelper' => $this->getInfoHelper(),
+			'colorSettings' => $this->colorSettings,
 		];
 	}
 }

@@ -1,5 +1,3 @@
-import {ajax, Dom} from 'main.core';
-
 export type AjaxComponentParams = {
 	USER_ID: number,
 	GROUP_ID: number,
@@ -46,19 +44,17 @@ export class KanbanComponent
 
 	saveSelection(order?: string)
 	{
-		ajax({
-			method: 'POST',
-			dataType: 'json',
-			url: this.ajaxComponentPath,
+		BX.ajax.runComponentAction('bitrix:tasks.kanban', 'setNewTaskOrder', {
+			mode: 'class',
 			data: {
-				action: 'setNewTaskOrder',
 				order: (order ? order : 'desc'),
 				params: this.ajaxComponentParams,
-				sessid: BX.bitrix_sessid()
 			},
-			onsuccess: function(data) {
+		}).then(
+			(response) => {
+				const data = response.data;
 				BX.onCustomEvent(this, 'onTaskSortChanged', [data]);
-			}
-		});
+			},
+		);
 	}
 }

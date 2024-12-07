@@ -9,6 +9,7 @@
 namespace Bitrix\Tasks\Access\Rule;
 
 use Bitrix\Main\Loader;
+use Bitrix\Tasks\Access\Model\TaskModel;
 use Bitrix\Tasks\Access\Permission\PermissionDictionary;
 use Bitrix\Tasks\Access\Role\RoleDictionary;
 use Bitrix\Main\Access\AccessibleItem;
@@ -26,6 +27,7 @@ class TaskEditRule extends \Bitrix\Main\Access\Rule\AbstractRule
 			return false;
 		}
 
+		/** @var TaskModel $task */
 		if ($this->user->isAdmin())
 		{
 			return true;

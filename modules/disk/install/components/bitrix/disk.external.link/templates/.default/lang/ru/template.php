@@ -14,7 +14,7 @@ $MESS["DISK_EXT_LINK_B24_ADV_4"] = "Документы";
 $MESS["DISK_EXT_LINK_B24_ADV_5"] = "Диск";
 $MESS["DISK_EXT_LINK_B24_ADV_6"] = "Календарь";
 $MESS["DISK_EXT_LINK_B24_ADV_CREATE_LINK_TEXT"] = "создайте свой битрикс24";
-$MESS["DISK_EXT_LINK_B24_ADV_CREATE_LINK_HREF"] = "http://www.bitrix24.ru/?utm_source=fileshare_button&utm_medium=referral&utm_campaign=fileshare_button";
+$MESS["DISK_EXT_LINK_B24_ADV_CREATE_LINK_HREF"] = "https://www.bitrix24.ru/?utm_source=fileshare_button&utm_medium=referral&utm_campaign=fileshare_button";
 $MESS["DISK_EXT_LINK_PROTECT_BY_PASSWORD"] = "Этот файл защищен паролем.";
 $MESS["DISK_EXT_LINK_FOLDER_PROTECT_BY_PASSWORD"] = "Эта директория защищена паролем.";
 $MESS["DISK_EXT_LINK_PROTECT_BY_PASSWORD_DESCR"] = "Если у вас есть пароль, введите его в поле ниже.";

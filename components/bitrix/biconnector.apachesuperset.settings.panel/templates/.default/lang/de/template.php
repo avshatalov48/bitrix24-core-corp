@@ -1,0 +1,25 @@
+<?php
+$MESS["BICONNECTOR_SUPERSET_SETTINGS_CLEAR_CACHE_BUTTON"] = "Daten jetzt aktualisieren";
+$MESS["BICONNECTOR_SUPERSET_SETTINGS_CLEAR_CACHE_BUTTON_HINT_TIME_LEFT_PLURAL_0"] = "Aktualisierung wird in #COUNT# Minute verfügbar sein.";
+$MESS["BICONNECTOR_SUPERSET_SETTINGS_CLEAR_CACHE_BUTTON_HINT_TIME_LEFT_PLURAL_1"] = "Aktualisierung wird in #COUNT# Minuten verfügbar sein.";
+$MESS["BICONNECTOR_SUPERSET_SETTINGS_CLEAR_CACHE_BUTTON_HINT_TIME_LEFT_PLURAL_2"] = "Aktualisierung wird in #COUNT# Minuten verfügbar sein.";
+$MESS["BICONNECTOR_SUPERSET_SETTINGS_CLEAR_CACHE_ERROR"] = "Dashboard-Daten können nicht aktualisiert werden.";
+$MESS["BICONNECTOR_SUPERSET_SETTINGS_CLEAR_CACHE_HINT_LINK"] = "Die Daten werden für alle Dashboards aktualisiert. Sie können die Daten nach Ablauf des Timers für die Updatesperre erneut aktualisieren. #HINT_LINK#";
+$MESS["BICONNECTOR_SUPERSET_SETTINGS_CLEAR_CACHE_SUCCESS"] = "Dashboard-Daten wurden aktualisiert.";
+$MESS["BICONNECTOR_SUPERSET_SETTINGS_COMMON_KEY_COPIED"] = "Schlüssel kopiert";
+$MESS["BICONNECTOR_SUPERSET_SETTINGS_COMMON_KEY_FIELD_HINT_LINK"] = "Dieser Schlüssel verschlüsselt die Dashboard-Daten, die aus Bitrix24 an BI-Builder gesendet werden. Aktualisieren Sie den Schlüssel, wenn Sie glauben, er wurde kompromittiert. #HINT_LINK#";
+$MESS["BICONNECTOR_SUPERSET_SETTINGS_COMMON_KEY_FIELD_REFRESH_BUTTON_MSGVER_1"] = "Key aktualisieren";
+$MESS["BICONNECTOR_SUPERSET_SETTINGS_COMMON_RANGE_FIELD_HINT"] = "Diese Zeitspanne wird für alle Dashboards genutzt, bis auf Dashboards mit individuellen Zeitspannen. #HINT_LINK#";
+$MESS["BICONNECTOR_SUPERSET_SETTINGS_COMMON_RANGE_FIELD_HINT_LINK"] = "Mehr";
+$MESS["BICONNECTOR_SUPERSET_SETTINGS_COMMON_RANGE_FROM_TITLE"] = "Startdatum";
+$MESS["BICONNECTOR_SUPERSET_SETTINGS_COMMON_RANGE_INCLUDE_LAST_DATE"] = "Inklusive";
+$MESS["BICONNECTOR_SUPERSET_SETTINGS_COMMON_RANGE_TO_TITLE"] = "Enddatum";
+$MESS["BICONNECTOR_SUPERSET_SETTINGS_DASHBOARD_HINT_LINK"] = "Mehr";
+$MESS["BICONNECTOR_SUPERSET_SETTINGS_DASHBOARD_RANGE_FIELD_HINT"] = "Neue Zeitspanne wird nur auf dieses Dashboard aktualisiert.";
+$MESS["BICONNECTOR_SUPERSET_SETTINGS_DELETE_SUPERSET_FIELD_DELETE_BUTTON"] = "Deaktivieren";
+$MESS["BICONNECTOR_SUPERSET_SETTINGS_DELETE_SUPERSET_FIELD_HINT"] = "Wenn Sie BI-Builder deaktivieren, werden Ihre Dashboards, Datensätze und Einstellungen unwiderruflich verloren gehen. Sie werden Ihre BI-Builder-Umgebung erneut einrichten müssen. #HINT_LINK#";
+$MESS["BICONNECTOR_SUPERSET_SETTINGS_KEY_UPDATE_FAILED"] = "Fehler beim Aktualisieren des Schlüssels.";
+$MESS["BICONNECTOR_SUPERSET_SETTINGS_KEY_UPDATE_SUCCESS"] = "Schlüssel wurde erfolgreich aktualisiert";
+$MESS["BICONNECTOR_SUPERSET_SETTINGS_NEW_DASHBOARD_NOTIFICATION_HINT_LINK"] = "Wählen Sie die Mitarbeiter aus, die benachrichtigt werden, wenn ein neues Dashboard oder Update verfügbar sind. #HINT_LINK#";
+$MESS["BICONNECTOR_SUPERSET_SETTINGS_OWNER_HINT_LINK"] = "Dashboard-Besitzer hat vollen Zugriff auf das Dashboard. Sie können Ihren Zugriff verlieren, wenn Sie den Dashboard-Besitzer ändern. #HINT_LINK#";
+$MESS["BICONNECTOR_SUPERSET_SETTINGS_PARAMS_HINT_LINK"] = "Parameterverfügbarkeit hängt vom ausgewählten Bereich ab. Nur der Parameter \"Nutzer-ID\" ist verfügbar, wenn kein Bereich ausgewählt ist. #HINT_LINK#";

@@ -34,7 +34,7 @@ class CCrmProductRow extends CAllCrmProductRow
 		);
 
 		$DB->Query(
-			"DELETE FROM {$tableName} WHERE OWNER_TYPE = '{$ownerType}' AND OWNER_ID = {$ownerID}", false, 'File: '.__FILE__.'<br/>Line: '.__LINE__);
+			"DELETE FROM {$tableName} WHERE OWNER_TYPE = '{$ownerType}' AND OWNER_ID = {$ownerID}");
 	}
 
 	public static function SaveRows($ownerType, $ownerID, $arRows, $accountContext = null, $checkPerms = true, $regEvent = true, $syncOwner = true, $totalInfo = array())
@@ -108,7 +108,7 @@ class CCrmProductRow extends CAllCrmProductRow
 		if(!empty($deleteRows))
 		{
 			$scriptValues = implode(',', $deleteRows);
-			$DB->Query("DELETE FROM {$tableName} WHERE ID IN ({$scriptValues})", false, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
+			$DB->Query("DELETE FROM {$tableName} WHERE ID IN ({$scriptValues})");
 
 			$reservationTableName = \Bitrix\Crm\Reservation\Internals\ProductRowReservationTable::getTableName();
 			$DB->Query(
@@ -127,7 +127,7 @@ class CCrmProductRow extends CAllCrmProductRow
 				}
 				$scriptValues = $DB->PrepareUpdate($tableName, $row);
 
-				$DB->Query("UPDATE {$tableName} SET {$scriptValues} WHERE ID = {$ID}", false, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
+				$DB->Query("UPDATE {$tableName} SET {$scriptValues} WHERE ID = {$ID}");
 			}
 		}
 		if(!empty($insertRows))
@@ -153,9 +153,7 @@ class CCrmProductRow extends CAllCrmProductRow
 					$data = $DB->PrepareInsert($tableName, $row);
 
 					$DB->Query(
-						"INSERT INTO {$tableName}({$data[0]}) VALUES ({$data[1]})",
-						false,
-						'File: '.__FILE__.'<br/>Line: '.__LINE__
+						"INSERT INTO {$tableName}({$data[0]}) VALUES ({$data[1]})"
 					);
 
 					static::$originalRows[$row['ORIGINAL_INDEX']]['ID'] = (int)$DB->LastID();
@@ -198,9 +196,7 @@ class CCrmProductRow extends CAllCrmProductRow
 				}
 
 				$DB->Query(
-					"INSERT INTO {$tableName}({$scriptColumns}) VALUES {$scriptValues}",
-					false,
-					'File: '.__FILE__.'<br/>Line: '.__LINE__
+					"INSERT INTO {$tableName}({$scriptColumns}) VALUES {$scriptValues}"
 				);
 			}
 
@@ -217,7 +213,7 @@ class CCrmProductRow extends CAllCrmProductRow
 		global $DB;
 		$tableName = self::CONFIG_TABLE_NAME;
 		$ownerType = $DB->ForSql($ownerType);
-		$dbResult = $DB->Query("SELECT SETTINGS FROM {$tableName} WHERE OWNER_TYPE = '{$ownerType}' AND OWNER_ID = {$ownerID}", false, 'File: '.__FILE__.'<br/>Line: '.__LINE__);
+		$dbResult = $DB->Query("SELECT SETTINGS FROM {$tableName} WHERE OWNER_TYPE = '{$ownerType}' AND OWNER_ID = {$ownerID}");
 		$fields = is_object($dbResult) ? $dbResult->Fetch() : null;
 		$s = is_array($fields) && isset($fields['SETTINGS']) ? $fields['SETTINGS'] : '';
 		if($s === '')

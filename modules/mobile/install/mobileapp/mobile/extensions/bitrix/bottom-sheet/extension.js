@@ -5,6 +5,7 @@ jn.define('bottom-sheet', (require, exports, module) => {
 	const { Type } = require('type');
 	const AppTheme = require('apptheme');
 	const { prepareHexColor } = require('utils/color');
+	const { mergeImmutable } = require('utils/object');
 
 	const DEFAULT_TOP_HEIGHT_OFFSET = 70;
 	const DEFAULT_MEDIUM_POSITION_PERCENT = 70;
@@ -12,7 +13,10 @@ jn.define('bottom-sheet', (require, exports, module) => {
 
 	const DEFAULT_WIDGET_PARAMS = {
 		modal: true,
-		title: '',
+		titleParams: {
+			text: '',
+			type: 'common',
+		},
 		enableNavigationBarBorder: false,
 		backgroundColor: DEFAULT_BACKGROUND_COLOR,
 		backdrop: {
@@ -30,6 +34,7 @@ jn.define('bottom-sheet', (require, exports, module) => {
 			forceDismissOnSwipeDown: true,
 			adoptHeightByKeyboard: false,
 			helpUrl: undefined,
+			bounceEnable: true,
 		},
 	};
 
@@ -39,10 +44,11 @@ jn.define('bottom-sheet', (require, exports, module) => {
 	class BottomSheet
 	{
 		/**
-		 * @param {?String} title
+		 * @param {?String} title - Deprecated: use titleParams instead
+		 * @param {?TitleParams} titleParams
 		 * @param {?Object} component
 		 */
-		constructor({ title = '', component = null } = {})
+		constructor({ title = '', titleParams = null, component = null } = {})
 		{
 			/** @type {PageManager} */
 			this.parentWidget = PageManager;
@@ -50,7 +56,7 @@ jn.define('bottom-sheet', (require, exports, module) => {
 			this.component = null;
 			this.widget = null;
 
-			/** @type {BottomSheetWidgetOptions} */
+			/** @type {Partial<BottomSheetWidgetOptions>} */
 			this.widgetOptions = {
 				...DEFAULT_WIDGET_PARAMS,
 				backdrop: {
@@ -61,6 +67,11 @@ jn.define('bottom-sheet', (require, exports, module) => {
 			if (Type.isStringFilled(title))
 			{
 				this.setTitle(title);
+			}
+
+			if (titleParams)
+			{
+				this.setTitleParams(titleParams);
 			}
 
 			if (component)
@@ -104,16 +115,35 @@ jn.define('bottom-sheet', (require, exports, module) => {
 				throw new TypeError('title must be a string');
 			}
 
-			this.widgetOptions.title = title;
+			this.widgetOptions.titleParams = mergeImmutable(
+				this.widgetOptions.titleParams,
+				{
+					text: title,
+				},
+			);
 
-			this.checkNavigationBar();
+			this.#checkNavigationBar();
 
 			return this;
 		}
 
-		checkNavigationBar()
+		/**
+		 * @public
+		 * @param {TitleParams} titleParams
+		 * @return {BottomSheet}
+		 */
+		setTitleParams(titleParams)
 		{
-			if (Type.isStringFilled(this.widgetOptions.title))
+			this.widgetOptions.titleParams = titleParams;
+
+			this.#checkNavigationBar();
+
+			return this;
+		}
+
+		#checkNavigationBar()
+		{
+			if (Type.isStringFilled(this.widgetOptions.titleParams?.text))
 			{
 				this.showNavigationBar();
 			}
@@ -487,6 +517,20 @@ jn.define('bottom-sheet', (require, exports, module) => {
 			);
 		}
 
+		enableBounce()
+		{
+			this.widgetOptions.backdrop.bounceEnable = true;
+
+			return this;
+		}
+
+		disableBounce()
+		{
+			this.widgetOptions.backdrop.bounceEnable = false;
+
+			return this;
+		}
+
 		/**
 		 * @public
 		 * @return {Promise}
@@ -509,7 +553,7 @@ jn.define('bottom-sheet', (require, exports, module) => {
 					.then((widget) => {
 						this.widget = widget;
 
-						this.widget.setTitle({ text: this.widgetOptions.title });
+						this.widget.setTitle(this.widgetOptions.titleParams);
 						this.widget.enableNavigationBarBorder(this.widgetOptions.enableNavigationBarBorder);
 
 						const component = typeof this.component === 'function' ? this.component(widget) : this.component;

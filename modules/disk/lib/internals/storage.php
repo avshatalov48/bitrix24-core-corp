@@ -129,7 +129,7 @@ final class StorageTable extends DataManager
 	{
 		return array(
 			new Entity\Validator\Length(1, 32),
-			new Entity\Validator\RegExp('/^[a-zA-Z0-9_-]+$/'),
+			new Entity\Validator\RegExp('/^[a-zA-Z0-9_\-.]+$/'),
 		);
 	}
 

@@ -1,0 +1,128 @@
+.ai__prompt-master_about-editor-slider {
+	box-sizing: border-box;
+	width: 360px;
+	min-height: 315px;
+	padding: 22px 20px 47px 20px;
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	background-color: #fff;
+	border-radius: var(--ui-border-radius-lg);
+	z-index: 2;
+}
+
+.ai__prompt-master_about-editor-slider-wrapper {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background-color: rgba(0, 0, 0, 0.5);
+	border-radius: var(--ui-border-radius-lg);
+	z-index: 2;
+	overflow: hidden;
+}
+
+.ai__prompt-master_about-editor-slider__header {
+	margin-bottom: 17px;
+	display: flex;
+	flex-direction: row;
+	align-items: flex-start;
+	justify-content: space-between;
+}
+
+.ai__prompt-master_about-editor-slider__title {
+	margin: 0;
+	font-size: var(--ui-font-size-md);
+	line-height: var(--ui-font-line-height-2xs);
+	font-weight: var(--ui-font-weight-normal);
+}
+
+.ai__prompt-master_about-editor-slider__close-icon {
+	--ui-icon-set__icon-color: var(--ui-color-base-90);
+	opacity: 0.18;
+	cursor: pointer;
+}
+
+.ai__prompt-master_about-editor-slider__close-icon:hover,
+.ai__prompt-master_about-editor-slider__close-icon:focus {
+	opacity: 0.5;
+}
+
+.ai__prompt-master_about-editor-slider__main {
+	display: flex;
+	flex-direction: column;
+	align-items: stretch;
+	justify-content: flex-start;
+}
+
+.ai__prompt-master_about-editor-slider__video-wrapper {
+	box-sizing: border-box;
+	width: 100%;
+	height: 160px;
+	margin-bottom: 19px;
+}
+
+.ai__prompt-master_about-editor-slider__video {
+
+}
+
+.ai__prompt-master_about-editor-slider-steps {
+	list-style-type: numeric;
+	padding: 0 0 0 16px;
+	margin: 0;
+	color: var(--ui-color-text-primary);
+	font-size: var(--ui-font-size-lg);
+	line-height: var(--ui-font-line-height-2xs);
+}
+
+.ai__prompt-master_about-editor-slider-step {
+	margin-bottom: 6px;
+	letter-spacing: -0.5px;
+}
+
+.ai__prompt-master_about-editor-slider-step b {
+	font-weight: var(--ui-font-weight-medium);
+}
+
+.ai__prompt-master_about-editor-slider-step-clarification-icon {
+	display: inline-block;
+	width: 25px;
+	height: 15px;
+	margin-left: 3px;
+	margin-right: 4px;
+	background-image: url('../../images/insert-text-icon.svg');
+	background-repeat: no-repeat;
+	background-position: center center;
+	background-size: contain;
+	vertical-align: text-bottom;
+}
+
+.ai__prompt-master_about-editor-slider-step:last-child {
+	margin-bottom: 0;
+}
+
+.ai__prompt-master_about-editor-slider-step::marker {
+	color: var(--ui-color-copilot-secondary);
+}
+
+
+.ai__prompt-master_about-editor-slider-wrapper.v-enter-active,
+.ai__prompt-master_about-editor-slider-wrapper.v-leave-active {
+	transition: opacity 0.3s ease-in-out;
+}
+
+.ai__prompt-master_about-editor-slider-wrapper.v-enter-active .ai__prompt-master_about-editor-slider,
+.ai__prompt-master_about-editor-slider-wrapper.v-leave-active .ai__prompt-master_about-editor-slider {
+	transition: transform 0.3s ease-in-out;
+}
+
+.ai__prompt-master_about-editor-slider-wrapper.v-enter-from,
+.ai__prompt-master_about-editor-slider-wrapper.v-leave-to {
+	opacity: 0;
+}
+
+.ai__prompt-master_about-editor-slider-wrapper.v-enter-from .ai__prompt-master_about-editor-slider,
+.ai__prompt-master_about-editor-slider-wrapper.v-leave-to .ai__prompt-master_about-editor-slider {
+	transform: translateY(100%);
+}

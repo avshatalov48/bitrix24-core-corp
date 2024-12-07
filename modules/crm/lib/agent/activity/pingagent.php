@@ -2,6 +2,7 @@
 
 namespace Bitrix\Crm\Agent\Activity;
 
+use Bitrix\Crm\Activity\Provider\ToDo\ToDo;
 use Bitrix\Crm\ActivityTable;
 use Bitrix\Crm\Agent\AgentBase;
 use Bitrix\Crm\Entity\MessageBuilder\ProcessTodoActivity;
@@ -145,15 +146,16 @@ class PingAgent extends AgentBase
 			$entityName = Container::getInstance()->getFactory($ownerTypeId)?->getItem($ownerId)?->getHeading();
 		}
 
-		$message = (new ProcessTodoActivity($ownerTypeId))
-			->getMessage([
-				'#subject#' => isset($activity['SUBJECT']) && mb_strlen($activity['SUBJECT']) > 0
-					? htmlspecialcharsbx($activity['SUBJECT'])
-					: '',
-				'#url#' => '#url#',
-				'#title#' => htmlspecialcharsbx(trim($entityName)),
-				'#deadline#' => static::transformDateTime($activity['DEADLINE'] ?? null, $activity['RESPONSIBLE_ID'] ?? null),
-			])
+		$subject = ToDo::getActivityTitle($activity);
+
+		$getMessageCallback = static fn (?Uri $url) =>
+			(new ProcessTodoActivity($ownerTypeId))
+				->getMessageCallback([
+					'#subject#' => htmlspecialcharsbx($subject),
+					'#url#' => $url,
+					'#title#' => htmlspecialcharsbx(trim($entityName)),
+					'#deadline#' => static::transformDateTime($activity['DEADLINE'] ?? null, $activity['RESPONSIBLE_ID'] ?? null),
+				])
 		;
 
 		CIMNotify::Add([
@@ -164,8 +166,8 @@ class PingAgent extends AgentBase
 			'NOTIFY_MODULE' => 'crm',
 			'NOTIFY_EVENT' => 'pingTodoActivity',
 			'NOTIFY_TAG' => 'CRM|PING_TODO_ACTIVITY|' . $activity['ID'],
-			'NOTIFY_MESSAGE' => str_replace('#url#', $url, $message),
-			'NOTIFY_MESSAGE_OUT' => str_replace('#url#', static::transformRelativeUrlToAbsolute($url), $message),
+			'NOTIFY_MESSAGE' => $getMessageCallback($url),
+			'NOTIFY_MESSAGE_OUT' => $getMessageCallback(static::transformRelativeUrlToAbsolute($url)),
 		]);
 	}
 

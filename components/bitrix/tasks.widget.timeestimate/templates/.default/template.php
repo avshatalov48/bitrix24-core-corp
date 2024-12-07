@@ -18,8 +18,10 @@ $helper = $arResult['HELPER'];
 		<?$data = $arParams['ENTITY_DATA'];?>
 		<?$inputPrefix = htmlspecialcharsbx($arParams['INPUT_PREFIX']);?>
 
-		<?$checked = $data['ALLOW_TIME_TRACKING'] == 'Y';?>
-		<label class="task-field-label task-field-label-tm"><input class="js-id-timeestimate-flag task-options-checkbox" data-target="allow-time-tracking" data-flag-name="ALLOW_TIME_TRACKING" <?=($checked? 'checked' : '')?> type="checkbox"><?=Loc::getMessage('TASKS_TASK_TEMPLATE_COMPONENT_TEMPLATE_TIME_TO_DO')?></label>
+		<?$checked = ($data['ALLOW_TIME_TRACKING'] == 'Y' && !$arResult['TIME_TRACKING_RESTRICT']);?>
+		<label class="task-field-label task-field-label-tm <?= $arResult['TIME_TRACKING_RESTRICT'] ? 'tasks-btn-restricted' : ''?>">
+			<input class="js-id-timeestimate-flag task-options-checkbox" data-target="allow-time-tracking" data-flag-name="ALLOW_TIME_TRACKING" <?=($checked? 'checked' : '')?> type="checkbox"><?=Loc::getMessage('TASKS_TASK_TEMPLATE_COMPONENT_TEMPLATE_TIME_TO_DO')?>
+		</label>
 		<input class="js-id-timeestimate-allow-time-tracking" type="hidden" name="<?=$inputPrefix?>[ALLOW_TIME_TRACKING]" value="<?=($checked ? 'Y' : 'N')?>" />
 		<span class="js-id-timeestimate-inputs task-options-inp-container-time task-openable-block<?if(!$checked):?> invisible<?endif?>">
             <span class="task-options-inp-container">

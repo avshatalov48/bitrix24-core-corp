@@ -1,8 +1,6 @@
 <?php
 
-
 namespace Bitrix\Market\ListTemplates;
-
 
 use Bitrix\Main\Context;
 use Bitrix\Main\Loader;
@@ -13,11 +11,12 @@ use Bitrix\Main\UI\PageNavigation;
 use Bitrix\Market\Application\Action;
 use Bitrix\Market\Application\License;
 use Bitrix\Market\Application\Versions;
-use Bitrix\Market\NumberApps;
+use Bitrix\Market\Rest\Actions;
+use Bitrix\Market\Rest\Transport;
+use Bitrix\Market\Toolbar;
 use Bitrix\Rest\AppTable;
 use Bitrix\Rest\Engine\Access;
 use Bitrix\Rest\Marketplace\Client;
-use Bitrix\Rest\Marketplace\Transport;
 use Bitrix\Rest\Marketplace\Url;
 use Bitrix\Rest\OAuthService;
 use CRestUtil;
@@ -35,20 +34,20 @@ class Installed extends BaseTemplate
 		global $APPLICATION;
 		$APPLICATION->SetTitle($title);
 
-		if(!Loader::includeModule('rest')) {
+		if (!Loader::includeModule('rest')) {
 			die;
 		}
 
 		$this->result['ADMIN'] = CRestUtil::isAdmin();
 
-		if(!$this->result['ADMIN']) {
+		if (!$this->result['ADMIN']) {
 			ShowError(Loc::getMessage('RMI_ACCESS_DENIED'));
 			die;
-		} else if (!OAuthService::getEngine()->isRegistered()) {
+		} elseif (!OAuthService::getEngine()->isRegistered()) {
 			try {
 				OAuthService::register();
 				OAuthService::getEngine()->getClient()->getApplicationList();
-			} catch(SystemException $e) {
+			} catch (SystemException $e) {
 				ShowError($e->getMessage());
 				die;
 			}
@@ -109,7 +108,7 @@ class Installed extends BaseTemplate
 		while ($app = $dbApps->Fetch()) {
 			$appCodes[] = $app['CODE'];
 			$app['APP_STATUS'] = AppTable::getAppStatusInfo($app, '');
-			if(isset($app['APP_STATUS']['MESSAGE_REPLACE']['#DAYS#'])) {
+			if (isset($app['APP_STATUS']['MESSAGE_REPLACE']['#DAYS#'])) {
 				$app['APP_STATUS']['MESSAGE_REPLACE']['#DAYS#']++;
 				$app['APP_STATUS']['MESSAGE_REPLACE']['#DAYS#'] = FormatDate('ddiff', time(), time() + 24 * 60 * 60 * $app['APP_STATUS']['MESSAGE_REPLACE']['#DAYS#']);
 			}
@@ -154,7 +153,7 @@ class Installed extends BaseTemplate
 		}
 
 		if (empty($appCodes)) {
-			$response = Transport::instance()->call(Transport::METHOD_TOTAL_APPS);
+			$response = Transport::instance()->call(Actions::METHOD_TOTAL_APPS);
 			$this->setAdditionalInfo($response);
 		}
 
@@ -171,7 +170,7 @@ class Installed extends BaseTemplate
 			$appItem['BUTTONS'] = Action::getButtons($appItem);
 
 			if (isset($appItem['BUTTONS'][Action::UPDATE])) {
-				$appItem['INSTALL_INFO'] = Action::getJsAppData($appItem);
+				$appItem['INSTALL_INFO'] = Action::getInstallJsInfo($appItem);
 				$appItem['LICENSE'] = License::getInfo($appItem);
 			}
 
@@ -191,10 +190,9 @@ class Installed extends BaseTemplate
 
 	private function setAdditionalInfo($response)
 	{
-		$this->result['TOTAL_APPS'] = NumberApps::get($response);
-		$this->result['SHOW_MARKET_ICON'] = $response['SHOW_MARKET_ICON'];
-		$this->result['ADDITIONAL_CONTENT'] = $response['ADDITIONAL_CONTENT'] ?? '';
-		$this->result['ADDITIONAL_MARKET_ACTION'] = $response['ADDITIONAL_MARKET_ACTION'] ?? '';
+		if (is_array($response)) {
+			$this->result = array_merge($this->result, Toolbar::getTotalAppsInfo($response));
+		}
 	}
 
 	private function getFilterTags(): array
@@ -205,7 +203,7 @@ class Installed extends BaseTemplate
 			[
 				'name' => Loc::getMessage('MARKET_NEED_UPDATING', ['#COUNT#' => $numUpdates]),
 				'value' => Installed::FILTER_UPDATES,
-			]
+			],
 		];
 	}
 

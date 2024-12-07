@@ -6,6 +6,7 @@ jn.define('im/messenger/lib/feature', (require, exports, module) => {
 
 	const dynamicProperties = {
 		localStorageEnable: true,
+		localStorageReadOnlyModeEnable: false,
 	};
 
 	/**
@@ -40,10 +41,7 @@ jn.define('im/messenger/lib/feature', (require, exports, module) => {
 		static get isLocalStorageEnabled()
 		{
 			return (
-				MessengerParams.isChatM1Enabled()
-				&& MessengerParams.isChatLocalStorageAvailable()
-				&& Feature.isLocalStorageSupported
-				&& Feature.getChatSettings().localStorageEnable
+				isLocalStorageEnabledDuringApplicationStartup
 				&& dynamicProperties.localStorageEnable
 			);
 		}
@@ -60,6 +58,11 @@ jn.define('im/messenger/lib/feature', (require, exports, module) => {
 			;
 
 			return isSupportedApp && (isSupportedAndroid || isSupportedIos);
+		}
+
+		static get isLocalStorageReadOnlyModeEnable()
+		{
+			return dynamicProperties.localStorageReadOnlyModeEnable;
 		}
 
 		static get isCopilotAvailable()
@@ -82,19 +85,93 @@ jn.define('im/messenger/lib/feature', (require, exports, module) => {
 			dynamicProperties.localStorageEnable = true;
 		}
 
+		static disableLocalStorageReadOnlyMode()
+		{
+			dynamicProperties.localStorageReadOnlyModeEnable = false;
+		}
+
+		static enableLocalStorageReadOnlyMode()
+		{
+			dynamicProperties.localStorageReadOnlyModeEnable = true;
+		}
+
+		static get isGoToMessageContextSupported()
+		{
+			return Application.getApiVersion() >= 54;
+		}
+
 		static get isMessagePinSupported()
 		{
-			return Feature.isChatBetaEnabled && Application.getApiVersion() >= 53;
+			return Feature.isGoToMessageContextSupported;
 		}
 
 		static get isMessageForwardSupported()
 		{
-			return Feature.isChatBetaEnabled && Application.getApiVersion() >= 54;
+			return Feature.isGoToMessageContextSupported;
 		}
 
 		static get isSupportBMPImageType()
 		{
 			return Application.getApiVersion() >= 53;
+		}
+
+		static get isCheckInMessageSupported()
+		{
+			return Application.getApiVersion() >= 54;
+		}
+
+		static get isCallMessageSupported()
+		{
+			return Application.getApiVersion() >= 56;
+		}
+
+		static get isCreateBannerMessageSupported()
+		{
+			return Application.getApiVersion() >= 54;
+		}
+
+		static get isMessageAttachSupported()
+		{
+			return Application.getApiVersion() >= 55;
+		}
+
+		static get isMessageKeyboardSupported()
+		{
+			return Application.getApiVersion() >= 55;
+		}
+
+		static get isAvatarBorderStylesSupported()
+		{
+			return Application.getApiVersion() >= 55;
+		}
+
+		static get isChatDialogWidgetSupportsSendPutCallBbCodes()
+		{
+			return Application.getApiVersion() >= 55;
+		}
+
+		static get isChatDialogWidgetSupportsBots()
+		{
+			return (
+				this.isMessageAttachSupported
+				&& this.isMessageKeyboardSupported
+				&& this.isChatDialogWidgetSupportsSendPutCallBbCodes
+			);
+		}
+
+		static get isMessageMenuAirIconSupported()
+		{
+			return Application.getApiVersion() >= 56;
+		}
+
+		static get isGalleryMessageSupported()
+		{
+			return Application.getApiVersion() >= 56;
+		}
+
+		static get isChatDialogWidgetFileDownloadTapEventSupported()
+		{
+			return Application.getApiVersion() >= 56;
 		}
 
 		static get isDevelopmentEnvironment()
@@ -106,6 +183,13 @@ jn.define('im/messenger/lib/feature', (require, exports, module) => {
 			);
 		}
 	}
+
+	const isLocalStorageEnabledDuringApplicationStartup = (
+		MessengerParams.isChatM1Enabled()
+		&& MessengerParams.isChatLocalStorageAvailable()
+		&& Feature.isLocalStorageSupported
+		&& Feature.getChatSettings().localStorageEnable
+	);
 
 	module.exports = { Feature };
 });

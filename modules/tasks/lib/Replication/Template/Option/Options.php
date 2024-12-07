@@ -27,6 +27,7 @@ class Options
 		'START_DATE' => true,
 		'END_DATE' => true,
 		'TIME' => true,
+		// deprecated, TIMEZONE_OFFSET parameter is always 0 in new templates
 		'TIMEZONE_OFFSET' => true,
 		'DAILY_MONTH_INTERVAL' => true,
 		'REPEAT_TILL' => true,
@@ -77,6 +78,7 @@ class Options
 		}
 		$options['TIME'] = UI::formatTimeAmount($time, 'HH:MI');
 
+		// deprecated, TIMEZONE_OFFSET parameter is always 0 in new templates
 		if (array_key_exists('TIMEZONE_OFFSET', $options))
 		{
 			$options['TIMEZONE_OFFSET'] = (int)$options['TIMEZONE_OFFSET'];

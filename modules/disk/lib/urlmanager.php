@@ -206,8 +206,6 @@ class UrlManager implements IErrorable
 	 */
 	public function encodeUrn($uri)
 	{
-		global $APPLICATION;
-
 		$result = '';
 		$parts = preg_split("#(://|:\\d+/|/|\\?|=|&)#", $uri, -1, PREG_SPLIT_DELIM_CAPTURE);
 
@@ -215,7 +213,7 @@ class UrlManager implements IErrorable
 		{
 			$result .= ($i % 2)
 				? $part
-				: rawurlencode($APPLICATION->convertCharset($part, LANG_CHARSET, 'UTF-8'));
+				: rawurlencode($part);
 		}
 
 		return $result;

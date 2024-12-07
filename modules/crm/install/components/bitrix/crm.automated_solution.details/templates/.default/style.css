@@ -1,0 +1,170 @@
+.crm-automated-solution-details {
+	padding-top: 17px;
+}
+
+.crm-automated-solution-details .ui-title-4,
+.crm-automated-solution-details .ui-title-3 {
+	margin-bottom: 27px;
+	padding-bottom: 14px;
+	width: 100%;
+	border-bottom: 1px solid rgba(82, 92, 105, .1);
+	font: 22px/28px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-light, 300);
+	color: #333;
+}
+
+.crm-automated-solution-details .ui-title-3 {
+	font: 18px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
+}
+
+.crm-automated-solution-details .ui-form-row {
+	margin-bottom: 13px;
+}
+
+.crm-automated-solution-details .ui-form-label {
+	margin-bottom: 5px;
+	font-size: 14px;
+	color: #67707c;
+}
+
+.crm-automated-solution-details-slider-wrapper .ui-sidepanel-title {
+	overflow: visible;
+	white-space: nowrap;
+}
+.crm-automated-solution-details .crm-automated-solution-details-form-label-xs .ui-form-label {
+	margin-bottom: 9px;
+	font-size: 13px;
+}
+
+.crm-automated-solution-details .crm-automated-solution-details-form-label-xs .ui-ctl-label-text {
+	font-size: 13px;
+	opacity: .5;
+}
+
+.crm-automated-solution-details-form-label-xs .ui-ctl-element {
+	font-size: 14px;
+}
+
+.crm-automated-solution-details-form-label-xs .ui-ctl-element::-webkit-input-placeholder {
+	color: rgba(51,51,51,.3);
+}
+.crm-automated-solution-details-form-label-xs .ui-ctl-element::-moz-placeholder {
+	color: rgba(51,51,51,.3);
+}
+.crm-automated-solution-details-form-label-xs .ui-ctl-element:-ms-input-placeholder {
+	color: rgba(51,51,51,.3);
+}
+.crm-automated-solution-details-form-label-xs .ui-ctl-element:-moz-placeholder {
+	color: rgba(51,51,51,.3);
+}
+
+.crm-automated-solution-details .ui-ctl-label-text {
+	font-size: 14px;
+	font-weight: 400;
+}
+
+.crm-automated-solution-details [data-tab="common"] .ui-form-row {
+	margin-bottom: 10px;
+}
+
+[data-tab="common"] .ui-form-row > [class*='ui-ctl'] {
+	padding: 14px 0 7px 0;
+}
+
+[data-tab="common"] .ui-form-content .ui-ctl {
+	margin-bottom: 22px;
+}
+
+.crm-type-ui-card-message {
+	position: relative;
+	padding: 23px 40px 15px 24px;
+	margin: 0 0 14px 0;
+	border-radius: var(--ui-border-radius-sm, 4px);
+	background: #eefafe;
+}
+
+.crm-type-ui-card-message .crm-type-ui-card-header {
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	-webkit-box-align: center;
+	    -ms-flex-align: center;
+	        align-items: center;
+	margin-bottom: 16px;
+}
+
+.crm-type-ui-card-message-icon {
+	width: 39px;
+	height: 39px;
+	margin-right: 11px;
+	border-radius: 50%;
+	background-color: #2fc6f6;
+	background-position: center;
+	background-repeat: no-repeat;
+}
+
+.crm-type-ui-card-message-icon--custom-fields {
+	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg width='17' height='19' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M16.3 0a.7.7 0 01.7.7v6.6a.7.7 0 01-.7.7H.7a.7.7 0 01-.7-.7V.7A.7.7 0 01.7 0h15.6zM15 2H2v4h13V2zm1.3 9a.7.7 0 01.7.7v6.6a.7.7 0 01-.7.7H.7a.7.7 0 01-.7-.7v-6.6a.7.7 0 01.7-.7h15.6zM15 13H2v4h13v-4z' fill='%23FFF' fill-rule='evenodd'/%3E%3C/svg%3E");
+}
+
+.crm-type-ui-card-message-title {
+	font: 21px/28px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-light, 300);
+	color: #333;
+	margin-top: -5px;
+}
+
+.crm-type-ui-card-message-description {
+	font: 13px/20px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	color: #525c69;
+	margin-bottom: 14px;
+}
+
+.crm-type-ui-card-message-close-button {
+	position: absolute;
+	cursor: pointer;
+	right: 8px;
+	top: 8px;
+	height: 20px;
+	width: 20px;
+	opacity: .3;
+	-webkit-transition: 250ms all ease;
+	-o-transition: 250ms all ease;
+	transition: 250ms all ease;
+}
+
+.crm-type-ui-card-message-close-button:hover {
+	opacity: 1;
+}
+
+.crm-type-ui-card-message-close-button::before,
+.crm-type-ui-card-message-close-button::after {
+	position: absolute;
+	content: '';
+	display: block;
+	background-color: #515e68;
+	top: 50%;
+	left: 50%;
+	width: 10px;
+	height: 2px;
+	-webkit-transform: rotate(45deg) translate(-50%, -50%);
+	-ms-transform: rotate(45deg) translate(-50%, -50%);
+	transform: rotate(45deg) translate(-50%, -50%);
+	-webkit-transform-origin: 0 0;
+	-ms-transform-origin: 0 0;
+	transform-origin: 0 0;
+}
+
+.crm-type-ui-card-message-close-button::after {
+	width: 2px;
+	height: 10px;
+}
+
+.crm-type-ui-card-message-actions {
+	margin-top: -5px;
+}
+
+.crm-type-ui-card-message-without-angle::after {
+	display: none;
+}

@@ -56,3 +56,4 @@ $MESS["TASKS_BP_DOCUMENT_TAGS"] = "Tags";
 $MESS["TASKS_BP_DOCUMENT_TASK_CONTROL"] = "Accept when completed";
 $MESS["TASKS_BP_DOCUMENT_TIME_ESTIMATE"] = "Estimated time required";
 $MESS["TASKS_BP_DOCUMENT_TITLE"] = "Name";
+$MESS["TASKS_FLOW_NOTIFICATION_MESSAGE_HALF_TIME_BEFORE_EXPIRE_MESSAGE"] = "Half the time allotted for the task [url=/workgroups/group/{groupId}/tasks/task/view/{taskId}/][#{taskId}] {taskTitle}[/url]has elapsed. Make sure you're on time with this task.";

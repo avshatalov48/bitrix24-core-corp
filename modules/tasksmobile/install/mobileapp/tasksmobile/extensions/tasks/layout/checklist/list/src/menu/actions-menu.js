@@ -7,22 +7,23 @@ jn.define('tasks/layout/checklist/list/src/menu/actions-menu', (require, exports
 	const { animate } = require('animation');
 	const { PureComponent } = require('layout/pure-component');
 	const { directions } = require('tasks/layout/checklist/list/src/constants');
-	const { IconView, iconTypes } = require('ui-system/blocks/icon');
+	const { IconView, Icon } = require('ui-system/blocks/icon');
 	const { Random } = require('utils/random');
-	const { UIScrollView } = require('layout/ui/scroll-view');
-	const { MEMBER_TYPE } = require('tasks/layout/checklist/list/src/constants');
+	const { ScrollView } = require('layout/ui/scroll-view');
+	const {
+		MEMBER_TYPE,
+		MEMBER_TYPE_ICONS,
+		MEMBER_TYPE_RESTRICTION_FEATURE_META,
+	} = require('tasks/layout/checklist/list/src/constants');
 
 	const ICON_SIZE = 24;
 	const ICON_MARGIN = 16;
-	const BUTTON_TYPES = {
-		important: 'important',
-		accomplice: 'accomplice',
-		auditor: 'auditor',
-		attach: 'attach',
-	};
-
 	const ACTIVE_COLOR = Color.accentMainPrimary;
 	const INACTIVE_COLOR = Color.base3;
+	const BUTTON_TYPES = {
+		important: 'important',
+		attach: 'attach',
+	};
 
 	/**
 	 * @class ChecklistActionsMenu
@@ -34,11 +35,13 @@ jn.define('tasks/layout/checklist/list/src/menu/actions-menu', (require, exports
 			super(props);
 
 			this.isShown = false;
+			this.targetMoveRef = null;
 
 			/** @type {CheckListFlatTreeItem} */
 			this.item = null;
 			/** @type {ChecklistActionsMenu} */
 			this.menuRef = null;
+			this.menuHeight = 0;
 
 			this.initialItem(props);
 			this.handleOnToggleImportant = this.handleOnToggleImportant.bind(this);
@@ -67,7 +70,6 @@ jn.define('tasks/layout/checklist/list/src/menu/actions-menu', (require, exports
 		handleOnToggleImportant()
 		{
 			const { onToggleImportant } = this.props;
-
 			Haptics.impactLight();
 			onToggleImportant();
 			this.refreshExtension();
@@ -96,16 +98,25 @@ jn.define('tasks/layout/checklist/list/src/menu/actions-menu', (require, exports
 		{
 			if (!this.isShown)
 			{
-				this.animateToggleMenu({ show: true });
+				return this.animateToggleMenu({ show: true });
 			}
+
+			return Promise.resolve();
 		}
 
 		hide()
 		{
 			if (this.isShown)
 			{
-				this.animateToggleMenu({ show: false });
+				return this.animateToggleMenu({ show: false });
 			}
+
+			return Promise.resolve();
+		}
+
+		isShownMenu()
+		{
+			return this.isShown;
 		}
 
 		/**
@@ -114,12 +125,12 @@ jn.define('tasks/layout/checklist/list/src/menu/actions-menu', (require, exports
 		 */
 		animateToggleMenu({ show })
 		{
-			animate(this.menuRef, {
+			this.isShown = show;
+
+			return animate(this.menuRef, {
 				opacity: show ? 1 : 0,
 				duration: 300,
 			}).catch(console.error);
-
-			this.isShown = show;
 		}
 
 		/**
@@ -130,10 +141,10 @@ jn.define('tasks/layout/checklist/list/src/menu/actions-menu', (require, exports
 		isActiveIconByType(type)
 		{
 			const activeMap = {
-				[BUTTON_TYPES.important]: this.item?.getIsImportant(),
-				[BUTTON_TYPES.attach]: Boolean(this.item?.getAttachmentsCount() > 0),
-				[BUTTON_TYPES.auditor]: this.item?.hasAuditor(),
-				[BUTTON_TYPES.accomplice]: this.item?.hasAccomplice(),
+				[BUTTON_TYPES.important]: this.item.getIsImportant(),
+				[BUTTON_TYPES.attach]: Boolean(this.item.getAttachmentsCount() > 0),
+				[MEMBER_TYPE.auditor]: this.item.hasAuditor(),
+				[MEMBER_TYPE.accomplice]: this.item.hasAccomplice(),
 			};
 
 			return Boolean(activeMap[type]);
@@ -145,13 +156,21 @@ jn.define('tasks/layout/checklist/list/src/menu/actions-menu', (require, exports
 
 			return View(
 				{
+					ref: (ref) => {
+						this.targetMoveRef = ref;
+					},
 					testId,
 					style: {
-						width: 30,
-						height: 30,
+						width: 24,
+						height: 24,
 						...style,
 					},
-					onClick,
+					onClick: () => {
+						if (onClick && this.isShown)
+						{
+							onClick(this.targetMoveRef);
+						}
+					},
 				},
 				IconView(restProps),
 			);
@@ -169,7 +188,12 @@ jn.define('tasks/layout/checklist/list/src/menu/actions-menu', (require, exports
 
 		renderMenu()
 		{
-			const { onMoveToCheckList, onAddFile, onBlur, openUserSelectionManager } = this.props;
+			if (!this.item)
+			{
+				return null;
+			}
+
+			const { onMoveToCheckList, onAddFile, onBlur } = this.props;
 			const { canUpdate, canAdd, canTabOut, canTabIn, hasAnotherCheckLists } = this.getPermissions();
 
 			return View(
@@ -182,59 +206,58 @@ jn.define('tasks/layout/checklist/list/src/menu/actions-menu', (require, exports
 						justifyContent: 'flex-end',
 					},
 				},
-				UIScrollView(
+				ScrollView(
 					{
 						horizontal: true,
 						style: {
 							flex: 1,
 							height: 24,
-							flexDirection: 'row',
 							alignItems: 'center',
 						},
 					},
 					this.renderIconView({
 						testId: this.getTestId('attach'),
-						iconColor: this.getIconColor(BUTTON_TYPES.attach),
-						icon: iconTypes.outline.attach1,
+						color: this.getIconColor(BUTTON_TYPES.attach),
+						icon: Icon.ATTACH,
 						onClick: onAddFile,
-						iconSize: ICON_SIZE,
+						size: ICON_SIZE,
 						style: {
 							marginRight: ICON_MARGIN,
-						},
-					}),
-					this.renderIconView({
-						testId: this.getTestId(MEMBER_TYPE.accomplice),
-						iconColor: this.getIconColor(BUTTON_TYPES.accomplice),
-						icon: iconTypes.outline.group,
-						iconSize: ICON_SIZE,
-						disabled: !canUpdate,
-						style: {
-							marginRight: ICON_MARGIN,
-						},
-						onClick: () => {
-							openUserSelectionManager(this.item.getId(), MEMBER_TYPE.accomplice);
 						},
 					}),
 					this.renderIconView({
 						testId: this.getTestId(MEMBER_TYPE.auditor),
-						iconColor: this.getIconColor(BUTTON_TYPES.auditor),
-						icon: iconTypes.outline.observer,
-						iconSize: ICON_SIZE,
-						disabled: !canUpdate,
+						color: this.getIconColor(MEMBER_TYPE.auditor),
+						icon: MEMBER_TYPE_ICONS[MEMBER_TYPE.auditor],
+						size: ICON_SIZE,
+						disabled: (
+							!canUpdate || MEMBER_TYPE_RESTRICTION_FEATURE_META[MEMBER_TYPE.auditor].isRestricted()
+						),
 						style: {
 							marginRight: ICON_MARGIN,
 						},
-						onClick: () => {
-							openUserSelectionManager(this.item.getId(), MEMBER_TYPE.auditor);
+						onClick: () => this.onMemberIconClick(MEMBER_TYPE.auditor),
+					}),
+					this.renderIconView({
+						testId: this.getTestId(MEMBER_TYPE.accomplice),
+						color: this.getIconColor(MEMBER_TYPE.accomplice),
+						icon: MEMBER_TYPE_ICONS[MEMBER_TYPE.accomplice],
+						size: ICON_SIZE,
+						disabled: (
+							!canUpdate || MEMBER_TYPE_RESTRICTION_FEATURE_META[MEMBER_TYPE.accomplice].isRestricted()
+						),
+						style: {
+							marginRight: ICON_MARGIN,
 						},
+						onClick: () => this.onMemberIconClick(MEMBER_TYPE.accomplice),
 					}),
 					this.renderIconView({
 						testId: this.getTestId('importance'),
-						iconSize: ICON_SIZE,
-						iconColor: this.isActiveIconByType(BUTTON_TYPES.important)
+						size: ICON_SIZE,
+						color: this.isActiveIconByType(BUTTON_TYPES.important)
 							? Color.accentMainWarning
 							: INACTIVE_COLOR,
-						icon: iconTypes.outline.fire,
+						icon: Icon.FIRE,
 						disabled: !canUpdate,
 						style: {
 							marginRight: ICON_MARGIN,
@@ -243,9 +266,9 @@ jn.define('tasks/layout/checklist/list/src/menu/actions-menu', (require, exports
 					}),
 					this.renderIconView({
 						testId: this.getTestId('toLeft'),
-						iconColor: this.getIconColor(),
-						iconSize: ICON_SIZE,
-						icon: iconTypes.outline.pointLeft,
+						color: this.getIconColor(),
+						size: ICON_SIZE,
+						icon: Icon.POINT_LEFT,
 						disabled: !canTabOut,
 						style: {
 							marginRight: ICON_MARGIN,
@@ -259,9 +282,9 @@ jn.define('tasks/layout/checklist/list/src/menu/actions-menu', (require, exports
 					}),
 					this.renderIconView({
 						testId: this.getTestId('toRight'),
-						iconColor: this.getIconColor(),
-						iconSize: ICON_SIZE,
-						icon: iconTypes.outline.pointRight,
+						color: this.getIconColor(),
+						size: ICON_SIZE,
+						icon: Icon.POINT_RIGHT,
 						disabled: !canTabIn,
 						style: {
 							marginRight: ICON_MARGIN,
@@ -275,14 +298,14 @@ jn.define('tasks/layout/checklist/list/src/menu/actions-menu', (require, exports
 					}),
 					this.renderIconView({
 						testId: this.getTestId('toChecklist'),
-						iconColor: this.getIconColor(),
-						icon: iconTypes.outline.moveToChecklist,
+						color: this.getIconColor(),
+						icon: Icon.MOVE_TO_CHECKLIST,
 						disabled: (canUpdate && !canAdd && !hasAnotherCheckLists) || !canUpdate,
-						iconSize: ICON_SIZE,
-						onClick: () => {
+						size: ICON_SIZE,
+						onClick: (targetRef) => {
 							if (onMoveToCheckList)
 							{
-								onMoveToCheckList(this.item?.getMoveIds());
+								onMoveToCheckList(this.item.getMoveIds(this.item.getId()), targetRef);
 							}
 						},
 					}, true),
@@ -292,23 +315,36 @@ jn.define('tasks/layout/checklist/list/src/menu/actions-menu', (require, exports
 						width: 1,
 						height: 14,
 						justifyContent: 'center',
-						backgroundColor: Color.bgSeparatorPrimary,
+						backgroundColor: Color.bgSeparatorPrimary.toHex(),
 						marginHorizontal: 10,
 					},
 				}),
 				this.renderIconView({
 					testId: this.getTestId('hide'),
-					iconColor: ACTIVE_COLOR,
-					icon: iconTypes.outline.chevronDown,
-					iconSize: ICON_SIZE,
+					color: ACTIVE_COLOR,
+					icon: Icon.CHEVRON_DOWN,
+					size: ICON_SIZE,
 					style: {
-						alignSelf: 'flex-end',
-						alignItems: 'center',
+						alignSelf: 'center',
 						justifyContent: 'center',
 					},
 					onClick: onBlur,
 				}),
 			);
+		}
+
+		onMemberIconClick(memberType)
+		{
+			const { openTariffRestrictionWidget, openUserSelectionManager } = this.props;
+
+			if (MEMBER_TYPE_RESTRICTION_FEATURE_META[memberType].isRestricted())
+			{
+				openTariffRestrictionWidget(memberType);
+
+				return;
+			}
+
+			openUserSelectionManager(this.item.getId(), memberType);
 		}
 
 		onTabMove(direction)
@@ -325,12 +361,12 @@ jn.define('tasks/layout/checklist/list/src/menu/actions-menu', (require, exports
 		getPermissions()
 		{
 			return {
-				canTabOut: this.item?.checkCanTabOut(),
-				canTabIn: this.item?.checkCanTabIn(),
-				canAdd: this.item?.checkCanAdd(),
-				canUpdate: this.item?.checkCanUpdate(),
-				canAddAccomplice: this.item?.checkCanAddAccomplice(),
-				hasAnotherCheckLists: this.item?.hasAnotherCheckLists(),
+				canTabOut: this.item.checkCanTabOut(),
+				canTabIn: this.item.checkCanTabIn(),
+				canAdd: this.item.checkCanAdd(),
+				canUpdate: this.item.checkCanUpdate(),
+				canAddAccomplice: this.item.checkCanAddAccomplice(),
+				hasAnotherCheckLists: this.item.hasAnotherCheckLists(),
 			};
 		}
 
@@ -344,19 +380,31 @@ jn.define('tasks/layout/checklist/list/src/menu/actions-menu', (require, exports
 					safeArea: {
 						bottom: true,
 					},
+					onClick: () => {
+						// Disabled blur
+						return null;
+					},
+					onLayout: (params) => {
+						this.menuHeight = params.height || 0;
+					},
 					style: {
 						opacity: 0,
-						paddingVertical: 10,
+						paddingVertical: 14,
 						paddingHorizontal: 18,
 						position: 'absolute',
 						width: '100%',
 						left: 0,
 						bottom: 0,
-						backgroundColor: Color.bgContentPrimary,
+						backgroundColor: Color.bgContentPrimary.toHex(),
 					},
 				},
 				this.renderMenu(),
 			);
+		}
+
+		getHeight()
+		{
+			return this.menuHeight;
 		}
 
 		getTestId(suffix)

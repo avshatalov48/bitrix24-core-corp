@@ -36,6 +36,8 @@ class CrmChannelSelectorComponent extends Base
 		$arParams['title'] = $arParams['title'] ?? '';
 		$arParams['link'] = $arParams['link'] ?? '';
 		$arParams['isLinkObtainable'] = ($arParams['isLinkObtainable'] ?? null) === true;
+		$arParams['isCombineMessageWithLink'] = (bool)($arParams['isCombineMessageWithLink'] ?? true);
+		$arParams['isInsertLinkInMessage'] = (bool)($arParams['isInsertLinkInMessage'] ?? false);
 		$arParams['entityTypeId'] = (int)($arParams['entityTypeId'] ?? 0);
 		$arParams['entityId'] = (int)($arParams['entityId'] ?? 0);
 		$arParams['files'] = (array)($arParams['files'] ?? []);
@@ -122,6 +124,8 @@ class CrmChannelSelectorComponent extends Base
 			'title' => $this->arParams['title'],
 			'link' => $this->arParams['link'],
 			'isLinkObtainable' => $this->arParams['isLinkObtainable'],
+			'isCombineMessageWithLink' => $this->arParams['isCombineMessageWithLink'],
+			'isInsertLinkInMessage' => $this->arParams['isInsertLinkInMessage'],
 			'isConfigurable' => $this->arParams['isConfigurable'],
 			'configureContext' => $this->arParams['configureContext'],
 			'files' => $this->arParams['files'],
@@ -158,7 +162,7 @@ class CrmChannelSelectorComponent extends Base
 			}
 		}
 
-		foreach (Integration\SmsManager::getSenderInfoList() as $senderInfo)
+		foreach (Integration\SmsManager::getSenderInfoList(true) as $senderInfo)
 		{
 			// template based providers can not send links
 			if ($senderInfo['isTemplatesBased'])
@@ -166,14 +170,31 @@ class CrmChannelSelectorComponent extends Base
 				continue;
 			}
 
-			$channels[] = [
-				'type' => Phone::ID,
-				'title' => $senderInfo['name'],
-				'canBeShown' => $senderInfo['canUse'],
-				'isAvailable' => $senderInfo['canUse'] && !empty($communications[Phone::ID]),
-				'id' => $senderInfo['id'],
-				'categoryTitle' => Loc::getMessage('CRM_CHANNEL_SELECTOR_CATEGORY_SMS'),
-			];
+			if ($senderInfo['fromList'])
+			{
+				foreach ($senderInfo['fromList'] as $provider)
+				{
+					$channels[] = [
+						'type' => Phone::ID,
+						'title' => $provider['name'],
+						'canBeShown' => $senderInfo['canUse'],
+						'isAvailable' => $senderInfo['canUse'] && !empty($communications[Phone::ID]),
+						'id' => $provider['id'],
+						'categoryTitle' => Loc::getMessage('CRM_CHANNEL_SELECTOR_CATEGORY_SMS'),
+					];
+				}
+			}
+			else
+			{
+				$channels[] = [
+					'type' => Phone::ID,
+					'title' => $senderInfo['name'],
+					'canBeShown' => $senderInfo['canUse'],
+					'isAvailable' => $senderInfo['canUse'] && !empty($communications[Phone::ID]),
+					'id' => $senderInfo['id'],
+					'categoryTitle' => Loc::getMessage('CRM_CHANNEL_SELECTOR_CATEGORY_SMS'),
+				];
+			}
 		}
 
 		return $channels;
@@ -407,7 +428,7 @@ class CrmChannelSelectorComponent extends Base
 
 		$this->arResult = $this->prepareResult();
 		$this->render();
-		
+
 		return $this->arResult;
 	}
 }

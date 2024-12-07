@@ -46,9 +46,13 @@ class CBPCrmChangeResponsibleActivity extends CBPActivity
 		$currentResponsibleId = (int)$this->getCurrentResponsibleId($responsibleFieldName);
 
 		$newResponsibleId = $this->getTargetResponsibleId($currentResponsibleId);
-		$this->writeDebugInfo($this->getDebugInfo([
-			'NewResponsibleId' => isset($newResponsibleId) ? "user_{$newResponsibleId}" : null,
-		]));
+
+		if ($this->workflow->isDebug())
+		{
+			$this->writeDebugInfo($this->getDebugInfo([
+				'NewResponsibleId' => isset($newResponsibleId) ? "user_{$newResponsibleId}" : null,
+			]));
+		}
 
 		if ($newResponsibleId)
 		{

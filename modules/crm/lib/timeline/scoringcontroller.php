@@ -2,6 +2,7 @@
 namespace Bitrix\Crm\Timeline;
 
 use Bitrix\Crm;
+use Bitrix\Crm\Ml\Scoring;
 use Bitrix\Main;
 use Bitrix\Main\ArgumentException;
 
@@ -101,6 +102,7 @@ class ScoringController extends EntityController
 	{
 		$scoringRecordId = $data['ASSOCIATED_ENTITY_ID'];
 		$data['SCORING_INFO'] = Crm\Ml\Internals\PredictionHistoryTable::getRowById($scoringRecordId);
+		$data['SCORING_IS_AVAILABLE'] = Scoring::isScoringAvailable();
 
 		return parent::prepareHistoryDataModel($data, $options);
 	}

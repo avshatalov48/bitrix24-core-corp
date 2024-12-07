@@ -317,7 +317,9 @@ abstract class CrmEntityDataProvider extends EntityDataProvider implements Hasha
 
 					if (!empty($this->data[$fieldName]))
 					{
-						$this->data[$fieldName] = TextHelper::convertBbCodeToHtml($this->data[$fieldName]);
+						$this->data[$fieldName] = TextHelper::convertBbCodeToHtml(
+							TextHelper::removeParagraphs($this->data[$fieldName]),
+						);
 					}
 				}
 			}
@@ -1871,7 +1873,7 @@ abstract class CrmEntityDataProvider extends EntityDataProvider implements Hasha
 				}
 			}
 		}
-		$templateFields = $template->getFields();
+		$templateFields = $template?->getFields() ?? [];
 		$qrPlaceholder = 'PaymentQrCode';
 		$data['changeQrCodeEnabled'] = false;
 		$data['qrCodeEnabled'] = false;

@@ -5,11 +5,7 @@ namespace Bitrix\Crm\Controller\Timeline\Calendar;
 use Bitrix\Crm\Component\EntityDetails\TimelineMenuBar;
 use Bitrix\Crm\Integration\Calendar\EventData;
 use Bitrix\Crm\Integration\Calendar\Helper;
-use Bitrix\Crm\Integration\NotificationsManager;
-use Bitrix\Crm\Integration\SmsManager;
-use Bitrix\Crm\ItemIdentifier;
-use Bitrix\Crm\MessageSender\Channel;
-use Bitrix\Crm\MessageSender\Channel\ChannelRepository;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Engine\Controller;
 use Bitrix\Main\Error;
 
@@ -22,7 +18,8 @@ class Sharing extends Controller
 		int $ownerTypeId,
 		string $channelId,
 		string $senderId,
-		array $ruleArray
+		array $ruleArray,
+		array $memberIds = [],
 	): bool
 	{
 		if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->checkUpdatePermissions($ownerTypeId, $ownerId))
@@ -32,7 +29,7 @@ class Sharing extends Controller
 			return false;
 		}
 
-		$sendingResult = Helper::getInstance()->sendLinkToClient($ownerId, $contactId, $contactTypeId, $channelId, $senderId, $ruleArray);
+		$sendingResult = Helper::getInstance()->sendLinkToClient($ownerId, $contactId, $contactTypeId, $channelId, $senderId, $ruleArray, $memberIds);
 		if ($sendingResult->getErrors())
 		{
 			$this->addErrors($sendingResult->getErrors());
@@ -50,6 +47,44 @@ class Sharing extends Controller
 		}
 
 		return true;
+	}
+
+	public function generateJointSharingLinkAction(
+		int $entityTypeId,
+		int $entityId,
+		array $memberIds,
+	): array
+	{
+		if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->checkUpdatePermissions($entityTypeId, $entityId))
+		{
+			$this->addError(\Bitrix\Crm\Controller\ErrorCode::getAccessDeniedError());
+
+			return [];
+		}
+
+		$broker = Container::getInstance()->getEntityBroker(\CCrmOwnerType::Deal);
+		if (!$broker)
+		{
+			return [];
+		}
+
+		$deal = $broker->getById($entityId);
+		if (!$deal)
+		{
+			return [];
+		}
+
+		$ownerId = $deal->getAssignedById();
+
+		$result = Helper::getInstance()->generateJointLink($entityId, $ownerId, $memberIds);
+		if (!$result->isSuccess())
+		{
+			$this->addErrors($result->getErrors());
+
+			return [];
+		}
+
+		return $result->getData();
 	}
 
 	public function onLinkCopiedAction(string $linkHash, int $ownerId, int $ownerTypeId): bool
@@ -148,91 +183,30 @@ class Sharing extends Controller
 		if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->checkUpdatePermissions($entityTypeId, $entityId))
 		{
 			$this->addError(\Bitrix\Crm\Controller\ErrorCode::getAccessDeniedError());
-			
+
 			return $result;
 		}
-		
+
 		if (!\Bitrix\Main\Loader::includeModule('calendar'))
 		{
 			$this->addError(new Error('Calendar module not found'));
-			
+
 			return $result;
 		}
-		
+
 		$context = new TimelineMenuBar\Context($entityTypeId, $entityId);
-		
+
 		$sharing = new TimelineMenuBar\Item\Sharing($context);
-		$result = $sharing->getSettings();
-		$result['smsConfig'] = $this->getSmsConfig($sharing, $context);
-		
-		return $result;
-	}
-	
-	private function getSmsConfig(TimelineMenuBar\Item\Sharing $sharing, TimelineMenuBar\Context $context): array
-	{
-		return [
-			'communications' => $this->getCommunications($sharing),
-			'contactCenterUrl' => \Bitrix\Crm\Service\Container::getInstance()->getRouter()->getContactCenterUrl(),
-			'senders' => $this->getSmsSenders($context),
-		];
-	}
-	
-	private function getCommunications(TimelineMenuBar\Item\Sharing $sharing): array
-	{
-		$communications = $sharing->getCommunications();
-		
-		foreach ($communications as $key => $communication)
-		{
-			$phone = current($communication['phones']);
-			$communications[$key]['phones'] = [$phone];
-		}
-		
-		return $communications;
-	}
-	
-	private function getSmsSenders(TimelineMenuBar\Context $context): array
-	{
-		$senders = SmsManager::getSenderInfoList(true);
-		
-		$itemIdentifier = new ItemIdentifier($context->getEntityTypeId(), $context->getEntityId());
-		$repo = ChannelRepository::create($itemIdentifier);
-		$notificationChannel = $repo->getDefaultForSender(NotificationsManager::getSenderCode());
-		
-		if ($notificationChannel)
-		{
-			$senders[] = [
-				'id' => $notificationChannel->getId(),
-				'fromList' => $this->getFromList($notificationChannel),
-				'name' => $notificationChannel->getName(),
-				'shortName' => $notificationChannel->getShortName(),
-				'canUse' => $notificationChannel->getSender()::canUse(),
-			];
-		}
-		
-		return $senders;
-	}
-	
-	private function getFromList(Channel $channel): array
-	{
-		$fromList = $channel->getFromList();
-		
-		$result = [];
-		foreach ($fromList as $item)
-		{
-			$result[] = [
-				'id' => $item->getId(),
-				'name' => $item->getName(),
-				'description' => $item->getDescription(),
-				'default' => $item->isDefault(),
-			];
-		}
-		
+		$result = $sharing->getConfig();
+		$result['smsConfig'] = $this->getSmsConfig();
+
 		return $result;
 	}
 
-	public function disableOptionPayAttentionToNewCrmSharingFeatureAction(): void
+	private function getSmsConfig(): array
 	{
-		$userOptionName = TimelineMenuBar\Item\Sharing::PAY_ATTENTION_TO_NEW_FEATURE_OPTION_NAME;
-		\CUserOptions::setOption("crm", $userOptionName, 'N');
+		return [
+			'contactCenterUrl' => \Bitrix\Crm\Service\Container::getInstance()->getRouter()->getContactCenterUrl(),
+		];
 	}
 }

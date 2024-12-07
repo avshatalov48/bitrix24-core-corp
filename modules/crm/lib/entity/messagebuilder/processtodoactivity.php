@@ -42,4 +42,9 @@ class ProcessTodoActivity extends BaseBuilder
 			static::PROCESS_ACTIVITY_PING
 		);
 	}
+
+	public static function getFilePath(): string
+	{
+		return __FILE__;
+	}
 }

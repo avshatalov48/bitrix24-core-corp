@@ -2,32 +2,47 @@
 
 namespace Bitrix\BIConnector\Integration\Superset;
 
-use Bitrix\BIConnector\Integration\Superset\Integrator\IntegratorResponse;
-use Bitrix\BIConnector\Integration\Superset\Integrator\ProxyIntegrator;
+use Bitrix\BIConnector\Superset\Config\ConfigContainer;
+use Bitrix\BIConnector\Integration\Superset\Integrator\Request\IntegratorResponse;
+use Bitrix\BIConnector\Integration\Superset\Integrator\Integrator;
 use Bitrix\BIConnector\Integration\Superset\Model\SupersetDashboardTable;
+use Bitrix\BIConnector\Integration\Superset\Model\SupersetUserTable;
 use Bitrix\BIConnector\Superset\ActionFilter\ProxyAuth;
+use Bitrix\BIConnector\Superset\Dashboard\EmbeddedFilter;
 use Bitrix\BIConnector\Superset\KeyManager;
+use Bitrix\BIConnector\Superset\Logger\Logger;
 use Bitrix\BIConnector\Superset\Logger\SupersetInitializerLogger;
 use Bitrix\BIConnector\Superset\MarketDashboardManager;
+use Bitrix\BIConnector\Superset\SystemDashboardManager;
 use Bitrix\BIConnector\Superset\UI\DashboardManager;
 use Bitrix\Bitrix24\Feature;
+use Bitrix\Main\Application;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Result;
 use Bitrix\Main\Error;
-use Bitrix\Main\Type\DateTime;
+use Bitrix\Rest\AppTable;
 
 final class SupersetInitializer
 {
-	public const SUPERSET_STATUS_READY = 'READY';
+	public const SUPERSET_STATUS_DOESNT_EXISTS = 'DOESNT_EXISTS';
 	public const SUPERSET_STATUS_LOAD = 'LOAD';
-	public const SUPERSET_STATUS_FROZEN = 'FROZEN';
-	public const SUPERSET_STATUS_DISABLED = 'DISABLED';
-	public const SUPERSET_STATUS_DOESNT_EXISTS = 'DOESNT_EXISTS'; // If portal startup superset first time
+	public const SUPERSET_STATUS_READY = 'READY';
+	public const SUPERSET_STATUS_ERROR = 'ERROR';
+	public const SUPERSET_STATUS_DELETED = 'DELETED';
 
 	public const FREEZE_REASON_TARIFF = 'TARIFF';
 
-	private const LAST_STARTUP_ATTEMPT_OPTION = 'last_superset_startup_attempt';
+	public const ERROR_DELETE_INSTANCE_OPTION = 'error_superset_delete_instance';
+
+	private const SUPERSET_CLEAN_TIMESTAMP_OPTION = 'superset_clean_timestamp';
+
+	/**
+	 * Container for superset status. Used for tests mocking
+	 *
+	 * @var SupersetStatusOptionContainer
+	 */
+	private static SupersetStatusOptionContainer $statusContainer;
 
 	/**
 	 * @return string current superset status
@@ -35,46 +50,28 @@ final class SupersetInitializer
 	public static function startupSuperset(): string
 	{
 		$status = self::getSupersetStatus();
-		$canSendAnotherRequest = ($status === self::SUPERSET_STATUS_LOAD && self::needCheckSupersetStatus());
-		if (!self::isSupersetExist() || $canSendAnotherRequest)
-		{
-			SupersetInitializerLogger::logInfo('Portal make superset startup', ['current_status' => $status]);
-			self::fixLastStartupAttempt();
-			self::startSupersetInitialize($status !== self::SUPERSET_STATUS_LOAD);
+		SupersetInitializerLogger::logInfo('Portal make superset startup', ['current_status' => $status]);
 
-			if ($status !== self::SUPERSET_STATUS_LOAD)
-			{
-				$status = self::SUPERSET_STATUS_LOAD;
-				self::setSupersetStatus($status);
-			}
+		$newStatus = self::startSupersetInitialize();
+		if ($status !== $newStatus)
+		{
+			self::setSupersetStatus($newStatus);
 		}
 
 		return $status;
 	}
 
-	public static function fixLastStartupAttempt(): void
-	{
-		Option::set('biconnector', self::LAST_STARTUP_ATTEMPT_OPTION, (new DateTime())->getTimestamp());
-	}
-
-	private static function needCheckSupersetStatus(): bool
-	{
-		$lastCheck = (int)Option::get('biconnector', self::LAST_STARTUP_ATTEMPT_OPTION, 0);
-
-		if ($lastCheck <= 0)
-		{
-			return true;
-		}
-
-		$lastCheckTime = DateTime::createFromTimestamp($lastCheck)->add('10 minutes');
-
-		return (new DateTime()) >= $lastCheckTime; // check again after 10 minutes
-	}
-
-	public static function createSuperset(): string
+	public static function initializeOrCheckSupersetStatus(): string
 	{
 		$status = self::getSupersetStatus();
-		if ($status !== self::SUPERSET_STATUS_DOESNT_EXISTS && $status !== self::SUPERSET_STATUS_LOAD)
+
+		$touchStatuses = [
+			self::SUPERSET_STATUS_ERROR,
+			self::SUPERSET_STATUS_LOAD,
+			self::SUPERSET_STATUS_DOESNT_EXISTS,
+		];
+
+		if (!in_array($status, $touchStatuses))
 		{
 			return $status;
 		}
@@ -82,10 +79,48 @@ final class SupersetInitializer
 		return self::startupSuperset();
 	}
 
-	private static function startSupersetInitialize($firstRequest = true): void
+	/**
+	 * @return string status of superset after startup. If request makes in background, return LOAD status
+	 */
+	private static function startSupersetInitialize(): string
 	{
 		self::preloadSystemDashboards();
-		\Bitrix\Main\Application::getInstance()->addBackgroundJob(fn() => self::makeSupersetCreateRequest($firstRequest));
+
+		if (self::getSupersetStatus() === self::SUPERSET_STATUS_DOESNT_EXISTS)
+		{
+			Application::getInstance()->addBackgroundJob(static function () {
+				self::makeSupersetCreateRequest();
+			});
+
+			return self::SUPERSET_STATUS_LOAD;
+		}
+
+		return self::makeSupersetCreateRequest();
+	}
+
+	private static function getOrCreateAccessKey(): Result
+	{
+		$result = new Result();
+		$user = \Bitrix\Main\Engine\CurrentUser::get();
+		$accessKey = KeyManager::getAccessKey();
+		if ($accessKey !== null)
+		{
+			$result->setData([
+				'ACCESS_KEY' => $accessKey,
+			]);
+		}
+		else
+		{
+			$createdResult = KeyManager::createAccessKey($user);
+			if (!$createdResult->isSuccess())
+			{
+				$createdResult->addError(new Error('Cannot create access key'));
+			}
+
+			$result = $createdResult;
+		}
+
+		return $result;
 	}
 
 	private static function preloadSystemDashboards(): void
@@ -153,6 +188,7 @@ final class SupersetInitializer
 		}
 
 		self::setSupersetStatus(self::SUPERSET_STATUS_READY);
+		DashboardManager::notifySupersetStatus(self::SUPERSET_STATUS_READY);
 
 		$logParams = [];
 		if (!empty($supersetAddress))
@@ -161,85 +197,82 @@ final class SupersetInitializer
 		}
 		SupersetInitializerLogger::logInfo('Superset successfully started', $logParams);
 
-		self::onSupersetCreated();
+		\Bitrix\Main\Application::getInstance()->addBackgroundJob(fn() => self::installInitialDashboards());
 	}
 
 	public static function freezeSuperset(array $params = []): void
 	{
-		$proxyIntegrator = ProxyIntegrator::getInstance();
+		$proxyIntegrator = Integrator::getInstance();
 		$proxyIntegrator->freezeSuperset($params);
 	}
 
 	public static function unfreezeSuperset(array $params = []): void
 	{
-		$proxyIntegrator = ProxyIntegrator::getInstance();
+		$proxyIntegrator = Integrator::getInstance();
 		$proxyIntegrator->unfreezeSuperset($params);
-	}
-
-	public static function setSupersetUnfreezed(): void
-	{
-		self::setSupersetStatus(self::SUPERSET_STATUS_READY);
-		DashboardManager::notifySupersetUnfreeze();
-	}
-
-	public static function onSupersetCreated(): void
-	{
-		self::installInitialDashboards();
 	}
 
 	public static function setSupersetStatus(string $status): void
 	{
-		Option::set('biconnector', 'superset_status', $status);
+		if (!isset(self::$statusContainer))
+		{
+			self::$statusContainer = new SupersetStatusOptionContainer();
+		}
+
+		self::$statusContainer->set($status);
 	}
 
 	public static function getSupersetStatus(): string
 	{
-		return Option::get('biconnector', 'superset_status', self::SUPERSET_STATUS_DOESNT_EXISTS);
+		if (!isset(self::$statusContainer))
+		{
+			self::$statusContainer = new SupersetStatusOptionContainer();
+		}
+
+		return self::$statusContainer->get();
 	}
 
-	private static function makeSupersetCreateRequest(bool $firstRequest = true): int
+	public static function setSupersetStatusContainer(SupersetStatusOptionContainer $container)
 	{
-		$proxyIntegrator = ProxyIntegrator::getInstance();
-		if (!$firstRequest)
+		self::$statusContainer = $container;
+	}
+
+	/**
+	 * @return string status of superset after startup. If request makes in background, return LOAD status
+	 */
+	private static function makeSupersetCreateRequest(): string
+	{
+		$proxyIntegrator = Integrator::getInstance();
+
+		$getKeyResult = self::getOrCreateAccessKey();
+		if (!$getKeyResult->isSuccess())
 		{
-			$proxyIntegrator->skipRequireFields();
+			SupersetInitializerLogger::logErrors($getKeyResult->getErrors());
+
+			return self::SUPERSET_STATUS_ERROR;
 		}
 
-		$user = \Bitrix\Main\Engine\CurrentUser::get();
-		$accessKey = KeyManager::getAccessKey();
-		if ($accessKey === null)
-		{
-			$createdResult = KeyManager::createAccessKey($user);
-			if ($createdResult->isSuccess())
-			{
-				$accessKey = $createdResult->getData()['ACCESS_KEY'] ?? null;
-			}
-		}
+		$response = $proxyIntegrator->startSuperset($getKeyResult->getData()['ACCESS_KEY']);
 
-		if ($accessKey === null)
-		{
-			return IntegratorResponse::STATUS_NO_ACCESS;
-		}
-
-		$response = $proxyIntegrator->startSuperset($accessKey);
+		$status = self::SUPERSET_STATUS_LOAD;
 		if ($response->getStatus() === IntegratorResponse::STATUS_CREATED)
 		{
 			self::enableSuperset($response->getData()['superset_address'] ?? '');
-
-			return $response->getStatus();
+			$status = self::SUPERSET_STATUS_READY;
 		}
-
-		if (!$response->hasErrors())
+		else if ($response->hasErrors())
 		{
-			Option::set('biconnector', ProxyAuth::SUPERSET_PROXY_TOKEN_OPTION, $response->getData()['token']);
-		}
-		else
-		{
-			Option::delete('biconnector', ['name' => self::LAST_STARTUP_ATTEMPT_OPTION]);
 			self::onUnsuccessfulSupersetStartup(...$response->getErrors());
+			$status = self::SUPERSET_STATUS_ERROR;
 		}
 
-		return $response->getStatus();
+		$responseData = $response->getData();
+		if (isset($responseData['token']))
+		{
+			Option::set('biconnector', ProxyAuth::SUPERSET_PROXY_TOKEN_OPTION, $responseData['token']);
+		}
+
+		return $status;
 	}
 
 	private static function installInitialDashboards(): Result
@@ -247,88 +280,62 @@ final class SupersetInitializer
 		return MarketDashboardManager::getInstance()->installInitialDashboards();
 	}
 
-	public static function isSupersetActive(): bool
+	public static function isSupersetReady(): bool
 	{
-		$activeStatuses = [
-			self::SUPERSET_STATUS_READY,
-			self::SUPERSET_STATUS_FROZEN,
-		];
-
-		return in_array(self::getSupersetStatus(), $activeStatuses);
+		return self::getSupersetStatus() === self::SUPERSET_STATUS_READY;
 	}
 
 	public static function isSupersetExist(): bool
 	{
 		$status = self::getSupersetStatus();
 
-		return $status !== self::SUPERSET_STATUS_DOESNT_EXISTS && $status !== self::SUPERSET_STATUS_DISABLED;
+		return $status !== self::SUPERSET_STATUS_DOESNT_EXISTS && $status !== self::SUPERSET_STATUS_DELETED;
 	}
 
-	public static function isSupersetLoad(): bool
+	public static function isSupersetDeleted(): bool
 	{
-		$possibleLoadStatus = [
-			self::SUPERSET_STATUS_LOAD,
-			self::SUPERSET_STATUS_FROZEN,
-		];
-
-		return in_array(self::getSupersetStatus(), $possibleLoadStatus, true);
+		return self::getSupersetStatus() === self::SUPERSET_STATUS_DELETED;
 	}
 
-	public static function isSupersetFrozen(): bool
+	public static function isSupersetLoading(): bool
 	{
-		return self::getSupersetStatus() === self::SUPERSET_STATUS_FROZEN;
+		return self::getSupersetStatus() === self::SUPERSET_STATUS_LOAD;
+	}
+
+	public static function isSupersetUnavailable(): bool
+	{
+		return self::getSupersetStatus() === self::SUPERSET_STATUS_ERROR;
 	}
 
 	public static function onUnsuccessfulSupersetStartup(Error ...$errors): void
 	{
 		if (!empty($errors))
 		{
-			SupersetInitializerLogger::logErrors($errors);
+			SupersetInitializerLogger::logErrors($errors, ['message' => 'error while startup superset']);
 		}
 		else
 		{
-			SupersetInitializerLogger::logErrors([new Error('undefined error while startup superset')]);
+			SupersetInitializerLogger::logErrors(
+				[new Error('undefined error while startup superset')],
+				['message' => 'error while startup superset']
+			);
 		}
 
-		$marketManager = MarketDashboardManager::getInstance();
-		$systemDashboards = $marketManager->getSystemDashboardApps();
-
-		$existingDashboardInfoList = SupersetDashboardTable::getList([
-			'select' => ['ID', 'APP_ID', 'STATUS'],
-			'filter' => [
-				'=APP_ID' => array_column($systemDashboards, 'CODE'),
-				'=STATUS' => SupersetDashboardTable::DASHBOARD_STATUS_LOAD,
-			],
-		])->fetchAll();
-
-		if (empty($existingDashboardInfoList))
-		{
-			self::setSupersetStatus(self::SUPERSET_STATUS_DOESNT_EXISTS);
-			return;
-		}
-
-		self::setSupersetStatus(self::SUPERSET_STATUS_DISABLED);
-
-		SupersetDashboardTable::updateMulti(array_column($existingDashboardInfoList, 'ID'), [
-			'STATUS' => SupersetDashboardTable::DASHBOARD_STATUS_FAILED,
-		]);
-
-		$notifyList = [];
-		foreach ($existingDashboardInfoList as $dashboardInfo)
-		{
-			$notifyList[] = [
-				'id' => $dashboardInfo['ID'],
-				'status' => SupersetDashboardTable::DASHBOARD_STATUS_FAILED,
-			];
-		}
-
-		DashboardManager::notifyBatchDashboardStatus($notifyList);
+		self::setSupersetStatus(self::SUPERSET_STATUS_ERROR);
+		DashboardManager::notifySupersetStatus(self::SUPERSET_STATUS_ERROR);
 	}
 
 	public static function onBitrix24LicenseChange(): void
 	{
 		if (self::getSupersetStatus() === self::SUPERSET_STATUS_DOESNT_EXISTS)
 		{
+			return;
+		}
+
+		if (self::getSupersetStatus() === self::SUPERSET_STATUS_DELETED)
+		{
+			self::setSupersetStatus(self::SUPERSET_STATUS_DOESNT_EXISTS);
+
 			return;
 		}
 
@@ -356,22 +363,28 @@ final class SupersetInitializer
 			return null;
 		}
 
-		$response = ProxyIntegrator::getInstance()->refreshDomainConnection();
-
-		if (!$response->hasErrors() && $response->getStatus() === IntegratorResponse::STATUS_OK)
+		if (
+			Integrator::getInstance()->ping()
+			&& self::getSupersetStatus() === self::SUPERSET_STATUS_READY
+		)
 		{
-			return null;
+			$response = Integrator::getInstance()->refreshDomainConnection();
+
+			if (!$response->hasErrors() && $response->getStatus() === IntegratorResponse::STATUS_OK)
+			{
+				return null;
+			}
 		}
 
 		$className = __CLASS__;
 		$agentName = "\\$className::refreshSupersetDomainConnection();";
 		$agent = \CAgent::GetList(
-				['ID' => 'DESC'],
-				[
-					'MODULE_ID' => 'biconnector',
-					'NAME' => $agentName,
-				]
-			)
+			['ID' => 'DESC'],
+			[
+				'MODULE_ID' => 'biconnector',
+				'NAME' => $agentName,
+			]
+		)
 			->Fetch()
 		;
 
@@ -389,5 +402,92 @@ final class SupersetInitializer
 		}
 
 		return $agentName;
+	}
+
+	public static function deleteInstance(): Result
+	{
+		$result = new Result();
+		$response = Integrator::getInstance()->deleteSuperset();
+		if (!$response->hasErrors())
+		{
+			Registrar::getRegistrar()->clear();
+			self::fixDeleteTimestamp();
+		}
+		else
+		{
+			$result->addErrors($response->getErrors());
+		}
+
+		return $result;
+	}
+
+	private static function fixDeleteTimestamp(): void
+	{
+		\Bitrix\Main\Config\Option::set('biconnector', self::SUPERSET_CLEAN_TIMESTAMP_OPTION, time());
+	}
+
+	private static function getDeleteTimestamp(): int
+	{
+		return (int)\Bitrix\Main\Config\Option::get('biconnector', self::SUPERSET_CLEAN_TIMESTAMP_OPTION, 0);
+	}
+
+	public static function getAvailableToEnableSupersetTimestamp(): int
+	{
+		$cleanTimestamp = self::getDeleteTimestamp();
+		$day = 60 * 60 * 24;
+
+		return $cleanTimestamp + $day;
+	}
+
+	/**
+	 * Clears all data abount BI Constructor - tables and market apps.
+	 *
+	 * @return void
+	 */
+	public static function clearSupersetData(): void
+	{
+		$dashboards = SupersetDashboardTable::getList(['select' => ['*', 'APP']])->fetchCollection();
+		foreach ($dashboards as $dashboard)
+		{
+			$app = $dashboard->getApp();
+			if ($app)
+			{
+				AppTable::uninstall($app->getCode());
+				AppTable::update($app->getId(), ['ACTIVE' => 'N', 'INSTALLED' => 'N']);
+			}
+
+			$dashboardId = $dashboard->getId();
+			$deleteResult = $dashboard->delete();
+			if (!$deleteResult->isSuccess())
+			{
+				Logger::logErrors($deleteResult->getErrors(), ['clearSupersetData, deleting dashboard ' . $dashboardId]);
+			}
+		}
+
+		$apps = AppTable::getList()->fetchCollection();
+		foreach ($apps as $app)
+		{
+			if ($app->getCode() && MarketDashboardManager::isDatasetAppByAppCode($app->getCode()))
+			{
+				AppTable::uninstall($app->getCode());
+				AppTable::update($app->getId(), ['ACTIVE' => 'N', 'INSTALLED' => 'N']);
+			}
+		}
+
+		foreach (SupersetUserTable::getList()->fetchCollection() as $user)
+		{
+			$user->delete();
+		}
+
+		Option::delete('biconnector', ['name' => EmbeddedFilter\DateTime::CONFIG_PERIOD_OPTION_NAME]);
+		Option::delete('biconnector', ['name' => EmbeddedFilter\DateTime::CONFIG_DATE_START_OPTION_NAME]);
+		Option::delete('biconnector', ['name' => EmbeddedFilter\DateTime::CONFIG_DATE_END_OPTION_NAME]);
+		Option::delete('biconnector', ['name' => SystemDashboardManager::OPTION_NEW_DASHBOARD_NOTIFICATION_LIST]);
+		Option::delete('biconnector', ['name' => self::ERROR_DELETE_INSTANCE_OPTION]);
+		Option::delete('biconnector', ['name' => EmbeddedFilter\DateTime::CONFIG_INCLUDE_LAST_FILTER_DATE_OPTION_NAME]);
+
+		Registrar::getRegistrar()->clear();
+
+		// TODO Clear permission and tag tables
 	}
 }

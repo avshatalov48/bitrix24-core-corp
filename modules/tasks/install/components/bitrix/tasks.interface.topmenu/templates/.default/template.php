@@ -32,17 +32,26 @@ if(SITE_TEMPLATE_ID === "bitrix24")
 
 $menuId = intval($arParams["GROUP_ID"]) ? "tasks_panel_menu_group" : "tasks_panel_menu";
 
+$request = \Bitrix\Main\Context::getCurrent()->getRequest();
+
 if(
-	((int)$arParams["GROUP_ID"] == 0 || $arParams['PROJECT_VIEW'] == 'Y')
+	(
+		(int)$arParams["GROUP_ID"] == 0
+		|| $arParams['PROJECT_VIEW'] == 'Y'
+	)
 	&& $arParams['USER_ID'] == $arParams['LOGGED_USER_ID']
+	&& (
+		$request->get('IFRAME') !== 'Y'
+		|| $request->get('SHOW_TASKS_TOP_MENU') === 'Y'
+	)
 )
 {
 
-	if (isset($_REQUEST['IFRAME']) && $_REQUEST['IFRAME']==='Y'): ?>
-	<style>.pagetitle-above {
-			margin-top: 18px;
-		}
-	</style>
+	if ($request->get('IFRAME') === 'Y'): ?>
+		<style>.pagetitle-above {
+				margin-top: 18px;
+			}
+		</style>
 	<?php
 	endif ?>
 
@@ -67,8 +76,16 @@ if(SITE_TEMPLATE_ID === "bitrix24")
 	$this->EndViewTarget();
 }
 
+$isScrumLimitExceeded = ScrumLimit::isLimitExceeded() || !ScrumLimit::isFeatureEnabled();
+if (ScrumLimit::canTurnOnTrial())
+{
+	$isScrumLimitExceeded = false;
+}
+
 $arResult['HELPER']->initializeExtension([
-	'isScrumLimitExceeded' => ScrumLimit::isLimitExceeded(),
-	'isTaskAccessPermissionsLimit' => !(Bitrix24::checkFeatureEnabled(Bitrix24\FeatureDictionary::TASKS_PERMISSIONS)),
+	'isScrumLimitExceeded' => $isScrumLimitExceeded,
+	'isTaskAccessPermissionsLimit' => !(
+		Bitrix24::checkFeatureEnabled(Bitrix24\FeatureDictionary::TASK_ACCESS_PERMISSIONS)
+	),
 	'isRoleControlDisabled' => Filter::isRolesEnabled(),
 ]);

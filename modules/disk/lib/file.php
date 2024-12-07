@@ -17,6 +17,7 @@ use Bitrix\Disk\Internals\SharingTable;
 use Bitrix\Disk\Internals\SimpleRightTable;
 use Bitrix\Disk\Internals\TrackedObjectTable;
 use Bitrix\Disk\Internals\VersionTable;
+use Bitrix\Disk\Security\ParameterSigner;
 use Bitrix\Disk\Security\SecurityContext;
 use Bitrix\Disk\Uf\FileUserType;
 use Bitrix\Main;
@@ -1738,17 +1739,46 @@ class File extends BaseObject
 		]);
 		$urlShowObjectInGrid = new Main\Web\Uri($urlShowObjectInGrid);
 
+		$links = [
+			/** @see \Bitrix\Disk\Controller\File::downloadAction() */
+			'download' => Main\Engine\UrlManager::getInstance()->create('disk.file.download', ['fileId' => $this->getId()]),
+			'showInGrid' => $urlShowObjectInGrid,
+			'preview' => $this->getPreviewLink(),
+		];
+
 		return array_merge(parent::jsonSerialize(), [
 			'typeFile' => (int)$this->getTypeFile(),
 			'globalContentVersion' => (int)$this->getGlobalContentVersion(),
 			'fileId' => (int)$this->getFileId(),
 			'size' => (int)$this->getSize(),
 			'etag' => $this->getEtag(),
-			'links' => [
-				/** @see \Bitrix\Disk\Controller\File::downloadAction() */
-				'download' => Main\Engine\UrlManager::getInstance()->create('disk.file.download', ['fileId' => $this->getId()]),
-				'showInGrid' => $urlShowObjectInGrid,
-			],
+			'links' => array_filter($links),
+		]);
+	}
+
+	private function getPreviewLink(): ?string
+	{
+		$urlManager = Main\Engine\UrlManager::getInstance();
+
+		if ($this->getView()->getPreviewData())
+		{
+			$controllerAction = 'disk.api.file.showPreview';
+		}
+		elseif (TypeFile::isImage($this))
+		{
+			$controllerAction = 'disk.api.file.showImage';
+		}
+		else
+		{
+			return null;
+		}
+
+		return $urlManager->create($controllerAction, [
+			'humanRE' => 1,
+			'width' => 640,
+			'height' => 640,
+			'signature' => ParameterSigner::getImageSignature($this->getId(), 640, 640),
+			'fileId' => $this->getId(),
 		]);
 	}
 }

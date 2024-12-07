@@ -31,7 +31,7 @@ class Trial
 			];
 		}
 
-		if (!Loader::includeModule('rest') || !CRestUtil::isAdmin()) {
+		if (!Loader::includeModule('rest')) {
 			return [
 				'error' => Loc::getMessage('MARKET_ACTIVATE_DEMO_ACCESS_DENIED'),
 			];

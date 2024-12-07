@@ -28,11 +28,18 @@ jn.define('layout/ui/file-attachment', (require, exports, module) => {
 			this.gridViewAdapter = null;
 
 			this.throttledOnAddButtonClick = throttle(this.onAddButtonClick, 500, this);
+
+			this.layoutWidget.on('onViewHidden', () => this.handleViewHidden());
 		}
 
 		componentWillReceiveProps(props)
 		{
 			this.state.attachments = props.attachments;
+		}
+
+		handleViewHidden()
+		{
+			this.props.onViewHidden?.();
 		}
 
 		onChangeAttachments(attachments)
@@ -220,7 +227,9 @@ jn.define('layout/ui/file-attachment', (require, exports, module) => {
 				attachmentFileIconFolder: this.props.attachmentFileIconFolder,
 				styles: this.props.styles,
 				files: this.state.attachments,
-				showName: this.props.showName,
+				showName: this.props.showName ?? true,
+				textLines: 2,
+				onFilePreviewMenuClick: this.props.onFilePreviewMenuClick,
 			});
 		}
 

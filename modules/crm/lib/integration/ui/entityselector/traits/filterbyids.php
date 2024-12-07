@@ -11,7 +11,7 @@ trait FilterByIds
 		return (bool)count($this->idsForFilter);
 	}
 
-	protected function setIdsForFilter($ids = []): void
+	protected function setIdsForFilter(array $ids = []): void
 	{
 		$this->idsForFilter = $ids;
 	}
@@ -25,7 +25,9 @@ trait FilterByIds
 	{
 		if ($this->isFilterByIds())
 		{
-			return ['@ID' => $this->getIdsForFilter()];
+			return [
+				'@ID' => $this->getIdsForFilter()
+			];
 		}
 
 		return [];

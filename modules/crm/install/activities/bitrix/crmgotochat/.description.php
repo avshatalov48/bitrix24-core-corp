@@ -5,11 +5,12 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 
 $arActivityDescription = [
-	'NAME' => Loc::getMessage('BP_CRM_GO_TO_CHAT_NAME'),
-	'DESCRIPTION' => Loc::getMessage('BP_CRM_GO_TO_CHAT_DESCRIPTION'),
+	'NAME' => Loc::getMessage('BP_CRM_GO_TO_CHAT_NAME_1'),
+	'DESCRIPTION' => Loc::getMessage('BP_CRM_GO_TO_CHAT_DESCRIPTION_1'),
 	'TYPE' => ['activity', 'robot_activity'],
 	'CLASS' => 'CrmGoToChat',
 	'JSCLASS' => 'BizProcActivity',
@@ -26,6 +27,16 @@ $arActivityDescription = [
 	'ROBOT_SETTINGS' => [
 		'CATEGORY' => 'client',
 		'GROUP' => ['clientCommunication'],
-		'SORT' => 1350,
+		'SORT' => 1351,
 	],
 ];
+
+
+if (Loader::includeModule('crm'))
+{
+	$canUseNotifications = \Bitrix\Crm\Integration\NotificationsManager::canUse();
+	if (!$canUseNotifications)
+	{
+		$arActivityDescription['EXCLUDED'] = true;
+	}
+}

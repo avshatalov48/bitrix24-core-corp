@@ -37,7 +37,8 @@ class RpaAutomationAddRobotComponent extends Rpa\Components\Base
 
 		if (!$this->checkPermissions($this->arResult['DOCUMENT_TYPE']))
 		{
-			return $this->showError(Loc::getMessage('RPA_MODIFY_TYPE_ACCESS_DENIED'));
+			$this->showError(Loc::getMessage('RPA_MODIFY_TYPE_ACCESS_DENIED'));
+			return;
 		}
 
 		$this->arResult['ROBOTS'] = \CBPRuntime::getRuntime()

@@ -20,7 +20,7 @@ jn.define('crm/timeline/stream/base', (require, exports, module) => {
 		 */
 		constructor(props)
 		{
-			const { items, timelineScopeEventBus, isEditable, onChange, onItemAction } = props;
+			const { items, timelineScopeEventBus, isEditable, onChange, onItemAction, entityType } = props;
 
 			/** @type {TimelineItemModel[]} */
 			this.items = [];
@@ -46,6 +46,8 @@ jn.define('crm/timeline/stream/base', (require, exports, module) => {
 
 			/** @type {ItemPositionCalculator} */
 			this.itemPositionCalculator = null;
+
+			this.entityType = entityType;
 		}
 
 		/**
@@ -409,17 +411,18 @@ jn.define('crm/timeline/stream/base', (require, exports, module) => {
 		renderItem(id)
 		{
 			const model = this.findItem(id);
-			if (model)
+			if (!model)
 			{
-				return TimelineItemFactory.make(model.type, {
-					model,
-					timelineScopeEventBus: this.timelineScopeEventBus,
-					ref: (ref) => this.itemRefs[id] = ref,
-					onAction: this.onItemAction.bind(this),
-				});
+				return null;
 			}
 
-			return null;
+			return TimelineItemFactory.make(model.type, {
+				model,
+				timelineScopeEventBus: this.timelineScopeEventBus,
+				ref: (ref) => this.itemRefs[id] = ref,
+				onAction: this.onItemAction.bind(this),
+				entityType: this.entityType,
+			});
 		}
 
 		/**

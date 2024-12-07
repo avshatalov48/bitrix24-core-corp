@@ -1,9 +1,9 @@
-import { ajax as Ajax, Dom, Event, Reflection, Text, Type, Loc } from "main.core";
-import { EventEmitter } from "main.core.events";
-import { BaseButton, Button, ButtonIcon } from "ui.buttons";
-import { Router } from "crm.router";
-import { Menu } from "main.popup";
-import {Guide} from "ui.tour";
+import { Router } from 'crm.router';
+import { ajax as Ajax, Dom, Event, Loc, Reflection, Text, Type } from 'main.core';
+import { EventEmitter } from 'main.core.events';
+import { Menu } from 'main.popup';
+import { BaseButton, Button, ButtonIcon } from 'ui.buttons';
+import { Guide } from 'ui.tour';
 
 import 'ui.hint';
 
@@ -17,6 +17,7 @@ class ToolbarEvents
 {
 	static TYPE_UPDATED = 'TypeUpdated';
 	static CATEGORIES_UPDATED = 'CategoriesUpdated';
+	static AUTOMATED_SOLUTION_UPDATED = 'CategoriesUpdated';
 }
 
 /**
@@ -67,6 +68,12 @@ export default class ToolbarComponent extends EventEmitter
 			const toolbar =	BX.UI.ToolbarManager.getDefaultToolbar();
 			const button = toolbar.getButton(Dom.attr(buttonNode, 'data-btn-uniqid'));
 			const entityTypeId = Number(buttonNode.dataset.entityTypeId);
+
+			if (button.counterNode && button.counterNode.innerText > 99)
+			{
+				button.counterNode.innerText = '99+';
+			}
+
 			if (button && entityTypeId > 0)
 			{
 				this.subscribeCategoriesUpdatedEvent(() => {
@@ -132,6 +139,11 @@ export default class ToolbarComponent extends EventEmitter
 		this.emit(ToolbarEvents.TYPE_UPDATED, data);
 	}
 
+	emitAutomatedSolutionUpdatedEvent(data: Object): void
+	{
+		this.emit(ToolbarEvents.AUTOMATED_SOLUTION_UPDATED, data);
+	}
+
 	emitCategoriesUpdatedEvent(data)
 	{
 		this.emit(ToolbarEvents.CATEGORIES_UPDATED, data);
@@ -145,6 +157,16 @@ export default class ToolbarComponent extends EventEmitter
 	subscribeCategoriesUpdatedEvent(callback)
 	{
 		this.subscribe(ToolbarEvents.CATEGORIES_UPDATED, callback);
+	}
+
+	subscribeAutomatedSolutionUpdatedEvent(callback): void
+	{
+		this.subscribe(ToolbarEvents.AUTOMATED_SOLUTION_UPDATED, callback);
+	}
+
+	unsubscribeAutomatedSolutionUpdatedEvent(callback): void
+	{
+		this.unsubscribe(ToolbarEvents.AUTOMATED_SOLUTION_UPDATED, callback);
 	}
 
 	reloadCategoriesMenu(button: BaseButton, entityTypeId: number, categoryId: ?number)

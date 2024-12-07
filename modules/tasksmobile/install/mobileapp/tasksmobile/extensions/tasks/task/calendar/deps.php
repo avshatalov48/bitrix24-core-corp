@@ -2,7 +2,11 @@
 
 return [
 	'extensions' => [
-		'rest',
+		'rest/run-action-executor',
 		'type',
+		'feature',
+	],
+	'bundle' => [
+		'./src/substitute-storage',
 	],
 ];

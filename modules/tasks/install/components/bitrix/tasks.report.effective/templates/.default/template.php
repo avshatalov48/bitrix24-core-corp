@@ -1,11 +1,11 @@
-<?
+<?php
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true){die();}
 
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Main\Loader;
 use Bitrix\Main\UI\Extension;
 use Bitrix\Main\Web\Json;
 use Bitrix\Tasks\Helper\RestrictionUrl;
+use Bitrix\Tasks\Integration\Bitrix24\FeatureDictionary;
 
 Extension::load([
 	"ui.graph.circle",
@@ -46,16 +46,8 @@ Loc::loadMessages(__FILE__);
 $bodyClass = $APPLICATION->GetPageProperty('BodyClass');
 $APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass.' ' : '').' no-background no-all-paddings pagetitle-toolbar-field-view ');
 $isBitrix24Template = SITE_TEMPLATE_ID === "bitrix24";
-$taskLimitExceeded = $arResult['TASK_LIMIT_EXCEEDED'];
-$kpiLimitExceeded = $arResult['KPI_LIMIT_EXCEEDED'];
 
-if (
-	$taskLimitExceeded
-	|| $kpiLimitExceeded
-)
-{
-	$APPLICATION->IncludeComponent("bitrix:ui.info.helper", "", []);
-}
+$taskLimitExceeded = $arResult['TASK_LIMIT_EXCEEDED'];
 
 $APPLICATION->IncludeComponent(
 	'bitrix:tasks.interface.topmenu',
@@ -134,7 +126,7 @@ if ($isBitrix24Template)
 	$this->EndViewTarget();
 }
 ?>
-<div class="<?=( ($arResult['TASK_LIMIT_EXCEEDED'] || $arResult['KPI_LIMIT_EXCEEDED']) ? 'task-report-locked' : '')?>" id="<?=$arResult['HELPER']->getScopeId()?>">
+<div class="<?=(($arResult['TASK_LIMIT_EXCEEDED'] || !$arResult['tasksEfficiencyEnabled']) ? 'task-report-locked' : '')?>" id="<?=$arResult['HELPER']->getScopeId()?>">
 	<div class="task-report-row task-report-row-50-50">
 		<div class="task-report-container">
 			<div class="task-report-container-title">
@@ -234,7 +226,7 @@ if (isset($arResult['FILTERS']) && is_array($arResult['FILTERS']))
 	if (!empty($selectors))
 	{
 		?>
-		<script type="text/javascript"><?
+		<script><?
 			foreach ($selectors as $groupSelector)
 			{
 			$selectorID = $groupSelector['ID'];
@@ -262,19 +254,21 @@ if (isset($arResult['FILTERS']) && is_array($arResult['FILTERS']))
 
 <?=$arResult['HELPER']->initializeExtension()?>
 
-<script type="text/javascript">
+<script>
 	BX.ready(function() {
-		var taskLimitExceeded = <?= Json::encode($taskLimitExceeded) ?>;
-		var kpiLimitExceeded = <?= Json::encode($kpiLimitExceeded) ?>;
+		const tasksEfficiencyEnabled = <?= Json::encode($arResult['tasksEfficiencyEnabled']) ?>;
 
-		if (taskLimitExceeded || kpiLimitExceeded)
+		if (!tasksEfficiencyEnabled)
 		{
-			BX.UI.InfoHelper.show('limit_tasks_efficiency', {
-				isLimit: true,
-				limitAnalyticsLabels: {
-					module: 'tasks',
-					source: 'view',
-				},
+			BX.Runtime.loadExtension('tasks.limit').then((exports) => {
+				const { Limit } = exports;
+				Limit.showInstance({
+					featureId: '<?=FeatureDictionary::TASK_EFFICIENCY?>',
+					limitAnalyticsLabels: {
+						module: 'tasks',
+						source: 'view',
+					},
+				});
 			});
 		}
 	});

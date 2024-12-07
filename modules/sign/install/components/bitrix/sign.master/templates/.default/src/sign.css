@@ -1,0 +1,919 @@
+.ui-side-panel-wrap-title-wrap {
+	display: none;
+}
+
+.sign-master__scope {
+	/*settings*/
+	--border-radius-md: 12px;
+	--inset-wrapper-space: 33px;
+
+	/*fonts*/
+	--font_os_light: 	"OpenSans-Light", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	--font_os_regular: 	"OpenSans-Regular", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	--font_os_semibold: "OpenSans-SemiBold", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	--font_os_bold: 	"OpenSans-Bold", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	--font_helvetica:	"Helvetica Neue", Helvetica, Arial, sans-serif;
+
+	/*colors*/
+	--color_text-1: rgba(106, 115, 127, 1);
+}
+
+.sign-master_slider .ui-side-panel-wrap-workarea {
+	overflow: unset;
+}
+
+.sign-master {
+	display: flex;
+	position: relative;
+	padding: var(--inset-wrapper-space);
+	min-height: 100vh;
+	box-sizing: border-box;
+	background: url(image/background-one.svg) top right no-repeat,
+				url(image/background-two.svg) left bottom no-repeat;
+	background-attachment: fixed;
+}
+
+.sign-master__block {
+	position: absolute;
+	box-sizing: border-box;
+	padding: 2px;
+	border: 2px solid #2fc6f6;
+	background: rgba(255,255,255,.6);
+	border-radius: 2px;
+	box-shadow: 0 2px 12px rgba(47, 198, 246, .5);
+}
+
+.sign-master__wrapper {
+	flex: 1;
+	display: block;
+	position: relative;
+	overflow: hidden;
+	/*min-width: 440px;*/
+	margin-right: 24px;
+}
+
+.sign-master__preview {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	min-width: 330px;
+	/*max-width: 450px;*/
+	/*max-height: calc(100vh - var(--inset-wrapper-space));*/
+	position: relative;
+	transition: .3s;
+}
+
+.sign-master__preview.--sm {
+	flex: .75;
+}
+
+.sign-master__preview.--hide {
+	pointer-events: none;
+	opacity: 0;
+	transition: unset;
+}
+
+.sign-master__preview-sticky {
+	position: sticky;
+	top: 5px;
+	/*max-height: calc(100vh - var(--inset-wrapper-space));*/
+}
+
+.sign-master__preview-container {
+	display: block;
+	overflow: hidden;
+	background: #fff;
+	box-shadow: 0 12px 20px rgba(82,92,105,.13);
+	transform: translateZ(0);
+}
+
+.sign-master__preview-container_image {
+	pointer-events: none;
+	user-select: none;
+}
+
+.sign-master__preview-container.--scroll {
+	/*overflow: auto;*/
+	cursor: grab;
+}
+
+.sign-master__preview-container.--grabbing {
+	cursor: grabbing;
+}
+
+.sign-master__preview-container.--relative {
+	position: relative;
+	padding-top: 140%;
+}
+
+.sign-master__preview-loader {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%,-50%);
+	display: inline-flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+}
+
+.sign-master__preview-loader_logo-b24 {
+	display: inline-block;
+	width: 69px;
+	height: 14px;
+	margin-bottom: 10px;
+	background: url(image/sign-master_logo-b24-en.svg) center no-repeat;
+	background-size: cover;
+}
+
+.sign-master__preview-loader_logo-b24.--ru {
+	width: 100px;
+	height: 19px;
+	margin-bottom: -5px;
+	background-image: url(image/sign-master_logo-b24-ru.svg);
+}
+
+.sign-master__preview-loader_spinner {
+	display: inline-block;
+	padding-top: 100%;
+	margin-bottom: 5px;
+}
+
+.sign-master__preview-loader_text {
+	font: 10px/20px var(--font_os_regular);
+	color: var(--color_text-1);
+}
+
+.sign-master__preview-image-block {
+	/*display: flex;*/
+	/*overflow: auto;*/
+	/*min-width: 100%;*/
+	/*position: relative;*/
+	/*padding-top: 140%;*/
+	/*background: #fff;*/
+	/*box-shadow: 0 12px 20px rgba(82,92,105,.13);*/
+}
+
+.sign-master__preview-image {
+	max-width: 100%;
+}
+
+.sign-master__preview-image_container {
+	display: inline-block;
+	overflow: hidden;
+}
+
+.sign-master__preview-image.--skeleton {
+	max-width: 100%;
+}
+
+.sign-master__preview-image.--hide {
+	opacity: 0;
+}
+
+.sign-master__preview-loading-container {
+}
+
+.sign-master__preview-loading {
+	display: inline-block;
+	text-align: center;
+}
+
+.sign-master__head{
+	display: flex;
+	padding: 18px 22px;
+	margin-bottom: 17px;
+	box-sizing: border-box;
+	background: rgba(255,255,255,1);
+	border-radius: var(--border-radius-md);
+}
+
+.sign-master__head-icon {
+	display: block;
+	width: 56px;
+	min-width: 56px;
+	height: 56px;
+	margin-right: 13px;
+	background: url("data:image/svg+xml,%3Csvg width='56' height='56' viewBox='0 0 56 56' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='28' cy='28' r='28' fill='%2347E4C2'/%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M16 16C16 14.8954 16.8954 14 18 14H32.1013C32.6074 14 33.0948 14.1919 33.465 14.537L39.3637 20.0355C39.7695 20.4137 40 20.9436 40 21.4984V41C40 42.1046 39.1046 43 38 43H18C16.8954 43 16 42.1046 16 41V16Z' fill='white'/%3E%3Cmask id='mask0_37_52310' style='mask-type:alpha' maskUnits='userSpaceOnUse' x='16' y='14' width='24' height='29'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M16 16C16 14.8954 16.8954 14 18 14H32.1013C32.6074 14 33.0948 14.1919 33.465 14.537L39.3637 20.0355C39.7695 20.4137 40 20.9436 40 21.4984V41C40 42.1046 39.1046 43 38 43H18C16.8954 43 16 42.1046 16 41V16Z' fill='white'/%3E%3C/mask%3E%3Cg mask='url(%23mask0_37_52310)'%3E%3Cpath opacity='0.12' fill-rule='evenodd' clip-rule='evenodd' d='M32.1183 14C31.9009 14 40.0001 14 40.0001 14C40.0001 14 40.0001 21.6101 40.0001 21.3645C40.0001 21.119 39.7773 21.0429 39.6421 21.0429C39.5543 21.0429 36.5429 21.0429 34.4435 21.0429C33.339 21.0429 32.4446 20.1487 32.4446 19.0441C32.4446 17.0809 32.4446 14.37 32.4446 14.3102C32.4446 14.2163 32.3357 14 32.1183 14Z' fill='%23525C69'/%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M19.6924 24.875C19.6924 24.3745 20.0981 23.9688 20.5986 23.9688H32.6323C33.1328 23.9688 33.5385 24.3745 33.5385 24.875C33.5385 25.3755 33.1328 25.7812 32.6323 25.7812H20.5986C20.0981 25.7812 19.6924 25.3755 19.6924 24.875ZM19.6924 29.4062C19.6924 28.9057 20.0981 28.5 20.5986 28.5H32.6323C33.1328 28.5 33.5385 28.9057 33.5385 29.4062C33.5385 29.9068 33.1328 30.3125 32.6323 30.3125H20.5986C20.0981 30.3125 19.6924 29.9068 19.6924 29.4062ZM20.5986 33.0312C20.0981 33.0312 19.6924 33.437 19.6924 33.9375C19.6924 34.438 20.0981 34.8438 20.5986 34.8438H28.94C29.4405 34.8438 29.8462 34.438 29.8462 33.9375C29.8462 33.437 29.4405 33.0312 28.94 33.0312H20.5986Z' fill='%233FD3B4'/%3E%3C/g%3E%3C/svg%3E%0A") center no-repeat;
+	border-radius: 50%;
+}
+
+.sign-master__head-container {
+	flex: 1;
+}
+
+.sign-master__head-title {
+	font: 26px/26px "OpenSans-Light", Helvetica, Arial, sans-serif;
+	color: rgba(51,51,51,1);
+	margin: 4px 0 7px;
+}
+
+.sign-master__head-title--sub {
+	font-family: "OpenSans-Regular", Helvetica, Arial, sans-serif;
+	font-size: 13px;
+	color: rgba(130,139,149,1);
+}
+
+.sign-master__container {
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+	min-height: 565px;
+	background: rgba(255,255,255,.8);
+	border-radius: var(--border-radius-md);
+}
+
+.sign-master__steps {
+	display: block;
+	overflow: hidden;
+	padding: 14px 26px;
+}
+
+.sign-master__steps-item {
+	display: inline-block;
+	padding-right: 20px;
+	position: relative;
+	vertical-align: top;
+	font-family: "OpenSans-SemiBold", Helvetica, Arial, sans-serif;
+	font-size: 14px;
+	line-height: 25px;
+	color: rgba(82,92,105,.5);
+}
+
+.sign-master__steps-item.--active {
+	color: #525c69;
+}
+
+.sign-master__steps-item.--prev {
+	color: #638d00;
+}
+
+.sign-master__steps-item:last-child {
+	padding-right: 0;
+}
+
+.sign-master__steps-item:after {
+	content: '';
+	position: absolute;
+	right: 6px;
+	top: 10px;
+	width: 5px;
+	height: 5px;
+	border-right: 2px solid #525c69;
+	border-top: 2px solid #525c69;
+	opacity: .2;
+	transform: rotate(45deg);
+}
+
+.sign-master__steps-item:last-child:after {
+	content: none;
+}
+
+.sign-master__content-responsible {
+	padding: 0 15px 15px 15px;
+	margin-bottom: 15px;
+	background-color: #f9fafb;
+	box-shadow: 0 1px 1px 0 rgba(0, 0, 0, .04);
+	border-radius: var(--ui-entity-editor-section-border-radius, var(--ui-border-radius-md, 1px));
+}
+
+.sign-master__content-responsible_title {
+	position: relative;
+	padding: 11px 20px 11px 0;
+	color: #2fc6f6;
+	font: 20px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: normal;
+}
+
+.sign-master__content-responsible_title-hint {
+	position: absolute;
+	bottom: 10px;
+	display: inline-flex;
+	vertical-align: middle;
+	align-items: center;
+	justify-content: center;
+	overflow: hidden;
+	width: 20px;
+	height: 20px;
+	cursor: pointer;
+	opacity: .85;
+	transition: .2s;
+}
+
+.sign-master__content-responsible_title-hint:hover {
+	opacity: 1;
+	transition: unset;
+}
+
+.sign-master__content-responsible_title-hint i {
+	display: inline-block;
+	width: 12px;
+	height: 12px;
+	background: url(image/sign-master-hint.svg) center no-repeat;
+}
+
+.sign-master__content {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+	padding: 15px 24px;
+	background: #fff;
+	border-radius: var(--border-radius-md);
+	box-shadow: 0 4px 13px 0 rgba(82,92,105,.04);
+}
+
+.sign-master__content.--lock {
+	opacity: .4;
+	pointer-events: none;
+}
+
+.sign-master__content-title {
+	font: 19px/24px "OpenSans-Regular", Helvetica, Arial, sans-serif;
+	color: #16b5e8;
+	margin-bottom: 7px;
+}
+
+.sign-master__content-subtitle {
+	font: 16px/22px "OpenSans-Regular", Helvetica, Arial, sans-serif;
+	color: #333333;
+	margin-bottom: 2px;
+}
+
+.sign-master__row {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: flex-start;
+	margin: 0 -5px 30px;
+}
+
+.sign-master__item {
+	width: 122px;
+	/*height: 122px;*/
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	box-sizing: border-box;
+	border-radius: var(--border-radius-md);
+	margin: 10px 5px 0;
+	padding: 3px 3px 10px;
+	position: relative;
+	cursor: pointer;
+	transition: .2s;
+}
+
+.sign-master__item--icon {
+	width: 100%;
+	height: 65px;
+	display: flex;
+	align-items: flex-end;
+	justify-content: center;
+	border-radius: 8px;
+	margin-bottom: 11px;
+	padding-bottom: 1px;
+	box-sizing: border-box;
+}
+
+.sign-master__item--icon.--bg-blue {
+	background: rgba(47,198,246,.08);
+	align-items: center;
+	flex-shrink: 0;
+}
+
+.sign-master__item--icon-img {
+	width: 48px;
+	height: 48px;
+	display: flex;
+	align-items: center;
+}
+
+.sign-master__item--icon-img .ui-icon {
+	margin-left: 3px;
+}
+
+.sign-master__item--icon-img .ui-icon.ui-icon-file-empty::after {
+	content: '';
+	display: block;
+	width: 24px;
+	height: 24px;
+	position: absolute;
+	top: 55%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	background: url(image/sign-master-plus.svg) center no-repeat;
+}
+
+.sign-master__item--text {
+	display: flex;
+	flex-direction: column;
+	flex: 1;
+	align-items: center;
+	flex-wrap: wrap;
+	text-align: center;
+	max-width: 100%;
+	overflow: hidden;
+	box-sizing: border-box;
+	padding: 0 10px;
+}
+
+.sign-master__item_text-name {
+	width: 100%;
+	font-size: 12px;
+	color: #525c69;
+	overflow: hidden;
+	word-break: break-word;
+}
+
+.sign-master__item--text-info {
+	width: 100%;
+	font-size: 11px;
+	color: #a8adb4;
+}
+
+.sign-master__item--icon-img.--img-suitcase {
+	background: url(image/sign-master-suitcase.svg) center no-repeat;
+}
+
+.sign-master__item--icon-img.--img-basket {
+	background: url(image/sign-master-basket.svg) center no-repeat;
+}
+
+.sign-master__item--icon-img.--img-book{
+	background: url(image/sign-master-book.svg) center no-repeat;
+}
+
+.sign-master__item--icon-img.--img-key {
+	background: url(image/sign-master-key.svg) center no-repeat;
+}
+
+.sign-master__item--icon-img.--img-photo-phone {
+	background: url(image/sign-master-photo-phone.svg) center no-repeat;
+}
+
+.sign-master__item--icon-img.--img-market {
+	background: url(image/sign-master-market.svg) center no-repeat;
+}
+
+.sign-master__item--detailed-info {
+	position: absolute;
+	top: 0;
+	right: 0;
+	background: #fff;
+	width: 32px;
+	height: 25px;
+	overflow: hidden;
+	cursor: pointer;
+	border-radius: 0 12px 0 8px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.sign-master__item--detailed-info .ui-icon {
+	opacity: 0.7;
+	transition: .2s;
+}
+
+.sign-master__item--detailed-info:hover .ui-icon {
+	opacity: 1;
+}
+
+.sign-master__item--detailed-info .ui-icon > i {
+	--ui-icon-service-bg-color: transparent;
+}
+
+.sign-master__item.--download-block {
+	border: 1px dashed rgba(47,198,246,.4);
+	padding-bottom: 7px;
+}
+
+.sign-master__item.--download-block:hover {
+	border: 1px solid rgba(47,198,246,.8);
+}
+
+.sign-master__item--text-name.--market {
+	font-family: "OpenSans-Bold", Helvetica, Arial, sans-serif;
+	font-size: 12px;
+	line-height: 13px;
+	color: #525C69;
+	position: relative;
+	top: -2px;
+}
+
+.sign-master__item--text-name.--market span {
+	color: #2FC6F6;
+}
+
+.sign-master__item--input-hidden {
+	display: none;
+}
+
+.sign-master__item-border {
+	position: absolute;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	left: 0;
+	pointer-events: none;
+	border: 1px solid #edeef0;
+	border-radius: var(--border-radius-md);
+	transition: .2s;
+	z-index: 1;
+}
+
+.sign-master__item:hover .sign-master__item-border {
+	border-color: rgba(82,92,105,.2);
+}
+
+.sign-master__item.--active .sign-master__item-border,
+.sign-master__item--input-hidden:checked + .sign-master__item-border {
+	border-color: #2fc6f6 !important;
+}
+
+.sign-master__item--icon.--download-block {
+	height: 58px;
+}
+
+.sign-master__content-bottom {
+	display: block;
+	padding: 26px 0 11px;
+	border-top: 1px solid rgba(82,92,105,.1);
+	margin-top: 11px;
+}
+
+.sign-master__content-bottom .ui-btn-disabled {
+	pointer-events: none;
+}
+
+.sign-master__preview-container_bottom {
+	display: flex;
+	justify-content: space-between;
+	margin-top: 14px;
+	transition: .2s;
+}
+
+.sign-master__preview-container_bottom.--lock {
+	pointer-events: none;
+	opacity: .4;
+}
+
+.sign-master__preview-nav {
+	display: flex;
+	align-items: center;
+	background: #fff;
+	box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+	border-radius: 40px;
+	padding: 3px;
+	margin-left: 9px;
+	font: 12px/17px "OpenSans-SemiBold", Helvetica, Arial, sans-serif;
+	color: rgba(168,173,180,1);
+}
+
+.sign-master__preview-nav.--lock {
+	opacity: .5;
+	pointer-events: none;
+}
+
+.sign-master__preview-nav--info-dark {
+	color: #525c69;
+}
+
+.sign-master__preview-nav--btn {
+	width: 24px;
+	height: 24px;
+	box-sizing: border-box;
+	border: 1px solid #f8f9fa;
+	border-radius: 50%;
+	/*position: relative;*/
+	background: url("data:image/svg+xml,%3Csvg width='16' height='16' viewBox='0 0 16 16' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M10.5741 11.7715L7.55606 8.75345L6.80006 8L7.55606 7.24717L10.5741 4.22914L9.50912 3.16416L4.67301 8.00027L9.50912 12.8364L10.5741 11.7715Z' fill='%23BDC1C6'/%3E%3C/svg%3E%0A") center no-repeat;
+	cursor: pointer;
+	transition: .2s;
+}
+
+.sign-master__preview-nav--btn.--next {
+	transform: rotate(180deg);
+}
+
+.sign-master__preview-nav--btn:hover {
+	border-color:  #bdc1c6;
+}
+
+.sign-master__preview-nav--btn.--disabled {
+	pointer-events: none;
+	opacity: 0.5;
+}
+
+.sign-master__preview-nav--info {
+	display: flex;
+	margin: 0 11px 2px;
+}
+
+.sign-master__preview-zoom {
+	display: inline-flex;
+	align-items: center;
+	position: relative;
+	padding-left: 23px;
+	margin-right: 13px;
+	font: 12px/16px "OpenSans-SemiBold", Helvetica, Arial, sans-serif;
+	color: #a8adb4;
+	transition: .2s;
+}
+
+.sign-master__preview-zoom_control {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 30px;
+	height: 40px;
+	background: center no-repeat;
+	opacity: .7;
+	cursor: pointer;
+	transition: .2s;
+}
+
+.sign-master__preview-zoom_control:hover {
+	opacity: 1;
+	transition: none;
+}
+
+.sign-master__preview-zoom_control.--hold {
+	pointer-events: none;
+	opacity: .15;
+}
+
+.sign-master__preview-zoom_control.--plus {
+	background-image: url(image/sign-master-plus.svg);
+}
+
+.sign-master__preview-zoom_control.--minus {
+	background-image: url(image/sign-master-minus.svg);
+}
+
+.sign-master__preview-zoom-value {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 31px;
+	white-space: nowrap;
+}
+
+.sign-master__preview-zoom-value:after {
+	content: '%';
+}
+
+.sign-master__send-summary--wrapper {
+	border: 1px solid #2fc6f6;
+	box-sizing: border-box;
+	border-radius: 8px;
+	margin: 5px -6px 8px;
+	padding: 19px 22px;
+	display: flex;
+	align-items: center;
+}
+
+.sign-master__send-summary--icon {
+	display: block;
+	min-width: 42px;
+	height: 50px;
+	margin: 4px 27px 0 0;
+	background: url("data:image/svg+xml,%3Csvg width='44' height='54' viewBox='0 0 44 54' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cg filter='url(%23filter0_d_69_49907)'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M2 3C2 1.89543 2.89543 1 4 1H29.3409C29.8588 1 30.3564 1.20086 30.7292 1.56031L41.3883 11.8387C41.7792 12.2156 42 12.7353 42 13.2784V49C42 50.1046 41.1046 51 40 51H4C2.89543 51 2 50.1046 2 49V3Z' fill='white'/%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M2 3C2 1.89543 2.89543 1 4 1H29.3409C29.8588 1 30.3564 1.20086 30.7292 1.56031L41.3883 11.8387C41.7792 12.2156 42 12.7353 42 13.2784V49C42 50.1046 41.1046 51 40 51H4C2.89543 51 2 50.1046 2 49V3Z' fill='%23828B95' fill-opacity='0.12'/%3E%3C/g%3E%3Cmask id='mask0_69_49907' style='mask-type:alpha' maskUnits='userSpaceOnUse' x='2' y='1' width='40' height='50'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M2 3C2 1.89543 2.89543 1 4 1H29.3409C29.8588 1 30.3564 1.20086 30.7292 1.56031L41.3883 11.8387C41.7792 12.2156 42 12.7353 42 13.2784V49C42 50.1046 41.1046 51 40 51H4C2.89543 51 2 50.1046 2 49V3Z' fill='white'/%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M2 3C2 1.89543 2.89543 1 4 1H29.3409C29.8588 1 30.3564 1.20086 30.7292 1.56031L41.3883 11.8387C41.7792 12.2156 42 12.7353 42 13.2784V49C42 50.1046 41.1046 51 40 51H4C2.89543 51 2 50.1046 2 49V3Z' fill='%23828B95'/%3E%3C/mask%3E%3Cg mask='url(%23mask0_69_49907)'%3E%3Cpath opacity='0.12' fill-rule='evenodd' clip-rule='evenodd' d='M28.8636 1C28.5013 1 41.9999 1 41.9999 1C41.9999 1 41.9999 14.1209 41.9999 13.6975C41.9999 13.2741 41.6286 13.1429 41.4033 13.1429C41.2369 13.1429 34.7719 13.1429 31.4035 13.1429C30.299 13.1429 29.4073 12.2514 29.4073 11.1468C29.4073 7.85923 29.4073 1.6537 29.4073 1.53485C29.4073 1.37302 29.226 1 28.8636 1Z' fill='%23525C69'/%3E%3Crect x='8' y='17' width='23.0769' height='2' rx='1' fill='%23BDC1C6'/%3E%3Crect x='8' y='22' width='23.0769' height='2' rx='1' fill='%23BDC1C6'/%3E%3Crect x='8' y='27' width='23.0769' height='2' rx='1' fill='%23BDC1C6'/%3E%3Crect x='8' y='32' width='16.9231' height='2' rx='1' fill='%23BDC1C6'/%3E%3Cpath d='M19.5 45L24.4799 39.3904C24.8666 38.9548 25.5847 39.2702 25.5255 39.8496L25.1834 43.2024C25.1248 43.7767 25.8318 44.0943 26.2223 43.6691L28.9581 40.6901C29.328 40.2873 30 40.549 30 41.0959V43.378C30 43.9351 30.693 44.1915 31.0556 43.7685L36 38' stroke='%23BDC1C6' stroke-width='1.2' stroke-linecap='round'/%3E%3C/g%3E%3Cdefs%3E%3Cfilter id='filter0_d_69_49907' x='0' y='0' width='44' height='54' filterUnits='userSpaceOnUse' color-interpolation-filters='sRGB'%3E%3CfeFlood flood-opacity='0' result='BackgroundImageFix'/%3E%3CfeColorMatrix in='SourceAlpha' type='matrix' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0' result='hardAlpha'/%3E%3CfeOffset dy='1'/%3E%3CfeGaussianBlur stdDeviation='1'/%3E%3CfeComposite in2='hardAlpha' operator='out'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.1 0'/%3E%3CfeBlend mode='normal' in2='BackgroundImageFix' result='effect1_dropShadow_69_49907'/%3E%3CfeBlend mode='normal' in='SourceGraphic' in2='effect1_dropShadow_69_49907' result='shape'/%3E%3C/filter%3E%3C/defs%3E%3C/svg%3E%0A") center no-repeat;
+}
+
+.sign-master__send-summary {
+	margin-right: auto;
+}
+
+.sign-master__send-summary--links {
+	display: flex;
+	justify-content: flex-end;
+	margin: auto 0;
+}
+
+.sign-master__send-summary--title {
+	position: relative;
+	padding-right: 20px;
+	font: 17px/23px "OpenSans-SemiBold", Helvetica, Arial, sans-serif;
+	margin-bottom: 4px;
+	word-break: break-all;
+	color: #333;
+}
+
+.sign-master__send-summary--title-edit-icon {
+	position: absolute;
+	height: 20px;
+	bottom: 0;
+	cursor: pointer;
+	transition: .2s;
+	opacity: 0;
+}
+
+.sign-master__send-summary--title:hover .sign-master__send-summary--title-edit-icon {
+	opacity: .8;
+}
+
+.sign-master__send-summary--title:hover .sign-master__send-summary--title-edit-icon:hover {
+	opacity: 1;
+}
+
+.sign-master__send-summary--title-edit-icon i {
+	display: inline-block;
+	width: 20px;
+	height: 20px;
+	background: url(image/sign-master-edit.svg) center no-repeat;
+}
+
+.sign-maste__send-summary--text {
+	color: #b9bfc1;
+	font-size: 13px;
+	margin-top: 2px;
+}
+
+.sign-master__send-member--wrapper {
+	/*display: flex;*/
+	/*flex-wrap: wrap;*/
+	/*justify-content: space-between;*/
+	padding: 15px 16px 20px;
+	border: 1px solid #d9dadc;
+	box-sizing: border-box;
+	border-radius: 8px;
+	margin: 7px -6px;
+}
+
+.sign-master__send-member--whois {
+	color: #a8adb4;
+	font-size: 11px;
+}
+
+.sign-master__send-member--name {
+	color: #2066b0;
+	font-size: 14px;
+	margin-top: 5px;
+}
+
+.sign-master__send-member--not-send {
+	min-height: auto;
+	margin: 11px 0 0;
+	width: auto;
+}
+
+.sign-master__send-member--signlabel {
+	display: block;
+	background-color: #dfe0e3;
+	border-radius: 16px;
+	padding: 4px 10px;
+	margin-top: 3px;
+	font-size: 10px;
+	line-height: 13px;
+	text-transform: uppercase;
+	font-weight: 700;
+	color: #6a737f;
+	white-space: nowrap;
+}
+
+.sign-master__send-member--signlabel.--signed {
+	background-color: rgba(223, 238, 175, 0.8);
+	color:  #668d13;
+}
+
+.sign-master__send-member--container {
+	display: flex;
+	justify-content: space-between;
+	align-items: flex-start;
+}
+
+.sign-master__send-member--info-container {
+	margin-right: 10px;
+}
+
+.sign-master__send-member--info-additional {
+	width: 100%;
+	margin-top: 23px;
+	border-top: 1px solid rgba(82,92,105,.08);
+	padding-top: 9px;
+}
+
+.sign-master__partner--requisites {
+	flex: 1;
+	min-height: 150px;
+	position: relative;
+}
+
+.sign-master__preview-nav--active {
+	color: blue;
+}
+
+.sign-master__send-member--communications {
+	width: 200px;
+	margin-top: 10px;
+	color: #333;
+}
+
+.sign-master__send-member--communications-arrow {
+	display: inline-flex;
+	align-items: flex-end;
+	cursor: pointer;
+}
+
+.sign-master__send-member--communications-arrow span {
+	display: inline-block;
+	overflow: hidden;
+	max-width: 180px;
+	border-bottom: 1px dashed rgba(51,51,51,.5);
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	transition: .2s;
+}
+
+.sign-master__send-member--communications-arrow:hover span {
+	border-bottom: 1px dashed rgba(51,51,51,.7);
+	transition: none;
+}
+
+.sign-master__send-member--communications-arrow:after {
+	content: '';
+	display: inline-block;
+	box-sizing: border-box;
+	width: 8px;
+	height: 8px;
+	border: 4px solid transparent;
+	border-top-color: rgba(51,51,51,.5);
+	margin: 0 -11px 0 3px;
+	transition: .2s;
+}
+
+.sign-master__send-member--communications-arrow:after {
+	border-top-color: rgba(51,51,51,.7);
+	transition: none;
+}
+
+.sign-master__send-member--communications-title {
+	display: block;
+	margin-bottom: 5px;
+	font-size: 11px;
+	color: #a8adb4;
+}
+
+.sign-master__preview-remove {
+	color: red;
+}
+
+.sign-master__preview-remove.--readonly {
+	color: #cdcdcd;
+}
+
+.sign-master__send-summary--title-edit {
+	display: flex;
+}
+
+.sign-master__send-summary--title-edit-cancel.ui-btn,
+.sign-master__send-summary--title-edit-save.ui-btn {
+	min-width: 32px;
+	margin-left: 7px;
+	padding: 0;
+}
+.sign-master__send-summary--title-edit-save.ui-btn.ui-btn-wait i,
+.sign-master__send-summary--title-edit-cancel.ui-btn.ui-btn-wait i {
+	display: none;
+}
+
+.sign-master__send-summary--title-edit-cancel i {
+	min-width: 14px;
+	height: 14px;
+	background: url(image/sign-master-cross.svg) center no-repeat;
+}
+
+.sign-master__send-summary--title-edit-save i {
+	width: 24px;
+	height: 25px;
+	background: url(image/sign-master-check.svg) center no-repeat;
+}
+
+.sign-master__send-summary--title-input {
+	min-height: 32px;
+}
+
+.sign-master__send-summary-edit {
+	display: none;
+}
+
+.sign-master__send-summary--wrapper.--edit .sign-master__send-summary-edit {
+	display: block;
+}
+
+.sign-master__send-summary-value {
+	display: block;
+}
+
+.sign-master__send-summary--wrapper.--edit {
+	background: linear-gradient(0deg, rgba(47, 198, 246, 0.06), rgba(47, 198, 246, 0.06)), #FFFFFF;
+}
+
+.sign-master__send-summary--wrapper.--edit .sign-master__send-summary-value,
+.sign-master__send-summary--wrapper.--edit .sign-master__send-summary--links {
+	display: none;
+}
+
+
+[data-action="changePartner"].ui-btn-disabled {
+	pointer-events: auto;
+}

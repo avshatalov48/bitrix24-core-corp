@@ -22,10 +22,6 @@ $result = $APPLICATION->IncludeComponent(
 $GLOBALS['APPLICATION']->RestartBuffer();
 header('Content-Type: application/json');
 
-if (SITE_CHARSET != 'UTF-8')
-{
-	$result = $GLOBALS['APPLICATION']->ConvertCharsetArray($result, SITE_CHARSET, 'UTF-8');
-}
 if (isset($result['ERROR']) && $result['ERROR'] != '')
 {
 	echo CUtil::PhpToJSObject(array('error' => $result['ERROR']));

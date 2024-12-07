@@ -1,7 +1,9 @@
 'use strict';
 
 (() => {
-	const { EntityReady } = jn.require('entity-ready');
+	const require = (ext) => jn.require(ext);
+	const { EntityReady } = require('entity-ready');
+	const { AvaMenu } = require('ava-menu');
 
 	if (typeof window.SocketConnection === 'undefined')
 	{
@@ -42,11 +44,19 @@
 
 			this.userCounterMapTabName = {
 				'**': 'livefeed',
-				bp_tasks: 'bp_tasks',
+				bp_workflow: 'bp_tasks',
 				im: 'messages',
 				tasks_total: 'tasks_total',
 				crm_all_no_orders: 'crm_all_no_orders',
 				crm_activity_current_calltracker: 'crm_activity_current_calltracker',
+				calendar: 'calendar',
+			};
+
+			this.tabNameMapOldUserCounter = {
+				bp_tasks: 'bp_tasks',
+			};
+
+			this.avaMenuCounterMapName = {
 				calendar: 'calendar',
 			};
 
@@ -243,29 +253,42 @@
 					this.userCountersDates[siteId][counter] = startTime;
 				}
 				else
-				if (this.userCountersDates[siteId][counter] >= startTime)
-				{
-					delete counters[siteId][counter];
-				}
-				else
-				{
-					this.userCountersDates[siteId][counter] = startTime;
-				}
+					if (this.userCountersDates[siteId][counter] >= startTime)
+					{
+						delete counters[siteId][counter];
+					}
+					else
+					{
+						this.userCountersDates[siteId][counter] = startTime;
+					}
 			}
 
 			this.userCounters = Utils.objectMerge(this.userCounters, counters);
 
 			let needUpdate = false;
-			for (const userCounter in this.userCounterMapTabName)
+			for (let userCounter in this.userCounterMapTabName)
 			{
 				if (!this.userCounterMapTabName.hasOwnProperty(userCounter))
 				{
 					continue;
 				}
 
+				const tabName = this.userCounterMapTabName[userCounter];
+
 				if (typeof this.userCounters[siteId][userCounter] === 'undefined')
 				{
-					continue;
+					const oldUserCounter = this.tabNameMapOldUserCounter[tabName];
+					if (typeof oldUserCounter === 'undefined')
+					{
+						continue;
+					}
+
+					if (typeof this.userCounters[siteId][oldUserCounter] === 'undefined')
+					{
+						continue;
+					}
+
+					userCounter = oldUserCounter;
 				}
 
 				const value = Number(this.userCounters[siteId][userCounter]);
@@ -275,7 +298,6 @@
 					continue;
 				}
 
-				const tabName = this.userCounterMapTabName[userCounter];
 				if (this.counters[tabName] == value)
 				{
 					continue;
@@ -343,9 +365,26 @@
 				Application.setIconBadge(this.total);
 			}
 
+			this.updateAvaMenu();
+
 			this.updateCache();
 
 			return true;
+		}
+
+		updateAvaMenu()
+		{
+			if (typeof AvaMenu === 'undefined')
+			{
+				return;
+			}
+
+			for (const [tabId, elemId] of Object.entries(this.avaMenuCounterMapName))
+			{
+				const counter = Number(this.counters[tabId]);
+				const value = counter || 0;
+				AvaMenu.setCounter({ elemId, value });
+			}
 		}
 
 		isEnableApplicationCounterType(tabName)
@@ -546,6 +585,7 @@
 		{
 			return true;
 		}
+		const appId = (typeof Application.getPackageName === 'function' ? Application.getPackageName() : 'Bitrix24');
 
 		if (typeof (Application.registerVoipNotifications) === 'function')
 		{
@@ -558,6 +598,7 @@
 					data: {
 						mobile_action: 'save_device_token',
 						device_name: model,
+						app_id: appId,
 						uuid,
 						device_token_voip: token,
 						device_type: 'APPLE',
@@ -612,6 +653,7 @@
 						device_name: (device.model),
 						uuid: device.uuid,
 						device_token: token,
+						app_id: appId,
 						device_type: dt,
 					},
 				})
@@ -672,7 +714,7 @@
 				params = tag.split('|');
 
 				const { Entry } = jn.require('tasks/entry');
-				Entry.openTask({ id: params[2] });
+				Entry.openTask({ id: params[2] }, { shouldOpenComments: params[1] === 'COMMENT' });
 			}
 			else if (tag.slice(0, 12) == 'SONET|EVENT|')
 			{

@@ -48,6 +48,7 @@ final class TaskTagProvider extends BaseProvider
 	private int $userId;
 	private int $taskId;
 	private int $groupId;
+	private bool $canPreselectTemplateTags = false;
 	private string $context;
 	private array $lastActivityTagIds = [];
 
@@ -60,6 +61,7 @@ final class TaskTagProvider extends BaseProvider
 		$this->taskId = (int)($options['taskId'] ?? 0);
 		$this->groupId = (int)($options['groupId'] ?? 0);
 		$this->userId = CurrentUser::get()->getId();
+		$this->canPreselectTemplateTags = (bool)($options['canPreselectTemplateTags'] ?? false);
 		$this->resolveContext($options);
 	}
 
@@ -489,6 +491,23 @@ final class TaskTagProvider extends BaseProvider
 	public function isAvailable(): bool
 	{
 		return $GLOBALS['USER']->isAuthorized();
+	}
+
+	public function getPreselectedItems(array $ids): array
+	{
+		$templateTags = array_filter($ids, fn($id) => is_string($id));
+
+		if ($this->canPreselectTemplateTags && !empty($templateTags))
+		{
+			return array_map(fn($tag): Item => new Item([
+				'id' => $tag,
+				'entityId' => self::ENTITY_ID,
+				'title' => $tag,
+				'tabs' => [self::TAGS_TAB_ID],
+			]), $templateTags);
+		}
+
+		return [];
 	}
 
 	public function getItems(array $ids): array

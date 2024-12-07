@@ -2,6 +2,7 @@
 
 namespace Bitrix\ImBot\Controller;
 
+use Bitrix\ImBot\Controller\Filter\CheckGiphyAvailable;
 use Bitrix\Main\Engine\Controller;
 use Bitrix\Main\Error;
 use Bitrix\Main\Localization\Loc;
@@ -17,6 +18,16 @@ class Giphy extends Controller
 	{
 		parent::__construct($request);
 		$this->sender = new \Bitrix\ImBot\Sender\Giphy();
+	}
+
+	protected function getDefaultPreFilters()
+	{
+		return array_merge(
+			parent::getDefaultPreFilters(),
+			[
+				new CheckGiphyAvailable(),
+			]
+		);
 	}
 
 	/**

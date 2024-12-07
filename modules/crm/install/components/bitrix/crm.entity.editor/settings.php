@@ -25,7 +25,6 @@ require_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/prolog_befo
 
 if($USER->IsAuthorized() && check_bitrix_sessid())
 {
-	CUtil::decodeURIComponent($_POST);
 	$guid = isset($_REQUEST['guid']) ? $_REQUEST['guid'] : '';
 	if($guid === '')
 	{

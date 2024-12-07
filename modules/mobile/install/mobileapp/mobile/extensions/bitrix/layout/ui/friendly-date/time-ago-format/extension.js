@@ -284,8 +284,8 @@ jn.define('layout/ui/friendly-date/time-ago-format', (require, exports, module) 
 		getPhrase({ code, value = null, replacements = {} })
 		{
 			const phrase = value === null
-				? Loc.getMessage(code, replacements)
-				: Loc.getMessagePlural(code, value, replacements);
+				? Loc.getLastMessageVer(code, replacements)
+				: Loc.getLastMessageVerPlural(code, value, replacements);
 
 			if (typeof this.props.onGetPhrase === 'function')
 			{

@@ -1,0 +1,13 @@
+/**
+ * @module layout/ui/copilot-role-selector/src/icons
+ */
+jn.define('layout/ui/copilot-role-selector/src/icons', (require, exports, module) => {
+	const AppTheme = require('apptheme');
+
+	const search = ({ color = AppTheme.colors.base1 } = {}) => `<svg width="16" height="17" viewBox="0 0 16 17" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M9.86037 12.5465C8.85776 13.2048 7.65815 13.5878 6.36909 13.5878C2.85154 13.5878 0 10.7363 0 7.2187C0 3.70115 2.85154 0.849609 6.36909 0.849609C9.88664 0.849609 12.7382 3.70115 12.7382 7.2187C12.7382 8.50776 12.3552 9.70737 11.6969 10.71L15.0073 14.0204C15.3978 14.4109 15.3978 15.0441 15.0073 15.4346L14.585 15.8569C14.1945 16.2474 13.5613 16.2474 13.1708 15.8569L9.86037 12.5465ZM10.9184 7.2187C10.9184 9.73124 8.88163 11.7681 6.36909 11.7681C3.85655 11.7681 1.81974 9.73124 1.81974 7.2187C1.81974 4.70616 3.85655 2.66935 6.36909 2.66935C8.88163 2.66935 10.9184 4.70616 10.9184 7.2187Z" fill="${color}"/></svg>`;
+	const chevronRight = ({ color = AppTheme.colors.base1 } = {}) => `<svg width="10" height="16" viewBox="0 0 10 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M0.000488281 2.10823L4.71617 6.82391L5.9376 8.00033L4.71617 9.17746L0.000488281 13.8931L1.66452 15.5572L9.22093 8.00075L1.66452 0.444336L0.000488281 2.10823Z" fill="${color}"/></svg>`;
+	const clearSearchText = ({ color = AppTheme.colors.base1 } = {}) => `<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M8 16C12.4183 16 16 12.4183 16 8C16 3.58172 12.4183 0 8 0C3.58172 0 0 3.58172 0 8C0 12.4183 3.58172 16 8 16ZM10 11L11 10L9 8L11 6L10 5L8 7L6 5L5 6L7 8L5 10L6 11L8 9L10 11Z" fill="${color}"/></svg>`;
+	const information = ({ color = AppTheme.colors.base1 }) => `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M14.0354 5.03238C14.0354 3.67357 13.2487 2.93457 11.8661 2.93457C10.5073 2.93457 9.72059 3.67357 9.72059 5.03238C9.72059 6.39119 10.5073 7.17787 11.8661 7.17787C13.2487 7.17787 14.0354 6.39119 14.0354 5.03238ZM15.5978 19.9389V18.0557L14.382 17.8888C14.0244 17.8411 14.0006 17.7935 14.0006 17.412V9.3527H9.06594L8.80371 11.2836L10.091 11.7366C10.3294 11.8081 10.4009 11.975 10.4009 12.2372V17.412C10.4009 17.7696 10.3532 17.8411 10.0195 17.8888L8.80371 18.0557V19.9389H15.5978Z" fill="${color}" /></svg>`;
+
+	module.exports = { search, chevronRight, clearSearchText, information };
+});

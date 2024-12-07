@@ -57,14 +57,20 @@ elseif ($_REQUEST["mobile_action"] == "save_device_token")
 
 			$dbres = CPullPush::GetList(array(), array("DEVICE_ID" => $uuid));
 			$arToken = $dbres->Fetch();
+			$baseAppId = "Bitrix24";
+			if( \Bitrix\Main\Config\Option::get('mobile', 'ru_app_enable', 'N') == 'Y')
+			{
+				$baseAppId = $_REQUEST["app_id"] ?? $baseAppId;
+			}
 
+			$appId = $baseAppId . (CMobile::$isDev ? "_bxdev" : "");
 			$fields = array(
 				"USER_ID" => $USER->GetID(),
 				"DEVICE_NAME" => $_REQUEST["device_name"],
 				"DEVICE_TYPE" => $_REQUEST["device_type"],
 				"DEVICE_ID" => $_REQUEST["uuid"],
-				"DATE_AUTH" => ConvertTimeStamp(getmicrotime(), "FULL"),
-				"APP_ID" => "Bitrix24" . (CMobile::$isDev ? "_bxdev" : "")
+				"DATE_AUTH" => ConvertTimeStamp(microtime(true), "FULL"),
+				"APP_ID" => $appId
 			);
 
 			if ($voipType != null)

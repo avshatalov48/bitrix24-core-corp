@@ -17,6 +17,7 @@ $MESS["BX24_INVITE_DIALOG_MAX_COUNT_ERROR"] = "Количество пригла
 $MESS["BX24_INVITE_DIALOG_INVITE_MESSAGE_TEXT_1"] = "Приглашаю вас в Битрикс24 нашей компании. Здесь мы сможем вместе работать над проектами и задачами, управлять документами, планировать встречи и собрания, общаться в блогах и многое другое.";
 $MESS["BX24_INVITE_DIALOG_PASSWORD_SAME"] = "использовавшийся ранее";
 $MESS["BX24_INVITE_DIALOG_ERROR_EMPTY_EMAIL_LIST"] = "Не указаны e-mail";
+$MESS["BX24_INVITE_DIALOG_ERROR_EMPTY_PHONE_LIST"] = "Не указаны номера телефонов";
 $MESS["BX24_INVITE_DIALOG_ERROR_EMPTY_EMAIL"] = "Не указан e-mail";
 $MESS["BX24_INVITE_DIALOG_ERROR_EMPTY_LAST_NAME"] = "Не указана фамилия";
 $MESS["BX24_INVITE_DIALOG_ERROR_EMPTY_PASSWORD"] = "Не указан пароль";

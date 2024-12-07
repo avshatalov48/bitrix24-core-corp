@@ -1,0 +1,58 @@
+.ai__copilot-agreement-popup-content {
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+	align-items: stretch;
+}
+
+.ai__copilot-agreement-popup-content_header {
+	margin-bottom: 20px;
+}
+
+.ai__copilot-agreement-popup-content_title {
+	margin: 0;
+	font-size: var(--ui-font-size-2xl);
+	font-weight: var(--ui-font-weight-semi-bold);
+	line-height: var(--ui-font-line-height-3xs);
+}
+
+.ai__copilot-agreement-popup-content_main {
+	display: flex;
+	flex-direction: column;
+	align-items: stretch;
+	justify-content: flex-start;
+	padding-bottom: 24px;
+	border-bottom: var(--ui-border-width-thin) solid rgba(var(--ui-color-base-90-rgb), 0.1);
+}
+.ai__copilot-agreement-popup-content_img {
+	box-sizing: border-box;
+	width: 453px;
+	max-width: 100%;
+	height: 167px;
+	margin-bottom: 20px;
+	background-repeat: no-repeat;
+	background-position: center center;
+	background-size: contain;
+	background-image: url(../../images/copilot-agreement-popup-img.svg);
+}
+
+.ai__copilot-agreement-popup-content_text {
+	margin-top: 0;
+	margin-bottom: 12px;
+	color: var(--ui-color-text-secondary);
+	font-size: var(--ui-font-size-md);
+	line-height: var(--ui-font-line-height-md);
+	text-align: center;
+}
+
+.ai__copilot-agreement-popup-content_text:last-child {
+	margin-bottom: 0;
+}
+
+.ai__copilot-agreement-popup-content_footer {
+	padding-top: 20px;
+	display: flex;
+	flex-direction: row;
+	justify-content: center;
+	gap: 0 12px;
+}

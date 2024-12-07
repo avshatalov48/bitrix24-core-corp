@@ -18,6 +18,7 @@ this.BX = this.BX || {};
 	    _this._fieldsetContainer = null;
 	    _this._addEmptyValue = false;
 	    _this._nextIndex = 0;
+	    _this._isDeleted = false;
 	    return _this;
 	  }
 	  babelHelpers.createClass(EntityEditorFieldsetField, [{
@@ -145,21 +146,38 @@ this.BX = this.BX || {};
 	        isEmbedded: true
 	      });
 	      entityEditor._enableCloseConfirmation = false;
+
+	      // Set CRM attribute manager
+	      var settings = this.getAttributeManagerSettings();
+	      if (BX.Type.isPlainObject(settings)) {
+	        var attributeManager = BX.Crm.EntityFieldAttributeManager.create(entityEditor.getId() + "_ATTR_MANAGER", {
+	          entityTypeId: BX.prop.getInteger(settings, "ENTITY_TYPE_ID", BX.CrmEntityType.enumeration.undefined),
+	          entityScope: BX.prop.getString(settings, "ENTITY_SCOPE", ""),
+	          isPermitted: BX.prop.getBoolean(settings, "IS_PERMITTED", true),
+	          isPhaseDependent: BX.prop.getBoolean(settings, "IS_PHASE_DEPENDENT", true),
+	          isAttrConfigButtonHidden: BX.prop.getBoolean(settings, "IS_ATTR_CONFIG_BUTTON_HIDDEN", true),
+	          lockScript: BX.prop.getString(settings, "LOCK_SCRIPT", ""),
+	          captions: BX.prop.getObject(settings, "CAPTIONS", {}),
+	          entityPhases: BX.prop.getArray(settings, 'ENTITY_PHASES', null)
+	        });
+	        entityEditor.setAttributeManager(attributeManager);
+	      }
 	      main_core_events.EventEmitter.subscribe(entityEditor, 'onControlChanged', function (event) {
 	        if (!_this3.isChanged()) {
 	          _this3.markAsChanged();
 	        }
 	      });
-	      this.subscribeEditorEvents(entityEditor, ['onControlMove', 'onFieldModify', 'onControlAdd', 'onControlRemove', 'onSchemeSave']);
+	      this.subscribeEditorEvents(entityEditor, ['onControlMove', 'onFieldModify', 'onFieldModifyAttributeConfigs', 'onControlAdd', 'onControlRemove', 'onSchemeSave']);
 	      var container = entityEditor.getContainer();
 	      if (main_core.Type.isDomNode(container)) {
 	        main_core.Dom.prepend(this.getDeleteButton(id), container);
 	      }
 	      if (values.hasOwnProperty("DELETED") && values["DELETED"] === 'Y') {
+	        this._isDeleted = true;
 	        this.layoutDeletedValue(entityEditor, id);
 	      }
 	      BX.Crm.RequisiteDetailsManager.create({
-	        "entityEditorId": entityEditorId
+	        entityEditorId: entityEditorId
 	      });
 	      return entityEditor;
 	    }
@@ -208,6 +226,7 @@ this.BX = this.BX || {};
 	        "onControlAdd": "add",
 	        "onControlMove": "move",
 	        "onFieldModify": "modify",
+	        "onFieldModifyAttributeConfigs": "modifyAttributes",
 	        "onControlRemove": "remove",
 	        "onSchemeSave": "saveScheme"
 	      };
@@ -221,15 +240,43 @@ this.BX = this.BX || {};
 	            if (_this4._entityEditorList.hasOwnProperty(index)) {
 	              var editor = _this4._entityEditorList[index];
 	              if (editor instanceof BX.UI.EntityEditor && editor !== target) {
-	                if (eventMap[eventName] === "modify") {
+	                if (eventMap[eventName] === "modify" || eventMap[eventName] === "modifyAttributes") {
 	                  setTimeout(function () {
 	                    var field = BX.prop.get(eventParams, "field", null);
 	                    if (field && field instanceof BX.UI.EntityEditorField) {
 	                      var control = _this4.getCorrespondedControl(eventMap[eventName], field.getId(), editor);
 	                      if (control) {
-	                        var label = BX.prop.getString(eventParams, "label", "");
-	                        if (main_core.Type.isStringFilled(label)) {
-	                          control.getSchemeElement().setTitle(label);
+	                        var needRefreshTitleLayout = false;
+	                        if (eventMap[eventName] === "modifyAttributes") {
+	                          var exists = [];
+	                          var configs = BX.prop.getArray(eventParams, "attrConfigs", null);
+	                          if (main_core.Type.isArray(configs) && configs.length > 0) {
+	                            for (var i = 0, length = configs.length; i < length; i++) {
+	                              var config = configs[i];
+	                              var typeId = BX.prop.getInteger(config, "typeId", BX.UI.EntityFieldAttributeType.undefined);
+	                              if (typeId !== BX.UI.EntityFieldAttributeType.undefined) {
+	                                exists.push(typeId);
+	                                control.getSchemeElement().setAttributeConfiguration(config);
+	                              }
+	                            }
+	                          }
+	                          for (var _index in BX.UI.EntityFieldAttributeType) {
+	                            if (BX.UI.EntityFieldAttributeType.hasOwnProperty(_index)) {
+	                              var _typeId = BX.UI.EntityFieldAttributeType[_index];
+	                              if (_typeId !== BX.UI.EntityFieldAttributeType.undefined && exists.indexOf(_typeId) < 0) {
+	                                control.getSchemeElement().removeAttributeConfiguration(_typeId);
+	                              }
+	                            }
+	                          }
+	                          needRefreshTitleLayout = true;
+	                        } else {
+	                          var label = BX.prop.getString(eventParams, "label", "");
+	                          if (main_core.Type.isStringFilled(label)) {
+	                            control.getSchemeElement().setTitle(label);
+	                            needRefreshTitleLayout = true;
+	                          }
+	                        }
+	                        if (needRefreshTitleLayout) {
 	                          control.refreshTitleLayout();
 	                        }
 	                      }
@@ -251,10 +298,10 @@ this.BX = this.BX || {};
 	                        });
 	                      });
 	                    } else if (eventMap[eventName] === "move") {
-	                      var _index = BX.prop.getInteger(options, "index", -1);
-	                      if (_index >= 0) {
+	                      var _index2 = BX.prop.getInteger(options, "index", -1);
+	                      if (_index2 >= 0) {
 	                        setTimeout(function () {
-	                          control.getParent().moveChild(control, _index, {
+	                          control.getParent().moveChild(control, _index2, {
 	                            enableSaving: false,
 	                            skipEvents: true
 	                          });
@@ -300,6 +347,11 @@ this.BX = this.BX || {};
 	      main_core_events.EventEmitter.unsubscribeAll(editor);
 	    }
 	  }, {
+	    key: "isDeleted",
+	    value: function isDeleted() {
+	      return this._isDeleted;
+	    }
+	  }, {
 	    key: "layoutDeletedValue",
 	    value: function layoutDeletedValue(entityEditor, id) {
 	      if (entityEditor instanceof BX.UI.EntityEditor) {
@@ -318,6 +370,7 @@ this.BX = this.BX || {};
 	    value: function onDeleteButtonClick(id) {
 	      if (this._entityEditorList.hasOwnProperty(id)) {
 	        this.unsubscribeEditorEvents(this._entityEditorList[id]);
+	        this._isDeleted = true;
 	        this.layoutDeletedValue(this._entityEditorList[id], id);
 	        this.markAsChanged();
 	      }
@@ -336,7 +389,7 @@ this.BX = this.BX || {};
 	        'ID': id
 	      });
 	      this.getModel().setField(this.getName(), value);
-	      this._entityEditorList[id] = this.createEntityEditor(id);
+	      this._entityEditorList[id] = this.createEntityEditor(id, {}, this.prepareEntityEditorContext());
 	      this.markAsChanged();
 	      return this._entityEditorList[id];
 	    }
@@ -479,7 +532,7 @@ this.BX = this.BX || {};
 	          for (_iterator.s(); !(_step = _iterator.n()).done;) {
 	            var item = _step.value;
 	            if (!this._entityEditorList[item.ID]) {
-	              this._entityEditorList[item.ID] = this.createEntityEditor(item.ID, item);
+	              this._entityEditorList[item.ID] = this.createEntityEditor(item.ID, item, this.prepareEntityEditorContext());
 	            }
 	          }
 	        } catch (err) {
@@ -490,6 +543,51 @@ this.BX = this.BX || {};
 	      } else if (this._mode === BX.UI.EntityEditorMode.edit && this._addEmptyValue) {
 	        this.addEmptyValue();
 	      }
+	    }
+	  }, {
+	    key: "getAttributeManagerSettings",
+	    value: function getAttributeManagerSettings() {
+	      return BX.prop.getObject(this._config, "ATTRIBUTE_CONFIG", null);
+	    }
+	  }, {
+	    key: "getResolverProperty",
+	    value: function getResolverProperty() {
+	      return BX.prop.getObject(this._settings, "resolverProperty", null);
+	    }
+	  }, {
+	    key: "getActiveControlById",
+	    value: function getActiveControlById(id) {
+	      for (var pseudoId in this._entityEditorList) {
+	        if (this._entityEditorList.hasOwnProperty(pseudoId)) {
+	          var control = this._entityEditorList[pseudoId].getActiveControlById(id, true);
+	          if (control) {
+	            return control;
+	          }
+	        }
+	      }
+	    }
+	  }, {
+	    key: "validate",
+	    value: function validate(result) {
+	      if (this._isDeleted || this._mode !== BX.UI.EntityEditorMode.edit) {
+	        return true;
+	      }
+	      var validator = BX.UI.EntityAsyncValidator.create();
+	      for (var pseudoId in this._entityEditorList) {
+	        if (this._entityEditorList.hasOwnProperty(pseudoId)) {
+	          var field = this._entityEditorList[pseudoId];
+	          if (field.getMode() !== BX.UI.EntityEditorMode.edit) {
+	            continue;
+	          }
+	          validator.addResult(field.validate(result));
+	        }
+	      }
+	      return validator.validate();
+	    }
+	  }, {
+	    key: "prepareEntityEditorContext",
+	    value: function prepareEntityEditorContext() {
+	      return {};
 	    }
 	  }], [{
 	    key: "create",

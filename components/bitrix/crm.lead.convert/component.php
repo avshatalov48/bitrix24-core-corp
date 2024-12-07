@@ -316,7 +316,14 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 			if ($bConvertDeal)
 			{
 				$prodJson = isset($_POST['DEAL_PRODUCT_DATA']) ? strval($_POST['DEAL_PRODUCT_DATA']) : '';
-				$arFields['DEAL']['PRODUCT_ROWS'] = isset($prodJson[0]) ? CUtil::JsObjectToPhp($prodJson) : array();
+				try
+				{
+					$arFields['DEAL']['PRODUCT_ROWS'] = isset($prodJson[0]) ? \Bitrix\Main\Web\Json::decode($prodJson) : [];
+				}
+				catch (\Bitrix\Main\ArgumentException $e)
+				{
+					$arFields['DEAL']['PRODUCT_ROWS'] = [];
+				}
 				if ($CCrmDeal->CheckFields($arFields['DEAL']) == false)
 				{
 					$bVarsFromForm = true;

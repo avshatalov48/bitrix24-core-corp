@@ -2,16 +2,15 @@
  * @module animation
  */
 jn.define('animation', (require, exports, module) => {
-
 	/**
 	 * Performs animation on node {ref} with specified {options}.
 	 * @param {object} ref
 	 * @param {object} options
 	 * @returns {Promise}
 	 */
-    function animate(ref, options)
+	function animate(ref, options)
 	{
-		return new Promise(resolve => transitable(ref) ? ref.animate(options, resolve) : resolve());
+		return new Promise((resolve) => (transitable(ref) ? ref.animate(options, resolve) : resolve()));
 	}
 
 	/**
@@ -32,7 +31,7 @@ jn.define('animation', (require, exports, module) => {
 	 */
 	function pause(ms)
 	{
-		return () => new Promise(resolve => setTimeout(resolve, ms));
+		return () => new Promise((resolve) => setTimeout(resolve, ms));
 	}
 
 	/**
@@ -52,7 +51,7 @@ jn.define('animation', (require, exports, module) => {
 	 */
 	function parallel(...transitions)
 	{
-		return () => Promise.all(transitions.map(transition => transition()));
+		return () => Promise.all(transitions.map((transition) => transition()));
 	}
 
 	/**
@@ -83,6 +82,5 @@ jn.define('animation', (require, exports, module) => {
 		return (ref && typeof ref.animate === 'function');
 	}
 
-    module.exports = { animate, transition, pause, chain, parallel, useRef, transitable };
-
+	module.exports = { animate, transition, pause, chain, parallel, useRef, transitable };
 });

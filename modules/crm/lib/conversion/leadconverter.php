@@ -93,16 +93,9 @@ class LeadConverter extends EntityConverter
 			);
 		}
 
-		$dbResult = \CCrmLead::GetListEx(
-			array(),
-			array('=ID' => $this->entityID, 'CHECK_PERMISSIONS' => 'N'),
-			false,
-			false,
-			array('ID', 'STATUS_ID', 'IS_RETURN_CUSTOMER')
-		);
+		$resolvedFields = LeadConversionType::resolveByEntityID($this->entityID);
 
-		$fields = $dbResult->Fetch();
-		if(!$fields)
+		if($resolvedFields === LeadConversionType::UNDEFINED)
 		{
 			throw new EntityConversionException(
 				\CCrmOwnerType::Lead,
@@ -111,7 +104,9 @@ class LeadConverter extends EntityConverter
 				EntityConversionException::NOT_FOUND
 			);
 		}
-		$this->conversionTypeID = LeadConversionType::resolveByEntityFields($fields);
+		$this->conversionTypeID = $resolvedFields;
+		$fields = \Bitrix\Crm\Conversion\LeadConversionType::loadLeadDataById((int)$this->entityID);
+
 		$this->isReturnCustomer = isset($fields['IS_RETURN_CUSTOMER']) &&$fields['IS_RETURN_CUSTOMER'] == 'Y';
 
 		$this->determineStartingPhase();
@@ -369,12 +364,12 @@ class LeadConverter extends EntityConverter
 							if($entity->Update($entityID, $fields, true, true, $this->getUpdateOptions()))
 							{
 								//region BizProcess
-								$arErrors = array();
+								$errors = [];
 								\CCrmBizProcHelper::AutoStartWorkflows(
 									\CCrmOwnerType::Company,
 									$entityID,
 									\CCrmBizProcEventType::Edit,
-									$arErrors
+									$errors
 								);
 								//endregion
 							}
@@ -432,12 +427,12 @@ class LeadConverter extends EntityConverter
 							if($entity->Update($entityID, $fields, true, true, $this->getUpdateOptions()))
 							{
 								//region BizProcess
-								$arErrors = array();
+								$errors = [];
 								\CCrmBizProcHelper::AutoStartWorkflows(
 									\CCrmOwnerType::Contact,
 									$entityID,
 									\CCrmBizProcEventType::Edit,
-									$arErrors
+									$errors
 								);
 								//endregion
 							}
@@ -568,17 +563,17 @@ class LeadConverter extends EntityConverter
 						\CCrmOwnerType::Company,
 						EntityConversionException::TARG_DST,
 						EntityConversionException::CREATE_FAILED,
-						$entity->LAST_ERROR
+						$entity->getLastError()
 					);
 				}
 
 				//region BizProcess
-				$arErrors = array();
+				$errors = [];
 				\CCrmBizProcHelper::AutoStartWorkflows(
 					\CCrmOwnerType::Company,
 					$entityID,
 					\CCrmBizProcEventType::Create,
-					$arErrors
+					$errors
 				);
 				//endregion
 
@@ -605,7 +600,7 @@ class LeadConverter extends EntityConverter
 						$entityTypeID,
 						EntityConversionException::TARG_DST,
 						EntityConversionException::INVALID_FIELDS,
-						$entity->LAST_ERROR
+						$entity->getLastError()
 					);
 				}
 
@@ -617,17 +612,17 @@ class LeadConverter extends EntityConverter
 						\CCrmOwnerType::Contact,
 						EntityConversionException::TARG_DST,
 						EntityConversionException::CREATE_FAILED,
-						$entity->LAST_ERROR
+						$entity->getLastError()
 					);
 				}
 
 				//region BizProcess
-				$arErrors = array();
+				$errors = [];
 				\CCrmBizProcHelper::AutoStartWorkflows(
 					\CCrmOwnerType::Contact,
 					$entityID,
 					\CCrmBizProcEventType::Create,
-					$arErrors
+					$errors
 				);
 				//endregion
 
@@ -678,7 +673,7 @@ class LeadConverter extends EntityConverter
 						\CCrmOwnerType::Deal,
 						EntityConversionException::TARG_DST,
 						EntityConversionException::CREATE_FAILED,
-						$entity->LAST_ERROR
+						$entity->getLastError()
 					);
 				}
 
@@ -741,12 +736,12 @@ class LeadConverter extends EntityConverter
 				unset($requisiteIdLinked, $bankDetailIdLinked, $mcRequisiteIdLinked, $mcBankDetailIdLinked);
 
 				//region BizProcess
-				$arErrors = array();
+				$errors = [];
 				\CCrmBizProcHelper::AutoStartWorkflows(
 					\CCrmOwnerType::Deal,
 					$entityID,
 					\CCrmBizProcEventType::Create,
-					$arErrors
+					$errors
 				);
 				//endregion
 
@@ -813,6 +808,11 @@ class LeadConverter extends EntityConverter
 				if(!empty($fields))
 				{
 					$entity = new \CCrmLead(false);
+					if (isset($this->contextData['USER_ID']))
+					{
+						$entityUpdateOptions['CURRENT_USER'] = $this->contextData['USER_ID'];
+					}
+
 					if($entity->Update($this->entityID, $fields, true, true, $entityUpdateOptions))
 					{
 						//region Requisites
@@ -893,12 +893,12 @@ class LeadConverter extends EntityConverter
 						if (!$this->shouldSkipBizProcAutoStart())
 						{
 							//region BizProcess
-							$arErrors = array();
+							$errors = [];
 							\CCrmBizProcHelper::AutoStartWorkflows(
 								\CCrmOwnerType::Lead,
 								$this->entityID,
 								\CCrmBizProcEventType::Edit,
-								$arErrors
+								$errors
 							);
 							//endregion
 						}

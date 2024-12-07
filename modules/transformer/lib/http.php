@@ -6,6 +6,7 @@ use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\ArgumentTypeException;
 use Bitrix\Main\Config\Option;
+use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Engine\UrlManager;
 use Bitrix\Main\Entity\ExpressionField;
 use Bitrix\Main\Type\DateTime;
@@ -23,22 +24,25 @@ class Http
 
 	const BACK_URL = '/bitrix/tools/transformer_result.php';
 
+	/**
+	 * @deprecated
+	 */
 	const CONNECTION_ERROR = 'no connection with controller';
 
 	/**
-	 * @deprecated \Bitrix\Transformer\Http::getDefaultCloudControllerUrl
+	 * @deprecated \Bitrix\Transformer\Http\ControllerResolver::getDefaultCloudControllerUrl
 	 */
 	public const CLOUD_CONVERTER_URL = 'https://transformer-de.bitrix.info/bitrix/tools/transformercontroller/add_queue.php';
 
-	private $controllerUrl;
+	public const CIRCUIT_BREAKER_ERRORS_THRESHOLD = 5;
+	public const CIRCUIT_BREAKER_ERRORS_SEARCH_PERIOD = 1800;
+
 	private $licenceCode = '';
 	private $domain = '';
 	private $type = '';
 
 	public function __construct()
 	{
-		$this->controllerUrl = self::getControllerUrl();
-
 		if(defined('BX24_HOST_NAME'))
 		{
 			$this->licenceCode = BX24_HOST_NAME;
@@ -49,30 +53,6 @@ class Http
 		}
 		$this->type = self::getPortalType();
 		$this->domain = self::getServerAddress();
-	}
-
-	private static function getControllerUrl(): ?string
-	{
-		if(defined('TRANSFORMER_CONTROLLER_URL'))
-		{
-			return TRANSFORMER_CONTROLLER_URL;
-		}
-
-		$optionsControllerUrl = Option::get(
-			self::MODULE_ID,
-			'transformer_controller_url',
-			self::getDefaultCloudControllerUrl(),
-		);
-		if(!empty($optionsControllerUrl))
-		{
-			$uri = new Uri($optionsControllerUrl);
-			if($uri->getHost())
-			{
-				return $uri->getLocator();
-			}
-		}
-
-		return null;
 	}
 
 	/**
@@ -107,24 +87,6 @@ class Http
 		return UrlManager::getInstance()->getHostUrl();
 	}
 
-	final public static function getDefaultCloudControllerUrl(): string
-	{
-		$region = Application::getInstance()->getLicense()->getRegion();
-
-		return match ($region) {
-			'ru' => 'https://transformer-ru-boxes.bitrix.info/bitrix/tools/transformercontroller/add_queue.php',
-			default => self::CLOUD_CONVERTER_URL,
-		};
-	}
-
-	/**
-	 * @internal
-	 */
-	final public static function isDefaultCloudControllerUsed(): bool
-	{
-		return self::getControllerUrl() === self::getDefaultCloudControllerUrl();
-	}
-
 	/**
 	 * Sign string with license or bx_sign.
 	 *
@@ -152,7 +114,7 @@ class Http
 	 * @param string $command Command to be executed.
 	 * @param string $guid GUID of the command to form back url.
 	 * @param array $params Parameters of the command.
-	 * @return array|bool|mixed
+	 * @return array
 	 * @throws ArgumentNullException
 	 * @throws ArgumentTypeException
 	 */
@@ -167,24 +129,34 @@ class Http
 			throw new ArgumentTypeException('params', 'array');
 		}
 
+		$controllerUrl = ServiceLocator::getInstance()->get('transformer.http.controllerResolver')->resolveControllerUrl(
+			$command,
+			$params['queue'] ?? null,
+		);
+
 		$logContext = [
 			'guid' => $guid,
-			'controllerUrl' => $this->controllerUrl,
+			'controllerUrl' => $controllerUrl,
 		];
 
-		if(!$this->shouldWeSend())
+		if (empty($controllerUrl))
 		{
-			Log::logger()->error(
-				'Error sending command: too many unsuccessful attempts, send aborted',
-				['errorCode' => Command::ERROR_CONNECTION_COUNT] + $logContext,
+			return $this->logErrorAndReturnResponse(
+				'Error sending command: controller url is empty',
+				$logContext,
+				Command::ERROR_EMPTY_CONTROLLER_URL,
+				$controllerUrl,
 			);
+		}
 
-			return [
-				'success' => false,
-				'result' => [
-					'code' => Command::ERROR_CONNECTION_COUNT
-				]
-			];
+		if (!$this->shouldWeSend($controllerUrl))
+		{
+			return $this->logErrorAndReturnResponse(
+				'Error sending command: too many unsuccessful attempts, send aborted',
+				$logContext,
+				Command::ERROR_CONNECTION_COUNT,
+				$controllerUrl
+			);
 		}
 
 		if($params['file'])
@@ -208,7 +180,6 @@ class Http
 		$post['BX_DOMAIN'] = $this->domain;
 		$post['BX_TYPE'] = $this->type;
 		$post['BX_VERSION'] = self::VERSION;
-		$post = \Bitrix\Main\Text\Encoding::convertEncoding($post, SITE_CHARSET, 'UTF-8');
 		$post['BX_HASH'] = self::requestSign($this->type, md5(implode('|', $post)));
 
 		$socketTimeout = Option::get(self::MODULE_ID, 'connection_time', 8);
@@ -228,7 +199,7 @@ class Http
 		]);
 		$httpClient->setHeader('User-Agent', 'Bitrix Transformer Client');
 		$httpClient->setHeader('Referer', $this->domain);
-		$response = $httpClient->post($this->controllerUrl, $post);
+		$response = $httpClient->post($controllerUrl, $post);
 
 		$logContext['response'] = $response;
 		Log::logger()->debug(
@@ -238,36 +209,64 @@ class Http
 
 		if($response === false)
 		{
-			Log::logger()->error(
+			return $this->logErrorAndReturnResponse(
 				'Error connecting to server',
-				['errorCode' => Command::ERROR_CONNECTION] + $logContext
+				$logContext,
+				Command::ERROR_CONNECTION,
+				$controllerUrl,
 			);
-
-			return [
-				'success' => false,
-				'result' => [
-					'code' => Command::ERROR_CONNECTION
-				]
-			];
 		}
+
 		try
 		{
-			return Json::decode($response);
+			$json = Json::decode($response);
+			$decodeErrorMessage = null;
 		}
 		catch(ArgumentException $e)
 		{
-			Log::logger()->error(
-				'Error decoding response from server',
-				['error' => $e->getMessage(), 'errorCode' => Command::ERROR_CONNECTION_RESPONSE] + $logContext,
-			);
-
-			return [
-				'success' => false,
-				'result' => [
-					'code' => Command::ERROR_CONNECTION_RESPONSE,
-				]
-			];
+			$json = null;
+			$decodeErrorMessage = $e->getMessage();
 		}
+
+		if (!is_array($json))
+		{
+			return $this->logErrorAndReturnResponse(
+				'Error decoding response from server',
+				$logContext,
+				Command::ERROR_CONNECTION_RESPONSE,
+				$controllerUrl,
+				$decodeErrorMessage,
+			);
+		}
+
+		$json['controllerUrl'] = $controllerUrl;
+
+		return $json;
+	}
+
+	private function logErrorAndReturnResponse(
+		string $logMessage,
+		array $logContext,
+		int $errorCode,
+		?string $controllerUrl,
+		?string $errorMessage = null
+	): array
+	{
+		$logContext += ['errorCode' => $errorCode];
+		if ($errorMessage !== null)
+		{
+			$logContext['error'] = $errorMessage;
+		}
+
+		Log::logger()->error($logMessage, $logContext);
+
+		return [
+			'success' => false,
+			'result' => [
+				'code' => $errorCode,
+			],
+			'controllerUrl' => $controllerUrl,
+		];
 	}
 
 	/**
@@ -287,19 +286,23 @@ class Http
 		return $uri;
 	}
 
-	private function shouldWeSend()
+	private function shouldWeSend(string $controllerUrl): bool
 	{
-		$timeSearchConnectionErrors = 1800;
-		$errorCountForStopSend = 5;
+		static $secondsSearchConnectionErrors = self::CIRCUIT_BREAKER_ERRORS_SEARCH_PERIOD;
 
-		$errorCount = CommandTable::getList(array(
-			'select' => array('CNT'),
-			'filter' => array('=ERROR' => self::CONNECTION_ERROR, '>UPDATE_TIME' => DateTime::createFromTimestamp(time() - $timeSearchConnectionErrors)),
-			'runtime' => array(
+		$queryResult = CommandTable::query()
+			->setSelect(['CNT'])
+			->where('CONTROLLER_URL', $controllerUrl)
+			->whereIn('ERROR_CODE', [Command::ERROR_CONNECTION, Command::ERROR_CONNECTION_RESPONSE])
+			->where('UPDATE_TIME', '>', (new DateTime())->add("-T{$secondsSearchConnectionErrors}S"))
+			->registerRuntimeField(
 				new ExpressionField('CNT', 'COUNT(*)')
-			),
-		))->fetch();
+			)
+			->fetch()
+		;
 
-		return ($errorCount['CNT'] < $errorCountForStopSend);
+		$errorCount = $queryResult['CNT'] ?? 0;
+
+		return ($errorCount < self::CIRCUIT_BREAKER_ERRORS_THRESHOLD);
 	}
 }

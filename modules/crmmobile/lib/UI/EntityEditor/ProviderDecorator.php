@@ -493,7 +493,7 @@ final class ProviderDecorator implements ReturnsEditorFields
 						$permissions[$entityTypeName] = [
 							'read' => $serviceUserPermissions->checkReadPermissions($entityTypeId),
 							'update' => $serviceUserPermissions->checkUpdatePermissions($entityTypeId, 0),
-							'add' => $serviceUserPermissions->checkAddPermissions($entityTypeId),
+							'add' => $serviceUserPermissions->checkAddPermissions($entityTypeId, 0),
 						];
 					}
 				}

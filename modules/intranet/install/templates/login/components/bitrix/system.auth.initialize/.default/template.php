@@ -68,7 +68,7 @@ $APPLICATION->SetTitle(GetMessage("CT_MAIN_REG_INIT_TITLE"));?>
 		<input type="hidden" name="<?echo $arParams["USER_ID"]?>" value="<?echo $arResult["USER_ID"]?>" />
 		<input type="hidden" name="confirm" value="Y" />
 	</form>
-	<script type="text/javascript">
+	<script>
 		BX.ready(function() {
 			BX.focus(document.forms["form_auth"]["NAME"]);
 			//BX.bind(BX("submit-button"), "click", function() { document.forms["form_auth"].submit(); });

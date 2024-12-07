@@ -20,8 +20,6 @@ if (!$currentUser || !$currentUser->IsAuthorized() || !check_bitrix_sessid() || 
 	die();
 }
 
-CUtil::JSPostUnescape();
-
 $action = isset($_POST['ACTION']) ? $_POST['ACTION'] : '';
 if($action == '')
 {

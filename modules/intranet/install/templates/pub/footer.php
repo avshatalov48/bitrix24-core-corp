@@ -28,12 +28,6 @@ if (!in_array($logoLang, array('ru', 'ua', 'en')))
 					<?
 					$b24Languages = [];
 					include_once $_SERVER['DOCUMENT_ROOT'].SITE_TEMPLATE_PATH.'/languages.php';
-					if (!\Bitrix\Main\Application::getInstance()->isUtfMode())
-					{
-						array_walk($b24Languages, function(&$lang) {
-							$lang["NAME"] = mb_convert_encoding($lang["NAME"], "HTML-ENTITIES", "UTF-8");
-						});
-					}
 					?>
 					<button class="ui-btn pub-btn-lang ui-btn-light-border ui-btn-sm ui-btn-themes ui-btn-dropdown ui-btn-no-caps" id="bx-lang-btn" onclick="pubLanguage.showSelector(this, <?=CUtil::PhpToJSObject($b24Languages)?>); "><?=$b24Languages[LANGUAGE_ID]["NAME"]?></button>
 				<? endif; ?>
@@ -51,7 +45,7 @@ if (!in_array($logoLang, array('ru', 'ua', 'en')))
 <div class="left-cloud"></div>
 <div class="right-cloud"></div>
 
-<script type="text/javascript">
+<script>
 
 var pubTemplate = {
 

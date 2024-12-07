@@ -79,6 +79,12 @@ class BizpocTab implements Tabable
 
 	public function getMenuData(): ?array
 	{
+		$counterId = (
+			$this->isAvailable() && class_exists('\Bitrix\Bizproc\Workflow\WorkflowUserCounters')
+				? 'bp_workflow'
+				: 'bp_tasks'
+		);
+
 		return [
 			'title' => $this->getTitle(),
 			'useLetterImage' => true,
@@ -87,7 +93,7 @@ class BizpocTab implements Tabable
 			'imageUrl' => 'favorite/icon-bp.png',
 			'params' => [
 				'onclick' => Utils::getComponentJSCode($this->getComponentParams()),
-				'counter' => 'bp_tasks',
+				'counter' => $counterId,
 			],
 		];
 	}

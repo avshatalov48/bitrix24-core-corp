@@ -1,11 +1,11 @@
+/* eslint-disable */
 this.BX = this.BX || {};
-(function (exports,main_core,main_core_events,mobile_utils,mobile_ajax) {
+(function (exports,ui_analytics,main_core,main_core_events,mobile_utils,mobile_ajax) {
 	'use strict';
 
 	var BalloonNotifier = /*#__PURE__*/function () {
 	  function BalloonNotifier() {
 	    var _this = this;
-
 	    babelHelpers.classCallCheck(this, BalloonNotifier);
 	    this.initialized = false;
 	    this.classes = {
@@ -24,16 +24,13 @@ this.BX = this.BX || {};
 	      _this.init();
 	    });
 	  }
-
 	  babelHelpers.createClass(BalloonNotifier, [{
 	    key: "init",
 	    value: function init() {
 	      var notifierNode = this.getNotifierNode();
-
 	      if (!notifierNode || this.initialized) {
 	        return;
 	      }
-
 	      this.initialized = true;
 	      this.initEvents();
 	    }
@@ -46,7 +43,6 @@ this.BX = this.BX || {};
 	        return false;
 	      });
 	      var refreshNeededNode = this.getRefreshNeededNode();
-
 	      if (refreshNeededNode) {
 	        refreshNeededNode.addEventListener('click', function () {
 	          app.exec('pullDownLoadingStart');
@@ -54,17 +50,13 @@ this.BX = this.BX || {};
 	          return false;
 	        });
 	      }
-
 	      var refreshErrorNode = this.getRefreshErrorNode();
-
 	      if (refreshErrorNode) {
 	        refreshErrorNode.addEventListener('click', function () {
 	          PageInstance.requestError('refresh', false);
 	        });
 	      }
-
 	      var nextPageErrorNode = this.getNextPageErrorNode();
-
 	      if (nextPageErrorNode) {
 	        nextPageErrorNode.addEventListener('click', function () {
 	          PageInstance.requestError('nextPage', false);
@@ -105,7 +97,6 @@ this.BX = this.BX || {};
 	    key: "showRefreshNeededNotifier",
 	    value: function showRefreshNeededNotifier() {
 	      var refreshNeededBlock = this.getRefreshNeededNode();
-
 	      if (refreshNeededBlock) {
 	        refreshNeededBlock.classList.add(this.classes.show);
 	      }
@@ -114,7 +105,6 @@ this.BX = this.BX || {};
 	    key: "hideRefreshNeededNotifier",
 	    value: function hideRefreshNeededNotifier() {
 	      var refreshNeededNode = this.getRefreshNeededNode();
-
 	      if (refreshNeededNode) {
 	        refreshNeededNode.classList.remove(this.classes.show);
 	      }
@@ -124,9 +114,8 @@ this.BX = this.BX || {};
 	    value: function showNotifier(params) {
 	      var cnt = parseInt(params.counterValue);
 	      var cnt_cent = cnt % 100,
-	          reminder = cnt % 10;
+	        reminder = cnt % 10;
 	      var suffix = '';
-
 	      if (cnt_cent >= 10 && cnt_cent < 15) {
 	        suffix = 3;
 	      } else if (reminder == 0) {
@@ -138,14 +127,12 @@ this.BX = this.BX || {};
 	      } else {
 	        suffix = 3;
 	      }
-
 	      if (Instance.getRefreshNeeded()) {
 	        this.getNotifierCounterNode().innerHTML = cnt ? cnt + '+' : '';
 	        this.hideRefreshNeededNotifier();
 	      } else {
 	        this.getNotifierCounterNode().innerHTML = cnt || '';
 	      }
-
 	      this.getNotifierCounterTitleNode().innerHTML = main_core.Loc.getMessage('MOBILE_EXT_LIVEFEED_COUNTER_TITLE_' + suffix);
 	      this.getNotifierNode().classList.add(this.classes.show);
 	    }
@@ -153,7 +140,6 @@ this.BX = this.BX || {};
 	    key: "hideNotifier",
 	    value: function hideNotifier() {
 	      var notifierNode = this.getNotifierNode();
-
 	      if (notifierNode) {
 	        notifierNode.classList.remove(this.classes.show);
 	      }
@@ -165,7 +151,6 @@ this.BX = this.BX || {};
 	var NextPageLoader = /*#__PURE__*/function () {
 	  function NextPageLoader() {
 	    var _this = this;
-
 	    babelHelpers.classCallCheck(this, NextPageLoader);
 	    this.initialized = false;
 	    this.init();
@@ -173,16 +158,13 @@ this.BX = this.BX || {};
 	      _this.init();
 	    });
 	  }
-
 	  babelHelpers.createClass(NextPageLoader, [{
 	    key: "init",
 	    value: function init() {
 	      var buttonNode = this.getButtonNode();
-
 	      if (!buttonNode || this.initialized) {
 	        return;
 	      }
-
 	      this.initialized = true;
 	      this.initEvents();
 	    }
@@ -204,7 +186,6 @@ this.BX = this.BX || {};
 	    key: "startWaiter",
 	    value: function startWaiter() {
 	      var button = this.getButtonNode();
-
 	      if (button) {
 	        button.classList.add('--loading');
 	      }
@@ -213,7 +194,6 @@ this.BX = this.BX || {};
 	    key: "stopWaiter",
 	    value: function stopWaiter() {
 	      var button = this.getButtonNode();
-
 	      if (button) {
 	        button.classList.remove('--loading');
 	      }
@@ -237,7 +217,6 @@ this.BX = this.BX || {};
 	      }
 	    };
 	  }
-
 	  babelHelpers.createClass(NotificationBar, [{
 	    key: "hideAll",
 	    value: function hideAll() {
@@ -297,7 +276,6 @@ this.BX = this.BX || {};
 	    this.setKeyName(main_core.Type.isPlainObject(params) && main_core.Type.isStringFilled(params.keyName) ? params.keyName : 'postUnsent');
 	    this.init();
 	  }
-
 	  babelHelpers.createClass(Database, [{
 	    key: "init",
 	    value: function init() {
@@ -334,7 +312,6 @@ this.BX = this.BX || {};
 	      if (parseInt(groupId) <= 0) {
 	        groupId = false;
 	      }
-
 	      app.exec('setStorageValue', {
 	        storageId: this.getTableName(),
 	        key: this.getKeyName() + (groupId ? '_' + groupId : ''),
@@ -348,18 +325,15 @@ this.BX = this.BX || {};
 	      if (parseInt(groupId) <= 0) {
 	        groupId = false;
 	      }
-
 	      for (var x in data) {
 	        if (!data.hasOwnProperty(x)) {
 	          continue;
 	        }
-
 	        if (x === 'sessid') {
 	          delete data[x];
 	          break;
 	        }
 	      }
-
 	      app.exec('setStorageValue', {
 	        storageId: this.getTableName(),
 	        key: this.getKeyName() + (groupId ? '_' + groupId : ''),
@@ -373,13 +347,11 @@ this.BX = this.BX || {};
 	      if (parseInt(groupId) <= 0) {
 	        groupId = false;
 	      }
-
 	      app.exec('getStorageValue', {
 	        storageId: this.getTableName(),
 	        key: this.getKeyName() + (groupId ? '_' + groupId : ''),
 	        callback: function callback(value) {
 	          value = main_core.Type.isPlainObject(value) ? value : main_core.Type.isStringFilled(value) ? JSON.parse(value) : {};
-
 	          if (main_core.Type.isPlainObject(value) && Object.keys(value).length > 0) {
 	            _callback.onLoad(value);
 	          } else {
@@ -393,13 +365,10 @@ this.BX = this.BX || {};
 	}();
 
 	var _templateObject;
-
 	var PublicationQueue = /*#__PURE__*/function (_EventEmitter) {
 	  babelHelpers.inherits(PublicationQueue, _EventEmitter);
-
 	  function PublicationQueue() {
 	    var _this;
-
 	    babelHelpers.classCallCheck(this, PublicationQueue);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(PublicationQueue).call(this));
 	    _this.repo = {};
@@ -416,12 +385,9 @@ this.BX = this.BX || {};
 	    _this.timeout = {
 	      show: 750
 	    };
-
 	    _this.init();
-
 	    return _this;
 	  }
-
 	  babelHelpers.createClass(PublicationQueue, [{
 	    key: "init",
 	    value: function init() {
@@ -439,11 +405,9 @@ this.BX = this.BX || {};
 	    key: "onScroll",
 	    value: function onScroll() {
 	      var containerNode = document.getElementById(this.nodeId.container);
-
 	      if (!main_core.Type.isDomNode(containerNode)) {
 	        return;
 	      }
-
 	      if (window.pageYOffset > 0) {
 	        containerNode.classList.add(this["class"].balloonFixed);
 	      } else {
@@ -454,25 +418,20 @@ this.BX = this.BX || {};
 	    key: "onFeedLoaded",
 	    value: function onFeedLoaded() {
 	      var _this2 = this;
-
 	      app.exec('getStorageValue', {
 	        storageId: 'livefeed',
 	        key: 'publicationQueue',
 	        callback: function callback(queue) {
 	          queue = main_core.Type.isPlainObject(queue) ? queue : main_core.Type.isStringFilled(queue) ? JSON.parse(queue) : {};
-
 	          if (!main_core.Type.isPlainObject(queue)) {
 	            return;
 	          }
-
 	          for (var key in queue) {
 	            if (!queue.hasOwnProperty(key)) {
 	              continue;
 	            }
-
 	            _this2.addToTray(key, {});
 	          }
-
 	          _this2.drawList();
 	        }
 	      });
@@ -493,7 +452,6 @@ this.BX = this.BX || {};
 	    key: "removeFromTray",
 	    value: function removeFromTray(key, params) {
 	      var _this3 = this;
-
 	      this.hideItem(key);
 	      setTimeout(function () {
 	        if (_this3.repo[key]) {
@@ -505,14 +463,12 @@ this.BX = this.BX || {};
 	    key: "addSuccess",
 	    value: function addSuccess(key, warningText) {
 	      var _this4 = this;
-
 	      if (this.repo[key] && this.repo[key].node) {
 	        this.repo[key].node.classList.remove(this["class"].balloonHidden);
 	        this.repo[key].node.classList.remove(this["class"].balloonShow);
 	        this.repo[key].node.classList.add(this["class"].balloonPublished);
 	        this.repo[key].node.lastElementChild.innerHTML = main_core.Type.isStringFilled(warningText) ? warningText : main_core.Loc.getMessage('MOBILE_EXT_LIVEFEED_PUBLICATION_QUEUE_SUCCESS_TITLE');
 	      }
-
 	      setTimeout(function () {
 	        _this4.removeFromTray(key);
 	      }, 5000);
@@ -534,18 +490,14 @@ this.BX = this.BX || {};
 	    key: "drawList",
 	    value: function drawList() {
 	      var containerNode = document.getElementById(this.nodeId.container);
-
 	      if (!main_core.Type.isDomNode(containerNode)) {
 	        return;
 	      }
-
 	      main_core.Dom.clean(containerNode);
-
 	      for (var key in this.repo) {
 	        if (!this.repo.hasOwnProperty(key) || !main_core.Type.isDomNode(this.repo[key].node)) {
 	          continue;
 	        }
-
 	        main_core.Dom.append(this.repo[key].node, containerNode);
 	      }
 	    }
@@ -553,15 +505,12 @@ this.BX = this.BX || {};
 	    key: "afterSetItem",
 	    value: function afterSetItem(params) {
 	      var _this5 = this;
-
 	      var key = params.key ? params.key : '',
-	          pageId = params.pageId ? params.pageId : '',
-	          contentType = params.contentType ? params.contentType : '';
-
+	        pageId = params.pageId ? params.pageId : '',
+	        contentType = params.contentType ? params.contentType : '';
 	      if (pageId != Instance.getPageId() || !key || !main_core.Type.isStringFilled(contentType)) {
 	        return;
 	      }
-
 	      if (contentType == 'post') {
 	        this.addToTray(key, {
 	          key: key
@@ -577,7 +526,6 @@ this.BX = this.BX || {};
 	      if (!main_core.Type.isPlainObject(params)) {
 	        params = {};
 	      }
-
 	      this.addSuccess(params.key ? params.key : '', params.warningText);
 	      this.drawList();
 	    }
@@ -587,7 +535,6 @@ this.BX = this.BX || {};
 	      if (!main_core.Type.isPlainObject(params)) {
 	        params = {};
 	      }
-
 	      this.addSuccess(params.key ? params.key : '');
 	      this.drawList();
 	    }
@@ -597,7 +544,6 @@ this.BX = this.BX || {};
 	      if (!main_core.Type.isPlainObject(params)) {
 	        params = {};
 	      }
-
 	      var key = params.key ? params.key : '';
 	      this.removeFromTray(key, {
 	        key: key
@@ -610,7 +556,6 @@ this.BX = this.BX || {};
 	      if (!main_core.Type.isPlainObject(params)) {
 	        params = {};
 	      }
-
 	      var key = params.key ? params.key : '';
 	      this.removeFromTray(key, {
 	        key: key
@@ -633,7 +578,6 @@ this.BX = this.BX || {};
 	      window.scrollTo(0, 0);
 	    }
 	  }]);
-
 	  function Post$$1(data) {
 	    babelHelpers.classCallCheck(this, Post$$1);
 	    this.logId = 0;
@@ -654,32 +598,29 @@ this.BX = this.BX || {};
 	    this.calendarEventId = 0;
 	    this.init(data);
 	  }
-
 	  babelHelpers.createClass(Post$$1, [{
 	    key: "init",
 	    value: function init(data) {
 	      var logId = data.logId,
-	          entryType = data.entryType,
-	          useFollow = data.useFollow,
-	          useTasks = data.useTasks,
-	          perm = data.perm,
-	          destinations = data.destinations,
-	          postId = data.postId,
-	          url = data.url,
-	          entityXmlId = data.entityXmlId,
-	          readOnly = data.readOnly,
-	          contentTypeId = data.contentTypeId,
-	          contentId = data.contentId,
-	          showFull = data.showFull,
-	          taskId = data.taskId,
-	          taskData = data.taskData,
-	          calendarEventId = data.calendarEventId;
+	        entryType = data.entryType,
+	        useFollow = data.useFollow,
+	        useTasks = data.useTasks,
+	        perm = data.perm,
+	        destinations = data.destinations,
+	        postId = data.postId,
+	        url = data.url,
+	        entityXmlId = data.entityXmlId,
+	        readOnly = data.readOnly,
+	        contentTypeId = data.contentTypeId,
+	        contentId = data.contentId,
+	        showFull = data.showFull,
+	        taskId = data.taskId,
+	        taskData = data.taskData,
+	        calendarEventId = data.calendarEventId;
 	      logId = parseInt(logId);
-
 	      if (logId <= 0) {
 	        return;
 	      }
-
 	      this.logId = logId;
 	      this.postId = parseInt(postId);
 	      this.contentId = parseInt(contentId);
@@ -689,27 +630,21 @@ this.BX = this.BX || {};
 	      this.useTasks = !!useTasks;
 	      this.readOnly = !!readOnly;
 	      this.showFull = !!showFull;
-
 	      if (main_core.Type.isStringFilled(entryType)) {
 	        this.entryType = entryType;
 	      }
-
 	      if (main_core.Type.isStringFilled(perm)) {
 	        this.perm = perm;
 	      }
-
 	      if (main_core.Type.isStringFilled(url)) {
 	        this.url = url;
 	      }
-
 	      if (main_core.Type.isStringFilled(entityXmlId)) {
 	        this.entityXmlId = entityXmlId;
 	      }
-
 	      if (main_core.Type.isStringFilled(contentTypeId)) {
 	        this.contentTypeId = contentTypeId;
 	      }
-
 	      if (main_core.Type.isStringFilled(taskData)) {
 	        try {
 	          this.taskData = JSON.parse(taskData);
@@ -717,7 +652,6 @@ this.BX = this.BX || {};
 	          this.taskData = null;
 	        }
 	      }
-
 	      if (main_core.Type.isPlainObject(destinations)) {
 	        this.destinations = destinations;
 	      }
@@ -726,22 +660,21 @@ this.BX = this.BX || {};
 	    key: "setFavorites",
 	    value: function setFavorites(data) {
 	      var _this = this;
-
 	      if (this.logId <= 0) {
 	        return;
 	      }
-
 	      var node = data.node,
-	          event = data.event; // for old versions without post menu in the feed
+	        event = data.event;
 
+	      // for old versions without post menu in the feed
 	      if (!main_core.Type.isDomNode(node)) {
 	        node = document.getElementById('log_entry_favorites_' + this.logId);
 	      }
-
 	      if (main_core.Type.isDomNode(node)) {
 	        var oldValue = node.getAttribute('data-favorites') === 'Y' ? 'Y' : 'N';
-	        var newValue = oldValue === 'Y' ? 'N' : 'Y'; // for old versions without post menu in the feed
+	        var newValue = oldValue === 'Y' ? 'N' : 'Y';
 
+	        // for old versions without post menu in the feed
 	        if (node.classList.contains('lenta-item-fav')) {
 	          if (oldValue === 'Y') {
 	            node.classList.remove('lenta-item-fav-active');
@@ -749,7 +682,6 @@ this.BX = this.BX || {};
 	            node.classList.add('lenta-item-fav-active');
 	          }
 	        }
-
 	        node.setAttribute('data-favorites', newValue);
 	        mobile_ajax.Ajax.runAction('socialnetwork.api.livefeed.changeFavorites', {
 	          data: {
@@ -770,7 +702,6 @@ this.BX = this.BX || {};
 	                bAjax: false
 	              });
 	            }
-
 	            BXMobileApp.onCustomEvent('onLogEntryFavorites', {
 	              log_id: _this.logId,
 	              page_id: main_core.Loc.getMessage('MSLPageId')
@@ -782,7 +713,6 @@ this.BX = this.BX || {};
 	          node.setAttribute('data-favorites', oldValue);
 	        });
 	      }
-
 	      if (event instanceof Event) {
 	        event.preventDefault();
 	        event.stopPropagation();
@@ -792,14 +722,11 @@ this.BX = this.BX || {};
 	    key: "setPinned",
 	    value: function setPinned(data) {
 	      var _this2 = this;
-
 	      if (this.logId <= 0) {
 	        return;
 	      }
-
 	      var menuNode = data.menuNode,
-	          context = data.context;
-
+	        context = data.context;
 	      if (main_core.Type.isDomNode(menuNode)) {
 	        var oldValue = menuNode.getAttribute('data-pinned') === 'Y' ? 'Y' : 'N';
 	        var newValue = oldValue === 'Y' ? 'N' : 'Y';
@@ -818,7 +745,6 @@ this.BX = this.BX || {};
 	          }
 	        }).then(function (response) {
 	          BXMobileApp.onCustomEvent('Livefeed::hideLoader', {}, true, true);
-
 	          if (response.data.success) {
 	            BXMobileApp.onCustomEvent('Livefeed.PinnedPanel::change', {
 	              logId: _this2.logId,
@@ -843,16 +769,14 @@ this.BX = this.BX || {};
 	    key: "openDetail",
 	    value: function openDetail(params) {
 	      var pathToEmptyPage = params.pathToEmptyPage,
-	          pathToCalendarEvent = params.pathToCalendarEvent,
-	          pathToTasksRouter = params.pathToTasksRouter,
-	          event = params.event,
-	          focusComments = params.focusComments,
-	          showFull = params.showFull;
-
+	        pathToCalendarEvent = params.pathToCalendarEvent,
+	        pathToTasksRouter = params.pathToTasksRouter,
+	        event = params.event,
+	        focusComments = params.focusComments,
+	        showFull = params.showFull;
 	      if (!main_core.Type.isStringFilled(pathToEmptyPage)) {
 	        return;
 	      }
-
 	      if (this.taskId > 0 && BXMobileAppContext.getApiVersion() >= 31 && this.taskData) {
 	        BXMobileApp.Events.postToComponent('taskbackground::task::open', [{
 	          id: this.taskId,
@@ -869,14 +793,13 @@ this.BX = this.BX || {};
 	        }]);
 	      } else {
 	        var path = pathToEmptyPage;
-
 	        if (this.calendarEventId > 0 && !focusComments && pathToCalendarEvent.length > 0) {
 	          path = pathToCalendarEvent.replace('#EVENT_ID#', this.calendarEventId);
-	        } else if (this.taskId > 0 && this.taskData && pathToTasksRouter.length > 0) // API version <= 31
+	        } else if (this.taskId > 0 && this.taskData && pathToTasksRouter.length > 0)
+	          // API version <= 31
 	          {
 	            path = pathToTasksRouter.replace('__ROUTE_PAGE__', 'view').replace('#USER_ID#', main_core.Loc.getMessage('MOBILE_EXT_LIVEFEED_CURRENT_USER_ID')) + '&TASK_ID=' + this.taskId;
 	          }
-
 	        __MSLOpenLogEntryNew({
 	          path: path,
 	          log_id: this.logId,
@@ -901,19 +824,14 @@ this.BX = this.BX || {};
 	    key: "initDetailPin",
 	    value: function initDetailPin() {
 	      var menuNode = document.getElementById('log-entry-menu-' + this.logId);
-
 	      if (!menuNode) {
 	        return;
 	      }
-
 	      var postNode = menuNode.closest('.post-wrap');
-
 	      if (!postNode) {
 	        return;
 	      }
-
 	      var pinnedValue = menuNode.getAttribute('data-pinned');
-
 	      if (pinnedValue === 'Y') {
 	        postNode.classList.add('lenta-item-pin-active');
 	      } else {
@@ -933,17 +851,14 @@ this.BX = this.BX || {};
 	  function BlogPost$$1() {
 	    babelHelpers.classCallCheck(this, BlogPost$$1);
 	  }
-
 	  babelHelpers.createClass(BlogPost$$1, null, [{
 	    key: "delete",
 	    value: function _delete(params) {
 	      var context = main_core.Type.isStringFilled(params.context) ? params.context : 'list';
 	      var postId = !main_core.Type.isUndefined(params.postId) ? parseInt(params.postId) : 0;
-
 	      if (postId <= 0) {
 	        return false;
 	      }
-
 	      app.confirm({
 	        title: main_core.Loc.getMessage('MOBILE_EXT_LIVEFEED_DELETE_CONFIRM_TITLE'),
 	        text: main_core.Loc.getMessage('MOBILE_EXT_LIVEFEED_DELETE_CONFIRM_DESCRIPTION'),
@@ -952,7 +867,6 @@ this.BX = this.BX || {};
 	          if (parseInt(btnNum) !== 1) {
 	            return false;
 	          }
-
 	          app.showPopupLoader({
 	            text: ''
 	          });
@@ -975,13 +889,10 @@ this.BX = this.BX || {};
 	            processData: true,
 	            callback: function callback(response) {
 	              app.hidePopupLoader();
-
 	              if (!main_core.Type.isStringFilled(response.SUCCESS) || response.SUCCESS !== 'Y') {
 	                return;
 	              }
-
 	              BXMobileApp.onCustomEvent('onBlogPostDelete', {}, true, true);
-
 	              if (context === 'detail') {
 	                app.closeController({
 	                  drop: true
@@ -1000,13 +911,10 @@ this.BX = this.BX || {};
 	    key: "edit",
 	    value: function edit(params) {
 	      var postId = !main_core.Type.isUndefined(params.postId) ? parseInt(params.postId) : 0;
-
 	      if (postId <= 0) {
 	        return;
 	      }
-
 	      var pinnedContext = !main_core.Type.isUndefined(params.pinnedContext) ? !!params.pinnedContext : false;
-
 	      if (Application.getApiVersion() >= Instance.getApiVersion('layoutPostForm')) {
 	        PostFormManagerInstance.show({
 	          pageId: Instance.getPageId(),
@@ -1017,7 +925,6 @@ this.BX = this.BX || {};
 	          postId: postId,
 	          callback: function callback(postData) {
 	            PostFormOldManagerInstance.formParams = {};
-
 	            if (!main_core.Type.isUndefined(postData.PostPerm) && postData.PostPerm >= 'W') {
 	              var selectedDestinations = {
 	                a_users: [],
@@ -1029,19 +936,16 @@ this.BX = this.BX || {};
 	                logId: postData.log_id,
 	                pinnedContext: pinnedContext
 	              });
-
 	              if (!main_core.Type.isUndefined(postData.PostDetailText)) {
 	                PostFormOldManagerInstance.setParams({
 	                  messageText: postData.PostDetailText
 	                });
 	              }
-
 	              if (main_core.Type.isPlainObject(postData.PostDestination)) {
 	                for (var _i = 0, _Object$entries = Object.entries(postData.PostDestination); _i < _Object$entries.length; _i++) {
 	                  var _Object$entries$_i = babelHelpers.slicedToArray(_Object$entries[_i], 2),
-	                      key = _Object$entries$_i[0],
-	                      value = _Object$entries$_i[1];
-
+	                    key = _Object$entries$_i[0],
+	                    value = _Object$entries$_i[1];
 	                  if (main_core.Type.isStringFilled(postData.PostDestination[key].STYLE) && postData.PostDestination[key].STYLE === 'all-users') {
 	                    PostFormOldManagerInstance.addDestination(selectedDestinations, {
 	                      type: 'UA'
@@ -1055,29 +959,24 @@ this.BX = this.BX || {};
 	                  }
 	                }
 	              }
-
 	              if (!main_core.Type.isUndefined(postData.PostDestinationHidden)) {
 	                PostFormOldManagerInstance.setExtraData({
 	                  hiddenRecipients: postData.PostDestinationHidden
 	                });
 	              }
-
 	              PostFormOldManagerInstance.setParams({
 	                selectedRecipients: selectedDestinations
 	              });
-
 	              if (!main_core.Type.isUndefined(postData.PostFiles)) {
 	                PostFormOldManagerInstance.setParams({
 	                  messageFiles: postData.PostFiles
 	                });
 	              }
-
 	              if (!main_core.Type.isUndefined(postData.PostUFCode)) {
 	                PostFormOldManagerInstance.setExtraData({
 	                  messageUFCode: postData.PostUFCode
 	                });
 	              }
-
 	              app.exec('showPostForm', PostFormOldManagerInstance.show());
 	            }
 	          }
@@ -1088,19 +987,14 @@ this.BX = this.BX || {};
 	    key: "getData",
 	    value: function getData(params) {
 	      var postId = !main_core.Type.isUndefined(params.postId) ? parseInt(params.postId) : 0;
-
 	      if (postId <= 0) {
 	        return;
 	      }
-
 	      var callbackFunction = main_core.Type.isFunction(params.callback) ? params.callback : null;
-
 	      if (main_core.Type.isNull(callbackFunction)) {
 	        return;
 	      }
-
 	      var result = {};
-
 	      if (postId > 0) {
 	        app.showPopupLoader();
 	        mobile_ajax.Ajax.wrap({
@@ -1121,43 +1015,33 @@ this.BX = this.BX || {};
 	          callback: function callback(data) {
 	            app.hidePopupLoader();
 	            result.id = postId;
-
 	            if (!main_core.Type.isUndefined(data.log_id) && parseInt(data.log_id) > 0) {
 	              result.log_id = data.log_id;
 	            }
-
 	            if (!main_core.Type.isUndefined(data.post_user_id) && parseInt(data.post_user_id) > 0) {
 	              result.post_user_id = data.post_user_id;
 	            }
-
 	            if (!main_core.Type.isUndefined(data.PostPerm)) {
 	              result.PostPerm = data.PostPerm;
 	            }
-
 	            if (!main_core.Type.isUndefined(data.PostDestination)) {
 	              result.PostDestination = data.PostDestination;
 	            }
-
 	            if (!main_core.Type.isUndefined(data.PostDestinationHidden)) {
 	              result.PostDestinationHidden = data.PostDestinationHidden;
 	            }
-
 	            if (!main_core.Type.isUndefined(data.PostDetailText)) {
 	              result.PostDetailText = data.PostDetailText;
 	            }
-
 	            if (main_core.Type.isUndefined(data.PostFiles)) {
 	              result.PostFiles = data.PostFiles;
 	            }
-
 	            if (!main_core.Type.isUndefined(data.PostBackgroundCode)) {
 	              result.PostBackgroundCode = data.PostBackgroundCode;
 	            }
-
 	            if (!main_core.Type.isUndefined(data.PostUFCode)) {
 	              result.PostUFCode = data.PostUFCode;
 	            }
-
 	            callbackFunction(result);
 	          },
 	          callback_failure: function callback_failure() {
@@ -1174,27 +1058,26 @@ this.BX = this.BX || {};
 	  function PostMenu() {
 	    babelHelpers.classCallCheck(this, PostMenu);
 	  }
-
 	  babelHelpers.createClass(PostMenu, [{
 	    key: "init",
 	    value: function init(data) {
 	      this.iconUrlFolderPath = '/bitrix/templates/mobile_app/images/lenta/menu/';
 	      this.sectionCode = 'defaultSection';
-	      this.logId = parseInt(data.logId);
-	      this.postId = parseInt(data.postId);
+	      this.logId = parseInt(data.logId, 10);
+	      this.postId = parseInt(data.postId, 10);
 	      this.postPerms = main_core.Type.isStringFilled(data.postPerms) ? data.postPerms : 'R';
 	      this.pageId = data.pageId;
 	      this.contentTypeId = main_core.Type.isStringFilled(data.contentTypeId) ? data.contentTypeId : null;
 	      this.contentId = main_core.Type.isInteger(data.contentId) ? data.contentId : 0;
-	      this.useShare = !!data.useShare && this.postId > 0;
-	      this.useFavorites = !!data.useFavorites && this.logId > 0;
-	      this.useFollow = !!data.useFollow && this.logId > 0;
-	      this.usePinned = !!data.usePinned && this.logId > 0;
+	      this.useShare = Boolean(data.useShare) && this.postId > 0;
+	      this.useFavorites = Boolean(data.useFavorites) && this.logId > 0;
+	      this.useFollow = Boolean(data.useFollow) && this.logId > 0;
+	      this.usePinned = Boolean(data.usePinned) && this.logId > 0;
 	      this.useTasks = main_core.Loc.getMessage('MOBILE_EXT_LIVEFEED_USE_TASKS') === 'Y';
-	      this.useRefreshComments = !!data.useRefreshComments;
-	      this.favoritesValue = !!data.favoritesValue;
-	      this.followValue = !!data.followValue;
-	      this.pinnedValue = !!data.pinnedValue;
+	      this.useRefreshComments = Boolean(data.useRefreshComments);
+	      this.favoritesValue = Boolean(data.favoritesValue);
+	      this.followValue = Boolean(data.followValue);
+	      this.pinnedValue = Boolean(data.pinnedValue);
 	      this.target = main_core.Type.isDomNode(data.target) ? data.target : null;
 	      this.context = main_core.Type.isStringFilled(data.context) ? data.context : 'list';
 	    }
@@ -1202,14 +1085,12 @@ this.BX = this.BX || {};
 	    key: "getMenuItems",
 	    value: function getMenuItems() {
 	      var _this = this;
-
 	      var result = [];
-
 	      if (this.usePinned) {
 	        result.push({
 	          id: 'pinned',
-	          title: main_core.Loc.getMessage('MOBILE_EXT_LIVEFEED_POST_MENU_PINNED_' + (!!this.pinnedValue ? 'Y' : 'N')),
-	          iconUrl: this.iconUrlFolderPath + (!!this.pinnedValue ? 'unpin.png' : 'pin.png'),
+	          title: main_core.Loc.getMessage("MOBILE_EXT_LIVEFEED_POST_MENU_PINNED_".concat(this.pinnedValue ? 'Y' : 'N')),
+	          iconUrl: this.iconUrlFolderPath + (this.pinnedValue ? 'unpin.png' : 'pin.png'),
 	          sectionCode: this.sectionCode,
 	          action: function action() {
 	            var postInstance = new Post$$1({
@@ -1222,26 +1103,24 @@ this.BX = this.BX || {};
 	          }
 	        });
 	      }
-
 	      if (this.useShare) {
 	        var selectedDestinations = {
 	          a_users: [],
 	          b_groups: []
 	        };
-
 	        if (selectedDestinations.a_users.length > 0 || selectedDestinations.b_groups.length > 0) {
 	          result.push({
 	            id: 'sharePost',
 	            title: main_core.Loc.getMessage('MOBILE_EXT_LIVEFEED_POST_MENU_SHARE'),
 	            iconName: 'add',
-	            iconUrl: this.iconUrlFolderPath + 'n_plus.png',
+	            iconUrl: "".concat(this.iconUrlFolderPath, "n_plus.png"),
 	            sectionCode: this.sectionCode,
 	            action: function action() {
 	              app.openTable({
 	                callback: function callback() {
 	                  oMSL.shareBlogPost();
 	                },
-	                url: main_core.Loc.getMessage('MOBILE_EXT_LIVEFEED_SITE_DIR') + 'mobile/index.php?mobile_action=' + (main_core.Loc.getMessage('MOBILE_EXT_LIVEFEED_CURRENT_EXTRANET_SITE') === 'Y' ? 'get_group_list' : 'get_usergroup_list') + '&feature=blog',
+	                url: "".concat(main_core.Loc.getMessage('MOBILE_EXT_LIVEFEED_SITE_DIR'), "mobile/index.php?mobile_action=").concat(main_core.Loc.getMessage('MOBILE_EXT_LIVEFEED_CURRENT_EXTRANET_SITE') === 'Y' ? 'get_group_list' : 'get_usergroup_list', "&feature=blog"),
 	                markmode: true,
 	                multiple: true,
 	                return_full_mode: true,
@@ -1259,24 +1138,22 @@ this.BX = this.BX || {};
 	          });
 	        }
 	      }
-
 	      if (this.postId > 0 && this.postPerms === 'W') {
 	        result.push({
 	          id: 'edit',
 	          title: main_core.Loc.getMessage('MOBILE_EXT_LIVEFEED_POST_MENU_EDIT'),
-	          iconUrl: this.iconUrlFolderPath + 'pencil.png',
+	          iconUrl: "".concat(this.iconUrlFolderPath, "pencil.png"),
 	          sectionCode: this.sectionCode,
 	          action: function action() {
 	            BlogPost$$1.edit({
 	              feedId: window.LiveFeedID,
 	              postId: _this.postId,
-	              pinnedContext: !!_this.pinnedValue
+	              pinnedContext: Boolean(_this.pinnedValue)
 	            });
 	          },
 	          arrowFlag: false,
 	          feature: 'edit'
-	        });
-	        result.push({
+	        }, {
 	          id: 'delete',
 	          title: main_core.Loc.getMessage('MOBILE_EXT_LIVEFEED_POST_MENU_DELETE'),
 	          iconName: 'delete',
@@ -1290,12 +1167,11 @@ this.BX = this.BX || {};
 	          arrowFlag: false
 	        });
 	      }
-
 	      if (this.useFavorites) {
 	        result.push({
 	          id: 'favorites',
-	          title: main_core.Loc.getMessage('MOBILE_EXT_LIVEFEED_POST_MENU_FAVORITES_' + (!!this.favoritesValue ? 'Y' : 'N')),
-	          iconUrl: this.iconUrlFolderPath + 'favorite.png',
+	          title: main_core.Loc.getMessage("MOBILE_EXT_LIVEFEED_POST_MENU_FAVORITES_".concat(this.favoritesValue ? 'Y' : 'N')),
+	          iconUrl: "".concat(this.iconUrlFolderPath, "favorite.png"),
 	          sectionCode: this.sectionCode,
 	          action: function action() {
 	            var postInstance = new Post$$1({
@@ -1309,12 +1185,11 @@ this.BX = this.BX || {};
 	          feature: 'favorites'
 	        });
 	      }
-
 	      if (this.useFollow) {
 	        result.push({
 	          id: 'follow',
-	          title: main_core.Loc.getMessage('MOBILE_EXT_LIVEFEED_POST_MENU_FOLLOW_' + (!!this.followValue ? 'Y' : 'N')),
-	          iconUrl: this.iconUrlFolderPath + 'eye.png',
+	          title: main_core.Loc.getMessage("MOBILE_EXT_LIVEFEED_POST_MENU_FOLLOW_".concat(this.followValue ? 'Y' : 'N')),
+	          iconUrl: "".concat(this.iconUrlFolderPath, "eye.png"),
 	          sectionCode: this.sectionCode,
 	          action: function action() {
 	            FollowManagerInstance.setFollow({
@@ -1329,12 +1204,11 @@ this.BX = this.BX || {};
 	          arrowFlag: false
 	        });
 	      }
-
 	      if (this.useRefreshComments) {
 	        result.push({
 	          id: 'refreshPostComments',
 	          title: main_core.Loc.getMessage('MOBILE_EXT_LIVEFEED_POST_MENU_REFRESH_COMMENTS'),
-	          iconUrl: this.iconUrlFolderPath + 'n_refresh.png',
+	          iconUrl: "".concat(this.iconUrlFolderPath, "n_refresh.png"),
 	          action: function action() {
 	            if (oMSL.bDetailEmptyPage) {
 	              // get comments on refresh from detail page menu
@@ -1352,12 +1226,11 @@ this.BX = this.BX || {};
 	          arrowFlag: false
 	        });
 	      }
-
 	      if (main_core.Type.isStringFilled(this.contentTypeId) && this.contentId > 0) {
 	        result.push({
 	          id: 'getPostLink',
 	          title: main_core.Loc.getMessage('MOBILE_EXT_LIVEFEED_POST_MENU_GET_LINK'),
-	          iconUrl: this.iconUrlFolderPath + 'link.png',
+	          iconUrl: "".concat(this.iconUrlFolderPath, "link.png"),
 	          sectionCode: this.sectionCode,
 	          action: function action() {
 	            oMSL.copyPostLink({
@@ -1367,12 +1240,11 @@ this.BX = this.BX || {};
 	          },
 	          arrowFlag: false
 	        });
-
 	        if (this.useTasks && this.logId > 0) {
 	          result.push({
 	            id: 'createTask',
 	            title: main_core.Loc.getMessage('MOBILE_EXT_LIVEFEED_POST_MENU_CREATE_TASK'),
-	            iconUrl: this.iconUrlFolderPath + 'n_check.png',
+	            iconUrl: "".concat(this.iconUrlFolderPath, "n_check.png"),
 	            sectionCode: this.sectionCode,
 	            action: function action() {
 	              oMSL.createTask({
@@ -1380,13 +1252,20 @@ this.BX = this.BX || {};
 	                entityId: _this.contentId,
 	                logId: _this.logId
 	              });
+	              ui_analytics.sendData({
+	                tool: 'tasks',
+	                category: 'task_operations',
+	                event: 'task_create',
+	                type: 'task',
+	                c_section: 'feed',
+	                c_element: 'create_button'
+	              });
 	              return false;
 	            },
 	            arrowFlag: false
 	          });
 	        }
 	      }
-
 	      return result;
 	    }
 	  }]);
@@ -1400,14 +1279,12 @@ this.BX = this.BX || {};
 	    this.listPageMenuItems = [];
 	    this.detailPageMenuItems = [];
 	  }
-
 	  babelHelpers.createClass(PageMenu, [{
 	    key: "init",
 	    value: function init(data) {
 	      this.type = data.type === 'detail' ? 'detail' : 'list';
 	      var menuItems = this.getPageMenuItems();
 	      var title = this.type === 'detail' ? main_core.Type.isStringFilled(main_core.Loc.getMessage('MSLLogEntryTitle')) ? main_core.Loc.getMessage('MSLLogEntryTitle') : '' : main_core.Type.isStringFilled(main_core.Loc.getMessage('MSLLogTitle')) ? main_core.Loc.getMessage('MSLLogTitle') : '';
-
 	      if (menuItems.length > 0) {
 	        if (BXMobileAppContext.getApiVersion() >= Instance.getApiVersion('pageMenu')) {
 	          this.initPagePopupMenu();
@@ -1422,7 +1299,6 @@ this.BX = this.BX || {};
 	      } else if (BXMobileAppContext.getApiVersion() < Instance.getApiVersion('pageMenu')) {
 	        BXMobileApp.UI.Page.TopBar.title.setCallback("");
 	      }
-
 	      BXMobileApp.UI.Page.TopBar.title.setText(title);
 	      BXMobileApp.UI.Page.TopBar.title.show();
 	    }
@@ -1430,13 +1306,10 @@ this.BX = this.BX || {};
 	    key: "initPagePopupMenu",
 	    value: function initPagePopupMenu() {
 	      var _this = this;
-
 	      if (BXMobileAppContext.getApiVersion() < Instance.getApiVersion('pageMenu')) {
 	        return;
 	      }
-
 	      var buttons = [];
-
 	      if (!oMSL.logId) {
 	        buttons.push({
 	          type: 'search',
@@ -1445,9 +1318,7 @@ this.BX = this.BX || {};
 	          }
 	        });
 	      }
-
 	      var menuItems = this.getPageMenuItems(this.type);
-
 	      if (BX.type.isArray(menuItems) && menuItems.length > 0) {
 	        buttons.push({
 	          type: 'more',
@@ -1456,7 +1327,6 @@ this.BX = this.BX || {};
 	          }
 	        });
 	      }
-
 	      app.exec('setRightButtons', {
 	        items: buttons
 	      });
@@ -1467,13 +1337,10 @@ this.BX = this.BX || {};
 	      if (this.type === 'detail') {
 	        this.detailPageMenuItems = this.buildDetailPageMenu(oMSL.menuData);
 	      }
-
 	      var menuItems = this.getPageMenuItems();
-
 	      if (menuItems.length <= 0) {
 	        return;
 	      }
-
 	      var popupMenuItems = [];
 	      var popupMenuActions = {};
 	      menuItems.forEach(function (menuItem) {
@@ -1509,11 +1376,9 @@ this.BX = this.BX || {};
 	    key: "buildDetailPageMenu",
 	    value: function buildDetailPageMenu(data) {
 	      var menuNode = null;
-
 	      if (BXMobileAppContext.getApiVersion() >= Instance.getApiVersion('pageMenu')) {
 	        menuNode = document.getElementById("log-entry-menu-".concat(Instance.getLogId()));
 	      }
-
 	      PostMenuInstance.init({
 	        logId: Instance.getLogId(),
 	        postId: parseInt(data.post_id),
@@ -1547,12 +1412,10 @@ this.BX = this.BX || {};
 	  function PostFormManager() {
 	    babelHelpers.classCallCheck(this, PostFormManager);
 	  }
-
 	  babelHelpers.createClass(PostFormManager, [{
 	    key: "show",
 	    value: function show(params) {
 	      var _this = this;
-
 	      var postData = {
 	        type: params.type ? params.type : 'post',
 	        groupId: params.groupId ? parseInt(params.groupId) : 0,
@@ -1608,33 +1471,26 @@ this.BX = this.BX || {};
 	    value: function getDatabaseData(postData) {
 	      var promise = new Promise(function (resolve, reject) {
 	        var postId = parseInt(postData.postId);
-
 	        if (postId > 0) {
 	          resolve(postData);
 	          return;
 	        }
-
 	        DatabaseUnsentPostInstance.load({
 	          onLoad: function onLoad(data) {
 	            if (data.contentType !== postData.type) {
 	              resolve(postData);
 	              return;
 	            }
-
 	            postData.groupId = 0;
-
 	            if (!main_core.Type.isPlainObject(postData.post)) {
 	              postData.post = {};
 	            }
-
 	            if (main_core.Type.isStringFilled(data.POST_TITLE)) {
 	              postData.post.PostTitle = data.POST_TITLE;
 	            }
-
 	            if (main_core.Type.isStringFilled(data.POST_MESSAGE)) {
 	              postData.post.PostDetailText = data.POST_MESSAGE;
 	            }
-
 	            if (main_core.Type.isArrayFilled(data.DEST) && main_core.Type.isPlainObject(data.DEST_DATA)) {
 	              postData.post.PostDestination = [];
 	              var patterns = [{
@@ -1650,17 +1506,14 @@ this.BX = this.BX || {};
 	              data.DEST.forEach(function (item) {
 	                var id = null;
 	                var style = null;
-
 	                for (var i = 0; i < patterns.length; i++) {
 	                  var matches = item.match(patterns[i].pattern);
-
 	                  if (matches) {
 	                    id = matches[1];
 	                    style = item === 'UA' ? 'all-users' : patterns[i].style;
 	                    break;
 	                  }
 	                }
-
 	                if (!main_core.Type.isNull(id)) {
 	                  postData.post.PostDestination.push({
 	                    STYLE: style,
@@ -1670,35 +1523,28 @@ this.BX = this.BX || {};
 	                }
 	              });
 	            }
-
 	            if (main_core.Type.isStringFilled(data.BACKGROUND_CODE)) {
 	              postData.post.PostBackgroundCode = data.BACKGROUND_CODE;
 	            }
-
 	            if (data.IMPORTANT === 'Y') {
 	              postData.post.PostImportantData = {
 	                value: 'Y'
 	              };
-
 	              if (main_core.Type.isStringFilled(data.IMPORTANT_DATE_END)) {
 	                postData.post.PostImportantData.endDate = Date.parse(data.IMPORTANT_DATE_END) / 1000;
 	              }
 	            }
-
 	            if (main_core.Type.isStringFilled(data.GRATITUDE_MEDAL)) {
 	              postData.post.PostGratitudeData = {
 	                gratitude: data.GRATITUDE_MEDAL,
 	                employees: []
 	              };
-
 	              if (Array.isArray(data.GRATITUDE_EMPLOYEES) && main_core.Type.isPlainObject(data.GRATITUDE_EMPLOYEES_DATA)) {
 	                data.GRATITUDE_EMPLOYEES.forEach(function (userId) {
 	                  var userData = data.GRATITUDE_EMPLOYEES_DATA[userId];
-
 	                  if (!main_core.Type.isPlainObject(userData)) {
 	                    return;
 	                  }
-
 	                  postData.post.PostGratitudeData.employees.push({
 	                    id: userData.id,
 	                    imageUrl: main_core.Type.isStringFilled(userData.imageUrl) ? userData.imageUrl : '',
@@ -1708,10 +1554,8 @@ this.BX = this.BX || {};
 	                });
 	              }
 	            }
-
 	            var voteId = 'n0';
 	            var dataKey = 'UF_BLOG_POST_VOTE_' + voteId + '_DATA';
-
 	            if (data.UF_BLOG_POST_VOTE === voteId && main_core.Type.isPlainObject(data[dataKey]) && Array.isArray(data[dataKey].QUESTIONS)) {
 	              postData.post.PostVoteData = {
 	                questions: data[dataKey].QUESTIONS.map(function (question) {
@@ -1720,7 +1564,6 @@ this.BX = this.BX || {};
 	                    allowMultiSelect: question.FIELD_TYPE == 1 ? 'Y' : 'N',
 	                    answers: []
 	                  };
-
 	                  if (Array.isArray(question.ANSWERS)) {
 	                    result.answers = question.ANSWERS.map(function (answer) {
 	                      return {
@@ -1728,12 +1571,10 @@ this.BX = this.BX || {};
 	                      };
 	                    });
 	                  }
-
 	                  return result;
 	                })
 	              };
 	            }
-
 	            resolve(postData);
 	          },
 	          onEmpty: function onEmpty() {
@@ -1755,7 +1596,6 @@ this.BX = this.BX || {};
 	          resolve(postData);
 	          return;
 	        }
-
 	        var promiseData = {
 	          resolve: resolve,
 	          reject: reject
@@ -1767,8 +1607,8 @@ this.BX = this.BX || {};
 	            this.resolve(Object.assign(postData, {
 	              group: {
 	                ID: parseInt(result.groupData.ID),
-	                NAME: result.groupData.NAME //							DESCRIPTION: result.groupData.DESCRIPTION
-
+	                NAME: result.groupData.NAME
+	                //							DESCRIPTION: result.groupData.DESCRIPTION
 	              }
 	            }));
 	          } else {
@@ -1794,7 +1634,6 @@ this.BX = this.BX || {};
 	          resolve(postData);
 	          return;
 	        }
-
 	        var promiseData = {
 	          resolve: resolve,
 	          reject: reject
@@ -1831,36 +1670,29 @@ this.BX = this.BX || {};
 	            postData.post.PostDestination.forEach(function (item) {
 	              var key = null;
 	              var code = null;
-
 	              switch (item.STYLE) {
 	                case 'users':
 	                  key = 'users';
 	                  code = item.ID;
 	                  break;
-
 	                case 'all-users':
 	                  key = 'users';
 	                  code = 'A';
 	                  break;
-
 	                case 'sonetgroups':
 	                  key = 'groups';
 	                  code = item.ID;
 	                  break;
-
 	                case 'department':
 	                  key = 'departments';
 	                  code = item.ID;
 	                  break;
-
 	                default:
 	              }
-
 	              if (key) {
 	                if (!main_core.Type.isArray(postData.recipients[key])) {
 	                  postData.recipients[key] = [];
 	                }
-
 	                postData.recipients[key].push({
 	                  id: code,
 	                  title: item.TITLE,
@@ -1870,7 +1702,6 @@ this.BX = this.BX || {};
 	              }
 	            });
 	          }
-
 	          if (main_core.Type.isArray(postData.post.PostDestinationHidden)) {
 	            postData.hiddenRecipients = [];
 	            postData.post.PostDestinationHidden.forEach(function (item) {
@@ -1885,7 +1716,6 @@ this.BX = this.BX || {};
 	            }]
 	          };
 	        }
-
 	        resolve(postData);
 	      });
 	      promise["catch"](function (error) {
@@ -1903,17 +1733,14 @@ this.BX = this.BX || {};
 	    this.postFormParams = {};
 	    this.postFormExtraData = {};
 	  }
-
 	  babelHelpers.createClass(PostFormOldManager, [{
 	    key: "setExtraDataArray",
 	    value: function setExtraDataArray(extraData) {
 	      var ob = null;
-
 	      for (var _i = 0, _Object$entries = Object.entries(extraData); _i < _Object$entries.length; _i++) {
 	        var _Object$entries$_i = babelHelpers.slicedToArray(_Object$entries[_i], 2),
-	            key = _Object$entries$_i[0],
-	            value = _Object$entries$_i[1];
-
+	          key = _Object$entries$_i[0],
+	          value = _Object$entries$_i[1];
 	        if (extraData.hasOwnProperty(key)) {
 	          ob = {};
 	          ob[key] = value;
@@ -1927,12 +1754,10 @@ this.BX = this.BX || {};
 	      if (!main_core.Type.isPlainObject(params)) {
 	        return;
 	      }
-
 	      for (var _i2 = 0, _Object$entries2 = Object.entries(params); _i2 < _Object$entries2.length; _i2++) {
 	        var _Object$entries2$_i = babelHelpers.slicedToArray(_Object$entries2[_i2], 2),
-	            key = _Object$entries2$_i[0],
-	            value = _Object$entries2$_i[1];
-
+	          key = _Object$entries2$_i[0],
+	          value = _Object$entries2$_i[1];
 	        if (key == 'hiddenRecipients' || key == 'logId' || key == 'postId' || key == 'postAuthorId' || key == 'messageUFCode' || key == 'commentId' || key == 'commentType' || key == 'nodeId' || key == 'pinnedContext') {
 	          this.postFormExtraData[key] = value;
 	        }
@@ -1949,12 +1774,10 @@ this.BX = this.BX || {};
 	      if (!main_core.Type.isPlainObject(params)) {
 	        return;
 	      }
-
 	      for (var _i3 = 0, _Object$entries3 = Object.entries(params); _i3 < _Object$entries3.length; _i3++) {
 	        var _Object$entries3$_i = babelHelpers.slicedToArray(_Object$entries3[_i3], 2),
-	            key = _Object$entries3$_i[0],
-	            value = _Object$entries3$_i[1];
-
+	          key = _Object$entries3$_i[0],
+	          value = _Object$entries3$_i[1];
 	        if (['selectedRecipients', 'messageText', 'messageFiles'].indexOf(key) !== -1) {
 	          this.postFormParams[key] = value;
 	        }
@@ -1966,14 +1789,11 @@ this.BX = this.BX || {};
 	      if (!main_core.Type.isPlainObject(params) || !main_core.Type.isStringFilled(params.type)) {
 	        return;
 	      }
-
 	      var searchRes = null;
-
 	      if (params.type === 'UA') {
 	        searchRes = selectedDestinations.a_users.some(this.findDestinationCallBack, {
 	          value: 0
 	        });
-
 	        if (!searchRes) {
 	          selectedDestinations.a_users.push({
 	            id: 0,
@@ -1986,7 +1806,6 @@ this.BX = this.BX || {};
 	        searchRes = selectedDestinations.a_users.some(this.findDestinationCallBack, {
 	          value: params.id
 	        });
-
 	        if (!searchRes) {
 	          selectedDestinations.a_users.push({
 	            id: params.id,
@@ -1999,7 +1818,6 @@ this.BX = this.BX || {};
 	        searchRes = selectedDestinations.b_groups.some(this.findDestinationCallBack, {
 	          value: params.id
 	        });
-
 	        if (!searchRes) {
 	          selectedDestinations.b_groups.push({
 	            id: params.id,
@@ -2019,11 +1837,9 @@ this.BX = this.BX || {};
 	    key: "show",
 	    value: function show(params) {
 	      var _this = this;
-
 	      if (!main_core.Type.isPlainObject(params)) {
 	        params = {};
 	      }
-
 	      var entityType = main_core.Type.isStringFilled(params.entityType) ? params.entityType : 'post';
 	      var extraData = this.getExtraData();
 	      var postFormParams = {
@@ -2038,29 +1854,23 @@ this.BX = this.BX || {};
 	            if (!main_core.Type.isStringFilled(data.text)) {
 	              return;
 	            }
-
 	            var postData = _this.buildRequestStub({
 	              type: entityType,
 	              extraData: data.extraData,
 	              text: _this.parseMentions(data.text),
 	              pinnedContext: main_core.Type.isStringFilled(data.extraData.pinnedContext) && data.extraData.pinnedContext === 'YES'
 	            });
-
 	            var ufCode = data.extraData.messageUFCode;
-
 	            _this.buildFiles(postData, data.attachedFiles, {
 	              ufCode: ufCode
 	            }).then(function () {
 	              if (entityType !== 'post') {
 	                return;
 	              }
-
 	              _this.buildDestinations(postData, data.selectedRecipients, main_core.Type.isPlainObject(data.extraData) && !main_core.Type.isUndefined(data.extraData.hiddenRecipients) ? data.extraData.hiddenRecipients : [], {});
-
 	              if (!postData.postVirtualId) {
 	                return;
 	              }
-
 	              postData.ufCode = ufCode;
 	              postData.contentType = 'post';
 	              oMSL.initPostForm({
@@ -2086,38 +1896,31 @@ this.BX = this.BX || {};
 	          name: main_core.Loc.getMessage('MSLPostFormCancel')
 	        }
 	      };
-
 	      if (!main_core.Type.isUndefined(this.postFormParams.messageText)) {
 	        postFormParams.message = {
 	          text: this.postFormParams.messageText
 	        };
 	      }
-
 	      if (!main_core.Type.isUndefined(this.postFormParams.messageFiles)) {
 	        postFormParams.attachedFiles = this.postFormParams.messageFiles;
 	      }
-
 	      if (entityType === 'post') {
 	        postFormParams.recipients = {
 	          dataSource: this.getRecipientsDataSource()
 	        };
-
 	        if (!main_core.Type.isUndefined(this.postFormParams.selectedRecipients)) {
 	          postFormParams.recipients.selectedRecipients = this.postFormParams.selectedRecipients;
 	        }
-
 	        if (!main_core.Type.isUndefined(this.postFormParams.backgroundCode)) {
 	          postFormParams.backgroundCode = this.postFormParams.backgroundCode;
 	        }
 	      }
-
 	      return postFormParams;
 	    }
 	  }, {
 	    key: "getAttachButton",
 	    value: function getAttachButton() {
 	      var attachButtonItems = [];
-
 	      if (main_core.Loc.getMessage('MOBILE_EXT_LIVEFEED_DISK_INSTALLED') === 'Y' || main_core.Loc.getMessage('MOBILE_EXT_LIVEFEED_WEBDAV_INSTALLED') === 'Y') {
 	        var diskAttachParams = {
 	          id: 'disk',
@@ -2132,17 +1935,16 @@ this.BX = this.BX || {};
 	          showtitle: 'YES',
 	          modal: 'YES',
 	          name: main_core.Loc.getMessage('MSLPostFormDiskTitle')
-	        }; //FIXME temporary workaround
+	        };
 
+	        //FIXME temporary workaround
 	        if (window.platform === 'ios') {
 	          diskAttachParams.dataSource.table_settings = tableSettings;
 	        } else {
 	          diskAttachParams.dataSource.TABLE_SETTINGS = tableSettings;
 	        }
-
 	        attachButtonItems.push(diskAttachParams);
 	      }
-
 	      attachButtonItems.push({
 	        id: 'mediateka',
 	        name: main_core.Loc.getMessage('MSLPostFormPhotoGallery')
@@ -2182,7 +1984,6 @@ this.BX = this.BX || {};
 	    key: "buildRequestStub",
 	    value: function buildRequestStub(params) {
 	      var request = null;
-
 	      if (params.type === 'post') {
 	        request = {
 	          ACTION: 'ADD_POST',
@@ -2198,13 +1999,11 @@ this.BX = this.BX || {};
 	          MOBILE: 'Y',
 	          PARSE_PREVIEW: 'Y'
 	        };
-
 	        if (!main_core.Type.isUndefined(params.extraData.postId) && parseInt(params.extraData.postId) > 0) {
 	          request.post_id = parseInt(params.extraData.postId);
 	          request.post_user_id = parseInt(params.extraData.postAuthorId);
 	          request.pinnedContext = !!params.pinnedContext;
 	          request.ACTION = 'EDIT_POST';
-
 	          if (!main_core.Type.isUndefined(params.extraData.logId) && parseInt(params.extraData.logId) > 0) {
 	            request.log_id = parseInt(params.extraData.logId);
 	          }
@@ -2217,58 +2016,46 @@ this.BX = this.BX || {};
 	          nodeId: params.extraData.nodeId,
 	          sessid: main_core.Loc.getMessage('bitrix_sessid')
 	        };
-
 	        if (params.extraData.commentType === 'blog') {
 	          request.comment_post_id = null;
 	        }
 	      }
-
 	      return request;
 	    }
 	  }, {
 	    key: "parseMentions",
 	    value: function parseMentions(text) {
 	      var parsedText = text;
-
 	      if (typeof oMSL.arMention != 'undefined') {
 	        for (var _i4 = 0, _Object$entries4 = Object.entries(oMSL.arMention); _i4 < _Object$entries4.length; _i4++) {
 	          var _Object$entries4$_i = babelHelpers.slicedToArray(_Object$entries4[_i4], 2),
-	              key = _Object$entries4$_i[0],
-	              value = _Object$entries4$_i[1];
-
+	            key = _Object$entries4$_i[0],
+	            value = _Object$entries4$_i[1];
 	          parsedText = parsedText.replace(new RegExp(key, 'g'), value);
 	        }
-
 	        oMSL.arMention = {};
 	        oMSL.commentTextCurrent = '';
 	      }
-
 	      return parsedText;
 	    }
 	  }, {
 	    key: "buildFiles",
 	    value: function buildFiles(postData, attachedFiles, params) {
 	      var _this2 = this;
-
 	      var promise = new Promise(function (resolve, reject) {
 	        var ufCode = params.ufCode;
 	        postData.postVirtualId = parseInt(Math.random() * 100000);
 	        postData.tasksList = [];
-
 	        if (main_core.Type.isArray(attachedFiles) && attachedFiles.length > 0) {
 	          var readedFileCount = 0;
 	          var fileTotal = attachedFiles.length;
-
 	          var fileCountIncrement = function fileCountIncrement() {
 	            readedFileCount++;
-
 	            if (readedFileCount >= fileTotal) {
 	              _this2.postProgressingFiles(postData, attachedFiles, params);
-
 	              resolve();
 	            }
 	          };
-
 	          var uploadTasks = [];
 	          attachedFiles.forEach(function (fileData) {
 	            var isFileFromBitrix24Disk = !main_core.Type.isUndefined(fileData.VALUE) // Android
@@ -2276,7 +2063,6 @@ this.BX = this.BX || {};
 	            || main_core.Type.isPlainObject(fileData.dataAttributes) && !main_core.Type.isUndefined(fileData.dataAttributes.VALUE) // iOS and modern Android too
 	            || main_core.Type.isStringFilled(fileData.ufCode) && fileData.ufCode === ufCode;
 	            var isNewFileOnDevice = main_core.Type.isUndefined(fileData.url) || !main_core.Type.isNumber(fileData.id);
-
 	            if (main_core.Type.isStringFilled(fileData.url) && isNewFileOnDevice && !isFileFromBitrix24Disk) {
 	              var taskId = "postTask_".concat(parseInt(Math.random() * 100000));
 	              var mimeType = mobile_utils.MobileUtils.getFileMimeType(fileData.type);
@@ -2301,7 +2087,6 @@ this.BX = this.BX || {};
 	                if (main_core.Type.isUndefined(postData[ufCode])) {
 	                  postData[ufCode] = [];
 	                }
-
 	                if (!main_core.Type.isUndefined(fileData.VALUE)) {
 	                  postData[ufCode].push(fileData.VALUE);
 	                } else if (parseInt(fileData.id) > 0) {
@@ -2310,21 +2095,17 @@ this.BX = this.BX || {};
 	                  postData[ufCode].push(fileData.dataAttributes.VALUE);
 	                }
 	              }
-
 	              fileCountIncrement();
 	            }
 	          });
-
 	          if (uploadTasks.length > 0) {
 	            BXMobileApp.onCustomEvent('onFileUploadTaskReceived', {
 	              files: uploadTasks
 	            }, true);
 	          }
-
 	          resolve();
 	        } else {
 	          _this2.postProgressingFiles(postData, attachedFiles, params);
-
 	          resolve();
 	        }
 	      });
@@ -2337,23 +2118,18 @@ this.BX = this.BX || {};
 	    key: "buildDestinations",
 	    value: function buildDestinations(postData, selectedRecipients, hiddenRecipients, params) {
 	      postData['DEST'] = [];
-
 	      if (main_core.Type.isPlainObject(selectedRecipients.a_users)) {
 	        for (var _i5 = 0, _Object$entries5 = Object.entries(selectedRecipients.a_users); _i5 < _Object$entries5.length; _i5++) {
 	          var _Object$entries5$_i = babelHelpers.slicedToArray(_Object$entries5[_i5], 2),
-	              key = _Object$entries5$_i[0],
-	              userData = _Object$entries5$_i[1];
-
+	            key = _Object$entries5$_i[0],
+	            userData = _Object$entries5$_i[1];
 	          var prefix = 'U';
-
 	          if (main_core.Type.isUndefined(postData.SPERM[prefix])) {
 	            postData.SPERM[prefix] = [];
 	          }
-
 	          if (main_core.Type.isUndefined(postData.SPERM_NAME[prefix])) {
 	            postData.SPERM_NAME[prefix] = [];
 	          }
-
 	          var id = !main_core.Type.isUndefined(userData.ID) ? userData.ID : userData.id;
 	          var name = !main_core.Type.isUndefined(userData.NAME) ? userData.NAME : userData.name;
 	          var value = parseInt(id) === 0 ? 'UA' : "U".concat(id);
@@ -2362,52 +2138,36 @@ this.BX = this.BX || {};
 	          postData.SPERM_NAME[prefix].push(name);
 	        }
 	      }
-
 	      if (main_core.Type.isPlainObject(selectedRecipients.b_groups)) {
 	        for (var _i6 = 0, _Object$entries6 = Object.entries(selectedRecipients.b_groups); _i6 < _Object$entries6.length; _i6++) {
 	          var _Object$entries6$_i = babelHelpers.slicedToArray(_Object$entries6[_i6], 2),
-	              _key = _Object$entries6$_i[0],
-	              groupData = _Object$entries6$_i[1];
-
+	            _key = _Object$entries6$_i[0],
+	            groupData = _Object$entries6$_i[1];
 	          var _prefix = 'SG';
-
 	          if (main_core.Type.isUndefined(postData.SPERM[_prefix])) {
 	            postData.SPERM[_prefix] = [];
 	          }
-
 	          if (main_core.Type.isUndefined(postData.SPERM_NAME[_prefix])) {
 	            postData.SPERM_NAME[_prefix] = [];
 	          }
-
 	          var _id = !main_core.Type.isUndefined(groupData.ID) ? groupData.ID : groupData.id;
-
 	          var _name = !main_core.Type.isUndefined(groupData.NAME) ? groupData.NAME : groupData.name;
-
 	          var _value = "SG".concat(_id);
-
 	          postData.SPERM[_prefix].push(_value);
-
 	          postData.DEST.push(_value);
-
 	          postData.SPERM_NAME[_prefix].push(_name);
 	        }
 	      }
-
 	      for (var _key2 in hiddenRecipients) {
 	        if (!hiddenRecipients.hasOwnProperty(_key2)) {
 	          continue;
 	        }
-
 	        var _prefix2 = hiddenRecipients[_key2].TYPE;
-
 	        if (main_core.Type.isUndefined(postData.SPERM[_prefix2])) {
 	          postData.SPERM[_prefix2] = [];
 	        }
-
 	        var _value2 = "".concat(hiddenRecipients[_key2].TYPE).concat(hiddenRecipients[_key2].ID);
-
 	        postData.SPERM[_prefix2].push(_value2);
-
 	        postData.DEST.push(_value2);
 	      }
 	    }
@@ -2430,34 +2190,27 @@ this.BX = this.BX || {};
 	    key: "postProgressingFiles",
 	    value: function postProgressingFiles(postData, attachedFiles, params) {
 	      var ufCode = params.ufCode;
-
 	      if (main_core.Type.isUndefined(postData[ufCode])) {
 	        postData[ufCode] = [];
 	      }
-
 	      if (main_core.Type.isUndefined(attachedFiles)) {
 	        attachedFiles = [];
 	      }
-
-	      for (var keyOld in this.postFormParams.messageFiles)
-	      /* existing */
+	      for (var keyOld in this.postFormParams.messageFiles) /* existing */
 	      {
 	        if (!this.postFormParams.messageFiles.hasOwnProperty(keyOld)) {
 	          continue;
 	        }
-
 	        for (var keyNew in attachedFiles) {
 	          if (!attachedFiles.hasOwnProperty(keyNew)) {
 	            continue;
 	          }
-
 	          if (this.postFormParams.messageFiles[keyOld].id == attachedFiles[keyNew].id || this.postFormParams.messageFiles[keyOld].id == attachedFiles[keyNew].ID) {
 	            postData[ufCode].push(this.postFormParams.messageFiles[keyOld].id);
 	            break;
 	          }
 	        }
 	      }
-
 	      if (postData[ufCode].length <= 0) {
 	        postData[ufCode].push('empty');
 	      }
@@ -2467,11 +2220,9 @@ this.BX = this.BX || {};
 	}();
 
 	var _templateObject$1;
-
 	var PinnedPanel = /*#__PURE__*/function () {
 	  function PinnedPanel() {
 	    var _this = this;
-
 	    babelHelpers.classCallCheck(this, PinnedPanel);
 	    this.panelInitialized = false;
 	    this["class"] = {
@@ -2500,26 +2251,20 @@ this.BX = this.BX || {};
 	      _this.init();
 	    });
 	  }
-
 	  babelHelpers.createClass(PinnedPanel, [{
 	    key: "init",
 	    value: function init() {
 	      var _this2 = this;
-
 	      var panel = document.querySelector(".".concat(this["class"].panel));
-
 	      if (!panel || this.panelInitialized) {
 	        return;
 	      }
-
 	      this.panelInitialized = true;
 	      this.adjustCollapsedPostsPanel();
 	      var collapsedPanel = document.querySelector(".".concat(this["class"].collapsedPanel));
-
 	      if (collapsedPanel) {
 	        collapsedPanel.addEventListener('touchend', function (e) {
 	          _this2.expandCollapsedPostsPanel();
-
 	          e.stopPropagation();
 	          return e.preventDefault();
 	        });
@@ -2539,13 +2284,11 @@ this.BX = this.BX || {};
 	    key: "recalcPanel",
 	    value: function recalcPanel(_ref) {
 	      var type = _ref.type;
-
 	      if (this.getPostsCount() > 0) {
 	        this.getPinnedPanelNode().classList.add("".concat(this["class"].panelActive));
 	      } else {
 	        this.getPinnedPanelNode().classList.remove("".concat(this["class"].panelActive));
 	      }
-
 	      this.recalcCollapsedPostsPanel({
 	        type: type
 	      });
@@ -2554,7 +2297,6 @@ this.BX = this.BX || {};
 	    key: "recalcCollapsedPostsPanel",
 	    value: function recalcCollapsedPostsPanel(_ref2) {
 	      var type = _ref2.type;
-
 	      if (this.getPostsCount() >= main_core.Loc.getMessage('MOBILE_EXT_LIVEFEED_COLLAPSED_PINNED_PANEL_ITEMS_LIMIT')) {
 	        if (type === 'insert' || this.getPinnedPanelNode().classList.contains("".concat(this["class"].panelCollapsed))) {
 	          this.getPinnedPanelNode().classList.add("".concat(this["class"].panelCollapsed));
@@ -2562,7 +2304,6 @@ this.BX = this.BX || {};
 	      } else {
 	        this.getPinnedPanelNode().classList.remove("".concat(this["class"].panelCollapsed));
 	      }
-
 	      this.adjustCollapsedPostsPanel();
 	    }
 	  }, {
@@ -2580,20 +2321,16 @@ this.BX = this.BX || {};
 	    value: function adjustCollapsedPostsPanel() {
 	      var postsCounter = this.getPostsCount();
 	      var postsCounterNode = this.getPinnedPanelNode().querySelector(".".concat(this["class"].collapsedPanelPostsValue));
-
 	      if (postsCounterNode) {
 	        postsCounterNode.innerHTML = parseInt(postsCounter);
 	      }
-
 	      var commentsCounterNode = this.getPinnedPanelNode().querySelector(".".concat(this["class"].collapsedPanelComments));
 	      var commentsCounterValueNode = this.getPinnedPanelNode().querySelector(".".concat(this["class"].collapsedPanelCommentsValue));
-
 	      if (commentsCounterNode && commentsCounterValueNode) {
 	        var newCommentCounter = Array.from(this.getPinnedPanelNode().querySelectorAll(".".concat(this["class"].collapsedPanelCommentsValueNew))).reduce(function (acc, node) {
 	          return acc + parseInt(node.innerHTML);
 	        }, 0);
 	        commentsCounterValueNode.innerHTML = '+' + newCommentCounter;
-
 	        if (newCommentCounter > 0) {
 	          commentsCounterNode.classList.add("".concat(this["class"].collapsedPanelCommentsShown));
 	        } else {
@@ -2605,11 +2342,9 @@ this.BX = this.BX || {};
 	    key: "getPinnedData",
 	    value: function getPinnedData(params) {
 	      var logId = params.logId ? parseInt(params.logId) : 0;
-
 	      if (logId <= 0) {
 	        return Promise.reject();
 	      }
-
 	      return new Promise(function (resolve, reject) {
 	        mobile_ajax.Ajax.runAction('socialnetwork.api.livefeed.logentry.getPinData', {
 	          data: {
@@ -2639,22 +2374,17 @@ this.BX = this.BX || {};
 	    key: "insertEntry",
 	    value: function insertEntry(_ref3) {
 	      var _this3 = this;
-
 	      var logId = _ref3.logId,
-	          postNode = _ref3.postNode,
-	          pinnedContent = _ref3.pinnedContent;
+	        postNode = _ref3.postNode,
+	        pinnedContent = _ref3.pinnedContent;
 	      var pinnedPanelNode = this.getPinnedPanelNode();
-
 	      if (!main_core.Type.isDomNode(postNode) || !main_core.Type.isDomNode(pinnedPanelNode)) {
 	        return;
 	      }
-
 	      var postItemPinnedBlock = postNode.querySelector(".".concat(this["class"].postItemPinnedBlock));
-
 	      if (!main_core.Type.isDomNode(postItemPinnedBlock)) {
 	        return;
 	      }
-
 	      postNode.classList.add(this["class"].postItemPinned);
 	      postNode.classList.add(this["class"].postItemPinActive);
 	      postItemPinnedBlock.innerHTML = "".concat(main_core.Type.isStringFilled(pinnedContent.TITLE) ? "<div class=\"".concat(this["class"].postItemPinnedTitle, "\">").concat(pinnedContent.TITLE, "</div>") : '', "<div class=\"").concat(this["class"].postItemPinnedTextBox, "\"><div class=\"").concat(this["class"].postItemPinnedDesc, "\">").concat(pinnedContent.DESCRIPTION, "</div></div>");
@@ -2662,29 +2392,21 @@ this.BX = this.BX || {};
 	      var cancelButton = cancelPinnedPanel.querySelector(".".concat(this["class"].cancelPanelButton));
 	      cancelButton.addEventListener('touchend', function (event) {
 	        var cancelPanel = event.currentTarget.closest(".".concat(_this3["class"].cancelPanel));
-
 	        if (!cancelPanel) {
 	          return;
 	        }
-
 	        var logId = parseInt(cancelPanel.getAttribute('data-livefeed-id'));
-
 	        if (logId <= 0) {
 	          return;
 	        }
-
 	        var postNode = document.querySelector(".".concat(_this3["class"].post, "[data-livefeed-id=\"").concat(logId, "\"]"));
-
 	        if (!postNode) {
 	          return;
 	        }
-
 	        var menuNode = postNode.querySelector('[data-menu-type="post"]');
-
 	        if (!menuNode) {
 	          return;
 	        }
-
 	        var postInstance = new Post$$1({
 	          logId: logId
 	        });
@@ -2704,25 +2426,21 @@ this.BX = this.BX || {};
 	    key: "extractEntry",
 	    value: function extractEntry(_ref4) {
 	      var logId = _ref4.logId,
-	          postNode = _ref4.postNode,
-	          containerNode = _ref4.containerNode;
+	        postNode = _ref4.postNode,
+	        containerNode = _ref4.containerNode;
 	      var pinnedPanelNode = this.getPinnedPanelNode();
-
 	      if (!main_core.Type.isDomNode(postNode) || !main_core.Type.isDomNode(containerNode) || !main_core.Type.isDomNode(pinnedPanelNode) || postNode.parentNode !== pinnedPanelNode || parseInt(logId) <= 0) {
 	        return;
 	      }
-
 	      postNode.classList.remove(this["class"].postItemPinned);
 	      postNode.classList.remove(this["class"].postItemPinActive);
 	      var cancelPanel = document.querySelector(".".concat(this["class"].cancelPanel, "[data-livefeed-id=\"").concat(parseInt(logId), "\"]"));
-
 	      if (cancelPanel) {
 	        cancelPanel.parentNode.insertBefore(postNode, cancelPanel);
 	        main_core.Dom.remove(cancelPanel);
 	      } else {
 	        main_core.Dom.prepend(postNode, containerNode);
 	      }
-
 	      this.recalcPanel({
 	        type: 'extract'
 	      });
@@ -2733,18 +2451,13 @@ this.BX = this.BX || {};
 
 	var Rating = /*#__PURE__*/function (_EventEmitter) {
 	  babelHelpers.inherits(Rating, _EventEmitter);
-
 	  function Rating() {
 	    var _this;
-
 	    babelHelpers.classCallCheck(this, Rating);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Rating).call(this));
-
 	    _this.init();
-
 	    return _this;
 	  }
-
 	  babelHelpers.createClass(Rating, [{
 	    key: "init",
 	    value: function init() {
@@ -2757,7 +2470,6 @@ this.BX = this.BX || {};
 	      if (!window.BXRL) {
 	        return;
 	      }
-
 	      Object.keys(window.BXRL).forEach(function (key) {
 	        if (key !== 'manager' && key !== 'render') {
 	          delete window.BXRL[key];
@@ -2772,22 +2484,17 @@ this.BX = this.BX || {};
 	  function ImportantManager() {
 	    babelHelpers.classCallCheck(this, ImportantManager);
 	  }
-
 	  babelHelpers.createClass(ImportantManager, [{
 	    key: "setPostRead",
 	    value: function setPostRead(node) {
 	      var _this = this;
-
 	      if (!main_core.Type.isDomNode(node) || node.hasAttribute('done')) {
 	        return false;
 	      }
-
 	      var postId = parseInt(node.getAttribute('bx-data-post-id'));
-
 	      if (postId <= 0) {
 	        return false;
 	      }
-
 	      this.renderRead({
 	        node: node,
 	        value: true
@@ -2823,10 +2530,8 @@ this.BX = this.BX || {};
 	      if (!main_core.Type.isObject(params) || !main_core.Type.isDomNode(params.node)) {
 	        return;
 	      }
-
 	      var node = params.node;
 	      var value = !!params.value;
-
 	      if (value) {
 	        node.checked = true;
 	        node.setAttribute('done', 'Y');
@@ -2836,19 +2541,14 @@ this.BX = this.BX || {};
 	        delete node.checked;
 	        node.removeAttribute('done');
 	      }
-
 	      var container = node.closest('.post-item-important');
-
 	      if (!container) {
 	        return;
 	      }
-
 	      var listNode = container.querySelector('.post-item-important-list');
-
 	      if (!listNode) {
 	        return;
 	      }
-
 	      listNode.classList.add('post-item-important-list-read');
 	    }
 	  }]);
@@ -2857,10 +2557,8 @@ this.BX = this.BX || {};
 
 	var SearchBar = /*#__PURE__*/function (_EventEmitter) {
 	  babelHelpers.inherits(SearchBar, _EventEmitter);
-
 	  function SearchBar() {
 	    var _this;
-
 	    babelHelpers.classCallCheck(this, SearchBar);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(SearchBar).call(this));
 	    _this.findTextMode = false;
@@ -2868,20 +2566,16 @@ this.BX = this.BX || {};
 	    _this.hideByRefresh = false;
 	    return _this;
 	  }
-
 	  babelHelpers.createClass(SearchBar, [{
 	    key: "init",
 	    value: function init(params) {
 	      var _this2 = this;
-
 	      if (BXMobileAppContext.getApiVersion() < Instance.getApiVersion('pageMenu')) {
 	        return;
 	      }
-
 	      if (main_core.Type.isPlainObject(params) && parseInt(params.ftMinTokenSize) > 0) {
 	        this.ftMinTokenSize = parseInt(params.ftMinTokenSize);
 	      }
-
 	      this.subscribe('onSearchBarCancelButtonClicked', this.searchBarEventCallback.bind(this));
 	      this.subscribe('onSearchBarSearchButtonClicked', this.searchBarEventCallback.bind(this));
 	      main_core_events.EventEmitter.subscribe('BX.MobileLivefeed.SearchBar::setHideByRefresh', this.setHideByRefresh.bind(this));
@@ -2896,7 +2590,6 @@ this.BX = this.BX || {};
 	              if (event.data.text.length >= _this2.ftMinTokenSize) {
 	                _this2.findTextMode = true;
 	              }
-
 	              _this2.emit('onSearchBarSearchButtonClicked', new main_core_events.BaseEvent({
 	                data: {
 	                  text: event.data.text
@@ -2915,10 +2608,8 @@ this.BX = this.BX || {};
 	    key: "searchBarEventCallback",
 	    value: function searchBarEventCallback(event) {
 	      var _this3 = this;
-
 	      var eventData = event.getData();
 	      var text = main_core.Type.isPlainObject(eventData) && main_core.Type.isStringFilled(eventData.text) ? eventData.text : '';
-
 	      if (text.length >= this.ftMinTokenSize) {
 	        app.exec('showSearchBarProgress');
 	        this.emitRefreshEvent(text);
@@ -2927,26 +2618,20 @@ this.BX = this.BX || {};
 	          if (!this.hideByRefresh) {
 	            main_core_events.EventEmitter.emit('BX.MobileLF:onSearchBarRefreshAbort');
 	          }
-
 	          if (BX.frameCache) {
 	            app.exec('hideSearchBarProgress');
 	            BX.frameCache.readCacheWithID('framecache-block-feed', function (params) {
 	              var container = document.getElementById('bxdynamic_feed_refresh');
-
 	              if (!main_core.Type.isArray(params.items) || !container) {
 	                _this3.emitRefreshEvent();
-
 	                return;
 	              }
-
 	              var block = params.items.find(function (item) {
 	                return main_core.Type.isStringFilled(item.ID) && item.ID === 'framecache-block-feed';
 	              });
-
 	              if (main_core.Type.isUndefined(block)) {
 	                return;
 	              }
-
 	              main_core.Runtime.html(container, block.CONTENT).then(function () {
 	                BX.processHTML(block.CONTENT, true);
 	              });
@@ -2959,7 +2644,6 @@ this.BX = this.BX || {};
 	            this.emitRefreshEvent();
 	          }
 	        }
-
 	        this.findTextMode = false;
 	      }
 	    }
@@ -2979,7 +2663,6 @@ this.BX = this.BX || {};
 	      if (PageInstance.refreshXhr) {
 	        return;
 	      }
-
 	      text = text || '';
 	      var event = new main_core_events.BaseEvent({
 	        compatData: [{
@@ -3008,29 +2691,24 @@ this.BX = this.BX || {};
 	    };
 	    this.init();
 	  }
-
 	  babelHelpers.createClass(PageScroll, [{
 	    key: "init",
 	    value: function init() {
 	      if (window.platform === 'ios') {
 	        return;
 	      }
-
 	      document.addEventListener('scroll', this.onScrollDetail.bind(this));
 	    }
 	  }, {
 	    key: "onScrollDetail",
 	    value: function onScrollDetail() {
 	      var _this = this;
-
 	      if (!this.canCheckScrollButton) {
 	        return;
 	      }
-
 	      clearTimeout(this.showScrollButtonTimeout);
 	      this.showScrollButtonTimeout = setTimeout(function () {
 	        Instance.setLastActivityDate();
-
 	        _this.checkScrollButton();
 	      }, 200);
 	    }
@@ -3038,7 +2716,6 @@ this.BX = this.BX || {};
 	    key: "checkScrollButton",
 	    value: function checkScrollButton() {
 	      var scrollTop = window.scrollY; // document.body.scrollTop
-
 	      var maxScroll = document.documentElement.scrollHeight - window.innerHeight - 100; // (this.keyboardShown ? 500 : 300)
 
 	      this.showScrollButtonBottom = !(document.documentElement.scrollHeight - window.innerHeight <= 0 // short page
@@ -3053,7 +2730,6 @@ this.BX = this.BX || {};
 	    value: function showHideScrollButton() {
 	      var postScrollButtonBottom = document.querySelector(".".concat(this["class"].scrollButtonBottom));
 	      var postScrollButtonTop = document.querySelector(".".concat(this["class"].scrollButtonTop));
-
 	      if (postScrollButtonBottom) {
 	        if (this.showScrollButtonBottom) {
 	          if (!postScrollButtonBottom.classList.contains("".concat(this["class"].scrollButtonBottomActive))) {
@@ -3065,7 +2741,6 @@ this.BX = this.BX || {};
 	          }
 	        }
 	      }
-
 	      if (postScrollButtonTop) {
 	        if (this.showScrollButtonTop) {
 	          if (!postScrollButtonTop.classList.contains("".concat(this["class"].scrollButtonTopActive))) {
@@ -3082,17 +2757,14 @@ this.BX = this.BX || {};
 	    key: "scrollTo",
 	    value: function scrollTo(type) {
 	      var _this2 = this;
-
 	      if (type !== 'top') {
 	        type = 'bottom';
 	      }
-
 	      this.canCheckScrollButton = false;
 	      this.showScrollButtonBottom = false;
 	      this.showScrollButtonTop = false;
 	      this.showHideScrollButton();
 	      var startValue = window.scrollY; // document.body.scrollTop
-
 	      var finishValue = type == 'bottom' ? document.documentElement.scrollHeight : 0;
 	      BitrixAnimation.animate({
 	        duration: 500,
@@ -3108,7 +2780,6 @@ this.BX = this.BX || {};
 	        },
 	        complete: function complete() {
 	          _this2.canCheckScrollButton = true;
-
 	          _this2.checkScrollButton();
 	        }
 	      });
@@ -3127,7 +2798,6 @@ this.BX = this.BX || {};
 	      postItemFollowActive: 'post-item-follow-active'
 	    };
 	  }
-
 	  babelHelpers.createClass(FollowManager, [{
 	    key: "init",
 	    value: function init() {}
@@ -3135,43 +2805,32 @@ this.BX = this.BX || {};
 	    key: "setFollow",
 	    value: function setFollow(params) {
 	      var _this = this;
-
 	      var logId = !main_core.Type.isUndefined(params.logId) ? parseInt(params.logId) : 0;
 	      var pageId = !main_core.Type.isUndefined(params.pageId) ? params.pageId : false;
 	      var runEvent = !main_core.Type.isUndefined(params.bRunEvent) ? params.bRunEvent : true;
 	      var useAjax = !main_core.Type.isUndefined(params.bAjax) ? params.bAjax : false;
 	      var turnOnOnly = typeof params.bOnlyOn != 'undefined' ? params.bOnlyOn : false;
-
 	      if (turnOnOnly == 'NO') {
 	        turnOnOnly = false;
 	      }
-
 	      var menuNode = null;
-
 	      if (main_core.Type.isDomNode(params.menuNode)) {
 	        menuNode = params.menuNode;
 	      } else if (main_core.Type.isStringFilled(params.menuNode)) {
 	        menuNode = document.getElementById(params.menuNode);
 	      }
-
 	      if (!menuNode) {
 	        menuNode = document.getElementById("log-entry-menu-".concat(logId));
 	      }
-
 	      var followBlock = document.getElementById("log_entry_follow_".concat(logId));
-
 	      if (!followBlock) {
 	        followBlock = document.getElementById("log_entry_follow");
 	      }
-
 	      var followWrap = document.getElementById("post_item_top_wrap_".concat(logId));
-
 	      if (!followWrap) {
 	        followWrap = document.getElementById("post_item_top_wrap");
 	      }
-
 	      var oldValue = null;
-
 	      if (menuNode) {
 	        oldValue = menuNode.getAttribute('data-follow') === 'Y' ? 'Y' : 'N';
 	      } else if (followBlock) {
@@ -3179,9 +2838,7 @@ this.BX = this.BX || {};
 	      } else {
 	        return false;
 	      }
-
 	      var newValue = oldValue === 'Y' ? 'N' : 'Y';
-
 	      if ((!main_core.Type.isStringFilled(Instance.getOption('detailPageId')) || Instance.getOption('detailPageId') !== pageId) && (!turnOnOnly || oldValue === 'N')) {
 	        this.drawFollow({
 	          value: oldValue !== 'Y',
@@ -3193,7 +2850,6 @@ this.BX = this.BX || {};
 	          logId: logId
 	        });
 	      }
-
 	      if (useAjax) {
 	        mobile_ajax.Ajax.runAction('socialnetwork.api.livefeed.changeFollow', {
 	          data: {
@@ -3207,7 +2863,6 @@ this.BX = this.BX || {};
 	          if (response.data.success) {
 	            return;
 	          }
-
 	          _this.drawFollow({
 	            value: oldValue === 'Y',
 	            followBlock: followBlock,
@@ -3227,28 +2882,22 @@ this.BX = this.BX || {};
 	          });
 	        });
 	      }
-
 	      return false;
 	    }
 	  }, {
 	    key: "drawFollow",
 	    value: function drawFollow(params) {
 	      var value = main_core.Type.isBoolean(params.value) ? params.value : null;
-
 	      if (main_core.Type.isNull(value)) {
 	        return;
 	      }
-
 	      var followBlock = main_core.Type.isDomNode(params.followBlock) ? params.followBlock : null;
-
 	      if (followBlock) {
 	        followBlock.classList.remove(value ? this["class"].postItemFollow : this["class"].postItemFollowActive);
 	        followBlock.classList.add(value ? this["class"].postItemFollowActive : this["class"].postItemFollow);
 	        followBlock.setAttribute('data-follow', value ? 'Y' : 'N');
 	      }
-
 	      var followWrap = main_core.Type.isDomNode(params.followWrap) ? params.followWrap : null;
-
 	      if (followWrap && !this.getFollowDefaultValue()) {
 	        if (value) {
 	          followWrap.classList.add(this["class"].postItemFollow);
@@ -3256,24 +2905,18 @@ this.BX = this.BX || {};
 	          followWrap.classList.remove(this["class"].postItemFollow);
 	        }
 	      }
-
 	      var menuNode = main_core.Type.isDomNode(params.menuNode) ? params.menuNode : null;
-
 	      if (menuNode) {
 	        menuNode.setAttribute('data-follow', value ? 'Y' : 'N');
 	      }
-
 	      var detailPageId = Instance.getOption('detailPageId');
-
 	      if (main_core.Type.isStringFilled(detailPageId)) {
 	        this.setFollowValue(value);
 	        this.setFollowMenuItemName();
 	      }
-
 	      var runEvent = main_core.Type.isBoolean(params.runEvent) ? params.runEvent : false;
 	      var logId = !main_core.Type.isUndefined(params.logId) ? parseInt(params.logId) : 0;
 	      var turnOnOnly = main_core.Type.isBoolean(params.turnOnOnly) ? params.turnOnOnly : false;
-
 	      if (runEvent && logId > 0) {
 	        BXMobileApp.onCustomEvent('onLogEntryFollow', {
 	          logId: logId,
@@ -3286,18 +2929,14 @@ this.BX = this.BX || {};
 	    key: "setFollowDefault",
 	    value: function setFollowDefault(params) {
 	      var _this2 = this;
-
 	      if (main_core.Type.isUndefined(params.value)) {
 	        return;
 	      }
-
 	      var value = !!params.value;
-
 	      if (!main_core.Type.isStringFilled(Instance.getOption('detailPageId'))) {
 	        this.setFollowDefaultValue(value);
 	        this.setDefaultFollowMenuItemName();
 	      }
-
 	      var postData = {
 	        sessid: BX.bitrix_sessid(),
 	        site: main_core.Loc.getMessage('SITE_ID'),
@@ -3310,7 +2949,6 @@ this.BX = this.BX || {};
 	        oMSL.pullDownAndRefresh();
 	      }, function (response) {
 	        _this2.setFollowDefaultValue(response.value !== 'Y');
-
 	        _this2.setDefaultFollowMenuItemName();
 	      });
 	    }
@@ -3340,11 +2978,9 @@ this.BX = this.BX || {};
 	      var menuItemIndex = PageMenuInstance.detailPageMenuItems.findIndex(function (item) {
 	        return main_core.Type.isStringFilled(item.feature) && item.feature === 'follow';
 	      });
-
 	      if (menuItemIndex < 0) {
 	        return;
 	      }
-
 	      var menuItem = PageMenuInstance.detailPageMenuItems[menuItemIndex];
 	      menuItem.name = this.getFollowValue() ? main_core.Loc.getMessage('MOBILE_EXT_LIVEFEED_POST_MENU_FOLLOW_Y') : main_core.Loc.getMessage('MOBILE_EXT_LIVEFEED_POST_MENU_FOLLOW_N');
 	      PageMenuInstance.detailPageMenuItems[menuItemIndex] = menuItem;
@@ -3358,11 +2994,9 @@ this.BX = this.BX || {};
 	      var menuItemIndex = PageMenuInstance.listPageMenuItems.findIndex(function (item) {
 	        return main_core.Type.isStringFilled(item.feature) && item.feature === 'follow';
 	      });
-
 	      if (menuItemIndex < 0) {
 	        return;
 	      }
-
 	      var menuItem = PageMenuInstance.listPageMenuItems[menuItemIndex];
 	      menuItem.name = this.getFollowDefaultValue() ? main_core.Loc.getMessage('MSLMenuItemFollowDefaultY') : main_core.Loc.getMessage('MSLMenuItemFollowDefaultN');
 	      PageMenuInstance.listPageMenuItems[menuItemIndex] = menuItem;
@@ -3375,7 +3009,6 @@ this.BX = this.BX || {};
 	}();
 
 	var _templateObject$2, _templateObject2, _templateObject3, _templateObject4;
-
 	var Comments = /*#__PURE__*/function () {
 	  function Comments() {
 	    babelHelpers.classCallCheck(this, Comments);
@@ -3384,7 +3017,6 @@ this.BX = this.BX || {};
 	    this.mid = {};
 	    this.init();
 	  }
-
 	  babelHelpers.createClass(Comments, [{
 	    key: "init",
 	    value: function init() {
@@ -3397,15 +3029,12 @@ this.BX = this.BX || {};
 	    key: "deleteHandler",
 	    value: function deleteHandler(event) {
 	      var _event$getData = event.getData(),
-	          _event$getData2 = babelHelpers.slicedToArray(_event$getData, 2),
-	          ENTITY_XML_ID = _event$getData2[0],
-	          id = _event$getData2[1];
-
+	        _event$getData2 = babelHelpers.slicedToArray(_event$getData, 2),
+	        ENTITY_XML_ID = _event$getData2[0],
+	        id = _event$getData2[1];
 	      var logId = Instance.getLogId();
-
 	      if (this.mid[id.join('-')] !== 'hidden') {
 	        this.mid[id.join('-')] = 'hidden';
-
 	        if (this.repoLog[logId]) {
 	          this.repoLog[logId]['POST_NUM_COMMENTS']--;
 	          BXMobileApp.onCustomEvent('onLogEntryCommentsNumRefresh', {
@@ -3419,17 +3048,14 @@ this.BX = this.BX || {};
 	    key: "drawHandler",
 	    value: function drawHandler(event) {
 	      var _event$getData3 = event.getData(),
-	          _event$getData4 = babelHelpers.slicedToArray(_event$getData3, 2),
-	          ENTITY_XML_ID = _event$getData4[0],
-	          id = _event$getData4[1];
-
+	        _event$getData4 = babelHelpers.slicedToArray(_event$getData3, 2),
+	        ENTITY_XML_ID = _event$getData4[0],
+	        id = _event$getData4[1];
 	      var logId = Instance.getLogId();
 	      this.mid[ENTITY_XML_ID] = this.mid[ENTITY_XML_ID] || {};
-
 	      if (this.mid[id.join('-')] !== 'drawn') {
 	        this.mid[id.join('-')] = 'drawn';
 	        var node = false;
-
 	        if (this.repoLog[logId] && (node = document.getElementById("record-".concat(id.join('-'), "-cover"))) && node && node.parentNode == document.getElementById("record-".concat(ENTITY_XML_ID, "-new"))) {
 	          this.repoLog[logId]['POST_NUM_COMMENTS']++;
 	          BXMobileApp.onCustomEvent('onLogEntryCommentsNumRefresh', {
@@ -3443,12 +3069,11 @@ this.BX = this.BX || {};
 	    key: "submitHandler",
 	    value: function submitHandler(event) {
 	      var _event$getData5 = event.getData(),
-	          _event$getData6 = babelHelpers.slicedToArray(_event$getData5, 4),
-	          entity_xml_id = _event$getData6[0],
-	          id = _event$getData6[1],
-	          obj = _event$getData6[2],
-	          post_data = _event$getData6[3];
-
+	        _event$getData6 = babelHelpers.slicedToArray(_event$getData5, 4),
+	        entity_xml_id = _event$getData6[0],
+	        id = _event$getData6[1],
+	        obj = _event$getData6[2],
+	        post_data = _event$getData6[3];
 	      if (post_data && post_data.mobile_action && post_data.mobile_action === 'add_comment' && id > 0) {
 	        post_data.mobile_action = post_data.action = 'edit_comment';
 	        post_data.edit_id = id;
@@ -3463,7 +3088,6 @@ this.BX = this.BX || {};
 	    key: "getList",
 	    value: function getList(params) {
 	      var _this = this;
-
 	      var timestampValue = params.ts;
 	      var pullDown = !!params.bPullDown;
 	      var pullDownTop = main_core.Type.isUndefined(params.bPullDownTop) || params.bPullDownTop;
@@ -3471,16 +3095,13 @@ this.BX = this.BX || {};
 	      var moveTop = main_core.Type.isUndefined(params.obFocus.comments) || params.obFocus.comments === 'NO' ? 'NO' : 'YES';
 	      var logId = oMSL.logId;
 	      var container = document.getElementById('post-comments-wrap');
-
 	      if (!pullDown) {
 	        if (pullDownTop) {
 	          BXMobileApp.UI.Page.Refresh.start();
 	        }
-
 	        main_core.Dom.clean(container);
 	        container.appendChild(main_core.Tag.render(_templateObject$2 || (_templateObject$2 = babelHelpers.taggedTemplateLiteral(["<span id=\"post-comment-last-after\"></span>"]))));
 	      }
-
 	      this.showEmptyListWaiter({
 	        container: container,
 	        enable: true
@@ -3495,18 +3116,15 @@ this.BX = this.BX || {};
 	        processData: true,
 	        callback: function callback(response) {
 	          var formWrap = document.getElementById('post-comments-form-wrap');
-
 	          if (pullDown) {
 	            app.exec('pullDownLoadingStop');
 	          } else if (pullDownTop) {
 	            BXMobileApp.UI.Page.Refresh.stop();
 	          }
-
 	          _this.showEmptyListWaiter({
 	            container: container,
 	            enable: false
 	          });
-
 	          if (main_core.Type.isStringFilled(response.POST_PERM)) {
 	            oMSL.menuData.post_perm = response.POST_PERM;
 	            PageMenuInstance.detailPageMenuItems = PageMenuInstance.buildDetailPageMenu(oMSL.menuData);
@@ -3514,11 +3132,9 @@ this.BX = this.BX || {};
 	              type: 'detail'
 	            });
 	          }
-
 	          if (main_core.Type.isStringFilled(response.TEXT)) {
 	            if (pullDown) {
 	              main_core.Dom.clean(container);
-
 	              if (!main_core.Type.isUndefined(response.POST_NUM_COMMENTS)) {
 	                BXMobileApp.onCustomEvent('onLogEntryCommentsNumRefresh', {
 	                  log_id: logId,
@@ -3526,11 +3142,9 @@ this.BX = this.BX || {};
 	                }, true);
 	              }
 	            }
-
 	            _this.setRepoItem(logId, {
 	              POST_NUM_COMMENTS: response.POST_NUM_COMMENTS
 	            });
-
 	            var contentData = BX.processHTML(response.TEXT, true);
 	            main_core.Runtime.html(container, contentData.HTML).then(function () {
 	              setTimeout(function () {
@@ -3539,10 +3153,8 @@ this.BX = this.BX || {};
 	            });
 	            container.appendChild(main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["<span id=\"post-comment-last-after\"></span>"]))));
 	            var cnt = 0;
-
 	            var func = function func() {
 	              cnt++;
-
 	              if (cnt < 100) {
 	                if (container.childNodes.length > 0) {
 	                  BX.ajax.processScripts(contentData.SCRIPT);
@@ -3551,7 +3163,6 @@ this.BX = this.BX || {};
 	                }
 	              }
 	            };
-
 	            BX.defer(func, _this)();
 	            var event = new main_core_events.BaseEvent({
 	              compatData: [{
@@ -3563,26 +3174,22 @@ this.BX = this.BX || {};
 	            });
 	            main_core_events.EventEmitter.emit('BX.UserContentView.onInitCall', event);
 	            main_core_events.EventEmitter.emit('BX.UserContentView.onClearCall', event);
-
-	            if (!pullDown) // redraw form
+	            if (!pullDown)
+	              // redraw form
 	              {
 	                if (formWrap) {
 	                  formWrap.innerHTML = '';
 	                }
-
 	                __MSLDetailPullDownInit(true);
-
 	                if (moveBottom === 'YES') {
 	                  _this.setFocusOnComments('form');
 	                } else if (moveTop == 'YES') {
 	                  _this.setFocusOnComments('list');
 	                }
 	              }
-
 	            Instance.setLastActivityDate();
 	            PageScrollInstance.checkScrollButton();
 	            var logIdContainer = document.getElementById('post_log_id');
-
 	            if (!main_core.Type.isUndefined(response.TS) && logIdContainer) {
 	              logIdContainer.setAttribute('data-ts', response.TS);
 	            }
@@ -3593,7 +3200,6 @@ this.BX = this.BX || {};
 	                enable: false
 	              });
 	            }
-
 	            app.alert({
 	              title: main_core.Loc.getMessage('MOBILE_EXT_LIVEFEED_ALERT_ERROR_TITLE'),
 	              text: main_core.Loc.getMessage('MOBILE_EXT_LIVEFEED_ALERT_ERROR_POST_NOT_FOUND_TEXT'),
@@ -3613,12 +3219,10 @@ this.BX = this.BX || {};
 	          } else {
 	            BXMobileApp.UI.Page.Refresh.stop();
 	          }
-
 	          _this.showEmptyListWaiter({
 	            container: container,
 	            enable: false
 	          });
-
 	          _this.showEmptyListFailed({
 	            container: container,
 	            timestampValue: timestampValue,
@@ -3633,54 +3237,44 @@ this.BX = this.BX || {};
 	    value: function showEmptyListWaiter(params) {
 	      var container = params.container;
 	      var enable = !!params.enable;
-
 	      if (!main_core.Type.isDomNode(container)) {
 	        return;
 	      }
-
 	      var waiterNode = container.querySelector('.post-comments-load-btn-wrap');
-
 	      if (waiterNode) {
 	        main_core.Dom.clean(waiterNode);
 	        main_core.Dom.remove(waiterNode);
 	      }
-
 	      if (!enable) {
 	        return;
 	      }
-
 	      container.appendChild(main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["<div class=\"post-comments-load-btn-wrap\"><div class=\"post-comments-loader\"></div><div class=\"post-comments-load-text\">", "</div></div>"])), main_core.Loc.getMessage('MSLDetailCommentsLoading')));
 	    }
 	  }, {
 	    key: "showEmptyListFailed",
 	    value: function showEmptyListFailed(params) {
 	      var _this2 = this;
-
 	      var container = params.container,
-	          timestampValue = params.timestampValue,
-	          pullDown = params.pullDown,
-	          moveBottom = params.moveBottom,
-	          data = params.data;
-
+	        timestampValue = params.timestampValue,
+	        pullDown = params.pullDown,
+	        moveBottom = params.moveBottom,
+	        data = params.data;
 	      if (!main_core.Type.isDomNode(container)) {
 	        return;
 	      }
-
 	      var errorMessage = main_core.Type.isObject(data) && main_core.Type.isStringFilled(data.ERROR_MESSAGE) ? data.ERROR_MESSAGE : main_core.Loc.getMessage('MSLDetailCommentsFailed');
 	      container.appendChild(main_core.Tag.render(_templateObject4 || (_templateObject4 = babelHelpers.taggedTemplateLiteral(["<div class=\"post-comments-load-btn-wrap\"><div class=\"post-comments-load-text\">", "</div><a class=\"post-comments-load-btn\">", "</a></div>"])), errorMessage, main_core.Loc.getMessage('MSLDetailCommentsReload')));
 	      var button = container.querySelector('.post-comments-load-btn');
-
 	      if (!button) {
 	        return;
 	      }
-
 	      button.addEventListener('click', function (event) {
 	        if (main_core.Type.isDomNode(event.target.parent)) {
 	          main_core.Dom.clean(event.target.parent);
 	          main_core.Dom.remove(event.target.parent);
-	        } // repeat get comments request (after error shown)
+	        }
 
-
+	        // repeat get comments request (after error shown)
 	        _this2.getList({
 	          ts: timestampValue,
 	          bPullDown: pullDown,
@@ -3707,19 +3301,15 @@ this.BX = this.BX || {};
 	    key: "setFocusOnComments",
 	    value: function setFocusOnComments(type) {
 	      type = type === 'list' ? 'list' : 'form';
-
 	      if (type === 'form') {
 	        this.setFocusOnCommentForm();
 	        Post$$1.moveBottom();
 	      } else if (type === 'list') {
 	        var container = document.getElementById('post-comments-wrap');
-
 	        if (!container) {
 	          return false;
 	        }
-
 	        var firstNewComment = container.querySelector('.post-comment-block-new');
-
 	        if (firstNewComment) {
 	          window.scrollTo(0, firstNewComment.offsetTop);
 	        } else {
@@ -3729,7 +3319,6 @@ this.BX = this.BX || {};
 	          window.scrollTo(0, firstComment ? firstComment.offsetTop : 0);
 	        }
 	      }
-
 	      return false;
 	    }
 	  }, {
@@ -3740,46 +3329,42 @@ this.BX = this.BX || {};
 	    }
 	  }, {
 	    key: "onLogEntryCommentAdd",
-	    value: function onLogEntryCommentAdd(logId, value) // for the feed
+	    value: function onLogEntryCommentAdd(logId, value)
+	    // for the feed
 	    {
 	      var newValue;
 	      var valuePassed = !main_core.Type.isUndefined(value);
 	      value = !main_core.Type.isUndefined(value) ? parseInt(value) : 0;
 	      var container = document.getElementById("informer_comments_".concat(logId));
 	      var containerNew = document.getElementById("informer_comments_new_".concat(logId));
-
-	      if (container && !containerNew) // detail page
+	      if (container && !containerNew)
+	        // detail page
 	        {
 	          if (value > 0) {
 	            newValue = value;
 	          } else if (!valuePassed) {
 	            newValue = (container.innerHTML.length > 0 ? parseInt(container.innerHTML) : 0) + 1;
 	          }
-
 	          if (parseInt(newValue) > 0) {
 	            container.innerHTML = newValue;
 	            container.style.display = 'inline-block';
-
 	            if (document.getElementById("informer_comments_text2_".concat(logId))) {
 	              document.getElementById("informer_comments_text2_".concat(logId)).style.display = 'inline-block';
 	            }
-
 	            if (document.getElementById("informer_comments_text_".concat(logId))) {
 	              document.getElementById("informer_comments_text_".concat(logId)).style.display = 'none';
 	            }
 	          }
 	        }
-
 	      var containerAll = document.getElementById('comcntleave-all');
-
-	      if (containerAll) // more comments
+	      if (containerAll)
+	        // more comments
 	        {
 	          if (value > 0) {
 	            newValue = value;
 	          } else if (!valuePassed) {
 	            newValue = (containerAll.innerHTML.length > 0 ? parseInt(containerAll.innerHTML) : 0) + 1;
 	          }
-
 	          containerAll.innerHTML = newValue;
 	        }
 	    }
@@ -3809,7 +3394,6 @@ this.BX = this.BX || {};
 	    this.nextPageErrorScroll = this.nextPageErrorScroll.bind(this);
 	    this.init();
 	  }
-
 	  babelHelpers.createClass(Page, [{
 	    key: "init",
 	    value: function init() {
@@ -3820,14 +3404,12 @@ this.BX = this.BX || {};
 	    value: function initScroll(enable, process_waiter) {
 	      enable = !!enable;
 	      process_waiter = !!process_waiter;
-
 	      if (enable) {
 	        document.removeEventListener('scroll', this.onScroll);
 	        document.addEventListener('scroll', this.onScroll);
 	      } else {
 	        document.removeEventListener('scroll', this.onScroll);
 	      }
-
 	      if (process_waiter && document.getElementById('next_post_more')) {
 	        document.getElementById('next_post_more').style.display = enable ? 'block' : 'none';
 	      }
@@ -3836,19 +3418,15 @@ this.BX = this.BX || {};
 	    key: "onScroll",
 	    value: function onScroll() {
 	      var _this = this;
-
 	      var deviceMaxScroll = Instance.getMaxScroll();
-
 	      if (!((window.pageYOffset >= deviceMaxScroll || document.documentElement.scrollHeight <= window.innerHeight // when small workarea
 	      ) && (window.pageYOffset > 0 // refresh patch
 	      || deviceMaxScroll > 0) && !this.isBusyRefreshing && !this.isBusyGettingNextPage)) {
 	        return;
 	      }
-
 	      if (Instance.getOption('refreshFrameCacheNeeded', false) === true) {
 	        return;
 	      }
-
 	      document.removeEventListener('scroll', this.onScroll);
 	      this.isBusyGettingNextPage = true;
 	      this.nextPageXhr = mobile_ajax.Ajax.wrap({
@@ -3858,7 +3436,6 @@ this.BX = this.BX || {};
 	        data: {},
 	        callback: function callback(data) {
 	          _this.nextPageXhr = null;
-
 	          if (main_core.Type.isPlainObject(data) && main_core.Type.isPlainObject(data.PROPS) && main_core.Type.isStringFilled(data.PROPS.CONTENT)) {
 	            if (main_core.Type.isUndefined(data.LAST_TS) || parseInt(data.LAST_TS) <= 0 || parseInt(main_core.Loc.getMessage('MSLFirstPageLastTS')) <= 0 || parseInt(data.LAST_TS) < parseInt(main_core.Loc.getMessage('MSLFirstPageLastTS')) || parseInt(data.LAST_TS) === parseInt(main_core.Loc.getMessage('MSLFirstPageLastTS')) && (parseInt(data.LAST_ID) <= 0 || parseInt(main_core.Loc.getMessage('MSLFirstPageLastId')) <= 0 || parseInt(data.LAST_ID) !== parseInt(main_core.Loc.getMessage('MSLFirstPageLastId')))) {
 	              _this.processAjaxBlock(data.PROPS, {
@@ -3876,29 +3453,22 @@ this.BX = this.BX || {};
 	                  }));
 	                }
 	              });
-
 	              var pageNumber = _this.getPageNumber();
-
 	              if (parseInt(main_core.Loc.getMessage('MSLPageNavNum')) > 0 && pageNumber > 0) {
 	                _this.setPageNumber(pageNumber + 1);
-
 	                var nextUrl = main_core.Uri.removeParam(_this.getNextPageUrl(), ['PAGEN_' + main_core.Loc.getMessage('MSLPageNavNum')]);
 	                nextUrl = main_core.Uri.addParam(nextUrl, babelHelpers.defineProperty({}, "PAGEN_".concat(parseInt(main_core.Loc.getMessage('MSLPageNavNum'))), _this.getPageNumber() + 1));
-
 	                _this.setNextPageUrl(nextUrl);
 	              }
-
 	              document.addEventListener('scroll', _this.onScroll);
 	            }
 	          } else {
 	            _this.requestError('nextPage', true);
 	          }
-
 	          _this.isBusyGettingNextPage = false;
 	        },
 	        callback_failure: function callback_failure() {
 	          _this.requestError('nextPage', true);
-
 	          _this.nextPageXhr = null;
 	          _this.isBusyGettingNextPage = false;
 	        }
@@ -3908,19 +3478,14 @@ this.BX = this.BX || {};
 	    key: "refresh",
 	    value: function refresh(bScroll, params) {
 	      var _this2 = this;
-
 	      bScroll = !!bScroll;
-
 	      if (this.isBusyGettingNextPage && !main_core.Type.isNull(this.nextPageXhr)) {
 	        this.nextPageXhr.abort();
 	      }
-
 	      var notifier = document.getElementById('lenta_notifier');
-
 	      if (notifier) {
 	        notifier.classList.add(this["class"].notifier);
 	      }
-
 	      Instance.setRefreshNeeded(false);
 	      Instance.setRefreshStarted(true);
 	      BalloonNotifierInstance.hideRefreshNeededNotifier();
@@ -3932,13 +3497,11 @@ this.BX = this.BX || {};
 	        RELOAD: 'Y',
 	        RELOAD_JSON: 'Y'
 	      });
-
 	      if (main_core.Type.isPlainObject(params) && main_core.Type.isStringFilled(params.find)) {
 	        reloadUrl = main_core.Uri.addParam(reloadUrl, {
 	          FIND: params.find
 	        });
 	      }
-
 	      var headers = [{
 	        name: 'BX-ACTION-TYPE',
 	        value: 'get_dynamic'
@@ -3963,28 +3526,21 @@ this.BX = this.BX || {};
 	        headers: headers,
 	        callback: function callback(data) {
 	          _this2.refreshXhr = null;
-
 	          _this2.setPageNumber(1);
-
 	          Instance.setRefreshStarted(false);
 	          Instance.setRefreshNeeded(false);
 	          NextPageLoaderInstance.stopWaiter();
-
 	          if (document.getElementById('lenta_notifier')) {
 	            document.getElementById('lenta_notifier').classList.remove(_this2["class"].notifier);
 	          }
-
 	          app.exec('pullDownLoadingStop');
 	          app.exec('hideSearchBarProgress');
-
 	          if (main_core.Type.isPlainObject(data) && main_core.Type.isPlainObject(data.PROPS) && main_core.Type.isStringFilled(data.PROPS.CONTENT)) {
 	            _this2.setRefreshFrameCacheNeeded(false);
-
 	            BitrixMobile.LazyLoad.clearImages();
 	            app.hidePopupLoader();
 	            BalloonNotifierInstance.hideNotifier();
 	            BalloonNotifierInstance.hideRefreshNeededNotifier();
-
 	            if (!main_core.Type.isUndefined(data.COUNTER_TO_CLEAR)) {
 	              BXMobileApp.onCustomEvent('onClearLFCounter', [data.COUNTER_TO_CLEAR], true);
 	              BXMobileApp.Events.postToComponent('onClearLiveFeedCounter', {
@@ -3993,37 +3549,32 @@ this.BX = this.BX || {};
 	                serverTimeUnix: data.COUNTER_SERVER_TIME_UNIX
 	              }, 'communication');
 	            }
-
 	            _this2.processAjaxBlock(data.PROPS, {
 	              type: 'refresh',
 	              callback: function callback() {
 	                PinnedPanelInstance.resetFlags();
 	                PinnedPanelInstance.init();
-
 	                if (!main_core.Type.isUndefined(BX.frameCache) && document.getElementById('bxdynamic_feed_refresh') && (main_core.Type.isUndefined(data.REWRITE_FRAMECACHE) || data.REWRITE_FRAMECACHE !== 'N')) {
 	                  var serverTimestamp = !main_core.Type.isUndefined(data.TS) && parseInt(data.TS) > 0 ? parseInt(data.TS) : 0;
-
 	                  if (serverTimestamp > 0) {
 	                    Instance.setOptions({
 	                      frameCacheTs: serverTimestamp
 	                    });
 	                  }
-
 	                  Instance.updateFrameCache({
 	                    timestamp: serverTimestamp
 	                  });
 	                }
+	                oMSL.registerBlocksToCheck();
 
-	                oMSL.registerBlocksToCheck(); //Android hack.
+	                //Android hack.
 	                //The processing of javascript and insertion of html works not so fast as expected
-
 	                setTimeout(function () {
 	                  BitrixMobile.LazyLoad.showImages(); // when refresh
 	                }, 1000);
 	                BalloonNotifierInstance.initEvents();
 	              }
 	            });
-
 	            if (bScroll) {
 	              BitrixAnimation.animate({
 	                duration: 1000,
@@ -4040,15 +3591,14 @@ this.BX = this.BX || {};
 	                complete: function complete() {}
 	              });
 	            }
-
-	            if (window.applicationCache && data.isManifestUpdated == '1' && !oMSL.appCacheDebug && (window.applicationCache.status == window.applicationCache.IDLE || window.applicationCache.status == window.applicationCache.UPDATEREADY)) //the manifest has been changed
+	            if (window.applicationCache && data.isManifestUpdated == '1' && !oMSL.appCacheDebug && (window.applicationCache.status == window.applicationCache.IDLE || window.applicationCache.status == window.applicationCache.UPDATEREADY))
+	              //the manifest has been changed
 	              {
 	                window.applicationCache.update();
 	              }
 	          } else {
 	            _this2.requestError('refresh', true);
 	          }
-
 	          _this2.isBusyRefreshing = false;
 	        },
 	        callback_failure: function callback_failure() {
@@ -4056,16 +3606,12 @@ this.BX = this.BX || {};
 	          Instance.setRefreshStarted(false);
 	          Instance.setRefreshNeeded(false);
 	          NextPageLoaderInstance.stopWaiter();
-
 	          if (document.getElementById('lenta_notifier')) {
 	            document.getElementById('lenta_notifier').classList.remove(_this2["class"].notifier);
 	          }
-
 	          app.exec('pullDownLoadingStop');
 	          app.exec('hideSearchBarProgress');
-
 	          _this2.requestError('refresh', true);
-
 	          _this2.isBusyRefreshing = false;
 	        }
 	      });
@@ -4076,12 +3622,10 @@ this.BX = this.BX || {};
 	      if (!main_core.Type.isPlainObject(params) || !main_core.Type.isStringFilled(params.type) || ['refresh', 'next'].indexOf(params.type) < 0) {
 	        return;
 	      }
-
 	      var htmlWasInserted = false;
 	      var scriptsLoaded = false;
 	      processCSS(insertHTML);
 	      processExternalJS(processInlineJS);
-
 	      function processCSS(callback) {
 	        if (main_core.Type.isArray(block.CSS) && block.CSS.length > 0) {
 	          BX.load(block.CSS, callback);
@@ -4089,24 +3633,21 @@ this.BX = this.BX || {};
 	          callback();
 	        }
 	      }
-
 	      function insertHTML() {
 	        if (params.type === 'refresh') {
 	          document.getElementById('lenta_wrapper_global').innerHTML = block.CONTENT;
-	        } else // next
+	        } else
+	          // next
 	          {
 	            document.getElementById('lenta_wrapper').insertBefore(main_core.Dom.create('div', {
 	              html: block.CONTENT
 	            }), document.getElementById('next_post_more'));
 	          }
-
 	        htmlWasInserted = true;
-
 	        if (scriptsLoaded) {
 	          processInlineJS();
 	        }
 	      }
-
 	      function processExternalJS(callback) {
 	        if (main_core.Type.isArray(block.JS) && block.JS.length > 0) {
 	          BX.load(block.JS, callback); // to initialize
@@ -4114,10 +3655,8 @@ this.BX = this.BX || {};
 	          callback();
 	        }
 	      }
-
 	      function processInlineJS() {
 	        scriptsLoaded = true;
-
 	        if (htmlWasInserted) {
 	          main_core.ajax.processRequestData(block.CONTENT, {
 	            scriptsRunFirst: false,
@@ -4135,22 +3674,17 @@ this.BX = this.BX || {};
 	    key: "requestError",
 	    value: function requestError(type, show) {
 	      var _this3 = this;
-
 	      if (!['refresh', 'nextPage'].includes(type)) {
 	        type = 'refresh';
 	      }
-
 	      show = !!show;
 	      var errorBlock = document.getElementById("lenta_".concat(type.toLowerCase(), "_error"));
-
 	      if (this.requestErrorTimeout[type]) {
 	        clearTimeout(this.requestErrorTimeout[type]);
 	      }
-
 	      if (errorBlock) {
 	        if (show) {
 	          errorBlock.classList.add(this["class"].notifierActive);
-
 	          if (type === 'refresh') {
 	            document.addEventListener('scroll', this.refreshErrorScroll);
 	          }
@@ -4158,7 +3692,6 @@ this.BX = this.BX || {};
 	          if (type === 'refresh') {
 	            document.removeEventListener('scroll', this.refreshErrorScroll);
 	          }
-
 	          errorBlock.classList.remove(this["class"].notifierActive);
 	        }
 	      } else {
@@ -4166,7 +3699,6 @@ this.BX = this.BX || {};
 	          _this3.requestError(type, show);
 	        }, 500);
 	      }
-
 	      if (type === 'nextPage') {
 	        this.initScroll(!show, true);
 	      }
@@ -4209,12 +3741,10 @@ this.BX = this.BX || {};
 	      });
 	      var refreshNeededNode = document.getElementById('next_page_refresh_needed');
 	      var nextPageCurtainNode = document.getElementById('next_post_more');
-
 	      if (refreshNeededNode && nextPageCurtainNode) {
 	        refreshNeededNode.style.display = !!status ? 'block' : 'none';
 	        nextPageCurtainNode.style.display = !!status ? 'none' : 'block';
 	      }
-
 	      main_core_events.EventEmitter.emit('BX.UserContentView.onSetPreventNextPage', new main_core_events.BaseEvent({
 	        compatData: [!!status]
 	      }));
@@ -4224,7 +3754,6 @@ this.BX = this.BX || {};
 	}();
 
 	var _templateObject$3, _templateObject2$1;
-
 	var Feed = /*#__PURE__*/function () {
 	  function Feed() {
 	    babelHelpers.classCallCheck(this, Feed);
@@ -4273,12 +3802,10 @@ this.BX = this.BX || {};
 	    this.isFrameDataReceived = false;
 	    this.init();
 	  }
-
 	  babelHelpers.createClass(Feed, [{
 	    key: "init",
 	    value: function init() {
 	      var _this = this;
-
 	      BXMobileApp.addCustomEvent('Livefeed.PublicationQueue::afterPostAdd', this.afterPostAdd.bind(this));
 	      BXMobileApp.addCustomEvent('Livefeed.PublicationQueue::afterPostAddError', this.afterPostAddError.bind(this));
 	      BXMobileApp.addCustomEvent('Livefeed.PublicationQueue::afterPostUpdate', this.afterPostUpdate.bind(this));
@@ -4287,7 +3814,6 @@ this.BX = this.BX || {};
 	      BXMobileApp.addCustomEvent('Livefeed::hideLoader', this.hideLoader.bind(this));
 	      BXMobileApp.addCustomEvent('Livefeed::scrollTop', this.scrollTop.bind(this));
 	      BXMobileApp.addCustomEvent('Livefeed::onLogEntryDetailNotFound', this.removePost.bind(this)); // from detail page
-
 	      BXMobileApp.addCustomEvent('Livefeed.PinnedPanel::change', this.onPinnedPanelChange.bind(this));
 	      BXMobileApp.addCustomEvent('Livefeed.PostDetail::pinChanged', this.onPostPinChanged.bind(this));
 	      main_core_events.EventEmitter.subscribe('BX.LazyLoad:ImageLoaded', this.onLazyLoadImageLoaded.bind(this));
@@ -4301,15 +3827,12 @@ this.BX = this.BX || {};
 	    key: "initListOnce",
 	    value: function initListOnce(params) {
 	      var _this2 = this;
-
 	      if (!main_core.Type.isPlainObject(params)) {
 	        params = {};
 	      }
-
 	      if (!main_core.Type.isUndefined(params.arAvailableGroup)) {
 	        this.availableGroupList = params.arAvailableGroup;
 	      }
-
 	      main_core_events.EventEmitter.subscribe('onFrameDataReceivedBefore', BitrixMobile.LazyLoad.clearImages);
 	      main_core_events.EventEmitter.subscribe('BX.LazyLoad:ImageLoaded', function () {
 	        _this2.recalcMaxScroll();
@@ -4323,10 +3846,9 @@ this.BX = this.BX || {};
 	      });
 	      main_core_events.EventEmitter.subscribe('onFrameDataProcessed', function (event) {
 	        var _event$getCompatData = event.getCompatData(),
-	            _event$getCompatData2 = babelHelpers.slicedToArray(_event$getCompatData, 2),
-	            blocks = _event$getCompatData2[0],
-	            bFromCache = _event$getCompatData2[1];
-
+	          _event$getCompatData2 = babelHelpers.slicedToArray(_event$getCompatData, 2),
+	          blocks = _event$getCompatData2[0],
+	          bFromCache = _event$getCompatData2[1];
 	        if (!main_core.Type.isUndefined(blocks) && !main_core.Type.isUndefined(blocks[0]) && !main_core.Type.isUndefined(bFromCache) && !!bFromCache) {
 	          if (!main_core.Type.isUndefined(blocks[0].PROPS) && !main_core.Type.isUndefined(blocks[0].PROPS.TS) && parseInt(blocks[0].PROPS.TS) > 0) {
 	            _this2.setOptions({
@@ -4334,9 +3856,7 @@ this.BX = this.BX || {};
 	            });
 	          }
 	        }
-
 	        BitrixMobile.LazyLoad.showImages(true);
-
 	        if (!!bFromCache) {
 	          PageInstance.setRefreshFrameCacheNeeded(true);
 	        }
@@ -4363,9 +3883,8 @@ this.BX = this.BX || {};
 	      });
 	      main_core_events.EventEmitter.subscribe('onFrameDataRequestFail', function (event) {
 	        var _event$getCompatData3 = event.getCompatData(),
-	            _event$getCompatData4 = babelHelpers.slicedToArray(_event$getCompatData3, 1),
-	            response = _event$getCompatData4[0];
-
+	          _event$getCompatData4 = babelHelpers.slicedToArray(_event$getCompatData3, 1),
+	          response = _event$getCompatData4[0];
 	        if (!main_core.Type.isUndefined(response) && main_core.Type.isStringFilled(response.reason) && response.reason === 'bad_eval') {
 	          _this2.isPullDownLocked = false;
 	          app.exec('pullDownLoadingStop');
@@ -4385,10 +3904,9 @@ this.BX = this.BX || {};
 	      });
 	      main_core_events.EventEmitter.subscribe('onCacheInvokeAfter', function (event) {
 	        var _event$getCompatData5 = event.getCompatData(),
-	            _event$getCompatData6 = babelHelpers.slicedToArray(_event$getCompatData5, 2),
-	            storageBlocks = _event$getCompatData6[0],
-	            resultSet = _event$getCompatData6[1];
-
+	          _event$getCompatData6 = babelHelpers.slicedToArray(_event$getCompatData5, 2),
+	          storageBlocks = _event$getCompatData6[0],
+	          resultSet = _event$getCompatData6[1];
 	        if (resultSet.items.length <= 0) {
 	          BX.frameCache.update(true, true);
 	        }
@@ -4442,7 +3960,6 @@ this.BX = this.BX || {};
 	        if (!optionsList.hasOwnProperty(key)) {
 	          continue;
 	        }
-
 	        this.options[key] = optionsList[key];
 	      }
 	    }
@@ -4452,11 +3969,9 @@ this.BX = this.BX || {};
 	      if (main_core.Type.isUndefined(defaultValue)) {
 	        defaultValue = null;
 	      }
-
 	      if (!main_core.Type.isStringFilled(key)) {
 	        return null;
 	      }
-
 	      return !main_core.Type.isUndefined(this.options[key]) ? this.options[key] : defaultValue;
 	    }
 	  }, {
@@ -4505,22 +4020,17 @@ this.BX = this.BX || {};
 	      if (!main_core.Type.isPlainObject(params)) {
 	        params = {};
 	      }
-
 	      var postId = typeof params.postId != 'undefined' ? parseInt(params.postId) : 0;
 	      var context = typeof params.context != 'undefined' ? params.context : '';
 	      var pageId = typeof params.pageId != 'undefined' ? params.pageId : '';
 	      var groupId = typeof params.groupId != 'undefined' ? params.groupId : null;
-
 	      if (pageId !== this.pageId) {
 	        return;
 	      }
-
 	      DatabaseUnsentPostInstance["delete"](groupId);
-
 	      if (postId <= 0 || main_core.Type.isStringFilled(params.warningText)) {
 	        return;
 	      }
-
 	      this.getEntryContent({
 	        entityType: 'BLOG_POST',
 	        entityId: postId,
@@ -4534,7 +4044,6 @@ this.BX = this.BX || {};
 	      if (!main_core.Type.isPlainObject(params)) {
 	        params = {};
 	      }
-
 	      var context = typeof params.context != 'undefined' ? params.context : '';
 	      var pageId = typeof params.pageId != 'undefined' ? params.pageId : '';
 	      var postId = typeof params.postId != 'undefined' ? parseInt(params.postId) : 0;
@@ -4551,11 +4060,9 @@ this.BX = this.BX || {};
 	    key: "afterPostAddError",
 	    value: function afterPostAddError(params) {
 	      var _this3 = this;
-
 	      if (!main_core.Type.isPlainObject(params)) {
 	        params = {};
 	      }
-
 	      var context = main_core.Type.isStringFilled(params.context) ? params.context : '';
 	      var groupId = params.groupId ? params.groupId : '';
 	      var selectedDestinations = {
@@ -4570,7 +4077,6 @@ this.BX = this.BX || {};
 	        messageText: params.postData.POST_MESSAGE
 	      });
 	      DatabaseUnsentPostInstance.save(params.postData, groupId);
-
 	      params.callback = function () {
 	        if (BXMobileAppContext.getApiVersion() >= _this3.getApiVersion('layoutPostForm')) {
 	          PostFormManagerInstance.show({
@@ -4581,7 +4087,6 @@ this.BX = this.BX || {};
 	          app.exec('showPostForm', PostFormOldManagerInstance.show());
 	        }
 	      };
-
 	      this.showPostError(params);
 	    }
 	  }, {
@@ -4590,15 +4095,12 @@ this.BX = this.BX || {};
 	      if (!main_core.Type.isPlainObject(params)) {
 	        params = {};
 	      }
-
 	      var context = main_core.Type.isStringFilled(params.context) ? params.context : '';
-
 	      params.callback = function () {
 	        BlogPost$$1.edit({
 	          postId: parseInt(params.postId)
 	        });
 	      };
-
 	      this.showPostError(params);
 	    }
 	  }, {
@@ -4607,7 +4109,6 @@ this.BX = this.BX || {};
 	      if (!main_core.Type.isPlainObject(params)) {
 	        params = {};
 	      }
-
 	      params.callback = main_core.Type.isFunction(params.callback) ? params.callback : function () {};
 	      var errorText = main_core.Type.isStringFilled(params.errorText) ? params.errorText : false;
 	      NotificationBarInstance.showError({
@@ -4623,11 +4124,9 @@ this.BX = this.BX || {};
 	      if (!main_core.Type.isPlainObject(params)) {
 	        params = {};
 	      }
-
 	      if (params.pageId && this.pageId !== null && params.pageId != this.pageId) {
 	        return;
 	      }
-
 	      app.showPopupLoader({
 	        text: main_core.Type.isStringFilled(params.text) ? params.text : ''
 	      });
@@ -4643,28 +4142,22 @@ this.BX = this.BX || {};
 	      if (!main_core.Type.isPlainObject(params)) {
 	        params = {};
 	      }
-
 	      if (params.pageId && this.pageId !== null && params.pageId != this.pageId) {
 	        return;
 	      }
-
 	      window.scrollTo(0, 0);
 	    }
 	  }, {
 	    key: "getEntryContent",
 	    value: function getEntryContent(params) {
 	      var _this4 = this;
-
 	      if (!main_core.Type.isPlainObject(params)) {
 	        params = {};
 	      }
-
 	      var logId = params.logId ? parseInt(params.logId) : 0;
-
 	      if (logId <= 0 && !(main_core.Type.isStringFilled(params.entityType) && parseInt(params.entityId) > 0)) {
 	        return;
 	      }
-
 	      mobile_ajax.Ajax.runComponentAction('bitrix:mobile.socialnetwork.log.ex', 'getEntryContent', {
 	        mode: 'class',
 	        signedParameters: this.getOption('signedParameters', {}),
@@ -4717,66 +4210,51 @@ this.BX = this.BX || {};
 	      if (!postContainer || !contentWrapper) {
 	        return Promise.reject();
 	      }
-
 	      var content = contentWrapper.querySelector(selector);
 	      var container = postContainer.querySelector(selector);
-
 	      if (container && content) {
 	        return main_core.Runtime.html(container, content.innerHTML);
 	      }
-
 	      return Promise.reject();
 	    }
 	  }, {
 	    key: "insertPost",
 	    value: function insertPost(params) {
 	      var _this5 = this;
-
 	      var containerNode = document.getElementById(this.nodeId.feedContainer);
 	      var content = params.content;
 	      var logId = params.logId;
 	      var queueKey = params.queueKey;
 	      var action = params.action;
-
 	      if (!main_core.Type.isDomNode(containerNode) || !main_core.Type.isStringFilled(content)) {
 	        return;
 	      }
-
 	      var serverTimestamp = typeof params.serverTimestamp != 'undefined' && parseInt(params.serverTimestamp) > 0 ? parseInt(params.serverTimestamp) : 0;
-
 	      if (action === 'update') {
 	        var postContainer = document.getElementById('lenta_item_' + logId);
-
 	        if (!postContainer) {
 	          postContainer = document.getElementById('lenta_item');
 	        }
-
 	        if (!postContainer) {
 	          return;
 	        }
-
 	        var matches = this.pageId.match(/^detail_(\d+)/i);
-
 	        if (matches && logId != matches[1]) {
 	          return;
 	        }
-
 	        var contentWrapper = postContainer.appendChild(document.createElement('div'));
 	        contentWrapper.style.display = 'none';
 	        main_core.Runtime.html(contentWrapper, content);
-
-	        if (postContainer.id === 'lenta_item') // empty detail
+	        if (postContainer.id === 'lenta_item')
+	          // empty detail
 	          {
 	            this.processDetailBlock(postContainer, contentWrapper, ".".concat(this["class"].postItemTop));
 	            this.processDetailBlock(postContainer, contentWrapper, ".".concat(this["class"].postItemPostBlock)).then(function () {
 	              var pageBlockNode = postContainer.querySelector(".".concat(_this5["class"].postItemPostBlock));
 	              var resultBlockNode = contentWrapper.querySelector(".".concat(_this5["class"].postItemPostBlock));
-
 	              if (pageBlockNode || resultBlockNode) {
 	                var pageClassList = _this5.filterPostBlockClassList(pageBlockNode.classList);
-
 	                var resultClassList = _this5.filterPostBlockClassList(resultBlockNode.classList);
-
 	                pageClassList.forEach(function (className) {
 	                  pageBlockNode.classList.remove(className);
 	                });
@@ -4784,7 +4262,6 @@ this.BX = this.BX || {};
 	                  pageBlockNode.classList.add(className);
 	                });
 	              }
-
 	              BitrixMobile.LazyLoad.showImages();
 	            });
 	            this.processDetailBlock(postContainer, contentWrapper, ".".concat(this["class"].postItemAttachedFileWrap)).then(function () {
@@ -4798,7 +4275,6 @@ this.BX = this.BX || {};
 	          main_core.Runtime.html(postContainer, contentPostItemTopWrap.innerHTML).then(function () {
 	            oMSL.checkNodesHeight();
 	            BitrixMobile.LazyLoad.showImages();
-
 	            if (document.getElementById('framecache-block-feed')) {
 	              setTimeout(function () {
 	                _this5.updateFrameCache({
@@ -4808,24 +4284,18 @@ this.BX = this.BX || {};
 	            }
 	          });
 	        }
-
 	        contentWrapper.remove();
 	      } else if (action === 'add') {
 	        this.setNewPostContainer(main_core.Tag.render(_templateObject$3 || (_templateObject$3 = babelHelpers.taggedTemplateLiteral(["<div class=\"", " ", "\" ontransitionend=\"", "\"></div>"])), this["class"].postNewContainerTransformNew, this["class"].postLazyLoadCheck, this.handleInsertPostTransitionEnd.bind(this)));
 	        main_core.Dom.prepend(this.getNewPostContainer(), containerNode);
 	        mobile_utils.Utils.htmlWithInlineJS(this.getNewPostContainer(), content).then(function () {
 	          var postNode = _this5.getNewPostContainer().querySelector("div.".concat(_this5["class"].listPost));
-
-	          main_core.Dom.style(_this5.getNewPostContainer(), 'height', "".concat(postNode.scrollHeight + 12
-	          /*margin-bottom*/
-	          , "px"));
-
+	          main_core.Dom.style(_this5.getNewPostContainer(), 'height', "".concat(postNode.scrollHeight + 12 /*margin-bottom*/, "px"));
 	          if (serverTimestamp > 0) {
 	            _this5.setOptions({
 	              frameCacheTs: serverTimestamp
 	            });
 	          }
-
 	          oMSL.registerBlocksToCheck();
 	          setTimeout(function () {
 	            oMSL.checkNodesHeight();
@@ -4837,7 +4307,6 @@ this.BX = this.BX || {};
 	          }, 750);
 	        });
 	      }
-
 	      PublicationQueueInstance.emit('onPostInserted', new main_core_events.BaseEvent({
 	        data: {
 	          key: queueKey
@@ -4848,17 +4317,13 @@ this.BX = this.BX || {};
 	    key: "removePost",
 	    value: function removePost(params) {
 	      var logId = parseInt(params.logId);
-
 	      if (logId <= 0) {
 	        return;
 	      }
-
 	      var itemNode = document.getElementById('lenta_item_' + logId);
-
 	      if (!itemNode) {
 	        return;
 	      }
-
 	      itemNode.remove();
 	    }
 	  }, {
@@ -4887,19 +4352,14 @@ this.BX = this.BX || {};
 	    key: "onLazyLoadImageLoaded",
 	    value: function onLazyLoadImageLoaded(event) {
 	      var _this6 = this;
-
 	      this.recalcMaxScroll();
-
 	      var _event$getData = event.getData(),
-	          _event$getData2 = babelHelpers.slicedToArray(_event$getData, 1),
-	          imageNode = _event$getData2[0];
-
+	        _event$getData2 = babelHelpers.slicedToArray(_event$getData, 1),
+	        imageNode = _event$getData2[0];
 	      if (imageNode) {
 	        var postCheckNode = imageNode.closest(".".concat(this["class"].postLazyLoadCheck));
-
 	        if (postCheckNode) {
 	          var postNode = postCheckNode.querySelector("div.".concat(this["class"].listPost));
-
 	          if (postNode) {
 	            postCheckNode.classList.add(this["class"].postNewContainerTransform);
 	            main_core.Dom.style(postCheckNode, 'height', "".concat(postNode.scrollHeight, "px"));
@@ -4926,22 +4386,18 @@ this.BX = this.BX || {};
 	    value: function onPinnedPanelChange(params) {
 	      var logId = params.logId ? parseInt(params.logId) : 0;
 	      var value = ['Y', 'N'].indexOf(params.value) !== -1 ? params.value : null;
-
 	      if (!logId || !value || !PinnedPanelInstance.getPinnedPanelNode()) {
 	        return;
 	      }
-
 	      var postNode = main_core.Type.isDomNode(params.postNode) ? params.postNode : null;
-
-	      if (!main_core.Type.isDomNode(params.postNode)) // from detail in list
+	      if (!main_core.Type.isDomNode(params.postNode))
+	        // from detail in list
 	        {
 	          postNode = document.getElementById("lenta_item_".concat(logId));
 	        }
-
 	      if (!main_core.Type.isDomNode(postNode)) {
 	        return;
 	      }
-
 	      if (value === 'N') {
 	        PinnedPanelInstance.extractEntry({
 	          logId: logId,
@@ -4952,11 +4408,9 @@ this.BX = this.BX || {};
 	        app.showPopupLoader({
 	          text: ""
 	        });
-
 	        if (this.getOption('refreshFrameCacheNeeded', false) === true) {
 	          return;
 	        }
-
 	        var entityValue = postNode.getAttribute('data-security-entity-pin');
 	        var tokenValue = postNode.getAttribute('data-security-token-pin');
 	        PinnedPanelInstance.getPinnedData({
@@ -4980,27 +4434,20 @@ this.BX = this.BX || {};
 	    value: function onPostPinChanged(params) {
 	      var logId = params.logId ? parseInt(params.logId) : 0;
 	      var value = ['Y', 'N'].indexOf(params.value) !== -1 ? params.value : null;
-
 	      if (!logId || !value) {
 	        return;
 	      }
-
 	      var menuNode = document.getElementById('log-entry-menu-' + logId);
-
 	      if (!menuNode) {
 	        return;
 	      }
-
 	      var postNode = menuNode.closest(".".concat(this["class"].detailPost));
-
 	      if (!postNode) {
 	        postNode = menuNode.closest(".".concat(this["class"].listPost));
 	      }
-
 	      if (!postNode) {
 	        return;
 	      }
-
 	      if (value === 'Y') {
 	        postNode.classList.add(this["class"].postItemPinActive);
 	      } else {
@@ -5015,32 +4462,29 @@ this.BX = this.BX || {};
 	        var menuNode = null;
 	        var context = 'list';
 	        var postNode = e.target.closest(".".concat(this["class"].listPost));
-
-	        if (postNode) // list
+	        if (postNode)
+	          // list
 	          {
 	            menuNode = postNode.querySelector('[data-menu-type="post"]');
 	            post = this.getPostFromNode(postNode);
-	          } else // detail
+	          } else
+	          // detail
 	          {
 	            context = 'detail';
 	            postNode = e.target.closest(".".concat(this["class"].detailPost));
-
 	            if (postNode) {
 	              menuNode = postNode.querySelector('[data-menu-type="post"]');
-
 	              if (menuNode) {
 	                post = this.getPostFromLogId(menuNode.getAttribute('data-log-id'));
 	              }
 	            }
 	          }
-
 	        if (post && menuNode) {
 	          return post.setPinned({
 	            menuNode: menuNode,
 	            context: context
 	          });
 	        }
-
 	        e.stopPropagation();
 	        return e.preventDefault();
 	      } else if (e.target.classList.contains(this["class"].addPostButton)) {
@@ -5065,13 +4509,10 @@ this.BX = this.BX || {};
 	        || e.target.closest(".".concat(this["class"].postItemDescriptionBlock))));
 	        var detailToComments = !!(!detailFromPinned && !detailFromNormal && (e.target.classList.contains(this["class"].postItemInformComments) || e.target.closest(".".concat(this["class"].postItemInformComments))));
 	        var detailToExpanded = !!(!detailFromPinned && !detailFromNormal && !detailToComments && (e.target.classList.contains(this["class"].postItemInformMore) || e.target.closest(".".concat(this["class"].postItemInformMore))));
-
 	        if (detailFromPinned || detailFromNormal || detailToComments || detailToExpanded) {
 	          var _postNode = e.target.closest(".".concat(this["class"].listPost));
-
 	          if (_postNode) {
 	            var _post = this.getPostFromNode(_postNode);
-
 	            if (_post) {
 	              _post.openDetail({
 	                pathToEmptyPage: this.getOption('pathToEmptyPage', ''),
@@ -5083,58 +4524,45 @@ this.BX = this.BX || {};
 	              });
 	            }
 	          }
-
 	          e.stopPropagation();
 	          return e.preventDefault();
 	        }
 	      } else if (e.target.closest(".".concat(this["class"].postWrapper))) {
 	        var expand = !!(e.target.classList.contains(this["class"].postItemInformMore) || e.target.closest(".".concat(this["class"].postItemInformMore)) || e.target.classList.contains(this["class"].postItemMore) || e.target.closest(".".concat(this["class"].postItemMore)));
 	        var postItemGratitudeUsersSmallContainer = null;
-
 	        if (e.target.classList.contains(this["class"].postItemGratitudeUsersSmallContainer)) {
 	          postItemGratitudeUsersSmallContainer = e.target;
 	        } else {
 	          postItemGratitudeUsersSmallContainer = e.target.closest(".".concat(this["class"].postItemGratitudeUsersSmallContainer));
 	        }
-
 	        if (expand || main_core.Type.isDomNode(postItemGratitudeUsersSmallContainer)) {
 	          if (main_core.Type.isDomNode(postItemGratitudeUsersSmallContainer)) {
 	            postItemGratitudeUsersSmallContainer.style.display = 'none';
 	            var postItemGratitudeUsersSmallHidden = postItemGratitudeUsersSmallContainer.parentNode.querySelector(".".concat(this["class"].postItemGratitudeUsersSmallHidden));
-
 	            if (postItemGratitudeUsersSmallHidden) {
 	              postItemGratitudeUsersSmallHidden.style.display = 'block';
 	            }
 	          }
-
 	          var logId = this.getOption('logId', 0);
-
 	          var _post2 = new Post$$1({
 	            logId: logId
 	          });
-
 	          _post2.expandText();
-
 	          e.stopPropagation();
 	          return e.preventDefault();
 	        }
-
 	        var importantUserListNode = null;
-
 	        if (e.target.classList.contains(this["class"].postItemImportantUserList)) {
 	          importantUserListNode = e.target;
 	        } else {
 	          importantUserListNode = e.target.closest(".".concat(this["class"].postItemImportantUserList));
 	        }
-
 	        if (importantUserListNode) {
 	          var inputNode = importantUserListNode.parentNode.querySelector('input');
 	          var postId = 0;
-
 	          if (main_core.Type.isDomNode(inputNode)) {
 	            postId = parseInt(inputNode.getAttribute('bx-data-post-id'));
 	          }
-
 	          if (postId > 0) {
 	            app.exec("openComponent", {
 	              name: "JSStackComponent",
@@ -5166,13 +4594,10 @@ this.BX = this.BX || {};
 	      if (!main_core.Type.isDomNode(node)) {
 	        return;
 	      }
-
 	      var logId = parseInt(node.getAttribute('data-livefeed-id'));
-
 	      if (logId <= 0) {
 	        return;
 	      }
-
 	      return new Post$$1({
 	        logId: logId,
 	        entryType: node.getAttribute('data-livefeed-post-entry-type'),
@@ -5197,11 +4622,9 @@ this.BX = this.BX || {};
 	    value: function getPostFromLogId(logId) {
 	      var result = null;
 	      logId = parseInt(logId);
-
 	      if (logId <= 0) {
 	        return result;
 	      }
-
 	      result = new Post$$1({
 	        logId: logId
 	      });
@@ -5211,46 +4634,37 @@ this.BX = this.BX || {};
 	    key: "updateFrameCache",
 	    value: function updateFrameCache(params) {
 	      var contentNode = document.getElementById('framecache-block-feed');
-
 	      if (!main_core.Type.isDomNode(contentNode)) {
 	        contentNode = document.getElementById('bxdynamic_feed_refresh');
 	      }
-
 	      if (!main_core.Type.isDomNode(contentNode)) {
 	        return;
 	      }
-
 	      var props = {
 	        USE_BROWSER_STORAGE: true,
 	        AUTO_UPDATE: true,
 	        USE_ANIMATION: false
 	      };
 	      var timestamp = typeof params.timestamp != 'undefined' ? parseInt(params.timestamp) : 0;
-
 	      if (timestamp > 0) {
 	        props.TS = timestamp;
 	      }
-
 	      BX.frameCache.writeCacheWithID('framecache-block-feed', contentNode.innerHTML, parseInt(Math.random() * 100000), JSON.stringify(props));
 	    }
 	  }, {
 	    key: "onMobilePlayerError",
 	    value: function onMobilePlayerError(event) {
 	      var _event$getData3 = event.getData(),
-	          _event$getData4 = babelHelpers.slicedToArray(_event$getData3, 2),
-	          player = _event$getData4[0],
-	          src = _event$getData4[1];
-
+	        _event$getData4 = babelHelpers.slicedToArray(_event$getData3, 2),
+	        player = _event$getData4[0],
+	        src = _event$getData4[1];
 	      if (!main_core.Type.isDomNode(player)) {
 	        return;
 	      }
-
 	      if (!main_core.Type.isStringFilled(src)) {
 	        return;
 	      }
-
 	      var container = player.parentNode;
-
 	      if (container) {
 	        if (container.querySelector('.disk-mobile-player-error-container')) {
 	          return;
@@ -5260,7 +4674,6 @@ this.BX = this.BX || {};
 	          return;
 	        }
 	      }
-
 	      var sources = player.getElementsByTagName('source');
 	      var sourcesLeft = sources.length;
 	      Array.from(sources).forEach(function (source) {
@@ -5269,11 +4682,9 @@ this.BX = this.BX || {};
 	          sourcesLeft--;
 	        }
 	      });
-
 	      if (sourcesLeft > 0) {
 	        return;
 	      }
-
 	      var errorContainer = main_core.Dom.create('div', {
 	        props: {
 	          className: 'disk-mobile-player-error-container'
@@ -5291,7 +4702,6 @@ this.BX = this.BX || {};
 	        })]
 	      });
 	      var downloadLink = errorContainer.querySelector('.disk-mobile-player-download');
-
 	      if (downloadLink) {
 	        main_core.Dom.adjust(downloadLink, {
 	          events: {
@@ -5303,7 +4713,6 @@ this.BX = this.BX || {};
 	          }
 	        });
 	      }
-
 	      if (container) {
 	        player.style.display = 'none';
 	        container.appendChild(errorContainer);
@@ -5317,23 +4726,18 @@ this.BX = this.BX || {};
 	    key: "getApiVersion",
 	    value: function getApiVersion(feature) {
 	      var result = 0;
-
 	      switch (feature) {
 	        case 'layoutPostForm':
 	          result = 37;
 	          break;
-
 	        case 'pageMenu':
 	          result = 34;
 	          break;
-
 	        case 'tabs':
 	          result = 41;
 	          break;
-
 	        default:
 	      }
-
 	      return result;
 	    }
 	  }, {
@@ -5366,39 +4770,32 @@ this.BX = this.BX || {};
 	    key: "afterEdit",
 	    value: function afterEdit(_ref) {
 	      var responseData = _ref.responseData,
-	          logId = _ref.logId;
+	        logId = _ref.logId;
 	      logId = !main_core.Type.isUndefined(logId) ? parseInt(logId) : 0;
 	      var newPostNode = main_core.Tag.render(_templateObject2$1 || (_templateObject2$1 = babelHelpers.taggedTemplateLiteral(["<div>", "</div>"])), responseData.text);
 	      var container = document.getElementById('blog-post-first-after');
-
 	      if (container) {
 	        container.parentNode.insertBefore(newPostNode, container.nextSibling);
 	      }
-
 	      var detailTextNode = newPostNode.querySelector(".post-item-post-block");
 	      var topNode = newPostNode.querySelector(".post-item-top");
 	      var filesNode = newPostNode.querySelector(".post-item-attached-file-wrap");
-
 	      if (logId > 0 && detailTextNode && topNode) {
 	        var postData = {
 	          detailText: detailTextNode.innerHTML,
 	          topText: topNode.innerHTML,
 	          logID: logId
 	        };
-
 	        if (filesNode) {
 	          postData.filesBlockText = filesNode.innerHTML;
 	        }
-
 	        BXMobileApp.onCustomEvent('onEditedPostInserted', postData, true, true);
 	      }
-
 	      BitrixMobile.LazyLoad.showImages();
 	    }
 	  }]);
 	  return Feed;
 	}();
-
 	var Instance = new Feed();
 	var BalloonNotifierInstance = new BalloonNotifier();
 	var NextPageLoaderInstance = new NextPageLoader();
@@ -5439,5 +4836,5 @@ this.BX = this.BX || {};
 	exports.CommentsInstance = CommentsInstance;
 	exports.PageInstance = PageInstance;
 
-}((this.BX.MobileLivefeed = this.BX.MobileLivefeed || {}),BX,BX.Event,BX,BX.Mobile));
+}((this.BX.MobileLivefeed = this.BX.MobileLivefeed || {}),BX.UI.Analytics,BX,BX.Event,BX,BX.Mobile));
 //# sourceMappingURL=livefeed.bundle.js.map

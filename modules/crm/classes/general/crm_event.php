@@ -35,7 +35,6 @@ class CCrmEvent
 	}
 	public function Add($arFields, $bPermCheck = true)
 	{
-		$err_mess = (self::err_mess()).'<br />Function: Add<br />Line: ';
 		$db_events = GetModuleEvents('crm', 'OnBeforeCrmAddEvent');
 		while($arEvent = $db_events->Fetch())
 			$arFields = ExecuteModuleEventEx($arEvent, array($arFields));
@@ -389,7 +388,6 @@ class CCrmEvent
 
 		$arSqlSearch = Array();
 		$strSqlSearch = "";
-		$err_mess = (self::err_mess()).'<br />Function: GetList<br />Line: ';
 
 		if (isset($arFilter['ENTITY']))
 		{
@@ -507,7 +505,7 @@ class CCrmEvent
 		if ($sOrder == '')
 			$sOrder = 'CER.ID DESC';
 
-		$strSqlOrder = ' ORDER BY '.TrimEx($sOrder,',');
+		$strSqlOrder = ' ORDER BY '.trim($sOrder, ', ');
 
 		// where
 		$arWhereFields = array(
@@ -622,7 +620,7 @@ class CCrmEvent
 			$strSql = $DB->TopSql($strSql, $nPageTop);
 		}
 
-		$res = $DB->Query($strSql, false, $err_mess.__LINE__);
+		$res = $DB->Query($strSql);
 		$res->SetUserFields(array('FILES' => array('MULTIPLE' => 'Y')));
 		return $res;
 	}
@@ -656,8 +654,6 @@ class CCrmEvent
 			$iUserId = $USER->GetId();
 		}
 
-		$err_mess = (self::err_mess()).'<br>Function: Delete<br>Line: ';
-
 		$ID = intval($ID);
 
 		$db_events = GetModuleEvents('crm', 'OnBeforeCrmEventDelete');
@@ -675,7 +671,7 @@ class CCrmEvent
 						CE.ID = CER.EVENT_ID
 					AND CER.ID = '$ID'
 					AND CER.ASSIGNED_BY_ID = '".$iUserId."' AND CE.EVENT_TYPE = 0";
-			$res = $this->cdb->Query($sql, false, $err_mess.__LINE__);
+			$res = $this->cdb->Query($sql);
 			if (!$res->Fetch())
 				return false;
 		}
@@ -685,13 +681,13 @@ class CCrmEvent
 				FROM b_crm_event_relations
 				WHERE EVENT_ID = (SELECT EVENT_ID FROM b_crm_event_relations WHERE ID = '$ID')
 				GROUP BY EVENT_ID";
-		$res = $this->cdb->Query($sql, false, $err_mess.__LINE__);
+		$res = $this->cdb->Query($sql);
 		if ($row = $res->Fetch())
 		{
 			// delete event
 			if ($row['CNT'] == 1)
 			{
-				$obRes = $this->cdb->Query("SELECT ID, FILES FROM b_crm_event WHERE ID = '$row[EVENT_ID]'", false, $err_mess.__LINE__);
+				$obRes = $this->cdb->Query("SELECT ID, FILES FROM b_crm_event WHERE ID = '$row[EVENT_ID]'");
 				if (($aRow = $obRes->Fetch()) !== false)
 				{
 					if (($arFiles = unserialize($aRow['FILES'], ['allowed_classes' => false])) !== false)
@@ -699,12 +695,12 @@ class CCrmEvent
 						foreach ($arFiles as $iFileId)
 							CFile::Delete((int) $iFileId);
 					}
-					$this->cdb->Query("DELETE FROM b_crm_event WHERE ID = '$row[EVENT_ID]'", false, $err_mess.__LINE__);
+					$this->cdb->Query("DELETE FROM b_crm_event WHERE ID = '$row[EVENT_ID]'");
 				}
 			}
 		}
 		// delete event relation
-		$res = $this->cdb->Query("DELETE FROM b_crm_event_relations WHERE ID = '$ID'", false, $err_mess.__LINE__);
+		$res = $this->cdb->Query("DELETE FROM b_crm_event_relations WHERE ID = '$ID'");
 
 		return $res;
 	}
@@ -712,15 +708,13 @@ class CCrmEvent
 	{
 		global $DB;
 
-		$err_mess = (self::err_mess()).'<br>Function: SetAssignedByElement<br>Line: ';
-
 		$assignedId = intval($assignedId);
 		$entityId = intval($entityId);
 
 		if ($entityType == '' || $entityId == 0)
 			return false;
 
-		$res = $DB->Query("UPDATE b_crm_event_relations SET ASSIGNED_BY_ID = $assignedId WHERE ENTITY_TYPE = '".$DB->ForSql($entityType)."' AND ENTITY_ID = '$entityId'", false, $err_mess.__LINE__);
+		$res = $DB->Query("UPDATE b_crm_event_relations SET ASSIGNED_BY_ID = $assignedId WHERE ENTITY_TYPE = '".$DB->ForSql($entityType)."' AND ENTITY_ID = '$entityId'");
 
 		return $res;
 	}
@@ -737,8 +731,7 @@ class CCrmEvent
 			AND E.EVENT_TYPE IN (0, 2)";
 
 		global $DB;
-		$err_mess = (self::err_mess()).'<br>Function: Rebind<br>Line: ';
-		$dbResult = $DB->Query($sql, false, $err_mess.__LINE__);
+		$dbResult = $DB->Query($sql);
 		if(!is_object($dbResult))
 		{
 			return;
@@ -756,7 +749,7 @@ class CCrmEvent
 		if(!empty($IDs))
 		{
 			$sql = 'UPDATE b_crm_event_relations SET ENTITY_ID = '.$dstEntityID.' WHERE EVENT_ID IN('.implode(',', $IDs).')';
-			$DB->Query($sql, false, $err_mess.__LINE__);
+			$DB->Query($sql);
 		}
 	}
 	/**
@@ -818,6 +811,8 @@ class CCrmEvent
 					'ref.EVENT_ID' => 'this.ID',
 					'ref.ENTITY_TYPE' => new \Bitrix\Main\DB\SqlExpression('?s', $entityTypeName),
 					'ref.ENTITY_ID' => new \Bitrix\Main\DB\SqlExpression('?i', $entityID),
+					'ref.ASSIGNED_BY_ID' => new \Bitrix\Main\DB\SqlExpression('?i', $userID),
+					'ref.ENTITY_FIELD' => new \Bitrix\Main\DB\SqlExpression('?s', ''),
 				],
 				['join_type' => Join::TYPE_INNER]
 			)
@@ -923,10 +918,4 @@ class CCrmEvent
 		$arFields = is_object($dbResult) ? $dbResult->Fetch() : null;
 		return is_array($arFields) && isset($arFields['EVENT_TYPE']) ? (int)$arFields['EVENT_TYPE'] : CCrmEvent::TYPE_USER;
 	}
-	private static function err_mess()
-	{
-		return '<br />Class: CCrmEvent<br />File: '.__FILE__;
-	}
 }
-
-?>

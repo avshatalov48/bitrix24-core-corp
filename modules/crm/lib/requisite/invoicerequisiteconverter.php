@@ -210,7 +210,7 @@ class InvoiceRequisiteConverter extends EntityRequisiteConverter
 	 */
 	private static function getAlphanum($str)
 	{
-		return preg_replace('/[^[:alnum:]]/'.BX_UTF_PCRE_MODIFIER, '', $str);
+		return preg_replace('/[^[:alnum:]]/u', '', $str);
 	}
 	/**
 	 * Prepare requisite comparison key.
@@ -526,11 +526,18 @@ class InvoiceRequisiteConverter extends EntityRequisiteConverter
 			$requisiteFields = array_merge($fields, $requisiteFields);
 			if($requisiteID > 0)
 			{
-				$result = $requisiteEntity->update($requisiteID, $requisiteFields);
+				$result = $requisiteEntity->update(
+					$requisiteID,
+					$requisiteFields,
+					['DISABLE_REQUIRED_USER_FIELD_CHECK' => true]
+				);
 			}
 			else
 			{
-				$result = $requisiteEntity->add($requisiteFields);
+				$result = $requisiteEntity->add(
+					$requisiteFields,
+					['DISABLE_REQUIRED_USER_FIELD_CHECK' => true]
+				);
 				if($result->isSuccess())
 				{
 					$requisiteID = (int)$result->getId();
@@ -622,7 +629,7 @@ class InvoiceRequisiteConverter extends EntityRequisiteConverter
 						$id = intval($paySystem['~ID']);
 						$file = isset($paySystem['~PSA_ACTION_FILE']) ? $paySystem['~PSA_ACTION_FILE'] : '';
 						if($id !== $innerPaySystemId
-							&& preg_match('/(quote|bill)(_\w+)*$/i'.BX_UTF_PCRE_MODIFIER, $file))
+							&& preg_match('/(quote|bill)(_\w+)*$/iu', $file))
 						{
 							$psaId = isset($paySystem['~PSA_ID']) ? (int)$paySystem['~PSA_ID'] : 0;
 							if ($psaId > 0)

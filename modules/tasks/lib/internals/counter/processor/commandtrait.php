@@ -80,6 +80,13 @@ trait CommandTrait
 		$req = [];
 		foreach ($data as $row)
 		{
+			$row = [
+				'USER_ID'	=> $row['USER_ID'],
+				'TASK_ID'	=> $row['TASK_ID'],
+				'GROUP_ID'	=> $row['GROUP_ID'],
+				'TYPE'		=> $row['TYPE'],
+				'VALUE' 	=> $row['VALUE'],
+			];
 			$row['TYPE'] = "'". $row['TYPE'] ."'";
 			$req[] = implode(',', $row);
 		}

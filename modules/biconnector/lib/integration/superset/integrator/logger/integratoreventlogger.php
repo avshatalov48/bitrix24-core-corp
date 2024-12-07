@@ -64,4 +64,45 @@ final class IntegratorEventLogger implements IntegratorLogger
 			'DESCRIPTION' => Json::encode($messageObj),
 		]);
 	}
+
+	public function logErrors(array $errors)
+	{
+		$errorObj = [
+			'errors' => [],
+		];
+
+		foreach ($errors as $error)
+		{
+			$errorObj['errors'][] = $error->getMessage();
+		}
+
+		$logType = 'ERROR';
+		\CEventLog::Add([
+			'SEVERITY' => $logType,
+			'AUDIT_TYPE_ID' => self::getAuditTypeByLogType($logType),
+			'MODULE_ID' => 'biconnector',
+			'DESCRIPTION' => Json::encode($errorObj),
+		]);
+	}
+
+	public function logInfo(string $message, array $params = [])
+	{
+		$messageObj = [
+			'message' => $message,
+		];
+
+		if (!empty($params))
+		{
+			$messageObj['params'] = $params;
+		}
+
+
+		$logType = 'INFO';
+		\CEventLog::Add([
+			'SEVERITY' => $logType,
+			'AUDIT_TYPE_ID' => self::getAuditTypeByLogType($logType),
+			'MODULE_ID' => 'biconnector',
+			'DESCRIPTION' => Json::encode($messageObj),
+		]);
+	}
 }

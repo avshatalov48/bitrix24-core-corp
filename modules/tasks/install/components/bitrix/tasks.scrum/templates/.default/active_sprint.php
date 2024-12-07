@@ -87,6 +87,7 @@ $pathToTask = str_replace('#group_id#', $arParams['GROUP_ID'], $pathToTask);
 			pathToTask: '<?= \CUtil::jSEscape($pathToTask) ?>',
 			taskLimitExceeded: '<?= ($arResult['taskLimitExceeded'] ? 'Y' : 'N') ?>',
 			canUseAutomation: '<?= ($arResult['canUseAutomation'] ? 'Y' : 'N') ?>',
+			isAutomationEnabled: '<?= ($arResult['isAutomationEnabled'] ? 'Y' : 'N') ?>',
 			canCompleteSprint: '<?= ($arResult['canCompleteSprint'] ? 'Y' : 'N') ?>'
 		});
 

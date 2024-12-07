@@ -128,7 +128,7 @@ class ControlButton extends \Bitrix\Main\Engine\Controller
 			$task['LINK'] = SITE_DIR . 'company/personal/user/' . $item['CREATED_BY'] . '/tasks/task/view/' . $item['ID'] . '/';
 
 			$userId = (int)$item['TM_USER_ID'];
-			$userType = $item['TM_TYPE'];
+			$userType = $item['TM_TYPE'] ?? null;
 
 			unset($item['TM_USER_ID'], $item['TM_TYPE']);
 

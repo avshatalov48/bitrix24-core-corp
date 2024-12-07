@@ -1,8 +1,8 @@
 <?php
 return [
 	'extensions' => [
-		'apptheme',
 		'type',
+		'im:lib/theme',
 		'im:messenger/lib/ui/base/item',
 		'im:messenger/lib/ui/base/list',
 		'im:messenger/lib/ui/base/checkbox',

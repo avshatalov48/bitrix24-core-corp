@@ -7,6 +7,7 @@
  */
 namespace Bitrix\Crm\SiteButton;
 
+use Bitrix\Crm\Integration\UserConsent;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Loader;
@@ -88,6 +89,17 @@ class Preset
 	public function install()
 	{
 		self::installDependencies();
+
+		if (
+			Loader::includeModule('bitrix24')
+			&& !\Bitrix\Bitrix24\Feature::isFeatureEnabled('crm_webform_edit')
+		)
+		{
+			UserConsent::getDefaultAgreementId();
+			self::updateInstalledVersion();
+
+			return true;
+		}
 
 		if(!self::checkVersion())
 		{

@@ -47,6 +47,7 @@ Extension::load([
 	'market.favorites',
 	'market.detail',
 	'market.application',
+	'rest.app-form',
 ]);
 Content::showAdditional($arResult);
 ?>

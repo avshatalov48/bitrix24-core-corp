@@ -3,7 +3,6 @@
 namespace Bitrix\Tasks\Provider\Tag;
 
 use Bitrix\Main\ORM\Query\Result;
-use Bitrix\Tasks\Internals\Task\LabelTable;
 use Bitrix\Tasks\Internals\Task\TagCollection;
 use Bitrix\Tasks\Internals\Task\TagObject;
 use Bitrix\Tasks\Provider\TaskQueryInterface;
@@ -21,25 +20,37 @@ class TagList
 	public function getList(TaskQueryInterface $tagQuery): CDBResult
 	{
 		$this->tagQuery = $tagQuery;
-		return $this->initCollection()->prepareData()->getCDBResult();
+
+		return $this->initArray()->prepareData()->getCDBResult();
 	}
 
-	public function getCollection(TaskQueryInterface $tagQuery): ?TagCollection
+	public function getCollection(TaskQueryInterface $tagQuery): TagCollection
 	{
 		$this->tagQuery = $tagQuery;
-		$this->initCollection();
 
-		return $this->collection;
+		return $this->initCollection()->collection;
 	}
 
 	private function initCollection(): static
 	{
-		$query = TagQueryBuilder::build($this->tagQuery);
-		$this->result = $query->exec();
-		$this->collection = $this->result->fetchCollection();
-		$this->tags = $query->exec()->fetchAll();
+		$this->collection = $this->getOrmResult()->fetchCollection();
 
 		return $this;
+	}
+
+	private function initArray(): static
+	{
+		$this->tags = $this->getOrmResult()->fetchAll();
+
+		return $this;
+	}
+
+	private function getOrmResult(): Result
+	{
+		$query = TagQueryBuilder::build($this->tagQuery);
+		$this->result = $query->exec();
+
+		return $this->result;
 	}
 
 	private function prepareData(): static
@@ -68,17 +79,6 @@ class TagList
 		foreach ($values as $field => $value)
 		{
 			$tag[$field] = $value;
-			// if (in_array($field, $this->tagQuery->getSelect(), true))
-			// {
-			//
-			// }
-			//
-			// if (
-			// 	in_array('TASK_ID', $this->tagQuery->getSelect(), true)
-			// )
-			// {
-			// 	$tag['TASK_ID'] = (int)$value;
-			// }
 		}
 
 		return $tag;

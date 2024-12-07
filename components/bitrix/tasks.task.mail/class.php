@@ -1,49 +1,133 @@
-<?
-/**
- * Bitrix Framework
- * @package bitrix
- * @subpackage sale
- * @copyright 2001-2015 Bitrix
- */
+<?php
 
-if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
+if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
-use \Bitrix\Main\Localization\Loc;
-
-use \Bitrix\Tasks\Manager\Task;
-use \Bitrix\Tasks\Util\Error\Collection;
+use Bitrix\Main\Loader;
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Tasks\Integration\SocialNetwork\Group;
+use Bitrix\Tasks\Manager\Task;
+use Bitrix\Tasks\Util\Error\Collection;
 use Bitrix\Tasks\Util;
 use Bitrix\Tasks\Access\Model\TaskModel;
 use Bitrix\Tasks;
+use Bitrix\Tasks\Util\Type;
+use Bitrix\Tasks\Util\User;
 
 Loc::loadMessages(__FILE__);
 
-CBitrixComponent::includeComponentClass("bitrix:tasks.task");
+CBitrixComponent::includeComponentClass("bitrix:tasks.base");
 
-class TasksMailTaskComponent extends TasksTaskComponent
+class TasksMailTaskComponent extends TasksBaseComponent
 {
+	protected $task = null;
 	protected $senderId = null;
-	private $replaceUser = false;
-	private $prevUser = false;
+	protected $groups2Get = [];
 
-	protected static function checkRights(array $arParams, array $arResult, array $auxParams): ?Util\Error
+	public function executeComponent()
+	{
+		if (!$this->checkModules())
+		{
+			$this->arResult['ERROR'] = [
+				'TYPE' => 'FATAL',
+				'CODE' => 'MODULE_NOT_INSTALLED',
+			];
+
+			$this->includeComponentTemplate();
+		}
+
+		$this->errors = new Collection();
+
+		if (!$this->checkPermission())
+		{
+			$this->handleErrors();
+			$this->includeComponentTemplate();
+		}
+		if (!$this->checkParameters())
+		{
+			$this->handleErrors();
+			$this->includeComponentTemplate();
+		}
+
+		$this->getAllData();
+		$this->includeComponentTemplate();
+		$this->processExecutionEnd();
+	}
+
+	protected function checkModules()
+	{
+		 return Loader::includeModule('tasks')
+			 && Loader::includeModule('socialnetwork')
+			 && Loader::includeModule('forum')
+		 ;
+	}
+
+	protected function handleErrors()
+	{
+		foreach ($this->errors as $error)
+		{
+			$this->arResult['ERROR'][$error->getCode()] = $error->toArray();
+		}
+	}
+
+	protected function checkPermission()
+	{
+		$userId = $this->getUserId();
+
+		if (!$userId)
+		{
+			$this->errors->add('USER_NOT_DEFINED', 'Can not identify current user');
+
+			return $this->errors->checkNoFatals();
+		}
+
+		$this->arResult['USER_ID'] = $userId;
+
+		if (!CBXFeatures::IsFeatureEnabled('Tasks'))
+		{
+			$this->errors->add('TASKS_MODULE_NOT_AVAILABLE', Loc::getMessage("TASKS_TB_TASKS_MODULE_NOT_AVAILABLE"));
+		}
+
+		$accessError = $this->checkAccessRights();
+		if ($accessError instanceof Util\Error)
+		{
+			$this->errors->add($accessError->getCode(), $accessError->getMessage(), $accessError->getType());
+		}
+
+		$taskId = (int)$this->arParams['ID'];
+		if (
+			$taskId
+			&& ($task = CTaskItem::getInstanceFromPool($taskId, $this->arResult['USER_ID']))
+			&& $task instanceof CTaskItem
+		)
+		{
+			$this->task = $task;
+		}
+
+		return $this->errors->checkNoFatals();
+	}
+
+	protected function checkAccessRights(): ?Util\Error
 	{
 		$error = new Util\Error(Loc::getMessage('TASKS_TT_NOT_FOUND_OR_NOT_ACCESSIBLE'), 'ACCESS_DENIED.NO_TASK');
 
-		$taskId = (int) $arParams[static::getParameterAlias('ID')];
+		$taskId = (int)$this->arParams['ID'];
 		$oldTask = $taskId ? TaskModel::createFromId($taskId) : null;
-		$accessCheckParams = null;
-		$action = Tasks\Access\ActionDictionary::ACTION_TASK_READ;
 
 		if (
-			!array_key_exists('USER_ID', $arResult)
-			|| !$arResult['USER_ID']
+			!array_key_exists('USER_ID', $this->arResult)
+			|| !$this->arResult['USER_ID']
 		)
 		{
 			return $error;
 		}
 
-		$res = (new Tasks\Access\TaskAccessController((int)$arResult['USER_ID']))->check($action, $oldTask, $accessCheckParams);
+		$res = (new Tasks\Access\TaskAccessController((int)$this->arResult['USER_ID']))->check(
+			Tasks\Access\ActionDictionary::ACTION_TASK_READ,
+			$oldTask,
+		);
 		if (!$res)
 		{
 			return $error;
@@ -52,188 +136,98 @@ class TasksMailTaskComponent extends TasksTaskComponent
 		return null;
 	}
 
-	protected function processExecutionStart()
-	{
-		if (!static::checkTasksModule())
-		{
-			return false;
-		}
-
-		parent::processExecutionStart();
-
-		$taskId = (int)$this->arParams['ID'];
-		$userId = (int)$this->arParams['USER_ID'];
-
-		if (!$taskId || !$userId)
-		{
-			return false;
-		}
-
-		$currentUserId = \Bitrix\Tasks\Util\User::getId();
-		$this->replaceUser = !$currentUserId;
-
-		try
-		{
-			$taskData = CTaskItem::getInstance($taskId, $userId)->getData(false);
-
-			if (
-				isset($taskData['CREATED_BY'])
-				&& (int)$taskData['CREATED_BY'] > 0
-				&&
-				(
-					$this->replaceUser
-					|| $currentUserId !== (int)$taskData['CREATED_BY']
-				)
-			)
-			{
-				$this->replaceUser = true;
-				$this->prevUser = $GLOBALS['USER'];
-				$GLOBALS['USER'] = $this->makeFakeCUserClass((int) $taskData['CREATED_BY']);
-			}
-		}
-		catch (TasksException $e) // todo: get rid of catching TasksException when refactor exception mechanism
-		{
-			$this->replaceUser = false;
-
-			if ($e->checkOfType(TasksException::TE_TASK_NOT_FOUND_OR_NOT_ACCESSIBLE))
-			{
-				$this->errors->add(
-					'ACCESS_DENIED.NO_TASK',
-					'Task not found or not accessible'
-				);
-
-				return false;
-			}
-		}
-		catch (\Bitrix\Tasks\Exception $e)
-		{
-			$this->replaceUser = false;
-			// todo: replace 'INTERNAL_ERROR' when invent symbolic code mechanism
-			$this->errors->add('INTERNAL_ERROR', $e->getMessageFriendly());
-
-			return false;
-		}
-
-		return true;
-	}
-
-	/**
-	 * @param int $userId
-	 * @return CUser
-	 */
-	protected function makeFakeCUserClass(int $userId): CUser
-	{
-		$settings = [
-			'id' => $userId,
-			'user_group' => [],
-		];
-
-		$userGroupResult = CUser::GetUserGroupEx($userId);
-		while ($userGroup = $userGroupResult->Fetch())
-		{
-			$settings['user_group'][] = $userGroup['GROUP_ID'];
-		}
-
-		$fakeCUserClass = new class extends CUser {
-			protected static $settings = [];
-
-			public static function init($settings)
-			{
-				static::$settings = $settings;
-			}
-
-			public function GetID()
-			{
-				return static::$settings['id'];
-			}
-
-			public static function GetUserGroup($ID)
-			{
-				return static::$settings['user_group'];
-			}
-		};
-		$fakeCUserClass::init($settings);
-
-		return $fakeCUserClass;
-	}
-
 	protected function processExecutionEnd()
 	{
-		if($this->replaceUser)
-		{
-			$GLOBALS['USER'] = $this->prevUser;
-		}
-
-		if($this->errors->checkHasFatals())
+		if ($this->errors->checkHasFatals())
 		{
 			\Bitrix\Tasks\Integration\Mail::stopMailEventCompiler();
 		}
 	}
 
-	protected static function getEffectiveUserId($arParams)
+	protected function getUserId()
 	{
-		$sender = intval($arParams['RECIPIENT_ID']);
+		$sender = (int)$this->arParams['RECIPIENT_ID'];
 		if(!$sender)
 		{
-			$sender = intval($arParams['USER_ID']);
+			$sender = (int)$this->arParams['USER_ID'];
 		}
 
-		if($sender)
+		if ($sender)
 		{
 			return $sender;
 		}
-		else
-		{
-			return parent::getEffectiveUserId($arParams);
-		}
-	}
 
-	protected static function checkRestrictions(array &$arParams, array &$arResult, Collection $errors)
-	{
-		// no restriction check, override
-	}
-
-	protected static function checkUserRestrictions($userId, Collection $errors)
-	{
-		// no restrictions, free access
-		return $userId;
-	}
-
-	protected static function checkExecuteDispatcher($request, Collection $errors, array $auxParams = array())
-	{
-		return false; // query dispatching is off for that component
+		return false;
 	}
 
 	protected function checkParameters()
 	{
 		static::tryParseNonNegativeIntegerParameter($this->arParams['ID']);
-		if(!$this->arParams['ID']) // no task add allowed, only read existing
-		{
-			$this->errors->add('NO_TASK_ID_SPECIFIED', 'No task id specified');
-		}
-
-		parent::checkParameters();
-
-		static::tryParseEnumerationParameter($this->arParams['ENTITY'], array('TASK', 'COMMENT'), 'TASK');
-		static::tryParseEnumerationParameter($this->arParams['ENTITY_ACTION'], array('ADD', 'UPDATE'));
-
+		static::tryParseEnumerationParameter($this->arParams['ENTITY'], ['TASK', 'COMMENT'], 'TASK');
+		static::tryParseEnumerationParameter($this->arParams['ENTITY_ACTION'], ['ADD', 'UPDATE']);
 		static::tryParseNonNegativeIntegerParameter($this->arParams['USER_ID']);
-		static::tryParseNonNegativeIntegerParameter($this->arParams['RECIPIENT_ID'], \Bitrix\Tasks\Util\User::getId()); // Bob
+		static::tryParseNonNegativeIntegerParameter($this->arParams['RECIPIENT_ID'], $this->arParams['USER_ID']); // Bob
 
-		$this->arParams['PREVIOUS_FIELDS'] = \Bitrix\Tasks\Util\Type::unSerializeArray($this->arParams['~PREVIOUS_FIELDS']); // tilda is required, as "PREVIOUS_FIELDS" contains broken serialization
-
-		$this->arParams['SUB_ENTITY_SELECT'] = array(Task\CheckList::getCode(), Task\Tag::getCode(), Task\ParentTask::getCode());
-		$this->arParams['AUX_DATA_SELECT'] = array('USER_FIELDS');
+		$this->arParams['PREVIOUS_FIELDS'] = Type::unSerializeArray($this->arParams['~PREVIOUS_FIELDS'] ?? ''); // tilda is required, as "PREVIOUS_FIELDS" contains broken serialization
+		$this->arParams['SUB_ENTITY_SELECT'] = [Task\CheckList::getCode(), Task\Tag::getCode(), Task\ParentTask::getCode()];
+		$this->arParams['AUX_DATA_SELECT'] = ['USER_FIELDS'];
 
 		static::tryParseStringParameter($this->arParams["URL"], \Bitrix\Tasks\Integration\Mail\Task::getDefaultPublicPath($this->arParams['ID']));
+
+		return $this->errors->checkNoFatals();
+	}
+
+	protected function getData()
+	{
+		$data = [];
+
+		if ($this->task !== null)
+		{
+			$data = Task::get(
+				$this->arResult['USER_ID'],
+				$this->task->getId(),
+				[
+					'ENTITY_SELECT' => [
+						'TAG',
+						'CHECKLIST',
+						'REMINDER',
+						'PROJECTDEPENDENCE',
+						'TEMPLATE',
+						'RELATEDTASK',
+					],
+					'ESCAPE_DATA' => false,
+					'ERRORS' => $this->errors,
+				]
+			);
+		}
+		else
+		{
+			$this->errors->add('TASKS_NOT_FOUND', 'Task not found');
+		}
+
+		if ($this->errors->checkHasFatals())
+		{
+			return;
+		}
+
+		$this->arResult['DATA']['TASK'] = $data['DATA'];
+		$this->arResult['CAN']['TASK'] = $data['CAN'];
+
+		$this->getDataAux();
+		$this->collectProjects();
+	}
+
+	protected function getAuxData()
+	{
 	}
 
 	protected function getDataAux()
 	{
-		parent::getDataAux();
+		$this->arResult['AUX_DATA'] = [];
+		$this->getDataUserFields();
 
 		$this->arResult['AUX_DATA']['CHANGES'] = $this->getChanges();
-		$this->arResult['AUX_DATA']['SITES'] = array();
+		$this->arResult['AUX_DATA']['SITES'] = [];
 
 		$sites = \Bitrix\Tasks\Util\Site::getPair();
 		$this->arResult['AUX_DATA']['SITE'] = $sites['INTRANET'];
@@ -243,11 +237,11 @@ class TasksMailTaskComponent extends TasksTaskComponent
 		// for file download in forum comments
 		if (
 			isset($this->arParams["RECIPIENT_ID"])
-			&& intval($this->arParams["RECIPIENT_ID"]) > 0
+			&& (int)$this->arParams["RECIPIENT_ID"] > 0
 		)
 		{
 			$backUrl = \Bitrix\Tasks\Integration\Mail\Task::getBackUrl(
-				intval($this->arParams["RECIPIENT_ID"]),
+				(int)$this->arParams["RECIPIENT_ID"],
 				$this->arResult['DATA']['TASK']["ID"],
 				$this->arParams["URL"],
 				$this->arResult['AUX_DATA']['SITE']['SITE_ID']
@@ -261,17 +255,17 @@ class TasksMailTaskComponent extends TasksTaskComponent
 
 		// for file download in task body
 		// todo: remove this when a special disk widget used
-		$fileData = array();
+		$fileData = [];
 		$ufCode = \Bitrix\Tasks\Integration\Disk\UserField::getMainSysUFCode();
-		if(is_array($this->arResult['DATA']['TASK'][$ufCode]))
+		if(isset($this->arResult['DATA']['TASK'][$ufCode]) && is_array($this->arResult['DATA']['TASK'][$ufCode]))
 		{
 			$fileData = \Bitrix\Tasks\Integration\Disk::getAttachmentData($this->arResult['DATA']['TASK'][$ufCode]);
 			foreach($fileData as $k => &$v)
 			{
-				if((string) $v['URL'] != '')
+				if((string)$v['URL'] !== '')
 				{
 					$v['URL'] = \Bitrix\Tasks\Integration\Mail\Task::getBackUrl(
-						intval($this->arParams["RECIPIENT_ID"]),
+						(int)$this->arParams["RECIPIENT_ID"],
 						$this->arResult['DATA']['TASK']["ID"],
 						$v['URL'],
 						$this->arResult['AUX_DATA']['SITE']['SITE_ID'],
@@ -284,42 +278,75 @@ class TasksMailTaskComponent extends TasksTaskComponent
 		$this->arResult['DATA']['ATTACHMENT'] = $fileData;
 	}
 
-	protected function collectTaskMembers()
+	protected function getDataUserFields()
 	{
-		parent::collectTaskMembers();
+		$this->arResult['AUX_DATA']['USER_FIELDS'] = Util\UserField\Task::getScheme(
+			$this->task !== null ? $this->task->getId() : 0
+		);
 
-		$this->users2Get[] = $this->senderId;
-		$this->users2Get[] = $this->arParams['RECIPIENT_ID'];
-
-		if(is_array($this->arResult['AUX_DATA']['CHANGES']))
+		// restore uf values from task data
+		if (Type::isIterable($this->arResult['AUX_DATA']['USER_FIELDS']))
 		{
-			foreach($this->arResult['AUX_DATA']['CHANGES'] as $k => $v)
+			foreach ($this->arResult['AUX_DATA']['USER_FIELDS'] as $ufCode => $ufDesc)
 			{
-				if($k == 'AUDITORS' || $k == 'ACCOMPLICES')
+				if (isset($this->arResult['DATA']['TASK'][$ufCode]))
 				{
-					$this->collectMembersFromArray(explode(',', $v['TO_VALUE']));
-				}
-				if($k == 'RESPONSIBLE_ID' || $k == 'CREATED_BY')
-				{
-					$this->users2Get[] = $v['TO_VALUE'];
+					$this->arResult['AUX_DATA']['USER_FIELDS'][$ufCode]['VALUE'] = $this->arResult['DATA']['TASK'][$ufCode];
 				}
 			}
 		}
 	}
 
+	protected function collectProjects()
+	{
+		if (
+			isset($this->arResult['DATA']['TASK']['GROUP_ID'])
+			&& $this->arResult['DATA']['TASK']['GROUP_ID']
+		)
+		{
+			$this->groups2Get[] = ($this->arResult['DATA']['TASK']['GROUP_ID']);
+		}
+		elseif (
+			isset($this->arResult['DATA']['TASK'][Task\Project::getCode(true)])
+			&& $this->arResult['DATA']['TASK'][Task\Project::getCode(true)]
+		)
+		{
+			$this->groups2Get[] = ($this->arResult['DATA']['TASK'][Task\Project::getCode(true)]['ID']);
+		}
+	}
+
+	protected function getReferenceData()
+	{
+		$users = [
+			$this->senderId,
+			$this->arParams['RECIPIENT_ID']
+		];
+
+		$this->arResult['DATA']['GROUP'] = Group::getData($this->groups2Get, ['IMAGE_ID', 'AVATAR_TYPE']);
+		$this->arResult['DATA']['USER'] = User::getData($users);
+	}
+
 	protected function formatData()
 	{
-		parent::formatData();
+		$data =& $this->arResult['DATA']['TASK'];
 
-		$this->arResult['DATA']['MEMBERS'] = array(
+		if (Type::isIterable($data))
+		{
+			Task::extendData($data, $this->arResult['DATA']);
+
+			// left for compatibility
+			$data[Task::SE_PREFIX . 'PARENT'] = $data[Task\ParentTask::getCode(true)] ?? null;
+		}
+
+		$this->arResult['DATA']['MEMBERS'] = [
 			'SENDER' => $this->arResult['DATA']['USER'][$this->senderId],
 			'RECEIVER' => $this->arResult['DATA']['USER'][$this->arParams['RECIPIENT_ID']]
-		);
+		];
 	}
 
 	protected function getChanges()
 	{
-		$previousFields = $this->arParams['PREVIOUS_FIELDS'];
+		$previousFields = $this->arParams['PREVIOUS_FIELDS'] ?? [];
 		foreach ($previousFields as $name => $value)
 		{
 			if (
@@ -332,6 +359,6 @@ class TasksMailTaskComponent extends TasksTaskComponent
 			}
 		}
 
-		return CTaskLog::getChanges($this->arParams['PREVIOUS_FIELDS'], $this->arResult['DATA']['TASK']);
+		return CTaskLog::getChanges($previousFields, $this->arResult['DATA']['TASK']);
 	}
 }

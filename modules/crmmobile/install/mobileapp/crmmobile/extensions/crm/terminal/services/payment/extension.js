@@ -166,8 +166,8 @@ jn.define('crm/terminal/services/payment', (require, exports, module) => {
 							return;
 						}
 						reject();
-					}).catch(() => {
-						reject();
+					}).catch((response) => {
+						reject(response);
 					});
 			});
 		}

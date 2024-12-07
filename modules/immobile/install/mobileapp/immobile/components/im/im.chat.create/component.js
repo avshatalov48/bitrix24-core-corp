@@ -5,7 +5,7 @@
  */
 
 var { EventType } = jn.require('im/messenger/const');
-var { openIntranetInviteWidget } = jn.require('intranet/invite-opener');
+var { openIntranetInviteWidget } = jn.require('intranet/invite-opener-new');
 var { AnalyticsEvent } = jn.require('analytics');
 
 /* Clean session variables after page restart */

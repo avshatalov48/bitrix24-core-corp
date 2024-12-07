@@ -1,20 +1,7 @@
 import {DialogId} from "../../../../../types/common";
 
 export type MessengerItemProps = {
-    data: {
-        id: DialogId,
-        key: string,
-        title: string,
-        description: string,
-        avatarUri: string,
-        avatarColor: string,
-        isYouTitle: boolean,
-        subtitle: string,
-        status: string,
-        iconSubtitle: string,
-        crownStatus: string,
-        style: object,
-    },
+    data: MessengerItemPropsData,
     size: 'L' | 'M',
     isCustomStyle?: boolean,
     isPressed: boolean,
@@ -23,6 +10,9 @@ export type MessengerItemProps = {
     onClick?: (params: MessengerItemOnClickParams) => any;
     onLongClick?: (params: MessengerItemProps['data']) => any;
     additionalComponent?: LayoutComponent;
+    onEllipsisClick?: Function;
+    isWithPressed?: boolean,
+    isSuperEllipseAvatar?: boolean,
 };
 
 export type MessengerItemOnClickParams = {
@@ -34,4 +24,20 @@ export type MessengerItemOnClickParams = {
         avatar: string,
         color: string,
     }
+}
+
+declare type MessengerItemPropsData = {
+    id: string | number,
+    key?: string,
+    title: string,
+    subtitle: string,
+    description: string,
+    avatarUri: string | undefined,
+    avatarColor: string,
+    isYouTitle: string,
+    size: string,
+    status: string,
+    iconSubtitle: string,
+    crownStatus: string,
+	style: object,
 }

@@ -30,6 +30,12 @@ export class CommunicationPage extends BaseSettingsPage
 		let chatSection = this.#buildChatSection();
 		chatSection.renderTo(contentNode);
 
+		if (this.hasValue('availableGeneralChannel'))
+		{
+			let channelSection = this.#buildChannelSection();
+			channelSection.renderTo(contentNode);
+		}
+
 		let diskSection = this.#buildDiskSection();
 		diskSection.renderTo(contentNode);
 	}
@@ -302,6 +308,137 @@ export class CommunicationPage extends BaseSettingsPage
 		{
 			let overdueChatsField = new Checker(this.getValue('create_overdue_chats'));
 			CommunicationPage.addToSectionHelper(overdueChatsField, settingsSection);
+		}
+
+		return settingsSection;
+	}
+
+	#buildChannelSection(): Section
+	{
+		if (!this.hasValue('sectionChannels'))
+		{
+			return ;
+		}
+
+		let chatSection = new Section(this.getValue('sectionChannels'));
+
+		let settingsSection = new SettingsSection({
+			section: chatSection,
+			parent: this,
+		});
+
+		if (this.hasValue('general_channel_can_post'))
+		{
+			let canPostGeneralChannelField = new Checker(this.getValue('allow_post_general_channel'));
+
+			let settingsField = new SettingsField({
+				fieldView: canPostGeneralChannelField,
+			});
+			let settingsRow = new SettingsRow({
+				parent: settingsSection,
+				child: settingsField,
+			});
+
+			let canPostGeneralChannelListField = new Selector(this.getValue('general_channel_can_post'));
+			settingsField = new SettingsField({
+				fieldView: canPostGeneralChannelListField,
+			});
+
+			let canPostGeneralChannelListRow = new Row({
+				isHidden: !canPostGeneralChannelField.isChecked(),
+				className: 'ui-section__subrow --no-border',
+			});
+
+			CommunicationPage.addToSectionHelper(canPostGeneralChannelListField, settingsRow, canPostGeneralChannelListRow);
+
+			let managerSelectorField = new UserSelector({
+				inputName: 'imchannel_toall_rights[]',
+				label: Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_SELECT_USER_PUBLIC_MESS_CHANNEL') ?? '',
+				enableAll: false,
+				values: Object.values(this.getValue('generalChannelManagersList') ?? []),
+				encodeValue: (value) => {
+					if (!Type.isNil(value.id))
+					{
+						return value.id === 'all-users' ? 'AU' : 'U' + value.id;
+					}
+
+					return null;
+				},
+				decodeValue: (value) => {
+					if (value === 'UA')
+					{
+						return {
+							type: 'AU',
+							id: '',
+						}
+					}
+
+					const arr = value.match(/^(U)(\d+)/);
+
+					if (!Type.isArray(arr))
+					{
+						return {
+							type: null,
+							id: null,
+						};
+					}
+
+					return {
+						type: arr[1],
+						id: arr[2],
+					}
+				},
+			});
+
+			let managerSelectorRow = new Row({
+				content: managerSelectorField.render(),
+				isHidden: this.getValue('general_channel_can_post').current !== 'MANAGER',
+				className: 'ui-section__subrow --no-border',
+			});
+
+			CommunicationPage.addToSectionHelper(managerSelectorField, settingsRow, managerSelectorRow);
+
+			const separatorRow = new SeparatorRow({
+				isHidden: this.getValue('general_channel_can_post').current !== 'MANAGER',
+			});
+			new SettingsRow({
+				row: separatorRow,
+				parent: settingsRow,
+			});
+
+			EventEmitter.subscribe(
+				canPostGeneralChannelField.switcher,
+				'toggled',
+				() => {
+					if (canPostGeneralChannelField.isChecked())
+					{
+						canPostGeneralChannelListRow.show();
+						if (canPostGeneralChannelListField.getInputNode().value === 'MANAGER')
+						{
+							managerSelectorRow.show();
+						}
+						separatorRow.show();
+					}
+					else
+					{
+						canPostGeneralChannelListRow.hide();
+						managerSelectorRow.hide();
+						separatorRow.hide();
+					}
+				},
+			);
+
+			canPostGeneralChannelListField.getInputNode()
+				.addEventListener('change', (event) => {
+					if (event.target.value === 'MANAGER')
+					{
+						managerSelectorRow.show();
+					}
+					else
+					{
+						managerSelectorRow.hide();
+					}
+				});
 		}
 
 		return settingsSection;

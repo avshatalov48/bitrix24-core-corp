@@ -1,4 +1,4 @@
-<?
+<?php
 /**
  * Class implements all further interactions with "forum" module considering "task comment" entity
  *
@@ -15,14 +15,19 @@ use Bitrix\Main\Entity\ExpressionField;
 use Bitrix\Main\Entity\Query;
 use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Main\Loader;
-
 use Bitrix\Disk\Driver;
 use Bitrix\Disk\Internals\AttachedObjectTable;
 use Bitrix\Tasks\Internals\Registry\TaskRegistry;
-use Bitrix\Tasks\Item\Task;
+use Bitrix\Tasks\Item\Context;
+use CTaskAssert;
+use Bitrix\Tasks\Access\ActionDictionary;
+use Bitrix\Tasks\Access\Model\TaskModel;
+use Bitrix\Tasks\Access\TaskAccessController;
 
 final class Topic extends \Bitrix\Tasks\Integration\Forum
 {
+	public const TYPE_TASK = 'TK';
+	
 	/**
 	 * Fires when new topic was added for the task
 	 *
@@ -34,26 +39,31 @@ final class Topic extends \Bitrix\Tasks\Integration\Forum
 	 */
 	public static function onBeforeAdd($entityType, $entityId, $arPost, &$arTopic)
 	{
-		// 'TK' is our entity type
-		if ($entityType !== 'TK')
+		if ($entityType !== self::TYPE_TASK)
 		{
 			return;
 		}
 
-		if(!(\CTaskAssert::isLaxIntegers($entityId) && ((int) $entityId >= 1)))
+		$taskId = (int)$entityId;
+		if($taskId <= 0)
 		{
-			\CTaskAssert::logError('[0xb6324222] Expected integer $entityId >= 1');
+			CTaskAssert::logError('[0xb6324222] Expected integer $entityId >= 1');
 			return;
 		}
 
-		$taskId = (int) $entityId;
-
-		$task = Task::getInstance($taskId);
-		if($task["TITLE"]) // it means you can read the task
+		$task = TaskRegistry::getInstance()->getObject($taskId);
+		if (is_null($task))
 		{
-			$arTopic["TITLE"] = $task["TITLE"];
-			$arTopic["MESSAGE"] = trim($task["TITLE"]."\n".$task["DESCRIPTION"]);
-			$arTopic["AUTHOR_ID"] = $task["CREATED_BY"];
+			return true; // <-- disgusting. compatability...
+		}
+
+		$userId = Context::getDefault()->getUserId(); // <-- disgusting. compatability...
+
+		if(TaskAccessController::can($userId, ActionDictionary::ACTION_TASK_READ, $taskId))
+		{
+			$arTopic["TITLE"] = $task->getTitle();
+			$arTopic["MESSAGE"] = trim($task->getTitle() . "\n" . $task->getDescription());
+			$arTopic["AUTHOR_ID"] = $task->getCreatedBy();
 		}
 
 		return true;
@@ -61,23 +71,22 @@ final class Topic extends \Bitrix\Tasks\Integration\Forum
 
 	public static function onAfterAdd($entityType, $entityId, $topicId)
 	{
-		// 'TK' is our entity type
-		if ($entityType !== 'TK')
+		if ($entityType !== self::TYPE_TASK)
 		{
 			return;
 		}
 
-		if(!(\CTaskAssert::isLaxIntegers($entityId) && ((int) $entityId >= 1)))
+		$taskId = (int)$entityId;
+		if($taskId <= 0)
 		{
-			\CTaskAssert::logError('[0xb6324222] Expected integer $entityId >= 1');
+			CTaskAssert::logError('[0xb6324222] Expected integer $entityId >= 1');
 			return;
 		}
 
-		if ($entityType === 'TK')
-		{
-			// todo: probably use low-level orm here
-			(new \CTasks())->update($entityId, ['FORUM_TOPIC_ID' => $topicId], ['SEND_UPDATE_PULL_EVENT' => false]);
-		}
+		TaskRegistry::getInstance()
+			->getObject($taskId)
+			?->setForumTopicId($topicId)
+			?->save();
 
 		return true;
 	}

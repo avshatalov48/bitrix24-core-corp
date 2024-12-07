@@ -15,6 +15,7 @@ class ContactProvider extends EntityProvider
 	protected int $categoryId;
 	protected bool $showPhones = false;
 	protected bool $showMails = false;
+	protected bool $hideReadMoreLink = false;
 
 	use FilterByIds;
 
@@ -27,10 +28,12 @@ class ContactProvider extends EntityProvider
 
 		$this->showPhones = (bool)($options['showPhones'] ?? $this->showPhones);
 		$this->showMails = (bool)($options['showMails'] ?? $this->showMails);
+		$this->hideReadMoreLink = (bool)($options['hideReadMoreLink'] ?? $this->hideReadMoreLink);
 		$this->setIdsForFilter($options['idsForFilterContact'] ?? []);
 
 		$this->options['showPhones'] = $this->showPhones;
 		$this->options['showMails'] = $this->showMails;
+		$this->options['hideReadMoreLink'] = $this->hideReadMoreLink;
 	}
 
 	protected function getEntityTypeId(): int
@@ -104,6 +107,11 @@ class ContactProvider extends EntityProvider
 	protected function getEntityInfo(int $entityId, bool $canReadItem): array
 	{
 		$entityInfo = parent::getEntityInfo($entityId, $canReadItem);
+
+		if ($this->hideReadMoreLink)
+		{
+			unset($entityInfo['url']);
+		}
 
 		if (!$this->showPhones && !$this->showMails)
 		{

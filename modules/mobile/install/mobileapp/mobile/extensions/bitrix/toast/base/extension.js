@@ -3,7 +3,8 @@
  */
 jn.define('toast/base', (require, exports, module) => {
 	const { Feature } = require('feature');
-	const AppTheme = require('apptheme');
+	const { Color } = require('tokens');
+	const { Icon } = require('assets/icons');
 
 	const Position = {
 		TOP: 'top',
@@ -11,35 +12,50 @@ jn.define('toast/base', (require, exports, module) => {
 	};
 
 	/**
+	 * @typedef {Object} ToastSvgParams
+	 * @property {string} [url]
+	 * @property {string} [content]
+	 */
+
+	/**
+	 * @typedef {Object} ToastLottieParams
+	 * @property {string} [url]
+	 * @property {string} [content]
+	 * @property {boolean} [loop]
+	 */
+
+	/**
+	 * @typedef {Object} ToastParams
+	 * @property {string} message
+	 * @property {string} [imageUrl] - Path to png-image
+	 * @property {string} [iconName] - Icon name from assets/icons ext. Since API 54
+	 * @property {Icon} [icon]
+	 * @property {ToastSvgParams} [svg]
+	 * @property {ToastLottieParams} [lottie] - Lottie animation
+	 * @property {boolean} [blur=true] - Specifies whether to blur the background when the toast is shown.
+	 * @property {string} [backgroundColor=AppTheme.colors.techOverlay] - The background color of the toast.
+	 * @property {number} [backgroundOpacity=0.6]
+	 * @property {string} [position='bottom'] - Position on screen
+	 * @property {number} [offset=26] - The offset of the toast from [params.position]
+	 * @property {string} [messageTextColor=AppTheme.colors.baseWhiteFixed]
+	 * @property {number} [textSize=18]
+	 * @property {string} [buttonText]
+	 * @property {number} [buttonTextSize=15]
+	 * @property {string} [buttonTextColor=AppTheme.colors.accentBrandBlue]
+	 * @property {number} [imageSize=24]
+	 * @property {number} [time=3.5] - The duration of the toast in seconds.
+	 * @property {boolean} [shouldCloseOnTap=true]
+	 * @property {string} [code='toastCode']
+	 * @property {Function} [onTimerOver] - Callback called when the timer is over and the toast is closed.
+	 * @property {Function} [onTap] - Callback called when the toast is tapped.
+	 * @property {Function} [onButtonTap] - Callback called when the toast button is tapped.
+	 */
+
+	/**
 	 * Show a toast notification.
-	 * @param {Object} params
-	 * @param {string} params.message
-	 * @param {string} [params.imageUrl] - Path to png-image
-	 * @param {Object} [params.svg]
-	 * @param {string} [params.svg.url] - Path to svg-image
-	 * @param {string} [params.svg.content] - Inline svg-image
-	 * @param {Object} [params.lottie] - Lottie animation
-	 * @param {string} [params.lottie.url]
-	 * @param {boolean} [params.lottie.loop]
-	 * @param {boolean} [params.lottie.content]
-	 * @param {boolean} [params.blur=true] - Specifies whether to blur the background when the toast is shown.
-	 * @param {string} [params.backgroundColor=AppTheme.colors.techOverlay] - The background color of the toast.
-	 * @param {number} [params.backgroundOpacity=0.6]
-	 * @param {string} [params.position='bottom'] - Position on screen
-	 * @param {number} [params.offset=26] - The offset of the toast from [params.position]
-	 * @param {string} [params.messageTextColor=AppTheme.colors.baseWhiteFixed]
-	 * @param {number} [params.textSize=18]
-	 * @param {string} [params.buttonText]
-	 * @param {number} [params.buttonTextSize=15]
-	 * @param {string} [params.buttonTextColor=AppTheme.colors.accentBrandBlue]
-	 * @param {number} [params.imageSize=24]
-	 * @param {number} [params.time=3.5] - The duration of the toast in seconds.
-	 * @param {boolean} [params.shouldCloseOnTap=true]
-	 * @param {string} [params.code='toastCode']
-	 * @param {Function} [params.onTimerOver] - Callback called when the timer is over and the toast is closed.
-	 * @param {Function} [params.onTap] - Callback called when the toast is tapped.
-	 * @param {Function} [params.onButtonTap] - Callback called when the toast button is tapped.
+	 * @param {ToastParams} params
 	 * @param {Object} [layoutWidget=null] - The layout widget to display the toast notification in.
+	 * @returns {Toast} - The toast notification object.
 	 */
 	function showToast(params = {}, layoutWidget = null)
 	{
@@ -47,10 +63,16 @@ jn.define('toast/base', (require, exports, module) => {
 		{
 			console.warn('Feature Toast is not support on your device or app');
 
-			return;
+			return null;
 		}
 
 		const preparedParams = { ...params };
+
+		const { icon } = params;
+		if (icon instanceof Icon)
+		{
+			preparedParams.iconName = icon.getIconName();
+		}
 
 		if (!Feature.isToastPositionSupported())
 		{
@@ -91,19 +113,47 @@ jn.define('toast/base', (require, exports, module) => {
 		}
 
 		toast.show();
+
+		return toast;
+	}
+
+	/**
+	 * Show a toast notification with fallback.
+	 * @param {ToastParams} params
+	 * @param {Object} [layoutWidget=null] - The layout widget to display the toast notification in.
+	 * @returns {Toast} - The toast notification object.
+	 */
+	function showSafeToast(params = {}, layoutWidget = null)
+	{
+		if (Feature.isToastSupported())
+		{
+			return showToast(params, layoutWidget);
+		}
+
+		if (params.message)
+		{
+			// eslint-disable-next-line no-undef
+			Notify.showMessage('', params.message);
+		}
+		else
+		{
+			console.warn('Cannot show fallback notification due to empty message');
+		}
+
+		return null;
 	}
 
 	const defaultToastParams = (position = Position.BOTTOM) => ({
 		position,
 		blur: true,
-		backgroundColor: AppTheme.colors.techOverlay,
-		backgroundOpacity: 0.6,
+		backgroundOpacity: Feature.isAirStyleSupported() ? 1 : 0.6,
 		offset: (position === Position.BOTTOM ? 26 : 0),
-		tintColor: AppTheme.colors.baseWhiteFixed,
-		messageTextColor: AppTheme.colors.baseWhiteFixed,
+		tintColor: Color.baseWhiteFixed.toHex(),
+		backgroundColor: Color.bgContentInapp.toHex(),
+		messageTextColor: Color.baseWhiteFixed.toHex(),
 		textSize: 15,
 		buttonTextSize: 16,
-		buttonTextColor: AppTheme.colors.accentBrandBlue,
+		buttonTextColor: Color.baseWhiteFixed.toHex(),
 		imageSize: 30,
 		time: 4,
 		shouldCloseOnTap: true,
@@ -112,6 +162,7 @@ jn.define('toast/base', (require, exports, module) => {
 
 	module.exports = {
 		showToast,
+		showSafeToast,
 		Position,
 	};
 });

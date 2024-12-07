@@ -665,30 +665,4 @@ class LeadDataProvider extends EntityDataProvider implements FactoryOptionable
 
 		return null;
 	}
-
-	/**
-	 * Prepare field parameter for specified field.
-	 * @param array $filter Filter params.
-	 * @param string $fieldID Field ID.
-	 * @return void
-	 */
-	public function prepareListFilterParam(array &$filter, $fieldID)
-	{
-		if($fieldID === 'TITLE'
-			|| $fieldID === 'NAME'
-			|| $fieldID === 'LAST_NAME'
-			|| $fieldID ===  'SECOND_NAME'
-			|| $fieldID ===  'POST'
-			|| $fieldID ===  'COMMENTS'
-			|| $fieldID === 'COMPANY_TITLE'
-		)
-		{
-			$value = isset($filter[$fieldID]) ? trim($filter[$fieldID]) : '';
-			if($value !== '')
-			{
-				$filter["?{$fieldID}"] = $value;
-			}
-			unset($filter[$fieldID]);
-		}
-	}
 }

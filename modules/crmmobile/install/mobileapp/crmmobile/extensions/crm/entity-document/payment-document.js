@@ -384,6 +384,7 @@ jn.define('crm/entity-document/payment-document', (require, exports, module) => 
 							text: Loc.getMessage('M_CRM_ENTITY_DOCUMENT_TERMINAL_CHECK_PHONE', {
 								'#PHONE_NUMBER#': getFormattedNumber(this.payment.phoneNumber),
 							}),
+							testId: 'PaymentDocumentCheckPhone',
 							style: {
 								color: AppTheme.colors.base3,
 								fontSize: 14,

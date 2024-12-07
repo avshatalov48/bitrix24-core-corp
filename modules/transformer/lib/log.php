@@ -52,7 +52,10 @@ class Log
 				return new NullLogger();
 			}
 
-			$logger = new FileLogger(Path::combine(Application::getDocumentRoot(), self::LOG));
+			$logger = new FileLogger(
+				Path::combine(Application::getDocumentRoot(), self::LOG),
+				0, // dont rotate logs by default
+			);
 
 			$logger->setLevel(Option::get('transformer', 'log_level', LogLevel::DEBUG));
 			$logger->setFormatter(new JsonLogFormatter(lineBreakAfterEachMessage: true));

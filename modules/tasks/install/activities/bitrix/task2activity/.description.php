@@ -6,6 +6,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Tasks\Integration\Bitrix24;
 
 $arActivityDescription = [
 	'NAME' => Loc::getMessage('BPTA2_DESCR_NAME_1'),
@@ -43,4 +44,16 @@ $arActivityDescription = [
 		],
 		'SORT' => 2100,
 	],
+	'EXCLUDED' => (!\Bitrix\Main\Loader::includeModule('tasks')),
 ];
+
+if (
+	isset($documentType)
+	&& $documentType[0] === 'crm'
+	&& !Bitrix24::checkFeatureEnabled(Bitrix24\FeatureDictionary::TASK_CRM_INTEGRATION)
+)
+{
+	$arActivityDescription['LOCKED'] = [
+		'INFO_CODE' => \Bitrix\Tasks\Helper\RestrictionUrl::TASK_LIMIT_CRM_INTEGRATION,
+	];
+}

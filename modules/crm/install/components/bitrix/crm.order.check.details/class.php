@@ -162,6 +162,38 @@ class CCrmOrderCheckDetailsComponent extends Crm\Component\EntityDetails\BaseCom
 			return;
 		}
 
+		if ($entityData['STATUS'] === 'E' && $this->getMode() === ComponentMode::VIEW)
+		{
+			$this->arResult['CUSTOM_TOOL_PANEL_BUTTONS'] = [
+				[
+					'ID' => 'REPRINT',
+					'TEXT' => Loc::getMessage('CRM_ORDER_CHECK_REPRINT'),
+					'ACTION_ID' => 'REPRINT',
+					'CLASS' => 'ui-btn-light-border',
+				],
+			];
+			$this->arResult['TOOL_PANEL_BUTTONS_ORDER'] = [
+				'VIEW' => ['REPRINT'],
+			];
+			$this->arResult['COMPONENT_AJAX_DATA'] = [
+				'ADDITIONAL_ACTIONS' => [
+					[
+						'ID' => 'REPRINT',
+						'ACTION' => 'reprint',
+						'ACTION_TYPE' => \Bitrix\UI\EntityEditor\Action::ACTION_TYPE_DIRECT,
+					],
+				],
+			];
+			$this->arResult['IS_TOOL_PANEL_ALWAYS_VISIBLE'] = true;
+		}
+		else
+		{
+			$this->arResult['CUSTOM_TOOL_PANEL_BUTTONS'] = null;
+			$this->arResult['TOOL_PANEL_BUTTONS_ORDER'] = null;
+			$this->arResult['COMPONENT_AJAX_DATA'] = null;
+			$this->arResult['IS_TOOL_PANEL_ALWAYS_VISIBLE'] = false;
+		}
+
 		if ($this->arResult['ENTITY_ID'] <= 0 && Cashbox\Manager::isEnabledPaySystemPrint())
 		{
 			ShowError(Loc::getMessage('CRM_ORDER_CASHBOX_MANUAL_PRINT_ERROR'));

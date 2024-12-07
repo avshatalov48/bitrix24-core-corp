@@ -14,8 +14,6 @@ $MESS['TASKS_BTN_IMPORT']='Импорт списка';
 $MESS['TASKS_BTN_IMPORT_CSV']='из CSV';
 $MESS['TASKS_BTN_EXPORT']='Экспорт списка';
 $MESS['TASKS_BTN_EXPORT_EXCEL']='в Excel';
-$MESS['TASKS_BTN_EXPORT_EXCEL_GRID_FIELDS']='Только поля из списка';
-$MESS['TASKS_BTN_EXPORT_EXCEL_ALL_FIELDS']='Все поля задач';
 $MESS['TASKS_BTN_EXPORT_TO_EXCEL']='Экспорт списка в Excel';
 
 $MESS['TASKS_BTN_SYNC']='Синхронизация списка';

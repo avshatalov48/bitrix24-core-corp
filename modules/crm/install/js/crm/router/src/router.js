@@ -1,4 +1,5 @@
-import { Reflection, Type, Uri } from 'main.core';
+import { Reflection, Text, Type, Uri } from 'main.core';
+import { MenuItem } from 'main.popup';
 
 import 'sidepanel';
 
@@ -54,6 +55,7 @@ class Router
 		{
 			this.defaultRootUrlTemplates = params.defaultRootUrlTemplates;
 		}
+
 		if (Type.isPlainObject(params.customRootUrlTemplates))
 		{
 			this.customRootUrlTemplates = params.customRootUrlTemplates;
@@ -65,6 +67,7 @@ class Router
 	setCurrentListView(entityTypeId: number, view: string): Router
 	{
 		this.currentViews[entityTypeId] = view;
+
 		return this;
 	}
 
@@ -73,41 +76,58 @@ class Router
 		return this.currentViews[entityTypeId] || ListViewTypes.LIST;
 	}
 
-	static openSlider(url, options): Promise<?BX.SidePanel.Slider>
+	static openSlider(url: string | Uri, options: ?Object = null): Promise<?BX.SidePanel.Slider>
 	{
-		if (!Type.isPlainObject(options))
+		const preparedUrl = String(url);
+		if (!Type.isStringFilled(preparedUrl))
 		{
-			options = {};
+			return Promise.resolve();
 		}
-		options = { ...{ cacheable: false, allowChangeHistory: true, events: {} }, ...options };
-		return new Promise((resolve) =>
-		{
-			if (Type.isString(url) && url.length > 1)
-			{
-				options.events.onClose = function(event)
-				{
-					resolve(event.getSlider());
-				};
-				BX.SidePanel.Instance.open(url, options);
-			}
-			else
-			{
-				resolve();
-			}
+
+		let preparedOptions = Type.isPlainObject(options) ? options : {};
+		preparedOptions = { cacheable: false, allowChangeHistory: true, events: {}, ...preparedOptions };
+
+		return new Promise((resolve) => {
+			preparedOptions.events.onClose = (event) => resolve(event.getSlider());
+
+			BX.SidePanel.Instance.open(preparedUrl, preparedOptions);
 		});
 	}
 
-	openTypeDetail(typeId: number, options: ?{}): ?Promise<?BX.SidePanel.Slider>
+	openTypeDetail(typeId: number, options: ?{}, queryParams: ?{}): ?Promise<?BX.SidePanel.Slider>
 	{
-		if (!Type.isPlainObject(options))
-		{
-			options = {};
-		}
-		options.width = 702;
+		const preparedOptions = Type.isPlainObject(options) ? options : {};
+
+		preparedOptions.width = 876;
+		preparedOptions.allowChangeHistory = false;
+		preparedOptions.cacheable = false;
+
 		const uri = this.getTypeDetailUrl(typeId);
 		if (uri)
 		{
-			return Router.openSlider(uri.toString(), options);
+			if (Type.isPlainObject(queryParams))
+			{
+				uri.setQueryParams(queryParams);
+			}
+
+			return Router.openSlider(uri.toString(), preparedOptions);
+		}
+
+		return null;
+	}
+
+	openAutomatedSolutionDetail(automatedSolutionId: number = 0, options: {} = {}): ?Promise<?BX.SidePanel.Slider>
+	{
+		const preparedOptions = Type.isPlainObject(options) ? options : {};
+
+		preparedOptions.width = 876;
+		preparedOptions.allowChangeHistory = false;
+		preparedOptions.cacheable = false;
+
+		const uri = this.getAutomatedSolutionDetailUrl(automatedSolutionId);
+		if (uri)
+		{
+			return Router.openSlider(uri, preparedOptions);
 		}
 
 		return null;
@@ -121,17 +141,12 @@ class Router
 	 */
 	getTemplate(component: string, entityTypeId: number = 0): ?string
 	{
-		if ((entityTypeId > 0) && this.customRootUrlTemplates.hasOwnProperty(entityTypeId))
+		if ((entityTypeId > 0) && Object.hasOwn(this.customRootUrlTemplates, entityTypeId))
 		{
-			if (this.customRootUrlTemplates[entityTypeId].hasOwnProperty(component))
-			{
-				return this.customRootUrlTemplates[entityTypeId][component];
-			}
-
-			return null;
+			return this.customRootUrlTemplates[entityTypeId][component] ?? null;
 		}
 
-		return (this.defaultRootUrlTemplates.hasOwnProperty(component) ? this.defaultRootUrlTemplates[component] : null);
+		return this.defaultRootUrlTemplates[component] ?? null;
 	}
 
 	getTypeDetailUrl(entityTypeId: number = 0): ?Uri
@@ -158,7 +173,7 @@ class Router
 
 	openTypeHelpPage()
 	{
-		Router.openHelper(null, 13315798);
+		Router.openHelper(null, 13_315_798);
 	}
 
 	static openHelper(event: Event = null, code: number = null)
@@ -167,45 +182,50 @@ class Router
 		{
 			event.preventDefault();
 		}
+
 		if (top.BX.Helper && code > 0)
 		{
-			top.BX.Helper.show('redirect=detail&code=' + code);
+			top.BX.Helper.show(`redirect=detail&code=${code}`);
 		}
 	}
 
-    showFeatureSlider(event, item)
-    {
-        Router.Instance.closeSettingsMenu(event, item);
-        BX.UI.InfoHelper.show('limit_smart_process_automation');
-    }
+	showFeatureSlider(event, item, sliderCode: string = 'limit_smart_process_automation')
+	{
+		Router.Instance.closeSettingsMenu(event, item);
 
-    /**
-     * For dynamic entities only.
-     * Does not support knowledge about whether kanban available or not.
-     *
-     * @param entityTypeId
-     * @param categoryId
-     */
-    getItemListUrlInCurrentView(entityTypeId: number, categoryId: ?number = 0): ?Uri
-    {
-        const currentListView = this.getCurrentListView(entityTypeId);
-        let template;
-        if (currentListView === ListViewTypes.KANBAN)
-        {
-            template = this.getTemplate('bitrix:crm.kanban', entityTypeId);
-        }
-        else
-        {
-            template = this.getTemplate('bitrix:crm.item.list', entityTypeId);
-        }
+		if (Reflection.getClass('BX.UI.InfoHelper.show'))
+		{
+			BX.UI.InfoHelper.show(sliderCode);
+		}
+	}
 
-        if (template)
-        {
-            return new Uri(template.replace('#entityTypeId#', entityTypeId).replace('#categoryId#', categoryId));
-        }
+	/**
+	 * For dynamic entities only.
+	 * Does not support knowledge about whether kanban available or not.
+	 *
+	 * @param entityTypeId
+	 * @param categoryId
+	 */
+	getItemListUrlInCurrentView(entityTypeId: number, categoryId: ?number = 0): ?Uri
+	{
+		const currentListView = this.getCurrentListView(entityTypeId);
+		let template = null;
+		if (currentListView === ListViewTypes.KANBAN)
+		{
+			template = this.getTemplate('bitrix:crm.kanban', entityTypeId);
+		}
+		else
+		{
+			template = this.getTemplate('bitrix:crm.item.list', entityTypeId);
+		}
 
-        return null;
-    }
+		if (template)
+		{
+			return new Uri(template.replace('#entityTypeId#', entityTypeId).replace('#categoryId#', categoryId));
+		}
+
+		return null;
+	}
 
 	/**
 	 * For factory based entities only.
@@ -249,11 +269,11 @@ class Router
 	openDocumentSlider(documentId: number): Promise<?BX.SidePanel.Slider>
 	{
 		return Router.openSlider(
-			'/bitrix/components/bitrix/crm.document.view/slider.php?documentId=' + documentId,
+			`/bitrix/components/bitrix/crm.document.view/slider.php?documentId=${documentId}`,
 			{
 				width: 1060,
 				loader: '/bitrix/components/bitrix/crm.document.view/templates/.default/images/document_view.svg',
-			}
+			},
 		);
 	}
 
@@ -261,51 +281,99 @@ class Router
 	{
 		// todo make a url template
 		return Router.openSlider(
-			'/bitrix/components/bitrix/crm.signdocument.view/slider.php?documentId=' + documentId
-			+ '&memberHash=' + memberHash
-			,
+			`/bitrix/components/bitrix/crm.signdocument.view/slider.php?documentId=${documentId}&memberHash=${memberHash}`,
 			{
 				width: 1060,
-			}
+			},
 		);
 	}
 
 	openSignDocumentModifySlider(documentId: number): Promise<?BX.SidePanel.Slider>
 	{
 		return Router.openSlider(
-			'/sign/doc/0/?docId=' + documentId + '&stepId=changePartner&noRedirect=Y'
+			`/sign/doc/0/?docId=${documentId}&stepId=changePartner&noRedirect=Y`,
 		);
 	}
 
 	openCalendarEventSlider(eventId: number, isSharing: boolean): Promise<?BX.SidePanel.Slider>
 	{
-		const sliderId = 'crm-calendar-slider-' + eventId + '-' + Math.floor(Math.random() * 1000);
+		const sliderId = `crm-calendar-slider-${eventId}-${Math.floor(Math.random() * 1000)}`;
 
 		return new (window.top.BX || window.BX).Calendar.SliderLoader(eventId, {
-			sliderId: sliderId,
-			isSharing: isSharing
+			sliderId,
+			isSharing,
 		}).show();
 	}
 
-    closeSettingsMenu(event, item)
-    {
-        if(item && Type.isFunction(item.getMenuWindow))
-        {
-            const window = item.getMenuWindow();
-            if(window)
-            {
-                window.close();
-                return;
-            }
-        }
-        const menu = this;
-        if(menu && Type.isFunction(menu.close))
-        {
-            menu.close();
-        }
-    }
+	closeSettingsMenu(event, item)
+	{
+		if (item && Type.isFunction(item.getMenuWindow))
+		{
+			const window = item.getMenuWindow();
+			if (window)
+			{
+				window.close();
+
+				return;
+			}
+		}
+		// eslint-disable-next-line unicorn/no-this-assignment
+		const menu = this;
+		if (menu && Type.isFunction(menu.close))
+		{
+			menu.close();
+		}
+	}
+
+	closeToolbarSettingsMenuRecursively(event: PointerEvent, menuItem: MenuItem): void
+	{
+		let menuWindow = menuItem?.getMenuWindow();
+		if (!menuWindow)
+		{
+			return;
+		}
+
+		while (menuWindow)
+		{
+			menuWindow.close();
+			menuWindow = menuWindow.getParentMenuWindow();
+		}
+	}
+
+	closeSliderOrRedirect(redirectTo: string | Uri, currentWindow: ?Window = null): void
+	{
+		const slider: ?BX.SidePanel.Slider = BX.SidePanel?.Instance?.getSliderByWindow(currentWindow ?? window);
+		if (slider)
+		{
+			slider.close();
+
+			return;
+		}
+
+		if (redirectTo instanceof Uri)
+		{
+			window.location.href = redirectTo.toString();
+		}
+		else
+		{
+			window.location.href = redirectTo;
+		}
+	}
+
+	getAutomatedSolutionListUrl(): ?Uri
+	{
+		return new Uri('/automation/type/automated_solution/list/');
+	}
+
+	getAutomatedSolutionDetailUrl(id: number): ?Uri
+	{
+		let normalizedId = Text.toInteger(id);
+		normalizedId = normalizedId > 0 ? normalizedId : 0;
+
+		return new Uri(`/automation/type/automated_solution/details/${normalizedId}/`);
+	}
 }
 
 export {
-	Router
+	Router,
 };

@@ -28,11 +28,11 @@ class Strictly extends Queue
 				'DATE_QUEUE' => 'ASC',
 				'SESSION_ID' => 'ASC',
 			],
-		])->fetchAll();
+		]);
 
-		if (count($sessionList) > 0)
+		if ($sessionList && $sessionList->getSelectedRowsCount() > 0)
 		{
-			foreach ($sessionList as $session)
+			while ($session = $sessionList->fetch())
 			{
 				ImOpenLines\Queue::returnSessionToQueue((int)$session['SESSION_ID']);
 			}

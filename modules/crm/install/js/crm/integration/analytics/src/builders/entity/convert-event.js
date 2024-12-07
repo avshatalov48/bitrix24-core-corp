@@ -10,6 +10,7 @@ export class ConvertEvent
 {
 	#srcEntityType: string | number | null;
 	#dstEntityType: string | number | null;
+	#section: ?EntityConvertEventStructure['c_section'];
 	#subSection: ?EntityConvertEventStructure['c_sub_section'];
 	#element: ?EntityConvertEventStructure['c_element'];
 	#status: ?EventStatus;
@@ -22,6 +23,13 @@ export class ConvertEvent
 		self.#dstEntityType = dstEntityType;
 
 		return self;
+	}
+
+	setSection(section: ?EntityConvertEventStructure['c_section']): ConvertEvent
+	{
+		this.#section = section;
+
+		return this;
 	}
 
 	setSubSection(subSection: ?EntityConvertEventStructure['c_sub_section']): ConvertEvent
@@ -61,7 +69,7 @@ export class ConvertEvent
 			category: Dictionary.CATEGORY_ENTITY_OPERATIONS,
 			event: Dictionary.EVENT_ENTITY_CONVERT,
 			type: dstType,
-			c_section: `${srcType}_section`,
+			c_section: this.#section,
 			c_sub_section: this.#subSection,
 			c_element: this.#element,
 			status: this.#status,

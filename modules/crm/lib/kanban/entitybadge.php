@@ -4,9 +4,8 @@ namespace Bitrix\Crm\Kanban;
 
 use Bitrix\Crm\Badge\Model\BadgeTable;
 use Bitrix\Crm\Badge\SourceIdentifier;
+use Bitrix\Crm\Item;
 use Bitrix\Crm\Service\Container;
-use Bitrix\Crm\Settings\Crm;
-use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Entity\ExpressionField;
 use Bitrix\Main\ORM\Query\Filter\ConditionTree;
 use CCrmOwnerType;
@@ -22,13 +21,9 @@ class EntityBadge
 		$this->entityIds = array_unique($entityIds);
 	}
 
+	/** @param $items Item[]|array  */
 	public function appendToEntityItems(&$items): void
 	{
-		if (!Crm::isUniversalActivityScenarioEnabled())
-		{
-			return;
-		}
-
 		$badges = $this->getBadges();
 
 		foreach ($badges as $badgeParams)
@@ -40,7 +35,14 @@ class EntityBadge
 			}
 
 			$badge = Container::getInstance()->getBadge($badgeParams['TYPE'], $badgeParams['VALUE']);
-			$items[$id]['badges'][] = $badge->getConfigFromMap();
+			if ($items[$id] instanceof Item)
+			{
+				$items[$id]->addBadge($badge->getConfigFromMap());
+			}
+			else
+			{
+				$items[$id]['badges'][] = $badge->getConfigFromMap();
+			}
 		}
 	}
 

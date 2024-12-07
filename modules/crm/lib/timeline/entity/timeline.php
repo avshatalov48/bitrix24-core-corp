@@ -3,6 +3,7 @@
 namespace Bitrix\Crm\Timeline\Entity;
 
 use Bitrix\Crm\Timeline\Entity\Object\Timeline;
+use Bitrix\Crm\Timeline\Entity\Repository\RestAppLayoutBlocksRepository;
 use Bitrix\Main;
 use Bitrix\Main\Entity;
 
@@ -90,8 +91,10 @@ class TimelineTable  extends Entity\DataManager
 
 	public static function onAfterDelete(Entity\Event $event)
 	{
-		$primary = $event->getParameter('primary');
-		NoteTable::deleteByItemId(NoteTable::NOTE_TYPE_HISTORY, $primary['ID']);
+		$id = $event->getParameter('primary')['ID'];
+
+		NoteTable::deleteByItemId(NoteTable::NOTE_TYPE_HISTORY, $id);
+		(new RestAppLayoutBlocksRepository())->deleteByItem($id, RestAppLayoutBlocksTable::TIMELINE_ITEM_TYPE);
 	}
 
 	public static function getObjectClass()

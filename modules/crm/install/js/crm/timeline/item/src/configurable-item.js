@@ -1,12 +1,12 @@
-import { ajax, Dom, Text, Type } from 'main.core';
-import TimelineItem from './item';
-import { Item } from './components/item';
-import Layout from './layout';
-import { BitrixVue } from 'ui.vue3';
-import { Base } from "./controllers/base";
-import ControllerManager from './controller-manager';
-import { DatetimeConverter } from 'crm.timeline.tools';
 import { StreamType } from 'crm.timeline.item';
+import { DatetimeConverter } from 'crm.timeline.tools';
+import { ajax, Dom, Text, Type } from 'main.core';
+import { BitrixVue } from 'ui.vue3';
+import { Item } from './components/item';
+import ControllerManager from './controller-manager';
+import { Base } from './controllers/base';
+import TimelineItem from './item';
+import Layout from './layout';
 
 declare type ConfigurableItemParams = {
 	timelineId: string,
@@ -27,6 +27,7 @@ declare type ConfigurableItemData = {
 	sort: ?Array,
 	layout: ?Object,
 	payload: ?Object,
+	color: ?Object,
 }
 
 export default class ConfigurableItem extends TimelineItem
@@ -48,6 +49,7 @@ export default class ConfigurableItem extends TimelineItem
 	#layoutApp: ?Object = null;
 	#layout: ?Layout = null;
 	#streamType: number = null;
+	#color: ?Object = null;
 
 	initialize(id, settings: ConfigurableItemParams): void
 	{
@@ -79,6 +81,12 @@ export default class ConfigurableItem extends TimelineItem
 		this.#sort = data.sort || [];
 		this.#layout = new Layout(data.layout || {});
 		this.#dataPayload = data.payload || {};
+		this.#color = data.color ?? null;
+	}
+
+	getColor(): ?Object
+	{
+		return this.#color;
 	}
 
 	getLayout(): Layout
@@ -171,7 +179,9 @@ export default class ConfigurableItem extends TimelineItem
 		// try to refresh layout via vue reactivity, if possible:
 		if (this.#layoutComponent)
 		{
+			this.#layoutComponent.setColor(this.getColor());
 			this.#layoutComponent.setLayout(this.getLayout().asPlainObject());
+
 			for (const controller of this.#controllers)
 			{
 				controller.onAfterItemRefreshLayout(this);
@@ -198,32 +208,32 @@ export default class ConfigurableItem extends TimelineItem
 
 	getLayoutContentBlockById(id: string): ?Object
 	{
-		return this.#layoutComponent.getContentBlockById(id);
+		return this.#layoutComponent?.getContentBlockById(id);
 	}
 
 	getLogo(): ?Object
 	{
-		return this.#layoutComponent.getLogo();
+		return this.#layoutComponent?.getLogo();
 	}
 
 	getLayoutFooterButtonById(id: string): ?Object
 	{
-		return this.#layoutComponent.getFooterButtonById(id);
+		return this.#layoutComponent?.getFooterButtonById(id);
 	}
 
 	getLayoutFooterMenu(): ?Object
 	{
-		return this.#layoutComponent.getFooterMenu();
+		return this.#layoutComponent?.getFooterMenu();
 	}
 
 	getLayoutHeaderChangeStreamButton(): ?Object
 	{
-		return this.#layoutComponent.getHeaderChangeStreamButton();
+		return this.#layoutComponent?.getHeaderChangeStreamButton();
 	}
 
 	highlightContentBlockById(blockId: string, isHighlighted: boolean): void
 	{
-		this.#layoutComponent.highlightContentBlockById(blockId, isHighlighted);
+		this.#layoutComponent?.highlightContentBlockById(blockId, isHighlighted);
 	}
 
 	clearLayout(): void
@@ -277,6 +287,7 @@ export default class ConfigurableItem extends TimelineItem
 	{
 		return {
 			initialLayout: this.getLayout().asPlainObject(),
+			initialColor: this.#streamType === StreamType.scheduled ? this.#color : null,
 			id: String(this.getId()),
 			useShortTimeFormat: this.#useShortTimeFormat,
 			isReadOnly: this.isReadOnly(),

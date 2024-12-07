@@ -1,6 +1,7 @@
 <?php
 namespace Bitrix\BIConnector\Integration\Voximplant;
 
+use Bitrix\Main\DB\SqlHelper;
 use Bitrix\Main\Localization\Loc;
 
 class Call
@@ -22,9 +23,12 @@ class Call
 		}
 
 		$params = $event->getParameters();
-		//$manager = $params[0];
+		$manager = $params[0];
 		$result = &$params[1];
 		$languageId = $params[2];
+
+		$connection = $manager->getDatabaseConnection();
+		$helper = $connection->getSqlHelper();
 
 		$viHistoryMessages = Loc::loadLanguageFile($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/voximplant/classes/general/vi_history.php', $languageId);
 
@@ -105,16 +109,7 @@ class Call
 				],
 				//TODO:CALL_STATUS int(11) NULL default 0,
 				//CALL_FAILED_CODE varchar(255) NULL,
-				'CALL_STATUS_CODE' => [
-					'IS_METRIC' => 'N',
-					'FIELD_NAME' => 'S.CALL_FAILED_CODE',
-					'FIELD_TYPE' => 'string',
-					'CALLBACK' => function($value, $dateFormats) use ($viHistoryMessages)
-					{
-						$messageId = 'VI_STATUS_' . $value;
-						return '[' . $value . ']' . (array_key_exists($messageId, $viHistoryMessages) ? ' ' . $viHistoryMessages[$messageId] : '');
-					}
-				],
+				'CALL_STATUS_CODE' => static::getCallStatusCodeDescription($helper, $viHistoryMessages),
 				'CALL_STATUS_CODE_ID' => [
 					'IS_METRIC' => 'N',
 					'FIELD_NAME' => 'S.CALL_FAILED_CODE',
@@ -243,5 +238,44 @@ class Call
 			$fieldInfo['FIELD_DESCRIPTION_FULL'] = $messages['VI_BIC_CALL_FIELD_' . $fieldCode . '_FULL'] ?? '';
 		}
 		unset($fieldInfo);
+	}
+
+	/**
+	 * @param SqlHelper $helper
+	 * @param array $viHistoryMessages
+	 *
+	 * @return array
+	 */
+	protected static function getCallStatusCodeDescription(SqlHelper $helper, array $viHistoryMessages): array
+	{
+		$cases = [];
+		foreach ($viHistoryMessages as $key => $value)
+		{
+			if (str_starts_with($key, 'VI_STATUS_') && $key !== 'VI_STATUS_OTHER')
+			{
+				$code = str_replace('VI_STATUS_', '', $key);
+				$codeName = "[{$code}] {$value}";
+				$cases[] = "WHEN S.CALL_FAILED_CODE = {$helper->convertToDbString($code)} THEN {$helper->convertToDbString($codeName)}";
+			}
+		}
+
+		$otherStatusName = $viHistoryMessages['VI_STATUS_OTHER'] ? " {$viHistoryMessages['VI_STATUS_OTHER']}" : '';
+		$otherCase = "concat('[', S.CALL_FAILED_CODE, ']', {$helper->convertToDbString($otherStatusName)})";
+
+		if (!empty($cases))
+		{
+			$fieldName = 'CASE ' . implode(' ', $cases) . ' ELSE ' . $otherCase . ' END';
+		}
+		else
+		{
+			$fieldName = $otherCase;
+		}
+
+
+		return [
+			'IS_METRIC' => 'N',
+			'FIELD_NAME' => $fieldName,
+			'FIELD_TYPE' => 'string',
+		];
 	}
 }

@@ -9,6 +9,7 @@ return [
 		'require-lazy',
 		'utils/array',
 		'utils/string',
+		'utils/random',
 		'event-emitter',
 		'layout/ui/fields/entity-selector',
 		'layout/ui/fields/client/elements',

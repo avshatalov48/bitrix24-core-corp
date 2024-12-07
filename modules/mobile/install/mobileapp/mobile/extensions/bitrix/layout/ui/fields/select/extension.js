@@ -9,10 +9,12 @@ jn.define('layout/ui/fields/select', (require, exports, module) => {
 	const { isEqual } = require('utils/object');
 	const { search } = require('utils/search');
 	const { EmptyScreen } = require('layout/ui/empty-screen');
+	const { ContextMenu } = require('layout/ui/context-menu');
 
 	const Type = {
 		Picker: 'picker',
 		Selector: 'selector',
+		ContextMenu: 'contextMenu',
 	};
 
 	const SELECTOR_SECTION_ID = 'all';
@@ -90,18 +92,14 @@ jn.define('layout/ui/fields/select', (require, exports, module) => {
 
 		prepareMode(config)
 		{
-			let mode;
-
 			if (this.isMultiple())
 			{
-				mode = Type.Selector;
-			}
-			else
-			{
-				mode = BX.prop.getString(config, 'mode', Type.Picker);
+				return Type.Selector;
 			}
 
-			if (mode !== Type.Selector)
+			let mode = BX.prop.getString(config, 'mode', Type.Picker);
+
+			if (!Object.values(Type).includes(mode))
 			{
 				mode = Type.Picker;
 			}
@@ -113,7 +111,10 @@ jn.define('layout/ui/fields/select', (require, exports, module) => {
 		{
 			items = items.filter((item) => item.value !== '');
 
-			if (this.isPicker() && !this.shouldPreselectFirstItem())
+			if (
+				(this.isPicker() || this.isContextMenu())
+				&& !this.shouldPreselectFirstItem()
+			)
 			{
 				items = [
 					{
@@ -234,11 +235,21 @@ jn.define('layout/ui/fields/select', (require, exports, module) => {
 			return this.getMode() === Type.Selector;
 		}
 
+		isContextMenu()
+		{
+			return this.getMode() === Type.ContextMenu;
+		}
+
 		handleAdditionalFocusActions()
 		{
 			if (this.isSelector())
 			{
 				return this.handleSelectorFocusAction();
+			}
+
+			if (this.isContextMenu())
+			{
+				return this.handleContextMenuFocusAction();
 			}
 
 			return this.handlePickerFocusAction();
@@ -265,6 +276,24 @@ jn.define('layout/ui/fields/select', (require, exports, module) => {
 			);
 
 			return Promise.resolve();
+		}
+
+		handleContextMenuFocusAction()
+		{
+			const contextMenu = new ContextMenu({
+				actions: this.getItems().map((item) => ({
+					id: item.name,
+					title: item.name,
+					selected: this.getValue() === item.value,
+					onClickCallback: () => this.removeFocus().then(() => this.handleChange(item.value)),
+				})),
+				params: {
+					title: this.getTitleText(),
+				},
+				onClose: () => this.removeFocus(),
+			});
+
+			return contextMenu.show(this.getPageManager());
 		}
 
 		handleSelectorFocusAction()
@@ -459,7 +488,7 @@ jn.define('layout/ui/fields/select', (require, exports, module) => {
 			{
 				const values = this.isMultiple() ? selectedValues : selectedValues[0];
 
-				return this.handleChange(values);
+				return this.handleChange(values, this.getItems());
 			}
 
 			return Promise.resolve();
@@ -630,8 +659,51 @@ jn.define('layout/ui/fields/select', (require, exports, module) => {
 		}
 	}
 
+	SelectField.propTypes = {
+		...BaseSelectField.propTypes,
+		config: PropTypes.shape({
+			showAll: PropTypes.bool, // show more button with count if it's multiple
+			styles: PropTypes.shape({
+				externalWrapperBorderColor: PropTypes.string,
+				externalWrapperBorderColorFocused: PropTypes.string,
+				externalWrapperBackgroundColor: PropTypes.string,
+				externalWrapperMarginHorizontal: PropTypes.number,
+			}),
+			deepMergeStyles: PropTypes.object, // override styles
+			parentWidget: PropTypes.object, // parent layout widget
+			copyingOnLongClick: PropTypes.bool,
+			titleIcon: PropTypes.object,
+
+			mode: PropTypes.oneOf([Type.Picker, Type.Selector]),
+			items: PropTypes.oneOfType([
+				PropTypes.arrayOf(PropTypes.shape({
+					value: PropTypes.string.isRequired,
+					name: PropTypes.string.isRequired,
+					selectedName: PropTypes.string,
+				})),
+				PropTypes.array,
+			]),
+			defaultListTitle: PropTypes.string,
+			selectShowImages: PropTypes.bool,
+			isSearchEnabled: PropTypes.bool,
+		}),
+	};
+
+	SelectField.defaultProps = {
+		...BaseSelectField.defaultProps,
+		config: {
+			...BaseSelectField.defaultProps.config,
+			mode: Type.Picker,
+			items: [],
+			defaultListTitle: '',
+			selectShowImages: true,
+			isSearchEnabled: true,
+		},
+	};
+
 	module.exports = {
 		SelectType: 'select',
+		SelectFieldClass: SelectField,
 		SelectField: (props) => new SelectField(props),
 	};
 });

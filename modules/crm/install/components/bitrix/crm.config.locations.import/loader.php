@@ -1,6 +1,5 @@
 <?php
 
-use Bitrix\Main;
 use Bitrix\Main\Loader;
 
 /** @global CUser $USER */
@@ -41,8 +40,6 @@ $arLoadParams = [
 ];
 
 $arLoadResult = saleLocationLoadFile($arLoadParams);
-
-$arLoadResult = Main\Text\Encoding::convertEncoding($arLoadResult, SITE_CHARSET, 'utf-8');
 
 echo json_encode($arLoadResult);
 

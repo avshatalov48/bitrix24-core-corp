@@ -1,13 +1,15 @@
 <?php
 namespace Bitrix\Controller;
 
-use Bitrix\Main,
-	Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\ORM\Data\DataManager;
+use Bitrix\Main\ORM\Fields;
+
 Loc::loadMessages(__FILE__);
 
 /**
  * Class CounterHistoryTable
- * 
+ *
  * Fields:
  * <ul>
  * <li> ID int mandatory
@@ -36,7 +38,7 @@ Loc::loadMessages(__FILE__);
  * @method static \Bitrix\Controller\EO_CounterHistory_Collection wakeUpCollection($rows)
  */
 
-class CounterHistoryTable extends Main\Entity\DataManager
+class CounterHistoryTable extends DataManager
 {
 	/**
 	 * Returns DB table name for entity.
@@ -55,46 +57,64 @@ class CounterHistoryTable extends Main\Entity\DataManager
 	 */
 	public static function getMap()
 	{
-		return array(
-			'ID' => array(
-				'data_type' => 'integer',
-				'primary' => true,
-				'autocomplete' => true,
-				'title' => Loc::getMessage('COUNTER_HISTORY_ENTITY_ID_FIELD'),
+		return [
+			new Fields\IntegerField(
+				'ID',
+				[
+					'primary' => true,
+					'autocomplete' => true,
+					'title' => Loc::getMessage('COUNTER_HISTORY_ENTITY_ID_FIELD'),
+				]
 			),
-			'COUNTER_ID' => array(
-				'data_type' => 'integer',
-				'title' => Loc::getMessage('COUNTER_HISTORY_ENTITY_COUNTER_ID_FIELD'),
+			new Fields\IntegerField(
+				'COUNTER_ID',
+				[
+					'title' => Loc::getMessage('COUNTER_HISTORY_ENTITY_COUNTER_ID_FIELD'),
+				]
 			),
-			'TIMESTAMP_X' => array(
-				'data_type' => 'datetime',
-				'required' => true,
-				'title' => Loc::getMessage('COUNTER_HISTORY_ENTITY_TIMESTAMP_X_FIELD'),
+			new Fields\DatetimeField(
+				'TIMESTAMP_X',
+				[
+					'required' => true,
+					'title' => Loc::getMessage('COUNTER_HISTORY_ENTITY_TIMESTAMP_X_FIELD'),
+				]
 			),
-			'USER_ID' => array(
-				'data_type' => 'integer',
-				'title' => Loc::getMessage('COUNTER_HISTORY_ENTITY_COUNTER_USER_ID_FIELD'),
+			new Fields\IntegerField(
+				'USER_ID',
+				[
+					'title' => Loc::getMessage('COUNTER_HISTORY_ENTITY_USER_ID_FIELD'),
+				]
 			),
-			'NAME' => array(
-				'data_type' => 'string',
-				'required' => true,
-				'validation' => array(__CLASS__, 'validateName'),
-				'title' => Loc::getMessage('COUNTER_HISTORY_ENTITY_NAME_FIELD'),
+			new Fields\StringField(
+				'NAME',
+				[
+					'required' => true,
+					'validation' => [__CLASS__, 'validateName'],
+					'title' => Loc::getMessage('COUNTER_HISTORY_ENTITY_NAME_FIELD'),
+				]
 			),
-			'COMMAND_FROM' => array(
-				'data_type' => 'text',
-				'title' => Loc::getMessage('COUNTER_HISTORY_ENTITY_COMMAND_FROM_FIELD'),
+			new Fields\TextField(
+				'COMMAND_FROM',
+				[
+					'required' => true,
+					'title' => Loc::getMessage('COUNTER_HISTORY_ENTITY_COMMAND_FROM_FIELD'),
+				]
 			),
-			'COMMAND_TO' => array(
-				'data_type' => 'text',
-				'title' => Loc::getMessage('COUNTER_HISTORY_ENTITY_COMMAND_TO_FIELD'),
+			new Fields\TextField(
+				'COMMAND_TO',
+				[
+					'required' => true,
+					'title' => Loc::getMessage('COUNTER_HISTORY_ENTITY_COMMAND_TO_FIELD'),
+				]
 			),
-			'USER' => array(
-				'data_type' => 'Bitrix\Main\UserTable',
-				'reference' => array('=this.USER_ID' => 'ref.ID'),
+			new Fields\Relations\Reference(
+				'USER',
+				'Bitrix\Main\UserTable',
+				['=this.USER_ID' => 'ref.ID']
 			),
-		);
+		];
 	}
+
 	/**
 	 * Returns validators for NAME field.
 	 *
@@ -102,8 +122,8 @@ class CounterHistoryTable extends Main\Entity\DataManager
 	 */
 	public static function validateName()
 	{
-		return array(
-			new Main\Entity\Validator\Length(null, 255),
-		);
+		return [
+			new Fields\Validators\LengthValidator(null, 255),
+		];
 	}
 }

@@ -136,6 +136,26 @@ final class Controller extends Timeline\Controller
 			$userId
 		);
 	}
+
+	public function onAutomationLaunchError(
+		ItemIdentifier $identifier,
+		int $activityId,
+		array $settings,
+		int $userId = null,
+	): void
+	{
+		LogMessageController::getInstance()->onCreate(
+			[
+				'ENTITY_TYPE_ID' => $identifier->getEntityTypeId(),
+				'ENTITY_ID' => $identifier->getEntityId(),
+				'ASSOCIATED_ENTITY_TYPE_ID' => CCrmOwnerType::Activity,
+				'ASSOCIATED_ENTITY_ID' => $activityId,
+				'SETTINGS' => $settings,
+			],
+			LogMessageType::AI_CALL_AUTOMATION_LAUNCH_ERROR,
+			$userId,
+		);
+	}
 	// endregion
 
 	public function onCreate(array $input, int $typeCategoryId, ?int $authorId = null): void

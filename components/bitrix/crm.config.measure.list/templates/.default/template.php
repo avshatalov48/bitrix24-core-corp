@@ -84,7 +84,7 @@ $APPLICATION->IncludeComponent(
 	$component
 );
 ?>
-<script type="text/javascript">
+<script>
 	function crm_measure_delete_grid(title, message, btnTitle, path)
 	{
 		var d =

@@ -88,16 +88,23 @@ class EntityRelationTable extends DataManager
 
 	public static function rebind(ItemIdentifier $oldItem, ItemIdentifier $newItem): Result
 	{
-		$childrenRows = self::query()
-			->setSelect(['DST_ENTITY_TYPE_ID', 'DST_ENTITY_ID'])
-			->where('SRC_ENTITY_TYPE_ID', $oldItem->getEntityTypeId())
-			->where('SRC_ENTITY_ID', $oldItem->getEntityId())
-			->fetchCollection()
-			->getAll()
-		;
+		return (new Result())->setData([
+			'affectedItems' => [
+				'parents' => self::rebindWhereItemIsParent($oldItem, $newItem),
+				'children' => self::rebindWhereItemIsChild($oldItem, $newItem),
+			],
+		]);
+	}
 
+	/**
+	 * @param ItemIdentifier $oldItem
+	 * @param ItemIdentifier $newItem
+	 * @return ItemIdentifier[] affected items
+	 */
+	public static function rebindWhereItemIsParent(ItemIdentifier $oldItem, ItemIdentifier $newItem): array
+	{
 		$parentsRows = self::query()
-			->setSelect(['SRC_ENTITY_TYPE_ID', 'SRC_ENTITY_ID'])
+			->setSelect(['*'])
 			->where('DST_ENTITY_TYPE_ID', $oldItem->getEntityTypeId())
 			->where('DST_ENTITY_ID', $oldItem->getEntityId())
 			->fetchCollection()
@@ -105,35 +112,150 @@ class EntityRelationTable extends DataManager
 		;
 
 		$connection = Application::getConnection();
-		$helper = $connection->getSqlHelper();
 
-		$sourceQuery = 'UPDATE %s SET SRC_ENTITY_TYPE_ID = %d, SRC_ENTITY_ID = %d WHERE SRC_ENTITY_TYPE_ID = %d AND SRC_ENTITY_ID = %d';
 		$destinationQuery = 'UPDATE %s SET DST_ENTITY_TYPE_ID = %d, DST_ENTITY_ID = %d WHERE DST_ENTITY_TYPE_ID = %d AND DST_ENTITY_ID = %d';
+		$destinationQuery = self::sprintfRebindQuery($oldItem, $newItem, $destinationQuery);
 
-		foreach ([$sourceQuery, $destinationQuery] as $query)
+		try
 		{
-			$connection->query(sprintf(
-				$query,
-				$helper->quote(static::getTableName()),
-				$helper->convertToDbInteger($newItem->getEntityTypeId()),
-				$helper->convertToDbInteger($newItem->getEntityId()),
-				$helper->convertToDbInteger($oldItem->getEntityTypeId()),
-				$helper->convertToDbInteger($oldItem->getEntityId())
-			));
+			$connection->query($destinationQuery);
+		}
+		catch (SqlQueryException $e)
+		{
+			self::deletePossibleDestinationRebindCollisions($newItem, $parentsRows);
+			$connection->query($destinationQuery);
 		}
 
-		return (new Result())->setData([
-			'affectedItems' => [
-				'parents' => array_map(
-					fn($parent) => new ItemIdentifier($parent->getSrcEntityTypeId(), $parent->getSrcEntityId()),
-					$parentsRows,
-				),
-				'children' => array_map(
-					fn($child) => new ItemIdentifier($child->getDstEntityTypeId(), $child->getDstEntityId()),
-					$childrenRows,
-				),
-			],
-		]);
+		return array_map(
+			static fn (EO_EntityRelation $parent) => new ItemIdentifier($parent->getSrcEntityTypeId(), $parent->getSrcEntityId()),
+			$parentsRows,
+		);
+	}
+
+	/**
+	 * @param ItemIdentifier $oldItem
+	 * @param ItemIdentifier $newItem
+	 * @return ItemIdentifier[] affected items
+	 */
+	public static function rebindWhereItemIsChild(ItemIdentifier $oldItem, ItemIdentifier $newItem): array
+	{
+		$childrenRows = self::query()
+			->setSelect(['*'])
+			->where('SRC_ENTITY_TYPE_ID', $oldItem->getEntityTypeId())
+			->where('SRC_ENTITY_ID', $oldItem->getEntityId())
+			->fetchCollection()
+			->getAll()
+		;
+
+		$connection = Application::getConnection();
+
+		$sourceQuery = 'UPDATE %s SET SRC_ENTITY_TYPE_ID = %d, SRC_ENTITY_ID = %d WHERE SRC_ENTITY_TYPE_ID = %d AND SRC_ENTITY_ID = %d';
+		$sourceQuery = self::sprintfRebindQuery($oldItem, $newItem, $sourceQuery);
+
+		try
+		{
+			$connection->query($sourceQuery);
+		}
+		catch (SqlQueryException $e)
+		{
+			self::deletePossibleSourceRebindCollisions($newItem, $childrenRows);
+			$connection->query($sourceQuery);
+		}
+
+		return array_map(
+			static fn (EO_EntityRelation $child) => new ItemIdentifier($child->getDstEntityTypeId(), $child->getDstEntityId()),
+			$childrenRows,
+		);
+	}
+
+	private static function sprintfRebindQuery(ItemIdentifier $oldItem, ItemIdentifier $newItem, string $query): string
+	{
+		$connection = Application::getConnection();
+		$helper = $connection->getSqlHelper();
+
+		return sprintf(
+			$query,
+			$helper->quote(static::getTableName()),
+			$helper->convertToDbInteger($newItem->getEntityTypeId()),
+			$helper->convertToDbInteger($newItem->getEntityId()),
+			$helper->convertToDbInteger($oldItem->getEntityTypeId()),
+			$helper->convertToDbInteger($oldItem->getEntityId())
+		);
+	}
+
+	private static function deletePossibleSourceRebindCollisions(
+		ItemIdentifier $newItem,
+		array $oldItemChildrenRows,
+	): void
+	{
+		$possibleRelations = [];
+		foreach ($oldItemChildrenRows as $childrenRow)
+		{
+			$possibleRelations[] = self::createObject(false)
+				->setSrcEntityTypeId($newItem->getEntityTypeId())
+				->setSrcEntityId($newItem->getEntityId())
+				->setDstEntityTypeId($childrenRow->getDstEntityTypeId())
+				->setDstEntityId($childrenRow->getDstEntityId())
+			;
+		}
+
+		self::deleteRelations($possibleRelations);
+	}
+
+	private static function deletePossibleDestinationRebindCollisions(
+		ItemIdentifier $newItem,
+		array $oldItemParentRows,
+	): void
+	{
+		$possibleRelations = [];
+		foreach ($oldItemParentRows as $parentRow)
+		{
+			$possibleRelations[] = self::createObject(false)
+				->setSrcEntityTypeId($parentRow->getSrcEntityTypeId())
+				->setSrcEntityId($parentRow->getSrcEntityId())
+				->setDstEntityTypeId($newItem->getEntityTypeId())
+				->setDstEntityId($newItem->getEntityId())
+			;
+		}
+
+		self::deleteRelations($possibleRelations);
+	}
+
+	/**
+	 * @param EO_EntityRelation[] $relations
+	 * @return void
+	 */
+	private static function deleteRelations(array $relations): void
+	{
+		$connection = Application::getConnection();
+		$helper = $connection->getSqlHelper();
+
+		$where = [];
+		foreach ($relations as $relation)
+		{
+			$srcEntityTypeId = $helper->convertToDbInteger($relation->getSrcEntityTypeId());
+			$srcEntityId = $helper->convertToDbInteger($relation->getSrcEntityId());
+			$dstEntityTypeId = $helper->convertToDbInteger($relation->getDstEntityTypeId());
+			$dstEntityId = $helper->convertToDbInteger($relation->getDstEntityId());
+
+			$where[] = "(
+				(SRC_ENTITY_TYPE_ID = {$srcEntityTypeId}) 
+				AND (SRC_ENTITY_ID = {$srcEntityId}) 
+				AND (DST_ENTITY_TYPE_ID = {$dstEntityTypeId}) 
+				AND (DST_ENTITY_ID = {$dstEntityId})
+			)";
+		}
+
+		if (empty($where))
+		{
+			return;
+		}
+
+		$resultWhere = implode(' OR ', $where);
+		$table = $helper->quote(self::getTableName());
+		$query = "DELETE FROM {$table} WHERE {$resultWhere};";
+
+		$connection->query($query);
 	}
 
 	public static function replaceBindings(ItemIdentifier $fromItem, ItemIdentifier $toItem): void

@@ -137,6 +137,14 @@ class ReserveQuantityEqualProductQuantityStrategy implements Strategy
 		$existReserve = $this->getReserve($productRowId);
 		if ($existReserve)
 		{
+			$existDateReserveEndFormatted = $existReserve['DATE_RESERVE_END']?->format('d.m.Y');
+			$newDateReserveEndFormatted = $dateReserveEnd?->format('d.m.Y');
+
+			if ($existDateReserveEndFormatted !== $newDateReserveEndFormatted)
+			{
+				$reserveInfo->setChanged();
+			}
+
 			if ((int)$existReserve['STORE_ID'] !== $storeId)
 			{
 				$reserveInfo->setChanged();
@@ -272,6 +280,7 @@ class ReserveQuantityEqualProductQuantityStrategy implements Strategy
 				'IS_AUTO',
 				'STORE_ID',
 				'RESERVE_QUANTITY',
+				'DATE_RESERVE_END',
 			],
 			'filter' => [
 				'=ROW_ID' => $productRowId,

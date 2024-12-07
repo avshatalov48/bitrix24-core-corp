@@ -92,7 +92,7 @@ $APPLICATION->IncludeComponent(
 
 ?>
 
-<script type="text/javascript">
+<script>
 
 <?if(!CCrmLocations::isLocationsCreated()):?>
 	crmShowSetLocationsDialog();

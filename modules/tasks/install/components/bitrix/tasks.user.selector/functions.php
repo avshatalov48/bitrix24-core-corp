@@ -15,7 +15,7 @@ function TasksEmployeeDrawStructure($arStructure, $arSections, $key, $name)
 		echo '</div>';
 
 		echo '<div class="company-department-children" id="'.$name.'_children_'.$arRes['ID'].'">';
-		if (is_array($arStructure[$ID]))
+		if (is_array($arStructure[$ID] ?? null))
 			TasksEmployeeDrawStructure($arStructure, $arSections, $ID, $name);
 
 		echo '<div class="company-department-employees" id="'.$name.'_employees_'.$ID.'"><span class="company-department-employees-loading">'.GetMessage("TASKS_EMP_WAIT").'</span></div>';

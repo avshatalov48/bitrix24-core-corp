@@ -2,57 +2,72 @@
  * @module im/messenger/controller/user-profile
  */
 jn.define('im/messenger/controller/user-profile', (require, exports, module) => {
+	const { EventType } = require('im/messenger/const');
+	const { openUserProfile } = require('user/profile');
+
 	class UserProfile
 	{
-		static show(userId, options) {
+		static async show(userId, options)
+		{
+			const widget = new UserProfile(userId, options);
+
+			widget.open();
+		}
+
+		constructor(userId, options)
+		{
+			this.userId = userId;
+			this.parentWidget = options.parentWidget;
+			this.openingDialogId = options.openingDialogId;
+
+			this.bindMethods();
+		}
+
+		async open()
+		{
 			if (Application.getApiVersion() >= 27)
 			{
-				let url = '/mobile/mobile_component/user.profile/?version=1';
+				this.subscribeExternalEvents();
+				const layoutWidget = await openUserProfile({
+					userId: this.userId,
+					parentWidget: this.parentWidget,
+				});
 
-				if (availableComponents && availableComponents['user.profile'])
-				{
-					url = availableComponents['user.profile'].publicUrl;
-				}
+				this.layoutWidget = layoutWidget;
 
-				let backdropOptions = {};
-				let isBackdrop = false;
-				if (options.backdrop)
-				{
-					if (typeof options.backdrop === 'object' && options.backdrop)
-					{
-						backdropOptions = { backdrop: options.backdrop };
-						isBackdrop = true;
-					}
-					else if (typeof options.backdrop === 'boolean' && options.backdrop)
-					{
-						backdropOptions = { backdrop: {} };
-						isBackdrop = true;
-					}
-				}
-
-				PageManager.openComponent(
-					'JSStackComponent',
-					{
-						scriptPath: url,
-						params: { userId, isBackdrop },
-						canOpenInDefault: true,
-						rootWidget: {
-							name: 'list',
-							groupStyle: true,
-							settings: {
-								objectName: 'form',
-								groupStyle: true,
-								...backdropOptions,
-							},
-						},
-					},
-					options.parentWidget || null,
-				);
+				layoutWidget.on(EventType.view.close, () => {
+					this.unsubscribeExternalEvents();
+				});
 			}
 			else
 			{
-				PageManager.openPage({ url: `/mobile/users/?user_id=${userId}` });
+				PageManager.openPage({ url: `/mobile/users/?user_id=${this.userId}` });
 			}
+		}
+
+		bindMethods()
+		{
+			this.deleteDialogHandler = this.deleteDialogHandler.bind(this);
+		}
+
+		subscribeExternalEvents()
+		{
+			BX.addCustomEvent(EventType.dialog.external.delete, this.deleteDialogHandler);
+		}
+
+		unsubscribeExternalEvents()
+		{
+			BX.removeCustomEvent(EventType.dialog.external.delete, this.deleteDialogHandler);
+		}
+
+		deleteDialogHandler({ dialogId })
+		{
+			if (String(this.openingDialogId) !== String(dialogId))
+			{
+				return;
+			}
+
+			this.layoutWidget.close();
 		}
 	}
 

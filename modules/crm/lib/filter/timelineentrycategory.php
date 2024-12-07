@@ -1,9 +1,9 @@
 <?php
 namespace Bitrix\Crm\Filter;
 
+use Bitrix\Crm;
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Crm;
 
 Loc::loadMessages(__FILE__);
 
@@ -23,6 +23,7 @@ class TimelineEntryCategory
 		COMMENT = 'comment',
 		DOCUMENT = 'document',
 		SMS = 'sms',
+		WHATSAPP = 'whatsapp',
 		NOTIFICATION = 'notification',
 		BIZ_PROCESS = 'biz-process',
 		WEB_FORM = 'web-form',
@@ -48,6 +49,7 @@ class TimelineEntryCategory
 			self::COMMENT => Loc::getMessage('CRM_TIMELINE_CATEGORY_COMMENT'),
 			self::DOCUMENT => Loc::getMessage('CRM_TIMELINE_CATEGORY_DOCUMENT'),
 			self::SMS => Loc::getMessage('CRM_TIMELINE_CATEGORY_SMS'),
+			self::WHATSAPP => Loc::getMessage('CRM_TIMELINE_CATEGORY_WHATSAPP'),
 			self::NOTIFICATION => Loc::getMessage('CRM_TIMELINE_CATEGORY_NOTIFICATION_2'),
 			self::ACTIVITY_ZOOM => Loc::getMessage('CRM_TIMELINE_CATEGORY_ZOOM'),
 			self::BIZ_PROCESS => Loc::getMessage('CRM_TIMELINE_CATEGORY_BIZ_PROCESS'),
@@ -210,6 +212,13 @@ class TimelineEntryCategory
 					$categoryFilter->where(
 						Main\Entity\Query::filter()
 							->where('ASSOCIATED_ENTITY_CLASS_NAME', Crm\Activity\Provider\Sms::getId())
+					);
+				}
+				elseif($entryCategoryID === self::WHATSAPP)
+				{
+					$categoryFilter->where(
+						Main\Entity\Query::filter()
+							->where('ASSOCIATED_ENTITY_CLASS_NAME', Crm\Activity\Provider\WhatsApp::getId())
 					);
 				}
 				elseif($entryCategoryID === self::NOTIFICATION)

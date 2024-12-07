@@ -1204,7 +1204,7 @@ if (!class_exists("CDavExchangeCalendar"))
 				if (mb_strtolower($arResultItem["DETAIL_TEXT_TYPE"]) === "html")
 				{
 					$arResultItem["DESCRIPTION"] = preg_replace(
-						"/[\s|\S]*?<body[^>]*?>([\s|\S]*?)<\/body>[\s|\S]*/is".BX_UTF_PCRE_MODIFIER,
+						"/[\s|\S]*?<body[^>]*?>([\s|\S]*?)<\/body>[\s|\S]*/isu",
 						"\\1",
 						$arResultItem["DESCRIPTION"]
 					);
@@ -2585,7 +2585,7 @@ if (!class_exists("CDavExchangeCalendar"))
 							U.ACTIVE = 'Y' AND
 							BUF.UF_BXDAVEX_MAILBOX in (".$strValue.")";
 
-					$res = $DB->Query($strSql, false, "File: ".__FILE__."<br>Line: ".__LINE__);
+					$res = $DB->Query($strSql);
 					$checkedEmails = [];
 					while ($entry = $res->Fetch())
 					{
@@ -2612,7 +2612,7 @@ if (!class_exists("CDavExchangeCalendar"))
 
 						if ($strLogins !== '')
 						{
-							$res = $DB->Query("SELECT U.ID, U.LOGIN FROM b_user U WHERE U.ACTIVE = 'Y' AND U.LOGIN in (".$strLogins.")", false, "File: ".__FILE__."<br>Line: ".__LINE__);
+							$res = $DB->Query("SELECT U.ID, U.LOGIN FROM b_user U WHERE U.ACTIVE = 'Y' AND U.LOGIN in (".$strLogins.")");
 
 							while($entry = $res->Fetch())
 							{

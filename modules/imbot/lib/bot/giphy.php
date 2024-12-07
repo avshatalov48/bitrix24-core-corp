@@ -1,6 +1,8 @@
 <?php
 namespace Bitrix\ImBot\Bot;
 
+use Bitrix\Main\Application;
+use Bitrix\Main\Config\Option;
 use Bitrix\Main\Localization\Loc;
 
 Loc::loadMessages(__FILE__);
@@ -8,6 +10,7 @@ Loc::loadMessages(__FILE__);
 class Giphy extends Base
 {
 	const BOT_CODE = "giphy";
+	private const REGION_BLACKLIST = ['ru', 'by', 'kz'];
 
 	public static function register(array $params = Array())
 	{
@@ -105,6 +108,23 @@ class Giphy extends Base
 		return $result;
 	}
 
+	public static function isAvailable(): bool
+	{
+		if (Option::get('imbot', 'giphy_available', 'N') === 'Y')
+		{
+			return true;
+		}
+
+		$region = Application::getInstance()->getLicense()->getRegion() ?? 'ru';
+
+		return !in_array($region, self::REGION_BLACKLIST, true);
+	}
+
+	public static function isEnabled(): bool
+	{
+		return parent::isEnabled() && self::isAvailable();
+	}
+
 	public static function onChatStart($dialogId, $joinFields)
 	{
 		if ($joinFields['CHAT_TYPE'] == IM_MESSAGE_PRIVATE)
@@ -131,6 +151,13 @@ class Giphy extends Base
 	{
 		if ($messageFields['SYSTEM'] == 'Y')
 			return false;
+
+		if (!self::isAvailable())
+		{
+			self::sendRegionErrorMessage((int)$messageId, $messageFields);
+
+			return false;
+		}
 
 		if (
 			$messageFields['MESSAGE_TYPE'] != IM_MESSAGE_PRIVATE ||
@@ -288,6 +315,13 @@ class Giphy extends Base
 		if ($messageFields['SYSTEM'] == 'Y')
 			return false;
 
+		if (!self::isAvailable())
+		{
+			self::sendRegionErrorMessage((int)$messageId, $messageFields);
+
+			return false;
+		}
+
 		if ($messageFields['COMMAND_CONTEXT'] == 'TEXTAREA')
 		{
 			if (
@@ -331,6 +365,21 @@ class Giphy extends Base
 		}
 
 		return $result;
+	}
+
+	public static function sendRegionErrorMessage(int $messageId, array $messageFields): void
+	{
+		if (!$messageFields['DIALOG_ID'])
+		{
+			return;
+		}
+
+		self::sendAnswer($messageId, [
+			'MESSAGE_ID' => $messageId,
+			'DIALOG_ID' => $messageFields['DIALOG_ID'],
+			'ANSWER' => Loc::getMessage('IMBOT_GIPHY_REGION_ERROR'),
+			'COMMAND_ID' => $messageFields['COMMAND_ID']
+		]);
 	}
 
 	public static function onAppLang($icon, $lang = null)

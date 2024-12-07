@@ -45,11 +45,6 @@ class SmartB2eDocument extends Dynamic
 		return false;
 	}
 
-	public function isPaymentsEnabled(): bool
-	{
-		return false;
-	}
-
 	public function isLinkWithProductsEnabled(): bool
 	{
 		return false;
@@ -298,7 +293,7 @@ class SmartB2eDocument extends Dynamic
 							'COMPLETED' => 'N',
 							'RESPONSIBLE_ID' => $item->getAssignedById(),
 							'START_TIME' => (new DateTime())
-								->add('+30 DAYS'),
+								->add('+365 DAYS'),
 						]
 					);
 				}
@@ -326,5 +321,10 @@ class SmartB2eDocument extends Dynamic
 		);
 
 		return $operation;
+	}
+
+	public function isCommunicationRoutingSupported(): bool
+	{
+		return false;
 	}
 }

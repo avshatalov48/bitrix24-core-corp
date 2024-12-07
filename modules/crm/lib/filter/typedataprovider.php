@@ -2,19 +2,18 @@
 
 namespace Bitrix\Crm\Filter;
 
+use Bitrix\Crm\AutomatedSolution\AutomatedSolutionManager;
 use Bitrix\Crm\Integration;
-use Bitrix\Crm\Integration\Intranet\CustomSection\CustomSectionQueries;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Filter\EntityDataProvider;
 use Bitrix\Main\Filter\Field;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Main\Type\DateTime;
 
 class TypeDataProvider extends EntityDataProvider
 {
 	protected TypeSettings $settings;
 
-	private CustomSectionQueries $customSectionQueries;
+	private AutomatedSolutionManager $automatedSolutionManager;
 
 	private bool $isCustomSectionsAvailable;
 
@@ -23,7 +22,7 @@ class TypeDataProvider extends EntityDataProvider
 		$this->settings = $settings;
 		Container::getInstance()->getLocalization()->loadMessages();
 
-		$this->customSectionQueries = CustomSectionQueries::getInstance();
+		$this->automatedSolutionManager = Container::getInstance()->getAutomatedSolutionManager();
 
 		$this->isCustomSectionsAvailable = Integration\IntranetManager::isCustomSectionsAvailable();
 		if (!$this->isCustomSectionsAvailable)
@@ -112,7 +111,7 @@ class TypeDataProvider extends EntityDataProvider
 
 		if ($this->isCustomSectionsAvailable && $this->settings->getIsExternalDynamicalTypes())
 		{
-			$fields['CUSTOM_SECTION'] = [
+			$fields['AUTOMATED_SOLUTION'] = [
 				'options' => [
 					'default' => true,
 					'partial' => true,
@@ -158,22 +157,14 @@ class TypeDataProvider extends EntityDataProvider
 				]
 			];
 		}
-		elseif ($fieldID === 'CUSTOM_SECTION')
+		elseif ($fieldID === 'AUTOMATED_SOLUTION')
 		{
-			$sections = $this->customSectionQueries->findAllRelatedByCrmType();
+			$solutions = $this->automatedSolutionManager->getExistingAutomatedSolutions();
 
 			$items = [];
-
-			foreach ($sections as $row)
+			foreach ($solutions as $solution)
 			{
-				if ($row['SECTION_TITLE'] === null)
-				{
-					continue;
-				}
-
-				$title = $row['SECTION_TITLE'];
-				$id = $row['CUSTOM_SECTION_ID'];
-				$items[$id] = $title;
+				$items[$solution['ID']] = $solution['TITLE'];
 			}
 
 			$result = [
@@ -251,8 +242,8 @@ class TypeDataProvider extends EntityDataProvider
 		if ($this->isCustomSectionsAvailable && $this->settings->getIsExternalDynamicalTypes())
 		{
 			$result[] = [
-				'id' => 'CUSTOM_SECTION',
-				'name' => $this->getFieldName('CUSTOM_SECTION'),
+				'id' => 'AUTOMATED_SOLUTION',
+				'name' => $this->getFieldName('AUTOMATED_SOLUTION'),
 				'default' => true,
 				'sort' => false,
 			];
@@ -331,90 +322,33 @@ class TypeDataProvider extends EntityDataProvider
 			$filter['<=UPDATED_TIME'] = $requestFilter['UPDATED_TIME_to'];
 		}
 
-		$this->appendCustomSectionFilter($filter, $requestFilter);
-		$this->appendDefaultCustomSectionFilter($filter, $requestFilter);
+		$this->appendAutomatedSolutionFilter($filter, $requestFilter);
 	}
 
-	protected function appendDefaultCustomSectionFilter(array &$filter, array $requestFilter) : void
+	protected function appendAutomatedSolutionFilter(array &$filter, array $requestFilter): void
 	{
-		if (isset($requestFilter['CUSTOM_SECTION']))
+		$automatedSolutionId = (int)($requestFilter['AUTOMATED_SOLUTION'] ?? null);
+		if ($automatedSolutionId > 0)
 		{
-			return;
+			$filter['=CUSTOM_SECTION_ID'] = $automatedSolutionId;
 		}
-
-		$foundSections = $this->customSectionQueries->findAllRelatedByCrmType();
-		$typeIds = [];
-		foreach ($foundSections as $row)
+		else
 		{
-			$typeId = Integration\IntranetManager::getEntityTypeIdByPageSettings($row['SETTINGS']);
-
-			if ($typeId !== null)
-			{
-				$typeIds[] = $typeId;
-			}
+			$this->appendAutomatedSolutionDefaultFilter($filter);
 		}
+	}
 
+	protected function appendAutomatedSolutionDefaultFilter(array &$filter): void
+	{
 		if ($this->settings->getIsExternalDynamicalTypes())
 		{
-			//-1, needed to cut off CRM processes if there are no external processes
-			$filter['@ENTITY_TYPE_ID'] = empty($typeIds) ? [-1] : $typeIds;
+			// grid in automation should not show CRM types
+			$filter['!=CUSTOM_SECTION_ID'] = null;
 		}
 		else
 		{
-			if (empty($typeIds))
-			{
-				return;
-			}
-			$filter[]['!@ENTITY_TYPE_ID'] = $typeIds;
-		}
-	}
-
-	protected function appendCustomSectionFilter(array &$filter, array $requestFilter): void
-	{
-		if (!$this->isCustomSectionsAvailable)
-		{
-			return;
-		}
-
-		if (!isset($requestFilter['CUSTOM_SECTION']))
-		{
-			return;
-		}
-
-		$customSectionId = (int)$requestFilter['CUSTOM_SECTION'];
-
-		if ($customSectionId > 0)
-		{
-			$foundSections = $this->customSectionQueries->findSettingsById($customSectionId);
-		}
-		else
-		{
-			$foundSections = $this->customSectionQueries->findAllRelatedByCrmType();
-		}
-
-		$typeIds = [];
-		foreach ($foundSections as $row)
-		{
-			$typeId = Integration\IntranetManager::getEntityTypeIdByPageSettings($row['SETTINGS']);
-
-			if ($typeId !== null)
-			{
-				$typeIds[] = $typeId;
-			}
-		}
-
-		if (empty($typeIds))
-		{
-			return;
-		}
-
-		if ($customSectionId > 0)
-		{
-			$filter['@ENTITY_TYPE_ID'] = $typeIds;
-		}
-		else
-		{
-			$filter[]['!@ENTITY_TYPE_ID'] = $typeIds;
+			// grid in crm should not show automation types
+			$filter['=CUSTOM_SECTION_ID'] = null;
 		}
 	}
 }

@@ -28,7 +28,7 @@ class TemplateConverter implements AgentInterface
 	 */
 	public static function isProceed(): bool
 	{
-		return Option::get('tasks', self::OPTION_KEY, 'null', '-') !== 'null';
+		return Option::get('tasks', self::OPTION_KEY, 'null') !== 'null';
 	}
 
 	public static function execute(): string
@@ -97,7 +97,7 @@ class TemplateConverter implements AgentInterface
 			return '';
 		}
 
-		Option::set('tasks', self::OPTION_KEY, (int) $template['ID'], '-');
+		Option::set('tasks', self::OPTION_KEY, (int) $template['ID']);
 
 		return static::getAgentName();
 	}
@@ -360,7 +360,7 @@ class TemplateConverter implements AgentInterface
 	 */
 	private function getList(): array
 	{
-		$startId = Option::get('tasks', self::OPTION_KEY, 0, '-');
+		$startId = Option::get('tasks', self::OPTION_KEY, 0);
 
 		$templates = TemplateTable::getList([
 			'filter' => [
@@ -387,6 +387,7 @@ class TemplateConverter implements AgentInterface
 	private function convertDone(): void
 	{
 		Option::delete('tasks', ['name' => self::OPTION_KEY, 'site_id' => '-']);
+		Option::delete('tasks', ['name' => self::OPTION_KEY]);
 	}
 
 	private function getSqlHelper(): SqlHelper

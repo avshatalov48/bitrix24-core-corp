@@ -1,0 +1,31 @@
+.ai__copilot-context-menu__result-popup {
+	border: var(--ui-border-width-thin) solid var(--ui-color-base-30);
+}
+
+.ai__copilot-context-menu__result-popup-content {
+	padding: 10px 6px 0 10px;
+}
+
+.ai__copilot-context-menu__result-popup-text {
+	max-height: 340px;
+	overflow-y: auto;
+	font-size: var(--ui-font-size-md);
+	line-height: var(--ui-font-line-height-3xs);
+	color: var(--ai__copilot_color-main);
+	margin-right: 24px;
+}
+
+.ai__copilot-context-menu__result-popup-text.--with-scroll {
+	margin-top: 18px;
+	margin-right: 2px;
+}
+
+.ai__copilot-context-menu__result-popup-text.--with-scroll {
+	scrollbar-color: var(--ui-color-base-30) var(--ui-color-base-04);
+	scrollbar-width: thin;
+}
+
+
+.ai__copilot-context-menu_result-popup-warning {
+	margin-top: 10px;
+}

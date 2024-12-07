@@ -2,8 +2,20 @@
 
 return [
 	'extensions' => [
+		'type',
 		'tokens',
+		'utils/type',
+		'utils/color',
 		'utils/object',
-		'ui-system/blocks/plain-view',
+		'utils/string',
+		'utils/enums/base',
+		'utils/enums/style',
+		'ui-system/blocks/icon',
+		'ui-system/typography/text',
+		'layout/ui/loaders/spinner',
+	],
+	'bundle' => [
+		'./src/size-enum',
+		'./src/design-enum',
 	],
 ];

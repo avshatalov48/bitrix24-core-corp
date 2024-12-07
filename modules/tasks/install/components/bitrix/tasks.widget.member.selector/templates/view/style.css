@@ -52,6 +52,7 @@
 	overflow: hidden;
 	display: flex;
 	align-items: center;
+	width: 100%;
 }
 
 .task-detail-sidebar-info-user-extranet,

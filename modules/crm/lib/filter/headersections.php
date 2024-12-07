@@ -58,7 +58,11 @@ final class HeaderSections
 		if ($this->isFastSearchCanBeUsed($settings))
 		{
 			$additionalProviders[] = new ActivityFastSearchDataProvider(
-				new ActivityFastSearchSettings(['ID' => $settings->getID()])
+				new ActivityFastSearchSettings([
+					'ID' => $settings->getID(),
+					'PARENT_FILTER_ENTITY_TYPE_ID' => $settings->getEntityTypeID(),
+					'PARENT_ENTITY_DATA_PROVIDER' => $filterFactory->getDataProvider($settings),
+				])
 			);
 		}
 

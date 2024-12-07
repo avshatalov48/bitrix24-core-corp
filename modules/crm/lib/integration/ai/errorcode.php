@@ -9,8 +9,10 @@ final class ErrorCode
 {
 	public const AI_NOT_AVAILABLE = 'AI_NOT_AVAILABLE';
 	public const AI_DISABLED = 'AI_IS_DISABLED';
+	public const LICENSE_NOT_ACCEPTED = 'LICENSE_NOT_ACCEPTED';
 	public const NOT_FOUND = \Bitrix\Crm\Controller\ErrorCode::NOT_FOUND;
 	public const FILE_NOT_FOUND = \Bitrix\Crm\Controller\ErrorCode::FILE_NOT_FOUND;
+	public const AI_RESULT_NOT_FOUND = 'AI_RESULT_NOT_FOUND';
 	public const FILE_NOT_SUPPORTED = 'FILE_NOT_SUPPORTED';
 	public const AI_ENGINE_NOT_FOUND = 'AI_ENGINE_NOT_FOUND';
 	public const AI_ENGINE_LIMIT_EXCEEDED = 'AI_ENGINE_LIMIT_EXCEEDED';
@@ -42,6 +44,14 @@ final class ErrorCode
 		);
 	}
 
+	public static function getLicenseNotAcceptedError(array $customData = null): Error
+	{
+		return new Error(
+			Loc::getMessage('CRM_INTEGRATION_AI_ERROR_NOT_AVAILABLE'),
+			self::LICENSE_NOT_ACCEPTED
+		);
+	}
+
 	public static function getNotFoundError(): Error
 	{
 		return \Bitrix\Crm\Controller\ErrorCode::getNotFoundError();
@@ -60,6 +70,15 @@ final class ErrorCode
 		return new Error(
 			Loc::getMessage('CRM_INTEGRATION_AI_ERROR_ENGINE_FAILED'),
 			self::AI_ENGINE_NOT_FOUND,
+			$customData
+		);
+	}
+
+	public static function getAIResultFoundError(array $customData = null): Error
+	{
+		return new Error(
+			Loc::getMessage('CRM_INTEGRATION_AI_ERROR_ENGINE_FAILED'),
+			self::AI_RESULT_NOT_FOUND,
 			$customData
 		);
 	}

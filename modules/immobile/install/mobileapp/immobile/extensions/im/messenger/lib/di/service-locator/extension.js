@@ -35,6 +35,13 @@ jn.define('im/messenger/lib/di/service-locator', (require, exports, module) => {
 
 			return this;
 		}
+
+		delete(serviceName)
+		{
+			this.services.delete(serviceName);
+
+			return this;
+		}
 	}
 
 	module.exports = {

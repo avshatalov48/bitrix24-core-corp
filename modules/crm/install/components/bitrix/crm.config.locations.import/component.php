@@ -46,7 +46,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') // process data from popup dialog
 				$contents = fread($fp, filesize($_FILES["FILE_IMPORT_UPLOAD"]["tmp_name"]));
 				fclose($fp);
 
-				$contents = $GLOBALS["APPLICATION"]->ConvertCharset($contents, 'windows-1251', LANG_CHARSET);
+				$contents = \Bitrix\Main\Text\Encoding::convertEncoding($contents, 'windows-1251', LANG_CHARSET);
 
 				$fp = fopen($arResult["TMP_PATH"].'/locations.csv', 'w+');
 				fwrite($fp, $contents);

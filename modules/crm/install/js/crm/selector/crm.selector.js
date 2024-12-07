@@ -184,7 +184,7 @@ BX.CrmUISelector = {
 			selectorInstance = params.selector;
 
 		var
-			entityTypesList = [ 'CONTACTS', 'COMPANIES', 'LEADS', 'DEALS', 'ORDERS', 'PRODUCTS', 'QUOTES' ],
+			entityTypesList = ['CONTACTS', 'COMPANIES', 'LEADS', 'DEALS', 'ORDERS', 'PRODUCTS', 'QUOTES', 'SMART_INVOICES'],
 			entityType = null;
 
 		for (entityType in responseData.ENTITIES)

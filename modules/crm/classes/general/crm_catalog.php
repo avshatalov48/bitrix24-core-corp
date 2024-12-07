@@ -165,7 +165,7 @@ class CAllCrmCatalog
 			return false;
 		}
 
-		$DB->Add($tableName, $arFields, array(), '', false, 'File: '.__FILE__.'<br/>Line: '.__LINE__);
+		$DB->Add($tableName, $arFields, array(), '');
 
 		if($DB->db_Error <> '')
 		{
@@ -236,7 +236,7 @@ class CAllCrmCatalog
 		if (!empty($sUpdate))
 		{
 			$sQuery = 'UPDATE '.$tableName.' SET '.$sUpdate.' WHERE ID = '.$ID;
-			$DB->Query($sQuery, false, 'File: '.__FILE__.'<br/>Line: '.__LINE__);
+			$DB->Query($sQuery);
 
 			CCrmEntityHelper::RemoveCached(self::CACHE_NAME, $ID);
 		}

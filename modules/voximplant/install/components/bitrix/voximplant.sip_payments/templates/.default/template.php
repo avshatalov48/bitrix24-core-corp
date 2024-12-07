@@ -6,7 +6,7 @@ CJSCore::RegisterExt('voximplant_sip_payments', array(
 ));
 CJSCore::Init(array('voximplant.common', 'voximplant_sip_payments'));
 ?>
-<script type="text/javascript">
+<script>
 	BX.ready(function(){
 		BX.VoxImplant.sipPayments.init();
 	})

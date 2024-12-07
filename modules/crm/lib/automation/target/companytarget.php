@@ -2,6 +2,8 @@
 
 namespace Bitrix\Crm\Automation\Target;
 
+use Bitrix\Crm\CompanyTable;
+
 class CompanyTarget extends BaseTarget
 {
 	public function getEntityTypeId()
@@ -9,35 +11,23 @@ class CompanyTarget extends BaseTarget
 		return \CCrmOwnerType::Company;
 	}
 
-	public function getEntityId()
+	protected function getEntityIdByDocumentId(string $documentId): int
 	{
-		$entity = $this->getEntity();
-		return isset($entity['ID']) ? (int)$entity['ID'] : 0;
+		return (int)str_replace('COMPANY_', '', $documentId);
 	}
 
-	public function setEntityById($id)
+	protected function getEntityFields(array $select): array
 	{
-		$id = (int)$id;
-		if ($id > 0)
+		$id = $this->getEntityId();
+		if (empty($id))
 		{
-			$entity = \CCrmCompany::GetByID($id, false);
-			if ($entity)
-			{
-				$this->setEntity($entity);
-				$this->setDocumentId('COMPANY_' . $id);
-			}
-		}
-	}
-
-	public function getEntity()
-	{
-		if ($this->entity === null && $id = $this->getDocumentId())
-		{
-			$id = (int)str_replace('COMPANY_', '', $id);
-			$this->setEntityById($id);
+			return [];
 		}
 
-		return parent::getEntity();
+		return CompanyTable::query()
+			->setSelect($select)
+			->where('ID', $id)
+			->fetch() ?: [];
 	}
 
 	public function getEntityStatus()

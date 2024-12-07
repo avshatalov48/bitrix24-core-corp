@@ -1,0 +1,87 @@
+.ai__prompt-master_loader,
+.ai__prompt-master_success,
+.ai__prompt-master_error {
+	display: flex;
+	flex-direction: column;
+	justify-content: flex-start;
+	align-items: center;
+	z-index: 5;
+	border-radius: var(--ui-border-radius-lg);
+}
+
+.ai__prompt-master_error {
+	align-self: flex-end;
+	padding-bottom: 44px;
+}
+
+.ai__prompt-master_loader-loader {
+	position: relative;
+	width: 80px;
+	height: 80px;
+	margin-bottom: 32px;
+}
+
+.ai__prompt-master_loader-text {
+	font-size: var(--ui-font-size-xl);
+}
+
+.ai__prompt-master_success-icon {
+	width: 100px;
+	height: 100px;
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: center;
+	margin-bottom: 25px;
+	background-color: #F7F3FD;
+	border-radius: var(--ui-border-radius-circle);
+}
+
+.ai__prompt-master_success-text {
+	font-size: var(--ui-font-size-xl);
+}
+
+.ai__prompt-master_success-close-btn {
+	position: absolute;
+	bottom: 44px;
+}
+
+.ai__prompt-master-container {
+	width: 100%;
+	display: flex;
+}
+
+.ai__prompt-master {
+	display: flex;
+	width: 100%;
+	position: relative;
+	justify-content: center;
+	align-items: center;
+}
+
+.ai__prompt-master_prompt-step-more-details {
+	margin-top: 20px;
+}
+
+.ai__prompt-master_more-details {
+	display: inline-block;
+	color: var(--ui-color-base-60);
+	font-feature-settings: 'clig' off, 'liga' off;
+	font-size: var(--ui-font-size-md);
+	line-height: normal;
+	border-bottom: var(--ui-border-width-thin) dashed rgba(var(--ui-color-base-60-rgb), 0.4);
+	transition: 0.2s ease-in-out border-bottom-color;
+	cursor: pointer;
+}
+
+.ai__prompt-master_more-details:hover {
+	border-bottom-color: rgba(var(--ui-color-base-60-rgb), 1);
+	transition-duration: 0s;
+}
+
+.ai__prompt-master_navigation {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: space-between;
+}

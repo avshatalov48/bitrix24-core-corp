@@ -15,8 +15,8 @@ class SpaceService
 	public static function isAvailable(bool $isPublic = false): bool
 	{
 		if (
-			!class_exists(Service::class)
-			|| !Loader::includeModule('socialnetwork')
+			!Loader::includeModule('socialnetwork')
+			|| !class_exists(Service::class)
 		)
 		{
 			return false;
@@ -28,6 +28,6 @@ class SpaceService
 	public static function useNotificationStrategy(): bool
 	{
 		return static::isAvailable(true)
-			&& Option::get('tasks', 'use_notification_strategy', 'N', '-') === 'Y';
+			&& Option::get('tasks', 'use_notification_strategy', 'N') === 'Y';
 	}
 }

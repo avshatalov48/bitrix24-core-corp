@@ -12,8 +12,6 @@ define('BX_SECURITY_SHOW_MESSAGE', true);
 
 require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_before.php");
 
-CUtil::JSPostUnescape();
-
 CModule::IncludeModule('tasks');
 
 Loc::loadMessages(__FILE__);
@@ -138,7 +136,7 @@ if (check_bitrix_sessid())
 						$flipped = array();
 						foreach ($itemOps as $opId)
 						{
-							$flipped[ToUpper($ops[$opId]['NAME'])] = true;
+							$flipped[mb_strtoupper($ops[$opId]['NAME'])] = true;
 						}
 						$templates[$itemId]['ALLOWED_ACTIONS'] = $flipped;
 					}

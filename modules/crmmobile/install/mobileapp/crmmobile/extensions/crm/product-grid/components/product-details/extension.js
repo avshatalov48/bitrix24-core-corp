@@ -25,6 +25,7 @@ jn.define('crm/product-grid/components/product-details', (require, exports, modu
 	const { PlanRestriction } = require('layout/ui/plan-restriction');
 	const { lock } = require('assets/common');
 	const { ProductType } = require('catalog/product-type');
+	const { ModeList } = require('catalog/store/mode-list');
 
 	/**
 	 * @callback calculationFn
@@ -71,6 +72,7 @@ jn.define('crm/product-grid/components/product-details', (require, exports, modu
 		 *	editable: boolean,
 		 *	isAllowedReservation: boolean,
 		 *  isReservationRestrictedByPlan: boolean
+		 *  inventoryControlMode: string
 		 *  defaultDateReserveEnd: number,
 		 *	iblockId: number,
 		 *	entityDetailPageUrl: string,
@@ -672,7 +674,10 @@ jn.define('crm/product-grid/components/product-details', (require, exports, modu
 				testId: 'ProductGridProductDetailsInputReserveQuantityField',
 				title: Loc.getMessage('PRODUCT_GRID_PRODUCT_DETAILS_FIELD_INPUT_RESERVE_QUANTITY_MSGVER_1'),
 				placeholder: '0',
-				readOnly: this.isReadonly(),
+				readOnly: (
+					this.isReadonly()
+					|| this.props.inventoryControlMode === ModeList.Mode1C
+				),
 				config: {
 					type: NumberPrecision.INTEGER,
 				},
@@ -824,7 +829,7 @@ jn.define('crm/product-grid/components/product-details', (require, exports, modu
 		 */
 		isCatalogProductFieldEditable()
 		{
-			return this.getProps().permissions.catalog_product_edit && !this.isReadonly();
+			return !this.getProps().isCatalogHidden && this.getProps().permissions.catalog_product_edit && !this.isReadonly();
 		}
 
 		/**

@@ -16,6 +16,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+Loader::requireModule('disk');
+
 class DiskFileEditorTemplatesController extends Engine\Controller
 {
 	public function configureActions()

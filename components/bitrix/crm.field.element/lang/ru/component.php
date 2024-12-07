@@ -1,8 +1,7 @@
 <?php
 $MESS['CRM_ELEMENT_BUTTON_SELECT'] = 'Выбрать';
 $MESS['CRM_SFE_ENTITY_NOT_SELECTED'] = 'Не выбран ни один тип сущности в настройках поля';
-
-$MESS['CRM_ENTITY_ITEM_DELETED'] = 'Удаленный элемент';
+$MESS['CRM_ELEMENT_HIDDEN_OR_DELETED'] = 'Скрытый или удалённый элемент';
 $MESS['CRM_ELEMENT_LEAD'] = 'Лиды';
 $MESS['CRM_ELEMENT_CONTACT'] = 'Контакты';
 $MESS['CRM_ELEMENT_COMPANY'] = 'Компании';

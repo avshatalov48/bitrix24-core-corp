@@ -180,6 +180,14 @@
 	transition: text-decoration-color 0.2s linear, -webkit-text-decoration-color 0.2s linear;
 }
 
+.crm-dups-item-title-hidden {
+	color: var(--ui-color-palette-gray-70);
+	font-size: var(--ui-font-size-xl);
+	line-height: var(--ui-font-line-height-3xs);
+	font-weight: var(--ui-font-weight-normal);
+	word-break: break-word;
+}
+
 .crm-dups-item-title:hover,
 .crm-dups-item-title:active {
 	-webkit-transition-duration: 0s;

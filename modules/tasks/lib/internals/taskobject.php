@@ -14,109 +14,69 @@ use Bitrix\Tasks\Integration\SocialNetwork\Group;
 use Bitrix\Tasks\Internals\Log\LogFacade;
 use Bitrix\Tasks\Internals\Task\CheckListTable;
 use Bitrix\Tasks\Internals\Task\RegularParametersObject;
-use Bitrix\Tasks\Internals\Task\RegularParametersTable;
 use Bitrix\Tasks\Internals\Task\Result\Result;
 use Bitrix\Tasks\Internals\Task\Result\ResultManager;
-use Bitrix\Tasks\Internals\Task\Result\ResultTable;
-use Bitrix\Tasks\Internals\Task\ScenarioTable;
 use Bitrix\Tasks\Internals\Task\Status;
-use Bitrix\Tasks\Internals\Task\UtsTasksTaskTable;
 use Bitrix\Tasks\Member\AbstractMemberService;
 use Bitrix\Tasks\Member\Service\TaskMemberService;
-use Bitrix\Tasks\Util\Entity\DateTimeField;
 use Bitrix\Tasks\Util\Type\DateTime;
 
 class TaskObject extends EO_Task implements Arrayable
 {
+	use CacheTrait;
 	use MemberTrait;
 	use WakeUpTrait;
 
-	/**
-	 * @throws ArgumentException
-	 * @throws ObjectPropertyException
-	 * @throws SystemException
-	 */
-	public function getCrmFields(bool $forceFetch = true): array
+	public function getCrmFields(bool $force = false): array
 	{
-		//first of all, try to get crm data from loaded data
-		$crmObject = $this->getUtsData();
-		if (is_null($crmObject) && $forceFetch)
+		if (!$this->isUtsDataFilled() || $this->isUtsDataChanged() || $force)
 		{
-			$crmObject = UtsTasksTaskTable::getById($this->getId())->fetchObject();
+			$this->fillUtsData()?->fillUfCrmTask();
 		}
-		if (empty($crmObject?->getUfCrmTask()))
-		{
-			return [];
-		}
-		return unserialize($crmObject->getUfCrmTask(), ['allowed_classes' => false]);
+
+		return (array)$this->getUtsData()?->getUfCrmTask();
 	}
 
-	public function getRegularFields(bool $forceFetch = true): ?RegularParametersObject
+	public function getRegularFields(bool $force = false): ?RegularParametersObject
 	{
-		//first of all, try to get crm data from loaded data
-		$regularObject = $this->getRegular();
-		if (is_null($regularObject) && $forceFetch)
+		if (!$this->isRegularFilled() || $this->isRegularChanged() || $force)
 		{
-			$regularObject = RegularParametersTable::getByTaskId($this->getId());
+			$this->fillRegular();
 		}
 
-		return $regularObject;
+		return $this->getRegular();
 	}
-
-	/**
-	 * @throws ObjectPropertyException
-	 * @throws SystemException
-	 * @throws ArgumentException
-	 */
-	public function getRegularDeadlineOffset(): ?int
+	
+	public function getRegularDeadlineOffset(): int
 	{
 		if (!$this->isRegular())
 		{
-			return null;
+			return 0;
 		}
 
 		$regularFields = $this->getRegularFields()?->getRegularParameters();
 		if (is_null($regularFields))
 		{
-			return null;
+			return 0;
 		}
 
 		return (int)$regularFields['DEADLINE_OFFSET'];
 	}
 
-	/**
-	 * @throws ArgumentException
-	 * @throws ObjectPropertyException
-	 * @throws SystemException
-	 */
-	public function getFileFields(): array
+	public function getFileFields(bool $force = false): array
 	{
-		//first of all, try to get crm data from loaded data
-		$filesObject = $this->getUtsData() ?? UtsTasksTaskTable::getById($this->getId())->fetchObject();
-		if (!is_null($filesObject))
+		if (!$this->isUtsDataFilled() || $this->isUtsDataChanged() || $force)
 		{
-			$ufFiles = $filesObject->getUfTaskWebdavFiles();
-			if (empty($ufFiles))
-			{
-				return [];
-			}
-			$ufFiles = unserialize($ufFiles, ['allowed_classes' => false]);
-
-			return is_array($ufFiles) ? $ufFiles : [];
+			$this->fillUtsData()?->fillUfTaskWebdavFiles();
 		}
 
-		return [];
+		return (array)$this->getUtsData()?->getUfTaskWebdavFiles();
 	}
 
-	/**
-	 * @throws ObjectPropertyException
-	 * @throws SystemException
-	 * @throws ArgumentException
-	 */
 	public function getLastResult(): ?Result
 	{
-		$results = $this->getResult() ?? ResultTable::getByTaskId($this->getId());
-		if ($results->count() !== 0)
+		$results = $this->getResult() ?? $this->fillResult();
+		if ((int)$results?->count() !== 0)
 		{
 			$ids = $results->getIdList();
 			return $results->getByPrimary(max($ids));
@@ -125,15 +85,10 @@ class TaskObject extends EO_Task implements Arrayable
 		return null;
 	}
 
-	/**
-	 * @throws ObjectPropertyException
-	 * @throws SystemException
-	 * @throws ArgumentException
-	 */
 	public function getFirstResult(): ?Result
 	{
-		$results = $this->getResult() ?? ResultTable::getByTaskId($this->getId());
-		if ($results->count() !== 0)
+		$results = $this->getResult() ?? $this->fillResult();
+		if ((int)$results?->count() !== 0)
 		{
 			$ids = $results->getIdList();
 			return $results->getByPrimary(min($ids));
@@ -147,11 +102,6 @@ class TaskObject extends EO_Task implements Arrayable
 		return $this->fillStatus();
 	}
 
-	/**
-	 * @throws ObjectPropertyException
-	 * @throws SystemException
-	 * @throws ArgumentException
-	 */
 	public function getRegularityStartTime(): ?\Bitrix\Main\Type\DateTime
 	{
 		if (!$this->isRegular())
@@ -160,6 +110,41 @@ class TaskObject extends EO_Task implements Arrayable
 		}
 
 		return $this->getRegularFields()?->getStartTime();
+	}
+
+	/**
+	 * @throws ArgumentException
+	 * @throws ObjectPropertyException
+	 * @throws SystemException
+	 */
+	public function getChildren(): TaskCollection
+	{
+		$query = $this::$dataClass::query();
+		$query
+			->setSelect(['ID', 'PARENT_ID', 'TITLE'])
+			->where('PARENT_ID', $this->getId());
+
+		return $query->exec()->fetchCollection();
+	}
+
+	public function getMemberService(): AbstractMemberService
+	{
+		return new TaskMemberService($this->getId());
+	}
+
+	public function getCachedCrmFields(): array
+	{
+		return $this->getCached('CRM_FIELDS') ?? [];
+	}
+
+	public function getFlowId(bool $force = true): int
+	{
+		if ($force && $this->onFlow() === false)
+		{
+			return 0;
+		}
+
+		return (int)$this->getFlowTask()?->getFlowId();
 	}
 
 	public function isDeleted(): bool
@@ -174,7 +159,7 @@ class TaskObject extends EO_Task implements Arrayable
 	 */
 	public function isMuted(int $userId): bool
 	{
-		return UserOption::isOptionSet($this->getId(), $userId, UserOption\Option::MUTED);
+		return $this->fillCache('MUTED', UserOption::isOptionSet($this->getId(), $userId, UserOption\Option::MUTED));
 	}
 
 	public function isExpired(): bool
@@ -194,17 +179,10 @@ class TaskObject extends EO_Task implements Arrayable
 	{
 		return (bool)$this->fillScenario()?->isCrm();
 	}
-
-	/**
-	 * @throws ArgumentException
-	 * @throws ObjectPropertyException
-	 * @throws SystemException
-	 */
+	
 	public function isRegular(): bool
 	{
-		return
-			$this->getIsRegular()
-			?? TaskTable::getByPrimary($this->getId(), ['select' => ['ID', 'IS_REGULAR']])->fetchObject()->getIsRegular();
+		return $this->getIsRegular() ?? $this->fillIsRegular();
 	}
 
 	public function isCompleted(): bool
@@ -222,9 +200,9 @@ class TaskObject extends EO_Task implements Arrayable
 		return ResultManager::requireResult($this->getId());
 	}
 
-	public function isInGroup(bool $forceFetch = true): bool
+	public function isInGroup(bool $force = true): bool
 	{
-		$forceFetch && $this->fillGroupId();
+		$force && $this->fillGroupId();
 		return $this->getGroupId() !== 0;
 	}
 
@@ -257,6 +235,11 @@ class TaskObject extends EO_Task implements Arrayable
 		}
 	}
 
+	public function onFlow(): bool
+	{
+		return $this->fillFlowTask() !== null;
+	}
+
 	public function hasDeadlineValue(): bool
 	{
 		return parent::hasDeadline() && !is_null($this->getDeadline());
@@ -274,9 +257,37 @@ class TaskObject extends EO_Task implements Arrayable
 		return !is_null($checklist);
 	}
 
-	public function toArray(): array
+	public function cacheCrmFields(): static
+	{
+		$currentCrmFields = $this->fillUtsData()?->fillUfCrmTask();
+		$currentCrmFields = !is_array($currentCrmFields) ? [] : $currentCrmFields;
+		$this->cache('CRM_FIELDS', $currentCrmFields);
+
+		return $this;
+	}
+
+	public function fillAdditionalMembers(): static
+	{
+		$this->disablePrefix();
+
+		if (!$this->isCached('ACCOMPLICES'))
+		{
+			$this->cache('ACCOMPLICES', $this->getFacade()->getAccompliceMembersIds());
+		}
+		if (!$this->isCached('AUDITORS'))
+		{
+			$this->cache('AUDITORS', $this->getFacade()->getAuditorMembersIds());
+		}
+
+		$this->enablePrefix();
+
+		return $this;
+	}
+
+	public function toArray(bool $withCustom = false): array
 	{
 		$data = $this->collectValues();
+		$data = $withCustom ? array_merge($data, $this->customData->toArray()) : $data;
 		foreach ($data as $fieldName => $field)
 		{
 			if (
@@ -300,25 +311,5 @@ class TaskObject extends EO_Task implements Arrayable
 			}
 		}
 		return $data;
-	}
-
-	/**
-	 * @throws ArgumentException
-	 * @throws ObjectPropertyException
-	 * @throws SystemException
-	 */
-	public function getChildren(): TaskCollection
-	{
-		$query = $this::$dataClass::query();
-		$query
-			->setSelect(['ID', 'PARENT_ID', 'TITLE'])
-			->where('PARENT_ID', $this->getId());
-
-		return $query->exec()->fetchCollection();
-	}
-
-	public function getMemberService(): AbstractMemberService
-	{
-		return new TaskMemberService($this->getId());
 	}
 }

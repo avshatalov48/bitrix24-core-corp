@@ -1,27 +1,29 @@
 <?php
 namespace Bitrix\Tasks\Internals\Task;
 
-use Bitrix\Main;
 use Bitrix\Main\Application;
 use Bitrix\Main\ArgumentException;
+use Bitrix\Main\ArgumentTypeException;
+use Bitrix\Main\DB\SqlQueryException;
+use Bitrix\Main\Entity\BooleanField;
 use Bitrix\Main\Event;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
 use Bitrix\Main\UserTable;
 use Bitrix\Main\Type\DateTime;
-use Bitrix\Tasks\Integration\CRM\Timeline;
-use Bitrix\Tasks\Integration\CRM\Timeline\Exception\TimelineException;
+use Bitrix\Main\ORM\Data\Internal\MergeTrait;
 use Bitrix\Tasks\Integration\CRM\TimeLineManager;
 use Bitrix\Tasks\Integration\Forum;
 use Bitrix\Tasks\Integration\Pull\PushCommand;
 use Bitrix\Tasks\Integration\Pull\PushService;
-use Bitrix\Tasks\Internals\Counter;
-use Bitrix\Tasks\Internals\Registry\TaskRegistry;
+use Bitrix\Tasks\Internals\Counter\CounterService;
+use Bitrix\Tasks\Internals\Counter\Event\EventDictionary;
+use Bitrix\Tasks\Internals\Log\Logger;
 use Bitrix\Tasks\Internals\TaskDataManager;
 use Bitrix\Tasks\Internals\TaskTable;
 use Bitrix\Tasks\MemberTable;
-use Exception;
 use Bitrix\Tasks\Internals\Counter\CounterDictionary;
+use Throwable;
 
 /**
  * Class ViewedTable
@@ -36,42 +38,34 @@ use Bitrix\Tasks\Internals\Counter\CounterDictionary;
  * @method static EO_Viewed_Result getById($id)
  * @method static EO_Viewed_Result getList(array $parameters = [])
  * @method static EO_Viewed_Entity getEntity()
- * @method static \Bitrix\Tasks\Internals\Task\EO_Viewed createObject($setDefaultValues = true)
+ * @method static \Bitrix\Tasks\Internals\Task\View createObject($setDefaultValues = true)
  * @method static \Bitrix\Tasks\Internals\Task\EO_Viewed_Collection createCollection()
- * @method static \Bitrix\Tasks\Internals\Task\EO_Viewed wakeUpObject($row)
+ * @method static \Bitrix\Tasks\Internals\Task\View wakeUpObject($row)
  * @method static \Bitrix\Tasks\Internals\Task\EO_Viewed_Collection wakeUpCollection($rows)
  */
 class ViewedTable extends TaskDataManager
 {
-	use Main\ORM\Data\Internal\MergeTrait;
+	use MergeTrait;
 
 	private const STEP_LIMIT = 5000;
 
-	private static $cache = [];
+	private static array $cache = [];
 
-	/**
-	 * Returns DB table name for entity.
-	 *
-	 * @return string
-	 */
+	public static function getObjectClass(): string
+	{
+		return View::class;
+	}
+	
 	public static function getTableName(): string
 	{
 		return 'b_tasks_viewed';
 	}
-
-	/**
-	 * @return false|string
-	 */
-	public static function getClass()
+	
+	public static function getClass(): string
 	{
 		return static::class;
 	}
-
-	/**
-	 * Returns entity map definition.
-	 *
-	 * @return array
-	 */
+	
 	public static function getMap(): array
 	{
 		return [
@@ -103,19 +97,12 @@ class ViewedTable extends TaskDataManager
 					'=this.USER_ID' => 'ref.USER_ID',
 				],
 			],
-			(new Main\Entity\BooleanField(
-				'IS_REAL_VIEW'
-			))
+			(new BooleanField('IS_REAL_VIEW'))
 				->configureValues('N', 'Y')
 				->configureDefaultValue('Y'),
 		];
 	}
-
-	/**
-	 * @param int $userId
-	 * @param int $taskId
-	 * @throws Main\LoaderException
-	 */
+	
 	public static function sendPushTaskView(int $userId, int $taskId): void
 	{
 		PushService::addEvent([$userId], [
@@ -128,6 +115,9 @@ class ViewedTable extends TaskDataManager
 		]);
 	}
 
+	/**
+	 * @throws SqlQueryException
+	 */
 	public static function getListForReadAll(
 		int $currentUserId,
 		string $userJoin,
@@ -137,7 +127,7 @@ class ViewedTable extends TaskDataManager
 	): ?array
 	{
 		$result = [];
-		$connection = Main\Application::getConnection();
+		$connection = Application::getConnection();
 
 		$strSelect = "T.ID as ID\n";
 		foreach ($select as $key => $field)
@@ -185,12 +175,12 @@ class ViewedTable extends TaskDataManager
 	 * @param int $currentUserId
 	 * @param string $userJoin
 	 * @param string $groupCondition
-	 * @throws Main\ArgumentTypeException
-	 * @throws Main\DB\SqlQueryException
+	 * @throws ArgumentTypeException
+	 * @throws SqlQueryException
 	 */
 	public static function readAll(int $currentUserId, string $userJoin, string $groupCondition = ''): void
 	{
-		$connection = Main\Application::getConnection();
+		$connection = Application::getConnection();
 		$sqlHelper = $connection->getSqlHelper();
 
 		$currentDateTime = new DateTime();
@@ -204,30 +194,15 @@ class ViewedTable extends TaskDataManager
 			$inserts[] = '(' . (int)$row['ID'] . ', ' . $currentUserId . ', ' . $viewedDate . ')';
 		}
 
-		$chunks = array_chunk($inserts, self::STEP_LIMIT);
-		unset($inserts);
-
-		foreach ($chunks as $chunk)
-		{
-			$values = implode(',', $chunk);
-			$values = "VALUES {$values}";
-			$sql = $sqlHelper->prepareMergeSelect(
-				static::getTableName(),
-				['TASK_ID', 'USER_ID'],
-				['TASK_ID', 'USER_ID', 'VIEWED_DATE'],
-				$values,
-				['VIEWED_DATE' => $currentDateTime]
-			);
-			$connection->query($sql);
-		}
+		static::read($inserts);
 	}
 
 	/**
 	 * @param int $userId
 	 * @param array $groupIds
 	 * @param bool $closedOnly
-	 * @throws Main\ArgumentTypeException
-	 * @throws Main\DB\SqlQueryException
+	 * @throws ArgumentTypeException
+	 * @throws SqlQueryException
 	 */
 	public static function readGroups(int $userId, array $groupIds, bool $closedOnly = false): void
 	{
@@ -237,8 +212,8 @@ class ViewedTable extends TaskDataManager
 		$currentDateTime = new DateTime();
 		$viewedDate = $sqlHelper->convertToDbDateTime($currentDateTime);
 
-		$intGroupIds = array_map(function($el) {
-			return (int) $el;
+		$intGroupIds = array_map(static function($el) {
+			return (int)$el;
 		}, $groupIds);
 
 		$condition = [];
@@ -278,8 +253,133 @@ class ViewedTable extends TaskDataManager
 			$inserts[] = '(' . (int)$row['ID'] . ', ' . $userId . ', ' . $viewedDate . ')';
 		}
 
+		static::read($inserts);
+	}
+
+	/**
+	 * @param int $taskId
+	 * @param int $userId
+	 * @param DateTime|null $viewedDate
+	 * @param array $parameters
+	 * @throws ArgumentException
+	 * @throws ObjectPropertyException
+	 * @throws SystemException
+	 */
+	public static function set(int $taskId, int $userId, ?DateTime $viewedDate = null, array $parameters = []): void
+	{
+		$parameters['SEND_PUSH'] = ($parameters['SEND_PUSH'] ?? !isset($viewedDate));
+		$parameters['IS_REAL_VIEW'] = ($parameters['IS_REAL_VIEW'] ?? false);
+		$parameters['UPDATE_TOPIC_LAST_VISIT'] = ($parameters['UPDATE_TOPIC_LAST_VISIT'] ?? true);
+		$parameters['SOURCE_VIEWED_DATE'] = $viewedDate;
+
+		$viewedDate = ($viewedDate ?? new DateTime());
+
+		static::onBeforeView($taskId);
+		static::viewTask($taskId, $userId, $viewedDate, $parameters);
+		static::onAfterView($taskId, $userId, $viewedDate, $parameters);
+	}
+	
+	private static function onBeforeView(int $taskId): void
+	{
+		CounterService::getInstance()->collectData($taskId);
+	}
+	
+	private static function viewTask(int $taskId, int $userId, DateTime $viewedDate, array $parameters = []): void
+	{
+		$cacheKey = $taskId . '.' . $userId . '.' . $viewedDate->getTimestamp();
+		if (isset(static::$cache[$cacheKey]))
+		{
+			return;
+		}
+
+		$view = static::getView($taskId, $userId);
+
+		if (null !== $view)
+		{
+			static::updateView($view, $viewedDate, $parameters);
+		}
+		else
+		{
+			static::addView($taskId, $userId, $viewedDate, $parameters);
+		}
+
+		self::$cache[$cacheKey] = true;
+	}
+
+	private static function getView(int $taskId, int $userId): ?View
+	{
+		try
+		{
+			return static::query()
+				->setSelect(['TASK_ID', 'USER_ID', 'IS_REAL_VIEW'])
+				->where('TASK_ID', $taskId)
+				->where('USER_ID', $userId)
+				->fetchObject();
+		}
+		catch (Throwable $t)
+		{
+			Logger::log($t, 'TASKS_DEBUG_VIEW_GET');
+			return  null;
+		}
+	}
+
+	private static function updateView(View $item, DateTime $viewedDate, array $parameters = []): void
+	{
+		$primary = ['TASK_ID' => $item->getTaskId(), 'USER_ID' => $item->getUserId()];
+		$params = ['VIEWED_DATE' => $viewedDate];
+		if ($parameters['IS_REAL_VIEW'] && !$item->getIsRealView())
+		{
+			$params['IS_REAL_VIEW'] = 'Y';
+			static::onFirstRealView($item->getTaskId(), $item->getUserId());
+		}
+		try
+		{
+			static::update($primary, $params);
+		}
+		catch (Throwable $t)
+		{
+			Logger::log($t, 'TASKS_DEBUG_VIEW_UPDATE');
+		}
+	}
+
+	private static function addView(int $taskId, int $userId, DateTime $viewedDate, array $parameters = []): void
+	{
+		$connection = Application::getConnection();
+		$helper = $connection->getSqlHelper();
+
+		$isRealView = $parameters['IS_REAL_VIEW'] === 'N' || $parameters['IS_REAL_VIEW'] === false ? 'N' : 'Y';
+
+		$fields = "(TASK_ID, USER_ID, VIEWED_DATE, IS_REAL_VIEW)";
+		try
+		{
+			$values = "({$taskId}, {$userId}, {$helper->convertToDbDateTime($viewedDate)}, '{$isRealView}')";
+
+			$sql = $helper->getInsertIgnore(static::getTableName(), " {$fields}", " VALUES {$values}");
+
+			$connection->query($sql);
+		}
+		catch (Throwable $t)
+		{
+			Logger::log($t, 'TASKS_DEBUG_VIEW_ADD');
+		}
+
+		if ($parameters['IS_REAL_VIEW'])
+		{
+			static::onFirstRealView($taskId, $userId);
+		}
+	}
+
+	/**
+	 * @throws SqlQueryException
+	 */
+	private static function read(array $inserts): void
+	{
+		$connection =  Application::getConnection();
+		$sqlHelper = $connection->getSqlHelper();
+
+		$currentDateTime = new DateTime();
+
 		$chunks = array_chunk($inserts, self::STEP_LIMIT);
-		unset($inserts);
 
 		foreach ($chunks as $chunk)
 		{
@@ -299,106 +399,12 @@ class ViewedTable extends TaskDataManager
 	/**
 	 * @param int $taskId
 	 * @param int $userId
-	 * @param DateTime|null $viewedDate
-	 * @param array $parameters
-	 * @throws Main\ArgumentException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
-	 * @throws Main\LoaderException
-	 */
-	public static function set(int $taskId, int $userId, ?DateTime $viewedDate = null, array $parameters = []): void
-	{
-		$parameters['SEND_PUSH'] = ($parameters['SEND_PUSH'] ?? !isset($viewedDate));
-		$parameters['IS_REAL_VIEW'] = ($parameters['IS_REAL_VIEW'] ?? false);
-		$parameters['UPDATE_TOPIC_LAST_VISIT'] = ($parameters['UPDATE_TOPIC_LAST_VISIT'] ?? true);
-		$parameters['SOURCE_VIEWED_DATE'] = $viewedDate;
-
-		$viewedDate = ($viewedDate ?? new DateTime());
-
-		static::onBeforeView($taskId, $userId, $viewedDate, $parameters);
-		static::viewTask($taskId, $userId, $viewedDate, $parameters);
-		static::onAfterView($taskId, $userId, $viewedDate, $parameters);
-	}
-
-	/**
-	 * @param int $taskId
-	 * @param int $userId
 	 * @param DateTime $viewedDate
 	 * @param array $parameters
-	 * @throws Main\ArgumentException
-	 * @throws Main\DB\SqlQueryException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
-	 */
-	private static function onBeforeView(int $taskId, int $userId, DateTime $viewedDate, array $parameters): void
-	{
-		Counter\CounterService::getInstance()->collectData($taskId);
-	}
-
-	/**
-	 * @param int $taskId
-	 * @param int $userId
-	 * @param DateTime $viewedDate
-	 * @throws Main\ArgumentException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
-	 * @throws Exception
-	 */
-	private static function viewTask(int $taskId, int $userId, DateTime $viewedDate, array $parameters = []): void
-	{
-		$cacheKey = $taskId.'.'.$userId.'.'.$viewedDate->getTimestamp();
-		if (array_key_exists($cacheKey, self::$cache))
-		{
-			return;
-		}
-
-		$list = static::getList([
-			'select' => ['TASK_ID', 'USER_ID', 'IS_REAL_VIEW'],
-			'filter' => [
-				'=TASK_ID' => $taskId,
-				'=USER_ID' => $userId,
-			],
-		]);
-
-		if ($item = $list->fetch())
-		{
-			$primary = ['TASK_ID' => $item['TASK_ID'], 'USER_ID' => $item['USER_ID']];
-			$params = ['VIEWED_DATE' => $viewedDate];
-			if ($item['IS_REAL_VIEW'] === 'N' && $parameters['IS_REAL_VIEW'])
-			{
-				$params['IS_REAL_VIEW'] = 'Y';
-				static::onFirstRealView($taskId, $userId);
-			}
-			static::update($primary, $params);
-		}
-		else
-		{
-			static::add([
-				'TASK_ID' => $taskId,
-				'USER_ID' => $userId,
-				'VIEWED_DATE' => $viewedDate,
-				'IS_REAL_VIEW' => $parameters['IS_REAL_VIEW'],
-			]);
-
-			if ($parameters['IS_REAL_VIEW'])
-			{
-				static::onFirstRealView($taskId, $userId);
-			}
-		}
-
-		self::$cache[$cacheKey] = true;
-	}
-
-	/**
-	 * @param int $taskId
-	 * @param int $userId
-	 * @param DateTime $viewedDate
-	 * @param array $parameters
-	 * @throws Main\ArgumentException
-	 * @throws Main\Db\SqlQueryException
-	 * @throws Main\LoaderException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
+	 * @throws ArgumentException
+	 * @throws SqlQueryException
+	 * @throws ObjectPropertyException
+	 * @throws SystemException
 	 */
 	private static function onAfterView(int $taskId, int $userId, DateTime $viewedDate, array $parameters): void
 	{
@@ -418,19 +424,25 @@ class ViewedTable extends TaskDataManager
 		];
 		$event = new Event('tasks', 'onTaskUpdateViewed', $eventParameters);
 		$event->send();
-		Counter\CounterService::addEvent(
-			Counter\Event\EventDictionary::EVENT_AFTER_TASK_VIEW,
+		CounterService::addEvent(
+			EventDictionary::EVENT_AFTER_TASK_VIEW,
 			[
 				'TASK_ID' => $taskId,
 				'USER_ID' => $userId,
 			]
 		);
 
-		(new TimeLineManager($taskId, $userId))->onTaskAllCommentViewed()->save();
+		TimeLineManager::get($taskId)
+			->setUserId($userId)
+			->onTaskAllCommentViewed()
+			->save();
 	}
 
 	private static function onFirstRealView(int $taskId, int $userId): void
 	{
-		(new TimeLineManager($taskId, $userId))->onTaskViewed()->save();
+		TimeLineManager::get($taskId)
+			->setUserId($userId)
+			->onTaskViewed()
+			->save();
 	}
 }

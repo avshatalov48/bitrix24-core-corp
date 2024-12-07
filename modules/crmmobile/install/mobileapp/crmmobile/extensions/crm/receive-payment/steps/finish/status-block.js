@@ -8,8 +8,9 @@ jn.define('crm/receive-payment/steps/finish/status-block', (require, exports, mo
 	const { LottieAnimations } = require('crm/receive-payment/steps/finish/lottie-animations');
 	const { Statuses } = require('crm/receive-payment/steps/finish/statuses');
 	const { getEntityMessage } = require('crm/loc');
-	const { TypeId } = require('crm/type/id');
+	const { TypeId } = require('crm/type');
 	const { EventEmitter } = require('event-emitter');
+	const { WarningBlock } = require('layout/ui/warning-block');
 
 	const pathToExtension = `${currentDomain}/bitrix/mobileapp/crmmobile/extensions/crm/receive-payment/steps/finish`;
 
@@ -26,6 +27,7 @@ jn.define('crm/receive-payment/steps/finish/status-block', (require, exports, mo
 			this.customEventEmitter = EventEmitter.createWithUid(this.uid);
 			this.state.sendingStatus = props.sendingStatus;
 			this.state.errorCode = null;
+			this.state.connectedSiteId = 0;
 		}
 
 		get sendMessageProps()
@@ -79,6 +81,11 @@ jn.define('crm/receive-payment/steps/finish/status-block', (require, exports, mo
 					break;
 
 				case Statuses.ERROR:
+					if (this.getErrorCode() === 9)
+					{
+						return this.renderWarningBlock();
+					}
+
 					text = Loc.getMessage('M_RP_F_MESSAGE_ERROR_BOTTOM', { '#ERROR_CODE#': this.getErrorCode() });
 					break;
 			}
@@ -193,6 +200,26 @@ jn.define('crm/receive-payment/steps/finish/status-block', (require, exports, mo
 					textAlign: 'center',
 				},
 			});
+		}
+
+		renderWarningBlock()
+		{
+			return View(
+				{
+					style: {
+						height: 120,
+						width: 360,
+						marginTop: 10,
+						marginHorizontal: 10,
+					},
+				},
+				new WarningBlock({
+					title: Loc.getMessage('M_RP_F_PHONE_NOT_CONFIRMED_WARNING_TITLE'),
+					description: Loc.getMessage('M_RP_F_PHONE_NOT_CONFIRMED_WARNING_TEXT'),
+					redirectUrl: `/shop/stores/?force_verify_site_id=${this.state.connectedSiteId}`,
+					redirectTitle: Loc.getMessage('M_RP_F_PHONE_CONFIRMATION_WARNING_TITLE'),
+				}),
+			);
 		}
 
 		getSelectedSmsSenderName()

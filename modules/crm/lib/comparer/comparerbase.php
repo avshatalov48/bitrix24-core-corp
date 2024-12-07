@@ -104,12 +104,12 @@ class ComparerBase
 		);
 	}
 
-	public static function isClosed(ItemIdentifier $identifier): bool
+	public static function isClosed(ItemIdentifier $identifier, bool $defaultFlag = null): ?bool
 	{
 		$factory = Container::getInstance()->getFactory($identifier->getEntityTypeId());
-		if (!$factory || !$factory->isStagesSupported())
+		if (!$factory || !$factory->isStagesEnabled())
 		{
-			return true;
+			return $defaultFlag;
 		}
 
 		$semantics = null;
@@ -145,7 +145,7 @@ class ComparerBase
 
 		if (!$semantics)
 		{
-			return true;
+			return $defaultFlag;
 		}
 
 		return PhaseSemantics::isFinal($semantics);

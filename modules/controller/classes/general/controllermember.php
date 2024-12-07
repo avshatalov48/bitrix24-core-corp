@@ -1,24 +1,24 @@
-<?
+<?php
 IncludeModuleLangFile(__FILE__);
 
-class CAllControllerMember
+class CControllerMember
 {
 	/******************************* Public methods ************************************/
 	public static function CheckMember($member_id, $member_url = false)
 	{
-		/** @global CMain $APPLICATION */
+		/** @var CMain $APPLICATION */
 		global $APPLICATION;
 
 		$dbr_member = CControllerMember::GetById($member_id);
 		$ar_member = $dbr_member->Fetch();
 		if (!$ar_member)
 		{
-			$e = new CApplicationException(GetMessage("CTRLR_MEM_ERR1")." ".htmlspecialcharsex($member_id));
+			$e = new CApplicationException(GetMessage('CTRLR_MEM_ERR1') . ' ' . htmlspecialcharsEx($member_id));
 			$APPLICATION->ThrowException($e);
 			return false;
 		}
 
-		$oRequest = new CControllerServerRequestTo($ar_member, "ping");
+		$oRequest = new CControllerServerRequestTo($ar_member, 'ping');
 		$oResponse = $oRequest->Send();
 		if ($oResponse !== false)
 		{
@@ -28,49 +28,51 @@ class CAllControllerMember
 		return false;
 	}
 
-	public static function RunCommandRedirect($member_id, $command, $arParameters = Array(), $log = true)
+	public static function RunCommandRedirect($member_id, $command, $arParameters = [], $log = true)
 	{
-		if(!($arMember = CControllerMember::GetMember($member_id)))
-			return false;
-
-		$command_id = CControllerMember::AddCommand($arMember["MEMBER_ID"], $command, $arParameters, false);
-
-		$arVars = Array("command_id"=>$command_id);
-		$oRequest = new CControllerServerRequestTo($arMember, "run", $arVars);
-
-		if($log)
+		if (!($arMember = CControllerMember::GetMember($member_id)))
 		{
-			$arControllerLog = Array(
-				'NAME'=>'REMOTE_COMMAND',
-				'CONTROLLER_MEMBER_ID'=>$member_id,
-				'DESCRIPTION'=>GetMessage("CTRLR_MEM_LOG_DESC_COMMAND").$command,
-				'STATUS'=>'Y'
-			);
+			return false;
+		}
+
+		$command_id = CControllerMember::AddCommand($arMember['MEMBER_ID'], $command, $arParameters, false);
+
+		$arVars = ['command_id' => $command_id];
+		$oRequest = new CControllerServerRequestTo($arMember, 'run', $arVars);
+
+		if ($log)
+		{
+			$arControllerLog = [
+				'NAME' => 'REMOTE_COMMAND',
+				'CONTROLLER_MEMBER_ID' => $member_id,
+				'DESCRIPTION' => GetMessage('CTRLR_MEM_LOG_DESC_COMMAND') . $command,
+				'STATUS' => 'Y'
+			];
 			CControllerLog::Add($arControllerLog);
 		}
 
-		$oRequest->RedirectRequest($arMember["URL"]."/bitrix/admin/main_controller.php");
+		$oRequest->RedirectRequest($arMember['URL'] . '/bitrix/admin/main_controller.php');
 
 		return true;
 	}
 
-	public static function RunCommandWithLog($member_id, $command, $arParameters = Array(), $task_id=false, $operation = 'run')
+	public static function RunCommandWithLog($member_id, $command, $arParameters = [], $task_id=false, $operation = 'run')
 	{
-		/** @global CMain $APPLICATION */
+		/** @var CMain $APPLICATION */
 		global $APPLICATION;
 
-		$arControllerLog = Array(
-				'NAME'=>'REMOTE_COMMAND',
-				'CONTROLLER_MEMBER_ID'=>$member_id,
-				'DESCRIPTION'=>"command: '$command'\n\noperation: '$operation'",
-				'STATUS'=>'Y'
-			);
+		$arControllerLog = [
+			'NAME' => 'REMOTE_COMMAND',
+			'CONTROLLER_MEMBER_ID' => $member_id,
+			'DESCRIPTION' => "command: '" . $command . "'\n\noperation: '" . $operation . "'",
+			'STATUS' => 'Y'
+		];
 
 		$res = CControllerMember::RunCommand($member_id, $command, $arParameters, $task_id, $operation);
-		if($res === false)
+		if ($res === false)
 		{
 			$e = $APPLICATION->GetException();
-			$arControllerLog['DESCRIPTION'] = $e->GetString()."\r\n".$arControllerLog['DESCRIPTION'];
+			$arControllerLog['DESCRIPTION'] = $e->GetString() . "\r\n" . $arControllerLog['DESCRIPTION'];
 			$arControllerLog['STATUS'] = 'N';
 		}
 
@@ -78,35 +80,45 @@ class CAllControllerMember
 		return $res;
 	}
 
-	public static function RunCommand($member_id, $command, $arParameters = Array(), $task_id=false, $operation = 'run')
+	public static function RunCommand($member_id, $command, $arParameters = [], $task_id=false, $operation = 'run')
 	{
-		/** @global CMain $APPLICATION */
+		/** @var CMain $APPLICATION */
 		global $APPLICATION;
 		global $DB;
 
-		if(!($arMember = CControllerMember::GetMember($member_id)))
-			return false;
-
-		if($operation == "run_immediate")
+		if (!($arMember = CControllerMember::GetMember($member_id)))
 		{
-			$arVars = array("command"=>$command);
+			return false;
+		}
+
+		if ($operation === 'run_immediate')
+		{
+			$arVars = ['command' => $command];
 		}
 		else
 		{
-			$command_id = CControllerMember::AddCommand($arMember["MEMBER_ID"], $command, $arParameters, $task_id);
+			$command_id = CControllerMember::AddCommand($arMember['MEMBER_ID'], $command, $arParameters, $task_id);
 
-			if($command_id !== false)
-				$arVars = array("command_id" => $command_id);
+			if ($command_id !== false)
+			{
+				$arVars = ['command_id' => $command_id];
+			}
 			else
-				$arVars = array();
+			{
+				$arVars = [];
+			}
 		}
 
-		if(empty($arVars))
+		if (empty($arVars))
 		{
-			if($DB->GetErrorMessage() <> '')
-				$e = new CApplicationException(GetMessage("CTRLR_MEM_ERR3")." ".$DB->GetErrorMessage());
+			if ($DB->GetErrorMessage() <> '')
+			{
+				$e = new CApplicationException(GetMessage('CTRLR_MEM_ERR3') . ' ' . $DB->GetErrorMessage());
+			}
 			else
-				$e = new CApplicationException(GetMessage("CTRLR_MEM_ERR2"));
+			{
+				$e = new CApplicationException(GetMessage('CTRLR_MEM_ERR2'));
+			}
 			$APPLICATION->ThrowException($e);
 			return false;
 		}
@@ -114,26 +126,30 @@ class CAllControllerMember
 		$oRequest = new CControllerServerRequestTo($arMember, $operation, $arVars);
 
 		/*@var $oResponse CControllerServerResponseFrom*/
-		if(($oResponse = $oRequest->Send())===false)
-			return false;
-
-		if(!$oResponse->Check())
+		if (($oResponse = $oRequest->Send()) === false)
 		{
-			$strError = GetMessage("CTRLR_MEM_ERR2");
+			return false;
+		}
+
+		if (!$oResponse->Check())
+		{
+			$strError = GetMessage('CTRLR_MEM_ERR2');
 			if ($oResponse->httpHeaders)
 			{
-				$strError .= " ".explode("\n", $oResponse->httpHeaders)[0];
+				$strError .= ' ' . explode("\n", $oResponse->httpHeaders)[0];
 			}
 			$e = new CApplicationException($strError);
 			$APPLICATION->ThrowException($e);
 			return false;
 		}
 
-		if($oResponse->OK() || preg_match("/^(STP0|FIN)/", $oResponse->text))
+		if ($oResponse->OK() || preg_match('/^(STP0|FIN)/', $oResponse->text))
+		{
 			return $oResponse->text;
+		}
 
-		$str = $oResponse->text <> ''? $oResponse->text : $oResponse->status;
-		$e = new CApplicationException(GetMessage("CTRLR_MEM_ERR3")." ".$str);
+		$str = $oResponse->text <> '' ? $oResponse->text : $oResponse->status;
+		$e = new CApplicationException(GetMessage('CTRLR_MEM_ERR3') . ' ' . $str);
 		$APPLICATION->ThrowException($e);
 
 		return false;
@@ -141,21 +157,21 @@ class CAllControllerMember
 
 	public static function SendFileWithLog($member_id, $file)
 	{
-		/** @global CMain $APPLICATION */
+		/** @var CMain $APPLICATION */
 		global $APPLICATION;
 
-		$arControllerLog = array(
+		$arControllerLog = [
 			'NAME' => 'SEND_FILE',
 			'CONTROLLER_MEMBER_ID' => $member_id,
-			'DESCRIPTION' => "sendfile",
+			'DESCRIPTION' => 'sendfile',
 			'STATUS' => 'Y',
-		);
+		];
 
 		$res = CControllerMember::SendFile();
 		if ($res === false)
 		{
 			$e = $APPLICATION->GetException();
-			$arControllerLog['DESCRIPTION'] = $e->GetString()."\n".$arControllerLog['DESCRIPTION'];
+			$arControllerLog['DESCRIPTION'] = $e->GetString() . "\n" . $arControllerLog['DESCRIPTION'];
 			$arControllerLog['STATUS'] = 'N';
 		}
 
@@ -171,34 +187,37 @@ class CAllControllerMember
 
 	public static function UpdateCounters($member_id, $task_id = false)
 	{
-		/** @global CMain $APPLICATION */
+		/** @var CMain $APPLICATION */
 		global $APPLICATION;
 		global $DB;
+		$connection = \Bitrix\Main\Application::getConnection();
 		$member_id = intval($member_id);
 
-		$lockIdSql = $DB->ForSQL("X".$APPLICATION->GetServerUniqID()."_update_counters_".$member_id);
-		$DB->Query("SELECT GET_LOCK('".$lockIdSql."', -1) as L");
+		$lockId = 'X' . CMain::GetServerUniqID() . '_update_counters_' . $member_id;
+		$connection->lock($lockId, -1); //Wait forever
 
 		$arMember = CControllerMember::GetMember($member_id);
-		if(!$arMember)
+		if (!$arMember)
 		{
-			$e = new CApplicationException("Member #".$member_id." is not found.");
+			$e = new CApplicationException('Member #' . $member_id . ' is not found.');
 			$APPLICATION->ThrowException($e);
-			$DB->Query("SELECT RELEASE_LOCK('".$lockIdSql."') as L");
+			$connection->unlock($lockId);
+
 			return false;
 		}
 
-		$dbr_group = CControllerGroup::GetList(array(), array("=ID" => $arMember["CONTROLLER_GROUP_ID"]), array("UF_*"));
-		if(!$ar_group = $dbr_group->Fetch())
+		$dbr_group = CControllerGroup::GetList([], ['=ID' => $arMember['CONTROLLER_GROUP_ID']], ['UF_*']);
+		if (!$ar_group = $dbr_group->Fetch())
 		{
-			$e = new CApplicationException("Group #".$arMember["CONTROLLER_GROUP_ID"]." is not found.");
+			$e = new CApplicationException('Group #' . $arMember['CONTROLLER_GROUP_ID'] . ' is not found.');
 			$APPLICATION->ThrowException($e);
-			$DB->Query("SELECT RELEASE_LOCK('".$lockIdSql."') as L");
+			$connection->unlock($lockId);
+
 			return false;
 		}
 
 		$strCommand = "echo 'DATE_FORMAT='.urlencode(CSite::GetDateFormat()).'&';\n";
-		if($ar_group["CHECK_COUNTER_FREE_SPACE"] == "Y")
+		if ($ar_group['CHECK_COUNTER_FREE_SPACE'] == 'Y')
 		{
 			$strCommand .= "function counter_free_space(\$APPLICATION, \$USER, \$DB) {\n";
 			$strCommand .= "  \$quota = new CDiskQuota();\n";
@@ -210,7 +229,7 @@ class CAllControllerMember
 			$strCommand .= "}\n";
 			$strCommand .= "echo 'COUNTER_FREE_SPACE='.urlencode(counter_free_space(\$APPLICATION, \$USER, \$DB)).'&';\n";
 		}
-		if($ar_group["CHECK_COUNTER_SITES"] == "Y")
+		if ($ar_group['CHECK_COUNTER_SITES'] == 'Y')
 		{
 			$strCommand .= "function counter_sites(\$APPLICATION, \$USER, \$DB) {\n";
 			$strCommand .= "  \$by = 'sort';\n";
@@ -220,7 +239,7 @@ class CAllControllerMember
 			$strCommand .= "}\n";
 			$strCommand .= "echo 'COUNTER_SITES='.urlencode(counter_sites(\$APPLICATION, \$USER, \$DB)).'&';\n";
 		}
-		if($ar_group["CHECK_COUNTER_USERS"] == "Y")
+		if ($ar_group['CHECK_COUNTER_USERS'] == 'Y')
 		{
 			$strCommand .= "function counter_users(\$APPLICATION, \$USER, \$DB) {\n";
 			$strCommand .= "  \$dbr = \$DB->Query(\"SELECT COUNT(1) as USER_COUNT FROM b_user U WHERE (U.EXTERNAL_AUTH_ID IS NULL OR U.EXTERNAL_AUTH_ID='')\");\n";
@@ -229,7 +248,7 @@ class CAllControllerMember
 			$strCommand .= "}\n";
 			$strCommand .= "echo 'COUNTER_USERS='.urlencode(counter_users(\$APPLICATION, \$USER, \$DB)).'&';\n";
 		}
-		if($ar_group["CHECK_COUNTER_LAST_AUTH"] == "Y")
+		if ($ar_group['CHECK_COUNTER_LAST_AUTH'] == 'Y')
 		{
 			$strCommand .= "function counter_last_auth(\$APPLICATION, \$USER, \$DB) {\n";
 			$strCommand .= "  \$dbr = \$DB->Query(\"SELECT MAX(U.LAST_LOGIN) as LAST_LOGIN FROM b_user U\");\n";
@@ -239,116 +258,131 @@ class CAllControllerMember
 			$strCommand .= "echo 'COUNTER_LAST_AUTH='.urlencode(counter_last_auth(\$APPLICATION, \$USER, \$DB)).'&';\n";
 		}
 		$rsCounters = CControllerCounter::GetMemberCounters($member_id);
-		while($arCounter = $rsCounters->Fetch())
+		while ($arCounter = $rsCounters->Fetch())
 		{
-			$strCommand .= "function counter_".$arCounter['ID']."(\$APPLICATION, \$USER, \$DB) {\n";
-			$strCommand .= "  return eval(\"".EscapePHPString($arCounter["COMMAND"])."\");\n";
+			$strCommand .= 'function counter_' . $arCounter['ID'] . "(\$APPLICATION, \$USER, \$DB) {\n";
+			$strCommand .= '  return eval("' . EscapePHPString($arCounter['COMMAND']) . "\");\n";
 			$strCommand .= "}\n";
-			$strCommand .= "echo '".$arCounter['ID']."='.urlencode(counter_".$arCounter['ID']."(\$APPLICATION, \$USER, \$DB)).'&';\n";
+			$strCommand .= "echo '" . $arCounter['ID'] . "='.urlencode(counter_" . $arCounter['ID'] . "(\$APPLICATION, \$USER, \$DB)).'&';\n";
 		}
 
-		foreach(GetModuleEvents("controller", "OnBeforeUpdateCounters", true) as $arEvent)
+		foreach (GetModuleEvents('controller', 'OnBeforeUpdateCounters', true) as $arEvent)
 		{
-			ExecuteModuleEventEx($arEvent, array($arMember, $ar_group, &$strCommand));
+			ExecuteModuleEventEx($arEvent, [$arMember, $ar_group, &$strCommand]);
 		}
 
-		$command_result = CControllerMember::RunCommand($member_id, $strCommand, array(), $task_id, 'run_immediate');
-		if($command_result===false)
+		$command_result = CControllerMember::RunCommand($member_id, $strCommand, [], $task_id, 'run_immediate');
+		if ($command_result === false)
 		{
 			$e = $APPLICATION->GetException();
-			if(!is_object($e))
+			if (!is_object($e))
 			{
-				$e = new CApplicationException("Command execution error.");
+				$e = new CApplicationException('Command execution error.');
 				$APPLICATION->ThrowException($e);
 			}
-			$DB->Query("SELECT RELEASE_LOCK('".$lockIdSql."') as L");
+			$connection->unlock($lockId);
+
 			return false;
 		}
 
-		$ar_command_result = array();
+		$ar_command_result = [];
 		parse_str($command_result, $ar_command_result);
 
 		//Try to guess encoding and convert to controller site charset
-		foreach($ar_command_result as $k => $v)
-			$ar_command_result[$k] = CUtil::ConvertToLangCharset($v);
+		foreach ($ar_command_result as $k => $v)
+		{
+			$ar_command_result[$k] = \Bitrix\Main\Text\Encoding::convertToUtf($v);
+		}
 
-		$arFields = array(
-			"TIMESTAMP" => $arMember["TIMESTAMP_X"],
-			"~COUNTERS_UPDATED" => $DB->CurrentTimeFunction(),
-		);
-		if(array_key_exists('COUNTER_FREE_SPACE', $ar_command_result))
+		$arFields = [
+			'TIMESTAMP' => $arMember['TIMESTAMP_X'],
+			'~COUNTERS_UPDATED' => $DB->CurrentTimeFunction(),
+		];
+		if (array_key_exists('COUNTER_FREE_SPACE', $ar_command_result))
+		{
 			$arFields['COUNTER_FREE_SPACE'] = intval($ar_command_result['COUNTER_FREE_SPACE']);
-		if(array_key_exists('COUNTER_SITES', $ar_command_result))
+		}
+		if (array_key_exists('COUNTER_SITES', $ar_command_result))
+		{
 			$arFields['COUNTER_SITES'] = intval($ar_command_result['COUNTER_SITES']);
-		if(array_key_exists('COUNTER_USERS', $ar_command_result))
+		}
+		if (array_key_exists('COUNTER_USERS', $ar_command_result))
+		{
 			$arFields['COUNTER_USERS'] = intval($ar_command_result['COUNTER_USERS']);
-		if(array_key_exists('COUNTER_LAST_AUTH', $ar_command_result))
+		}
+		if (array_key_exists('COUNTER_LAST_AUTH', $ar_command_result))
+		{
 			$arFields['COUNTER_LAST_AUTH'] = $DB->FormatDate($ar_command_result['COUNTER_LAST_AUTH'], 'YYYY-MM-DD HH:MI:SS', CSite::GetDateFormat());
+		}
 
-		if(!CControllerMember::Update($member_id, $arFields))
+		if (!CControllerMember::Update($member_id, $arFields))
 		{
 			$e = $APPLICATION->GetException();
-			$e = new CApplicationException(GetMessage("CTRLR_MEM_COUNTERS_ERR1").$e->GetString());
+			$e = new CApplicationException(GetMessage('CTRLR_MEM_COUNTERS_ERR1') . $e->GetString());
 			$APPLICATION->ThrowException($e);
-			$DB->Query("SELECT RELEASE_LOCK('".$lockIdSql."') as L");
+			$connection->unlock($lockId);
+
 			return false;
 		}
 
 		CControllerCounter::UpdateMemberValues($member_id, $ar_command_result);
+		$connection->unlock($lockId);
 
-		$DB->Query("SELECT RELEASE_LOCK('".$lockIdSql."') as L");
 		return $arFields;
 	}
 
-
 	public static function SetGroupSettings($member_id, $task_id = false)
 	{
-		/** @global CMain $APPLICATION */
+		/** @var CMain $APPLICATION */
 		global $APPLICATION;
 
-		if(!($arMember = CControllerMember::GetMember($member_id)))
+		if (!($arMember = CControllerMember::GetMember($member_id)))
+		{
 			return false;
+		}
 
-		$arControllerLog = Array(
-				'NAME'=>'SET_SETTINGS',
-				'CONTROLLER_MEMBER_ID'=>$arMember['ID'],
-				'DESCRIPTION'=>GetMessage("CTRLR_MEM_LOG_DESC_GROUP").' '.$arMember["CONTROLLER_GROUP_ID"],
-				'STATUS'=>'Y'
-			);
+		$arControllerLog = [
+			'NAME' => 'SET_SETTINGS',
+			'CONTROLLER_MEMBER_ID' => $arMember['ID'],
+			'DESCRIPTION' => GetMessage('CTRLR_MEM_LOG_DESC_GROUP') . ' ' . $arMember['CONTROLLER_GROUP_ID'],
+			'STATUS' => 'Y'
+		];
 
 		$result = false;
-		if($strCommand = CControllerGroup::GetGroupSettings($arMember["CONTROLLER_GROUP_ID"]))
+		if ($strCommand = CControllerGroup::GetGroupSettings($arMember['CONTROLLER_GROUP_ID']))
 		{
-			$dbr_group = CControllerGroup::GetList(array(), array("=ID" => $arMember["CONTROLLER_GROUP_ID"]), array("UF_*"));
-			if($ar_group = $dbr_group->Fetch())
+			$dbr_group = CControllerGroup::GetList([], ['=ID' => $arMember['CONTROLLER_GROUP_ID']], ['UF_*']);
+			if ($ar_group = $dbr_group->Fetch())
 			{
-				if($ar_group["TRIAL_PERIOD"]>0 && $arMember["IN_GROUP_FROM"])
+				if ($ar_group['TRIAL_PERIOD'] > 0 && $arMember['IN_GROUP_FROM'])
 				{
-					$tFrom = MakeTimeStamp($arMember["IN_GROUP_FROM"], FORMAT_DATE);
-					$tTo = $tFrom + $ar_group["TRIAL_PERIOD"]*24*60*60 - 1;
+					$tFrom = MakeTimeStamp($arMember['IN_GROUP_FROM'], FORMAT_DATE);
+					$tTo = $tFrom + $ar_group['TRIAL_PERIOD'] * 24 * 60 * 60 - 1;
 
-					$strCommand .= "\r\nCOption::SetOptionString('main', '~controller_trial', '".$tTo."');";
+					$strCommand .= "\r\nCOption::SetOptionString('main', '~controller_trial', '" . $tTo . "');";
 				}
 				else
+				{
 					$strCommand .= "\r\nCOption::RemoveOption('main', '~controller_trial');";
+				}
 			}
 
-			foreach(GetModuleEvents("controller", "OnBeforeSetGroupSettings", true) as $arEvent)
+			foreach (GetModuleEvents('controller', 'OnBeforeSetGroupSettings', true) as $arEvent)
 			{
-				ExecuteModuleEventEx($arEvent, array($arMember, $ar_group, &$strCommand));
+				ExecuteModuleEventEx($arEvent, [$arMember, $ar_group, &$strCommand]);
 			}
 
-			$result = CControllerMember::RunCommand($member_id, $strCommand, array(), $task_id, 'run_immediate');
+			$result = CControllerMember::RunCommand($member_id, $strCommand, [], $task_id, 'run_immediate');
 		}
 		else
 		{
-			$e = new CApplicationException(GetMessage("CTRLR_MEM_ERR4")." ".$arMember["CONTROLLER_GROUP_ID"]);
+			$e = new CApplicationException(GetMessage('CTRLR_MEM_ERR4') . ' ' . $arMember['CONTROLLER_GROUP_ID']);
 			$APPLICATION->ThrowException($e);
 		}
 
-		if($task_id === false)
+		if ($task_id === false)
 		{
-			if($result === false)
+			if ($result === false)
 			{
 				$e = $APPLICATION->GetException();
 				$arControllerLog['DESCRIPTION'] = $e->GetString();
@@ -369,159 +403,189 @@ class CAllControllerMember
 	{
 		global $DB, $USER;
 
-		if(is_object($USER))
+		if (is_object($USER))
+		{
 			$USER_ID = $USER->GetID();
+		}
 		else
+		{
 			$USER_ID = 1;
+		}
 
-		$DB->Add("b_controller_member_log", array(
-			"CONTROLLER_MEMBER_ID" => $CONTROLLER_MEMBER_ID,
-			"USER_ID" => $USER_ID,
-			"~CREATED_DATE" => $DB->CurrentTimeFunction(),
-			"FIELD" => "NOTE",
-			"NOTES" => $strNote,
-		), array("NOTES"));
+		$DB->Add('b_controller_member_log', [
+			'CONTROLLER_MEMBER_ID' => $CONTROLLER_MEMBER_ID,
+			'USER_ID' => $USER_ID,
+			'~CREATED_DATE' => $DB->CurrentTimeFunction(),
+			'FIELD' => 'NOTE',
+			'NOTES' => $strNote,
+		], ['NOTES']);
 	}
 
 	public static function logChanges($CONTROLLER_MEMBER_ID, $arFieldsOld, $arFieldsNew, $strNote)
 	{
 		global $DB, $USER;
-		static $arFieldsToLog = array("CONTROLLER_GROUP_ID", "SITE_ACTIVE", "NAME", "ACTIVE");
+		static $arFieldsToLog = ['CONTROLLER_GROUP_ID', 'SITE_ACTIVE', 'NAME', 'ACTIVE'];
 
-		if(is_object($USER))
-			$USER_ID = $USER->GetID();
-		else
-			$USER_ID = 1;
-
-		foreach($arFieldsToLog as $FIELD)
+		if (is_object($USER))
 		{
-			if(
+			$USER_ID = $USER->GetID();
+		}
+		else
+		{
+			$USER_ID = 1;
+		}
+
+		foreach ($arFieldsToLog as $FIELD)
+		{
+			if (
 				isset($arFieldsOld[$FIELD])
 				&& isset($arFieldsNew[$FIELD])
 				&& $arFieldsOld[$FIELD] != $arFieldsNew[$FIELD]
 			)
-				$DB->Add("b_controller_member_log", array(
-					"CONTROLLER_MEMBER_ID" => $CONTROLLER_MEMBER_ID,
-					"USER_ID" => $USER_ID,
-					"~CREATED_DATE" => $DB->CurrentTimeFunction(),
-					"FIELD" => $FIELD,
-					"FROM_VALUE" => $arFieldsOld[$FIELD],
-					"TO_VALUE" => $arFieldsNew[$FIELD],
-					"NOTES" => $strNote,
-				), array("FROM_VALUE", "TO_VALUE", "NOTES"));
+			{
+				$DB->Add('b_controller_member_log', [
+					'CONTROLLER_MEMBER_ID' => $CONTROLLER_MEMBER_ID,
+					'USER_ID' => $USER_ID,
+					'~CREATED_DATE' => $DB->CurrentTimeFunction(),
+					'FIELD' => $FIELD,
+					'FROM_VALUE' => $arFieldsOld[$FIELD],
+					'TO_VALUE' => $arFieldsNew[$FIELD],
+					'NOTES' => $strNote,
+				], ['FROM_VALUE', 'TO_VALUE', 'NOTES']);
+			}
 		}
 	}
 
 	public static function GetLog($arFilter)
 	{
 		global $DB;
+		$connection = \Bitrix\Main\Application::getConnection();
+		$helper = $connection->getSqlHelper();
 
 		$obQueryWhere = new CSQLWhere;
-		$arFields = array(
-			"CONTROLLER_MEMBER_ID" => array(
-				"TABLE_ALIAS" => "l",
-				"FIELD_NAME" => "l.CONTROLLER_MEMBER_ID",
-				"FIELD_TYPE" => "int",
-				"JOIN" => false,
-			),
-			"FIELD" => array(
-				"TABLE_ALIAS" => "l",
-				"FIELD_NAME" => "l.FIELD",
-				"FIELD_TYPE" => "string",
-				"JOIN" => false,
-			),
-		);
+		$arFields = [
+			'CONTROLLER_MEMBER_ID' => [
+				'TABLE_ALIAS' => 'l',
+				'FIELD_NAME' => 'l.CONTROLLER_MEMBER_ID',
+				'FIELD_TYPE' => 'int',
+				'JOIN' => false,
+			],
+			'FIELD' => [
+				'TABLE_ALIAS' => 'l',
+				'FIELD_NAME' => 'l.FIELD',
+				'FIELD_TYPE' => 'string',
+				'JOIN' => false,
+			],
+		];
 		$obQueryWhere->SetFields($arFields);
 
-		if(!is_array($arFilter))
-			$arFilter = array();
+		if (!is_array($arFilter))
+		{
+			$arFilter = [];
+		}
 		$strQueryWhere = $obQueryWhere->GetQuery($arFilter);
 
-		$strSql = "
+		$strSql = '
 			SELECT l.*
-				,".$DB->DateToCharFunction("l.CREATED_DATE", "FULL")." CREATED_DATE
-				,".$DB->Concat("'('", "U.LOGIN", "') '", "U.NAME", "' '", "U.LAST_NAME")." USER_ID_USER
+				,' . $DB->DateToCharFunction('l.CREATED_DATE', 'FULL') . ' CREATED_DATE
+				,' . $helper->getConcatFunction("'('", 'U.LOGIN', "') '", 'U.NAME', "' '", 'U.LAST_NAME') . ' USER_ID_USER
 			FROM b_controller_member_log l
 			LEFT JOIN b_user U ON U.ID = l.USER_ID
-		";
+		';
 
-		if($strQueryWhere)
+		if ($strQueryWhere)
 		{
-			$strSql .= "
+			$strSql .= '
 				WHERE
-				".$strQueryWhere."
-			";
+				' . $strQueryWhere . '
+			';
 		}
 
-		$strSql .= "
+		$strSql .= '
 			ORDER BY l.ID DESC
-		";
+		';
 
 		return $DB->Query($strSql);
 	}
 
 	public static function Add($arFields)
 	{
-		/** @global CUserTypeManager $USER_FIELD_MANAGER */
+		/** @var CUserTypeManager $USER_FIELD_MANAGER */
 		global $USER_FIELD_MANAGER;
-		/** @global CDatabase $DB */
+		/** @var CDatabase $DB */
 		global $DB;
 
-		if(!CControllerMember::CheckFields($arFields))
+		if (!CControllerMember::CheckFields($arFields))
+		{
 			return false;
+		}
 
-		if(!$USER_FIELD_MANAGER->CheckFields("CONTROLLER_MEMBER", 0, $arFields))
+		if (!$USER_FIELD_MANAGER->CheckFields('CONTROLLER_MEMBER', 0, $arFields))
+		{
 			return false;
+		}
 
-		$arFields["SITE_ACTIVE"] = "X";
-		unset($arFields["TIMESTAMP_X"]);
-		$arFields["~TIMESTAMP_X"] = $DB->CurrentTimeFunction();
+		$arFields['SITE_ACTIVE'] = 'X';
+		unset($arFields['TIMESTAMP_X']);
+		$arFields['~TIMESTAMP_X'] = CDatabase::CurrentTimeFunction();
 
-		$ID = $DB->Add("b_controller_member", $arFields, array("NOTES"));
-		$USER_FIELD_MANAGER->Update("CONTROLLER_MEMBER", $ID, $arFields);
+		$ID = $DB->Add('b_controller_member', $arFields, ['NOTES']);
+		$USER_FIELD_MANAGER->Update('CONTROLLER_MEMBER', $ID, $arFields);
 
 		CControllerMember::UnregisterExpiredAgent($ID);
 
 		return $ID;
 	}
 
-	public static function Update($ID, $arFields, $strNote = "")
+	public static function Update($ID, $arFields, $strNote = '')
 	{
-		/** @global CUserTypeManager $USER_FIELD_MANAGER */
+		/** @var CUserTypeManager $USER_FIELD_MANAGER */
 		global $USER_FIELD_MANAGER;
-		/** @global CDatabase $DB */
+		/** @var CDatabase $DB */
 		global $DB;
 
 		$dbr_m = CControllerMember::GetByID($ID);
 		$ar_m = $dbr_m->Fetch();
 
-		if(!CControllerMember::CheckFields($arFields, $ID))
+		if (!CControllerMember::CheckFields($arFields, $ID))
+		{
 			return false;
+		}
 
-		if(!$USER_FIELD_MANAGER->CheckFields("CONTROLLER_MEMBER", $ID, $arFields))
+		if (!$USER_FIELD_MANAGER->CheckFields('CONTROLLER_MEMBER', $ID, $arFields))
+		{
 			return false;
+		}
 
-		if(
-			isset($arFields["CONTROLLER_GROUP_ID"])
-			&& $ar_m["CONTROLLER_GROUP_ID"] != $arFields["CONTROLLER_GROUP_ID"]
-			&& !isset($arFields["IN_GROUP_FROM"])
+		if (
+			isset($arFields['CONTROLLER_GROUP_ID'])
+			&& $ar_m['CONTROLLER_GROUP_ID'] != $arFields['CONTROLLER_GROUP_ID']
+			&& !isset($arFields['IN_GROUP_FROM'])
 		)
-			$arFields["~IN_GROUP_FROM"] = $DB->CurrentTimeFunction();
+		{
+			$arFields['~IN_GROUP_FROM'] = CDatabase::CurrentTimeFunction();
+		}
 
-		unset($arFields["TIMESTAMP_X"]);
-		if(array_key_exists("TIMESTAMP", $arFields))
-			$arFields["~TIMESTAMP_X"] = $DB->CharToDateFunction($arFields["TIMESTAMP"]);
+		unset($arFields['TIMESTAMP_X']);
+		if (array_key_exists('TIMESTAMP', $arFields))
+		{
+			$arFields['~TIMESTAMP_X'] = $DB->CharToDateFunction($arFields['TIMESTAMP']);
+		}
 		else
-			$arFields["~TIMESTAMP_X"] = $DB->CurrentTimeFunction();
+		{
+			$arFields['~TIMESTAMP_X'] = CDatabase::CurrentTimeFunction();
+		}
 
-		$arUpdateBinds = array();
-		$strUpdate = $DB->PrepareUpdateBind("b_controller_member", $arFields, "", false, $arUpdateBinds);
+		$arUpdateBinds = [];
+		$strUpdate = $DB->PrepareUpdateBind('b_controller_member', $arFields, '', false, $arUpdateBinds);
 
-		$strSql = "UPDATE b_controller_member SET ".$strUpdate." WHERE ID=".intval($ID);
+		$strSql = 'UPDATE b_controller_member SET ' . $strUpdate . ' WHERE ID=' . intval($ID);
 
-		$arBinds = array();
-		foreach($arUpdateBinds as $field_id)
+		$arBinds = [];
+		foreach ($arUpdateBinds as $field_id)
+		{
 			$arBinds[$field_id] = $arFields[$field_id];
+		}
 
 		$DB->QueryBind($strSql, $arBinds);
 
@@ -530,20 +594,20 @@ class CAllControllerMember
 
 		CControllerMember::logChanges($ID, $ar_m, $ar_n, $strNote);
 
-		$USER_FIELD_MANAGER->Update("CONTROLLER_MEMBER", $ID, $arFields);
+		$USER_FIELD_MANAGER->Update('CONTROLLER_MEMBER', $ID, $arFields);
 
-		if(
-			isset($arFields["CONTROLLER_GROUP_ID"])
-			&& $ar_m["CONTROLLER_GROUP_ID"] != $arFields["CONTROLLER_GROUP_ID"]
+		if (
+			isset($arFields['CONTROLLER_GROUP_ID'])
+			&& $ar_m['CONTROLLER_GROUP_ID'] != $arFields['CONTROLLER_GROUP_ID']
 		)
 		{
 			CControllerMember::SetGroupSettings($ID);
 		}
 
-		if(
-			isset($arFields["ACTIVE"]) && $ar_m["ACTIVE"] != $arFields["ACTIVE"]
-			|| isset($arFields["DATE_ACTIVE_FROM"]) && $ar_m["DATE_ACTIVE_FROM"] != $arFields["DATE_ACTIVE_FROM"]
-			|| isset($arFields["DATE_ACTIVE_TO"]) && $ar_m["DATE_ACTIVE_TO"] != $arFields["DATE_ACTIVE_TO"]
+		if (
+			isset($arFields['ACTIVE']) && $ar_m['ACTIVE'] != $arFields['ACTIVE']
+			|| isset($arFields['DATE_ACTIVE_FROM']) && $ar_m['DATE_ACTIVE_FROM'] != $arFields['DATE_ACTIVE_FROM']
+			|| isset($arFields['DATE_ACTIVE_TO']) && $ar_m['DATE_ACTIVE_TO'] != $arFields['DATE_ACTIVE_TO']
 		)
 		{
 			CControllerMember::UnregisterExpiredAgent($ID);
@@ -557,380 +621,428 @@ class CAllControllerMember
 		global $DB, $USER_FIELD_MANAGER;
 		$ID = intval($ID);
 
-		$USER_FIELD_MANAGER->Delete("CONTROLLER_MEMBER", $ID);
-		$DB->Query("DELETE FROM b_controller_log WHERE CONTROLLER_MEMBER_ID = ".$ID);
-		$DB->Query("DELETE FROM b_controller_task WHERE CONTROLLER_MEMBER_ID = ".$ID);
-		$DB->Query("DELETE FROM b_controller_counter_value WHERE CONTROLLER_MEMBER_ID = ".$ID);
-		$DB->Query("DELETE FROM b_controller_member_log WHERE CONTROLLER_MEMBER_ID = ".$ID);
-		$DB->Query("DELETE FROM b_controller_member WHERE ID = ".$ID);
+		$USER_FIELD_MANAGER->Delete('CONTROLLER_MEMBER', $ID);
+		$DB->Query('DELETE FROM b_controller_log WHERE CONTROLLER_MEMBER_ID = ' . $ID);
+		$DB->Query('DELETE FROM b_controller_task WHERE CONTROLLER_MEMBER_ID = ' . $ID);
+		$DB->Query('DELETE FROM b_controller_counter_value WHERE CONTROLLER_MEMBER_ID = ' . $ID);
+		$DB->Query('DELETE FROM b_controller_member_log WHERE CONTROLLER_MEMBER_ID = ' . $ID);
+		$DB->Query('DELETE FROM b_controller_member WHERE ID = ' . $ID);
 
 		return true;
 	}
 
-	public static function GetList($arOrder = array(), $arFilter = array(), $arSelect = array(), $arOptions = array(), $arNavParams = false)
+	public static function GetList($arOrder = [], $arFilter = [], $arSelect = [], $arOptions = [], $arNavParams = false)
 	{
 		global $DB, $USER_FIELD_MANAGER;
+		$connection = \Bitrix\Main\Application::getConnection();
+		$helper = $connection->getSqlHelper();
 
 		$bEmptySelect = !is_array($arSelect) || empty($arSelect);
 
-		if(is_array($arOrder) && is_array($arSelect))
-			foreach($arOrder as $k => $v)
+		if (is_array($arOrder) && is_array($arSelect))
+		{
+			foreach ($arOrder as $k => $_)
+			{
 				$arSelect[] = $k;
+			}
+		}
 
 		$obUserFieldsSql = new CUserTypeSQL;
-		$obUserFieldsSql->SetEntity("CONTROLLER_MEMBER", "M.ID");
+		$obUserFieldsSql->SetEntity('CONTROLLER_MEMBER', 'M.ID');
 		$obUserFieldsSql->SetSelect($arSelect);
 		$obUserFieldsSql->SetFilter($arFilter);
 		$obUserFieldsSql->SetOrder($arOrder);
 
-		static $arFields = array(
-			"ID" => array(
-				"FIELD_NAME" => "M.ID",
-				"FIELD_TYPE" => "int",
-			),
-			"MEMBER_ID" => array(
-				"FIELD_NAME" => "M.MEMBER_ID",
-				"FIELD_TYPE" => "string",
-			),
-			"SECRET_ID" => array(
-				"FIELD_NAME" => "M.SECRET_ID",
-				"FIELD_TYPE" => "string",
-			),
-			"NAME" => array(
-				"FIELD_NAME" => "M.NAME",
-				"FIELD_TYPE" => "string",
-			),
-			"EMAIL" => array(
-				"FIELD_NAME" => "M.EMAIL",
-				"FIELD_TYPE" => "string",
-			),
-			"CONTACT_PERSON" => array(
-				"FIELD_NAME" => "M.CONTACT_PERSON",
-				"FIELD_TYPE" => "string",
-			),
-			"URL" => array(
-				"FIELD_NAME" => "M.URL",
-				"FIELD_TYPE" => "string",
-			),
-			"CONTROLLER_GROUP_ID" => array(
-				"FIELD_NAME" => "M.CONTROLLER_GROUP_ID",
-				"FIELD_TYPE" => "int",
-			),
-			"CONTROLLER_GROUP_NAME" => array(
-				"FIELD_NAME" => "G.NAME",
-				"FIELD_TYPE" => "string",
-				"TABLE_ALIAS" => "G",
-				"JOIN" => "INNER JOIN b_controller_group G ON G.ID = M.CONTROLLER_GROUP_ID",
-				"LEFT_JOIN" => "LEFT JOIN b_controller_group G ON G.ID = M.CONTROLLER_GROUP_ID",
-			),
-			"IN_GROUP_FROM" => array(
-				"FIELD_NAME" => "M.IN_GROUP_FROM",
-				"FIELD_TYPE" => "datetime",
-				"FORMAT" => "FULL",
-			),
-			"SHARED_KERNEL" => array(
-				"FIELD_NAME" => "M.SHARED_KERNEL",
-				"FIELD_TYPE" => "string",
-			),
-			"ACTIVE" => array(
-				"FIELD_NAME" => "M.ACTIVE",
-				"FIELD_TYPE" => "string",
-			),
-			"SITE_ACTIVE" => array(
-				"FIELD_NAME" => "M.SITE_ACTIVE",
-				"FIELD_TYPE" => "string",
-			),
-			"DISCONNECTED" => array(
-				"FIELD_NAME" => "M.DISCONNECTED",
-				"FIELD_TYPE" => "string",
-			),
-			"DATE_ACTIVE_FROM" => array(
-				"FIELD_NAME" => "M.DATE_ACTIVE_FROM",
-				"FIELD_TYPE" => "datetime",
-				"FORMAT" => "SHORT",
-			),
-			"DATE_ACTIVE_TO" => array(
-				"FIELD_NAME" => "M.DATE_ACTIVE_TO",
-				"FIELD_TYPE" => "datetime",
-				"FORMAT" => "SHORT",
-			),
-			"TIMESTAMP_X" => array(
-				"FIELD_NAME" => "M.TIMESTAMP_X",
-				"FIELD_TYPE" => "datetime",
-				"FORMAT" => "FULL",
-			),
-			"MODIFIED_BY" => array(
-				"FIELD_NAME" => "M.MODIFIED_BY",
-				"FIELD_TYPE" => "int",
-			),
-			"MODIFIED_BY_USER" => array(
-				"FIELD_NAME" => "concat('(', UM.LOGIN, ') ', UM.NAME, ' ', UM.LAST_NAME)",
-				"FIELD_TYPE" => "string",
-				"TABLE_ALIAS" => "UM",
-				"JOIN" => "INNER JOIN b_user UM ON UM.ID = M.MODIFIED_BY",
-				"LEFT_JOIN" => "LEFT JOIN b_user UM ON UM.ID = M.MODIFIED_BY",
-			),
-			"DATE_CREATE" => array(
-				"FIELD_NAME" => "M.DATE_CREATE",
-				"FIELD_TYPE" => "datetime",
-				"FORMAT" => "FULL",
-			),
-			"CREATED_BY" => array(
-				"FIELD_NAME" => "M.CREATED_BY",
-				"FIELD_TYPE" => "int",
-			),
-			"CREATED_BY_USER" => array(
-				"FIELD_NAME" => "concat('(', UC.LOGIN, ') ', UC.NAME, ' ', UC.LAST_NAME)",
-				"FIELD_TYPE" => "string",
-				"TABLE_ALIAS" => "UC",
-				"JOIN" => "INNER JOIN b_user UC ON UC.ID = M.CREATED_BY",
-				"LEFT_JOIN" => "LEFT JOIN b_user UC ON UC.ID = M.CREATED_BY",
-			),
-			"COUNTER_FREE_SPACE" => array(
-				"FIELD_NAME" => "M.COUNTER_FREE_SPACE",
-				"FIELD_TYPE" => "int",
-			),
-			"COUNTER_SITES" => array(
-				"FIELD_NAME" => "M.COUNTER_SITES",
-				"FIELD_TYPE" => "int",
-			),
-			"COUNTER_USERS" => array(
-				"FIELD_NAME" => "M.COUNTER_USERS",
-				"FIELD_TYPE" => "int",
-			),
-			"COUNTER_LAST_AUTH" => array(
-				"FIELD_NAME" => "M.COUNTER_LAST_AUTH",
-				"FIELD_TYPE" => "datetime",
-				"FORMAT" => "FULL",
-			),
-			"COUNTERS_UPDATED" => array(
-				"FIELD_NAME" => "M.COUNTERS_UPDATED",
-				"FIELD_TYPE" => "datetime",
-				"FORMAT" => "FULL",
-			),
-			"NOTES" => array(
-				"FIELD_NAME" => "M.NOTES",
-			),
-			"HOSTNAME" => array(
-				"FIELD_NAME" => "M.HOSTNAME",
-				"FIELD_TYPE" => "string",
-			),
-		);
+		static $arFields = false;
+		if (!$arFields)
+		{
+			$arFields = [
+				'ID' => [
+					'FIELD_NAME' => 'M.ID',
+					'FIELD_TYPE' => 'int',
+				],
+				'MEMBER_ID' => [
+					'FIELD_NAME' => 'M.MEMBER_ID',
+					'FIELD_TYPE' => 'string',
+				],
+				'SECRET_ID' => [
+					'FIELD_NAME' => 'M.SECRET_ID',
+					'FIELD_TYPE' => 'string',
+				],
+				'NAME' => [
+					'FIELD_NAME' => 'M.NAME',
+					'FIELD_TYPE' => 'string',
+				],
+				'EMAIL' => [
+					'FIELD_NAME' => 'M.EMAIL',
+					'FIELD_TYPE' => 'string',
+				],
+				'CONTACT_PERSON' => [
+					'FIELD_NAME' => 'M.CONTACT_PERSON',
+					'FIELD_TYPE' => 'string',
+				],
+				'URL' => [
+					'FIELD_NAME' => 'M.URL',
+					'FIELD_TYPE' => 'string',
+				],
+				'CONTROLLER_GROUP_ID' => [
+					'FIELD_NAME' => 'M.CONTROLLER_GROUP_ID',
+					'FIELD_TYPE' => 'int',
+				],
+				'CONTROLLER_GROUP_NAME' => [
+					'FIELD_NAME' => 'G.NAME',
+					'FIELD_TYPE' => 'string',
+					'TABLE_ALIAS' => 'G',
+					'JOIN' => 'INNER JOIN b_controller_group G ON G.ID = M.CONTROLLER_GROUP_ID',
+					'LEFT_JOIN' => 'LEFT JOIN b_controller_group G ON G.ID = M.CONTROLLER_GROUP_ID',
+				],
+				'IN_GROUP_FROM' => [
+					'FIELD_NAME' => 'M.IN_GROUP_FROM',
+					'FIELD_TYPE' => 'datetime',
+					'FORMAT' => 'FULL',
+				],
+				'SHARED_KERNEL' => [
+					'FIELD_NAME' => 'M.SHARED_KERNEL',
+					'FIELD_TYPE' => 'string',
+				],
+				'ACTIVE' => [
+					'FIELD_NAME' => 'M.ACTIVE',
+					'FIELD_TYPE' => 'string',
+				],
+				'SITE_ACTIVE' => [
+					'FIELD_NAME' => 'M.SITE_ACTIVE',
+					'FIELD_TYPE' => 'string',
+				],
+				'DISCONNECTED' => [
+					'FIELD_NAME' => 'M.DISCONNECTED',
+					'FIELD_TYPE' => 'string',
+				],
+				'DATE_ACTIVE_FROM' => [
+					'FIELD_NAME' => 'M.DATE_ACTIVE_FROM',
+					'FIELD_TYPE' => 'datetime',
+					'FORMAT' => 'SHORT',
+				],
+				'DATE_ACTIVE_TO' => [
+					'FIELD_NAME' => 'M.DATE_ACTIVE_TO',
+					'FIELD_TYPE' => 'datetime',
+					'FORMAT' => 'SHORT',
+				],
+				'TIMESTAMP_X' => [
+					'FIELD_NAME' => 'M.TIMESTAMP_X',
+					'FIELD_TYPE' => 'datetime',
+					'FORMAT' => 'FULL',
+				],
+				'MODIFIED_BY' => [
+					'FIELD_NAME' => 'M.MODIFIED_BY',
+					'FIELD_TYPE' => 'int',
+				],
+				'MODIFIED_BY_USER' => [
+					'FIELD_NAME' => $helper->getConcatFunction("'('", 'UM.LOGIN', "') '", 'UM.NAME', "' '", 'UM.LAST_NAME'),
+					'FIELD_TYPE' => 'string',
+					'TABLE_ALIAS' => 'UM',
+					'JOIN' => 'INNER JOIN b_user UM ON UM.ID = M.MODIFIED_BY',
+					'LEFT_JOIN' => 'LEFT JOIN b_user UM ON UM.ID = M.MODIFIED_BY',
+				],
+				'DATE_CREATE' => [
+					'FIELD_NAME' => 'M.DATE_CREATE',
+					'FIELD_TYPE' => 'datetime',
+					'FORMAT' => 'FULL',
+				],
+				'CREATED_BY' => [
+					'FIELD_NAME' => 'M.CREATED_BY',
+					'FIELD_TYPE' => 'int',
+				],
+				'CREATED_BY_USER' => [
+					'FIELD_NAME' => $helper->getConcatFunction("'('", 'UC.LOGIN', "') '", 'UC.NAME', "' '", 'UC.LAST_NAME'),
+					'FIELD_TYPE' => 'string',
+					'TABLE_ALIAS' => 'UC',
+					'JOIN' => 'INNER JOIN b_user UC ON UC.ID = M.CREATED_BY',
+					'LEFT_JOIN' => 'LEFT JOIN b_user UC ON UC.ID = M.CREATED_BY',
+				],
+				'COUNTER_FREE_SPACE' => [
+					'FIELD_NAME' => 'M.COUNTER_FREE_SPACE',
+					'FIELD_TYPE' => 'int',
+				],
+				'COUNTER_SITES' => [
+					'FIELD_NAME' => 'M.COUNTER_SITES',
+					'FIELD_TYPE' => 'int',
+				],
+				'COUNTER_USERS' => [
+					'FIELD_NAME' => 'M.COUNTER_USERS',
+					'FIELD_TYPE' => 'int',
+				],
+				'COUNTER_LAST_AUTH' => [
+					'FIELD_NAME' => 'M.COUNTER_LAST_AUTH',
+					'FIELD_TYPE' => 'datetime',
+					'FORMAT' => 'FULL',
+				],
+				'COUNTERS_UPDATED' => [
+					'FIELD_NAME' => 'M.COUNTERS_UPDATED',
+					'FIELD_TYPE' => 'datetime',
+					'FORMAT' => 'FULL',
+				],
+				'NOTES' => [
+					'FIELD_NAME' => 'M.NOTES',
+				],
+				'HOSTNAME' => [
+					'FIELD_NAME' => 'M.HOSTNAME',
+					'FIELD_TYPE' => 'string',
+				],
+			];
+		}
 
 		$rsCounters = CControllerCounter::GetList();
-		while($arCounter = $rsCounters->Fetch())
+		while ($arCounter = $rsCounters->Fetch())
 		{
-			$arFields["COUNTER_".$arCounter["ID"]] = array(
-				"FIELD_NAME" => "CCV_".$arCounter["ID"].".".CControllerCounter::GetTypeColumn($arCounter["COUNTER_TYPE"]),
-				"FIELD_TYPE" => CControllerCounter::GetTypeUserType($arCounter["COUNTER_TYPE"]),
-				"TABLE_ALIAS" => "CCV_".$arCounter["ID"],
-				"JOIN" => "INNER JOIN b_controller_counter_value CCV_".$arCounter["ID"]." ON CCV_".$arCounter["ID"].".CONTROLLER_COUNTER_ID = ".$arCounter["ID"]." AND CCV_".$arCounter["ID"].".CONTROLLER_MEMBER_ID = M.ID",
-				"LEFT_JOIN" => "LEFT JOIN b_controller_counter_value CCV_".$arCounter["ID"]." ON CCV_".$arCounter["ID"].".CONTROLLER_COUNTER_ID = ".$arCounter["ID"]." AND CCV_".$arCounter["ID"].".CONTROLLER_MEMBER_ID = M.ID",
-			);
+			$arFields['COUNTER_' . $arCounter['ID']] = [
+				'FIELD_NAME' => 'CCV_' . $arCounter['ID'] . '.' . CControllerCounter::GetTypeColumn($arCounter['COUNTER_TYPE']),
+				'FIELD_TYPE' => CControllerCounter::GetTypeUserType($arCounter['COUNTER_TYPE']),
+				'TABLE_ALIAS' => 'CCV_' . $arCounter['ID'],
+				'JOIN' => 'INNER JOIN b_controller_counter_value CCV_' . $arCounter['ID'] . ' ON CCV_' . $arCounter['ID'] . '.CONTROLLER_COUNTER_ID = ' . $arCounter['ID'] . ' AND CCV_' . $arCounter['ID'] . '.CONTROLLER_MEMBER_ID = M.ID',
+				'LEFT_JOIN' => 'LEFT JOIN b_controller_counter_value CCV_' . $arCounter['ID'] . ' ON CCV_' . $arCounter['ID'] . '.CONTROLLER_COUNTER_ID = ' . $arCounter['ID'] . ' AND CCV_' . $arCounter['ID'] . '.CONTROLLER_MEMBER_ID = M.ID',
+			];
 		}
 
 		$obWhere = new CSQLWhere;
 		$obWhere->SetFields($arFields);
 
-		$arDateFields = array();
-		foreach($arFields as $code => $arField)
-			if($arField["FIELD_TYPE"] == "datetime")
-				$arDateFields[] = $code;
-		$date_field = "/(".implode("|", $arDateFields).")\$/";
-
-		$arFilterNew = array();
-		if(is_array($arFilter))
+		$arDateFields = [];
+		foreach ($arFields as $code => $arField)
 		{
-			foreach($arFilter as $k => $value)
+			if ($arField['FIELD_TYPE'] == 'datetime')
 			{
-				if(is_array($value))
+				$arDateFields[] = $code;
+			}
+		}
+		$date_field = '/(' . implode('|', $arDateFields) . ')$/';
+
+		$arFilterNew = [];
+		if (is_array($arFilter))
+		{
+			foreach ($arFilter as $k => $value)
+			{
+				if (is_array($value))
 				{
-					if(!empty($value))
+					if (!empty($value))
+					{
 						$arFilterNew[$k] = $value;
+					}
 				}
-				elseif($value === false)
+				elseif ($value === false)
 				{
 					$arFilterNew[$k] = $value;
 				}
-				elseif((string)$value <> '')
+				elseif ((string)$value !== '')
 				{
-					if(array_key_exists("date_format", $arOptions) && preg_match($date_field, $k))
-						$arFilterNew[$k] = ConvertTimeStamp(MakeTimeStamp($value, $arOptions["date_format"]), "FULL");
+					if (array_key_exists('date_format', $arOptions) && preg_match($date_field, $k))
+					{
+						$arFilterNew[$k] = ConvertTimeStamp(MakeTimeStamp($value, $arOptions['date_format']), 'FULL');
+					}
 					else
+					{
 						$arFilterNew[$k] = $value;
+					}
 				}
 			}
 		}
 
-		$strWhere = "1 = 1";
+		$strWhere = '1 = 1';
 
-		$r = $obWhere->GetQuery($arFilterNew);
-		if($r <> '')
-			$strWhere .= " AND (".$r.") ";
+		$r = trim($obWhere->GetQuery($arFilterNew));
+		if ($r)
+		{
+			$strWhere .= ' AND (' . $r . ') ';
+		}
 
 		$userFieldsWhere = $obUserFieldsSql->GetFilter();
-		if($userFieldsWhere)
-			$strWhere .= " AND (".$userFieldsWhere.") ";
-
-		if(is_array($arOrder))
+		if ($userFieldsWhere)
 		{
-			foreach($arOrder as $key => $value)
+			$strWhere .= ' AND (' . $userFieldsWhere . ') ';
+		}
+
+		if (is_array($arOrder))
+		{
+			foreach ($arOrder as $key => $_)
 			{
 				$key = mb_strtoupper($key);
-				if(array_key_exists($key, $arFields) && isset($arFields[$key]["LEFT_JOIN"]))
+				if (array_key_exists($key, $arFields) && isset($arFields[$key]['LEFT_JOIN']))
+				{
 					$obWhere->c_joins[$key]++;
+				}
 			}
 		}
 
-		if($bEmptySelect)
+		if ($bEmptySelect)
 		{
-			$arSelectAdd = array(
-				"ID",
-				"MEMBER_ID",
-				"SECRET_ID",
-				"NAME",
-				"URL",
-				"HOSTNAME",
-				"EMAIL",
-				"CONTACT_PERSON",
-				"CONTROLLER_GROUP_ID",
-				"DISCONNECTED",
-				"SHARED_KERNEL",
-				"ACTIVE",
-				"DATE_ACTIVE_FROM",
-				"DATE_ACTIVE_TO",
-				"SITE_ACTIVE",
-				"TIMESTAMP_X",
-				"MODIFIED_BY",
-				"DATE_CREATE",
-				"CREATED_BY",
-				"IN_GROUP_FROM",
-				"NOTES",
-				"COUNTER_FREE_SPACE",
-				"COUNTER_SITES",
-				"COUNTER_USERS",
-				"COUNTER_LAST_AUTH",
-				"COUNTERS_UPDATED",
-				"MODIFIED_BY_USER",
-				"CREATED_BY_USER",
-			);
-			if(is_array($arSelect))
+			$arSelectAdd = [
+				'ID',
+				'MEMBER_ID',
+				'SECRET_ID',
+				'NAME',
+				'URL',
+				'HOSTNAME',
+				'EMAIL',
+				'CONTACT_PERSON',
+				'CONTROLLER_GROUP_ID',
+				'DISCONNECTED',
+				'SHARED_KERNEL',
+				'ACTIVE',
+				'DATE_ACTIVE_FROM',
+				'DATE_ACTIVE_TO',
+				'SITE_ACTIVE',
+				'TIMESTAMP_X',
+				'MODIFIED_BY',
+				'DATE_CREATE',
+				'CREATED_BY',
+				'IN_GROUP_FROM',
+				'NOTES',
+				'COUNTER_FREE_SPACE',
+				'COUNTER_SITES',
+				'COUNTER_USERS',
+				'COUNTER_LAST_AUTH',
+				'COUNTERS_UPDATED',
+				'MODIFIED_BY_USER',
+				'CREATED_BY_USER',
+			];
+			if (is_array($arSelect))
+			{
 				$arSelect = array_merge($arSelect, $arSelectAdd);
+			}
 			else
+			{
 				$arSelect = $arSelectAdd;
+			}
 		}
 
-		$duplicates = array("ID" => 1);
+		$duplicates = ['ID' => 1];
 		$strSelect = "M.ID AS ID\n";
-		foreach($arSelect as $key)
+		foreach ($arSelect as $key)
 		{
 			$key = mb_strtoupper($key);
-			if(array_key_exists($key, $arFields) && !array_key_exists($key, $duplicates))
+			if (array_key_exists($key, $arFields) && !array_key_exists($key, $duplicates))
 			{
 				$duplicates[$key]++;
 
-				if(isset($arFields[$key]["LEFT_JOIN"]))
-					$obWhere->c_joins[$key]++;
-
-				if($arFields[$key]["FIELD_TYPE"] == "datetime")
+				if (isset($arFields[$key]['LEFT_JOIN']))
 				{
-					if(array_key_exists("date_format", $arOptions))
-						$strSelect .= ",".$DB->DateFormatToDB($arOptions["date_format"], $arFields[$key]["FIELD_NAME"])." AS ".$key."\n";
+					$obWhere->c_joins[$key]++;
+				}
+
+				if ($arFields[$key]['FIELD_TYPE'] == 'datetime')
+				{
+					if (array_key_exists('date_format', $arOptions))
+					{
+						$strSelect .= ',' . $DB->DateFormatToDB($arOptions['date_format'], $arFields[$key]['FIELD_NAME']) . ' AS ' . $key . "\n";
+					}
 					else
-						$strSelect .= ",".$arFields[$key]["FIELD_NAME"]." AS ".$key."_TMP,".$DB->DateToCharFunction($arFields[$key]["FIELD_NAME"], $arFields[$key]["FORMAT"])." AS ".$key."\n";
+					{
+						$strSelect .= ',' . $arFields[$key]['FIELD_NAME'] . ' AS ' . $key . '_TMP,' . $DB->DateToCharFunction($arFields[$key]['FIELD_NAME'], $arFields[$key]['FORMAT']) . ' AS ' . $key . "\n";
+					}
 				}
 				else
-					$strSelect .= ",".$arFields[$key]["FIELD_NAME"]." AS ".$key."\n";
+				{
+					$strSelect .= ',' . $arFields[$key]['FIELD_NAME'] . ' AS ' . $key . "\n";
+				}
 			}
 		}
 
-		$strSql = "
-			SELECT ".($obUserFieldsSql->GetDistinct()? "DISTINCT": "")." ".$strSelect.$obUserFieldsSql->GetSelect()."
+		$strSql = '
+			SELECT ' . ($obUserFieldsSql->GetDistinct() ? 'DISTINCT' : '') . ' ' . $strSelect . $obUserFieldsSql->GetSelect() . '
 			FROM b_controller_member M
-				".$obWhere->GetJoins()."
-				".$obUserFieldsSql->GetJoin("M.ID")."
-			WHERE ".$strWhere."
-			".CControllerAgent::_OrderBy($arOrder, $arFields, $obUserFieldsSql);
+				' . $obWhere->GetJoins() . '
+				' . $obUserFieldsSql->GetJoin('M.ID') . '
+			WHERE ' . $strWhere . '
+			' . CControllerAgent::_OrderBy($arOrder, $arFields, $obUserFieldsSql);
 
 		if (!is_array($arNavParams))
 		{
-			$dbr = $DB->Query($strSql, false, "File: ".__FILE__."<br>Line: ".__LINE__);
+			$dbr = $DB->Query($strSql);
 		}
-		elseif ($arNavParams["nTopCount"] > 0)
+		elseif ($arNavParams['nTopCount'] > 0)
 		{
-			$strSql = $strSql."\nLIMIT ".intval($arNavParams["nTopCount"]);
-			if ($arNavParams["nOffset"] > 0)
+			$strSql = $strSql . "\nLIMIT " . intval($arNavParams['nTopCount']);
+			if ($arNavParams['nOffset'] > 0)
 			{
-				$strSql .= " OFFSET ".intval($arNavParams["nOffset"]);
+				$strSql .= ' OFFSET ' . intval($arNavParams['nOffset']);
 			}
-			$dbr = $DB->Query($strSql, false, "File: ".__FILE__."<br>Line: ".__LINE__);
+			$dbr = $DB->Query($strSql);
 		}
 		else
 		{
-			$strSqlCnt = "
+			$strSqlCnt = '
 				FROM b_controller_member M
-					".$obWhere->GetJoins()."
-					".($userFieldsWhere? $obUserFieldsSql->GetJoin("M.ID"): "")."
-				WHERE ".$strWhere."
-			";
-			$res_cnt = $DB->Query("SELECT count('x') CNT ".$strSqlCnt);
+					' . $obWhere->GetJoins() . '
+					' . ($userFieldsWhere ? $obUserFieldsSql->GetJoin('M.ID') : '') . '
+				WHERE ' . $strWhere . '
+			';
+			$res_cnt = $DB->Query("SELECT count('x') CNT " . $strSqlCnt);
 			$ar_cnt = $res_cnt->Fetch();
-			if (isset($arNavParams["bOnlyCount"]) && $arNavParams["bOnlyCount"] === true)
+			if (isset($arNavParams['bOnlyCount']) && $arNavParams['bOnlyCount'] === true)
 			{
-				return $ar_cnt["CNT"];
+				return $ar_cnt['CNT'];
 			}
 
 			$dbr = new CDBResult();
-			$dbr->NavQuery($strSql, $ar_cnt["CNT"], $arNavParams);
+			$dbr->NavQuery($strSql, $ar_cnt['CNT'], $arNavParams);
 		}
 
-		$dbr->is_filtered = $strWhere != "1 = 1";
-		$dbr->SetUserFields($USER_FIELD_MANAGER->GetUserFields("CONTROLLER_MEMBER"));
+		$dbr->is_filtered = $strWhere !== '1 = 1';
+		$dbr->SetUserFields($USER_FIELD_MANAGER->GetUserFields('CONTROLLER_MEMBER'));
 
 		return $dbr;
 	}
 
 	public static function GetByID($ID)
 	{
-		return CControllerMember::GetList(Array(), Array("ID"=>intval($ID)));
+		return CControllerMember::GetList([], ['ID' => intval($ID)]);
 	}
-
 
 	public static function GetByGuid($guid)
 	{
-		return CControllerMember::GetList(Array(), Array("=MEMBER_ID"=>$guid));
+		return CControllerMember::GetList([], ['=MEMBER_ID' => $guid]);
 	}
 
 	public static function RegisterMemberByPassword($ar_member, $admin_login, $admin_password, $controller_url = false)
 	{
-		/** @global CMain $APPLICATION */
+		/** @var CMain $APPLICATION */
 		global $APPLICATION;
 
-		if($controller_url===false)
-			$controller_url = COption::GetOptionString("controller", "controller_url", ($APPLICATION->IsHTTPS()?"https://":"http://").$_SERVER['HTTP_HOST']);
+		/** @var \Bitrix\Main\HttpRequest $request */
+		$request = \Bitrix\Main\Context::getCurrent()->getRequest();
 
-		if(!isset($ar_member['MEMBER_ID']))
-			$ar_member['MEMBER_ID'] = "m".\Bitrix\Main\Security\Random::getString(31);
+		if ($controller_url === false)
+		{
+			$controller_url = COption::GetOptionString('controller', 'controller_url', ($request->isHttps() ? 'https://' : 'http://') . $_SERVER['HTTP_HOST']);
+		}
 
-		if(!isset($ar_member['SECRET_ID']))
-			$ar_member['SECRET_ID'] = "m".\Bitrix\Main\Security\Random::getString(31);
+		if (!isset($ar_member['MEMBER_ID']))
+		{
+			$ar_member['MEMBER_ID'] = 'm' . \Bitrix\Main\Security\Random::getString(31);
+		}
 
-		if(!CControllerMember::CheckFields($ar_member))
+		if (!isset($ar_member['SECRET_ID']))
+		{
+			$ar_member['SECRET_ID'] = 'm' . \Bitrix\Main\Security\Random::getString(31);
+		}
+
+		if (!CControllerMember::CheckFields($ar_member))
+		{
 			return false;
+		}
 
-		$arParameters = Array(
-			"member_id" => $ar_member['MEMBER_ID'],
-			"member_secret_id" => $ar_member['SECRET_ID'],
-			"controller_url" => $controller_url,
-			"admin_login" => $admin_login,
-			"admin_password" => $admin_password,
-			"join_command" => '
+		$arParameters = [
+			'member_id' => $ar_member['MEMBER_ID'],
+			'member_secret_id' => $ar_member['SECRET_ID'],
+			'controller_url' => $controller_url,
+			'admin_login' => $admin_login,
+			'admin_password' => $admin_password,
+			'join_command' => '
 				COption::SetOptionString("main", "controller_member", "Y");
 				COption::SetOptionString("main", "controller_ticket", "");
 				RegisterModuleDependences("main", "OnUserLoginExternal", "main", "CControllerClient", "OnExternalLogin", 1);
 				RegisterModuleDependences("main", "OnExternalAuthList", "main", "CControllerClient", "OnExternalAuthList");
 			',
-			"disconnect_command" => '
+			'disconnect_command' => '
 				CControllerClient::RestoreAll();
 				COption::SetOptionString("main", "controller_member", "N");
 				COption::SetOptionString("main", "controller_member_id", "");
@@ -938,17 +1050,17 @@ class CAllControllerMember
 				UnRegisterModuleDependences("main", "OnUserLoginExternal", "main", "CControllerClient", "OnExternalLogin");
 				UnRegisterModuleDependences("main", "OnExternalAuthList", "main", "CControllerClient", "OnExternalAuthList");
 			'
-		);
+		];
 
-		$oRequest = new CControllerServerRequestTo($ar_member, "simple_register", $arParameters);
-		if(($oResponse = $oRequest->Send())===false)
+		$oRequest = new CControllerServerRequestTo($ar_member, 'simple_register', $arParameters);
+		if (($oResponse = $oRequest->Send()) === false)
 		{
 			return false;
 		}
 
 		$result = $oResponse->OK();
 
-		if($result === false)
+		if ($result === false)
 		{
 			$e = new CApplicationException($oResponse->text);
 			$APPLICATION->ThrowException($e);
@@ -956,14 +1068,14 @@ class CAllControllerMember
 		else
 		{
 			$APPLICATION->ResetException();
-			if($ID = CControllerMember::Add($ar_member))
+			if ($ID = CControllerMember::Add($ar_member))
 			{
-				$arControllerLog = Array(
-					'NAME'=>'REGISTRATION',
-					'CONTROLLER_MEMBER_ID'=>$ID,
-					'DESCRIPTION'=>GetMessage("CTRLR_MEM_LOG_DESC_JOIN_BY_TICKET"),
-					'STATUS'=>'Y'
-				);
+				$arControllerLog = [
+					'NAME' => 'REGISTRATION',
+					'CONTROLLER_MEMBER_ID' => $ID,
+					'DESCRIPTION' => GetMessage('CTRLR_MEM_LOG_DESC_JOIN_BY_TICKET'),
+					'STATUS' => 'Y'
+				];
 				CControllerLog::Add($arControllerLog);
 				CControllerMember::SetGroupSettings($ID);
 				return $ID;
@@ -975,28 +1087,34 @@ class CAllControllerMember
 
 	public static function ReconnectMemberByPassword($ID, $ar_member, $admin_login, $admin_password, $controller_url = false)
 	{
-		/** @global CMain $APPLICATION */
+		/** @var CMain $APPLICATION */
 		global $APPLICATION;
+		/** @var \Bitrix\Main\HttpRequest $request */
+		$request = \Bitrix\Main\Context::getCurrent()->getRequest();
 
-		if($controller_url===false)
-			$controller_url = COption::GetOptionString("controller", "controller_url", ($APPLICATION->IsHTTPS()?"https://":"http://").$_SERVER['HTTP_HOST']);
+		if ($controller_url === false)
+		{
+			$controller_url = COption::GetOptionString('controller', 'controller_url', ($request->isHttps() ? 'https://' : 'http://') . $_SERVER['HTTP_HOST']);
+		}
 
-		if(!CControllerMember::CheckFields($ar_member, $ID))
+		if (!CControllerMember::CheckFields($ar_member, $ID))
+		{
 			return false;
+		}
 
-		$arParameters = Array(
-			"member_id" => $ar_member['MEMBER_ID'],
-			"member_secret_id" => $ar_member['SECRET_ID'],
-			"controller_url" => $controller_url,
-			"admin_login" => $admin_login,
-			"admin_password" => $admin_password,
-			"join_command" => '
+		$arParameters = [
+			'member_id' => $ar_member['MEMBER_ID'],
+			'member_secret_id' => $ar_member['SECRET_ID'],
+			'controller_url' => $controller_url,
+			'admin_login' => $admin_login,
+			'admin_password' => $admin_password,
+			'join_command' => '
 				COption::SetOptionString("main", "controller_member", "Y");
 				COption::SetOptionString("main", "controller_ticket", "");
 				RegisterModuleDependences("main", "OnUserLoginExternal", "main", "CControllerClient", "OnExternalLogin", 1);
 				RegisterModuleDependences("main", "OnExternalAuthList", "main", "CControllerClient", "OnExternalAuthList");
 			',
-			"disconnect_command" => '
+			'disconnect_command' => '
 				CControllerClient::RestoreAll();
 				COption::SetOptionString("main", "controller_member", "N");
 				COption::SetOptionString("main", "controller_member_id", "");
@@ -1004,17 +1122,17 @@ class CAllControllerMember
 				UnRegisterModuleDependences("main", "OnUserLoginExternal", "main", "CControllerClient", "OnExternalLogin");
 				UnRegisterModuleDependences("main", "OnExternalAuthList", "main", "CControllerClient", "OnExternalAuthList");
 			'
-		);
+		];
 
-		$oRequest = new CControllerServerRequestTo($ar_member, "simple_register", $arParameters);
-		if(($oResponse = $oRequest->Send())===false)
+		$oRequest = new CControllerServerRequestTo($ar_member, 'simple_register', $arParameters);
+		if (($oResponse = $oRequest->Send()) === false)
 		{
 			return false;
 		}
 
 		$result = $oResponse->OK();
 
-		if($result === false)
+		if ($result === false)
 		{
 			$e = new CApplicationException($oResponse->text);
 			$APPLICATION->ThrowException($e);
@@ -1022,14 +1140,14 @@ class CAllControllerMember
 		else
 		{
 			$APPLICATION->ResetException();
-			if(CControllerMember::Update($ID, $ar_member))
+			if (CControllerMember::Update($ID, $ar_member))
 			{
-				$arControllerLog = Array(
-					'NAME'=>'REGISTRATION',
-					'CONTROLLER_MEMBER_ID'=>$ID,
-					'DESCRIPTION'=>GetMessage("CTRLR_MEM_LOG_DESC_JOIN_BY_TICKET"),
-					'STATUS'=>'Y'
-				);
+				$arControllerLog = [
+					'NAME' => 'REGISTRATION',
+					'CONTROLLER_MEMBER_ID' => $ID,
+					'DESCRIPTION' => GetMessage('CTRLR_MEM_LOG_DESC_JOIN_BY_TICKET'),
+					'STATUS' => 'Y'
+				];
 				CControllerLog::Add($arControllerLog);
 				CControllerMember::SetGroupSettings($ID);
 				return $ID;
@@ -1041,59 +1159,65 @@ class CAllControllerMember
 
 	public static function CheckUserAuth($member_id, $login, $password)
 	{
-		/** @global CMain $APPLICATION */
+		/** @var CMain $APPLICATION */
 		global $APPLICATION;
 
 		$arMember = CControllerMember::GetMember($member_id);
-		if(!$arMember)
+		if (!$arMember)
+		{
 			return false;
+		}
 
 		// send query to the client in order to check authorization
-		$arParameters = array("login"=>$login, "password"=>$password);
+		$arParameters = ['login' => $login, 'password' => $password];
 		$oRequest = new CControllerServerRequestTo($arMember, 'check_auth', $arParameters);
 		$oResponse = $oRequest->Send();
-		if($oResponse === false)
+		if ($oResponse === false)
+		{
 			return false;
+		}
 
-		if($oResponse->OK() === false)
+		if ($oResponse->OK() === false)
 		{
 			$e = new CApplicationException($oResponse->text);
 			$APPLICATION->ThrowException($e);
 			return false;
 		}
-		elseif(COption::GetOptionString("controller", "auth_trans_enabled", "N") === "Y")
+		elseif (COption::GetOptionString('controller', 'auth_trans_enabled', 'N') === 'Y')
 		{
-			$current_groups = $oResponse->arParameters['USER_INFO']["GROUP_ID"];
-			$arRemGroups = \Bitrix\Controller\GroupMapTable::getMapping("LOCAL_GROUP_CODE", "REMOTE_GROUP_CODE");
+			$current_groups = $oResponse->arParameters['USER_INFO']['GROUP_ID'];
+			$arRemGroups = \Bitrix\Controller\GroupMapTable::getMapping('LOCAL_GROUP_CODE', 'REMOTE_GROUP_CODE');
 		}
-		elseif(COption::GetOptionString("controller", "auth_controller_enabled", "N") === "Y")
+		elseif (COption::GetOptionString('controller', 'auth_controller_enabled', 'N') === 'Y')
 		{
-			$current_groups = $oResponse->arParameters['USER_INFO']["GROUP_ID"];
-			$arRemGroups = \Bitrix\Controller\GroupMapTable::getMapping("LOCAL_GROUP_CODE", "CONTROLLER_GROUP_ID");
+			$current_groups = $oResponse->arParameters['USER_INFO']['GROUP_ID'];
+			$arRemGroups = \Bitrix\Controller\GroupMapTable::getMapping('LOCAL_GROUP_CODE', 'CONTROLLER_GROUP_ID');
 		}
 		else
 		{
 			return false;
 		}
 
-		$GROUP_ID = array();
-		$GROUPS_TO_ADD = array();
-		$GROUPS_TO_DELETE = array();
-		foreach($arRemGroups as $arTGroup)
+		$GROUP_ID = [];
+		$GROUPS_TO_ADD = [];
+		$GROUPS_TO_DELETE = [];
+		foreach ($arRemGroups as $arTGroup)
 		{
 			$bFound = false;
-			foreach($current_groups as $group_id)
+			foreach ($current_groups as $group_id)
 			{
-				if($arTGroup["FROM"] == $group_id)
+				if ($arTGroup['FROM'] == $group_id)
 				{
-					$GROUP_ID[] = $arTGroup["TO"];
-					$GROUPS_TO_ADD[] = $arTGroup["TO"];
+					$GROUP_ID[] = $arTGroup['TO'];
+					$GROUPS_TO_ADD[] = $arTGroup['TO'];
 					$bFound = true;
 				}
 			}
 
-			if(!$bFound)
-				$GROUPS_TO_DELETE[] = $arTGroup["TO"];
+			if (!$bFound)
+			{
+				$GROUPS_TO_DELETE[] = $arTGroup['TO'];
+			}
 		}
 
 		$oResponse->arParameters['USER_INFO']['GROUP_ID'] = $GROUP_ID;
@@ -1104,31 +1228,34 @@ class CAllControllerMember
 		return $oResponse->arParameters;
 	}
 
-
 	public static function RegisterMemberByPHP($ar_member)
 	{
-		/** @global CMain $APPLICATION */
-		global $APPLICATION;
+		/** @var \Bitrix\Main\HttpRequest $request */
+		$request = \Bitrix\Main\Context::getCurrent()->getRequest();
 
-		$controller_url = COption::GetOptionString("controller", "controller_url", ($APPLICATION->IsHTTPS()?"https://":"http://").$_SERVER['HTTP_HOST']);
+		$controller_url = COption::GetOptionString('controller', 'controller_url', ($request->isHttps() ? 'https://' : 'http://') . $_SERVER['HTTP_HOST']);
 
-		if(!isset($ar_member['MEMBER_ID']))
-			$ar_member['MEMBER_ID'] = "m".\Bitrix\Main\Security\Random::getString(31);
+		if (!isset($ar_member['MEMBER_ID']))
+		{
+			$ar_member['MEMBER_ID'] = 'm' . \Bitrix\Main\Security\Random::getString(31);
+		}
 
-		if(!isset($ar_member['SECRET_ID']))
-			$ar_member['SECRET_ID'] = "m".\Bitrix\Main\Security\Random::getString(31);
+		if (!isset($ar_member['SECRET_ID']))
+		{
+			$ar_member['SECRET_ID'] = 'm' . \Bitrix\Main\Security\Random::getString(31);
+		}
 
-		$arParameters = Array(
-			"member_id" => $ar_member['MEMBER_ID'],
-			"member_secret_id" => $ar_member['SECRET_ID'],
-			"controller_url" => $controller_url,
-			"join_command" => '
+		$arParameters = [
+			'member_id' => $ar_member['MEMBER_ID'],
+			'member_secret_id' => $ar_member['SECRET_ID'],
+			'controller_url' => $controller_url,
+			'join_command' => '
 				COption::SetOptionString("main", "controller_member", "Y");
 				COption::SetOptionString("main", "controller_ticket", "");
 				RegisterModuleDependences("main", "OnUserLoginExternal", "main", "CControllerClient", "OnExternalLogin", 1);
 				RegisterModuleDependences("main", "OnExternalAuthList", "main", "CControllerClient", "OnExternalAuthList");
 			',
-			"disconnect_command" => '
+			'disconnect_command' => '
 				CControllerClient::RestoreAll();
 				COption::SetOptionString("main", "controller_member", "N");
 				COption::SetOptionString("main", "controller_member_id", "");
@@ -1136,43 +1263,48 @@ class CAllControllerMember
 				UnRegisterModuleDependences("main", "OnUserLoginExternal", "main", "CControllerClient", "OnExternalLogin");
 				UnRegisterModuleDependences("main", "OnExternalAuthList", "main", "CControllerClient", "OnExternalAuthList");
 			'
-		);
+		];
 
-		if($ar_member["ID"] = CControllerMember::Add($ar_member))
+		if ($ar_member['ID'] = CControllerMember::Add($ar_member))
 		{
-			$ar_member["REG_PARAMS"] = $arParameters;
+			$ar_member['REG_PARAMS'] = $arParameters;
 			return $ar_member;
 		}
 		return false;
 	}
 
-
 	public static function RegisterMemberByTicket($ar_member, $ticket_id, $session_id)
 	{
-		/** @global CMain $APPLICATION */
+		/** @var CMain $APPLICATION */
 		global $APPLICATION;
 
-		if($ar_member["ID"]>0)
-			$ID = $ar_member["ID"];
+		if ($ar_member['ID'] > 0)
+		{
+			$ID = $ar_member['ID'];
+		}
 		else
+		{
 			$ID = false;
+		}
 
-		$member_id = $ar_member["MEMBER_ID"];
+		$member_id = $ar_member['MEMBER_ID'];
 
-		if(!CControllerMember::CheckFields($ar_member, $ID))
+		if (!CControllerMember::CheckFields($ar_member, $ID))
+		{
 			return false;
+		}
 
-		$ar_member["MEMBER_ID"] = $member_id;
+		$ar_member['MEMBER_ID'] = $member_id;
 
-		$arParameters = Array(
-			"controller_ticket_id"=>$ticket_id,
-			"join_command" => '
+		$arParameters = [
+			'controller_ticket_id' => $ticket_id,
+			'join_command' => '
 				COption::SetOptionString("main", "controller_member", "Y");
 				COption::SetOptionString("main", "controller_ticket", "");
 				RegisterModuleDependences("main", "OnUserLoginExternal", "main", "CControllerClient", "OnExternalLogin", 1);
 				RegisterModuleDependences("main", "OnExternalAuthList", "main", "CControllerClient", "OnExternalAuthList");
 			',
-			"disconnect_command" => '
+			'disconnect_command' => '
 				CControllerClient::RestoreAll();
 				COption::SetOptionString("main", "controller_member", "N");
 				COption::SetOptionString("main", "controller_member_id", "");
@@ -1180,60 +1312,65 @@ class CAllControllerMember
 				UnRegisterModuleDependences("main", "OnUserLoginExternal", "main", "CControllerClient", "OnExternalLogin", 1);
 				UnRegisterModuleDependences("main", "OnExternalAuthList", "main", "CControllerClient", "OnExternalAuthList");
 			'
-		);
+		];
 
-		$oRequest = new CControllerServerRequestTo($ar_member, "register", $arParameters);
-		if($session_id)
+		$oRequest = new CControllerServerRequestTo($ar_member, 'register', $arParameters);
+		if ($session_id)
+		{
 			$oRequest->session_id = $session_id;
+		}
 
-		if(($oResponse = $oRequest->Send())==false)
+		if (($oResponse = $oRequest->Send()) === false)
+		{
 			return false;
+		}
 
 		$result = $oResponse->OK();
 
-		if($result === false)
+		if ($result === false)
 		{
 			$e = new CApplicationException($oResponse->text);
 			$APPLICATION->ThrowException($e);
 			return false;
 		}
 
-
-		if($ID>0)
+		if ($ID > 0)
 		{
-			$ar_member["DISCONNECTED"] = "N";
+			$ar_member['DISCONNECTED'] = 'N';
 			$ID = CControllerMember::Update($ID, $ar_member) ? $ID : false;
 		}
 		else
-			$ID = CControllerMember::Add($ar_member);
-
-		if($ID>0)
 		{
-			$arControllerLog = Array(
-					'NAME'=>'REGISTRATION',
-					'CONTROLLER_MEMBER_ID'=>$ID,
-					'DESCRIPTION'=>GetMessage("CTRLR_MEM_LOG_DESC_JOIN_BY_TICKET2"),
-					'STATUS'=>'Y'
-				);
+			$ID = CControllerMember::Add($ar_member);
+		}
+
+		if ($ID > 0)
+		{
+			$arControllerLog = [
+				'NAME' => 'REGISTRATION',
+				'CONTROLLER_MEMBER_ID' => $ID,
+				'DESCRIPTION' => GetMessage('CTRLR_MEM_LOG_DESC_JOIN_BY_TICKET2'),
+				'STATUS' => 'Y'
+			];
 
 			CControllerLog::Add($arControllerLog);
 			CControllerMember::SetGroupSettings($ID);
 
-			if(!isset($ar_member["DISCONNECTED"]) || $ar_member["DISCONNECTED"]=="N")
+			if (!isset($ar_member['DISCONNECTED']) || $ar_member['DISCONNECTED'] == 'N')
 			{
 				// add join event
 				CTimeZone::Disable();
 				$db_res = CControllerMember::GetByID($ID);
 				CTimeZone::Enable();
 
-				if($arFields = $db_res->Fetch())
+				if ($arFields = $db_res->Fetch())
 				{
-					foreach (GetModuleEvents("controller", "OnAfterRegisterMemberByTicket", true) as $arEvent)
+					foreach (GetModuleEvents('controller', 'OnAfterRegisterMemberByTicket', true) as $arEvent)
 					{
-						ExecuteModuleEventEx($arEvent, array(&$arFields));
+						ExecuteModuleEventEx($arEvent, [&$arFields]);
 					}
 
-					CEvent::Send("CONTROLLER_MEMBER_REGISTER", CSite::GetDefSite(), $arFields);
+					CEvent::Send('CONTROLLER_MEMBER_REGISTER', CSite::GetDefSite(), $arFields);
 				}
 			}
 
@@ -1245,94 +1382,94 @@ class CAllControllerMember
 
 	public static function CheckFields(&$arFields, $ID = false)
 	{
-		/** @global CMain $APPLICATION */
+		/** @var CMain $APPLICATION */
 		global $APPLICATION;
-		/** @global CDatabase $DB */
+		/** @var CDatabase $DB */
 		global $DB;
-		/** @global CUser $USER */
+		/** @var CUser $USER */
 		global $USER;
 
-		$arMsg = array();
+		$arMsg = [];
 		if ($ID > 0)
 		{
-			unset($arFields["ID"]);
+			unset($arFields['ID']);
 		}
 
 		if ($ID === false)
 		{
-			if (!array_key_exists("MEMBER_ID", $arFields))
+			if (!array_key_exists('MEMBER_ID', $arFields))
 			{
-				$arFields["MEMBER_ID"] = "m".\Bitrix\Main\Security\Random::getString(31);
+				$arFields['MEMBER_ID'] = 'm' . \Bitrix\Main\Security\Random::getString(31);
 			}
-			elseif (array_key_exists("MEMBER_ID", $arFields))
+			elseif (array_key_exists('MEMBER_ID', $arFields))
 			{
-				if (intval($arFields["MEMBER_ID"]) > 0)
+				if (intval($arFields['MEMBER_ID']) > 0)
 				{
-					$arMsg[] = array(
-						"id" => "MEMBER_ID",
-						"text" => GetMessage("CTRLR_MEM_ERR_MEMBER_ID"),
-					);
+					$arMsg[] = [
+						'id' => 'MEMBER_ID',
+						'text' => GetMessage('CTRLR_MEM_ERR_MEMBER_ID'),
+					];
 				}
 				else
 				{
 					$strSqlCheck = "
 						SELECT 'x'
 						FROM b_controller_member
-						WHERE MEMBER_ID = '".$DB->ForSQL($arFields['MEMBER_ID'], 32)."'
-						AND ID <> ".intval($ID)."
-					";
+						WHERE MEMBER_ID = '" . $DB->ForSql($arFields['MEMBER_ID'], 32) . "'
+						AND ID <> " . intval($ID) . '
+					';
 					$dbrCheck = $DB->Query($strSqlCheck);
 					if ($dbrCheck->Fetch())
 					{
-						$arMsg[] = array(
-							"id" => "MEMBER_ID",
-							"text" => GetMessage("CTRLR_MEM_ERR_MEMBER_UID"),
-						);
+						$arMsg[] = [
+							'id' => 'MEMBER_ID',
+							'text' => GetMessage('CTRLR_MEM_ERR_MEMBER_UID'),
+						];
 					}
 				}
 			}
 		}
 
-		if (($ID === false || array_key_exists("NAME", $arFields)) && $arFields["NAME"] == '')
+		if (($ID === false || array_key_exists('NAME', $arFields)) && $arFields['NAME'] === '')
 		{
-			$arMsg[] = array(
-				"id" => "NAME",
-				"text" => GetMessage("CTRLR_MEM_ERR_MEMBER_NAME"),
-			);
+			$arMsg[] = [
+				'id' => 'NAME',
+				'text' => GetMessage('CTRLR_MEM_ERR_MEMBER_NAME'),
+			];
 		}
 
-		if (($ID === false || array_key_exists("URL", $arFields)) && $arFields["URL"] == '')
+		if (($ID === false || array_key_exists('URL', $arFields)) && $arFields['URL'] === '')
 		{
-			$arMsg[] = array(
-				"id" => "URL",
-				"text" => GetMessage("CTRLR_MEM_ERR_MEMBER_URL"),
-			);
+			$arMsg[] = [
+				'id' => 'URL',
+				'text' => GetMessage('CTRLR_MEM_ERR_MEMBER_URL'),
+			];
 		}
 
-		if ($ID === false && !array_key_exists("CONTROLLER_GROUP_ID", $arFields))
+		if ($ID === false && !array_key_exists('CONTROLLER_GROUP_ID', $arFields))
 		{
-			$arFields["CONTROLLER_GROUP_ID"] = COption::GetOptionInt("controller", "default_group", 1);
+			$arFields['CONTROLLER_GROUP_ID'] = COption::GetOptionInt('controller', 'default_group', 1);
 		}
 
 		if ($ID === false)
 		{
-			$dbEvents = GetModuleEvents("controller", "OnBeforeControllerMemberAdd", true);
+			$dbEvents = GetModuleEvents('controller', 'OnBeforeControllerMemberAdd', true);
 		}
 		else
 		{
-			$dbEvents = GetModuleEvents("controller", "OnBeforeControllerMemberUpdate", true);
+			$dbEvents = GetModuleEvents('controller', 'OnBeforeControllerMemberUpdate', true);
 		}
 
 		$APPLICATION->ResetException();
-		foreach($dbEvents as $arEvent)
+		foreach ($dbEvents as $arEvent)
 		{
-			$bEventRes = ExecuteModuleEventEx($arEvent, array($ID, &$arFields));
+			$bEventRes = ExecuteModuleEventEx($arEvent, [$ID, &$arFields]);
 			if ($bEventRes === false)
 			{
 				$ex = $APPLICATION->GetException();
-				$arMsg[] = array(
-					"text" => ($ex? $ex->GetString(): "Unknown error."),
-				);
+				$arMsg[] = [
+					'text' => ($ex ? $ex->GetString() : 'Unknown error.'),
+				];
 			}
 		}
 
@@ -1343,39 +1480,39 @@ class CAllControllerMember
 			return false;
 		}
 
-		if (isset($arFields["URL"]))
+		if (isset($arFields['URL']))
 		{
-			$arFields["URL"] = CControllerMember::_GoodURL($arFields["URL"]);
+			$arFields['URL'] = CControllerMember::_GoodURL($arFields['URL']);
 		}
 
-		if (array_key_exists("ACTIVE", $arFields) && $arFields["ACTIVE"] != "Y")
+		if (array_key_exists('ACTIVE', $arFields) && $arFields['ACTIVE'] != 'Y')
 		{
-			$arFields["ACTIVE"] = "N";
+			$arFields['ACTIVE'] = 'N';
 		}
 
-		if (array_key_exists("SHARED_KERNEL", $arFields) && $arFields["SHARED_KERNEL"] != "Y")
+		if (array_key_exists('SHARED_KERNEL', $arFields) && $arFields['SHARED_KERNEL'] != 'Y')
 		{
-			$arFields["SHARED_KERNEL"] = "N";
+			$arFields['SHARED_KERNEL'] = 'N';
 		}
 
-		if (array_key_exists("DISCONNECTED", $arFields) && $arFields["DISCONNECTED"] != "Y" && $arFields["DISCONNECTED"]!="I")
+		if (array_key_exists('DISCONNECTED', $arFields) && $arFields['DISCONNECTED'] != 'Y' && $arFields['DISCONNECTED'] != 'I')
 		{
-			$arFields["DISCONNECTED"] = "N";
+			$arFields['DISCONNECTED'] = 'N';
 		}
 
-		if (!array_key_exists("MODIFIED_BY", $arFields) && is_object($USER))
+		if (!array_key_exists('MODIFIED_BY', $arFields) && is_object($USER))
 		{
-			$arFields["MODIFIED_BY"] = $USER->GetID();
+			$arFields['MODIFIED_BY'] = $USER->GetID();
 		}
 
-		if ($ID === false && !array_key_exists("CREATED_BY", $arFields) && is_object($USER))
+		if ($ID === false && !array_key_exists('CREATED_BY', $arFields) && is_object($USER))
 		{
-			$arFields["CREATED_BY"] = $USER->GetID();
+			$arFields['CREATED_BY'] = $USER->GetID();
 		}
 
-		if ($ID === false && !array_key_exists("DATE_CREATE", $arFields))
+		if ($ID === false && !array_key_exists('DATE_CREATE', $arFields))
 		{
-			$arFields["~DATE_CREATE"] = $DB->CurrentTimeFunction();
+			$arFields['~DATE_CREATE'] = CDatabase::CurrentTimeFunction();
 		}
 
 		return true;
@@ -1383,34 +1520,40 @@ class CAllControllerMember
 
 	public static function CloseMember($member_id, $bClose = true, $task_id = false)
 	{
-		/** @global CMain $APPLICATION */
+		/** @var CMain $APPLICATION */
 		global $APPLICATION;
 
-		if(!($arMember = CControllerMember::GetMember($member_id)))
+		if (!($arMember = CControllerMember::GetMember($member_id)))
+		{
 			return false;
+		}
 
-		$arControllerLog = Array(
-				'NAME'=>'SITE_CLOSING',
-				'CONTROLLER_MEMBER_ID'=>$arMember['ID'],
-				'DESCRIPTION'=>($bClose ? GetMessage("CTRLR_MEM_LOG_SITE_CLO") : GetMessage("CTRLR_MEM_LOG_SITE_OPE")),
-				'STATUS'=>'Y',
-				"TASK_ID"=>$task_id
-			);
+		$arControllerLog = [
+			'NAME' => 'SITE_CLOSING',
+			'CONTROLLER_MEMBER_ID' => $arMember['ID'],
+			'DESCRIPTION' => ($bClose ? GetMessage('CTRLR_MEM_LOG_SITE_CLO') : GetMessage('CTRLR_MEM_LOG_SITE_OPE')),
+			'STATUS' => 'Y',
+			'TASK_ID' => $task_id,
+		];
 
-		$strCommand = 'CControllerClient::SetOptionString("main", "site_stopped", "'.($bClose?'Y':'N').'");';
-		$result = CControllerMember::RunCommand($member_id, $strCommand, array(), $task_id, 'run_immediate');
-		if($result === false)
+		$strCommand = 'CControllerClient::SetOptionString("main", "site_stopped", "' . ($bClose ? 'Y' : 'N') . '");';
+		$result = CControllerMember::RunCommand($member_id, $strCommand, [], $task_id, 'run_immediate');
+		if ($result === false)
 		{
 			$e = $APPLICATION->GetException();
 			if ($e)
+			{
 				$arControllerLog['DESCRIPTION'] = $e->GetString();
+			}
 			else
+			{
 				$arControllerLog['DESCRIPTION'] = 'Unknown error [001]';
+			}
 			$arControllerLog['STATUS'] = 'N';
 		}
 		else
 		{
-			CControllerMember::Update($arMember['ID'], Array('SITE_ACTIVE'=>(!$bClose?'Y':'N')));
+			CControllerMember::Update($arMember['ID'], ['SITE_ACTIVE' => (!$bClose ? 'Y' : 'N')]);
 		}
 
 		if ($task_id === false)
@@ -1420,19 +1563,23 @@ class CAllControllerMember
 
 		// close event
 		CTimeZone::Disable();
-		$db_res = CControllerMember::GetByID($arMember["ID"]);
+		$db_res = CControllerMember::GetByID($arMember['ID']);
 		CTimeZone::Enable();
-		if($arFields = $db_res->Fetch())
+		if ($arFields = $db_res->Fetch())
 		{
-			foreach (GetModuleEvents("controller", "OnAfterCloseMember", true) as $arEvent)
+			foreach (GetModuleEvents('controller', 'OnAfterCloseMember', true) as $arEvent)
 			{
-				ExecuteModuleEventEx($arEvent, array(&$arFields));
+				ExecuteModuleEventEx($arEvent, [&$arFields]);
 			}
 
-			if($bClose)
-				CEvent::Send("CONTROLLER_MEMBER_CLOSED", CSite::GetDefSite(), $arFields);
+			if ($bClose)
+			{
+				CEvent::Send('CONTROLLER_MEMBER_CLOSED', CSite::GetDefSite(), $arFields);
+			}
 			else
-				CEvent::Send("CONTROLLER_MEMBER_OPENED", CSite::GetDefSite(), $arFields);
+			{
+				CEvent::Send('CONTROLLER_MEMBER_OPENED', CSite::GetDefSite(), $arFields);
+			}
 		}
 
 		return $result;
@@ -1440,24 +1587,26 @@ class CAllControllerMember
 
 	public static function UnRegister($member_id)
 	{
-		/** @global CMain $APPLICATION */
+		/** @var CMain $APPLICATION */
 		global $APPLICATION;
 
-		if(($ar_member = CControllerMember::GetMember($member_id))===false)
+		if (($ar_member = CControllerMember::GetMember($member_id)) === false)
+		{
 			return false;
+		}
 
-		$arParameters = Array();
-		$oRequest = new CControllerServerRequestTo($ar_member, "unregister", $arParameters);
+		$arParameters = [];
+		$oRequest = new CControllerServerRequestTo($ar_member, 'unregister', $arParameters);
 		$oResponse = $oRequest->Send();
 
-		$arControllerLog = Array(
-				'NAME'=>'UNREGISTRATION',
-				'CONTROLLER_MEMBER_ID'=>$ar_member['ID'],
-				'STATUS'=>'Y',
-				'DESCRIPTION'=>GetMessage("CTRLR_MEM_LOG_DISCON"),
-			);
+		$arControllerLog = [
+			'NAME' => 'UNREGISTRATION',
+			'CONTROLLER_MEMBER_ID' => $ar_member['ID'],
+			'STATUS' => 'Y',
+			'DESCRIPTION' => GetMessage('CTRLR_MEM_LOG_DISCON'),
+		];
 
-		if($oResponse==false)
+		if ($oResponse === false)
 		{
 			$e = $APPLICATION->GetException();
 			$arControllerLog['DESCRIPTION'] = $e->GetString();
@@ -1467,19 +1616,21 @@ class CAllControllerMember
 		{
 			$result = $oResponse->OK();
 			$arControllerLog['DESCRIPTION'] = $oResponse->text;
-			if($result === false)
+			if ($result === false)
 			{
-				$e = new CApplicationException(GetMessage("CTRLR_MEM_LOG_DISCON_ERR")." ".$oResponse->text);
+				$e = new CApplicationException(GetMessage('CTRLR_MEM_LOG_DISCON_ERR') . ' ' . $oResponse->text);
 				$APPLICATION->ThrowException($e);
 			}
 			else
-				CControllerMember::Update($ar_member['ID'], Array('DISCONNECTED'=>'Y'));
+			{
+				CControllerMember::Update($ar_member['ID'], ['DISCONNECTED' => 'Y']);
+				$e = false;
+			}
 		}
 
-
-		if($result === false)
+		if ($result === false)
 		{
-			$arControllerLog['DESCRIPTION'] = $e->GetString()."\r\n".$arControllerLog['DESCRIPTION'];
+			$arControllerLog['DESCRIPTION'] = $e->GetString() . "\r\n" . $arControllerLog['DESCRIPTION'];
 			$arControllerLog['STATUS'] = 'N';
 		}
 
@@ -1488,7 +1639,7 @@ class CAllControllerMember
 		return $result;
 	}
 
-	public static function AddCommand($member_guid, $command, $arAddParams = Array(), $task_id = false)
+	public static function AddCommand($member_guid, $command, $arAddParams = [], $task_id = false)
 	{
 		global $DB;
 
@@ -1496,42 +1647,46 @@ class CAllControllerMember
 		$command_id = \Bitrix\Main\Security\Random::getString(32);
 
 		$db_id = $DB->Add(
-			"b_controller_command",
-			array(
-				"MEMBER_ID" => $member_guid,
-				"COMMAND_ID" => $command_id,
-				"TASK_ID" => $task_id,
-				"COMMAND" => $command,
-				"~DATE_INSERT" => $DB->CurrentTimeFunction(),
-				"ADD_PARAMS" => (count($arAddParams)>0?serialize($arAddParams):false)
-			),
-			array("COMMAND", "ADD_PARAMS"),
-			"", true //bIgnoreErrors
+			'b_controller_command',
+			[
+				'MEMBER_ID' => $member_guid,
+				'COMMAND_ID' => $command_id,
+				'TASK_ID' => $task_id,
+				'COMMAND' => $command,
+				'~DATE_INSERT' => $DB->CurrentTimeFunction(),
+				'ADD_PARAMS' => (count($arAddParams) > 0 ? serialize($arAddParams) : false)
+			],
+			['COMMAND', 'ADD_PARAMS'],
+			'', true //bIgnoreErrors
 		);
 
-		if($db_id > 0)
+		if ($db_id > 0)
+		{
 			return $command_id;
+		}
 		else
+		{
 			return false;
+		}
 	}
 
 	public static function GetMember($id)
 	{
-		/** @global CMain $APPLICATION */
+		/** @var CMain $APPLICATION */
 		global $APPLICATION;
 
 		$dbr_member = CControllerMember::GetById($id);
 		$ar_member = $dbr_member->Fetch();
-		if(!$ar_member)
+		if (!$ar_member)
 		{
-			$e = new CApplicationException(GetMessage("CTRLR_MEM_ERR6")." ".htmlspecialcharsex($id));
+			$e = new CApplicationException(GetMessage('CTRLR_MEM_ERR6') . ' ' . htmlspecialcharsEx($id));
 			$APPLICATION->ThrowException($e);
 			return false;
 		}
 
-		if($ar_member['DISCONNECTED'] == 'Y')
+		if ($ar_member['DISCONNECTED'] == 'Y')
 		{
-			$e = new CApplicationException(GetMessage("CTRLR_MEM_ERR7"));
+			$e = new CApplicationException(GetMessage('CTRLR_MEM_ERR7'));
 			$APPLICATION->ThrowException($e);
 			return false;
 		}
@@ -1541,18 +1696,179 @@ class CAllControllerMember
 
 	public static function SiteUpdate($member_id)
 	{
-		return CControllerTask::Add(Array(
-			"TASK_ID"=>"UPDATE",
-			"CONTROLLER_MEMBER_ID"=>$member_id
-		));
+		return CControllerTask::Add([
+			'TASK_ID' => 'UPDATE',
+			'CONTROLLER_MEMBER_ID' => $member_id
+		]);
 	}
 
 	public static function _GoodURL($url)
 	{
 		$url = mb_strtolower(trim($url, " \t\r\n./"));
-		if(mb_substr($url, 0, 7) != "http://" && mb_substr($url, 0, 8) != "https://")
-			$url = "http://".$url;
+		if (mb_substr($url, 0, 7) !== 'http://' && mb_substr($url, 0, 8) !== 'https://')
+		{
+			$url = 'http://' . $url;
+		}
 		return $url;
 	}
+
+	public static function _CheckCommandId($member_guid, $command_id)
+	{
+		$connection = \Bitrix\Main\Application::getConnection();
+		$helper = $connection->getSqlHelper();
+
+		$sql = "
+			SELECT C.ID, C.COMMAND, M.SECRET_ID, C.ADD_PARAMS
+			FROM
+				b_controller_command C
+				INNER JOIN b_controller_member M ON C.MEMBER_ID = M.MEMBER_ID
+			WHERE
+				C.MEMBER_ID = '" . $helper->forSql($member_guid, 32) . "'
+				AND C.COMMAND_ID = '" . $helper->forSql($command_id, 32) . "'
+				AND C.DATE_EXEC IS NULL
+				AND C.DATE_INSERT > " . $helper->addSecondsToDateTime('-60');
+
+		$command = $connection->query($sql)->fetch();
+		if (!$command)
+		{
+			return false;
+		}
+
+		$connection->queryExecute('UPDATE b_controller_command SET DATE_EXEC = ' . $helper->getCurrentDateTimeFunction() . ' WHERE ID = ' . $command['ID']);
+
+		return $command;
+	}
+
+	public static function UnregisterExpiredAgent($id = false)
+	{
+		$connection = \Bitrix\Main\Application::getConnection();
+		$helper = $connection->getSqlHelper();
+
+		$handledMembers = [];
+
+		if ($id > 0)
+		{
+			$strAddWhere = 'AND M.ID = ' . intval($id);
+		}
+		else
+		{
+			$strAddWhere = '';
+		}
+
+		$rsTrialGroups = $connection->query('SELECT ID FROM b_controller_group WHERE TRIAL_PERIOD > 0');
+		$arTrialGroups = [];
+		while ($arGroup = $rsTrialGroups->fetch())
+		{
+			$arTrialGroups[] = $arGroup['ID'];
+		}
+
+		if ($arTrialGroups)
+		{
+			$strSql = '
+				SELECT M.ID
+				FROM b_controller_member M
+				INNER JOIN b_controller_group G ON M.CONTROLLER_GROUP_ID = G.ID
+				WHERE
+					G.ID in (' . implode(',', $arTrialGroups) . ')
+					AND G.TRIAL_PERIOD > 0
+					AND M.IN_GROUP_FROM < ' . $helper->addDaysToDateTime('-G.TRIAL_PERIOD') . '
+					AND SITE_ACTIVE = \'Y\'
+					AND DISCONNECTED = \'N\'
+					' . $strAddWhere . '
+			';
+
+			$dbr = $connection->query($strSql);
+			while ($ar = $dbr->fetch())
+			{
+				if ($id > 0)
+				{
+					CControllerMember::CloseMember($id, true);
+
+					return true;
+				}
+				elseif (!isset($handledMembers[$ar['ID']]))
+				{
+					$handledMembers[$ar['ID']] = $ar['ID'];
+					CControllerTask::Add([
+						'TASK_ID' => 'CLOSE_MEMBER',
+						'CONTROLLER_MEMBER_ID' => $ar['ID'],
+						'INIT_EXECUTE_PARAMS' => true,
+					]);
+				}
+			}
+		}
+
+		$strSql = '
+			SELECT M.ID
+			FROM b_controller_member M
+			WHERE
+				(DATE_ACTIVE_FROM IS NULL OR DATE_ACTIVE_FROM <= ' . $helper->getCurrentDateTimeFunction() . ')
+				AND (DATE_ACTIVE_TO IS NULL OR DATE_ACTIVE_TO >= ' . $helper->getCurrentDateTimeFunction() . ')
+				AND ACTIVE = \'Y\'
+				AND SITE_ACTIVE <> \'Y\'
+				AND DISCONNECTED = \'N\'
+				' . $strAddWhere . '
+		';
+
+		$dbr = $connection->query($strSql);
+		while ($ar = $dbr->fetch())
+		{
+			if ($id > 0)
+			{
+				CControllerMember::CloseMember($id, false);
+
+				return true;
+			}
+			elseif (!isset($handledMembers[$ar['ID']]))
+			{
+				$handledMembers[$ar['ID']] = $ar['ID'];
+				CControllerTask::Add([
+					'TASK_ID' => 'CLOSE_MEMBER',
+					'CONTROLLER_MEMBER_ID' => $ar['ID'],
+					'INIT_EXECUTE_PARAMS' => false,
+				]);
+			}
+		}
+
+		$strSql = '
+			SELECT M.ID
+			FROM b_controller_member M
+			WHERE
+				(
+					DATE_ACTIVE_FROM > ' . $helper->getCurrentDateTimeFunction() . '
+					OR DATE_ACTIVE_TO < ' . $helper->getCurrentDateTimeFunction() . '
+					OR ACTIVE = \'N\'
+				)
+				AND SITE_ACTIVE <> \'N\'
+				AND DISCONNECTED = \'N\'
+				' . $strAddWhere . '
+		';
+
+		$dbr = $connection->query($strSql);
+		while ($ar = $dbr->fetch())
+		{
+			if ($id > 0)
+			{
+				CControllerMember::CloseMember($id, true);
+
+				return true;
+			}
+			elseif (!isset($handledMembers[$ar['ID']]))
+			{
+				$handledMembers[$ar['ID']] = $ar['ID'];
+				CControllerTask::Add([
+					'TASK_ID' => 'CLOSE_MEMBER',
+					'CONTROLLER_MEMBER_ID' => $ar['ID'],
+					'INIT_EXECUTE_PARAMS' => true,
+				]);
+			}
+		}
+
+		if ($id > 0)
+		{
+			return true;
+		}
+
+		return 'CControllerMember::UnregisterExpiredAgent();';
+	}
 }
-?>

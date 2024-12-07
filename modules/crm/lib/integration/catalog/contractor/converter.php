@@ -555,6 +555,7 @@ class Converter extends Stepper implements \Bitrix\Catalog\v2\Contractor\IConver
 			),
 			[
 				'ALLOW_SET_SYSTEM_FIELDS' => true,
+				'DISABLE_REQUIRED_USER_FIELD_CHECK' => true,
 			]
 		);
 	}
@@ -658,7 +659,7 @@ class Converter extends Stepper implements \Bitrix\Catalog\v2\Contractor\IConver
 
 	public static function runMigration(): void
 	{
-		self::bind(300);
+		self::bind(30);
 	}
 
 	public static function showMigrationProgress(): void

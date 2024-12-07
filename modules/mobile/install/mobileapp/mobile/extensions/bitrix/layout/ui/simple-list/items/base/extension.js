@@ -20,7 +20,7 @@ jn.define('layout/ui/simple-list/items/base', (require, exports, module) => {
 
 			this.blockManager = new ItemLayoutBlockManager(this.props.itemLayoutOptions);
 			this.showMenuHandler = props.showMenuHandler;
-			this.styles = styles;
+			this.styles = this.getStyles();
 
 			this.onItemClick = debounce((itemId, itemData, params) => {
 				this.props.itemDetailOpenHandler(itemId, itemData, params);
@@ -60,6 +60,29 @@ jn.define('layout/ui/simple-list/items/base', (require, exports, module) => {
 			return BX.prop.getObject(this.props, 'customStyles', {});
 		}
 
+		get colors()
+		{
+			return this.props.showAirStyle ? AppTheme.realColors : AppTheme.colors;
+		}
+
+		getStyles()
+		{
+			return {
+				wrapper: {
+					paddingBottom: 1,
+					backgroundColor: this.colors.bgContentPrimary,
+				},
+				item: {
+					position: 'relative',
+					backgroundColor: this.colors.bgContentPrimary,
+				},
+				itemContent: {
+					paddingTop: 17,
+					paddingBottom: 17,
+				},
+			};
+		}
+
 		/**
 		 * @private
 		 * @returns View
@@ -75,6 +98,7 @@ jn.define('layout/ui/simple-list/items/base', (require, exports, module) => {
 			return View(
 				{
 					style: wrapperStyle,
+					ref: this.props.forwardRef,
 					testId: `${this.testId}_ITEM_${item.id}`,
 					onClick: () => this.onItemClick(item.id, item.data, this.params),
 					onLongClick: () => this.onItemLongClick(item.id, item.data, this.params),
@@ -201,12 +225,12 @@ jn.define('layout/ui/simple-list/items/base', (require, exports, module) => {
 
 			const transitionToBeige = transition(this.elementRef, {
 				duration: 300,
-				backgroundColor: AppTheme.colors.accentSoftOrange1,
+				backgroundColor: this.colors.accentSoftOrange1,
 				opacity: 1,
 			});
 			const transitionToWhite = transition(this.elementRef, {
 				duration: 300,
-				backgroundColor: AppTheme.colors.base8,
+				backgroundColor: this.colors.base8,
 				opacity: 1,
 			});
 			const animate = (
@@ -223,21 +247,6 @@ jn.define('layout/ui/simple-list/items/base', (require, exports, module) => {
 			animate().then(callback).catch(console.error);
 		}
 	}
-
-	const styles = {
-		wrapper: {
-			paddingBottom: 1,
-			backgroundColor: AppTheme.colors.bgContentPrimary,
-		},
-		item: {
-			position: 'relative',
-			backgroundColor: AppTheme.colors.bgContentPrimary,
-		},
-		itemContent: {
-			paddingTop: 17,
-			paddingBottom: 17,
-		},
-	};
 
 	module.exports = { Base };
 });

@@ -109,7 +109,7 @@ class CCrmContactWS extends IWebService
 			);
 		}
 
-		$listName = ToUpper(self::makeGUID($listName_original));
+		$listName = mb_strtoupper(self::makeGUID($listName_original));
 
 
 		//$dbAuthor = CUser::GetByID($arSection['CREATED_BY']);
@@ -248,7 +248,7 @@ class CCrmContactWS extends IWebService
 			return new CSoapFault('Data error', 'Wrong GUID - '.$listName);
 		}
 
-		$listName = ToUpper(self::makeGUID($listName_original));
+		$listName = mb_strtoupper(self::makeGUID($listName_original));
 
 		$arFilter = [
 			'EXPORT' => 'Y',
@@ -389,7 +389,7 @@ class CCrmContactWS extends IWebService
 			return new CSoapFault('Data error', 'Wrong GUID - '.$listName);
 		}
 
-		$listName = ToUpper(self::makeGUID($listName_original));
+		$listName = mb_strtoupper(self::makeGUID($listName_original));
 		$listItemID = intval($listItemID);
 
 		$obData = new CXMLCreator('Attachments');

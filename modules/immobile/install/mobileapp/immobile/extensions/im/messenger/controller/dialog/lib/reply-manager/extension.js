@@ -379,7 +379,7 @@ jn.define('im/messenger/controller/dialog/lib/reply-manager', (require, exports,
 
 		initializeEditingMessage(message, initWithForward)
 		{
-			this.setEditMessage(message);
+			this.editMessage = message;
 
 			this._isEditInProcess = true;
 			this.dialogView.setInputQuote(message, InputQuoteType.edit, false);
@@ -387,7 +387,7 @@ jn.define('im/messenger/controller/dialog/lib/reply-manager', (require, exports,
 
 		initializeQuotingMessage(message, initWithForward)
 		{
-			this.setQuoteMessage(message);
+			this.quoteMessage = message;
 			if (initWithForward)
 			{
 				this._isQuoteInBackground = true;

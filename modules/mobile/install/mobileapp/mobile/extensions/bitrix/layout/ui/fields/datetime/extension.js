@@ -11,6 +11,7 @@ jn.define('layout/ui/fields/datetime', (require, exports, module) => {
 		DATE: 'date',
 		DATETIME: 'datetime',
 	};
+	const { Icon } = require('assets/icons');
 
 	/**
 	 * @class DateTimeField
@@ -153,7 +154,6 @@ jn.define('layout/ui/fields/datetime', (require, exports, module) => {
 			return View(
 				{
 					onLongClick: this.getContentLongClickHandler(),
-					onClick: () => this.handleAdditionalFocusActions(),
 				},
 				Text({
 					style: this.styles.value,
@@ -213,6 +213,13 @@ jn.define('layout/ui/fields/datetime', (require, exports, module) => {
 
 		getDateString(date)
 		{
+			const formatter = this.getConfig().dateFormatter;
+
+			if (formatter)
+			{
+				return String(formatter(date));
+			}
+
 			// eslint-disable-next-line no-undef
 			return BX.type.isNumber(date) ? DateFormatter.getDateString(date, this.getConfig().dateFormat) : '';
 		}
@@ -339,15 +346,19 @@ jn.define('layout/ui/fields/datetime', (require, exports, module) => {
 			return this.getDisplayedValue();
 		}
 
-		/**
-		 * @public
-		 * @return {{icon: string}}
-		 */
-		getLeftIcon()
+		getDefaultLeftIcon()
 		{
-			return {
-				icon: 'calendar2',
-			};
+			return Icon.CALENDAR_WITH_SLOTS;
+		}
+
+		isEmptyValue(value)
+		{
+			if (value === 0)
+			{
+				return true;
+			}
+
+			return super.isEmptyValue(value);
 		}
 	}
 
@@ -371,6 +382,7 @@ jn.define('layout/ui/fields/datetime', (require, exports, module) => {
 			enableTime: PropTypes.bool,
 			datePickerType: PropTypes.oneOf(Object.values(DatePickerType)),
 			dateFormat: PropTypes.string,
+			dateFormatter: PropTypes.func,
 			defaultListTitle: PropTypes.string,
 			checkTimezoneOffset: PropTypes.bool,
 			items: PropTypes.array, // menu items for date picker

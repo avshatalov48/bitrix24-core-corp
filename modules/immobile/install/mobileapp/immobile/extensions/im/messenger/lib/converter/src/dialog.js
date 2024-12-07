@@ -6,26 +6,31 @@ jn.define('im/messenger/lib/converter/dialog', (require, exports, module) => {
 
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const {
-		FileType,
 		DialogType,
+		MessageParams,
 	} = require('im/messenger/const');
-	const { MessengerParams } = require('im/messenger/lib/params');
-	const { emojiRegex } = require('im/messenger/lib/utils');
 	const {
 		TextMessage,
 		EmojiOnlyMessage,
 		DeletedMessage,
 		ImageMessage,
+		MediaGalleryMessage,
 		AudioMessage,
 		VideoMessage,
 		FileMessage,
+		FileGalleryMessage,
 		SystemTextMessage,
 		UnsupportedMessage,
-		CopilotPromtMessage,
+		CopilotPromptMessage,
 		CopilotErrorMessage,
 		CopilotMessage,
+		CheckInMessageFactory,
+		CreateBannerFactory,
+		GalleryMessageFactory,
+		CallMessageFactory,
 	} = require('im/messenger/lib/element');
-	const { SmileManager } = require('im/messenger/lib/smile-manager');
+	const { Feature } = require('im/messenger/lib/feature');
+	const { MessageHelper } = require('im/messenger/lib/helper');
 
 	/**
 	 * @class DialogConverter
@@ -34,44 +39,56 @@ jn.define('im/messenger/lib/converter/dialog', (require, exports, module) => {
 	{
 		/**
 		 * @param {Array<MessagesModelState>} modelMessageList
+		 * @param dialogId
 		 * @return {Array<Message>}
 		 */
-		static createMessageList(modelMessageList)
+		static createMessageList(modelMessageList, dialogId)
 		{
 			if (!Type.isArrayFilled(modelMessageList))
 			{
 				return [];
 			}
 
-			const chatId = modelMessageList[0].chatId;
-			const dialog = serviceLocator.get('core').getStore().getters['dialoguesModel/getByChatId'](chatId);
-			const options = DialogConverter.prepareOptionsForMessage(dialog);
+			const dialog = serviceLocator.get('core').getStore().getters['dialoguesModel/getById'](dialogId);
+			const options = DialogConverter.prepareSharedOptionsForMessages(dialog);
 
 			return modelMessageList.map((modelMessage) => DialogConverter.createMessage(modelMessage, options));
 		}
 
 		/**
 		 * @param {MessagesModelState} modelMessage
-		 * @param {CreateMessageOptions}options
+		 * @param {CreateMessageOptions} options
 		 * @return {Message}
 		 */
 		static createMessage(modelMessage = {}, options = {})
 		{
-			const isSystemMessage = modelMessage.authorId === 0;
-			if (isSystemMessage)
+			if (modelMessage.params?.componentId === MessageParams.ComponentId.ChatCopilotCreationMessage)
 			{
-				return new SystemTextMessage(modelMessage, options);
+				return new CopilotPromptMessage(modelMessage, options);
 			}
 
-			const isDeletedMessage = modelMessage.params.IS_DELETED === 'Y';
-			if (isDeletedMessage)
+			if (CreateBannerFactory.checkSuitableForDisplay(modelMessage))
+			{
+				return CreateBannerFactory.create(modelMessage, options);
+			}
+
+			const files = serviceLocator.get('core')
+				.getStore()
+				.getters['filesModel/getListByMessageId'](modelMessage.id)
+			;
+			const messageHelper = MessageHelper.createByModel(
+				modelMessage,
+				files,
+			);
+
+			if (messageHelper.isSystem)
+			{
+				return new SystemTextMessage(modelMessage, { ...options, showCommentInfo: false });
+			}
+
+			if (messageHelper.isDeleted)
 			{
 				return new DeletedMessage(modelMessage, options);
-			}
-
-			if (modelMessage.params?.componentId === 'ChatCopilotCreationMessage')
-			{
-				return new CopilotPromtMessage(modelMessage, options);
 			}
 
 			if (
@@ -82,22 +99,40 @@ jn.define('im/messenger/lib/converter/dialog', (require, exports, module) => {
 				return new CopilotErrorMessage(modelMessage, options);
 			}
 
-			if (modelMessage.params?.componentId === 'CopilotMessage')
+			if (modelMessage.params?.componentId === MessageParams.ComponentId.CopilotMessage)
 			{
 				return new CopilotMessage(modelMessage, options);
 			}
 
-			const isMessageWithFile = modelMessage.files[0];
-			/** @type {FilesModelState || null} */
-			let file = null;
-			if (isMessageWithFile)
+			if (CheckInMessageFactory.checkSuitableForDisplay(modelMessage))
 			{
-				file = serviceLocator.get('core').getStore().getters['filesModel/getById'](modelMessage.files[0]);
+				return CheckInMessageFactory.create(modelMessage, options);
 			}
 
-			if (isMessageWithFile && file && file.type === FileType.image)
+			if (messageHelper.isMediaGallery && Feature.isGalleryMessageSupported)
 			{
-				if (Type.isStringFilled(file.urlPreview))
+				return new MediaGalleryMessage(modelMessage, options, files);
+			}
+
+			if (messageHelper.isFileGallery && Feature.isGalleryMessageSupported)
+			{
+				return new FileGalleryMessage(modelMessage, options, files);
+			}
+
+			if (GalleryMessageFactory.checkSuitableForDisplay(modelMessage))
+			{
+				return GalleryMessageFactory.create(modelMessage, options);
+			}
+
+			if (CallMessageFactory.checkSuitableForDisplay(modelMessage))
+			{
+				return CallMessageFactory.create(modelMessage, options);
+			}
+
+			const file = files[0];
+			if (messageHelper.isImage)
+			{
+				if (Type.isStringFilled(file?.urlPreview))
 				{
 					return new ImageMessage(modelMessage, options, file);
 				}
@@ -105,41 +140,32 @@ jn.define('im/messenger/lib/converter/dialog', (require, exports, module) => {
 				return new FileMessage(modelMessage, options, file);
 			}
 
-			if (isMessageWithFile && file && file.type === FileType.audio)
+			if (messageHelper.isAudio)
 			{
 				return new AudioMessage(modelMessage, options, file);
 			}
 
-			if (isMessageWithFile && file && file.type === FileType.video)
+			if (messageHelper.isVideo)
 			{
 				return new VideoMessage(modelMessage, options, file);
 			}
 
-			if (isMessageWithFile && file && file.type === FileType.file)
+			if (messageHelper.isFile)
 			{
 				return new FileMessage(modelMessage, options, file);
 			}
 
-			const isMessageWithAttach = modelMessage
-				&& modelMessage.params
-				&& modelMessage.params.ATTACH
-				&& modelMessage.params.ATTACH[0]
-			;
-
-			if (isMessageWithAttach)
+			if (messageHelper.isWithAttach)
 			{
 				return new TextMessage(modelMessage, options);
 			}
 
-			if (
-				Type.isStringFilled(modelMessage.text)
-				&& (DialogConverter.isEmojiOnly(modelMessage.text) || DialogConverter.isSmileOnly(modelMessage.text))
-			)
+			if (messageHelper.isEmojiOnly || messageHelper.isSmileOnly)
 			{
 				return new EmojiOnlyMessage(modelMessage, options);
 			}
 
-			if (Type.isStringFilled(modelMessage.text))
+			if (messageHelper.isText)
 			{
 				return new TextMessage(modelMessage, options);
 			}
@@ -147,7 +173,7 @@ jn.define('im/messenger/lib/converter/dialog', (require, exports, module) => {
 			return new UnsupportedMessage(modelMessage, options);
 		}
 
-		static createRecentMessage(dialogId)
+		static createMessageFromRecent(dialogId)
 		{
 			const recentItem = serviceLocator.get('core').getStore().getters['recentModel/getById'](dialogId);
 			if (!recentItem || !recentItem.message || !recentItem.message.text)
@@ -157,12 +183,12 @@ jn.define('im/messenger/lib/converter/dialog', (require, exports, module) => {
 
 			const recentMessage = recentItem.message;
 
-			const options = {
+			const defaultOptions = {
 				showUsername: false,
 				showAvatar: false,
 			};
 
-			const modelMessage = {
+			const defaultModelMessage = {
 				id: recentMessage.id,
 				templateId: '',
 				chatId: 0,
@@ -184,28 +210,21 @@ jn.define('im/messenger/lib/converter/dialog', (require, exports, module) => {
 				playingTime: 0,
 			};
 
-			let viewMessage = null;
-			const isSystemMessage = recentMessage.senderId === 0;
-			if (isSystemMessage)
-			{
-				viewMessage = new SystemTextMessage(modelMessage, options);
-			}
-			else if (Type.isStringFilled(modelMessage.text) && DialogConverter.isEmojiOnly(modelMessage.text))
-			{
-				viewMessage = new EmojiOnlyMessage(modelMessage, options);
-			}
-			else if (Type.isStringFilled(modelMessage.text))
-			{
-				viewMessage = new TextMessage(modelMessage, options);
-			}
+			const dialog = serviceLocator.get('core').getStore().getters['dialoguesModel/getById'](dialogId);
 
-			if (viewMessage)
-			{
-				viewMessage.setShowTail(true);
-				viewMessage.setAvatarUri(null);
-			}
+			const options = dialog
+				? DialogConverter.prepareSharedOptionsForMessages(dialog)
+				: defaultOptions
+			;
 
-			return viewMessage;
+			const storedMessage = serviceLocator.get('core').getStore().getters['messagesModel/getById'](recentMessage.id);
+
+			const modelMessage = ('id' in storedMessage)
+				? storedMessage
+				: defaultModelMessage
+			;
+
+			return DialogConverter.createMessage(modelMessage, options);
 		}
 
 		static fromPushToMessage(params = {})
@@ -221,9 +240,10 @@ jn.define('im/messenger/lib/converter/dialog', (require, exports, module) => {
 				unread: params.message.unread,
 				system: params.message.system,
 				forward: params.message.forward || {},
+				prevId: params.message.prevId,
 			};
 
-			if (modelMessage.authorId === MessengerParams.getUserId())
+			if (modelMessage.authorId === serviceLocator.get('core').getUserId())
 			{
 				modelMessage.unread = false;
 			}
@@ -236,34 +256,12 @@ jn.define('im/messenger/lib/converter/dialog', (require, exports, module) => {
 			return modelMessage;
 		}
 
-		static isEmojiOnly(messageText)
-		{
-			const text = messageText.replaceAll(emojiRegex, '');
-
-			return text.replaceAll(/\s/g, '').length === 0;
-		}
-
-		static isSmileOnly(messageText)
-		{
-			const smileManager = SmileManager.getInstance();
-			if (Object.values(smileManager.getSmiles()).length === 0)
-			{
-				return false;
-			}
-
-			const pattern = smileManager.getPattern();
-			const regExp = new RegExp(`(?:(?:${pattern})(?=(?:(?:${pattern})|\\s|&quot;|<|$)))`, 'g');
-			const text = messageText.replaceAll(regExp, '');
-
-			return text.replaceAll(/\s/g, '').length === 0;
-		}
-
 		/**
 		 *
 		 * @param {DialoguesModelState} dialog
 		 * @return {CreateMessageOptions}
 		 */
-		static prepareOptionsForMessage(dialog)
+		static prepareSharedOptionsForMessages(dialog)
 		{
 			/** @type {CreateMessageOptions} */
 			const options = {};
@@ -275,9 +273,23 @@ jn.define('im/messenger/lib/converter/dialog', (require, exports, module) => {
 
 			if (dialog.type === DialogType.copilot)
 			{
-				options.showReaction = false;
 				options.canBeQuoted = false;
 			}
+
+			if ([DialogType.openChannel, DialogType.channel, DialogType.generalChannel].includes(dialog.type))
+			{
+				options.showCommentInfo = true;
+				options.showAvatarsInReaction = false;
+			}
+
+			if (dialog.type === DialogType.comment)
+			{
+				options.initialPostMessageId = String(dialog.parentMessageId);
+			}
+
+			const applicationSettingState = serviceLocator.get('core').getStore().getters['applicationModel/getSettings']();
+			options.audioRate = applicationSettingState ? applicationSettingState.audioRate : 1;
+			options.dialogId = dialog.dialogId;
 
 			return options;
 		}

@@ -287,7 +287,8 @@ class CCrmEntityProgressBarComponent extends CBitrixComponent
 				'STATUS_ID' => $stepID,
 				'COLOR' => $color,
 				'IS_PASSED' => $isPassed,
-				'IS_VISIBLE' => $isVisible
+				'IS_VISIBLE' => $isVisible,
+				'STAGES_TO_MOVE' => $info['STAGES_TO_MOVE'] ?? [],
 			);
 
 			if($stepID === $this->currentStepID)

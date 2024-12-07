@@ -47,6 +47,7 @@ jn.define('tasks/layout/task/view', (require, exports, module) => {
 	const { NotifyManager } = require('notify-manager');
 	const { RequestExecutor } = require('rest');
 	const { LoadingScreenComponent } = require('layout/ui/loading-screen');
+	const { RunActionExecutor } = require('rest/run-action-executor');
 
 	const { dispatch } = require('statemanager/redux/store');
 	const { taskUpdatedFromOldTaskModel } = require('tasks/statemanager/redux/slices/tasks');
@@ -524,6 +525,8 @@ jn.define('tasks/layout/task/view', (require, exports, module) => {
 
 			this.currentUser = null;
 			this.isInitial = true;
+			this.isCreating = false;
+
 			this.task = new Task({ id: this.userId });
 			this.task.updateData({ id: this.taskId });
 
@@ -531,7 +534,15 @@ jn.define('tasks/layout/task/view', (require, exports, module) => {
 			{
 				this.task.importProperties(props.taskObject);
 				this.currentUser = this.task.currentUser;
+				this.isCreating = (this.task.temporaryId === this.task.id);
+
 				this.state.readOnly = !this.task.actions.edit;
+				this.state.showLoading = this.isCreating;
+			}
+
+			if (this.isCreating)
+			{
+				BX.addCustomEvent('createNew:onTaskCreated', (eventData) => this.onTaskCreated(eventData));
 			}
 
 			this.scrollY = 0;
@@ -574,6 +585,16 @@ jn.define('tasks/layout/task/view', (require, exports, module) => {
 				this.layoutWidget.enableNavigationBarBorder(false);
 			}
 
+			if (this.isCreating)
+			{
+				void this.getDiskFolderId();
+				void this.getDeadlines();
+				void this.getCurrentUserData();
+				void CalendarSettings.loadSettings();
+
+				return;
+			}
+
 			Promise.allSettled([
 				this.getTaskData(),
 				this.getTaskResultData(),
@@ -587,6 +608,25 @@ jn.define('tasks/layout/task/view', (require, exports, module) => {
 			;
 		}
 
+		onTaskCreated(data)
+		{
+			const { id, guid } = data;
+
+			console.log(id, guid, this.task.id);
+			if (this.task.id === guid)
+			{
+				this.taskId = Number(id);
+
+				Promise.allSettled([
+					this.getTaskData(),
+					this.getTaskResultData(),
+				])
+					.then(() => this.doFinalInitAction())
+					.catch(console.error)
+				;
+			}
+		}
+
 		doFinalInitAction()
 		{
 			if (this.currentUser)
@@ -595,6 +635,7 @@ jn.define('tasks/layout/task/view', (require, exports, module) => {
 			}
 			this.task.enableFieldChangesTracker();
 			this.isInitial = false;
+			this.isCreating = false;
 
 			this.pull = new Pull(this, this.task);
 			this.pull.subscribe();
@@ -809,23 +850,20 @@ jn.define('tasks/layout/task/view', (require, exports, module) => {
 
 		getCurrentUserData()
 		{
-			return new Promise((resolve, reject) => {
+			return new Promise((resolve) => {
 				if (this.currentUser)
 				{
 					resolve();
 
 					return;
 				}
-				(new RequestExecutor('tasksmobile.User.getUsersData', { userIds: [this.userId] }))
-					.call()
-					.then((response) => {
-						this.currentUser = response.result[this.userId];
+				(new RunActionExecutor('tasksmobile.User.getCurrentUserDataLegacy'))
+					.setHandler((response) => {
+						this.currentUser = response.data;
 						resolve();
 					})
-					.catch((e) => {
-						console.error(e);
-						reject();
-					});
+					.call(false)
+				;
 			});
 		}
 

@@ -25,12 +25,23 @@ if (!Loader::includeModule('crm'))
 
 class CrmTypeDetailComponent extends Base
 {
+	private const TAB_IDS = [
+		'custom-section',
+		'common',
+		'fields',
+		'relation',
+		'user-fields',
+		// 'conversion',
+	];
+
 	/** @var Type */
 	protected $type;
 
 	public function onPrepareComponentParams($arParams): array
 	{
 		$this->fillParameterFromRequest('entityTypeId', $arParams);
+		$this->fillParameterFromRequest('automatedSolutionId', $arParams);
+		$this->fillParameterFromRequest('activeTabId', $arParams);
 
 		return parent::onPrepareComponentParams($arParams);
 	}
@@ -44,7 +55,7 @@ class CrmTypeDetailComponent extends Base
 			return;
 		}
 
-		$userPermissions = Service\Container::getInstance()->getUserPermissions();
+		$userPermissions = $this->userPermissions;
 		$entityTypeId = (int) $this->arParams['entityTypeId'];
 		if($entityTypeId > 0)
 		{
@@ -96,6 +107,11 @@ class CrmTypeDetailComponent extends Base
 		$type->unset('CREATED_BY');
 		$type->unset('UPDATED_BY');
 
+		if (!empty($this->arParams['automatedSolutionId']) && (int)$this->arParams['automatedSolutionId'] > 0)
+		{
+			$type->setCustomSectionId($this->arParams['automatedSolutionId']);
+		}
+
 		return $type;
 	}
 
@@ -112,7 +128,6 @@ class CrmTypeDetailComponent extends Base
 		$this->arResult['type'] = $this->getType()->jsonSerialize();
 		$this->arResult['isCategoriesControlDisabled'] = false;
 		$this->arResult['isRecyclebinControlDisabled'] = false;
-		$this->arResult['isRestricted'] = RestrictionManager::getDynamicTypesLimitRestriction()->isCreateTypeRestricted();
 		if ($this->type->getIsCategoriesEnabled() && $this->type->getId() > 0)
 		{
 			$factory = Service\Container::getInstance()->getFactory($this->type->getEntityTypeId());
@@ -140,6 +155,14 @@ class CrmTypeDetailComponent extends Base
 		$this->arResult['isCustomSectionsAvailable'] = Integration\IntranetManager::isCustomSectionsAvailable();
 		$this->arResult['linkedUserFields'] = $this->getLinkedUserFields();
 		$this->arResult['isExternal'] = $this->request->get('isExternal') === 'Y';
+		$this->arResult['isCrmAdmin'] = $this->userPermissions->isCrmAdmin();
+		$this->initializeRestrictionValues();
+
+		$this->arResult['activeTabId'] = $this->arParams['activeTabId'] ?? null;
+		if (!in_array($this->arResult['activeTabId'], self::TAB_IDS, true))
+		{
+			$this->arResult['activeTabId'] = $this->arResult['isExternal'] ? 'custom-section' : 'common';
+		}
 
 		$this->includeComponentTemplate();
 	}
@@ -234,5 +257,21 @@ class CrmTypeDetailComponent extends Base
 		}
 
 		return $result;
+	}
+
+	protected function initializeRestrictionValues(): void
+	{
+		$restrictions = RestrictionManager::getDynamicTypesLimitRestriction();
+		$isRestricted = $restrictions->isCreateTypeRestricted();
+
+		$this->arResult['isRestricted'] = $isRestricted;
+		$this->arResult['restrictionErrorMessage'] = $isRestricted
+			? $restrictions->getCreateTypeRestrictedError()->getMessage()
+			: ''
+		;
+		$this->arResult['restrictionSliderCode'] = $isRestricted && $restrictions->canShowRestrictionSlider()
+			? $restrictions->getCreateTypeRestrictionSliderCode()
+			: ''
+		;
 	}
 }

@@ -55,6 +55,7 @@ class GetTabsAction extends Action
 			'connectors' => [
 				'telegram' => $hasRegisterTelegramConnector,
 			],
+			'remindersList' => TodoPingSettingsProvider::getValuesListForJsComponent(),
 		];
 	}
 
@@ -142,7 +143,7 @@ class GetTabsAction extends Action
 					'defaultFilterId' => $this->getDefaultFilterId($filterOptions),
 					'sortType' => $this->getSortType($entityTypeName, $categoryId),
 					'smartActivitySettings' => $this->getSmartActivitySettings($factory, $permissions),
-					'reminders' => (new TodoPingSettingsProvider($entityTypeId, (int)$categoryId))->fetchForJsComponent(),
+					'reminders' => (new TodoPingSettingsProvider($entityTypeId, (int)$categoryId))->fetchSelectedValues(),
 				],
 				'permissions' => $permissions,
 				'restrictions' => [

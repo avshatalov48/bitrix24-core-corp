@@ -6,7 +6,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 
 \Bitrix\Main\UI\Extension::load(['ui.design-tokens']);
 ?>
-<script type="text/javascript">
+<script>
 if (window.JCCalendarViewDay)
 	jsBXAC.SetViewHandler(new JCCalendarViewDay());
 else

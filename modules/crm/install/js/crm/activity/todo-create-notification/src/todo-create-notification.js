@@ -1,10 +1,10 @@
-import { Loc, Tag } from 'main.core';
-import { BaseEvent, EventEmitter } from 'main.core.events';
-import { Popup, PopupManager } from 'main.popup';
-import { TodoEditor } from 'crm.activity.todo-editor';
-import { Button, ButtonColor, ButtonState, CancelButton, SaveButton } from 'ui.buttons';
+import { TodoEditorV2 } from 'crm.activity.todo-editor-v2';
 import { TodoNotificationSkip } from 'crm.activity.todo-notification-skip';
 import { TodoNotificationSkipMenu } from 'crm.activity.todo-notification-skip-menu';
+import { Event, Loc, Tag, Cache } from 'main.core';
+import { BaseEvent, EventEmitter } from 'main.core.events';
+import { Popup, PopupManager } from 'main.popup';
+import { Button, ButtonColor, ButtonState } from 'ui.buttons';
 
 import './todo-create-notification.css';
 
@@ -15,6 +15,7 @@ declare type TodoCreateNotificationParams = {
 	stageIdField: string,
 	finalStages: Array<string>,
 	skipPeriod: ?string,
+	analytics?: Object,
 }
 
 const SAVE_BUTTON_ID = 'save';
@@ -33,10 +34,12 @@ export class TodoCreateNotification
 	#allowCloseSlider: boolean = false;
 	#isSkipped: boolean = false;
 	#popup: ?Popup = null;
-	#toDoEditor: ?TodoEditor = null;
+	#toDoEditor: ?TodoEditorV2 = null;
 	#skipProvider: TodoNotificationSkip = null;
 	#skipMenu: ?TodoNotificationSkipMenu = null;
 	#sliderIsMinimizing: boolean = false;
+	#analytics: Object = null;
+	#refs: typeof(Cache.MemoryCache) = new Cache.MemoryCache();
 
 	constructor(params: TodoCreateNotificationParams)
 	{
@@ -45,7 +48,8 @@ export class TodoCreateNotification
 		this.#entityStageId = params.entityStageId;
 		this.#stageIdField = params.stageIdField;
 		this.#finalStages = params.finalStages;
-		this.#isSkipped = !!params.skipPeriod;
+		this.#isSkipped = Boolean(params.skipPeriod);
+		this.#analytics = params.analytics ?? {};
 
 		if (BX.CrmTimelineManager)
 		{
@@ -73,6 +77,7 @@ export class TodoCreateNotification
 			EventEmitter.subscribe('onCrmEntityUpdate', this.#onEntityUpdate.bind(this));
 			EventEmitter.subscribe('onCrmEntityDelete', this.#onEntityDelete.bind(this));
 		}
+
 		EventEmitter.subscribe('Crm.InterfaceToolbar.MenuBuild', this.#onToolbarMenuBuild.bind(this));
 	}
 
@@ -110,6 +115,7 @@ export class TodoCreateNotification
 		{
 			return;
 		}
+
 		if (!sliderEvent.isActionAllowed())
 		{
 			return; // editor has unsaved fields
@@ -120,7 +126,7 @@ export class TodoCreateNotification
 			return; // timeline already has scheduled activities
 		}
 
-		if (this.#finalStages.indexOf(this.#entityStageId) > -1)
+		if (this.#finalStages.includes(this.#entityStageId))
 		{
 			return; // element has final stage
 		}
@@ -128,7 +134,7 @@ export class TodoCreateNotification
 		this.#sliderIsMinimizing = this.#isSliderMinimizeAvailable() && sliderEvent.getSlider()?.isMinimizing();
 		sliderEvent.denyAction();
 
-		setTimeout(() => {
+		setTimeout(async () => {
 			this.#showTodoCreationNotification();
 		}, 100);
 	}
@@ -136,7 +142,10 @@ export class TodoCreateNotification
 	#onEntityUpdate(event: BaseEvent): void
 	{
 		const [eventParams] = event.getCompatData();
-		if (eventParams.hasOwnProperty('entityData') && eventParams.entityData.hasOwnProperty(this.#stageIdField))
+		if (
+			Object.hasOwn(eventParams, 'entityData')
+			&& Object.hasOwn(eventParams.entityData, this.#stageIdField)
+		)
 		{
 			this.#entityStageId = eventParams.entityData[this.#stageIdField];
 		}
@@ -145,7 +154,10 @@ export class TodoCreateNotification
 	#onEntityDelete(event: BaseEvent): void
 	{
 		const [eventParams] = event.getCompatData();
-		if (eventParams.hasOwnProperty('id') && eventParams.id == this.#entityId)
+		if (
+			Object.hasOwn(eventParams, 'id')
+			&& Text.toString(eventParams.id) === Text.toString(this.#entityId)
+		)
 		{
 			this.#allowCloseSlider = true;
 		}
@@ -153,7 +165,7 @@ export class TodoCreateNotification
 
 	#onEntityModelChange(event: BaseEvent): void
 	{
-		const [model, eventParams]  = event.getCompatData();
+		const [model, eventParams] = event.getCompatData();
 
 		if (eventParams.fieldName === this.#stageIdField)
 		{
@@ -163,12 +175,12 @@ export class TodoCreateNotification
 
 	#onSkippedPeriodChange(period: string): void
 	{
-		this.#isSkipped = !!period;
+		this.#isSkipped = Boolean(period);
 	}
 
 	#onToolbarMenuBuild(event: BaseEvent): void
 	{
-		const [, {items}] = event.getData();
+		const [, { items }] = event.getData();
 		items.push({ delimiter: true });
 		for (const skipItem of this.#skipMenu.getItems())
 		{
@@ -176,21 +188,7 @@ export class TodoCreateNotification
 		}
 	}
 
-	#onChangeDescription(event: BaseEvent): void
-	{
-		const {description} = event.getData();
-		const saveButton = this.#popup?.getButton(SAVE_BUTTON_ID);
-		if (!description.length && !saveButton.getState())
-		{
-			saveButton.setState(ButtonState.DISABLED);
-		}
-		else if (description.length && saveButton.getState() === ButtonState.DISABLED)
-		{
-			saveButton.setState(null);
-		}
-	}
-
-	#onSaveHotkeyPressed(event: BaseEvent): void
+	#onSaveHotkeyPressed(): void
 	{
 		const saveButton = this.#popup?.getButton(SAVE_BUTTON_ID);
 		if (!saveButton.getState()) // if save button is not disabled
@@ -215,8 +213,16 @@ export class TodoCreateNotification
 		this.#popup?.getButton(CANCEL_BUTTON_ID)?.setState(ButtonState.DISABLED);
 		this.#popup?.getButton(SKIP_BUTTON_ID)?.setState(ButtonState.WAITING);
 
+		this.getTodoEditor().cancel({
+			analytics: {
+				...this.#analytics,
+				element: TodoEditorV2.AnalyticsElement.skipPeriodButton,
+				notificationSkipPeriod: period,
+			},
+		});
+
 		this.#skipProvider.saveSkippedPeriod(period).then(() => {
-			this.#isSkipped = !!period;
+			this.#isSkipped = Boolean(period);
 			this.#skipMenu.setSelectedValue(period);
 			this.#revertButtonsState();
 			this.#allowCloseSlider = true;
@@ -233,9 +239,10 @@ export class TodoCreateNotification
 		this.#popup?.getButton(CANCEL_BUTTON_ID)?.setState(ButtonState.DISABLED);
 		this.#popup?.getButton(SKIP_BUTTON_ID)?.setState(ButtonState.DISABLED);
 
-		this.#toDoEditor.save().then((result) => {
+		this.getTodoEditor().save().then((result) => {
 			this.#revertButtonsState();
-			if (!(result.hasOwnProperty('errors') && result.errors.length))
+
+			if (!(Object.hasOwn(result, 'errors') && result.errors.length > 0))
 			{
 				this.#allowCloseSlider = true;
 				this.#closePopup();
@@ -243,6 +250,18 @@ export class TodoCreateNotification
 			}
 		}).catch(() => {
 			this.#revertButtonsState();
+		});
+	}
+
+	#cancel(): void
+	{
+		void this.getTodoEditor().cancel({
+			analytics: {
+				...this.#analytics,
+				element: TodoEditorV2.AnalyticsElement.cancelButton,
+			},
+		}).then(() => {
+			this.#closePopup();
 		});
 	}
 
@@ -280,19 +299,26 @@ export class TodoCreateNotification
 			const popupPaddingNumberValue = parseFloat(popupPadding) || 12;
 			const popupOverlayColor = htmlStyles.getPropertyValue('--ui-color-base-solid') || '#000000';
 
+			const { innerWidth } = window;
+
 			this.#popup = PopupManager.create({
-				id: 'todo-create-confirm-' + this.#entityTypeId + '-' + this.#entityId,
-				closeIcon: true,
+				id: `todo-create-confirm-${this.#entityTypeId}-${this.#entityId}`,
+				closeIcon: false,
 				padding: popupPaddingNumberValue,
 				overlay: {
 					opacity: 40,
 					backgroundColor: popupOverlayColor,
 				},
 				content: this.#getPopupContent(),
-				buttons: this.#getPopupButtons(),
-				width: 545,
+				minWidth: 537,
+				width: Math.round(innerWidth * 0.45),
+				maxWidth: 737,
 				events: {
 					onClose: this.#closeSlider.bind(this),
+					onFirstShow: () => {
+						this.getTodoEditor().show();
+						this.getTodoEditor().setFocused();
+					},
 				},
 				className: 'crm-activity__todo-create-notification-popup',
 			});
@@ -301,125 +327,166 @@ export class TodoCreateNotification
 		this.#popup.show();
 
 		setTimeout(() => {
-			this.#toDoEditor.setFocused();
+			this.getTodoEditor().setFocused();
 		}, 10);
 
 		setTimeout(() => {
 			this.#popup.setClosingByEsc(true);
+
+			Event.bind(document, 'keyup', (event) => {
+				if (event.key === 'Escape')
+				{
+					void this.getTodoEditor().cancel({
+						analytics: {
+							...this.#analytics,
+							element: TodoEditorV2.AnalyticsElement.cancelButton,
+						},
+					});
+				}
+			});
 		}, 300);
-	}
-
-	#getPopupTitle(): string
-	{
-		return Loc.getMessage('CRM_ACTIVITY_TODO_NOTIFICATION_TITLE');
-	}
-
-	#getPopupDescription(): string
-	{
-		let messagePhrase = 'CRM_ACTIVITY_TODO_NOTIFICATION_DESCRIPTION';
-		switch (this.#entityTypeId)
-		{
-			case BX.CrmEntityType.enumeration.lead:
-				messagePhrase = 'CRM_ACTIVITY_TODO_NOTIFICATION_DESCRIPTION_LEAD';
-				break;
-			case BX.CrmEntityType.enumeration.deal:
-				messagePhrase = 'CRM_ACTIVITY_TODO_NOTIFICATION_DESCRIPTION_DEAL';
-				break;
-		}
-
-		return Loc.getMessage(messagePhrase);
 	}
 
 	#getPopupContent(): HTMLElement
 	{
-		const editorContainer = Tag.render`<div></div>`;
+		return this.#refs.remember('content', () => {
+			const buttonsContainer = Tag.render`
+				<div class="crm-activity__todo-create-notification_footer">
+					<div class="crm-activity__todo-create-notification_buttons-container">
+						<button 
+							class="ui-btn ui-btn-xs ui-btn-primary ui-btn-round"
+							onclick="${this.#saveTodo.bind(this)}"
+						>
+							${Loc.getMessage('CRM_ACTIVITY_TODO_NOTIFICATION_OK_BUTTON_V2')}
+						</button>
+						<button
+							class="ui-btn ui-btn-xs ui-btn-link"
+							onclick="${this.#cancel.bind(this)}"
+						>
+							${Loc.getMessage('CRM_ACTIVITY_TODO_NOTIFICATION_CANCEL_BUTTON_V2')}
+						</button>
+					</div>
+					${this.#getPreparedForV2NotificationSkipButton().render()}
+				</div>
+			`;
 
-		const content = Tag.render`<div class="crm-activity__todo-create-notification">
-			<div class="crm-activity__todo-create-notification_title">${this.#getPopupTitle()}</div>
-			<div class="crm-activity__todo-create-notification_content">
-				<div class="crm-activity__todo-create-notification_description">${this.#getPopupDescription()}</div>
-				${editorContainer}
-			</div>
-		</div>`;
+			return Tag.render`
+				<div>
+					<div class="crm-activity__todo-create-notification_title --v2">
+						${this.#getNotificationTitle()}
+					</div>
+					<div>
+						${this.#getTodoEditorContainer()}
+					</div>
+					${buttonsContainer}
+				</div>
+			`;
+		});
+	}
 
-		this.#toDoEditor = new TodoEditor({
-			container: editorContainer,
+	#getTodoEditorContainer(): HTMLElement
+	{
+		return this.#refs.remember('editor', () => {
+			return Tag.render`<div></div>`;
+		});
+	}
+
+	#getNotificationTitle(): string
+	{
+		let code = null;
+
+		switch (this.#entityTypeId)
+		{
+			case BX.CrmEntityType.enumeration.lead:
+				code = 'CRM_ACTIVITY_TODO_NOTIFICATION_TITLE_V2_LEAD';
+				break;
+			case BX.CrmEntityType.enumeration.deal:
+				code = 'CRM_ACTIVITY_TODO_NOTIFICATION_TITLE_V2_DEAL';
+				break;
+			default:
+				code = 'CRM_ACTIVITY_TODO_NOTIFICATION_TITLE_V2';
+		}
+
+		return Loc.getMessage(code);
+	}
+
+	#getPreparedForV2NotificationSkipButton(): Button
+	{
+		return this.#createNotificationSkipButton()
+			.setNoCaps()
+			.addClass('crm-activity__todo-create-notification_skip-button')
+		;
+	}
+
+	getTodoEditor(): TodoEditorV2
+	{
+		if (this.#toDoEditor !== null)
+		{
+			return this.#toDoEditor;
+		}
+
+		const params = {
+			container: this.#getTodoEditorContainer(),
 			ownerTypeId: this.#entityTypeId,
 			ownerId: this.#entityId,
 			currentUser: this.#timeline.getCurrentUser(),
 			pingSettings: this.#timeline.getPingSettings(),
 			events: {
-				onChangeDescription: this.#onChangeDescription.bind(this),
 				onSaveHotkeyPressed: this.#onSaveHotkeyPressed.bind(this),
 				onChangeUploaderContainerSize: this.#onChangeUploaderContainerSize.bind(this),
 			},
-			borderColor: TodoEditor.BorderColor.PRIMARY,
-		});
-		this.#toDoEditor.show();
+			borderColor: TodoEditorV2.BorderColor.PRIMARY,
+		};
 
-		return content;
+		params.calendarSettings = this.#timeline.getCalendarSettings();
+		params.colorSettings = this.#timeline.getColorSettings();
+		params.defaultDescription = '';
+		params.analytics = this.#analytics;
+
+		this.#toDoEditor = new TodoEditorV2(params);
+
+		return this.#toDoEditor;
 	}
 
-	#getPopupButtons(): Array<Button>
+	#createNotificationSkipButton(): Button
 	{
-		return [
-			new SaveButton({
-				id: SAVE_BUTTON_ID,
-				round: true,
-				state: this.#toDoEditor.getDescription() ? null : ButtonState.DISABLED,
-				events: {
-					click: this.#saveTodo.bind(this),
-				},
-			}),
-			new CancelButton({
-				text: Loc.getMessage('CRM_ACTIVITY_TODO_NOTIFICATION_CANCEL'),
-				color: ButtonColor.LIGHT_BORDER,
-				id: CANCEL_BUTTON_ID,
-				round: true,
-				events: {
-					click: this.#closePopup.bind(this),
-				},
-			}),
-			new Button({
-				text: Loc.getMessage('CRM_ACTIVITY_TODO_NOTIFICATION_SKIP'),
-				color: ButtonColor.LINK,
-				id: SKIP_BUTTON_ID,
-				dropdown: true,
-				menu: {
-					closeByEsc: true,
-					items: this.#getSkipMenuItems(),
-					minWidth: 233,
-				},
-			}),
-		]
+		return new Button({
+			text: Loc.getMessage('CRM_ACTIVITY_TODO_NOTIFICATION_SKIP_V2'),
+			color: ButtonColor.LINK,
+			id: SKIP_BUTTON_ID,
+			dropdown: true,
+			menu: {
+				closeByEsc: true,
+				items: this.#getSkipMenuItems(),
+				minWidth: 233,
+			},
+		});
 	}
 
 	#getSkipMenuItems(): Array
 	{
-		const menuItems = [];
-
-		menuItems.push({
-			id: 'day',
-			text: Loc.getMessage('CRM_ACTIVITY_TODO_NOTIFICATION_SKIP_FOR_DAY'),
-			onclick: this.#onSkipMenuItemSelect.bind(this, 'day')
-		});
-		menuItems.push({
-			id: 'week',
-			text: Loc.getMessage('CRM_ACTIVITY_TODO_NOTIFICATION_SKIP_FOR_WEEK'),
-			onclick: this.#onSkipMenuItemSelect.bind(this, 'week')
-		});
-		menuItems.push({
-			id: 'month',
-			text: Loc.getMessage('CRM_ACTIVITY_TODO_NOTIFICATION_SKIP_FOR_MONTH'),
-			onclick: this.#onSkipMenuItemSelect.bind(this, 'month')
-		});
-		menuItems.push({
-			id: 'forever',
-			text: Loc.getMessage('CRM_ACTIVITY_TODO_NOTIFICATION_SKIP_FOREVER'),
-			onclick: this.#onSkipMenuItemSelect.bind(this, 'forever')
-		});
-
-		return menuItems;
+		return [
+			{
+				id: 'day',
+				text: Loc.getMessage('CRM_ACTIVITY_TODO_NOTIFICATION_SKIP_FOR_DAY'),
+				onclick: this.#onSkipMenuItemSelect.bind(this, 'day'),
+			},
+			{
+				id: 'week',
+				text: Loc.getMessage('CRM_ACTIVITY_TODO_NOTIFICATION_SKIP_FOR_WEEK'),
+				onclick: this.#onSkipMenuItemSelect.bind(this, 'week'),
+			},
+			{
+				id: 'month',
+				text: Loc.getMessage('CRM_ACTIVITY_TODO_NOTIFICATION_SKIP_FOR_MONTH'),
+				onclick: this.#onSkipMenuItemSelect.bind(this, 'month'),
+			},
+			{
+				id: 'forever',
+				text: Loc.getMessage('CRM_ACTIVITY_TODO_NOTIFICATION_SKIP_FOREVER'),
+				onclick: this.#onSkipMenuItemSelect.bind(this, 'forever'),
+			},
+		];
 	}
 
 	#showCancelNotificationInParentWindow()
@@ -427,12 +494,14 @@ export class TodoCreateNotification
 		if (top.BX && top.BX.Runtime)
 		{
 			const entityTypeId = this.#entityTypeId;
-			top.BX.Runtime.loadExtension('crm.activity.todo-notification-skip').then((exports) => {
-				const skipProvider = new exports.TodoNotificationSkip({
-					entityTypeId
-				});
-				skipProvider.showCancelPeriodNotification();
-			});
+			void top.BX.Runtime.loadExtension('crm.activity.todo-notification-skip')
+				.then((exports) => {
+					const skipProvider = new exports.TodoNotificationSkip({
+						entityTypeId,
+					});
+					skipProvider.showCancelPeriodNotification();
+				})
+			;
 		}
 	}
 }

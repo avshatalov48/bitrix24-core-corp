@@ -17,3 +17,4 @@ $MESS['M_CRM_COMMUNICATION_MENU_INFO_TITLE_DEAL'] = 'В сделке ещё не
 $MESS['M_CRM_COMMUNICATION_MENU_INFO_TITLE_QUOTE'] = 'В предложении ещё нет клиента';
 $MESS['M_CRM_COMMUNICATION_MENU_INFO_TITLE_SMART_INVOICE'] = 'В счёте ещё нет клиента';
 $MESS['M_CRM_COMMUNICATION_MENU_INFO_DESCRIPTION'] = 'Добавьте клиента, чтобы позвонить, написать письмо или отправить сообщение в чат';
+$MESS['M_CRM_COMMUNICATION_HIDDEN'] = 'Скрыто';

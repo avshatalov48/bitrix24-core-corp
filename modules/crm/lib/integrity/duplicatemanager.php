@@ -168,26 +168,54 @@ class DuplicateManager
 	/**
 	* @return Duplicate
 	*/
-	public static function createDuplicate($typeID, array $matches, $entityTypeID, $rootEntityID, $userID, $enablePermissionCheck, $enableRanking, $limit = 0)
+	public static function createDuplicate(
+		$typeID, array $matches, $entityTypeID, $rootEntityID, $userID, $enablePermissionCheck, $enableRanking, $limit = 0
+	)
 	{
-		return self::createCriterion($typeID, $matches)->createDuplicate($entityTypeID, $rootEntityID, $userID, $enablePermissionCheck, $enableRanking, $limit);
+		return self::createCriterion($typeID, $matches)
+			->createDuplicate(
+				$entityTypeID,
+				$rootEntityID,
+				$userID,
+				$enablePermissionCheck,
+				$enableRanking,
+				$limit
+			)
+		;
 	}
 	/**
 	* @return DuplicateIndexBuilder
 	*/
-	public static function createIndexBuilder($typeID, $entityTypeID, $userID, $enablePermissionCheck = false, $options = null)
+	public static function createIndexBuilder(
+		$typeID,
+		$entityTypeID,
+		$userID,
+		$enablePermissionCheck = false,
+		$options = null
+	)
 	{
 		$scope = self::parseScopeOption($options);
+		$contextId = self::parseContextIdOption($options);
 
-		return new DuplicateIndexBuilder($typeID, new DedupeParams($entityTypeID, $userID, $enablePermissionCheck, $scope));
+		return new DuplicateIndexBuilder(
+			$typeID,
+			new DedupeParams($entityTypeID, $userID, $enablePermissionCheck, $scope, $contextId)
+		);
 	}
 	/**
 	 * @return DuplicateIndexBuilder
 	 */
-	public static function createAutomaticIndexBuilder($typeID, $entityTypeID, $userID, $enablePermissionCheck = false, $options = null)
+	public static function createAutomaticIndexBuilder(
+		$typeID,
+		$entityTypeID,
+		$userID,
+		$enablePermissionCheck = false,
+		$options = null
+	)
 	{
 		$scope = self::parseScopeOption($options);
-		$params = new DedupeParams($entityTypeID, $userID, $enablePermissionCheck, $scope);
+		$contextId = self::parseContextIdOption($options);
+		$params = new DedupeParams($entityTypeID, $userID, $enablePermissionCheck, $scope, $contextId);
 
 		if (isset($options['LAST_INDEX_DATE']) && $options['LAST_INDEX_DATE'] instanceof Main\Type\DateTime)
 		{
@@ -273,7 +301,8 @@ class DuplicateManager
 	public static function removeIndexes(array $typeIDs, $entityTypeID, $userID, $enablePermissionCheck = false, $options = null)
 	{
 		$scope = self::parseScopeOption($options);
-		$params = new DedupeParams($entityTypeID, $userID, $enablePermissionCheck, $scope);
+		$contextId = self::parseContextIdOption($options);
+		$params = new DedupeParams($entityTypeID, $userID, $enablePermissionCheck, $scope, $contextId);
 		foreach($typeIDs as $typeID)
 		{
 			$builder = new DuplicateIndexBuilder($typeID, $params);
@@ -386,6 +415,17 @@ class DuplicateManager
 		}
 
 		return $scope;
+	}
+	public static function parseContextIdOption($options)
+	{
+
+		$contextId = '';
+		if (is_array($options) && isset($options['CONTEXT_ID']) && is_string($options['CONTEXT_ID']))
+		{
+			$contextId = $options['CONTEXT_ID'];
+		}
+
+		return $contextId;
 	}
 	public static function getDedupeTypeScopeMap($entityTypeID)
 	{

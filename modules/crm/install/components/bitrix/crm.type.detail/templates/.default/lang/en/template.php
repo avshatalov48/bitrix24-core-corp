@@ -11,6 +11,7 @@ $MESS["CRM_TYPE_DETAIL_CONVERSION_DESTINATION"] = "Destination types";
 $MESS["CRM_TYPE_DETAIL_CONVERSION_SOURCE"] = "Source types";
 $MESS["CRM_TYPE_DETAIL_CUSTOM_SECTION_HINT_ABOUT_CUSTOM_SECTIONS_IN_CRM"] = "You are currently browsing the CRM area. To create an SPA inside a different automated solution, use the \"Automation\" area.";
 $MESS["CRM_TYPE_DETAIL_CUSTOM_SECTION_LABEL_MSGVER_1"] = "Select or create an automated solution";
+$MESS["CRM_TYPE_DETAIL_CUSTOM_SECTION_LABEL_SELECT"] = "Select automated solution:";
 $MESS["CRM_TYPE_DETAIL_CUSTOM_SECTION_LIST_MSGVER_1"] = "Automated solutions";
 $MESS["CRM_TYPE_DETAIL_CUSTOM_SECTION_SWITCHER_MSGVER_1"] = "Add SPA to automated solution";
 $MESS["CRM_TYPE_DETAIL_DELETE_CONFIRM"] = "Are sure you want to delete this Smart Process Automation?";

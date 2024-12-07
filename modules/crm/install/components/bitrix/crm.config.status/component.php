@@ -7,6 +7,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 use Bitrix\Crm\Color\PhaseColorScheme;
 use Bitrix\Crm\Integration\PullManager;
+use Bitrix\Crm\PhaseSemantics;
 
 if (!CModule::IncludeModule('crm'))
 {
@@ -79,17 +80,19 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid() &&
 		 * For example see CCrmStatusInvoice.
 		 */
 		$events = GetModuleEvents("crm", "OnBeforeCrmStatusCreate");
-
-		while($arEvent = $events->Fetch())
+		while ($arEvent = $events->Fetch())
 		{
 			$CCrmStatus = ExecuteModuleEventEx($arEvent, array($entityId));
-
-			if($CCrmStatus)
+			if ($CCrmStatus)
+			{
 				break;
+			}
 		}
 
-		if(!$CCrmStatus)
+		if (!$CCrmStatus)
+		{
 			$CCrmStatus = new CCrmStatus($entityId);
+		}
 
 		$error = '';
 		if(array_key_exists('REMOVE', $arFields) && is_array($arFields['REMOVE']))
@@ -154,11 +157,36 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid() &&
 			LocalRedirect($APPLICATION->GetCurPage().'?ACTIVE_TAB='.$_POST['ACTIVE_TAB'].'&ERROR='.$error);
 		}
 
+		$existedStatuses = \Bitrix\Crm\StatusTable::getStatusesByEntityId($entityId);
 		foreach($arFields as $id => $arField)
 		{
-			$arField['SORT'] = (int)$arField['SORT'];
+			if (mb_strpos($id, 'n') === 0)
+			{
+				continue;
+			}
+			$semantics = $arField['SEMANTICS'] ?? '';
+			$status = $arField['STATUS_ID'] ?? '';
+			$sort = $arField['SORT'] ?? 0;
+			// update final statues sort first:
+			if (
+				($semantics === PhaseSemantics::SUCCESS || $semantics === PhaseSemantics::FAILURE)
+				&& ($existedStatuses[$status]['SORT'] ?? 0) < $sort
+			)
+			{
+				$CCrmStatus->Update($id, [
+					'SORT' => $sort
+				]);
+			}
+		}
+
+		foreach($arFields as $id => $arField)
+		{
+			$arField['SORT'] = (int)($arField['SORT'] ?? 0);
 			if ($arField['SORT'] <= $iPrevSort)
+			{
 				$arField['SORT'] = $iPrevSort + 10;
+			}
+
 			$iPrevSort = $arField['SORT'];
 
 			if (mb_strpos($id, 'n') === 0)
@@ -167,15 +195,18 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid() &&
 				{
 					continue;
 				}
-
 				$arAdd['NAME'] = trim($arField['VALUE']);
-				$arAdd['SORT'] = $arField['SORT'];
-				$arAdd['COLOR'] = $arField['COLOR'];
-				$arAdd['SEMANTICS'] = $arField['SEMANTICS'];
+				$arAdd['SORT'] = $arField['SORT'] ?? 0;
+				$arAdd['COLOR'] = $arField['COLOR'] ?? '';
+				$arAdd['SEMANTICS'] = $arField['SEMANTICS'] ?? '';
 				$arAdd['STATUS_ID'] = $arField['STATUS_ID'] ?? null;
 				$arAdd['CATEGORY_ID'] = $arField['CATEGORY_ID'] ?? null;
 
 				$id = $CCrmStatus->Add($arAdd);
+				if (!$id)
+				{
+					LocalRedirect($APPLICATION->GetCurPage().'?ACTIVE_TAB='.$_POST['ACTIVE_TAB'].'&ERROR='.urlencode($CCrmStatus->GetLastError()));
+				}
 				$arCurrentData = $CCrmStatus->GetStatusById($id);
 				if(is_array($arCurrentData) && isset($arCurrentData['STATUS_ID']))
 				{
@@ -190,20 +221,25 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid() &&
 			{
 				$id = (int) $id;
 				$arCurrentData = $CCrmStatus->GetStatusById($id);
+				$color = $arField['COLOR'] ?? '';
 				if(!$arCurrentData)
 				{
 					continue;
 				}
 				if(
-					trim($arField['VALUE']) != $arCurrentData['NAME'] ||
-					intval($arField['SORT']) != $arCurrentData['SORT'] ||
-					$arField['COLOR'] !== $arCurrentData['COLOR']
+					trim($arField['VALUE']) != $arCurrentData['NAME']
+					|| intval($arField['SORT']) != $arCurrentData['SORT']
+					|| $color !== $arCurrentData['COLOR']
 				)
 				{
 					$arUpdate['NAME'] = trim($arField['VALUE']);
 					$arUpdate['SORT'] = $arField['SORT'];
-					$arUpdate['COLOR'] = $arField['COLOR'];
-					$CCrmStatus->Update($id, $arUpdate);
+					$arUpdate['COLOR'] = $color;
+
+					if (!$CCrmStatus->Update($id, $arUpdate))
+					{
+						LocalRedirect($APPLICATION->GetCurPage().'?ACTIVE_TAB='.$_POST['ACTIVE_TAB'].'&ERROR='.urlencode($CCrmStatus->GetLastError()));
+					}
 				}
 			}
 		}

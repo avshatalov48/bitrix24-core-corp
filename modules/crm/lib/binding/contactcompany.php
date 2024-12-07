@@ -245,8 +245,8 @@ class ContactCompanyTable extends Entity\DataManager
 	 */
 	public static function getCompanyBindings($companyID)
 	{
-		$contactID = (int)$companyID;
-		if($contactID <= 0)
+		$companyID = (int)$companyID;
+		if($companyID <= 0)
 		{
 			throw new Main\ArgumentException('Must be greater than zero', 'companyID');
 		}

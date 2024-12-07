@@ -269,7 +269,7 @@ class CTasksTools
 			&& (strcasecmp(LANGUAGE_ID, 'DE') !== 0)
 		)
 		{
-			$dateTimeFormated = ToLower($dateTimeFormated);
+			$dateTimeFormated = mb_strtolower($dateTimeFormated);
 		}
 
 		// strip current year

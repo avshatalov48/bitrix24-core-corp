@@ -30,7 +30,7 @@ final class CheckProductsOnAdd extends Base
 					$item->setStageId($stageId);
 				}
 
-				$checkResult = self::checkAvailabilityServices($productRows);
+				$checkResult = self::checkAvailabilityServices($productRows->toArray());
 				if (!$checkResult->isSuccess())
 				{
 					$stageId = $factory->setStartStageIdPermittedForUser($item);

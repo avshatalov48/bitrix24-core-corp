@@ -857,10 +857,22 @@ class CCrmWebFormEditComponent extends \CBitrixComponent
 		global $USER;
 		$CrmPerms = new CCrmPerms($USER->GetID());
 
-		if($CrmPerms->HavePerm('WEBFORM', BX_CRM_PERM_NONE))
+		if (
+			Loader::includeModule('bitrix24')
+			&& !\Bitrix\Bitrix24\Feature::isFeatureEnabled('crm_webform_edit')
+		)
+		{
+			$this->errors[] = Loc::getMessage('CRM_PERMISSION_DENIED');
+			$this->arResult['TARIFF_RESTRICTED'] = 'Y';
+			$this->showErrors();
+
+			return false;
+		}
+		if ($CrmPerms->HavePerm('WEBFORM', BX_CRM_PERM_NONE))
 		{
 			$this->errors[] = Loc::getMessage('CRM_PERMISSION_DENIED');
 			$this->showErrors();
+
 			return false;
 		}
 
@@ -870,6 +882,7 @@ class CCrmWebFormEditComponent extends \CBitrixComponent
 		{
 			$this->errors[] = Loc::getMessage('CRM_PERMISSION_DENIED');
 			$this->showErrors();
+
 			return false;
 		}
 

@@ -4,6 +4,7 @@ namespace Bitrix\Crm\Integrity;
 
 use Bitrix\Main\ORM\Objectify\State;
 use Bitrix\Main\Type\DateTime;
+use Bitrix\Crm\Service\Container;
 
 class AutoSearchUserSettings extends Entity\EO_AutosearchUserSettings
 {
@@ -152,8 +153,11 @@ class AutoSearchUserSettings extends Entity\EO_AutosearchUserSettings
 	}
 	protected function clearConflictsNotification(): void
 	{
-		$sessionStorage = \Bitrix\Main\Application::getInstance()->getLocalSession($this->getSessionStorageKey());
-		$sessionStorage->clear();
+		if (Container::getInstance()->getContext()->getUserId())
+		{
+			$sessionStorage = \Bitrix\Main\Application::getInstance()->getLocalSession($this->getSessionStorageKey());
+			$sessionStorage->clear();
+		}
 	}
 	protected function getSessionStorageKey(): string
 	{

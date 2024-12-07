@@ -942,7 +942,7 @@ class CDavGroupdavClientCalendar extends CDavGroupdavClient
 			}
 			if ($arConnection['ACCOUNT_TYPE'] === \Bitrix\Calendar\Sync\Google\Helper::GOOGLE_ACCOUNT_TYPE_CALDAV)
 			{
-				$client->setGoogleCalendarOAuth($arConnection['ENTITY_ID']);
+				continue;
 			}
 
 			if (!$client->CheckWebdavServer($arConnection["SERVER_PATH"]))
@@ -1175,7 +1175,7 @@ class CDavGroupdavClientCalendar extends CDavGroupdavClient
 		}
 		if ($arConnection['ACCOUNT_TYPE'] === \Bitrix\Calendar\Sync\Google\Helper::GOOGLE_ACCOUNT_TYPE_CALDAV)
 		{
-			$client->setGoogleCalendarOAuth($arConnection['ENTITY_ID']);
+			return null;
 		}
 
 		//$client->Debug();
@@ -1218,7 +1218,7 @@ class CDavGroupdavClientCalendar extends CDavGroupdavClient
 		}
 		if ($arConnection['ACCOUNT_TYPE'] === \Bitrix\Calendar\Sync\Google\Helper::GOOGLE_ACCOUNT_TYPE_CALDAV)
 		{
-			$client->setGoogleCalendarOAuth($arConnection['ENTITY_ID']);
+			return null;
 		}
 
 		//$client->Debug();
@@ -1262,7 +1262,7 @@ class CDavGroupdavClientCalendar extends CDavGroupdavClient
 		}
 		if ($arConnection['ACCOUNT_TYPE'] === \Bitrix\Calendar\Sync\Google\Helper::GOOGLE_ACCOUNT_TYPE_CALDAV)
 		{
-			$client->setGoogleCalendarOAuth($arConnection['ENTITY_ID']);
+			return null;
 		}
 
 		//$client->Debug();
@@ -1301,15 +1301,19 @@ class CDavGroupdavClientCalendar extends CDavGroupdavClient
 
 	public static function DoCheckCalDAVServer($scheme, $host = null, $port = null, $username = null, $password = null, $path = null, $oauth = null)
 	{
-		if ($scheme."!" == intval($scheme)."!")
+		if ($scheme."!" == (int)$scheme ."!")
 		{
 			$scheme = intval($scheme);
 			if ($scheme <= 0)
+			{
 				return false;
+			}
 
 			$arConnection = CDavConnection::GetById($scheme);
 			if (!is_array($arConnection))
+			{
 				return false;
+			}
 
 			$scheme = $arConnection["SERVER_SCHEME"];
 			$host = $arConnection["SERVER_HOST"];
@@ -1334,9 +1338,9 @@ class CDavGroupdavClientCalendar extends CDavGroupdavClient
 			$arProxy = CDav::GetProxySettings();
 			$client->SetProxy($arProxy["PROXY_SCHEME"], $arProxy["PROXY_HOST"], $arProxy["PROXY_PORT"], $arProxy["PROXY_USERNAME"], $arProxy["PROXY_PASSWORD"]);
 		}
-		if (!empty($oauth['type']) && $oauth['type'] == 'google')
+		if (!empty($oauth['type']) && $oauth['type'] === 'google')
 		{
-			$client->setGoogleCalendarOAuth($oauth['id']);
+			return null;
 		}
 
 		return $client->CheckWebdavServer($path);
@@ -1394,21 +1398,6 @@ class CDavGroupdavClientCalendar extends CDavGroupdavClient
 	public function GetRequestEventPath($calendarXmlId = '', $itemXmlId = '')
 	{
 		return rtrim($calendarXmlId, '/').'/'.$itemXmlId.".ics";
-	}
-
-	public function setGoogleCalendarOAuth($id)
-	{
-		CModule::includeModule('socialservices');
-
-		$googleOAuthClient = new CSocServGoogleOAuth($id);
-		$googleOAuthClient->getEntityOAuth()->addScope([
-			'https://www.googleapis.com/auth/calendar',
-			'https://www.googleapis.com/auth/calendar.readonly'
-		]);
-		if ($token = $googleOAuthClient->getStorageToken())
-		{
-			$this->setGoogleOAuth($token);
-		}
 	}
 }
 ?>

@@ -3,11 +3,11 @@
 return [
 	'extensions' => [
 		'apptheme',
-		'layout/ui/fields/string',
-		'layout/ui/fields/base',
-		'native/phonenumber',
 		'utils/phone',
 		'utils/string',
-		'assets/common'
+		'assets/common',
+		'utils/validation',
+		'layout/ui/fields/base',
+		'layout/ui/fields/string',
 	],
 ];

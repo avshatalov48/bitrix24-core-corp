@@ -1,12 +1,15 @@
-<?
-use \Bitrix\Main\Localization\Loc;
+<?php
+
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Intranet\Integration\Templates\Bitrix24\ThemePickerVideo;
 
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 {
 	die();
 }
 
-$new = time() < strtotime('15 January 2024');
+$new = time() < strtotime('15 July 2024');
+$videoDomain = (new ThemePickerVideo())->getDomain();
 
 return array(
 
@@ -25,6 +28,132 @@ return array(
 	),
 
 	"subThemes" => array(
+		"light:video-orion" => array(
+			"title" => Loc::getMessage("BITRIX24_THEME_VIDEO_ORION"),
+			"previewImage" => "orion-preview.jpg",
+			"prefetchImages" => array("orion-poster.jpg"),
+			"video" => array(
+				"sources" => array(
+					"webm" => "//$videoDomain/bitrix24/themes/video-orion/orion.webm",
+					"mp4" => "//$videoDomain/bitrix24/themes/video-orion/orion.mp4"
+				)
+			),
+			"resizable" => true,
+			"new" => $new,
+		),
+
+		"light:orion" => array(
+			"title" => Loc::getMessage("BITRIX24_THEME_ORION"),
+			"previewImage" => "orion-preview.jpg",
+			"prefetchImages" => array("orion.jpg"),
+			"resizable" => true,
+			"new" => $new,
+		),
+
+		"light:video-shining-intelligence" => array(
+			"title" => Loc::getMessage("BITRIX24_THEME_VIDEO_SHINING_INTELLIGENCE"),
+			"previewImage" => "shining-intelligence-preview.jpg",
+			"prefetchImages" => array("shining-intelligence-poster.jpg"),
+			"video" => array(
+				"sources" => array(
+					"webm" => "//$videoDomain/bitrix24/themes/video-shining-intelligence/shining-intelligence.webm",
+					"mp4" => "//$videoDomain/bitrix24/themes/video-shining-intelligence/shining-intelligence.mp4"
+				)
+			),
+			"resizable" => true,
+			"new" => $new,
+		),
+
+		"light:shining-intelligence" => array(
+			"title" => Loc::getMessage("BITRIX24_THEME_SHINING_INTELLIGENCE"),
+			"prefetchImages" => array("shining-intelligence.jpg"),
+			"previewImage" => "shining-intelligence-preview.jpg",
+			"width" => 1920,
+			"height" => 1080,
+			"resizable" => true,
+			"new" => $new,
+		),
+
+		"light:contrast-horizon" => array(
+			"title" => Loc::getMessage("BITRIX24_THEME_CONTRAST_HORIZON"),
+			"prefetchImages" => array("contrast-horizon.jpg"),
+			"previewImage" => "contrast-horizon-preview.jpg",
+			"width" => 1920,
+			"height" => 1080,
+			"resizable" => true,
+			"new" => $new,
+		),
+
+		"light:amethyst-inspiration" => array(
+			"title" => Loc::getMessage("BITRIX24_THEME_AMETHYST_INSPIRATION"),
+			"prefetchImages" => array("amethyst-inspiration.jpg"),
+			"previewImage" => "amethyst-inspiration-preview.jpg",
+			"width" => 1920,
+			"height" => 1080,
+			"resizable" => true,
+			"new" => $new,
+		),
+
+		"light:astronomical-watercolor" => array(
+			"title" => Loc::getMessage("BITRIX24_THEME_ASTRONOMICAL_WATERCOLOR"),
+			"prefetchImages" => array("astronomical-watercolor.jpg"),
+			"previewImage" => "astronomical-watercolor-preview.jpg",
+			"width" => 1920,
+			"height" => 1080,
+			"resizable" => true,
+			"new" => $new,
+		),
+
+		"light:galactic-dream" => array(
+			"title" => Loc::getMessage("BITRIX24_THEME_GALACTIC_DREAM"),
+			"prefetchImages" => array("galactic-dream.jpg"),
+			"previewImage" => "galactic-dream-preview.jpg",
+			"width" => 1920,
+			"height" => 1080,
+			"resizable" => true,
+			"new" => $new,
+		),
+
+		"light:cosmic-dreams" => array(
+			"title" => Loc::getMessage("BITRIX24_THEME_COSMIC_DREAMS"),
+			"prefetchImages" => array("cosmic-dreams.jpg"),
+			"previewImage" => "cosmic-dreams-preview.jpg",
+			"width" => 1920,
+			"height" => 1080,
+			"resizable" => true,
+			"new" => $new,
+		),
+
+		"light:sunset-magic" => array(
+			"title" => Loc::getMessage("BITRIX24_THEME_SUNSET_MAGIC"),
+			"prefetchImages" => array("sunset-magic.jpg"),
+			"previewImage" => "sunset-magic-preview.jpg",
+			"width" => 1920,
+			"height" => 1080,
+			"resizable" => true,
+			"new" => $new,
+		),
+
+		"light:dawn-harmony" => array(
+			"title" => Loc::getMessage("BITRIX24_THEME_DAWN_HARMONY"),
+			"prefetchImages" => array("dawn-harmony.jpg"),
+			"previewImage" => "dawn-harmony-preview.jpg",
+			"width" => 1920,
+			"height" => 1080,
+			"resizable" => true,
+			"new" => $new,
+		),
+
+		"light:northern-lights" => array(
+			"title" => Loc::getMessage("BITRIX24_THEME_NORTHERN_LIGHTS"),
+			"prefetchImages" => array("northern-lights.jpg"),
+			"previewImage" => "northern-lights-preview.jpg",
+			"width" => 1920,
+			"height" => 1080,
+			"resizable" => true,
+			"new" => $new,
+		),
+
 		"light:jupiter" => array(
 			"title" => Loc::getMessage("BITRIX24_THEME_JUPITER"),
 			"prefetchImages" => array("jupiter.jpg"),
@@ -32,7 +161,6 @@ return array(
 			"width" => 1920,
 			"height" => 1080,
 			"resizable" => true,
-			"new" => $new,
 		),
 
 		"light:pancakes-cat" => array(
@@ -42,7 +170,6 @@ return array(
 			"width" => 1920,
 			"height" => 1080,
 			"resizable" => true,
-			"new" => time() < strtotime('18 March 2024'),
 			"zones" => array("ru", "by"),
 		),
 
@@ -53,7 +180,6 @@ return array(
 			"width" => 1920,
 			"height" => 1080,
 			"resizable" => true,
-			"new" => time() < strtotime('18 March 2024'),
 			"zones" => array("ru", "by"),
 		),
 
@@ -64,12 +190,11 @@ return array(
 			"video" => array(
 				// "poster" => "jupiter-poster.jpg",
 				"sources" => array(
-					"webm" => "//d26efdvpp7zws9.cloudfront.net/bitrix24/themes/video-jupiter/jupiter.webm",
-					"mp4" => "//d26efdvpp7zws9.cloudfront.net/bitrix24/themes/video-jupiter/jupiter.mp4"
+					"webm" => "//$videoDomain/bitrix24/themes/video-jupiter/jupiter.webm",
+					"mp4" => "//$videoDomain/bitrix24/themes/video-jupiter/jupiter.mp4"
 				)
 			),
 			"resizable" => true,
-			"new" => $new,
 		),
 
 		"light:orbital-symphony" => array(
@@ -79,7 +204,6 @@ return array(
 			"width" => 1920,
 			"height" => 1080,
 			"resizable" => true,
-			"new" => $new,
 		),
 
 		"light:flickering-way" => array(
@@ -89,7 +213,6 @@ return array(
 			"width" => 1920,
 			"height" => 1080,
 			"resizable" => true,
-			"new" => $new,
 		),
 
 		"light:mysterious-vega" => array(
@@ -99,7 +222,6 @@ return array(
 			"width" => 1920,
 			"height" => 1080,
 			"resizable" => true,
-			"new" => $new,
 		),
 
 		"light:saturn" => array(
@@ -109,7 +231,6 @@ return array(
 			"width" => 1920,
 			"height" => 1080,
 			"resizable" => true,
-			"new" => $new,
 		),
 
 		"light:video-saturn" => array(
@@ -119,12 +240,11 @@ return array(
 			"video" => array(
 				// "poster" => "saturn-poster.jpg",
 				"sources" => array(
-					"webm" => "//d26efdvpp7zws9.cloudfront.net/bitrix24/themes/video-saturn/saturn.webm",
-					"mp4" => "//d26efdvpp7zws9.cloudfront.net/bitrix24/themes/video-saturn/saturn.mp4"
+					"webm" => "//$videoDomain/bitrix24/themes/video-saturn/saturn.webm",
+					"mp4" => "//$videoDomain/bitrix24/themes/video-saturn/saturn.mp4"
 				)
 			),
 			"resizable" => true,
-			"new" => $new,
 		),
 
 		"light:sapphire-whirlwind" => array(
@@ -134,7 +254,6 @@ return array(
 			"width" => 1920,
 			"height" => 1080,
 			"resizable" => true,
-			"new" => $new,
 		),
 
 		"light:orion-nebula" => array(
@@ -144,7 +263,6 @@ return array(
 			"width" => 1920,
 			"height" => 1080,
 			"resizable" => true,
-			"new" => $new,
 		),
 
 		"light:cosmic-string" => array(
@@ -154,7 +272,6 @@ return array(
 			"width" => 1920,
 			"height" => 1080,
 			"resizable" => true,
-			"new" => $new,
 		),
 		"light:neptune" => array(
 			"title" => Loc::getMessage("BITRIX24_THEME_NEPTUNE"),
@@ -163,7 +280,6 @@ return array(
 			"width" => 1920,
 			"height" => 1080,
 			"resizable" => true,
-			"new" => $new,
 		),
 
 		"light:video-neptune" => array(
@@ -173,12 +289,11 @@ return array(
 			"video" => array(
 				// "poster" => "neptune-poster.jpg",
 				"sources" => array(
-					"webm" => "//d26efdvpp7zws9.cloudfront.net/bitrix24/themes/video-neptune/neptune.webm",
-					"mp4" => "//d26efdvpp7zws9.cloudfront.net/bitrix24/themes/video-neptune/neptune.mp4"
+					"webm" => "//$videoDomain/bitrix24/themes/video-neptune/neptune.webm",
+					"mp4" => "//$videoDomain/bitrix24/themes/video-neptune/neptune.mp4"
 				)
 			),
 			"resizable" => true,
-			"new" => $new,
 		),
 
 		"light:pluto" => array(
@@ -188,7 +303,6 @@ return array(
 			"width" => 1920,
 			"height" => 1080,
 			"resizable" => true,
-			"new" => $new,
 		),
 
 		"light:andromeda-galaxy" => array(
@@ -198,7 +312,6 @@ return array(
 			"width" => 1920,
 			"height" => 1080,
 			"resizable" => true,
-			"new" => $new,
 		),
 
 		"light:galactic-harmony" => array(
@@ -208,7 +321,6 @@ return array(
 			"width" => 1920,
 			"height" => 1080,
 			"resizable" => true,
-			"new" => $new,
 		),
 
 		"light:foggy-horizon" => array(
@@ -218,7 +330,6 @@ return array(
 			"width" => 1920,
 			"height" => 1080,
 			"resizable" => true,
-			"new" => $new,
 		),
 
 		"light:milky-way" => array(
@@ -1223,8 +1334,8 @@ return array(
 			"video" => array(
 				"poster" => "star-sky-poster.jpg",
 				"sources" => array(
-					"webm" => "//d26efdvpp7zws9.cloudfront.net/bitrix24/themes/video-star-sky/star-sky3.webm",
-					"mp4" => "//d26efdvpp7zws9.cloudfront.net/bitrix24/themes/video-star-sky/star-sky3.mp4"
+					"webm" => "//$videoDomain/bitrix24/themes/video-star-sky/star-sky3.webm",
+					"mp4" => "//$videoDomain/bitrix24/themes/video-star-sky/star-sky3.mp4"
 				)
 			),
 			"resizable" => true
@@ -1237,8 +1348,8 @@ return array(
 			"video" => array(
 				"poster" => "waves-poster.jpg",
 				"sources" => array(
-					"webm" => "//d26efdvpp7zws9.cloudfront.net/bitrix24/themes/video-waves/waves3.webm",
-					"mp4" => "//d26efdvpp7zws9.cloudfront.net/bitrix24/themes/video-waves/waves3.mp4"
+					"webm" => "//$videoDomain/bitrix24/themes/video-waves/waves3.webm",
+					"mp4" => "//$videoDomain/bitrix24/themes/video-waves/waves3.mp4"
 				)
 			),
 			"resizable" => true
@@ -1251,8 +1362,8 @@ return array(
 			"video" => array(
 				"poster" => "jellyfishes-poster.jpg",
 				"sources" => array(
-					"webm" => "//d26efdvpp7zws9.cloudfront.net/bitrix24/themes/video-jellyfishes/jellyfishes3.webm",
-					"mp4" => "//d26efdvpp7zws9.cloudfront.net/bitrix24/themes/video-jellyfishes/jellyfishes3.mp4"
+					"webm" => "//$videoDomain/bitrix24/themes/video-jellyfishes/jellyfishes3.webm",
+					"mp4" => "//$videoDomain/bitrix24/themes/video-jellyfishes/jellyfishes3.mp4"
 				)
 			),
 			"resizable" => true
@@ -1265,8 +1376,8 @@ return array(
 			"video" => array(
 				"poster" => "sunset-poster.jpg",
 				"sources" => array(
-					"webm" => "//d26efdvpp7zws9.cloudfront.net/bitrix24/themes/video-sunset/sunset3.webm",
-					"mp4" => "//d26efdvpp7zws9.cloudfront.net/bitrix24/themes/video-sunset/sunset3.mp4"
+					"webm" => "//$videoDomain/bitrix24/themes/video-sunset/sunset3.webm",
+					"mp4" => "//$videoDomain/bitrix24/themes/video-sunset/sunset3.mp4"
 				)
 			),
 			"resizable" => true
@@ -1279,8 +1390,8 @@ return array(
 			"video" => array(
 				"poster" => "rain-poster.jpg",
 				"sources" => array(
-					"webm" => "//d26efdvpp7zws9.cloudfront.net/bitrix24/themes/video-rain/rain3.webm",
-					"mp4" => "//d26efdvpp7zws9.cloudfront.net/bitrix24/themes/video-rain/rain3.mp4"
+					"webm" => "//$videoDomain/bitrix24/themes/video-rain/rain3.webm",
+					"mp4" => "//$videoDomain/bitrix24/themes/video-rain/rain3.mp4"
 				)
 			),
 			"resizable" => true
@@ -1293,8 +1404,8 @@ return array(
 			"video" => array(
 				"poster" => "rain-drops-poster.jpg",
 				"sources" => array(
-					"webm" => "//d26efdvpp7zws9.cloudfront.net/bitrix24/themes/video-rain-drops/rain-drops3.webm",
-					"mp4" => "//d26efdvpp7zws9.cloudfront.net/bitrix24/themes/video-rain-drops/rain-drops3.mp4"
+					"webm" => "//$videoDomain/bitrix24/themes/video-rain-drops/rain-drops3.webm",
+					"mp4" => "//$videoDomain/bitrix24/themes/video-rain-drops/rain-drops3.mp4"
 				)
 			),
 			"resizable" => true
@@ -1307,8 +1418,8 @@ return array(
 			"video" => array(
 				"poster" => "grass-poster.jpg",
 				"sources" => array(
-					"webm" => "//d26efdvpp7zws9.cloudfront.net/bitrix24/themes/video-grass/grass3.webm",
-					"mp4" => "//d26efdvpp7zws9.cloudfront.net/bitrix24/themes/video-grass/grass3.mp4"
+					"webm" => "//$videoDomain/bitrix24/themes/video-grass/grass3.webm",
+					"mp4" => "//$videoDomain/bitrix24/themes/video-grass/grass3.mp4"
 				)
 			),
 			"resizable" => true
@@ -1321,8 +1432,8 @@ return array(
 			"video" => array(
 				"poster" => "stones-poster.jpg",
 				"sources" => array(
-					"webm" => "//d26efdvpp7zws9.cloudfront.net/bitrix24/themes/video-stones/stones3.webm",
-					"mp4" => "//d26efdvpp7zws9.cloudfront.net/bitrix24/themes/video-stones/stones3.mp4"
+					"webm" => "//$videoDomain/bitrix24/themes/video-stones/stones3.webm",
+					"mp4" => "//$videoDomain/bitrix24/themes/video-stones/stones3.mp4"
 				)
 			),
 			"resizable" => true
@@ -1335,8 +1446,8 @@ return array(
 			"video" => array(
 				"poster" => "waterfall-poster.jpg",
 				"sources" => array(
-					"webm" => "//d26efdvpp7zws9.cloudfront.net/bitrix24/themes/video-waterfall/waterfall3.webm",
-					"mp4" => "//d26efdvpp7zws9.cloudfront.net/bitrix24/themes/video-waterfall/waterfall3.mp4"
+					"webm" => "//$videoDomain/bitrix24/themes/video-waterfall/waterfall3.webm",
+					"mp4" => "//$videoDomain/bitrix24/themes/video-waterfall/waterfall3.mp4"
 				)
 			),
 			"resizable" => true
@@ -1349,8 +1460,8 @@ return array(
 			"video" => array(
 				"poster" => "shining-poster.jpg",
 				"sources" => array(
-					"webm" => "//d26efdvpp7zws9.cloudfront.net/bitrix24/themes/video-shining/shining3.webm",
-					"mp4" => "//d26efdvpp7zws9.cloudfront.net/bitrix24/themes/video-shining/shining3.mp4"
+					"webm" => "//$videoDomain/bitrix24/themes/video-shining/shining3.webm",
+					"mp4" => "//$videoDomain/bitrix24/themes/video-shining/shining3.mp4"
 				)
 			),
 			"resizable" => true
@@ -1363,8 +1474,8 @@ return array(
 			"video" => array(
 				"poster" => "beach-poster.jpg",
 				"sources" => array(
-					"webm" => "//d26efdvpp7zws9.cloudfront.net/bitrix24/themes/video-beach/beach3.webm",
-					"mp4" => "//d26efdvpp7zws9.cloudfront.net/bitrix24/themes/video-beach/beach3.mp4"
+					"webm" => "//$videoDomain/bitrix24/themes/video-beach/beach3.webm",
+					"mp4" => "//$videoDomain/bitrix24/themes/video-beach/beach3.mp4"
 				)
 			),
 			"resizable" => true
@@ -1377,8 +1488,8 @@ return array(
 			"video" => array(
 				"poster" => "river-poster.jpg",
 				"sources" => array(
-					"webm" => "//d26efdvpp7zws9.cloudfront.net/bitrix24/themes/video-river/river.webm",
-					"mp4" => "//d26efdvpp7zws9.cloudfront.net/bitrix24/themes/video-river/river.mp4"
+					"webm" => "//$videoDomain/bitrix24/themes/video-river/river.webm",
+					"mp4" => "//$videoDomain/bitrix24/themes/video-river/river.mp4"
 				)
 			),
 			"resizable" => true

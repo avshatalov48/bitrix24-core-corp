@@ -16,6 +16,7 @@ final class Settings
 		'employee_plan' => 'employee_plan',
 		'report' => 'report',
 		'templates' => 'templates',
+		'flows' => 'flows',
 	];
 
 	private function isAvailable(): bool

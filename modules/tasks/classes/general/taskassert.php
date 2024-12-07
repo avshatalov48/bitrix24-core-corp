@@ -10,7 +10,10 @@ class CTaskAssertException extends \Bitrix\Main\ArgumentException
 {
 }
 
-
+/**
+ * @deprecated
+ * @use \Bitrix\Tasks\Internals\Log\Logger
+ */
 class CTaskAssert
 {
 	// Error log levels:

@@ -8,6 +8,7 @@ return [
 		'calendar:event-list-view',
 		'calendar:layout/ui/loader',
 		'calendar:event-list-view/search',
+		'tokens',
 	],
 ];
 

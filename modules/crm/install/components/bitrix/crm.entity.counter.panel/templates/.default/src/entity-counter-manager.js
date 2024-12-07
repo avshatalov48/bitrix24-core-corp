@@ -1,4 +1,4 @@
-import { ajax as Ajax, Event, Loc, Text, Type } from 'main.core';
+import { ajax as Ajax, Event, Loc, Runtime, Text, Type } from 'main.core';
 import { BaseEvent, EventEmitter } from 'main.core.events';
 
 import type { EntityCounterManagerOptions } from './entity-counter-manager-options';
@@ -9,8 +9,6 @@ export default class EntityCounterManager
 
 	#id: string;
 	#entityTypeId: number;
-	#entityTypeName: string;
-	#serviceUrl: string;
 	#codes: Array;
 	#extras: Object;
 	#withExcludeUsers: boolean = false;
@@ -18,33 +16,28 @@ export default class EntityCounterManager
 	#isRequestRunning: boolean;
 	#lastPullEventData: Object;
 	#isTabActive: boolean;
+	#openedSlidersCount: Number;
 
 	constructor(options: EntityCounterManagerOptions): void
 	{
 		if (!Type.isPlainObject(options))
 		{
-			throw 'BX.Crm.EntityCounterManager: The "options" argument must be object.';
+			throw new TypeError('BX.Crm.EntityCounterManager: The "options" argument must be object.');
 		}
 
 		this.#id = Type.isString(options.id) ? options.id : '';
 		if (this.#id === '')
 		{
-			throw 'BX.Crm.EntityCounterManager: The "id" argument must be specified.';
-		}
-
-		this.#serviceUrl = Type.isString(options.serviceUrl) ? options.serviceUrl : '';
-		if (this.#serviceUrl === '')
-		{
-			throw 'BX.Crm.EntityCounterManager: The "serviceUrl" argument must be specified.';
+			throw new RangeError('BX.Crm.EntityCounterManager: The "id" argument must be specified.');
 		}
 
 		this.#entityTypeId = options.entityTypeId ? Text.toInteger(options.entityTypeId) : 0;
-		this.#entityTypeName = BX.CrmEntityType.resolveName(this.#entityTypeId);
 		this.#codes = Type.isArray(options.codes) ? options.codes : [];
 		this.#extras = Type.isObject(options.extras) ? options.extras : {};
 		this.#withExcludeUsers = Type.isBoolean(options.withExcludeUsers) ? options.withExcludeUsers : false;
 		this.#counterData = {};
 		this.#isTabActive = true;
+		this.#openedSlidersCount = 0;
 
 		this.#bindEvents();
 
@@ -53,7 +46,10 @@ export default class EntityCounterManager
 
 	#bindEvents(): void
 	{
-		EventEmitter.subscribe('onPullEvent-main', this.#onPullEvent.bind(this));
+		EventEmitter.subscribe(
+			'onPullEvent-main',
+			Runtime.debounce(this.#onPullEvent, 3000, this),
+		);
 
 		Event.ready(() => {
 			Event.bind(document, 'visibilitychange', () => {
@@ -64,11 +60,34 @@ export default class EntityCounterManager
 				}
 			});
 		});
+
+		EventEmitter.subscribe('SidePanel.Slider:onOpen', () => {
+			this.#openedSlidersCount++;
+			this.#isTabActive = false;
+		});
+
+		EventEmitter.subscribe('SidePanel.Slider:onClose', () => {
+			this.#openedSlidersCount--;
+			if (this.#openedSlidersCount <= 0)
+			{
+				this.#openedSlidersCount = 0;
+				this.#isTabActive = true;
+				if (this.#isRecalculationRequired())
+				{
+					this.#tryRecalculate(this.#lastPullEventData);
+				}
+			}
+		});
 	}
 
 	#onPullEvent(event: BaseEvent): void
 	{
-		const [ command, params ] = event.getData();
+		if (!this.#isTabActive)
+		{
+			return;
+		}
+
+		const [command, params] = event.getData();
 		if (command !== 'user_counter')
 		{
 			return;
@@ -85,11 +104,13 @@ export default class EntityCounterManager
 		let enableRecalculationWithRequest = false;
 
 		const counterData = this.#fetchCounterData(params);
-		for (let counterId in counterData)
+
+		// eslint-disable-next-line no-restricted-syntax
+		for (const counterId in counterData)
 		{
 			if (
-				!counterData.hasOwnProperty(counterId)
-				|| this.#codes.indexOf(counterId) < 0
+				!Object.hasOwn(counterData, counterId)
+				|| !this.#codes.includes(counterId)
 			)
 			{
 				continue;
@@ -126,7 +147,7 @@ export default class EntityCounterManager
 
 	#startRecalculationRequest(): void
 	{
-		if (this.#isRequestRunning )
+		if (this.#isRequestRunning)
 		{
 			return;
 		}
@@ -138,13 +159,16 @@ export default class EntityCounterManager
 
 		this.#isRequestRunning = true;
 
-		Ajax.runAction('crm.counter.list', {
-			data: {
-				entityTypeId: this.#entityTypeId,
-				extras: this.#extras,
-				withExcludeUsers: this.#withExcludeUsers ? 1 : 0,
-			}
-		}).then(this.#onRecalculationSuccess.bind(this));
+		const data = {
+			entityTypeId: this.#entityTypeId,
+			extras: this.#extras,
+			withExcludeUsers: this.#withExcludeUsers ? 1 : 0,
+		};
+
+		void Ajax
+			.runAction('crm.counter.list', { data })
+			.then(this.#onRecalculationSuccess.bind(this))
+		;
 	}
 
 	#onRecalculationSuccess(result: Object): void
@@ -156,6 +180,7 @@ export default class EntityCounterManager
 		{
 			return;
 		}
+
 		this.setCounterData(data);
 
 		EventEmitter.emit('BX.Crm.EntityCounterManager:onRecalculate', this);
@@ -165,7 +190,7 @@ export default class EntityCounterManager
 	{
 		const currentSiteId = Loc.getMessage('SITE_ID');
 
-		return  Type.isPlainObject(params[currentSiteId]) ? params[currentSiteId] : {};
+		return Type.isPlainObject(params[currentSiteId]) ? params[currentSiteId] : {};
 	}
 
 	#isRecalculationRequired(): Boolean

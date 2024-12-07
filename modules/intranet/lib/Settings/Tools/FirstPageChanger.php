@@ -2,20 +2,23 @@
 
 namespace Bitrix\Intranet\Settings\Tools;
 
+use Bitrix\Intranet\Portal\FirstPage;
 use Bitrix\Intranet\UI\LeftMenu\Preset\Manager;
 use Bitrix\Intranet\UI\LeftMenu\Preset\PresetAbstract;
 use Bitrix\Main\Config\Option;
 
 class FirstPageChanger
 {
+	private FirstPage $firstPage;
 
 	public function __construct(private ToolsManager $toolsManager)
 	{
+		$this->firstPage = FirstPage::getInstance();
 	}
 
-	public function changeForAllUsers(): void
+	public function changeForAllUsers(string $siteId = SITE_ID): void
 	{
-		$presetId = Option::get('intranet', 'left_menu_preset', '', SITE_ID);
+		$presetId = Option::get('intranet', 'left_menu_preset', '', $siteId);
 		$preset = Manager::getPreset($presetId);
 		$structure = [];
 
@@ -28,9 +31,11 @@ class FirstPageChanger
 
 		if ($firstPage)
 		{
-			Option::set('intranet', 'left_menu_first_page', $firstPage, SITE_ID);
-			\CUserOptions::DeleteOptionsByName('intranet', 'left_menu_first_page_changed_' . SITE_ID);
+			Option::set('intranet', 'left_menu_first_page', $firstPage, $siteId);
+			\CUserOptions::DeleteOptionsByName('intranet', 'left_menu_first_page_changed_' . $siteId);
 		}
+
+		$this->firstPage->clearCacheForAll();
 	}
 
 	public function changeForCurrentUser($structure): void
@@ -62,6 +67,8 @@ class FirstPageChanger
 			\CUserOptions::SetOption('intranet', 'left_menu_first_page_' . SITE_ID, $firstPage);
 			\CUserOptions::SetOption('intranet', 'left_menu_first_page_changed_' . SITE_ID, 'Y');
 		}
+
+		$this->firstPage->clearCache();
 	}
 
 	public function checkNeedChanges(): bool

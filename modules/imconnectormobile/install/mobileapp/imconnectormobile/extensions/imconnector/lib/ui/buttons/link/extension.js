@@ -2,6 +2,7 @@
  * @module imconnector/lib/ui/buttons/link
  */
 jn.define('imconnector/lib/ui/buttons/link', (require, exports, module) => {
+	const AppTheme = require('apptheme');
 	const { Type } = require('type');
 	const { withPressed } = require('utils/color');
 	const { inAppUrl } = require('in-app-url');
@@ -23,7 +24,7 @@ jn.define('imconnector/lib/ui/buttons/link', (require, exports, module) => {
 					flexDirection: 'row',
 					alignItems: 'center',
 					justifyContent: 'center',
-					backgroundColor: withPressed('#00A2E8'),
+					backgroundColor: withPressed(AppTheme.colors.accentMainPrimary),
 					borderRadius,
 					paddingVertical: 4,
 					paddingHorizontal: 25,
@@ -42,7 +43,7 @@ jn.define('imconnector/lib/ui/buttons/link', (require, exports, module) => {
 			},
 			Text({
 				style: {
-					color: '#FFFFFF',
+					color: AppTheme.colors.baseWhiteFixed,
 					fontSize: 16,
 					fontWeight: 400,
 					numberOfLines: 1,

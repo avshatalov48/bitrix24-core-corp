@@ -221,7 +221,7 @@ $APPLICATION->IncludeComponent(
 );
 ?>
 <?if($arResult['CAN_CONVERT'] && isset($arResult['CONVERSION_CONFIGS'])):?>
-<script type="text/javascript">
+<script>
 	BX.ready(
 		function()
 		{
@@ -283,7 +283,7 @@ $APPLICATION->IncludeComponent(
 <?endif;?>
 
 <?if($arResult['ENABLE_INSTANT_EDIT']):?>
-<script type="text/javascript">
+<script>
 	BX.ready(
 		function()
 		{
@@ -363,7 +363,7 @@ $APPLICATION->IncludeComponent(
 </script>
 <?endif;?>
 
-<script type="text/javascript">
+<script>
 	BX.ready(function(){
 		BX.Crm.PartialEditorDialog.registerEntityEditorUrl(
 			"<?=CCrmOwnerType::LeadName?>",
@@ -398,7 +398,7 @@ $APPLICATION->IncludeComponent(
 </script>
 
 <?if(isset($arResult['ENABLE_BIZPROC_LAZY_LOADING']) && $arResult['ENABLE_BIZPROC_LAZY_LOADING'] === true):?>
-<script type="text/javascript">
+<script>
 	BX.ready(
 		function()
 		{
@@ -425,7 +425,7 @@ $APPLICATION->IncludeComponent(
 <?endif;?>
 
 <?if(isset($arResult['ENABLE_LIVE_FEED_LAZY_LOAD']) && $arResult['ENABLE_LIVE_FEED_LAZY_LOAD'] === true):?>
-<script type="text/javascript">
+<script>
 	BX.ready(
 		function()
 		{

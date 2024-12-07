@@ -30,7 +30,10 @@ class CBPCrmResourceBookingCancel extends CBPActivity
 
 		$fieldValue[$fieldId] = ['empty'];
 
-		$this->writeDebugInfo($this->getDebugInfo(['ResourceField' => $fieldId]));
+		if ($this->workflow->isDebug())
+		{
+			$this->writeDebugInfo($this->getDebugInfo(['ResourceField' => $fieldId]));
+		}
 
 		$documentService = $this->workflow->GetService("DocumentService");
 		$documentService->UpdateDocument($this->GetDocumentId(), $fieldValue);

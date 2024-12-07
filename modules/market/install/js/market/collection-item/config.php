@@ -9,6 +9,7 @@ return [
 	'js' => 'dist/collection-item.bundle.js',
 	'rel' => [
 		'main.polyfill.core',
+		'market.market-links',
 	],
 	'skip_core' => true,
 ];

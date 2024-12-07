@@ -371,7 +371,7 @@ class Instagram
 
 	public static function getSectionCode()
 	{
-		return 'IMPORT_'.ToUpper(static::$source);
+		return 'IMPORT_'.mb_strtoupper(static::$source);
 	}
 
 	public static function getProductsCount()

@@ -3,6 +3,7 @@
  */
 jn.define('crm/timeline/controllers/task', (require, exports, module) => {
 	const { TimelineBaseController } = require('crm/controllers/base');
+	const { Type } = require('crm/type');
 
 	const SupportedActions = {
 		OPEN: 'Task:View',
@@ -30,7 +31,13 @@ jn.define('crm/timeline/controllers/task', (require, exports, module) => {
 				case SupportedActions.OPEN:
 				case SupportedActions.EDIT:
 				case SupportedActions.OPEN_RESULT:
-					this.openTask(actionParams);
+					this.openTask({
+						...actionParams,
+						analyticsLabel: {
+							c_section: 'crm',
+							c_sub_section: Type.getTypeForAnalytics(this.entity.typeId),
+						},
+					});
 					break;
 
 				case SupportedActions.SEND_PING:
@@ -44,18 +51,20 @@ jn.define('crm/timeline/controllers/task', (require, exports, module) => {
 				case SupportedActions.CHANGE_DEADLINE:
 					this.changeDeadline(actionParams);
 					break;
+				default:
 			}
 		}
 
-		openTask(data)
+		openTask({ taskId, taskTitle, analyticsLabel })
 		{
 			const eventData = [
 				{
-					taskId: data.taskId,
+					taskId,
 					taskInfo: {
-						title: data.taskTitle,
+						title: taskTitle,
 					},
 				},
+				{ analyticsLabel },
 			];
 
 			BX.postComponentEvent('taskbackground::task::open', eventData, 'background');
@@ -70,9 +79,7 @@ jn.define('crm/timeline/controllers/task', (require, exports, module) => {
 
 		deleteTask(data)
 		{
-			const task = new Task({ id: env.userId });
-			task.updateData({ id: data.taskId });
-			task.remove();
+			BX.postComponentEvent('taskbackground::removeTask', [data.taskId]);
 		}
 
 		changeDeadline(data)

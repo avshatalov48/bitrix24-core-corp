@@ -2,6 +2,6 @@
 
 return [
 	'selector/widget/entity',
-	'intranet/invite-opener',
+	'intranet:invite-opener-new',
 	'loc',
 ];

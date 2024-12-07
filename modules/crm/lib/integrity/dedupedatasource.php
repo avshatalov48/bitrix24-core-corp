@@ -4,30 +4,38 @@ namespace Bitrix\Crm\Integrity;
 
 use Bitrix\Main\DB\SqlExpression;
 use Bitrix\Main\Entity\Query;
-use Bitrix\Main\ORM\Query\Join;
+use Bitrix\Main\ORM;
 use Bitrix\Main\ORM\Fields\Relations\Reference;
+use Bitrix\Main\ORM\Query\Join;
 
 abstract class DedupeDataSource
 {
 	protected $typeID = DuplicateIndexType::UNDEFINED;
-	/** @var DedupeParams $params **/
-	protected $params = null;
-	protected $permissionSql = null;
+	protected DedupeParams $params;
+	protected $permissionSql;
 	protected $processedItemCount = 0;
+
+	abstract public function getList($offset, $limit): DedupeDataSourceResult;
+	abstract protected function getOrmEntity(): ORM\Entity;
+	abstract protected function applyQueryFilterByMatches(Query $query, DuplicateCriterion $criterion): Query;
+
+	/**
+	 * @deprecated
+	 * @see DedupeDataSource::isEmptyEntity()
+	 */
+	abstract public function calculateEntityCount(DuplicateCriterion $criterion, array $options = null);
 
 	public function __construct($typeID, DedupeParams $params)
 	{
 		$this->typeID = $typeID;
 		$this->params = $params;
 	}
-	static public function create($typeID, DedupeParams $params)
-	{
-		return DedupeDataSourceFactory::create($typeID, $params);
-	}
+
 	public function getTypeID()
 	{
 		return $this->typeID;
 	}
+
 	/**
 	 * @return DedupeParams
 	 */
@@ -35,36 +43,88 @@ abstract class DedupeDataSource
 	{
 		return $this->params;
 	}
+
 	public function getEntityTypeID()
 	{
 		return $this->params->getEntityTypeID();
 	}
+
 	public function getUserID()
 	{
 		return $this->params->getUserID();
 	}
+
 	public function isPermissionCheckEnabled()
 	{
 		return $this->params->isPermissionCheckEnabled();
 	}
+
 	public function getScope()
 	{
 		return $this->params->getScope();
 	}
-	/**
-	 * @return DedupeDataSourceResult
-	 */
-	abstract public function getList($offset, $limit);
-	abstract public function calculateEntityCount(DuplicateCriterion $criterion, array $options = null);
+
+	public function getContextId(): string
+	{
+		return $this->params->getContextId();
+	}
+
+	public function isEmptyEntity(DuplicateCriterion $criterion, int $rootEntityId): bool
+	{
+		$query = new Query($this->getOrmEntity());
+		$query->addSelect('ID');
+
+		if ($this->isPermissionCheckEnabled())
+		{
+			$permissionSql = $this->preparePermissionSql();
+			if ($permissionSql === false)
+			{
+				return true; //Access denied;
+			}
+
+			if (is_string($permissionSql) && $permissionSql !== '')
+			{
+				$query->addFilter('@ENTITY_ID', new SqlExpression($permissionSql));
+			}
+		}
+
+		$entityTypeId = $this->getEntityTypeID();
+		$query->addFilter('=ENTITY_TYPE_ID', $entityTypeId);
+		$query = $this->applyQueryFilterByMatches($query, $criterion);
+
+		if ($rootEntityId > 0)
+		{
+			$userId = $this->getUserID();
+
+			$query->addFilter('!ENTITY_ID', $rootEntityId);
+			$query->addFilter(
+				'!@ENTITY_ID',
+				DuplicateIndexMismatch::prepareQueryField(
+					$criterion,
+					$entityTypeId,
+					$rootEntityId,
+					$userId
+				)
+			);
+		}
+
+		$query = self::registerRuntimeFieldsByParams($query, $this->getParams());
+		$query->setLimit(1);
+		$dbResult = $query->exec();
+		$fields = $dbResult->fetch();
+
+		return !(is_array($fields) && isset($fields['ID']));
+	}
+
 	protected function preparePermissionSql()
 	{
-		if($this->permissionSql !== null)
+		if ($this->permissionSql !== null)
 		{
 			return $this->permissionSql;
 		}
 
 		$userID = $this->getUserID();
-		if(\CCrmPerms::IsAdmin($userID))
+		if (\CCrmPerms::IsAdmin($userID))
 		{
 			$this->permissionSql = '';
 		}
@@ -77,6 +137,7 @@ abstract class DedupeDataSource
 				array('RAW_QUERY' => true, 'PERMS'=> \CCrmPerms::GetUserPermissions($userID))
 			);
 		}
+
 		return $this->permissionSql;
 	}
 
@@ -99,7 +160,13 @@ abstract class DedupeDataSource
 			default:
 				throw new \Bitrix\Main\NotImplementedException("Entity type #{$entityTypeId} has not data manager");
 		}
+
 		return $entityClass;
+	}
+
+	public static function create($typeID, DedupeParams $params)
+	{
+		return DedupeDataSourceFactory::create($typeID, $params);
 	}
 
 	public static function registerRuntimeFieldsByParams(Query $query, DedupeParams $params): Query

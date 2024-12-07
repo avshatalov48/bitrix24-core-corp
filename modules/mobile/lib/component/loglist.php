@@ -163,9 +163,9 @@ class LogList  extends \Bitrix\Socialnetwork\Component\LogListCommon
 		{
 			$params['ENTITY_TYPE'] = SONET_ENTITY_GROUP;
 		}
-		$params['USER_ID'] = (int)$params['USER_ID']; // profile page
-		$params['LOG_ID'] = (int)$params['LOG_ID']; // log entity page
-		$params['NEW_LOG_ID'] = (int)$params['NEW_LOG_ID'];
+		$params['USER_ID'] = (int)($params['USER_ID'] ?? 0); // profile page
+		$params['LOG_ID'] = (int)($params['LOG_ID'] ?? 0); // log entity page
+		$params['NEW_LOG_ID'] = (int)($params['NEW_LOG_ID'] ?? 0);
 
 		$params['FIND'] = ($request->get('FIND') ? trim($request->get('FIND')) : '');
 
@@ -173,10 +173,8 @@ class LogList  extends \Bitrix\Socialnetwork\Component\LogListCommon
 
 		$paramsInstance->prepareNameTemplateParams($params);
 
-		if (!isset($params['SHOW_LOGIN']))
-		{
-			$params['SHOW_LOGIN'] = $params['SHOW_LOGIN'] !== 'N' ? 'Y' : 'N';
-		}
+		$params['SHOW_LOGIN'] = ($params['SHOW_LOGIN'] ?? 'Y');
+
 		$this->useLogin = ($params['SHOW_LOGIN'] !== 'N');
 
 		$paramsInstance->prepareAvatarParams($params);

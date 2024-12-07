@@ -33,8 +33,8 @@ if (isset($_REQUEST['app_calendar_action']))
 			"DATE_FROM" => $_POST['from_date'],
 			"DATE_TO" => $_POST['to_date'],
 			"SKIP_TIME" => isset($_POST['skip_time']) && $_POST['skip_time'] == 'Y',
-			'NAME' => CMobile::ConvertFromUtf(trim($_POST['name'])),
-			'DESCRIPTION' => CMobile::ConvertFromUtf(trim($_POST['desc'])),
+			'NAME' => trim($_POST['name']),
+			'DESCRIPTION' => trim($_POST['desc']),
 			'SECTIONS' => array($sectId),
 			'ACCESSIBILITY' => $_POST['accessibility'],
 			'IMPORTANCE' => $_POST['importance'],
@@ -49,8 +49,6 @@ if (isset($_REQUEST['app_calendar_action']))
 		{
 			$arFields['LOCATION'] = $_POST['location'];
 			$arFields['LOCATION']['CHANGED'] = $arFields['LOCATION']['CHANGED'] == 'Y';
-			$arFields['LOCATION']['NEW'] = CMobile::ConvertFromUtf($arFields['LOCATION']['NEW']);
-			$arFields['LOCATION']['OLD'] = CMobile::ConvertFromUtf($arFields['LOCATION']['OLD']);
 
 			if ($arFields['LOCATION']['CHANGED'])
 			{

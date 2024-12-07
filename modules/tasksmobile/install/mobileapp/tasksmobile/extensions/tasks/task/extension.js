@@ -1146,7 +1146,7 @@
 			});
 		}
 
-		open(parentWidget)
+		open(parentWidget, context, params = {})
 		{
 			const taskId = this.task.id;
 			const taskData = {
@@ -1154,13 +1154,19 @@
 				id: taskId,
 				title: (this.task.title || 'TASK'),
 			};
-			const params = {
+			const { analyticsLabel = {}, view, kanbanOwnerId } = params;
+
+			const newParams = {
 				parentWidget,
+				context,
+				view,
+				kanbanOwnerId,
 				userId: this.task.currentUser.id,
 				taskObject: (this.task.canSendMyselfOnOpen ? this.task.exportProperties() : null),
+				analyticsLabel,
 			};
 
-			Entry.openTask(taskData, params);
+			Entry.openTask(taskData, newParams);
 		}
 	}
 
@@ -1694,6 +1700,7 @@
 		setDefaultData()
 		{
 			this.id = `tmp-id-${Date.now()}`;
+			this.temporaryId = undefined;
 			this.guid = undefined;
 			this.title = undefined;
 			this.description = undefined;
@@ -1752,6 +1759,7 @@
 		{
 			const fieldMap = {
 				id: () => row.id,
+				temporaryId: () => row.temporaryId,
 				title: () => row.title,
 				name: () => row.name,
 				description: () => row.description,
@@ -1849,6 +1857,7 @@
 			const has = Object.prototype.hasOwnProperty;
 			const fieldMap = {
 				id: () => row.id,
+				temporaryId: () => row.temporaryId,
 				title: () => row.title,
 				description: () => row.description,
 				parsedDescription: () => row.parsedDescription,
@@ -2011,6 +2020,7 @@
 				_id: this._id,
 				_guid: this._guid,
 
+				temporaryId: this.temporaryId,
 				title: this.title,
 				description: this.description,
 				parsedDescription: this.parsedDescription,
@@ -2556,9 +2566,9 @@
 			return this._actions.exportProperties();
 		}
 
-		open(parentWidget = null)
+		open(parentWidget = null, context = null, params = {})
 		{
-			this._actions.open(parentWidget);
+			this._actions.open(parentWidget, context, params);
 		}
 
 		save()

@@ -1,3 +1,4 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
 (function (exports,crm_model) {
@@ -9,12 +10,10 @@ this.BX.Crm = this.BX.Crm || {};
 	 */
 	var StageModel = /*#__PURE__*/function (_Model) {
 	  babelHelpers.inherits(StageModel, _Model);
-
 	  function StageModel(data, params) {
 	    babelHelpers.classCallCheck(this, StageModel);
 	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(StageModel).call(this, data, params));
 	  }
-
 	  babelHelpers.createClass(StageModel, [{
 	    key: "getModelName",
 	    value: function getModelName() {
@@ -69,6 +68,17 @@ this.BX.Crm = this.BX.Crm || {};
 	    key: "getCategoryId",
 	    value: function getCategoryId() {
 	      return this.data.categoryId;
+	    }
+	  }, {
+	    key: "getStagesToMove",
+	    value: function getStagesToMove() {
+	      return this.data.stagesToMove;
+	    }
+	  }, {
+	    key: "isAllowedMoveToAnyStage",
+	    value: function isAllowedMoveToAnyStage() {
+	      var _this$data$allowMoveT;
+	      return (_this$data$allowMoveT = this.data.allowMoveToAnyStage) !== null && _this$data$allowMoveT !== void 0 ? _this$data$allowMoveT : false;
 	    }
 	  }, {
 	    key: "isFinal",

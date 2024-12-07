@@ -327,7 +327,7 @@ abstract class EntityMerger
 		$userFieldInfos = $this->getEntityUserFieldsInfo();
 
 		$this->innerMergeEntityFields($seed, $targ, $entityFieldInfos, $skipEmpty, $options);
-		EntityMerger::mergeUserFields($seed, $targ, $userFieldInfos, $options);
+		$this->mergeUserFields($seed, $targ, $userFieldInfos, $options);
 
 		$seedMultiFields = isset($seed['FM']) && is_array($seed['FM']) ? $seed['FM'] : array();
 		$targMultiFields = isset($targ['FM']) && is_array($targ['FM']) ? $targ['FM'] : array();
@@ -431,9 +431,9 @@ abstract class EntityMerger
 			$options['map'] = $this->map;
 		}
 
-		self::mergeEntityFieldsBatch($seeds, $targ, $entityFieldInfos, false, $options);
+		$this->mergeEntityFieldsBatch($seeds, $targ, $entityFieldInfos, false, $options);
 		$this->mergeBoundEntitiesBatch($seeds, $targ, false, $options);
-		EntityMerger::mergeUserFieldsBatch($seeds, $targ, $userFieldInfos, $options);
+		$this->mergeUserFieldsBatch($seeds, $targ, $userFieldInfos, $options);
 
 		$matchMap = array();
 		foreach($seedIDs as $seedID)
@@ -582,7 +582,7 @@ abstract class EntityMerger
 
 		$options = array('conflictResolutionMode' => $this->conflictResolutionMode);
 		$this->innerMergeEntityFields($seed, $targ, $entityFieldInfos, false, $options);
-		EntityMerger::mergeUserFields($seed, $targ, $userFieldInfos, $options);
+		$this->mergeUserFields($seed, $targ, $userFieldInfos, $options);
 
 		$matches = $this->getRegisteredEntityMatches($entityTypeID, $seedID);
 
@@ -701,6 +701,11 @@ abstract class EntityMerger
 			}
 			return $value == null;
 		}
+		elseif ($type === 'boolean')
+		{
+			return $value === null;
+		}
+
 		return $value == null;
 	}
 	protected function innerPrepareEntityFieldMergeData($fieldID, array $fieldParams,  array $seeds, array $targ, array $options = null)
@@ -1030,8 +1035,8 @@ abstract class EntityMerger
 			return $this->innerPrepareEntityFieldMergeData(
 				$fieldID,
 				array(
-					'TYPE' => isset($fieldInfo['TYPE']) ? $fieldInfo['TYPE'] : 'string',
-					'IS_MULTIPLE' => false
+					'TYPE' => $fieldInfo['TYPE'] ?? 'string',
+					'IS_MULTIPLE' => in_array(\CCrmFieldInfoAttr::Multiple, $fieldInfo['ATTRIBUTES'], true),
 				),
 				$seeds,
 				$targ,
@@ -1160,7 +1165,7 @@ abstract class EntityMerger
 		);
 	}
 
-	protected static function mergeEntityFieldsBatch(array &$seeds, array &$targ, array &$fieldInfos, $skipEmpty = false, array $options = null)
+	protected function mergeEntityFieldsBatch(array &$seeds, array &$targ, array &$fieldInfos, $skipEmpty = false, array $options = null)
 	{
 		if(empty($seeds))
 		{
@@ -1284,7 +1289,7 @@ abstract class EntityMerger
 				$currentSeedIDs = array_keys($seedValueMap);
 				$currentTarg = $targFlg ? $targ : $seedMap[array_shift($currentSeedIDs)];
 
-				$fieldConflictResolver = static::getFieldConflictResolver($fieldID, $fieldInfo['TYPE'] ?? 'string');
+				$fieldConflictResolver = $this->getFieldConflictResolver($fieldID, $fieldInfo['TYPE'] ?? 'string');
 				$fieldConflictResolver->setTarget($currentTarg);
 
 				foreach($currentSeedIDs as $seedID)
@@ -1338,7 +1343,7 @@ abstract class EntityMerger
 	 * @param array $options Operation options.
 	 * @return void
 	 */
-	protected static function mergeEntityFields(array &$seed, array &$targ, array &$fieldInfos, $skipEmpty = false, array $options = null)
+	protected function mergeEntityFields(array &$seed, array &$targ, array &$fieldInfos, $skipEmpty = false, array $options = null)
 	{
 		if(empty($seed))
 		{
@@ -1395,7 +1400,7 @@ abstract class EntityMerger
 			$seedFlg = static::doesFieldHaveValue($fieldInfo, $seed, $fieldID, $skipEmpty);
 			$type = ($fieldInfo['TYPE'] ?? 'string');
 
-			$fieldConflictResolver = static::getFieldConflictResolver($fieldID, $type);
+			$fieldConflictResolver = $this->getFieldConflictResolver($fieldID, $type);
 			$fieldConflictResolver->addSeed((int)($seed['ID'] ?? 0), $seed);
 			$fieldConflictResolver->setTarget($targ);
 			if($targFlg
@@ -1517,7 +1522,7 @@ abstract class EntityMerger
 	 */
 	protected function innerMergeEntityFields(array &$seed, array &$targ, array &$fieldInfos, $skipEmpty = false, array $options = array())
 	{
-		self::mergeEntityFields($seed, $targ, $fieldInfos, $skipEmpty, $options);
+		$this->mergeEntityFields($seed, $targ, $fieldInfos, $skipEmpty, $options);
 		$this->innerMergeBoundEntities($seed, $targ, $skipEmpty, $options);
 	}
 
@@ -1601,7 +1606,7 @@ abstract class EntityMerger
 	 * @param string $type
 	 * @return ConflictResolver\Base
 	 */
-	protected static function getFieldConflictResolver(string $fieldId, string $type): ConflictResolver\Base
+	protected function getFieldConflictResolver(string $fieldId, string $type): ConflictResolver\Base
 	{
 		if ($type === 'string')
 		{
@@ -1649,7 +1654,7 @@ abstract class EntityMerger
 	 * @param array &$fieldInfos Entity field infos.
 	 * @return void
 	 */
-	protected static function mergeUserFields(array &$seed, array &$targ, array &$fieldInfos, array $options = array())
+	protected function mergeUserFields(array &$seed, array &$targ, array &$fieldInfos, array $options = array())
 	{
 		if(empty($seed))
 		{
@@ -1700,7 +1705,7 @@ abstract class EntityMerger
 				&& $conflictResolutionMode === ConflictResolutionMode::ASK_USER
 			)
 			{
-				$fieldConflictResolver = static::getFieldConflictResolver($fieldID, $typeID);
+				$fieldConflictResolver = $this->getFieldConflictResolver($fieldID, $typeID);
 				$fieldConflictResolver->setTarget($targ);
 				$fieldConflictResolver->addSeed((int)$seed['ID'], $seed);
 				$resolveResult = $fieldConflictResolver->resolve();
@@ -2048,7 +2053,7 @@ abstract class EntityMerger
 
 		try
 		{
-			$addressFields = Main\Web\Json::encode($addressFields);
+			$addressFields = Main\Web\Json::encode($addressFields, 0);
 		}
 		catch (Main\ArgumentException $exception)
 		{
@@ -2058,7 +2063,7 @@ abstract class EntityMerger
 		return $addressFields;
 	}
 
-	protected static function mergeUserFieldsBatch(array &$seeds, array &$targ, array &$fieldInfos, array $options = array())
+	protected function mergeUserFieldsBatch(array &$seeds, array &$targ, array &$fieldInfos, array $options = array())
 	{
 		if(empty($seeds))
 		{
@@ -2133,7 +2138,7 @@ abstract class EntityMerger
 				$currentSeedIDs = array_keys($seedValueMap);
 				$currentTarg = isset($targ[$fieldID]) ? $targ : $seedMap[array_shift($currentSeedIDs)];
 
-				$fieldConflictResolver = static::getFieldConflictResolver($fieldID, $typeID);
+				$fieldConflictResolver = $this->getFieldConflictResolver($fieldID, $typeID);
 				$fieldConflictResolver->setTarget($currentTarg);
 				foreach($currentSeedIDs as $seedID)
 				{
@@ -2794,6 +2799,7 @@ abstract class EntityMerger
 	 * @param int $entityID Entity ID.
 	 * @param int $roleID Entity Role ID (is not required).
 	 * @throws Main\NotImplementedException
+	 * @throws EntityMergerException
 	 * @return array
 	 */
 	abstract protected function getEntityFields($entityID, $roleID);
@@ -2848,9 +2854,9 @@ abstract class EntityMerger
 	 * @return array|null
 	 * @throws Main\NotImplementedException
 	 */
-	protected function prepareCollisionMessageFields(array &$collisions, array &$seed, array &$targ)
+	protected function prepareCollisionMessageFields(array &$collisions, array &$seed, array &$targ): array|null
 	{
-		throw new Main\NotImplementedException('Method setupRecoveryData must be overridden');
+		throw new Main\NotImplementedException('Method prepareCollisionMessageFields must be overridden');
 	}
 	/**
 	 * Setup recovery data from fields.
@@ -2928,6 +2934,7 @@ abstract class EntityMerger
 	 * @param array $options Options.
 	 * @return void
 	 * @throws Main\NotImplementedException
+	 * @throws EntityMergerException
 	 */
 	abstract protected function updateEntity($entityID, array &$fields, $roleID, array $options = array());
 	/**
@@ -2937,6 +2944,7 @@ abstract class EntityMerger
 	 * @param array $options Options.
 	 * @return void
 	 * @throws Main\NotImplementedException
+	 * @throws EntityMergerException
 	 */
 	abstract protected function deleteEntity($entityID, $roleID, array $options = array());
 }

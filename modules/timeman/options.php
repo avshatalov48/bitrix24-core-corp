@@ -47,7 +47,7 @@ $Apply = (!empty($_REQUEST['Apply']) ? 'Y' : '');
 $RestoreDefaults = (!empty($_REQUEST['RestoreDefaults']) ? 'Y' : '');
 
 if (
-	$REQUEST_METHOD=="POST"
+	$_SERVER['REQUEST_METHOD']=="POST"
 	&& $Update . $Apply . $RestoreDefaults <> ''
 	&& check_bitrix_sessid()
 )
@@ -301,7 +301,7 @@ if (CModule::IncludeModule("forum"))
 <?
 if (count($arHints) > 0):
 ?>
-<script type="text/javascript">
+<script>
 BX.ready(function() {
 <?
 	foreach ($arHints as $hint):

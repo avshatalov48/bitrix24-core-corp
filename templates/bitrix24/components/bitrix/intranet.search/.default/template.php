@@ -90,7 +90,7 @@ $APPLICATION->IncludeComponent("bitrix:intranet.structure.selector", 'alphabet',
 
 ?>
 
-<script type="text/javascript">
+<script>
 	BX.bind(BX('filter-but-ABC'), 'click', ABC_popup);
 	BX.bind(BX('filter-but-more'), 'click', more_action_popup);
 	

@@ -4,19 +4,36 @@
  * @module im/messenger/provider/pull/copilot/dialog
  */
 jn.define('im/messenger/provider/pull/copilot/dialog', (require, exports, module) => {
-	const { DialogBasePullHandler } = require('im/messenger/provider/pull/lib');
+	const { BaseDialogPullHandler } = require('im/messenger/provider/pull/base');
 	const { LoggerManager } = require('im/messenger/lib/logger');
 	const { Counters } = require('im/messenger/lib/counters');
+	const { DialogHelper } = require('im/messenger/lib/helper');
+
 	const logger = LoggerManager.getInstance().getLogger('pull-handler--copilot-dialog');
 
 	/**
 	 * @class CopilotDialogPullHandler
 	 */
-	class CopilotDialogPullHandler extends DialogBasePullHandler
+	class CopilotDialogPullHandler extends BaseDialogPullHandler
 	{
 		constructor()
 		{
 			super({ logger });
+		}
+
+		handleChatCopilotRoleUpdate(params, extra, command)
+		{
+			logger.info(`${this.getClassName()}.handleChatCopilotRoleUpdate.params`, params);
+			this.store.dispatch(
+				'dialoguesModel/copilotModel/updateRole',
+				{
+					dialogId: params.dialogId,
+					fields: {
+						chats: params.copilotRole.chats,
+						roles: params.copilotRole.roles,
+					},
+				},
+			).catch((error) => logger.error(`${this.constructor.name}.handleChatCopilotRoleUpdate.catch:`, error));
 		}
 
 		handleReadAllChats(params, extra, command)
@@ -63,6 +80,22 @@ jn.define('im/messenger/provider/pull/copilot/dialog', (require, exports, module
 		deleteCounters(dialogId)
 		{
 			delete Counters.copilotCounter.detail[dialogId];
+		}
+
+		/**
+		 * @param {DialoguesModelState} chatData
+		 * @return {boolean}
+		 */
+		shouldDeleteChat(chatData)
+		{
+			const helper = DialogHelper.createByModel(chatData);
+
+			if (!helper?.isCopilot)
+			{
+				return false;
+			}
+
+			return true;
 		}
 	}
 

@@ -10,6 +10,8 @@ use Bitrix\Main\Result;
 
 class FillItemFieldsFromCallTranscriptionPayload extends Dto
 {
+	public const PAYLOAD_IS_EMPTY_ERROR_CODE = 'PAYLOAD_IS_EMPTY';
+
 	/** @var SingleFieldFillPayload[] */
 	public array $singleFields = [];
 	/** @var MultipleFieldFillPayload[] */
@@ -41,7 +43,12 @@ class FillItemFieldsFromCallTranscriptionPayload extends Dto
 						&& empty($fields['unallocatedData'])
 					)
 					{
-						$result->addError(new Error('Payload cant be completely empty'));
+						$result->addError(
+							new Error(
+								'Payload cant be completely empty',
+								FillItemFieldsFromCallTranscriptionPayload::PAYLOAD_IS_EMPTY_ERROR_CODE
+							)
+						);
 					}
 
 					return $result;

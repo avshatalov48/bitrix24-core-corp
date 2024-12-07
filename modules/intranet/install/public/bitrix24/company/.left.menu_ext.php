@@ -37,6 +37,8 @@ if (ToolsManager::getInstance()->checkAvailabilityByMenuId('menu_employee'))
 		[],
 		[
 			'menu_item_id' => 'menu_employee',
+			'counter_num' => (new \Bitrix\Intranet\User())->getTotalInvitationCounterValue(),
+			'counter_id' => \Bitrix\Intranet\Invitation::getTotalInvitationCounterId()
 		],
 		'',
 	];

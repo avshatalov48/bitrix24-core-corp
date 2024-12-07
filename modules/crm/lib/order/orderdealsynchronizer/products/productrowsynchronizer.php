@@ -203,7 +203,8 @@ class ProductRowSynchronizer implements LoggerAwareInterface
 					$dealBasketItem['PRODUCT_PROVIDER_CLASS'] = '\\'.CatalogProvider::class;
 				}
 
-				$basketItem = $basket->createItem('catalog', $dealBasketItem['PRODUCT_ID']);
+				$moduleId = $productId > 0 ? 'catalog' : '';
+				$basketItem = $basket->createItem($moduleId, $dealBasketItem['PRODUCT_ID']);
 				$syncResult->addNewBasketItem($rowId, $basketItem);
 			}
 
@@ -269,7 +270,10 @@ class ProductRowSynchronizer implements LoggerAwareInterface
 		/** @var \Bitrix\Crm\Order\BasketItem $basketItem */
 		foreach ($this->order->getBasket() as $basketItem)
 		{
-			if ($basketItem->getId() === 0)
+			if (
+				$basketItem->getId() === 0
+				|| $basketItem->getFields()->isChanged('PRODUCT_ID')
+			)
 			{
 				$strategy = RefreshFactory::createSingle($basketItem->getBasketCode());
 				$this->order->getBasket()->refresh($strategy);

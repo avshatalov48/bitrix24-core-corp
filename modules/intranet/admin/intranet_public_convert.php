@@ -4,7 +4,7 @@ require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/intranet/include.php");
 
 IncludeModuleLangFile(__FILE__);
 
-if($REQUEST_METHOD=="POST" && check_bitrix_sessid())
+if($_SERVER['REQUEST_METHOD']=="POST" && check_bitrix_sessid())
 {
 	if (isset($_POST["skip_convert_button"]))
 	{

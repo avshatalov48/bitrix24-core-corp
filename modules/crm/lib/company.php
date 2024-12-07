@@ -27,4 +27,9 @@ class Company extends EO_Company implements UserFieldFilterable
 
 		return $this->filteredUserFields;
 	}
+
+	public function getHeading(): string
+	{
+		return $this->getTitle();
+	}
 }

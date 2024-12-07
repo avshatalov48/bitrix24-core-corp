@@ -42,26 +42,6 @@ class CCrmWebFormListComponent extends \CBitrixComponent
 	{
 		if ($this->request->get('rebuildResources') === 'y' || $this->request->get('rebuildAll') === 'y')
 		{
-			if ($this->request->get('rebuildFiles') === 'y')
-			{
-				$files = Main\FileTable::query()
-					->addSelect('ID')
-					->addFilter('MODULE_ID', 'crm')
-					->addFilter('SUBDIR', 'crm/form')
-					->addFilter('FILE_NAME', 'app.js')
-					->setOrder(['ID' => 'DESC'])
-					->setLimit(3)
-					->fetchAll()
-				;
-				if (count($files) > 1)
-				{
-					foreach ($files as $file)
-					{
-						\CFile::Delete($file['ID']);
-					}
-				}
-			}
-
 			Webpack\Form::rebuildResources();
 			if (
 				Main\Loader::includeModule('landing')
@@ -100,6 +80,13 @@ class CCrmWebFormListComponent extends \CBitrixComponent
 		}
 
 		$replaceListNew = array('id' => 0, 'form_id' => 0);
+		$this->arResult['AVAILABLE'] = true;
+
+		if (Loader::includeModule('bitrix24') )
+		{
+			$this->arResult['AVAILABLE'] = \Bitrix\Bitrix24\Feature::isFeatureEnabled('crm_webform_edit');
+		}
+
 		$this->arResult['PATH_TO_WEB_FORM_NEW'] = CComponentEngine::makePathFromTemplate($this->arParams['PATH_TO_WEB_FORM_EDIT'], $replaceListNew);
 		$preset = $this->request->get('PRESET');
 

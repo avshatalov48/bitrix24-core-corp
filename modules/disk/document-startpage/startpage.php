@@ -13,7 +13,7 @@
 	?>
 </head>
 <body style="height: 100%;margin: 0;padding: 0; background: #f5f5f5">
-	<script type="text/javascript">
+	<script>
 	function closeConfirm()
 	{
 		if(window.opener)

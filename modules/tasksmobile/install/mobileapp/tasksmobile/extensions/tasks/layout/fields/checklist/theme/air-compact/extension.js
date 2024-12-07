@@ -3,21 +3,31 @@
  */
 jn.define('tasks/layout/fields/checklist/theme/air-compact', (require, exports, module) => {
 	const { Loc } = require('loc');
+	const { Icon } = require('assets/icons');
 	const { AirCompactThemeView } = require('layout/ui/fields/base/theme/air-compact');
 	const { withTheme } = require('layout/ui/fields/theme');
+	const { ChecklistPreview, ClickStrategy } = require('tasks/layout/checklist/preview');
 
-	const { ChecklistPreview } = require('tasks/layout/checklist/preview');
-
-	const AirTheme = ({ field, handleOnCreateChecklist }) => {
-		const checklists = field.getSortedChecklists();
+	/**
+	 * @param {ChecklistPreview} field
+	 * @return {Chip}
+	 * @constructor
+	 */
+	const AirTheme = ({ field }) => {
+		const checklists = field.isLoading() ? field.getChecklistStubs() : field.getSortedChecklists();
 
 		return AirCompactThemeView({
-			testId: 'CHECKLIST_FIELD',
-			empty: checklists.length === 0,
-			multiple: true,
-			leftIcon: 'taskList1',
-			text: Loc.getMessage('TASKS_FIELDS_CHECKLIST_AIR_COMPACT_TITLE'),
-			onClick: handleOnCreateChecklist(field.props.parentWidget),
+			testId: field.testId,
+			bindContainerRef: field.bindContainerRef,
+			empty: field.isEmpty(),
+			readOnly: field.isReadOnly(),
+			multiple: field.isMultiple(),
+			leftIcon: {
+				icon: Icon.TASK_LIST,
+			},
+			text: Loc.getMessage('TASKS_FIELDS_CHECKLIST_AIR_TITLE'),
+			textMultiple: Loc.getMessage('TASKS_FIELDS_CHECKLIST_AIR_TITLE_MULTI'),
+			onClick: field.getContentClickHandler(),
 			count: checklists.length,
 		});
 	};
@@ -28,5 +38,6 @@ jn.define('tasks/layout/fields/checklist/theme/air-compact', (require, exports, 
 	module.exports = {
 		AirTheme,
 		ChecklistField,
+		ClickStrategy,
 	};
 });

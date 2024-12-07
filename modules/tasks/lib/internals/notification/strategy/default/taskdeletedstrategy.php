@@ -18,7 +18,13 @@ class TaskDeletedStrategy implements RecipientStrategyInterface
 
 	public function getRecipients(): array
 	{
-		return $this->userRepository->getRecepients($this->task, $this->getSender(), $this->dictionary->get('options', []));
+		$this->dictionary->merge('options', ['forceFetchMembers' => false]);
+
+		return $this->userRepository->getRecepients(
+			$this->task,
+			$this->getSender(),
+			$this->dictionary->get('options', [])
+		);
 	}
 
 	public function getSender(): ?User

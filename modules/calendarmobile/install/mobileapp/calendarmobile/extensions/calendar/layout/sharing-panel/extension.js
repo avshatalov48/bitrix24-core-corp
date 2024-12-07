@@ -4,12 +4,13 @@
 jn.define('calendar/layout/sharing-panel', (require, exports, module) => {
 	const AppTheme = require('apptheme');
 	const { Loc } = require('loc');
-	const { withPressed } = require('utils/color');
 	const { BottomSheet } = require('bottom-sheet');
-	const { Analytics } = require('calendar/sharing/analytics');
+	const { withPressed } = require('utils/color');
+
 	const { Icons } = require('calendar/layout/icons');
-	const { SharingContext } = require('calendar/model/sharing');
 	const { LinkList } = require('calendar/layout/sharing-joint');
+	const { Color } = require('tokens');
+	const { Analytics } = require('calendar/sharing/analytics');
 
 	/**
 	 * @class SharingPanel
@@ -35,15 +36,13 @@ jn.define('calendar/layout/sharing-panel', (require, exports, module) => {
 
 		render()
 		{
-			const isCalendarContext = this.model.getContext() === SharingContext.CALENDAR;
-
 			return View(
 				{
 					testId: 'SharingPanelDescriptionHeader',
-					style: styles.wrapper(isCalendarContext),
+					style: styles.wrapper,
 				},
-				isCalendarContext && this.renderSendButton(),
-				isCalendarContext && this.renderHistoryButton(),
+				this.renderSendButton(),
+				this.renderHistoryButton(),
 			);
 		}
 
@@ -106,51 +105,44 @@ jn.define('calendar/layout/sharing-panel', (require, exports, module) => {
 					style: styles.historyButtonContainer,
 					onClick: this.handleHistoryButtonClick,
 				},
-				Image(
-					{
-						tintColor: AppTheme.colors.base3,
-						svg: {
-							content: Icons.people,
-						},
-						style: {
-							height: 24,
-							width: 24,
-						},
+				Image({
+					tintColor: AppTheme.colors.base3,
+					svg: {
+						content: Icons.people,
 					},
-				),
-				Text(
-					{
-						style: styles.historyButtonText,
-						text: Loc.getMessage('CALENDARMOBILE_SHARING_PANEL_JOINT_SLOTS'),
+					style: {
+						height: 24,
+						width: 24,
 					},
-				),
+				}),
+				Text({
+					style: styles.historyButtonText,
+					text: Loc.getMessage('CALENDARMOBILE_SHARING_PANEL_JOINT_SLOTS'),
+				}),
 			);
 		}
 
 		handleHistoryButtonClick()
 		{
-			const component = new LinkList({
+			const component = (layoutWidget) => new LinkList({
+				layoutWidget,
 				model: this.model,
 			});
 
-			// eslint-disable-next-line promise/catch-or-return
-			new BottomSheet({ component })
+			void new BottomSheet({ component })
 				.setParentWidget(this.props.layoutWidget)
-				.setBackgroundColor(AppTheme.colors.bgNavigation)
+				.setBackgroundColor(Color.bgNavigation.toHex())
 				.disableContentSwipe()
 				.setMediumPositionPercent(80)
 				.open()
-				.then((widget) => component.setLayoutWidget(widget))
 			;
 		}
 	}
 
 	const styles = {
-		wrapper: (isCalendarContext) => {
-			return {
-				marginBottom: 30,
-				paddingHorizontal: isCalendarContext ? 45 : 30,
-			};
+		wrapper: {
+			marginBottom: 30,
+			paddingHorizontal: 45,
 		},
 		sendButtonContainer: {
 			flexGrow: 1,
@@ -167,7 +159,7 @@ jn.define('calendar/layout/sharing-panel', (require, exports, module) => {
 			fontWeight: '500',
 			ellipsize: 'end',
 			numberOfLines: 1,
-			color: AppTheme.colors.base8,
+			color: AppTheme.colors.baseWhiteFixed,
 		},
 		historyButtonContainer: {
 			flexGrow: 1,

@@ -5,6 +5,7 @@ namespace Bitrix\Tasks\Internals\Task\Template;
 use Bitrix\Main\SystemException;
 use Bitrix\Main\Type\Contract\Arrayable;
 use Bitrix\Tasks\Access\Role\RoleDictionary;
+use Bitrix\Tasks\Internals\CacheTrait;
 use Bitrix\Tasks\Internals\Log\LogFacade;
 use Bitrix\Tasks\Internals\MemberTrait;
 use Bitrix\Tasks\Internals\Task\EO_Template;
@@ -18,16 +19,9 @@ use CTaskTemplates;
 
 class TemplateObject extends EO_Template implements Arrayable
 {
+	use CacheTrait;
 	use MemberTrait;
 	use WakeUpTrait;
-
-	public static function createFromFields(array $fields, array $parameters = []): static
-	{
-		$fields = array_merge($fields, $parameters);
-
-		return (new static())
-			->setId($fields['ID'] ?? 0);
-	}
 
 	public function toArray(): array
 	{

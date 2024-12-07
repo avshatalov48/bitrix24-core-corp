@@ -3,6 +3,7 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Tasks\Helper\RestrictionUrl;
+use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit;
 
 $APPLICATION->SetAdditionalCSS("/bitrix/js/intranet/intranet-common.css");
 \Bitrix\Main\UI\Extension::load(['uf']);
@@ -163,14 +164,15 @@ $APPLICATION->SetAdditionalCSS("/bitrix/js/intranet/intranet-common.css");
 				<?if($canUse):?>
 					<?if($arResult['AUX_DATA']['USER']['IS_SUPER'])
 					{
-						$canManage = $arResult['COMPONENT_DATA']['RESTRICTION']['MANAGE'];
-						$taskLimitExceeded = $arResult['COMPONENT_DATA']['RESTRICTION']['TASK_LIMIT_EXCEEDED'];
-						if (!$canManage && $taskLimitExceeded)
+						$canUse = $arResult['COMPONENT_DATA']['RESTRICTION']['USE'];
+						if (!$canUse)
 						{
 						?>
-							<span class="tasks-btn-restricted"
-								  onclick="top.BX.UI.InfoHelper.show('<?= RestrictionUrl::TASK_LIMIT_CUSTOM_FIELDS_SLIDER_URL?>',{isLimit: true,limitAnalyticsLabels: {module: 'tasks'}});"
-								  style="cursor: pointer;">
+							<span
+								class="tasks-btn-restricted"
+								onclick="<?= Limit::getLimitLockClick(\Bitrix\Tasks\Integration\Bitrix24\FeatureDictionary::TASK_CUSTOM_FIELDS, null)?>"
+								style="cursor: pointer;"
+							>
 								<a class="tasks-uf-panel-btn-action js-id-uf-panel-add-field" href="javascript:void(0);">
 									<?=Loc::getMessage('TASKS_TUFP_FIELD_ADD')?>
 								</a>

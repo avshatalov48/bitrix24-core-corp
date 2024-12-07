@@ -104,11 +104,13 @@ class NetworkSessionTable extends Main\Entity\DataManager
 				'CASE WHEN %1$s IS NULL THEN 0 WHEN %1$s < NOW() THEN 1 ELSE 0 END',
 				['DATE_FINISH']
 			))->configureValueType(IntegerField::class),
-
 			'TELEMETRY_SENT' => [
 				'data_type' => 'boolean',
 				'values' => ['N', 'Y'],
 				'default_value' => 'N',
+			],
+			'STATUS' => [
+				'data_type' => 'string',
 			],
 		];
 	}

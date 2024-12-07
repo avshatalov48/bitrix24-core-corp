@@ -20,6 +20,7 @@ use Bitrix\Main\Localization\Loc;
 CJSCore::Init(array("popup", "ajax"));
 
 ShowMessage($arResult["MESSAGE"] ?? '');
+$isExtranetUser = \Bitrix\Main\Loader::includeModule('intranet') && !\Bitrix\Intranet\Util::isIntranetUser();
 
 if($USER->IsAuthorized()):?>
 <div class="intranet-user-profile-security">
@@ -44,6 +45,7 @@ if($USER->IsAuthorized()):?>
                 <td class="content-edit-form-field-error">&nbsp;</td>
             </tr>
 
+			<?php if (!$isExtranetUser): ?>
 			<tr>
 				<td class="content-edit-form-header content-edit-form-header-first" colspan="3" >
 					<div class="content-edit-form-header-wrap"><?=Loc::getMessage('DAV_ACCOUNTS_SECTION')?></div>
@@ -78,6 +80,7 @@ if($USER->IsAuthorized()):?>
 				</td>
 				<td class="content-edit-form-field-error">&nbsp;</td>
 			</tr>
+			<?php endif; ?>
 
 			<?php if(\Bitrix\Main\ModuleManager::isModuleInstalled('extranet')):?>
 				<tr>

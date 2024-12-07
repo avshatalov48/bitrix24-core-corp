@@ -2321,7 +2321,7 @@ class CTaskNotifications
 				$pathToTask = self::getNotificationPath($users[$userId], $taskId, true, $sites);
 				$pathToTask = self::addParameters($pathToTask, ($message['ADDITIONAL_DATA']['TASK_URL'] ?? null));
 
-				$message['ENTITY_CODE'] = ToUpper($message['ENTITY_CODE']);
+				$message['ENTITY_CODE'] = mb_strtoupper($message['ENTITY_CODE']);
 
 				// replace #TASK_URL_BEGIN# placeholder
 				$message['MESSAGE']['INSTANT'] = self::placeLinkAnchor($message['MESSAGE']['INSTANT'], $pathToTask, 'BBCODE');
@@ -2538,7 +2538,7 @@ class CTaskNotifications
 
 			if ($groupId > 0)
 			{
-				$groupData = self::getGroupData($groupId);
+				$groupData = SocialNetwork\Group::getGroupData($groupId);
 				$pushData['group'] = [
 					'id' => $groupId,
 					'name' => $groupData['NAME'],
@@ -2682,41 +2682,6 @@ class CTaskNotifications
 		}
 
 		return $cache[$userId];
-	}
-
-	private static function getGroupData(int $groupId): array
-	{
-		static $cache = [];
-
-		if (!array_key_exists($groupId, $cache))
-		{
-			$avatarTypes = (Loader::includeModule('socialnetwork') ? Workgroup::getAvatarTypes() : []);
-			$groupsData = SocialNetwork\Group::getData([$groupId], ['IMAGE_ID', 'AVATAR_TYPE']);
-			$group = $groupsData[$groupId];
-
-			$imageUrl = '';
-			if (
-				(int)$group['IMAGE_ID'] > 0
-				&& is_array($file = \CFile::GetFileArray($group['IMAGE_ID']))
-			)
-			{
-				$imageUrl = $file['SRC'];
-			}
-			else if (
-				!empty($group['AVATAR_TYPE'])
-				&& isset($avatarTypes[$group['AVATAR_TYPE']])
-			)
-			{
-				$imageUrl = $avatarTypes[$group['AVATAR_TYPE']]['mobileUrl'];
-			}
-
-			$cache[$groupId] = [
-				'NAME' => $group['NAME'],
-				'IMAGE' => $imageUrl,
-			];
-		}
-
-		return $cache[$groupId];
 	}
 
 	########################
@@ -3860,14 +3825,18 @@ class CTaskNotifications
 	 */
 	public static function __Fields2Names($arFields)
 	{
+
 		$arFields = array_unique(array_filter($arFields));
 		$arNames = array();
+		$locMap = [
+			'NEW_FILES' => 'FILES',
+			'DELETED_FILES' => 'FILES',
+			'START_DATE_PLAN' => 'START_DATE_PLAN',
+			'END_DATE_PLAN' => 'END_DATE_PLAN',
+		];
 		foreach($arFields as $field)
 		{
-			if ($field === "NEW_FILES" || $field === "DELETED_FILES")
-			{
-				$field = "FILES";
-			}
+			$field = $locMap[$field] ?? $field;
 			$arNames[] = GetMessage("TASKS_SONET_LOG_".$field);
 		}
 
@@ -4115,7 +4084,7 @@ class CTaskNotifications
 
 	public static function useNewNotifications(): bool
 	{
-		if (Option::get('tasks', self::USE_LEGACY_KEY, 'null', '-') !== 'null')
+		if (Option::get('tasks', self::USE_LEGACY_KEY, 'null') !== 'null')
 		{
 			return false;
 		}

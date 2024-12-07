@@ -154,6 +154,16 @@ class RelationManager
 	}
 
 	/**
+	 * @internal
+	 */
+	public function cleanRelationsCache(): void
+	{
+		EntityConversionMapTable::cleanCache();
+		$this->relationsCache = [];
+		$this->customRelations = null;
+	}
+
+	/**
 	 * Bind the types with each other
 	 *
 	 * @param Relation $relation
@@ -951,6 +961,7 @@ class RelationManager
 				$parentEntityId
 			);
 			$factory = Container::getInstance()->getFactory($entityTypeId);
+			$addEventName = 'CrmCreateDynamicFrom' . ucfirst(\Bitrix\Crm\Integration\Analytics\Dictionary::getAnalyticsEntityType($parentEntityTypeId));
 			if ($factory && $serviceUrl)
 			{
 				$tab = [
@@ -969,9 +980,10 @@ class RelationManager
 									'PRESERVE_HISTORY' => true,
 									'PARENT_ENTITY_TYPE_ID' => $parentEntityTypeId,
 									'PARENT_ENTITY_ID' => $parentEntityId,
+									'ADD_EVENT_NAME' => $addEventName,
 									'ANALYTICS' => [
 										// we dont know where from this component was opened from - it could be anywhere on portal
-										// 'c_section' => \Bitrix\Crm\Analytics\Builder\Dictionary::getType($parentEntityTypeId) . '_section',
+										'c_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::getAnalyticsEntityType($parentEntityTypeId) . '_section',
 										'c_sub_section' => Dictionary::SUB_SECTION_DETAILS,
 									],
 								]

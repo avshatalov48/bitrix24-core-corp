@@ -136,7 +136,7 @@ if($communicationPanel)
 		{
 			?><div id="<?=htmlspecialcharsbx($callButtonId)?>" class="ui-btn ui-btn-light-border ui-btn-icon-phone-call ui-btn-themes"></div><?
 		}?>
-		<script type="text/javascript">
+		<script>
 			BX.ready(
 				function()
 				{
@@ -182,7 +182,7 @@ if($communicationPanel)
 		{
 			?><div id="<?=htmlspecialcharsbx($emailButtonId)?>" class="ui-btn ui-btn-light-border ui-btn-icon-mail ui-btn-themes"></div><?
 		}?>
-		<script type="text/javascript">
+		<script>
 			BX.ready(
 				function()
 				{
@@ -206,7 +206,7 @@ if($communicationPanel)
 		{
 			?><div id="<?=htmlspecialcharsbx($messengerButtonId)?>" class="ui-btn ui-btn-light-border ui-btn-icon-chat ui-btn-themes"></div><?
 		}?>
-		<script type="text/javascript">
+		<script>
 			BX.ready(
 				function()
 				{
@@ -227,7 +227,7 @@ if($communicationPanel)
 if($enableMoreButton)
 {
 	?><button class="ui-btn ui-btn-light-border ui-btn-themes ui-btn-icon-setting crm-entity-actions-button-margin-left ui-btn-themes"></button>
-	<script type="text/javascript">
+	<script>
 		BX.ready(
 			function ()
 			{
@@ -290,7 +290,7 @@ foreach($items as $item)
 
 		if(!empty($menuItems))
 		{
-			?><script type="text/javascript">
+			?><script>
 			BX.ready(
 				function()
 				{
@@ -351,7 +351,7 @@ foreach($items as $item)
 		<button id="<?=htmlspecialcharsbx($labelID);?>" class="ui-btn-main"><?=htmlspecialcharsbx($schemeDescr)?></button>
 		<button id="<?=htmlspecialcharsbx($buttonID);?>" class="ui-btn-extra"></button>
 	</div>
-		<script type="text/javascript">
+		<script>
 			BX.ready(
 				function()
 				{
@@ -438,7 +438,7 @@ foreach($items as $item)
 	?>
 		<button class="ui-btn ui-btn-md ui-btn-light-border ui-btn-themes crm-bizproc-starter-icon"
 				id="<?=htmlspecialcharsbx($starterButtonId)?>" title="<?=GetMessage('CRM_TOOLBAR_BIZPROC_STARTER_LABEL')?>"></button>
-		<script type="text/javascript">
+		<script>
 			BX.ready(
 				function()
 				{

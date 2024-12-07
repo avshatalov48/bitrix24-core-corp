@@ -13,6 +13,11 @@ jn.define('im/messenger/db/table/option', (require, exports, module) => {
 			return 'b_im_option';
 		}
 
+		getPrimaryKey()
+		{
+			return 'name';
+		}
+
 		getFields()
 		{
 			return [

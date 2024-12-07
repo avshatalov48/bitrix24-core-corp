@@ -63,7 +63,7 @@ jn.define('im/messenger/controller/search/experimental/provider', (require, expo
 			 * @protected
 			 * @type {number}
 			 */
-			this.minSearchSize = MessengerParams.get('MIN_SEARCH_SIZE', 3);
+			this.minSearchSize = MessengerParams.get('SEARCH_MIN_SIZE', 3);
 			/**
 			 * @protected
 			 * @type {function(): void}

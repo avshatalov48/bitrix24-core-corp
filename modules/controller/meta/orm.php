@@ -205,12 +205,14 @@ namespace Bitrix\Controller {
 	class EO_AuthGrant {
 		/* @var \Bitrix\Controller\AuthGrantTable */
 		static public $dataClass = '\Bitrix\Controller\AuthGrantTable';
+
 		/**
 		 * @param bool|array $setDefaultValues
 		 */
 		public function __construct($setDefaultValues = true) {}
 	}
 }
+
 namespace Bitrix\Controller {
 	/**
 	 * EO_AuthGrant_Collection
@@ -288,6 +290,7 @@ namespace Bitrix\Controller {
 		static public $dataClass = '\Bitrix\Controller\AuthGrantTable';
 	}
 }
+
 namespace Bitrix\Controller {
 	/**
 	 * Common methods:
@@ -315,6 +318,7 @@ namespace Bitrix\Controller {
 	 */
 	class EO_AuthGrant_Entity extends \Bitrix\Main\ORM\Entity {}
 }
+
 /* ORMENTITYANNOTATION:Bitrix\Controller\AuthLogTable:controller/lib/authlog.php:e05228df2968a544fd9a7944588b7da5 */
 namespace Bitrix\Controller {
 	/**
@@ -459,12 +463,14 @@ namespace Bitrix\Controller {
 	class EO_AuthLog {
 		/* @var \Bitrix\Controller\AuthLogTable */
 		static public $dataClass = '\Bitrix\Controller\AuthLogTable';
+
 		/**
 		 * @param bool|array $setDefaultValues
 		 */
 		public function __construct($setDefaultValues = true) {}
 	}
 }
+
 namespace Bitrix\Controller {
 	/**
 	 * EO_AuthLog_Collection
@@ -527,6 +533,7 @@ namespace Bitrix\Controller {
 		static public $dataClass = '\Bitrix\Controller\AuthLogTable';
 	}
 }
+
 namespace Bitrix\Controller {
 	/**
 	 * Common methods:
@@ -554,6 +561,7 @@ namespace Bitrix\Controller {
 	 */
 	class EO_AuthLog_Entity extends \Bitrix\Main\ORM\Entity {}
 }
+
 /* ORMENTITYANNOTATION:Bitrix\Controller\CounterHistoryTable:controller/lib/counterhistory.php:df0c7f94c212e92d45f7d47b2ba42186 */
 namespace Bitrix\Controller {
 	/**
@@ -668,12 +676,14 @@ namespace Bitrix\Controller {
 	class EO_CounterHistory {
 		/* @var \Bitrix\Controller\CounterHistoryTable */
 		static public $dataClass = '\Bitrix\Controller\CounterHistoryTable';
+
 		/**
 		 * @param bool|array $setDefaultValues
 		 */
 		public function __construct($setDefaultValues = true) {}
 	}
 }
+
 namespace Bitrix\Controller {
 	/**
 	 * EO_CounterHistory_Collection
@@ -728,6 +738,7 @@ namespace Bitrix\Controller {
 		static public $dataClass = '\Bitrix\Controller\CounterHistoryTable';
 	}
 }
+
 namespace Bitrix\Controller {
 	/**
 	 * Common methods:
@@ -755,6 +766,7 @@ namespace Bitrix\Controller {
 	 */
 	class EO_CounterHistory_Entity extends \Bitrix\Main\ORM\Entity {}
 }
+
 /* ORMENTITYANNOTATION:Bitrix\Controller\GroupTable:controller/lib/group.php:243e34d19ce46b1f8d595b95a420eab0 */
 namespace Bitrix\Controller {
 	/**
@@ -999,12 +1011,14 @@ namespace Bitrix\Controller {
 	class EO_Group {
 		/* @var \Bitrix\Controller\GroupTable */
 		static public $dataClass = '\Bitrix\Controller\GroupTable';
+
 		/**
 		 * @param bool|array $setDefaultValues
 		 */
 		public function __construct($setDefaultValues = true) {}
 	}
 }
+
 namespace Bitrix\Controller {
 	/**
 	 * EO_Group_Collection
@@ -1086,6 +1100,7 @@ namespace Bitrix\Controller {
 		static public $dataClass = '\Bitrix\Controller\GroupTable';
 	}
 }
+
 namespace Bitrix\Controller {
 	/**
 	 * Common methods:
@@ -1113,6 +1128,7 @@ namespace Bitrix\Controller {
 	 */
 	class EO_Group_Entity extends \Bitrix\Main\ORM\Entity {}
 }
+
 /* ORMENTITYANNOTATION:Bitrix\Controller\GroupMapTable:controller/lib/groupmap.php:959744460060491b11b7f136af4ffff3 */
 namespace Bitrix\Controller {
 	/**
@@ -1197,12 +1213,14 @@ namespace Bitrix\Controller {
 	class EO_GroupMap {
 		/* @var \Bitrix\Controller\GroupMapTable */
 		static public $dataClass = '\Bitrix\Controller\GroupMapTable';
+
 		/**
 		 * @param bool|array $setDefaultValues
 		 */
 		public function __construct($setDefaultValues = true) {}
 	}
 }
+
 namespace Bitrix\Controller {
 	/**
 	 * EO_GroupMap_Collection
@@ -1251,6 +1269,7 @@ namespace Bitrix\Controller {
 		static public $dataClass = '\Bitrix\Controller\GroupMapTable';
 	}
 }
+
 namespace Bitrix\Controller {
 	/**
 	 * Common methods:
@@ -1278,6 +1297,7 @@ namespace Bitrix\Controller {
 	 */
 	class EO_GroupMap_Entity extends \Bitrix\Main\ORM\Entity {}
 }
+
 /* ORMENTITYANNOTATION:Bitrix\Controller\MemberTable:controller/lib/member.php:a487a5fb5f06d80f3435edd24a31e160 */
 namespace Bitrix\Controller {
 	/**
@@ -1602,12 +1622,14 @@ namespace Bitrix\Controller {
 	class EO_Member {
 		/* @var \Bitrix\Controller\MemberTable */
 		static public $dataClass = '\Bitrix\Controller\MemberTable';
+
 		/**
 		 * @param bool|array $setDefaultValues
 		 */
 		public function __construct($setDefaultValues = true) {}
 	}
 }
+
 namespace Bitrix\Controller {
 	/**
 	 * EO_Member_Collection
@@ -1706,6 +1728,7 @@ namespace Bitrix\Controller {
 		static public $dataClass = '\Bitrix\Controller\MemberTable';
 	}
 }
+
 namespace Bitrix\Controller {
 	/**
 	 * Common methods:

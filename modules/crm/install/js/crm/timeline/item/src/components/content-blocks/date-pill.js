@@ -1,18 +1,28 @@
 import { DatetimeConverter } from 'crm.timeline.tools';
-import { Runtime, Text } from 'main.core';
-import { DateTimeFormat } from 'main.date';
+import { Runtime, Type } from 'main.core';
+import { DateTimeFormat, Timezone } from 'main.date';
 import { Action } from '../../action';
 
 export const DatePillColor = Object.freeze({
 	DEFAULT: 'default',
 	WARNING: 'warning',
+	NONE: 'none',
 });
 
+export const PillStyle = Object.freeze({
+	DEFAULT: 'pill',
+	INLINE_GROUP: 'pill-inline-group',
+});
 
 export default {
 	props: {
 		value: Number,
 		withTime: Boolean,
+		duration: {
+			type: Number,
+			required: false,
+			default: null,
+		},
 		backgroundColor: {
 			type: String,
 			required: false,
@@ -21,27 +31,30 @@ export default {
 				return Object.values(DatePillColor).includes(value);
 			},
 		},
-		action: Object|null,
+		action: Object | null,
+		styleValue: String,
 	},
 	inject: ['isReadOnly'],
 	data(): Object
 	{
 		return {
-			// in server timezone
 			currentTimestamp: this.value,
-			// in server timezone
 			initialTimestamp: this.value,
-			actionTimeoutId: null,
 		};
 	},
 	computed: {
-		className() {
+		className(): []
+		{
 			return [
 				'crm-timeline__date-pill',
-				`--color-${this.backgroundColor}`, {
-				'--readonly': this.isPillReadonly,
-				}
-			]
+				`--color-${this.backgroundColor}`,
+				{
+					'--readonly': this.isPillReadonly,
+				},
+				{
+					'--inline-group': this.styleValue === PillStyle.INLINE_GROUP,
+				},
+			];
 		},
 		formattedDate(): string {
 			if (!this.currentTimestamp)
@@ -49,7 +62,20 @@ export default {
 				return null;
 			}
 
-			return DatetimeConverter.createFromServerTimestamp(this.currentTimestamp).toUserTime().toDatetimeString({ withDayOfWeek: true, delimiter:', ' })
+			const converter = this.getDatetimeConverter();
+
+			let result = converter.toDatetimeString({
+				withDayOfWeek: true,
+				withFullMonth: true,
+				delimiter: ', ',
+			});
+			if (Type.isNumber(this.duration))
+			{
+				const converterWithDuration = this.getDatetimeConverterWithDuration();
+				result = `${result}-${converterWithDuration.toTimeString()}`;
+			}
+
+			return result;
 		},
 		currentDateInSiteFormat(): ?string
 		{
@@ -57,7 +83,7 @@ export default {
 				this.withTime
 					? DatetimeConverter.getSiteDateTimeFormat()
 					: DatetimeConverter.getSiteDateFormat(),
-				(DatetimeConverter.createFromServerTimestamp(this.currentTimestamp)).toUserTime().getValue()
+				this.getDatetimeConverter().getValue()
 			);
 		},
 
@@ -72,13 +98,6 @@ export default {
 
 		isPillReadonly(): boolean {
 			return this.isReadOnly || !this.action;
-		},
-
-		// todo remove after fixing main
-		browserToUserOffset(): number {
-			const userToUTCOffset = BX.Main.Timezone.Offset.SERVER_TO_UTC + BX.Main.Timezone.Offset.USER_TO_SERVER;
-
-			return userToUTCOffset + Text.toInteger((new Date()).getTimezoneOffset() * 60);
 		},
 	},
 	watch: {
@@ -95,27 +114,18 @@ export default {
 			{
 				return;
 			}
-			this.cancelScheduledActionExecution();
 
 			// eslint-disable-next-line @bitrix24/bitrix24-rules/no-bx
 			BX.calendar({
 				node: event.target,
 				callback_after: (newDate: Date) => {
 					// we assume that user selected time in his timezone
-					this.currentTimestamp = Math.floor(newDate.getTime() / 1000) - this.browserToUserOffset;
+					this.currentTimestamp = Timezone.UserTime.toUTCTimestamp(newDate);
 
 					this.executeAction();
 				},
 				...this.calendarParams,
 			});
-		},
-		cancelScheduledActionExecution(): void
-		{
-			if (this.actionTimeoutId)
-			{
-				clearTimeout(this.actionTimeoutId);
-				this.actionTimeoutId = null;
-			}
 		},
 		executeAction(): void
 		{
@@ -140,6 +150,16 @@ export default {
 			action.execute(this);
 
 			this.initialTimestamp = this.currentTimestamp;
+
+			this.$emit('onChange', this.initialTimestamp);
+		},
+		getDatetimeConverter(): DatetimeConverter
+		{
+			return (DatetimeConverter.createFromServerTimestamp(this.currentTimestamp)).toUserTime();
+		},
+		getDatetimeConverterWithDuration(): DatetimeConverter
+		{
+			return (DatetimeConverter.createFromServerTimestamp(this.currentTimestamp + this.duration)).toUserTime();
 		},
 	},
 	template: `

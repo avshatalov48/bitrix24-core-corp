@@ -116,7 +116,7 @@ $mode = isset($arParams['MODE'])? mb_strtoupper($arParams['MODE']) : 'EDIT';
 $isVisible = $mode !== 'VIEW' || !isset($arResult['OPTIONS']['show_in_view_mode']) || $arResult['OPTIONS']['show_in_view_mode'] === 'Y';
 ?><div id="<?=$undoContainerID?>"></div>
 <div id="<?=$containerID?>" class="bx-interface-form bx-crm-edit-form"<?=!$isVisible ? ' style="display:none;"' : ''?>>
-<script type="text/javascript">
+<script>
 	var bxForm_<?=$arParams['FORM_ID']?> = null;
 </script><?
 if($arParams['SHOW_FORM_TAG']):
@@ -303,7 +303,7 @@ foreach($arSections as &$arSection):
 			// rewrite bReplaceTabToNbsp option
 			if (is_array($params) && isset($params['bReplaceTabToNbsp']) && !$params['bReplaceTabToNbsp'])
 			{
-				?><script type="text/javascript">
+				?><script>
 				BX.ready(function () {
 					BX.addCustomEvent(window, "LHE_OnBeforeParsersInit", function(lhe) {
 						if (lhe !== null && typeof(lhe) === "object" && lhe.hasOwnProperty("arConfig")
@@ -449,7 +449,7 @@ foreach($arSections as &$arSection):
 												?><tr style="display: none;">
 													<td colspan="4">
 														<input type="hidden" name="<?=$addresFieldQualifiedName?>" value="<?=htmlspecialcharsbx($addresFieldValue)?>"/>
-														<script type="text/javascript">
+														<script>
 															BX.ready(
 																function()
 																{
@@ -495,7 +495,7 @@ foreach($arSections as &$arSection):
 						</div>
 					</div>
 				</div>
-				<script type="text/javascript">
+				<script>
 					BX.ready(
 						function()
 						{
@@ -561,7 +561,7 @@ foreach($arSections as &$arSection):
 										$dataInputID = "{$arParams['FORM_ID']}_{$itemLocality['NAME']}";
 										?><input class="crm-offer-item-inp" id="<?=$searchInputID?>" name="<?=$itemName?>" type="text" value="<?=htmlspecialcharsbx($itemValue)?>" />
 										<input type="hidden" id="<?=$dataInputID?>" name="<?=$itemLocality['NAME']?>" value="<?=htmlspecialcharsbx($itemLocality['VALUE'])?>"/>
-										<script type="text/javascript">
+										<script>
 											BX.ready(
 												function()
 												{
@@ -610,7 +610,7 @@ foreach($arSections as &$arSection):
 					</div>
 				</div>
 			<div class="crm-offer-info-data-wrap" id="<?=htmlspecialcharsEx($containerId)?>"></div>
-			<script type="text/javascript">
+			<script>
 				BX.ready(function(){
 					BX.Crm.RequisiteBankDetailsArea.create(
 						"<?= CUtil::JSEscape("{$field['id']}_area") ?>",
@@ -702,14 +702,14 @@ foreach($arSections as &$arSection):
 					case 'date':
 						$fieldId = $field['id'];
 						?><input id="<?=$fieldId?>" name="<?=$fieldId?>" class="crm-offer-item-inp crm-item-table-date" type="text" value="<?=$valEncoded?>" />
-						<script type="text/javascript">
+						<script>
 							BX.ready(function(){ BX.CrmDateLinkField.create(BX('<?=CUtil::JSEscape($fieldId)?>'), null, { showTime: true, setFocusOnShow: false }); });
 						</script><?
 						break;
 					case 'date_short':
 						$fieldId = $field['id'];
 						?><input id="<?=$fieldId?>" name="<?=$fieldId?>" class="crm-offer-item-inp crm-item-table-date" type="text" value="<?=$valEncoded?>" />
-						<script type="text/javascript">
+						<script>
 							BX.ready(function(){ BX.CrmDateLinkField.create(BX('<?=CUtil::JSEscape($fieldId)?>'), null, { showTime: false, setFocusOnShow: false }); });
 						</script><?
 						break;
@@ -718,7 +718,7 @@ foreach($arSections as &$arSection):
 						$viewID = "{$arParams['FORM_ID']}_{$field['id']}_VIEW";
 						?><span id="<?=htmlspecialcharsbx($viewID)?>" class="bx-crm-edit-datetime-link"><?=htmlspecialcharsEx($val !== '' ? $val : GetMessage('interface_form_set_datetime'))?></span>
 						<input id="<?=htmlspecialcharsbx($dataID)?>" type="hidden" name="<?=htmlspecialcharsbx($field['id'])?>" value="<?=$valEncoded?>" <?=$params?>>
-						<script type="text/javascript">BX.ready(function(){ BX.CrmDateLinkField.create(BX('<?=CUtil::addslashes($dataID)?>'), BX('<?=CUtil::addslashes($viewID)?>'), { showTime: false }); });</script><?
+						<script>BX.ready(function(){ BX.CrmDateLinkField.create(BX('<?=CUtil::addslashes($dataID)?>'), BX('<?=CUtil::addslashes($viewID)?>'), { showTime: false }); });</script><?
 						break;
 					case 'intranet_user_search':
 						$params = isset($field['componentParams']) ? $field['componentParams'] : array();
@@ -881,7 +881,7 @@ foreach($arSections as &$arSection):
 								$dialogSettings['titleTitle'] = GetMessage('interface_form_add_company_fld_title_name');
 							}
 							//$sipManagerRequired = true;
-							?><script type="text/javascript">
+							?><script>
 							BX.ready(
 									function()
 									{
@@ -1087,7 +1087,7 @@ foreach($arSections as &$arSection):
 								'industryItems' => CCrmEntitySelectorHelper::PrepareListItems(CCrmStatus::GetStatusList('INDUSTRY'))
 							);
 							//$sipManagerRequired = true;
-							?><script type="text/javascript">
+							?><script>
 							BX.ready(
 								function()
 								{
@@ -1297,7 +1297,7 @@ foreach($arSections as &$arSection):
 								$advancedInfoHTML = '<div id="'.htmlspecialcharsbx($viewerContainerID).'" class="crm-offer-info-description"></div>';
 								$sipManagerRequired = true;
 
-								?><script type="text/javascript">
+								?><script>
 									BX.ready(
 										function()
 										{
@@ -1463,7 +1463,7 @@ foreach($arSections as &$arSection):
 								$advancedInfoHTML = '<div id="'.htmlspecialcharsbx($viewerContainerID).'" class="crm-offer-info-description"></div>';
 								$sipManagerRequired = true;
 
-								?><script type="text/javascript">
+								?><script>
 								BX.ready(
 									function()
 									{
@@ -1674,7 +1674,7 @@ foreach($arSections as &$arSection):
 									'markingTitle' => isset($customMessages['SECONDARY_ENTITY_MARKING_TITLE'])
 										? $customMessages['SECONDARY_ENTITY_MARKING_TITLE'] : ''
 								);
-								?><script type="text/javascript">
+								?><script>
 									BX.ready(
 										function()
 										{
@@ -1766,7 +1766,7 @@ foreach($arSections as &$arSection):
 						$dataInputID = "{$arParams['FORM_ID']}_{$params['DATA_INPUT_NAME']}";
 						?><input type="text" class="crm-offer-item-inp" id="<?=$searchInputID?>" name="<?=$field["id"]?>"  name="<?=$field["id"]?>" value="<?=$valEncoded?>"<?=$params?>/>
 						<input type="hidden" id="<?=$dataInputID?>" name="<?=$params['DATA_INPUT_NAME']?>" value="<?=htmlspecialcharsbx($params['DATA_VALUE'])?>"/>
-						<script type="text/javascript">
+						<script>
 							BX.ready(
 								function()
 								{
@@ -1828,7 +1828,7 @@ unset($arSection);
 
 if ($sipManagerRequired)
 {
-?><script type="text/javascript">
+?><script>
 	BX.ready(
 		function()
 		{
@@ -2058,7 +2058,7 @@ $variables = array(
 	"GRID_ID"=>$arParams["THEME_GRID_ID"],
 );
 
-?><script type="text/javascript">
+?><script>
 var formSettingsDialog<?=$arParams["FORM_ID"]?>;
 bxForm_<?=$arParams["FORM_ID"]?> = new BxCrmInterfaceForm('<?=$arParams["FORM_ID"]?>', <?=CUtil::PhpToJsObject(array_keys($arResult["TABS"]))?>);
 bxForm_<?=$arParams["FORM_ID"]?>.vars = <?=CUtil::PhpToJsObject($variables)?>;<?
@@ -2075,7 +2075,7 @@ bxForm_<?=$arParams["FORM_ID"]?>.EnableSigleSubmit(true);
 </script><?
 
 ?></div><!-- bx-interface-form --><?
-?><script type="text/javascript">
+?><script>
 	BX.ready(
 		function()
 		{
@@ -2157,7 +2157,7 @@ bxForm_<?=$arParams["FORM_ID"]?>.EnableSigleSubmit(true);
 	);
 </script><?
 if(!empty($arUserSearchFields)):
-?><script type="text/javascript">
+?><script>
 	BX.ready(
 		function()
 		{<?

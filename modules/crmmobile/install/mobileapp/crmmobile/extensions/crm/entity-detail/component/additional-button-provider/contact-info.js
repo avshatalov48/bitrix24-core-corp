@@ -3,13 +3,10 @@
  */
 jn.define('crm/entity-detail/component/communication-button/contact-info', (require, exports, module) => {
 	const { TypeId, TypeName, Type } = require('crm/type');
-	const { EmailType } = require('layout/ui/fields/email');
-	const { ImType } = require('layout/ui/fields/im');
-	const { PhoneType } = require('layout/ui/fields/phone');
 	const { clone, get, isEmpty } = require('utils/object');
+	const { SelectorProcessing, TYPE_ADVANCED_INFO } = require('crm/selector/utils/processing');
 
 	const CLIENTS = [TypeName.Contact, TypeName.Company];
-	const CONNECTION_TYPES = [PhoneType, EmailType, ImType];
 
 	/**
 	 * @function ButtonProvider
@@ -27,17 +24,18 @@ jn.define('crm/entity-detail/component/communication-button/contact-info', (requ
 		CLIENTS.forEach((entityTypeName) => {
 			const entityTypeId = Type.resolveIdByName(entityTypeName);
 			const modelClientInfo = get(entityModel, ['CLIENT_INFO', `${entityTypeName}_DATA`], []);
-			const entityData = modelClientInfo.map(({ id, typeName, title, advancedInfo = {} }) => {
+			const entityData = modelClientInfo.map(({ id, typeName, title, advancedInfo = {}, hidden = true }) => {
 				let connectionValues = {};
 				const multiFields = get(advancedInfo, 'multiFields', []);
 
+				const modelMultiFieldData = get(entityModel, ['MULTIFIELD_DATA'], []);
 				if (Array.isArray(multiFields) && multiFields.length > 0)
 				{
 					multiFields.forEach(({ TYPE_ID, ...connectionData }) => {
 						const connectionType = TYPE_ID.toLowerCase();
-						if (CONNECTION_TYPES.includes(connectionType))
+						if (TYPE_ADVANCED_INFO.includes(TYPE_ID))
 						{
-							const connectionValue = prepareConnectionData(connectionData);
+							const connectionValue = SelectorProcessing.prepareValue(connectionData);
 							if (Array.isArray(connectionValues[connectionType]))
 							{
 								connectionValues[connectionType].push(connectionValue);
@@ -49,15 +47,16 @@ jn.define('crm/entity-detail/component/communication-button/contact-info', (requ
 						}
 					});
 				}
-				else
+				else if (modelMultiFieldData)
 				{
-					connectionValues = getMultiFieldClientInfo(entityModel, `${entityTypeId}_${id}`);
+					connectionValues = SelectorProcessing.getMultiFieldClientInfo(modelMultiFieldData, `${entityTypeId}_${id}`);
 				}
 
 				return {
 					id,
 					type: typeName,
 					title,
+					hidden,
 					...connectionValues,
 				};
 			});
@@ -79,7 +78,8 @@ jn.define('crm/entity-detail/component/communication-button/contact-info', (requ
 		const entityId = detailCard.getEntityId();
 		const { entityModel } = detailCard;
 
-		const entityInfo = getMultiFieldClientInfo(entityModel);
+		const modelMultiFieldData = get(entityModel, ['MULTIFIELD_DATA'], []);
+		const entityInfo = SelectorProcessing.getMultiFieldClientInfo(modelMultiFieldData, `${entityTypeId}_${entityId}`);
 
 		if (!isEmpty(entityInfo))
 		{
@@ -93,7 +93,7 @@ jn.define('crm/entity-detail/component/communication-button/contact-info', (requ
 				},
 			];
 
-			if (value.hasOwnProperty(entityTypeName))
+			if (entityTypeName in value)
 			{
 				value[entityTypeName] = multiFieldInfo;
 			}
@@ -108,33 +108,6 @@ jn.define('crm/entity-detail/component/communication-button/contact-info', (requ
 
 		return value;
 	};
-
-	const getMultiFieldClientInfo = (entityModel, typeId) => {
-		const { ENTITY_TYPE_ID, ID } = entityModel;
-		const connectionId = typeId || `${ENTITY_TYPE_ID}_${ID}`;
-		const contactsInfo = {};
-
-		CONNECTION_TYPES.forEach((connectionType) => {
-			const modelValues = get(entityModel, ['MULTIFIELD_DATA', connectionType.toUpperCase(), connectionId], []);
-			const connectionValues = modelValues
-				.map((connectionValue) => prepareConnectionData(connectionValue))
-				.filter(Boolean);
-
-			if (connectionValues.length > 0)
-			{
-				contactsInfo[connectionType] = connectionValues;
-			}
-		});
-
-		return contactsInfo;
-	};
-
-	const prepareConnectionData = (data) => ({
-		title: data.TITLE,
-		value: data.VALUE,
-		complexName: data.COMPLEX_NAME,
-		valueType: data.VALUE_TYPE,
-	});
 
 	module.exports = { prepareClientInfo, addMultiFieldInfo };
 });

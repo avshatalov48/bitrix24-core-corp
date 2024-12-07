@@ -2,6 +2,7 @@
 namespace Bitrix\Tasks\Internals\Task;
 
 use Bitrix\Main;
+use Bitrix\Main\Type\Collection;
 
 /**
  * Class UserOptionTable
@@ -100,6 +101,34 @@ class UserOptionTable extends Main\Entity\DataManager
 		$connection->query("
 			DELETE FROM {$tableName}
 			WHERE TASK_ID = {$taskId} AND USER_ID = {$userId}
+		");
+	}
+
+	public static function deleteByOptions(int $taskId, int $userId, array $options): void
+	{
+		if ($taskId <= 0 || $userId <= 0)
+		{
+			return;
+		}
+
+		Collection::normalizeArrayValuesByInt($options, false);
+		if (empty($options))
+		{
+			return;
+		}
+
+		$options = '(' . implode(',', $options) . ')';
+
+		$tableName = static::getTableName();
+		$connection = Main\Application::getConnection();
+		$helper = $connection->getSqlHelper();
+
+		$connection->query("
+			delete 
+			from {$helper->quote($tableName)} 
+			where {$helper->quote('TASK_ID')} = {$taskId}
+			and {$helper->quote('USER_ID')} = {$userId}
+			and {$helper->quote('OPTION_CODE')} in ({$options})
 		");
 	}
 }

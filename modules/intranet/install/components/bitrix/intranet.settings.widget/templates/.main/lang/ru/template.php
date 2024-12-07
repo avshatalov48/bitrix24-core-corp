@@ -4,6 +4,7 @@ $MESS['INTRANET_SETTINGS_WIDGET_SECTION_REQUISITE_SITE_TITLE'] = 'Сайт-ви�
 $MESS['INTRANET_SETTINGS_WIDGET_SECTION_SECURITY_TITLE'] = 'Безопасность';
 $MESS['INTRANET_SETTINGS_WIDGET_SECTION_SETTINGS_TITLE'] = 'Настройки';
 $MESS['INTRANET_SETTINGS_WIDGET_SECTION_MIGRATION_TITLE'] = 'Импорт в Битрикс24';
+$MESS['INTRANET_SETTINGS_WIDGET_MAIN_PAGE_TITLE'] = 'Главная страница: наш вайб';
 
 $MESS['INTRANET_SETTINGS_WIDGET_REDIRECT_TO_REQUISITE_BUTTON'] = 'Перейти';
 $MESS['INTRANET_SETTINGS_WIDGET_COPY_LINK_BUTTON'] = 'Копировать ссылку';
@@ -26,3 +27,4 @@ $MESS['INTRANET_SETTINGS_WIDGET_FILIAL_NETWORK'] = 'Филиальная сет�
 $MESS['INTRANET_SETTINGS_WIDGET_FILIAL_NETWORK_UNAVAILABLE'] = 'У вас нет доступных филиалов';
 $MESS['INTRANET_SETTINGS_WIDGET_FILIAL_SETTINGS'] = 'Настроить';
 $MESS['INTRANET_SETTINGS_WIDGET_FILIAL_ABOUT'] = 'Подробнее';
+$MESS['INTRANET_SETTINGS_WIDGET_LABEL_NEW'] = 'Новое';

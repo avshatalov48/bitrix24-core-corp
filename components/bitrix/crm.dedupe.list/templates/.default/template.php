@@ -382,7 +382,7 @@ foreach($arResult['ITEMS'] as $item)
 	</td>
 </tr>
 </tbody></table></div>
-<script type="text/javascript">
+<script>
 	BX.ready(
 		function()
 		{
@@ -469,7 +469,7 @@ if($arResult['NEED_FOR_REBUILD_DUP_INDEX'])
 // CRM_DEDUPE_LIST_LEAD_REBUILD_DUP_INDEX_DLG_TITLE, CRM_DEDUPE_LIST_LEAD_REBUILD_DUP_INDEX_DLG_SUMMARY
 // CRM_DEDUPE_LIST_CONTACT_REBUILD_DUP_INDEX_DLG_TITLE, CRM_DEDUPE_LIST_CONTACT_REBUILD_DUP_INDEX_DLG_SUMMARY
 // CRM_DEDUPE_LIST_COMPANY_REBUILD_DUP_INDEX_DLG_TITLE, CRM_DEDUPE_LIST_COMPANY_REBUILD_DUP_INDEX_DLG_SUMMARY
-?><script type="text/javascript">
+?><script>
 	BX.ready(
 		function()
 		{

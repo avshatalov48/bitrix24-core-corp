@@ -1,0 +1,42 @@
+.sign-preview__block-area {
+	position: absolute;
+	overflow: hidden;
+	/*padding: 2px;*/
+	box-sizing: border-box;
+	border: 1px dashed #cdcdcd;
+	border-radius: 2px;
+	opacity: 0;
+	animation: sign-preview__block-area-show .1s linear forwards;
+	animation-delay: .17s;
+	--font-helvetica: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-helvetica, var(--font-helvetica));
+	line-height: 1.2;
+	word-break: break-all;
+}
+
+.sign-preview__block-area.--empty {
+	border: 2px solid rgba(47,198,246,.65);
+	box-shadow: 0 2px 12px rgba(47, 198, 246, .5);
+	background: rgba(255,255,255,.45);
+}
+
+@keyframes sign-preview__block-area-show {
+	0% {
+		opacity: 0;
+	}
+	100% {
+		opacity: 1;
+	}
+}
+
+.sign-preview__block-area.--image {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}
+
+.sign-preview__block-area img {
+	display: block;
+	max-width: 100%;
+	max-height: 100%;
+}

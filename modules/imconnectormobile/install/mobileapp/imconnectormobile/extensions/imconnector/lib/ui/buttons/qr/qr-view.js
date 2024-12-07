@@ -2,6 +2,7 @@
  * @module imconnector/lib/ui/buttons/qr/qr-view
  */
 jn.define('imconnector/lib/ui/buttons/qr/qr-view', (require, exports, module) => {
+	const AppTheme = require('apptheme');
 	const { Loc } = require('loc');
 	const { EmptyButton } = require('imconnector/lib/ui/buttons/empty');
 	class QrView extends LayoutComponent
@@ -27,7 +28,7 @@ jn.define('imconnector/lib/ui/buttons/qr/qr-view', (require, exports, module) =>
 				View(
 					{
 						style: {
-							borderColor: '#2FC6F6',
+							borderColor: AppTheme.colors.accentMainPrimary,
 							borderWidth: 2,
 							borderRadius: 12,
 							width: 200,
@@ -48,7 +49,7 @@ jn.define('imconnector/lib/ui/buttons/qr/qr-view', (require, exports, module) =>
 				),
 				Text({
 					style: {
-						color: '#333333',
+						color: AppTheme.colors.base1,
 						fontSize: 17,
 						fontWeight: '500',
 						textAlign: 'center',

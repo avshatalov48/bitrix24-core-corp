@@ -14,7 +14,7 @@
 			this.pushTypes = [];
 
 			this.providerId = 'chat';
-			this.providerTitle = BX.message('SE_CHAT_TITLE');
+			this.providerTitle = BX.message('SE_MESSENGER_TITLE');
 			this.providerSubtitle = '';
 
 			this.loadSettingsPromise = this.loadSettings();

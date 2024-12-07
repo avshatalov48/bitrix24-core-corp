@@ -1,9 +1,9 @@
 <?php if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
-use Bitrix\Main\Localization\Loc;
 use Bitrix\Catalog\StoreDocumentTable;
-use Bitrix\Crm\Service\Container;
 use Bitrix\Crm;
+use Bitrix\Crm\Service\Container;
+use Bitrix\Main\Localization\Loc;
 
 \Bitrix\Main\UI\Extension::load('ui.design-tokens');
 
@@ -146,10 +146,11 @@ if (!function_exists('CrmEntityTreeDrawActivity'))
 									$provider = isset($activityTypes[$item['TYPE_ID']]['provider']) && $activityTypes[$item['TYPE_ID']]['provider'] === true;
 									if ($provider && ($provider = \CCrmActivity::GetActivityProvider($item)) !== null)
 									{
-										$visual = array(
+										$visual = [
 											'title' => $provider::getTypeName($item['PROVIDER_TYPE_ID'], $item['DIRECTION']),
-											'icon' => 'crm-doc-droplist-item-'.mb_strtolower($provider::getId())
-										);
+											'icon' => 'crm-doc-droplist-item-'.mb_strtolower($provider::getId()),
+											'subject' => $provider::getActivityTitle($item),
+										];
 									}
 									elseif (isset($activityTypes[$item['TYPE_ID'] .'_'. $item['DIRECTION']]))
 									{
@@ -161,7 +162,7 @@ if (!function_exists('CrmEntityTreeDrawActivity'))
 									}
 								}
 								?>
-								<li class="crm-doc-droplist-item <?= $visual['icon']?>" title="<?= \htmlspecialcharsbx($visual['title']);?>"><?= $item['SUBJECT'];?></li>
+								<li class="crm-doc-droplist-item <?= $visual['icon']?>" title="<?= \htmlspecialcharsbx($visual['title']) ?>"><?= $visual['subject'] ?? $item['SUBJECT'] ?></li>
 							<?endforeach;?>
 						</ul>
 					</div>

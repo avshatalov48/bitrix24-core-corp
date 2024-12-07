@@ -35,7 +35,7 @@ class TextHelper
 		return htmlspecialcharsbx(strip_tags(htmlspecialcharsback($result)));
 	}
 
-	public static function convertBbCodeToHtml($bb): string
+	public static function convertBbCodeToHtml($bb, $useTypography = false): string
 	{
 		$parser = new \CTextParser();
 
@@ -56,13 +56,18 @@ class TextHelper
 			'HTML' => 'Y',
 		];
 
+		if ($useTypography && property_exists($parser, 'useTypography'))
+		{
+			$parser->useTypography = true;
+		}
+
 		$result =  $parser->convertText((string)$bb);
 
 		return (string)preg_replace(
 			[
-				"#<br />[\\t\\s]*(<li[^>]*>)#is" . BX_UTF_PCRE_MODIFIER,
-				"#<br />[\\t\\s]*(</ol[^>]*>)#is" . BX_UTF_PCRE_MODIFIER,
-				"#<br />[\\t\\s]*(</ul[^>]*>)#is" . BX_UTF_PCRE_MODIFIER,
+				"#<br />[\\t\\s]*(<li[^>]*>)#isu",
+				"#<br />[\\t\\s]*(</ol[^>]*>)#isu",
+				"#<br />[\\t\\s]*(</ul[^>]*>)#isu",
 			],
 			"\\1",
 			$result
@@ -153,7 +158,7 @@ class TextHelper
 	 * @param array $excludeFromWhitelist - tags that are additionally removed from the input string
 	 * @return string
 	 */
-	final public static function sanitizeBbCode($bb, array $excludeFromWhitelist = []): string
+	final public static function sanitizeBbCode($bb, array $excludeFromWhitelist = [], array $extraWhiteList = []): string
 	{
 		$bb = (string)$bb;
 		if (empty($bb))
@@ -174,13 +179,45 @@ class TextHelper
 			'url',
 		];
 
+		$tags = array_diff($whitelist, $excludeFromWhitelist);
+		$tags = array_merge($tags, $extraWhiteList);
+
 		$pattern =
 			'#\[(\/?)(?!\b'
-			. implode('\b|\b', array_diff($whitelist, $excludeFromWhitelist))
-			. '\b)\w+\b[^\]]*\]#i'
-			. BX_UTF_PCRE_MODIFIER
+			. implode('\b|\b', $tags)
+			. '\b)\w+\b[^\]]*\]#iu'
 		;
 
-		return preg_replace($pattern, '', $bb);
+		return (string)preg_replace($pattern, '', $bb);
+	}
+
+	final public static function removeParagraphs(string $bbcode): string
+	{
+		$text = $bbcode;
+		$replaced  = 0;
+		$doubleLF = false;
+		do
+		{
+			$text = preg_replace_callback(
+				"/\\[p](.*?)\\[\\/p](([ \r\t]*)\n?)/isu",
+				function($matches) use (&$doubleLF) {
+					$result = preg_replace("/^\n|\n$/", '', $matches[1]);
+					if ($doubleLF)
+					{
+						$result = "\n\n" . $result;
+					}
+
+					$doubleLF = true;
+
+					return $result;
+				},
+				$text,
+				-1,
+				$replaced
+			);
+		}
+		while ($replaced > 0);
+
+		return $text;
 	}
 }

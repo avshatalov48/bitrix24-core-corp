@@ -58,6 +58,12 @@ abstract class ProcessInventoryManagement extends Base
 			/** @var Crm\ProductRow $productRow */
 			foreach ($itemProductRows as $productRow)
 			{
+				// If the product exists, but it is not in the catalog, shipment is not possible and is not required
+				if ($productRow->getProductId() <= 0)
+				{
+					continue;
+				}
+
 				$productRows[$productRow->getId()] = $productRow->toArray();
 			}
 		}

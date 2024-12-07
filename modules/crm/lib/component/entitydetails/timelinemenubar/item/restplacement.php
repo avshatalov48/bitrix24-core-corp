@@ -3,8 +3,6 @@
 namespace Bitrix\Crm\Component\EntityDetails\TimelineMenuBar\Item;
 
 use Bitrix\Crm\Component\EntityDetails\TimelineMenuBar\Item;
-use Bitrix\Crm\Integration\Rest\AppPlacement;
-use Bitrix\Main\Config\Option;
 use Bitrix\Main\UI\Extension;
 use CUserOptions;
 
@@ -115,8 +113,7 @@ class RestPlacement extends Item
 
 	private function isCanShowTour(): bool
 	{
-		$isHideAllTours = (Option::get('crm.tour', 'HIDE_ALL_TOURS', 'N') === 'Y');
-		if ($isHideAllTours)
+		if ($this->isHideAllTours())
 		{
 			return false;
 		}

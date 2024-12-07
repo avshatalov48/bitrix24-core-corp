@@ -194,7 +194,7 @@ class CrmInvoicePaymentClientComponent extends CBitrixComponent
 		{
 			if (
 				!in_array($paySystemElement['ACTION_FILE'], $this->arParams['EXCLUDED_ACTION_LIST']) &&
-				!preg_match('/quote(_\w+)*$/i'.BX_UTF_PCRE_MODIFIER, $paySystemElement['ACTION_FILE'])
+				!preg_match('/quote(_\w+)*$/iu', $paySystemElement['ACTION_FILE'])
 			)
 			{
 				$service = new Sale\PaySystem\Service($paySystemElement);

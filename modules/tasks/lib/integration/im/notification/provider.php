@@ -83,6 +83,9 @@ class Provider implements ProviderInterface
 				case EntityCode::CODE_COMMENT . ':' . EntityOperation::ADD:
 					$this->pushNotification((new CommentCreated())->getNotification($message));
 					break;
+				case EntityCode::CODE_TASK . ':' . EntityOperation::ADD_TO_FLOW_WITH_MANUAL_DISTRIBUTION:
+					$this->pushNotification((new Notification\UseCase\Flow\TaskAddedToFlowWithManualDistribution())->getNotification($message));
+					break;
 			}
 
 		}

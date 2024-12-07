@@ -3,7 +3,7 @@
  */
 jn.define('tasks/layout/task/fields/parentTask', (require, exports, module) => {
 	const { Loc } = require('loc');
-	const { TaskField } = require('tasks/layout/task/fields/tasks');
+	const { TaskField } = require('tasks/layout/task/fields/task');
 
 	class ParentTask extends LayoutComponent
 	{

@@ -52,43 +52,36 @@ jn.define('im/messenger/lib/element/dialog/message/copilot-promt', (require, exp
 					text: Loc.getMessage('IMMOBILE_ELEMENT_DIALOG_MESSAGE_COPILOT_PROMT_ACTION_1'),
 					editable: false,
 					leftIcon: null,
+					code: 'ability',
 				},
 				{
 					id: CopilotButtonType.promtSend,
 					text: Loc.getMessage('IMMOBILE_ELEMENT_DIALOG_MESSAGE_COPILOT_PROMT_ACTION_2'),
 					editable: false,
 					leftIcon: null,
+					code: 'greeting',
 				},
 				{
 					id: CopilotButtonType.promtSend,
 					text: Loc.getMessage('IMMOBILE_ELEMENT_DIALOG_MESSAGE_COPILOT_PROMT_ACTION_3'),
 					editable: false,
 					leftIcon: null,
+					code: 'congratulation',
 				},
 				{
 					id: CopilotButtonType.promtSend,
 					text: Loc.getMessage('IMMOBILE_ELEMENT_DIALOG_MESSAGE_COPILOT_PROMT_ACTION_4'),
 					editable: false,
 					leftIcon: null,
+					code: 'poem',
 				},
 				{
 					id: CopilotButtonType.promtSend,
 					text: Loc.getMessage('IMMOBILE_ELEMENT_DIALOG_MESSAGE_COPILOT_PROMT_ACTION_5'),
 					editable: false,
 					leftIcon: null,
+					code: 'autocad',
 				},
-				// {
-				// 	id: CopilotButtonType.promtEdit,
-				// 	text: Loc.getMessage('IMMOBILE_ELEMENT_DIALOG_MESSAGE_COPILOT_PROMT_ACTION_6'),
-				// 	editable: true,
-				// 	leftIcon: null,
-				// },
-				// {
-				// 	id: CopilotButtonType.promtEdit,
-				// 	text: Loc.getMessage('IMMOBILE_ELEMENT_DIALOG_MESSAGE_COPILOT_PROMT_ACTION_7'),
-				// 	editable: true,
-				// 	leftIcon: null,
-				// },
 			];
 
 			return this;

@@ -113,15 +113,12 @@ class CIntranetSearchConverters
 				if($result <> '')
 				{
 					$file_name = end(explode('/', $absolute_path));
-					if(CUtil::DetectUTF8(urlencode($file_name)))
-					{
-						$file_name = $APPLICATION->ConvertCharset($file_name, "UTF-8", LANG_CHARSET);
-					}
+
 					return array(
 						"TITLE" => $file_name,
-						"CONTENT" => $APPLICATION->ConvertCharset($result, "UTF-8", LANG_CHARSET),
+						"CONTENT" => $result,
 						"PROPERTIES" => array(
-							COption::GetOptionString("search", "page_tag_property") => $APPLICATION->ConvertCharset($tags, "UTF-8", LANG_CHARSET),
+							COption::GetOptionString("search", "page_tag_property") => $tags,
 						),
 					);
 				}
@@ -134,7 +131,6 @@ class CIntranetSearchConverters
 	{
 		if(file_exists($absolute_path) && is_file($absolute_path))
 		{
-			global $APPLICATION;
 			//Function and security checks
 			if(function_exists("zip_open"))
 			{
@@ -267,7 +263,7 @@ class CIntranetSearchConverter_docx extends CIntranetSearchConverter
 		$content = "";
 		while($data = zip_entry_read($entry, 102400))
 		{
-			$text_len = defined('BX_UTF')? mb_strlen($data, 'latin1') : mb_strlen($data);
+			$text_len = strlen($data);
 			$this->Check_pcre_limit($text_len);
 
 			$data = str_replace("</w:p>", "\n", $data);//Paragraf
@@ -275,7 +271,7 @@ class CIntranetSearchConverter_docx extends CIntranetSearchConverter
 			$content .= preg_replace('#[\s\n\r]+#', ' ', $data);
 		}
 
-		$text_len = defined('BX_UTF')? mb_strlen($content, 'latin1') : mb_strlen($content);
+		$text_len = strlen($content);
 		$this->Check_pcre_limit($text_len);
 
 		return preg_replace("#(<.*?>)#", "", $content);
@@ -299,7 +295,7 @@ class CIntranetSearchConverter_xlsx extends CIntranetSearchConverter
 		$data = zip_entry_read($entry, zip_entry_filesize($entry));
 		if($data)
 		{
-			$text_len = defined('BX_UTF')? mb_strlen($data, 'latin1') : mb_strlen($data);
+			$text_len = strlen($data);
 			$this->Check_pcre_limit($text_len);
 			if(preg_match_all("#<(t|v)>(.*?)</\\1>#is", $data, $match))
 			{
@@ -328,7 +324,7 @@ class CIntranetSearchConverter_pptx extends CIntranetSearchConverter
 		$data = zip_entry_read($entry, zip_entry_filesize($entry));
 		if($data)
 		{
-			$text_len = defined('BX_UTF')? mb_strlen($data, 'latin1') : mb_strlen($data);
+			$text_len = strlen($data);
 			$this->Check_pcre_limit($text_len);
 			if(preg_match_all("#<(a:t)>(.*?)</\\1>#is", $data, $match))
 			{
@@ -356,14 +352,14 @@ class CIntranetSearchConverter_odt extends CIntranetSearchConverter
 		$content = "";
 		while($data = zip_entry_read($entry, 102400))
 		{
-			$text_len = defined('BX_UTF')? mb_strlen($data, 'latin1') : mb_strlen($data);
+			$text_len = strlen($data);
 			$this->Check_pcre_limit($text_len);
 
 			$data = preg_replace("#(<.*?>)#", " ", $data);
 			$content .= preg_replace('#[\s\n\r]+#', ' ', $data);
 		}
 
-		$text_len = defined('BX_UTF')? mb_strlen($content, 'latin1') : mb_strlen($content);
+		$text_len = strlen($content);
 		$this->Check_pcre_limit($text_len);
 
 		return preg_replace("#(<.*?>)#", "", $content);
@@ -387,7 +383,7 @@ class CIntranetSearchConverter_ods extends CIntranetSearchConverter_odt
 		$data = zip_entry_read($entry, zip_entry_filesize($entry));
 		if($data)
 		{
-			$text_len = defined('BX_UTF')? mb_strlen($data, 'latin1') : mb_strlen($data);
+			$text_len = strlen($data);
 			$this->Check_pcre_limit($text_len);
 			if(preg_match_all("#<(text:p)>(.*?)</\\1>#is", $data, $match))
 			{
@@ -419,8 +415,6 @@ class CIntranetSearchConverter_rtf extends CIntranetSearchConverter
 
 	function ParseFile($f, $charset = false)
 	{
-		global $APPLICATION;
-
 		$result = "";
 
 		$para_mode = 0;
@@ -487,7 +481,7 @@ class CIntranetSearchConverter_rtf extends CIntranetSearchConverter
 				case "RTF_CHAR":
 					if($data_skip_mode == 0)
 					{
-						$result .= $APPLICATION->ConvertCharset(chr($com["numarg"]), $charset, "UTF-8");
+						$result .= \Bitrix\Main\Text\Encoding::convertEncoding(chr($com["numarg"]), $charset, "UTF-8");
 					}
 					break;
 				case "uc":
@@ -500,7 +494,7 @@ class CIntranetSearchConverter_rtf extends CIntranetSearchConverter
 					if($com["numarg"] < 0)
 						break;
 					if($data_skip_mode == 0)
-						$result .= $GLOBALS["APPLICATION"]->ConvertCharset(chr($com["numarg"] & 255).chr($com["numarg"] >> 8), "UTF-16", "UTF-8");
+						$result .= \Bitrix\Main\Text\Encoding::convertEncoding(chr($com["numarg"] & 255).chr($com["numarg"] >> 8), "UTF-16", "UTF-8");
 					$i = $groups[$group_count]["uc"];
 
 					while((--$i) >= 0)
@@ -566,7 +560,7 @@ class CIntranetSearchConverter_rtf extends CIntranetSearchConverter
 			default:
 				if($data_skip_mode == 0)
 					if($c != "\n" && $c != "\r")
-						$result .= $APPLICATION->ConvertCharset($c, $charset, "UTF-8");
+						$result .= \Bitrix\Main\Text\Encoding::convertEncoding($c, $charset, "UTF-8");
 			}
 		}
 		return $result;

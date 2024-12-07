@@ -7,7 +7,6 @@ use Bitrix\Main\Context;
 use Bitrix\Main\Error;
 use Bitrix\Main\ModuleManager;
 use Bitrix\Main\Result;
-use Bitrix\Main\Text\Encoding;
 use Bitrix\Main\Web\HttpClient;
 use Bitrix\Main\Web\Json;
 
@@ -102,8 +101,6 @@ final class Provider
 			$params['DATA'] = $data;
 
 			//$params = Converter::convertStubInEmpty($params);
-			$params = Encoding::convertEncoding($params, SITE_CHARSET, 'UTF-8');
-
 			$params['DATA'] = base64_encode(serialize($params['DATA']));
 			$params['BX_HASH'] = self::requestSign($this->type, md5(implode('|', $params)));
 

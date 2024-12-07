@@ -1,3 +1,4 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 (function (exports,main_core_events,ui_sidepanel_layout,ui_confetti,main_core,ui_dialogs_messagebox) {

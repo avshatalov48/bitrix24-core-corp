@@ -40,9 +40,14 @@ class CBPTasksGetDocumentActivity extends CBPActivity
 		}
 
 		$taskId = $this->TaskId;
-		$logMap = static::getPropertiesMap($this->getDocumentType());
-		unset($logMap['Fields']);
-		$logMap = $this->getDebugInfo(['TaskId' => $taskId], $logMap);
+		$logMap = [];
+
+		if ($this->workflow->isDebug())
+		{
+			$logMap = static::getPropertiesMap($this->getDocumentType());
+			unset($logMap['Fields']);
+			$logMap = $this->getDebugInfo(['TaskId' => $taskId], $logMap);
+		}
 
 		if (!is_numeric($taskId))
 		{
@@ -81,7 +86,10 @@ class CBPTasksGetDocumentActivity extends CBPActivity
 			$this->arProperties[$id] = $document[$id];
 		}
 
-		$this->writeDebugInfo($this->getDebugInfo($document, array_merge($logMap, $map)));
+		if ($this->workflow->isDebug())
+		{
+			$this->writeDebugInfo($this->getDebugInfo($document, array_merge($logMap, $map)));
+		}
 
 		return CBPActivityExecutionStatus::Closed;
 	}

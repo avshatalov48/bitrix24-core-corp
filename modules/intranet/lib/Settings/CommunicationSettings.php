@@ -6,6 +6,7 @@ use Bitrix\Disk\Configuration;
 use Bitrix\Disk\Driver;
 use Bitrix\Im\V2\Chat;
 use Bitrix\Im\V2\Chat\ChatFactory;
+use Bitrix\Intranet\Service\ServiceContainer;
 use Bitrix\Intranet\Settings\Controls\Field;
 use Bitrix\Intranet\Settings\Controls\Section;
 use Bitrix\Intranet\Settings\Controls\Selector;
@@ -248,7 +249,7 @@ class CommunicationSettings extends AbstractSettings
 
 		if (isset($this->data["rating_text_like_y"]) && $this->data["rating_text_like_y"] !== '')
 		{
-			\COption::SetOptionString("main", "rating_text_like_y", htmlspecialcharsbx($this->data["rating_text_like_y"]));
+			\COption::SetOptionString("main", "rating_text_like_y", $this->data["rating_text_like_y"]);
 		}
 
 		if ($this->isBitrix24)
@@ -272,44 +273,53 @@ class CommunicationSettings extends AbstractSettings
 				$this->data["general_chat_can_post"] = Chat::MANAGE_RIGHTS_NONE;
 				unset($this->data['allow_post_general_chat']);
 			}
-			if (\COption::GetOptionString("im", "im_general_chat_new_rights") !== 'Y')
+
+			if (isset($this->data["general_chat_can_post"]))
 			{
-				if (isset($this->data["allow_general_chat_toall"]))
+				$generalChat = ChatFactory::getInstance()->getGeneralChat();
+				if ($generalChat)
 				{
-					$valuesToSave = [];
-					if (is_array($this->data["imchat_toall_rights"]))
+					$generalChat->setCanPost($this->data["general_chat_can_post"]);
+					if ($this->data["general_chat_can_post"] === Chat::MANAGE_RIGHTS_MANAGERS)
 					{
-						foreach ($this->data["imchat_toall_rights"] as $key => $value)
+						if (isset($this->data["imchat_toall_rights"]))
 						{
-							$valuesToSave[] = ($value === 'UA' ? 'AU' : $value);
+							$managerIds = array_map(function ($userCode) {
+								$matches = [];
+								if (preg_match('/^U(\d+)$/', $userCode, $matches))
+								{
+									return $matches[1];
+								}
+							}, $this->data["imchat_toall_rights"]);
+							$generalChat->setManagers($managerIds);
 						}
 					}
-
-					if (in_array('AU', $valuesToSave) || empty($valuesToSave))
-					{
-						\CIMChat::SetAccessToGeneralChat(true);
-					}
-					else
-					{
-						\CIMChat::SetAccessToGeneralChat(false, $valuesToSave);
-					}
-				}
-				else
-				{
-					\CIMChat::SetAccessToGeneralChat(false);
+					$generalChat->save();
 				}
 			}
-			else
+
+			if (
+				class_exists('\Bitrix\Im\V2\Chat\GeneralChannel')
+				&& method_exists('\Bitrix\Im\V2\Chat\ChatFactory', 'getGeneralChannel')
+				&& ChatFactory::getInstance()->getGeneralChannel() !== null
+
+			)
 			{
-				if (isset($this->data["general_chat_can_post"]))
+				if (isset($this->data['allow_post_general_channel']) && $this->data['allow_post_general_channel'] === 'N')
 				{
-					$generalChat = ChatFactory::getInstance()->getGeneralChat();
-					if ($generalChat)
+					$this->data["general_channel_can_post"] = Chat::MANAGE_RIGHTS_NONE;
+					unset($this->data['allow_post_general_channel']);
+				}
+
+				if (isset($this->data["general_channel_can_post"]))
+				{
+					$generalChannel = ChatFactory::getInstance()->getGeneralChannel();
+					if ($generalChannel)
 					{
-						$generalChat->setCanPost($this->data["general_chat_can_post"]);
-						if ($this->data["general_chat_can_post"] === Chat::MANAGE_RIGHTS_MANAGERS)
+						$generalChannel->setCanPost($this->data["general_channel_can_post"]);
+						if ($this->data["general_channel_can_post"] === Chat::MANAGE_RIGHTS_MANAGERS)
 						{
-							if (isset($this->data["imchat_toall_rights"]))
+							if (isset($this->data["imchannel_toall_rights"]))
 							{
 								$managerIds = array_map(function ($userCode) {
 									$matches = [];
@@ -317,11 +327,11 @@ class CommunicationSettings extends AbstractSettings
 									{
 										return $matches[1];
 									}
-								}, $this->data["imchat_toall_rights"]);
-								$generalChat->setManagers($managerIds);
+								}, $this->data["imchannel_toall_rights"]);
+								$generalChannel->setManagers($managerIds);
 							}
 						}
-						$generalChat->save();
+						$generalChannel->save();
 					}
 				}
 			}
@@ -361,6 +371,12 @@ class CommunicationSettings extends AbstractSettings
 		$data['sectionChats'] = new Section(
 			'settings-communication-section-chats',
 			Loc::getMessage('INTRANET_SETTINGS_SECTION_TITLE_CHATS'),
+			'ui-icon-set --chats-1',
+			false
+		);
+		$data['sectionChannels'] = new Section(
+			'settings-communication-section-channels',
+			Loc::getMessage('INTRANET_SETTINGS_SECTION_TITLE_CHANNELS') ?? '',
 			'ui-icon-set --chats-1',
 			false
 		);
@@ -427,6 +443,55 @@ class CommunicationSettings extends AbstractSettings
 				$generalChatRights['generalChatCanPost'] ?? null
 			);
 
+
+			if (
+				class_exists('\Bitrix\Im\V2\Chat\GeneralChannel')
+				&& method_exists('\Bitrix\Im\V2\Chat\ChatFactory', 'getGeneralChannel')
+				&& ChatFactory::getInstance()->getGeneralChannel() !== null
+			)
+			{
+				$data['availableGeneralChannel'] = 'Y';
+
+				$generalChannel = ChatFactory::getInstance()->getGeneralChannel();
+				if (isset($generalChannel))
+				{
+					$generalChannelRights = $generalChannel->getRightsForIntranetConfig();
+					$data = array_merge($data, $generalChannelRights);
+				}
+
+				$data['allow_post_general_channel'] = new Switcher(
+					'settings-communication-field-allow_post_general_channel',
+					'allow_post_general_channel',
+					Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_ALLOW_POST_GEN_CHANNEL') ?? '',
+					($generalChannelRights['generalChannelCanPost'] ?? null) === 'NONE' ? 'N' : 'Y',
+					[
+						'on' => Loc::getMessage('INTRANET_SETTINGS_FIELD_HINT_ALLOW_POST_GEN_CHANNEL') ?? ''
+					],
+					helpDesk: 'redirect=detail&code=20963046#1'
+				);
+
+				$values = [];
+				foreach ($generalChannelRights['generalChannelCanPostList'] ?? [] as $value => $name)
+				{
+					if ($value === 'NONE')
+					{
+						continue;
+					}
+					$values[] = [
+						'value' => $value,
+						'name' => $name,
+						'selected' => $value === ($generalChannelRights['generalChannelCanPost'] ?? null)
+					];
+				}
+
+				$data['general_channel_can_post'] = new Selector(
+					'settings-communication-field-general_channel_can_post',
+					'general_channel_can_post',
+					Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_ALLOW_POST_GEN_CHANNEL_LIST') ?? '',
+					$values,
+					$generalChannelRights['generalChannelCanPost'] ?? null
+				);
+			}
 		}
 
 		$data['default_livefeed_toall'] = new Switcher(
@@ -543,7 +608,7 @@ class CommunicationSettings extends AbstractSettings
 			isEnable: !$this->isBitrix24
 			|| $this->isBitrix24
 			&& Feature::isFeatureEnabled("disk_object_lock_enabled"),
-			helpDesk:'redirect=detail&code=18213348',
+			helpDesk:'redirect=detail&code=20962214',
 		);
 
 		if (Loader::includeModule("disk"))
@@ -639,35 +704,9 @@ class CommunicationSettings extends AbstractSettings
 
 		if ($rootDepartmentId === null)
 		{
-			$rootDepartmentId = \COption::GetOptionString("main", "wizard_departament", false, SITE_DIR, true);
-			if (
-				empty($rootDepartmentId)
-				&& Loader::includeModule('iblock')
-			)
-			{
-				$iblockId = \COption::GetOptionInt('intranet', 'iblock_structure', false);
-				if ($iblockId > 0)
-				{
-					$res = \CIBlockSection::getList(
-						array(
-							'LEFT_MARGIN' => 'ASC',
-						),
-						array(
-							'IBLOCK_ID' => $iblockId,
-							'ACTIVE' => 'Y',
-						),
-						false,
-						array('ID')
-					);
-					if (
-						!empty($res)
-						&& ($rootSection = $res->fetch())
-					)
-					{
-						$rootDepartmentId = $rootSection['ID'];
-					}
-				}
-			}
+			$departmentRepository = ServiceContainer::getInstance()->departmentRepository();
+			$department = $departmentRepository->getRootDepartment();
+			$rootDepartmentId = $department->getId();
 		}
 
 		foreach($rightsList as $key => $value)
@@ -707,12 +746,14 @@ class CommunicationSettings extends AbstractSettings
 			//sections
 			'settings-communication-section-feed' => Loc::getMessage('INTRANET_SETTINGS_SECTION_TITLE_NEWS_FEED'),
 			'settings-communication-section-chats' => Loc::getMessage('INTRANET_SETTINGS_SECTION_TITLE_CHATS'),
+				'settings-communication-section-channels' => Loc::getMessage('INTRANET_SETTINGS_SECTION_TITLE_CHANNELS') ?? '',
 			'settings-communication-section-disk' => Loc::getMessage('INTRANET_SETTINGS_SECTION_TITLE_DISK'),
 			//fields
 			'allow_livefeed_toall' => Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_POST_FEED'),
 			'default_livefeed_toall' => Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_PUBLISH_TO_ALL_DEFAULT'),
 			'rating_text_like_y' => Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_LIKE_INPUT'),
 			'allow_post_general_chat' => Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_ALLOW_POST_GEN_CHAT'),
+			'allow_post_general_channel' => Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_ALLOW_POST_GEN_CHANNEL') ?? '',
 			'general_chat_message_leave' => Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_ALLOW_LEAVE_MESSAGE'),
 			'url_preview_enable' => Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_ALLOW_URL_PREVIEW'),
 			'create_overdue_chats' => Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_CREATE_OVERDUE_CHATS'),

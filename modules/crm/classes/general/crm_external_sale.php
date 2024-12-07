@@ -22,13 +22,6 @@ class CCrmExternalSale
 		);
 	}
 
-	public static function OnMigrateToBox()
-	{
-		COption::RemoveOption("crm", "~limit_max_shops");
-		COption::RemoveOption("crm", "~limit_max_days");
-		COption::RemoveOption("crm", "crm_deal_category_limit");
-	}
-
 	public static function GetDefaultSettings($id)
 	{
 		$result = null;
@@ -95,7 +88,7 @@ class CCrmExternalSale
 		if (!self::CheckFields($arFields))
 			return false;
 
-		$result = $DB->Add('b_crm_external_sale', $arFields, array("COOKIE", "LAST_STATUS"), "crm", false, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
+		$result = $DB->Add('b_crm_external_sale', $arFields, array("COOKIE", "LAST_STATUS"), "crm");
 		$result = intval($result);
 
 		return ($result > 0) ? $result : false;
@@ -182,14 +175,14 @@ class CCrmExternalSale
 		global $DB;
 
 		$ID = intval($ID);
-		return $DB->Query("DELETE FROM b_crm_external_sale WHERE ID = ".$ID, false, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
+		return $DB->Query("DELETE FROM b_crm_external_sale WHERE ID = ".$ID);
 	}
 
 	public static function Count()
 	{
 		global $DB;
 
-		$db = $DB->Query("SELECT COUNT(ID) as CNT FROM b_crm_external_sale", false, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
+		$db = $DB->Query("SELECT COUNT(ID) as CNT FROM b_crm_external_sale");
 		if ($ar = $db->Fetch())
 			return intval($ar["CNT"]);
 
@@ -241,7 +234,7 @@ class CCrmExternalSale
 		if ($arSqls["ORDERBY"] <> '')
 			$strSql .= "ORDER BY ".$arSqls["ORDERBY"]." ";
 
-		$dbRes = $DB->Query($strSql, false, "File: ".__FILE__."<br>Line: ".__LINE__);
+		$dbRes = $DB->Query($strSql);
 
 		return $dbRes;
 	}

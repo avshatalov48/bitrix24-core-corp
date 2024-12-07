@@ -6,11 +6,10 @@ use Bitrix\Crm\Agent\AgentBase;
 use Bitrix\Crm\Automation\Trigger\Sign\B2e\CoordinationTrigger;
 use Bitrix\Crm\Automation\Trigger\Sign\B2e\FillingTrigger;
 use Bitrix\Crm\Service\Container;
-use Bitrix\Main\Loader;
-use Bitrix\Sign\Config\Storage;
 
 final class SeparateCoordinationAndFillingStageAgent extends AgentBase
 {
+	public const IS_DISABLED = true;
 	private const OLD_STATUSES_MAP = [
 		'COORDINATION' => ['COORDINATION_AND_FILLING'],
 		'FILLING' => ['COORDINATION_AND_FILLING'],
@@ -30,17 +29,9 @@ final class SeparateCoordinationAndFillingStageAgent extends AgentBase
 		FillingTrigger::class => 'FILLING',
 	];
 
-	private static function isB2eEnabled(): bool
-	{
-		return Loader::includeModule('sign')
-			&& method_exists(Storage::instance(), 'isB2eAvailable')
-			&& Storage::instance()->isB2eAvailable()
-		;
-	}
-
 	public static function doRun(): bool
 	{
-		if (!self::isB2eEnabled())
+		if (self::IS_DISABLED)
 		{
 			return false;
 		}
@@ -120,9 +111,10 @@ final class SeparateCoordinationAndFillingStageAgent extends AgentBase
 		//Set new stages for items
 		foreach (self::OLD_STATUSES_MAP as $newStage => $oldStages)
 		{
-			$whereStageIds = array_map(static function (string $item) use ($defaultCategoryId, $statusService) {
-				return $statusService->makeName($defaultCategoryId, $item);
-			}, $oldStages);
+			$whereStageIds = array_map(
+				fn (string $item) => $statusService->makeName($defaultCategoryId, $item),
+				$oldStages
+			);
 			$newStageId = $statusService->makeName($defaultCategoryId, $newStage);
 			$itemService->updateStageIdByStageIds($newStageId, $whereStageIds);
 		}

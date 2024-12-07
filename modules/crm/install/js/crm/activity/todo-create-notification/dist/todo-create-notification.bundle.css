@@ -10,6 +10,11 @@
 	font-weight: var(--ui-font-weight-light, 300);
 }
 
+.crm-activity__todo-create-notification_title.--v2 {
+	font-size: var(--ui-font-size-lg);
+	font-weight: var(--ui-font-weight-regular);
+}
+
 .crm-activity__todo-create-notification_content {
 	background: var(--ui-color-palette-blue-20, #e5f9ff);
 	border-radius: var(--ui-border-radius-xs, 0);
@@ -57,4 +62,28 @@
 .crm-activity__todo-create-notification-popup .popup-window-close-icon:hover::after {
 	background-color: var(--ui-color-base-40, #bdc1c6);
 	transition-duration: unset;
+}
+
+.crm-activity__todo-create-notification_footer {
+	display: flex;
+	justify-content: space-between;
+	margin-top: var(--ui-space-inset-xs2);
+}
+
+.crm-activity__todo-create-notification_buttons-container {
+	display: flex;
+	align-items: center;
+}
+
+.crm-activity__todo-create-notification_skip-button .ui-btn-text,
+.crm-activity__todo-create-notification_skip-button:before {
+	font-size: var(--ui-font-size-sm);
+	color: var(--ui-color-palette-gray-70);
+	font-weight: var(--ui-font-weight-regular);
+}
+
+.crm-activity__todo-create-notification_skip-button .ui-btn-text {
+	height: var(--ui-font-size-sm);
+	line-height: 9px;
+	border-bottom: 1px var(--ui-text-decoration-style-dashed) var(--ui-color-palette-gray-70);
 }

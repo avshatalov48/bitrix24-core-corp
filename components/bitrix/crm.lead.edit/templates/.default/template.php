@@ -82,7 +82,7 @@ $APPLICATION->IncludeComponent(
 	)
 );
 
-?><script type="text/javascript">
+?><script>
 	BX.ready(
 		function()
 		{
@@ -236,7 +236,7 @@ $APPLICATION->IncludeComponent(
 	);
 </script>
 <?if($arResult['CAN_CONVERT'] && isset($arResult['CONVERSION_CONFIGS'])):?>
-	<script type="text/javascript">
+	<script>
 		BX.ready(
 			function()
 			{

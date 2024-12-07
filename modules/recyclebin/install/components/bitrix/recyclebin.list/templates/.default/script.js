@@ -58,13 +58,38 @@ BX.namespace('Recyclebin');
 		});
 	};
 
-	BX.Recyclebin.List.restoreBatch = function() {
+	BX.Recyclebin.List.restoreBatch = function(useBatchManager = false) {
+		const { isAll, selectedRows } = this.getGridObjectBatchParams();
 
-		var gridObject = BX.Main.gridManager.getById(BX.Recyclebin.List.gridId).instance;
-		var selectedRows = gridObject.getRows().getSelectedIds();
+		if (useBatchManager)
+		{
+			const batchManager = BX.Recyclebin.DeletionManager.getInstance(this.gridId);
 
-		var isAll = gridObject.getActionsPanel().getForAllCheckbox() != undefined &&
-			gridObject.getActionsPanel().getForAllCheckbox().checked ? 1 : 0;
+			if (!batchManager || batchManager.isRunning())
+			{
+				return;
+			}
+
+			batchManager.setMessages({
+				textBefore: 'RECYCLEBIN_DM_PROGRESSBAR_TITLE_RESTORE',
+				textAfter: 'RECYCLEBIN_DM_PROGRESSBAR_CANCEL',
+				successCount: 'RECYCLEBIN_DM_PROGRESSBAR_SUCCESS_COUNT_RESTORE',
+				failedCount: 'RECYCLEBIN_DM_PROGRESSBAR_FAILED_COUNT_RESTORE',
+			});
+
+			if (isAll)
+			{
+				batchManager.resetEntityIds();
+			}
+			else
+			{
+				batchManager.setEntityIds(selectedRows);
+			}
+
+			batchManager.executeRestore();
+
+			return;
+		}
 
 		BX.ajax.runComponentAction('bitrix:recyclebin.list', 'restore', {
 			mode: 'ajax',
@@ -82,16 +107,42 @@ BX.namespace('Recyclebin');
 				content: response.errors[0].message
 			});
 		});
-	}
+	};
 
-	BX.Recyclebin.List.removeBatch = function() {
+	BX.Recyclebin.List.removeBatch = function(useBatchManager = false) {
+		const { isAll, selectedRows } = this.getGridObjectBatchParams();
+
+		if (useBatchManager)
+		{
+			const batchManager = BX.Recyclebin.DeletionManager.getInstance(this.gridId);
+
+			if (!batchManager || batchManager.isRunning())
+			{
+				return;
+			}
+
+			batchManager.setMessages({
+				textBefore: 'RECYCLEBIN_DM_PROGRESSBAR_TITLE_DELETION',
+				textAfter: 'RECYCLEBIN_DM_PROGRESSBAR_CANCEL',
+				successCount: 'RECYCLEBIN_DM_PROGRESSBAR_SUCCESS_COUNT_DELETION',
+				failedCount: 'RECYCLEBIN_DM_PROGRESSBAR_FAILED_COUNT_DELETION',
+			});
+
+			if (isAll)
+			{
+				batchManager.resetEntityIds();
+			}
+			else
+			{
+				batchManager.setEntityIds(selectedRows);
+			}
+
+			batchManager.executeDelete();
+
+			return;
+		}
+
 		BX.Recyclebin.confirm(BX.message('RECYCLEBIN_CONFIRM_REMOVE')).then(function(code) {
-			var gridObject = BX.Main.gridManager.getById(BX.Recyclebin.List.gridId).instance;
-			var selectedRows = gridObject.getRows().getSelectedIds();
-
-			var isAll = gridObject.getActionsPanel().getForAllCheckbox() != undefined &&
-			gridObject.getActionsPanel().getForAllCheckbox().checked ? 1 : 0;
-
 			BX.ajax.runComponentAction('bitrix:recyclebin.list', 'remove', {
 				mode: 'ajax',
 				data: {
@@ -109,6 +160,36 @@ BX.namespace('Recyclebin');
 				});
 			});
 		});
+	};
+
+	BX.Recyclebin.List.getGridObjectBatchParams = function()
+	{
+		const gridObject = BX.Main.gridManager.getById(this.gridId).instance;
+
+		const actionsPanel = gridObject.getActionsPanel();
+		const isForAllChecked = actionsPanel.getForAllCheckbox() && actionsPanel.getForAllCheckbox().checked;
+		const isAll = isForAllChecked ? 1 : 0;
+		const selectedRows = gridObject.getRows().getSelectedIds();
+
+		return {
+			isAll,
+			selectedRows,
+		};
+	};
+
+	BX.Recyclebin.List.showLimit = function(featureId)
+	{
+		BX.Runtime.loadExtension('ui.info-helper')
+			.then(({ FeaturePromotersRegistry }) => {
+				if (FeaturePromotersRegistry)
+				{
+					FeaturePromotersRegistry.getPromoter({
+						featureId,
+						bindElement: null,
+					}).show();
+				}
+			})
+		;
 	};
 
 	BX.Recyclebin.confirm = function(body, callback, params)
@@ -133,7 +214,9 @@ BX.namespace('Recyclebin');
 					overlay : { opacity: 50 },
 					content : '',
 					autoHide   : false,
-					closeByEsc : false
+					closeByEsc: false,
+					minWidth: 300,
+					className: 'recyclebin-confirm-popup',
 				}
 			);
 		}

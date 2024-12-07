@@ -94,7 +94,7 @@ $qty = count($arResult['ITEMS']);
 	</div>
 <?endif;?>
 
-<script type="text/javascript">
+<script>
 	var productParams = {
 		isEditMode: '<?=($arParams["RESTRICTED_MODE"] ? "N" : "Y")?>',
 		products: <?=CUtil::PhpToJSObject($arResult['ITEMS'])?>,

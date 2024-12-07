@@ -60,7 +60,7 @@ if (Bitrix24Manager::isFeatureEnabled('disk_common_storage'))
 	);
 }
 ?>
-<script type="text/javascript">
+<script>
 BX.ready(function(){
 	if (BX('BXDiskRightInputPlug') && BX.DiskUpload.getObj('FolderList'))
 	{

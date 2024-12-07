@@ -20,4 +20,5 @@ $MESS["TASKS_ACTION_RESULT_REQUIRED"] = "Постановщик запросил
 $MESS['TASKS_TASK_TAG_ALREADY_EXISTS'] = 'Такой тег уже существует';
 $MESS['TASKS_TASK_TAG_ACCESS_DENIED'] = 'Недостаточно прав';
 $MESS['TASKS_TASK_TAG_UNKNOWN_ERROR'] = 'Не удалось добавить тег, попробуйте ещё раз';
-?>
+$MESS['TASKS_TASK_FLOW_DEADLINE_LABEL'] = 'Устанавливается автоматически';
+$MESS['TASKS_TASK_FLOW_SECRET_PROJECT_LABEL'] = 'Скрытый проект';

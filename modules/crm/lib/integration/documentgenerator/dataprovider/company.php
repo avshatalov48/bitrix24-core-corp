@@ -90,6 +90,13 @@ class Company extends CrmEntityDataProvider
 			$this->fields['IMOL'] = [
 				'TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_IMOL_TITLE'),
 			];
+			$this->fields['WEB'] = [
+				'TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_COMPANY_WEB_TITLE'),
+				'VALUE' => [$this, 'getClientWeb'],
+				'FORMAT' => [
+					'mfirst' => true,
+				],
+			];
 			$this->fields['REVENUE']['TYPE'] = Money::class;
 			$this->fields['REVENUE']['VALUE'] = [$this, 'getRevenue'];
 			$this->fields['ADDRESS']['VALUE'] = [$this, 'getAddress'];

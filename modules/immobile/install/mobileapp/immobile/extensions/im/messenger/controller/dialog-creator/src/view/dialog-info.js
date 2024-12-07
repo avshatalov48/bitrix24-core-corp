@@ -2,16 +2,16 @@
  * @module im/messenger/controller/dialog-creator/dialog-info/view
  */
 jn.define('im/messenger/controller/dialog-creator/dialog-info/view', (require, exports, module) => {
-
 	const { Loc } = require('loc');
+	const { Theme } = require('im/lib/theme');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { List } = require('im/messenger/lib/ui/base/list');
 	const { cross } = require('im/messenger/assets/common');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { ChatTitle, ChatAvatar } = require('im/messenger/lib/element');
-	const AppTheme = require('apptheme');
 
-	const previewIcon = `<svg width="76" height="76" viewBox="0 0 76 76" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="76" height="76" rx="38" fill="${AppTheme.colors.bgContentTertiary}"/><path fill-rule="evenodd" clip-rule="evenodd" d="M48.5509 30.6862H43.2754C42.8986 29.2028 42.5218 27.7194 41.0145 27.7194H34.9855C33.4782 27.7194 33.1014 29.2028 32.7246 30.6862H27.4491C26.6202 30.6862 25.9419 31.3538 25.9419 32.1696V45.5202C25.9419 46.3361 26.6202 47.0036 27.4491 47.0036H48.5509C49.3799 47.0036 50.0582 46.3361 50.0582 45.5202V32.1696C50.0581 31.3538 49.3799 30.6862 48.5509 30.6862ZM34.1328 38.6111C34.1328 40.7131 35.8642 42.4171 38 42.4171C40.1358 42.4171 41.8673 40.7131 41.8673 38.6111C41.8673 36.5091 40.1359 34.8051 38 34.8051C35.8642 34.8051 34.1328 36.5091 34.1328 38.6111ZM38 43.8078C35.0838 43.8078 32.7197 41.4812 32.7197 38.6111C32.7197 35.741 35.0838 33.4144 38 33.4144C40.9163 33.4144 43.2803 35.741 43.2803 38.6111C43.2803 41.4812 40.9163 43.8078 38 43.8078ZM47.4512 34.3456H45.4987V33.0441H47.4512V34.3456Z" fill="${AppTheme.colors.base5}"/></svg>`;
+	const previewIconLight = `<svg width="84" height="84" viewBox="0 0 84 84" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="42" cy="42" r="40.5" fill="white" stroke="url(#paint0_linear_17702_428925)" stroke-width="3"/><g clip-path="url(#clip0_17702_428925)"><path d="M6.19489 42.0004C6.19489 22.2258 22.2254 6.19531 42 6.19531C61.7746 6.19531 77.8051 22.2258 77.8051 42.0004C77.8051 61.775 61.7746 77.8055 42 77.8055C22.2254 77.8055 6.19489 61.775 6.19489 42.0004Z" fill="#EDF7FF"/><path d="M6.19489 42.0004C6.19489 22.2258 22.2254 6.19531 42 6.19531C61.7746 6.19531 77.8051 22.2258 77.8051 42.0004C77.8051 61.775 61.7746 77.8055 42 77.8055C22.2254 77.8055 6.19489 61.775 6.19489 42.0004Z" stroke="white"/><path fill-rule="evenodd" clip-rule="evenodd" d="M34.8876 43.9335C34.8876 40.0086 38.0754 36.8208 42.0003 36.8208C45.9253 36.8208 49.113 40.0086 49.113 43.9335C49.113 47.8585 45.9253 51.0462 42.0003 51.0462C38.0754 51.0462 34.8876 47.8585 34.8876 43.9335ZM37.2785 43.9335C37.2785 46.5435 39.3903 48.6554 42.0003 48.6554C44.6103 48.6554 46.7222 46.5435 46.7222 43.9335C46.7222 41.3236 44.6103 39.2117 42.0003 39.2117C39.3903 39.2117 37.2785 41.3236 37.2785 43.9335Z" fill="#0075FF"/><path fill-rule="evenodd" clip-rule="evenodd" d="M50.2085 32.8553H53.9541C56.1457 32.8553 57.9388 34.6484 57.9388 36.84V51.9819C57.9388 54.1734 56.1457 55.9666 53.9541 55.9666H30.0459C27.8543 55.9666 26.0612 54.1734 26.0612 51.9819V36.84C26.0612 34.6484 27.8543 32.8553 30.0459 32.8553H33.6719L35.7041 29.8269C36.4413 28.7112 37.6766 28.0537 39.0114 28.0537H44.7893C46.1042 28.0537 47.3395 28.6913 48.0766 29.7671L50.2085 32.8553ZM53.9541 53.5558C54.8307 53.5558 55.548 52.8386 55.548 51.9619V36.8201C55.548 35.9434 54.8307 35.2262 53.9541 35.2262H50.2085C49.4115 35.2262 48.6744 34.8277 48.236 34.1902L46.1042 31.102C45.8054 30.6836 45.3073 30.4246 44.7893 30.4246H39.0114C38.4934 30.4246 37.9953 30.7035 37.6965 31.1419L35.6643 34.1702C35.2061 34.8277 34.4689 35.2262 33.6719 35.2262H30.0459C29.1692 35.2262 28.452 35.9434 28.452 36.8201V51.9619C28.452 52.8386 29.1692 53.5558 30.0459 53.5558H53.9541Z" fill="#0075FF"/></g><defs><linearGradient id="paint0_linear_17702_428925" x1="11.0339" y1="1.77966" x2="44.1356" y2="49.4746" gradientUnits="userSpaceOnUse"><stop stop-color="#86FFC7"/><stop offset="1" stop-color="#0075FF"/></linearGradient><clipPath id="clip0_17702_428925"><path d="M5.69489 42.0004C5.69489 21.9497 21.9492 5.69531 42 5.69531C62.0507 5.69531 78.3051 21.9497 78.3051 42.0004C78.3051 62.0511 62.0507 78.3055 42 78.3055C21.9492 78.3055 5.69489 62.0511 5.69489 42.0004Z" fill="white"/></clipPath></defs></svg>`;
+	const previewIconDark = `<svg width="84" height="84" viewBox="0 0 84 84" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="42" cy="42" r="40.5" fill="#0F0F0F" stroke="url(#paint0_linear_17800_1227308)" stroke-width="3"/><g clip-path="url(#clip0_17800_1227308)"><path d="M5.69492 42.0004C5.69492 21.9497 21.9493 5.69531 42 5.69531C62.0507 5.69531 78.3051 21.9497 78.3051 42.0004C78.3051 62.0511 62.0507 78.3055 42 78.3055C21.9493 78.3055 5.69492 62.0511 5.69492 42.0004Z" fill="#1A2A33"/><path fill-rule="evenodd" clip-rule="evenodd" d="M34.8877 43.9335C34.8877 40.0086 38.0754 36.8208 42.0004 36.8208C45.9253 36.8208 49.1131 40.0086 49.1131 43.9335C49.1131 47.8585 45.9253 51.0462 42.0004 51.0462C38.0754 51.0462 34.8877 47.8585 34.8877 43.9335ZM37.2785 43.9335C37.2785 46.5435 39.3904 48.6554 42.0004 48.6554C44.6103 48.6554 46.7222 46.5435 46.7222 43.9335C46.7222 41.3236 44.6103 39.2117 42.0004 39.2117C39.3904 39.2117 37.2785 41.3236 37.2785 43.9335Z" fill="#1587FA"/><path fill-rule="evenodd" clip-rule="evenodd" d="M50.2085 32.8553H53.9541C56.1457 32.8553 57.9388 34.6484 57.9388 36.84V51.9819C57.9388 54.1734 56.1457 55.9666 53.9541 55.9666H30.0459C27.8543 55.9666 26.0612 54.1734 26.0612 51.9819V36.84C26.0612 34.6484 27.8543 32.8553 30.0459 32.8553H33.672L35.7042 29.8269C36.4413 28.7112 37.6766 28.0537 39.0115 28.0537H44.7893C46.1042 28.0537 47.3395 28.6913 48.0767 29.7671L50.2085 32.8553ZM53.9541 53.5558C54.8308 53.5558 55.548 52.8386 55.548 51.9619V36.8201C55.548 35.9434 54.8308 35.2262 53.9541 35.2262H50.2085C49.4116 35.2262 48.6744 34.8277 48.2361 34.1902L46.1043 31.102C45.8054 30.6836 45.3073 30.4246 44.7893 30.4246H39.0115C38.4935 30.4246 37.9954 30.7035 37.6965 31.1419L35.6643 34.1702C35.2061 34.8277 34.4689 35.2262 33.672 35.2262H30.0459C29.1693 35.2262 28.452 35.9434 28.452 36.8201V51.9619C28.452 52.8386 29.1693 53.5558 30.0459 53.5558H53.9541Z" fill="#1587FA"/></g><defs><linearGradient id="paint0_linear_17800_1227308" x1="11.0339" y1="1.77966" x2="44.1356" y2="49.4746" gradientUnits="userSpaceOnUse"><stop stop-color="#0A4C2E"/><stop offset="1" stop-color="#1B79E6"/></linearGradient><clipPath id="clip0_17800_1227308"><path d="M5.69492 42.0004C5.69492 21.9497 21.9493 5.69531 42 5.69531C62.0507 5.69531 78.3051 21.9497 78.3051 42.0004C78.3051 62.0511 62.0507 78.3055 42 78.3055C21.9493 78.3055 5.69492 62.0511 5.69492 42.0004Z" fill="white"/></clipPath></defs></svg>`;
 
 	class DialogInfoView extends LayoutComponent
 	{
@@ -47,7 +47,7 @@ jn.define('im/messenger/controller/dialog-creator/dialog-info/view', (require, e
 							alignItems: 'center',
 							flexWrap: 2,
 							justifyContent: 'space-between',
-							backgroundColor: AppTheme.colors.bgContentPrimary,
+							backgroundColor: Theme.colors.bgContentPrimary,
 							borderRadius: 12,
 							marginBottom: 20,
 						},
@@ -142,6 +142,10 @@ jn.define('im/messenger/controller/dialog-creator/dialog-info/view', (require, e
 		{
 			super(props);
 			this.state.avatar = props.uri || null;
+			this.previewIcon = Theme.getInstance().getId() === 'light'
+				? previewIconLight
+				: previewIconDark
+			;
 
 			props.ref(this);
 		}
@@ -163,7 +167,7 @@ jn.define('im/messenger/controller/dialog-creator/dialog-info/view', (require, e
 						resizeMode: 'cover',
 						uri: this.state.avatar,
 						svg: {
-							content: this.state.avatar === null ? previewIcon : null,
+							content: this.state.avatar === null ? this.previewIcon : null,
 						},
 					}
 				),
@@ -187,6 +191,7 @@ jn.define('im/messenger/controller/dialog-creator/dialog-info/view', (require, e
 			/** @type DialogDTO */
 			this.dialogDTO = props.dialogDTO;
 			this.state.isTextEmpty = true;
+			this.state.isFocused = false;
 		}
 
 		render()
@@ -198,17 +203,19 @@ jn.define('im/messenger/controller/dialog-creator/dialog-info/view', (require, e
 						flexDirection: 'row',
 						flexGrow: 2,
 						borderBottomWidth: 1,
-						borderBottomColor: AppTheme.colors.bgSeparatorSecondary,
+						borderBottomColor: this.state.isFocused
+							? Theme.colors.accentMainPrimary
+							: Theme.colors.bgSeparatorSecondary,
 					},
 				},
 				TextField({
 					placeholder: Loc.getMessage('IMMOBILE_DIALOG_CREATOR_CHAT_TITLE_PLACEHOLDER'),
-					placeholderTextColor: AppTheme.colors.base5,
+					placeholderTextColor: Theme.colors.base5,
 					value: this.dialogDTO.getTitle(),
 					multiline: false,
 					style: {
 						flexGrow: 2,
-						color: AppTheme.colors.base1,
+						color: Theme.colors.base1,
 						fontSize: 18,
 						marginRight: 5,
 					},
@@ -222,6 +229,12 @@ jn.define('im/messenger/controller/dialog-creator/dialog-info/view', (require, e
 							this.setState({isTextEmpty: true});
 						}
 						this.dialogDTO.setTitle(text);
+					},
+					onFocus: () => {
+						this.setState({ isFocused: true });
+					},
+					onBlur: () => {
+						this.setState({ isFocused: false });
 					},
 					onSubmitEditing: () => this.textRef.blur(),
 					ref: ref => this.textRef = ref,
@@ -246,7 +259,7 @@ jn.define('im/messenger/controller/dialog-creator/dialog-info/view', (require, e
 							},
 							resizeMode: 'contain',
 							svg: {
-								content: cross({ color: AppTheme.colors.base4, strokeWight: 0 }),
+								content: cross({ color: Theme.colors.base4, strokeWight: 0 }),
 							},
 						}
 					),

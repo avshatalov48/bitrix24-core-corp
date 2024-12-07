@@ -24,7 +24,6 @@ $MESS["CRM_CONTACT_TAB_EVENT"] = "История";
 $MESS["CRM_CONTACT_TAB_QUOTE_MSGVER_1"] = "Предложения";
 $MESS["CRM_CONTACT_TAB_DEAL"] = "Сделки";
 $MESS["CRM_CONTACT_TAB_BIZPROC"] = "Бизнес-процессы";
-$MESS["CRM_CONTACT_TAB_PORTRAIT"] = "Портрет";
 $MESS["CRM_CONTACT_TAB_TREE"] = "Связи";
 $MESS["CRM_CONTACT_HONORIFIC_NOT_SELECTED"] = "Не выбрано";
 $MESS["CRM_CONTACT_COPY_PAGE_TITLE"] = "Копирование контакта";

@@ -58,7 +58,6 @@ if(!function_exists('__CrmContactShowEndHtmlResonse'))
 	}
 }
 
-CUtil::JSPostUnescape();
 $APPLICATION->RestartBuffer();
 Header('Content-Type: application/x-javascript; charset='.LANG_CHARSET);
 

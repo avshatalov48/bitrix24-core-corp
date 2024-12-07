@@ -19,6 +19,12 @@ if (!$CrmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE'))
 }
 
 $arTypes = CCrmFields::GetEntityTypes();
+
+if (!\CCrmSaleHelper::isWithOrdersMode())
+{
+	unset($arTypes['ORDER']);
+}
+
 foreach($arTypes as $key => $ar)
 {
 	if ($key === 'CRM_INVOICE' && !\Bitrix\Crm\Settings\InvoiceSettings::getCurrent()->isOldInvoicesEnabled())

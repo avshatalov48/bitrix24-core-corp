@@ -2,8 +2,6 @@
  * @module tasks/layout/checklist/list/src/checkbox/checkbox-counter
  */
 jn.define('tasks/layout/checklist/list/src/checkbox/checkbox-counter', (require, exports, module) => {
-	const { useCallback } = require('utils/function');
-	// const { CheckBox } = require('layout/ui/checkbox');
 	const { Checkbox } = require('ui-system/form/checkbox');
 	const { PureComponent } = require('layout/pure-component');
 	const { ChecklistImportant } = require('tasks/layout/checklist/list/src/checkbox/checkbox-counter/important');
@@ -23,22 +21,6 @@ jn.define('tasks/layout/checklist/list/src/checkbox/checkbox-counter', (require,
 
 			/** @type {ChecklistImportant} */
 			this.importantRef = null;
-
-			this.handleOnClick = this.handleOnClick.bind(this);
-
-			this.initialState(props);
-		}
-
-		componentWillReceiveProps(props)
-		{
-			this.initialState(props);
-		}
-
-		initialState(props)
-		{
-			const { checked } = props;
-
-			this.state = { checked };
 		}
 
 		/**
@@ -72,25 +54,23 @@ jn.define('tasks/layout/checklist/list/src/checkbox/checkbox-counter', (require,
 						alignItems: 'center',
 						justifyContent: 'center',
 					},
-					onClick: this.handleOnClick,
+					onClick: this.#handleOnClick,
 				},
 				this.renderCheckbox(),
 				new ChecklistImportant({
-					ref: useCallback((ref) => {
-						this.importantRef = ref;
-					}),
+					ref: this.#setRef,
 					important,
-					onClick: this.handleOnClick,
+					onClick: this.#handleOnClick,
 				}),
 			);
 		}
 
 		renderCheckbox()
 		{
-			const { checked } = this.state;
+			const { checked } = this.props;
 
 			return new Checkbox({
-				testId: this.getTestId(checked ? 'select' : 'unselect'),
+				testId: this.getTestId(),
 				checked,
 				useState: false,
 				size: 18,
@@ -103,7 +83,7 @@ jn.define('tasks/layout/checklist/list/src/checkbox/checkbox-counter', (require,
 		 */
 		renderProgressCheckbox()
 		{
-			const { checked } = this.state;
+			const { checked } = this.props;
 			const { progressMode, totalCount, completedCount, disabled } = this.props;
 			const isShowProgress = progressMode && !checked;
 
@@ -128,42 +108,32 @@ jn.define('tasks/layout/checklist/list/src/checkbox/checkbox-counter', (require,
 		}
 
 		/**
-		 * @public
-		 */
-		executeCheckbox()
-		{
-			const { checked } = this.state;
-
-			return new Promise((resolve) => {
-				this.setState({ checked: !checked }, resolve);
-			});
-		}
-
-		/**
 		 * @private
 		 */
-		handleOnClick()
-		{
-			const { disabled, checked, onClick } = this.props;
+		#handleOnClick = () => {
+			const { disabled, checked, onClick, showToastNoRights } = this.props;
+
 			if (disabled)
 			{
+				showToastNoRights();
+
 				return;
 			}
 
-			this.executeCheckbox().then(() => {
-				if (onClick)
-				{
-					onClick(!checked);
-				}
-			}).catch(console.error);
-		}
+			if (onClick)
+			{
+				onClick(!checked);
+			}
+		};
 
 		getTestId(suffix)
 		{
-			const prefix = 'checkbox_block';
-
-			return suffix ? `${prefix}_${suffix}` : prefix;
+			return 'checkbox_block';
 		}
+
+		#setRef = (ref) => {
+			this.importantRef = ref;
+		};
 	}
 
 	module.exports = { CheckBoxCounter };

@@ -67,6 +67,15 @@ jn.define('im/messenger/lib/element/user-status', (require, exports, module) => 
 		}
 
 		/**
+		 * @desc Get svg manager chat status ( crown )
+		 * @return {string}
+		 */
+		static getStatusGreenCrown()
+		{
+			return userStatuses.greenCrown;
+		}
+
+		/**
 		 * @desc Get svg user`s status
 		 * @return {string}
 		 */

@@ -57,18 +57,21 @@ class TimemanScheduleShiftComponent extends BaseComponent
 		$shift = null;
 		if (!$this->arResult['SCHEDULE_ID'])
 		{
-			return $this->showError(Loc::getMessage('TIMEMAN_SHIFT_EDIT_ERROR_SCHEDULE_ID_IS_REQUIRED'));
+			$this->showError(Loc::getMessage('TIMEMAN_SHIFT_EDIT_ERROR_SCHEDULE_ID_IS_REQUIRED'));
+			return;
 		}
 		if (!$this->userPermissionsManager->canUpdateSchedule($this->arResult['SCHEDULE_ID']))
 		{
-			return $this->showError(Loc::getMessage('TIMEMAN_SHIFT_EDIT_ERROR_ACCESS_DENIED'));
+			$this->showError(Loc::getMessage('TIMEMAN_SHIFT_EDIT_ERROR_ACCESS_DENIED'));
+			return;
 		}
 		if (!$this->arResult['SHIFT_ID'])
 		{
 			# trying to create
 			if (!$this->scheduleRepository->findById($this->arResult['SCHEDULE_ID']))
 			{
-				return $this->showError(Loc::getMessage('TIMEMAN_ERROR_SCHEDULE_NOT_FOUND'));
+				$this->showError(Loc::getMessage('TIMEMAN_ERROR_SCHEDULE_NOT_FOUND'));
+				return;
 			}
 			$this->arResult['shiftForm'] = new ShiftForm();
 			/** @noinspection PhpVoidFunctionResultUsedInspection */
@@ -80,7 +83,8 @@ class TimemanScheduleShiftComponent extends BaseComponent
 			$shift = $this->shiftRepository->findByIdAndScheduleId($this->arResult['SHIFT_ID'], $this->arResult['SCHEDULE_ID']);
 			if (!$shift)
 			{
-				return $this->showError(Loc::getMessage('TIMEMAN_SHIFT_EDIT_ERROR_SHIFT_NOT_FOUND'));
+				$this->showError(Loc::getMessage('TIMEMAN_SHIFT_EDIT_ERROR_SHIFT_NOT_FOUND'));
+				return;
 			}
 		}
 

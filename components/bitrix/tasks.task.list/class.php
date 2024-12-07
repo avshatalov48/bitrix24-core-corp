@@ -41,6 +41,7 @@ use Bitrix\Tasks\Util\User;
 use Bitrix\Tasks\Access\Model\TaskModel;
 use Bitrix\Tasks\Access\TaskAccessController;
 use Bitrix\Tasks\Access\ActionDictionary;
+use Bitrix\Tasks\Helper\Analytics;
 
 Loc::loadMessages(__FILE__);
 
@@ -58,6 +59,7 @@ class TasksTaskListComponent extends TasksBaseComponent
 
 	protected $exportAs = false;
 	protected bool $exportAllColumns = false;
+	protected int $exportStep = 100;
 	protected $getChildRowsAction = false;
 	protected $pageSizes = array(
 		array("NAME" => "5", "VALUE" => "5"),
@@ -129,6 +131,25 @@ class TasksTaskListComponent extends TasksBaseComponent
 		$this->setUserId();
 		$this->errorCollection = new \Bitrix\Tasks\Util\Error\Collection();
 	}
+
+		public function executeComponent()
+		{
+			$result = parent::executeComponent();
+
+			if ($this->exportAs === 'EXCEL')
+			{
+				unset($this->listParameters['filter']['ONLY_ROOT_TASKS']);
+				$totalCount = Manager\Task::getCount($this->listParameters['filter'], $this->arParams['PROVIDER_PARAMETERS']);
+
+				$result = [
+					'PROCESSED_ITEMS' => count($this->arResult['LIST']),
+					'TOTAL_ITEMS' => $totalCount,
+					'LAST_EXPORTED_ID' => end($this->arResult['LIST'])['id'],
+				];
+			}
+
+			return $result;
+		}
 
 	protected function setUserId()
 	{
@@ -341,7 +362,7 @@ class TasksTaskListComponent extends TasksBaseComponent
 			'TARGET_USER_ID' => (int)$arParams['USER_ID']
 		];
 		$getListParameters = [
-			'select' => array_keys(\CTasks::getFieldsInfo()),
+			'select' => ['FLOW', ...array_keys(\CTasks::getFieldsInfo())],
 			'legacyFilter' => ['ID' => $taskIds],
 		];
 		$tasks = Manager\Task::getList(User::getId(), $getListParameters, $parameters)['DATA'];
@@ -573,15 +594,22 @@ class TasksTaskListComponent extends TasksBaseComponent
 			__checkForum($this->arParams["FORUM_ID"]);
 		}
 
-		$this->exportAs = (array_key_exists('EXPORT_AS', $_REQUEST) ? $_REQUEST['EXPORT_AS'] : false);
+		$request =\Bitrix\Main\Context::getCurrent()->getRequest();
+
+		$this->exportAs = ($request->get('EXPORT_AS') ? $request->get('EXPORT_AS') : false);
+
 		if ($this->exportAs !== false)
 		{
-			if (array_key_exists('COLUMNS', $_REQUEST) && $_REQUEST['COLUMNS'] === 'ALL')
+			$context =\Bitrix\Main\Context::getCurrent()->getRequest();
+
+			if ( $context->get('ALL_COLUMNS') === 'Y')
 			{
 				$this->exportAllColumns = true;
 			}
-			$this->arParams['USE_PAGINATION'] = false;
-			$this->arParams['PAGINATION_PAGE_SIZE'] = 0;
+			if ($context->get('EXPORT_STEP') !== null && $context->get('EXPORT_STEP') > $this->exportStep)
+			{
+				$this->exportStep = $context->get('EXPORT_STEP');
+			}
 		}
 		else
 		{
@@ -805,12 +833,18 @@ class TasksTaskListComponent extends TasksBaseComponent
 		}
 
 		if (
-			Loader::includeModule('socialnetwork')
-			&& isset($this->arParams['GROUP_ID'])
-			&& $this->arParams['GROUP_ID']
+			isset($this->arParams['GROUP_ID'])
+			&& (int)$this->arParams['GROUP_ID'] > 0
+			&& Loader::includeModule('socialnetwork')
 		)
 		{
 			SocialNetwork::setLogDestinationLast(['SG' => [$this->arParams['GROUP_ID']]]);
+
+			$this->arParams['CAN_SORT_STAGES'] = SocialNetwork\Group::can(
+				$this->arParams['GROUP_ID'],
+				SocialNetwork\Group::ACTION_SORT_TASKS,
+				$this->userId
+			);
 		}
 
 		$this->arResult['LAST_GROUP_ID'] = 0;
@@ -832,7 +866,7 @@ class TasksTaskListComponent extends TasksBaseComponent
 			return false;
 		}
 
-		$request = static::getRequest(true);
+		$request = static::getRequest();
 		$controls = $request->get('controls');
 		if (!$controls || !is_array($controls))
 		{
@@ -840,6 +874,8 @@ class TasksTaskListComponent extends TasksBaseComponent
 		}
 
 		$rows = $request->get('rows');
+		Main\Type\Collection::normalizeArrayValuesByInt($rows, false);
+
 		$action = $controls['action_button_'.$this->arParams['GRID_ID']];
 
 		$allTasks = array_key_exists('action_all_rows_'.$this->arParams['GRID_ID'], $controls) &&
@@ -1010,6 +1046,7 @@ class TasksTaskListComponent extends TasksBaseComponent
 		return $errors->checkNoFatals();
 	}
 
+
 	protected function doPostAction()
 	{
 		$this->arResult['DEFAULT_PRESET_KEY'] = $this->filter->getDefaultPresetKey();
@@ -1067,12 +1104,7 @@ class TasksTaskListComponent extends TasksBaseComponent
 
 			if ($showFirstGridTaskTour)
 			{
-				\Bitrix\Tasks\AnalyticLogger::logToFile(
-					'markShowedStep',
-					'firstGridTaskCreation',
-					'0',
-					'tourGuide'
-				);
+				Analytics::getInstance()->onFirstTaskGridCreation();
 			}
 
 			$this->arResult['tours']['firstGridTaskCreation'] = [
@@ -1132,13 +1164,18 @@ class TasksTaskListComponent extends TasksBaseComponent
 
 	protected function getSelect()
 	{
-		$columns = $this->grid->getVisibleColumns();
+		$columns = $this->grid->getVisibleColumns(false !== $this->exportAs);
 
 		if ($this->exportAs == false)
 		{
 			if ($this->needGroupBySubTasks())
 			{
 				$columns[] = 'PARENT_ID';
+			}
+
+			if (isset($this->arParams['GROUP_ID']))
+			{
+				$columns[] = 'STAGE_ID';
 			}
 
 			$preferredColumns = [
@@ -1161,7 +1198,7 @@ class TasksTaskListComponent extends TasksBaseComponent
 				'FAVORITE',
 				'IS_MUTED',
 				'IS_PINNED',
-				'IS_PINNED_IN_GROUP'
+				'IS_PINNED_IN_GROUP',
 			];
 
 			$columns = array_merge($columns, $preferredColumns, array_keys($this->getUF()));
@@ -1235,7 +1272,11 @@ class TasksTaskListComponent extends TasksBaseComponent
 			$gridSort = $this->grid->getOptions()->GetSorting($this->getDefaultSorting())['sort'];
 		}
 
-		if (isset($gridSort['SORTING']))
+		if ($this->exportAs)
+		{
+			$sortResult['ID'] = 'asc';
+		}
+		elseif (isset($gridSort['SORTING']))
 		{
 			$sortResult = ['SORTING' => 'asc'];
 		}
@@ -1407,10 +1448,7 @@ class TasksTaskListComponent extends TasksBaseComponent
 		$page = $this->getPageNum();
 		$this->savePageNumToStorage($page);
 
-		if (
-			$this->exportAs === false
-			&& $this->getChildRowsAction === false
-		)
+		if ($this->getChildRowsAction === false)
 		{
 			$getListParameters['NAV_PARAMS'] = [
 				'nPageSize' => $this->getPageSize(),
@@ -1458,10 +1496,7 @@ class TasksTaskListComponent extends TasksBaseComponent
 		}
 
 		$this->arResult['ENABLE_NEXT_PAGE'] = false;
-		if (
-			$this->exportAs === false
-			&& (count($mgrResult['DATA']) > $this->getPageSize())
-		)
+		if (count($mgrResult['DATA']) > $this->getPageSize())
 		{
 			$this->arResult['ENABLE_NEXT_PAGE'] = true;
 			$keys = array_keys($mgrResult['DATA']);
@@ -1735,7 +1770,6 @@ class TasksTaskListComponent extends TasksBaseComponent
 		{
 			return 1;
 		}
-
 		if(isset($this->arParams['PAGE_NUMBER']) || isset($_REQUEST['page']))
 		{
 			$pageNum = (int)(isset($this->arParams['PAGE_NUMBER']) ? $this->arParams['PAGE_NUMBER'] : $_REQUEST['page']);
@@ -1830,6 +1864,11 @@ class TasksTaskListComponent extends TasksBaseComponent
 
 	protected function getPageSize()
 	{
+		if ($this->exportAs)
+		{
+			return $this->exportStep;
+		}
+
 		$navParams = $this->grid->getOptions()->getNavParams(array('nPageSize' => 50));
 
 		return (int)$navParams['nPageSize'];
@@ -1899,6 +1938,7 @@ class TasksTaskListComponent extends TasksBaseComponent
 					}
 				}
 			}
+			unset($this->listParameters['filter']['PARENT_ID']);
 		}
 
 		return $subTasks;
@@ -1927,8 +1967,10 @@ class TasksTaskListComponent extends TasksBaseComponent
 					}
 					$this->arResult['LIST'] = $list;
 				}
+
+				$totalCount = Manager\Task::getCount($this->listParameters['filter'], $this->arParams['PROVIDER_PARAMETERS']);
+				$this->arResult['TOTAL_PAGES'] = (int) ceil($totalCount / $this->exportStep);
 				$this->IncludeComponentTemplate('export_' . mb_strtolower($this->exportAs));
-				parent::doFinalActions();
 			}
 			else
 			{
@@ -1972,7 +2014,7 @@ class TasksTaskListComponent extends TasksBaseComponent
 
 		while ($row = $auditorRows->fetchObject())
 		{
-			$tasks[$row->getTaskId()][$memberType][] = $row->getUser()->getName() . ' ' . $row->getUser()->getLastName();
+			$tasks[$row->getTaskId()][$memberType][] = $row->getUser()?->getName() . ' ' . $row->getUser()?->getLastName();
 		}
 
 		return $tasks;

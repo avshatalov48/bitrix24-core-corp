@@ -2,9 +2,11 @@
 
 IncludeModuleLangFile(__FILE__);
 
-use	Bitrix\Main;
-use	Bitrix\Main\Loader;
 use Bitrix\Crm\UserField\UserFieldHistory;
+use Bitrix\Iblock\UserField\Types\ElementType;
+use Bitrix\Iblock\UserField\Types\SectionType;
+use Bitrix\Main;
+use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 
 class CCrmFields
@@ -121,43 +123,43 @@ class CCrmFields
 
 	public static function GetEntityTypes()
 	{
-		$arEntityType = Array(
-			'CRM_LEAD' => array(
+		$arEntityType = [
+			'CRM_LEAD' => [
 				'ID' =>'CRM_LEAD',
-				'NAME' => GetMessage('CRM_FIELDS_LEAD'),
-				'DESC' => GetMessage('CRM_FIELDS_LEAD_DESC')
-			),
-			'CRM_CONTACT' => array(
+				'NAME' => Loc::getMessage('CRM_FIELDS_LEAD'),
+				'DESC' => Loc::getMessage('CRM_FIELDS_LEAD_DESC'),
+			],
+			'CRM_CONTACT' => [
 				'ID' =>'CRM_CONTACT',
-				'NAME' => GetMessage('CRM_FIELDS_CONTACT'),
-				'DESC' => GetMessage('CRM_FIELDS_CONTACT_DESC')
-			),
-			'CRM_COMPANY' => array(
+				'NAME' => Loc::getMessage('CRM_FIELDS_CONTACT'),
+				'DESC' => Loc::getMessage('CRM_FIELDS_CONTACT_DESC'),
+			],
+			'CRM_COMPANY' => [
 				'ID' =>'CRM_COMPANY',
-				'NAME' => GetMessage('CRM_FIELDS_COMPANY'),
-				'DESC' => GetMessage('CRM_FIELDS_COMPANY_DESC')
-			),
-			'CRM_DEAL'=> array(
+				'NAME' => Loc::getMessage('CRM_FIELDS_COMPANY'),
+				'DESC' => Loc::getMessage('CRM_FIELDS_COMPANY_DESC'),
+			],
+			'CRM_DEAL'=> [
 				'ID' =>'CRM_DEAL',
-				'NAME' => GetMessage('CRM_FIELDS_DEAL'),
-				'DESC' => GetMessage('CRM_FIELDS_DEAL_DESC')
-			),
-			'CRM_QUOTE'=> array(
+				'NAME' => Loc::getMessage('CRM_FIELDS_DEAL'),
+				'DESC' => Loc::getMessage('CRM_FIELDS_DEAL_DESC'),
+			],
+			'CRM_QUOTE'=> [
 				'ID' =>'CRM_QUOTE',
-				'NAME' => GetMessage('CRM_FIELDS_QUOTE_MSGVER_1'),
-				'DESC' => GetMessage('CRM_FIELDS_QUOTE_DESC_MSGVER_1')
-			),
-			'CRM_INVOICE'=> array(
+				'NAME' => Loc::getMessage('CRM_FIELDS_QUOTE_MSGVER_1'),
+				'DESC' => Loc::getMessage('CRM_FIELDS_QUOTE_DESC_MSGVER_1'),
+			],
+			'CRM_INVOICE'=> [
 				'ID' =>'CRM_INVOICE',
 				'NAME' => \CCrmOwnerType::GetDescription(\CCrmOwnerType::Invoice),
-				'DESC' => GetMessage('CRM_FIELDS_INVOICE_DESC')
-			),
-			'ORDER' => array(
+				'DESC' => Loc::getMessage('CRM_FIELDS_INVOICE_DESC'),
+			],
+			'ORDER' => [
 				'ID' => \Bitrix\Crm\Order\Manager::getUfId(),
-				'NAME' => GetMessage('CRM_FIELDS_ORDER'),
-				'DESC' => GetMessage('CRM_FIELDS_ORDER_DESC')
-			)
-		);
+				'NAME' => Loc::getMessage('CRM_FIELDS_ORDER'),
+				'DESC' => Loc::getMessage('CRM_FIELDS_ORDER_DESC'),
+			],
+		];
 
 		if (\Bitrix\Crm\Settings\InvoiceSettings::getCurrent()->isSmartInvoiceEnabled())
 		{
@@ -375,15 +377,29 @@ class CCrmFields
 				}
 				unset($arDefault);
 
-				$arFields[] = array(
+				$items = [];
+				if (
+					class_exists(SectionType::class)
+					&& method_exists(SectionType::class, 'canUseDialogAndUiViews')
+					&& SectionType::canUseDialogAndUiViews()
+				)
+				{
+					$items = [
+						'DIALOG' => Loc::getMessage('CRM_FIELDS_TYPE_IB_DISPLAY_DIALOG'),
+						'UI' => Loc::getMessage('CRM_FIELDS_TYPE_IB_DISPLAY_UI'),
+					];
+				}
+
+				$items['LIST'] = Loc::getMessage('CRM_FIELDS_TYPE_IB_DISPLAY_LIST');
+				$items['CHECKBOX'] = Loc::getMessage('CRM_FIELDS_TYPE_IB_DISPLAY_CHECKBOX');
+
+				$arFields[] = [
 					'id' => 'IB_DISPLAY',
-					'name' => GetMessage('CRM_FIELDS_TYPE_IB_DISPLAY'),
+					'name' => Loc::getMessage('CRM_FIELDS_TYPE_IB_DISPLAY'),
 					'type' => 'list',
-					'items' => array(
-						'LIST'		=> GetMessage('CRM_FIELDS_TYPE_IB_DISPLAY_LIST'),
-						'CHECKBOX' 	=> GetMessage('CRM_FIELDS_TYPE_IB_DISPLAY_CHECKBOX'),
-					),
-				);
+					'items' => $items,
+				];
+
 				$arFields[] = array(
 					'id' => 'IB_LIST_HEIGHT',
 					'name' => GetMessage('CRM_FIELDS_TYPE_IB_LIST_HEIGHT'),
@@ -451,15 +467,29 @@ class CCrmFields
 				}
 				unset($arDefault);
 
-				$arFields[] = array(
+				$items = [];
+				if (
+					class_exists(ElementType::class)
+					&& method_exists(ElementType::class, 'canUseDialogAndUiViews')
+					&& ElementType::canUseDialogAndUiViews()
+				)
+				{
+					$items = [
+						'DIALOG' => Loc::getMessage('CRM_FIELDS_TYPE_IB_DISPLAY_DIALOG'),
+						'UI' => Loc::getMessage('CRM_FIELDS_TYPE_IB_DISPLAY_UI'),
+					];
+				}
+
+				$items['LIST'] = Loc::getMessage('CRM_FIELDS_TYPE_IB_DISPLAY_LIST');
+				$items['CHECKBOX'] = Loc::getMessage('CRM_FIELDS_TYPE_IB_DISPLAY_CHECKBOX');
+
+				$arFields[] = [
 					'id' => 'IB_DISPLAY',
-					'name' => GetMessage('CRM_FIELDS_TYPE_IB_DISPLAY'),
+					'name' => Loc::getMessage('CRM_FIELDS_TYPE_IB_DISPLAY'),
 					'type' => 'list',
-					'items' => array(
-						'LIST'		=> GetMessage('CRM_FIELDS_TYPE_IB_DISPLAY_LIST'),
-						'CHECKBOX' 	=> GetMessage('CRM_FIELDS_TYPE_IB_DISPLAY_CHECKBOX'),
-					),
-				);
+					'items' => $items,
+				];
+
 				$arFields[] = array(
 					'id' => 'IB_LIST_HEIGHT',
 					'name' => GetMessage('CRM_FIELDS_TYPE_IB_LIST_HEIGHT'),
@@ -532,16 +562,12 @@ class CCrmFields
 	{
 		$obUserField = new CUserTypeEntity();
 		@set_time_limit(0);
-		$this->cdb->StartTransaction();
 		if (!$obUserField->Delete($ID))
 		{
-			$this->cdb->Rollback();
-
 			$this->SetError(array('id' => 'DELETE_ENTITY_ID', 'text' => GetMessage('CRM_FIELDS_ERROR_DELETE_ENTITY_ID')));
 
 			return false;
 		}
-		$this->cdb->Commit();
 
 		UserFieldHistory::processRemoval(CCrmOwnerType::ResolveIDByUFEntityID($this->sUFEntityID), $ID);
 

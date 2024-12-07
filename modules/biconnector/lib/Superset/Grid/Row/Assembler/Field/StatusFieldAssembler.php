@@ -2,7 +2,7 @@
 
 namespace Bitrix\BIConnector\Superset\Grid\Row\Assembler\Field;
 
-use Bitrix\BIConnector\DashboardTable;
+use Bitrix\BIConnector\Integration\Superset\Model\SupersetDashboard;
 use Bitrix\BIConnector\Integration\Superset\SupersetInitializer;
 use Bitrix\BIConnector\Superset\Grid\Settings\DashboardSettings;
 use Bitrix\BIConnector\Integration\Superset\Model\SupersetDashboardTable;
@@ -19,7 +19,7 @@ class StatusFieldAssembler extends FieldAssembler
 
 	protected function prepareColumn($value): string
 	{
-		if (SupersetInitializer::isSupersetFrozen())
+		if (SupersetInitializer::isSupersetLoading())
 		{
 			return self::getStatusLabelByStatusType(SupersetDashboardTable::DASHBOARD_STATUS_LOAD);
 		}
@@ -29,7 +29,7 @@ class StatusFieldAssembler extends FieldAssembler
 			return self::getStatusLabelByStatusType(self::DASHBOARD_STATUS_COMPUTED_NOT_LOAD);
 		}
 
-		if ($value['EDIT_URL'] === '' && $value['STATUS'] === SupersetDashboardTable::DASHBOARD_STATUS_READY)
+		if ($value['EDIT_URL'] === '' && in_array($value['STATUS'], SupersetDashboard::getActiveDashboardStatuses(), true))
 		{
 			return self::getStatusLabelByStatusType(self::DASHBOARD_STATUS_COMPUTED_NOT_FOUND);
 		}
@@ -56,6 +56,16 @@ class StatusFieldAssembler extends FieldAssembler
 				return <<<HTML
 				<div class="dashboard-status-label-wrapper">
 					<span class="ui-label ui-label-lightgreen ui-label-fill dashboard-status-label">
+						<span class="ui-label-inner">$status</span>
+					</span>
+				</div>
+				HTML;
+
+			case SupersetDashboardTable::DASHBOARD_STATUS_DRAFT:
+				$status = Loc::getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_STATUS_DRAFT');
+				return <<<HTML
+				<div class="dashboard-status-label-wrapper">
+					<span class="ui-label ui-label-default ui-label-fill dashboard-status-label">
 						<span class="ui-label-inner">$status</span>
 					</span>
 				</div>

@@ -169,6 +169,21 @@ class EmployeeSettings extends AbstractSettings
 			Option::set('intranet', 'BLOCK_NEW_USER_LF_SITE', 'Y', false, SITE_ID);
 		}
 
+		$allowCompanyPulseValue = Option::get('intranet', 'allow_company_pulse', 'Y');
+		if ($this->data['allow_company_pulse'] === 'N' && $allowCompanyPulseValue === 'Y')
+		{
+			Option::set('intranet', 'allow_company_pulse', "N");
+
+			\Bitrix\Intranet\UStat\UStat::disableEventHandler();
+		}
+		else if ($this->data['allow_company_pulse'] === 'Y' && $allowCompanyPulseValue === 'N')
+		{
+			Option::set('intranet', 'allow_company_pulse', "Y");
+			Option::set('intranet', 'check_limit_company_pulse', "N");
+
+			\Bitrix\Intranet\UStat\UStat::enableEventHandler();
+		}
+
 		return new Result();
 	}
 
@@ -261,6 +276,31 @@ class EmployeeSettings extends AbstractSettings
 			]
 		);
 
+		$allowCompanyPulseValue = Option::get('intranet', 'allow_company_pulse', null);
+		if (is_null($allowCompanyPulseValue))
+		{
+			Option::set('intranet', 'allow_company_pulse', "Y");
+			$allowCompanyPulseValue = "Y";
+		}
+		$url = "";
+		if (Loader::includeModule('ui'))
+		{
+			$url = \Bitrix\UI\Util::getArticleUrlByCode('6474093');
+		}
+
+		$data['allow_company_pulse'] = new Switcher(
+			'settings-employee-field-allow_company_pulse',
+			'allow_company_pulse',
+			Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_SHOW_MESSAGE_COMPANY_PULSE'),
+			$allowCompanyPulseValue,
+			[
+				'on' => Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_SHOW_WIDGET', [
+					'[helpdesklink]' => '<a class=\'more\' href=\'' . $url . '\'>',
+					'[/helpdesklink]' => '</a>'
+				])
+			],
+		);
+
 		$values = [];
 		$currentSite = Culture::getCurrentSite();
 		foreach (\CSite::GetNameTemplates() as $format => $name)
@@ -318,6 +358,13 @@ class EmployeeSettings extends AbstractSettings
 			false
 		);
 
+		$data['SECTION_ADDITIONAL'] = new Section(
+			'settings-employee-section-additional',
+			Loc::getMessage('INTRANET_SETTINGS_SECTION_TITLE_ADDITIONAL'),
+			'ui-icon-set --apps',
+			false
+		);
+
 		if (Loader::includeModule('location'))
 		{
 			$addressFormatList = [];
@@ -333,6 +380,9 @@ class EmployeeSettings extends AbstractSettings
 				];
 				$hintList[$format->getCode()] = $sanitizer->SanitizeHtml($format->getDescription());
 			}
+			usort($addressFormatList, function ($a, $b) {
+				return strcmp($a['name'], $b['name']);
+			});
 			$hintList['hintTitle'] = Loc::getMessage('INTRANET_SETTINGS_FIELD_HINT_TITLE_ADDRESS_FORMAT');
 			$data['fieldFormatAddress'] = new Selector(
 				'settings-employee-field-format_address',
@@ -373,6 +423,7 @@ class EmployeeSettings extends AbstractSettings
 		$index = [
 			'settings-employee-section-profile' => Loc::getMessage('INTRANET_SETTINGS_SECTION_TITLE_PROFILE'),
 			'settings-employee-section-invite' => Loc::getMessage('INTRANET_SETTINGS_SECTION_TITLE_INVITE'),
+			'settings-employee-section-additional' => Loc::getMessage('INTRANET_SETTINGS_SECTION_TITLE_ADDITIONAL'),
 		];
 		if ($this->isBitrix24)
 		{
@@ -392,6 +443,7 @@ class EmployeeSettings extends AbstractSettings
 			'show_fired_employees' => Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_SHOW_QUIT_EMPLOYEE'),
 			'general_chat_message_join' => Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_SHOW_MESSAGE_NEW_EMPLOYEE'),
 			'allow_new_user_lf' => Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_SHOW_MESSAGE_NEW_EMPLOYEE_LF'),
+			'allow_company_pulse' => Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_SHOW_MESSAGE_COMPANY_PULSE'),
 		]);
 
 		return $searchEngine->find($query);

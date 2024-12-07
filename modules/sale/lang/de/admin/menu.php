@@ -73,6 +73,7 @@ $MESS["SALE_LOCATION_REINDEX"] = "Suche neu indexieren";
 $MESS["SALE_LOCATION_REINDEX_DESCR"] = "Suche neu indexieren";
 $MESS["SALE_MASTER_CONVERTER_TEXT"] = "Onlineshop konvertieren";
 $MESS["SALE_MASTER_CONVERTER_TITLE"] = "Konvertieren";
+$MESS["SALE_MENU_AGENT_SCHEME"] = "Presets des Auftragnehmers";
 $MESS["SALE_MENU_CRM_SITE_MASTER"] = "Zu Bitrix24 wechseln";
 $MESS["SALE_MENU_CRM_SITE_MASTER_ITEM"] = "Installationsassistent von Bitrix24";
 $MESS["SALE_MENU_DELIVERY_REQUESTS"] = "Transportbestellungen";

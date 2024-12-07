@@ -372,10 +372,8 @@ final class Lead extends Service\Factory
 			Item::FIELD_NAME_IS_RETURN_CUSTOMER => [
 				'TYPE' => Field::TYPE_BOOLEAN,
 				'ATTRIBUTES' => [\CCrmFieldInfoAttr::ReadOnly, \CCrmFieldInfoAttr::NotDisplayed],
-				'CLASS' => Field\IsReturnCustomer::class,
-				'SETTINGS' => [
-					'isPrimarySource' => true,
-				],
+				// lead and deal have different logic for return customer
+				'CLASS' => Field\IsReturnCustomerForLead::class,
 			],
 			// it has similar logic to Item::FIELD_NAME_CLOSE_DATE, but they are not the same field.
 			Item\Lead::FIELD_NAME_DATE_CLOSED => [
@@ -506,6 +504,10 @@ final class Lead extends Service\Factory
 			)
 			->addAction(
 				Operation::ACTION_AFTER_SAVE,
+				new Operation\Action\Compatible\SocialNetwork\ProcessSendNotification\WhenAddingEntity(),
+			)
+			->addAction(
+				Operation::ACTION_AFTER_SAVE,
 				new Operation\Action\Compatible\SendEvent('OnAfterCrmLeadAdd'),
 			)
 			->addAction(
@@ -550,6 +552,10 @@ final class Lead extends Service\Factory
 			->addAction(
 				Operation::ACTION_AFTER_SAVE,
 				new Operation\Action\Compatible\SocialNetwork\ProcessUpdate(),
+			)
+			->addAction(
+				Operation::ACTION_AFTER_SAVE,
+				new Operation\Action\Compatible\SocialNetwork\ProcessSendNotification\WhenUpdatingEntity(),
 			)
 			->addAction(
 				Operation::ACTION_AFTER_SAVE,
@@ -641,6 +647,11 @@ final class Lead extends Service\Factory
 	}
 
 	public function isSmartActivityNotificationSupported(): bool
+	{
+		return true;
+	}
+
+	public function isCommunicationRoutingSupported(): bool
 	{
 		return true;
 	}

@@ -94,7 +94,7 @@ abstract class Common
 			return false;
 		}
 
-		return ToUpper(Main\HttpApplication::getConnection()->getType()) == ToUpper((string) $type);
+		return mb_strtoupper(Main\HttpApplication::getConnection()->getType()) == mb_strtoupper((string) $type);
 	}
 
 	public static function getDataTypeSql($type, $len = 0)
@@ -284,7 +284,7 @@ abstract class Common
 	 *
 	 * todo: refactor this, get rid of 'if condition'
 	 */
-	public static function insertBatch($tableName, array $items)
+	public static function insertBatch($tableName, array $items, bool $ignore = false)
 	{
 		$connection = Application::getConnection();
 		$sqlHelper = $connection->getSqlHelper();
@@ -298,15 +298,34 @@ abstract class Common
 			$query .= ($query? ', ' : ' ') . '(' . $values . ')';
 			if(mb_strlen($query) > 2048)
 			{
-				$connection->queryExecute("INSERT INTO {$tableName} ({$prefix}) VALUES {$query}");
+				$sqlQuery = "INSERT INTO {$tableName} ({$prefix}) VALUES {$query}";
+				if ($ignore)
+				{
+					$sqlQuery = $sqlHelper->getInsertIgnore(
+						$tableName,
+						" ({$prefix})",
+						" VALUES {$query}"
+					);
+				}
+				$connection->queryExecute($sqlQuery);
 				$query = '';
 			}
 		}
 		unset($item);
 
+		$sqlQuery = "INSERT INTO {$tableName} ({$prefix}) VALUES {$query}";
+		if ($ignore)
+		{
+			$sqlQuery = $sqlHelper->getInsertIgnore(
+				$tableName,
+				" ({$prefix})",
+				" VALUES {$query}"
+			);
+		}
+
 		if ($query && $prefix)
 		{
-			$connection->queryExecute("INSERT INTO {$tableName} ({$prefix}) VALUES {$query}");
+			$connection->queryExecute($sqlQuery);
 		}
 	}
 
@@ -340,7 +359,7 @@ abstract class Common
 
 	protected static function getIndexName($tableName, $ixNamePostfix, $columns = array())
 	{
-		return 'IX_'.preg_replace('#^B_#', '', ToUpper($tableName))."_".ToUpper($ixNamePostfix);
+		return 'IX_'.preg_replace('#^B_#', '', mb_strtoupper($tableName))."_".mb_strtoupper($ixNamePostfix);
 	}
 
 	protected static function escapeArray($columns)

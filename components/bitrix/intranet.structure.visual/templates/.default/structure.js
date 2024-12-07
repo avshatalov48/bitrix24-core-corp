@@ -319,7 +319,7 @@ BX.IntranetVSBlock.prototype.showEmployees = function()
 			autoHide: true,
 			lightShadow: true,
 			content: data,
-			offsetLeft: 50,
+			offsetLeft: BX.proxy_context?.offsetWidth ? BX.proxy_context.offsetWidth / 2 : 95,
 			angle : true
 		});
 	}

@@ -15,7 +15,12 @@ class LimitManagerBox extends LimitManager
 	 */
 	public function fixLimit(int $rowsCount): bool
 	{
-		return false;
+		if (!$this->isSuperset())
+		{
+			return false;
+		}
+
+		return parent::fixLimit($rowsCount);
 	}
 
 	/**
@@ -26,7 +31,20 @@ class LimitManagerBox extends LimitManager
 	 */
 	public function getLimit()
 	{
+		if ($this->isSuperset())
+		{
+			return 10000000;
+		}
+
 		return 0;
+	}
+
+	public function isLimitByLicence(): bool
+	{
+		$expireDate = $this->getLimitDate();
+		$daysLeft = $expireDate->getDiff(new \Bitrix\Main\Type\Date())->days;
+
+		return $daysLeft < self::GRACE_PERIOD_DAYS;
 	}
 
 	/**
@@ -58,6 +76,11 @@ class LimitManagerBox extends LimitManager
 	 */
 	public function checkLimitWarning()
 	{
+		if ($this->isSuperset() && !$this->isLimitByLicence())
+		{
+			return $this->getFirstOverLimitDate() === null;
+		}
+
 		$expireDate = $this->getLimitDate();
 		$daysLeft = $expireDate->getDiff(new \Bitrix\Main\Type\Date())->days;
 
@@ -71,6 +94,11 @@ class LimitManagerBox extends LimitManager
 	 */
 	public function checkLimit()
 	{
+		if ($this->isSuperset() && !$this->isLimitByLicence())
+		{
+			return !$this->isDataConnectionDisabled();
+		}
+
 		$expireDate = $this->getLimitDate();
 		$daysLeft = $expireDate->getDiff(new \Bitrix\Main\Type\Date())->d;
 

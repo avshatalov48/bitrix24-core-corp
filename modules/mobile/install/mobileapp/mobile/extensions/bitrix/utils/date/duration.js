@@ -8,7 +8,7 @@ jn.define('utils/date/duration', (require, exports, module) => {
 	const MINUTE_LENGTH = 60000;
 	const HOUR_LENGTH = 3_600_000;
 	const DAY_LENGTH = 86_400_000;
-	const MONTH_LENGTH = 2_592_000_000;
+	const MONTH_LENGTH = 2_678_400_000;
 	const YEAR_LENGTH = 31_536_000_000;
 
 	/**
@@ -78,7 +78,7 @@ jn.define('utils/date/duration', (require, exports, module) => {
 		}
 
 		/**
-		 * Duration in months (considering that a month is 30 days)
+		 * Duration in months (considering that a month is 31 days)
 		 * @return {number}
 		 */
 		get months()
@@ -154,7 +154,7 @@ jn.define('utils/date/duration', (require, exports, module) => {
 				s: this.seconds % 60,
 				i: this.minutes % 60,
 				H: this.hours % 24,
-				d: this.days % 30,
+				d: this.days % 31,
 				m: this.months % 12,
 				Y: this.years,
 			};

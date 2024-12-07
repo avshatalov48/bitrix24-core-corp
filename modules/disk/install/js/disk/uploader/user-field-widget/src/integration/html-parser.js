@@ -1,5 +1,6 @@
 import { Text, Runtime } from 'main.core';
 import { EventEmitter } from 'main.core.events';
+import { UploaderFile } from 'ui.uploader.core';
 
 import type { TileWidgetItem } from 'ui.uploader.tile-widget';
 import type MainPostForm from './main-post-form';
@@ -41,14 +42,14 @@ export default class HtmlParser
 		return this.#form.getHtmlEditor();
 	}
 
-	insertFile(item: TileWidgetItem): void
+	insertFile(file: UploaderFile): void
 	{
-		const bbDelimiter: string = item.isImage ? '\n' : ' ';
-		const htmlDelimiter: string = item.isImage ? '<br>' : '&nbsp;';
+		const bbDelimiter: string = file.isImage() ? '\n' : ' ';
+		const htmlDelimiter: string = file.isImage() ? '<br>' : '&nbsp;';
 
 		EventEmitter.emit(this.getHtmlEditor(), 'OnInsertContent', [
-			bbDelimiter + this.createItemBBCode(item) + bbDelimiter,
-			htmlDelimiter + this.createItemHtml(item) + htmlDelimiter,
+			bbDelimiter + this.createItemBBCode(file) + bbDelimiter,
+			htmlDelimiter + this.createItemHtml(file) + htmlDelimiter,
 		]);
 
 		this.syncHighlights();
@@ -95,14 +96,14 @@ export default class HtmlParser
 		this.syncHighlights();
 	}
 
-	selectItem(item: TileWidgetItem): void
+	selectItem(file: UploaderFile): void
 	{
-		item.tileWidgetData.selected = true;
+		file.setCustomData('tileSelected', true);
 	}
 
-	deselectItem(item: TileWidgetItem): void
+	deselectItem(file: UploaderFile): void
 	{
-		item.tileWidgetData.selected = false;
+		file.setCustomData('tileSelected', false);
 	}
 
 	syncHighlights(): void
@@ -119,16 +120,16 @@ export default class HtmlParser
 
 		let hasInsertedItems = false;
 
-		const items: TileWidgetItem[] = this.#form.getUserFieldControl().getItems();
-		items.forEach((item: TileWidgetItem): void => {
-			if (inserted.has(item.serverFileId))
+		const files: UploaderFile[] = this.#form.getUserFieldControl().getFiles();
+		files.forEach((file: UploaderFile): void => {
+			if (inserted.has(file.getServerFileId()))
 			{
 				hasInsertedItems = true;
-				this.selectItem(item);
+				this.selectItem(file);
 			}
 			else
 			{
-				this.deselectItem(item);
+				this.deselectItem(file);
 			}
 		});
 
@@ -138,20 +139,20 @@ export default class HtmlParser
 		}
 	}
 
-	createItemHtml(item: TileWidgetItem, id: string): string
+	createItemHtml(file: UploaderFile, id: string): string
 	{
 		const tagId = this.getHtmlEditor().SetBxTag(false, {
 			tag: this.#parserId,
-			serverFileId: item.serverFileId,
+			serverFileId: file.getServerFileId(),
 			hideContextMenu: true,
-			fileId: item.serverFileId,
+			fileId: file.getServerFileId(),
 		});
 
-		if (item.isImage)
+		if (file.isImage())
 		{
-			const imageSrc = this.getHtmlEditor().bbCode ? item.previewUrl : item.serverPreviewUrl;
-			const previewWidth = this.getHtmlEditor().bbCode ? item.previewWidth : item.serverPreviewWidth;
-			const previewHeight = this.getHtmlEditor().bbCode ? item.previewHeight : item.serverPreviewHeight;
+			const imageSrc = this.getHtmlEditor().bbCode ? file.getPreviewUrl() : file.getServerPreviewUrl();
+			const previewWidth = this.getHtmlEditor().bbCode ? file.getPreviewWidth() : file.getServerPreviewWidth();
+			const previewHeight = this.getHtmlEditor().bbCode ? file.getPreviewHeight() : file.getServerPreviewHeight();
 
 			const renderWidth = 600; // half size of imagePreviewWidth
 			const renderHeight = 600; // half size of imagePreviewHeight
@@ -163,19 +164,19 @@ export default class HtmlParser
 			const width = useOriginalSize ? previewWidth : previewWidth * ratio;
 			const height = useOriginalSize ? previewHeight : previewHeight * ratio;
 
-			return `<img style="max-width: 90%;" width="${width}" height="${height}" data-bx-file-id="${Text.encode(item.serverFileId)}" id="${tagId}" src="${imageSrc}" title="${Text.encode(item.name)}" data-bx-paste-check="Y" />`;
+			return `<img style="max-width: 90%;" width="${width}" height="${height}" data-bx-file-id="${Text.encode(file.getServerFileId())}" id="${tagId}" src="${imageSrc}" title="${Text.encode(file.getName())}" data-bx-paste-check="Y" />`;
 		}
-		else if (item.customData.fileType === 'player')
+		else if (file.getCustomData('fileType') === 'player')
 		{
-			return `<img contenteditable="false" class="bxhtmled-player-surrogate" data-bx-file-id="${Text.encode(item.serverFileId)}" id="${tagId}" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-bx-paste-check="Y" />`;
+			return `<img contenteditable="false" class="bxhtmled-player-surrogate" data-bx-file-id="${Text.encode(file.getServerFileId())}" id="${tagId}" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-bx-paste-check="Y" />`;
 		}
 
-		return `<span contenteditable="false" data-bx-file-id="${Text.encode(item.serverFileId)}" id="${tagId}" style="color: #2067B0; border-bottom: 1px dashed #2067B0; margin:0 2px;">${Text.encode(item.name)}</span>`;
+		return `<span contenteditable="false" data-bx-file-id="${Text.encode(file.getServerFileId())}" id="${tagId}" style="color: #2067B0; border-bottom: 1px dashed #2067B0; margin:0 2px;">${Text.encode(file.getName())}</span>`;
 	}
 
-	createItemBBCode(item: TileWidgetItem): string
+	createItemBBCode(file: UploaderFile): string
 	{
-		return this.#tag.replace('#id#', item.serverFileId);
+		return this.#tag.replace('#id#', file.getServerFileId());
 	}
 
 	#init(htmlEditor): void
@@ -197,20 +198,20 @@ export default class HtmlParser
 			(str, id): string => {
 				const { objectId, attachedId } = this.#getIds(id);
 
-				const items: TileWidgetItem[] = this.#form.getUserFieldControl().getItems();
-				const item: TileWidgetItem = items.find((item: TileWidgetItem) => {
-					return item.serverFileId === attachedId || item.customData.objectId === objectId;
+				const files: UploaderFile[] = this.#form.getUserFieldControl().getFiles();
+				const insertedFile: UploaderFile = files.find((file: UploaderFile) => {
+					return file.getServerFileId() === attachedId || file.getCustomData('objectId') === objectId;
 				});
 
-				if (item)
+				if (insertedFile)
 				{
-					this.selectItem(item);
+					this.selectItem(insertedFile);
 
-					return this.createItemHtml(item, id);
+					return this.createItemHtml(insertedFile, id);
 				}
 
 				return str;
-			}
+			},
 		);
 	}
 
@@ -218,14 +219,14 @@ export default class HtmlParser
 	{
 		const { serverFileId } = bxTag;
 
-		const items: TileWidgetItem[] = this.#form.getUserFieldControl().getItems();
-		const item: TileWidgetItem = items.find((item: TileWidgetItem): boolean => {
-			return item.serverFileId === serverFileId;
+		const files: UploaderFile[] = this.#form.getUserFieldControl().getFiles();
+		const uploaderFile: UploaderFile = files.find((file: UploaderFile): boolean => {
+			return file.getServerFileId() === serverFileId;
 		});
 
-		if (item)
+		if (uploaderFile)
 		{
-			return this.createItemBBCode(item);
+			return this.createItemBBCode(uploaderFile);
 		}
 
 		return '';

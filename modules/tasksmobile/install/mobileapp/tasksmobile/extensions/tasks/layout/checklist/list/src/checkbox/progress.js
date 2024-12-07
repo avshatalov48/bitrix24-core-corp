@@ -2,7 +2,7 @@
  * @module tasks/layout/checklist/list/src/checkbox/checkbox-counter/progress
  */
 jn.define('tasks/layout/checklist/list/src/checkbox/checkbox-counter/progress', (require, exports, module) => {
-	const AppTheme = require('apptheme');
+	const { Color } = require('tokens');
 	const { PureComponent } = require('layout/pure-component');
 	const { CHECKBOX_SIZE } = require('tasks/layout/checklist/list/src/constants');
 
@@ -101,14 +101,14 @@ jn.define('tasks/layout/checklist/list/src/checkbox/checkbox-counter/progress', 
 					params: {
 						type: 'circle',
 						currentPercent: calculateCurrentPercent,
-						color: AppTheme.colors.accentExtraDarkblue,
+						color: Color.accentExtraDarkblue.toHex(),
 					},
 					style: {
 						width: CHECKBOX_SIZE,
 						height: CHECKBOX_SIZE,
 						justifyContent: 'center',
 						alignItems: 'center',
-						backgroundColor: AppTheme.colors.base5,
+						backgroundColor: Color.base5.toHex(),
 					},
 					onClick: this.handleOnClick,
 				},
@@ -121,7 +121,7 @@ jn.define('tasks/layout/checklist/list/src/checkbox/checkbox-counter/progress', 
 							justifyContent: 'center',
 							alignItems: 'center',
 							borderRadius: 10,
-							backgroundColor: AppTheme.colors.bgContentPrimary,
+							backgroundColor: Color.bgContentPrimary.toHex(),
 						},
 					},
 				),

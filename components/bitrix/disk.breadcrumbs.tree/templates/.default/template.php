@@ -20,7 +20,7 @@ $firstObject = array_shift($arResult['BREADCRUMBS']);
 
 
 
-<script type="text/javascript">
+<script>
 		BX.Disk['BreadcrumbsTreeClass_<?= $component->getComponentId() ?>'] = new BX.Disk.BreadcrumbsTreeClass({
 			storageBaseUrl: '<?= CUtil::JSUrlEscape($arResult['STORAGE']['LINK']) ?>',
 			rootObject: {

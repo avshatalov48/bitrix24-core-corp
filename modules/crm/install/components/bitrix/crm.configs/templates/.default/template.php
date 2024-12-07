@@ -415,7 +415,7 @@ foreach($tabs as $tabId => $tabName)
 </div>
 </div>
 
-<script type="text/javascript">
+<script>
 	BX(function () {
 		BX.Crm.Page.initialize();
 

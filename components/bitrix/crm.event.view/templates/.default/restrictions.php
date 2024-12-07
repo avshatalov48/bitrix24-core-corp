@@ -45,7 +45,7 @@ if($arResult['ENABLE_CONTROL_PANEL'])
 
 if (!(isset($arResult['INTERNAL']) && $arResult['INTERNAL'])):
 ?>
-<script type="text/javascript">
+<script>
 	BX.ready(function() {
 		<?php echo RestrictionManager::getHistoryViewRestriction()->prepareInfoHelperScript() . ';'; ?>
 		var slider = top.BX && top.BX.SidePanel && top.BX.SidePanel.Instance.getSliderByWindow(window);

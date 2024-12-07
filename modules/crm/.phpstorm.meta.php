@@ -20,6 +20,7 @@ namespace PHPSTORM_META
 		'crm.service.converter.type',
 		'crm.service.converter.productRow',
 		'crm.service.converter.category',
+		'crm.service.converter.automatedSolution',
 		'crm.service.broker.user',
 		'crm.service.broker.enumeration',
 		'crm.service.broker.file',
@@ -110,6 +111,7 @@ namespace PHPSTORM_META
 		'crm.service.converter.type' => \Bitrix\Crm\Service\Converter\Type::class,
 		'crm.service.converter.productRow' => \Bitrix\Crm\Service\Converter\ProductRow::class,
 		'crm.service.converter.category' => \Bitrix\Crm\Service\Converter\Category::class,
+		'crm.service.converter.automatedSolution' => \Bitrix\Crm\Service\Converter\AutomatedSolution::class,
 		'crm.service.broker.user' => \Bitrix\Crm\Service\Broker\User::class,
 		'crm.service.broker.enumeration' => \Bitrix\Crm\Service\Broker\Enumeration::class,
 		'crm.service.broker.file' => \Bitrix\Crm\Service\Broker\File::class,
@@ -176,5 +178,7 @@ namespace PHPSTORM_META
 		'crm.integration.sign' => \Bitrix\Crm\Service\Integration\Sign::class,
 		'crm.activity.actcounterlighttimerepo' => \Bitrix\Crm\Activity\LightCounter\ActCounterLightTimeRepo::class,
 		'crm.summary.summaryFactory' => \Bitrix\Crm\Summary\SummaryFactory::class,
+		'crm.binding.clientBinder' => \Bitrix\Crm\Binding\ClientBinder::class,
+		'crm.service.communication.rankingFactory' => \Bitrix\Crm\Service\Communication\Search\Ranking\RankingFactory::class,
 	]));
 }

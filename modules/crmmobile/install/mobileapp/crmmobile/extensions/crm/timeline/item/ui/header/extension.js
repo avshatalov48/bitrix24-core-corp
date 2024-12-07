@@ -240,6 +240,7 @@ jn.define('crm/timeline/item/ui/header', (require, exports, module) => {
 				return null;
 			}
 
+			const { analyticsEvent } = this.props;
 			const { type, action, disableIfReadonly } = this.props.changeStreamButton;
 
 			const props = {
@@ -261,7 +262,7 @@ jn.define('crm/timeline/item/ui/header', (require, exports, module) => {
 
 				() => {
 					this.sharedStorage.set(`${this.props.activityType}_showConfirm`, 'N');
-					this.onAction(action);
+					this.onAction(action, analyticsEvent);
 				},
 			);
 
@@ -270,7 +271,7 @@ jn.define('crm/timeline/item/ui/header', (require, exports, module) => {
 
 				if (this.sharedStorage.get(`${this.props.activityType}_showConfirm`) === 'N')
 				{
-					this.onAction(action);
+					this.onAction(action, analyticsEvent);
 				}
 				else
 				{
@@ -321,12 +322,34 @@ jn.define('crm/timeline/item/ui/header', (require, exports, module) => {
 			);
 		}
 
-		onAction(action)
+		onAction(action, analyticsEvent = null)
 		{
-			if (action && this.props.onAction)
+			if (!(action && this.props.onAction))
 			{
-				this.props.onAction(action);
+				return;
 			}
+
+			let result = this.props.onAction(action);
+			if (!(result instanceof Promise))
+			{
+				result = Promise.resolve();
+			}
+
+			if (!analyticsEvent)
+			{
+				return;
+			}
+
+			result
+				.then(() => {
+					analyticsEvent.setStatus('success');
+				})
+				.catch(() => {
+					analyticsEvent.setStatus('error');
+				})
+				.finally(() => {
+					analyticsEvent.send();
+				});
 		}
 	}
 

@@ -17,7 +17,7 @@ $APPLICATION->IncludeComponent("bitrix:ui.tile.list", "", [
 
 ?>
 
-<script type="text/javascript">
+<script>
 	BX.message({
 		'INTRANET_AI_CENTER_ML_REQUIRED': '<?= GetMessageJS('INTRANET_AI_CENTER_ML_REQUIRED')?>'
 	});

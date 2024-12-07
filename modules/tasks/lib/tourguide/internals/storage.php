@@ -2,7 +2,7 @@
 
 namespace Bitrix\Tasks\TourGuide\Internals;
 
-use Bitrix\Tasks\TourGuide;
+use Bitrix\Tasks\TourGuide\TourGuide;
 
 class Storage
 {

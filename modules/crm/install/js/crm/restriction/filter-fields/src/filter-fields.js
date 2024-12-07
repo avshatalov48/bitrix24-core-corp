@@ -8,6 +8,7 @@ export class FilterFieldsRestriction
 		this.options = options;
 		this.bindAddFilterItemEvent();
 		this.bindGridSortEvent();
+		this.bindCheckboxListOptionClick();
 	}
 
 	bindAddFilterItemEvent()
@@ -33,17 +34,6 @@ export class FilterFieldsRestriction
 						}
 					},
 				);
-				filter.getEmitter().subscribe(
-					'onBeforeAddFilterItem',
-					(event) => {
-						const eventData = event.getData();
-						if (eventData.hasOwnProperty('NAME') && this.isRestrictedFilterField(eventData.NAME))
-						{
-							event.preventDefault();
-							this.callRestrictionCallback();
-						}
-					}
-				);
 			}
 		}
 	}
@@ -62,9 +52,36 @@ export class FilterFieldsRestriction
 						event.preventDefault();
 						this.callRestrictionCallback();
 					}
-				}
+				},
 			);
 		}
+	}
+
+	bindCheckboxListOptionClick(): void
+	{
+		Event.EventEmitter.subscribe(
+			'ui:checkbox-list:check-option',
+			(event) => {
+				const { id, context } = event.getData();
+
+				if (!Type.isPlainObject(context) || !Type.isStringFilled(context.parentType))
+				{
+					return;
+				}
+
+				if (context.parentType === 'filter' && this.isRestrictedFilterField(id))
+				{
+					event.preventDefault();
+					this.callRestrictionCallback();
+				}
+
+				if (context.parentType === 'grid' && this.isRestrictedGridField(id))
+				{
+					event.preventDefault();
+					this.callRestrictionCallback();
+				}
+			},
+		);
 	}
 
 	isRestrictedFilterField(fieldName: string): boolean

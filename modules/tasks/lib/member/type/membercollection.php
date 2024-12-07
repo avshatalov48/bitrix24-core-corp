@@ -50,6 +50,16 @@ class MemberCollection implements IteratorAggregate, Arrayable
 		return $this;
 	}
 
+	public function merge(self $collection): static
+	{
+		foreach ($collection as $item)
+		{
+			$this->add($item);
+		}
+
+		return $this;
+	}
+
 	public function pop(): ?Member
 	{
 		return array_pop($this->items);

@@ -14,7 +14,7 @@ class Sign extends Tool
 
 	public function getName(): string
 	{
-		return Loc::getMessage('INTRANET_SETTINGS_TOOLS_SIGN_MAIN') ?? '';
+		return Loc::getMessage('INTRANET_SETTINGS_TOOLS_SIGN_MAIN_MSGVER_1') ?? '';
 	}
 
 	public function isAvailable(): bool
@@ -45,5 +45,10 @@ class Sign extends Tool
 	public function getSettingsPath(): ?string
 	{
 		return '/sign/config/permission/';
+	}
+
+	public function getAdditionalMenuItemIds(): array
+	{
+		return ['menu_sign_b2e'];
 	}
 }

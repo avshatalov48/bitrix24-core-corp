@@ -2,8 +2,8 @@
  * @module im/messenger/lib/params
  */
 jn.define('im/messenger/lib/params', (require, exports, module) => {
-
 	const { Loc } = require('loc');
+	const { ComponentCode } = require('im/messenger/const');
 
 	/**
 	 * @class MessengerParams
@@ -42,6 +42,23 @@ jn.define('im/messenger/lib/params', (require, exports, module) => {
 		getGeneralChatId()
 		{
 			return Number(this.get('IM_GENERAL_CHAT_ID', 0));
+		}
+
+		/**
+		 * @return {string}
+		 */
+		getMessengerTitle()
+		{
+			return this.get('MESSAGES', { COMPONENT_TITLE: '' }).COMPONENT_TITLE;
+		}
+
+		/**
+		 *
+		 * @return {string || ''}
+		 */
+		getComponentCode()
+		{
+			return this.get('COMPONENT_CODE', '');
 		}
 
 		setGeneralChatId(id)
@@ -89,9 +106,62 @@ jn.define('im/messenger/lib/params', (require, exports, module) => {
 			return this.get('HAS_ACTIVE_CLOUD_STORAGE_BUCKET', false);
 		}
 
-		isCopilotAddUsersEnabled()
+		/**
+		 * @return boolean
+		 */
+		canUseTelephony()
 		{
-			return this.get('IS_COPILOT_ADD_USERS', false);
+			return this.get('CAN_USE_TELEPHONY', false);
+		}
+
+		/**
+		* @return {PlanLimits}
+		*/
+		getPlanLimits()
+		{
+			return this.get('PLAN_LIMITS', {});
+		}
+
+		/**
+		 * @param {PlanLimits} limits
+		* @return void
+		*/
+		setPlanLimits(limits)
+		{
+			this.set('PLAN_LIMITS', limits);
+		}
+
+		/**
+		 * @return {boolean}
+		 */
+		isFullChatHistoryAvailable()
+		{
+			const limits = this.getPlanLimits();
+			const componentCode = this.getComponentCode();
+			if (componentCode !== ComponentCode.imChannelMessenger && limits?.fullChatHistory)
+			{
+				return limits?.fullChatHistory?.isAvailable;
+			}
+
+			return true;
+		}
+
+		isLinksMigrated()
+		{
+			return this.get('IS_LINKS_MIGRATED', false);
+		}
+
+		isFilesMigrated()
+		{
+			return this.get('IS_FILES_MIGRATED', false);
+		}
+
+		isCollabAvailable()
+		{
+			// TODO implement collab flag support
+			return false;
+
+			return this.get('IS_COLLAB_AVAILABLE', false);
 		}
 	}
 

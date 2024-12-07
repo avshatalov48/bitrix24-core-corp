@@ -7,6 +7,12 @@ BX.Tasks.GridActions = {
 	defaultPresetId: '',
 	getTotalCountProceed: false,
 	currentGroupAction: null,
+	restrictions: {
+		project: {
+			limitExceeded: false,
+			limitFeatureId: '',
+		}
+	},
 
 	checkCanMove: function()
 	{
@@ -292,6 +298,10 @@ BX.Tasks.GridActions = {
 			entities: [
 				{
 					id: 'project',
+					options: {
+						lockProjectLink: this.restrictions.project.limitExceeded,
+						lockProjectLinkFeatureId: this.restrictions.project.limitFeatureId,
+					},
 				},
 			],
 			events: {
@@ -1125,6 +1135,102 @@ BX.Tasks.GridActions = {
 			});
 		}
 	},
+
+	onStageSwitch: function(taskId, stageId, color)
+	{
+		const row = BX.Main.gridManager.getById(this.gridId).instance.getRows().getById(taskId);
+		const stageIdCell = row.getCellById('STAGE_ID');
+
+		if (!stageIdCell)
+		{
+			return;
+		}
+
+		const stagesContainer = stageIdCell.querySelector('.tasks-grid-stage-container');
+		if (!stagesContainer)
+		{
+			return;
+		}
+
+		if (this.isCurrentStageSelected(stagesContainer, stageId))
+		{
+			return;
+		}
+
+		let applyCurrent = true;
+		let title = '';
+		for (const stageElement of stagesContainer.children)
+		{
+			const stageElementId = parseInt(stageElement.dataset.stageId);
+
+			if (applyCurrent)
+			{
+				stageElement.style.backgroundColor = color;
+			}
+			else
+			{
+				stageElement.style.backgroundColor = '';
+			}
+
+			stageElement.dataset.selected = 'N';
+
+			if (stageElementId === parseInt(stageId))
+			{
+				applyCurrent = false;
+				title = stageElement.title;
+				stageElement.dataset.selected = 'Y';
+			}
+		}
+
+		if (title !== '')
+		{
+			const titleElement = stageIdCell.querySelector('.tasks-grid-stage-title');
+
+			if (titleElement)
+			{
+				titleElement.innerHTML = title;
+			}
+		}
+
+		this.saveStage(taskId, stageId);
+	},
+
+	isCurrentStageSelected: function(stagesContainer, stageId)
+	{
+		for (const stageElement of stagesContainer.children)
+		{
+			const selected = stageElement.dataset.selected;
+			const currentStageId = parseInt(stageElement.dataset.stageId);
+
+			if (currentStageId === stageId && selected === 'Y')
+			{
+				return true;
+			}
+		}
+
+		return false;
+	},
+
+	saveStage: function(taskId, stageId)
+	{
+		return BX.ajax.runComponentAction('bitrix:tasks.task', 'moveStage', {
+			mode: 'class',
+			data: {
+				taskId,
+				stageId
+			}
+		}).then((response) => {
+			if (response && response.errors && response.errors.length === 0)
+			{
+				BX.Tasks.Util.fireGlobalTaskEvent(
+					"UPDATE_STAGE",
+					{ID: taskId, STAGE_ID: stageId},
+					{STAY_AT_PAGE: true},
+					{id: taskId}
+				);
+			}
+		})
+	}
 };
 
 BX(function() {
@@ -1149,21 +1255,6 @@ BX(function() {
 		this.taskList = new Map();
 		this.comments = new Map();
 
-		this.queue = {
-			pull: new BX.Tasks.Runtime.DebouncedQueue({
-				timeout: 1000,
-				events: {
-					onCommitAsync: (event) => BX.Tasks.ControllerTask.getRepositoryByCollectionPushEventsAsync(event.getData().poolItems, this)
-				}
-			}),
-			event: new BX.Tasks.Runtime.DebouncedQueue({
-				timeout: 10,
-				events: {
-					onCommitAsync: (event) => BX.Tasks.ControllerTask.emitByCollectionEventImitterEventsAsync(event.getData().poolItems)
-				}
-			})
-		};
-
 		this.actions = {
 			taskAdd: 'taskAdd',
 			taskUpdate: 'taskUpdate',
@@ -1185,6 +1276,7 @@ BX(function() {
 
 	BX.Tasks.Grid.prototype = {
 		init: function(options) {
+			this.subscribeToPull();
 			this.bindEvents();
 			this.fillTaskListItems(options.taskList);
 			this.colorPinnedRows();
@@ -1196,14 +1288,87 @@ BX(function() {
 			}
 		},
 
-		bindEvents: function() {
-			var eventHandlers = {
-				comment_read_all: this.onPullCommentReadAll,
-				project_read_all: this.onPullProjectReadAll,
-				tag_changed: this.onPullTagChanged,
-			};
+		subscribeToPull()
+		{
+			new BX.Pull.QueueManager({
+				moduleId: 'tasks',
+				userId: this.ownerId,
+				additionalData: {},
+				events: {
+					onBeforePull: (event) => {
+						const { pullData: { command, params } } = event.data;
 
-			var eventHandlersToPool = {
+						const pullHandlers = {
+							comment_read_all: this.onPullCommentReadAll,
+							project_read_all: this.onPullProjectReadAll,
+							tag_changed: this.onPullTagChanged,
+						};
+						if (pullHandlers[command])
+						{
+							pullHandlers[command].apply(this, [params]);
+						}
+					},
+					onPull: (event) => {
+						const { pullData: { command, params }, promises } = event.data;
+
+						const taskId = (new BX.Tasks.ControllerTaskEvent()).resolveIdByParam(command, params);
+						if (taskId > 0)
+						{
+							promises.push(
+								Promise.resolve({
+									data: {
+										id: taskId,
+										action: command,
+										actionParams: params,
+									},
+								}),
+							);
+						}
+					},
+				},
+				callbacks: {
+					onBeforeQueueExecute: (items) => {
+						return Promise.resolve();
+					},
+					onQueueExecute: (items) => {
+						return new Promise((resolve, reject) => {
+							BX.Tasks.ControllerTask
+								.getRepository(items, this)
+								.then((repository) => {
+									// eslint-disable-next-line promise/catch-or-return
+									this.executePullQueue(this.getPullItems(items, repository))
+										.then(() => {
+											resolve();
+										})
+									;
+								})
+							;
+						});
+					},
+					onReload: () => {},
+				},
+			});
+		},
+
+		getPullItems(items, repository)
+		{
+			const pullItems = [];
+
+			items.forEach((item) => {
+				pullItems.push({
+					...item,
+					...{
+						repository,
+					},
+				});
+			});
+
+			return pullItems;
+		},
+
+		executePullQueue(pullItems)
+		{
+			const pullHandlers = {
 				comment_add: this.onPullCommentAdd,
 				task_add: this.onPullTaskAdd,
 				task_update: this.onPullTaskUpdate,
@@ -1212,40 +1377,24 @@ BX(function() {
 				user_option_changed: this.onUserOptionChanged,
 			};
 
-			BX.Event.EventEmitter.subscribe('BX.Tasks.ControllerTask:onGetRepository', function(e) {
-				this.queue.event.push(e.getData());
-			}.bind(this));
+			return new Promise((resolve, reject) => {
+				pullItems.forEach((pullItem) => {
+					const { data: { action, actionParams }, repository } = pullItem;
 
-			BX.Event.EventEmitter.subscribe('BX.Tasks.Event:onEmit', function(e) {
-				var params = e.getData().params;
-				var command = e.getData().command;
-				var repository = e.getData().repository;
-
-				if (eventHandlersToPool[command])
-				{
-					eventHandlersToPool[command].apply(this, [params, repository]);
-				}
-			}.bind(this));
-
-			BX.addCustomEvent('onPullEvent-tasks', function(command, params)
-			{
-				if (eventHandlers[command])
-				{
-					eventHandlers[command].apply(this, [params]);
-				}
-				else
-				{
-					var inx = (new BX.Tasks.ControllerTaskEvent()).resolveIdByParam(command, params);
-					if (inx > 0 )
+					if (pullHandlers[action])
 					{
-						this.queue.pull.push({
-							id: inx,
-							params
-						}, command);
+						pullHandlers[action].apply(
+							this,
+							[actionParams, repository],
+						);
 					}
-				}
-			}.bind(this));
+				});
 
+				resolve();
+			});
+		},
+
+		bindEvents: function() {
 			BX.addCustomEvent('BX.Main.grid:sort', function(column, grid) {
 				if (grid === this.grid)
 				{
@@ -1660,8 +1809,8 @@ BX(function() {
 			}
 		},
 
-		addGridRow: function(rowId, rowData, parameters, repository) {
-
+		addGridRow: function(rowId, rowData, parameters, repository)
+		{
 			var item = repository.collectionGrid.get(BX.Text.toNumber(rowId));
 
 			if (item[rowId])
@@ -1706,9 +1855,17 @@ BX(function() {
 			{
 				BX.Tasks.alert('grid.id is empty' + rowId);
 			}
+
+			const gridId = this.getGrid().containerId;
+			const checkBoxNode = document.getElementById(gridId + '_check_all');
+			if (checkBoxNode && checkBoxNode.disabled === true)
+			{
+				checkBoxNode.disabled = false;
+			}
 		},
 
-		updateGridRow: function(rowId, rowData, parameters, repository) {
+		updateGridRow: function(rowId, rowData, parameters, repository)
+		{
 			if (!this.isRowExist(rowId))
 			{
 				return;
@@ -1746,7 +1903,8 @@ BX(function() {
 			}
 		},
 
-		removeItem: function(id) {
+		removeItem: function(id)
+		{
 			if (!this.isRowExist(id))
 			{
 				return;

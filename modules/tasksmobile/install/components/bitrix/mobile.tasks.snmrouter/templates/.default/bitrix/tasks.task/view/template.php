@@ -235,7 +235,7 @@ $APPLICATION->IncludeComponent(
 					array(
 						"type" => ($can["EDIT"] ? "select-user" : "user"),
 						"id" => "data[SE_RESPONSIBLE][0][ID]",
-						"name" => GetMessage("MB_TASKS_TASK_SETTINGS_RESPONSIBLE"),
+						"name" => GetMessage("MB_TASKS_TASK_SETTINGS_RESPONSIBLE_MSGVER_1"),
 						"item" => $task["SE_RESPONSIBLE"],
 						"value" => $task["RESPONSIBLE_ID"],
 						"canDrop" => false
@@ -412,7 +412,7 @@ $emotion = (!empty($arResult["RATING"][$arResult["Post"]["ID"]]["USER_REACTION"]
 	?></div><?
 ?></div>
 <div class="task-comments-block" id="task-comments-block"><?=$task_comments_html?></div>
-<script type="text/javascript">
+<script>
 BX.message({
 	PAGE_TITLE : '<?=GetMessageJS("MB_TASKS_GENERAL_TITLE")?>',
 	MB_TASKS_TASK_PLACEHOLDER : '<span class="placeholder"><?=GetMessageJS("MB_TASKS_TASK_PLACEHOLDER")?></span>',
@@ -487,21 +487,21 @@ BX.ready(function(){
 		}
 	);
 
-    setTimeout(function(){
-        if (BX('post-comments-wrap'))
-        {
-            var firstNewComment = BX.findChild(BX('post-comments-wrap'), { className : 'post-comment-block-new' }, true);
-            if (firstNewComment)
-            {
-                document.body.scrollTop = firstNewComment.offsetTop;
-            }
-            // else
-            // {
-            //     var firstComment = BX.findChild(BX('post-comments-wrap'), { className : 'post-comment-block' }, true);
-            //     document.body.scrollTop = (firstComment ? firstComment.offsetTop : 0);
-            // }
-        }
-    }, 100);
+	setTimeout(function(){
+		if (BX('post-comments-wrap'))
+		{
+			var firstNewComment = BX.findChild(BX('post-comments-wrap'), { className : 'post-comment-block-new' }, true);
+			if (firstNewComment)
+			{
+				document.body.scrollTop = firstNewComment.offsetTop;
+			}
+			// else
+			// {
+			// 	var firstComment = BX.findChild(BX('post-comments-wrap'), { className : 'post-comment-block' }, true);
+			// 	document.body.scrollTop = (firstComment ? firstComment.offsetTop : 0);
+			// }
+		}
+	}, 100);
 });
 
 if(typeof BX.MSL != 'undefined')

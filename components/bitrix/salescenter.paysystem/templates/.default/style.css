@@ -428,6 +428,20 @@
 	background-color: #19D0C8;
 }
 
+.salescenter-roboxchange-sbp-icon { width: 97px; }
+.salescenter-roboxchange-sbp-icon i {
+	background-image: url(images/roboxchange_sbp.svg);
+	background-size: 100% auto;
+	background-color: #1487C9;
+}
+
+.salescenter-roboxchange-widget-icon { width: 97px; }
+.salescenter-roboxchange-widget-icon i {
+	background-image: url(images/roboxchange_widget.svg);
+	background-size: 80% auto;
+	background-color: #FF5722;
+}
+
 .salescenter-roboxchange-apple_pay-icon { width: 97px; }
 .salescenter-roboxchange-apple_pay-icon i {
 	background-image: url(images/roboxchange_apple_pay.svg);
@@ -696,4 +710,13 @@
 
 .salescenter-settings-menu {
 	margin-left: 5px;
+}
+
+.salescenter-paysystem-checkbox-desc {
+	font-size: 12px;
+	font-style: italic;
+}
+
+.salescenter-paysystem-checkbox-input {
+	margin-bottom: 16px !important;
 }

@@ -127,31 +127,37 @@ class Type extends OrmObject
 			return null;
 		}
 
+		$selectedCustomSectionId = $this->getSelectedCustomSectionId($type);
+
 		$result = [];
 		foreach ($sections as $section)
 		{
-			$isSelected = false;
-
-			if (!$type->isNew())
-			{
-				foreach ($section->getPages() as $sectionPage)
-				{
-					$settings = IntranetManager::preparePageSettingsForItemsList($type->getEntityTypeId());
-					$isSelected = ($sectionPage->getSettings() === $settings);
-					if ($isSelected)
-					{
-						break;
-					}
-				}
-			}
-
 			$result[] = [
 				'id' => $section->getId(),
 				'title' => $section->getTitle(),
-				'isSelected' => $isSelected,
+				'isSelected' => $section->getId() === $selectedCustomSectionId,
 			];
 		}
 
 		return $result;
+	}
+
+	private function getSelectedCustomSectionId(Model\Dynamic\Type $type): ?int
+	{
+		$automatedSolutionId = $type->getCustomSectionId();
+		if ($automatedSolutionId <= 0)
+		{
+			return null;
+		}
+
+		$automatedSolution = Container::getInstance()->getAutomatedSolutionManager()->getAutomatedSolution(
+			$automatedSolutionId,
+		);
+		if (!$automatedSolution)
+		{
+			return null;
+		}
+
+		return $automatedSolution['INTRANET_CUSTOM_SECTION_ID'] ?? null;
 	}
 }

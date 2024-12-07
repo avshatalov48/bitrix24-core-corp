@@ -38,7 +38,7 @@ jn.define('crm/conversion/wizard/steps/entities', (require, exports, module) => 
 				permissions,
 				isReturnCustomer,
 			});
-			const buttonsCount = hasConversionSelectorMenuButton ? 2 : 1;
+			const buttonsCount = hasConversionSelectorMenuButton ? 1 : 0;
 			const entityTypesHeight = (entityTypeIds.length * booleanFieldHeight) + (entityTypeIds.length * lineMargins);
 			const buttonsHeight = (buttonsCount * buttonHeight) + (buttonsCount * lineMargins);
 

@@ -4,6 +4,7 @@ use Bitrix\Crm;
 use Bitrix\Crm\Binding;
 use Bitrix\Crm\Timeline;
 use Bitrix\Main;
+use CCrmOwnerType;
 
 class DealMerger extends EntityMerger
 {
@@ -129,7 +130,7 @@ class DealMerger extends EntityMerger
 		return \CCrmDeal::CheckDeletePermission($entityID, $userPermissions);
 	}
 
-	protected static function getFieldConflictResolver(string $fieldId, string $type): ConflictResolver\Base
+	protected function getFieldConflictResolver(string $fieldId, string $type): ConflictResolver\Base
 	{
 		$userDefinedResolver = static::getUserDefinedConflictResolver(
 			\CCrmOwnerType::Deal,
@@ -153,9 +154,10 @@ class DealMerger extends EntityMerger
 
 			case 'OPPORTUNITY':
 				//Crutch for Opportunity Field. It can be ignored if ProductRows are not empty. We will recalculate Opportunity after merging of ProductRows. See DealMerger::innerMergeBoundEntities.
-				$resolver = new Crm\Merger\ConflictResolver\OpportunityField($fieldId);
-				$resolver->setEntityTypeId(\CCrmOwnerType::Deal);
-				return $resolver;
+				return new Crm\Merger\ConflictResolver\OpportunityField(
+					$fieldId,
+					CCrmOwnerType::Deal,
+				);
 
 			case 'TAX_VALUE':
 				//Crutch for TaxValue Field. It can be ignored. We will recalculate TaxValue after merging of ProductRows. See DealMerger::innerMergeBoundEntities.
@@ -421,7 +423,7 @@ class DealMerger extends EntityMerger
 				EntityMergerException::UPDATE_FAILED,
 				'',
 				0,
-				new Main\SystemException($entity->LAST_ERROR)
+				new Main\SystemException($entity->getLastError())
 			);
 		}
 
@@ -452,9 +454,14 @@ class DealMerger extends EntityMerger
 				EntityMergerException::DELETE_FAILED,
 				'',
 				0,
-				new Main\SystemException($entity->LAST_ERROR)
+				new Main\SystemException($entity->getLastError())
 			);
 		}
+	}
+
+	protected function prepareCollisionMessageFields(array &$collisions, array &$seed, array &$targ): ?array
+	{
+		return null;
 	}
 
 	protected function rebind($seedID, $targID)
@@ -477,7 +484,7 @@ class DealMerger extends EntityMerger
 			\CCrmOwnerType::Deal, $targID
 		);
 
-		Crm\Relation\EntityRelationTable::rebind(
+		Crm\Relation\EntityRelationTable::rebindWhereItemIsChild(
 			new Crm\ItemIdentifier(\CCrmOwnerType::Deal, $seedID),
 			new Crm\ItemIdentifier(\CCrmOwnerType::Deal, $targID)
 		);

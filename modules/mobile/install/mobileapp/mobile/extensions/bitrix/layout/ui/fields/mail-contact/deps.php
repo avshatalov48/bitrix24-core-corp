@@ -3,6 +3,7 @@
 return [
 	'extensions' => [
 		'apptheme',
+		'analytics',
 		'layout/ui/fields/entity-selector',
 		'layout/ui/context-menu',
 		'loc',

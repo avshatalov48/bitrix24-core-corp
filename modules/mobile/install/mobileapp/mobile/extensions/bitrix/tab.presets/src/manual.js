@@ -2,9 +2,11 @@
  * @bxjs_lang_path extension.php
  */
 jn.define('tab/presets/editor', (require, exports, module) => {
-	const { colors, styles, getSvg } = require('tab/settings/res');
+	const { colors, styles, getIcon } = require('tab/settings/res');
 	const { Haptics } = require('haptics');
 	const AppTheme = require('apptheme');
+	const { Color } = require('tokens');
+	const { IconView, Icon } = require('ui-system/blocks/icon');
 	const CellType = {
 		SECTION: 'section',
 		ELEMENT: 'element',
@@ -194,7 +196,6 @@ jn.define('tab/presets/editor', (require, exports, module) => {
 					style: {
 						flexDirection: 'row',
 						justifyContent: 'flex-start',
-						backgroundColor: AppTheme.colors.bgContentPrimary,
 					},
 				},
 				View(
@@ -208,11 +209,10 @@ jn.define('tab/presets/editor', (require, exports, module) => {
 					},
 					type === CellType.ELEMENT_UNCHANGEABLE
 						? null
-						: Image({
-							style: { width: 6, height: 14 },
-							svg: {
-								content: getSvg('drag', AppTheme.colors.base4),
-							},
+						: IconView({
+							size: 20,
+							color: iconTintColor,
+							icon: Icon.DRAG
 						}),
 				),
 				View(
@@ -224,11 +224,10 @@ jn.define('tab/presets/editor', (require, exports, module) => {
 							width: 24,
 						},
 					},
-					Image({
-						style: { width: 24, height: 24 },
-						svg: {
-							content: getSvg(iconId, iconTintColor),
-						},
+					IconView({
+						size: 32,
+						color: Color.base4,
+						icon: getIcon(iconId),
 					}),
 				),
 				View(

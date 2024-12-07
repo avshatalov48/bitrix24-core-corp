@@ -1,0 +1,22 @@
+<?php
+$MESS["SIGN_SERVICE_DEFAULT_ERROR"] = "Не удалось выполнить действие, попробуйте чуть позже";
+$MESS["SIGN_SERVICE_DEFAULT_ERROR_WITH_CODE"] = "Не удалось выполнить действие, попробуйте чуть позже (код ошибки: #CODE#)";
+$MESS["SIGN_SERVICE_ERROR_PROTECTED_PDF"] = "Файл защищён паролем и недоступен для загрузки";
+$MESS["SIGN_SERVICE_ERROR_FILE_TOO_BIG"] = "Файл слишком большой";
+$MESS["SIGN_SERVICE_ERROR_FILE_TOO_BIG_SIZE_MSG_1"] = "Файл слишком большой. Максимальный размер не может превышать #SIZE# МБ";
+$MESS["SIGN_SERVICE_ERROR_NO_FILE_TYPE"] = "Такой формат не поддерживается. Можно добавлять файлы в форматах pdf, doc, docx, rtf, odt, jpg, png";
+$MESS["SIGN_SERVICE_ERROR_TOO_MANY_FILES_COUNT"] = "На подпись можно отправить до #COUNT# изображений или 1 файл в форматах pdf, doc, docx, rtf, odt";
+$MESS["SIGN_SERVICE_ERROR_FILE_TO_MANY_PAGES_COUNT"] = "Количество страниц в файле не может превышать #COUNT#";
+$MESS["SIGN_SERVICE_ERROR_DELETE_DOCUMENTS_EXISTS"] = "Не можем удалить шаблон, по которому созданы документы";
+$MESS["SIGN_SERVICE_ERROR_BLANK_DELETE_FAILED"] = "Не удалось удалить шаблон, попробуйте чуть позже";
+$MESS["SIGN_SERVICE_ERROR_REQUIRED_FIELDS_VALIDATION"] = "Заполните обязательные поля";
+$MESS["SIGN_SERVICE_ERROR_EMPTY_MEMBER_CHANNEL"] = "Укажите номер телефона или e-mail участника подписания";
+$MESS["SIGN_SERVICE_ERROR_DOCUMENT_TO_MANY_MEMBERS"] = "Должно быть 2 участника подписания";
+$MESS["SIGN_SERVICE_ERROR_PREVIOUS_MEMBER_NOT_DONE"] = "Выполнить действие можно только после того, как первая сторона подпишет документ";
+$MESS["SIGN_SERVICE_ERROR_FIELD_FILE_NOT_IMAGE"] = "В это поле можно добавить только изображения";
+$MESS["SIGN_SERVICE_ERROR_MEMBER_INVALID_PHONE"] = "Введите корректный номер для отправки СМС или выберите e-mail";
+$MESS["SIGN_SERVICE_ERROR_MEMBER_PHONE_UNSUPPORTED_COUNTRY_CODE"] = "Отправка СМС на этот номер временно не поддерживается. Вы можете отправить документ на подпись по e-mail";
+$MESS["SIGN_SERVICE_ERROR_DOCUMENT_SIGNING_EXPIRED"] = "Срок подписания документа закончился";
+$MESS["SIGN_SERVICE_ERROR_SMS_LIMIT_EXCEEDED"] = "Превышен лимит на повторную отправку по SMS";
+$MESS["SIGN_SERVICE_ERROR_MEMBERS_NOT_READY_FOR_RESEND"] = "Документ не готов к отправке";
+$MESS["SIGN_SERVICE_ERROR_INCORRECT_TAX_ID"] = "Компании с таким ИНН нет. Убедитесь, что указали ИНН без ошибок";

@@ -3,8 +3,6 @@
  */
 jn.define('im/messenger/lib/counters/lib/base-counters', (require, exports, module) => {
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
-	const { restManager } = require('im/messenger/lib/rest-manager');
-	const { RestMethod } = require('im/messenger/const');
 	const { Logger } = require('im/messenger/lib/logger');
 
 	/**
@@ -15,6 +13,7 @@ jn.define('im/messenger/lib/counters/lib/base-counters', (require, exports, modu
 		constructor(options = {})
 		{
 			this.store = serviceLocator.get('core').getStore();
+			this.messagerInitService = serviceLocator.get('messenger-init-service');
 			this.logger = options.logger || Logger;
 
 			this.updateTimeout = null;
@@ -29,20 +28,15 @@ jn.define('im/messenger/lib/counters/lib/base-counters', (require, exports, modu
 			this.handleCountersGet = this.handleCountersGet.bind(this);
 		}
 
-		initCounters()
-		{}
-
-		initRequests()
+		subscribeInitMessengerEvent()
 		{
-			restManager.on(RestMethod.imV2CountersGet, this.getRestOptions(), this.handleCountersGet);
-		}
-
-		getRestOptions()
-		{
-			return { JSON: 'Y' };
+			this.messagerInitService.onInit(this.handleCountersGet);
 		}
 
 		handleCountersGet()
+		{}
+
+		initCounters()
 		{}
 
 		updateDelayed()
@@ -69,6 +63,33 @@ jn.define('im/messenger/lib/counters/lib/base-counters', (require, exports, modu
 			if (dialogItem.counter && dialogItem.counter > 0)
 			{
 				counter = dialogItem.counter;
+			}
+			else if (recentItem.unread)
+			{
+				counter = 1;
+			}
+
+			return counter;
+		}
+
+		/**
+		 *
+		 * @param {RecentModelState} recentItem
+		 * @param {DialoguesModelState} dialogItem
+		 * @return {number}
+		 */
+		calculateChatCounter(recentItem = {}, dialogItem = {})
+		{
+			let counter = 0;
+			const commentCounter = this.store.getters['commentModel/getChannelCounters'](dialogItem?.chatId);
+			if (commentCounter > 0)
+			{
+				counter += commentCounter;
+			}
+
+			if (dialogItem.counter && dialogItem.counter > 0)
+			{
+				counter += dialogItem.counter;
 			}
 			else if (recentItem.unread)
 			{

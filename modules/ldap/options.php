@@ -2,7 +2,7 @@
 ##############################################
 # Bitrix: SiteManager                        #
 # Copyright (c) 2002-2012 Bitrix             #
-# http://www.bitrixsoft.com                  #
+# https://www.bitrixsoft.com                 #
 # mailto:admin@bitrixsoft.com                #
 ##############################################
 
@@ -40,7 +40,7 @@ else
 // set up form
 $arAllOptions =	Array(
 		//Array("group_limit", Loc::getMessage('LDAP_OPTIONS_GROUP_LIMIT'), 0, Array("text", 5)),
-		Array("default_email", Loc::getMessage('LDAP_OPTIONS_DEFAULT_EMAIL'), "no@email", Array("text")),
+		Array("default_email", Loc::getMessage('LDAP_OPTIONS_DEFAULT_EMAIL'), "no@email.test", Array("text")),
 		Array("use_ntlm", Loc::getMessage('LDAP_OPTIONS_USE_NTLM'), "N", Array("checkbox")),
 		Array("use_ntlm_login", Loc::getMessage('LDAP_CURRENT_USER'), $currentUserNTLMMsg, Array("statictext")),
 		Array("ntlm_varname", Loc::getMessage('LDAP_OPTIONS_NTLM_VARNAME'), "REMOTE_USER", Array("text", 20)),
@@ -55,7 +55,7 @@ $arAllOptions =	Array(
 
 if($MOD_RIGHT>="W"):
 
-	if ($REQUEST_METHOD=="GET" && $RestoreDefaults <> '' && check_bitrix_sessid())
+	if ($_SERVER['REQUEST_METHOD']=="GET" && $RestoreDefaults <> '' && check_bitrix_sessid())
 	{
 		COption::RemoveOption($module_id);
 		$z = CGroup::GetList("id", "asc", array("ACTIVE" => "Y", "ADMIN" => "N"));
@@ -63,7 +63,7 @@ if($MOD_RIGHT>="W"):
 			$APPLICATION->DelGroupRight($module_id, array($zr["ID"]));
 	}
 
-	if($REQUEST_METHOD=="POST" && $Update <> '' && check_bitrix_sessid())
+	if($_SERVER['REQUEST_METHOD']=="POST" && $Update <> '' && check_bitrix_sessid())
 	{
 		if($_POST['bitrixvm_auth_net'] && !preg_match("#(\d{1,3}\.){3,3}(\d{1,3})/(\d{1,3}\.){3,3}(\d{1,3})#",$_POST['bitrixvm_auth_net']) && !preg_match("#(\d{1,3}\.){3,3}(\d{1,3})/(\d{1,3})#",$_POST['bitrixvm_auth_net']))
 			CAdminMessage::ShowMessage(Loc::getMessage('LDAP_WRONG_NET_MASK'));
@@ -117,7 +117,7 @@ $tabControl->Begin();
 $tabControl->BeginNextTab();?>
 <?require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/admin/group_rights.php");?>
 <?$tabControl->Buttons();?>
-<script language="JavaScript">
+<script>
 function RestoreDefaults()
 {
 	if(confirm('<?echo AddSlashes(Loc::getMessage("MAIN_HINT_RESTORE_DEFAULTS_WARNING"))?>'))

@@ -54,6 +54,7 @@ class Counter extends Controller
 				CounterDictionary::COUNTER_SONET_FOREIGN_COMMENTS,
 				CounterDictionary::COUNTER_SCRUM_TOTAL_COMMENTS,
 				CounterDictionary::COUNTER_SCRUM_FOREIGN_COMMENTS,
+				CounterDictionary::COUNTER_FLOW_TOTAL,
 			];
 		}
 		$counters = [];

@@ -48,17 +48,17 @@ class GroupedBindings implements \Traversable, \Iterator
 		return $this->bindings[$ownerTypeId];
 	}
 
-	public function current()
+	public function current(): array|false
 	{
 		return current($this->bindings);
 	}
 
-	public function next()
+	public function next(): void
 	{
 		next($this->bindings);
 	}
 
-	public function key()
+	public function key(): ?int
 	{
 		return key($this->bindings);
 	}
@@ -68,7 +68,7 @@ class GroupedBindings implements \Traversable, \Iterator
 		return null !== key($this->bindings);
 	}
 
-	public function rewind()
+	public function rewind(): void
 	{
 		reset($this->bindings);
 	}

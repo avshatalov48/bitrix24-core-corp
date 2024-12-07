@@ -113,6 +113,8 @@ export class InvitationPopup extends EventEmitter
 			return new EmployeesContent({
 				isAdmin: this.getOptions().isAdmin,
 				awaitData: this.#getAwaitData(),
+				invitationCounter: this.getOptions().params.invitationCounter,
+				counterId: this.getOptions().params.counterId,
 			});
 		});
 	}

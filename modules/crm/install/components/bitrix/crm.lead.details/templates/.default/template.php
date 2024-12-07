@@ -71,21 +71,30 @@ if (\Bitrix\Crm\Restriction\RestrictionManager::getLeadsRestriction()->hasPermis
 				'EXCLUDE' => 'BX.Crm.EntityDetailManager.items["' . CUtil::JSEscape($guid) . '"].processExclusion();'
 			],
 			'ANALYTICS' => [
+				'c_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SECTION_LEAD,
 				'c_sub_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SUB_SECTION_DETAILS,
 			],
 		],
 		$component
 	);
 }
+
+$isMlAvailable = \Bitrix\Crm\Ml\Scoring::isMlAvailable();
+$isScoringEnabled = \Bitrix\Crm\Ml\Scoring::isEnabled();
+$isScoringAvailable = \Bitrix\Crm\Ml\Scoring::isScoringAvailable();
+$isTrainingUsed = \Bitrix\Crm\Ml\Scoring::isTrainingUsed();
+if ($isMlAvailable && $isScoringEnabled && $isScoringAvailable && $isTrainingUsed)
+{
+	echo \Bitrix\Crm\Tour\Ml\ScoringShutdownWarning::getInstance()->build();
+}
+
+if ($isScoringAvailable):
 ?>
-	<script type="text/javascript">
-		BX.message({
-			"CRM_TIMELINE_HISTORY_STUB": "<?=GetMessageJS('CRM_LEAD_DETAIL_HISTORY_STUB')?>",
-		});
+	<script>
 		<? if($arResult['ENTITY_ID'] > 0): ?>
 			new BX.CrmScoringButton({
-				mlInstalled: <?= (\Bitrix\Crm\Ml\Scoring::isMlAvailable() ? 'true' : 'false')?>,
-				scoringEnabled: <?= (\Bitrix\Crm\Ml\Scoring::isEnabled() ? 'true' : 'false')?>,
+				mlInstalled: <?= ($isMlAvailable ? 'true' : 'false')?>,
+				scoringEnabled: <?= ($isScoringEnabled ? 'true' : 'false')?>,
 				scoringParameters: <?= \Bitrix\Main\Web\Json::encode($arResult['SCORING'])?>,
 				entityType: '<?= CCrmOwnerType::LeadName?>',
 				entityId: <?= (int)$arResult['ENTITY_ID']?>,
@@ -93,7 +102,14 @@ if (\Bitrix\Crm\Restriction\RestrictionManager::getLeadsRestriction()->hasPermis
 			});
 		<? endif; ?>
 </script><?
-
+endif;
+?>
+<script>
+	BX.message({
+		"CRM_TIMELINE_HISTORY_STUB": "<?=GetMessageJS('CRM_LEAD_DETAIL_HISTORY_STUB')?>",
+	});
+</script>
+<?php
 $APPLICATION->IncludeComponent(
 	'bitrix:crm.entity.details',
 	'',
@@ -120,13 +136,16 @@ $APPLICATION->IncludeComponent(
 		'CONVERSION_SCHEME' => $arResult['CONVERSION_SCHEME'] ?? null,
 		'CONVERSION_TYPE_ID' => $arResult['CONVERSION_TYPE_ID'] ?? LeadConversionType::GENERAL,
 		'CONVERTER_ID' => $arResult['CONVERTER_ID'] ?? null,
+		'EXTRAS' => [
+			'ANALYTICS' => $arParams['EXTRAS']['ANALYTICS'] ?? [],
+		],
 	]
 );
 
 /** @var \Bitrix\Crm\Conversion\LeadConversionConfig|null $conversionConfig */
 $conversionConfig = $arResult['CONVERSION_CONFIG'] ?? null;
 if($arResult['CONVERSION_PERMITTED'] && $arResult['CAN_CONVERT'] && $conversionConfig):
-?><script type="text/javascript">
+?><script>
 		BX.ready(
 			function()
 			{
@@ -160,6 +179,7 @@ if($arResult['CONVERSION_PERMITTED'] && $arResult['CAN_CONVERT'] && $conversionC
 								last : "<?=GetMessageJS("CRM_LEAD_CONV_ENTITY_SEL_LAST")?>",
 							},
 							analytics: {
+								c_section: '<?= \Bitrix\Crm\Integration\Analytics\Dictionary::SECTION_LEAD ?>',
 								c_sub_section: '<?= \Bitrix\Crm\Integration\Analytics\Dictionary::SUB_SECTION_DETAILS ?>',
 							},
 						}
@@ -224,7 +244,7 @@ if($arResult['CONVERSION_PERMITTED'] && $arResult['CAN_CONVERT'] && $conversionC
 endif;
 
 if (array_key_exists('AUTOMATION_CHECK_AUTOMATION_TOUR_GUIDE_DATA', $arResult)):?>
-	<script type="text/javascript">
+	<script>
 		BX.ready(function() {
 			BX.Runtime.loadExtension('bizproc.automation.guide')
 			.then((exports) => {

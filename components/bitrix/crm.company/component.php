@@ -83,7 +83,6 @@ $arDefaultUrlTemplates404 = [
 	'dedupewizard' => 'dedupewizard/',
 	'widget' => 'widget/',
 	'analytics/list' => 'analytics/list/',
-	'portrait' => 'portrait/#company_id#/',
 	'details' => 'details/#company_id#/',
 	'merge' => 'merge/',
 	'requisiteselect' => 'requisite/select/#company_id#/',
@@ -189,20 +188,21 @@ else
 	{
 		$componentPage = 'widget';
 	}
-	elseif (isset($_REQUEST['portrait']))
-	{
-		$componentPage = 'portrait';
-	}
 
-	$arResult['PATH_TO_COMPANY_LIST'] = $arResult['PATH_TO_COMPANY_DEDUPE'] = $arResult['PATH_TO_COMPANY_DEDUPEWIZARD'] = $APPLICATION->GetCurPage();
-	$arResult['PATH_TO_COMPANY_DETAILS'] = $APPLICATION->GetCurPage() . "?$arVariableAliases[company_id]=#company_id#&details";
-	$arResult['PATH_TO_COMPANY_REQUISITE_SELECT'] = $APPLICATION->GetCurPage() . "?$arVariableAliases[company_id]=#company_id#&requisiteselect";
-	$arResult['PATH_TO_COMPANY_SHOW'] = $APPLICATION->GetCurPage() . "?$arVariableAliases[company_id]=#company_id#&show";
-	$arResult['PATH_TO_COMPANY_DETAILS'] = $APPLICATION->GetCurPage() . "?$arVariableAliases[company_id]=#company_id#&details";
-	$arResult['PATH_TO_COMPANY_EDIT'] = $APPLICATION->GetCurPage() . "?$arVariableAliases[company_id]=#company_id#&edit";
-	$arResult['PATH_TO_COMPANY_IMPORT'] = $APPLICATION->GetCurPage() . "?import";
-	$arResult['PATH_TO_COMPANY_WIDGET'] = $APPLICATION->GetCurPage() . "?widget";
-	$arResult['PATH_TO_COMPANY_PORTRAIT'] = $APPLICATION->GetCurPage() . "?portrait";
+	$currentPage = $APPLICATION->GetCurPage();
+
+	$arResult['PATH_TO_COMPANY_DETAILS'] = $currentPage . "?$arVariableAliases[company_id]=#company_id#&details";
+	$arResult['PATH_TO_COMPANY_REQUISITE_SELECT'] = $currentPage . "?$arVariableAliases[company_id]=#company_id#&requisiteselect";
+	$arResult['PATH_TO_COMPANY_SHOW'] = $currentPage . "?$arVariableAliases[company_id]=#company_id#&show";
+	$arResult['PATH_TO_COMPANY_DETAILS'] = $currentPage . "?$arVariableAliases[company_id]=#company_id#&details";
+	$arResult['PATH_TO_COMPANY_EDIT'] = $currentPage . "?$arVariableAliases[company_id]=#company_id#&edit";
+	$arResult['PATH_TO_COMPANY_IMPORT'] = $currentPage . '?import';
+	$arResult['PATH_TO_COMPANY_WIDGET'] = $currentPage . '?widget';
+
+	$arResult['PATH_TO_COMPANY_LIST'] = $currentPage;
+	$arResult['PATH_TO_COMPANY_DEDUPE'] = $currentPage;
+	$arResult['PATH_TO_COMPANY_DEDUPEWIZARD'] = $currentPage;
+	$arResult['PATH_TO_COMPANY_PORTRAIT'] = $currentPage;
 }
 
 $arResult = array_merge(

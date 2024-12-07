@@ -8,7 +8,7 @@ if (isset($disk_installer_errors) && is_array($disk_installer_errors) && (count(
 	{
 		$errors .= htmlspecialcharsbx($e) . '<br>';
 	}
-	echo CAdminMessage::ShowMessage(Array(
+	CAdminMessage::ShowMessage(Array(
 		'TYPE' => 'ERROR',
 		'MESSAGE' => GetMessage('MOD_UNINST_ERR'),
 		'DETAILS' => $errors,
@@ -16,14 +16,14 @@ if (isset($disk_installer_errors) && is_array($disk_installer_errors) && (count(
 	));
 }
 if($ex = $APPLICATION->GetException())
-	echo CAdminMessage::ShowMessage(Array(
+	CAdminMessage::ShowMessage(Array(
 		"TYPE" => "ERROR",
 		"MESSAGE" => GetMessage("MOD_UNINST_ERR"),
 		"DETAILS" => $ex->GetString(),
 		"HTML" => true,
 	));
 else
-	echo CAdminMessage::ShowNote(GetMessage("MOD_UNINST_OK"));
+	CAdminMessage::ShowNote(GetMessage("MOD_UNINST_OK"));
 ?>
 <form action="<?echo $APPLICATION->GetCurPage()?>">
 	<input type="hidden" name="lang" value="<?echo LANG?>">

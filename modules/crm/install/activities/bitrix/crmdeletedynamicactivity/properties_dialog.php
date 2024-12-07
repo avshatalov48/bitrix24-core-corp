@@ -19,7 +19,7 @@ $entityIdField = $map['EntityId'];
 		<?= $dialog->renderFieldControl(
 			$entityTypeIdField,
 			$dialog->getCurrentValue($entityTypeIdField),
-			true,
+			$entityTypeIdField['AllowSelection'] ?? true,
 			1
 		) ?>
 	</td>
@@ -30,7 +30,7 @@ $entityIdField = $map['EntityId'];
 		<?= $dialog->renderFieldControl(
 			$entityIdField,
 			$dialog->getCurrentValue($entityIdField),
-			true,
+			$field['AllowSelection'] ?? true,
 			1
 		) ?>
 	</td>

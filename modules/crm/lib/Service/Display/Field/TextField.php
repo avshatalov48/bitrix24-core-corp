@@ -45,7 +45,14 @@ class TextField extends BaseLinkedEntitiesField
 
 			if ($this->isKanbanContext() || $this->isGridContext())
 			{
-				$value = TextHelper::sanitizeHtml(TextHelper::convertBbCodeToHtml($fieldValue));
+				$hasParagraph = preg_match('/\[p]/i', $fieldValue) === 1;
+				$useTypography = $hasParagraph;
+
+				$value = TextHelper::sanitizeHtml(TextHelper::convertBbCodeToHtml($fieldValue, $useTypography));
+				if ($useTypography)
+				{
+					$value = "<div class='crm-bbcode-container --{$this->getContext()}'>{$value}</div>";
+				}
 
 				$wasRenderedAsHtml = true;
 			}
@@ -67,7 +74,13 @@ class TextField extends BaseLinkedEntitiesField
 		$contentTypeId = $this->getContentTypeId($itemId);
 		$result['config']['contentTypeId'] = $contentTypeId;
 
-		if ($contentTypeId === \CCrmContentType::Html && $this->getId() === 'COMMENTS')
+		if (
+			$this->getId() === 'COMMENTS'
+			&& (
+				$contentTypeId === \CCrmContentType::Html
+				|| $contentTypeId === \CCrmContentType::BBCode // Temporarily removes [p] for mobile compatibility
+			)
+		)
 		{
 			$contentTypeId = \CCrmContentType::BBCode;
 			if (is_array($result['value']))

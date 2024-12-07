@@ -34,9 +34,9 @@ elseif ($events == 'inactive_feature')
 elseif (is_array($events))
 {
 	$arSections = array(
-		array("ID" => 'today', "NAME" => CMobile::PrepareStrToJson(GetMessage('EVENTS_GROUP_TODAY'))),
-		array("ID" => 'tomorrow', "NAME" => CMobile::PrepareStrToJson(GetMessage('EVENTS_GROUP_TOMORROW'))),
-		array("ID" => 'later', "NAME" => CMobile::PrepareStrToJson(GetMessage('EVENTS_GROUP_LATE')))
+		array("ID" => 'today', "NAME" => GetMessage('EVENTS_GROUP_TODAY')),
+		array("ID" => 'tomorrow', "NAME" => GetMessage('EVENTS_GROUP_TOMORROW')),
+		array("ID" => 'later', "NAME" => GetMessage('EVENTS_GROUP_LATE'))
 	);
 
 	$url = '/mobile/calendar/view_event.php';
@@ -75,7 +75,7 @@ elseif (is_array($events))
 
 		$item = array(
 			"ID" => $event['ID'],
-			"NAME" => CMobile::PrepareStrToJson($event['NAME']),
+			"NAME" => $event['NAME'],
 			"URL" => $url."?event_id=".$event['ID'],
 			"PAGE"=>array(
 				"modal"=>true,
@@ -150,7 +150,7 @@ elseif (is_array($events))
 			));
 		}
 
-		$item['TAGS'] = CMobile::PrepareStrToJson($fromToMess);
+		$item['TAGS'] = $fromToMess;
 
 		$arResult['EVENTS'][] = $item;
 	}
@@ -182,7 +182,7 @@ elseif (is_array($events))
 
 	$res = array(
 		"TABLE_SETTINGS" => array(
-			"footer" => CMobile::PrepareStrToJson($strFooter),
+			"footer" => $strFooter,
 			"use_sections" => $use_sections
 		)
 	);

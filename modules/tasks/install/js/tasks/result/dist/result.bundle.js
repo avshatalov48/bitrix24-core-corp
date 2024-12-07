@@ -1,6 +1,6 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports,main_core_events,main_core) {
+(function (exports,main_core_events,main_core,ui_analytics) {
 	'use strict';
 
 	var Result = /*#__PURE__*/function () {
@@ -178,16 +178,9 @@ this.BX = this.BX || {};
 	babelHelpers.defineProperty(ResultManager, "resultRegistry", {});
 	babelHelpers.defineProperty(ResultManager, "instance", null);
 
+	function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+	function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 	var ResultAction = /*#__PURE__*/function () {
-	  babelHelpers.createClass(ResultAction, null, [{
-	    key: "getInstance",
-	    value: function getInstance() {
-	      if (!ResultAction.instance) {
-	        ResultAction.instance = new ResultAction();
-	      }
-	      return ResultAction.instance;
-	    }
-	  }]);
 	  function ResultAction() {
 	    babelHelpers.classCallCheck(this, ResultAction);
 	  }
@@ -204,25 +197,47 @@ this.BX = this.BX || {};
 	        data: {
 	          commentId: commentId
 	        }
-	      }).then(function (response) {
-	        if (!response.data) {
-	          return;
-	        }
-	      }.bind(this));
+	      })["catch"](console.error);
 	    }
 	  }, {
 	    key: "createFromComment",
 	    value: function createFromComment(commentId) {
+	      var shouldSendAnalytics = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
+	      var analyticsLabel = {
+	        tool: 'tasks',
+	        category: 'task_operations',
+	        event: 'status_summary_add',
+	        type: 'task',
+	        c_section: 'task',
+	        c_sub_section: 'task_card',
+	        c_element: 'comment_context_menu'
+	      };
 	      main_core.ajax.runComponentAction('bitrix:tasks.widget.result', 'createFromComment', {
 	        mode: 'class',
 	        data: {
 	          commentId: commentId
 	        }
-	      }).then(function (response) {
-	        if (!response.data) {
-	          return;
+	      }).then(function () {
+	        if (shouldSendAnalytics) {
+	          ui_analytics.sendData(_objectSpread(_objectSpread({}, analyticsLabel), {}, {
+	            status: 'success'
+	          }));
 	        }
-	      }.bind(this));
+	      })["catch"](function () {
+	        if (shouldSendAnalytics) {
+	          ui_analytics.sendData(_objectSpread(_objectSpread({}, analyticsLabel), {}, {
+	            status: 'error'
+	          }));
+	        }
+	      });
+	    }
+	  }], [{
+	    key: "getInstance",
+	    value: function getInstance() {
+	      if (!ResultAction.instance) {
+	        ResultAction.instance = new ResultAction();
+	      }
+	      return ResultAction.instance;
 	    }
 	  }]);
 	  return ResultAction;
@@ -232,5 +247,5 @@ this.BX = this.BX || {};
 	exports.ResultManager = ResultManager;
 	exports.ResultAction = ResultAction;
 
-}((this.BX.Tasks = this.BX.Tasks || {}),BX.Event,BX));
+}((this.BX.Tasks = this.BX.Tasks || {}),BX.Event,BX,BX.UI.Analytics));
 //# sourceMappingURL=result.bundle.js.map

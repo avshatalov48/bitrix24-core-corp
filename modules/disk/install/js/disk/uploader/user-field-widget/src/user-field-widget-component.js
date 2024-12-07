@@ -1,5 +1,5 @@
 import { Type, Loc } from 'main.core';
-import { BaseEvent } from 'main.core.events';
+import type { BaseEvent } from 'main.core.events';
 import { VueUploaderComponent } from 'ui.uploader.vue';
 import { TileWidgetComponent, TileWidgetSlot, TileWidgetOptions, TileWidgetItem } from 'ui.uploader.tile-widget';
 
@@ -10,7 +10,6 @@ import SettingsMenu from './settings-menu';
 
 import { ControlPanel } from './components/control-panel';
 import { DocumentPanel } from './components/document-panel';
-import { InsertIntoTextButton } from './components/insert-into-text-button';
 
 import './css/user-field-widget-component.css';
 
@@ -35,13 +34,21 @@ export const UserFieldWidgetComponent: BitrixVueComponentProps = {
 			customUploaderOptions: UserFieldWidget.getDefaultUploaderOptions(),
 		};
 	},
+	props: {
+		visibility: {
+			type: String,
+			default(rawProps): string {
+				const mainPostFormContext = Type.isElementNode(rawProps.widgetOptions.eventObject);
+
+				return mainPostFormContext ? 'hidden' : 'both';
+			},
+		},
+	},
 	data(): Object
 	{
-		const options: UserFieldWidgetOptions = this.widgetOptions;
 		return {
-			controlVisibility: Type.isBoolean(options.controlVisibility) ? options.controlVisibility : true,
-			uploaderPanelVisibility: Type.isBoolean(options.uploaderPanelVisibility) ? options.uploaderPanelVisibility : true,
-			documentPanelVisibility: Type.isBoolean(options.documentPanelVisibility) ? options.documentPanelVisibility : false,
+			documentsCollapsed: this.visibility === 'both',
+			priorityVisibility: null,
 		};
 	},
 	provide(): Object<string, any>
@@ -50,7 +57,7 @@ export const UserFieldWidgetComponent: BitrixVueComponentProps = {
 			userFieldControl: this.userFieldControl,
 			postForm: this.userFieldControl.getMainPostForm(),
 			getMessage: this.getMessage,
-		}
+		};
 	},
 	beforeCreate(): void
 	{
@@ -62,46 +69,6 @@ export const UserFieldWidgetComponent: BitrixVueComponentProps = {
 			return Loc.getMessage(code, replacements);
 		},
 
-		show(forceUpdate = false): void
-		{
-			if (forceUpdate)
-			{
-				this.$refs.container.style.display = 'block';
-			}
-
-			this.controlVisibility = true;
-		},
-
-		hide(forceUpdate = false): void
-		{
-			if (forceUpdate)
-			{
-				this.$refs.container.style.display = 'none';
-			}
-
-			this.controlVisibility = false;
-		},
-
-		showUploaderPanel(): void
-		{
-			this.uploaderPanelVisibility = true;
-		},
-
-		hideUploaderPanel(): void
-		{
-			this.uploaderPanelVisibility = false;
-		},
-
-		showDocumentPanel(): void
-		{
-			this.documentPanelVisibility = true;
-		},
-
-		hideDocumentPanel(): void
-		{
-			this.documentPanelVisibility = false;
-		},
-
 		enableAutoCollapse(): void
 		{
 			this.$refs.tileWidget.enableAutoCollapse();
@@ -111,30 +78,44 @@ export const UserFieldWidgetComponent: BitrixVueComponentProps = {
 		{
 			return UserFieldWidget.prepareUploaderOptions(this.uploaderOptions);
 		},
+		getUserFieldControl(): UserFieldControl
+		{
+			return this.userFieldControl;
+		},
 	},
 	computed: {
 		tileWidgetOptions(): TileWidgetOptions {
-			const tileWidgetOptions: TileWidgetOptions =
-				Type.isPlainObject(this.widgetOptions.tileWidgetOptions)
-					? Object.assign({}, this.widgetOptions.tileWidgetOptions)
+			const widgetOptions: UserFieldWidgetOptions = this.widgetOptions;
+			const tileWidgetOptions: TileWidgetOptions = (
+				Type.isPlainObject(widgetOptions.tileWidgetOptions)
+					? { ...widgetOptions.tileWidgetOptions }
 					: {}
-			;
+			);
 
 			tileWidgetOptions.slots = Type.isPlainObject(tileWidgetOptions.slots) ? tileWidgetOptions.slots : {};
 			tileWidgetOptions.slots[TileWidgetSlot.AFTER_TILE_LIST] = ControlPanel;
-			if (this.userFieldControl.getMainPostForm())
-			{
-				tileWidgetOptions.slots[TileWidgetSlot.ITEM_EXTRA_ACTION] = InsertIntoTextButton;
-			}
+			tileWidgetOptions.insertIntoText = (
+				Type.isBoolean(widgetOptions.insertIntoText)
+					? widgetOptions.insertIntoText
+					: this.userFieldControl.getMainPostForm() !== null
+			);
 
 			tileWidgetOptions.showItemMenuButton = true;
-			tileWidgetOptions.events = {
-				'TileItem:onMenuCreate': (event: BaseEvent): void => {
-					const { item, menu }: { item: TileWidgetItem, menu: Menu } = event.getData();
-					const itemMenu: ItemMenu = new ItemMenu(this.userFieldControl, item, menu);
-					itemMenu.build();
-				},
+
+			tileWidgetOptions.events = tileWidgetOptions.events || {};
+			tileWidgetOptions.events['TileItem:onMenuCreate'] = (event: BaseEvent): void => {
+				const { item, menu }: { item: TileWidgetItem, menu: Menu } = event.getData();
+				const itemMenu: ItemMenu = new ItemMenu(this.userFieldControl, item, menu);
+				itemMenu.build();
 			};
+
+			if (this.userFieldControl.getMainPostForm() !== null)
+			{
+				tileWidgetOptions.events.onInsertIntoText = (event: BaseEvent): void => {
+					const { item }: { item: TileWidgetItem } = event.getData();
+					this.userFieldControl.getMainPostForm().insertIntoText(item);
+				};
+			}
 
 			const settingsMenu: SettingsMenu = new SettingsMenu(this.userFieldControl);
 			if (settingsMenu.hasItems())
@@ -148,18 +129,45 @@ export const UserFieldWidgetComponent: BitrixVueComponentProps = {
 
 			return tileWidgetOptions;
 		},
+		shouldShowCreateDocumentLink(): boolean
+		{
+			return (
+				this.userFieldControl.canCreateDocuments()
+				&& this.documentsCollapsed
+				&& this.finalVisibility === 'both'
+			);
+		},
+		shouldShowDocuments(): boolean
+		{
+			return (
+				this.userFieldControl.canCreateDocuments()
+				&& (
+					this.finalVisibility === 'documents'
+					|| (this.finalVisibility === 'both' && !this.documentsCollapsed)
+				)
+			);
+		},
+		finalVisibility(): string
+		{
+			if (this.priorityVisibility !== null)
+			{
+				return this.priorityVisibility;
+			}
+
+			return this.visibility;
+		},
 	},
 	// language=Vue
 	template: `
 		<div 
 			class="disk-user-field-control" 
 			:class="[{ '--has-files': this.items.length > 0 }]"
-			:style="{ display: controlVisibility ? 'block' : 'none' }"
+			:style="{ display: finalVisibility === 'hidden' ? 'none' : 'block' }"
 			ref="container"
 		>
 			<div 
 				class="disk-user-field-uploader-panel"
-				:class="[{ '--hidden': !uploaderPanelVisibility }]"
+				:class="[{ '--hidden': finalVisibility !== 'uploader' && finalVisibility !== 'both' }]"
 				ref="uploader-container"
 			>
 				<TileWidgetComponent
@@ -171,19 +179,18 @@ export const UserFieldWidgetComponent: BitrixVueComponentProps = {
 
 			<div 
 				class="disk-user-field-create-document"
-				v-if="this.userFieldControl.canCreateDocuments() && !this.userFieldControl.getMainPostForm() && !documentPanelVisibility"
-				@click="documentPanelVisibility = true"
+				v-if="shouldShowCreateDocumentLink"
+				@click="documentsCollapsed = false"
 			>{{ getMessage('DISK_UF_WIDGET_CREATE_DOCUMENT') }}</div>
 
 			<div 
 				class="disk-user-field-document-panel"
-				:class="{ '--single': this.userFieldControl.getMainPostForm() !== null }"
+				:class="{ '--single': finalVisibility !== 'both' }"
 				ref="document-container"
-				v-if="this.userFieldControl.canCreateDocuments() && documentPanelVisibility"
+				v-if="shouldShowDocuments"
 			>
 				<DocumentPanel />
 			</div>
 		</div>
-		`
-	,
+	`,
 };

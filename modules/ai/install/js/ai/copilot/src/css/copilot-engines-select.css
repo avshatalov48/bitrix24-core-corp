@@ -1,0 +1,35 @@
+.ai__copilot_engines-select {
+	margin-left: 3px;
+	margin-right: 3px;
+	padding-right: 12px;
+	position: relative;
+	display: inline-block;
+	color: var(--ui-color-text-primary);
+	cursor: pointer;
+	border-bottom: var(--ui-border-width-thin) solid rgba(var(--ui-color-text-primary-rgb), 0.2);
+	transition: 0.2s ease-in-out border-bottom-color, 0.2s ease-in-out width;
+}
+
+.ai__copilot_engines-select::after {
+	content: '';
+	position: absolute;
+	top: 4px;
+	right: 0;
+	width: 10px;
+	height: 10px;
+	background-image: url(../../images/ai__copilot_dropdown-icon.svg);
+	background-repeat: no-repeat;
+	background-position: center center;
+}
+
+.ai__copilot_engines-select:hover,
+.ai__copilot_engines-select.--menu-show {
+	transition-duration: 0s;
+	border-bottom-color: rgba(var(--ui-color-text-primary-rgb), 1);
+}
+
+.ai__copilot_engines-select_selected {
+	white-space: nowrap;
+	transition: 0.2s ease-in-out opacity;
+	letter-spacing: -0.6px;
+}

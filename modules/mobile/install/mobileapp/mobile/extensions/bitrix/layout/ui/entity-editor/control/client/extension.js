@@ -41,6 +41,36 @@ jn.define('layout/ui/entity-editor/control/client', (require, exports, module) =
 			};
 		}
 
+		getPermissionByType(type)
+		{
+			return get(
+				this.schemeElement.getData(),
+				['permissions', type.toUpperCase()],
+				false,
+			);
+		}
+
+		canEditClients()
+		{
+			const contactPermission = this.getPermissionByType(CRM_CONTACT);
+			const canEditContacts = contactPermission.add || contactPermission.update;
+
+			const companyPermission = this.getPermissionByType(CRM_COMPANY);
+			const canEditCompanies = companyPermission.add || companyPermission.update;
+
+			return canEditContacts || canEditCompanies;
+		}
+
+		isVisible()
+		{
+			if (!this.hasValue() && !this.canEditClients())
+			{
+				return false;
+			}
+
+			return super.isVisible();
+		}
+
 		isMyCompany()
 		{
 			return this.getDataParam('enableMyCompanyOnly', false);
@@ -58,7 +88,12 @@ jn.define('layout/ui/entity-editor/control/client', (require, exports, module) =
 
 			const entityInfo = get(modelData, [entityInfoName, `${type.toUpperCase()}_DATA`], []);
 
-			return entityInfo.map((data) => SelectorProcessing.prepareContact(data));
+			const modelMultiFieldData = get(modelData, ['MULTIFIELD_DATA'], []);
+
+			return entityInfo.map((entityData) => SelectorProcessing.prepareContact({
+				...entityData,
+				modelMultiFieldData,
+			}));
 		}
 
 		getValuesToSave()

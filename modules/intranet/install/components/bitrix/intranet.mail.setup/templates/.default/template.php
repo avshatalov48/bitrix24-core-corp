@@ -172,7 +172,7 @@ foreach ($arParams['SERVICES'] as $id => $settings)
 	<? } ?>
 </div>
 
-<script type="text/javascript">
+<script>
 
 	BX.bind(BX('settings_save'), 'click', function(e) {
 		e.preventDefault ? e.preventDefault() : e.returnValue = false;

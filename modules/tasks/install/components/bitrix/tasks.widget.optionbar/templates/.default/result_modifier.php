@@ -42,4 +42,6 @@ foreach($arParams['OPTIONS'] as $k => $option)
 //);
 $arResult['JS_DATA'] = [
 	'taskLimitExceeded' => $arResult['TASK_LIMIT_EXCEEDED'],
+	'taskControlLimitExceeded' => $arResult['TASK_CONTROL_LIMIT_EXCEEDED'],
+	'taskSkipWeekendsLimitExceeded' => $arResult['TASK_SKIP_WEEKENDS_LIMIT_EXCEEDED'],
 ];

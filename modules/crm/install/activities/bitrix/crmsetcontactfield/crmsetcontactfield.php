@@ -160,7 +160,7 @@ class CBPCrmSetContactField extends CBPSetFieldActivity
 		else
 		{
 			$factory = \Bitrix\Crm\Service\Container::getInstance()->getFactory($entityTypeId);
-			if (isset($factory) && $factory->isAutomationEnabled())
+			if (isset($factory))
 			{
 				$entity = $factory->getItem($entityId);
 				if ($entity)

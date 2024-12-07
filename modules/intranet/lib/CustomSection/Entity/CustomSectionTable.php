@@ -4,6 +4,7 @@ namespace Bitrix\Intranet\CustomSection\Entity;
 
 use Bitrix\Intranet\CustomSection\Manager;
 use Bitrix\Main\DI\ServiceLocator;
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ORM\Data\DataManager;
 use Bitrix\Main\ORM\EntityError;
 use Bitrix\Main\ORM\Event;
@@ -55,10 +56,12 @@ class CustomSectionTable extends DataManager
 				->configureRequired()
 				->configureUnique()
 				->addValidator(new RegExpValidator(Manager::VALID_CODE_REGEX))
+				->configureTitle(Loc::getMessage('INTRANET_CUSTOM_SECTION_TABLE_FIELD_TITLE_CODE'))
 			,
 			(new StringField('TITLE'))
 				->configureSize(255)
 				->configureRequired()
+				->configureTitle(Loc::getMessage('INTRANET_CUSTOM_SECTION_TABLE_FIELD_TITLE_TITLE'))
 			,
 			(new StringField('MODULE_ID'))
 				->configureSize(50)
@@ -72,29 +75,50 @@ class CustomSectionTable extends DataManager
 
 	public static function onBeforeAdd(Event $event): EventResult
 	{
-		return static::fillCodeIfEmptyOrInvalid($event, false);
+		$result = new EventResult();
+		self::trimTitle($event, $result);
+		self::fillCodeIfEmptyOrInvalid($event, $result, false);
+
+		return $result;
 	}
 
 	public static function onBeforeUpdate(Event $event): EventResult
 	{
-		return static::fillCodeIfEmptyOrInvalid($event, true);
+		$result = new EventResult();
+		self::trimTitle($event, $result);
+		self::fillCodeIfEmptyOrInvalid($event, $result, true);
+
+		return $result;
 	}
 
-	protected static function fillCodeIfEmptyOrInvalid(Event $event, bool $isUpdate): EventResult
+	private static function trimTitle(Event $event, EventResult $result): void
 	{
-		$result = new EventResult();
+		$title = self::extractFieldFromOrmEvent($event, $result, 'TITLE');
+		if (!is_string($title))
+		{
+			return;
+		}
 
-		$fields = $event->getParameter('fields') ?? [];
+		$trimmedTitle = trim($title);
+		if ($trimmedTitle !== $title)
+		{
+			$result->modifyFields(
+				$result->getModified() + ['TITLE' => $trimmedTitle],
+			);
+		}
+	}
 
-		$code = isset($fields['CODE']) ? (string)$fields['CODE'] : null;
+	protected static function fillCodeIfEmptyOrInvalid(Event $event, EventResult $result, bool $isUpdate): void
+	{
+		$code = self::extractFieldFromOrmEvent($event, $result, 'CODE');
 		if ($isUpdate && is_null($code))
 		{
-			return $result;
+			return;
 		}
 
 		if (!static::getCodeGenerator()->isCodeValid((string)$code))
 		{
-			$newCode = static::getCodeGenerator()->generate($fields['TITLE'] ?? null);
+			$newCode = static::getCodeGenerator()->generate(self::extractFieldFromOrmEvent($event, $result, 'TITLE'));
 
 			if (empty($newCode))
 			{
@@ -102,13 +126,18 @@ class CustomSectionTable extends DataManager
 			}
 			else
 			{
-				$result->modifyFields([
-					'CODE' => $newCode,
-				]);
+				$result->modifyFields(
+					$result->getModified() + ['CODE' => $newCode],
+				);
 			}
 		}
+	}
 
-		return $result;
+	private static function extractFieldFromOrmEvent(Event $event, EventResult $result, string $fieldName): mixed
+	{
+		$fields = $event->getParameter('fields') ?? [];
+
+		return $result->getModified()[$fieldName] ?? $fields[$fieldName] ?? null;
 	}
 
 	protected static function getCodeGenerator(): CodeGenerator

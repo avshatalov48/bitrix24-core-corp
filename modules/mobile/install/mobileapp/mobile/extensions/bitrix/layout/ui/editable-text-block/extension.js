@@ -2,12 +2,14 @@
  * @module layout/ui/editable-text-block
  */
 jn.define('layout/ui/editable-text-block', (require, exports, module) => {
-	const { Color } = require('tokens');
+	const AppTheme = require('apptheme');
 	const { TextEditor } = require('layout/ui/text-editor');
+	const { TextEditor: BBCodeTextEditor } = require('text-editor');
 	const { CollapsibleText } = require('layout/ui/collapsible-text');
 	const { Type } = require('type');
 	const { pen } = require('assets/common');
 	const { inAppUrl } = require('in-app-url');
+	const { isOffline } = require('device/connection');
 
 	/**
 	 * @class EditableTextBlock
@@ -17,24 +19,32 @@ jn.define('layout/ui/editable-text-block', (require, exports, module) => {
 		/**
 		 * @param {Object} props
 		 * @param {string} props.value
-		 * @param {string} props.placeholder
-		 * @param {Function} props.onSave - callback with newValue onSave(value)
-		 * @param {Function} props.onBeforeSave
-		 * @param {Object} props.externalStyles
-		 * @param {Object} props.textProps - props for CollapsibleText
-		 * @param {Object} props.editorProps
-		 * @param {string} props.editorProps.placeholder
-		 * @param {string} props.editorProps.title
-		 * @param {string} props.editorProps.required
-		 * @param {Function} props.editorProps.onLinkClick
-		 * @param {string} props.testId
-		 * @param {string} props.editIconTestId
+		 * @param {string} [props.placeholder]
+		 * @param {Function} [props.onSave] - callback with newValue onSave(value)
+		 * @param {Function} [props.onBeforeSave]
+		 * @param {Object} [props.externalStyles]
+		 * @param {Object} [props.textProps] - props for CollapsibleText
+		 * @param {Object} [props.editorProps]
+		 * @param {string} [props.editorProps.placeholder]
+		 * @param {string} [props.editorProps.title]
+		 * @param {string} [props.editorProps.required]
+		 * @param {Function} [props.editorProps.onLinkClick]
+		 * @param {object} [props.editorProps.textAreaStyle]
+		 * @param {boolean} [props.editorProps.useBBCodeEditor]
+		 * @param {string} [props.testId]
+		 * @param {string} [props.editIconTestId]
+		 * @param {boolean} [props.showEditIcon]
 		 */
 		constructor(props)
 		{
 			super(props);
 
 			this.textEditorLayout = null;
+		}
+
+		shouldShowEditIcon()
+		{
+			return BX.prop.getBoolean(this.props, 'showEditIcon', true);
 		}
 
 		render()
@@ -47,25 +57,33 @@ jn.define('layout/ui/editable-text-block', (require, exports, module) => {
 						paddingLeft: 16,
 						paddingRight: 47,
 						borderWidth: 1,
-						borderColor: Color.bgSeparatorPrimary,
+						borderColor: AppTheme.colors.bgSeparatorPrimary,
 						borderRadius: 12,
 						...this.props.externalStyles,
 					},
 					testId: this.props.testId,
 				},
-				this.renderEditIcon(),
+				this.shouldShowEditIcon() && this.renderEditIcon(),
 				this.renderText(),
 			);
 		}
 
 		renderText()
 		{
-			return new CollapsibleText({
+			const params = {
 				value: this.props.value || this.props.placeholder,
 				...this.props.textProps,
+				useBBCodeEditor: this.props.editorProps.useBBCodeEditor,
 				onClick: () => this.openEditor(),
 				onLongClick: () => this.openEditor(),
-			});
+			};
+
+			if (this.props.editorProps.useBBCodeEditor)
+			{
+				params.onLinkClick = () => this.openEditor();
+			}
+
+			return new CollapsibleText(params);
 		}
 
 		renderEditIcon()
@@ -90,7 +108,6 @@ jn.define('layout/ui/editable-text-block', (require, exports, module) => {
 					testId: this.props.editIconTestId || 'TextEditorEditIcon',
 				},
 				Image({
-					tintColor: Color.base3,
 					svg: {
 						content: pen(),
 					},
@@ -104,20 +121,63 @@ jn.define('layout/ui/editable-text-block', (require, exports, module) => {
 
 		openEditor()
 		{
-			const { placeholder, title, required, textAreaStyle, parentWidget } = this.props.editorProps;
+			const {
+				title,
+				placeholder,
+				required,
+				textAreaStyle,
+				useBBCodeEditor,
+				bbCodeEditorParams = {},
+				parentWidget,
+			} = this.props.editorProps;
+			const { value } = this.props;
+
+			if (useBBCodeEditor)
+			{
+				const editorParams = {
+					...bbCodeEditorParams,
+					title,
+					textInput: {
+						...bbCodeEditorParams.textInput,
+						placeholder,
+					},
+					value,
+					readOnly: (!bbCodeEditorParams.readOnly && isOffline() ? true : bbCodeEditorParams.readOnly),
+					onSave: ({ bbcode, files }) => {
+						if (this.props.onSave)
+						{
+							this.props.onSave(bbcode, files);
+						}
+						this.textEditorLayout = null;
+					},
+				};
+
+				BBCodeTextEditor.edit(editorParams)
+					.then((layout) => {
+						this.textEditorLayout = layout;
+					})
+					.catch(console.error)
+				;
+
+				return;
+			}
 
 			TextEditor.open({
 				title,
-				text: this.props.value,
-				required,
 				parentWidget,
+				text: value,
+				required,
 				placeholder,
+				textAreaStyle,
 				onSave: (text) => this.onSave(text),
 				onBeforeSave: (editor) => this.onBeforeSave(editor),
 				onLinkClick: ({ url }) => this.onEditorLinkClick(url),
-			}).then(({ layout }) => {
-				this.textEditorLayout = layout;
-			}).catch((error) => console.error(error));
+			})
+				.then(({ layout }) => {
+					this.textEditorLayout = layout;
+				})
+				.catch((error) => console.error(error))
+			;
 		}
 
 		onSave(value)

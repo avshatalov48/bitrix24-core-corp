@@ -11,7 +11,6 @@ return [
 		'utils/function',
 		'layout/ui/fields',
 		'layout/ui/entity-editor/control/base',
-		'layout/ui/entity-editor/modeEnum',
 		'layout/ui/fields/focus-manager',
 		'layout/ui/plan-restriction',
 		'layout/ui/entity-editor/tooltip/duplicate',

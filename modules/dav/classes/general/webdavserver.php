@@ -2,7 +2,6 @@
 use Bitrix\Disk\Driver;
 use Bitrix\Disk\File;
 use Bitrix\Disk\Folder;
-use Bitrix\Disk\Internals\Error\Error;
 use Bitrix\Disk\BaseObject;
 use Bitrix\Disk\Storage;
 use Bitrix\Disk\Security\DiskSecurityContext;
@@ -10,7 +9,6 @@ use Bitrix\Disk\Security\FakeSecurityContext;
 use Bitrix\Disk\ProxyType;
 use Bitrix\Disk\User;
 use Bitrix\Main\Loader;
-use Bitrix\Main\Text\Encoding;
 use Bitrix\Main\Localization\Loc;
 
 IncludeModuleLangFile(__FILE__);
@@ -178,12 +176,6 @@ class CDavWebDavServer
 	{
 		$t = rawurldecode($t);
 		$t = str_replace("%20", " ", $t);
-		if (preg_match("/^.{1}/su", $t) == 1 && SITE_CHARSET != "UTF-8")
-		{
-			$t = CharsetConverter::ConvertCharset($t, "UTF-8", SITE_CHARSET);
-			if (preg_match("/^.{1}/su", $t) == 1 ) // IE
-				$t = CharsetConverter::ConvertCharset($t, "UTF-8", SITE_CHARSET);
-		}
 		return $t;
 	}
 
@@ -210,10 +202,6 @@ class CDavWebDavServer
 		}
 		else
 		{
-			if ($params["utf8"] == "Y" && SITE_CHARSET != "UTF-8")
-			{
-				$t = CharsetConverter::ConvertCharset($t, SITE_CHARSET, "UTF-8");
-			}
 			if ($params["urlencode"] != "N")
 			{
 				$t = str_replace(" ", "%20", $t);
@@ -237,7 +225,7 @@ class CDavWebDavServer
 		$request = $this->request;
 		$requestDocument = $request->GetXmlDocument();
 		/** @var Storage $storage */
-		$requestPath = Encoding::convertEncoding($request->getPath(), 'UTF-8', SITE_CHARSET);
+		$requestPath = $request->getPath();
 
 		if ($this->fillSystemStorage($arResources, $requestPath))
 		{
@@ -286,16 +274,16 @@ class CDavWebDavServer
 		{
 			return '403 Forbidden';
 		}
-		// È ÔÎÐÌÈÐÓÅÌ CDavResource
-		// ÇÀÏÈÕÈÂÀß Â ÍÅÃÎ ÂÑÅ ÅÃÎ ÑÂÎÉÑÒÂÀ
-		// $resource->AddProperty('èìÿ', 'çíà÷åíèå' /*, 'xmlns', 'ñûðûå äàííûå'*/);
+		// Ð˜ Ð¤ÐžÐ ÐœÐ˜Ð Ð£Ð•Ðœ CDavResource
+		// Ð—ÐÐŸÐ˜Ð¥Ð˜Ð’ÐÐ¯ Ð’ ÐÐ•Ð“Ðž Ð’Ð¡Ð• Ð•Ð“Ðž Ð¡Ð’ÐžÐ™Ð¡Ð¢Ð’Ð
+		// $resource->AddProperty('Ð¸Ð¼Ñ', 'Ð·Ð½Ð°Ñ‡ÐµÐ½Ð¸Ðµ' /*, 'xmlns', 'ÑÑ‹Ñ€Ñ‹Ðµ Ð´Ð°Ð½Ð½Ñ‹Ðµ'*/);
 		// $resource->AddProperty('resourcetype', array('collection', ''));
 
 		$arResources[] = $this->getResourceByObject($requestPath, $object);
 
 		if ($request->GetDepth() && $object instanceof Folder)
 		{
-			// ÂÛÃÐÅÁÀÅÌ È ÄÎÏÈÑÛÂÀÅÌ Â $arResources ÄÅÒÅÉ ÏÓÒÈ $path
+			// Ð’Ð«Ð“Ð Ð•Ð‘ÐÐ•Ðœ Ð˜ Ð”ÐžÐŸÐ˜Ð¡Ð«Ð’ÐÐ•Ðœ Ð’ $arResources Ð”Ð•Ð¢Ð•Ð™ ÐŸÐ£Ð¢Ð˜ $path
 			foreach ($object->getChildren($securityContext) as $child)
 			{
 				/** @var File|Folder $child */
@@ -313,7 +301,7 @@ class CDavWebDavServer
 
 		/** @var CDavRequest $request */
 		$request = $this->request;
-		$requestPath = Encoding::convertEncoding($request->getPath(), 'UTF-8', SITE_CHARSET);
+		$requestPath = $request->getPath();
 		if ($this->isSystemStorageElement($requestPath))
 		{
 			return '403 Forbidden';
@@ -329,7 +317,7 @@ class CDavWebDavServer
 //					true
 //				);
 
-		// ÒÓÒÀ ÏÀÒ×ÈÌ ÄÎÊÓÌÅÍÒ ÏÎ ÏÓÒÞ $path
+		// Ð¢Ð£Ð¢Ð ÐŸÐÐ¢Ð§Ð˜Ðœ Ð”ÐžÐšÐ£ÐœÐ•ÐÐ¢ ÐŸÐž ÐŸÐ£Ð¢Ð® $path
 		list($storage, $path) = $this->parsePath($requestPath);
 
 		if (!$storage)
@@ -357,18 +345,18 @@ class CDavWebDavServer
 			return '403 Forbidden';
 		}
 
-		//todo Êàê ÿ äîëæåí ïîëó÷èòü ñâîéñòâà, êîòîðûå ìíå ïðèñûëàþò?
+		//todo ÐšÐ°Ðº Ñ Ð´Ð¾Ð»Ð¶ÐµÐ½ Ð¿Ð¾Ð»ÑƒÑ‡Ð¸Ñ‚ÑŒ ÑÐ²Ð¾Ð¹ÑÑ‚Ð²Ð°, ÐºÐ¾Ñ‚Ð¾Ñ€Ñ‹Ðµ Ð¼Ð½Ðµ Ð¿Ñ€Ð¸ÑÑ‹Ð»Ð°ÑŽÑ‚?
 //		if(isset($requestDocument['name']))
 //		{
 //			$object->rename($requestDocument['name']);
 //		}
 
-		//todo ÷òî çíà÷èò 403? Êîòîðûå íå ïîëó÷èëîñü îáíîâèòü? À ÷òî ñ óñïåøíûìè?
+		//todo Ñ‡Ñ‚Ð¾ Ð·Ð½Ð°Ñ‡Ð¸Ñ‚ 403? ÐšÐ¾Ñ‚Ð¾Ñ€Ñ‹Ðµ Ð½Ðµ Ð¿Ð¾Ð»ÑƒÑ‡Ð¸Ð»Ð¾ÑÑŒ Ð¾Ð±Ð½Ð¾Ð²Ð¸Ñ‚ÑŒ? Ð Ñ‡Ñ‚Ð¾ Ñ ÑƒÑÐ¿ÐµÑˆÐ½Ñ‹Ð¼Ð¸?
 
-		// È ÔÎÐÌÈÐÓÅÌ CDavResource
+		// Ð˜ Ð¤ÐžÐ ÐœÐ˜Ð Ð£Ð•Ðœ CDavResource
 		$resource = new CDavResource($requestPath);
-		// ÇÀÏÈÕÈÂÀß Â ÍÅÃÎ ÂÑÅ ÅÃÎ ÑÂÎÉÑÒÂÀ, ÊÎÒÎÐÛÅ '403 Forbidden'
-		// $resource->AddProperty('èìÿ', '', 'xmlns', '', '403 Forbidden');
+		// Ð—ÐÐŸÐ˜Ð¥Ð˜Ð’ÐÐ¯ Ð’ ÐÐ•Ð“Ðž Ð’Ð¡Ð• Ð•Ð“Ðž Ð¡Ð’ÐžÐ™Ð¡Ð¢Ð’Ð, ÐšÐžÐ¢ÐžÐ Ð«Ð• '403 Forbidden'
+		// $resource->AddProperty('Ð¸Ð¼Ñ', '', 'xmlns', '', '403 Forbidden');
 
 		$arResources[] = $resource;
 
@@ -380,7 +368,7 @@ class CDavWebDavServer
 		/** @var CDavRequest $request */
 		$request = $this->request;
 		$response = $this->response;
-		$requestPath = Encoding::convertEncoding($request->getPath(), 'UTF-8', SITE_CHARSET);
+		$requestPath = $request->getPath();
 
 		$path = $request->GetPath();
 
@@ -508,9 +496,9 @@ class CDavWebDavServer
 	{
 		/** @var CDavRequest $request */
 		$request = $this->request;
-		$requestPath = Encoding::convertEncoding($request->getPath(), 'UTF-8', SITE_CHARSET);
+		$requestPath = $request->getPath();
 
-		//todo îòêóäà ìû óçíàåì õðàíèëèùå îòíîñèòåëüíî êîòîðîãî âåñòè ïîèñê?
+		//todo Ð¾Ñ‚ÐºÑƒÐ´Ð° Ð¼Ñ‹ ÑƒÐ·Ð½Ð°ÐµÐ¼ Ñ…Ñ€Ð°Ð½Ð¸Ð»Ð¸Ñ‰Ðµ Ð¾Ñ‚Ð½Ð¾ÑÐ¸Ñ‚ÐµÐ»ÑŒÐ½Ð¾ ÐºÐ¾Ñ‚Ð¾Ñ€Ð¾Ð³Ð¾ Ð²ÐµÑÑ‚Ð¸ Ð¿Ð¾Ð¸ÑÐº?
 		list($storage, $path) = $this->parsePath($requestPath);
 
 		if (!$storage)
@@ -609,9 +597,9 @@ class CDavWebDavServer
 	{
 		/** @var CDavRequest $request */
 		$request = $this->request;
-		$requestPath = Encoding::convertEncoding($request->getPath(), 'UTF-8', SITE_CHARSET);
+		$requestPath = $request->getPath();
 
-		//todo îòêóäà ìû óçíàåì õðàíèëèùå îòíîñèòåëüíî êîòîðîãî âåñòè ïîèñê?
+		//todo Ð¾Ñ‚ÐºÑƒÐ´Ð° Ð¼Ñ‹ ÑƒÐ·Ð½Ð°ÐµÐ¼ Ñ…Ñ€Ð°Ð½Ð¸Ð»Ð¸Ñ‰Ðµ Ð¾Ñ‚Ð½Ð¾ÑÐ¸Ñ‚ÐµÐ»ÑŒÐ½Ð¾ ÐºÐ¾Ñ‚Ð¾Ñ€Ð¾Ð³Ð¾ Ð²ÐµÑÑ‚Ð¸ Ð¿Ð¾Ð¸ÑÐº?
 		list($storage, $path) = $this->parsePath($requestPath);
 
 		if (!$storage)
@@ -645,13 +633,13 @@ class CDavWebDavServer
 	{
 		/** @var CDavRequest $request */
 		$request = $this->request;
-		$requestPath = Encoding::convertEncoding($request->getPath(), 'UTF-8', SITE_CHARSET);
+		$requestPath = $request->getPath();
 		if ($this->isSystemStorageElement($requestPath))
 		{
 			return '403 Forbidden';
 		}
 
-		//todo îòêóäà ìû óçíàåì õðàíèëèùå îòíîñèòåëüíî êîòîðîãî âåñòè ïîèñê?
+		//todo Ð¾Ñ‚ÐºÑƒÐ´Ð° Ð¼Ñ‹ ÑƒÐ·Ð½Ð°ÐµÐ¼ Ñ…Ñ€Ð°Ð½Ð¸Ð»Ð¸Ñ‰Ðµ Ð¾Ñ‚Ð½Ð¾ÑÐ¸Ñ‚ÐµÐ»ÑŒÐ½Ð¾ ÐºÐ¾Ñ‚Ð¾Ñ€Ð¾Ð³Ð¾ Ð²ÐµÑÑ‚Ð¸ Ð¿Ð¾Ð¸ÑÐº?
 		/** @var Storage $storage */
 		list($storage, $path) = $this->parsePath($requestPath);
 		//todo?
@@ -707,7 +695,7 @@ class CDavWebDavServer
 	{
 		/** @var CDavRequest $request */
 		$request = $this->request;
-		$requestPath = Encoding::convertEncoding($request->getPath(), 'UTF-8', SITE_CHARSET);
+		$requestPath = $request->getPath();
 		if ($this->isSystemStorageElement($requestPath))
 		{
 			return '403 Forbidden';
@@ -726,7 +714,7 @@ class CDavWebDavServer
 
 		$requestDocument = $request->GetXmlDocument();
 
-		//todo îòêóäà ìû óçíàåì õðàíèëèùå îòíîñèòåëüíî êîòîðîãî âåñòè ïîèñê?
+		//todo Ð¾Ñ‚ÐºÑƒÐ´Ð° Ð¼Ñ‹ ÑƒÐ·Ð½Ð°ÐµÐ¼ Ñ…Ñ€Ð°Ð½Ð¸Ð»Ð¸Ñ‰Ðµ Ð¾Ñ‚Ð½Ð¾ÑÐ¸Ñ‚ÐµÐ»ÑŒÐ½Ð¾ ÐºÐ¾Ñ‚Ð¾Ñ€Ð¾Ð³Ð¾ Ð²ÐµÑÑ‚Ð¸ Ð¿Ð¾Ð¸ÑÐº?
 		/** @var Storage $storage */
 		list($storage, $path) = $this->parsePath($requestPath);
 		$objectId = Driver::getInstance()->getUrlManager()->resolveObjectIdFromPath($storage, $path);
@@ -904,7 +892,7 @@ class CDavWebDavServer
 	{
 		/** @var CDavRequest $request */
 		$request = $this->request;
-		$requestPath = Encoding::convertEncoding($request->getPath(), 'UTF-8', SITE_CHARSET);
+		$requestPath = $request->getPath();
 
 		list($storage, $path) = self::ParsePath($requestPath);
 
@@ -934,7 +922,7 @@ class CDavWebDavServer
 	{
 		/** @var CDavRequest $request */
 		$request = $this->request;
-		$requestPath = Encoding::convertEncoding($request->getPath(), 'UTF-8', SITE_CHARSET);
+		$requestPath = $request->getPath();
 
 		list($storage, $path) = self::ParsePath($requestPath);
 

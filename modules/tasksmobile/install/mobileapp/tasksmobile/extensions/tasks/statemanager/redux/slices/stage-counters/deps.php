@@ -20,5 +20,5 @@ return [
 		'./src/reducer',
 		'./src/selector',
 		'./src/slice',
-	]
+	],
 ];

@@ -175,7 +175,7 @@ class Processor extends \Bitrix\Socialnetwork\Component\LogListCommon\Processor
 		}
 		else
 		{
-			if ($params['DESTINATION'] > 0)
+			if (isset($params['DESTINATION']) && $params['DESTINATION'] > 0)
 			{
 				$this->setFilterKey('LOG_RIGHTS', $params['DESTINATION']);
 				$this->showPinnedPanel = false;
@@ -232,7 +232,7 @@ class Processor extends \Bitrix\Socialnetwork\Component\LogListCommon\Processor
 			{
 				$this->setFilterKey('EVENT_ID', [$params['EXACT_EVENT_ID']]);
 			}
-			elseif (is_array($params['EVENT_ID']))
+			elseif (isset($params['EVENT_ID']) && is_array($params['EVENT_ID']))
 			{
 				$arraysToMerge = [];
 				foreach ($params['EVENT_ID'] as $eventId)
@@ -243,7 +243,7 @@ class Processor extends \Bitrix\Socialnetwork\Component\LogListCommon\Processor
 
 				$this->setFilterKey('EVENT_ID', array_unique($eventIdFullSet));
 			}
-			elseif ($params['EVENT_ID'])
+			elseif (!empty($params['EVENT_ID']))
 			{
 				$this->setFilterKey('EVENT_ID', \CSocNetLogTools::findFullSetByEventID($params['EVENT_ID']));
 			}

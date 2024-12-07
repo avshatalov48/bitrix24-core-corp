@@ -61,7 +61,7 @@ while($enum_fields = $property_enums->GetNext())
 }
 
 ?>
-<script type="text/javascript">
+<script>
 function GetAbsenceDialog(absenceID)
 {
 	<?

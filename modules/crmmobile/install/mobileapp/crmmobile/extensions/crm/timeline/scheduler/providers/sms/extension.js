@@ -3,7 +3,7 @@
  */
 jn.define('crm/timeline/scheduler/providers/sms', (require, exports, module) => {
 	const { Loc } = require('loc');
-	const { Color } = require('tokens');
+	const AppTheme = require('apptheme');
 	const { WidgetHeaderButton } = require('layout/ui/widget-header-button');
 	const { TimelineSchedulerBaseProvider } = require('crm/timeline/scheduler/providers/base');
 	const { Textarea } = require('layout/ui/textarea');
@@ -20,6 +20,7 @@ jn.define('crm/timeline/scheduler/providers/sms', (require, exports, module) => 
 	const { Line } = require('utils/skeleton');
 	const { Type } = require('type');
 	const { settings } = require('assets/common');
+	const { Icon } = require('assets/icons');
 	const { ContextMenu } = require('layout/ui/context-menu');
 
 	const MAX_SMS_LENGTH = 200;
@@ -50,9 +51,12 @@ jn.define('crm/timeline/scheduler/providers/sms', (require, exports, module) => 
 			return Loc.getMessage('M_CRM_TIMELINE_SCHEDULER_SMS_MENU_TITLE');
 		}
 
+		/**
+		 * @returns {Icon}
+		 */
 		static getMenuIcon()
 		{
-			return `<svg width="31" height="31" viewBox="0 0 31 31" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M7.75618 7.79004C6.32944 7.79004 5.17284 8.94665 5.17285 10.3734L5.17294 20.6003C5.17295 22.0271 6.32954 23.1837 7.75627 23.1837H9.93142V25.9041C9.93142 26.3726 10.5049 26.5992 10.8252 26.2573L13.7039 23.1837H23.3893C24.8161 23.1837 25.9727 22.027 25.9727 20.6003L25.9726 10.3734C25.9726 8.94662 24.816 7.79004 23.3892 7.79004H7.75618ZM11.1814 17.4841C11.3614 17.2089 11.4514 16.8939 11.4514 16.5392C11.4514 16.1531 11.3555 15.8329 11.1638 15.5786C10.9721 15.3243 10.6297 15.0863 10.1367 14.8646C9.62286 14.6298 9.30789 14.4681 9.19182 14.3794C9.07574 14.2907 9.0177 14.1903 9.0177 14.0781C9.0177 13.9738 9.06335 13.8864 9.15465 13.816C9.24594 13.7455 9.39201 13.7103 9.59286 13.7103C9.98152 13.7103 10.4432 13.8329 10.9779 14.0781L11.4514 12.8847C10.8358 12.6109 10.2319 12.4739 9.63982 12.4739C8.96944 12.4739 8.44255 12.6213 8.0591 12.916C7.67566 13.2108 7.48394 13.6216 7.48394 14.1485C7.48394 14.4302 7.52894 14.6741 7.61893 14.8802C7.70892 15.0863 7.84717 15.2689 8.03367 15.428C8.22018 15.5871 8.49993 15.7514 8.87294 15.921C9.28507 16.1062 9.53874 16.2288 9.63395 16.2888C9.72915 16.3487 9.79828 16.4081 9.84132 16.4668C9.88436 16.5255 9.90588 16.5939 9.90588 16.6722C9.90588 16.7974 9.8524 16.8998 9.74546 16.9793C9.63851 17.0589 9.47027 17.0987 9.24073 17.0987C8.97466 17.0987 8.68252 17.0563 8.36429 16.9715C8.04606 16.8867 7.73957 16.7687 7.44482 16.6174V17.9947C7.72392 18.1277 7.99259 18.221 8.25082 18.2744C8.50906 18.3279 8.82859 18.3546 9.20942 18.3546C9.6659 18.3546 10.0637 18.2783 10.4028 18.1257C10.7419 17.9731 11.0014 17.7593 11.1814 17.4841ZM13.6583 14.1559L14.8282 18.2759H16.2993L17.4536 14.1637H17.4888C17.4575 14.7846 17.4399 15.1745 17.4359 15.3336C17.432 15.4927 17.4301 15.6375 17.4301 15.7679V18.2759H18.8504V12.5556H16.7884L15.6185 16.617H15.5872L14.3939 12.5556H12.3358V18.2759H13.7052V15.7914C13.7052 15.4027 13.6778 14.8576 13.6231 14.1559H13.6583ZM23.8241 16.5392C23.8241 16.8939 23.7341 17.2089 23.5541 17.4841C23.3741 17.7593 23.1146 17.9731 22.7755 18.1257C22.4364 18.2783 22.0386 18.3546 21.5821 18.3546C21.2013 18.3546 20.8818 18.3279 20.6235 18.2744C20.3653 18.221 20.0966 18.1277 19.8175 17.9947V16.6174C20.1123 16.7687 20.4188 16.8867 20.737 16.9715C21.0552 17.0563 21.3474 17.0987 21.6134 17.0987C21.843 17.0987 22.0112 17.0589 22.1182 16.9793C22.2251 16.8998 22.2786 16.7974 22.2786 16.6722C22.2786 16.5939 22.2571 16.5255 22.214 16.4668C22.171 16.4081 22.1019 16.3487 22.0067 16.2888C21.9115 16.2288 21.6578 16.1062 21.2457 15.921C20.8727 15.7514 20.5929 15.5871 20.4064 15.428C20.2199 15.2689 20.0816 15.0863 19.9917 14.8802C19.9017 14.6741 19.8567 14.4302 19.8567 14.1485C19.8567 13.6216 20.0484 13.2108 20.4318 12.916C20.8153 12.6213 21.3422 12.4739 22.0125 12.4739C22.6047 12.4739 23.2085 12.6109 23.8241 12.8847L23.3507 14.0781C22.8159 13.8329 22.3542 13.7103 21.9656 13.7103C21.7647 13.7103 21.6187 13.7455 21.5274 13.816C21.4361 13.8864 21.3904 13.9738 21.3904 14.0781C21.3904 14.1903 21.4485 14.2907 21.5645 14.3794C21.6806 14.4681 21.9956 14.6298 22.5094 14.8646C23.0024 15.0863 23.3448 15.3243 23.5365 15.5786C23.7282 15.8329 23.8241 16.1531 23.8241 16.5392Z" fill="${Color.base3}"/></svg>`;
+			return Icon.SMS;
 		}
 
 		static getDefaultPosition()
@@ -538,8 +542,8 @@ jn.define('crm/timeline/scheduler/providers/sms', (require, exports, module) => 
 				communications,
 				ownerInfo,
 				typeId,
-				selectedPhoneId: toPhoneId,
-				onPhoneSelectCallback: this.onPhoneSelectCallback,
+				selectedId: toPhoneId,
+				onSelectCallback: this.onPhoneSelectCallback,
 			});
 		}
 
@@ -657,7 +661,7 @@ jn.define('crm/timeline/scheduler/providers/sms', (require, exports, module) => 
 					style: styles.settingsIconContainer,
 				},
 				Image({
-					tintColor: Color.base5,
+					tintColor: AppTheme.colors.base5,
 					style: styles.settingsIcon,
 					svg: {
 						content: settings(),
@@ -675,25 +679,25 @@ jn.define('crm/timeline/scheduler/providers/sms', (require, exports, module) => 
 				const { smsConfig, onChangeSenderCallback, onChangePhoneCallback } = this;
 
 				this.sendersSelector = new SendersSelector({
-					currentPhoneId,
+					currentFromId: currentPhoneId,
 					currentSender,
 					senders: smsConfig.config.senders,
 					contactCenterUrl: smsConfig.contactCenterUrl,
 					onChangeSenderCallback,
-					onChangePhoneCallback,
+					onChangeFromCallback: onChangePhoneCallback,
 				});
 			}
 
 			this.sendersSelector.show(this.layout);
 		}
 
-		onChangeSenderCallback({ sender, phoneId })
+		onChangeSenderCallback({ sender, fromId })
 		{
 			const isSenderTemplatesBased = this.isSenderTemplatesBased(sender);
 
 			this.setState({
 				sender,
-				fromPhoneId: phoneId,
+				fromPhoneId: fromId,
 				templateId: isSenderTemplatesBased ? 0 : null,
 				maxHeight: MAX_HEIGHT,
 			}, () => {
@@ -708,10 +712,10 @@ jn.define('crm/timeline/scheduler/providers/sms', (require, exports, module) => 
 			});
 		}
 
-		onChangePhoneCallback({ phoneId })
+		onChangePhoneCallback({ fromId })
 		{
 			this.setState({
-				fromPhoneId: phoneId,
+				fromPhoneId: fromId,
 			});
 		}
 
@@ -781,7 +785,7 @@ jn.define('crm/timeline/scheduler/providers/sms', (require, exports, module) => 
 					Image({
 						style: styles.templateSelectorIcon,
 						svg: {
-							content: `<svg width="23" height="22" viewBox="0 0 23 22" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M4.66406 5.74707H6.4974V7.5804H4.66406V5.74707ZM8.33073 5.74707H19.3307V7.5804H8.33073V5.74707ZM8.33073 14.9137H19.3307V16.7471H8.33073V14.9137ZM4.66406 14.9137H6.4974V16.7471H4.66406V14.9137ZM8.33073 10.3304H19.3307V12.1637H8.33073V10.3304ZM4.66406 10.3304H6.4974V12.1637H4.66406V10.3304Z" fill="${Color.base3}"/></svg>`,
+							content: `<svg width="23" height="22" viewBox="0 0 23 22" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M4.66406 5.74707H6.4974V7.5804H4.66406V5.74707ZM8.33073 5.74707H19.3307V7.5804H8.33073V5.74707ZM8.33073 14.9137H19.3307V16.7471H8.33073V14.9137ZM4.66406 14.9137H6.4974V16.7471H4.66406V14.9137ZM8.33073 10.3304H19.3307V12.1637H8.33073V10.3304ZM4.66406 10.3304H6.4974V12.1637H4.66406V10.3304Z" fill="${AppTheme.colors.base3}"/></svg>`,
 						},
 						onClick: this.openTemplateSelector,
 					}),
@@ -918,7 +922,7 @@ jn.define('crm/timeline/scheduler/providers/sms', (require, exports, module) => 
 						text: this.state.text,
 						style: styles.textField,
 						placeholder: Loc.getMessage('M_CRM_TIMELINE_SCHEDULER_SMS_PLACEHOLDER'),
-						placeholderTextColor: Color.base5,
+						placeholderTextColor: AppTheme.colors.base5,
 						onChange: this.debouncedTextChange,
 					}),
 				),
@@ -1011,8 +1015,8 @@ jn.define('crm/timeline/scheduler/providers/sms', (require, exports, module) => 
 	}
 
 	const icons = {
-		corner: `<svg width="15" height="16" viewBox="0 0 15 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M33.8847 35.25H2C1.30964 35.25 0.75 34.6904 0.75 34V4.56797C0.75 3.47827 2.04714 2.91035 2.84785 3.64947L34.7325 33.0815C35.5687 33.8533 35.0226 35.25 33.8847 35.25Z" fill="${Color.bgContentPrimary}" stroke="${Color.accentExtraAqua}" stroke-width="1.5"/></svg>`,
-		warning: `<svg width="19" height="19" viewBox="0 0 19 19" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7.78925 4.20218H10.5268L10.2109 10.116H8.10512L7.78925 4.20218Z" fill="${Color.base2}"/><path d="M9.15776 14.2528C10.0869 14.2528 10.8401 13.4996 10.8401 12.5705C10.8401 11.6414 10.0869 10.8881 9.15776 10.8881C8.22863 10.8881 7.47543 11.6414 7.47543 12.5705C7.47543 13.4996 8.22863 14.2528 9.15776 14.2528Z" fill="${Color.base2}"/><path fill-rule="evenodd" clip-rule="evenodd" d="M9.14886 18.1317C14.1099 18.1317 18.1317 14.1099 18.1317 9.14886C18.1317 4.18777 14.1099 0.166016 9.14886 0.166016C4.18777 0.166016 0.166016 4.18777 0.166016 9.14886C0.166016 14.1099 4.18777 18.1317 9.14886 18.1317ZM9.14886 15.9977C12.9314 15.9977 15.9977 12.9314 15.9977 9.14887C15.9977 5.36636 12.9314 2.30004 9.14886 2.30004C5.36636 2.30004 2.30004 5.36636 2.30004 9.14887C2.30004 12.9314 5.36636 15.9977 9.14886 15.9977Z" fill="${Color.base2}"/></svg>`,
+		corner: `<svg width="15" height="16" viewBox="0 0 15 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M33.8847 35.25H2C1.30964 35.25 0.75 34.6904 0.75 34V4.56797C0.75 3.47827 2.04714 2.91035 2.84785 3.64947L34.7325 33.0815C35.5687 33.8533 35.0226 35.25 33.8847 35.25Z" fill="${AppTheme.colors.bgContentPrimary}" stroke="${AppTheme.colors.accentExtraAqua}" stroke-width="1.5"/></svg>`,
+		warning: `<svg width="19" height="19" viewBox="0 0 19 19" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7.78925 4.20218H10.5268L10.2109 10.116H8.10512L7.78925 4.20218Z" fill="${AppTheme.colors.base2}"/><path d="M9.15776 14.2528C10.0869 14.2528 10.8401 13.4996 10.8401 12.5705C10.8401 11.6414 10.0869 10.8881 9.15776 10.8881C8.22863 10.8881 7.47543 11.6414 7.47543 12.5705C7.47543 13.4996 8.22863 14.2528 9.15776 14.2528Z" fill="${AppTheme.colors.base2}"/><path fill-rule="evenodd" clip-rule="evenodd" d="M9.14886 18.1317C14.1099 18.1317 18.1317 14.1099 18.1317 9.14886C18.1317 4.18777 14.1099 0.166016 9.14886 0.166016C4.18777 0.166016 0.166016 4.18777 0.166016 9.14886C0.166016 14.1099 4.18777 18.1317 9.14886 18.1317ZM9.14886 15.9977C12.9314 15.9977 15.9977 12.9314 15.9977 9.14887C15.9977 5.36636 12.9314 2.30004 9.14886 2.30004C5.36636 2.30004 2.30004 5.36636 2.30004 9.14887C2.30004 12.9314 5.36636 15.9977 9.14886 15.9977Z" fill="${AppTheme.colors.base2}"/></svg>`,
 	};
 
 	const styles = {
@@ -1026,7 +1030,7 @@ jn.define('crm/timeline/scheduler/providers/sms', (require, exports, module) => 
 		wrapper: (maxHeight) => ({
 			flex: 1,
 			padding: 14,
-			backgroundColor: Color.bgContentPrimary,
+			backgroundColor: AppTheme.colors.bgContentPrimary,
 			borderTopLeftRadius: 12,
 			borderTopRightRadius: 12,
 			maxHeight,
@@ -1065,24 +1069,24 @@ jn.define('crm/timeline/scheduler/providers/sms', (require, exports, module) => 
 			padding: 18,
 			borderWidth: 1.4,
 			borderRadius: 12,
-			borderColor: Color.base6,
+			borderColor: AppTheme.colors.base6,
 		},
 		templateTitleContainer: {
 			flexDirection: 'row',
 			justifyContent: 'space-between',
 			alignContent: 'center',
 			borderBottomWidth: 1,
-			borderBottomColor: Color.base3,
+			borderBottomColor: AppTheme.colors.base3,
 			paddingBottom: 10,
 			marginBottom: 10,
 		},
 		templateTitleLabel: {
 			fontSize: 14,
-			color: Color.base3,
+			color: AppTheme.colors.base3,
 		},
 		templateTitle: {
 			fontSize: 18,
-			color: Color.base3,
+			color: AppTheme.colors.base3,
 			marginTop: 4,
 		},
 		templateSelectorIcon: {
@@ -1092,22 +1096,22 @@ jn.define('crm/timeline/scheduler/providers/sms', (require, exports, module) => 
 			alignSelf: 'center',
 		},
 		templatePreview: {
-			color: Color.base3,
+			color: AppTheme.colors.base3,
 			fontSize: 14,
 		},
 		textFieldCorner: {
 			width: 15,
 			height: 16,
-			backgroundColor: Color.bgContentPrimary,
+			backgroundColor: AppTheme.colors.bgContentPrimary,
 			marginBottom: -2,
 			zIndex: 10,
 		},
 		counter: (hasRemainingLetters) => {
 			return {
 				position: 'absolute',
-				backgroundColor: Color.bgContentPrimary,
+				backgroundColor: AppTheme.colors.bgContentPrimary,
 				zIndex: 10,
-				color: hasRemainingLetters ? Color.base5 : Color.accentSoftElementRed1,
+				color: hasRemainingLetters ? AppTheme.colors.base5 : AppTheme.colors.accentSoftElementRed1,
 				paddingHorizontal: 6,
 				fontSize: 13,
 				right: 12,
@@ -1116,7 +1120,7 @@ jn.define('crm/timeline/scheduler/providers/sms', (require, exports, module) => 
 			};
 		},
 		textFieldWrapper: {
-			borderColor: Color.accentExtraAqua,
+			borderColor: AppTheme.colors.accentExtraAqua,
 			borderWidth: 1.5,
 			zIndex: 1,
 			borderTopRightRadius: 6,
@@ -1125,7 +1129,7 @@ jn.define('crm/timeline/scheduler/providers/sms', (require, exports, module) => 
 			flex: 1,
 		},
 		textField: {
-			color: Color.base1,
+			color: AppTheme.colors.base1,
 			fontSize: 16,
 			paddingHorizontal: 16,
 			paddingVertical: 14,

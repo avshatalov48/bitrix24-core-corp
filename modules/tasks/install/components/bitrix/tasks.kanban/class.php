@@ -6,8 +6,11 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 require_once __DIR__ . '/scrummanager.php';
 
+use Bitrix\Main\Engine\Contract\Controllerable;
+use Bitrix\Main\Errorable;
 use \Bitrix\Main\Localization\Loc;
 use \Bitrix\Main\Config\Option;
+use Bitrix\Main\Type\Collection;
 use \Bitrix\Main\Type\DateTime;
 use \Bitrix\Main\Error;
 use \Bitrix\Main\Loader;
@@ -15,9 +18,11 @@ use \Bitrix\Main\Application;
 
 use Bitrix\Tasks\Component\Kanban\ScrumManager;
 use Bitrix\Tasks\Helper\Analytics;
+use Bitrix\Tasks\Integration\Bizproc\Listener;
 use Bitrix\Tasks\Integration\Intranet\Settings;
 use Bitrix\Tasks\Integration\Pull\PushCommand;
 use Bitrix\Tasks\Integration\Socialnetwork\Context\Context;
+use Bitrix\Tasks\Internals\Log\LogFacade;
 use Bitrix\Tasks\Internals\Registry\TaskRegistry;
 use Bitrix\Tasks\Internals\Task\MetaStatus;
 use Bitrix\Tasks\Internals\Task\Status;
@@ -25,7 +30,7 @@ use Bitrix\Tasks\Internals\TaskTable;
 use \Bitrix\Tasks\Kanban\StagesTable;
 use \Bitrix\Tasks\Kanban\TaskStageTable;
 use \Bitrix\Tasks\Kanban\TimeLineTable;
-use \Bitrix\Tasks\ProjectsTable;
+use Bitrix\Tasks\Kanban\ProjectsTable;
 use \Bitrix\Tasks\Helper\Filter;
 use Bitrix\Tasks\Internals\Counter;
 use \Bitrix\Tasks\Internals\Task;
@@ -55,7 +60,7 @@ use \Bitrix\Tasks\Components\Kanban\Services\Counters;
 
 use Bitrix\Tasks\TourGuide;
 
-class TasksKanbanComponent extends \CBitrixComponent
+class TasksKanbanComponent extends \CBitrixComponent implements Controllerable, Errorable
 {
 	private const ORDER_OPTION = 'order_new_task_v2';
 	const TASK_TYPE_USER = 'user';
@@ -136,10 +141,8 @@ class TasksKanbanComponent extends \CBitrixComponent
 		{
 			return $init;
 		}
-		else
-		{
-			$this->initVars();
-		}
+
+		$this->initVars();
 
 		// get data of user or group
 		if ($this->taskType === static::TASK_TYPE_USER)
@@ -168,9 +171,9 @@ class TasksKanbanComponent extends \CBitrixComponent
 		}
 
 		if (
-			Loader::includeModule('socialnetwork')
-			&& isset($this->arParams['GROUP_ID'])
-			&& $this->arParams['GROUP_ID']
+			isset($this->arParams['GROUP_ID'])
+			&& (int)$this->arParams['GROUP_ID'] > 0
+			&& Loader::includeModule('socialnetwork')
 		)
 		{
 			SocialNetwork::setLogDestinationLast(['SG' => [$this->arParams['GROUP_ID']]]);
@@ -221,15 +224,15 @@ class TasksKanbanComponent extends \CBitrixComponent
 
 		// vars
 		$params['SONET_LOAD'] = $sonetOn = Loader::includeModule('socialnetwork');
-		$params['GROUP_ID_FORCED'] = isset($params['GROUP_ID_FORCED']) ? $params['GROUP_ID_FORCED'] : false;
-		$params['IS_AJAX'] = isset($params['IS_AJAX']) && $params['IS_AJAX'] == 'Y' ? 'Y' : 'N';
-		$params['SET_TITLE'] = isset($params['SET_TITLE']) && $params['SET_TITLE'] == 'Y' ? 'Y' : 'N';
-		$params['PERSONAL'] = isset($params['PERSONAL']) && $params['PERSONAL'] == 'Y' ? 'Y' : 'N';
-		$params['TIMELINE_MODE'] = isset($params['TIMELINE_MODE']) && $params['TIMELINE_MODE'] == 'Y' ? 'Y' : 'N';
-		$params['USER_ID'] = !isset($params['USER_ID']) || intval($params['USER_ID']) <= 0 ? $this->userId : intval($params['USER_ID']);
-		$params['GROUP_ID'] = !isset($params['GROUP_ID']) || !$sonetOn ? 0 : max(0, intval($params['GROUP_ID']));
-		$params['SPRINT_ID'] = !isset($params['SPRINT_ID']) ? -1 : intval($params['SPRINT_ID']);
-		$params['IS_COMPLETED_SPRINT'] = ((isset($params['IS_COMPLETED_SPRINT']) && $params['IS_COMPLETED_SPRINT'] == 'Y') ? 'Y' : 'N');
+		$params['GROUP_ID_FORCED'] = $params['GROUP_ID_FORCED'] ?? false;
+		$params['IS_AJAX'] = isset($params['IS_AJAX']) && $params['IS_AJAX'] === 'Y' ? 'Y' : 'N';
+		$params['SET_TITLE'] = isset($params['SET_TITLE']) && $params['SET_TITLE'] === 'Y' ? 'Y' : 'N';
+		$params['PERSONAL'] = isset($params['PERSONAL']) && $params['PERSONAL'] === 'Y' ? 'Y' : 'N';
+		$params['TIMELINE_MODE'] = isset($params['TIMELINE_MODE']) && $params['TIMELINE_MODE'] === 'Y' ? 'Y' : 'N';
+		$params['USER_ID'] = !isset($params['USER_ID']) || (int)$params['USER_ID'] <= 0 ? $this->userId : (int)$params['USER_ID'];
+		$params['GROUP_ID'] = !isset($params['GROUP_ID']) || !$sonetOn ? 0 : max(0, (int)$params['GROUP_ID']);
+		$params['SPRINT_ID'] = !isset($params['SPRINT_ID']) ? -1 : (int)$params['SPRINT_ID'];
+		$params['IS_COMPLETED_SPRINT'] = ((isset($params['IS_COMPLETED_SPRINT']) && $params['IS_COMPLETED_SPRINT'] === 'Y') ? 'Y' : 'N');
 		$params['~NAME_TEMPLATE'] = !isset($params['~NAME_TEMPLATE'])
 									? \CSite::GetNameFormat(false)
 									: str_replace(array('#NOBR#', '#/NOBR#'), array('', ''), trim($params['~NAME_TEMPLATE']));
@@ -241,7 +244,7 @@ class TasksKanbanComponent extends \CBitrixComponent
 		{
 			StagesTable::setWorkMode(StagesTable::WORK_MODE_ACTIVE_SPRINT);
 
-			if (isset($params['SPRINT_ID']) && $params['SPRINT_ID'] >= 0)
+			if ($params['SPRINT_ID'] >= 0)
 			{
 				$params['SPRINT_SELECTED'] = 'Y';
 			}
@@ -253,20 +256,20 @@ class TasksKanbanComponent extends \CBitrixComponent
 
 			$params['IS_SCRUM'] = true;
 
-			$viewHelper = new ViewHelper();
+			$viewHelper = new ViewHelper($this->getSiteId());
 
 			$params['IS_ACTIVE_SPRINT'] = ($viewHelper->getActiveView($params['GROUP_ID']) === 'active_sprint' ? 'Y' : 'N');
 		}
 
 		// force set last user group
-		if ($params['PERSONAL'] == 'Y')
+		if ($params['PERSONAL'] === 'Y')
 		{
 			if ($params['GROUP_ID'] > 0)
 			{
 				$params['GROUP_ID_FORCED'] = true;
 			}
 			$this->arParams['STAGES_ENTITY_ID'] = $params['USER_ID'];
-			if ($this->arParams['TIMELINE_MODE'] == 'Y')
+			if ($this->arParams['TIMELINE_MODE'] === 'Y')
 			{
 				StagesTable::setWorkMode(StagesTable::WORK_MODE_TIMELINE);
 			}
@@ -336,7 +339,7 @@ class TasksKanbanComponent extends \CBitrixComponent
 		//			Filter\Task::setUserId($params['USER_ID']);
 		//		}
 
-		if (StagesTable::getWorkMode() == StagesTable::WORK_MODE_ACTIVE_SPRINT)
+		if (StagesTable::getWorkMode() === StagesTable::WORK_MODE_ACTIVE_SPRINT)
 		{
 			$taskService = new TaskService($params['USER_ID'], $this->application);
 			$this->filterInstance = $taskService->getFilterInstance(
@@ -707,7 +710,7 @@ class TasksKanbanComponent extends \CBitrixComponent
 	 * @param bool $string Convert Errors to string.
 	 * @return array
 	 */
-	protected function getErrors($string = true)
+	protected function getErrorsOld($string = true)
 	{
 		if ($string)
 		{
@@ -718,10 +721,8 @@ class TasksKanbanComponent extends \CBitrixComponent
 			}
 			return $errors;
 		}
-		else
-		{
-			return $this->errors;
-		}
+
+		return $this->errors;
 	}
 
 	/**
@@ -732,7 +733,7 @@ class TasksKanbanComponent extends \CBitrixComponent
 	protected function addError($code)
 	{
 		$message = Loc::getMessage($code);
-		$this->errors[] = new Error($message != '' ? $message : $code, $code);
+		$this->errors[] = new Error(!empty($message) ? $message : $code, $code);
 	}
 
 	/**
@@ -820,6 +821,7 @@ class TasksKanbanComponent extends \CBitrixComponent
 				'STAGE_ID',
 				'IS_MUTED',
 				'GROUP_ID',
+				'FLOW_ID',
 				'PARENT_ID',
 				'MARK',
 				'UF_CRM_TASK',
@@ -845,7 +847,7 @@ class TasksKanbanComponent extends \CBitrixComponent
 	 * Get filter array.
 	 * @return array
 	 */
-	protected function getFilter()
+	protected function getFilter(): array
 	{
 		static $filling = false;
 
@@ -853,10 +855,8 @@ class TasksKanbanComponent extends \CBitrixComponent
 		{
 			return $this->filter;
 		}
-		else
-		{
-			$filling = true;
-		}
+
+		$filling = true;
 
 		$params =& $this->arParams;
 		$filter =& $this->filter;
@@ -875,7 +875,7 @@ class TasksKanbanComponent extends \CBitrixComponent
 		{
 			$filter['CHECK_PERMISSIONS'] = 'Y';
 		}
-		if ($params['PERSONAL'] != 'Y' || $params['GROUP_ID'] > 0)
+		if ($params['PERSONAL'] !== 'Y' || $params['GROUP_ID'] > 0)
 		{
 			$filter['GROUP_ID'] = $params['GROUP_ID'];
 		}
@@ -979,7 +979,7 @@ class TasksKanbanComponent extends \CBitrixComponent
 		// if personal, we look at another field
 		if (
 			(
-				$this->arParams['PERSONAL'] == 'Y' ||
+				$this->arParams['PERSONAL'] === 'Y' ||
 				$this->arParams['SPRINT_ID'] > 0
 			)
 			&&
@@ -996,7 +996,7 @@ class TasksKanbanComponent extends \CBitrixComponent
 		}
 
 
-		[$rows, $res] = \CTaskItem::fetchList(
+		[$rows, $res] = CTaskItem::fetchList(
 			$this->userId,
 			($params['order'] ?? []),
 			($params['filter'] ?? []),
@@ -1084,7 +1084,8 @@ class TasksKanbanComponent extends \CBitrixComponent
 	{
 		$deadline = new Bitrix\Tasks\Grid\Task\Row\Content\Date\Deadline($taskData);
 
-		$value = $deadline->formatDate($taskData['DEADLINE']);
+		$rawValue = $deadline->formatDate($taskData['DEADLINE']);
+		$value = $rawValue;
 		$color = '';
 		$fill = false;
 
@@ -1097,6 +1098,7 @@ class TasksKanbanComponent extends \CBitrixComponent
 		}
 
 		return [
+			'rawValue' => $rawValue,
 			'value' => $value,
 			'color' => $color,
 			'fill' => $fill,
@@ -1219,10 +1221,11 @@ class TasksKanbanComponent extends \CBitrixComponent
 	 * @param bool $assoc Return as associative.
 	 * @return array
 	 */
-	protected function getColumns($assoc = false)
+	protected function getColumns(bool $assoc = false): array
 	{
 		$columns = [];
 		$counts = [];
+		$filteredStages = [];
 		$timeLineMode = $this->arParams['TIMELINE_MODE'] === 'Y';
 		$viewModeForAnalytics = Analytics::getInstance($this->arParams['USER_ID'], $this->arParams['GROUP_ID'] ?? 0)->getViewStateName();
 		$filter = $this->getFilter();
@@ -1234,14 +1237,38 @@ class TasksKanbanComponent extends \CBitrixComponent
 			$counts = StagesTable::getStagesCount(
 				$stageList,
 				$filter,
-				$this->arParams['USER_ID'] ? $this->arParams['USER_ID'] : false
+				$this->arParams['USER_ID'] ?: false
 			);
+		}
+
+		if (
+			StagesTable::getWorkMode() === StagesTable::WORK_MODE_GROUP
+			|| StagesTable::getWorkMode() === StagesTable::WORK_MODE_ACTIVE_SPRINT
+		)
+		{
+			if (!empty($filter['::SUBFILTER-STAGE_ID']) && is_array($filter['::SUBFILTER-STAGE_ID']['STAGE_ID']))
+			{
+				foreach ($filter['::SUBFILTER-STAGE_ID']['STAGE_ID'] as $filteredStage)
+				{
+					if (array_key_exists($filteredStage, $stageList))
+					{
+						$filteredStages[] = $filteredStage;
+					}
+				}
+
+				$this->filter['::SUBFILTER-STAGE_ID']['STAGE_ID'] = $filteredStages;
+			}
 		}
 
 		// get columns
 		foreach ($stageList as $stage)
 		{
 			$count = 0;
+
+			if (!empty($filteredStages) && !in_array($stage['ID'], $filteredStages))
+			{
+				continue;
+			}
 
 			if ($stage['ADDITIONAL_FILTER'])
 			{
@@ -1295,8 +1322,9 @@ class TasksKanbanComponent extends \CBitrixComponent
 	 * Fill one item with task data.
 	 * @param object $task Task item.
 	 * @return array
+	 * @throws \Bitrix\Main\ObjectException
 	 */
-	protected function fillData(\CTaskItem $task)
+	protected function fillData(CTaskItem $task)
 	{
 		static $endDayTime = null;
 		static $date = null;
@@ -1322,7 +1350,7 @@ class TasksKanbanComponent extends \CBitrixComponent
 
 		$activityDate = $item['ACTIVITY_DATE'] ?? null;
 
-		$canEdit = $task->isActionAllowed(\CTaskItem::ACTION_EDIT);
+		$canEdit = $task->isActionAllowed(CTaskItem::ACTION_EDIT);
 		$markProp = (!in_array($item['MARK'], ['P', 'N'])) ? 'NONE': $item['MARK'];
 		$data = array(
 			// base
@@ -1339,16 +1367,16 @@ class TasksKanbanComponent extends \CBitrixComponent
 			'deadline' => $this->getDeadlineProps($item),
 			'deadline_visibility' => $this->displayService->fillDeadLineVisibility(),
 			// time
-			'time_tracking' => $item['ALLOW_TIME_TRACKING'] == 'Y',
+			'time_tracking' => $item['ALLOW_TIME_TRACKING'] === 'Y',
 			'time_logs' => (int)$item['TIME_SPENT_IN_LOGS'],
 			'time_logs_start' => (int)$item['TIME_SPENT_IN_LOGS'],
 			'time_estimate' => $item['TIME_ESTIMATE'],
 			// rights
-			'allow_change_deadline' => $task->isActionAllowed(\CTaskItem::ACTION_CHANGE_DEADLINE),
-			'allow_delegate' => $task->isActionAllowed(\CTaskItem::ACTION_DELEGATE) || $canEdit,
-			'allow_complete' => $task->isActionAllowed(\CTaskItem::ACTION_COMPLETE),
-			'allow_start' => $task->isActionAllowed(\CTaskItem::ACTION_START) || $task->isActionAllowed(\CTaskItem::ACTION_PAUSE),
-			'allow_time_tracking' => $task->isActionAllowed(\CTaskItem::ACTION_START_TIME_TRACKING),
+			'allow_change_deadline' => $task->isActionAllowed(CTaskItem::ACTION_CHANGE_DEADLINE),
+			'allow_delegate' => $task->isActionAllowed(CTaskItem::ACTION_DELEGATE) || $canEdit,
+			'allow_complete' => $task->isActionAllowed(CTaskItem::ACTION_COMPLETE),
+			'allow_start' => $task->isActionAllowed(CTaskItem::ACTION_START) || $task->isActionAllowed(CTaskItem::ACTION_PAUSE),
+			'allow_time_tracking' => $task->isActionAllowed(CTaskItem::ACTION_START_TIME_TRACKING),
 			'allow_edit' => $canEdit,
 			// dates
 			'date_activity' => $activityDate,
@@ -1387,6 +1415,7 @@ class TasksKanbanComponent extends \CBitrixComponent
 			'item_fields' => [
 				$this->displayService->fillId($item['ID']),
 				$this->displayService->fillProject($item['GROUP_ID']),
+				$this->displayService->fillFlow($item['FLOW_ID'] ?? 0),
 				$this->displayService->fillMark(Loc::getMessage("TASKS_MARK_$markProp")),
 				$this->displayService->fillDateStart($item['DATE_START'] ?? ''),
 				$this->displayService->fillDateFinishPlan($item['END_DATE_PLAN'] ?? ''),
@@ -1487,15 +1516,32 @@ class TasksKanbanComponent extends \CBitrixComponent
 		return $stages;
 	}
 
+	protected function getTasksByStages(int ...$stageIds): array
+	{
+		if ([] === $stageIds)
+		{
+			return [];
+		}
+
+		$stages = StagesTable::query()
+			->setSelect(['*']) // compatability
+			->whereIn('ID', $stageIds)
+			->exec()
+			->fetchAll();
+
+		return $this->getData(stages: $stages);
+	}
+
 	/**
 	 * Base method for getting data.
 	 * @param array $additionalFilter Additional filter.
 	 * @param bool $skipCommonFilter Skip merge with common filter.
 	 * @return array
 	 */
-	protected function getData(array $additionalFilter = [], $skipCommonFilter = false)
+	protected function getData(array $additionalFilter = [], $skipCommonFilter = false, array $stages = [])
 	{
-		$items = array();
+		$items = [];
+		$filteredStages = [];
 		$order = $this->getOrder();
 		$filter = $this->getFilter();
 		$listParams = $this->getListParams();
@@ -1515,26 +1561,45 @@ class TasksKanbanComponent extends \CBitrixComponent
 
 		if (isset($filter['ONLY_STAGE_ID']))
 		{
-			$onlyStageId = $filter['ONLY_STAGE_ID'];
+			$onlyStageId = (int)$filter['ONLY_STAGE_ID'];
 			unset($filter['ONLY_STAGE_ID']);
 		}
 
+		if (
+			StagesTable::getWorkMode() === StagesTable::WORK_MODE_GROUP
+			|| StagesTable::getWorkMode() === StagesTable::WORK_MODE_ACTIVE_SPRINT
+		)
+		{
+			if (!empty($filter['::SUBFILTER-STAGE_ID']))
+			{
+				$filteredStages = $filter['::SUBFILTER-STAGE_ID']['STAGE_ID'];
+			}
+		}
+
+
 		$listParams['MAKE_ACCESS_FILTER'] = true;
 
+		$stages = [] === $stages ? StagesTable::getStages($this->arParams['STAGES_ENTITY_ID']) : $stages;
+
 		// get tasks by stages
-		foreach (StagesTable::getStages($this->arParams['STAGES_ENTITY_ID']) as $column)
+		foreach ($stages as $column)
 		{
 			$stageId = StagesTable::getStageIdByCode(
 				$column['ID'],
 				$this->arParams['STAGES_ENTITY_ID']
 			);
-			if (
-				isset($onlyStageId) &&
-				!in_array($onlyStageId, (array)$stageId)
-			)
+
+			$realStageId = is_array($stageId) ? (int)$stageId[0] : $stageId;
+			if (isset($onlyStageId) && $onlyStageId !== $realStageId)
 			{
 				continue;
 			}
+
+			if (!empty($filteredStages) && !in_array($realStageId, $filteredStages))
+			{
+				continue;
+			}
+
 
 			// todo have subtask then not get
 			if ($column['ADDITIONAL_FILTER'])
@@ -1552,6 +1617,11 @@ class TasksKanbanComponent extends \CBitrixComponent
 						'STAGE_ID' => $stageId
 					)
 				);
+			}
+
+			if ($this->arParams['TIMELINE_MODE'] === 'Y' && isset($filterTmp['STAGE_ID']))
+			{
+				unset($filterTmp['STAGE_ID']);
 			}
 
 			[$rows, $res] = $this->getList(array(
@@ -1850,30 +1920,6 @@ class TasksKanbanComponent extends \CBitrixComponent
 	}
 
 	/**
-	 * Convert charset from utf-8 to site.
-	 * @param mixed $data
-	 * @param bool $fromUtf Direction - from (true) or to (false).
-	 * @return mixed
-	 */
-	protected function convertUtf($data, $fromUtf)
-	{
-		if (SITE_CHARSET != 'UTF-8')
-		{
-			$from = $fromUtf ? 'UTF-8' : SITE_CHARSET;
-			$to = !$fromUtf ? 'UTF-8' : SITE_CHARSET;
-			if (is_array($data))
-			{
-				$data = $this->application->ConvertCharsetArray($data, $from, $to);
-			}
-			else
-			{
-				$data = $this->application->ConvertCharset($data, $from, $to);
-			}
-		}
-		return $data;
-	}
-
-	/**
 	 * Check views for current Kanban. Ask admin for create default.
 	 * @return boolean
 	 */
@@ -1923,109 +1969,107 @@ class TasksKanbanComponent extends \CBitrixComponent
 			$checkStages = StagesTable::getStages($params['STAGES_ENTITY_ID'], true);
 			if (empty($checkStages))
 			{
-				if ($params['IS_AJAX'] == 'Y')
+				if ($params['IS_AJAX'] === 'Y')
 				{
 					return false;
 				}
-				else
-				{
-					if (
-						$this->taskType == static::TASK_TYPE_GROUP &&
-						!\CSocNetGroup::GetByID($params['GROUP_ID'])
-					)
-					{
-						return true;
-					}
 
-					$views = array();
-					if (empty($views))
+				if (
+					$this->taskType == static::TASK_TYPE_GROUP &&
+					!\CSocNetGroup::GetByID($params['GROUP_ID'])
+				)
+				{
+					return true;
+				}
+
+				$views = array();
+				if (empty($views))
+				{
+					// create default view, if not exists
+					StagesTable::getStages(0);
+					// get all stages views
+					$res = StagesTable::getList(array(
+						'select' => array(
+							'ENTITY_ID'
+						),
+						'filter' => array(
+							'=ENTITY_TYPE' => StagesTable::WORK_MODE_GROUP
+						),
+						'group' => array(
+							'ENTITY_ID'
+						)
+					));
+					while ($row = $res->fetch())
 					{
-						// create default view, if not exists
-						StagesTable::getStages(0);
-						// get all stages views
-						$res = StagesTable::getList(array(
-							'select' => array(
-								'ENTITY_ID'
+						$views[$row['ENTITY_ID']] = array();
+					}
+					// get current user groups
+					if (!empty($views))
+					{
+						$res = \CSocNetUserToGroup::GetList(
+							array(
+								'GROUP_DATE_ACTIVITY' => 'DESC'
 							),
-							'filter' => array(
-								'=ENTITY_TYPE' => StagesTable::WORK_MODE_GROUP
+							array(
+								'GROUP_ID' => array_keys($views),
+								'USER_ID' => $this->userId
 							),
-							'group' => array(
-								'ENTITY_ID'
+							false, false,
+							array(
+								'ID', 'GROUP_NAME', 'GROUP_ID' , 'GROUP_SCRUM_MASTER_ID'
 							)
-						));
+						);
 						while ($row = $res->fetch())
 						{
-							$views[$row['ENTITY_ID']] = array();
-						}
-						// get current user groups
-						if (!empty($views))
-						{
-							$res = \CSocNetUserToGroup::GetList(
-								array(
-									'GROUP_DATE_ACTIVITY' => 'DESC'
-								),
-								array(
-									'GROUP_ID' => array_keys($views),
-									'USER_ID' => $this->userId
-								),
-								false, false,
-								array(
-									'ID', 'GROUP_NAME', 'GROUP_ID' , 'GROUP_SCRUM_MASTER_ID'
-								)
-							);
-							while ($row = $res->fetch())
+							if (
+								$this->canReadGroupTasks($row['GROUP_ID'])
+								&& (empty($row['GROUP_SCRUM_MASTER_ID']))
+							)
 							{
-								if (
-									$this->canReadGroupTasks($row['GROUP_ID'])
-									&& (empty($row['GROUP_SCRUM_MASTER_ID']))
-								)
-								{
-									$views[$row['GROUP_ID']] = array(
-										'ID' => $row['GROUP_ID'],
-										'NAME' => $row['GROUP_NAME']
-									);
-								}
+								$views[$row['GROUP_ID']] = array(
+									'ID' => $row['GROUP_ID'],
+									'NAME' => $row['GROUP_NAME']
+								);
 							}
 						}
-						// check disable views for current user
-						$viewsTmp = array();
-						foreach ($views as $vId => $view)
-						{
-							if (!empty($view))
-							{
-								$viewsTmp[$vId] = $view;
-							}
-						}
-						$views = $viewsTmp;
-						unset($viewsTmp);
-						// if view not exists - copy from default
-						if (empty($views))
-						{
-							StagesTable::copyView(0, $params['GROUP_ID']);
-							$this->reloadPage();
-						}
-						// if user submit view, what he want
-						$setView = $this->request('set_view_id');
-						if ($setView !== null && ($setView == 0 || isset($views[$setView])))
-						{
-							StagesTable::copyView($setView, $params['GROUP_ID']);
-							$this->reloadPage();
-						}
-						// if default
-						if ($params['GROUP_ID'] == 0)
-						{
-							$this->reloadPage();
-						}
-						// else ask user
-						$this->arResult['VIEWS'] = $views;
-						$this->arResult['DATA'] = array(
-							'columns' => $this->getDemoColumns(0),
-							'items' => array(),
-							'demo' => true
-						);
-						return false;
 					}
+					// check disable views for current user
+					$viewsTmp = array();
+					foreach ($views as $vId => $view)
+					{
+						if (!empty($view))
+						{
+							$viewsTmp[$vId] = $view;
+						}
+					}
+					$views = $viewsTmp;
+					unset($viewsTmp);
+					// if view not exists - copy from default
+					if (empty($views))
+					{
+						StagesTable::copyView(0, $params['GROUP_ID']);
+						$this->reloadPage();
+					}
+					// if user submit view, what he want
+					$setView = $this->request('set_view_id');
+					if ($setView !== null && ($setView == 0 || isset($views[$setView])))
+					{
+						StagesTable::copyView($setView, $params['GROUP_ID']);
+						$this->reloadPage();
+					}
+					// if default
+					if ($params['GROUP_ID'] == 0)
+					{
+						$this->reloadPage();
+					}
+					// else ask user
+					$this->arResult['VIEWS'] = $views;
+					$this->arResult['DATA'] = array(
+						'columns' => $this->getDemoColumns(0),
+						'items' => array(),
+						'demo' => true
+					);
+					return false;
 				}
 			}
 		}
@@ -2064,8 +2108,8 @@ class TasksKanbanComponent extends \CBitrixComponent
 	 */
 	protected function initResult()
 	{
-		$this->arResult['ERRORS'] = $this->getErrors();
-		$this->arResult['ERRORS_COLLECTION'] = $this->getErrors(false);
+		$this->arResult['ERRORS'] = $this->getErrorsOld();
+		$this->arResult['ERRORS_COLLECTION'] = $this->getErrorsOld(false);
 		$this->arResult['TASK_TYPE'] = $this->taskType;
 		$this->arResult['PAGE'] = $this->getURI();
 		$this->arResult['CURRENT_USER_ID'] = $this->userId;
@@ -2239,7 +2283,7 @@ class TasksKanbanComponent extends \CBitrixComponent
 		$init = $this->init();
 
 		// if ajax, go to the actions
-		if ($this->arParams['IS_AJAX'] == 'Y')
+		if ($this->arParams['IS_AJAX'] === 'Y')
 		{
 			$this->executeComponentAjax();
 			return;
@@ -2264,12 +2308,14 @@ class TasksKanbanComponent extends \CBitrixComponent
 		$this->arResult['MANDATORY_EXISTS'] = $this->mandatoryExists();
 
 		// if all right, get data
-		if ($this->checkViews() && $init)
+		if ($init && $this->checkViews())
 		{
+			$columns = $this->getColumns();
+
 			$this->arResult['DATA'] = array(
-				'columns' => $this->getColumns(),
+				'columns' => $columns,
 				'items' => $this->getData(),
-				'demo' => false
+				'demo' => false,
 			);
 		}
 
@@ -2354,7 +2400,7 @@ class TasksKanbanComponent extends \CBitrixComponent
 		// if is array, output as a json
 		if (is_array($return))
 		{
-			if ($errors = $this->getErrors())
+			if ($errors = $this->getErrorsOld())
 			{
 				$return = array(
 					'error' => implode("\n", $errors),
@@ -2407,163 +2453,183 @@ class TasksKanbanComponent extends \CBitrixComponent
 		}
 	}
 
+	protected function checkBeforeAction(): bool
+	{
+		if (!$this->init())
+		{
+			return false;
+		}
+
+		return true;
+	}
+
 	/**
 	 * Add new task.
-	 * @return array
 	 */
-	protected function actionAddTask()
+	public function addTaskAction(): array
 	{
+		if (!$this->checkBeforeAction())
+		{
+			return [];
+		}
+
+		$columnId = $this->request('columnId');
+		$taskName = $this->request('taskName');
+		if (!$columnId || trim($taskName) === '')
+		{
+			return [];
+		}
+
+		if ($this->mandatoryExists())
+		{
+			$this->addError('TASK_LIST_TASK_MANDATORY_EXISTS');
+
+			return [];
+		}
+
+		if (!$this->canCreateTasks())
+		{
+			$this->addError('TASK_LIST_TASK_CREATE_DENIED_V2');
+
+			return [];
+		}
+
+		$params = $this->arParams;
+
+		$scrumProject = false;
+
+		$responsibleId = $params['USER_ID'];
 		if (
-			($columnId = $this->request('columnId')) &&
-			($taskName = $this->request('taskName'))
+			StagesTable::getWorkMode() === StagesTable::WORK_MODE_ACTIVE_SPRINT
+			&& Loader::includeModule('socialnetwork')
 		)
 		{
-			if ($this->mandatoryExists())
-			{
-				$this->addError('TASK_LIST_TASK_MANDATORY_EXISTS');
-				return array();
-			}
+			$scrumManager = new ScrumManager($params['GROUP_ID']);
+			$responsibleId = $scrumManager->getScrumTaskResponsible($params['USER_ID']);
+			$scrumProject = true;
+		}
 
-			if (!$this->canCreateTasks())
-			{
-				$this->addError('TASK_LIST_TASK_CREATE_DENIED_V2');
-				return array();
-			}
+		$stages = StagesTable::getStages($params['STAGES_ENTITY_ID']);
+		$fields = [
+			'TITLE' => $taskName,
+			'CREATED_BY' => $this->userId,
+			'RESPONSIBLE_ID' => $responsibleId,
+			'GROUP_ID' => $params['GROUP_ID'],
+			'STAGE_ID' => isset($stages[$columnId]) ? $columnId : 0,
+		];
 
-			$params = $this->arParams;
-
-			$scrumProject = false;
-
-			$responsibleId = $params['USER_ID'];
-			if (StagesTable::getWorkMode() == StagesTable::WORK_MODE_ACTIVE_SPRINT &&
-				Loader::includeModule('socialnetwork'))
+		if ($scrumProject)
+		{
+			$parentTaskId = (int)$this->request('parentTaskId');
+			if ($parentTaskId)
 			{
-				$scrumManager = new ScrumManager($params['GROUP_ID']);
-				$responsibleId = $scrumManager->getScrumTaskResponsible($params['USER_ID']);
-				$scrumProject = true;
-			}
-
-			$stages = StagesTable::getStages($params['STAGES_ENTITY_ID']);
-			$fields = array(
-				'TITLE' => $this->convertUtf($taskName, true),
-				'CREATED_BY' => $this->userId,
-				'RESPONSIBLE_ID' => $responsibleId,
-				'GROUP_ID' => $params['GROUP_ID'],
-				'STAGE_ID' => isset($stages[$columnId]) ? $columnId : 0
-			);
-
-			if ($scrumProject)
-			{
-				$parentTaskId = (int)$this->request('parentTaskId');
-				if ($parentTaskId)
-				{
-					try
-					{
-						$taskItemObject = \CTaskItem::getInstance($parentTaskId, $this->userId);
-						$taskInfo = $taskItemObject->getData(false, [
-							'select' => ['TAGS'],
-						]);
-						$fields['PARENT_ID'] = $parentTaskId;
-						$fields['TAGS'] = $taskInfo['TAGS'] ? $taskInfo['TAGS'] : [];
-					}
-					catch (\Exception $exception)
-					{
-						$this->addError('TASK_LIST_TASK_MANDATORY_EXISTS');
-						return [];
-					}
-				}
-			}
-
-			if (isset($stages[$columnId]['TO_UPDATE']))
-			{
-				$fields = array_merge(
-					$fields,
-					$stages[$columnId]['TO_UPDATE']
-				);
-			}
-			if (
-				$params['PERSONAL'] == 'Y' ||
-				$params['SPRINT_ID'] > 0
-			)
-			{
-				unset($fields['STAGE_ID']);
-			}
-			// disable sort / link - its set below here
-			if ($params['GROUP_ID'] == 0)
-			{
-				StagesTable::disablePinForUser($this->userId);
-			}
-			if (
-				$params['PERSONAL'] == 'Y' &&
-				$params['TIMELINE_MODE'] != 'Y'
-			)
-			{
-				StagesTable::disableLinkForUser($params['USER_ID']);
-			}
-			$task = \CTaskItem::add($fields, $this->userId, ['DISABLE_BIZPROC_RUN' => true]);
-			if ($task->getId() > 0)
-			{
-				$newId = $task->getId();
-				// set link
-				if (
-					(
-						$params['PERSONAL'] == 'Y' ||
-						$params['SPRINT_ID'] > 0
-					)
-					&&
-					$params['TIMELINE_MODE'] != 'Y'
-				)
-				{
-					if ($params['SPRINT_ID'] > 0)
-					{
-						$kanbanService = new KanbanService();
-						$kanbanService->removeTasksFromKanban($params['SPRINT_ID'], [$newId]);
-					}
-					TaskStageTable::add([
-						'TASK_ID' => $newId,
-						'STAGE_ID' => $columnId
-					]);
-				}
-				// set sort
-				if ($params['GROUP_ID'] == 0)
-				{
-					$this->setSorting(
-						$newId,
-						$this->request('beforeItemId'),
-						$this->request('afterItemId')
-					);
-				}
-
 				try
 				{
-					\Bitrix\Tasks\Integration\Bizproc\Listener::onTaskAdd($newId, $task->getData());
+					$taskItemObject = CTaskItem::getInstance($parentTaskId, $this->userId);
+					$taskInfo = $taskItemObject->getData(false, [
+						'select' => ['TAGS'],
+					]);
+					$fields['PARENT_ID'] = $parentTaskId;
+					$fields['TAGS'] = $taskInfo['TAGS'] ? : [];
 				}
-				catch (TasksException $e)
+				catch (Exception $exception)
 				{
-
-				}
-
-				if ($scrumProject)
-				{
-					$this->updateScrumItem($params['SPRINT_ID'], $newId, $fields);
-
-					$taskObject = new \CTasks;
-					$taskObject->update($newId, ['STAGE_ID' => $columnId]);
-				}
-
-				// output
-				return $this->getRawData($newId, $columnId);
-			}
-			else
-			{
-				if (($e = $this->application->GetException()))
-				{
-					$this->addError($e->getString());
+					LogFacade::logThrowable($exception);
+					$this->addError('TASK_LIST_TASK_MANDATORY_EXISTS');
+					return [];
 				}
 			}
 		}
 
-		return array();
+		if (isset($stages[$columnId]['TO_UPDATE']))
+		{
+			$fields = array_merge(
+				$fields,
+				$stages[$columnId]['TO_UPDATE']
+			);
+		}
+		if (
+			$params['PERSONAL'] === 'Y'
+			|| $params['SPRINT_ID'] > 0
+		)
+		{
+			unset($fields['STAGE_ID']);
+		}
+		// disable sort / link - its set below here
+		if ((int)$params['GROUP_ID'] === 0)
+		{
+			StagesTable::disablePinForUser($this->userId);
+		}
+		if (
+			$params['PERSONAL'] === 'Y'
+			&& $params['TIMELINE_MODE'] !== 'Y'
+		)
+		{
+			StagesTable::disableLinkForUser($params['USER_ID']);
+		}
+		$task = CTaskItem::add($fields, $this->userId, [
+			'DISABLE_BIZPROC_RUN' => true,
+			'SKIP_TIMEZONE' => [
+				'DEADLINE',
+			]
+		]);
+		if ($task->getId() > 0)
+		{
+			$newId = $task->getId();
+			// set link
+			if (
+				($params['PERSONAL'] === 'Y'
+					|| $params['SPRINT_ID'] > 0)
+				&& $params['TIMELINE_MODE'] !== 'Y'
+			)
+			{
+				if ($params['SPRINT_ID'] > 0)
+				{
+					$kanbanService = new KanbanService();
+					$kanbanService->removeTasksFromKanban($params['SPRINT_ID'], [$newId]);
+				}
+				TaskStageTable::add([
+					'TASK_ID' => $newId,
+					'STAGE_ID' => $columnId,
+				]);
+			}
+			// set sort
+			if ((int)$params['GROUP_ID'] === 0)
+			{
+				$this->setSorting(
+					$newId,
+					$this->request('beforeItemId'),
+					$this->request('afterItemId')
+				);
+			}
+
+			try
+			{
+				Listener::onTaskAdd($newId, $task->getData());
+			}
+			catch (TasksException $e)
+			{
+				LogFacade::logThrowable($e);
+			}
+
+			if ($scrumProject)
+			{
+				$this->updateScrumItem($params['SPRINT_ID'], $newId, $fields);
+
+				$taskObject = new \CTasks();
+				$taskObject->update($newId, ['STAGE_ID' => $columnId]);
+			}
+
+			// output
+			return $this->getRawData($newId, $columnId);
+		}
+
+		if (($e = $this->application->GetException()))
+		{
+			$this->addError($e->getString());
+		}
+
+		return [];
 	}
 
 	private function updateScrumItem(int $sprintId, int $taskId, array $fields): void
@@ -2598,8 +2664,13 @@ class TasksKanbanComponent extends \CBitrixComponent
 	 * Move item from one stage to another.
 	 * @return array
 	 */
-	protected function actionMoveTask()
+	public function moveTaskAction(): array
 	{
+		if (!$this->checkBeforeAction())
+		{
+			return [];
+		}
+
 		$columnId = $this->request('columnId');
 		$taskId = $this->request('itemId');
 		if (!$taskId)
@@ -2608,7 +2679,7 @@ class TasksKanbanComponent extends \CBitrixComponent
 		}
 		if ($taskId && $columnId && $this->canSortTasks())
 		{
-			$groupAction = $this->request('groupAction') == 'Y';
+			$groupAction = $this->request('groupAction') === 'Y';
 			$stages = StagesTable::getStages($this->arParams['STAGES_ENTITY_ID']);
 
 			if (isset($stages[$columnId]))
@@ -2644,45 +2715,45 @@ class TasksKanbanComponent extends \CBitrixComponent
 							continue;
 						}
 
-					// update some fields, if fields is exists
-					if (isset($stages[$columnId]['TO_UPDATE']))
-					{
-						$acceesAllowed = true;
-						if ($stages[$columnId]['TO_UPDATE_ACCESS'])
+						// update some fields, if fields is exists
+						if (isset($stages[$columnId]['TO_UPDATE']))
 						{
-							$taskInst = \CTaskItem::getInstance($taskId, $this->userId);
-							if (!$taskInst->checkAccess(ActionDictionary::getActionByLegacyId($stages[$columnId]['TO_UPDATE_ACCESS'])))
+							$acceesAllowed = true;
+							if ($stages[$columnId]['TO_UPDATE_ACCESS'])
 							{
-								$acceesAllowed = false;
+								$taskInst = CTaskItem::getInstance($taskId, $this->userId);
+								if (!$taskInst->checkAccess(ActionDictionary::getActionByLegacyId($stages[$columnId]['TO_UPDATE_ACCESS'])))
+								{
+									$acceesAllowed = false;
+								}
+							}
+							if ($acceesAllowed)
+							{
+								$task->update(
+									$data['id'],
+									$stages[$columnId]['TO_UPDATE']
+								);
+							}
+							else if (!$groupAction)
+							{
+								$this->addError('TASK_LIST_TASK_ACTION_DENIED_V2');
+								return [];
 							}
 						}
-						if ($acceesAllowed)
-						{
-							$task->update(
-								$data['id'],
-								$stages[$columnId]['TO_UPDATE']
-							);
-						}
-						else if (!$groupAction)
-						{
-							$this->addError('TASK_LIST_TASK_ACTION_DENIED_V2');
-							return [];
-						}
-					}
 
 						// if is timeline, we don't have real columns
-						if ($this->arParams['TIMELINE_MODE'] == 'Y')
+						if ($this->arParams['TIMELINE_MODE'] === 'Y')
 						{
 							continue;
 						}
 
 						// personal kanban or scrum
 						if (
-							$this->arParams['PERSONAL'] == 'Y'
+							$this->arParams['PERSONAL'] === 'Y'
 							|| $this->arParams['SPRINT_ID'] > 0
 						)
 						{
-							if ($this->arParams['PERSONAL'] == 'Y')
+							if ($this->arParams['PERSONAL'] === 'Y')
 							{
 								StagesTable::setWorkMode(StagesTable::WORK_MODE_USER);
 							}
@@ -2704,11 +2775,11 @@ class TasksKanbanComponent extends \CBitrixComponent
 								));
 
 								if (
-									$this->arParams['PERSONAL'] == 'Y' &&
-									$columnId !== $rowStg['STAGE_ID']
+									$this->arParams['PERSONAL'] === 'Y'
+									&& $columnId !== $rowStg['STAGE_ID']
 								)
 								{
-									\Bitrix\Tasks\Integration\Bizproc\Listener::onPlanTaskStageUpdate(
+									Listener::onPlanTaskStageUpdate(
 										$this->arParams['STAGES_ENTITY_ID'],
 										$rowStg['TASK_ID'],
 										$columnId
@@ -2779,8 +2850,13 @@ class TasksKanbanComponent extends \CBitrixComponent
 		return array();
 	}
 
-	protected function actionCompleteParentTask(): array
+	public function completeParentTaskAction(): array
 	{
+		if (!$this->checkBeforeAction())
+		{
+			return [];
+		}
+
 		$taskId = (int)$this->request('taskId');
 		$finishColumnId = $this->request('finishColumnId');
 
@@ -2814,8 +2890,13 @@ class TasksKanbanComponent extends \CBitrixComponent
 		return [];
 	}
 
-	protected function actionRenewParentTask(): array
+	public function renewParentTaskAction(): array
 	{
+		if (!$this->checkBeforeAction())
+		{
+			return [];
+		}
+
 		$taskId = (int)$this->request('taskId');
 		$newColumnId = $this->request('newColumnId');
 
@@ -2849,8 +2930,13 @@ class TasksKanbanComponent extends \CBitrixComponent
 		return [];
 	}
 
-	protected function actionProceedParentTask(): array
+	public function proceedParentTaskAction(): array
 	{
+		if (!$this->checkBeforeAction())
+		{
+			return [];
+		}
+
 		$taskId = (int)$this->request('taskId');
 
 		if (!$taskId)
@@ -2872,8 +2958,13 @@ class TasksKanbanComponent extends \CBitrixComponent
 	 * Get new task info.
 	 * @return array
 	 */
-	protected function actionNewTask()
+	public function newTaskAction(): array
 	{
+		if (!$this->checkBeforeAction())
+		{
+			return [];
+		}
+
 		if (($taskId = $this->request('taskId')))
 		{
 			$this->addFilter('ID', $taskId);
@@ -2887,8 +2978,13 @@ class TasksKanbanComponent extends \CBitrixComponent
 		return array();
 	}
 
-	protected function actionRefreshListTasks()
+	public function refreshListTasksAction(): array
 	{
+		if (!$this->checkBeforeAction())
+		{
+			return [];
+		}
+
 		if (($taskIds = $this->request('taskIds')))
 		{
 			$isScrum = $this->request('isScrum') === 'Y';
@@ -2906,20 +3002,18 @@ class TasksKanbanComponent extends \CBitrixComponent
 				}
 			}
 
-			if ($this->arParams['TIMELINE_MODE'] == 'Y')
+			if ($this->arParams['TIMELINE_MODE'] === 'Y')
 			{
 				return $this->getData(['ID' => $taskIds], true);
 			}
-			else
-			{
-				$rows = $this->getData(['ID' => $taskIds]);
-				foreach ($rows as $key => $row)
-				{
-					$rows[$key]['columns'] = $this->getStages($row['id']);
-				}
 
-				return $rows;
+			$rows = $this->getData(['ID' => $taskIds]);
+			foreach ($rows as $key => $row)
+			{
+				$rows[$key]['columns'] = $this->getStages($row['id']);
 			}
+
+			return $rows;
 		}
 
 		return [];
@@ -2929,8 +3023,13 @@ class TasksKanbanComponent extends \CBitrixComponent
 	 * Just refresh task info.
 	 * @return array
 	 */
-	protected function actionRefreshTask()
+	public function refreshTaskAction(): array
 	{
+		if (!$this->checkBeforeAction())
+		{
+			return [];
+		}
+
 		if (($taskId = $this->request('taskId')))
 		{
 			$isScrum = $this->request('isScrum') === 'Y';
@@ -2949,7 +3048,7 @@ class TasksKanbanComponent extends \CBitrixComponent
 				}
 			}
 
-			if ($this->arParams['TIMELINE_MODE'] == 'Y')
+			if ($this->arParams['TIMELINE_MODE'] === 'Y')
 			{
 				$rows = $this->getData(
 					['ID' => $taskId],
@@ -2973,15 +3072,20 @@ class TasksKanbanComponent extends \CBitrixComponent
 			}
 		}
 
-		return array();
+		return [];
 	}
 
 	/**
 	 * Get items from one column.
 	 * @return array
 	 */
-	protected function actionGetColumnItems()
+	public function getColumnItemsAction(): array
 	{
+		if (!$this->checkBeforeAction())
+		{
+			return [];
+		}
+
 		$items = [];
 
 		if (($columnId = $this->request('columnId')))
@@ -3023,9 +3127,14 @@ class TasksKanbanComponent extends \CBitrixComponent
 	 * Modify stage in Kanban.
 	 * @return array
 	 */
-	protected function actionModifyColumn()
+	public function modifyColumnAction(): array
 	{
-		if ($this->arParams['TIMELINE_MODE'] == 'Y')
+		if (!$this->checkBeforeAction())
+		{
+			return [];
+		}
+
+		if ($this->arParams['TIMELINE_MODE'] === 'Y')
 		{
 			$this->addError('TASK_LIST_TASK_ACTION_DENIED_V2');
 			return [];
@@ -3047,12 +3156,12 @@ class TasksKanbanComponent extends \CBitrixComponent
 				}
 				// delete
 				if (
-					isset($fields['id']) &&
-					isset($fields['delete']) &&
-					$fields['delete']
+					isset($fields['id'])
+					&& isset($fields['delete'])
+					&& $fields['delete']
 				)
 				{
-					if ($this->arParams['PERSONAL'] == 'Y')
+					if ($this->arParams['PERSONAL'] === 'Y')
 					{
 						$stageId = StagesTable::getStageIdByCode(
 							$fields['id'],
@@ -3122,32 +3231,39 @@ class TasksKanbanComponent extends \CBitrixComponent
 					}
 				}
 				// add / update
+				else if (isset($fields['columnName']) && trim($fields['columnName']) != '')
+				{
+					$fields = array(
+						'ID' => isset($fields['id']) ? (int)$fields['id'] : 0,
+						'COLOR' => $fields['columnColor'] ?? '',
+						'TITLE' => $fields['columnName'],
+						'AFTER_ID' => $fields['afterColumnId'] ?? null,
+						'ENTITY_ID' => $this->arParams['STAGES_ENTITY_ID']
+					);
+					if ($fields['AFTER_ID'] === null)
+					{
+						unset($fields['AFTER_ID']);
+					}
+					$res = StagesTable::updateByCode($fields['ID'], $fields);
+					if ((int)$fields['ID'] === 0 && $res && $res->isSuccess())
+					{
+						$filter = $this->getFilter();
+						if (
+							!empty($filter['::SUBFILTER-STAGE_ID'])
+							&& is_array($filter['::SUBFILTER-STAGE_ID']['STAGE_ID'])
+						)
+						{
+							$this->filter['::SUBFILTER-STAGE_ID']['STAGE_ID'][] = (string)$res->getId();
+						}
+
+						$columns = $this->getColumns(true);
+
+						return is_array($columns[$res->getId()]) ? $columns[$res->getId()] : [];
+					}
+				}
 				else
 				{
-					if (isset($fields['columnName']) && trim($fields['columnName']) != '')
-					{
-						$fields = array(
-							'ID' => isset($fields['id']) ? (int)$fields['id'] : 0,
-							'COLOR' => isset($fields['columnColor']) ? $fields['columnColor'] : '',
-							'TITLE' => $this->convertUtf($fields['columnName'], true),
-							'AFTER_ID' => isset($fields['afterColumnId']) ? $fields['afterColumnId'] : null,
-							'ENTITY_ID' => $this->arParams['STAGES_ENTITY_ID']
-						);
-						if ($fields['AFTER_ID'] === null)
-						{
-							unset($fields['AFTER_ID']);
-						}
-						$res = StagesTable::updateByCode($fields['ID'], $fields);
-						if ($fields['ID'] == 0 && $res && $res->isSuccess())
-						{
-							$columns = $this->getColumns(true);
-							return $columns[$res->getId()];
-						}
-					}
-					else
-					{
-						$this->addError('TASK_LIST_COLUMN_TITLE_EMPTY');
-					}
+					$this->addError('TASK_LIST_COLUMN_TITLE_EMPTY');
 				}
 			}
 			else
@@ -3162,9 +3278,14 @@ class TasksKanbanComponent extends \CBitrixComponent
 	 * Move column.
 	 * @return array
 	 */
-	protected function actionMoveColumn()
+	public function moveColumnAction(): array
 	{
-		if ($this->arParams['TIMELINE_MODE'] == 'Y')
+		if (!$this->checkBeforeAction())
+		{
+			return [];
+		}
+
+		if ($this->arParams['TIMELINE_MODE'] === 'Y')
 		{
 			$this->addError('TASK_LIST_TASK_ACTION_DENIED_V2');
 		}
@@ -3188,9 +3309,15 @@ class TasksKanbanComponent extends \CBitrixComponent
 	 * Apply filter and restart.
 	 * @return array
 	 */
-	protected function actionApplyFilter()
+	public function applyFilterAction(): array
 	{
+		if (!$this->checkBeforeAction())
+		{
+			return [];
+		}
+
 		$columns = $this->getColumns();
+
 		$items = $this->getData();
 		$parentTasks = [];
 
@@ -3207,12 +3334,17 @@ class TasksKanbanComponent extends \CBitrixComponent
 		return [
 			'columns' => $columns,
 			'items' => $items,
-			'parentTasks' => $parentTasks
+			'parentTasks' => $parentTasks,
 		];
 	}
 
-	protected function actionChangeSprint()
+	public function changeSprintAction(): array
 	{
+		if (!$this->checkBeforeAction())
+		{
+			return [];
+		}
+
 		$groupId = (int) $this->arParams['GROUP_ID'];
 		$sprintId = (int) $this->arParams['SPRINT_ID'];
 
@@ -3244,8 +3376,13 @@ class TasksKanbanComponent extends \CBitrixComponent
 	 * Set client date and time.
 	 * @return array
 	 */
-	protected function actionSetClientDate()
+	public function setClientDateAction(): array
 	{
+		if (!$this->checkBeforeAction())
+		{
+			return [];
+		}
+
 		$clientDate = $this->request('clientDate');
 		$clientTime = $this->request('clientTime');
 
@@ -3279,8 +3416,13 @@ class TasksKanbanComponent extends \CBitrixComponent
 	 * Change demo view to other.
 	 * @return array
 	 */
-	protected function actionChangeDemoView()
+	public function changeDemoViewAction(): array
 	{
+		if (!$this->checkBeforeAction())
+		{
+			return [];
+		}
+
 		$viewId = (int)$this->request('viewId');
 
 		return array(
@@ -3296,8 +3438,13 @@ class TasksKanbanComponent extends \CBitrixComponent
 	 * Notify admin for get access.
 	 * @return array
 	 */
-	protected function actionNotifyAdmin()
+	public function notifyAdminAction(): array
 	{
+		if (!$this->checkBeforeAction())
+		{
+			return [];
+		}
+
 		if (
 			($userId = $this->request('userId')) &&
 			Loader::includeModule('im')
@@ -3331,8 +3478,13 @@ class TasksKanbanComponent extends \CBitrixComponent
 	 * Set order for new task (desc, asc).
 	 * @return array
 	 */
-	protected function actionSetNewTaskOrder()
+	public function setNewTaskOrderAction(): array
 	{
+		if (!$this->checkBeforeAction())
+		{
+			return [];
+		}
+
 		$order = $this->request('order');
 		$groupId = $this->arParams['GROUP_ID'];
 
@@ -3342,7 +3494,7 @@ class TasksKanbanComponent extends \CBitrixComponent
 			$this->canSortTasks()
 		)
 		{
-			if ($groupId > 0 && $this->arParams['PERSONAL'] != 'Y')
+			if ($groupId > 0 && $this->arParams['PERSONAL'] !== 'Y')
 			{
 				ProjectsTable::set($groupId, array(
 					'ORDER_NEW_TASK' => $order
@@ -3363,18 +3515,23 @@ class TasksKanbanComponent extends \CBitrixComponent
 	 * Delegate task to other.
 	 * @return array
 	 */
-	protected function actionDelegateTask()
+	public function delegateTaskAction(): array
 	{
+		if (!$this->checkBeforeAction())
+		{
+			return [];
+		}
+
 		if (
 			($taskId = $this->request('taskId')) &&
 			($responsible = $this->request('userId'))
 		)
 		{
-			$groupAction = $this->request('groupAction') == 'Y';
+			$groupAction = $this->request('groupAction') === 'Y';
 			$taskIds = (array) $taskId;
 			foreach ($taskIds as $taskId)
 			{
-				$task = \CTaskItem::getInstance($taskId, $this->userId);
+				$task = CTaskItem::getInstance($taskId, $this->userId);
 
 				try
 				{
@@ -3423,10 +3580,10 @@ class TasksKanbanComponent extends \CBitrixComponent
 
 	/**
 	 * Provides some actions with task members.
-	 * @param string Sub action code.
+	 * @param string $subAction Sub action code.
 	 * @return array
 	 */
-	protected function addMemberTask($subAction)
+	protected function addMemberTask(string $subAction): array
 	{
 		if (
 			($taskId = $this->request('taskId')) &&
@@ -3436,15 +3593,15 @@ class TasksKanbanComponent extends \CBitrixComponent
 			$taskIds = (array) $taskId;
 			foreach ($taskIds as $taskId)
 			{
-				$task = \CTaskItem::getInstance($taskId, $this->userId);
-				if ($subAction == 'addAccomplice')
+				$task = CTaskItem::getInstance($taskId, $this->userId);
+				if ($subAction === 'addAccomplice')
 				{
-					if ($task->isActionAllowed(\CTaskItem::ACTION_EDIT))
+					if ($task->isActionAllowed(CTaskItem::ACTION_EDIT))
 					{
 						\CTasks::addAccomplices($taskId, [$userId]);
 					}
 				}
-				else if ($subAction == 'addAuditor')
+				else if ($subAction === 'addAuditor')
 				{
 					\CTasks::addAuditors($taskId, [$userId]);
 				}
@@ -3457,8 +3614,13 @@ class TasksKanbanComponent extends \CBitrixComponent
 	 * Provides action to add accomplice for task.
 	 * @return array
 	 */
-	protected function actionAddAccompliceTask()
+	public function addAccompliceTaskAction(): array
 	{
+		if (!$this->checkBeforeAction())
+		{
+			return [];
+		}
+
 		return $this->addMemberTask('addAccomplice');
 	}
 
@@ -3466,29 +3628,34 @@ class TasksKanbanComponent extends \CBitrixComponent
 	 * Provides action to add auditor for task.
 	 * @return array
 	 */
-	protected function actionAddAuditorTask()
+	public function addAuditorTaskAction(): array
 	{
+		if (!$this->checkBeforeAction())
+		{
+			return [];
+		}
+
 		return $this->addMemberTask('addAuditor');
 	}
 
 	/**
 	 * Provides action to add to favorite task or to remove from.
-	 * @param string Sub action code.
+	 * @param string $subAction Sub action code.
 	 * @return array
 	 */
-	protected function favoriteTask($subAction)
+	protected function favoriteTask(string $subAction): array
 	{
 		if ($taskId = $this->request('taskId'))
 		{
 			$taskIds = (array) $taskId;
 			foreach ($taskIds as $taskId)
 			{
-				$task = \CTaskItem::getInstance($taskId, $this->userId);
-				if ($subAction == 'add')
+				$task = CTaskItem::getInstance($taskId, $this->userId);
+				if ($subAction === 'add')
 				{
 					$task->addToFavorite();
 				}
-				else if ($subAction == 'delete')
+				else if ($subAction === 'delete')
 				{
 					$task->deleteFromFavorite();
 				}
@@ -3501,8 +3668,13 @@ class TasksKanbanComponent extends \CBitrixComponent
 	 * Provides action to add to favorite task.
 	 * @return array
 	 */
-	protected function actionAddFavoriteTask()
+	public function addFavoriteTaskAction(): array
 	{
+		if (!$this->checkBeforeAction())
+		{
+			return [];
+		}
+
 		return $this->favoriteTask('add');
 	}
 
@@ -3510,27 +3682,37 @@ class TasksKanbanComponent extends \CBitrixComponent
 	 * Provides action to delete from favorite task.
 	 * @return array
 	 */
-	protected function actionDeleteFavoriteTask()
+	public function deleteFavoriteTaskAction(): array
 	{
+		if (!$this->checkBeforeAction())
+		{
+			return [];
+		}
+
 		return $this->favoriteTask('delete');
 	}
 
 	/**
-	 * Delegate author's rights of task to other.
+	 * Delegate author's rights of task to others.
 	 * @return array
 	 */
-	protected function actionChangeAuthorTask()
+	public function changeAuthorTaskAction(): array
 	{
+		if (!$this->checkBeforeAction())
+		{
+			return [];
+		}
+
 		if (
 			($taskId = $this->request('taskId')) &&
 			($author = $this->request('userId'))
 		)
 		{
-			$groupAction = $this->request('groupAction') == 'Y';
+			$groupAction = $this->request('groupAction') === 'Y';
 			$taskIds = (array) $taskId;
 			foreach ($taskIds as $taskId)
 			{
-				$task = \CTaskItem::getInstance($taskId, $this->userId);
+				$task = CTaskItem::getInstance($taskId, $this->userId);
 				if ($task->checkAccess(ActionDictionary::ACTION_TASK_EDIT))
 				{
 					try
@@ -3565,19 +3747,24 @@ class TasksKanbanComponent extends \CBitrixComponent
 	 * Set deadline to the task.
 	 * @return array
 	 */
-	protected function actionDeadlineTask()
+	public function deadlineTaskAction(): array
 	{
+		if (!$this->checkBeforeAction())
+		{
+			return [];
+		}
+
 		if (
 			($taskId = $this->request('taskId')) &&
 			($deadline = $this->request('deadline'))
 		)
 		{
-			$groupAction = $this->request('groupAction') == 'Y';
+			$groupAction = $this->request('groupAction') === 'Y';
 			$deadlineDT = new DateTime($deadline);
 			$taskIds = (array) $taskId;
 			foreach ($taskIds as $taskId)
 			{
-				$task = \CTaskItem::getInstance($taskId, $this->userId);
+				$task = CTaskItem::getInstance($taskId, $this->userId);
 				if ($task->checkAccess(ActionDictionary::ACTION_TASK_DEADLINE))
 				{
 					$update = array(
@@ -3657,8 +3844,13 @@ class TasksKanbanComponent extends \CBitrixComponent
 	 * Changes task group.
 	 * @return array
 	 */
-	protected function actionChangeGroupTask()
+	public function changeGroupTaskAction(): array
 	{
+		if (!$this->checkBeforeAction())
+		{
+			return [];
+		}
+
 		if (
 			($taskId = $this->request('taskId')) &&
 			($groupId = $this->request('groupId')) &&
@@ -3676,8 +3868,8 @@ class TasksKanbanComponent extends \CBitrixComponent
 			$taskIds = (array) $taskId;
 			foreach ($taskIds as $taskId)
 			{
-				$task = \CTaskItem::getInstance($taskId, $this->userId);
-				if ($task->isActionAllowed(\CTaskItem::ACTION_EDIT))
+				$task = CTaskItem::getInstance($taskId, $this->userId);
+				if ($task->isActionAllowed(CTaskItem::ACTION_EDIT))
 				{
 					$task->update([
 						'GROUP_ID' => $groupId
@@ -3693,15 +3885,20 @@ class TasksKanbanComponent extends \CBitrixComponent
 	 * Deletes task.
 	 * @return array
 	 */
-	protected function actionDeleteTask()
+	public function deleteTaskAction(): array
 	{
+		if (!$this->checkBeforeAction())
+		{
+			return [];
+		}
+
 		if ($taskId = $this->request('taskId'))
 		{
 			$taskIds = (array) $taskId;
 			foreach ($taskIds as $taskId)
 			{
-				$task = \CTaskItem::getInstance($taskId, $this->userId);
-				if ($task->isActionAllowed(\CTaskItem::ACTION_REMOVE))
+				$task = CTaskItem::getInstance($taskId, $this->userId);
+				if ($task->isActionAllowed(CTaskItem::ACTION_REMOVE))
 				{
 					$task->delete();
 				}
@@ -3716,11 +3913,11 @@ class TasksKanbanComponent extends \CBitrixComponent
 	 * @param string $code Code of action.
 	 * @return array
 	 */
-	protected function actionsSimilar($code)
+	protected function actionsSimilar(string $code): array
 	{
 		if (($taskId = $this->request('taskId')))
 		{
-			$groupAction = $this->request('groupAction') == 'Y';
+			$groupAction = $this->request('groupAction') === 'Y';
 			$taskIds = (array) $taskId;
 			foreach ($taskIds as $taskId)
 			{
@@ -3728,10 +3925,10 @@ class TasksKanbanComponent extends \CBitrixComponent
 				{
 					case 'start':
 					case 'pause':
-						$task = \CTaskItem::getInstance($taskId, $this->userId);
-						if ($task->checkAccess($code == 'start' ? ActionDictionary::ACTION_TASK_START : ActionDictionary::ACTION_TASK_PAUSE))
+						$task = CTaskItem::getInstance($taskId, $this->userId);
+						if ($task->checkAccess($code === 'start' ? ActionDictionary::ACTION_TASK_START : ActionDictionary::ACTION_TASK_PAUSE))
 						{
-							if ($code == 'start')
+							if ($code === 'start')
 							{
 								$task->startExecution();
 							}
@@ -3763,14 +3960,14 @@ class TasksKanbanComponent extends \CBitrixComponent
 			}
 		}
 
-		return array();
+		return [];
 	}
 
-	private function completeTask(int $taskId)
+	private function completeTask(int $taskId): void
 	{
 		try
 		{
-			$task = \CTaskItem::getInstance($taskId, $this->userId);
+			$task = CTaskItem::getInstance($taskId, $this->userId);
 			if (!$task->checkAccess(ActionDictionary::ACTION_TASK_COMPLETE_RESULT))
 			{
 				$this->addError('TASKS_KANBAN_RESULT_REQUIRED');
@@ -3786,19 +3983,21 @@ class TasksKanbanComponent extends \CBitrixComponent
 				$this->onTaskComplete();
 			}
 		}
-		catch(\Exception $exception)
+		catch(Exception $exception)
 		{
 			$this->addError($exception->getMessage());
 		}
 	}
 
-	private function renewTask(int $taskId)
+	private function renewTask(int $taskId): void
 	{
 		try
 		{
-			$task = \CTaskItem::getInstance($taskId, $this->userId);
-			if ($task->checkAccess(ActionDictionary::ACTION_TASK_RENEW) ||
-				$task->checkAccess(ActionDictionary::ACTION_TASK_APPROVE))
+			$task = CTaskItem::getInstance($taskId, $this->userId);
+			if (
+				$task->checkAccess(ActionDictionary::ACTION_TASK_RENEW)
+				|| $task->checkAccess(ActionDictionary::ACTION_TASK_APPROVE)
+			)
 			{
 				$queryObject = \CTasks::getList(
 					[],
@@ -3812,23 +4011,23 @@ class TasksKanbanComponent extends \CBitrixComponent
 				}
 			}
 		}
-		catch(\Exception $exception)
+		catch(Exception $exception)
 		{
 			$this->addError($exception->getMessage());
 		}
-	}
-
-	private function getActiveTab(int $groupId)
-	{
-		return \CUserOptions::getOption('tasks.scrum.'.$groupId, 'active_tab', 'plan');
 	}
 
 	/**
 	 * Start task exection.
 	 * @return array
 	 */
-	protected function actionStartTask()
+	public function startTaskAction(): array
 	{
+		if (!$this->checkBeforeAction())
+		{
+			return [];
+		}
+
 		return $this->actionsSimilar('start');
 	}
 
@@ -3836,8 +4035,13 @@ class TasksKanbanComponent extends \CBitrixComponent
 	 * Pause task exection.
 	 * @return array
 	 */
-	protected function actionPauseTask()
+	public function pauseTaskAction(): array
 	{
+		if (!$this->checkBeforeAction())
+		{
+			return [];
+		}
+
 		return $this->actionsSimilar('pause');
 	}
 
@@ -3845,8 +4049,13 @@ class TasksKanbanComponent extends \CBitrixComponent
 	 * Mute task.
 	 * @return array
 	 */
-	protected function actionMuteTask(): array
+	public function muteTaskAction(): array
 	{
+		if (!$this->checkBeforeAction())
+		{
+			return [];
+		}
+
 		return $this->actionsSimilar('mute');
 	}
 
@@ -3854,8 +4063,13 @@ class TasksKanbanComponent extends \CBitrixComponent
 	 * Unmute task.
 	 * @return array
 	 */
-	protected function actionUnmuteTask(): array
+	public function unmuteTaskAction(): array
 	{
+		if (!$this->checkBeforeAction())
+		{
+			return [];
+		}
+
 		return $this->actionsSimilar('unmute');
 	}
 
@@ -3863,8 +4077,13 @@ class TasksKanbanComponent extends \CBitrixComponent
 	 * Complete the task.
 	 * @return array
 	 */
-	protected function actionCompleteTask()
+	public function completeTaskAction(): array
 	{
+		if (!$this->checkBeforeAction())
+		{
+			return [];
+		}
+
 		return $this->actionsSimilar('complete');
 	}
 
@@ -3872,11 +4091,16 @@ class TasksKanbanComponent extends \CBitrixComponent
 	 * Converter tasks of My Plan.
 	 * @return array
 	 */
-	protected function actionConverterMP()
+	public function converterMPAction(): array
 	{
+		if (!$this->checkBeforeAction())
+		{
+			return [];
+		}
+
 		$params = $this->arParams;
 
-		if ($params['PERSONAL'] == 'Y')
+		if ($params['PERSONAL'] === 'Y')
 		{
 			$lastId = $this->request('last');
 			$checkStages = StagesTable::getStages(
@@ -3971,17 +4195,27 @@ class TasksKanbanComponent extends \CBitrixComponent
 				'finish' => $finish
 			);
 		}
+
+		return [];
 	}
 
 	/**
 	 * Save user selected fields for tasks view in kanban.
 	 */
-	protected function actionSaveUserSelectedFields(): bool
+	public function saveUserSelectedFieldsAction(): bool
 	{
-		$fields = $this->convertUtf($this->request('fields'), true);
-		return $this->kanbanUserSettings->saveUserSelectedFields(
-			$fields
-		);
+		if (!$this->checkBeforeAction())
+		{
+			return false;
+		}
+
+		$fields = $this->request('fields');
+		if (empty($fields))
+		{
+			return false;
+		}
+
+		return $this->kanbanUserSettings->saveUserSelectedFields($fields);
 	}
 
 	private function isScrum(): bool
@@ -4114,5 +4348,30 @@ class TasksKanbanComponent extends \CBitrixComponent
 				Analytics::ELEMENT['complete_button'],
 			);
 		}
+	}
+	
+	private function getStageIdsWithTasks(array $stages): array
+	{
+		$stagesWithTasks = array_filter($stages, static fn (array $column): bool => (int)$column['total'] > 0 || $column['type'] === StagesTable::SYS_TYPE_NEW);
+		$stagesWithTasks = array_column($stagesWithTasks, 'id');
+
+		Collection::normalizeArrayValuesByInt($stagesWithTasks, false);
+		
+		return $stagesWithTasks;
+	}
+
+	public function configureActions(): array
+	{
+		return [];
+	}
+
+	public function getErrorByCode($code): void
+	{
+		return;
+	}
+
+	public function getErrors()
+	{
+		return $this->errors;
 	}
 }

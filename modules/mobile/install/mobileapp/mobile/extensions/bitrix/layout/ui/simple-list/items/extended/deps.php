@@ -2,7 +2,6 @@
 
 return [
 	'extensions' => [
-		'apptheme',
 		'layout/ui/fields',
 		'layout/ui/friendly-date',
 		'layout/ui/simple-list/items/base',

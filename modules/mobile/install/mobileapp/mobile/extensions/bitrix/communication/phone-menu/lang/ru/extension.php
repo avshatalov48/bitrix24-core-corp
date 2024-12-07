@@ -1,8 +1,8 @@
 <?php
 $MESS['PHONE_CALL_MSGVER_2'] = 'Позвонить';
 
-$MESS['PHONE_CALL_TO'] = 'На номер #PHONE#';
-$MESS['PHONE_CALL_B24'] = 'Позвонить через Bitrix24';
+$MESS["PHONE_CALL_TO_MSGVER_1"] = "#PHONE#";
+$MESS['PHONE_CALL_B24_MSGVER_1'] = 'Позвонить через Битрикс24';
 $MESS['PHONE_CALL_B24_DISABLED'] = 'Телефония не настроена';
 $MESS['PHONE_CALL_B24_BANNER_TITLE'] = 'Звоните прямо из CRM';
 $MESS['PHONE_CALL_B24_BANNER_BUTTON'] = 'Настроить Телефонию';
@@ -13,3 +13,4 @@ $MESS['PHONE_CALL_B24_BANNER_FEATURE_3'] = 'Звонки распределят�
 
 $MESS['PHONE_COPY'] = 'Скопировать';
 $MESS['PHONE_COPY_DONE'] = 'Номер скопирован';
+$MESS['PHONE_HIDDEN'] = 'Номер скрыт';

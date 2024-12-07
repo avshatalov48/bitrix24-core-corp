@@ -1,0 +1,312 @@
+.sign-b2e-send__lang-selector {
+	margin: 10px 0 0 0;
+}
+
+.sign-b2e-send {
+	position: relative;
+}
+
+.sign-b2e-send .sign-lang-selector {
+	display: inline-block;
+}
+
+.sign-b2e-send .sign-reminder-selector {
+	display: inline-block;
+}
+
+.sign-b2e-send__config-container {
+	display: flex;
+	flex-direction: row;
+	flex-wrap: wrap;
+	align-self: center;
+	margin-top: 15px;
+	gap: 12px;
+}
+
+.sign-b2e-send__config-container .sign-b2e-send__communications {
+	margin-top: 0;
+}
+
+.sign-b2e-send__deadline {
+	font: 12px/14.32px var(--ui-font-family-system);
+	color: var(--ui-color-palette-gray-60);
+	display: none;
+}
+
+.sign-b2e-send__title {
+	font: 24px/32.68px var(--font_os_regular);
+	color: var(--ui-color-palette-black-base);
+	margin: 0 0 12px 0;
+}
+
+.sign-b2e-send__employee-details {
+	align-items: center;
+	display: flex;
+	border: 1px solid var(--ui-color-palette-blue-50);
+	border-radius: 8px;
+	padding: 19px 22px;
+}
+
+.sign-b2e-send__employee-details:before {
+	background: url('images/sign__icon-document-empty.svg') no-repeat center;
+	content: '';
+	display: block;
+	min-width: 42px;
+	height: 50px;
+	margin-right: 15px;
+}
+
+.sign-b2e-send__employee-details_summary {
+	flex-grow: 1;
+}
+
+.sign-b2e-send__employee-details_title {
+	margin: 0 0 5px 0;
+	color: var(--ui-color-palette-black-base);
+	font: 17px/23px var(--font_os_semibold);
+}
+
+.sign-b2e-send__employee-details_structure {
+	color: var(--color-3);
+	font-size: 13px;
+	margin: 0 0 2px 0;
+}
+
+.sign-b2e-send__party {
+	border: 1px solid var(--color-4);
+	border-radius: 8px;
+	margin-top: 15px;
+	padding: 10px;
+}
+
+.sign-b2e-send__company-items_flex {
+	display: flex;
+	align-items: center;
+}
+
+.sign-b2e-send__company-items_shrunk {
+	width: 15px;
+	display: block;
+	margin: 0 5px;
+}
+
+.sign-b2e-send__company-items_item-title {
+	flex: 1 0;
+}
+
+.sign-b2e-send__party_signing-employees,
+.sign-b2e-send__company-items_item-title {
+	color: var(--ui-color-palette-gray-50);
+	font: 11px/13.13px var(--ui-font-family-system);
+	margin: 0;
+}
+
+.sign-b2e-send__party_item-info {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	flex: 1 0;
+	min-width: 0;
+	padding: 10px 0;
+	border: 1px solid #dedfe3;
+	margin-top: 5px;
+	border-radius: 5px;
+}
+
+.sign-b2e-send__party_item-info-avatar {
+	margin-left: 10px;
+	background: url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzYiIGhlaWdodD0iMzYiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjM2IiBoZWlnaHQ9IjM2IiByeD0iMTgiIGZpbGw9IiMyRkM2RjYiLz48cGF0aCBmaWxsLXJ1bGU9ImV2ZW5vZGQiIGNsaXAtcnVsZT0iZXZlbm9kZCIgZD0iTTIxIDIyLjgyNHYtNi4yMzFhLjYuNiAwIDAxLjc0NS0uNTgybDIuOC43YS42LjYgMCAwMS40NTUuNTgydjUuNTMxaDF2MkgxMHYtMmgxdi05LjY4NmExIDEgMCAwMS44NC0uOTg3bDctMS4xMzhBMSAxIDAgMDEyMCAxMnYxMC44MjRoMXptLTcgMGgzdi0zaC0zdjN6TTI0IDE5aC0ydjJoMnYtMnptLTYtNS4xNzZoLTJ2Mmgydi0yem0tMyAwaC0ydjJoMnYtMnptMyAzaC0ydjJoMnYtMnptLTMgMGgtMnYyaDJ2LTJ6IiBmaWxsPSIjZmZmIi8+PC9zdmc+) no-repeat;
+	background-size: cover;
+	width: 35px;
+	height: 35px;
+	min-width: 35px;
+	min-height: 35px;
+	border-radius: 50%;
+	overflow: hidden;
+	float: left;
+}
+
+.sign-b2e-send__party_item-info-avatar.--user {
+	background-image: url('/bitrix/js/socialnetwork/entity-selector/src/images/default-user.svg');
+}
+
+.sign-b2e-send__party_item-info-title {
+	display: flex;
+	flex-direction: column;
+	margin-left: 10px;
+	min-width: 0;
+}
+.sign-b2e-send__party-item-separator {
+	color: var(--ui-color-palette-gray-30);
+	font: 20px/13.13px var(--ui-font-family-system);
+}
+
+.sign-b2e-send__party_item-info-header {
+	font: 16px/20px var(--ui-font-family-system);
+	color: var(--ui-color-palette-gray-90);
+}
+
+.sign-b2e-send__party_item-info-footer {
+	font: 12px/14.32px var(--ui-font-family-system);
+	color: var(--ui-color-palette-gray-60);
+}
+
+.sign-b2e-send__party_item-info-header,
+.sign-b2e-send__party_item-info-footer {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.sign-b2e-send__party--employee-party {
+	display: flex;
+	flex-direction: column;
+}
+
+.sign-b2e-send__party_signing-employees {
+	margin-bottom: 5px;
+}
+
+.sign-b2e-send__communications {
+	margin-top: 15px;
+	gap: 15px;
+	align-items: center;
+}
+
+.sign-b2e-send__communications_title {
+	font: 13px/15.51px var(--ui-font-family-system);
+	color: var(--ui-color-palette-gray-60);
+	margin-right: 5px;
+}
+
+.sign-b2e-send__communications_arrow:before {
+	right: -2px;
+	top: -3px;
+	transform: rotate(45deg);
+}
+
+.sign-b2e-send__communications_arrow:after {
+	right: -2px;
+	bottom: -3px;
+	transform: rotate(-45deg);
+}
+
+.sign-b2e-send__communications_communication-type {
+	display: inline-block;
+	position: relative;
+	white-space: nowrap;
+}
+
+.sign-b2e-send__communications_communication-type-text {
+	display: inline-block;
+	font: 13px/17.2px var(--ui-font-family-system);
+	color: var(--ui-color-palette-gray-90);
+	background: var(--ui-color-palette-gray-05);
+	padding: 5px 10px;
+	border-radius: 25px;
+}
+
+.sign-b2e-send__communications_communication-type:after {
+	border-width: 4px;
+	border-color: var(--color-6) transparent transparent;
+	border-style: solid;
+	content: '';
+	cursor: pointer;
+	display: inline-block;
+	margin-left: 7px;
+	vertical-align: sub;
+	display: none;
+}
+
+.send-b2e-overlay {
+	position: absolute;
+	width: 100%;
+	height: 100%;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background: var(--ui-color-palette-gray-05);
+	text-align: center;
+	z-index: 2;
+	overflow: hidden;
+	display: flex;
+	flex-direction: column;
+}
+
+.sign-b2e-overlay-content {
+	flex-grow: 1;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+}
+
+.sign-b2e-overlay-close-description {
+	margin: 20px auto 30px;
+	font-size: 17px;
+	line-height: 20px;
+	max-width: 410px;
+	color: var(--ui-color-palette-gray-70);
+}
+
+.send-b2e-progress-container {
+	padding: 40px;
+}
+.sign-b2e-overlay-progress-title {
+	font-size: 25px;
+	line-height: 30px;
+	margin-top: 30px;
+	color: var(--ui-color-palette-gray-90);
+}
+
+.sign-b2e-overlay__animate-layout {
+	background: url('./images/sign_send_progress_empty.svg') no-repeat center;
+	min-width: 219px;
+	height: 178px;
+}
+
+.sign-b2e-overlay__overlap-docs {
+	position: relative;
+	display: inline-block;
+	width: 103px;
+	height: 136px;
+	top: 20px;
+	left: -30px;
+}
+
+.sign-b2e-overlay__overlap-docs:last-of-type {
+	left: 65px;
+}
+
+.sign-b2e-overlay__overlap-doc {
+	background: url('./images/sign_send_overlap_doc.svg') no-repeat center;
+	position: absolute;
+	width: 100%;
+	height: 100%;
+	top: -10px;
+}
+
+.sign-b2e-overlay__overlap-doc:nth-child(1) {
+	left: -15px;
+	top: 10px;
+}
+
+.sign-b2e-overlay__overlap-doc:nth-child(2) {
+	left: -7px;
+	top: auto;
+}
+
+.sign-b2e-overlay__overlap-doc:nth-child(4) {
+	animation: doc-sheet-movement 1.3s infinite cubic-bezier(0.42, 0, 0.14, 1.35);
+	z-index: 1;
+}
+
+@keyframes doc-sheet-movement {
+	0%, 30% {
+		transform: translateX(0);
+	}
+	100% {
+		transform: translateX(198px);
+	}
+}

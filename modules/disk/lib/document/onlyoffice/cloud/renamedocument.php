@@ -11,6 +11,7 @@ final class RenameDocument extends BaseSender
 	{
 		$clientId = (new Configuration())->getCloudRegistrationData()['clientId'];
 
+		/** @see \Bitrix\DocumentProxy\Controller\CommandService::processAction */
 		return $this->performRequest('documentproxy.CommandService.process', [
 			'clientId' => $clientId,
 			'body' => $operationData,

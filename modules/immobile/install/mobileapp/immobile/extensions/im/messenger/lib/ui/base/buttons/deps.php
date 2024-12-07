@@ -2,7 +2,8 @@
 return [
 	'extensions' => [
 		'utils/function',
-        'utils/color',
+		'utils/color',
+		'im:lib/theme',
 	],
 	'bundle' => [
 		'./src/full-width-button',

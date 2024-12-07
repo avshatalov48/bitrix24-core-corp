@@ -101,33 +101,38 @@ class CDavSynchronizeSettings extends \CBitrixComponent implements \Bitrix\Main\
 	{
 		global $USER;
 		$arResult = array();
-		$arResult['COMMON']['DEFAULT_COLLECTION_TO_SYNC']['VALUE'] = CDavAddressbookHandler::GetDefaultResourceProviderName($USER->GetID());
+		$userId = $USER->GetID();
+		$arResult['COMMON']['DEFAULT_COLLECTION_TO_SYNC']['VALUE'] = CDavAddressbookHandler::GetDefaultResourceProviderName($userId);
 
-		$arResult['ACCOUNTS']['ENABLED'] = CDavAccounts::IsResourceSyncEnabled($USER->GetID());
-		$arResult['ACCOUNTS']['UF_DEPARTMENT'] = CDavAccounts::GetResourceSyncUfDepartments($USER->GetID());
-		$providerVariants['accounts'] = Loc::getMessage('DAV_ACCOUNTS');
+		if (!(Loader::includeModule('intranet') && !\Bitrix\Intranet\Util::isIntranetUser()))
+		{
+			$arResult['ACCOUNTS']['ENABLED'] = CDavAccounts::IsResourceSyncEnabled($userId);
+			$arResult['ACCOUNTS']['UF_DEPARTMENT'] = CDavAccounts::GetResourceSyncUfDepartments($userId);
+			$providerVariants['accounts'] = Loc::getMessage('DAV_ACCOUNTS');
+		}
+
 		if (\Bitrix\Main\ModuleManager::isModuleInstalled('extranet'))
 		{
-			$arResult['EXTRANET_ACCOUNTS']['ENABLED'] = CDavExtranetAccounts::IsResourceSyncEnabled($USER->GetID());
+			$arResult['EXTRANET_ACCOUNTS']['ENABLED'] = CDavExtranetAccounts::IsResourceSyncEnabled($userId);
 			$providerVariants['extranetAccounts'] = Loc::getMessage('DAV_EXTRANET_ACCOUNTS');
 		}
 		if (Loader::includeModule('crm'))
 		{
 			if (CCrmContact::CheckExportPermission())
 			{
-				$arResult['CONTACTS']['ENABLED'] = CDavCrmContacts::IsResourceSyncEnabled($USER->GetID());
-				$arResult['CONTACTS']['MAX_COUNT'] = CDavCrmContacts::GetResourceSyncMaxCount($USER->GetID());
+				$arResult['CONTACTS']['ENABLED'] = CDavCrmContacts::IsResourceSyncEnabled($userId);
+				$arResult['CONTACTS']['MAX_COUNT'] = CDavCrmContacts::GetResourceSyncMaxCount($userId);
 				$arResult['CONTACTS']['FILTER']['ITEMS'] = CDavCrmContacts::GetListOfFilterItems();
-				$arResult['CONTACTS']['FILTER']['VALUE'] = CDavCrmContacts::GetResourceSyncFilterOwner($USER->GetID());
+				$arResult['CONTACTS']['FILTER']['VALUE'] = CDavCrmContacts::GetResourceSyncFilterOwner($userId);
 				$providerVariants['crmContacts'] = Loc::getMessage('DAV_CONTACTS');
 			}
 
 			if (CCrmCompany::CheckExportPermission())
 			{
-				$arResult['COMPANIES']['ENABLED'] = CDavCrmCompanies::IsResourceSyncEnabled($USER->GetID());
-				$arResult['COMPANIES']['MAX_COUNT'] = CDavCrmCompanies::GetResourceSyncMaxCount($USER->GetID());
+				$arResult['COMPANIES']['ENABLED'] = CDavCrmCompanies::IsResourceSyncEnabled($userId);
+				$arResult['COMPANIES']['MAX_COUNT'] = CDavCrmCompanies::GetResourceSyncMaxCount($userId);
 				$arResult['COMPANIES']['FILTER']['ITEMS'] = CDavCrmCompanies::GetListOfFilterItems();
-				$arResult['COMPANIES']['FILTER']['VALUE'] = CDavCrmCompanies::GetResourceSyncFilterOwner($USER->GetID());
+				$arResult['COMPANIES']['FILTER']['VALUE'] = CDavCrmCompanies::GetResourceSyncFilterOwner($userId);
 				$providerVariants['crmCompanies'] = Loc::getMessage('DAV_COMPANIES');
 			}
 		}
@@ -138,29 +143,30 @@ class CDavSynchronizeSettings extends \CBitrixComponent implements \Bitrix\Main\
 	private function saveParams($params)
 	{
 		global $USER;
+		$userId = $USER->GetID();
 		if (isset($params['DAV_SYNC_SETTINGS']['COMMON']['DEFAULT_COLLECTION_TO_SYNC']))
 		{
-			CDavAddressbookHandler::SetDefaultResourceProviderName($params['DAV_SYNC_SETTINGS']['COMMON']['DEFAULT_COLLECTION_TO_SYNC'], $USER->GetID());
+			CDavAddressbookHandler::SetDefaultResourceProviderName($params['DAV_SYNC_SETTINGS']['COMMON']['DEFAULT_COLLECTION_TO_SYNC'], $userId);
 		}
 
 		if (isset($params['DAV_SYNC_SETTINGS']['ACCOUNTS']))
 		{
-			CDavAccounts::SetResourceSyncSetting($params['DAV_SYNC_SETTINGS']['ACCOUNTS'], $USER->GetID());
+			CDavAccounts::SetResourceSyncSetting($params['DAV_SYNC_SETTINGS']['ACCOUNTS'], $userId);
 		}
 
 		if (isset($params['DAV_SYNC_SETTINGS']['EXTRANET_ACCOUNTS']))
 		{
-			CDavExtranetAccounts::SetResourceSyncSetting($params['DAV_SYNC_SETTINGS']['EXTRANET_ACCOUNTS'], $USER->GetID());
+			CDavExtranetAccounts::SetResourceSyncSetting($params['DAV_SYNC_SETTINGS']['EXTRANET_ACCOUNTS'], $userId);
 		}
 
 		if (isset($params['DAV_SYNC_SETTINGS']['CONTACTS']))
 		{
-			CDavCrmContacts::SetResourceSyncSetting($params['DAV_SYNC_SETTINGS']['CONTACTS'], $USER->GetID());
+			CDavCrmContacts::SetResourceSyncSetting($params['DAV_SYNC_SETTINGS']['CONTACTS'], $userId);
 		}
 
 		if (isset($params['DAV_SYNC_SETTINGS']['COMPANIES']))
 		{
-			CDavCrmCompanies::SetResourceSyncSetting($params['DAV_SYNC_SETTINGS']['COMPANIES'], $USER->GetID());
+			CDavCrmCompanies::SetResourceSyncSetting($params['DAV_SYNC_SETTINGS']['COMPANIES'], $userId);
 		}
 	}
 }

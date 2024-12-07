@@ -49,7 +49,7 @@ Extension::load([
 	'ui.counter',
 	'ui.label',
 	'ui.fonts.opensans',
-	'tasks.runtime',
+	'pull.queuemanager',
 ]);
 
 $isBitrix24Template = (SITE_TEMPLATE_ID === 'bitrix24');
@@ -61,7 +61,7 @@ $data = $arResult['DATA'];
 	<div class="tasks-scrum-kanban-header-target-observer"></div>
 </div>
 
-<script type="text/javascript">
+<script>
 
 	BX.message(<?=Json::encode($messages)?>);
 

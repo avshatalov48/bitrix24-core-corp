@@ -1,0 +1,54 @@
+.ai__prompt-master_error-screen {
+	display: flex;
+	flex-direction: column;
+	justify-content: flex-start;
+	align-items: center;
+}
+
+.ai__prompt-master_error-screen-icon {
+	width: 98px;
+	min-width: 98px;
+	height: 98px;
+	display: flex;
+	flex-direction: row;
+	justify-content: center;
+	align-items: center;
+	background-color: rgba(var(--ui-color-text-alert-rgb), 0.1);
+	border-radius: var(--ui-border-radius-circle);
+}
+
+.ai__prompt-master_error-screen-icon {
+	margin-bottom: 20px;
+}
+
+.ai__prompt-master_error-screen-error {
+	margin-bottom: 15px;
+	font-size: var(--ui-font-size-xl);
+}
+
+.ai__prompt-master_error-screen-repeat-btn {
+	margin-bottom: 90px;
+}
+
+.ai__prompt-master_error-screen-warning-message {
+	padding: 0 40px;
+	font-size: var(--ui-font-size-md);
+	line-height: var(--ui-font-line-height-2xs);
+	color: var(--ui-color-base-60);
+	text-align: center;
+}
+
+.ai__prompt-master_error-screen-back-btn {
+	--ui-icon-set__icon-color: var(--ui-color-text-subtle);
+
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	font-weight: var(--ui-font-weight-medium);
+	color: var(--ui-icon-set__icon-color);
+	cursor: pointer;
+}
+
+.ai__prompt-master_error-screen-back-btn:hover {
+	--ui-icon-set__icon-color: var(--ui-color-text-secondary);
+}

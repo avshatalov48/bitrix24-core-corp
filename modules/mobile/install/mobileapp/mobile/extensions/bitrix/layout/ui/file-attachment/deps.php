@@ -8,6 +8,7 @@ return [
 		'utils/function',
 		'utils/object',
 		'loc',
+		'layout/ui/optimized-grid-view',
 	],
 	'bundle' => [
 		'./grid-view-adapter',

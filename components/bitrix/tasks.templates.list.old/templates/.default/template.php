@@ -39,7 +39,7 @@ $arPaths = array(
 	"PATH_TO_TASKS_TASK" => $arParams["PATH_TO_TASKS_TASK"]
 );
 ?>
-<script type="text/javascript">
+<script>
 	var ajaxUrl = "/bitrix/components/bitrix/tasks.templates.list/ajax.php?SITE_ID=<?php echo SITE_ID?>";
 </script>
 

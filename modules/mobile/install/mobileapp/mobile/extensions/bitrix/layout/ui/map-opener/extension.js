@@ -2,7 +2,7 @@
  * @module layout/ui/map-opener
  */
 jn.define('layout/ui/map-opener', (require, exports, module) => {
-
+	const { ContextMenu } = require('layout/ui/context-menu');
 	const { GeoPoint } = require('layout/ui/map-opener/geo-point');
 	const { getServices } = require('layout/ui/map-opener/services');
 
@@ -121,6 +121,8 @@ jn.define('layout/ui/map-opener', (require, exports, module) => {
 		}
 	}
 
-	module.exports = { MapOpener };
-
+	module.exports = {
+		MapOpener,
+		GeoPoint,
+	};
 });

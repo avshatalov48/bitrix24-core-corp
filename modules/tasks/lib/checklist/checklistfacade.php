@@ -19,6 +19,7 @@ use Bitrix\Tasks\CheckList\Internals\CheckList;
 use Bitrix\Tasks\CheckList\Internals\CheckListTree;
 use Bitrix\Tasks\Integration\Disk\Rest\Attachment;
 use Bitrix\Tasks\Ui\Avatar;
+use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\TaskLimit;
 use Bitrix\Tasks\Util\Result;
 use Bitrix\Tasks\Util\User;
 use Bitrix\Tasks\Util\UserField;
@@ -612,6 +613,14 @@ abstract class CheckListFacade
 	public static function merge($entityId, $userId, $newItems, $parameters = [])
 	{
 		$mergeResult = new Result();
+		$isLimitExceeded = TaskLimit::isLimitExceeded();
+		if ($isLimitExceeded)
+		{
+			foreach ($newItems as &$newItem)
+			{
+				unset($newItem['MEMBERS']);
+			}
+		}
 
 		static::doMergePreActions($entityId, $userId);
 

@@ -4,7 +4,8 @@ use Bitrix\Main\Engine\Contract\Controllerable;
 use Bitrix\Main\Engine\Response\AjaxJson;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Rest\Marketplace\Transport;
+use Bitrix\Market\Rest\Actions;
+use Bitrix\Market\Rest\Transport;
 
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) {
 	die();
@@ -37,7 +38,7 @@ class MarketReviews extends CBitrixComponent implements Controllerable
 
 		$result = [];
 
-		$response = Transport::instance()->call(Transport::METHOD_GET_REVIEWS, [
+		$response = Transport::instance()->call(Actions::METHOD_GET_REVIEWS, [
 			'filter_user' => $USER->GetID(),
 			'reviews_page' => $page,
 			'filter_type' => $filter,

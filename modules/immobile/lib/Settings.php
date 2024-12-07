@@ -67,11 +67,16 @@ class Settings
 			return false;
 		}
 
-		return \Bitrix\Im\V2\Chat\CopilotChat::isAvailable();
+		return \Bitrix\Im\V2\Chat\CopilotChat::isActive();
 	}
 
-	public static function isCopilotAddUsersEnabled(): bool
+	public static function planLimits(): ?array
 	{
-		return \Bitrix\Main\Config\Option::get('im', 'im_add_users_to_copilot_chat', 'N') === 'Y';
+		if (!\Bitrix\Main\Loader::includeModule('im'))
+		{
+			return null;
+		}
+
+		return \Bitrix\Im\V2\TariffLimit\Limit::getInstance()->getRestrictions();
 	}
 }

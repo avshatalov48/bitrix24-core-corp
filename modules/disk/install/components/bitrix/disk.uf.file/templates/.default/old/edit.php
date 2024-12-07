@@ -161,7 +161,7 @@ if (!empty($arResult['CAN_CREATE_FILE_BY_CLOUD']))
 <?
 }
 ?>
-<script type="text/javascript">
+<script>
 BX.ready(function(){
 	BX.message(<?=CUtil::phpToJsObject(Loc::loadLanguageFile(__FILE__))?>);
 <? if($arParams['DISABLE_LOCAL_EDIT']){ ?>

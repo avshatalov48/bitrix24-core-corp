@@ -4,16 +4,15 @@ namespace Bitrix\Tasks\CheckList\Task;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentTypeException;
 use Bitrix\Main\Db\SqlQueryException;
-use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\NotImplementedException;
 use Bitrix\Main\SystemException;
 use Bitrix\Tasks\Access\ActionDictionary;
 use Bitrix\Tasks\Access\TaskAccessController;
-use Bitrix\Tasks\AnalyticLogger;
 use Bitrix\Tasks\CheckList\CheckListFacade;
 use Bitrix\Tasks\CheckList\Internals\CheckList;
 use Bitrix\Tasks\Comments\Task\CommentPoster;
+use Bitrix\Tasks\Helper\Analytics;
 use Bitrix\Tasks\Integration\CRM\TimeLineManager;
 use Bitrix\Tasks\Internals\Registry\TaskRegistry;
 use Bitrix\Tasks\Internals\SearchIndex;
@@ -22,7 +21,6 @@ use Bitrix\Tasks\Internals\Task\CheckListTable;
 use Bitrix\Tasks\Util;
 use CTaskAssert;
 use CTaskItem;
-use Exception;
 
 /**
  * Class TaskCheckListFacade
@@ -475,7 +473,7 @@ class TaskCheckListFacade extends CheckListFacade
 					$label = $value;
 				}
 
-				AnalyticLogger::logToFile($action, $tag, $label);
+				Analytics::getInstance()->logToFile($action, $tag, $label);
 			}
 		}
 	}

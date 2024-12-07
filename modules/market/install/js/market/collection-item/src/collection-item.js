@@ -1,12 +1,19 @@
+import { MarketLinks } from "market.market-links";
+
 import "./collection-item.css";
 
 export const CollectionItem = {
 	props: [
 		'item',
 	],
+	data() {
+		return {
+			MarketLinks: MarketLinks,
+		}
+	},
 	template: `
 		<a class="market-item-container"
-		   :href="$root.getCollectionUri(item.COLLECTION_ID, item.SHOW_ON_PAGE)"
+		   :href="MarketLinks.collectionLink(item.COLLECTION_ID, item.SHOW_ON_PAGE)"
 		   data-slider-ignore-autobinding="true"
 		   data-load-content="list"
 		   @click.prevent="$root.emitLoadContent"

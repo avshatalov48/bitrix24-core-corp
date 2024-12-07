@@ -41,7 +41,7 @@ if ($arParams['TYPE'] == 'list')
 	}
 
 	?>
-	<script type="text/javascript">
+	<script>
 
 		BX.SidePanel.Instance.bindAnchors({
 			rules: [

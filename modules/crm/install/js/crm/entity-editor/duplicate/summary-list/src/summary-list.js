@@ -39,6 +39,7 @@ class ItemInfo
 	#entityTypeTitle: "";
 	#entityTitle: "";
 	#isMy: false;
+	#isHidden: false;
 	#entityUrl: "";
 	#relatedEntityTitle = "";
 	#responsible: Responsible;
@@ -73,6 +74,7 @@ class ItemInfo
 			entityTypeTitle: this.#entityTypeTitle,
 			entityTitle: this.#entityTitle,
 			isMy: this.#isMy,
+			isHidden: this.#isHidden,
 			entityUrl: this.#entityUrl,
 			relatedEntityTitle: this.#relatedEntityTitle,
 			responsible: this.#responsible,
@@ -129,6 +131,16 @@ class ItemInfo
 	get isMy(): boolean
 	{
 		return this.#isMy;
+	}
+
+	set isHidden(value: boolean)
+	{
+		this.#isHidden = value;
+	}
+
+	get isHidden(): boolean
+	{
+		return this.#isHidden;
 	}
 
 	set entityUrl(value: string)
@@ -426,6 +438,7 @@ class SummaryList extends EventEmitter
 			entityTypeId === BX.CrmEntityType.enumeration.company
 			&& BX.prop.getString(entity, "IS_MY_COMPANY", "") === "Y"
 		);
+		itemInfo.isHidden = (BX.prop.getString(entity, "IS_HIDDEN", "") === "Y");
 		itemInfo.entityUrl = BX.prop.getString(entity, "URL", "");
 		itemInfo.responsible = {
 			id: BX.prop.getInteger(entity, "RESPONSIBLE_ID", 0),
@@ -486,17 +499,66 @@ class SummaryList extends EventEmitter
 		return content;
 	}
 
+	renderHiddenItem(item: Object): string
+	{
+		return Tag.render`
+			<div class="crm-dups-item">
+				<div class="crm-dups-item-top">
+					<div class="crm-dups-item-header">
+						<div class="crm-dups-item-type">${Text.encode(item["entityTypeTitle"])}</div>
+						<span class="crm-dups-item-title-hidden">${Text.encode(item["entityTitle"])}</span>
+						<div class="crm-dups-item-rel-title hidden"></div>
+					</div>
+					<div class="crm-dups-item-photo bx-ui-tooltip-photo">
+						<span
+							class="bx-ui-tooltip-info-data-photo no-photo"
+							style="width: 20px; height: 20px;"
+						></span>
+					</div>
+				</div>
+				<div class="crm-dups-item-details">
+				</div>
+			</div>
+		`;
+	}
+
+	renderVisibleItem(item: Object): string
+	{
+		return Tag.render`
+			<div class="crm-dups-item">
+				<div class="crm-dups-item-top">
+					<div class="crm-dups-item-header">
+						<div class="crm-dups-item-type">${Text.encode(item["entityTypeTitle"])}</div>
+						<a
+							href="${Text.encode(item["entityUrl"])}"
+							class="crm-dups-item-title">${Text.encode(item["entityTitle"])}</a>
+						<div class="crm-dups-item-rel-title hidden"></div>
+					</div>
+					${this.#renderResponsible(item["responsible"])}
+				</div>
+				<div class="crm-dups-item-details">
+					${this.renderItemDetails(item)}
+				</div>
+					${this.#renderAddButton({
+						"type": item["entityTypeName"],
+						"id": item["entityId"],
+						"title": item["entityTitle"],
+						"isMy": item["isMy"]
+					})}
+			</div>
+		`;
+	}
+
+	renderItem(item: Object): string
+	{
+		return item["isHidden"] ? this.renderHiddenItem(item) : this.renderVisibleItem(item);
+	}
+
 	getLayout()
 	{
 		const layoutData = this.getLayoutData();
 
-		if (
-			!(
-				Type.isStringFilled(layoutData["title"])
-				&& Type.isArray(layoutData["groups"])
-				&& layoutData["groups"].length > 0
-			)
-		)
+		if (!(Type.isStringFilled(layoutData["title"]) && Type.isArrayFilled(layoutData["groups"])))
 		{
 			return "";
 		}
@@ -508,27 +570,7 @@ class SummaryList extends EventEmitter
 					<div class="crm-dups-group">
 						<div class="crm-dups-group-header">${Text.encode(group["title"])}</div>
 						<div class="crm-dups-group-items">${group["items"].map((item) => Tag.render`
-							<div class="crm-dups-item">
-								<div class="crm-dups-item-top">
-									<div class="crm-dups-item-header">
-										<div class="crm-dups-item-type">${Text.encode(item["entityTypeTitle"])}</div>
-										<a
-											href="${Text.encode(item["entityUrl"])}"
-											class="crm-dups-item-title">${Text.encode(item["entityTitle"])}</a>
-										<div class="crm-dups-item-rel-title hidden"></div>
-									</div>
-									${this.#renderResponsible(item["responsible"])}
-								</div>
-								<div class="crm-dups-item-details">
-									${this.renderItemDetails(item)}
-								</div>
-									${this.#renderAddButton({
-										"type": item["entityTypeName"],
-										"id": item["entityId"],
-										"title": item["entityTitle"],
-										"isMy": item["isMy"]
-									})}
-							</div>
+							${this.renderItem(item)}
 						`)}</div>
 					</div>
 				`)}</div>

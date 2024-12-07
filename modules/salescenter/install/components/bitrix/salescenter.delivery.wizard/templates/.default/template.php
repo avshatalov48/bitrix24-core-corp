@@ -96,7 +96,7 @@ if (in_array($arResult['code'], $arResult['knownHandlerCodes']) && Bitrix\Main\I
 	</form>
 <?endif;?>
 
-<script type="text/javascript">
+<script>
 	BX.ready(function () {
 		BX.Salescenter.DeliveryInstallation.Wizard.init(<?=\Bitrix\Main\Web\Json::encode(
 			[

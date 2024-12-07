@@ -2,6 +2,7 @@
 
 return [
 	'extensions' => [
+		'ava-menu',
 		'apptheme',
 		"files/const",
 		"files/converter",

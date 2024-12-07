@@ -195,7 +195,7 @@ $APPLICATION->IncludeComponent(
 $this->EndViewTarget();
 
 ?>
-<script type="text/javascript">
+<script>
 	BX.namespace("BX.Crm");
 	BX.Crm.productListManager = BX.Crm.ProductListManagerClass.create({
 		splitterBtnId: "bx-crm-goods-drug-btn",

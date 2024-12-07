@@ -125,7 +125,7 @@ $APPLICATION->IncludeComponent(
 	array('HIDE_ICONS' => 'Y')
 );
 if(SITE_TEMPLATE_ID === 'bitrix24'):
-?><script type="text/javascript">
+?><script>
 	BX.ready(
 			function()
 			{
@@ -134,7 +134,7 @@ if(SITE_TEMPLATE_ID === 'bitrix24'):
 	);
 </script><?
 endif;
-?><script type="text/javascript">
+?><script>
 	BX.ready(
 			function()
 			{

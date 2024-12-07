@@ -120,7 +120,7 @@ $renderViews = static function(array $views): void {
 			<?php $renderViews($arResult['views']['right']); ?>
 		<?php endif; ?>
 	</div>
-	<script type="text/javascript">
+	<script>
 		BX.ready(function() {
 			// init navigation bar panel
 			(new BX.Crm.NavigationBar({

@@ -1,0 +1,45 @@
+.ui-page-slider-padding {
+	padding-bottom: 0 !important;
+}
+
+.ui-side-panel-content {
+	height: 100vh;
+}
+
+.ui-side-panel-wrap-workarea {
+	border-bottom-right-radius: 0;
+	border-bottom-left-radius: 0;
+}
+
+.dashboard-url-param-container .ui-form {
+	padding: 0;
+}
+
+.dashboard-url-param-container .ui-form-label {
+	padding: 0;
+	margin: 0;
+}
+
+.dashboard-url-param-container .biconnector-url-list-text {
+	padding: 14px 16px 11px;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+}
+
+.dashboard-url-param-container .ui-ctl-label-text {
+	font-size: var(--ui-font-size-sm);
+}
+
+.dashboard-url-param-container .biconnector-url-list-scope-name .ui-ctl-label-text {
+	font-size: var(--ui-font-size-3xs);
+	font-weight: var(--ui-font-weight-bold);
+}
+
+.dashboard-url-param-container .ui-form-row {
+	margin: 0;
+	align-items: flex-start;
+	border-bottom: 1px #f5f7f8 solid;
+}
+
+.biconnector-url-list-scope-name {
+	background: #eef2f4;
+}

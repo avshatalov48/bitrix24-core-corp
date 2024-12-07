@@ -84,7 +84,6 @@ class PaySystemMode extends Base
 				'alfabank',
 				'tinkoff_bank',
 				'',
-				'qiwi',
 				'embedded',
 				'installments',
 				'cash',

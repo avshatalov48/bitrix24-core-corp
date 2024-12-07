@@ -129,15 +129,18 @@ class VisibilityManager
 	{
 		$fields = self::loadUserFieldsAccessCodes($entityTypeID);
 
-		return self::prepareUserFieldsAccessCodes($fields);
+		return self::prepareFieldsAccessCodes($fields);
 	}
 
 	public static function getUserFieldsAccessCodesAndData(int $entityTypeID): array
 	{
 		$fields = self::loadUserFieldsAccessCodes($entityTypeID);
 		$usersInfo = self::getUsersInfo($fields);
+		$departmentInfo = self::getDepartmentInfo();
 
-		return self::prepareUserFieldsAccessCodes($fields, $usersInfo);
+		$accessCodesInfo = array_merge($usersInfo, $departmentInfo);
+
+		return self::prepareFieldsAccessCodes($fields, $accessCodesInfo);
 	}
 
 	private static function loadUserFieldsAccessCodes(int $entityTypeID): array
@@ -157,10 +160,10 @@ class VisibilityManager
 
 	/**
 	 * @param array $fields
-	 * @param array $usersInfo
+	 * @param ?array $accessCodesInfo
 	 * @return array
 	 */
-	private static function prepareUserFieldsAccessCodes(array $fields, ?array $usersInfo = null): array
+	private static function prepareFieldsAccessCodes(array $fields, ?array $accessCodesInfo = null): array
 	{
 		$results = [];
 
@@ -168,9 +171,9 @@ class VisibilityManager
 		{
 			$fieldName = $field['FIELD_NAME'];
 			$accessCode = $field['ACCESS_CODE'];
-			if (isset($usersInfo[$accessCode]) || is_null($usersInfo))
+			if (isset($accessCodesInfo[$accessCode]) || is_null($accessCodesInfo))
 			{
-				$results[$fieldName]['accessCodes'][$accessCode] = $usersInfo[$accessCode] ?? [];
+				$results[$fieldName]['accessCodes'][$accessCode] = $accessCodesInfo[$accessCode] ?? [];
 			}
 		}
 
@@ -202,6 +205,13 @@ class VisibilityManager
 			unset($user['email'], $user['checksum']);
 			return $user;
 		}, $users);
+	}
+
+	private static function getDepartmentInfo(): array
+	{
+		$structure = CSocNetLogDestination::GetStucture(array('LAZY_LOAD' => true));
+
+		return $structure['department'] ?? [];
 	}
 
 	/**
@@ -243,7 +253,7 @@ class VisibilityManager
 	{
 		$userId = 0;
 
-		$codesWithUserId = preg_grep('#^U\d+$#' . BX_UTF_PCRE_MODIFIER, $userAccessCodes);
+		$codesWithUserId = preg_grep('#^U\d+$#u', $userAccessCodes);
 		if (!empty($codesWithUserId))
 		{
 			$userId = (int)str_replace('U', '', array_shift($codesWithUserId));

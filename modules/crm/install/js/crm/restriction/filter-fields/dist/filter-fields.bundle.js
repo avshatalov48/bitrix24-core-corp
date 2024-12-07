@@ -1,4 +1,3 @@
-/* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
 (function (exports,main_core) {
@@ -10,6 +9,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    this.options = options;
 	    this.bindAddFilterItemEvent();
 	    this.bindGridSortEvent();
+	    this.bindCheckboxListOptionClick();
 	  }
 	  babelHelpers.createClass(FilterFieldsRestriction, [{
 	    key: "bindAddFilterItemEvent",
@@ -35,13 +35,6 @@ this.BX.Crm = this.BX.Crm || {};
 	              _this.callRestrictionCallback();
 	            }
 	          });
-	          filter.getEmitter().subscribe('onBeforeAddFilterItem', function (event) {
-	            var eventData = event.getData();
-	            if (eventData.hasOwnProperty('NAME') && _this.isRestrictedFilterField(eventData.NAME)) {
-	              event.preventDefault();
-	              _this.callRestrictionCallback();
-	            }
-	          });
 	        }
 	      }
 	    }
@@ -62,6 +55,27 @@ this.BX.Crm = this.BX.Crm || {};
 	          }
 	        });
 	      }
+	    }
+	  }, {
+	    key: "bindCheckboxListOptionClick",
+	    value: function bindCheckboxListOptionClick() {
+	      var _this3 = this;
+	      main_core.Event.EventEmitter.subscribe('ui:checkbox-list:check-option', function (event) {
+	        var _event$getData2 = event.getData(),
+	          id = _event$getData2.id,
+	          context = _event$getData2.context;
+	        if (!main_core.Type.isPlainObject(context) || !main_core.Type.isStringFilled(context.parentType)) {
+	          return;
+	        }
+	        if (context.parentType === 'filter' && _this3.isRestrictedFilterField(id)) {
+	          event.preventDefault();
+	          _this3.callRestrictionCallback();
+	        }
+	        if (context.parentType === 'grid' && _this3.isRestrictedGridField(id)) {
+	          event.preventDefault();
+	          _this3.callRestrictionCallback();
+	        }
+	      });
 	    }
 	  }, {
 	    key: "isRestrictedFilterField",

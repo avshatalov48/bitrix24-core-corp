@@ -76,7 +76,7 @@ $helper = $arResult['HELPER'];
 			<?endif?>
 		</div>
 
-		<script type="text/javascript">
+		<script>
 			BX.message({
 				'path_user': '<?= $arResult['PATHS']['USER'];?>',
 				'path_group': '<?= $arResult['PATHS']['GROUP']?>',

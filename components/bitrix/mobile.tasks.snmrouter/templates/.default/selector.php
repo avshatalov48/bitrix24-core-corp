@@ -9,7 +9,6 @@ $filter = array();
 if ($request->getPost("search"))
 {
 	$post = array("search" => $request->getPost("search"));
-	CUtil::decodeURIComponent($post);
 	$filter = array(
 		"%TITLE" => $post["search"],
 	);

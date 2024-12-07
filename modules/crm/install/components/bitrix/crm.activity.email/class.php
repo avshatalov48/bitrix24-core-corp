@@ -32,9 +32,9 @@ class CrmActivityEmailComponent extends CBitrixComponent
 		switch(mb_strtolower($action))
 		{
 			case 'view':
-				return $this->executeView();
+				$this->executeView();
 			default:
-				return $this->executeEdit();
+				$this->executeEdit();
 		}
 	}
 
@@ -170,7 +170,7 @@ class CrmActivityEmailComponent extends CBitrixComponent
 								foreach ($paySystems as $item)
 								{
 									$itemActionFile = isset($item['~PSA_ACTION_FILE']) ? $item['~PSA_ACTION_FILE'] : '';
-									if (preg_match('/quote(_\w+)*$/i'.BX_UTF_PCRE_MODIFIER, $itemActionFile))
+									if (preg_match('/quote(_\w+)*$/iu', $itemActionFile))
 									{
 										$pdfFileId = \CCrmQuote::savePdf($quote['ID'], $item['~ID']);
 										break;
@@ -661,6 +661,11 @@ class CrmActivityEmailComponent extends CBitrixComponent
 					{
 						$result[] = $address->getEmail();
 					}
+
+					if ($field === 'from')
+					{
+						$activityEmailMeta['senderName'] = $address->getName();
+					}
 				}
 
 				$activityEmailMeta[$field] = $result;
@@ -709,7 +714,7 @@ class CrmActivityEmailComponent extends CBitrixComponent
 			{
 				$activity['ITEM_IMAGE'] = $author['IMAGE_URL'];
 
-				$activity['ITEM_FROM_TITLE'] = $author['NAME_FORMATTED'] ?: $activityEmailMeta['__email'];
+				$activity['ITEM_FROM_TITLE'] = $activityEmailMeta['senderName'] ?? $author['NAME_FORMATTED'] ?? $activityEmailMeta['__email'];
 				$activity['ITEM_FROM_EMAIL'] = $activityEmailMeta['__email'] != $activity['ITEM_FROM_TITLE']
 					? $activityEmailMeta['__email'] : null;
 				$activity['ITEM_FROM_URL']   = null;

@@ -27,11 +27,19 @@
 	{
 		BX.bindDelegate(document.body, 'click', {tagName: 'A'}, function (e)
 		{
-			if(this.hostname == document.location.hostname)
+			if (this.hostname == document.location.hostname)
 			{
-				var func = BX.MobileTools.resolveOpenFunction(this.href);
+				let analyticsLabel = {};
+				try
+				{
+					analyticsLabel = JSON.parse(this.attributes['data-analytics'].value);
+				}
+				catch
+				{}
 
-				if(func)
+				var func = BX.MobileTools.resolveOpenFunction(this.href, { analyticsLabel });
+
+				if (func)
 				{
 					func();
 					return BX.PreventDefault(e);

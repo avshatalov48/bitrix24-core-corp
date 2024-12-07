@@ -1,0 +1,6 @@
+<?php
+$MESS["SIGN_CANCELLATION_ITEM_SIGNING_CANCEL_DIALOG_NO_BUTTON_TEXT"] = "No";
+$MESS["SIGN_CANCELLATION_ITEM_SIGNING_CANCEL_DIALOG_TEXT"] = "The signing will be stopped for the persons who are yet to sign the document. Do you want to cancel the signing?";
+$MESS["SIGN_CANCELLATION_ITEM_SIGNING_CANCEL_DIALOG_TITLE"] = "Cancel signing";
+$MESS["SIGN_CANCELLATION_ITEM_SIGNING_CANCEL_DIALOG_YES_BUTTON_TEXT"] = "Yes";
+$MESS["SIGN_CANCELLATION_ITEM_SIGNING_CANCEL_SUCCESS"] = "The signing has been stopped.";

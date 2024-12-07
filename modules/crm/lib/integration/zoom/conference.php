@@ -2,34 +2,34 @@
 
 namespace Bitrix\Crm\Integration\Zoom;
 
-use Bitrix\Main\Engine\UrlManager;
-use Bitrix\Main\Error,
-	Bitrix\Main\Loader,
-	Bitrix\Main\Type\DateTime,
-	Bitrix\Main\Localization\Loc,
-	Bitrix\Socialservices\ZoomMeetingTable,
-	Bitrix\Main\Result;
+use Bitrix\Crm\Activity\Provider;
+use Bitrix\Crm\Timeline\ZoomController;
+use Bitrix\Main\Error;
+use Bitrix\Main\Loader;
+use Bitrix\Main\Result;
+use Bitrix\SocialServices\Integration\Zoom;
+use Bitrix\Socialservices\ZoomMeetingTable;
+use CAllCrmActivity;
+use CCrmActivity;
 
 class Conference
 {
-	public const MEETING_SCHEDULED_TYPE = 2;
-	public const ACTIVITY_ENTITY_TYPE = 'activity';
-
 	/**
-	 * @param $userId
+	 * @param int $userId
 	 * @param array $data See possible values here https://marketplace.zoom.us/docs/api-reference/zoom-api/meetings/meetingcreate
+	 *
 	 * @return Result
-	 * @throws \Bitrix\Main\LoaderException
 	 */
-	public static function createZoom($userId, $data): Result
+	public static function createZoom(int $userId, $data): Result
 	{
 		$result = new Result();
-		if (!Loader::includeModule('socialservices'))
+
+		if (!self::isAvailable())
 		{
 			return $result->addError(new Error('Socialservices module is not installed'));
 		}
 
-		$createResult = \Bitrix\SocialServices\Integration\Zoom\Conference::create($userId, $data);
+		$createResult = Zoom\Conference::create($userId, $data);
 		if (!$createResult->isSuccess())
 		{
 			return $result->addErrors($createResult->getErrors());
@@ -46,59 +46,45 @@ class Conference
 		return $result->setData($conferenceData);
 	}
 
-	/**
-	 * @param int $conferenceId
-	 * @return Result
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\SystemException
-	 */
 	public static function updateJoinedStatus(int $conferenceId): Result
 	{
 		$result = new Result();
-		if (!Loader::includeModule('socialservices'))
+
+		if (!self::isAvailable())
 		{
 			return $result->addError(new Error('Module socialservices is not installed.'));
 		}
 
-		$updateResult = \Bitrix\SocialServices\Integration\Zoom\Conference::setJoin($conferenceId);
+		$updateResult = Zoom\Conference::setJoin($conferenceId);
 		if (!$updateResult->isSuccess())
 		{
 			return $result->addError(new Error('Error while update join status.'));
 		}
 		$conferenceData = $updateResult->getData();
 
-		$params['SETTINGS'] = [
-			'ZOOM_EVENT_TYPE' => \Bitrix\Crm\Activity\Provider\Zoom::TYPE_ZOOM_CONF_JOINED
-		];
-		$params['BINDINGS'] = \CAllCrmActivity::GetBindings($conferenceData['ENTITY_ID']);
+		$params['SETTINGS'] = ['ZOOM_EVENT_TYPE' => Provider\Zoom::TYPE_ZOOM_CONF_JOINED];
+		$params['BINDINGS'] = CAllCrmActivity::GetBindings($conferenceData['ENTITY_ID']);
 
-		\Bitrix\Crm\Timeline\ZoomController::getInstance()->onCreate(
-			$conferenceData['ENTITY_ID'],
-			$params
-		);
+		ZoomController::getInstance()->onCreate($conferenceData['ENTITY_ID'], $params);
 
 		return $result;
 	}
 
-	/**
-	 * @param int $conferenceId
-	 * @return Result
-	 * @throws \Bitrix\Main\LoaderException
-	 */
 	public static function updateEndStatus(int $conferenceId): Result
 	{
 		$result = new Result();
-		if (!Loader::includeModule('socialservices'))
+
+		if (!self::isAvailable())
 		{
 			return $result->addError(new Error('Module socialservices is not installed.'));
 		}
 
-		$updateResult = \Bitrix\SocialServices\Integration\Zoom\Conference::setEnd($conferenceId);
+		$updateResult = Zoom\Conference::setEnd($conferenceId);
 		if ($updateResult->isSuccess())
 		{
 			$conferenceData = $updateResult->getData();
-			\CCrmActivity::Complete($conferenceData['ENTITY_ID'], true);
+
+			CCrmActivity::Complete($conferenceData['ENTITY_ID']);
 		}
 		else
 		{
@@ -106,5 +92,31 @@ class Conference
 		}
 
 		return $result;
+	}
+
+	public static function getConferenceData(int $conferenceId): array
+	{
+		if (!self::isAvailable())
+		{
+			return [];
+		}
+
+		$conference = ZoomMeetingTable::getRowById($conferenceId);
+		if (is_array($conference))
+		{
+			return [
+				'CONF_START_TIME' => $conference['CONFERENCE_STARTED'],
+				'CONF_URL' => $conference['SHORT_LINK'] ?? '',
+				'DURATION' => $conference['DURATION'] ?? '',
+				'TOPIC' => $conference['TITLE'] ?? '',
+			];
+		}
+
+		return [];
+	}
+
+	private static function isAvailable(): bool
+	{
+		return Loader::includeModule('socialservices');
 	}
 }

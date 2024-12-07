@@ -60,7 +60,7 @@ $APPLICATION->IncludeComponent(
 						'Field' => $field['FieldName']
 					],
 					$dialog->getCurrentValue($field['FieldName']),
-					true,
+					$field['AllowSelection'] ?? true,
 					0
 				)
 				?>

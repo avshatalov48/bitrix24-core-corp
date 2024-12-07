@@ -1,6 +1,7 @@
 <?php
 return [
 	'extensions' => [
+		'alert',
 		'apptheme',
 		'loc',
 		'notify',
@@ -8,6 +9,7 @@ return [
 		'type',
 		'layout/ui/buttons-toolbar',
 		'toast',
+		'tokens',
 
 		'tasks:entry',
 		'tasks:enum',

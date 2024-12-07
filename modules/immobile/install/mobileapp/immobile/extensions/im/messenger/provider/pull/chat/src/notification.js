@@ -4,7 +4,7 @@
 jn.define('im/messenger/provider/pull/chat/notification', (require, exports, module) => {
 	const { Type } = require('type');
 	const { Loc } = require('loc');
-	const { BasePullHandler } = require('im/messenger/provider/pull/lib');
+	const { BasePullHandler } = require('im/messenger/provider/pull/base');
 	const { Counters } = require('im/messenger/lib/counters');
 	const { EventType } = require('im/messenger/const');
 	const { Notifier } = require('im/messenger/lib/notifier');

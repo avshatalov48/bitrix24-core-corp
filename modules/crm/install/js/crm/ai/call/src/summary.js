@@ -17,6 +17,11 @@ export class Summary extends Base
 		this.textboxTitle = Loc.getMessage('CRM_COPILOT_CALL_SUMMARY_TITLE');
 	}
 
+	getNotAccuratePhraseCode(): string
+	{
+		return 'CRM_COPILOT_CALL_SUMMARY_NOT_BE_ACCURATE';
+	}
+
 	prepareAiJobResult(response: Object): string
 	{
 		return response.data.aiJobResult.summary;

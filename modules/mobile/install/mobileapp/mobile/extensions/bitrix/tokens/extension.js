@@ -1,11 +1,12 @@
 /**
  * @module tokens
- * @return {Object}
  */
 jn.define('tokens', (require, exports, module) => {
 	const { Color } = require('tokens/src/color');
-	const { CornerTypes, Corner } = require('tokens/src/corner');
-	const { IndentTypes, Indent } = require('tokens/src/indent');
+	const { Corner } = require('tokens/src/corner');
+	const { Indent } = require('tokens/src/indent');
+	const { Component } = require('tokens/src/component');
+	const { Typography } = require('tokens/src/typography');
 
-	module.exports = { CornerTypes, Corner, IndentTypes, Indent, Color };
+	module.exports = { Corner, Indent, Color, Component, Typography };
 });

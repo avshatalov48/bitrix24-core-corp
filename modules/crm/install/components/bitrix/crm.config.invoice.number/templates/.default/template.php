@@ -69,7 +69,7 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 	</tr>
 </table>
 
-<script type="text/javascript">
+<script>
 	function showAccountNumberAdditionalFields(templateID)
 	{
 		for (var i = 1; i < 6; i++)

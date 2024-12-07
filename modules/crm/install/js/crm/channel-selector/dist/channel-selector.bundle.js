@@ -25,12 +25,14 @@ this.BX.Crm = this.BX.Crm || {};
 	const CHANNEL_TYPE_IM = 'IM';
 	const MAX_VISIBLE_ITEMS = 4;
 	const MARKET_LINK = 'category/crm_robot_sms/';
+	const LINK_IN_MESSAGE_PLACEHOLDER = '#LINK#';
 	const items = new Map();
 
 	/**
 	 * @memberof BX.Crm.ChannelSelector
 	 */
 	var _link = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("link");
+	var _isInsertLinkInMessage = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isInsertLinkInMessage");
 	var _loader = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("loader");
 	var _getLinkPromise = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getLinkPromise");
 	var _menu = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("menu");
@@ -51,6 +53,7 @@ this.BX.Crm = this.BX.Crm || {};
 	var _showGetLinkErrorNotification = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showGetLinkErrorNotification");
 	var _showNotice = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showNotice");
 	var _handleChannelClick = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleChannelClick");
+	var _getSmsText = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getSmsText");
 	var _openContactCenter = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("openContactCenter");
 	var _showLoader = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("showLoader");
 	var _hideLoader = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("hideLoader");
@@ -70,6 +73,9 @@ this.BX.Crm = this.BX.Crm || {};
 	    });
 	    Object.defineProperty(this, _openContactCenter, {
 	      value: _openContactCenter2
+	    });
+	    Object.defineProperty(this, _getSmsText, {
+	      value: _getSmsText2
 	    });
 	    Object.defineProperty(this, _handleChannelClick, {
 	      value: _handleChannelClick2
@@ -123,6 +129,11 @@ this.BX.Crm = this.BX.Crm || {};
 	      writable: true,
 	      value: void 0
 	    });
+	    this.isCombineMessageWithLink = true;
+	    Object.defineProperty(this, _isInsertLinkInMessage, {
+	      writable: true,
+	      value: false
+	    });
 	    Object.defineProperty(this, _loader, {
 	      writable: true,
 	      value: void 0
@@ -152,6 +163,8 @@ this.BX.Crm = this.BX.Crm || {};
 	    this.files = main_core.Type.isArray(parameters.files) ? parameters.files : [];
 	    this.activityEditorId = String(parameters.activityEditorId);
 	    this.smsUrl = String(parameters.smsUrl);
+	    this.isCombineMessageWithLink = main_core.Type.isBoolean(parameters.isCombineMessageWithLink) ? parameters.isCombineMessageWithLink : true;
+	    babelHelpers.classPrivateFieldLooseBase(this, _isInsertLinkInMessage)[_isInsertLinkInMessage] = main_core.Type.isBoolean(parameters.isInsertLinkInMessage) ? parameters.isInsertLinkInMessage : false;
 	    this.templateCode = (_parameters$templateC = parameters.templateCode) != null ? _parameters$templateC : null;
 	    this.setChannels(parameters.channels);
 	    this.communications = main_core.Type.isPlainObject(parameters.communications) ? parameters.communications : {};
@@ -331,12 +344,9 @@ this.BX.Crm = this.BX.Crm || {};
 	      const requestParams = {
 	        entityTypeId: this.entityTypeId,
 	        entityId: this.entityId,
-	        text: main_core.Loc.getMessage('CRM_CHANNEL_SELECTOR_MESSAGE_WITH_LINK', {
-	          '#MESSAGE#': channel.id === 'bitrix24' && this.fullBody ? this.fullBody : this.body,
-	          '#LINK#': link
-	        }),
+	        text: babelHelpers.classPrivateFieldLooseBase(this, _getSmsText)[_getSmsText](channel, link),
 	        providerId: channel.id,
-	        isProviderFixed: 'Y',
+	        isProviderFixed: 'N',
 	        canUseBitrix24Provider: 'Y'
 	      };
 	      if (channel.templateCode) {
@@ -613,6 +623,19 @@ this.BX.Crm = this.BX.Crm || {};
 	  if (channel.type === CHANNEL_TYPE_IM) {
 	    this.openMessenger(channel);
 	  }
+	}
+	function _getSmsText2(channel, link) {
+	  const message = channel.id === 'bitrix24' && this.fullBody ? this.fullBody : this.body;
+	  if (this.isCombineMessageWithLink) {
+	    return main_core.Loc.getMessage('CRM_CHANNEL_SELECTOR_MESSAGE_WITH_LINK', {
+	      '#MESSAGE#': message,
+	      '#LINK#': link
+	    });
+	  }
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _isInsertLinkInMessage)[_isInsertLinkInMessage]) {
+	    return message.replace(LINK_IN_MESSAGE_PLACEHOLDER, link);
+	  }
+	  return message;
 	}
 	function _openContactCenter2() {
 	  crm_router.Router.openSlider(this.contactCenterUrl).then(() => {

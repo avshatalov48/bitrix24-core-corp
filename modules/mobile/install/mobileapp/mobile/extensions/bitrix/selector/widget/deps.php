@@ -2,9 +2,13 @@
 
 return [
 	'extensions' => [
-		'apptheme',
+		'loc',
+		'tokens',
+		'feature',
+		'selector/providers/common',
+		'toast',
 		'utils/array',
 		'utils/object',
-		'selector/providers/common',
+		'type',
 	],
 ];

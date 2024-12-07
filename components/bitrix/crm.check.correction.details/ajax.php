@@ -129,12 +129,6 @@ elseif ($action === 'SAVE')
 		];
 	}
 
-	$fields = Main\Text\Encoding::convertEncoding(
-		$fields,
-		'utf-8',
-		LANG_CHARSET
-	);
-
 	$result = Cashbox\CheckManager::addCorrection($request->get('TYPE'), $request->get('CASHBOX_ID'), $fields);
 	if (!$result->isSuccess())
 	{

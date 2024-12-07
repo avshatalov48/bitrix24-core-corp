@@ -5,6 +5,8 @@ use Bitrix\Main\Application;
 use Bitrix\Tasks\Comments\Internals\Comment;
 use Bitrix\Tasks\Comments\Viewed\Enum;
 use Bitrix\Tasks\Comments\Viewed\Group;
+use Bitrix\Tasks\Flow\FlowFeature;
+use Bitrix\Tasks\Flow\Internal\FlowTaskTable;
 use Bitrix\Tasks\Internals\Task\Status;
 use Bitrix\Tasks\Internals\Task\UserOptionTable;
 use Bitrix\Tasks\Internals\UserOption;
@@ -94,16 +96,24 @@ class UserCollector
 		$expiredTime = Deadline::getExpiredTime()->format('Y-m-d H:i:s');
 		$statuses = implode(',', [Status::PENDING, Status::IN_PROGRESS]);
 
+		$sqlFlowSelect = FlowFeature::isOn() ? ' FT.FLOW_ID,' : '';
+		$sqlFlowJoin = FlowFeature::isOn()
+			? ' LEFT JOIN '. FlowTaskTable::getTableName() . ' FT ON FT.TASK_ID = T.ID '
+			: ''
+		;
+
 		$sql = "
 			SELECT
 				T.ID,
 				T.GROUP_ID,
 				TM.TYPE,
+				{$sqlFlowSelect}
 				'1' as " . $helper->quote('COUNT') . "
 			FROM b_tasks T
 			INNER JOIN ". MemberTable::getTableName() ." TM 
 				ON TM.TASK_ID = T.ID 
 				AND TM.USER_ID = {$this->userId}
+			{$sqlFlowJoin}
 			WHERE
 				{$taskFilter}
 				AND T.DEADLINE < '{$expiredTime}'
@@ -145,7 +155,8 @@ class UserCollector
 				'TYPE' 		=> in_array($row['ID'], $mutedTasks)
 					? CounterDictionary::MAP_MUTED_EXPIRED[$type]
 					: CounterDictionary::MAP_EXPIRED[$type],
-				'VALUE' 	=> (int) $row['COUNT']
+				'VALUE' 	=> (int) $row['COUNT'],
+				'FLOW_ID'	=> $row['FLOW_ID'] ?? null,
 			];
 		}
 
@@ -154,12 +165,15 @@ class UserCollector
 
 	private function getJoinForRecountComments(): array
 	{
+		$sqlFlowJoin = FlowFeature::isOn() ? 'LEFT JOIN b_tasks_flow_task FT ON FT.TASK_ID = T.ID' : '';
+
 		return [
 			"
 				LEFT JOIN b_tasks_viewed TV ON TV.TASK_ID = T.ID AND TV.USER_ID = {$this->userId}
 				INNER JOIN b_tasks_member TM ON TM.TASK_ID = T.ID AND TM.USER_ID = {$this->userId}
 				INNER JOIN b_forum_message FM ON FM.TOPIC_ID = T.FORUM_TOPIC_ID
 				LEFT JOIN b_uts_forum_message BUF ON BUF.VALUE_ID = FM.ID
+				$sqlFlowJoin
 			",
 			Counter::getJoinForRecountCommentsByType(Enum::USER_NAME, ['userId' => $this->userId])
 		];
@@ -214,18 +228,21 @@ class UserCollector
 
 		$join = implode(' ', $statement['join']);
 		$filter = implode(' AND ', $statement['filter']);
+		$sqlSelectFlow = FlowFeature::isOn() ? 'FT.FLOW_ID,' : '';
+		$sqlGroupFlow = FlowFeature::isOn() ? 'FT.FLOW_ID,' : '';
 
 		$sql = "
 			SELECT
 			    T.ID,
 				COUNT(DISTINCT FM.ID) as COUNT,
 				T.GROUP_ID,
+				{$sqlSelectFlow}
 			   	TM.TYPE
 			FROM b_tasks T
 				{$join}
 			WHERE
 				{$filter}
-			GROUP BY T.ID, TM.TYPE
+			GROUP BY T.ID, {$sqlGroupFlow} TM.TYPE
 		";
 
 		$res = Application::getConnection()->query($sql);
@@ -245,7 +262,8 @@ class UserCollector
 				'TYPE' 		=> in_array($row['ID'], $mutedTasks)
 					? CounterDictionary::MAP_MUTED_COMMENTS[$type]
 					: CounterDictionary::MAP_COMMENTS[$type],
-				'VALUE' 	=> (int) $row['COUNT']
+				'VALUE' 	=> (int) $row['COUNT'],
+				'FLOW_ID'	=> $row['FLOW_ID'] ?? null,
 			];
 		}
 

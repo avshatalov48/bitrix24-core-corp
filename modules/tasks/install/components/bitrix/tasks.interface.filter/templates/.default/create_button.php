@@ -53,7 +53,7 @@ $createButtonClass .= ($arResult['IS_SCRUM_PROJECT'] ? ' ui-btn-light-border ui-
 	<span id="tasks-popupMenuAdd" class="ui-btn-extra"></span>
 </div>
 
-<script type="text/javascript">
+<script>
 	(function() {
 		function getMenuItems()
 		{

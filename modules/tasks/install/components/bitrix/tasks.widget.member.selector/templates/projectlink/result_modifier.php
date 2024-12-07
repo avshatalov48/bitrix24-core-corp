@@ -78,4 +78,6 @@ $arResult['JS_DATA'] = [
 	'entityRoute' => $arParams['ENTITY_ROUTE'],
 	'groupId' => (empty($group) ? 0 : $group['ID']),
 	'context' => $arParams['CONTEXT'],
+	'isProjectLimitExceeded' => $arResult['isProjectLimitExceeded'],
+	'projectFeatureId' => $arResult['projectFeatureId'],
 ];

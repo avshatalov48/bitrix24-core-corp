@@ -36,6 +36,7 @@ jn.define('crm/terminal/payment-pay/components/payment-button/factory', (require
 			{
 				if (paymentSystem.type === Types.sbp)
 				{
+					props.testId = 'TerminalPaymentPaySBPButton';
 					props.text = Loc.getMessage('M_CRM_TL_PAYMENT_PAY_VIA_QR_FAST_MONEY_TRANSFER');
 					props.iconUri = PaymentButtonFactory.getImagePath('sbp');
 					props.styles = {
@@ -60,6 +61,7 @@ jn.define('crm/terminal/payment-pay/components/payment-button/factory', (require
 
 				if (paymentSystem.type === Types.sberbankQr)
 				{
+					props.testId = 'TerminalPaymentPaySberbankButton';
 					props.text = Loc.getMessage('M_CRM_TL_PAYMENT_PAY_VIA_QR_SBERBANK');
 					props.iconUri = PaymentButtonFactory.getImagePath('sber-qr');
 					props.styles = {

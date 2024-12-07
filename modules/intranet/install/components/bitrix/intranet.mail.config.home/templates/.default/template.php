@@ -760,7 +760,7 @@ if ($showDomainBlock)
 									</div>
 									<input type="submit" style="position: absolute; visibility: hidden; ">
 								</form>
-								<script type="text/javascript">
+								<script>
 
 									BX.bind(BX('delegate-domain-block'), 'click', function() {
 										BX('select-delegate').checked = true;
@@ -1820,7 +1820,7 @@ if ($showDomainBlock)
 	<? endif ?>
 </div>
 
-<script type="text/javascript">
+<script>
 
 	function toggleSubordinateBlock(id, show)
 	{
@@ -2227,7 +2227,7 @@ if ($showDomainBlock)
 
 </script>
 
-<script type="text/javascript">
+<script>
 
 	var imapDirsPopup = new BX.PopupWindow('imap_dirs_popup', null, {
 		titleBar: '<?=CUtil::jsEscape(getMessage('INTR_MAIL_IMAP_DIRS_TITLE')) ?>',

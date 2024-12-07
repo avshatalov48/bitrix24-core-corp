@@ -106,7 +106,7 @@ foreach ($filter as $filterKey => $filterValues)
 	}
 }
 ?>
-<script type="text/javascript">
+<script>
 BX.ready(function(){
 	if (!!<?=$controller?> && ! <?=$controller?>.loaded)
 	{

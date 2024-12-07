@@ -128,10 +128,10 @@ class TasksWidgetCheckListNewComponent extends TasksBaseComponent
 
 	public function getSignature()
 	{
-		$seedPhrase = ToLower($this->getName().$this->getTemplateName());
+		$seedPhrase = mb_strtolower($this->getName().$this->getTemplateName());
 		if ($this->arParams['SIGNATURE_SEED'] ?? null)
 		{
-			$seedPhrase = trim(ToLower($this->arParams['SIGNATURE_SEED']));
+			$seedPhrase = trim(mb_strtolower($this->arParams['SIGNATURE_SEED']));
 		}
 		return preg_replace('#[^a-zA-Z0-9]#', '_', $seedPhrase).'_'.$this->getInPageNumber();
 	}

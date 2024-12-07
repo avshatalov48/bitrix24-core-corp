@@ -8,10 +8,11 @@
 
 namespace Bitrix\Tasks\Util\UserField;
 
+use Bitrix\Bitrix24\Feature;
+use Bitrix\Main\Loader;
 use Bitrix\Main\UserFieldTable;
 use Bitrix\Tasks\Integration\Bitrix24;
 use Bitrix\Tasks\Util;
-use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\TaskLimit;
 use Bitrix\Tasks\Util\UserField;
 
 final class Restriction
@@ -19,21 +20,22 @@ final class Restriction
 	public static function canUse($entityCode, $userId = 0, $forceUpdate = false)
 	{
 		// you can read\write field values, but editing scheme is not guaranteed
-		if (
-			static::hadUserFieldsBefore($entityCode, $forceUpdate)
-			|| Bitrix24\Task::checkFeatureEnabled(Bitrix24\FeatureDictionary::TASKS_USER_FIELD)
-		)
+		if (static::hadUserFieldsBefore($entityCode, $forceUpdate))
 		{
 			return true;
 		}
 
-		return !TaskLimit::isLimitExceeded((TaskLimit::isLimitExist() ? 0 : Util\Restriction\Bitrix24Restriction\Limit::DEFAULT_LIMIT));
+		return Bitrix24\Task::checkFeatureEnabled(Bitrix24\FeatureDictionary::TASK_CUSTOM_FIELDS);
 	}
 
 	public static function canManage($entityCode, $userId = 0)
 	{
-		// for any entity, ask bitrix24
-		return Bitrix24\Task::checkFeatureEnabled(Bitrix24\FeatureDictionary::TASKS_USER_FIELD);
+		if (!Loader::includeModule('bitrix24'))
+		{
+			return true;
+		}
+		
+		return Feature::isFeatureEnabled(Bitrix24\FeatureDictionary::TASK_CUSTOM_FIELDS);
 	}
 
 	public static function canCreateMandatory($entityCode, $userId = 0)
@@ -64,7 +66,7 @@ final class Restriction
 
 	private static function hadUserFieldsBefore($entityCode, $forceUpdate)
 	{
-		$optionName = 'have_uf_' . ToLower($entityCode);
+		$optionName = 'have_uf_' . mb_strtolower($entityCode);
 		$optionValue = Util::getOption($optionName);
 
 		if ($optionValue === '' || $forceUpdate) // not checked before, check then
@@ -79,7 +81,7 @@ final class Restriction
 				];
 				unset($possibleEntityCodes[$entityCode]);
 
-				$anotherOptionName = 'have_uf_' . ToLower(key($possibleEntityCodes));
+				$anotherOptionName = 'have_uf_' . mb_strtolower(key($possibleEntityCodes));
 				$anotherUserFieldExists = static::checkUserFieldsExists(key($possibleEntityCodes));
 
 				Util::setOption($anotherOptionName, ($anotherUserFieldExists? '1' : '0'));

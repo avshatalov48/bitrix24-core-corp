@@ -230,7 +230,7 @@ $sortBpLog = false;
 </div>
 <? } ?>
 
-<script type="text/javascript">
+<script>
 	BX(function () {
 		const location = "<?= $arResult['PATH_TO_FILE_VIEW'] ?>";
 		BX.Disk['FileViewClass_<?= $component->getComponentId() ?>'] = new BX.Disk.FileViewClass({

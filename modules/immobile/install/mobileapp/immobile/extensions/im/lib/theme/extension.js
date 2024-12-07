@@ -2,10 +2,94 @@
  * @module im/lib/theme
  */
 jn.define('im/lib/theme', (require, exports, module) => {
-	const appTheme = require('native/apptheme')?.AppTheme;
+	const { Feature } = require('feature');
+	const AppTheme = require('apptheme');
+
+	let tokens = null;
+	try
+	{
+		tokens = require('tokens');
+	}
+	catch (e)
+	{
+		console.error(e);
+	}
+
+	let tokenCollection = null;
 
 	class Theme
 	{
+		/**
+		 * @return {{[p: string]: string}}
+		 */
+		static get colors()
+		{
+			if (
+				Theme.isDesignSystemSupported
+				&& tokens?.Color
+			)
+			{
+				tokenCollection ??= Theme.createNewDesignTokenCollection();
+
+				return tokenCollection;
+			}
+
+			return AppTheme.colors;
+		}
+
+		/**
+		 * @return {typeof Corner}
+		 */
+		static get corner()
+		{
+			return tokens?.Corner;
+		}
+
+		/**
+		 * @return {typeof Color}
+		 */
+		static get color()
+		{
+			if (
+				Theme.isDesignSystemSupported
+				&& tokens?.Color
+			)
+			{
+				return tokens?.Color;
+			}
+
+			return Theme.#createAirColorFromOldTokens();
+		}
+
+		/**
+		 * @return {{name: string, toHex: string, value: string, withPressed: string}}
+		 */
+		static #createAirColorFromOldTokens()
+		{
+			const result = {};
+			Object.keys(AppTheme.colors).forEach((token) => {
+				const hex = AppTheme.colors[token];
+				result[token] = { name: token, toHex: hex, value: hex, withPressed: hex };
+			});
+
+			return result;
+		}
+
+		static createNewDesignTokenCollection()
+		{
+			const result = {};
+			Object.keys(tokens.Color).forEach((token) => {
+				result[token] = tokens.Color[token].getValue();
+			});
+
+			return result;
+		}
+
+		static get isDesignSystemSupported()
+		{
+			return Feature.isAirStyleSupported();
+		}
+
 		/**
 		 * @return {Theme}
 		 */
@@ -19,44 +103,9 @@ jn.define('im/lib/theme', (require, exports, module) => {
 			return this.instance;
 		}
 
-		constructor()
-		{
-			this.appTheme = appTheme;
-		}
-
-		get isSupported()
-		{
-			return !!this.appTheme;
-		}
-
 		getId()
 		{
-			if (!this.isSupported)
-			{
-				return 'light';
-			}
-
-			return appTheme.getId();
-		}
-
-		getColors(id)
-		{
-			if (!this.isSupported)
-			{
-				return [];
-			}
-
-			return appTheme.getColors(id);
-		}
-
-		setId(id)
-		{
-			if (!this.isSupported)
-			{
-				return false;
-			}
-
-			return appTheme.setId(id);
+			return AppTheme.id;
 		}
 	}
 

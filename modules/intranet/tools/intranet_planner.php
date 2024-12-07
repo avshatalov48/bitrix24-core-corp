@@ -6,7 +6,6 @@ require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_befo
 if (check_bitrix_sessid() && $USER->IsAuthorized())
 {
 	CModule::IncludeModule('intranet');
-	CUtil::JSPostUnescape();
 
 	$action = isset($_REQUEST['action']) ? $_REQUEST['action'] : 'update';
 	$site_id = $_REQUEST['site_id'];

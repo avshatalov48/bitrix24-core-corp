@@ -4,7 +4,7 @@ use Bitrix\Main\Localization\Loc;
 
 require($_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php');
 Loc::loadLanguageFile($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/intranet/public_bitrix24/configs/editor/index.php');
-$APPLICATION->SetTitle(Loc::getMessage('TITLE'));
+$APPLICATION->SetTitle(Loc::getMessage('TITLE_MSGVER_1'));
 
 $APPLICATION->IncludeComponent(
 	'bitrix:ui.sidepanel.wrapper',

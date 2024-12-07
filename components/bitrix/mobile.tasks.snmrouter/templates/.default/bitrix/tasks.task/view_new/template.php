@@ -294,7 +294,7 @@ $APPLICATION->IncludeComponent(
 					array(
 						"type" => ($can["EDIT"] ? "select-user" : "user"),
 						"id" => "data[SE_RESPONSIBLE][0][ID]",
-						"name" => GetMessage("MB_TASKS_TASK_SETTINGS_RESPONSIBLE"),
+						"name" => GetMessage("MB_TASKS_TASK_SETTINGS_RESPONSIBLE_MSGVER_1"),
 						"item" => $task["SE_RESPONSIBLE"],
 						"value" => $task["RESPONSIBLE_ID"],
 						"canDrop" => false
@@ -497,7 +497,7 @@ $emotion = (!empty($arResult["RATING"][$arResult["Post"]["ID"]]["USER_REACTION"]
 	?></div><?
 ?></div>
 <div class="task-comments-block" id="task-comments-block"><?=$task_comments_html?></div>
-<script type="text/javascript">
+<script>
 BX.message({
 	PAGE_TITLE : '<?=GetMessageJS("MB_TASKS_GENERAL_TITLE")?>',
 	MB_TASKS_TASK_PLACEHOLDER : '<span class="placeholder"><?=GetMessageJS("MB_TASKS_TASK_PLACEHOLDER")?></span>',
@@ -661,7 +661,10 @@ BX.ready(function(){
 var commentsCount = <?=(int)$task['COMMENTS_COUNT']?>;
 
 if(typeof BX.MSL != 'undefined')
+{
 	BX.MSL.viewImageBind('tasks-detail-card-container-over', { tag: 'IMG', attr: 'data-bx-image' });
+}
+
 BX.addCustomEvent("onCheckFileBlockVisibility", function(node){
 	if (BX("block_file_empty").parentNode != node.parentNode)
 	{

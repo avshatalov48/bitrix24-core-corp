@@ -13,6 +13,8 @@ class ItemSelector extends ContentBlock
 	protected ?array $valuesList = null;
 	protected ?string $emptyState = null;
 	protected ?string $selectorTitle = null;
+	protected bool $compactMode = false;
+	protected ?string $icon = null;
 
 	public function getRendererName(): string
 	{
@@ -67,6 +69,25 @@ class ItemSelector extends ContentBlock
 		return $this;
 	}
 
+	public function setCompactMode(bool $value = true): self
+	{
+		$this->compactMode = $value;
+
+		return $this;
+	}
+
+	public function getCompactMode(): bool
+	{
+		return $this->compactMode;
+	}
+
+	public function setIcon(?string $icon): self
+	{
+		$this->icon = $icon;
+
+		return $this;
+	}
+
 	protected function getProperties(): array
 	{
 		return [
@@ -75,6 +96,8 @@ class ItemSelector extends ContentBlock
 			'valuesList' => $this->getValuesList(),
 			'value' => $this->getValue(),
 			'saveAction' => $this->getAction(),
+			'compactMode' => $this->getCompactMode(),
+			'icon' => $this->icon,
 		];
 	}
 }

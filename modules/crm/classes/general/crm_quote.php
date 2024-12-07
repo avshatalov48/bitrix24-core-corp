@@ -1,5 +1,6 @@
 <?php
 IncludeModuleLangFile(__FILE__);
+//@codingStandardsIgnoreFile
 
 use Bitrix\Crm;
 use Bitrix\Crm\Binding\QuoteContactTable;
@@ -409,23 +410,10 @@ class CAllCrmQuote
 
 			$result = $arFields['ID'] = $ID;
 
-			if (isset($GLOBALS["USER"]) && isset($arFields['COMPANY_ID']) && intval($arFields['COMPANY_ID']) > 0)
-			{
-				CUserOptions::SetOption('crm', 'crm_company_search', array('last_selected' => $arFields['COMPANY_ID']));
-			}
-
 			//region Save contacts
 			if(!empty($contactBindings))
 			{
 				QuoteContactTable::bindContacts($ID, $contactBindings);
-				if (isset($GLOBALS['USER']))
-				{
-					CUserOptions::SetOption(
-						'crm',
-						'crm_contact_search',
-						array('last_selected' => $contactIDs[count($contactIDs) - 1])
-					);
-				}
 			}
 			//endregion
 
@@ -767,9 +755,6 @@ class CAllCrmQuote
 				}
 			}
 
-			if (isset($arFields['ASSIGNED_BY_ID']) && $arRow['ASSIGNED_BY_ID'] != $arFields['ASSIGNED_BY_ID'])
-				CCrmEvent::SetAssignedByElement($arFields['ASSIGNED_BY_ID'], 'QUOTE', $ID);
-
 			//region Preparation of contacts
 			$originalContactBindings = QuoteContactTable::getQuoteBindings($ID);
 			$originalContactIDs = \Bitrix\Crm\Binding\EntityBinding::prepareEntityIDs(CCrmOwnerType::Contact, $originalContactBindings);
@@ -948,7 +933,7 @@ class CAllCrmQuote
 				}
 				else
 				{
-					$DB->Query($sql, false, 'File: '.__FILE__.'<br>Line: '.__LINE__);
+					$DB->Query($sql);
 				}
 				$bResult = true;
 			}
@@ -1116,15 +1101,14 @@ class CAllCrmQuote
 				return false;
 
 			if(!$DB->Query(
-				'DELETE FROM '.CCrmQuote::ELEMENT_TABLE_NAME.' WHERE QUOTE_ID = '.$ID,
-				false, 'File: '.__FILE__.'<br/>Line: '.__LINE__))
+				'DELETE FROM '.CCrmQuote::ELEMENT_TABLE_NAME.' WHERE QUOTE_ID = '.$ID))
 			{
 				$APPLICATION->throwException(GetMessage('CRM_QUOTE_ERR_DELETE_STORAGE_ELEMENTS_QUERY_MSGVER_1'));
 				return false;
 			}
 		}
 
-		$dbRes = $DB->Query("DELETE FROM b_crm_quote WHERE ID = {$ID}{$sWherePerm}", false, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
+		$dbRes = $DB->Query("DELETE FROM b_crm_quote WHERE ID = {$ID}{$sWherePerm}");
 		if (is_object($dbRes) && $dbRes->AffectedRowsCount() > 0)
 		{
 			Bitrix\Crm\Kanban\SortTable::clearEntity($ID, \CCrmOwnerType::QuoteName);
@@ -2264,9 +2248,7 @@ class CAllCrmQuote
 		$elementID = (int)$elementID;
 
 		$dbResult = $DB->Query(
-			'SELECT 1 FROM '.CCrmQuote::ELEMENT_TABLE_NAME.' WHERE QUOTE_ID = '.$quoteID.' AND STORAGE_TYPE_ID = '.$storageTypeID.' AND ELEMENT_ID = '.$elementID,
-			false,
-			'File: '.__FILE__.'<br/>Line: '.__LINE__
+			'SELECT 1 FROM '.CCrmQuote::ELEMENT_TABLE_NAME.' WHERE QUOTE_ID = '.$quoteID.' AND STORAGE_TYPE_ID = '.$storageTypeID.' AND ELEMENT_ID = '.$elementID
 		);
 		return is_array($dbResult->Fetch());
 	}
@@ -2510,69 +2492,14 @@ class CAllCrmQuote
 		return $queryBuilder->buildCompatible();
 	}
 
+	/**
+	 * @deprecated This method is useless. Remove its calls.
+	 *
+	 * @return true
+	 */
 	public static function LocalComponentCausedUpdater()
 	{
-		global $stackCacheManager;
-
-		$bResult = true;
-		$errMsg = array();
-		$bError = false;
-
-		// at first, check last update version
-		if (COption::GetOptionString('crm', '~CRM_QUOTE_14_1_11', 'N') === 'Y')
-			return $bResult;
-
-		try
-		{
-			// Copy perms from deals to quotes
-			$CCrmRole = new CCrmRole();
-			$dbRoles = $CCrmRole->GetList();
-
-			while($arRole = $dbRoles->Fetch())
-			{
-				$arPerms = $CCrmRole->GetRolePerms($arRole['ID']);
-
-				if(!isset($arPerms['QUOTE']) && is_array($arPerms['DEAL'] ?? null))
-				{
-					foreach ($arPerms['DEAL'] as $key => $value)
-					{
-						if(isset($value['-']))
-							$arPerms['QUOTE'][$key]['-'] = $value['-'];
-						else
-							$arPerms['QUOTE'][$key]['-'] = null;
-					}
-				}
-
-				$arFields = array('RELATION' => $arPerms);
-				$CCrmRole->Update($arRole['ID'], $arFields);
-			}
-
-			// Create default quote status list (if not exists)
-			$arStatus = CCrmStatus::GetStatus('QUOTE_STATUS');
-			if (empty($arStatus))
-			{
-				CCrmStatus::InstallDefault('QUOTE_STATUS');
-			}
-			unset($arStatus);
-		}
-		catch (Exception $e)
-		{
-			$errMsg[] = $e->getMessage();
-			$bError = true;
-		}
-
-		if (!$bError)
-		{
-			COption::SetOptionString('crm', '~CRM_QUOTE_14_1_11', 'Y');
-		}
-		else
-		{
-			$errString = implode('<br>', $errMsg);
-			ShowError($errString);
-			$bResult = false;
-		}
-
-		return $bResult;
+		return true;
 	}
 
 	public static function LoadProductRows($ID)
@@ -2620,7 +2547,7 @@ class CAllCrmQuote
 		global $DB;
 		$result = array();
 		$table = CCrmQuote::ELEMENT_TABLE_NAME;
-		$dbResult = $DB->Query("SELECT ELEMENT_ID FROM {$table} WHERE QUOTE_ID = {$ID}", false, 'File: '.__FILE__.'<br/>Line: '.__LINE__);
+		$dbResult = $DB->Query("SELECT ELEMENT_ID FROM {$table} WHERE QUOTE_ID = {$ID}");
 		while($arResult = $dbResult->Fetch())
 		{
 			$elementID = isset($arResult['ELEMENT_ID']) ? (int)$arResult['ELEMENT_ID'] : 0;
@@ -2752,18 +2679,23 @@ class CAllCrmQuote
 
 	public static function GetSemanticID($statusID)
 	{
-		if($statusID === 'APPROVED')
+		if (is_null($statusID))
 		{
-			return Bitrix\Crm\PhaseSemantics::SUCCESS;
+			return (self::GetStatusSort($statusID) > self::GetFinalStatusSort())
+				? Bitrix\Crm\PhaseSemantics::FAILURE
+				: Bitrix\Crm\PhaseSemantics::PROCESS
+			;
 		}
 
-		if($statusID === 'DECLAINED')
+		if ($statusID === '')
 		{
-			return Bitrix\Crm\PhaseSemantics::FAILURE;
+			return Bitrix\Crm\PhaseSemantics::UNDEFINED;
 		}
 
-		return (self::GetStatusSort($statusID) > self::GetFinalStatusSort())
-			? Bitrix\Crm\PhaseSemantics::FAILURE : Bitrix\Crm\PhaseSemantics::PROCESS;
+		return Crm\Service\Container::getInstance()
+			->getFactory(\CCrmOwnerType::Quote)
+			?->getStageSemantics($statusID)
+		;
 	}
 
 	public static function GetStatuses()
@@ -3447,7 +3379,7 @@ class CAllCrmQuote
 					foreach($paySystems as &$paySystem)
 					{
 						$file = isset($paySystem['~PSA_ACTION_FILE']) ? $paySystem['~PSA_ACTION_FILE'] : '';
-						if(preg_match('/quote(_\w+)*$/i'.BX_UTF_PCRE_MODIFIER, $file))
+						if(preg_match('/quote(_\w+)*$/iu', $file))
 						{
 							$result = true;
 							break;
@@ -3477,9 +3409,7 @@ class CAllCrmQuote
 		$elementID = (int)$elementID;
 
 		$dbResult = $DB->Query(
-			'SELECT QUOTE_ID FROM '.CCrmQuote::ELEMENT_TABLE_NAME.' WHERE STORAGE_TYPE_ID = '.$storageTypeID.' AND ELEMENT_ID = '.$elementID,
-			false,
-			'File: '.__FILE__.'<br/>Line: '.__LINE__
+			'SELECT QUOTE_ID FROM '.CCrmQuote::ELEMENT_TABLE_NAME.' WHERE STORAGE_TYPE_ID = '.$storageTypeID.' AND ELEMENT_ID = '.$elementID
 		);
 
 		while($arResult = $dbResult->Fetch())
@@ -4315,25 +4245,19 @@ class CAllCrmQuote
 		if($ownerTypeID === CCrmOwnerType::Lead)
 		{
 			$DB->Query(
-				"UPDATE {$tableName} SET LEAD_ID = {$newID} WHERE LEAD_ID = {$oldID}",
-				false,
-				'File: '.__FILE__.'<br>Line: '.__LINE__
+				"UPDATE {$tableName} SET LEAD_ID = {$newID} WHERE LEAD_ID = {$oldID}"
 			);
 		}
 		elseif($ownerTypeID === CCrmOwnerType::Contact)
 		{
 			$DB->Query(
-				"UPDATE {$tableName} SET CONTACT_ID = {$newID} WHERE CONTACT_ID = {$oldID}",
-				false,
-				'File: '.__FILE__.'<br>Line: '.__LINE__
+				"UPDATE {$tableName} SET CONTACT_ID = {$newID} WHERE CONTACT_ID = {$oldID}"
 			);
 		}
 		elseif($ownerTypeID === CCrmOwnerType::Company)
 		{
 			$DB->Query(
-				"UPDATE {$tableName} SET COMPANY_ID = {$newID} WHERE COMPANY_ID = {$oldID}",
-				false,
-				'File: '.__FILE__.'<br>Line: '.__LINE__
+				"UPDATE {$tableName} SET COMPANY_ID = {$newID} WHERE COMPANY_ID = {$oldID}"
 			);
 		}
 	}
@@ -4435,7 +4359,7 @@ class CAllCrmQuote
 				}
 				unset($arFilter[$k]);
 			}
-			elseif (preg_match('/(.*)_from$/i'.BX_UTF_PCRE_MODIFIER, $k, $arMatch))
+			elseif (preg_match('/(.*)_from$/iu', $k, $arMatch))
 			{
 				if($v <> '')
 				{
@@ -4443,11 +4367,11 @@ class CAllCrmQuote
 				}
 				unset($arFilter[$k]);
 			}
-			elseif (preg_match('/(.*)_to$/i'.BX_UTF_PCRE_MODIFIER, $k, $arMatch))
+			elseif (preg_match('/(.*)_to$/iu', $k, $arMatch))
 			{
 				if($v <> '')
 				{
-					if (($arMatch[1] == 'DATE_CREATE' || $arMatch[1] == 'DATE_MODIFY') && !preg_match('/\d{1,2}:\d{1,2}(:\d{1,2})?$/'.BX_UTF_PCRE_MODIFIER, $v))
+					if (($arMatch[1] == 'DATE_CREATE' || $arMatch[1] == 'DATE_MODIFY') && !preg_match('/\d{1,2}:\d{1,2}(:\d{1,2})?$/u', $v))
 					{
 						$v = CCrmDateTimeHelper::SetMaxDayTime($v);
 					}
@@ -4654,5 +4578,10 @@ class CCrmQuoteStorageType
 	{
 		$typeID = intval($typeID);
 		return $typeID > self::Undefined && $typeID <= self::Last;
+	}
+
+	public function getLastError(): string
+	{
+		return (string)$this->LAST_ERROR;
 	}
 }

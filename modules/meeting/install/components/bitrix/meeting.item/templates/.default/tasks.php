@@ -36,7 +36,7 @@ $APPLICATION->IncludeComponent(
 	null, array('HIDE_ICONS' => 'Y')
 );
 ?>
-<script type="text/javascript">
+<script>
 <?
 foreach ($arResult['ITEM']['TASKS'] as $task_id):
 ?>

@@ -190,7 +190,7 @@ $APPLICATION->IncludeComponent(
 );
 
 if($element && $arResult['ENABLE_INSTANT_EDIT']):
-?><script type="text/javascript">
+?><script>
 	BX.ready(
 			function()
 			{
@@ -268,7 +268,7 @@ if($element && $arResult['ENABLE_INSTANT_EDIT']):
 </script>
 <?endif;?>
 
-<script type="text/javascript">
+<script>
 	BX.ready(function(){
 		var treeContainerId = '<?=$arResult['TREE_CONTAINER_ID']?>';
 		if (!BX(treeContainerId))
@@ -298,7 +298,7 @@ if($element && $arResult['ENABLE_INSTANT_EDIT']):
 </script>
 
 <?if(isset($arResult['ENABLE_LIVE_FEED_LAZY_LOAD']) && $arResult['ENABLE_LIVE_FEED_LAZY_LOAD'] === true):?>
-<script type="text/javascript">
+<script>
 	(function()
 	{
 		var liveFeedContainerId = "<?=CUtil::JSEscape($arResult['LIVE_FEED_CONTAINER_ID'])?>";

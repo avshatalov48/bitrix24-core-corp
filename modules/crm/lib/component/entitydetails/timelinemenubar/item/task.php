@@ -46,4 +46,9 @@ class Task extends Item
 
 		return true;
 	}
+
+	public function hasTariffRestrictions(): bool
+	{
+		return !\Bitrix\Crm\Restriction\RestrictionManager::getTaskRestriction()->hasPermission();
+	}
 }

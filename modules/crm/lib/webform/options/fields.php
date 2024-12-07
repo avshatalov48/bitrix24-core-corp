@@ -243,7 +243,7 @@ final class Fields
 				'placeholder' => $field['PLACEHOLDER'],
 				'value' => $field['VALUE'],
 				'items' => $this->getFieldItems($field, $data),
-				'hint' => $field['SETTINGS_DATA']['HINT'],
+				'hint' => $field['SETTINGS_DATA']['HINT'] ?? '',
 				'hintOnFocus' => !empty($field['SETTINGS_DATA']['HINT_ON_FOCUS'])
 					&& $field['SETTINGS_DATA']['HINT_ON_FOCUS'] === 'Y',
 				'autocomplete' => !empty($field['SETTINGS_DATA']['AUTOCOMPLETE'])

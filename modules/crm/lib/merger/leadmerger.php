@@ -6,6 +6,7 @@ use Bitrix\Crm\Conversion;
 use Bitrix\Crm\Recovery;
 use Bitrix\Crm\Timeline;
 use Bitrix\Main;
+use Bitrix\Main\Localization\Loc;
 
 class LeadMerger extends EntityMerger
 {
@@ -97,7 +98,7 @@ class LeadMerger extends EntityMerger
 		}
 	}
 
-	protected static function getFieldConflictResolver(string $fieldId, string $type): ConflictResolver\Base
+	protected function getFieldConflictResolver(string $fieldId, string $type): ConflictResolver\Base
 	{
 		$userDefinedResolver = static::getUserDefinedConflictResolver(
 			\CCrmOwnerType::Lead,
@@ -134,9 +135,10 @@ class LeadMerger extends EntityMerger
 
 			case 'OPPORTUNITY':
 				//Crutch for Opportunity Field. It can be ignored if ProductRows are not empty. We will recalculate Opportunity after merging of ProductRows. See DealMerger::innerMergeBoundEntities.
-				$resolver = new Crm\Merger\ConflictResolver\OpportunityField($fieldId);
-				$resolver->setEntityTypeId(\CCrmOwnerType::Lead);
-				return $resolver;
+				return new Crm\Merger\ConflictResolver\OpportunityField(
+					$fieldId,
+					\CCrmOwnerType::Lead,
+				);
 
 			case 'TAX_VALUE':
 				//Crutch for TaxValue Field. It can be ignored. We will recalculate TaxValue after merging of ProductRows. See DealMerger::innerMergeBoundEntities.
@@ -517,7 +519,7 @@ class LeadMerger extends EntityMerger
 				EntityMergerException::UPDATE_FAILED,
 				'',
 				0,
-				new Main\SystemException($entity->LAST_ERROR)
+				new Main\SystemException($entity->getLastError())
 			);
 		}
 
@@ -540,7 +542,7 @@ class LeadMerger extends EntityMerger
 				EntityMergerException::DELETE_FAILED,
 				'',
 				0,
-				new Main\SystemException($entity->LAST_ERROR)
+				new Main\SystemException($entity->getLastError())
 			);
 		}
 	}
@@ -564,7 +566,7 @@ class LeadMerger extends EntityMerger
 			\CCrmOwnerType::Lead, $targID
 		);
 
-		Crm\Relation\EntityRelationTable::rebind(
+		Crm\Relation\EntityRelationTable::rebindWhereItemIsChild(
 			new Crm\ItemIdentifier(\CCrmOwnerType::Lead, $seedID),
 			new Crm\ItemIdentifier(\CCrmOwnerType::Lead, $targID)
 		);
@@ -585,43 +587,65 @@ class LeadMerger extends EntityMerger
 			$results[EntityMergeCollision::SEED_EXTERNAL_OWNERSHIP] = new EntityMergeCollision(\CCrmOwnerType::Lead, $seedID, $targID, EntityMergeCollision::SEED_EXTERNAL_OWNERSHIP);
 		}
 	}
-	protected function prepareCollisionMessageFields(array &$collisions, array &$seed, array &$targ)
+	protected function prepareCollisionMessageFields(array &$collisions, array &$seed, array &$targ): array
 	{
-		self::includeLangFile();
-
-		$replacements = array(
-			'#USER_NAME#' => $this->getUserName(),
-			'#SEED_TITLE#' => isset($seed['TITLE']) ? $seed['TITLE'] : '',
-			'#SEED_ID#' => isset($seed['ID']) ? $seed['ID'] : '',
-			'#TARG_TITLE#' => isset($targ['TITLE']) ? $targ['TITLE'] : '',
-			'#TARG_ID#' => isset($targ['ID']) ? $targ['ID'] : '',
-		);
-
-		$messages = array();
-		if(isset($collisions[EntityMergeCollision::READ_PERMISSION_LACK])
-			&& isset($collisions[EntityMergeCollision::UPDATE_PERMISSION_LACK]))
+		$notifyMessageCallback = function (?string $languageId = null) use (
+			$collisions,
+			$seed,
+			$targ,
+		): ?string
 		{
-			$messages[] = GetMessage('CRM_LEAD_MERGER_COLLISION_READ_UPDATE_PERMISSION', $replacements);
-		}
-		elseif(isset($collisions[EntityMergeCollision::READ_PERMISSION_LACK]))
-		{
-			$messages[] = GetMessage('CRM_LEAD_MERGER_COLLISION_READ_PERMISSION', $replacements);
-		}
-		elseif(isset($collisions[EntityMergeCollision::UPDATE_PERMISSION_LACK]))
-		{
-			$messages[] = GetMessage('CRM_LEAD_MERGER_COLLISION_UPDATE_PERMISSION', $replacements);
-		}
+			self::includeLangFile();
 
-		if(empty($messages))
-		{
-			return null;
-		}
+			$replacements = [
+				'#USER_NAME#' => $this->getUserName(),
+				'#SEED_TITLE#' => $seed['TITLE'] ?? '',
+				'#SEED_ID#' => $seed['ID'] ?? '',
+				'#TARG_TITLE#' => $targ['TITLE'] ?? '',
+				'#TARG_ID#' => $targ['ID'] ?? '',
+			];
 
-		$html = implode('<br/>', $messages);
+			$messages = [];
+			if (isset(
+				$collisions[EntityMergeCollision::READ_PERMISSION_LACK],
+				$collisions[EntityMergeCollision::UPDATE_PERMISSION_LACK],
+			))
+			{
+				$messages[] = Loc::getMessage(
+					'CRM_LEAD_MERGER_COLLISION_READ_UPDATE_PERMISSION',
+					$replacements,
+					$languageId,
+				);
+			}
+			elseif (isset($collisions[EntityMergeCollision::READ_PERMISSION_LACK]))
+			{
+				$messages[] = Loc::getMessage(
+					'CRM_LEAD_MERGER_COLLISION_READ_PERMISSION',
+					$replacements,
+					$languageId,
+				);
+			}
+			elseif (isset($collisions[EntityMergeCollision::UPDATE_PERMISSION_LACK]))
+			{
+				$messages[] = Loc::getMessage(
+					'CRM_LEAD_MERGER_COLLISION_UPDATE_PERMISSION',
+					$replacements,
+					$languageId,
+				);
+			}
+
+			if (empty($messages))
+			{
+				return null;
+			}
+
+			return implode('<br/>', $messages);
+		};
+
 		return array(
 			'TO_USER_ID' => isset($seed['ASSIGNED_BY_ID']) ? (int)$seed['ASSIGNED_BY_ID'] : 0,
-			'NOTIFY_MESSAGE' => $html,
-			'NOTIFY_MESSAGE_OUT' => $html
+			'NOTIFY_MESSAGE' => $notifyMessageCallback,
+			'NOTIFY_MESSAGE_OUT' => $notifyMessageCallback,
 		);
 	}
 	/**

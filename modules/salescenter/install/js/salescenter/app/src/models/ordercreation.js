@@ -25,6 +25,7 @@ export class OrderCreationModel extends VuexBuilderModel
 			deliveryId: null,
 			delivery: null,
 			isEnabledSubmit: false,
+			isSenderSelected: true,
 			isCompilationMode: false,
 			errors: [],
 			total: {
@@ -110,7 +111,7 @@ export class OrderCreationModel extends VuexBuilderModel
 			},
 			isAllowedSubmit: state =>
 			{
-				return state.isEnabledSubmit;
+				return state.isEnabledSubmit && state.isSenderSelected;
 			},
 			isCompilationMode: state =>
 			{
@@ -242,6 +243,10 @@ export class OrderCreationModel extends VuexBuilderModel
 			setAvailablePaySystemsIds: (state, payload) =>
 			{
 				state.availablePaySystemsIds = payload;
+			},
+			setIsSenderSelected: (state, isSelected) =>
+			{
+				state.isSenderSelected = isSelected;
 			},
 			enableSubmit: (state) =>
 			{

@@ -34,8 +34,6 @@ if(!$permissions->canPerform(\Bitrix\Voximplant\Security\Permissions::ENTITY_LIN
 
 if ($_POST['VI_PHONE_ORDER'] == 'Y')
 {
-	CUtil::decodeURIComponent($_POST);
-
 	$arSend = Array(
 		'NAME' => $_POST['FORM_NAME'],
 		'CONTACT' => $_POST['FORM_CONTACT'],
@@ -51,8 +49,6 @@ if ($_POST['VI_PHONE_ORDER'] == 'Y')
 }
 else if ($_POST['VI_PHONE_ORDER_EXTRA'] == 'Y')
 {
-	CUtil::decodeURIComponent($_POST);
-
 	$arSend = Array(
 		'TYPE' => $_POST['FORM_TYPE'],
 	);

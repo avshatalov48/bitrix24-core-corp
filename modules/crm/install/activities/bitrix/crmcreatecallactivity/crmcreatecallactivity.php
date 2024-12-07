@@ -5,6 +5,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use Bitrix\Crm\Automation\ClientCommunications\ClientCommunications;
+
 class CBPCrmCreateCallActivity extends CBPActivity
 {
 	public function __construct($name)
@@ -118,7 +120,10 @@ class CBPCrmCreateCallActivity extends CBPActivity
 			);
 		}
 
-		$this->writeDebugInfo($this->getDebugInfo(['Responsible' => $this->Responsible ?? 'user_' . $responsibleId]));
+		if ($this->workflow->isDebug())
+		{
+			$this->writeDebugInfo($this->getDebugInfo(['Responsible' => $this->Responsible ?? 'user_' . $responsibleId]));
+		}
 
 		if(!($id = CCrmActivity::Add($activityFields, false, true, array('REGISTER_SONET_EVENT' => true))))
 		{
@@ -143,7 +148,7 @@ class CBPCrmCreateCallActivity extends CBPActivity
 		if (!$id)
 		{
 			$documentId = $this->GetDocumentId();
-			list($typeName, $ownerID) = explode('_', $documentId[2]);
+			[$typeName, $ownerID] = explode('_', $documentId[2]);
 			$ownerTypeID = \CCrmOwnerType::ResolveID($typeName);
 
 			return CCrmOwnerType::GetResponsibleID($ownerTypeID, $ownerID, false);
@@ -178,153 +183,29 @@ class CBPCrmCreateCallActivity extends CBPActivity
 	private function getCommunications()
 	{
 		$documentId = $this->GetDocumentId();
-		list($typeName, $id) = explode('_', $documentId[2]);
+		[$typeId, $id] = \CCrmBizProcHelper::resolveEntityId($documentId);
 
-		if ($typeName === CCrmOwnerType::DealName)
-		{
-			$communications = $this->getDealCommunications($id);
-		}
-		elseif ($typeName === CCrmOwnerType::OrderName)
-		{
-			$communications = $this->getOrderCommunications($id);
-		}
-		elseif ($typeName === CCrmOwnerType::LeadName)
-		{
-			$communications = $this->getLeadCommunications($id);
-		}
-		else
-		{
-			$communications = $this->getCommunicationsFromFM(
-				CCrmOwnerType::ResolveID($typeName),
-				$id
-			);
-		}
-
-		$communications = array_slice($communications, 0, 1);
-		return $communications;
-	}
-
-	private function getDealCommunications($id)
-	{
-		$communications = array();
-
-		$entity = CCrmDeal::GetByID($id, false);
-		if(!$entity)
-		{
-			return array();
-		}
-
-		$entityContactID = isset($entity['CONTACT_ID']) ? intval($entity['CONTACT_ID']) : 0;
-		$entityCompanyID = isset($entity['COMPANY_ID']) ? intval($entity['COMPANY_ID']) : 0;
-
-		if ($entityContactID > 0)
-		{
-			$communications = $this->getCommunicationsFromFM(CCrmOwnerType::Contact, $entityContactID);
-		}
-
-		if (empty($communications) && $entityCompanyID > 0)
-		{
-			$communications = $this->getCommunicationsFromFM(CCrmOwnerType::Company, $entityCompanyID);
-		}
+		$communicationType = CCrmFieldMulti::PHONE;
+		$clientCommunications = new ClientCommunications((int)$typeId, (int)$id, $communicationType);
+		$communications = $clientCommunications->getFirstFilled();
 
 		if (empty($communications))
 		{
-			$communications = CCrmActivity::GetCommunicationsByOwner('DEAL', $id, 'PHONE');
-		}
-
-		return $communications;
-	}
-
-	private function getOrderCommunications($id)
-	{
-		$communications = [];
-
-		$dbRes = \Bitrix\Crm\Order\ContactCompanyCollection::getList(array(
-			'select' => array('ENTITY_ID', 'ENTITY_TYPE_ID'),
-			'filter' => array(
-				'=ORDER_ID' => $id,
-				'@ENTITY_TYPE_ID' => [\CCrmOwnerType::Contact, \CCrmOwnerType::Company],
-				'IS_PRIMARY' => 'Y'
-			),
-			'order' => ['ENTITY_TYPE_ID' => 'ASC']
-		));
-		while ($row = $dbRes->fetch())
-		{
-			$communications = $this->getCommunicationsFromFM($row['ENTITY_TYPE_ID'], $row['ENTITY_ID']);
-			if ($communications)
+			if ($typeId === CCrmOwnerType::Deal)
 			{
-				break;
+				$communications = CCrmActivity::GetCommunicationsByOwner(
+					CCrmOwnerType::DealName, $id, $communicationType
+				);
+			}
+			elseif($typeId === CCrmOwnerType::Lead)
+			{
+				$communications = CCrmActivity::GetCommunicationsByOwner(
+					CCrmOwnerType::LeadName, $id, $communicationType
+				);
 			}
 		}
 
-		return $communications;
-	}
-
-	private function getLeadCommunications($id)
-	{
-		$communications = $this->getCommunicationsFromFM(CCrmOwnerType::Lead, $id);
-
-		if ($communications)
-		{
-			return $communications;
-		}
-
-		$entity = CCrmLead::GetByID($id, false);
-		if(!$entity)
-		{
-			return array();
-		}
-
-		$entityContactID = isset($entity['CONTACT_ID']) ? intval($entity['CONTACT_ID']) : 0;
-		$entityCompanyID = isset($entity['COMPANY_ID']) ? intval($entity['COMPANY_ID']) : 0;
-
-		if ($entityContactID > 0)
-		{
-			$communications = $this->getCommunicationsFromFM(CCrmOwnerType::Contact, $entityContactID);
-		}
-
-		if (empty($communications) && $entityCompanyID > 0)
-		{
-			$communications = $this->getCommunicationsFromFM(CCrmOwnerType::Company, $entityCompanyID);
-		}
-
-		if (empty($communications))
-		{
-			$communications = CCrmActivity::GetCommunicationsByOwner('LEAD', $id, 'PHONE');
-		}
-
-		return $communications;
-	}
-
-	private function getCommunicationsFromFM($entityTypeId, $entityId)
-	{
-		$entityTypeName = CCrmOwnerType::ResolveName($entityTypeId);
-		$communications = array();
-
-		$iterator = CCrmFieldMulti::GetList(
-			array('ID' => 'asc'),
-			array('ENTITY_ID' => $entityTypeName,
-				'ELEMENT_ID' => $entityId,
-				'TYPE_ID' => 'PHONE'
-			)
-		);
-
-		while ($row = $iterator->fetch())
-		{
-			if (empty($row['VALUE']))
-				continue;
-
-			$communications[] = array(
-				'ENTITY_ID' => $entityId,
-				'ENTITY_TYPE_ID' => $entityTypeId,
-				'ENTITY_TYPE' => $entityTypeName,
-				'TYPE' => 'PHONE',
-				'VALUE' => $row['VALUE'],
-				'VALUE_TYPE' => $row['VALUE_TYPE']
-			);
-		}
-
-		return $communications;
+		return array_slice($communications, 0, 1);
 	}
 
 	public static function ValidateProperties($testProperties = array(), CBPWorkflowTemplateUser $user = null)
@@ -337,7 +218,7 @@ class CBPCrmCreateCallActivity extends CBPActivity
 			foreach ($fieldsMap as $propertyKey => $fieldProperties)
 			{
 				if (
-					CBPHelper::getBool($fieldProperties['Required'])
+					CBPHelper::getBool($fieldProperties['Required'] ?? false)
 					&& CBPHelper::isEmptyValue($testProperties[$propertyKey])
 				)
 					$errors[] = array(

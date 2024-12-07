@@ -2,21 +2,20 @@
 namespace Bitrix\Intranet;
 
 use Bitrix\Crm\WebForm;
+use Bitrix\ImConnector;
 use Bitrix\ImOpenLines\Common;
 use Bitrix\ImOpenlines\Security\Helper;
 use Bitrix\ImOpenlines\Security\Permissions;
-use Bitrix\ImConnector;
 use Bitrix\Intranet\Binding\Marketplace;
 use Bitrix\Main\Application;
-use Bitrix\Main\DI\ServiceLocator;
+use Bitrix\Main\Config\Option;
 use Bitrix\Main\Error;
 use Bitrix\Main\Loader;
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
 use Bitrix\Main\UI\Extension;
 use Bitrix\Main\Web\Json;
 use Bitrix\Main\Web\Uri;
-use Bitrix\Main\Localization\Loc;
-use Bitrix\Main\Config\Option;
 use Bitrix\Notifications\FeatureStatus;
 use Bitrix\Notifications\Limit;
 use Bitrix\Notifications\Settings;
@@ -443,7 +442,10 @@ class ContactCenter
 					)
 					{
 						$crmPaymentStatus = Settings::getScenarioAvailability(Settings::SCENARIO_CRM_PAYMENT);
-						if ($crmPaymentStatus === FeatureStatus::UNAVAILABLE)
+						if (
+							$crmPaymentStatus === FeatureStatus::UNAVAILABLE
+							&& empty($filter['PRESERVE_NOTIFICATIONS_CONNECTOR'])
+						)
 						{
 							unset($itemsList[$code]);
 						}

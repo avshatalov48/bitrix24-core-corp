@@ -98,7 +98,7 @@ class RecyclebinSettings
 	{
 		if (!$this->isB24)
 		{
-			\CAgent::AddAgent('\Bitrix\Crm\Agent\Recyclebin\RecyclebinAgent::run();', 'crm', 'N', 86400);
+			\CAgent::AddAgent('\Bitrix\Crm\Agent\Recyclebin\RecyclebinAgent::run();', 'crm', 'N', 3600);
 		}
 	}
 

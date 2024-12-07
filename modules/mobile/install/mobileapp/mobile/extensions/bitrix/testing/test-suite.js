@@ -1,3 +1,4 @@
+/* eslint-disable no-await-in-loop */
 /**
  * @module testing/test-suite
  */
@@ -59,26 +60,42 @@ jn.define('testing/test-suite', (require, exports, module) => {
 		/**
 		 * @public
 		 */
-		execute()
+		async execute()
 		{
 			this.report.group(this.title);
 
-			this.beforeAll.map(fn => fn.call());
+			void await this.#executeArrayFunctions(this.beforeAll);
 
-			const only = this.testCases.filter(testCase => testCase.$only);
-			const executables = only.length ? only : this.testCases;
+			const only = this.testCases.filter((testCase) => testCase.$only);
+			const executables = (only.length > 0 ? only : this.testCases)
+				.filter((testCase) => !testCase.$skip)
+			;
 
-			executables.filter(testCase => !testCase.$skip).map(testCase => {
-				this.beforeEach.map(fn => fn.call());
+			for (const testCase of executables)
+			{
+				void await this.#executeArrayFunctions(this.beforeEach);
 
-				testCase.execute();
+				void await testCase.execute();
 
-				this.afterEach.map(fn => fn.call());
-			});
+				void await this.#executeArrayFunctions(this.afterEach);
+			}
 
-			this.afterAll.map(fn => fn.call());
+			void await this.#executeArrayFunctions(this.afterAll);
 
 			this.report.groupEnd();
+		}
+
+		/**
+		 *
+		 * @param {Array<Function>} arrayFn
+		 * @return {Promise<void>}
+		 */
+		async #executeArrayFunctions(arrayFn)
+		{
+			for (const fn of arrayFn)
+			{
+				void await fn();
+			}
 		}
 
 		/**
@@ -88,6 +105,7 @@ jn.define('testing/test-suite', (require, exports, module) => {
 		only()
 		{
 			this.$only = true;
+
 			return this;
 		}
 
@@ -98,6 +116,7 @@ jn.define('testing/test-suite', (require, exports, module) => {
 		skip()
 		{
 			this.$skip = true;
+
 			return this;
 		}
 	}
@@ -105,5 +124,4 @@ jn.define('testing/test-suite', (require, exports, module) => {
 	module.exports = {
 		TestSuite,
 	};
-
 });

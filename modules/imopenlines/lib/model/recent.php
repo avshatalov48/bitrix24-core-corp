@@ -2,6 +2,7 @@
 namespace Bitrix\ImOpenLines\Model;
 
 use Bitrix\Im\V2\Common\MultiplyInsertTrait;
+use Bitrix\Im\V2\Common\UpdateByFilterTrait;
 use Bitrix\Main\ORM\Data\Internal\DeleteByFilterTrait;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\ORM\Data\DataManager;
@@ -28,6 +29,7 @@ class RecentTable extends DataManager
 {
 	use MultiplyInsertTrait;
 	use DeleteByFilterTrait;
+	use UpdateByFilterTrait;
 
 	/**
 	 * Returns DB table name for entity.

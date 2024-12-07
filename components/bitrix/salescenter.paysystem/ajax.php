@@ -207,8 +207,6 @@ class SalesCenterPaySystemAjaxController extends \Bitrix\Main\Engine\Controller
 		$isBusinessValue = true;
 		if (isset($_POST['PAYSYSTEMBizVal']))
 		{
-			$_POST['PAYSYSTEMBizVal'] = Bitrix\Main\Text\Encoding::convertEncoding($_POST['PAYSYSTEMBizVal'], LANG_CHARSET, 'UTF-8');
-
 			try
 			{
 				$_POST['PAYSYSTEMBizVal'] = Web\Json::decode($_POST['PAYSYSTEMBizVal']);

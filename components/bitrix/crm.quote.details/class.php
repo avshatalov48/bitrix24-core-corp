@@ -2,12 +2,14 @@
 
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
+use Bitrix\Crm\Agent\Quote\StorageElementIdsToAttachedObject;
 use Bitrix\Crm\Component\EntityDetails\FactoryBased;
 use Bitrix\Crm\Contact;
 use Bitrix\Crm\Conversion\ConversionManager;
 use Bitrix\Crm\Conversion\DealConversionWizard;
 use Bitrix\Crm\Conversion\EntityConversionConfig;
 use Bitrix\Crm\EO_Company;
+use Bitrix\Crm\Integration\Disk\AttachedObjectService;
 use Bitrix\Crm\Integration\StorageManager;
 use Bitrix\Crm\Integration\StorageType;
 use Bitrix\Crm\Item;
@@ -242,7 +244,7 @@ class CrmQuoteDetailsComponent extends FactoryBased
 		foreach($paySystems as $paySystem)
 		{
 			$file = $paySystem['~PSA_ACTION_FILE'] ?? '';
-			if(preg_match('/quote(_\w+)*$/i'.BX_UTF_PCRE_MODIFIER, $file))
+			if(preg_match('/quote(_\w+)*$/iu', $file))
 			{
 				$printTemplates[] = [
 					'id' => (int)$paySystem['~ID'],
@@ -317,6 +319,7 @@ class CrmQuoteDetailsComponent extends FactoryBased
 						'cancelButton' => Loc::getMessage('CRM_COMMON_CANCEL'),
 					],
 					'analytics' => [
+						'c_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SECTION_QUOTE,
 						'c_sub_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SUB_SECTION_DETAILS,
 					],
 				],
@@ -592,7 +595,7 @@ class CrmQuoteDetailsComponent extends FactoryBased
 							'ADD_EVENT_NAME' => 'CrmCreateDealFrom'.mb_convert_case($this->getEntityName(), MB_CASE_TITLE),
 							'ANALYTICS' => [
 								// we dont know where from this component was opened from - it could be anywhere on portal
-								// 'c_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SECTION_QUOTE,
+								'c_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SECTION_QUOTE,
 								'c_sub_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SUB_SECTION_DETAILS,
 							],
 						], 'crm.deal.list')
@@ -627,7 +630,7 @@ class CrmQuoteDetailsComponent extends FactoryBased
 								. mb_convert_case($this->getEntityName(), MB_CASE_TITLE),
 							'ANALYTICS' => [
 								// we dont know where from this component was opened from - it could be anywhere on portal
-								// 'c_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SECTION_QUOTE,
+								'c_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SECTION_QUOTE,
 								'c_sub_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SUB_SECTION_DETAILS,
 							],
 						], 'crm.invoice.list'),
@@ -671,20 +674,14 @@ class CrmQuoteDetailsComponent extends FactoryBased
 	{
 		parent::initializeEditorAdapter();
 
-		$filesData = [];
-		$storageElementIds = array_unique($this->item->getStorageElementIds() ?? []);
-		foreach($storageElementIds as $fileId)
-		{
-			if($fileId > 0)
-			{
-				$fileInfo = StorageManager::getFileInfo($fileId);
-				if($fileInfo)
-				{
-					$filesData[] = $fileInfo;
-				}
-			}
+		$this->convertFilesToAttachedObjectIfRequired($this->item);
 
-		}
+		$storageElementIds = array_unique($this->item->getStorageElementIds() ?? []);
+		$filesData = AttachedObjectService::loadFilesData(
+			$storageElementIds,
+			$this->item->getId(),
+			\CCrmOwnerType::Quote
+		);
 
 		$additionalData = [];
 		Tracking\UI\Details::prepareEntityData(
@@ -720,6 +717,11 @@ class CrmQuoteDetailsComponent extends FactoryBased
 			->addEntityData(Item\Quote::FIELD_NAME_STORAGE_ELEMENTS, $storageElementIds)
 			->addEntityData(static::FILES_DATA, $filesData)
 		;
+	}
+
+	private function convertFilesToAttachedObjectIfRequired(Item\Quote $quote): void
+	{
+		StorageElementIdsToAttachedObject::getInstance()->convertStorageElements($quote);
 	}
 
 	public function createEmailAttachmentAction(int $paymentSystemId): ?array
@@ -1026,5 +1028,17 @@ class CrmQuoteDetailsComponent extends FactoryBased
 				->fillDeadlinesDefaultValues($data, $deadlineStage);
 		}
 		return $data;
+	}
+
+	protected function getExtras(): array
+	{
+		$extras = parent::getExtras();
+
+		$extras['ANALYTICS'] = [
+			'c_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SECTION_QUOTE,
+			'c_sub_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SUB_SECTION_DETAILS,
+		];
+
+		return $extras;
 	}
 }

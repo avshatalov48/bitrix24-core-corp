@@ -75,6 +75,7 @@ $MESS["CRM_CF_SUBSCRIBE_REPEATED_NOTIFY"] = "Отправка дополните
 $MESS["CRM_CF_PRODUCT_SETTINGS_STATUS_YES"] = "Да";
 $MESS["CRM_CF_PRODUCT_SETTINGS_STATUS_NO"] = "Нет";
 $MESS["CRM_CF_PRODUCT_SETTINGS_CHANGE"] = "Изменить";
+$MESS["CRM_CF_PRODUCT_SETTINGS_DISABLE"] = "Отключить";
 $MESS["CRM_CF_NUMERATOR_TITLE"] = "Использовать";
 $MESS["CRM_CF_ORDER_DEFAULT_RESPONSIBLE_ID"] = "Ответственный за заказ (по умолчанию)";
 $MESS["CRM_CF_ORDER_TRACKING_AUTOCHECK"] = "Автоматически проверять статусы отправлений";

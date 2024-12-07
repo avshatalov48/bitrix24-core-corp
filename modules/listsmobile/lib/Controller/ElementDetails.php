@@ -70,6 +70,29 @@ class ElementDetails extends \Bitrix\Main\Engine\Controller
 		$canRead = $this->canUserReadElement($elementObject);
 		$canEdit = $this->canUserEditElement($elementObject);
 
+		$description = $iBlock->getDescription() ?? '';
+		$parser = new \CTextParser();
+		$bbDescription = $parser->convertHTMLToBB(
+			$description,
+			[
+				'ANCHOR' => 'Y',
+				'BIU' => 'Y',
+				'FONT' => 'Y',
+				'LIST' => 'Y',
+				'NL2BR' => 'Y',
+
+				'HTML' => 'N',
+				'IMG' => 'N',
+				'QUOTE' => 'N',
+				'CODE' => 'N',
+				'SMILES' => 'N',
+				'VIDEO' => 'N',
+				'TABLE' => 'N',
+				'ALIGN' => 'N',
+				'P' => 'N',
+			]
+		);
+
 		$result = [
 			'perms' => [
 				'canRead' => $canRead,
@@ -77,7 +100,7 @@ class ElementDetails extends \Bitrix\Main\Engine\Controller
 			],
 			'iBlockName' => $iBlock->getName(),
 			'elementName' => $elementObject->getName(),
-			'iBlockDescription' => $iBlock->getDescription(),
+			'iBlockDescription' => htmlspecialcharsback($bbDescription),
 			'editor' => $canRead ? $this->getEditorConfig($service, $elementObject, $iBlock) : null,
 			'hasBPParametersOnStartUp' => false,
 			'signedBpDocument' => null,

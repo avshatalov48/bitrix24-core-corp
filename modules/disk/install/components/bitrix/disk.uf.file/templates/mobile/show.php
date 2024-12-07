@@ -187,7 +187,7 @@ if (!empty($arResult['FILES']))
 		$attributes = $t;
 
 		?><div id="wdif-doc-<?=$file['ID']?>" class="post-item-attached-file<?=($moreFilesBlockShown ? ' post-item-attached-file-hidden' : '')?>"><?
-			if (in_array(tolower($file["EXTENSION"]), array("exe")))
+			if (in_array(mb_strtolower($file["EXTENSION"]), array("exe")))
 			{
 				?><span <?=$attributes?> class="post-item-attached-file-link"><?
 					?><span class="post-item-attached-file-name"><?=htmlspecialcharsbx($file['NAME_WO_EXTENSION'])?></span><?
@@ -198,7 +198,7 @@ if (!empty($arResult['FILES']))
 			else
 			{
 				?>
-				<div class="ui-icon ui-icon-file-<?=tolower($file["EXTENSION"])?>"><i></i></div>
+				<div class="ui-icon ui-icon-file-<?=mb_strtolower($file["EXTENSION"])?>"><i></i></div>
 				<a <?=$attributes
 					?>onclick="app.openDocument({'url' : '<?=$file['DOWNLOAD_URL']?>'}); return BX.PreventDefault(event);" <?
 					?>href="javascript:void(0);" <?

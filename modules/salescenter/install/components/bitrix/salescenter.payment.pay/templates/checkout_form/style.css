@@ -30,7 +30,7 @@
 
 .order-payment-operator {
 	padding-right: 10px;
-	max-width: 170px;
+	max-width: 100%;
 }
 
 .order-payment-operator img {
@@ -94,7 +94,10 @@ a.check-link:hover { text-decoration: none; }
 	font-size: 21px;
 }
 
-.order-payment-operator .order-payment-pay-system-name { font-size: 16px; }
+.order-payment-operator .order-payment-pay-system-name {
+	font-size: 16px;
+	word-wrap: break-word;
+}
 
 .order-payment-loader {
 	position: relative;

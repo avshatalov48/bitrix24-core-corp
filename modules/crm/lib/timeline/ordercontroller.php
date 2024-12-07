@@ -258,7 +258,7 @@ class OrderController extends EntityController
 
 		if ($params['IS_NEW_ORDER'] === 'Y')
 		{
-			$params = [
+			$timelineParams = [
 				'ORDER_FIELDS' => $orderFields,
 				'SETTINGS' => [
 					'FIELDS' => [
@@ -274,7 +274,7 @@ class OrderController extends EntityController
 				]
 			];
 
-			$this->onCreate($ownerId, $params);
+			$this->onCreate($ownerId, $timelineParams);
 		}
 
 		$bindings = [

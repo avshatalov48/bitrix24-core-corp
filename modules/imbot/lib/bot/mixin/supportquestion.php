@@ -2,14 +2,13 @@
 
 namespace Bitrix\ImBot\Bot\Mixin;
 
+use Bitrix\ImBot\DialogSession;
 use Bitrix\Main;
-use Bitrix\Main\Config\Option;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Im;
 use Bitrix\Im\Bot\Keyboard;
 use Bitrix\ImBot;
 use Bitrix\ImBot\Error;
-use Bitrix\ImBot\Model\NetworkSessionTable;
 
 const CHAT_QUESTION_SUPPORT_COUNTER = 'imbot_support_question';
 const COMMAND_ADD_QUESTION = 'question';
@@ -229,16 +228,8 @@ trait SupportQuestion
 			$title = Loc::getMessage('CHAT_QUESTION_TITLE', ['#NUMBER#' => $counter]);
 		}
 
-		if ($fromOperator)
-		{
-			$locDescription = static::getMessage('CHAT_QUESTION_DESC_FROM_OPERATOR') ?: Loc::getMessage('CHAT_QUESTION_DESC_FROM_OPERATOR');
-			$locMessage = static::getMessage('CHAT_QUESTION_GREETING') ?: Loc::getMessage('CHAT_QUESTION_GREETING');
-		}
-		else
-		{
-			$locDescription = static::getMessage('CHAT_QUESTION_DESC') ?: Loc::getMessage('CHAT_QUESTION_DESC');
-			$locMessage = static::getMessage('CHAT_QUESTION_GREETING') ?: Loc::getMessage('CHAT_QUESTION_GREETING');
-		}
+		$locDescription = static::getMessage('CHAT_QUESTION_DESCRIPTION_BOT') ?: Loc::getMessage('CHAT_QUESTION_DESCRIPTION_BOT');
+		$locMessage = static::getMessage('CHAT_QUESTION_GREETING') ?: Loc::getMessage('CHAT_QUESTION_GREETING');
 
 		$chatParams = [
 			'TYPE' => \IM_MESSAGE_CHAT,
@@ -251,7 +242,6 @@ trait SupportQuestion
 			'OWNER_ID' => static::getBotId(),
 			'TITLE' => $title,
 			'DESCRIPTION' => $locDescription,
-			'MESSAGE' => $locMessage,
 			'SKIP_ADD_MESSAGE' => 'Y',
 			'ACCESS_HISTORY' => $showMenu
 		];
@@ -280,7 +270,47 @@ trait SupportQuestion
 			return -1;
 		}
 
+		ImBot\Pull::addMultidialog(
+			'chat'.$chatId,
+			static::getBotId(),
+			$userId ?: static::getCurrentUser()->getId()
+		);
+
+		self::sendBannerMessage($chatId, $locMessage);
+
+		$dialogSession = new DialogSession(static::getBotId(), 'chat' . $chatId);
+		$dialogSession->start([
+			'GREETING_SHOWN' => 'Y',
+			'SESSION_ID' => 0,
+			'STATUS' => \Bitrix\ImBot\Bot\Network::MULTIDIALOG_STATUS_NEW,
+		]);
+
+		static::cleanQuestionsCountCache(static::getBotId());
+
 		return $chatId;
+	}
+
+	protected static function sendBannerMessage(int $chatId, string $message): void
+	{
+		$chat = \Bitrix\Im\V2\Chat::getInstance($chatId);
+
+		$messageFields = [
+			'MESSAGE_TYPE' => $chat->getType(),
+			'TO_CHAT_ID' => $chat->getChatId(),
+			'FROM_USER_ID' => 0,
+			'SYSTEM' => 'Y',
+			'PUSH' => 'N',
+			'SKIP_COUNTER_INCREMENTS' => 'Y',
+			'MESSAGE' => htmlspecialcharsback($message),
+			'PARAMS' => [
+				'COMPONENT_ID' => 'SupportChatCreationMessage',
+				'COMPONENT_PARAMS' => [
+					'BANNER_TITLE' => static::getMessage('CHAT_QUESTION_GREETING_TITLE') ?: Loc::getMessage('CHAT_QUESTION_GREETING_TITLE'),
+				]
+			]
+		];
+
+		\CIMMessage::Add($messageFields);
 	}
 
 	/**
@@ -300,6 +330,16 @@ trait SupportQuestion
 		$params['BOT_ID'] = static::getBotId();
 
 		return parent::getQuestionList($params);
+	}
+
+	public static function getQuestionsCount(?int $botId = null, ?int $userId = null): int
+	{
+		return parent::getQuestionsCount(static::getBotId(), $userId);
+	}
+
+	public static function getQuestionsWithUnreadMessages(?int $botId = null): array
+	{
+		return parent::getQuestionsWithUnreadMessages(static::getBotId());
 	}
 
 	/**

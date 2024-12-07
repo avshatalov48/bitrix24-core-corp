@@ -3,6 +3,7 @@
 namespace Bitrix\Crm\Category;
 
 use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\CategoryIdentifier;
 
 class PermissionEntityTypeHelper
 {
@@ -153,5 +154,40 @@ class PermissionEntityTypeHelper
 			&& is_array($options['RESTRICT_BY_ENTITY_TYPES'])
 			&& !empty($options['RESTRICT_BY_ENTITY_TYPES'])
 		);
+	}
+
+	/**
+	 * @param string $permissionEntityType DEAL_C1 for example
+	 * @return array [$entityTypeId, $categoryId]
+	 */
+	public static function extractEntityEndCategoryFromPermissionEntityType(string $permissionEntityType): ?CategoryIdentifier
+	{
+		$entityTypeId = 0;
+		$categoryId = 0;
+		$entityTypeParts = explode('_', $permissionEntityType);
+		if (count($entityTypeParts) === 1)
+		{
+			$entityTypeId = \CCrmOwnerType::ResolveID($entityTypeParts[0]);
+		}
+		else
+		{
+			$categoryCode = array_pop($entityTypeParts);
+			$entityTypeId = \CCrmOwnerType::ResolveID(implode('_', $entityTypeParts));
+			if (\CCrmOwnerType::IsDefined($entityTypeId))
+			{
+				$helper = new self($entityTypeId);
+				$categoryId = $helper->extractCategoryFromPermissionEntityType($permissionEntityType);
+				if ($categoryId === -1)
+				{
+					return null; // wrong category
+				}
+			}
+			else
+			{
+				return null;
+			}
+		}
+
+		return CategoryIdentifier::createByParams($entityTypeId, $categoryId);
 	}
 }

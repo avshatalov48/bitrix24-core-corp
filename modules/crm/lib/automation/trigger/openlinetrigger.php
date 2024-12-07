@@ -67,6 +67,7 @@ class OpenLineTrigger extends BaseTrigger
 			{
 				return (mb_stripos($msgText, $trigger['APPLY_RULES']['msg_text']) !== false);
 			}
+			return false;
 		}
 
 		return true;

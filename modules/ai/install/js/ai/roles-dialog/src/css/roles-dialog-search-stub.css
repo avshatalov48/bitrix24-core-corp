@@ -1,0 +1,57 @@
+.ai__roles-dialog_search-stub {
+	width: 100%;
+	height: 100%;
+	display: flex;
+	flex-direction: row;
+	justify-content: center;
+	align-items: flex-start;
+}
+
+.ai__roles-dialog_search-stub-content {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	max-width: 360px;
+}
+
+.ai__roles-dialog_search-stub-image {
+	width: 343px;
+	height: 172px;
+	background-image: url(../../images/ai-roles-dialog-no-search-result-stub.svg);
+	background-repeat: no-repeat;
+	background-position: center center;
+}
+
+.ai__roles-dialog_search-stub-title {
+	margin: 0;
+	padding: 0;
+	font-size: var(--ui-font-size-2xl);
+	font-weight: var(--ui-font-weight-normal);
+	line-height: var(--ui-font-line-height-3xs);
+	color: var(--ui-color-text-primary);
+	text-align: center;
+}
+
+.ai__roles-dialog_search-stub-text {
+	margin-top: 12px;
+	padding: 0 32px;
+	font-size: var(--ui-font-size-2xl);
+	line-height: var(--ui-font-line-height-3xs);
+	letter-spacing: 0;
+	text-align: center;
+	color: var(--ui-color-base-50);
+}
+
+.ai__roles-dialog_search-stub-text a,
+.ai__roles-dialog_search-stub-text span {
+	color: var(--ui-color-copilot-secondary);
+	text-decoration: underline;
+	text-underline-position: under;
+	cursor: pointer;
+}
+
+.ai__roles-dialog_search-stub-text a:hover,
+.ai__roles-dialog_search-stub-text span:hover {
+	color: var(--ui-color-copilot-primary);
+	text-decoration: underline;
+}

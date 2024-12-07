@@ -10,6 +10,7 @@ return [
 		'layout/ui/item-selector',
 		'layout/ui/menu',
 		'layout/ui/empty-screen',
+		'ui-system/blocks/icon',
 		'crm:entity-chat-opener',
 	],
 	'bundle' => [

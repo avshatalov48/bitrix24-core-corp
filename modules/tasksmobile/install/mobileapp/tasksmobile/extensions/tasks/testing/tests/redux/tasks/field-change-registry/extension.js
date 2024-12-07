@@ -3,42 +3,22 @@
 	const { describe, test, expect, beforeEach } = require('testing');
 	const { FieldChangeRegistry } = require('tasks/statemanager/redux/slices/tasks/field-change-registry');
 	const { TaskModel } = require('tasks/statemanager/redux/slices/tasks/model/task');
-	const { TaskStatus } = require('tasks/enum');
 	const {
 		prepareUpdateDeadlineNewState,
 		prepareDelegateNewState,
 		processFieldChanges,
 		unregisterRegistryChanges,
+		onCommonActionError,
 	} = require('tasks/statemanager/redux/slices/tasks/extra-reducer');
 
 	const getOldTaskState = (now) => ({
+		...TaskModel.getDefaultReduxTask(),
 		id: 1,
-		newCommentsCount: 0,
-		status: TaskStatus.PENDING,
 		creator: 2,
 		responsible: 1,
-		accomplices: [],
-		auditors: [],
-
-		isMuted: false,
-		isPinned: false,
-		isInFavorites: false,
-		isTimerRunningForCurrentUser: false,
-
 		deadline: Math.ceil(now / 1000) - 3600,
 		activityDate: Math.ceil(now / 1000) - 2 * 3600,
-
-		canUseTimer: false,
-		canStart: false,
-		canPause: false,
-		canComplete: false,
-		canRenew: false,
-		canApprove: false,
-		canDisapprove: false,
-
-		isRemoved: false,
 		isExpired: true,
-		isConsideredForCounterChange: false,
 	});
 	const fulfillRequest = (requestId) => unregisterRegistryChanges(requestId);
 
@@ -230,6 +210,7 @@
 			expect(firstNewTaskState).toEqual({
 				...oldTaskState,
 				responsible: firstNewResponsible,
+				auditors: [oldTaskState.responsible],
 				activityDate: Math.ceil(firstNewActivityDate / 1000),
 				isConsideredForCounterChange: true,
 			});
@@ -245,6 +226,7 @@
 			expect(secondNewTaskState).toEqual({
 				...oldTaskState,
 				responsible: secondNewResponsible,
+				auditors: [oldTaskState.responsible, firstNewResponsible],
 				activityDate: Math.ceil(secondNewActivityDate / 1000),
 				isConsideredForCounterChange: true,
 			});
@@ -388,5 +370,55 @@
 		});
 
 		// endregion
+
+		test('should correctly rollback changes after server error', () => {
+			const now = Date.now();
+			const oldTaskState = getOldTaskState(now);
+
+			// pending
+			const requestId = 'request_1';
+			const newResponsible = 5;
+			const newActivityDate = now;
+			const newTaskState = prepareDelegateNewState(oldTaskState, newResponsible, newActivityDate);
+			processFieldChanges(requestId, oldTaskState, newTaskState);
+
+			// fulfill with error
+			const taskAfterRollback = onCommonActionError(requestId, newTaskState);
+			expect(taskAfterRollback).toEqual(oldTaskState);
+		});
+
+		test('should correctly rollback changes after successive server errors', () => {
+			const now = Date.now();
+			const oldTaskState = getOldTaskState(now);
+
+			// pending 1
+			const firstRequestId = 'request_1';
+			const firstNewResponsible = 5;
+			const firstNewActivityDate = now;
+			const firstNewTaskState = prepareDelegateNewState(oldTaskState, firstNewResponsible, firstNewActivityDate);
+			processFieldChanges(firstRequestId, oldTaskState, firstNewTaskState);
+
+			// pending 2
+			const secondRequestId = 'request_2';
+			const secondNewResponsible = 10;
+			const secondNewActivityDate = firstNewActivityDate + 1000;
+			const secondNewTaskState = prepareDelegateNewState(
+				firstNewTaskState,
+				secondNewResponsible,
+				secondNewActivityDate,
+			);
+			processFieldChanges(secondRequestId, firstNewTaskState, secondNewTaskState);
+
+			// fulfill with error 1
+			const taskAfterFirstRollback = onCommonActionError(firstRequestId, secondNewTaskState);
+			expect(taskAfterFirstRollback).toEqual({
+				...secondNewTaskState,
+				isConsideredForCounterChange: false,
+			});
+
+			// fulfill with error 2
+			const taskAfterSecondRollback = onCommonActionError(secondRequestId, secondNewTaskState);
+			expect(taskAfterSecondRollback).toEqual(oldTaskState);
+		});
 	});
 })();

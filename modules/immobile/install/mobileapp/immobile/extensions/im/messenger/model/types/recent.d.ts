@@ -1,5 +1,6 @@
-import {PayloadData} from "./base";
+import {MessengerModel, PayloadData} from "./base";
 import {DialogId} from "../../types/common";
+import {CommentModelCollection} from "./comment";
 
 export enum ChatType
 {
@@ -29,6 +30,7 @@ export type RecentModelState = {
 		params: object,
 	},
 	dateMessage: Date | null,
+	lastActivityDate: Date,
 	unread: boolean,
 	pinned: boolean,
 	liked: boolean,
@@ -53,6 +55,7 @@ export type RecentModelActions =
 	| 'recentModel/set'
 	| 'recentModel/like'
 	| 'recentModel/delete'
+	| 'recentModel/deleteFromModel'
 	| 'recentModel/clearAllCounters'
 	| 'recentModel/update'
 
@@ -94,11 +97,18 @@ export interface RecentUpdateData extends PayloadData
 }
 
 
-export type RecentDeleteActions = 'delete';
+export type RecentDeleteActions = 'delete' | 'deleteFromModel';
 export interface RecentDeleteData extends PayloadData
 {
 	id: DialogId;
 	index: number;
 }
+
+export type RecentModelCollection = {
+	collection: Array<RecentModelState>;
+	index: Record<DialogId, number>;
+}
+
+export type RecentMessengerModel = MessengerModel<RecentModelCollection>;
 
 

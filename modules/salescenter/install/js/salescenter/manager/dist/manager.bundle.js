@@ -690,6 +690,26 @@ this.BX = this.BX || {};
 	      }
 	    }
 	  }, {
+	    key: "openLimitShopNumberInfoHelper",
+	    value: function openLimitShopNumberInfoHelper() {
+	      BX.UI.InfoHelper.show('limit_shop_number');
+	    }
+	  }, {
+	    key: "openFreeTarifInfoHelper",
+	    value: function openFreeTarifInfoHelper() {
+	      BX.UI.InfoHelper.show('limit_sites_free');
+	    }
+	  }, {
+	    key: "openFreeDomenInfoHelper",
+	    value: function openFreeDomenInfoHelper() {
+	      BX.UI.InfoHelper.show('limit_free_domen');
+	    }
+	  }, {
+	    key: "openConfirmEmailInfoHelper",
+	    value: function openConfirmEmailInfoHelper() {
+	      BX.UI.InfoHelper.show('limit_sites_confirm_email');
+	    }
+	  }, {
 	    key: "openHowItWorks",
 	    value: function openHowItWorks(event) {
 	      Manager.openHelper(event, 'redirect=detail&code=9289135', 'chat_connect');

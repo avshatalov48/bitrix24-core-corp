@@ -16,6 +16,7 @@ class CompanyProvider extends EntityProvider
 	protected bool $excludeMyCompany = false;
 	protected bool $showPhones = false;
 	protected bool $showMails = false;
+	protected bool $hideReadMoreLink = false;
 	protected $categoryId;
 
 	use FilterByIds;
@@ -31,11 +32,13 @@ class CompanyProvider extends EntityProvider
 		$this->excludeMyCompany = (bool)($options['excludeMyCompany'] ?? $this->excludeMyCompany);
 		$this->showPhones = (bool)($options['showPhones'] ?? $this->showPhones);
 		$this->showMails = (bool)($options['showMails'] ?? $this->showMails);
+		$this->hideReadMoreLink = (bool)($options['hideReadMoreLink'] ?? $this->hideReadMoreLink);
 		$this->setIdsForFilter($options['idsForFilterCompany'] ?? []);
 		$this->options['enableMyCompanyOnly'] = $this->enableMyCompanyOnly;
 		$this->options['excludeMyCompany'] = $this->excludeMyCompany;
 		$this->options['showPhones'] = $this->showPhones;
 		$this->options['showMails'] = $this->showMails;
+		$this->options['hideReadMoreLink'] = $this->hideReadMoreLink;
 	}
 
 	public function getRecentItemIds(string $context): array
@@ -129,6 +132,11 @@ class CompanyProvider extends EntityProvider
 	protected function getEntityInfo(int $entityId, bool $canReadItem): array
 	{
 		$entityInfo = parent::getEntityInfo($entityId, $canReadItem);
+
+		if ($this->hideReadMoreLink)
+		{
+			unset($entityInfo['url']);
+		}
 
 		if (!$this->showPhones && !$this->showMails)
 		{

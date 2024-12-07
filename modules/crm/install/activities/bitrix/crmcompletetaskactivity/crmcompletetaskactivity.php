@@ -149,7 +149,10 @@ class CBPCrmCompleteTaskActivity extends CBPActivity
 	protected function getItemStages(Bitrix\Crm\Item $item): array
 	{
 		$target = new \Bitrix\Crm\Automation\Target\ItemTarget($item->getEntityTypeId());
-		$target->setEntityById($item->getId());
+		$entityId = $item->getId();
+		$target->setEntityId($entityId);
+		$target->setDocumentId(\CCrmOwnerType::ResolveName($target->getEntityTypeId()) . '_' . $entityId);
+
 		return $target->getEntityStatuses();
 	}
 

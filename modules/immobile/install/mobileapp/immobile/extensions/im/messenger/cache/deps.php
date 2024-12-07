@@ -11,9 +11,6 @@ return [
 	],
 	'bundle' => [
 		'./src/shared-storage/base',
-		'./src/shared-storage/base-recent',
-		'./src/shared-storage/chat-recent',
-		'./src/shared-storage/copilot-recent',
 		'./src/shared-storage/draft',
 		'./src/native/share-dialog',
 		'./src/simple-wrapper/map-cache',

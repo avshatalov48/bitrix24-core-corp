@@ -98,6 +98,7 @@ jn.define('tasks/layout/task/fields/auditors', (require, exports, module) => {
 					multiple: true,
 					value: Object.keys(this.state.auditors),
 					config: {
+						canOpenUserList: true,
 						mode: UserFieldMode.ICONS,
 						useLettersForEmptyAvatar: true,
 						deepMergeStyles: this.props.deepMergeStyles,

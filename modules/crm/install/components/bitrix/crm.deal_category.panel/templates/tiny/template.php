@@ -22,6 +22,7 @@ Extension::load([
 	'main.popup',
 ]);
 
+$entityTypeId = CCrmOwnerType::Deal;
 $guid = $arResult['GUID'];
 $containerId = HtmlFilter::encode("{$guid}_container");
 $buttonId = HtmlFilter::encode("{$guid}_selector");
@@ -39,13 +40,17 @@ $menuItems = array_map(static function ($item)
 
 	return $item;
 }, $menuItems);
-$menuItems[] = [
-	'delimiter' => true,
-];
-$menuItems[] = [
-	'text' => Loc::getMessage('CRM_DEAL_CATEGORY_PANEL_TUNNELS2'),
-	'onclick' => new JsCode("BX.SidePanel.Instance.open('{$tunnelsUrl}', { cacheable: false, customLeftBoundary: 40, allowChangeHistory: false });")
-];
+
+if (Container::getInstance()->getUserPermissions()->isAdminForEntity($entityTypeId))
+{
+	$menuItems[] = [
+		'delimiter' => true,
+	];
+	$menuItems[] = [
+		'text' => Loc::getMessage('CRM_DEAL_CATEGORY_PANEL_TUNNELS2'),
+		'onclick' => new JsCode("BX.SidePanel.Instance.open('{$tunnelsUrl}', { cacheable: false, customLeftBoundary: 40, allowChangeHistory: false });")
+	];
+}
 
 $categoryButton = new Button([
 	'id' => $buttonId,

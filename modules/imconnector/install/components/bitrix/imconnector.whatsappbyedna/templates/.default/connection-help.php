@@ -9,7 +9,7 @@ use \Bitrix\Main\Localization\Loc;
 ?>
 <div class="imconnector-field-box">
 	<div class="imconnector-field-box-subtitle-darken">
-		<?=Loc::getMessage('IMCONNECTOR_COMPONENT_WHATSAPPBYEDNA_INSTRUCTION_TITLE' . $arResult['LOC_REGION_POSTFIX'])?>
+		<?=Loc::getMessage('IMCONNECTOR_COMPONENT_WHATSAPPBYEDNA_CONNECT_HELP_TITLE' . $arResult['LOC_REGION_POSTFIX'])?>
 	</div>
 	<div class="imconnector-field-button-box">
 		<div onclick="top.BX.Helper.show('<?=$arResult['HELPDESK_CODE']?>');"

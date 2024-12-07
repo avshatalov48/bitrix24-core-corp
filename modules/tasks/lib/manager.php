@@ -44,7 +44,7 @@ abstract class Manager
 			throw new \Bitrix\Main\SystemException('Cannot identify sub-entity code');
 		}
 
-		return ($prefix ? static::SE_PREFIX : '').ToUpper($class[count($class) - 1]);
+		return ($prefix ? static::SE_PREFIX : '').mb_strtoupper($class[count($class) - 1]);
 	}
 
 	protected static function getTask($userId, $taskId)

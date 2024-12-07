@@ -319,6 +319,21 @@ abstract class BaseMessage extends Base
 			return;
 		}
 
+		$settings = [
+			'FIELDS' => self::makeActivityFields($additionalFields),
+			'ORIGINAL_MESSAGE' => static::fetchOriginalMessageFields($id),
+		];
+
+		if (isset($additionalFields['ASSOCIATED_MESSAGE_TAG']))
+		{
+			$settings['ASSOCIATED_MESSAGE_TAG'] = $additionalFields['ASSOCIATED_MESSAGE_TAG'];
+		}
+
+		if (isset($additionalFields['ORIGINAL_TEMPLATE_ID']))
+		{
+			$settings['ORIGINAL_TEMPLATE_ID'] = $additionalFields['ORIGINAL_TEMPLATE_ID'];
+		}
+
 		static::addActivity(
 			[
 				'PROVIDER_TYPE_ID' => $additionalFields['ACTIVITY_PROVIDER_TYPE_ID'] ?? static::getDefaultTypeId(),
@@ -335,10 +350,7 @@ abstract class BaseMessage extends Base
 						'VALUE' => $additionalFields['MESSAGE_TO']
 					]
 				],
-				'SETTINGS' => [
-					'FIELDS' => self::makeActivityFields($additionalFields),
-					'ORIGINAL_MESSAGE' => static::fetchOriginalMessageFields($id),
-				],
+				'SETTINGS' => $settings,
 			]
 		);
 	}

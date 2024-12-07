@@ -9,7 +9,7 @@ if(isset($arResult["BLOCKS"]))
 if ($arResult["BLOCK"] !== "")
 {
 	$templateFolder = $this->GetFolder();
-	$folder = $templateFolder."/".ToLower($arResult["BLOCK"])."/";
+	$folder = $templateFolder."/".mb_strtolower($arResult["BLOCK"])."/";
 
 	$arResult["TEMPLATE_FOLDER"] = $folder;
     $arResult["TEMPLATE_DATA"] = $arParams["TEMPLATE_DATA"];

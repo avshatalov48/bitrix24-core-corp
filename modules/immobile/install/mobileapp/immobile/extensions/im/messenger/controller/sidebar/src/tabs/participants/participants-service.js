@@ -2,7 +2,6 @@
  * @module im/messenger/controller/sidebar/tabs/participants/participants-service
  */
 jn.define('im/messenger/controller/sidebar/tabs/participants/participants-service', (require, exports, module) => {
-	/* global PageManager */
 	const { Loc } = require('loc');
 	const { Type } = require('type');
 	const { Logger } = require('im/messenger/lib/logger');
@@ -183,6 +182,7 @@ jn.define('im/messenger/controller/sidebar/tabs/participants/participants-servic
 				isAdmin,
 				isYou,
 				isCopilot,
+				isSuperEllipseAvatar: this.isSuperEllipseAvatar(),
 			};
 		}
 
@@ -317,6 +317,11 @@ jn.define('im/messenger/controller/sidebar/tabs/participants/participants-servic
 			}
 
 			BX.onCustomEvent(EventType.dialog.external.mention, [userId, BBCode.user]);
+		}
+
+		isSuperEllipseAvatar()
+		{
+			return false;
 		}
 	}
 

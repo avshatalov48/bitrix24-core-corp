@@ -141,6 +141,27 @@ abstract class BaseObject extends Internals\Engine\Controller
 		);
 	}
 
+	protected function copyTo(Disk\BaseObject $object, Disk\Folder $toFolder)
+	{
+		$securityContext = $object->getStorage()->getSecurityContext($this->getCurrentUser()->getId());
+		if (!$object->canRead($securityContext) || !$toFolder->canAdd($securityContext))
+		{
+			$this->errorCollection[] = new Error(Loc::getMessage('DISK_ERROR_MESSAGE_DENIED'));
+
+			return null;
+		}
+
+		$copiedObject = $object->copyTo($toFolder, $this->getCurrentUser()->getId(), true);
+		if (!$copiedObject)
+		{
+			$this->errorCollection->add($object->getErrors());
+
+			return null;
+		}
+
+		return $this->get($copiedObject);
+	}
+
 	protected function move(Disk\BaseObject $object, Disk\Folder $toFolder)
 	{
 		$securityContext = $object->getStorage()->getSecurityContext($this->getCurrentUser()->getId());

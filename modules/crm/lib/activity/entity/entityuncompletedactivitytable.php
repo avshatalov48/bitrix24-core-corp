@@ -66,4 +66,18 @@ class EntityUncompletedActivityTable extends \Bitrix\Main\Entity\DataManager
 		;
 		Application::getConnection()->query($sql);
 	}
+
+	public static function deleteByIds(array $ids): void
+	{
+		if (empty($ids))
+		{
+			return;
+		}
+
+		$ids = array_map(fn(string $id): int => (int) $id, $ids);
+
+		$sql = sprintf("DELETE FROM b_crm_entity_uncompleted_act WHERE ID in (%s)", implode(',', $ids));
+
+		Application::getConnection()->query($sql);
+	}
 }

@@ -1,5 +1,6 @@
+import { init as initGridPanel } from 'crm.entity-list.panel';
 import { Router } from 'crm.router';
-import { SettingsButtonExtender } from 'crm.settings-button-extender';
+import { SettingsButtonExtender, type SettingsButtonExtenderParams } from 'crm.settings-button-extender';
 import { ajax as Ajax, Event, Loc, Reflection, Runtime, Text, Type, Uri } from 'main.core';
 import { BaseEvent, EventEmitter } from 'main.core.events';
 import { MessageBox, MessageBoxButtons } from 'ui.dialogs.messagebox';
@@ -12,17 +13,16 @@ class ItemListComponent
 	entityTypeId: number;
 	categoryId: number;
 	gridId: string;
+	progressBarContainerId: string;
 	grid: BX.Main.grid;
 	errorTextContainer: Element;
 	entityTypeName: string;
 	reloadGridTimeoutId: number;
 	exportPopups: Object;
 	#isIframe: boolean = false;
-	#smartActivityNotificationSupported: boolean = false;
 	// is the list is embedded in another entity detail tab
 	#isEmbedded: boolean = false;
-	#pingSettings: Object;
-	#aiAutostartSettings: ?string;
+	#settingsButtonExtenderParams: ?SettingsButtonExtenderParams;
 
 	constructor(params): void
 	{
@@ -32,12 +32,13 @@ class ItemListComponent
 			this.entityTypeId = Text.toInteger(params.entityTypeId);
 			this.entityTypeName = params.entityTypeName;
 			this.categoryId = Text.toInteger(params.categoryId);
-			this.#smartActivityNotificationSupported = Text.toBoolean(params.smartActivityNotificationSupported);
 
 			if (Type.isString(params.gridId))
 			{
 				this.gridId = params.gridId;
 			}
+			this.progressBarContainerId = String(params.progressBarContainerId);
+
 			if(this.gridId && BX.Main.grid && BX.Main.gridManager)
 			{
 				this.grid = BX.Main.gridManager.getInstanceById(this.gridId);
@@ -74,11 +75,10 @@ class ItemListComponent
 			{
 				this.#isEmbedded = params.isEmbedded;
 			}
-			if (Type.isPlainObject(params.pingSettings))
+			if (Type.isPlainObject(params.settingsButtonExtenderParams))
 			{
-				this.#pingSettings = params.pingSettings;
+				this.#settingsButtonExtenderParams = params.settingsButtonExtenderParams;
 			}
-			this.#aiAutostartSettings = Type.isString(params.aiAutostartSettings) ? params.aiAutostartSettings : null;
 		}
 
 		this.reloadGridTimeoutId = 0;
@@ -89,6 +89,7 @@ class ItemListComponent
 		this.bindEvents();
 
 		this.#initSettingsButtonExtender();
+		this.#initGridPanel();
 	}
 
 	bindEvents(): void
@@ -140,30 +141,7 @@ class ItemListComponent
 			this.reloadGridAfterTimeout();
 		});
 
-		EventEmitter.subscribe("onLocalStorageSet", (event) => {
-			const parameters = event.data;
-			if (!Type.isArray(parameters) || !parameters[0])
-			{
-				return;
-			}
-			const params = parameters[0];
-			const key = params.key || '';
-			if (key !== "onCrmEntityCreate" && key !== "onCrmEntityUpdate" && key !== "onCrmEntityDelete" && key !== "onCrmEntityConvert")
-			{
-				return;
-			}
-			const eventData = params.value;
-			if (!Type.isPlainObject(eventData))
-			{
-				return;
-			}
-			if (!this.entityTypeName || !eventData.entityTypeName)
-			{
-				return;
-			}
-
-			this.reloadGridAfterTimeout();
-		});
+		BX.Crm.EntityEvent.subscribeToEntityType(this.entityTypeId, () => this.reloadGridAfterTimeout());
 
 		const addItemButton = document.querySelector('[data-role="add-new-item-button-' + this.gridId + '"]');
 		if (addItemButton)
@@ -191,7 +169,7 @@ class ItemListComponent
 
 	#initSettingsButtonExtender(): void
 	{
-		if (this.#isIframe || this.#isEmbedded)
+		if (this.#isIframe || this.#isEmbedded || !this.#settingsButtonExtenderParams)
 		{
 			return;
 		}
@@ -207,17 +185,20 @@ class ItemListComponent
 		const settingsMenu = toolbar.getSettingsButton()?.getMenuWindow();
 		if (settingsMenu)
 		{
+			this.#settingsButtonExtenderParams.grid = this.grid;
+			this.#settingsButtonExtenderParams.rootMenu = settingsMenu;
+
 			/** @see BX.Crm.SettingsButtonExtender */
-			new SettingsButtonExtender({
-				smartActivityNotificationSupported: this.#smartActivityNotificationSupported,
-				entityTypeId: this.entityTypeId,
-				categoryId: this.categoryId,
-				aiAutostartSettings: this.#aiAutostartSettings,
-				pingSettings: this.#pingSettings,
-				rootMenu: settingsMenu,
-				grid: this.grid,
-			});
+			new SettingsButtonExtender(this.#settingsButtonExtenderParams);
 		}
+	}
+
+	#initGridPanel(): void
+	{
+		initGridPanel({
+			gridId: this.gridId,
+			progressBarContainerId: this.progressBarContainerId,
+		});
 	}
 
 	reloadGridAfterTimeout()

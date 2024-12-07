@@ -95,7 +95,7 @@ class Scalar implements \ArrayAccess
 
 	public function isCamelName($camelName)
 	{
-		return ToLower(str_replace('_', '', $this->name)) == ToLower(trim((string) $camelName));
+		return mb_strtolower(str_replace('_', '', $this->name)) == mb_strtolower(trim((string) $camelName));
 	}
 
 	public function setDBName($name)

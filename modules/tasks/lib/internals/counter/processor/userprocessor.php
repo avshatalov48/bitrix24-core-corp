@@ -98,9 +98,9 @@ class UserProcessor
 			$targetTasks = $this->getUserTasks();
 		}
 
-		if (count($targetTasks) > CounterController::STEP_LIMIT)
+		if (count($targetTasks) > CounterController::getStepLimit())
 		{
-			$chunks = array_chunk($targetTasks, CounterController::STEP_LIMIT);
+			$chunks = array_chunk($targetTasks, CounterController::getStepLimit());
 
 			/**
 			 * the first one will be return for immediately counting

@@ -25,12 +25,34 @@ jn.define('im/messenger/provider/rest/recent', (require, exports, module) => {
 				methodParams.ONLY_COPILOT = options.onlyCopilot ? 'Y' : 'N';
 			}
 
-			if (options.lastMessageDate)
+			if (options.lastActivityDate)
 			{
-				methodParams.LAST_MESSAGE_DATE = options.lastMessageDate;
+				methodParams.DATE_LAST_ACTIVITY = options.lastActivityDate;
 			}
 
 			return BX.rest.callMethod(RestMethod.imRecentList, methodParams);
+		}
+
+		getChannelList(options = {})
+		{
+			const methodParams = {};
+
+			if (Type.isNumber(options.limit))
+			{
+				methodParams.limit = options.limit;
+			}
+
+			if (Type.isPlainObject(options.filter))
+			{
+				methodParams.filter = {};
+
+				if (Type.isNumber(options.filter.lastMessageId))
+				{
+					methodParams.filter.lastMessageId = options.filter.lastMessageId;
+				}
+			}
+
+			return BX.rest.callMethod(RestMethod.imV2RecentChannelTail, methodParams);
 		}
 
 		pinChat(options = {})

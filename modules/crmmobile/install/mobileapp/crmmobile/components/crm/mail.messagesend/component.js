@@ -6,7 +6,7 @@
 
 	function buildContactSetForFields(contacts)
 	{
-		return contacts.map((item) => ({ value: item.email }));
+		return contacts.map((item) => ({ value: item.email, isEmailHidden: item.isEmailHidden }));
 	}
 
 	function buildContactListForBindings(contacts)

@@ -133,6 +133,10 @@ create table if not exists b_intranet_invitation (
 	INVITATION_TYPE varchar(50) null,
 	DATE_CREATE datetime not null,
 	INITIALIZED char(1) not null default 'N',
+    IS_MASS char(1) not null default 'N',
+    IS_DEPARTMENT char(1) not null default 'N',
+    IS_INTEGRATOR char(1) not null default 'N',
+    IS_REGISTER char(1) not null default 'N',
 
 	PRIMARY KEY(ID),
 	INDEX ix_intranet_invitation_created (DATE_CREATE),

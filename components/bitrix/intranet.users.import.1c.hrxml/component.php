@@ -127,8 +127,6 @@ ob_end_clean();
 
 if(!$bDesignMode)
 {
-	if(toUpper(LANG_CHARSET) != "UTF-8")
-		$contents = $APPLICATION->ConvertCharset($contents, LANG_CHARSET, "UTF-8");
 	header("Content-Type: text/html; charset=UTF-8");
 	echo $contents;
 	die();

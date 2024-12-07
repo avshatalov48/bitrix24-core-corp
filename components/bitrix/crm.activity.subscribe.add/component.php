@@ -89,7 +89,7 @@ if ($arResult['ENTITY_ID'] == 'all')
 			$arFilter['=ORIGINATOR_ID'] = $v !== '__INTERNAL' ? $v : null;
 			unset($arFilter[$k]);
 		}
-		elseif (preg_match('/(.*)_from$/i'.BX_UTF_PCRE_MODIFIER, $k, $arMatch))
+		elseif (preg_match('/(.*)_from$/iu', $k, $arMatch))
 		{
 			if($v <> '')
 			{
@@ -97,11 +97,11 @@ if ($arResult['ENTITY_ID'] == 'all')
 			}
 			unset($arFilter[$k]);
 		}
-		elseif (preg_match('/(.*)_to$/i'.BX_UTF_PCRE_MODIFIER, $k, $arMatch))
+		elseif (preg_match('/(.*)_to$/iu', $k, $arMatch))
 		{
 			if($v <> '')
 			{
-				if (($arMatch[1] == 'DATE_CREATE' || $arMatch[1] == 'DATE_MODIFY') && !preg_match('/\d{1,2}:\d{1,2}(:\d{1,2})?$/'.BX_UTF_PCRE_MODIFIER, $v))
+				if (($arMatch[1] == 'DATE_CREATE' || $arMatch[1] == 'DATE_MODIFY') && !preg_match('/\d{1,2}:\d{1,2}(:\d{1,2})?$/u', $v))
 				{
 					$v = CCrmDateTimeHelper::SetMaxDayTime($v);
 				}

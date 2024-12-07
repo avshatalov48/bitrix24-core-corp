@@ -10,25 +10,39 @@ jn.define('im/messenger/controller/dialog-creator/dialog-creator', (require, exp
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const { restManager } = require('im/messenger/lib/rest-manager');
-	const { RestMethod, DialogType, EventType, ComponentCode, BotCode } = require('im/messenger/const');
+	const {
+		RestMethod,
+		DialogType,
+		EventType,
+		ComponentCode,
+		BotCode,
+		Analytics,
+		OpenDialogContextType,
+	} = require('im/messenger/const');
 	const { Logger } = require('im/messenger/lib/logger');
+	const { AnalyticsEvent } = require('analytics');
+	const { CopilotRoleSelector } = require('layout/ui/copilot-role-selector');
+	const { ChannelCreator } = require('im/messenger/controller/channel-creator');
 
 	class DialogCreator
 	{
 		constructor(options = {})
 		{
 			this.store = serviceLocator.get('core').getStore();
+			this.messagerInitService = serviceLocator.get('messenger-init-service');
 			this.selector = () => {};
-			this.initRequests();
+			this.bindMethods();
+			this.subscribeInitMessengerEvent();
 		}
 
-		initRequests()
+		subscribeInitMessengerEvent()
 		{
-			restManager.on(
-				RestMethod.imUserGet,
-				{ ID: MessengerParams.getUserId() },
-				this.handleUserGet.bind(this),
-			);
+			this.messagerInitService.onInit(this.handleUserGet);
+		}
+
+		bindMethods()
+		{
+			this.handleUserGet = this.handleUserGet.bind(this);
 		}
 
 		open()
@@ -42,15 +56,68 @@ jn.define('im/messenger/controller/dialog-creator/dialog-creator', (require, exp
 			);
 		}
 
+		createChannelDialog()
+		{
+			ChannelCreator.open({
+				userList: this.prepareItems(this.getUserList()),
+				analytics: new AnalyticsEvent().setSection(Analytics.Section.channelTab),
+			});
+		}
+
 		createCopilotDialog()
+		{
+			this.sendAnalyticsStartCreateCopilotDialog();
+
+			CopilotRoleSelector.open({
+				showOpenFeedbackItem: true,
+				openWidgetConfig: {
+					backdrop: {
+						mediumPositionPercent: 75,
+						horizontalSwipeAllowed: false,
+						onlyMediumPosition: false,
+					},
+				},
+			})
+				.then((result) => {
+					Logger.log(`${this.constructor.name}.CopilotRoleSelector.result:`, result);
+					const fields = {
+						type: DialogType.copilot.toUpperCase(),
+					};
+
+					if (result?.role?.code)
+					{
+						fields.copilotMainRole = result?.role?.code;
+					}
+
+					this.callRestCreateCopilotDialog(fields);
+				})
+				.catch((error) => Logger.error(error));
+		}
+
+		sendAnalyticsStartCreateCopilotDialog()
+		{
+			try
+			{
+				const analytics = new AnalyticsEvent()
+					.setTool(Analytics.Tool.im)
+					.setCategory(Analytics.Category.copilot)
+					.setEvent(Analytics.Event.clickCreateNew)
+					.setType(Analytics.Type.copilot)
+					.setSection(Analytics.Section.copilotTab);
+
+				analytics.send();
+			}
+			catch (e)
+			{
+				console.error(`${this.constructor.name}.sendAnalyticsStartCreateCopilotDialog.catch:`, e);
+			}
+		}
+
+		callRestCreateCopilotDialog(fields)
 		{
 			BX.rest.callMethod(
 				RestMethod.imV2ChatAdd,
-				{
-					fields: {
-						type: DialogType.copilot.toUpperCase(),
-					},
-				},
+				{ fields },
 			).then((result) => {
 				const chatId = parseInt(result.data().chatId, 10);
 				if (chatId > 0)
@@ -59,22 +126,36 @@ jn.define('im/messenger/controller/dialog-creator/dialog-creator', (require, exp
 						() => {
 							MessengerEmitter.emit(
 								EventType.messenger.openDialog,
-								{ dialogId: `chat${chatId}` },
+								{
+									dialogId: `chat${chatId}`,
+									context: OpenDialogContextType.chatCreation,
+								},
 								ComponentCode.imCopilotMessenger,
 							);
+
+							const analytics = new AnalyticsEvent()
+								.setTool(Analytics.Tool.ai)
+								.setCategory(Analytics.Category.chatOperations)
+								.setEvent(Analytics.Event.createNewChat)
+								.setType(Analytics.Type.ai)
+								.setSection(Analytics.Section.copilotTab)
+								.setP3(Analytics.CopilotChatType.private)
+								.setP5(`chatId_${chatId}`);
+
+							analytics.send();
 						},
 						200,
 					);
 
 					if (result.answer.error || result.error())
 					{
-						Logger.error('DialogCreator.createCopilotDialog.error', result.error());
+						Logger.error(`${this.constructor.name}.callRestCreateCopilotDialog.result.error`, result.error());
 					}
 				}
 			})
 				.catch(
 					(err) => {
-						Logger.error(err);
+						Logger.error(`${this.constructor.name}.callRestCreateCopilotDialog.catch:`, err);
 					},
 				);
 		}
@@ -156,26 +237,20 @@ jn.define('im/messenger/controller/dialog-creator/dialog-creator', (require, exp
 					type: 'chats',
 					selected: false,
 					disable: false,
-					isPressed: true,
+					isWithPressed: true,
 				};
 			});
 		}
 
-		handleUserGet(response)
+		/**
+		 * @param {immobileTabChatLoadResult} data
+		 */
+		handleUserGet(data)
 		{
-			const error = response.error();
-			if (error)
+			if (data?.userData)
 			{
-				Logger.error('DialogCreator.handleUserGet', error);
-
-				return;
+				this.store.dispatch('usersModel/set', [data.userData]);
 			}
-
-			const currentUser = response.data();
-
-			Logger.info('DialogCreator.handleUserGet', currentUser);
-
-			this.store.dispatch('usersModel/set', [currentUser]);
 		}
 	}
 

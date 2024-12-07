@@ -1,8 +1,7 @@
-import {Popup} from 'main.popup';
-import {ajax, Cache, Event, Loc, Tag, Type} from 'main.core';
-import {BaseEvent, EventEmitter} from 'main.core.events';
-import {Editor} from './product.list.editor';
-import { StoreSlider } from 'catalog.store-use';
+import { Popup } from 'main.popup';
+import { ajax, Cache, Event, Loc, Tag, Type } from 'main.core';
+import { BaseEvent } from 'main.core.events';
+import { Editor } from './product.list.editor';
 
 export default class SettingsPopup
 {
@@ -97,18 +96,7 @@ export default class SettingsPopup
 
 		BX.UI.Hint.init(setting);
 
-		if (item.id === 'SLIDER')
-		{
-			Event.bind(setting, 'change', (event) =>
-			{
-				new StoreSlider().open(item.url, {})
-					.then(() => this.#editor.reloadGrid(false));
-			})
-		}
-		else
-		{
-			Event.bind(setting, 'change', this.#setSetting.bind(this));
-		}
+		Event.bind(setting, 'change', this.#setSetting.bind(this));
 
 		return setting;
 	}

@@ -2,12 +2,14 @@
 
 namespace Bitrix\Crm\Service\Sign;
 
+use Bitrix\Crm\Security\PermissionToken;
 use Bitrix\Main;
 use Bitrix\Crm;
+use Bitrix\Sign\Service\Container;
 
 class Requisite
 {
-	public static function getBannerData(Crm\FieldSet\Item $item, int $entityId): array
+	public static function getBannerData(Crm\FieldSet\Item $item, int $entityId, ?string $documentUid = null): array
 	{
 		$fields = [];
 		$presetId = $item->getRequisitePresetId();
@@ -69,6 +71,17 @@ class Requisite
 			}
 		}
 
+		$permissionToken =  PermissionToken::createEditMyCompanyRequisitesToken(
+			$item->getEntityTypeId(),
+			$entityId
+		);
+
+		$document = null;
+		if (Main\Loader::includeModule('sign') && $documentUid !== null)
+		{
+			$document = Container::instance()->getDocumentRepository()->getByUid($documentUid);
+		}
+
 		$rqEditUrl = "/bitrix/components/bitrix/crm.requisite.details/slider.ajax.php"
 			. "?requisite_id={$rqId}"
 			. "&pid={$presetId}"
@@ -87,6 +100,7 @@ class Requisite
 			$field['value'] = $value;
 			$field['valuePrintable'] = $value;
 			$fieldEntityTypeId = $field['editing']['entityTypeId'];
+			$field['permissionToken'] = $permissionToken;
 
 			if (!$fieldEntityTypeId)
 			{
@@ -97,9 +111,21 @@ class Requisite
 				($fieldEntityTypeId === \CCrmOwnerType::Requisite)
 					? $rqEditUrl
 					: Crm\Service\Container::getInstance()->getRouter()->getItemDetailUrl(
-					$fieldEntityTypeId,
-					$entityId
-				);
+						$fieldEntityTypeId,
+						$entityId
+					);
+
+			if ($fieldEntityTypeId === \CCrmOwnerType::Requisite)
+			{
+				$field['editing']['permissionToken'] = $permissionToken;
+			}
+
+			if ($fieldEntityTypeId === \CCrmOwnerType::Company)
+			{
+				$field['editing']['entityId'] = $entityId;
+				$field['editing']['documentEntityId'] = $document?->entityId;
+				$field['editing']['documentEntityTypeId'] = $document?->entityTypeId;
+			}
 
 			$fields[] = $field;
 		}

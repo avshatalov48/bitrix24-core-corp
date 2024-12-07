@@ -2,6 +2,7 @@
 
 return [
 	'extensions' => [
+		'feature',
 		'layout/ui/context-menu',
 		'layout/ui/kanban',
 		'layout/ui/kanban/toolbar',
@@ -12,7 +13,6 @@ return [
 		'statemanager/redux/connect',
 		'statemanager/redux/store',
 		'tasks:layout/dashboard/toolbar',
-		'tasks:core',
 		'tasks:enum',
 		'tasks:layout/simple-list/items',
 		'tasks:layout/simple-list/skeleton',

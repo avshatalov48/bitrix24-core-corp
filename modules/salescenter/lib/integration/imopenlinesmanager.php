@@ -20,6 +20,7 @@ use Bitrix\Main\Web\Uri;
 use Bitrix\Crm\Order\Order;
 use Bitrix\Crm\Order\Payment;
 use Bitrix\Crm;
+use Bitrix\Salescenter\Analytics;
 use Bitrix\SalesCenter\Driver;
 use Bitrix\SalesCenter\Model\Meta;
 use Bitrix\SalesCenter\Model\Page;
@@ -689,6 +690,8 @@ class ImOpenLinesManager extends Base
 			if ($resultSendMessage->isSuccess())
 			{
 				CrmManager::addTimelineEntryOnPaymentSend($payment, ['DESTINATION' => 'CHAT']);
+
+				self::addAnalyticsOnPaymentSend($payment);
 			}
 			else
 			{
@@ -904,6 +907,16 @@ class ImOpenLinesManager extends Base
 		}
 
 		return $result;
+	}
+
+	protected static function addAnalyticsOnPaymentSend(Payment $payment): void
+	{
+		$constructor = new Analytics\LabelConstructor();
+
+		$event = $constructor->getAnalyticsEventForPayment('payment_link_sent', $payment);
+		$event->setP1('provider_openlines');
+
+		$event->send();
 	}
 
 	protected function createImMessageForPaymentCheck(Payment $payment, string $url): string

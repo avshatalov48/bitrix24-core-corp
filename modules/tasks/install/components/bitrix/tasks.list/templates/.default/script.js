@@ -216,26 +216,6 @@ function isLeftClick(event)
 	return event.which == 1 || (event.which == 0 && BX.browser.IsIE());
 }
 
-function ShowPopupTask(taskId, e)
-{
-	// Don't use popups for iPad/iPhone
-	if (
-		(navigator.userAgent.match(/iPhone/i)) ||
- 		(navigator.userAgent.match(/iPad/i))
- 	)
-		return (false);
-
-	if(!e) e = window.event;
-
-	if (isLeftClick(e))
-	{
-		if (typeof(tasksIFrameList) == "undefined")
-			tasksIFrameList = [];
-		taskIFramePopup.view(taskId, tasksIFrameList);
-		BX.PreventDefault(e);
-	}
-}
-
 function AddQuickPopupTask(e, newTaskData)
 {
 	newTaskData = newTaskData || {};
@@ -252,128 +232,6 @@ function AddQuickPopupTask(e, newTaskData)
 	{
 		taskIFramePopup.edit(0, newTaskData);
 	}
-}
-
-
-function AddPopupTask(e, group_id)
-{
-	group_id = group_id || 0;
-
-	// Don't use popups for iPad/iPhone
-	if (
-		(navigator.userAgent.match(/iPhone/i)) ||
- 		(navigator.userAgent.match(/iPad/i))
- 	)
-		return (false);
-
-	if(!e) e = window.event;
-
-	if (isLeftClick(e))
-	{
-		var params = null;
-
-		if (group_id > 0)
-			params = { GROUP_ID: group_id };
-
-		taskIFramePopup.add(params);
-		BX.PreventDefault(e);
-	}
-}
-
-function EditPopupTask(taskId, e)
-{
-	// Don't use popups for iPad/iPhone
-	if (
-		(navigator.userAgent.match(/iPhone/i)) ||
- 		(navigator.userAgent.match(/iPad/i))
- 	)
-		return (false);
-
-	if(!e) e = window.event;
-
-	if (isLeftClick(e))
-	{
-		taskIFramePopup.edit(taskId);
-		BX.PreventDefault(e);
-	}
-}
-
-function AddPopupSubtask(taskId, e)
-{
-	// Don't use popups for iPad/iPhone
-	if (
-		(navigator.userAgent.match(/iPhone/i)) ||
- 		(navigator.userAgent.match(/iPad/i))
- 	)
-		return (false);
-
-	if(!e) e = window.event;
-
-	if (isLeftClick(e))
-	{
-		taskIFramePopup.add({PARENT_ID: taskId});
-		BX.PreventDefault(e);
-	}
-}
-
-function CopyPopupTask(taskId, e)
-{
-	debugger;
-	// Don't use popups for iPad/iPhone
-	if (
-		(navigator.userAgent.match(/iPhone/i)) ||
- 		(navigator.userAgent.match(/iPad/i))
- 	)
-		return (false);
-
-	if(!e) e = window.event;
-
-	if (isLeftClick(e))
-	{
-		taskIFramePopup.add({COPY: taskId});
-		BX.PreventDefault(e);
-	}
-}
-
-function AddPopupTemplateTask(templateId, e)
-{
-	// Don't use popups for iPad/iPhone
-	if (
-		(navigator.userAgent.match(/iPhone/i)) ||
- 		(navigator.userAgent.match(/iPad/i))
- 	)
-		return (false);
-
-	if(!e) e = window.event;
-
-	taskIFramePopup.add({TEMPLATE: templateId});
-
-	BX.PreventDefault(e);
-}
-
-function AddPopupTemplateSubtask(templateId, taskId, e)
-{
-	if(!e) e = window.event;
-
-	taskIFramePopup.add({TEMPLATE: templateId, PARENT_ID: taskId});
-
-	BX.PreventDefault(e);
-}
-
-function AddPopupGroupTask(groupId, e)
-{
-	// Don't use popups for iPad/iPhone
-	if (
-		(navigator.userAgent.match(/iPhone/i)) ||
- 		(navigator.userAgent.match(/iPad/i))
- 	)
-		return (false);
-
-	if(!e) e = window.event;
-
-	taskIFramePopup.add({GROUP_ID: groupId});
-
-	BX.PreventDefault(e);
 }
 
 function SetCSSStatus(element, status, prefix)
@@ -987,9 +845,4 @@ function __onPriorityChange()
 function tasksFormatDate(date)
 {
 	return BX.date.format(BX.date.convertBitrixFormat(BX.message('FORMAT_DATETIME')), date);
-}
-
-function onDetails(e)
-{
-	ShowPopupTask(this.id, e.event)
 }

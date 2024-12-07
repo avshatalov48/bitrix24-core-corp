@@ -22,6 +22,7 @@ use Bitrix\Tasks\TourGuide;
 use Bitrix\Tasks\UI;
 use Bitrix\Tasks\Util\Error\Collection;
 use Bitrix\Tasks\Util\User;
+use Bitrix\Tasks\Helper\Analytics;
 
 Loc::loadMessages(__FILE__);
 
@@ -243,83 +244,6 @@ class TasksProjectsComponent extends CBitrixComponent implements Controllerable
 		];
 	}
 
-	private function getGroups(): array
-	{
-		$nav = new PageNavigation('page');
-		$nav
-			->allowAllRecords(true)
-			->setPageSize(10)
-			->setCurrentPage($this->getCurrentPage())
-		;
-
-		$select = $this->getSelect();
-		$querySelect = $this->provider->prepareQuerySelect($select);
-
-		$query = $this->provider->getPrimaryProjectsQuery($querySelect);
-		$query = $this->filter->process($query);
-		$query
-			->setOrder($this->order->getOrder())
-			->setOffset($nav->getOffset())
-			->setLimit($nav->getLimit())
-			->countTotal(true)
-		;
-
-		$res = $query->exec();
-
-		$nav->setRecordCount($res->getCount());
-		$this->arResult['NAV'] = $nav;
-
-		$this->arResult['CURRENT_PAGE'] = $nav->getCurrentPage();
-		$this->arResult['ENABLE_NEXT_PAGE'] = (
-			($nav->getCurrentPage() * $nav->getPageSize() + 1) <= $nav->getRecordCount()
-		);
-
-		$groups = [];
-		while ($group = $res->fetch())
-		{
-			$groupId = $group['ID'];
-			$group['PATH'] = CComponentEngine::MakePathFromTemplate(
-				$this->arParams['PATH_TO_GROUP_TASKS'],
-				['group_id' => $groupId]
-			);
-
-			if ($this->arResult['isScrumList'])
-			{
-				$group['PATH'] = (new Uri($group['PATH']))->addParams([
-					'scrum' => 'Y'
-				])->getUri();
-			}
-
-			$groups[$groupId] = $group;
-		}
-
-		if (!empty($groups))
-		{
-			if (in_array('IMAGE_ID', $select, true))
-			{
-				$groups = $this->provider->fillAvatars($groups);
-			}
-			if (in_array('EFFICIENCY', $select, true))
-			{
-				$groups = $this->provider->fillEfficiencies($groups);
-			}
-			if (in_array('MEMBERS', $select, true))
-			{
-				$groups = $this->provider->fillMembers($groups);
-			}
-			if (in_array('TAGS', $select, true))
-			{
-				$groups = $this->provider->fillTags($groups);
-			}
-			if (in_array('COUNTERS', $select, true))
-			{
-				$groups = $this->provider->fillCounters($groups);
-			}
-		}
-
-		return $groups;
-	}
-
 	private function doPostAction(): void
 	{
 		if (!$this->request->isAjaxRequest())
@@ -371,12 +295,10 @@ class TasksProjectsComponent extends CBitrixComponent implements Controllerable
 
 			if ($showTour)
 			{
-				\Bitrix\Tasks\AnalyticLogger::logToFile(
-					'markShowedStep',
-					($this->arResult['isScrumList'] ? 'firstScrumCreation' : 'firstProjectCreation'),
-					'0',
-					'tourGuide'
-				);
+				$logger = Analytics::getInstance();
+				$this->arResult['isScrumList']
+					? $logger->onFirstScrumCreation()
+					: $logger->onFirstProjectCreation();
 			}
 		}
 	}
@@ -672,87 +594,6 @@ class TasksProjectsComponent extends CBitrixComponent implements Controllerable
 		}
 
 		return (new Bitrix\Tasks\Grid\Project\Grid($groups, $this->arParams))->prepareRows();
-	}
-
-	private function getGroupsData(array $groupIds, array $select): array
-	{
-		$groupIds = array_filter($groupIds, [__CLASS__, 'checkGroupId']);
-		if (empty($groupIds))
-		{
-			return [];
-		}
-
-		$groups = array_fill_keys($groupIds, false);
-
-		$querySelect = $this->provider->prepareQuerySelect($select);
-
-		$query = $this->provider->getPrimaryProjectsQuery($querySelect);
-		$query = $this->filter->process($query);
-		$query->whereIn('ID', $groupIds);
-
-		$result = $query->exec();
-		while ($group = $result->fetch())
-		{
-			$group['PATH'] = CComponentEngine::MakePathFromTemplate(
-				$this->arParams['PATH_TO_GROUP_TASKS'],
-				['group_id' => $group['ID']]
-			);
-			$groups[$group['ID']] = $group;
-		}
-
-		return $groups;
-	}
-
-	public function findProjectPlaceAction(int $groupId, int $currentPage): ?array
-	{
-		if (!$this->checkRequirementsForAjaxCalls())
-		{
-			return null;
-		}
-
-		if (!$this->checkGroupId($groupId))
-		{
-			return null;
-		}
-
-		$this->initForAjaxCalls();
-
-		$select = $this->provider->prepareQuerySelect($this->getSelect());
-
-		$query = $this->provider->getPrimaryProjectsQuery($select);
-		$query = $this->filter->process($query);
-		$query
-			->setSelect([
-				'ID',
-				'ACTIVITY_DATE',
-				new ExpressionField(
-					'IS_PINNED',
-					ProjectUserOptionTable::getSelectExpression(
-						$this->arParams['USER_ID'],
-						UserOptionTypeDictionary::OPTION_PINNED
-					),
-					['ID', 'UG.USER_ID']
-				)
-			])
-			->setOrder($this->order->getOrder())
-			->setLimit($currentPage * 10)
-		;
-
-		$projects = $query->exec()->fetchAll();
-		$projects = array_map('intval', array_column($projects, 'ID'));
-
-		if (empty($projects) || ($index = array_search($groupId, $projects, true)) === false)
-		{
-			return [
-				'projectBefore' => false,
-				'projectAfter' => false,
-			];
-		}
-
-		return [
-			'projectBefore' => ($index === 0 ? 0 : $projects[$index - 1]),
-			'projectAfter' => ($index === count($projects) - 1 ? 0 : $projects[$index + 1]),
-		];
 	}
 
 	private function checkGroupId(int $groupId): bool

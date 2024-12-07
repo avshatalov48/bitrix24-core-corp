@@ -108,7 +108,7 @@ class Input
 
 			if (
 				empty($connector)
-				&& Connector::isConnector($connector)
+				|| !Connector::isConnector($connector)
 			)
 			{
 				$result->addError(new Error(
@@ -319,7 +319,9 @@ class Input
 				$result->addErrors($resultEvent->getErrors());
 			}
 
-			$result->setResult(array_merge($message, $result->getResult()));
+			$resultData = array_merge($message, $result->getResult());
+			$resultData['eventResult'] = $resultEvent->getResult();
+			$result->setResult($resultData);
 		}
 
 		return $result;

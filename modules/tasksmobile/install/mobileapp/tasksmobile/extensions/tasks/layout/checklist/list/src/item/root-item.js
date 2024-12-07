@@ -4,6 +4,7 @@
 jn.define('tasks/layout/checklist/list/src/root-item', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const { Indent, Color } = require('tokens');
+	const { Text5 } = require('ui-system/typography/text');
 	const { BaseChecklistItem } = require('tasks/layout/checklist/list/src/base-item');
 
 	const FOCUS = 'focus';
@@ -14,52 +15,65 @@ jn.define('tasks/layout/checklist/list/src/root-item', (require, exports, module
 	 */
 	class RootChecklistItem extends BaseChecklistItem
 	{
+		constructor(props)
+		{
+			super(props);
+
+			const { item } = props;
+
+			this.prevTitle = item.getTitle();
+		}
+
 		render()
 		{
-			return this.renderContent([
-				View(
-					{
-						testId: 'checklist_root_title',
-						style: {
-							flexDirection: 'column',
-						},
-					},
+			return this.renderContent({
+				children: [
 					View(
 						{
+							testId: 'checklist_root_title',
 							style: {
-								flexDirection: 'row',
-								alignItems: 'flex-start',
-							},
-							onClick: () => {
-								this.textInputFocus();
+								flexDirection: 'column',
 							},
 						},
-						this.renderTextField(),
+						View(
+							{
+								style: {
+									flexDirection: 'row',
+									alignItems: 'flex-start',
+								},
+								onClick: () => {
+									this.textInputFocus();
+								},
+							},
+							this.renderTextField(),
+						),
+						this.renderDescription(),
 					),
-					this.renderDescription(),
-				),
-			]);
+				],
+			});
 		}
 
 		renderDescription()
 		{
 			const { item } = this.props;
-
-			const getCompleteCount = `${item.countCompletedCount(true)}/${item.getDescendantsCount(true)}`;
+			const completedCount = item.getCompletedCount();
+			const totalCount = item.getTotalCount();
 
 			return View(
 				{
 					testId: 'checklist_items_count',
 					style: {
-						marginTop: Indent.S,
+						marginTop: Indent.S.toNumber(),
 					},
 				},
-				Text({
+				Text5({
 					style: {
-						fontSize: 12,
-						color: Color.base3,
+						color: Color.base3.toHex(),
 					},
-					text: `${getCompleteCount} ${Loc.getMessage('TASKSMOBILE_LAYOUT_CHECKLIST_DONE')}`,
+					text: Loc.getMessage('TASKSMOBILE_LAYOUT_CHECKLIST_DONE_MSGVER_1', {
+						'#COMPLETED#': completedCount,
+						'#TOTAL#': totalCount,
+					}),
 				}),
 			);
 		}
@@ -67,8 +81,8 @@ jn.define('tasks/layout/checklist/list/src/root-item', (require, exports, module
 		getTextFieldStyle()
 		{
 			return {
-				fontWeight: '500',
-				color: Color.base1,
+				textSize: 2,
+				header: true,
 			};
 		}
 
@@ -78,16 +92,7 @@ jn.define('tasks/layout/checklist/list/src/root-item', (require, exports, module
 		 */
 		getPlaceholder(item)
 		{
-			return item.getPrevTitle() || Loc.getMessage('TASKSMOBILE_LAYOUT_LIST_INPUT_PLACEHOLDER');
-		}
-
-		handleOnChangeTitle(title)
-		{
-			const { item } = this.props;
-
-			item.setTitle(title);
-			item.setIsNew(false);
-			this.handleOnChange();
+			return this.#getPrevTitle() || Loc.getMessage('TASKSMOBILE_LAYOUT_LIST_INPUT_PLACEHOLDER');
 		}
 
 		handleOnBlur()
@@ -116,7 +121,7 @@ jn.define('tasks/layout/checklist/list/src/root-item', (require, exports, module
 		handleOnSubmit()
 		{
 			const { item } = this.props;
-			if (item.getDescendantsCount() > 0)
+			if (item.getTotalCount() > 0)
 			{
 				this.textInputBlur();
 
@@ -126,16 +131,28 @@ jn.define('tasks/layout/checklist/list/src/root-item', (require, exports, module
 			super.handleOnSubmit();
 		}
 
+		handleOnChangeTitle(title)
+		{
+			if (this.isDefaultChecklistTitle(this.#getPrevTitle()) && !title)
+			{
+				return;
+			}
+
+			super.handleOnChangeTitle(title);
+		}
+
 		toggleChecklistRootTitle(item, action)
 		{
+			const title = item.getTitle();
 			if (action === FOCUS && this.isDefaultChecklistTitle(item.getTitle()))
 			{
-				this.clearText(item);
+				this.#setPrevTitle(title);
+				this.#clearText(item);
 			}
 			else if (action === BLUR && !item.hasItemTitle())
 			{
-				item.setTitle(item.getPrevTitle());
-				this.textRef.reload();
+				item.setTitle(this.#getPrevTitle());
+				this.toggleCompleteText();
 			}
 		}
 
@@ -144,6 +161,25 @@ jn.define('tasks/layout/checklist/list/src/root-item', (require, exports, module
 			const regex = new RegExp(`^${Loc.getMessage('TASKSMOBILE_LAYOUT_CHECKLIST_STUB_TEXT').toLowerCase()}(\\s\\d+)?$`);
 
 			return regex.test(value.trim().toLowerCase());
+		}
+
+		#clearText(item)
+		{
+			if (item.getTitle())
+			{
+				item.setTitle('');
+				this.textRef.clear();
+			}
+		}
+
+		#getPrevTitle()
+		{
+			return this.prevTitle;
+		}
+
+		#setPrevTitle(title)
+		{
+			this.prevTitle = title;
 		}
 	}
 

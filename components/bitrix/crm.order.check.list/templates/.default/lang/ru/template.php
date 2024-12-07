@@ -13,4 +13,6 @@ $MESS["CRM_ORDER_CHECK_CHECK_STATUS"] = "Обновить статус";
 $MESS["CRM_ORDER_CHECK_URL"] = "Ссылка на чек";
 $MESS["CRM_ORDER_CHECK_DELETE_TITLE"] = "Удалить чек";
 $MESS["CRM_ORDER_CHECK_DELETE"] = "Удалить";
+$MESS["CRM_ORDER_CHECK_REPRINT_TITLE"] = "Напечатать чек повторно";
+$MESS["CRM_ORDER_CHECK_REPRINT"] = "Напечатать повторно";
 $MESS["CRM_ORDER_CHECK_DELETE_CONFIRM"] = "Вы уверены, что хотите удалить?";

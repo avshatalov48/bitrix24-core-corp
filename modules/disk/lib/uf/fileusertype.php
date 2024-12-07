@@ -548,6 +548,11 @@ final class FileUserType
 		$userFieldManager = Driver::getInstance()->getUserFieldManager();
 		$errors = [];
 
+		if ($value === '')
+		{
+			return [];
+		}
+
 		[$type, $realValue] = self::detectType($value);
 
 		if ($type === self::TYPE_ALREADY_ATTACHED)

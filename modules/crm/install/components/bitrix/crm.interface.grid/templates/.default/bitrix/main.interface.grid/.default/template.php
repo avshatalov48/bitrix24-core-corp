@@ -221,7 +221,7 @@ else: //!empty($arParams["ROWS"])
 						<?$buttonID = mb_strtolower($arParams["GRID_ID"])."_row_count_button";?>
 						<td id="<?=$wrapperID?>">
 							<?=$footer["title"]?>: <a id="<?=$buttonID?>" href="#"><?=$footer["show_row_count"]?></a>
-							<script type="text/javascript">
+							<script>
 								BX.ready(
 									function()
 									{
@@ -683,7 +683,7 @@ $variables = array(
 );
 ?>
 
-<script type="text/javascript">
+<script>
 var settingsDialog<?=$arParams["GRID_ID"]?>;
 var viewsDialog<?=$arParams["GRID_ID"]?>;
 var filtersDialog<?=$arParams["GRID_ID"]?>;
@@ -789,7 +789,7 @@ bxGrid_<?=$arParams["GRID_ID"]?>.initEventParams = <?=CUtil::PhpToJSObject($arPa
 ?>
 </script>
 
-<script type="text/javascript">
+<script>
 	BX.ready(function() {
 		bxGrid_<?=$arParams["GRID_ID"]?>.InitTable();
 	});
@@ -804,7 +804,7 @@ if (is_array($ajaxLoaderParams))
 		$ajaxLoaderParams['url'] = $arResult["CURRENT_URL"];
 	}
 	$ajaxLoaderParams['ajaxId'] = $arParams["AJAX_ID"];
-	?><script type="text/javascript">
+	?><script>
 		BX.ready(
 			function()
 			{
@@ -825,7 +825,7 @@ if (is_array($managerConfig)):
 	if ($managerID === '')
 		$managerID = $arParams["GRID_ID"]."_MANAGER";
 ?>
-<script type="text/javascript">
+<script>
 	BX.ready(
 		function()
 		{

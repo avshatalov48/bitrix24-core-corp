@@ -62,6 +62,7 @@ $MESS["MENU_MY_WORKGROUPS"] = "My groups";
 $MESS["MENU_MY_WORKGROUPS_EXTRANET"] = "Extranet";
 $MESS["MENU_MY_WORKGROUPS_FAVORITES"] = "Favorites";
 $MESS["MENU_OPEN_IN_NEW_PAGE"] = "Open in new tab";
+$MESS["MENU_OPEN_SETTINGS_MAIN_PAGE"] = "Edit start page preferences";
 $MESS["MENU_PRESET_CRM_DESC1"] = "Automate sales";
 $MESS["MENU_PRESET_CRM_DESC2"] = "improve conversions and communicate with customers";
 $MESS["MENU_PRESET_CRM_DESC11"] = "Automate sales";

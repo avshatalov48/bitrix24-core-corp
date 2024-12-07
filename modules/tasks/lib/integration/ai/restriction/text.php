@@ -9,12 +9,7 @@ class Text extends Restriction
 {
 	public function isChecklistAvailable(): bool
 	{
-		if (!$this->engineAvailable)
-		{
-			return false;
-		}
-
-		return Main\Config\Option::get('main', 'bitrix:main.post.form:Copilot', 'N') === 'Y';
+		return $this->engineAvailable;
 	}
 
 	protected function getType(): string

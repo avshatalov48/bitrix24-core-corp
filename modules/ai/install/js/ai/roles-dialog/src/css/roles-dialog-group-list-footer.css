@@ -1,0 +1,29 @@
+.ai__roles-dialog_standard-group-btn {
+	width: 100%;
+	min-height: 54px;
+	padding: 12px;
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: center;
+	border-radius: var(--ui-border-radius-md);
+	background-color: rgba(var(--ui-color-on-primary-rgb), 0.8);
+	border: none;
+	outline: none;
+	cursor: pointer;
+	transition: background-color 0.2s linear;
+	color: var(--ui-color-copilot-primary, #8E52EC);
+}
+
+.ai__roles-dialog_standard-group-btn:hover {
+	color: var(--ui-color-copilot-dark, #682AC6);
+	background-color: rgba(var(--ui-color-on-primary-rgb), 1);
+	transition-duration: 0s;
+}
+
+.ai__roles-dialog_standard-group-btn-text {
+	font-size: var(--ui-font-size-md);
+	font-weight: var(--ui-font-weight-semi-bold);
+	line-height: var(--ui-font-line-height-2xs);
+	letter-spacing: 0;
+}

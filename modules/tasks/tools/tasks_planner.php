@@ -7,8 +7,6 @@ require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_bef
 
 if (check_bitrix_sessid() && CModule::IncludeModule('tasks'))
 {
-	CUtil::JSPostUnescape();
-
 	$action = $_REQUEST['action'];
 	$site_id = $_REQUEST['site_id'];
 

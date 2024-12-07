@@ -1,5 +1,7 @@
 <?php
 
+use Bitrix\Crm\Entity\EntityEditorConfigScope;
+
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 {
 	die();
@@ -36,6 +38,11 @@ class CrmTimelineMenuBarComponent extends \CBitrixComponent
 		$this->arResult['entityId'] = $this->entityId;
 		$this->arResult['entityCategoryId'] = $this->entityCategoryId;
 		$this->arResult['isReadonly'] = $this->isReadonly;
+		$this->arResult['editMode'] = $this->getEditMode();
+		$this->arResult['extras'] = [
+			'isMyCompany' => ($this->arParams['EXTRAS']['IS_MY_COMPANY'] ?? 'N') === 'Y',
+			'analytics' => $this->arParams['EXTRAS']['ANALYTICS'] ?? [],
+		];
 	}
 
 	public function executeComponent()
@@ -65,5 +72,23 @@ class CrmTimelineMenuBarComponent extends \CBitrixComponent
 		$this->arResult['items'] = $repo->getAvailableItems();
 
 		$this->includeComponentTemplate();
+	}
+
+	protected function getEditMode(): bool|string
+	{
+		$entityConfigScope = $this->arParams['ENTITY_CONFIG_SCOPE'] ?? EntityEditorConfigScope::UNDEFINED;
+		$allowMoveItems = $this->arParams['ALLOW_MOVE_ITEMS'] ?? false;
+
+		if ($entityConfigScope === EntityEditorConfigScope::PERSONAL)
+		{
+			return true;
+		}
+
+		if ($allowMoveItems === true)
+		{
+			return 'common';
+		}
+
+		return false;
 	}
 }

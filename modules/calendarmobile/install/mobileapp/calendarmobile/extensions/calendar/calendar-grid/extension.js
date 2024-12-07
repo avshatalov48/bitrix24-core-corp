@@ -5,6 +5,7 @@ jn.define('calendar/calendar-grid', (require, exports, module) => {
 	const AppTheme = require('apptheme');
 	const { PureComponent } = require('layout/pure-component');
 	const { DateHelper } = require('calendar/date-helper');
+	const { Color } = require('tokens');
 
 	/**
 	 * @class CalendarGrid
@@ -27,7 +28,7 @@ jn.define('calendar/calendar-grid', (require, exports, module) => {
 			return CalendarView(
 				{
 					style: {
-						backgroundColor: AppTheme.colors.bgNavigation,
+						backgroundColor: Color.bgNavigation.toHex(),
 					},
 					textStyle: {
 						today: {
@@ -35,7 +36,7 @@ jn.define('calendar/calendar-grid', (require, exports, module) => {
 						},
 						todaySelected: {
 							backgroundColor: AppTheme.colors.base1,
-							textColor: AppTheme.colors.bgNavigation,
+							textColor: Color.bgNavigation.toHex(),
 						},
 						currentWeekNumber: {
 							textColor: AppTheme.colors.accentBrandBlue,

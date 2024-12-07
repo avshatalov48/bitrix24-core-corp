@@ -2,13 +2,21 @@
  * @module tasks/statemanager/redux/slices/tasks/extra-reducer
  */
 jn.define('tasks/statemanager/redux/slices/tasks/extra-reducer', (require, exports, module) => {
-	const { TaskFilter } = require('tasks/filter/task');
+	const { TasksDashboardFilter } = require('tasks/dashboard/filter');
 	const { FieldChangeRegistry } = require('tasks/statemanager/redux/slices/tasks/field-change-registry');
 	const { tasksAdapter } = require('tasks/statemanager/redux/slices/tasks/meta');
 	const { TaskModel } = require('tasks/statemanager/redux/slices/tasks/model/task');
 	const { TaskStatus } = require('tasks/enum');
-	const { selectIsExpired, selectIsMember, selectCounter } = require('tasks/statemanager/redux/slices/tasks/selector');
+	const {
+		selectIsExpired,
+		selectIsMember,
+		selectCounter,
+		selectIsPureCreator,
+		selectIsCreator,
+	} = require('tasks/statemanager/redux/slices/tasks/selector');
 	const { isEqual } = require('utils/object');
+	const { Type } = require('type');
+	const { Views } = require('tasks/statemanager/redux/types');
 
 	/**
 	 * @param {Object} state
@@ -40,11 +48,11 @@ jn.define('tasks/statemanager/redux/slices/tasks/extra-reducer', (require, expor
 	 * @param {TaskReduxModel} newTaskState
 	 */
 	const processFieldChanges = (requestId, oldTaskState, newTaskState) => {
-		const changedFields = [];
+		const changedFields = {};
 		Object.keys(newTaskState).forEach((field) => {
 			if (newTaskState[field] !== oldTaskState[field])
 			{
-				changedFields.push(field);
+				changedFields[field] = oldTaskState[field];
 			}
 		});
 		FieldChangeRegistry.registerFieldsChange(requestId, newTaskState.id, changedFields);
@@ -52,7 +60,7 @@ jn.define('tasks/statemanager/redux/slices/tasks/extra-reducer', (require, expor
 		const oldCounter = selectCounter(oldTaskState).value;
 		const newCounter = selectCounter(newTaskState).value;
 
-		const isMuteChanged = changedFields.includes('isMuted');
+		const isMuteChanged = Object.keys(changedFields).includes('isMuted');
 		const isParticipationChanged = selectIsMember(oldTaskState) !== selectIsMember(newTaskState);
 		// we need to register counter changes only for tasks included in common counter
 		const isIncludedInCommonCounter = (
@@ -64,6 +72,60 @@ jn.define('tasks/statemanager/redux/slices/tasks/extra-reducer', (require, expor
 		{
 			FieldChangeRegistry.registerCounterChange(requestId, newCounter - oldCounter);
 		}
+	};
+
+	const createPending = (state, action) => {
+		const { reduxFields } = action.meta.arg;
+
+		return tasksAdapter.upsertOne(state, { ...TaskModel.getDefaultReduxTask(), ...reduxFields });
+	};
+
+	const prepareUpdateNewState = (oldTaskState, reduxFields) => {
+		const newTaskState = {
+			...oldTaskState,
+			...reduxFields,
+		};
+
+		if (
+			newTaskState.creator === oldTaskState.creator
+			&& newTaskState.responsible !== oldTaskState.responsible
+			&& !newTaskState.auditors.includes(oldTaskState.responsible)
+		)
+		{
+			newTaskState.auditors = [...newTaskState.auditors, oldTaskState.responsible];
+		}
+
+		return prepareNewReduxState(newTaskState);
+	};
+
+	const updatePending = (state, action) => {
+		const { taskId, reduxFields } = action.meta.arg;
+
+		const oldTaskState = state.entities[taskId];
+		if (oldTaskState)
+		{
+			const newTaskState = prepareUpdateNewState(oldTaskState, reduxFields);
+
+			upsertOne(state, action, oldTaskState, newTaskState);
+		}
+	};
+
+	const prepareNewReduxState = (reduxFields) => {
+		const preparedFields = { ...reduxFields };
+
+		if (preparedFields.accomplices?.length > 0)
+		{
+			preparedFields.accomplices = preparedFields.accomplices.map((userId) => Number(userId));
+			preparedFields.accomplices.sort((a, b) => a - b);
+		}
+
+		if (preparedFields.auditors?.length > 0)
+		{
+			preparedFields.auditors = preparedFields.auditors.map((userId) => Number(userId));
+			preparedFields.auditors.sort((a, b) => a - b);
+		}
+
+		return preparedFields;
 	};
 
 	const prepareUpdateDeadlineNewState = (oldTaskState, deadline, activityDate = Date.now()) => ({
@@ -87,6 +149,11 @@ jn.define('tasks/statemanager/redux/slices/tasks/extra-reducer', (require, expor
 	const prepareDelegateNewState = (oldTaskState, responsible, activityDate = Date.now()) => ({
 		...oldTaskState,
 		responsible,
+		auditors: (
+			oldTaskState.auditors.includes(oldTaskState.responsible)
+				? oldTaskState.auditors
+				: [...oldTaskState.auditors, oldTaskState.responsible]
+		),
 		activityDate: Math.ceil(activityDate / 1000),
 		isConsideredForCounterChange: true,
 	});
@@ -100,11 +167,34 @@ jn.define('tasks/statemanager/redux/slices/tasks/extra-reducer', (require, expor
 		upsertOne(state, action, oldTaskState, newTaskState);
 	};
 
-	const prepareUnfollowNewState = (oldTaskState) => ({
-		...oldTaskState,
-		auditors: oldTaskState.auditors.filter((userId) => userId !== Number(env.userId)),
-		isConsideredForCounterChange: true,
-	});
+	const prepareFollowNewState = (oldTaskState) => {
+		const newTaskState = {
+			...oldTaskState,
+			auditors: [...oldTaskState.auditors, Number(env.userId)],
+			isConsideredForCounterChange: true,
+		};
+
+		return prepareNewReduxState(newTaskState);
+	};
+
+	const followPending = (state, action) => {
+		const { taskId } = action.meta.arg;
+
+		const oldTaskState = state.entities[taskId];
+		const newTaskState = prepareFollowNewState(oldTaskState);
+
+		upsertOne(state, action, oldTaskState, newTaskState);
+	};
+
+	const prepareUnfollowNewState = (oldTaskState) => {
+		const newTaskState = ({
+			...oldTaskState,
+			auditors: oldTaskState.auditors.filter((userId) => userId !== Number(env.userId)),
+			isConsideredForCounterChange: true,
+		});
+
+		return prepareNewReduxState(newTaskState);
+	};
 
 	const unfollowPending = (state, action) => {
 		const { taskId } = action.meta.arg;
@@ -148,6 +238,7 @@ jn.define('tasks/statemanager/redux/slices/tasks/extra-reducer', (require, expor
 		status: TaskStatus.IN_PROGRESS,
 		canStart: false,
 		canPause: true,
+		canDefer: false,
 	});
 
 	const startPending = (state, action) => {
@@ -164,6 +255,7 @@ jn.define('tasks/statemanager/redux/slices/tasks/extra-reducer', (require, expor
 		status: TaskStatus.PENDING,
 		canStart: true,
 		canPause: false,
+		canDefer: true,
 	});
 
 	const pausePending = (state, action) => {
@@ -175,17 +267,26 @@ jn.define('tasks/statemanager/redux/slices/tasks/extra-reducer', (require, expor
 		upsertOne(state, action, oldTaskState, newTaskState);
 	};
 
-	const prepareCompleteNewState = (oldTaskState, activityDate = Date.now()) => ({
-		...oldTaskState,
-		activityDate: Math.ceil(activityDate / 1000),
-		status: TaskStatus.COMPLETED,
-		canUseTimer: false,
-		canStart: false,
-		canPause: false,
-		canRenew: true,
-		canComplete: false,
-		isConsideredForCounterChange: true,
-	});
+	const prepareCompleteNewState = (oldTaskState, activityDate = Date.now()) => {
+		let status = TaskStatus.COMPLETED;
+
+		if (oldTaskState.allowTaskControl && !selectIsPureCreator(oldTaskState))
+		{
+			status = TaskStatus.SUPPOSEDLY_COMPLETED;
+		}
+
+		return {
+			...oldTaskState,
+			activityDate: Math.ceil(activityDate / 1000),
+			status,
+			canUseTimer: false,
+			canStart: false,
+			canPause: false,
+			canRenew: true,
+			canComplete: false,
+			isConsideredForCounterChange: true,
+		};
+	};
 
 	const completePending = (state, action) => {
 		const { taskId } = action.meta.arg;
@@ -193,7 +294,7 @@ jn.define('tasks/statemanager/redux/slices/tasks/extra-reducer', (require, expor
 		const oldTaskState = state.entities[taskId];
 		const newTaskState = prepareCompleteNewState(oldTaskState);
 
-		if (!oldTaskState.isResultRequired || oldTaskState.isOpenResultExists)
+		if (selectIsCreator(newTaskState) || !oldTaskState.isResultRequired || oldTaskState.isOpenResultExists)
 		{
 			upsertOne(state, action, oldTaskState, newTaskState);
 		}
@@ -206,6 +307,7 @@ jn.define('tasks/statemanager/redux/slices/tasks/extra-reducer', (require, expor
 		canStart: true,
 		canRenew: false,
 		canComplete: true,
+		canDefer: true,
 		isConsideredForCounterChange: true,
 	});
 
@@ -214,6 +316,26 @@ jn.define('tasks/statemanager/redux/slices/tasks/extra-reducer', (require, expor
 
 		const oldTaskState = state.entities[taskId];
 		const newTaskState = prepareRenewNewState(oldTaskState);
+
+		upsertOne(state, action, oldTaskState, newTaskState);
+	};
+
+	const prepareDeferNewState = (oldTaskState, activityDate = Date.now()) => ({
+		...oldTaskState,
+		activityDate: Math.ceil(activityDate / 1000),
+		status: TaskStatus.DEFERRED,
+		canStart: false,
+		canRenew: true,
+		canComplete: true,
+		canDefer: false,
+		isConsideredForCounterChange: true,
+	});
+
+	const deferPending = (state, action) => {
+		const { taskId } = action.meta.arg;
+
+		const oldTaskState = state.entities[taskId];
+		const newTaskState = prepareDeferNewState(oldTaskState);
 
 		upsertOne(state, action, oldTaskState, newTaskState);
 	};
@@ -392,11 +514,11 @@ jn.define('tasks/statemanager/redux/slices/tasks/extra-reducer', (require, expor
 			const isAccomplice = task.accomplices.includes(userId);
 			const isAuditor = task.auditors.includes(userId);
 			const roleMap = {
-				[TaskFilter.roleType.all]: (isCreator || isResponsible || isAccomplice || isAuditor),
-				[TaskFilter.roleType.originator]: isCreator,
-				[TaskFilter.roleType.responsible]: isResponsible,
-				[TaskFilter.roleType.accomplice]: isAccomplice,
-				[TaskFilter.roleType.auditor]: isAuditor,
+				[TasksDashboardFilter.roleType.all]: (isCreator || isResponsible || isAccomplice || isAuditor),
+				[TasksDashboardFilter.roleType.originator]: isCreator,
+				[TasksDashboardFilter.roleType.responsible]: isResponsible,
+				[TasksDashboardFilter.roleType.accomplice]: isAccomplice,
+				[TasksDashboardFilter.roleType.auditor]: isAuditor,
 			};
 
 			return roleMap[role];
@@ -415,6 +537,182 @@ jn.define('tasks/statemanager/redux/slices/tasks/extra-reducer', (require, expor
 		upsertMany(state, action, oldTaskStates, newTaskStates);
 	};
 
+	const updateSubTasksPending = (state, action) => {
+		const { parentId, newSubTasks, deletedSubTasks } = action.meta.arg;
+
+		// Prepare old and new states for new subtasks
+		const oldNewSubTaskStates = newSubTasks.map((subTaskId) => state.entities[subTaskId]).filter(Boolean);
+		const newNewSubTaskStates = newSubTasks.map((subTaskId) => {
+			const subTask = state.entities[subTaskId];
+
+			return subTask ? { ...subTask, parentId } : null;
+		}).filter(Boolean);
+
+		// Prepare old and new states for deleted subtasks
+		const oldDeletedSubTaskStates = deletedSubTasks.map((subTaskId) => state.entities[subTaskId]);
+		const newDeletedSubTaskStates = deletedSubTasks.map((subTaskId) => {
+			const subTask = state.entities[subTaskId];
+
+			return subTask ? { ...subTask, parentId: 0 } : null;
+		});
+
+		// Combine old and new states
+		const oldTaskStates = [...oldNewSubTaskStates, ...oldDeletedSubTaskStates];
+		const newTaskStates = [...newNewSubTaskStates, ...newDeletedSubTaskStates];
+		// Update the state for all subtasks
+		upsertMany(state, action, oldTaskStates, newTaskStates);
+	};
+
+	const updateSubTasksFulfilled = (state, action) => {
+		const { requestId, arg } = action.meta;
+		const { status, data } = action.payload;
+		const { updatedNewSubTasks = [], updatedDeletedSubTasks = [] } = data;
+		const { newSubTasks, deletedSubTasks } = arg;
+		const {
+			items: updatedNewSubTasksItems = [],
+		} = updatedNewSubTasks;
+
+		const updatedNewSubTasksIds = updatedNewSubTasksItems.map((task) => task.id);
+
+		const newSubTasksIdentical = isEqual(new Set(newSubTasks), new Set(updatedNewSubTasksIds));
+		const deletedSubTasksIdentical = isEqual(new Set(deletedSubTasks), new Set(updatedDeletedSubTasks));
+
+		const existingTasks = deletedSubTasks.map((taskId) => state.entities[taskId]);
+
+		// eslint-disable-next-line init-declarations
+		let preparedTasks;
+
+		if (status === 'success' && newSubTasksIdentical && deletedSubTasksIdentical)
+		{
+			preparedTasks = onUpdateSubTasksActionSuccess(requestId, existingTasks);
+		}
+		else
+		{
+			const tasksToRevert = existingTasks.filter(
+				(existingTask) => ![...updatedNewSubTasks, ...updatedDeletedSubTasks].includes(existingTask.id),
+			);
+
+			preparedTasks = onUpdateSubTasksActionError(requestId, tasksToRevert);
+		}
+
+		const updates = preparedTasks.map((preparedTask, index) => {
+			if (!isEqual(existingTasks[index], preparedTask))
+			{
+				return { id: existingTasks[index].id, changes: preparedTask };
+			}
+
+			return null;
+		}).filter(Boolean);
+
+		tasksAdapter.upsertMany(state, [...updates, ...updatedNewSubTasksItems]);
+	};
+
+	const onUpdateSubTasksActionError = (requestId, existingTasks) => {
+		return existingTasks.map((existingTask) => {
+			const sourceFields = FieldChangeRegistry.getChangedFields(requestId, existingTask.id);
+
+			FieldChangeRegistry.updateChangedFieldsAfterRequest(requestId, existingTask.id, sourceFields);
+			unregisterRegistryChanges(requestId);
+
+			return {
+				...existingTask,
+				...FieldChangeRegistry.removeChangedFields(existingTask.id, sourceFields),
+				isConsideredForCounterChange: false,
+			};
+		});
+	};
+
+	const onUpdateSubTasksActionSuccess = (requestId, existingTasks) => {
+		unregisterRegistryChanges(requestId);
+
+		return existingTasks.map((existingTask) => {
+			const sourceFields = FieldChangeRegistry.getChangedFields(requestId, existingTask.id);
+			FieldChangeRegistry.updateChangedFieldsAfterRequest(requestId, existingTask.id, sourceFields);
+
+			const preparedTask = TaskModel.prepareReduxTaskFromServerTask(existingTask);
+
+			return {
+				...existingTask,
+				...FieldChangeRegistry.removeChangedFields(existingTask.id, sourceFields),
+				...preparedTask,
+				isConsideredForCounterChange: false,
+			};
+		});
+	};
+
+	const updateRelatedTasksPending = (state, action) => {
+		const { taskId, relatedTasks } = action.meta.arg;
+
+		const oldTaskState = state.entities[taskId];
+		if (oldTaskState)
+		{
+			const newTaskState = {
+				...oldTaskState,
+				relatedTasks: relatedTasks.map((relatedTaskId) => Number(relatedTaskId)),
+			};
+
+			upsertOne(state, action, oldTaskState, newTaskState);
+		}
+	};
+
+	const updateRelatedTasksFulfilled = (state, action) => {
+		const { requestId, arg } = action.meta;
+		const { status, data } = action.payload;
+		const { updatedNewRelatedTasks = [], updatedDeletedRelatedTasks = [] } = data;
+		const { taskId, newRelatedTasks, deletedRelatedTasks } = arg;
+
+		const {
+			items: updatedNewRelatedTasksItems = [],
+		} = updatedNewRelatedTasks;
+
+		const updatedNewRelatedTasksIds = updatedNewRelatedTasksItems.map((task) => task.id);
+
+		const newRelatedTasksIdentical = isEqual(new Set(newRelatedTasks), new Set(updatedNewRelatedTasksIds));
+		const deletedRelatedTasksIdentical = isEqual(new Set(deletedRelatedTasks), new Set(updatedDeletedRelatedTasks));
+
+		if (status === 'success' && newRelatedTasksIdentical && deletedRelatedTasksIdentical)
+		{
+			unregisterRegistryChanges(requestId);
+			// add new tasks to the state and update existing ones
+			tasksAdapter.upsertMany(state, updatedNewRelatedTasksItems);
+		}
+		else
+		{
+			const existingTask = state.entities[taskId];
+			const sourceFields = FieldChangeRegistry.getChangedFields(requestId, existingTask.id);
+
+			FieldChangeRegistry.updateChangedFieldsAfterRequest(requestId, existingTask.id, sourceFields);
+			unregisterRegistryChanges(requestId);
+
+			let relatedTasks = [...existingTask.relatedTasks];
+
+			if (deletedRelatedTasks.length > 0 && updatedDeletedRelatedTasks.length === 0)
+			{
+				relatedTasks.push(...deletedRelatedTasks);
+			}
+
+			if (newRelatedTasks.length > 0 && updatedNewRelatedTasks.length === 0)
+			{
+				relatedTasks = relatedTasks.filter((id) => !newRelatedTasks.includes(id));
+			}
+
+			const preparedTask = {
+				...existingTask,
+				...FieldChangeRegistry.removeChangedFields(existingTask.id, sourceFields),
+				relatedTasks, // revert related tasks
+				isConsideredForCounterChange: false,
+			};
+
+			if (!isEqual(existingTask, preparedTask))
+			{
+				tasksAdapter.upsertMany(state, [
+					...updatedNewRelatedTasksItems,
+					preparedTask,
+				]);
+			}
+		}
+	};
+
 	/**
 	 * @param {string} requestId
 	 */
@@ -423,24 +721,74 @@ jn.define('tasks/statemanager/redux/slices/tasks/extra-reducer', (require, expor
 		FieldChangeRegistry.unregisterFieldsChange(requestId);
 	};
 
-	const onCommonActionFulfilled = (state, action) => {
-		const { meta, payload } = action;
-		const { requestId, arg } = meta;
-
+	const onCommonActionSuccess = (requestId, existingTask, data) => {
 		unregisterRegistryChanges(requestId);
 
-		const existingTask = state.entities[arg.taskId];
-		const preparedTask = TaskModel.prepareReduxTaskFromServerTask(payload.data.task, existingTask);
+		return TaskModel.prepareReduxTaskFromServerTask(data.task, existingTask);
+	};
+
+	const onCommonActionError = (requestId, existingTask) => {
+		const sourceFields = FieldChangeRegistry.getChangedFields(requestId, existingTask.id);
+
+		FieldChangeRegistry.updateChangedFieldsAfterRequest(requestId, existingTask.id, sourceFields);
+		unregisterRegistryChanges(requestId);
+
+		return {
+			...existingTask,
+			...FieldChangeRegistry.removeChangedFields(existingTask.id, sourceFields),
+			isConsideredForCounterChange: false,
+		};
+	};
+
+	const onCommonActionFulfilled = (state, action) => {
+		const { requestId, arg } = action.meta;
+		const { status, data } = action.payload;
+		const { taskId } = arg;
+
+		const existingTask = state.entities[taskId];
+		const preparedTask = (
+			status === 'success'
+				? onCommonActionSuccess(requestId, existingTask, data)
+				: onCommonActionError(requestId, existingTask)
+		);
 
 		if (!isEqual(existingTask, preparedTask))
 		{
-			tasksAdapter.upsertOne(state, preparedTask);
+			tasksAdapter.updateOne(state, { id: taskId, changes: preparedTask });
 		}
 	};
+
+	const onCreateError = (requestId, existingTask, errors) => ({
+		...onCommonActionError(requestId, existingTask),
+		isCreationErrorExist: true,
+		creationErrorText: (Type.isArrayFilled(errors) ? errors[0].message : ''),
+	});
+
+	const createFulfilled = (state, action) => {
+		const { requestId, arg } = action.meta;
+		const { status, data, errors } = action.payload;
+		const { taskId } = arg;
+
+		const existingTask = state.entities[taskId];
+		const preparedTask = (
+			status === 'success'
+				? onCommonActionSuccess(requestId, existingTask, data)
+				: onCreateError(requestId, existingTask, errors)
+		);
+
+		if (!isEqual(existingTask, preparedTask))
+		{
+			tasksAdapter.updateOne(state, { id: taskId, changes: preparedTask });
+		}
+	};
+
+	const updateFulfilled = onCommonActionFulfilled;
 
 	const updateDeadlineFulfilled = onCommonActionFulfilled;
 
 	const delegateFulfilled = onCommonActionFulfilled;
+
+	const followFulfilled = onCommonActionFulfilled;
 
 	const unfollowFulfilled = onCommonActionFulfilled;
 
@@ -455,6 +803,8 @@ jn.define('tasks/statemanager/redux/slices/tasks/extra-reducer', (require, expor
 	const completeFulfilled = onCommonActionFulfilled;
 
 	const renewFulfilled = onCommonActionFulfilled;
+
+	const deferFulfilled = onCommonActionFulfilled;
 
 	const approveFulfilled = onCommonActionFulfilled;
 
@@ -487,9 +837,88 @@ jn.define('tasks/statemanager/redux/slices/tasks/extra-reducer', (require, expor
 
 	const readAllForProjectFulfilled = (state, action) => unregisterRegistryChanges(action.meta.requestId);
 
+	const taskResultFetchedFulfilled = (state, action) => {
+		const { taskId } = action.meta.arg;
+		const { results } = action.payload.data;
+		const task = state.entities[taskId];
+
+		tasksAdapter.upsertOne(state, {
+			...task,
+			resultsCount: results.length,
+		});
+	};
+
+	const taskResultCreatedFulfilled = (state, action) => {
+		const { taskId } = action.meta.arg;
+		const task = state.entities[taskId];
+
+		tasksAdapter.upsertOne(state, {
+			...task,
+			resultsCount: task.resultsCount + 1,
+		});
+	};
+
+	const taskResultRemovedFulfilled = (state, action) => {
+		const { taskId } = action.meta.arg;
+		const task = state.entities[taskId];
+
+		tasksAdapter.upsertOne(state, {
+			...task,
+			resultsCount: Math.max(task.resultsCount - 1, 0),
+		});
+	};
+
+	const updateTaskStagePending = (state, action) => {
+		const { taskId, view } = action.meta.arg;
+		const {
+			stage,
+		} = action.meta;
+
+		const task = state.entities[taskId];
+		if (task && stage && view === Views.DEADLINE)
+		{
+			const oldTaskState = state.entities[taskId];
+			const newTaskState = prepareUpdateDeadlineNewState(oldTaskState, stage.deadline);
+
+			upsertOne(state, action, oldTaskState, newTaskState);
+		}
+	};
+
+	const updateTaskStageFulfilled = (state, action) => {
+		const { status, data } = action.payload;
+		const { taskId, view } = action.meta.arg;
+		const {
+			requestId,
+		} = action.meta;
+
+		if (view === Views.DEADLINE)
+		{
+			if (data === true && status === 'success')
+			{
+				unregisterRegistryChanges(requestId);
+			}
+			else
+			{
+				const preparedTask = onCommonActionError(requestId, state.entities[taskId]);
+				tasksAdapter.upsertOne(state, preparedTask);
+			}
+		}
+	};
+
+	const updateTaskStageRejected = (state, action) => {
+		const { taskId } = action.meta.arg;
+		const {
+			requestId,
+		} = action.meta;
+
+		const preparedTask = onCommonActionError(requestId, state.entities[taskId]);
+		tasksAdapter.upsertOne(state, preparedTask);
+	};
+
 	module.exports = {
 		prepareUpdateDeadlineNewState,
 		prepareDelegateNewState,
+		prepareFollowNewState,
 		prepareUnfollowNewState,
 		prepareStartTimerNewState,
 		preparePauseTimerNewState,
@@ -497,6 +926,7 @@ jn.define('tasks/statemanager/redux/slices/tasks/extra-reducer', (require, expor
 		preparePauseNewState,
 		prepareCompleteNewState,
 		prepareRenewNewState,
+		prepareDeferNewState,
 		prepareApproveNewState,
 		prepareDisapproveNewState,
 		preparePingNewState,
@@ -511,11 +941,19 @@ jn.define('tasks/statemanager/redux/slices/tasks/extra-reducer', (require, expor
 
 		processFieldChanges,
 		unregisterRegistryChanges,
+		onCommonActionSuccess,
+		onCommonActionError,
 
+		createPending,
+		createFulfilled,
+		updatePending,
+		updateFulfilled,
 		updateDeadlinePending,
 		updateDeadlineFulfilled,
 		delegatePending,
 		delegateFulfilled,
+		followPending,
+		followFulfilled,
 		unfollowPending,
 		unfollowFulfilled,
 		startTimerPending,
@@ -530,6 +968,8 @@ jn.define('tasks/statemanager/redux/slices/tasks/extra-reducer', (require, expor
 		completeFulfilled,
 		renewPending,
 		renewFulfilled,
+		deferPending,
+		deferFulfilled,
 		approvePending,
 		approveFulfilled,
 		disapprovePending,
@@ -553,5 +993,15 @@ jn.define('tasks/statemanager/redux/slices/tasks/extra-reducer', (require, expor
 		readAllForRoleFulfilled,
 		readAllForProjectPending,
 		readAllForProjectFulfilled,
+		taskResultFetchedFulfilled,
+		taskResultCreatedFulfilled,
+		taskResultRemovedFulfilled,
+		updateSubTasksPending,
+		updateSubTasksFulfilled,
+		updateRelatedTasksPending,
+		updateRelatedTasksFulfilled,
+		updateTaskStagePending,
+		updateTaskStageFulfilled,
+		updateTaskStageRejected,
 	};
 });

@@ -638,7 +638,7 @@ class ProfilePost
 			{
 				$result["MICRO"] = "Y";
 				$result["TITLE"] = preg_replace(
-					[ "/\n+/is".BX_UTF_PCRE_MODIFIER, "/\s+/is".BX_UTF_PCRE_MODIFIER ],
+					[ "/\n+/isu", "/\s+/isu" ],
 					" ",
 					\blogTextParser::killAllTags($result['DETAIL_TEXT'])
 				);

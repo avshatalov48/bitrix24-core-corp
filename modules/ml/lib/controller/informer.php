@@ -9,16 +9,19 @@ use Bitrix\Ml\Model;
 class Informer extends Base
 {
 	/**
-	 * @param int $modelId
-	 * @param string $state
+	 * @param $modelName
+	 * @param $state
 	 * @param array $additionalParams
+	 *
+	 * @return array|null
 	 */
-	public function setModelStateAction($modelName, $state, array $additionalParams)
+	public function setModelStateAction($modelName, $state, array $additionalParams): ?array
 	{
 		$model = Model::loadWithName($modelName);
-		if(!$model)
+		if (!$model)
 		{
 			$this->addError(new Error("Model " . $modelName . " is not found"));
+
 			return null;
 		}
 
@@ -29,10 +32,11 @@ class Informer extends Base
 			"model" => $model,
 		];
 
-		if($additionalParams["PERFORMANCE"])
+		if (isset($additionalParams["PERFORMANCE"]))
 		{
 			$fields["performance"] = $additionalParams["PERFORMANCE"];
 		}
+
 		$event = new Event("ml", "onModelStateChange", $fields);
 		$event->send();
 
@@ -43,12 +47,12 @@ class Informer extends Base
 	 * @param int $predictionId
 	 * @param array $result
 	 */
-	public function setPredictionResultAction($predictionId, array $result)
+	public function setPredictionResultAction($predictionId, array $result): void
 	{
 
 	}
 
-	public function testAction()
+	public function testAction(): string
 	{
 		return "asd";
 	}

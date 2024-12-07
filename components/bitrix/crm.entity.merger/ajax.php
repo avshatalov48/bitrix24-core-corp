@@ -584,6 +584,11 @@ class CCrmEntityMergeComponentAjaxController extends Main\Engine\Controller
 				}
 				$fieldData[$key]['EXTRAS']['INFOS'] = $entityInfos;
 			}
+
+			if ($type === 'boolean')
+			{
+				$fieldData[$key]['VALUE'] = $fieldData[$key]['VALUE'] === true ? 'Y' : 'N';
+			}
 		}
 
 		$multiFieldTypeIds = array_keys(\CCrmFieldMulti::GetEntityTypeInfos());

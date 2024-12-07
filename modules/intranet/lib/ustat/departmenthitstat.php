@@ -2,7 +2,9 @@
 
 namespace Bitrix\Intranet\UStat;
 
+use Bitrix\Main\Application;
 use Bitrix\Main\ArgumentException;
+use Bitrix\Main\DB\SqlException;
 use Bitrix\Main\DB\SqlExpression;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
@@ -59,35 +61,41 @@ class DepartmentHitStat
 	 */
 	public function day(string $section, DateTime $day): void
 	{
-		$collection = $this->getDepartmentsHasDayStatistic($day);
-		$departmentIdsWithoutStat = $this->departmentIds;
-
-		foreach ($collection as $item)
+		$fields = [
+			'TOTAL' => new SqlExpression('?#.?# + 1', DepartmentDayTable::getTableName(), 'TOTAL')
+		];
+		$values = [];
+		if (DepartmentDayTable::getEntity()->hasField($section))
 		{
-			$departmentIdsWithoutStat = array_filter($departmentIdsWithoutStat, function ($id) use($item) {
-				return $item->getDeptId() !== (int)$id;
-			});
+			$fields[$section] = new SqlExpression('?#.?# + 1', DepartmentDayTable::getTableName(), $section);
+		}
 
+		foreach ($this->departmentIds as $id)
+		{
+			$value = [
+				'DEPT_ID' => $id,
+				'DAY' => $day,
+				'TOTAL' => 1,
+			];
 			if (DepartmentDayTable::getEntity()->hasField($section))
 			{
-				$item->set($section, new SqlExpression('?# + 1', $section));
+				$value[$section] = 1;
 			}
+			$values[] = $value;
+		}
 
-			$item->setTotal(new SqlExpression('?# + 1', 'TOTAL'));
-		}
-		foreach ($departmentIdsWithoutStat as $id)
-		{
-			$departmentDayTable = DepartmentDayTable::createObject();
-			if (DepartmentDayTable::getEntity()->hasField($section))
-			{
-				$departmentDayTable->set($section, 1);
-			}
-			$departmentDayTable->setDay($day);
-			$departmentDayTable->setDeptId($id);
-			$departmentDayTable->setTotal(1);
-			$collection[] = $departmentDayTable;
-		}
-		$collection->save();
+		$connection = Application::getConnection();
+		$helper = $connection->getSqlHelper();
+		$query = $helper->prepareMergeValues(
+			DepartmentDayTable::getTableName(),
+			[
+				'DEPT_ID',
+				'DAY',
+			],
+			$values,
+			$fields
+		);
+		$connection->queryExecute($query);
 	}
 
 	/**
@@ -97,34 +105,41 @@ class DepartmentHitStat
 	 */
 	public function hour(string $section, DateTime $hour): void
 	{
-		$collection = $this->getDepartmentsHasHourStatistic($hour);
-		$departmentIdsWithoutStat = $this->departmentIds;
-
-		foreach ($collection as $item)
+		$fields = [
+			'TOTAL' => new SqlExpression('?#.?# + 1', DepartmentHourTable::getTableName(),'TOTAL')
+		];
+		$values = [];
+		if (DepartmentHourTable::getEntity()->hasField($section))
 		{
-			$departmentIdsWithoutStat = array_filter($departmentIdsWithoutStat, function ($id) use($item) {
-				return $item->getDeptId() !== (int)$id;
-			});
+			$fields[$section] = new SqlExpression('?#.?# + 1', DepartmentHourTable::getTableName(), $section);
+		}
 
+		foreach ($this->departmentIds as $id)
+		{
+			$value = [
+				'DEPT_ID' => $id,
+				'HOUR' => $hour,
+				'TOTAL' => 1,
+			];
 			if (DepartmentHourTable::getEntity()->hasField($section))
 			{
-				$item->set($section, new SqlExpression('?# + 1', $section));
+				$value[$section] = 1;
 			}
+			$values[] = $value;
+		}
 
-			$item->setTotal(new SqlExpression('?# + 1', 'TOTAL'));
-		}
-		foreach ($departmentIdsWithoutStat as $id)
-		{
-			$departmentDayTable = DepartmentHourTable::createObject();
-			if (DepartmentHourTable::getEntity()->hasField($section))
-			{
-				$departmentDayTable->set($section, 1);
-			}
-			$departmentDayTable->setHour($hour);
-			$departmentDayTable->setDeptId($id);
-			$departmentDayTable->setTotal(1);
-			$collection[] = $departmentDayTable;
-		}
-		$collection->save();
+		$connection = Application::getConnection();
+		$helper = $connection->getSqlHelper();
+		$query = $helper->prepareMergeValues(
+			DepartmentHourTable::getTableName(),
+			[
+				'DEPT_ID',
+				'HOUR',
+			],
+			$values,
+			$fields
+		);
+
+		$connection->queryExecute($query);
 	}
 }

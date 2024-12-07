@@ -71,6 +71,7 @@ use Bitrix\Main\Type\DateTime;
  * @method Item setContactBindings(array $contactBindings)
  * @method array getContacts()
  * @method string|null getStageId()
+ * @method string|null getPreviousStageId()
  * @method Item setStageId(string $stageId)
  * @method bool isChangedStageId()
  * @method int|null getCategoryId()
@@ -238,6 +239,7 @@ abstract class Item implements \JsonSerializable, \ArrayAccess, Arrayable
 	private $fieldToImplementationMap = [];
 	/** @var FieldImplementation[]|null */
 	private $allImplementationsCache;
+	private array $badges = [];
 
 	public function __construct(
 		int $entityTypeId,
@@ -1583,14 +1585,14 @@ abstract class Item implements \JsonSerializable, \ArrayAccess, Arrayable
 		return Container::getInstance()->getItemConverter()->toJson($this);
 	}
 
-	public function offsetExists($offset): bool
+	public function offsetExists(mixed $offset): bool
 	{
 		$commonFieldName = (string)$offset;
 
 		return $this->hasField($commonFieldName) && $this->get($commonFieldName) !== null;
 	}
 
-	public function offsetGet($offset)
+	public function offsetGet(mixed $offset): mixed
 	{
 		$commonFieldName = (string)$offset;
 
@@ -1604,14 +1606,14 @@ abstract class Item implements \JsonSerializable, \ArrayAccess, Arrayable
 		return $this->entityObject->offsetGet($entityFieldName);
 	}
 
-	public function offsetSet($offset, $value): void
+	public function offsetSet(mixed $offset, mixed $value): void
 	{
 		$commonFieldName = (string)$offset;
 
 		$this->set($commonFieldName, $value);
 	}
 
-	public function offsetUnset($offset): void
+	public function offsetUnset(mixed $offset): void
 	{
 		$commonFieldName = (string)$offset;
 
@@ -2246,5 +2248,15 @@ abstract class Item implements \JsonSerializable, \ArrayAccess, Arrayable
 			),
 			true
 		);
+	}
+
+	public function getBadges(): array
+	{
+		return $this->badges;
+	}
+
+	public function addBadge(array $badge): void
+	{
+		$this->badges[] = $badge;
 	}
 }

@@ -1,0 +1,36 @@
+.crm-field-ping-selector-compact-icon {
+	display: block;
+	width: 20px;
+	height: 20px;
+	cursor: pointer;
+	background-size: contain;
+}
+
+.crm-field-ping-selector-compact-icon:hover {
+	opacity: var(--ui-opacity-80);
+}
+
+.crm-field-ping-selector-compact-icon.--bell {
+	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg width='24' height='24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M10.026 18.185l-.003.03a1.991 1.991 0 003.981 0l-.003-.03h-3.975zm6.946-8.483c0-1.74-1.349-4.206-4.027-4.67v-.045A.99.99 0 0011.958 4a.99.99 0 00-.987.987v.046c-2.673.468-4.018 2.932-4.018 4.669 0 1.928.019 3.301.019 4.186 0 .698-1.275 1.624-1.813 1.983a.522.522 0 00-.235.432v.308a.5.5 0 00.5.5H18.5a.5.5 0 00.5-.5v-.308a.522.522 0 00-.235-.432c-.537-.36-1.811-1.285-1.811-1.983 0-.885.018-2.258.018-4.186z' fill='%23959CA4'/%3E%3C/svg%3E");
+}
+
+.crm-field-ping-selector-compact-icon.--bell.--empty {
+	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg width='24' height='24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M10.024 18.201l-.001.015a1.991 1.991 0 003.981 0l-.001-.015a.109.109 0 01-.002-.016h-3.975c0 .005 0 .01-.002.016zm6.948-8.5c0-.357-.057-.744-.17-1.14l-8.55 8.55H18.5a.5.5 0 00.5-.5v-.308a.522.522 0 00-.235-.432c-.537-.36-1.811-1.285-1.811-1.983 0-.357.003-.794.006-1.315.006-.77.012-1.722.012-2.871zM15.03 5.943l1.835-1.834a.3.3 0 01.425 0l.796.796a.3.3 0 010 .424L5.513 17.901a.3.3 0 01-.424 0l-.797-.796a.3.3 0 010-.425l2.667-2.666a.646.646 0 00.013-.126c0-.357-.003-.794-.007-1.315-.005-.77-.012-1.722-.012-2.871 0-1.737 1.345-4.2 4.018-4.669v-.046A.99.99 0 0111.958 4a.99.99 0 01.988.987v.044c.82.142 1.514.472 2.085.911z' fill='%23959CA4'/%3E%3C/svg%3E");
+}
+
+.crm-field-ping-selector-arrow .menu-popup-item-text {
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	-webkit-box-align: center;
+	    -ms-flex-align: center;
+	        align-items: center;
+}
+
+.crm-field-ping-selector-arrow .menu-popup-item-text::after {
+	content: '';
+	display: inline-block;
+	width: 16px;
+	height: 20px;
+	background: url("data:image/svg+xml;charset=utf-8,%3Csvg width='16' height='16' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M6 5.174l2.921 2.921L6 11.017l1.174 1.173 2.921-2.921 1.173-1.174L7.174 4 6 5.174z' fill='%23A8ABB2'/%3E%3C/svg%3E") center center no-repeat;
+}

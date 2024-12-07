@@ -60,7 +60,7 @@ class Popup implements NotificationProvider
 			'isExpired' => $this->getNumberRemainingDaysLicense() === -1,
 			'type' => 'popup',
 			'popupType' => $this->getCurrentType(),
-			'expireDate' => $this->expireDate->getTimestamp(),
+			'expireDate' => $this->expireDate?->getTimestamp(),
 			'blockDate' => Date::createFromTimestamp($this->expireDate?->getTimestamp())->add('+15 days')->getTimestamp(),
 			'isPortalWithPartner' => $this->license->getPartnerId() > 0,
 			'urlBuyWithPartner' => self::URL_PARTNER_BUY,
@@ -79,7 +79,7 @@ class Popup implements NotificationProvider
 
 		$config = $this->getSavedShowConfiguration();
 		$value = [
-			'expireDate' => $this->expireDate->getTimestamp(),
+			'expireDate' => $this->expireDate?->getTimestamp(),
 			'type' => $type,
 			'next-show' => (new DateTime())->add('+1 day')->getTimestamp(),
 		];
@@ -177,7 +177,7 @@ class Popup implements NotificationProvider
 			return true;
 		}
 
-		if ($savedConfiguration['expireDate'] === $this->expireDate->getTimestamp())
+		if ($savedConfiguration['expireDate'] === $this->expireDate?->getTimestamp())
 		{
 			if ($savedConfiguration['type'] === $this->getCurrentType() && $this->getNumberRemainingDaysLicense() > -1)
 			{

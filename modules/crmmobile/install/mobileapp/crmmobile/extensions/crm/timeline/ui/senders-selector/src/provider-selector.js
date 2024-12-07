@@ -4,29 +4,38 @@
 jn.define('crm/timeline/ui/senders-selector/provider-selector', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const AppTheme = require('apptheme');
+	const { ContextMenu } = require('layout/ui/context-menu');
 
 	/**
 	 * @class ProviderSelector
 	 */
 	class ProviderSelector
 	{
-		constructor({ senders, currentSender, onChangeSenderCallback, contactCenterUrl })
+		constructor({
+			senders,
+			currentSender,
+			onChangeSenderCallback,
+			onDisabledSenderClickCallback,
+			contactCenterUrl,
+		})
 		{
 			this.senders = senders;
 			this.currentSender = currentSender;
 			this.onChangeSenderCallback = onChangeSenderCallback;
+			this.onDisabledSenderClickCallback = onDisabledSenderClickCallback;
 			this.contactCenterUrl = contactCenterUrl;
 
 			this.onProviderActionClick = this.onProviderActionClick.bind(this);
+			this.onDisabledProviderActionClick = this.onDisabledProviderActionClick.bind(this);
 			this.onConnectOtherProviderClick = this.onConnectOtherProviderClick.bind(this);
 
 			this.menu = new ContextMenu({
-				testId: 'SENDERS_SELECTOR_PROVIDER_MENU',
+				testId: 'crmmobile-senders-selector-provider-menu',
 				actions: this.getProviderMenuActions(),
 				params: {
 					shouldResizeContent: true,
 					showCancelButton: true,
-					title: Loc.getMessage('M_CRM_TIMELINE_SENDERS_SELECTOR_PROVIDER'),
+					title: Loc.getMessage('M_CRM_TIMELINE_SENDERS_SELECTOR_SENDER_SERVICE'),
 				},
 			});
 		}
@@ -54,6 +63,7 @@ jn.define('crm/timeline/ui/senders-selector/provider-selector', (require, export
 				showSelectedImage: isSelected,
 				isDisabled: !canUse,
 				onClickCallback: this.onProviderActionClick,
+				onDisableClick: this.onDisabledProviderActionClick,
 			};
 		}
 
@@ -65,10 +75,24 @@ jn.define('crm/timeline/ui/senders-selector/provider-selector', (require, export
 				this.currentSender = sender;
 				this.menu.setSelectedActions([senderId]);
 
-				const phoneId = sender.fromList[0].id;
+				const fromId = sender.fromList[0].id;
 				this.onChangeSenderCallback({
 					sender,
-					phoneId,
+					fromId,
+				});
+			}
+
+			return Promise.resolve();
+		}
+
+		onDisabledProviderActionClick(senderId)
+		{
+			if (this.onDisabledSenderClickCallback)
+			{
+				const sender = this.findSenderById(senderId);
+				this.onDisabledSenderClickCallback({
+					sender,
+					layoutWidget: this.menu.layoutWidget,
 				});
 			}
 
@@ -111,9 +135,9 @@ jn.define('crm/timeline/ui/senders-selector/provider-selector', (require, export
 			this.menu.show(parentWidget);
 		}
 
-		close()
+		close(callback = () => {})
 		{
-			this.menu.close();
+			this.menu.close(callback);
 		}
 	}
 

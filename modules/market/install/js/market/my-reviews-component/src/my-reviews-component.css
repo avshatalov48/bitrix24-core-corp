@@ -46,10 +46,13 @@
 }
 
 .market-reviews__section {
-	padding: 8px 16px;
 	margin-bottom: 15px;
 	border-radius: var(--ui-border-radius-lg, 12px);
 	background-color: #fff;
+}
+
+.market-reviews__item.--selected {
+	background: #fefcee;
 }
 
 .market-reviews__sort {
@@ -103,17 +106,23 @@
 .market-reviews__item-content {
 	display: flex;
 	align-items: flex-start;
+	padding-bottom: 12px;
+	border-bottom: 1px solid #dfe0e3;
 }
 
 .market-reviews__item {
-	padding-bottom: 16px;
-	margin-bottom: 20px;
-	border-bottom: 1px solid #dfe0e3;
+	padding: 8px 16px 10px 16px;
+	border-radius: var(--ui-border-radius-lg, 12px);
 }
 
 .market-reviews__item:last-of-type {
 	padding-bottom: 4px;
 	margin-bottom: 0;
+	border-bottom: none;
+}
+
+.market-reviews__item:only-child .market-reviews__item-content,
+.market-reviews__item:last-child .market-reviews__item-content {
 	border-bottom: none;
 }
 
@@ -165,11 +174,12 @@
 
 .market-reviews__item-description {
 	margin-top: 10px;
+	word-break: break-word;
 }
 
 .market-reviews__item-answer {
 	display: flex;
-	margin-top: 31px;
+	margin-top: 12px;
 	font-size: var(--ui-font-size-xs, 12px);
 	color: #a8adb4;
 }
@@ -228,6 +238,82 @@
 	stroke: transparent;
 }
 
+.market-rating__app-rating_star.--pointer {
+	cursor: pointer;
+}
+
 .market-reviews__bottom-loader {
 	text-align: center;
+}
+
+.market-reviews__item-menu {
+	margin-left: auto;
+	background: var(--ui-color-base-70);
+	cursor: pointer;
+}
+
+.market-reviews__item-title-wrapper {
+	display: flex;
+	width: 100%;
+}
+
+.market-reviews__item-rating {
+	margin-left: auto;
+}
+
+.market-reviews__item-date {
+	text-align: right;
+}
+
+.market-reviews__item-editing-block {
+	border-radius: 10px;
+	background: var(--ui-color-base-03);
+	padding: 12px;
+	margin-top: 6px;
+}
+
+.market-reviews__item-editing-title {
+	font-size: var(--ui-font-size-sm);
+	font-weight: var(--ui-font-weight-medium);
+	margin-right: 12px;
+}
+
+.market-reviews__item-editing-header {
+	margin-bottom: 10px;
+	display: flex;
+	align-items: center;
+}
+
+.market-reviews__item-editing-content .ui-ctl-textarea {
+	width: 100%;
+}
+
+.market-reviews__item-editing-content .ui-ctl-textarea .ui-ctl-element {
+	resize: none;
+	border-radius: 12px;
+	padding-top: 8px;
+	padding-left: 17px;
+}
+
+.market-reviews__item-editing-content .ui-btn-link.ui-btn {
+	padding: 0 15px;
+}
+
+.market-reviews__item-editing-buttons {
+	margin-left: 13px;
+}
+
+.market-reviews__item-editing-block .ui-alert {
+	margin: 12px 0 18px;
+	color: var(--ui-color-base-90);
+	--ui-alert-padding: 8px 10px;
+}
+
+.market-reviews__item-editing-block .ui-alert-icon-info::before {
+	width: 13px;
+	height: 13px;
+	min-width: 13px;
+	position: relative;
+	top: 2px;
+	-webkit-mask-size: contain;
 }

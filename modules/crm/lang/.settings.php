@@ -7,4 +7,7 @@ return [
 	'lib/integration/catalog/contractor/agentcontractcontractortable.php' => [
 		'languages' => ['ru', 'en'],
 	],
+	'lib/Feature' => [
+		'languages' => ['ru'],
+	],
 ];

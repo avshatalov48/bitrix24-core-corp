@@ -76,7 +76,7 @@ if($categoryID >= 0)
 	$filterExtras = array('dealCategoryID' => '?');
 }
 
-use Bitrix\Crm\Widget\Layout\DealWidget; ?><script type="text/javascript">
+use Bitrix\Crm\Widget\Layout\DealWidget; ?><script>
 	BX.ready(
 		function()
 		{

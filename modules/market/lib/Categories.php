@@ -3,7 +3,8 @@
 namespace Bitrix\Market;
 
 use Bitrix\Main\Application;
-use Bitrix\Rest\Marketplace\Transport;
+use Bitrix\Market\Rest\Actions;
+use Bitrix\Market\Rest\Transport;
 
 class Categories
 {
@@ -47,7 +48,7 @@ class Categories
 	public static function forceGet(): array
 	{
 		if (empty(Categories::get())) {
-			$response = Transport::instance()->call(Transport::METHOD_GET_CATEGORIES_V2);
+			$response = Transport::instance()->call(Actions::METHOD_GET_CATEGORIES_V2);
 			if (!empty($response)) {
 				Categories::saveCache($response);
 			}

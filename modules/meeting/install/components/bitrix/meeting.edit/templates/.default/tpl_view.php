@@ -21,7 +21,7 @@ $this->SetViewTarget('pagetitle', 100);
 $this->EndViewTarget();
 ?>
 
-<script type="text/javascript" bxrunfirst="true">
+<script bxrunfirst="true">
 window.bx_user_url_tpl = '<?=CUtil::JSEscape(COption::GetOptionString('intranet', 'path_user', '', SITE_ID))?>';
 window.arMembersList = [];
 window.meeting_owner = <?=(int)($arUsers['O'][0] ?? null)?>;
@@ -280,7 +280,7 @@ require($_SERVER['DOCUMENT_ROOT'].$this->GetFolder().'/agenda.php');
 <?
 if ($arResult['CAN_EDIT']):
 ?>
-<script type="text/javascript">
+<script>
 window.BXMEETINGCANEDIT = true;
 BX.ready(function(){
 	BX('meeting_toolbar_layout').appendChild(BX('meeting_toolbar'));

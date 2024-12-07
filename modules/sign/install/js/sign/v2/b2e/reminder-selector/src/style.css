@@ -1,0 +1,30 @@
+.sign-reminder-selector__label {
+	font: 13px/15.51px var(--ui-font-family-system);
+	color: var(--ui-color-palette-gray-60);
+	margin-right: 10px;
+}
+
+.sign-reminder-selector__button {
+	font: 13px/17.2px var(--ui-font-family-system);
+	text-transform: none;
+	background: var(--ui-color-palette-gray-05);
+	border: none;
+	border-radius: 25px;
+	height: auto;
+	padding: 6px 26px 6px 29px;
+}
+
+.ui-btn.ui-btn-dropdown.sign-reminder-selector__button:before {
+	border-width: 4px;
+	border-style: solid;
+	border-color: var(--ui-color-palette-gray-90) transparent transparent;
+	transform: none;
+}
+
+.sign-reminder-selector__button:after {
+	content: '';
+	display: block;
+	width: 18px;
+	height: 18px;
+	background: url('./images/icon-bell.svg') no-repeat;
+}

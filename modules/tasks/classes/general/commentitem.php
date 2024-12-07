@@ -12,8 +12,11 @@ use Bitrix\Main;
 use Bitrix\Main\ObjectException;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\SocialNetwork;
+use Bitrix\Tasks\Access\ActionDictionary;
+use Bitrix\Tasks\Access\TaskAccessController;
 use Bitrix\Tasks\Integration\Disk\Rest\Attachment;
 use Bitrix\Tasks\Integration\Forum\Task\Comment;
+use Bitrix\Tasks\Util\Result;
 
 /**
  * Class CTaskCommentItem
@@ -42,10 +45,31 @@ final class CTaskCommentItem extends CTaskSubItemAbstract
 		{
 			$fields['AUTHOR_ID'] = $task->getExecutiveUserId();
 		}
+
+		$currentUserId = $task->getExecutiveUserId();
+		$canRead = true;
+		if ((int)$currentUserId !== (int)$fields['AUTHOR_ID'])
+		{
+			$canRead = TaskAccessController::can(
+				$currentUserId,
+				ActionDictionary::ACTION_TASK_READ,
+				$task->getId(),
+			);
+		}
+
 		$fields = self::formatPostDateField($fields);
 
-        // rights are checked inside forum`s taskEntity class, NO NEED to check rights here
-		$result = Comment::add($task->getId(), $fields);
+		if ($canRead)
+		{
+			// rights of author are checked inside forum`s taskEntity class, NO NEED to check rights here
+			$result = Comment::add($task->getId(), $fields);
+		}
+		else
+		{
+			$result = new Result();
+			$result->addError('PERMISSION_DENIED', 'Access denied');
+		}
+
 		if (!$result->isSuccess())
 		{
 			$errorMessages = ($result->getErrors() ? $result->getErrors()->getMessages() : ['']);
@@ -337,7 +361,7 @@ final class CTaskCommentItem extends CTaskSubItemAbstract
 		{
 			foreach ($result as $index => $comment)
 			{
-				$attachedObjectsIds = $comment['ATTACHED_OBJECTS_IDS'];
+				$attachedObjectsIds = $comment['ATTACHED_OBJECTS_IDS'] ?? null;
 				if (is_array($attachedObjectsIds))
 				{
 					foreach ($attachedObjectsIds as $attachmentId)

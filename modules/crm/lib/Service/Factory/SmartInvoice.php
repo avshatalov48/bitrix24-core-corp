@@ -72,6 +72,9 @@ class SmartInvoice extends Dynamic
 		$settings[Item\SmartInvoice::FIELD_NAME_COMMENTS] = [
 			'TYPE' => Field::TYPE_TEXT,
 			'VALUE_TYPE' => Field::VALUE_TYPE_BB,
+			'SETTINGS' => [
+				'isFlexibleContentType' => true,
+			],
 			'CLASS' => Field\Comments::class,
 		];
 		$settings[Item\SmartInvoice::FIELD_NAME_ACCOUNT_NUMBER] = [
@@ -213,6 +216,10 @@ class SmartInvoice extends Dynamic
 				);
 				$oldInvoicePermissionEntity = $userPermissions::getPermissionEntityType(\CCrmOwnerType::Invoice);
 				$permissions = RolePermission::getByEntityId($oldInvoicePermissionEntity);
+				foreach ($permissions as $roleId => $rolePermissions)
+				{
+					$permissions[$roleId] = array_merge($rolePermissions, \CCrmRole::getBasePermissionSetForEntity(new \Bitrix\Crm\CategoryIdentifier(\CCrmOwnerType::SmartInvoice, $defaultCategoryId)));
+				}
 				$permissionsCopingResult = RolePermission::setByEntityId($smartInvoicePermissionEntity, $permissions);
 				if (!$permissionsCopingResult->isSuccess())
 				{
@@ -385,5 +392,4 @@ class SmartInvoice extends Dynamic
 
 		return $hasTable;
 	}
-
 }

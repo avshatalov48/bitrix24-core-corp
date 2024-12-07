@@ -17,7 +17,7 @@ $MESS["INTR_MAIL_DOMAIN_INSTR_STEP1_B_VALUE"] = "Значение:";
 $MESS["INTR_MAIL_DOMAIN_INSTR_STEP1_B_VALUEV"] = "<b>mail.yandex.ru.</b> (точка на конце адреса существенна)";
 $MESS["INTR_MAIL_DOMAIN_INSTR_STEP1_C"] = "Укажите адрес <b>#SECRET_N#@yandex.ru</b> в качестве контактного почтового адреса в регистрационных данных вашего домена. Эта операция производится при помощи инструментов вашего регистратора доменов.";
 $MESS["INTR_MAIL_DOMAIN_INSTR_STEP1_C_HINT"] = "Сразу после подтверждения домена необходимо поменять этот адрес на ваш настоящий e-mail.";
-$MESS["INTR_MAIL_DOMAIN_INSTR_STEP1_HINT"] = "Если у вас возникли вопросы или проблемы, связанные с подтверждением домена, <a href=\"http://dev.1c-bitrix.ru/support/\" target=\"_blank\">обращайтесь в службу поддержки</a>.";
+$MESS["INTR_MAIL_DOMAIN_INSTR_STEP1_HINT"] = "Если у вас возникли вопросы или проблемы, связанные с подтверждением домена, <a href=\"https://dev.1c-bitrix.ru/support/\" target=\"_blank\">обращайтесь в службу поддержки</a>.";
 $MESS["INTR_MAIL_DOMAIN_INSTR_STEP2_PROMPT"] = "После того, как вы подтвердите владение доменом, от вас потребуется изменить MX-записи, которые ему соответствуют. Эта операция производится с помощью инструментов хостинг-провайдера, обслуживающего ваш домен.";
 $MESS["INTR_MAIL_DOMAIN_INSTR_STEP2_TITLE"] = "Настройка MX-записи";
 $MESS["INTR_MAIL_DOMAIN_INSTR_STEP2_MXPROMPT"] = "Заведите новую MX-запись со следующими параметрами:";
@@ -71,7 +71,7 @@ $MESS["INTR_MAIL_DOMAIN_CHOOSE_HINT"] = "Выберите имя в зоне .ru
 $MESS["INTR_MAIL_DOMAIN_SUGGEST_WAIT"] = "Поиск вариантов...";
 $MESS["INTR_MAIL_DOMAIN_SUGGEST_TITLE"] = "Придумайте другое имя или выберите";
 $MESS["INTR_MAIL_DOMAIN_SUGGEST_MORE"] = "Показать другие варианты";
-$MESS["INTR_MAIL_DOMAIN_EULA_CONFIRM"] = "Я принимаю условия <a href=\"http://www.bitrix24.ru/about/domain.php\" target=\"_blank\">Пользовательского соглашения</a>";
+$MESS["INTR_MAIL_DOMAIN_EULA_CONFIRM"] = "Я принимаю условия <a href=\"https://www.bitrix24.ru/about/domain.php\" target=\"_blank\">Пользовательского соглашения</a>";
 $MESS["INTR_MAIL_DOMAIN_EMPTY_NAME"] = "введите имя";
 $MESS["INTR_MAIL_DOMAIN_SHORT_NAME"] = "минимум 2 символа перед .ru";
 $MESS["INTR_MAIL_DOMAIN_LONG_NAME"] = "максимум 63 символа перед .ru";

@@ -78,15 +78,14 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 		{
 			// json can be broken sometimes; see http://jabber.bx/view.php?id=133871
 			$productData = Context::getCurrent()->getRequest()->getPostList()->getRaw('ORDER_PRODUCT_DATA');
-			if (!defined("BX_UTF"))
+			try
 			{
-				$productData = \Bitrix\Main\Text\Encoding::convertEncoding(
-					$productData, 'UTF-8', SITE_CHARSET
-				);
+				$productData = current(\Bitrix\Main\Web\Json::decode($productData));
 			}
-
-			$productData = current(\CUtil::JsObjectToPhp($productData));
-
+			catch (\Bitrix\Main\ArgumentException $e)
+			{
+				$productData = [];
+			}
 			if (!$isNew)
 			{
 				$productData['PRODUCT'] = $this->prepareRefreshBasket($id, $productData['PRODUCT'] ?? []);
@@ -199,9 +198,7 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 		{
 			try
 			{
-				$clientData = \Bitrix\Main\Web\Json::decode(
-					\Bitrix\Main\Text\Encoding::convertEncoding($this->request['CLIENT'], LANG_CHARSET, 'UTF-8')
-				);
+				$clientData = \Bitrix\Main\Web\Json::decode($this->request['CLIENT']);
 			}
 			catch (\Bitrix\Main\SystemException $e)
 			{
@@ -2601,7 +2598,6 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 	}
 }
 
-CUtil::JSPostUnescape();
 $APPLICATION->RestartBuffer();
 $processor = new AjaxProcessor($_REQUEST);
 $result = $processor->checkConditions();

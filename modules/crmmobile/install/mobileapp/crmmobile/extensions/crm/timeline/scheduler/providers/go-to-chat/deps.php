@@ -15,10 +15,12 @@ return [
 		'haptics',
 		'apptheme',
 		'type',
+		'assets/icons',
 		'notify-manager',
 		'utils/color',
 		'utils/error-notifier',
 		'utils/skeleton',
+		'layout/ui/context-menu',
 	],
 	'bundle' => [
 		'./src/messenger-slider',

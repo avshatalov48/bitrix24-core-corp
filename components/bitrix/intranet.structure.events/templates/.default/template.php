@@ -45,11 +45,9 @@ foreach ($arResult['ENTRIES'] as $arEntry)
 	
 	$arUser['SUBTITLE'] = FormatDateEx($arEntry['DATE_ACTIVE_FROM'], false, $arParams['DATE_FORMAT'])
 		.' - '
-		.ToLower(
-			$arEntry['PROPERTY_STATE_VALUE'] 
-			? $arEntry['PROPERTY_STATE_VALUE'] 
-			: ($arEntry['PREVIEW_TEXT'] ? $arEntry['PREVIEW_TEXT'] : $arEntry['NAME'])
-		);
+		.mb_strtolower($arEntry['PROPERTY_STATE_VALUE']
+			? $arEntry['PROPERTY_STATE_VALUE']
+			: ($arEntry['PREVIEW_TEXT'] ? $arEntry['PREVIEW_TEXT'] : $arEntry['NAME']));
 
 	$APPLICATION->IncludeComponent(
 		'bitrix:intranet.system.person',

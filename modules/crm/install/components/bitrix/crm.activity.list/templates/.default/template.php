@@ -265,7 +265,7 @@ $prefixLower = mb_strtolower($arResult['PREFIX']);
 	<? __CrmActivityListRenderItems($arResult['ITEMS'], 'COMPLETED', $arResult['SHOW_TOP'], $editorCfg); ?>
 </div>
 </div>
-<script type="text/javascript">
+<script>
 BX.ready(function()
 {
 	var selector = BX('<?=CUtil::JSEscape($selectorContainerID)?>');

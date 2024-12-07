@@ -12,6 +12,7 @@
 		{
 			return '';
 		}
+
 		return String(value);
 	}
 
@@ -28,7 +29,7 @@
 	function camelize(value)
 	{
 		return value
-			.replace(/_/g, " ")
+			.replace(/_/g, ' ')
 			.replace(/(?:^\w|[A-Z]|\b\w)/g, (word, index) => {
 				return index === 0
 					? word.toLowerCase()
@@ -44,15 +45,14 @@
 			let r, re;
 
 			re = /^[\s\r\n]+/g;
-			r = value.replace(re, "");
+			r = value.replace(re, '');
 			re = /[\s\r\n]+$/g;
-			r = r.replace(re, "");
+			r = r.replace(re, '');
+
 			return r;
 		}
-		else
-		{
-			return value;
-		}
+
+		return value;
 	}
 
 	function number_format(number, decimals, dec_point, thousands_sep)
@@ -80,7 +80,7 @@
 		j = (i.length > 3 ? i.length % 3 : 0);
 
 		km = (j ? i.substr(0, j) + thousands_sep : '');
-		kw = i.substr(j).replace(/(\d{3})(?=\d)/g, "$1" + thousands_sep);
+		kw = i.substr(j).replace(/(\d{3})(?=\d)/g, `$1${thousands_sep}`);
 		kd = (decimals ? dec_point + Math.abs(number - i).toFixed(decimals).replace(/-/, '0').slice(2) : '');
 
 		return sign + km + kw + kd;
@@ -158,6 +158,24 @@
 	}
 
 	/**
+	 * @param {string} str
+	 * @param {number} num
+	 * @return {string}
+	 */
+	function truncate(str, num)
+	{
+		const trimmedStr = trim(str);
+		if (trimmedStr.length <= num)
+		{
+			return trimmedStr;
+		}
+
+		const truncatedStr = trimmedStr.slice(0, num);
+
+		return `${trim(truncatedStr)}...`;
+	}
+
+	/**
 	 * @class StringUtils
 	 * @deprecated Please import specific utilities directly, using jn.require()
 	 */
@@ -196,7 +214,7 @@
 	 */
 	jn.define('utils/string', (require, exports, module) => {
 
-	    module.exports = {
+		module.exports = {
 			stringify,
 			capitalize,
 			camelize,
@@ -205,9 +223,8 @@
 			splitByWords,
 			compareWords,
 			IntlCollator,
+			truncate,
 			replaceAll,
 		};
-
 	});
-
 })();

@@ -58,7 +58,7 @@ $APPLICATION->setTitle(Loc::getMessage('DISK_FILE_VIEW_FILE_TITLE_USERFIELDS', [
 	</tbody>
 </table>
 
-<script type="text/javascript">
+<script>
 	BX(function () {
 		var sliderByWindow = BX.SidePanel.Instance.getSliderByWindow(window);
 		if (sliderByWindow)

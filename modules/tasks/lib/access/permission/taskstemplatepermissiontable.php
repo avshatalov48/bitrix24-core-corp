@@ -23,20 +23,25 @@ use Bitrix\Main\Entity;
  * @method static EO_TasksTemplatePermission_Result getList(array $parameters = [])
  * @method static EO_TasksTemplatePermission_Entity getEntity()
  * @method static \Bitrix\Tasks\Access\Permission\TasksTemplatePermission createObject($setDefaultValues = true)
- * @method static \Bitrix\Tasks\Access\Permission\EO_TasksTemplatePermission_Collection createCollection()
+ * @method static \Bitrix\Tasks\Access\Permission\TasksTemplatePermissionCollection createCollection()
  * @method static \Bitrix\Tasks\Access\Permission\TasksTemplatePermission wakeUpObject($row)
- * @method static \Bitrix\Tasks\Access\Permission\EO_TasksTemplatePermission_Collection wakeUpCollection($rows)
+ * @method static \Bitrix\Tasks\Access\Permission\TasksTemplatePermissionCollection wakeUpCollection($rows)
  */
 class TasksTemplatePermissionTable extends AccessPermissionTable
 {
-	public static function getTableName()
+	public static function getTableName(): string
 	{
 		return 'b_tasks_template_permission';
 	}
 
-	public static function getObjectClass()
+	public static function getObjectClass(): string
 	{
 		return TasksTemplatePermission::class;
+	}
+
+	public static function getCollectionClass(): string
+	{
+		return TasksTemplatePermissionCollection::class;
 	}
 
 	public static function getMap()
@@ -44,20 +49,20 @@ class TasksTemplatePermissionTable extends AccessPermissionTable
 		return [
 			new Entity\IntegerField('ID', [
 				'autocomplete' => true,
-				'primary' => true
+				'primary' => true,
 			]),
 			new Entity\IntegerField('TEMPLATE_ID', [
-				'required' => true
+				'required' => true,
 			]),
 			new Entity\StringField('ACCESS_CODE', [
-				'required' => true
+				'required' => true,
 			]),
 			new Entity\StringField('PERMISSION_ID', [
-				'required' => true
+				'required' => true,
 			]),
 			new Entity\IntegerField('VALUE', [
-				'required' => true
-			])
+				'required' => true,
+			]),
 		];
 	}
 
@@ -93,9 +98,9 @@ class TasksTemplatePermissionTable extends AccessPermissionTable
 				'=TEMPLATE_ID'		=> (int) $data['TEMPLATE_ID'],
 				'=ACCESS_CODE' 		=> $data['ACCESS_CODE'],
 				'%=PERMISSION_ID' 	=> $parentPermissions,
-				'=VALUE' 			=> PermissionDictionary::VALUE_NO
+				'=VALUE' 			=> PermissionDictionary::VALUE_NO,
 			],
-			'limit' => 1
+			'limit' => 1,
 		])->fetchAll();
 
 		if (is_array($res) && count($res) > 0)

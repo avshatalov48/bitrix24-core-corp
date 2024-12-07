@@ -15,19 +15,16 @@
 		 */
 		constructor(params = {})
 		{
-			this.groupId = parseInt(params.groupId || 0);
+			this.groupId = parseInt(params.groupId || '0', 10);
 			this.newsPathTemplate = (params.newsPathTemplate || '');
 			this.calendarWebPathTemplate = (params.calendarWebPathTemplate || '');
-			this.currentUserId = parseInt(params.currentUserId || 0);
+			this.currentUserId = parseInt(params.currentUserId || '0', 10);
 			this.tabs = (params.tabs || null);
 			this.subtitle = (params.subtitle || '');
 			this.item = (params.item || {});
 			this.guid = (params.guid || WorkgroupUtil.createGuid());
 
-			if (
-				this.groupId <= 0
-				|| !this.tabs
-			)
+			if (this.groupId <= 0 || !this.tabs)
 			{
 				return;
 			}
@@ -45,7 +42,6 @@
 			{
 				WorkgroupUtil.getGroupData(this.groupId).then(
 					(data) => {
-
 						this.tabs.setTitle({
 							text: data.NAME,
 							detailText: WorkgroupUtil.getSubtitle(data.NUMBER_OF_MEMBERS),
@@ -53,8 +49,8 @@
 							userLargeTitleMode: true,
 						});
 					},
-					response => console.error(response)
-				)
+					console.error,
+				);
 			}
 		}
 
@@ -63,12 +59,12 @@
 			this.tabs.on('titleClick', () => ProjectViewManager.open(this.currentUserId, this.groupId));
 			this.tabs.on('onTabSelected', (tab) => {
 				this.onTabSelected({
-					tab: tab,
+					tab,
 					groupId: this.groupId,
-				})
+				});
 			});
 
-			BX.addCustomEvent('tasks.list:setVisualCounter', data => this.onTasksCounterSet(data));
+			BX.addCustomEvent('tasks.list:setVisualCounter', (data) => this.onTasksCounterSet(data));
 			BX.addCustomEvent('tasks.list:updateTitle', (data) => this.onTasksTitleUpdated(data));
 			BX.addCustomEvent('background:updateTasksCounter', (data) => this.updateTasksCounter(data));
 		}
@@ -81,11 +77,11 @@
 			}
 		}
 
-		onTasksTitleUpdated(data)
+		onTasksTitleUpdated({ guid, useProgress })
 		{
-			if (data.guid === this.guid)
+			if (guid === this.guid)
 			{
-				this.tabs.setTitle({useProgress: data.useProgress}, true);
+				this.tabs.setTitle({ useProgress }, true);
 			}
 		}
 
@@ -97,12 +93,9 @@
 		onTabSelected(params)
 		{
 			const tab = params.tab || null;
-			const groupId = parseInt(params.groupId || 0);
+			const groupId = parseInt(params.groupId || '0', 10);
 
-			if (
-				tab === null
-				|| groupId <= 0
-			)
+			if (tab === null || groupId <= 0)
 			{
 				return;
 			}

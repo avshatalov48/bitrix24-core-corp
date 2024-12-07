@@ -140,7 +140,7 @@ $arTemplate = null;
 if ($arResult['BP_ID'] != '')
 {
 	$db_res = CBPWorkflowTemplateLoader::GetList(
-		[$by => $order],
+		[],
 		[
 			'DOCUMENT_TYPE' => ['crm', $arResult['ENTITY_TYPE'], $arResult['DOCUMENT_TYPE']],
 			'ID' => $arResult['BP_ID']

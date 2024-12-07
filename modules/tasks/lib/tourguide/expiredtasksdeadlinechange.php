@@ -10,7 +10,6 @@ use Bitrix\Main\SystemException;
 use Bitrix\Main\UserTable;
 use Bitrix\Tasks\Internals\Counter;
 use Bitrix\Tasks\Internals\Task\LogTable;
-use Bitrix\Tasks\TourGuide;
 use Bitrix\Tasks\TourGuide\Exception\TourGuideException;
 use Exception;
 

@@ -976,7 +976,7 @@ if (CModule::IncludeModule("calendar") && class_exists("CCalendar") && !class_ex
 			if (is_null($cs) || empty($cs))
 				$cs = "utf-8";
 
-			$content = $GLOBALS["APPLICATION"]->ConvertCharset($content, $charset, $cs);
+			$content = \Bitrix\Main\Text\Encoding::convertEncoding($content, $charset, $cs);
 
 			CDav::Report("CDavCalendarHandler::Put", "content (converted ".$charset." -> ".$cs.")", $content);
 

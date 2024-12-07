@@ -73,7 +73,7 @@ $containerID = "{$guid}_container";
 		endif;
 	?></div>
 
-	<script type="text/javascript">
+	<script>
 		(
 			function()
 			{

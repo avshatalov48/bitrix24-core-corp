@@ -1,4 +1,5 @@
-<?if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+<?
+if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)die();
 
 if (isset($_REQUEST['AJAX_CALL']) && $_REQUEST['AJAX_CALL'] == 'Y')
 	return;
@@ -22,6 +23,12 @@ $arResult['TELEPHONY_AVAILABLE'] = \Bitrix\Voximplant\Limits::canManageTelephony
 $arResult['SLIDER_CODE'] = \Bitrix\Voximplant\Limits::canManageTelephony();
 
 $arResult['LINK_TO_BUY'] = $arResult['TELEPHONY_AVAILABLE'] ? CVoxImplantSip::getBuyLink() : "";
+$arResult['LIC_KEY_HASH'] = '';
+if (!IsModuleInstalled('bitrix24'))
+{
+	$license = Bitrix\Main\Application::getInstance()->getLicense();
+	$arResult['LIC_KEY_HASH'] = $license->getHashLicenseKey();;
+}
 if (\Bitrix\Main\Loader::includeModule('ui'))
 {
 	$arResult['LINK_TO_DOC'] = \Bitrix\UI\Util::getArticleUrlByCode('5838389');

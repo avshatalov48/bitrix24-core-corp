@@ -9,9 +9,7 @@ CJSCore::RegisterExt('crm_entity_editor_rel', array(
 	'js' => [
 		'/bitrix/js/main/dd.js',
 		'/bitrix/js/crm/interface_form.js',
-		'/bitrix/js/crm/phase.js',
 		'/bitrix/js/crm/dialog.js',
-		'/bitrix/js/crm/entity_event.js',
 	],
 ));
 
@@ -76,6 +74,7 @@ return array(
 		'crm.entity-editor.field.image',
 		'crm.placement.detailsearch',
 		'crm.entity-editor.field-configurator',
+		'crm.entity-editor.field-attr',
 		'crm.entity-editor.field.phone-number-input',
 		'crm.entity-editor.duplicate.summary-list',
 		'main.popup',

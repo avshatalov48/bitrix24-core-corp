@@ -1,25 +1,44 @@
 /* eslint-disable */
-(function (exports,main_core,main_core_events,main_loader,ui_dialogs_messagebox,crm_typeModel,crm_router,ui_entitySelector) {
+(function (exports,crm_integration_analytics,crm_router,crm_toolbarComponent,crm_typeModel,main_core,main_core_events,main_loader,ui_analytics,ui_dialogs_messagebox,ui_entitySelector) {
 	'use strict';
 
-	var _templateObject, _templateObject2, _templateObject3, _templateObject4, _templateObject5, _templateObject6, _templateObject7, _templateObject8;
+	var _templateObject, _templateObject2, _templateObject3, _templateObject4, _templateObject5, _templateObject6, _templateObject7, _templateObject8, _templateObject9;
 	function _createForOfIteratorHelper(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
 	function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
 	function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) arr2[i] = arr[i]; return arr2; }
+	function _classPrivateMethodInitSpec(obj, privateSet) { _checkPrivateRedeclaration(obj, privateSet); privateSet.add(obj); }
+	function _classPrivateFieldInitSpec(obj, privateMap, value) { _checkPrivateRedeclaration(obj, privateMap); privateMap.set(obj, value); }
+	function _checkPrivateRedeclaration(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	function _classPrivateMethodGet(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 	var namespace = main_core.Reflection.namespace('BX.Crm.Component');
 	var instance = null;
 
 	/**
 	 * @memberOf BX.Crm.Component
 	 */
+	var _isCancelEventRegistered = /*#__PURE__*/new WeakMap();
+	var _registerCancelEvent = /*#__PURE__*/new WeakSet();
+	var _findActiveTabButton = /*#__PURE__*/new WeakSet();
+	var _findFirstTabButton = /*#__PURE__*/new WeakSet();
+	var _getAnalyticsBuilder = /*#__PURE__*/new WeakSet();
 	var TypeDetail = /*#__PURE__*/function () {
 	  function TypeDetail(params) {
 	    babelHelpers.classCallCheck(this, TypeDetail);
+	    _classPrivateMethodInitSpec(this, _getAnalyticsBuilder);
+	    _classPrivateMethodInitSpec(this, _findFirstTabButton);
+	    _classPrivateMethodInitSpec(this, _findActiveTabButton);
+	    _classPrivateMethodInitSpec(this, _registerCancelEvent);
 	    babelHelpers.defineProperty(this, "isProgress", false);
 	    babelHelpers.defineProperty(this, "tabs", new Map());
 	    babelHelpers.defineProperty(this, "isRestricted", false);
 	    babelHelpers.defineProperty(this, "isExternal", false);
 	    babelHelpers.defineProperty(this, "isSaveFromTypeDetail", true);
+	    babelHelpers.defineProperty(this, "isCreateSectionsViaAutomatedSolutionDetails", false);
+	    babelHelpers.defineProperty(this, "isCrmAdmin", false);
+	    _classPrivateFieldInitSpec(this, _isCancelEventRegistered, {
+	      writable: true,
+	      value: false
+	    });
 	    if (main_core.Type.isPlainObject(params)) {
 	      this.type = params.type;
 	      this.isNew = !this.type.isSaved();
@@ -29,12 +48,18 @@
 	      this.presets = params.presets;
 	      this.relations = params.relations;
 	      this.isRestricted = Boolean(params.isRestricted);
+	      this.restrictionErrorMessage = main_core.Type.isStringFilled(params.restrictionErrorMessage) ? params.restrictionErrorMessage : '';
+	      this.restrictionSliderCode = main_core.Type.isStringFilled(params.restrictionSliderCode) && this.isRestricted ? params.restrictionSliderCode : null;
 	      this.isExternal = Boolean(params.isExternal);
+	      this.isCreateSectionsViaAutomatedSolutionDetails = Boolean(params.isCreateSectionsViaAutomatedSolutionDetails);
+	      this.isCrmAdmin = Boolean(params.isCrmAdmin);
 	    }
 	    this.buttonsPanel = document.getElementById('ui-button-panel');
 	    this.saveButton = document.getElementById('ui-button-panel-save');
 	    this.cancelButton = document.getElementById('ui-button-panel-cancel');
 	    this.deleteButton = document.getElementById('ui-button-panel-remove');
+
+	    // eslint-disable-next-line unicorn/no-this-assignment
 	    instance = this;
 	  }
 	  babelHelpers.createClass(TypeDetail, [{
@@ -42,9 +67,7 @@
 	    value: function init() {
 	      this.bindEvents();
 	      this.fillTabs();
-	      if (!this.type.getId()) {
-	        this.enablePresetsView();
-	      } else {
+	      if (this.type.getId()) {
 	        // const customPreset = this.getPresetById('bitrix:empty');
 	        // const presetSelector = document.querySelector('[data-role="crm-type-preset-selector"]');
 	        // if (customPreset && presetSelector)
@@ -56,6 +79,8 @@
 	        if (presetSelectorContainer) {
 	          main_core.Dom.addClass(presetSelectorContainer, 'crm-type-hidden');
 	        }
+	      } else {
+	        this.enablePresetsView();
 	      }
 	      main_core.Dom.removeClass(document.querySelector('body'), 'crm-type-hidden');
 	      this.initRelations();
@@ -82,6 +107,46 @@
 	      this.form.querySelectorAll('[data-name*="linkedUserFields"]').forEach(function (linkedUserFieldNode) {
 	        main_core.Event.bind(linkedUserFieldNode, 'click', _this.enableUserFieldIfAnyLinkedChecked.bind(_this));
 	      });
+	      main_core_events.EventEmitter.subscribe('SidePanel.Slider:onCloseByEsc', function (event) {
+	        var _event$getData = event.getData(),
+	          _event$getData2 = babelHelpers.slicedToArray(_event$getData, 1),
+	          sliderEvent = _event$getData2[0];
+	        var slider = sliderEvent.getSlider();
+	        if (slider === _this.getSlider()) {
+	          _classPrivateMethodGet(_this, _registerCancelEvent, _registerCancelEvent2).call(_this, crm_integration_analytics.Dictionary.ELEMENT_ESC_BUTTON);
+	        }
+	      });
+	      main_core_events.EventEmitter.subscribe('SidePanel.Slider:onClose', function (event) {
+	        var _event$getData3 = event.getData(),
+	          _event$getData4 = babelHelpers.slicedToArray(_event$getData3, 1),
+	          sliderEvent = _event$getData4[0];
+	        var slider = sliderEvent.getSlider();
+	        if (slider === _this.getSlider()) {
+	          _classPrivateMethodGet(_this, _registerCancelEvent, _registerCancelEvent2).call(_this, null);
+	        }
+	      });
+	      this.handleSliderDestroy = this.handleSliderDestroy.bind(this);
+	      top.BX.Event.EventEmitter.subscribe('SidePanel.Slider:onDestroy', this.handleSliderDestroy);
+	    }
+	  }, {
+	    key: "handleSliderDestroy",
+	    value: function handleSliderDestroy(event) {
+	      var _event$getData5 = event.getData(),
+	        _event$getData6 = babelHelpers.slicedToArray(_event$getData5, 1),
+	        sliderEvent = _event$getData6[0];
+	      var slider = sliderEvent.getSlider();
+	      if (slider.getFrameWindow() === window) {
+	        // if we add event handler from iframe to the main page, they will live forever, even after slider destroys
+	        // sometimes it causes errors, like in this case
+	        this.destroy();
+	        top.BX.Event.EventEmitter.unsubscribe('SidePanel.Slider:onDestroy', this.handleSliderDestroy);
+	      }
+	    }
+	  }, {
+	    key: "destroy",
+	    value: function destroy() {
+	      var _this$customSectionCo;
+	      (_this$customSectionCo = this.customSectionController) === null || _this$customSectionCo === void 0 ? void 0 : _this$customSectionCo.destroy();
 	    }
 	  }, {
 	    key: "enablePresetsView",
@@ -106,12 +171,9 @@
 	  }, {
 	    key: "disablePresetsView",
 	    value: function disablePresetsView() {
+	      var _classPrivateMethodGe;
 	      main_core.Dom.removeClass(document.querySelector('body'), 'crm-type-settings-presets');
-	      var initTabDataRole = this.isExternal ? 'tab-custom-section' : 'tab-common';
-	      var initialTab = document.querySelector("[data-role=".concat(initTabDataRole, "]"));
-	      if (initialTab) {
-	        initialTab.click();
-	      }
+	      ((_classPrivateMethodGe = _classPrivateMethodGet(this, _findActiveTabButton, _findActiveTabButton2).call(this)) !== null && _classPrivateMethodGe !== void 0 ? _classPrivateMethodGe : _classPrivateMethodGet(this, _findFirstTabButton, _findFirstTabButton2).call(this)).click();
 	      var presetSelectorContainer = document.querySelector('[data-role="preset-selector-container"]');
 	      if (presetSelectorContainer) {
 	        main_core.Dom.removeClass(presetSelectorContainer, 'crm-type-hidden');
@@ -181,7 +243,11 @@
 	    value: function save(event) {
 	      var _this5 = this;
 	      if (this.isRestricted) {
-	        crm_router.Router.Instance.showFeatureSlider();
+	        if (main_core.Type.isStringFilled(this.restrictionSliderCode) && main_core.Reflection.getClass('BX.UI.InfoHelper.show')) {
+	          BX.UI.InfoHelper.show(this.restrictionSliderCode);
+	        } else {
+	          this.showErrors([this.restrictionErrorMessage]);
+	        }
 	        this.stopProgress();
 	        return;
 	      }
@@ -209,7 +275,7 @@
 	      // });
 	      var linkedUserFields = {};
 	      this.form.querySelectorAll('[data-name*="linkedUserFields"]').forEach(function (linkedUserFieldNode) {
-	        var name = linkedUserFieldNode.dataset.name.substr('linkedUserFields['.length).replace(']', '');
+	        var name = linkedUserFieldNode.dataset.name.slice('linkedUserFields['.length).replace(']', '');
 	        linkedUserFields[name] = _this5.isBooleanFieldChecked(linkedUserFieldNode);
 	      });
 	      this.type.setLinkedUserFields(linkedUserFields);
@@ -220,15 +286,20 @@
 	      if (this.customSectionController) {
 	        var customSectionData = this.customSectionController.getData();
 	        this.type.setCustomSectionId(customSectionData.customSectionId);
-	        this.type.setCustomSections(customSectionData.customSecions);
+	        this.type.setCustomSections(customSectionData.customSections);
 	        this.type.setIsExternalDynamicalType(this.isExternal);
 	        this.type.setIsSaveFromTypeDetail(this.isSaveFromTypeDetail);
 	      }
+	      var analyticsBuilder = _classPrivateMethodGet(this, _getAnalyticsBuilder, _getAnalyticsBuilder2).call(this).setElement(crm_integration_analytics.Dictionary.ELEMENT_CREATE_BUTTON);
+	      ui_analytics.sendData(analyticsBuilder.setStatus(crm_integration_analytics.Dictionary.STATUS_ATTEMPT).buildData());
 	      this.type.save().then(function (response) {
+	        ui_analytics.sendData(analyticsBuilder.setStatus(crm_integration_analytics.Dictionary.STATUS_SUCCESS).setId(_this5.type.getId()).buildData());
+	        babelHelpers.classPrivateFieldSet(_this5, _isCancelEventRegistered, true);
 	        _this5.stopProgress();
 	        _this5.afterSave(response);
 	        _this5.isNew = false;
 	      })["catch"](function (errors) {
+	        ui_analytics.sendData(analyticsBuilder.setStatus(crm_integration_analytics.Dictionary.STATUS_ERROR).setId(_this5.type.getId()).buildData());
 	        _this5.showErrors(errors);
 	        _this5.stopProgress();
 	      });
@@ -238,7 +309,7 @@
 	    value: function collectEntityTypeIds(role) {
 	      var entityTypeIds = [];
 	      var checkboxes = this.container.querySelectorAll("[data-role=\"".concat(role, "\"]"));
-	      Array.from(checkboxes).forEach(function (checkbox) {
+	      babelHelpers.toConsumableArray(checkboxes).forEach(function (checkbox) {
 	        if (checkbox.checked) {
 	          entityTypeIds.push(checkbox.dataset.entityTypeId);
 	        }
@@ -248,16 +319,12 @@
 	  }, {
 	    key: "afterSave",
 	    value: function afterSave(response) {
+	      var _this$getSlider;
 	      this.addDataToSlider('response', response);
-	      if (response.data.hasOwnProperty('urlTemplates')) {
+	      if (Object.hasOwn(response.data, 'urlTemplates')) {
 	        crm_router.Router.Instance.setUrlTemplates(response.data.urlTemplates);
 	      }
-	      var slider = this.getSlider();
-	      if (slider) {
-	        slider.close();
-	      } else if (this.isNew) {
-	        location.href = crm_router.Router.Instance.getTypeDetailUrl(this.type.getEntityTypeId());
-	      }
+	      (_this$getSlider = this.getSlider()) === null || _this$getSlider === void 0 ? void 0 : _this$getSlider.close();
 	      this.emitTypeUpdatedEvent({
 	        isUrlChanged: response.data.isUrlChanged === true
 	      });
@@ -265,26 +332,13 @@
 	  }, {
 	    key: "getSlider",
 	    value: function getSlider() {
-	      if (main_core.Reflection.getClass('BX.SidePanel')) {
-	        return BX.SidePanel.Instance.getSliderByWindow(window);
-	      }
-	      return null;
-	    }
-	  }, {
-	    key: "getToolbarComponent",
-	    value: function getToolbarComponent() {
-	      if (main_core.Reflection.getClass('BX.Crm.ToolbarComponent')) {
-	        return BX.Crm.ToolbarComponent.Instance;
-	      }
-	      return null;
+	      var _BX$SidePanel, _BX$SidePanel$Instanc;
+	      return (_BX$SidePanel = BX.SidePanel) === null || _BX$SidePanel === void 0 ? void 0 : (_BX$SidePanel$Instanc = _BX$SidePanel.Instance) === null || _BX$SidePanel$Instanc === void 0 ? void 0 : _BX$SidePanel$Instanc.getSliderByWindow(window);
 	    }
 	  }, {
 	    key: "emitTypeUpdatedEvent",
 	    value: function emitTypeUpdatedEvent(data) {
-	      var toolbar = this.getToolbarComponent();
-	      if (toolbar) {
-	        toolbar.emitTypeUpdatedEvent(data);
-	      }
+	      crm_toolbarComponent.ToolbarComponent.Instance.emitTypeUpdatedEvent(data);
 	    }
 	  }, {
 	    key: "addDataToSlider",
@@ -305,7 +359,7 @@
 	      });
 	      if (main_core.Type.isDomNode(this.errorsContainer)) {
 	        this.errorsContainer.innerText = text;
-	        this.errorsContainer.parentNode.style.display = 'block';
+	        main_core.Dom.style(this.errorsContainer.parentNode, 'display', 'block');
 	      } else {
 	        console.error(text);
 	      }
@@ -314,7 +368,7 @@
 	    key: "hideErrors",
 	    value: function hideErrors() {
 	      if (main_core.Type.isDomNode(this.errorsContainer)) {
-	        this.errorsContainer.parentNode.style.display = 'none';
+	        main_core.Dom.style(this.errorsContainer.parentNode, 'display', 'none');
 	        this.errorsContainer.innerText = '';
 	      }
 	    }
@@ -332,31 +386,30 @@
 	      if (!this.type) {
 	        return;
 	      }
+	      var currentUrl = new main_core.Uri(decodeURI(window.location.href));
+	      var analyticsBuilder = new crm_integration_analytics.Builder.Automation.Type.DeleteEvent().setElement(crm_integration_analytics.Dictionary.ELEMENT_DELETE_BUTTON).setIsExternal(this.isExternal).setSubSection(currentUrl.getQueryParam('c_sub_section')).setId(this.type.getId());
 	      ui_dialogs_messagebox.MessageBox.confirm(main_core.Loc.getMessage('CRM_TYPE_DETAIL_DELETE_CONFIRM'), function () {
 	        return new Promise(function (resolve) {
+	          ui_analytics.sendData(analyticsBuilder.setStatus(crm_integration_analytics.Dictionary.STATUS_ATTEMPT).buildData());
 	          _this6.startProgress();
 	          _this6.type["delete"]().then(function (response) {
+	            ui_analytics.sendData(analyticsBuilder.setStatus(crm_integration_analytics.Dictionary.STATUS_SUCCESS).buildData());
+	            babelHelpers.classPrivateFieldSet(_this6, _isCancelEventRegistered, true);
 	            _this6.stopProgress();
 	            var isUrlChanged = main_core.Type.isObject(response.data) && response.data.isUrlChanged === true;
 	            _this6.emitTypeUpdatedEvent({
 	              isUrlChanged: isUrlChanged
 	            });
-	            var slider = _this6.getSlider();
-	            if (slider) {
-	              slider.close();
-	            } else {
-	              var listUrl = crm_router.Router.Instance.getTypeListUrl();
-	              if (listUrl) {
-	                location.href = listUrl.toString();
-	              }
-	            }
+	            crm_router.Router.Instance.closeSliderOrRedirect(crm_router.Router.Instance.getTypeListUrl());
 	          })["catch"](function (errors) {
+	            ui_analytics.sendData(analyticsBuilder.setStatus(crm_integration_analytics.Dictionary.STATUS_ERROR).buildData());
 	            _this6.showErrors(errors);
 	            _this6.stopProgress();
 	            resolve();
 	          });
 	        });
 	      }, null, function (box) {
+	        ui_analytics.sendData(analyticsBuilder.setStatus(crm_integration_analytics.Dictionary.STATUS_CANCEL).buildData());
 	        _this6.stopProgress();
 	        box.close();
 	      });
@@ -377,11 +430,11 @@
 	    key: "showTab",
 	    value: function showTab(tabNameToShow) {
 	      var _this8 = this;
-	      Array.from(this.tabs.keys()).forEach(function (tabName) {
+	      babelHelpers.toConsumableArray(this.tabs.keys()).forEach(function (tabName) {
 	        if (tabName === tabNameToShow) {
-	          _this8.tabs.get(tabName).classList.add('crm-type-tab-current');
+	          main_core.Dom.addClass(_this8.tabs.get(tabName), 'crm-type-tab-current');
 	        } else {
-	          _this8.tabs.get(tabName).classList.remove('crm-type-tab-current');
+	          main_core.Dom.removeClass(_this8.tabs.get(tabName), 'crm-type-tab-current');
 	        }
 	      });
 	    }
@@ -412,6 +465,7 @@
 	          }
 	        }
 	      });
+	      this.selectedPresetId = presetId;
 	    }
 	  }, {
 	    key: "getPresetById",
@@ -430,6 +484,7 @@
 	      } finally {
 	        _iterator.f();
 	      }
+	      return null;
 	    }
 	  }, {
 	    key: "updateInputs",
@@ -462,7 +517,7 @@
 	  }, {
 	    key: "getBooleanFieldNodeByName",
 	    value: function getBooleanFieldNodeByName(fieldName) {
-	      return this.container.querySelector('[data-name="' + fieldName + '"]');
+	      return this.container.querySelector("[data-name=\"".concat(fieldName, "\"]"));
 	    }
 	  }, {
 	    key: "isBooleanFieldChecked",
@@ -476,6 +531,7 @@
 	    key: "setBooleanFieldCheckedState",
 	    value: function setBooleanFieldCheckedState(node, isChecked) {
 	      if (node.nodeName === 'INPUT') {
+	        // eslint-disable-next-line no-param-reassign
 	        node.checked = isChecked;
 	        return;
 	      }
@@ -514,7 +570,9 @@
 	        switcher: BX.UI.Switcher.getById('crm-type-custom-section-switcher'),
 	        container: this.container.querySelector('[data-role="crm-type-custom-section-container"]'),
 	        selectorContainer: this.container.querySelector('[data-role="crm-type-custom-section-selector"]'),
-	        customSections: this.type.getCustomSections() || []
+	        customSections: this.type.getCustomSections() || [],
+	        isCreateSectionsViaAutomatedSolutionDetails: this.isCreateSectionsViaAutomatedSolutionDetails,
+	        isCrmAdmin: this.isCrmAdmin
 	      });
 	    }
 	  }], [{
@@ -534,25 +592,59 @@
 	  }, {
 	    key: "handleHideDescriptionClick",
 	    value: function handleHideDescriptionClick(target) {
-	      target.parentNode.style.display = 'none';
+	      main_core.Dom.style(target.parentNode, 'display', 'none');
 	    }
 	  }, {
 	    key: "handleBooleanFieldClick",
 	    value: function handleBooleanFieldClick(fieldName) {
-	      if (instance) {
-	        instance.toggleBooleanField(fieldName);
-	      }
+	      var _instance2;
+	      (_instance2 = instance) === null || _instance2 === void 0 ? void 0 : _instance2.toggleBooleanField(fieldName);
 	    }
 	  }, {
 	    key: "handlePresetSelectorClick",
 	    value: function handlePresetSelectorClick() {
-	      if (instance) {
-	        instance.enablePresetsView();
-	      }
+	      var _instance3;
+	      (_instance3 = instance) === null || _instance3 === void 0 ? void 0 : _instance3.enablePresetsView();
+	    }
+	  }, {
+	    key: "handleCancelButtonClick",
+	    value: function handleCancelButtonClick() {
+	      var _instance;
+	      // if we just add click event handler to cancel button node, that handler will be called after slider close
+	      // to capture click before that, we need to add handler directly to markup
+	      (_instance = instance) === null || _instance === void 0 ? void 0 : _classPrivateMethodGet(_instance, _registerCancelEvent, _registerCancelEvent2).call(_instance, crm_integration_analytics.Dictionary.ELEMENT_CANCEL_BUTTON);
 	    }
 	  }]);
 	  return TypeDetail;
 	}();
+	function _registerCancelEvent2(element) {
+	  if (babelHelpers.classPrivateFieldGet(this, _isCancelEventRegistered)) {
+	    return;
+	  }
+	  babelHelpers.classPrivateFieldSet(this, _isCancelEventRegistered, true);
+	  ui_analytics.sendData(_classPrivateMethodGet(this, _getAnalyticsBuilder, _getAnalyticsBuilder2).call(this).setElement(element).setStatus(crm_integration_analytics.Dictionary.STATUS_CANCEL).buildData());
+	}
+	function _findActiveTabButton2() {
+	  return document.querySelector('.ui-sidepanel-menu-item.ui-sidepanel-menu-active > [data-role^=tab-]');
+	}
+	function _findFirstTabButton2() {
+	  return document.querySelector('.ui-sidepanel-menu-item > [data-role^=tab-]');
+	}
+	function _getAnalyticsBuilder2() {
+	  var builder = this.isNew ? new crm_integration_analytics.Builder.Automation.Type.CreateEvent() : new crm_integration_analytics.Builder.Automation.Type.EditEvent();
+	  builder.setIsExternal(this.isExternal);
+	  if (main_core.Type.isStringFilled(this.selectedPresetId)) {
+	    builder.setPreset(this.selectedPresetId);
+	  }
+	  if (this.type.getId() > 0) {
+	    builder.setId(this.type.getId());
+	  }
+	  var currentUrl = new main_core.Uri(decodeURI(window.location.href));
+	  if (currentUrl.getQueryParam('c_sub_section') && builder instanceof crm_integration_analytics.Builder.Automation.Type.EditEvent) {
+	    builder.setSubSection(currentUrl.getQueryParam('c_sub_section'));
+	  }
+	  return builder;
+	}
 	namespace.TypeDetail = TypeDetail;
 	var RelationsController = /*#__PURE__*/function () {
 	  function RelationsController(options) {
@@ -642,10 +734,10 @@
 	    key: "adjust",
 	    value: function adjust() {
 	      var _this11 = this;
-	      if (!this.switcher.isChecked()) {
-	        main_core.Dom.addClass(this.container, 'crm-type-hidden');
-	      } else {
+	      if (this.switcher.isChecked()) {
 	        main_core.Dom.removeClass(this.container, 'crm-type-hidden');
+	      } else {
+	        main_core.Dom.addClass(this.container, 'crm-type-hidden');
 	      }
 	      var selectedTypes = this.typeSelector.getDialog().getSelectedItems();
 	      if (selectedTypes.length > 0) {
@@ -685,9 +777,9 @@
 	  }, {
 	    key: "isItemSelected",
 	    value: function isItemSelected(item, selectedItems) {
-	      return selectedItems.filter(function (selectedItem) {
+	      return selectedItems.some(function (selectedItem) {
 	        return item.id === selectedItem.id;
-	      }).length > 0;
+	      });
 	    }
 	  }, {
 	    key: "getData",
@@ -725,14 +817,27 @@
 	    } else {
 	      this.customSections = [];
 	    }
+	    if (main_core.Type.isBoolean(options.isCreateSectionsViaAutomatedSolutionDetails)) {
+	      this.isCreateSectionsViaAutomatedSolutionDetails = options.isCreateSectionsViaAutomatedSolutionDetails;
+	    }
+	    if (main_core.Type.isBoolean(options.isCrmAdmin)) {
+	      this.isCrmAdmin = options.isCrmAdmin;
+	    }
 	    this.initSelector();
-	    this.settingsContainer = main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["<div class=\"crm-type-hidden crm-type-custom-sections-settings-container\">\n\t\t\t<div class=\"crm-type-relation-subtitle\">", "</div>\n\t\t</div>"])), main_core.Loc.getMessage('CRM_TYPE_DETAIL_CUSTOM_SECTION_LIST_MSGVER_1'));
+	    this.settingsContainer = main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"crm-type-hidden crm-type-custom-sections-settings-container\">\n\t\t\t\t<div class=\"crm-type-relation-subtitle\">", "</div>\n\t\t\t</div>\n\t\t"])), main_core.Loc.getMessage('CRM_TYPE_DETAIL_CUSTOM_SECTION_LIST_MSGVER_1'));
 	    this.container.append(this.settingsContainer);
 	    this.adjustInitialState();
 	    this.bindEvents();
 	    this.adjust();
 	  }
 	  babelHelpers.createClass(CustomSectionsController, [{
+	    key: "destroy",
+	    value: function destroy() {
+	      var _this$selector;
+	      this.unbindEvents();
+	      (_this$selector = this.selector) === null || _this$selector === void 0 ? void 0 : _this$selector.unsubscribeAll();
+	    }
+	  }, {
 	    key: "initSelector",
 	    value: function initSelector() {
 	      var items = [];
@@ -749,25 +854,40 @@
 	          selectedItems.push(item);
 	        }
 	      });
-	      this.selector = new ui_entitySelector.TagSelector({
-	        showCreateButton: true,
-	        createButtonCaption: main_core.Loc.getMessage('CRM_COMMON_ACTION_CONFIG'),
+	      var tagSelectorOptions = {
 	        multiple: false,
 	        dialogOptions: {
-	          enableSearch: false,
-	          multiple: false,
 	          items: items,
 	          selectedItems: selectedItems,
 	          dropdownMode: true,
 	          height: 200,
-	          showAvatars: false,
-	          recentTabOptions: {
-	            stub: false
-	          }
+	          showAvatars: false
 	        }
-	      });
-	      this.selector.subscribe('onCreateButtonClick', this.onCreateButtonClick.bind(this));
+	      };
+	      if (this.isCreateSectionsViaAutomatedSolutionDetails) {
+	        tagSelectorOptions.showCreateButton = false;
+	        tagSelectorOptions.dialogOptions.footer = main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<a\n\t\t\t\t\tonclick=\"", "\"\n\t\t\t\t\tclass=\"ui-selector-footer-link ui-selector-footer-link-add\"\n\t\t\t\t>", "</a>\n\t\t\t"])), this.onOpenAutomatedSolutionCreationSliderClick.bind(this), main_core.Loc.getMessage('CRM_COMMON_ACTION_CREATE'));
+	      } else {
+	        tagSelectorOptions.showCreateButton = true;
+	        tagSelectorOptions.createButtonCaption = main_core.Loc.getMessage('CRM_COMMON_ACTION_CONFIG');
+	        tagSelectorOptions.events = {
+	          onCreateButtonClick: this.onCreateButtonClick.bind(this)
+	        };
+	      }
+	      if (!this.isCrmAdmin) {
+	        tagSelectorOptions.locked = true;
+	      }
+	      this.selector = new ui_entitySelector.TagSelector(tagSelectorOptions);
 	      this.selector.renderTo(this.selectorContainer);
+	    }
+	  }, {
+	    key: "reInitSelector",
+	    value: function reInitSelector() {
+	      this.selector.getDialog().destroy();
+	      this.selector.unsubscribeAll();
+	      this.selector = null;
+	      main_core.Dom.clean(this.selectorContainer);
+	      this.initSelector();
 	    }
 	  }, {
 	    key: "showSelector",
@@ -790,7 +910,56 @@
 	  }, {
 	    key: "bindEvents",
 	    value: function bindEvents() {
-	      main_core_events.EventEmitter.subscribe(this.switcher, 'toggled', this.adjust.bind(this));
+	      this.adjust = this.adjust.bind(this);
+	      this.onAutomatedSolutionUpdate = this.onAutomatedSolutionUpdate.bind(this);
+	      main_core_events.EventEmitter.subscribe(this.switcher, 'toggled', this.adjust);
+	      if (this.isCreateSectionsViaAutomatedSolutionDetails) {
+	        crm_toolbarComponent.ToolbarComponent.Instance.subscribeAutomatedSolutionUpdatedEvent(this.onAutomatedSolutionUpdate);
+	      }
+	    }
+	  }, {
+	    key: "unbindEvents",
+	    value: function unbindEvents() {
+	      main_core_events.EventEmitter.unsubscribe(this.switcher, 'toggled', this.adjust);
+	      crm_toolbarComponent.ToolbarComponent.Instance.unsubscribeAutomatedSolutionUpdatedEvent(this.onAutomatedSolutionUpdate);
+	    }
+	  }, {
+	    key: "onAutomatedSolutionUpdate",
+	    value: function onAutomatedSolutionUpdate(event) {
+	      var id = main_core.Text.toInteger(event.getData().intranetCustomSectionId);
+	      var title = String(event.getData().title);
+	      if (id <= 0 || !main_core.Type.isStringFilled(title)) {
+	        return;
+	      }
+	      var currentCustomSection = this.customSections.find(function (section) {
+	        return main_core.Text.toInteger(section.id) === id;
+	      });
+	      if (currentCustomSection) {
+	        currentCustomSection.title = title;
+	      } else {
+	        this.customSections.push({
+	          id: id,
+	          title: title
+	        });
+	      }
+	      this.reInitSelector();
+	      this.selectCustomSectionById(id);
+	    }
+	  }, {
+	    key: "selectCustomSectionById",
+	    value: function selectCustomSectionById(id) {
+	      var _dialog$getItem;
+	      var dialog = this.selector.getDialog();
+	      dialog.deselectAll();
+	      (_dialog$getItem = dialog.getItem({
+	        entityId: 'custom-section',
+	        id: id
+	      })) === null || _dialog$getItem === void 0 ? void 0 : _dialog$getItem.select();
+	    }
+	  }, {
+	    key: "onOpenAutomatedSolutionCreationSliderClick",
+	    value: function onOpenAutomatedSolutionCreationSliderClick() {
+	      void crm_router.Router.Instance.openAutomatedSolutionDetail();
 	    }
 	  }, {
 	    key: "onCreateButtonClick",
@@ -803,27 +972,27 @@
 	    value: function renderSectionsConfig() {
 	      var _this13 = this;
 	      if (!this.sectionsListContainer) {
-	        this.sectionsListContainer = main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["<div class=\"crm-type-custom-sections-list-container\"></div>"])));
+	        this.sectionsListContainer = main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["<div class=\"crm-type-custom-sections-list-container\"></div>"])));
 	        this.settingsContainer.append(this.sectionsListContainer);
 	      }
 	      this.renderSectionsList(this.sectionsListContainer);
 	      if (!this.addSectionItemButton) {
-	        this.addSectionItemButton = main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["<div class=\"crm-type-custom-section-add-item-container\">\n\t\t\t\t<span class=\"crm-type-custom-section-add-item-button\" onclick=\"", "\">", "</span>\n\t\t\t</div>"])), function () {
-	          _this13.sectionsListContainer.append(_this13.renderSectionItem());
+	        this.addSectionItemButton = main_core.Tag.render(_templateObject4 || (_templateObject4 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"crm-type-custom-section-add-item-container\">\n\t\t\t\t\t<span\n\t\t\t\t\t\tclass=\"crm-type-custom-section-add-item-button\"\n\t\t\t\t\t\tonclick=\"", "\"\n\t\t\t\t\t>\n\t\t\t\t\t\t", "\n\t\t\t\t\t</span>\n\t\t\t\t</div>\n\t\t\t"])), function () {
+	          return _this13.sectionsListContainer.append(_this13.renderSectionItem());
 	        }, main_core.Loc.getMessage('CRM_COMMON_ACTION_CREATE'));
 	        this.settingsContainer.append(this.addSectionItemButton);
 	      }
 	      if (!this.buttonsContainer) {
-	        this.settingsContainer.append(main_core.Tag.render(_templateObject4 || (_templateObject4 = babelHelpers.taggedTemplateLiteral(["<hr class=\"crm-type-custom-sections-line\">"]))));
-	        this.buttonsContainer = main_core.Tag.render(_templateObject5 || (_templateObject5 = babelHelpers.taggedTemplateLiteral(["<div class=\"crm-type-custom-sections-buttons-container\"></div>"])));
+	        this.settingsContainer.append(main_core.Tag.render(_templateObject5 || (_templateObject5 = babelHelpers.taggedTemplateLiteral(["<hr class=\"crm-type-custom-sections-line\">"]))));
+	        this.buttonsContainer = main_core.Tag.render(_templateObject6 || (_templateObject6 = babelHelpers.taggedTemplateLiteral(["<div class=\"crm-type-custom-sections-buttons-container\"></div>"])));
 	        this.settingsContainer.append(this.buttonsContainer);
 	      }
 	      if (!this.saveButton) {
-	        this.saveButton = main_core.Tag.render(_templateObject6 || (_templateObject6 = babelHelpers.taggedTemplateLiteral(["<span class=\"ui-btn ui-btn-primary\" onclick=\"", "\">", "</span>"])), this.onSaveConfigHandler.bind(this), main_core.Loc.getMessage('CRM_COMMON_ACTION_SAVE'));
+	        this.saveButton = main_core.Tag.render(_templateObject7 || (_templateObject7 = babelHelpers.taggedTemplateLiteral(["<span class=\"ui-btn ui-btn-primary\" onclick=\"", "\">", "</span>"])), this.onSaveConfigHandler.bind(this), main_core.Loc.getMessage('CRM_COMMON_ACTION_SAVE'));
 	        this.buttonsContainer.append(this.saveButton);
 	      }
 	      if (!this.cancelButton) {
-	        this.cancelButton = main_core.Tag.render(_templateObject7 || (_templateObject7 = babelHelpers.taggedTemplateLiteral(["<span class=\"ui-btn ui-btn-light-border\" onclick=\"", "\">", "</span>"])), this.onCancelConfigHandler.bind(this), main_core.Loc.getMessage('CRM_COMMON_ACTION_CANCEL'));
+	        this.cancelButton = main_core.Tag.render(_templateObject8 || (_templateObject8 = babelHelpers.taggedTemplateLiteral(["<span class=\"ui-btn ui-btn-light-border\" onclick=\"", "\">", "</span>"])), this.onCancelConfigHandler.bind(this), main_core.Loc.getMessage('CRM_COMMON_ACTION_CANCEL'));
 	        this.buttonsContainer.append(this.cancelButton);
 	      }
 	    }
@@ -833,7 +1002,7 @@
 	      event.preventDefault();
 	      var selectedSection = this.getSelectedSection();
 	      var newCustomSections = [];
-	      Array.from(this.sectionsListContainer.children).forEach(function (node) {
+	      babelHelpers.toConsumableArray(this.sectionsListContainer.children).forEach(function (node) {
 	        var idInput = node.querySelector('[name="id"]');
 	        var valueInput = node.querySelector('[name="value"]');
 	        if (!idInput || !valueInput) {
@@ -854,8 +1023,7 @@
 	        }
 	      });
 	      this.customSections = newCustomSections;
-	      main_core.Dom.clean(this.selectorContainer);
-	      this.initSelector();
+	      this.reInitSelector();
 	      this.showSelector();
 	      this.hideSectionsList();
 	    }
@@ -881,7 +1049,7 @@
 	    value: function renderSectionItem(section) {
 	      var _this15 = this;
 	      var item = new CustomSectionItem(section);
-	      var node = main_core.Tag.render(_templateObject8 || (_templateObject8 = babelHelpers.taggedTemplateLiteral(["<div style=\"margin-bottom: 10px;\" class=\"ui-ctl ui-ctl-textbox ui-ctl-w100 ui-ctl-row\">\n\t\t\t<input type=\"hidden\" name=\"id\" value=\"", "\" />\n\t\t\t<input class=\"ui-ctl-element\" name=\"value\" type=\"text\" value=\"", "\">\n\t\t\t<div class=\"crm-type-custom-section-remove-item\" onclick=\"", "\"></div>\n\t\t</div>"])), item.getId(), main_core.Text.encode(item.getValue()), function (event) {
+	      var node = main_core.Tag.render(_templateObject9 || (_templateObject9 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div style=\"margin-bottom: 10px;\" class=\"ui-ctl ui-ctl-textbox ui-ctl-w100 ui-ctl-row\">\n\t\t\t\t<input type=\"hidden\" name=\"id\" value=\"", "\" />\n\t\t\t\t<input class=\"ui-ctl-element\" name=\"value\" type=\"text\" value=\"", "\">\n\t\t\t\t<div\n\t\t\t\t\tclass=\"crm-type-custom-section-remove-item\"\n\t\t\t\t\tonclick=\"", "\">\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), item.getId(), main_core.Text.encode(item.getValue()), function (event) {
 	        event.preventDefault();
 	        _this15.sectionsListContainer.removeChild(item.getNode());
 	      });
@@ -903,10 +1071,10 @@
 	  }, {
 	    key: "adjust",
 	    value: function adjust() {
-	      if (!this.switcher.isChecked()) {
-	        main_core.Dom.addClass(this.container, 'crm-type-hidden');
-	      } else {
+	      if (this.switcher.isChecked()) {
 	        main_core.Dom.removeClass(this.container, 'crm-type-hidden');
+	      } else {
+	        main_core.Dom.addClass(this.container, 'crm-type-hidden');
 	      }
 	    }
 	  }, {
@@ -924,15 +1092,16 @@
 	  }, {
 	    key: "getData",
 	    value: function getData() {
-	      var data = {};
-	      data.customSectionId = 0;
+	      var data = {
+	        customSectionId: 0,
+	        customSections: this.customSections
+	      };
 	      if (this.switcher.isChecked()) {
 	        var selectedSection = this.getSelectedSection();
 	        if (selectedSection) {
 	          data.customSectionId = selectedSection.id;
 	        }
 	      }
-	      data.customSecions = this.customSections;
 	      return data;
 	    }
 	  }]);
@@ -942,7 +1111,7 @@
 	  function CustomSectionItem() {
 	    var customSection = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
 	    babelHelpers.classCallCheck(this, CustomSectionItem);
-	    this.id = customSection ? customSection.id : 'new_' + main_core.Text.getRandom();
+	    this.id = customSection ? customSection.id : "new_".concat(main_core.Text.getRandom());
 	    this.value = customSection ? customSection.title : '';
 	  }
 	  babelHelpers.createClass(CustomSectionItem, [{
@@ -985,5 +1154,5 @@
 	  return CustomSectionItem;
 	}();
 
-}((this.window = this.window || {}),BX,BX.Event,BX,BX.UI.Dialogs,BX.Crm.Models,BX.Crm,BX.UI.EntitySelector));
+}((this.window = this.window || {}),BX.Crm.Integration.Analytics,BX.Crm,BX.Crm,BX.Crm.Models,BX,BX.Event,BX,BX.UI.Analytics,BX.UI.Dialogs,BX.UI.EntitySelector));
 //# sourceMappingURL=script.js.map

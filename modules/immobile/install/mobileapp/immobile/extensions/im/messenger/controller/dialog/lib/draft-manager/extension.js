@@ -30,7 +30,6 @@ jn.define('im/messenger/controller/dialog/lib/draft-manager', (require, exports,
 			{
 				this.clearDraft();
 			}
-
 			this.start();
 		}
 
@@ -48,6 +47,8 @@ jn.define('im/messenger/controller/dialog/lib/draft-manager', (require, exports,
 				type: draft.messageType,
 				username: draft.userName,
 				message: draft.message,
+				image: draft.image,
+				video: draft.video,
 			};
 
 			if (!ObjectUtils.isStringFullSpace(draft.text))
@@ -94,6 +95,8 @@ jn.define('im/messenger/controller/dialog/lib/draft-manager', (require, exports,
 				draft.messageType = this.replyManager.quoteMessage.type;
 				draft.message = this.replyManager.quoteMessage.message;
 				draft.userName = this.replyManager.quoteMessage.username;
+				draft.video = this.replyManager.quoteMessage.video ?? null;
+				draft.image = this.replyManager.quoteMessage.image ?? null;
 			}
 			else if (this.replyManager.isEditInProcess)
 			{
@@ -102,6 +105,8 @@ jn.define('im/messenger/controller/dialog/lib/draft-manager', (require, exports,
 				draft.messageType = this.replyManager.editMessage.type;
 				draft.message = this.replyManager.editMessage.message;
 				draft.userName = this.replyManager.editMessage.username;
+				draft.video = this.replyManager.editMessage.video ?? null;
+				draft.image = this.replyManager.editMessage.image ?? null;
 			}
 
 			this.setInStore(draft);

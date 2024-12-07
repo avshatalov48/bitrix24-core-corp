@@ -9,3 +9,28 @@
   height: 0;
   opacity: 0;
 }
+
+.task-options-item-open-inner.--tariff-lock {
+	position: relative;
+	max-width: 798px;
+	min-width: 217px;
+}
+
+.task-options-item-open-inner.--tariff-lock .tariff-lock {
+	--task-tariff-lock-icon-size: 42px;
+
+	position: absolute;
+	right: 0;
+	top: 0;
+	width: var(--task-tariff-lock-icon-size);
+	height: var(--task-tariff-lock-icon-size);
+	z-index: 1;
+	margin: 0;
+	margin-right: 0!important;
+	opacity: 1;
+	transition: .2s;
+}
+
+.task-options-item-open-inner.--tariff-lock .tariff-lock:hover {
+	opacity: 0.8;
+}

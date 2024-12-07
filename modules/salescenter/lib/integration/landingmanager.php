@@ -8,6 +8,7 @@ use Bitrix\Main\Engine\UrlManager;
 use Bitrix\Main\Error;
 use Bitrix\Main\Event;
 use Bitrix\Main\EventResult;
+use Bitrix\Main\Loader;
 use Bitrix\Main\ORM\Data\AddResult;
 use Bitrix\Main\ORM\Data\UpdateResult;
 use Bitrix\Main\Result;
@@ -27,12 +28,16 @@ class LandingManager extends Base
 	protected const OPTION_SALESCENTER_SITE_ID = '~connected_site_id';
 	protected const OPTION_SALESCENTER_INSTALL_DEFAULT_SITES_TRIES_COUNT = '~install_default_site_tries_count';
 
+	protected const OPTION_SALESCENTER_PUBLISH_DEFAULT_SITES_TRIES_COUNT = '~publish_default_site_tries_count';
+
 	protected $connectedSite;
 	protected $landingPublicUrlInfo = [];
 	protected $loadedLandings = [];
 	protected $hiddenLandingIds = [];
 	protected $additionalLandingIds = [];
 	protected $connectedWebForms;
+	private bool $isCreationInProgress = false;
+	private bool $isPublicationInProgress = false;
 
 	/**
 	 * @return string
@@ -51,36 +56,35 @@ class LandingManager extends Base
 	 */
 	public static function onAfterDemoCreate(Event $event)
 	{
-		$result = new EventResult(EventResult::SUCCESS);
-		$code = $event->getParameter('code');
-		if(static::isSalesChatTemplateCode($code))
+		$instance = static::getInstance();
+		
+		$landingId = (int)$event->getParameter('id');
+
+		if ($landingId === $instance->getConnectedSiteId())
 		{
-			$landingId = $event->getParameter('id');
-			if($landingId != static::getInstance()->getConnectedSiteId())
-			{
-				if(static::getInstance()->isConnectionAvailable())
-				{
-					// todo: tmp hack! remove after add correctly verification
-					$skipPhoneOption = Option::get('landing', 'allow_skip_phone_verification', 'N');
-					$skipEmailOption = Option::get('landing', 'allow_skip_email_verification', 'N');
-					Option::set('landing', 'allow_skip_phone_verification', 'Y');
-					Option::set('landing', 'allow_skip_email_verification', 'Y');
-
-					Landing\Rights::setGlobalOff();
-					Landing\PublicAction\Site::publication($landingId, true);
-					Landing\Rights::setGlobalOn();
-
-					// todo: tmp hack! remove after add correctly verification
-					Option::set('landing', 'allow_skip_phone_verification', $skipPhoneOption);
-					Option::set('landing', 'allow_skip_email_verification', $skipEmailOption);
-				}
-
-				static::getInstance()->createWebFormPages();
-				static::getInstance()->setConnectedSiteId($landingId);
-			}
+			return new EventResult(EventResult::SUCCESS);
 		}
 
-		return $result;
+		$result = $instance->setConnectedSiteId($landingId);
+
+		if (!$result)
+		{
+			return new EventResult(EventResult::SUCCESS);
+		}
+
+		if (
+			$instance->isConnectionAvailable()
+			&& $instance->isPhoneConfirmed()
+		)
+		{
+			Landing\Rights::setGlobalOff();
+			Landing\PublicAction\Site::publication($landingId, true);
+			Landing\Rights::setGlobalOn();
+		}
+
+		$instance->createWebFormPages();
+
+		return new EventResult(EventResult::SUCCESS);
 	}
 
 	/**
@@ -244,11 +248,17 @@ class LandingManager extends Base
 	 */
 	public static function onBeforeSiteRecycle(Event $event)
 	{
-		if($event->getParameter('delete') !== 'Y')
+		if ($event->getParameter('delete') !== 'Y')
 		{
-			if(!static::getInstance()->isSiteExists())
+			if (!static::getInstance()->isSiteExists())
 			{
-				$siteId = $event->getParameter('id');
+				$siteId = (int)$event->getParameter('id');
+
+				if ($siteId === static::getInstance()->getConnectedSiteId())
+				{
+					return new EventResult(EventResult::SUCCESS);
+				}
+				
 				static::getInstance()->setConnectedSiteId($siteId);
 			}
 		}
@@ -319,16 +329,20 @@ class LandingManager extends Base
 		return (int) Option::get(Driver::MODULE_ID, static::OPTION_SALESCENTER_SITE_ID);
 	}
 
-	/**
-	 * @param int $landingId
-	 */
-	protected function setConnectedSiteId($landingId)
+	protected function setConnectedSiteId(int $landingId): bool
 	{
-		$landingId = (int) $landingId;
+		$templateCode = static::getSiteTemplateCode($landingId);
+
+		if (!static::isSalesChatTemplateCode($templateCode))
+		{
+			return false;
+		}
+
 		Option::set(Driver::MODULE_ID, static::OPTION_SALESCENTER_SITE_ID, $landingId);
-		PullManager::getInstance()->sendConnectEvent();
 		$this->loadedLandings = [];
 		$this->landingPublicUrlInfo = [];
+
+		return true;
 	}
 
 	/**
@@ -360,6 +374,29 @@ class LandingManager extends Base
 		}
 
 		return false;
+	}
+
+	protected static function getSiteTemplateCode(int $landingId): string
+	{
+		Landing\Rights::setOff();
+
+		$siteInfo = Landing\Site::getList([
+			'select' => ['TPL_CODE'],
+			'filter' => [
+				'=ID' => $landingId,
+				'=DELETED' => ['Y', 'N'],
+			],
+			'limit' => 1,
+		])->fetch();
+
+		Landing\Rights::setOn();
+		
+		if (!isset($siteInfo['TPL_CODE']))
+		{
+			return '';
+		}
+		
+		return $siteInfo['TPL_CODE'];
 	}
 
 	/**
@@ -411,6 +448,29 @@ class LandingManager extends Base
 		return false;
 	}
 
+	public function isPhoneConfirmed(): bool
+	{
+		if (
+			$this->isEnabled()
+			&& Loader::includeModule('landing')
+			&& Loader::includeModule('bitrix24')
+			&& !in_array(\CBitrix24::getPortalZone(), ['ru', 'by', 'kz'], true)
+		)
+		{
+			$error = new \Bitrix\Landing\Error();
+			$connectedSiteId = LandingManager::getInstance()->getConnectedSiteId();
+
+			if (!empty($connectedSiteId))
+			{
+				return Landing\Mutator::checkSiteVerification($connectedSiteId, $error);
+			}
+
+			return false;
+		}
+
+		return true;
+	}
+
 	public function tryInstallDefaultSiteOnce(): void
 	{
 		if (!$this->isEnabled())
@@ -418,42 +478,106 @@ class LandingManager extends Base
 			return;
 		}
 
-		if (!$this->isTriedInstallDefaultSite())
+		$optionName = static::OPTION_SALESCENTER_INSTALL_DEFAULT_SITES_TRIES_COUNT;
+
+		if (
+			!$this->isCreationInProgress
+			&& !$this->isSiteExists()
+			&& $this->isTriedActionDefaultSite($optionName)
+		)
+		{
+			$this->resetTriedActionDefaultSiteStatus($optionName);
+			$this->isCreationInProgress = true;
+		}
+
+		if (!$this->isTriedActionDefaultSite($optionName))
 		{
 			// for preserve competing installations set flag before install
-			$this->markTriedInstallDefaultSiteStatus();
+			$this->markTriedActionDefaultSiteStatus($optionName);
 			$success = $this->installDefaultSite();
+
+			$this->connectedSite = null;
+
 			if (!$success)
 			{
-				$this->resetTriedInstallDefaultSiteStatus();
+				$this->resetTriedActionDefaultSiteStatus($optionName);
+
+				return;
 			}
+
+			$this->isCreationInProgress = false;
 		}
 	}
 
-	protected function isTriedInstallDefaultSite(): bool
+	public function tryPublishDefaultSiteOnce(): void
+	{
+		if (!$this->isEnabled())
+		{
+			return;
+		}
+
+		if (!$this->isPhoneConfirmed())
+		{
+			return;
+		}
+
+		$optionName = static::OPTION_SALESCENTER_PUBLISH_DEFAULT_SITES_TRIES_COUNT;
+
+		if (
+			!$this->isPublicationInProgress
+			&& !$this->isSitePublished()
+			&& $this->isTriedActionDefaultSite($optionName)
+		)
+		{
+			$this->resetTriedActionDefaultSiteStatus($optionName);
+			$this->isPublicationInProgress = true;
+		}
+
+		if (!$this->isTriedActionDefaultSite($optionName))
+		{
+			// for preserve competing installations set flag before install
+			$this->markTriedActionDefaultSiteStatus($optionName);
+
+			Landing\Rights::setGlobalOff();
+			$result = Landing\PublicAction\Site::publication($this->getConnectedSiteId());
+			Landing\Rights::setGlobalOn();
+
+			$this->connectedSite = null;
+
+			if (!$result->isSuccess())
+			{
+				$this->resetTriedActionDefaultSiteStatus($optionName);
+
+				return;
+			}
+
+			$this->isPublicationInProgress = false;
+		}
+	}
+	protected function isTriedActionDefaultSite(string $optionName): bool
 	{
 		return (
 			(int) Option::get(
 				Driver::MODULE_ID,
-				static::OPTION_SALESCENTER_INSTALL_DEFAULT_SITES_TRIES_COUNT,
+				$optionName,
 				0) > 0
 		);
 	}
 
-	protected function markTriedInstallDefaultSiteStatus(): void
+	protected function markTriedActionDefaultSiteStatus(string $optionName): void
 	{
 		Option::set(
 			Driver::MODULE_ID,
-			static::OPTION_SALESCENTER_INSTALL_DEFAULT_SITES_TRIES_COUNT,
+			$optionName,
 			1
 		);
 	}
 
-	protected function resetTriedInstallDefaultSiteStatus(): void
+	protected function resetTriedActionDefaultSiteStatus(string $optionName): void
 	{
 		Option::set(
 			Driver::MODULE_ID,
-			static::OPTION_SALESCENTER_INSTALL_DEFAULT_SITES_TRIES_COUNT,
+			$optionName,
 			0
 		);
 	}
@@ -729,7 +853,12 @@ class LandingManager extends Base
 			{
 				$this->tryInstallDefaultSiteOnce();
 			}
-			if ($this->isEnabled && $this->isSiteExists())
+			else if (LandingManager::getInstance()->isPhoneConfirmed() && !$this->isSitePublished())
+			{
+				$this->tryPublishDefaultSiteOnce();
+			}
+
+			if ($this->isEnabled && $this->isSiteExists() && $this->isSitePublished())
 			{
 				Landing\Rights::setOff();
 				$siteId = $this->getConnectedSiteId();

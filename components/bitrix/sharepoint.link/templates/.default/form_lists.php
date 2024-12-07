@@ -46,7 +46,7 @@ echo $bExists ? 'bx-sp-unavail' : ''
 ?>
 </div>
 
-<script type="text/javascript">
+<script>
 function SLsetListValue(row)
 {
 	var input = BX(row.id.substr(5));
@@ -90,7 +90,7 @@ BX.ready(function() {
 else:
 	ShowError(GetMessage('SL_FORM_LISTS_ERROR_NONE'));
 ?>
-<script type="text/javascript">
+<script>
 var wnd = BX.WindowManager.Get();
 wnd.ClearButtons();
 wnd.SetHead('');

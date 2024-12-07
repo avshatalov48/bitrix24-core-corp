@@ -16,7 +16,7 @@ Extension::load("ui.buttons.icons");
 /** @var array $arResult */
 $containerId = 'bx-crm-exclusion-import';
 ?>
-<script type="text/javascript">
+<script>
 	BX.ready(function () {
 		BX.Crm.Exclusion.Import.init(<?=Json::encode(array(
 			'containerId' => $containerId,

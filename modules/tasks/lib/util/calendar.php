@@ -484,4 +484,16 @@ final class Calendar
 
 		return $result;
 	}
+
+	public function getEndHour(): int
+	{
+		$settings = self::getSettings();
+		return (int)($settings['HOURS']['END']['H'] ?? 0);
+	}
+
+	public function getEndMinute(): int
+	{
+		$settings = self::getSettings();
+		return (int)($settings['HOURS']['END']['M'] ?? 0);
+	}
 }

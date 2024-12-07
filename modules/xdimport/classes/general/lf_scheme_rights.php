@@ -183,7 +183,7 @@ class CXDILFSchemeRights
 				b_xdi_lf_scheme_right SR
 			' . $sFilter . $sOrder;
 
-		return $DB->Query($strSql, false, 'File: ' . __FILE__ . '<br>Line: ' . __LINE__);
+		return $DB->Query($strSql);
 	}
 
 	function GetByID($ID)
@@ -198,7 +198,7 @@ class CXDILFSchemeRights
 			WHERE SR.ID = ' . $ID . '
 		';
 
-		return $DB->Query($strSql, false, 'File: ' . __FILE__ . '<br>Line: ' . __LINE__);
+		return $DB->Query($strSql);
 	}
 
 	function Set($schemeId, $arRights = [], $arEUV = [])

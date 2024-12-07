@@ -2,54 +2,73 @@
  * @module tasks/dashboard/src/more-menu
  */
 jn.define('tasks/dashboard/src/more-menu', (require, exports, module) => {
-	const AppTheme = require('apptheme');
-	const { downloadImages } = require('asset-manager');
-	const { TaskFilter } = require('tasks/filter/task');
-	const { moreWithDot } = require('assets/common');
-	const { Loc } = require('loc');
-	const { Sorting } = require('tasks/dashboard/src/sorting');
+	const { UIMenuType } = require('layout/ui/menu');
+	const { BaseListMoreMenu } = require('layout/ui/list/base-more-menu');
+	const { TasksDashboardFilter } = require('tasks/dashboard/filter');
+	const { TasksDashboardSorting } = require('tasks/dashboard/src/sorting');
+	const { Feature } = require('feature');
+	const { Color } = require('tokens');
 	const { Views } = require('tasks/statemanager/redux/types');
+	const { Loc } = require('tasks/loc');
+	const { AnalyticsEvent } = require('analytics');
 
-	const iconPrefix = `${currentDomain}/bitrix/mobileapp/tasksmobile/extensions/tasks/dashboard/images/more-menu-`;
-	const Icons = {
-		[TaskFilter.counterType.expired]: `${iconPrefix}expired.png`,
-		[TaskFilter.counterType.newComments]: `${iconPrefix}new-comments.png`,
-		sortByActivity: `${iconPrefix}sort-by-activity.png`,
-		sortByDeadline: `${iconPrefix}sort-by-deadline.png`,
-		readAll: `${iconPrefix}read-all.png`,
-	};
+	const airStyleSupported = Feature.isAirStyleSupported();
 
-	class MoreMenu
+	let iconPrefix = `${currentDomain}/bitrix/mobileapp/tasksmobile/extensions/tasks/dashboard/images/more-menu-`;
+
+	if (airStyleSupported)
 	{
+		iconPrefix += 'outline-';
+	}
+
+	/**
+	 * @class TasksDashboardMoreMenu
+	 */
+	class TasksDashboardMoreMenu extends BaseListMoreMenu
+	{
+		get icons()
+		{
+			return {
+				[TasksDashboardFilter.counterType.expired]: airStyleSupported ? null : `${iconPrefix}expired.png`,
+				[TasksDashboardFilter.counterType.newComments]: airStyleSupported ? null : `${iconPrefix}new-comments.png`,
+				sortByActivity: `${iconPrefix}sort-by-activity.png`,
+				sortByDeadline: `${iconPrefix}sort-by-deadline.png`,
+				readAll: `${iconPrefix}read-all.png`,
+				[Views.DEADLINE]: `${iconPrefix}view-deadline.png`,
+				[Views.KANBAN]: `${iconPrefix}view-kanban.png`,
+				[Views.LIST]: `${iconPrefix}view-list.png`,
+				[Views.PLANNER]: `${iconPrefix}view-planner.png`,
+			};
+		}
+
+		/**
+		 * @param {Array} counters
+		 * @param {String} selectedCounter
+		 * @param {String} selectedSorting
+		 * @param {Object} callbacks
+		 * @param {Object} analyticsLabel
+		 */
 		constructor(
 			counters,
 			selectedCounter,
 			selectedSorting,
 			callbacks = {},
+			analyticsLabel = {},
 		)
 		{
-			this.counters = counters;
-			this.selectedCounter = selectedCounter;
-			this.selectedSorting = selectedSorting;
+			super(counters, selectedCounter, selectedSorting, callbacks);
 
-			this.menu = null;
-
-			this.openMoreMenu = this.openMoreMenu.bind(this);
-
-			this.onCounterClick = callbacks.onCounterClick;
-			this.onSortingClick = callbacks.onSortingClick;
 			this.onReadAllClick = callbacks.onReadAllClick;
-
 			this.getSelectedView = callbacks.getSelectedView;
+			this.getOwnerId = callbacks.getOwnerId;
+			this.getProjectId = callbacks.getProjectId;
 
-			setTimeout(() => this.prefetchAssets(), 1000);
-		}
-
-		prefetchAssets()
-		{
-			const icons = Object.values(Icons).filter((icon) => icon !== null);
-
-			void downloadImages(icons);
+			this.openViewSwitcher = callbacks.openViewSwitcher;
+			this.onListClick = callbacks.onListClick;
+			this.onKanbanClick = callbacks.onKanbanClick;
+			this.onPlannerClick = callbacks.onPlannerClick;
+			this.onDeadlineClick = callbacks.onDeadlineClick;
+			this.analyticsLabel = analyticsLabel;
 		}
 
 		/**
@@ -60,118 +79,119 @@ jn.define('tasks/dashboard/src/more-menu', (require, exports, module) => {
 		{
 			return {
 				type: 'more',
+				id: 'task-dashboard-more',
+				testId: 'task-dashboard-more',
+				dot: this.hasCountersValue(),
 				callback: this.openMoreMenu,
-				svg: {
-					content: moreWithDot(AppTheme.colors.base4, this.getMenuBackgroundColor(), this.getMenuDotColor()),
-				},
+				accent: this.isCounterSelected(),
 			};
 		}
 
-		/**
-		 * @private
-		 * @returns {string|null}
-		 */
-		getMenuBackgroundColor()
+		isCounterSelected()
 		{
-			const isCounterSelected = (
-				this.selectedCounter === TaskFilter.counterType.expired
-				|| this.selectedCounter === TaskFilter.counterType.newComments
+			return (
+				this.selectedCounter === TasksDashboardFilter.counterType.expired
+				|| this.selectedCounter === TasksDashboardFilter.counterType.newComments
 			);
-
-			return (isCounterSelected ? AppTheme.colors.accentBrandBlue : null);
 		}
 
 		/**
 		 * @private
-		 * @returns {string|null}
+		 * @returns {bool|null}
 		 */
-		getMenuDotColor()
+		hasCountersValue()
 		{
-			const hasCountersValue = (
-				this.counters[TaskFilter.counterType.expired] + this.counters[TaskFilter.counterType.newComments] > 0
+			return (
+				this.counters[TasksDashboardFilter.counterType.expired]
+				+ this.counters[TasksDashboardFilter.counterType.newComments] > 0
 			);
-
-			return (hasCountersValue ? AppTheme.colors.accentMainAlert : null);
 		}
 
 		/**
 		 * @private
+		 * @returns {array}
 		 */
-		openMoreMenu()
+		getMenuItems()
 		{
 			const articleCode = this.getHelpdeskArticleCode();
-			const menuItems = [
-				{
-					id: TaskFilter.counterType.expired,
-					testId: TaskFilter.counterType.expired,
-					title: Loc.getMessage('TASKSMOBILE_TASK_VIEW_ROUTER_MORE_MENU_EXPIRED'),
-					iconUrl: Icons[TaskFilter.counterType.expired],
-					sectionCode: 'default',
-					checked: (this.selectedCounter === TaskFilter.counterType.expired),
-					showCheckedIcon: false,
-					counterValue: this.counters[TaskFilter.counterType.expired],
-					counterStyle: {
-						backgroundColor: AppTheme.colors.accentMainAlert,
-					},
-					onItemSelected: this.onMenuItemSelected.bind(this),
-				},
-				{
-					id: TaskFilter.counterType.newComments,
-					testId: TaskFilter.counterType.newComments,
-					title: Loc.getMessage('TASKSMOBILE_TASK_VIEW_ROUTER_MORE_MENU_NEW_COMMENTS'),
-					iconUrl: Icons[TaskFilter.counterType.newComments],
-					sectionCode: 'default',
-					checked: (this.selectedCounter === TaskFilter.counterType.newComments),
-					showCheckedIcon: false,
-					counterValue: this.counters[TaskFilter.counterType.newComments],
-					counterStyle: {
-						backgroundColor: AppTheme.colors.accentMainSuccess,
-					},
-					showTopSeparator: false,
-					onItemSelected: this.onMenuItemSelected.bind(this),
-				},
-				{
-					id: 'sortByActivity',
-					testId: 'sortByActivity',
-					title: Loc.getMessage('TASKSMOBILE_TASK_VIEW_ROUTER_MORE_MENU_SORT_ACTIVITY_MSGVER_1'),
-					iconUrl: Icons.sortByActivity,
-					sectionCode: 'default',
-					checked: (this.selectedSorting === Sorting.type.ACTIVITY),
-					showCheckedIcon: false,
-					showTopSeparator: true,
-					onItemSelected: this.onMenuItemSelected.bind(this),
-				},
-				{
-					id: 'sortByDeadline',
-					testId: 'sortByDeadline',
-					title: Loc.getMessage('TASKSMOBILE_TASK_VIEW_ROUTER_MORE_MENU_SORT_DEADLINE'),
-					iconUrl: Icons.sortByDeadline,
-					sectionCode: 'default',
-					checked: (this.selectedSorting === Sorting.type.DEADLINE),
-					showCheckedIcon: false,
-					showTopSeparator: false,
-					onItemSelected: this.onMenuItemSelected.bind(this),
-				},
-				{
-					id: 'readAll',
-					testId: 'readAll',
-					title: Loc.getMessage('TASKSMOBILE_TASK_VIEW_ROUTER_MORE_MENU_READ_ALL'),
-					iconUrl: Icons.readAll,
-					iconName: 'read',
-					sectionCode: 'default',
-					showTopSeparator: true,
-					onItemSelected: this.onMenuItemSelected.bind(this),
-				},
-				articleCode && {
-					type: UI.Menu.Types.HELPDESK,
-					data: { articleCode },
-				},
-			]
-				.filter(Boolean);
 
-			this.menu = new UI.Menu(menuItems);
-			this.menu.show();
+
+			const viewSwitcherNextMenu = {
+				items: this.getViewSwitcherMenuItems(),
+				sections: [
+					{ id: 'changeView' },
+				],
+				title: Loc.getMessage('M_TASKS_BACK'),
+			};
+
+			return [
+				this.createMenuItem({
+					id: TasksDashboardFilter.counterType.expired,
+					title: Loc.getMessage('TASKSMOBILE_TASK_VIEW_ROUTER_MORE_MENU_EXPIRED'),
+					counterColor: Color.accentMainAlert.toHex(),
+					sectionCode: 'counters',
+					sectionTitle: (
+						Number(this.getOwnerId()) === Number(env.userId)
+							? Loc.getMessage('TASKSMOBILE_DASHBOARD_MORE_MENU_MY_COUNTER_TITLE')
+							: Loc.getMessage('TASKSMOBILE_DASHBOARD_MORE_MENU_COUNTER_TITLE')
+					),
+					showIcon: !airStyleSupported,
+				}),
+				this.createMenuItem({
+					id: TasksDashboardFilter.counterType.newComments,
+					title: Loc.getMessage('TASKSMOBILE_TASK_VIEW_ROUTER_MORE_MENU_NEW_COMMENTS'),
+					counterColor: Color.accentMainSuccess.toHex(),
+					sectionCode: 'counters',
+					showIcon: !airStyleSupported,
+				}),
+				this.createMenuItem({
+					id: 'sortByActivity',
+					title: Loc.getMessage('TASKSMOBILE_TASK_VIEW_ROUTER_MORE_MENU_SORT_ACTIVITY_MSGVER_1'),
+					checked: this.selectedSorting === 'ACTIVITY',
+					showTopSeparator: true,
+					sectionCode: 'sorting',
+					sectionTitle: Loc.getMessage('TASKSMOBILE_DASHBOARD_MORE_MENU_SORT_TITLE'),
+				}),
+				this.createMenuItem({
+					id: 'sortByDeadline',
+					title: Loc.getMessage('TASKSMOBILE_TASK_VIEW_ROUTER_MORE_MENU_SORT_DEADLINE'),
+					checked: this.selectedSorting === 'DEADLINE',
+					sectionCode: 'sorting',
+				}),
+				this.createMenuItem({
+					id: 'readAll',
+					title: Loc.getMessage('TASKSMOBILE_TASK_VIEW_ROUTER_MORE_MENU_READ_ALL'),
+					showTopSeparator: true,
+					sectionCode: 'settings',
+				}),
+				this.createMenuItem({
+					id: 'view-switcher',
+					title: Loc.getMessage('M_TASKS_VIEW_ROUTER_MENU_TITLE'),
+					iconUrl: this.icons[this.getSelectedView()],
+					showTopSeparator: true,
+					sectionCode: 'changeView',
+					nextMenu: airStyleSupported ? viewSwitcherNextMenu : null,
+				}),
+				articleCode && {
+					type: UIMenuType.HELPDESK,
+					data: { articleCode },
+					sectionCode: 'settings',
+				},
+			].filter(Boolean);
 		}
+
+		getViewSwitcherMenuItems = () => {
+			return Object.values(Views)
+				.filter((view) => !(view === Views.KANBAN && this.getProjectId() === null))
+				.map((view) => ({
+					id: view,
+					title: Loc.getMessage(`M_TASKS_VIEW_ROUTER_MENU_TITLE_${view}`),
+					checked: this.getSelectedView() === view,
+					showCheckedIcon: false,
+					sectionCode: 'changeView',
+				}))
+				.map((item) => this.createMenuItem(item));
+		};
 
 		/**
 		 * @private
@@ -202,59 +222,80 @@ jn.define('tasks/dashboard/src/more-menu', (require, exports, module) => {
 		 * @param event
 		 * @param item
 		 */
-		onMenuItemSelected(event, item)
-		{
+		onMenuItemSelected = (event, item) => {
+			const analyticsEvent = new AnalyticsEvent({
+				...this.analyticsLabel,
+				tool: 'tasks',
+				category: 'task_operations',
+				type: 'task',
+				status: 'success',
+				c_sub_section: this.getSelectedView()?.toLowerCase(),
+			});
+
 			switch (item.id)
 			{
-				case TaskFilter.counterType.expired:
-				case TaskFilter.counterType.newComments:
+				case TasksDashboardFilter.counterType.expired:
+					analyticsEvent
+						.setEvent('overdue_counters_on')
+						.setElement('overdue_counters_filter')
+						.send();
+
+					this.onCounterClick(item.id);
+					break;
+
+				case TasksDashboardFilter.counterType.newComments:
+					analyticsEvent
+						.setEvent('comments_counters_on')
+						.setElement('comments_counters_filter')
+						.send();
+
 					this.onCounterClick(item.id);
 					break;
 
 				case 'sortByActivity':
-					this.onSortingClick(Sorting.type.ACTIVITY);
+					this.onSortingClick(TasksDashboardSorting.types.ACTIVITY);
 					break;
 
 				case 'sortByDeadline':
-					this.onSortingClick(Sorting.type.DEADLINE);
+				{
+					this.onSortingClick(TasksDashboardSorting.types.DEADLINE);
 					break;
+				}
 
 				case 'readAll':
 					this.onReadAllClick();
 					break;
 
+				case 'view-switcher':
+				{
+					if (!airStyleSupported)
+					{
+						this.openViewSwitcher();
+					}
+					break;
+				}
+
+				case Views.LIST:
+					this.onListClick();
+					break;
+
+				case Views.KANBAN:
+					this.onKanbanClick();
+					break;
+
+				case Views.PLANNER:
+					this.onPlannerClick();
+					break;
+
+				case Views.DEADLINE:
+					this.onDeadlineClick();
+					break;
+
 				default:
 					break;
 			}
-		}
-
-		/**
-		 * @public
-		 * @param counters
-		 */
-		setCounters(counters)
-		{
-			this.counters = counters;
-		}
-
-		/**
-		 * @public
-		 * @param counter
-		 */
-		setSelectedCounter(counter)
-		{
-			this.selectedCounter = counter;
-		}
-
-		/**
-		 * @public
-		 * @param sorting
-		 */
-		setSelectedSorting(sorting)
-		{
-			this.selectedSorting = sorting;
-		}
+		};
 	}
 
-	module.exports = { MoreMenu };
+	module.exports = { TasksDashboardMoreMenu };
 });

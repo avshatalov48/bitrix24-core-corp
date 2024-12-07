@@ -276,7 +276,7 @@ jn.define('layout/ui/fields/money', (require, exports, module) => {
 		handleOnChange(value)
 		{
 			let amount = value.amount;
-			if (value.amount !== '')
+			if (value.amount !== '' && value.amount !== null)
 			{
 				amount = BX.type.isNumber(Number(value.amount)) ? String(value.amount) : '';
 			}
@@ -343,7 +343,7 @@ jn.define('layout/ui/fields/money', (require, exports, module) => {
 				value,
 				focus: this.state.focus,
 				onChange: this.onChange,
-				renderAdditionalContent: !multiple && renderAdditionalContent,
+				renderAdditionalContent: multiple ? null : renderAdditionalContent,
 				parent: this,
 				config: {
 					primaryField: {

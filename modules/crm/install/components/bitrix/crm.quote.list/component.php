@@ -124,10 +124,13 @@ $arResult['IS_AJAX_CALL'] = isset($_REQUEST['AJAX_CALL']) || isset($_REQUEST['aj
 $arResult['NAVIGATION_CONTEXT_ID'] = $arParams['NAVIGATION_CONTEXT_ID'] ?? '';
 $arResult['PRESERVE_HISTORY'] = $arParams['PRESERVE_HISTORY'] ?? false;
 $arResult['ENABLE_SLIDER'] = \CCrmOwnerType::IsSliderEnabled(\CCrmOwnerType::Quote);
-$arResult['CALL_LIST_UPDATE_MODE'] = isset($_REQUEST['call_list_context']) && isset($_REQUEST['call_list_id']) && IsModuleInstalled('voximplant');
-$arResult['CALL_LIST_CONTEXT'] = (string)($_REQUEST['call_list_context'] ?? null);
-$arResult['CALL_LIST_ID'] = (int)($_REQUEST['call_list_id'] ?? null);
-if($arResult['CALL_LIST_UPDATE_MODE'])
+
+[$callListId, $callListContext] = \CCrmViewHelper::getCallListIdAndContextFromRequest();
+$arResult['CALL_LIST_ID'] = $callListId;
+$arResult['CALL_LIST_CONTEXT'] = $callListContext;
+unset($callListId, $callListContext);
+
+if (\CCrmViewHelper::isCallListUpdateMode(\CCrmOwnerType::Quote))
 {
 	AddEventHandler('crm', 'onCrmQuoteListItemBuildMenu', array('\Bitrix\Crm\CallList\CallList', 'handleOnCrmQuoteListItemBuildMenu'));
 }
@@ -367,6 +370,19 @@ unset($arHeader);
 
 //endregion Headers initialization
 
+$settings = \CCrmViewHelper::initGridSettings(
+	$arResult['GRID_ID'],
+	$gridOptions,
+	$arResult['HEADERS'],
+	$isInExportMode,
+);
+
+$arResult['PANEL'] = \CCrmViewHelper::initGridPanel(
+	\CCrmOwnerType::Quote,
+	$settings,
+);
+unset($settings);
+
 //region Try to extract user action data
 // We have to extract them before call of CGridOptions::GetFilter() or the custom filter will be corrupted.
 $actionData = array(
@@ -375,106 +391,9 @@ $actionData = array(
 );
 if(check_bitrix_sessid())
 {
-	$postAction = 'action_button_'.$arResult['GRID_ID'];
 	$getAction = 'action_'.$arResult['GRID_ID'];
 	//We need to check grid 'controls'
-	$controls = isset($_POST['controls']) && is_array($_POST['controls']) ? $_POST['controls'] : [];
-	if ($actionData['METHOD'] == 'POST' && (isset($controls[$postAction]) || isset($_POST[$postAction])))
-	{
-		CUtil::JSPostUnescape();
-
-		$actionData['ACTIVE'] = true;
-
-		if(isset($controls[$postAction]))
-		{
-			$actionData['NAME'] = $controls[$postAction];
-		}
-		else
-		{
-			$actionData['NAME'] = $_POST[$postAction];
-			unset($_POST[$postAction], $_REQUEST[$postAction]);
-		}
-
-		$allRows = 'action_all_rows_'.$arResult['GRID_ID'];
-		$actionData['ALL_ROWS'] = false;
-		if(isset($controls[$allRows]))
-		{
-			$actionData['ALL_ROWS'] = $controls[$allRows] == 'Y';
-		}
-		elseif(isset($_POST[$allRows]))
-		{
-			$actionData['ALL_ROWS'] = $_POST[$allRows] == 'Y';
-			unset($_POST[$allRows], $_REQUEST[$allRows]);
-		}
-
-		if(isset($_POST['rows']) && is_array($_POST['rows']))
-		{
-			$actionData['ID'] = $_POST['rows'];
-		}
-		elseif(isset($_POST['ID']))
-		{
-			$actionData['ID'] = $_POST['ID'];
-			unset($_POST['ID'], $_REQUEST['ID']);
-		}
-
-		if(isset($_POST['FIELDS']))
-		{
-			$actionData['FIELDS'] = $_POST['FIELDS'];
-			unset($_POST['FIELDS'], $_REQUEST['FIELDS']);
-		}
-
-		if(isset($_POST['ACTION_STATUS_ID']) || isset($controls['ACTION_STATUS_ID']))
-		{
-			if(isset($_POST['ACTION_STATUS_ID']))
-			{
-				$actionData['STATUS_ID'] = trim($_POST['ACTION_STATUS_ID']);
-				unset($_POST['ACTION_STATUS_ID'], $_REQUEST['ACTION_STATUS_ID']);
-			}
-			else
-			{
-				$actionData['STATUS_ID'] = trim($controls['ACTION_STATUS_ID']);
-			}
-		}
-
-		if(isset($_POST['ACTION_ASSIGNED_BY_ID']) || isset($controls['ACTION_ASSIGNED_BY_ID']))
-		{
-			$assignedByID = 0;
-			if(isset($_POST['ACTION_ASSIGNED_BY_ID']))
-			{
-				if(!is_array($_POST['ACTION_ASSIGNED_BY_ID']))
-				{
-					$assignedByID = intval($_POST['ACTION_ASSIGNED_BY_ID']);
-				}
-				elseif(count($_POST['ACTION_ASSIGNED_BY_ID']) > 0)
-				{
-					$assignedByID = intval($_POST['ACTION_ASSIGNED_BY_ID'][0]);
-				}
-				unset($_POST['ACTION_ASSIGNED_BY_ID'], $_REQUEST['ACTION_ASSIGNED_BY_ID']);
-			}
-			else
-			{
-				$assignedByID = (int)$controls['ACTION_ASSIGNED_BY_ID'];
-			}
-
-			$actionData['ASSIGNED_BY_ID'] = $assignedByID;
-		}
-
-		if(isset($_POST['ACTION_OPENED']) || isset($controls['ACTION_OPENED']))
-		{
-			if(isset($_POST['ACTION_OPENED']))
-			{
-				$actionData['OPENED'] = mb_strtoupper($_POST['ACTION_OPENED']) === 'Y' ? 'Y' : 'N';
-				unset($_POST['ACTION_OPENED'], $_REQUEST['ACTION_OPENED']);
-			}
-			else
-			{
-				$actionData['OPENED'] = mb_strtoupper($controls['ACTION_OPENED']) === 'Y' ? 'Y' : 'N';
-			}
-		}
-
-		$actionData['AJAX_CALL'] = $arResult['IS_AJAX_CALL'];
-	}
-	elseif ($actionData['METHOD'] == 'GET' && isset($_GET[$getAction]))
+	if ($actionData['METHOD'] == 'GET' && isset($_GET[$getAction]))
 	{
 		$actionData['ACTIVE'] = true;
 
@@ -649,13 +568,13 @@ foreach ($arFilter as $k => $v)
 		unset($arEntitiesFilter);
 		unset($arFilter[$k]);
 	}
-	elseif (preg_match('/(.*)_from$/i'.BX_UTF_PCRE_MODIFIER, $k, $arMatch))
+	elseif (preg_match('/(.*)_from$/iu', $k, $arMatch))
 	{
 		\Bitrix\Crm\UI\Filter\Range::prepareFrom($arFilter, $arMatch[1], $v);
 	}
-	elseif (preg_match('/(.*)_to$/i'.BX_UTF_PCRE_MODIFIER, $k, $arMatch))
+	elseif (preg_match('/(.*)_to$/iu', $k, $arMatch))
 	{
-		if ($v != '' && ($arMatch[1] == 'DATE_CREATE' || $arMatch[1] == 'DATE_MODIFY') && !preg_match('/\d{1,2}:\d{1,2}(:\d{1,2})?$/'.BX_UTF_PCRE_MODIFIER, $v))
+		if ($v != '' && ($arMatch[1] == 'DATE_CREATE' || $arMatch[1] == 'DATE_MODIFY') && !preg_match('/\d{1,2}:\d{1,2}(:\d{1,2})?$/u', $v))
 		{
 			$v = CCrmDateTimeHelper::SetMaxDayTime($v);
 		}
@@ -681,334 +600,35 @@ foreach ($arFilter as $k => $v)
 \Bitrix\Crm\UI\Filter\EntityHandler::internalize($arResult['FILTER'], $arFilter);
 
 //region POST & GET actions processing
-if($actionData['ACTIVE'])
+\CCrmViewHelper::processGridRequest(\CCrmOwnerType::Quote, $arResult['GRID_ID'], $arResult['PANEL']);
+
+if($actionData['ACTIVE'] && $actionData['METHOD'] == 'GET')
 {
-	if ($actionData['METHOD'] == 'POST')
+	if ($actionData['NAME'] == 'delete' && isset($actionData['ID']))
 	{
-		if($actionData['NAME'] == 'delete')
+		$ID = intval($actionData['ID']);
+
+		$arEntityAttr = $CCrmPerms->GetEntityAttr('QUOTE', array($ID));
+		$attr = $arEntityAttr[$ID];
+
+		if($CCrmPerms->CheckEnityAccess('QUOTE', 'DELETE', $attr))
 		{
-			if ((isset($actionData['ID']) && is_array($actionData['ID'])) || $actionData['ALL_ROWS'])
+			$DB->StartTransaction();
+
+			if($CCrmQuote->Delete($ID))
 			{
-				$arFilterDel = [];
-				if (!$actionData['ALL_ROWS'])
-				{
-					$arFilterDel = array('ID' => $actionData['ID']);
-				}
-				else
-				{
-					// Fix for issue #26628
-					$arFilterDel += $arFilter;
-				}
-
-				$obRes = CCrmQuote::GetList([], $arFilterDel, false, false, array('ID'));
-				while($arQuote = $obRes->Fetch())
-				{
-					$ID = $arQuote['ID'];
-					$arEntityAttr = $CCrmPerms->GetEntityAttr('QUOTE', array($ID));
-					if (!$CCrmPerms->CheckEnityAccess('QUOTE', 'DELETE', $arEntityAttr[$ID]))
-					{
-						continue ;
-					}
-
-					$DB->StartTransaction();
-
-					if (/*---bizproc---$CCrmBizProc->Delete($ID, $arEntityAttr[$ID])
-						&& */$CCrmQuote->Delete($ID))
-					{
-						$DB->Commit();
-					}
-					else
-					{
-						$DB->Rollback();
-					}
-				}
+				$DB->Commit();
 			}
-		}
-		elseif($actionData['NAME'] == 'edit')
-		{
-			if(isset($actionData['FIELDS']) && is_array($actionData['FIELDS']))
+			else
 			{
-				foreach($actionData['FIELDS'] as $ID => $arSrcData)
-				{
-					$arEntityAttr = $CCrmPerms->GetEntityAttr('QUOTE', array($ID));
-					if (!$CCrmPerms->CheckEnityAccess('QUOTE', 'WRITE', $arEntityAttr[$ID]))
-					{
-						continue ;
-					}
-
-					$arUpdateData = [];
-					reset($arResult['HEADERS']);
-					foreach ($arResult['HEADERS'] as $arHead)
-					{
-						if (isset($arHead['editable']) && (is_array($arHead['editable']) || $arHead['editable'] === true) && isset($arSrcData[$arHead['id']]))
-						{
-							$arUpdateData[$arHead['id']] = $arSrcData[$arHead['id']];
-						}
-					}
-					if (!empty($arUpdateData))
-					{
-						$DB->StartTransaction();
-
-						if($CCrmQuote->Update($ID, $arUpdateData, true, true, array('DISABLE_USER_FIELD_CHECK' => true)))
-						{
-							$DB->Commit();
-						}
-						else
-						{
-							$DB->Rollback();
-						}
-					}
-				}
+				$DB->Rollback();
 			}
-		}
-		elseif ($actionData['NAME'] == 'tasks')
-		{
-			if (isset($actionData['ID']) && is_array($actionData['ID']))
-			{
-				$arTaskID = [];
-				foreach($actionData['ID'] as $ID)
-				{
-					$arTaskID[] = 'D_'.$ID;
-				}
-
-				$APPLICATION->RestartBuffer();
-
-				$taskUrl = CHTTP::urlAddParams(
-					CComponentEngine::MakePathFromTemplate(
-						COption::GetOptionString('tasks', 'paths_task_user_edit', ''),
-						array(
-							'task_id' => 0,
-							'user_id' => $userID
-						)
-					),
-					array(
-						'UF_CRM_TASK' => implode(';', $arTaskID),
-						'TITLE' => urlencode(GetMessage('CRM_TASK_TITLE_PREFIX')),
-						'TAGS' => urlencode(GetMessage('CRM_TASK_TAG')),
-						'back_url' => urlencode($arParams['PATH_TO_QUOTE_LIST'])
-					)
-				);
-				if ($actionData['AJAX_CALL'])
-				{
-					echo '<script> parent.window.location = "'.CUtil::JSEscape($taskUrl).'";</script>';
-					exit();
-				}
-				else
-				{
-					LocalRedirect($taskUrl);
-				}
-			}
-		}
-		elseif ($actionData['NAME'] == 'set_status')
-		{
-			if(isset($actionData['STATUS_ID']) && $actionData['STATUS_ID'] != '') // Fix for issue #26628
-			{
-				$arIDs = [];
-				if ($actionData['ALL_ROWS'])
-				{
-					$arActionFilter = $arFilter;
-					$arActionFilter['CHECK_PERMISSIONS'] = 'N'; // Ignore 'WRITE' permission - we will check it before update.
-
-					$dbRes = CCrmQuote::GetList([], $arActionFilter, false, false, array('ID'));
-					while($arQuote = $dbRes->Fetch())
-					{
-						$arIDs[] = $arQuote['ID'];
-					}
-				}
-				elseif (isset($actionData['ID']) && is_array($actionData['ID']))
-				{
-					$arIDs = $actionData['ID'];
-				}
-
-				$arEntityAttr = $CCrmPerms->GetEntityAttr('QUOTE', $arIDs);
-				foreach($arIDs as $ID)
-				{
-					if (!$CCrmPerms->CheckEnityAccess('QUOTE', 'WRITE', $arEntityAttr[$ID]))
-					{
-						continue;
-					}
-
-					$DB->StartTransaction();
-
-					$arUpdateData = array(
-						'STATUS_ID' => $actionData['STATUS_ID']
-					);
-
-					if($CCrmQuote->Update($ID, $arUpdateData, true, true, array('DISABLE_USER_FIELD_CHECK' => true)))
-					{
-						$DB->Commit();
-					}
-					else
-					{
-						$DB->Rollback();
-					}
-				}
-			}
-		}
-		elseif ($actionData['NAME'] == 'assign_to')
-		{
-			if(isset($actionData['ASSIGNED_BY_ID']))
-			{
-				$arIDs = [];
-				if ($actionData['ALL_ROWS'])
-				{
-					$arActionFilter = $arFilter;
-					$arActionFilter['CHECK_PERMISSIONS'] = 'N'; // Ignore 'WRITE' permission - we will check it before update.
-					$dbRes = CCrmQuote::GetList([], $arActionFilter, false, false, array('ID'));
-					while($arQuote = $dbRes->Fetch())
-					{
-						$arIDs[] = $arQuote['ID'];
-					}
-				}
-				elseif (isset($actionData['ID']) && is_array($actionData['ID']))
-				{
-					$arIDs = $actionData['ID'];
-				}
-
-				$arEntityAttr = $CCrmPerms->GetEntityAttr('QUOTE', $arIDs);
-
-				foreach($arIDs as $ID)
-				{
-					if (!$CCrmPerms->CheckEnityAccess('QUOTE', 'WRITE', $arEntityAttr[$ID]))
-					{
-						continue;
-					}
-
-					$DB->StartTransaction();
-
-					$arUpdateData = array(
-						'ASSIGNED_BY_ID' => $actionData['ASSIGNED_BY_ID']
-					);
-
-					if (
-						$CCrmQuote->Update(
-							$ID,
-							$arUpdateData,
-							true,
-							true,
-							[
-								'REGISTER_SONET_EVENT' => true,
-								'DISABLE_USER_FIELD_CHECK' => true,
-							]
-						)
-					)
-					{
-						$DB->Commit();
-					}
-					else
-					{
-						$DB->Rollback();
-					}
-				}
-			}
-		}
-		elseif ($actionData['NAME'] == 'mark_as_opened')
-				{
-					if(isset($actionData['OPENED']) && $actionData['OPENED'] != '')
-					{
-						$isOpened = mb_strtoupper($actionData['OPENED']) === 'Y' ? 'Y' : 'N';
-						$arIDs = [];
-						if ($actionData['ALL_ROWS'])
-						{
-							$arActionFilter = $arFilter;
-							$arActionFilter['CHECK_PERMISSIONS'] = 'N'; // Ignore 'WRITE' permission - we will check it before update.
-
-							$dbRes = CCrmQuote::GetList(
-								[],
-								$arActionFilter,
-								false,
-								false,
-								array('ID', 'OPENED')
-							);
-
-							while($arQuote = $dbRes->Fetch())
-							{
-								if(isset($arQuote['OPENED']) && $arQuote['OPENED'] === $isOpened)
-								{
-									continue;
-								}
-
-								$arIDs[] = $arQuote['ID'];
-							}
-						}
-						elseif (isset($actionData['ID']) && is_array($actionData['ID']))
-						{
-							$dbRes = CCrmQuote::GetList(
-								[],
-								array(
-									'@ID'=> $actionData['ID'],
-									'CHECK_PERMISSIONS' => 'N'
-								),
-								false,
-								false,
-								array('ID', 'OPENED')
-							);
-
-							while($arQuote = $dbRes->Fetch())
-							{
-								if(isset($arQuote['OPENED']) && $arQuote['OPENED'] === $isOpened)
-								{
-									continue;
-								}
-
-								$arIDs[] = $arQuote['ID'];
-							}
-						}
-
-						$arEntityAttr = $CCrmPerms->GetEntityAttr('QUOTE', $arIDs);
-						foreach($arIDs as $ID)
-						{
-							if (!$CCrmPerms->CheckEnityAccess('QUOTE', 'WRITE', $arEntityAttr[$ID]))
-							{
-								continue;
-							}
-
-							$DB->StartTransaction();
-							$arUpdateData = array('OPENED' => $isOpened);
-							if($CCrmQuote->Update($ID, $arUpdateData, true, true, array('DISABLE_USER_FIELD_CHECK' => true)))
-							{
-								$DB->Commit();
-							}
-							else
-							{
-								$DB->Rollback();
-							}
-						}
-					}
-				}
-		if (!$actionData['AJAX_CALL'])
-		{
-			LocalRedirect($arParams['PATH_TO_QUOTE_LIST']);
 		}
 	}
-	else//if ($actionData['METHOD'] == 'GET')
+
+	if (!$actionData['AJAX_CALL'])
 	{
-		if ($actionData['NAME'] == 'delete' && isset($actionData['ID']))
-		{
-			$ID = intval($actionData['ID']);
-
-			$arEntityAttr = $CCrmPerms->GetEntityAttr('QUOTE', array($ID));
-			$attr = $arEntityAttr[$ID];
-
-			if($CCrmPerms->CheckEnityAccess('QUOTE', 'DELETE', $attr))
-			{
-				$DB->StartTransaction();
-
-				if($CCrmQuote->Delete($ID))
-				{
-					$DB->Commit();
-				}
-				else
-				{
-					$DB->Rollback();
-				}
-			}
-		}
-
-		if (!$actionData['AJAX_CALL'])
-		{
-			LocalRedirect($bInternal ? '?'.$arParams['FORM_ID'].'_active_tab=tab_quote' : $arParams['PATH_TO_QUOTE_LIST']);
-		}
+		LocalRedirect($bInternal ? '?'.$arParams['FORM_ID'].'_active_tab=tab_quote' : $arParams['PATH_TO_QUOTE_LIST']);
 	}
 }
 //endregion POST & GET actions processing
@@ -1289,7 +909,7 @@ if(isset($arSort['quote_summary']))
 	$arSort['title'] = $arSort['quote_summary'];
 	unset($arSort['quote_summary']);
 }
-if($arSort['date_create'])
+if(isset($arSort['date_create']))
 {
 	$arSort['id'] = $arSort['date_create'];
 	unset($arSort['date_create']);
@@ -2030,6 +1650,9 @@ if (isset($arResult['QUOTE_ID']) && !empty($arResult['QUOTE_ID']))
 		$arResult['QUOTE'][$iQuoteId]['EDIT'] = $CCrmPerms->CheckEnityAccess('QUOTE', 'WRITE', $arQuoteAttr[$iQuoteId]);
 		$arResult['QUOTE'][$iQuoteId]['DELETE'] = $CCrmPerms->CheckEnityAccess('QUOTE', 'DELETE', $arQuoteAttr[$iQuoteId]);
 	}
+
+	$entityBadges = new Bitrix\Crm\Kanban\EntityBadge(CCrmOwnerType::Quote, $arResult['QUOTE_ID']);
+	$entityBadges->appendToEntityItems($arResult['QUOTE']);
 }
 
 if (!$isInExportMode)
@@ -2101,8 +1724,7 @@ else
 		Header('Content-Transfer-Encoding: binary');
 
 		// add UTF-8 BOM marker
-		if (defined('BX_UTF') && BX_UTF)
-			echo chr(239).chr(187).chr(191);
+		echo chr(239).chr(187).chr(191);
 
 		$this->IncludeComponentTemplate($sExportType);
 

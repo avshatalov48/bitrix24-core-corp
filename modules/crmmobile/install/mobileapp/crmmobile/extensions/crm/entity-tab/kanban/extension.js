@@ -12,6 +12,7 @@ jn.define('crm/entity-tab/kanban', (require, exports, module) => {
 	const { get } = require('utils/object');
 	const { ListItemType, ListItemsFactory } = require('crm/simple-list/items');
 	const { Kanban } = require('layout/ui/kanban');
+	const { Icon } = require('ui-system/blocks/icon');
 
 	const store = require('statemanager/redux/store');
 	const {
@@ -28,6 +29,7 @@ jn.define('crm/entity-tab/kanban', (require, exports, module) => {
 	} = require('crm/statemanager/redux/slices/kanban-settings');
 
 	const { selectById: selectStageById } = require('crm/statemanager/redux/slices/stage-settings');
+	const { batchActions } = require('statemanager/redux/batched-actions');
 
 	const PLUS_ONE_ACTION = 'plus';
 	const MINUS_ONE_ACTION = 'minus';
@@ -95,12 +97,17 @@ jn.define('crm/entity-tab/kanban', (require, exports, module) => {
 			viewComponent.reload(force, params);
 		}
 
-		initCategoryCounters(params = {})
+		/**
+		 * @param {object} params
+		 * @param {boolean} force
+		 */
+		initCategoryCounters(params = {}, force = false)
 		{
 			store.dispatch(fetchStageCounters({
 				entityTypeId: this.props.entityTypeId,
 				categoryId: this.getCurrentCategoryId(),
 				params,
+				forceFetch: force,
 			}));
 		}
 
@@ -113,7 +120,6 @@ jn.define('crm/entity-tab/kanban', (require, exports, module) => {
 			store.dispatch(fetchCrmKanbanSettings({
 				categoryId,
 				entityTypeId: this.props.entityTypeId,
-				forceFetch: true,
 			}));
 		}
 
@@ -232,6 +238,7 @@ jn.define('crm/entity-tab/kanban', (require, exports, module) => {
 				isShowFloatingButton: this.isShowFloatingButton(),
 				onNotViewableHandler: this.onNotViewable,
 				onPanListHandler: this.props.onPanList || null,
+				popupItemMenu: true,
 				initCountersHandler: this.initCategoryCounters,
 				itemType: ListItemType.CRM_ENTITY,
 				itemFactory: ListItemsFactory,
@@ -411,12 +418,12 @@ jn.define('crm/entity-tab/kanban', (require, exports, module) => {
 		getCrmModeAction()
 		{
 			const { restrictions } = this.props;
-			const { id, title, iconUrl, onAction } = getActionChangeCrmMode();
+			const { id, title, onAction } = getActionChangeCrmMode();
 
 			return {
 				id,
 				title,
-				iconUrl,
+				icon: Icon.SETTINGS,
 				showTopSeparator: true,
 				onItemSelected: async () => {
 					if (restrictions.crmMode)
@@ -635,11 +642,15 @@ jn.define('crm/entity-tab/kanban', (require, exports, module) => {
 		handleOnItemDetailCardUpdate(uid, params)
 		{
 			this.animateItemAfterBackFromDetail(params.actionName || UPDATE_ACTION, params);
+
+			this.updateStageCountersAfterReturnFromDetail(params.actionName || UPDATE_ACTION, params);
 		}
 
 		handleOnItemDetailCardCreate(uid, params)
 		{
 			this.animateItemAfterBackFromDetail(CREATE_ACTION, params);
+
+			this.updateStageCountersAfterReturnFromDetail(CREATE_ACTION, params);
 		}
 
 		animateItemAfterBackFromDetail(action, params)
@@ -695,6 +706,82 @@ jn.define('crm/entity-tab/kanban', (require, exports, module) => {
 			}
 		}
 
+		updateStageCountersAfterReturnFromDetail(action, params)
+		{
+			const newOpportunity = BX.prop.getNumber(params.entityModel, 'OPPORTUNITY', null);
+			const newStageId = BX.prop.getNumber(params.entityModel, 'STAGE_ID', null);
+
+			if (action === DELETE_ACTION || newStageId === null || newOpportunity === null)
+			{
+				// Update stage counters in handleOnItemDeleted
+				return;
+			}
+
+			const updateCategory = BX.prop.getBoolean(params.additionalData, 'isCategoryUpdated', false);
+
+			if (updateCategory)
+			{
+				// Update stage counters in modifyCountersByColumnId
+				return;
+			}
+
+			if (action === CREATE_ACTION)
+			{
+				store.dispatch(counterIncremented({
+					id: newStageId,
+					amount: newOpportunity,
+					count: 1,
+				}));
+
+				return;
+			}
+
+			const oldOpportunity = BX.prop.getNumber(params?.originalEntityModel, 'OPPORTUNITY', null);
+			const originalStageId = BX.prop.getNumber(params?.originalEntityModel, 'STAGE_ID', null);
+
+			if (oldOpportunity === null || originalStageId === null)
+			{
+				return;
+			}
+
+			if (originalStageId !== newStageId)
+			{
+				store.dispatch(
+					batchActions([
+						counterDecremented({
+							id: originalStageId,
+							amount: oldOpportunity,
+							count: 1,
+						}),
+						counterIncremented({
+							id: newStageId,
+							amount: newOpportunity,
+							count: 1,
+						}),
+					]),
+				);
+			}
+			else if (oldOpportunity !== newOpportunity)
+			{
+				if (oldOpportunity < newOpportunity)
+				{
+					store.dispatch(counterIncremented({
+						id: newStageId,
+						amount: newOpportunity - oldOpportunity,
+						count: 0,
+					}));
+				}
+				else
+				{
+					store.dispatch(counterDecremented({
+						id: newStageId,
+						amount: oldOpportunity - newOpportunity,
+						count: 0,
+					}));
+				}
+			}
+		}
+
 		itemCategoryIsChanged(params)
 		{
 			const category = this.getCategoryFromCategoryStorage();
@@ -704,7 +791,7 @@ jn.define('crm/entity-tab/kanban', (require, exports, module) => {
 				return false;
 			}
 
-			return params.categoryId !== category.id; // todo check this property
+			return params.categoryId !== category.categoryId;
 		}
 
 		handleOnItemDetailCardAccessDenied(uid, params)

@@ -1,6 +1,5 @@
 (() => {
 	const require = (ext) => jn.require(ext);
-	const { openIntranetInviteWidget } = require('intranet/invite-opener');
 	const { Loc } = require('loc');
 
 	/**
@@ -33,6 +32,11 @@
 			return true;
 		}
 
+		static getSearchPlaceholderWithCreation()
+		{
+			return Loc.getMessage('SELECTOR_COMPONENT_INVITE_SEARCH_WITH_CREATION');
+		}
+
 		static getCreateText()
 		{
 			return Loc.getMessage('SELECTOR_COMPONENT_INVITE_USER_TAG');
@@ -50,13 +54,16 @@
 
 		static getCreateEntityHandler(providerOptions, getParentLayoutFunction = null, analytics = {})
 		{
+			// to prevent cyclical dependency
+			const { openIntranetInviteWidget } = require('intranet/invite-opener-new');
+
 			return (text, allowMultipleSelection) => {
 				return new Promise((resolve, reject) => {
 					openIntranetInviteWidget({
 						analytics,
 						multipleInvite: allowMultipleSelection,
 						parentLayout: getParentLayoutFunction ? getParentLayoutFunction() : null,
-						onInviteSendedHandler: (users) => {
+						onInviteSentHandler: (users) => {
 							if (Array.isArray(users) && users.length > 0)
 							{
 								const preparedUsers = users.map((user) => {
@@ -64,8 +71,10 @@
 										id: user.id,
 										type: 'user',
 										entityId: 'user',
-										phone: user.phone,
-										title: user.phone,
+										phone: user.personalMobile,
+										firstName: user.name,
+										lastName: user.lastName,
+										title: user.fullName,
 									};
 								});
 								resolve(preparedUsers);
@@ -82,6 +91,13 @@
 			};
 		}
 	}
+
+	/**
+	 * @module selector/widget/entity/socialnetwork/user
+	 */
+	jn.define('selector/widget/entity/socialnetwork/user', (require, exports, module) => {
+		module.exports = { SocialNetworkUserSelector };
+	});
 
 	this.SocialNetworkUserSelector = SocialNetworkUserSelector;
 })();

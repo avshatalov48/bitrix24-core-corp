@@ -9,6 +9,11 @@ Loc::loadMessages(__FILE__);
 
 class Manager
 {
+	public static function isEntityTypeSupported(int $entityTypeId): bool
+	{
+		return Store::isEntityTypeSupported($entityTypeId);
+	}
+
 	public static function checkCreatePermission()
 	{
 		return Access::current()->canWrite();

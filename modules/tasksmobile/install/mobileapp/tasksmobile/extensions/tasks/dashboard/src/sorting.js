@@ -2,13 +2,21 @@
  * @module tasks/dashboard/src/sorting
  */
 jn.define('tasks/dashboard/src/sorting', (require, exports, module) => {
-	class Sorting
+	const { Views } = require('tasks/statemanager/redux/types');
+	const { BaseListSorting } = require('layout/ui/list/base-sorting');
+
+	/**
+	 * @class TasksDashboardSorting
+	 * @extends BaseListSorting
+	 */
+	class TasksDashboardSorting extends BaseListSorting
 	{
 		/**
 		 * @public
-		 * @returns {{DEADLINE: string, ACTIVITY: string}}
+		 * @static
+		 * @returns {Object}
 		 */
-		static get type()
+		static get types()
 		{
 			return {
 				ACTIVITY: 'ACTIVITY',
@@ -16,34 +24,38 @@ jn.define('tasks/dashboard/src/sorting', (require, exports, module) => {
 			};
 		}
 
+		/**
+		 * @param {Object} data
+		 */
 		constructor(data = {})
 		{
-			this.type = data.type ?? Sorting.type.ACTIVITY;
-			// this.isASC = data.isASC ?? false;
-			// todo: temporary solution, until user will be able to configure order, too.
-			this.isASC = !(this.type === Sorting.type.ACTIVITY);
-			this.noPropertyValue = data.noPropertyValue ?? Infinity;
+			super({
+				types: TasksDashboardSorting.types,
+				type: data.type,
+				isASC: !(data.type === TasksDashboardSorting.types.ACTIVITY),
+				noPropertyValue: data.noPropertyValue ?? Infinity,
+			});
 
-			this.getPropertyValue = this.getPropertyValue.bind(this);
+			this.view = data.view;
 		}
 
 		/**
 		 * @public
-		 * @returns {*}
+		 * @param {string} view
 		 */
-		toggle()
+		setView(view)
 		{
-			this.type = (this.type === Sorting.type.ACTIVITY ? Sorting.type.DEADLINE : Sorting.type.ACTIVITY);
-
-			return this.getType();
+			this.view = view;
 		}
 
 		/**
 		 * @public
 		 * @returns {string}
 		 */
-		getType()
+		toggle()
 		{
+			this.type = (this.type === this.types.ACTIVITY ? this.types.DEADLINE : this.types.ACTIVITY);
+
 			return this.type;
 		}
 
@@ -55,9 +67,9 @@ jn.define('tasks/dashboard/src/sorting', (require, exports, module) => {
 		{
 			switch (this.type)
 			{
-				case Sorting.type.ACTIVITY:
+				case TasksDashboardSorting.types.ACTIVITY:
 					return 'activityDate';
-				case Sorting.type.DEADLINE:
+				case TasksDashboardSorting.types.DEADLINE:
 					return 'deadline';
 				default:
 					return null;
@@ -65,57 +77,67 @@ jn.define('tasks/dashboard/src/sorting', (require, exports, module) => {
 		}
 
 		/**
-		 * @public
-		 * @param type
-		 */
-		setType(type)
-		{
-			if (Object.values(Sorting.type).includes(type))
-			{
-				this.type = type;
-			}
-		}
-
-		/**
-		 * @public
-		 * @param {boolean} isASC
-		 */
-		setOrder(isASC)
-		{
-			this.isASC = isASC;
-		}
-
-		getSortingConfig()
-		{
-			return {
-				noPropertyValue: this.noPropertyValue,
-				isASC: this.isASC,
-				sortByProperty: this.getType(),
-				getPropertyValue: this.getPropertyValue,
-				getSection: Sorting.getSortingSection,
-			};
-		}
-
-		/**
 		 * @private
 		 * @param {object} item
 		 * @return {number}
 		 */
-		getPropertyValue(item)
+		getPropertyValue = (item) => {
+			const value = item[this.getConvertedType()];
+
+			return value === null ? undefined : (new Date(value)).getTime();
+		};
+
+		/**
+		 * @private
+		 * @param {Object} item
+		 * @return {number}
+		 */
+		getSortingSection(item)
 		{
-			return (new Date(item[this.getConvertedType()])).getTime();
+			if (this.view === Views.LIST)
+			{
+				if (item.isCreationErrorExist)
+				{
+					return 0;
+				}
+
+				if (item.isPinned)
+				{
+					return 1;
+				}
+
+				return 2;
+			}
+
+			if (item.isCreationErrorExist)
+			{
+				return 0;
+			}
+
+			return 1;
 		}
 
 		/**
 		 * @private
+		 * @static
 		 * @param {object} item
 		 * @return {number}
 		 */
 		static getSortingSection(item)
 		{
-			return item.isPinned ? 0 : 1;
+			if (item.isCreationErrorExist)
+			{
+				return 0;
+			}
+
+			if (item.isPinned)
+			{
+				return 1;
+			}
+
+			return 2;
 		}
 	}
 
-	module.exports = { Sorting };
+	module.exports = { TasksDashboardSorting };
 });

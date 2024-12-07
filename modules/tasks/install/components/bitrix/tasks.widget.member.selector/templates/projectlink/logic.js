@@ -58,6 +58,17 @@ BX.namespace('Tasks.Component');
 
 			onOpenForm: function()
 			{
+				if (this.option('isProjectLimitExceeded') === true)
+				{
+					BX.Runtime.loadExtension('tasks.limit').then((exports) => {
+						const { Limit } = exports;
+						Limit.showInstance({
+							featureId: 'socialnetwork_projects_groups',
+						});
+					});
+
+					return;
+				}
 				this.getProjectDialog().show();
 			},
 
@@ -127,7 +138,11 @@ BX.namespace('Tasks.Component');
 						entities: [
 							{
 								id: 'project',
-							}
+								options: {
+									lockProjectLink: this.option('isProjectLimitExceeded'),
+									lockProjectLinkFeatureId: this.option('projectFeatureId'),
+								},
+							},
 						],
 						events: {
 							'Item:onSelect': function(event) {

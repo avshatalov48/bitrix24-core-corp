@@ -2,12 +2,16 @@
  * @module im/messenger/const/copilot-button
  */
 jn.define('im/messenger/const/copilot-button', (require, exports, module) => {
-
 	const CopilotButtonType = {
-		promtSend: 'promt-send',
-		promtEdit: 'promt-edit',
+		promptSend: 'promt-send',
+		promptEdit: 'promt-edit',
 		copy: 'copy',
 	};
 
-	module.exports = { CopilotButtonType };
+	const CopilotPromptType = {
+		default: 'default',
+		simpleTemplate: 'simpleTemplate',
+	};
+
+	module.exports = { CopilotButtonType, CopilotPromptType };
 });

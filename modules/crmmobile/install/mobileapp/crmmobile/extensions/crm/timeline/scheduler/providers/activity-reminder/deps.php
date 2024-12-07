@@ -4,7 +4,7 @@ return [
 	'extensions' => [
 		'loc',
 		'haptics',
-		'tokens',
+		'apptheme',
 		'assets/common',
 		'layout/ui/banners',
 		'layout/ui/context-menu',

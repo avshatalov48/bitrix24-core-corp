@@ -198,7 +198,14 @@ final class SaveEntityCommand extends Command
 			}
 			elseif ($fieldType === Field::TYPE_FILE)
 			{
-				$fields[$id] = $this->prepareFileField($field, $fields[$id]);
+				$files = $fields[$id];
+				if ($field instanceof Field\Photo && is_numeric($files))
+				{
+					continue;
+				}
+
+				$fields[$id] = $this->prepareFileField($field, $files);
+
 			}
 			elseif ($fieldType === 'money')
 			{
@@ -259,7 +266,12 @@ final class SaveEntityCommand extends Command
 		$useTimezone = ($field->getUserField()['SETTINGS']['USE_TIMEZONE'] ?? 'Y') === 'Y';
 		$isDynamicEntityType = \CCrmOwnerType::isPossibleDynamicTypeId($this->entity->getEntityTypeId());
 
-		$createFromTimestamp = static function ($timestamp) use ($isDateTimeField, $timezoneOffset, $useTimezone, $isDynamicEntityType) {
+		$createFromTimestamp = static function ($timestamp) use (
+			$isDateTimeField,
+			$timezoneOffset,
+			$useTimezone,
+			$isDynamicEntityType
+		) {
 			$object = $isDateTimeField
 				? ($isDynamicEntityType && $useTimezone
 					? DateTime::createFromTimestamp($timestamp + $timezoneOffset)

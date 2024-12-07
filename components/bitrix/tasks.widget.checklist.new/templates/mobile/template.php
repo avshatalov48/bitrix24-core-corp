@@ -41,7 +41,7 @@ if (Loader::includeModule('disk'))
 	</div>
 <?php endif?>
 
-<script type="text/javascript">
+<script>
 	BX.ready(function()
 	{
 		BX.message({

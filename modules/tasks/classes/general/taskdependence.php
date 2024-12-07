@@ -74,7 +74,7 @@ class CTaskDependence
 		$TASK_ID = intval($TASK_ID);
 		$DEPENDS_ON_ID = intval($DEPENDS_ON_ID);
 		$strSql = "DELETE FROM b_tasks_dependence WHERE TASK_ID = ".$TASK_ID." AND DEPENDS_ON_ID = ".$DEPENDS_ON_ID;
-		return $DB->Query($strSql, false, "File: ".__FILE__."<br>Line: ".__LINE__);
+		return $DB->Query($strSql);
 	}
 
 	public static function GetFilter($arFilter)
@@ -160,7 +160,7 @@ class CTaskDependence
 
 		//echo $strSql;
 
-		return $DB->Query($strSql, false, "File: ".__FILE__."<br>Line: ".__LINE__);
+		return $DB->Query($strSql);
 	}
 
 	public static function DeleteByDependsOnID($DEPENDS_ON)
@@ -169,7 +169,7 @@ class CTaskDependence
 
 		$DEPENDS_ON = intval($DEPENDS_ON);
 		$strSql = "DELETE FROM b_tasks_dependence WHERE DEPENDS_ON_ID = ".$DEPENDS_ON;
-		return $DB->Query($strSql, false, "File: ".__FILE__."<br>Line: ".__LINE__);
+		return $DB->Query($strSql);
 	}
 
 	public static function DeleteByTaskID($TASK_ID)
@@ -178,6 +178,6 @@ class CTaskDependence
 
 		$TASK_ID = intval($TASK_ID);
 		$strSql = "DELETE FROM b_tasks_dependence WHERE TASK_ID = ".$TASK_ID;
-		return $DB->Query($strSql, false, "File: ".__FILE__."<br>Line: ".__LINE__);
+		return $DB->Query($strSql);
 	}
 }

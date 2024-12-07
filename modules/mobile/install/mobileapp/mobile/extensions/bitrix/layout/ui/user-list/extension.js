@@ -3,10 +3,10 @@
  */
 jn.define('layout/ui/user-list', (require, exports, module) => {
 	const { Loc } = require('loc');
-	const AppTheme = require('apptheme');
+	const { Indent, Color } = require('tokens');
+	const { Text2, Text5 } = require('ui-system/typography/text');
 	const { ProfileView } = require('user/profile');
-
-	const DEFAULT_AVATAR = '/bitrix/mobileapp/mobile/extensions/bitrix/layout/ui/user-list/images/default-avatar.png';
+	const { Avatar } = require('layout/ui/user/avatar');
 
 	class UserList extends LayoutComponent
 	{
@@ -24,7 +24,7 @@ jn.define('layout/ui/user-list', (require, exports, module) => {
 				{
 					style: {
 						flex: 1,
-						backgroundColor: AppTheme.colors.bgContentPrimary,
+						backgroundColor: Color.bgContentPrimary.toHex(),
 					},
 					safeArea: {
 						bottom: true,
@@ -54,46 +54,43 @@ jn.define('layout/ui/user-list', (require, exports, module) => {
 				{
 					style: {
 						flexDirection: 'row',
-						height: 70,
 						alignItems: 'center',
-						marginLeft: 16,
-						borderTopWidth: isWithTopBorder ? 1 : 0,
-						borderTopColor: AppTheme.colors.bgSeparatorPrimary,
+						marginLeft: Indent.XL3.toNumber(),
 					},
 					testId: `${this.testId}_USER_${user.id}`,
 					onClick: () => this.openUserProfile(user.id),
 				},
-				Image({
-					style: {
-						width: 40,
-						height: 40,
-						borderRadius: 20,
-					},
-					uri: this.getImageUrl(user.avatar || DEFAULT_AVATAR),
+				Avatar({
+					id: user.id,
+					name: user.name,
+					size: 40,
+					testId: `${this.testId}_USER_${user.id}_AVATAR`,
+					image: user.avatar,
 				}),
 				View(
 					{
 						style: {
+							height: 70,
+							justifyContent: 'center',
 							flex: 1,
 							flexDirection: 'column',
-							marginHorizontal: 12,
+							marginHorizontal: Indent.XL.toNumber(),
+							borderTopWidth: isWithTopBorder ? 1 : 0,
+							borderTopColor: Color.bgSeparatorPrimary.toHex(),
+							paddingVertical: Indent.XL2.toNumber(),
 						},
 					},
-					Text({
+					Text2({
+						text: user.name,
 						style: {
-							fontSize: 18,
-							fontWeight: '400',
-							color: AppTheme.colors.base1,
+							color: Color.base1.toHex(),
 						},
 						numberOfLines: 1,
 						ellipsize: 'end',
-						text: user.name,
 					}),
-					(user.workPosition && Text({
+					(user.workPosition && Text5({
 						style: {
-							fontSize: 15,
-							fontWeight: '400',
-							color: AppTheme.colors.base3,
+							color: Color.base3.toHex(),
 						},
 						numberOfLines: 1,
 						ellipsize: 'end',
@@ -115,17 +112,6 @@ jn.define('layout/ui/user-list', (require, exports, module) => {
 					horizontalSwipeAllowed: false,
 				},
 			}).then((list) => ProfileView.open({ userId, isBackdrop: true }, list));
-		}
-
-		getImageUrl(imageUrl)
-		{
-			if (imageUrl.indexOf(currentDomain) !== 0)
-			{
-				imageUrl = imageUrl.replace(String(currentDomain), '');
-				imageUrl = (imageUrl.indexOf('http') === 0 ? imageUrl : `${currentDomain}${imageUrl}`);
-			}
-
-			return encodeURI(imageUrl);
 		}
 	}
 
@@ -150,7 +136,10 @@ jn.define('layout/ui/user-list', (require, exports, module) => {
 					mediumPositionPercent: 70,
 				},
 			}).then((layoutWidget) => {
-				layoutWidget.setTitle({ text: (data.title || Loc.getMessage('MOBILE_LAYOUT_UI_USER_LIST_DEFAULT_TITLE')) });
+				layoutWidget.setTitle({
+					text: (data.title || Loc.getMessage('MOBILE_LAYOUT_UI_USER_LIST_DEFAULT_TITLE')),
+					type: 'dialog',
+				});
 				layoutWidget.showComponent(userList);
 
 				userList.layoutWidget = layoutWidget;

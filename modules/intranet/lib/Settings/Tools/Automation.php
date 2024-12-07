@@ -36,11 +36,43 @@ class Automation extends Tool
 		return [
 			'robots' => '/crm/deal/list/#robots',
 			'bizproc' => $this->getBizprocUrl(),
-			'crm-dynamic' => '/automation/type/',
+			'crm-dynamic' => $this->getCrmDynamicUrl(),
 			'bizproc_script' => '/crm/deal/list/#scripts',
 			'rpa' => '/rpa/',
 			'lists' => $this->isListsEnabled() ? '/company/lists/' : null,
 		];
+	}
+
+	private function getCrmDynamicUrl(): string
+	{
+		static $defaultUrl = '/automation/type/';
+
+		if (!Loader::includeModule('crm'))
+		{
+			return $defaultUrl;
+		}
+
+		$isAutomatedSolutionListEnabled =
+			method_exists(\Bitrix\Crm\Settings\Crm::class, 'isAutomatedSolutionListEnabled')
+			&& \Bitrix\Crm\Settings\Crm::isAutomatedSolutionListEnabled()
+		;
+		if (!$isAutomatedSolutionListEnabled)
+		{
+			return $defaultUrl;
+		}
+
+		$router = \Bitrix\Crm\Service\Container::getInstance()->getRouter();
+		$automatedSolutionListUrl =
+			method_exists($router, 'getAutomatedSolutionListUrl')
+				? $router->getAutomatedSolutionListUrl()
+				: null
+		;
+		if (!$automatedSolutionListUrl)
+		{
+			return $defaultUrl;
+		}
+
+		return $automatedSolutionListUrl->getUri();
 	}
 
 	public function getSubgroupsInfoHelperSlider(): array

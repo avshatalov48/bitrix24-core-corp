@@ -525,7 +525,7 @@ class TimelineBindingTable  extends Entity\DataManager
 			->exec()
 			->fetch();
 
-		return $binding['IS_FIXED'] === 'Y';
+		return is_array($binding) && $binding['IS_FIXED'] === 'Y';
 	}
 
 	public static function setIsFixed(int $id, int $ownerTypeId, int $ownerId, bool $isFixed): UpdateResult

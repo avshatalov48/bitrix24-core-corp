@@ -37,7 +37,7 @@ class CVNSetupAjax
 
 		self::returnJson(array_merge(array(
 			'result' => $error === false ? 'ok' : 'error',
-			'error'  => CharsetConverter::ConvertCharset($error, SITE_CHARSET, 'UTF-8')
+			'error'  => $error,
 		), $result));
 	}
 

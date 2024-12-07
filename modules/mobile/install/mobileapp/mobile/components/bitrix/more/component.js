@@ -8,6 +8,9 @@
 	let sections = [];
 	let SITE_ID = BX.componentParameters.get("SITE_ID", "s1");
 
+	const { MoreTabNavigator } = jn.require('navigator/more-tab');
+	const moreTabNavigator = new MoreTabNavigator();
+
 	/**
 	 * @let  BaseList menu
 	 */
@@ -156,18 +159,17 @@
 			});
 		},
 
-		drawPopupMenu: function ()
+		drawPopupMenu()
 		{
-			let popupPoints = this.popupMenuItems;
+			const popupPoints = this.popupMenuItems;
 			this.popup = dialogs.createPopupMenu();
-			this.popup.setData(popupPoints, [{id: "menu", title: ""}], (event, item) =>
-			{
-				if (event === "onItemSelected")
+			this.popup.setData(popupPoints, [{ id: 'menu', title: '' }], (event, item) => {
+				if (event === 'onItemSelected')
 				{
-					let menuItem = this.popupMenuItems.find(menuItem => menuItem.id === item.id);
+					const menuItem = this.popupMenuItems.find((menuItem) => menuItem.id === item.id);
 					if (menuItem.onclick)
 					{
-						(function ()
+						(function()
 						{
 							eval(menuItem.onclick);
 						}).bind(item)();
@@ -175,18 +177,21 @@
 				}
 			});
 
-			let buttons = [];
-			buttons.push({type: "search", callback: () => menu.showSearchBar()});
-			buttons.push({type: "more", callback: () => this.popup.show()});
+			const buttons = [];
+			buttons.push(
+				{ type: 'search', callback: () => menu.showSearchBar() },
+				{ type: 'more', callback: () => this.popup.show() }
+			);
 			menu.setRightButtons(buttons);
 		},
-		handleResult: function (result)
+		handleResult(result)
 		{
-			let menuStructure = result.menu;
+			const menuStructure = result.menu;
 			if (result.counterList)
 			{
 				this.counterList = result.counterList;
 			}
+
 			if (result.popupMenuItems)
 			{
 				this.popupMenuItems = result.popupMenuItems;
@@ -199,30 +204,26 @@
 				items = [];
 				sections = [];
 				menuStructure
-					.filter(
-						section => !(typeof section != "object"
-							|| (typeof section["items"] == "undefined")
-							|| (section["min_api_version"] && section["min_api_version"] > Application.getApiVersion())
+					.filter((section) => !(typeof section !== 'object'
+							|| (typeof section.items === 'undefined')
+							|| (section.min_api_version && section.min_api_version > Application.getApiVersion())
 							|| section.hidden == true
-						))
+					))
 					.forEach(
-						section =>
-						{
-
-							let sectionCode = "section_" + section.sort;
+						(section) => {
+							const sectionCode = `section_${section.sort}`;
 							let sectionItems = [];
 							if (section.items)
 							{
 								sectionItems = section.items
-									.filter(item => !item.hidden)
-									.map(item =>
-									{
+									.filter(({ hidden }) => !hidden)
+									.map((item) => {
 										if (item.params && item.params.counter)
 										{
 											this.counterList.push(item.params.counter);
-											if (typeof this.currentCounters[item.params.counter] != "undefined")
+											if (typeof this.currentCounters[item.params.counter] !== 'undefined')
 											{
-												item.messageCount = this.currentCounters[item.params.counter]
+												item.messageCount = this.currentCounters[item.params.counter];
 											}
 										}
 
@@ -234,30 +235,29 @@
 								title: section.title,
 								// height: 36,
 								styles: {
-									title: {font: {size: 13, fontStyle: "semibold"}}
+									title: { font: { size: 13, fontStyle: 'semibold' } },
 								},
 
-								id: sectionCode
+								id: sectionCode,
 							});
 
-							items = items.concat(sectionItems)
-						});
+							items = [...items, ...sectionItems];
+						},
+					);
 			}
-
 		},
-		init: function ()
+		init()
 		{
 			menu.setListener((eventName, data) => this.listener(eventName, data));
 			items = items.filter((item) => item !== false).map((item) =>
 			{
-				if (item.type !== "destruct")
+				if (item.type !== 'destruct')
 				{
-					item.styles =
-						{
-							title: {
-								color: "#FF4E5665"
-							}
-						};
+					item.styles = {
+						title: {
+							color: '#FF4E5665',
+						},
+					};
 				}
 
 				if (item.params.counter)
@@ -266,141 +266,156 @@
 				}
 
 				return item;
-
 			});
 
-			BX.addCustomEvent("onPullEvent-crm", command =>
-			{
-				if(command === 'was_inited')
+			BX.addCustomEvent('onPullEvent-crm', (command) => {
+				if (command === 'was_inited')
 				{
 					this.forceReload();
 				}
 			});
-			BX.addCustomEvent("onPullEvent-main", (command, params) =>
-			{
-				if (command == "user_counter")
+			BX.addCustomEvent('onPullEvent-main', (command, params) => {
+				if (command === 'user_counter' && params[SITE_ID])
 				{
-					if (params[SITE_ID])
-					{
-						this.updateCounters(params[SITE_ID])
-					}
+					this.updateCounters(params[SITE_ID]);
 				}
 			});
 
-			BX.addCustomEvent("onUpdateUserCounters", (data) =>
-			{
+			BX.addCustomEvent('onUpdateUserCounters', (data) => {
 				if (data[SITE_ID])
 				{
-					this.updateCounters(data[SITE_ID])
+					this.updateCounters(data[SITE_ID]);
 				}
 			});
 
-			BX.addCustomEvent("shouldReloadMenu", () => this.updateMenu());
+			BX.addCustomEvent('shouldReloadMenu', () => this.updateMenu());
 			this.initCache();
 			this.redraw();
 			this.updateMenu();
 		},
-		listener: function (eventName, data)
+		listener(eventName, data)
 		{
 			let item = null;
-			if (eventName === "onUserTypeText")
+			switch (eventName)
 			{
-				if (data.text.length > 0)
-				{
-					menu.setSearchResultItems(More.find(data.text), []);
-				}
-				else
-				{
-					menu.setSearchResultItems([], []);
-				}
-			}
-			else if (eventName === "onItemAction")
-			{
-				item = data.item;
-				if (item.params.actionOnclick)
-				{
-					eval(item.params.actionOnclick);
-				}
-			}
-			else if (eventName === "onItemSelected" || eventName === "onSearchItemSelected")
-			{
-				item = data;
-				if (item.type === "group")
-				{
-					PageManager.openComponent("JSComponentSimpleList", {
-						title: item.title,
-						params: {
-							items: item.params.items
-						}
-					})
-				}
-				else if (item.params.onclick)
-				{
-					(function ()
+				case 'onUserTypeText':
+					if (data.text.length > 0)
 					{
-						eval(item.params.onclick);
-					}).call(item);
-				}
-				else if (item.params.action)
-				{
-					Application.exit();
-				}
-				else if (item.params.url)
-				{
-					if (item.params._type && item.params._type === "list")
-					{
-						PageManager.openList(item.params);
+						menu.setSearchResultItems(More.find(data.text), []);
 					}
 					else
 					{
-						let backdrop = undefined;
-						if (typeof item.params.backdrop == "object")
-						{
-							if (Object.keys(item.params.backdrop).length > 0)
-							{
-								backdrop = item.params.backdrop;
-							}
-							else
-							{
-								backdrop = {};
-							}
-						}
+						menu.setSearchResultItems([], []);
+					}
 
-						PageManager.openPage({
-							url: item.params.url,
-							useSearchBar: item.params.useSearchBar,
+					break;
+				case 'onItemAction':
+					item = data.item;
+					if (item.params.actionOnclick)
+					{
+						eval(item.params.actionOnclick);
+					}
+
+					break;
+				case 'onItemSelected':
+				case 'onSearchItemSelected':
+					item = data;
+					if (item.type === 'group')
+					{
+						PageManager.openComponent('JSComponentSimpleList', {
 							title: item.title,
-							cache: (item.params.cache !== false),
-							backdrop: backdrop
+							params: {
+								items: item.params.items,
+							},
 						});
 					}
-				}
-			}
-			else if (eventName === "onRefresh")
-			{
-				menu.stopRefreshing();
-				this.updateMenu();
+					else if (item.params.onclick)
+					{
+						(function()
+						{
+							eval(item.params.onclick);
+						}).call(item);
+					}
+					else if (item.params.action)
+					{
+						Application.exit();
+					}
+					else if (item.params.url)
+					{
+						if (item.params._type && item.params._type === 'list')
+						{
+							PageManager.openList(item.params);
+						}
+						else
+						{
+							let backdrop = undefined;
+							if (typeof item.params.backdrop === 'object')
+							{
+								if (Object.keys(item.params.backdrop).length > 0)
+								{
+									backdrop = item.params.backdrop;
+								}
+								else
+								{
+									backdrop = {};
+								}
+							}
+
+							PageManager.openPage({
+								url: item.params.url,
+								useSearchBar: item.params.useSearchBar,
+								titleParams: { text: item.title, type: 'section' },
+								cache: (item.params.cache !== false),
+								backdrop,
+							});
+						}
+					}
+
+					break;
+				case 'onRefresh':
+					menu.stopRefreshing();
+					this.updateMenu();
+
+					break;
+				default:
 			}
 		},
 		counterList: [],
-		currentCounters: {}
+		currentCounters: {},
+		getItemById(id)
+		{
+			return items.find((item) => item?.params?.id === id);
+		},
+		triggerItemOnClick(item)
+		{
+			if (item.params.onclick)
+			{
+				(function()
+				{
+					eval(item
+						.params
+						.onclick);
+				}
+				).call(item);
+			}
+		},
 	};
 
-
+	moreTabNavigator.unsubscribeFromPushNotifications();
+	moreTabNavigator.subscribeToPushNotifications(More);
 	More.init();
-	qrauth.listenUniversalLink()
+	// eslint-disable-next-line no-undef
+	qrauth.listenUniversalLink();
 	window.updateMenuItem = (id, data) => {
 		menu.updateItems([
-			{ filter: {id: id}, element: data }
+			{ filter: { id }, element: data },
 		]);
 	};
 
-	BX.onCustomEvent("onMenuLoaded", [this.result]);
+	BX.onCustomEvent('onMenuLoaded', [this.result]);
 	/**
 	 * @var {MobileIntent} mobileIntent
 	 */
-	const mobileIntent = jn.require('intent')
-	mobileIntent.execute()
-
+	const mobileIntent = jn.require('intent');
+	mobileIntent.execute();
 }).bind(this)();
-

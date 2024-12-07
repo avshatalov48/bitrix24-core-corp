@@ -1,13 +1,15 @@
 <?php
 namespace Bitrix\Controller;
 
-use Bitrix\Main,
-	Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\ORM\Data\DataManager;
+use Bitrix\Main\ORM\Fields;
+
 Loc::loadMessages(__FILE__);
 
 /**
  * Class GroupTable
- * 
+ *
  * Fields:
  * <ul>
  * <li> ID int mandatory
@@ -49,7 +51,7 @@ Loc::loadMessages(__FILE__);
  * @method static \Bitrix\Controller\EO_Group_Collection wakeUpCollection($rows)
  */
 
-class GroupTable extends Main\Entity\DataManager
+class GroupTable extends DataManager
 {
 	/**
 	 * Returns DB table name for entity.
@@ -68,105 +70,147 @@ class GroupTable extends Main\Entity\DataManager
 	 */
 	public static function getMap()
 	{
-		return array(
-			'ID' => array(
-				'data_type' => 'integer',
-				'primary' => true,
-				'autocomplete' => true,
-				'title' => Loc::getMessage('GROUP_ENTITY_ID_FIELD'),
+		return [
+			new Fields\IntegerField(
+				'ID',
+				[
+					'primary' => true,
+					'autocomplete' => true,
+					'title' => Loc::getMessage('GROUP_ENTITY_ID_FIELD'),
+				]
 			),
-			'TIMESTAMP_X' => array(
-				'data_type' => 'datetime',
-				'required' => true,
-				'title' => Loc::getMessage('GROUP_ENTITY_TIMESTAMP_X_FIELD'),
+			new Fields\DatetimeField(
+				'TIMESTAMP_X',
+				[
+					'required' => true,
+					'title' => Loc::getMessage('GROUP_ENTITY_TIMESTAMP_X_FIELD'),
+				]
 			),
-			'NAME' => array(
-				'data_type' => 'string',
-				'required' => true,
-				'validation' => array(__CLASS__, 'validateName'),
-				'title' => Loc::getMessage('GROUP_ENTITY_NAME_FIELD'),
+			new Fields\StringField(
+				'NAME',
+				[
+					'required' => true,
+					'validation' => [__CLASS__, 'validateName'],
+					'title' => Loc::getMessage('GROUP_ENTITY_NAME_FIELD'),
+				]
 			),
-			'UPDATE_PERIOD' => array(
-				'data_type' => 'integer',
-				'required' => true,
-				'title' => Loc::getMessage('GROUP_ENTITY_UPDATE_PERIOD_FIELD'),
+			new Fields\IntegerField(
+				'UPDATE_PERIOD',
+				[
+					'default' => -1,
+					'title' => Loc::getMessage('GROUP_ENTITY_UPDATE_PERIOD_FIELD'),
+				]
 			),
-			'DISABLE_DEACTIVATED' => array(
-				'data_type' => 'boolean',
-				'values' => array('N', 'Y'),
-				'title' => Loc::getMessage('GROUP_ENTITY_DISABLE_DEACTIVATED_FIELD'),
+			new Fields\BooleanField(
+				'DISABLE_DEACTIVATED',
+				[
+					'values' => ['N', 'Y'],
+					'default' => 'N',
+					'title' => Loc::getMessage('GROUP_ENTITY_DISABLE_DEACTIVATED_FIELD'),
+				]
 			),
-			'DESCRIPTION' => array(
-				'data_type' => 'text',
-				'title' => Loc::getMessage('GROUP_ENTITY_DESCRIPTION_FIELD'),
+			new Fields\TextField(
+				'DESCRIPTION',
+				[
+					'title' => Loc::getMessage('GROUP_ENTITY_DESCRIPTION_FIELD'),
+				]
 			),
-			'MODIFIED_BY' => array(
-				'data_type' => 'integer',
-				'title' => Loc::getMessage('GROUP_ENTITY_MODIFIED_BY_FIELD'),
+			new Fields\IntegerField(
+				'MODIFIED_BY',
+				[
+					'title' => Loc::getMessage('GROUP_ENTITY_MODIFIED_BY_FIELD'),
+				]
 			),
-			'DATE_CREATE' => array(
-				'data_type' => 'datetime',
-				'required' => true,
-				'title' => Loc::getMessage('GROUP_ENTITY_DATE_CREATE_FIELD'),
+			new Fields\DatetimeField(
+				'DATE_CREATE',
+				[
+					'required' => true,
+					'title' => Loc::getMessage('GROUP_ENTITY_DATE_CREATE_FIELD'),
+				]
 			),
-			'CREATED_BY' => array(
-				'data_type' => 'integer',
-				'title' => Loc::getMessage('GROUP_ENTITY_CREATED_BY_FIELD'),
+			new Fields\IntegerField(
+				'CREATED_BY',
+				[
+					'title' => Loc::getMessage('GROUP_ENTITY_CREATED_BY_FIELD'),
+				]
 			),
-			'INSTALL_INFO' => array(
-				'data_type' => 'text',
-				'title' => Loc::getMessage('GROUP_ENTITY_INSTALL_INFO_FIELD'),
+			new Fields\TextField(
+				'INSTALL_INFO',
+				[
+					'title' => Loc::getMessage('GROUP_ENTITY_INSTALL_INFO_FIELD'),
+				]
 			),
-			'UNINSTALL_INFO' => array(
-				'data_type' => 'text',
-				'title' => Loc::getMessage('GROUP_ENTITY_UNINSTALL_INFO_FIELD'),
+			new Fields\TextField(
+				'UNINSTALL_INFO',
+				[
+					'title' => Loc::getMessage('GROUP_ENTITY_UNINSTALL_INFO_FIELD'),
+				]
 			),
-			'INSTALL_PHP' => array(
-				'data_type' => 'text',
-				'title' => Loc::getMessage('GROUP_ENTITY_INSTALL_PHP_FIELD'),
+			new Fields\TextField(
+				'INSTALL_PHP',
+				[
+					'title' => Loc::getMessage('GROUP_ENTITY_INSTALL_PHP_FIELD'),
+				]
 			),
-			'UNINSTALL_PHP' => array(
-				'data_type' => 'text',
-				'title' => Loc::getMessage('GROUP_ENTITY_UNINSTALL_PHP_FIELD'),
+			new Fields\TextField(
+				'UNINSTALL_PHP',
+				[
+					'title' => Loc::getMessage('GROUP_ENTITY_UNINSTALL_PHP_FIELD'),
+				]
 			),
-			'TRIAL_PERIOD' => array(
-				'data_type' => 'integer',
-				'title' => Loc::getMessage('GROUP_ENTITY_TRIAL_PERIOD_FIELD'),
+			new Fields\IntegerField(
+				'TRIAL_PERIOD',
+				[
+					'title' => Loc::getMessage('GROUP_ENTITY_TRIAL_PERIOD_FIELD'),
+				]
 			),
-			'COUNTER_UPDATE_PERIOD' => array(
-				'data_type' => 'integer',
-				'title' => Loc::getMessage('GROUP_ENTITY_COUNTER_UPDATE_PERIOD_FIELD'),
+			new Fields\IntegerField(
+				'COUNTER_UPDATE_PERIOD',
+				[
+					'title' => Loc::getMessage('GROUP_ENTITY_COUNTER_UPDATE_PERIOD_FIELD'),
+				]
 			),
-			'CHECK_COUNTER_FREE_SPACE' => array(
-				'data_type' => 'string',
-				'validation' => array(__CLASS__, 'validateCheckCounterFreeSpace'),
-				'title' => Loc::getMessage('GROUP_ENTITY_CHECK_COUNTER_FREE_SPACE_FIELD'),
+			new Fields\StringField(
+				'CHECK_COUNTER_FREE_SPACE',
+				[
+					'validation' => [__CLASS__, 'validateCheckCounterFreeSpace'],
+					'title' => Loc::getMessage('GROUP_ENTITY_CHECK_COUNTER_FREE_SPACE_FIELD'),
+				]
 			),
-			'CHECK_COUNTER_SITES' => array(
-				'data_type' => 'string',
-				'validation' => array(__CLASS__, 'validateCheckCounterSites'),
-				'title' => Loc::getMessage('GROUP_ENTITY_CHECK_COUNTER_SITES_FIELD'),
+			new Fields\StringField(
+				'CHECK_COUNTER_SITES',
+				[
+					'validation' => [__CLASS__, 'validateCheckCounterSites'],
+					'title' => Loc::getMessage('GROUP_ENTITY_CHECK_COUNTER_SITES_FIELD'),
+				]
 			),
-			'CHECK_COUNTER_USERS' => array(
-				'data_type' => 'string',
-				'validation' => array(__CLASS__, 'validateCheckCounterUsers'),
-				'title' => Loc::getMessage('GROUP_ENTITY_CHECK_COUNTER_USERS_FIELD'),
+			new Fields\StringField(
+				'CHECK_COUNTER_USERS',
+				[
+					'validation' => [__CLASS__, 'validateCheckCounterUsers'],
+					'title' => Loc::getMessage('GROUP_ENTITY_CHECK_COUNTER_USERS_FIELD'),
+				]
 			),
-			'CHECK_COUNTER_LAST_AUTH' => array(
-				'data_type' => 'string',
-				'validation' => array(__CLASS__, 'validateCheckCounterLastAuth'),
-				'title' => Loc::getMessage('GROUP_ENTITY_CHECK_COUNTER_LAST_AUTH_FIELD'),
+			new Fields\StringField(
+				'CHECK_COUNTER_LAST_AUTH',
+				[
+					'validation' => [__CLASS__, 'validateCheckCounterLastAuth'],
+					'title' => Loc::getMessage('GROUP_ENTITY_CHECK_COUNTER_LAST_AUTH_FIELD'),
+				]
 			),
-			'CREATED' => array(
-				'data_type' => 'Bitrix\Main\UserTable',
-				'reference' => array('=this.CREATED_BY' => 'ref.ID'),
+			new Fields\Relations\Reference(
+				'CREATED',
+				'Bitrix\Main\UserTable',
+				['=this.CREATED_BY' => 'ref.ID']
 			),
-			'MODIFIED' => array(
-				'data_type' => 'Bitrix\Main\UserTable',
-				'reference' => array('=this.MODIFIED_BY' => 'ref.ID'),
+			new Fields\Relations\Reference(
+				'MODIFIED',
+				'Bitrix\Main\UserTable',
+				['=this.MODIFIED_BY' => 'ref.ID']
 			),
-		);
+		];
 	}
+
 	/**
 	 * Returns validators for NAME field.
 	 *
@@ -174,10 +218,11 @@ class GroupTable extends Main\Entity\DataManager
 	 */
 	public static function validateName()
 	{
-		return array(
-			new Main\Entity\Validator\Length(null, 255),
-		);
+		return [
+			new Fields\Validators\LengthValidator(null, 255),
+		];
 	}
+
 	/**
 	 * Returns validators for CHECK_COUNTER_FREE_SPACE field.
 	 *
@@ -185,10 +230,11 @@ class GroupTable extends Main\Entity\DataManager
 	 */
 	public static function validateCheckCounterFreeSpace()
 	{
-		return array(
-			new Main\Entity\Validator\Length(null, 1),
-		);
+		return [
+			new Fields\Validators\LengthValidator(null, 1),
+		];
 	}
+
 	/**
 	 * Returns validators for CHECK_COUNTER_SITES field.
 	 *
@@ -196,10 +242,11 @@ class GroupTable extends Main\Entity\DataManager
 	 */
 	public static function validateCheckCounterSites()
 	{
-		return array(
-			new Main\Entity\Validator\Length(null, 1),
-		);
+		return [
+			new Fields\Validators\LengthValidator(null, 1),
+		];
 	}
+
 	/**
 	 * Returns validators for CHECK_COUNTER_USERS field.
 	 *
@@ -207,10 +254,11 @@ class GroupTable extends Main\Entity\DataManager
 	 */
 	public static function validateCheckCounterUsers()
 	{
-		return array(
-			new Main\Entity\Validator\Length(null, 1),
-		);
+		return [
+			new Fields\Validators\LengthValidator(null, 1),
+		];
 	}
+
 	/**
 	 * Returns validators for CHECK_COUNTER_LAST_AUTH field.
 	 *
@@ -218,8 +266,8 @@ class GroupTable extends Main\Entity\DataManager
 	 */
 	public static function validateCheckCounterLastAuth()
 	{
-		return array(
-			new Main\Entity\Validator\Length(null, 1),
-		);
+		return [
+			new Fields\Validators\LengthValidator(null, 1),
+		];
 	}
 }

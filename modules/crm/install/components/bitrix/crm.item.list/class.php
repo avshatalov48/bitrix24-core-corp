@@ -1,8 +1,8 @@
 <?php
 
-use Bitrix\Crm\Activity\TodoPingSettingsProvider;
 use Bitrix\Crm\Component\EntityList\FieldRestrictionManager;
 use Bitrix\Crm\Component\EntityList\FieldRestrictionManagerTypes;
+use Bitrix\Crm\Component\EntityList\NearestActivity\ManagerFactory;
 use Bitrix\Crm\Filter\FieldsTransform;
 use Bitrix\Crm\Filter\UiFilterOptions;
 use Bitrix\Crm\Integration;
@@ -16,11 +16,12 @@ use Bitrix\Crm\Service\Display;
 use Bitrix\Crm\Service\Router;
 use Bitrix\Crm\Settings\HistorySettings;
 use Bitrix\Crm\UserField\Visibility\VisibilityManager;
+use Bitrix\Crm\WebForm\Internals\PageNavigation;
 use Bitrix\Main\Grid;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Main\UI\PageNavigation;
 use Bitrix\UI\Buttons;
+use Bitrix\Crm\Component\EntityList\NearestActivity;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
@@ -47,6 +48,10 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 	protected $exportType;
 	protected $notAccessibleFields;
 	protected FieldRestrictionManager $fieldRestrictionManager;
+
+	private ?array $gridColumns = null;
+	private ?Grid\Panel\Panel $panel = null;
+	private ?NearestActivity\Manager $nearestActivityManager = null;
 
 	protected function init(): void
 	{
@@ -117,28 +122,15 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 			return $this->processExport();
 		}
 
-		$this->processGridActions();
+		$this->processRequest();
 
 		$this->getApplication()->SetTitle(htmlspecialcharsbx($this->getTitle()));
 
 		$listFilter = $this->getListFilter();
 
-		FieldsTransform\UserBasedField::applyTransformWrapper($listFilter);
-
-		// transform ACTIVITY_COUNTER|ACTIVITY_RESPONSIBLE_IDS filter to real filter params
-		CCrmEntityHelper::applySubQueryBasedFiltersWrapper(
-			$this->entityTypeId,
-			$this->getGridId(),
-			\Bitrix\Crm\Counter\EntityCounter::internalizeExtras($_REQUEST),
-			$listFilter,
-			null
-		);
-
 		$this->fieldRestrictionManager->removeRestrictedFields($this->filterOptions, $this->gridOptions);
 
-		$navParams = $this->gridOptions->getNavParams(['nPageSize' => static::DEFAULT_PAGE_SIZE]);
-		$pageSize = (int)$navParams['nPageSize'];
-		$pageNavigation = $this->getPageNavigation($pageSize);
+		$pageNavigation = $this->getPageNavigation();
 		$entityTypeName = \CCrmOwnerType::ResolveName($this->entityTypeId);
 		$categoryId = $this->category ? $this->category->getId() : 0;
 		$this->arResult['grid'] = $this->prepareGrid(
@@ -153,22 +145,14 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 			'categoryId' => $categoryId,
 			'gridId' => $this->getGridId(),
 			'backendUrl' => $this->arParams['backendUrl'] ?? null,
-			'smartActivityNotificationSupported' => $this->factory->isSmartActivityNotificationSupported(),
 			'isIframe' => $this->isIframe(),
 			'isEmbedded' => $this->isEmbedded(),
-			'pingSettings' => (new TodoPingSettingsProvider($this->entityTypeId, $categoryId))->fetchAll(),
+			'settingsButtonExtenderParams' =>
+				\Bitrix\Crm\UI\SettingsButtonExtender\SettingsButtonExtenderParams::createDefaultForGrid($this->entityTypeId, $this->getGridId())
+					->setCategoryId($this->getCategoryId())
+					->setIsAllItemsCategory($this->category === null)
+					->buildParams()
 		];
-		if (
-			\Bitrix\Crm\Integration\AI\AIManager::isAiCallAutomaticProcessingAllowed()
-			&& in_array($this->entityTypeId, \Bitrix\Crm\Integration\AI\AIManager::SUPPORTED_ENTITY_TYPE_IDS, true)
-			&& $this->userPermissions->isAdmin()
-			&& $this->category !== null
-		)
-		{
-			$this->arResult['jsParams']['aiAutostartSettings'] = \Bitrix\Main\Web\Json::encode(
-				\Bitrix\Crm\Integration\AI\Operation\AutostartSettings::get($this->entityTypeId, $this->category->getId())
-			);
-		}
 		$this->arResult['entityTypeName'] = $entityTypeName;
 		$this->arResult['categoryId'] = $this->category ? $this->category->getId() : 0;
 		$this->arResult['entityTypeDescription'] = $this->factory->getEntityDescription();
@@ -184,44 +168,9 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 		$this->includeComponentTemplate();
 	}
 
-	protected function processGridActions(): void
+	protected function processRequest(): void
 	{
-		$request = \Bitrix\Main\Application::getInstance()->getContext()->getRequest();
-		if (
-			$request->getRequestMethod() !== 'POST'
-			|| !check_bitrix_sessid()
-		)
-		{
-			return;
-		}
-		$removeActionButtonParamName = 'action_button_' . $this->getGridId();
-		if ($request->getPost($removeActionButtonParamName) === 'delete')
-		{
-			$ids = $request->getPost('ID');
-			if (!is_array($ids))
-			{
-				return;
-			}
-			\Bitrix\Main\Type\Collection::normalizeArrayValuesByInt($ids);
-			if (empty($ids))
-			{
-				return;
-			}
-			$items = $this->factory->getItemsFilteredByPermissions(
-				[
-					'filter' => [
-						'@ID' => $ids,
-					]
-				],
-				null,
-				\Bitrix\Crm\Service\UserPermissions::OPERATION_DELETE
-			);
-			foreach ($items as $item)
-			{
-				$operation = $this->factory->getDeleteOperation($item);
-				$operation->launch();
-			}
-		}
+		\CCrmViewHelper::processGridRequest($this->entityTypeId, $this->getGridId(), $this->getPanel(), $this->request);
 	}
 
 	protected function getGridId(): string
@@ -236,6 +185,11 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 		return $gridId;
 	}
 
+	protected function getPageNavigationId(): string
+	{
+		return "{$this->getGridId()}_{$this->navParamName}";
+	}
+
 	protected function getNotAccessibleFieldNames(): array
 	{
 		if ($this->notAccessibleFields === null)
@@ -246,11 +200,20 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 		return $this->notAccessibleFields;
 	}
 
+	private function getGridColumns(): array
+	{
+		$this->gridColumns ??= array_merge($this->provider->getGridColumns(), $this->ufProvider->getGridColumns());
+
+		$this->gridColumns = array_values($this->gridColumns);
+
+		return $this->gridColumns;
+	}
+
 	protected function prepareGrid(array $listFilter, PageNavigation $pageNavigation, array $gridSort): array
 	{
 		$grid = [];
 		$grid['GRID_ID'] = $this->getGridId();
-		$grid['COLUMNS'] = array_merge($this->provider->getGridColumns(), $this->ufProvider->getGridColumns());
+		$grid['COLUMNS'] = $this->getGridColumns();
 		$notAccessibleFields = $this->getNotAccessibleFieldNames();
 		foreach ($grid['COLUMNS'] as $key => $column)
 		{
@@ -288,48 +251,82 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 
 		$grid['ROWS'] = $rows;
 		$pageNavigation->setRecordCount($totalCount);
-		$grid['NAV_PARAM_NAME'] = $this->navParamName;
+		$grid['NAV_PARAM_NAME'] = $pageNavigation->getId();
 		$grid['CURRENT_PAGE'] = $pageNavigation->getCurrentPage();
 		$grid['NAV_OBJECT'] = $pageNavigation;
 		$grid['TOTAL_ROWS_COUNT'] = $totalCount;
 		$grid['AJAX_MODE'] = ($this->arParams['ajaxMode'] ?? 'Y');
 		$grid['ALLOW_ROWS_SORT'] = false;
-		$grid['AJAX_OPTION_JUMP'] = "N";
-		$grid['AJAX_OPTION_STYLE'] = "N";
-		$grid['AJAX_OPTION_HISTORY'] = "N";
+		$grid['AJAX_OPTION_JUMP'] = 'N';
+		$grid['AJAX_OPTION_STYLE'] = 'N';
+		$grid['AJAX_OPTION_HISTORY'] = 'N';
 		$grid['SHOW_PAGESIZE'] = true;
 		$grid['DEFAULT_PAGE_SIZE'] = static::DEFAULT_PAGE_SIZE;
 		$grid['PAGE_SIZES'] = [['NAME' => '10', 'VALUE' => '10'], ['NAME' => '20', 'VALUE' => '20'], ['NAME' => '50', 'VALUE' => '50']];
 		$grid['SHOW_PAGINATION'] = true;
 		$grid['ALLOW_CONTEXT_MENU'] = false;
-		$grid['SHOW_SELECTED_COUNTER'] = false;
 		$grid['SHOW_ROW_ACTIONS_MENU'] = true;
 		$grid['ENABLE_FIELDS_SEARCH'] = 'Y';
+		$grid['HANDLE_RESPONSE_ERRORS'] = true;
 		$grid['HEADERS_SECTIONS'] = $this->getHeaderSections();
-		$canDelete = Container::getInstance()->getUserPermissions()->checkDeletePermissions(
-			$this->factory->getEntityTypeId(),
-			0,
-			$this->getCategoryId()
-		);
 		$grid['USE_CHECKBOX_LIST_FOR_SETTINGS_POPUP'] = true;
-		$grid['SHOW_ROW_CHECKBOXES'] = $canDelete;
-		$grid['SHOW_CHECK_ALL_CHECKBOXES'] = $canDelete;
-		$grid['SHOW_ACTION_PANEL'] = $canDelete;
-		if ($canDelete)
+		$grid['SHOW_ROW_CHECKBOXES'] = true;
+		$grid['SHOW_SELECTED_COUNTER'] = true;
+		$grid['SHOW_CHECK_ALL_CHECKBOXES'] = true;
+
+		$actionPanel = $this->getPanel()->getControls();
+		$showActionPanel = !empty($actionPanel) && !$this->isEmbedded();
+
+		$grid['SHOW_ACTION_PANEL'] = $showActionPanel;
+		if ($showActionPanel)
 		{
-			$snippet = new \Bitrix\Main\Grid\Panel\Snippet();
 			$grid['ACTION_PANEL'] = [
 				'GROUPS' => [
 					[
-						'ITEMS' => [
-							$snippet->getRemoveButton(),
-						],
+						'ITEMS' => $actionPanel,
 					],
-				]
+				],
 			];
 		}
 
 		return $grid;
+	}
+
+	private function getPanel(): Grid\Panel\Panel
+	{
+		if (!$this->panel)
+		{
+			$settings = new \Bitrix\Crm\Component\EntityList\Grid\Settings\ItemSettings([
+				'ID' => $this->getGridId(),
+				/**
+				 * Could be rewritten in the future to
+				 * @see Grid\Export\ExcelExporter::isExportRequest()
+				 */
+				'MODE' => $this->isExportMode() ? \Bitrix\Crm\Component\EntityList\Grid\Settings\ItemSettings::MODE_EXCEL : \Bitrix\Crm\Component\EntityList\Grid\Settings\ItemSettings::MODE_HTML,
+			]);
+
+			$settings->setCategoryId($this->getCategoryId());
+			$settings->setIsAllItemsCategory($this->category === null);
+
+			$visibleColumns = $this->getVisibleColumns();
+			$editableVisibleColumns = array_filter(
+				$this->getGridColumns(),
+				fn(array $column) => isset($column['editable']) && in_array($column['id'], $visibleColumns, true)
+			);
+
+			$settings->setEditableFieldsWhitelist(array_column($editableVisibleColumns, 'id'));
+
+			$this->panel = new Grid\Panel\Panel(
+				new \Bitrix\Crm\Component\EntityList\Grid\Panel\Action\ItemDataProvider(
+					$this->factory,
+					$this->userPermissions,
+					Container::getInstance()->getContext(),
+					$settings
+				),
+			);
+		}
+
+		return $this->panel;
 	}
 
 	protected function prepareInterfaceToolbar(): array
@@ -349,6 +346,24 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 			;
 
 			$toolbar['id'] = $this->getGridId() . '_toolbar';
+
+			if ($this->arParams['ADD_EVENT_NAME'])
+			{
+				$analyticsBuilder = \Bitrix\Crm\Integration\Analytics\Builder\Entity\AddOpenEvent::createDefault($this->entityTypeId)
+					->setSection(
+						!empty($arParams['ANALYTICS']['c_section']) && is_string($arParams['ANALYTICS']['c_section'])
+						? $arParams['ANALYTICS']['c_section']
+						: null
+					)
+					->setSubSection(
+						!empty($arParams['ANALYTICS']['c_sub_section']) && is_string($arParams['ANALYTICS']['c_sub_section'])
+							? $arParams['ANALYTICS']['c_sub_section']
+							: null
+					)
+					->setElement(\Bitrix\Crm\Integration\Analytics\Dictionary::ELEMENT_CREATE_LINKED_ENTITY_BUTTON);
+				$url = $analyticsBuilder->buildUri($url)->getUri();
+			}
+
 			$addButton = [
 				'TEXT' => $entityTypeDescription,
 				'TITLE' => Loc::getMessage(
@@ -377,12 +392,25 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 		return $toolbar;
 	}
 
-	protected function getPageNavigation(int $pageSize): PageNavigation
+	protected function getPageNavigation(): PageNavigation
 	{
-		$pageNavigation = new PageNavigation($this->navParamName);
-		$pageNavigation->allowAllRecords(false)->setPageSize($pageSize)->initFromUri();
+		$pageNavigation = new PageNavigation($this->getPageNavigationId());
+		$pageNavigation
+			->allowAllRecords(false)
+			->setPageSize($this->getPageSize())
+			->initFromUri()
+		;
 
 		return $pageNavigation;
+	}
+
+	protected function getPageSize(): int
+	{
+		$navParams = $this->gridOptions->getNavParams([
+			'nPageSize' => static::DEFAULT_PAGE_SIZE,
+		]);
+
+		return (int)$navParams['nPageSize'];
 	}
 
 	protected function getListFilter(): array
@@ -412,6 +440,17 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 		{
 			$filter = $this->category->getItemsFilter($filter);
 		}
+
+		FieldsTransform\UserBasedField::applyTransformWrapper($filter);
+
+		// transform ACTIVITY_COUNTER|ACTIVITY_RESPONSIBLE_IDS filter to real filter params
+		CCrmEntityHelper::applySubQueryBasedFiltersWrapper(
+			$this->entityTypeId,
+			$this->getGridId(),
+			\Bitrix\Crm\Counter\EntityCounter::internalizeExtras($_REQUEST),
+			$filter,
+			null
+		);
 
 		return $filter;
 	}
@@ -465,7 +504,7 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 	{
 		if ($this->getErrors())
 		{
-			return ['ERROR' => implode("", $this->getErrorMessages())];
+			return ['ERROR' => implode('', $this->getErrorMessages())];
 		}
 
 		$listFilter = $this->getListFilter();
@@ -485,11 +524,12 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 			$listFilter['<ID'] = $lastExportedId;
 		}
 
-		$pageNavigation = new PageNavigation($this->navParamName);
+		$pageNavigation = new PageNavigation($this->getPageNavigationId());
 		$pageNavigation
 			->allowAllRecords(false)
 			->setPageSize($this->arParams['STEXPORT_PAGE_SIZE'])
-			->setCurrentPage(1);
+			->setCurrentPage(1)
+		;
 
 		$this->setTemplateName($this->exportType);
 
@@ -582,10 +622,7 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 			if (empty($this->visibleColumns))
 			{
 				$this->visibleColumns = array_filter(
-					array_merge(
-						$this->provider->getGridColumns(),
-						$this->ufProvider->getGridColumns()
-					),
+					$this->getGridColumns(),
 					static function($column) {
 						return isset($column['default']) && $column['default'] === true;
 					}
@@ -612,7 +649,7 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 
 			$isExportEventEnabled = HistorySettings::getCurrent()->isExportEventEnabled();
 			$notAccessibleFields = $this->getNotAccessibleFieldNames();
-			$itemsData = [];
+			$itemsData = $listById = [];
 			foreach($list as $item)
 			{
 				$itemData = $item->getData();
@@ -624,7 +661,10 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 					$trackedObject = $this->factory->getTrackedObject($item);
 					Container::getInstance()->getEventHistory()->registerExport($trackedObject);
 				}
+				$listById[$item->getId()] = $item;
 			}
+			$list = $listById;
+			unset($listById);
 
 			$displayOptions =
 				(new Display\Options())
@@ -706,11 +746,21 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 					}
 				}
 			}
+
+			if (!$this->isExportMode())
+			{
+				$entityBadges = new Bitrix\Crm\Kanban\EntityBadge($this->entityTypeId, $itemIds);
+				$entityBadges->appendToEntityItems($list);
+			}
+
 			foreach($list as $item)
 			{
 				$itemId = $item->getId();
 				$itemData = $itemsData[$itemId];
 				$itemColumn = $itemColumns[$itemId];
+
+				$this->appendNearestActivityBlockToItem($item, $itemData, $itemColumn);
+
 				if (isset($restrictedItemIds[$itemId]))
 				{
 					$valueReplacer = $this->isExportMode()
@@ -730,9 +780,14 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 					}
 				}
 
+				if ($item->getBadges())
+				{
+					$itemColumn['TITLE'] .= Bitrix\Crm\Component\EntityList\BadgeBuilder::render($item->getBadges());
+				}
+
 				$result[] = [
 					'id' => $itemId,
-					'data' => $itemData,
+					'data' => $this->prepareItemDataForEdit($itemData),
 					'columns' => $itemColumn,
 					'actions' => $this->getContextActions($item),
 				];
@@ -740,6 +795,49 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 		}
 
 		return $result;
+	}
+
+	/**
+	 * @param Array<string, mixed> $rawItemData
+	 *
+	 * @return Array<string, mixed>
+	 */
+	private function prepareItemDataForEdit(array $rawItemData): array
+	{
+		$result = [];
+
+		foreach ($rawItemData as $key => $value)
+		{
+			if ($value instanceof \Bitrix\Main\Type\Date)
+			{
+				$result[$key] = (string)$value;
+			}
+			else
+			{
+				$result[$key] = $value;
+			}
+		}
+
+		return $result;
+	}
+
+	private function appendNearestActivityBlockToItem(Item $item, array &$itemData, array &$itemColumn): void
+	{
+		if ($this->nearestActivityManager === null)
+		{
+			$this->nearestActivityManager = ManagerFactory::getInstance()->getManager($this->entityTypeId);
+		}
+
+		$itemData['EDIT'] = $this->userPermissions->checkUpdatePermissions(
+			$this->entityTypeId,
+			$item->getId(),
+			$item->getCategoryId(),
+		);
+
+		$itemData = $this->nearestActivityManager->appendNearestActivityBlock([$itemData], true)[0];
+		$rendered = $itemData['ACTIVITY_BLOCK']->render($this->getGridId());
+
+		$itemColumn['ACTIVITY_BLOCK'] = $rendered;
 	}
 
 	protected function getContextActions(Item $item): array
@@ -766,16 +864,26 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 				'HREF' => $editUrl,
 			];
 		}
-		if ($userPermissions->canAddItem($item))
+		if ($userPermissions->canUpdateItem($item))
 		{
-			$copyUrl = clone $itemDetailUrl;
-			$copyUrl->addParams([
-				'copy' => '1',
-			]);
-
 			$analyticsEventBuilder = CopyOpenEvent::createDefault($this->entityTypeId);
 			$this->configureAnalyticsEventBuilder($analyticsEventBuilder);
 			$analyticsEventBuilder->setElement(\Bitrix\Crm\Integration\Analytics\Dictionary::ELEMENT_GRID_ROW_CONTEXT_MENU);
+
+			$copyUrlParams = [
+				'copy' => '1',
+			];
+
+			$parentEntityTypeId = (int)($this->arParams['parentEntityTypeId'] ?? 0);
+			$parentEntityId = (int)($this->arParams['parentEntityId'] ?? 0);
+			if ($parentEntityId > 0 && \CCrmOwnerType::IsDefined($parentEntityTypeId))
+			{
+				$copyUrlParams['parentTypeId'] = $parentEntityTypeId;
+				$copyUrlParams['parentId'] = $parentEntityId;
+			}
+
+			$copyUrl = clone $itemDetailUrl;
+			$copyUrl->addParams($copyUrlParams);
 
 			$actions[] = [
 				'TEXT' => Loc::getMessage('CRM_COMMON_ACTION_COPY'),

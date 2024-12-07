@@ -119,6 +119,11 @@ jn.define('crm/type', (require, exports, module) => {
 				return false;
 			}
 
+			if (id >= DynamicTypeId.UnlimitedTypeStart)
+			{
+				return id % 2 === 0;
+			}
+
 			return id >= DynamicTypeId.Start && id < DynamicTypeId.End;
 		}
 
@@ -242,6 +247,17 @@ jn.define('crm/type', (require, exports, module) => {
 			return null;
 		}
 
+		static getTypeForAnalytics(entityType)
+		{
+			const analyticsType = Type.getCommonEntityTypeName(entityType);
+			if (analyticsType)
+			{
+				return analyticsType.toLowerCase();
+			}
+
+			return null;
+		}
+
 		static getCamelizedEntityTypeName(entityType)
 		{
 			entityType = Type.getCommonEntityTypeName(entityType);
@@ -251,6 +267,16 @@ jn.define('crm/type', (require, exports, module) => {
 			}
 
 			return null;
+		}
+
+		static getSupportedEntities()
+		{
+			const idsAndNames = {};
+			SUPPORTED_ENTITIES.forEach((entityId) => {
+				idsAndNames[entityId] = Type.resolveNameById(entityId);
+			});
+
+			return idsAndNames;
 		}
 	}
 

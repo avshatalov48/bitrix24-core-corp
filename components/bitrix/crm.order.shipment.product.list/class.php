@@ -132,7 +132,7 @@ final class CCrmOrderShipmentProductListComponent extends \CBitrixComponent
 		if(!$this->shipment->isSystem()) //skip during adding product mode
 		{
 			$result[] = ['id' => 'AMOUNT', 'name' => Loc::getMessage('CRM_ORDER_SPLC_AMOUNT'), 'sort' => 'AMOUNT', 'default' => true, 'editable' => true];
-			$useStoreControl = (Main\Config\Option::get('catalog', 'default_use_store_control', 'N') == 'Y');
+			$useStoreControl = (Main\Config\Option::get('catalog', 'default_use_store_control', 'N') === 'Y');
 
 			if($useStoreControl)
 			{

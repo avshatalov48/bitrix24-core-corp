@@ -5,6 +5,7 @@ return [
 		'log',
 		'type',
 		'utils/object',
+		'im:messenger/lib/feature',
 		'im:messenger/lib/di/service-locator',
 		'im:messenger/lib/logger',
 		'im:messenger/lib/params',

@@ -8,6 +8,10 @@ use Bitrix\Main\Text\StringHelper;
 use Bitrix\Main\Web\Uri;
 use Bitrix\Tasks\Access;
 use Bitrix\Tasks\Comments\Internals\Comment;
+use Bitrix\Tasks\Flow\Comment\CommentEvent;
+use Bitrix\Tasks\Flow\Internal\Entity\FlowEntity;
+use Bitrix\Tasks\Flow\Provider\Exception\FlowNotFoundException;
+use Bitrix\Tasks\Flow\Provider\FlowProvider;
 use Bitrix\Tasks\Integration\CRM;
 use Bitrix\Tasks\Integration\Disk;
 use Bitrix\Tasks\Integration\Forum;
@@ -15,7 +19,7 @@ use Bitrix\Tasks\Integration\Mail;
 use Bitrix\Tasks\Integration\SocialNetwork;
 use Bitrix\Tasks\Internals\Registry\TaskRegistry;
 use Bitrix\Tasks\Internals\Task\Status;
-use Bitrix\Tasks\Internals\TaskTable;
+use Bitrix\Tasks\Internals\TaskObject;
 use Bitrix\Tasks\Util\Collection;
 use Bitrix\Tasks\Util\Type\DateTime;
 use Bitrix\Tasks\Util\User;
@@ -401,14 +405,9 @@ class CommentPoster
 			$replace = ['#NEW_VALUE#' => $this->parseUserToLinked($creatorId)];
 			$addComment->addPart($partName, Loc::getMessage($messageKey, $replace), [[$messageKey, $replace]]);
 		}
-		if ($this->authorId !== $responsibleId)
-		{
-			$partName = 'responsible';
-			$messageKey = 'COMMENT_POSTER_COMMENT_TASK_UPDATE_CHANGES_FIELD_ASSIGNEE';
-			$messageKey = $this->getLastVersionedMessageKey($messageKey);
-			$replace = ['#NEW_VALUE#' => $this->parseUserToLinked($responsibleId)];
-			$addComment->addPart($partName, Loc::getMessage($messageKey, $replace), [[$messageKey, $replace]]);
-		}
+
+		$this->addResponsibleComment($addComment);
+
 		if (!empty($accomplices))
 		{
 			$partName = 'accomplices';
@@ -462,6 +461,12 @@ class CommentPoster
 	 */
 	private function prepareChangeComments(array $oldFields, array $newFields, array $changes): array
 	{
+		$task = TaskRegistry::getInstance()->getObject($this->taskId, true);
+		if (null === $task)
+		{
+			return [];
+		}
+
 		unset($changes['STATUS']);
 
 		if (empty($changes))
@@ -486,6 +491,10 @@ class CommentPoster
 
 			switch ($field)
 			{
+				case 'RESPONSIBLE_ID':
+					$this->addChangeResponsibleComment($changeComment, $changes);
+					continue 2;
+
 				case 'UF_TASK_WEBDAV_FILES':
 					$field = 'FILES';
 					break;
@@ -1209,6 +1218,7 @@ class CommentPoster
 			'TASK_APPROVE',
 			'TASK_DISAPPROVE',
 			'TASK_COMPLETE',
+			'TASK_CHANGE_RESPONSIBLE',
 		];
 		foreach ($replaces as $key)
 		{
@@ -1252,11 +1262,13 @@ class CommentPoster
 				case 'TASK_APPROVE':
 				case 'TASK_DISAPPROVE':
 				case 'TASK_COMPLETE':
+				case 'TASK_CHANGE_RESPONSIBLE':
 					$actionMap = [
 						'DEADLINE_CHANGE' => Access\ActionDictionary::ACTION_TASK_DEADLINE,
 						'TASK_APPROVE' => Access\ActionDictionary::ACTION_TASK_APPROVE,
 						'TASK_DISAPPROVE' => Access\ActionDictionary::ACTION_TASK_DISAPPROVE,
 						'TASK_COMPLETE' => Access\ActionDictionary::ACTION_TASK_COMPLETE,
+						'TASK_CHANGE_RESPONSIBLE' => Access\ActionDictionary::ACTION_TASK_CHANGE_RESPONSIBLE,
 					];
 					$replace = '';
 					if (isset($taskId) && Access\TaskAccessController::can($userId, $actionMap[$key], $taskId))
@@ -1528,7 +1540,67 @@ class CommentPoster
 		return match ($key)
 		{
 			'RESPONSIBLE_ID' => 'ASSIGNEE',
+			'START_DATE_PLAN' => 'START_DATE_PLAN',
+			'END_DATE_PLAN' => 'END_DATE_PLAN',
 			default => $key,
 		};
+	}
+
+	private function addResponsibleComment(Comment $comment, string $partName = 'responsible'): void
+	{
+		$task = TaskRegistry::getInstance()->get($this->taskId, true);
+		if ((int)$task['FLOW_ID'] <= 0)
+		{
+			$this->addTaskResponsibleComment($comment, $partName);
+			return;
+		}
+
+		$this->addFlowResponsibleComment($comment);
+	}
+
+	private function addTaskResponsibleComment(Comment $comment, string $partName): void
+	{
+		$task = TaskRegistry::getInstance()->get($this->taskId, true);
+
+		if ($this->authorId === (int)$task['RESPONSIBLE_ID'])
+		{
+			return;
+		}
+
+		$messageKey = 'COMMENT_POSTER_COMMENT_TASK_UPDATE_CHANGES_FIELD_ASSIGNEE';
+		$messageKey = $this->getLastVersionedMessageKey($messageKey);
+		$replace = ['#NEW_VALUE#' => $this->parseUserToLinked((int)$task['RESPONSIBLE_ID'])];
+		$comment->addPart($partName, Loc::getMessage($messageKey, $replace), [[$messageKey, $replace]]);
+	}
+
+	private function addFlowResponsibleComment(Comment $comment): void
+	{
+		$task = TaskRegistry::getInstance()->get($this->taskId, true);
+
+		try
+		{
+			$flow = (new FlowProvider())->getFlow($task['FLOW_ID']);
+		}
+		catch (FlowNotFoundException)
+		{
+			return;
+		}
+
+		$flowComment = $flow->getComment(CommentEvent::TASK_ADD, $this->taskId);
+		$replaces = $flowComment->getReplaces();
+
+		$comment->addPart($flowComment->getPartName(), Loc::getMessage($flowComment->getMessageKey(), $replaces), $replaces);
+	}
+
+	private function addChangeResponsibleComment(Comment $changeComment, array $changes): void
+	{
+		if (isset($changes['FLOW_ID']))
+		{
+			$this->addFlowResponsibleComment($changeComment);
+		}
+		else
+		{
+			$this->addTaskResponsibleComment($changeComment, 'changes');
+		}
 	}
 }

@@ -34,6 +34,7 @@ final class Result extends \Bitrix\Main\Result implements \JsonSerializable
 	 * @param int|null $parentJobId
 	 * @param int|null $retryCount
 	 * @param bool $isManualLaunch
+	 * @param string|null $languageId
 	 */
 	public function __construct(
 		private int $typeId,
@@ -46,6 +47,7 @@ final class Result extends \Bitrix\Main\Result implements \JsonSerializable
 		private ?int $parentJobId = null,
 		private ?int $retryCount = null,
 		private bool $isManualLaunch = true,
+		private ?string $languageId = null
 	)
 	{
 		parent::__construct();
@@ -146,6 +148,11 @@ final class Result extends \Bitrix\Main\Result implements \JsonSerializable
 		return $this->isManualLaunch;
 	}
 
+	public function getLanguageId(): ?string
+	{
+		return $this->languageId;
+	}
+
 	public function jsonSerialize(): array
 	{
 		return [
@@ -161,6 +168,7 @@ final class Result extends \Bitrix\Main\Result implements \JsonSerializable
 			'isSuccess' => $this->isSuccess(),
 			'errors' => $this->getErrors(),
 			'isManualLaunch' => $this->isManualLaunch,
+			'languageId' => $this->languageId,
 		];
 	}
 

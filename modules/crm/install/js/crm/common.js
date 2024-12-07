@@ -3399,6 +3399,7 @@ if(typeof(BX.CrmEntityType) === "undefined")
 
 	BX.CrmEntityType.dynamicTypeStart = 128;
 	BX.CrmEntityType.dynamicTypeEnd = 192;
+	BX.CrmEntityType.unlimitedTypeStart = 1030;
 	BX.CrmEntityType.dynamicTypeNamePrefix = "DYNAMIC_";
 	BX.CrmEntityType.dynamicTypeAbbreviationPrefix = "T";
 	BX.CrmEntityType.enumeration =
@@ -3408,6 +3409,7 @@ if(typeof(BX.CrmEntityType) === "undefined")
 		deal: 2,
 		contact: 3,
 		company: 4,
+		requisite: 8,
 		invoice: 5,
 		activity: 6,
 		quote: 7,
@@ -3419,6 +3421,7 @@ if(typeof(BX.CrmEntityType) === "undefined")
 		smartinvoice: 31,
 		storeDocument: 33,
 		shipmentDocument: 34,
+		bankDetail: 35,
 		smartdocument: 36,
 		smartb2edocument: 39,
 		agentcontract: 38,
@@ -3431,6 +3434,7 @@ if(typeof(BX.CrmEntityType) === "undefined")
 		deal: "DEAL",
 		contact: "CONTACT",
 		company: "COMPANY",
+		requisite: "REQUISITE",
 		invoice: "INVOICE",
 		activity: "ACTIVITY",
 		quote: "QUOTE",
@@ -3442,6 +3446,7 @@ if(typeof(BX.CrmEntityType) === "undefined")
 		ordercheck: "ORDER_CHECK",
 		smartinvoice: "SMART_INVOICE",
 		dynamic: "DYNAMIC",
+		bankDetail: "BANK_DETAIL",
 		smartdocument: "SMART_DOCUMENT",
 		smartb2edocument: 'SMART_B2E_DOC',
 		agentcontract: "AGENT_CONTRACT"
@@ -3515,6 +3520,10 @@ if(typeof(BX.CrmEntityType) === "undefined")
 		{
 			return BX.CrmEntityType.names.company;
 		}
+		else if(typeId === BX.CrmEntityType.enumeration.requisite)
+		{
+			return BX.CrmEntityType.names.requisite;
+		}
 		else if(typeId === BX.CrmEntityType.enumeration.invoice)
 		{
 			return BX.CrmEntityType.names.invoice;
@@ -3546,6 +3555,10 @@ if(typeof(BX.CrmEntityType) === "undefined")
 		else if(typeId === BX.CrmEntityType.enumeration.smartinvoice)
 		{
 			return BX.CrmEntityType.names.smartinvoice;
+		}
+		else if(typeId === BX.CrmEntityType.enumeration.bankDetail)
+		{
+			return BX.CrmEntityType.names.bankDetail;
 		}
 		else if(typeId === BX.CrmEntityType.enumeration.smartdocument)
 		{
@@ -3591,6 +3604,10 @@ if(typeof(BX.CrmEntityType) === "undefined")
 		{
 			return this.enumeration.company;
 		}
+		else if(name === BX.CrmEntityType.names.requisite)
+		{
+			return this.enumeration.requisite;
+		}
 		else if(name === BX.CrmEntityType.names.invoice)
 		{
 			return this.enumeration.invoice;
@@ -3622,6 +3639,10 @@ if(typeof(BX.CrmEntityType) === "undefined")
 		else if(name === BX.CrmEntityType.names.smartinvoice)
 		{
 			return this.enumeration.smartinvoice;
+		}
+		else if(name === BX.CrmEntityType.names.bankDetail)
+		{
+			return this.enumeration.bankDetail;
 		}
 		else if(name === BX.CrmEntityType.names.smartdocument)
 		{
@@ -3703,7 +3724,8 @@ if(typeof(BX.CrmEntityType) === "undefined")
 		typeId = Number(typeId);
 
 		return (
-			typeId >= this.dynamicTypeStart && typeId < this.dynamicTypeEnd
+			(typeId >= this.dynamicTypeStart && typeId < this.dynamicTypeEnd)
+			|| (typeId >= this.unlimitedTypeStart && typeId % 2 === 0)
 		)
 	};
 
@@ -13077,6 +13099,7 @@ BX.Crm.Page =
 		factoryBased: { condition: new RegExp("/type/[0-9]+/details/[0-9]+/", "i") },
 		dynamicAutomation: { condition: new RegExp("/crm/type/[0-9]+/automation/[0-9]+/", "i"), stopParameters: ['grid_action', 'page'], options: { customLeftBoundary: 0, loader: 'bizproc:automation-loader' } },
 		activity: { condition: new RegExp("/bitrix/components/bitrix/crm.activity.planner/slider.php", "i"), options: { allowChangeHistory: false, width: 1080 }},
+		factoryBasedMerge: { condition: new RegExp('/crm/type/[0-9]+/merge/', 'i'), options: { allowHistoryChange: false, customLeftBoundary: 0 } },
 	},
 	items: [],
 	initialized: false,
@@ -13749,15 +13772,17 @@ if(typeof(BX.CrmLeadMode) === "undefined")
 							}
 							convertButton.setWaiting();
 
-							BX.loadCSS(
-								'/bitrix/js/crm/css/autorun_proc.css'
-							);
-							BX.loadScript(
-								['/bitrix/js/crm/batch_conversion.js', '/bitrix/js/crm/progress_control.js', '/bitrix/js/crm/autorun_proc.js'],
-								function() {
-									this.convertLead();
-								}.bind(this)
-							);
+							Promise.all([
+								BX.Runtime.loadExtension('crm.autorun'),
+								new Promise((resolve) => {
+									BX.loadScript(
+										[
+											'/bitrix/js/crm/progress_control.js'
+										],
+										resolve
+									)
+								})
+							]).then(() => this.convertLead());
 
 						}.bind(this)}
 					}),
@@ -13923,6 +13948,92 @@ if(typeof(BX.CrmLeadMode) === "undefined")
 				+ BX.message('SITE_ID')
 			);
 		}
+	};
+}
+
+if(typeof BX.Crm.EntityEvent === "undefined")
+{
+	BX.Crm.EntityEvent = {
+		names: {
+			create: "onCrmEntityCreate",
+			update: "onCrmEntityUpdate",
+			delete: "onCrmEntityDelete",
+			convert: "onCrmEntityConvert",
+			invalidate: "onCrmEntityInvalidate"
+		},
+		fireCreate: function(entityTypeId, entityId, context, additionalParams)
+		{
+			this.fire(BX.Crm.EntityEvent.names.create, entityTypeId, entityId, context, additionalParams);
+		},
+		fireUpdate: function(entityTypeId, entityId, context, additionalParams)
+		{
+			this.fire(BX.Crm.EntityEvent.names.update, entityTypeId, entityId, context, additionalParams);
+		},
+		fireDelete: function(entityTypeId, entityId, context, additionalParams)
+		{
+			this.fire(BX.Crm.EntityEvent.names.delete, entityTypeId, entityId, context, additionalParams);
+		},
+		fire: function(eventName, entityTypeId, entityId, context, additionalParams)
+		{
+			var params =
+				{
+					entityTypeId: entityTypeId,
+					entityTypeName: BX.CrmEntityType.resolveName(entityTypeId),
+					entityId: entityId,
+					context: context
+				};
+
+			if(BX.type.isPlainObject(additionalParams))
+			{
+				params = BX.mergeEx(params, additionalParams);
+			}
+
+			BX.localStorage.set(eventName, params, 10);
+		},
+		subscribeToEntityType: function(entityTypeId, handler)
+		{
+			this.subscribe((eventName, eventParams) => {
+				if (eventParams.entityTypeId === entityTypeId)
+				{
+					handler(eventName, eventParams);
+				}
+			});
+		},
+
+		/**
+		 * Subscribe to all entity events
+		 * @param handler (eventName: string, eventParams: Object) => void
+		 */
+		subscribe: function(handler)
+		{
+			BX.Event.EventEmitter.subscribe('onLocalStorageSet', (event) => {
+				const parameters = event.getData();
+				if (!BX.Type.isArray(parameters) || !parameters[0])
+				{
+					return;
+				}
+
+				const params = parameters[0];
+				const key = params.key || '';
+				if (!Object.values(this.names).includes(key))
+				{
+					return;
+				}
+
+				const eventData = params.value;
+				if (!BX.Type.isPlainObject(eventData))
+				{
+					return;
+				}
+
+				if (!eventData.entityTypeId)
+				{
+					return;
+				}
+
+				handler(key, eventData);
+			});
+		},
 	};
 }
 

@@ -101,12 +101,27 @@ abstract class AbstractReplicator
 		return false;
 	}
 
+	public function enableTimeZone(): void
+	{
+		CTimeZone::Enable();
+	}
+
+	public function disableTimeZone(): void
+	{
+		CTimeZone::Disable();
+	}
+
 	protected function init(int $entityId): void
 	{
 		$this->entityId = $entityId;
 		$this->producer = $this->getProducer();
 		$this->repeater = $this->getRepeater();
 		$this->checker = $this->getChecker();
+	}
+
+	protected function lazyInit(int $entityId): void
+	{
+		$this->entityId = $entityId;
 	}
 
 	protected function getResult(): ?ReplicationResult
@@ -121,7 +136,7 @@ abstract class AbstractReplicator
 			return;
 		}
 
-		CTimeZone::Disable();
+		$this->disableTimeZone();
 	}
 
 	protected function onAfterReplicate(bool $do = true): void
@@ -131,7 +146,7 @@ abstract class AbstractReplicator
 			return;
 		}
 
-		CTimeZone::Enable();
+		$this->enableTimeZone();
 	}
 
 	private function logUnexpectedError(Throwable $error): void

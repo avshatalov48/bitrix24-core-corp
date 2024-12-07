@@ -164,4 +164,38 @@ class Template extends Base
 
 		return $template;
 	}
+
+	public function createAction(array $fields): array
+	{
+		$userId = CurrentUser::get()->getId();
+
+		foreach ($fields['ACCOMPLICES'] as $key => $value)
+		{
+			if (empty($value['ID']))
+			{
+				unset($fields['ACCOMPLICES'][$key]);
+			}
+			else
+			{
+				$fields['ACCOMPLICES'][$key] = $value['ID'];
+			}
+		}
+
+		$template = new \Bitrix\Tasks\Control\Template($userId);
+		$template->add($fields);
+
+		return [];
+	}
+
+	public function getComponentAction(): Response\Component
+	{
+		return new Response\Component(
+			"bitrix:tasks.task.template",
+			".default",
+			[
+				'ENABLE_FOOTER' => false,
+			],
+			['HIDE_ICONS' => 'Y']
+		);
+	}
 }

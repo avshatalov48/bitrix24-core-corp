@@ -8,6 +8,7 @@ return [
 		'animation',
 		'alert',
 		'loc',
+		'ui-system/blocks/icon',
 	],
 
 	'bundle' => [

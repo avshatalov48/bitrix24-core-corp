@@ -1,3 +1,7 @@
 <?php
 
-$MESS['BPMOBILE_TAB_TASK_LIST'] = 'Задания';
+$MESS['BPMOBILE_TAB_WORKFLOW_LIST'] = 'Бизнес-процессы';
+
+$MESS['BPMOBILE_TAB_WORKFLOW_LIST_ALERT_EXTRANET_ACCESS_DENIED_TITLE'] = 'Недостаточно прав';
+$MESS['BPMOBILE_TAB_WORKFLOW_LIST_ALERT_EXTRANET_ACCESS_DENIED_TEXT'] = 'У вас нет доступа на просмотр бизнес-процессов';
+$MESS['BPMOBILE_TAB_WORKFLOW_LIST_ALERT_CONFIRM'] = 'Понятно';

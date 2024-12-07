@@ -13,6 +13,14 @@ class Logo extends Base
 	public const ICON_TYPE_FAILURE = 'failure';
 	public const ICON_TYPE_SUCCESS = 'success';
 	public const ICON_TYPE_PURPLE = 'purple';
+	public const ICON_TYPE_ORANGE = 'orange';
+	public const ICON_TYPE_SECONDARY = 'secondary';
+
+	public const ADDITIONAL_ICON_CODE_PROGRESS = 'progress';
+	public const ADDITIONAL_ICON_CODE_PENCIL = 'pencil';
+	public const ADDITIONAL_ICON_CODE_SIGN = 'sign';
+	public const ADDITIONAL_ICON_CODE_DONE = 'done';
+	public const ADDITIONAL_ICON_CODE_UNAVAILABLE = 'unavailable';
 
 	protected const BODY_LOGO_BACKGROUND_SIZE = 60;
 

@@ -91,7 +91,7 @@ class RecycleBinOrmRepository implements RecyclebinTasksRepositoryInterface
 			}
 			elseif ($this->isTemplate($entity))
 			{
-				$this->templateCollection->add(TemplateObject::createFromFields(['ID' => (int)$entity->getEntityId()]));
+				$this->templateCollection->add(TemplateObject::wakeUpObject(['ID' => (int)$entity->getEntityId()]));
 			}
 		}
 

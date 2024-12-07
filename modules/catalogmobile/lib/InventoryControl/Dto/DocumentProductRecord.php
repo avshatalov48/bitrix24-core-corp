@@ -21,6 +21,9 @@ final class DocumentProductRecord extends Dto
 	public $documentId;
 
 	/** @var int|null */
+	public $basketCode;
+
+	/** @var int|null */
 	public $documentType;
 
 	/** @var int|null */

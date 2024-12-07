@@ -3,8 +3,8 @@
 namespace Bitrix\BIConnector\Integration\Superset\Model;
 
 use Bitrix\BIConnector\Integration\Superset\Integrator\Dto;
-use Bitrix\BIConnector\Integration\Superset\Integrator\IntegratorResponse;
-use Bitrix\BIConnector\Integration\Superset\Integrator\ProxyIntegrator;
+use Bitrix\BIConnector\Integration\Superset\Integrator\Request\IntegratorResponse;
+use Bitrix\BIConnector\Integration\Superset\Integrator\Integrator;
 use Bitrix\BIConnector\Superset\Dashboard\EmbeddedFilter;
 use Bitrix\Main\Error;
 use Bitrix\Main\Result;
@@ -14,15 +14,10 @@ final class Dashboard
 	private ?Dto\DashboardEmbeddedCredentials $embeddedCredentials = null;
 
 	public function __construct(
-		private EO_SupersetDashboard $ormObject,
+		private SupersetDashboard $ormObject,
 		private ?Dto\Dashboard $dashboardData = null
 	)
 	{
-	}
-
-	public function setDashboardCredentials(Dto\DashboardEmbeddedCredentials $embeddedCredentials): void
-	{
-		$this->embeddedCredentials = $embeddedCredentials;
 	}
 
 	public function getId(): int
@@ -69,6 +64,11 @@ final class Dashboard
 		return $this->getType() === SupersetDashboardTable::DASHBOARD_TYPE_MARKET;
 	}
 
+	public function isAvailableDashboard(): bool
+	{
+		return in_array($this->getStatus(), SupersetDashboard::getActiveDashboardStatuses(), true);
+	}
+
 	public function getUrl(): string
 	{
 		return $this->dashboardData?->url ?? '';
@@ -99,7 +99,7 @@ final class Dashboard
 		return $this->ormObject->get($fieldName) ?? null;
 	}
 
-	public function getOrmObject(): EO_SupersetDashboard
+	public function getOrmObject(): SupersetDashboard
 	{
 		return $this->ormObject;
 	}
@@ -126,6 +126,7 @@ final class Dashboard
 			'EXTERNAL_ID' => $this->getExternalId(),
 			'STATUS' => $this->getStatus(),
 			'URL' => $this->getUrl() ?? '',
+			'DETAIL_URL' => $this->ormObject->getDetailUrl()->getUri() ?? '',
 			'EDIT_URL' => $this->getEditUrl() ?? '',
 			'TITLE' => $this->getTitle() ?? '',
 			'SOURCE_ID' => $this->ormObject->getSourceId(),
@@ -133,11 +134,13 @@ final class Dashboard
 			'APP_ID' => $this->ormObject->getAppId(),
 			'TYPE' => $this->getType(),
 			'CREATED_BY_ID' => $this->ormObject->get('CREATED_BY_ID'),
+			'OWNER_ID' => $this->ormObject->get('OWNER_ID'),
 			'DATE_CREATE' => $this->ormObject->get('DATE_CREATE'),
 			'DATE_MODIFY' => $this->ormObject->get('DATE_MODIFY'),
 			'FILTER_PERIOD' => $embeddedFilterFields['FILTER_PERIOD'],
 			'DATE_FILTER_START' => $embeddedFilterFields['DATE_FILTER_START'],
 			'DATE_FILTER_END' => $embeddedFilterFields['DATE_FILTER_END'],
+			'INCLUDE_LAST_FILTER_DATE' => $embeddedFilterFields['INCLUDE_LAST_FILTER_DATE'],
 		];
 	}
 
@@ -161,7 +164,7 @@ final class Dashboard
 		return $this->dashboardData !== null;
 	}
 
-	private function getNativeFilterFields(): array
+	public function getNativeFilterFields(): array
 	{
 		$dateFilter = new EmbeddedFilter\DateTime($this);
 
@@ -169,6 +172,7 @@ final class Dashboard
 			'FILTER_PERIOD' => $dateFilter->getPeriod(),
 			'DATE_FILTER_START' => $dateFilter->getDateStart(),
 			'DATE_FILTER_END' => $dateFilter->getDateEnd(),
+			'INCLUDE_LAST_FILTER_DATE' => $dateFilter->needIncludeLastFilterDate(),
 		];
 	}
 
@@ -193,7 +197,7 @@ final class Dashboard
 			return $result->addError(new Error("Cannot change title without external id"));
 		}
 
-		$response = ProxyIntegrator::getInstance()->updateDashboard($externalId, ['dashboard_title' => $title]);
+		$response = Integrator::getInstance()->updateDashboard($externalId, ['dashboard_title' => $title]);
 		if ($response->getStatus() !== IntegratorResponse::STATUS_OK || $response->hasErrors())
 		{
 			return $result->addError(new Error("Error while changing title in superset"));
@@ -214,5 +218,81 @@ final class Dashboard
 		$this->ormObject->save();
 
 		return $result;
+	}
+
+	/**
+	 * Publish or make draft dashboard.
+	 *
+	 * @param bool $published
+	 * @return Result
+	 */
+	public function toggleDraft(bool $published): Result
+	{
+		$result = new Result();
+
+		if ($this->ormObject->getType() !== SupersetDashboardTable::DASHBOARD_TYPE_CUSTOM)
+		{
+			return $result->addError(new Error("Changing publish property is available only for custom dashboard"));
+		}
+
+		$externalId = $this->getOrmObject()->getExternalId();
+		if ($externalId <= 0)
+		{
+			return $result->addError(new Error("Cannot change publish property without external id"));
+		}
+
+		$response = Integrator::getInstance()->updateDashboard($externalId, ['published' => $published]);
+		if ($response->getStatus() !== IntegratorResponse::STATUS_OK || $response->hasErrors())
+		{
+			return $result->addError(new Error("Error while changing publish property in superset"));
+		}
+
+		$changedFields = $response->getData();
+		if (!isset($changedFields['published']))
+		{
+			return $result->addError(new Error("Published property didn`t change while update fields"));
+		}
+
+		$status =
+			$published
+				? SupersetDashboardTable::DASHBOARD_STATUS_READY
+				: SupersetDashboardTable::DASHBOARD_STATUS_DRAFT
+		;
+
+		$this->ormObject->setStatus($status);
+		$this->ormObject->save();
+
+		return $result;
+	}
+
+	public function loadCredentials(): self
+	{
+		$integrator = Integrator::getInstance();
+		$credentialsResponse = $integrator->getDashboardEmbeddedCredentials($this->getExternalId());
+
+		$credentials = $credentialsResponse->getData();
+		if (!empty($credentials))
+		{
+			$this->embeddedCredentials = $credentials;
+		}
+
+		return $this;
+	}
+
+	public function loadProxyData(): self
+	{
+		$integrator = Integrator::getInstance();
+		$integratorResult = $integrator->getDashboardById($this->getExternalId());
+		if ($integratorResult->hasErrors())
+		{
+			return $this;
+		}
+		$dashboardData = $integratorResult->getData();
+		if (!empty($dashboardData))
+		{
+			$this->dashboardData = $dashboardData;
+		}
+
+		return $this;
 	}
 }

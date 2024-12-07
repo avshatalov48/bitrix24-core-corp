@@ -9,7 +9,13 @@ jn.define('im/messenger/controller/dialog/lib/pin/manager', (require, exports, m
 	const { DialogConverter } = require('im/messenger/lib/converter');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { Feature } = require('im/messenger/lib/feature');
+	const { ChatPermission } = require('im/messenger/lib/permission-manager');
+	const { isOnline } = require('device/connection');
 	const { Notification } = require('im/messenger/lib/ui/notification');
+
+	const { LoggerManager } = require('im/messenger/lib/logger');
+
+	const logger = LoggerManager.getInstance().getLogger('dialog--pin-manager')
 
 	const ButtonType = {
 		delete: 'delete',
@@ -40,6 +46,9 @@ jn.define('im/messenger/controller/dialog/lib/pin/manager', (require, exports, m
 			this.locator = locator;
 
 			this.firstMessageId = null;
+			this.discussionMessageId = null;
+			this.isShowDiscussionPanel = false;
+			this.isCanEditPin = false;
 			this.bindStoreEventHandlers();
 			this.bindViewEventHandlers();
 		}
@@ -51,13 +60,16 @@ jn.define('im/messenger/controller/dialog/lib/pin/manager', (require, exports, m
 			this.onDeletePin = this.onDeletePin.bind(this);
 			this.onUpdatePin = this.onUpdatePin.bind(this);
 			this.onUpdateMessage = this.onUpdateMessage.bind(this);
-			this.onDeleteByChatId = this.onDeleteByChatId.bind(this);
 			this.onDeleteMessagesByIdList = this.onDeleteMessagesByIdList.bind(this);
+			this.onUpdateDiscussionMessage = this.onUpdateDiscussionMessage.bind(this);
+			this.onUpdateDialog = this.onUpdateDialog.bind(this);
 		}
 
 		bindViewEventHandlers()
 		{
 			this.onButtonTap = this.onButtonTap.bind(this);
+			this.onPinPanelTap = this.onPinPanelTap.bind(this);
+			this.onDiscussionPanelTap = this.onDiscussionPanelTap.bind(this);
 		}
 
 		subscribeStoreEvents()
@@ -73,8 +85,8 @@ jn.define('im/messenger/controller/dialog/lib/pin/manager', (require, exports, m
 				.on('messagesModel/pinModel/delete', this.onDeletePin)
 				.on('messagesModel/pinModel/updateMessage', this.onUpdateMessage)
 				.on('messagesModel/pinModel/updatePin', this.onUpdatePin)
-				.on('messagesModel/pinModel/deleteByChatId', this.onDeleteByChatId)
 				.on('messagesModel/pinModel/deleteMessagesByIdList', this.onDeleteMessagesByIdList)
+				.on('dialoguesModel/update', this.onUpdateDialog)
 			;
 		}
 
@@ -92,9 +104,11 @@ jn.define('im/messenger/controller/dialog/lib/pin/manager', (require, exports, m
 				.off('messagesModel/pinModel/deleteByIdList', this.onDeletePin)
 				.off('messagesModel/pinModel/updateMessage', this.onUpdateMessage)
 				.off('messagesModel/pinModel/updatePin', this.onUpdatePin)
-				.off('messagesModel/pinModel/deleteByChatId', this.onDeleteByChatId)
 				.off('messagesModel/pinModel/deleteMessagesByIdList', this.onDeleteMessagesByIdList)
+				.off('dialoguesModel/update', this.onUpdateDialog)
 			;
+
+			this.unsubscribeDiscussionStoreEvents();
 		}
 
 		subscribeViewEvents()
@@ -105,10 +119,46 @@ jn.define('im/messenger/controller/dialog/lib/pin/manager', (require, exports, m
 			}
 
 			this.locator.get('view').pinPanel.on(EventType.dialog.pinPanel.buttonTap, this.onButtonTap);
-			this.locator.get('view').pinPanel.on(EventType.dialog.pinPanel.itemTap, (messageId) => {
-				Notification.showComingSoon();
-			})
+			this.locator.get('view').pinPanel.on(EventType.dialog.pinPanel.itemTap, this.onPinPanelTap);
+		}
+
+		subscribeDiscussionViewEvents()
+		{
+			this.locator.get('view').on(EventType.dialog.viewAreaMessagesChanged, this.onViewAreaMessagesChanged.bind(this));
+			this.locator.get('view').pinPanel.on(EventType.dialog.pinPanel.itemTap, this.onDiscussionPanelTap);
+		}
+
+		subscribeDiscussionStoreEvents()
+		{
+			serviceLocator.get('core').getStoreManager()
+				.on('messagesModel/update', this.onUpdateDiscussionMessage)
+				.on('messagesModel/updateWithId', this.onUpdateDiscussionMessage)
 			;
+		}
+
+		unsubscribeDiscussionStoreEvents()
+		{
+			serviceLocator.get('core').getStoreManager()
+				.off('messagesModel/update', this.onUpdateDiscussionMessage)
+				.off('messagesModel/updateWithId', this.onUpdateDiscussionMessage)
+			;
+		}
+
+		/**
+		 *
+		 * @param {MutationPayload<
+		 * MessagesUpdateData | MessagesUpdateWithIdData,
+		 * MessagesUpdateActions | MessagesUpdateWithIdActions
+		 * >} mutation.payload
+		 */
+		onUpdateDiscussionMessage(mutation)
+		{
+			if (Number(mutation.payload.data.id) !== Number(this.discussionMessageId))
+			{
+				return;
+			}
+
+			this.updateDiscussionMessage();
 		}
 
 		getPinPanelParams()
@@ -129,6 +179,8 @@ jn.define('im/messenger/controller/dialog/lib/pin/manager', (require, exports, m
 			this.firstMessageId ??= pinPanelParams.itemList[0].id;
 			this.currentPin = lastPin;
 			this.pinnedMessage = pinPanelParams.itemList[0];
+
+			logger.log(`${this.constructor.name}.getPinPanelParams`, pinPanelParams);
 
 			return pinPanelParams;
 		}
@@ -169,6 +221,8 @@ jn.define('im/messenger/controller/dialog/lib/pin/manager', (require, exports, m
 			const message = this.prepareMessage(pin.message);
 			message.id = this.firstMessageId;
 			this.pinnedMessage = message;
+
+			logger.log(`${this.constructor.name}.deletePin`, message);
 
 			this.locator.get('view').pinPanel.updateItem(message);
 		}
@@ -230,12 +284,86 @@ jn.define('im/messenger/controller/dialog/lib/pin/manager', (require, exports, m
 			this.firstMessageId = this.pinnedMessage.id;
 			this.currentPin = pinModel;
 
-			this.locator.get('view').pinPanel.show({
+			const pinPanelParams = {
 				title: this.getTitle(),
 				itemList: [this.pinnedMessage],
 				selectedItemId: this.firstMessageId,
-				buttonType: ButtonType.delete,
+			};
+			this.isCanEditPin = ChatPermission.isCanPost(this.dialogId);
+
+			pinPanelParams.buttonType = this.isCanEditPin
+				? ButtonType.delete
+				: null
+			;
+
+			this.locator.get('view').pinPanel.show(pinPanelParams);
+		}
+
+		showDiscussionMessage(messageId)
+		{
+			if (!Feature.isMessagePinSupported)
+			{
+				return;
+			}
+
+			setTimeout(() => {
+				// timeout is necessary because the messages do not have time to be processed by the native
+				this.discussionMessageId = messageId;
+				const { messageList } = this.locator.get('view').getViewableMessages();
+
+				if (!messageList.some((message) => Number(message.id) === messageId))
+				{
+					this.showDiscussionPanel();
+				}
+
+				this.subscribeDiscussionViewEvents();
+				this.subscribeDiscussionStoreEvents();
+			}, 50);
+		}
+
+		hideDiscussionPanel()
+		{
+			this.isShowDiscussionPanel = false;
+			this.locator.get('view').pinPanel.hide();
+		}
+
+		showDiscussionPanel()
+		{
+			this.isShowDiscussionPanel = true;
+
+			const modelMessage = this.store.getters['messagesModel/getById'](this.discussionMessageId);
+
+			if (!modelMessage)
+			{
+				logger.error(`${this.constructor.name}.showDiscussionPanel error: Message with id ${this.discussionMessageId} not found`);
+
+				return;
+			}
+
+			this.locator.get('view').pinPanel.show({
+				title: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_PIN_PANEL_DISCUSSION_MESSAGE_TITLE'),
+				itemList: [this.prepareMessage(modelMessage)],
+				selectedItemId: String(this.discussionMessageId),
 			});
+		}
+
+		updateDiscussionMessage()
+		{
+			if (!this.discussionMessageId)
+			{
+				return;
+			}
+
+			const modelMessage = this.store.getters['messagesModel/getById'](this.discussionMessageId);
+
+			if (!('id' in modelMessage))
+			{
+				logger.error(`${this.constructor.name}.showDiscussionPanel error: Message with id ${this.discussionMessageId} not found`);
+
+				return;
+			}
+
+			this.locator.get('view').pinPanel.updateItem(this.prepareMessage(modelMessage));
 		}
 
 		/**
@@ -274,14 +402,21 @@ jn.define('im/messenger/controller/dialog/lib/pin/manager', (require, exports, m
 		preparePinPanelParams(pinModel)
 		{
 			const message = this.prepareMessage(pinModel.message);
-			const title = this.getTitle();
 
-			return {
+			const pinPanelParams = {
+				title: this.getTitle(),
 				itemList: [message],
 				selectedItemId: message.id,
-				title,
-				buttonType: ButtonType.delete,
 			};
+
+			this.isCanEditPin = ChatPermission.isCanPost(this.dialogId);
+
+			pinPanelParams.buttonType = this.isCanEditPin
+				? ButtonType.delete
+				: null
+			;
+
+			return pinPanelParams;
 		}
 
 		/**
@@ -335,6 +470,27 @@ jn.define('im/messenger/controller/dialog/lib/pin/manager', (require, exports, m
 
 		// region View EventHandlers
 
+		onViewAreaMessagesChanged(indexList, messageList)
+		{
+			const isDiscussionMessageOnScreen = messageList
+				.some((message) => Number(message.id) === this.discussionMessageId)
+			;
+
+			if (isDiscussionMessageOnScreen && this.isShowDiscussionPanel)
+			{
+				this.hideDiscussionPanel();
+
+				return;
+			}
+
+			if (!isDiscussionMessageOnScreen && !this.isShowDiscussionPanel)
+			{
+				this.showDiscussionPanel();
+
+				return;
+			}
+		}
+
 		/**
 		 *
 		 * @param {number | string} messageId
@@ -347,9 +503,45 @@ jn.define('im/messenger/controller/dialog/lib/pin/manager', (require, exports, m
 				return; // TODO unsupported type
 			}
 
+			if (!isOnline())
+			{
+				Notification.showOfflineToast();
+
+				return;
+			}
+
 			this.locator.get('message-service')
 				.unpinMessage(Number(this.currentPin.messageId))
 			;
+		}
+
+		/**
+		 *
+		 * @param {number | string} messageId
+		 */
+		async onPinPanelTap(messageId)
+		{
+			const lastPin = this.getLastPin();
+			if (!lastPin)
+			{
+				return;
+			}
+
+			await this.locator.get('context-manager').goToMessageContext({
+				dialogId: this.dialogId,
+				messageId: lastPin.messageId,
+			});
+		}
+
+		/**
+		 *
+		 * @param {number | string} messageId
+		 */
+		async onDiscussionPanelTap(messageId)
+		{
+			await this.locator.get('context-manager').goToPostMessageContext({
+				postMessageId: Number(this.discussionMessageId),
+			});
 		}
 		// endregion
 
@@ -374,19 +566,6 @@ jn.define('im/messenger/controller/dialog/lib/pin/manager', (require, exports, m
 		 */
 		onDeleteMessagesByIdList({ payload })
 		{
-			this.redrawPanel();
-		}
-
-		/**
-		 * @param {MutationPayload<PinDeleteByChatIdData, PinDeleteByChatIdActions>} payload
-		 */
-		onDeleteByChatId({ payload })
-		{
-			if (!this.isPinInCurrentDialog(payload.data.chatId))
-			{
-				return;
-			}
-
 			this.redrawPanel();
 		}
 
@@ -454,6 +633,25 @@ jn.define('im/messenger/controller/dialog/lib/pin/manager', (require, exports, m
 		onDeleteByIdList({ payload })
 		{
 			this.redrawPanel();
+		}
+
+		/**
+		 * @param {MutationPayload<DialoguesUpdateData, DialoguesUpdateActions>} payload
+		 */
+		onUpdateDialog({ payload })
+		{
+			if (this.isCanEditPin === ChatPermission.isCanPost(payload.data.dialogId))
+			{
+				return;
+			}
+
+			const lastPin = this.getLastPin();
+			if (!lastPin)
+			{
+				return;
+			}
+
+			this.showPanel(lastPin);
 		}
 		// endregion
 	}

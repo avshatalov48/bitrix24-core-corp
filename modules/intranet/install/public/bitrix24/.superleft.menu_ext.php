@@ -4,6 +4,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use Bitrix\BIConnector;
 use Bitrix\Catalog\Access\AccessController;
 use Bitrix\Catalog\Access\ActionDictionary;
 use Bitrix\Intranet\Binding\Marketplace;
@@ -13,6 +14,7 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ModuleManager;
 use Bitrix\Intranet\Settings\Tools\ToolsManager;
+use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\ProjectLimit;
 
 IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/intranet/public_bitrix24/.superleft.menu_ext.php");
 CModule::IncludeModule("intranet");
@@ -46,7 +48,7 @@ $isNewLiveFeedCounterAvailable = (
 
 $arMenu = [
 	[
-		GetMessage("MENU_LIVE_FEED2"),
+		GetMessage("MENU_LIVE_FEED3"),
 		"/stream/",
 		[],
 		[
@@ -228,6 +230,23 @@ if (ToolsManager::getInstance()->checkAvailabilityByMenuId('menu_shop'))
 	}
 }
 
+if (
+	Loader::includeModule('biconnector')
+	&& ToolsManager::getInstance()->checkAvailabilityByMenuId('crm_bi')
+	&& BIConnector\Access\AccessController::getCurrent()->check(BIConnector\Access\ActionDictionary::ACTION_BIC_ACCESS)
+)
+{
+	$arMenu[] = [
+		Loc::getMessage('MENU_BI_CONSTRUCTOR'),
+		'/bi/dashboard/',
+		[],
+		[
+			'menu_item_id' => 'menu_bi_constructor',
+		],
+		'',
+	];
+}
+
 if (CModule::IncludeModule("sender") && \Bitrix\Sender\Security\User::current()->hasAccess())
 {
 	$arMenu[] = array(
@@ -247,7 +266,7 @@ if (CModule::IncludeModule("sender") && \Bitrix\Sender\Security\User::current()-
 }
 
 $arMenu[] = [
-	Loc::getMessage('MENU_IM_MESSENGER'),
+	Loc::getMessage('MENU_IM_MESSENGER_NEW'),
 	'/online/',
 	[],
 	[
@@ -265,11 +284,29 @@ if (
 	&& \Bitrix\Sign\Config\Storage::instance()->isB2eAvailable()
 )
 {
+	$counterId = '';
+	$signContainer = \Bitrix\Sign\Service\Container::instance();
+	if (method_exists($signContainer, 'getB2eUserToSignDocumentCounterService'))
+	{
+		$counterService = $signContainer->getB2eUserToSignDocumentCounterService();
+		if (method_exists($counterService, 'getCounterId'))
+		{
+			$counterId = $counterService->getCounterId();
+		}
+	}
+	$menuSignB2eTitle = Loc::getMessage('MENU_SIGN_B2E');
+	if (\Bitrix\Main\Application::getInstance()->getLicense()->getRegion() === 'ru')
+	{
+		IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/intranet/public_bitrix24/.superleft.menu_ext.ru_region.php");
+		$menuSignB2eTitle = Loc::getMessage('MENU_SIGN_B2E_GOSKEY');
+	}
+
 	$arMenu[] = [
-		Loc::getMessage('MENU_SIGN_B2E'),
+		$menuSignB2eTitle,
 		'/sign/b2e/',
 		[],
 		[
+			'counter_id' => $counterId,
 			'menu_item_id' => 'menu_sign_b2e',
 			'my_tools_section' => true,
 			'can_be_first_item' => true,
@@ -281,7 +318,7 @@ if (
 if (Loader::includeModule('sign') && \Bitrix\Sign\Config\Storage::instance()->isAvailable())
 {
 	$arMenu[] = [
-		Loc::getMessage('MENU_SIGN'),
+		Loc::getMessage('MENU_SIGN_MSGVER_1'),
 		'/sign/',
 		[],
 		[
@@ -311,6 +348,23 @@ if (CModule::IncludeModule("intranet") && CIntranetUtils::IsExternalMailAvailabl
 	);
 }
 
+$projectSubLink = "/company/personal/user/".$userId."/groups/create/";
+if (
+	Loader::includeModule('tasks')
+	&& class_exists('\Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\ProjectLimit')
+)
+{
+	$isProjectLimitExceeded = !ProjectLimit::isFeatureEnabled();
+	if (ProjectLimit::canTurnOnTrial())
+	{
+		$isProjectLimitExceeded = false;
+	}
+	if ($isProjectLimitExceeded)
+	{
+		$projectSubLink = 'javascript:' . ProjectLimit::getLimitLockClick(ProjectLimit::getFeatureId());
+	}
+}
+
 //groups
 $arMenu[] = [
 	GetMessage("MENU_GROUP_SECTION"),
@@ -321,7 +375,7 @@ $arMenu[] = [
 			"sonetgroups_panel_menu",
 			"/workgroups/"
 		),
-		"sub_link" => "/company/personal/user/".$userId."/groups/create/",
+		"sub_link" => $projectSubLink,
 		"menu_item_id" => "menu_all_groups",
 		"top_menu_id" => "sonetgroups_panel_menu",
 		// todo oh 'counter_id' => 'workgroups',
@@ -407,6 +461,7 @@ $arMenu[] = [
 		'class' => 'menu-company',
 		'menu_item_id' => 'menu_company',
 		'top_menu_id' => 'top_menu_id_company',
+		'counter_id' => \Bitrix\Intranet\Invitation::getTotalInvitationCounterId(),
 	],
 	'',
 ];
@@ -425,23 +480,6 @@ if (Loader::includeModule("bitrix24"))
 			"class" => "menu-tariff",
 			"menu_item_id" => "menu_tariff",
 			"top_menu_id" => "top_menu_id_settings"
-		),
-		""
-	);
-}
-else
-{
-	$arMenu[] = array(
-		GetMessage("MENU_LICENSE"),
-		"/updates/",
-		array(),
-		array(
-			"real_link" => getLeftMenuItemLink(
-				"top_menu_id_updates",
-				"/updates/"
-			),
-			"menu_item_id" => "menu_updates",
-			"top_menu_id" => "top_menu_id_updates"
 		),
 		""
 	);

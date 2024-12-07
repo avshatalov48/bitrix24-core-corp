@@ -82,7 +82,19 @@ export default class Ustat {
 	{
 		const {myPosition, userList, range} = this.#renderUsers();
 		let div;
-		if (range > 0 && myPosition > 0)
+		if (!this.data['ENABLED'])
+		{
+			div = Tag.render`
+			<div class="system-auth-form__item system-auth-form__scope --without-stat">
+				<div class="system-auth-form__item-container --flex --column">
+					<div class="system-auth-form__item-title">${Loc.getMessage('INTRANET_USER_PROFILE_PULSE_TITLE')}</div>
+					<div class="system-auth-form__item-container --center">
+						<div class="system-auth-form__item-title --lighter" data-role="empty-info">${Loc.getMessage('INTRANET_USER_PROFILE_DISABLED')}</div>
+					</div>
+				</div>
+			</div>
+		`;
+		} else if (range > 0 && myPosition > 0)
 		{
 			div = Tag.render`
 			<div class="system-auth-form__item system-auth-form__scope --clickable" onclick="${this.onclickHandle}">

@@ -1,13 +1,13 @@
 <?php
 namespace Bitrix\Controller;
 
-use Bitrix\Main,
-	Bitrix\Main\Localization\Loc;
-Loc::loadMessages(__FILE__);
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\ORM\Data\DataManager;
+use Bitrix\Main\ORM\Fields;
 
 /**
  * Class GroupMapTable
- * 
+ *
  * Fields:
  * <ul>
  * <li> ID int mandatory
@@ -33,7 +33,7 @@ Loc::loadMessages(__FILE__);
  * @method static \Bitrix\Controller\EO_GroupMap_Collection wakeUpCollection($rows)
  */
 
-class GroupMapTable extends Main\Entity\DataManager
+class GroupMapTable extends DataManager
 {
 	/**
 	 * Returns DB table name for entity.
@@ -52,71 +52,84 @@ class GroupMapTable extends Main\Entity\DataManager
 	 */
 	public static function getMap()
 	{
-		return array(
-			'ID' => array(
-				'data_type' => 'integer',
-				'primary' => true,
-				'autocomplete' => true,
-				'title' => Loc::getMessage('GROUP_MAP_ENTITY_ID_FIELD'),
+		return [
+			new Fields\IntegerField(
+				'ID',
+				[
+					'primary' => true,
+					'autocomplete' => true,
+					'title' => Loc::getMessage('GROUP_MAP_ENTITY_ID_FIELD'),
+				]
 			),
-			'CONTROLLER_GROUP_ID' => array(
-				'data_type' => 'integer',
-				'title' => Loc::getMessage('GROUP_MAP_ENTITY_CONTROLLER_GROUP_ID_FIELD'),
+			new Fields\IntegerField(
+				'CONTROLLER_GROUP_ID',
+				[
+					'title' => Loc::getMessage('GROUP_MAP_ENTITY_CONTROLLER_GROUP_ID_FIELD'),
+				]
 			),
-			'REMOTE_GROUP_CODE' => array(
-				'data_type' => 'string',
-				'validation' => array(__CLASS__, 'validateRemoteGroupCode'),
-				'title' => Loc::getMessage('GROUP_MAP_ENTITY_REMOTE_GROUP_CODE_FIELD'),
+			new Fields\StringField(
+				'REMOTE_GROUP_CODE',
+				[
+					'validation' => [__CLASS__, 'validateRemoteGroupCode'],
+					'title' => Loc::getMessage('GROUP_MAP_ENTITY_REMOTE_GROUP_CODE_FIELD'),
+				]
 			),
-			'LOCAL_GROUP_CODE' => array(
-				'data_type' => 'string',
-				'validation' => array(__CLASS__, 'validateLocalGroupCode'),
-				'title' => Loc::getMessage('GROUP_MAP_ENTITY_LOCAL_GROUP_CODE_FIELD'),
+			new Fields\StringField(
+				'LOCAL_GROUP_CODE',
+				[
+					'validation' => [__CLASS__, 'validateLocalGroupCode'],
+					'title' => Loc::getMessage('GROUP_MAP_ENTITY_LOCAL_GROUP_CODE_FIELD'),
+				]
 			),
-			'CONTROLLER_GROUP' => array(
-				'data_type' => 'Bitrix\Controller\GroupTable',
-				'reference' => array('=this.CONTROLLER_GROUP_ID' => 'ref.ID'),
+			new Fields\Relations\Reference(
+				'CONTROLLER_GROUP',
+				'Bitrix\Controller\GroupTable',
+				['=this.CONTROLLER_GROUP_ID' => 'ref.ID']
 			),
-		);
+		];
 	}
+
 	/**
 	 * Returns validators for REMOTE_GROUP_CODE field.
-	 *
-	 * @return array
-	 */
-	public static function validateRemoteGroupCode()
+	*
+	* @return array
+	*/
+	public static function validateRemoteGroupCode(): array
 	{
-		return array(
-			new Main\Entity\Validator\Length(null, 30),
-		);
+		return [
+			new Fields\Validators\LengthValidator(null, 30),
+		];
 	}
+
 	/**
 	 * Returns validators for LOCAL_GROUP_CODE field.
-	 *
-	 * @return array
-	 */
-	public static function validateLocalGroupCode()
+	*
+	* @return array
+	*/
+	public static function validateLocalGroupCode(): array
 	{
-		return array(
-			new Main\Entity\Validator\Length(null, 30),
-		);
+		return [
+			new Fields\Validators\LengthValidator(null, 30),
+		];
 	}
 
 	/**
 	 * Returns true if the mapping is exists.
-	 * 
+	 *
 	 * @param array $fields Filter array.
-	 * @return boolean
+	 * @return bool
 	 * @throws Main\ArgumentException
 	 */
 	public static function isExists($fields)
 	{
-		$filter = array();
+		$filter = [];
 		foreach ($fields as $name => $value)
-			$filter["=".$name] = $value;
+		{
+			$filter['=' . $name] = $value;
+		}
 
 		$match = false;
-		$list = self::getList(array("filter" => $filter));
+		$list = self::getList(['filter' => $filter]);
 		while (($result = $list->fetch()) && !$match)
 		{
 			$match = true;
@@ -131,7 +144,7 @@ class GroupMapTable extends Main\Entity\DataManager
 
 	/**
 	 * Returns array of mapping arrays in form of array("FROM"=>NN, "TO"=>MM).
-	 * 
+	 *
 	 * @param string $from Mapping field.
 	 * @param string $to Mapping field.
 	 * @return array
@@ -139,18 +152,18 @@ class GroupMapTable extends Main\Entity\DataManager
 	 */
 	public static function getMapping($from, $to)
 	{
-		$result = array();
-		$filter = array(
-			"!=".$from => false,
-			"!=".$to => false,
-		);
-		$list = self::getList(array("filter" => $filter));
+		$result = [];
+		$filter = [
+			'!=' . $from => false,
+			'!=' . $to => false,
+		];
+		$list = self::getList(['filter' => $filter]);
 		while ($item = $list->fetch())
 		{
-			$result[] = array(
-				"FROM" => $item[$from],
-				"TO" => $item[$to],
-			);
+			$result[] = [
+				'FROM' => $item[$from],
+				'TO' => $item[$to],
+			];
 		}
 		return $result;
 	}

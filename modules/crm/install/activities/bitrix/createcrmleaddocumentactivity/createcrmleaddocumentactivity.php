@@ -36,6 +36,11 @@ class CBPCreateCrmLeadDocumentActivity extends CBPCreateDocumentActivity
 		$documentService = $this->workflow->GetService('DocumentService');
 
 		$fields = $this->Fields;
+		if (!is_array($fields))
+		{
+			$fields = [];
+		}
+
 		if (method_exists($this, 'prepareFieldsValues'))
 		{
 			$fields = $this->prepareFieldsValues($documentType, $fields);

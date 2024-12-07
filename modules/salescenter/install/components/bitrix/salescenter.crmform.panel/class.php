@@ -10,12 +10,19 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Web\Uri;
 use Bitrix\SalesCenter\Integration\SaleManager;
 use Bitrix\Crm\WebForm;
+use Bitrix\Crm\Service\WebForm\WebFormScenarioService;
+use Bitrix\Crm\Service\WebForm\Scenario\BaseScenario;
+use Bitrix\Main\Engine\CurrentUser;
 
 Loc::loadMessages(__FILE__);
 
 class SalesCenterCrmFormPanel extends CBitrixComponent
 {
-	const HELPDESK_SLIDER_URL = 'redirect=detail&code=13774372';
+	private const HELPDESK_SLIDER_URL = 'redirect=detail&code=13774372';
+	private const HELPDESK_HASH_WITHOUT_PICTURES = 'withoutpictures';
+	private const HELPDESK_HASH_PAYMENT = 'payment';
+	private const HELPDESK_HASH_WITH_PICTURES = 'withpictures';
+	private const HELPDESK_HASH_VISUAL_GOODS = 'visualgoods';
 
 	private $requiredModules = ['salescenter', 'sale', 'crm'];
 
@@ -24,7 +31,17 @@ class SalesCenterCrmFormPanel extends CBitrixComponent
 	 */
 	public static function getAllowedTemplates(): array
 	{
-		return ['products1', 'products2', 'products3', 'products4'];
+		if (!Loader::includeModule('crm'))
+		{
+			return [];
+		}
+
+		return [
+			BaseScenario::SCENARIO_PRODUCT1,
+			BaseScenario::SCENARIO_PRODUCT2,
+			BaseScenario::SCENARIO_PRODUCT3,
+			BaseScenario::SCENARIO_PRODUCT4,
+		];
 	}
 
 	/**
@@ -46,7 +63,7 @@ class SalesCenterCrmFormPanel extends CBitrixComponent
 
 		return $formsCollection->fetch() ? true : false;
 	}
-	
+
 	public function executeComponent()
 	{
 		if (!$this->requireModules())
@@ -105,10 +122,10 @@ class SalesCenterCrmFormPanel extends CBitrixComponent
 			'de' => 'https://helpdesk.bitrix24.de/open/13790640/',
 			'pl' => 'https://helpdesk.bitrix24.pl/open/13796424/',
 		];
-		
+
 		// links
 		$pages['by'] = $pages['kz'] = $pages['ru'];
-		
+
 		return $pages[$lang] ?? $pages['en'];
 	}
 
@@ -159,7 +176,7 @@ class SalesCenterCrmFormPanel extends CBitrixComponent
 			'filter' => ['ACTIVE' => 'Y', 'TEMPLATE_ID' => self::getAllowedTemplates()],
 			'order' => ['ID' => 'DESC'],
 		]);
-		
+
 		while ($form = $formsCollection->fetch())
 		{
 			if (!isset($existingForms[$form['TEMPLATE_ID']]))
@@ -174,36 +191,31 @@ class SalesCenterCrmFormPanel extends CBitrixComponent
 
 	private function getPresets(): array
 	{
-		return [
-			[
-				'id' => 'products1',
-				'title' => Loc::getMessage('SALESCENTER_CRM_FORM_PANEL_PRESET_1'),
-				'image' => $this->getImagePath().'products1.svg',
-				'activeImage' => $this->getImagePath().'products1-active.svg',
-				'helpdeskHash' => 'withoutpictures',
-			],
-			[
-				'id' => 'products2',
-				'title' => Loc::getMessage('SALESCENTER_CRM_FORM_PANEL_PRESET_2_MSGVER_1'),
-				'image' => $this->getImagePath().'products2.svg',
-				'activeImage' => $this->getImagePath().'products2-active.svg',
-				'helpdeskHash' => 'payment',
-			],
-			[
-				'id' => 'products3',
-				'title' => Loc::getMessage('SALESCENTER_CRM_FORM_PANEL_PRESET_3'),
-				'image' => $this->getImagePath().'products3.svg',
-				'activeImage' => $this->getImagePath().'products3-active.svg',
-				'helpdeskHash' => 'withpictures',
-			],
-			[
-				'id' => 'products4',
-				'title' => Loc::getMessage('SALESCENTER_CRM_FORM_PANEL_PRESET_4'),
-				'image' => $this->getImagePath().'products4.svg',
-				'activeImage' => $this->getImagePath().'products4-active.svg',
-				'helpdeskHash' => 'visualgoods',
-			],
-		];
+		if (!Loader::includeModule('crm'))
+		{
+			return [];
+		}
+
+		$presets = [];
+		$webFormScenarioService = new WebFormScenarioService(CurrentUser::get());
+		$scenarios = $webFormScenarioService->getScenarioList();
+		foreach ($scenarios as $scenario)
+		{
+			if (!in_array($scenario['id'], self::getAllowedTemplates(), true))
+			{
+				continue;
+			}
+
+			$presets[] = [
+				'id' => $scenario['id'],
+				'title' => $scenario['title'],
+				'image' => $this->getScenarioDefaultPictureByTemplateId($scenario['id']),
+				'activeImage' => $this->getScenarioActivePictureByTemplateId($scenario['id']),
+				'helpdeskHash' => $this->getHelpdeskHashByTemplateId($scenario['id']),
+			];
+		}
+
+		return $presets;
 	}
 
 	private function getImagePath(): string
@@ -264,5 +276,56 @@ class SalesCenterCrmFormPanel extends CBitrixComponent
 		];
 
 		return $menu;
+	}
+
+	private function getScenarioDefaultPictureByTemplateId(string $templateId): string
+	{
+		if (!Loader::includeModule('crm'))
+		{
+			return '';
+		}
+
+		return match ($templateId)
+		{
+			BaseScenario::SCENARIO_PRODUCT1 => $this->getImagePath().'products1.svg',
+			BaseScenario::SCENARIO_PRODUCT2 => $this->getImagePath().'products2.svg',
+			BaseScenario::SCENARIO_PRODUCT3 => $this->getImagePath().'products3.svg',
+			BaseScenario::SCENARIO_PRODUCT4 => $this->getImagePath().'products4.svg',
+			default => '',
+		};
+	}
+
+	private function getScenarioActivePictureByTemplateId(string $templateId): string
+	{
+		if (!Loader::includeModule('crm'))
+		{
+			return '';
+		}
+
+		return match ($templateId)
+		{
+			BaseScenario::SCENARIO_PRODUCT1 => $this->getImagePath().'products1-active.svg',
+			BaseScenario::SCENARIO_PRODUCT2 => $this->getImagePath().'products2-active.svg',
+			BaseScenario::SCENARIO_PRODUCT3 => $this->getImagePath().'products3-active.svg',
+			BaseScenario::SCENARIO_PRODUCT4 => $this->getImagePath().'products4-active.svg',
+			default => '',
+		};
+	}
+
+	private function getHelpdeskHashByTemplateId(string $templateId): string
+	{
+		if (!Loader::includeModule('crm'))
+		{
+			return '';
+		}
+
+		return match ($templateId)
+		{
+			BaseScenario::SCENARIO_PRODUCT1 => self::HELPDESK_HASH_WITHOUT_PICTURES,
+			BaseScenario::SCENARIO_PRODUCT2 => self::HELPDESK_HASH_PAYMENT,
+			BaseScenario::SCENARIO_PRODUCT3 => self::HELPDESK_HASH_WITH_PICTURES,
+			BaseScenario::SCENARIO_PRODUCT4 => self::HELPDESK_HASH_VISUAL_GOODS,
+			default => '',
+		};
 	}
 }

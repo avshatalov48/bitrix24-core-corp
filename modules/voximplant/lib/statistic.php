@@ -45,9 +45,9 @@ Loc::loadMessages(__FILE__);
  *
  * <<< ORMENTITYANNOTATION
  * @method static EO_Statistic_Query query()
- * @method static EO_Statistic_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_Statistic_Result getByPrimary($primary, array $parameters = [])
  * @method static EO_Statistic_Result getById($id)
- * @method static EO_Statistic_Result getList(array $parameters = array())
+ * @method static EO_Statistic_Result getList(array $parameters = [])
  * @method static EO_Statistic_Entity getEntity()
  * @method static \Bitrix\Voximplant\EO_Statistic createObject($setDefaultValues = true)
  * @method static \Bitrix\Voximplant\EO_Statistic_Collection createCollection()
@@ -173,6 +173,7 @@ class StatisticTable extends Base
 			new Entity\IntegerField('SESSION_ID'),
 			new Entity\IntegerField('REDIAL_ATTEMPT'),
 			new Entity\TextField('COMMENT'),
+			new Entity\IntegerField('RECORD_DURATION'),
 			new Entity\ReferenceField(
 				'SEARCH_INDEX',
 				StatisticIndexTable::getEntity(),

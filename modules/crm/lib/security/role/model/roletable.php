@@ -39,6 +39,7 @@ class RoleTable extends DataManager
 			(new StringField('NAME', ['required' => true, 'size' => 255])),
 			(new StringField('IS_SYSTEM', ['required' => false, 'size' => 1])),
 			(new StringField('CODE', ['required' => false, 'size' => 64])),
+			(new StringField('GROUP_CODE', ['required' => false, 'size' => 64])),
 			(new Reference('PERMISSION', RolePermissionTable::class, Join::on('this.ROLE_ID', 'ref.ID'))),
 		];
 	}

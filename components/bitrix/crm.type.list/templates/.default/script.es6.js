@@ -1,5 +1,8 @@
+import { Builder, Dictionary } from 'crm.integration.analytics';
+import { Router } from 'crm.router';
 import { ajax as Ajax, Dom, Loc, Reflection, Text, Type } from 'main.core';
 import { BaseEvent, EventEmitter } from 'main.core.events';
+import { sendData as sendAnalyticsData } from 'ui.analytics';
 import { MessageBox, MessageBoxButtons } from 'ui.dialogs.messagebox';
 
 const namespace = Reflection.namespace('BX.Crm');
@@ -10,7 +13,7 @@ class TypeListComponent
 	grid: BX.Main.grid;
 	errorTextContainer: Element;
 	welcomeMessageContainer: Element;
-	isEmptyList: boolean;
+	isExternal: boolean;
 
 	constructor(params): void
 	{
@@ -35,7 +38,11 @@ class TypeListComponent
 			{
 				this.welcomeMessageContainer = params.welcomeMessageContainer;
 			}
-			this.isEmptyList = Boolean(params.isEmptyList);
+
+			if (Type.isBoolean(params.isExternal))
+			{
+				this.isExternal = params.isExternal;
+			}
 		}
 	}
 
@@ -46,9 +53,10 @@ class TypeListComponent
 
 	bindEvents(): void
 	{
+		EventEmitter.subscribe('BX.Crm.TypeListComponent:onClickCreate', this.handleTypeCreate.bind(this));
 		EventEmitter.subscribe('BX.Crm.TypeListComponent:onClickDelete', this.handleTypeDelete.bind(this));
-		EventEmitter.subscribe('BX.Crm.TypeListComponent:onFilterByCustomSection', this.handleFilterByCustomSection.bind(this));
-		EventEmitter.subscribe('BX.Crm.TypeListComponent:onResetFilterByCustomSection', this.handleFilterByCustomSection.bind(this));
+		EventEmitter.subscribe('BX.Crm.TypeListComponent:onFilterByAutomatedSolution', this.handleFilterByAutomatedSolution.bind(this));
+		EventEmitter.subscribe('BX.Crm.TypeListComponent:onResetFilterByAutomatedSolution', this.handleFilterByAutomatedSolution.bind(this));
 
 		const toolbarComponent = this.getToolbarComponent();
 
@@ -108,6 +116,36 @@ class TypeListComponent
 	}
 
 	// region EventHandlers
+	handleTypeCreate(event: BaseEvent<Object>): void
+	{
+		let { queryParams } = event.getData();
+
+		if (!Type.isPlainObject(queryParams))
+		{
+			queryParams = {};
+		}
+
+		const automatedSolutionId = this.#getAutomatedSolutionIdFromFilter();
+		if (automatedSolutionId > 0)
+		{
+			queryParams.automatedSolutionId = automatedSolutionId;
+		}
+
+		void Router.Instance.openTypeDetail(0, null, queryParams);
+	}
+
+	#getAutomatedSolutionIdFromFilter(): ?number
+	{
+		const { AUTOMATED_SOLUTION: automatedSolutionId } = this.#getCurrentFilter();
+
+		if (Text.toInteger(automatedSolutionId) > 0)
+		{
+			return Text.toInteger(automatedSolutionId);
+		}
+
+		return null;
+	}
+
 	handleTypeDelete(event: BaseEvent): void
 	{
 		const id = Text.toInteger(event.data.id);
@@ -119,19 +157,38 @@ class TypeListComponent
 			return;
 		}
 
+		const analyticsBuilder = (new Builder.Automation.Type.DeleteEvent())
+			.setSubSection(Dictionary.ELEMENT_GRID_ROW_CONTEXT_MENU)
+			.setIsExternal(this.isExternal)
+			.setId(id)
+		;
+
+		let isCancelRegistered = false;
+
 		MessageBox.show({
 			title: Loc.getMessage('CRM_TYPE_TYPE_DELETE_CONFIRMATION_TITLE'),
 			message: Loc.getMessage('CRM_TYPE_TYPE_DELETE_CONFIRMATION_MESSAGE'),
 			modal: true,
 			buttons: MessageBoxButtons.YES_CANCEL,
 			onYes: (messageBox) => {
+				sendAnalyticsData(
+					analyticsBuilder
+						.setStatus(Dictionary.STATUS_ATTEMPT)
+						.buildData()
+					,
+				);
+
 				Ajax.runAction('crm.controller.type.delete', {
 					analyticsLabel: 'crmTypeListDeleteType',
-					data:
-							{
-								id,
-							},
+					data: { id },
 				}).then((response: {data: {}}) => {
+					sendAnalyticsData(
+						analyticsBuilder
+							.setStatus(Dictionary.STATUS_SUCCESS)
+							.buildData()
+						,
+					);
+
 					const isUrlChanged = Type.isObject(response.data) && (response.data.isUrlChanged === true);
 					if (isUrlChanged)
 					{
@@ -141,9 +198,58 @@ class TypeListComponent
 					}
 
 					this.grid.reloadTable();
-				}).catch(this.showErrorsFromResponse.bind(this));
+				}).catch((response) => {
+					sendAnalyticsData(
+						analyticsBuilder
+							.setStatus(Dictionary.STATUS_ERROR)
+							.buildData()
+						,
+					);
+
+					this.showErrorsFromResponse(response);
+				});
 
 				messageBox.close();
+			},
+			onCancel: (messageBox) => {
+				if (isCancelRegistered)
+				{
+					messageBox.close();
+
+					return;
+				}
+
+				isCancelRegistered = true;
+
+				sendAnalyticsData(
+					analyticsBuilder
+						.setElement(Dictionary.ELEMENT_CANCEL_BUTTON)
+						.setStatus(Dictionary.STATUS_CANCEL)
+						.buildData()
+					,
+				);
+
+				messageBox.close();
+			},
+			popupOptions: {
+				events: {
+					onPopupClose: () => {
+						if (isCancelRegistered)
+						{
+							return;
+						}
+
+						isCancelRegistered = true;
+
+						sendAnalyticsData(
+							analyticsBuilder
+								.setElement(null)
+								.setStatus(Dictionary.STATUS_CANCEL)
+								.buildData()
+							,
+						);
+					},
+				},
 			},
 		});
 	}
@@ -159,12 +265,11 @@ class TypeListComponent
 		return null;
 	}
 
-	handleFilterByCustomSection(event: BaseEvent): void
+	handleFilterByAutomatedSolution(event: BaseEvent): void
 	{
-		const currentFilter = BX.Main.filterManager?.getList()[0]?.getFilterFieldsValues() || [];
 		const data = {
-			...currentFilter,
-			CUSTOM_SECTION: event.data || null,
+			...this.#getCurrentFilter(),
+			AUTOMATED_SOLUTION: event.data || null,
 		};
 
 		const api = BX.Main.filterManager?.getList()[0]?.getApi();
@@ -174,6 +279,11 @@ class TypeListComponent
 		}
 		api.setFields(data);
 		api.apply();
+	}
+
+	#getCurrentFilter(): Object
+	{
+		return BX.Main.filterManager?.getList()[0]?.getFilterFieldsValues() || {};
 	}
 }
 

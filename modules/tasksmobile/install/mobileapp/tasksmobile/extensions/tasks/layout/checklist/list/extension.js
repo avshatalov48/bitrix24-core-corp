@@ -5,19 +5,19 @@ jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const { Color } = require('tokens');
 	const { unique } = require('utils/array');
-	const { showToast } = require('toast/base');
 	const { throttle } = require('utils/function');
-	const { useCallback } = require('utils/function');
+	const { UserField } = require('layout/ui/fields/user');
 	const { ListViewQueueWorker } = require('layout/list-view-queue-worker');
-	const { UserSelectionManager } = require('layout/ui/user-selection-manager');
 	const { MainChecklistItem } = require('tasks/layout/checklist/list/src/main-item');
 	const { RootChecklistItem } = require('tasks/layout/checklist/list/src/root-item');
+	const { toastMovedItem, toastEmptyPersonalList, toastNoRights } = require('tasks/layout/checklist/list/src/toasts');
 	const { ChecklistActionsMenu } = require('tasks/layout/checklist/list/src/menu/actions-menu');
 	const { ChecklistsMenu } = require('tasks/layout/checklist/list/src/menu/checklists-menu');
+	const { MEMBER_TYPE, MEMBER_TYPE_RESTRICTION_FEATURE_META } = require('tasks/layout/checklist/list/src/constants');
 	const { ButtonAdd, buttonAddItemType } = require('tasks/layout/checklist/list/src/buttons/button-add-item');
 	const { ChecklistItemView } = require('tasks/layout/checklist/list/src/layout/item-view');
-	const { EntitySelectorFactory, EntitySelectorFactoryType } = require('selector/widget/factory');
-	const { ChecklistEmptyScreen, emptyScreenItemType } = require('tasks/layout/checklist/list/src/empty-screen');
+	const { OptimizedListView } = require('layout/ui/optimized-list-view');
+	const { makeAccomplicesFieldConfig, makeAuditorsFieldConfig } = require('tasks/layout/task/form-utils');
 
 	const IS_IOS = Application.getPlatform() === 'ios';
 	const STUB_MENU = {
@@ -32,8 +32,6 @@ jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 	{
 		/**
 		 * @param {object} props
-		 * @param {number} [props.userId]
-		 * @param {number} [props.taskId]
 		 * @param {string | number} [props.focusedItemId]
 		 * @param {CheckListFlatTree} [props.checklist]
 		 * @param {object} [props.parentWidget]
@@ -42,32 +40,12 @@ jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 		{
 			super(props);
 
-			this.handleOnSubmit = this.handleOnSubmit.bind(this);
-			this.handleOnButtonAppendItem = this.handleOnButtonAppendItem.bind(this);
-			this.handleOnRemoveItem = this.handleOnRemoveItem.bind(this);
-			this.handleOnToggleComplete = this.handleOnToggleComplete.bind(this);
-			this.handleOnBlur = throttle(this.handleOnBlur, 300, this);
 			this.handleOnFocus = throttle(this.handleOnFocus, 300, this);
-			this.handleOnChange = this.handleOnChange.bind(this);
-			this.updateRows = this.updateRows.bind(this);
-			this.handleOnTabMove = this.handleOnTabMove.bind(this);
-			this.openUserSelectionManager = this.openUserSelector.bind(this);
-			this.handleOnShowChecklistsMenu = this.handleOnShowChecklistsMenu.bind(this);
-			this.handleOnAddFile = this.handleOnAddFile.bind(this);
-			this.handleOnToggleImportant = this.handleOnToggleImportant.bind(this);
-			this.handleOnChangeMembers = this.handleOnChangeMembers.bind(this);
-			this.handleOnChangeAttachments = this.handleOnChangeAttachments.bind(this);
-			this.handleHideMenu = this.handleHideMenu.bind(this);
-			this.handleShowMenu = this.handleShowMenu.bind(this);
-			this.handleOnBlurFocusedItem = this.handleOnBlurFocusedItem.bind(this);
-			this.updateRowByKey = this.updateRowByKey.bind(this);
 
 			this.itemRefMap = new Map();
 			this.focusedItemId = props.focusedItemId || null;
 			this.parentWidget = props.parentWidget || null;
 
-			this.checklist.setTaskId(props.taskId);
-			this.checklist.setUserId(props.userId);
 			this.setFocused(this.focusedItemId || props.checklist.getFocusedItemId());
 
 			/** @type {ListViewQueueWorker} */
@@ -75,21 +53,22 @@ jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 			/** @type {ChecklistActionsMenu} */
 			this.menuRef = null;
 
-			this.initState(props);
+			this.#initState(props);
 
 			this.delayedScroll = null;
 			this.isShowKeyboard = false;
-			this.saveFocus = false;
+			this.setSaveFocus(false);
+			this.toastEmptyPersonalList = null;
 
 			this.initialKeyboardHandlers();
 		}
 
 		componentWillReceiveProps(props)
 		{
-			this.initState(props);
+			this.#initState(props);
 		}
 
-		initState(props)
+		#initState(props)
 		{
 			this.state = {
 				onlyMine: props.onlyMine,
@@ -111,6 +90,8 @@ jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 
 			Keyboard.on(Keyboard.Event.WillShow, () => {
 				this.isShowKeyboard = true;
+
+				void this.handleShowMenu(this.getFocusedItem());
 
 				if (typeof this.delayedScroll === 'function')
 				{
@@ -137,11 +118,16 @@ jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 		 * @param {boolean} [params.onlyMine]
 		 * @param {boolean} [params.hideCompleted]
 		 */
-		reload(params)
+		reload(params = {})
 		{
 			this.checklist.setConditions(params, true);
 
-			this.setState(params);
+			this.setState(
+				params,
+				() => {
+					this.showEmptyToast();
+				},
+			);
 		}
 
 		/**
@@ -155,7 +141,7 @@ jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 				return;
 			}
 
-			const checklistItem = this.itemRefMap.get(item.getId());
+			const checklistItem = this.getItemRef(item.getId());
 			checklistItem.reload();
 		}
 
@@ -169,25 +155,9 @@ jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 			return this.parentWidget;
 		}
 
-		/**
-		 * @private
-		 * @param {CheckListFlatTreeItem} item
-		 * @param {number[]} itemIds
-		 * @return {Promise<void>}
-		 */
-		updateCounter({ item, itemIds = [] })
+		updateChecklistCounter()
 		{
-			if (!item)
-			{
-				return Promise.resolve();
-			}
-
-			const rootItem = this.checklist.getRootItem();
-			this.reloadItem(rootItem);
-
-			return Promise.resolve();
-
-			// return this.updateRows({ itemIds: [rootItem?.getId(), ...itemIds] });
+			this.reloadItem(this.checklist.getRootItem());
 		}
 
 		/**
@@ -195,26 +165,24 @@ jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 		 * @param {CheckListFlatTreeItem} item
 		 * @param {Boolean} shouldRender
 		 */
-		updateRowByKey(item, shouldRender)
-		{
+		updateRowByKey = (item, shouldRender = true) => {
 			const key = item.getKey();
 			item.updateListViewType();
 			const updateItem = item.getItem();
 
-			void this.checklistQueue.updateRowByKey(key, updateItem, false, shouldRender);
-		}
+			return this.checklistQueue.updateRowByKey(key, updateItem, false, shouldRender);
+		};
 
 		/**
-		 * @param {number[]} itemIds
-		 * @param {string} animation
-		 * @param {boolean} saveFocus
-		 * @param {boolean} shouldRenderItem
+		 * @param {Array<string | number>} itemIds
+		 * @param {ListViewAnimate} [animation]
+		 * @param {boolean} [saveFocus]
+		 * @param {boolean} [shouldRender]
 		 */
-		updateRows({ itemIds, animation, saveFocus, shouldRenderItem })
-		{
+		updateRows = ({ itemIds, animation, saveFocus, shouldRender }) => {
 			if (typeof saveFocus === 'boolean')
 			{
-				this.saveFocus = saveFocus;
+				this.setSaveFocus(saveFocus);
 			}
 
 			const items = [];
@@ -227,51 +195,32 @@ jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 				}
 			});
 
-			if (itemIds === buttonAddItemType.key)
+			if (this.shouldButtonAdd(buttonAddItemType.key))
 			{
 				items.push(buttonAddItemType.key);
 			}
 
-			const updater = (shouldRender) => this.checklistQueue
+			const updater = () => this.checklistQueue
 				.updateRows(items, animation, shouldRender)
 				.catch(console.error);
 
 			const focusedItem = this.getFocusedItem();
 
-			if (IS_IOS && saveFocus && focusedItem)
+			if (saveFocus && focusedItem)
 			{
 				return updater().then(() => {
-					this.focusToItem(focusedItem);
+					this.handleOnFocusItem();
 				}).catch(console.error);
 			}
 
 			return updater();
-		}
-
-		focusSwitcher(focusedItem, callback)
-		{
-			if (!focusedItem)
-			{
-				return Promise.resolve();
-			}
-
-			const closestElement = this.checklist.getClosestElement(focusedItem);
-
-			this.focusToItem(closestElement);
-
-			return new Promise((resolve) => {
-				callback().then(() => {
-					this.focusToItem(focusedItem);
-					resolve();
-				}).catch(console.error);
-			});
-		}
+		};
 
 		/**
 		 * @private
 		 * @param {string[]} keys
 		 * @param {string} animation
-		 * @return {function(): Promise}
+		 * @return {Promise<ListViewQueueWorker>}
 		 */
 		deleteRows(keys, animation = 'fade')
 		{
@@ -281,6 +230,7 @@ jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 		/**
 		 * @param {object} item
 		 * @param {number} position
+		 * @return Promise<void>
 		 */
 		insertRows(item, position)
 		{
@@ -299,10 +249,9 @@ jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 				return Promise.reject();
 			}
 
-			const listViewRef = this.checklistQueue.getListViewRef();
 			const itemKey = item.getKey();
-			const isVisible = await listViewRef?.isItemVisible(itemKey);
 			const position = this.checklistQueue.getElementPosition(itemKey);
+			const isVisible = await this.#isVisibleItem(position?.index, itemKey);
 
 			if (isVisible || !position)
 			{
@@ -314,6 +263,33 @@ jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 			return this.checklistQueue.scrollTo(section, index, true);
 		}
 
+		/**
+		 * @param {number} index
+		 * @param {string} itemKey
+		 * @return {Promise<boolean>}
+		 */
+		async #isVisibleItem(index, itemKey)
+		{
+			const listViewRef = this.checklistQueue.getListViewRef();
+			const isVisible = await listViewRef?.isItemVisible(itemKey);
+
+			if (!isVisible)
+			{
+				return false;
+			}
+
+			const visibleItems = await listViewRef.getVisibleItems();
+			if (!Array.isArray(visibleItems))
+			{
+				return false;
+			}
+
+			const lastIndex = visibleItems.length - 1;
+			const position = visibleItems.findIndex(({ index: positionIndex }) => index === positionIndex);
+
+			return lastIndex !== position && lastIndex - 1 !== position;
+		}
+
 		isFilterEnabled()
 		{
 			const { onlyMine, hideCompleted } = this.state;
@@ -321,7 +297,19 @@ jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 			return onlyMine || hideCompleted;
 		}
 
-		shouldEmptyScreen(checklistItems)
+		showEmptyToast()
+		{
+			if (!this.isFilterEnabled() || !this.shouldEmptyToast())
+			{
+				this.toastEmptyPersonalList?.close();
+
+				return;
+			}
+
+			this.toastEmptyPersonalList = toastEmptyPersonalList({ layoutWidget: this.getParentWidget(), ...this.state });
+		}
+
+		shouldEmptyToast(checklistItems)
 		{
 			const isEmptyList = (items) => items.filter((item) => !item.isRoot()).length === 0;
 
@@ -342,11 +330,6 @@ jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 			const primitiveItems = checklistItems.map((item) => item.getItem());
 			primitiveItems.push(buttonAddItemType);
 
-			if (this.isFilterEnabled() && this.shouldEmptyScreen(checklistItems))
-			{
-				primitiveItems.push(emptyScreenItemType);
-			}
-
 			return primitiveItems;
 		}
 
@@ -366,11 +349,11 @@ jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 					style: {
 						flex: 1,
 						paddingBottom: IS_IOS ? 0 : 12,
-						backgroundColor: Color.bgContentPrimary,
+						backgroundColor: Color.bgContentPrimary.toHex(),
 					},
 					resizableByKeyboard: true,
 				},
-				ListView({
+				OptimizedListView({
 					ref: (ref) => {
 						this.checklistQueue.setListViewRef(ref);
 					},
@@ -396,16 +379,9 @@ jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 		 */
 		renderChecklistItem(item)
 		{
-			const { checklist } = this.props;
-
-			if (item.key === buttonAddItemType.key)
+			if (this.shouldButtonAdd(item.key))
 			{
 				return ButtonAdd({ onClick: this.handleOnButtonAppendItem });
-			}
-
-			if (item.key === emptyScreenItemType.key)
-			{
-				return this.renderEmptyScreen();
 			}
 
 			if (item.key === STUB_MENU.key)
@@ -418,11 +394,10 @@ jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 				});
 			}
 
-			const checklistItem = checklist.getItemById(item.id);
-
+			const checklistItem = this.checklist.getItemById(item.id);
 			if (!checklistItem)
 			{
-				console.log(`no item ${checklistItem.getId()}`);
+				console.log(`no item ${item.id}`);
 
 				return null;
 			}
@@ -437,16 +412,18 @@ jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 		getItemProps(checklistItem)
 		{
 			const { diskConfig } = this.props;
+			const isFocused = this.focusedItemId === checklistItem.getId();
 
 			return {
 				ref: ((itemRef) => {
 					this.itemRefMap.set(checklistItem.getId(), itemRef);
 				}),
+				isFocused,
 				diskConfig,
+				showToastNoRights: this.showToastNoRights,
 				selectedOptions: this.state,
 				parentWidget: this.getParentWidget(),
 				item: checklistItem,
-				isFocused: this.focusedItemId === checklistItem.getId(),
 				onSubmit: this.handleOnSubmit,
 				onRemove: this.handleOnRemoveItem,
 				onFocus: this.handleOnFocus,
@@ -455,9 +432,10 @@ jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 				updateRowByKey: this.updateRowByKey,
 				hideMenu: this.handleHideMenu,
 				showMenu: this.handleShowMenu,
-				onChangeAttachments: this.handleOnChangeAttachments,
+				onChangeAttachments: this.#handleOnChangeAttachments,
 				onToggleComplete: this.handleOnToggleComplete,
 				openUserSelectionManager: this.openUserSelectionManager,
+				openTariffRestrictionWidget: this.openTariffRestrictionWidget,
 			};
 		}
 
@@ -470,33 +448,18 @@ jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 			const item = this.checklist.getItemById(this.focusedItemId);
 
 			return new ChecklistActionsMenu({
-				ref: useCallback((menuRef) => {
+				ref: (menuRef) => {
 					this.menuRef = menuRef;
-				}),
+				},
 				item,
 				parentWidget: this.getParentWidget(),
-				onTabMove: this.handleOnTabMove,
+				onTabMove: this.#handleOnTabMove,
 				onToggleImportant: this.handleOnToggleImportant,
 				onMoveToCheckList: this.handleOnShowChecklistsMenu,
 				openUserSelectionManager: this.openUserSelectionManager,
+				openTariffRestrictionWidget: this.openTariffRestrictionWidget,
 				onAddFile: this.handleOnAddFile,
 				onBlur: this.handleOnBlurFocusedItem,
-			});
-		}
-
-		renderEmptyScreen()
-		{
-			return ChecklistEmptyScreen({
-				title: Loc.getMessage('TASKSMOBILE_LAYOUT_CHECKLIST_EMPTY_SCREEN_PERSONAL_TITLE'),
-				imageName: 'list.svg',
-				onClick: () => {
-					const { onChangeFilter } = this.props;
-
-					if (onChangeFilter)
-					{
-						onChangeFilter({ onlyMine: false, hideCompleted: false });
-					}
-				},
 			});
 		}
 
@@ -507,7 +470,7 @@ jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 		handleOnFocus(focusedItem)
 		{
 			this.setFocused(focusedItem.getId());
-			this.menuRef.setItem(focusedItem);
+
 			const scrollToFocusedItem = () => this.scrollToItem(focusedItem);
 			if (this.isShowKeyboard)
 			{
@@ -517,81 +480,75 @@ jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 			{
 				this.delayedScroll = scrollToFocusedItem;
 			}
+
+			this.setSaveFocus(false);
 		}
 
 		/**
 		 * @private
-		 * @param {CheckListFlatTreeItem} blurItem
+		 * @param {Boolean} forceDelete
+		 * @param {CheckListFlatTreeItem} item
 		 */
-		handleOnBlur(blurItem)
-		{
-			if (!blurItem)
+		handleOnBlur = ({ item, forceDelete = false }) => {
+			if (!item)
 			{
 				return Promise.resolve();
 			}
 
-			const shouldBeDeletedOnBlur = !this.saveFocus && !blurItem.hasItemTitle() && blurItem.shouldRemove();
-
-			if ((shouldBeDeletedOnBlur && !blurItem.isRoot()))
+			if (forceDelete)
 			{
-				return this.handleOnRemoveItem({ item: blurItem });
+				return this.handleOnRemoveItem({ item });
 			}
 
-			this.saveFocus = false;
+			const blurItemRef = this.getItemRef(item.getId());
+			const shouldBeDeletedOnBlur = !this.saveFocus && !blurItemRef.getTextValue() && item.shouldRemove();
+
+			if ((shouldBeDeletedOnBlur && !item.isRoot()))
+			{
+				return this.handleOnRemoveItem({ item });
+			}
+
+			if (!this.saveFocus && item.getId() === this.focusedItemId)
+			{
+				this.setFocused(null);
+			}
+
+			this.setSaveFocus(false);
 
 			return Promise.resolve();
-		}
-
-		/**
-		 * @private
-		 * @param {CheckListFlatTreeItem} item
-		 */
-		focusToItem(item)
-		{
-			const focusedItem = this.itemRefMap.get(item.getId());
-			if (focusedItem)
-			{
-				focusedItem.textInputFocus();
-			}
-		}
+		};
 
 		/**
 		 * @public
 		 * @return {Promise<void>}
 		 */
-		handleOnToggleImportant()
-		{
+		handleOnToggleImportant = () => {
+			this.handleOnChange();
+
 			return this.getFocusedItemRef()?.toggleImportant();
-		}
+		};
 
-		handleOnAddFile()
-		{
+		handleOnAddFile = () => {
+			this.setSaveFocus(true);
 			this.getFocusedItemRef()?.addFile();
-		}
+		};
 
-		handleOnChange()
-		{
-			const { onChange } = this.props;
+		handleOnChange = (shouldSave = true) => {
+			const { onChange, onSave } = this.props;
+
+			if (onSave && shouldSave)
+			{
+				onSave();
+			}
 
 			if (onChange)
 			{
 				onChange();
 			}
-		}
+		};
 
-		isShowEmptyState()
-		{
-			return Boolean(this.checklistQueue.getElementPosition(emptyScreenItemType.key));
-		}
-
-		async handleOnButtonAppendItem()
-		{
+		handleOnButtonAppendItem = async () => {
 			const rootItem = this.checklist.getRootItem();
-
-			if (this.isShowEmptyState())
-			{
-				void this.deleteRows([emptyScreenItemType.key]);
-			}
 
 			const focusedItem = this.getFocusedItem();
 
@@ -611,10 +568,9 @@ jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 			}
 
 			return this.insertNewItem(rootItem);
-		}
+		};
 
-		async handleOnSubmit(submitItem)
-		{
+		handleOnSubmit = async (submitItem) => {
 			const focusedItem = this.getFocusedItem();
 
 			const item = submitItem || focusedItem;
@@ -630,9 +586,9 @@ jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 			}
 
 			return this.insertNewItem(item);
-		}
+		};
 
-		getFilteredPosition(item)
+		#getInsertPosition(item)
 		{
 			this.checklist.setConditions(this.state);
 			const position = this.checklist.getInsertPosition(item);
@@ -641,12 +597,25 @@ jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 			return position;
 		}
 
-		insertNewItem(item)
+		async insertNewItem(item)
 		{
-			const position = this.getFilteredPosition(item);
+			if (!this.checklist.canAdd())
+			{
+				return;
+			}
+
+			const insertPosition = this.#getInsertPosition(item);
+			const shouldInsert = this.preInsertValidationFocus(insertPosition);
+
+			if (!shouldInsert)
+			{
+				return;
+			}
+
 			const newItem = this.checklist.addNewItem(item);
 
 			const { onlyMine } = this.state;
+
 			if (onlyMine)
 			{
 				newItem.setAlwaysShow(true);
@@ -657,42 +626,57 @@ jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 				return;
 			}
 
+			// this.handleOnBlurFocusedItem();
 			this.setFocused(newItem.getId());
-			this.insertRows(newItem.getItem(), position).then(() => {
-				this.afterInsert(newItem);
-			}).catch(console.error);
-		}
-
-		afterInsert(item)
-		{
-			void this.updateCounter({ item });
-			void this.scrollToItem(item);
+			await this.insertRows(newItem.getItem(), insertPosition).catch(console.error);
+			await this.afterInsert(newItem);
 		}
 
 		/**
-		 * @private
-		 * @param {CheckListFlatTreeItem} item
-		 * @param {boolean} force
+		 * @param {number} insertPosition
 		 */
-		async handleOnRemoveItem({ item })
+		preInsertValidationFocus(insertPosition)
 		{
-			const removeKeys = this.checklist.removeItem(item);
-			await this.deleteRows(removeKeys);
+			const positionedItem = this.checklist.getItemByIndex(insertPosition);
 
-			if (this.isFilterEnabled() && !this.isShowEmptyState() && this.shouldEmptyScreen())
+			if (!positionedItem || positionedItem.hasItemTitle())
 			{
-				void this.checklistQueue.appendRows([emptyScreenItemType], 'none');
+				return true;
 			}
 
-			return this.updateCounter({ item });
+			this.handleOnFocus(positionedItem);
+			this.handleOnFocusItem();
+
+			return false;
 		}
+
+		async afterInsert(item)
+		{
+			this.updateChecklistCounter();
+			await this.scrollToItem(item).catch(console.error);
+		}
+
+		/**
+		 * @param {CheckListFlatTreeItem} item
+		 */
+		handleOnRemoveItem = async ({ item }) => {
+			const removeKeys = this.checklist.removeItem(item);
+			if (removeKeys.length === 0)
+			{
+				return;
+			}
+
+			await this.deleteRows(removeKeys);
+			this.showEmptyToast();
+			this.handleOnChange();
+			this.updateChecklistCounter();
+		};
 
 		/**
 		 * @private
 		 * @param {CheckListFlatTreeItem} item
 		 */
-		handleOnToggleComplete(item)
-		{
+		handleOnToggleComplete = (item) => {
 			const { hideCompleted } = this.state;
 
 			if (hideCompleted)
@@ -700,71 +684,52 @@ jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 				this.removeElementFilterIsEnabled(item);
 			}
 
-			void this.updateRowByKey(item, false);
-			void this.updateCounter({ item });
-		}
+			void this.updateRowByKey(item);
+			void this.updateChecklistCounter();
+			this.handleOnChange(false);
+		};
 
 		/**
-		 * @private
 		 * @param {CheckListFlatTreeItem} item
 		 * @param {'left' | 'right'} direction
 		 */
-		async handleOnTabMove(item, direction)
-		{
+		#handleOnTabMove = (item, direction) => {
 			const isLeft = direction === 'left';
-			const moved = isLeft ? item.tabOut() : item.tabIn();
-
-			if (!moved)
-			{
-				return;
-			}
-
+			const parentItems = isLeft ? item.tabOut() : item.tabIn();
 			const moveIds = item.getMoveIds();
 
-			// eslint-disable-next-line no-unused-vars
-			const shouldBeUpdateRoot = () => {
-				const parent = item.getParent();
-
-				if (isLeft)
-				{
-					return parent.isRoot();
-				}
-
-				const prevPositionParentItem = parent.getParent();
-
-				return prevPositionParentItem.isRoot();
-			};
-
 			this.reloadItem(item);
-
-			await this.updateRows({ itemIds: moveIds });
-
 			this.updateActionMenu();
-		}
+			parentItems.forEach((parentItem) => {
+				this.reloadItem(parentItem);
+			});
 
-		handleOnShowChecklistsMenu(moveIds)
-		{
+			this.handleOnChange();
+			this.updateRows({ itemIds: moveIds });
+		};
+
+		handleOnShowChecklistsMenu = (moveIds, targetRef) => {
 			const { checklists } = this.props;
 
 			ChecklistsMenu.open({
+				targetRef,
 				parentWidget: this.getParentWidget(),
-				moveItemToChecklist: (checkListId) => {
-					this.moveItemToChecklist({ checkListId, moveIds });
+				moveItemToChecklist: (checklistId) => {
+					void this.moveItemToChecklist({ checklistId, moveIds });
 				},
 				checklists,
 				sourceChecklistId: this.checklist.getId(),
 			});
-		}
+		};
 
-		handleOnChangeMembers({ members, item, memberType })
-		{
+		#handleOnChangeMembers = ({ members, item, memberType }) => {
 			if (members.length > 0)
 			{
 				const membersMap = members.map(({ id, title, imageUrl }) => ({
 					id,
 					name: title,
 					image: imageUrl,
-					type: memberType,
+					type: item.getMemberType(memberType),
 				}));
 
 				// itemRef.setMembersToText(members.map(({ title }) => title));
@@ -783,14 +748,14 @@ jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 			{
 				this.removeElementFilterIsEnabled(item);
 			}
-		}
+		};
 
-		handleOnChangeAttachments(item)
-		{
+		#handleOnChangeAttachments = ({ item, shouldRender }) => {
 			this.updateActionMenu();
 			this.handleOnChange();
-			this.updateRows({ itemIds: [item.getId()] });
-		}
+
+			return this.updateRows({ itemIds: [item.getId()], animation: 'automatic', shouldRender });
+		};
 
 		/**
 		 * @param {CheckListFlatTreeItem} item
@@ -818,156 +783,134 @@ jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 			return new Promise((resolve) => {
 				this.timerId = setTimeout(async () => {
 					await this.deleteRows([item.getKey()]);
-					this.setState({}, resolve);
+					this.showEmptyToast();
 					this.timerId = null;
+					resolve();
 				}, 1000);
 			});
 		}
 
-		async moveItemToChecklist({ checkListId, moveIds })
+		async moveItemToChecklist({ checklistId, moveIds })
 		{
 			const { onMoveToCheckList } = this.props;
 			this.handleOnBlurFocusedItem();
-
-			const parentWidget = this.getParentWidget();
+			this.updateChecklistCounter();
 
 			const openChecklist = await onMoveToCheckList({
 				moveIds,
-				toCheckListId: checkListId,
+				toCheckListId: checklistId,
 				sourceChecklistId: this.checklist.getId(),
 			});
 
-			showToast({
-				layoutWidget: parentWidget,
-				message: Loc.getMessage('TASKSMOBILE_LAYOUT_CHECKLIST_ITEM_MOVED'),
-				buttonText: Loc.getMessage('TASKSMOBILE_LAYOUT_CHECKLIST_REDIRECT'),
-				onButtonTap: openChecklist,
-			});
+			toastMovedItem({ layoutWidget: this.getParentWidget(), onButtonTap: openChecklist });
 		}
 
 		/**
 		 * @param {number|string} itemId
-		 * @param {string} entityMemberType
+		 * @param {string} memberType
 		 */
-		openUserSelector(itemId, entityMemberType)
-		{
-			const item = this.checklist.getItemById(itemId);
-			const memberType = item.getMemberType(entityMemberType);
-			const initSelectedIds = Object.values(item.getMembers())
-				.filter(({ type }) => type === memberType)
-				.map(({ id }) => id);
+		openUserSelectionManager = (itemId, memberType) => {
+			if (!this.checklist.canAddAccomplice())
+			{
+				this.showToastNoRights();
 
-			const selector = EntitySelectorFactory.createByType(EntitySelectorFactoryType.USER, {
-				provider: {
-					context: `TASKS_MEMBER_SELECTOR_EDIT_${entityMemberType}`,
-					options: {
-						useLettersForEmptyAvatar: true,
-					},
-				},
-				initSelectedIds,
-				createOptions: {
-					enableCreation: false,
-				},
-				allowMultipleSelection: true,
-				events: {
-					onClose: (members) => {
-						this.handleOnChangeMembers({ members, item, memberType });
-						this.handleOnChange();
-					},
-					onViewRemoved: () => {
-						this.updateActionMenu();
-						this.updateRows({ itemIds: [item.getId()], animation: 'fade', saveFocus: true });
-					},
-				},
-				widgetParams: {
-					title: Loc.getMessage(`TASKSMOBILE_LAYOUT_CHECKLIST_${entityMemberType.toUpperCase()}_SELECTOR_TITLE`),
-					backdrop: {
-						mediumPositionPercent: 70,
-					},
-				},
+				return;
+			}
+
+			this.setSaveFocus(true);
+			const item = this.checklist.getItemById(itemId);
+			const userConfig = this.getUserFieldConfig(memberType);
+
+			const userFieldInstance = UserField({
+				id: memberType,
+				value: item.getMembersIds(memberType),
+				readOnly: false,
+				required: false,
+				multiple: true,
+				showTitle: false,
+				config: userConfig({
+					items: item.getPrepareMembers(),
+					groupId: this.props.groupId,
+					parentWidget: this.getParentWidget(),
+				}),
+				title: Loc.getMessage(`TASKSMOBILE_LAYOUT_CHECKLIST_${memberType.toUpperCase()}_SELECTOR_TITLE`),
+				onSelectorHidden: this.handleOnFocusItem,
+				onChange: this.#handleOnChangeUsers({ item, memberType }),
 			});
 
-			return selector.show({}, this.parentWidget);
-		}
+			userFieldInstance.openSelector();
+		};
 
-		openUserSelectionManager(itemId)
+		openTariffRestrictionWidget = (memberType) => {
+			this.setSaveFocus(true);
+
+			MEMBER_TYPE_RESTRICTION_FEATURE_META[memberType].showRestriction({
+				parentWidget: this.getParentWidget(),
+				onHidden: () => this.handleOnFocusItem(),
+			});
+		};
+
+		#handleOnChangeUsers = ({ item, memberType }) => (_, members = []) => {
+			this.#handleOnChangeMembers({ item, members, memberType });
+			this.updateActionMenu();
+			this.updateRows({ itemIds: [item.getId()], animation: 'fade', saveFocus: true });
+			this.handleOnChange();
+		};
+
+		getUserFieldConfig(entityMemberType)
 		{
-			const item = this.checklist.getItemById(itemId);
-
-			const sections = {
-				accomplice: {
-					isMultiple: true,
-					title: Loc.getMessage('TASKSMOBILE_LAYOUT_CHECKLIST_TITLE_ACCOMPLICE'),
-					providerContext: 'TASKS_MEMBER_SELECTOR_EDIT_accomplice',
-				},
-				auditor: {
-					isMultiple: true,
-					title: Loc.getMessage('TASKSMOBILE_LAYOUT_CHECKLIST_TITLE_AUDITOR'),
-					providerContext: 'TASKS_MEMBER_SELECTOR_EDIT_auditor',
-				},
+			const fieldConfigMap = {
+				[MEMBER_TYPE.auditor]: makeAuditorsFieldConfig,
+				[MEMBER_TYPE.accomplice]: makeAccomplicesFieldConfig,
 			};
 
-			const members = item.getMembers();
-			const users = Object.keys(item.getMembers()).map((id) => {
-				const { type, name = '', image = '' } = members[id];
-
-				return {
-					id: Number(id),
-					section: item.getMemberType(type),
-					title: name,
-					image,
-				};
-			});
-
-			this.saveFocus = true;
-			void UserSelectionManager.open({
-				users,
-				sections,
-				uniqueUserInSections: true,
-				parentWidget: this.getParentWidget(),
-				useLettersForEmptyAvatar: true,
-				onChange: (changeMembers) => {
-					this.handleOnChangeMembers({ members: changeMembers, item });
-					this.updateActionMenu();
-				},
-				onClose: () => {
-					this.updateRows({ itemIds: [itemId], animation: 'fade', saveFocus: true });
-				},
-			});
+			return fieldConfigMap[entityMemberType];
 		}
 
+		/**
+		 * @returns {MainChecklistItem}
+		 */
 		getFocusedItemRef()
 		{
 			if (this.focusedItemId)
 			{
-				return this.itemRefMap.get(this.focusedItemId);
+				return this.getItemRef(this.focusedItemId);
 			}
 
 			return null;
 		}
 
 		/**
+		 * @returns {MainChecklistItem}
+		 */
+		getItemRef(id)
+		{
+			return this.itemRefMap.get(id);
+		}
+
+		/**
 		 * @param {CheckListFlatTreeItem} focusedItem
 		 */
-		handleShowMenu(focusedItem)
-		{
-			if (!this.menuRef)
+		handleShowMenu = async (focusedItem) => {
+			if (!this.menuRef || !focusedItem)
 			{
 				return;
 			}
 
-			const isStubMenu = this.checklistQueue.getElementPosition(STUB_MENU.key);
-			if (!isStubMenu)
-			{
-				void this.checklistQueue.appendRows([STUB_MENU], 'none');
-			}
-
 			this.menuRef.setItem(focusedItem);
-			this.menuRef.show();
-		}
+			if (!this.menuRef.isShownMenu())
+			{
+				const isStubMenu = this.checklistQueue.getElementPosition(STUB_MENU.key);
+				if (!isStubMenu)
+				{
+					void this.checklistQueue.appendRows([STUB_MENU], 'none');
+				}
 
-		handleHideMenu()
-		{
+				await this.menuRef.show();
+			}
+		};
+
+		handleHideMenu = () => {
 			if (!this.menuRef)
 			{
 				return;
@@ -975,38 +918,50 @@ jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 
 			void this.deleteRows([STUB_MENU.key], 'none');
 			this.menuRef.hide();
-		}
+		};
 
 		/**
 		 * @private
-		 * @param {number} focusedItemId
+		 * @param {number | null} focusedItemId
 		 * @return {string[]}
 		 */
 		setFocused(focusedItemId)
 		{
 			const blurItemId = this.focusedItemId;
 			this.focusedItemId = focusedItemId;
-
 			this.checklist.getItemById(focusedItemId)?.focus();
 			this.checklist.getItemById(blurItemId)?.blur();
 
 			return [blurItemId, focusedItemId];
 		}
 
-		handleOnBlurFocusedItem()
-		{
+		handleOnFocusItem = () => {
+			const focusedItem = this.getFocusedItemRef();
+			if (focusedItem)
+			{
+				focusedItem.textInputFocus();
+			}
+		};
+
+		handleOnBlurFocusedItem = () => {
 			const focusedItem = this.getFocusedItemRef();
 
 			if (focusedItem)
 			{
 				focusedItem.textInputBlur();
 			}
-		}
+		};
 
 		updateActionMenu()
 		{
 			this.menuRef?.refreshExtension();
 		}
+
+		showToastNoRights = () => {
+			toastNoRights({
+				layoutWidget: this.getParentWidget(),
+			});
+		};
 
 		/**
 		 * @private
@@ -1021,6 +976,20 @@ jn.define('tasks/layout/checklist/list', (require, exports, module) => {
 		getFocusedItem()
 		{
 			return this.checklist.getItemById(this.focusedItemId);
+		}
+
+		/**
+		 * @public
+		 * @param {Boolean} save
+		 */
+		setSaveFocus(save)
+		{
+			this.saveFocus = save;
+		}
+
+		shouldButtonAdd(itemKey)
+		{
+			return itemKey === buttonAddItemType.key && this.checklist.canAdd();
 		}
 	}
 

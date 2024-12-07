@@ -129,7 +129,7 @@ abstract class Entity
 			$resourceBookingFilter = [
 				'CALENDAR_DATE_FROM' => $filter['CALENDAR_DATE_FROM'],
 				'CALENDAR_DATE_TO' => $filter['CALENDAR_DATE_TO'],
-				'CALENDAR_FIELD' => $filter['CALENDAR_FIELD']
+				'CALENDAR_FIELD' => $filter['CALENDAR_FIELD'],
 			];
 		}
 
@@ -165,6 +165,27 @@ abstract class Entity
 		}
 
 		return $provider::$method($parameters['order'], $filter, false, false, $fieldsSelect, $options);
+	}
+
+	final public function getCount(array $filter): int
+	{
+		if (($filter['CATEGORY_ID'] ?? null) === 0)
+		{
+			$filter['@CATEGORY_ID'] = $filter['CATEGORY_ID'];
+			unset($filter['CATEGORY_ID']);
+		}
+
+		$provider = $this->getItemsProvider();
+		$method = method_exists($provider, 'getListEx') ? 'getListEx' : 'getList';
+
+		$result = $provider::$method([], $filter, [], false, [], []);
+
+		if (is_numeric($result))
+		{
+			return (int)$result;
+		}
+
+		return 0;
 	}
 
 	/**

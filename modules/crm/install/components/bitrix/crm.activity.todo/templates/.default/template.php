@@ -8,16 +8,20 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Extension;
 
-Extension::load(['ui.fonts.opensans', 'ui.cnt']);
+Extension::load([
+	'ui.fonts.opensans',
+	'ui.cnt',
+	'ui.notification',
+]);
 
 if ($arParams['IS_AJAX'] === 'Y')
 {
 	echo '<link rel="stylesheet" type="text/css" href="', $this->getFolder(), '/style.css?6" />';
-	echo '<script type="text/javascript" src="', $this->getFolder(), '/script.js?v14"></script>';
+	echo '<script src="', $this->getFolder(), '/script.js?v15"></script>';
 }
 ?>
 
-<script type="text/javascript">
+<script>
 	BX.message({
 		CRM_ACTIVITY_TODO_VIEW_TITLE: '<?= CUtil::JSEscape(Loc::getMessage('CRM_ACTIVITY_TODO_VIEW_TITLE'));?>',
 		CRM_ACTIVITY_TODO_CLOSE: '<?= CUtil::JSEscape(Loc::getMessage('CRM_ACTIVITY_TODO_CLOSE'));?>',
@@ -54,6 +58,7 @@ if ($arParams['IS_AJAX'] === 'Y')
 	?>
 <div class="crm-activity-todo-item<?= $item['COMPLETED']=='Y' ? ' crm-activity-todo-item-completed' : ''?>"<?
 	?> data-id="<?= $item['ID']?>"<?
+	?> data-providerid="<?= $item['PROVIDER_ID'] ?? 0 ?>"<?
 	?> data-ownerid="<?= $item['OWNER_ID']?>"<?
 	?> data-ownertypeid="<?= $item['OWNER_TYPE_ID']?>"<?
 	?> data-deadlined="<?= $item['DEADLINED']?>"<?
@@ -122,7 +127,7 @@ if ($arParams['IS_AJAX'] === 'Y')
 <?endforeach;?>
 </div>
 
-<script type="text/javascript">
+<script>
 	BX.CrmActivityTodo.create({
 		container: 'crm-activity-todo-items'
 	});

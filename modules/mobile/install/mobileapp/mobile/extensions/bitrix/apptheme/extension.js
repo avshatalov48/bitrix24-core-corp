@@ -6,33 +6,87 @@ jn.define('apptheme', (require, exports, module) => {
 	const LIGHT = 'light';
 	const DARK = 'dark';
 
-	const { themes } = require('apptheme/list');
+	const CompatibleThemeMap = {
+		newdark: 'dark',
+		newlight: 'light',
+	};
+
+	const { styles, typography } = require('apptheme/list');
 	const nativeAppTheme = (Application.getApiVersion() >= 52) ? require('native/apptheme')?.AppTheme : undefined;
 
 	const componentTokens = {
-		[DARK]: {},
-		[LIGHT]: {},
+		[DARK]: {}, [LIGHT]: {},
 	};
 
 	class AppTheme
 	{
+		static cachedColors = {};
+		static cachedFonts = null;
+		static cachedStyles = null;
+
 		static get colors()
 		{
-			let systemColors = themes.light;
-			const customTokens = componentTokens[AppTheme.id];
-			if (nativeAppTheme)
+			let colors = {};
+			if (AppTheme.cachedColors[AppTheme.id])
 			{
-				systemColors = nativeAppTheme.getColors();
+				colors = AppTheme.cachedColors[AppTheme.id];
+			}
+			else
+			{
+				let systemColors = colors.light;
+				const customTokens = componentTokens[AppTheme.id];
+				if (nativeAppTheme)
+				{
+					systemColors = nativeAppTheme.getColors(AppTheme.id);
+				}
+
+				colors = { ...customTokens, ...systemColors };
+				AppTheme.cachedColors[AppTheme.id] = colors;
 			}
 
-			return { ...customTokens, ...systemColors };
+			return colors;
+		}
+
+		static get realColors()
+		{
+			if (AppTheme.cachedColors.currentRealColors)
+			{
+				return AppTheme.cachedColors.currentRealColors;
+			}
+
+			const colors = nativeAppTheme.getColors();
+			AppTheme.cachedColors.currentRealColors = colors;
+
+			return colors;
+		}
+
+		static get typography()
+		{
+			if (AppTheme.cachedFonts === null)
+			{
+				AppTheme.cachedFonts = nativeAppTheme?.typography ?? typography;
+			}
+
+			return AppTheme.cachedFonts;
+		}
+
+		static get styles()
+		{
+			if (AppTheme.cachedStyles === null)
+			{
+				AppTheme.cachedStyles = nativeAppTheme?.styles ?? styles;
+			}
+
+			return AppTheme.cachedStyles;
 		}
 
 		static get id()
 		{
 			if (nativeAppTheme)
 			{
-				return nativeAppTheme.getId();
+				const realThemeId = nativeAppTheme.getId();
+
+				return CompatibleThemeMap[realThemeId] ?? realThemeId;
 			}
 
 			return LIGHT;
@@ -60,6 +114,9 @@ jn.define('apptheme', (require, exports, module) => {
 			return nativeAppTheme.setId(id);
 		}
 
+		/**
+		 * @param {Function} onToggle
+		 */
 		static toggle(onToggle = null)
 		{
 			const currentId = AppTheme.id;
@@ -68,10 +125,11 @@ jn.define('apptheme', (require, exports, module) => {
 
 			if (onToggle !== null && typeof onToggle === 'function')
 			{
-				onToggle.apply(null, [newId]);
+				onToggle(newId);
 			}
 			else
 			{
+				// eslint-disable-next-line no-undef
 				reload();
 			}
 		}

@@ -1,6 +1,5 @@
-/* eslint-disable flowtype/require-return-type */
-/* eslint-disable bitrix-rules/no-bx */
-/* eslint-disable bitrix-rules/no-pseudo-private */
+/* eslint-disable @bitrix24/bitrix24-rules/no-pseudo-private */
+/* eslint-disable  no-underscore-dangle */
 
 /**
  * @module im/messenger/lib/parser/utils/parsed-elements
@@ -20,6 +19,7 @@ jn.define('im/messenger/lib/parser/utils/parsed-elements', (require, exports, mo
 		add(element)
 		{
 			const newLength = this._list.push(element);
+
 			return Number(newLength - 1);
 		},
 
@@ -28,17 +28,18 @@ jn.define('im/messenger/lib/parser/utils/parsed-elements', (require, exports, mo
 			const textLines = text.split('\n');
 
 			const orderedList = [];
-			textLines.forEach(line => {
+			textLines.forEach((line) => {
 				if (line.includes(PLACEHOLDER))
 				{
-					let [, replacementId] = line.split(PLACEHOLDER);
+					const [, replacementIdText] = line.split(PLACEHOLDER);
+					const replacementId = Number(replacementIdText.trim());
 
 					orderedList.push(this._list[replacementId]);
 				}
 			});
 
 			return orderedList;
-		}
+		},
 	};
 
 	module.exports = {

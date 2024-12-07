@@ -57,7 +57,7 @@ foreach($arResult['VERSIONS'] as $version)
 					?>><?=htmlspecialcharsbx($version['NAME'])?><?
 					?></a><?
 					?><span class="feed-com-file-size"><?=$version['SIZE']?></span><?
-					?><script type="text/javascript">
+					?><script>
 						var WDpreButtons_<?= $version['ID'] . '_' . $version['GLOBAL_CONTENT_VERSION'] ?> = [
 							{text : BX.message('JS_CORE_VIEWER_VIEW_ELEMENT'), className : "bx-viewer-popup-item item-view", href : "#", onclick: function(e){
 								top.BX.UI.Viewer.Instance.openByNode(BX("disk-attach-<?=$version['ID'] . '-' . $version['GLOBAL_CONTENT_VERSION'] ?>"));

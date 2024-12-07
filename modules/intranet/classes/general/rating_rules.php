@@ -45,7 +45,6 @@ class CRatingRulesIntranet
 	public static function subordinateCheck($arConfigs)
 	{
 		global $DB, $USER_FIELD_MANAGER;
-			$err_mess = "File: ".__FILE__."<br>Function: subordinateCheck<br>Line: ";
 
 		$ratingId = CRatings::GetAuthorityRating();
 		if ($ratingId == 0)
@@ -63,7 +62,7 @@ class CRatingRulesIntranet
 		if ($iblockId > 0 && $fieldId > 0)
 		{
 			// truncate table first
-			$DB->Query("TRUNCATE TABLE b_rating_subordinate", false, $err_mess.__LINE__);
+			$DB->Query("TRUNCATE TABLE b_rating_subordinate");
 
 			$squery = "
 				INSERT INTO b_rating_subordinate (RATING_ID, ENTITY_ID, VOTES)
@@ -88,7 +87,7 @@ class CRatingRulesIntranet
 				LEFT JOIN b_rating_user RU on RU.RATING_ID = ".intval($ratingId)." and RU.ENTITY_ID = U2U.SUBORDINATE_ID
 				LEFT JOIN b_rating_user RUS on RUS.RATING_ID = ".intval($ratingId)." and RUS.ENTITY_ID = U2U.USER_ID
 				GROUP BY U2U.USER_ID, U2U.ID, RUS.BONUS";
-			$DB->Query($squery, false, $err_mess.__LINE__);
+			$DB->Query($squery);
 		}
 
 		return true;

@@ -1,6 +1,7 @@
 <?
 $MESS["MENU_LIVE_FEED"] = "Живая лента";
 $MESS["MENU_LIVE_FEED2"] = "Новости";
+$MESS["MENU_LIVE_FEED3"] = "Лента";
 $MESS["MENU_TASKS"] = "Задачи и Проекты";
 $MESS["MENU_CALENDAR"] = "Календарь";
 $MESS["MENU_SITES"] = "Сайты";
@@ -23,7 +24,7 @@ $MESS["MENU_CONFERENCE_SECTION"] = "Видеоконференции";
 $MESS["MENU_OPENLINES_LINES_SINGLE"] = "Открытые линии";
 $MESS["MENU_DISK_SECTION_MSGVER_1"] = "Диск";
 $MESS["MENU_TIMEMAN_SECTION"] = "Время и отчеты";
-$MESS["MENU_IM_MESSENGER"] = "Чат и звонки";
+$MESS["MENU_IM_MESSENGER_NEW"] = "Мессенджер";
 $MESS["MENU_DEVOPS"] = "Разработчикам";
 $MESS["MENU_MAIL_CHANGE_SETTINGS"] = "Изменить настройки";
 $MESS["MENU_EMPLOYEE"] = "Сотрудники";
@@ -47,6 +48,7 @@ $MESS["MENU_STORE_ACCOUNTING_SECTION"] = "Складской учёт";
 $MESS["MENU_AUTOMATION_SECTION"] = "Автоматизация";
 $MESS["MENU_LISTS_SECTION"] = "Списки";
 $MESS["MENU_SITES_AND_STORES"] = "Сайты и Магазины";
-$MESS["MENU_SIGN"] = "Подпись";
+$MESS["MENU_SIGN_MSGVER_1"] = "Подпись";
 $MESS["MENU_SIGN_B2E"] = "КЭДО";
 $MESS["MENU_GROUP_SPACES"] = "Пространства";
+$MESS["MENU_BI_CONSTRUCTOR"] = "BI Конструктор";

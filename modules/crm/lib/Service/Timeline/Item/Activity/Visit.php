@@ -10,9 +10,7 @@ use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\Audio;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\Text;
 use Bitrix\Crm\Service\Timeline\Layout\Body\Logo;
 use Bitrix\Crm\Service\Timeline\Layout\Common;
-use Bitrix\Crm\Service\Timeline\Layout\Footer\Button;
 use Bitrix\Crm\Service\Timeline\Layout\Header\Tag;
-use Bitrix\Crm\Settings\WorkTime;
 use Bitrix\Main\Localization\Loc;
 
 final class Visit extends Activity
@@ -81,15 +79,8 @@ final class Visit extends Activity
 
 	public function getButtons(): array
 	{
-		$nearestWorkday = (new WorkTime())->detectNearestWorkDateTime(3, 1);
-
-		$buttons['scheduleButton'] = (new Button(Loc::getMessage('CRM_TIMELINE_BUTTON_VISIT_SCHEDULE'), Button::TYPE_SECONDARY))
-			->setAction((new JsEvent('Activity:Visit:Schedule'))
-				->addActionParamInt('activityId', $this->getActivityId())
-				->addActionParamString('scheduleDate', $nearestWorkday->toString())
-				->addActionParamInt('scheduleTs', $nearestWorkday->getTimestamp())
-			)
-		;
+		$buttons = parent::getButtons();
+		$buttons['scheduleButton'] = $this->getScheduleButton('Activity:Visit:Schedule');
 
 		return $buttons;
 	}

@@ -41,12 +41,18 @@ class StopWorktimeManager extends WorktimeManager
 	}
 
 	/**
-	 * @param WorktimeRecord $record
+	 * @param ?WorktimeRecord $record
 	 * @return WorktimeRecord
 	 */
 	protected function updateRecordFields($record)
 	{
+		if (!$record)
+		{
+			return $record;
+		}
+
 		$record->stopWork($this->worktimeRecordForm, $this->getRecordedStopTimestamp($record));
+
 		return $record;
 	}
 

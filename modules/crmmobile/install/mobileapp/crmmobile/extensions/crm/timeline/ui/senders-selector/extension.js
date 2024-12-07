@@ -5,8 +5,11 @@ jn.define('crm/timeline/ui/senders-selector', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const { Type } = require('type');
 	const { get } = require('utils/object');
+	const { ContextMenu } = require('layout/ui/context-menu');
 	const { ProviderSelector } = require('crm/timeline/ui/senders-selector/provider-selector');
-	const { NumberSelector } = require('crm/timeline/ui/senders-selector/number-selector');
+	const { FromSelector } = require('crm/timeline/ui/senders-selector/from-selector');
+
+	const SENDER_TYPE_EMAIL = 'EMAIL';
 
 	/**
 	 * @class SendersSelector
@@ -17,30 +20,35 @@ jn.define('crm/timeline/ui/senders-selector', (require, exports, module) => {
 			senders,
 			currentSender,
 			contactCenterUrl,
-			currentPhoneId,
+			currentFromId,
 			onChangeSenderCallback,
-			onChangePhoneCallback,
+			onDisabledSenderClickCallback,
+			onChangeFromCallback,
+			smsAndMailSenders,
 		})
 		{
 			this.providerSelector = null;
-			this.numberSelector = null;
+			this.fromSelector = null;
 
 			this.senders = senders;
 			this.currentSender = currentSender;
-			this.currentPhoneId = currentPhoneId;
+			this.currentFromId = currentFromId;
 			this.contactCenterUrl = contactCenterUrl;
 			this.name = currentSender.shortName;
+			this.smsAndMailSenders = smsAndMailSenders || false;
 
 			// eslint-disable-next-line no-shadow
-			this.onChangeSenderCallback = ({ sender, phoneId }) => {
-				this.update({ sender, phoneId });
-				onChangeSenderCallback({ sender, phoneId });
+			this.onChangeSenderCallback = ({ sender, fromId }) => {
+				this.update({ sender, fromId });
+				onChangeSenderCallback({ sender, fromId });
 			};
 
+			this.onDisabledSenderClickCallback = onDisabledSenderClickCallback;
+
 			// eslint-disable-next-line no-shadow
-			this.onChangePhoneCallback = ({ phoneId }) => {
-				this.update({ phoneId });
-				onChangePhoneCallback({ phoneId });
+			this.onChangeFromCallback = ({ fromId }) => {
+				this.update({ fromId });
+				onChangeFromCallback({ fromId });
 			};
 
 			this.settingsMenu = new ContextMenu(this.getMenuConfig());
@@ -55,35 +63,42 @@ jn.define('crm/timeline/ui/senders-selector', (require, exports, module) => {
 					contactCenterUrl: this.contactCenterUrl,
 					currentSender: this.currentSender,
 					onChangeSenderCallback: this.onChangeSenderCallback,
+					onDisabledSenderClickCallback: this.onDisabledSenderClickCallback,
 				});
 			}
 
 			this.providerSelector.show(this.layout);
 		}
 
-		showNumberSelector()
+		showFromSelector()
 		{
-			if (!this.numberSelector)
+			if (!this.fromSelector)
 			{
-				this.numberSelector = new NumberSelector({
+				this.fromSelector = new FromSelector({
 					sender: this.currentSender,
-					phoneId: this.currentPhoneId,
-					onChangePhoneCallback: this.onChangePhoneCallback,
+					fromId: this.currentFromId,
+					onChangeFromCallback: this.onChangeFromCallback,
 				});
 			}
 
-			this.numberSelector.show(this.layout);
+			this.fromSelector.show(this.layout);
 		}
 
 		getMenuConfig()
 		{
+			let title = Loc.getMessage('M_CRM_TIMELINE_SENDERS_SELECTOR_TITLE');
+			if (this.smsAndMailSenders)
+			{
+				title = Loc.getMessage('M_CRM_TIMELINE_SENDERS_SELECTOR_TITLE_CHANNEL');
+			}
+
 			return {
-				testId: 'SMS_SETTINGS_MENU',
+				testId: 'crmmobile-senders-selector-menu',
 				actions: this.getSettingsMenuActions(),
 				params: {
 					shouldResizeContent: true,
 					showCancelButton: true,
-					title: Loc.getMessage('M_CRM_TIMELINE_SENDERS_SELECTOR_TITLE'),
+					title,
 				},
 			};
 		}
@@ -92,15 +107,21 @@ jn.define('crm/timeline/ui/senders-selector', (require, exports, module) => {
 		{
 			return [
 				this.getProviderAction(),
-				this.getPhoneAction(),
+				this.getFromAction(),
 			];
 		}
 
 		getProviderAction()
 		{
+			let title = Loc.getMessage('M_CRM_TIMELINE_SENDERS_SELECTOR_PROVIDER');
+			if (this.smsAndMailSenders)
+			{
+				title = Loc.getMessage('M_CRM_TIMELINE_SENDERS_SELECTOR_SENDER_SERVICE');
+			}
+
 			return {
-				id: 'sms-settings-provider',
-				title: Loc.getMessage('M_CRM_TIMELINE_SENDERS_SELECTOR_PROVIDER'),
+				id: 'crmmobile-senders-selector-provider',
+				title,
 				subtitle: this.name,
 				onClickCallback: () => {
 					this.showProviderSelector();
@@ -110,25 +131,31 @@ jn.define('crm/timeline/ui/senders-selector', (require, exports, module) => {
 			};
 		}
 
-		getPhoneAction()
+		getFromAction()
 		{
-			const phone = this.getCurrentPhone();
+			const from = this.getCurrentFrom();
+
+			let title = Loc.getMessage('M_CRM_TIMELINE_SENDERS_SELECTOR_PHONE');
+			if (this.currentSender?.typeId === SENDER_TYPE_EMAIL)
+			{
+				title = Loc.getMessage('M_CRM_TIMELINE_SENDERS_SELECTOR_EMAIL');
+			}
 
 			return {
-				id: 'sms-settings-phone',
-				title: Loc.getMessage('M_CRM_TIMELINE_SENDERS_SELECTOR_PHONE'),
-				subtitle: get(phone, 'name', ''),
+				id: 'crmmobile-senders-selector-from',
+				title,
+				subtitle: get(from, 'name', ''),
 				onClickCallback: () => {
-					this.showNumberSelector();
+					this.showFromSelector();
 
 					return Promise.resolve({ closeMenu: false });
 				},
 			};
 		}
 
-		getCurrentPhone()
+		getCurrentFrom()
 		{
-			return this.currentSender.fromList.find((phone) => phone.id === this.currentPhoneId);
+			return this.currentSender.fromList.find((from) => from.id === this.currentFromId);
 		}
 
 		show(parentWidget = PageManager)
@@ -136,9 +163,16 @@ jn.define('crm/timeline/ui/senders-selector', (require, exports, module) => {
 			void this.settingsMenu.show(parentWidget);
 		}
 
-		close()
+		close(callback = () => {})
 		{
-			void this.settingsMenu.close();
+			if (this.providerSelector)
+			{
+				this.providerSelector.close(() => this.settingsMenu.close(callback));
+			}
+			else
+			{
+				this.settingsMenu.close(callback);
+			}
 		}
 
 		get layout()
@@ -151,7 +185,7 @@ jn.define('crm/timeline/ui/senders-selector', (require, exports, module) => {
 			return this.settingsMenu.actionsBySections;
 		}
 
-		update({ sender, phoneId })
+		update({ sender, fromId })
 		{
 			let needRerender = false;
 
@@ -164,14 +198,14 @@ jn.define('crm/timeline/ui/senders-selector', (require, exports, module) => {
 				{
 					needRerender = true;
 					this.name = name;
-					this.numberSelector = null;
+					this.fromSelector = null;
 				}
 			}
 
-			if (Type.isStringFilled(phoneId) || Type.isNumber(phoneId))
+			if (Type.isStringFilled(fromId) || Type.isNumber(fromId))
 			{
 				needRerender = true;
-				this.currentPhoneId = phoneId;
+				this.currentFromId = fromId;
 			}
 
 			if (needRerender)

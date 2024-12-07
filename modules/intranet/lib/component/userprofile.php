@@ -2,6 +2,7 @@
 
 namespace Bitrix\Intranet\Component;
 
+use Bitrix\Intranet\Service\ServiceContainer;
 use Bitrix\Intranet\Util;
 use Bitrix\Main\Event;
 use Bitrix\Main\EventManager;
@@ -469,30 +470,16 @@ class UserProfile extends \CBitrixComponent implements \Bitrix\Main\Engine\Contr
 			(int)$this->arParams['ID'] > 0
 		)
 		{
-			$iblockID = \COption::GetOptionInt("intranet", "iblock_structure");
-			$rsDepartments = \CIBlockSection::GetList(
-				[],
-				[
-					'UF_HEAD' => (int)$this->arParams['ID'],
-					'IBLOCK_ID' => $iblockID],
-				false,
-				[
-					'UF_HEAD',
-					'ID',
-					'IBLOCK_ID'
-				]
-			);
-			while ($arDepartment = $rsDepartments->Fetch())
+			$departmentRepository = ServiceContainer::getInstance()
+				->departmentRepository();
+			$departmentCollection = $departmentRepository->getDepartmentByHeadId((int)$this->arParams['ID']);
+			foreach ($departmentCollection as $department)
 			{
-				if (in_array($arDepartment['ID'], $newFields['UF_DEPARTMENT']))
+				if (in_array($department->getId(), $newFields['UF_DEPARTMENT']))
 				{
 					continue;
 				}
-				$depFields = [
-					"UF_HEAD" => false
-				];
-				$section = new \CIBlockSection;
-				$section->Update($arDepartment['ID'], $depFields);
+				$departmentRepository->unsetHead($department->getId());
 			}
 		}
 
@@ -623,6 +610,14 @@ class UserProfile extends \CBitrixComponent implements \Bitrix\Main\Engine\Contr
 		)
 		{
 			$user["STATUS"] = self::STATUS_INVITED;
+		}
+
+		if (
+			$user["ACTIVE"] === "N"
+			&& !empty($user["CONFIRM_CODE"])
+		)
+		{
+			$user["STATUS"] = 'waiting';
 		}
 
 		if (in_array($user["EXTERNAL_AUTH_ID"], [ 'email' ]))

@@ -40,8 +40,6 @@ class CrmProductSectionTreeController
 	{
 		try
 		{
-			\CUtil::JSPostUnescape();
-
 			$this->checkRequest();
 
 			$this->processAction();

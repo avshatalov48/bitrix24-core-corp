@@ -6,7 +6,6 @@ jn.define('calendar/event-list-view', (require, exports, module) => {
 	const { isEqual } = require('utils/object');
 	const { PureComponent } = require('layout/pure-component');
 	const { DateHelper } = require('calendar/date-helper');
-	const { PlanRestriction } = require('layout/ui/plan-restriction');
 	const { BottomSheet } = require('bottom-sheet');
 	const { DialogSharing } = require('calendar/layout/dialog/dialog-sharing');
 	const { Loc } = require('loc');
@@ -23,6 +22,10 @@ jn.define('calendar/event-list-view', (require, exports, module) => {
 	const { Type } = require('type');
 	const { CalendarGrid } = require('calendar/calendar-grid');
 	const isAndroid = Application.getPlatform() === 'android';
+	const { FloatingButtonComponent } = require('layout/ui/floating-button');
+	const { FloatingActionButton, FloatingActionButtonSupportNative } = require('ui-system/form/buttons/floating-action-button');
+	const { Color } = require('tokens');
+	const { getFeatureRestriction, tariffPlanRestrictionsReady } = require('tariff-plan-restriction');
 
 	/**
 	 * @class CalendarEventListView
@@ -204,13 +207,13 @@ jn.define('calendar/event-list-view', (require, exports, module) => {
 		initLayout()
 		{
 			this.setMonthTitle(this.nowTime);
-
 			this.initRightMenu();
+			this.initFloatingButton();
 		}
 
-		initRightMenu()
+		async initRightMenu()
 		{
-			const buttons = this.getMenuButtons();
+			const buttons = await this.getMenuButtons();
 
 			if (!isEqual(buttons, this.layoutRightButtons))
 			{
@@ -219,14 +222,29 @@ jn.define('calendar/event-list-view', (require, exports, module) => {
 			}
 		}
 
-		getMenuButtons()
+		initFloatingButton()
+		{
+			if (!FloatingActionButtonSupportNative(this.layout))
+			{
+				return;
+			}
+
+			FloatingActionButton({
+				testId: this.getFloatingButtonTestId(),
+				parentLayout: this.layout,
+				onClick: this.handleFloatingButtonClick,
+			});
+		}
+
+		async getMenuButtons()
 		{
 			const buttons = [];
+			const sharingButton = await this.getSharingButton();
 
 			buttons.push(
 				this.getSearchButton(),
-				this.getSharingButton(),
-				this.syncButton.getContent()
+				sharingButton,
+				this.syncButton.getContent(),
 			);
 
 			return buttons;
@@ -246,11 +264,14 @@ jn.define('calendar/event-list-view', (require, exports, module) => {
 			};
 		}
 
-		getSharingButton()
+		async getSharingButton()
 		{
+			await tariffPlanRestrictionsReady();
+			const { isRestricted } = getFeatureRestriction(this.sharing.getFeatureCode());
+
 			return {
 				svg: {
-					content: this.sharing.isOn() && this.sharing.isRestriction() === false
+					content: this.sharing.isOn() && !isRestricted()
 						? icons.menuCalendarColor
 						: icons.menuCalendarGray,
 				},
@@ -276,10 +297,14 @@ jn.define('calendar/event-list-view', (require, exports, module) => {
 			}
 		}
 
-		onEventChanged()
+		onEventChanged(event)
 		{
 			this.closeViewForm();
-			this.refreshEventManager();
+
+			if (event && event.app_calendar_action)
+			{
+				this.refreshEventManager();
+			}
 		}
 
 		onEventDeleted()
@@ -353,6 +378,7 @@ jn.define('calendar/event-list-view', (require, exports, module) => {
 
 			if (this.searchFilter.isEmpty())
 			{
+				this.eventManager.setFilteredMode(false);
 				this.setMonthTitle(this.state.lastSelectedDate);
 				this.setState({
 					isFilledEventList: true,
@@ -364,6 +390,7 @@ jn.define('calendar/event-list-view', (require, exports, module) => {
 			}
 			else
 			{
+				this.eventManager.setFilteredMode(true);
 				this.setSearchTitle();
 				// eslint-disable-next-line promise/catch-or-return
 				this.getEventsByFilter().then((events) => {
@@ -395,17 +422,19 @@ jn.define('calendar/event-list-view', (require, exports, module) => {
 			]);
 		}
 
-		openSharingDialog()
+		async openSharingDialog()
 		{
-			if (this.sharing.isRestriction())
+			await tariffPlanRestrictionsReady();
+			const { isRestricted, showRestriction } = getFeatureRestriction(this.sharing.getFeatureCode());
+
+			if (isRestricted())
 			{
-				PlanRestriction.open({
-					title: Loc.getMessage('M_CALENDAR_EVENT_LIST_RESTRICTION_SHARING_SLOTS_FREE'),
-				});
+				showRestriction();
 			}
 			else
 			{
-				const component = new DialogSharing({
+				const component = (layoutWidget) => new DialogSharing({
+					layoutWidget,
 					sharing: this.sharing,
 					onSharing: (fields) => {
 						this.sharing.getModel().setFields(fields);
@@ -413,13 +442,11 @@ jn.define('calendar/event-list-view', (require, exports, module) => {
 					},
 				});
 
-				// eslint-disable-next-line promise/catch-or-return
-				new BottomSheet({ component })
-					.setBackgroundColor(AppTheme.colors.bgNavigation)
+				void new BottomSheet({ component })
+					.setBackgroundColor(Color.bgNavigation.toHex())
 					.setMediumPositionPercent(70)
 					.disableContentSwipe()
 					.open()
-					.then((widget) => component.setLayoutWidget(widget))
 				;
 			}
 		}
@@ -480,7 +507,7 @@ jn.define('calendar/event-list-view', (require, exports, module) => {
 						alignItems: 'flex-start',
 						justifyContent: 'flex-start',
 						borderBottomWidth: 0.5,
-						borderBottomColor: AppTheme.colors.base6,
+						borderBottomColor: Color.bgSeparatorPrimary.toHex(),
 					},
 				},
 				Text({
@@ -541,9 +568,9 @@ jn.define('calendar/event-list-view', (require, exports, module) => {
 
 		renderFloatingButton()
 		{
-			// eslint-disable-next-line no-undef
-			return new UI.FloatingButtonComponent({
-				testId: 'calendar_event_list_floating_button',
+			return new FloatingButtonComponent({
+				parentLayout: this.layout,
+				testId: this.getFloatingButtonTestId(),
 				position: { bottom: -100 },
 				onClick: this.handleFloatingButtonClick,
 				ref: (ref) => {
@@ -716,6 +743,11 @@ jn.define('calendar/event-list-view', (require, exports, module) => {
 		closeSearch()
 		{
 			this.layout.search.close();
+		}
+
+		getFloatingButtonTestId()
+		{
+			return 'calendar_event_list_ADD_BTN';
 		}
 	}
 

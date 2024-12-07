@@ -3,7 +3,11 @@
  */
 jn.define('layout/ui/detail-card/floating-button', (require, exports, module) => {
 	const { AnalyticsLabel } = require('analytics-label');
+	const { FloatingButtonComponent } = require('layout/ui/floating-button');
 	const { FloatingButtonMenu } = require('layout/ui/detail-card/floating-button/menu');
+	const { FloatingActionButton, FloatingActionButtonSupportNative } = require(
+		'ui-system/form/buttons/floating-action-button',
+	);
 
 	const isIOS = Application.getPlatform() === 'ios';
 
@@ -23,8 +27,10 @@ jn.define('layout/ui/detail-card/floating-button', (require, exports, module) =>
 
 			this.menu = null;
 
-			/** @type {UI.FloatingButtonComponent} */
+			/** @type {FloatingButtonComponent} */
 			this.floatingButtonRef = null;
+
+			this.floatinNativeButtonRef = null;
 
 			this.handleOnClick = this.handleOnClick.bind(this);
 			this.handleOnLongClick = this.handleOnLongClick.bind(this);
@@ -52,10 +58,17 @@ jn.define('layout/ui/detail-card/floating-button', (require, exports, module) =>
 			return this.detailCard.getEntityAnalyticsData();
 		}
 
+		getTestId()
+		{
+			return 'detail-card_ADD_BTN';
+		}
+
 		componentDidMount()
 		{
-			this.eventEmitter.on('DetailCard.FloatingMenu.Item::onRecentAction', this.handleRecentItemAction);
-			this.eventEmitter.on('DetailCard.FloatingMenu.Item::onSaveInRecent', this.handleRecentAdd);
+			if (!this.isFloatingActionButtonSupportNative())
+			{
+				this.initRecentListeners();
+			}
 
 			if (isIOS)
 			{
@@ -75,6 +88,34 @@ jn.define('layout/ui/detail-card/floating-button', (require, exports, module) =>
 		}
 
 		componentWillUnmount()
+		{
+			this.removeRecentListeners();
+		}
+
+		initNativeButton(layout)
+		{
+			if (this.isFloatingActionButtonSupportNative())
+			{
+				this.initRecentListeners();
+			}
+
+			this.floatinNativeButtonRef = FloatingActionButton({
+				parentLayout: layout,
+				testId: this.getTestId(),
+				onClick: this.handleOnClick,
+				onLongClick: this.handleOnLongClick,
+			});
+
+			return this.floatinNativeButtonRef;
+		}
+
+		initRecentListeners()
+		{
+			this.eventEmitter.on('DetailCard.FloatingMenu.Item::onRecentAction', this.handleRecentItemAction);
+			this.eventEmitter.on('DetailCard.FloatingMenu.Item::onSaveInRecent', this.handleRecentAdd);
+		}
+
+		removeRecentListeners()
 		{
 			this.eventEmitter.off('DetailCard.FloatingMenu.Item::onRecentAction', this.handleRecentItemAction);
 			this.eventEmitter.off('DetailCard.FloatingMenu.Item::onSaveInRecent', this.handleRecentAdd);
@@ -103,7 +144,7 @@ jn.define('layout/ui/detail-card/floating-button', (require, exports, module) =>
 						actionId,
 						position: menu.getRecentPosition(actionId, tabId),
 					}))
-				;
+					.catch(console.error);
 			}
 		}
 
@@ -132,18 +173,20 @@ jn.define('layout/ui/detail-card/floating-button', (require, exports, module) =>
 
 		actualize()
 		{
-			if (!this.floatingButtonRef)
+			if (!this.floatingButtonRef && !this.floatinNativeButtonRef)
 			{
 				return;
 			}
 
 			if (this.isVisible())
 			{
-				this.floatingButtonRef.show();
+				this.floatinNativeButtonRef?.show();
+				this.floatingButtonRef?.show();
 			}
 			else
 			{
-				this.floatingButtonRef.hide();
+				this.floatinNativeButtonRef?.hide();
+				this.floatingButtonRef?.hide();
 			}
 		}
 
@@ -151,10 +194,13 @@ jn.define('layout/ui/detail-card/floating-button', (require, exports, module) =>
 		{
 			this.menu = null;
 
-			return new UI.FloatingButtonComponent({
-				testId: 'detail-card-floating-button',
+			return new FloatingButtonComponent({
+				ref: (ref) => {
+					this.floatingButtonRef = ref;
+				},
+				parentLayout: this.getLayout(),
+				testId: this.getTestId(),
 				position: this.getPosition(),
-				ref: (ref) => this.floatingButtonRef = ref,
 				onClick: this.handleOnClick,
 				onLongClick: this.handleOnLongClick,
 			});
@@ -303,7 +349,17 @@ jn.define('layout/ui/detail-card/floating-button', (require, exports, module) =>
 					.then(({ closeCallback }) => closeCallback && closeCallback())
 			);
 		}
+
+		getLayout()
+		{
+			return this.detailCard.layout;
+		}
+
+		isFloatingActionButtonSupportNative(layout)
+		{
+			return FloatingActionButtonSupportNative(layout || this.getLayout());
+		}
 	}
 
-	module.exports = { FloatingButton };
+	module.exports = { FloatingButton, FloatingActionButtonSupportNative };
 });

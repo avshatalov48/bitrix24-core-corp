@@ -304,7 +304,7 @@ jn.define('analytics', (require, exports, module) => {
 			Object.getOwnPropertyNames(this.data).forEach((prop) => {
 				if (!Type.isNil(this.data[prop]))
 				{
-					getParameters.push(`${prop}=${this.data[prop]}`);
+					getParameters.push(`st[${prop}]=${encodeURIComponent(this.data[prop])}`);
 				}
 			});
 
@@ -357,15 +357,14 @@ jn.define('analytics', (require, exports, module) => {
 				{
 					data = analyticsData.exportToObject();
 				}
+				else if (analyticsData.data)
+				{
+					data = analyticsData.data;
+				}
 				else
-					if (analyticsData.data)
-					{
-						data = analyticsData.data;
-					}
-					else
-					{
-						data = analyticsData;
-					}
+				{
+					data = analyticsData;
+				}
 				Object.getOwnPropertyNames(this.data).forEach((prop) => {
 					if (!Type.isNil(data[prop]))
 					{

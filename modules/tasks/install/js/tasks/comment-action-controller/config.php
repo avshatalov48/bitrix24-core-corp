@@ -10,6 +10,7 @@ return [
 	'rel' => [
 		'main.core',
 		'rest.client',
+		'ui.entity-selector',
 	],
 	'skip_core' => false,
 ];

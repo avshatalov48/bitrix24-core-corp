@@ -9,12 +9,6 @@ use Bitrix\Crm\Activity\Entity\ConfigurableRestApp\Dto\LayoutDto;
 use Bitrix\Crm\Activity\Entity\ConfigurableRestApp\Dto\MenuItemDto;
 use Bitrix\Crm\Activity\Entity\ConfigurableRestApp\Dto\TagDto;
 use Bitrix\Crm\Dto\Dto;
-use Bitrix\Crm\Activity\Entity\ConfigurableRestApp\Dto\ContentBlock\DeadlineDto;
-use Bitrix\Crm\Activity\Entity\ConfigurableRestApp\Dto\ContentBlock\LineOfBlocksDto;
-use Bitrix\Crm\Activity\Entity\ConfigurableRestApp\Dto\ContentBlock\LinkDto;
-use Bitrix\Crm\Activity\Entity\ConfigurableRestApp\Dto\ContentBlock\TextDto;
-use Bitrix\Crm\Activity\Entity\ConfigurableRestApp\Dto\ContentBlock\WithTitleDto;
-use Bitrix\Crm\Activity\Entity\ConfigurableRestApp\EventHandler;
 use Bitrix\Crm\Service\Timeline\Item\Activity;
 use Bitrix\Crm\Service\Timeline\Layout;
 use Bitrix\Crm\Service\Timeline\Layout\Action;
@@ -24,16 +18,59 @@ use Bitrix\Crm\Service\Timeline\Layout\Header\Tag;
 use Bitrix\Crm\Service\Timeline\Layout\Icon;
 use Bitrix\Crm\Service\Timeline\Layout\Menu\MenuItem;
 use Bitrix\Crm\Service\Timeline\Layout\Menu\MenuItemDelimiter;
+use Bitrix\Crm\Service\Timeline\Layout\Factory\RestAppConfigurable\ActionFactory;
+use Bitrix\Crm\Service\Timeline\Layout\Factory\RestAppConfigurable\ContentBlockFactory;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Web\Json;
-use Bitrix\Main\Web\Uri;
 use Bitrix\Rest\AppTable;
+use Bitrix\Main\ArgumentException;
 
 class ConfigurableRestApp extends Activity
 {
 	private ?LayoutDto $layoutDto = null;
 	private ?int $restAppId = null;
+	protected ActionFactory $actionFactory;
+	protected ContentBlockFactory $contentBlockFactory;
+
+	protected function getActionFactory(): ActionFactory
+	{
+		if (!isset($this->actionFactory))
+		{
+			$this->actionFactory = new ActionFactory($this, $this->getRestAppClientId(), $this->getRestAppId());
+		}
+
+		return $this->actionFactory;
+	}
+
+	protected function getContentBlocksFactory(): ContentBlockFactory
+	{
+		if (!isset($this->contentBlockFactory))
+		{
+			$this->contentBlockFactory = new ContentBlockFactory($this, $this->getActionFactory());
+		}
+
+		return $this->contentBlockFactory;
+	}
+
+	public function needShowRestAppLayoutBlocks(): bool
+	{
+		return false;
+	}
+
+	public static function isModelValid(\Bitrix\Crm\Service\Timeline\Item\Model $model): bool
+	{
+		try
+		{
+			$layout = Json::decode($model->getAssociatedEntityModel()?->get('PROVIDER_DATA'));
+
+			return !empty($layout);
+		}
+		catch (ArgumentException)
+		{
+			return false;
+		}
+	}
 
 	protected function getActivityTypeId(): string
 	{
@@ -281,7 +318,15 @@ class ConfigurableRestApp extends Activity
 	{
 		if (!$this->layoutDto)
 		{
-			$layout = Json::decode($this->getAssociatedEntityModel()->get('PROVIDER_DATA'));
+			try
+			{
+				$layout = Json::decode($this->getAssociatedEntityModel()->get('PROVIDER_DATA'));
+			}
+			catch (ArgumentException)
+			{
+				$layout = [];
+			}
+
 			$this->layoutDto = new LayoutDto((array)$layout);
 		}
 
@@ -302,113 +347,7 @@ class ConfigurableRestApp extends Activity
 
 	private function createContentBlock(?ContentBlockDto $contentBlockDto): ?ContentBlock
 	{
-		if (!$this->isValidDto($contentBlockDto))
-		{
-			return null;
-		}
-
-		$properties = $contentBlockDto->properties ?? new \stdClass();
-
-		switch ($contentBlockDto->type)
-		{
-			case ContentBlockDto::TYPE_TEXT:
-				/** @var $properties TextDto */
-				return (new ContentBlock\Text())
-					->setValue($properties->value)
-					->setIsMultiline($properties->multiline)
-					->setTitle($properties->title)
-					->setIsBold($properties->bold)
-					->setFontSize($properties->size)
-					->setColor($properties->color)
-					->setScope($properties->scope)
-				;
-
-			case  ContentBlockDto::TYPE_LARGE_TEXT:
-				return (new ContentBlock\EditableDescription())
-					->setText($properties->value)
-					->setEditable(false)
-					->setHeight(ContentBlock\EditableDescription::HEIGHT_LONG)
-				;
-
-			case ContentBlockDto::TYPE_LINK:
-				/** @var $properties LinkDto */
-				return (new ContentBlock\Link())
-					->setValue($properties->text)
-					->setIsBold($properties->bold)
-					->setAction($this->createAction($properties->action))
-					->setScope($properties->scope)
-				;
-
-			case ContentBlockDto::TYPE_DEADLINE:
-				/** @var $properties DeadlineDto */
-				if ($this->getDeadline())
-				{
-					$readonly = !$this->isScheduled() || ($properties->readonly ?? false);
-
-					return (new ContentBlock\EditableDate())
-						->setStyle(ContentBlock\EditableDate::STYLE_PILL)
-						->setDate($this->getDeadline())
-						->setAction($readonly ? null : $this->getChangeDeadlineAction())
-						->setBackgroundColor($readonly ? null : ContentBlock\EditableDate::BACKGROUND_COLOR_WARNING)
-						->setScope($properties->scope)
-					;
-				}
-
-				return null;
-
-			case ContentBlockDto::TYPE_WITH_TITLE:
-				/** @var $properties WithTitleDto */
-				if (!$properties->block || !$this->isValidChildContentBlock($properties->block))
-				{
-					return null;
-				}
-
-				$childBlock = $this->createContentBlock($properties->block);
-				if (!$childBlock)
-				{
-					return null;
-				}
-
-				return (new ContentBlock\ContentBlockWithTitle())
-					->setTitle($properties->title)
-					->setWordWrap(true)
-					->setInline($properties->inline)
-					->setContentBlock($childBlock)
-					->setScope($properties->scope)
-				;
-
-			case ContentBlockDto::TYPE_LINE_OF_BLOCKS:
-				/** @var $properties LineOfBlocksDto */
-				if (!is_array($properties->blocks))
-				{
-					return null;
-				}
-				$blocks = [];
-				foreach ($properties->blocks as $blockId => $blockDto)
-				{
-					if (!$this->isValidChildContentBlock($blockDto))
-					{
-						continue;
-					}
-
-					$block = $this->createContentBlock($blockDto);
-					if ($block)
-					{
-						$blocks[(string)$blockId] = $block;
-					}
-				}
-				if (empty($blocks))
-				{
-					return null;
-				}
-
-				return (new ContentBlock\LineOfTextBlocks())
-					->setScope($properties->scope)
-					->setContentBlocks($blocks)
-				;
-		}
-
-		return null;
+		return $this->getContentBlocksFactory()->createByDto($contentBlockDto);
 	}
 
 	private function createFooterButton(?FooterButtonDto $buttonDto): ?Button
@@ -445,110 +384,13 @@ class ConfigurableRestApp extends Activity
 		{
 			return null;
 		}
-		if ($actionDto->type === ActionDto::TYPE_REDIRECT)
-		{
-			$uri = new Uri($actionDto->uri);
-			$action = new Action\Redirect($uri);
-			if ($uri->getHost()) // open external links in new window
-			{
-				$action->addActionParamString('target', '_blank');
-			}
 
-			return $action;
-		}
-		if (
-			$actionDto->type === ActionDto::TYPE_REST_EVENT
-			|| $actionDto->type === ActionDto::TYPE_OPEN_REST_APP
-		)
-		{
-			$actionParams = $actionDto->actionParams ?? [];
-			if ($actionDto->type === ActionDto::TYPE_REST_EVENT)
-			{
-				$actionParams['entityTypeId'] = $this->getContext()->getEntityTypeId();
-				$actionParams['entityId'] = $this->getContext()->getEntityId();
-				$actionParams['activityId'] = $this->getActivityId();
-				$actionParams['id'] = $actionDto->id;
-
-				$actionParams['APP_ID'] = $this->getRestAppClientId();
-				$signedParams = EventHandler::signParams($actionParams);
-				$animation = null;
-				switch ($actionDto->animationType)
-				{
-					case ActionDto::ANIMATION_TYPE_DISABLE:
-						$animation = Action\Animation::disableBlock()->setForever(true);
-						break;
-					case ActionDto::ANIMATION_TYPE_LOADER:
-						$animation = Action\Animation::showLoaderForItem()->setForever(true);
-						break;
-				}
-
-				return (new Action\RunAjaxAction('crm.activity.configurable.emitRestEvent'))
-					->addActionParamString('signedParams', $signedParams)
-					->setAnimation($animation)
-				;
-
-			}
-			else
-			{
-				$action = $this->createOpenAppAction();
-				foreach ($actionParams as $actionParamName => $actionParamValue)
-				{
-					$action->addActionParamString((string)$actionParamName, (string)$actionParamValue);
-				}
-				if ($actionDto->sliderParams)
-				{
-					if ($actionDto->sliderParams->title)
-					{
-						$action->addActionParamString('bx24_title', $actionDto->sliderParams->title);
-					}
-					if ($actionDto->sliderParams->width)
-					{
-						$action->addActionParamInt('bx24_width', $actionDto->sliderParams->width);
-					}
-					if ($actionDto->sliderParams->leftBoundary)
-					{
-						$action->addActionParamInt('bx24_leftBoundary', $actionDto->sliderParams->leftBoundary);
-					}
-					$labelParams = [];
-					if ($actionDto->sliderParams->labelText)
-					{
-						$labelParams['text'] = $actionDto->sliderParams->labelText;
-					}
-					if ($actionDto->sliderParams->labelColor)
-					{
-						$labelParams['color'] = $actionDto->sliderParams->labelColor;
-					}
-					if ($actionDto->sliderParams->labelBgColor)
-					{
-						$labelParams['bgColor'] = $actionDto->sliderParams->labelBgColor;
-					}
-					if (!empty($labelParams))
-					{
-						$action->addActionParamString('bx24_label', Json::encode($labelParams));
-					}
-				}
-
-				return $action;
-			}
-		}
-
-		return null;
+		return $this->getActionFactory()->createByDto($actionDto);
 	}
 
 	private function createOpenAppAction(): Action\JsEvent
 	{
-		$action = (new Action\JsEvent('Activity:ConfigurableRestApp:OpenApp'));
-		$action->addActionParamInt('restAppId',$this->getRestAppId());
-		$this->appendContextActionParams($action);
-
-		return $action;
-	}
-
-	private function appendContextActionParams(Action $action): void
-	{
-		$action->addActionParamInt('entityTypeId', $this->getContext()->getEntityTypeId());
-		$action->addActionParamInt('entityId', $this->getContext()->getEntityId());
-		$action->addActionParamInt('activityId', $this->getActivityId());
+		return $this->getActionFactory()->createOpenAppAction();
 	}
 
 	private function isValidDto(?Dto $dto): bool
@@ -559,16 +401,6 @@ class ConfigurableRestApp extends Activity
 		}
 
 		return !$dto->hasValidationErrors();
-	}
-
-	private function isValidChildContentBlock(?ContentBlockDto $contentBlock): bool
-	{
-		if (!$this->isValidDto($contentBlock))
-		{
-			return false;
-		}
-
-		return in_array($contentBlock->type, [ContentBlockDto::TYPE_TEXT, ContentBlockDto::TYPE_LINK, ContentBlockDto::TYPE_DEADLINE], true);
 	}
 
 	private function getProviderParams(): array

@@ -7,16 +7,15 @@
  */
 namespace Bitrix\Crm\Exclusion;
 
-use Bitrix\Main\DB\Result;
 use Bitrix\Crm\Communication;
-use Bitrix\Crm\FieldMultiTable;
-use Bitrix\Crm\Exclusion\Entity\ExclusionTable;
-use Bitrix\Main\NotSupportedException;
-use Bitrix\Main\DB\SqlQueryException;
-
-use Bitrix\Crm\LeadTable;
 use Bitrix\Crm\DealTable;
+use Bitrix\Crm\Exclusion\Entity\ExclusionTable;
+use Bitrix\Crm\FieldMultiTable;
+use Bitrix\Crm\LeadTable;
 use Bitrix\Crm\QuoteTable;
+use Bitrix\Main\DB\Result;
+use Bitrix\Main\DB\SqlQueryException;
+use Bitrix\Main\NotSupportedException;
 
 /**
  * Class Store of exclusions
@@ -25,6 +24,19 @@ use Bitrix\Crm\QuoteTable;
  */
 class Store
 {
+	public static function isEntityTypeSupported(int $entityTypeId): bool
+	{
+		static $supported = [
+			\CCrmOwnerType::Contact,
+			\CCrmOwnerType::Company,
+			\CCrmOwnerType::Lead,
+			\CCrmOwnerType::Deal,
+			\CCrmOwnerType::Quote,
+		];
+
+		return in_array($entityTypeId, $supported, true);
+	}
+
 	/**
 	 * Add exclusions from entity.
 	 *

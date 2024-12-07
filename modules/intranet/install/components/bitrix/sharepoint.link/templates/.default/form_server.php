@@ -4,7 +4,7 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
 __IncludeLang($_SERVER['DOCUMENT_ROOT'].$this->GetFolder().'/lang/'.LANGUAGE_ID.'/template.php');
 ?>
 
-<script type="text/javascript">
+<script>
 var oberror = null;
 var step = 1;
 function SLshowError(msg)
@@ -183,8 +183,8 @@ wnd.SetButtons(SLnextButton);
 			<tr>
 				<td class="bx-popup-label bx-width30" valign="top"><?=GetMessage('SL_SETTINGS_CONN_SERVER')?>: </td>
 				<td><input type="text" name="sp_server" value="<?=$arResult['SERVICE']['SP_URL'] ? htmlspecialcharsbx($arResult['SERVICE']['SP_URL']) : 'http://'?>" size="50" onchange="bParamsChanged = true;" onblur="SLtestParams();" />
-				<div id="sp_server_result_0" style="display: none;"><?=ShowError(GetMessage('SL_FORM_SERVER_DOWN'))?></div>
-				<div id="sp_server_result_1" style="display: none;"><?=ShowNote(GetMessage('SL_FORM_SERVER_OK'))?></div>
+				<div id="sp_server_result_0" style="display: none;"><? ShowError(GetMessage('SL_FORM_SERVER_DOWN'))?></div>
+				<div id="sp_server_result_1" style="display: none;"><? ShowNote(GetMessage('SL_FORM_SERVER_OK'))?></div>
 				</td>
 			</tr>
 			<tr class="section">
@@ -199,8 +199,8 @@ wnd.SetButtons(SLnextButton);
 				<td>
 					<input type="password" name="sp_pass"  value="<?=htmlspecialcharsbx($arResult['SERVICE']['SP_AUTH_PASS'])?>" size="30" onchange="bParamsChanged = true" onblur="SLtestParams();" />
 					<input type="checkbox" id="show_pass" onclick="SLshowPass(this.checked)" /> <label for="show_pass"><?=GetMessage('SL_SETTINGS_CONN_PASS_SHOW_SYMBOLS')?></label>
-					<div id="sp_auth_result_0" style="display: none;"><?=ShowError(GetMessage('SL_FORM_SERVER_AUTH_FAILED'))?></div>
-					<div id="sp_auth_result_1" style="display: none;"><?=ShowNote(GetMessage('SL_FORM_SERVER_AUTH_OK'))?></div>
+					<div id="sp_auth_result_0" style="display: none;"><? ShowError(GetMessage('SL_FORM_SERVER_AUTH_FAILED'))?></div>
+					<div id="sp_auth_result_1" style="display: none;"><? ShowNote(GetMessage('SL_FORM_SERVER_AUTH_OK'))?></div>
 
 				</td>
 			</tr>

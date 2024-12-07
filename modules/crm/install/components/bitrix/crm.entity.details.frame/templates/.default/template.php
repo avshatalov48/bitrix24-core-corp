@@ -161,7 +161,10 @@ if($arResult['ENTITY_TYPE_ID'] === CCrmOwnerType::Lead)
 	$APPLICATION->IncludeComponent(
 		'bitrix:crm.lead.details',
 		'',
-		array('ENTITY_ID' => $arResult['ENTITY_ID'])
+		[
+			'ENTITY_ID' => $arResult['ENTITY_ID'],
+			'EXTRAS' => $arResult['EXTRAS'] ?? [],
+		]
 	);
 }
 elseif($arResult['ENTITY_TYPE_ID'] === CCrmOwnerType::Contact)
@@ -169,7 +172,10 @@ elseif($arResult['ENTITY_TYPE_ID'] === CCrmOwnerType::Contact)
 	$APPLICATION->IncludeComponent(
 		'bitrix:crm.contact.details',
 		'',
-		array('ENTITY_ID' => $arResult['ENTITY_ID'])
+		[
+			'ENTITY_ID' => $arResult['ENTITY_ID'],
+			'EXTRAS' => $arResult['EXTRAS'] ?? [],
+		]
 	);
 }
 elseif($arResult['ENTITY_TYPE_ID'] === CCrmOwnerType::Company)
@@ -177,7 +183,10 @@ elseif($arResult['ENTITY_TYPE_ID'] === CCrmOwnerType::Company)
 	$APPLICATION->IncludeComponent(
 		'bitrix:crm.company.details',
 		'',
-		array('ENTITY_ID' => $arResult['ENTITY_ID'])
+		[
+			'ENTITY_ID' => $arResult['ENTITY_ID'],
+			'EXTRAS' => $arResult['EXTRAS'] ?? [],
+		]
 	);
 }
 elseif($arResult['ENTITY_TYPE_ID'] === CCrmOwnerType::Deal)
@@ -185,10 +194,10 @@ elseif($arResult['ENTITY_TYPE_ID'] === CCrmOwnerType::Deal)
 	$APPLICATION->IncludeComponent(
 		'bitrix:crm.deal.details',
 		'',
-		array(
+		[
 			'ENTITY_ID' => $arResult['ENTITY_ID'],
-			'EXTRAS' => $arResult['EXTRAS']
-		)
+			'EXTRAS' => $arResult['EXTRAS'] ?? [],
+		]
 	);
 }
 elseif($arResult['ENTITY_TYPE_ID'] === CCrmOwnerType::Order)
@@ -196,10 +205,10 @@ elseif($arResult['ENTITY_TYPE_ID'] === CCrmOwnerType::Order)
 	$APPLICATION->IncludeComponent(
 		'bitrix:crm.order.details',
 		'',
-		array(
+		[
 			'ENTITY_ID' => $arResult['ENTITY_ID'],
-			'EXTRAS' => $arResult['EXTRAS']
-		)
+			'EXTRAS' => $arResult['EXTRAS'] ?? [],
+		]
 	);
 }
 elseif($arResult['ENTITY_TYPE_ID'] === CCrmOwnerType::OrderCheck)
@@ -207,10 +216,10 @@ elseif($arResult['ENTITY_TYPE_ID'] === CCrmOwnerType::OrderCheck)
 	$APPLICATION->IncludeComponent(
 		'bitrix:crm.order.check.details',
 		'',
-		array(
+		[
 			'ENTITY_ID' => $arResult['ENTITY_ID'],
-			'EXTRAS' => $arResult['EXTRAS']
-		)
+			'EXTRAS' => $arResult['EXTRAS'] ?? [],
+		]
 	);
 }
 elseif($arResult['ENTITY_TYPE_ID'] === CCrmOwnerType::CheckCorrection)
@@ -218,10 +227,10 @@ elseif($arResult['ENTITY_TYPE_ID'] === CCrmOwnerType::CheckCorrection)
 	$APPLICATION->IncludeComponent(
 		'bitrix:crm.check.correction.details',
 		'',
-		array(
+		[
 			'ENTITY_ID' => $arResult['ENTITY_ID'],
-			'EXTRAS' => $arResult['EXTRAS']
-		)
+			'EXTRAS' => $arResult['EXTRAS'] ?? [],
+		]
 	);
 }
 elseif($arResult['ENTITY_TYPE_ID'] === CCrmOwnerType::OrderShipment)
@@ -229,10 +238,10 @@ elseif($arResult['ENTITY_TYPE_ID'] === CCrmOwnerType::OrderShipment)
 	$APPLICATION->IncludeComponent(
 		'bitrix:crm.order.shipment.details',
 		'',
-		array(
+		[
 			'ENTITY_ID' => $arResult['ENTITY_ID'],
-			'EXTRAS' => $arResult['EXTRAS']
-		)
+			'EXTRAS' => $arResult['EXTRAS'] ?? [],
+		]
 	);
 }
 elseif($arResult['ENTITY_TYPE_ID'] === CCrmOwnerType::OrderPayment)
@@ -240,10 +249,10 @@ elseif($arResult['ENTITY_TYPE_ID'] === CCrmOwnerType::OrderPayment)
 	$APPLICATION->IncludeComponent(
 		'bitrix:crm.order.payment.details',
 		'',
-		array(
+		[
 			'ENTITY_ID' => $arResult['ENTITY_ID'],
-			'EXTRAS' => $arResult['EXTRAS']
-		)
+			'EXTRAS' => $arResult['EXTRAS'] ?? [],
+		]
 	);
 }
 else

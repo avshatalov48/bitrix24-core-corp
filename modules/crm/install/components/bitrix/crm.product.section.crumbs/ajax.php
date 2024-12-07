@@ -45,8 +45,6 @@ class CrmProductSectionCrumbsController
 	{
 		try
 		{
-			\CUtil::JSPostUnescape();
-
 			$this->checkRequest();
 
 			$this->processAction();

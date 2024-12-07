@@ -45,13 +45,26 @@ if (\Bitrix\Main\Loader::includeModule('biconnector'))
 	$isLocked = $lockFile ? flock($lockFile, LOCK_EX) : false;
 
 	$manager = Bitrix\BIConnector\Manager::getInstance();
-	$service = $manager->createService(isset($_GET['consumer']) && $_GET['consumer'] === 'datalens' ? 'datalens' : 'pbi');
+
+	$consumer = 'pbi';
+	if (isset($_GET['consumer']) && in_array($_GET['consumer'], ['datalens', 'bi-ctr'], true))
+	{
+		$consumer = $_GET['consumer'];
+	}
+	$service = $manager->createService($consumer);
 	$service->setLanguage($languageCode);
 
 	$limitManager = \Bitrix\BIConnector\LimitManager::getInstance();
 	if ($supersetKey)
 	{
 		$limitManager->setSupersetKey($supersetKey);
+	}
+	else if (
+		!\Bitrix\Main\Loader::includeModule('bitrix24')
+		&& $accessKey === \Bitrix\BIConnector\Superset\KeyManager::getAccessKey()
+	)
+	{
+		$limitManager->setIsSuperset();
 	}
 
 	if (!$manager->checkAccessKey($accessKey))
@@ -78,7 +91,7 @@ if (\Bitrix\Main\Loader::includeModule('biconnector'))
 			ob_start();
 			\Bitrix\BIConnector\PrettyPrinter::printRowsArray($tableFields);
 			$c = ob_get_clean();
-			echo \Bitrix\Main\Text\Encoding::convertEncoding($c, SITE_CHARSET, 'UTF-8');
+			echo $c;
 		}
 		else
 		{

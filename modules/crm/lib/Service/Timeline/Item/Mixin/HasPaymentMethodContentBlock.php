@@ -28,17 +28,11 @@ trait HasPaymentMethodContentBlock
 
 		$result
 			->addContentBlock(
-				'title',
-				(new Text())
-					->setValue(Loc::getMessage('CRM_TIMELINE_ECOMMERCE_PAYMENT_METHOD'))
-					->setFontSize(Text::FONT_SIZE_SM)
-					->setColor(Text::COLOR_BASE_70)
-			)
-			->addContentBlock(
 				'value',
 				(new Text())
-					->setValue((string)($fields['PAY_SYSTEM_NAME'] ?? ''))
-					->setColor(Text::COLOR_BASE_90)
+					->setValue(Loc::getMessage('CRM_TIMELINE_ECOMMERCE_PAYMENT_METHOD_MSGVER_1', ['#PAYMENT_METHOD#' => (string)$fields['PAY_SYSTEM_NAME']]))
+					->setFontSize(Text::FONT_SIZE_SM)
+					->setColor(Text::COLOR_BASE_70)
 			)
 		;
 

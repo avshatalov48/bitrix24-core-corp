@@ -22,13 +22,13 @@ final class SettingPeriodAction extends BaseAction
 
 	protected function getText(): string
 	{
-		return Loc::getMessage('BICONNECTOR_DASHBOARD_GRID_ACTION_SETTING_PERIOD');
+		return Loc::getMessage('BICONNECTOR_DASHBOARD_GRID_ACTION_SETTING_PERIOD') ?? '';
 	}
 
 	public function getControl(array $rawFields): ?array
 	{
 		$dashboardId = (int)$rawFields['ID'];
-		$this->onclick = "BX.BIConnector.DashboardManager.openSettingPeriodSlider({$dashboardId})";
+		$this->onclick = "BX.BIConnector.DashboardManager.openSettingsSlider({$dashboardId})";
 
 		return parent::getControl($rawFields);
 	}

@@ -209,17 +209,20 @@ class ViolationNotifierAgent
 			->getUsersBaseQuery()
 			->addSelect('PERSONAL_GENDER')
 			->where('ID', $shiftPlan->getUserId())
+			->where('ACTIVE', 'Y')
 			->exec()
-			->fetch();
+			->fetch()
+		;
 		if (!$fromUser)
 		{
 			return '';
 		}
 		$name = UserHelper::getInstance()->getFormattedName($fromUser);
 		$gender = $fromUser['PERSONAL_GENDER'] === 'F' ? '_FEMALE' : '_MALE';
-		$notifyText = Loc::getMessage(
+		$notifyText = fn (?string $languageId = null) => Loc::getMessage(
 			'TM_VIOLATION_NOTIFIER_AGENT_MISSED_SHIFT_NOTIFICATION' . $gender,
-			['#USER_NAME#' => $name]
+			['#USER_NAME#' => $name],
+			$languageId
 		);
 		foreach ($toUserIds as $toUserId)
 		{
@@ -289,6 +292,7 @@ class ViolationNotifierAgent
 			->getUsersBaseQuery()
 			->addSelect('PERSONAL_GENDER')
 			->whereIn('ID', $userIds)
+			->where('ACTIVE', 'Y')
 			->exec()
 			->fetchAll();
 		return array_combine(

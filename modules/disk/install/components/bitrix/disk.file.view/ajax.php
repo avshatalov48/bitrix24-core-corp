@@ -297,10 +297,7 @@ class DiskFileViewAjaxController extends \Bitrix\Disk\Internals\Controller
 					$data['DOCUMENT_ID'])
 				)
 				{
-					CBPTrackingService::deleteByWorkflow($workflowId);
-					CBPTaskService::deleteByWorkflow($workflowId);
-
-					CBPStateService::deleteWorkflow($workflowId);
+					CBPDocument::killWorkflow($workflowId);
 				}
 			}
 		}

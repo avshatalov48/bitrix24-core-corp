@@ -282,7 +282,7 @@ class CustomSectionProvider extends Provider
 			return false;
 		}
 		$separator = \Bitrix\Intranet\CustomSection\Provider::PAGE_SETTINGS_SEPARATOR;
-		[$pageCode, $sectionCode, $foo] = explode($separator, $pageSettings);
+		[$pageCode, $sectionCode] = explode($separator, $pageSettings);
 		$pageProviders = static::getSystemPageProviders();
 		if (!isset($pageProviders[$pageCode]))
 		{

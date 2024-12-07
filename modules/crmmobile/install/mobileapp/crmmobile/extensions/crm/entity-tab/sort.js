@@ -6,6 +6,7 @@
 jn.define('crm/entity-tab/sort', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const { getEntityMessage } = require('crm/loc');
+	const { Icon } = require('ui-system/blocks/icon');
 
 	/**
 	 * @class TypeSort
@@ -54,14 +55,12 @@ jn.define('crm/entity-tab/sort', (require, exports, module) => {
 
 		getSortMenuAction(callback)
 		{
-			const pathToIcons = `${currentDomain}/bitrix/mobileapp/crmmobile/extensions/crm/entity-tab/icons/`;
-
 			return {
 				id: 'kanban-sort-toggle',
 				title: Loc.getMessage('M_CRM_ENTITY_TAB_SORT_TOGGLE_TEXT'),
 				checked: (this.typeSort === TypeSort.LastActivityTime),
-				sectionCode: 'sort',
-				iconUrl: `${pathToIcons}focus.png`,
+				sectionCode: 'action',
+				icon: Icon.PING,
 				onItemSelected: this.onItemSelected.bind(this, callback),
 			};
 		}

@@ -12,7 +12,7 @@ $APPLICATION->AddHeadScript($taskJs);
 $name = $arResult["NAME"];
 ?>
 
-<script type="text/javascript">
+<script>
 	var O_<?=$name?> = null;
 	if (typeof TasksTask === "function")
 	{

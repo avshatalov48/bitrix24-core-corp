@@ -13,7 +13,7 @@ abstract class IndexRebuild extends Base
 {
 	public const ERR_ON_START_MERGE_AGENT_ACTIVE = 1010;  // Start is not possible, because merge agent is active.
 
-	protected function getMessage($messageId): ?string
+	protected function getMessage(string $messageId, ?string $languageId = null): ?string
 	{
 		static $isMessagesLoaded = false;
 
@@ -23,14 +23,9 @@ abstract class IndexRebuild extends Base
 			$isMessagesLoaded = true;
 		}
 
-		$message = Loc::getMessage($messageId);
+		$message = Loc::getMessage($messageId, null, $languageId);
 
-		if ($message === null)
-		{
-			return parent::getMessage($messageId);
-		}
-
-		return $message;
+		return $message ?? parent::getMessage($messageId, $languageId);
 	}
 
 	protected function getErrorByCode(int $errorCode): Error
@@ -98,7 +93,10 @@ abstract class IndexRebuild extends Base
 				$this->getEntityTypeId(),
 				$this->getUserId(),
 				!Container::getInstance()->getUserPermissions($this->getUserId())->isAdmin(),
-				array('SCOPE' => $progressData['SCOPE'])
+				[
+					'SCOPE' => $progressData['SCOPE'],
+					'CONTEXT_ID' => $progressData['CONTEXT_ID'] ?? '',
+				]
 			);
 			$totalItemQty += $builder->getTotalCount();
 		}
@@ -115,7 +113,7 @@ abstract class IndexRebuild extends Base
 
 		return true;
 	}
-	
+
 	protected function onRunning(array $progressData): bool
 	{
 		if (!$this->checkStepInterval($progressData))
@@ -154,7 +152,10 @@ abstract class IndexRebuild extends Base
 				$this->getEntityTypeId(),
 				$this->getUserId(),
 				!Container::getInstance()->getUserPermissions($this->getUserId())->isAdmin(),
-				array('SCOPE' => $progressData['SCOPE'])
+				[
+					'SCOPE' => $progressData['SCOPE'],
+					'CONTEXT_ID' => $progressData['CONTEXT_ID'] ?? '',
+				]
 			);
 
 			$buildData = $progressData['BUILD_DATA'];
@@ -216,6 +217,7 @@ abstract class IndexRebuild extends Base
 
 			if(!$isInProgress)
 			{
+				$builder->dropDataSourceCache();
 				$isFinal = $typeIndex === ($countOfTypes - 1);
 				if(!$isFinal)
 				{

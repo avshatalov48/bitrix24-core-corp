@@ -23,7 +23,6 @@ $MESS['CRM_TIMELINE_BLOCK_CLIENT_MARK_TEXT_MSGVER_1'] = 'Клиент оцени
 $MESS['CRM_TIMELINE_BLOCK_DESCRIPTION_EXCLUDE_1'] = 'Звонок поступил в нерабочее время';
 $MESS["CRM_TIMELINE_BLOCK_DESCRIPTION_EXCLUDE_2"] = "Длительность звонка:";
 $MESS['CRM_TIMELINE_BUTTON_CALL'] = 'Позвонить';
-$MESS['CRM_TIMELINE_BUTTON_CALL_SCHEDULE'] = 'Запланировать';
 $MESS['CRM_TIMELINE_BUTTON_CALL_COMPLETE'] = 'Обработан';
 $MESS['CRM_TIMELINE_BUTTON_TIP_TRANSCRIPT'] = 'Показать расшифровку звонка';
 $MESS['CRM_TIMELINE_ITEM_CALL_COMPLETE_TO'] = 'Крайний срок';

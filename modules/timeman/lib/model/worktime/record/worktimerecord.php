@@ -114,7 +114,13 @@ class WorktimeRecord extends EO_WorktimeRecord
 		$this->setPaused(false);
 		$this->setDateFinish(DateTime::createFromTimestamp($this->getRecordedStopTimestamp()));
 		$this->setTimeFinish(TimeHelper::getInstance()->getSecondsFromDateTime($this->buildRecordedStopDateTime()));
-		$this->setDuration($this->getTimeFinish() - $this->getTimeStart() - $this->getRecordedBreakLength());
+
+		$this->setDuration(
+			$this->correctDuration(
+				$this->getTimeFinish() - $this->getTimeStart() - $this->getRecordedBreakLength()
+			)
+		);
+
 		$this->setPaused(false);
 	}
 
@@ -124,13 +130,23 @@ class WorktimeRecord extends EO_WorktimeRecord
 	public function pauseWork($recordForm)
 	{
 		$pauseStartUtcTimestamp = $this->getTimeHelper()->getUtcNowTimestamp();
+
 		$this->setRecordedDuration($this->calculateDurationSince($pauseStartUtcTimestamp));
+
 		$this->setCurrentStatus(WorktimeRecordTable::STATUS_PAUSED);
+
 		$this->setIpClose($recordForm->ipClose);
 		$this->setLonClose($recordForm->longitudeClose);
 		$this->setLatClose($recordForm->latitudeClose);
+
 		$this->setDateFinish(DateTime::createFromTimestamp($pauseStartUtcTimestamp));
-		$this->setTimeFinish(($this->getTimeHelper()->getSecondsFromDateTime($this->getDateFinish())) % 86400);
+
+		$this->setTimeFinish(
+			TimeHelper::getInstance()->getSecondsFromDateTime($this->buildRecordedStartDateTime())
+			+ $this->getTimeLeaks()
+			+ $this->getRecordedDuration()
+		);
+
 		$this->setPaused(true);
 	}
 
@@ -185,7 +201,11 @@ class WorktimeRecord extends EO_WorktimeRecord
 		if ($this->isTimeNeedToBeSaved($workRecordForm->recordedBreakLength, $this->getRecordedBreakLength()))
 		{
 			$this->setRecordedBreakLength($workRecordForm->recordedBreakLength);
-			$this->updateDuration($this->getRecordedStopTimestamp() > 0 ? $this->getRecordedStopTimestamp() : $this->getTimeHelper()->getUtcNowTimestamp());
+			$this->updateDuration(
+				$this->getRecordedStopTimestamp() > 0
+					? $this->getRecordedStopTimestamp()
+					: $this->getTimeHelper()->getUtcNowTimestamp()
+			);
 		}
 		return $this;
 	}
@@ -269,7 +289,12 @@ class WorktimeRecord extends EO_WorktimeRecord
 		{
 			$this->setRecordedDuration($this->calculateDurationSince($endTimestamp));
 		}
-		$this->setDuration($this->getTimeFinish() - $this->getTimeStart() - $this->getRecordedBreakLength());
+
+		$this->setDuration(
+			$this->correctDuration(
+				$this->getTimeFinish() - $this->getTimeStart() - $this->getRecordedBreakLength()
+			)
+		);
 	}
 
 	private function getTimeHelper()
@@ -601,6 +626,18 @@ class WorktimeRecord extends EO_WorktimeRecord
 			$this->setRecordedBreakLength($this->getRecordedBreakLength() + $newBreak);
 			$this->setActualBreakLength($this->getActualBreakLength() + $newBreak);
 		}
+	}
+
+	private function correctDuration(int $duration): int
+	{
+		$secondsPerDay = 86400;
+
+		if ($duration < 0)
+		{
+			return $duration + $secondsPerDay;
+		}
+
+		return $duration;
 	}
 
 	/**

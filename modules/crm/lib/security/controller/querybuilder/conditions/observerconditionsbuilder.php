@@ -2,14 +2,18 @@
 
 namespace Bitrix\Crm\Security\Controller\QueryBuilder\Conditions;
 
+use Bitrix\Crm\Observer\ObserverRepository;
 use Bitrix\Crm\Security\Controller;
 
 class ObserverConditionsBuilder
 {
+	private ObserverRepository $observerRepository;
+
 	public function __construct(
 		private Controller\Base $controller
 	)
 	{
+		$this->observerRepository = ObserverRepository::getInstance();
 	}
 
 	/**
@@ -47,6 +51,11 @@ class ObserverConditionsBuilder
 		$observerConditions = [];
 		foreach ($categoryIdMap as $entityTypeID => $categoryIds)
 		{
+			if (!$this->observerRepository->isUsersPresentAsObservers($userId, $entityTypeID))
+			{
+				continue;
+			}
+
 			$categoryIds = array_filter($categoryIds, fn($cat) => $cat !== null);
 			$categoryIds = array_unique($categoryIds);
 

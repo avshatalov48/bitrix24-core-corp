@@ -5,6 +5,7 @@ namespace Bitrix\Disk\Controller;
 use Bitrix\Disk;
 use Bitrix\Disk\Configuration;
 use Bitrix\Disk\Driver;
+use Bitrix\Disk\Integration\Bitrix24Manager;
 use Bitrix\Disk\Internals\Engine;
 use Bitrix\Disk\Internals\Error\Error;
 use Bitrix\Disk\Security\ParameterSigner;
@@ -326,14 +327,24 @@ class File extends BaseObject
 		return $response;
 	}
 
+	public function copyToAction(Disk\File $file, Disk\Folder $toFolder)
+	{
+		return $this->copyTo($file, $toFolder);
+	}
+
+	public function moveToAction(Disk\File $file, Disk\Folder $toFolder)
+	{
+		return $this->move($file, $toFolder);
+	}
+
 	public function markDeletedAction(Disk\File $file)
 	{
-		return $this->markDeleted($file);
+		$this->markDeleted($file);
 	}
 
 	public function deleteAction(Disk\File $file)
 	{
-		return $this->deleteFile($file);
+		$this->deleteFile($file);
 	}
 
 	public function restoreAction(Disk\File $file)
@@ -363,6 +374,13 @@ class File extends BaseObject
 
 	public function generateExternalLinkAction(Disk\File $file)
 	{
+		if (!Bitrix24Manager::isFeatureEnabled('disk_manual_external_link'))
+		{
+			$this->addError(new Error('Could not generate external link. Feature is disabled by tarif.'));
+
+			return null;
+		}
+
 		return $this->generateExternalLink($file);
 	}
 

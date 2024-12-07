@@ -778,6 +778,7 @@ B24.Timemanager = {
 			this.layout.statusBlock = BX("timeman-status-block");
 			this.layout.taskTime = BX("timeman-task-time");
 			this.layout.taskTimer = BX("timeman-task-timer");
+			this.layout.checkInCounter = BX('timeman-stafftrack-counter');
 
 			window.BXTIMEMAN.ShowFormWeekly(reportJson);
 
@@ -900,6 +901,25 @@ B24.Timemanager = {
 
 	redraw : function()
 	{
+		const checkInValue = this.data.CHECKIN_COUNTER?.VALUE;
+		const checkInClass = this.data.CHECKIN_COUNTER?.CLASS;
+		if (checkInValue)
+		{
+			BX.Runtime.loadExtension('ui.counter').then(() => {
+				BX.Dom.style(this.layout.checkInCounter, 'display', '');
+				this.layout.checkInCounter.firstElementChild.textContent = checkInValue;
+
+				const currentClass = this.layout.checkInCounter.dataset.class;
+				BX.Dom.removeClass(this.layout.checkInCounter, currentClass);
+				BX.Dom.addClass(this.layout.checkInCounter, checkInClass);
+				this.layout.checkInCounter.dataset.class = checkInClass;
+			});
+		}
+		else
+		{
+			this.layout.checkInCounter.style.display = 'none';
+		}
+
 		this.redraw_planner(this.data.PLANNER);
 
 		if (this.data.STATE == "CLOSED" && (this.data.CAN_OPEN == "REOPEN" || !this.data.CAN_OPEN))

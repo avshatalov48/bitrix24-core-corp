@@ -187,7 +187,7 @@ class Link
 
 		$result = '';
 		if (ModuleManager::isModuleInstalled('bitrix24')) {
-			$result = '/settings/license_buy.php?product=subscr' . $from;
+			$result = '/settings/license_all.php?subscr=o' . $from;
 		} else {
 			$region = Option::get('main', '~PARAM_CLIENT_LANG', LANGUAGE_ID);
 

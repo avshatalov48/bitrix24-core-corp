@@ -6,7 +6,7 @@ use Bitrix\Disk\Internals\Error\Error;
 use Bitrix\Disk\Internals\Error\ErrorCollection;
 use Bitrix\Disk\Internals\Error\IErrorable;
 use Bitrix\Disk\Internals\Engine;
-use Bitrix\Main\ArgumentNullException;
+use Bitrix\Main\ArgumentException;
 use Bitrix\Rest\RestException;
 
 abstract class Base implements IErrorable
@@ -76,7 +76,7 @@ abstract class Base implements IErrorable
 
 			return $binder->invoke();
 		}
-		catch(ArgumentNullException $e)
+		catch (ArgumentException $e)
 		{
 			throw new RestException(
 				"Invalid value of parameter { {$e->getParameter()} }.",

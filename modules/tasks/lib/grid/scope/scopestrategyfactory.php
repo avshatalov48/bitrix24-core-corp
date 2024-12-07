@@ -2,17 +2,29 @@
 
 namespace Bitrix\Tasks\Grid\Scope;
 
+use Bitrix\Tasks\Grid\Scope\Types\ProjectFlowStrategy;
 use Bitrix\Tasks\Grid\Scope\Types\SpaceStrategy;
+use Bitrix\Tasks\Grid\Scope\Types\StageStrategy;
 use Bitrix\Tasks\Grid\ScopeStrategyInterface;
 
 class ScopeStrategyFactory
 {
-	public static function getStrategy(string $context): ?ScopeStrategyInterface
+	/**
+	 * @return ScopeStrategyInterface[]
+	 */
+	public static function getStrategies(array $parameters = []): array
 	{
-		return match (mb_strtolower($context))
+		$strategies = [new StageStrategy()];
+		if (mb_strtolower($parameters['SCOPE'] ?? '') === Scope::SPACES)
 		{
-			Scope::SPACES => new SpaceStrategy(),
-			default => null,
-		};
+			$strategies[] = new SpaceStrategy();
+		}
+
+		if (($parameters['GROUP_ID'] ?? 0) > 0)
+		{
+			$strategies[] = new ProjectFlowStrategy();
+		}
+
+		return $strategies;
 	}
 }

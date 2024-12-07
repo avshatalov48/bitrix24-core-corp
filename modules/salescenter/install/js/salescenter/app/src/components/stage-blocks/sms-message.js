@@ -276,6 +276,12 @@ const SmsMessage = {
 			this.currentSenderCode = currentSenderCode;
 			this.senders = senders;
 			this.pushedToUseBitrix24Notifications = pushedToUseBitrix24Notifications;
+
+			this.$root.$app.options.currentSenderCode = this.currentSenderCode;
+			this.$root.$app.options.senders = this.senders;
+			this.$root.$app.options.pushedToUseBitrix24Notifications = this.pushedToUseBitrix24Notifications;
+
+			this.$store.commit('orderCreation/setIsSenderSelected', this.currentSenderCode !== '');
 		},
 		handleOnSmsSenderSelected(value)
 		{
@@ -292,7 +298,7 @@ const SmsMessage = {
 						this.initialize(
 							resolve.data.currentSenderCode,
 							resolve.data.senders,
-							resolve.data.pushedToUseBitrix24Notifications
+							resolve.data.pushedToUseBitrix24Notifications,
 						);
 						this.smsSenderListComponentKey += 1;
 					}

@@ -31,6 +31,16 @@ class OrderCheckController extends EntityController
 			$data['PRINTED'] = $data['SETTINGS']['PRINTED'];
 		}
 
+		if (isset($data['SETTINGS']['PRINTING']))
+		{
+			$data['PRINTING'] = $data['SETTINGS']['PRINTING'];
+		}
+
+		if (isset($data['SETTINGS']['ERROR_MESSAGE']))
+		{
+			$data['ERROR_MESSAGE'] = $data['SETTINGS']['ERROR_MESSAGE'];
+		}
+
 		unset($data['SETTINGS']);
 
 		return parent::prepareHistoryDataModel($data, $options);
@@ -89,6 +99,29 @@ class OrderCheckController extends EntityController
 		$timelineEntryId = OrderCheckEntry::create([
 			'ENTITY_ID' => $ownerId,
 			'TYPE_CATEGORY_ID' => TimelineType::UNDEFINED,
+			'AUTHOR_ID' => self::resolveCreatorID($orderFields),
+			'SETTINGS' => $settings,
+			'BINDINGS' => $bindings,
+		]);
+
+		foreach ($bindings as $binding)
+		{
+			$this->sendPullEventOnAdd(
+				new ItemIdentifier($binding['ENTITY_TYPE_ID'], $binding['ENTITY_ID']),
+				$timelineEntryId
+			);
+		}
+	}
+
+	public function onPrintingCheck(int $ownerId, array $params): void
+	{
+		$bindings = $params['BINDINGS'] ?? [];
+		$settings = $params['SETTINGS'] ?? [];
+		$orderFields = $params['ORDER_FIELDS'] ?? [];
+
+		$timelineEntryId = OrderCheckEntry::create([
+			'ENTITY_ID' => $ownerId,
+			'TYPE_CATEGORY_ID' => TimelineType::MARK,
 			'AUTHOR_ID' => self::resolveCreatorID($orderFields),
 			'SETTINGS' => $settings,
 			'BINDINGS' => $bindings,

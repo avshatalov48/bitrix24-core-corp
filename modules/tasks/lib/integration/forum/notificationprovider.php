@@ -101,7 +101,7 @@ class NotificationProvider implements ProviderInterface
 							"AVATAR_SIZE" => 100,
 							"LANGUAGE_ID" => $site["LANGUAGE_ID"],
 							"SITE_ID" => SITE_ID,
-							"PULL" => "Y",
+							"PULL" => "N",
 						)
 					);
 				}

@@ -171,11 +171,13 @@ class Event
 			'TASK_ID',
 			'ID',
 			'OLD_RECORD',
+			'NEW_RECORD',
 			'GROUP_ID',
 			'CREATED_BY',
 			'RESPONSIBLE_ID',
 			'ACCOMPLICES',
 			'AUDITORS',
+			'MESSAGE_ID',
 		];
 
 		foreach ($data as $key => $row)
@@ -189,7 +191,26 @@ class Event
 		if (isset($data['OLD_RECORD']['ID']))
 		{
 			$data['TASK_ID'] = $data['OLD_RECORD']['ID'];
+			$data['PREVIOUS_GROUP_ID'] = $data['OLD_RECORD']['GROUP_ID'] ?? null;
+			$data['OLD_MEMBERS'] = array_merge(
+				[$data['OLD_RECORD']['CREATED_BY']],
+				[$data['OLD_RECORD']['RESPONSIBLE_ID']],
+				$data['OLD_RECORD']['ACCOMPLICES'],
+				$data['OLD_RECORD']['AUDITORS'],
+			);
 			unset($data['OLD_RECORD']);
+		}
+
+		if (isset($data['NEW_RECORD']))
+		{
+			$data['NEW_MEMBERS'] = array_merge(
+				[$data['NEW_RECORD']['CREATED_BY']],
+				[$data['NEW_RECORD']['RESPONSIBLE_ID']],
+				$data['NEW_RECORD']['ACCOMPLICES'],
+				$data['NEW_RECORD']['AUDITORS'],
+			);
+			$data['GROUP_ID'] = $data['NEW_RECORD']['GROUP_ID'] ?? null;
+			unset($data['NEW_RECORD']);
 		}
 
 		return $data;

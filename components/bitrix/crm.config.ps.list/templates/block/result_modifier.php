@@ -8,8 +8,8 @@ if (array_key_exists('PAY_SYSTEMS', $arResult))
 {
 	foreach ($arResult['PAY_SYSTEMS'] as $id => $data)
 	{
-		if (preg_match('/bill(\w+)*$/i'.BX_UTF_PCRE_MODIFIER, $data['HANDLER']) ||
-			preg_match('/quote(_\w+)*$/i'.BX_UTF_PCRE_MODIFIER, $data['HANDLER'])
+		if (preg_match('/bill(\w+)*$/iu', $data['HANDLER']) ||
+			preg_match('/quote(_\w+)*$/iu', $data['HANDLER'])
 		)
 		{
 			continue;

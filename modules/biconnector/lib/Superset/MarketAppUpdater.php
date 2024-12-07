@@ -116,18 +116,34 @@ class MarketAppUpdater
 	 */
 	private function addSystemDashboardRows(array $codes): void
 	{
+		if (!$codes)
+		{
+			return;
+		}
+
 		$manager = MarketDashboardManager::getInstance();
 		$allSystemApps = $manager->getSystemDashboardApps();
 		$apps = array_filter($allSystemApps, static fn($item) => in_array($item['CODE'], $codes, true));
 		foreach ($apps as $app)
 		{
-			SupersetDashboardTable::add([
-				'EXTERNAL_ID' => null,
-				'TITLE' => $app['NAME'],
-				'TYPE' => SupersetDashboardTable::DASHBOARD_TYPE_SYSTEM,
-				'APP_ID' => $app['CODE'],
-				'STATUS' => SupersetDashboardTable::DASHBOARD_STATUS_LOAD,
-			]);
+			$dashboard = SupersetDashboardTable::getList([
+				'filter' => [
+					'=APP_ID' => $app['CODE'],
+					'=TYPE' => SupersetDashboardTable::DASHBOARD_TYPE_SYSTEM,
+				],
+				'limit' => 1,
+			])->fetchObject();
+
+			if (!$dashboard)
+			{
+				SupersetDashboardTable::createObject()
+					->setTitle($app['NAME'])
+					->setType(SupersetDashboardTable::DASHBOARD_TYPE_SYSTEM)
+					->setStatus(SupersetDashboardTable::DASHBOARD_STATUS_LOAD)
+					->setAppId($app['CODE'])
+					->save()
+				;
+			}
 		}
 	}
 

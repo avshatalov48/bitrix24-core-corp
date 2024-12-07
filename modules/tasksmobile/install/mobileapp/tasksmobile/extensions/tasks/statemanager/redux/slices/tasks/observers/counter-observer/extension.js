@@ -27,7 +27,7 @@ jn.define('tasks/statemanager/redux/slices/tasks/observers/counter-observer', (r
 				return;
 			}
 
-			const prevTask = prevTasks[Number(nextTask.id)];
+			const prevTask = prevTasks[nextTask.id];
 
 			const prevIsMember = selectIsMember(prevTask);
 			const prevCounterValue = selectCounter(prevTask).value;

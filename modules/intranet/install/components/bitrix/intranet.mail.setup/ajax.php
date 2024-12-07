@@ -1056,14 +1056,10 @@ class CIntranetMailSetupAjax
 
 					if (is_set($_REQUEST, 'imap_dirs'))
 					{
-						$income = (array) \Bitrix\Main\Text\Encoding::convertEncoding(
-							$_REQUEST['imap_dirs']['income'], 'UTF-8', SITE_CHARSET
-						);
+						$income = (array) $_REQUEST['imap_dirs']['income'];
 						$mbData['OPTIONS']['imap']['income'] = array_intersect($income, $availableDirs);
 
-						$outcome = (array) \Bitrix\Main\Text\Encoding::convertEncoding(
-							$_REQUEST['imap_dirs']['outcome'], 'UTF-8', SITE_CHARSET
-						);
+						$outcome = (array) $_REQUEST['imap_dirs']['outcome'];
 						$mbData['OPTIONS']['imap']['outcome'] = array_intersect($outcome, $availableDirs);
 					}
 
@@ -1231,14 +1227,10 @@ class CIntranetMailSetupAjax
 
 				if (is_set($_REQUEST, 'imap_dirs'))
 				{
-					$income = (array) \Bitrix\Main\Text\Encoding::convertEncoding(
-						$_REQUEST['imap_dirs']['income'], 'UTF-8', SITE_CHARSET
-					);
+					$income = (array) $_REQUEST['imap_dirs']['income'];
 					$mbData['OPTIONS']['imap']['income'] = array_intersect($income, $availableDirs);
 
-					$outcome = (array) \Bitrix\Main\Text\Encoding::convertEncoding(
-						$_REQUEST['imap_dirs']['outcome'], 'UTF-8', SITE_CHARSET
-					);
+					$outcome = (array) $_REQUEST['imap_dirs']['outcome'];
 					$mbData['OPTIONS']['imap']['outcome'] = array_intersect($outcome, $availableDirs);
 				}
 
@@ -1314,12 +1306,8 @@ class CIntranetMailSetupAjax
 
 				if (is_set($_REQUEST, 'imap_dirs'))
 				{
-					$income = (array) \Bitrix\Main\Text\Encoding::convertEncoding(
-						$_REQUEST['imap_dirs']['income'], 'UTF-8', SITE_CHARSET
-					);
-					$outcome = (array) \Bitrix\Main\Text\Encoding::convertEncoding(
-						$_REQUEST['imap_dirs']['outcome'], 'UTF-8', SITE_CHARSET
-					);
+					$income = (array) $_REQUEST['imap_dirs']['income'];
+					$outcome = (array) $_REQUEST['imap_dirs']['outcome'];
 				}
 				else
 				{

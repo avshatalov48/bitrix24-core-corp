@@ -2,6 +2,20 @@ import { Dom, Loc, Tag, Type, Text, Event } from 'main.core';
 import 'ui.design-tokens';
 import 'ui.fonts.opensans';
 import './style.css';
+import { Attention, AttentionPresets } from './attention';
+
+export type TextboxOptions = {
+	text: string,
+	title: string,
+	enableSearch: boolean,
+	previousTextContent: HTMLElement,
+	attentions: Array<Attention>,
+};
+
+export {
+	Attention,
+	AttentionPresets,
+};
 
 export class Textbox
 {
@@ -12,12 +26,13 @@ export class Textbox
 
 	searchInputPlaceholder = Loc.getMessage('CRM_COPILOT_TEXTBOX_SEARCH_PLACEHOLDER');
 
-	constructor(options = {}): void
+	constructor(options: TextboxOptions = {}): void
 	{
 		this.setText(options.text);
 		this.title = (Type.isString(options.title)) ? options.title : '';
 		this.enableSearch = Type.isBoolean(options.enableSearch) ? options.enableSearch : true;
 		this.previousTextContent = Type.isElementNode(options.previousTextContent) ? options.previousTextContent : null;
+		this.attentions = options.attentions ?? [];
 	}
 
 	setText(text)
@@ -37,6 +52,7 @@ export class Textbox
 		Dom.append(this.getHeaderContainer(), this.rootContainer);
 		Dom.append(this.getPreviousTextContainer(), this.rootContainer);
 		Dom.append(this.getContentContainer(), this.rootContainer);
+		Dom.append(this.getAttentionsContainer(), this.rootContainer);
 	}
 
 	get(): HTMLElement
@@ -168,6 +184,21 @@ export class Textbox
 		Dom.append(searchBtn, searchNode);
 
 		return searchNode;
+	}
+
+	getAttentionsContainer(): HTMLElement
+	{
+		if (!Type.isArrayFilled(this.attentions))
+		{
+			return Tag.render``;
+		}
+
+		const attentionsContainer = Tag.render`<div class="crm-copilot-textbox__attentions"></div>`;
+		this.attentions.forEach((attention) => {
+			Dom.append(attention.render(), attentionsContainer);
+		});
+
+		return attentionsContainer;
 	}
 
 	getPreviousTextContainer(): HTMLElement

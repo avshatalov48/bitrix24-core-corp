@@ -117,7 +117,6 @@ $filter = array('CATALOG_ID' => $catalogID);
 
 if(isset($_REQUEST["search"]) && !empty($_REQUEST["search"]))
 {
-	CUtil::JSPostUnescape();
 	$filter['%NAME'] = trim($_REQUEST["search"]);
 	$filter['LOGIC'] = 'OR';
 }

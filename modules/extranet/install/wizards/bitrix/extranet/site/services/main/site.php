@@ -49,7 +49,7 @@ if (!defined("WIZARD_IS_RERUN") || WIZARD_IS_RERUN !== true || WIZARD_B24_TO_CP)
 		$EMAIL = COption::GetOptionString("main", "email_from");
 		$LANGUAGE_ID = LANGUAGE_ID;
 		$DOC_ROOT = "";
-		$CHARSET = (defined("BX_UTF") ? "UTF-8" : "windows-1251");
+		$CHARSET = "UTF-8";
 		$SERVER_NAME = $_SERVER["SERVER_NAME"];
 	}
 

@@ -10,11 +10,14 @@ return [
 		'tasks:statemanager/redux/slices/kanban-settings/meta',
 		'tasks:statemanager/redux/slices/kanban-settings/thunk',
 		'tasks:statemanager/redux/slices/stage-settings/thunk',
+		'tasks:statemanager/redux/slices/kanban-settings/src/tools',
+		'tasks:statemanager/redux/slices/kanban-settings/reducer',
+		'tasks:statemanager/redux/slices/kanban-settings/action',
+		'tasks:statemanager/redux/slices/tasks/thunk',
+		'tasks:statemanager/redux/slices/kanban-settings/selector',
 	],
 	'bundle' => [
-		'./src/tools',
 		'./src/extra-reducer',
-		'./src/selector',
 		'./src/slice',
-	]
+	],
 ];

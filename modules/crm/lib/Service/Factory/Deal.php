@@ -504,7 +504,10 @@ final class Deal extends Factory
 			'order' => [
 				'SORT' => 'ASC',
 				'ID' => 'ASC',
-			]
+			],
+			'cache' => [
+				'ttl' => 84600,
+			],
 		])->fetchCollection();
 		foreach ($categories as $category)
 		{
@@ -587,6 +590,10 @@ final class Deal extends Factory
 			)
 			->addAction(
 				Operation::ACTION_AFTER_SAVE,
+				new Operation\Action\Compatible\SocialNetwork\ProcessSendNotification\WhenAddingEntity(),
+			)
+			->addAction(
+				Operation::ACTION_AFTER_SAVE,
 				new Operation\Action\Compatible\SendEvent('OnAfterCrmDealAdd'),
 			)
 			->addAction(
@@ -649,7 +656,12 @@ final class Deal extends Factory
 			->addAction(
 				Operation::ACTION_AFTER_SAVE,
 				new Operation\Action\Compatible\SocialNetwork\ProcessUpdate(),
-			)->addAction(
+			)
+			->addAction(
+				Operation::ACTION_AFTER_SAVE,
+				new Operation\Action\Compatible\SocialNetwork\ProcessSendNotification\WhenUpdatingEntity(),
+			)
+			->addAction(
 				Operation::ACTION_AFTER_SAVE,
 				new Operation\Action\UpdateMlScoring(),
 			)
@@ -750,6 +762,11 @@ final class Deal extends Factory
 	}
 
 	public function isSmartActivityNotificationSupported(): bool
+	{
+		return true;
+	}
+
+	public function isCommunicationRoutingSupported(): bool
 	{
 		return true;
 	}

@@ -1,0 +1,21 @@
+<?php
+$MESS["M_INTRANET_PERSONAL_MOBILE_IS_NOT_FILLED"] = "User didn't provide their phone number";
+$MESS["M_INTRANET_RECOMMENDATION_TO_ASSIGN_USER_AS_ADMINISTRATOR_BUTTON_TEXT"] = "Make administrator";
+$MESS["M_INTRANET_RECOMMENDATION_TO_ASSIGN_USER_AS_ADMINISTRATOR_DESCRIPTION"] = "Administrators have full access to user and customer personal information. They can invite and dismiss users and employees; change user permissions and Bitrix24 settings. Do you want to make this user an administrator?";
+$MESS["M_INTRANET_RECOMMENDATION_TO_ASSIGN_USER_AS_ADMINISTRATOR_TITLE"] = "Assign user as administrator?";
+$MESS["M_INTRANET_RECOMMENDATION_TO_ENABLE_2FA_BUTTON_TEXT"] = "Send notification";
+$MESS["M_INTRANET_RECOMMENDATION_TO_ENABLE_2FA_DESCRIPTION"] = "With Bitrix24, users can protect their account with a second authentication factor. Send the user a notification suggesting to enable 2FA.";
+$MESS["M_INTRANET_RECOMMENDATION_TO_ENABLE_2FA_TITLE"] = "Ask the user to protect their account with two-factor authentication (2FA)";
+$MESS["M_INTRANET_RECOMMENDATION_TO_INSTALL_DESKTOP_ALREADY_INSTALLED"] = "Desktop app already installed";
+$MESS["M_INTRANET_RECOMMENDATION_TO_INSTALL_DESKTOP_BUTTON_TEXT"] = "Nudge";
+$MESS["M_INTRANET_RECOMMENDATION_TO_INSTALL_DESKTOP_DESCRIPTION"] = "Just click an icon on the Desktop instead of opening the browser. Plus, the desktop app can record video calls and ring on an incoming phone call.";
+$MESS["M_INTRANET_RECOMMENDATION_TO_INSTALL_DESKTOP_IS_NOT_INSTALLED"] = "Desktop app is not installed";
+$MESS["M_INTRANET_RECOMMENDATION_TO_INSTALL_DESKTOP_TITLE"] = "Nudge the user to install Bitrix24 desktop app";
+$MESS["M_INTRANET_RECOMMENDATION_TO_INSTALL_MOBILE_ALREADY_INSTALLED"] = "Mobile app is already installed";
+$MESS["M_INTRANET_RECOMMENDATION_TO_INSTALL_MOBILE_IS_NOT_INSTALLED"] = "Mobile app is not installed";
+$MESS["M_INTRANET_USER_STATUS_ADMIN"] = "Administrator";
+$MESS["M_INTRANET_USER_STATUS_DESKTOP_INSTALLED"] = "Computer";
+$MESS["M_INTRANET_USER_STATUS_INVITED"] = "Invite pending";
+$MESS["M_INTRANET_USER_STATUS_INVITE_IS_SENDED"] = "Invitation re-sent";
+$MESS["M_INTRANET_USER_STATUS_MOBILE_APP_INSTALLED"] = "Phone";
+$MESS["M_INTRANET_USER_STATUS_PENDING"] = "Pending log in confirmation";

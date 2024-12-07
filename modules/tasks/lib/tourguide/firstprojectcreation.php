@@ -9,7 +9,6 @@ use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
 use Bitrix\Socialnetwork\UserToGroupTable;
 use Bitrix\Socialnetwork\WorkgroupTable;
-use Bitrix\Tasks\TourGuide;
 use Bitrix\Tasks\TourGuide\Exception\TourGuideException;
 use Exception;
 

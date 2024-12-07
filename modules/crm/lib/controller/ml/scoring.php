@@ -3,10 +3,12 @@
 namespace Bitrix\Crm\Controller\Ml;
 
 use Bitrix\Crm\Ml\ViewHelper;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Engine\Controller;
 use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Error;
 use Bitrix\Main\Loader;
+use CCrmOwnerType;
 
 class Scoring extends Controller
 {
@@ -15,39 +17,51 @@ class Scoring extends Controller
 	 *
 	 * @param string $entityType String type of the entity.
 	 * @param int $entityId Id of the entity
+	 *
 	 * @return array|null
 	 */
 	public function tryCreateFirstPredictionAction($entityType, $entityId)
 	{
-		$userPermissions = \CCrmPerms::GetCurrentUserPermissions();
-		if (!\CCrmAuthorizationHelper::CheckReadPermission($entityType, $entityId, $userPermissions))
+		$entityTypeId = CCrmOwnerType::ResolveID($entityType);
+		$categoryId = Container::getInstance()
+			->getFactory($entityTypeId)
+			?->getItemCategoryId($entityId)
+		;
+
+		if (
+			!Container::getInstance()->getUserPermissions()->checkReadPermissions(
+				$entityTypeId,
+				$entityId,
+				$categoryId
+			)
+		)
 		{
 			$this->addError(new Error("Access denied"));
+
 			return null;
 		}
 
-		$entityTypeId = \CCrmOwnerType::ResolveID($entityType);
-
-		if(!Loader::includeModule("ml"))
+		if (!Loader::includeModule("ml"))
 		{
 			$this->addError(new Error("ML module is not installed"));
 			return null;
 		}
 
-		if(!\Bitrix\Crm\Ml\Scoring::isMlAvailable() || !\Bitrix\Crm\Ml\Scoring::isEnabled())
+		if (!\Bitrix\Crm\Ml\Scoring::isMlAvailable() || !\Bitrix\Crm\Ml\Scoring::isEnabled())
 		{
 			$this->addError(new Error("Scoring is not available for this portal"));
+
 			return null;
 		}
 
 		$model = \Bitrix\Crm\Ml\Scoring::getScoringModel($entityTypeId, $entityId);
-		if(!$model || $model->getState() !== \Bitrix\Ml\Model::STATE_READY)
+		if (!$model || $model->getState() !== \Bitrix\Ml\Model::STATE_READY)
 		{
 			$this->addError(new Error("Scoring model is not in ready state"));
 			return null;
 		}
 
-		if(ViewHelper::isEntityFinal($entityTypeId, $entityId))
+		if (ViewHelper::isEntityFinal($entityTypeId, $entityId))
 		{
 			$this->addError(new Error("Entity is in final state"));
 			return null;

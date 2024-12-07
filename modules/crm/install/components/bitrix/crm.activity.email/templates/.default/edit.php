@@ -1,10 +1,14 @@
 <?php
 
+use Bitrix\Crm\Tour;
 use Bitrix\Mail\Helper;
 use Bitrix\Main\Loader;
-use Bitrix\Crm\Tour;
 
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
+
 global $APPLICATION;
 
 $formId = 'crm_act_email_create_form';
@@ -37,6 +41,10 @@ $rcptLast = array(
 	'deals' => array(),
 	'leads' => array(),
 );
+
+Bitrix\Main\UI\Extension::load([
+	"crm.integration.ui.banner-dispatcher",
+]);
 
 echo (Tour\AhaMomentSaveLastTemplate::getInstance())->build();
 
@@ -397,7 +405,7 @@ foreach ($arParams['DOCS_BINDINGS'] as $item)
 	}
 ?>
 
-<script type="text/javascript">
+<script>
 
 if(BX.SidePanel)
 {

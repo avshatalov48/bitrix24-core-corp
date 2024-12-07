@@ -775,3 +775,101 @@ CREATE INDEX ix_b_tasks_custom_sort_user_id_sort_task_id ON b_tasks_custom_sort 
 CREATE INDEX ix_b_tasks_custom_sort_group_id_sort_task_id ON b_tasks_custom_sort (group_id, sort, task_id);
 CREATE INDEX ix_b_tasks_custom_sort_task_id_group_id ON b_tasks_custom_sort (task_id, group_id);
 CREATE UNIQUE INDEX ux_b_tasks_custom_sort_task_id_user_id_group_id ON b_tasks_custom_sort (task_id, user_id, group_id);
+
+create table if not exists b_tasks_flow (
+	ID int not null generated always as identity,
+	OWNER_ID int not null,
+	CREATOR_ID int not null,
+	GROUP_ID int not null,
+	TEMPLATE_ID int not null default 0,
+	EFFICIENCY int not null default 100,
+	ACTIVE smallint not null default 0,
+	PLANNED_COMPLETION_TIME int not null default 0,
+	ACTIVITY timestamp(0) not null default now(),
+	NAME varchar(255) not null,
+	DESCRIPTION text,
+	DISTRIBUTION_TYPE varchar(16) not null default '',
+	DEMO smallint not null default 0,
+	primary key (ID),
+	constraint idx_b_tasks_flow_name unique (NAME)
+);
+create index idx_b_tasks_flow_group_id on b_tasks_flow (GROUP_ID);
+create index idx_b_tasks_flow_activity on b_tasks_flow (ACTIVITY);
+create index idx_b_tasks_flow_creator on b_tasks_flow (CREATOR_ID);
+create index idx_b_tasks_flow_owner on b_tasks_flow (OWNER_ID);
+create index idx_b_tasks_flow_efficiency on b_tasks_flow (EFFICIENCY);
+
+create table if not exists b_tasks_flow_task (
+	ID int not null generated always as identity,
+	FLOW_ID int not null,
+	TASK_ID int not null,
+	primary key (ID),
+	constraint idx_b_tasks_flow_task_task_id unique (TASK_ID)
+);
+create index idx_b_tasks_flow_task_flow_id_task_id on b_tasks_flow_task (FLOW_ID, TASK_ID);
+
+create table if not exists b_tasks_flow_responsible_queue (
+	ID int not null generated always as identity,
+	FLOW_ID int not null,
+	USER_ID int not null,
+	NEXT_USER_ID int not null,
+	SORT smallint not null default 0,
+	primary key (ID),
+	constraint idx_b_tasks_flow_responsible_queue_flow_id_user_id unique (FLOW_ID, USER_ID)
+);
+create index idx_b_tasks_flow_responsible_queue_flow_id_sort on b_tasks_flow_responsible_queue (FLOW_ID, SORT);
+
+create table if not exists b_tasks_flow_option (
+	ID int not null generated always as identity,
+	FLOW_ID int not null,
+	NAME varchar(255) not null,
+	VALUE varchar(255) not null,
+	primary key (ID),
+	constraint idx_b_tasks_flow_option_name_value unique (FLOW_ID, NAME)
+);
+
+create table if not exists b_tasks_flow_member
+(
+	ID int not null generated always as identity,
+	FLOW_ID int not null,
+	ACCESS_CODE varchar(100) not null,
+	ENTITY_ID int not null,
+	ENTITY_TYPE varchar(100) not null,
+	ROLE char(2) not null,
+	constraint ix_flow_access unique (FLOW_ID, ACCESS_CODE, ROLE),
+	primary key (ID)
+);
+create index ix_access on b_tasks_flow_member (ACCESS_CODE);
+create index ix_role on b_tasks_flow_member (ROLE);
+create index ix_entity on b_tasks_flow_member (ENTITY_ID, ENTITY_TYPE);
+
+create table if not exists b_tasks_flow_notification (
+	ID int not null generated always as identity,
+	FLOW_ID int not null,
+	INTEGRATION_ID int not null default 0,
+	STATUS varchar(50) not null default 'SYNC',
+	DATA text not null,
+	UPDATED_AT timestamp(0) not null default now(),
+	primary key (ID)
+);
+create index b_tasks_flow_notification_flow on b_tasks_flow_notification (FLOW_ID);
+
+CREATE TABLE IF NOT EXISTS b_tasks_flow_search_index (
+	ID int not null generated always as identity,
+	FLOW_ID INT NOT NULL,
+	SEARCH_INDEX TEXT NULL,
+	UNIQUE (FLOW_ID)
+);
+CREATE INDEX IXF_TASKS_FLOW_SEARCH_INDEX_SEARCH_INDEX ON b_tasks_flow_search_index USING GIN (to_tsvector('english', COALESCE(SEARCH_INDEX, '')));
+
+create table if not exists b_tasks_flow_auto_created_robot
+(
+	ID                   int          not null generated always as identity,
+	FLOW_ID              int          not null,
+	STAGE_ID             int          not null,
+	BIZ_PROC_TEMPLATE_ID int          not null,
+	STAGE_TYPE           varchar(255) not null,
+	ROBOT                varchar(255) not null
+);
+
+create unique index ix_flow_robot on b_tasks_flow_auto_created_robot (FLOW_ID, ROBOT);

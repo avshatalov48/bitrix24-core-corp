@@ -1,7 +1,8 @@
  <?
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
 
-use Bitrix\Main\Localization\Loc;
+ use Bitrix\Main\Loader;
+ use Bitrix\Main\Localization\Loc;
  use Bitrix\Main\UI\Extension;
  use Bitrix\Tasks\Integration\Recyclebin\Task;
 
@@ -20,6 +21,11 @@ Loc::loadMessages(__FILE__);
 /** @global CDatabase $DB */
 /** @var CBitrixComponentTemplate $this */
 /** @var CBitrixComponent $component */
+
+ if ($arParams['SHOW_AHA_START_FLOW_TASK'])
+ {
+	 Extension::load('tasks.clue');
+ }
 
 $helper = $arResult['HELPER'];
 
@@ -113,7 +119,7 @@ $taskData = $arParams["TASK"];
 	<script>
 		BX.message({
 			TASKS_REST_BUTTON_TITLE_2: '<?=Loc::getMessage('TASKS_REST_BUTTON_TITLE_2')?>',
-			TASKS_DELETE_SUCCESS: '<?= Task::getDeleteMessage((int)$arParams['USER_ID']) ?>'
+			TASKS_DELETE_SUCCESS: '<?= Loader::includeModule('recyclebin') ? Task::getDeleteMessage((int)$arParams['USER_ID']) : Loc::getMessage('TASKS_DELETE_SUCCESS') ?>'
 		});
 	</script>
 <?$helper->initializeExtension();?>

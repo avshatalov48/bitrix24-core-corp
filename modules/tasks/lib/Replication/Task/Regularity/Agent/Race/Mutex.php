@@ -2,51 +2,17 @@
 
 namespace Bitrix\Tasks\Replication\Task\Regularity\Agent\Race;
 
-use Bitrix\Main\Application;
-use Bitrix\Main\Data\ManagedCache;
+use Bitrix\Tasks\Replication\AbstractMutex;
 
-class Mutex
+class Mutex extends AbstractMutex
 {
-	private const TTL = 1800;
-	private const LOCKED = 1;
-	private const CACHE_NAME = 'tasks_regularity_notification_mutex';
-
-
-	private ManagedCache $cache;
-
-	public function __construct(private string $name = self::CACHE_NAME)
+	protected function getTTL(): int
 	{
-		$this->init();
+		return 1800;
 	}
 
-	private function init(): void
+	protected function getCacheName(): string
 	{
-		$this->cache = Application::getInstance()->getManagedCache();
-	}
-
-	public function lock(): bool
-	{
-		if ($this->cache->read(static::TTL, $this->name))
-		{
-			$value = $this->cache->get($this->name);
-		}
-
-		if (!empty($value))
-		{
-			return false;
-		}
-
-		$this->cache->setImmediate($this->name, static::LOCKED);
-
-		return true;
-	}
-
-	/**
-	 * @return bool
-	 */
-	public function unlock(): bool
-	{
-		$this->cache->clean($this->name);
-		return true;
+		return 'tasks_regularity_notification_mutex';
 	}
 }

@@ -486,6 +486,7 @@ export class Row
 			rowId: this.id,
 			model: this.getModel(),
 			node: storeAvaiableNode,
+			inventoryManagementMode: this.getInventoryManagementMode(),
 		});
 	}
 
@@ -539,8 +540,9 @@ export class Row
 				isReserveEqualProductQuantity: this.#isReserveEqualProductQuantity(),
 				defaultDateReservation: this.editor.getSettingValue('defaultDateReservation'),
 				isInventoryManagementToolEnabled: this.isInventoryManagementToolEnabled(),
+				inventoryManagementMode: this.getInventoryManagementMode(),
 				isBlocked: this.isReserveBlocked(),
-				measureName: this.#getMeasureName(),
+				measureName: this.getMeasureName(),
 			});
 
 			EventEmitter.subscribe(
@@ -635,7 +637,7 @@ export class Row
 			{
 				if (this.isRestrictedStoreInfo())
 				{
-					storeWrapper.innerHTML = this.reserveControl.getReservedQuantity() + ' ' + Text.encode(this.#getMeasureName());
+					storeWrapper.innerHTML = this.reserveControl.getReservedQuantity() + ' ' + Text.encode(this.getMeasureName());
 					return;
 				}
 
@@ -1241,7 +1243,7 @@ export class Row
 			return;
 		}
 
-		amountWithMeasure = amount + ' ' + this.#getMeasureName();
+		amountWithMeasure = amount + ' ' + this.getMeasureName();
 		availableWrapper.innerHTML =
 			amount > 0
 				? amountWithMeasure
@@ -1287,7 +1289,7 @@ export class Row
 			return;
 		}
 
-		reserveWrapper.innerHTML = Text.toNumber(this.getField('ROW_RESERVED')) + ' ' + this.#getMeasureName();
+		reserveWrapper.innerHTML = Text.toNumber(this.getField('ROW_RESERVED')) + ' ' + this.getMeasureName();
 	}
 
 	setDeductedQuantity(value)
@@ -1305,7 +1307,7 @@ export class Row
 			return;
 		}
 
-		deductedWrapper.innerHTML = Text.toNumber(this.getField('DEDUCTED_QUANTITY')) + ' ' + this.#getMeasureName();
+		deductedWrapper.innerHTML = Text.toNumber(this.getField('DEDUCTED_QUANTITY')) + ' ' + this.getMeasureName();
 	}
 
 	changeStoreName(value: number)
@@ -1583,6 +1585,13 @@ export class Row
 		if (Type.isElementNode(input))
 		{
 			input.value = value;
+
+			const view = node?.querySelector('span[data-name="VIEW_RESERVE_QUANTITY"]');
+			if (view)
+			{
+				view.textContent = value;
+			}
+
 			this.reserveControl?.changeInputValue(value);
 		}
 		else
@@ -2182,6 +2191,11 @@ export class Row
 		return this.getSettingValue('isInventoryManagementToolEnabled', true);
 	}
 
+	getInventoryManagementMode(): ?string
+	{
+		return this.getSettingValue('inventoryManagementMode', '');
+	}
+
 	isRestrictedStoreInfo(): boolean
 	{
 		if (!this.editor.getSettingValue('allowReservation', true))
@@ -2212,7 +2226,7 @@ export class Row
 		return this.editor.getSettingValue('isReserveEqualProductQuantity', false);
 	}
 
-	#getMeasureName()
+	getMeasureName()
 	{
 		const measureName =
 			Type.isStringFilled(this.model.getField('MEASURE_NAME'))

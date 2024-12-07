@@ -23,7 +23,7 @@ class StepCrmForm extends Step
 			$forms = [];
 			$dbRes = \Bitrix\Crm\WebForm\Internals\FormTable::getDefaultTypeList([
 				"select" => ["ID", "NAME", "CALL_FROM"],
-				"filter" => ["IS_CALLBACK_FORM" => "Y", "ACTIVE" => "Y"]
+				"filter" => ["=IS_CALLBACK_FORM" => "Y", "=ACTIVE" => "Y"]
 			]);
 			while ($res = $dbRes->fetch())
 			{

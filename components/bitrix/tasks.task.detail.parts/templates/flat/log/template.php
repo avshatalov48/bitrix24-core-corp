@@ -125,6 +125,7 @@ $groups = $arParams["TEMPLATE_DATA"]["DATA"]["GROUP"];
 $users = $arParams["TEMPLATE_DATA"]["DATA"]["USER"];
 $relatedTasks = $arParams["TEMPLATE_DATA"]["DATA"]["RELATED_TASK"];
 $taskData = $arParams["TEMPLATE_DATA"]["DATA"]["TASK"];
+$flows = $arParams['TEMPLATE_DATA']['DATA']['FLOWS'];
 
 $trackedFields = CTaskLog::getTrackedFields();
 ?>
@@ -178,7 +179,7 @@ $trackedFields = CTaskLog::getTrackedFields();
 
 			<?
 			$fieldName = Loc::getMessage("TASKS_LOG_" . $record["FIELD"]);
-			if ($record['FIELD'] == \Bitrix\Tasks\Integration\Disk\UserField::getMainSysUFCode())
+			if ($record['FIELD'] === \Bitrix\Tasks\Integration\Disk\UserField::getMainSysUFCode())
 			{
 				$fieldName = Loc::getMessage('TASKS_LOG_FILES');
 			}
@@ -186,18 +187,18 @@ $trackedFields = CTaskLog::getTrackedFields();
 			{
 				$fieldName = Loc::getMessage('TASKS_LOG_ASSIGNEE');
 			}
-			elseif ($fieldName == '' && ($trackedFields[$record["FIELD"]]['TITLE'] ?? '') != '')
+			elseif (empty($fieldName) && !empty($trackedFields[$record["FIELD"]]['TITLE']))
 			{
 				$fieldName = $trackedFields[$record["FIELD"]]['TITLE'];
 			}
 			?>
 
 			<span class="task-log-where"><?=htmlspecialcharsbx($fieldName)?><?
-			if ($record["FIELD"] == "DELETED_FILES")
+			if ($record["FIELD"] === "DELETED_FILES")
 			{
 				?>: <?=htmlspecialcharsbx($record["FROM_VALUE"])?><?
 			}
-			elseif ($record["FIELD"] == "NEW_FILES")
+			elseif ($record["FIELD"] === "NEW_FILES")
 			{
 				?>: <?=htmlspecialcharsbx($record["TO_VALUE"])?><?
 			}
@@ -209,7 +210,7 @@ $trackedFields = CTaskLog::getTrackedFields();
 
 				if (!$arParams["PUBLIC_MODE"])
 				{
-					if ($record["FIELD"] != "COMMENT_DEL")
+					if ($record["FIELD"] !== "COMMENT_DEL")
 					{
 						?> <a class="task-log-link" href="<?=$link?>">#<?=$record["TO_VALUE"]?></a><?
 					}
@@ -590,9 +591,17 @@ $trackedFields = CTaskLog::getTrackedFields();
 				break;
 
 			case "STATUS":
-				echo Loc::getMessage("TASKS_STATUS_".$record["FROM_VALUE"])?><span class="task-log-arrow">&rarr;</span><?=Loc::getMessage("TASKS_STATUS_".$record["TO_VALUE"]);
-				break;
+				echo
+					Loc::getMessage('TASKS_STATUS_' . $record['FROM_VALUE'] . '_MSGVER_1')
+					?? Loc::getMessage('TASKS_STATUS_' . $record['FROM_VALUE'])
+				;
+				?><span class="task-log-arrow">&rarr;</span><?php
+					echo
+						Loc::getMessage('TASKS_STATUS_' . $record['TO_VALUE'] . '_MSGVER_1')
+						?? Loc::getMessage('TASKS_STATUS_' . $record['TO_VALUE'])
+					;
 
+				break;
 			case "MARK":
 				echo !$record["FROM_VALUE"] ? Loc::getMessage("TASKS_MARK_NONE") : Loc::getMessage("TASKS_MARK_".$record["FROM_VALUE"])?><span class="task-log-arrow">&rarr;</span><? echo !$record["TO_VALUE"] ? Loc::getMessage("TASKS_MARK_NONE") : Loc::getMessage("TASKS_MARK_".$record["TO_VALUE"]);
 				break;
@@ -611,6 +620,10 @@ $trackedFields = CTaskLog::getTrackedFields();
 				$deleted = array_filter(explode(',', $record['FROM_VALUE']));
 				sort($deleted);
 				echo prepareUfCrmEntities($deleted);
+				break;
+			case 'FLOW_ID':
+				include_once __DIR__ . '/column/flow.php';
+				renderFlow($record, $flows);
 				break;
 
 			default:

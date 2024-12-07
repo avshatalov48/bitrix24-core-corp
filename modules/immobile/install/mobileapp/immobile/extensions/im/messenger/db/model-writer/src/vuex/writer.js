@@ -22,6 +22,7 @@ jn.define('im/messenger/db/model-writer/vuex/writer', (require, exports, module)
 		 *  reaction: ReactionRepository
 		 *  queue: QueueRepository
 		 *  pinMessage: PinMessageRepository
+		 *  sidebarFile: SidebarFileRepository
 		 * }} options.repository
 		 */
 		constructor(options)

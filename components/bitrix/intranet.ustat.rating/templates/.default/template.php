@@ -57,7 +57,7 @@ $topActivity = $arParams['OFFSET'] ? (int) $arParams['TOP_ACTIVITY'] : $arResult
 	<div id="pulse-popup-max-score" style="display: none"><?=$topActivity?></div>
 <? endif ?>
 
-<script type="text/javascript">
+<script>
 	var ustatUsers = BX.findChildren(BX('intranet-activity-container'), {className:'pulse-popup-user-name-text'}, true);
 	for (i in ustatUsers)
 	{

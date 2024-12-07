@@ -2,7 +2,8 @@
 
 namespace Bitrix\Crm\Service\Operation;
 
-use Bitrix\Crm\Activity\Entity\ToDo;
+use Bitrix\Crm\Activity\Entity;
+use Bitrix\Crm\Activity\Provider\ToDo;
 use Bitrix\Crm\Field\Collection;
 use Bitrix\Crm\Integration\PullManager;
 use Bitrix\Crm\Integrity;
@@ -182,11 +183,8 @@ class Add extends Operation
 
 			if ($deadline)
 			{
-				ToDo::createWithDefaultDescription(
-					$this->item->getEntityTypeId(),
-					$this->item->getId(),
-					$deadline
-				);
+				(new Entity\ToDo($this->getItemIdentifier(), new ToDo\ToDo()))
+					->createWithDefaultSubjectAndDescription($deadline);
 			}
 		}
 	}

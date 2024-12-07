@@ -1,8 +1,11 @@
 <?
 $MESS['IMCONNECTOR_COMPONENT_CONNECTOR_SETTINGS_CONNECT'] = 'Настройка канала';
 $MESS['IMCONNECTOR_COMPONENT_CONNECTOR_SETTINGS_CONFIGURE_CHANNEL'] = 'Настройка канала';
+$MESS['IMCONNECTOR_COMPONENT_CONNECTOR_SETTINGS_CONFIGURE_CHANNEL_MSGVER_1'] = 'Настройки открытой линии и прав доступа';
 $MESS['IMCONNECTOR_COMPONENT_CONNECTOR_SETTINGS_PERMISSIONS'] = 'Права доступа';
+$MESS['IMCONNECTOR_COMPONENT_CONNECTOR_SETTINGS_PERMISSIONS_TIP'] = 'Выбранные настройки будут действовать для всех открытых линий во всех каналах';
 $MESS['IMCONNECTOR_COMPONENT_CONNECTOR_SETTINGS_OPEN_LINE'] = 'Открытая линия';
+$MESS['IMCONNECTOR_COMPONENT_CONNECTOR_SETTINGS_OPEN_LINE_TIP'] = 'Открытые линии собирают сообщения со всех каналов и распределяют их по очереди между сотрудниками';
 $MESS['IMCONNECTOR_COMPONENT_CONNECTOR_SETTINGS_CREATE_OPEN_LINE'] = 'Создать открытую линию';
 $MESS['IMCONNECTOR_COMPONENT_CONNECTOR_SETTINGS_CONFIGURE'] = 'настроить';
 $MESS['IMCONNECTOR_COMPONENT_CONNECTOR_SETTINGS_NO_OPEN_LINE'] = 'У вас нет ни одной открытой линии, у которой вы можете настроить каналы коммуникаций. Пожалуйста, создайте новую открытую линию.';

@@ -114,7 +114,7 @@ class Order extends Base
 		self::convertDateFields($fields);
 
 		$this->document = array_merge($this->document, $fields ?: []);
-
+		$this->normalizeEntityBindings(['COMPANY_ID', 'CONTACT_ID']);
 		$this->loadUserFieldValues();
 	}
 

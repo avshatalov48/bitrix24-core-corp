@@ -1,13 +1,13 @@
-<?
-$US_HOST_PROCESS_MAIN = ($US_HOST_PROCESS_MAIN ? True : False);
+<?php
+$US_HOST_PROCESS_MAIN = isset($US_HOST_PROCESS_MAIN) && $US_HOST_PROCESS_MAIN;
 
-define("US_CALL_TYPE", "DB");
-define("US_SAVE_UPDATERS_DIR", "/bitrix/updaters");
-define("US_DB_VERSIONS_FILE", $_SERVER["DOCUMENT_ROOT"].BX_PERSONAL_ROOT."/php_interface/versions.php");
+define('US_CALL_TYPE', 'DB');
+define('US_SAVE_UPDATERS_DIR', '/bitrix/updaters');
+define('US_DB_VERSIONS_FILE', $_SERVER['DOCUMENT_ROOT'] . BX_PERSONAL_ROOT . '/php_interface/versions.php');
 
-require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/classes/general/update_client.php");
+require_once $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/classes/general/update_client.php';
 
-if (!function_exists("DBUpdaterCheckUpdates"))
+if (!function_exists('DBUpdaterCheckUpdates'))
 {
 	function DBUpdaterLock()
 	{
@@ -15,48 +15,27 @@ if (!function_exists("DBUpdaterCheckUpdates"))
 
 		$uniq = $APPLICATION->GetServerUniqID();
 
-		if ($DB->type == "MYSQL")
+		if ($DB->type == 'MYSQL')
 		{
-			$dbLock = $DB->Query("SELECT GET_LOCK('".$uniq."_DBUpdater', 0) as L", false, "File: ".__FILE__."<br>Line: ".__LINE__);
+			$dbLock = $DB->Query("SELECT GET_LOCK('" . $uniq . "_DBUpdater', 0) as L");
 			$arLock = $dbLock->Fetch();
-			if ($arLock["L"] == "1")
+			if ($arLock['L'] == '1')
+			{
 				return true;
+			}
 			else
+			{
 				return false;
+			}
 		}
-		elseif ($DB->type == "ORACLE")
+		elseif ($DB->type == 'PGSQL')
 		{
-			$dbLock = $DB->Query("
-				declare
-					my_lock_id number;
-					my_result number;
-					lock_failed exception;
-					pragma exception_init(lock_failed, -54);
-				begin
-					my_lock_id:=dbms_utility.get_hash_value(to_char('".$uniq."_DBUpdater'), 0, 1024);
-					my_result:=dbms_lock.request(my_lock_id, dbms_lock.x_mode, 0, true);
-					--  Return value:
-					--    0 - success
-					--    1 - timeout
-					--    2 - deadlock
-					--    3 - parameter error
-					--    4 - already own lock specified by 'id' or 'lockhandle'
-					--    5 - illegal lockhandle
-					if(my_result<>0 and my_result<>4)then
-						raise lock_failed;
-					end if;
-				end;
-			", true);
-			return ($dbLock !== false);
-		}
-		else
-		{
-			$i = 60;
-			$DB->Query("DELETE FROM B_OPTION WHERE MODULE_ID = 'main' AND NAME = '".$uniq."_DBUpdater' AND SITE_ID IS NULL AND DATEDIFF(SECOND, CONVERT(DATETIME, DESCRIPTION), GETDATE()) > ".$i, false, "File: ".__FILE__."<br>Line: ".__LINE__);
-			$DB->Query("SET LOCK_TIMEOUT 1", false, "File: ".__FILE__."<br>Line: ".__LINE__);
-			$dbLock = $DB->Query("INSERT INTO B_OPTION(MODULE_ID, NAME, SITE_ID, VALUE, DESCRIPTION) VALUES ('main', '".$uniq."_DBUpdater', NULL,  NULL, CONVERT(VARCHAR(128), GETDATE()))", true);
-			$DB->Query("SET LOCK_TIMEOUT -1", false, "File: ".__FILE__."<br>Line: ".__LINE__);
-			return ($dbLock !== false);
+			$dbLock = $DB->Query('SELECT CASE WHEN pg_try_advisory_lock(' . crc32($uniq . '_DBUpdater') . ") THEN '1' ELSE '0' END AS L");
+			$arLock = $dbLock->Fetch();
+			if ($arLock['L'] == '1')
+			{
+				return true;
+			}
 		}
 	}
 
@@ -66,22 +45,35 @@ if (!function_exists("DBUpdaterCheckUpdates"))
 
 		$uniq = $APPLICATION->GetServerUniqID();
 
-		if ($DB->type == "MYSQL")
+		if ($DB->type == 'MYSQL')
 		{
-			$dbLock = $DB->Query("SELECT RELEASE_LOCK('".$uniq."_DBUpdater') as L", false, "File: ".__FILE__."<br>Line: ".__LINE__);
+			$dbLock = $DB->Query("SELECT RELEASE_LOCK('" . $uniq . "_DBUpdater') as L");
 			$arLock = $dbLock->Fetch();
-			if($arLock["L"] == "0")
+			if ($arLock['L'] == '0')
+			{
 				return false;
+			}
 			else
+			{
 				return true;
+			}
 		}
-		elseif ($DB->type == "ORACLE")
+		elseif ($DB->type == 'PGSQL')
 		{
-			return true;
+			$dbLock = $DB->Query('SELECT CASE WHEN pg_advisory_unlock(' . crc32($uniq . '_DBUpdater') . ") THEN '1' ELSE '0' END AS L");
+			$arLock = $dbLock->Fetch();
+			if ($arLock['L'] == '1')
+			{
+				return true;
+			}
+			else
+			{
+				return false;
+			}
 		}
 		else
 		{
-			$DB->Query("DELETE FROM B_OPTION WHERE MODULE_ID = 'main' AND NAME = '".$uniq."_DBUpdater' AND SITE_ID IS NULL", false, "File: ".__FILE__."<br>Line: ".__LINE__);
+			$DB->Query("DELETE FROM B_OPTION WHERE MODULE_ID = 'main' AND NAME = '" . $uniq . "_DBUpdater' AND SITE_ID IS NULL");
 			return true;
 		}
 	}
@@ -89,135 +81,167 @@ if (!function_exists("DBUpdaterCheckUpdates"))
 	function DBUpdaterCheckUpdates($US_HOST_PROCESS_MAIN)
 	{
 		if (!file_exists(US_DB_VERSIONS_FILE))
-			DBUpdaterCollectDBVersionsNew("A", "", "");
+		{
+			DBUpdaterCollectDBVersionsNew('A', '', '');
+		}
 
-		$arDBVersions = array();
-		include(US_DB_VERSIONS_FILE);
+		$arDBVersions = [];
+		include US_DB_VERSIONS_FILE;
 
-		if (!file_exists($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/versions.php"))
-			return array();
-		$arVersions = array();
-		include($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/versions.php");
+		if (!file_exists($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/versions.php'))
+		{
+			return [];
+		}
+		$arVersions = [];
+		include $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/versions.php';
 
-		$arResult = array();
+		$arResult = [];
 		foreach ($arDBVersions as $moduleID => $dbVersion)
 		{
-			if ($US_HOST_PROCESS_MAIN && $moduleID != "main" || !$US_HOST_PROCESS_MAIN && $moduleID == "main")
+			if ($US_HOST_PROCESS_MAIN && $moduleID != 'main' || !$US_HOST_PROCESS_MAIN && $moduleID == 'main')
+			{
 				continue;
+			}
 
 			if (array_key_exists($moduleID, $arVersions))
 			{
 				if (CUpdateClient::CompareVersions($arVersions[$moduleID], $dbVersion) > 0)
+				{
 					$arResult[$moduleID] = $dbVersion;
+				}
 			}
 		}
 
 		return $arResult;
 	}
 
-
 	function DBUpdaterCollectDBVersionsNew($collectTypeParam, $moduleIdParam, $versionIdParam)
 	{
-		$arDBVersions = array();
-		include(US_DB_VERSIONS_FILE);
+		$arDBVersions = [];
+		include US_DB_VERSIONS_FILE;
 
 		@unlink(US_DB_VERSIONS_FILE);
 
-		$errorMessage = "";
+		$errorMessage = '';
 		$arDBVersionsNew = CUpdateClient::GetCurrentModules($errorMessage, false);
 
-		if ($errorMessage == '')
+		if ($errorMessage === '')
 		{
-			$f = fopen(US_DB_VERSIONS_FILE, "w");
-			fwrite($f, "<"."?\n");
+			$f = fopen(US_DB_VERSIONS_FILE, 'w');
+			fwrite($f, '<' . "?\n");
 			fwrite($f, "\$arDBVersions = array(\n");
 			foreach ($arDBVersionsNew as $moduleID => $version)
 			{
 				if (!array_key_exists($moduleID, $arDBVersions))
+				{
 					$arDBVersions[$moduleID] = $version;
+				}
 
-				if ($collectTypeParam == "A")
+				if ($collectTypeParam == 'A')
 				{
-					fwrite($f, "\t\"".htmlspecialcharsbx($moduleID)."\" => \"".htmlspecialcharsbx($version)."\",\n");
+					fwrite($f, "\t\"" . htmlspecialcharsbx($moduleID) . '" => "' . htmlspecialcharsbx($version) . "\",\n");
 				}
-				elseif ($collectTypeParam == "M")
+				elseif ($collectTypeParam == 'M')
 				{
-					if ($moduleID == "main")
-						fwrite($f, "\t\"".htmlspecialcharsbx($moduleID)."\" => \"".htmlspecialcharsbx($version)."\",\n");
+					if ($moduleID == 'main')
+					{
+						fwrite($f, "\t\"" . htmlspecialcharsbx($moduleID) . '" => "' . htmlspecialcharsbx($version) . "\",\n");
+					}
 					else
-						fwrite($f, "\t\"".htmlspecialcharsbx($moduleID)."\" => \"".htmlspecialcharsbx($arDBVersions[$moduleID])."\",\n");
+					{
+						fwrite($f, "\t\"" . htmlspecialcharsbx($moduleID) . '" => "' . htmlspecialcharsbx($arDBVersions[$moduleID]) . "\",\n");
+					}
 				}
-				elseif ($collectTypeParam == "O")
+				elseif ($collectTypeParam == 'O')
 				{
-					if ($moduleID != "main")
-						fwrite($f, "\t\"".htmlspecialcharsbx($moduleID)."\" => \"".htmlspecialcharsbx($version)."\",\n");
+					if ($moduleID != 'main')
+					{
+						fwrite($f, "\t\"" . htmlspecialcharsbx($moduleID) . '" => "' . htmlspecialcharsbx($version) . "\",\n");
+					}
 					else
-						fwrite($f, "\t\"".htmlspecialcharsbx($moduleID)."\" => \"".htmlspecialcharsbx($arDBVersions[$moduleID])."\",\n");
+					{
+						fwrite($f, "\t\"" . htmlspecialcharsbx($moduleID) . '" => "' . htmlspecialcharsbx($arDBVersions[$moduleID]) . "\",\n");
+					}
 				}
-				elseif ($collectTypeParam == "N")
+				elseif ($collectTypeParam == 'N')
 				{
 					if ($moduleID == $moduleIdParam)
-						fwrite($f, "\t\"".htmlspecialcharsbx($moduleID)."\" => \"".htmlspecialcharsbx($versionIdParam)."\",\n");
+					{
+						fwrite($f, "\t\"" . htmlspecialcharsbx($moduleID) . '" => "' . htmlspecialcharsbx($versionIdParam) . "\",\n");
+					}
 					else
-						fwrite($f, "\t\"".htmlspecialcharsbx($moduleID)."\" => \"".htmlspecialcharsbx($arDBVersions[$moduleID])."\",\n");
+					{
+						fwrite($f, "\t\"" . htmlspecialcharsbx($moduleID) . '" => "' . htmlspecialcharsbx($arDBVersions[$moduleID]) . "\",\n");
+					}
 				}
 			}
 			fwrite($f, ");\n");
-			fwrite($f, "?".">");
+			fwrite($f, '?' . '>');
 			fclose($f);
 		}
 		else
 		{
-			CControllerClient::SendMessage("SITE_UPDATE_KERNEL_DB", "N", $errorMessage);
+			CControllerClient::SendMessage('SITE_UPDATE_KERNEL_DB', 'N', $errorMessage);
 		}
 	}
 
 	function DBUpdaterUpdateFromVersion($moduleID, $dbVersion)
 	{
 		if ($moduleID == '')
-			return;
-		if ($dbVersion == '')
-			return;
-
-		$errorMessage = "";
-
-		if (file_exists($_SERVER["DOCUMENT_ROOT"].US_SAVE_UPDATERS_DIR."/".$moduleID) && is_dir($_SERVER["DOCUMENT_ROOT"].US_SAVE_UPDATERS_DIR."/".$moduleID))
 		{
-			$arUpdaters = array();
+			return;
+		}
+		if ($dbVersion == '')
+		{
+			return;
+		}
 
-			if ($handle = @opendir($_SERVER["DOCUMENT_ROOT"].US_SAVE_UPDATERS_DIR."/".$moduleID))
+		$errorMessage = '';
+
+		if (file_exists($_SERVER['DOCUMENT_ROOT'] . US_SAVE_UPDATERS_DIR . '/' . $moduleID) && is_dir($_SERVER['DOCUMENT_ROOT'] . US_SAVE_UPDATERS_DIR . '/' . $moduleID))
+		{
+			$arUpdaters = [];
+
+			if ($handle = @opendir($_SERVER['DOCUMENT_ROOT'] . US_SAVE_UPDATERS_DIR . '/' . $moduleID))
 			{
 				while (false !== ($dir = readdir($handle)))
 				{
-					if ($dir == "." || $dir == "..")
-						continue;
-
-					if (mb_substr($dir, 0, 7) == "updater")
+					if ($dir == '.' || $dir == '..')
 					{
-						if (is_file($_SERVER["DOCUMENT_ROOT"].US_SAVE_UPDATERS_DIR."/".$moduleID."/".$dir))
+						continue;
+					}
+
+					if (mb_substr($dir, 0, 7) === 'updater')
+					{
+						if (is_file($_SERVER['DOCUMENT_ROOT'] . US_SAVE_UPDATERS_DIR . '/' . $moduleID . '/' . $dir))
 						{
 							$num = mb_substr($dir, 7, mb_strlen($dir) - 11);
-							if (mb_substr($dir, mb_strlen($dir) - 9) == "_post.php")
+							if (mb_substr($dir, mb_strlen($dir) - 9) === '_post.php')
+							{
 								$num = mb_substr($dir, 7, mb_strlen($dir) - 16);
+							}
 
-							$arUpdaters[] = array("/".$dir, Trim($num));
+							$arUpdaters[] = ['/' . $dir, trim($num)];
 						}
-						elseif (file_exists($_SERVER["DOCUMENT_ROOT"].US_SAVE_UPDATERS_DIR."/".$moduleID."/".$dir."/index.php"))
+						elseif (file_exists($_SERVER['DOCUMENT_ROOT'] . US_SAVE_UPDATERS_DIR . '/' . $moduleID . '/' . $dir . '/index.php'))
 						{
 							$num = mb_substr($dir, 7);
-							if (mb_substr($dir, mb_strlen($dir) - 5) == "_post")
+							if (mb_substr($dir, mb_strlen($dir) - 5) === '_post')
+							{
 								$num = mb_substr($dir, 7, mb_strlen($dir) - 12);
+							}
 
-							$arUpdaters[] = array("/".$dir."/index.php", Trim($num));
+							$arUpdaters[] = ['/' . $dir . '/index.php', trim($num)];
 						}
 					}
 				}
 				closedir($handle);
 			}
 
-			for ($i1 = 0; $i1 < count($arUpdaters) - 1; $i1++)
+			$c = count($arUpdaters);
+			for ($i1 = 0; $i1 < $c - 1; $i1++)
 			{
-				for ($j1 = $i1 + 1; $j1 < count($arUpdaters); $j1++)
+				for ($j1 = $i1 + 1; $j1 < $c; $j1++)
 				{
 					if (CUpdateClient::CompareVersions($arUpdaters[$i1][1], $arUpdaters[$j1][1]) > 0)
 					{
@@ -228,23 +252,29 @@ if (!function_exists("DBUpdaterCheckUpdates"))
 				}
 			}
 
-			for ($i1 = 0; $i1 < count($arUpdaters); $i1++)
+			for ($i1 = 0; $i1 < $c; $i1++)
 			{
 				if (CUpdateClient::CompareVersions($arUpdaters[$i1][1], $dbVersion) <= 0)
+				{
 					continue;
+				}
 
-				$errorMessageTmp = "";
+				$errorMessageTmp = '';
 
-				CUpdateClient::RunUpdaterScript($_SERVER["DOCUMENT_ROOT"].US_SAVE_UPDATERS_DIR."/".$moduleID.$arUpdaters[$i1][0], $errorMessageTmp, "", $moduleID);
-				if ($errorMessageTmp <> '')
-					$errorMessage .= str_replace("#MODULE#", $moduleID, str_replace("#VER#", $arUpdaters[$i1][1], GetMessage("SUPP_UK_UPDN_ERR"))).": ".$errorMessageTmp.".<br>";
+				CUpdateClient::RunUpdaterScript($_SERVER['DOCUMENT_ROOT'] . US_SAVE_UPDATERS_DIR . '/' . $moduleID . $arUpdaters[$i1][0], $errorMessageTmp, '', $moduleID);
+				if ($errorMessageTmp !== '')
+				{
+					$errorMessage .= str_replace('#MODULE#', $moduleID, str_replace('#VER#', $arUpdaters[$i1][1], GetMessage('SUPP_UK_UPDN_ERR'))) . ': ' . $errorMessageTmp . '.<br>';
+				}
 
-				DBUpdaterCollectDBVersionsNew("N", $moduleID, $arUpdaters[$i1][1]);
+				DBUpdaterCollectDBVersionsNew('N', $moduleID, $arUpdaters[$i1][1]);
 			}
 		}
 
-		if ($errorMessage <> '')
-			CControllerClient::SendMessage("SITE_UPDATE_KERNEL_DB", "N", $errorMessage);
+		if ($errorMessage !== '')
+		{
+			CControllerClient::SendMessage('SITE_UPDATE_KERNEL_DB', 'N', $errorMessage);
+		}
 	}
 }
 
@@ -253,28 +283,29 @@ $arDBVersions = DBUpdaterCheckUpdates($US_HOST_PROCESS_MAIN);
 if (count($arDBVersions) > 0)
 {
 	@set_time_limit(0);
-	ini_set("track_errors", "1");
+	ini_set('track_errors', '1');
 	ignore_user_abort(true);
 
 	if (DBUpdaterLock())
 	{
-		require_once($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/classes/general/controller_member.php");
+		require_once $_SERVER['DOCUMENT_ROOT'] . BX_ROOT . '/modules/main/classes/general/controller_member.php';
 
 		foreach ($arDBVersions as $moduleID => $dbVersion)
+		{
 			DBUpdaterUpdateFromVersion($moduleID, $dbVersion);
+		}
 
-		DBUpdaterCollectDBVersionsNew($US_HOST_PROCESS_MAIN ? "M" : "O", "", "");
+		DBUpdaterCollectDBVersionsNew($US_HOST_PROCESS_MAIN ? 'M' : 'O', '', '');
 
-		CControllerClient::SendMessage("SITE_UPDATE_KERNEL_DB", "Y", "");
+		CControllerClient::SendMessage('SITE_UPDATE_KERNEL_DB', 'Y', '');
 
 		DBUpdaterUnLock();
 
-		LocalRedirect($_SERVER["REQUEST_URI"]);
+		LocalRedirect($_SERVER['REQUEST_URI']);
 	}
 	else
 	{
-		echo "Web site is now updating. Please wait for about one minute.";
+		echo 'Web site is now updating. Please wait for about one minute.';
 		die();
 	}
 }
-?>

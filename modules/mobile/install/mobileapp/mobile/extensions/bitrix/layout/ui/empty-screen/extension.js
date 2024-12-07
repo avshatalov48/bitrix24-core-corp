@@ -3,15 +3,18 @@
  */
 jn.define('layout/ui/empty-screen', (require, exports, module) => {
 	const AppTheme = require('apptheme');
+	const { Color } = require('tokens');
 	const { stringify } = require('utils/string');
 	const { mergeImmutable } = require('utils/object');
 	const { PureComponent } = require('layout/pure-component');
+	const { makeLibraryImagePathByModule } = require('asset-manager');
 
 	const RELATIVE_PATH = `${currentDomain}/bitrix/mobileapp`;
 	const IMAGE_PATH = `${RELATIVE_PATH}/mobile/extensions/bitrix/assets/empty-states`;
 
 	/**
 	 * @class EmptyScreen
+	 * @deprecated use StatusBlock
 	 */
 	class EmptyScreen extends PureComponent
 	{
@@ -20,7 +23,7 @@ jn.define('layout/ui/empty-screen', (require, exports, module) => {
 		 */
 		get backgroundColor()
 		{
-			return this.props.backgroundColor || AppTheme.colors.bgContentPrimary;
+			return this.props.backgroundColor || Color.bgPrimary.toHex();
 		}
 
 		/**
@@ -80,6 +83,24 @@ jn.define('layout/ui/empty-screen', (require, exports, module) => {
 			return defaultStyles;
 		}
 
+		get rootContainerStyle()
+		{
+			const defaultStyles = {
+				flexDirection: 'column',
+				flexGrow: 1,
+				backgroundColor: this.backgroundColor,
+				width: '100%',
+				height: '100%',
+			};
+
+			if (this.styles.rootContainer)
+			{
+				return mergeImmutable(defaultStyles, this.styles.rootContainer);
+			}
+
+			return defaultStyles;
+		}
+
 		get iconStyle()
 		{
 			const defaultStyles = {
@@ -108,22 +129,11 @@ jn.define('layout/ui/empty-screen', (require, exports, module) => {
 		 * @param {string} moduleId
 		 * @return {string}
 		 */
-		static makeLibraryImagePathByModule(filename, moduleId)
-		{
-			return `${RELATIVE_PATH}/${moduleId}mobile/extensions/${moduleId}/assets/empty-states/${AppTheme.id}/${filename}`;
-		}
-
-		/**
-		 * @public
-		 * @param {string} filename
-		 * @param {string} moduleId
-		 * @return {string}
-		 */
 		static makeLibraryImagePath(filename, moduleId)
 		{
 			if (moduleId)
 			{
-				return EmptyScreen.makeLibraryImagePathByModule(filename, moduleId);
+				return makeLibraryImagePathByModule(filename, 'empty-states', moduleId);
 			}
 
 			return `${IMAGE_PATH}/${AppTheme.id}/${filename}`;
@@ -133,13 +143,7 @@ jn.define('layout/ui/empty-screen', (require, exports, module) => {
 		{
 			return View(
 				{
-					style: {
-						flexDirection: 'column',
-						flexGrow: 1,
-						backgroundColor: this.backgroundColor,
-						width: '100%',
-						height: '100%',
-					},
+					style: this.rootContainerStyle,
 					safeArea: {
 						bottom: true,
 					},

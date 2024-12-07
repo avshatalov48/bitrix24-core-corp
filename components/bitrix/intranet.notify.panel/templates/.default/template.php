@@ -13,7 +13,7 @@ $this->setFrameMode(true);
 
 if (isset($arResult['config']['notify']) && !empty($arResult['config']['notify']))
 {
-	Extension::load('intranet.license-notify');
+	Extension::load(['intranet.license-notify', 'ui.banner-dispatcher']);
 	?>
 	<script>
 		BX.ready(() => {

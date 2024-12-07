@@ -137,7 +137,11 @@ class ResponsibleQueue
 
 	public static function checkId($id)
 	{
-		$item = UserTable::getRowById($id);
+		$item = UserTable::getRow([
+			'select' => ['ID'],
+			'filter' => ['=ID' => $id],
+		]);
+
 		return is_array($item);
 	}
 
@@ -157,23 +161,17 @@ class ResponsibleQueue
 		$timeManSettings = $timeManUser->GetSettings(Array('UF_TIMEMAN'));
 		if (!$timeManSettings['UF_TIMEMAN'])
 		{
-			$result = true;
+			return true;
 		}
-		else
+
+		$timeManUser->GetCurrentInfo(true); // need for reload cache
+
+		if (method_exists($timeManUser, 'getCurrentRecordStatus'))
 		{
-			$timeManUser->GetCurrentInfo(true); // need for reload cache
-
-			if ($timeManUser->State() == 'OPENED')
-			{
-				$result = true;
-			}
-			else
-			{
-				$result = false;
-			}
+			return $timeManUser->getCurrentRecordStatus() === 'OPENED';
 		}
 
-		return $result;
+		return $timeManUser->State() === 'OPENED';
 	}
 
 	public function getNextId()

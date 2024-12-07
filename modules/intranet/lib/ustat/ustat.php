@@ -10,10 +10,15 @@ namespace Bitrix\Intranet\UStat;
 
 use Bitrix\Main;
 use Bitrix\Main\Application;
+use Bitrix\Main\Config\Option;
 use Bitrix\Main\DB\SqlException;
 use Bitrix\Main\DB\SqlExpression;
 use Bitrix\Main\Entity;
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Type;
+use Bitrix\Main\UserTable;
+use CFile;
+use CUser;
 
 class UStat
 {
@@ -23,8 +28,95 @@ class UStat
 	// if user uses this amount of services, they are involved
 	const INVOLVEMENT_SERVICE_COUNT = 4;
 
+	const USER_LIMIT = 1000;
+
+	const ADMIN_GROUP_ID = 1;
+
+	const CACHE_ID = 'pulse_company_active_user_count';
+	const CACHE_TTL = 3600;
+	private const CACHE_PATH = '/intranet/ustat_user_count/';
+
+	public static function sendNotificationIfLimitExceeded(): bool
+	{
+		$checkLimitCompanyPulse = Option::get('intranet', 'check_limit_company_pulse', 'N');
+		if ($checkLimitCompanyPulse !== 'N')
+		{
+			return false;
+		}
+
+		$cache = \Bitrix\Main\Data\Cache::createInstance();
+		if($cache->initCache(self::CACHE_TTL, self::CACHE_ID, self::CACHE_PATH))
+		{
+			$userCount = $cache->getVars();
+		}
+		else
+		{
+			$userCount = Main\Application::getInstance()->getLicense()->getActiveUsersCount();
+			$cache->startDataCache();
+			$cache->endDataCache($userCount);
+		}
+		if ($userCount < self::USER_LIMIT)
+		{
+			return false;
+		}
+
+		return true;
+	}
+
+	public static function sendAdminNotification(): void
+	{
+		IncludeModuleLangFile(__FILE__);
+
+		$admins  = CUser::GetList('', '', array("GROUPS_ID" => array(static::ADMIN_GROUP_ID)), array("SELECT"=>array("ID")));
+		if (\Bitrix\Main\Loader::includeModule("im"))
+		{
+			while ($admin = $admins->Fetch())
+			{
+				\CIMNotify::add([
+					"TO_USER_ID" => $admin["ID"],
+					"NOTIFY_TYPE" => IM_NOTIFY_SYSTEM,
+					"NOTIFY_MODULE" => 'intranet',
+					"NOTIFY_EVENT" => 'refresh_error',
+					"NOTIFY_SUB_TAG" => "USER_LIMIT",
+					"NOTIFY_MESSAGE" => Loc::getMessage('INTRANET_USTAT_RECOMMEND_DISABLING'),
+					"NOTIFY_MESSAGE_OUT" => Loc::getMessage('INTRANET_USTAT_RECOMMEND_DISABLING'),
+					"MESSAGE" => GetMessage('INTRANET_USTAT_RECOMMEND_DISABLING'),
+					"RECENT_ADD" => 'Y',
+				]);
+			}
+		}
+		Option::set('intranet', 'check_limit_company_pulse', "Y");
+	}
+
+	public static function checkAvailableCompanyPulse(): bool
+	{
+		$allowCompanyPulseValue = Option::get('intranet', 'allow_company_pulse', 'Y');
+		return $allowCompanyPulseValue === 'Y';
+	}
+
+	public static function checkAvailableCompanyPulseAndNotifyAdmin(): bool
+	{
+		if (self::checkAvailableCompanyPulse())
+		{
+			if (self::sendNotificationIfLimitExceeded())
+			{
+				self::sendAdminNotification();
+			}
+
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	}
+
 	public static function incrementCounter($section, $userId = null)
 	{
+		if (!self::checkAvailableCompanyPulseAndNotifyAdmin())
+		{
+			return;
+		}
 		// try to update
 		// if no update for DAY table, then:
 		//   check if user is absent today, then we need to update ACTIVE_USERS counters for depts and company
@@ -134,6 +226,10 @@ class UStat
 	 */
 	public static function recount()
 	{
+		if (!self::checkAvailableCompanyPulseAndNotifyAdmin())
+		{
+			return;
+		}
 		static::recountDeptartmentsActiveUsers();
 		static::recountCompanyActiveUsers();
 		static::recountDailyInvolvement();
@@ -195,6 +291,13 @@ class UStat
 
 	public static function getStatusInformation()
 	{
+		if (!self::checkAvailableCompanyPulseAndNotifyAdmin())
+		{
+			return [
+				'ACTIVITY' => 0,
+				'INVOLVEMENT' => 0,
+			];
+		}
 		// 1. activity score: emulate last 60 minutes
 		$currentActivity = static::getCurrentActivity();
 
@@ -303,6 +406,11 @@ class UStat
 
 	public static function getCurrentActivity($departmentId = 0, $section = null)
 	{
+		if (!self::checkAvailableCompanyPulseAndNotifyAdmin())
+		{
+			return 0;
+		}
+
 		$data = array();
 
 		$fieldName = ($section) === null ? 'TOTAL' : $section;
@@ -345,6 +453,11 @@ class UStat
 	 */
 	public static function getDepartmentGraphData($departmentId, Type\DateTime $dateFrom, Type\DateTime $dateTo, $interval)
 	{
+		if (!self::checkAvailableCompanyPulseAndNotifyAdmin())
+		{
+			return [];
+		}
+
 		if (!in_array($interval, array('hour', 'day', 'month'), true))
 		{
 			throw new Main\ArgumentException('Interval should be the "hour", or "day", or "month".');
@@ -527,6 +640,10 @@ class UStat
 	 */
 	public static function getDepartmentSummaryInvolvement($departmentId, Type\DateTime $dateFrom, Type\DateTime $dateTo, $interval)
 	{
+		if (!self::checkAvailableCompanyPulseAndNotifyAdmin())
+		{
+			return 0;
+		}
 		// at this moment departmentId doesn't work, data will be counted for a whole company
 
 		if (!in_array($interval, array('hour', 'day', 'month'), true))
@@ -706,6 +823,10 @@ class UStat
 	 */
 	public static function getSectionInvolvement($departmentId, $section, Type\DateTime $dateFrom, Type\DateTime $dateTo, $interval)
 	{
+		if (!self::checkAvailableCompanyPulseAndNotifyAdmin())
+		{
+			return [];
+		}
 		// at this moment departmentId doesn't work, data will be counted for a whole company
 
 		if (!in_array($interval, array('hour', 'day', 'month'), true))
@@ -848,6 +969,104 @@ class UStat
 				$hourlyData['TOTAL_USERS'] = $dailyActiveUsers[$hourlyData['DATE']->format('Y-m-d')];
 			}
 		}
+
+		return $data;
+	}
+
+	public static function getUserRatingApi(string $period = '', int $limit = 5)
+	{
+		$users = [];
+		$toDate = new Type\DateTime();
+		$fieldName = 'TOTAL';
+
+		switch ($period)
+		{
+			case 'year':
+				$fromDate = Type\DateTime::createFromTimestamp(mktime(0, 0, 0, date('n')-12, 1));
+				$interval = 'month';
+				break;
+			case 'month':
+				$fromDate = Type\DateTime::createFromTimestamp(mktime(0, 0, 0, date('n'), date('j')-30));
+				$interval = 'day';
+				break;
+			case 'week':
+				$fromDate = Type\DateTime::createFromTimestamp(mktime(0, 0, 0, date('n'), date('j')-7));
+				$interval = 'day';
+				break;
+			default:
+				// for today, from 00:00 till 23:59
+				$fromDate = Type\DateTime::createFromTimestamp(mktime(-1, 0, 0));
+				$toDate = Type\DateTime::createFromTimestamp(mktime(24, 0, 0));
+				$interval = 'hour';
+		}
+
+		$posQuery = new Entity\Query(UserDayTable::getEntity());
+		$posQuery->setFilter(array(
+			 '><DAY' => array(
+				 ConvertTimeStamp($fromDate->getTimestamp()),
+				 ConvertTimeStamp($toDate->getTimestamp())
+			 ),
+			 '>SUM_'.$fieldName => 0
+		 ));
+
+		// now get position
+		$posQuery->setSelect(array(
+			'USER_ID',
+			new Entity\ExpressionField('SUM_'.$fieldName, 'SUM(%s)', $fieldName),
+			'US.NAME',
+			'US.LAST_NAME',
+			'US.PERSONAL_PHOTO',
+			'US.WORK_POSITION'
+		));
+		$posQuery->addOrder('SUM_'.$fieldName, 'DESC');
+
+		$userReference = new Entity\ReferenceField(
+			'US',
+			UserTable::getEntity(),
+			[
+				'=ref.ID' => 'this.USER_ID'
+			],
+			['join_type' => 'LEFT']
+		);
+		$posQuery->registerRuntimeField('US', $userReference);
+		$posQuery->setLimit($limit);
+		$result = $posQuery->exec();
+
+		$prefix = strtoupper($posQuery->getInitAlias() . '_us_');
+
+		while ($row = $result->fetch())
+		{
+			$personalPhotoFile = null;
+			$avatarSrc = null;
+			if(!empty($row[$prefix . "PERSONAL_PHOTO"]))
+			{
+				$personalPhotoFile = CFile::GetFileArray($row[$prefix . 'PERSONAL_PHOTO']);
+				$avatarSrc = $personalPhotoFile["SRC"];
+			}
+
+			$users[] = [
+				'user_id' => $row['USER_ID'],
+				'name' => $row[$prefix .'NAME'],
+				'last_name' => $row[$prefix .'LAST_NAME'],
+				'work_position' => $row[$prefix .'WORK_POSITION'],
+				'activity' => $row['SUM_'.$fieldName],
+				'avatar' => $avatarSrc
+			];
+		}
+
+		$sumInvolvement = self::getDepartmentSummaryInvolvement(0, $fromDate, $toDate, $interval);
+		$rawData = self::getDepartmentGraphData(0, $fromDate, $toDate, $interval);
+		$sumActivity = 0;
+		foreach ($rawData as $k => $v)
+		{
+			$sumActivity += $v[$fieldName];
+		}
+
+		$data = [
+			'involvement' => $sumInvolvement,
+			'activity' => $sumActivity,
+			'users' => $users
+		];
 
 		return $data;
 	}
@@ -1898,5 +2117,27 @@ class UStat
 		}
 
 		return $formatted;
+	}
+
+	public static function enableEventHandler()
+	{
+		CrmEventHandler::registerListeners();
+		SocnetEventHandler::registerListeners();
+		LikesEventHandler::registerListeners();
+		TasksEventHandler::registerListeners();
+		ImEventHandler::registerListeners();
+		DiskEventHandler::registerListeners();
+		MobileEventHandler::registerListeners();
+	}
+
+	public static function disableEventHandler()
+	{
+		SocnetEventHandler::unregisterListeners();
+		LikesEventHandler::unregisterListeners();
+		TasksEventHandler::unregisterListeners();
+		ImEventHandler::unregisterListeners();
+		DiskEventHandler::unregisterListeners();
+		MobileEventHandler::unregisterListeners();
+		CrmEventHandler::unregisterListeners();
 	}
 }

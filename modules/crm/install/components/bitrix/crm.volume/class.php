@@ -154,7 +154,7 @@ class CrmVolumeComponent extends \CBitrixComponent
 			return;
 		}
 
-		if (Main\Application::getConnection() instanceof \Bitrix\Main\DB\PgsqlConnection)
+		if (\Bitrix\Crm\DbHelper::isPgSqlDb())
 		{
 			Crm\Service\Container::getInstance()->getLocalization()->loadMessages();
 			\ShowError(Loc::getMessage('CRM_LOCALIZATION_DB_TYPE_NOT_SUPPORTED'));

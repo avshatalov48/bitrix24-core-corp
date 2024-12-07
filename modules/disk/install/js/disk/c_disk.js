@@ -842,11 +842,6 @@ if(!BX.Disk.pathToUser)
 				}
 			},
 
-			getUrlForDownloadDesktop: function ()
-			{
-				return (BX.browser.IsMac()? "https://dl.bitrix24.com/b24/bitrix24_desktop.dmg": "https://dl.bitrix24.com/b24/bitrix24_desktop.exe");
-			},
-
 			getUrlToShowObjectInGrid: function (objectId, params)
 			{
 				params = params || {};
@@ -907,11 +902,6 @@ if(!BX.Disk.pathToUser)
 				}
 
 				BX.userOptions.send(null);
-			},
-
-			getDownloadDesktop: function ()
-			{
-				document.location.href = this.getUrlForDownloadDesktop();
 			},
 
 			deactiveBanner: function (name)

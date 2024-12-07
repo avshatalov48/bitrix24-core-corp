@@ -6,6 +6,7 @@ use Bitrix\Timeman\Helper\EntityCodesHelper;
 use Bitrix\Timeman\Model\Schedule\Schedule;
 use Bitrix\Timeman\Model\Worktime\Record\WorktimeRecord;
 use Bitrix\Timeman\Service\DependencyManager;
+use Bitrix\Timeman\Integration;
 
 class CTimeMan
 {
@@ -49,7 +50,13 @@ class CTimeMan
 		$STATE = $TMUSER->State();
 
 		$info = ['ID' => '', 'STATE' => $STATE, 'CAN_EDIT' => 'N'];
-		$actionsBuilder = DependencyManager::getInstance()->getWorktimeActionList()->buildPossibleActionsListForUser($TMUSER->GetID());
+
+		$actionsBuilder = DependencyManager::getInstance()
+			->getWorktimeActionList()
+			->buildPossibleActionsListForUser($TMUSER->GetID());
+
+		$actions = $actionsBuilder->getAllActions();
+
 		if ($STATE == 'CLOSED')
 		{
 			$info['CAN_OPEN'] = $TMUSER->OpenAction();
@@ -62,7 +69,7 @@ class CTimeMan
 		$arSettings = $TMUSER->GetSettings(['UF_TM_REPORT_REQ']);
 		$info['REPORT_REQ'] = $arSettings['UF_TM_REPORT_REQ'] ?? null;
 		$info['TM_FREE'] = false;
-		if ($arInfo = $TMUSER->GetCurrentInfo())
+		if ($arInfo = $TMUSER->GetCurrentInfo(count($actions) > 1))
 		{
 			$record = WorktimeRecord::wakeUpRecord($arInfo);
 			foreach ($actionsBuilder->getAllActions() as $worktimeAction)
@@ -134,6 +141,8 @@ class CTimeMan
 				$info['TM_FREE'] = $worktimeAction->getSchedule() && $worktimeAction->getSchedule()->isFlextime();
 			}
 		}
+
+		$info['CHECKIN_COUNTER'] = Integration\Stafftrack\Counter::get();
 
 		$planner = CIntranetPlanner::getData(SITE_ID, $bFull);
 		$plannerData = $planner['DATA'];
@@ -964,9 +973,9 @@ class _CTimeManCalendarNew extends ITimeManCalendar
 				'DATE_TO' => $arEvent['DATE_TO'],
 				'ACCESSIBILITY' => $arEvent['ACCESSIBILITY'],
 				'IMPORTANCE' => $arEvent['IMPORTANCE'],
-				'STATUS' => $arEvent['STATUS'],
+				'STATUS' => $arEvent['STATUS'] ?? null,
 				'IS_MEETING' => $arEvent['IS_MEETING'] ? 'Y' : 'N',
-				'GUESTS' => $arEvent['GUESTS'],
+				'GUESTS' => $arEvent['GUESTS'] ?? null,
 				'URL' => $url,
 			];
 		}

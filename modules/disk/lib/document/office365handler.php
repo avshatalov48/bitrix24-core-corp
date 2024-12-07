@@ -221,7 +221,6 @@ class Office365Handler extends OneDriveHandler implements IViewer
 	protected function getUploadPath(FileData $fileData)
 	{
 		$fileName = $fileData->getName();
-		$fileName = $this->convertToUtf8($fileName);
 		$fileName = rawurlencode($fileName);
 
 		return $this->getApiUrlRoot() . "/drive/root:/{$fileName}:/";

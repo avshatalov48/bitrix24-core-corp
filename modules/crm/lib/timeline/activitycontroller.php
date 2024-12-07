@@ -60,10 +60,9 @@ class ActivityController extends EntityController
 			return;
 		}
 
-		$status = isset($fields['STATUS']) ? (int)$fields['STATUS'] : \CCrmActivityStatus::Undefined;
-		$typeID = isset($fields['TYPE_ID']) ? (int)$fields['TYPE_ID'] : \CCrmActivityType::Undefined;
-		$direction = isset($fields['DIRECTION']) ? (int)$fields['DIRECTION'] : \CCrmActivityDirection::Undefined;
-		$providerID = isset($fields['PROVIDER_ID']) ? $fields['PROVIDER_ID'] : '';
+		$status = (int)($fields['STATUS'] ?? \CCrmActivityStatus::Undefined);
+		$typeID = (int)($fields['TYPE_ID'] ?? \CCrmActivityType::Undefined);
+		$providerID = $fields['PROVIDER_ID'] ?? '';
 		$authorID = self::resolveAuthorID($fields);
 
 		$created = null;
@@ -189,31 +188,66 @@ class ActivityController extends EntityController
 			}
 			$historyEntryID = ActivityEntry::create($timelineParams);
 		}
-		elseif($typeID === \CCrmActivityType::Provider
+		elseif (
+			$typeID === \CCrmActivityType::Provider
 			&& isset($fields['PROVIDER_ID'])
-			&& $fields['PROVIDER_ID'] === Activity\Provider\ToDo::getId()
+			&& $fields['PROVIDER_ID'] === Activity\Provider\ToDo\ToDo::getId()
 		)
 		{
-			$logMessageController = LogMessageController::getInstance();
-			foreach ($bindings as $binding)
+			$duration = null;
+
+			if (
+				!empty($fields['START_TIME'])
+				&& !empty($fields['END_TIME'])
+				&& $fields['START_TIME'] !== $fields['END_TIME']
+			)
 			{
-				$logMessageController->onCreate(
-					[
+				$from = DateTime::createFromUserTime($fields['START_TIME'])->getTimestamp();
+				$to = DateTime::createFromUserTime($fields['END_TIME'])->getTimestamp();
+				$duration = $to - $from;
+			}
+
+			$binding = array_shift($bindings);
+			$deadlineTimestamp = (
+				empty($fields['DEADLINE'])
+					? null
+					: (DateTime::createFromUserTime($fields['DEADLINE'])->getTimestamp())
+			);
+			$activityData = [
+				'DESCRIPTION' => $fields['DESCRIPTION'],
+				'ASSOCIATED_ENTITY_ID' => $fields['ASSOCIATED_ENTITY_ID'],
+				'DEADLINE_TIMESTAMP' => $deadlineTimestamp,
+			];
+			if ($duration)
+			{
+				$activityData['DURATION'] = $duration;
+			}
+
+			$logMessageController = LogMessageController::getInstance();
+			$timelineEntryId = $logMessageController->onCreate(
+				[
+					'ENTITY_TYPE_ID' => $binding['OWNER_TYPE_ID'],
+					'ENTITY_ID' => $binding['OWNER_ID'],
+					'ASSOCIATED_ENTITY_TYPE_ID' => \CCrmOwnerType::Activity,
+					'ASSOCIATED_ENTITY_ID' => $ownerID,
+					'SETTINGS' => [
+						'ACTIVITY_DATA' => $activityData,
+					],
+				],
+				LogMessageType::TODO_CREATED,
+				$params['CURRENT_USER'] ?? null
+			);
+
+			if ($timelineEntryId > 0)
+			{
+				foreach ($bindings as $binding)
+				{
+					Entity\TimelineBindingTable::upsert([
+						'OWNER_ID' => $timelineEntryId,
 						'ENTITY_TYPE_ID' => $binding['OWNER_TYPE_ID'],
 						'ENTITY_ID' => $binding['OWNER_ID'],
-						'ASSOCIATED_ENTITY_TYPE_ID' => \CCrmOwnerType::Activity,
-						'ASSOCIATED_ENTITY_ID' => $ownerID,
-						'SETTINGS' => [
-							'ACTIVITY_DATA' => [
-								'DESCRIPTION' => $fields['DESCRIPTION'],
-								'ASSOCIATED_ENTITY_ID' => $fields['ASSOCIATED_ENTITY_ID'],
-								'DEADLINE_TIMESTAMP' => $fields['DEADLINE'] ? (DateTime::createFromUserTime($fields['DEADLINE'])->getTimestamp()) : null,
-							]
-						]
-					],
-					LogMessageType::TODO_CREATED,
-					$params['CURRENT_USER'] ?? null
-				);
+					]);
+				}
 			}
 		}
 
@@ -241,34 +275,41 @@ class ActivityController extends EntityController
 
 	public function onModify($ownerID, array $params)
 	{
-		if(!is_int($ownerID))
+		if (!is_int($ownerID))
 		{
 			$ownerID = (int)$ownerID;
 		}
 
-		if($ownerID <= 0)
+		if ($ownerID <= 0)
 		{
 			throw new Main\ArgumentException('Owner ID must be greater than zero.', 'ownerID');
 		}
 
 		$currentFields = isset($params['CURRENT_FIELDS']) && is_array($params['CURRENT_FIELDS'])
-			? $params['CURRENT_FIELDS'] : array();
+			? $params['CURRENT_FIELDS']
+			: [];
 		$currentBindings = isset($params['CURRENT_BINDINGS']) && is_array($params['CURRENT_BINDINGS'])
-			? $params['CURRENT_BINDINGS'] : array();
+			? $params['CURRENT_BINDINGS']
+			: [];
 		$previousFields = isset($params['PREVIOUS_FIELDS']) && is_array($params['PREVIOUS_FIELDS'])
-			? $params['PREVIOUS_FIELDS'] : array();
+			? $params['PREVIOUS_FIELDS']
+			: [];
 		$additionalParams = isset($params['ADDITIONAL_PARAMS']) && is_array($params['ADDITIONAL_PARAMS'])
-			? $params['ADDITIONAL_PARAMS'] : [];
+			? $params['ADDITIONAL_PARAMS']
+			: [];
 
-		$typeID = isset($currentFields['TYPE_ID']) ? (int)$currentFields['TYPE_ID'] : \CCrmActivityType::Undefined;
-		$providerID = isset($currentFields['PROVIDER_ID']) ? $currentFields['PROVIDER_ID'] : '';
+		$typeID = isset($currentFields['TYPE_ID'])
+			? (int)$currentFields['TYPE_ID']
+			: \CCrmActivityType::Undefined;
+		$providerID = $currentFields['PROVIDER_ID'] ?? '';
+		$provider = \CCrmActivity::GetProviderById($providerID);
+		$moveBindingsLogMessageType = isset($provider) ? $provider::getMoveBindingsLogMessageType() : null;
 		$prevCompleted = isset($previousFields['COMPLETED']) && $previousFields['COMPLETED'] === 'Y';
 		$curCompleted = isset($currentFields['COMPLETED']) && $currentFields['COMPLETED'] === 'Y';
-
 		$authorID = self::resolveAuthorID($currentFields);
-
 		$historyEntryID = 0;
-		if(!$prevCompleted && $curCompleted)
+
+		if (!$prevCompleted && $curCompleted)
 		{
 			if (
 				$typeID === \CCrmActivityType::Provider && $providerID === Activity\Provider\Tasks\Comment::getId()
@@ -298,7 +339,6 @@ class ActivityController extends EntityController
 					'AUTHOR_ID' => $authorID,
 					'BINDINGS' => self::mapBindings($currentBindings),
 				];
-				$provider = \CCrmActivity::GetProviderById($providerID);
 				if (!is_null($provider) && $provider::isTask())
 				{
 					$taskId = $currentFields['ASSOCIATED_ENTITY_ID'];
@@ -327,14 +367,14 @@ class ActivityController extends EntityController
 				$historyEntryID = ActivityEntry::create($historyData);
 			}
 		}
-		elseif($prevCompleted && !$curCompleted)
+		elseif ($prevCompleted && !$curCompleted)
 		{
-			if(
+			if (
 				$typeID == \CCrmActivityType::Provider
 				&& in_array(
 					$providerID,
 					[
-						Activity\Provider\ToDo::getId(),
+						Activity\Provider\ToDo\ToDo::getId(),
 						Activity\Provider\ConfigurableRestApp::getId(),
 						Activity\Provider\Zoom::getId(),
 						Activity\Provider\Tasks\Task::getId(),
@@ -361,6 +401,15 @@ class ActivityController extends EntityController
 				);
 			}
 		}
+		elseif (isset($additionalParams['MOVE_BINDINGS_MAP']) && $moveBindingsLogMessageType)
+		{
+			$this->onMoveBindings(
+				$ownerID,
+				$moveBindingsLogMessageType,
+				$additionalParams['MOVE_BINDINGS_MAP'],
+				$currentFields
+			);
+		}
 
 		$enableHistoryPush = $historyEntryID > 0;
 		$enableActivityPush = self::isActivitySupported($currentFields);
@@ -380,7 +429,7 @@ class ActivityController extends EntityController
 			);
 		}
 
-		foreach($currentBindings as $binding)
+		foreach ($currentBindings as $binding)
 		{
 			$entityItemIdentifier = Crm\ItemIdentifier::createFromArray($binding);
 			if (!$entityItemIdentifier)
@@ -442,6 +491,7 @@ class ActivityController extends EntityController
 			}
 		}
 	}
+
 	public function onDelete($ownerID, array $params)
 	{
 		if(!is_int($ownerID))
@@ -456,10 +506,11 @@ class ActivityController extends EntityController
 		$bindings = isset($params['BINDINGS']) && is_array($params['BINDINGS']) ? $params['BINDINGS'] : [];
 		foreach($bindings as $binding)
 		{
-			$this->sendPullEventOnDeleteScheduled(
-				new Crm\ItemIdentifier($binding['OWNER_TYPE_ID'], $binding['OWNER_ID']),
-				$ownerID
-			);
+			$entityItemIdentifier = Crm\ItemIdentifier::createFromArray($binding);
+			if ($entityItemIdentifier)
+			{
+				$this->sendPullEventOnDeleteScheduled($entityItemIdentifier, $ownerID);
+			}
 		}
 
 		$movedToRecycleBin = isset($params['MOVED_TO_RECYCLE_BIN']) && $params['MOVED_TO_RECYCLE_BIN'];
@@ -651,7 +702,8 @@ class ActivityController extends EntityController
 			Activity\Provider\StoreDocument::getId(),
 			Activity\Provider\Document::getId(),
 			Activity\Provider\SignDocument::getId(),
-			Activity\Provider\ToDo::getId(),
+			Activity\Provider\SignB2eDocument::getId(),
+			Activity\Provider\ToDo\ToDo::getId(),
 			Activity\Provider\Payment::getId(),
 			Activity\Provider\ConfigurableRestApp::getId(),
 			Activity\Provider\CalendarSharing::getId(),
@@ -660,25 +712,31 @@ class ActivityController extends EntityController
 		];
 	}
 
-	protected static function isActivityProviderSupported($providerID)
+	protected static function isActivityProviderSupported(string $providerId): bool
 	{
-		return(
-			$providerID === Activity\Provider\WebForm::getId()
-			|| $providerID === Activity\Provider\Wait::getId()
-			|| $providerID === Activity\Provider\Request::getId()
-			|| $providerID === Activity\Provider\OpenLine::getId()
-			|| $providerID === Activity\Provider\Sms::getId()
-			|| $providerID === Activity\Provider\Notification::getId()
-			|| $providerID === Activity\Provider\RestApp::getId()
-			|| $providerID === Activity\Provider\Visit::getId()
-			|| $providerID === Activity\Provider\Zoom::getId()
-			|| $providerID === Activity\Provider\Document::getId()
-			|| $providerID === Activity\Provider\SignDocument::getId()
-			|| $providerID === Activity\Provider\ToDo::getId()
-			|| $providerID === Activity\Provider\ConfigurableRestApp::getId()
-			|| $providerID === Activity\Provider\CalendarSharing::getId()
-			|| $providerID === Activity\Provider\Tasks\Comment::getId()
-			|| $providerID === Activity\Provider\Tasks\Task::getId()
+		return in_array(
+			$providerId,
+			[
+				Activity\Provider\WebForm::getId(),
+				Activity\Provider\Wait::getId(),
+				Activity\Provider\Request::getId(),
+				Activity\Provider\OpenLine::getId(),
+				Activity\Provider\Sms::getId(),
+				Activity\Provider\WhatsApp::getId(),
+				Activity\Provider\Notification::getId(),
+				Activity\Provider\RestApp::getId(),
+				Activity\Provider\Visit::getId(),
+				Activity\Provider\Zoom::getId(),
+				Activity\Provider\Document::getId(),
+				Activity\Provider\SignDocument::getId(),
+				Activity\Provider\SignB2eDocument::getId(),
+				Activity\Provider\ToDo\ToDo::getId(),
+				Activity\Provider\ConfigurableRestApp::getId(),
+				Activity\Provider\CalendarSharing::getId(),
+				Activity\Provider\Tasks\Comment::getId(),
+				Activity\Provider\Tasks\Task::getId(),
+			],
+			true
 		);
 	}
 
@@ -876,9 +934,9 @@ class ActivityController extends EntityController
 		$typeID = (int)($fields['TYPE_ID'] ?? 0);
 		$providerID = $fields['PROVIDER_ID'] ?? '';
 
-		if ($providerID === Activity\Provider\ToDo::getId())
+		if ($providerID === Activity\Provider\ToDo\ToDo::getId())
 		{
-			$fields['PING_OFFSETS'] = Activity\Provider\ToDo::getPingOffsets($ID);
+			$fields['PING_OFFSETS'] = Activity\Provider\ToDo\ToDo::getPingOffsets($ID);
 		}
 		else
 		{
@@ -935,7 +993,13 @@ class ActivityController extends EntityController
 				}
 			}
 		}
-		elseif($providerID === Activity\Provider\Sms::getId())
+		elseif (
+			in_array(
+				$providerID,
+				[Activity\Provider\Sms::getId(), Activity\Provider\Whatsapp::getId()],
+				true
+			)
+		)
 		{
 			// first, check original message fields
 			$smsFields = Integration\SmsManager::getMessageFields($fields['ASSOCIATED_ENTITY_ID']);
@@ -957,6 +1021,7 @@ class ActivityController extends EntityController
 					),
 					'statusId' => $smsFields['STATUS_ID'],
 					'errorText' => $smsFields['EXEC_ERROR'],
+					'templateId' => $fields['SETTINGS']['ORIGINAL_TEMPLATE_ID'] ?? 0,
 				];
 			}
 		}
@@ -1352,10 +1417,91 @@ class ActivityController extends EntityController
 				]
 			);
 			$items = NoteTable::loadForItems($items, NoteTable::NOTE_TYPE_ACTIVITY);
+			$items = (new Crm\Timeline\Entity\Repository\RestAppLayoutBlocksRepository())
+				->loadForItems($items, Crm\Timeline\Entity\RestAppLayoutBlocksTable::ACTIVITY_ITEM_TYPE)
+			;
 
 			foreach ($identifiers as $identifier)
 			{
 				$this->sendPullEventOnUpdateScheduled($identifier, $scheduledData, $userId);
+			}
+		}
+	}
+
+	private function onMoveBindings(int $activityId, string $typeCategory, mixed $bindingsMap, array $currentFields): void
+	{
+		if (empty($typeCategory))
+		{
+			return;
+		}
+
+		if (!is_array($bindingsMap))
+		{
+			return;
+		}
+
+		$sourceItemIdentifier = isset($bindingsMap['source']) && $bindingsMap['source'] instanceof ItemIdentifier
+			? $bindingsMap['source']
+			: null;
+		$targetItemIdentifier = isset($bindingsMap['target']) && $bindingsMap['target'] instanceof ItemIdentifier
+			? $bindingsMap['target']
+			: null;
+		if (is_null($sourceItemIdentifier) || is_null($targetItemIdentifier))
+		{
+			return;
+		}
+
+		$authorId = self::resolveAuthorID($currentFields);
+
+		LogMessageController::getInstance()->onCreate(
+			[
+				'ENTITY_TYPE_ID' => $sourceItemIdentifier->getEntityTypeId(),
+				'ENTITY_ID' => $sourceItemIdentifier->getEntityId(),
+				'SETTINGS' => [
+					'FROM' => [
+						'ENTITY_TYPE_ID' => $targetItemIdentifier->getEntityTypeId(),
+						'ENTITY_ID' => $targetItemIdentifier->getEntityId(),
+					],
+				],
+			],
+			$typeCategory,
+			$authorId
+		);
+
+		LogMessageController::getInstance()->onCreate(
+			[
+				'ENTITY_TYPE_ID' => $targetItemIdentifier->getEntityTypeId(),
+				'ENTITY_ID' => $targetItemIdentifier->getEntityId(),
+				'SETTINGS' => [
+					'TO' => [
+						'ENTITY_TYPE_ID' => $sourceItemIdentifier->getEntityTypeId(),
+						'ENTITY_ID' => $sourceItemIdentifier->getEntityId(),
+					],
+				],
+			],
+			$typeCategory,
+			$authorId
+		);
+
+		if (self::isActivitySupported($currentFields))
+		{
+			if (isset($currentFields['COMPLETED']) && $currentFields['COMPLETED'] === 'Y')
+			{
+				$timelineEntriesIds = TimelineEntry::getEntriesIdsByAssociatedEntity(
+					\CCrmOwnerType::Activity,
+					$activityId,
+					self::MAX_SIMULTANEOUS_PULL_EVENT_COUNT
+				);
+				foreach ($timelineEntriesIds as $timelineEntryId)
+				{
+					$this->sendPullEventOnDelete($sourceItemIdentifier, $timelineEntryId);
+					$this->sendPullEventOnAdd($targetItemIdentifier, $timelineEntryId);
+				}
+			}
+			else
+			{
+				$this->sendPullEventOnDeleteScheduled($sourceItemIdentifier, $activityId);
+				$this->sendPullEventOnAddScheduled($targetItemIdentifier, $currentFields);
 			}
 		}
 	}

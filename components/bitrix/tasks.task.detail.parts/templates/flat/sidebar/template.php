@@ -2,10 +2,13 @@
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
 
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Text\HtmlFilter;
 use Bitrix\Tasks\Helper\RestrictionUrl;
+use Bitrix\Tasks\Integration\Bitrix24;
 use Bitrix\Tasks\Integration\SocialNetwork\Group;
 use Bitrix\Tasks\Internals\Task\MetaStatus;
 use Bitrix\Tasks\Replication\Replicator\RegularTaskReplicator;
+use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\TaskLimit;
 
 Loc::loadMessages(__FILE__);
 
@@ -21,7 +24,17 @@ $taskData = $templateData["DATA"]["TASK"];
 $can = $templateData["DATA"]["TASK"]["ACTION"];
 $workingTime = $templateData["AUX_DATA"]["COMPANY_WORKTIME"];
 $stages = isset($arParams['TEMPLATE_DATA']['DATA']['STAGES']) ? $arParams['TEMPLATE_DATA']['DATA']['STAGES'] : array();
+
+$taskMailUserIntegrationEnabled = Bitrix24::checkFeatureEnabled(
+	Bitrix24\FeatureDictionary::TASK_MAIL_USER_INTEGRATION
+);
+$taskMailUserIntegrationFeatureId = Bitrix24\FeatureDictionary::TASK_MAIL_USER_INTEGRATION;
+$taskObserversParticipantsEnabled = Bitrix24::checkFeatureEnabled(
+	Bitrix24\FeatureDictionary::TASK_OBSERVERS_PARTICIPANTS
+);
 $taskLimitExceeded = $arResult['TASK_LIMIT_EXCEEDED'];
+
+$taskRateExceeded = !Bitrix24::checkFeatureEnabled(Bitrix24\FeatureDictionary::TASK_RATE);
 
 $canReadGroupTasks = (
 	array_key_exists('GROUP_ID', $taskData)
@@ -37,7 +50,10 @@ $canReadGroupTasks = (
 	<div class="task-detail-sidebar-content">
 		<div class="task-detail-sidebar-status">
 			<div class="task-detail-sidebar-status-content">
-				<span id="task-detail-status-name" class="task-detail-sidebar-status-text"><?=Loc::getMessage("TASKS_STATUS_".$taskData["REAL_STATUS"])?></span>
+				<span id="task-detail-status-name" class="task-detail-sidebar-status-text"><?=
+						Loc::getMessage('TASKS_STATUS_' . $taskData['REAL_STATUS'] . '_MSGVER_1')
+						?? Loc::getMessage('TASKS_STATUS_' . $taskData['REAL_STATUS'])
+					?></span>
 				<span id="task-detail-status-date" class="task-detail-sidebar-status-date"><?
 					if ($taskData["REAL_STATUS"] != 4 && $taskData["REAL_STATUS"] != 5)
 					{
@@ -185,17 +201,17 @@ $canReadGroupTasks = (
 			<div class="task-detail-sidebar-item-title"><?=Loc::getMessage("TASKS_MARK_MSGVER_1")?>:</div>
 			<div class="task-detail-sidebar-item-value<?if(!$can["RATE"]):?> task-detail-sidebar-item-readonly<?php endif?>">
 				<?php
-					if ($taskLimitExceeded)
+					if ($taskRateExceeded)
 					{
 						$lockClassName = 'tariff-lock';
-						$onLockClick =
-							"top.BX.UI.InfoHelper.show('"
-							. RestrictionUrl::TASK_RATE_SLIDER_URL
-							. "',{isLimit: true,limitAnalyticsLabels: {module: 'tasks',}});"
-						;
+						$onLockClick = TaskLimit::getLimitLockClick(
+							Bitrix24\FeatureDictionary::TASK_RATE,
+							null,
+							'taskSidebar'
+						);
 						$lockClassStyle = "cursor: pointer;";
 				?>
-					<span class="<?=$lockClassName?>" onclick="<?=$onLockClick?>" style="<?=$lockClassStyle?>"></span>
+					<span class="<?=$lockClassName?>" onclick="<?=HtmlFilter::encode($onLockClick)?>" style="<?=$lockClassStyle?>"></span>
 				<?php
 				}
 				?>
@@ -253,7 +269,9 @@ $canReadGroupTasks = (
 				'DISABLE_JS_IF_READ_ONLY' => 'Y',
 				'CHECK_ABSENCE'=>'Y',
 				'GROUP_ID' => (array_key_exists('GROUP_ID', $taskData)) ? $taskData['GROUP_ID'] : 0,
-				'ROLE_KEY' => \Bitrix\Tasks\Access\Role\RoleDictionary::ROLE_RESPONSIBLE
+				'ROLE_KEY' => \Bitrix\Tasks\Access\Role\RoleDictionary::ROLE_RESPONSIBLE,
+				'taskMailUserIntegrationEnabled' => $taskMailUserIntegrationEnabled,
+				'taskMailUserIntegrationFeatureId' => $taskMailUserIntegrationFeatureId,
 			),
 			null,
 			array("HIDE_ICONS" => "Y", "ACTIVE_COMPONENT" => "Y")
@@ -279,7 +297,8 @@ $canReadGroupTasks = (
 				'DISABLE_JS_IF_READ_ONLY' => 'Y',
 				'TASK_LIMIT_EXCEEDED' => $taskLimitExceeded,
 				'GROUP_ID' => (array_key_exists('GROUP_ID', $taskData)) ? $taskData['GROUP_ID'] : 0,
-				'ROLE_KEY' => \Bitrix\Tasks\Access\Role\RoleDictionary::ROLE_ACCOMPLICE
+				'ROLE_KEY' => \Bitrix\Tasks\Access\Role\RoleDictionary::ROLE_ACCOMPLICE,
+				'viewSelectorEnabled' => $taskObserversParticipantsEnabled,
 			),
 			null,
 			array("HIDE_ICONS" => "Y", "ACTIVE_COMPONENT" => "Y")
@@ -312,7 +331,8 @@ $canReadGroupTasks = (
 				),
 				'TASK_LIMIT_EXCEEDED' => $taskLimitExceeded,
 				'GROUP_ID' => (array_key_exists('GROUP_ID', $taskData)) ? $taskData['GROUP_ID'] : 0,
-				'ROLE_KEY' => \Bitrix\Tasks\Access\Role\RoleDictionary::ROLE_AUDITOR
+				'ROLE_KEY' => \Bitrix\Tasks\Access\Role\RoleDictionary::ROLE_AUDITOR,
+				'viewSelectorEnabled' => $taskObserversParticipantsEnabled,
 			),
 			null,
 			array("HIDE_ICONS" => "Y", "ACTIVE_COMPONENT" => "Y")
@@ -416,7 +436,7 @@ $canReadGroupTasks = (
 </div>
 
 <?php
-// получить список встроенных приложений
+// РїРѕР»СѓС‡РёС‚СЊ СЃРїРёСЃРѕРє РІСЃС‚СЂРѕРµРЅРЅС‹С… РїСЂРёР»РѕР¶РµРЅРёР№
 if(\Bitrix\Main\Loader::includeModule('rest'))
 {
 	$restPlacementHandlerList = \Bitrix\Rest\PlacementTable::getHandlersList(\CTaskRestService::PLACEMENT_TASK_VIEW_SIDEBAR);
@@ -483,6 +503,9 @@ if(\Bitrix\Main\Loader::includeModule('rest'))
 		taskLimitExceeded: <?=CUtil::PhpToJSObject($taskLimitExceeded)?>,
 		calendarSettings: <?=CUtil::PhpToJSObject($arResult['CALENDAR_SETTINGS'])?>,
 		isScrumTask: '<?= $arParams['IS_SCRUM_TASK'] ? 'Y' : 'N' ?>',
-		parentId: <?= (int) $taskData['PARENT_ID'] ?>
+		parentId: <?= (int) $taskData['PARENT_ID'] ?>,
+		taskRateExceeded: <?=CUtil::PhpToJSObject($taskRateExceeded)?>,
+		taskRateFeatureId: '<?= Bitrix24\FeatureDictionary::TASK_RATE ?>',
+		taskObserversParticipantsEnabled: <?=CUtil::PhpToJSObject($taskObserversParticipantsEnabled)?>,
 	});
 </script>

@@ -63,8 +63,16 @@ class Activity
 					'FIELD_NAME' => str_replace('#FIELD_NAME#', 'A.TYPE_ID', $activityTypesSql),
 					'FIELD_TYPE' => 'string',
 				],
-				//TODO:PROVIDER_ID varchar(100) NULL,
-				//TODO:PROVIDER_TYPE_ID varchar(100) NULL,
+				'PROVIDER_ID' => [
+					'IS_METRIC' => 'N', // 'Y'
+					'FIELD_NAME' => 'A.PROVIDER_ID',
+					'FIELD_TYPE' => 'string',
+				],
+				'PROVIDER_TYPE_ID' => [
+					'IS_METRIC' => 'N', // 'Y'
+					'FIELD_NAME' => 'A.PROVIDER_TYPE_ID',
+					'FIELD_TYPE' => 'string',
+				],
 				//TODO:PROVIDER_GROUP_ID varchar(100) NULL,
 				// OWNER_ID INT(1) NOT NULL,
 				'OWNER_ID' => [

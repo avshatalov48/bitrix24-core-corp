@@ -10,7 +10,7 @@ use Bitrix\Main\ORM\Fields\Validators\LengthValidator;
 
 class AppFavoritesTable extends DataManager
 {
-	private static array $appList = [];
+	private static ?array $appList = null;
 
 	public static function getTableName()
 	{
@@ -52,13 +52,16 @@ class AppFavoritesTable extends DataManager
 
 	public static function getUserFavorites(): array
 	{
-		if (empty(AppFavoritesTable::$appList)) {
+		if (is_null(AppFavoritesTable::$appList)) {
 			global $USER;
+
+			AppFavoritesTable::$appList = [];
 
 			$favList = AppFavoritesTable::getList([
 				'filter' => [
 					'=USER_ID' => $USER->GetID(),
 				],
+				'select' => ['APP_CODE'],
 			])->fetchAll();
 
 			AppFavoritesTable::$appList = array_unique(array_column($favList, 'APP_CODE'));
@@ -81,20 +84,6 @@ class AppFavoritesTable extends DataManager
 		])->fetchAll();
 
 		return array_unique(array_column($favList, 'APP_CODE'));
-	}
-
-	public static function getUserFavoritesCount(): int
-	{
-		global $USER;
-
-		$dbFav = AppFavoritesTable::getList([
-			'filter' => [
-				'=USER_ID' => $USER->GetID(),
-			],
-			'count_total' => true,
-		]);
-
-		return (int)$dbFav->getCount();
 	}
 
 	public static function addItem($appCode)

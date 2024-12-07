@@ -2,6 +2,7 @@
 
 return [
 	"extensions" => [
+		'reload/listeners',
 		"loc",
 		"event-emitter",
 		"pull/client/events",

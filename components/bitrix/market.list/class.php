@@ -30,12 +30,12 @@ class MarketList extends CBitrixComponent implements Controllerable, Loadable
 	public function executeComponent()
 	{
 		$this->arParams['HISTORY'] = History::getFirstPageInfo('list');
-		$this->arParams['CREATE_URI_SITE_TEMPLATE'] = Link::getCreateUri();
 
 		$this->prepareResult();
 
 		$marketAction = $this->arResult['ADDITIONAL_MARKET_ACTION'] ?? '';
-		$this->arResult = array_merge($this->arResult, Toolbar::getInfo($marketAction));
+		$searchAction = $this->arResult['ADDITIONAL_SEARCH_ACTION'] ?? '';
+		$this->arResult = array_merge($this->arResult, Toolbar::getInfo($marketAction, $searchAction));
 
 		$this->includeComponentTemplate();
 	}

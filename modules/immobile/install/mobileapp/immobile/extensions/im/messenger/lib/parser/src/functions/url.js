@@ -20,6 +20,13 @@ jn.define('im/messenger/lib/parser/functions/url', (require, exports, module) =>
 			return text;
 		},
 
+		removeBR(text)
+		{
+			text = text.replace(/\[\/?br]/gim, '');
+
+			return text;
+		},
+
 		removeSimpleUrlTag(text)
 		{
 			text = text.replace(/\[url](.*?)\[\/url]/gi, (whole, link) => link);

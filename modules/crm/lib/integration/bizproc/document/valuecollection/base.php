@@ -242,7 +242,7 @@ abstract class Base extends ValueCollection
 				{
 					$fieldValue = $this->document[$userFieldName];
 				}
-				elseif (isset($userFieldParams['VALUE']) && $userFieldParams['VALUE'] !== false)
+				elseif (array_key_exists('VALUE', $userFieldParams))
 				{
 					$fieldValue = $userFieldParams['VALUE'];
 				}
@@ -269,14 +269,22 @@ abstract class Base extends ValueCollection
 				{
 					if (!$isFieldMultiple)
 					{
-						$this->document[$userFieldName] = 'user_' . $fieldValue;
+						$this->document[$userFieldName] =
+							$this->document[$userFieldName] > 0
+								? 'user_' . $fieldValue
+								: null
+						;
 					}
 					elseif (is_array($fieldValue))
 					{
 						$this->document[$userFieldName] = [];
 						foreach ($fieldValue as $value)
 						{
-							$this->document[$userFieldName][] = 'user_' . $value;
+							$this->document[$userFieldName][] =
+								$this->document[$userFieldName] > 0
+									? 'user_' . $value
+									: null
+							;
 						}
 					}
 				}
@@ -321,6 +329,10 @@ abstract class Base extends ValueCollection
 				elseif ($fieldTypeID === 'resourcebooking')
 				{
 					self::prepareResourceBookingField($this->document, $userFieldName);
+				}
+				elseif ($fieldTypeID === 'file')
+				{
+					$this->document[$userFieldName] = $fieldValue > 0 ? $fieldValue : null;
 				}
 				elseif (!isset($this->document[$userFieldName]))
 				{
@@ -410,7 +422,7 @@ abstract class Base extends ValueCollection
 		}
 
 		$multiFieldTypes = \CCrmFieldMulti::GetEntityTypeList();
-		foreach ($multiFieldTypes as $typeId => $arFields)
+		foreach ($multiFieldTypes as $typeId => $fields)
 		{
 			if (!isset($this->document[$typeId]))
 			{
@@ -423,7 +435,7 @@ abstract class Base extends ValueCollection
 				$this->document[$printableFieldName] = '';
 			}
 
-			foreach ($arFields as $valueType => $valueName)
+			foreach ($fields as $valueType => $valueName)
 			{
 				$fieldName = $typeId . '_' . $valueType;
 				if (!isset($this->document[$fieldName]))
@@ -689,6 +701,17 @@ abstract class Base extends ValueCollection
 			if (isset($this->document[$field]))
 			{
 				$this->document[$field] = $this->document[$field] > 0 ? 'user_' . $this->document[$field] : null;
+			}
+		}
+	}
+
+	protected function normalizeEntityBindings(array $fields): void
+	{
+		foreach ($fields as $field)
+		{
+			if (array_key_exists($field, $this->document) && $this->document[$field] <= 0)
+			{
+				$this->document[$field] = null;
 			}
 		}
 	}

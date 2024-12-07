@@ -1,8 +1,9 @@
 <?
 $MESS["TASKS_STATUS_1"] = "Новая";
-$MESS["TASKS_STATUS_2"] = "Ждет выполнения";
+$MESS["TASKS_STATUS_2"] = "Ждёт выполнения";
 $MESS["TASKS_STATUS_3"] = "Выполняется";
-$MESS["TASKS_STATUS_4"] = "Ждет контроля";
+$MESS["TASKS_STATUS_4"] = "Ждёт контроля";
+$MESS["TASKS_STATUS_4_MSGVER_1"] = "Ждёт контроля";
 $MESS["TASKS_STATUS_5"] = "Завершена";
 $MESS["TASKS_STATUS_6"] = "Отложена";
 $MESS["TASKS_STATUS_7"] = "Отклонена";
@@ -29,4 +30,3 @@ $MESS["TASKS_EXCEL_ADD_IN_REPORT"] = "В отчете";
 $MESS["TASKS_EXCEL_GROUP_ID"] = "Группа";
 $MESS["TASKS_ELAPSED_H"] = "ч";
 $MESS["TASKS_ELAPSED_M"] = "м";
-?>

@@ -148,7 +148,7 @@
 /* text container */
 .crm-copilot-textbox__content {
 	width: 100%;
-	margin-top: 24px;
+	margin: 24px 0 20px 0;
 	overflow: auto;
 	scrollbar-width: thin;
 	scrollbar-color: #EDEEF0 transparent;
@@ -207,3 +207,68 @@
 	caret-color: transparent;
 }
 
+.crm-copilot-textbox__attentions .crm-textbox-attention:not(:last-child){
+	margin-bottom: 6px;
+}
+
+.crm-textbox-attention {
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	-webkit-box-align: center;
+	    -ms-flex-align: center;
+	        align-items: center;
+	gap: 3px;
+}
+
+.crm-textbox-attention__icon {
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	-webkit-box-align: center;
+	    -ms-flex-align: center;
+	        align-items: center;
+	-webkit-box-pack: center;
+	    -ms-flex-pack: center;
+	        justify-content: center;
+}
+
+.crm-textbox-attention__content {
+	font-family: var(--ui-font-family-open-sans);
+	font-weight: var(--ui-font-weight-regular);
+	font-size: var(--ui-font-size-xs);
+}
+
+.crm-textbox-attention__content a,
+.crm-textbox-attention__content a:hover{
+	text-decoration: underline;
+	color: inherit;
+}
+
+/** default attention preset */
+.crm-textbox-attention.--crm-textbox-attention-default .crm-textbox-attention__content {
+	color: var(--ui-color-palette-gray-60);
+}
+
+.crm-textbox-attention.--crm-textbox-attention-default .crm-textbox-attention__content a {
+	color: inherit;
+}
+
+.crm-textbox-attention.--crm-textbox-attention-default .crm-textbox-attention__content a:hover,
+.crm-textbox-attention.--crm-textbox-attention-default .crm-textbox-attention__content a:active {
+	color: var(--ui-color-palette-gray-90);
+}
+
+/** copilot attention preset */
+.crm-textbox-attention.--crm-textbox-attention-copilot .crm-textbox-attention__content {
+	color: #B6AAC8;
+}
+
+.crm-textbox-attention.--crm-textbox-attention-copilot .crm-textbox-attention__content a {
+	color: #B095DC;
+}
+
+.crm-textbox-attention.--crm-textbox-attention-copilot .crm-textbox-attention__content a:hover,
+.crm-textbox-attention.--crm-textbox-attention-copilot .crm-textbox-attention__content a:active {
+	color: #8E52EC;
+}

@@ -40,7 +40,7 @@ $code = htmlspecialcharsbx($arResult['ROW']['CODE']);
 $containerId = 'crm-analytics-source-ads-editor';
 ?>
 
-<script type="text/javascript">
+<script>
 	BX.ready(function () {
 		top.BX.onCustomEvent(
 			top,
@@ -442,7 +442,7 @@ $containerId = 'crm-analytics-source-ads-editor';
 
 	</form>
 
-	<script type="text/javascript">
+	<script>
 		BX.ready(function () {
 			BX.Crm.Tracking.Source.Editor.init(<?=Json::encode(array(
 				'containerId' => $containerId,

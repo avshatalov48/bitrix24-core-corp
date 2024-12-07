@@ -1,6 +1,8 @@
 <?
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
+{
 	die();
+}
 
 define('NO_KEEP_STATISTIC', 'Y');
 define('NO_AGENT_STATISTIC','Y');
@@ -27,6 +29,15 @@ header('Pragma: public');
 
 $userCache = array();
 $groupCache = array();
+$skipColumns = [
+	'FLAG_COMPLETE',
+	'RESPONSIBLE_ID',
+	'CREATED_BY'
+];
+$locMap = [
+	'START_DATE_PLAN' => 'START_DATE_PLAN',
+	'END_DATE_PLAN' => 'END_DATE_PLAN',
+];
 ?>
 <meta http-equiv="Content-type" content="text/html;charset=<? echo LANG_CHARSET ?>"/>
 
@@ -34,10 +45,11 @@ $groupCache = array();
 	<thead>
 	<tr>
 		<?php foreach ($arParams['COLUMNS'] as $field):
-			if (in_array($field, array('FLAG_COMPLETE', 'RESPONSIBLE_ID', 'CREATED_BY')))
+			if (in_array($field, $skipColumns, true))
 			{
 				continue;
 			}
+			$field = $locMap[$field] ?? $field;
 			?>
 			<th><?=GetMessage("TASKS_EXCEL_".$field)?></th>
 		<?php endforeach ?>

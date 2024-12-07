@@ -44,7 +44,7 @@ if (empty($items))
     </button>
 </div>
 
-<script type="text/javascript">
+<script>
     BX.ready(
         function()
         {

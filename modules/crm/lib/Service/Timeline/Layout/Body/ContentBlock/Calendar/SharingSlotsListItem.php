@@ -7,7 +7,7 @@ use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock;
 
 class SharingSlotsListItem extends ContentBlock
 {
-	use CalendarSharing;
+	use CalendarSharing\FormatTrait;
 
 	protected ?array $rule = null;
 

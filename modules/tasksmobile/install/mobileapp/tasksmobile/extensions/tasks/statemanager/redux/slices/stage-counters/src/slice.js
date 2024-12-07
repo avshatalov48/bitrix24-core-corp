@@ -4,10 +4,7 @@
 jn.define('tasks/statemanager/redux/slices/stage-counters/src/slice', (require, exports, module) => {
 	const { ReducerRegistry } = require('statemanager/redux/reducer-registry');
 	const { createSlice } = require('statemanager/redux/toolkit');
-	const {
-		sliceName,
-		adapter,
-	} = require('tasks/statemanager/redux/slices/stage-counters/meta');
+	const { sliceName, initialState } = require('tasks/statemanager/redux/slices/stage-counters/meta');
 	const { setTaskStage } = require('tasks/statemanager/redux/slices/tasks-stages');
 	const {
 		fetchStagesPending,
@@ -24,6 +21,7 @@ jn.define('tasks/statemanager/redux/slices/stage-counters/src/slice', (require, 
 
 	const { fetchStages } = require('tasks/statemanager/redux/slices/kanban-settings/thunk');
 	const { addStage } = require('tasks/statemanager/redux/slices/stage-settings/thunk');
+
 	function getExtraReducers()
 	{
 		return (builder) => {
@@ -36,11 +34,9 @@ jn.define('tasks/statemanager/redux/slices/stage-counters/src/slice', (require, 
 		};
 	}
 
-	const initialState = adapter.getInitialState();
-	const filledState = adapter.upsertMany(initialState, []);
 	const slice = createSlice({
 		name: sliceName,
-		initialState: filledState,
+		initialState,
 		reducers: {
 			stageCounterIncreased,
 			stageCounterDecreased,

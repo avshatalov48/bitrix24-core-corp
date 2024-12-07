@@ -117,35 +117,19 @@ class AddressField extends BaseField
 
 	protected function prepareCode(string $value): string
 	{
-		$isUtf = (defined('BX_UTF') && BX_UTF);
-
 		$regExps = [];
 
-		if($isUtf)
-		{
-			//\u00AB « left-pointing double angle quotation mark
-			//\u00BB » right-pointing double angle quotation mark
-			//\u201E „ double low-9 quotation mark
-			//\u201F ? double high-reversed-9 quotation mark
-			//\u2018 ‘ left single quotation mark
-			//\u2019 ’ right single quotation mark
-			//\u201C “ left double quotation mark
-			//\u201D ” right double quotation mark
-			$regExps[] = '/[\\x{00AB}\\x{00BB}\\x{2018}\\x{2019}\\x{201C}\\x{201D}\\x{201E}\\x{201F}]/u';
-		}
-		else
-		{
-			//AB « left-pointing double angle quotation mark
-			//BB » right-pointing double angle quotation mark
-			//84 „ double low-9 quotation mark
-			//91 ‘ left single quotation mark
-			//92 ’ right single quotation mark
-			//93 “ left double quotation mark
-			//94 ” right double quotation mark
-			$regExps[] = '/[\\xAB\\xBB\\x84\\x91\\x92\\x93\\x94]/';
-		}
+		//\u00AB « left-pointing double angle quotation mark
+		//\u00BB » right-pointing double angle quotation mark
+		//\u201E „ double low-9 quotation mark
+		//\u201F ? double high-reversed-9 quotation mark
+		//\u2018 ‘ left single quotation mark
+		//\u2019 ’ right single quotation mark
+		//\u201C “ left double quotation mark
+		//\u201D ” right double quotation mark
+		$regExps[] = '/[\\x{00AB}\\x{00BB}\\x{2018}\\x{2019}\\x{201C}\\x{201D}\\x{201E}\\x{201F}]/u';
 
-		$regExps[] = '/["`\'\\-,.;:\\s]/i' . BX_UTF_PCRE_MODIFIER;
+		$regExps[] = '/["`\'\\-,.;:\\s]/iu';
 
 		return mb_strtolower(trim(preg_replace($regExps, '', $value)));
 	}

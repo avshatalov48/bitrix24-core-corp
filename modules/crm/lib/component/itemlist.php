@@ -39,7 +39,6 @@ abstract class ItemList extends Base
 	protected $users;
 	/** @var Category */
 	protected $category;
-	protected Service\Router $router;
 	/** @var Service\Factory */
 	protected $factory;
 	/** @var Kanban\Entity */
@@ -57,7 +56,9 @@ abstract class ItemList extends Base
 			return;
 		}
 
+		//@codingStandardsIgnoreStart
 		$entityTypeId = (int)$this->arParams['entityTypeId'];
+		//@codingStandardsIgnoreEnd
 		$type = Service\Container::getInstance()->getTypeByEntityTypeId($entityTypeId);
 		if (!$type && \CCrmOwnerType::isDynamicTypeBasedStaticEntity($entityTypeId))
 		{
@@ -84,7 +85,6 @@ abstract class ItemList extends Base
 
 		$this->entityTypeId = $type->getEntityTypeId();
 
-		$this->router = Container::getInstance()->getRouter();
 		$this->router->setCurrentListView($this->entityTypeId, $this->getListViewType());
 
 		$this->factory = Service\Container::getInstance()->getFactory($this->entityTypeId);
@@ -163,7 +163,9 @@ abstract class ItemList extends Base
 	 */
 	protected function initCategory(): ?Category
 	{
+		//@codingStandardsIgnoreStart
 		$categoryId = (int) ($this->arParams['categoryId'] ?? null);
+		//@codingStandardsIgnoreEnd
 		$optionName = 'current_' . mb_strtolower($this->factory->getEntityName()) . '_category';
 
 		if ($categoryId <= 0)
@@ -194,6 +196,7 @@ abstract class ItemList extends Base
 		return $category;
 	}
 
+	//@codingStandardsIgnoreStart
 	public function onPrepareComponentParams($arParams): array
 	{
 		$this->fillParameterFromRequest('categoryId', $arParams);
@@ -201,10 +204,11 @@ abstract class ItemList extends Base
 
 		return parent::onPrepareComponentParams($arParams);
 	}
+	//@codingStandardsIgnoreEnd
 
 	protected function getCategoryId(): ?int
 	{
-		return ($this->category?->getId());
+		return $this->category?->getId();
 	}
 
 	protected function getToolbarParameters(): array
@@ -253,7 +257,7 @@ abstract class ItemList extends Base
 			);
 			if (
 				count($categories) > 1
-				|| Container::getInstance()->getUserPermissions()->canWriteConfig()
+				|| Container::getInstance()->getUserPermissions()->isAdminForEntity($this->entityTypeId)
 			)
 			{
 				$buttonConfig = [
@@ -290,27 +294,40 @@ abstract class ItemList extends Base
 		// a bit of hardcode to avoid components copying
 		if (
 			$this->entityTypeId === \CCrmOwnerType::SmartInvoice
-			&& !InvoiceSettings::getCurrent()->isOldInvoicesEnabled()
 			&& Container::getInstance()->getUserPermissions()->canReadType(\CCrmOwnerType::Invoice)
 		)
 		{
-			$settingsItems[] = [
-				'text' => \CCrmOwnerType::GetCategoryCaption(\CCrmOwnerType::Invoice),
-				'href' => $this->router->getItemListUrlInCurrentView(\CCrmOwnerType::Invoice),
-				'onclick' => new Buttons\JsHandler('BX.Crm.Router.Instance.closeSettingsMenu'),
-			];
-
-			if (InvoiceSettings::getCurrent()->isShowInvoiceTransitionNotice())
+			if (!InvoiceSettings::getCurrent()->isOldInvoicesEnabled())
 			{
-				$spotlight = [
-					'ID' => 'crm-old-invoices-transition',
-					'JS_OPTIONS' => [
-						'targetElement' => static::TOOLBAR_SETTINGS_BUTTON_ID,
-						'content' => Loc::getMessage('CRM_COMPONENT_ITEM_LIST_OLD_INVOICES_TRANSITION_SPOTLIGHT'),
-						'targetVertex' => 'middle-center',
-						'autoSave' => true,
-					],
+				$settingsItems[] = [
+					'text' => \CCrmOwnerType::GetCategoryCaption(\CCrmOwnerType::Invoice),
+					'href' => $this->router->getItemListUrlInCurrentView(\CCrmOwnerType::Invoice),
+					'onclick' => new Buttons\JsHandler('BX.Crm.Router.Instance.closeSettingsMenu'),
 				];
+
+				if (InvoiceSettings::getCurrent()->isShowInvoiceTransitionNotice())
+				{
+					$spotlight = [
+						'ID' => 'crm-old-invoices-transition',
+						'JS_OPTIONS' => [
+							'targetElement' => static::TOOLBAR_SETTINGS_BUTTON_ID,
+							'content' => Loc::getMessage('CRM_COMPONENT_ITEM_LIST_OLD_INVOICES_TRANSITION_SPOTLIGHT'),
+							'targetVertex' => 'middle-center',
+							'autoSave' => true,
+						],
+					];
+				}
+			}
+
+			$currentListView = Container::getInstance()->getRouter()->getCurrentListView(\CCrmOwnerType::SmartInvoice);
+			$availableViews = [\Bitrix\Crm\Service\Router::LIST_VIEW_LIST, \Bitrix\Crm\Service\Router::LIST_VIEW_KANBAN];
+			if (in_array($currentListView, $availableViews, true))
+			{
+				$einvoiceToolbarSettings = new Integration\Rest\EInvoiceApp\ToolbarSettings();
+				$settingsItems = array_merge(
+					$settingsItems,
+					$einvoiceToolbarSettings->getItems(),
+				);
 			}
 		}
 
@@ -329,6 +346,7 @@ abstract class ItemList extends Base
 			$buttons[Toolbar\ButtonLocation::RIGHT][] = $settingsButton;
 		}
 
+		//@codingStandardsIgnoreStart
 		$parameters = [
 			'buttons' => $buttons,
 			'filter' => $this->prepareFilter(),
@@ -339,6 +357,7 @@ abstract class ItemList extends Base
 			'categoryId' => $this->arResult['categoryId'],
 			'pathToEntityList' => '/crm/type/' . $this->entityTypeId,
 		];
+		//@codingStandardsIgnoreEnd
 
 		return array_merge(parent::getToolbarParameters(), $parameters);
 	}
@@ -360,17 +379,19 @@ abstract class ItemList extends Base
 	protected function getToolbarSettingsItems(): array
 	{
 		$settingsItems = [];
-		$userPermissions = Container::getInstance()->getUserPermissions();
-		if ($userPermissions->canWriteConfig())
+		$userPermissions = $this->userPermissions;
+		if ($userPermissions->canUpdateType((int)$this->entityTypeId))
 		{
-			if ($userPermissions->canUpdateType($this->entityTypeId))
-			{
-				$settingsItems[] = [
-					'text' => Loc::getMessage('CRM_TYPE_TYPE_SETTINGS'),
-					'href' => $this->router->getTypeDetailUrl($this->entityTypeId),
-					'onclick' => new Buttons\JsHandler('BX.Crm.Router.Instance.closeSettingsMenu'),
-				];
-			}
+			$settingsItems[] = [
+				'text' => Loc::getMessage('CRM_TYPE_TYPE_SETTINGS'),
+				'href' => $this->router->getTypeDetailUrl($this->entityTypeId)->addParams([
+					'c_sub_section' => Integration\Analytics\Dictionary::ELEMENT_SETTINGS_BUTTON,
+				]),
+				'onclick' => new Buttons\JsHandler('BX.Crm.Router.Instance.closeSettingsMenu'),
+			];
+		}
+		if ($userPermissions->isAdminForEntity((int)$this->entityTypeId))
+		{
 			$dynamicTypesLimit = RestrictionManager::getDynamicTypesLimitRestriction();
 			$isTypeSettingsRestricted = $dynamicTypesLimit->isTypeSettingsRestricted($this->entityTypeId);
 			if ($isTypeSettingsRestricted)
@@ -393,6 +414,7 @@ abstract class ItemList extends Base
 		return $settingsItems;
 	}
 
+	//@codingStandardsIgnoreStart
 	protected function prepareFilter(): array
 	{
 		$limits = null;
@@ -428,6 +450,7 @@ abstract class ItemList extends Base
 			'RESTRICTED_FIELDS' => $this->arResult['restrictedFields'] ?? [],
 		];
 	}
+	//@codingStandardsIgnoreEnd
 
 	protected function getDefaultFilterFields(): array
 	{
@@ -581,7 +604,7 @@ abstract class ItemList extends Base
 		if ($this->counterPanelViewHtml === null)
 		{
 			ob_start();
-
+			//@codingStandardsIgnoreStart
 			$this->getApplication()->IncludeComponent(
 				'bitrix:crm.entity.counter.panel',
 				'',
@@ -592,6 +615,7 @@ abstract class ItemList extends Base
 					'RETURN_AS_HTML_MODE' => true
 				]
 			);
+			//@codingStandardsIgnoreEnd
 			$this->counterPanelViewHtml = ob_get_clean();
 		}
 		return $this->counterPanelViewHtml;
@@ -619,7 +643,7 @@ abstract class ItemList extends Base
 			}
 		}
 
-		if ($this->userPermissions->canWriteConfig())
+		if ($this->userPermissions->isAdminForEntity($this->entityTypeId))
 		{
 			$menu[] = [
 				'delimiter' => true,
@@ -722,6 +746,7 @@ abstract class ItemList extends Base
 		return $btnParameters;
 	}
 
+	//@codingStandardsIgnoreStart
 	protected function configureAnalyticsEventBuilder(AbstractBuilder $builder): void
 	{
 		if ($this->isEmbedded())
@@ -756,6 +781,7 @@ abstract class ItemList extends Base
 			$builder->setP2WithValueNormalization('category', $this->category->getCode());
 		}
 	}
+	//@codingStandardsIgnoreEnd
 
 	protected function isDeadlinesModeSupported(): bool
 	{

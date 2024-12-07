@@ -35,7 +35,7 @@ elseif ($arResult["START_INFO"]["STATE"] == "EXPIRED")
 	$statusName = "";
 	$statusClass = "timeman-expired";
 }
-
+$arResult["START_INFO"]['PLANNER']['TASKS_COUNT'] = $arResult["START_INFO"]['PLANNER']['TASKS_COUNT'] ?? 0;
 $bInfoRow = $arResult["START_INFO"]['PLANNER']["EVENT_TIME"] != '' || $arResult["START_INFO"]['PLANNER']["TASKS_COUNT"] > 0;
 $bTaskTimeRow = isset($arResult["START_INFO"]['PLANNER']['TASKS_TIMER']) && is_array($arResult["START_INFO"]['PLANNER']['TASKS_TIMER']) && $arResult["START_INFO"]['PLANNER']['TASKS_TIMER']['TIMER_STARTED_AT'] > 0;
 
@@ -57,6 +57,12 @@ if($bTaskTimeRow)
 }
 
 $isCompositeMode = defined("USE_HTML_STATIC_CACHE");
+
+$forceShowCheckInCounter = !$isCompositeMode && !empty($arResult['START_INFO']['CHECKIN_COUNTER']['VALUE']);
+if ($forceShowCheckInCounter)
+{
+	\Bitrix\Main\UI\Extension::load('ui.counter');
+}
 ?>
 <div class="timeman-container timeman-container-<?=LANGUAGE_ID?><?=(IsAmPmMode() ? " am-pm-mode" : "")?>" id="timeman-container">
 	<div class="timeman-wrap"><?
@@ -69,8 +75,14 @@ $isCompositeMode = defined("USE_HTML_STATIC_CACHE");
 					?><span class="timeman-tasks" id="timeman-tasks"<?if($arResult["START_INFO"]['PLANNER']["TASKS_COUNT"] <= 0):?> style="display:none"<?endif?>><?=$arResult["START_INFO"]['PLANNER']["TASKS_COUNT"]?></span><?
 				?></span><?
 				?><span class="timeman-task-time" id="timeman-task-time"<?if(!$bTaskTimeRow):?> style="display:none"<?endif?>><i></i><span id="timeman-task-timer"><?=$taskTime?></span></span><?
-				?><span class="timeman-beginning-but" id="timeman-status-block"<?if($bTaskTimeRow&&$bInfoRow):?> style="display:none"<?endif?>><i></i><span id="timeman-status" class="timeman-status"><?=$statusName?></span></span>
-				<script type="text/javascript">
+				?><span class="timeman-beginning-but" id="timeman-status-block"<?if($bTaskTimeRow&&$bInfoRow):?> style="display:none"<?endif?>><i></i><span id="timeman-status" class="timeman-status"><?=$statusName?></span>
+					<span class="ui-counter <?= $arResult['START_INFO']['CHECKIN_COUNTER']['CLASS'] ?? '' ?> ui-counter-sm" data-class="<?= $arResult['START_INFO']['CHECKIN_COUNTER']['CLASS'] ?? '' ?>" style="margin-left: 5px; <?= (!$forceShowCheckInCounter ? 'display: none;' : '') ?>" id="timeman-stafftrack-counter">
+						<span class="ui-counter-inner">
+							<?= $arResult['START_INFO']['CHECKIN_COUNTER']['VALUE'] ?? '' ?>
+						</span>
+					</span>
+				</span>
+				<script>
 				<?if (!Frame::isAjaxRequest()):?>
 					BX.addCustomEvent(window, "onScriptsLoaded", function() {
 				<?endif?>

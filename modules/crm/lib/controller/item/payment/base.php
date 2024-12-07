@@ -3,6 +3,8 @@
 namespace Bitrix\Crm\Controller\Item\Payment;
 
 use Bitrix\Crm;
+use Bitrix\Main\Context;
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Sale;
 use Bitrix\Main;
 
@@ -25,27 +27,25 @@ abstract class Base extends Crm\Controller\Base
 		$payment->setField('SUM', $sum);
 	}
 
-	/**
-	 * @param int $paymentId
-	 * @param array $filter
-	 * @param array $order
-	 * @return array
-	 */
 	public function listAction(
 		int $paymentId,
 		array $filter = [],
 		array $order = []
-	): array
+	): ?array
 	{
 		$payment = $this->getPaymentById($paymentId);
 		if (!$payment)
 		{
-			return [];
+			$this->addError(new Main\Error('Payment has not been found'));
+
+			return null;
 		}
 
 		if (!$this->canViewPayment($payment))
 		{
-			return [];
+			$this->setAccessDenied();
+
+			return null;
 		}
 
 		$select = $this->getSelectFields();
@@ -63,44 +63,60 @@ abstract class Base extends Crm\Controller\Base
 			]
 		);
 
-		return $dbRes->fetchAll();
+		$typeCaster = Crm\Rest\TypeCast\OrmTypeCast::getInstance();
+
+		return array_map(
+			function ($fields) use ($typeCaster)
+			{
+				return $typeCaster->castRecord(Sale\Internals\PayableItemTable::class, $fields);
+			},
+			$dbRes->fetchAll()
+		);
 	}
 
 	/**
 	 * @param int $id - ID from b_sale_order_payment_item
-	 * @return bool
+	 * @return ?bool
 	 */
-	public function deleteAction(int $id): bool
+	public function deleteAction(int $id): ?bool
 	{
 		$payment = $this->getPaymentByPayableId($id);
 		if (!$payment)
 		{
-			return false;
+			$this->addError(new Main\Error('Payable item has not been found'));
+
+			return null;
 		}
 
 		if (!$this->canEditPayment($payment))
 		{
-			return false;
+			$this->setAccessDenied();
+
+			return null;
 		}
 
 		$payableItem = $payment->getPayableItemCollection()->getItemById($id);
 
 		/** @var Sale\PayableItem $payableItem */
 		$result = $payableItem->delete();
-		if ($result->isSuccess())
+		if (!$result->isSuccess())
 		{
-			$this->recalculatePaymentSum($payment);
+			$this->addError(new Main\Error('Internal delete error'));
 
-			$result = $payment->getOrder()->save();
-			if ($result->isSuccess())
-			{
-				return true;
-			}
+			return null;
 		}
 
-		$this->addErrors($result->getErrors());
+		$this->recalculatePaymentSum($payment);
 
-		return false;
+		$result = $payment->getOrder()->save();
+		if (!$result->isSuccess())
+		{
+			$this->addErrors($result->getErrors());
+
+			return null;
+		}
+
+		return true;
 	}
 
 	protected function getPaymentByPayableId(int $id): ?Crm\Order\Payment

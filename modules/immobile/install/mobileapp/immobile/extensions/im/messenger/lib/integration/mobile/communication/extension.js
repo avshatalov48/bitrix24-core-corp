@@ -2,9 +2,8 @@
  * @module im/messenger/lib/integration/mobile/communication
  */
 jn.define('im/messenger/lib/integration/mobile/communication', (require, exports, module) => {
-	const { restManager } = require('im/messenger/lib/rest-manager');
-	const { RestMethod } = require('im/messenger/const');
 	const { Logger } = require('im/messenger/lib/logger');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 
 	/**
 	 * @class Communication
@@ -13,57 +12,66 @@ jn.define('im/messenger/lib/integration/mobile/communication', (require, exports
 	{
 		constructor()
 		{
-			restManager.on(RestMethod.userCounters, {}, this.handleUserCountersGet.bind(this));
-			restManager.on(RestMethod.serverTime, {}, this.handleServerTime.bind(this));
-			restManager.on(RestMethod.imDesktopStatusGet, {}, this.handleDesktopStatusGet.bind(this));
+			this.messagerInitService = serviceLocator.get('messenger-init-service');
+			this.bindMethods();
+			this.subscribeInitMessengerEvent();
 		}
 
-		handleUserCountersGet(response)
+		bindMethods()
 		{
-			const error = response.error();
-			if (error)
-			{
-				Logger.error('Counters.handleUserCountersGet', error);
+			this.initMessenger = this.initMessenger.bind(this);
+			this.handleUserCountersGet = this.handleUserCountersGet.bind(this);
+			this.handleServerTime = this.handleServerTime.bind(this);
+			this.handleDesktopStatusGet = this.handleDesktopStatusGet.bind(this);
+		}
 
-				return;
-			}
+		subscribeInitMessengerEvent()
+		{
+			this.messagerInitService.onInit(this.initMessenger);
+		}
 
-			Logger.info('Counters.handleUserCountersGet', response.data(), response.time());
+		handleUserCountersGet(portalCounters)
+		{
+			const counters = portalCounters.result;
+			const time = portalCounters.time ? { start: portalCounters.time } : null;
 
-			const counters = response.data();
-			const time = response.time ? response.time() : null;
-
+			Logger.info('Counters.handleUserCountersGet', counters, time);
 			BX.postComponentEvent('onSetUserCounters', [counters, time], 'communication');
 		}
 
-		handleServerTime(response)
+		handleServerTime(serverTime)
 		{
-			const error = response.error();
-			if (error)
-			{
-				Logger.error('Communication.handleServerTime', error);
-
-				return;
-			}
-
-			Logger.info('Communication.handleServerTime', response.data());
-
-			BX.postComponentEvent('onUpdateServerTime', [response.data()], 'communication');
+			Logger.info('Communication.handleServerTime', serverTime);
+			BX.postComponentEvent('onUpdateServerTime', [serverTime], 'communication');
 		}
 
-		handleDesktopStatusGet(response)
+		handleDesktopStatusGet(desktopStatus)
 		{
-			const error = response.error();
-			if (error)
-			{
-				Logger.error('Communication.handleDesktopStatusGet', error);
+			Logger.info('Communication.handleDesktopStatusGet', desktopStatus);
+			BX.postComponentEvent('setDesktopStatus', [desktopStatus], 'communication');
+		}
 
-				return;
+		/**
+		 * @param {immobileTabChatLoadResult | immobileTabChannelLoadResult | immobileTabCopilotLoadResult} data
+		 */
+		initMessenger(data)
+		{
+			const { desktopStatus, serverTime, portalCounters } = data;
+
+			if (desktopStatus)
+			{
+				this.handleDesktopStatusGet(desktopStatus);
 			}
 
-			Logger.info('Communication.handleDesktopStatusGet', response.data());
+			if (serverTime)
+			{
+				this.handleServerTime(serverTime);
+			}
 
-			BX.postComponentEvent('setDesktopStatus', [response.data()], 'communication');
+			if (portalCounters)
+			{
+				this.handleUserCountersGet(portalCounters);
+			}
 		}
 	}
 

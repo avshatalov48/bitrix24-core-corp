@@ -24,6 +24,7 @@ export interface BaseFieldProps {
 	hasHiddenEmptyView?: boolean; // Whether to have a view without a title if the field is empty.
 	showBorder?: boolean; // Whether to show a border around the field.
 	hasSolidBorderContainer?: boolean; // Whether the border around the field is solid.
+	restrictionPolicy?: number;
 
 	// Config Props
 	config?: {

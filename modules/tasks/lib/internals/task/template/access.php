@@ -1,8 +1,15 @@
 <?php
+
 namespace Bitrix\Tasks\Internals\Task\Template;
 
-use Bitrix\Main,
-	Bitrix\Main\Localization\Loc;
+use Bitrix\Main\ArgumentTypeException;
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\ORM\Data\DataManager;
+use Bitrix\Main\ORM\Fields\IntegerField;
+use Bitrix\Main\ORM\Fields\StringField;
+use Bitrix\Main\ORM\Fields\Validators\LengthValidator;
+use Bitrix\Main\SystemException;
+
 Loc::loadMessages(__FILE__);
 
 /**
@@ -31,68 +38,42 @@ Loc::loadMessages(__FILE__);
  * @method static \Bitrix\Tasks\Internals\Task\Template\EO_Access wakeUpObject($row)
  * @method static \Bitrix\Tasks\Internals\Task\Template\EO_Access_Collection wakeUpCollection($rows)
  */
-
-class AccessTable extends Main\Entity\DataManager
+class AccessTable extends DataManager
 {
-	/**
-	 * Returns DB table name for entity.
-	 *
-	 * @return string
-	 */
-	public static function getTableName()
+	public static function getTableName(): string
 	{
 		return 'b_tasks_task_template_access';
 	}
 
-	/**
-	 * @return static
-	 */
-	public static function getClass()
+	public static function getClass(): string
 	{
-		return get_called_class();
+		return static::class;
 	}
 
 	/**
-	 * Returns entity map definition.
-	 *
-	 * @return array
+	 * @throws ArgumentTypeException
+	 * @throws SystemException
 	 */
-	public static function getMap()
+	public static function getMap(): array
 	{
-		return array(
-			'ID' => array(
-				'data_type' => 'integer',
-				'primary' => true,
-				'autocomplete' => true,
-				'title' => Loc::getMessage('TASK_TEMPLATE_ACCESS_ENTITY_ID_FIELD'),
-			),
-			'GROUP_CODE' => array(
-				'data_type' => 'string',
-				'required' => true,
-				'validation' => array(__CLASS__, 'validateGroupCode'),
-				'title' => Loc::getMessage('TASK_TEMPLATE_ACCESS_ENTITY_GROUP_CODE_FIELD'),
-			),
-			'ENTITY_ID' => array(
-				'data_type' => 'integer',
-				'required' => true,
-				'title' => Loc::getMessage('TASK_TEMPLATE_ACCESS_ENTITY_ENTITY_ID_FIELD'),
-			),
-			'TASK_ID' => array(
-				'data_type' => 'integer',
-				'required' => true,
-				'title' => Loc::getMessage('TASK_TEMPLATE_ACCESS_ENTITY_TASK_ID_FIELD'),
-			),
-		);
-	}
-	/**
-	 * Returns validators for GROUP_CODE field.
-	 *
-	 * @return array
-	 */
-	public static function validateGroupCode()
-	{
-		return array(
-			new Main\Entity\Validator\Length(null, 50),
-		);
+		return [
+			(new IntegerField('ID'))
+				->configurePrimary()
+				->configureAutocomplete()
+				->configureTitle(Loc::getMessage('TASK_TEMPLATE_ACCESS_ENTITY_ID_FIELD')),
+
+			(new StringField('GROUP_CODE'))
+				->configureRequired()
+				->addValidator(new LengthValidator(null, 50))
+				->configureTitle(Loc::getMessage('TASK_TEMPLATE_ACCESS_ENTITY_GROUP_CODE_FIELD')),
+
+			(new IntegerField('ENTITY_ID'))
+				->configureRequired()
+				->configureTitle(Loc::getMessage('TASK_TEMPLATE_ACCESS_ENTITY_ENTITY_ID_FIELD')),
+
+			(new IntegerField('TASK_ID'))
+				->configureRequired()
+				->configureTitle(Loc::getMessage('TASK_TEMPLATE_ACCESS_ENTITY_TASK_ID_FIELD')),
+		];
 	}
 }

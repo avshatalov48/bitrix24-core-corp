@@ -109,7 +109,7 @@ final class Impact extends \Bitrix\Tasks\Processor\Task\Result\Impact
 			$startDate = null;
 			$endDate = null;
 
-			if($data['MATCH_WORK_TIME'] == 'Y')
+			if(($data['MATCH_WORK_TIME'] ?? null) == 'Y')
 			{
 				// MATCH_WORK_TIME was set to Y, we have to reschedule and re-check existing dates even if no actual date change required
 				$startDate = isset($data['START_DATE_PLAN']) ? $data['START_DATE_PLAN'] : $this->data['START_DATE_PLAN'];

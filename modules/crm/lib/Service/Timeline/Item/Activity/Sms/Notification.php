@@ -39,7 +39,7 @@ class Notification extends Base
 
 	protected function getMessageText(): ?string
 	{
-		$messageInfo = $this->getAssociatedEntityModel()->get('MESSAGE_INFO') ?? [];
+		$messageInfo = $this->getAssociatedEntityModel()?->get('MESSAGE_INFO') ?? [];
 		if (!empty($messageInfo['MESSAGE']['TEXT']))
 		{
 			return $messageInfo['MESSAGE']['TEXT'];
@@ -58,7 +58,7 @@ class Notification extends Base
 
 	private function getNotificationHistoryItem(): array
 	{
-		$messageInfo = $this->getAssociatedEntityModel()->get('MESSAGE_INFO') ?? [];
+		$messageInfo = $this->getAssociatedEntityModel()?->get('MESSAGE_INFO') ?? [];
 
 		return $messageInfo['HISTORY_ITEMS'][0] ?? [];
 	}

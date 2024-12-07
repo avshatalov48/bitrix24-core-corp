@@ -71,9 +71,9 @@ class OpenLine extends Activity
 			'vkgroup' => Layout\Common\Logo::CHANNEL_VK,
 			'vkgrouporder' => Layout\Common\Logo::CHANNEL_VK_ORDER,
 			'whatsappbytwilio' => Layout\Common\Logo::CHANNEL_WHATSAPP_BITRIX,
-			'whatsappbyedna' => Layout\Common\Logo::CHANNEL_EDNA,
+			'whatsappbyedna' => Layout\Common\Logo::CHANNEL_WHATSAPP,
 		];
-		$userCode = $this->getAssociatedEntityModel()->get('PROVIDER_PARAMS')['USER_CODE'];
+		$userCode = $this->getAssociatedEntityModel()?->get('PROVIDER_PARAMS')['USER_CODE'];
 		if (isset($userCode))
 		{
 			$connectorType = OpenLineManager::getLineConnectorType($userCode);
@@ -85,14 +85,14 @@ class OpenLine extends Activity
 
 		return Layout\Common\Logo::getInstance($logoCode)
 			->createLogo()
-			->setAction($this->getOpenChatAction())
+			?->setAction($this->getOpenChatAction())
 		;
 	}
 
 	public function getContentBlocks(): array
 	{
 		$result = [];
-		$userCode = $this->getAssociatedEntityModel()->get('PROVIDER_PARAMS')['USER_CODE'];
+		$userCode = $this->getAssociatedEntityModel()?->get('PROVIDER_PARAMS')['USER_CODE'];
 
 		$lineName = OpenLineManager::getLineTitle($userCode);
 		if ($lineName)
@@ -111,7 +111,7 @@ class OpenLine extends Activity
 		}
 
 		$sourceList = [];
-		$providerId = $this->getAssociatedEntityModel()->get('PROVIDER_ID');
+		$providerId = $this->getAssociatedEntityModel()?->get('PROVIDER_ID');
 		if ($providerId && $provider = CCrmActivity::GetProviderById($providerId))
 		{
 			$sourceList = $provider::getResultSources();
@@ -179,8 +179,8 @@ class OpenLine extends Activity
 	{
 		$tags = [];
 
-		$userCode = $this->getAssociatedEntityModel()->get('PROVIDER_PARAMS')['USER_CODE'];
-		$responsibleId = $this->getAssociatedEntityModel()->get('RESPONSIBLE_ID');
+		$userCode = $this->getAssociatedEntityModel()?->get('PROVIDER_PARAMS')['USER_CODE'];
+		$responsibleId = $this->getAssociatedEntityModel()?->get('RESPONSIBLE_ID');
 
 		// the tag will not be removed until the responsible user reads all messages
 		if (
@@ -212,7 +212,7 @@ class OpenLine extends Activity
 
 	protected function getOpenChatAction(): ?Action
 	{
-		$communication = $this->getAssociatedEntityModel()->get('COMMUNICATION') ?? [];
+		$communication = $this->getAssociatedEntityModel()?->get('COMMUNICATION') ?? [];
 		$dialogId = $communication['VALUE'] ?? null;
 		if (!$dialogId || $communication['TYPE'] !== 'IM')
 		{
@@ -244,6 +244,11 @@ class OpenLine extends Activity
 			->setDisableIfReadonly()
 			->setAction($completeAction)
 		;
+	}
+
+	protected function canMoveTo(): bool
+	{
+		return $this->isScheduled();
 	}
 
 	private function buildClientMarkBlock(): ?ContentBlock
@@ -281,7 +286,7 @@ class OpenLine extends Activity
 
 	private function getSessionData(): array
 	{
-		$sessionId = $this->getModel()->getAssociatedEntityModel()->get('ASSOCIATED_ENTITY_ID') ?? 0;
+		$sessionId = $this->getModel()->getAssociatedEntityModel()?->get('ASSOCIATED_ENTITY_ID') ?? 0;
 
 		return $sessionId > 0
 			? OpenLineManager::getSessionData($sessionId)

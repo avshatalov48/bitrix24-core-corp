@@ -1,0 +1,203 @@
+.sign-ui-signing-link-container {
+	height: 100%;
+}
+
+.sign-ui-signing-link-container .ui-slider-no-access,
+.sign-ui-signing-link-container .sign-ui-signing-link__empty-state {
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+}
+
+.sign-ui-signing-link__empty-state {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	padding: 20px;
+}
+
+.sign-ui-signing-link__empty-state_icon {
+	display: block;
+	margin-bottom: 30px;
+	width: 152px;
+	height: 124px;
+	background: url(./images/state-default.svg) no-repeat;
+}
+
+.sign-ui-signing-link__empty-state_title {
+	display: block;
+	margin-bottom: 16px;
+	font: var(--ui-font-weight-medium) var(--ui-font-size-4xl) var(--ui-font-family-system);
+	color: var(--ui-color-base-90);
+}
+
+.sign-ui-signing-link__empty-state_desc {
+	display: block;
+	margin-bottom: 30px;
+	max-width: 450px;
+	font: var(--ui-font-size-xl) var(--ui-font-family-system);
+	color: var(--ui-color-base-60);
+	text-align: center;
+}
+
+.sign-ui-signing-link__employee-mobile-doc
+{
+	display: none;
+}
+
+
+.sign-ui-signing-link__employee {
+	background: #EBF1F4;
+	padding: 30px;
+	border-radius: var(--ui-border-radius-md);
+}
+
+.sign-ui-signing-link__employee-doc {
+	padding: 20px;
+	margin-bottom: 15px;
+	background-color: #fff;
+	border-radius: var(--ui-slider-section-border-radius, var(--ui-border-radius-md));
+}
+
+.sign-ui-signing-link__employee-doc > p {
+	font: 18px/25px var(--ui-font-family-system);
+	color: var(--ui-color-palette-black-base);
+	margin: 0 0 10px 0;
+}
+
+.sign-ui-signing-link__employee-doc > div {
+	border: 1px solid var(--ui-color-palette-gray-20);
+	border-radius: 10px;
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	-ms-flex-wrap: nowrap;
+	flex-wrap: nowrap;
+	-webkit-box-align: center;
+	-ms-flex-align: center;
+	align-items: center;
+	padding: 10px 15px;
+	font-family: var(--ui-font-family-system);
+}
+
+.sign-ui-signing-link__employee-doc > div > div {
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	-webkit-box-flex: 1;
+	-ms-flex-positive: 1;
+	flex-grow: 1;
+	-webkit-box-align: center;
+	-ms-flex-align: center;
+	align-items: center;
+}
+
+.sign-ui-signing-link__employee-doc .sign-ui-signing-link__employee-doc--icon {
+	width: 36px;
+	height: 36px;
+	display: inline-block;
+	background: url(../src/images/document-empty.svg) center no-repeat;
+	background-size: contain;
+}
+
+.sign-ui-signing-link__employee-doc .sign-ui-signing-link__employee-doc--info {
+	margin-left: 15px;
+	font-family: var(--ui-font-family-system);
+}
+
+.sign-ui-signing-link__employee-doc .sign-ui-signing-link__employee-doc--info-title {
+	margin: 0;
+	color: var(--ui-color-palette-gray-90);
+	font-size: 16px;
+	line-height: 20px;
+	word-break: break-word;
+}
+
+.sign-ui-signing-link__employee-doc .sign-ui-signing-link__employee-doc--info-date {
+	margin: 0;
+	color: var(--ui-color-palette-gray-60);
+	font-size: 12px;
+	line-height: 14.32px;
+}
+
+.sign-ui-signing-link__employee-alldocs {
+	padding: 20px;
+	margin-bottom: 15px;
+	background-color: #fff;
+	border-radius: var(--ui-slider-section-border-radius, var(--ui-border-radius-md));
+	cursor: pointer;
+	position: relative;
+	vertical-align: middle;
+}
+
+.sign-ui-signing-link__employee-alldocs::before {
+	content: '';
+	display: block;
+	width: 16px;
+	height: 16px;
+	margin-right: 20px;
+	position: absolute;
+	right: 0;
+	top: 50%;
+	background: url("data:image/svg+xml,%3Csvg width='16' height='16' viewBox='0 0 16 16' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cg opacity='0.5'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M5.44019 4.22895L8.45822 7.24699L9.23994 7.9999L8.45822 8.75326L5.44019 11.7713L6.50516 12.8363L11.3413 8.00017L6.50516 3.16406L5.44019 4.22895Z' fill='%23959CA4'/%3E%3C/g%3E%3C/svg%3E%0A") center no-repeat;
+	transform: translate(0, -50%);
+	cursor: pointer;
+	opacity: 1;
+	transition: .2s;
+}
+
+.sign-ui-signing-link__employee-header {
+	display: flex;
+}
+
+.sign-ui-signing-link__employee-header-header {
+	flex-grow: 1;
+}
+
+.sign-ui-signing-link__employee-header-header > h2 {
+	word-break: break-word;
+}
+
+.sign-ui-signing-link__employee-header-person {
+	padding: 10px;
+	margin-top: 10px;
+	margin-bottom: auto;
+	margin-left: 50px;
+	background-color: #fff;
+	border-radius: var(--ui-slider-section-border-radius, var(--ui-border-radius-md));
+	display: flex;
+	min-width: 200px;
+	max-width: 300px;
+	overflow: hidden;
+}
+
+.sign-ui-signing-link__employee-header-person-photo > img {
+	background: url("data:image/svg+xml;charset=utf-8,%3Csvg width='28' height='28' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M14 28c7.732 0 14-6.268 14-14S21.732 0 14 0 0 6.268 0 14s6.268 14 14 14z' fill='%23858D95'/%3E%3Cpath d='M21.174 20.29l-.46-2.345c0-.653-.87-1.4-2.585-1.835a5.874 5.874 0 01-1.637-.731c-.11-.062-.094-.633-.094-.633l-.552-.083c0-.046-.047-.73-.047-.73.66-.219.593-1.504.593-1.504.42.228.692-.789.692-.789.497-1.413-.247-1.328-.247-1.328.13-.863.13-1.74 0-2.602-.33-2.863-5.306-2.086-4.716-1.15-1.455-.264-1.123 2.984-1.123 2.984l.316.841c-.438.279-.352.598-.256.955.04.149.082.304.088.466.03.81.536.642.536.642.031 1.338.703 1.512.703 1.512.127.84.048.697.048.697l-.598.072c.008.19-.008.382-.047.57-.348.151-.56.272-.771.392-.216.122-.43.244-.783.396-1.35.58-2.817 1.336-3.078 2.353-.122.474-.24 1.208-.33 1.857 1.98.827 4.275 1.322 6.73 1.375h.874c2.46-.053 4.762-.55 6.744-1.381z' fill='%23fff'/%3E%3C/svg%3E") center no-repeat;
+	background-size: auto;
+	background-size: contain !important;
+	width: 50px;
+	height: 50px;
+	border-radius: 50%;
+	margin-right: 10px;
+}
+
+.sign-ui-signing-link__employee-header-person-text {
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	overflow: hidden;
+	margin-top: 5px;
+}
+
+.sign-ui-signing-link-loading-mask {
+	width: 900px;
+	height: 100vh;
+	margin: 0 auto;
+	background-image: url("./images/sign_mask.svg");
+	background-repeat: no-repeat;
+	background-position-x: center;
+	background-position-y: top;
+	background-size: 100%;
+}

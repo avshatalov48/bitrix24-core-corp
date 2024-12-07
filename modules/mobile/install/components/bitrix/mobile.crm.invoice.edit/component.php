@@ -516,8 +516,6 @@ else
 		$bVarsFromForm = true;
 		if ($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid() && (isset($_POST['save']) || isset($_POST['continue']) || $bAjaxSubmit) && $arResult["IS_EDIT_PERMITTED"])
 		{
-			CUtil::JSPostUnescape();
-
 			//Check entities access -->
 			$quoteID = isset($_POST['UF_QUOTE_ID']) ? intval($_POST['UF_QUOTE_ID']) : null;
 			if ($quoteID > 0 && !CCrmQuote::CheckReadPermission($quoteID))

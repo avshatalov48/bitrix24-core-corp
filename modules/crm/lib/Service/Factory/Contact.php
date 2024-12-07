@@ -436,6 +436,10 @@ class Contact extends Service\Factory
 				Operation::ACTION_AFTER_SAVE,
 				new Operation\Action\ClearCache('b_crm_contact'),
 			)
+			->addAction(
+				Operation::ACTION_AFTER_SAVE,
+				new Operation\Action\Compatible\SocialNetwork\ProcessSendNotification\WhenAddingEntity(),
+			)
 		;
 
 		if ($operation->getItem()->getCategoryId() === 0)
@@ -487,6 +491,10 @@ class Contact extends Service\Factory
 			->addAction(
 				Operation::ACTION_AFTER_SAVE,
 				new Operation\Action\ResetEntityCommunicationSettingsInActivities(),
+			)
+			->addAction(
+				Operation::ACTION_AFTER_SAVE,
+				new Operation\Action\Compatible\SocialNetwork\ProcessSendNotification\WhenUpdatingEntity(),
 			)
 		;
 
@@ -550,5 +558,10 @@ class Contact extends Service\Factory
 	protected function getStatisticsFacade(): ?Statistics\OperationFacade
 	{
 		return new Statistics\OperationFacade\Contact();
+	}
+
+	public function isCommunicationRoutingSupported(): bool
+	{
+		return true;
 	}
 }

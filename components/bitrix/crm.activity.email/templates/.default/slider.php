@@ -66,7 +66,7 @@ $activity = $arParams['ACTIVITY'];
 
 ?>
 
-<script type="text/javascript">
+<script>
 
 BX.ready(function ()
 {
@@ -127,7 +127,7 @@ BX.ready(function ()
 	}
 ?>
 
-<script type="text/javascript">
+<script>
 
 BX.message({
 	CRM_ACT_EMAIL_REPLY_EMPTY_RCPT: '<?=\CUtil::jsEscape(getMessage('CRM_ACT_EMAIL_REPLY_EMPTY_RCPT')) ?>',

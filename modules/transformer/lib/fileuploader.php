@@ -5,7 +5,6 @@ namespace Bitrix\Transformer;
 use Bitrix\Main\Error;
 use Bitrix\Main\IO\Path;
 use Bitrix\Main\Result;
-use Bitrix\Main\Text\BinaryString;
 
 class FileUploader
 {
@@ -182,13 +181,14 @@ class FileUploader
 		$result = new Result();
 
 		$file = new \Bitrix\Main\IO\File($fileName);
-		if(!static::isCorrectFile($file))
+		if (!static::isCorrectFile($file))
 		{
-			$result->addError(new Error($errorPrefix . 'Wrong fileName'));
+			return $result->addError(new Error($errorPrefix . 'Wrong fileName'));
 		}
-		if(!$file->putContents($data, \Bitrix\Main\IO\File::APPEND))
+
+		if (!$file->putContents($data, \Bitrix\Main\IO\File::APPEND))
 		{
-			$result->addError(new Error($errorPrefix . 'Cant write local file'));
+			return $result->addError(new Error($errorPrefix . 'Cant write local file'));
 		}
 
 		return $result->setData(['result' => 'local']);
@@ -219,9 +219,9 @@ class FileUploader
 	 */
 	private static function parseSize($str)
 	{
-		$str = BinaryString::changeCaseToLower($str);
+		$str = strtolower($str);
 		$res = doubleval($str);
-		$suffix = BinaryString::changeCaseToLower(BinaryString::getSubstring($str, -1));
+		$suffix = strtolower(substr($str, -1));
 		if($suffix === "k")
 		{
 			$res *= 1024;

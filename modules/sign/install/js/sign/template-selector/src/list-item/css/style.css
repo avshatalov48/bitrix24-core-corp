@@ -1,0 +1,105 @@
+.sign-template-selector-list-item {
+	width: 122px;
+	height: 122px;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	box-sizing: border-box;
+	border-radius: 12px;
+	margin: 10px 5px 0;
+	padding: 3px 3px 10px;
+	position: relative;
+	cursor: pointer;
+	transition: .2s;
+	border: 1px solid #edeef0;
+}
+
+.sign-template-selector-list-item:hover {
+	border-color: rgba(82, 92, 105, .2);
+}
+
+.sign-template-selector-list-item.sign-template-selector-list-item-selected {
+	border-color: #2fc6f6;
+}
+
+.sign-template-selector-list-item-icon {
+	width: 100%;
+	height: 65px;
+	display: flex;
+	align-items: flex-end;
+	justify-content: center;
+	border-radius: 8px;
+	margin-bottom: 11px;
+	box-sizing: border-box;
+}
+
+.sign-template-selector-list-item-icon-blue {
+	background-color: rgba(47, 198, 246, .08);
+}
+
+.sign-template-selector-list-item-text {
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	flex: 1;
+	align-items: center;
+	flex-wrap: wrap;
+	text-align: center;
+	max-width: 100%;
+	overflow: hidden;
+	box-sizing: border-box;
+	padding: 0 10px;
+}
+
+.sign-template-selector-list-item-text-title {
+	width: 100%;
+	font-size: 12px;
+	color: #525c69;
+	text-overflow: ellipsis;
+	display: -moz-box;
+	display: -webkit-box;
+	-webkit-box-orient: vertical;
+	-webkit-line-clamp: 2;
+	line-clamp: 2;
+	box-orient: vertical;
+	overflow: hidden;
+	word-break: break-all;
+	text-align: center;
+}
+
+.sign-template-selector-list-item-text-description {
+	width: 100%;
+	font-size: 11px;
+	color: #a8adb4;
+}
+
+.sign-template-selector-list-item-edit-button {
+	background-color: rgba(255, 255, 255, .9);
+	position: absolute;
+	top: 5px;
+	right: 5px;
+	width: 24px;
+	height: 24px;
+	border-radius: 4px;
+	opacity: 0;
+	transition: 200ms all ease;
+}
+
+.sign-template-selector-list-item-edit-button::after {
+	background: url("images/edit-icon.svg") center center no-repeat;
+	display: block;
+	position: absolute;
+	content: '';
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+}
+
+.sign-template-selector-list-item:hover .sign-template-selector-list-item-edit-button {
+	opacity: .7;
+}
+
+.sign-template-selector-list-item:hover .sign-template-selector-list-item-edit-button:hover {
+	opacity: 1;
+}

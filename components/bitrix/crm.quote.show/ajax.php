@@ -60,7 +60,6 @@ if(!function_exists('__CrmQuoteShowEndHtmlResonse'))
 		die();
 	}
 }
-CUtil::JSPostUnescape();
 $APPLICATION->RestartBuffer();
 header('Content-Type: application/x-javascript; charset='.LANG_CHARSET);
 

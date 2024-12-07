@@ -26,4 +26,4 @@ if($component->hasErrors())
 
 <h2><?= $arResult['FOLDER']['NAME'] ?></h2>
 
-<?= var_dump($arResult); ?>
+<? var_dump($arResult); ?>

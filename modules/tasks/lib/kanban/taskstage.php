@@ -1,6 +1,8 @@
 <?php
 namespace Bitrix\Tasks\Kanban;
 
+use Bitrix\Main\Application;
+use Bitrix\Main\Config\Option;
 use \Bitrix\Tasks\Internals\TaskTable as Task;
 use \Bitrix\Main\Entity;
 
@@ -111,6 +113,50 @@ class TaskStageTable extends Entity\DataManager
 		while ($row = $res->fetch())
 		{
 			self::delete($row['ID']);
+		}
+	}
+
+	public static function move(int $id, int $taskId, int $stageId): void
+	{
+		if (Option::get('tasks', 'tasks_kanban_move_task_use_lock', 'N') === 'N')
+		{
+			static::update($id, array(
+				'STAGE_ID' => $stageId
+			));
+
+			return;
+		}
+
+		$connection = Application::getConnection();
+		$lockKey = 'b_tasks_task_stage_move_task' . $id;
+
+		if ($connection->lock($lockKey))
+		{
+			try
+			{
+				$row = static::query()
+					->setSelect(['ID'])
+					->whereNot('ID', $id)
+					->where('TASK_ID', $taskId)
+					->where('STAGE_ID', $stageId)
+					->exec()
+					->fetchObject();
+
+				if (null === $row)
+				{
+					static::update($id, array(
+						'STAGE_ID' => $stageId
+					));
+				}
+				else
+				{
+					static::delete($id);
+				}
+			}
+			finally
+			{
+				$connection->unlock($lockKey);
+			}
 		}
 	}
 }

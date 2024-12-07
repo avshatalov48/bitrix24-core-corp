@@ -10,6 +10,7 @@ return [
 		"settings/sync",
 		"im:chat/settings/chat",
 		"tasks:settings/task",
+		"intranet:settings/users",
 		"settings/tabs",
 		"settings/system",
 		"settings/calltracker",

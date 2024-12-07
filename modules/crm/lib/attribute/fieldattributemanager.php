@@ -3,10 +3,13 @@ namespace Bitrix\Crm\Attribute;
 
 use Bitrix\Crm;
 use Bitrix\Crm\Attribute\Entity\FieldAttributeTable;
+use Bitrix\Crm\EntityBankDetail;
+use Bitrix\Crm\EntityRequisite;
 use Bitrix\Crm\PhaseSemantics;
 use Bitrix\Crm\UserField\Visibility\VisibilityManager;
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
+use CCrmDeal;
 use CCrmOwnerType;
 
 class FieldAttributeManager
@@ -28,6 +31,11 @@ class FieldAttributeManager
 
 	public static function isEntitySupported(int $entityTypeId): bool
 	{
+		if ($entityTypeId === CCrmOwnerType::Requisite || $entityTypeId === CCrmOwnerType::BankDetail)
+		{
+			return false;
+		}
+		
 		$factory = Crm\Service\Container::getInstance()->getFactory($entityTypeId);
 		if($factory)
 		{
@@ -51,7 +59,6 @@ class FieldAttributeManager
 		}
 
 		$categoryId = null;
-
 		$factory = Crm\Service\Container::getInstance()->getFactory($entityTypeId);
 		if ($factory)
 		{
@@ -69,13 +76,36 @@ class FieldAttributeManager
 				}
 			}
 		}
+		$scope = static::getEntityScopeByCategory($categoryId);
 
-		return static::getEntityScopeByCategory($categoryId);
+		if (
+			(
+				$entityTypeId === CCrmOwnerType::Requisite
+				|| $entityTypeId === CCrmOwnerType::BankDetail
+			)
+			&& is_array($options) && isset($options['PRESET_ID'])
+		)
+		{
+			$presetId = (int)$options['PRESET_ID'];
+			$scope .= ($scope !== '' ? '_' : '') . static::getEntityScopeByPreset($presetId);
+
+			if ($entityTypeId === CCrmOwnerType::BankDetail)
+			{
+				$scope .= '_bd';
+			}
+		}
+
+		return $scope;
 	}
 
 	public static function getEntityScopeByCategory(?int $categoryId = 0): string
 	{
-		return $categoryId > 0 ? "category_{$categoryId}" : "";
+		return $categoryId > 0 ? "category_$categoryId" : '';
+	}
+
+	public static function getEntityScopeByPreset(?int $presetId = 0): string
+	{
+		return $presetId > 0 ? "preset_$presetId" : '';
 	}
 
 	protected static function sortPhasesBySortAscAndIdDesc(array $phases): array
@@ -597,7 +627,7 @@ class FieldAttributeManager
 				{
 					if ($entityID > 0)
 					{
-						$dbResult = \CCrmDeal::GetListEx(
+						$dbResult = CCrmDeal::GetListEx(
 							[],
 							['=ID' => $entityID, 'CHECK_PERMISSIONS' => 'N'],
 							false,
@@ -617,7 +647,7 @@ class FieldAttributeManager
 
 					if ($stageID === '')
 					{
-						$stageID = \CCrmDeal::GetStartStageID($categoryID);
+						$stageID = CCrmDeal::GetStartStageID($categoryID);
 					}
 				}
 				elseif ($categoryID < 0)
@@ -653,6 +683,34 @@ class FieldAttributeManager
 			}
 
 			$entityScope = self::resolveEntityScope($entityTypeID, $entityID, ['CATEGORY_ID' => $categoryID]);
+		}
+		elseif (
+			$entityTypeID === CCrmOwnerType::Requisite
+			|| $entityTypeID === CCrmOwnerType::BankDetail
+		)
+		{
+			$presetId = (int)($options['PRESET_ID'] ?? 0);
+
+			if ($presetId <= 0)
+			{
+				if ($entityTypeID === CCrmOwnerType::Requisite)
+				{
+					$presetId = EntityRequisite::getSingleInstance()->getPresetIdByFields($entityID, $entityData);
+				}
+				else //if ($entityTypeID === CCrmOwnerType::BankDetail)
+				{
+					$presetId = EntityBankDetail::getSingleInstance()->getPresetIdByFields($entityID, $entityData);
+				}
+			}
+
+			if ($presetId <= 0)
+			{
+				throw new Main\SystemException(
+					'The presetId must be defined for the Requisite or BankDetail entity types'
+				);
+			}
+
+			$entityScope = self::resolveEntityScope($entityTypeID, $entityID, ['PRESET_ID' => $presetId]);
 		}
 
 		$fieldsData = static::getList($entityTypeID, $entityScope, $fieldOrigin);
@@ -763,54 +821,60 @@ class FieldAttributeManager
 	)
 	{
 		//If Start Phase and Finish Phase are empty, then field is required always.
-		if($startPhase === '' && $finishPhase === '')
+		if ($startPhase === '' && $finishPhase === '')
 		{
 			return true;
 		}
 
-		if(!is_array($options))
+		if (!is_array($options))
 		{
-			$options = array();
+			$options = [];
 		}
 
-		if($entityTypeID === CCrmOwnerType::Deal)
+		if ($entityTypeID === CCrmOwnerType::Deal)
 		{
-			$categoryID = isset($entityData['CATEGORY_ID']) ? (int)$entityData['CATEGORY_ID'] : -1;
-			if($categoryID < 0 && isset($options['CATEGORY_ID']))
+			$categoryID = (int)($entityData['CATEGORY_ID'] ?? -1);
+			if ($categoryID < 0 && isset($options['CATEGORY_ID']))
 			{
 				$categoryID = $options['CATEGORY_ID'];
 			}
 
-			$startStageSort = \CCrmDeal::GetStageSort($startPhase, $categoryID);
-			$finishStageSort = \CCrmDeal::GetStageSort($finishPhase, $categoryID);
+			$startStageSort = CCrmDeal::GetStageSort($startPhase, $categoryID);
+			$finishStageSort = CCrmDeal::GetStageSort($finishPhase, $categoryID);
 
-			$stageID = isset($options['STAGE_ID'])
-				? $options['STAGE_ID']
-				: (isset($entityData['STAGE_ID']) ? $entityData['STAGE_ID'] : '');
-			$stageSort = \CCrmDeal::GetStageSort($stageID, $categoryID);
+			$stageID = $options['STAGE_ID'] ?? ($entityData['STAGE_ID'] ?? '');
+			$stageSort = CCrmDeal::GetStageSort($stageID, $categoryID);
 
-			return($stageSort >= $startStageSort && $stageSort <= $finishStageSort);
+			return ($stageSort >= $startStageSort && $stageSort <= $finishStageSort);
 		}
-		if($entityTypeID === CCrmOwnerType::Lead)
+		if ($entityTypeID === CCrmOwnerType::Lead)
 		{
 			$startStatusSort = \CCrmLead::GetStatusSort($startPhase);
 			$finishStatusSort = \CCrmLead::GetStatusSort($finishPhase);
 
-			$statusID = isset($options['STATUS_ID'])
-				? $options['STATUS_ID']
-				: (isset($entityData['STATUS_ID']) ? $entityData['STATUS_ID'] : '');
+			$statusID = $options['STATUS_ID'] ?? ($entityData['STATUS_ID'] ?? '');
 			$statusSort = \CCrmLead::GetStatusSort($statusID);
 
-			return($statusSort >= $startStatusSort && $statusSort <= $finishStatusSort);
+			return ($statusSort >= $startStatusSort && $statusSort <= $finishStatusSort);
 		}
-		if($entityTypeID === CCrmOwnerType::Contact)
+		if ($entityTypeID === CCrmOwnerType::Contact)
 		{
 			// There are no statuses for contacts yet
 			return true;
 		}
-		if($entityTypeID === CCrmOwnerType::Company)
+		if ($entityTypeID === CCrmOwnerType::Company)
 		{
 			// There are no statuses for companies yet
+			return true;
+		}
+		if ($entityTypeID === CCrmOwnerType::Requisite)
+		{
+			// There are no statuses for requisites yet
+			return true;
+		}
+		if ($entityTypeID === CCrmOwnerType::BankDetail)
+		{
+			// There are no statuses for requisites yet
 			return true;
 		}
 
@@ -838,6 +902,22 @@ class FieldAttributeManager
 			return $captions;
 		}
 
+		$captionsForNotCategorized = [
+			'REQUIRED_SHORT' => Loc::getMessage('CRM_FIELD_ATTRIBUTE_MANAGER_STATUS_CAPTION_REQUIRED_SHORT'),
+			'REQUIRED_FULL' => Loc::getMessage('CRM_FIELD_ATTRIBUTE_MANAGER_STATUS_CAPTION_REQUIRED_SHORT'),
+			'GROUP_TYPE_GENERAL' => '',
+			'GROUP_TYPE_PIPELINE' => '',
+			'GROUP_TYPE_JUNK' => '',
+		];
+
+		if (
+			$entityTypeId === CCrmOwnerType::Requisite
+			|| $entityTypeId === CCrmOwnerType::BankDetail
+		)
+		{
+			return $captionsForNotCategorized;
+		}
+
 		$factory = Crm\Service\Container::getInstance()->getFactory($entityTypeId);
 		if ($factory)
 		{
@@ -846,27 +926,27 @@ class FieldAttributeManager
 				if (!$factory->isCategoriesEnabled())
 				{
 					$captions = [
-						'REQUIRED_SHORT' => Loc::getMessage('CRM_FIELD_ATTRIBUTE_MANAGER_STATUS_CAPTION_REQUIRED_SHORT'),
-						'REQUIRED_FULL' => Loc::getMessage('CRM_FIELD_ATTRIBUTE_MANAGER_STAGE_CAPTION_REQUIRED_FULL_1'),
+						'REQUIRED_SHORT' => Loc::getMessage(
+							'CRM_FIELD_ATTRIBUTE_MANAGER_STATUS_CAPTION_REQUIRED_SHORT'
+						),
+						'REQUIRED_FULL' => Loc::getMessage(
+							'CRM_FIELD_ATTRIBUTE_MANAGER_STAGE_CAPTION_REQUIRED_FULL_1'
+						),
 						'GROUP_TYPE_GENERAL' => Loc::getMessage(
 							'CRM_FIELD_ATTRIBUTE_MANAGER_STATUS_CAPTION_GROUP_TYPE_GENERAL_MSGVER_1'
 						),
 						'GROUP_TYPE_PIPELINE' => Loc::getMessage(
 							'CRM_FIELD_ATTRIBUTE_MANAGER_STATUS_CAPTION_GROUP_TYPE_PIPELINE'
 						),
-						'GROUP_TYPE_JUNK' => Loc::getMessage('CRM_FIELD_ATTRIBUTE_MANAGER_STATUS_CAPTION_GROUP_TYPE_JUNK'),
+						'GROUP_TYPE_JUNK' => Loc::getMessage(
+							'CRM_FIELD_ATTRIBUTE_MANAGER_STATUS_CAPTION_GROUP_TYPE_JUNK'
+						),
 					];
 				}
 			}
 			else
 			{
-				$captions = [
-					'REQUIRED_SHORT' => Loc::getMessage('CRM_FIELD_ATTRIBUTE_MANAGER_STATUS_CAPTION_REQUIRED_SHORT'),
-					'REQUIRED_FULL' => Loc::getMessage('CRM_FIELD_ATTRIBUTE_MANAGER_STATUS_CAPTION_REQUIRED_SHORT'),
-					'GROUP_TYPE_GENERAL' => '',
-					'GROUP_TYPE_PIPELINE' => '',
-					'GROUP_TYPE_JUNK' => '',
-				];
+				$captions = $captionsForNotCategorized;
 			}
 		}
 
@@ -1105,6 +1185,36 @@ class FieldAttributeManager
 			'=ENTITY_TYPE_ID' => $entityTypeId,
 		];
 		self::delete($filter);
+	}
+
+	public static function deleteByScopePrefix(string $scopePrefix, array $excludeFields = []): void
+	{
+		if ($scopePrefix !== '')
+		{
+			$filter = ['=%ENTITY_SCOPE' => "$scopePrefix%"];
+
+			if (!empty($excludeFields))
+			{
+				 $filter['!@FIELD_NAME'] = $excludeFields;
+			}
+
+			static::delete($filter);
+		}
+	}
+
+	public static function deleteByScope(string $scope, array $excludeFields = []): void
+	{
+		if ($scope !== '')
+		{
+			$filter = ['=ENTITY_SCOPE' => $scope];
+
+			if (!empty($excludeFields))
+			{
+				 $filter['!@FIELD_NAME'] = $excludeFields;
+			}
+
+			static::delete($filter);
+		}
 	}
 
 	/**

@@ -3,6 +3,7 @@
 return [
 	'extensions' => [
 		'loc',
+		'im:lib/theme',
 		'im:messenger/const/rest',
 		'im:messenger/lib/element',
 		'im:messenger/lib/ui/base/loader',
@@ -11,7 +12,6 @@ return [
 		'im:messenger/lib/params',
 		'im:messenger/lib/rest',
 		'im:messenger/cache',
-		'apptheme',
 	],
 	'bundle' => [
 		'./src/view',

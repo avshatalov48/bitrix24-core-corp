@@ -8,6 +8,8 @@ use Bitrix\Crm\Service\Timeline\Repository\IgnoredItemsRules;
 use Bitrix\Crm\Service\Timeline\Repository\Query;
 use Bitrix\Crm\Service\Timeline\Repository\Result;
 use Bitrix\Crm\Timeline\Entity\NoteTable;
+use Bitrix\Crm\Timeline\Entity\Repository\RestAppLayoutBlocksRepository;
+use Bitrix\Crm\Timeline\Entity\RestAppLayoutBlocksTable;
 use Bitrix\Crm\Timeline\Entity\TimelineBindingTable;
 use Bitrix\Crm\Timeline\Entity\TimelineTable;
 use Bitrix\Crm\Timeline\EntityController;
@@ -80,6 +82,7 @@ class Repository
 					'RESULT_MARK',
 					'ORIGIN_ID',
 					'LAST_UPDATED',
+					'START_TIME',
 					'END_TIME',
 					'STORAGE_TYPE_ID',
 					'STORAGE_ELEMENT_IDS',
@@ -109,6 +112,7 @@ class Repository
 		);
 
 		$items = NoteTable::loadForItems($items, NoteTable::NOTE_TYPE_ACTIVITY);
+		$items = (new RestAppLayoutBlocksRepository())->loadForItems($items, RestAppLayoutBlocksTable::ACTIVITY_ITEM_TYPE);
 
 		$items = array_values($items);
 

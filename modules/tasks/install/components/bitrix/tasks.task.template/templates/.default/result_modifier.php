@@ -341,3 +341,4 @@ $arResult['JS_DATA']['currentUser'] = $users[$arParams['USER_ID']];
 $arResult['JS_DATA']['taskLimitExceeded'] = $arResult['AUX_DATA']['TASK_LIMIT_EXCEEDED'];
 $arResult['JS_DATA']['templateSubtaskLimitExceeded'] = $arResult['AUX_DATA']['TEMPLATE_SUBTASK_LIMIT_EXCEEDED'];
 $arResult['JS_DATA']['templateTaskRecurrentLimitExceeded'] = $arResult['AUX_DATA']['TASK_RECURRENT_RESTRICT'];
+$arResult['JS_DATA']['templateTaskTimeTrackingLimitExceeded'] = $arResult['AUX_DATA']['TASK_TIME_TRACKING_RESTRICT'];

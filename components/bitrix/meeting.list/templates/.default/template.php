@@ -66,7 +66,7 @@ endforeach;
 ?>
 				</select>
 			</div>
-<script type="text/javascript">
+<script>
 window.meeting_last_fld = 'owner';
 function BXFilterSelectOwner(el, fld)
 {
@@ -134,7 +134,7 @@ if (IsModuleInstalled('socialnetwork')):
 	), null, array('HIDE_ICONS' => 'Y'));
 
 ?>
-<script type="text/javascript">
+<script>
 function BXOnGroupChange(group)
 {
 	if (!!group && group.length > 0)
@@ -175,7 +175,7 @@ endif;
 <?
 $this->EndViewTarget();
 ?>
-<script type="text/javascript">
+<script>
 function BXDeleteMeeting(id)
 {
 	BX.PopupMenu.currentItem.popupWindow.close();
@@ -235,7 +235,7 @@ else:
 	foreach ($arResult['MEETINGS'] as $arMeeting):
 		$current_role = ($arMeeting['USERS'][$USER->GetID()] ?? null);
 ?>
-	<script type="text/javascript">
+	<script>
 meetingMenuPopup[<?=$arMeeting["ID"]?>] = [
 	{text : "<?=GetMessage("ME_DETAIL")?>", title : "<?=GetMessage("ME_DETAIL_EX")?>", className : "menu-popup-item-view", href : "<?=CUtil::JSEscape($arMeeting['URL'])?>" }
 	,{text : "<?=GetMessage("ME_COPY")?>", title : "<?=GetMessage("ME_COPY_EX")?>", className : "menu-popup-item-create", href : "<?=CUtil::JSEscape($arMeeting['URL_COPY'])?>" }

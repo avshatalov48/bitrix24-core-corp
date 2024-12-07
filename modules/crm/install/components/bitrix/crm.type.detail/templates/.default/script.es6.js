@@ -1,9 +1,12 @@
-import { Dom, Event, Loc, Reflection, Tag, Text, Type } from 'main.core';
-import { EventEmitter } from 'main.core.events';
-import { Loader } from 'main.loader';
-import { MessageBox } from 'ui.dialogs.messagebox';
-import { CustomSection, TypeModel, TypeModelData } from 'crm.type-model';
+import { Builder, Dictionary } from 'crm.integration.analytics';
 import { Router } from 'crm.router';
+import { ToolbarComponent } from 'crm.toolbar-component';
+import { CustomSection, TypeModel, TypeModelData } from 'crm.type-model';
+import { Dom, Event, Loc, Reflection, Tag, Text, Type, Uri } from 'main.core';
+import { type BaseEvent, EventEmitter } from 'main.core.events';
+import { Loader } from 'main.loader';
+import { sendData as sendAnalyticsData } from 'ui.analytics';
+import { MessageBox } from 'ui.dialogs.messagebox';
 import { TagSelector } from 'ui.entity-selector';
 
 declare type Preset = {
@@ -33,69 +36,87 @@ let instance: TypeDetail = null;
  */
 class TypeDetail
 {
-    form;
-    type: TypeModel;
-    isProgress: boolean = false;
+	form;
+	type: TypeModel;
+	isProgress: boolean = false;
 	container: Element;
 	errorsContainer: Element;
-    isNew: boolean;
+	isNew: boolean;
 	tabs: Map<string, Element> = new Map();
 	presets: Array;
+	selectedPresetId: ?string;
 	relations: {
 		parent: Relation[],
 		child: Relation[],
 	};
+
 	parentRelationsController: RelationsController;
 	childRelationsController: RelationsController;
 	customSectionController: ?CustomSectionsController;
 	isRestricted: boolean = false;
+	restrictionErrorMessage: string;
+	restrictionSliderCode: ?string;
 	isExternal: boolean = false;
 	isSaveFromTypeDetail: boolean = true;
+	isCreateSectionsViaAutomatedSolutionDetails: boolean = false;
+	isCrmAdmin: boolean = false;
 
-    constructor(params: {
-        form: Element,
-        type: TypeModel,
-        container: Element,
-        errorsContainer: Element,
+	#isCancelEventRegistered: boolean = false;
+
+	constructor(params: {
+		form: Element,
+		type: TypeModel,
+		container: Element,
+		errorsContainer: Element,
 		presets?: Array,
 		relations: {
-        	parent: Relation[],
+			parent: Relation[],
 			child: Relation[],
 		},
+		isCreateSectionsViaAutomatedSolutionDetails: boolean,
+		isExternal: boolean,
+		isRestricted: boolean,
+		restrictionErrorMessage: string,
+		restrictionSliderCode: ?string,
+		isCrmAdmin: boolean,
     })
-    {
-        if(Type.isPlainObject(params))
-        {
-            this.type = params.type;
-            this.isNew = !this.type.isSaved();
-            this.form = params.form;
-            this.container = params.container;
-            this.errorsContainer = params.errorsContainer;
-            this.presets = params.presets;
-            this.relations = params.relations;
-            this.isRestricted = Boolean(params.isRestricted);
-			this.isExternal = Boolean(params.isExternal);
-        }
-
-        this.buttonsPanel = document.getElementById('ui-button-panel');
-        this.saveButton = document.getElementById('ui-button-panel-save');
-        this.cancelButton = document.getElementById('ui-button-panel-cancel');
-        this.deleteButton = document.getElementById('ui-button-panel-remove');
-
-        instance = this;
-    }
-
-    init()
-    {
-        this.bindEvents();
-
-        this.fillTabs();
-
-        if (!this.type.getId())
+	{
+		if (Type.isPlainObject(params))
 		{
-			this.enablePresetsView()
+			this.type = params.type;
+			this.isNew = !this.type.isSaved();
+			this.form = params.form;
+			this.container = params.container;
+			this.errorsContainer = params.errorsContainer;
+			this.presets = params.presets;
+			this.relations = params.relations;
+			this.isRestricted = Boolean(params.isRestricted);
+			this.restrictionErrorMessage = Type.isStringFilled(params.restrictionErrorMessage) ? params.restrictionErrorMessage : '';
+			this.restrictionSliderCode = Type.isStringFilled(params.restrictionSliderCode) && this.isRestricted
+				? params.restrictionSliderCode
+				: null
+			;
+			this.isExternal = Boolean(params.isExternal);
+			this.isCreateSectionsViaAutomatedSolutionDetails = Boolean(params.isCreateSectionsViaAutomatedSolutionDetails);
+			this.isCrmAdmin = Boolean(params.isCrmAdmin);
 		}
-        else
+
+		this.buttonsPanel = document.getElementById('ui-button-panel');
+		this.saveButton = document.getElementById('ui-button-panel-save');
+		this.cancelButton = document.getElementById('ui-button-panel-cancel');
+		this.deleteButton = document.getElementById('ui-button-panel-remove');
+
+		// eslint-disable-next-line unicorn/no-this-assignment
+		instance = this;
+	}
+
+	init()
+	{
+		this.bindEvents();
+
+		this.fillTabs();
+
+		if (this.type.getId())
 		{
 			// const customPreset = this.getPresetById('bitrix:empty');
 			// const presetSelector = document.querySelector('[data-role="crm-type-preset-selector"]');
@@ -110,29 +131,32 @@ class TypeDetail
 				Dom.addClass(presetSelectorContainer, 'crm-type-hidden');
 			}
 		}
+		else
+		{
+			this.enablePresetsView();
+		}
 
 		Dom.removeClass(document.querySelector('body'), 'crm-type-hidden');
 
-        this.initRelations();
+		this.initRelations();
 
-        this.initCustomSections();
-    }
+		this.initCustomSections();
+	}
 
-    bindEvents()
-    {
-        Event.bind(this.saveButton, 'click', (event) => {
-                this.save(event);
-            }, {
-                passive: false
-            }
-        );
+	bindEvents()
+	{
+		Event.bind(this.saveButton, 'click', (event) => {
+			this.save(event);
+		}, {
+			passive: false,
+		});
 
-        if(this.deleteButton)
-        {
-            Event.bind(this.deleteButton, 'click', (event) => {
-                this.delete(event);
-            });
-        }
+		if (this.deleteButton)
+		{
+			Event.bind(this.deleteButton, 'click', (event) => {
+				this.delete(event);
+			});
+		}
 
 		const userFieldOption = this.getBooleanFieldNodeByName('isUseInUserfieldEnabled');
 		if (userFieldOption)
@@ -143,7 +167,66 @@ class TypeDetail
 		this.form.querySelectorAll('[data-name*="linkedUserFields"]').forEach((linkedUserFieldNode) => {
 			Event.bind(linkedUserFieldNode, 'click', this.enableUserFieldIfAnyLinkedChecked.bind(this));
 		});
-    }
+
+		EventEmitter.subscribe('SidePanel.Slider:onCloseByEsc', (event: BaseEvent) => {
+			const [sliderEvent] = event.getData();
+			const slider: BX.SidePanel.Slider = sliderEvent.getSlider();
+
+			if (slider === this.getSlider())
+			{
+				this.#registerCancelEvent(Dictionary.ELEMENT_ESC_BUTTON);
+			}
+		});
+		EventEmitter.subscribe('SidePanel.Slider:onClose', (event: BaseEvent) => {
+			const [sliderEvent] = event.getData();
+			const slider: BX.SidePanel.Slider = sliderEvent.getSlider();
+
+			if (slider === this.getSlider())
+			{
+				this.#registerCancelEvent(null);
+			}
+		});
+
+		this.handleSliderDestroy = this.handleSliderDestroy.bind(this);
+		top.BX.Event.EventEmitter.subscribe('SidePanel.Slider:onDestroy', this.handleSliderDestroy);
+	}
+
+	handleSliderDestroy(event: BaseEvent): void
+	{
+		const [sliderEvent] = event.getData();
+		const slider: BX.SidePanel.Slider = sliderEvent.getSlider();
+
+		if (slider.getFrameWindow() === window)
+		{
+			// if we add event handler from iframe to the main page, they will live forever, even after slider destroys
+			// sometimes it causes errors, like in this case
+			this.destroy();
+			top.BX.Event.EventEmitter.unsubscribe('SidePanel.Slider:onDestroy', this.handleSliderDestroy);
+		}
+	}
+
+	#registerCancelEvent(element: ?string): void
+	{
+		if (this.#isCancelEventRegistered)
+		{
+			return;
+		}
+
+		this.#isCancelEventRegistered = true;
+
+		sendAnalyticsData(
+			this.#getAnalyticsBuilder()
+				.setElement(element)
+				.setStatus(Dictionary.STATUS_CANCEL)
+				.buildData()
+			,
+		);
+	}
+
+	destroy(): void
+	{
+		this.customSectionController?.destroy();
+	}
 
 	enablePresetsView()
 	{
@@ -172,12 +255,8 @@ class TypeDetail
 	{
 		Dom.removeClass(document.querySelector('body'), 'crm-type-settings-presets');
 
-		const initTabDataRole = (this.isExternal) ? 'tab-custom-section' : 'tab-common';
-		const initialTab = document.querySelector(`[data-role=${initTabDataRole}]`);
-		if (initialTab)
-		{
-			initialTab.click();
-		}
+		(this.#findActiveTabButton() ?? this.#findFirstTabButton()).click();
+
 		const presetSelectorContainer = document.querySelector('[data-role="preset-selector-container"]');
 		if (presetSelectorContainer)
 		{
@@ -187,7 +266,17 @@ class TypeDetail
 		Dom.removeClass(this.buttonsPanel, 'crm-type-hidden');
 	}
 
-    disableLinkedUserFieldsIfNotAvailable()
+	#findActiveTabButton(): ?HTMLElement
+	{
+		return document.querySelector('.ui-sidepanel-menu-item.ui-sidepanel-menu-active > [data-role^=tab-]');
+	}
+
+	#findFirstTabButton(): HTMLElement
+	{
+		return document.querySelector('.ui-sidepanel-menu-item > [data-role^=tab-]');
+	}
+
+	disableLinkedUserFieldsIfNotAvailable()
 	{
 		const userFieldOption = this.getBooleanFieldNodeByName('isUseInUserfieldEnabled');
 		if (!this.isBooleanFieldChecked(userFieldOption))
@@ -212,68 +301,81 @@ class TypeDetail
 		}
 	}
 
-    getLoader()
-    {
-        if(!this.loader)
-        {
-            this.loader = new Loader({size: 150});
-        }
-
-        return this.loader;
-    }
-
-    startProgress()
-    {
-        this.isProgress = true;
-        if(!this.getLoader().isShown())
-        {
-            this.getLoader().show(this.form);
-        }
-        this.hideErrors();
-    }
-
-    stopProgress()
-    {
-        this.isProgress = false;
-        this.getLoader().hide();
-        setTimeout(() =>
-        {
-            Dom.removeClass(this.saveButton, 'ui-btn-wait');
-            Dom.removeClass(this.cancelButton, 'ui-btn-wait');
-            if(this.deleteButton)
-            {
-                Dom.removeClass(this.deleteButton, 'ui-btn-wait');
-            }
-        }, 200);
-    }
-
-    save(event)
-    {
-    	if (this.isRestricted)
+	getLoader(): Loader
+	{
+		if (!this.loader)
 		{
-			Router.Instance.showFeatureSlider();
+			this.loader = new Loader({ size: 150 });
+		}
+
+		return this.loader;
+	}
+
+	startProgress(): void
+	{
+		this.isProgress = true;
+		if (!this.getLoader().isShown())
+		{
+			this.getLoader().show(this.form);
+		}
+		this.hideErrors();
+	}
+
+	stopProgress()
+	{
+		this.isProgress = false;
+		this.getLoader().hide();
+		setTimeout(() => {
+			Dom.removeClass(this.saveButton, 'ui-btn-wait');
+			Dom.removeClass(this.cancelButton, 'ui-btn-wait');
+			if (this.deleteButton)
+			{
+				Dom.removeClass(this.deleteButton, 'ui-btn-wait');
+			}
+		}, 200);
+	}
+
+	save(event)
+	{
+		if (this.isRestricted)
+		{
+			if (
+				Type.isStringFilled(this.restrictionSliderCode)
+				&& Reflection.getClass('BX.UI.InfoHelper.show')
+			)
+			{
+				BX.UI.InfoHelper.show(this.restrictionSliderCode);
+			}
+			else
+			{
+				this.showErrors([this.restrictionErrorMessage]);
+			}
+
 			this.stopProgress();
+
 			return;
 		}
-        event.preventDefault();
-        if(!this.form)
-        {
-            return;
-        }
-        if(this.isProgress)
-        {
-            return;
-        }
-        if(!this.type)
-        {
-            return;
-        }
-        this.startProgress();
+		event.preventDefault();
+		if (!this.form)
+		{
+			return;
+		}
 
-        this.type.setTitle(this.form.querySelector('[name="title"]').value);
-        TypeModel.getBooleanFieldNames().forEach((fieldName) => {
-        	const fieldNode = this.getBooleanFieldNodeByName(fieldName);
-        	if (fieldNode)
+		if (this.isProgress)
+		{
+			return;
+		}
+
+		if (!this.type)
+		{
+			return;
+		}
+		this.startProgress();
+
+		this.type.setTitle(this.form.querySelector('[name="title"]').value);
+		TypeModel.getBooleanFieldNames().forEach((fieldName) => {
+			const fieldNode = this.getBooleanFieldNodeByName(fieldName);
+			if (fieldNode)
 			{
 				this.type.data[fieldName] = this.isBooleanFieldChecked(fieldNode);
 			}
@@ -284,7 +386,7 @@ class TypeDetail
 		// });
 		const linkedUserFields = {};
 		this.form.querySelectorAll('[data-name*="linkedUserFields"]').forEach((linkedUserFieldNode) => {
-			const name = linkedUserFieldNode.dataset.name.substr('linkedUserFields['.length).replace(']', '')
+			const name = linkedUserFieldNode.dataset.name.slice('linkedUserFields['.length).replace(']', '');
 			linkedUserFields[name] = this.isBooleanFieldChecked(linkedUserFieldNode);
 		});
 		this.type.setLinkedUserFields(linkedUserFields);
@@ -296,28 +398,84 @@ class TypeDetail
 		{
 			const customSectionData = this.customSectionController.getData();
 			this.type.setCustomSectionId(customSectionData.customSectionId);
-			this.type.setCustomSections(customSectionData.customSecions);
+			this.type.setCustomSections(customSectionData.customSections);
 			this.type.setIsExternalDynamicalType(this.isExternal);
 			this.type.setIsSaveFromTypeDetail(this.isSaveFromTypeDetail);
 		}
 
+		const analyticsBuilder = this.#getAnalyticsBuilder()
+			.setElement(Dictionary.ELEMENT_CREATE_BUTTON)
+		;
+
+		sendAnalyticsData(
+			analyticsBuilder
+				.setStatus(Dictionary.STATUS_ATTEMPT)
+				.buildData()
+			,
+		);
+
 		this.type.save().then((response) => {
+			sendAnalyticsData(
+				analyticsBuilder
+					.setStatus(Dictionary.STATUS_SUCCESS)
+					.setId(this.type.getId())
+					.buildData()
+				,
+			);
+
+			this.#isCancelEventRegistered = true;
+
 			this.stopProgress();
 			this.afterSave(response);
 			this.isNew = false;
-		}).catch( (errors) => {
+		}).catch((errors) => {
+			sendAnalyticsData(
+				analyticsBuilder
+					.setStatus(Dictionary.STATUS_ERROR)
+					.setId(this.type.getId())
+					.buildData()
+				,
+			);
+
 			this.showErrors(errors);
 			this.stopProgress();
 		});
-    }
+	}
+
+	#getAnalyticsBuilder(): Builder.Automation.Type.CreateEvent | Builder.Automation.Type.EditEvent
+	{
+		const builder = this.isNew
+			? new Builder.Automation.Type.CreateEvent()
+			: new Builder.Automation.Type.EditEvent()
+		;
+
+		builder.setIsExternal(this.isExternal);
+
+		if (Type.isStringFilled(this.selectedPresetId))
+		{
+			builder.setPreset(this.selectedPresetId);
+		}
+
+		if (this.type.getId() > 0)
+		{
+			builder.setId(this.type.getId());
+		}
+
+		const currentUrl = new Uri(decodeURI(window.location.href));
+		if (currentUrl.getQueryParam('c_sub_section') && builder instanceof Builder.Automation.Type.EditEvent)
+		{
+			builder.setSubSection(currentUrl.getQueryParam('c_sub_section'));
+		}
+
+		return builder;
+	}
 
 	collectEntityTypeIds(role: string): []
 	{
 		const entityTypeIds = [];
 
 		const checkboxes = this.container.querySelectorAll(`[data-role="${role}"]`);
-		Array.from(checkboxes).forEach( (checkbox: HTMLInputElement) =>
-		{
+		[...checkboxes].forEach((checkbox: HTMLInputElement) => {
 			if (checkbox.checked)
 			{
 				entityTypeIds.push(checkbox.dataset.entityTypeId);
@@ -327,82 +485,54 @@ class TypeDetail
 		return entityTypeIds;
 	}
 
-    afterSave(response: {data: {}})
-    {
-        this.addDataToSlider('response', response);
+	afterSave(response: {data: {}})
+	{
+		this.addDataToSlider('response', response);
 
-		if (response.data.hasOwnProperty('urlTemplates'))
+		if (Object.hasOwn(response.data, 'urlTemplates'))
 		{
 			Router.Instance.setUrlTemplates(response.data.urlTemplates);
 		}
 
-        const slider = this.getSlider();
-        if(slider)
-        {
-            slider.close();
-        }
-        else if(this.isNew)
-        {
-            location.href = Router.Instance.getTypeDetailUrl(this.type.getEntityTypeId());
-        }
+		this.getSlider()?.close();
 
-        this.emitTypeUpdatedEvent({
+		this.emitTypeUpdatedEvent({
 			isUrlChanged: (response.data.isUrlChanged === true),
 		});
-    }
+	}
 
-    getSlider()
-    {
-        if(Reflection.getClass('BX.SidePanel'))
-        {
-            return BX.SidePanel.Instance.getSliderByWindow(window);
-        }
-
-        return null;
-    }
-
-    getToolbarComponent(): ?BX.Crm.ToolbarComponent
+	getSlider(): ?BX.SidePanel.Slider
 	{
-		if(Reflection.getClass('BX.Crm.ToolbarComponent'))
-		{
-			return BX.Crm.ToolbarComponent.Instance;
-		}
-
-		return null;
+		return BX.SidePanel?.Instance?.getSliderByWindow(window);
 	}
 
 	emitTypeUpdatedEvent(data): void
 	{
-		const toolbar = this.getToolbarComponent();
-		if (toolbar)
-		{
-			toolbar.emitTypeUpdatedEvent(data);
-		}
+		ToolbarComponent.Instance.emitTypeUpdatedEvent(data);
 	}
 
-    addDataToSlider(key, data)
-    {
-        if(Type.isString(key) && Type.isPlainObject(data))
-        {
-            let slider = this.getSlider();
-            if(slider)
-            {
-                slider.data.set(key, data);
-            }
-        }
-    }
+	addDataToSlider(key, data)
+	{
+		if (Type.isString(key) && Type.isPlainObject(data))
+		{
+			const slider = this.getSlider();
+			if (slider)
+			{
+				slider.data.set(key, data);
+			}
+		}
+	}
 
 	showErrors(errors: string[])
 	{
 		let text = '';
-		errors.forEach((message) =>
-		{
+		errors.forEach((message) => {
 			text += message;
 		});
-		if(Type.isDomNode(this.errorsContainer))
+		if (Type.isDomNode(this.errorsContainer))
 		{
 			this.errorsContainer.innerText = text;
-			this.errorsContainer.parentNode.style.display = 'block';
+			Dom.style(this.errorsContainer.parentNode, 'display', 'block');
 		}
 		else
 		{
@@ -410,75 +540,105 @@ class TypeDetail
 		}
 	}
 
-    hideErrors()
-    {
-        if(Type.isDomNode(this.errorsContainer))
-        {
-            this.errorsContainer.parentNode.style.display = 'none';
-            this.errorsContainer.innerText = '';
-        }
-    }
+	hideErrors()
+	{
+		if (Type.isDomNode(this.errorsContainer))
+		{
+			Dom.style(this.errorsContainer.parentNode, 'display', 'none');
+			this.errorsContainer.innerText = '';
+		}
+	}
 
-    delete(event)
-    {
-        event.preventDefault();
-        if(!this.form)
-        {
-            return;
-        }
-        if(this.isProgress)
-        {
-            return;
-        }
-        if(!this.type)
-        {
-            return;
-        }
-        MessageBox.confirm(
-            Loc.getMessage('CRM_TYPE_DETAIL_DELETE_CONFIRM'),
-            () => {
-                return new Promise((resolve) => {
-                    this.startProgress();
-                    this.type.delete().then((response) => {
-                        this.stopProgress();
+	delete(event)
+	{
+		event.preventDefault();
+		if (!this.form)
+		{
+			return;
+		}
 
-                        const isUrlChanged = (Type.isObject(response.data) && (response.data.isUrlChanged === true));
-						this.emitTypeUpdatedEvent({isUrlChanged});
+		if (this.isProgress)
+		{
+			return;
+		}
 
-						const slider = this.getSlider();
-                        if(slider)
-                        {
-                            slider.close();
-                        }
-                        else
-                        {
-                            const listUrl = Router.Instance.getTypeListUrl();
-                            if(listUrl)
-                            {
-                                location.href = listUrl.toString();
-                            }
-                        }
-                    }).catch((errors: string[]) => {
-                        this.showErrors(errors);
-                        this.stopProgress();
-                        resolve();
-                    });
-                });
-            },
-            null,
-            (box) => {
-                this.stopProgress();
-                box.close();
-            }
-        );
-    }
+		if (!this.type)
+		{
+			return;
+		}
+
+		const currentUrl = new Uri(decodeURI(window.location.href));
+
+		const analyticsBuilder = (new Builder.Automation.Type.DeleteEvent())
+			.setElement(Dictionary.ELEMENT_DELETE_BUTTON)
+			.setIsExternal(this.isExternal)
+			.setSubSection(currentUrl.getQueryParam('c_sub_section'))
+			.setId(this.type.getId())
+		;
+
+		MessageBox.confirm(
+			Loc.getMessage('CRM_TYPE_DETAIL_DELETE_CONFIRM'),
+			() => {
+				return new Promise((resolve) => {
+					sendAnalyticsData(
+						analyticsBuilder
+							.setStatus(Dictionary.STATUS_ATTEMPT)
+							.buildData()
+						,
+					);
+
+					this.startProgress();
+					this.type.delete().then((response) => {
+						sendAnalyticsData(
+							analyticsBuilder
+								.setStatus(Dictionary.STATUS_SUCCESS)
+								.buildData()
+							,
+						);
+
+						this.#isCancelEventRegistered = true;
+
+						this.stopProgress();
+
+						const isUrlChanged = (Type.isObject(response.data) && (response.data.isUrlChanged === true));
+						this.emitTypeUpdatedEvent({ isUrlChanged });
+
+						Router.Instance.closeSliderOrRedirect(Router.Instance.getTypeListUrl());
+					}).catch((errors: string[]) => {
+						sendAnalyticsData(
+							analyticsBuilder
+								.setStatus(Dictionary.STATUS_ERROR)
+								.buildData()
+							,
+						);
+
+						this.showErrors(errors);
+						this.stopProgress();
+						resolve();
+					});
+				});
+			},
+			null,
+			(box) => {
+				sendAnalyticsData(
+					analyticsBuilder
+						.setStatus(Dictionary.STATUS_CANCEL)
+						.buildData()
+					,
+				);
+
+				this.stopProgress();
+				box.close();
+			},
+		);
+	}
 
 	fillTabs()
 	{
-		if(this.container)
+		if (this.container)
 		{
 			this.container.querySelectorAll('.crm-type-tab').forEach((tabNode: HTMLDivElement) => {
-				if(tabNode.dataset.tab)
+				if (tabNode.dataset.tab)
 				{
 					this.tabs.set(tabNode.dataset.tab, tabNode);
 				}
@@ -488,14 +648,14 @@ class TypeDetail
 
 	showTab(tabNameToShow: string)
 	{
-		Array.from(this.tabs.keys()).forEach((tabName: string) => {
-			if(tabName === tabNameToShow)
+		[...this.tabs.keys()].forEach((tabName: string) => {
+			if (tabName === tabNameToShow)
 			{
-				this.tabs.get(tabName).classList.add('crm-type-tab-current');
+				Dom.addClass(this.tabs.get(tabName), 'crm-type-tab-current');
 			}
 			else
 			{
-				this.tabs.get(tabName).classList.remove('crm-type-tab-current');
+				Dom.removeClass(this.tabs.get(tabName), 'crm-type-tab-current');
 			}
 		});
 	}
@@ -533,6 +693,8 @@ class TypeDetail
 				}
 			}
 		});
+
+		this.selectedPresetId = presetId;
 	}
 
 	getPresetById(presetId: string)
@@ -544,6 +706,8 @@ class TypeDetail
 				return preset;
 			}
 		}
+
+		return null;
 	}
 
 	updateInputs(data: TypeModelData)
@@ -580,12 +744,12 @@ class TypeDetail
 		}
 	}
 
-	getBooleanFieldNodeByName(fieldName: string): ?HTMLDivElement|HTMLInputElement
+	getBooleanFieldNodeByName(fieldName: string): ?HTMLDivElement | HTMLInputElement
 	{
-		return this.container.querySelector('[data-name="' + fieldName + '"]');
+		return this.container.querySelector(`[data-name="${fieldName}"]`);
 	}
 
-	isBooleanFieldChecked(node: HTMLDivElement|HTMLInputElement): boolean
+	isBooleanFieldChecked(node: HTMLDivElement | HTMLInputElement): boolean
 	{
 		if (node.nodeName === 'INPUT')
 		{
@@ -595,13 +759,16 @@ class TypeDetail
 		return Dom.hasClass(node, 'crm-type-field-button-item-active');
 	}
 
-	setBooleanFieldCheckedState(node: HTMLDivElement|HTMLInputElement, isChecked: boolean): void
+	setBooleanFieldCheckedState(node: HTMLDivElement | HTMLInputElement, isChecked: boolean): void
 	{
 		if (node.nodeName === 'INPUT')
 		{
+			// eslint-disable-next-line no-param-reassign
 			node.checked = isChecked;
+
 			return;
 		}
+
 		if (isChecked)
 		{
 			Dom.addClass(node, 'crm-type-field-button-item-active');
@@ -642,6 +809,8 @@ class TypeDetail
 			container: this.container.querySelector('[data-role="crm-type-custom-section-container"]'),
 			selectorContainer: this.container.querySelector('[data-role="crm-type-custom-section-selector"]'),
 			customSections: this.type.getCustomSections() || [],
+			isCreateSectionsViaAutomatedSolutionDetails: this.isCreateSectionsViaAutomatedSolutionDetails,
+			isCrmAdmin: this.isCrmAdmin,
 		});
 	}
 
@@ -663,23 +832,24 @@ class TypeDetail
 
 	static handleHideDescriptionClick(target: HTMLDivElement)
 	{
-		target.parentNode.style.display = 'none';
+		Dom.style(target.parentNode, 'display', 'none');
 	}
 
 	static handleBooleanFieldClick(fieldName: string)
 	{
-		if (instance)
-		{
-			instance.toggleBooleanField(fieldName);
-		}
+		instance?.toggleBooleanField(fieldName);
 	}
 
 	static handlePresetSelectorClick()
 	{
-		if (instance)
-		{
-			instance.enablePresetsView();
-		}
+		instance?.enablePresetsView();
+	}
+
+	static handleCancelButtonClick()
+	{
+		// if we just add click event handler to cancel button node, that handler will be called after slider close
+		// to capture click before that, we need to add handler directly to markup
+		instance?.#registerCancelEvent(Dictionary.ELEMENT_CANCEL_BUTTON);
 	}
 }
 
@@ -739,7 +909,7 @@ class RelationsController
 				}
 				else
 				{
-					unselectedTabs.push(item)
+					unselectedTabs.push(item);
 				}
 			}
 			else
@@ -761,7 +931,7 @@ class RelationsController
 			events: {
 				onAfterTagAdd: this.adjust.bind(this),
 				onAfterTagRemove: this.adjust.bind(this),
-			}
+			},
 		});
 		this.typeSelector.renderTo(this.typeSelectorContainer);
 
@@ -797,13 +967,13 @@ class RelationsController
 
 	adjust()
 	{
-		if (!this.switcher.isChecked())
+		if (this.switcher.isChecked())
 		{
-			Dom.addClass(this.container, 'crm-type-hidden');
+			Dom.removeClass(this.container, 'crm-type-hidden');
 		}
 		else
 		{
-			Dom.removeClass(this.container, 'crm-type-hidden');
+			Dom.addClass(this.container, 'crm-type-hidden');
 		}
 		const selectedTypes = this.typeSelector.getDialog().getSelectedItems();
 		if (selectedTypes.length > 0)
@@ -814,6 +984,7 @@ class RelationsController
 		{
 			Dom.addClass(this.tabsContainer, 'crm-type-hidden');
 		}
+
 		if (this.tabsCheckbox.checked)
 		{
 			Dom.removeClass(this.tabsSelectorContainer, 'crm-type-hidden');
@@ -830,7 +1001,7 @@ class RelationsController
 				this.tabsSelector.getDialog().removeItem(item);
 				this.tabsSelector.removeTag({
 					id: item.getId(),
-					entityId: item.getEntityId()
+					entityId: item.getEntityId(),
 				});
 			}
 		});
@@ -852,12 +1023,12 @@ class RelationsController
 
 	isItemSelected(item, selectedItems: Array): boolean
 	{
-		return selectedItems.filter((selectedItem) => {
+		return selectedItems.some((selectedItem) => {
 			return item.id === selectedItem.id;
-		}).length > 0;
+		});
 	}
 
-	getData()
+	getData(): Array
 	{
 		const data = [];
 		if (!this.switcher.isChecked())
@@ -897,12 +1068,16 @@ class CustomSectionsController
 	saveButton: Element;
 	cancelButton: Element;
 	addSectionItemButton: Element;
+	isCreateSectionsViaAutomatedSolutionDetails: false;
+	isCrmAdmin: false;
 
 	constructor(options: {
 		switcher: {},
 		container: Element,
 		selectorContainer: Element,
-		customSections?: CustomSection[]
+		customSections?: CustomSection[],
+		isCreateSectionsViaAutomatedSolutionDetails: boolean,
+		isCrmAdmin: boolean,
 	})
 	{
 		this.switcher = options.switcher;
@@ -917,11 +1092,23 @@ class CustomSectionsController
 			this.customSections = [];
 		}
 
+		if (Type.isBoolean(options.isCreateSectionsViaAutomatedSolutionDetails))
+		{
+			this.isCreateSectionsViaAutomatedSolutionDetails = options.isCreateSectionsViaAutomatedSolutionDetails;
+		}
+
+		if (Type.isBoolean(options.isCrmAdmin))
+		{
+			this.isCrmAdmin = options.isCrmAdmin;
+		}
+
 		this.initSelector();
 
-		this.settingsContainer = Tag.render`<div class="crm-type-hidden crm-type-custom-sections-settings-container">
-			<div class="crm-type-relation-subtitle">${Loc.getMessage('CRM_TYPE_DETAIL_CUSTOM_SECTION_LIST_MSGVER_1')}</div>
-		</div>`;
+		this.settingsContainer = Tag.render`
+			<div class="crm-type-hidden crm-type-custom-sections-settings-container">
+				<div class="crm-type-relation-subtitle">${Loc.getMessage('CRM_TYPE_DETAIL_CUSTOM_SECTION_LIST_MSGVER_1')}</div>
+			</div>
+		`;
 		this.container.append(this.settingsContainer);
 
 		this.adjustInitialState();
@@ -929,6 +1116,12 @@ class CustomSectionsController
 		this.bindEvents();
 
 		this.adjust();
+	}
+
+	destroy()
+	{
+		this.unbindEvents();
+		this.selector?.unsubscribeAll();
 	}
 
 	initSelector()
@@ -952,27 +1145,52 @@ class CustomSectionsController
 			}
 		});
 
-		this.selector = new TagSelector({
-			showCreateButton: true,
-			createButtonCaption: Loc.getMessage('CRM_COMMON_ACTION_CONFIG'),
+		const tagSelectorOptions = {
 			multiple: false,
 			dialogOptions: {
-				enableSearch: false,
-				multiple: false,
 				items,
 				selectedItems,
 				dropdownMode: true,
 				height: 200,
 				showAvatars: false,
-				recentTabOptions: {
-					stub: false,
-				}
 			},
-		});
+		};
 
-		this.selector.subscribe('onCreateButtonClick', this.onCreateButtonClick.bind(this));
+		if (this.isCreateSectionsViaAutomatedSolutionDetails)
+		{
+			tagSelectorOptions.showCreateButton = false;
+			tagSelectorOptions.dialogOptions.footer = Tag.render`
+				<a
+					onclick="${this.onOpenAutomatedSolutionCreationSliderClick.bind(this)}"
+					class="ui-selector-footer-link ui-selector-footer-link-add"
+				>${Loc.getMessage('CRM_COMMON_ACTION_CREATE')}</a>
+			`;
+		}
+		else
+		{
+			tagSelectorOptions.showCreateButton = true;
+			tagSelectorOptions.createButtonCaption = Loc.getMessage('CRM_COMMON_ACTION_CONFIG');
+			tagSelectorOptions.events = {
+				onCreateButtonClick: this.onCreateButtonClick.bind(this),
+			};
+		}
 
+		if (!this.isCrmAdmin)
+		{
+			tagSelectorOptions.locked = true;
+		}
+
+		this.selector = new TagSelector(tagSelectorOptions);
 		this.selector.renderTo(this.selectorContainer);
+	}
+
+	reInitSelector()
+	{
+		this.selector.getDialog().destroy();
+		this.selector.unsubscribeAll();
+		this.selector = null;
+		Dom.clean(this.selectorContainer);
+		this.initSelector();
 	}
 
 	showSelector()
@@ -996,7 +1214,69 @@ class CustomSectionsController
 
 	bindEvents()
 	{
-		EventEmitter.subscribe(this.switcher, 'toggled', this.adjust.bind(this));
+		this.adjust = this.adjust.bind(this);
+		this.onAutomatedSolutionUpdate = this.onAutomatedSolutionUpdate.bind(this);
+
+		EventEmitter.subscribe(this.switcher, 'toggled', this.adjust);
+		if (this.isCreateSectionsViaAutomatedSolutionDetails)
+		{
+			ToolbarComponent.Instance.subscribeAutomatedSolutionUpdatedEvent(
+				this.onAutomatedSolutionUpdate,
+			);
+		}
+	}
+
+	unbindEvents()
+	{
+		EventEmitter.unsubscribe(this.switcher, 'toggled', this.adjust);
+		ToolbarComponent.Instance.unsubscribeAutomatedSolutionUpdatedEvent(this.onAutomatedSolutionUpdate);
+	}
+
+	onAutomatedSolutionUpdate(event: BaseEvent): void
+	{
+		const id = Text.toInteger(event.getData().intranetCustomSectionId);
+		const title = String(event.getData().title);
+
+		if (id <= 0 || !Type.isStringFilled(title))
+		{
+			return;
+		}
+
+		const currentCustomSection = this.customSections.find(
+			(section) => Text.toInteger(section.id) === id,
+		);
+
+		if (currentCustomSection)
+		{
+			currentCustomSection.title = title;
+		}
+		else
+		{
+			this.customSections.push({
+				id,
+				title,
+			});
+		}
+
+		this.reInitSelector();
+
+		this.selectCustomSectionById(id);
+	}
+
+	selectCustomSectionById(id: number): void
+	{
+		const dialog = this.selector.getDialog();
+
+		dialog.deselectAll();
+		dialog.getItem({
+			entityId: 'custom-section',
+			id,
+		})?.select();
+	}
+
+	onOpenAutomatedSolutionCreationSliderClick(): void
+	{
+		void Router.Instance.openAutomatedSolutionDetail();
 	}
 
 	onCreateButtonClick()
@@ -1017,11 +1297,16 @@ class CustomSectionsController
 
 		if (!this.addSectionItemButton)
 		{
-			this.addSectionItemButton = Tag.render`<div class="crm-type-custom-section-add-item-container">
-				<span class="crm-type-custom-section-add-item-button" onclick="${() => {
-				this.sectionsListContainer.append(this.renderSectionItem());
-			}}">${Loc.getMessage('CRM_COMMON_ACTION_CREATE')}</span>
-			</div>`;
+			this.addSectionItemButton = Tag.render`
+				<div class="crm-type-custom-section-add-item-container">
+					<span
+						class="crm-type-custom-section-add-item-button"
+						onclick="${() => this.sectionsListContainer.append(this.renderSectionItem())}"
+					>
+						${Loc.getMessage('CRM_COMMON_ACTION_CREATE')}
+					</span>
+				</div>
+			`;
 			this.settingsContainer.append(this.addSectionItemButton);
 		}
 
@@ -1031,14 +1316,16 @@ class CustomSectionsController
 			this.buttonsContainer = Tag.render`<div class="crm-type-custom-sections-buttons-container"></div>`;
 			this.settingsContainer.append(this.buttonsContainer);
 		}
+
 		if (!this.saveButton)
 		{
-			this.saveButton = Tag.render`<span class="ui-btn ui-btn-primary" onclick="${this.onSaveConfigHandler.bind(this)}">${Loc.getMessage('CRM_COMMON_ACTION_SAVE')}</span>`
+			this.saveButton = Tag.render`<span class="ui-btn ui-btn-primary" onclick="${this.onSaveConfigHandler.bind(this)}">${Loc.getMessage('CRM_COMMON_ACTION_SAVE')}</span>`;
 			this.buttonsContainer.append(this.saveButton);
 		}
+
 		if (!this.cancelButton)
 		{
-			this.cancelButton = Tag.render`<span class="ui-btn ui-btn-light-border" onclick="${this.onCancelConfigHandler.bind(this)}">${Loc.getMessage('CRM_COMMON_ACTION_CANCEL')}</span>`
+			this.cancelButton = Tag.render`<span class="ui-btn ui-btn-light-border" onclick="${this.onCancelConfigHandler.bind(this)}">${Loc.getMessage('CRM_COMMON_ACTION_CANCEL')}</span>`;
 			this.buttonsContainer.append(this.cancelButton);
 		}
 	}
@@ -1049,7 +1336,7 @@ class CustomSectionsController
 
 		const selectedSection = this.getSelectedSection();
 		const newCustomSections = [];
-		Array.from(this.sectionsListContainer.children).forEach((node) => {
+		[...this.sectionsListContainer.children].forEach((node) => {
 			const idInput = node.querySelector('[name="id"]');
 			const valueInput = node.querySelector('[name="value"]');
 			if (!idInput || !valueInput)
@@ -1063,20 +1350,20 @@ class CustomSectionsController
 			{
 				isSelected = true;
 			}
+
 			if (title)
 			{
 				newCustomSections.push({
 					id,
 					title,
-					isSelected
+					isSelected,
 				});
 			}
 		});
 
 		this.customSections = newCustomSections;
 
-		Dom.clean(this.selectorContainer);
-		this.initSelector();
+		this.reInitSelector();
 		this.showSelector();
 
 		this.hideSectionsList();
@@ -1102,14 +1389,19 @@ class CustomSectionsController
 	renderSectionItem(section: ?CustomSection): HTMLDivElement
 	{
 		const item = new CustomSectionItem(section);
-		const node = Tag.render`<div style="margin-bottom: 10px;" class="ui-ctl ui-ctl-textbox ui-ctl-w100 ui-ctl-row">
-			<input type="hidden" name="id" value="${item.getId()}" />
-			<input class="ui-ctl-element" name="value" type="text" value="${Text.encode(item.getValue())}">
-			<div class="crm-type-custom-section-remove-item" onclick="${(event) => {
-				event.preventDefault();
-				this.sectionsListContainer.removeChild(item.getNode());
-			}}"></div>
-		</div>`;
+		const node = Tag.render`
+			<div style="margin-bottom: 10px;" class="ui-ctl ui-ctl-textbox ui-ctl-w100 ui-ctl-row">
+				<input type="hidden" name="id" value="${item.getId()}" />
+				<input class="ui-ctl-element" name="value" type="text" value="${Text.encode(item.getValue())}">
+				<div
+					class="crm-type-custom-section-remove-item"
+					onclick="${(event) => {
+						event.preventDefault();
+						this.sectionsListContainer.removeChild(item.getNode());
+					}}">
+				</div>
+			</div>
+		`;
 
 		item.setNode(node);
 
@@ -1130,13 +1422,13 @@ class CustomSectionsController
 
 	adjust()
 	{
-		if (!this.switcher.isChecked())
+		if (this.switcher.isChecked())
 		{
-			Dom.addClass(this.container, 'crm-type-hidden');
+			Dom.removeClass(this.container, 'crm-type-hidden');
 		}
 		else
 		{
-			Dom.removeClass(this.container, 'crm-type-hidden');
+			Dom.addClass(this.container, 'crm-type-hidden');
 		}
 	}
 
@@ -1156,8 +1448,11 @@ class CustomSectionsController
 
 	getData()
 	{
-		let data = {};
-		data.customSectionId = 0;
+		const data = {
+			customSectionId: 0,
+			customSections: this.customSections,
+		};
+
 		if (this.switcher.isChecked())
 		{
 			const selectedSection = this.getSelectedSection();
@@ -1167,8 +1462,6 @@ class CustomSectionsController
 			}
 		}
 
-		data.customSecions = this.customSections;
-
 		return data;
 	}
 }
@@ -1177,7 +1470,7 @@ class CustomSectionItem
 {
 	constructor(customSection: CustomSection = null)
 	{
-		this.id = customSection ? customSection.id : 'new_' + Text.getRandom();
+		this.id = customSection ? customSection.id : `new_${Text.getRandom()}`;
 		this.value = customSection ? customSection.title : '';
 	}
 
@@ -1199,21 +1492,23 @@ class CustomSectionItem
 	getInput(): ?Element
 	{
 		const node = this.getNode();
-		if(!node)
+		if (!node)
 		{
 			return null;
 		}
-		if(node instanceof HTMLInputElement)
+
+		if (node instanceof HTMLInputElement)
 		{
 			return node;
 		}
+
 		return node.querySelector('input');
 	}
 
 	getValue(): string
 	{
 		const input = this.getInput();
-		if(input && input.value)
+		if (input && input.value)
 		{
 			return input.value;
 		}

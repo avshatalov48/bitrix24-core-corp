@@ -29,6 +29,11 @@ class Contact extends EO_Contact implements UserFieldFilterable
 		return $this->filteredUserFields;
 	}
 
+	public function getHeading(): string
+	{
+		return $this->getFormattedName();
+	}
+
 	public function getFormattedName(): string
 	{
 		return CCrmContact::PrepareFormattedName([

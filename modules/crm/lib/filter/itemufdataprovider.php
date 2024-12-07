@@ -2,59 +2,33 @@
 
 namespace Bitrix\Crm\Filter;
 
-use Bitrix\Crm\UI\Filter\EntityHandler;
+use Bitrix\Crm\Component\EntityList\UserField\GridHeaders;
+use Bitrix\Main\Application;
+use Bitrix\Main\Filter\EntitySettings;
 
 class ItemUfDataProvider extends UserFieldDataProvider
 {
+	private \CCrmUserType $userType;
+
+	public function __construct(EntitySettings $settings)
+	{
+		parent::__construct($settings);
+
+		$this->userType = new \CCrmUserType(Application::getUserTypeManager(), $this->getUserFieldEntityID());
+	}
+
 	public function getGridColumns(): array
 	{
 		$result = [];
 
-		$userFields = $this->getUserFields();
+		$headers =
+			(new GridHeaders($this->userType))
+				->setWithEnumFieldValues(false)
+				->setWithHtmlSpecialchars(false)
+		;
 
-		foreach($userFields as $userField)
-		{
-			$result[] = $this->getGridColumn($userField);
-		}
-
-		return $result;
-	}
-
-	protected function getGridColumn(array $userField): array
-	{
-		$fieldName = $userField['FIELD_NAME'];
-		$isMultiple = $userField['MULTIPLE'] === 'Y';
-
-		$result = [
-			'id' => $fieldName,
-			'name' => $this->getFieldName($userField),
-			'default' => ($userField['SHOW_FILTER'] !== 'N'),
-			'sort' => $isMultiple ? false : $fieldName,
-		];
+		$headers->append($result);
 
 		return $result;
-	}
-
-	protected function getFieldName(array $userField): string
-	{
-		$fieldLabel = '';
-		if(isset($userField['LIST_FILTER_LABEL']))
-		{
-			$fieldLabel = $userField['LIST_FILTER_LABEL'];
-		}
-		if(empty($fieldLabel) && isset($userField['LIST_COLUMN_LABEL']))
-		{
-			$fieldLabel = $userField['LIST_COLUMN_LABEL'];
-		}
-		if(empty($fieldLabel) && isset($userField['EDIT_FORM_LABEL']))
-		{
-			$fieldLabel = $userField['EDIT_FORM_LABEL'];
-		}
-		if(empty($fieldLabel))
-		{
-			return $userField['FIELD_NAME'];
-		}
-
-		return $fieldLabel;
 	}
 }

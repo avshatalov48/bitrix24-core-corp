@@ -90,7 +90,7 @@ abstract class Mail extends \Bitrix\Tasks\Integration
 		}
 
 		return preg_replace_callback(
-			"/\[ATTACHMENT\s*=\s*([^\]]*)\]/is".BX_UTF_PCRE_MODIFIER,
+			"/\[ATTACHMENT\s*=\s*([^\]]*)\]/isu",
 			function ($matches) use ($attachmentRelations)
 			{
 				if (isset($attachmentRelations[$matches[1]]))

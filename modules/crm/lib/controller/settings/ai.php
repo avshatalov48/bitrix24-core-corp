@@ -6,8 +6,6 @@ use Bitrix\Crm\Controller\Base;
 use Bitrix\Crm\Controller\ErrorCode;
 use Bitrix\Crm\Integration\AI\AIManager;
 use Bitrix\Crm\Integration\AI\Operation\AutostartSettings;
-use Bitrix\Crm\Service\Container;
-use Bitrix\Crm\Service\UserPermissions;
 use Bitrix\Main\Engine\ActionFilter\ContentType;
 use Bitrix\Main\Engine\ActionFilter\Scope;
 use Bitrix\Main\Error;
@@ -16,15 +14,6 @@ use Bitrix\Main\EventResult;
 
 class AI extends Base
 {
-	private UserPermissions $permissions;
-
-	protected function init(): void
-	{
-		parent::init();
-
-		$this->permissions = Container::getInstance()->getUserPermissions();
-	}
-
 	protected function getDefaultPreFilters(): array
 	{
 		$filters = parent::getDefaultPreFilters();
@@ -51,7 +40,7 @@ class AI extends Base
 
 	public function getAutostartSettingsAction(int $entityTypeId, ?int $categoryId = null): ?array
 	{
-		if (!$this->permissions->canReadConfig())
+		if (!AutostartSettings::checkReadPermissions($entityTypeId, $categoryId))
 		{
 			$this->addError(ErrorCode::getAccessDeniedError());
 
@@ -65,7 +54,7 @@ class AI extends Base
 
 	public function saveAutostartSettingsAction(array $settings, int $entityTypeId, ?int $categoryId = null): ?array
 	{
-		if (!$this->permissions->canWriteConfig())
+		if (!AutostartSettings::checkSavePermissions($entityTypeId, $categoryId))
 		{
 			$this->addError(ErrorCode::getAccessDeniedError());
 
@@ -84,6 +73,7 @@ class AI extends Base
 		if (!$result->isSuccess())
 		{
 			$this->addErrors($result->getErrors());
+
 			return null;
 		}
 

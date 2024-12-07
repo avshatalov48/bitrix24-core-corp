@@ -49,7 +49,7 @@ $cur_date_m = date('n'); $cur_date_y = date('Y');
 						<a href="javascript:void(0)" onclick="this.blur();window.BXTMREPORT.changeMonth(-1)" class="filter-date-link filter-date-link-left"></a>
 						<span class="fiter-date-text" id="tm_datefilter_title" onclick="BX.calendar({node: this, field: 'bx_goto_date', bTime: false, callback: jsCalendarInsertDate});"><?=GetMessage('TMR_MONTH_'.$cur_date_m)?> <?=$cur_date_y?></span>
 						<input type="hidden" name="bx_goto_date" id="bx_goto_date" value="<?=ConvertTimeStamp()?>" />
-<script type="text/javascript">
+<script>
 function jsCalendarInsertDate(value)
 {
 	if (BX.type.isDate(value))
@@ -91,7 +91,7 @@ if (count($arResult['arAccessUsers']['READ']) > 1 || $arResult['arAccessUsers'][
 	function __tmr_replace($str)
 	{
 		$str = preg_replace(
-			'/<option([^>]*)>'.GetMessage('MAIN_NO').'<\/option>/i'.BX_UTF_PCRE_MODIFIER,
+			'/<option([^>]*)>'.GetMessage('MAIN_NO').'<\/option>/iu',
 			'<option\\1>'.GetMessage('TMR_FILTER_DEPT_0').'</option>',
 			$str
 		);
@@ -130,7 +130,7 @@ endif;
 		</form>
 	</div>
 </div>
-<script type="text/javascript">window.BXTMREPORT = new JCTimeManReport('bx_tm_report', {
+<script>window.BXTMREPORT = new JCTimeManReport('bx_tm_report', {
 	DEPARTMENTS: 'tm_report_conrol_departments',
 	FILTER: 'REPORT_FILTER',
 	DATESELECTOR: 'bx_tm_report_dateselector',

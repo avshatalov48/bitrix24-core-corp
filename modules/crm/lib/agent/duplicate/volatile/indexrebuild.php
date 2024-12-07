@@ -181,7 +181,7 @@ class IndexRebuild extends Base
 		DuplicateIndexTypeSettingsTable::setProgressData($this->getVolatileTypeId(), []);
 	}
 
-	protected function getMessage($messageId): ?string
+	protected function getMessage(string $messageId, ?string $languageId = null): ?string
 	{
 		static $isMessagesLoaded = false;
 
@@ -191,11 +191,11 @@ class IndexRebuild extends Base
 			$isMessagesLoaded = true;
 		}
 
-		$message = Loc::getMessage($messageId);
+		$message = Loc::getMessage($messageId, null, $languageId);
 
 		if ($message === null)
 		{
-			return parent::getMessage($messageId);
+			return parent::getMessage($messageId, $languageId);
 		}
 
 		return $message;
@@ -231,7 +231,7 @@ class IndexRebuild extends Base
 		return 'CRM_AGNT_DUP_VOLATILE_IDX_NOTIFY';
 	}
 
-	protected function getNotifyMessage(int $percentage): string
+	protected function getNotifyMessage(int $percentage): string|callable
 	{
 		$message = '';
 
@@ -239,10 +239,17 @@ class IndexRebuild extends Base
 		{
 			$percentageString = sprintf('%03d', $percentage);
 			$messagePrefix = $this->getNotifyMessagePrefix();
-			$message = $this->getMessage("{$messagePrefix}_$percentageString");
+			$message = $this->getMessageCallback("{$messagePrefix}_$percentageString");
 		}
 
 		return $message;
+	}
+
+	protected function getMessageCallback(string $code): callable
+	{
+		return fn (?string $languageId = null) =>
+			$this->getMessage($code, $languageId)
+		;
 	}
 
 	protected function isNeedHalfNotification(array $progressData): bool

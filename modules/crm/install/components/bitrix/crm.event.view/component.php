@@ -452,7 +452,7 @@ $arFilter += $filterOptions->getFilter($arResult['FILTER']);
 foreach ($arFilter as $k => $v)
 {
 	$arMatch = array();
-	if (preg_match('/(.*)_from$/i'.BX_UTF_PCRE_MODIFIER, $k, $arMatch))
+	if (preg_match('/(.*)_from$/iu', $k, $arMatch))
 	{
 		if($v !== '')
 		{
@@ -460,11 +460,11 @@ foreach ($arFilter as $k => $v)
 		}
 		unset($arFilter[$k]);
 	}
-	else if (preg_match('/(.*)_to$/i'.BX_UTF_PCRE_MODIFIER, $k, $arMatch))
+	else if (preg_match('/(.*)_to$/iu', $k, $arMatch))
 	{
 		if($v !== '')
 		{
-			if($arMatch[1] == 'DATE_CREATE' && !preg_match('/\d{1,2}:\d{1,2}(:\d{1,2})?$/'.BX_UTF_PCRE_MODIFIER, $v))
+			if($arMatch[1] == 'DATE_CREATE' && !preg_match('/\d{1,2}:\d{1,2}(:\d{1,2})?$/u', $v))
 			{
 				$v = CCrmDateTimeHelper::SetMaxDayTime($v);
 			}

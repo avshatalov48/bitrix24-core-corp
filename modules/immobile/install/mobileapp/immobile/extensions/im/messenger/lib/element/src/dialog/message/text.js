@@ -2,6 +2,7 @@
  * @module im/messenger/lib/element/dialog/message/text
  */
 jn.define('im/messenger/lib/element/dialog/message/text', (require, exports, module) => {
+	const { MessageType } = require('im/messenger/const');
 	const { Message } = require('im/messenger/lib/element/dialog/message/base');
 
 	/**
@@ -17,14 +18,13 @@ jn.define('im/messenger/lib/element/dialog/message/text', (require, exports, mod
 		{
 			super(modelMessage, options);
 
-			// this.setMessage(modelMessage.text + `\n\n ID: [b]${modelMessage.id}[/b]`);
-			this.setMessage(modelMessage.text);
+			this.setMessage(modelMessage.text, { dialogId: options.dialogId });
 			this.setShowTail(true);
 		}
 
 		getType()
 		{
-			return 'text';
+			return MessageType.text;
 		}
 	}
 

@@ -50,7 +50,10 @@ class CBPCrmGetProductRowActivity extends CBPActivity
 		}
 
 		$rowId = (int)$rowId;
-		$this->writeDebugInfo($this->getDebugInfo(['RowId' => $rowId]));
+		if ($this->workflow->isDebug())
+		{
+			$this->writeDebugInfo($this->getDebugInfo(['RowId' => $rowId]));
+		}
 
 		$product = Crm\Automation\Connectors\Product::fetchFromTableByFilter(['ID' => $rowId]);
 

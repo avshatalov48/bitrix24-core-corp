@@ -16,7 +16,7 @@ $this->SetViewTarget("sidebar", 10);
 
 ?>
 
-<script type="text/javascript">
+<script>
 
 BX.INTRANET_USTAT_LAST_PARAMETERS = null;
 
@@ -333,7 +333,7 @@ BX.ready(function() {
 	</div>
 </div>
 
-<script type="text/javascript">
+<script>
 
 var pulse_loading = {
 

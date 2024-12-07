@@ -15,10 +15,10 @@ $types = $arResult['AUX_DATA']['FIELD_TYPE'];
 // $arResult['JS_DATA'] will appear in js controller as options,
 // so be careful, do not publicise smth insecure
 $arResult['JS_DATA']['typesToCreate'] = array(
-	'string' => $types['string']['DESCRIPTION'],
-	'double' => $types['double']['DESCRIPTION'],
-	'datetime' => $types['datetime']['DESCRIPTION'],
-	'boolean' => $types['boolean']['DESCRIPTION'],
+	'string' => $types['string']['DESCRIPTION'] ?? null,
+	'double' => $types['double']['DESCRIPTION'] ?? null,
+	'datetime' => $types['datetime']['DESCRIPTION'] ?? null,
+	'boolean' => $types['boolean']['DESCRIPTION'] ?? null,
 );
 $publicScheme = array();
 $id2code = array();

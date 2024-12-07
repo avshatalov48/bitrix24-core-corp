@@ -77,18 +77,15 @@ if ($_REQUEST['MODE'] == 'EMPLOYEES')
 
 	if ($SECTION_ID != 'last' && $SECTION_ID != "extranet")
 	{
-		$dbRes = CIBlockSection::GetList(
-			array('ID' => 'ASC'),
-			array('ID' => $SECTION_ID, 'IBLOCK_ID' => COption::GetOptionInt('intranet', 'iblock_structure')),
-			false,
-			array('UF_HEAD')
-		);
-		if (($arSection = $dbRes->Fetch()) && $arSection['UF_HEAD'] > 0)
+		$userHead = \Bitrix\Intranet\Service\ServiceContainer::getInstance()->departmentRepository()
+			->getDepartmentHead($SECTION_ID);
+
+		if ($userHead instanceof \Bitrix\Intranet\User)
 		{
 			$dbUsers = CUser::GetList(
 				'last_name', 'asc',
 				array(
-					'ID' => $arSection['UF_HEAD'],
+					'ID' => $userHead->getId(),
 					'ACTIVE' => 'Y'
 				),
 				array('SELECT' => array('UF_*'))
@@ -181,7 +178,6 @@ window.arLastSelected = <?echo CUtil::PhpToJsObject($arLastSelected)?>;
 }
 elseif ($_REQUEST['MODE'] == 'SEARCH')
 {
-	CUtil::JSPostUnescape();
 	$APPLICATION->RestartBuffer();
 
 	$search = $_REQUEST['search'];
@@ -711,42 +707,53 @@ BXLoadEmployees('last', true);
 	{
 		foreach ($arStructure[$key] as $ID)
 		{
+			/** @var \Bitrix\Intranet\Entity\Department|array $arRes */
 			$arRes = $arSections[$ID];
+			$depth = $arRes instanceof \Bitrix\Intranet\Entity\Department ? $arRes->getDepth() : null;
+			$name = $arRes instanceof \Bitrix\Intranet\Entity\Department ? $arRes->getName() : $arRes['NAME'];
 
-			echo '<div class="bx-employee-section'.($key == 0 ? '-first' : '').'" style="padding-left: '.(($arRes['DEPTH_LEVEL']-1)*15).'px" onclick="BXLoadEmployees(\''.$ID.'\')" id="bx_employee_section_'.$ID.'">';
-			echo '<div class="bx-employee-section-name bx-emp-closed">'.htmlspecialcharsbx($arRes['NAME']).'</div>';
+			echo '<div class="bx-employee-section'.($key == 0 ? '-first' : '').'" style="padding-left: '.(($depth-1)*15).'px" onclick="BXLoadEmployees(\''.$ID.'\')" id="bx_employee_section_'.$ID.'">';
+			echo '<div class="bx-employee-section-name bx-emp-closed">'.htmlspecialcharsbx($name).'</div>';
 			echo '</div>';
 
-			echo '<div style="display: none" id="bx_children_'.$arRes['ID'].'">';
+			echo '<div style="display: none" id="bx_children_'.$ID.'">';
 			if (is_array($arStructure[$ID]))
 			{
 				EmployeeDrawStructure($arStructure, $arSections, $ID);
 			}
-			echo '<div class="bx-employees-list" id="bx_employees_'.$ID.'" style="margin-left: '.($arRes['DEPTH_LEVEL']*15).'px"><i>'.GetMessage('INTR_EMP_WAIT').'</i></div>';
+			echo '<div class="bx-employees-list" id="bx_employees_'.$ID.'" style="margin-left: '.($depth*15).'px"><i>'.GetMessage('INTR_EMP_WAIT').'</i></div>';
 			echo '</div>';
 
 		}
 	}
+	$treeOfDepartments = \Bitrix\Intranet\Service\ServiceContainer::getInstance()
+		->departmentRepository()
+		->getAllTree();
+	$arStructure = [0 => []];
+	$arSections = [];
 
-	$dbRes = CIBlockSection::GetTreeList(array('IBLOCK_ID' => COption::GetOptionInt('intranet', 'iblock_structure')));
-	$arStructure = array(0 => array());
-	$arSections = array();
-	while ($arRes = $dbRes->Fetch())
+	foreach ($treeOfDepartments as $department)
 	{
-		if (!$arRes['IBLOCK_SECTION_ID'])
-			$arStructure[0][] = $arRes['ID'];
-		elseif (!is_array($arStructure[$arRes['IBLOCK_SECTION_ID']]))
-			$arStructure[$arRes['IBLOCK_SECTION_ID']] = array($arRes['ID']);
+		if (!$department->getParentId())
+		{
+			$arStructure[0][] = $department->getId();
+		}
+		elseif (!is_array($arStructure[$department->getParentId()]))
+		{
+			$arStructure[$department->getParentId()] = [$department->getId()];
+		}
 		else
-			$arStructure[$arRes['IBLOCK_SECTION_ID']][] = $arRes['ID'];
+		{
+			$arStructure[$department->getParentId()][] = $department->getId();
+		}
 
-		$arSections[$arRes['ID']] = $arRes;
+		$arSections[$department->getId()] = $department;
 	}
 
 	if ($bExtranet)
 	{
 		$arStructure[0][] = "extranet";
-		$arSections["extranet"] = Array("ID" => "extranet", "NAME" => GetMessage("INTR_EMP_EXTRANET"));
+		$arSections["extranet"] = ["ID" => "extranet", "NAME" => GetMessage("INTR_EMP_EXTRANET")];
 	}
 
 	EmployeeDrawStructure($arStructure, $arSections, 0);
@@ -772,8 +779,12 @@ BXLoadEmployees('last', true);
 ?>
 section_id = '<?echo $opened_section?>';
 BXLoadEmployees(section_id, true);
-<?
-				$opened_section = $arSections[$opened_section]['IBLOCK_SECTION_ID'];
+<?php
+				$opened_section = null;
+				if ($arSections[$opened_section] instanceof \Bitrix\Intranet\Entity\Department)
+				{
+					$opened_section = $arSections[$opened_section]->getParentId();
+				}
 			}
 		}
 ?>

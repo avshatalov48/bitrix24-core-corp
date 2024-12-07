@@ -3,18 +3,18 @@
  */
 jn.define('ui-system/blocks/chip', (require, exports, module) => {
 	const { PropTypes } = require('utils/validation');
-	const { Indent, IndentTypes, Color, Corner } = require('tokens');
+	const { Indent, Color, Corner, Component } = require('tokens');
 	const { merge } = require('utils/object');
 	const { last } = require('utils/array');
 
-	const getIndent = (indent) => Indent[indent.toUpperCase()] || IndentTypes.M;
+	const getIndent = (indent) => Indent.resolve(indent).toNumber();
 
 	/**
 	 * @function Chip
 	 * @params {object} props
 	 * @params {boolean} [props.rounded]
 	 * @params {boolean} [props.disabled]
-	 * @params {string} [props.indent]
+	 * @params {Indent} [props.indent]
 	 * @params {number} [props.height]
 	 * @params {string} [props.borderColor]
 	 * @params {string} [props.children]
@@ -24,7 +24,7 @@ jn.define('ui-system/blocks/chip', (require, exports, module) => {
 		const {
 			rounded = false,
 			disabled = false,
-			indent = IndentTypes.M,
+			indent = Indent.M,
 			height = 30,
 			borderColor,
 			backgroundColor,
@@ -38,12 +38,14 @@ jn.define('ui-system/blocks/chip', (require, exports, module) => {
 			flexDirection: 'row',
 			borderWidth: 1,
 			height,
-			borderColor: disabled ? Color.bgSeparatorPrimary : borderColor || Color.base4,
-			borderRadius: rounded ? Corner.circle : Corner.M,
-			backgroundColor,
+			borderColor: disabled
+				? Color.bgSeparatorPrimary.toHex()
+				: Color.resolve(borderColor, Color.base4).toHex(),
+			borderRadius: rounded ? Component.elementAccentCorner.toNumber() : Corner.M.toNumber(),
+			backgroundColor: backgroundColor && Color.resolve(backgroundColor),
 		};
 
-		if (typeof indent === 'object')
+		if (indent && indent.left && indent.right)
 		{
 			chipStyle.paddingLeft = getIndent(indent.left);
 			chipStyle.paddingRight = getIndent(indent.right);
@@ -52,7 +54,7 @@ jn.define('ui-system/blocks/chip', (require, exports, module) => {
 		else if (!indent && children.length > 1 && last(children)?.name === 'Image')
 		{
 			chipStyle.paddingLeft = getIndent(indent);
-			chipStyle.paddingRight = getIndent(IndentTypes.XS);
+			chipStyle.paddingRight = getIndent(Indent.XS);
 		}
 		else
 		{
@@ -85,7 +87,7 @@ jn.define('ui-system/blocks/chip', (require, exports, module) => {
 
 	Chip.defaultProps = {
 		rounded: false,
-		indent: IndentTypes.M,
+		indent: Indent.M,
 		height: 30,
 		disabled: false,
 		backgroundColor: null,

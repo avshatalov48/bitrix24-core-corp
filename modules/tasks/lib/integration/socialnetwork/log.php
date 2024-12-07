@@ -6,6 +6,7 @@
 
 namespace Bitrix\Tasks\Integration\SocialNetwork;
 
+use Bitrix\Main\Application;
 use Bitrix\Main\Event;
 use Bitrix\Main\EventResult;
 use Bitrix\Socialnetwork\LogRightTable;
@@ -225,13 +226,20 @@ class Log extends SocialNetwork
 		// drop all rights
 		\CSocNetLogRights::DeleteByLogID($log['ID']);
 
+		$connection = Application::getConnection();
+
 		foreach ($rights as $row)
 		{
-			LogRightTable::add([
-				'LOG_ID' => $log['ID'],
-				'GROUP_CODE' => $row,
-				'LOG_UPDATE' => new \Bitrix\Main\DB\SqlExpression(\Bitrix\Main\Application::getInstance()->getConnection()->getSqlHelper()->getCurrentDateTimeFunction())
-			]);
+			$logId = (int) $log['ID'];
+			$logUpdate = $connection->getSqlHelper()->getCurrentDateTimeFunction();
+
+			$sql = $connection->getSqlHelper()->getInsertIgnore(
+				LogRightTable::getTableName(),
+				' (LOG_ID, GROUP_CODE, LOG_UPDATE)',
+				" VALUES ({$logId}, '{$row}', $logUpdate)"
+			);
+
+			$connection->query($sql);
 		}
 
 	}

@@ -1,0 +1,23 @@
+<?php
+$MESS["CALLMOBILE_MESSAGE_HAS_ACTIVE_CALL_HINT"] = "You are now on a different call. Disconnect from that call to start a new one.";
+$MESS["MOBILE_CALL_ALREADY_FINISHED"] = "Call has already been ended";
+$MESS["MOBILE_CALL_ALREADY_JOINED"] = "You cannot connect to the call from multiple devices";
+$MESS["MOBILE_CALL_APP_REQUIRED"] = "Application is required";
+$MESS["MOBILE_CALL_ERROR"] = "Error";
+$MESS["MOBILE_CALL_INTERNAL_ERROR"] = "Internal application error. Error code: #ERROR_CODE#";
+$MESS["MOBILE_CALL_JOIN_GROUP_CALL"] = "Connect to group call";
+$MESS["MOBILE_CALL_MICROPHONE_ACCESS_DENIED"] = "Access denied";
+$MESS["MOBILE_CALL_MICROPHONE_CAMERA_REQUIRED"] = "Access to your microphone and camera is required to make the video call. Would you like to open the Settings to allow the application to use your devices?";
+$MESS["MOBILE_CALL_MICROPHONE_CANCEL"] = "Cancel";
+$MESS["MOBILE_CALL_MICROPHONE_CAN_NOT_ACCESS_CAMERA"] = "You have to allow the application to access your camera to use it";
+$MESS["MOBILE_CALL_MICROPHONE_REQUIRED"] = "Access to your microphone is required to make the call. Would you like to open the Settings to allow the application to use your microphone?";
+$MESS["MOBILE_CALL_MICROPHONE_SETTINGS"] = "Open Settings";
+$MESS["MOBILE_CALL_NO_CAMERA_WITH_LEGACY_APP"] = "Cannot enable or disable the camera because your contact's application is out of date and cannot toggle the camera during the call.";
+$MESS["MOBILE_CALL_NO_MICROPHONE_ACCESS"] = "Cannot access the microphone";
+$MESS["MOBILE_CALL_NO_MICROPHONE_CAMERA_ACCESS"] = "Cannot access the microphone and camera";
+$MESS["MOBILE_CALL_OPEN_APP_STORE"] = "Open App Store";
+$MESS["MOBILE_CALL_OPEN_CHAT"] = "Open chat";
+$MESS["MOBILE_CALL_OPEN_PLAY_MARKET"] = "Open Play Market";
+$MESS["MOBILE_CALL_UNSUPPORTED_VERSION"] = "Your application is out of date. Please update to make calls.";
+$MESS["MOBILE_CALL_WITHOUT_VIDEO"] = "Without video";
+$MESS["MOBILE_CALL_WITH_VIDEO"] = "With video";

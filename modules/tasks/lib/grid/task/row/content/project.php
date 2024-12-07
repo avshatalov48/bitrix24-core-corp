@@ -5,6 +5,8 @@ use Bitrix\Main;
 use Bitrix\Main\Web\Json;
 use Bitrix\Main\Web\Uri;
 use Bitrix\Tasks\Grid\Task\Row\Content;
+use Bitrix\Tasks\Integration\Bitrix24;
+use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\ProjectLimit;
 
 /**
  * Class Project
@@ -25,6 +27,15 @@ class Project extends Content
 		$groupId = (int)$row['GROUP_ID'];
 		if (!$groupId)
 		{
+			if (!ProjectLimit::isFeatureEnabledOrTrial())
+			{
+				return (
+					$row['ACTION']['EDIT']
+					? "<div style='cursor: pointer;' class='tasks-list-tariff-lock-container' onclick='BX.UI.InfoHelper.show(`limit_tasks_projects`)'><span class='task-list-tariff-lock'></span></div>"
+					: "<span></span>"
+				);
+			}
+
 			return (
 				$row['ACTION']['EDIT']
 					? "<div class='tasks-list-project-container'><span class='tasks-list-project-add' onclick='BX.PreventDefault(); BX.Tasks.GridActions.onProjectAddClick({$row['ID']}, this)'></span></div>"

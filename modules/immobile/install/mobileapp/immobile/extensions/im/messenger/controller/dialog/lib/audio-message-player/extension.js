@@ -43,6 +43,30 @@ jn.define('im/messenger/controller/dialog/lib/audio-player', (require, exports, 
 			this.setMessageIsPlaying(true, playingTime);
 		}
 
+		/**
+		 * @return {Promise}
+		 */
+		changeRate()
+		{
+			const applicationSettingState = this.store.getters['applicationModel/getSettings']();
+			const currentAudioRate = applicationSettingState ? applicationSettingState.audioRate : 1;
+
+			/** @type {AudioRate} */
+			let newRate = currentAudioRate;
+			switch (currentAudioRate)
+			{
+				case 1: newRate = 1.5;
+					break;
+				case 1.5: newRate = 2;
+					break;
+				case 2: newRate = 1;
+					break;
+				default: newRate = 1;
+			}
+
+			return this.setApplicationAudioRate(newRate);
+		}
+
 		playNext()
 		{
 			const previousMessageId = this.playingMessageId;
@@ -90,6 +114,17 @@ jn.define('im/messenger/controller/dialog/lib/audio-player', (require, exports, 
 				audioPlaying: isPlaying,
 				playingTime,
 			});
+		}
+
+		/**
+		 * @param {AudioRate} rate
+		 * @return {Promise}
+		 * @private
+		 */
+		setApplicationAudioRate(rate)
+		{
+			return this.store.dispatch('applicationModel/setAudioRateSetting', rate)
+				.catch((error) => Logger.error('setApplicationAudioRate.applicationModel/setAudioRateSetting.catch:', error));
 		}
 
 		/**

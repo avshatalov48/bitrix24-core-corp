@@ -9,6 +9,8 @@ export type StageModelData = {
 	color: ?string,
 	semantics: ?string,
     categoryId: ?number,
+	stagesToMove: ?Array<string>,
+	allowMoveToAnyStage: ?boolean,
 };
 
 /**
@@ -17,25 +19,25 @@ export type StageModelData = {
  */
 export class StageModel extends Model
 {
-    constructor(data: StageModelData, params: ?{})
-    {
-        super(data, params);
-    }
+	constructor(data: StageModelData, params: ?{})
+	{
+		super(data, params);
+	}
 
-    getModelName(): string
-    {
-        return 'stage';
-    }
+	getModelName(): string
+	{
+		return 'stage';
+	}
 
-    getName(): ?string
-    {
-        return this.data.name;
-    }
+	getName(): ?string
+	{
+		return this.data.name;
+	}
 
-    setName(name: string)
-    {
-        this.data.name = name;
-    }
+	setName(name: string)
+	{
+		this.data.name = name;
+	}
 
 	getEntityId(): string
 	{
@@ -75,6 +77,16 @@ export class StageModel extends Model
 	getCategoryId(): ?number
 	{
 		return this.data.categoryId;
+	}
+
+	getStagesToMove(): Array<string>
+	{
+		return this.data.stagesToMove;
+	}
+
+	isAllowedMoveToAnyStage(): boolean
+	{
+		return this.data.allowMoveToAnyStage ?? false;
 	}
 
 	isFinal(): boolean

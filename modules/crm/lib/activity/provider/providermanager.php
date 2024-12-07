@@ -1,11 +1,12 @@
 <?php
 namespace Bitrix\Crm\Activity\Provider;
 
-use Bitrix\Crm\Activity\Provider\Tasks;
+use Bitrix\Crm\Activity\Provider\ToDo\ToDo;
 use Bitrix\Crm\Badge\SourceIdentifier;
 use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Timeline\Monitor;
+use Bitrix\Crm\Settings;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ORM\Query;
 
@@ -16,6 +17,8 @@ class ProviderManager
 	private static array|null $providers = null;
 
 	private static array|null $allProviders = null;
+	private static array|null $allProvidersEntities = null;
+
 	/**
 	 * @return Base[] - List of providers.
 	 */
@@ -68,6 +71,11 @@ class ProviderManager
 			Tasks\Comment::getId() => Tasks\Comment::class,
 			Tasks\Task::getId() => Tasks\Task::class,
 		];
+
+		if (Settings\Crm::isWhatsAppScenarioEnabled())
+		{
+			$providersList[Whatsapp::getId()] = Whatsapp::className();
+		}
 
 		if(!$checkAvailable || Visit::isAvailable())
 		{
@@ -321,5 +329,22 @@ class ProviderManager
 				);
 			}
 		);
+	}
+
+	public static function getProviderEntity(string $providerId): ?string
+	{
+		if (self::$allProvidersEntities === null)
+		{
+			self::$allProvidersEntities = self::prepareProviderEntityList(false);
+		}
+
+		return self::$allProvidersEntities[$providerId] ?? null;
+	}
+
+	private static function prepareProviderEntityList(): array
+	{
+		return [
+			ToDo::getId() => \Bitrix\Crm\Activity\Entity\ToDo::class,
+		];
 	}
 }

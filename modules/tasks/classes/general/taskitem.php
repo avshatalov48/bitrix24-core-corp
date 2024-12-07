@@ -17,7 +17,10 @@ use Bitrix\Tasks\CheckList\Task\TaskCheckListFacade;
 use Bitrix\Tasks\CheckList\Template\TemplateCheckListFacade;
 use Bitrix\Tasks\CheckList\Internals\CheckList;
 use Bitrix\Tasks\Comments\Task\CommentPoster;
+use Bitrix\Tasks\Flow\Access\FlowAccessController;
+use Bitrix\Tasks\Flow\Access\FlowAction;
 use Bitrix\Tasks\Helper\Analytics;
+use Bitrix\Tasks\Internals\Log\Logger;
 use \Bitrix\Tasks\Internals\Task\FavoriteTable;
 use Bitrix\Tasks\Internals\Task\MetaStatus;
 use Bitrix\Tasks\Internals\Task\Status;
@@ -287,6 +290,7 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 			$arNewTaskData['CREATED_BY'] = $executiveUserId;
 		}
 
+		// todo: remove, this fact will checked in TaskSaveRule
 		// Check some conditions for non-admins
 		if (
 			isset($arNewTaskData['GROUP_ID'])
@@ -294,6 +298,7 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 			&& (!\Bitrix\Tasks\Util\User::isAdmin($executiveUserId))
 			&& (!\Bitrix\Tasks\Integration\Bitrix24\User::isAdmin($executiveUserId))
 			&& \Bitrix\Tasks\Integration\Socialnetwork::includeModule()
+			&& (int)($arNewTaskData['FLOW_ID'] ?? 0) <= 0
 		)
 		{
 			if (
@@ -310,7 +315,9 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 			}
 		}
 
-		if (!TaskAccessController::can($executiveUserId, ActionDictionary::ACTION_TASK_SAVE, null, \Bitrix\Tasks\Access\Model\TaskModel::createFromArray($arNewTaskData)))
+		$model = \Bitrix\Tasks\Access\Model\TaskModel::createFromArray($arNewTaskData);
+
+		if (!TaskAccessController::can($executiveUserId, ActionDictionary::ACTION_TASK_SAVE, null, $model))
 		{
 			static::sendTaskCreateAnalytics($arNewTaskData, (int)$executiveUserId);
 
@@ -322,8 +329,8 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 
 		$parentId = (int)($arNewTaskData['PARENT_ID'] ?? null);
 		if (
-			$parentId > 0 &&
-			!TaskAccessController::can($executiveUserId, ActionDictionary::ACTION_TASK_READ, $parentId)
+			$parentId > 0
+			&& !TaskAccessController::can($executiveUserId, ActionDictionary::ACTION_TASK_READ, $parentId)
 		)
 		{
 			static::sendTaskCreateAnalytics($arNewTaskData, (int)$executiveUserId);
@@ -2090,7 +2097,7 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 		catch (Exception $e)
 		{
 			$message = '[0xa819f6f1] probably SQL error at ' . $e->getFile() . ':' . $e->getLine() . '. ' . $e->getMessage();
-			CTaskAssert::logError($message);
+			Logger::log($message, 'TASKS_TASK_FETCH_LIST');
 			throw new TasksException(
 				$e->getMessage(),
 				TasksException::TE_SQL_ERROR
@@ -2384,6 +2391,12 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 			return $this->proceedActionFavorite($arActionArguments);
 		}
 
+		if ($actionId === ActionDictionary::ACTION_TASK_REMOVE)
+		{
+			$this->proceedActionRemove($arActionArguments);
+			return;
+		}
+
 		try
 		{
 			$arTaskData = $this->getData($bSpecialChars = false, [], !$skipAccessControl);
@@ -2395,13 +2408,10 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 
 		$arNewFields = null;
 
-		if ($actionId === ActionDictionary::ACTION_TASK_REMOVE)
+		if ($actionId === ActionDictionary::ACTION_TASK_EDIT)
 		{
-			return $this->proceedActionRemove($arActionArguments);
-		}
-		elseif ($actionId === ActionDictionary::ACTION_TASK_EDIT)
-		{
-			return $this->proceedActionEdit($arActionArguments, $arTaskData);
+			$this->proceedActionEdit($arActionArguments, $arTaskData);
+			return;
 		}
 
 		switch ($actionId)
@@ -3423,11 +3433,13 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 			$event = $parentId ? Analytics::EVENT['subtask_add'] : Analytics::EVENT['task_create'];
 
 			Analytics::getInstance($userId)->onTaskCreate(
+				$fields['TASKS_ANALYTICS_CATEGORY'] ?: Analytics::TASK_CATEGORY,
 				$event,
 				$fields['TASKS_ANALYTICS_SECTION'],
 				$fields['TASKS_ANALYTICS_ELEMENT'] ?? null,
 				$fields['TASKS_ANALYTICS_SUB_SECTION'] ?? null,
-				$status
+				$status,
+				$fields['TASKS_ANALYTICS_PARAMS'] ?? [],
 			);
 		}
 	}
@@ -3456,7 +3468,7 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 			$arDateKeys = 				$arCTasksManifest['REST: date fields'];
 
 			// mix up user fields, only reading, writing and selecting are supported for them
-			$userFields = array_keys(static::getEntityUserFields());
+			$userFields = array_keys(static::getEntityUserFields() ?? []);
 			if(!empty($userFields))
 			{
 				$arWritableTaskDataKeys = 		array_merge($arCTasksManifest['REST: writable task data fields'], $userFields);
@@ -4237,13 +4249,13 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 	 */
 	public function addDependOn($parentId, $linkType = DependenceTable::LINK_TYPE_FINISH_START)
 	{
-		return $this->addProjectDependence($parentId, $linkType);
+		$this->addProjectDependence($parentId, $linkType);
 	}
 	/**
 	 * @deprecated
 	 */
 	public function deleteDependOn($parentId)
 	{
-		return $this->deleteProjectDependence($parentId);
+		$this->deleteProjectDependence($parentId);
 	}
 }

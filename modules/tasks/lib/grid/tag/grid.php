@@ -4,7 +4,7 @@ namespace Bitrix\Tasks\Grid\Tag;
 
 use Bitrix\Main\Localization\Loc;
 
-class Grid extends \Bitrix\Tasks\Grid
+class Grid extends \Bitrix\Tasks\Grid\Grid
 {
 	public function prepareHeaders(): array
 	{

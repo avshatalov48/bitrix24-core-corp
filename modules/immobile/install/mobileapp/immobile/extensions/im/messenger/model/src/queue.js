@@ -9,13 +9,13 @@ jn.define('im/messenger/model/queue', (require, exports, module) => {
 	const { LoggerManager } = require('im/messenger/lib/logger');
 	const logger = LoggerManager.getInstance().getLogger('model--queue');
 
-	const elementState = {
+	const queueDefaultElement = Object.freeze({
 		id: '',
 		requestName: '',
 		requestData: {},
 		priority: 0,
 		messageId: 0,
-	};
+	});
 
 	const queueModel = {
 		namespaced: true,
@@ -143,5 +143,5 @@ jn.define('im/messenger/model/queue', (require, exports, module) => {
 		return ids;
 	}
 
-	module.exports = { queueModel };
+	module.exports = { queueModel, queueDefaultElement };
 });

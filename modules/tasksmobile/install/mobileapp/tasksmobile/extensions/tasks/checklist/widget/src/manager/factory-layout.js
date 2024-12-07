@@ -15,6 +15,11 @@ jn.define('tasks/checklist/widget/src/manager/factory-layout', (require, exports
 	};
 
 	/**
+	 * @typedef {Object} ChecklistBottomSheetProps
+	 *
+	 * @param layoutType
+	 * @param {ChecklistBottomSheetProps} restProps
+	 *
 	 * @function ChecklistBottomSheet
 	 */
 	function checklistWidgetFactoryLayout({ layoutType, ...restProps })

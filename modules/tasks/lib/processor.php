@@ -40,12 +40,13 @@ abstract class Processor
 			throw new ArgumentException('User ID not defined');
 		}
 
-		if(!array_key_exists($userId, static::$instances))
+		$key = static::class . '_' . $userId;
+		if(!isset(static::$instances[$key]))
 		{
-			static::$instances[$userId] = new static($userId);
+			static::$instances[$key] = new static($userId);
 		}
 
-		return static::$instances[$userId];
+		return static::$instances[$key];
 	}
 
 	public function __construct($userId)

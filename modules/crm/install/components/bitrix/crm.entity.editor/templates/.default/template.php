@@ -59,6 +59,13 @@ $bbFieldNames = isset($arResult['ENTITY_BB_FIELD_NAMES']) && is_array($arResult[
 	? $arResult['ENTITY_BB_FIELD_NAMES']
 	: []
 ;
+
+$hasBBCodeFields = isset($arResult['HAS_BBCODE_FIELDS']) && $arResult['HAS_BBCODE_FIELDS'] === true;
+if ($hasBBCodeFields)
+{
+	Main\UI\Extension::load(['ui.text-editor', 'ui.bbcode.formatter.html-formatter']);
+}
+
 foreach ($htmlFieldNames as $fieldName)
 {
 	$fieldPrefix = $prefix.'_'.strtolower($fieldName);
@@ -140,7 +147,7 @@ if(Main\Loader::includeModule('socialnetwork'))
 	$department = $structure['department'];
 	$departmentRelation = $structure['department_relation'];
 	$departmentRelationHead = $structure['department_relation_head'];
-	?><script type="text/javascript">
+	?><script>
 		BX.ready(
 			function()
 			{
@@ -260,7 +267,7 @@ if(!empty($htmlEditorConfigs))
 	);
 ?></div>
 <?endif?>
-<script type="text/javascript">
+<script>
 	BX.ready(
 		function()
 		{
@@ -921,6 +928,7 @@ if(!empty($htmlEditorConfigs))
 						pullTag: "<?= CUtil::JSEscape($arResult['PULL_TAG'] ?? '') ?>",
 						pullModuleId: "<?= CUtil::JSEscape($arResult['PULL_MODULE_ID'] ?? '') ?>",
 						analyticsConfig: <?= CUtil::PhpToJSObject($arResult['ANALYTICS_CONFIG'] ?? []) ?>,
+						personalViewAllowed: <?= $arResult['PERSONAL_VIEW_ALLOWED'] ? 'true' : 'false'?>,
 					}
 				)
 			);

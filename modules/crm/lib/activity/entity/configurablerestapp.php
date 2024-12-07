@@ -296,7 +296,7 @@ class ConfigurableRestApp
 		$fields['RESPONSIBLE_ID'] = $this->getResponsibleId();
 		$fields['COMPLETED'] = $this->getCompleted() ? 'Y' : 'N';
 		$fields['IS_INCOMING_CHANNEL'] = $this->getIsIncomingChannel() ? 'Y' : 'N';
-		$fields['PROVIDER_DATA'] = Json::encode($this->getLayoutDto());
+		$fields['PROVIDER_DATA'] = Json::encode($this->getLayoutDto(), 0);
 		$fields['PROVIDER_PARAMS'] =[
 			'clientId' => $this->getRestClientId(),
 			'badgeCode' => $this->getBadgeCode(),

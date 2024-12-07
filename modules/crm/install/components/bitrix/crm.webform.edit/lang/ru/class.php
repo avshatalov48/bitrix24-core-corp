@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["CRM_MODULE_NOT_INSTALLED"] = "Модуль CRM не установлен.";
 $MESS["BIZPROC_MODULE_NOT_INSTALLED"] = "Модуль Бизнес-процессы не установлен.";
 $MESS["CRM_MODULE_NOT_INSTALLED_CURRENCY"] = "Модуль currency не установлен.";
@@ -26,4 +26,3 @@ $MESS["CRM_WEBFORM_EDIT_PRESET_MACROS_FORM_NAME"] = "Название формы
 $MESS["CRM_WEBFORM_EDIT_PRESET_MACROS_FORM_NAME_DESC"] = "Название формы";
 $MESS["CRM_WEBFORM_EDIT_SECOND_SHORT"] = "сек";
 $MESS['CRM_WEBFORM_SCENARIO_NAME_TEMPLATE'] = '#NAME# от #DATE#';
-?>

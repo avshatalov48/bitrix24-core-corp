@@ -1,6 +1,8 @@
 <?php
+$MESS["MARKET_POPUP_INSTALL_JS_1C_STORE_MANAGEMENT"] = "Open the app and follow the instructions.";
 $MESS["MARKET_POPUP_INSTALL_JS_ACCESS"] = "Permissions";
 $MESS["MARKET_POPUP_INSTALL_JS_APPLICATION"] = "Application #APP_NAME#<br> was installed on your Bitrix24";
+$MESS["MARKET_POPUP_INSTALL_JS_APPLICATION_SHORT"] = "The app #APP_NAME# has been installed.";
 $MESS["MARKET_POPUP_INSTALL_JS_APP_REQUESTS_PERMISSIONS_TO_WORK"] = "The app requests permissions for:";
 $MESS["MARKET_POPUP_INSTALL_JS_APP_WILL_OPEN_AUTO_AFTER"] = "The app will open in <span class=\"market-popup__info-app-launch_counter\">#COUNTER#</span> second (-s)";
 $MESS["MARKET_POPUP_INSTALL_JS_APP_WORKS_AUTOMATICALLY"] = "This app has no user interface. You can uninstall it on the \"Installed apps\" tab.";

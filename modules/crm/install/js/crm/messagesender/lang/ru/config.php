@@ -7,3 +7,6 @@ $MESS["CRM_MESSAGESENDER_B24_CONSENT_ACCEPT"] = "Принимаю";
 $MESS["CRM_MESSAGESENDER_B24_CONSENT_REJECT"] = "Не принимаю";
 $MESS["CRM_MESSAGESENDER_B24_AGREEMENT_ACCEPT"] = "Отправка СМС и WhatsApp сообщений через Битрикс24 подключена";
 $MESS["CRM_MESSAGESENDER_B24_OPENLINE_LINEID_ERROR"] = "Открытая линия не найдена. Попробуйте снова или обратитесь в техническую поддержку Битрикс24";
+
+$MESS["CRM_MESSAGESENDER_B24_CONDITION_CHECKER_MARKET_MESSAGE"] = "Чтобы отправить приглашение, подключите <br>СМС-провайдера";
+$MESS["CRM_MESSAGESENDER_B24_CONDITION_CHECKER_OK_BTN_TEXT"] = "Подключить";

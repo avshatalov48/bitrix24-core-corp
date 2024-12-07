@@ -1,3 +1,4 @@
+import { EventEmitter } from 'main.core.events';
 import { Vuex } from 'ui.vue.vuex';
 import StageBlocksList from './components/deal-receiving-payment/stage-blocks-list';
 import EntityCreatePaymentStages from './components/crm-entity-create-payment/stage-blocks-list';
@@ -93,6 +94,14 @@ export default {
 		{
 			if (!this.isAllowedPaymentDeliverySubmitButton)
 			{
+				return;
+			}
+
+			if (!this.$root.$app.isPhoneConfirmed)
+			{
+				EventEmitter.subscribeOnce('BX.Salescenter.App::onPhoneConfirmed', () => this.sendPaymentDeliveryForm(event));
+				this.$root.$app.showPhoneConfirmPopup();
+
 				return;
 			}
 
@@ -266,7 +275,7 @@ export default {
 			));
 			if (filteredSenders.length === 0)
 			{
-				return false;
+				this.$store.commit('orderCreation/setIsSenderSelected', false);
 			}
 
 			return this.$store.getters['orderCreation/isAllowedSubmit'];
@@ -504,7 +513,7 @@ export default {
 				</div>
 				<div class="salescenter-app-right-side">
 					<start
-						v-if="needShowStoreConnection"
+						v-if="needShowStoreConnection && mode !== ModeDictionary.terminalPayment"
 						@on-successfully-connected="onSuccessfullyConnected"
 					>
 					</start>

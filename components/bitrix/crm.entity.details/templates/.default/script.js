@@ -269,10 +269,13 @@ if(typeof BX.Crm.EntityDetailManager === "undefined")
 			var urlParams = { external_context: context };
 			this.prepareCreationUrlParams(urlParams);
 
-			var additionalUrlParams = BX.prop.getObject(options, "urlParams", null);
-			if(additionalUrlParams)
+			if (options)
 			{
-				urlParams = BX.mergeEx(urlParams, additionalUrlParams);
+				var additionalUrlParams = BX.prop.getObject(options, "urlParams", null);
+				if(additionalUrlParams)
+				{
+					urlParams = BX.mergeEx(urlParams, additionalUrlParams);
+				}
 			}
 
 			BX.CrmEntityManager.createEntity(
@@ -285,9 +288,9 @@ if(typeof BX.Crm.EntityDetailManager === "undefined")
 					}.bind(this)
 				);
 		},
-		createQuote: function()
+		createQuote: function(options)
 		{
-			this.createEntity(BX.CrmEntityType.names.quote);
+			this.createEntity(BX.CrmEntityType.names.quote, options);
 		},
 		createOrder: function()
 		{
@@ -297,9 +300,9 @@ if(typeof BX.Crm.EntityDetailManager === "undefined")
 		{
 			this.createEntity(BX.CrmEntityType.names.invoice);
 		},
-		createDeal: function()
+		createDeal: function(options)
 		{
-			this.createEntity(BX.CrmEntityType.names.deal);
+			this.createEntity(BX.CrmEntityType.names.deal, options);
 		},
 		onRemovalConfirm: function(result)
 		{
@@ -309,6 +312,21 @@ if(typeof BX.Crm.EntityDetailManager === "undefined")
 			}
 
 			this.remove();
+		},
+		extractUrlParamsFromEvent: function(callback)
+		{
+			return function(options)
+			{
+				if (options && options.data && options.data.urlParams)
+				{
+					options.urlParams = {
+						...options.urlParams,
+						...options.data.urlParams
+					};
+				}
+
+				callback(options);
+			};
 		},
 		onRemovalRequestSuccess: function(result)
 		{
@@ -552,7 +570,7 @@ if(typeof BX.Crm.LeadDetailManager === "undefined")
 	{
 		BX.addCustomEvent(window, "Crm.EntityConverter.Converted", BX.delegate(this.onConversionComplete, this));
 		BX.addCustomEvent(window, "Crm.EntityProgress.Saved", BX.delegate(this.onProgressSave, this));
-		BX.addCustomEvent(window, "CrmCreateQuoteFromLead", BX.delegate(this.onCreateQuote, this));
+		BX.addCustomEvent(window, "CrmCreateQuoteFromLead", this.extractUrlParamsFromEvent(this.createQuote.bind(this)).bind(this));
 		BX.addCustomEvent(window, "CrmCreateOrderFromLead", BX.delegate(this.onCreateOrder, this));
 	};
 	BX.Crm.LeadDetailManager.prototype.processConversionCompletion = function(eventArgs)
@@ -630,9 +648,9 @@ if(typeof BX.Crm.LeadDetailManager === "undefined")
 		this.processStatusSave(eventArgs);
 
 	};
-	BX.Crm.LeadDetailManager.prototype.onCreateQuote = function()
+	BX.Crm.LeadDetailManager.prototype.onCreateQuote = function(option)
 	{
-		this.createQuote();
+		this.createQuote(option);
 	};
 	BX.Crm.LeadDetailManager.prototype.onCreateOrder = function()
 	{
@@ -662,14 +680,14 @@ if(typeof BX.Crm.ContactDetailManager === "undefined")
 	BX.extend(BX.Crm.ContactDetailManager, BX.Crm.EntityDetailManager);
 	BX.Crm.ContactDetailManager.prototype.doInitialize = function()
 	{
-		BX.addCustomEvent(window, "CrmCreateQuoteFromContact", BX.delegate(this.onCreateQuote, this));
+		BX.addCustomEvent(window, "CrmCreateQuoteFromContact", this.extractUrlParamsFromEvent(this.createQuote.bind(this)).bind(this));
 		BX.addCustomEvent(window, "CrmCreateInvoiceFromContact", BX.delegate(this.onCreateInvoice, this));
-		BX.addCustomEvent(window, "CrmCreateDealFromContact", BX.delegate(this.onCreateDeal, this));
+		BX.addCustomEvent(window, "CrmCreateDealFromContact", this.extractUrlParamsFromEvent(this.createDeal.bind(this)).bind(this));
 		BX.addCustomEvent(window, "CrmCreateOrderFromContact", BX.delegate(this.onCreateOrder, this));
 	};
-	BX.Crm.ContactDetailManager.prototype.onCreateQuote = function()
+	BX.Crm.ContactDetailManager.prototype.onCreateQuote = function(options)
 	{
-		this.createQuote();
+		this.createQuote(options);
 	};
 	BX.Crm.ContactDetailManager.prototype.onCreateOrder = function()
 	{
@@ -679,9 +697,9 @@ if(typeof BX.Crm.ContactDetailManager === "undefined")
 	{
 		this.createInvoice();
 	};
-	BX.Crm.ContactDetailManager.prototype.onCreateDeal = function()
+	BX.Crm.ContactDetailManager.prototype.onCreateDeal = function(options)
 	{
-		this.createDeal();
+		this.createDeal(options);
 	};
 	BX.Crm.ContactDetailManager.prototype.prepareCreationUrlParams = function(urlParams)
 	{
@@ -707,14 +725,14 @@ if(typeof BX.Crm.CompanyDetailManager === "undefined")
 	BX.extend(BX.Crm.CompanyDetailManager, BX.Crm.EntityDetailManager);
 	BX.Crm.CompanyDetailManager.prototype.doInitialize = function()
 	{
-		BX.addCustomEvent(window, "CrmCreateQuoteFromCompany", BX.delegate(this.onCreateQuote, this));
+		BX.addCustomEvent(window, "CrmCreateQuoteFromCompany", this.extractUrlParamsFromEvent(this.createQuote.bind(this)).bind(this));
 		BX.addCustomEvent(window, "CrmCreateInvoiceFromCompany", BX.delegate(this.onCreateInvoice, this));
-		BX.addCustomEvent(window, "CrmCreateDealFromCompany", BX.delegate(this.onCreateDeal, this));
+		BX.addCustomEvent(window, "CrmCreateDealFromCompany", this.extractUrlParamsFromEvent(this.createDeal.bind(this)).bind(this));
 		BX.addCustomEvent(window, "CrmCreateOrderFromCompany", BX.delegate(this.onCreateOrder, this));
 	};
-	BX.Crm.CompanyDetailManager.prototype.onCreateQuote = function()
+	BX.Crm.CompanyDetailManager.prototype.onCreateQuote = function(options)
 	{
-		this.createQuote();
+		this.createQuote(options);
 	};
 	BX.Crm.CompanyDetailManager.prototype.onCreateOrder = function()
 	{
@@ -724,9 +742,9 @@ if(typeof BX.Crm.CompanyDetailManager === "undefined")
 	{
 		this.createInvoice();
 	};
-	BX.Crm.CompanyDetailManager.prototype.onCreateDeal = function()
+	BX.Crm.CompanyDetailManager.prototype.onCreateDeal = function(options)
 	{
-		this.createDeal();
+		this.createDeal(options);
 	};
 	BX.Crm.CompanyDetailManager.prototype.prepareCreationUrlParams = function(urlParams)
 	{

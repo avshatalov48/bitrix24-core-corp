@@ -21,6 +21,7 @@ $APPLICATION->includeComponent(
 	'bitrix:market.list',
 	'',
 	[
-		'IS_INSTALLED' => 'Y'
+		'CURRENT_PAGE' => $arResult['CURRENT_PAGE'],
+		'IS_INSTALLED' => 'Y',
 	]
 );

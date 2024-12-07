@@ -56,7 +56,11 @@ class BasketBuilderWithDistributedQuantityControl extends BasketBuilder
 
 					$product['BASKET_CODE'] = 'n'.++$maxIndex;
 					$product['ORIGIN_BASKET_ID'] = $basketItem->getId();
+					unset($product['XML_ID']);
+
 					$result[$product['BASKET_CODE']] = $product;
+
+					$basketCodeMap[$product['ORIGIN_BASKET_ID']] = $product['BASKET_CODE'];
 
 					continue;
 				}
@@ -134,6 +138,7 @@ class BasketBuilderWithDistributedQuantityControl extends BasketBuilder
 					$product['ID'] = $index;
 					$product['BASKET_CODE'] = $index;
 					$product['BASKET_ID'] = $index;
+					$product['XML_ID'] = $basketItem->getField('XML_ID');
 				}
 				else
 				{
@@ -168,6 +173,32 @@ class BasketBuilderWithDistributedQuantityControl extends BasketBuilder
 					}
 
 					$this->formData['SHIPMENT'][$index]['PRODUCT'] = $preparedShipmentProducts;
+				}
+			}
+		}
+
+		// prepare payment product
+		if (isset($basketCodeMap) && !empty($this->formData['PAYMENT']))
+		{
+			foreach ($this->formData['PAYMENT'] as $index => $payment)
+			{
+				$paymentProducts = $payment['PRODUCT'] ?? null;
+				if ($paymentProducts)
+				{
+					$preparedPaymentProducts = [];
+					foreach ($paymentProducts as $code => $paymentProduct)
+					{
+						if (isset($basketCodeMap[$code]))
+						{
+							$code = $basketCodeMap[$code];
+
+							$paymentProduct['BASKET_CODE'] = $code;
+						}
+
+						$preparedPaymentProducts[$code] = $paymentProduct;
+					}
+
+					$this->formData['PAYMENT'][$index]['PRODUCT'] = $preparedPaymentProducts;
 				}
 			}
 		}

@@ -1,6 +1,7 @@
 <?php
 
 use Bitrix\Crm\Binding\EntityContactTable;
+use Bitrix\Crm\CompanyTable;
 use Bitrix\Crm\Counter\EntityCountableActivityTable;
 use Bitrix\Crm\Item;
 use Bitrix\Crm\Service\Container;
@@ -545,14 +546,15 @@ class CCrmSipHelper
 
 	private static function getCompanyTitle(int $companyId): ?string
 	{
-		$companyFactory = Container::getInstance()->getFactory(\CCrmOwnerType::Company);
-		if ($companyFactory)
+		if ($companyId > 0)
 		{
-			$companyItem = $companyFactory->getItem($companyId);
-			if ($companyItem)
-			{
-				return $companyItem->getTitle();
-			}
+			$item = CompanyTable::query()
+				->setSelect(['TITLE'])
+				->where('ID', $companyId)
+				->setLimit(1)
+				->fetch();
+
+			return $item['TITLE'] ?? null;
 		}
 
 		return null;

@@ -2,6 +2,7 @@
  * @module im/messenger/lib/element/dialog/message/copilot-error
  */
 jn.define('im/messenger/lib/element/dialog/message/copilot-error', (require, exports, module) => {
+	const { MessageType } = require('im/messenger/const');
 	const { CopilotAsset } = require('im/messenger/assets/copilot');
 	const { TextMessage } = require('im/messenger/lib/element/dialog/message/text');
 
@@ -21,7 +22,7 @@ jn.define('im/messenger/lib/element/dialog/message/copilot-error', (require, exp
 
 		getType()
 		{
-			return 'copilot-error';
+			return MessageType.copilotError;
 		}
 
 		setCopilotError()

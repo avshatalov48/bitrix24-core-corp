@@ -5,6 +5,7 @@ return [
 		'loc',
 		'notify',
 		'apptheme',
+		'assets/icons',
 		'utils/error-notifier',
 		'helpers/component',
 		'layout/ui/detail-card/floating-button/menu/item',

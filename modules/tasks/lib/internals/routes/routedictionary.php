@@ -24,5 +24,7 @@ abstract class RouteDictionary
 
 	public const PATH_TO_RECYCLEBIN = '/company/personal/user/#user_id#/tasks/recyclebin/';
 
+	public const PATH_TO_FLOWS = '/company/personal/user/#user_id#/tasks/flow/';
+
 	public const RECYCLEBIN_SUFFIX = 'recyclebin/';
 }

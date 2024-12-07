@@ -97,9 +97,15 @@ jn.define('catalog/store/document-card/component', (require, exports, module) =>
 					const { entityModel } = detailCard;
 					const result = [];
 
+					const isCancelDisabledForRealization = (
+						entityModel.DOC_TYPE === 'W'
+						&& entityModel.IS_EXTERNAL_CATALOG
+					);
+
 					const isCancelDocumentActive = (
 						this.hasPermission(params.permissions, entityModel, 'catalog_store_document_cancel')
 						&& params.isDocumentConducted(entityModel)
+						&& !isCancelDisabledForRealization
 					);
 					if (isCancelDocumentActive)
 					{

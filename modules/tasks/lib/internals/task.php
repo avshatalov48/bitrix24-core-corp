@@ -17,6 +17,7 @@ use Bitrix\Main\ORM\Fields\Relations\ManyToMany;
 use Bitrix\Main\ORM\Fields\Relations\OneToMany;
 use Bitrix\Main\ORM\Fields\Relations\Reference;
 use Bitrix\Main\ORM\Query\Join;
+use Bitrix\Tasks\Flow\Internal\FlowTaskTable;
 use Bitrix\Tasks\Internals\Task\CheckListTable;
 use Bitrix\Tasks\Internals\Task\Mark;
 use Bitrix\Tasks\Internals\Task\MemberTable;
@@ -336,7 +337,13 @@ class TaskTable extends TaskDataManager
 				'CHECKLIST_DATA',
 				CheckListTable::getEntity(),
 				['this.ID' => 'ref.TASK_ID'],
-			))->configureJoinType(Join::TYPE_LEFT)
+			))->configureJoinType(Join::TYPE_LEFT),
+
+			(new Reference(
+				'FLOW_TASK',
+				FlowTaskTable::getEntity(),
+				Join::on('this.ID', 'ref.TASK_ID'),
+			))->configureJoinType(Join::TYPE_LEFT),
 		);
 	}
 	/**

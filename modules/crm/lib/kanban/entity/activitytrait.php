@@ -3,7 +3,9 @@
 
 namespace Bitrix\Crm\Kanban\Entity;
 
-
+use Bitrix\Crm\Activity\Entity;
+use Bitrix\Crm\Activity\Provider\ToDo;
+use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Kanban\EntityActivityDeadline;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main\ArgumentException;
@@ -43,8 +45,16 @@ trait ActivityTrait
 					return new Result();
 				}
 			case EntityActivities::STAGE_IDLE:
+				$activities = $this->getAllActivities($ownerTypeId, $id);
 				$result = new Result();
+
+				if (empty($activities))
+				{
+					return $result;
+				}
+
 				$message = Loc::getMessage('CRM_KANBAN_AT_VIEW_MODE_MOVE_ITEM_TO_COLUMN_BLOCKED');
+
 				return $result->addError(new Error($message));
 			case EntityActivities::STAGE_PENDING:
 			case EntityActivities::STAGE_THIS_WEEK:
@@ -148,11 +158,8 @@ trait ActivityTrait
 		{
 			if ($hasOnlyIncomingActivities)
 			{
-				$result = \Bitrix\Crm\Activity\Entity\ToDo::createWithDefaultDescription(
-					$ownerTypeId,
-					$ownerId,
-					$deadline
-				);
+				$result = (new Entity\ToDo(new ItemIdentifier($ownerTypeId, $ownerId), new ToDo\ToDo()))
+					->createWithDefaultSubjectAndDescription($deadline);
 			}
 			else
 			{

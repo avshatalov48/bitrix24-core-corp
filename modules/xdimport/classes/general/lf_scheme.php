@@ -464,7 +464,7 @@ class CAllXDILFScheme
 			WHERE S.ID = " . $ID."
 		";
 
-		return $DB->Query($strSql, false, "File: ".__FILE__."<br>Line: ".__LINE__);
+		return $DB->Query($strSql);
 	}
 
 	public static function CheckRequest(): string
@@ -849,7 +849,7 @@ class CAllXDILFScheme
 				)
 				{
 					$strSql = "UPDATE b_xdi_lf_scheme SET LAST_EXECUTED=" . $DB->GetNowFunction()." WHERE ID=" . (int)$arScheme["ID"];
-					$DB->Query($strSql, false, "File: ".__FILE__."<br>Line: ".__LINE__);
+					$DB->Query($strSql);
 				}
 				else
 				{

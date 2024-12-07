@@ -569,7 +569,8 @@ BX.Intranet.SearchTitle = function(arParams)
 		var crmQuote= [];
 		var crmInvoice= [];
 		var crmSmartInvoice = [];
-		var crmDynamic = [];
+		const crmDynamic = [];
+		const crmExternalDynamic = new Map();
 		var diskItems= [];
 		var taskItems= [];
 		var crmContactMore = false, crmCompanyMore = false, crmDealMore = false, crmLeadMore = false,
@@ -665,7 +666,21 @@ BX.Intranet.SearchTitle = function(arParams)
 			}
 			else if (itemData.module === 'crm' && itemData.type.indexOf('DYNAMIC_') === 0)
 			{
-				if (crmDynamic.length < 10)
+				const customSectionTitle = itemData?.attributes?.customSectionTitle;
+				if (customSectionTitle)
+				{
+					if (!crmExternalDynamic.has(customSectionTitle))
+					{
+						crmExternalDynamic.set(customSectionTitle, []);
+					}
+
+					const externalDynamicItems = crmExternalDynamic.get(customSectionTitle, customSectionTitle);
+					if (externalDynamicItems.length < 10)
+					{
+						externalDynamicItems.push(item);
+					}
+				}
+				else if (crmDynamic.length < 10)
 				{
 					crmDynamic.push(item);
 				}
@@ -794,6 +809,14 @@ BX.Intranet.SearchTitle = function(arParams)
 		}
 
 		this.BuildEntityBlock(crmDynamic, "CRM: " + BX.message("SEARCH_CRM_DYNAMIC"), "dynamic");
+		crmExternalDynamic.forEach((items, customSectionTitle) => {
+			const title = BX.util.htmlspecialchars(customSectionTitle);
+			const prefixWrapper = `
+				<span class="search-title-top-subtitle-prefix-wrapper" title="${title}">${title}</span>:
+			`;
+
+			this.BuildEntityBlock(items, `${prefixWrapper} ${BX.message('SEARCH_CRM_DYNAMIC')}`, 'dynamic');
+		});
 
 		this.BuildEntityBlock(diskItems, BX.message("SEARCH_DISK"), "disk", limits.disk);
 		if (diskMore)

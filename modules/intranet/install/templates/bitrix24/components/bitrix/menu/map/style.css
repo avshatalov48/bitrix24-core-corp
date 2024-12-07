@@ -50,8 +50,15 @@
 }
 
 .sitemap-section-item.--has-children > .sitemap-section-item-title {
+	color: #000;
+	font-family: var(--ui-font-family-secondary);
+	font-weight: var(--ui-font-weight-semi-bold);
+}
+
+.sitemap-section-item.--has-children > span.sitemap-section-item-title:not([data-onclick])
+{
 	background: transparent !important;
-	color: #828b95 !important;
+	cursor: default;
 }
 
 .sitemap-section-item-children {

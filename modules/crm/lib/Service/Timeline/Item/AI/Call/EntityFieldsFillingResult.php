@@ -41,6 +41,10 @@ final class EntityFieldsFillingResult extends Base
 						->addActionParamInt('ownerTypeId', $this->getContext()->getEntityTypeId())
 						// analytic metrics
 						->addActionParamInt('activityId', $this->getActivityId())
+						->addActionParamString(
+							'activityDirection',
+							mb_strtolower(\CCrmActivityDirection::ResolveName($this->getAssociatedEntityModel()?->get('DIRECTION')))
+						)
 						->setAnimation(Action\Animation::disableBlock())
 				)
 				->setScopeWeb()
@@ -59,6 +63,12 @@ final class EntityFieldsFillingResult extends Base
 				->addActionParamInt('activityId', $this->getActivityId())
 				->addActionParamInt('ownerTypeId', $this->getContext()->getEntityTypeId())
 				->addActionParamInt('ownerId', $this->getContext()->getEntityId())
+				->addActionParamString('languageTitle', $this->getJobResultLanguageTitle())
+				// for analytics
+				->addActionParamString(
+					'activityDirection',
+					mb_strtolower(\CCrmActivityDirection::ResolveName($this->getAssociatedEntityModel()?->get('DIRECTION')))
+				)
 			;
 		}
 
@@ -107,7 +117,7 @@ final class EntityFieldsFillingResult extends Base
 		return $result->getOperationStatus() === Result::OPERATION_STATUS_CONFLICT;
 	}
 
-	private function getJobResult(): ?Result
+	protected function getJobResult(): ?Result
 	{
 		$activityId = $this->getAssociatedEntityModel()?->get('ID');
 		if (!isset($activityId))

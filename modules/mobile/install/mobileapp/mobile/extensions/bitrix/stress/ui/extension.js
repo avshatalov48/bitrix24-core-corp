@@ -366,7 +366,7 @@
 			rootWidget: {
 				name: "stress",
 				settings: {
-					title: BX.message("STRESS_LEVEL_TITLE"),
+					titleParams: {text: BX.message("STRESS_LEVEL_TITLE"), type: "section"},
 					objectName: "stress",
 				}
 			}

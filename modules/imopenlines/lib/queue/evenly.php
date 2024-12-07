@@ -29,41 +29,41 @@ class Evenly extends Queue
 			'QUEUE_HISTORY' => [],
 		];
 
-		$operators = [];
 		$queueHistory = $this->session['QUEUE_HISTORY'];
-		$fullCountOperators = 0;
-
-		$select = [
-			'ID',
-			'USER_ID'
-		];
-
-		$filter = ['=CONFIG_ID' => $this->config['ID']];
-		$order = [
-			'LAST_ACTIVITY_DATE' => 'asc',
-			'LAST_ACTIVITY_DATE_EXACT' => 'asc'
-		];
 
 		$res = ImOpenLines\Queue::getList([
-			'select' => $select,
-			'filter' => $filter,
-			'order' => $order
+			'select' => [
+				'ID',
+				'USER_ID'
+			],
+			'filter' => [
+				'=CONFIG_ID' => $this->config['ID']
+			],
+			'order' => [
+				'LAST_ACTIVITY_DATE' => 'ASC',
+				'LAST_ACTIVITY_DATE_EXACT' => 'ASC'
+			],
 		]);
 
+		$userIds = [];
+		$operators = [];
 		while($queueUser = $res->fetch())
 		{
-			$fullCountOperators++;
-			if($this->isOperatorAvailable($queueUser['USER_ID'], $currentOperator))
-			{
-				$operators[$queueUser['USER_ID']] = $queueUser;
-			}
+			$userIds[] = (int)$queueUser['USER_ID'];
+			$operators[(int)$queueUser['USER_ID']] = $queueUser;
 		}
 
-		$this->processingEmptyQueue($this->config['ID'], $fullCountOperators);
-
-		if(!empty($operators))
+		$operatorList = $this->getAvailableOperators($userIds, $currentOperator);
+		foreach ($operatorList as $userId)
 		{
-			$operatorId = reset($operators)['USER_ID'];
+			$queueHistory[$userId] = true;
+		}
+
+		$this->processingEmptyQueue($this->config['ID'], count($userIds));
+
+		if(!empty($operatorList))
+		{
+			$operatorId = reset($operatorList);
 
 			$queueHistory[$operatorId] = true;
 

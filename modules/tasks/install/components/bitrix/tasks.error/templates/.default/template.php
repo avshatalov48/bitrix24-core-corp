@@ -1,9 +1,20 @@
 <?php
-if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
-\Bitrix\Main\UI\Extension::load(['ui.design-tokens', 'ui.fonts.opensans']);
+if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)
+{
+	die();
+}
+
+use Bitrix\Main\UI\Extension;
+
+/** @var CAllMain $APPLICATION */
+/** @var array $arResult */
+
+$APPLICATION->SetPageProperty('BodyClass', 'no-all-paddings no-tasks-iframe-header');
+$APPLICATION->SetTitle('');
+
+Extension::load(['ui.design-tokens', 'ui.fonts.opensans']);
 ?>
-
 
 <div class="task-no-access">
 	<div class="task-no-access-inner">

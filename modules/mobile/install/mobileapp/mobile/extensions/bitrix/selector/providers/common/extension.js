@@ -2,7 +2,6 @@
  * @module selector/providers/common
  */
 jn.define('selector/providers/common', (require, exports, module) => {
-	const AppTheme = require('apptheme');
 	const { withCurrentDomain } = require('utils/url');
 	const { mergeImmutable } = require('utils/object');
 	const { uniqBy, unique } = require('utils/array');
@@ -11,17 +10,11 @@ jn.define('selector/providers/common', (require, exports, module) => {
 	const { BasePickerCache } = require('selector/utils/picker-cache');
 	const { BaseSelectorProvider } = require('selector/providers/base');
 	const { Color } = require('selector/providers/common/src/entity-color');
-	const { getColor } = require('layout/ui/user/empty-avatar');
+	const { getColor, getBackgroundColorStyles } = require('layout/ui/user/empty-avatar');
 	const { Loc } = require('loc');
 
 	const specialChars = '!"#$%&\'()*+,-.\/:;<=>?@[\\]^_`{|}';
 	const specialCharsRegExp = new RegExp(`[${specialChars}]`, 'g');
-
-	const getImage = (name) => {
-		const path = '/bitrix/mobileapp/mobile/extensions/bitrix/selector/providers/common/images/';
-
-		return `${currentDomain}${path}${name}.png`;
-	};
 
 	const EMPTY_AVATAR = '/bitrix/mobileapp/mobile/extensions/bitrix/layout/ui/fields/user/images/empty-avatar.png';
 	const DEFAULT_AVATAR = '/bitrix/mobileapp/mobile/extensions/bitrix/layout/ui/fields/user/images/default-avatar.png';
@@ -66,14 +59,31 @@ jn.define('selector/providers/common', (require, exports, module) => {
 			return '';
 		}
 
+		getAvatarImage(name)
+		{
+			const path = '/bitrix/mobileapp/mobile/extensions/bitrix/selector/providers/common/images/';
+
+			return `${currentDomain}${path}${name}.png`;
+		}
+
 		getColor(entityId, entityType)
 		{
-			if (entityType === 'user' && this.options.useLettersForEmptyAvatar)
+			if (this.options.useLettersForEmptyAvatar && entityType === 'user')
 			{
 				return getColor(entityId);
 			}
 
 			return Color(entityType);
+		}
+
+		getColorGradient(entityId, entityType)
+		{
+			if (this.options.useLettersForEmptyAvatar && entityType === 'user')
+			{
+				return getBackgroundColorStyles(entityId).backgroundColorGradient;
+			}
+
+			return null;
 		}
 
 		setQuery(value)
@@ -96,6 +106,7 @@ jn.define('selector/providers/common', (require, exports, module) => {
 
 			this.options = options;
 			this.options.useLettersForEmptyAvatar = Boolean(options.useLettersForEmptyAvatar);
+
 			this.cache = new BasePickerCache(this.cacheId());
 		}
 
@@ -146,6 +157,7 @@ jn.define('selector/providers/common', (require, exports, module) => {
 				context: this.context,
 				preselectedItems: this.preselectedItems,
 				entities: this.getSortedEntities(),
+				recentItemsLimit: this.options.recentItemsLimit,
 			};
 		}
 
@@ -559,6 +571,7 @@ jn.define('selector/providers/common', (require, exports, module) => {
 							const item = { ...original };
 
 							item.color = this.getColor(item.id, entityId);
+							item.colorGradient = this.getColorGradient(item.id, entityId);
 
 							if (typeof item.id !== 'undefined')
 							{
@@ -567,7 +580,7 @@ jn.define('selector/providers/common', (require, exports, module) => {
 
 							if (!item.imageUrl && !this.options.useLettersForEmptyAvatar)
 							{
-								item.imageUrl = getImage(entityId);
+								item.imageUrl = this.getAvatarImage(entityId);
 							}
 
 							return item;
@@ -613,7 +626,8 @@ jn.define('selector/providers/common', (require, exports, module) => {
 						shortTitle: item.shortTitle,
 						params: item.params,
 						imageUrl: isDefaultImage(item.imageUrl) && this.options.useLettersForEmptyAvatar ? null : item.imageUrl,
-						defaultImage: !this.options.useLettersForEmptyAvatar && item.imageUrl.includes(getImage(entityId)),
+						defaultImage: !this.options.useLettersForEmptyAvatar
+							&& item.imageUrl.includes(this.getAvatarImage(entityId)),
 					});
 				}
 
@@ -689,12 +703,9 @@ jn.define('selector/providers/common', (require, exports, module) => {
 				sectionCode: 'common',
 				height: 64,
 				color: this.getColor(entity.id, entity.entityId),
+				colorGradient: this.getColorGradient(entity.id, entity.entityId),
 				styles: {
-					title: {
-						font: {
-							size: 16,
-						},
-					},
+					title: {},
 					subtitle: {},
 				},
 				useLetterImage: true,
@@ -706,6 +717,12 @@ jn.define('selector/providers/common', (require, exports, module) => {
 					id: entity.id,
 					customData: entity.customData || {},
 				},
+				disabled: entity.customData?.isSelectable === false,
+				type: entity.type,
+				typeIconFrame: entity.typeIconFrame,
+				imageColor: entity.imageColor,
+				selectedImageColor: entity.selectedImageColor,
+				selectedTypeIconFrame: entity.selectedTypeIconFrame,
 			};
 
 			switch (entity.entityId)
@@ -716,7 +733,9 @@ jn.define('selector/providers/common', (require, exports, module) => {
 					{
 						item.styles.title.font = { color: Color('userExtranet', 'title') };
 						item.color = this.getColor(entity.id, 'userExtranet');
+						item.colorGradient = this.getColorGradient(entity.id, 'userExtranet');
 					}
+
 					item.subtitle = stringify(entity.customData?.position);
 					item.shortTitle = stringify(entity.customData?.name);
 					item.lastName = stringify(entity.customData?.lastName);
@@ -728,19 +747,12 @@ jn.define('selector/providers/common', (require, exports, module) => {
 
 				case 'project':
 				{
-					item.subtitle = entity.title;
-					item.title = Loc.getMessage('PROVIDER_COMMON_PROJECT');
+					item.subtitle = Loc.getMessage('PROVIDER_COMMON_PROJECT');
 					item.shortTitle = entity.title;
 					item.name = entity.title;
-					item.styles.title.font = {
-						size: 12,
-						color: AppTheme.colors.base4,
-						fontStyle: 'bold',
-					};
-					item.styles.subtitle.font = {
-						size: 17,
-						color: AppTheme.colors.base1,
-					};
+
+					item.styles.title.font = {};
+					item.styles.subtitle.font = {};
 
 					if (entity.entityType === 'extranet')
 					{
@@ -753,19 +765,12 @@ jn.define('selector/providers/common', (require, exports, module) => {
 
 				case 'department':
 				{
-					item.subtitle = entity.title;
+					item.subtitle = Loc.getMessage('PROVIDER_COMMON_DEPARTMENT');
 					item.shortTitle = entity.title;
 					item.name = entity.title;
-					item.title = Loc.getMessage('PROVIDER_COMMON_DEPARTMENT');
-					item.styles.title.font = {
-						size: 12,
-						color: AppTheme.colors.base4,
-						fontStyle: 'bold',
-					};
-					item.styles.subtitle.font = {
-						size: 17,
-						color: AppTheme.colors.base1,
-					};
+
+					item.styles.title.font = {};
+					item.styles.subtitle.font = {};
 
 					break;
 				}
@@ -803,7 +808,7 @@ jn.define('selector/providers/common', (require, exports, module) => {
 			// Note: Android doesn't support svg images in selector widget
 			if (!item.imageUrl || item.imageUrl.endsWith('.svg'))
 			{
-				item.imageUrl = this.options.useLettersForEmptyAvatar ? null : getImage(entity.entityId);
+				item.imageUrl = this.options.useLettersForEmptyAvatar ? null : this.getAvatarImage(entity.entityId);
 			}
 
 			if (this.isSingleChoose())

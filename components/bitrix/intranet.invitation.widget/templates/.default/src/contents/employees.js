@@ -1,5 +1,7 @@
+import { Counter } from 'ui.cnt';
 import { Content } from "./content";
-import { Tag, Loc, ajax, Text } from "main.core";
+import { Analytics } from '../analytics';
+import { Tag, Loc, ajax, Text, Type } from 'main.core';
 import type { EmployeesContentOptions } from "../types/options";
 import type { ConfigContent } from "../types/content";
 import { Menu } from "main.popup";
@@ -22,6 +24,8 @@ export class EmployeesContent extends Content
 					...response.data.users,
 					...this.getOptions(),
 				});
+				this.#showCounter();
+
 				return this.getLayout();
 			}),
 			flex: 5,
@@ -37,14 +41,14 @@ export class EmployeesContent extends Content
 					<div class="intranet-invitation-widget-inner">
 						<div class="intranet-invitation-widget-content">
 							<div class="intranet-invitation-widget-item-content">
-								<div class="intranet-invitation-widget-item-progress ${this.getOptions().isLimit ? 'intranet-invitation-widget-item-progress--crit' : 'intranet-invitation-widget-item-progress--full'}"/>
+								<div onclick="${this.showUserList()}" class="intranet-invitation-widget-item-progress ${this.getOptions().isLimit ? 'intranet-invitation-widget-item-progress--crit' : 'intranet-invitation-widget-item-progress--full'}"/>
 								<div class="intranet-invitation-widget-employees">
-									<div class="intranet-invitation-widget-item-name">
-										<span>
+									<div onclick="${this.showUserList()}" class="intranet-invitation-widget-item-name">
+										<span style="margin-right: 2px;">
 											${Loc.getMessage('INTRANET_INVITATION_WIDGET_EMPLOYEES')}
 										</span>
 									</div>
-									<div class="intranet-invitation-widget-item-num">
+									<div onclick="${this.showUserList()}" class="intranet-invitation-widget-item-num">
 										${this.getOptions().currentUserCountMessage}
 									</div>
 								</div>
@@ -55,6 +59,60 @@ export class EmployeesContent extends Content
 					</div>
 				</div>
 			`;
+		});
+	}
+
+	#showCounter(): void
+	{
+		if (this.getOptions().invitationCounter > 0)
+		{
+			this.#getCounter().renderTo(this.#getCounterWrapper());
+		}
+
+		BX.addCustomEvent('onPullEvent-main', this.#onReceiveCounterValue.bind(this));
+	}
+
+	#onReceiveCounterValue(command, params): void
+	{
+		if (command === 'user_counter' && params[BX.message('SITE_ID')])
+		{
+			const counters = BX.clone(params[BX.message('SITE_ID')]);
+			const value = counters[this.getOptions().counterId];
+
+			if (!Type.isNumber(value))
+			{
+				return;
+			}
+
+			this.#getCounter().update(value);
+			this.getOptions().invitationCounter = value;
+
+			if (value > 0)
+			{
+				this.#getCounter().renderTo(this.#getCounterWrapper());
+			}
+			else
+			{
+				this.#getCounter().destroy();
+				this.cache.delete('counter');
+			}
+		}
+	}
+
+	#getCounter(): Counter
+	{
+		return this.cache.remember('counter', () => {
+			return new Counter({
+				value: Number(this.getOptions().invitationCounter),
+				color: Counter.Color.DANGER,
+			});
+		});
+	}
+
+	#getCounterWrapper(): HTMLElement
+	{
+		return this.cache.remember('counter-wrapper', () => {
+			return this.getLayout().querySelector('.intranet-invitation-widget-item-name');
 		});
 	}
 
@@ -77,12 +135,22 @@ export class EmployeesContent extends Content
 			}
 
 			return Tag.render`
-				<div class="intranet-invitation-widget-item-detail">
+				<div onclick="${this.showUserList()}" class="intranet-invitation-widget-item-detail">
 					<span class="intranet-invitation-widget-item-link-text">
 						${content}
 					</span>
 				</div>
 			`;
+		});
+	}
+
+	showUserList(): Function
+	{
+		return this.cache.remember('showUserList', () => {
+			return () => {
+				Analytics.send(Analytics.EVENT_OPEN_USER_LIST);
+				document.location.href = '/company/';
+			};
 		});
 	}
 

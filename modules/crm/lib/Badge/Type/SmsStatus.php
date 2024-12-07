@@ -11,6 +11,7 @@ class SmsStatus extends Badge
 {
 	public const SENDING_SMS_ERROR_VALUE = 'sending_sms_error';
 	public const SENDING_NOTIFICATION_ERROR_VALUE = 'sending_notification_error';
+	public const SENDING_SMS_SUCCESS_VALUE = 'sending_sms_success';
 
 	protected const TYPE = 'sms_status';
 
@@ -34,6 +35,12 @@ class SmsStatus extends Badge
 				ValueItemOptions::TEXT_COLOR_FAILURE,
 				ValueItemOptions::BG_COLOR_FAILURE
 			),
+			new ValueItem(
+				self::SENDING_SMS_SUCCESS_VALUE,
+				Loc::getMessage('CRM_BADGE_SMS_SENDING_SUCCESS'),
+				ValueItemOptions::TEXT_COLOR_SUCCESS,
+				ValueItemOptions::BG_COLOR_SUCCESS
+			)
 		];
 	}
 

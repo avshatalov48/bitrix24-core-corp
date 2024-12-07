@@ -3,7 +3,7 @@
 use Bitrix\Main\Localization\Loc;
 Loc::loadMessages(__FILE__);
 
-Class ldap extends CModule
+class ldap extends CModule
 {
 	var $MODULE_ID = "ldap";
 	var $MODULE_VERSION;
@@ -110,14 +110,14 @@ Class ldap extends CModule
 	
 	function InstallEvents()
 	{
+		global $APPLICATION;
+
 		if (!$this->CheckLDAP())
 		{
 			$APPLICATION->ThrowException(implode("<br>", $this->errors));
 			return false;
 		}
 
-		$by = "name";
-		$order = "asc";
 		$dbLang = CLanguage::GetList();
 		while($arLang = $dbLang->Fetch())
 		{
@@ -174,12 +174,9 @@ Class ldap extends CModule
 		global $APPLICATION;
 		if ($this->CheckLDAP())
 		{
-			if($_ENV["COMPUTERNAME"]!='BX')
-			{
-				CopyDirFiles($_SERVER['DOCUMENT_ROOT']."/bitrix/modules/ldap/install/images", $_SERVER['DOCUMENT_ROOT']."/bitrix/images/ldap");
-				CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/ldap/install/admin", $_SERVER["DOCUMENT_ROOT"]."/bitrix/admin");
-				CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/ldap/install/themes", $_SERVER["DOCUMENT_ROOT"]."/bitrix/themes", true, true);
-			}
+			CopyDirFiles($_SERVER['DOCUMENT_ROOT']."/bitrix/modules/ldap/install/images", $_SERVER['DOCUMENT_ROOT']."/bitrix/images/ldap");
+			CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/ldap/install/admin", $_SERVER["DOCUMENT_ROOT"]."/bitrix/admin");
+			CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/ldap/install/themes", $_SERVER["DOCUMENT_ROOT"]."/bitrix/themes", true, true);
 		}
 
 		if(count($this->errors) > 0)
@@ -205,22 +202,26 @@ Class ldap extends CModule
 
 	function DoInstall()
 	{
-		global $DB, $DOCUMENT_ROOT, $APPLICATION;
+		global $APPLICATION;
+
 		$APPLICATION->ResetException();
 		if ($this->InstallDB())
 		{
 			$this->InstallFiles();
 			$this->InstallEvents();
 		}
-		$APPLICATION->IncludeAdminFile(Loc::getMessage("LDAP_INSTALL_TITLE"), $DOCUMENT_ROOT."/bitrix/modules/ldap/install/step1.php");
+		$APPLICATION->IncludeAdminFile(Loc::getMessage("LDAP_INSTALL_TITLE"), $_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/ldap/install/step1.php");
 	}
 
 	function DoUninstall()
 	{
-		global $DB, $DOCUMENT_ROOT, $APPLICATION, $step;
+		global $APPLICATION, $step;
+
 		$step = intval($step);
 		if($step<2)
-			$APPLICATION->IncludeAdminFile(Loc::getMessage("LDAP_UNINSTALL_TITLE"), $DOCUMENT_ROOT."/bitrix/modules/ldap/install/unstep1.php");
+		{
+			$APPLICATION->IncludeAdminFile(Loc::getMessage("LDAP_UNINSTALL_TITLE"), $_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/ldap/install/unstep1.php");
+		}
 		elseif($step==2)
 		{
 			$APPLICATION->ResetException();
@@ -229,8 +230,7 @@ Class ldap extends CModule
 				$this->UnInstallFiles();
 				$this->UnInstallEvents();
 			}
-			$APPLICATION->IncludeAdminFile(Loc::getMessage("LDAP_UNINSTALL_TITLE"), $DOCUMENT_ROOT."/bitrix/modules/ldap/install/unstep2.php");
+			$APPLICATION->IncludeAdminFile(Loc::getMessage("LDAP_UNINSTALL_TITLE"), $_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/ldap/install/unstep2.php");
 		}
 	}
 }
-?>

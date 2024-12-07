@@ -11,7 +11,9 @@ jn.define('tasks/in-app-url/routes', (require, exports, module) => {
 			async ({ taskId }) => {
 				const { Entry } = await requireLazy('tasks:entry');
 
-				Entry.openTask({ taskId }, {});
+				const analyticsLabel = getAnalyticsData();
+
+				Entry.openTask({ taskId }, { analyticsLabel });
 			},
 		).name('tasks:task:openForUser');
 
@@ -20,7 +22,9 @@ jn.define('tasks/in-app-url/routes', (require, exports, module) => {
 			async ({ taskId }) => {
 				const { Entry } = await requireLazy('tasks:entry');
 
-				Entry.openTask({ taskId }, {});
+				const analyticsLabel = getAnalyticsData();
+
+				Entry.openTask({ taskId }, { analyticsLabel });
 			},
 		).name('tasks:task:openForGroup');
 
@@ -33,4 +37,20 @@ jn.define('tasks/in-app-url/routes', (require, exports, module) => {
 			},
 		).name('tasks:efficiency:open');
 	};
+
+	function getAnalyticsData()
+	{
+		let analyticsLabel = {};
+
+		const componentName = PageManager.getNavigator().getVisible()?.type;
+		if (componentName === 'im.messenger')
+		{
+			analyticsLabel = {
+				c_section: 'chat',
+				c_element: 'title_click',
+			};
+		}
+
+		return analyticsLabel;
+	}
 });

@@ -9,6 +9,7 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\CatalogMobile\InventoryControl\Dto\DocumentListItem;
 use Bitrix\CatalogMobile\InventoryControl\Dto\DocumentListItemData;
 use Bitrix\Sale\ShipmentItem;
+use Bitrix\Sale\Tax\VatCalculator;
 
 class Item
 {
@@ -128,13 +129,29 @@ class Item
 	private function getTotalWithCurrencyValue(array $document): float
 	{
 		$shipmentBasketResult = ShipmentItem::getList([
-			'select' => ['PRICE' => 'BASKET.PRICE', 'ORDER_DELIVERY_ID', 'QUANTITY'],
+			'select' => [
+				'PRICE' => 'BASKET.PRICE',
+				'VAT_RATE' => 'BASKET.VAT_RATE',
+				'VAT_INCLUDED' => 'BASKET.VAT_INCLUDED',
+				'ORDER_DELIVERY_ID',
+				'QUANTITY',
+			],
 			'filter' => ['=ORDER_DELIVERY_ID' => $document['ID']],
 		]);
 		$totalValue = 0;
 		while ($shipmentItem = $shipmentBasketResult->fetch())
 		{
-			$totalValue += (float)$shipmentItem['PRICE'] * $shipmentItem['QUANTITY'];
+			$priceWithVat = (float)$shipmentItem['PRICE'];
+			if ($shipmentItem['VAT_RATE'] !== null)
+			{
+				$vatCalculator = new VatCalculator((float)$shipmentItem['VAT_RATE']);
+
+				$priceWithVat = ($shipmentItem['VAT_INCLUDED'] === 'Y')
+					? $priceWithVat
+					: $vatCalculator->accrue($priceWithVat);
+			}
+
+			$totalValue += $priceWithVat * $shipmentItem['QUANTITY'];
 		}
 
 		return $totalValue;

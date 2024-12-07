@@ -17,6 +17,7 @@ return [
 		'layout/ui/fields/focus-manager',
 		'layout/ui/menu',
 		'loc',
+		'feature',
 		'notify-manager',
 		'qrauth/utils',
 		'utils',

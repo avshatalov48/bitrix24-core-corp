@@ -17,6 +17,17 @@ class TemplatePathMaker extends PathMaker
 		return $path . $this->queryParams;
 	}
 
+	public function makePathForEntitySelector(): string
+	{
+		$path = str_replace(
+			['#user_id#', '#action#', '#template_id#'],
+			[$this->ownerId, $this->action, '#id#'],
+			RouteDictionary::PATH_TO_USER_TEMPLATE
+		);
+
+		return $path . $this->queryParams;
+	}
+
 	public function makeEntitiesListPath(): string
 	{
 		return str_replace(['#user_id#'], [$this->ownerId], RouteDictionary::PATH_TO_USER_TEMPLATES_LIST);

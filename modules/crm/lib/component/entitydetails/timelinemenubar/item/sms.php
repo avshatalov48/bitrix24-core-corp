@@ -4,9 +4,19 @@ namespace Bitrix\Crm\Component\EntityDetails\TimelineMenuBar\Item;
 
 use Bitrix\Crm\Component\EntityDetails\TimelineMenuBar\Item;
 use Bitrix\Crm\Integration\SmsManager;
+use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Settings;
+use Bitrix\Main\Loader;
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Page\Asset;
+use Bitrix\MessageService\Sender\Sms\Ednaru;
+use CCrmOwnerType;
 
 class Sms extends Item
 {
+	public const WHATSAPP_PROVIDER_ID = 'ednaru';
+	public const SERVICE_URL = '/bitrix/components/bitrix/crm.timeline/ajax.php';
+
 	public function getId(): string
 	{
 		return 'sms';
@@ -14,16 +24,20 @@ class Sms extends Item
 
 	public function getName(): string
 	{
-		return
-			(\Bitrix\Main\Loader::includeModule('messageservice') && \Bitrix\MessageService\Sender\Sms\Ednaru::isSupported())
-				? \Bitrix\Main\Localization\Loc::getMessage('CRM_TIMELINE_SMS_TITLE2')
-				: \Bitrix\Main\Localization\Loc::getMessage('CRM_TIMELINE_SMS_TITLE')
+		$isOldScenario = Loader::includeModule('messageservice')
+			&& Ednaru::isSupported()
+			&& !Settings\Crm::isWhatsAppScenarioEnabled()
+		;
+
+		return $isOldScenario
+			? Loc::getMessage('CRM_TIMELINE_SMS_TITLE2')
+			: Loc::getMessage('CRM_TIMELINE_SMS_TITLE')
 		;
 	}
 
 	public function getTitle(): string
 	{
-		return \Bitrix\Main\Localization\Loc::getMessage('CRM_TIMELINE_SMS');
+		return Loc::getMessage('CRM_TIMELINE_SMS');
 	}
 
 	public function isAvailable(): bool
@@ -43,9 +57,9 @@ class Sms extends Item
 			return false;
 		}
 
-		if (\CCrmOwnerType::isUseDynamicTypeBasedApproach($this->getEntityTypeId()))
+		if (CCrmOwnerType::isUseDynamicTypeBasedApproach($this->getEntityTypeId()))
 		{
-			$factory = \Bitrix\Crm\Service\Container::getInstance()->getFactory($this->getEntityTypeId());
+			$factory = Container::getInstance()->getFactory($this->getEntityTypeId());
 
 			return ($factory && $factory->isClientEnabled());
 		}
@@ -55,89 +69,16 @@ class Sms extends Item
 
 	public function prepareSettings(): array
 	{
-		$settings = [
-			'serviceUrl' => '/bitrix/components/bitrix/crm.timeline/ajax.php',
-			'canSendMessage' => SmsManager::canSendMessage(),
-			'smsConfig' => SmsManager::getEditorConfig(
-				$this->getEntityTypeId(),
-				$this->getEntityId()
-			),
+		return [
+			'serviceUrl' => self::SERVICE_URL,
 		];
-		$isSalescenterEnabled = !in_array($this->getEntityTypeId(), [
-			\CCrmOwnerType::StoreDocument,
-			\CCrmOwnerType::Order,
-			\CCrmOwnerType::OrderPayment,
-			\CCrmOwnerType::OrderShipment,
-			\CCrmOwnerType::ShipmentDocument,
-		]) && \Bitrix\Crm\Integration\SalesCenterManager::getInstance()->isShowApplicationInSmsEditor();
-
-		$settings['smsConfig']['isSalescenterEnabled'] = $isSalescenterEnabled;
-		$settings['smsConfig']['isSalescenterToolEnabled'] =
-			$isSalescenterEnabled
-			&& \Bitrix\Salescenter\Restriction\ToolAvailabilityManager::getInstance()->checkSalescenterAvailability()
-		;
-
-		$documentGeneratorManager = \Bitrix\Crm\Integration\DocumentGeneratorManager::getInstance();
-		$isDocumentsEnabled = $documentGeneratorManager->isDocumentButtonAvailable();
-		if ($isDocumentsEnabled)
-		{
-			$extension =  \Bitrix\Main\UI\Extension::getConfig('documentgenerator.selector');
-			if ($extension)
-			{
-				$provider = $documentGeneratorManager->getCrmOwnerTypeProvider($this->getEntityTypeId(), false);
-				if(!$provider)
-				{
-					$isDocumentsEnabled = false;
-				}
-				else
-				{
-					$settings['smsConfig']['documentsProvider'] = $provider;
-					$settings['smsConfig']['documentsValue'] = $this->getEntityId();
-				}
-			}
-			else
-			{
-				$isDocumentsEnabled = false;
-			}
-		}
-		$settings['smsConfig']['isDocumentsEnabled'] = $isDocumentsEnabled;
-
-		$settings['showFiles'] = false;
-		$enableFiles = (\Bitrix\Main\Loader::includeModule('disk') && \Bitrix\Disk\Configuration::isPossibleToShowExternalLinkControl());
-		if ($enableFiles)
-		{
-			$settings['smsConfig']['isFilesEnabled'] = $enableFiles;
-			$enableFilesExternalLink = \Bitrix\Disk\Configuration::isEnabledManualExternalLink();
-			$settings['smsConfig']['isFilesExternalLinkEnabled'] = $enableFilesExternalLink;
-			if ($enableFilesExternalLink)
-			{
-				$settings['smsConfig']['diskUrls'] = [
-					'urlSelect' => '/bitrix/tools/disk/uf.php?action=selectFile&SITE_ID='.SITE_ID,
-					'urlRenameFile' => '/bitrix/tools/disk/uf.php?action=renameFile',
-					'urlDeleteFile' => '/bitrix/tools/disk/uf.php?action=deleteFile',
-					'urlUpload' => '/bitrix/tools/disk/uf.php?action=uploadFile&ncc=1',
-				];
-			}
-			else
-			{
-				$settings['showFiles'] = \Bitrix\Crm\Integration\Bitrix24Manager::isEnabled();
-			}
-		}
-		else
-		{
-			$settings['smsConfig']['isFilesEnabled'] = false;
-		}
-		$settings['enableFiles'] = $enableFiles;
-
-		return $settings;
 	}
 
 	public function loadAssets(): void
 	{
 		if ($this->getSettings()['smsConfig']['isFilesExternalLinkEnabled'] ?? false)
 		{
-			\Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/components/bitrix/disk.uf.file/templates/.default/script.js');
+			Asset::getInstance()->addJs('/bitrix/components/bitrix/disk.uf.file/templates/.default/script.js');
 		}
 	}
-
 }

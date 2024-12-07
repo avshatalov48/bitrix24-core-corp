@@ -5,6 +5,7 @@ jn.define('layout/ui/search-bar/search-layout', (require, exports, module) => {
 	const { debounce } = require('utils/function');
 	const { isEqual } = require('utils/object');
 	const { PropTypes } = require('utils/validation');
+	const { Type } = require('type');
 	const { RunActionExecutor } = require('rest/run-action-executor');
 	const {
 		MINIMAL_SEARCH_LENGTH,
@@ -61,7 +62,7 @@ jn.define('layout/ui/search-bar/search-layout', (require, exports, module) => {
 		{
 			const search = this.nativeSearchField;
 
-			search.mode = 'layout';
+			search.mode = this.props.disablePresets ? 'bar' : 'layout';
 
 			search.removeAllListeners('cancel');
 			search.removeAllListeners('hide');
@@ -82,15 +83,22 @@ jn.define('layout/ui/search-bar/search-layout', (require, exports, module) => {
 		/**
 		 * @public
 		 */
-
 		show()
 		{
 			const search = this.nativeSearchField;
 			search.text = this.text;
 
 			this.createSearchLayoutView();
-			search.show(this.searchLayoutView, 44);
-			this.fetchPresets();
+
+			if (this.props.disablePresets)
+			{
+				search.show();
+			}
+			else
+			{
+				search.show(this.searchLayoutView, 44);
+				this.fetchPresets();
+			}
 		}
 
 		createSearchLayoutView()
@@ -116,9 +124,20 @@ jn.define('layout/ui/search-bar/search-layout', (require, exports, module) => {
 			this.nativeSearchField.close();
 		}
 
+		getSearchButton = () => {
+			return {
+				type: 'search',
+				id: 'search',
+				testId: 'search',
+				callback: this.show,
+				accent: this.hasChanges(),
+			};
+		};
+
 		/**
 		 * @public
 		 * @return {string|null}
+		 * @deprecated - now you need to use getSearchButton
 		 */
 		getSearchButtonBackgroundColor()
 		{
@@ -136,6 +155,11 @@ jn.define('layout/ui/search-bar/search-layout', (require, exports, module) => {
 		 */
 		getDefaultPresetId()
 		{
+			if (Type.isFunction(this.props.getDefaultPresetId))
+			{
+				return this.props.getDefaultPresetId();
+			}
+
 			if (!this.presetsLoaded)
 			{
 				return null;
@@ -230,14 +254,16 @@ jn.define('layout/ui/search-bar/search-layout', (require, exports, module) => {
 				return;
 			}
 
-			const { counters, presets } = response.data;
-			this.counters = counters;
-			this.presets = presets;
+			const { counters = [], presets } = response.data;
 
 			if (!this.presetsLoaded || !isEqual(this.counters, counters) || !isEqual(this.presets, presets))
 			{
-				this.searchLayoutView.setPresets(presets, counters);
+				this.counters = counters;
+				this.presets = Object.entries(presets).map(([id, preset]) => ({ id, ...preset }));
+
+				this.searchLayoutView.setPresets(this.presets, this.counters);
 			}
+
 			this.presetsLoaded = true;
 		}
 
@@ -290,16 +316,16 @@ jn.define('layout/ui/search-bar/search-layout', (require, exports, module) => {
 		 */
 		search()
 		{
-			if (this.text.length > 0 && this.text.length < MINIMAL_SEARCH_LENGTH)
-			{
-				return;
-			}
-
 			if (this.text.length > 0 && this.hasRestrictions())
 			{
 				this.text = '';
 				this.nativeSearchField.text = '';
 
+				return;
+			}
+
+			if (this.text.length > 0 && this.text.length < MINIMAL_SEARCH_LENGTH)
+			{
 				return;
 			}
 
@@ -343,6 +369,11 @@ jn.define('layout/ui/search-bar/search-layout', (require, exports, module) => {
 				return this.presetId !== this.getDefaultPresetId();
 			}
 
+			if (Type.isFunction(this.props.getDefaultPresetId))
+			{
+				return this.presetId !== this.props.getDefaultPresetId();
+			}
+
 			return false;
 		}
 	}
@@ -357,6 +388,7 @@ jn.define('layout/ui/search-bar/search-layout', (require, exports, module) => {
 		onMoreButtonClick: PropTypes.func,
 		presetId: PropTypes.string,
 		counterId: PropTypes.string,
+		disablePresets: PropTypes.bool,
 	};
 
 	module.exports = { SearchLayout };

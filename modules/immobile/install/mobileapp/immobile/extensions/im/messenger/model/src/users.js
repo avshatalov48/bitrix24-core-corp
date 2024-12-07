@@ -9,7 +9,7 @@ jn.define('im/messenger/model/users', (require, exports, module) => {
 	const { LoggerManager } = require('im/messenger/lib/logger');
 	const logger = LoggerManager.getInstance().getLogger('model--users');
 
-	const elementState = {
+	const userDefaultElement = Object.freeze({
 		id: 0,
 		name: '',
 		firstName: '',
@@ -43,7 +43,7 @@ jn.define('im/messenger/model/users', (require, exports, module) => {
 			innerPhone: '',
 		},
 		isCompleteInfo: true,
-	};
+	});
 
 	const usersModel = {
 		namespaced: true,
@@ -77,7 +77,10 @@ jn.define('im/messenger/model/users', (require, exports, module) => {
 				return userList;
 			},
 
-			/** @function usersModel/getByIdList */
+			/**
+			 * @function usersModel/getByIdList
+			 * @return {Array<UsersModelState>}
+			 */
 			getByIdList: (state, getters) => (idList) => {
 				if (!Type.isArrayFilled(idList))
 				{
@@ -187,7 +190,7 @@ jn.define('im/messenger/model/users', (require, exports, module) => {
 				{
 					result = payload.map((user) => {
 						return {
-							...elementState,
+							...userDefaultElement,
 							...validate(user, {
 								fromLocalDatabase: true,
 							}),
@@ -217,7 +220,7 @@ jn.define('im/messenger/model/users', (require, exports, module) => {
 				{
 					result = payload.map((user) => {
 						return {
-							...elementState,
+							...userDefaultElement,
 							...validate(user),
 							isCompleteInfo: true,
 						};
@@ -254,7 +257,7 @@ jn.define('im/messenger/model/users', (require, exports, module) => {
 					{
 						modelUser.isCompleteInfo = false;
 						userList.push({
-							...elementState,
+							...userDefaultElement,
 							...modelUser,
 						});
 					}
@@ -325,7 +328,7 @@ jn.define('im/messenger/model/users', (require, exports, module) => {
 							if (isHasBaseProperty)
 							{
 								result.push({
-									...elementState,
+									...userDefaultElement,
 									...validate(user),
 								});
 							}
@@ -671,5 +674,5 @@ jn.define('im/messenger/model/users', (require, exports, module) => {
 		return result;
 	}
 
-	module.exports = { usersModel };
+	module.exports = { usersModel, userDefaultElement };
 });

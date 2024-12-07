@@ -9,6 +9,7 @@ return [
 		'im:messenger/lib/params',
 		'im:messenger/lib/helper',
 		'im:messenger/const',
+		'im:messenger/type',
 	],
 	'bundle' => [
 	],

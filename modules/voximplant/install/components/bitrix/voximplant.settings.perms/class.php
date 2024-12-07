@@ -41,10 +41,11 @@ class CVoximplantPermsComponent extends CBitrixComponent
 
 		$roleAccessCodes = array();
 
+		$roleAccess = \Bitrix\Voximplant\Security\RoleManager::getRoleAccess() ?? [];
 		$accessManager = new CAccess();
-		$resolvedAccessCodes = $accessManager->GetNames(array_keys(\Bitrix\Voximplant\Security\RoleManager::getRoleAccess()));
+		$resolvedAccessCodes = $accessManager->GetNames(array_keys($roleAccess));
 
-		foreach(\Bitrix\Voximplant\Security\RoleManager::getRoleAccess() as $accessCode => $accessRoles)
+		foreach($roleAccess as $accessCode => $accessRoles)
 		{
 			foreach ($accessRoles as $roleId)
 			{

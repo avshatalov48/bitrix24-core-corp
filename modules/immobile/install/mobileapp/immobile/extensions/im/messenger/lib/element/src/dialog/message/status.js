@@ -89,7 +89,10 @@ jn.define('im/messenger/lib/element/dialog/message/status', (require, exports, m
 				showTime: true,
 			});
 			const dateText = dataFriendly.makeText(dataState);
-			const text = `${Loc.getMessage('IMMOBILE_ELEMENT_DIALOG_MESSAGE_VIEWED')} ${dateText}`;
+			const text = Loc.getMessage(
+				'IMMOBILE_ELEMENT_DIALOG_MESSAGE_VIEWED_MSGVER_1',
+				{ '#DATE#': dateText },
+			);
 			this.setStatusText(text);
 		}
 

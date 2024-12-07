@@ -27,5 +27,4 @@ trait FileListPreparer
 
 		return $result;
 	}
-
 }

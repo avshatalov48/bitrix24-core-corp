@@ -40,8 +40,46 @@ export class EmployeePage extends BaseSettingsPage
 
 		let inviteSection = this.#buildInviteSection();
 		inviteSection?.renderTo(contentNode);
+
+		let additionalSection = this.#buildAdditionalSection();
+		additionalSection?.renderTo(contentNode);
 	}
 
+	#buildAdditionalSection(): ?SettingsSection
+	{
+		if (!this.hasValue('SECTION_ADDITIONAL'))
+		{
+			return;
+		}
+
+		let additionalSection = new Section(this.getValue('SECTION_ADDITIONAL'));
+
+		let sectionSettings = new SettingsSection({
+			section: additionalSection,
+			parent: this
+		});
+
+		if (this.hasValue('allow_company_pulse'))
+		{
+			let companyPulseField = new Checker(this.getValue('allow_company_pulse'));
+
+			EventEmitter.subscribe(
+				companyPulseField.switcher,
+				'toggled',
+				() =>
+				{
+					this.getAnalytic()?.addEventConfigEmployee(
+						AnalyticSettingsEvent.CHANGE_QUICK_REG,
+						companyPulseField.isChecked()
+					);
+				}
+			);
+
+			EmployeePage.addToSectionHelper(companyPulseField, sectionSettings);
+		}
+
+		return sectionSettings;
+	}
 	#buildProfileSection(): ?SettingsSection
 	{
 		if (!this.hasValue('SECTION_PROFILE'))

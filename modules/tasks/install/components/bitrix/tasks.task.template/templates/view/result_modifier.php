@@ -271,6 +271,11 @@ $arResult['TEMPLATE_DATA']['TEMPLATE']['SE_PARENTITEM'] = $seParentItem;
 
 $ufToShow = array();
 $diskUfCode = Integration\Disk\UserField::getMainSysUFCode();
+if (isset($arResult['TEMPLATE_DATA']['USER_FIELDS'][$diskUfCode]))
+{
+	$arResult['TEMPLATE_DATA']['USER_FIELDS'][$diskUfCode]['ENTITY_VALUE_ID'] = $template->getId();
+}
+
 foreach($arResult['TEMPLATE_DATA']['USER_FIELDS'] as $userField)
 {
 	$isEmpty = UserField::isValueEmpty($userField["VALUE"]) && $userField["USER_TYPE_ID"] !== 'boolean';
@@ -311,5 +316,6 @@ $arResult['JS_DATA']= array(
 	'can' => array(
 		'edit' => $template->canEdit(),
 	),
+	'context' => \Bitrix\Main\Context::getCurrent()->getRequest()->get('context'),
 	'backUrl' => Util::secureBackUrl($arResult['TEMPLATE_DATA']['BACKURL']),
 );

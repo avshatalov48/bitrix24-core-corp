@@ -55,14 +55,12 @@ $APPLICATION->IncludeComponent(
 		'SCRIPTS' => [
 			'DELETE' => 'BX.Crm.EntityDetailManager.items["'.CUtil::JSEscape($guid).'"].processRemoval();'
 		],
-		'ANALYTICS' => [
-			'c_sub_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SUB_SECTION_DETAILS,
-		],
+		'ANALYTICS' => $arResult['ANALYTICS'] ?? [],
 	],
 	$component
 );
 
-?><script type="text/javascript">
+?><script>
 		BX.ready(
 			function() {
 				BX.message({
@@ -100,13 +98,16 @@ $APPLICATION->IncludeComponent(
 		'ACTIVITY_EDITOR_ID' => $activityEditorID,
 		'PATH_TO_USER_PROFILE' => $arResult['PATH_TO_USER_PROFILE'],
 		'ENABLE_PROGRESS_BAR' => false,
-		'EXTRAS' => ['CATEGORY_ID' => $arResult['CATEGORY_ID']],
+		'EXTRAS' => [
+			'CATEGORY_ID' => $arResult['CATEGORY_ID'],
+			'ANALYTICS' => $arResult['ANALYTICS'] ?? [],
+		],
 	]
 );
 
 if ($arResult['ENTITY_ID'] <= 0 && !empty($arResult['FIELDS_SET_DEFAULT_VALUE']))
 {?>
-	<script type="text/javascript">
+	<script>
 		BX.ready(function () {
 			var fieldsSetDefaultValue = <?= CUtil::PhpToJSObject($arResult['FIELDS_SET_DEFAULT_VALUE']) ?>;
 			BX.addCustomEvent("onSave", function(fieldConfigurator, params) {

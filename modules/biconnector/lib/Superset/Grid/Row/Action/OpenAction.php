@@ -22,7 +22,7 @@ final class OpenAction extends BaseAction
 
 	protected function getText(): string
 	{
-		return Loc::getMessage('BICONNECTOR_DASHBOARD_GRID_ACTION_OPEN');
+		return Loc::getMessage('BICONNECTOR_DASHBOARD_GRID_ACTION_OPEN') ?? '';
 	}
 
 	public function getControl(array $rawFields): ?array
@@ -33,7 +33,12 @@ final class OpenAction extends BaseAction
 			return parent::getControl($rawFields);
 		}
 
-		$this->href = "/bi/dashboard/detail/$dashboardId/";
+		if (!empty($rawFields['HAS_ZONE_URL_PARAMS']))
+		{
+			return null;
+		}
+
+		$this->href = $rawFields['DETAIL_URL'];
 
 		return parent::getControl($rawFields);
 	}

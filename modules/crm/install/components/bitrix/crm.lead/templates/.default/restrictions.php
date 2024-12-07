@@ -13,25 +13,27 @@ use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Localization\Loc;
 
-if (!RestrictionManager::getLeadsRestriction()->hasPermission()):?>
+if (!RestrictionManager::getLeadsRestriction()->hasPermission()):
+	?>
 <script>
-	BX.ready(function() {
-		<?= RestrictionManager::getLeadsRestriction()->prepareInfoHelperScript() ?>;
+	BX.ready(() => {
+		<?= RestrictionManager::getLeadsRestriction()->prepareFeaturePromoterScript() ?>;
 
-		let slider = top.BX && top.BX.SidePanel && top.BX.SidePanel.Instance.getSliderByWindow(window);
+		const slider = top?.BX?.SidePanel?.Instance.getSliderByWindow(window);
 		if (slider)
 		{
 			slider.close();
 		}
 		else
 		{
-			BX.addCustomEvent("SidePanel.Slider:onCloseComplete", function() {
-				location.href = "/crm/deal/";
+			BX.addCustomEvent('SidePanel.Slider:onCloseComplete', () => {
+				location.href = '/crm/deal/';
 			});
 		}
-	})
+	});
 </script>
-<?endif;
+<?php
+	endif;
 
 if (RestrictionManager::getActivityFieldRestriction()->isExceeded()):?>
 	<script>

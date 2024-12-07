@@ -1,0 +1,55 @@
+.ai__roles-dialog_loader-popup-inner {
+	display: flex;
+	flex-direction: column;
+	justify-content: flex-start;
+	align-items: stretch;
+	height: 100%;
+}
+
+.ai__roles-dialog_loader-popup-content {
+	display: flex;
+	flex-direction: row;
+	align-items: stretch;
+	justify-content: flex-start;
+	flex-wrap: wrap;
+	flex-basis: 100%;
+}
+
+.ai__roles-dialog_loader-popup-title-bar {
+	display: flex;
+	flex-direction: row;
+	justify-content: space-between;
+	align-items: center;
+	width: 100%;
+	box-sizing: border-box;
+	position: relative;
+	min-height: 66px;
+	padding: 0 24px 0 24px;
+}
+
+.ai__roles-dialog_loader-popup-title-bar::after {
+	content: '';
+	display: block;
+	width: 100%;
+	height: 5px;
+	background: linear-gradient(180deg, #000000 0%, rgba(0, 0, 0, 0.508016) 41.51%, rgba(0, 0, 0, 0.0001) 100%);
+	opacity: 0.08;
+	position: absolute;
+	top: 100%;
+	left: 0;
+	z-index: 1;
+}
+
+.ai__roles-dialog_loader-popup-content-left {
+	box-sizing: border-box;
+	width: 355px;
+	padding: 24px 24px 27px 12px;
+	background-color: var(--entity-catalog__gray_lighter);
+}
+
+.ai__roles-dialog_loader-popup-content-right {
+	box-sizing: border-box;
+	padding: 24px 24px 20px 26px;
+	width: calc(100% - 355px);
+	background-color: var(--entity-catalog__gray_light);
+}

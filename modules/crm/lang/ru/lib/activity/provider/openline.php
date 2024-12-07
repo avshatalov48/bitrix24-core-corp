@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["IMOPENLINES_ACTIVITY_PROVIDER_NAME"] = "Открытые линии";
 $MESS["IMOPENLINES_ACTIVITY_PROVIDER_TYPE_TEMPLATE"] = "Открытая линия - #NAME#";
 $MESS["IMOPENLINES_ACTIVITY_PROVIDER_SESSION_INCOMING"] = "Входящий чат";
@@ -7,4 +7,4 @@ $MESS["IMOPENLINES_ACTIVITY_PROVIDER_SESSION_RENDER_VIEW"] = "Открыть п�
 $MESS["IMOPENLINES_ACTIVITY_PROVIDER_SESSION_RENDER_START"] = "Продолжить диалог";
 $MESS["IMOPENLINES_ACTIVITY_PROVIDER_ACTIVE"] = "Подключено";
 $MESS["IMOPENLINES_ACTIVITY_PROVIDER_INACTIVE"] = "Подключить";
-?>
+$MESS["IMOPENLINES_ACTIVITY_PROVIDER_ACTIVITY_SUBJECT"] = "Чат открытой линии - \"#LEAD_NAME#\" (#CONNECTOR_NAME#)";

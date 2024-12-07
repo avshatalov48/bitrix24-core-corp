@@ -98,7 +98,10 @@ $this->setFrameMode(true);
 						'otp' => $arResult['OTP'],
 						'bindings' => $arResult['BINDINGS'],
 						'im' => ModuleManager::isModuleInstalled('im') ? 'Y' : 'N',
+						'signDocument' => ($arResult['IS_SIGN_DOCUMENT_AVAILABLE'] ?? false) ? 'Y' : 'N',
 					],
+					'desktopDownloadLinks' => $arResult['DESKTOP_DOWNLOAD_LINKS'],
+					'networkProfileUrl' => $arResult['NETWORK_PROFILE_URL'],
 				])?>);
 		});
 	</script>

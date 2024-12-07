@@ -8,7 +8,9 @@ use Bitrix\Crm\Service\Timeline\Layout\Header\Tag;
 
 class EventDownloaded extends LogMessage
 {
-	use CalendarSharing;
+	use CalendarSharing\ModelDataTrait;
+	use CalendarSharing\PlannedEventContentBlockTrait;
+	use CalendarSharing\MessageTrait;
 
 	public function getType(): string
 	{
@@ -33,7 +35,7 @@ class EventDownloaded extends LogMessage
 	public function getContentBlocks(): ?array
 	{
 		return [
-			'planned' => $this->getPlannedEventContentBlock(),
+			'planned' => $this->getPlannedEventContentBlock($this->getContactTypeId(), $this->getContactId()),
 		];
 	}
 }

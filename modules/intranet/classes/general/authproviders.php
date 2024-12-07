@@ -190,19 +190,16 @@ class CIntranetAuthProvider extends CAuthProvider implements IProviderInterface
 					"TYPE" => 4,
 				);
 
-				$dbRes = CIBlockSection::GetList(
-					array('ID' => 'ASC'),
-					array('IBLOCK_ID' => COption::GetOptionInt('intranet', 'iblock_structure'), '%NAME' => $search),
-					false,
-					array('ID', 'NAME'),
-					array('nTopCount' => 7)
-				);
-				while ($arSection = $dbRes->fetch())
+				$departmentRepository = \Bitrix\Intranet\Service\ServiceContainer::getInstance()
+					->departmentRepository();
+				$departments = $departmentRepository->getDepartmentsByName($search, 7);
+				/** @var \Bitrix\Intranet\Entity\Department $department */
+				foreach ($departments as $department)
 				{
 					$arItem = Array(
-						"ID" => $arSection["ID"],
+						"ID" => $department->getId(),
 						"AVATAR" => "/bitrix/js/main/core/images/access/avatar-user-everyone.png",
-						"NAME" => $arSection["NAME"],
+						"NAME" => $department->getName(),
 						"DESC" => GetMessage("authprov_group"),
 						"CHECKBOX" => array(
 							"D#ID#" => GetMessage("authprov_check_d"),
@@ -306,6 +303,8 @@ class CIntranetAuthProvider extends CAuthProvider implements IProviderInterface
 		$elements = '';
 		$arElement = array();
 		$arElements = array();
+		$departmentRepository = \Bitrix\Intranet\Service\ServiceContainer::getInstance()
+			->departmentRepository();
 
 		$arLRU = CAccess::GetLastRecentlyUsed($this->id);
 		if(!empty($arLRU))
@@ -333,15 +332,16 @@ class CIntranetAuthProvider extends CAuthProvider implements IProviderInterface
 				else if (mb_substr($val, 0, 2) == 'IU')
 					$arLast['U'][] = mb_substr($val, 2);
 			}
-			$dbRes = CIBlockSection::GetList(
-				array('ID' => 'ASC'),
-				array('IBLOCK_ID' => COption::GetOptionInt('intranet', 'iblock_structure'), 'ID' => $arLastID),
-				false,
-				array('ID', 'NAME')
-			);
-			while ($arSection = $dbRes->Fetch())
+
+			$departments = $departmentRepository->findAllByIds($arLastID);
+			/** @var \Bitrix\Intranet\Entity\Department $department */
+			foreach ($departments as $department)
 			{
-				$arElement[$arSection['ID']] = $arSection;
+				$adapter = [
+					'ID' => (string)$department->getId(),
+					'NAME' => $department->getName(),
+				];
+				$arElement[$adapter['ID']] = $adapter;
 			}
 			if (!empty($arLast['DR']))
 			{
@@ -416,23 +416,26 @@ class CIntranetAuthProvider extends CAuthProvider implements IProviderInterface
 			}
 			elseif ($obCache->StartDataCache())
 			{
+				$departmentCollection = $departmentRepository->getAllTree();
+				foreach ($departmentCollection as $department)
+				{
+					$iblockSectionID = $department->getParentId() ?? 0;
+
+					if (!isset($arStructure[$iblockSectionID]) || !is_array($arStructure[$iblockSectionID]))
+					{
+						$arStructure[$iblockSectionID] = [$department->getId()];
+					}
+					else
+					{
+						$arStructure[$iblockSectionID][] = $department->getId();
+					}
+
+					$arSections[$department->getId()] = $department->toIblockArray();
+				}
 				global $CACHE_MANAGER;
 				$CACHE_MANAGER->StartTagCache($cacheDir);
 				$CACHE_MANAGER->RegisterTag("iblock_id_".$IBlockID);
 
-				$dbRes = CIBlockSection::GetTreeList($arSecFilter);
-
-				while ($arRes = $dbRes->Fetch())
-				{
-					$iblockSectionID = intval($arRes['IBLOCK_SECTION_ID']);
-
-					if (!isset($arStructure[$iblockSectionID]) || !is_array($arStructure[$iblockSectionID]))
-						$arStructure[$iblockSectionID] = array($arRes['ID']);
-					else
-						$arStructure[$iblockSectionID][] = $arRes['ID'];
-
-					$arSections[$arRes['ID']] = $arRes;
-				}
 				$CACHE_MANAGER->EndTagCache();
 				$obCache->EndDataCache(array("SECTIONS" => $arSections, "STRUCTURE" => $arStructure));
 			}
@@ -475,16 +478,20 @@ class CIntranetAuthProvider extends CAuthProvider implements IProviderInterface
 		$arResult = array();
 		if(!empty($arID['D']))
 		{
-			$res = CIBlockSection::GetList(
-				array('ID' => 'ASC'),
-				array('IBLOCK_ID' => COption::GetOptionInt('intranet', 'iblock_structure'), 'ID'=>$arID['D']),
-				false,
-				array("ID", "NAME")
-			);
-			while($arSec = $res->Fetch())
+			$departmentRepository = \Bitrix\Intranet\Service\ServiceContainer::getInstance()
+				->departmentRepository();
+			$departments = $departmentRepository->findAllByIds($arID['D']);
+			/** @var \Bitrix\Intranet\Entity\Department $department */
+			foreach($departments as $department)
 			{
-				$arResult["D".$arSec["ID"]] = array("provider" => GetMessage("authprov_name_out_group"), "name"=>$arSec["NAME"].": ".GetMessage("authprov_check_d"));
-				$arResult["DR".$arSec["ID"]] = array("provider" => GetMessage("authprov_name_out_group"), "name"=>$arSec["NAME"].": ".GetMessage("authprov_check_dr"));
+				$arResult["D".$department->getId()] = [
+					"provider" => GetMessage("authprov_name_out_group"),
+					"name" => $department->getName().": ".GetMessage("authprov_check_d")
+				];
+				$arResult["DR".$department->getId()] = [
+					"provider" => GetMessage("authprov_name_out_group"),
+					"name" => $department->getName().": ".GetMessage("authprov_check_dr")
+				];
 			}
 		}
 		if(!empty($arID['U']))
@@ -580,6 +587,14 @@ class CIntranetAuthProvider extends CAuthProvider implements IProviderInterface
 		}
 	}
 
+	/**
+	 * @Deprecated
+	 *
+	 * Will be deleted after transferring department data to the "humanresources" module
+	 *
+	 * @param $arParams
+	 * @return false|void
+	 */
 	public static function OnBeforeIBlockSectionUpdate($arFields)
 	{
 		if(COption::GetOptionString('intranet', 'iblock_structure', '') == $arFields['IBLOCK_ID'])

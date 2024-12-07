@@ -8,6 +8,7 @@ $MESS['CSPL_MENU_CREATE_ARTNUMBER'] = 'Товар с серийным номер
 $MESS['CSPL_MENU_CREATE_BARCODE'] = 'Товар со штрихкодами';
 $MESS['CSPL_MENU_CHOOSE_FROM_DB'] = 'Выбрать из каталога';
 $MESS['CSPL_MENU_CHOOSE_FROM_DB_2'] = 'Найти или создать';
+$MESS['CSPL_MENU_CHOOSE_FROM_DB_WITHOUT_CREATION'] = 'Найти товар';
 $MESS['CSPL_REMOVE_PRODUCT_ERROR'] = 'Невозможно удалить товар из документа';
 $MESS['CSPL_UPDATE_TAB_ERROR'] = 'При загрузке данных произошла ошибка';
 $MESS['CSPL_UNKNOWN_ERROR'] = 'Что-то пошло не так...';

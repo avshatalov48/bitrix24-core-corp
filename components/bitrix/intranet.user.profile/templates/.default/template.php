@@ -160,7 +160,10 @@ if (
 					}
 					?>
 					<div class="<?= implode(' ', $classList) ?>" data-role="user-profile-actions-button">
-						<span><?=ToUpper(Loc::getMessage("INTRANET_USER_PROFILE_".$arResult["User"]["STATUS"]))?></span>
+						<span><?=mb_strtoupper(
+							Loc::getMessage("INTRANET_USER_PROFILE_MSG_1_".$arResult["User"]["STATUS"])
+							?? Loc::getMessage("INTRANET_USER_PROFILE_".$arResult["User"]["STATUS"]
+							))?></span>
 						<?php
 						if ($arResult["Permissions"]['edit'])
 						{
@@ -177,7 +180,7 @@ if (
 
 			<div class="intranet-user-profile-status-info">
 				<div class="intranet-user-profile-status intranet-user-profile-status-<?= $arResult["User"]["ONLINE_STATUS"]["STATUS"] ?>">
-					<?=ToUpper($arResult["User"]["ONLINE_STATUS"]["STATUS_TEXT"])?>
+					<?=mb_strtoupper($arResult["User"]["ONLINE_STATUS"]["STATUS_TEXT"])?>
 				</div>
 				<div class="intranet-user-profile-last-time">
 					<?php
@@ -246,7 +249,7 @@ if (
 
 						if (class_exists(Bitrix\UI\Avatar\Mask\Helper::class)
 							&&
-							\Bitrix\Main\Config\Option::get('ui', 'avatar-editor-availability-delete-after-10.2022', 'N') === 'Y'
+							\Bitrix\Main\Config\Option::get('ui', 'avatar-editor-availability', 'N') === 'Y'
 						)
 						{
 							?><div class="intranet-user-profile-userpic-mask" id="intranet-user-profile-photo-mask">
@@ -298,7 +301,21 @@ if (
 							<a
 								class="ui-btn ui-btn-sm ui-btn-light-border ui-btn-round"
 								href="javascript:void(0)"
-								onclick="if (top.BXIM) { top.BXIM.callTo(<?= $arResult["User"]['ID'] ?>); }"
+								onclick="if (top.BXIM) {
+									top.BXIM.callTo(<?= $arResult['User']['ID'] ?>);
+									if (BX.type.isFunction(BX.UI?.Analytics?.sendData))
+									{
+										BX.UI.Analytics.sendData({
+											tool: 'im',
+											category: 'user_profile',
+											event: 'click_call_button',
+											type: 'private',
+											c_section: 'user_profile',
+											c_element: 'videocall',
+											p5: 'profileId_<?= $arResult['User']['ID'] ?>'
+										});
+									}
+								}"
 							>
 								<?= Loc::getMessage("INTRANET_USER_PROFILE_VIDEOCALL") ?>
 							</a>
@@ -393,14 +410,14 @@ if (
 			<div class="intranet-user-profile-column-block">
 				<div class="intranet-user-profile-apps">
 					<div class="intranet-user-profile-desktop-block">
-						<?=Loc::getMessage("INTRANET_USER_PROFILE_DISK_INSTALLED_MSGVER_1")?>
 						<?php
+						$installationDate = null;
 						if (
 							isset($arResult["DISK_INFO"]["INSTALLATION_DATE"])
 							&& !empty(($arResult["DISK_INFO"]["INSTALLATION_DATE"]))
 						)
 						{
-							echo $arResult["DISK_INFO"]["INSTALLATION_DATE"];
+							$installationDate = $arResult["DISK_INFO"]["INSTALLATION_DATE"];
 						}
 
 						if (
@@ -408,7 +425,15 @@ if (
 							&& !empty(($arResult["DISK_INFO"]["SPACE"]))
 						)
 						{
-							echo ", ".Loc::getMessage("INTRANET_USER_PROFILE_DISK_SPACE", array("#VALUE#" => $arResult["DISK_INFO"]["SPACE"]));
+						?>
+							<?=Loc::getMessage("INTRANET_USER_PROFILE_DISK_SPACE_MSGVER_1", ['#DATE#' => $installationDate, '#VALUE#' => $arResult["DISK_INFO"]["SPACE"]])?>
+						<?php
+						}
+						else
+						{
+						?>
+							<?=Loc::getMessage("INTRANET_USER_PROFILE_DISK_INSTALLED_MSGVER_2", ['#DATE#' => $installationDate])?>
+						<?php
 						}
 						?>
 					</div>
@@ -923,9 +948,13 @@ if ($arResult["adminRightsRestricted"])
 		"INTRANET_USER_PROFILE_MOVE_TO_INTRANET_TITLE" : "<?= CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_MOVE_TO_INTRANET_TITLE")) ?>",
 		"INTRANET_USER_PROFILE_REINVITE_SUCCESS" : "<?= CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_REINVITE_SUCCESS")) ?>",
 		"INTRANET_USER_PROFILE_MOVE_ADMIN_RIGHTS_SECURITY_CONFIRM_TITLE" : "<?= CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_MOVE_ADMIN_RIGHTS_SECURITY_CONFIRM_TITLE")) ?>",
-		"INTRANET_USER_PROFILE_MOVE_ADMIN_RIGHTS_SECURITY_CONFIRM_DESCRIPTION" : "<?= CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_MOVE_ADMIN_RIGHTS_SECURITY_CONFIRM_DESCRIPTION")) ?>",
-		"INTRANET_USER_PROFILE_CONFIRM_YES" : "<?= CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_CONFIRM_YES")) ?>",
-		"INTRANET_USER_PROFILE_CONFIRM_NO" : "<?= CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_CONFIRM_NO")) ?>",
+		"INTRANET_USER_PROFILE_MOVE_ADMIN_RIGHTS_SECURITY_CONFIRM_DESCRIPTION_MSGVER_1" : "<?= CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_MOVE_ADMIN_RIGHTS_SECURITY_CONFIRM_DESCRIPTION_MSGVER_1", [
+			'[helpdesklink]' => '<a href="javascript:top.BX.Helper.show(\'redirect=detail&code=20682986\');">',
+			'[/helpdesklink]' => '</a>'
+		])) ?>",
+		"INTRANET_USER_PROFILE_CONFIRM_YES_MSGVER_1" : "<?= CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_CONFIRM_YES_MSGVER_1")) ?>",
+		"INTRANET_USER_PROFILE_CONFIRM_YES_INTEGRATOR" : "<?= CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_CONFIRM_YES_INTEGRATOR")) ?>",
+		"INTRANET_USER_PROFILE_CONFIRM_NO_MSGVER_1" : "<?= CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_CONFIRM_NO_MSGVER_1")) ?>",
 		"INTRANET_USER_PROFILE_PHOTO_DELETE_CONFIRM" : "<?= CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_PHOTO_DELETE_CONFIRM")) ?>",
 		"INTRANET_USER_PROFILE_MOVE_ADMIN_RIGHTS_CONFIRM" : "<?= CUtil::JSEscape($moveRightsConfirmText) ?>",
 		"INTRANET_USER_PROFILE_FIELD_NAME" : "<?= CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_FIELD_NAME")) ?>",
@@ -947,7 +976,11 @@ if ($arResult["adminRightsRestricted"])
 				"#LINK_END#" => "</a>"
 			))
 		) ?>",
-		"INTRANET_USER_PROFILE_STRESSLEVEL_NORESULT_INDICATOR_TEXT" : "<?= CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_STRESSLEVEL_NORESULT_INDICATOR_TEXT")) ?>"
+		"INTRANET_USER_PROFILE_STRESSLEVEL_NORESULT_INDICATOR_TEXT" : "<?= CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_STRESSLEVEL_NORESULT_INDICATOR_TEXT")) ?>",
+		"INTRANET_USER_PROFILE_ACTION_CONFIRM" : "<?= CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_ACTION_CONFIRM")) ?>",
+		"INTRANET_USERPROFILE_ACTION_REFUSE" : "<?= CUtil::JSEscape(Loc::getMessage("INTRANET_USERPROFILE_ACTION_REFUSE")) ?>",
+		"INTRANET_USER_PROFILE_INTEGRATOR_ERROR_NOT_PARTNER_CLOSE" : "<?= CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_INTEGRATOR_ERROR_NOT_PARTNER_CLOSE")) ?>",
+		"INTRANET_USER_PROFILE_INTEGRATOR_ERROR_NOT_PARTNER" : "<?= CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_INTEGRATOR_ERROR_NOT_PARTNER")) ?>",
 	});
 
 	new BX.Intranet.UserProfile.Manager({

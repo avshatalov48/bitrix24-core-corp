@@ -2,13 +2,13 @@
  * @module layout/ui/counter-view
  */
 jn.define('layout/ui/counter-view', (require, exports, module) => {
-	const AppTheme = require('apptheme');
+	const { Color } = require('tokens');
 
 	const CounterView = (value, props = {}) => {
 		const {
 			isDouble = false,
-			firstColor = AppTheme.colors.accentMainAlert,
-			secondColor = AppTheme.colors.accentMainSuccess,
+			firstColor = Color.accentMainAlert.toHex(),
+			secondColor = Color.accentMainSuccess.toHex(),
 		} = props;
 
 		return View(
@@ -52,7 +52,7 @@ jn.define('layout/ui/counter-view', (require, exports, module) => {
 							height: 20,
 							width: 20,
 							zIndex: -1,
-							backgroundColor: AppTheme.colors.bgContentPrimary,
+							backgroundColor: Color.bgContentPrimary.toHex(),
 							borderRadius: 10,
 							right: 2,
 						},
@@ -78,7 +78,7 @@ jn.define('layout/ui/counter-view', (require, exports, module) => {
 				Text({
 					testId: `counter-view-first-${firstColor}`,
 					style: {
-						color: AppTheme.colors.baseWhiteFixed,
+						color: Color.baseWhiteFixed.toHex(),
 						fontSize: 12,
 						textAlign: 'center',
 					},

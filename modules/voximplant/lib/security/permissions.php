@@ -161,7 +161,13 @@ class Permissions
 					self::PERMISSION_SELF,
 					self::PERMISSION_DEPARTMENT,
 					self::PERMISSION_ANY
-				]
+				],
+				self::ACTION_MODIFY => [
+					self::PERMISSION_NONE,
+					self::PERMISSION_SELF,
+					self::PERMISSION_DEPARTMENT,
+					self::PERMISSION_ANY
+				],
 			],
 			self::ENTITY_CALL => [
 				self::ACTION_PERFORM => [

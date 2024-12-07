@@ -72,7 +72,7 @@ $cfgRnd = 'rnd_cfg_number_'.$rnd.(($arResult['ENTITY_NAME'] <> '') ? '_'.$arResu
 	</tr>
 </table>
 
-<script type="text/javascript">
+<script>
 	function showNumberAdditionalFields(templateID)
 	{
 		var rnd = "<?=$rnd?>";

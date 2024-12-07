@@ -8,26 +8,22 @@ use Bitrix\Crm\Order\OrderDealSynchronizer\Products;
 use Bitrix\Crm\ProductRowTable;
 use Bitrix\Main\Error;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Main\SystemException;
 use Bitrix\Sale;
 use Bitrix\Salescenter;
 
 class Product extends Base
 {
-	/**
-	 * @param int $paymentId
-	 * @param array $filter
-	 * @param array $order
-	 * @return array
-	 * @throws SystemException
-	 */
 	public function listAction(
 		int $paymentId,
 		array $filter = [],
 		array $order = []
-	): array
+	): ?array
 	{
 		$paymentItemList = parent::listAction($paymentId, $filter, $order);
+		if (is_null($paymentItemList))
+		{
+			return null;
+		}
 
 		$result = [];
 		$xmlIdList = [];
@@ -54,7 +50,7 @@ class Product extends Base
 		{
 			$basketId = Products\ProductRowXmlId::getBasketIdFromXmlId($row['XML_ID']);
 
-			$result[$basketId]['ROW_ID'] = $row['ID'];
+			$result[$basketId]['ROW_ID'] = (int)$row['ID'];
 
 			unset($result[$basketId]['ENTITY_ID']);
 		}
@@ -64,14 +60,6 @@ class Product extends Base
 		return $this->convertKeysToCamelCase($productList);
 	}
 
-
-	/**
-	 * @param int $paymentId
-	 * @param int $rowId
-	 * @param int $quantity
-	 * @return int|null
-	 * @throws SystemException
-	 */
 	public function addAction(int $paymentId, int $rowId, int $quantity) : ?int
 	{
 		if ($quantity <= 0)
@@ -87,8 +75,17 @@ class Product extends Base
 
 		/** @var Crm\Order\Payment $payment */
 		$payment = $this->getPaymentById($paymentId);
-		if (!$payment || !$this->canEditPayment($payment))
+		if (!$payment)
 		{
+			$this->addError(new Error('Payment has not been found'));
+
+			return null;
+		}
+
+		if (!$this->canEditPayment($payment))
+		{
+			$this->setAccessDenied();
+
 			return null;
 		}
 
@@ -100,12 +97,16 @@ class Product extends Base
 
 		if (!$entityTypeId || !$entityId)
 		{
+			$this->addError(new Error('Order binding has not been found'));
+
 			return null;
 		}
 
 		$factory = Crm\Service\Container::getInstance()->getFactory($entityTypeId);
 		if (!$factory || !$factory->isLinkWithProductsEnabled())
 		{
+			$this->addError(new Error('Entity does not support links with catalog products'));
+
 			return null;
 		}
 
@@ -201,11 +202,6 @@ class Product extends Base
 		return null;
 	}
 
-	/**
-	 * @param int $id
-	 * @param int $quantity
-	 * @return bool|null
-	 */
 	public function setQuantityAction(int $id, int $quantity): ?bool
 	{
 		if ($quantity <= 0)
@@ -220,9 +216,18 @@ class Product extends Base
 		}
 
 		$payment = $this->getPaymentByPayableId($id);
-		if (!$payment || !$this->canEditPayment($payment))
+		if (!$payment)
 		{
-			return false;
+			$this->addError(new Error('Payable item has not been found'));
+
+			return null;
+		}
+
+		if (!$this->canEditPayment($payment))
+		{
+			$this->setAccessDenied();
+
+			return null;
 		}
 
 		/** @var Crm\Order\PayableBasketItem $payableItem */
@@ -239,7 +244,13 @@ class Product extends Base
 			return null;
 		}
 
-		$payableItem->setField('QUANTITY', $quantity);
+		$result = $payableItem->setField('QUANTITY', $quantity);
+		if (!$result->isSuccess())
+		{
+			$this->addError(new Error('Set quantity internal error'));
+
+			return null;
+		}
 
 		$this->recalculatePaymentSum($payment);
 
@@ -306,5 +317,4 @@ class Product extends Base
 	{
 		return Sale\Registry::ENTITY_BASKET_ITEM;
 	}
-
 }

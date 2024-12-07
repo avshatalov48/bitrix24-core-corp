@@ -7,6 +7,7 @@ jn.define('im/messenger/model/application', (require, exports, module) => {
 	const { AppStatus } = require('im/messenger/const');
 	const { DialogHelper } = require('im/messenger/lib/helper');
 	const { LoggerManager } = require('im/messenger/lib/logger');
+	const { Type } = require('type');
 	const logger = LoggerManager.getInstance().getLogger('model--application');
 
 	const applicationModel = {
@@ -22,8 +23,12 @@ jn.define('im/messenger/model/application', (require, exports, module) => {
 					networkWaiting: false,
 					connection: false,
 					sync: false,
+					backgroundSync: false,
 					running: false,
 				},
+			},
+			settings: {
+				audioRate: 1,
 			},
 		}),
 		getters: {
@@ -46,6 +51,11 @@ jn.define('im/messenger/model/application', (require, exports, module) => {
 					return AppStatus.sync;
 				}
 
+				if (statusData.backgroundSync === true)
+				{
+					return AppStatus.backgroundSync;
+				}
+
 				return AppStatus.running;
 			},
 
@@ -56,34 +66,35 @@ jn.define('im/messenger/model/application', (require, exports, module) => {
 				return !statusData.networkWaiting;
 			},
 
-			/** @function applicationModel/getDialogId */
-			getDialogId: (state) => {
-				const chatSettings = Application.storage.getObject('settings.chat', {
-					chatBetaEnable: false,
-				});
-
-				if (chatSettings.chatBetaEnable)
-				{
-					return state.dialog.currentId;
-				}
-
-				const page = PageManager.getNavigator().getVisible();
-				if (page.type === 'Web' && page.pageId === `im-${state.dialog.currentId}`)
-				{
-					return state.dialog.currentId;
-				}
-
-				return 0;
+			/**
+			 * @function applicationModel/getCurrentOpenedDialogId
+			 * @return {DialogId | 0}
+			 */
+			getCurrentOpenedDialogId: (state) => () => {
+				return state.dialog.currentId;
 			},
 
-			/** @function applicationModel/isDialogOpen */
-			isDialogOpen: (state) => {
+			/** @function applicationModel/isSomeDialogOpen */
+			isSomeDialogOpen: (state) => {
 				return state.dialog.idList.length > 0;
 			},
 
-			/** @function applicationModel/getOpenDialogs */
+			/** @function applicationModel/isDialogOpen */
+			isDialogOpen: (state) => (dialogId) => {
+				return state.dialog.idList.includes(dialogId);
+			},
+
+			/**
+			 * @function applicationModel/getOpenDialogs
+			 * @return {Array<DialogId>}
+			 */
 			getOpenDialogs: (state) => () => {
 				return state.dialog.idList;
+			},
+
+			/** @function applicationModel/getSettings */
+			getSettings: (state) => () => {
+				return state.settings;
 			},
 		},
 		actions: {
@@ -136,6 +147,21 @@ jn.define('im/messenger/model/application', (require, exports, module) => {
 					},
 				});
 			},
+
+			/** @function applicationModel/setAudioRateSetting */
+			setAudioRateSetting: (store, payload) => {
+				if (!Type.isNumber(payload))
+				{
+					return;
+				}
+
+				store.commit('setSettings', {
+					actionName: 'setAudioRateSetting',
+					data: {
+						audioRate: payload,
+					},
+				});
+			},
 		},
 		mutations: {
 			/**
@@ -151,6 +177,17 @@ jn.define('im/messenger/model/application', (require, exports, module) => {
 
 				state.common.status[name] = value;
 			},
+
+			/**
+			 * @param state
+			 * @param {MutationPayload<ApplicationSetSettingsData, ApplicationSetSettingsActions>} payload
+			 */
+			setSettings: (state, payload) => {
+				logger.log('applicationModel: setSettings mutation', payload);
+
+				state.settings = { ...state.settings, ...payload.data };
+			},
+
 			/**
 			 * @param state
 			 * @param {MutationPayload<ApplicationOpenDialogIdData, ApplicationOpenDialogIdActions>} payload

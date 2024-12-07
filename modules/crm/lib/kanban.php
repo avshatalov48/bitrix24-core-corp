@@ -2,6 +2,8 @@
 
 namespace Bitrix\Crm;
 
+use Bitrix\Crm\Activity\ToDo\CalendarSettings\CalendarSettingsProvider;
+use Bitrix\Crm\Activity\ToDo\ColorSettings\ColorSettingsProvider;
 use Bitrix\Crm\Color\PhaseColorScheme;
 use Bitrix\Crm\Filter\FieldsTransform\UserBasedField;
 use Bitrix\Crm\Format\PersonNameFormatter;
@@ -706,6 +708,13 @@ abstract class Kanban
 		];
 		$filterHistory = ['STAGE_ID_FROM_HISTORY', 'STAGE_ID_FROM_SUPPOSED_HISTORY', 'STAGE_SEMANTIC_ID_FROM_HISTORY'];
 		$filterUtm = ['UTM_SOURCE', 'UTM_MEDIUM', 'UTM_CAMPAIGN', 'UTM_CONTENT', 'UTM_TERM'];
+		/**
+		 * possible subtype values for example:
+		 *   null | employee | string | url | address | money | integer | double | boolean | datetime |
+		 *   date | enumeration | crm_status | iblock_element | iblock_section | crm
+		 * may also take other value
+		 */
+		$filterSubtype = ['money'];
 		//from main.filter
 		$grid = $entity->getFilterOptions();
 
@@ -825,7 +834,11 @@ abstract class Kanban
 					{
 						$filter['=%' . $key] = $search[$key] . '%';
 					}
-					elseif(in_array($key, array_merge($filterHistory, $filterUtm), true))
+					elseif(in_array($key, array_merge($filterHistory, $filterUtm), true) ||
+						(
+							isset($item['subtype']) && in_array($item['subtype'], $filterSubtype, true)
+						)
+					)
 					{
 						$filter['%' . $key] = $search[$key];
 					}
@@ -1354,8 +1367,12 @@ abstract class Kanban
 
 		$lastActivityInfo = $this->getEntity()->prepareMultipleItemsLastActivity($rows);
 		$pingSettingsInfo = $this->getEntity()->prepareMultipleItemsPingSettings($this->entity->getTypeId());
+		$calendarSettings = (new CalendarSettingsProvider())->fetchForJsComponent();
+		$colorSettings = (new ColorSettingsProvider())->fetchForJsComponent();
 
 		$activeAutomationDebugEntityIds = \CCrmBizProcHelper::getActiveDebugEntityIds($this->entity->getTypeId());
+
+		$userPermissions = Container::getInstance()->getUserPermissions()->getCrmPermissions();
 
 		foreach($rows as $rowId => $row)
 		{
@@ -1381,7 +1398,10 @@ abstract class Kanban
 				if (array_key_exists($code, $row) && array_key_exists($code, $displayedFields))
 				{
 					$displayedField = $displayedFields[$code];
-					if ($this->shouldShowField($displayedField, $row[$code]))
+					if (
+						$this->shouldShowField($displayedField, $row[$code])
+						&& !$this->skipClientField($row, $code)
+					)
 					{
 						$field = [
 							'code' => $code,
@@ -1418,13 +1438,8 @@ abstract class Kanban
 					{
 						continue;
 					}
-					if (
-						isset($this->requiredFields[$fieldName])
-						&& !$fieldValue
-						&& $fieldValue !== '0'
-						&& $fieldValue !== 0
-						&& $fieldValue !== 0.0
-					)
+
+					if ($this->isRequiredFieldEmpty($fieldName, $fieldValue))
 					{
 						foreach ($this->requiredFields[$fieldName] as $stageId)
 						{
@@ -1432,6 +1447,7 @@ abstract class Kanban
 							{
 								$required[$stageId] = [];
 							}
+
 							$required[$stageId][] = $fieldName;
 						}
 					}
@@ -1504,8 +1520,32 @@ abstract class Kanban
 				'sort' => $this->getEntity()->prepareItemSort($rows[$rowId]),
 				'lastActivity' => $lastActivityInfo[$row['ID']] ?? null,
 				'pingSettings' => isset($row['CATEGORY_ID']) ? $pingSettingsInfo[$row['CATEGORY_ID']] : null,
+				'colorSettings' => $colorSettings,
+				'calendarSettings' => $calendarSettings,
 				'draggable' => (bool)($row['DRAGGABLE'] ?? true),
 			];
+
+			/*
+			 * Perhaps in the future we will want to hide the amount in each element, then it will be enough
+			 * for this option to be set to true for the elements in which the amounts need to be hidden.
+			 *
+			 * if (!$entity->havePermissionToDisplayColumnSum($columnId, $userPermissions))
+			 * {
+			 *	$result[$rowId]['price'] = null;
+			 *	$result[$rowId]['price_formatted'] = $entity->getHiddenPriceFormattedText($row['CURRENCY_FORMAT']);
+			 *	$result[$rowId]['entity_price'] = null;
+			 *
+			 *	foreach ($result[$rowId]['fields'] as &$field)
+			 *	{
+			 *		if ($field['code'] === Item::FIELD_NAME_OPPORTUNITY)
+			 *		{
+			 *			$field['value'] = null;
+			 *		}
+			 *	}
+			 *	unset($field);
+			 * }
+			 */
+
 			$result[$rowId] = array_merge($result[$rowId], $this->prepareAdditionalFields($row));
 			$isRestricted = (!empty($restrictedItemIds) && in_array($row['ID'], $restrictedItemIds));
 			if ($isRestricted)
@@ -1538,10 +1578,38 @@ abstract class Kanban
 			$result = $this->sort($result);
 		}
 
+		$this->entity->appendAdditionalData($result);
+
 		return [
 			'ITEMS' => $result,
 			'RESTRICTED_VALUE_CLICK_CALLBACK' => $restrictedValueClickCallback,
 		];
+	}
+
+	protected function skipClientField(array $row, string $code): bool
+	{
+		return $this->entity->skipClientField($row, $code);
+	}
+
+	protected function isRequiredFieldEmpty(string $fieldName, mixed $fieldValue): bool
+	{
+		if (!isset($this->requiredFields[$fieldName]))
+		{
+			return false;
+		}
+
+		$field = $this->entity->getField($fieldName);
+		if ($field === null)
+		{
+			return
+				!$fieldValue
+				&& $fieldValue !== '0'
+				&& $fieldValue !== 0
+				&& $fieldValue !== 0.0
+			;
+		}
+
+		return $field->isValueEmpty($fieldValue);
 	}
 
 	protected function prepareAdditionalFields(array $item): array
@@ -1924,9 +1992,7 @@ abstract class Kanban
 	 */
 	public function isCrmAdmin(): bool
 	{
-		$crmPerms = new \CCrmPerms($this->currentUserId);
-
-		return $crmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE');
+		return Container::getInstance()->getUserPermissions($this->currentUserId)->isAdminForEntity($this->getEntity()->getTypeId());
 	}
 
 	public function removeUserAdditionalSelectFields(): void

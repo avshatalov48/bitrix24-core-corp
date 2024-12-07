@@ -104,7 +104,7 @@ class Notifier
 	 */
 	protected static function forwardMessage(array $params): Result
 	{
-		$classSupport = self::detectSupportBot();
+		$classSupport = static::detectBot();
 		if (!$classSupport)
 		{
 			$result = new Result;
@@ -163,7 +163,7 @@ class Notifier
 	{
 		$result = new Result;
 
-		$classSupport = self::detectSupportBot();
+		$classSupport = static::detectBot();
 
 		/** @see \Bitrix\ImBot\Bot\Network::onReceiveCommand */
 		$commandResult = $classSupport::onReceiveCommand(
@@ -206,7 +206,7 @@ class Notifier
 		 */
 		global $APPLICATION;
 
-		$classSupport = self::detectSupportBot();
+		$classSupport = static::detectBot();
 
 		$chatId = self::getChannel();
 		if (!$chatId)
@@ -243,6 +243,11 @@ class Notifier
 			// feedback button
 			if (!empty($params['KEYBOARD']))
 			{
+				if (!is_array($params['KEYBOARD']))
+				{
+					$params['KEYBOARD'] = \CUtil::JsObjectToPhp($params['KEYBOARD']);
+				}
+
 				if (!isset($params['KEYBOARD']['BUTTONS']))
 				{
 					$keyboard['BUTTONS'] = $params['KEYBOARD'];
@@ -304,7 +309,7 @@ class Notifier
 	 */
 	private static function getChannel(): ?int
 	{
-		$classSupport = self::detectSupportBot();
+		$classSupport = static::detectBot();
 		$res = \Bitrix\Im\Model\ChatTable::getList([
 			'select' => ['ID', 'ENTITY_ID'],
 			'filter' => [
@@ -333,7 +338,7 @@ class Notifier
 		 */
 		global $APPLICATION;
 
-		$classSupport = self::detectSupportBot();
+		$classSupport = static::detectBot();
 		$adminGroupUsers = self::getAdminGroupUsers();
 		$adminGroupUsers[] = $classSupport::getBotId();
 
@@ -401,7 +406,7 @@ class Notifier
 	 */
 	private static function getChannelName(): string
 	{
-		$classSupport = self::detectSupportBot();
+		$classSupport = static::detectBot();
 		$name = $classSupport::getMessage('NOTIFIER_CHANNEL');
 		if (!$name)
 		{
@@ -417,7 +422,7 @@ class Notifier
 	 */
 	private static function checkChannelMembers(int $chatId): void
 	{
-		$classSupport = self::detectSupportBot();
+		$classSupport = static::detectBot();
 
 		$chat = new \CIMChat(0);
 		$chat->setOwner($chatId, $classSupport::getBotId(), false);
@@ -447,7 +452,7 @@ class Notifier
 	 * Detects installed support bot.
 	 * @return \Bitrix\Imbot\Bot\SupportBot|string|null
 	 */
-	private static function detectSupportBot(): ?string
+	protected static function detectBot(): ?string
 	{
 		static $classSupport = null;
 

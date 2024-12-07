@@ -2,15 +2,10 @@
  * @module layout/ui/fields/email
  */
 jn.define('layout/ui/fields/email', (require, exports, module) => {
-
-	const { BaseField } = require('layout/ui/fields/base');
-	const { StringFieldClass } = require('layout/ui/fields/string');
-	const { domains } = require('layout/ui/fields/email/domains');
-	const { isValidEmail } = require('utils/url');
-	const { stringify } = require('utils/string');
 	const { Loc } = require('loc');
-
-	const DEFAULT = 'default';
+	const { stringify } = require('utils/string');
+	const { getDomainImageUri, getEmailServiceName, isValidEmail } = require('utils/email');
+	const { StringFieldClass } = require('layout/ui/fields/string');
 
 	/**
 	 * @class EmailField
@@ -39,13 +34,18 @@ jn.define('layout/ui/fields/email', (require, exports, module) => {
 			return super.shouldComponentUpdate(nextProps, nextState);
 		}
 
+		getEmailService(value)
+		{
+			return getEmailServiceName(this.prepareValue(value));
+		}
+
 		renderLeftIcons()
 		{
 			const style = this.getStyles();
 
 			return Image({
 				style: style.leftIcon,
-				uri: this.getImageUri(),
+				uri: getDomainImageUri({ service: this.service }),
 				resizeMode: 'contain',
 			});
 		}
@@ -58,11 +58,16 @@ jn.define('layout/ui/fields/email', (require, exports, module) => {
 				const value = stringify(this.getValue());
 				if (value !== '' && !isValidEmail(value))
 				{
-					error = BX.message('FIELD_ERROR_EMAIL');
+					error = EmailField.getValidationErrorMessage();
 				}
 			}
 
 			return error;
+		}
+
+		static getValidationErrorMessage()
+		{
+			return Loc.getMessage('FIELD_ERROR_EMAIL');
 		}
 
 		getConfig()
@@ -74,32 +79,6 @@ jn.define('layout/ui/fields/email', (require, exports, module) => {
 				keyboardType: 'email-address',
 				autoCapitalize: 'none',
 			};
-		}
-
-		getImageUri()
-		{
-			return `${BaseField.getExtensionPath()}/email/images/${this.service}.png`;
-		}
-
-		getEmailService(value)
-		{
-			const domain = this.getEmailDomain(value);
-			const service = Object.keys(domains).find((name) => domains[name].includes(domain));
-
-			return service || DEFAULT;
-		}
-
-		getEmailDomain(value)
-		{
-			const email = this.prepareValue(value);
-			if (email.trim() === '')
-			{
-				return null;
-			}
-
-			const startIndex = email.lastIndexOf('@') + 1;
-
-			return email.substring(startIndex).trim();
 		}
 
 		getDefaultStyles()
@@ -131,7 +110,7 @@ jn.define('layout/ui/fields/email', (require, exports, module) => {
 
 	module.exports = {
 		EmailType: 'email',
+		EmailFieldClass: EmailField,
 		EmailField: (props) => new EmailField(props),
 	};
-
 });

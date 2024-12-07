@@ -11,13 +11,15 @@ class DefaultCategoryPermissions extends Service\Scenario
 	/** @var \CCrmRole */
 	protected $roleClassName = \CCrmRole::class;
 
-	protected $entityTypeId;
-	protected $categoryId;
+	protected int $entityTypeId;
+	protected int $categoryId;
+	protected bool $needSetOpenPermissions;
 
-	public function __construct(int $entityTypeId, int $categoryId)
+	public function __construct(int $entityTypeId, int $categoryId, bool $needSetOpenPermissions = true)
 	{
 		$this->entityTypeId = $entityTypeId;
 		$this->categoryId = $categoryId;
+		$this->needSetOpenPermissions = $needSetOpenPermissions;
 	}
 
 	public function play(): Result
@@ -28,11 +30,25 @@ class DefaultCategoryPermissions extends Service\Scenario
 			$this->entityTypeId,
 			$this->categoryId
 		);
+		Service\Container::getInstance()->getFactory($this->entityTypeId)?->clearCategoriesCache();
 
 		/** @var \CCrmRole $role */
 		$role = new $this->roleClassName;
 		$roleDbResult = $this->roleClassName::GetList();
 		$systemRolesIds = \Bitrix\Crm\Security\Role\RolePermission::getSystemRolesIds();
+
+		$categoryIdentifier = new \Bitrix\Crm\CategoryIdentifier($this->entityTypeId, $this->categoryId);
+		$defaultPermissionSet =
+			$this->needSetOpenPermissions
+			? \CCrmRole::getDefaultPermissionSetForEntity($categoryIdentifier)
+			: \CCrmRole::getBasePermissionSetForEntity($categoryIdentifier)
+		;
+
+		if (empty($defaultPermissionSet))
+		{
+			return $result;
+		}
+
 		while($roleFields = $roleDbResult->Fetch())
 		{
 			$roleID = (int)$roleFields['ID'];
@@ -40,7 +56,7 @@ class DefaultCategoryPermissions extends Service\Scenario
 			{
 				continue;
 			}
-			$roleRelation = \CCrmRole::GetRolePerms($roleID);
+			$roleRelation = \CCrmRole::getRolePermissionsAndSettings($roleID);
 			if(isset($roleRelation[$permissionEntity]))
 			{
 				continue;
@@ -48,7 +64,7 @@ class DefaultCategoryPermissions extends Service\Scenario
 
 			if(!isset($roleRelation[$permissionEntity]))
 			{
-				$roleRelation[$permissionEntity] = \CCrmRole::GetDefaultPermissionSet();
+				$roleRelation[$permissionEntity] = $defaultPermissionSet;
 			}
 			$fields = ['RELATION' => $roleRelation];
 			$updateResult = $role->Update($roleID, $fields);

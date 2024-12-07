@@ -18,7 +18,6 @@ return [
 		'im:chat/selector/adapter/dialog-list',
 		'user/profile',
 		'pull/client/events',
-		'intranet/invite-opener',
 		'analytics',
 		'im:chat/selector/chat',
 		'list/selector',

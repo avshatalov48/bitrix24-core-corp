@@ -13,7 +13,15 @@ foreach ($requiredModules as $requiredModule)
 	}
 }
 
+$arResult['tasksReportEnabled'] = \Bitrix\Tasks\Integration\Bitrix24::checkFeatureEnabled(
+	\Bitrix\Tasks\Integration\Bitrix24\FeatureDictionary::TASK_REPORTS
+);
+$arResult['tasksReportFeatureId'] = \Bitrix\Tasks\Integration\Bitrix24\FeatureDictionary::TASK_REPORTS;
+
+$arResult['pathToTasks'] = str_replace(
+	'#user_id#',
+	$arParams['USER_ID'] ?? 0,
+	$arParams['PATH_TO_USER_TASKS'] ?? ''
+);
+
 $this->IncludeComponentTemplate();
-
-
-?>

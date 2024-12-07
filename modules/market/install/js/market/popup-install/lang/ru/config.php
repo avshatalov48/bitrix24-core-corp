@@ -1,5 +1,5 @@
 <?php
-$MESS["MARKET_POPUP_INSTALL_JS_INSTALL_TITLE"] = "Установить <span class=\"market-popup__header-title_highlight\" title=\"#APP_NAME#\">#APP_NAME#</span>?";
+$MESS["MARKET_POPUP_INSTALL_JS_INSTALL_TITLE"] = "<span class=\"market-popup__header-title_highlight\" title=\"#APP_NAME#\">#APP_NAME#</span>";
 $MESS["MARKET_POPUP_INSTALL_JS_UPDATE_TITLE"] = "Обновить <span class=\"market-popup__header-title_highlight\" title=\"#APP_NAME#\">#APP_NAME#</span>?";
 $MESS["MARKET_POPUP_INSTALL_JS_VERSION"] = "Версия #APP_VERSION#";
 $MESS["MARKET_POPUP_INSTALL_JS_AVAILABLE_IN_SUBSCRIPTION"] = "Доступно в подписке";
@@ -15,8 +15,10 @@ $MESS["MARKET_POPUP_INSTALL_JS_NEW_VERSION"] = "Новая версия";
 $MESS["MARKET_POPUP_INSTALL_JS_PREVIOUS_VERSION"] = "Предыдущая версия";
 $MESS["MARKET_POPUP_INSTALL_JS_INSTALLING_THE_APP_ON_YOUR_BITRIX"] = "Установка приложения на ваш Битрикс24";
 $MESS["MARKET_POPUP_INSTALL_JS_APPLICATION"] = "Приложение #APP_NAME#<br> установлено на ваш Битрикс24";
+$MESS["MARKET_POPUP_INSTALL_JS_APPLICATION_SHORT"] = "Приложение #APP_NAME# установлено";
 $MESS["MARKET_POPUP_INSTALL_JS_APP_WORKS_AUTOMATICALLY"] = "Приложение работает в автоматическом режиме. Удалить приложение можно во вкладке 'Установленные приложения'";
 $MESS["MARKET_POPUP_INSTALL_JS_INSTALLED_APP_LOCATED_APP_TAB"] = "Все ваши установленные приложения находятся во вкладке 'Приложения' в главном меню Битрикс24";
+$MESS["MARKET_POPUP_INSTALL_JS_1C_STORE_MANAGEMENT"] = "Откройте приложение и выполните все шаги инструкции";
 $MESS["MARKET_POPUP_INSTALL_JS_READY"] = "Готово";
 $MESS["MARKET_POPUP_INSTALL_JS_APP_WILL_OPEN_AUTO_AFTER"] = "Приложение откроется автоматически через <span class=\"market-popup__info-app-launch_counter\">#COUNTER#</span>";
 $MESS["MARKET_POPUP_INSTALL_JS_OPEN_APP"] = "Открыть приложение";

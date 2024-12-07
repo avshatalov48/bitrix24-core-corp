@@ -5,6 +5,7 @@ use Bitrix\Bitrix24\PhoneVerify;
 use Bitrix\Main;
 use Bitrix\Crm;
 use Bitrix\Crm\WebForm;
+use Bitrix\Main\Loader;
 
 /**
  * Class Form
@@ -186,6 +187,13 @@ class Form extends Main\Engine\JsonController
 			return [];
 		}
 
+		$tariffRestricted = false;
+
+		if (Loader::includeModule('bitrix24') )
+		{
+			$tariffRestricted = !\Bitrix\Bitrix24\Feature::isFeatureEnabled('crm_webform_edit');
+		}
+
 		return WebForm\Options\Dictionary::instance()->toArray() + [
 			'permissions' => [
 				'userField' => [
@@ -193,6 +201,9 @@ class Form extends Main\Engine\JsonController
 				],
 				'form' => [
 					'edit' => $this->getFormAccess(true),
+				],
+				'tariff' => [
+					'restricted' => $tariffRestricted,
 				],
 			],
 		];
@@ -265,12 +276,12 @@ class Form extends Main\Engine\JsonController
 		}
 
 		$options = WebForm\Options::create($formId);
-		$aOptions = $options->getArray();
+		$optionsArray = $options->getArray();
 		foreach ($data as $type => $values)
 		{
-			$aOptions['embedding']['views'][$type] = $values;
+			$optionsArray['embedding']['views'][$type] = $values;
 		}
-		$options->merge($aOptions);
+		$options->merge($optionsArray);
 		$result = $options->save();
 		$this->addErrors($result->getErrors());
 
@@ -940,10 +951,19 @@ class Form extends Main\Engine\JsonController
 
 	protected function getFormAccess($write = false): bool
 	{
+		$hasTariffAccess = true;
+
+		if ($write)
+		{
+			if (Loader::includeModule('bitrix24'))
+			{
+				$hasTariffAccess = \Bitrix\Bitrix24\Feature::isFeatureEnabled('crm_webform_edit');
+			}
+		}
+
 		return $write
-			? WebForm\Manager::checkWritePermission()
-			: WebForm\Manager::checkReadPermission()
-		;
+			? $hasTariffAccess && WebForm\Manager::checkWritePermission()
+			: WebForm\Manager::checkReadPermission();
 	}
 
 	protected function getSiteButtonAccess($write = false): bool

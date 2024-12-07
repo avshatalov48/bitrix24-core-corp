@@ -163,6 +163,11 @@ class Comment extends Base
 		{
 			return null;
 		}
+		if (!$this->hasUpdateCommentPermission($id, $ownerTypeId, $ownerId))
+		{
+			$this->addError(ErrorCode::getAccessDeniedError());
+			return null;
+		}
 
 		$params = compact('id', 'ownerTypeId', 'ownerId');
 		[$content, $filesList] = $this->fetchFieldsToUpdate($fields, $params);
@@ -192,6 +197,11 @@ class Comment extends Base
 
 		if (!$this->assertValidOwner($ownerId, $ownerTypeId))
 		{
+			return null;
+		}
+		if (!$this->hasUpdateCommentPermission($id, $ownerTypeId, $ownerId))
+		{
+			$this->addError(ErrorCode::getAccessDeniedError());
 			return null;
 		}
 
@@ -339,6 +349,12 @@ class Comment extends Base
 
 		if (!$this->assertValidOwner($ownerId, $ownerTypeId))
 		{
+			return;
+		}
+
+		if (!$this->hasDeleteCommentPermission($id, $ownerTypeId, $ownerId))
+		{
+			$this->addError(ErrorCode::getAccessDeniedError());
 			return;
 		}
 
@@ -507,27 +523,25 @@ class Comment extends Base
 	//endregion
 
 	//region validation methods
-	protected function isAllowedAction(int $ownerTypeId, int $ownerId, bool $checkUpdatePermission = true): bool
+	protected function hasReadEntityPermission(int $ownerTypeId, int $ownerId): bool
 	{
 		$userPermissions = Container::getInstance()->getUserPermissions();
-
-		if ($checkUpdatePermission)
+		if (!$userPermissions->checkReadPermissions($ownerTypeId, $ownerId))
 		{
-			$isActionAllowed = $userPermissions->checkUpdatePermissions($ownerTypeId, $ownerId);
+			$this->addError(ErrorCode::getAccessDeniedError());
+			return false;
 		}
-		else
+		return true;
+	}
+	protected function hasUpdateEntityPermission(int $ownerTypeId, int $ownerId): bool
+	{
+		$userPermissions = Container::getInstance()->getUserPermissions();
+		if (!$userPermissions->checkUpdatePermissions($ownerTypeId, $ownerId))
 		{
-			$isActionAllowed = $userPermissions->checkReadPermissions($ownerTypeId, $ownerId);
+			$this->addError(ErrorCode::getAccessDeniedError());
+			return false;
 		}
-
-		if ($isActionAllowed)
-		{
-			return true;
-		}
-
-		$this->addError(ErrorCode::getAccessDeniedError());
-
-		return false;
+		return true;
 	}
 
 	private function assertValidOwner(int $ownerId, int $ownerTypeId, bool $checkUpdatePermission = true): bool
@@ -539,12 +553,14 @@ class Comment extends Base
 			return false;
 		}
 
-		if (!$this->isAllowedAction($ownerTypeId, $ownerId, $checkUpdatePermission))
+		if ($checkUpdatePermission)
 		{
-			return false;
+			return $this->hasUpdateEntityPermission($ownerTypeId, $ownerId);
 		}
-
-		return true;
+		else
+		{
+			return $this->hasReadEntityPermission($ownerTypeId, $ownerId);
+		}
 	}
 
 	private function assertValidCommentRecord(?int $commentId): bool
@@ -665,7 +681,7 @@ class Comment extends Base
 	{
 		$loadedBindings = $this->loadBindings($commentId);
 		if (count($loadedBindings) === 0)
-        {
+		{
 			return [];
 		}
 
@@ -675,7 +691,7 @@ class Comment extends Base
 		{
 			$ownerId = (int)$bindingData['ENTITY_ID'];
 			$ownerTypeId = (int)$bindingData['ENTITY_TYPE_ID'];
-			if ($this->isAllowedAction($ownerTypeId, $ownerId))
+			if ($this->hasUpdateEntityPermission($ownerTypeId, $ownerId))
 			{
 				break;
 			}
@@ -741,6 +757,32 @@ class Comment extends Base
 		}
 
 		return $filesList;
+	}
+
+	private function isCurrentUserAuthor(int $commentId): bool
+	{
+		$comment = CommentEntry::getByID($commentId);
+		return (int)$comment['AUTHOR_ID'] === (int)$this->getCurrentUser()->getId();
+	}
+
+	protected function hasUpdateCommentPermission(int $commentId, int $entityTypeId, int $entityId): bool
+	{
+		return $this->isCurrentUserAuthor($commentId) && $this->hasUpdateEntityPermission($entityTypeId, $entityId);
+	}
+
+	protected function hasDeleteCommentPermission(int $commentId, int $entityTypeId, int $entityId): bool
+	{
+		if (!$this->hasUpdateEntityPermission($entityTypeId, $entityId))
+		{
+			return false;
+		}
+
+		$currentUserId = $this->getCurrentUser()->getId();
+		if (Container::getInstance()->getUserPermissions($currentUserId)->isAdminForEntity($entityTypeId))
+		{
+			return true;
+		}
+		return $this->isCurrentUserAuthor($commentId);
 	}
 	//endregion
 }

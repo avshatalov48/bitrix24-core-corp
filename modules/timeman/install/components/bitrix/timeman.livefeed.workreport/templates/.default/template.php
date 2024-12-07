@@ -58,7 +58,7 @@ if (in_array($arParams["MARK"], array("N", "G", "B")))
 }
 ?>
 
-<script type="text/javascript">
+<script>
 BX.addCustomEvent('onWorkReportMarkChange',
 	function(data){
 

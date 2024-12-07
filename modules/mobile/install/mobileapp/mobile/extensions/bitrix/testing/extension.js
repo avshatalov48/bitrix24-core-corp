@@ -6,7 +6,9 @@ jn.define('testing', (require, exports, module) => {
 	const { TestCase } = require('testing/test-case');
 	const { TestingExpectation } = require('testing/expectation');
 	const { TestingReport } = require('testing/report');
+	const { config } = require('testing/test-config');
 	const { ConsolePrinter, JnLayoutPrinter } = require('testing/printers');
+	const { expectationCount } = require('testing/expectation-count');
 
 	/** @type {TestSuite[]} */
 	const testSuites = [];
@@ -63,6 +65,14 @@ jn.define('testing', (require, exports, module) => {
 
 	const expect = (value) => new TestingExpectation(value);
 
+	expect.assertions = (requiredAssertionsCount) => {
+		expectationCount.setRequiredCount(requiredAssertionsCount);
+	};
+
+	expect.hasAssertions = () => {
+		expectationCount.setRequiredCount(1);
+	};
+
 	const beforeEach = (fn) => currentSuite().beforeEach.push(fn);
 
 	const afterEach = (fn) => currentSuite().afterEach.push(fn);
@@ -84,5 +94,6 @@ jn.define('testing', (require, exports, module) => {
 		testSuites,
 		ConsolePrinter,
 		JnLayoutPrinter,
+		config,
 	};
 });

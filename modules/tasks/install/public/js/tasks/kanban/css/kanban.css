@@ -192,7 +192,7 @@
 	margin: 1px 4px 0 0;
 	font-size: 12px;
 	color: #525c69;
-	border-bottom: 1px dashed transparent;
+	align-items: center;
 }
 
 .tasks-kanban-item-tags .ui-label-inner,
@@ -202,8 +202,12 @@
 	overflow: visible !important;
 }
 
+.ui-label.tasks-kanban-item-deadline {
+	display: inline-flex;
+	align-items: center;
+}
+
 .tasks-kanban-item-deadline-hover { cursor: pointer }
-.tasks-kanban-item-deadline-hover:hover { border-bottom: 1px dashed #525c69 }
 
 /*.tasks-kanban-item-set-deadline,*/
 .tasks-kanban-item-files,

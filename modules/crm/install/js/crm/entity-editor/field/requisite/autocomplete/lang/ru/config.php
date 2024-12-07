@@ -4,4 +4,5 @@ $MESS["REQUISITE_AUTOCOMPLETE_NOT_FOUND"] = "Ничего не найдено";
 $MESS["REQUISITE_AUTOCOMPLETE_ADVICE_NEW_SERVICE_LINK"] = "Подскажите сервис";
 $MESS["REQUISITE_AUTOCOMPLETE_ADVICE_NEW_SERVICE"] = "#ADVICE_NEW_SERVICE_LINK# автоподстановки реквизитов в вашей стране.";
 $MESS["REQUISITE_AUTOCOMPLETE_FILL_IN"] = "Заполнить по #FIELD_NAME#";
+$MESS["REQUISITE_AUTOCOMPLETE_FILL_IN_01"] = "Укажите #FIELD_NAME# для автоматического заполнения";
 $MESS["REQUISITE_AUTOCOMPLETE_INSTALL"] = "Установить";

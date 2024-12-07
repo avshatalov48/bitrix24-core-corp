@@ -1,15 +1,30 @@
 <?php
 return [
+	'components' => [
+		'qrcodeauth',
+	],
 	"extensions" => [
-		'apptheme',
+		'analytics',
+		'loc',
 		'rest',
 		'notify',
+		'tokens',
+		'apptheme',
 		'qrauth/utils',
+		'bottom-sheet',
+		'ui-system/typography',
+		'ui-system/layout/box',
+		'ui-system/layout/card',
+		'ui-system/blocks/icon',
+		'ui-system/blocks/link',
 		'layout/ui/buttons/action',
 		'layout/ui/buttons/cancel',
-		'layout/ui/buttons/primary'
+		'layout/ui/buttons/primary',
+		'ui-system/form/buttons/button',
 	],
 	"bundle" => [
-		"./src/styles"
+		"./src/auth",
+		"./src/scanner",
+
 	]
 ];

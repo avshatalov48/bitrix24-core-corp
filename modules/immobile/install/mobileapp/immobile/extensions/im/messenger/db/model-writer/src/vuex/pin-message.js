@@ -6,6 +6,7 @@ eslint-disable consistent-return
  */
 jn.define('im/messenger/db/model-writer/vuex/pin-message', (require, exports, module) => {
 	const { Type } = require('type');
+	const { DialogHelper } = require('im/messenger/lib/helper');
 	const { Writer } = require('im/messenger/db/model-writer/vuex/writer');
 
 	class PinMessageWriter extends Writer
@@ -23,7 +24,6 @@ jn.define('im/messenger/db/model-writer/vuex/pin-message', (require, exports, mo
 				.on('messagesModel/pinModel/updatePin', this.addRouter)
 				.on('messagesModel/pinModel/updateMessage', this.updateRouter)
 				.on('messagesModel/pinModel/deleteByIdList', this.deleteRouter)
-				.on('messagesModel/pinModel/deleteByChatId', this.deleteRouter)
 				.on('messagesModel/pinModel/delete', this.deleteRouter)
 				.on('messagesModel/pinModel/deleteMessagesByIdList', this.deleteRouter)
 			;
@@ -37,7 +37,6 @@ jn.define('im/messenger/db/model-writer/vuex/pin-message', (require, exports, mo
 				.off('messagesModel/pinModel/updatePin', this.addRouter)
 				.off('messagesModel/pinModel/updateMessage', this.updateRouter)
 				.off('messagesModel/pinModel/deleteByIdList', this.deleteRouter)
-				.off('messagesModel/pinModel/deleteByChatId', this.deleteRouter)
 				.off('messagesModel/pinModel/delete', this.deleteRouter)
 				.off('messagesModel/pinModel/deleteMessagesByIdList', this.deleteRouter)
 			;
@@ -116,10 +115,6 @@ jn.define('im/messenger/db/model-writer/vuex/pin-message', (require, exports, mo
 					return this.deletePin(payload.data);
 				}
 
-				case 'deleteByChatId': {
-					return this.deleteByChatId(payload.data);
-				}
-
 				case 'deleteMessage': {
 					return this.deleteMessageList(payload.data);
 				}
@@ -147,6 +142,12 @@ jn.define('im/messenger/db/model-writer/vuex/pin-message', (require, exports, mo
 		 */
 		addPinList(pinData)
 		{
+			const dialogHelper = DialogHelper.createByChatId(pinData.chatId);
+			if (!dialogHelper?.isLocalStorageSupported)
+			{
+				return;
+			}
+
 			this.repository.pinMessage.saveFromModel(pinData.pins, pinData.messages);
 		}
 
@@ -164,6 +165,12 @@ jn.define('im/messenger/db/model-writer/vuex/pin-message', (require, exports, mo
 				return;
 			}
 
+			const dialogHelper = DialogHelper.createByChatId(pinData.chatId);
+			if (!dialogHelper?.isLocalStorageSupported)
+			{
+				return;
+			}
+
 			this.repository.pinMessage.saveFromModel([pinModel], [pinModel.message]);
 		}
 
@@ -172,6 +179,12 @@ jn.define('im/messenger/db/model-writer/vuex/pin-message', (require, exports, mo
 		 */
 		updateMessage(updateMessageData)
 		{
+			const dialogHelper = DialogHelper.createByChatId(updateMessageData.chatId);
+			if (!dialogHelper?.isLocalStorageSupported)
+			{
+				return;
+			}
+
 			this.repository.pinMessage.updateMessage({
 				id: updateMessageData.id,
 				...updateMessageData.fields,
@@ -194,15 +207,6 @@ jn.define('im/messenger/db/model-writer/vuex/pin-message', (require, exports, mo
 		deletePinList(deletePinListData)
 		{
 			this.repository.pinMessage.deletePinsByIdList(deletePinListData.idList);
-		}
-
-		/**
-		 *
-		 * @param {PinDeleteByChatIdData} deleteByChatIdData
-		 */
-		deleteByChatId(deleteByChatIdData)
-		{
-			this.repository.pinMessage.deleteByChatId(deleteByChatIdData.chatId);
 		}
 
 		/**

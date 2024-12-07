@@ -138,7 +138,7 @@ $APPLICATION->IncludeComponent("bitrix:ui.info.helper", "", array());
 <?
 if (!empty($arResult['ERROR_MESSAGE']))
 {
-	?><script type="text/javascript">alert('<?=$arResult['ERROR_MESSAGE'];?>');</script><?
+	?><script>alert('<?=$arResult['ERROR_MESSAGE'];?>');</script><?
 }
 ?>
 </div>

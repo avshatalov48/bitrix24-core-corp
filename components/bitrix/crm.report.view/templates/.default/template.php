@@ -564,7 +564,7 @@ while ($arRes = $obRes->Fetch())
 	<i class="r2"></i>
 </div>
 <?$this->EndViewTarget();?>
-<script type="text/javascript">
+<script>
 	var crmDealElements = <? echo CUtil::PhpToJsObject($arDeals); ?>;
 	var crmCompanyElements = <? echo CUtil::PhpToJsObject($arCompanies); ?>;
 	var crmContactElements = <? echo CUtil::PhpToJsObject($arContacts); ?>;

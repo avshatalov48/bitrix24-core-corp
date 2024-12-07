@@ -191,34 +191,67 @@ final class imopenlines extends \CModule
 		$eventManager->registerEventHandler('imopenlines', 'OnChatSkip', 'imopenlines', '\Bitrix\ImOpenLines\Integrations\Report\Statistics\EventHandler', 'onChatSkip', 500);
 		$eventManager->registerEventHandler('imopenlines', 'OnSessionVote', 'imopenlines', '\Bitrix\ImOpenLines\Integrations\Report\Statistics\EventHandler', 'onSessionVote', 500);
 
+		/** @see \Bitrix\ImOpenLines\Queue\Event::onQueueTypeChange */
 		$eventManager->registerEventHandler('imopenlines', 'OnImopenlineChangeQueueType', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'onQueueTypeChange');
+		/** @see \Bitrix\ImOpenLines\Queue\Event::onQueueOperatorsAdd */
 		$eventManager->registerEventHandler('imopenlines', 'OnQueueOperatorsAdd', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'onQueueOperatorsAdd');
+		/** @see \Bitrix\ImOpenLines\Queue\Event::onQueueOperatorsDelete */
 		$eventManager->registerEventHandler('imopenlines', 'OnQueueOperatorsDelete', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'onQueueOperatorsDelete');
+		/** @see \Bitrix\ImOpenLines\Recent::onQueueOperatorsDelete */
+		$eventManager->registerEventHandler('imopenlines', 'OnQueueOperatorsDelete', 'imopenlines', '\Bitrix\ImOpenLines\Recent', 'onQueueOperatorsDelete');
+		/** @see \Bitrix\ImOpenLines\Queue\Event::OnBeforeDepartmentsDelete */
 		$eventManager->registerEventHandler('iblock', 'OnBeforeIBlockSectionDelete', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'OnBeforeDepartmentsDelete');
+		/** @see \Bitrix\ImOpenLines\Queue\Event::OnAfterDepartmentsDelete */
 		$eventManager->registerEventHandler('iblock', 'OnAfterIBlockSectionDelete', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'OnAfterDepartmentsDelete');
+		/** @see \Bitrix\ImOpenLines\Queue\Event::OnBeforeDepartmentsUpdate */
 		$eventManager->registerEventHandler('iblock', 'OnBeforeIBlockSectionUpdate', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'OnBeforeDepartmentsUpdate');
+		/** @see \Bitrix\ImOpenLines\Queue\Event::OnAfterDepartmentsUpdate */
 		$eventManager->registerEventHandler('iblock', 'OnAfterIBlockSectionUpdate', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'OnAfterDepartmentsUpdate');
+		/** @see \Bitrix\ImOpenLines\Queue\Event::onUserAdd */
 		$eventManager->registerEventHandler('main', 'OnAfterUserAdd', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'onUserAdd');
+		/** @see \Bitrix\ImOpenLines\Queue\Event::onUserUpdateBefore */
 		$eventManager->registerEventHandler('main', 'OnBeforeUserUpdate', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'onUserUpdateBefore');
+		/** @see \Bitrix\ImOpenLines\Queue\Event::onUserUpdate */
 		$eventManager->registerEventHandler('main', 'OnAfterUserUpdate', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'onUserUpdate');
+		/** @see \Bitrix\ImOpenLines\Queue\Event::OnAfterUserDelete */
 		$eventManager->registerEventHandler('main', 'OnAfterUserDelete', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'OnAfterUserDelete');
+		/** @see \Bitrix\ImOpenLines\Queue\Event::onUserDelete */
 		$eventManager->registerEventHandler('main', 'OnUserDelete', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'onUserDelete');
+		/** @see \Bitrix\ImOpenLines\Queue\Event::onAfterTMDayStart  */
 		$eventManager->registerEventHandler('timeman', 'OnAfterTMDayStart', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'onAfterTMDayStart');
+		/** @see \Bitrix\ImOpenLines\Queue\Event::onAfterTMDayPause  */
 		$eventManager->registerEventHandler('timeman', 'OnAfterTMDayPause', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'onAfterTMDayPause');
+		/** @see \Bitrix\ImOpenLines\Queue\Event::onAfterTMDayContinue  */
 		$eventManager->registerEventHandler('timeman', 'OnAfterTMDayContinue', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'onAfterTMDayContinue');
+		/** @see \Bitrix\ImOpenLines\Queue\Event::onAfterTMDayEnd  */
 		$eventManager->registerEventHandler('timeman', 'OnAfterTMDayEnd', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'onAfterTMDayEnd');
+		/** @see \Bitrix\ImOpenLines\Queue\Event::OnStartAbsence  */
 		$eventManager->registerEventHandler('intranet', 'OnStartAbsence', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'OnStartAbsence');
+		/** @see \Bitrix\ImOpenLines\Queue\Event::OnEndAbsence  */
 		$eventManager->registerEventHandler('intranet', 'OnEndAbsence', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'OnEndAbsence');
+		/** @see \Bitrix\ImOpenLines\Queue\Event::checkFreeSlotOnChatAnswer  */
 		$eventManager->registerEventHandler('imopenlines', 'OnChatAnswer', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'checkFreeSlotOnChatAnswer', 50);
+		/** @see \Bitrix\ImOpenLines\Queue\Event::checkFreeSlotOnOperatorTransfer  */
 		$eventManager->registerEventHandler('imopenlines', 'OnOperatorTransfer', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'checkFreeSlotOnOperatorTransfer', 50);
+		/** @see \Bitrix\ImOpenLines\Queue\Event::checkFreeSlotOnFinish  */
 		$eventManager->registerEventHandler('imopenlines', 'OnChatSkip', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'checkFreeSlotOnFinish', 50);
+		/** @see \Bitrix\ImOpenLines\Queue\Event::checkFreeSlotOnFinish  */
 		$eventManager->registerEventHandler('imopenlines', 'OnChatMarkSpam', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'checkFreeSlotOnFinish', 50);
+		/** @see \Bitrix\ImOpenLines\Queue\Event::checkFreeSlotOnFinish  */
 		$eventManager->registerEventHandler('imopenlines', 'OnChatFinish', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'checkFreeSlotOnFinish', 50);
 
 		$eventManager->registerEventHandler('imopenlines', 'OnChatAnswer', 'imopenlines', '\Bitrix\ImOpenLines\SalesCenter\Catalog', 'OnChatAnswer', 500);
 
 		$eventManager->registerEventHandler('crm', 'onSiteFormFilledOpenlines', 'imopenlines', '\Bitrix\ImOpenLines\Widget\FormHandler', 'onOpenlinesFormFilled');
 		$eventManager->registerEventHandler('crm', 'onSiteFormFillOpenlines', 'imopenlines', '\Bitrix\ImOpenLines\Widget\FormHandler', 'onOpenlinesFormFill');
+
+		/** @see \Bitrix\ImOpenLines\Queue\Event::onDepartmentUpdate */
+		$eventManager->registerEventHandler('humanresources', 'NODE_UPDATED', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'onDepartmentUpdate');
+		/** @see \Bitrix\ImOpenLines\Queue\Event::onDepartmentDelete */
+		$eventManager->registerEventHandler('humanresources', 'NODE_DELETED', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'onDepartmentDelete');
+		/** @see \Bitrix\ImOpenLines\Queue\Event::onDepartmentMemberUpdated */
+		$eventManager->registerEventHandler('humanresources', 'MEMBER_UPDATED', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'onDepartmentMemberUpdated');
+
 
 		/** @see \Bitrix\ImOpenLines\Integrations\Report\Statistics\Manager::calculateStatisticsInQueue */
 		\CAgent::AddAgent('Bitrix\ImOpenLines\Integrations\Report\Statistics\Manager::calculateStatisticsInQueue();', 'imopenlines', 'N');
@@ -466,31 +499,65 @@ final class imopenlines extends \CModule
 		$eventManager->unRegisterEventHandler('rest', 'OnRestServiceBuildDescription', 'imopenlines', '\Bitrix\ImOpenLines\Rest', 'onRestServiceBuildDescription');
 		$eventManager->unRegisterEventHandler('main', 'Bitrix\Disk\Controller\File::'.\Bitrix\Main\Engine\Controller::EVENT_ON_BEFORE_ACTION, 'imopenlines', '\Bitrix\ImOpenLines\Widget\Auth', 'onDiskCheckAuth');
 		$eventManager->unRegisterEventHandler('rest', 'onRestCheckAuth', 'imopenlines', '\Bitrix\ImOpenLines\Widget\Auth', 'onRestCheckAuth');
+		/** @see \Bitrix\ImOpenLines\Queue\Event::onQueueTypeChange */
 		$eventManager->unRegisterEventHandler('imopenlines', 'OnImopenlineChangeQueueType', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'onQueueTypeChange');
+		/** @see \Bitrix\ImOpenLines\Queue\Event::onQueueOperatorsAdd */
 		$eventManager->unRegisterEventHandler('imopenlines', 'OnQueueOperatorsAdd', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'onQueueOperatorsAdd');
+		/** @see \Bitrix\ImOpenLines\Queue\Event::onQueueOperatorsDelete */
 		$eventManager->unRegisterEventHandler('imopenlines', 'OnQueueOperatorsDelete', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'onQueueOperatorsDelete');
+		/** @see \Bitrix\ImOpenLines\Recent::onQueueOperatorsDelete */
+		$eventManager->unRegisterEventHandler('imopenlines', 'OnQueueOperatorsDelete', 'imopenlines', '\Bitrix\ImOpenLines\Recent', 'onQueueOperatorsDelete');
+		/** @see \Bitrix\ImOpenLines\Queue\Event::OnBeforeDepartmentsDelete */
 		$eventManager->unRegisterEventHandler('iblock', 'OnBeforeIBlockSectionDelete', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'OnBeforeDepartmentsDelete');
+		/** @see \Bitrix\ImOpenLines\Queue\Event::OnAfterDepartmentsDelete */
 		$eventManager->unRegisterEventHandler('iblock', 'OnAfterIBlockSectionDelete', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'OnAfterDepartmentsDelete');
+		/** @see \Bitrix\ImOpenLines\Queue\Event::OnBeforeDepartmentsUpdate */
 		$eventManager->unRegisterEventHandler('iblock', 'OnBeforeIBlockSectionUpdate', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'OnBeforeDepartmentsUpdate');
+		/** @see \Bitrix\ImOpenLines\Queue\Event::OnAfterDepartmentsUpdate */
 		$eventManager->unRegisterEventHandler('iblock', 'OnAfterIBlockSectionUpdate', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'OnAfterDepartmentsUpdate');
+		/** @see \Bitrix\ImOpenLines\Queue\Event::onDepartmentUpdate */
+		$eventManager->unRegisterEventHandler('humanresources', 'NODE_UPDATED', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'onDepartmentUpdate');
+		/** @see \Bitrix\ImOpenLines\Queue\Event::onDepartmentDelete */
+		$eventManager->unRegisterEventHandler('humanresources', 'NODE_DELETED', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'onDepartmentDelete');
+		/** @see \Bitrix\ImOpenLines\Queue\Event::onDepartmentMemberUpdated */
+		$eventManager->unRegisterEventHandler('humanresources', 'MEMBER_UPDATED', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'onDepartmentMemberUpdated');
+		/** @see \Bitrix\ImOpenLines\Queue\Event::onUserAdd */
 		$eventManager->unRegisterEventHandler('main', 'OnAfterUserAdd', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'onUserAdd');
+		/** @see \Bitrix\ImOpenLines\Queue\Event::onUserUpdateBefore */
 		$eventManager->unRegisterEventHandler('main', 'OnBeforeUserUpdate', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'onUserUpdateBefore');
+		/** @see \Bitrix\ImOpenLines\Queue\Event::onUserUpdate */
 		$eventManager->unRegisterEventHandler('main', 'OnAfterUserUpdate', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'onUserUpdate');
+		/** @see \Bitrix\ImOpenLines\Queue\Event::OnAfterUserDelete */
 		$eventManager->unRegisterEventHandler('main', 'OnAfterUserDelete', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'OnAfterUserDelete');
+		/** @see \Bitrix\ImOpenLines\Queue\Event::onUserDelete */
 		$eventManager->unRegisterEventHandler('main', 'OnUserDelete', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'onUserDelete');
+		/** @see \Bitrix\ImOpenLines\Queue\Event::onAfterTMDayStart */
 		$eventManager->unRegisterEventHandler('timeman', 'OnAfterTMDayStart', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'onAfterTMDayStart');
+		/** @see \Bitrix\ImOpenLines\Queue\Event::onAfterTMDayPause */
 		$eventManager->unRegisterEventHandler('timeman', 'OnAfterTMDayPause', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'onAfterTMDayPause');
+		/** @see \Bitrix\ImOpenLines\Queue\Event::onAfterTMDayContinue */
 		$eventManager->unRegisterEventHandler('timeman', 'OnAfterTMDayContinue', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'onAfterTMDayContinue');
+		/** @see \Bitrix\ImOpenLines\Queue\Event::onAfterTMDayEnd */
 		$eventManager->unRegisterEventHandler('timeman', 'OnAfterTMDayEnd', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'onAfterTMDayEnd');
+		/** @see \Bitrix\ImOpenLines\Queue\Event::OnStartAbsence */
 		$eventManager->unRegisterEventHandler('intranet', 'OnStartAbsence', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'OnStartAbsence');
+		/** @see \Bitrix\ImOpenLines\Queue\Event::OnEndAbsence */
 		$eventManager->unRegisterEventHandler('intranet', 'OnEndAbsence', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'OnEndAbsence');
+		/** @see \Bitrix\ImOpenLines\Queue\Event::checkFreeSlotOnChatAnswer */
 		$eventManager->unRegisterEventHandler('imopenlines', 'OnChatAnswer', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'checkFreeSlotOnChatAnswer');
+		/** @see \Bitrix\ImOpenLines\Queue\Event::checkFreeSlotOnOperatorTransfer */
 		$eventManager->unRegisterEventHandler('imopenlines', 'OnOperatorTransfer', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'checkFreeSlotOnOperatorTransfer');
+		/** @see \Bitrix\ImOpenLines\Queue\Event::checkFreeSlotOnFinish */
 		$eventManager->unRegisterEventHandler('imopenlines', 'OnChatSkip', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'checkFreeSlotOnFinish');
+		/** @see \Bitrix\ImOpenLines\Queue\Event::checkFreeSlotOnFinish */
 		$eventManager->unRegisterEventHandler('imopenlines', 'OnChatMarkSpam', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'checkFreeSlotOnFinish');
+		/** @see \Bitrix\ImOpenLines\Queue\Event::checkFreeSlotOnFinish */
 		$eventManager->unRegisterEventHandler('imopenlines', 'OnChatFinish', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'checkFreeSlotOnFinish');
+		/** @see \Bitrix\ImOpenLines\Connector::onSessionStart */
 		$eventManager->unRegisterEventHandler('imopenlines', 'OnSessionStart', 'imopenlines', '\Bitrix\ImOpenLines\Connector', 'onSessionStart');
+		/** @see \Bitrix\ImOpenLines\Connector::onSessionFinish */
 		$eventManager->unRegisterEventHandler('imopenlines', 'OnSessionFinish', 'imopenlines', '\Bitrix\ImOpenLines\Connector', 'onSessionFinish');
+		/** @see \Bitrix\ImOpenLines\SalesCenter\Catalog::OnChatAnswer */
 		$eventManager->unRegisterEventHandler('imopenlines', 'OnChatAnswer', 'imopenlines', '\Bitrix\ImOpenLines\SalesCenter\Catalog', 'OnChatAnswer');
 
 		$this->UnInstallChatApps();

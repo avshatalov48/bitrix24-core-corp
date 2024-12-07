@@ -62,7 +62,7 @@ this.BX.Crm.Timeline = this.BX.Crm.Timeline || {};
 	      throw new Error('Comment ID must be specified');
 	    }
 	    babelHelpers.classPrivateFieldLooseBase(this, _commentId)[_commentId] = main_core.Text.toInteger(commentId);
-	    babelHelpers.classPrivateFieldLooseBase(this, _editorName)[_editorName] = 'CrmTimeLineComment' + babelHelpers.classPrivateFieldLooseBase(this, _commentId)[_commentId] + BX.util.getRandomString(4);
+	    babelHelpers.classPrivateFieldLooseBase(this, _editorName)[_editorName] = `CrmTimeLineComment${babelHelpers.classPrivateFieldLooseBase(this, _commentId)[_commentId]}${main_core.Text.getRandom(4)}`;
 	  }
 	  show(editorContainer) {
 	    babelHelpers.classPrivateFieldLooseBase(this, _editorContainer)[_editorContainer] = main_core.Type.isDomNode(editorContainer) ? editorContainer : null;
@@ -82,19 +82,19 @@ this.BX.Crm.Timeline = this.BX.Crm.Timeline || {};
 	      }
 	    }).then(result => {
 	      const assets = result.data.assets;
-	      const assetsToLoad = [...(assets.hasOwnProperty('css') ? assets.css : []), ...(assets.hasOwnProperty('js') ? assets.js : [])];
+	      const assetsToLoad = [...(Object.prototype.hasOwnProperty.call(assets, 'css') ? assets.css : []), ...(Object.prototype.hasOwnProperty.call(assets, 'js') ? assets.js : [])];
+
+	      // eslint-disable-next-line @bitrix24/bitrix24-rules/no-bx
 	      BX.load(assetsToLoad, () => {
-	        if (assets.hasOwnProperty('string')) {
-	          Promise.all(assets.string.map(stringValue => main_core.Runtime.html(null, stringValue))).then(() => {
+	        if (Object.prototype.hasOwnProperty.call(assets, 'string')) {
+	          void Promise.all(assets.string.map(stringValue => main_core.Runtime.html(null, stringValue))).then(() => {
 	            babelHelpers.classPrivateFieldLooseBase(this, _onEditorHtmlLoad)[_onEditorHtmlLoad](result);
 	          });
 	        } else {
 	          babelHelpers.classPrivateFieldLooseBase(this, _onEditorHtmlLoad)[_onEditorHtmlLoad](result);
 	        }
 	      });
-	    }).catch(result => {
-	      babelHelpers.classPrivateFieldLooseBase(this, _onRunRequestError)[_onRunRequestError](result);
-	    });
+	    }).catch(result => babelHelpers.classPrivateFieldLooseBase(this, _onRunRequestError)[_onRunRequestError](result));
 	  }
 	  getContent() {
 	    let content = '';
@@ -104,7 +104,7 @@ this.BX.Crm.Timeline = this.BX.Crm.Timeline || {};
 	    }
 	    if (!main_core.Type.isStringFilled(content)) {
 	      ui_notification.UI.Notification.Center.notify({
-	        content: BX.message('CRM_TIMELINE_EMPTY_COMMENT_MESSAGE')
+	        content: main_core.Loc.getMessage('CRM_TIMELINE_EMPTY_COMMENT_MESSAGE')
 	      });
 	    }
 	    return content;
@@ -117,17 +117,34 @@ this.BX.Crm.Timeline = this.BX.Crm.Timeline || {};
 	    return content;
 	  }
 	  getAttachments() {
-	    let attachmentList = [];
+	    const attachmentList = [];
 	    if (babelHelpers.classPrivateFieldLooseBase(this, _postForm)[_postForm]) {
 	      babelHelpers.classPrivateFieldLooseBase(this, _postForm)[_postForm].eventNode.querySelectorAll('input[name="UF_CRM_COMMENT_FILES[]"]').forEach(input => attachmentList.push(input.value));
 	    }
 	    return attachmentList;
 	  }
+	  getAttachmentsAllowEditOptions(attachmentList) {
+	    if (!main_core.Type.isArrayFilled(attachmentList)) {
+	      return {};
+	    }
+	    const options = {};
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _postForm)[_postForm]) {
+	      attachmentList.forEach(id => {
+	        const selectorName = `input[name="CRM_TIMELINE_DISK_ATTACHED_OBJECT_ALLOW_EDIT[${id}]"`;
+	        const selector = babelHelpers.classPrivateFieldLooseBase(this, _postForm)[_postForm].eventNode.querySelector(selectorName);
+	        if (selector) {
+	          options[id] = selector.value;
+	        }
+	      });
+	    }
+	    return options;
+	  }
 	}
 	function _onEditorHtmlLoad2(result) {
 	  if (main_core.Type.isObject(result) && main_core.Type.isObject(result.data) && main_core.Type.isStringFilled(result.data.html)) {
 	    babelHelpers.classPrivateFieldLooseBase(this, _showLoader)[_showLoader](false);
-	    main_core.Runtime.html(babelHelpers.classPrivateFieldLooseBase(this, _editorContainer)[_editorContainer], result.data.html).then(() => {
+	    void main_core.Runtime.html(babelHelpers.classPrivateFieldLooseBase(this, _editorContainer)[_editorContainer], result.data.html).then(() => {
+	      // eslint-disable-next-line no-undef
 	      if (LHEPostForm) {
 	        setTimeout(babelHelpers.classPrivateFieldLooseBase(this, _showEditor)[_showEditor].bind(this), 0);
 	      }
@@ -149,13 +166,21 @@ this.BX.Crm.Timeline = this.BX.Crm.Timeline || {};
 	  }
 	}
 	function _showEditor2() {
+	  // eslint-disable-next-line no-undef
 	  babelHelpers.classPrivateFieldLooseBase(this, _postForm)[_postForm] = LHEPostForm.getHandler(babelHelpers.classPrivateFieldLooseBase(this, _editorName)[_editorName]);
+	  // eslint-disable-next-line no-undef
 	  babelHelpers.classPrivateFieldLooseBase(this, _editor)[_editor] = BXHtmlEditor.Get(babelHelpers.classPrivateFieldLooseBase(this, _editorName)[_editorName]);
+
+	  // eslint-disable-next-line @bitrix24/bitrix24-rules/no-bx
 	  BX.onCustomEvent(babelHelpers.classPrivateFieldLooseBase(this, _postForm)[_postForm].eventNode, 'OnShowLHE', [true]);
 	  babelHelpers.classPrivateFieldLooseBase(this, _commentMessage)[_commentMessage] = babelHelpers.classPrivateFieldLooseBase(this, _postForm)[_postForm].oEditor.GetContent();
 	  if (babelHelpers.classPrivateFieldLooseBase(this, _editor)[_editor].dom) {
-	    babelHelpers.classPrivateFieldLooseBase(this, _editor)[_editor].dom.textareaCont.style.opacity = 1;
-	    babelHelpers.classPrivateFieldLooseBase(this, _editor)[_editor].dom.iframeCont.style.opacity = 1;
+	    main_core.Dom.style(babelHelpers.classPrivateFieldLooseBase(this, _editor)[_editor].dom.textareaCont, {
+	      opacity: 1
+	    });
+	    main_core.Dom.style(babelHelpers.classPrivateFieldLooseBase(this, _editor)[_editor].dom.iframeCont, {
+	      opacity: 1
+	    });
 	  }
 	  setTimeout(() => {
 	    babelHelpers.classPrivateFieldLooseBase(this, _editor)[_editor].Focus(true);
@@ -172,10 +197,8 @@ this.BX.Crm.Timeline = this.BX.Crm.Timeline || {};
 	      });
 	    }
 	    babelHelpers.classPrivateFieldLooseBase(this, _loader)[_loader].show(babelHelpers.classPrivateFieldLooseBase(this, _editorContainer)[_editorContainer]);
-	  } else {
-	    if (!babelHelpers.classPrivateFieldLooseBase(this, _loader)[_loader] && main_loader.Loader) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _loader)[_loader].hide();
-	    }
+	  } else if (!babelHelpers.classPrivateFieldLooseBase(this, _loader)[_loader] && main_loader.Loader) {
+	    babelHelpers.classPrivateFieldLooseBase(this, _loader)[_loader].hide();
 	  }
 	}
 

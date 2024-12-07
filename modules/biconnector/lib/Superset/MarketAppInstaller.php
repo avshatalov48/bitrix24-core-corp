@@ -7,6 +7,7 @@ use Bitrix\BiConnector\Configuration\Manifest;
 use Bitrix\BIConnector\Superset\Logger\MarketDashboardLogger;
 use Bitrix\Main\Error;
 use Bitrix\Main\IO\Directory;
+use Bitrix\Main\IO\FileOpenException;
 use Bitrix\Main\Result;
 use Bitrix\Main\Web\Json;
 use Bitrix\Main\Web\Uri;
@@ -56,6 +57,12 @@ class MarketAppInstaller
 
 		if (isset($installResult['errorDescription']))
 		{
+			MarketDashboardLogger::logErrors([new Error($installResult['errorDescription'])], [
+				'message' => 'Cannot install rest application',
+				'app_code' => $code,
+				'version' => $version ?? 'no version',
+			]);
+
 			$result->addError(new Error($installResult['errorDescription']));
 
 			return $result;
@@ -64,6 +71,11 @@ class MarketAppInstaller
 		$importResult = $this->importConfiguration($installResult['id']);
 		if (!$importResult->isSuccess())
 		{
+			MarketDashboardLogger::logErrors($importResult->getErrors(), [
+				'message' => 'Cannot import configuration',
+				'app_code' => $code,
+				'version' => $version ?? 'no version',
+			]);
 			$result->addErrors($importResult->getErrors());
 		}
 
@@ -173,7 +185,15 @@ class MarketAppInstaller
 	{
 		$result = new Result();
 
-		$fileInfo = \CFile::MakeFileArray(Uri::urnEncode($app['URL']));
+		try
+		{
+			$fileInfo = \CFile::makeFileArray(Uri::urnEncode($app['URL']));
+		}
+		catch (FileOpenException $e)
+		{
+			$result->addError(new Error("prepareArchive: file at {$app['URL']} cannot be opened: " . $e->getMessage()));
+		}
+
 		if (empty($fileInfo['tmp_name']))
 		{
 			$result->addError(new Error("prepareArchive: tmp_name of file at {$app['URL']} is not specified."));
@@ -181,7 +201,7 @@ class MarketAppInstaller
 			return $result;
 		}
 
-		$checkResult = \CFile::CheckFile(
+		$checkResult = \CFile::checkFile(
 			arFile: $fileInfo,
 			mimeType: [
 				'application/gzip',

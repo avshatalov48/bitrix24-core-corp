@@ -8,7 +8,10 @@ use Bitrix\Tasks\Control\Exception\TemplateAddException;
 use Bitrix\Tasks\Control\Exception\TemplateUpdateException;
 use Bitrix\Tasks\Control\Handler\Exception\TemplateFieldValidateException;
 use Bitrix\Tasks\Control\Handler\TemplateFieldHandler;
+use Bitrix\Tasks\Integration\Pull\PushCommand;
+use Bitrix\Tasks\Integration\Pull\PushService;
 use Bitrix\Tasks\Internals\DataBase\Tree\TargetNodeNotFoundException;
+use Bitrix\Tasks\Internals\Log\LogFacade;
 use Bitrix\Tasks\Internals\Task\Template\ScenarioTable;
 use Bitrix\Tasks\Internals\Task\Template\TemplateDependenceTable;
 use Bitrix\Tasks\Internals\Task\Template\TemplateMemberTable;
@@ -19,6 +22,7 @@ use Bitrix\Tasks\Internals\Task\Template\TemplateTagTable;
 use Bitrix\Tasks\Internals\Task\TemplateTable;
 use Bitrix\Tasks\Item\SystemLog;
 use Bitrix\Tasks\Member\Service\TemplateMemberService;
+use Bitrix\Tasks\Replication\Replicator\RegularTemplateTaskReplicator;
 
 class Template
 {
@@ -27,6 +31,7 @@ class Template
 	private $db;
 	private $ufManager;
 	private $application;
+	private RegularTemplateTaskReplicator $replicator;
 
 	private $userId;
 
@@ -41,15 +46,8 @@ class Template
 
 	public function __construct(int $userId)
 	{
-		global $DB;
-		global $USER_FIELD_MANAGER;
-		global $APPLICATION;
-
-		$this->db = $DB;
-		$this->ufManager = $USER_FIELD_MANAGER;
-		$this->application = $APPLICATION;
-
 		$this->userId = $userId;
+		$this->init();
 	}
 
 	/**
@@ -105,7 +103,7 @@ class Template
 		{
 			$message = $e->getMessage();
 			$this->application->ThrowException(new \CAdminException([
-				['text' => $message]
+				['text' => $message],
 			]));
 
 			throw new TemplateAddException($e->getMessage());
@@ -143,6 +141,8 @@ class Template
 		$this->setParent($fields);
 		$this->setRights($fields);
 		$this->resetCache();
+
+		$this->sendAddPush($fields);
 
 		return $template;
 	}
@@ -197,7 +197,7 @@ class Template
 				$this->fullDelete();
 			}
 
-			$this->onDelete();
+			$this->onDelete($template);
 		}
 		catch (\Exception $e)
 		{
@@ -255,7 +255,7 @@ class Template
 		{
 			$message = $e->getMessage();
 			$this->application->ThrowException(new \CAdminException([
-				['text' => $message]
+				['text' => $message],
 			]));
 
 			throw new TemplateUpdateException($e->getMessage());
@@ -282,6 +282,8 @@ class Template
 		}
 
 		$this->resetCache();
+
+		$this->sendUpdatePush($fields);
 
 		return $templateObject;
 	}
@@ -527,10 +529,8 @@ class Template
 	/**
 	 * @return bool
 	 */
-	private function onDelete(): bool
+	private function onDelete(?array $template): bool
 	{
-		$template = $this->getTemplateData();
-
 		foreach (GetModuleEvents('tasks', 'OnTaskTemplateDelete', true) as $arEvent)
 		{
 			if (ExecuteModuleEventEx($arEvent, array($this->templateId, $template)) === false)
@@ -564,7 +564,14 @@ class Template
 		$subTree = DependenceTable::getSubTree($this->templateId, [], ['INCLUDE_SELF' => false])->fetchAll();
 
 		// delete link to parent
-		DependenceTable::unlink($this->templateId);
+		try
+		{
+			DependenceTable::unlink($this->templateId);
+		}
+		catch (TargetNodeNotFoundException)
+		{
+			// it is okay :)
+		}
 
 		// reattach sub templates
 		if ($parentId)
@@ -592,11 +599,14 @@ class Template
 		$select = ['TEMPLATE_ID', 'PARENT_TEMPLATE_ID'];
 		$filter = [
 			'=TEMPLATE_ID' => $this->templateId,
-			'=PARENT_TEMPLATE_ID' => $this->templateId
+			'=PARENT_TEMPLATE_ID' => $this->templateId,
 		];
 
 		$item = DependenceTable::getList(['select' => $select, 'filter' => $filter])->fetch();
-		DependenceTable::delete($item);
+		if (false !== $item)
+		{
+			DependenceTable::delete($item);
+		}
 	}
 
 	/**
@@ -669,12 +679,10 @@ class Template
 	 * @param array $fields
 	 * @return void
 	 */
-	private function enableReplication(array $fields)
+	private function enableReplication(array $fields): void
 	{
-		$name = 'CTasks::RepeatTaskByTemplateId('.$this->templateId.');';
-
 		// First, remove all agents for this template
-		$this->removeAgents();
+		$this->replicator->stopReplication($this->templateId);
 
 		if (
 			!array_key_exists('REPLICATE', $fields)
@@ -684,20 +692,7 @@ class Template
 			return;
 		}
 
-		$nextTime = \CTasks::getNextTime($fields['REPLICATE_PARAMS'], $this->templateId); // localtime
-		if ($nextTime)
-		{
-
-			\CAgent::AddAgent(
-				$name,
-				'tasks',
-				'N', 		// is periodic?
-				86400, 		// interval (24 hours)
-				$nextTime, 	// datecheck
-				'Y', 		// is active?
-				$nextTime	// next_exec
-			);
-		}
+		$this->replicator->startReplicationAndUpdateTemplate($this->templateId, $fields['REPLICATE_PARAMS']);
 	}
 
 	/**
@@ -788,5 +783,51 @@ class Template
 	private function resetCache(): void
 	{
 		TemplateMemberService::invalidate();
+	}
+
+	private function sendAddPush(array $fields): void
+	{
+		$this->sendPush(PushCommand::TEMPLATE_ADDED, $fields);
+	}
+
+	private function sendUpdatePush(array $fields): void
+	{
+		$this->sendPush(PushCommand::TEMPLATE_UPDATED, $fields);
+	}
+
+	private function sendPush(string $command, array $fields): void
+	{
+		$params = [
+			'TEMPLATE_ID' => $this->templateId,
+			'TEMPLATE_TITLE' => $fields['TITLE'] ?? null,
+		];
+
+		try
+		{
+			PushService::addEvent($this->userId, [
+				'module_id' => 'tasks',
+				'command' => $command,
+				'params' => $params,
+			]);
+		}
+		catch (\Exception $exception)
+		{
+			LogFacade::logThrowable($exception);
+
+			return;
+		}
+	}
+
+	private function init(): void
+	{
+		global $DB;
+		global $USER_FIELD_MANAGER;
+		global $APPLICATION;
+
+		$this->db = $DB;
+		$this->ufManager = $USER_FIELD_MANAGER;
+		$this->application = $APPLICATION;
+
+		$this->replicator = new RegularTemplateTaskReplicator($this->userId);
 	}
 }

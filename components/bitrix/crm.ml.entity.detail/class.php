@@ -14,6 +14,7 @@ use Bitrix\Crm\Ml\Model\LeadScoring;
 use Bitrix\Crm\Ml\Scoring;
 use Bitrix\Crm\Ml\TrainingState;
 use Bitrix\Crm\Ml\ViewHelper;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Context;
 use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Error;
@@ -50,13 +51,16 @@ class CCrmMlEntityDetailComponent extends CBitrixComponent
 	{
 		$this->setEntity($this->arParams['TYPE'], $this->arParams['ID']);
 
-		$userPermissions = CCrmPerms::GetCurrentUserPermissions();
-
+		$categoryId = Container::getInstance()
+			->getFactory($this->entityTypeId)
+			?->getItemCategoryId($this->entityId)
+		;
+		
 		if (
-			!CCrmAuthorizationHelper::CheckReadPermission(
-				$this->arParams['TYPE'],
-				$this->arParams['ID'],
-				$userPermissions
+			!Container::getInstance()->getUserPermissions()->checkReadPermissions(
+				$this->entityTypeId,
+				$this->entityId,
+				$categoryId
 			)
 		)
 		{

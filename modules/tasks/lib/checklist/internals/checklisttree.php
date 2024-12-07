@@ -11,6 +11,8 @@ use Bitrix\Main\NotImplementedException;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
 use Bitrix\Tasks\Internals\DataBase\Helper;
+use Bitrix\Tasks\Internals\Log\Logger;
+use Bitrix\Tasks\Internals\Task\CheckListTable;
 use Bitrix\Tasks\Util\Result;
 use Exception;
 
@@ -147,6 +149,15 @@ abstract class CheckListTree
 				if ($parameters['NEW_NODE'] ?? null)
 				{
 					$result = static::addErrorToResult($result, $replaces, __METHOD__, 'EXISTING_NODE_ADDING');
+					$logData = [
+						'first' => CheckListTable::getById($id)->fetch(),
+						'second' => CheckListTable::getById($parentId)->fetch(),
+						'dc' => static::getDataController(),
+						'pcn' => static::getParentNodeColumnName(),
+						'ccn' => static::getNodeColumnName(),
+					];
+
+					Logger::log($logData, 'TASKS_CHECKLIST_RACE_CONDITION');
 				}
 				else
 				{

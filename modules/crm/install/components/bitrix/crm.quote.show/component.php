@@ -1139,7 +1139,7 @@ if(is_array($paySystems))
 	foreach($paySystems as &$paySystem)
 	{
 		$file = isset($paySystem['~PSA_ACTION_FILE']) ? $paySystem['~PSA_ACTION_FILE'] : '';
-		if(preg_match('/quote(_\w+)*$/i'.BX_UTF_PCRE_MODIFIER, $file))
+		if(preg_match('/quote(_\w+)*$/iu', $file))
 		{
 			$quotePaySystemInfos[] = array(
 				'ID' => (int)$paySystem['~ID'],

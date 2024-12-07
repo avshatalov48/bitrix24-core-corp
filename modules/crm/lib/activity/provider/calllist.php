@@ -183,12 +183,12 @@ class CallList extends Base
 		);
 		return ob_get_clean();
 	}
-	
+
 	public static function checkOwner()
 	{
 		return false;
 	}
-	
+
 	public static function postForm(array &$activity, array $formData)
 	{
 		$result = new Main\Result();
@@ -201,7 +201,7 @@ class CallList extends Base
 			$result->addError(new Main\Error(Loc::getMessage('CRM_CALL_LIST_NOT_CREATED_ERROR')));
 			return $result;
 		}
-		
+
 		if($callListSubject == '')
 		{
 			$result->addError(new Main\Error(Loc::getMessage('CRM_CALL_LIST_SUBJECT_EMPTY')));
@@ -266,29 +266,46 @@ class CallList extends Base
 		if($activityFields['AUTHOR_ID'] !== $activityFields['RESPONSIBLE_ID'])
 			static::notify($activityFields);
 	}
-	
-	public static function notify($activityFields)
+
+	public static function notify($activityFields): void
 	{
-		if(!Main\Loader::includeModule('im'))
+		if (!Main\Loader::includeModule('im'))
+		{
 			return;
+		}
+
+		$subject = $activityFields['SUBJECT'] ?? '';
+		$url = \CCrmOwnerType::GetEntityShowPath(\CCrmOwnerType::Activity, $activityFields['ID'] ?? 0);
+
+		$notifyMessageCallback = static fn (?string $languageId = null) =>
+			Loc::getMessage(
+				'CRM_CALL_LIST_RESPONSIBLE_IM_NOTIFY',
+				[ '#title#' => '<a href="'.$url.'">'. htmlspecialcharsbx($subject) .'</a>' ],
+				$languageId,
+			)
+		;
+
+		$notifyMessageOutCallback = static fn (?string $languageId = null) =>
+			Loc::getMessage(
+				'CRM_CALL_LIST_RESPONSIBLE_IM_NOTIFY',
+				[ '#title#' => htmlspecialcharsbx($subject) ],
+				$languageId,
+			)
+		;
 
 		$notification = array(
 			"MESSAGE_TYPE" => IM_MESSAGE_SYSTEM,
-			"TO_USER_ID" => $activityFields['RESPONSIBLE_ID'],
-			"FROM_USER_ID" => $activityFields['AUTHOR_ID'],
+			"TO_USER_ID" => (int)($activityFields['RESPONSIBLE_ID'] ?? 0),
+			"FROM_USER_ID" => (int)($activityFields['AUTHOR_ID'] ?? 0),
 			"NOTIFY_TYPE" => IM_NOTIFY_FROM,
 			"NOTIFY_MODULE" => "crm",
 			//"NOTIFY_EVENT" => "callListCreated",
 			"NOTIFY_EVENT" => "changeAssignedBy",
-			"NOTIFY_TAG" => "CRM|CALL_LIST|".$activityFields['ID'],
-			"NOTIFY_MESSAGE" => Loc::getMessage('CRM_CALL_LIST_RESPONSIBLE_IM_NOTIFY', array(
-				'#title#' =>  '<a href="'.\CCrmOwnerType::GetEntityShowPath(\CCrmOwnerType::Activity, $activityFields['ID']).'">'.$activityFields['SUBJECT'].'</a>'
-			)),
-			"NOTIFY_MESSAGE_OUT" => Loc::getMessage('CRM_CALL_LIST_RESPONSIBLE_IM_NOTIFY', array(
-				'#title#' => $activityFields['SUBJECT']
-			)),
+			"NOTIFY_TAG" => "CRM|CALL_LIST|" . ($activityFields['ID'] ?? 0),
+			"NOTIFY_MESSAGE" => $notifyMessageCallback,
+			"NOTIFY_MESSAGE_OUT" => $notifyMessageOutCallback,
 		);
-		
+
 		\CIMNotify::Add($notification);
 	}
 

@@ -5,5 +5,6 @@ export type UiConfig = {
 	hideTab: boolean,
 	hideChartControls: boolean,
 	filterOption: FilterUiOption,
-	filters: {},
+	filters: Object,
+	urlParams: Object,
 }

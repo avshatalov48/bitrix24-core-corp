@@ -15,6 +15,7 @@ export type SiteDomainType = {
 	isRenameable: boolean,
 	occupiedDomains: Object,
 	label: ?string,
+	exampleDns: Object,
 };
 
 export class SiteDomainField extends SettingsField

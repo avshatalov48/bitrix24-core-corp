@@ -144,10 +144,6 @@ class Bitrix24Manager
 	{
 		$helpdeskId = self::getFeatureRestrictionMap()[$feature];
 
-		if ($feature === 'disk_manual_external_folder')
-		{
-			$feature = 'disk_manual_external_link';
-		}
 		if ($feature === 'disk_folder_rights')
 		{
 			$feature = 'disk_folder_sharing';
@@ -162,6 +158,14 @@ class Bitrix24Manager
 			return $jsAction;
 		}
 
+		$giftedFeature = [
+			'disk_import_cloud_files',
+		];
+
+		if (\in_array($feature, $giftedFeature, true))
+		{
+			return "BX.UI.FeaturePromotersRegistry.getPromoter({featureId: '{$feature}'}).show();";
+		}
 
 		return "BX.UI.InfoHelper.show('{$helpdeskId}')";
 	}
@@ -176,6 +180,7 @@ class Bitrix24Manager
 			'disk_folder_rights' => 'limit_office_disk_folders_access_rights',
 			'disk_file_rights' => 'limit_office_disk_files_access_rights',
 			'disk_common_storage' => 'limit_company_common_disk',
+			'disk_import_cloud_files' => 'limit_office_cloud_storage',
 		];
 	}
 }

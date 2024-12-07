@@ -53,6 +53,11 @@ jn.define('entity-ready', (require, exports, module) => {
 		{
 			BX.postComponentEvent('EntityReady::ready', [entityId]);
 		}
+
+		isReady(entityId)
+		{
+			return this.readyEntitiesCollection.has(entityId);
+		}
 	}
 
 	module.exports = {

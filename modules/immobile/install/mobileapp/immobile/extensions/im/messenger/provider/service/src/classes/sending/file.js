@@ -3,6 +3,7 @@
  */
 jn.define('im/messenger/provider/service/classes/sending/file', (require, exports, module) => {
 	const { Filesystem, Reader } = require('native/filesystem');
+	const { Type } = require('type');
 
 	const {
 		getExtension,
@@ -15,6 +16,7 @@ jn.define('im/messenger/provider/service/classes/sending/file', (require, export
 		FileStatus,
 		FileType,
 		ErrorCode,
+		ComponentCode,
 	} = require('im/messenger/const');
 	const { getFileTypeByExtension } = require('im/messenger/lib/helper');
 	const { Logger } = require('im/messenger/lib/logger');
@@ -60,7 +62,8 @@ jn.define('im/messenger/provider/service/classes/sending/file', (require, export
 		initUploadManager()
 		{
 			/** @private */
-			this.uploadManager = new UploadManager();
+			const componentName = BX.componentParameters.get('COMPONENT_CODE', ComponentCode.imMessenger); // TODO change getter to helper method
+			this.uploadManager = new UploadManager(componentName);
 			this.uploadManager
 				.on(UploaderManagerEvent.progress, (fileId, data) => {
 					Logger.info('UploaderManagerEvent.progress', fileId, data);
@@ -150,7 +153,7 @@ jn.define('im/messenger/provider/service/classes/sending/file', (require, export
 							id: temporaryMessageId,
 							fields: {
 								error: true,
-								errorReason: ErrorCode.uploadManager.NETWORK_ERROR,
+								errorReason: ErrorCode.NETWORK_ERROR,
 							},
 						});
 					});
@@ -254,7 +257,7 @@ jn.define('im/messenger/provider/service/classes/sending/file', (require, export
 			this.addFileToFileUploadStack(messageWithFile);
 			const uploadTask = await this.uploadManager.addUploadTaskByMessage(messageWithFile);
 
-			return this.addFileToModelByUploadTask(uploadTask);
+			return this.addFileToModelByUploadTask(uploadTask, messageWithFile.dialogId);
 		}
 
 		/**
@@ -283,7 +286,8 @@ jn.define('im/messenger/provider/service/classes/sending/file', (require, export
 				this.addFileToUploadRegistry(file.temporaryFileId, file);
 				this.addFileToFileUploadStack(file);
 				const { fileData, task } = await this.uploadManager.getFileDataAndTask(file);
-				await this.addFileToModelByUploadTask(fileData);
+
+				await this.addFileToModelByUploadTask(fileData, file.dialogId);
 				callBackSend(file);
 				tasks.push(task);
 			}
@@ -328,7 +332,7 @@ jn.define('im/messenger/provider/service/classes/sending/file', (require, export
 		/**
 		 * @private
 		 */
-		async addFileToModelByUploadTask(uploadTask)
+		async addFileToModelByUploadTask(uploadTask, dialogId)
 		{
 			const { taskId, file } = uploadTask;
 
@@ -350,10 +354,12 @@ jn.define('im/messenger/provider/service/classes/sending/file', (require, export
 				};
 			}
 
+			const dialog = this.getDialog(dialogId);
+
 			return this.store.dispatch('filesModel/set', {
 				id: taskId,
-				dialogId: this.getDialog().dialogId,
-				chatId: this.getDialog().chatId,
+				dialogId: dialog?.dialogId,
+				chatId: dialog?.chatId,
 				authorId: serviceLocator.get('core').getUserId(),
 				name: file.name,
 				type: this.getFileType(file),
@@ -641,10 +647,22 @@ jn.define('im/messenger/provider/service/classes/sending/file', (require, export
 
 			if (!isHasMessageId)
 			{
-				const messagesModelState = this.store.getters['messagesModel/getById'](messageId);
+				let messagesModelState = this.store.getters['messagesModel/getById'](messageId);
+				if (Type.isPlainObject(messagesModelState) && !Type.isUndefined(messagesModelState.id))
+				{
+					messagesModelState = this.store.getters['messagesModel/getByTemplateId'](messageId);
+				}
+
 				if (fileId)
 				{
-					messagesModelState.files[0] = fileId;
+					if (Type.isArray(messagesModelState.files))
+					{
+						messagesModelState.files[0] = fileId;
+					}
+					else
+					{
+						messagesModelState.files = [fileId];
+					}
 				}
 
 				this.store.dispatch('messagesModel/addToChatCollection', messagesModelState);

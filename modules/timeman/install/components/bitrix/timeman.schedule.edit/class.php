@@ -82,7 +82,8 @@ class TimemanScheduleComponent extends \Bitrix\Timeman\Component\BaseComponent
 		{
 			if (!$this->userPermissionsManager->canReadSchedule($this->arResult['SCHEDULE_ID']))
 			{
-				return $this->showError(Loc::getMessage('TIMEMAN_SCHEDULE_EDIT_ERROR_SCHEDULE_READ_ACCESS_DENIED'));
+				$this->showError(Loc::getMessage('TIMEMAN_SCHEDULE_EDIT_ERROR_SCHEDULE_READ_ACCESS_DENIED'));
+				return;
 			}
 			$this->arResult['isNewSchedule'] = false;
 			if ($this->arResult['VIOLATIONS_ONLY'])
@@ -104,7 +105,8 @@ class TimemanScheduleComponent extends \Bitrix\Timeman\Component\BaseComponent
 			}
 			if (!$editingSchedule)
 			{
-				return $this->showError(Loc::getMessage('TIMEMAN_SCHEDULE_EDIT_ERROR_SCHEDULE_NOT_FOUND'));
+				$this->showError(Loc::getMessage('TIMEMAN_SCHEDULE_EDIT_ERROR_SCHEDULE_NOT_FOUND'));
+				return;
 			}
 			if ($editingSchedule->isShifted())
 			{
@@ -140,7 +142,8 @@ class TimemanScheduleComponent extends \Bitrix\Timeman\Component\BaseComponent
 		{
 			if (!$this->userPermissionsManager->canCreateSchedule())
 			{
-				return $this->showError(Loc::getMessage('TIMEMAN_SCHEDULE_EDIT_ERROR_SCHEDULE_CREATE_ACCESS_DENIED'));
+				$this->showError(Loc::getMessage('TIMEMAN_SCHEDULE_EDIT_ERROR_SCHEDULE_CREATE_ACCESS_DENIED'));
+				return;
 			}
 		}
 		$this->arResult['hintWorktimeRestrictionMaxStartOffset'] = Loc::getMessage('TIMEMAN_SCHEDULE_EDIT_HINT_RESTRICTION_MAX_START_OFFSET');
@@ -161,7 +164,8 @@ class TimemanScheduleComponent extends \Bitrix\Timeman\Component\BaseComponent
 					->fetch();
 				if (!$user)
 				{
-					return $this->showError(Loc::getMessage('TIMEMAN_SCHEDULE_EDIT_ERROR_SCHEDULE_NOT_FOUND'));
+					$this->showError(Loc::getMessage('TIMEMAN_SCHEDULE_EDIT_ERROR_SCHEDULE_NOT_FOUND'));
+					return;
 				}
 				$this->arResult['ENTITY_NAME'] = UserHelper::getInstance()->getFormattedName($user);
 			}
@@ -193,7 +197,8 @@ class TimemanScheduleComponent extends \Bitrix\Timeman\Component\BaseComponent
 			$this->arResult['canUpdatePersonalViolations'] = $this->userPermissionsManager->canUpdateViolationRules($this->arResult['ENTITY_CODE']);
 			if ($editingSchedule->isFlextime())
 			{
-				return $this->showError(Loc::getMessage('TIMEMAN_SCHEDULE_EDIT_ERROR_NO_VIOLATION_CONTROL'));
+				$this->showError(Loc::getMessage('TIMEMAN_SCHEDULE_EDIT_ERROR_NO_VIOLATION_CONTROL'));
+				return;
 			}
 			$foundByHierarchy = false;
 			$violationRules = $this->violationRepository->findByScheduleIdEntityCode($this->arResult['SCHEDULE_ID'], $this->arResult['ENTITY_CODE']);

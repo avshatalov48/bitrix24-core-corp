@@ -1,4 +1,5 @@
 /**
+ * @deprecated
  * @module layout/ui/switcher
  */
 jn.define('layout/ui/switcher', (require, exports, module) => {
@@ -11,6 +12,10 @@ jn.define('layout/ui/switcher', (require, exports, module) => {
 		TRACK_ACTIVE: AppTheme.colors.accentBrandBlue,
 	};
 
+	/**
+	 * @deprecated
+	 * @class Switcher
+	 */
 	class Switcher extends LayoutComponent
 	{
 		constructor(props)
@@ -72,11 +77,12 @@ jn.define('layout/ui/switcher', (require, exports, module) => {
 
 		render()
 		{
+			const { testId } = this.props;
 			const { switcherContainer, switcher } = this.getStyles();
 
 			return View(
 				{
-					testId: `${this.props.testId}-Container`,
+					testId: `${testId}-Container`,
 					ref: (ref) => {
 						this.switcherContainerRef = ref;
 					},
@@ -84,6 +90,7 @@ jn.define('layout/ui/switcher', (require, exports, module) => {
 				},
 				View(
 					{
+						testId: this.#getTestId(),
 						ref: (ref) => {
 							this.switcherRef = ref;
 						},
@@ -91,6 +98,14 @@ jn.define('layout/ui/switcher', (require, exports, module) => {
 					},
 				),
 			);
+		}
+
+		#getTestId()
+		{
+			const { checked, testId } = this.props;
+			const prefix = checked ? '' : 'un';
+
+			return `${testId}_${prefix}selected`;
 		}
 
 		getThumbColor(checked)
@@ -148,4 +163,3 @@ jn.define('layout/ui/switcher', (require, exports, module) => {
 
 	module.exports = { Switcher };
 });
-

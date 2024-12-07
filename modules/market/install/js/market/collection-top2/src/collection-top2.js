@@ -1,4 +1,5 @@
-import {CollectionTop2List} from "market.collection-top2-list";
+import { CollectionTop2List } from "market.collection-top2-list";
+import { MarketLinks } from "market.market-links";
 
 import "./collection-top2.css";
 
@@ -9,6 +10,11 @@ export const CollectionTop2 = {
 	props: [
 		'item', 'scrollable', 'showListButton',
 	],
+	data() {
+		return {
+			MarketLinks: MarketLinks,
+		}
+	},
 	mounted: function() {
 		if (this.scrollable) {
 			(new BX.UI.Ears({
@@ -31,7 +37,7 @@ export const CollectionTop2 = {
 						:title="item.NAME"
 					>
 						<a class="market-toplist-title-text-link"
-						   :href="$root.getCollectionUri(item.COLLECTION_ID, item.SHOW_ON_PAGE)"
+						   :href="MarketLinks.collectionLink(item.COLLECTION_ID, item.SHOW_ON_PAGE)"
 						   data-slider-ignore-autobinding="true"
 						   data-load-content="list"
 						   @click.prevent="$root.emitLoadContent"
@@ -47,7 +53,7 @@ export const CollectionTop2 = {
 				</div>
 				<div class="market-toplist-header-block --not-compressible">
 					<a class="market-toplist-more-btn"
-					   :href="$root.getCollectionUri(item.COLLECTION_ID, item.SHOW_ON_PAGE)"
+					   :href="MarketLinks.collectionLink(item.COLLECTION_ID, item.SHOW_ON_PAGE)"
 					   data-slider-ignore-autobinding="true"
 					   data-load-content="list"
 					   @click.prevent="$root.emitLoadContent"

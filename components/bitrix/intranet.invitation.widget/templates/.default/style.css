@@ -60,6 +60,10 @@
 	font-weight: var(--ui-font-weight-semi-bold, 600);
 }
 
+.intranet-invitation-widget-item--emp .intranet-invitation-widget-item-name {
+	cursor: pointer;
+}
+
 .intranet-invitation-widget-item-link {
 	line-height: 16px;
 	margin-top: -3px;
@@ -375,6 +379,7 @@
 	flex-shrink: 0;
 	background-repeat: no-repeat;
 	background-position: center;
+	cursor: pointer;
 }
 
 .intranet-invitation-widget-item-progress--empty {
@@ -406,6 +411,7 @@
 	font: 12px/16px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
 	font-weight: var(--ui-font-weight-semi-bold, 600);
 	margin-top: 3px;
+	cursor: pointer;
 }
 
 .intranet-invitation-widget-item-detail {
@@ -415,6 +421,7 @@
 	padding-bottom: 10px;
 	padding-top: 4px;
 	margin-top: auto;
+	cursor: pointer;
 }
 
 .intranet-invitation-widget-item-detail span.intranet-invitation-widget-item-link-text:hover,
@@ -831,6 +838,12 @@
 
 .intranet-invitation-widget-item--counter-inactive .ui-icon-common-user > i {
 	background-image: url(data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2228%22%20height%3D%2228%22%3E%3Cg%20fill%3D%22%23525C69%22%20fill-rule%3D%22evenodd%22%3E%3Cpath%20d%3D%22M14%200c7.732%200%2014%206.268%2014%2014s-6.268%2014-14%2014S0%2021.732%200%2014%206.268%200%2014%200z%22%20opacity%3D%22.09%22%2F%3E%3Cpath%20d%3D%22M12.13%206.826c-.562-.893%204.108-1.636%204.554.993l.017.121a8.458%208.458%200%20010%202.522h.04c.14.007.578.111.239%201.17l-.08.244c-.087.259-.317.808-.631.637l.002.122c-.003.32-.06%201.164-.576%201.335l.045.708.535.08v.127c.002.167.017.445.091.486a5.695%205.695%200%20001.586.709c1.606.407%202.448%201.097%202.502%201.715l.003.063.446%202.273c-1.923.806-4.154%201.288-6.54%201.338h-.835c-2.381-.05-4.608-.53-6.528-1.333l.056-.384c.078-.518.17-1.047.264-1.414.253-.986%201.674-1.718%202.983-2.28.677-.292.823-.467%201.505-.765.029-.136.044-.274.047-.413l-.001-.139.58-.068.007.008c.015.008.043-.04-.054-.684l-.034-.012c-.134-.056-.621-.336-.647-1.453l-.037.008c-.108.019-.424.023-.476-.537l-.007-.094c-.02-.508-.402-.953.09-1.325l.073-.05-.306-.816-.016-.204c-.042-.693-.086-2.903%201.104-2.688z%22%20opacity%3D%22.247%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E);
+}
+
+.invitation-widget-counter {
+	position: absolute;
+	left: 75%;
+	top: -17px;
 }
 
 

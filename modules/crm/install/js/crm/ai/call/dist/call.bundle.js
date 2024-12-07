@@ -7,19 +7,23 @@ this.BX.Crm = this.BX.Crm || {};
 	var _templateObject;
 	var Base = /*#__PURE__*/function () {
 	  function Base(data) {
-	    var _this = this;
+	    var _data$languageTitle,
+	      _this = this;
 	    babelHelpers.classCallCheck(this, Base);
+	    babelHelpers.defineProperty(this, "languageTitle", null);
 	    this.initDefaultOptions();
 	    this.activityId = data.activityId;
 	    this.ownerTypeId = data.ownerTypeId;
 	    this.ownerId = data.ownerId;
+	    this.languageTitle = (_data$languageTitle = data.languageTitle) !== null && _data$languageTitle !== void 0 ? _data$languageTitle : null;
 	    var audioPlayerNode = main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["<div id=\"crm-textbox-audio-player\"></div>"])));
 	    this.audioPlayerApp = new crm_audioPlayer.AudioPlayer({
 	      rootNode: audioPlayerNode
 	    });
 	    this.textbox = new crm_ai_textbox.Textbox({
 	      title: this.textboxTitle,
-	      previousTextContent: audioPlayerNode
+	      previousTextContent: audioPlayerNode,
+	      attentions: this.getTextboxAttentions()
 	    });
 	    this.sliderId = "".concat(this.id, "-").concat(Math.floor(Math.random() * 1000));
 	    this.wrapperSlider = new crm_ai_slider.Slider({
@@ -94,6 +98,50 @@ this.BX.Crm = this.BX.Crm || {};
 	      };
 	    }
 	  }, {
+	    key: "getTextboxAttentions",
+	    value: function getTextboxAttentions() {
+	      var attentions = [this.getNotAccurateAttention()];
+	      var jobLanguageAttention = this.getJobLanguageAttention();
+	      if (jobLanguageAttention !== null) {
+	        attentions.push(jobLanguageAttention);
+	      }
+	      return attentions;
+	    }
+	  }, {
+	    key: "getNotAccurateAttention",
+	    value: function getNotAccurateAttention() {
+	      var helpdeskCode = '20412666';
+	      var content = main_core.Loc.getMessage(this.getNotAccuratePhraseCode(), {
+	        '[helpdesklink]': "<a href=\"##\" onclick=\"top.BX.Helper.show('redirect=detail&code=".concat(helpdeskCode, "');\">"),
+	        '[/helpdesklink]': '</a>'
+	      });
+	      return new crm_ai_textbox.Attention({
+	        content: content
+	      });
+	    }
+	  }, {
+	    key: "getJobLanguageAttention",
+	    value: function getJobLanguageAttention() {
+	      if (!main_core.Type.isStringFilled(this.languageTitle)) {
+	        return null;
+	      }
+	      var helpdeskCode = '20423978';
+	      var content = main_core.Loc.getMessage('CRM_COPILOT_CALL_JOB_LANGUAGE_ATTENTION', {
+	        '#LANGUAGE_TITLE#': "<span style=\"text-transform: lowercase\">".concat(main_core.Text.encode(this.languageTitle), "</span>"),
+	        '[helpdesklink]': "<a href=\"##\" onclick=\"top.BX.Helper.show('redirect=detail&code=".concat(helpdeskCode, "');\">"),
+	        '[/helpdesklink]': '</a>'
+	      });
+	      return new crm_ai_textbox.Attention({
+	        preset: crm_ai_textbox.AttentionPresets.COPILOT,
+	        content: content
+	      });
+	    }
+	  }, {
+	    key: "getNotAccuratePhraseCode",
+	    value: function getNotAccuratePhraseCode() {
+	      return '';
+	    }
+	  }, {
 	    key: "getSliderTitle",
 	    value: function getSliderTitle() {
 	      return '';
@@ -129,6 +177,11 @@ this.BX.Crm = this.BX.Crm || {};
 	      this.textboxTitle = main_core.Loc.getMessage('CRM_COPILOT_CALL_SUMMARY_TITLE');
 	    }
 	  }, {
+	    key: "getNotAccuratePhraseCode",
+	    value: function getNotAccuratePhraseCode() {
+	      return 'CRM_COPILOT_CALL_SUMMARY_NOT_BE_ACCURATE';
+	    }
+	  }, {
 	    key: "prepareAiJobResult",
 	    value: function prepareAiJobResult(response) {
 	      return response.data.aiJobResult.summary;
@@ -154,6 +207,11 @@ this.BX.Crm = this.BX.Crm || {};
 	      this.sliderTitle = main_core.Loc.getMessage('CRM_COMMON_COPILOT');
 	      this.sliderWidth = 730;
 	      this.textboxTitle = main_core.Loc.getMessage('CRM_COPILOT_CALL_TRANSCRIPT_TITLE');
+	    }
+	  }, {
+	    key: "getNotAccuratePhraseCode",
+	    value: function getNotAccuratePhraseCode() {
+	      return 'CRM_COPILOT_CALL_TRANSCRIPT_NOT_BE_ACCURATE';
 	    }
 	  }, {
 	    key: "prepareAiJobResult",

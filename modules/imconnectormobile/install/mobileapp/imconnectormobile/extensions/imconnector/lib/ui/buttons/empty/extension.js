@@ -2,6 +2,7 @@
  * @module imconnector/lib/ui/buttons/empty
  */
 jn.define('imconnector/lib/ui/buttons/empty', (require, exports, module) => {
+	const AppTheme = require('apptheme');
 	const { Type } = require('type');
 	const { withPressed } = require('utils/color');
 
@@ -22,8 +23,8 @@ jn.define('imconnector/lib/ui/buttons/empty', (require, exports, module) => {
 					flexDirection: 'row',
 					alignItems: 'center',
 					justifyContent: 'center',
-					backgroundColor: withPressed('#FFFFFF'),
-					borderColor: '#828B95',
+					backgroundColor: withPressed(AppTheme.colors.base8),
+					borderColor: AppTheme.colors.base3,
 					borderWidth: 1,
 					borderRadius,
 					paddingVertical: 4,
@@ -42,7 +43,7 @@ jn.define('imconnector/lib/ui/buttons/empty', (require, exports, module) => {
 			},
 			Text({
 				style: {
-					color: '#333333',
+					color: AppTheme.colors.base1,
 					fontSize: 16,
 					fontWeight: 400,
 					numberOfLines: 1,

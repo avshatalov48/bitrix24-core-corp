@@ -2,17 +2,23 @@
 
 namespace Bitrix\BIConnector\Superset;
 
-use Bitrix\BIConnector\Integration\Superset\Integrator\ProxyIntegrator;
+use Bitrix\BIConnector\Integration\Superset\Integrator\Integrator;
+use Bitrix\BIConnector\Integration\Superset\Model;
 use Bitrix\BIConnector\Integration\Superset\Model\SupersetDashboardTable;
+use Bitrix\BIConnector;
+use Bitrix\BIConnector\Superset\Dashboard\EmbeddedFilter;
 use Bitrix\BIConnector\Superset\Logger\MarketDashboardLogger;
-use Bitrix\BIConnector\Integration\Superset\SupersetController;
+use Bitrix\BIConnector\Superset\Scope\ScopeService;
 use Bitrix\BIConnector\Superset\UI\DashboardManager;
+use \Bitrix\BIConnector\Superset\Dashboard\UrlParameter;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Error;
 use Bitrix\Main\Event;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
+use Bitrix\Main\Type\Date;
+use Bitrix\Main\Type\DateTime;
 use Bitrix\Rest;
 use Bitrix\Rest\AppTable;
 use Bitrix\Bitrix24\Feature;
@@ -24,9 +30,10 @@ final class MarketDashboardManager
 	public const MARKET_COLLECTION_ID = 'bi_constructor_dashboards';
 	private const DASHBOARD_EXPORT_ENABLED_OPTION_NAME = 'bi_constructor_dashboard_export_enabled';
 	private const DASHBOARD_EXPORT_FEATURE_NAME = 'bi_constructor_export';
+	private const EVENT_ON_AFTER_DASHBOARD_INSTALL = 'onAfterDashboardInstall';
 
 	private static ?MarketDashboardManager $instance = null;
-	private ProxyIntegrator $integrator;
+	private Integrator $integrator;
 
 	public static function getInstance(): self
 	{
@@ -35,12 +42,18 @@ final class MarketDashboardManager
 
 	private function __construct()
 	{
-		$this->integrator = ProxyIntegrator::getInstance();
+		$this->integrator = Integrator::getInstance();
 	}
 
 	public static function getMarketCollectionUrl(): string
 	{
-		return '/market/collection/' . self::MARKET_COLLECTION_ID . '/';
+		$marketPrefix = '/marketplace/';
+		if (Loader::includeModule('intranet'))
+		{
+			$marketPrefix = \Bitrix\Intranet\Binding\Marketplace::getMainDirectory();
+		}
+
+		return $marketPrefix . 'collection/' . self::MARKET_COLLECTION_ID . '/';
 	}
 
 	/**
@@ -76,7 +89,7 @@ final class MarketDashboardManager
 			{
 				MarketDashboardLogger::logErrors($response->getErrors(),[
 					'message' => 'System dashboard installation error',
-					'code' => $appCode,
+					'app_code' => $appCode,
 				]);
 			}
 
@@ -128,8 +141,17 @@ final class MarketDashboardManager
 			->setType($type)
 			->setAppId($appCode)
 			->setStatus(SupersetDashboardTable::DASHBOARD_STATUS_READY)
+			->setDateModify(new DateTime())
 			->save()
 		;
+
+		$dashboardId = $dashboard->getId();
+		$eventData = [
+			'dashboardId' => $dashboardId,
+			'type' => $type,
+		];
+		$onInstallEvent = new Event('biconnector', self::EVENT_ON_AFTER_DASHBOARD_INSTALL, $eventData);
+		$onInstallEvent->send();
 
 		DashboardManager::notifyDashboardStatus($dashboard->getId(), SupersetDashboardTable::DASHBOARD_STATUS_READY);
 
@@ -139,12 +161,85 @@ final class MarketDashboardManager
 				? 'System dashboard was successfully updated'
 				: 'System dashboard was successfully installed'
 			;
-			MarketDashboardLogger::logInfo($logMessage, ['code' => $appCode]);
+			MarketDashboardLogger::logInfo($logMessage, ['app_code' => $appCode]);
 
 			SystemDashboardManager::notifyUserDashboardModification($dashboard, $isDashboardExists);
 		}
 
+		$result->setData(['dashboard' => $dashboard]);
+
 		return $result;
+	}
+
+	/**
+	 * Sets dashboard settings contained in archive. Sets period, scopes, etc.
+	 *
+	 * @param Model\SupersetDashboard $dashboard
+	 * @param array $dashboardSettings
+	 *
+	 * @return void
+	 */
+	public function applyDashboardSettings(Model\SupersetDashboard $dashboard, array $dashboardSettings = []): void
+	{
+		if (!$dashboardSettings)
+		{
+			return;
+		}
+
+		if (isset($dashboardSettings['period']))
+		{
+			$periodSetting = $dashboardSettings['period'];
+			if ($periodSetting['FILTER_PERIOD'] === EmbeddedFilter\DateTime::PERIOD_DEFAULT)
+			{
+				$dashboard->setDateFilterStart(null);
+				$dashboard->setDateFilterEnd(null);
+				$dashboard->setFilterPeriod(null);
+			}
+			elseif ($periodSetting['FILTER_PERIOD'] === EmbeddedFilter\DateTime::PERIOD_RANGE)
+			{
+				try
+				{
+					$dateStart = new Date($periodSetting['DATE_FILTER_START']);
+					$dateEnd = new Date($periodSetting['DATE_FILTER_END']);
+					$includeLastFilterDate = $periodSetting['INCLUDE_LAST_FILTER_DATE'] ?? null;
+					$dashboard->setDateFilterStart($dateStart);
+					$dashboard->setDateFilterEnd($dateEnd);
+					$dashboard->setIncludeLastFilterDate($includeLastFilterDate);
+					$dashboard->setFilterPeriod(EmbeddedFilter\DateTime::PERIOD_RANGE);
+				}
+				catch (\Bitrix\Main\ObjectException)
+				{}
+			}
+			else
+			{
+				$period = EmbeddedFilter\DateTime::getDefaultPeriod();
+				$innerPeriod = $periodSetting['FILTER_PERIOD'] ?? '';
+				if (is_string($innerPeriod) && EmbeddedFilter\DateTime::isAvailablePeriod($innerPeriod))
+				{
+					$period = $innerPeriod;
+				}
+				$dashboard->setFilterPeriod($period);
+			}
+		}
+
+		$dashboard->save();
+
+		if (is_array($dashboardSettings['scope'] ?? null))
+		{
+			$scopes = ScopeService::getInstance()->getDashboardScopes($dashboard->getId());
+			$scopesToSave = array_unique([...$scopes, ...$dashboardSettings['scope']]);
+			ScopeService::getInstance()->saveDashboardScopes($dashboard->getId(), $scopesToSave);
+
+			if (is_array($dashboardSettings['urlParameters'] ?? null) && !empty($dashboardSettings['urlParameters']))
+			{
+				(new UrlParameter\Service($dashboard))
+					->saveDashboardParams(
+						$dashboardSettings['urlParameters'],
+						$scopesToSave
+					)
+				;
+			}
+		}
 	}
 
 	/**
@@ -209,7 +304,7 @@ final class MarketDashboardManager
 			{
 				MarketDashboardLogger::logErrors($response->getErrors(), [
 					'message' => 'System dataset installation error',
-					'code' => $appCode,
+					'app_code' => $appCode,
 				]);
 			}
 
@@ -220,7 +315,7 @@ final class MarketDashboardManager
 
 		if (self::isSystemAppByAppCode($appCode))
 		{
-			MarketDashboardLogger::logInfo('System dataset was successfully installed', ['code' => $appCode]);
+			MarketDashboardLogger::logInfo('System dataset was successfully installed', ['app_code' => $appCode]);
 		}
 
 		return $result;
@@ -268,38 +363,37 @@ final class MarketDashboardManager
 	{
 		$result = new Result();
 
-		$installedDashboardsIterator = SupersetDashboardTable::getList([
+		$installedDashboards = SupersetDashboardTable::getList([
 			'select' => ['ID', 'EXTERNAL_ID', 'APP_ID', 'TYPE', 'SOURCE_ID', 'APP.ID'],
 			'filter' => [
 				'=APP_ID' => $appCode,
 			],
-		]);
+			'order' => ['DATE_CREATE' => 'DESC'],
+		])->fetchCollection();
 
-		$originalExternalDashboardId = 0;
-		$originalDashboardId = 0;
-		while ($row = $installedDashboardsIterator->fetch())
+		$originalDashboard = null;
+		foreach ($installedDashboards as $dashboard)
 		{
-			if ($row['TYPE'] === SupersetDashboardTable::DASHBOARD_TYPE_SYSTEM)
+			if ($dashboard->getType() === SupersetDashboardTable::DASHBOARD_TYPE_SYSTEM)
 			{
 				$result->addError(new Error(Loc::getMessage('BI_CONNECTOR_SUPERSET_DELETE_ERROR_SYSTEM_DASHBOARD')));
 
 				return $result;
 			}
 
-			if ($row['SOURCE_ID'] !== null)
+			if ($dashboard->getSourceId() > 0)
 			{
 				$result->addError(new Error(Loc::getMessage('BI_CONNECTOR_SUPERSET_DELETE_ERROR_HAS_COPIES')));
 
 				return $result;
 			}
 
-			$originalExternalDashboardId = (int)$row['EXTERNAL_ID'];
-			$originalDashboardId = (int)$row['ID'];
+			$originalDashboard = $dashboard;
 		}
 
-		if ($originalExternalDashboardId > 0)
+		if ($originalDashboard)
 		{
-			$response = $this->integrator->deleteDashboard([$originalExternalDashboardId]);
+			$response = $this->integrator->deleteDashboard([$originalDashboard->getExternalId()]);
 			if ($response->hasErrors())
 			{
 				$result->addError(new Error(Loc::getMessage('BI_CONNECTOR_SUPERSET_ERROR_DELETE_PROXY')));
@@ -307,7 +401,7 @@ final class MarketDashboardManager
 				return $result;
 			}
 
-			SupersetDashboardTable::delete($originalDashboardId);
+			$originalDashboard->delete();
 		}
 
 		return $result;
@@ -477,18 +571,14 @@ final class MarketDashboardManager
 			return true;
 		}
 
-		global $USER;
-
-		if (Loader::includeModule('bitrix24'))
+		if (
+			Loader::includeModule('bitrix24')
+			&& !Feature::isFeatureEnabled(self::DASHBOARD_EXPORT_FEATURE_NAME)
+		)
 		{
-			if (isset($USER) && $USER instanceof \CUser)
-			{
-				$isAdmin = $USER->isAdmin() || \CBitrix24::IsPortalAdmin($USER->getId());
-
-				return $isAdmin && Feature::isFeatureEnabled(self::DASHBOARD_EXPORT_FEATURE_NAME);
-			}
+			return false;
 		}
 
-		return false;
+		return BIConnector\Manager::isAdmin();
 	}
 }

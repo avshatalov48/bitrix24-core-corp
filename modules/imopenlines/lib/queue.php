@@ -16,8 +16,6 @@ use Bitrix\Pull;
 use Bitrix\Im;
 use Bitrix\Im\Model\RecentTable;
 
-use Bitrix\Intranet\UserAbsence;
-
 use Bitrix\ImOpenLines\Queue\Cache;
 use Bitrix\ImOpenLines\Model\QueueTable;
 use Bitrix\ImOpenLines\Model\SessionTable;
@@ -51,30 +49,29 @@ class Queue
 
 	/**
 	 * @param $session
-	 * @return bool|\Bitrix\ImOpenLines\Queue\Evenly|\Bitrix\ImOpenLines\Queue\All|\Bitrix\ImOpenLines\Queue\Strictly
+	 * @return Queue\Evenly|Queue\All|Queue\Strictly|null
 	 */
-	public static function initialization($session)
+	public static function initialization(Session $session): ?Queue\Queue
 	{
-		$result = false;
+		$queue = null;
 
-		if(!empty($session) && $session instanceof Session)
+		$config = $session->getConfig();
+		$chat = $session->getChat();
+
+		if (
+			!empty($config)
+			&& !empty($config['QUEUE_TYPE'])
+			&& !empty(self::$type[$config['QUEUE_TYPE']])
+			&& !empty($chat)
+		)
 		{
-			$configData = $session->getConfig();
-			$chatManager = $session->getChat();
+			$queueClass = "Bitrix\\ImOpenLines\\Queue\\" . ucfirst(mb_strtolower($config['QUEUE_TYPE']));
 
-			if(
-				!empty($configData) &&
-				!empty($configData['QUEUE_TYPE']) && !empty(self::$type[$configData['QUEUE_TYPE']]) &&
-				!empty($chatManager)
-			)
-			{
-				$queue = "Bitrix\\ImOpenLines\\Queue\\" . ucfirst(mb_strtolower($configData['QUEUE_TYPE']));
-
-				$result = new $queue($session);
-			}
+			/** @var Queue\Evenly|Queue\All|Queue\Strictly $queue */
+			$queue = new $queueClass($session);
 		}
 
-		return $result;
+		return $queue;
 	}
 
 	/**
@@ -530,17 +527,17 @@ class Queue
 	 */
 	public static function getActualLineId($params)
 	{
-		$result = 0;
+		$lineId = 0;
 
 		if(!empty($params['LINE_ID']))
 		{
-			$result = $params['LINE_ID'];
+			$lineId = $params['LINE_ID'];
 		}
 
 		if(!empty($params['USER_CODE']))
 		{
-			//TODO: Replace with the method \Bitrix\ImOpenLines\Chat::parseLinesChatEntityId or \Bitrix\ImOpenLines\Chat::parseLiveChatEntityId
-			list($connectorId, $result, $connectorChatId, $connectorUserId) = explode('|', $params['USER_CODE']);
+			$entityIdParts = \Bitrix\ImOpenLines\Chat::parseLinesChatEntityId($params['USER_CODE']);
+			$lineId = $entityIdParts['lineId'];
 
 			$raw = SessionTable::getList([
 				'select' => ['CONFIG_ID'],
@@ -557,12 +554,12 @@ class Queue
 			{
 				if(!empty($session['CONFIG_ID']))
 				{
-					$result = $session['CONFIG_ID'];
+					$lineId = $session['CONFIG_ID'];
 				}
 			}
 		}
 
-		return $result;
+		return (int)$lineId;
 	}
 
 	/**
@@ -902,77 +899,99 @@ class Queue
 		return false;
 	}
 
-
 	/**
 	 * How many chats can accept this statement.
 	 *
-	 * @param $idUser
-	 * @param int $idLine
+	 * @param $userId
+	 * @param int $lineId
 	 * @param int $maxChat
 	 * @param null $typeMaxChat
 	 * @return int|mixed
 	 */
-	public static function getCountFreeSlotOperator($idUser, $idLine = 0, $maxChat = 0, $typeMaxChat = null)
+	public static function getCountFreeSlotOperator($userId, $lineId = 0, $maxChat = 0, $typeMaxChat = null)
 	{
-		if(empty($maxChat) || $maxChat > Queue::MAX_CHAT)
+		$result = self::getCountFreeSlotsOperators([$userId], $lineId, $maxChat, $typeMaxChat);
+
+		return $result[$userId] ?? Queue::MAX_CHAT;
+	}
+
+	public static function getCountFreeSlotsOperators(array $userIds, $lineId = 0, $maxChat = 0, $typeMaxChat = null)
+	{
+		$results = array_fill_keys($userIds, Queue::MAX_CHAT);
+
+		if (empty($maxChat) || $maxChat > Queue::MAX_CHAT)
 		{
 			$maxChat = Queue::MAX_CHAT;
 		}
 
-		$countNotCloseGlobal = 0;
-
-		if(Loader::includeModule('im'))
+		if (Loader::includeModule('im'))
 		{
-			$countNotCloseGlobal = RecentTable::getCount([
-				'=USER_ID' => $idUser,
-				'=ITEM_TYPE' => IM_MESSAGE_OPEN_LINE
-			]);
+			$recentCounts = RecentTable::getList([
+				'select' => ['USER_ID', 'CNT'],
+				'filter' => [
+					'=USER_ID' => $userIds,
+					'=ITEM_TYPE' => IM_MESSAGE_OPEN_LINE
+				],
+				'runtime' => [
+					new \Bitrix\Main\Entity\ExpressionField('CNT', 'COUNT(*)')
+				],
+				'group' => ['USER_ID']
+			])->fetchAll();
+
+			foreach ($recentCounts as $recentCount)
+			{
+				$userId = $recentCount['USER_ID'];
+				$countNotCloseGlobal = $recentCount['CNT'];
+				$results[$userId] = Queue::MAX_CHAT - $countNotCloseGlobal;
+			}
 		}
 
-		$result = Queue::MAX_CHAT - $countNotCloseGlobal;
-
-		if(
-			$result > 0 &&
-			!empty($idLine) &&
-			is_numeric($idLine) &&
-			$idLine > 0 &&
-			!empty($typeMaxChat) &&
-			(
-				$typeMaxChat == Config::TYPE_MAX_CHAT_ANSWERED ||
-				$typeMaxChat == Config::TYPE_MAX_CHAT_ANSWERED_NEW ||
-				$typeMaxChat == Config::TYPE_MAX_CHAT_CLOSED
-			)
+		if (
+			!empty($lineId)
+			&& is_numeric($lineId)
+			&& $lineId > 0
+			&& !empty($typeMaxChat)
+			&& in_array($typeMaxChat, [Config::TYPE_MAX_CHAT_ANSWERED, Config::TYPE_MAX_CHAT_ANSWERED_NEW, Config::TYPE_MAX_CHAT_CLOSED], true)
 		)
 		{
-			if($typeMaxChat == Config::TYPE_MAX_CHAT_ANSWERED_NEW)
+			$stopStatus = null;
+
+			if ($typeMaxChat == Config::TYPE_MAX_CHAT_ANSWERED_NEW)
 			{
 				$stopStatus = Session::STATUS_CLIENT_AFTER_OPERATOR;
 			}
-
-			if($typeMaxChat == Config::TYPE_MAX_CHAT_ANSWERED)
+			elseif ($typeMaxChat == Config::TYPE_MAX_CHAT_ANSWERED)
 			{
 				$stopStatus = Session::STATUS_OPERATOR;
 			}
-
-			if($typeMaxChat == Config::TYPE_MAX_CHAT_CLOSED)
+			elseif ($typeMaxChat == Config::TYPE_MAX_CHAT_CLOSED)
 			{
 				$stopStatus = Session::STATUS_WAIT_CLIENT;
 			}
 
-			if(!empty($stopStatus))
+			if (!empty($stopStatus))
 			{
-				$countBusy  = SessionCheckTable::getCount([
-					'=SESSION.OPERATOR_ID' => $idUser,
-					'=SESSION.CONFIG_ID' => $idLine,
-					'<SESSION.STATUS' => $stopStatus
-				]);
+				$busyCounts = SessionCheckTable::getList([
+					'select' => ['OPERATOR_ID' => 'SESSION.OPERATOR_ID', 'CNT'],
+					'filter' => [
+						'=SESSION.OPERATOR_ID' => $userIds,
+						'=SESSION.CONFIG_ID' => $lineId,
+						'<SESSION.STATUS' => $stopStatus
+					],
+					'runtime' => [
+						new \Bitrix\Main\Entity\ExpressionField('CNT', 'COUNT(*)')
+					],
+					'group' => ['SESSION.OPERATOR_ID']
+				])->fetchAll();
 
-				$freeSlotRestrictions = $maxChat - $countBusy;
-
-				$result = min($freeSlotRestrictions, $result);
+				foreach ($busyCounts as $busyCount)
+				{
+					$freeSlotRestrictions = $maxChat - $busyCount['CNT'];
+					$results[$busyCount['OPERATOR_ID']] = min($freeSlotRestrictions, (int)$results[$busyCount['OPERATOR_ID']]);
+				}
 			}
 		}
 
-		return $result;
+		return $results;
 	}
 }

@@ -24,11 +24,10 @@ CJSCore::Init([
 	'popup',
 	'date',
 	'sidepanel',
+	'crm.autorun'
 ]);
 $asset = Bitrix\Main\Page\Asset::getInstance();
 $asset->addJs('/bitrix/js/crm/common.js');
-$asset->addJs('/bitrix/js/crm/autorun_proc.js');
-$asset->addCss('/bitrix/js/crm/css/autorun_proc.css');
 $asset->addCss('/bitrix/themes/.default/crm-entity-show.css');
 $asset->addCss('/bitrix/js/crm/css/crm.css');
 
@@ -240,7 +239,7 @@ if(!empty($arResult['BUILDERS'])):
 	?><div id="rebuildMessageWrapper" ></div><?
 endif;
 ?><div class="crm-widget" id="<?=htmlspecialcharsbx($containerID)?>"></div>
-<script type="text/javascript">
+<script>
 	BX.ready(
 		function()
 		{
@@ -621,7 +620,7 @@ endif;
 	);
 </script>
 <?if(!empty($arResult['BUILDERS'])):?>
-<script type="text/javascript">
+<script>
 	BX.ready(
 		function()
 		{

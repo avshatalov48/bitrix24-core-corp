@@ -7,6 +7,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 
 use Bitrix\Crm\Terminal\Config\TerminalPaysystemManager;
 use Bitrix\Main\Loader;
+use Bitrix\SalesCenter\Integration\LandingManager;
 use Bitrix\SalesCenter\Integration\SaleManager;
 
 /**
@@ -154,6 +155,23 @@ class CrmConfigTerminalSettingsController extends \Bitrix\Main\Engine\Controller
 			'isSberQrConnected' => $terminalPaysystemManager->isSberQrPaysystemConnected(),
 			'isAnyPaysystemActive' => $terminalPaysystemManager->isAnyPaysystemActive(),
 			'availablePaysystems' => $terminalPaysystemManager->getAvailablePaysystems(),
+		];
+	}
+
+	public function updateConnectedSiteParamsAction()
+	{
+		if (!Loader::includeModule('salescenter'))
+		{
+			return [
+				'connectedSiteId' => 0,
+			];
+		}
+
+		return [
+			'isConnectedSiteExists' => LandingManager::getInstance()->isSiteExists(),
+			'connectedSiteId' => LandingManager::getInstance()->getConnectedSiteId(),
+			'isConnectedSitePublished' => LandingManager::getInstance()->isSitePublished(),
+			'isPhoneConfirmed' => LandingManager::getInstance()->isPhoneConfirmed(),
 		];
 	}
 

@@ -1,9 +1,21 @@
 import { ReactionsModelState } from './messages/reactions';
-import { PayloadData } from "./base";
+import {MessengerModel, PayloadData} from "./base";
+import {DialogType} from "./dialogues";
+import {KeyboardButtonConfig} from "./messages/keyboard";
+
+declare type MessagesModelCollection = {
+	collection: Record<number | string, MessagesModelState>,
+	chatCollection: Record<number, Set<number>>,
+	temporaryMessages: Record<string, MessagesModelState>,
+}
+
+export type MessagesMessengerModel = MessengerModel<MessagesModelCollection>;
 
 export type MessagesModelState = {
 	id: number | string,
 	templateId: string,
+	previousId: number,
+	nextId: number,
 	chatId: number,
 	authorId: number,
 	date: Date,
@@ -28,9 +40,15 @@ export type MessagesModelState = {
 	retry: boolean,
 	audioPlaying: boolean,
 	playingTime: number,
-	forward: object,
+	forward?: {
+		id: string,
+		userId: number,
+		chatTitle: string | null,
+		chatType: DialogType,
+	},
 	reactions?: ReactionsModelState // extended property
 	attach: Array<AttachConfig>,
+	keyboard: Array<KeyboardButtonConfig>,
 	richLinkId: number,
 }
 
@@ -136,6 +154,7 @@ declare type AttachRichItem = {
 export type MessagesModelActions =
 	'messagesModel/forceUpdateByChatId'
 	| 'messagesModel/store'
+	| 'messagesModel/storeToLocalDatabase'
 	| 'messagesModel/setFromLocalDatabase'
 	| 'messagesModel/add'
 	| 'messagesModel/addToChatCollection'
@@ -153,6 +172,8 @@ export type MessagesModelActions =
 	| 'messagesModel/deleteTemporaryMessages'
 	| 'messagesModel/deleteByChatId'
 	| 'messagesModel/deleteAttach'
+	| 'messagesModel/clearChatCollection'
+	| 'messagesModel/disableKeyboardByMessageId'
 
 export type MessagesModelMutation =
 	'messagesModel/setChatCollection'

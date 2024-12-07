@@ -1,5 +1,6 @@
 <?
 
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Timeman\Model\Worktime\Record\WorktimeRecordTable;
 
 IncludeModuleLangFile(__FILE__);
@@ -81,14 +82,12 @@ class CTimeManNotify
 
 			$arRes = $dbRes->Fetch();
 
-			$culture = \Bitrix\Main\Application::getInstance()->getContext()->getCulture();
-			$dayMonthFormat = $culture->getDayMonthFormat();
 			$bSend = false;
 			if ($arRes)
 			{
 				$logID = $arRes['ID'];
 
-				if ($SEND_TYPE != 'A')
+				if ($SEND_TYPE !== 'A')
 				{
 					$arSoFields["=LOG_UPDATE"] = $date;
 
@@ -100,53 +99,64 @@ class CTimeManNotify
 					if (IsModuleInstalled("im") && $sendNotifications)
 					{
 						$arEntry["LOG_ID"] = $logID;
-						$arEntry["DATE_TEXT"] = FormatDate($dayMonthFormat, MakeTimeStamp($arEntry["DATE_START"], FORMAT_DATETIME));
 
-						if ($SEND_TYPE == "U")
-							self::NotifyImApprove($arEntry);
-						else
-							self::NotifyImNew($arEntry);
-					}
-
-				}
-			}
-			else
-			{
-				if ($SEND_TYPE != 'U')
-				{
-					$logID = CSocNetLog::Add($arSoFields, false);
-
-					if (intval($logID) > 0)
-					{
-						CSocNetLog::Update($logID, array("TMP_ID" => $logID));
-						CSocNetLogRights::Add($logID, $arRights);
-
-						if (
-							$sendNotifications
-							&& $arEntry["INACTIVE_OR_ACTIVATED"] == "Y"
-							&& IsModuleInstalled("im")
-						)
+						if ($SEND_TYPE === "U")
 						{
-							$arEntry["LOG_ID"] = $logID;
-							$arEntry["DATE_TEXT"] = FormatDate($dayMonthFormat, MakeTimeStamp($arEntry["DATE_START"], FORMAT_DATETIME));
+							self::NotifyImApprove($arEntry);
+						}
+						else
+						{
 							self::NotifyImNew($arEntry);
 						}
-						$bSend = true;
 					}
+
+				}
+			}
+			else if ($SEND_TYPE !== 'U')
+			{
+				$logID = CSocNetLog::Add($arSoFields, false);
+
+				if (intval($logID) > 0)
+				{
+					CSocNetLog::Update($logID, array("TMP_ID" => $logID));
+					CSocNetLogRights::Add($logID, $arRights);
+
+					if (
+						$sendNotifications
+						&& $arEntry["INACTIVE_OR_ACTIVATED"] === "Y"
+						&& IsModuleInstalled("im")
+					)
+					{
+						$arEntry["LOG_ID"] = $logID;
+						self::NotifyImNew($arEntry);
+					}
+					$bSend = true;
 				}
 			}
 
-			if ($bSend && intval($logID) > 0)
+			if ($bSend && (int)$logID > 0)
+			{
 				CSocNetLog::SendEvent($logID, "SONET_NEW_EVENT", $logID);
+			}
 
 			return $logID;
 		}
 	}
 
+	protected static function getFormattedDate($date, ?string $languageId = null): string
+	{
+		$culture = \Bitrix\Main\Application::getInstance()->getContext()->getCulture();
+		$dayMonthFormat = $culture->getDayMonthFormat();
+
+		return FormatDate($dayMonthFormat, MakeTimeStamp($date, FORMAT_DATETIME), false, $languageId);
+	}
+
 	protected static function NotifyImNew($arEntry)
 	{
 		if(!CModule::IncludeModule("im"))
+		{
 			return false;
+		}
 
 		$arMessageFields = array(
 			"MESSAGE_TYPE" => IM_MESSAGE_SYSTEM,
@@ -160,17 +170,12 @@ class CTimeManNotify
 
 		$reports_page = COption::GetOptionString("timeman", "TIMEMAN_REPORT_PATH", "/timeman/timeman.php");
 
-		switch ($arEntry["USER_GENDER"])
+		$gender_suffix = match ($arEntry["USER_GENDER"])
 		{
-			case "M":
-				$gender_suffix = "_M";
-				break;
-			case "F":
-				$gender_suffix = "_F";
-					break;
-			default:
-				$gender_suffix = "";
-		}
+			"M" => "_M",
+			"F" => "_F",
+			default => "",
+		};
 
 		$arManagers = CTimeMan::GetUserManagers($arEntry["USER_ID"]);
 		if (is_array($arManagers) && count($arManagers) > 0)
@@ -180,13 +185,25 @@ class CTimeManNotify
 				$arMessageFields["TO_USER_ID"] = $managerID;
 				$arTmp = CSocNetLogTools::ProcessPath(array("REPORTS_PAGE" => $reports_page), $managerID);
 
-				$arMessageFields["NOTIFY_MESSAGE"] = GetMessage("TIMEMAN_ENTRY_IM_ADD".$gender_suffix, Array(
-					"#period#" => "<a href=\"".$arTmp["URLS"]["REPORTS_PAGE"]."\" class=\"bx-notifier-item-action\">".htmlspecialcharsbx($arEntry["DATE_TEXT"])."</a>",
-				));
 
-				$arMessageFields["NOTIFY_MESSAGE_OUT"] = GetMessage("TIMEMAN_ENTRY_IM_ADD".$gender_suffix, Array(
-					"#period#" => htmlspecialcharsbx($arEntry["DATE_TEXT"]),
-				))." (".$arTmp["SERVER_NAME"].$arTmp["URLS"]["REPORTS_PAGE"].")";
+				$arMessageFields["NOTIFY_MESSAGE"] = fn (?string $languageId = null) => Loc::getMessage(
+					"TIMEMAN_ENTRY_IM_ADD".$gender_suffix,
+					[
+						"#period#" => "<a href=\"".$arTmp["URLS"]["REPORTS_PAGE"]."\" class=\"bx-notifier-item-action\">".htmlspecialcharsbx(self::getFormattedDate($arEntry["DATE_START"], $languageId))."</a>",
+					],
+					$languageId
+				);
+
+				$arMessageFields["NOTIFY_MESSAGE_OUT"] = fn (?string $languageId = null) =>
+					Loc::getMessage(
+						"TIMEMAN_ENTRY_IM_ADD".$gender_suffix,
+						[
+							"#period#" => htmlspecialcharsbx(self::getFormattedDate($arEntry["DATE_START"], $languageId)),
+						],
+						$languageId
+					)
+					. " (".$arTmp["SERVER_NAME"].$arTmp["URLS"]["REPORTS_PAGE"].")"
+				;
 
 				CIMNotify::Add($arMessageFields);
 			}
@@ -198,7 +215,9 @@ class CTimeManNotify
 	protected static function NotifyImApprove($arEntry)
 	{
 		if(!CModule::IncludeModule("im"))
+		{
 			return false;
+		}
 
 		$arMessageFields = array(
 			"MESSAGE_TYPE" => IM_MESSAGE_SYSTEM,
@@ -217,28 +236,33 @@ class CTimeManNotify
 		$dbUser = CUser::GetByID($GLOBALS["USER"]->GetID());
 		if ($arUser = $dbUser->Fetch())
 		{
-			switch ($arUser["PERSONAL_GENDER"])
+			$gender_suffix = match ($arUser["PERSONAL_GENDER"])
 			{
-				case "M":
-					$gender_suffix = "_M";
-					break;
-				case "F":
-					$gender_suffix = "_F";
-						break;
-				default:
-					$gender_suffix = "";
-			}
+				"M" => "_M",
+				"F" => "_F",
+				default => "",
+			};
 		}
 
 		$arTmp = CSocNetLogTools::ProcessPath(array("REPORTS_PAGE" => $reports_page), $arEntry["USER_ID"]);
 
-		$arMessageFields["NOTIFY_MESSAGE"] = GetMessage("TIMEMAN_ENTRY_IM_APPROVE".$gender_suffix, Array(
-			"#period#" => "<a href=\"".$arTmp["URLS"]["REPORTS_PAGE"]."\" class=\"bx-notifier-item-action\">".htmlspecialcharsbx($arEntry["DATE_TEXT"])."</a>",
-		));
+		$arMessageFields["NOTIFY_MESSAGE"] = fn (?string $languageId = null) => Loc::getMessage(
+			"TIMEMAN_ENTRY_IM_APPROVE" . $gender_suffix,
+			[
+				"#period#" => "<a href=\"".$arTmp["URLS"]["REPORTS_PAGE"]."\" class=\"bx-notifier-item-action\">".htmlspecialcharsbx(self::getFormattedDate($arEntry["DATE_START"], $languageId))."</a>",
+			],
+			$languageId
+		);
 
-		$arMessageFields["NOTIFY_MESSAGE_OUT"] = GetMessage("TIMEMAN_ENTRY_IM_APPROVE".$gender_suffix, Array(
-			"#period#" => htmlspecialcharsbx($arEntry["DATE_TEXT"]),
-		))." (".$arTmp["SERVER_NAME"].$arTmp["URLS"]["REPORTS_PAGE"].")";
+		$arMessageFields["NOTIFY_MESSAGE_OUT"] = fn (?string $languageId = null) =>
+			Loc::getMessage(
+				"TIMEMAN_ENTRY_IM_APPROVE" . $gender_suffix,
+				[
+					"#period#" => htmlspecialcharsbx(self::getFormattedDate($arEntry["DATE_START"], $languageId)),
+				],
+				$languageId
+			)
+			. " (".$arTmp["SERVER_NAME"].$arTmp["URLS"]["REPORTS_PAGE"].")";
 
 		CIMNotify::Add($arMessageFields);
 
@@ -599,7 +623,7 @@ class CTimeManNotify
 				$parserLog->pathToUser = $parserLog->userPath = $arParams["PATH_TO_USER"];
 				$parserLog->bMobile = (isset($arParams["MOBILE"]) && $arParams["MOBILE"] == "Y");
 				$arResult["EVENT_FORMATTED"]["MESSAGE"] = htmlspecialcharsbx($parserLog->convert(htmlspecialcharsback($arResult["EVENT_FORMATTED"]["MESSAGE"]), $arAllow));
-				$arResult["EVENT_FORMATTED"]["MESSAGE"] = preg_replace("/\[user\s*=\s*([^\]]*)\](.+?)\[\/user\]/is".BX_UTF_PCRE_MODIFIER, "\\2", $arResult["EVENT_FORMATTED"]["MESSAGE"]);
+				$arResult["EVENT_FORMATTED"]["MESSAGE"] = preg_replace("/\[user\s*=\s*([^\]]*)\](.+?)\[\/user\]/isu", "\\2", $arResult["EVENT_FORMATTED"]["MESSAGE"]);
 			}
 			else
 			{
@@ -917,14 +941,11 @@ class CTimeManNotify
 			&& intval($arFields["ENTRY_ID"]) > 0
 		)
 		{
-			$date_text = "";
-
 			$dbEntry = CTimeManEntry::GetList(array(), array("ID" => $arFields["ENTRY_ID"]));
 			if ($arEntry = $dbEntry->Fetch())
 			{
 				$culture = \Bitrix\Main\Application::getInstance()->getContext()->getCulture();
 				$dayMonthFormat = $culture->getDayMonthFormat();
-				$date_text = FormatDate($dayMonthFormat, MakeTimeStamp($arEntry["DATE_START"], FORMAT_DATETIME));
 
 				$arMessageFields = array(
 					"MESSAGE_TYPE" => IM_MESSAGE_SYSTEM,
@@ -943,17 +964,12 @@ class CTimeManNotify
 				$dbUser = CUser::GetByID($arFields["USER_ID"]);
 				if ($arUser = $dbUser->Fetch())
 				{
-					switch ($arUser["PERSONAL_GENDER"])
+					$gender_suffix = match ($arUser["PERSONAL_GENDER"])
 					{
-						case "M":
-							$gender_suffix = "_M";
-							break;
-						case "F":
-							$gender_suffix = "_F";
-								break;
-						default:
-							$gender_suffix = "";
-					}
+						"M" => "_M",
+						"F" => "_F",
+						default => "",
+					};
 				}
 
 				$arManagers = CTimeMan::GetUserManagers($arEntry["USER_ID"]);
@@ -973,27 +989,41 @@ class CTimeManNotify
 					array("USER_ID")
 				);
 				while ($arUnFollower = $rsUnFollower->Fetch())
+				{
 					$arUnFollowers[] = $arUnFollower["USER_ID"];
+				}
 
 				$arUserIDToSend = array_diff($arUserIDToSend, $arUnFollowers);
 
 				foreach($arUserIDToSend as $user_id)
 				{
 					if ($arFields["USER_ID"] == $user_id)
+					{
 						continue;
+					}
 
 					$arMessageFields["TO_USER_ID"] = $user_id;
 					$arTmp = CSocNetLogTools::ProcessPath(array("REPORTS_PAGE" => $reports_page), $user_id);
 
 					$sender_type = ($arEntry["USER_ID"] == $user_id ? "1" : ($arEntry["USER_ID"] == $arFields["USER_ID"] ? "2" : "3"));
 
-					$arMessageFields["NOTIFY_MESSAGE"] = GetMessage("TIMEMAN_ENTRY_IM_COMMENT_".$sender_type.$gender_suffix, Array(
-						"#period#" => "<a href=\"".$arTmp["URLS"]["REPORTS_PAGE"]."\" class=\"bx-notifier-item-action\">".htmlspecialcharsbx($date_text)."</a>",
-					));
+					$arMessageFields["NOTIFY_MESSAGE"] = fn (?string $languageId = null) => Loc::getMessage(
+						"TIMEMAN_ENTRY_IM_COMMENT_".$sender_type.$gender_suffix,
+						[
+							"#period#" => "<a href=\"".$arTmp["URLS"]["REPORTS_PAGE"]."\" class=\"bx-notifier-item-action\">".htmlspecialcharsbx(FormatDate($dayMonthFormat, MakeTimeStamp($arEntry["DATE_START"], FORMAT_DATETIME), false, $languageId))."</a>",
+						],
+						$languageId
+					);
 
-					$arMessageFields["NOTIFY_MESSAGE_OUT"] = GetMessage("TIMEMAN_ENTRY_IM_COMMENT_".$sender_type.$gender_suffix, Array(
-						"#period#" => htmlspecialcharsbx($date_text),
-					))." (".$arTmp["SERVER_NAME"].$arTmp["URLS"]["REPORTS_PAGE"].")#BR##BR#".$arFields["MESSAGE"];
+					$arMessageFields["NOTIFY_MESSAGE_OUT"] = fn (?string $languageId = null) =>
+						Loc::getMessage(
+							"TIMEMAN_ENTRY_IM_COMMENT_".$sender_type.$gender_suffix,
+							[
+								"#period#" => htmlspecialcharsbx(FormatDate($dayMonthFormat, MakeTimeStamp($arEntry["DATE_START"], FORMAT_DATETIME), false, $languageId)),
+							],
+							$languageId
+						)
+						. " (".$arTmp["SERVER_NAME"].$arTmp["URLS"]["REPORTS_PAGE"].")#BR##BR#".$arFields["MESSAGE"];
 
 					CIMNotify::Add($arMessageFields);
 				}

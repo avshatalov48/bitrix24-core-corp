@@ -24,7 +24,7 @@ final class CheckProductsOnUpdate extends Base
 					$result->addError(Crm\Reservation\Error\InventoryManagementError::create());
 				}
 
-				$checkResult = self::checkAvailabilityServices($productRows);
+				$checkResult = self::checkAvailabilityServices($productRows->toArray());
 				if (!$checkResult->isSuccess())
 				{
 					Crm\Activity\Provider\StoreDocument::addServiceActivity($item->getId());

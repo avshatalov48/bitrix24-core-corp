@@ -16,6 +16,7 @@ use Bitrix\Crm\Item;
 use Bitrix\Crm\PhaseSemantics;
 use Bitrix\Crm\RelationIdentifier;
 use Bitrix\Crm\Service\EventHistory\TrackedObject;
+use Bitrix\Crm\Service\Operation\Action\Compatible\SocialNetwork\ProcessSendNotification;
 use Bitrix\Crm\Settings\Crm;
 use Bitrix\Crm\Settings\HistorySettings;
 use Bitrix\Crm\Statistics;
@@ -30,7 +31,6 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\NotImplementedException;
 use Bitrix\Main\ORM\Data\DataManager;
 use Bitrix\Main\ORM\Objectify\EntityObject;
-use Bitrix\Main\ORM\Query\Query;
 use Bitrix\Main\UserField;
 
 abstract class Factory
@@ -395,24 +395,31 @@ abstract class Factory
 
 		$parameters = $this->prepareGetListParameters($parameters);
 
-		$itemIds =
-			$this->getDataClass()::getList(['select' => [Item::FIELD_NAME_ID]] + $parameters)
-				->fetchCollection()
-				->getIdList()
-		;
-		if (empty($itemIds))
+		if ($this->isSkipSelectIdsHack($parameters))
 		{
-			return [];
+			$list = $this->getDataClass()::getList($parameters);
+		}
+		else
+		{
+			$itemIds =
+				$this->getDataClass()::getList(['select' => [Item::FIELD_NAME_ID]] + $parameters)
+					->fetchCollection()
+					->getIdList()
+			;
+			if (empty($itemIds))
+			{
+				return [];
+			}
+
+			$params = [
+					'filter' => ['@' . Item::FIELD_NAME_ID => $itemIds],
+					'limit' => null,
+				] + $parameters;
+
+			$list = $this->getDataClass()::getList($params);
 		}
 
 		$items = [];
-
-		$params = [
-				'filter' => ['@' . Item::FIELD_NAME_ID => $itemIds],
-				'limit' => null,
-			] + $parameters;
-
-		$list = $this->getDataClass()::getList($params);
 		while($item = $list->fetchObject())
 		{
 			$items[] = $this->getItemByEntityObject($item);
@@ -420,7 +427,10 @@ abstract class Factory
 
 		if ($isFmInSelect && $this->isMultiFieldsEnabled())
 		{
-			Container::getInstance()->getMultifieldStorage()->warmupCache($this->getEntityTypeId(), $itemIds);
+			Container::getInstance()->getMultifieldStorage()->warmupCache(
+				$this->getEntityTypeId(),
+				array_map(fn(Item $item) => $item->getId(), $items),
+			);
 		}
 
 		return $items;
@@ -533,7 +543,7 @@ abstract class Factory
 					{
 						$filter = [
 							0 => $filter,
-							'@CATEGORY_ID' => $availableCategoriesIds
+							'@CATEGORY_ID' => $availableCategoriesIds,
 						];
 					}
 					else
@@ -551,13 +561,14 @@ abstract class Factory
 	 * Returns Item by $id. Contacts, products and observers are selected by default
 	 *
 	 * @param int $id
+	 * @param array $fieldsToSelect Fields to select. All fields by default.
 	 *
 	 * @return Item|null
 	 */
-	public function getItem(int $id): ?Item
+	public function getItem(int $id, array $fieldsToSelect = ['*']): ?Item
 	{
 		$parameters = [
-			'select' => ['*'],
+			'select' => $fieldsToSelect,
 			'filter' => ['=ID' => $id],
 			// Do not set limit here! 'limit' limits number of DB rows, not items.
 			// If sql contains joins, there are multiple rows for each item. Some data will not be fetched
@@ -787,14 +798,12 @@ abstract class Factory
 	{
 		if ($this->isReference($key))
 		{
-			$regex = '|^[!=%@><]*#COMMON_FIELD_NAME#\.|';
+			$regex = '|^[!=%@><]*#COMMON_FIELD_NAME#\.|u';
 		}
 		else
 		{
-			$regex = '|^[!=%@><]*#COMMON_FIELD_NAME#$|';
+			$regex = '|^[!=%@><]*#COMMON_FIELD_NAME#$|u';
 		}
-
-		$regex .= BX_UTF_PCRE_MODIFIER;
 
 		foreach ($this->getFieldsMap() as $commonFieldName => $entityFieldName)
 		{
@@ -1315,7 +1324,14 @@ abstract class Factory
 	 */
 	public function getUpdateOperation(Item $item, Context $context = null): Operation\Update
 	{
-		return new Operation\Update($item, $this->getOperationSettings($context), $this->getFieldsCollection());
+		$operation = new Operation\Update($item, $this->getOperationSettings($context), $this->getFieldsCollection());
+
+		$operation->addAction(
+			Operation::ACTION_AFTER_SAVE,
+			new Operation\Action\DeleteEntityBadges(),
+		);
+
+		return $operation;
 	}
 
 	/**
@@ -1384,6 +1400,10 @@ abstract class Factory
 		$restore = new Operation\Restore($item, $this->getOperationSettings($context), $this->getFieldsCollection());
 
 		$this->configureAddOperation($restore);
+		$restore->removeAction(
+			Operation::ACTION_AFTER_SAVE,
+			ProcessSendNotification\WhenAddingEntity::class,
+		);
 
 		return $restore;
 	}
@@ -1607,6 +1627,19 @@ abstract class Factory
 		$semantics = $stage->getSemantics();
 
 		return PhaseSemantics::isDefined($semantics) ? $semantics : PhaseSemantics::PROCESS;
+	}
+
+	final public function getSuccessfulStage(?int $categoryId = null): ?EO_Status
+	{
+		foreach ($this->getStages($categoryId) as $stage)
+		{
+			if (PhaseSemantics::isSuccess($stage->getSemantics()))
+			{
+				return $stage;
+			}
+		}
+
+		return null;
 	}
 	//endregion
 
@@ -1973,7 +2006,7 @@ abstract class Factory
 			'select' => [Item::FIELD_NAME_CATEGORY_ID],
 			'filter' => [
 				'=ID' => $id,
-			]
+			],
 		]);
 		if (!empty($items))
 		{
@@ -2009,6 +2042,60 @@ abstract class Factory
 	}
 
 	public function isInCustomSection(): bool
+	{
+		return false;
+	}
+
+	private function isSkipSelectIdsHack(array $parameters): bool
+	{
+		$filter = $parameters['filter'] ?? [];
+		$select = $parameters['select'] ?? [];
+
+		if (count($filter) === 1 && $this->isFilterContainField($filter, Item::FIELD_NAME_ID))
+		{
+			return true;
+		}
+
+		if ((count($select) === 1 && array_key_exists(Item::FIELD_NAME_ID, $select)))
+		{
+			return true;
+		}
+
+		return false;
+	}
+
+	private function isFilterContainField(array $array, string $field): bool
+	{
+		$keys = array_keys($array);
+		foreach ($keys as $key)
+		{
+			// remove any special symbols from $key
+			$key = preg_replace('/[^a-zA-Z0-9_]/', '', $key);
+
+			if ($key === $field)
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	public function checkIfTotalItemsCountExceeded(int $limit, array $filter = []): bool
+	{
+		$count = $this->getDataClass()::query()
+			->setSelect(['ID'])
+			->setFilter($filter)
+			->setLimit($limit + 1)
+			->countTotal(true)
+			->exec()
+			->getCount()
+		;
+
+		return $count > $limit;
+	}
+
+	public function isCommunicationRoutingSupported(): bool
 	{
 		return false;
 	}

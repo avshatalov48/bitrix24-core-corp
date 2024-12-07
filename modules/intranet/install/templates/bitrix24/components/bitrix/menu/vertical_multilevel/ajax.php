@@ -8,7 +8,7 @@ if ($_SERVER["REQUEST_METHOD"]=="POST" && $_POST["action"] <> '' && check_bitrix
 	{
 		Bitrix\Intranet\Composite\CacheProvider::deleteUserCache();
 	}
-	
+
 	if (isset($_POST["site_id"]) && trim($_POST["site_id"]))
 	{
 		$siteID = trim($_POST["site_id"]);
@@ -49,12 +49,15 @@ if ($_SERVER["REQUEST_METHOD"]=="POST" && $_POST["action"] <> '' && check_bitrix
 			}
 			break;
 		case "set_app_rights":
-			if (CModule::IncludeModule("bitrix24") && $GLOBALS['USER']->CanDoOperation('bitrix24_config'))
+			if (
+				isset($_POST["app_id"])
+				&& (int)$_POST["app_id"]
+				&& CModule::IncludeModule("bitrix24")
+				&& $GLOBALS['USER']->CanDoOperation('bitrix24_config')
+			)
 			{
-				if (isset($_POST["app_id"]) && intval($_POST["app_id"]))
-					$app_id = intval($_POST["app_id"]);
-
-				$resRights = CBitrix24AppRights::SetAppRights($app_id, $_POST["rights"]);
+				$app_id = (int)$_POST["app_id"];
+				CBitrix24AppRights::SetAppRights($app_id, $_POST["rights"]);
 			}
 			break;
 		case "add_favorite":

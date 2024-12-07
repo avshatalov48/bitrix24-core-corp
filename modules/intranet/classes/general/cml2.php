@@ -262,66 +262,61 @@ class CUserCMLImport
 		if (null == $arDepts)
 			$arDepts = $this->arDepartments;
 
-		$obSection = new CIBlockSection();
-
 		foreach ($arDepts as $arDeptData)
 		{
-			//print_r($arDeptData);
-
+			$isActive = !($arDeptData[GetMessage('IBLOCK_XML2_USER_TAG_STATUS')] === GetMessage('IBLOCK_XML2_USER_VALUE_DELETED'));
 			$XML_ID = $arDeptData[GetMessage('IBLOCK_XML2_USER_TAG_ID')];
-			if ($SECTION_ID = $this->GetSectionByXML_ID($this->DEPARTMENTS_IBLOCK_ID, $XML_ID))
-			{
-				$dbRes = $obSection->GetByID($SECTION_ID);
-				$arCurrentSection = $dbRes->Fetch();
-			}
-
-			$arFields = array(
-				'ACTIVE' => ($arDeptData[GetMessage('IBLOCK_XML2_USER_TAG_STATUS')]===GetMessage('IBLOCK_XML2_USER_VALUE_DELETED')? 'N': 'Y'),
-				'IBLOCK_ID' => $this->DEPARTMENTS_IBLOCK_ID,
-				'IBLOCK_SECTION_ID' => intval($PARENT_ID),
-				'EXTERNAL_ID' => $XML_ID,
-				'NAME' => $arDeptData[GetMessage('IBLOCK_XML2_USER_TAG_NAME')],
-				//'SORT' => 100,
-			);
+			$departmentRepository = \Bitrix\Intranet\Service\ServiceContainer::getInstance()
+				->departmentRepository();
+			$department = $departmentRepository->findAllByXmlId($XML_ID)->first();
 
 			$bStoreHead = false;
-			if (isset($arDeptData[GetMessage('IBLOCK_XML2_USER_TAG_DEPARTMENT_HEAD')]))
+			$headId = null;
+			if (isset($arDeptData[GetMessage('IBLOCK_XML2_USER_TAG_DEPARTMENT_HEAD')])
+				&& $arDeptData[GetMessage('IBLOCK_XML2_USER_TAG_DEPARTMENT_HEAD')])
 			{
-				if ($arDeptData[GetMessage('IBLOCK_XML2_USER_TAG_DEPARTMENT_HEAD')])
+				if ($arUser = $this->GetUserByXML_ID($arDeptData[GetMessage('IBLOCK_XML2_USER_TAG_DEPARTMENT_HEAD')]))
 				{
-					if ($arUser = $this->GetUserByXML_ID($arDeptData[GetMessage('IBLOCK_XML2_USER_TAG_DEPARTMENT_HEAD')]))
-					{
-						$arFields['UF_HEAD'] = $arUser['ID'];
-					}
-					else
-					{
-						$bStoreHead = true;
-					}
+					$headId = (int)$arUser['ID'];
 				}
 				else
 				{
-					$arFields['UF_HEAD'] = '';
+					$bStoreHead = true;
 				}
 
 			}
 
-			//print_r($arFields);
+			try
+			{
+				if (!$department)
+				{
+					$department = new \Bitrix\Intranet\Entity\Department(
+						$arDeptData[GetMessage('IBLOCK_XML2_USER_TAG_NAME')],
+						parentId: (int)$PARENT_ID > 0 ? (int)$PARENT_ID : null,
+						xmlId: $XML_ID,
+						sort: 100,
+						isActive: $isActive
+					);
+				}
+				else
+				{
+					$department->setName($arDeptData[GetMessage('IBLOCK_XML2_USER_TAG_NAME')]);
+					$department->setParentId((int)$PARENT_ID > 0 ? (int)$PARENT_ID : null);
+					$department->setXmlId($XML_ID);
+					$department->setIsActive($isActive);
+				}
+				$department = $departmentRepository->save($department);
 
-			if (!$SECTION_ID)
-			{
-				$arFields['SORT'] = 100;
-				$SECTION_ID = $obSection->Add($arFields);
-				$res = ($SECTION_ID > 0);
-				$this->arSectionCache[$this->DEPARTMENTS_IBLOCK_ID][$XML_ID] = $SECTION_ID;
-			}
-			else
-			{
-				$res = $obSection->Update($SECTION_ID, $arFields);
-			}
+				$this->arSectionCache[$this->DEPARTMENTS_IBLOCK_ID][$XML_ID] = $department->getId() ?? false;
 
-			if (!$res)
+				if ($headId)
+				{
+					$departmentRepository->setHead($department->getId(), $headId);
+				}
+			}
+			catch (\Exception $exception)
 			{
-				$GLOBALS['APPLICATION']->ThrowException($obSection->LAST_ERROR);
+				$GLOBALS['APPLICATION']->ThrowException($exception->getMessage());
 				return false;
 			}
 
@@ -330,30 +325,29 @@ class CUserCMLImport
 				if (!$this->next_step['_TEMPORARY']['DEPARTMENT_HEADS'])
 					$this->next_step['_TEMPORARY']['DEPARTMENT_HEADS'] = array();
 				if (!$this->next_step['_TEMPORARY']['DEPARTMENT_HEADS'][$arDeptData[GetMessage('IBLOCK_XML2_USER_TAG_DEPARTMENT_HEAD')]])
-					$this->next_step['_TEMPORARY']['DEPARTMENT_HEADS'][$arDeptData[GetMessage('IBLOCK_XML2_USER_TAG_DEPARTMENT_HEAD')]] = array();
+					$this->next_step['_TEMPORARY']['DEPARTMENT_HEADS'][$arDeptData[GetMessage('IBLOCK_XML2_USER_TAG_DEPARTMENT_HEAD')]] = [];
 
-				$this->next_step['_TEMPORARY']['DEPARTMENT_HEADS'][$arDeptData[GetMessage('IBLOCK_XML2_USER_TAG_DEPARTMENT_HEAD')]][] = $SECTION_ID;
+				$this->next_step['_TEMPORARY']['DEPARTMENT_HEADS'][$arDeptData[GetMessage('IBLOCK_XML2_USER_TAG_DEPARTMENT_HEAD')]][] = $department->getId();
 			}
 
 			if (is_array($arDeptData[GetMessage('IBLOCK_XML2_USER_TAG_DEPARTMENTS')]))
 			{
-				if (!$this->LoadDepartments($arDeptData[GetMessage('IBLOCK_XML2_USER_TAG_DEPARTMENTS')], $SECTION_ID))
+				if (!$this->LoadDepartments($arDeptData[GetMessage('IBLOCK_XML2_USER_TAG_DEPARTMENTS')], $department->getId()))
 					return false;
 			}
 		}
-
-		// if (!$PARENT_ID)
-			// $obSection->ReSort();
 
 		return true;
 	}
 
 	function GetStructureRoot()
 	{
-		$dbs = CIBlockSection::GetList(Array(), Array("IBLOCK_ID"=>$this->DEPARTMENTS_IBLOCK_ID, "SECTION_ID"=>0));
-		if ($arRoot = $dbs->Fetch())
+		$departmentRepository = \Bitrix\Intranet\Service\ServiceContainer::getInstance()
+			->departmentRepository();
+		$department = $departmentRepository->getRootDepartment();
+		if ($department)
 		{
-			return $arRoot['ID'];
+			return $department->getId();
 		}
 
 		$company_name = COption::GetOptionString("main", "site_name", "");
@@ -364,13 +358,18 @@ class CUserCMLImport
 				$company_name = $ars["NAME"];
 		}
 
-		$arFields = Array(
-			"NAME" => $company_name,
-			"IBLOCK_ID"=>$this->DEPARTMENTS_IBLOCK_ID
-		);
+		try
+		{
+			$department = $departmentRepository->save(new \Bitrix\Intranet\Entity\Department(
+				name: $company_name
+			));
 
-		$ss = new CIBlockSection();
-		return $ss->Add($arFields);
+			return $department->getId();
+		}
+		catch (\Exception)
+		{
+			return false;
+		}
 	}
 
 	function ImportMetaData($xml_root_id = false)
@@ -550,7 +549,7 @@ class CUserCMLImport
 			);
 			while($property_state_enum = $property_state->GetNext())
 			{
-				$property_state_final[ToLower($property_state_enum["VALUE"])] = $property_state_enum["ID"];
+				$property_state_final[mb_strtolower($property_state_enum["VALUE"])] = $property_state_enum["ID"];
 			}
 		}
 
@@ -851,10 +850,11 @@ class CUserCMLImport
 
 				if (isset($this->next_step['_TEMPORARY']['DEPARTMENT_HEADS'][$arFields['XML_ID']]))
 				{
-					$obSection = new CIBlockSection();
+					$departmentRepository = \Bitrix\Intranet\Service\ServiceContainer::getInstance()
+						->departmentRepository();
 					foreach ($this->next_step['_TEMPORARY']['DEPARTMENT_HEADS'][$arFields['XML_ID']] as $dpt)
 					{
-						$obSection->Update($dpt, array('UF_HEAD' => $CURRENT_USER), false, false);
+						$departmentRepository->setHead((int)$dpt, (int)$CURRENT_USER);
 					}
 				}
 
@@ -926,7 +926,7 @@ class CUserCMLImport
 						'POST' => $arState['POST'],
 						'USER' => $CURRENT_USER,
 						'DEPARTMENT' => $arState['DEPARTMENT'],
-						'STATE' => array("VALUE" => $property_state_final[ToLower($arState['STATE'])])
+						'STATE' => array("VALUE" => $property_state_final[mb_strtolower($arState['STATE'])])
 					),
 				);
 
@@ -1042,7 +1042,7 @@ class CUserCMLImport
 			}
 		}
 
-		$TYPE = ToUpper($TYPE);
+		$TYPE = mb_strtoupper($TYPE);
 
 		if (false !== mb_strpos($TYPE, GetMessage('INTR_IAC_VACATION')))
 			return $this->arAbsenceTypes['VACATION'];

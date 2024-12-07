@@ -16,7 +16,7 @@ Loc::loadMessages(__FILE__);
 		))?>
 </div>
 
-<script type="text/javascript">
+<script>
 	BX.ready(function(){
 
 		var mpConverterSuccess = false;
@@ -24,19 +24,20 @@ Loc::loadMessages(__FILE__);
 		{
 			if (typeof Kanban !== "undefined")
 			{
-				Kanban.ajax({
-						action: "converterMP",
-						last: last
-					},
-					function(data)
-					{
-						if (!data.error)
+
+				Kanban.ajax('converterMP', {
+					last: last
+				}).then(
+					(response) => {
+						const data = response.data;
+						const error = response.errors.pop();
+
+						if (!error)
 						{
 							if (data.finish !== true)
 							{
 								BX("tasks-kanban-cp").innerHTML =
-										parseInt(BX("tasks-kanban-cp").innerHTML) +
-										data.processed;
+									parseInt(BX("tasks-kanban-cp").innerHTML) + data.processed;
 								mpConverter(data.last);
 							}
 							else
@@ -48,9 +49,10 @@ Loc::loadMessages(__FILE__);
 						}
 						else
 						{
-							BX.Kanban.Utils.showErrorDialog(data.error, true);
+							BX.Kanban.Utils.showErrorDialog(error.message, true);
 						}
-					});
+					}
+				);
 			}
 		};
 

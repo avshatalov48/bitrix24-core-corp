@@ -27,15 +27,15 @@ CModule::IncludeModule('iblock');
 
 global $APPLICATION;
 
-$arParams["TASK_VAR"] = trim($arParams["TASK_VAR"]);
+$arParams["TASK_VAR"] = trim($arParams["TASK_VAR"] ?? '');
 if ($arParams["TASK_VAR"] == '')
 	$arParams["TASK_VAR"] = "task_id";
 
-$arParams["GROUP_VAR"] = trim($arParams["GROUP_VAR"]);
+$arParams["GROUP_VAR"] = trim($arParams["GROUP_VAR"] ?? '');
 if ($arParams["GROUP_VAR"] == '')
 	$arParams["GROUP_VAR"] = "group_id";
 
-$arParams["ACTION_VAR"] = trim($arParams["ACTION_VAR"]);
+$arParams["ACTION_VAR"] = trim($arParams["ACTION_VAR"] ?? '');
 if ($arParams["ACTION_VAR"] == '')
 	$arParams["ACTION_VAR"] = "action";
 
@@ -47,7 +47,7 @@ if ($arParams["NAME_TEMPLATE"] == '')
 
 $arParams["USER_ID"] = intval($arParams["USER_ID"]) > 0 ? intval($arParams["USER_ID"]) : \Bitrix\Tasks\Util\User::getId();
 
-$arParams["GROUP_ID"] = intval($arParams["GROUP_ID"]);
+$arParams["GROUP_ID"] = intval($arParams["GROUP_ID"] ?? null);
 
 $taskType = ($arParams["GROUP_ID"] > 0 ? "group" : "user");
 
@@ -74,17 +74,17 @@ if ($arParams["PATH_TO_USER_TASKS_TEMPLATES"] == '')
 }
 
 //group paths
-$arParams["PATH_TO_GROUP_TASKS"] = trim($arParams["PATH_TO_GROUP_TASKS"]);
+$arParams["PATH_TO_GROUP_TASKS"] = trim($arParams["PATH_TO_GROUP_TASKS"] ?? '');
 if ($arParams["PATH_TO_GROUP_TASKS"] == '')
 {
 	$arParams["PATH_TO_GROUP_TASKS"] = COption::GetOptionString("tasks", "paths_task_group", htmlspecialcharsbx($APPLICATION->GetCurPage()."?".$arParams["PAGE_VAR"]."=group_tasks&".$arParams["GROUP_VAR"]."=#group_id#"), SITE_ID);
 }
-$arParams["PATH_TO_GROUP_TASKS_TASK"] = trim($arParams["PATH_TO_GROUP_TASKS_TASK"]);
+$arParams["PATH_TO_GROUP_TASKS_TASK"] = trim($arParams["PATH_TO_GROUP_TASKS_TASK"] ?? '');
 if ($arParams["PATH_TO_GROUP_TASKS_TASK"] == '')
 {
 	$arParams["PATH_TO_GROUP_TASKS_TASK"] = COption::GetOptionString("tasks", "paths_task_group_action", htmlspecialcharsbx($APPLICATION->GetCurPage()."?".$arParams["PAGE_VAR"]."=group_tasks_task&".$arParams["GROUP_VAR"]."=#group_id#&".$arParams["TASK_VAR"]."=#task_id#&".$arParams["ACTION_VAR"]."=#action#"), SITE_ID);
 }
-$arParams["PATH_TO_GROUP_TASKS_REPORT"] = trim($arParams["PATH_TO_GROUP_TASKS_REPORT"]);
+$arParams["PATH_TO_GROUP_TASKS_REPORT"] = trim($arParams["PATH_TO_GROUP_TASKS_REPORT"] ?? '');
 if ($arParams["PATH_TO_GROUP_TASKS_REPORT"] == '')
 {
 	$arParams["PATH_TO_GROUP_TASKS_REPORT"] = htmlspecialcharsbx($APPLICATION->GetCurPage()."?".$arParams["PAGE_VAR"]."=group_tasks_report&".$arParams["GROUP_VAR"]."=#group_id#");
@@ -124,14 +124,14 @@ $arParams["PATH_TO_TEMPLATES"] = str_replace("#user_id#", $arParams["USER_ID"], 
 $arFilter = array();
 
 // filter
-if ($_GET["F_CANCEL"] == "Y")
+if (($_GET["F_CANCEL"] ?? null) == "Y")
 {
 	$_SESSION["FILTER"] = array();
 }
 
 $phpDateFormat = $DB->DateFormatToPHP(CSite::GetDateFormat("SHORT"));
 
-if ($_GET["F_FILTER"] == "Y")
+if (($_GET["F_FILTER"] ?? null) == "Y")
 {
 	$_SESSION["FILTER"]["F_FILTER"] = "Y";
 	$_SESSION["FILTER"]["F_DATE_TYPE"] = htmlspecialcharsbx($_GET["F_DATE_TYPE"]);
@@ -156,7 +156,7 @@ else
 	}
 }
 
-if ($_SESSION["FILTER"]["F_FILTER"] == "Y")
+if (($_SESSION["FILTER"]["F_FILTER"] ?? null) == "Y")
 {
 	$arResult["FILTER"] = $_SESSION["FILTER"];
 }
@@ -207,7 +207,7 @@ switch ($arResult["FILTER"]["F_DATE_TYPE"])
 		$arFilter["PERIOD"]["START"] = date($phpDateFormat, strtotime(date("Y-m-01")));
 		break;
 }
-if (intval($arResult["FILTER"]["F_DEPARTMENT_ID"]) > 0)
+if (intval($arResult["FILTER"]["F_DEPARTMENT_ID"] ?? null) > 0)
 {
 	$rsSection = CIBlockSection::GetByID(intval($arResult["FILTER"]["F_DEPARTMENT_ID"]));
 
@@ -234,18 +234,18 @@ if (intval($arResult["FILTER"]["F_DEPARTMENT_ID"]) > 0)
 	}
 }
 
-if (intval($arResult["FILTER"]["F_GROUP_ID"]) > 0)
+if (intval($arResult["FILTER"]["F_GROUP_ID"] ?? null) > 0)
 {
 	$arFilter["GROUP_ID"] = intval($arResult["FILTER"]["F_GROUP_ID"]);
 }
 
-if (intval($arResult["FILTER"]["F_RESPONSIBLE_ID"]) > 0)
+if (intval($arResult["FILTER"]["F_RESPONSIBLE_ID"] ?? null) > 0)
 {
 	$arFilter["RESPONSIBLE_ID"] = intval($arResult["FILTER"]["F_RESPONSIBLE_ID"]);
 }
 
 $arResult["START"] = htmlspecialcharsEx($arFilter["PERIOD"]["START"]);
-$arResult["END"] = htmlspecialcharsEx($arFilter["PERIOD"]["END"]);
+$arResult["END"] = htmlspecialcharsEx($arFilter["PERIOD"]["END"] ?? '');
 
 // order
 if (isset($_GET["SORTF"]) && in_array($_GET["SORTF"], array("RESPONSIBLE", "NEW", "OPEN", "CLOSED", "OVERDUED", "MARKED", "POSITIVE")) && isset($_GET["SORTD"]) && in_array($_GET["SORTD"], array("ASC", "DESC")))
@@ -333,7 +333,7 @@ while ($report = $rsReports->GetNext())
 {
 	$tmp = $report;
 	$arResult["REPORTS"][] = $tmp;
-	if (!is_set($arResult["DEPARTMENTS"][$report["DEPARTMENT_ID"]]))
+	if (!is_set($arResult["DEPARTMENTS"][$report["DEPARTMENT_ID"]] ?? null))
 	{
 		$arParentFilter = array(
 			'IBLOCK_ID' => $IBlockID,
@@ -391,7 +391,7 @@ if ($arParams["SET_TITLE"] == "Y")
 	$APPLICATION->SetTitle(GetMessage("TASKS_EFFICIENCY_REPORT"));
 }
 
-if ($arParams["SET_NAVCHAIN"] != "N")
+if (($arParams["SET_NAVCHAIN"] ?? null) != "N")
 {
 	if ($taskType == "user")
 	{

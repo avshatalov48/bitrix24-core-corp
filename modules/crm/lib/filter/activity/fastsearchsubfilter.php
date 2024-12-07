@@ -16,13 +16,11 @@ use Bitrix\Main\Type\DateTime;
 
 class FastSearchSubFilter
 {
+	private EntityDataProvider $parentEntityDataProvider;
 
-	/** @var string one of EntityDataProvider::QUERY_APPROACH_ORM | EntityDataProvider::QUERY_APPROACH_BUILDER */
-	private string $queryApproach;
-
-	public function __construct($queryApproach)
+	public function __construct(EntityDataProvider $parentEntityDataProvider)
 	{
-		$this->queryApproach = $queryApproach;
+		$this->parentEntityDataProvider = $parentEntityDataProvider;
 	}
 
 	public function applyFilter(int $entityTypeId, array &$filterFields): void
@@ -46,11 +44,13 @@ class FastSearchSubFilter
 			)
 			->where('bind.OWNER_TYPE_ID', $entityTypeId);
 
-		if ($this->queryApproach === EntityDataProvider::QUERY_APPROACH_ORM)
+		$queryApproach = $this->parentEntityDataProvider->getDataProviderQueryApproach();
+
+		if ($queryApproach === EntityDataProvider::QUERY_APPROACH_ORM)
 		{
 			$filterFields[] = ['@ID' => new SqlExpression($query->getQuery())];
 		}
-		elseif ($this->queryApproach === EntityDataProvider::QUERY_APPROACH_BUILDER)
+		elseif ($queryApproach === EntityDataProvider::QUERY_APPROACH_BUILDER)
 		{
 			$entity = EntityManager::resolveByTypeID($entityTypeId);
 			$masterAlias = $entity->getDbTableAlias();
@@ -60,16 +60,27 @@ class FastSearchSubFilter
 
 	public function transformFilter(int $entityTypeId, array &$filter): array
 	{
-		$afsDataProvider = new ActivityFastSearchDataProvider(new ActivityFastSearchSettings(['ID' => $entityTypeId]));
+		$afsDataProvider = new ActivityFastSearchDataProvider(
+			new ActivityFastSearchSettings([
+				'ID' => $entityTypeId,
+				'PARENT_FILTER_ENTITY_TYPE_ID' => $entityTypeId,
+				'PARENT_ENTITY_DATA_PROVIDER' => $this->parentEntityDataProvider,
+			])
+		);
 
 		$fields = $afsDataProvider->prepareFields();
 
 		$resFilter = [];
 		foreach ($fields as $filedName => $fieldObj)
 		{
-			$dbFieldName = str_replace('ACTIVITY_FASTSEARCH_', '', $filedName);
+			$dbFieldName = preg_replace('/[^a-zA-Z0-9_]/', '', $filedName);
+			$dbFieldName = str_replace('ACTIVITY_FASTSEARCH_', '', $dbFieldName);
 
-			$fieldsInFilter = array_filter($filter, fn ($key) => str_starts_with($key, $filedName), ARRAY_FILTER_USE_KEY);
+			$fieldsInFilter = array_filter($filter, function($key) use ($filedName) {
+				$preparedKey = preg_replace('/[^a-zA-Z0-9_]/', '', $key);
+
+				return str_starts_with($preparedKey, $filedName);
+			}, ARRAY_FILTER_USE_KEY);
 
 			if (empty($fieldsInFilter))
 			{
@@ -150,6 +161,16 @@ class FastSearchSubFilter
 		elseif(isset($filter['!' . $fieldName]) && $filter['!' . $fieldName] === false)
 		{
 			$result['!' . $dbFieldName] = $filter['!' . $fieldName];
+		}
+
+		if (isset($filter[">=$fieldName"]))
+		{
+			$result['>=' . $dbFieldName] = $filter[">=$fieldName"];
+		}
+
+		if (isset($filter["<=$fieldName"]))
+		{
+			$result['<=' . $dbFieldName] = $filter["<=$fieldName"];
 		}
 
 		return $result;

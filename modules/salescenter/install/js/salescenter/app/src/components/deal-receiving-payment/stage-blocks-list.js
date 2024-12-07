@@ -28,12 +28,12 @@ export default {
 	props: {
 		sendAllowed: {
 			type: Boolean,
-			required: true
+			required: true,
 		},
 	},
 	data()
 	{
-		let stages =  {
+		const stages = {
 			message: {
 				initSenders: this.$root.$app.options.senders,
 				initCurrentSenderCode: this.$root.$app.options.currentSenderCode,
@@ -112,25 +112,25 @@ export default {
 		if (this.$root.$app.options.hasOwnProperty('timeline'))
 		{
 			stages.timeline = {
-				items: this.getTimelineCollection(this.$root.$app.options.timeline)
-			}
+				items: this.getTimelineCollection(this.$root.$app.options.timeline),
+			};
 		}
-		
+
 		if (this.$root.$app.options.paySystemList.groups)
 		{
 			stages.paysystem.groups = this.getTileGroupsCollection(
 				this.$root.$app.options.paySystemList.groups,
-				stages.paysystem.tiles
+				stages.paysystem.tiles,
 			);
 		}
 
 		return {
-			stages: stages,
-		}
+			stages,
+		};
 	},
 	mixins: [
 		StageMixin,
-		MixinTemplatesType
+		MixinTemplatesType,
 	],
 	computed: {
 		hasStageTimeLine()
@@ -161,7 +161,7 @@ export default {
 		},
 		getTimelineCollection(items)
 		{
-			let list = [];
+			const list = [];
 
 			Object.values(items).forEach(
 				options => list.push(TimeLineItem.Factory.create(options)));
@@ -170,7 +170,7 @@ export default {
 		},
 		getTileCollection(items)
 		{
-			let tiles = [];
+			const tiles = [];
 			Object.values(items).forEach(
 				options => tiles.push(Tile.Factory.create(options)));
 
@@ -179,8 +179,8 @@ export default {
 		getTileGroupsCollection(groups, tiles)
 		{
 			const ret = [];
-			
-			if (groups instanceof Array)
+
+			if (Array.isArray(groups))
 			{
 				Object.values(groups).forEach((item) => {
 					const group = new Tile.Group(item);
@@ -193,7 +193,7 @@ export default {
 		},
 		getTitleItems(items)
 		{
-			let result = [];
+			const result = [];
 			items.forEach((item) => {
 				if (![Tile.More.type(), Tile.Offer.type()].includes(item.type))
 				{
@@ -206,29 +206,31 @@ export default {
 		stageRefresh(e, type)
 		{
 			Ajax.runComponentAction(
-				"bitrix:salescenter.app",
-				"getAjaxData",
+				'bitrix:salescenter.app',
+				'getAjaxData',
 				{
-					mode: "class",
+					mode: 'class',
 					data: {
-						type: type,
+						type,
+					},
+				},
+			).then(
+				(response) => {
+					if (response.data)
+					{
+						this.refreshTilesByType(response.data, type);
 					}
-				}
-			).then(function(response) {
-				if (response.data)
-				{
-					this.refreshTilesByType(response.data, type);
-				}
-			}.bind(this),
-			function() {
-				UI.Notification.Center.notify({
-					content: Loc.getMessage('SALESCENTER_DATA_UPDATE_ERROR'),
-				});
-			});
+				},
+				() => {
+					UI.Notification.Center.notify({
+						content: Loc.getMessage('SALESCENTER_DATA_UPDATE_ERROR'),
+					});
+				},
+			);
 		},
 		refreshTilesByType(data, type)
 		{
-			if(type === 'PAY_SYSTEM')
+			if (type === 'PAY_SYSTEM')
 			{
 				this.stages.paysystem.status = data.isSet
 					? Status.complete
@@ -238,7 +240,7 @@ export default {
 				this.stages.paysystem.installed = data.isSet;
 				this.stages.paysystem.titleItems = this.getTitleItems(data.items);
 			}
-			else if(type === 'CASHBOX')
+			else if (type === 'CASHBOX')
 			{
 				this.stages.cashbox.status = data.isSet
 					? Status.complete
@@ -247,9 +249,9 @@ export default {
 				this.stages.cashbox.installed = data.isSet;
 				this.stages.cashbox.titleItems = this.getTitleItems(data.items);
 			}
-			else if(type === 'DELIVERY')
+			else if (type === 'DELIVERY')
 			{
-				this.stages.delivery.status = data.isSet
+				this.stages.delivery.status = data.isInstalled
 					? Status.complete
 					: Status.disabled;
 				this.stages.delivery.tiles = this.getTileCollection(data.items);
@@ -382,6 +384,7 @@ export default {
 				:stageOnDeliveryFinished="stages.automation.stageOnDeliveryFinished"
 				:items="stages.automation.items"
 				:initialCollapseState="stages.automation.initialCollapseState"
+				:isDeliveryStageVisible="stages.delivery.installed"
 				@on-save-collapsed-option="saveCollapsedOption"
 			/>
 			<send-block

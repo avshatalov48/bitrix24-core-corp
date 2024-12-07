@@ -1,5 +1,6 @@
 declare type TaskReduxModel = {
 	id: number,
+	guid?: string,
 	name?: string,
 	description?: string,
 	parsedDescription?: string,
@@ -9,6 +10,7 @@ declare type TaskReduxModel = {
 	commentsCount?: number,
 	serviceCommentsCount?: number,
 	newCommentsCount?: number,
+	resultsCount?: number,
 	parentId?: number,
 
 	status?: number,
@@ -21,15 +23,13 @@ declare type TaskReduxModel = {
 	accomplices?: number[],
 	auditors?: number[],
 
-	// ToDo
-	// relatedTasks?: object,
-	// ToDo
-	// subTasks?: object,
+	relatedTaskId?: number;
+	relatedTasks?: number[],
 
 	crm?: CrmDTO[],
 	tags?: TagsDTO[],
 	files?: FilesDTO[],
-	uploadedFiles?: string[],
+	uploadedFiles: UploadingFilesDTO[],
 
 	isMuted?: boolean,
 	isPinned?: boolean,
@@ -51,13 +51,25 @@ declare type TaskReduxModel = {
 	endDate?: number,
 
 	checklist?: ChecklistDTO,
+	checklistDetails?: ChecklistDetailsDTO[],
+	checklistFlatTree?: object[],
 	counter?: CounterDTO,
 
-	// ToDo
-	actions?: object,
+	// todo: remove this after removing old task card
+	actionsOld?: object;
 
+	canRead?: boolean,
+	canUpdate?: boolean,
 	canUpdateDeadline?: boolean,
+	canUpdateCreator?: boolean,
+	canUpdateResponsible?: boolean,
+	canUpdateAccomplices?: boolean,
 	canDelegate?: boolean,
+	canUpdateMark?: boolean,
+	canUpdateReminder?: boolean,
+	canUpdateElapsedTime?: boolean,
+	canAddChecklist?: boolean,
+	canUpdateChecklist?: boolean,
 	canRemove?: boolean,
 	canUseTimer?: boolean,
 	canStart?: boolean,
@@ -71,12 +83,24 @@ declare type TaskReduxModel = {
 	isRemoved?: boolean,
 	isExpired?: boolean,
 	isConsideredForCounterChange?: boolean,
+
+	isCreationErrorExist?: boolean,
+	creationErrorText?: string,
+
+	imChatId?: number,
+	imMessageId?: number,
 };
 
 export type ChecklistDTO = {
 	completed: number,
 	uncompleted: number,
 }
+
+export type ChecklistDetailsDTO = {
+	title: string,
+	completed: number,
+	uncompleted: number,
+};
 
 export type CounterDTO = {
 	counters: {
@@ -92,7 +116,7 @@ export type CounterDTO = {
 }
 
 export type CrmDTO = {
-	id: number,
+	id: string,
 	type: string,
 	title: string,
 	subtitle: string,
@@ -106,10 +130,25 @@ export type TagsDTO = {
 
 export type FilesDTO = {
 	id: number,
-	objectId: string,
+	objectId: number,
 	name: string,
 	size: string,
 	url: string,
 	type: string,
 	isImage: boolean,
+}
+
+export type UploadingFilesDTO = {
+	id: string,
+	uuid: string,
+	name: string,
+	url: string,
+	height: number,
+	width: number,
+	previewUrl: string,
+	previewHeight: number,
+	previewWidth: number,
+	type: string,
+	isUploading: boolean,
+	hasError: boolean,
 }

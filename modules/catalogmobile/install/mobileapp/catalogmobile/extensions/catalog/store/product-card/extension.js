@@ -4,7 +4,7 @@
 jn.define('catalog/store/product-card', (require, exports, module) => {
 	const AppTheme = require('apptheme');
 	const { InlineSkuTree } = require('layout/ui/product-grid/components/inline-sku-tree');
-	const { isEmpty } = require('utils/object');
+	const { isEmpty, mergeImmutable } = require('utils/object');
 	const { ProductCard } = require('layout/ui/product-grid/components/product-card');
 	const { StoreProductRow } = require('catalog/store/product-list/model');
 	const { CatalogStoreProductDetails } = require('catalog/store/product-details');
@@ -70,6 +70,7 @@ jn.define('catalog/store/product-card', (require, exports, module) => {
 								this.renderLineSeparator(),
 								documentType !== 'W' && this.renderPurchasePrice(),
 								this.renderSellPrice(),
+								this.renderTaxes(),
 							),
 						),
 					),
@@ -96,6 +97,7 @@ jn.define('catalog/store/product-card', (require, exports, module) => {
 			const measures = this.props.measures ?? {};
 			const permissions = this.props.permissions ?? {};
 			const catalog = this.props.catalog ?? {};
+			const config = this.props.config ?? {};
 
 			PageManager.openWidget('layout', {
 				title: BX.message('CSPL_DETAILS_BACKDROP_TITLE'),
@@ -117,6 +119,7 @@ jn.define('catalog/store/product-card', (require, exports, module) => {
 							permissions,
 							catalog,
 							document,
+							config,
 							onChange: (productData) => {
 								productRow.setFields(productData);
 								this.setState({ productRow }, () => {
@@ -128,6 +131,75 @@ jn.define('catalog/store/product-card', (require, exports, module) => {
 					);
 				},
 			});
+		}
+
+		renderTaxes()
+		{
+			const vatRate = this.state.productRow.getVatRate();
+
+			if (vatRate === null || parseFloat(vatRate) === 0)
+			{
+				return null;
+			}
+
+			const vatRatePercent = vatRate * 100;
+
+			if (vatRatePercent === 0)
+			{
+				return null;
+			}
+
+			const vatIncluded = this.state.productRow.isVatIncluded();
+			const vatIncludedMessageCode = vatIncluded
+				? 'CSPL_SELLING_PRICE_TAX_INCLUDED'
+				: 'CSPL_SELLING_PRICE_TAX_NOT_INCLUDED';
+			const vatIncludedMessage = BX.message(vatIncludedMessageCode);
+			const vatPercentMessage = BX.message('CSPL_SELLING_PRICE_TAX')
+				.replace('#PERCENT#', vatRatePercent);
+
+			const amount = this.state.productRow.getVatValue();
+			const currency = this.state.productRow.getCurrency();
+			const vatValue = Money.create({ amount, currency });
+
+			const vatValueMessage = `${vatPercentMessage}, ${vatValue.formatted}`;
+
+			const style = {
+				fontSize: 12,
+				color: AppTheme.colors.base4,
+				textAlign: 'right',
+			};
+
+			return Row(
+				{
+					style: {
+						marginTop: 4,
+						marginBottom: 0,
+					},
+				},
+				View(
+					{
+						style: {
+							flexDirection: 'row',
+							justifyContent: 'flex-end',
+						},
+					},
+					View(
+						{
+							style: {
+								flexDirection: 'column',
+							},
+						},
+						Text({
+							style,
+							text: vatValueMessage,
+						}),
+						Text({
+							style,
+							text: vatIncludedMessage,
+						}),
+					),
+				),
+			);
 		}
 
 		showProductContextMenu()
@@ -521,51 +593,7 @@ jn.define('catalog/store/product-card', (require, exports, module) => {
 		renderSellPrice()
 		{
 			const documentType = this.props.document ? this.props.document.type : '';
-			const title = () => View(
-				{
-					style: Styles.summaryRow.leftWrapper,
-				},
-				Text({
-					text: BX.message('CSPL_SELLING_PRICE'),
-					style: documentType === 'W' ? Styles.summaryRow.title : Styles.summaryRow.secondaryTitle,
-				}),
-			);
-
-			const value = () => {
-				let node;
-				let { amount, currency } = this.state.productRow.getSellPrice();
-
-				amount = parseFloat(amount);
-
-				if (isFinite(amount))
-				{
-					node = MoneyView({
-						money: Money.create({ amount, currency }),
-						renderAmount: (formattedAmount) => Text({
-							text: formattedAmount,
-							style: documentType === 'W' ? Styles.summaryRow.mainPrice : Styles.summaryRow.secondaryPrice,
-						}),
-						renderCurrency: (formattedCurrency) => Text({
-							text: formattedCurrency,
-							style: documentType === 'W' ? Styles.summaryRow.mainPriceCurrency : Styles.summaryRow.secondaryPriceCurrency,
-						}),
-					});
-				}
-				else
-				{
-					node = Text({
-						text: String(BX.message('CSPL_PRICE_EMPTY')),
-						style: Styles.summaryRow.secondaryPrice,
-					});
-				}
-
-				return View(
-					{
-						style: Styles.summaryRow.rightWrapper,
-					},
-					node,
-				);
-			};
+			let { amount, currency } = this.state.productRow.getSellPrice();
 
 			return View(
 				{
@@ -573,8 +601,54 @@ jn.define('catalog/store/product-card', (require, exports, module) => {
 						flexDirection: 'row',
 					},
 				},
-				title(),
-				value(),
+				this.renderPriceTitle(BX.message('CSPL_SELLING_PRICE'), documentType),
+				this.renderPriceValue(parseFloat(amount), currency, documentType),
+			);
+		}
+
+		renderPriceValue(amount, currency, documentType)
+		{
+			if (!isFinite(amount))
+			{
+				return View(
+					{
+						style: Styles.summaryRow.rightWrapper,
+					},
+					Text({
+						text: String(BX.message('CSPL_PRICE_EMPTY')),
+						style: Styles.summaryRow.secondaryPrice,
+					}),
+				);
+			}
+
+			return View(
+				{
+					style: Styles.summaryRow.rightWrapper,
+				},
+				MoneyView({
+					money: Money.create({ amount, currency }),
+					renderAmount: (formattedAmount) => Text({
+						text: formattedAmount,
+						style: documentType === 'W' ? Styles.summaryRow.mainPrice : Styles.summaryRow.secondaryPrice,
+					}),
+					renderCurrency: (formattedCurrency) => Text({
+						text: formattedCurrency,
+						style: documentType === 'W' ? Styles.summaryRow.mainPriceCurrency : Styles.summaryRow.secondaryPriceCurrency,
+					}),
+				}),
+			);
+		}
+
+		renderPriceTitle(text, documentType)
+		{
+			return View(
+				{
+					style: Styles.summaryRow.leftWrapper,
+				},
+				Text({
+					text: text,
+					style: documentType === 'W' ? Styles.summaryRow.title : Styles.summaryRow.secondaryTitle,
+				}),
 			);
 		}
 
@@ -594,6 +668,37 @@ jn.define('catalog/store/product-card', (require, exports, module) => {
 
 			dialogs.showSnackbar(params, callback);
 		}
+	}
+
+	function Row(options, ...columns)
+	{
+		const horizontalGap = 8;
+		const verticalGap = 8;
+
+		const children = columns.map((columnContent, index, arr) => {
+			const maxIndex = arr.length - 1;
+			const style = {
+				flexGrow: 1,
+				flexBasis: 0,
+				marginLeft: index === 0 ? 0 : horizontalGap,
+				marginRight: index === maxIndex ? 0 : horizontalGap,
+			};
+
+			return View({ style }, columnContent);
+		});
+
+		const defaultOptions = {
+			style: {
+				flexDirection: 'row',
+				justifyContent: 'space-between',
+				marginBottom: verticalGap,
+			},
+		};
+
+		return View(
+			mergeImmutable(defaultOptions, options),
+			...children,
+		);
 	}
 
 	const Styles = {

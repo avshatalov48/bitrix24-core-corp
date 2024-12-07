@@ -81,7 +81,7 @@ $APPLICATION->IncludeComponent('bitrix:ui.button.panel', '', [
 	'BUTTONS' => $buttons,
 ]);
 ?>
-<script type="text/javascript">
+<script>
 	BX.ready(function ()
 	{
 		BX.message({

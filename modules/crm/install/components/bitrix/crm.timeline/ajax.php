@@ -4,6 +4,7 @@ use Bitrix\Crm\Activity\Provider\Sms\MessageDto;
 use Bitrix\Crm\Activity\Provider\Sms\TemplatePlaceholderDto;
 use Bitrix\Crm\Integration\DocumentGeneratorManager;
 use Bitrix\Crm\ItemIdentifier;
+use Bitrix\Crm\Timeline\TimelineEntry;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Web\Json;
 
@@ -64,7 +65,6 @@ if (!$currentUser || !$currentUser->IsAuthorized() || !check_bitrix_sessid() || 
 }
 
 \Bitrix\Main\Localization\Loc::loadMessages(__FILE__);
-CUtil::JSPostUnescape();
 $GLOBALS['APPLICATION']->RestartBuffer();
 Header('Content-Type: application/x-javascript; charset='.LANG_CHARSET);
 if($action == '')
@@ -117,9 +117,12 @@ if($action == 'SAVE_COMMENT') // OBSOLETE: new API 'crm.timeline.comment.add' is
 		'ENTITY_TYPE_ID' => $ownerTypeID,
 		'ENTITY_ID' => $ownerID,
 	);
-	$item = Bitrix\Crm\Timeline\CommentController::getInstance()->onCreate($entryID, $saveData);
 
-	__CrmTimelineEndResponse(array('HISTORY_ITEM' => $item));
+	Bitrix\Crm\Timeline\CommentController::getInstance()->onCreate($entryID, $saveData);
+
+	$item = TimelineEntry::getByID($entryID) ?? [];
+
+	__CrmTimelineEndResponse(['HISTORY_ITEM' => $item]);
 }
 elseif($action == 'SAVE_WAIT')
 {
@@ -460,6 +463,7 @@ elseif ($action === 'SAVE_SMS_MESSAGE')
 	$messageTo = isset($_REQUEST['MESSAGE_TO']) ? (string)$_REQUEST['MESSAGE_TO'] : null;
 	$messageBody = isset($_REQUEST['MESSAGE_BODY']) ? (string)$_REQUEST['MESSAGE_BODY'] : null;
 	$messageTemplateCode = $_REQUEST['MESSAGE_TEMPLATE'] ?? null;
+	$messageTemplateOriginalId = $_REQUEST['MESSAGE_TEMPLATE_ORIGINAL_ID'] ?? null;
 
 	$isTemplatesWithPlaceholdersBased = ($_REQUEST['MESSAGE_TEMPLATE_WITH_PLACEHOLDER'] ?? false) === 'true';
 
@@ -492,6 +496,7 @@ elseif ($action === 'SAVE_SMS_MESSAGE')
 		'to' => $messageTo,
 		'body' => $messageBody,
 		'template' => $messageTemplateCode,
+		'templateOriginalId' => $messageTemplateOriginalId,
 	]);
 
 	$messagePlaceholders = $_REQUEST['MESSAGE_PLACEHOLDERS'] ?? [];
@@ -689,7 +694,7 @@ elseif($action == 'UPDATE_COMMENT') // OBSOLETE: new API 'crm.timeline.comment.u
 		{
 			if (Loader::includeModule('pull'))
 			{
-				$tag = \Bitrix\Crm\Timeline\TimelineEntry::prepareEntityPushTag($ownerTypeID, $ownerID);
+				$tag = TimelineEntry::prepareEntityPushTag($ownerTypeID, $ownerID);
 				\CPullWatch::AddToStack(
 					$tag,
 					array(
@@ -718,8 +723,12 @@ elseif($action == 'UPDATE_COMMENT') // OBSOLETE: new API 'crm.timeline.comment.u
 			'ENTITY_ID' => $ownerID,
 			'OLD_MENTION_LIST' => $oldMentions
 		);
-		$item = Bitrix\Crm\Timeline\CommentController::getInstance()->onModify($id, $saveData);
-		__CrmTimelineEndResponse(array('HISTORY_ITEM' => $item));
+
+		Bitrix\Crm\Timeline\CommentController::getInstance()->onModify($id, $saveData);
+
+		$item = TimelineEntry::getByID($id) ?? [];
+
+		__CrmTimelineEndResponse(['HISTORY_ITEM' => $item]);
 	}
 	else
 	{
@@ -809,7 +818,7 @@ elseif($action == 'GET_COMMENT_CONTENT') // OBSOLETE: new API 'crm.timeline.comm
 	}
 	else
 	{
-		$commentData = \Bitrix\Crm\Timeline\TimelineEntry::getByID($id);
+		$commentData = TimelineEntry::getByID($id);
 		$data = \Bitrix\Crm\Timeline\CommentController::convertToHtml($commentData, array("INCLUDE_FILES" => 'Y'));
 		$html = $data['COMMENT'];
 	}

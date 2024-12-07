@@ -95,6 +95,7 @@ $MESS["CRM_LEAD_FIELD_UTM_SOURCE"] = "Ad system";
 $MESS["CRM_LEAD_FIELD_UTM_TERM"] = "Campaign search term";
 $MESS["CRM_LEAD_FIELD_WEBFORM_ID"] = "Created by CRM form";
 $MESS["CRM_LEAD_NOT_RESPONSIBLE_IM_NOTIFY"] = "You are no longer responsible for the lead \"#title#\"";
+$MESS["CRM_LEAD_NO_PERMISSIONS_TO_DELETE"] = "Insufficient permission to delete lead \"#LEAD_NAME#\".";
 $MESS["CRM_LEAD_PROGRESS_IM_NOTIFY_MSGVER_1"] = "\"#title#\" lead stage changed from \"#start_status_title#\" to \"#final_status_title#\".";
 $MESS["CRM_LEAD_RESPONSIBLE_IM_NOTIFY"] = "You are now responsible for the lead \"#title#\"";
 $MESS["CRM_LEAD_UPDATE_CANCELED"] = "Lead has not been updated because the operation was canceled by event handler: \"#NAME#\"";

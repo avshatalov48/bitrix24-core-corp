@@ -24,7 +24,7 @@ class Auth
 		];
 	}
 
-	public static function getOneTimeAuthHash(int $userId = null)
+	public static function getOneTimeAuthHash(int $userId = null, int $ttl = null)
 	{
 		$path = '/mobile/';
 
@@ -36,17 +36,23 @@ class Auth
 
 		$siteId = \CSite::GetDefSite();
 		$hash = \CUser::GetHitAuthHash($path, $userId, $siteId);
+
 		if ($hash)
 		{
-			return $hash;
+			if ($ttl)
+			{
+				static::removeOneTimeAuthHash($hash, false);
+			}
+			else
+			{
+				return $hash;
+			}
 		}
-		else
-		{
-			return \CUser::AddHitAuthHash($path, $userId, $siteId);
-		}
+
+		return \CUser::AddHitAuthHash($path, $userId, $siteId, $ttl);
 	}
 
-	public static function removeOneTimeAuthHash($hash = null)
+	public static function removeOneTimeAuthHash($hash = null, $initializeEvent = true)
 	{
 		if(!empty($hash))
 		{
@@ -62,9 +68,13 @@ class Auth
 				$dbResult = $DB->Query("DELETE FROM b_user_hit_auth WHERE ${where}");
 				if ($dbResult->result && $dbResult->AffectedRowsCount())
 				{
-					$handlers = EventManager::getInstance()->findEventHandlers('mobile', 'oneTimeHashRemoved');
-					foreach ($handlers as $handler) {
-						ExecuteModuleEventEx($handler, array($userId, $hash));
+					if ($initializeEvent)
+					{
+						$handlers = EventManager::getInstance()->findEventHandlers('mobile', 'onOneTimeHashRemoved');
+						foreach ($handlers as $handler)
+						{
+							ExecuteModuleEventEx($handler, array($userId, $hash));
+						}
 					}
 
 					return true;

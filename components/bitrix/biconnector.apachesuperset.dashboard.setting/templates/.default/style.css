@@ -1,0 +1,4 @@
+.ui-entity-editor-section-edit {
+	/* hack, without padding inner elements doesnt margin */
+	padding-top: 1px;
+}

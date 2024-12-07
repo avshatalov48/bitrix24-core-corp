@@ -33,9 +33,11 @@ class DynamicItems
 		$types = \Bitrix\Crm\Model\Dynamic\TypeTable::getList()->fetchCollection();
 		foreach ($types as $type)
 		{
+			$statusEntityId = \Bitrix\Main\Application::getConnection()->getSqlHelper()->forSql(\CCrmOwnerType::ResolveName($type->getEntityTypeId()));
+
 			$result['crm_dynamic_items_' . $type->getEntityTypeId()] = [
 				'TABLE_NAME' => $type->getTableName(),
-				'TABLE_DESCRIPTION' => $type->getName(),
+				'TABLE_DESCRIPTION' => $type->getTitle(),
 				'TABLE_ALIAS' => 'D',
 				'FIELDS' => [
 					'ID' => [
@@ -165,16 +167,16 @@ class DynamicItems
 						'FIELD_NAME' => 'S.NAME',
 						'FIELD_TYPE' => 'string',
 						'TABLE_ALIAS' => 'S',
-						'JOIN' => 'INNER JOIN b_crm_status S ON S.ENTITY_ID like \'DYNAMIC_%_STAGE_%\' and S.STATUS_ID = D.STAGE_ID',
-						'LEFT_JOIN' => 'LEFT JOIN b_crm_status S ON S.ENTITY_ID like \'DYNAMIC_%_STAGE_%\' and S.STATUS_ID = D.STAGE_ID',
+						'JOIN' => 'INNER JOIN b_crm_status S ON S.ENTITY_ID like \'' . $statusEntityId . '_STAGE_%\' and S.STATUS_ID = D.STAGE_ID',
+						'LEFT_JOIN' => 'LEFT JOIN b_crm_status S ON S.ENTITY_ID like \'' . $statusEntityId . '_STAGE_%\' and S.STATUS_ID = D.STAGE_ID',
 					],
 					'STAGE' => [
 						'IS_METRIC' => 'N', // 'Y'
 						'FIELD_NAME' => 'if(D.STAGE_ID is null, null, concat_ws(\' \', concat(\'[\', D.STAGE_ID, \']\'), nullif(S.NAME, \'\')))',
 						'FIELD_TYPE' => 'string',
 						'TABLE_ALIAS' => 'S',
-						'JOIN' => 'INNER JOIN b_crm_status S ON S.ENTITY_ID like \'DYNAMIC_%_STAGE_%\' and S.STATUS_ID = D.STAGE_ID',
-						'LEFT_JOIN' => 'LEFT JOIN b_crm_status S ON S.ENTITY_ID like \'DYNAMIC_%_STAGE_%\' and S.STATUS_ID = D.STAGE_ID',
+						'JOIN' => 'INNER JOIN b_crm_status S ON S.ENTITY_ID like \'' . $statusEntityId . '_STAGE_%\' and S.STATUS_ID = D.STAGE_ID',
+						'LEFT_JOIN' => 'LEFT JOIN b_crm_status S ON S.ENTITY_ID like \'' . $statusEntityId . '_STAGE_%\' and S.STATUS_ID = D.STAGE_ID',
 					],
 					'PREVIOUS_STAGE_ID' => [
 						'IS_METRIC' => 'N', // 'Y'

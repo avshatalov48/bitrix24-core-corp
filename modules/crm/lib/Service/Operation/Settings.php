@@ -90,7 +90,8 @@ class Settings
 			->disableCheckLimits()
 			->disableCheckAccess()
 			->disableCheckFields()
-			->disableCheckRequiredUserFields();
+			->disableCheckRequiredUserFields()
+		;
 	}
 
 	/**

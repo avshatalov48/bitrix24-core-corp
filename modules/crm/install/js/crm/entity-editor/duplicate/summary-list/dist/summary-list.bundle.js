@@ -4,7 +4,7 @@ this.BX.Crm = this.BX.Crm || {};
 (function (exports,main_core,main_core_events,main_popup,ui_buttons) {
 	'use strict';
 
-	var _templateObject, _templateObject2, _templateObject3, _templateObject4, _templateObject5;
+	var _templateObject, _templateObject2, _templateObject3, _templateObject4, _templateObject5, _templateObject6, _templateObject7;
 	function _classPrivateMethodInitSpec(obj, privateSet) { _checkPrivateRedeclaration(obj, privateSet); privateSet.add(obj); }
 	function _classPrivateFieldInitSpec(obj, privateMap, value) { _checkPrivateRedeclaration(obj, privateMap); privateMap.set(obj, value); }
 	function _checkPrivateRedeclaration(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
@@ -14,6 +14,7 @@ this.BX.Crm = this.BX.Crm || {};
 	var _entityTypeTitle = /*#__PURE__*/new WeakMap();
 	var _entityTitle = /*#__PURE__*/new WeakMap();
 	var _isMy = /*#__PURE__*/new WeakMap();
+	var _isHidden = /*#__PURE__*/new WeakMap();
 	var _entityUrl = /*#__PURE__*/new WeakMap();
 	var _relatedEntityTitle = /*#__PURE__*/new WeakMap();
 	var _responsible = /*#__PURE__*/new WeakMap();
@@ -43,6 +44,10 @@ this.BX.Crm = this.BX.Crm || {};
 	      value: void 0
 	    });
 	    _classPrivateFieldInitSpec(this, _isMy, {
+	      writable: true,
+	      value: void 0
+	    });
+	    _classPrivateFieldInitSpec(this, _isHidden, {
 	      writable: true,
 	      value: void 0
 	    });
@@ -90,6 +95,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        entityTypeTitle: babelHelpers.classPrivateFieldGet(this, _entityTypeTitle),
 	        entityTitle: babelHelpers.classPrivateFieldGet(this, _entityTitle),
 	        isMy: babelHelpers.classPrivateFieldGet(this, _isMy),
+	        isHidden: babelHelpers.classPrivateFieldGet(this, _isHidden),
 	        entityUrl: babelHelpers.classPrivateFieldGet(this, _entityUrl),
 	        relatedEntityTitle: babelHelpers.classPrivateFieldGet(this, _relatedEntityTitle),
 	        responsible: babelHelpers.classPrivateFieldGet(this, _responsible),
@@ -148,6 +154,14 @@ this.BX.Crm = this.BX.Crm || {};
 	    },
 	    get: function get() {
 	      return babelHelpers.classPrivateFieldGet(this, _isMy);
+	    }
+	  }, {
+	    key: "isHidden",
+	    set: function set(value) {
+	      babelHelpers.classPrivateFieldSet(this, _isHidden, value);
+	    },
+	    get: function get() {
+	      return babelHelpers.classPrivateFieldGet(this, _isHidden);
 	    }
 	  }, {
 	    key: "entityUrl",
@@ -386,6 +400,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      itemInfo.entityTypeTitle = BX.prop.getString(entity, 'CATEGORY_NAME', BX.CrmEntityType.getCaption(entityTypeId));
 	      itemInfo.entityTitle = BX.prop.getString(entity, "TITLE", "");
 	      itemInfo.isMy = entityTypeId === BX.CrmEntityType.enumeration.company && BX.prop.getString(entity, "IS_MY_COMPANY", "") === "Y";
+	      itemInfo.isHidden = BX.prop.getString(entity, "IS_HIDDEN", "") === "Y";
 	      itemInfo.entityUrl = BX.prop.getString(entity, "URL", "");
 	      itemInfo.responsible = {
 	        id: BX.prop.getInteger(entity, "RESPONSIBLE_ID", 0),
@@ -436,21 +451,36 @@ this.BX.Crm = this.BX.Crm || {};
 	      return content;
 	    }
 	  }, {
+	    key: "renderHiddenItem",
+	    value: function renderHiddenItem(item) {
+	      return main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"crm-dups-item\">\n\t\t\t\t<div class=\"crm-dups-item-top\">\n\t\t\t\t\t<div class=\"crm-dups-item-header\">\n\t\t\t\t\t\t<div class=\"crm-dups-item-type\">", "</div>\n\t\t\t\t\t\t<span class=\"crm-dups-item-title-hidden\">", "</span>\n\t\t\t\t\t\t<div class=\"crm-dups-item-rel-title hidden\"></div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"crm-dups-item-photo bx-ui-tooltip-photo\">\n\t\t\t\t\t\t<span\n\t\t\t\t\t\t\tclass=\"bx-ui-tooltip-info-data-photo no-photo\"\n\t\t\t\t\t\t\tstyle=\"width: 20px; height: 20px;\"\n\t\t\t\t\t\t></span>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"crm-dups-item-details\">\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), main_core.Text.encode(item["entityTypeTitle"]), main_core.Text.encode(item["entityTitle"]));
+	    }
+	  }, {
+	    key: "renderVisibleItem",
+	    value: function renderVisibleItem(item) {
+	      return main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"crm-dups-item\">\n\t\t\t\t<div class=\"crm-dups-item-top\">\n\t\t\t\t\t<div class=\"crm-dups-item-header\">\n\t\t\t\t\t\t<div class=\"crm-dups-item-type\">", "</div>\n\t\t\t\t\t\t<a\n\t\t\t\t\t\t\thref=\"", "\"\n\t\t\t\t\t\t\tclass=\"crm-dups-item-title\">", "</a>\n\t\t\t\t\t\t<div class=\"crm-dups-item-rel-title hidden\"></div>\n\t\t\t\t\t</div>\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t\t<div class=\"crm-dups-item-details\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t\t\t", "\n\t\t\t</div>\n\t\t"])), main_core.Text.encode(item["entityTypeTitle"]), main_core.Text.encode(item["entityUrl"]), main_core.Text.encode(item["entityTitle"]), _classPrivateMethodGet(this, _renderResponsible, _renderResponsible2).call(this, item["responsible"]), this.renderItemDetails(item), _classPrivateMethodGet(this, _renderAddButton, _renderAddButton2).call(this, {
+	        "type": item["entityTypeName"],
+	        "id": item["entityId"],
+	        "title": item["entityTitle"],
+	        "isMy": item["isMy"]
+	      }));
+	    }
+	  }, {
+	    key: "renderItem",
+	    value: function renderItem(item) {
+	      return item["isHidden"] ? this.renderHiddenItem(item) : this.renderVisibleItem(item);
+	    }
+	  }, {
 	    key: "getLayout",
 	    value: function getLayout() {
 	      var _this3 = this;
 	      var layoutData = this.getLayoutData();
-	      if (!(main_core.Type.isStringFilled(layoutData["title"]) && main_core.Type.isArray(layoutData["groups"]) && layoutData["groups"].length > 0)) {
+	      if (!(main_core.Type.isStringFilled(layoutData["title"]) && main_core.Type.isArrayFilled(layoutData["groups"]))) {
 	        return "";
 	      }
-	      return main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"crm-dups-wrapper\">\n\t\t\t\t<div class=\"crm-dups-header\">", "</div>\n\t\t\t\t<div class=\"crm-dups-list\">", "</div>\n\t\t\t</div>\n\t\t"])), main_core.Text.encode(layoutData["title"]), layoutData["groups"].map(function (group) {
-	        return main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"crm-dups-group\">\n\t\t\t\t\t\t<div class=\"crm-dups-group-header\">", "</div>\n\t\t\t\t\t\t<div class=\"crm-dups-group-items\">", "</div>\n\t\t\t\t\t</div>\n\t\t\t\t"])), main_core.Text.encode(group["title"]), group["items"].map(function (item) {
-	          return main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t\t\t<div class=\"crm-dups-item\">\n\t\t\t\t\t\t\t\t<div class=\"crm-dups-item-top\">\n\t\t\t\t\t\t\t\t\t<div class=\"crm-dups-item-header\">\n\t\t\t\t\t\t\t\t\t\t<div class=\"crm-dups-item-type\">", "</div>\n\t\t\t\t\t\t\t\t\t\t<a\n\t\t\t\t\t\t\t\t\t\t\thref=\"", "\"\n\t\t\t\t\t\t\t\t\t\t\tclass=\"crm-dups-item-title\">", "</a>\n\t\t\t\t\t\t\t\t\t\t<div class=\"crm-dups-item-rel-title hidden\"></div>\n\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t<div class=\"crm-dups-item-details\">\n\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t"])), main_core.Text.encode(item["entityTypeTitle"]), main_core.Text.encode(item["entityUrl"]), main_core.Text.encode(item["entityTitle"]), _classPrivateMethodGet(_this3, _renderResponsible, _renderResponsible2).call(_this3, item["responsible"]), _this3.renderItemDetails(item), _classPrivateMethodGet(_this3, _renderAddButton, _renderAddButton2).call(_this3, {
-	            "type": item["entityTypeName"],
-	            "id": item["entityId"],
-	            "title": item["entityTitle"],
-	            "isMy": item["isMy"]
-	          }));
+	      return main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"crm-dups-wrapper\">\n\t\t\t\t<div class=\"crm-dups-header\">", "</div>\n\t\t\t\t<div class=\"crm-dups-list\">", "</div>\n\t\t\t</div>\n\t\t"])), main_core.Text.encode(layoutData["title"]), layoutData["groups"].map(function (group) {
+	        return main_core.Tag.render(_templateObject4 || (_templateObject4 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"crm-dups-group\">\n\t\t\t\t\t\t<div class=\"crm-dups-group-header\">", "</div>\n\t\t\t\t\t\t<div class=\"crm-dups-group-items\">", "</div>\n\t\t\t\t\t</div>\n\t\t\t\t"])), main_core.Text.encode(group["title"]), group["items"].map(function (item) {
+	          return main_core.Tag.render(_templateObject5 || (_templateObject5 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t"])), _this3.renderItem(item));
 	        }));
 	      }));
 	    }
@@ -548,7 +578,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  var isPhoto = main_core.Type.isStringFilled(options["photoUrl"]) && options["photoUrl"] !== "#";
 	  var noPhotoClass = isPhoto ? "" : " no-photo";
 	  var backgroundStyle = isPhoto ? " background: url('".concat(main_core.Text.encode(options["photoUrl"]), "') no-repeat center; background-size: cover;") : "";
-	  var responsibleContainer = main_core.Tag.render(_templateObject4 || (_templateObject4 = babelHelpers.taggedTemplateLiteral(["<div class=\"crm-dups-item-photo bx-ui-tooltip-photo\">\n\t\t\t<a\n\t\t\t\thref=\"", "\"\n\t\t\t\tclass=\"bx-ui-tooltip-info-data-photo", "\"\n\t\t\t\tstyle=\"width: 20px; height: 20px;", "\"\n\t\t\t\tdata-hint=\"", "\"\n\t\t\t\tdata-hint-no-icon\n\t\t\t></a>\n\t\t</div>"])), main_core.Text.encode(options["profileUrl"]), noPhotoClass, backgroundStyle, main_core.Text.encode(options["fullName"]));
+	  var responsibleContainer = main_core.Tag.render(_templateObject6 || (_templateObject6 = babelHelpers.taggedTemplateLiteral(["<div class=\"crm-dups-item-photo bx-ui-tooltip-photo\">\n\t\t\t<a\n\t\t\t\thref=\"", "\"\n\t\t\t\tclass=\"bx-ui-tooltip-info-data-photo", "\"\n\t\t\t\tstyle=\"width: 20px; height: 20px;", "\"\n\t\t\t\tdata-hint=\"", "\"\n\t\t\t\tdata-hint-no-icon\n\t\t\t></a>\n\t\t</div>"])), main_core.Text.encode(options["profileUrl"]), noPhotoClass, backgroundStyle, main_core.Text.encode(options["fullName"]));
 	  BX.UI.Hint.popupParameters = {
 	    padding: 10
 	  };
@@ -575,7 +605,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      _this4.onAddButtonClick(btn.getContext());
 	    }
 	  });
-	  return main_core.Tag.render(_templateObject5 || (_templateObject5 = babelHelpers.taggedTemplateLiteral(["<div class=\"crm-dups-item-add-btn\">", "</div>"])), btn.render());
+	  return main_core.Tag.render(_templateObject7 || (_templateObject7 = babelHelpers.taggedTemplateLiteral(["<div class=\"crm-dups-item-add-btn\">", "</div>"])), btn.render());
 	}
 
 	exports.SummaryList = SummaryList;

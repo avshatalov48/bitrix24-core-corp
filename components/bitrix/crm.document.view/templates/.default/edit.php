@@ -78,23 +78,12 @@ function displayField($placeholder, array $field, $required = false)
 	?></div><?
 }
 
-function findStringPosition($string, $needle, $offset = 0)
-{
-	$functionName = 'stripos';
-	if(defined('BX_UTF') && BX_UTF && function_exists('mb_stripos'))
-	{
-		$functionName = 'mb_stripos';
-	}
-
-	return $functionName($string, $needle, $offset);
-}
-
 function displayGroup(array &$allGroups, $name, $groups, array &$placeholders, array $fields, $isRoot = false)
 {
 	$showGroup = false;
 	foreach($placeholders as $placeholder => $value)
 	{
-		if(findStringPosition($placeholder, $name) !== false && !empty($value))
+		if(mb_stripos($placeholder, $name) !== false && !empty($value))
 		{
 			$showGroup = true;
 			break;

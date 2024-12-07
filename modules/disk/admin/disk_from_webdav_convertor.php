@@ -132,7 +132,6 @@ class CFromWebDavConvertor
 		{
 			$obUserField = new CUserTypeEntity;
 			$obUserField->delete($r['ID']);
-			$USER_FIELD_MANAGER->arFieldsCache = array();
 		}
 	}
 
@@ -240,8 +239,6 @@ if($_GET['revert'])
 
 if (isset($_REQUEST['webdav_process']) && ($_REQUEST['webdav_process'] === 'Y'))
 {
-	CUtil::JSPostUnescape();
-
 	require_once($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_admin_js.php');
 
 	if(!empty($_REQUEST['publishDocs']))
@@ -439,7 +436,7 @@ else
 			background:url("/bitrix/panel/main/images/bx-admin-sprite.png") no-repeat 4px -88px;
 		}
 	</style>
-	<script language='JavaScript'>
+	<script>
 	var wd_stop;
 	var wd_dialog;
 

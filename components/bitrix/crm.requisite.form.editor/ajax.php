@@ -54,8 +54,6 @@ class CrmRequisiteFormEditorController
 	{
 		try
 		{
-			\CUtil::JSPostUnescape();
-
 			$this->checkRequest();
 
 			$this->processAction();

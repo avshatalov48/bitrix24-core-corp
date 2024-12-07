@@ -57,8 +57,8 @@ CREATE TABLE b_tasks (
 	INDEX ix_b_tasks_created_activity_date (CREATED_DATE, ACTIVITY_DATE),
 	INDEX b_tasks_deadline_ibuk (DEADLINE, DEADLINE_COUNTED),
 	INDEX ix_tasks_deadline_g (GROUP_ID),
-	INDEX ix_tasks_minimal_filter (DEADLINE, STATUS, ZOMBIE, GROUP_ID),
-	INDEX ix_b_tasks_status_is_regular(STATUS, IS_REGULAR)
+	INDEX ix_b_tasks_status_is_regular(STATUS, IS_REGULAR),
+	INDEX ix_tasks_standard_filter (DEADLINE, STATUS, GROUP_ID)
 );
 
 CREATE TABLE b_tasks_files_temporary (
@@ -790,4 +790,105 @@ CREATE TABLE IF NOT EXISTS b_tasks_custom_sort
 	INDEX ix_tasks_custom_sort_group_id_sort_task_id (GROUP_ID, SORT, TASK_ID),
 	INDEX ix_b_tasks_custom_sort_task_id_group_id (TASK_ID, GROUP_ID),
 	UNIQUE INDEX ix_b_tasks_custom_sort_task_id_user_id_group_id (TASK_ID, USER_ID, GROUP_ID)
+);
+
+create table if not exists b_tasks_flow (
+	ID int not null auto_increment,
+	OWNER_ID int not null,
+	CREATOR_ID int not null,
+	GROUP_ID int not null,
+	TEMPLATE_ID int not null default 0,
+	EFFICIENCY int not null default 100,
+	ACTIVE tinyint(1) not null default 0,
+	PLANNED_COMPLETION_TIME int not null default 0,
+	ACTIVITY datetime not null default now(),
+	NAME varchar(255) not null,
+	DESCRIPTION text,
+	DISTRIBUTION_TYPE varchar(16) not null default '',
+	DEMO tinyint(1) not null default 0,
+	primary key (ID),
+	index idx_b_tasks_flow_group_id (GROUP_ID),
+	index idx_b_tasks_flow_activity (ACTIVITY),
+	index idx_b_tasks_flow_creator (CREATOR_ID),
+	index idx_b_tasks_flow_owner (OWNER_ID),
+	index idx_b_tasks_flow_efficiency (EFFICIENCY),
+	unique index idx_b_tasks_flow_name (NAME)
+);
+
+create table if not exists b_tasks_flow_task (
+	ID int not null auto_increment,
+	FLOW_ID int not null,
+	TASK_ID int not null,
+	primary key (ID),
+	index idx_b_tasks_flow_task_flow_id_task_id (FLOW_ID, TASK_ID),
+	unique index idx_b_tasks_flow_task_task_id (TASK_ID)
+);
+
+create table if not exists b_tasks_flow_option (
+	ID int not null auto_increment,
+	FLOW_ID int not null,
+	NAME varchar(255) not null,
+	VALUE varchar(255) not null,
+	primary key (ID),
+	unique index idx_b_tasks_flow_option_name_value (FLOW_ID, NAME)
+);
+
+create table if not exists b_tasks_flow_responsible_queue (
+	ID int not null auto_increment,
+	FLOW_ID int not null,
+	USER_ID int not null,
+	NEXT_USER_ID int not null,
+	SORT tinyint not null default 0,
+	primary key (ID),
+	unique index idx_b_tasks_flow_responsible_queue_flow_id_user_id (FLOW_ID, USER_ID),
+	index idx_b_tasks_flow_responsible_queue_flow_id_sort (FLOW_ID, SORT)
+);
+
+create table if not exists b_tasks_flow_notification
+(
+	ID int not null auto_increment,
+	FLOW_ID int not null,
+	INTEGRATION_ID int not null default 0,
+	STATUS varchar(50) not null default 'SYNC',
+	DATA text not null,
+	UPDATED_AT datetime not null default now(),
+	index b_tasks_flow_notification_flow (FLOW_ID),
+	primary key (ID)
+);
+
+create table if not exists b_tasks_flow_search_index
+(
+	ID int not null auto_increment,
+	FLOW_ID int not null,
+	SEARCH_INDEX mediumtext null,
+	unique index ux_b_tasks_flow_search_index_flow_id (FLOW_ID),
+	fulltext index IXF_TASKS_FLOW_SEARCH_INDEX_SEARCH_INDEX (SEARCH_INDEX),
+	primary key (ID)
+);
+
+create table if not exists b_tasks_flow_member
+(
+	ID int not null auto_increment,
+	FLOW_ID int not null,
+	ACCESS_CODE varchar(100) not null,
+	ENTITY_ID int not null,
+	ENTITY_TYPE varchar(100) not null,
+	ROLE char(2) not null,
+	unique index ix_flow_access (FLOW_ID, ACCESS_CODE, ROLE),
+	index ix_access (ACCESS_CODE),
+	index ix_role (ROLE),
+	index ix_entity (ENTITY_ID, ENTITY_TYPE),
+	primary key (ID)
+);
+
+create table if not exists b_tasks_flow_auto_created_robot
+(
+	ID int not null auto_increment,
+	FLOW_ID int not null,
+	STAGE_ID int not null,
+	BIZ_PROC_TEMPLATE_ID int not null,
+	STAGE_TYPE varchar(255) not null,
+	ROBOT varchar(255) not null,
+	primary key (ID),
+	unique index ix_flow_robot(FLOW_ID, ROBOT)
 );

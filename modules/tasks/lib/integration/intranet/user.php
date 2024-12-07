@@ -24,6 +24,46 @@ final class User extends \Bitrix\Tasks\Integration\Intranet
 	}
 
 	/**
+	 * @param int $userId
+	 * @return bool
+	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
+	 */
+	public static function isEmail(int $userId): bool
+	{
+		if (!self::includeModule())
+		{
+			return false;
+		}
+
+		if ($userId <= 0)
+		{
+			return false;
+		}
+
+		return (new \Bitrix\Intranet\User($userId))->isEmail();
+	}
+
+	/**
+	 * @param int $userId
+	 * @return bool
+	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
+	 */
+	public static function isIntranet(int $userId): bool
+	{
+		if (!self::includeModule())
+		{
+			return false;
+		}
+
+		if ($userId <= 0)
+		{
+			return false;
+		}
+
+		return (new \Bitrix\Intranet\User($userId))->isIntranet();
+	}
+
+	/**
 	 * Checks if a given user is a director (has subordinate users or departments)
 	 *
 	 * @param int $userId

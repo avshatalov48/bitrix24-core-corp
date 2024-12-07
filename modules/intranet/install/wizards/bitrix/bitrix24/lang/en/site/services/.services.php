@@ -1,5 +1,6 @@
 <?php
 $MESS["SERVICE_ADVERTISING"] = "Advertising and Banners";
+$MESS["SERVICE_BICONNECTOR"] = "BI connector";
 $MESS["SERVICE_BLOG"] = "Blogs";
 $MESS["SERVICE_BPV"] = "Business Processes";
 $MESS["SERVICE_CALENDAR"] = "Event Calendar";
@@ -22,6 +23,7 @@ $MESS["SERVICE_MEDIALIBRARY"] = "Media Library";
 $MESS["SERVICE_MEDIALIBRARY_DESC"] = "Media Library sample content";
 $MESS["SERVICE_MEETING"] = "Meetings and events";
 $MESS["SERVICE_PHOTOGALLERY"] = "Photo Gallery";
+$MESS["SERVICE_SALESCENTER"] = "Chat sales";
 $MESS["SERVICE_SEARCH"] = "Search";
 $MESS["SERVICE_SOCIALNETWORK"] = "Social Network";
 $MESS["SERVICE_SOCIALSERVICES"] = "Social Services";

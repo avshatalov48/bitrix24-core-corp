@@ -48,7 +48,7 @@ this.BX = this.BX || {};
 	        top.BX.UI.InfoHelper.show(this.inventoryManagementFeatureCode);
 	        return;
 	      }
-	      ui_dialogs_messagebox.MessageBox.confirm(main_core.Loc.getMessage('DOCUMENT_GRID_DOCUMENT_DELETE_CONTENT'), function (messageBox, button) {
+	      ui_dialogs_messagebox.MessageBox.confirm(main_core.Loc.getMessage('DOCUMENT_GRID_DOCUMENT_DELETE_CONTENT_2'), function (messageBox, button) {
 	        button.setWaiting();
 	        main_core.ajax.runAction('crm.api.realizationdocument.setRealization', {
 	          data: {
@@ -86,7 +86,7 @@ this.BX = this.BX || {};
 	        this.openStoreMasterSlider();
 	        return;
 	      }
-	      ui_dialogs_messagebox.MessageBox.confirm(main_core.Loc.getMessage('DOCUMENT_GRID_DOCUMENT_CONDUCT_CONTENT'), function (messageBox, button) {
+	      ui_dialogs_messagebox.MessageBox.confirm(main_core.Loc.getMessage('DOCUMENT_GRID_DOCUMENT_CONDUCT_CONTENT_2'), function (messageBox, button) {
 	        button.setWaiting();
 	        main_core.ajax.runAction('crm.api.realizationdocument.setShipped', {
 	          data: {
@@ -124,7 +124,7 @@ this.BX = this.BX || {};
 	        this.openStoreMasterSlider();
 	        return;
 	      }
-	      ui_dialogs_messagebox.MessageBox.confirm(main_core.Loc.getMessage('DOCUMENT_GRID_DOCUMENT_CANCEL_CONTENT'), function (messageBox, button) {
+	      ui_dialogs_messagebox.MessageBox.confirm(main_core.Loc.getMessage('DOCUMENT_GRID_DOCUMENT_CANCEL_CONTENT_2'), function (messageBox, button) {
 	        button.setWaiting();
 	        main_core.ajax.runAction('crm.api.realizationdocument.setShipped', {
 	          data: {

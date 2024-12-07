@@ -41,7 +41,7 @@ class CXDILFScheme extends CAllXDILFScheme
 		if($strUpdate!="")
 		{
 			$strSql = "UPDATE b_xdi_lf_scheme SET ".$strUpdate." WHERE ID=".$ID;
-			$DB->Query($strSql, false, "File: ".__FILE__."<br>Line: ".__LINE__);
+			$DB->Query($strSql);
 
 			if(defined("BX_COMP_MANAGED_CACHE"))
 			{
@@ -169,7 +169,7 @@ class CXDILFScheme extends CAllXDILFScheme
 				b_xdi_lf_scheme S
 			".$sFilter.$sOrder;
 
-		return $DB->Query($strSql, false, "File: ".__FILE__."<br>Line: ".__LINE__);
+		return $DB->Query($strSql);
 	}
 
 }

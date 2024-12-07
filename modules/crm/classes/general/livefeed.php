@@ -246,6 +246,7 @@ class CCrmLiveFeedEvent
 	const Progress = 'progress';
 	const Denomination = 'denomination';
 	const Responsible = 'responsible';
+	const Observer = 'observer';
 	const Client = 'client';
 	const Owner = 'owner';
 	const Message = 'message';
@@ -863,7 +864,7 @@ class CCrmLiveFeed
 			}
 
 			$arResult["EVENT_FORMATTED"]["MESSAGE"] = htmlspecialcharsbx($parserLog->convert(htmlspecialcharsback($arResult["EVENT_FORMATTED"]["MESSAGE"]), $arAllow));
-			$arResult["EVENT_FORMATTED"]["MESSAGE"] = preg_replace("/\[user\s*=\s*([^\]]*)\](.+?)\[\/user\]/is".BX_UTF_PCRE_MODIFIER, "\\2", $arResult["EVENT_FORMATTED"]["MESSAGE"]);
+			$arResult["EVENT_FORMATTED"]["MESSAGE"] = preg_replace("/\[user\s*=\s*([^\]]*)\](.+?)\[\/user\]/isu", "\\2", $arResult["EVENT_FORMATTED"]["MESSAGE"]);
 		}
 		else
 		{
@@ -2314,7 +2315,40 @@ class CCrmLiveFeed
 				}
 
 				$url = str_replace(array("#log_id#"), array($arLogFields["ID"]), $arParams["PATH_TO_LOG_ENTRY"]);
-				$serverName = (CMain::IsHTTPS() ? "https" : "http")."://".((defined("SITE_SERVER_NAME") && SITE_SERVER_NAME <> '') ? SITE_SERVER_NAME : COption::GetOptionString("main", "server_name", ""));
+				$absoluteUrl = CCrmUrlUtil::ToAbsoluteUrl($url);
+
+				$notifyMessageCallback = static function (?string $languageId = null) use (
+					$title,
+					$url,
+					$genderSuffix,
+				){
+					$replace = [
+						'#title#' => "<a href=\"".$url."\" class=\"bx-notifier-item-action\">".htmlspecialcharsbx($title)."</a>",
+					];
+
+					return Loc::getMessage(
+						"CRM_LF_COMMENT_IM_NOTIFY{$genderSuffix}",
+						$replace,
+						$languageId,
+					);
+				};
+
+				$notifyMessageOutCallback = static function (?string $languageId = null) use (
+					$absoluteUrl,
+					$title,
+					$genderSuffix,
+				){
+					$replace = [
+						'#title#' => htmlspecialcharsbx($title),
+					];
+					$message = Loc::getMessage(
+						"CRM_LF_COMMENT_IM_NOTIFY{$genderSuffix}",
+						$replace,
+						$languageId,
+					);
+
+					return "{$message} ({$absoluteUrl})";
+				};
 
 				$arMessageFields = array(
 					"MESSAGE_TYPE" => IM_MESSAGE_SYSTEM,
@@ -2326,9 +2360,10 @@ class CCrmLiveFeed
 					//"NOTIFY_EVENT" => "comment",
 					"NOTIFY_EVENT" => "mention",
 					"NOTIFY_TAG" => "CRM|LOG_COMMENT|".$arLogFields["ID"],
-					"NOTIFY_MESSAGE" => GetMessage("CRM_LF_COMMENT_IM_NOTIFY".$genderSuffix, Array("#title#" => "<a href=\"".$url."\" class=\"bx-notifier-item-action\">".htmlspecialcharsbx($title)."</a>")),
-					"NOTIFY_MESSAGE_OUT" => GetMessage("CRM_LF_COMMENT_IM_NOTIFY".$genderSuffix, Array("#title#" => htmlspecialcharsbx($title)))." (".$serverName.$url.")"
+					"NOTIFY_MESSAGE" => $notifyMessageCallback,
+					"NOTIFY_MESSAGE_OUT" => $notifyMessageOutCallback,
 				);
+
 				CIMNotify::Add($arMessageFields);
 			}
 		}
@@ -3799,7 +3834,7 @@ class CCrmLiveFeed
 				GROUP BY RL.RELATION, RP.ATTR, RP.ENTITY
 			";
 
-			$res = $DB->Query($sSql, false, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
+			$res = $DB->Query($sSql);
 			while($row = $res->Fetch())
 			{
 				if (!isset($permsList[$row['ENTITY']]))
@@ -3880,7 +3915,7 @@ class CCrmLiveFeed
 							WHERE
 								UA.USER_ID IN (".implode(', ', $responsibleList).")
 								AND UA.ACCESS_CODE IN ('".implode("', '", $selfRelationsListChunk)."')";
-						$rsUser = $DB->Query($strSQL, false, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
+						$rsUser = $DB->Query($strSQL);
 						while ($arUser = $rsUser->Fetch())
 						{
 							if ($arUser["USER_ID"] != $author_id)
@@ -3900,7 +3935,7 @@ class CCrmLiveFeed
 							FROM b_user_access UA
 							WHERE
 								UA.ACCESS_CODE IN ('".implode("', '", $userRelationsListChunk)."')";
-						$rsUser = $DB->Query($strSQL, false, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
+						$rsUser = $DB->Query($strSQL);
 						while ($arUser = $rsUser->Fetch())
 						{
 							if ($arUser["USER_ID"] != $author_id)
@@ -3926,7 +3961,7 @@ class CCrmLiveFeed
 								INNER JOIN b_user_access UA2 ON
 									UA2.USER_ID = UA.USER_ID
 									AND UA2.ACCESS_CODE IN ('".implode("', '", $departmentRelationsListChunk)."')";
-						$rsUser = $DB->Query($strSQL, false, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
+						$rsUser = $DB->Query($strSQL);
 						while ($arUser = $rsUser->Fetch())
 						{
 							if ($arUser["USER_ID"] != $author_id)
@@ -3951,7 +3986,7 @@ class CCrmLiveFeed
 								INNER JOIN b_user_access UA2 ON
 									UA2.USER_ID = UA.USER_ID
 									AND UA2.ACCESS_CODE IN ('".implode("', '", $subDepartmentRelationsListChunk)."')";
-						$rsUser = $DB->Query($strSQL, false, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
+						$rsUser = $DB->Query($strSQL);
 						while ($arUser = $rsUser->Fetch())
 						{
 							if ($arUser["USER_ID"] != $author_id)
@@ -4292,7 +4327,7 @@ class CCrmLiveFeed
 			$entity_type = $arLog["ENTITY_TYPE"];
 			$entity_id = $arLog["ENTITY_ID"];
 
-			$strURL = $APPLICATION->GetCurPageParam("", array("IFRAME", "MID", "SEF_APPLICATION_CUR_PAGE_URL", BX_AJAX_PARAM_ID, "result"));
+			$strURL = $APPLICATION->GetCurPageParam("", array("IFRAME", "MID", BX_AJAX_PARAM_ID, "result"));
 			$strURL = ForumAddPageParams(
 				$strURL,
 				array(
@@ -4883,26 +4918,13 @@ class CCrmLiveFeed
 			'PARENTS' => static::prepareParentRelations($item),
 		];
 
-		$logEventId = static::CreateLogEvent(
+		static::CreateLogEvent(
 			$liveFeedFields,
 			\CCrmLiveFeedEvent::Add,
 			[
 				'CURRENT_USER' => $context->getUserId(),
 			],
 		);
-
-		if ($logEventId === false)
-		{
-			return;
-		}
-
-		if (
-			static::isNotificationEnabled($item->getEntityTypeId())
-			&& $item->getCreatedBy() !== $item->getAssignedById()
-		)
-		{
-			static::sendNotificationAboutResponsibleAdd($item);
-		}
 	}
 
 	private static function isNotificationEnabled(int $entityTypeId): bool
@@ -4913,38 +4935,6 @@ class CCrmLiveFeed
 		}
 
 		return true;
-	}
-
-	private static function sendNotificationAboutResponsibleAdd(Item $item): void
-	{
-		if (!Loader::includeModule('im'))
-		{
-			return;
-		}
-
-		$entityTypeName = \CCrmOwnerType::ResolveName($item->getEntityTypeId());
-		$message = (new MessageBuilder\ProcessEntityResponsible($item->getEntityTypeId()))
-			->setType(MessageBuilder\ProcessEntityResponsible::BECOME_RESPONSIBLE)
-			->getMessage([
-				'#TITLE#' => htmlspecialcharsbx($item->getHeading()),
-				'#URL#' => '#URL#',
-			])
-		;
-
-		$url = Container::getInstance()->getRouter()->getItemDetailUrl($item->getEntityTypeId(), $item->getId());
-
-		\CIMNotify::Add([
-			'MESSAGE_TYPE' => IM_MESSAGE_SYSTEM,
-			'TO_USER_ID' => $item->getAssignedById(),
-			'FROM_USER_ID' => $item->getCreatedBy(),
-			'NOTIFY_TYPE' => IM_NOTIFY_FROM,
-			'NOTIFY_MODULE' => 'crm',
-			//'NOTIFY_EVENT' => mb_strtolower($entityTypeName) . '_add',
-			'NOTIFY_EVENT' => 'changeAssignedBy',
-			'NOTIFY_TAG' => "CRM|{$entityTypeName}_RESPONSIBLE|" . $item->getId(),
-			'NOTIFY_MESSAGE' => str_replace('#URL#', $url, $message),
-			'NOTIFY_MESSAGE_OUT' => str_replace('#URL#', static::transformRelativeUrlToAbsolute($url), $message),
-		]);
 	}
 
 	private static function transformRelativeUrlToAbsolute(Uri $url): Uri
@@ -4975,11 +4965,6 @@ class CCrmLiveFeed
 
 			if (static::isNotificationEnabled($item->getEntityTypeId()))
 			{
-				if ($singleEvent['TYPE'] === \CCrmLiveFeedEvent::Responsible)
-				{
-					static::sendNotificationAboutAssignedChange($itemBeforeSave, $item);
-				}
-
 				if ($singleEvent['TYPE'] === \CCrmLiveFeedEvent::Progress)
 				{
 					static::sendNotificationAboutStageChange($itemBeforeSave, $item);
@@ -5038,6 +5023,26 @@ class CCrmLiveFeed
 				],
 			];
 		}
+//
+//		if ($difference->isChanged(Item::FIELD_NAME_OBSERVERS))
+//		{
+//			$eventData[\CCrmLiveFeedEvent::Observer] = [
+//				'TYPE' => \CCrmLiveFeedEvent::Observer,
+//				'FIELDS' => [
+//					'ENTITY_TYPE_ID' => $item->getEntityTypeId(),
+//					'ENTITY_ID' => $item->getId(),
+//					'USER_ID' => $item->getUpdatedBy(),
+//					'TITLE' => Loc::getMessage(
+//						'CRM_LF_EVENT_FIELD_CHANGED',
+//						['#FIELD_CAPTION#' => htmlspecialcharsbx($factory->getFieldCaption(Item::FIELD_NAME_OBSERVERS))]
+//					),
+//					'PARAMS' => [
+//						'START_OBSERVER_IDS' => $difference->getPreviousValue(Item::FIELD_NAME_OBSERVERS),
+//						'FINAL_OBSERVER_IDS' => $difference->getCurrentValue(Item::FIELD_NAME_OBSERVERS),
+//					],
+//				],
+//			];
+//		}
 
 		if ($factory->isClientEnabled() && $item->hasField(Item::FIELD_NAME_CONTACT_IDS))
 		{
@@ -5158,6 +5163,14 @@ class CCrmLiveFeed
 		return $eventData;
 	}
 
+	public static function getTitleAboutChangingField(string $fieldCaption): ?string
+	{
+		return Loc::getMessage(
+			'CRM_LF_EVENT_FIELD_CHANGED',
+			['#FIELD_CAPTION#' => htmlspecialcharsbx($fieldCaption)],
+		);
+	}
+
 	private static function prepareParentRelations(Item $item): ?array
 	{
 		if (!static::isParentRelationsSupported($item->getEntityTypeId()))
@@ -5229,70 +5242,6 @@ class CCrmLiveFeed
 		);
 	}
 
-	private static function sendNotificationAboutAssignedChange(Item $itemBeforeSave, Item $item): void
-	{
-		if (!Loader::includeModule('im'))
-		{
-			return;
-		}
-
-		$entityTypeName = \CCrmOwnerType::ResolveName($item->getEntityTypeId());
-		$notificationFields = [
-			'MESSAGE_TYPE' => IM_MESSAGE_SYSTEM,
-			'FROM_USER_ID' => $item->getUpdatedBy(),
-			'NOTIFY_TYPE' => IM_NOTIFY_FROM,
-			'NOTIFY_MODULE' => 'crm',
-			//'NOTIFY_EVENT' => mb_strtolower($entityTypeName) . '_update',
-			'NOTIFY_EVENT' => 'changeAssignedBy',
-			'NOTIFY_TAG' => "CRM|{$entityTypeName}_RESPONSIBLE|" . $item->getId(),
-		];
-
-		$previousAssigned = $itemBeforeSave->remindActual(Item::FIELD_NAME_ASSIGNED);
-		$currentAssigned = $item->getAssignedById();
-
-		$url = Container::getInstance()->getRouter()->getItemDetailUrl($item->getEntityTypeId(), $item->getId());
-
-		if ($currentAssigned !== $item->getUpdatedBy())
-		{
-			$notificationToNewAssigned = $notificationFields;
-
-			$notificationToNewAssigned['TO_USER_ID'] = $currentAssigned;
-
-			$message = (new MessageBuilder\ProcessEntityResponsible($item->getEntityTypeId()))
-				->setType(MessageBuilder\ProcessEntityResponsible::BECOME_RESPONSIBLE)
-				->getMessage([
-					'#TITLE#' => htmlspecialcharsbx($item->getHeading()),
-					'#URL#' => '#URL#',
-				])
-			;
-
-			$notificationToNewAssigned['NOTIFY_MESSAGE'] = str_replace('#URL#', $url, $message);
-			$notificationToNewAssigned['NOTIFY_MESSAGE_OUT'] = str_replace('#URL#', static::transformRelativeUrlToAbsolute($url), $message);
-
-			\CIMNotify::Add($notificationToNewAssigned);
-		}
-
-		if ($previousAssigned !== $item->getUpdatedBy())
-		{
-			$notificationToPreviousAssigned = $notificationFields;
-
-			$notificationToPreviousAssigned['TO_USER_ID'] = $previousAssigned;
-
-			$message = (new MessageBuilder\ProcessEntityResponsible($item->getEntityTypeId()))
-				->setType(MessageBuilder\ProcessEntityResponsible::NO_LONGER_RESPONSIBLE)
-				->getMessage([
-					'#TITLE#' => htmlspecialcharsbx($item->getHeading()),
-					'#URL#' => '#URL#',
-				])
-			;
-
-			$notificationToPreviousAssigned['NOTIFY_MESSAGE'] = str_replace('#URL#', $url, $message);
-			$notificationToPreviousAssigned['NOTIFY_MESSAGE_OUT'] = str_replace('#URL#', static::transformRelativeUrlToAbsolute($url), $message);
-
-			\CIMNotify::Add($notificationToPreviousAssigned);
-		}
-	}
-
 	private static function sendNotificationAboutStageChange(Item $itemBeforeSave, Item $item): void
 	{
 		$factory = Container::getInstance()->getFactory($item->getEntityTypeId());
@@ -5307,16 +5256,18 @@ class CCrmLiveFeed
 			$previousStage = $factory->getStage($itemBeforeSave->remindActual(Item::FIELD_NAME_STAGE_ID));
 			$currentStage = $factory->getStage($item->getStageId());
 
-			$message = (new MessageBuilder\ProcessEntityStage($item->getEntityTypeId()))
-				->getMessage([
-					'#TITLE#' => htmlspecialcharsbx($item->getHeading()),
-					'#START_STAGE_CAPTION#' => $previousStage ? htmlspecialcharsbx($previousStage->getName()) : '',
-					'#FINAL_STAGE_CAPTION#' => $currentStage ? htmlspecialcharsbx($currentStage->getName()) : '',
-					'#URL#' => '#URL#',
-				])
+			$getMessageCallback = static fn (string $url) =>
+				(new MessageBuilder\ProcessEntityStage($item->getEntityTypeId()))
+					->getMessageCallback([
+						'#TITLE#' => htmlspecialcharsbx($item->getHeading()),
+						'#START_STAGE_CAPTION#' => $previousStage ? htmlspecialcharsbx($previousStage->getName()) : '',
+						'#FINAL_STAGE_CAPTION#' => $currentStage ? htmlspecialcharsbx($currentStage->getName()) : '',
+						'#URL#' => $url,
+					])
 			;
 
 			$url = Container::getInstance()->getRouter()->getItemDetailUrl($item->getEntityTypeId(), $item->getId());
+			$absoluteUrl = static::transformRelativeUrlToAbsolute($url);
 
 			\CIMNotify::Add([
 				'MESSAGE_TYPE' => IM_MESSAGE_SYSTEM,
@@ -5327,8 +5278,8 @@ class CCrmLiveFeed
 				//'NOTIFY_EVENT' => mb_strtolower($entityTypeName) . '_update',
 				'NOTIFY_EVENT' => 'changeStage',
 				'NOTIFY_TAG' => "CRM|{$entityTypeName}_PROGRESS|" . $item->getId(),
-				'NOTIFY_MESSAGE' => str_replace('#URL#', $url, $message),
-				'NOTIFY_MESSAGE_OUT' => str_replace('#URL#', static::transformRelativeUrlToAbsolute($url), $message),
+				'NOTIFY_MESSAGE' => $getMessageCallback($url),
+				'NOTIFY_MESSAGE_OUT' => $getMessageCallback($absoluteUrl),
 			]);
 		}
 	}
@@ -5467,7 +5418,7 @@ class CCrmLiveFeedComponent
 
 		if (!$this->fields)
 		{
-			throw new Exception("Empty fields");
+			throw new Main\ArgumentException("Empty fields");
 		}
 
 		$this->entityTypeID = CCrmLiveFeedEntity::ResolveEntityTypeID($this->fields["ENTITY_TYPE"]);
@@ -6488,7 +6439,7 @@ class CCrmLiveFeedComponent
 							{
 								ob_start();
 								?>
-								<script type="text/javascript">
+								<script>
 								if (typeof (window.bSipManagerUrlDefined_<?=$arCommunication["ENTITY_TYPE_ID"]?>) === 'undefined')
 								{
 									window.bSipManagerUrlDefined_<?=$arCommunication["ENTITY_TYPE_ID"]?> = true;
@@ -7384,7 +7335,7 @@ class CCrmLiveFeedComponent
 					}
 
 					//  send mention notifications
-					preg_match_all("/\[user\s*=\s*([^\]]*)\](.+?)\[\/user\]/is".BX_UTF_PCRE_MODIFIER, $message, $arMention);
+					preg_match_all("/\[user\s*=\s*([^\]]*)\](.+?)\[\/user\]/isu", $message, $arMention);
 					if (
 						!empty($arMention)
 						&& !empty($arMention[1])

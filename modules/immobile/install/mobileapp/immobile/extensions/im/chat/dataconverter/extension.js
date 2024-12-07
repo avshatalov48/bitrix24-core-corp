@@ -43,7 +43,7 @@ ChatDataConverter.getElementFormat = function(element)
 		item.imageUrl = ChatUtils.getAvatar(element.user.avatar);
 		if (!item.imageUrl && !element.user.last_activity_date)
 		{
-			item.imageUrl = `${this.imagePath}/avatar_wait_x3.png`;
+			item.imageUrl = `${this.imagePath}/avatar_wait_air.png`;
 		}
 		item.color = element.user.color;
 		item.sectionCode = element.pinned ? 'pinned' : 'general';
@@ -1023,7 +1023,7 @@ ChatDataConverter.getSearchElementFormat = function(element, recent)
 		item.imageUrl = ChatUtils.getAvatar(element.user.avatar);
 		if (!item.imageUrl && !element.user.last_activity_date)
 		{
-			item.imageUrl = `${this.imagePath}/avatar_wait_x3.png`;
+			item.imageUrl = `${this.imagePath}/avatar_wait_air.png`;
 		}
 
 		item.color = element.user.color;
@@ -1105,7 +1105,7 @@ ChatDataConverter.getListElementByUser = function(element)
 	item.imageUrl = ChatUtils.getAvatar(item.source.avatar);
 	if (!item.imageUrl && !item.source.last_activity_date)
 	{
-		item.imageUrl = `${this.imagePath}/avatar_wait_x3.png`;
+		item.imageUrl = `${this.imagePath}/avatar_wait_air.png`;
 	}
 	item.color = item.source.color;
 	item.shortTitle = item.source.first_name ? item.source.first_name : item.source.name;

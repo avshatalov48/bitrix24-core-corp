@@ -189,15 +189,19 @@ if (typeof(BX.FilterEntitySelector) === "undefined")
 
 			onFilterApply: function(id, data, ctx, promise, params)
 			{
-				if (this.option('taskLimitExceeded') || this.option('kpiLimitExceeded'))
+				if (this.option('taskLimitExceeded') || !this.option('tasksEfficiencyEnabled'))
 				{
-					BX.UI.InfoHelper.show('limit_tasks_efficiency', {
-						isLimit: true,
-						limitAnalyticsLabels: {
-							module: 'tasks',
-							source: 'filter'
-						},
+					BX.Runtime.loadExtension('tasks.limit').then((exports) => {
+						const { Limit } = exports;
+						Limit.showInstance({
+							featureId: 'tasks_efficiency',
+							limitAnalyticsLabels: {
+								module: 'tasks',
+								source: 'filter',
+							},
+						});
 					});
+
 					return;
 				}
 

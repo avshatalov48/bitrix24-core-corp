@@ -20,7 +20,6 @@ use Bitrix\Disk\ProxyType;
 use Bitrix\Main\Application;
 use Bitrix\Main\Loader;
 use Bitrix\Main\ModuleManager;
-use Bitrix\Main\Text;
 use CSearch;
 
 final class IndexManager
@@ -125,8 +124,8 @@ final class IndexManager
 			$maxIndexSize = Configuration::getMaxIndexSize();
 			if ($maxIndexSize > 0)
 			{
-				//yes, we know that substr may kills some last characters
-				$content = Text\BinaryString::getSubstring($content, 0, $maxIndexSize);
+				//yes, we know that substr may kill some last characters
+				$content = substr($content, 0, $maxIndexSize);
 			}
 
 			$textBuilder->addText($content);
@@ -208,7 +207,7 @@ final class IndexManager
 		if ($maxIndexSize > 0)
 		{
 			//yes, we know that substr may kills some last characters
-			$searchData['BODY'] = Text\BinaryString::getSubstring($searchData['BODY'], 0, $maxIndexSize);
+			$searchData['BODY'] = substr($searchData['BODY'], 0, $maxIndexSize);
 		}
 
 

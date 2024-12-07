@@ -20,7 +20,7 @@ $currentSprintName = htmlspecialcharsbx($arResult['SPRINT']['START_TIME'])
 	</div>
 </div>
 
-<script type="text/javascript">
+<script>
 	BX.ready(function()
 	{
 		BX.Tasks.SprintSelector(

@@ -29,7 +29,6 @@ class OnTaskAdded implements TimeLineEvent
 			'RESPONSIBLE_ID' => $this->task->getResponsibleId(),
 			'REFRESH_TASK_ACTIVITY' => false,
 			'TASK_RESTORED' => $this->restored,
-			'IMMEDIATELY' => true,
 		];
 	}
 

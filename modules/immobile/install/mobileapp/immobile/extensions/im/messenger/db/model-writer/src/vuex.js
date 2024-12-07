@@ -11,6 +11,9 @@ jn.define('im/messenger/db/model-writer/vuex', (require, exports, module) => {
 	const { TempMessageWriter } = require('im/messenger/db/model-writer/vuex/temp-message');
 	const { QueueWriter } = require('im/messenger/db/model-writer/vuex/queue');
 	const { PinMessageWriter } = require('im/messenger/db/model-writer/vuex/pin-message');
+	const { ApplicationWriter } = require('im/messenger/db/model-writer/vuex/application');
+	const { CopilotWriter } = require('im/messenger/db/model-writer/vuex/copilot');
+	const { SidebarFileWriter } = require('im/messenger/db/model-writer/vuex/sidebar/file');
 
 	class VuexModelWriter
 	{
@@ -25,7 +28,8 @@ jn.define('im/messenger/db/model-writer/vuex', (require, exports, module) => {
 		 *  user: UserRepository,
 		 *  message: MessageRepository,
 		 *  tempMessage: TempMessageRepository,
-		 *  reaction: ReactionRepository
+		 *  reaction: ReactionRepository,
+		 *  sidebarFile: SidebarFileRepository
 		 * }} options.repository
 		 */
 		constructor(options)
@@ -43,7 +47,7 @@ jn.define('im/messenger/db/model-writer/vuex', (require, exports, module) => {
 				repository: this.repository,
 			};
 
-			// this.recentWriter = new RecentWriter(writerOptions);
+			this.recentWriter = new RecentWriter(writerOptions);
 			this.dialogWriter = new DialogWriter(writerOptions);
 			this.userWriter = new UserWriter(writerOptions);
 			this.fileWriter = new FileWriter(writerOptions);
@@ -52,6 +56,9 @@ jn.define('im/messenger/db/model-writer/vuex', (require, exports, module) => {
 			this.tempMessageWriter = new TempMessageWriter(writerOptions);
 			this.queueWriter = new QueueWriter(writerOptions);
 			this.pinMessageWriter = new PinMessageWriter(writerOptions);
+			this.applicationWriter = new ApplicationWriter(writerOptions);
+			this.copilotWriter = new CopilotWriter(writerOptions);
+			this.sidebarFileWriter = new SidebarFileWriter(writerOptions);
 		}
 	}
 

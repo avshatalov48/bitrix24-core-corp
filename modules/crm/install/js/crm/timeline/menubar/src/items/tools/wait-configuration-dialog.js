@@ -1,19 +1,32 @@
-import Wait from "../wait";
-import {Loc} from "main.core";
+/* eslint-disable no-underscore-dangle, @bitrix24/bitrix24-rules/no-pseudo-private */
+
+import Wait from '../wait';
+import { Loc, Tag, Dom, Text, Runtime } from 'main.core';
 
 /** @memberof BX.Crm.Timeline.Tools */
 export default class WaitConfigurationDialog
 {
+	_id: string;
+	_settings: Object;
+	_type: number;
+	_duration: number;
+	_target: string;
+	_targetDates: Array;
+	_container: HTMLElement;
+	_durationInput: HTMLInputElement;
+	_targetDateNode: HTMLElement;
+	_popup = null;
+	_menuId = null;
+
 	constructor()
 	{
-		this._id = "";
+		this._id = '';
 		this._settings = {};
 		this._type = Wait.WaitingType.undefined;
 		this._duration = 0;
-		this._target = "";
-		this._targetDates = null;
+		this._target = '';
+		this._targetDates = [];
 		this._container = null;
-		this._durationMeasureNode = null;
 		this._durationInput = null;
 		this._targetDateNode = null;
 		this._popup = null;
@@ -22,189 +35,246 @@ export default class WaitConfigurationDialog
 	initialize(id, settings)
 	{
 		this._id = BX.type.isNotEmptyString(id) ? id : BX.util.getRandomString(4);
-		this._settings = settings ? settings : {};
-		this._type = BX.prop.getInteger(this._settings, "type", Wait.WaitingType.after);
-		this._duration = BX.prop.getInteger(this._settings, "duration", 1);
-		this._target = BX.prop.getString(this._settings, "target", "");
-		this._targetDates = BX.prop.getArray(this._settings, "targetDates", []);
+		this._settings = settings || {};
+		this._type = BX.prop.getInteger(this._settings, 'type', Wait.WaitingType.after);
+		this._duration = BX.prop.getInteger(this._settings, 'duration', 1);
+		this._target = BX.prop.getString(this._settings, 'target', '');
+		this._targetDates = BX.prop.getArray(this._settings, 'targetDates', []);
 
-		this._menuId = this._id + "_target_date_sel";
+		this._menuId = `${this._id}_target_date_sel`;
 	}
 
-	getId()
+	getId(): string
 	{
 		return this._id;
 	}
 
-	getType()
+	getType(): number
 	{
 		return this._type;
 	}
 
-	setType(type)
+	setType(type: number): void
 	{
 		this._type = type;
 	}
 
-	getDuration()
+	getDuration(): number
 	{
 		return this._duration;
 	}
 
-	setDuration(duration)
+	setDuration(duration: number): void
 	{
 		this._duration = duration;
 	}
 
-	getTarget()
+	getTarget(): string
 	{
 		return this._target;
 	}
 
-	setTarget(target)
+	setTarget(target: string): void
 	{
 		this._target = target;
 	}
 
 	getMessage(name)
 	{
-		const m = WaitConfigurationDialog.messages;
-		return m.hasOwnProperty(name) ? m[name] : name;
+		const messages = WaitConfigurationDialog.messages;
+
+		return Object.prototype.hasOwnProperty.call(messages, name)
+			? messages[name]
+			: name
+		;
 	}
 
-	getDurationText(duration, enableNumber)
+	getTargetDateCaption(): string
 	{
-		return Wait.Helper.getDurationText(duration, enableNumber);
+		return this._targetDates.find((targetDate) => targetDate.name === this._target)?.caption ?? '';
 	}
 
-	getTargetDateCaption(name)
+	isBeforeWaitingType(): boolean
 	{
-		const length = this._targetDates.length;
-		for(let i = 0; i < length; i++)
-		{
-			const info = this._targetDates[i];
-			if(info["name"] === name)
-			{
-				return info["caption"];
-			}
-		}
-
-		return "";
+		return this.getType() === Wait.WaitingType.before;
 	}
 
 	open()
 	{
 		this._popup = new BX.PopupWindow(
 			this._id,
-			null, //this._configSelector,
+			null, // this._configSelector,
 			{
 				autoHide: true,
 				draggable: false,
 				bindOptions: { forceBindPosition: false },
 				closeByEsc: true,
 				zIndex: 0,
-				content: this.prepareDialogContent(),
+				content: this.renderDialogContent(),
 				events:
 					{
-						onPopupShow: BX.delegate(this.onPopupShow, this),
-						onPopupClose: BX.delegate(this.onPopupClose, this),
-						onPopupDestroy: BX.delegate(this.onPopupDestroy, this)
+						onPopupShow: this.onPopupShow.bind(this),
+						onPopupClose: this.onPopupClose.bind(this),
+						onPopupDestroy: this.onPopupDestroy.bind(this),
 					},
 				buttons:
 					[
 						new BX.PopupWindowButton(
 							{
 								text: Loc.getMessage('CRM_TIMELINE_CHOOSE'),
-								className: "popup-window-button-accept" ,
-								events: { click: BX.delegate(this.onSaveButtonClick, this) }
-							}
+								className: 'popup-window-button-accept',
+								events: { click: this.onSaveButtonClick.bind(this) },
+							},
 						),
 						new BX.PopupWindowButtonLink(
 							{
-								text : BX.message("JS_CORE_WINDOW_CANCEL"),
-								events: { click: BX.delegate(this.onCancelButtonClick, this) }
-							}
-						)
-					]
-			}
+								text: Loc.getMessage('JS_CORE_WINDOW_CANCEL'),
+								events: { click: this.onCancelButtonClick.bind(this) },
+							},
+						),
+					],
+			},
 		);
+
 		this._popup.show();
 	}
 
 	close()
 	{
-		if(this._popup)
+		if (this._popup)
 		{
 			this._popup.close();
 		}
 	}
 
-	prepareDialogContent()
+	renderDialogContent(): HTMLElement
 	{
-		const container = BX.create("div", {attrs: {className: "crm-wait-popup-select-block"}});
-		const wrapper = BX.create("div", {attrs: {className: "crm-wait-popup-select-wrapper"}});
-		container.appendChild(wrapper);
+		const container = this.getContainer();
+		container.innerHTML = '';
 
-		this._durationInput = BX.create(
-			"input",
-			{
-				attrs: { type: "text", className: "crm-wait-popup-settings-input", value: this._duration },
-				events: { keyup: BX.delegate(this.onDurationChange, this) }
-			}
-		);
+		const wrapper = Tag.render`<div class="crm-wait-popup-select-wrapper"></div>`;
 
-		this._durationMeasureNode = BX.create(
-			"span",
-			{ attrs: { className: "crm-wait-popup-settings-title" }, text: this.getDurationText(this._duration, false) }
-		);
+		const contentTextNode = this.getContentTextNode();
+		this.appendDurationInput(contentTextNode);
+		this.appendTargetDateNode(contentTextNode);
 
-		if(this._type === Wait.WaitingType.after)
-		{
-			wrapper.appendChild(
-				BX.create("span", { attrs: { className: "crm-wait-popup-settings-title" }, text: Loc.getMessage('CRM_TIMELINE_WAIT_CONFIG_PREFIX_TYPE_AFTER') })
-			);
-			wrapper.appendChild(this._durationInput);
-			wrapper.appendChild(this._durationMeasureNode);
-		}
-		else
-		{
-			wrapper.appendChild(
-				BX.create("span", { attrs: { className: "crm-wait-popup-settings-title" }, text: Loc.getMessage('CRM_TIMELINE_WAIT_CONFIG_PREFIX_TYPE_BEFORE') })
-			);
-			wrapper.appendChild(this._durationInput);
-			wrapper.appendChild(this._durationMeasureNode);
-			wrapper.appendChild(
-				BX.create("span", { attrs: { className: "crm-wait-popup-settings-title" }, text: " " + Loc.getMessage('CRM_TIMELINE_WAIT_TARGET_PREFIX_TYPE_BEFORE') })
-			);
+		Dom.append(contentTextNode, wrapper);
+		Dom.append(wrapper, container);
 
-			this._targetDateNode = BX.create(
-				"span",
-				{
-					attrs: { className: "crm-automation-popup-settings-link" },
-					text: this.getTargetDateCaption(this._target),
-					events: { click: BX.delegate(this.toggleTargetMenu, this) }
-				}
-			);
-			wrapper.appendChild(this._targetDateNode);
-		}
 		return container;
 	}
 
-	onDurationChange()
+	getContainer(): HTMLElement
 	{
-		let duration = parseInt(this._durationInput.value);
-		if(isNaN(duration) || duration <= 0)
+		if (!this._container)
+		{
+			this._container = Tag.render`<div class="crm-wait-popup-select-block"></div>`;
+		}
+
+		return this._container;
+	}
+
+	getContentTextNode(): HTMLElement
+	{
+		const phraseCode = this.isBeforeWaitingType()
+			? 'CRM_TIMELINE_WAIT_CONFIG_DIALOG_BEFORE_CONTENT_TEXT'
+			: 'CRM_TIMELINE_WAIT_CONFIG_DIALOG_AFTER_CONTENT_TEXT'
+		;
+
+		// put a container so that in the future you can put the input there
+		const replacement = {
+			'#DAY_INPUT#': `<span class="crm-wait-duration-input-container" id="${this.getDurationInputContainerId()}"></span>`,
+			'#TARGET_DATE#': this.isBeforeWaitingType()
+				? `<span class="crm-wait-target-date-container" id="${this.getTargetDateNodeContainerId()}"></span>`
+				: null
+			,
+		};
+
+		return Tag.render`
+			<span class="crm-wait-text-wrapper crm-wait-popup-settings-title">
+				${Loc.getMessagePlural(phraseCode, this.getDuration(), replacement)}
+			</span>
+		`;
+	}
+
+	getDurationInputContainerId(): string
+	{
+		return `crm-wait-duration-input-container-${this.getId()}`;
+	}
+
+	getDurationInput(): HTMLInputElement
+	{
+		if (!this._durationInput)
+		{
+			this._durationInput = Tag.render`
+				<input type="text" class="crm-wait-popup-settings-input" value="${this.getDuration()}">
+			`;
+
+			this._durationInput.onkeyup = Runtime.debounce(this.onDurationChange.bind(this), 300);
+		}
+
+		return this._durationInput;
+	}
+
+	appendDurationInput(contentTextNode: HTMLElement): void
+	{
+		const containerId = this.getDurationInputContainerId();
+		const container = contentTextNode.querySelector(`#${containerId}`);
+
+		Dom.append(this.getDurationInput(), container);
+	}
+
+	onDurationChange(): void
+	{
+		let duration = parseInt(this.getDurationInput().value, 10);
+		if (Number.isNaN(duration) || duration <= 0)
 		{
 			duration = 1;
 		}
-		this._duration = duration;
-		this._durationMeasureNode.innerHTML = BX.util.htmlspecialchars(this.getDurationText(duration, false));
 
+		this._duration = duration;
+
+		this.renderDialogContent();
+		this.getDurationInput().focus();
 	}
 
-	toggleTargetMenu()
+	getTargetDateNodeContainerId(): string
 	{
-		if(this.isTargetMenuOpened())
+		return `crm-wait-configuration-dialog-target-date-container-${this.getId()}`;
+	}
+
+	getTargetDateNode(): HTMLElement
+	{
+		if (!this._targetDateNode)
+		{
+			this._targetDateNode = Tag.render`
+				<span class="crm-automation-popup-settings-link">
+					${Text.encode(this.getTargetDateCaption(this._target))}
+				</span>
+			`;
+
+			this._targetDateNode.onclick = this.toggleTargetMenu.bind(this);
+		}
+
+		return this._targetDateNode;
+	}
+
+	appendTargetDateNode(contentTextNode: HTMLElement): void
+	{
+		if (!this.isBeforeWaitingType())
+		{
+			return;
+		}
+
+		const containerId = this.getTargetDateNodeContainerId();
+		const container = contentTextNode.querySelector(`#${containerId}`);
+
+		Dom.append(this.getTargetDateNode(), container);
+	}
+
+	toggleTargetMenu(): void
+	{
+		if (this.isTargetMenuOpened())
 		{
 			this.closeTargetMenu();
 		}
@@ -214,27 +284,27 @@ export default class WaitConfigurationDialog
 		}
 	}
 
-	isTargetMenuOpened()
+	isTargetMenuOpened(): boolean
 	{
-		return !!BX.PopupMenu.getMenuById(this._menuId);
+		return Boolean(BX.PopupMenu.getMenuById(this._menuId));
 	}
 
-	openTargetMenu()
+	openTargetMenu(): void
 	{
 		const menuItems = [];
 		let i = 0;
 		const length = this._targetDates.length;
-		for(; i < length; i++)
+		for (; i < length; i++)
 		{
 			const info = this._targetDates[i];
 
 			menuItems.push(
 				{
-					text: info["caption"],
-					title: info["caption"],
-					value: info["name"],
-					onclick: BX.delegate(this.onTargetSelect, this)
-				}
+					text: info.caption,
+					title: info.caption,
+					value: info.name,
+					onclick: this.onTargetSelect.bind(this),
+				},
 			);
 		}
 
@@ -245,24 +315,23 @@ export default class WaitConfigurationDialog
 			{
 				zIndex: 200,
 				autoHide: true,
-				offsetLeft: BX.pos(this._targetDateNode)["width"] / 2,
-				angle: { position: 'top', offset: 0 }
-			}
+				offsetLeft: Dom.getPosition(this.getTargetDateNode()).width / 2,
+				angle: { position: 'top', offset: 0 },
+			},
 		);
 	}
 
-	closeTargetMenu()
+	closeTargetMenu(): void
 	{
 		BX.PopupMenu.destroy(this._menuId);
 	}
 
-	onPopupShow(e, item)
-	{
-	}
+	onPopupShow(e, item): void
+	{}
 
-	onPopupClose()
+	onPopupClose(): void
 	{
-		if(this._popup)
+		if (this._popup)
 		{
 			this._popup.destroy();
 		}
@@ -270,41 +339,43 @@ export default class WaitConfigurationDialog
 		this.closeTargetMenu();
 	}
 
-	onPopupDestroy()
+	onPopupDestroy(): void
 	{
-		if(this._popup)
+		if (this._popup)
 		{
 			this._popup = null;
 		}
 	}
 
-	onSaveButtonClick(e)
+	onSaveButtonClick(e): void
 	{
-		const callback = BX.prop.getFunction(this._settings, "onSave", null);
-		if(!callback)
+		this.onDurationChange();
+		const callback = BX.prop.getFunction(this._settings, 'onSave', null);
+		if (!callback)
 		{
 			return;
 		}
 
-		const params = {type: this._type};
-		params["duration"] = this._duration;
-		params["target"] = this._type === Wait.WaitingType.before ? this._target : "";
-		callback(this, params);
+		callback(this, {
+			type: this.getType(),
+			duration: this.getDuration(),
+			target: this.isBeforeWaitingType() ? this.getTarget() : '',
+		});
 	}
 
-	onCancelButtonClick(e)
+	onCancelButtonClick(e): void
 	{
-		const callback = BX.prop.getFunction(this._settings, "onCancel", null);
-		if(callback)
+		const callback = BX.prop.getFunction(this._settings, 'onCancel', null);
+		if (callback)
 		{
 			callback(this);
 		}
 	}
 
-	onTargetSelect(e, item)
+	onTargetSelect(e, item): void
 	{
-		const fieldName = BX.prop.getString(item, "value", "");
-		if(fieldName !== "")
+		const fieldName = BX.prop.getString(item, 'value', '');
+		if (fieldName !== '')
 		{
 			this._target = fieldName;
 			this._targetDateNode.innerHTML = BX.util.htmlspecialchars(this.getTargetDateCaption(fieldName));
@@ -314,10 +385,11 @@ export default class WaitConfigurationDialog
 		e.preventDefault ? e.preventDefault() : (e.returnValue = false);
 	}
 
-	static create(id, settings)
+	static create(id: string, settings: Object): WaitConfigurationDialog
 	{
 		const self = new WaitConfigurationDialog();
 		self.initialize(id, settings);
+
 		return self;
 	}
 

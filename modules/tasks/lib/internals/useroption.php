@@ -17,6 +17,12 @@ use ReflectionClass;
  */
 class UserOption
 {
+	public static $cache = [];
+
+	public const REMOVE_ON_USER_ROLE_CHANGED = [
+		Option::MUTED,
+	];
+
 	/**
 	 * @param int $userId
 	 * @param int $option
@@ -87,6 +93,15 @@ class UserOption
 	 */
 	public static function getOptions(int $taskId, int $userId): array
 	{
+		if (
+			array_key_exists($userId, self::$cache)
+			&& is_array(self::$cache[$userId])
+			&& array_key_exists($taskId, self::$cache[$userId])
+		)
+		{
+			return self::$cache[$userId][$taskId];
+		}
+
 		$optionsResult = UserOptionTable::getList([
 			'select' => ['OPTION_CODE'],
 			'filter' => [
@@ -101,7 +116,9 @@ class UserOption
 			$options[] = (int)$option['OPTION_CODE'];
 		}
 
-		return $options;
+		self::$cache[$userId][$taskId] = $options;
+
+		return self::$cache[$userId][$taskId];
 	}
 
 	/**
@@ -210,6 +227,7 @@ class UserOption
 		if ($taskId > 0)
 		{
 			UserOptionTable::deleteByTaskId($taskId);
+			static::invalidate();
 		}
 	}
 
@@ -223,6 +241,7 @@ class UserOption
 		if ($userId > 0)
 		{
 			UserOptionTable::deleteByUserId($userId);
+			static::invalidate($userId);
 		}
 	}
 
@@ -236,6 +255,7 @@ class UserOption
 		if ($taskId > 0 && $userId > 0)
 		{
 			UserOptionTable::deleteByTaskIdAndUserId($taskId, $userId);
+			static::invalidate($userId, $taskId);
 		}
 	}
 
@@ -295,6 +315,8 @@ class UserOption
 			return;
 		}
 
+		static::invalidate($userId, $taskId);
+
 		if ($option === Option::MUTED)
 		{
 			Counter\CounterService::addEvent(
@@ -302,7 +324,7 @@ class UserOption
 				[
 					'TASK_ID' => $taskId,
 					'USER_ID' => $userId,
-					'ADDED' => $added
+					'ADDED' => $added,
 				]
 			);
 		}
@@ -320,6 +342,20 @@ class UserOption
 			]
 		);
 		$event->send();
+	}
+
+	/**
+	 * Removes necessary options when changing the user's role in a task
+	 */
+	public static function deleteOnUserRoleChanged(int $taskId, int $userId): void
+	{
+		if ($taskId <= 0 || $userId <= 0)
+		{
+			return;
+		}
+
+		UserOptionTable::deleteByOptions($taskId, $userId, static::REMOVE_ON_USER_ROLE_CHANGED);
+		static::invalidate($userId, $taskId);
 	}
 
 	/**
@@ -341,5 +377,21 @@ class UserOption
 				'ADDED' => $added,
 			],
 		]);
+	}
+
+	private static function invalidate(int $userId = 0, int $taskId = 0): void
+	{
+		if ($taskId > 0)
+		{
+			unset(static::$cache[$userId][$taskId]);
+		}
+		elseif ($userId > 0)
+		{
+			unset(static::$cache[$userId]);
+		}
+		else
+		{
+			static::$cache = [];
+		}
 	}
 }

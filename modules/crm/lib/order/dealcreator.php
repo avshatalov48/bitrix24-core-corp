@@ -7,8 +7,7 @@ use Bitrix\Crm;
 
 class DealCreator
 {
-	/** @var Order|null $order */
-	private $order = null;
+	private Order $order;
 
 	public function __construct(Order $order)
 	{
@@ -30,9 +29,13 @@ class DealCreator
 		$facility->setDirection(Crm\EntityManageFacility::DIRECTION_OUTGOING);
 
 		$fields = $this->getDealFieldsOnCreate();
-		$dealId = (int)$facility->registerDeal($fields);
-
-		return $dealId;
+		return (int)$facility->registerDeal(
+			$fields,
+			true,
+			[
+				'CURRENT_USER' => $fields['ASSIGNED_BY_ID']
+			]
+		);
 	}
 
 	/**

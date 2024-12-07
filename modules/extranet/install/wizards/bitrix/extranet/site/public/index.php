@@ -1,9 +1,15 @@
 <?php
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/header.php");
 
+if (!\CModule::IncludeModule('intranet'))
+{
+	return;
+}
+
 IncludeModuleLangFile($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/extranet/public/index.php');
 
 $APPLICATION->SetTitle(GetMessage("EXTRANET_INDEX_PAGE_TITLE"));
+use Bitrix\Intranet;
 ?>
 <p><table class="data-table">
 <tr>
@@ -58,7 +64,7 @@ $APPLICATION->IncludeComponent("bitrix:desktop", ".default", array(
 	"GU_TASKS_ORDER_BY" => "E",
 	"GU_TASKS_TYPE" => "Z",
 	"G_CALENDAR_IBLOCK_TYPE" => "events",
-	"G_CALENDAR_IBLOCK_ID" => "#CALENDAR_USER_IBLOCK_ID#",
+	"G_CALENDAR_IBLOCK_ID" => Intranet\Integration\Wizards\Portal\Ids::getIblockId('calendar_employees'),
 	"G_CALENDAR_DETAIL_URL" => SITE_DIR . "contacts/personal/user/#user_id#/calendar/",
 	"G_CALENDAR_CACHE_TYPE" => "N",
 	"G_CALENDAR_CACHE_TIME" => "3600",

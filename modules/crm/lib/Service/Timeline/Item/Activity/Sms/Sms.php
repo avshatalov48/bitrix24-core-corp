@@ -2,7 +2,10 @@
 
 namespace Bitrix\Crm\Service\Timeline\Item\Activity\Sms;
 
+use Bitrix\Crm\Component\EntityDetails\TimelineMenuBar;
 use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Service\Timeline\Layout\Action;
+use Bitrix\Crm\Service\Timeline\Layout\Action\JsEvent;
 use Bitrix\Crm\Service\Timeline\Layout\Action\Redirect;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\ContentBlockFactory;
@@ -37,12 +40,14 @@ class Sms extends Base
 
 	protected function getMessageText(): ?string
 	{
-		return $this->getAssociatedEntityModel()->get('DESCRIPTION_RAW');
+		return $this->getAssociatedEntityModel()?->get('DESCRIPTION_RAW');
 	}
 
 	protected function getMessageSentViaContentBlock(): ?ContentBlock
 	{
-		$smsInfo = $this->getAssociatedEntityModel()->get('SMS_INFO');
+		$sentByRobot = $this->isSentByRobot();
+
+		$smsInfo = $this->getAssociatedEntityModel()?->get('SMS_INFO');
 		$smsInfo = $smsInfo ?? [];
 
 		$senderId = $smsInfo['senderId'] ?? '';
@@ -53,8 +58,6 @@ class Sms extends Base
 		{
 			$senderName = $fromName;
 		}
-		$providerParams = $this->getAssociatedEntityModel()->get('PROVIDER_PARAMS') ?? [];
-		$sentByRobot = ($providerParams['sender'] ?? '')  === 'robot';
 
 		$message = Loc::getMessage(
 			$sentByRobot
@@ -64,6 +67,7 @@ class Sms extends Base
 				'#SERVICE_NAME#' => $senderName,
 			]
 		);
+
 		if ($senderId !== 'rest' && $fromName)
 		{
 			$message = Loc::getMessage($sentByRobot
@@ -79,17 +83,15 @@ class Sms extends Base
 		return (new Text())->setValue($message)->setColor(Text::COLOR_BASE_60);
 	}
 
-
-
 	protected function buildUserContentBlock(): ?ContentBlock
 	{
-		$providerParams = $this->getAssociatedEntityModel()->get('PROVIDER_PARAMS') ?? [];
+		$providerParams = $this->getAssociatedEntityModel()?->get('PROVIDER_PARAMS') ?? [];
 		$recipientUserId = (int)($providerParams['recipient_user_id'] ?? 0);
 		if (!$recipientUserId)
 		{
 			return null;
 		}
-		$communication = $this->getAssociatedEntityModel()->get('COMMUNICATION') ?? [];
+		$communication = $this->getAssociatedEntityModel()?->get('COMMUNICATION') ?? [];
 		$phone = $communication['FORMATTED_VALUE'] ?? null;
 		if (!$phone)
 		{
@@ -113,4 +115,49 @@ class Sms extends Base
 		;
 	}
 
+	protected function getResendingAction(): ?Action
+	{
+		$menuBarItem = new TimelineMenuBar\Item\Sms($this->getMenuBarContext());
+		if (
+			!$menuBarItem->isAvailable()
+			|| $this->isSentByRobot()
+		)
+		{
+			return null;
+		}
+
+		return (new JsEvent('Activity:Sms:Resend'))
+			->addActionParamArray('params', $this->getResendData())
+		;
+	}
+
+	protected function isSentByRobot(): bool
+	{
+		$providerParams = $this->getAssociatedEntityModel()?->get('PROVIDER_PARAMS') ?? [];
+
+		return ($providerParams['sender'] ?? '')  === 'robot';
+	}
+
+	final protected function getClient(): array
+	{
+		$communication = $this->getAssociatedEntityModel()?->get('COMMUNICATION') ?? [];
+
+		return [
+			'entityTypeId' => $communication['ENTITY_TYPE_ID'] ?? null,
+			'entityId' => $communication['ENTITY_ID'] ?? null,
+			'value' => $communication['VALUE'] ?? null,
+		];
+	}
+
+	private function getResendData(): array
+	{
+		$smsInfo = $this->getAssociatedEntityModel()?->get('SMS_INFO');
+
+		return [
+			'text' => $this->getMessageText(),
+			'senderId' => $smsInfo['senderId'] ?? '',
+			'from' => $smsInfo['from'] ?? '',
+			'client' => $this->getClient(),
+		];
+	}
 }

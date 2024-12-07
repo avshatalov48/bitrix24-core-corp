@@ -1,0 +1,9 @@
+.sign-v2e-helper__link {
+	border-bottom: 1px rgba(39, 107, 179, .4) solid;
+	text-wrap: nowrap;
+}
+
+.--with-sign-hint .ui-hint-icon {
+	margin: 0;
+	vertical-align: middle;
+}

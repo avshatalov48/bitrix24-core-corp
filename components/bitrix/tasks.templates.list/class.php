@@ -9,11 +9,12 @@ use Bitrix\Main\Grid;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Filter;
+use Bitrix\Tasks\Integration\Bitrix24;
 use Bitrix\Tasks\Integration\Intranet\Settings;
 use Bitrix\Tasks\Internals\Task\Template\TemplateTagTable;
 use Bitrix\Tasks\Item\Task\Template;
 use Bitrix\Tasks\Manager;
-use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\TemplateSubtaskLimit;
+use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\TaskLimit;
 
 Loc::loadMessages(__FILE__);
 
@@ -395,7 +396,10 @@ class TasksTemplatesListComponent extends TasksBaseComponent
 
 	protected function getAuxData()
 	{
-		$this->arResult['AUX_DATA']['TEMPLATE_SUBTASK_LIMIT_EXCEEDED'] = TemplateSubtaskLimit::isLimitExceeded();
+		$taskTemplatesSubtasksEnabled = Bitrix24::checkFeatureEnabled(
+			Bitrix24\FeatureDictionary::TASK_TEMPLATES_SUBTASKS
+		);
+		$this->arResult['AUX_DATA']['TEMPLATE_SUBTASK_LIMIT_EXCEEDED'] = !$taskTemplatesSubtasksEnabled;
 	}
 
 	/**

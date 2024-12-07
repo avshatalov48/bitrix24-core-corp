@@ -1,17 +1,16 @@
 <?php
 namespace Bitrix\ImOpenLines\Queue;
 
-use Bitrix\ImOpenLines\Relation;
-use \Bitrix\Main\Event,
-	\Bitrix\Main\Type\DateTime;
+use \Bitrix\Main\Type\DateTime;
 
 use \Bitrix\Im;
 
 use \Bitrix\ImOpenLines,
 	\Bitrix\ImOpenLines\Chat,
 	\Bitrix\ImOpenLines\Config,
+	\Bitrix\ImOpenLines\Model\RecentTable,
+	\Bitrix\ImOpenLines\Relation,
 	\Bitrix\ImOpenLines\Session,
-	\Bitrix\ImOpenLines\Model\SessionTable,
 	\Bitrix\ImOpenLines\Model\SessionCheckTable;
 
 /**
@@ -124,8 +123,12 @@ class All extends Queue
 				{
 					if(!empty($resultOperatorQueue['OPERATOR_LIST']))
 					{
+						$notifyUsers = $this->getUsersForFirstNotification($resultOperatorQueue['OPERATOR_LIST']);
+
 						$this->chat->setOperators($resultOperatorQueue['OPERATOR_LIST'], $this->session['ID']);
 						$this->chat->update(['AUTHOR_ID' => 0]);
+
+						$this->sessionManager->getChat()->sendJoinMessage($notifyUsers);
 					}
 					elseif(
 						!empty($resultOperatorQueue['OPERATOR_ID']) &&
@@ -215,5 +218,26 @@ class All extends Queue
 			$fakeRelation->removeRelation($this->config['WELCOME_BOT_ID']);
 			(new \CIMChat(0))->DeleteUser((int)$this->session['CHAT_ID'],$this->config['WELCOME_BOT_ID'], false, true);
 		}
+	}
+
+	private function getUsersForFirstNotification(array $operators = []): array
+	{
+		if (empty($operators))
+		{
+			return [];
+		}
+
+		$operators = array_map('intval', $operators);
+
+		$recentRows = RecentTable::getList([
+			'select' => ['USER_ID'],
+			'filter' => ['=CHAT_ID' => (int)$this->session['CHAT_ID']],
+		])->fetchAll();
+
+		$userIds = array_map('intval', array_column($recentRows, 'USER_ID'));
+
+		$newUserIds = array_diff($operators, $userIds);
+
+		return array_values($newUserIds);
 	}
 }

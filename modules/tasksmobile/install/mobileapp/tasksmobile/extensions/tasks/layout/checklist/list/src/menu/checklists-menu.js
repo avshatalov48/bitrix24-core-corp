@@ -3,10 +3,9 @@
  */
 jn.define('tasks/layout/checklist/list/src/menu/checklists-menu', (require, exports, module) => {
 	const { Loc } = require('loc');
-	const AppTheme = require('apptheme');
+	const { Icon } = require('assets/icons');
+	const { UIMenu } = require('layout/ui/menu');
 	const { PropTypes } = require('utils/validation');
-	const { ContextMenu } = require('layout/ui/context-menu');
-	const { outline: { arrowRight, taskList1 } } = require('assets/icons');
 
 	/**
 	 * @class ChecklistsMenu
@@ -31,28 +30,19 @@ jn.define('tasks/layout/checklist/list/src/menu/checklists-menu', (require, expo
 		{
 			this.props = props;
 
-			this.contextMenu = this.createContextMenu();
+			this.menu = this.#createMenu();
 		}
 
 		show()
 		{
-			const { parentWidget } = this.props;
+			const { targetRef } = this.props;
 
-			this.contextMenu.show(parentWidget);
+			this.menu.show({ target: targetRef });
 		}
 
-		/**
-		 * @private
-		 * @returns {ContextMenu}
-		 */
-		createContextMenu()
+		#createMenu()
 		{
-			return new ContextMenu({
-				actions: this.getMenuActions(),
-				params: {
-					title: Loc.getMessage('TASKSMOBILE_LAYOUT_CHECKLIST_MOVE_TO'),
-				},
-			});
+			return new UIMenu(this.getMenuActions());
 		}
 
 		/**
@@ -64,21 +54,24 @@ jn.define('tasks/layout/checklist/list/src/menu/checklists-menu', (require, expo
 			const { checklists, sourceChecklistId } = this.props;
 			const actions = [];
 
-			checklists.forEach((checkList) => {
-				const rootItem = checkList.getRootItem();
-				const checkListId = rootItem.getId();
+			[...checklists.values()].sort((a, b) => {
+				const itemA = a.getRootItem()?.getSortIndex();
+				const itemB = b.getRootItem()?.getSortIndex();
 
-				if (sourceChecklistId !== checkListId)
+				return itemA - itemB;
+			}).forEach((checklist) => {
+				const rootItem = checklist.getRootItem();
+				const checklistId = rootItem.getId();
+
+				if (sourceChecklistId !== checklistId)
 				{
 					actions.push({
-						id: checkListId,
+						id: String(checklistId),
 						title: rootItem.getTitle(),
 						isCustomIconColor: true,
-						data: {
-							svgIcon: taskList1({ color: AppTheme.colors.accentMainPrimary }),
-						},
-						onClickCallback: () => {
-							this.onClose(rootItem.getId());
+						iconName: Icon.TASK_LIST,
+						onItemSelected: () => {
+							this.handleItemSelected(checklistId);
 						},
 					});
 				}
@@ -99,11 +92,9 @@ jn.define('tasks/layout/checklist/list/src/menu/checklists-menu', (require, expo
 				id: 'newChecklist',
 				title: Loc.getMessage('TASKSMOBILE_LAYOUT_CHECKLIST_MOVE_TO_NEW'),
 				isCustomIconColor: true,
-				data: {
-					svgIcon: arrowRight({ color: AppTheme.colors.base1 }),
-				},
-				onClickCallback: () => {
-					this.onClose();
+				iconName: Icon.PLUS,
+				onItemSelected: () => {
+					this.handleItemSelected();
 				},
 			};
 		}
@@ -112,17 +103,14 @@ jn.define('tasks/layout/checklist/list/src/menu/checklists-menu', (require, expo
 		 * @private
 		 * @param {string | number} checklistId
 		 */
-		onClose(checklistId)
-		{
+		handleItemSelected = (checklistId) => {
 			const { moveItemToChecklist } = this.props;
 
-			this.contextMenu.close(() => {
-				if (moveItemToChecklist)
-				{
-					moveItemToChecklist(checklistId);
-				}
-			});
-		}
+			if (moveItemToChecklist)
+			{
+				moveItemToChecklist(checklistId);
+			}
+		};
 	}
 
 	ChecklistsMenu.propTypes = {

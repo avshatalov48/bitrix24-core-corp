@@ -14,8 +14,6 @@ if($siteID !== '')
 
 require($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/prolog_before.php');
 
-CUtil::JSPostUnescape();
-
 /** @global $APPLICATION CMain */
 global $USER, $APPLICATION;
 

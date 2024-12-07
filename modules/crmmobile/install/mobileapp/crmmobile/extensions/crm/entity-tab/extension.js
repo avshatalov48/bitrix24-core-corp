@@ -12,13 +12,15 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 	const { ViewMode } = require('layout/ui/simple-list/view-mode');
 	const { ImageAfterTypes } = require('layout/ui/context-menu/item');
 	const { Loc } = require('loc');
+	const { qrauth } = require('qrauth/utils');
+	const { Color } = require('tokens');
+	const { Notify } = require('notify');
 	const { Type: CoreType } = require('type');
 	const { clone, get, isEqual } = require('utils/object');
 	const { capitalize } = require('utils/string');
-	const { CategorySvg } = require('crm/assets/category');
+	const { UIMenuType } = require('layout/ui/menu');
 	const { EntitySvg } = require('crm/assets/entity');
 	const { CategorySelectActions } = require('crm/category-list/actions');
-	const { CategoryStorage } = require('crm/storage/category');
 	const {
 		getActionToCopyEntity,
 		getActionToChangePipeline,
@@ -26,12 +28,31 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 		getActionToConversion,
 	} = require('crm/entity-actions');
 	const { Filter } = require('layout/ui/kanban/filter');
-	const { PullManager } = require('crm/entity-tab/pull-manager');
+	const { PullManager, TypePull } = require('crm/entity-tab/pull-manager');
 	const { TypeSort, ItemsSortManager } = require('crm/entity-tab/sort');
 	const { TypeFactory } = require('crm/entity-tab/type');
 	const { getEntityMessage } = require('crm/loc');
 	const { ActivityCountersStoreManager } = require('crm/state-storage');
 	const { Type } = require('crm/type');
+	const { ContextMenu } = require('layout/ui/context-menu');
+	const { Icon } = require('ui-system/blocks/icon');
+	const { NotifyManager } = require('notify-manager');
+	const store = require('statemanager/redux/store');
+	const {
+		fetchCrmKanban,
+		getCrmKanbanUniqId,
+		selectById: selectKanbanById,
+		selectStatus,
+		STATUS,
+	} = require('crm/statemanager/redux/slices/kanban-settings');
+
+	const {
+		selectIdAndStatusByIds,
+	} = require('crm/statemanager/redux/slices/stage-settings');
+
+	const {
+		fetchStageCounters,
+	} = require('crm/statemanager/redux/slices/stage-counters');
 
 	const PULL_MODULE_ID = 'crm';
 	const PULL_EVENT_NAME_ITEM_UPDATED = 'ITEMUPDATED';
@@ -169,16 +190,22 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 				const categoryId = this.getCurrentCategoryId();
 				const categoryFromStorage = this.getCategoryFromCategoryStorage(categoryId);
 
+				BX.componentParameters.set('analytics', this.getAnalytics());
+
 				this.setState(
 					{
 						isLoading: false,
 						searchButtonBackgroundColor: null,
 						categoryId,
 					},
-					() => this.initAfterCategoryChange(
-						categoryFromStorage,
-						{ categoryId },
-					),
+					() => {
+						setTimeout(() => {
+							this.initAfterCategoryChange(
+								categoryFromStorage,
+								{ categoryId },
+							);
+						}, 50);
+					},
 				);
 			}).catch((err) => {
 				console.error(err);
@@ -206,10 +233,14 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 			ActivityCountersStoreManager
 				.subscribe('activityCountersModel/setCounters', this.updateEntityTypesHandler);
 
-			CategoryStorage
-				.subscribeOnChange(() => this.applyCategoryStorageChanges())
-				.markReady()
-			;
+			this.unsubscribeFromStore = store.subscribe(() => {
+				const category = this.getCategoryFromCategoryStorage(this.state.categoryId);
+
+				if (!isEqual(this.category, category))
+				{
+					this.applyCategoryStorageChanges();
+				}
+			});
 
 			if (!this.props.permissions.read)
 			{
@@ -217,10 +248,17 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 				const category = this.getCategoryFromCategoryStorage(currentCategoryId);
 				this.changeCategory(category, true);
 			}
+
+			BX.componentParameters.set('analytics', this.getAnalytics());
 		}
 
 		componentWillUnmount()
 		{
+			if (this.unsubscribeFromStore)
+			{
+				this.unsubscribeFromStore();
+			}
+
 			BX.removeCustomEvent('UI.SearchBar::onSearch', this.onSearchHandler);
 			BX.removeCustomEvent('UI.SearchBar::onSearchHide', this.onSearchHideHandler);
 
@@ -455,7 +493,7 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 		{
 			const actions = [
 				{
-					type: UI.Menu.Types.DESKTOP,
+					type: UIMenuType.DESKTOP,
 					showHint: false,
 					data: {
 						qrUrl: this.getEntityType(this.props.entityTypeId).link,
@@ -479,20 +517,17 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 			if (this.canUseChangeCategory())
 			{
 				buttons.push({
-					type: 'options',
+					type: Icon.CRM.getIconName(),
 					badgeCode: 'kanban_categories_selector',
 					callback: this.showCategorySelector,
-					svg: {
-						content: CategorySvg.funnel(),
-					},
 				});
 			}
 
 			buttons.push({
-				type: 'search',
+				type: Icon.SEARCH.getIconName(),
 				badgeCode: 'search',
 				callback: this.showSearchBarHandler,
-				svg: this.getSearchButtonSvg(),
+				accent: Boolean(this.state.searchButtonBackgroundColor),
 			});
 
 			return buttons;
@@ -681,6 +716,18 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 					return new Promise((resolve, reject) => {
 						if (this.isNeedProcessPull(data, context))
 						{
+							const entityTypeId = this.props.entityTypeId;
+							const categoryId = this.getCategoryId(entityTypeId);
+
+							store.dispatch(fetchStageCounters({
+								entityTypeId,
+								categoryId,
+								params: {
+									filter: this.filter,
+								},
+								forceFetch: true,
+							}));
+
 							const { item, eventName } = data.params;
 							const oldItem = this.getCurrentStatefulList().getItemComponent(item.id);
 
@@ -1017,9 +1064,7 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 			}
 			else if (entityType.hasRestrictions)
 			{
-				const { PlanRestriction } = await requireLazy('layout/ui/plan-restriction');
-
-				PlanRestriction.open({ title: entityType.titleInPlural || entityType.title });
+				await this.openPlanRestriction({ title: entityType.titleInPlural || entityType.title });
 			}
 			else if (entityType.link)
 			{
@@ -1183,9 +1228,7 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 
 		getEntityMessage(messageCode, entityTypeId = null)
 		{
-			entityTypeId = entityTypeId || this.props.entityTypeId;
-
-			return getEntityMessage(messageCode, entityTypeId);
+			return getEntityMessage(messageCode, entityTypeId || this.props.entityTypeId);
 		}
 
 		/**
@@ -1204,15 +1247,14 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 					sort: 100,
 					title:
 						canUpdate
-							? Loc.getMessage('M_CRM_ENTITY_TAB_ITEM_ACTION_EDIT_TEXT')
+							? Loc.getMessage('M_CRM_ENTITY_TAB_ITEM_ACTION_EDIT_TEXT_MSGVER_1')
 							: Loc.getMessage('M_CRM_ENTITY_TAB_ITEM_ACTION_OPEN_TEXT'),
-					showArrow: true,
-					onClickCallback: (action, itemId, { parentWidget, parent }) => {
-						parentWidget.close(() => this.handleItemDetailOpen(itemId, parent.data));
+					onClickCallback: (action, itemId, { ensureMenuClosed, parent }) => {
+						ensureMenuClosed(() => {
+							this.handleItemDetailOpen(itemId, parent.data);
+						});
 					},
-					data: {
-						svgIcon: canUpdate ? editEntitySvg : openEntitySvg,
-					},
+					icon: canUpdate ? Icon.EDIT : Icon.FILE,
 				},
 			];
 
@@ -1220,7 +1262,6 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 
 			const {
 				id: copyEntityId,
-				svgIcon: copyEntitySvgIcon,
 				onAction: copyEntityOnAction,
 			} = getActionToCopyEntity(entityTypeId);
 
@@ -1234,15 +1275,13 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 
 			if (canUseConversion(entityTypeId))
 			{
-				const conversionMenuItem = {
+				let conversionMenuItem = {
 					id: conversionId,
-					sort: 200,
+					sort: 300,
 					title: conversionTitle,
-					type: conversionId,
-					showActionLoader: true,
-					showArrow: true,
-					onClickCallback: (action, entityId, { parentWidget }) => {
-						parentWidget.close(async () => {
+					showActionLoader: false,
+					onClickCallback: (action, entityId, { ensureMenuClosed }) => {
+						ensureMenuClosed(async () => {
 							const analytics = this.getAnalytics()
 								.setEvent('entity_convert')
 								.setElement('element_context_menu');
@@ -1261,22 +1300,27 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 							conversionAction();
 						});
 					},
+					icon: conversionSvg,
 					onDisableClick: this.showForbiddenActionNotification.bind(this),
 					isDisabled: !canUpdate,
-					data: { svgIcon: conversionSvg },
 				};
 
 				if (!restrictions.conversion)
 				{
-					conversionMenuItem.showArrow = false;
-					conversionMenuItem.data = {
-						svgIcon: conversionSvg,
-						svgIconAfter: { type: ImageAfterTypes.LOCK },
-					};
-					conversionMenuItem.onClickCallback = (action, entityId, { parentWidget }) => {
-						parentWidget.close(() => {
-							PlanRestriction.open({ title: conversionTitle });
-						});
+					conversionMenuItem = {
+						...conversionMenuItem,
+						showActionLoader: false,
+						icon: Icon.LOCK,
+						style: {
+							icon: {
+								color: Color.base0.toHex(),
+							},
+						},
+						onClickCallback: (action, entityId, { ensureMenuClosed }) => {
+							ensureMenuClosed(async () => {
+								await this.openPlanRestriction({ title: conversionTitle });
+							});
+						},
 					};
 				}
 
@@ -1285,26 +1329,27 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 
 			actions.push({
 				id: copyEntityId,
-				sort: 300,
-				title: Loc.getMessage('M_CRM_ENTITY_TAB_ITEM_ACTION_COPY_TEXT'),
-				type: copyEntityId,
-				showArrow: true,
-				onClickCallback: (action, itemId, { parentWidget }) => {
+				sort: 900,
+				title: Loc.getMessage('M_CRM_ENTITY_TAB_ITEM_ACTION_COPY_TEXT_MSGVER_1'),
+				onClickCallback: (action, itemId, { parentWidget, ensureMenuClosed }) => {
 					const categoryId = this.getCategoryId(entityTypeId);
 					const analytics = this.getAnalytics()
 						.setEvent('entity_add_open')
 						.setElement('element_context_menu');
 
-					parentWidget.close(() => copyEntityOnAction({
-						entityTypeId,
-						entityId: itemId,
-						categoryId,
-						analytics,
-					}));
+					ensureMenuClosed(() => {
+						copyEntityOnAction({
+							entityTypeId,
+							entityId: itemId,
+							categoryId,
+							analytics,
+						});
+					});
 				},
 				onDisableClick: () => this.showForbiddenCreateNotification(entityTypeId),
 				isDisabled: !canAdd,
-				data: { svgIcon: copyEntitySvgIcon },
+				icon: Icon.COPY,
+				sectionCode: 'additional',
 			});
 
 			if (this.canUseChangeCategory())
@@ -1312,7 +1357,6 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 				const {
 					id: changePipelineId,
 					title: changePipelineTitle,
-					svgIcon: changePipelineSvgIcon,
 					onAction: changePipelineAction,
 				} = getActionToChangePipeline();
 
@@ -1320,46 +1364,47 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 					id: changePipelineId,
 					sort: 400,
 					title: changePipelineTitle,
-					type: changePipelineId,
-					showArrow: true,
-					onClickCallback: (action, itemId, { parentWidget }) => {
+					onClickCallback: (action, itemId, { parentWidget, ensureMenuClosed }) => {
 						const categoryId = this.getCategoryId(entityTypeId);
-						parentWidget.close(() => {
+						ensureMenuClosed(async () => {
 							const changeParams = { categoryId, itemId, entityTypeId };
-							changePipelineAction(changeParams)
+							await changePipelineAction(changeParams)
 								.then(() => this.blinkItemListView(itemId))
 								.then(() => this.deleteRowFromListView(itemId));
 						});
 					},
 					onDisableClick: this.showForbiddenActionNotification.bind(this),
 					isDisabled: !canUpdate,
-					data: { svgIcon: changePipelineSvgIcon },
+					icon: Icon.CHANGE_FUNNEL,
 				});
 			}
 
 			actions.push(
 				{
 					id: 'delete',
-					sort: 900,
+					sort: 1000,
 					title: Loc.getMessage('M_CRM_ENTITY_TAB_ITEM_ACTION_DELETE_TEXT'),
-					type: 'delete',
 					onClickCallback: this.deleteItemConfirm,
 					onDisableClick: this.showForbiddenDeleteNotification.bind(this),
 					isDisabled: !permissions.delete,
+					isDestructive: true,
+					sectionCode: 'additional',
+					icon: Icon.TRASHCAN,
 				},
 				{
 					id: 'showActivityDetailTab',
-					sort: 1000,
-					title: Loc.getMessage('M_CRM_ENTITY_TAB_ITEM_ACTION_ACTIVITIES2'),
-					showArrow: true,
-					onClickCallback: (action, itemId, { parentWidget, parent }) => {
+					sort: 600,
+					title: Loc.getMessage('M_CRM_ENTITY_TAB_ITEM_ACTION_ACTIVITIES2_MSGVER_1'),
+					onClickCallback: (action, itemId, { parentWidget, ensureMenuClosed, parent }) => {
 						const params = {
 							activeTab: TabType.TIMELINE,
 						};
-						parentWidget.close(() => this.handleItemDetailOpen(itemId, parent.data, params));
+						ensureMenuClosed(() => {
+							this.handleItemDetailOpen(itemId, parent.data, params);
+						});
 					},
-					sectionCode: 'additional',
-					data: { svgIcon: activitiesSvg },
+					sectionCode: 'timeline',
+					icon: Icon.TIMELINE,
 				},
 			);
 
@@ -1369,27 +1414,35 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 				const {
 					id: shareId,
 					title: shareTitle,
-					svgIcon: shareSvgIcon,
 					onAction: onShareAction,
 				} = getActionToShare();
 
 				actions.push({
 					id: shareId,
-					sort: 1100,
+					sort: 800,
 					title: shareTitle,
-					onClickCallback: (action, itemId, { parentWidget }) => {
+					onClickCallback: (action, itemId, { parentWidget, ensureMenuClosed }) => {
 						const linkToItem = linkTemplate.replace('#ENTITY_ID#', itemId);
 
-						parentWidget.close(() => onShareAction(linkToItem));
+						ensureMenuClosed(() => {
+							onShareAction(linkToItem);
+						});
 					},
-					sectionCode: shareId,
-					data: { svgIcon: shareSvgIcon },
+					icon: Icon.SHARE,
+					sectionCode: 'additional',
 				});
 			}
 
 			actions.sort(({ sort: sortA = Infinity }, { sort: sortB = Infinity }) => sortA - sortB);
 
 			return actions;
+		}
+
+		async openPlanRestriction(options)
+		{
+			const { PlanRestriction } = await requireLazy('layout/ui/plan-restriction');
+
+			PlanRestriction.open(options);
 		}
 
 		canUseChangeCategory()
@@ -1416,9 +1469,25 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 			params.categoriesCount = this.getCurrentEntityType().data.categoriesCount || 0;
 			params.userInfo = this.props.userInfo;
 			params.isChatSupported = this.getCurrentEntityType().isChatSupported;
-			params.reminders = this.getCurrentEntityType().data.reminders;
+			params.reminders = this.prepareReminders(
+				this.getCurrentEntityType().data.reminders,
+				this.props.remindersList,
+			);
 
 			return TypeFactory.getEntityByType(this.entityTypeName, params);
+		}
+
+		/**
+		 * @param {array} selectedValues
+		 * @param {array} valuesList
+		 * @return {{selectedValues: array, valuesList: array}}
+		 */
+		prepareReminders(selectedValues = [], valuesList = [])
+		{
+			return {
+				selectedValues,
+				valuesList,
+			};
 		}
 
 		/**
@@ -1493,7 +1562,9 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 				return Promise.resolve();
 			}
 
-			return new Promise((resolve) => this.setState({ isLoading: true }, resolve));
+			return new Promise((resolve) => {
+				this.setState({ isLoading: true }, resolve);
+			});
 		}
 
 		scrollToTop()
@@ -1545,7 +1616,8 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 
 			promise
 				.then(() => this.trySetCurrentCategory(category))
-				.then((data) => this.tryUpdateToNewCategory(data, desiredCategoryId, showNotice));
+				.then((data) => this.tryUpdateToNewCategory(data, desiredCategoryId, showNotice))
+				.catch(console.error);
 		}
 
 		trySetCurrentCategory(category)
@@ -1563,12 +1635,6 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 							categoryId,
 						},
 					}).then((response) => {
-						if (categoryId !== response.data.categoryId && categoryId >= 0)
-						{
-							const pathToList = CategoryStorage.getPathToCategoryList(entityTypeId);
-							CategoryStorage.clearTtlValue(pathToList);
-						}
-
 						resolve(response.data);
 					}).catch(({ errors }) => {
 						console.error(errors);
@@ -1617,7 +1683,7 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 
 			if (!categoryFromStorage)
 			{
-				this.state.categoryId = categoryId;
+				this.state.categoryId = this.getCurrentCategoryId();
 				this.clearCurrentCategory();
 
 				console.error(`Category ${categoryId} not found in storage`);
@@ -1629,6 +1695,10 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 					console.info(`Category change will be repeated after ${repeatTimeout / 1000} seconds. Attempt: ${this.categoryChangeAttempts}`);
 
 					this.categoryChangeTimeoutId = setTimeout(() => {
+						store.dispatch(fetchCrmKanban({
+							entityTypeId: this.props.entityTypeId,
+							categoryId: this.state.categoryId,
+						}));
 						this.tryUpdateToNewCategory(data, desiredCategoryId, showNotice);
 					}, repeatTimeout);
 				}
@@ -1638,7 +1708,12 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 
 			this.categoryChangeAttempts = 0;
 
-			showNotice = showNotice || (categoryFromStorage && categoryFromStorage.id !== desiredCategoryId);
+			showNotice = showNotice
+				|| (
+					categoryFromStorage
+					&& desiredCategoryId
+					&& categoryFromStorage.categoryId !== desiredCategoryId
+				);
 
 			if (showNotice)
 			{
@@ -1709,6 +1784,11 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 		isCategoryStagesCountChanged(newCategory)
 		{
 			const currentCategory = this.category;
+
+			if (!currentCategory && newCategory)
+			{
+				return true;
+			}
 
 			if (currentCategory.id !== newCategory.id)
 			{
@@ -1805,12 +1885,27 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 		 */
 		getCategoryFromCategoryStorage(categoryId = null)
 		{
-			if (categoryId === null)
+			const preparedCategoryId = categoryId === null ? this.getCurrentCategoryId() : categoryId;
+			const crmKanbanUniqId = getCrmKanbanUniqId(this.props.entityTypeId, preparedCategoryId);
+			const fullCategory = selectKanbanById(store.getState(), crmKanbanUniqId);
+
+			if (!fullCategory)
 			{
-				categoryId = this.getCurrentCategoryId();
+				return null;
 			}
 
-			return CategoryStorage.getCategory(this.props.entityTypeId, categoryId);
+			const processStages = selectIdAndStatusByIds(store.getState(), fullCategory.processStages);
+			const successStages = selectIdAndStatusByIds(store.getState(), fullCategory.successStages);
+			const failedStages = selectIdAndStatusByIds(store.getState(), fullCategory.failedStages);
+
+			return {
+				id: fullCategory.id,
+				categoryId: fullCategory.categoryId,
+				categoriesEnabled: fullCategory.categoriesEnabled,
+				processStages,
+				successStages,
+				failedStages,
+			};
 		}
 
 		/**
@@ -1896,12 +1991,7 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 
 			console.error('view component not found');
 
-			const pathToCategory = CategoryStorage.getPathToCategory(
-				this.props.entityTypeId,
-				this.getCurrentCategoryId(),
-			);
-
-			if (!this.getCategoryFromCategoryStorage() && !CategoryStorage.isFetching(pathToCategory))
+			if (!this.getCategoryFromCategoryStorage() && selectStatus(store.getState()) !== STATUS.loading)
 			{
 				this.changeCategory(null);
 			}
@@ -1917,11 +2007,5 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 		{}
 	}
 
-	const openEntitySvg = '<svg width="17" height="21" viewBox="0 0 17 21" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M14.4234 17.7238C14.4234 17.8825 14.2934 18.01 14.1346 18.01H2.56338C2.40338 18.01 2.27463 17.8825 2.27463 17.7238V2.2875C2.27463 2.13 2.40338 2.00125 2.56338 2.00125H8.05963C8.21963 2.00125 8.34838 2.13 8.34838 2.2875V7.72C8.34838 7.8775 8.47838 8.005 8.63838 8.005H14.1346C14.2934 8.005 14.4234 8.13375 14.4234 8.29125V17.7238ZM10.3734 3.09C10.3734 3.0325 10.4221 2.98375 10.4821 2.98375C10.5109 2.98375 10.5384 2.995 10.5584 3.015L13.3984 5.82125C13.4409 5.8625 13.4409 5.93 13.3984 5.9725C13.3771 5.9925 13.3509 6.00375 13.3209 6.00375H10.4821C10.4221 6.00375 10.3734 5.955 10.3734 5.89625V3.09ZM16.0234 5.585L10.6909 0.31375C10.4884 0.11375 10.2121 0 9.92338 0H1.33463C0.734634 0 0.249634 0.48 0.249634 1.0725V18.94C0.249634 19.5313 0.734634 20.0113 1.33463 20.0113H15.3634C15.9609 20.0113 16.4471 19.5313 16.4471 18.94V6.59625C16.4471 6.21625 16.2946 5.8525 16.0234 5.585ZM12.0359 10.0063H4.65963C4.46088 10.0063 4.29838 10.1663 4.29838 10.3638V11.65C4.29838 11.8463 4.46088 12.0075 4.65963 12.0075H12.0359C12.2359 12.0075 12.3984 11.8463 12.3984 11.65V10.3638C12.3984 10.1663 12.2359 10.0063 12.0359 10.0063ZM4.73338 8.005H5.88963C6.12963 8.005 6.32338 7.8125 6.32338 7.575V6.4325C6.32338 6.195 6.12963 6.00375 5.88963 6.00375H4.73338C4.49338 6.00375 4.29838 6.195 4.29838 6.4325V7.575C4.29838 7.8125 4.49338 8.005 4.73338 8.005ZM12.0359 14.0087H4.65963C4.46088 14.0087 4.29838 14.1675 4.29838 14.365V15.6525C4.29838 15.8488 4.46088 16.01 4.65963 16.01H12.0359C12.2359 16.01 12.3984 15.8488 12.3984 15.6525V14.365C12.3984 14.1675 12.2359 14.0087 12.0359 14.0087Z" fill="#6a737f"/></svg>';
-
-	const editEntitySvg = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M17.0242 3.54235C17.2203 3.34691 17.5378 3.34801 17.7326 3.54479L20.6219 6.46453C20.8156 6.66031 20.8145 6.97592 20.6195 7.17036L9.43665 18.3165L5.84393 14.686L17.0242 3.54235ZM4.1756 19.5286C4.14163 19.6572 4.17803 19.7931 4.27024 19.8877C4.36488 19.9823 4.50078 20.0187 4.62939 19.9823L8.64557 18.9003L5.25791 15.5137L4.1756 19.5286Z" fill="#6a737f"/></svg>';
-
-	const activitiesSvg = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M3.70785 3.97461C3.24153 3.97461 2.8635 4.35264 2.8635 4.81897V5.79497C1.97592 6.13038 1.3457 6.9791 1.3457 7.9731C1.3457 8.96711 1.97592 9.81583 2.8635 10.1512V13.0186C1.97592 13.354 1.3457 14.2027 1.3457 15.1967C1.3457 16.1907 1.97592 17.0395 2.8635 17.3749V18.8377C2.8635 19.304 3.24153 19.6821 3.70785 19.6821C4.17418 19.6821 4.55221 19.304 4.55221 18.8377V17.3749C5.43981 17.0395 6.07006 16.1908 6.07006 15.1967C6.07006 14.2027 5.43981 13.354 4.55221 13.0186V10.1513C5.43981 9.81586 6.07006 8.96713 6.07006 7.9731C6.07006 6.97908 5.43981 6.13034 4.55221 5.79495V4.81897C4.55221 4.35264 4.17418 3.97461 3.70785 3.97461ZM7.94922 6.37598C7.94922 5.82369 8.39693 5.37598 8.94922 5.37598H21.619C22.1713 5.37598 22.619 5.82369 22.619 6.37598V9.57077C22.619 10.1231 22.1713 10.5708 21.619 10.5708H8.94922C8.39693 10.5708 7.94922 10.1231 7.94922 9.57077V6.37598ZM7.94922 13.5986C7.94922 13.0463 8.39693 12.5986 8.94922 12.5986H21.619C22.1713 12.5986 22.619 13.0463 22.619 13.5986V16.7934C22.619 17.3457 22.1713 17.7934 21.619 17.7934H8.94922C8.39693 17.7934 7.94922 17.3457 7.94922 16.7934V13.5986Z" fill="#6a737f"/></svg>';
-
-	module.exports = { EntityTab };
+	module.exports = { EntityTab, TypePull };
 });

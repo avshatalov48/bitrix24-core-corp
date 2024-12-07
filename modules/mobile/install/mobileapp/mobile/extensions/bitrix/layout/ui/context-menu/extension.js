@@ -1,61 +1,18 @@
-(() => {
-	/**
-	 * @typedef {Object} ContextMenuProperties
-	 * @property {ContextMenuActionProperties[]} actions
-	 * @property {Object} titlesBySectionCode
-	 * @property {?string} parentId
-	 * @property {?Object} parent
-	 * @property {function} onClose
-	 * @property {function} onCancel
-	 *
-	 * @property {?Object} params
-	 * @property {string} params.title
-	 * @property {boolean} params.showCancelButton
-	 * @property {boolean} params.showPartiallyHidden
-	 * @property {boolean} params.shouldResizeContent
-	 * @property {boolean} params.showActionLoader
-	 * @property {boolean} params.isCustomIconColor
-	 *
-	 * @property {?Object} banner
-	 * @property {string[]} banner.featureItems
-	 * @property {string} banner.imagePath
-	 * @property {string} banner.imageSvg
-	 * @property {?string} banner.positioning
-	 * @property {?string} banner.title
-	 * @property {?boolean} banner.showSubtitle
-	 * @property {?string} banner.buttonText
-	 * @property {?string} banner.buttonType
-	 * @property {?object} banner.onButtonClick
-	 * @property {?object} banner.onCloseBanner
-	 * @property {?object} banner.qrAuth
-	 * @property {string} banner.qrAuth.redirectUrl
-	 *
-	 * @property {?Object} customSection
-	 * @property {number} customSection.height
-	 * @property {View} customSection.layout
-	 *
-	 * @property {?Object} analyticsLabel
-	 */
-
-	/**
-	 * @typedef {Object} ContextMenuActionProperties
-	 * @property {string} id
-	 * @property {string} title
-	 * @property {?string} type
-	 * @property {?string} sectionCode
-	 * @property {function} onActiveCallback
-	 * @property {boolean} showActionLoader
-	 * @property {boolean} isCustomIconColor
-	 */
-
-	const require = (ext) => jn.require(ext);
-	const AppTheme = require('apptheme');
-	const { ContextMenuBanner, BannerPositioning } = require('layout/ui/context-menu/banner');
+/**
+ * @module layout/ui/context-menu
+ */
+jn.define('layout/ui/context-menu', (require, exports, module) => {
 	const { Type } = require('type');
-	const { ContextMenuItem } = require('layout/ui/context-menu/item');
-
-	const ACTION_DELETE = 'delete';
-	const ACTION_CANCEL = 'cancel';
+	const { Color } = require('tokens');
+	const { Icon } = require('assets/icons');
+	const { BottomSheet } = require('bottom-sheet');
+	const { AreaList } = require('ui-system/layout/area-list');
+	const { PropTypes } = require('utils/validation');
+	const { ContextMenuSection } = require('layout/ui/context-menu/section');
+	const { ContextMenuItem, ImageAfterTypes, BadgeCounterDesign } = require(
+		'layout/ui/context-menu/item',
+	);
+	const { ContextMenuBanner, BannerPositioning } = require('layout/ui/context-menu/banner');
 
 	const DEFAULT_BANNER_HEIGHT = device.screen.width > 375 ? 258 : 300;
 	const DEFAULT_BANNER_TITLE_HEIGHT = 36;
@@ -67,21 +24,29 @@
 
 	const IS_IOS = Application.getPlatform() === 'ios';
 	const INDENT_AFTER_ACTION_BUTTON = 28 + (IS_IOS ? 0 : 26);
-
 	const ANDROID_BOTTOM_SAFE_AREA = 34;
-
-	const INDENT_BETWEEN_SECTIONS = 10;
-	const ITEM_HEIGHT = 58;
-	const SECTION_TITLE_HEIGHT = 38;
 	const TITLE_HEIGHT = 44;
 
 	/**
+	 * @typedef {Object} ContextMenuProps
+	 * @property {ContextMenuItemProps[]} actions
+	 * @property {ContextMenuBannerProps} banner
+	 * @property {Object} analyticsLabel
+	 * @property {Object} parent
+	 * @property {Object} titlesBySectionCode
+	 * @property {Object} titleActionsBySectionCode
+	 * @property {Function} onCancel
+	 * @property {Function} onClose
+	 * @property {Object} params
+	 * @property {string} params.title
+	 * @property {boolean} params.showActionLoader
+	 * @property {string} params.helpUrl
 	 * @class ContextMenu
 	 */
 	class ContextMenu extends LayoutComponent
 	{
 		/**
-		 * @param {ContextMenuProperties} props
+		 * @param {...ContextMenuProps} props
 		 */
 		constructor(props)
 		{
@@ -91,8 +56,9 @@
 				enabled: true,
 			};
 
+			this.layoutWidget = null;
+			this.parentWidget = null;
 			this.closedByApi = false;
-			this.closeHandler = this.close.bind(this);
 
 			this.renderAction = this.renderAction.bind(this);
 			this.getActionParentWidget = this.getActionParentWidget.bind(this);
@@ -102,9 +68,8 @@
 
 		initialize(props)
 		{
-			this.params = BX.prop.getObject(props, 'params', {});
-			this.testId = `${props.testId}_CONTEXT_MENU`;
 			this.parentId = props.parentId;
+			this.params = BX.prop.getObject(props, 'params', {});
 			this.parent = BX.prop.getObject(props, 'parent', {});
 			this.titlesBySectionCode = BX.prop.getObject(props, 'titlesBySectionCode', {});
 			this.titleActionsBySectionCode = BX.prop.getObject(props, 'titleActionsBySectionCode', {});
@@ -118,7 +83,9 @@
 
 			this.styles = {
 				view: {
-					backgroundColor: this.backgroundDisabled ? AppTheme.colors.bgContentPrimary : AppTheme.colors.bgSecondary,
+					backgroundColor: this.backgroundDisabled
+						? Color.bgContentPrimary.toHex()
+						: Color.bgSecondary.toHex(),
 					safeArea: {
 						bottom: true,
 					},
@@ -126,63 +93,11 @@
 			};
 		}
 
-		componentDidUpdate(prevProps, prevState)
+		#getTestId()
 		{
-			if (this.layoutWidget && !this.showPartiallyHidden)
-			{
-				const calculatedHeight = this.calcMediumHeight();
+			const { testId } = this.props;
 
-				if (this.height !== calculatedHeight)
-				{
-					this.height = calculatedHeight;
-					this.layoutWidget.setBottomSheetHeight(calculatedHeight);
-				}
-			}
-		}
-
-		get title()
-		{
-			return BX.prop.getString(this.params, 'title', '');
-		}
-
-		get showCancelButton()
-		{
-			return false;
-		}
-
-		get showActionLoader()
-		{
-			return BX.prop.getBoolean(this.params, 'showActionLoader', false);
-		}
-
-		get isCustomIconColor()
-		{
-			return BX.prop.getBoolean(this.params, 'isCustomIconColor', false);
-		}
-
-		get isRawIcon()
-		{
-			return BX.prop.getBoolean(this.params, 'isRawIcon', false);
-		}
-
-		get shouldResizeContent()
-		{
-			return BX.prop.getBoolean(this.params, 'shouldResizeContent', false);
-		}
-
-		get showPartiallyHidden()
-		{
-			return BX.prop.getBoolean(this.params, 'showPartiallyHidden', false);
-		}
-
-		get mediumPositionPercent()
-		{
-			return BX.prop.getNumber(this.params, 'mediumPositionPercent', 50);
-		}
-
-		get helpUrl()
-		{
-			return BX.prop.getString(this.params, 'helpUrl', null);
+			return `${testId}_CONTEXT_MENU`;
 		}
 
 		prepareActions(actions)
@@ -192,53 +107,31 @@
 				return [];
 			}
 
-			return actions.map((action) => {
-				if (action.type)
-				{
-					action = {
-						...this.getActionConfigByType(action.type),
-						...action,
-					};
-				}
+			const {
+				updateItemHandler,
+				isRawIcon = false,
+				showActionLoader = false,
+				isCustomIconColor = false,
+			} = this.props;
 
-				action.sectionCode = (action.sectionCode || ContextMenuSection.getDefaultSectionName());
-				action.parentId = this.parentId;
-				action.parent = this.parent;
-				action.updateItemHandler = this.props.updateItemHandler;
-				action.closeHandler = this.closeHandler;
-				action.analyticsLabel = this.analyticsLabel;
+			const actionItems = [];
 
-				if (!action.hasOwnProperty('showActionLoader'))
-				{
-					action.showActionLoader = this.showActionLoader;
-				}
-
-				if (!action.hasOwnProperty('isCustomIconColor'))
-				{
-					action.isCustomIconColor = this.isCustomIconColor;
-				}
-
-				if (!action.hasOwnProperty('isRawIcon'))
-				{
-					action.isRawIcon = this.isRawIcon;
-				}
-
-				return action;
+			actions.forEach((action) => {
+				actionItems.push({
+					showActionLoader,
+					isCustomIconColor,
+					isRawIcon,
+					updateItemHandler,
+					sectionCode: (action.sectionCode || ContextMenuSection.getDefaultSectionName()),
+					parentId: this.parentId,
+					parent: this.parent,
+					closeHandler: this.close,
+					analyticsLabel: this.analyticsLabel,
+					...action,
+				});
 			});
-		}
 
-		getActionConfigByType(type)
-		{
-			if (type === ACTION_DELETE)
-			{
-				return {
-					data: {
-						svgIcon: '<svg width="16" height="20" viewBox="0 0 16 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9.365 0.358398H6.40958V1.84482H1.87921C1.1169 1.84482 0.498932 2.46279 0.498932 3.2251V4.81772H15.276V3.2251C15.276 2.46279 14.658 1.84482 13.8957 1.84482H9.365V0.358398Z" fill="#6a737f"/><path d="M1.97671 6.30421H13.7984L12.6903 18.8431C12.6484 19.318 12.2505 19.6823 11.7737 19.6823H4.00133C3.52452 19.6823 3.12669 19.318 3.08472 18.8431L1.97671 6.30421Z" fill="#6a737f"/></svg>',
-					},
-				};
-			}
-
-			return {};
+			return actionItems;
 		}
 
 		getActionsBySections()
@@ -247,41 +140,26 @@
 
 			this.actions.forEach((action) => {
 				const sectionCode = action.sectionCode;
+				const onActiveCallback = Type.isFunction(action.onActiveCallback)
+					? action.onActiveCallback(action.id, action.parentId, action.parent)
+					: true;
+				const active = Boolean(action.active ?? action.isActive ?? onActiveCallback);
 
 				actionsBySections[sectionCode] = actionsBySections[sectionCode] || [];
-				actionsBySections[sectionCode].push({
-					...action,
-					isActive:
-						action.hasOwnProperty('onActiveCallback')
-							? action.onActiveCallback(action.id, action.parentId, action.parent)
-							: true
-					,
-				});
+				actionsBySections[sectionCode].push({ ...action, active });
 			});
-
-			if (this.showCancelButton)
-			{
-				const serviceSectionName = ContextMenuSection.getServiceSectionName();
-
-				actionsBySections[serviceSectionName] = actionsBySections[serviceSectionName] || [];
-				actionsBySections[serviceSectionName].push(this.getCancelButtonConfig());
-			}
 
 			return actionsBySections;
 		}
 
 		render()
 		{
-			return ScrollView(
+			return AreaList(
 				{
-					style: this.styles.view,
-					testId: this.testId,
+					testId: this.#getTestId(),
 				},
-				View(
-					{},
-					this.renderBanner(),
-					...this.renderSections(),
-				),
+				this.renderBanner(),
+				...this.renderSections(),
 			);
 		}
 
@@ -292,7 +170,7 @@
 				return new ContextMenuBanner({
 					banner: this.banner,
 					menu: this,
-					parentWidget: this.parentWidget,
+					parentWidget: this.getParentWidget(),
 				});
 			}
 
@@ -301,41 +179,40 @@
 
 		renderSections()
 		{
-			const results = new Map();
-			let i = 0;
+			const results = [];
 
 			if (this.customSection)
 			{
-				results.set('custom', this.customSection.layout);
-				i++;
+				results.push(this.customSection.layout);
 			}
 
-			for (const sectionCode in this.actionsBySections)
-			{
-				const section = ContextMenuSection.create({
-					id: sectionCode,
-					title: this.titlesBySectionCode[sectionCode],
-					titleAction: this.titleActionsBySectionCode[sectionCode],
-					actions: this.actionsBySections[sectionCode],
-					renderAction: this.renderAction,
-					enabled: this.state.enabled,
-					style: {
-						marginTop: i > 0 ? INDENT_BETWEEN_SECTIONS : 0,
-					},
-					showTitleBorder: this.showTitleBorder(this.actionsBySections[sectionCode]),
-					closeHandler: this.closeHandler,
-				});
+			Object.entries(this.actionsBySections).forEach(([sectionCode]) => {
+				const title = this.titlesBySectionCode[sectionCode];
+				const actions = this.actionsBySections[sectionCode];
+				const isActive = actions.some(({ active }) => active);
 
-				results.set(sectionCode, section);
-				i++;
-			}
+				if (isActive)
+				{
+					results.push(ContextMenuSection.create({
+						testId: this.#getTestId(),
+						id: sectionCode,
+						title,
+						actions,
+						titleAction: this.titleActionsBySectionCode[sectionCode],
+						renderAction: this.renderAction,
+						enabled: this.state.enabled,
+						showTitleBorder: this.showTitleBorder(actions),
+						closeHandler: this.close,
+					}));
+				}
+			});
 
-			return results.values();
+			return results;
 		}
 
-		showTitleBorder(actionsBySections)
+		showTitleBorder(actions)
 		{
-			return actionsBySections.find((action) => action.isActive);
+			return actions.find((action) => action.active);
 		}
 
 		renderAction(action, params = {})
@@ -343,7 +220,7 @@
 			return ContextMenuItem.create({
 				...action,
 				...params,
-				testId: this.testId,
+				testId: this.#getTestId(),
 				getParentWidget: this.getActionParentWidget,
 			});
 		}
@@ -353,29 +230,9 @@
 			return this.layoutWidget;
 		}
 
-		getCancelButtonConfig()
-		{
-			return {
-				id: ACTION_CANCEL,
-				isActive: true,
-				parentId: this.parentId,
-				title: BX.message('CONTEXT_MENU_CANCEL'),
-				sectionCode: ContextMenuSection.getServiceSectionName(),
-				largeIcon: false,
-				type: ContextMenuItem.getTypeCancelName(),
-				showActionLoader: false,
-				data: {
-					svgIcon: '<svg width="17" height="17" viewBox="0 0 17 17" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M10.7562 8.54581L16.4267 14.2163L14.2165 16.4266L8.54596 10.7561L2.87545 16.4266L0.665192 14.2163L6.3357 8.54581L0.665192 2.87529L2.87545 0.665039L8.54596 6.33555L14.2165 0.665039L16.4267 2.87529L10.7562 8.54581Z" fill="#A8ADB4"/></svg>',
-				},
-				onClickCallback: () => Promise.resolve(true),
-				closeHandler: this.closeHandler,
-			};
-		}
-
 		/**
 		 * @public
-		 * @param {ContextMenuProperties} props
-		 * @return void
+		 * @param {...ContextMenuProps} props
 		 */
 		rerender(props)
 		{
@@ -395,14 +252,31 @@
 		 * @public
 		 * @param {Function} callback
 		 */
-		close(callback = () => {})
-		{
+		close = (callback) => {
 			this.closedByApi = true;
 
 			if (this.layoutWidget)
 			{
 				this.layoutWidget.close(callback);
 			}
+		};
+
+		/**
+		 * @param layoutWidget
+		 */
+		setLayoutWidget(layoutWidget)
+		{
+			this.layoutWidget = layoutWidget;
+		}
+
+		setParentWidget(parentWidget)
+		{
+			this.parentWidget = parentWidget;
+		}
+
+		getParentWidget()
+		{
+			return this.parentWidget || PageManager;
 		}
 
 		/**
@@ -410,100 +284,86 @@
 		 * @param parentWidget
 		 * @return {Promise}
 		 */
-		show(parentWidget = PageManager)
+		async show(parentWidget)
 		{
-			return new Promise((resolve, reject) => {
-				const widgetParams = this.prepareWidgetParams();
+			this.setParentWidget(parentWidget);
 
-				this.parentWidget = parentWidget || PageManager;
+			const { onCancel, onClose, params = {} } = this.props;
+			const {
+				helpUrl = '',
+				shouldResizeContent = false,
+				showPartiallyHidden = false,
+				mediumPositionPercent = 50,
+			} = params;
 
-				this.parentWidget
-					.openWidget('layout', widgetParams)
-					.then((layoutWidget) => {
-						this.layoutWidget = layoutWidget;
+			const entityBottomSheet = new BottomSheet({ component: this });
+			const contextMenuBottomSheet = entityBottomSheet
+				.setParentWidget(this.getParentWidget())
+				.setBackgroundColor(Color.bgSecondary.toHex())
+				.setNavigationBarColor(Color.bgContentPrimary.toHex())
+				.enableForceDismissOnSwipeDown()
+				.disableHorizontalSwipe()
+				.enableSwipe()
+				.enableOnlyMediumPosition()
+				.setTitleParams({
+					text: this.getTitle(),
+					type: 'dialog',
+				});
 
-						if (Type.isStringFilled(this.title))
-						{
-							layoutWidget.setTitle({ text: this.title });
-							layoutWidget.enableNavigationBarBorder(false);
-						}
-
-						layoutWidget.setListener((eventName) => {
-							if (eventName === 'onViewHidden' || eventName === 'onViewRemoved')
-							{
-								if (this.props.onClose)
-								{
-									this.props.onClose();
-								}
-
-								if (!this.closedByApi && this.props.onCancel)
-								{
-									this.props.onCancel();
-								}
-							}
-						});
-
-						layoutWidget.showComponent(this);
-
-						resolve();
-					})
-					.catch(reject)
-				;
-			});
-		}
-
-		/**
-		 * @private
-		 * @returns {Object}
-		 */
-		prepareWidgetParams()
-		{
-			let onlyMediumPosition = true;
-			let mediumPositionHeight = this.calcMediumHeight();
-			let topPosition = 0;
-
-			if (this.showPartiallyHidden)
+			if (helpUrl)
 			{
-				const threshold = this.getDeviceScreenHeight() * this.mediumPositionPercent / 100;
-
-				if (mediumPositionHeight > threshold)
-				{
-					mediumPositionHeight = this.calcMediumHeightForThreshold(threshold);
-
-					if (threshold > mediumPositionHeight)
-					{
-						topPosition = this.calcTopPositionOffset();
-						onlyMediumPosition = false;
-					}
-				}
+				contextMenuBottomSheet.setHelpUrl(helpUrl);
 			}
 
-			this.height = mediumPositionHeight;
+			if (shouldResizeContent)
+			{
+				contextMenuBottomSheet.enableResizeContent();
+			}
 
-			const widgetParams = {
-				backgroundColor: AppTheme.colors.bgSecondary,
-				backdrop: {
-					shouldResizeContent: this.shouldResizeContent,
-					swipeAllowed: true,
-					forceDismissOnSwipeDown: true,
-					onlyMediumPosition,
-					topPosition,
-					mediumPositionHeight,
-					horizontalSwipeAllowed: false,
-					hideNavigationBar: !Type.isStringFilled(this.title),
-					navigationBarColor: AppTheme.colors.bgSecondary,
-					helpUrl: this.helpUrl,
-				},
-			};
+			if (!showPartiallyHidden)
+			{
+				contextMenuBottomSheet.setMediumPositionHeight(this.calcMediumHeight());
+			}
 
-			Object.keys(widgetParams.backdrop).forEach((key) => {
-				if (Type.isNil(widgetParams.backdrop[key]))
+			let mediumPositionHeight = this.calcMediumHeight();
+			const threshold = this.#getDeviceScreenHeight() * mediumPositionPercent / 100;
+			if (mediumPositionHeight > threshold)
+			{
+				mediumPositionHeight = this.calcMediumHeightForThreshold(threshold);
+
+				let topPosition = 0;
+				if (threshold > mediumPositionHeight)
 				{
-					delete widgetParams.backdrop[key];
+					topPosition = this.#calcTopPositionOffset();
+					contextMenuBottomSheet.disableOnlyMediumPosition();
+				}
+				contextMenuBottomSheet.setTopPosition(topPosition);
+				contextMenuBottomSheet.setMediumPositionPercent(mediumPositionPercent);
+			}
+			else
+			{
+				contextMenuBottomSheet.setMediumPositionHeight(this.calcMediumHeight());
+			}
+
+			const layoutWidget = await contextMenuBottomSheet.open();
+			layoutWidget.setListener((eventName) => {
+				if (eventName === 'onViewHidden' || eventName === 'onViewRemoved')
+				{
+					if (onClose)
+					{
+						onClose();
+					}
+
+					if (!this.closedByApi && onCancel)
+					{
+						onCancel();
+					}
 				}
 			});
 
-			return widgetParams;
+			this.setLayoutWidget(layoutWidget);
+
+			return layoutWidget;
 		}
 
 		/**
@@ -521,12 +381,6 @@
 			);
 		}
 
-		getBottomSafeArea()
-		{
-			// fix android height calculated with native bottom buttons
-			return IS_IOS ? 0 : ANDROID_BOTTOM_SAFE_AREA;
-		}
-
 		/**
 		 * @private
 		 * @returns {number}
@@ -537,33 +391,44 @@
 
 			for (const [sectionCode, sectionActions] of Object.entries(this.actionsBySections))
 			{
-				if (
-					Type.isStringFilled(this.titlesBySectionCode[sectionCode])
-					|| Type.isObject(this.titlesBySectionCode[sectionCode]) // BBCode case
-				)
+				if (this.titlesBySectionCode[sectionCode])
 				{
-					height += SECTION_TITLE_HEIGHT;
+					height += ContextMenuItem.getHeight();
 				}
 
-				for (const action of sectionActions)
+				for (const { active } of sectionActions)
 				{
-					if (action.isActive)
-					{
-						height += ITEM_HEIGHT;
-					}
+					height += active ? ContextMenuItem.getHeight() : 0;
 
 					// why check cancel - it looks like the end, and we can show a fully expanded menu
 					// otherwise, we can show only a part of the menu
-					if (height >= threshold && action.id !== ACTION_CANCEL)
+					if (height >= threshold)
 					{
-						return height - ITEM_HEIGHT - 1;
+						return height - ContextMenuItem.getHeight() - 1;
 					}
 				}
-
-				height += INDENT_BETWEEN_SECTIONS;
 			}
 
 			return height;
+		}
+
+		getSectionsHeight()
+		{
+			let height = 0;
+			Object.entries(this.actionsBySections).forEach(([sectionCode, sectionActions]) => {
+				let activeSection = false;
+				sectionActions.forEach(({ active }) => {
+					activeSection = active;
+					height += active ? ContextMenuItem.getHeight() : 0;
+				});
+
+				if (this.titlesBySectionCode[sectionCode] && activeSection)
+				{
+					height += ContextMenuItem.getHeight();
+				}
+			});
+
+			return height + ContextMenuSection.getIndentBetweenSections();
 		}
 
 		/**
@@ -572,34 +437,7 @@
 		 */
 		getTitleHeight()
 		{
-			return Type.isStringFilled(this.title) ? TITLE_HEIGHT : 0;
-		}
-
-		getSectionsHeight()
-		{
-			let height = 0;
-
-			for (const sectionCode in this.actionsBySections)
-			{
-				if (
-					Type.isStringFilled(this.titlesBySectionCode[sectionCode])
-					|| Type.isObject(this.titlesBySectionCode[sectionCode]) // BBCode case
-				)
-				{
-					height += SECTION_TITLE_HEIGHT;
-				}
-
-				height += this.actionsBySections[sectionCode].reduce((sum, action) => {
-					if (action.isActive)
-					{
-						return sum + ITEM_HEIGHT;
-					}
-
-					return sum;
-				}, INDENT_BETWEEN_SECTIONS);
-			}
-
-			return height;
+			return this.hasTitle() ? TITLE_HEIGHT : 0;
 		}
 
 		get isActionBanner()
@@ -607,14 +445,19 @@
 			return (this.banner.qrauth || this.banner.onButtonClick || this.banner.onCloseBanner);
 		}
 
+		get isActionBannerWithRejectButton()
+		{
+			return this.banner.showRejectButton;
+		}
+
 		get backgroundDisabled()
 		{
-			return (this.banner && !this.showCancelButton && this.isActionBanner);
+			return (this.banner && this.isActionBanner);
 		}
 
 		get spaceRequiredForButton()
 		{
-			return (this.banner && this.showCancelButton && this.isActionBanner);
+			return (this.banner && this.isActionBanner);
 		}
 
 		getBannerHeight()
@@ -655,6 +498,11 @@
 					}
 				}
 
+				if (this.isActionBannerWithRejectButton)
+				{
+					itemsHeight += DEFAULT_BANNER_BUTTON_HEIGHT;
+				}
+
 				if (this.banner.subtext)
 				{
 					itemsHeight += DEFAULT_BANNER_SUBTEXT_HEIGHT;
@@ -668,75 +516,94 @@
 
 		getCustomSectionHeight()
 		{
-			if (this.customSection)
-			{
-				return this.customSection.height;
-			}
+			return this.customSection?.height || 0;
+		}
 
-			return 0;
+		getTitle()
+		{
+			return BX.prop.getString(this.params, 'title', '');
+		}
+
+		hasTitle()
+		{
+			return Type.isStringFilled(this.getTitle());
+		}
+
+		getBottomSafeArea()
+		{
+			// fix android height calculated with native bottom buttons
+			return IS_IOS ? 0 : ANDROID_BOTTOM_SAFE_AREA;
 		}
 
 		/**
 		 * @private
 		 * @returns {number}
 		 */
-		calcTopPositionOffset()
+		#calcTopPositionOffset()
 		{
-			// eslint-disable-next-line max-len
-			const topOffsetForExpandedMenu = this.getDeviceScreenHeight() - this.getTopSafeAreaHeight() - this.calcMediumHeight();
+			const topOffsetForExpandedMenu = this.#getDeviceScreenHeight()
+				- this.#getTopSafeAreaHeight()
+				- this.calcMediumHeight();
 
 			return Math.max(topOffsetForExpandedMenu, 70);
 		}
 
-		getDeviceScreenHeight()
+		#getDeviceScreenHeight()
 		{
-			const {
-				screen: {
-					height: screenHeight,
-				} = {},
-			} = device || {};
-
-			return screenHeight;
+			return device?.screen?.height || 0;
 		}
 
-		getTopSafeAreaHeight()
+		#getTopSafeAreaHeight()
 		{
-			const {
-				screen: {
-					safeArea: {
-						top: topSafeArea,
-					},
-				} = {},
-			} = device || {};
-
-			return topSafeArea;
+			return device?.screen?.safeArea?.top || 0;
 		}
 
 		setSelectedActions(ids, showSelectedImage = true)
 		{
-			this.actions.map((action) => {
-				if (ids.includes(action.id))
-				{
-					action.isSelected = true;
-					action.showSelectedImage = showSelectedImage;
-				}
-				else
-				{
-					action.isSelected = false;
-					action.showSelectedImage = false;
-				}
+			this.actions = this.actions.map((action) => {
+				const selected = ids.includes(action.id);
+				const updateOptions = {
+					selected,
+					isSelected: selected,
+					showSelectedImage: selected && showSelectedImage,
+				};
+
+				return { ...action, ...updateOptions };
 			});
 
 			this.actionsBySections = this.getActionsBySections();
 		}
 	}
 
+	ContextMenuItem.propTypes = {
+		actions: PropTypes.objectOf(ContextMenuItem.propTypes),
+		titlesBySectionCode: PropTypes.arrayOf(
+			PropTypes.objectOf(PropTypes.string),
+		),
+		params: PropTypes.shape({
+			title: PropTypes.string,
+			shouldResizeContent: PropTypes.bool,
+			showActionLoader: PropTypes.bool,
+			showPartiallyHidden: PropTypes.bool,
+			mediumPositionPercent: PropTypes.number,
+			helpUrl: PropTypes.string,
+		}),
+		analyticsLabel: PropTypes.object,
+		onCancel: PropTypes.func,
+		onClose: PropTypes.func,
+	};
+
+	module.exports = {
+		Icon,
+		ContextMenu,
+		ImageAfterTypes,
+		ContextMenuItem,
+		BadgeCounterDesign,
+	};
+});
+
+(() => {
+	const { ContextMenu } = jn.require('layout/ui/context-menu');
+
 	this.ContextMenu = ContextMenu;
 })();
-
-/**
- * @module layout/ui/context-menu
- */
-jn.define('layout/ui/context-menu', (require, exports, module) => {
-	module.exports = { ContextMenu: this.ContextMenu };
-});

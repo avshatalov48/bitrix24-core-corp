@@ -18,6 +18,7 @@ class Comment
 	public const TYPE_EXPIRED = 4;
 	public const TYPE_EXPIRED_SOON = 5;
 	public const TYPE_PING_STATUS = 6;
+	public const TYPE_ADD_TO_FLOW_WITH_MANUAL_DISTRIBUTION = 7;
 
 	private $authorId = 0;
 	private $type = self::TYPE_DEFAULT;

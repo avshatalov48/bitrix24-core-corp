@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["CRM_PERMISSION_DENIED"] = "Доступ запрещен";
 $MESS["CRM_ERROR_FIELD_IS_MISSING"] = "Не введено значение обязательного поля \"%FIELD_NAME%\"";
 $MESS["CRM_ERROR_FIELD_INCORRECT"] = "Некорректно заполнено поле \"%FIELD_NAME%\"";
@@ -100,4 +100,4 @@ $MESS["CRM_LEAD_FIELD_UTM"] = "UTM-метки";
 $MESS["CRM_LEAD_FIELD_COMPARE_IS_MANUAL_OPPORTUNITY"] = "Изменен режим расчета поля \"Сумма\"";
 $MESS["CRM_LEAD_FIELD_COMPARE_IS_MANUAL_OPPORTUNITY_Y"] = "Вручную";
 $MESS["CRM_LEAD_FIELD_COMPARE_IS_MANUAL_OPPORTUNITY_N"] = "На основе стоимости товаров";
-?>
+$MESS["CRM_LEAD_NO_PERMISSIONS_TO_DELETE"] = "#LEAD_NAME#: недостаточно прав для удаления";

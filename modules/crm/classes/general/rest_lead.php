@@ -258,7 +258,7 @@ class CCRMLeadRest
 			$data['AUTH'] = self::$authHash;
 		}
 
-		return self::$bReturnObject ? $data : $APPLICATION->ConvertCharset(CUtil::PhpToJsObject($data), LANG_CHARSET, 'UTF-8');
+		return self::$bReturnObject ? $data : CUtil::PhpToJsObject($data);
 	}
 }
 ?>

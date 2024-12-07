@@ -5,6 +5,7 @@ use Bitrix\Disk\Document\DocumentHandlersManager;
 use Bitrix\Disk\Document\OnlyOffice;
 use Bitrix\Disk\Internals\DeletedLogManager;
 use Bitrix\Disk\Internals\DeletionNotifyManager;
+use Bitrix\Disk\Internals\Runtime\StorageRuntimeCache;
 use Bitrix\Disk\RecentlyUsedManager;
 use Bitrix\Disk\Rest\RestManager;
 use Bitrix\Disk\RightsManager;
@@ -31,14 +32,12 @@ return [
 			'disk.urlManager' => [
 				'className' => UrlManager::class,
 			],
+			'disk.storageRuntimeCache' => [
+				'className' => StorageRuntimeCache::class,
+			],
 			'disk.documentHandlersManager' => [
 				'className' => DocumentHandlersManager::class,
-//				'constructor' => function() {
-//					global $USER;
-//
-//					return new DocumentHandlersManager($USER);
-//				},
-				'constructorParams' => function() {
+				'constructorParams' => static function() {
 					global $USER;
 
 					return [

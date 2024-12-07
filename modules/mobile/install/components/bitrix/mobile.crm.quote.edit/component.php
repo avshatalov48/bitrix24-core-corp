@@ -273,7 +273,6 @@ else
 	if (isset($_GET['title']))
 	{
 		$arFields['~TITLE'] = $_GET['title'];
-		CUtil::decodeURIComponent($arFields['~TITLE']);
 		$arFields['TITLE'] = htmlspecialcharsbx($arFields['~TITLE']);
 	}
 
@@ -563,8 +562,6 @@ if ($bPostChecked)
 	$bVarsFromForm = true;
 	if(isset($_POST['save']) || isset($_POST['continue']) && $arResult["IS_EDIT_PERMITTED"])
 	{
-		CUtil::JSPostUnescape();
-
 		$content = isset($_POST['CONTENT']) ? trim($_POST['CONTENT']) : '';
 		$content = \Bitrix\Crm\Format\TextHelper::sanitizeHtml($content);
 

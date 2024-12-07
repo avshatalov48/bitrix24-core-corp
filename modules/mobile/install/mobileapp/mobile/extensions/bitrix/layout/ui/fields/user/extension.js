@@ -13,6 +13,7 @@ jn.define('layout/ui/fields/user', (require, exports, module) => {
 	const { isNil } = require('utils/type');
 	const { AnalyticsEvent } = require('analytics');
 	const { isPhoneNumber } = require('utils/phone');
+	const { Icon } = require('assets/icons');
 
 	const EMPTY_AVATAR = '/bitrix/mobileapp/mobile/extensions/bitrix/layout/ui/fields/user/images/empty-avatar.png';
 	const DEFAULT_AVATAR = '/bitrix/mobileapp/mobile/extensions/bitrix/layout/ui/fields/user/images/default-avatar.png';
@@ -32,23 +33,17 @@ jn.define('layout/ui/fields/user', (require, exports, module) => {
 		{
 			super(props);
 
-			if (this.isReadOnly() && this.isMultiple() && this.isIconsMode() && !this.isEmpty())
+			if (this.isReadOnly() && this.isMultiple() && !this.isEmpty() && this.canOpenUserList())
 			{
-				this.customContentClickHandler = () => {
-					UserListManager.open({
-						title: (this.getTitleText() === this.props.title ? this.props.title : null),
-						users: this.state.entityList.map((user) => ({
-							id: user.id,
-							name: this.prepareUserTitle(user.title),
-							avatar: user.imageUrl,
-							workPosition: (user.customData && user.customData.position ? user.customData.position : ''),
-						})),
-						testId: this.testId,
-					});
-				};
+				this.customContentClickHandler = this.openUserList.bind(this);
 			}
 
 			this.state.showAll = false;
+		}
+
+		canOpenUserList()
+		{
+			return BX.prop.getBoolean(this.getConfig(), 'canOpenUserList', false);
 		}
 
 		prepareUserTitle(userTitle)
@@ -297,6 +292,20 @@ jn.define('layout/ui/fields/user', (require, exports, module) => {
 				.catch(console.error);
 		}
 
+		openUserList()
+		{
+			UserListManager.open({
+				title: (this.getTitleText() === this.props.title ? this.props.title : null),
+				users: this.state.entityList.map((user) => ({
+					id: user.id,
+					name: this.prepareUserTitle(user.title),
+					avatar: user.imageUrl,
+					workPosition: (user.customData && user.customData.position ? user.customData.position : ''),
+				})),
+				testId: this.testId,
+			});
+		}
+
 		shouldShowEditIcon()
 		{
 			return BX.prop.getBoolean(this.props, 'showEditIcon', false);
@@ -397,7 +406,25 @@ jn.define('layout/ui/fields/user', (require, exports, module) => {
 				},
 			};
 		}
+
+		getDefaultLeftIcon()
+		{
+			return this.getConfig().defaultLeftIcon || Icon.PERSON;
+		}
 	}
+
+	UserField.propTypes = {
+		...EntitySelectorFieldClass.propTypes,
+	};
+
+	UserField.defaultProps = {
+		...EntitySelectorFieldClass.defaultProps,
+		config: {
+			...EntitySelectorFieldClass.defaultProps.config,
+			selectorType: EntitySelectorFactory.Type.USER,
+			mode: Mode.DEFAULT,
+		},
+	};
 
 	module.exports = {
 		UserType: 'user',

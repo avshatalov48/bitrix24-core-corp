@@ -1,0 +1,13 @@
+.ai__roles-dialog_header-with-hint {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+}
+
+.ai__roles-dialog_header-with-hint-text {
+	font-size: var(--ui-font-size-lg);
+	font-weight: var(--ui-font-weight-normal);
+	line-height: var(--ui-font-line-height-3xs);
+	letter-spacing: 0;
+	color: rgba(var(--ui-color-text-secondary-rgb), 0.6);
+}

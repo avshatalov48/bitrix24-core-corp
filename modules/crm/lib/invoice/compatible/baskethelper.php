@@ -292,7 +292,23 @@ class BasketHelper
 
 				$arShoppingCartItem['QUANTITY'] = (float)$arShoppingCartItem['QUANTITY'];
 				$arShoppingCartItem['WEIGHT'] = (float)($arShoppingCartItem['WEIGHT'] ?? null);
-				$arShoppingCartItem['DIMENSIONS'] = unserialize(($arShoppingCartItem['DIMENSIONS'] ?? null), ['allowed_classes' => false]);
+				$dimensions = null;
+				if (isset($arShoppingCartItem['DIMENSIONS']))
+				{
+					if (!empty($arShoppingCartItem['DIMENSIONS']) && is_array($arShoppingCartItem['DIMENSIONS']))
+					{
+						$dimensions = $arShoppingCartItem['DIMENSIONS'];
+					}
+					elseif (is_string($arShoppingCartItem['DIMENSIONS']) && $arShoppingCartItem['DIMENSIONS'] !== '')
+					{
+						$dimensions = unserialize(
+							$arShoppingCartItem['DIMENSIONS'],
+							['allowed_classes' => false]
+						);
+					}
+				}
+				$arShoppingCartItem['DIMENSIONS'] = $dimensions;
+				unset($dimensions);
 				$arShoppingCartItem['VAT_RATE'] = (float)($arShoppingCartItem['VAT_RATE'] ?? null);
 				$arShoppingCartItem['DISCOUNT_PRICE'] = round(($arShoppingCartItem['DISCOUNT_PRICE'] ?? null), SALE_VALUE_PRECISION);
 

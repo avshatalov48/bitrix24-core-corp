@@ -25,6 +25,7 @@ return [
 		'utils/date',
 
 		'catalog:product-type',
+		'catalog:store/mode-list',
 
 		'notify',
 		'crm:loc',

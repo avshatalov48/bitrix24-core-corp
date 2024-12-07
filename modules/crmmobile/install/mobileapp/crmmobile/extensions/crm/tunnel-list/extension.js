@@ -8,7 +8,7 @@ jn.define('crm/tunnel-list', (require, exports, module) => {
 	const { clone } = require('utils/object');
 	const { connect } = require('statemanager/redux/connect');
 	const AppTheme = require('apptheme');
-	const { selectEntities, getTunnelUniqueId } = require('crm/statemanager/redux/slices/tunnels');
+	const { getTunnelUniqueId, selectItemsByIds } = require('crm/statemanager/redux/slices/tunnels');
 
 	class TunnelList extends LayoutComponent
 	{
@@ -17,7 +17,7 @@ jn.define('crm/tunnel-list', (require, exports, module) => {
 			super(props);
 
 			this.state = {
-				tunnels: Object.values(this.tunnels),
+				tunnels: [...this.tunnels],
 			};
 
 			this.selectedKanbanSettings = null;
@@ -35,7 +35,7 @@ jn.define('crm/tunnel-list', (require, exports, module) => {
 
 		get tunnels()
 		{
-			return BX.prop.getObject(this.props, 'tunnels', []);
+			return BX.prop.getArray(this.props, 'tunnels', []);
 		}
 
 		render()
@@ -141,7 +141,7 @@ jn.define('crm/tunnel-list', (require, exports, module) => {
 			const tunnelIndex = modifiedTunnels.findIndex((item) => item.robot.name === tunnel.robot.name);
 			modifiedTunnels[tunnelIndex] = {
 				...modifiedTunnels[tunnelIndex],
-				dstCategoryId: selectedCategory.id,
+				dstCategoryId: selectedCategory.categoryId,
 				dstCategoryName: selectedCategory.name,
 				dstStageId: selectedStage.id,
 				dstStageName: selectedStage.name,
@@ -259,7 +259,7 @@ jn.define('crm/tunnel-list', (require, exports, module) => {
 	}
 
 	const mapStateToProps = (state, { tunnelIds }) => ({
-		tunnels: selectEntities(state, tunnelIds),
+		tunnels: selectItemsByIds(state, tunnelIds),
 	});
 
 	const svgImages = {

@@ -1,0 +1,3 @@
+<?php
+$MESS["CRM_SEND_EDNA_WHATS_APP_MESSAGE_ACTIVITY_DESCRIPTION_DESCRIPTION"] = "Sends WhatsApp or SMS message using a selected template.";
+$MESS["CRM_SEND_EDNA_WHATS_APP_MESSAGE_ACTIVITY_DESCRIPTION_NAME"] = "Send WhatsApp message";

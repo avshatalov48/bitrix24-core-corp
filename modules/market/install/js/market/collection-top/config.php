@@ -8,9 +8,9 @@ return [
 	'css' => 'dist/collection-top.bundle.css',
 	'js' => 'dist/collection-top.bundle.js',
 	'rel' => [
-		'main.polyfill.core',
-		'market.rating-store',
-		'ui.vue3.pinia',
+		'market.rating-stars',
+		'market.market-links',
+		'main.core',
 	],
-	'skip_core' => true,
+	'skip_core' => false,
 ];

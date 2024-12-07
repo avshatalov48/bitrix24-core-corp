@@ -284,6 +284,9 @@ class ElementField
 
 	private function resolveIsTrusted(): bool
 	{
-		return $this->property['TYPE'] === 'N:Sequence' && !$this->resolveEditable();
+		return (
+			($this->property['TYPE'] === 'N:Sequence' || $this->property['FIELD_ID'] === 'ACTIVE_FROM')
+			&& !$this->resolveEditable()
+		);
 	}
 }

@@ -7,7 +7,6 @@ use Bitrix\Market\Subscription;
 use Bitrix\Rest\Marketplace\Client;
 use Bitrix\Main\Type\Date;
 
-
 class Status
 {
 	public const ACTIVE = 'A';
@@ -27,15 +26,21 @@ class Status
 	{
 		$status = Status::NOT_EXIST;
 
-		if (Status::isExist()) {
+		if (Status::isExist())
+		{
 			$finish = Subscription::getFinishDate();
 
-			if (Client::isSubscriptionAvailable()) {
+			if (Client::isSubscriptionAvailable())
+			{
 				$date = (new Date())->add(Status::PRE_EXPIRED_DAYS . 'days');
 				$status = ($finish > $date) ? Status::ACTIVE : Status::PRE_EXPIRED;
-			} elseif ($finish) {
+			}
+			elseif ($finish)
+			{
 				$status = Status::EXPIRED;
-			} else {
+			}
+			else
+			{
 				$status = Status::NEVER_USED;
 			}
 		}
@@ -52,9 +57,16 @@ class Status
 	{
 		$slider = 'limit_benefit_market';
 
-		if (Client::isSubscriptionDemo()) {
+		if (Client::isSubscriptionDemo())
+		{
 			$slider = 'limit_benefit_market_trial_active';
-		} else if (Subscription::getFinishDate() !== null) {
+		}
+		elseif (Loader::includeModule('bitrix24') && \CBitrix24::isLicenseNeverPayed())
+		{
+			$slider = 'limit_market_trial_demo';
+		}
+		elseif (Subscription::getFinishDate() !== null)
+		{
 			$slider = 'limit_benefit_market_active';
 		}
 

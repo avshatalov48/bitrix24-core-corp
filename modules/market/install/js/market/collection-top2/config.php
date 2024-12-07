@@ -10,6 +10,7 @@ return [
 	'rel' => [
 		'main.polyfill.core',
 		'market.collection-top2-list',
+		'market.market-links',
 	],
 	'skip_core' => true,
 ];

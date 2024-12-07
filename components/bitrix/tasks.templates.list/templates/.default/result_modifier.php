@@ -161,14 +161,12 @@ function prepareTaskRowActions($row, $arParams, $arResult)
 			];
 			if ($arResult['AUX_DATA']['TEMPLATE_SUBTASK_LIMIT_EXCEEDED'])
 			{
-				$addSubTemplateAction['onclick'] =
-					"BX.UI.InfoHelper.show('" . RestrictionUrl::TEMPLATE_LIMIT_SUBTASKS_SLIDER_URL . "', {
-					isLimit: true,
-					limitAnalyticsLabels: {
-						module: 'tasks',
-						source: 'templateList'
-					}});"
-				;
+				$onLockClick = Util\Restriction\Bitrix24Restriction\Limit\TaskLimit::getLimitLockClick(
+					\Bitrix\Tasks\Integration\Bitrix24\FeatureDictionary::TASK_TEMPLATES_SUBTASKS,
+					null,
+					'templateList'
+				);
+				$addSubTemplateAction['onclick'] = $onLockClick;
 				$addSubTemplateAction['className'] = 'tasks-list-menu-popup-item-lock';
 			}
 			else

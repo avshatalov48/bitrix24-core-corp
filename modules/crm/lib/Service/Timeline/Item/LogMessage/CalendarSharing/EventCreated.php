@@ -13,7 +13,10 @@ use Bitrix\Crm\Service\Timeline\Layout\Common\Icon;
 
 class EventCreated extends LogMessage
 {
-	use CalendarSharing;
+	use CalendarSharing\ModelDataTrait;
+	use CalendarSharing\DateTrait;
+	use CalendarSharing\ContactTrait;
+	use CalendarSharing\MessageTrait;
 
 	public function getType(): string
 	{
@@ -32,9 +35,9 @@ class EventCreated extends LogMessage
 
 	public function getContentBlocks(): ?array
 	{
-		$contactName = $this->getContactName();
-		$contactUrl = $this->getContactUrl();
-		$date = $this->getDateContent();
+		$contactName = $this->getContactName($this->getContactTypeId(), $this->getContactId());
+		$contactUrl = $this->getContactUrl($this->getContactTypeId(), $this->getContactId());
+		$date = $this->getDateContent($this->getTimestamp());
 
 		$contentBlock = (new LineOfTextBlocks())
 			->addContentBlock(

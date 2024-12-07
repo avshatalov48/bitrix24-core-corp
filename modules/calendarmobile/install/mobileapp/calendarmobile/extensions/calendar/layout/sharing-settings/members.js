@@ -5,6 +5,8 @@ jn.define('calendar/layout/sharing-settings/members', (require, exports, module)
 	const AppTheme = require('apptheme');
 	const { Loc } = require('loc');
 	const { EntitySelectorFactory } = require('selector/widget/factory');
+
+	const { SharingContext } = require('calendar/model/sharing');
 	const { SharingSettingsCard } = require('calendar/layout/sharing-settings/card');
 	const { Avatars } = require('calendar/layout/avatars');
 	const { Icons } = require('calendar/layout/icons');
@@ -158,12 +160,14 @@ jn.define('calendar/layout/sharing-settings/members', (require, exports, module)
 
 		renderPeopleIcon()
 		{
+			const isCalendarContext = this.model.getContext() === SharingContext.CALENDAR;
+
 			return View(
 				{
 					style: styles.peopleIconContainer,
 				},
 				Image({
-					tintColor: AppTheme.colors.accentMainPrimary,
+					tintColor: isCalendarContext ? AppTheme.colors.accentMainPrimary : AppTheme.colors.base2,
 					svg: {
 						content: Icons.people,
 					},
@@ -196,13 +200,17 @@ jn.define('calendar/layout/sharing-settings/members', (require, exports, module)
 
 		renderPlus()
 		{
+			const isCalendarContext = this.model.getContext() === SharingContext.CALENDAR;
+			const backgroundColor = isCalendarContext ? AppTheme.colors.accentSoftBlue2 : AppTheme.colors.base7;
+			const iconColor = isCalendarContext ? AppTheme.colors.accentMainLinks : AppTheme.colors.base1;
+
 			return View(
 				{
 					style: styles.plusContainer,
 				},
 				Image({
 					svg: {
-						content: icons.plus,
+						content: icons.plus(backgroundColor, iconColor),
 					},
 					style: styles.plusIcon,
 				}),
@@ -246,7 +254,7 @@ jn.define('calendar/layout/sharing-settings/members', (require, exports, module)
 	};
 
 	const icons = {
-		plus: '<svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="18" cy="18" r="18" fill="#E5F9FF"/> <path fill-rule="evenodd" clip-rule="evenodd" d="M18.0001 11.05C18.359 11.05 18.6501 11.3411 18.6501 11.7V17.35H24.3C24.659 17.35 24.95 17.6411 24.95 18.0001C24.95 18.359 24.659 18.6501 24.3 18.6501H18.6501V24.3C18.6501 24.659 18.359 24.95 18.0001 24.95C17.6411 24.95 17.3501 24.659 17.3501 24.3V18.6501H11.7C11.3411 18.6501 11.05 18.359 11.05 18.0001C11.05 17.6411 11.3411 17.35 11.7 17.35H17.3501V11.7C17.3501 11.3411 17.6411 11.05 18.0001 11.05Z" fill="#2066B0"/></svg>'
+		plus: (backgroundColor, iconColor) => `<svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="18" cy="18" r="18" fill="${backgroundColor}"/> <path fill-rule="evenodd" clip-rule="evenodd" d="M18.0001 11.05C18.359 11.05 18.6501 11.3411 18.6501 11.7V17.35H24.3C24.659 17.35 24.95 17.6411 24.95 18.0001C24.95 18.359 24.659 18.6501 24.3 18.6501H18.6501V24.3C18.6501 24.659 18.359 24.95 18.0001 24.95C17.6411 24.95 17.3501 24.659 17.3501 24.3V18.6501H11.7C11.3411 18.6501 11.05 18.359 11.05 18.0001C11.05 17.6411 11.3411 17.35 11.7 17.35H17.3501V11.7C17.3501 11.3411 17.6411 11.05 18.0001 11.05Z" fill="${iconColor}"/></svg>`,
 	};
 
 	module.exports = { SharingSettingsMembers };

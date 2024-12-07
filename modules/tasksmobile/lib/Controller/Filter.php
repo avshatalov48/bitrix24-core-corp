@@ -2,24 +2,43 @@
 
 namespace Bitrix\TasksMobile\Controller;
 
+use Bitrix\Main\Engine\ActionFilter\CloseSession;
 use Bitrix\Main\Engine\Controller;
 use Bitrix\Main\Loader;
-use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Filter\Options;
 use Bitrix\Socialnetwork\Component\WorkgroupList;
-use Bitrix\Tasks\Internals\Counter;
-use Bitrix\Tasks\Internals\Counter\CounterDictionary;
-use Bitrix\Tasks\Internals\Counter\Role;
 use Bitrix\Tasks\Internals\Project\Provider;
 
 Loader::requireModule('socialnetwork');
 
 class Filter extends Controller
 {
+	public function configureActions()
+	{
+		return [
+			'getTaskListPresets' => [
+				'+prefilters' => [new CloseSession()],
+			],
+			'getProjectListPresets' => [
+				'+prefilters' => [new CloseSession()],
+			],
+			'getScrumListPresets' => [
+				'+prefilters' => [new CloseSession()],
+			],
+			'getSearchBarPresets' => [
+				'+prefilters' => [new CloseSession()],
+			],
+		];
+	}
+
 	public function getTaskListPresetsAction(int $groupId = 0): array
 	{
 		/** @var \Bitrix\Tasks\Helper\Filter $filterInstance */
 		$filterInstance = \Bitrix\Tasks\Helper\Filter::getInstance($this->getCurrentUser()->getId(), $groupId);
+		if (method_exists(\Bitrix\Tasks\Helper\Filter::class, 'setRolePresetsEnabledForMobile'))
+		{
+			\Bitrix\Tasks\Helper\Filter::setRolePresetsEnabledForMobile(true);
+		}
 		$filterOptions = $filterInstance->getOptions();
 		$presets = $filterInstance->getAllPresets();
 
@@ -51,7 +70,10 @@ class Filter extends Controller
 	{
 		/** @var \Bitrix\Tasks\Helper\Filter $filterInstance */
 		$filterInstance = \Bitrix\Tasks\Helper\Filter::getInstance($this->getCurrentUser()->getId(), $groupId);
-
+		if (method_exists(\Bitrix\Tasks\Helper\Filter::class, 'setRolePresetsEnabledForMobile'))
+		{
+			\Bitrix\Tasks\Helper\Filter::setRolePresetsEnabledForMobile(true);
+		}
 		$presets = $filterInstance->getPresets();
 		$allPresets = $filterInstance->getAllPresets();
 		foreach ($allPresets as $key => $preset)
@@ -68,7 +90,7 @@ class Filter extends Controller
 		);
 
 		$allPresets = array_map(
-			static fn (string $key) => [
+			static fn(string $key) => [
 				'id' => $key,
 				'name' => (string)$allPresets[$key]['name'],
 				'default' => (bool)$allPresets[$key]['default'],
@@ -90,7 +112,7 @@ class Filter extends Controller
 		);
 
 		return array_map(
-			static fn ($key) => [
+			static fn($key) => [
 				'id' => $key,
 				'name' => $presets[$key]['name'],
 				'fields' => ($presets[$key]['preparedFields'] ?? []),

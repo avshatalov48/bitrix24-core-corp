@@ -56,6 +56,14 @@ jn.define('crm/conversion', (require, exports, module) => {
 			this.customEventEmitter.on('DetailCard::onTabContentLoaded', this.validateDetailCard.bind(this));
 		}
 
+		get analytics()
+		{
+			return {
+				...BX.componentParameters.get('analytics', {}),
+				...(this.props?.analytics ?? {}),
+			};
+		}
+
 		getPermissions()
 		{
 			const { data } = this.props;
@@ -245,12 +253,16 @@ jn.define('crm/conversion', (require, exports, module) => {
 			{
 				this.layoutWidget.close(() => {
 					this.layoutWidget = null;
-					inAppUrl.open(entityUrl);
+					inAppUrl.open(entityUrl, {
+						analytics: this.analytics,
+					});
 				});
 			}
 			else
 			{
-				inAppUrl.open(entityUrl);
+				inAppUrl.open(entityUrl, {
+					analytics: this.analytics,
+				});
 			}
 		}
 
@@ -339,7 +351,7 @@ jn.define('crm/conversion', (require, exports, module) => {
 			}
 
 			const conversionConfig = this.getConversionConfig(params);
-			this.processAnalyticsEvents(conversionConfig, this.props.analytics, 'attempt');
+			this.processAnalyticsEvents(conversionConfig, this.analytics, 'attempt');
 
 			return new Promise((resolve, reject) => {
 				BX.ajax.runComponentAction(
@@ -350,14 +362,12 @@ jn.define('crm/conversion', (require, exports, module) => {
 						...conversionConfig,
 					},
 				).then((response) => {
-					console.warn(response);
 					const status = !response || response.ERROR ? 'error' : 'success';
-					this.processAnalyticsEvents(conversionConfig, this.props.analytics, status);
 					resolve(response);
+					this.processAnalyticsEvents(conversionConfig, this.analytics, status);
 				}).catch((error) => {
-					console.error(error);
-					this.processAnalyticsEvents(conversionConfig, this.props.analytics, 'error');
 					reject(error);
+					this.processAnalyticsEvents(conversionConfig, this.analytics, 'error');
 				});
 			});
 		}
@@ -374,7 +384,7 @@ jn.define('crm/conversion', (require, exports, module) => {
 			conversionTargetEntitiesTypes.forEach((type) => {
 				if (config[type.toLowerCase()] === 'Y')
 				{
-					eventsToSend.push(new AnalyticsEvent(preparedEvent).setType(type));
+					eventsToSend.push(new AnalyticsEvent(preparedEvent).setType(type.toLowerCase()));
 				}
 			});
 

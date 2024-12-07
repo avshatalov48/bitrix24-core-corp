@@ -2,7 +2,7 @@
 
 return [
 	'extensions' => [
-		'apptheme',
+		'im:lib/theme',
 		'type',
 		'im:messenger/lib/ui/base/avatar',
 	],

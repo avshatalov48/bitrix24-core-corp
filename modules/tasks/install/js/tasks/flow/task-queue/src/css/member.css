@@ -1,0 +1,7 @@
+.tasks-flow__task-queue-member_avatar.ui-icon {
+	width: var(--ui-icon-size-xs);
+}
+
+.tasks-flow__task-queue-member {
+	display: flex;
+}

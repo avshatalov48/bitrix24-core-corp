@@ -168,7 +168,7 @@ else
 				<td align="right"><?= GetMessage("INTASK_C29T_TO_TIME") ?>:</td>
 				<td>
 					<input type="text" name="end_time" readonly value="" size="5">
-					<script language="JavaScript">
+					<script>
 					<!--
 					function RMR_CalcEndTime()
 					{
@@ -361,7 +361,7 @@ else
 	<?=bitrix_sessid_post()?>
 	</form>
 	<br />
-	<script language="JavaScript">
+	<script>
 	RMR_CalcEndTime();
 	RMR_RegularityChange("<?= ($arResult["Item"]["Regularity"] == '' ? "NONE" : $arResult["Item"]["Regularity"]) ?>");
 	</script>

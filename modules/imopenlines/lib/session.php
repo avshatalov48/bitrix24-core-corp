@@ -141,7 +141,7 @@ class Session
 		return $this;
 	}
 
-	public function getQueueManager(): ImOpenLines\Queue\Queue
+	public function getQueueManager(): ?ImOpenLines\Queue\Queue
 	{
 		if (!$this->queueManager instanceof ImOpenLines\Queue\Queue)
 		{
@@ -1779,7 +1779,6 @@ class Session
 		Debug::addSession($this,  __METHOD__, ['manual' => $manual]);
 
 		$queueManager = $this->getQueueManager();
-
 		if ($queueManager)
 		{
 			$result = $queueManager->transferToNext($manual);

@@ -4,7 +4,6 @@ namespace Bitrix\Timeman\Controller;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Engine\Controller;
 use Bitrix\Main\Error;
-use Bitrix\Main\Text\Encoding;
 use Bitrix\Main\Type\Date;
 use Bitrix\Main\Web\Json;
 use Bitrix\Timeman\Monitor\Config;
@@ -23,8 +22,6 @@ class Monitor extends Controller
 				'enabled' => $enabled,
 			];
 		}
-
-		$history = Encoding::convertEncoding($history, LANG_CHARSET, 'UTF-8');
 
 		try
 		{

@@ -1,6 +1,10 @@
 <?php
+
 namespace Bitrix\Crm\Integrity;
+
 use Bitrix\Main;
+use Bitrix\Main\Entity\Query;
+use Bitrix\Main\ORM;
 
 class PersonDedupeDataSource extends MatchHashDedupeDataSource
 {
@@ -8,49 +12,64 @@ class PersonDedupeDataSource extends MatchHashDedupeDataSource
 	{
 		parent::__construct(DuplicateIndexType::PERSON, $params);
 	}
-	/**
-	 * @return Array
-	 */
-	protected function loadEntityMatches($entityTypeID, $entityID)
+
+	final protected function getOrmEntity(): ORM\Entity
+	{
+		return DuplicatePersonMatchCodeTable::getEntity();
+	}
+
+	final protected function applyQueryFilterByMatches(Query $query, DuplicateCriterion $criterion): Query
+	{
+		$matches = $criterion->getMatches();
+		$lastName = $matches['LAST_NAME'] ?? '';
+		if ($lastName === '')
+		{
+			throw new Main\ArgumentException("Parameter 'LAST_NAME' is required.", 'matches');
+		}
+
+		$query->addFilter('=LAST_NAME', $lastName);
+		$query->addFilter('=NAME', $matches['NAME'] ?? '');
+		$query->addFilter('=SECOND_NAME', $matches['SECOND_NAME'] ?? '');
+
+		return $query;
+	}
+
+	protected function loadEntityMatches($entityTypeID, $entityID): ?array
 	{
 		return DuplicatePersonCriterion::loadEntityMatches($entityTypeID, $entityID);
 	}
-	/**
-	 * @return Array
-	 */
-	protected function loadEntitesMatches($entityTypeID, array $entityIDs)
+
+	protected function loadEntitesMatches($entityTypeID, array $entityIDs): ?array
 	{
 		return DuplicatePersonCriterion::loadEntitiesMatches($entityTypeID, $entityIDs);
 	}
-	/**
-	 * @return array|null
-	 */
-	protected function getEntityMatchesByHash($entityTypeID, $entityID, $matchHash)
+
+	protected function getEntityMatchesByHash($entityTypeID, $entityID, $matchHash): ?array
 	{
 		$matches = DuplicatePersonCriterion::loadEntityMatches($entityTypeID, $entityID);
-		if(!is_array($matches))
+		if (!is_array($matches))
 		{
 			return null;
 		}
 
-		if(DuplicatePersonCriterion::prepareMatchHash($matches) === $matchHash)
+		if (DuplicatePersonCriterion::prepareMatchHash($matches) === $matchHash)
 		{
 			return $matches;
 		}
 
-		if(isset($matches['SECOND_NAME']) && $matches['SECOND_NAME'] !== '')
+		if (isset($matches['SECOND_NAME']) && $matches['SECOND_NAME'] !== '')
 		{
 			$matches['SECOND_NAME'] = '';
-			if(DuplicatePersonCriterion::prepareMatchHash($matches) === $matchHash)
+			if (DuplicatePersonCriterion::prepareMatchHash($matches) === $matchHash)
 			{
 				return $matches;
 			}
 		}
 
-		if(isset($matches['NAME']) && $matches['NAME'] !== '')
+		if (isset($matches['NAME']) && $matches['NAME'] !== '')
 		{
 			$matches['NAME'] = '';
-			if(DuplicatePersonCriterion::prepareMatchHash($matches) === $matchHash)
+			if (DuplicatePersonCriterion::prepareMatchHash($matches) === $matchHash)
 			{
 				return $matches;
 			}
@@ -58,54 +77,62 @@ class PersonDedupeDataSource extends MatchHashDedupeDataSource
 
 		return null;
 	}
-	/**
-	 * @return DuplicateCriterion
-	 */
-	protected function createCriterionFromMatches(array $matches)
+
+	protected function createCriterionFromMatches(array $matches): DuplicateCriterion
 	{
 		return DuplicatePersonCriterion::createFromMatches($matches);
 	}
-	protected function prepareResult(array &$map, DedupeDataSourceResult $result)
+
+	protected function prepareResult(array &$map, DedupeDataSourceResult $result): void
 	{
 		$entityTypeID = $this->getEntityTypeID();
-		foreach($map as $matchHash => &$entry)
+
+		foreach ($map as $matchHash => &$entry)
 		{
 			$isValidEntry = false;
 			$primaryQty = isset($entry['PRIMARY']) ? count($entry['PRIMARY']) : 0;
 			$secondaryQty = isset($entry['SECONDARY']) ? count($entry['SECONDARY']) : 0;
-
-			if($primaryQty > 1)
+			if ($primaryQty > 1)
 			{
-				$matches = $this->getEntityMatchesByHash($entityTypeID, $entry['PRIMARY'][0], $matchHash);
-				if(is_array($matches))
+				$matches = $this->getEntityMatchesByHash(
+					$entityTypeID,
+					$entry['PRIMARY'][0],
+					$matchHash
+				);
+				if (is_array($matches))
 				{
 					$criterion = $this->createCriterionFromMatches($matches);
 					$dup = new Duplicate($criterion, array());
-					foreach($entry['PRIMARY'] as $entityID)
+					foreach ($entry['PRIMARY'] as $entityID)
 					{
 						$dup->addEntity(new DuplicateEntity($entityTypeID, $entityID));
 					}
+
 					$result->addItem($matchHash, $dup);
 					$isValidEntry = true;
 				}
 			}
 
-			if($primaryQty > 0 && $secondaryQty > 0)
+			if ($primaryQty > 0 && $secondaryQty > 0)
 			{
 				foreach($entry['SECONDARY'] as $secondaryEntityID)
 				{
-					$secondaryEntityMatches = $this->getEntityMatchesByHash($entityTypeID, $secondaryEntityID, $matchHash);
-					if(is_array($secondaryEntityMatches))
+					$secondaryEntityMatches = $this->getEntityMatchesByHash(
+						$entityTypeID,
+						$secondaryEntityID,
+						$matchHash
+					);
+					if (is_array($secondaryEntityMatches))
 					{
 						$criterion = $this->createCriterionFromMatches($secondaryEntityMatches);
 						$secondaryEntityMatchHash = $criterion->getMatchHash();
-						if($secondaryEntityMatchHash === '')
+						if ($secondaryEntityMatchHash === '')
 						{
 							continue;
 						}
 
 						$dup = $result->getItem($secondaryEntityMatchHash);
-						if(!$dup)
+						if (!$dup)
 						{
 							$dup = new Duplicate($criterion, array(new DuplicateEntity($entityTypeID, $secondaryEntityID)));
 							$dup->setOption('enableOverwrite', false);
@@ -118,10 +145,11 @@ class PersonDedupeDataSource extends MatchHashDedupeDataSource
 
 						$result->addItem($secondaryEntityMatchHash, $dup);
 						$isValidEntry = true;
-						foreach($entry['PRIMARY'] as $primaryEntityID)
+
+						foreach ($entry['PRIMARY'] as $primaryEntityID)
 						{
 							$matches = $this->getEntityMatchesByHash($entityTypeID, $primaryEntityID, $matchHash);
-							if(is_array($matches))
+							if (is_array($matches))
 							{
 								$entity = new DuplicateEntity($entityTypeID, $primaryEntityID);
 								$entity->setCriterion($this->createCriterionFromMatches($matches));
@@ -131,6 +159,7 @@ class PersonDedupeDataSource extends MatchHashDedupeDataSource
 					}
 				}
 			}
+
 			if (!$isValidEntry)
 			{
 				$result->addInvalidItem((string)$matchHash);
@@ -138,6 +167,53 @@ class PersonDedupeDataSource extends MatchHashDedupeDataSource
 		}
 		unset($entry);
 	}
+
+	public function isEmptyEntity(DuplicateCriterion $criterion, int $rootEntityId): bool
+	{
+		$isEmpty = parent::isEmptyEntity($criterion, $rootEntityId);
+		if (!$isEmpty)
+		{
+			return false;
+		}
+
+		$matches = $criterion->getMatches();
+		$name = $matches['NAME'] ?? '';
+		$secondName = $matches['SECOND_NAME'] ?? '';
+		$lastName = $matches['LAST_NAME'] ?? '';
+
+		if ($secondName !== '' && $name !== '')
+		{
+			$isEmptyByLastNameAndName = parent::isEmptyEntity(
+				DuplicatePersonCriterion::createFromMatches(['LAST_NAME' => $lastName, 'NAME' => $name]),
+				$rootEntityId
+			);
+			if (!$isEmptyByLastNameAndName)
+			{
+				return false;
+			}
+		}
+
+		if ($name !== '')
+		{
+			$isEmptyByLastName = parent::isEmptyEntity(
+				DuplicatePersonCriterion::createFromMatches(['LAST_NAME' => $lastName]),
+				$rootEntityId
+			);
+			if (!$isEmptyByLastName)
+			{
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	/**
+	 * @deprecated
+	 * @see PersonDedupeDataSource::isEmptyEntity()
+	 *
+	 * @noinspection All
+	 */
 	public function calculateEntityCount(DuplicateCriterion $criterion, array $options = null)
 	{
 		$count = $this->innerCalculateEntityCount($criterion, $options);
@@ -164,6 +240,11 @@ class PersonDedupeDataSource extends MatchHashDedupeDataSource
 
 		return $count;
 	}
+
+	/**
+	 * @deprecated
+	 * @noinspection All
+	 */
 	protected function innerCalculateEntityCount(DuplicateCriterion $criterion, array $options = null)
 	{
 		$entityTypeID = $this->getEntityTypeID();

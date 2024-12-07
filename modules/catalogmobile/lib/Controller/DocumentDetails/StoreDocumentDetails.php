@@ -616,13 +616,14 @@ class StoreDocumentDetails extends BaseDocumentDetails
 		if (!empty($filesToDelete))
 		{
 			$fileIdToPrimary = array_column($existingFiles, 'ID', 'FILE_ID');
+			$primaryToFileId = array_column($existingFiles, 'FILE_ID', 'ID');
 			$idsToDelete = array_intersect_key($fileIdToPrimary, array_fill_keys($filesToDelete, true));
 			foreach ($idsToDelete as $id)
 			{
 				$deleteResult = StoreDocumentFileTable::delete($id);
 				if ($deleteResult->isSuccess())
 				{
-					\CFile::Delete($id);
+					\CFile::Delete($primaryToFileId[$id]);
 				}
 				else
 				{
@@ -634,20 +635,20 @@ class StoreDocumentDetails extends BaseDocumentDetails
 		$filesToAdd = array_diff($fileIds, $existingFileIds);
 		foreach ($filesToAdd as $fileToAdd)
 		{
-			$addResult = StoreDocumentFileTable::add([
-				'DOCUMENT_ID' => $documentId,
-				'FILE_ID' => $fileToAdd,
-			]);
-			if ($addResult->isSuccess())
+			if ($pendingFile = $pendingFiles->getByFileId($fileToAdd))
 			{
-				if ($pendingFile = $pendingFiles->getByFileId($fileToAdd))
+				$addResult = StoreDocumentFileTable::add([
+					'DOCUMENT_ID' => $documentId,
+					'FILE_ID' => $fileToAdd,
+				]);
+				if ($addResult->isSuccess())
 				{
 					$pendingFile->makePersistent();
 				}
-			}
-			else
-			{
-				$isSuccess = false;
+				else
+				{
+					$isSuccess = false;
+				}
 			}
 		}
 

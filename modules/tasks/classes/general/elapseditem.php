@@ -309,7 +309,7 @@ final class CTaskElapsedItem extends CTaskSubItemAbstract
 				$order = ($argsParsed[1] ?? []);
 				$filter = ($argsParsed[2] ?? []);
 				$select = ($argsParsed[3] ?? []);
-				$navParams = $argsParsed[4]['NAV_PARAMS'];
+				$navParams = is_array($argsParsed[4]['NAV_PARAMS'] ?? null) ? $argsParsed[4]['NAV_PARAMS'] : null;
 
 				$byTaskId = false;
 				if (count($argsParsed) > 0 && $taskId !== 0)

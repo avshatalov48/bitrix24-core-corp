@@ -44,7 +44,7 @@ class RegularTaskProducer implements ProducerInterface
 		$this->copiedTaskId = $this->currentResult->getData()[$this->copier->getImplementerClass()][$task->getId()];
 		$this->currentResult->setData([RegularTaskReplicator::getPayloadKey() => $this->copiedTaskId]);
 
-		$deadlineOffsetInDays = (int)($task->getRegularDeadlineOffset());
+		$deadlineOffsetInDays = $task->getRegularDeadlineOffset();
 
 		if ($deadlineOffsetInDays <= 0)
 		{

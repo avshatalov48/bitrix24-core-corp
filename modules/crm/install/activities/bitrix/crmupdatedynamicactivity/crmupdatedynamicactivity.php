@@ -71,6 +71,12 @@ class CBPCrmUpdateDynamicActivity extends \Bitrix\Bizproc\Activity\BaseActivity
 		$conditionGroup->internalizeValues($this->getDocumentType());
 
 		$targetDocumentType = CCrmBizProcHelper::ResolveDocumentType($this->DynamicTypeId);
+
+		if (!$targetDocumentType)
+		{
+			return 0;
+		}
+
 		$factory = Container::getInstance()->getFactory($this->DynamicTypeId);
 		$items = $factory?->getItems([
 			'select' => ['ID'],
@@ -85,9 +91,11 @@ class CBPCrmUpdateDynamicActivity extends \Bitrix\Bizproc\Activity\BaseActivity
 	{
 		$errors = parent::checkProperties();
 
-		$factory = Container::getInstance()->getFactory($this->DynamicTypeId);
-
-		if (!CCrmOwnerType::isPossibleDynamicTypeId($this->DynamicTypeId) || is_null($factory))
+		if (
+			is_null($this->DynamicTypeId)
+			|| !CCrmOwnerType::isPossibleDynamicTypeId($this->DynamicTypeId)
+			|| is_null(Container::getInstance()->getFactory($this->DynamicTypeId))
+		)
 		{
 			$errors->setError(new Error(Loc::getMessage('CRM_UDA_ENTITY_TYPE_ERROR')));
 		}
@@ -259,7 +267,8 @@ class CBPCrmUpdateDynamicActivity extends \Bitrix\Bizproc\Activity\BaseActivity
 				'FieldName' => 'dynamic_type_id',
 				'Type' => FieldType::SELECT,
 				'Options' => $typeNames,
-				'Required' => true
+				'Required' => true,
+				'AllowSelection' => false,
 			],
 			'DynamicId' => [
 				'FieldName' => 'dynamic_id',

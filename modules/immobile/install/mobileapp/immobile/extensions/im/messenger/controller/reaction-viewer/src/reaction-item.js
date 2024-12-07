@@ -2,7 +2,8 @@
  * @module im/messenger/controller/reaction-viewer/reaction-item
  */
 jn.define('im/messenger/controller/reaction-viewer/reaction-item', (require, exports, module) => {
-	const AppTheme = require('apptheme');
+	/* global JNEventEmitter */
+	const { Theme } = require('im/lib/theme');
 	const { Loc } = require('loc');
 
 	const sharedEmitter = new JNEventEmitter();
@@ -59,7 +60,7 @@ jn.define('im/messenger/controller/reaction-viewer/reaction-item', (require, exp
 				},
 				this.props.reactionType === 'all'
 					? this.renderSummary()
-					: this.renderReaction()
+					: this.renderReaction(),
 			);
 		}
 
@@ -73,7 +74,7 @@ jn.define('im/messenger/controller/reaction-viewer/reaction-item', (require, exp
 						flexDirection: 'row',
 						alignSelf: 'center',
 						flex: 1,
-						borderBottomColor: this.state.isCurrent ? AppTheme.colors.accentMainPrimary : AppTheme.colors.bgNavigation,
+						borderBottomColor: this.state.isCurrent ? Theme.colors.accentMainPrimary : Theme.colors.bgNavigation,
 						borderBottomWidth: 2,
 					},
 				},
@@ -88,7 +89,7 @@ jn.define('im/messenger/controller/reaction-viewer/reaction-item', (require, exp
 				}),
 				Text({
 					style: {
-						color: this.state.isCurrent ? AppTheme.colors.base1 : AppTheme.colors.base4,
+						color: this.state.isCurrent ? Theme.colors.base1 : Theme.colors.base4,
 						fontSize: 14,
 						fontWeight: '500',
 					},
@@ -107,13 +108,13 @@ jn.define('im/messenger/controller/reaction-viewer/reaction-item', (require, exp
 						flexDirection: 'row',
 						alignSelf: 'center',
 						flex: 1,
-						borderBottomColor: this.state.isCurrent ? AppTheme.colors.accentMainPrimary : AppTheme.colors.bgNavigation,
+						borderBottomColor: this.state.isCurrent ? Theme.colors.accentMainPrimary : Theme.colors.bgNavigation,
 						borderBottomWidth: 2,
 					},
 				},
 				Text({
 					style: {
-						color: this.state.isCurrent ? AppTheme.colors.base1 : AppTheme.colors.base4,
+						color: this.state.isCurrent ? Theme.colors.base1 : Theme.colors.base4,
 						fontSize: 14,
 						fontWeight: '500',
 						marginRight: 6,
@@ -122,7 +123,7 @@ jn.define('im/messenger/controller/reaction-viewer/reaction-item', (require, exp
 				}),
 				Text({
 					style: {
-						color: this.state.isCurrent ? AppTheme.colors.base1 : AppTheme.colors.base4,
+						color: this.state.isCurrent ? Theme.colors.base1 : Theme.colors.base4,
 						fontSize: 14,
 						fontWeight: '500',
 					},

@@ -2,10 +2,12 @@
 
 namespace Bitrix\BIConnector\Superset;
 
-use Bitrix\BIConnector\Integration\Superset\Model\EO_SupersetDashboard;
+use Bitrix\BIConnector\Integration\Superset\Model\SupersetDashboard;
+use Bitrix\BIConnector\Integration\Superset\SupersetInitializer;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\UserGroupTable;
 use Bitrix\Main\Web\Json;
 
 final class SystemDashboardManager
@@ -80,20 +82,19 @@ final class SystemDashboardManager
 		if ($list === null)
 		{
 			$adminIds = [];
-			$users = \CUser::GetList(
-				'ID',
-				'ASC',
-				[
-					'GROUPS_ID' => 1,
-					'ACTIVE' => 'Y',
+			$users = UserGroupTable::getList([
+				'filter' => [
+					'=GROUP_ID' => 1,
+					'=DATE_ACTIVE_TO' => null,
+					'=USER.ACTIVE' => 'Y',
+					'=USER.IS_REAL_USER' => 'Y',
 				],
-				[
-					'FIELDS' => 'ID',
-				]
-			);
+				'select' => [ 'USER_ID' ]
+			]);
+
 			while ($user = $users->Fetch())
 			{
-				$adminIds[] = $user['ID'];
+				$adminIds[] = $user['USER_ID'];
 			}
 
 			return $adminIds;
@@ -103,7 +104,7 @@ final class SystemDashboardManager
 
 		return is_array($list) ? $list : [];
 	}
-	public static function notifyUserDashboardModification(EO_SupersetDashboard $dashboard, bool $isModification): void
+	public static function notifyUserDashboardModification(SupersetDashboard $dashboard, bool $isModification): void
 	{
 		if (Loader::includeModule('im'))
 		{
@@ -133,6 +134,42 @@ final class SystemDashboardManager
 				];
 
 				\CIMNotify::Add($notificationFields);
+			}
+		}
+	}
+
+	/**
+	 * Adds agent to set admin as dashboard's owner if the previous owner was fired.
+	 * @param $fields array User fields ACTIVE (Y/N) and ID.
+	 *
+	 * @return void
+	 */
+	public static function onAfterUserUpdateHandler(array $fields): void
+	{
+		if (!SupersetInitializer::isSupersetReady())
+		{
+			return;
+		}
+
+		if (!isset($fields['ACTIVE']))
+		{
+			return;
+		}
+
+		if ($fields['ACTIVE'] === 'N')
+		{
+			$userId = (int)($fields['ID'] ?? 0);
+			if ($userId)
+			{
+				\CAgent::addAgent(
+					"\\Bitrix\\BIConnector\\Integration\\Superset\\Agent::setDefaultOwnerForDashboards({$userId});",
+					'biconnector',
+					'N',
+					300,
+					'',
+					'Y',
+					convertTimeStamp(time() + \CTimeZone::getOffset() + 300, 'FULL')
+				);
 			}
 		}
 	}

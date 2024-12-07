@@ -63,37 +63,43 @@ jn.define('crm/timeline/item/ui/loading-overlay', (require, exports, module) => 
 
 		/**
 		 * @public
+		 * @return {Promise} Resolves after animation completed
 		 */
 		show()
 		{
 			if (!this.nodeRef)
 			{
-				return;
+				return Promise.resolve();
 			}
 
-			this.setState({ visible: true }, () => {
-				this.nodeRef.animate({
-					duration: 300,
-					opacity: 0.6,
+			return new Promise((resolve) => {
+				this.setState({ visible: true }, () => {
+					this.nodeRef.animate({
+						duration: 300,
+						opacity: 0.6,
+					}, resolve);
 				});
 			});
 		}
 
 		/**
 		 * @public
+		 * @return {Promise} Resolves after animation completed
 		 */
 		hide()
 		{
 			if (!this.nodeRef)
 			{
-				return;
+				return Promise.resolve();
 			}
 
-			this.nodeRef.animate({
-				duration: 300,
-				opacity: 0,
-			}, () => {
-				this.setState({ visible: false });
+			return new Promise((resolve) => {
+				this.nodeRef.animate({
+					duration: 300,
+					opacity: 0,
+				}, () => {
+					this.setState({ visible: false }, resolve);
+				});
 			});
 		}
 	}

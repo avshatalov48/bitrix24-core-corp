@@ -5,8 +5,6 @@ class CXDILFSchemeRSS
 {
 	public static function Request($server, $page, $port, $params, $uri = false)
 	{
-		global $APPLICATION;
-
 		if ($uri && $uri <> '')
 		{
 			$strURI = $uri;
@@ -63,7 +61,7 @@ class CXDILFSchemeRSS
 			}
 
 			$strData = preg_replace("/<"."\\?XML.*?\\?".">/i", "", $strData);
-			$strData = $APPLICATION->ConvertCharset($strData, $rss_charset, SITE_CHARSET);
+			$strData = \Bitrix\Main\Text\Encoding::convertEncoding($strData, $rss_charset, SITE_CHARSET);
 		}
 
 		if ($strData <> '')

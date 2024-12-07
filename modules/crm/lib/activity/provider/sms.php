@@ -20,6 +20,12 @@ class Sms extends BaseMessage
 {
 	public const PROVIDER_TYPE_SMS = 'SMS';
 
+	private const ALLOWED_PROVIDER_TYPES = [
+		self::PROVIDER_TYPE_SMS,
+		self::PROVIDER_TYPE_SALESCENTER_PAYMENT_SENT,
+		self::PROVIDER_TYPE_SALESCENTER_DELIVERY,
+	];
+
 	/**
 	 * @inheritDoc
 	 */
@@ -55,7 +61,7 @@ class Sms extends BaseMessage
 		$activity = CCrmActivity::GetList([], [
 			'TYPE_ID' => CCrmActivityType::Provider,
 			'PROVIDER_ID' => static::getId(),
-			'@PROVIDER_TYPE_ID' => [static::PROVIDER_TYPE_SMS, static::PROVIDER_TYPE_SALESCENTER_PAYMENT_SENT, static::PROVIDER_TYPE_SALESCENTER_DELIVERY],
+			'@PROVIDER_TYPE_ID' => self::ALLOWED_PROVIDER_TYPES,
 			'ASSOCIATED_ENTITY_ID' => $id,
 			'CHECK_PERMISSIONS' => 'N',
 		])->Fetch();
@@ -170,5 +176,17 @@ class Sms extends BaseMessage
 		}
 
 		return null;
+	}
+
+	public static function onMessageSent(Event $event): void
+	{
+		$additionalFields = $event->getParameter('ADDITIONAL_FIELDS') ?? [];
+		$providerTypeId = $additionalFields['ACTIVITY_PROVIDER_TYPE_ID'] ?? static::getDefaultTypeId();
+		if (!in_array($providerTypeId, self::ALLOWED_PROVIDER_TYPES, true))
+		{
+			return;
+		}
+
+		parent::onMessageSent($event);
 	}
 }

@@ -82,6 +82,10 @@ class CCrmEntityMergerComponent extends CBitrixComponent
 		$this->arResult['PATH_TO_ENTITY_LIST'] = isset($this->arParams['~PATH_TO_ENTITY_LIST'])
 			? $this->arParams['~PATH_TO_ENTITY_LIST'] : '';
 
+		$this->arResult['IS_RECEIVE_ENTITY_EDITOR_FROM_CONTROLLER'] =
+			(bool)($this->arParams['IS_RECEIVE_ENTITY_EDITOR_FROM_CONTROLLER'] ?? false)
+		;
+
 		$this->arResult['IS_AUTOMATIC'] = ($this->request->get('is_automatic') === 'yes');
 
 		$this->arResult['DEDUPE_CONFIG'] = [];
@@ -235,6 +239,8 @@ class CCrmEntityMergerComponent extends CBitrixComponent
 		{
 			$this->arResult['EXTERNAL_CONTEXT_ID'] = '';
 		}
+
+		$this->arResult['RESULT_TITLE'] = $this->arParams['RESULT_TITLE'] ?? null;
 
 		$this->includeComponentTemplate();
 	}

@@ -6,12 +6,13 @@ BX.namespace("BX.CRM.Kanban");
 
 /**
  * @param options
- * @extends {BX.Kanban.Grid}
+ * @extends {BX.Kanban.DropZone}
  * @constructor
  */
 BX.CRM.Kanban.DropZone = function(options)
 {
 	BX.Kanban.DropZone.apply(this, arguments);
+
 	this.droppedItems = [];
 };
 
@@ -91,9 +92,7 @@ BX.CRM.Kanban.DropZone.prototype = {
 	 */
 	captureItem: function(item)
 	{
-		var event;
-
-		event = new BX.Kanban.DropZoneEvent();
+		const event = new BX.CRM.Kanban.DropZoneEvent();
 		event.setItem(item);
 		event.setDropZone(this);
 		BX.onCustomEvent(this.getGrid(), "Kanban.DropZone:onBeforeItemCaptured", [event]);
@@ -113,16 +112,16 @@ BX.CRM.Kanban.DropZone.prototype = {
 
 		this.getGrid().hideItem(item);
 
-		BX.onCustomEvent(this.getGrid(), "Kanban.DropZone:onItemCaptured", [item, this]);
+		BX.onCustomEvent(this.getGrid(), 'Kanban.DropZone:onItemCaptured', [item, this, event.groupIds]);
 
 		this.captureTimeout = setTimeout(
-			function() {
+			() => {
 				this.empty();
 				this.getDropZoneArea().hide();
 				this.droppedItems = [];
 				this.getGrid().dropZonesShow = false;
-			}.bind(this),
-			this.getDropZoneArea().getDropZoneTimeout()
+			},
+			this.getDropZoneArea().getDropZoneTimeout(),
 		);
 	},
 
@@ -262,6 +261,34 @@ BX.CRM.Kanban.DropZone.prototype = {
 		this.setActive();
 		this.getDropZoneArea().setActive();
 	},
+
+	empty: function()
+	{
+		if (this.captureTimeout)
+		{
+			clearTimeout(this.captureTimeout);
+		}
+
+		if (this.droppedItem === null)
+		{
+			return;
+		}
+
+		this.unsetActive();
+		this.unsetCaptured();
+
+		BX.onCustomEvent(this.getGrid(), 'Kanban.DropZone:onItemEmptied', [this.droppedItem, this]);
+
+		this.droppedItem = null;
+	},
 };
 
+BX.CRM.Kanban.DropZoneEvent = function(options){
+	BX.Kanban.DropZoneEvent.apply(this, options);
+	this.groupIds = [];
+};
+
+BX.CRM.Kanban.DropZoneEvent.prototype = {
+	__proto__: BX.Kanban.DropZoneEvent.prototype,
+};
 })();

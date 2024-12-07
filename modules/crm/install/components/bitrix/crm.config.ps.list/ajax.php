@@ -25,7 +25,6 @@ if (!$curUser || !$curUser->IsAuthorized() || !check_bitrix_sessid() || $_SERVER
 }
 
 \Bitrix\Main\Localization\Loc::loadMessages(__FILE__);
-CUtil::JSPostUnescape();
 if (!function_exists('__CrmConfigPsEndResponse'))
 {
 	function __CrmActivityEditorEndResponse($result)

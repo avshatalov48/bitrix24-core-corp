@@ -12,7 +12,7 @@ use Bitrix\Main\Config\Option;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ModuleManager;
-use Bitrix\Tasks\AnalyticLogger;
+use Bitrix\Tasks\Helper\Analytics;
 use Bitrix\Tasks\Internals\Marketing\EventInterface;
 use Bitrix\Tasks\Util\Type\DateTime;
 use Bitrix\UI\Barcode\Barcode;
@@ -53,13 +53,7 @@ class QrMobileEvent extends BaseEvent
 
 		$this->disableEvent();
 
-		AnalyticLogger::logToFile(
-			'send',
-			'QrMobile',
-			0,
-			'QrMobile',
-			$this->userId
-		);
+		Analytics::getInstance($this->userId)->onQrMobile();
 
 		return true;
 	}

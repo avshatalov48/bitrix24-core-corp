@@ -1,7 +1,6 @@
-
-import { IconBackgroundColor } from '../enums/icon-background-color';
+import { Dom, Text, Type } from 'main.core';
 import { Counter } from 'ui.cnt';
-import {Dom, Text} from 'main.core';
+import { IconBackgroundColor } from '../enums/icon-background-color';
 
 export const Icon = {
 	props: {
@@ -21,38 +20,59 @@ export const Icon = {
 			default: IconBackgroundColor.PRIMARY,
 		},
 		backgroundUri: String,
+		backgroundColor: {
+			type: String,
+			required: false,
+			default: null,
+		},
 	},
 	inject: ['isLogMessage'],
 	computed: {
-		className() {
+		className(): Object
+		{
 			return {
 				'crm-timeline__card_icon': true,
-				[`--bg-${this.backgroundColorToken}`]: !!this.backgroundColorToken,
-				[`--code-${this.code}`]: !!this.code && !this.backgroundUri,
-				[`--custom-bg`]: !!this.backgroundUri,
-				['--muted']: this.isLogMessage,
-			}
+				[`--bg-${this.backgroundColorToken}`]: Boolean(this.backgroundColorToken),
+				[`--code-${this.code}`]: Boolean(this.code) && !this.backgroundUri,
+				'--custom-bg': Boolean(this.backgroundUri),
+				'--muted': this.isLogMessage,
+			};
 		},
 
-		counterNodeContainer() {
+		counterNodeContainer(): HTMLDivElement
+		{
 			return this.$refs.counter;
 		},
 
-		styles() {
+		styles(): Object
+		{
 			if (!this.backgroundUri)
 			{
 				return {};
 			}
 
 			return {
-				backgroundImage: "url('" + encodeURI(Text.encode(this.backgroundUri)) + "')",
+				backgroundImage: `url('${encodeURI(Text.encode(this.backgroundUri))}')`,
+			};
+		},
+
+		iconStyle(): Object
+		{
+			if (Type.isStringFilled(this.backgroundColor))
+			{
+				return {
+					'--crm-timeline-card-icon-background': Text.encode(this.backgroundColor),
+				};
 			}
-		}
+
+			return {};
+		},
 	},
 
 	methods: {
 		renderCounter() {
-			if (!this.counterType) {
+			if (!this.counterType)
+			{
 				return;
 			}
 			Dom.clean(this.counterNodeContainer);
@@ -70,13 +90,13 @@ export const Icon = {
 	watch: {
 		counterType(newCounterType): void // update if counter state changed
 		{
-			this.$nextTick(() => {
+			void this.$nextTick(() => {
 				this.renderCounter();
 			});
-		}
+		},
 	},
 	template: `
-		<div :class="className">
+		<div :class="className" :style="iconStyle">
 			<i :style="styles"></i>
 			<div ref="counter" v-show="!!counterType" class="crm-timeline__card_icon_counter"></div>
 		</div>

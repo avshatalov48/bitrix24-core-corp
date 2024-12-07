@@ -34,7 +34,6 @@ jn.define('layout/ui/banners/backdrop-header', (require, exports, module) => {
 	 * @return {View}
 	 */
 	const MainImage = (backgroundImage) => {
-
 		if (typeof backgroundImage === 'string')
 		{
 			return View(

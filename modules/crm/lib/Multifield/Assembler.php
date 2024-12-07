@@ -65,6 +65,11 @@ final class Assembler
 			$result['VALUE'] = $value->getValue();
 		}
 
+		if (!is_null($value->getValueExtra()?->getCountryCode()))
+		{
+			$result['VALUE_EXTRA']['VALUE_COUNTRY_CODE'] = $value->getValueExtra()?->getCountryCode();
+		}
+
 		return $result;
 	}
 

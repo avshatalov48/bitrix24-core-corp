@@ -129,6 +129,8 @@ final class Task extends \Bitrix\Tasks\Manager
 		$fieldMap['TASKS_ANALYTICS_SECTION'] = array(0, 1, 0, 0, 0);
 		$fieldMap['TASKS_ANALYTICS_SUB_SECTION'] = array(0, 1, 0, 0, 0);
 		$fieldMap['TASKS_ANALYTICS_ELEMENT'] = array(0, 1, 0, 0, 0);
+		$fieldMap['TASKS_ANALYTICS_PARAMS'] = array(0, 1, 0, 0, 0);
+		$fieldMap['TASKS_ANALYTICS_CATEGORY'] = array(0, 1, 0, 0, 0);
 
 		return $fieldMap;
 	}
@@ -668,6 +670,8 @@ final class Task extends \Bitrix\Tasks\Manager
 				$subCan = array($data[ 'ID' ] => &$can);
 				static::injectDayPlanFields($userId, $parameters, $subData, $subCan);
 			}
+
+			$data['FLOW_ID'] = (int)$data['FLOW_ID'];
 		}
 
 		return array(
@@ -989,20 +993,20 @@ final class Task extends \Bitrix\Tasks\Manager
 		$user = UserModel::createFromId($userId);
 		$data = self::cleanData($user, $data);
 
-		if (is_array($references[ 'USER' ]))
+		if (isset($references['USER']) && is_array($references['USER']))
 		{
 			Originator::extendData($data, $references[ 'USER' ]);
 			Responsible::extendData($data, $references[ 'USER' ]);
 			Auditor::extendData($data, $references[ 'USER' ]);
 			Accomplice::extendData($data, $references[ 'USER' ]);
 		}
-		if (is_array($references[ 'RELATED_TASK' ]))
+		if (isset($references['RELATED_TASK']) && is_array($references['RELATED_TASK']))
 		{
 			RelatedTask::extendData($data, $references[ 'RELATED_TASK' ]);
 			ParentTask::extendData($data, $references[ 'RELATED_TASK' ]);
 			ProjectDependence::extendData($data, $references[ 'RELATED_TASK' ]);
 		}
-		if (is_array($references[ 'GROUP' ]))
+		if (isset($references['GROUP']) && is_array($references['GROUP']))
 		{
 			Project::extendData($data, $references[ 'GROUP' ]);
 		}
@@ -1267,7 +1271,7 @@ final class Task extends \Bitrix\Tasks\Manager
 		$strIndex = join(' ', $index);
 		$strIndex = array_unique(explode(' ', $strIndex));
 		$strIndex = join(' ', $strIndex);
-		$strIndex = toUpper($strIndex);
+		$strIndex = mb_strtoupper($strIndex);
 
 		return $strIndex;
 	}

@@ -88,11 +88,19 @@ class BizprocMobile extends CModule
 			true
 		);
 
+		CopyDirFiles(
+			$_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/bizprocmobile/install/components/',
+			$_SERVER['DOCUMENT_ROOT'] . '/bitrix/components/',
+			true,
+			true
+		);
+
 		return true;
 	}
 
-	public function uninstallFiles()
+	public function uninstallFiles(): void
 	{
+		DeleteDirFilesEx('/bitrix/mobileapp/' . $this->MODULE_ID);
 	}
 
 	public function installEvents()

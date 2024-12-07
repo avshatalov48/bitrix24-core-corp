@@ -3,7 +3,6 @@
 return [
 	'extensions' => [
 		'loc',
-		'alert/alert',
 		'utils/validation',
 	],
 	'bundle' => [
@@ -11,5 +10,6 @@ return [
 		'confirm',
 		'./src/confirm-closing',
 		'./src/confirm-destructive',
+		'./src/confirm-default',
 	],
 ];

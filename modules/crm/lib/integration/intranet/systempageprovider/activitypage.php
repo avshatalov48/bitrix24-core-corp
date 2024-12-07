@@ -6,8 +6,8 @@ use Bitrix\Crm\Integration\Intranet\CustomSectionProvider;
 use Bitrix\Crm\Integration\Intranet\SystemPageProvider;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Router;
-use Bitrix\Intranet\CustomSection\DataStructures\CustomSectionPage;
 use Bitrix\Intranet\CustomSection\DataStructures;
+use Bitrix\Intranet\CustomSection\DataStructures\CustomSectionPage;
 use Bitrix\Intranet\CustomSection\Provider\Component;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Web\Uri;
@@ -15,7 +15,7 @@ use Bitrix\Main\Web\Uri;
 class ActivityPage extends SystemPageProvider
 {
 	protected const DEFAULT_SETTINGS = [];
-	protected const SORT = 100;
+	protected const SORT = 999999;
 
 	public static function getComponent(string $pageSettings, Uri $url): ?Component
 	{

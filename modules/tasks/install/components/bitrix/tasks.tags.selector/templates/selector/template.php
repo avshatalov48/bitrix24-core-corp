@@ -37,7 +37,7 @@ $tagsAreConverting = TagConverter::isProceed();
 	<?php endif ?>
 <?php endif?>
 
-<script type="text/javascript">
+<script>
 	BX.ready(function() {
 		BX.message({
 			TAGS_BUTTON_OK: '<?= GetMessageJS('TASKS_TAGS_OK') ?>',
@@ -48,7 +48,7 @@ $tagsAreConverting = TagConverter::isProceed();
 			TAGS_BUTTON_CHANGE: '<?= GetMessageJS('TASKS_TAGS_CHANGE') ?>',
 			TASKS_TAG_SELECTOR_TAGS_ARE_CONVERTING_TITLE: '<?= GetMessageJS('TASKS_TAG_SELECTOR_TAGS_ARE_CONVERTING_TITLE') ?>',
 			TASKS_TAG_SELECTOR_TAGS_ARE_CONVERTING_COME_BACK_LATER: '<?= GetMessageJS('TASKS_TAG_SELECTOR_TAGS_ARE_CONVERTING_COME_BACK_LATER') ?>',
-			TASKS_TAG_SELECTOR_TAGS_ARE_CONVERTING_TEXT: '<?= GetMessageJS('TASKS_TAG_SELECTOR_TAGS_ARE_CONVERTING_TEXT') ?>',
+			TASKS_TAG_SELECTOR_TAGS_ARE_CONVERTING_TEXT: '<?= Json::encode(GetMessageJS('TASKS_TAG_SELECTOR_TAGS_ARE_CONVERTING_TEXT')) ?>',
 		});
 
 		var tasksTagsSelector = new BX.Tasks.TagsSelector(

@@ -65,12 +65,15 @@ class BankDetailMatcher extends BaseRequisiteMatcher
 
 	protected function createBlankRequisite($settings)
 	{
-		return $this->getRequisiteEntity()->add([
-			'NAME' => $settings['RQ_NAME'],
-			'PRESET_ID' => $settings['RQ_PRESET_ID'],
-			'ENTITY_ID' => $this->getEntityId(),
-			'ENTITY_TYPE_ID' => $this->getEntityTypeId()
-		]);
+		return $this->getRequisiteEntity()->add(
+			[
+				'NAME' => $settings['RQ_NAME'],
+				'PRESET_ID' => $settings['RQ_PRESET_ID'],
+				'ENTITY_ID' => $this->getEntityId(),
+				'ENTITY_TYPE_ID' => $this->getEntityTypeId(),
+			],
+			['DISABLE_REQUIRED_USER_FIELD_CHECK' => true]
+		);
 	}
 
 	protected function loadExistingEntities()

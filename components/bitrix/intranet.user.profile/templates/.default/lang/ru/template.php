@@ -12,9 +12,11 @@ $MESS["INTRANET_USER_PROFILE_BLOG_GRAT_TITLE"] = "Благодарности";
 $MESS["INTRANET_USER_PROFILE_BLOG_GRAT_ADD"] = "Поблагодарить";
 $MESS["INTRANET_USER_PROFILE_MORE"] = "Показать еще #NUM#";
 $MESS["INTRANET_USER_PROFILE_extranet"] = "Экстранет";
+$MESS["INTRANET_USER_PROFILE_waiting"] = "Ждёт подтверждения входа";
 $MESS["INTRANET_USER_PROFILE_visitor"] = "Посетитель";
 $MESS["INTRANET_USER_PROFILE_fired"] = "Уволен";
 $MESS["INTRANET_USER_PROFILE_invited"] = "Приглашен";
+$MESS["INTRANET_USER_PROFILE_MSG_1_invited"] = "Приглашение не принято";
 $MESS["INTRANET_USER_PROFILE_integrator"] = "Интегратор";
 $MESS["INTRANET_USER_PROFILE_admin"] = "Администратор";
 $MESS["INTRANET_USER_PROFILE_email"] = "Почтовый пользователь";
@@ -72,9 +74,10 @@ $MESS["INTRANET_USER_PROFILE_PHOTO_DELETE_CONFIRM"] = "Вы уверены, чт
 $MESS["INTRANET_USER_PROFILE_MOVE_ADMIN_RIGHTS_CONFIRM"] = "На вашем Битрикс24 назначено максимальное допустимое<br/> количество администраторов. 
 При назначении данного<br/>пользователя вы лишитесь права администрировать портал. Вы уверены, что хотите передать права администратора?";
 $MESS["INTRANET_USER_PROFILE_MOVE_ADMIN_RIGHTS_SECURITY_CONFIRM_TITLE"] = "Назначить сотрудника администратором?";
-$MESS["INTRANET_USER_PROFILE_MOVE_ADMIN_RIGHTS_SECURITY_CONFIRM_DESCRIPTION"] = "Администратор имеет полный доступ к персональным данным сотрудников и клиентов, может приглашать и увольнять сотрудников, изменять права и настройки вашего Битрикс24";
-$MESS["INTRANET_USER_PROFILE_CONFIRM_YES"] = "Да, назначить";
-$MESS["INTRANET_USER_PROFILE_CONFIRM_NO"] = "Не назначать";
+$MESS["INTRANET_USER_PROFILE_MOVE_ADMIN_RIGHTS_SECURITY_CONFIRM_DESCRIPTION_MSGVER_1"] = "Обратите внимание, что администратор сможет назначать и удалять любых других администраторов, а также получит полный контроль над вашим Битрикс24. Если это не ваш сотрудник или вы не знаете сотрудника лично, перед назначением убедитесь в его надёжности.<br/><br/>Сторонних разработчиков и сотрудников компаний-партнёров Битрикс24 важно добавлять только как интеграторов. Интеграторы обладают достаточными правами для настройки, но не смогут забрать у вас доступ к Битрикс24.<br/><br/>[helpdesklink]Подробнее о том, как защитить Битрикс24[/helpdesklink]";
+$MESS["INTRANET_USER_PROFILE_CONFIRM_YES_MSGVER_1"] = "Назначить администратором";
+$MESS["INTRANET_USER_PROFILE_CONFIRM_YES_INTEGRATOR"] = "Назначить интегратором";
+$MESS["INTRANET_USER_PROFILE_CONFIRM_NO_MSGVER_1"] = "Отмена";
 $MESS["INTRANET_USER_PROFILE_MOVE_ADMIN_RIGHTS_CONFIRM_PROMO"] = "#LINK_START#Получить#LINK_END# дополнительные возможности для вашего Битрикс24";
 $MESS["INTRANET_USER_PROFILE_RIGHTS_RESTR_TITLE"] = "Ограничение числа администраторов";
 $MESS["INTRANET_USER_PROFILE_RIGHTS_RESTR_TEXT1"] = "Получите дополнительные полезные возможности для вашего «Битрикс24»";
@@ -105,10 +108,19 @@ $MESS["INTRANET_USER_PROFILE_STRESSLEVEL_NORESULT_INDICATOR_TEXT"] = "стрес
 $MESS["INTRANET_USER_PROFILE_STRESSLEVEL_RESULT_HINT_VISIBLE"] = "Показатель уровня вашего стресса доступен для просмотра другим пользователям.";
 $MESS["INTRANET_USER_PROFILE_STRESSLEVEL_RESULT_HINT_INVISIBLE"] = "Показатель уровня вашего стресса недоступен для просмотра другим пользователям.";
 $MESS["INTRANET_USER_PROFILE_STRESSLEVEL_RESULT_SHARE_LINK"] = "копировать в буфер";
-$MESS["INTRANET_USER_PROFILE_DISK_SPACE"] = "объем - #VALUE#";
-$MESS["INTRANET_USER_PROFILE_DISK_INSTALLED_MSGVER_1"] = "Установлен Битрикс24.Диск";
+$MESS["INTRANET_USER_PROFILE_DISK_SPACE_MSGVER_1"] = "Установлен Битрикс24.Диск #DATE#, объем - #VALUE#";
+$MESS["INTRANET_USER_PROFILE_DISK_INSTALLED_MSGVER_2"] = "Установлен Битрикс24.Диск #DATE#";
 $MESS["INTRANET_USER_PROFILE_FIRE_INVITED_USER"] = "Вы не можете удалить приглашенного пользователя, так как он связан с другими инструментами.
 Деактивируйте (увольте) пользователя, чтобы закрыть ему доступ к этому Битрикс24.
 <br><br>Хотите уволить?";
 
 $MESS['INTRANET_USER_PROFILE_FACEBOOK_RESTRICTIONS_META_RU'] = '* принадлежит компании Meta, признанной экстремистской организацией и запрещённой на территории РФ';
+
+$MESS["INTRANET_USER_PROFILE_ACTION_CONFIRM"] = "Подтвердить вход";
+$MESS["INTRANET_USERPROFILE_ACTION_REFUSE"] = "Отказать";
+$MESS["INTRANET_USER_PROFILE_INTEGRATOR_ERROR_NOT_PARTNER"] = 'Сотрудника нет в списке сертифицированных партнёров, его нельзя сделать интегратором. Интегратор получает доступ к вашему Битрикс24, поэтому мы разрешаем назначать интеграторами только сотрудников проверенных компаний.
+<br/><br/>
+Напоминаем, что для настройки достаточно прав интегратора. Не рекомендуем давать сторонним разработчикам права администратора, так как они могут уволить остальных сотрудников и получить полный контроль над вашим Битрикс24.
+<br/><br/>
+Выбрать надёжного партнёра можно на <a target="_blank" href="https://www.bitrix24.ru/partners/" >нашем сайте</a>';
+$MESS["INTRANET_USER_PROFILE_INTEGRATOR_ERROR_NOT_PARTNER_CLOSE"] = "Понятно";

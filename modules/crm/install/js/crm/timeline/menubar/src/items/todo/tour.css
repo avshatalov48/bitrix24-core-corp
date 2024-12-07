@@ -1,0 +1,9 @@
+.popup-window-ui-tour.--hidden{
+	display: none !important;
+}
+
+.crm-entity-stream-content-new-detail-todo-guide-link{
+	color: var(--ui-color-link-primary-base);
+	font-size: var(--ui-font-size-xl);
+	border-bottom-style: dashed !important;
+}

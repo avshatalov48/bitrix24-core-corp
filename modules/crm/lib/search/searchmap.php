@@ -4,6 +4,7 @@ namespace Bitrix\Crm\Search;
 
 use Bitrix\Crm\Integrity\DuplicateCommunicationCriterion;
 use Bitrix\Main\NotSupportedException;
+use Bitrix\Main\UserTable;
 use CCrmFieldMulti;
 use CCrmOwnerType;
 use CCrmStatus;
@@ -11,7 +12,7 @@ use CUser;
 
 class SearchMap
 {
-	private static array$users = [];
+	private static array $users = [];
 	private array $data = [];
 
 	/**
@@ -96,6 +97,8 @@ class SearchMap
 	
 	public function addUserByID($userId): void
 	{
+		global $USER;
+
 		if ((int)$userId <= 0)
 		{
 			return;
@@ -105,18 +108,24 @@ class SearchMap
 		{
 			$user = self::$users[(int)$userId];
 		}
+		elseif (isset($USER) && $USER instanceof \CUser && (int)$userId === (int)$USER->GetID())
+		{
+			$user = [
+				'ID' => $USER->GetID(),
+				'LOGIN' => $USER->GetLogin(),
+				'NAME' => $USER->GetFullName(),
+				'LAST_NAME' => $USER->GetLastName(),
+				'SECOND_NAME' => $USER->GetSecondName(),
+				'TITLE' => $USER->GetParam("TITLE"),
+			];
+		}
 		else
 		{
-			$dbResult = CUser::GetList(
-				'ID',
-				'ASC',
-				['ID'=> $userId],
-				[
-					'FIELDS' => ['ID', 'LOGIN', 'NAME', 'LAST_NAME', 'SECOND_NAME', 'TITLE'],
-				]
-			);
+			$userQ = UserTable::query()
+				->setSelect(['ID', 'LOGIN', 'NAME', 'LAST_NAME', 'SECOND_NAME', 'TITLE'])
+				->where('ID', $userId);
 
-			$user = self::$users[$userId] = $dbResult->Fetch();
+			$user = self::$users[$userId] = $userQ->fetch();
 		}
 
 		if (!is_array($user))

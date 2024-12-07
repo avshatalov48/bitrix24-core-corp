@@ -45,7 +45,7 @@ foreach($arParams["BUTTONS"] as $item):
 		$containerId = $toolbarID.'_crm-requisite-toolbar-editor_'.$requisitePresetSelectorIndex;
 		?>
 		<div id="<?= $containerId ?>" class="crm-offer-requisite-block-wrap" style="display: none;"></div>
-		<script type="text/javascript">
+		<script>
 			BX.namespace("BX.Crm");
 			BX.Crm["RequisiteToolbarEditor_<?= $toolbarID ?>_<?= $requisitePresetSelectorIndex ?>"] = new BX.Crm.RequisiteToolbarEditorClass({
 				containerId: "<?= CUtil::JSEscape($containerId) ?>",
@@ -96,7 +96,7 @@ foreach($arParams["BUTTONS"] as $item):
 
 		if(isset($params['SCRIPTS']) && is_array($params['SCRIPTS']))
 		{
-			?><script type="text/javascript">
+			?><script>
 				BX.ready(
 					function()
 					{
@@ -169,7 +169,7 @@ if(!empty($moreItems)):
 	?><span class="crm-toolbar-alignment-right">
 		<span class="crm-setting-btn"></span>
 	</span>
-	<script type="text/javascript">
+	<script>
 		BX.ready(
 			function()
 			{

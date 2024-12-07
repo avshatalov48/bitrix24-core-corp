@@ -235,16 +235,18 @@ final class SaveEntityCommand extends Command
 						}
 						else
 						{
-							$value = $this->toWebFile($value, $propId);
-							if (is_int($value))
+							$tmpValue = $this->toWebFile($value, $propId);
+							$value = null;
+							if (is_int($tmpValue))
 							{
 								$entityData = $this->getEntityData();
 								if (isset($entityData[$propId]) && is_array($entityData[$propId]))
 								{
-									$foundKey = array_search($value, $entityData[$propId], false);
+									$foundKey = array_search($tmpValue, $entityData[$propId], false);
 									if ($foundKey !== false)
 									{
 										$modifiedKey = $foundKey;
+										$value = $tmpValue;
 									}
 								}
 							}
@@ -376,9 +378,13 @@ final class SaveEntityCommand extends Command
 
 	private function toWebMoney($value): string
 	{
-		if (isset($value['currency']) && !empty($value['amount']))
+		if (
+			isset($value['currency'], $value['amount'])
+			&& ($value['amount'] !== '' && $value['amount'] !== 'null')
+			&& $value['currency'] !== ''
+		)
 		{
-			return (double)$value['amount'] . '|' . $value['currency'];
+			return $value['amount'] . '|' . $value['currency'];
 		}
 
 		return '';

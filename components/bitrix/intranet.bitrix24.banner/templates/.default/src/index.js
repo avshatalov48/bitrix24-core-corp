@@ -1,20 +1,16 @@
 import { Menu } from 'main.popup';
 import { Loc } from 'main.core';
 
+export type installersForLinuxType = {
+	deb: string,
+	rpm: string,
+};
+
 export class Bitrix24Banner
 {
 	#menuLinux: ?Menu;
 	static #instance: ?this;
-	#typesInstallersForLinux = {
-		'DEB': {
-			text: Loc.getMessage('B24_BANNER_DOWNLOAD_LINUX_DEB'),
-			href: 'https://dl.bitrix24.com/b24/bitrix24_desktop.deb',
-		},
-		'RPM': {
-			text: Loc.getMessage('B24_BANNER_DOWNLOAD_LINUX_RPM'),
-			href: 'https://dl.bitrix24.com/b24/bitrix24_desktop.rpm',
-		},
-	};
+	#installersForLinux: installersForLinuxType;
 
 	static getInstance()
 	{
@@ -25,23 +21,24 @@ export class Bitrix24Banner
 		return this.#instance;
 	}
 
-	showMenuForLinux(event, target): void
+	showMenuForLinux(event, target, links: installersForLinuxType): void
 	{
 		event.preventDefault();
+		this.#installersForLinux = links;
 		this.#menuLinux = (this.#menuLinux || new Menu({
 			className: 'system-auth-form__popup',
 			bindElement: target,
 			items: [
 				{
-					text: this.#typesInstallersForLinux.DEB.text,
-					href: this.#typesInstallersForLinux.DEB.href,
+					text: Loc.getMessage('B24_BANNER_DOWNLOAD_LINUX_DEB'),
+					href: this.#installersForLinux.deb,
 					onclick: (element) => {
 						element.close();
 					}
 				},
 				{
-					text: this.#typesInstallersForLinux.RPM.text,
-					href: this.#typesInstallersForLinux.RPM.href,
+					text: Loc.getMessage('B24_BANNER_DOWNLOAD_LINUX_RPM'),
+					href: this.#installersForLinux.rpm,
 					onclick: (element) => {
 						element.close();
 					}

@@ -1,0 +1,26 @@
+<?php
+$MESS["AI_OPT_CHECK_LIMITS"] = "Check limits";
+$MESS["AI_OPT_CLOUD_BUTTON_REGISTER"] = "Connect";
+$MESS["AI_OPT_CLOUD_BUTTON_UNREGISTER"] = "Disconnect";
+$MESS["AI_OPT_CLOUD_LABEL_BUTTON_REGISTER"] = "Cloud service";
+$MESS["AI_OPT_DISABLE_HISTORY_FOR_USERS"] = "Don't log requests from users";
+$MESS["AI_OPT_DISABLE_HISTORY_FOR_USERS_ADD"] = "Add users";
+$MESS["AI_OPT_ENGINE_AUDIO"] = "AI audio provider";
+$MESS["AI_OPT_ENGINE_IMAGE"] = "AI image provider";
+$MESS["AI_OPT_ENGINE_TEXT"] = "AI text provider";
+$MESS["AI_OPT_FORCE_QUEUE"] = "Always use queue";
+$MESS["AI_OPT_HEADER_CLOUD"] = "Register";
+$MESS["AI_OPT_HEADER_ENGINES"] = "Providers";
+$MESS["AI_OPT_HEADER_HISTORY"] = "Request log";
+$MESS["AI_OPT_HEADER_QUEUE"] = "Queue";
+$MESS["AI_OPT_MAX_HISTORY_PER_USER"] = "Maximum history entries per user";
+$MESS["AI_OPT_OPENAI_BEARER"] = "Open AI key";
+$MESS["AI_OPT_PROMPT_HOST_REMOTE_DB"] = "Prompt database";
+$MESS["AI_OPT_PROMPT_HOST_REMOTE_DB_CLEAR"] = "update";
+$MESS["AI_OPT_PROMPT_HOST_REMOTE_DB_SYSTEM"] = "Default";
+$MESS["AI_OPT_PUBLIC_URL"] = "Public URL including protocol and port";
+$MESS["AI_OPT_QUEUE_URL"] = "Queue URL, including protocol and port";
+$MESS["AI_OPT_STABLE_DIFFUSION_BEARER"] = "Stable Diffusion key";
+$MESS["AI_OPT_WRITE_ERRORS"] = "Log incorrect requests";
+$MESS["AI_OPT_WRITE_HISTORY_ALWAYS"] = "Always log requests";
+$MESS["AI_OPT_WRITE_HISTORY_REQUEST"] = "Add full requests to log";

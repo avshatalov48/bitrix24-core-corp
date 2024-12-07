@@ -1,11 +1,12 @@
 <?php
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
 
+use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Localization\LanguageTable;
 use Bitrix\Main\UserField\Types\DateTimeType;
 use Bitrix\Main\UserField\Types\DateType;
-use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\UserFieldLimit;
+use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\TaskLimit;
 use Bitrix\Tasks\Util\Result;
 use Bitrix\Tasks\Util\Type\DateTime;
 use Bitrix\Tasks\Util\User;
@@ -27,7 +28,7 @@ class TasksUserFieldPanelComponent extends TasksBaseComponent
 
 	public function configureActions()
 	{
-		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		if (!Loader::includeModule('tasks'))
 		{
 			return [];
 		}
@@ -64,7 +65,7 @@ class TasksUserFieldPanelComponent extends TasksBaseComponent
 
 	protected function init()
 	{
-		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		if (!Loader::includeModule('tasks'))
 		{
 			return null;
 		}
@@ -75,7 +76,7 @@ class TasksUserFieldPanelComponent extends TasksBaseComponent
 
 	protected function setUserId()
 	{
-		$this->userId = (int) \Bitrix\Tasks\Util\User::getId();
+		$this->userId = (int) User::getId();
 	}
 
 	public function getErrorByCode($code)
@@ -94,7 +95,7 @@ class TasksUserFieldPanelComponent extends TasksBaseComponent
 
 	public function saveFieldAction($id, array $data, array $parameters = [])
 	{
-		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		if (!Loader::includeModule('tasks'))
 		{
 			return null;
 		}
@@ -118,7 +119,7 @@ class TasksUserFieldPanelComponent extends TasksBaseComponent
 			$parameters['RELATED_ENTITIES'] = array_diff($parameters['RELATED_ENTITIES'], array($data['ENTITY_CODE']));
 		}
 
-		if (!\Bitrix\Tasks\Util\User::isSuper())
+		if (!User::isSuper())
 		{
 			$this->errorCollection->add('ACTION_NOT_ALLOWED', Loc::getMessage('TASKS_TUFE_UF_ADMIN_RESTRICTED'));
 			return [];
@@ -130,7 +131,7 @@ class TasksUserFieldPanelComponent extends TasksBaseComponent
 		}
 		if (
 			!Restriction::canManage($ufController->getEntityCode())
-			&& UserFieldLimit::isLimitExceeded()
+			&& TaskLimit::isLimitExceeded()
 		)
 		{
 			$this->errorCollection->add('ACTION_RESTRICTED', Loc::getMessage('TASKS_TUFE_UF_MANAGING_RESTRICTED'));
@@ -259,12 +260,12 @@ class TasksUserFieldPanelComponent extends TasksBaseComponent
 			return [];
 		}
 
-		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		if (!Loader::includeModule('tasks'))
 		{
 			return null;
 		}
 
-		if(!\Bitrix\Tasks\Util\User::isSuper())
+		if(!User::isSuper())
 		{
 			$this->errorCollection->add('ACTION_NOT_ALLOWED', Loc::getMessage('TASKS_TUFE_UF_ADMIN_RESTRICTED'));
 			return [];
@@ -296,9 +297,9 @@ class TasksUserFieldPanelComponent extends TasksBaseComponent
 		return [];
 	}
 
-	public function setStateAction(array $state, $entityCode, $dropAll = false)
+	public function setStateAction(array $state, $entityCode, $dropAll = false): ?array
 	{
-		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		if (!Loader::includeModule('tasks'))
 		{
 			return null;
 		}
@@ -316,17 +317,21 @@ class TasksUserFieldPanelComponent extends TasksBaseComponent
 			return [];
 		}
 
-		if($dropAll && !\Bitrix\Tasks\Util\User::isSuper())
+		if($dropAll && !User::isSuper())
 		{
 			$this->errorCollection->add('ACTION_NOT_ALLOWED', Loc::getMessage('TASKS_TUFE_UF_ADMIN_RESTRICTED'));
 			return [];
 		}
 
-		$ctrl = static::getStateController($ufController);
-		if($dropAll)
+		$ctrl = static::getStateController($ufController)
+			->setUserId($this->userId)
+			->setIsCommon($dropAll);
+
+		if ($dropAll)
 		{
 			$ctrl->removeForAllUsers();
 		}
+
 		$ctrl->set($state);
 
 		return [];
@@ -334,7 +339,7 @@ class TasksUserFieldPanelComponent extends TasksBaseComponent
 
 	public function getFieldHTMLAction($id, $entityCode, $entityId = 0, array $parameters = [])
 	{
-		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		if (!Loader::includeModule('tasks'))
 		{
 			return null;
 		}
@@ -441,7 +446,7 @@ class TasksUserFieldPanelComponent extends TasksBaseComponent
 			'USE' => Restriction::canUse($entityCode, $this->userId),
 			'MANAGE' => Restriction::canManage($entityCode, $this->userId),
 			'CREATE_MANDATORY' => Restriction::canCreateMandatory($entityCode, $this->userId),
-			'TASK_LIMIT_EXCEEDED' => UserFieldLimit::isLimitExceeded(),
+			'TASK_LIMIT_EXCEEDED' => TaskLimit::isLimitExceeded(),
 		];
 	}
 
@@ -625,7 +630,7 @@ class TasksUserFieldPanelComponent extends TasksBaseComponent
 				$parameters['RELATED_ENTITIES'] = array();
 			}
 
-			if(!\Bitrix\Tasks\Util\User::isSuper())
+			if(!User::isSuper())
 			{
 				$result->addError('ACTION_NOT_ALLOWED', Loc::getMessage('TASKS_TUFE_UF_ADMIN_RESTRICTED'));
 			}
@@ -776,7 +781,7 @@ if(CModule::IncludeModule('tasks'))
 			}
 			else
 			{
-				$optionName = 'tc_'.ToLower($code).'_ufp_st';
+				$optionName = 'tc_'.mb_strtolower($code).'_ufp_st';
 			}
 
 			$this->setOptionName($optionName);

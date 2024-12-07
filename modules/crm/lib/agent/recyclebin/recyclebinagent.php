@@ -52,7 +52,7 @@ class RecyclebinAgent extends AgentBase
 
 		$list = RecyclebinTable::getList([
 			'filter' => [
-				'MODULE_ID' => 'crm',
+				'=MODULE_ID' => 'crm',
 				'<=TIMESTAMP' => DateTime::createFromTimestamp($timestamp),
 			],
 			'order' => ['TIMESTAMP' => 'ASC'],

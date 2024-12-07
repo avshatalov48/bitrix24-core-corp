@@ -27,18 +27,17 @@ class OnSalePsBeforeInitiatePay
 		)
 		{
 			$isFiscalizationEnabled = $service->isFiscalizationEnabled($payment);
-			if (in_array($isFiscalizationEnabled, [true, null], true))
+			if ($isFiscalizationEnabled)
 			{
-				$parameters = [];
-				if ($isFiscalizationEnabled === true)
-				{
-					$parameters['ERROR'] = new Main\Error(
-						Loc::getMessage('CRM_TERMINAL_EVENTS_HANDLER_FISCALIZATION_ERROR'),
-						'fiscalization_enabled'
-					);
-				}
-
-				return new Main\EventResult(Main\EventResult::ERROR, $parameters);
+				return new Main\EventResult(
+					Main\EventResult::ERROR,
+					[
+						'ERROR' => new Main\Error(
+							Loc::getMessage('CRM_TERMINAL_EVENTS_HANDLER_FISCALIZATION_ERROR'),
+							'fiscalization_enabled'
+						)
+					]
+				);
 			}
 		}
 

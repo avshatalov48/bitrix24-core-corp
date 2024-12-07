@@ -362,7 +362,7 @@ if ($arResult['Storage']['FILE_COUNT'] > 0)
 ?>
 </div>
 
-<script type="text/javascript">
+<script>
 	BX(function () {
 
 		var drop = {trashcan: false, unnecessaryVersion: false},

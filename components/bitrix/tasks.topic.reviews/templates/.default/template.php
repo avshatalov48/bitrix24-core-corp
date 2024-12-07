@@ -73,7 +73,7 @@ if (LANGUAGE_ID == 'ru')
 <?php if (!empty($arResult["ERROR_MESSAGE"])):?>
 <div class="reviews-note-box reviews-note-error">
 	<div class="reviews-note-box-text">
-	<?php echo ShowError($arResult["ERROR_MESSAGE"], "reviews-note-error");?>
+	<?php ShowError($arResult["ERROR_MESSAGE"], "reviews-note-error");?>
 	</div>
 </div>
 <?php endif?>

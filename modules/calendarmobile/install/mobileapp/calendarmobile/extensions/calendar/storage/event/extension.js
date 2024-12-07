@@ -2,7 +2,7 @@
  * @module calendar/storage/event
  */
 jn.define('calendar/storage/event', (require, exports, module) => {
-	const { EventAjax } = require('calendar/ajax/event');
+	const { EventAjax } = require('calendar/ajax');
 	const { EventTable } = require('calendar/storage/inmemory/event');
 	const { hashCode } = require('utils/hash');
 

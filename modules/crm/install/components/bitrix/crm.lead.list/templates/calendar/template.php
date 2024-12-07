@@ -32,14 +32,12 @@ if (CModule::IncludeModule('bitrix24') && !\Bitrix\Crm\CallList\CallList::isAvai
 	CBitrix24::initLicenseInfoPopupJS();
 }
 
-Bitrix\Main\UI\Extension::load(['ui.fonts.opensans']);
+Bitrix\Main\UI\Extension::load(['ui.fonts.opensans', 'crm.autorun']);
 
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/common.js');
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/progress_control.js');
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/activity.js');
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/interface_grid.js');
-Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/autorun_proc.js');
-Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/js/crm/css/autorun_proc.css');
 
 $calendarId = 'CrmCalendarLeadListGrid';
 $newLeadUrl = preg_replace("/#lead_id#/i", "0", $arParams['PATH_TO_LEAD_DETAILS']);
@@ -407,7 +405,7 @@ if (!empty($arResult['RESTRICTED_FIELDS_ENGINE']))
 
 ?>
 
-<script type="text/javascript">
+<script>
 //region Javascript External Handlers calendar
 BX.ready(function(){
 	var

@@ -19,7 +19,7 @@ export class Visit extends Base
 
 		if (action === 'Activity:Visit:Schedule' && actionData)
 		{
-			this.#scheduleCall(actionData.activityId, actionData.scheduleDate);
+			this.runScheduleAction(actionData.activityId, actionData.scheduleDate);
 		}
 	}
 
@@ -43,21 +43,6 @@ export class Visit extends Base
 		else
 		{
 			player.play();
-		}
-	}
-
-	#scheduleCall(activityId: Number, scheduleDate: String): void
-	{
-		const menuBar = BX.Crm?.Timeline?.MenuBar?.getDefault();
-		if (menuBar)
-		{
-			menuBar.setActiveItemById('todo');
-
-			const todoEditor = menuBar.getItemById('todo');
-
-			todoEditor.focus();
-			todoEditor.setParentActivityId(activityId);
-			todoEditor.setDeadLine(scheduleDate);
 		}
 	}
 

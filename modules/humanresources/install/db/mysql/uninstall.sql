@@ -1,0 +1,13 @@
+DROP TABLE `b_hr_structure_node_backward_access_code`;
+DROP TABLE `b_hr_structure_node_member_role`;
+DROP TABLE `b_hr_structure_node_member`;
+DROP TABLE `b_hr_structure_node_relation`;
+DROP TABLE `b_hr_structure_node_role`;
+DROP TABLE `b_hr_structure`;
+DROP TABLE `b_hr_structure_node`;
+DROP TABLE `b_hr_structure_node_path`;
+DROP TABLE `b_hr_structure_role`;
+DROP TABLE `b_hr_access_role`;
+DROP TABLE `b_hr_access_role_relation`;
+DROP TABLE `b_hr_access_permission`;
+DROP TABLE `b_hr_log`;

@@ -1,0 +1,9 @@
+<?php
+$MESS['MOBILE_USERS_MORE_MENU_SORTING_TYPE_DATE'] = 'По дате приглашения';
+$MESS['MOBILE_USERS_MORE_MENU_SORTING_TYPE_STRUCTURE'] = 'По структуре';
+$MESS['MOBILE_USERS_MORE_MENU_SORTING_TYPE_ALPHABET'] = 'По алфавиту';
+
+$MESS['MOBILE_USERS_MORE_MENU_COMPANY_STRUCTURE'] = 'Структура компании';
+$MESS['MOBILE_USERS_MORE_MENU_COMPANY_STRUCTURE_HINT_TEXT'] = 'Настройте иерархию сотрудников и отделов в веб‑версии';
+
+$MESS['MOBILE_USERS_FILTER_DEFAULT_DEPARTMENT_TITLE'] = 'Все отделы и сотрудники';

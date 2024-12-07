@@ -2,6 +2,7 @@
 namespace Bitrix\ImConnector\Rest;
 
 use Bitrix\Rest\PlacementTable,
+	Bitrix\Main\Application,
 	Bitrix\Main\ORM\Data\AddResult,
 	Bitrix\Main\ORM\Data\DeleteResult,
 	Bitrix\ImConnector\Model\CustomConnectorsTable,
@@ -14,6 +15,7 @@ use Bitrix\Rest\PlacementTable,
 class Helper
 {
 	const PLACEMENT_SETTING_CONNECTOR = 'SETTING_CONNECTOR';
+	const LOCK_KEY_NAME = 'imconnector_register_app_lock_';
 
 	/**
 	 * @param array $params
@@ -30,77 +32,81 @@ class Helper
 			&& !empty($params['REST_APP_ID'])
 		)
 		{
-			$raw = CustomConnectorsTable::getList([
-				'select' => ['ID'],
-				'filter' => [
-					'=ID_CONNECTOR' => $params['ID'],
-					'=REST_APP_ID' => $params['REST_APP_ID']
-				]
-			]);
+			$keyLock = self::LOCK_KEY_NAME . $params['ID'];
+			if (Application::getConnection()->lock($keyLock))
+			{
+				$changeParams = [
+					'ID_CONNECTOR' => mb_strtolower($params['ID']),
+					'NAME' => $params['NAME'],
+					'ICON' => $params['ICON'],
+					'COMPONENT' => $params['COMPONENT'],
+					'REST_APP_ID' => $params['REST_APP_ID'],
+				];
+				$placementParams = [
+					'REST_APP_ID' => $params['REST_APP_ID'],
+					'PLACEMENT_HANDLER' => $params['PLACEMENT_HANDLER'],
+					'TITLE' => $params['TITLE']
+				];
 
-			$changeParams = [
-				'ID_CONNECTOR' => mb_strtolower($params['ID']),
-				'NAME' => $params['NAME'],
-				'ICON' => $params['ICON'],
-				'COMPONENT' => $params['COMPONENT'],
-				'REST_APP_ID' => $params['REST_APP_ID'],
-			];
-			$placementParams = [
-				'REST_APP_ID' => $params['REST_APP_ID'],
-				'PLACEMENT_HANDLER' => $params['PLACEMENT_HANDLER'],
-				'TITLE' => $params['TITLE']
-			];
+				if (isset($params['ICON_DISABLED']))
+				{
+					$changeParams['ICON_DISABLED'] = $params['ICON_DISABLED'];
+				}
+				if (isset($params['DEL_EXTERNAL_MESSAGES']))
+				{
+					$changeParams['DEL_EXTERNAL_MESSAGES'] = $params['DEL_EXTERNAL_MESSAGES'];
+				}
+				if (isset($params['EDIT_INTERNAL_MESSAGES']))
+				{
+					$changeParams['EDIT_INTERNAL_MESSAGES'] = $params['EDIT_INTERNAL_MESSAGES'];
+				}
+				if (isset($params['DEL_INTERNAL_MESSAGES']))
+				{
+					$changeParams['DEL_INTERNAL_MESSAGES'] = $params['DEL_INTERNAL_MESSAGES'];
+				}
+				if (isset($params['NEWSLETTER']))
+				{
+					$changeParams['NEWSLETTER'] = $params['NEWSLETTER'];
+				}
+				if (isset($params['NEED_SYSTEM_MESSAGES']))
+				{
+					$changeParams['NEED_SYSTEM_MESSAGES'] = $params['NEED_SYSTEM_MESSAGES'];
+				}
+				if (isset($params['NEED_SIGNATURE']))
+				{
+					$changeParams['NEED_SIGNATURE'] = $params['NEED_SIGNATURE'];
+				}
+				if (isset($params['CHAT_GROUP']))
+				{
+					$changeParams['CHAT_GROUP'] = $params['CHAT_GROUP'];
+				}
+				if (isset($params['COMMENT']))
+				{
+					$placementParams['COMMENT'] = $params['COMMENT'];
+				}
 
-			if (isset($params['ICON_DISABLED']))
-			{
-				$changeParams['ICON_DISABLED'] = $params['ICON_DISABLED'];
-			}
-			if (isset($params['DEL_EXTERNAL_MESSAGES']))
-			{
-				$changeParams['DEL_EXTERNAL_MESSAGES'] = $params['DEL_EXTERNAL_MESSAGES'];
-			}
-			if (isset($params['EDIT_INTERNAL_MESSAGES']))
-			{
-				$changeParams['EDIT_INTERNAL_MESSAGES'] = $params['EDIT_INTERNAL_MESSAGES'];
-			}
-			if (isset($params['DEL_INTERNAL_MESSAGES']))
-			{
-				$changeParams['DEL_INTERNAL_MESSAGES'] = $params['DEL_INTERNAL_MESSAGES'];
-			}
-			if (isset($params['NEWSLETTER']))
-			{
-				$changeParams['NEWSLETTER'] = $params['NEWSLETTER'];
-			}
-			if (isset($params['NEED_SYSTEM_MESSAGES']))
-			{
-				$changeParams['NEED_SYSTEM_MESSAGES'] = $params['NEED_SYSTEM_MESSAGES'];
-			}
-			if (isset($params['NEED_SIGNATURE']))
-			{
-				$changeParams['NEED_SIGNATURE'] = $params['NEED_SIGNATURE'];
-			}
-			if (isset($params['CHAT_GROUP']))
-			{
-				$changeParams['CHAT_GROUP'] = $params['CHAT_GROUP'];
-			}
-			if (isset($params['COMMENT']))
-			{
-				$placementParams['COMMENT'] = $params['COMMENT'];
-			}
+				$placementId = self::registerPlacement($placementParams);
+				if ($placementId > 0)
+				{
+					$changeParams['REST_PLACEMENT_ID'] = $placementId;
+				}
 
-			$placementId = self::registerPlacement($placementParams);
-			if ($placementId > 0)
-			{
-				$changeParams['REST_PLACEMENT_ID'] = $placementId;
-			}
+				$raw = CustomConnectorsTable::getList([
+					'select' => ['ID'],
+					'filter' => [
+						'=ID_CONNECTOR' => $changeParams['ID_CONNECTOR'],
+					]
+				]);
+				if ($row = $raw->fetch())
+				{
+					$result = CustomConnectorsTable::update($row['ID'], $changeParams)->isSuccess();
+				}
+				else
+				{
+					$result = CustomConnectorsTable::add($changeParams)->isSuccess();
+				}
 
-			if ($row = $raw->fetch())
-			{
-				$result = CustomConnectorsTable::update($row['ID'], $changeParams)->isSuccess();
-			}
-			else
-			{
-				$result = CustomConnectorsTable::add($changeParams)->isSuccess();
+				Application::getConnection()->unlock($keyLock);
 			}
 		}
 

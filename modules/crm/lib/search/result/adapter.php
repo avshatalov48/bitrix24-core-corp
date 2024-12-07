@@ -50,6 +50,7 @@ abstract class Adapter
 			$resultItem->setType($entityTypeName);
 			$resultItem->setId($entityId);
 			$resultItem->setSubTitle($this->prepareSubTitle($item));
+			$resultItem->setAttributes($this->prepareAttributes($item));
 
 			$adaptedResult[$entityId] = $resultItem;
 		}
@@ -161,6 +162,11 @@ abstract class Adapter
 	abstract protected function prepareSubTitle(array $item): string;
 
 	abstract protected function areMultifieldsSupported(): bool;
+
+	protected function prepareAttributes(array $item): array
+	{
+		return [];
+	}
 
 	/**
 	 * @param Category|null $category

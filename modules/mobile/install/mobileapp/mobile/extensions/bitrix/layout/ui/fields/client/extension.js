@@ -14,6 +14,7 @@ jn.define('layout/ui/fields/client', (require, exports, module) => {
 	const { get, isEqual, isEmpty, mergeImmutable } = require('utils/object');
 	const { stringify } = require('utils/string');
 	const { EntitySelectorFactory, EntitySelectorFactoryType } = require('selector/widget/factory');
+	const { Random } = require('utils/random');
 
 	let SelectorProcessing = null;
 	let Type = null;
@@ -81,12 +82,22 @@ jn.define('layout/ui/fields/client', (require, exports, module) => {
 			this.customEventEmitter.on('UI.Fields.Client::select', this.handleClientSelection);
 
 			BX.addCustomEvent('MultiFieldDrawer::onSave', this.handleMultiFieldChange);
+
+			this.emitClientFieldUpdateEvent();
 		}
 
 		componentDidUpdate(prevProps, prevState)
 		{
 			super.componentDidUpdate(prevProps, prevState);
 
+			if (!isEqual(this.props.value, prevProps.value))
+			{
+				this.emitClientFieldUpdateEvent();
+			}
+		}
+
+		emitClientFieldUpdateEvent()
+		{
 			const { permissions } = this.getConfig();
 			const compound = this.getCompound();
 			const contactCompound = compound.find(({ entityTypeName }) => entityTypeName === TypeName.Contact);
@@ -122,9 +133,24 @@ jn.define('layout/ui/fields/client', (require, exports, module) => {
 				showClientAdd: BX.prop.getBoolean(config, 'showClientAdd', false),
 				enableMyCompanyOnly: BX.prop.getBoolean(config, 'enableMyCompanyOnly', false),
 				compound: BX.prop.getArray(config, 'compound', []),
-				selectorTitle: ''
-				,
+				selectorTitle: '',
+				entityList: this.getItems(config),
 			};
+		}
+
+		/**
+		 * @private
+		 * @param {object} config
+		 * @return {object}
+		 */
+		getItems(config)
+		{
+			if (config.items)
+			{
+				return BX.prop.getObject(config, 'items', {});
+			}
+
+			return BX.prop.getObject(config, 'entityList', {});
 		}
 
 		useHapticOnChange()
@@ -137,9 +163,9 @@ jn.define('layout/ui/fields/client', (require, exports, module) => {
 			return BX.prop.getBoolean(this.props, 'canFocusTitle', false);
 		}
 
-		isShowClientInfo()
+		isShowClientInfo(isHiddenContact)
 		{
-			return this.getConfig().showClientInfo;
+			return this.getConfig().showClientInfo && !isHiddenContact;
 		}
 
 		isShowClientType()
@@ -306,7 +332,7 @@ jn.define('layout/ui/fields/client', (require, exports, module) => {
 							testId: `${testId}-${contact.type}-${contact.id}`,
 							onEdit: this.onEditClient,
 							readOnly: this.isReadOnly(),
-							showClientInfo: this.isShowClientInfo(),
+							showClientInfo: this.isShowClientInfo(contact.hidden),
 							showClientType: this.isShowClientType(),
 							onOpenBackdrop: () => {
 								this.handleOnOpenBackDrop(contact);
@@ -490,7 +516,7 @@ jn.define('layout/ui/fields/client', (require, exports, module) => {
 				analytics: analyticsToSend && new AnalyticsEvent(analyticsToSend)
 					.setSubSection('element_card')
 					.setEvent('entity_add_open')
-					.setType(type),
+					.setType(type?.toLowerCase()),
 			});
 		}
 
@@ -750,7 +776,24 @@ jn.define('layout/ui/fields/client', (require, exports, module) => {
 				options.categoryId = categoryId;
 			}
 
+			if (this.hasHiddenEntities(selectorType))
+			{
+				if (selectorType === CRM_CONTACT)
+				{
+					options.idsForFilterContact = this.getItems(this.getConfig())[selectorType].map((contact) => contact.id);
+				}
+				else if (selectorType === CRM_COMPANY)
+				{
+					options.idsForFilterCompany = this.getItems(this.getConfig())[selectorType].map((contact) => contact.id);
+				}
+			}
+
 			return { options };
+		}
+
+		hasHiddenEntities(type)
+		{
+			return this.getValue()[type].find((entity) => entity.hidden);
 		}
 
 		isShowSelectorInDeal(selectorType)
@@ -759,7 +802,16 @@ jn.define('layout/ui/fields/client', (require, exports, module) => {
 			const isContact = selectorType === CRM_CONTACT;
 			const { [CRM_COMPANY]: companies } = this.getValue();
 
-			return isContact || (isCompany && !companies.some((company) => this.shouldShowClient(company)));
+			return (
+				(
+					isContact
+					|| (isCompany && !companies.some((company) => this.shouldShowClient(company)))
+				)
+				&& (
+					this.checkPermissions(selectorType, 'add')
+					|| this.checkPermissions(selectorType, 'update')
+				)
+			);
 		}
 
 		setEntityContacts(contacts)
@@ -1023,8 +1075,61 @@ jn.define('layout/ui/fields/client', (require, exports, module) => {
 		}
 	}
 
+	ClientField.propTypes = {
+		...BaseField.propTypes,
+		permissions: PropTypes.object, // { [entityTypeName]: { read: boolean, add: boolean } }
+		canFocusTitle: PropTypes.bool,
+		analytics: PropTypes.object,
+
+		config: PropTypes.shape({
+			// base field props
+			showAll: PropTypes.bool, // show more button with count if it's multiple
+			styles: PropTypes.shape({
+				externalWrapperBorderColor: PropTypes.string,
+				externalWrapperBorderColorFocused: PropTypes.string,
+				externalWrapperBackgroundColor: PropTypes.string,
+				externalWrapperMarginHorizontal: PropTypes.number,
+			}),
+			deepMergeStyles: PropTypes.object, // override styles
+			parentWidget: PropTypes.object, // parent layout widget
+			copyingOnLongClick: PropTypes.bool,
+			titleIcon: PropTypes.object,
+
+			categoryParams: PropTypes.object,
+			showClientInfo: PropTypes.bool,
+			showClientType: PropTypes.bool,
+			showClientAdd: PropTypes.bool,
+			enableMyCompanyOnly: PropTypes.bool,
+			compound: PropTypes.array,
+
+			clientLayout: PropTypes.number,
+			fixedLayoutType: PropTypes.string,
+			entityDetailOpener: PropTypes.object,
+			options: PropTypes.object,
+			owner: PropTypes.object,
+
+			entityList: PropTypes.object, // { [entityTypeName]: { title: string, icon: string } }
+		}),
+	};
+
+	ClientField.defaultProps = {
+		...BaseField.defaultProps,
+		permissions: {},
+		canFocusTitle: false,
+		analytics: null,
+
+		config: {
+			...BaseField.defaultProps.config,
+			showClientInfo: false,
+			showClientType: true,
+			showClientAdd: false,
+			enableMyCompanyOnly: false,
+		},
+	};
+
 	module.exports = {
 		ClientType: 'client',
+		ClientFieldClass: ClientField,
 		ClientField: (props) => new ClientField(props),
 	};
 });

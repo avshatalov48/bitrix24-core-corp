@@ -1,6 +1,6 @@
+import { Type } from 'main.core';
 import { Logo } from './body/logo';
 import { LogoCalendar } from './body/logo-calendar';
-import { Type } from 'main.core';
 
 export const Body = {
 	components: {

@@ -6,6 +6,37 @@ jn.define('utils/search', (require, exports, module) => {
 	const { unique } = require('utils/array');
 
 	/**
+	 * @function checkValueMatchQuery
+	 * @param {string} query
+	 * @param {string} value
+	 * @returns {boolean}
+	 */
+	const checkValueMatchQuery = (query, value) => {
+		if (value && typeof value === 'string'
+			&& query && typeof query === 'string')
+		{
+			const queryWords = splitByWords(query);
+			const uniqueQueryWords = unique(queryWords);
+			const matchedWords = [];
+
+			const valueWords = splitByWords(value);
+			valueWords.forEach((word) => {
+				queryWords.forEach((queryWord) => {
+					const match = compareWords(queryWord, word);
+					if (match && !matchedWords.includes(queryWord))
+					{
+						matchedWords.push(queryWord);
+					}
+				});
+			});
+
+			return matchedWords.length >= uniqueQueryWords.length;
+		}
+
+		return false;
+	};
+
+	/**
 	 * @function search
 	 */
 	function search(items, query, predicates = [], excludeFields = [])
@@ -68,5 +99,5 @@ jn.define('utils/search', (require, exports, module) => {
 		}
 	}
 
-	module.exports = { search };
+	module.exports = { search, checkValueMatchQuery };
 });

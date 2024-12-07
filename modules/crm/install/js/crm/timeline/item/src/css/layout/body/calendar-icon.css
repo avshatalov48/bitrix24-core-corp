@@ -103,3 +103,20 @@
 .crm-timeline__calendar-icon_day-week {
 	margin-right: 1px;
 }
+
+.crm-timeline__calendar-icon_event_icon {
+	width: 20px;
+	height: 21px;
+	background-image: url('../../../images/timeline-card-logos/calendar/crm-timeline__calendar-event.svg');
+	background-color: var(--ui-color-background-primary);
+	box-shadow: var(--ui-shadow-bottom-2xs);
+	border-radius: 50%;
+	position: absolute;
+	z-index: 2;
+	right: 10px;
+	top: 8px;
+}
+
+.crm-timeline__card-logo.--orange .crm-timeline__calendar-icon {
+	--crm-timeline__calendar-icon_primary-color: var(--ui-color-palette-orange-50, #FFA900);
+}

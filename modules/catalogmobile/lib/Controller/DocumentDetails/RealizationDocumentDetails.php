@@ -176,7 +176,7 @@ class RealizationDocumentDetails extends BaseDocumentDetails
 		$orderData = [
 			'ID' => $orderId,
 			'CLIENT' => [
-				'COMPANY_ID' => array_map(static fn($id) => (int)$id, $formData['COMPANY_ID']),
+				'COMPANY_ID' => $formData['COMPANY_ID'][0] ?? null,
 				'CONTACT_IDS' => array_map(static fn($id) => (int)$id, $formData['CONTACT_IDS']),
 			],
 			'RESPONSIBLE_ID' => (int)$formData['RESPONSIBLE_ID'],
@@ -288,7 +288,7 @@ class RealizationDocumentDetails extends BaseDocumentDetails
 		$parsedProducts = [];
 		foreach ($products as $productKey => $product)
 		{
-			$basketCode = is_int($product['id']) ? $product['id'] : 'n' . $productKey;
+			$basketCode = $product['basketCode'] ?? 'n' . $productKey;;
 			$parsedProducts[$basketCode] = [
 				'NAME' => $product['name'],
 				'QUANTITY' => (float)$product['amount'],
@@ -297,8 +297,10 @@ class RealizationDocumentDetails extends BaseDocumentDetails
 				'BASKET_CODE' => $basketCode,
 				'PRODUCT_ID' => $product['productId'],
 				'OFFER_ID' => $product['productId'],
-				'BASE_PRICE' => $product['price']['sell']['amount'],
+				'BASE_PRICE' => $product['price']['sell']['basePrice'],
 				'PRICE' => $product['price']['sell']['amount'],
+				'VAT_RATE' => $product['price']['vat']['vatRate'],
+				'VAT_INCLUDED' => $product['price']['vat']['vatIncluded'],
 				'CUSTOM_PRICE' => 'Y',
 				'TYPE' => $product['type'] ? ProductTypeMapper::getType($product['type']) : null,
 				'DISCOUNT_PRICE' => 0,
@@ -323,7 +325,7 @@ class RealizationDocumentDetails extends BaseDocumentDetails
 		$parsedProducts = [];
 		foreach ($products as $productKey => $product)
 		{
-			$basketCode = is_int($product['id']) ? $product['id'] : 'n' . $productKey;
+			$basketCode = $product['basketCode'] ?? 'n' . $productKey;;
 			$parsedProducts[$basketCode] = [
 				'QUANTITY' => (float)$product['amount'],
 				'AMOUNT' => (float)$product['amount'],
@@ -396,6 +398,8 @@ class RealizationDocumentDetails extends BaseDocumentDetails
 						->setQuantity((float)$product['QUANTITY'])
 						->setMeasureCode((int)$product['MEASURE_CODE'])
 						->setMeasureName($product['MEASURE_NAME'])
+						->setTaxIncluded($product['VAT_INCLUDED'])
+						->setTaxRate(($product['VAT_RATE'] !== null) ? $product['VAT_RATE'] * 100 : null)
 					;
 
 					$basketItems[] = $item->getFields();

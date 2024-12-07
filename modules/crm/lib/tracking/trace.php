@@ -8,7 +8,6 @@
 namespace Bitrix\Crm\Tracking;
 
 use Bitrix\Main\Event;
-use Bitrix\Main\Text\Encoding;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\Web\Json;
 use Bitrix\Main\Web\Uri;
@@ -73,7 +72,6 @@ class Trace
 		{
 			try
 			{
-				$string = Encoding::convertEncoding($string, SITE_CHARSET, 'UTF-8');
 				$data = Json::decode($string);
 				if (is_array($data))
 				{

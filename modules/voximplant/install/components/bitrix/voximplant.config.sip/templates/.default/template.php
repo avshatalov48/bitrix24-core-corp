@@ -57,7 +57,7 @@ if($isBitrix24Template)
 					</div>
 					<p><?=GetMessage('VI_CONFIG_SIP_CONNECT_INFO_P4_2');?></p>
 					<div class="tel-set-inp-add-new" style="margin-bottom: 35px">
-						<span class="ui-btn ui-btn-primary" onclick="BX.Voximplant.Sip.connectModule('<?=$arResult['LINK_TO_BUY']?>')" >
+						<span class="ui-btn ui-btn-primary" onclick="BX.Voximplant.Sip.connectModule('<?=$arResult['LINK_TO_BUY']?>', '<?=$arResult['LIC_KEY_HASH']?>')" >
 							<?=GetMessage('VI_CONFIG_SIP_ACCEPT_3')?>
 						</span>
 					</div>
@@ -68,7 +68,7 @@ if($isBitrix24Template)
 		</div>
 	</div>
 </div>
-<script type="text/javascript">
+<script>
 	BX.Voximplant.Sip.init({
 		publicFolder: '<?=CVoxImplantMain::GetPublicFolder()?>',
 		type: '<?=CUtil::JSEscape($arResult['SIP_TYPE'])?>',

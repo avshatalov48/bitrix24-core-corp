@@ -5,7 +5,6 @@ return [
 		'disk',
 		'apptheme',
 		'im:messenger/api/dialog-opener',
-		'tasks:task',
 		'require-lazy',
 	],
 	'components' => [

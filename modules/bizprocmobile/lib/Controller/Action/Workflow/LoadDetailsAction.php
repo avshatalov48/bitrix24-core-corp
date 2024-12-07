@@ -7,6 +7,7 @@ use Bitrix\Bizproc\Workflow\Task\TaskTable;
 use Bitrix\Bizproc\Workflow\WorkflowState;
 use Bitrix\BizprocMobile\EntityEditor\Converter;
 use Bitrix\BizprocMobile\EntityEditor\ParametersProvider;
+use Bitrix\BizprocMobile\UI\CommentCounterView;
 use Bitrix\Main\Engine\Action;
 use Bitrix\Main\Error;
 use Bitrix\Main\Localization\Loc;
@@ -36,6 +37,7 @@ class LoadDetailsAction extends Action
 		}
 
 		$canView = $this->canUserViewWorkflow($currentUserId, $state);
+		$commentCounter = new CommentCounterView($workflowId, $currentUserId);
 
 		if ($state->getModuleId() === 'lists' && $state->getEntity() === 'BizprocDocument')
 		{
@@ -43,6 +45,7 @@ class LoadDetailsAction extends Action
 				'workflow' => null,
 				'editor' => $canView ? $this->getWorkflowEditor($state) : null,
 				'taskCount' => $this->getTasksCount($state->getId(), $currentUserId),
+				'commentCounter' => $commentCounter,
 				'isLiveFeedProcess' => true,
 				'documentId' => $state->getDocumentId(),
 				'canViewWorkflow' => $canView,
@@ -60,6 +63,7 @@ class LoadDetailsAction extends Action
 			],
 			'editor' => $canView ? $this->getWorkflowEditor($state) : null,
 			'taskCount' => $this->getTasksCount($state->getId(), $currentUserId),
+			'commentCounter' => $commentCounter,
 			'isLiveFeedProcess' => false,
 			'documentId' => $state->getDocumentId(),
 			'canViewWorkflow' => $canView,

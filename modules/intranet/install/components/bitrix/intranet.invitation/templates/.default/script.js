@@ -11,6 +11,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    var _this;
 	    babelHelpers.classCallCheck(this, Submit);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Submit).call(this));
+	    _this.waitingResponse = false;
 	    _this.parent = parent;
 	    _this.setEventNamespace("BX.Intranet.Invitation.Submit");
 	    _this.parent.subscribe("onButtonClick", function (event) {});
@@ -298,8 +299,10 @@ this.BX.Intranet = this.BX.Intranet || {};
 	        return;
 	      }
 	      if (isDisable) {
+	        this.waitingResponse = true;
 	        main_core.Dom.addClass(button, ["ui-btn-wait", "invite-cursor-auto"]);
 	      } else {
+	        this.waitingResponse = false;
 	        main_core.Dom.removeClass(button, ["ui-btn-wait", "invite-cursor-auto"]);
 	      }
 	    }
@@ -586,10 +589,10 @@ this.BX.Intranet = this.BX.Intranet || {};
 	        main_core.Event.bind(closeIcon, 'click', function (event) {
 	          event.preventDefault();
 	          if (main_core.Type.isDomNode(node.parentNode)) {
-	            var phoneBlock = node.parentNode.querySelector("[data-role='phone-block']");
+	            var phoneBlock = node.parentNode.querySelector('input.ui-ctl-element');
 	            if (main_core.Type.isDomNode(phoneBlock)) {
-	              var newInput = main_core.Tag.render(_templateObject$2 || (_templateObject$2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t\t\t<input\n\t\t\t\t\t\t\t\tname=\"EMAIL[]\"\n\t\t\t\t\t\t\t\ttype=\"text\"\n\t\t\t\t\t\t\t\tmaxlength=\"50\"\n\t\t\t\t\t\t\t\tdata-num=\"", "\"\n\t\t\t\t\t\t\t\tclass=\"ui-ctl-element js-email-phone-input\"\n\t\t\t\t\t\t\t\tplaceholder=\"", "\"\n\t\t\t\t\t\t\t/>"])), node.getAttribute('data-num'), main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_EMAIL_OR_PHONE_INPUT'));
-	              main_core.Dom.replace(node, newInput);
+	              var newInput = main_core.Tag.render(_templateObject$2 || (_templateObject$2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t\t\t<input\n\t\t\t\t\t\t\t\tname=\"", "\"\n\t\t\t\t\t\t\t\ttype=\"text\"\n\t\t\t\t\t\t\t\tmaxlength=\"50\"\n\t\t\t\t\t\t\t\tdata-num=\"", "\"\n\t\t\t\t\t\t\t\tclass=\"ui-ctl-element js-email-phone-input\"\n\t\t\t\t\t\t\t\tplaceholder=\"", "\"\n\t\t\t\t\t\t\t/>"])), phoneBlock.name, node.getAttribute('data-num'), phoneBlock.placeholder);
+	              main_core.Dom.replace(phoneBlock, newInput);
 	              _this3.bindCloseIcons(newInput.parentNode);
 	              _this3.bindPhoneChecker(newInput.parentNode);
 	              main_core.Dom.remove(phoneBlock);
@@ -618,7 +621,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	        nameTitle = "\n\t\t\t\t<div class=\"ui-ctl-label-text\">\n\t\t\t\t\t".concat(main_core.Loc.getMessage("BX24_INVITE_DIALOG_ADD_NAME_TITLE"), "\n\t\t\t\t</div>");
 	        lastNameTitle = "\n\t\t\t\t<div class=\"ui-ctl-label-text\">\n\t\t\t\t\t".concat(main_core.Loc.getMessage("BX24_INVITE_DIALOG_ADD_LAST_NAME_TITLE"), "\n\t\t\t\t</div>");
 	      }
-	      var element = main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"invite-form-row js-form-row\">\n\t\t\t\t<div class=\"invite-form-col\">\n\t\t\t\t\t", "\n\t\t\t\t\t<div class=\"ui-ctl ui-ctl-w100 ui-ctl-textbox ui-ctl-block ui-ctl-after-icon\">\n\t\t\t\t\t\t<input \n\t\t\t\t\t\t\tname=\"EMAIL[]\" \n\t\t\t\t\t\t\ttype=\"text\" \n\t\t\t\t\t\t\tmaxlength=\"50\"\n\t\t\t\t\t\t\tdata-num=\"", "\" \n\t\t\t\t\t\t\tclass=\"ui-ctl-element js-email-phone-input\" \n\t\t\t\t\t\t\tplaceholder=\"", "\"\n\t\t\t\t\t\t/>\n\t\t\t\t\t\t<button class=\"ui-ctl-after ui-ctl-icon-clear\" style=\"display: none\"></button>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"invite-form-col\">\n\t\t\t\t\t", "\n\t\t\t\t\t<div class=\"ui-ctl ui-ctl-w100 ui-ctl-textbox ui-ctl-block ui-ctl-after-icon\">\n\t\t\t\t\t\t<input name=\"NAME[]\" type=\"text\" class=\"ui-ctl-element\" placeholder=\"", "\">\n\t\t\t\t\t\t<button class=\"ui-ctl-after ui-ctl-icon-clear\" style=\"display: none\"></button>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"invite-form-col\">\n\t\t\t\t\t", "\n\t\t\t\t\t<div class=\"ui-ctl ui-ctl-w100 ui-ctl-textbox ui-ctl-block ui-ctl-after-icon\">\n\t\t\t\t\t\t<input name=\"LAST_NAME[]\" type=\"text\" class=\"ui-ctl-element\" placeholder=\"", "\">\n\t\t\t\t\t\t<button class=\"ui-ctl-after ui-ctl-icon-clear\" style=\"display: none\"></button>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), showTitles ? emailTitle : '', this.inputNum++, main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_EMAIL_OR_PHONE_INPUT'), showTitles ? nameTitle : '', main_core.Loc.getMessage('BX24_INVITE_DIALOG_ADD_NAME_TITLE'), showTitles ? lastNameTitle : '', main_core.Loc.getMessage('BX24_INVITE_DIALOG_ADD_LAST_NAME_TITLE'));
+	      var element = main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"invite-form-row js-form-row\">\n\t\t\t\t<div class=\"invite-form-col\">\n\t\t\t\t\t", "\n\t\t\t\t\t<div class=\"ui-ctl ui-ctl-w100 ui-ctl-textbox ui-ctl-block ui-ctl-after-icon\">\n\t\t\t\t\t\t<input \n\t\t\t\t\t\t\tname=\"EMAIL[]\" \n\t\t\t\t\t\t\ttype=\"text\" \n\t\t\t\t\t\t\tmaxlength=\"50\"\n\t\t\t\t\t\t\tdata-num=\"", "\" \n\t\t\t\t\t\t\tclass=\"ui-ctl-element js-email-phone-input\" \n\t\t\t\t\t\t\tplaceholder=\"", "\"\n\t\t\t\t\t\t/>\n\t\t\t\t\t\t<button type=\"button\" class=\"ui-ctl-after ui-ctl-icon-clear\" style=\"display: none\"></button>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"invite-form-col\">\n\t\t\t\t\t", "\n\t\t\t\t\t<div class=\"ui-ctl ui-ctl-w100 ui-ctl-textbox ui-ctl-block ui-ctl-after-icon\">\n\t\t\t\t\t\t<input name=\"NAME[]\" type=\"text\" class=\"ui-ctl-element js-email-name-input\" placeholder=\"", "\">\n\t\t\t\t\t\t<button type=\"button\" class=\"ui-ctl-after ui-ctl-icon-clear\" style=\"display: none\"></button>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"invite-form-col\">\n\t\t\t\t\t", "\n\t\t\t\t\t<div class=\"ui-ctl ui-ctl-w100 ui-ctl-textbox ui-ctl-block ui-ctl-after-icon\">\n\t\t\t\t\t\t<input name=\"LAST_NAME[]\" type=\"text\" class=\"ui-ctl-element js-email-last-name-input\" placeholder=\"", "\">\n\t\t\t\t\t\t<button type=\"button\" class=\"ui-ctl-after ui-ctl-icon-clear\" style=\"display: none\"></button>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), showTitles ? emailTitle : '', this.inputNum++, main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_EMAIL_OR_PHONE_INPUT'), showTitles ? nameTitle : '', main_core.Loc.getMessage('BX24_INVITE_DIALOG_ADD_NAME_TITLE'), showTitles ? lastNameTitle : '', main_core.Loc.getMessage('BX24_INVITE_DIALOG_ADD_LAST_NAME_TITLE'));
 	      main_core.Dom.append(element, this.rowsContainer);
 	      this.bindCloseIcons(element);
 	      this.bindPhoneChecker(element);
@@ -627,7 +630,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    key: "renderRegisterInputs",
 	    value: function renderRegisterInputs() {
 	      main_core.Dom.clean(this.rowsContainer);
-	      var element = main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div>\n\t\t\t\t<div class=\"invite-form-row\">\n\t\t\t\t\t<div class=\"invite-form-col\">\n\t\t\t\t\t\t<div class=\"ui-ctl-label-text\">", "</div>\n\t\t\t\t\t\t<div class=\"ui-ctl ui-ctl-w100 ui-ctl-textbox ui-ctl-block ui-ctl-after-icon\">\n\t\t\t\t\t\t\t<input type=\"text\" name=\"ADD_NAME\" id=\"ADD_NAME\" class=\"ui-ctl-element\">\n\t\t\t\t\t\t\t<button class=\"ui-ctl-after ui-ctl-icon-clear\" style=\"display: none\"></button>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"invite-form-row\">\n\t\t\t\t\t<div class=\"invite-form-col\">\n\t\t\t\t\t\t<div class=\"ui-ctl-label-text\">", "</div>\n\t\t\t\t\t\t<div class=\"ui-ctl ui-ctl-w100 ui-ctl-textbox ui-ctl-block ui-ctl-after-icon\">\n\t\t\t\t\t\t\t<input type=\"text\" name=\"ADD_LAST_NAME\" id=\"ADD_LAST_NAME\" class=\"ui-ctl-element\">\n\t\t\t\t\t\t\t<button class=\"ui-ctl-after ui-ctl-icon-clear\" style=\"display: none\"></button>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"invite-form-row\">\n\t\t\t\t\t<div class=\"invite-form-col\">\n\t\t\t\t\t\t<div class=\"ui-ctl-label-text\">", "</div>\n\t\t\t\t\t\t<div class=\"ui-ctl ui-ctl-w100 ui-ctl-textbox ui-ctl-block ui-ctl-after-icon\">\n\t\t\t\t\t\t\t<input type=\"text\" name=\"ADD_EMAIL\" id=\"ADD_EMAIL\" class=\"ui-ctl-element\" maxlength=\"50\">\n\t\t\t\t\t\t\t<button class=\"ui-ctl-after ui-ctl-icon-clear\" style=\"display: none\"></button>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"invite-form-row\">\n\t\t\t\t\t<div class=\"invite-form-col\">\n\t\t\t\t\t\t<div class=\"ui-ctl-label-text\">", "</div>\n\t\t\t\t\t\t<div class=\"ui-ctl ui-ctl-w100 ui-ctl-textbox ui-ctl-block ui-ctl-after-icon\">\n\t\t\t\t\t\t\t<input type=\"text\" name=\"ADD_POSITION\" id=\"ADD_POSITION\" class=\"ui-ctl-element\">\n\t\t\t\t\t\t\t<button class=\"ui-ctl-after ui-ctl-icon-clear\" style=\"display: none\"></button>\n\t\t\t\t\t\t</div>\t\t\t\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), main_core.Loc.getMessage("BX24_INVITE_DIALOG_ADD_NAME_TITLE"), main_core.Loc.getMessage("BX24_INVITE_DIALOG_ADD_LAST_NAME_TITLE"), main_core.Loc.getMessage("BX24_INVITE_DIALOG_ADD_EMAIL_TITLE"), main_core.Loc.getMessage("BX24_INVITE_DIALOG_ADD_POSITION_TITLE"));
+	      var element = main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div>\n\t\t\t\t<div class=\"invite-form-row\">\n\t\t\t\t\t<div class=\"invite-form-col\">\n\t\t\t\t\t\t<div class=\"ui-ctl-label-text\">", "</div>\n\t\t\t\t\t\t<div class=\"ui-ctl ui-ctl-w100 ui-ctl-textbox ui-ctl-block ui-ctl-after-icon\">\n\t\t\t\t\t\t\t<input type=\"text\" name=\"ADD_NAME\" id=\"ADD_NAME\" class=\"ui-ctl-element\">\n\t\t\t\t\t\t\t<button type=\"button\" class=\"ui-ctl-after ui-ctl-icon-clear\" style=\"display: none\"></button>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"invite-form-row\">\n\t\t\t\t\t<div class=\"invite-form-col\">\n\t\t\t\t\t\t<div class=\"ui-ctl-label-text\">", "</div>\n\t\t\t\t\t\t<div class=\"ui-ctl ui-ctl-w100 ui-ctl-textbox ui-ctl-block ui-ctl-after-icon\">\n\t\t\t\t\t\t\t<input type=\"text\" name=\"ADD_LAST_NAME\" id=\"ADD_LAST_NAME\" class=\"ui-ctl-element\">\n\t\t\t\t\t\t\t<button type=\"button\" class=\"ui-ctl-after ui-ctl-icon-clear\" style=\"display: none\"></button>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"invite-form-row\">\n\t\t\t\t\t<div class=\"invite-form-col\">\n\t\t\t\t\t\t<div class=\"ui-ctl-label-text\">", "</div>\n\t\t\t\t\t\t<div class=\"ui-ctl ui-ctl-w100 ui-ctl-textbox ui-ctl-block ui-ctl-after-icon\">\n\t\t\t\t\t\t\t<input type=\"text\" name=\"ADD_EMAIL\" id=\"ADD_EMAIL\" class=\"ui-ctl-element\" maxlength=\"50\">\n\t\t\t\t\t\t\t<button type=\"button\" class=\"ui-ctl-after ui-ctl-icon-clear\" style=\"display: none\"></button>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"invite-form-row\">\n\t\t\t\t\t<div class=\"invite-form-col\">\n\t\t\t\t\t\t<div class=\"ui-ctl-label-text\">", "</div>\n\t\t\t\t\t\t<div class=\"ui-ctl ui-ctl-w100 ui-ctl-textbox ui-ctl-block ui-ctl-after-icon\">\n\t\t\t\t\t\t\t<input type=\"text\" name=\"ADD_POSITION\" id=\"ADD_POSITION\" class=\"ui-ctl-element\">\n\t\t\t\t\t\t\t<button type=\"button\" class=\"ui-ctl-after ui-ctl-icon-clear\" style=\"display: none\"></button>\n\t\t\t\t\t\t</div>\t\t\t\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), main_core.Loc.getMessage("BX24_INVITE_DIALOG_ADD_NAME_TITLE"), main_core.Loc.getMessage("BX24_INVITE_DIALOG_ADD_LAST_NAME_TITLE"), main_core.Loc.getMessage("BX24_INVITE_DIALOG_ADD_EMAIL_TITLE"), main_core.Loc.getMessage("BX24_INVITE_DIALOG_ADD_POSITION_TITLE"));
 	      main_core.Dom.append(element, this.rowsContainer);
 	      this.bindCloseIcons(element);
 	    }
@@ -635,7 +638,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    key: "renderIntegratorInput",
 	    value: function renderIntegratorInput() {
 	      main_core.Dom.clean(this.rowsContainer);
-	      var element = main_core.Tag.render(_templateObject4 || (_templateObject4 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"invite-form-row\">\n\t\t\t\t<div class=\"invite-form-col\">\n\t\t\t\t\t<div class=\"ui-ctl-label-text\">", "</div>\n\t\t\t\t\t<div class=\"ui-ctl ui-ctl-w100 ui-ctl-textbox ui-ctl-block ui-ctl-after-icon\">\n\t\t\t\t\t\t<input \n\t\t\t\t\t\t\ttype=\"text\" \n\t\t\t\t\t\t\tclass=\"ui-ctl-element\" \n\t\t\t\t\t\t\tvalue=\"\" \n\t\t\t\t\t\t\tmaxlength=\"50\"\n\t\t\t\t\t\t\tname=\"integrator_email\" \n\t\t\t\t\t\t\tid=\"integrator_email\" \n\t\t\t\t\t\t\tplaceholder=\"", "\"\n\t\t\t\t\t\t/>\n\t\t\t\t\t\t<button class=\"ui-ctl-after ui-ctl-icon-clear\" style=\"display: none\"></button>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), main_core.Loc.getMessage("INTRANET_INVITE_DIALOG_INTEGRATOR_EMAIL"), main_core.Loc.getMessage("INTRANET_INVITE_DIALOG_INTEGRATOR_EMAIL"));
+	      var element = main_core.Tag.render(_templateObject4 || (_templateObject4 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"invite-form-row\">\n\t\t\t\t<div class=\"invite-form-col\">\n\t\t\t\t\t<div class=\"ui-ctl-label-text\">", "</div>\n\t\t\t\t\t<div class=\"ui-ctl ui-ctl-w100 ui-ctl-textbox ui-ctl-block ui-ctl-after-icon\">\n\t\t\t\t\t\t<input \n\t\t\t\t\t\t\ttype=\"text\" \n\t\t\t\t\t\t\tclass=\"ui-ctl-element\" \n\t\t\t\t\t\t\tvalue=\"\" \n\t\t\t\t\t\t\tmaxlength=\"50\"\n\t\t\t\t\t\t\tname=\"integrator_email\" \n\t\t\t\t\t\t\tid=\"integrator_email\" \n\t\t\t\t\t\t\tplaceholder=\"", "\"\n\t\t\t\t\t\t/>\n\t\t\t\t\t\t<button type=\"button\" class=\"ui-ctl-after ui-ctl-icon-clear\" style=\"display: none\"></button>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), main_core.Loc.getMessage("INTRANET_INVITE_DIALOG_INTEGRATOR_EMAIL"), main_core.Loc.getMessage("INTRANET_INVITE_DIALOG_INTEGRATOR_EMAIL"));
 	      main_core.Dom.append(element, this.rowsContainer);
 	      this.bindCloseIcons(element);
 	    }
@@ -670,11 +673,16 @@ this.BX.Intranet = this.BX.Intranet || {};
 	          });
 	        }
 	        if (type === "project" && !!this.options[type]) {
+	          var options = {
+	            fillRecentTab: true
+	          };
+	          if (Object.prototype.hasOwnProperty.call(this.options, 'projectLimitExceeded') && Object.prototype.hasOwnProperty.call(this.options, 'projectLimitFeatureId')) {
+	            options.lockProjectLink = this.options.projectLimitExceeded;
+	            options.lockProjectLinkFeatureId = this.options.projectLimitFeatureId;
+	          }
 	          var optionValue = {
-	            id: "project",
-	            options: {
-	              fillRecentTab: true
-	            }
+	            id: 'project',
+	            options: options
 	          };
 	          if (this.options[type] === "extranet") {
 	            optionValue["options"]["extranet"] = true;
@@ -784,6 +792,20 @@ this.BX.Intranet = this.BX.Intranet || {};
 	        p2: _classPrivateMethodGet(this, _getAdminAllowMode, _getAdminAllowMode2).call(this)
 	      });
 	    }
+	  }, {
+	    key: "sendTabData",
+	    value: function sendTabData(section, subSection) {
+	      if (!section) {
+	        return;
+	      }
+	      ui_analytics.sendData({
+	        tool: Analytics.TOOLS,
+	        category: Analytics.CATEGORY_INVITATION,
+	        event: Analytics.EVENT_TAB_VIEW,
+	        c_section: section,
+	        c_sub_section: subSection
+	      });
+	    }
 	  }]);
 	  return Analytics;
 	}();
@@ -803,6 +825,14 @@ this.BX.Intranet = this.BX.Intranet || {};
 	babelHelpers.defineProperty(Analytics, "ADMIN_ALLOW_MODE_N", 'askAdminToAllow_N');
 	babelHelpers.defineProperty(Analytics, "IS_ADMIN_Y", 'isAdmin_Y');
 	babelHelpers.defineProperty(Analytics, "IS_ADMIN_N", 'isAdmin_N');
+	babelHelpers.defineProperty(Analytics, "EVENT_TAB_VIEW", 'tab_view');
+	babelHelpers.defineProperty(Analytics, "TAB_EMAIL", 'tab_by_email');
+	babelHelpers.defineProperty(Analytics, "TAB_MASS", 'tab_mass');
+	babelHelpers.defineProperty(Analytics, "TAB_DEPARTMENT", 'tab_department');
+	babelHelpers.defineProperty(Analytics, "TAB_INTEGRATOR", 'tab_integrator');
+	babelHelpers.defineProperty(Analytics, "TAB_LINK", 'by_link');
+	babelHelpers.defineProperty(Analytics, "TAB_REGISTRATION", 'registration');
+	babelHelpers.defineProperty(Analytics, "TAB_AD", 'AD');
 
 	var Form = /*#__PURE__*/function (_EventEmitter) {
 	  babelHelpers.inherits(Form, _EventEmitter);
@@ -826,6 +856,8 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    _this.firstInvitationBlock = params.firstInvitationBlock;
 	    _this.isSelfRegisterEnabled = params.isSelfRegisterEnabled;
 	    _this.analyticsLabel = params.analyticsLabel;
+	    _this.projectLimitExceeded = main_core.Type.isBoolean(params.projectLimitExceeded) ? params.projectLimitExceeded : true;
+	    _this.projectLimitFeatureId = main_core.Type.isString(params.projectLimitFeatureId) ? params.projectLimitFeatureId : '';
 	    if (main_core.Type.isDomNode(_this.contentContainer)) {
 	      var blocks = Array.prototype.slice.call(_this.contentContainer.querySelectorAll(".js-intranet-invitation-block"));
 	      (blocks || []).forEach(function (block) {
@@ -872,16 +904,29 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      this.selector.render();
 	    }
 	  }, {
+	    key: "getSubSection",
+	    value: function getSubSection() {
+	      var regex = /analyticsLabel\[source]=(\w*)&/gm;
+	      var match = regex.exec(decodeURI(window.location));
+	      if ((match === null || match === void 0 ? void 0 : match.length) > 1) {
+	        return match[1];
+	      }
+	      return null;
+	    }
+	  }, {
 	    key: "changeContent",
 	    value: function changeContent(action) {
 	      this.hideErrorMessage();
 	      this.hideSuccessMessage();
+	      var section = this.getSubSection();
+	      var subSection = "";
 	      if (action.length > 0) {
 	        if (action === 'active-directory') {
 	          if (!this.activeDirectory) {
 	            this.activeDirectory = new ActiveDirectory(this);
 	          }
 	          this.activeDirectory.showForm();
+	          this.analytics.sendTabData(Analytics.TAB_AD);
 	          return;
 	        }
 	        var projectId = this.userOptions.hasOwnProperty('groupId') ? parseInt(this.userOptions.groupId, 10) : 0;
@@ -895,8 +940,10 @@ this.BX.Intranet = this.BX.Intranet || {};
 	            };
 	            var row = new Row(this, params);
 	            if (action === 'invite') {
+	              subSection = Analytics.TAB_EMAIL;
 	              row.renderInviteInputs(5);
 	            } else if (action === 'invite-with-group-dp') {
+	              subSection = Analytics.TAB_DEPARTMENT;
 	              row.renderInviteInputs(3);
 	              var selectorParams = {
 	                contentBlock: this.contentBlocks[action].querySelector("[data-role='entity-selector-container']"),
@@ -904,7 +951,9 @@ this.BX.Intranet = this.BX.Intranet || {};
 	                  department: true,
 	                  project: true,
 	                  projectId: projectId,
-	                  isAdmin: this.isAdmin
+	                  isAdmin: this.isAdmin,
+	                  projectLimitExceeded: this.projectLimitExceeded,
+	                  projectLimitFeatureId: this.projectLimitFeatureId
 	                }
 	              };
 	              this.renderSelector(selectorParams);
@@ -916,11 +965,14 @@ this.BX.Intranet = this.BX.Intranet || {};
 	                  department: false,
 	                  project: "extranet",
 	                  projectId: projectId,
-	                  isAdmin: this.isAdmin
+	                  isAdmin: this.isAdmin,
+	                  projectLimitExceeded: this.projectLimitExceeded,
+	                  projectLimitFeatureId: this.projectLimitFeatureId
 	                }
 	              };
 	              this.renderSelector(_selectorParams);
 	            } else if (action === "add") {
+	              subSection = Analytics.TAB_REGISTRATION;
 	              row.renderRegisterInputs();
 	              var _selectorParams2 = {
 	                contentBlock: this.contentBlocks[action].querySelector("[data-role='entity-selector-container']"),
@@ -928,17 +980,27 @@ this.BX.Intranet = this.BX.Intranet || {};
 	                  department: true,
 	                  project: true,
 	                  projectId: projectId,
-	                  isAdmin: this.isAdmin
+	                  isAdmin: this.isAdmin,
+	                  projectLimitExceeded: this.projectLimitExceeded,
+	                  projectLimitFeatureId: this.projectLimitFeatureId
 	                }
 	              };
 	              this.renderSelector(_selectorParams2);
 	            } else if (action === "integrator") {
+	              subSection = Analytics.TAB_INTEGRATOR;
 	              row.renderIntegratorInput();
+	            } else if (action === "self") {
+	              subSection = Analytics.TAB_LINK;
+	            } else if (action === "mass-invite") {
+	              subSection = Analytics.TAB_MASS;
 	            }
 	          } else {
 	            main_core.Dom.removeClass(block, 'invite-block-shown');
 	            main_core.Dom.addClass(block, 'invite-block-hidden');
 	          }
+	        }
+	        if (this.analytics) {
+	          this.analytics.sendTabData(section, subSection);
 	        }
 	        this.changeButton(action);
 	      }
@@ -958,22 +1020,30 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      if (action === "invite") {
 	        this.button.innerText = main_core.Loc.getMessage('BX24_INVITE_DIALOG_ACTION_INVITE');
 	        main_core.Event.bind(this.button, 'click', function () {
-	          _this2.submit.submitInvite();
+	          if (!_this2.submit.waitingResponse) {
+	            _this2.submit.submitInvite();
+	          }
 	        });
 	      } else if (action === "mass-invite") {
 	        this.button.innerText = main_core.Loc.getMessage('BX24_INVITE_DIALOG_ACTION_INVITE');
 	        main_core.Event.bind(this.button, 'click', function () {
-	          _this2.submit.submitMassInvite();
+	          if (!_this2.submit.waitingResponse) {
+	            _this2.submit.submitMassInvite();
+	          }
 	        });
 	      } else if (action === "invite-with-group-dp") {
 	        this.button.innerText = main_core.Loc.getMessage('BX24_INVITE_DIALOG_ACTION_INVITE');
 	        main_core.Event.bind(this.button, 'click', function () {
-	          _this2.submit.submitInviteWithGroupDp();
+	          if (!_this2.submit.waitingResponse) {
+	            _this2.submit.submitInviteWithGroupDp();
+	          }
 	        });
 	      } else if (action === "add") {
 	        this.button.innerText = main_core.Loc.getMessage('BX24_INVITE_DIALOG_ACTION_ADD');
 	        main_core.Event.bind(this.button, 'click', function () {
-	          _this2.submit.submitAdd();
+	          if (!_this2.submit.waitingResponse) {
+	            _this2.submit.submitAdd();
+	          }
 	        });
 	      } else if (action === "self") {
 	        this.button.innerText = main_core.Loc.getMessage('BX24_INVITE_DIALOG_ACTION_SAVE');
@@ -986,12 +1056,16 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      } else if (action === "integrator") {
 	        this.button.innerText = main_core.Loc.getMessage('BX24_INVITE_DIALOG_ACTION_INVITE');
 	        main_core.Event.bind(this.button, 'click', function () {
-	          _this2.submit.submitIntegrator();
+	          if (!_this2.submit.waitingResponse) {
+	            _this2.submit.submitIntegrator();
+	          }
 	        });
 	      } else if (action === "extranet") {
 	        this.button.innerText = main_core.Loc.getMessage('BX24_INVITE_DIALOG_ACTION_INVITE');
 	        main_core.Event.bind(this.button, 'click', function () {
-	          _this2.submit.submitExtranet();
+	          if (!_this2.submit.waitingResponse) {
+	            _this2.submit.submitExtranet();
+	          }
 	        });
 	      } else if (action === "success") {
 	        this.button.innerText = main_core.Loc.getMessage('BX24_INVITE_DIALOG_ACTION_INVITE_MORE');

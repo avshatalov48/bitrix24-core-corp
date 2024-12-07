@@ -37,7 +37,7 @@ Vue.component(config.templateAddPaymentBySmsTimeline,
 					<div class="salescenter-app-payment-by-sms-item-counter-icon salescenter-app-payment-by-sms-item-counter-icon-sent"></div>
 				</div>
 				<div class="${classModule}-content">
-					<span class="${classModule}-content-text">Клиент еще не перешел по ссылке</span>
+					<span class="${classModule}-content-text">РљР»РёРµРЅС‚ РµС‰Рµ РЅРµ РїРµСЂРµС€РµР» РїРѕ СЃСЃС‹Р»РєРµ</span>
 				</div>
 			</div>
 			<div class="${classModule}-item ${classModule}-item-disabled">
@@ -46,7 +46,7 @@ Vue.component(config.templateAddPaymentBySmsTimeline,
 					<div class="salescenter-app-payment-by-sms-item-counter-icon salescenter-app-payment-by-sms-item-counter-icon-cash"></div>
 				</div>
 				<div class="${classModule}-content">
-					<span class="${classModule}-content-text">Клиент еще не оплатил заказ</span>
+					<span class="${classModule}-content-text">РљР»РёРµРЅС‚ РµС‰Рµ РЅРµ РѕРїР»Р°С‚РёР» Р·Р°РєР°Р·</span>
 				</div>
 			</div>
 			<div class="${classModule}-item ${classModule}-item-disabled">
@@ -55,7 +55,7 @@ Vue.component(config.templateAddPaymentBySmsTimeline,
 					<div class="salescenter-app-payment-by-sms-item-counter-icon salescenter-app-payment-by-sms-item-counter-icon-check-sent"></div>
 				</div>
 				<div class="${classModule}-content">
-					<span class="${classModule}-content-text">Чек не отправлен клиенту</span>
+					<span class="${classModule}-content-text">Р§РµРє РЅРµ РѕС‚РїСЂР°РІР»РµРЅ РєР»РёРµРЅС‚Сѓ</span>
 				</div>
 			</div>
 			
@@ -67,10 +67,10 @@ Vue.component(config.templateAddPaymentBySmsTimeline,
 				<div class="${classModule}-content">
 					<span class="${classModule}-content-price">
 						890
-						<span class="${classModule}-content-price-cur">руб.</span>
+						<span class="${classModule}-content-price-cur">СЂСѓР±.</span>
 					</span>
-					<span class="${classModule}-content-text-strong">Оплачено 22 декабря 14:31</span>
-					<span class="${classModule}-content-text">Способ оплаты: Сбербанк онлайн</span>
+					<span class="${classModule}-content-text-strong">РћРїР»Р°С‡РµРЅРѕ 22 РґРµРєР°Р±СЂСЏ 14:31</span>
+					<span class="${classModule}-content-text">РЎРїРѕСЃРѕР± РѕРїР»Р°С‚С‹: РЎР±РµСЂР±Р°РЅРє РѕРЅР»Р°Р№РЅ</span>
 				</div>
 			</div>
 			<div class="${classModule}-item">
@@ -79,7 +79,7 @@ Vue.component(config.templateAddPaymentBySmsTimeline,
 					<div class="salescenter-app-payment-by-sms-item-counter-icon salescenter-app-payment-by-sms-item-counter-icon-watch"></div>
 				</div>
 				<div class="${classModule}-content">
-					<span class="${classModule}-content-text">Клиент просмотрел заказ 22 декабря 14:00</span>
+					<span class="${classModule}-content-text">РљР»РёРµРЅС‚ РїСЂРѕСЃРјРѕС‚СЂРµР» Р·Р°РєР°Р· 22 РґРµРєР°Р±СЂСЏ 14:00</span>
 				</div>
 			</div>
 			<div class="${classModule}-item">
@@ -88,8 +88,8 @@ Vue.component(config.templateAddPaymentBySmsTimeline,
 					<div class="salescenter-app-payment-by-sms-item-counter-icon salescenter-app-payment-by-sms-item-counter-icon-check"></div>
 				</div>
 				<div class="${classModule}-content">
-					<span class="${classModule}-content-text">Создан чек №123 от 22 декабря</span>
-					<a href="#">Посмотреть</a>
+					<span class="${classModule}-content-text">РЎРѕР·РґР°РЅ С‡РµРє в„–123 РѕС‚ 22 РґРµРєР°Р±СЂСЏ</span>
+					<a href="#">РџРѕСЃРјРѕС‚СЂРµС‚СЊ</a>
 				</div>
 			</div>
 			<div class="${classModule}-item ${classModule}-item-disabled">
@@ -98,8 +98,8 @@ Vue.component(config.templateAddPaymentBySmsTimeline,
 					<div class="salescenter-app-payment-by-sms-item-counter-icon salescenter-app-payment-by-sms-item-counter-icon-check-sent"></div>
 				</div>
 				<div class="${classModule}-content">
-					<span class="${classModule}-content-text">Чек №123 отправлен клиенту 22 декабря 22:34</span>
-					<a href="#">Посмотреть</a>
+					<span class="${classModule}-content-text">Р§РµРє в„–123 РѕС‚РїСЂР°РІР»РµРЅ РєР»РёРµРЅС‚Сѓ 22 РґРµРєР°Р±СЂСЏ 22:34</span>
+					<a href="#">РџРѕСЃРјРѕС‚СЂРµС‚СЊ</a>
 				</div>
 			</div>-->
 		</div>

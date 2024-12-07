@@ -35,6 +35,8 @@ BX.namespace('Tasks.Component');
 
 				this.bindEvents();
 				this.getDayPlan(); // pre-init dayplan as it should process all events come from planner
+
+				this.showAha();
 			},
 
 			bindEvents: function()
@@ -99,6 +101,44 @@ BX.namespace('Tasks.Component');
 				return this.instances.dayplan;
 			},
 
+			showAha()
+			{
+				if (
+					this.option('showAhaStartFlowTask')
+					&& BX.Tasks.Clue
+					&& this.vars.can.START
+				)
+				{
+					const bindElement = this.getStartBtnForAha();
+					if (bindElement)
+					{
+						const clue = new BX.Tasks.Clue({
+							id: `task_start_${this.option('currentUserId')}`,
+							autoSave: true,
+						});
+
+						clue.show(BX.Tasks.Clue.SPOT.TASK_START, bindElement);
+					}
+				}
+			},
+
+			getStartBtnForAha()
+			{
+				const startTimer = this.control('buttonset').querySelector('[data-action="START_TIMER"]');
+				if (startTimer && window.getComputedStyle(startTimer).display !== 'none')
+				{
+					return startTimer;
+				}
+
+				const start = this.control('buttonset').querySelector('[data-action="START"]');
+				if (start && window.getComputedStyle(start).display !== 'none')
+				{
+					return start;
+				}
+
+				return null;
+			},
+
 			showUserSelector: function()
 			{
 				if (!this.userSelector)
@@ -144,15 +184,19 @@ BX.namespace('Tasks.Component');
 					}
 					else if (code === 'DELEGATE')
 					{
-						if (this.option('taskLimitExceeded'))
+						if (this.option('taskDelegatingExceeded'))
 						{
-							BX.UI.InfoHelper.show('limit_tasks_delegating', {
-								isLimit: true,
-								limitAnalyticsLabels: {
-									module: 'tasks',
-									source: 'taskView'
-								}
+							BX.Runtime.loadExtension('tasks.limit').then((exports) => {
+								const { Limit } = exports;
+								Limit.showInstance({
+									featureId: this.option('taskDelegatingFeatureId'),
+									limitAnalyticsLabels: {
+										module: 'tasks',
+										source: 'taskView',
+									},
+								});
 							});
+
 							return;
 						}
 						this.showUserSelector();
@@ -552,8 +596,13 @@ BX.namespace('Tasks.Component');
 						code: 'DELEGATE',
 						text: BX.message('TASKS_DELEGATE_TASK'),
 						title: BX.message('TASKS_DELEGATE_TASK'),
-						className: 'menu-popup-item-delegate' + (this.option('taskLimitExceeded') ? ' tasks-tariff-lock' : ''),
-						onclick: this.passCtx(this.doMenuAction)
+						className: 'menu-popup-item-delegate' + (
+							this.option('taskLimitExceeded')
+							|| this.option('taskDelegatingExceeded')
+								? ' tasks-tariff-lock'
+								: ''
+						),
+						onclick: this.passCtx(this.doMenuAction),
 					});
 				}
 

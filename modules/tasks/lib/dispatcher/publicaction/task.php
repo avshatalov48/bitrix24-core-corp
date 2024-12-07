@@ -933,12 +933,20 @@ final class Task extends \Bitrix\Tasks\Dispatcher\RestrictedAction
 	{
 		$result = [];
 
+		$id = (int)$id;
+		$originatorId = (int)$originatorId;
+		if ($id <=0 || $originatorId <= 0)
+		{
+			$this->addForbiddenError();
+			return $result;
+		}
+
 		$oldTask = TaskModel::createFromId($id);
 		$newTask = clone $oldTask;
 
 		$members = $newTask->getMembers();
 		$members[RoleDictionary::ROLE_DIRECTOR] = [];
-		$members[RoleDictionary::ROLE_DIRECTOR][] = (int)$originatorId;
+		$members[RoleDictionary::ROLE_DIRECTOR][] = $originatorId;
 		$newTask->setMembers($members);
 
 		if (!(new TaskAccessController($this->userId))->check(ActionDictionary::ACTION_TASK_CHANGE_DIRECTOR, $oldTask, $newTask))

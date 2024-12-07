@@ -42,7 +42,6 @@ if (!CCrmAuthorizationHelper::CheckConfigurationUpdatePermission($currentUserPer
 	__ajaxEndJsonResonse(array('ERROR' => 'Access denied.'));
 }
 
-CUtil::JSPostUnescape();
 $action = isset($_POST['ACTION']) ? $_POST['ACTION'] : '';
 if($action == '')
 {

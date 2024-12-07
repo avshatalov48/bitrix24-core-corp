@@ -60,7 +60,7 @@ BX.namespace('Tasks.Component');
 					},
 					"graphs": [{
 						"useNegativeColorIfDown": true,
-						"balloonText": "[[category]]<br><b>Эффективность: [[value]]</b>",
+						"balloonText": "[[category]]<br><b>Р­С„С„РµРєС‚РёРІРЅРѕСЃС‚СЊ: [[value]]</b>",
 						"bullet": "round",
 						"bulletBorderAlpha": 1,
 						"bulletBorderColor": "#FFFFFF",

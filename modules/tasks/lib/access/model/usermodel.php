@@ -3,9 +3,10 @@
 namespace Bitrix\Tasks\Access\Model;
 
 use Bitrix\Main\Access\User\AccessibleUser;
-use Bitrix\Main\UserTable;
-use Bitrix\Tasks\Access\Permission\TasksPermissionTable;
+use Bitrix\Tasks\Access\Permission\PermissionDictionary;
+use Bitrix\Tasks\Access\Permission\PermissionRegistry;
 use Bitrix\Tasks\Access\Role\TasksRoleRelationTable;
+use Bitrix\Tasks\Integration\Intranet;
 
 /**
  * Bitrix Framework
@@ -35,7 +36,7 @@ class UserModel extends \Bitrix\Main\Access\User\UserModel
 				return $this->allSubordinates;
 			}
 
-			$this->allSubordinates = \Bitrix\Tasks\Integration\Intranet\User::getSubordinate($this->userId, null, true, true);
+			$this->allSubordinates = Intranet\User::getSubordinate($this->userId, null, true, true);
 		}
 		return $this->allSubordinates;
 	}
@@ -65,34 +66,19 @@ class UserModel extends \Bitrix\Main\Access\User\UserModel
 	public function getPermission(string $permissionId): ?int
 	{
 		$permissions = $this->getPermissions();
-		if (array_key_exists($permissionId, $permissions))
+		if (in_array($permissionId, $permissions))
 		{
-			return $permissions[$permissionId];
+			return PermissionDictionary::VALUE_YES;
 		}
-		return null;
+
+		return PermissionDictionary::VALUE_NO;
 	}
 
 	public function isEmail(): bool
 	{
 		if ($this->isEmail === null)
 		{
-			$this->isEmail = false;
-
-			$user = UserTable::getList([
-				'select' => ['EXTERNAL_AUTH_ID'],
-				'filter' => [
-					'=ID' => $this->userId
-				],
-				'limit' => 1
-			])->fetch();
-
-			if (
-				$user
-				&& $user['EXTERNAL_AUTH_ID'] === 'email'
-			)
-			{
-				$this->isEmail = true;
-			}
+			$this->isEmail = Intranet\User::isEmail($this->userId);
 		}
 		return $this->isEmail;
 	}
@@ -101,44 +87,21 @@ class UserModel extends \Bitrix\Main\Access\User\UserModel
 	{
 		if ($this->isExtranet === null)
 		{
-			$this->isExtranet = \Bitrix\Tasks\Integration\Extranet\User::isExtranet($this->getUserId());
+			$this->isExtranet = !Intranet\User::isIntranet($this->userId);
 		}
 		return $this->isExtranet;
 	}
 
 	private function getPermissions(): array
 	{
-		if (!$this->permissions)
+		if (is_array($this->permissions))
 		{
-			$this->permissions = [];
-			$roles = $this->getRoles();
-
-			if (empty($roles))
-			{
-				return $this->permissions;
-			}
-
-			$res = TasksPermissionTable::query()
-				->addSelect("PERMISSION_ID")
-				->addSelect("VALUE")
-				->whereIn("ROLE_ID", $roles)
-				->exec()
-				->fetchAll();
-
-			foreach ($res as $row)
-			{
-				$permissionId = $row["PERMISSION_ID"];
-				$value = (int) $row["VALUE"];
-				if (!array_key_exists($permissionId, $this->permissions))
-				{
-					$this->permissions[$permissionId] = 0;
-				}
-				if ($value > $this->permissions[$permissionId])
-				{
-					$this->permissions[$permissionId] = $value;
-				}
-			}
+			return $this->permissions;
 		}
+
+		$roles = $this->getRoles();
+		$this->permissions = PermissionRegistry::getInstance()->getPermissions($roles);
+
 		return $this->permissions;
 	}
 }

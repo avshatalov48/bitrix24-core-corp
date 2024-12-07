@@ -1,8 +1,8 @@
 <?php
 
-use Bitrix\Main\Routing\RoutingConfigurator;
-use Bitrix\Main\Routing\Controllers\PublicPageController;
 use Bitrix\Bitrix24\Sso\Scim;
+use Bitrix\Main\Routing\Controllers\PublicPageController;
+use Bitrix\Main\Routing\RoutingConfigurator;
 
 return function (RoutingConfigurator $routes) {
 
@@ -146,13 +146,18 @@ return function (RoutingConfigurator $routes) {
 		}
 	);
 
+	// automation
+	$routes
+		->any('/automation/type/{any}', new PublicPageController('/automation/type/index.php'))
+		->where('any', '.*');
+
 	// marketplace
 	$routes
 		->prefix('marketplace')
 		->where('any', '.*')
 		->group(function (RoutingConfigurator $routes) {
 
-			$routes->any('local/{any}', new PublicPageController('/marketplace/local/index.php'));
+
 			$routes->any('configuration/{any}', new PublicPageController('/marketplace/configuration/index.php'));
 			$routes->any('hook/{any}', new PublicPageController('/marketplace/hook/index.php'));
 			$routes->any('app/{any}', new PublicPageController('/marketplace/app/index.php'));

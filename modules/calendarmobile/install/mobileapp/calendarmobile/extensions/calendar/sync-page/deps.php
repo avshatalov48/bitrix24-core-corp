@@ -8,7 +8,8 @@ return [
 		'pull/client/events',
 		'layout/ui/fields/boolean',
 		'calendar:ajax',
-		'calendar:sync-page/provider'
+		'calendar:sync-page/provider',
+		'tokens',
 	],
 	'bundle' => [
 		'./title'

@@ -5,7 +5,6 @@ jn.define('user/profile/src/profile-view', (require, exports, module) => {
 	const AppTheme = require('apptheme');
 	const { Profile } = require('user/profile/src/profile');
 
-	const crmEntityDetailComponent = 'crm:crm.entity.details';
 	const COMMUNICATION_PATH = '/bitrix/mobileapp/mobile/extensions/bitrix/user/profile/images/communication';
 
 	const statusColor = (status) => {
@@ -48,7 +47,7 @@ jn.define('user/profile/src/profile-view', (require, exports, module) => {
 			this.loaded = false;
 			this.name = '';
 			this.imageUrl = '';
-			BX.onViewLoaded(() => this.form.setTitle({ text: BX.message('PROFILE_INFO') }));
+			BX.onViewLoaded(() => this.form.setTitle({ text: BX.message('PROFILE_INFO_MSGVER_1'), type: 'entity' }));
 		}
 
 		loadPlaceholder()
@@ -127,7 +126,9 @@ jn.define('user/profile/src/profile-view', (require, exports, module) => {
 							if (this.formFields[fieldName].asterix)
 							{
 								this.formFields[fieldName].title = `${this.formFields[fieldName].title}*`;
-								const sectionIndex = this.formSections.findIndex((section) => section.id === this.formFields[fieldName].sectionCode);
+								const sectionIndex = this.formSections.findIndex((section) => (
+									section.id === this.formFields[fieldName].sectionCode
+								));
 								if (this.formSections[sectionIndex].footer)
 								{
 									this.formSections[sectionIndex].footer += `\n${this.formFields[fieldName].asterix}`;
@@ -156,7 +157,7 @@ jn.define('user/profile/src/profile-view', (require, exports, module) => {
 						if (data.HEAD_DATA && data.HEAD_DATA.id)
 						{
 							this.formFields.HEAD = {
-								title: BX.message('STRUCTURE_HEAD'),
+								title: BX.message('STRUCTURE_HEAD_MSGVER_1'),
 								subtitle: data.HEAD,
 								params: {
 									openScheme: 'user',
@@ -360,13 +361,10 @@ jn.define('user/profile/src/profile-view', (require, exports, module) => {
 				BX.postComponentEvent('ImMobile.Messenger.Dialog:open', [dialogParams], 'im.messenger');
 			};
 
-			if (this.isCrmEntityDetail())
+			const imOpener = DialogOpener();
+			if (typeof imOpener === 'function')
 			{
-				const imOpener = DialogOpener();
-				if (typeof imOpener === 'function')
-				{
-					openDialog = () => imOpener.open(dialogParams);
-				}
+				openDialog = () => imOpener.open(dialogParams);
 			}
 
 			if (!this.isBackdrop)
@@ -377,18 +375,6 @@ jn.define('user/profile/src/profile-view', (require, exports, module) => {
 			this.form.close(openDialog);
 
 			return true;
-		}
-
-		isCrmEntityDetail()
-		{
-			if (!PageManager.getNavigator())
-			{
-				return null;
-			}
-
-			const { type } = PageManager.getNavigator().getVisible();
-
-			return crmEntityDetailComponent === type;
 		}
 
 		/**
@@ -543,10 +529,10 @@ jn.define('user/profile/src/profile-view', (require, exports, module) => {
 		{
 			this.popupMenu.setData(
 				[
-					{ title: BX.message('PROFILE_USER_TASKS'), sectionCode: 'usermenu', id: 'tasks' },
-					{ title: BX.message('PROFILE_USER_FILES'), sectionCode: 'usermenu', id: 'files' },
-					{ title: BX.message('PROFILE_USER_MESSAGES'), sectionCode: 'usermenu', id: 'messages' },
-				],
+					this.isTasksMobileInstalled() && { title: BX.message('PROFILE_USER_TASKS_MSGVER_1'), sectionCode: 'usermenu', id: 'tasks' },
+					{ title: BX.message('PROFILE_USER_FILES_MSGVER_1'), sectionCode: 'usermenu', id: 'files' },
+					{ title: BX.message('PROFILE_USER_MESSAGES_MSGVER_1'), sectionCode: 'usermenu', id: 'messages' },
+				].filter(Boolean),
 				[{ id: 'usermenu', title: '' }],
 				(event, item) => {
 					if (event === 'onItemSelected')
@@ -568,7 +554,7 @@ jn.define('user/profile/src/profile-view', (require, exports, module) => {
 
 											});
 										},
-										title: BX.message('PROFILE_INFO'),
+										title: BX.message('PROFILE_INFO_MSGVER_1'),
 									},
 								);
 
@@ -603,6 +589,11 @@ jn.define('user/profile/src/profile-view', (require, exports, module) => {
 					callback: () => this.popupMenu.show(),
 				},
 			]);
+		}
+
+		isTasksMobileInstalled()
+		{
+			return BX.prop.getBoolean(jnExtensionData.get('user/profile'), 'isTasksMobileInstalled', false);
 		}
 
 		error(e)
@@ -681,7 +672,7 @@ jn.define('user/profile/src/profile-view', (require, exports, module) => {
 					PageManager.openWidget(
 						'list',
 						{
-							title: params.title,
+							titleParams: { text: params.title, type: 'entity' },
 							groupStyle: true,
 							onReady: openProfile,
 							onError: (error) => console.error(error),
@@ -692,7 +683,7 @@ jn.define('user/profile/src/profile-view', (require, exports, module) => {
 				{
 					if (formObject.setTitle)
 					{
-						formObject.setTitle({ text: BX.message('PROFILE_INFO') });
+						formObject.setTitle({ text: BX.message('PROFILE_INFO_MSGVER_1'), type: 'entity' });
 					}
 
 					openProfile(formObject);
@@ -706,16 +697,10 @@ jn.define('user/profile/src/profile-view', (require, exports, module) => {
 
 		static openComponent(userData = {})
 		{
-			let url = '';
-			if (availableComponents && availableComponents['user.profile'])
-			{
-				url = availableComponents['user.profile'].publicUrl;
-			}
-
 			PageManager.openComponent(
 				'JSStackComponent',
 				{
-					scriptPath: url,
+					scriptPath: availableComponents?.['user.profile']?.publicUrl ?? '',
 					params: { userId: userData.userId },
 					canOpenInDefault: true,
 					rootWidget: {

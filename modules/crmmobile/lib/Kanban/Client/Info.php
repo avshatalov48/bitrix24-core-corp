@@ -11,7 +11,7 @@ final class Info
 	private string $type;
 	private string $title;
 
-	public static function get(array $item, string $type, string $title, bool $hidden = true): array
+	public static function get(array $item, string $type, string $title, bool $hidden = false): array
 	{
 		return (new self($item, $type, $title))->getByType($hidden);
 	}

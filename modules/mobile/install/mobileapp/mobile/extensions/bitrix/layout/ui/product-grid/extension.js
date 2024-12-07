@@ -9,6 +9,7 @@ jn.define('layout/ui/product-grid', (require, exports, module) => {
 	const { FadeView } = require('animation/components/fade-view');
 	const { EmptyScreen } = require('layout/ui/empty-screen');
 	const { Random } = require('utils/random');
+	const { FloatingButtonComponent } = require('layout/ui/floating-button');
 
 	/**
 	 * Class provides basic implementation of product grid and must be inherited to concrete use case.
@@ -366,7 +367,7 @@ jn.define('layout/ui/product-grid', (require, exports, module) => {
 		{
 			if (this.isEditable() && this.showFloatingButton)
 			{
-				return new UI.FloatingButtonComponent({
+				return new FloatingButtonComponent({
 					testId: 'productGridAddItemButton',
 					onClick: () => this.onAddItemButtonClick(),
 					onLongClick: () => this.onAddItemButtonLongClick(),

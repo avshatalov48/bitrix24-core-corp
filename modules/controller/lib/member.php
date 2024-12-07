@@ -1,13 +1,15 @@
 <?php
 namespace Bitrix\Controller;
 
-use Bitrix\Main,
-	Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\ORM\Data\DataManager;
+use Bitrix\Main\ORM\Fields;
+
 Loc::loadMessages(__FILE__);
 
 /**
  * Class MemberTable
- * 
+ *
  * Fields:
  * <ul>
  * <li> ID int mandatory
@@ -57,7 +59,7 @@ Loc::loadMessages(__FILE__);
  * @method static \Bitrix\Controller\EO_Member_Collection wakeUpCollection($rows)
  */
 
-class MemberTable extends Main\Entity\DataManager
+class MemberTable extends DataManager
 {
 	/**
 	 * Returns DB table name for entity.
@@ -76,146 +78,205 @@ class MemberTable extends Main\Entity\DataManager
 	 */
 	public static function getMap()
 	{
-		return array(
-			'ID' => array(
-				'data_type' => 'integer',
-				'primary' => true,
-				'autocomplete' => true,
-				'title' => Loc::getMessage('MEMBER_ENTITY_ID_FIELD'),
+		return [
+			new Fields\IntegerField(
+				'ID',
+				[
+					'primary' => true,
+					'autocomplete' => true,
+					'title' => Loc::getMessage('MEMBER_ENTITY_ID_FIELD'),
+				]
 			),
-			'MEMBER_ID' => array(
-				'data_type' => 'string',
-				'required' => true,
-				'validation' => array(__CLASS__, 'validateMemberId'),
-				'title' => Loc::getMessage('MEMBER_ENTITY_MEMBER_ID_FIELD'),
+			new Fields\StringField(
+				'MEMBER_ID',
+				[
+					'required' => true,
+					'validation' => [__CLASS__, 'validateMemberId'],
+					'title' => Loc::getMessage('MEMBER_ENTITY_MEMBER_ID_FIELD'),
+				]
 			),
-			'SECRET_ID' => array(
-				'data_type' => 'string',
-				'required' => true,
-				'validation' => array(__CLASS__, 'validateSecretId'),
-				'title' => Loc::getMessage('MEMBER_ENTITY_SECRET_ID_FIELD'),
+			new Fields\StringField(
+				'SECRET_ID',
+				[
+					'required' => true,
+					'validation' => [__CLASS__, 'validateSecretId'],
+					'title' => Loc::getMessage('MEMBER_ENTITY_SECRET_ID_FIELD'),
+				]
 			),
-			'NAME' => array(
-				'data_type' => 'string',
-				'required' => true,
-				'validation' => array(__CLASS__, 'validateName'),
-				'title' => Loc::getMessage('MEMBER_ENTITY_NAME_FIELD'),
+			new Fields\StringField(
+				'NAME',
+				[
+					'required' => true,
+					'validation' => [__CLASS__, 'validateName'],
+					'title' => Loc::getMessage('MEMBER_ENTITY_NAME_FIELD'),
+				]
 			),
-			'URL' => array(
-				'data_type' => 'string',
-				'required' => true,
-				'validation' => array(__CLASS__, 'validateUrl'),
-				'title' => Loc::getMessage('MEMBER_ENTITY_URL_FIELD'),
+			new Fields\StringField(
+				'URL',
+				[
+					'required' => true,
+					'validation' => [__CLASS__, 'validateUrl'],
+					'title' => Loc::getMessage('MEMBER_ENTITY_URL_FIELD'),
+				]
 			),
-			'EMAIL' => array(
-				'data_type' => 'string',
-				'validation' => array(__CLASS__, 'validateEmail'),
-				'title' => Loc::getMessage('MEMBER_ENTITY_EMAIL_FIELD'),
+			new Fields\StringField(
+				'HOSTNAME',
+				[
+					'validation' => [__CLASS__, 'validateHostname'],
+					'title' => Loc::getMessage('MEMBER_ENTITY_HOSTNAME_FIELD'),
+				]
 			),
-			'CONTACT_PERSON' => array(
-				'data_type' => 'string',
-				'validation' => array(__CLASS__, 'validateContactPerson'),
-				'title' => Loc::getMessage('MEMBER_ENTITY_CONTACT_PERSON_FIELD'),
+			new Fields\StringField(
+				'EMAIL',
+				[
+					'validation' => [__CLASS__, 'validateEmail'],
+					'title' => Loc::getMessage('MEMBER_ENTITY_EMAIL_FIELD'),
+				]
 			),
-			'CONTROLLER_GROUP_ID' => array(
-				'data_type' => 'integer',
-				'required' => true,
-				'title' => Loc::getMessage('MEMBER_ENTITY_CONTROLLER_GROUP_ID_FIELD'),
+			new Fields\StringField(
+				'CONTACT_PERSON',
+				[
+					'validation' => [__CLASS__, 'validateContactPerson'],
+					'title' => Loc::getMessage('MEMBER_ENTITY_CONTACT_PERSON_FIELD'),
+				]
 			),
-			'DISCONNECTED' => array(
-				'data_type' => 'boolean',
-				'values' => array('N', 'Y'),
-				'title' => Loc::getMessage('MEMBER_ENTITY_DISCONNECTED_FIELD'),
+			new Fields\IntegerField(
+				'CONTROLLER_GROUP_ID',
+				[
+					'required' => true,
+					'title' => Loc::getMessage('MEMBER_ENTITY_CONTROLLER_GROUP_ID_FIELD'),
+				]
 			),
-			'SHARED_KERNEL' => array(
-				'data_type' => 'boolean',
-				'values' => array('N', 'Y'),
-				'title' => Loc::getMessage('MEMBER_ENTITY_SHARED_KERNEL_FIELD'),
+			new Fields\BooleanField(
+				'DISCONNECTED',
+				[
+					'values' => ['N', 'Y'],
+					'default' => 'N',
+					'title' => Loc::getMessage('MEMBER_ENTITY_DISCONNECTED_FIELD'),
+				]
 			),
-			'ACTIVE' => array(
-				'data_type' => 'boolean',
-				'values' => array('N', 'Y'),
-				'title' => Loc::getMessage('MEMBER_ENTITY_ACTIVE_FIELD'),
+			new Fields\BooleanField(
+				'SHARED_KERNEL',
+				[
+					'values' => ['N', 'Y'],
+					'default' => 'N',
+					'title' => Loc::getMessage('MEMBER_ENTITY_SHARED_KERNEL_FIELD'),
+				]
 			),
-			'DATE_ACTIVE_FROM' => array(
-				'data_type' => 'datetime',
-				'title' => Loc::getMessage('MEMBER_ENTITY_DATE_ACTIVE_FROM_FIELD'),
+			new Fields\BooleanField(
+				'ACTIVE',
+				[
+					'values' => ['N', 'Y'],
+					'default' => 'Y',
+					'title' => Loc::getMessage('MEMBER_ENTITY_ACTIVE_FIELD'),
+				]
 			),
-			'DATE_ACTIVE_TO' => array(
-				'data_type' => 'datetime',
-				'title' => Loc::getMessage('MEMBER_ENTITY_DATE_ACTIVE_TO_FIELD'),
+			new Fields\DatetimeField(
+				'DATE_ACTIVE_FROM',
+				[
+					'title' => Loc::getMessage('MEMBER_ENTITY_DATE_ACTIVE_FROM_FIELD'),
+				]
 			),
-			'SITE_ACTIVE' => array(
-				'data_type' => 'boolean',
-				'values' => array('N', 'Y'),
-				'title' => Loc::getMessage('MEMBER_ENTITY_SITE_ACTIVE_FIELD'),
+			new Fields\DatetimeField(
+				'DATE_ACTIVE_TO',
+				[
+					'title' => Loc::getMessage('MEMBER_ENTITY_DATE_ACTIVE_TO_FIELD'),
+				]
 			),
-			'TIMESTAMP_X' => array(
-				'data_type' => 'datetime',
-				'required' => true,
-				'title' => Loc::getMessage('MEMBER_ENTITY_TIMESTAMP_X_FIELD'),
+			new Fields\BooleanField(
+				'SITE_ACTIVE',
+				[
+					'values' => ['N', 'Y'],
+					'default' => 'Y',
+					'title' => Loc::getMessage('MEMBER_ENTITY_SITE_ACTIVE_FIELD'),
+				]
 			),
-			'MODIFIED_BY' => array(
-				'data_type' => 'integer',
-				'title' => Loc::getMessage('MEMBER_ENTITY_MODIFIED_BY_FIELD'),
+			new Fields\DatetimeField(
+				'TIMESTAMP_X',
+				[
+					'required' => true,
+					'title' => Loc::getMessage('MEMBER_ENTITY_TIMESTAMP_X_FIELD'),
+				]
 			),
-			'DATE_CREATE' => array(
-				'data_type' => 'datetime',
-				'required' => true,
-				'title' => Loc::getMessage('MEMBER_ENTITY_DATE_CREATE_FIELD'),
+			new Fields\IntegerField(
+				'MODIFIED_BY',
+				[
+					'title' => Loc::getMessage('MEMBER_ENTITY_MODIFIED_BY_FIELD'),
+				]
 			),
-			'CREATED_BY' => array(
-				'data_type' => 'integer',
-				'title' => Loc::getMessage('MEMBER_ENTITY_CREATED_BY_FIELD'),
+			new Fields\DatetimeField(
+				'DATE_CREATE',
+				[
+					'required' => true,
+					'title' => Loc::getMessage('MEMBER_ENTITY_DATE_CREATE_FIELD'),
+				]
 			),
-			'IN_GROUP_FROM' => array(
-				'data_type' => 'datetime',
-				'title' => Loc::getMessage('MEMBER_ENTITY_IN_GROUP_FROM_FIELD'),
+			new Fields\IntegerField(
+				'CREATED_BY',
+				[
+					'title' => Loc::getMessage('MEMBER_ENTITY_CREATED_BY_FIELD'),
+				]
 			),
-			'NOTES' => array(
-				'data_type' => 'text',
-				'title' => Loc::getMessage('MEMBER_ENTITY_NOTES_FIELD'),
+			new Fields\DatetimeField(
+				'IN_GROUP_FROM',
+				[
+					'title' => Loc::getMessage('MEMBER_ENTITY_IN_GROUP_FROM_FIELD'),
+				]
 			),
-			'COUNTER_FREE_SPACE' => array(
-				'data_type' => 'float',
-				'title' => Loc::getMessage('MEMBER_ENTITY_COUNTER_FREE_SPACE_FIELD'),
+			new Fields\TextField(
+				'NOTES',
+				[
+					'title' => Loc::getMessage('MEMBER_ENTITY_NOTES_FIELD'),
+				]
 			),
-			'COUNTER_SITES' => array(
-				'data_type' => 'integer',
-				'title' => Loc::getMessage('MEMBER_ENTITY_COUNTER_SITES_FIELD'),
+			new Fields\FloatField(
+				'COUNTER_FREE_SPACE',
+				[
+					'title' => Loc::getMessage('MEMBER_ENTITY_COUNTER_FREE_SPACE_FIELD'),
+				]
 			),
-			'COUNTER_USERS' => array(
-				'data_type' => 'integer',
-				'title' => Loc::getMessage('MEMBER_ENTITY_COUNTER_USERS_FIELD'),
+			new Fields\IntegerField(
+				'COUNTER_SITES',
+				[
+					'title' => Loc::getMessage('MEMBER_ENTITY_COUNTER_SITES_FIELD'),
+				]
 			),
-			'COUNTER_LAST_AUTH' => array(
-				'data_type' => 'datetime',
-				'title' => Loc::getMessage('MEMBER_ENTITY_COUNTER_LAST_AUTH_FIELD'),
+			new Fields\IntegerField(
+				'COUNTER_USERS',
+				[
+					'title' => Loc::getMessage('MEMBER_ENTITY_COUNTER_USERS_FIELD'),
+				]
 			),
-			'COUNTERS_UPDATED' => array(
-				'data_type' => 'datetime',
-				'title' => Loc::getMessage('MEMBER_ENTITY_COUNTERS_UPDATED_FIELD'),
+			new Fields\DatetimeField(
+				'COUNTER_LAST_AUTH',
+				[
+					'title' => Loc::getMessage('MEMBER_ENTITY_COUNTER_LAST_AUTH_FIELD'),
+				]
 			),
-			'HOSTNAME' => array(
-				'data_type' => 'string',
-				'required' => true,
-				'validation' => array(__CLASS__, 'validateHostname'),
-				'title' => Loc::getMessage('MEMBER_ENTITY_HOSTNAME_FIELD'),
+			new Fields\DatetimeField(
+				'COUNTERS_UPDATED',
+				[
+					'title' => Loc::getMessage('MEMBER_ENTITY_COUNTERS_UPDATED_FIELD'),
+				]
 			),
-			'CONTROLLER_GROUP' => array(
-				'data_type' => 'Bitrix\Controller\GroupTable',
-				'reference' => array('=this.CONTROLLER_GROUP_ID' => 'ref.ID'),
+			new Fields\Relations\Reference(
+				'CONTROLLER_GROUP',
+				'\Bitrix\Controller\ControllerGroup',
+				['=this.CONTROLLER_GROUP_ID' => 'ref.ID']
 			),
-			'CREATED' => array(
-				'data_type' => 'Bitrix\Main\UserTable',
-				'reference' => array('=this.CREATED_BY' => 'ref.ID'),
+			new Fields\Relations\Reference(
+				'CREATED',
+				'Bitrix\Main\UserTable',
+				['=this.CREATED_BY' => 'ref.ID']
 			),
-			'MODIFIED' => array(
-				'data_type' => 'Bitrix\Main\UserTable',
-				'reference' => array('=this.MODIFIED_BY' => 'ref.ID'),
+			new Fields\Relations\Reference(
+				'MODIFIED',
+				'Bitrix\Main\UserTable',
+				['=this.MODIFIED_BY' => 'ref.ID']
 			),
-		);
+		];
 	}
+
 	/**
 	 * Returns validators for MEMBER_ID field.
 	 *
@@ -223,10 +284,11 @@ class MemberTable extends Main\Entity\DataManager
 	 */
 	public static function validateMemberId()
 	{
-		return array(
-			new Main\Entity\Validator\Length(null, 32),
-		);
+		return [
+			new Fields\Validators\LengthValidator(null, 32),
+		];
 	}
+
 	/**
 	 * Returns validators for SECRET_ID field.
 	 *
@@ -234,10 +296,11 @@ class MemberTable extends Main\Entity\DataManager
 	 */
 	public static function validateSecretId()
 	{
-		return array(
-			new Main\Entity\Validator\Length(null, 32),
-		);
+		return [
+			new Fields\Validators\LengthValidator(null, 32),
+		];
 	}
+
 	/**
 	 * Returns validators for NAME field.
 	 *
@@ -245,10 +308,11 @@ class MemberTable extends Main\Entity\DataManager
 	 */
 	public static function validateName()
 	{
-		return array(
-			new Main\Entity\Validator\Length(null, 255),
-		);
+		return [
+			new Fields\Validators\LengthValidator(null, 255),
+		];
 	}
+
 	/**
 	 * Returns validators for URL field.
 	 *
@@ -256,10 +320,11 @@ class MemberTable extends Main\Entity\DataManager
 	 */
 	public static function validateUrl()
 	{
-		return array(
-			new Main\Entity\Validator\Length(null, 255),
-		);
+		return [
+			new Fields\Validators\LengthValidator(null, 255),
+		];
 	}
+
 	/**
 	 * Returns validators for EMAIL field.
 	 *
@@ -267,10 +332,11 @@ class MemberTable extends Main\Entity\DataManager
 	 */
 	public static function validateEmail()
 	{
-		return array(
-			new Main\Entity\Validator\Length(null, 255),
-		);
+		return [
+			new Fields\Validators\LengthValidator(null, 255),
+		];
 	}
+
 	/**
 	 * Returns validators for CONTACT_PERSON field.
 	 *
@@ -278,10 +344,11 @@ class MemberTable extends Main\Entity\DataManager
 	 */
 	public static function validateContactPerson()
 	{
-		return array(
-			new Main\Entity\Validator\Length(null, 255),
-		);
+		return [
+			new Fields\Validators\LengthValidator(null, 255),
+		];
 	}
+
 	/**
 	 * Returns validators for HOSTNAME field.
 	 *
@@ -289,8 +356,8 @@ class MemberTable extends Main\Entity\DataManager
 	 */
 	public static function validateHostname()
 	{
-		return array(
-			new Main\Entity\Validator\Length(null, 255),
-		);
+		return [
+			new Fields\Validators\LengthValidator(null, 255),
+		];
 	}
 }

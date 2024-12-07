@@ -34,4 +34,9 @@ final class ProcessEntityResponsible extends ProcessEntity
 {
 	public const BECOME_RESPONSIBLE = 'BECOME_RESPONSIBLE';
 	public const NO_LONGER_RESPONSIBLE = 'NO_LONGER_RESPONSIBLE';
+
+	public static function getFilePath(): string
+	{
+		return __FILE__;
+	}
 }

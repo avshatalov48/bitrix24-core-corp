@@ -20,9 +20,9 @@ use Bitrix\Tasks\Internals\TaskDataManager;
  * @method static EO_TemplateMember_Result getList(array $parameters = [])
  * @method static EO_TemplateMember_Entity getEntity()
  * @method static \Bitrix\Tasks\Internals\Task\Template\TemplateMemberObject createObject($setDefaultValues = true)
- * @method static \Bitrix\Tasks\Internals\Task\Template\EO_TemplateMember_Collection createCollection()
+ * @method static \Bitrix\Tasks\Internals\Task\Template\TemplateMemberCollection createCollection()
  * @method static \Bitrix\Tasks\Internals\Task\Template\TemplateMemberObject wakeUpObject($row)
- * @method static \Bitrix\Tasks\Internals\Task\Template\EO_TemplateMember_Collection wakeUpCollection($rows)
+ * @method static \Bitrix\Tasks\Internals\Task\Template\TemplateMemberCollection wakeUpCollection($rows)
  */
 class TemplateMemberTable extends TaskDataManager
 {

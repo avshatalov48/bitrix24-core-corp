@@ -37,11 +37,33 @@ class Title extends Content
 				'action' => 'view',
 			])
 		);
+
+		$isFlowMyTasksContext = ($parameters['FLOW_MY_TASKS'] ?? null) === 'Y';
+		$taSec = (
+			$isFlowMyTasksContext
+				? Analytics::SECTION['flows']
+				: Analytics::SECTION['tasks']
+		);
+		$taEl = (
+			$isFlowMyTasksContext
+				? Analytics::ELEMENT['my_tasks_column']
+				: Analytics::ELEMENT['title_click']
+		);
+
 		$taskUrl->addParams([
-			'ta_sec' => Analytics::SECTION['tasks'],
+			'ta_sec' => $taSec,
 			'ta_sub' => Analytics::SUB_SECTION['list'],
-			'ta_el' => Analytics::ELEMENT['title_click'],
+			'ta_el' => $taEl,
 		]);
+
+		$demoSuffix = $arParams['demoSuffix'] ?? null;
+
+		if ($isFlowMyTasksContext && $demoSuffix)
+		{
+			$taskUrl->addParams([
+				'p1' => 'isDemo_' . $demoSuffix,
+			]);
+		}
 
 		$priorityLayout = ($taskPriority === \Bitrix\Tasks\Internals\Task\Priority::HIGH ? '<span class="task-priority-high"></span> ' : '');
 
@@ -63,7 +85,7 @@ class Title extends Content
 		$cssClass = 'task-status-text-color-'.(
 			in_array($taskStatus, $statuses, true) ? tasksStatus2String($taskStatus) : 'in-progress'
 			);
-		$taskTitle = htmlspecialcharsbx($row['TITLE']);
+		$taskTitle = htmlspecialcharsbx($row['TITLE'] ?? '');
 		$title = "<a href='{$taskUrl->getUri()}' class='task-title {$cssClass}'>{$taskTitle}{$postfixIcons}</a>";
 		$title .= $timeTracker . $this->prepareTimeTracking();
 
@@ -80,11 +102,18 @@ class Title extends Content
 						'action' => 'view',
 					])
 				);
+
 				$subTaskUrl->addParams([
-					'ta_sec' => Analytics::SECTION['tasks'],
+					'ta_sec' => $taSec,
 					'ta_sub' => Analytics::SUB_SECTION['list'],
-					'ta_el' => Analytics::ELEMENT['title_click'],
+					'ta_el' => $taEl,
 				]);
+				if ($isFlowMyTasksContext && $demoSuffix)
+				{
+					$subTaskUrl->addParams([
+						'p1' => 'isDemo_' . $demoSuffix,
+					]);
+				}
 
 				$subTaskTitle = htmlspecialcharsbx($subTask['TITLE']);
 				$title .= "&nbsp;&nbsp;&larr;&nbsp;&nbsp;<a href='{$subTaskUrl->getUri()}'>{$subTaskTitle}</a>";

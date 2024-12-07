@@ -48,8 +48,6 @@ if (
 	&& ($_POST['module'] === 'tasks')
 )
 {
-	CUtil::JSPostUnescape();
-
 	switch ($_POST['action'])
 	{
 		case 'group_action':
@@ -1172,7 +1170,7 @@ foreach($arParams['PREORDER'] as $sortF => $sortD)
 {
 	if(preg_match('#^[a-zA-Z0-9_-]+$#', $sortF))
 	{
-		$arParams['PREORDER'][$sortF] = ToLower($sortD) == 'asc' ? 'ASC' : 'DESC';
+		$arParams['PREORDER'][$sortF] = mb_strtolower($sortD) == 'asc' ? 'ASC' : 'DESC';
 	}
 	else
 	{

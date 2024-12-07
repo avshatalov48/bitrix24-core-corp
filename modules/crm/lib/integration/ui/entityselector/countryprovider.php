@@ -172,7 +172,7 @@ class CountryProvider extends BaseProvider
 	{
 		if (file_exists($this->metadataFilename) && is_file($this->metadataFilename))
 		{
-			$allData = CUtil::JsObjectToPhp(file_get_contents($this->metadataFilename));
+			$allData = \Bitrix\Main\Web\Json::decode(file_get_contents($this->metadataFilename));
 			$metadata = $allData['metadata'] ?? [];
 
 			return array_column($metadata, 'countryCode', 'id');

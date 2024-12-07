@@ -136,6 +136,21 @@ class ItemFieldsCaster implements ICaster
 			return $this->externalizeEnumerationField($fieldId, $value);
 		}
 
+		if ($this->fieldsMap[$fieldId]['Type'] === FieldType::USER)
+		{
+			$complexDocumentId = \CCrmBizProcHelper::ResolveDocumentId(
+				$this->item->getEntityTypeId(),
+				$this->item->getId()
+			);
+			$userIds = \CBPHelper::extractUsers($value, $complexDocumentId);
+			if (!$this->fieldsMap[$fieldId]['Multiple'])
+			{
+				return $userIds[0] ?? null;
+			}
+
+			return $userIds;
+		}
+
 		if (is_array($value))
 		{
 			$converter = fn ($currentValue) => $this->externalizeValue($fieldId, $currentValue);
@@ -151,26 +166,6 @@ class ItemFieldsCaster implements ICaster
 		{
 			case FieldType::BOOL:
 				return \CBPHelper::getBool($value);
-
-			case FieldType::USER:
-				$complexDocumentId = \CCrmBizProcHelper::ResolveDocumentId(
-					$this->item->getEntityTypeId(),
-					$this->item->getId()
-				);
-
-				if (mb_strpos($value, 'user_') === 0)
-				{
-					return (int)mb_substr($value, mb_strlen('user_'));
-				}
-				else
-				{
-					$group = \CBPHelper::convertToSimpleGroups([$value])[0] ?? null;
-					$documentService = \CBPRuntime::getRuntime()->getDocumentService();
-
-					$userIds = $documentService->getUsersFromUserGroup($group, $complexDocumentId);
-
-					return $this->fieldsMap[$fieldId]['Multiple'] ? $userIds : $userIds[0];
-				}
 
 			case FieldType::FILE:
 				$file = false;

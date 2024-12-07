@@ -50,7 +50,10 @@ class CBPCrmGetPaymentInfoActivity extends CBPActivity
 		{
 			$orderId = reset($orderId);
 		}
-		$this->writeDebugInfo($this->getDebugInfo());
+		if ($this->workflow->isDebug())
+		{
+			$this->writeDebugInfo($this->getDebugInfo());
+		}
 
 		if (!$orderId)
 		{

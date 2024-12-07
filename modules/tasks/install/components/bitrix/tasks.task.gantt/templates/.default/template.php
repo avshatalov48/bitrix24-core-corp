@@ -4,6 +4,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Extension;
 use Bitrix\Tasks\Helper\RestrictionUrl;
@@ -15,6 +16,8 @@ use Bitrix\Tasks\UI\ScopeDictionary;
 $isIFrame = isset($_REQUEST['IFRAME']) && $_REQUEST['IFRAME'] === 'Y';
 $isBitrix24Template = (SITE_TEMPLATE_ID === 'bitrix24');
 
+// todo: tmp, move phrases
+Loc::loadLanguageFile($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/tasks/install/components/bitrix/tasks.task.list/templates/.default/template.php');
 Loc::loadMessages(__FILE__);
 
 Extension::load([
@@ -27,6 +30,7 @@ Extension::load([
 	'task-popups',
 	'CJSTask',
 	'ui.counter',
+	'ui.stepprocessing',
 ]);
 
 /** intranet-settings-support */
@@ -96,7 +100,7 @@ else
 
 ?>
 
-<script type="text/javascript">
+<script>
     BX.message({
         TASKS_PATH_TO_USER_PROFILE: "<?php echo CUtil::JSEscape($arParams["PATH_TO_USER_PROFILE"])?>",
         TASKS_PATH_TO_TASK: "<?php echo CUtil::JSEscape((isset($arParams['GROUP_ID']) && $arParams['GROUP_ID'] > 0) ? $arParams["PATH_TO_GROUP_TASKS_TASK"] : $arParams["PATH_TO_USER_TASKS_TASK"])?>",
@@ -721,12 +725,70 @@ $APPLICATION->IncludeComponent(
 $navigationHtml = ob_get_contents();
 ob_end_clean();
 //endregion
+
+$componentName = 'bitrix:tasks.task.list';
+$componentParams = [
+	'NAME_TEMPLATE' => $arParams['NAME_TEMPLATE'] ?? '',
+	'GROUP_ID' => (int)$arParams['GROUP_ID'],
+	'USER_ID' => (int)$arParams['USER_ID'],
+];
+
+
+//min step 100
+$arResult['EXPORT_EXCEL_PARAMS'] = [
+	'id' => 'EXPORT_EXCEL_PARAMS',
+	'controller' => 'bitrix:tasks.api.export',
+	'queue' => [
+		[
+			'action' => 'dispatcher',
+		],
+	],
+	'params' => [
+		'SITE_ID' => SITE_ID,
+		'EXPORT_TYPE' => 'excel',
+		'EXPORT_AS' => 'EXCEL',
+		'EXPORT_STEP' => '100',
+		'COMPONENT_NAME' => $componentName,
+		'signedParameters' => \Bitrix\Main\Component\ParameterSigner::signParameters(
+			$componentName,
+			$componentParams
+		),
+	],
+	'optionsFields' => [
+		'EXPORT_ALL_FIELDS' => [
+			'name' => 'COLUMNS',
+			'type' => 'checkbox',
+			'title' => Loc::getMessage('TASKS_EXCEL_POPUP_PARAGRAPH_1'),
+			'value' => 'N'
+		],
+		'REQUISITE_MULTILINE' => [
+			'name' => 'ALL_COLUMNS',
+			'type' => 'checkbox',
+			'title' => Loc::getMessage('TASKS_EXCEL_POPUP_PARAGRAPH_2'),
+			'value' => 'N'
+		],
+	],
+	'messages' => [
+		'DialogTitle' => Loc::getMessage('TASKS_EXCEL_POPUP_TITLE'),
+		'DialogSummary' => Loc::getMessage('TASKS_EXCEL_POPUP_DESCRIPTION'),
+	],
+	'dialogMaxWidth' => 650,
+];
 ?>
 
 <?= $navigationHtml; ?>
 
 <script>
 	BX.message({
-		TASKS_DELETE_SUCCESS: '<?= Task::getDeleteMessage((int)$arParams['USER_ID']) ?>'
+		TASKS_DELETE_SUCCESS: '<?= Loader::includeModule('recyclebin') ? Task::getDeleteMessage((int)$arParams['USER_ID']) : Loc::getMessage('TASKS_DELETE_SUCCESS') ?>'
 	});
+
+	BX.ready(
+		function() {
+			BX.UI.StepProcessing.ProcessManager
+				.create(<?= \CUtil::PhpToJSObject($arResult['EXPORT_EXCEL_PARAMS']) ?>)
+				.setHandler(BX.UI.StepProcessing.ProcessCallback.RequestStart)
+			;
+		}
+	);
 </script>

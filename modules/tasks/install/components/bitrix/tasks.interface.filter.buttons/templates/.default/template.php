@@ -99,7 +99,7 @@ elseif ($section === 'VIEW_TASK')
 
 <?php $this->EndViewTarget(); ?>
 
-<script type="text/javascript">
+<script>
 	BX.ready(function() {
 		BX.message({
 			"POPUP_MENU_CHECKLIST_SECTION": '<?= GetMessageJs('TASKS_INTERFACE_FILTER_BUTTONS_POPUP_MENU_CHECKLIST_SECTION') ?>',

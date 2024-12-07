@@ -1,6 +1,8 @@
 <?php
 return [
-	'extensions'=> [
-		'qrauth','qrauth/crm', 'rest'
+	'extensions' => [
+		'qrauth',
+		'qrauth/crm',
+		'rest'
 	]
 ];

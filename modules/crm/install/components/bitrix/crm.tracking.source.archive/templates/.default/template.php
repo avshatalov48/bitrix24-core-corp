@@ -93,7 +93,7 @@ $APPLICATION->IncludeComponent(
 
 
 ?>
-	<script type="text/javascript">
+	<script>
 		BX.ready(function () {
 			BX.Crm.Tracking.Source.Archive.init(<?=Json::encode([
 				'messages' => $arResult['MESSAGES'],

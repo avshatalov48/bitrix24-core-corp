@@ -8,6 +8,7 @@ jn.define('im/messenger/provider/service/classes/sending/upload-manager', (requi
 
 	const {
 		FileType,
+		ComponentCode,
 	} = require('im/messenger/const');
 	const { UploaderClient } = require('uploader/client');
 	const { UploadTask } = require('im/messenger/provider/service/classes/sending/upload-task');
@@ -30,9 +31,9 @@ jn.define('im/messenger/provider/service/classes/sending/upload-manager', (requi
 	 */
 	class UploadManager
 	{
-		constructor()
+		constructor(componentName = ComponentCode.imMessenger)
 		{
-			this.client = new UploaderClient('im-messenger');
+			this.client = new UploaderClient(componentName);
 			this.eventEmitter = new JNEventEmitter();
 			this.onFileUploadDone = this.fileUploadDoneHandler.bind(this);
 			this.onFileUploadProgress = this.fileUploadProgressHandler.bind(this);

@@ -7,6 +7,7 @@
 	const require = (ext) => jn.require(ext);
 
 	const AppTheme = require('apptheme');
+	const { splitByWords, compareWords } = require('utils/string');
 
 	/** @interface UserListDelegate */
 	class UserListDelegate
@@ -67,7 +68,10 @@
 
 			if (enableEventListener)
 			{
-				this.list.setListener((event, data) => reflectFunction(this.eventHandlers, event, this).call(this, data));
+				this.list.setListener((event, data) => reflectFunction(this.eventHandlers, event, this).call(
+					this,
+					data,
+				));
 			}
 
 			this.searcher = new UserSearcher(this.list, this._delegate, this.options.filter);
@@ -152,16 +156,18 @@
 				this.list.addItems(modifiedListData);
 				if (this.request.hasNext() && this.options.disablePagination !== true)
 				{
-					this.list.updateItems([{
-						filter: { sectionCode: 'service' },
-						element: {
-							title: `${BX.message('LOAD_MORE_USERS')} (${this.request.getNextCount()})`,
-							type: 'button',
-							unselectable: false,
-							sectionCode: 'service',
-							params: { code: 'more' },
+					this.list.updateItems([
+						{
+							filter: { sectionCode: 'service' },
+							element: {
+								title: `${BX.message('LOAD_MORE_USERS')} (${this.request.getNextCount()})`,
+								type: 'button',
+								unselectable: false,
+								sectionCode: 'service',
+								params: { code: 'more' },
+							},
 						},
-					}]);
+					]);
 				}
 				else
 				{
@@ -182,9 +188,21 @@
 					{
 						const match = (
 							!ids.includes(item.params.id)
-							&& (item.title && item.title.toLowerCase().startsWith(query)
-								|| item.subtitle && item.subtitle.toLowerCase().startsWith(query)
-								|| item.sortValues && item.sortValues.name && item.sortValues.name.toLowerCase().startsWith(query))
+							&& (
+								(
+									item.title
+									&& item.title.toLowerCase().startsWith(query)
+								)
+								|| (
+									item.subtitle
+									&& item.subtitle.toLowerCase().startsWith(query)
+								)
+								|| (
+									item.sortValues
+									&& item.sortValues.name
+									&& item.sortValues.name.toLowerCase().startsWith(query)
+								)
+							)
 						);
 
 						if (match)
@@ -296,16 +314,18 @@
 					{
 						if (data.params.code === 'more' && this.request.hasNext())
 						{
-							this.list.updateItems([{
-								filter: { sectionCode: 'service' },
-								element: {
-									title: BX.message('USER_LOADING'),
-									type: 'loading',
-									sectionCode: 'service',
-									unselectable: true,
-									params: { code: 'loading' },
+							this.list.updateItems([
+								{
+									filter: { sectionCode: 'service' },
+									element: {
+										title: BX.message('USER_LOADING'),
+										type: 'loading',
+										sectionCode: 'service',
+										unselectable: true,
+										params: { code: 'loading' },
+									},
 								},
-							}]);
+							]);
 
 							this.request.callNext();
 						}
@@ -399,12 +419,17 @@
 						items = this.prepareItems(items);
 						if (items.length === 0)
 						{
-							this.sendResult([{
-								title: BX.message('SEARCH_EMPTY_RESULT'),
-								unselectable: true,
-								type: 'button',
-								params: { code: 'skip_handle' },
-							}], []);
+							this.sendResult(
+								[
+									{
+										title: BX.message('SEARCH_EMPTY_RESULT'),
+										unselectable: true,
+										type: 'button',
+										params: { code: 'skip_handle' },
+									},
+								],
+								[],
+							);
 						}
 						else
 						{
@@ -421,22 +446,36 @@
 					}
 					else if (error && error.code !== 'REQUEST_CANCELED')
 					{
-						this.sendResult([{
-							title: BX.message('SEARCH_EMPTY_RESULT'),
-							unselectable: true,
-							type: 'button',
-							params: { code: 'skip_handle' },
-						}], []);
+						this.sendResult(
+							[
+								{
+									title: BX.message('SEARCH_EMPTY_RESULT'),
+									unselectable: true,
+									type: 'button',
+									params: { code: 'skip_handle' },
+								},
+							],
+							[],
+						);
 					}
 				};
 
-				this.sendResult([{
-					title: BX.message('SEARCH_LOADING'),
-					unselectable: true,
-					sectionCode: 'service',
-					type: 'loading',
-					params: { code: 'skip_handle' },
-				}], [{ id: 'service' }, { id: 'people' }], 'searching');
+				this.sendResult(
+					[
+						{
+							title: BX.message('SEARCH_LOADING'),
+							unselectable: true,
+							sectionCode: 'service',
+							type: 'loading',
+							params: { code: 'skip_handle' },
+						},
+					],
+					[
+						{ id: 'service' },
+						{ id: 'people' },
+					],
+					'searching',
+				);
 				this.searchRequest.call();
 			}
 			else
@@ -507,12 +546,14 @@
 		showRecentResults()
 		{
 			const preparedLastSearchItems = this.lastSearchItems.map((item) => {
-				item.actions = [{
-					title: BX.message('ACTION_DELETE'),
-					identifier: 'delete',
-					destruct: true,
-					color: AppTheme.colors.accentMainAlert,
-				}];
+				item.actions = [
+					{
+						title: BX.message('ACTION_DELETE'),
+						identifier: 'delete',
+						destruct: true,
+						color: AppTheme.colors.accentMainAlert,
+					},
+				];
 
 				return item;
 			});
@@ -542,7 +583,7 @@
 			try
 			{
 				query = query.toLowerCase();
-				const queryWords = query.split(' ');
+				const queryWords = splitByWords(query);
 				const shouldMatch = queryWords.length;
 				const searchFields = Object.keys(this.searchFieldWeights);
 				const result = items.map((item) => {
@@ -555,12 +596,11 @@
 							const field = item[name];
 							if (field)
 							{
-								const fieldWords = field.toLowerCase().split(' ');
+								const fieldWords = splitByWords(field);
 								const findHandler = (word) => {
 									const items = queryWords.filter((queryWord) => {
-										const match = word.indexOf(queryWord) === 0
-											&& !matchedWords.includes(queryWord);
-										if (match)
+										const match = compareWords(queryWord, word);
+										if (match && !matchedWords.includes(queryWord))
 										{
 											matchedWords.push(queryWord);
 										}

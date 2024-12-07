@@ -7,6 +7,7 @@ return [
 		'rest',
 		'calendar:sync-page',
 		'calendar:layout/ui/loader',
-		'calendar:ajax'
+		'calendar:ajax',
+		'tokens',
 	],
 ];

@@ -5,9 +5,13 @@ return [
 		'entity-ready',
 		'pull/client/events',
 		'qrauth/utils',
-		'rest',
+		'reload/listeners',
+		'rest/run-action-executor',
 		'storage-cache',
+		'tariff-plan-restriction',
 		'tasks:entry',
+		'tasks:enum',
 		'utils/logger/error-logger',
-	]
+		'tasks:navigator',
+	],
 ];

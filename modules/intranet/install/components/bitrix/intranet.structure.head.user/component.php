@@ -20,27 +20,25 @@ else
 		
 	if ($this->StartResultCache(false, $arParams['ID']))
 	{
-		$dbRes = CIBlockSection::GetList(
-			array('active_from' => 'desc'),
-			array(
-				'IBLOCK_ID' => COption::GetOptionInt('intranet', 'iblock_structure'),
-				'UF_HEAD' => $arParams['ID'],
-			),
-			false
-		);
-
-		$arResult['SECTIONS'] = array();
-		while ($arRes = $dbRes->Fetch())
+		$arResult['SECTIONS'] = [];
+		$departmentRepository = \Bitrix\Intranet\Service\ServiceContainer::getInstance()->departmentRepository();
+		$departmentCollection = $departmentRepository->getDepartmentByHeadId($arParams['ID']);
+		foreach ($departmentCollection as $department)
 		{
+			$url = null;
 			if ($arParams['DETAIL_URL'])
-				$arRes['URL'] = str_replace(
+				$url = str_replace(
 					array('#ID#', '#DEPARTMENT#', '#DEPARTMENT_ID#', '#DEPT#', '#DEPT_ID#'),
-					$arRes['ID'],
+					$department->getId(),
 					$arParams['DETAIL_URL']
 				);
-		
-			$arResult['SECTIONS'][] = $arRes;
+
+			$arResult['SECTIONS'][] = [
+				'NAME' => $department->getName(),
+				'URL' => $url
+			];
 		}
+
 		$this->IncludeComponentTemplate();
 	}
 }

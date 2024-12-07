@@ -24,7 +24,7 @@ use Bitrix\Main\Web\Uri;
 </style>
 <? endif ?>
 
-<script type="text/javascript">
+<script>
 
 var chart;
 var chartData = <?=CUtil::PhpToJSObject($arResult['DATA'])?>;
@@ -757,7 +757,7 @@ BX.ready(function(){
 </div>
 
 <? if (!isset($_REQUEST['AJAX'])): ?>
-<script type="text/javascript">
+<script>
 
 BX.bind(BX('pulse_open_btn'), 'click', function(){
 	pulse_loading.show()

@@ -19,6 +19,7 @@ jn.define('layout/ui/user/avatar/src/base-avatar', (require, exports, module) =>
 	 * @param {object} [additionalStyles]
 	 * @param {object} [additionalStyles.image]
 	 * @param {object} [additionalStyles.wrapper]
+	 * @param {function} [onClick]
 	 * @return {SafeImage}
 	 */
 	const Avatar = ({
@@ -28,8 +29,10 @@ jn.define('layout/ui/user/avatar/src/base-avatar', (require, exports, module) =>
 		testId,
 		size = 24,
 		additionalStyles = {},
+		onClick,
 	}) => SafeImage({
 		testId,
+		onClick,
 		style: {
 			width: size,
 			height: size,
@@ -38,7 +41,7 @@ jn.define('layout/ui/user/avatar/src/base-avatar', (require, exports, module) =>
 		},
 		wrapperStyle: additionalStyles.wrapper,
 		renderPlaceholder: () => {
-			if (!Type.isNumber(id) || !Type.isStringFilled(name))
+			if (!Type.isNumber(id))
 			{
 				return null;
 			}
@@ -48,6 +51,7 @@ jn.define('layout/ui/user/avatar/src/base-avatar', (require, exports, module) =>
 				name,
 				size,
 				additionalStyles: additionalStyles.image,
+				onClick,
 			});
 		},
 		placeholder: {

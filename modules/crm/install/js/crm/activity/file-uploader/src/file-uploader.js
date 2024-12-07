@@ -4,7 +4,7 @@ import { TileWidget } from 'ui.uploader.tile-widget';
 import type { FileUploaderOptions } from './file-uploader-options';
 
 import 'ui.design-tokens';
-import './file-uploader.css'
+import './file-uploader.css';
 
 const MAX_UPLOAD_FILE_SIZE = 1024 * 1024 * 50; // 50M;
 

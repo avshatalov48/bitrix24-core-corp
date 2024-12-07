@@ -2,6 +2,8 @@
 
 namespace Bitrix\CalendarMobile\Controller;
 
+use Bitrix\Calendar\Integration\Bitrix24\FeatureDictionary;
+use Bitrix\Calendar\Integration\Bitrix24Manager;
 use Bitrix\CalendarMobile\Dto;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Engine\Controller;
@@ -36,6 +38,7 @@ class Sharing extends Controller
 		return Dto\Sharing::make([
 			'isEnabled' => true,
 			'isRestriction' => $this->isRestriction(),
+			'isPromo' => $this->isPromo(),
 			'shortUrl' => \Bitrix\Calendar\Sharing\Helper::getShortUrl($sharing->getActiveLinkUrl()),
 			'userInfo' => $sharing->getUserInfo(),
 			'settings' => $sharing->getLinkSettings(),
@@ -66,6 +69,7 @@ class Sharing extends Controller
 		return Dto\Sharing::make([
 			'isEnabled' => false,
 			'isRestriction' => $this->isRestriction(),
+			'isPromo' => $this->isPromo(),
 			'settings' => $this->getSettings($sharing->getLinkInfo()),
 		]);
 	}
@@ -97,6 +101,7 @@ class Sharing extends Controller
 		return Dto\Sharing::make([
 			'isEnabled' => !empty($activeLinkShortUrl),
 			'isRestriction' => $this->isRestriction(),
+			'isPromo' => $this->isPromo(),
 			'shortUrl' => $activeLinkShortUrl,
 			'settings' => $this->getSettings($sharing->getLinkInfo()),
 		]);
@@ -174,21 +179,21 @@ class Sharing extends Controller
 	public function saveLinkRuleAction(string $linkHash, array $ruleArray): array
 	{
 		$result = [];
-		
+
 		if (Loader::includeModule('intranet') && !\Bitrix\Intranet\Util::isIntranetUser())
 		{
 			$this->addError(new Error('Access denied'));
-			
+
 			return $result;
 		}
-		
+
 		$saveResult = \Bitrix\Calendar\Sharing\Link\Rule\Helper::getInstance()->saveLinkRule($linkHash, $ruleArray);
-		
+
 		if (!$saveResult)
 		{
 			$this->addError(new Error('Error while trying to save rule'));
 		}
-		
+
 		return $result;
 	}
 
@@ -222,11 +227,15 @@ class Sharing extends Controller
 
 		$linkInfo = $this->getLinkInfoCrm($entityId, $ownerId);
 
+		$sharing = new \Bitrix\Calendar\Sharing\Sharing(\CCalendar::GetCurUserId());
+
 		return Dto\Sharing::make([
 			'isEnabled' => true,
 			'shortUrl' => $linkInfo['url'],
 			'isRestriction' => false,
+			'isPromo' => false,
 			'settings' => $this->getSettings($linkInfo),
+			'userInfo' => $sharing->getUserInfo(),
 		]);
 	}
 
@@ -253,8 +262,14 @@ class Sharing extends Controller
 
 	public function isRestriction(): bool
 	{
-		return !\Bitrix\Calendar\Integration\Bitrix24Manager::isFeatureEnabled('calendar_sharing');
+		return !Bitrix24Manager::isFeatureEnabled(FeatureDictionary::CALENDAR_SHARING);
 	}
+
+	public function isPromo(): bool
+	{
+		return Bitrix24Manager::isPromoFeatureEnabled(FeatureDictionary::CALENDAR_SHARING);
+	}
+
 
 	private function getSettings(array $linkInfo): array
 	{

@@ -142,7 +142,7 @@ abstract class Calendar extends Integration
 	private static function getDefaultWorkSettings(): array
 	{
 		$site = \CSite::GetByID(SITE_ID)->Fetch();
-		$weekDay = (string)$site['WEEK_START'];
+		$weekDay = $site ? (string) $site['WEEK_START'] : '';
 		$weekDaysMap = ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'];
 
 		return [

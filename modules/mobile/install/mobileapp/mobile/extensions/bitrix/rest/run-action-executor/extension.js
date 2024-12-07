@@ -24,6 +24,7 @@ jn.define('rest/run-action-executor', (require, exports, module) => {
 			this.cacheTtl = 0;
 			this.uid = null;
 			this.jsonEnabled = false;
+			this.skipRequestIfCacheExists = false;
 		}
 
 		enableJson()
@@ -64,6 +65,11 @@ jn.define('rest/run-action-executor', (require, exports, module) => {
 				if (cache)
 				{
 					this.onCacheFetched(cache, this.getUid());
+
+					if (this.skipRequestIfCacheExists)
+					{
+						return Promise.resolve(cache);
+					}
 				}
 			}
 
@@ -174,6 +180,13 @@ jn.define('rest/run-action-executor', (require, exports, module) => {
 			{
 				this.options = Object.assign(this.options, options);
 			}
+
+			return this;
+		}
+
+		setSkipRequestIfCacheExists()
+		{
+			this.skipRequestIfCacheExists = true;
 
 			return this;
 		}

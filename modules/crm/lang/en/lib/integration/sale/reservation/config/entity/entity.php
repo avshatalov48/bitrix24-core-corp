@@ -1,7 +1,7 @@
 <?php
 $MESS["CRM_SALE_RESERVATION_CONFIG_DEAL_AUTO_WRITE_OFF_ON_FINALIZE_CODE"] = "Auto sale unshipped items when completing deal";
 $MESS["CRM_SALE_RESERVATION_CONFIG_DEAL_AUTO_WRITE_OFF_ON_FINALIZE_DESCRIPTION"] = "When the deal is successfully completed, the system will check for unshipped items and create a sales order.";
-$MESS["CRM_SALE_RESERVATION_CONFIG_MODE"] = "Reservation mode";
+$MESS["CRM_SALE_RESERVATION_CONFIG_MODE"] = "Reservation mode:";
 $MESS["CRM_SALE_RESERVATION_CONFIG_MODE_OPTION_MANUAL"] = "Manual";
 $MESS["CRM_SALE_RESERVATION_CONFIG_MODE_OPTION_ON_ADD_TO_DOCUMENT"] = "When adding product to deal";
 $MESS["CRM_SALE_RESERVATION_CONFIG_MODE_OPTION_ON_PAYMENT"] = "Upon payment";

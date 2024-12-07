@@ -149,7 +149,7 @@ $APPLICATION->IncludeComponent(
 	<input type="hidden" name="action" value="">
     <input id="<?= $presetFieldAddFormId.'_save' ?>" type="submit" name="save" value="Y">
 </form>
-<script type="text/javascript">
+<script>
     BX.ready(function () {
         BX.namespace("BX.Crm");
         var presetFieldListManagerId = "<?= CUtil::JSEscape($params['presetFieldListManagerId']) ?>";

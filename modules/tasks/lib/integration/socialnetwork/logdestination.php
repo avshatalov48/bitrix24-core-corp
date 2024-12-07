@@ -10,9 +10,10 @@ namespace Bitrix\Tasks\Integration\SocialNetwork;
 
 
 use Bitrix\Main\Config\Option;
+use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ModuleManager;
-use Bitrix\Tasks\Integration\Network\MemberSelector;
+use Bitrix\Tasks\Integration\Bitrix24;
 use Bitrix\Tasks\Util\User;
 
 class LogDestination
@@ -52,11 +53,16 @@ class LogDestination
 
 	private function canAddMailUsers(): self
 	{
+		$taskMailUserIntegrationEnabled = Bitrix24::checkFeatureEnabled(
+			Bitrix24\FeatureDictionary::TASK_MAIL_USER_INTEGRATION
+		);
+
 		$this->destination['CAN_ADD_MAIL_USERS'] = (
-			ModuleManager::isModuleInstalled('mail')
+			$taskMailUserIntegrationEnabled
+			&& ModuleManager::isModuleInstalled('mail')
 			&& ModuleManager::isModuleInstalled('intranet')
 			&& (
-				!\Bitrix\Main\Loader::includeModule('bitrix24')
+				!Loader::includeModule('bitrix24')
 				|| \CBitrix24::isEmailConfirmed()
 			)
 		);

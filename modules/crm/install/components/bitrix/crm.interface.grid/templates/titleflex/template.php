@@ -172,6 +172,7 @@ $APPLICATION->IncludeComponent(
 		'USE_CHECKBOX_LIST_FOR_SETTINGS_POPUP' => (bool)(
 			$arParams['USE_CHECKBOX_LIST_FOR_SETTINGS_POPUP'] ?? \Bitrix\Main\ModuleManager::isModuleInstalled('ui')
 		),
+		'HANDLE_RESPONSE_ERRORS' => true,
 	],
 	$component,
 	array('HIDE_ICONS' => 'Y')
@@ -187,7 +188,7 @@ if(is_array($extensionConfig))
 	$extensionMessages['goToDetails'] = GetMessage('CRM_INTERFACE_GRID_GO_TO_DETAILS');
 	$extensionConfig['destroyPreviousExtension'] = true;
 	?>
-	<script type="text/javascript">
+	<script>
 		BX.ready(
 			function()
 			{

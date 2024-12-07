@@ -2,10 +2,11 @@
  * @module layout/ui/context-menu/button
  */
 jn.define('layout/ui/context-menu/button', (require, exports, module) => {
-	const { cancelConfig } = require('layout/ui/context-menu/buttons/cancel');
-	const { ContextMenuItem } = require('layout/ui/context-menu/item');
+	const { cancelConfig } = require('layout/ui/context-menu/buttons/src/cancel');
+	const { ContextMenuItem, ContextMenuItemType } = require('layout/ui/context-menu/item');
 
 	/**
+	 * @deprecated
 	 * @param props
 	 * @param {string} props.type
 	 * @param {string} props.title
@@ -19,14 +20,13 @@ jn.define('layout/ui/context-menu/button', (require, exports, module) => {
 	 */
 	const menuButton = (props = {}) => {
 		const { type, testId, style = {}, divider = false, radius = true, ...restProps } = props;
-		const isCancel = type === ContextMenuItem.getTypeCancelName();
+		const isCancel = type === 'cancel';
 
 		let config = {
 			...restProps,
-			isActive: true,
-			type: ContextMenuItem.getTypeButtonName(),
-			firstInSection: !divider,
-			lastInSection: !divider,
+			divider,
+			active: true,
+			type: ContextMenuItemType.BUTTON,
 			needProcessing: false,
 			data: {
 				style,

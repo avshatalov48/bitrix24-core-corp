@@ -1,5 +1,6 @@
+/* eslint-disable */
 this.BX = this.BX || {};
-(function (exports,main_core_events,ui_buttons,crm_router,main_popup,ui_tour,ui_hint,main_core,ui_navigationpanel) {
+(function (exports,crm_router,main_core_events,main_popup,ui_buttons,ui_tour,ui_hint,main_core,ui_navigationpanel) {
 	'use strict';
 
 	function _classPrivateMethodInitSpec(obj, privateSet) { _checkPrivateRedeclaration(obj, privateSet); privateSet.add(obj); }
@@ -15,6 +16,7 @@ this.BX = this.BX || {};
 	 */
 	babelHelpers.defineProperty(ToolbarEvents, "TYPE_UPDATED", 'TypeUpdated');
 	babelHelpers.defineProperty(ToolbarEvents, "CATEGORIES_UPDATED", 'CategoriesUpdated');
+	babelHelpers.defineProperty(ToolbarEvents, "AUTOMATED_SOLUTION_UPDATED", 'CategoriesUpdated');
 	var _bindAutomationGuide = /*#__PURE__*/new WeakSet();
 	var ToolbarComponent = /*#__PURE__*/function (_EventEmitter) {
 	  babelHelpers.inherits(ToolbarComponent, _EventEmitter);
@@ -50,6 +52,9 @@ this.BX = this.BX || {};
 	        var toolbar = BX.UI.ToolbarManager.getDefaultToolbar();
 	        var button = toolbar.getButton(main_core.Dom.attr(buttonNode, 'data-btn-uniqid'));
 	        var entityTypeId = Number(buttonNode.dataset.entityTypeId);
+	        if (button.counterNode && button.counterNode.innerText > 99) {
+	          button.counterNode.innerText = '99+';
+	        }
 	        if (button && entityTypeId > 0) {
 	          this.subscribeCategoriesUpdatedEvent(function () {
 	            _this2.reloadCategoriesMenu(button, entityTypeId, buttonNode.dataset.categoryId);
@@ -62,6 +67,11 @@ this.BX = this.BX || {};
 	    key: "emitTypeUpdatedEvent",
 	    value: function emitTypeUpdatedEvent(data) {
 	      this.emit(ToolbarEvents.TYPE_UPDATED, data);
+	    }
+	  }, {
+	    key: "emitAutomatedSolutionUpdatedEvent",
+	    value: function emitAutomatedSolutionUpdatedEvent(data) {
+	      this.emit(ToolbarEvents.AUTOMATED_SOLUTION_UPDATED, data);
 	    }
 	  }, {
 	    key: "emitCategoriesUpdatedEvent",
@@ -77,6 +87,16 @@ this.BX = this.BX || {};
 	    key: "subscribeCategoriesUpdatedEvent",
 	    value: function subscribeCategoriesUpdatedEvent(callback) {
 	      this.subscribe(ToolbarEvents.CATEGORIES_UPDATED, callback);
+	    }
+	  }, {
+	    key: "subscribeAutomatedSolutionUpdatedEvent",
+	    value: function subscribeAutomatedSolutionUpdatedEvent(callback) {
+	      this.subscribe(ToolbarEvents.AUTOMATED_SOLUTION_UPDATED, callback);
+	    }
+	  }, {
+	    key: "unsubscribeAutomatedSolutionUpdatedEvent",
+	    value: function unsubscribeAutomatedSolutionUpdatedEvent(callback) {
+	      this.unsubscribe(ToolbarEvents.AUTOMATED_SOLUTION_UPDATED, callback);
 	    }
 	  }, {
 	    key: "reloadCategoriesMenu",
@@ -337,5 +357,5 @@ this.BX = this.BX || {};
 	exports.ToolbarComponent = ToolbarComponent;
 	exports.NavigationBar = NavigationBar;
 
-}((this.BX.Crm = this.BX.Crm || {}),BX.Event,BX.UI,BX.Crm,BX.Main,BX.UI.Tour,BX,BX,BX.UI));
+}((this.BX.Crm = this.BX.Crm || {}),BX.Crm,BX.Event,BX.Main,BX.UI,BX.UI.Tour,BX,BX,BX.UI));
 //# sourceMappingURL=toolbar-component.bundle.js.map

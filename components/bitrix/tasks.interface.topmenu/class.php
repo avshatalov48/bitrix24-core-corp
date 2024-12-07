@@ -42,6 +42,7 @@ class TasksTopmenuComponent extends TasksBaseComponent
 
 		static::tryParseStringParameter($arParams['MARK_SECTION_PROJECTS'], 'N');
 		static::tryParseStringParameter($arParams['MARK_SECTION_PROJECTS_LIST'], 'N');
+		static::tryParseStringParameter($arParams['MARK_SECTION_FLOW_LIST'], 'N');
 		static::tryParseStringParameter($arParams['MARK_SECTION_SCRUM_LIST'], 'N');
 		static::tryParseStringParameter($arParams['MARK_ACTIVE_ROLE'], 'N');
 		static::tryParseStringParameter($arParams['MARK_SECTION_MANAGE'], 'N');
@@ -137,6 +138,7 @@ class TasksTopmenuComponent extends TasksBaseComponent
 		$this->arResult['TOTAL'] = 0;
 		$this->arResult['PROJECTS_COUNTER'] = 0;
 		$this->arResult['SCRUM_COUNTER'] = 0;
+		$this->arResult['FLOW_COUNTER'] = 0;
 
 		if (
 			$this->arParams['PARENT_COMPONENT'] !== 'tasks.task'
@@ -155,6 +157,7 @@ class TasksTopmenuComponent extends TasksBaseComponent
 			$this->arResult['PROJECTS_COUNTER'] = $counter->get(Counter\CounterDictionary::COUNTER_SONET_TOTAL_EXPIRED)
 				+ $counter->get(Counter\CounterDictionary::COUNTER_SONET_TOTAL_COMMENTS);
 			$this->arResult['SCRUM_COUNTER'] = $counter->get(Counter\CounterDictionary::COUNTER_SCRUM_TOTAL_COMMENTS);
+			$this->arResult['FLOW_COUNTER'] = $counter->get(Counter\CounterDictionary::COUNTER_FLOW_TOTAL);
 		}
 
 		return true;

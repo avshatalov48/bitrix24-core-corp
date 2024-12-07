@@ -8,8 +8,8 @@ return [
 		'haptics',
 		'assets/icons',
 		'bottom-sheet',
+		'layout/ui/menu',
 		'utils/validation',
-		'layout/ui/context-menu',
 
 		'tasks:layout/checklist/list',
 	],

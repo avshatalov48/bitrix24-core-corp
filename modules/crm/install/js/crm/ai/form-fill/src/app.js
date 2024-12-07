@@ -53,6 +53,7 @@ export class AiFormFillApplication
 
 		this.#store.commit('setMergeUUID', this.#options.mergeUuid);
 		this.#store.commit('setActivityId', this.#options.activityId);
+		this.#store.commit('setActivityDirection', this.#options.activityDirection);
 		this.#application.use(this.#store);
 		this.#application.mount(this.rootNode);
 	}

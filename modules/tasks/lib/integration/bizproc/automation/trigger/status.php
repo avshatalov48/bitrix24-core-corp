@@ -30,7 +30,7 @@ class Status extends Base
 			return false;
 		}
 
-		$statusA = (int)$trigger['APPLY_RULES']['STATUS'];
+		$statusA = (int)($trigger['APPLY_RULES']['STATUS'] ?? 0);
 		$statusB = (int)$this->getInputData('STATUS');
 
 		return (!$statusA || $statusA === $statusB);

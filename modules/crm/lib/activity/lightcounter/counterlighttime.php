@@ -20,7 +20,7 @@ final class CounterLightTime
 	{
 
 		$deadline = $params->deadline();
-		if ($deadline === false || $deadline === null)
+		if ($deadline === false || $deadline === null || CCrmDateTimeHelper::IsMaxDatabaseDate($deadline))
 		{
 			return CCrmDateTimeHelper::getMaxDatabaseDateObject();
 		}

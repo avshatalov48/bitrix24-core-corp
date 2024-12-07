@@ -96,7 +96,7 @@
 			expect(result).toEqual({
 				add: [],
 				update: [],
-				delete: ['1'],
+				delete: [1],
 			});
 		});
 
@@ -126,7 +126,7 @@
 					{ id: 2, name: 'Item 2 from server' },
 					{ id: 4, name: 'Item 4 from server' },
 				],
-				delete: ['3'],
+				delete: [3],
 			});
 		});
 	});

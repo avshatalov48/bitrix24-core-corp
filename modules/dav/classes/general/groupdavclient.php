@@ -460,8 +460,7 @@ class CDavGroupdavClient
 			return $text;
 		}
 
-		global $APPLICATION;
-		return $APPLICATION->ConvertCharset($text, "utf-8", $this->encoding);
+		return \Bitrix\Main\Text\Encoding::convertEncoding($text, "utf-8", $this->encoding);
 	}
 
 	public function Decode($text)
@@ -475,8 +474,7 @@ class CDavGroupdavClient
 			return $text;
 		}
 
-		global $APPLICATION;
-		return $APPLICATION->ConvertCharset($text, $this->encoding, "utf-8");
+		return \Bitrix\Main\Text\Encoding::convertEncoding($text, $this->encoding, "utf-8");
 	}
 
 	public function SetPrivateIp($value)

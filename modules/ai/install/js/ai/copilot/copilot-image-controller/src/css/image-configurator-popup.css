@@ -1,0 +1,46 @@
+.ai__copilot-image-configurator-popup-content {
+	display: flex;
+	flex-direction: column;
+	justify-content: flex-start;
+	align-items: stretch;
+	padding-top: 12px;
+	padding-bottom: 20px;
+}
+
+.ai__copilot-image-configurator-popup-content_header {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: flex-start;
+	padding: 0 12px;
+	margin-bottom: 8px;
+}
+
+.ai__copilot-image-configurator-popup-content_back-btn {
+	width: 24px;
+	min-width: 24px;
+	height: 24px;
+	margin-right: 2px;
+	opacity: 0.7;
+	cursor: pointer;
+}
+
+.ai__copilot-image-configurator-popup-content_back-btn:hover {
+	opacity: 1;
+}
+
+.ai__copilot-image-configurator-popup-content_title {
+	font-size: var(--ui-font-size-md);
+	line-height: var(--ui-font-line-height-sm);
+	color: var(--ui-color-text-secondary);
+	font-weight: var(--ui-font-weight-bold);
+}
+
+.ai__copilot-image-configurator-popup-content_footer {
+	width: 100%;
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: center;
+	margin-top: 12px;
+}

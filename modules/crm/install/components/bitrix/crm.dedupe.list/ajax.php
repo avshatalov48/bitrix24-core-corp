@@ -95,7 +95,6 @@ if ($_SERVER['REQUEST_METHOD'] != 'POST')
 {
 	__CrmDedupeListEndResponse(array('ERROR' => 'Invalid request.'));
 }
-CUtil::JSPostUnescape();
 $action = isset($_POST['ACTION']) ? $_POST['ACTION'] : '';
 
 if (!CModule::IncludeModule('crm'))

@@ -2,14 +2,12 @@
 
 return [
 	'extensions' => [
-		'loc',
-		'type',
 		'apptheme',
+		'feature',
 		'haptics',
 		'layout/pure-component',
-		'layout/ui/empty-list',
-		'layout/ui/empty-screen',
 		'layout/ui/context-menu',
+		'layout/ui/empty-screen',
 		'layout/ui/floating-button',
 		'layout/ui/loading-screen',
 		'layout/ui/simple-list/items',
@@ -18,7 +16,13 @@ return [
 		'layout/ui/simple-list/items/extended',
 		'layout/ui/simple-list/skeleton',
 		'layout/ui/simple-list/view-mode',
+		'layout/ui/simple-list/menu-engine',
+		'ui-system/blocks/status-block',
+		'loc',
+		'type',
+		'layout/ui/optimized-list-view',
 		'utils/object',
 		'utils/function',
+		'utils/type',
 	],
 ];

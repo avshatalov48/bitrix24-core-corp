@@ -20,7 +20,7 @@ $APPLICATION->IncludeComponent("bitrix:mobile.menu.ext", ".default", array(), fa
 $frame->finishDynamicWithID("menu", $stub = "", $containerId = null, $useBrowserStorage = true);
 $APPLICATION->IncludeComponent("bitrix:mobile.rtc", "", array(), false, Array("HIDE_ICONS" => "Y"));
 ?>
-<script type="text/javascript">
+<script>
 	app.enableSliderMenu(true);
 </script>
 <? require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/footer.php") ?>

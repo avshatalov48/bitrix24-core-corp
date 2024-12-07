@@ -107,6 +107,12 @@ export const DetailComponent = {
 
 			return 0;
 		},
+		canShowAppForm: function () {
+			return this.result.APP.hasOwnProperty('HAS_APP_FORM')
+				&& this.result.APP.HAS_APP_FORM === true
+				&& this.result.APP.hasOwnProperty('INSTALLED')
+				&& this.result.APP.INSTALLED === 'Y';
+		},
 		...mapState(marketInstallState, ['installStep', 'slider', 'timer', 'installError', ]),
 	},
 	created () {
@@ -162,6 +168,10 @@ export const DetailComponent = {
 			} else if (this.installStep === 3) {
 				clearTimeout(this.timer);
 				this.reloadSlider();
+
+				if (this.closeDetailAfterInstall()) {
+					this.openApplication();
+				}
 			}
 		},
 		handleScroll: function () {
@@ -271,6 +281,11 @@ export const DetailComponent = {
 				this.result.APP.REVIEWS.ITEMS.unshift(userReview);
 			}
 		},
+		updateRating: function (rating) {
+			if (rating.hasOwnProperty('RATING_DETAIL')) {
+				this.result.APP.REVIEWS.RATING = rating;
+			}
+		},
 		createPopupMenu: function() {
 			if (this.result.APP.MENU_ITEMS.length <= 0 && !this.showRightsButton) {
 				return;
@@ -283,6 +298,20 @@ export const DetailComponent = {
 						this.menuPopup1.close();
 						this.menuPopup2.close();
 						this.setRights();
+					},
+				})
+			}
+
+			if (this.canShowAppForm)
+			{
+				this.result.APP.MENU_ITEMS.push({
+					text: this.$Bitrix.Loc.getMessage('MARKET_DETAIL_ACTION_JS_CONFIG'),
+					onclick: (event) => {
+						this.menuPopup1.close();
+						this.menuPopup2.close();
+						top.BX.Rest.AppForm.buildByAppWithLoader(this.result.APP.CODE, top.BX.Rest.EventType.DISPLAY).then((form) => {
+							form.show();
+						});
 					},
 				})
 			}
@@ -377,7 +406,8 @@ export const DetailComponent = {
 			BX.UI.InfoHelper.show(this.pricePolicySlider);
 		},
 		...mapActions(marketInstallState, [
-			'showInstallPopup', 'setAppInfo', 'openSliderWithContent', 'reloadSlider', 'isSubscriptionApp', 'isHiddenBuy'
+			'showInstallPopup', 'setAppInfo', 'openSliderWithContent', 'reloadSlider', 'isSubscriptionApp', 'isHiddenBuy',
+			'closeDetailAfterInstall', 'openApplication',
 		]),
 		...mapActions(marketUninstallState, ['deleteAction', 'setDeleteActionInfo']),
 	},
@@ -786,6 +816,7 @@ export const DetailComponent = {
 				:showNoAccessInstallButton="showNoAccessInstallButton"
 				@can-review="result.APP.REVIEWS.CAN_REVIEW = $event"
 				@review-info="addUserReview"
+				@update-rating="updateRating"
 			/>
 
 			<div class="market-detail__catalog-element" v-if="showYouMayLike">

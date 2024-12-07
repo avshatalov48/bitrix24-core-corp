@@ -1638,7 +1638,7 @@ class Rest extends \IRestService
 			'FORMAT_DATE' => $coreMessages['FORMAT_DATE'],
 			'FORMAT_DATETIME' => $coreMessages['FORMAT_DATETIME'],
 			'AMPM_MODE' => IsAmPmMode(true),
-			'UTF_MODE' => Main\Application::getInstance()->isUtfMode() ? 'Y' : 'N',
+			'UTF_MODE' => 'Y',
 			'isCloud' => \Bitrix\Main\ModuleManager::isModuleInstalled('bitrix24'),
 		];
 
@@ -2224,7 +2224,10 @@ class Rest extends \IRestService
 			return Chat::getChatIdBySession((int)$params['SESSION_ID']);
 		}
 
-		if (isset($params['USER_CODE']))
+		if (
+			isset($params['USER_CODE'])
+			&& (is_string($params['USER_CODE']) || is_numeric($params['USER_CODE']))
+		)
 		{
 			if (mb_strpos($params['USER_CODE'], 'imol|') === 0)
 			{

@@ -11,27 +11,21 @@ InitBVar($arParams['SHOW_NAV_BOTTOM']);
 
 $arParams['DETAIL_URL'] = COption::GetOptionString('intranet', 'search_user_url', '/user/#ID#/');
 
-$arParams['IBLOCK_ID'] = intval($arParams['IBLOCK_ID']);
-if (!$arParams['IBLOCK_ID']) $arParams['IBLOCK_ID'] = COption::GetOptionInt('intranet', 'iblock_state_history');
-if (!$arParams['IBLOCK_TYPE']) $arParams['IBLOCK_TYPE'] = COption::GetOptionString('intranet', 'iblock_type');
-
-if(!isset($arParams["CACHE_TIME"]))
-	$arParams["CACHE_TIME"] = 3600;
-
+$arParams['IBLOCK_ID'] = intval($arParams['IBLOCK_ID'] ?? COption::GetOptionInt('intranet', 'iblock_state_history'));
+$arParams['IBLOCK_TYPE'] = trim($arParams['IBLOCK_TYPE'] ?? COption::GetOptionString('intranet', 'iblock_type'));
+$arParams["CACHE_TIME"] = $arParams["CACHE_TIME"] ?? 3600;
 if ($arParams['CACHE_TYPE'] == 'A')
 	$arParams['CACHE_TYPE'] = COption::GetOptionString("main", "component_cache_on", "Y");
 
-if ($arParams["NAME_TEMPLATE"] == '')
-	$arParams["NAME_TEMPLATE"] = CSite::GetNameFormat();
-
-$arParams['SHOW_LOGIN'] = $arParams['SHOW_LOGIN'] != "N" ? "Y" : "N";
+$arParams["NAME_TEMPLATE"] = trim($arParams["NAME_TEMPLATE"] ?? CSite::GetNameFormat());
+$arParams['SHOW_LOGIN'] = ($arParams['SHOW_LOGIN'] ?? 'N') == "N" ? "Y" : "N";
 
 if (!array_key_exists("PM_URL", $arParams))
 	$arParams["~PM_URL"] = $arParams["PM_URL"] = "/company/personal/messages/chat/#USER_ID#/";
 if (!array_key_exists("PATH_TO_CONPANY_DEPARTMENT", $arParams))
 	$arParams["~PATH_TO_CONPANY_DEPARTMENT"] = $arParams["PATH_TO_CONPANY_DEPARTMENT"] = "/company/structure.php?set_filter_structure=Y&structure_UF_DEPARTMENT=#ID#";
 
-if (!$arParams['DATE_FORMAT']) $arParams['DATE_FORMAT'] = CComponentUtil::GetDateFormatDefault();
+$arParams['DATE_FORMAT'] = trim($arParams['DATE_FORMAT'] ?? CComponentUtil::GetDateFormatDefault());
 
 // for bitrix:main.user.link
 $arTooltipFieldsDefault	= serialize(array(
@@ -53,14 +47,13 @@ if (!array_key_exists("SHOW_FIELDS_TOOLTIP", $arParams))
 	$arParams["SHOW_FIELDS_TOOLTIP"] = unserialize(COption::GetOptionString("socialnetwork", "tooltip_fields", $arTooltipFieldsDefault), ["allowed_classes" => false]);
 if (!array_key_exists("USER_PROPERTY_TOOLTIP", $arParams))
 	$arParams["USER_PROPERTY_TOOLTIP"] = unserialize(COption::GetOptionString("socialnetwork", "tooltip_properties", $arTooltipPropertiesDefault), ["allowed_classes" => false]);
-
 if (!array_key_exists("PATH_TO_CONPANY_DEPARTMENT", $arParams))
 	$arParams["PATH_TO_CONPANY_DEPARTMENT"] = "/company/structure.php?set_filter_structure=Y&structure_UF_DEPARTMENT=#ID#";
 
 $IBLOCK_PERMISSION = CIBlock::GetPermission($arParams['IBLOCK_ID']);
 $arParams['bAdmin'] = $IBLOCK_PERMISSION >= 'U';
 
-$DEPARTMENT = intval($_REQUEST['department']);
+$DEPARTMENT = intval($_REQUEST['department'] ?? 0);
 
 $arParams['bCache'] = $arParams['CACHE_TYPE'] == 'Y' && $arParams['CACHE_TIME'] > 0; // && $DEPARTMENT <= 0;
 
@@ -146,10 +139,12 @@ else
 
 	if ($strUserIDs != '')
 	{
-		$dbRes = CIBlockSection::GetList(array('SORT' => 'ASC'), array('IBLOCK_ID' => COption::GetOptionInt('intranet', 'iblock_structure'), 'ID' => array_unique($arDepartmentIDs)));
-		while ($arSect = $dbRes->Fetch())
+		$departmentRepository = \Bitrix\Intranet\Service\ServiceContainer::getInstance()
+			->departmentRepository();
+		$departmentCollection = $departmentRepository->findAllByIds(array_unique($arDepartmentIDs));
+		foreach ($departmentCollection as $department)
 		{
-			$arResult['DEPARTMENTS'][$arSect['ID']] = $arSect['NAME'];
+			$arResult['DEPARTMENTS'][$department->getId()] = $department->getName();
 		}
 		unset($dbRes);
 
@@ -211,7 +206,7 @@ if ($bDataFromCache)
 foreach ($arResult['USERS'] as $key => $arUser)
 {
 	if (!$bDataFromCache)
-		$arResult['USERS']['IS_ONLINE'] = CIntranetUtils::IsOnline($arUser['LAST_ACTIVITY_DATE']);
+		$arResult['USERS']['IS_ONLINE'] = CIntranetUtils::IsOnline($arUser['LAST_ACTIVITY_DATE'] ?? null);
 
 	$arUser['DETAIL_URL'] = str_replace(array('#ID#', '#USER_ID#'), $arUser['ID'], $arParams['DETAIL_URL']);
 
@@ -269,4 +264,3 @@ if ($APPLICATION->GetShowIncludeAreas() && $USER->IsAdmin())
 
 	$this->AddIncludeAreaIcons($arIcons);
 }
-?>

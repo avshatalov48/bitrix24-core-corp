@@ -83,6 +83,6 @@ class AutoRemoveTaskAgent implements AgentInterface
 
 	private function isEnabled(): bool
 	{
-		return Option::get(Manager::MODULE_ID, static::OPTION_KEY, 'N', '-') === 'Y';
+		return Option::get(Manager::MODULE_ID, static::OPTION_KEY, 'N') === 'Y';
 	}
 }

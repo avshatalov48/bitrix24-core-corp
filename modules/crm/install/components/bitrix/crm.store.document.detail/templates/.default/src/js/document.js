@@ -4,6 +4,8 @@ import { EventEmitter } from 'main.core.events';
 import { Popup } from 'main.popup';
 import { Button, ButtonColor, ButtonState } from 'ui.buttons';
 import { DocumentOnboardingManager, OnboardingData } from './document.onboarding.manager';
+import { EnableWizardOpener, AnalyticsContextList } from 'catalog.store-enable-wizard';
+import { OneCPlanRestrictionSlider } from 'catalog.tool-availability-manager';
 
 export class Document extends BaseCard
 {
@@ -28,6 +30,7 @@ export class Document extends BaseCard
 		this.isInventoryManagementDisabled = settings.isInventoryManagementDisabled;
 		this.inventoryManagementFeatureCode = settings.inventoryManagementFeatureCode;
 		this.lockedCancellation = settings.isProductBatchMethodSelected;
+		this.isOnecMode = settings.isOnecMode;
 
 		this.addCopyLinkPopup();
 
@@ -150,10 +153,12 @@ export class Document extends BaseCard
 	{
 		const card = this;
 
-		BX.SidePanel.Instance.open(
+		new EnableWizardOpener().open(
 			this.masterSliderUrl,
 			{
-				cacheable: false,
+				urlParams: {
+					analyticsContextSection: AnalyticsContextList.DOCUMENT_CARD,
+				},
 				data: {
 					openGridOnDone: false,
 				},
@@ -169,8 +174,7 @@ export class Document extends BaseCard
 						{
 							card.isDeductLocked = false;
 
-							const sliders = BX.SidePanel.Instance.getOpenSliders();
-							sliders.forEach((slider) => {
+							BX.SidePanel.Instance.getOpenSliders().forEach((slider) => {
 								if (slider.getWindow()?.BX.Catalog?.DocumentGridManager)
 								{
 									slider.allowChangeHistory = false;
@@ -203,9 +207,9 @@ export class Document extends BaseCard
 		this.defaultOnSuccessCallback = editor._ajaxForm._config.onsuccess;
 
 		saveButton.onclick = (event) => {
-			if (this.isInventoryManagementDisabled && this.inventoryManagementFeatureCode)
+			if (this.isInventoryManagementDisabled)
 			{
-				top.BX.UI.InfoHelper.show(this.inventoryManagementFeatureCode);
+				this.showPlanRestrictedSlider();
 
 				return;
 			}
@@ -219,9 +223,9 @@ export class Document extends BaseCard
 		{
 			const deductAndSaveButton = Tag.render`<button class="ui-btn ui-btn-light-border">${Loc.getMessage('CRM_STORE_DOCUMENT_DETAIL_SAVE_AND_DEDUCT_BUTTON')}</button>`;
 			deductAndSaveButton.onclick = (event) => {
-				if (this.isInventoryManagementDisabled && this.inventoryManagementFeatureCode)
+				if (this.isInventoryManagementDisabled)
 				{
-					top.BX.UI.InfoHelper.show(this.inventoryManagementFeatureCode);
+					this.showPlanRestrictedSlider();
 
 					return;
 				}
@@ -259,9 +263,9 @@ export class Document extends BaseCard
 						return;
 					}
 
-					if (this.isInventoryManagementDisabled && this.inventoryManagementFeatureCode)
+					if (this.isInventoryManagementDisabled)
 					{
-						top.BX.UI.InfoHelper.show(this.inventoryManagementFeatureCode);
+						this.showPlanRestrictedSlider();
 
 						return;
 					}
@@ -338,7 +342,7 @@ export class Document extends BaseCard
 			saveButton.after(deductButton);
 			this.deductButton = deductButton;
 		}
-		else if (this.permissions.cancel)
+		else if (this.permissions.cancel && !this.isDisabledCancellation())
 		{
 			const deductButton = new Button({
 				text: Loc.getMessage('CRM_STORE_DOCUMENT_DETAIL_CANCEL_DEDUCT_BUTTON'),
@@ -349,9 +353,9 @@ export class Document extends BaseCard
 						return;
 					}
 
-					if (this.isInventoryManagementDisabled && this.inventoryManagementFeatureCode)
+					if (this.isInventoryManagementDisabled)
 					{
-						top.BX.UI.InfoHelper.show(this.inventoryManagementFeatureCode);
+						this.showPlanRestrictedSlider();
 
 						return;
 					}
@@ -502,9 +506,26 @@ export class Document extends BaseCard
 		}
 	}
 
+	showPlanRestrictedSlider(): void
+	{
+		if (this.isOnecMode)
+		{
+			OneCPlanRestrictionSlider.show();
+		}
+		else if (this.inventoryManagementFeatureCode)
+		{
+			top.BX.UI.InfoHelper.show(this.inventoryManagementFeatureCode);
+		}
+	}
+
 	isLockedCancellation(): boolean
 	{
 		return this.lockedCancellation;
+	}
+
+	isDisabledCancellation(): boolean
+	{
+		return this.isOnecMode;
 	}
 
 	showCancellationInfo(): void

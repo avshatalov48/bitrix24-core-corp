@@ -3,9 +3,11 @@
 namespace Bitrix\CatalogMobile\InventoryControl\DataProvider\DocumentProducts\Product;
 
 use Bitrix\Catalog\v2\IoC\ServiceContainer;
+use Bitrix\Catalog\VatTable;
 use Bitrix\Main\Loader;
 use Bitrix\CatalogMobile\InventoryControl\DataProvider\DocumentProducts\Document;
 use Bitrix\CatalogMobile\InventoryControl\Dto\DocumentProductRecord;
+use Bitrix\Sale\Tax\VatCalculator;
 
 Loader::includeModule('catalog');
 Loader::includeModule('currency');
@@ -64,6 +66,29 @@ final class CompletePrices implements Enricher
 				}
 			}
 
+			$vatId = $sku->getField('VAT_ID');
+			$vatIncluded = $sku->getField('VAT_INCLUDED');
+			$vat = (int)$vatId ? VatTable::getRowById($vatId) : [];
+			$vatRate = $vat['RATE'] ?? null;
+			$priceWithVat = $sellPrice;
+			$vatValue = 0;
+
+			if ($vatRate !== null)
+			{
+				$vatRate = $vatRate / 100;
+				$isVatInPrice = ($vatIncluded === 'Y');
+				$vatCalculator = new VatCalculator($vatRate);
+
+				$priceWithVat = $isVatInPrice
+					? $priceWithVat
+					: $vatCalculator->accrue($sellPrice);
+
+				$vatValue = $vatCalculator->calc(
+					$sellPrice,
+					$isVatInPrice
+				);
+			}
+
 			$completedRecord = clone $record;
 			$completedRecord->price = [
 				'purchase' => [
@@ -73,7 +98,13 @@ final class CompletePrices implements Enricher
 				'sell' => [
 					'amount' => $sellPrice,
 					'currency' => $currency,
-				]
+				],
+				'vat' => [
+					'priceWithVat' => $priceWithVat,
+					'vatRate' => $vatRate,
+					'vatIncluded' => $vatIncluded,
+					'vatValue' => $vatValue,
+				],
 			];
 
 			$result[] = $completedRecord;

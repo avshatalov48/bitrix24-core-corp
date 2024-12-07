@@ -94,7 +94,7 @@ if(!isset($arParams['HIDE_TOOLBAR']) || $arParams['HIDE_TOOLBAR'] <> 'Y')
 		<input id="CRM_EXCH1C_ENABLE_CHECK" type="checkbox" name="CRM_EXCH1C_ENABLE"<?= ($arResult['CRM_EXCH1C_ENABLED'] === 'Y') ? ' checked="checked"' : '' ?> /><span><?= ' '.htmlspecialcharsbx(GetMessage('CRM_EXCH1C_ENABLED_TITLE')) ?></span>
 	</form>
 </div>
-<script type="text/javascript">
+<script>
 	BX.ready(function () {
 		var form =BX('CRM_EXCH1C_ENABLE_FORM');
 		var check = BX('CRM_EXCH1C_ENABLE_CHECK');

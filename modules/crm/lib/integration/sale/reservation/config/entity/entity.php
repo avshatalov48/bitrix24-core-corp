@@ -4,7 +4,9 @@ namespace Bitrix\Crm\Integration\Sale\Reservation\Config\Entity;
 
 use Bitrix\Crm\Integration\Sale\Reservation\Config\Storage;
 use Bitrix\Crm\Integration\Sale\Reservation\Config\TypeDictionary;
+use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Catalog\Store\EnableWizard\Manager;
 
 Loc::loadMessages(__FILE__);
 
@@ -62,6 +64,8 @@ abstract class Entity
 	 */
 	public static function getScheme(): array
 	{
+		$isOnecMode = Loader::includeModule('catalog') && Manager::isOnecMode();
+
 		return [
 			[
 				'code' => static::RESERVATION_MODE_CODE,
@@ -83,7 +87,7 @@ abstract class Entity
 						'name' => Loc::getMessage('CRM_SALE_RESERVATION_CONFIG_MODE_OPTION_ON_PAYMENT'),
 					],
 				],
-				'disabled' => false,
+				'disabled' => $isOnecMode,
 			],
 			[
 				'code' => static::RESERVE_WITHDRAWAL_PERIOD_CODE,
@@ -91,7 +95,7 @@ abstract class Entity
 				'type' => TypeDictionary::INTEGER,
 				'default' => static::DEFAULT_RESERVE_WITHDRAWAL_PERIOD_VALUE,
 				'sort' => 200,
-				'disabled' => false,
+				'disabled' => $isOnecMode,
 			]
 		];
 	}
@@ -122,6 +126,18 @@ abstract class Entity
 	public function setValues(array $values): Entity
 	{
 		$this->values = $values;
+		return $this;
+	}
+
+	/**
+	 * @param string $name
+	 * @param string $value
+	 * @return $this
+	 */
+	public function setValue(string $name, string $value): Entity
+	{
+		$this->values[$name] = $value;
+
 		return $this;
 	}
 

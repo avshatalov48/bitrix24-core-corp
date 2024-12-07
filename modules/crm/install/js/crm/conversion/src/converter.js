@@ -29,6 +29,7 @@ export type ConverterParams = {
 	isRedirectToDetailPageEnabled?: boolean,
 	messages: Object<string, string>,
 	analytics?: {
+		c_section?: EntityConvertEvent['c_section'],
 		c_sub_section?: EntityConvertEvent['c_sub_section'],
 		c_element?: EntityConvertEvent['c_element'],
 	},
@@ -289,6 +290,7 @@ export class Converter
 	#sendAnalyticsData(dstEntityTypeId: number, status: EventStatus): void
 	{
 		const builder = Builder.Entity.ConvertEvent.createDefault(this.#entityTypeId, dstEntityTypeId)
+			.setSection(this.#params.analytics.c_section)
 			.setSubSection(this.#params.analytics.c_sub_section)
 			.setElement(this.#params.analytics.c_element)
 			.setStatus(status)
@@ -305,6 +307,7 @@ export class Converter
 		}
 
 		const allowedKeys = new Set([
+			'c_section',
 			'c_sub_section',
 			'c_element',
 		]);

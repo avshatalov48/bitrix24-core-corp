@@ -1,50 +1,51 @@
-(function ()
+(function()
 {
 	/**
 	 * @bxjs_lang_path mobile_ui_messages.php
 	 */
-	var loader = function (taskId, container, imageNode, processingNode)
+	var loader = function(taskId, container, imageNode, processingNode)
 	{
 		this.onDestroyEventName = null;
 		this.shouldDestroyOnEnd = false;
-		this.loaderContainer = BX.create("DIV", {props: {className: "mobile-uploader-rotating"}});
-		this.cancelLayout = BX.create("DIV", {
-			props: {className: "mobile-upload-cancel"},
-			attrs: {"data-task-id": taskId}
+		this.loaderContainer = BX.create('DIV', { props: { className: 'mobile-uploader-rotating' } });
+		this.cancelLayout = BX.create('DIV', {
+			props: { className: 'mobile-upload-cancel' },
+			attrs: { 'data-task-id': taskId },
 		});
 
-		this.loaderWrapper = BX.create("DIV",
+		this.loaderWrapper = BX.create(
+			'DIV',
 			{
-				props: {className: "mobile-uploader-loader-wrapper"},
+				props: { className: 'mobile-uploader-loader-wrapper' },
 				children: [
-					this.loaderOverlay = BX.create("DIV",
+					this.loaderOverlay = BX.create(
+						'DIV',
 						{
-							attrs: {id: "container_" + taskId},
-							props: {className: "mobile-uploader-loader"},
-							children: [this.cancelLayout, this.loaderContainer]
-						}
-					)
-				]
-			}
+							attrs: { id: `container_${taskId}` },
+							props: { className: 'mobile-uploader-loader' },
+							children: [this.cancelLayout, this.loaderContainer],
+						},
+					),
+				],
+			},
 		);
 
-		if(!processingNode)
+		if (!processingNode)
 		{
 			processingNode = this.loaderWrapper;
 		}
 
-		if(processingNode)
+		if (processingNode)
 		{
-			this.proccessingLabel = BX.create("DIV", {
-				props: {className: "mobile-upload-processing"},
-				attrs: {style: "display:none"},
-				html: BX.message("MUI_PROCESSING")
+			this.proccessingLabel = BX.create('DIV', {
+				props: { className: 'mobile-upload-processing' },
+				attrs: { style: 'display:none' },
+				html: BX.message('MUI_PROCESSING'),
 			});
-			this.loaderWrapper.appendChild(this.proccessingLabel)
+			this.loaderWrapper.appendChild(this.proccessingLabel);
 		}
 
-
-		BX.bind(this.loaderContainer, "click", BX.proxy(function ()
+		BX.bind(this.loaderContainer, 'click', BX.proxy(function()
 		{
 			if (this.bar.value() < 1)
 			{
@@ -55,7 +56,7 @@
 
 		if (this.imageLayout)
 		{
-			BX.addClass(this.imageLayout, "mobile-uploader-img-blurred");
+			BX.addClass(this.imageLayout, 'mobile-uploader-img-blurred');
 		}
 
 		container.appendChild(this.loaderWrapper);
@@ -66,78 +67,74 @@
 
 	loader.prototype.setProcessingVisibility = function (visible, animate)
 	{
-		if(!this.proccessingLabel)
+		if (!this.proccessingLabel)
+		{
 			return;
+		}
 
 		if (visible)
 		{
-			BX.show(this.proccessingLabel)
+			BX.show(this.proccessingLabel);
+		}
+		else if (animate === true)
+		{
+			this.proccessingLabel.style.opacity = 0;
 		}
 		else
 		{
-			if(animate === true)
-			{
-				this.proccessingLabel.style.opacity = 0.0;
-			}
-			else
-			{
-				BX.hide(this.proccessingLabel);
-			}
+			BX.hide(this.proccessingLabel);
 		}
 	};
 
-	loader.prototype.createProgress = function ()
+	loader.prototype.createProgress = function()
 	{
-
 		this.bar = new BX.ProgressBarJs.Circle(this.loaderContainer, {
-			easing: "linear",
+			easing: 'linear',
 			strokeWidth: 4,
 			color: '#ffffff',
-			from: {color: '#ffffff'},
-			to: {color: '#ffffff'},
-			step: BX.proxy(function (state, bar)
+			from: { color: '#ffffff' },
+			to: { color: '#ffffff' },
+			step: BX.proxy(function(state, bar)
 			{
 				if (bar.value() == 1)
 				{
 					this.isBeingEnd = true;
-					this.cancelLayout.style.transform = "scale(0)";
+					this.cancelLayout.style.transform = 'scale(0)';
 
-					setTimeout(BX.proxy(function ()
+					setTimeout(BX.proxy(function()
 					{
-						BX.addClass(this.cancelLayout, "mobile-upload-done");
-						setTimeout(
-							BX.proxy(function ()
+						BX.addClass(this.cancelLayout, 'mobile-upload-done');
+						setTimeout(BX.proxy(function()
+						{
+							this.cancelLayout.style.transform = 'scale(1)';
+							this.isBeingEnd = false;
+							if (this.shouldDestroyOnEnd)
 							{
-								this.cancelLayout.style.transform = "scale(1)";
-								this.isBeingEnd = false;
-								if (this.shouldDestroyOnEnd)
-								{
-									setTimeout(BX.proxy(this.destroy, this), 300);
-								}
-							}, this), 200);
-
+								setTimeout(BX.proxy(this.destroy, this), 300);
+							}
+						}, this), 200);
 					}, this), 200);
 					if (this.onDestroyEventName == null)
 					{
 						this.destroy();
 					}
 				}
-			}, this)
+			}, this),
 		});
 	};
 
-	loader.prototype.setProgress = function (percent)
+	loader.prototype.setProgress = function(percent)
 	{
 		console.log(percent);
-		this.bar.animate(percent / 100, {duration: 500});
+		this.bar.animate(percent / 100, { duration: 500 });
 	};
 
-	loader.prototype.setByteSent = function (sent, total)
+	loader.prototype.setByteSent = function(sent, total)
 	{
-		this.proccessingLabel.innerHTML = ((sent/1024/1024).toFixed(2))+" MB "+" / "+(total/1024/1024).toFixed(2) + " MB";
+		this.proccessingLabel.innerHTML = `${(sent / 1024 / 1024).toFixed(2)} MB  / ${(total / 1024 / 1024).toFixed(2)} MB`;
 	};
 
-	loader.prototype.destroy = function ()
+	loader.prototype.destroy = function()
 	{
 		if (this.isBeingEnd)
 		{
@@ -145,31 +142,30 @@
 		}
 		else
 		{
-			BX.removeClass(this.imageLayout, "mobile-uploader-img-blurred");
-			this.loaderOverlay.style.opacity = 0.0;
+			BX.removeClass(this.imageLayout, 'mobile-uploader-img-blurred');
+			this.loaderOverlay.style.opacity = 0;
 			this.setProcessingVisibility(false, true);
 			this.bar.destroy();
 		}
-
 	};
 
 	window.loader = loader;
 
 	BX.MobileUploaderConst = {
-		FILE_CREATED: "onfilecreated",
-		FILE_CREATED_FAILED: "onerrorfilecreate",
-		FILE_UPLOAD_PROGRESS: "onprogress",
-		FILE_UPLOAD_START: "onloadstart",
-		FILE_UPLOAD_FAILED: "onfileuploadfailed",
-		FILE_READ_ERROR: "onfilereaderror",
-		FILE_PROCESSING: "onfileprocessing",
-		FILE_PROCESSING_DONE: "onfileprocessingdone",
-		ALL_TASK_COMPLETED: "oncomplete",
-		TASK_TOKEN_DEFINED: "ontasktokendefined",
-		TASK_STARTED_FAILED: "onloadstartfailed",
-		TASK_CREATED: "ontaskcreated",
-		TASK_CANCELLED: "ontaskcancelled",
-		TASK_NOT_FOUND: "ontasknotfound",
+		FILE_CREATED: 'onfilecreated',
+		FILE_CREATED_FAILED: 'onerrorfilecreate',
+		FILE_UPLOAD_PROGRESS: 'onprogress',
+		FILE_UPLOAD_START: 'onloadstart',
+		FILE_UPLOAD_FAILED: 'onfileuploadfailed',
+		FILE_READ_ERROR: 'onfilereaderror',
+		FILE_PROCESSING: 'onfileprocessing',
+		FILE_PROCESSING_DONE: 'onfileprocessingdone',
+		ALL_TASK_COMPLETED: 'oncomplete',
+		TASK_TOKEN_DEFINED: 'ontasktokendefined',
+		TASK_STARTED_FAILED: 'onloadstartfailed',
+		TASK_CREATED: 'ontaskcreated',
+		TASK_CANCELLED: 'ontaskcancelled',
+		TASK_NOT_FOUND: 'ontasknotfound',
 	};
 	BX.MobileUploadProvider = {
 		/**
@@ -190,21 +186,21 @@
 			 //handle event
 		 });
 		 */
-		setListener: function (listener)
+		setListener(listener)
 		{
 			this.listener = listener;
 		},
-		toBXUrl: function (path)
+		toBXUrl(path)
 		{
-			return "bx" + path;
+			return `bx${path}`;
 		},
-		cancelTasks: function (taskIds)
+		cancelTasks(taskIds)
 		{
-			BXMobileApp.onCustomEvent("onFileUploadTaskCancel", {"taskIds": taskIds}, true);
+			BXMobileApp.onCustomEvent('onFileUploadTaskCancel', { taskIds }, true);
 		},
-		removeTasks: function (tasks)
+		removeTasks(tasks)
 		{
-			tasks.forEach(BX.proxy(function (taskId)
+			tasks.forEach(BX.proxy(function(taskId)
 			{
 				if (this.loaders[taskId])
 				{
@@ -226,22 +222,19 @@
 				}
 			}, this));
 		},
-		attachToTasks: function (tasks)
+		attachToTasks(tasks)
 		{
 			this.registerTaskLoaders(tasks);
-			BXMobileApp.onCustomEvent("onFileUploadTaskRequest", {files: tasks}, true);
+			BXMobileApp.onCustomEvent('onFileUploadTaskRequest', {files: tasks}, true);
 		},
-		registerTaskLoaders: function (tasks)
+		registerTaskLoaders(tasks)
 		{
-			this.removeTasks(tasks.map(function (task)
-			{
-				return task.taskId
-			}));
-			tasks.forEach(BX.proxy(function (task)
+			this.removeTasks(tasks.map(({ taskId }) => taskId));
+			tasks.forEach(BX.proxy(function(task)
 			{
 				if (task.progressNode)
 				{
-					this.loaders[task.taskId] = new loader(task.taskId, task.progressNode, task.imageNode,task.progressNode);
+					this.loaders[task.taskId] = new loader(task.taskId, task.progressNode, task.imageNode, task.progressNode);
 					if (task.onDestroyEventName)
 					{
 						this.loaders[task.taskId].onDestroyEventName = task.onDestroyEventName;
@@ -266,17 +259,17 @@
 
 		 }
 		 ]);
-		 * **/
-		addTasks: function (tasks)
+		 * * */
+		addTasks(tasks)
 		{
 			this.registerTaskLoaders(tasks);
-			BXMobileApp.Events.postToComponent("onFileUploadTaskReceived", [{files: tasks}], 'background');
+			BXMobileApp.Events.postToComponent('onFileUploadTaskReceived', [{ files: tasks }], 'background');
 		},
-		init: function ()
+		init()
 		{
 			this.taskIds = [];
 			this.loaders = {};
-			BXMobileApp.addCustomEvent("onFileUploadStatusChanged", BX.proxy(function (data)
+			BXMobileApp.addCustomEvent('onFileUploadStatusChanged', BX.proxy(function(data)
 			{
 				if (this.loaders[data.taskId])
 				{
@@ -290,7 +283,7 @@
 					}
 					else if (data.event == BX.MobileUploaderConst.FILE_UPLOAD_PROGRESS)
 					{
-						if((data.data.byteTotal/1024/2024) > 2) //more then 2MB
+						if ((data.data.byteTotal / 1024 / 2024) > 2) // more then 2MB
 						{
 							taskLoader.setProcessingVisibility(true);
 							taskLoader.setByteSent(data.data.byteSent, data.data.byteTotal);
@@ -301,21 +294,19 @@
 						}
 
 						taskLoader.setProgress(data.data.percent);
-
 					}
-					else if(data.event === "onfileprocessing")
+					else if (data.event === 'onfileprocessing')
 					{
 						taskLoader.setProcessingVisibility(true);
 					}
-
 				}
 
-				if (this.listener && this.taskIds.indexOf(data.taskId) > -1)
+				if (this.listener && this.taskIds.includes(data.taskId))
 				{
-					this.listener.call(null, data.event, data.data, data.taskId)
+					this.listener.call(null, data.event, data.data, data.taskId);
 				}
 			}, this));
-		}
+		},
 
 	};
 

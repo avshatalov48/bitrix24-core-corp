@@ -76,6 +76,7 @@ export default {
 				dialogId: this.$root.$app.options.dialogId,
 				sessionId: this.$root.$app.options.sessionId,
 				isShortProductViewFormat: true,
+				enableEmptyProductError: false,
 			},
 		);
 
@@ -259,24 +260,14 @@ export default {
 				this.$store.commit('orderCreation/enableSubmit');
 			}
 		},
-		isNeedDisableSubmit()
+		isNeedDisableSubmit(): boolean
 		{
 			const basket = this.$store.getters['orderCreation/getBasket']();
 
-			if (
+			return (
 				basket.length <= 0
-				// || !this.$root.$app.hasClientContactInfo()
 				|| (this.productForm && Type.isFunction(this.productForm.hasErrors) && this.productForm.hasErrors())
-			)
-			{
-				return true;
-			}
-
-			const filledProducts = basket.filter((item) => {
-				return (Type.isStringFilled(item.module) && item.productId > 0);
-			});
-
-			return filledProducts.length <= 0;
+			);
 		},
 	},
 	template: `

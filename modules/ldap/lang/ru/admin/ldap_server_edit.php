@@ -15,8 +15,6 @@ $MESS["LDAP_EDIT_CODE_ABS"] = "Не определен";
 $MESS["LDAP_EDIT_SERV_PORT"] = "Сервер:порт:";
 $MESS["LDAP_EDIT_ADM_LOGIN"] = "Логин пользователя с правами доступа на чтение к дереву<br>(в формате логин@домен или домен\\логин):";
 $MESS["LDAP_EDIT_ADM_PASS"] = "Пароль:";
-$MESS["LDAP_EDIT_ADM_PASS_CHANGE"] = "Изменить";
-$MESS["LDAP_EDIT_ADM_PASS_CHANGE_CANCEL"] = "Отмена";
 $MESS["LDAP_EDIT_BASE_DN"] = "Корень дерева (base DN):";
 $MESS["LDAP_EDIT_GROUP_FILTER"] = "Фильтр для групп пользователей:";
 $MESS["LDAP_EDIT_GROUP_ATTR"] = "Атрибут идентификатора группы:";
@@ -85,4 +83,5 @@ $MESS["LDAP_EDIT_SET_DEPARTMENT_HEAD"] = "Назначать руководит�
 $MESS["LDAP_EDIT_LDAP_OPT_TIMELIMIT"] = "Количество секунд для ожидания результатов поиска [LDAP_OPT_TIMELIMIT]";
 $MESS["LDAP_EDIT_LDAP_OPT_TIMEOUT"] = "Таймаут для синхронных вызовов API для OpenLDAP [LDAP_OPT_TIMEOUT]";
 $MESS["LDAP_EDIT_LDAP_OPT_NETWORK_TIMEOUT"] = "Сетевой таймаут [LDAP_OPT_NETWORK_TIMEOUT]";
+$MESS['LDAP_EDIT_NEW_PASS'] = 'Новый пароль (требуется также для списка групп):';
 ?>

@@ -45,7 +45,7 @@ if ($firstPageChanger->checkNeedChanges())
 $arResult = [
 	'IS_ADMIN' => $menuUser->isAdmin(),
 	'IS_EXTRANET' => isModuleInstalled("extranet") && SITE_ID    == \COption::GetOptionString("extranet", "extranet_site"),
-	'SHOW_PRESET_POPUP' => \COption::GetOptionString("intranet", "show_menu_preset_popup", "N") == "Y",
+	'SHOW_PRESET_POPUP' => \COption::GetOptionString("intranet", "show_menu_preset_popup", "N") == "Y" && $menuUser->isAdmin(),
 	'SHOW_SITEMAP_BUTTON' => false,
 	'ITEMS' => [
 		'show' => $visibleItems,
@@ -101,21 +101,21 @@ $counters = \CUserCounter::GetValues($USER->GetID(), SITE_ID);
 $counters = is_array($counters) ? $counters : [];
 
 $workgroupCounterData = [
-	'livefeed' => ($counters[\CUserCounter::LIVEFEED_CODE . 'SG0'] ?? ''),
+	'livefeed' => (int)($counters[\CUserCounter::LIVEFEED_CODE . 'SG0'] ?? 0),
 ];
 
 if (Loader::includeModule('tasks'))
 {
 	$tasksCounterInstance = \Bitrix\Tasks\Internals\Counter::getInstance($USER->GetID());
 
-	$workgroupCounterData[TasksCounterDictionary::COUNTER_PROJECTS_MAJOR] = (
+	$workgroupCounterData[TasksCounterDictionary::COUNTER_PROJECTS_MAJOR] = (int)(
 		$tasksCounterInstance->get(TasksCounterDictionary::COUNTER_GROUPS_TOTAL_COMMENTS)
 		+ $tasksCounterInstance->get(TasksCounterDictionary::COUNTER_PROJECTS_TOTAL_COMMENTS)
 		+ $tasksCounterInstance->get(TasksCounterDictionary::COUNTER_GROUPS_TOTAL_EXPIRED)
 		+ $tasksCounterInstance->get(TasksCounterDictionary::COUNTER_PROJECTS_TOTAL_EXPIRED)
 	);
 
-	$workgroupCounterData[TasksCounterDictionary::COUNTER_SCRUM_TOTAL_COMMENTS] = $tasksCounterInstance->get(TasksCounterDictionary::COUNTER_SCRUM_TOTAL_COMMENTS);
+	$workgroupCounterData[TasksCounterDictionary::COUNTER_SCRUM_TOTAL_COMMENTS] = (int)$tasksCounterInstance->get(TasksCounterDictionary::COUNTER_SCRUM_TOTAL_COMMENTS);
 }
 
 $counters['workgroups'] = array_sum($workgroupCounterData);

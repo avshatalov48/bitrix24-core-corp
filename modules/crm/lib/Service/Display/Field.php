@@ -24,10 +24,14 @@ use Bitrix\Crm\Service\Display\Field\NumberField;
 use Bitrix\Crm\Service\Display\Field\OtherField;
 use Bitrix\Crm\Service\Display\Field\PaymentStatusField;
 use Bitrix\Crm\Service\Display\Field\ResourceBookingField;
+use Bitrix\Crm\Service\Display\Field\Sign\B2e\ResultStatusField;
+use Bitrix\Crm\Service\Display\Field\Sign\B2e\UserListField;
+use Bitrix\Crm\Service\Display\Field\Sign\B2e\UserNameListField;
 use Bitrix\Crm\Service\Display\Field\StringField;
 use Bitrix\Crm\Service\Display\Field\TextField;
 use Bitrix\Crm\Service\Display\Field\UrlField;
 use Bitrix\Crm\Service\Display\Field\UserField;
+use Bitrix\Main\ArgumentException;
 use CCrmOwnerType;
 
 abstract class Field
@@ -175,6 +179,21 @@ abstract class Field
 		// {
 		// 	return new StatusField($id);
 		// }
+
+		if ($type === ResultStatusField::TYPE)
+		{
+			return new ResultStatusField($id);
+		}
+
+		if ($type === UserListField::TYPE)
+		{
+			return new UserListField($id);
+		}
+
+		if ($type === UserNameListField::TYPE)
+		{
+			return new UserNameListField($id);
+		}
 
 		if ($type === PaymentStatusField::TYPE)
 		{
@@ -602,7 +621,7 @@ abstract class Field
 			return $this->getFormattedValueForMobile($fieldValue, $itemId, $displayOptions);
 		}
 
-		throw new Exception('Unknown context: ' . $context);
+		throw new ArgumentException('Unknown context: ' . $context);
 	}
 
 	protected function getFormattedValueForKanban($fieldValue, int $itemId, Options $displayOptions)
@@ -695,7 +714,10 @@ abstract class Field
 	{
 		if ($this->isUserField())
 		{
-			$values = array_map('htmlspecialcharsback', $values);
+			$values = array_map(
+				'htmlspecialcharsback',
+				array_filter($values, 'is_scalar')
+			);
 		}
 
 		return array_values($values);

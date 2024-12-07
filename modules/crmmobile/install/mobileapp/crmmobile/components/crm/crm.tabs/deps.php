@@ -2,6 +2,7 @@
 
 return [
 	'extensions' => [
+		'tokens',
 		'apptheme',
 		'layout/ui/menu',
 		'layout/pure-component',
@@ -12,10 +13,12 @@ return [
 		'require-lazy',
 		'qrauth/utils',
 		'rest',
+		'assets/icons',
 		'utils/object',
 		'utils/function',
 		'alert',
 		'loc',
+		'feature',
 
 		'crm:type',
 		'crm:loc',
@@ -24,5 +27,7 @@ return [
 		'crm:entity-tab/kanban',
 		'crm:ui/loading-progress',
 		'crm:simple-list/items',
+
+		'crm:navigator',
 	],
 ];

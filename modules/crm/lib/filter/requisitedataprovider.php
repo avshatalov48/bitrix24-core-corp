@@ -169,7 +169,7 @@ class RequisiteDataProvider extends Main\Filter\DataProvider
 									'type' => 'text',
 									'name' => $fieldNamePrefix.
 										($hideCountry ? '' : ' ('.$countries[$countryId].')').': '.
-										$addressTypeName.' - '.ToLower($addressLabels[$fieldKey]),
+										$addressTypeName.' - '.mb_strtolower($addressLabels[$fieldKey]),
 								]
 							);
 						}

@@ -120,10 +120,10 @@ if (!defined("STOP_WEBDAV") || !STOP_WEBDAV)
 	$bNeedInclude = true;
 	if (isset($_SERVER["REQUEST_METHOD"]) && $_SERVER["REQUEST_METHOD"] === "HEAD")
 	{
-		$res = mb_strtolower($_SERVER["HTTP_USER_AGENT"]);
+		$res = mb_strtolower($_SERVER["HTTP_USER_AGENT"] ?? null);
 		if (
-			mb_strpos($res, "microsoft") === false
-			&& $_SERVER["REAL_FILE_PATH"] == ''
+			empty($_SERVER["REAL_FILE_PATH"])
+			&& !str_contains($res, "microsoft")
 			&& mb_substr($_SERVER['REQUEST_URI'], -1, 1) === '/'
 		)
 		{
@@ -131,7 +131,7 @@ if (!defined("STOP_WEBDAV") || !STOP_WEBDAV)
 			$res = CUrlRewriter::GetList(Array("QUERY" => $_SERVER['REQUEST_URI']));
 			foreach ($res as $res_detail)
 			{
-				if (mb_strpos($res_detail["ID"], "webdav") !== false || mb_strpos($res_detail["ID"], "disk") !== false || mb_strpos($res_detail["ID"], "socialnetwork") !== false)
+				if (str_contains($res_detail["ID"], "webdav") || str_contains($res_detail["ID"], "disk") || str_contains($res_detail["ID"], "socialnetwork"))
 				{
 					$bNeedInclude = true;
 					break;
@@ -140,7 +140,7 @@ if (!defined("STOP_WEBDAV") || !STOP_WEBDAV)
 		}
 	}
 
-	if (__webdavIsDavHeaders() && $bNeedInclude)
+	if ($bNeedInclude && __webdavIsDavHeaders())
 	{
 		if (CModule::includeModule('ldap') && CLdapUtil::isBitrixVMAuthSupported())
 		{
@@ -166,9 +166,18 @@ if (!defined("STOP_WEBDAV") || !STOP_WEBDAV)
 		$GLOBALS["APPLICATION"]->arComponentMatch[] = 'disk';
 		$GLOBALS["APPLICATION"]->arComponentMatch[] = 'socialnetwork';
 
-		define("STOP_STATISTICS", true);
-		define("NO_AGENT_STATISTIC","Y");
-		define("NO_AGENT_CHECK", true);
+		if (!defined('STOP_STATISTICS'))
+		{
+			define("STOP_STATISTICS", true);
+		}
+		if (!defined('NO_AGENT_STATISTIC'))
+		{
+			define("NO_AGENT_STATISTIC","Y");
+		}
+		if (!defined('NO_AGENT_CHECK'))
+		{
+			define("NO_AGENT_CHECK", true);
+		}
 		$GLOBALS["APPLICATION"]->ShowPanel = false;
 
 		if (CModule::IncludeModule("dav") && CModule::IncludeModule("disk"))

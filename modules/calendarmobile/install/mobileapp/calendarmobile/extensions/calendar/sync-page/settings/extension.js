@@ -11,6 +11,7 @@ jn.define('calendar/sync-page/settings', (require, exports, module) => {
 	const { SyncSettingsSection } = require('calendar/sync-page/settings/section');
 	const { SyncSettingsMenu } = require('calendar/sync-page/settings/menu');
 	const { CalendarLoader } = require('calendar/layout/ui/loader');
+	const { Color } = require('tokens');
 
 	/**
 	 * @class SyncSettings
@@ -39,7 +40,7 @@ jn.define('calendar/sync-page/settings', (require, exports, module) => {
 
 			// eslint-disable-next-line promise/catch-or-return
 			bottomSheet.setParentWidget(parentWidget)
-				.setBackgroundColor(AppTheme.colors.bgNavigation)
+				.setBackgroundColor(Color.bgNavigation.toHex())
 				.setMediumPositionPercent(70)
 				.enableResizeContent()
 				.disableContentSwipe()
@@ -73,7 +74,7 @@ jn.define('calendar/sync-page/settings', (require, exports, module) => {
 					style: {
 						flex: 1,
 					},
-					testId: `sync_page_settings_container`,
+					testId: 'sync_page_settings_container',
 				},
 				this.renderHeader(),
 				!this.state.loading && this.renderSyncInfo(),
@@ -94,7 +95,7 @@ jn.define('calendar/sync-page/settings', (require, exports, module) => {
 					},
 					clickable: true,
 					onClick: () => this.layoutWidget.close(),
-					testId: `sync_page_settings_header`,
+					testId: 'sync_page_settings_header',
 				},
 				this.renderLeftArrow(),
 				this.renderTitle(),
@@ -128,7 +129,7 @@ jn.define('calendar/sync-page/settings', (require, exports, module) => {
 			return Text(
 				{
 					style: {
-						fontSize: 17,
+						fontSize: 19,
 						fontWeight: '400',
 					},
 					text: Loc.getMessage('M_CALENDAR_SYNC_SETTINGS_TITLE'),
@@ -141,14 +142,14 @@ jn.define('calendar/sync-page/settings', (require, exports, module) => {
 			return ScrollView(
 				{
 					style: {
-						backgroundColor: AppTheme.colors.bgContentPrimary,
+						backgroundColor: Color.bgContentPrimary.toHex(),
 						flex: 1,
 					},
 				},
 				View(
 					{
 						style: {
-							backgroundColor: AppTheme.colors.bgContentPrimary,
+							backgroundColor: Color.bgContentPrimary.toHex(),
 							paddingTop: 12,
 							paddingBottom: 20,
 							marginBottom: 20,
@@ -167,13 +168,13 @@ jn.define('calendar/sync-page/settings', (require, exports, module) => {
 			return View(
 				{
 					style: {
-						backgroundColor: AppTheme.colors.bgContentPrimary,
+						backgroundColor: Color.bgContentPrimary.toHex(),
 						flexDirection: 'row',
 						justifyContent: 'space-between',
 						paddingVertical: 12,
 						paddingHorizontal: 30,
 					},
-					testId: `sync_page_settings_sync_info`,
+					testId: 'sync_page_settings_sync_info',
 				},
 				this.renderIcon(),
 				View(
@@ -241,7 +242,7 @@ jn.define('calendar/sync-page/settings', (require, exports, module) => {
 						flexDirection: 'column',
 						paddingHorizontal: 30,
 					},
-					testId: `sync_page_settings_sections_container`,
+					testId: 'sync_page_settings_sections_container',
 				},
 				...this.sections.map((section, index) => {
 					return new SyncSettingsSection({

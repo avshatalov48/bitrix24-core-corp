@@ -25,7 +25,6 @@ class OnTaskBindingsUpdated implements TimeLineEvent
 			'AUTHOR_ID' => $this->userId,
 			'REFRESH_TASK_ACTIVITY' => true,
 			'IGNORE_IN_LOGS' => true,
-			'IMMEDIATELY' => true,
 		];
 	}
 

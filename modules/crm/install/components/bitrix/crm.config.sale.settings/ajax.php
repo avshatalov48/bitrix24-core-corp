@@ -42,9 +42,7 @@ if ($action === 'FIX_STATUSES')
 	}
 
 	$dbRes = $DB->Query(
-		"SELECT ENTITY_ID, STATUS_ID FROM b_crm_status WHERE SYSTEM = 'N' GROUP BY ENTITY_ID, STATUS_ID HAVING COUNT(*) > 1",
-		false,
-		'FILE: '.__FILE__.'<br /> LINE: '.__LINE__
+		"SELECT ENTITY_ID, STATUS_ID FROM b_crm_status WHERE SYSTEM = 'N' GROUP BY ENTITY_ID, STATUS_ID HAVING COUNT(*) > 1"
 	);
 
 	$items = array();
@@ -64,9 +62,7 @@ if ($action === 'FIX_STATUSES')
 		}
 
 		$dbRes = $DB->Query(
-			"SELECT ID, SORT, NAME, SYSTEM FROM b_crm_status WHERE ENTITY_ID = '{$entityID}' AND STATUS_ID = '{$statusID}'",
-			false,
-			'FILE: '.__FILE__.'<br /> LINE: '.__LINE__
+			"SELECT ID, SORT, NAME, SYSTEM FROM b_crm_status WHERE ENTITY_ID = '{$entityID}' AND STATUS_ID = '{$statusID}'"
 		);
 
 		$entity = new CCrmStatus($entityID);

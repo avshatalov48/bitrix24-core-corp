@@ -511,7 +511,7 @@ class CrmClientPortraitComponent extends \CBitrixComponent
 	public static function prepareComments($comments)
 	{
 		return trim(htmlspecialcharsback(strip_tags(
-			preg_replace('/(<br[^>]*>)+/is'.BX_UTF_PCRE_MODIFIER, "\n", $comments)
+			preg_replace('/(<br[^>]*>)+/isu', "\n", $comments)
 		)));
 	}
 }

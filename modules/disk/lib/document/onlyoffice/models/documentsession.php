@@ -2,8 +2,10 @@
 
 namespace Bitrix\Disk\Document\OnlyOffice\Models;
 
+use Bitrix\Disk\Document\OnlyOffice\Bitrix24Scenario;
 use Bitrix\Disk\File;
 use Bitrix\Disk\Internals\Entity\Model;
+use Bitrix\Disk\Internals\Error\ErrorCollection;
 use Bitrix\Disk\Security\SecurityContext;
 use Bitrix\Disk\User;
 use Bitrix\Disk\Version;
@@ -63,6 +65,30 @@ final class DocumentSession extends Model
 	public static function getTableClassName()
 	{
 		return DocumentSessionTable::class;
+	}
+
+	public static function add(array $data, ErrorCollection $errorCollection)
+	{
+		self::trackFirstEditForLimitedEdit($data);
+
+		return parent::add($data, $errorCollection);
+	}
+
+	protected function update(array $data)
+	{
+		self::trackFirstEditForLimitedEdit($data);
+
+		return parent::update($data);
+	}
+
+	private static function trackFirstEditForLimitedEdit(array $modelData): void
+	{
+		$type = $modelData['TYPE'] ?? null;
+		if ($type === self::TYPE_EDIT)
+		{
+			$bitrix24Scenario = new Bitrix24Scenario();
+			$bitrix24Scenario->trackFirstEditForLimitedEdit();
+		}
 	}
 
 	/**

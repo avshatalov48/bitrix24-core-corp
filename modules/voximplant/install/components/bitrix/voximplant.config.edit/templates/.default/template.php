@@ -363,7 +363,7 @@ $arResult["ERROR"] ??= '';
 										</div>
 									<? endif; ?>
 									<? if (!\Bitrix\Voximplant\Limits::canSelectCallSource()): ?>
-										<script type="text/javascript">
+										<script>
 											viCrmSource = BX('vi_crm_source_select').options.selectedIndex;
 											BX.bind(BX('vi_crm_source_select'), 'change', function (e)
 											{
@@ -488,7 +488,7 @@ $arResult["ERROR"] ??= '';
 						<div class="voximplant-number-settings-text"><?= Loc::getMessage("VI_CONFIG_VOTE_TIP") ?></div>
 					</div>
 					<? if (!\Bitrix\Voximplant\Limits::canVote()): ?>
-						<script type="text/javascript">
+						<script>
 							BX.bind(BX('vi_vote'), 'change', function (e)
 							{
 								BX('vi_vote').checked = false;

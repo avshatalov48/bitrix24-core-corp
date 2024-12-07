@@ -305,8 +305,17 @@ class Helper
 
 	public static function isAdmin(int $userId): bool
 	{
+		if ($userId <= 0)
+		{
+			return false;
+		}
+
 		global $USER;
-		if ($userId === $USER->GetID() && $USER->isAdmin())
+		if (
+			$USER instanceof \CUser
+			&& $userId === $USER->GetID()
+			&& $USER->isAdmin()
+		)
 		{
 			return true;
 		}
@@ -318,6 +327,7 @@ class Helper
 
 		$groups = \CUser::GetUserGroup($userId);
 		$groups = array_map('intval', $groups);
+
 		return in_array(1, $groups, true);
 	}
 

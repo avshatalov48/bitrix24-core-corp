@@ -1,0 +1,9 @@
+.crm-timeline__address-block .ui-link {
+	cursor: default;
+}
+
+.crm-timeline__address-block-address-wrapper {
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}

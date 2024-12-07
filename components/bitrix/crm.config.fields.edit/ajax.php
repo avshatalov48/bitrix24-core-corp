@@ -41,7 +41,6 @@ if ($_SERVER['REQUEST_METHOD'] != 'POST')
 	__CrmConfigFieldEditEndResponse(array('ERROR' => 'Request method is not allowed.'));
 }
 
-CUtil::JSPostUnescape();
 $action = isset($_POST['ACTION']) ? $_POST['ACTION'] : '';
 if($action === 'ADD_FIELD')
 {

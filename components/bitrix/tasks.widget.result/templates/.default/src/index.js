@@ -134,6 +134,8 @@ class TaskResult
 
 	initExpandButton()
 	{
+		EventEmitter.subscribe('BX.Forum.Spoiler:toggle', this.onSpoilerToggle.bind(this));
+
 		this.contentNode = document.getElementById(`tasks-result-list-container-${this.taskId}`);
 		this.containerNode = document.getElementById(`tasks-result-list-wrapper-${this.taskId}`);
 
@@ -161,8 +163,6 @@ class TaskResult
 		this.itemsNodes.length === 2
 			? this.itemsContentNode.classList.add('--two-results')
 			: this.itemsContentNode.classList.add('--many-results');
-
-		EventEmitter.subscribe('BX.Forum.Spoiler:toggle', this.onSpoilerToggle.bind(this));
 	}
 
 	onSpoilerToggle(event)

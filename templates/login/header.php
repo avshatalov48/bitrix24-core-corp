@@ -43,5 +43,5 @@ $APPLICATION->ShowPanel();
 	</tr>
 	<tr>
 		<td class="log-main-cell">
-			<div class="log-popup-wrap <?echo $APPLICATION->ShowProperty("popup_class","")?>" id="login-popup-wrap">
+			<div class="log-popup-wrap <? $APPLICATION->ShowProperty("popup_class","") ?>" id="login-popup-wrap">
 				<div class="log-popup" id="login-popup">

@@ -7,8 +7,9 @@ use Bitrix\Main\Type\DateTime;
 use Bitrix\Tasks\Internals\SystemLogTable;
 use Bitrix\Tasks\Internals\Task\SystemLogObject;
 use Bitrix\Tasks\Replication\RepositoryInterface;
+use Bitrix\Tasks\Replication\Template\Common\HistoryServiceInterface;
 
-class TemplateHistoryService
+class TemplateHistoryService implements HistoryServiceInterface
 {
 	public function __construct(private RepositoryInterface $repository)
 	{

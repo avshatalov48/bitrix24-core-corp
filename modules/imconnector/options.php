@@ -55,7 +55,7 @@ $aTabs = array(
 		),
 		array(
 			'allow_search_network',
-			Loc::getMessage('IMCONNECTOR_FIELD_ALLOW_SEARCH_NETWORK_TITLE'),
+			Loc::getMessage('IMCONNECTOR_FIELD_ALLOW_SEARCH_NETWORK_TITLE_MSGVER_1'),
 			'Y',
 			array('checkbox'),
 		),

@@ -32,7 +32,7 @@ class MoneyField extends BaseField
 
 	protected function convertToWebType($value): string
 	{
-		if (is_array($value) && isset($value['currency']) && !empty($value['amount']))
+		if (is_array($value) && isset($value['currency'], $value['amount']) && !\CBPHelper::isEmptyValue($value['amount']))
 		{
 			return (double)$value['amount'] . '|' . $value['currency'];
 		}

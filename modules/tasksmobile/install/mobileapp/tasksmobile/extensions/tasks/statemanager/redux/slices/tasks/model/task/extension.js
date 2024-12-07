@@ -5,6 +5,7 @@ jn.define('tasks/statemanager/redux/slices/tasks/model/task', (require, exports,
 	const { ExpirationRegistry } = require('tasks/statemanager/redux/slices/tasks/expiration-registry');
 	const { FieldChangeRegistry } = require('tasks/statemanager/redux/slices/tasks/field-change-registry');
 	const { selectIsExpired } = require('tasks/statemanager/redux/slices/tasks/selector');
+	const { TaskStatus, TaskPriority } = require('tasks/enum');
 	const { Type } = require('type');
 
 	class TaskModel
@@ -19,8 +20,8 @@ jn.define('tasks/statemanager/redux/slices/tasks/model/task', (require, exports,
 		 */
 		static prepareReduxTaskFromServerTask(sourceServerTask, existingReduxTask = null)
 		{
-			const preparedTask = { ...(existingReduxTask || TaskModel.getEmptyReduxTask()) };
-			const serverTask = FieldChangeRegistry.removeChangedFields(sourceServerTask);
+			const preparedTask = { ...TaskModel.getEmptyReduxTask(), ...existingReduxTask };
+			const serverTask = FieldChangeRegistry.removeChangedFields(sourceServerTask.id, sourceServerTask);
 			let taskId = Number(existingReduxTask?.id);
 
 			if (!Type.isUndefined(serverTask.id))
@@ -49,6 +50,11 @@ jn.define('tasks/statemanager/redux/slices/tasks/model/task', (require, exports,
 				preparedTask.groupId = Number(serverTask.groupId);
 			}
 
+			if (!Type.isUndefined(serverTask.flowId))
+			{
+				preparedTask.flowId = Number(serverTask.flowId);
+			}
+
 			if (!Type.isUndefined(serverTask.timeElapsed))
 			{
 				preparedTask.timeElapsed = Number(serverTask.timeElapsed);
@@ -72,6 +78,16 @@ jn.define('tasks/statemanager/redux/slices/tasks/model/task', (require, exports,
 			if (!Type.isUndefined(serverTask.newCommentsCount))
 			{
 				preparedTask.newCommentsCount = Number(serverTask.newCommentsCount);
+			}
+
+			if (!Type.isUndefined(serverTask.resultsCount))
+			{
+				preparedTask.resultsCount = Number(serverTask.resultsCount);
+			}
+
+			if (!Type.isUndefined(serverTask.viewsCount))
+			{
+				preparedTask.viewsCount = Number(serverTask.viewsCount);
 			}
 
 			if (!Type.isUndefined(serverTask.parentId))
@@ -119,14 +135,14 @@ jn.define('tasks/statemanager/redux/slices/tasks/model/task', (require, exports,
 				preparedTask.auditors = serverTask.auditors.map((userId) => Number(userId));
 			}
 
-			// if (!Type.isUndefined(serverTask.relatedTasks))
-			// {
-			// 	preparedTask.relatedTasks = (Type.isArray(serverTask.relatedTasks) ? {} : serverTask.relatedTasks);
-			// }
-			//
+			if (!Type.isUndefined(serverTask.relatedTasks))
+			{
+				preparedTask.relatedTasks = (Type.isArray(serverTask.relatedTasks) ? [] : serverTask.relatedTasks);
+			}
+
 			// if (!Type.isUndefined(serverTask.subTasks))
 			// {
-			// 	preparedTask.subTasks = (Type.isArray(serverTask.subTasks) ? {} : serverTask.subTasks);
+			// 	preparedTask.subTasks = (Type.isArray(serverTask.subTasks) ? [] : serverTask.subTasks);
 			// }
 
 			if (!Type.isUndefined(serverTask.crm))
@@ -147,6 +163,11 @@ jn.define('tasks/statemanager/redux/slices/tasks/model/task', (require, exports,
 			if (!Type.isUndefined(serverTask.isMuted))
 			{
 				preparedTask.isMuted = serverTask.isMuted;
+			}
+
+			if (!Type.isUndefined(serverTask.isDodNecessary))
+			{
+				preparedTask.isDodNecessary = serverTask.isDodNecessary;
 			}
 
 			if (!Type.isUndefined(serverTask.isPinned))
@@ -239,31 +260,67 @@ jn.define('tasks/statemanager/redux/slices/tasks/model/task', (require, exports,
 				preparedTask.checklist = serverTask.checklist;
 			}
 
+			if (!Type.isUndefined(serverTask.checklistDetails))
+			{
+				preparedTask.checklistDetails = serverTask.checklistDetails;
+			}
+
+			if (!Type.isUndefined(serverTask.dodTypes))
+			{
+				preparedTask.dodTypes = serverTask.dodTypes;
+			}
+
+			if (!Type.isUndefined(serverTask.activeDodTypeId))
+			{
+				preparedTask.activeDodTypeId = serverTask.activeDodTypeId;
+			}
+
 			if (!Type.isUndefined(serverTask.counter))
 			{
 				preparedTask.counter = serverTask.counter;
 			}
 
-			if (!Type.isUndefined(serverTask.actions))
+			if (
+				!Type.isUndefined(serverTask.actions)
+				&& !Type.isUndefined(serverTask.actionsOld)
+			)
 			{
-				const actions = serverTask.actions;
+				preparedTask.actionsOld = serverTask.actionsOld;
 
-				preparedTask.actions = actions;
-				preparedTask.canUpdateDeadline = actions.changeDeadline;
-				preparedTask.canDelegate = actions.delegate;
-				preparedTask.canRemove = actions.remove;
-				preparedTask.canDefer = actions.defer;
-				preparedTask.canUseTimer = actions['dayplan.timer.toggle'];
-				preparedTask.canStart = actions.start && !actions['dayplan.timer.toggle'];
-				preparedTask.canPause = actions.pause && !actions['dayplan.timer.toggle'];
-				preparedTask.canComplete = actions.complete;
-				preparedTask.canRenew = actions.renew;
-				preparedTask.canApprove = actions.approve;
-				preparedTask.canDisapprove = actions.disapprove;
+				const actions = FieldChangeRegistry.removeChangedFields(preparedTask.id, serverTask.actions);
+
+				preparedTask.canRead = actions.canRead ?? preparedTask.canRead;
+				preparedTask.canUpdate = actions.canUpdate ?? preparedTask.canUpdate;
+				preparedTask.canUpdateDeadline = actions.canUpdateDeadline ?? preparedTask.canUpdateDeadline;
+				preparedTask.canUpdateCreator = actions.canUpdateCreator ?? preparedTask.canUpdateCreator;
+				preparedTask.canUpdateResponsible = actions.canUpdateResponsible ?? preparedTask.canUpdateResponsible;
+				preparedTask.canUpdateAccomplices = actions.canUpdateAccomplices ?? preparedTask.canUpdateAccomplices;
+				preparedTask.canDelegate = actions.canDelegate ?? preparedTask.canDelegate;
+				preparedTask.canUpdateMark = actions.canUpdateMark ?? preparedTask.canUpdateMark;
+				preparedTask.canUpdateReminder = actions.canUpdateReminder ?? preparedTask.canUpdateReminder;
+				preparedTask.canUpdateElapsedTime = actions.canUpdateElapsedTime ?? preparedTask.canUpdateElapsedTime;
+				preparedTask.canAddChecklist = actions.canAddChecklist ?? preparedTask.canAddChecklist;
+				preparedTask.canUpdateChecklist = actions.canUpdateChecklist ?? preparedTask.canUpdateChecklist;
+				preparedTask.canRemove = actions.canRemove ?? preparedTask.canRemove;
+				preparedTask.canUseTimer = actions.canUseTimer ?? preparedTask.canUseTimer;
+				preparedTask.canStart = (actions.canStart ?? preparedTask.canStart) && !preparedTask.canUseTimer;
+				preparedTask.canPause = (actions.canPause ?? preparedTask.canPause) && !preparedTask.canUseTimer;
+				preparedTask.canComplete = actions.canComplete ?? preparedTask.canComplete;
+				preparedTask.canRenew = actions.canRenew ?? preparedTask.canRenew;
+				preparedTask.canApprove = actions.canApprove ?? preparedTask.canApprove;
+				preparedTask.canDisapprove = actions.canDisapprove ?? preparedTask.canDisapprove;
+				preparedTask.canDefer = actions.canDefer ?? preparedTask.canDefer;
 			}
 
 			preparedTask.isExpired = selectIsExpired(preparedTask);
 			preparedTask.isConsideredForCounterChange = false;
+			preparedTask.isCreationErrorExist = false;
+
+			const uploadedFiles = Array.isArray(preparedTask.uploadedFiles) ? preparedTask.uploadedFiles : [];
+
+			preparedTask.uploadedFiles = uploadedFiles.filter((file) => {
+				return file.isUploading || !Number.isInteger(Number(file.objectId));
+			});
 
 			if (!existingReduxTask || isDeadlineChanged)
 			{
@@ -275,7 +332,7 @@ jn.define('tasks/statemanager/redux/slices/tasks/model/task', (require, exports,
 
 		static prepareReduxTaskFromOldTaskModel(oldTaskModel, existingReduxTask = null)
 		{
-			const preparedTask = (existingReduxTask || TaskModel.getEmptyReduxTask());
+			const preparedTask = { ...TaskModel.getEmptyReduxTask(), ...existingReduxTask };
 
 			// eslint-disable-next-line no-underscore-dangle
 			if (!Type.isUndefined(oldTaskModel._id))
@@ -302,6 +359,11 @@ jn.define('tasks/statemanager/redux/slices/tasks/model/task', (require, exports,
 			if (!Type.isUndefined(oldTaskModel.groupId))
 			{
 				preparedTask.groupId = Number(oldTaskModel.groupId);
+			}
+
+			if (!Type.isUndefined(oldTaskModel.flowId))
+			{
+				preparedTask.flowId = Number(oldTaskModel.flowId);
 			}
 
 			if (!Type.isUndefined(oldTaskModel.timeElapsed))
@@ -378,14 +440,14 @@ jn.define('tasks/statemanager/redux/slices/tasks/model/task', (require, exports,
 				preparedTask.auditors = Object.keys(oldTaskModel.auditors).map((userId) => Number(userId));
 			}
 
-			// if (!Type.isUndefined(oldTaskModel.relatedTasks))
-			// {
-			// 	preparedTask.relatedTasks = (Type.isArray(oldTaskModel.relatedTasks) ? {} : oldTaskModel.relatedTasks);
-			// }
-			//
+			if (!Type.isUndefined(oldTaskModel.relatedTasks))
+			{
+				preparedTask.relatedTasks = (Type.isArray(oldTaskModel.relatedTasks) ? [] : oldTaskModel.relatedTasks);
+			}
+
 			// if (!Type.isUndefined(oldTaskModel.subTasks))
 			// {
-			// 	preparedTask.subTasks = (Type.isArray(oldTaskModel.subTasks) ? {} : oldTaskModel.subTasks);
+			// 	preparedTask.subTasks = (Type.isArray(oldTaskModel.subTasks) ? [] : oldTaskModel.subTasks);
 			// }
 
 			if (!Type.isUndefined(oldTaskModel.crm))
@@ -501,6 +563,11 @@ jn.define('tasks/statemanager/redux/slices/tasks/model/task', (require, exports,
 				preparedTask.checklist = oldTaskModel.checklist;
 			}
 
+			if (!Type.isUndefined(oldTaskModel.checklistDetails))
+			{
+				preparedTask.checklistDetails = oldTaskModel.checklistDetails;
+			}
+
 			// eslint-disable-next-line no-underscore-dangle
 			if (!Type.isUndefined(oldTaskModel._counter))
 			{
@@ -514,7 +581,7 @@ jn.define('tasks/statemanager/redux/slices/tasks/model/task', (require, exports,
 				// eslint-disable-next-line no-underscore-dangle
 				const actions = oldTaskModel._actions;
 
-				preparedTask.actions = actions.actions;
+				preparedTask.actionsOld = actions.actions;
 				preparedTask.canUpdateDeadline = actions.canChangeDeadline;
 				preparedTask.canDelegate = actions.canDelegate;
 				preparedTask.canRemove = actions.canRemove;
@@ -546,6 +613,7 @@ jn.define('tasks/statemanager/redux/slices/tasks/model/task', (require, exports,
 		{
 			return {
 				id: `tmp-id-${Date.now()}`,
+				guid: undefined,
 				name: undefined,
 				description: undefined,
 				parsedDescription: undefined,
@@ -555,6 +623,7 @@ jn.define('tasks/statemanager/redux/slices/tasks/model/task', (require, exports,
 				commentsCount: undefined,
 				serviceCommentsCount: undefined,
 				newCommentsCount: 0,
+				resultsCount: 0,
 				parentId: undefined,
 
 				status: undefined,
@@ -566,13 +635,13 @@ jn.define('tasks/statemanager/redux/slices/tasks/model/task', (require, exports,
 				responsible: undefined,
 				accomplices: undefined,
 				auditors: undefined,
-				// relatedTasks: undefined,
+				relatedTasks: [],
 				// subTasks: undefined,
 
 				crm: undefined,
 				tags: undefined,
 				files: undefined,
-				uploadedFiles: undefined,
+				uploadedFiles: [],
 
 				isMuted: undefined,
 				isPinned: undefined,
@@ -597,6 +666,7 @@ jn.define('tasks/statemanager/redux/slices/tasks/model/task', (require, exports,
 					completed: 0,
 					uncompleted: 0,
 				},
+				checklistDetails: [],
 				counter: {
 					counters: {
 						expired: 0,
@@ -609,10 +679,20 @@ jn.define('tasks/statemanager/redux/slices/tasks/model/task', (require, exports,
 					color: '',
 					value: 0,
 				},
-				actions: {},
+				actionsOld: {},
 
+				canRead: false,
+				canUpdate: false,
 				canUpdateDeadline: false,
+				canUpdateCreator: false,
+				canUpdateResponsible: false,
+				canUpdateAccomplices: false,
 				canDelegate: false,
+				canUpdateMark: false,
+				canUpdateReminder: false,
+				canUpdateElapsedTime: false,
+				canAddChecklist: false,
+				canUpdateChecklist: false,
 				canRemove: false,
 				canUseTimer: false,
 				canStart: false,
@@ -626,6 +706,111 @@ jn.define('tasks/statemanager/redux/slices/tasks/model/task', (require, exports,
 				isRemoved: false,
 				isExpired: false,
 				isConsideredForCounterChange: false,
+				isCreationErrorExist: false,
+			};
+		}
+
+		/**
+		 * @returns {TaskReduxModel}
+		 */
+		static getDefaultReduxTask()
+		{
+			return {
+				id: `tmp-id-${Date.now()}`,
+				guid: null,
+				name: '',
+				description: '',
+				parsedDescription: '',
+				groupId: 0,
+				timeElapsed: 0,
+				timeEstimate: 0,
+				commentsCount: 0,
+				serviceCommentsCount: 0,
+				newCommentsCount: 0,
+				resultsCount: 0,
+				parentId: 0,
+
+				status: TaskStatus.PENDING,
+				subStatus: TaskStatus.PENDING,
+				priority: TaskPriority.NORMAL,
+				mark: null,
+
+				creator: Number(env.userId),
+				responsible: Number(env.userId),
+				accomplices: [],
+				auditors: [],
+				relatedTasks: [],
+				// subTasks: [],
+
+				crm: [],
+				tags: [],
+				files: [],
+				uploadedFiles: [],
+
+				isMuted: false,
+				isPinned: false,
+				isInFavorites: false,
+				isResultRequired: false,
+				isResultExists: false,
+				isOpenResultExists: false,
+				isMatchWorkTime: false,
+				allowChangeDeadline: false,
+				allowTimeTracking: false,
+				allowTaskControl: false,
+				isTimerRunningForCurrentUser: false,
+
+				deadline: null,
+				activityDate: Math.ceil(Date.now() / 1000),
+				startDatePlan: null,
+				endDatePlan: null,
+				startDate: null,
+				endDate: null,
+
+				checklist: {
+					completed: 0,
+					uncompleted: 0,
+				},
+				checklistDetails: [],
+				counter: {
+					counters: {
+						expired: 0,
+						newComments: 0,
+						mutedExpired: 0,
+						mutedNewComments: 0,
+						projectExpired: 0,
+						projectNewComments: 0,
+					},
+					color: '',
+					value: 0,
+				},
+				actionsOld: {},
+
+				canRead: true,
+				canUpdate: true,
+				canUpdateDeadline: true,
+				canUpdateCreator: true,
+				canUpdateResponsible: true,
+				canUpdateAccomplices: true,
+				canDelegate: false,
+				canUpdateMark: true,
+				canUpdateReminder: true,
+				canUpdateElapsedTime: false,
+				canAddChecklist: true,
+				canUpdateChecklist: true,
+				canRemove: true,
+				canUseTimer: false,
+				canStart: true,
+				canPause: false,
+				canComplete: true,
+				canRenew: false,
+				canApprove: false,
+				canDisapprove: false,
+				canDefer: true,
+
+				isRemoved: false,
+				isExpired: false,
+				isConsideredForCounterChange: false,
+				isCreationErrorExist: false,
 			};
 		}
 	}

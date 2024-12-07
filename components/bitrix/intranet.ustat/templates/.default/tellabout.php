@@ -56,7 +56,7 @@ if (!isset($arParams["PATH_TO_POST"]))
 }
 
 ?>
-<form <?=isset($_REQUEST['AJAX'])?'style="display: none"':''?> id="intranet-ustat-tell-about-form" action="/bitrix/urlrewrite.php?SEF_APPLICATION_CUR_PAGE_URL=<?=str_replace("%23", "#", urlencode($arParams["PATH_TO_POST"]))?>" method="POST">
+<form <?=isset($_REQUEST['AJAX'])?'style="display: none"':''?> id="intranet-ustat-tell-about-form" action="<?= htmlspecialcharsbx($arParams["PATH_TO_POST"]) ?>" method="POST">
 <?=bitrix_sessid_post()?>
 <input type="text" name="POST_TITLE" value="<?=htmlspecialcharsbx($title)?>">
 <textarea name="POST_MESSAGE"><?=htmlspecialcharsbx($text)?></textarea>

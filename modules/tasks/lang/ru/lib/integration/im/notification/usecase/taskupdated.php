@@ -17,6 +17,7 @@ $MESS['TASKS_MESSAGE_ASSIGNEE'] = 'Исполнитель';
 $MESS["TASKS_MESSAGE_TITLE"] = "Название";
 $MESS["TASKS_MESSAGE_START_DATE_PLAN"] = "Планируемая дата начала";
 $MESS["TASKS_MESSAGE_END_DATE_PLAN"] = "Планируемая дата окончания";
+$MESS["TASKS_MESSAGE_START_DATE_PLAN_MSGVER_1"] = "Планируемая дата начала";
 $MESS["TASKS_MESSAGE_END_DATE_PLAN_MSGVER_1"] = 'Планируемая дата окончания';
 $MESS["TASKS_MESSAGE_TAGS"] = "Теги";
 $MESS["TASKS_MESSAGE_PRIORITY"] = "Приоритет";

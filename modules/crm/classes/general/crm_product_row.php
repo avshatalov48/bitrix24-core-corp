@@ -325,7 +325,7 @@ class CAllCrmProductRow
 		if (!empty($sUpdate))
 		{
 			$sQuery = 'UPDATE '.CCrmProductRow::TABLE_NAME.' SET '.$sUpdate.' WHERE ID = '.$ID;
-			$DB->Query($sQuery, false, 'File: '.__FILE__.'<br/>Line: '.__LINE__);
+			$DB->Query($sQuery);
 
 			CCrmEntityHelper::RemoveCached(self::CACHE_NAME, $ID);
 		}
@@ -1788,7 +1788,7 @@ class CAllCrmProductRow
 
 		$configTableName = CCrmProductRow::CONFIG_TABLE_NAME;
 		$DB->Query(
-			"DELETE FROM {$configTableName} WHERE OWNER_TYPE = '{$ownerType}' AND OWNER_ID = {$ownerID}", false, 'File: '.__FILE__.'<br/>Line: '.__LINE__);
+			"DELETE FROM {$configTableName} WHERE OWNER_TYPE = '{$ownerType}' AND OWNER_ID = {$ownerID}");
 	}
 	public static function RebindSettings($oldOwnerType, $oldOwnerID, $newOwnerType, $newOwnerID)
 	{

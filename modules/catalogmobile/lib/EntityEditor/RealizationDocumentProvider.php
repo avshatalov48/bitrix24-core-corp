@@ -4,6 +4,7 @@ namespace Bitrix\CatalogMobile\EntityEditor;
 
 use Bitrix\Catalog\Access\AccessController;
 use Bitrix\Catalog\Access\ActionDictionary;
+use Bitrix\Catalog\Config\State;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
@@ -530,6 +531,12 @@ class RealizationDocumentProvider extends \Bitrix\UI\EntityEditor\BaseProvider
 			$entityData = array_merge($entityData, $this->getShipmentPropertiesData());
 		}
 
+		/*
+		 * perhaps this is not the best idea, but I don't really know how else can we pass it to the detail card without
+		 * having to specify it in every place we open the card from
+		 */
+		$entityData['IS_EXTERNAL_CATALOG'] = State::isExternalCatalog();
+
 		return $entityData;
 	}
 
@@ -643,7 +650,7 @@ class RealizationDocumentProvider extends \Bitrix\UI\EntityEditor\BaseProvider
 				{
 					foreach ($this->order->getBasket() as $basketItem)
 					{
-						$total += (float)$basketItem->getField('PRICE') * (float)$basketItem->getField('QUANTITY');
+						$total += $basketItem->getPriceWithVat() * $basketItem->getQuantity();
 						$count++;
 					}
 				}
@@ -652,7 +659,7 @@ class RealizationDocumentProvider extends \Bitrix\UI\EntityEditor\BaseProvider
 					foreach ($this->payment->getPayableItemCollection()->getBasketItems() as $payableItem)
 					{
 						$basketItem = $payableItem->getEntityObject();
-						$total += (float)$basketItem->getField('PRICE') * (float)$basketItem->getField('QUANTITY');
+						$total += $basketItem->getPriceWithVat() * $payableItem->getQuantity();
 						$count++;
 					}
 				}
@@ -662,7 +669,7 @@ class RealizationDocumentProvider extends \Bitrix\UI\EntityEditor\BaseProvider
 				foreach ($this->shipment->getShipmentItemCollection() as $shipmentItem)
 				{
 					$basketItem = $shipmentItem->getBasketItem();
-					$total += (float)$basketItem->getField('PRICE') * (float)$basketItem->getField('QUANTITY');
+					$total += $basketItem->getPriceWithVat() * $shipmentItem->getQuantity();
 					$count++;
 				}
 			}

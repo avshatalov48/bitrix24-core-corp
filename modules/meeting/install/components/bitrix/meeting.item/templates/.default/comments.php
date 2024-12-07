@@ -5,7 +5,7 @@ if ($arParams['FORUM_ID'] > 0)
 {
 	if (isset($arParams['MINIMAL']))
 	{
-		?><script type="text/javascript">
+		?><script>
 			if (!window.onForumImageLoad)
 			{
 				BX.loadCSS('<?=CUtil::GetAdditionalFileURL('/bitrix/components/bitrix/forum.comments/templates/.default/style.css', true)?>');

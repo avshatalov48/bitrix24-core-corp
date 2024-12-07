@@ -5,9 +5,6 @@ use Bitrix\Main\Localization\Loc;
 
 define("IM_AJAX_INIT", true);
 define("PUBLIC_AJAX_MODE", true);
-define("NO_KEEP_STATISTIC", "Y");
-define("NO_AGENT_STATISTIC","Y");
-define('STOP_STATISTICS', true);
 define('BX_SECURITY_SHOW_MESSAGE', true);
 
 require_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/prolog_before.php');
@@ -16,8 +13,6 @@ if (!Loader::includeModule('imopenlines'))
 {
 	return;
 }
-
-Loc::loadMessages(__FILE__);
 
 class ImOpenLinesListAjaxController
 {
@@ -29,8 +24,8 @@ class ImOpenLinesListAjaxController
 	/** @var \Bitrix\ImOpenlines\Security\Permissions */
 	protected $userPermissions;
 
-	/** @var HttpRequest $request */
-	protected $request = array();
+	/** @var \Bitrix\Main\HttpRequest $request */
+	protected $request;
 
 	protected function getActions()
 	{
@@ -99,7 +94,7 @@ class ImOpenLinesListAjaxController
 		if(!$configManager->canEditLine($this->requestData['CONFIG_ID']))
 		{
 			$this->errors[] = Loc::getMessage('OL_PERMISSION_MODIFY_LINE');
-			return;
+			return false;
 		}
 		return $configManager->delete($this->requestData['CONFIG_ID']);
 	}

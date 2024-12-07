@@ -28,7 +28,7 @@ abstract class Merge extends Base
 		return 'CRM_AGNT_DUP_BGRND_MRG_NOTIFY';
 	}
 
-	protected function getMessage($messageId): ?string
+	protected function getMessage(string $messageId, ?string $languageId = null): ?string
 	{
 		static $isMessagesLoaded = false;
 
@@ -38,14 +38,9 @@ abstract class Merge extends Base
 			$isMessagesLoaded = true;
 		}
 
-		$message = Loc::getMessage($messageId);
+		$message = Loc::getMessage($messageId, null, $languageId);
 
-		if ($message === null)
-		{
-			return parent::getMessage($messageId);
-		}
-
-		return $message;
+		return $message ?? parent::getMessage($messageId, $languageId);
 	}
 
 	protected function getErrorByCode(int $errorCode): Error

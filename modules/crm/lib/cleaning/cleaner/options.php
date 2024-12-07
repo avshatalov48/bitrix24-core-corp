@@ -14,7 +14,9 @@ final class Options
 	/** @var int */
 	private $entityId;
 	/** @var string */
-	private $environment = self::ENVIRONMENT_HIT;
+	private string $environment = self::ENVIRONMENT_HIT;
+
+	private ?int $forceUserId = null;
 
 	/**
 	 * @param int $entityTypeId - type id of cleaning target
@@ -66,5 +68,15 @@ final class Options
 	public function getEnvironment(): string
 	{
 		return $this->environment;
+	}
+
+	public function getForceUserId(): ?int
+	{
+		return $this->forceUserId;
+	}
+
+	public function setForceUserId(?int $forceUserId): void
+	{
+		$this->forceUserId = $forceUserId;
 	}
 }

@@ -69,6 +69,9 @@ class Document
 			throw new \DomainException("Document $entityId not found");
 		}
 
+		$total = self::getShipmentTotalValues($shipment);
+		$total['currency'] = $shipment->getOrder()->getCurrency();
+
 		return Dto\Document::make([
 			'id' => $shipment->getId(),
 			'type' => StoreDocumentTable::TYPE_SALES_ORDERS,
@@ -80,25 +83,31 @@ class Document
 					Access\Model\StoreDocument::createForSaleRealization($shipment->getId())
 				)
 			),
-			'total' => [
-				'amount' => self::getShipmentTotal($shipment),
-				'currency' => $shipment->getOrder()->getCurrency(),
-			]
+			'total' => $total
 		]);
 	}
 
-	private static function getShipmentTotal(Shipment $shipment): float
+	private static function getShipmentTotalValues(Shipment $shipment): array
 	{
-		$total = 0;
+		$totalPrice = 0;
+		$totalTax = 0;
+		$taxIncluded = 0;
 
 		/** @var ShipmentItem $shipmentItem */
 		foreach ($shipment->getShipmentItemCollection() as $shipmentItem)
 		{
 			$basketItem = $shipmentItem->getBasketItem();
-			$total += $basketItem->getPrice() * $shipmentItem->getQuantity();
+			$taxIncluded = $basketItem->isVatInPrice();
+
+			$totalTax += $basketItem->getVatUnit(false) * $shipmentItem->getQuantity();
+			$totalPrice += $basketItem->getPriceWithVat() * $shipmentItem->getQuantity();
 		}
 
-		return $total;
+		return [
+			'amount' => $totalPrice,
+			'totalTax' => $totalTax,
+			'taxIncluded' => $taxIncluded,
+		];
 	}
 
 	private static function getEmptyDocument(?string $documentType = null): Dto\Document

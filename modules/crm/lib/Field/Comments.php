@@ -21,7 +21,7 @@ final class Comments extends Field
 
 			$item->set(
 				$this->getName(),
-				CommentsHelper::normalizeComment($newComment),
+				CommentsHelper::normalizeComment($newComment, ['p']),
 			);
 		}
 

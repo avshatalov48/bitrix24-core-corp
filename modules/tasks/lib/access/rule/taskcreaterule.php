@@ -9,10 +9,16 @@
 namespace Bitrix\Tasks\Access\Rule;
 
 use Bitrix\Main\Access\AccessibleItem;
+use Bitrix\Main\Access\Rule\AbstractRule;
 use Bitrix\Main\Loader;
+use Bitrix\Socialnetwork\Internals\Registry\FeaturePermRegistry;
+use Bitrix\Tasks\Access\Model\TaskModel;
+use Bitrix\Tasks\Access\Rule\Traits\FlowTrait;
 
-class TaskCreateRule extends \Bitrix\Main\Access\Rule\AbstractRule
+class TaskCreateRule extends AbstractRule
 {
+	use FlowTrait;
+
 	public function execute(AccessibleItem $task = null, $params = null): bool
 	{
 		if (!$task)
@@ -39,6 +45,7 @@ class TaskCreateRule extends \Bitrix\Main\Access\Rule\AbstractRule
 
 	private function checkGroupPermission(AccessibleItem $task): bool
 	{
+		/** @var TaskModel $task */
 		$group = $task->getGroup();
 		if (!$group)
 		{
@@ -64,14 +71,26 @@ class TaskCreateRule extends \Bitrix\Main\Access\Rule\AbstractRule
 			return false;
 		}
 
-		if (!\Bitrix\Socialnetwork\Internals\Registry\FeaturePermRegistry::getInstance()->get(
+		if (!FeaturePermRegistry::getInstance()->get(
 			$task->getGroupId(),
 			'tasks',
 			'create_tasks',
 			$this->user->getUserId()
 		))
 		{
+			if ($task->getFlowId() > 0)
+			{
+				if ($this->checkFlowPermissions($task->getFlowId()))
+				{
+					return true;
+				}
+
+				$this->controller->addError(static::class, 'Access to create task denied by flow permissions');
+				return false;
+			}
+
 			$this->controller->addError(static::class, 'Access to create task denied by group permissions');
+
 			return false;
 		}
 

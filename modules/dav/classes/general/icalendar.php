@@ -239,7 +239,7 @@ class CDavICalendarComponent
 
 		$wrapped = "";
 		foreach ($strs as $str)
-			$wrapped .= preg_replace('/(.{72})/'.BX_UTF_PCRE_MODIFIER, "\\1\r\n ", $str)."\r\n";
+			$wrapped .= preg_replace('/(.{72})/u', "\\1\r\n ", $str)."\r\n";
 
 		return $wrapped;
 	}
@@ -572,7 +572,7 @@ class CDavICalendarProperty
 		elseif ((mb_strlen($name) + mb_strlen($str)) > 72 && (mb_strlen($name) < 72) && (mb_strlen($str) < 72))
 			$result = $name."\r\n ".$str;
 		else
-			$result = preg_replace('/(.{72})/'.BX_UTF_PCRE_MODIFIER, '$1'."\r\n ", $name.$str);
+			$result = preg_replace('/(.{72})/u', '$1'."\r\n ", $name.$str);
 
 		return $result;
 	}

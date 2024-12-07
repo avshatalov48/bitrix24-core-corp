@@ -299,9 +299,15 @@ foreach ($arResult["ITEMS"] as $index => $data)
 if ($arResult['PERM_CAN_EDIT'])
 {
 	$connectButton = new UI\Buttons\AddButton([
-		"link" => CUtil::JSEscape($arResult['PATH_TO_WEB_FORM_NEW'])
+		"link" => $arResult['AVAILABLE'] ? CUtil::JSEscape($arResult['PATH_TO_WEB_FORM_NEW'])
+			: '#'
 	]);
 	$connectButton->addAttribute('target', '_top');
+	if (!$arResult['AVAILABLE'])
+	{
+		$connectButton->addAttribute('onclick', "BX.UI.InfoHelper.show('limit_crm_webform_edit')");
+	}
+
 	UI\Toolbar\Facade\Toolbar::addButton(
 		$connectButton,
 		UI\Toolbar\ButtonLocation::AFTER_TITLE
@@ -513,7 +519,7 @@ if ($arResult['PERM_CAN_EDIT'])
 		)
 	);
 	?>
-	<script type="text/javascript">
+	<script>
 		BX.ready(function () {
 		<?php if (!$arResult['PERM_CAN_EDIT']) :?>
 				BX.SidePanel.Instance.bindAnchors({

@@ -84,7 +84,6 @@ if (in_array("MODIFY_BY", $select))
 $filter = array();
 if(isset($_REQUEST["search"]))
 {
-	CUtil::JSPostUnescape();
 	$v = trim($_REQUEST["search"]);
 	if (!empty($v))
 	{

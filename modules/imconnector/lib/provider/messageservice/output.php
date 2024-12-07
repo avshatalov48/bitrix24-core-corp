@@ -275,7 +275,8 @@ class Output extends Base\Output
 				$data['url'] = '';
 				$data['url_im'] = '';
 
-				$info = $this->getSenderInfo();
+				$statusData = $status->getData();
+				$info = $this->getSenderInfo($statusData['subjectId'] ?? null);
 				if (isset($info['name'], $info['channelName']))
 				{
 					$data['name'] = $info['name'];
@@ -295,7 +296,7 @@ class Output extends Base\Output
 	 * Returns some info about connector's sender.
 	 * @return array
 	 */
-	public function getSenderInfo(): array
+	public function getSenderInfo(?int $subjectId = null): array
 	{
 		static $senderInfo = [];
 		if (
@@ -323,6 +324,13 @@ class Output extends Base\Output
 			foreach ($list as $from)
 			{
 				$senderInfo['fromList'][$from['id']] = $from;
+				if ($subjectId == $from['id'])
+				{
+					$senderInfo['channelName'] = $from['name'];
+					$senderInfo['channelPhone'] = $from['channelPhone'];
+					break;
+				}
+
 				if ($senderInfo['defaultFrom'] == $from['id'])
 				{
 					$senderInfo['channelName'] = $from['name'];

@@ -1,0 +1,64 @@
+.ai-settings-section {
+	display: block;
+	margin: 10px;
+	padding: 12px;
+	background-color: var(--ui-color-background-primary);
+	border-radius: var(--ui-border-radius-md);
+	font-family: var(--ui-font-family-primary);
+}
+
+.ai-settings_group-title {
+	display: inline-block;
+	margin-bottom: 0;
+}
+
+.ai-settings_option {
+	border-bottom: 1px solid var(--ui-color-base-15);
+}
+
+.ai-settings_option:last-child {
+	border-bottom: none;
+}
+
+.ai-settings_table-wrapper {
+	padding-left: 10px;
+	padding-right: 10px;
+}
+
+.ai-settings_table {
+	border-collapse: collapse;
+	width: 100%;
+}
+
+.ai-settings_table .ui-ctl {
+	width: 100%;
+}
+
+.ai-settings_form {
+	padding-bottom: 0;
+}
+
+.ai-settings_option-title {
+	margin-top: 1px;
+	white-space: nowrap;
+}
+
+.ai-settings_option-title-wrapper {
+	max-width: 200px;
+	padding: 20px 20px 20px 0;
+	vertical-align: top;
+}
+
+.ai-settings_option-input-wrapper {
+	padding-top: 20px;
+	padding-bottom: 13px;
+}
+
+.ai-settings_option-input {
+	padding-top: 20px;
+	padding-bottom: 13px;
+	display: flex;
+	flex-direction: row;
+	align-items: flex-start;
+	justify-content: flex-start;
+}

@@ -1,9 +1,152 @@
 <?php
 
+use Bitrix\Crm\Integration\UI\EntitySelector\CopilotLanguageProvider;
 use Bitrix\Crm\Integration\UI\EntitySelector\CountryProvider;
 use Bitrix\Crm\Integration\UI\EntitySelector\DynamicMultipleProvider;
+use Bitrix\Crm\Integration\UI\EntitySelector\MessageTemplateProvider;
 use Bitrix\Crm\Integration\UI\EntitySelector\PlaceholderProvider;
 use Bitrix\Crm\Integration\UI\EntitySelector\TimelinePingProvider;
+use Bitrix\Crm\Security\Role\UIAdapters\AccessRights\SiteGroupsProvider;
+
+$uiEntitySelectorConfig = [
+	'value' => [
+		'entities' => [
+			[
+				'entityId' => 'company',
+				'provider' => [
+					'moduleId' => 'crm',
+					'className' => '\\Bitrix\\Crm\\Integration\\UI\\EntitySelector\\CompanyProvider'
+				],
+			],
+			[
+				'entityId' => 'contact',
+				'provider' => [
+					'moduleId' => 'crm',
+					'className' => '\\Bitrix\\Crm\\Integration\\UI\\EntitySelector\\ContactProvider'
+				],
+			],
+			[
+				'entityId' => 'deal',
+				'provider' => [
+					'moduleId' => 'crm',
+					'className' => '\\Bitrix\\Crm\\Integration\\UI\\EntitySelector\\DealProvider'
+				],
+			],
+			[
+				'entityId' => 'lead',
+				'provider' => [
+					'moduleId' => 'crm',
+					'className' => '\\Bitrix\\Crm\\Integration\\UI\\EntitySelector\\LeadProvider'
+				],
+			],
+			[
+				'entityId' => 'quote',
+				'provider' => [
+					'moduleId' => 'crm',
+					'className' => '\\Bitrix\\Crm\\Integration\\UI\\EntitySelector\\QuoteProvider'
+				],
+			],
+			[
+				'entityId' => 'order',
+				'provider' => [
+					'moduleId' => 'crm',
+					'className' => '\\Bitrix\\Crm\\Integration\\UI\\EntitySelector\\OrderProvider'
+				],
+			],
+			[
+				'entityId' => 'dynamic',
+				'provider' => [
+					'moduleId' => 'crm',
+					'className' => '\\Bitrix\\Crm\\Integration\\UI\\EntitySelector\\DynamicProvider'
+				],
+			],
+			[
+				'entityId' => 'dynamic_multiple',
+				'provider' => [
+					'moduleId' => 'crm',
+					'className' => DynamicMultipleProvider::class,
+				],
+			],
+			[
+				'entityId' => 'dynamic_type',
+				'provider' => [
+					'moduleId' => 'crm',
+					'className' => '\\Bitrix\\Crm\\Integration\\UI\\EntitySelector\\DynamicTypeProvider',
+				],
+			],
+			[
+				'entityId' => 'smart_invoice',
+				'provider' => [
+					'moduleId' => 'crm',
+					'className' => '\\Bitrix\\Crm\\Integration\\UI\\EntitySelector\\SmartInvoice'
+				],
+			],
+			[
+				'entityId' => 'smart_document',
+				'provider' => [
+					'moduleId' => 'crm',
+					'className' => '\\Bitrix\\Crm\\Integration\\UI\\EntitySelector\\SmartDocument'
+				],
+			],
+			[
+				'entityId' => 'copilot_language',
+				'provider' => [
+					'moduleId' => 'crm',
+					'className' => CopilotLanguageProvider::class,
+				],
+			],
+			[
+				'entityId' => 'country',
+				'provider' => [
+					'moduleId' => 'crm',
+					'className' => CountryProvider::class,
+				],
+			],
+			[
+				'entityId' => 'timeline_ping',
+				'provider' => [
+					'moduleId' => 'crm',
+					'className' => TimelinePingProvider::class,
+				],
+			],
+			[
+				'entityId' => 'placeholder',
+				'provider' => [
+					'moduleId' => 'crm',
+					'className' => PlaceholderProvider::class,
+				],
+			],
+			[
+				'entityId' => 'message_template',
+				'provider' => [
+					'moduleId' => 'crm',
+					'className' => MessageTemplateProvider::class,
+				],
+			],
+			[
+				'entityId' => 'site_groups',
+				'provider' => [
+					'moduleId' => 'crm',
+					'className' => SiteGroupsProvider::class,
+				],
+			],
+		],
+		'extensions' => ['crm.entity-selector'],
+	],
+	'readonly' => true,
+];
+
+if (\Bitrix\Main\ModuleManager::isModuleInstalled('socialnetwork'))
+{
+	$uiEntitySelectorConfig['value']['entities'][] = [
+		'entityId' => 'projectmembers',
+		'provider' => [
+			'moduleId' => 'crm',
+			'className' => \Bitrix\Crm\Integration\Socialnetwork\Providers\ProjectMembersProvider::class,
+		],
+	];
+}
+
 
 return array(
 	'controllers' => array(
@@ -112,6 +255,9 @@ return array(
 			'crm.service.converter.category' => [
 				'className' => '\\Bitrix\\Crm\\Service\\Converter\\Category',
 			],
+			'crm.service.converter.automatedSolution' => [
+				'className' => '\\Bitrix\\Crm\\Service\\Converter\\AutomatedSolution',
+			],
 			'crm.service.converter.caseCache' => [
 				'className' => '\\Bitrix\\Crm\\Service\\Converter\\InMemoryCaseCache',
 			],
@@ -171,6 +317,12 @@ return array(
 			],
 			'crm.service.sign.b2e.status' => [
 				'className' => \Bitrix\Crm\Service\Sign\B2e\StatusService::class,
+			],
+			'crm.service.sign.document' => [
+				'className' => \Bitrix\Crm\Service\Sign\DocumentService::class,
+			],
+			'crm.service.sign.member' => [
+				'className' => \Bitrix\Crm\Service\Sign\MemberService::class,
 			],
 			'crm.service.director' => [
 				'className' => '\\Bitrix\\Crm\\Service\\Director',
@@ -319,6 +471,9 @@ return array(
 			'crm.service.ads.conversion.configurator' => [
 				'className' => '\\Bitrix\\Crm\\Ads\\Pixel\\Configuration\\Configurator'
 			],
+			'crm.service.integration.sign.kanban.pull' => [
+				'className' => \Bitrix\Crm\Service\Integration\Sign\Kanban\PullService::class
+			],
 			'crm.entity.paymentDocumentsRepository' => [
 				'className' => '\\Bitrix\\Crm\\Entity\\PaymentDocumentsRepository',
 			],
@@ -395,111 +550,22 @@ return array(
 			'crm.terminal.payment' => [
 				'className' => \Bitrix\Crm\Service\Sale\Terminal\PaymentService::class,
 			],
+			'crm.customSection.automatedSolutionManager' => [
+				'className' => \Bitrix\Crm\AutomatedSolution\AutomatedSolutionManager::class,
+			],
 			'crm.summary.summaryFactory' => [
 				'className' => \Bitrix\Crm\Summary\SummaryFactory::class,
 			],
-		],
-		'readonly' => true,
-	],
-	'ui.entity-selector' => [
-		'value' => [
-			'entities' => [
-				[
-					'entityId' => 'company',
-					'provider' => [
-						'moduleId' => 'crm',
-						'className' => '\\Bitrix\\Crm\\Integration\\UI\\EntitySelector\\CompanyProvider'
-					],
-				],
-				[
-					'entityId' => 'contact',
-					'provider' => [
-						'moduleId' => 'crm',
-						'className' => '\\Bitrix\\Crm\\Integration\\UI\\EntitySelector\\ContactProvider'
-					],
-				],
-				[
-					'entityId' => 'deal',
-					'provider' => [
-						'moduleId' => 'crm',
-						'className' => '\\Bitrix\\Crm\\Integration\\UI\\EntitySelector\\DealProvider'
-					],
-				],
-				[
-					'entityId' => 'lead',
-					'provider' => [
-						'moduleId' => 'crm',
-						'className' => '\\Bitrix\\Crm\\Integration\\UI\\EntitySelector\\LeadProvider'
-					],
-				],
-				[
-					'entityId' => 'quote',
-					'provider' => [
-						'moduleId' => 'crm',
-						'className' => '\\Bitrix\\Crm\\Integration\\UI\\EntitySelector\\QuoteProvider'
-					],
-				],
-				[
-					'entityId' => 'order',
-					'provider' => [
-						'moduleId' => 'crm',
-						'className' => '\\Bitrix\\Crm\\Integration\\UI\\EntitySelector\\OrderProvider'
-					],
-				],
-				[
-					'entityId' => 'dynamic',
-					'provider' => [
-						'moduleId' => 'crm',
-						'className' => '\\Bitrix\\Crm\\Integration\\UI\\EntitySelector\\DynamicProvider'
-					],
-				],
-				[
-					'entityId' => 'dynamic_multiple',
-					'provider' => [
-						'moduleId' => 'crm',
-						'className' => DynamicMultipleProvider::class,
-					],
-				],
-				[
-					'entityId' => 'smart_invoice',
-					'provider' => [
-						'moduleId' => 'crm',
-						'className' => '\\Bitrix\\Crm\\Integration\\UI\\EntitySelector\\SmartInvoice'
-					],
-				],
-				[
-					'entityId' => 'smart_document',
-					'provider' => [
-						'moduleId' => 'crm',
-						'className' => '\\Bitrix\\Crm\\Integration\\UI\\EntitySelector\\SmartDocument'
-					],
-				],
-				[
-					'entityId' => 'country',
-					'provider' => [
-						'moduleId' => 'crm',
-						'className' => CountryProvider::class,
-					],
-				],
-				[
-					'entityId' => 'timeline_ping',
-					'provider' => [
-						'moduleId' => 'crm',
-						'className' => TimelinePingProvider::class,
-					],
-				],
-				[
-					'entityId' => 'placeholder',
-					'provider' => [
-						'moduleId' => 'crm',
-						'className' => PlaceholderProvider::class,
-					],
-				],
+			'crm.binding.clientBinder' => [
+				'className' => \Bitrix\Crm\Binding\ClientBinder::class,
 			],
-			'extensions' => ['crm.entity-selector'],
+			'crm.service.communication.rankingFactory' => [
+				'className' => \Bitrix\Crm\Service\Communication\Search\Ranking\RankingFactory::class,
+			],
 		],
 		'readonly' => true,
 	],
+	'ui.entity-selector' => $uiEntitySelectorConfig,
 	'userField' => [
 		'value' => [
 			'access' => '\\Bitrix\\Crm\\UserField\\Access',

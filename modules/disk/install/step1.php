@@ -19,7 +19,7 @@ if($ex instanceof CAdminException)
 }
 if(!$needToSkip && $ex)
 {
-	echo CAdminMessage::ShowMessage(Array(
+	CAdminMessage::ShowMessage(Array(
 		"TYPE" => "ERROR",
 		"MESSAGE" => GetMessage("MOD_INST_ERR"),
 		"DETAILS" => $ex->GetString(),
@@ -28,7 +28,7 @@ if(!$needToSkip && $ex)
 }
 else
 {
-	echo CAdminMessage::ShowNote(GetMessage("MOD_INST_OK"));
+	CAdminMessage::ShowNote(GetMessage("MOD_INST_OK"));
 }
 ?>
 <div style="font-size: 12px;"></div>

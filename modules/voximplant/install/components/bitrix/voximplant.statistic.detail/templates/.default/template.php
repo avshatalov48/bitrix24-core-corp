@@ -11,6 +11,7 @@
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Voximplant\Security\Permissions;
 
 CJSCore::Init([
 	'main.polyfill.promise',
@@ -109,6 +110,7 @@ $totalContainer = '
 ?><div id="tel-stat-grid-container"><?
 
 	$actionPanel = false;
+	$userPermissions = Permissions::createWithCurrentUser();
 	if (!$inReportSlider)
 	{
 		$actionPanel = [
@@ -133,6 +135,24 @@ $totalContainer = '
 				]
 			],
 		];
+
+		if ($userPermissions->canPerform(Permissions::ENTITY_CALL_RECORD, Permissions::ACTION_MODIFY))
+		{
+			$actionPanel['GROUPS']['TYPE']['ITEMS'][] = [
+				"ID" => "download_records",
+				"TYPE" => \Bitrix\Main\Grid\Panel\Types::BUTTON,
+				"TEXT" => Loc::getMessage("TEL_STAT_ACTION_VOX_DELETE_RECORD"),
+				"VALUE" => "create_delete_records_list",
+				"ONCHANGE" => [
+					[
+						"ACTION" => Bitrix\Main\Grid\Panel\Actions::CALLBACK,
+						"DATA" => [
+							['JS' => "BX.VoximplantStatisticDetail.Instance.openDeleteConfirm(true)"]
+						]
+					]
+				],
+			];
+		}
 	}
 
 	$APPLICATION->IncludeComponent(
@@ -191,7 +211,14 @@ $totalContainer = '
 		"TEL_STAT_RECORDS_ALREADY_DOWNLOADED": '<?=GetMessageJS("TEL_STAT_RECORDS_ALREADY_DOWNLOADED")?>',
 		"TEL_STAT_RECORDS_ALREADY_DOWNLOADED_TITLE": '<?=GetMessageJS("TEL_STAT_RECORDS_ALREADY_DOWNLOADED_TITLE")?>',
 		"TEL_STAT_RECORDS_DOWNLOADED_AVAILABLE": '<?=GetMessageJS("TEL_STAT_RECORDS_DOWNLOADED_AVAILABLE")?>',
-		"TEL_STAT_ACTION_VOX_DOWNLOAD_HINT": '<?=GetMessageJS("TEL_STAT_ACTION_VOX_DOWNLOAD_HINT")?>'
+		"TEL_STAT_ACTION_VOX_DOWNLOAD_HINT": '<?=GetMessageJS("TEL_STAT_ACTION_VOX_DOWNLOAD_HINT")?>',
+		"TEL_STAT_ACTION_CONFIRM_DELETE_RECORD": '<?=GetMessageJS("TEL_STAT_ACTION_CONFIRM_DELETE_RECORD")?>',
+		"TEL_STAT_ACTION_CANCEL_DELETE_RECORD": '<?=GetMessageJS("TEL_STAT_ACTION_CANCEL_DELETE_RECORD")?>',
+		"TEL_STAT_RECORDS_ALREADY_DELETED_TITLE": '<?=GetMessageJS("TEL_STAT_RECORDS_ALREADY_DELETED_TITLE")?>',
+		"TEL_STAT_RECORDS_DELETED_AVAILABLE": '<?=GetMessageJS("TEL_STAT_RECORDS_DELETED_AVAILABLE")?>',
+		"TEL_STAT_RECORDS_DELETE_CONFIRM": '<?=GetMessageJS("TEL_STAT_RECORDS_DELETE_CONFIRM")?>',
+		"TEL_STAT_RECORDS_DELETE_CONFIRM_TITLE": '<?=GetMessageJS("TEL_STAT_RECORDS_DELETE_CONFIRM_TITLE")?>',
+		"TEL_STAT_RECORDS_DELETE_PROGRESS": '<?=GetMessageJS("TEL_STAT_RECORDS_DELETE_PROGRESS")?>',
 	});
 
 	BX.ready(function() {

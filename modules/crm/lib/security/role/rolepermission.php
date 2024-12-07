@@ -2,6 +2,7 @@
 
 namespace Bitrix\Crm\Security\Role;
 
+use Bitrix\Crm\Security\Role\Manage\Permissions\Transition;
 use Bitrix\Crm\Security\Role\Model\RoleTable;
 use Bitrix\Main;
 use Bitrix\Crm\Security\Role\Model\RolePermissionTable;
@@ -27,6 +28,7 @@ class RolePermission
 				'FIELD_VALUE',
 				'ATTR',
 				'PERM_TYPE',
+				'SETTINGS',
 			],
 			'cache' => [
 				'ttl' => 84600,
@@ -41,6 +43,7 @@ class RolePermission
 			$fieldValue = (string)$permission['FIELD_VALUE'];
 			$entity = (string)$permission['ENTITY'];
 			$permissionType = (string)$permission['PERM_TYPE'];
+			$settings = $permission['SETTINGS'] ?? [];
 
 			if ($field == '-')
 			{
@@ -56,6 +59,32 @@ class RolePermission
 				{
 					$result[$entity][$permissionType][$field][$fieldValue] = $attribute;
 				}
+
+			if ($permissionType !== (new Transition([]))->code())
+			{
+				continue;
+			}
+
+			if ($field === '-')
+			{
+				if (!isset($result[$entity][$permissionType][$field]))
+				{
+					$result['settings'][$entity][$permissionType][$field] = $settings ?? [];
+				} else
+				{
+					$values = array_unique(array_merge($settings, $result['settings'][$entity][$permissionType][$field] ?? []));
+					$result['settings'][$entity][$permissionType][$field] = array_filter($values);
+				}
+			}
+			else if (!isset($result[$entity][$permissionType][$field][$fieldValue]))
+			{
+				$result['settings'][$entity][$permissionType][$field][$fieldValue] = $settings ?? [];
+			}
+			else
+			{
+				$values = array_unique(array_merge($settings, $result['settings'][$entity][$permissionType][$field][$fieldValue] ?? []));
+				$result['settings'][$entity][$permissionType][$field][$fieldValue] = array_filter($values);
+			}
 		}
 
 		return $result;
@@ -86,11 +115,17 @@ class RolePermission
 
 			if ($res['FIELD'] != '-')
 			{
-				$role[$res['ENTITY']][$res['PERM_TYPE']][$res['FIELD']][$res['FIELD_VALUE']] = trim($res['ATTR']);
+				$role[$res['ENTITY']][$res['PERM_TYPE']][$res['FIELD']][$res['FIELD_VALUE']] = [
+					'ATTR' => trim($res['ATTR']),
+					'SETTINGS' => empty($res['SETTINGS']) ? null : $res['SETTINGS'],
+				];
 			}
 			else
 			{
-				$role[$res['ENTITY']][$res['PERM_TYPE']][$res['FIELD']] = trim($res['ATTR']);
+				$role[$res['ENTITY']][$res['PERM_TYPE']][$res['FIELD']] =  [
+					'ATTR' => trim($res['ATTR']),
+					'SETTINGS' => empty($res['SETTINGS']) ? null : $res['SETTINGS'],
+				];;
 			}
 		}
 		static::$cache = $result;
@@ -114,11 +149,18 @@ class RolePermission
 				continue;
 			}
 
-			$result[$roleId] =
-				array_key_exists($entityId, $entities)
-					? $entities[$entityId]
-					: \CCrmRole::GetDefaultPermissionSet()
-			;
+			if (array_key_exists($entityId, $entities))
+			{
+				$result[$roleId] = $entities[$entityId];
+			}
+			else
+			{
+				$categoryIdentifier = \Bitrix\Crm\Category\PermissionEntityTypeHelper::extractEntityEndCategoryFromPermissionEntityType($entityId);
+				if ($categoryIdentifier)
+				{
+					$result[$roleId] = \CCrmRole::getDefaultPermissionSetForEntity($categoryIdentifier);
+				}
+			}
 		}
 
 		return $result;
@@ -149,7 +191,8 @@ class RolePermission
 			)
 			{
 				$perms = reset($entities["CONFIG"]["WRITE"]);
-				if ($perms >= BX_CRM_PERM_ALL)
+				$adminPermValue = is_array($perms) ? $perms['ATTR'] : $perms;
+				if ($adminPermValue >= \Bitrix\Crm\Service\UserPermissions::PERMISSION_ALL)
 				{
 					continue;
 				}
@@ -178,7 +221,7 @@ class RolePermission
 	 * Sets the same permission for all roles but one entity
 	 *
 	 * @param string $entityId
-	 * @param array $permissionSet it is an array like ["READ" => ["-" => "X"], ...]]
+	 * @param array $permissionSet it is an array like ["READ" => ["-" => ["ATTR" => "X"]], ...]]
 	 * @return Main\Result
 	 */
 	public static function setByEntityIdForAllNotAdminRoles(string $entityId, array $permissionSet)
@@ -194,7 +237,8 @@ class RolePermission
 			if (array_key_exists("CONFIG", $entities) && array_key_exists("WRITE", $entities["CONFIG"]))
 			{
 				$perms = reset($entities["CONFIG"]["WRITE"]);
-				if ($perms >= BX_CRM_PERM_ALL)
+				$adminPermValue = is_array($perms) ? $perms['ATTR'] : $perms;
+				if ($adminPermValue >= \Bitrix\Crm\Service\UserPermissions::PERMISSION_ALL)
 				{
 					continue;
 				}

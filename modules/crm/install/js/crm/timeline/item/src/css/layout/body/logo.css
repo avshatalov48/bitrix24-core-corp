@@ -12,7 +12,8 @@
 	width: var(--crm-timeline__icon-size, 80px);
 	height: var(--crm-timeline__icon-size, 80px);
 	border-radius: var(--ui-border-radius-lg, 12px);
-	background-color: var(--ui-color-palette-blue-20, #e5f9ff);
+	--crm-timeline__logo-background: var(--ui-color-palette-blue-20);
+	background-color: var(--crm-timeline__logo-background);
 	overflow: hidden;
 	transition: 0.25s ease linear;
 }
@@ -91,12 +92,23 @@
 	background-color: var(--ui-color-text-alert, #ff5752);
 }
 
+.crm-timeline__card-logo_icon.--type-secondary > i {
+	background-color: var(--ui-color-background-secondary, #edeef0);
+}
+
 .crm-timeline__card.--disabled .crm-timeline__card-icon > i {
 	mask-image: url(../../../images/crm-timeline_icon-card-no-image-disabled.svg);
 }
 
 .crm-timeline__card-logo.--failure {
 	background-color: var(--ui-color-background-alert, #ffe8e8);
+}
+.crm-timeline__card-logo.--secondary {
+	background-color: var(--ui-color-background-secondary, #edeef0);
+}
+
+.crm-timeline__card-logo.--orange {
+	background-color: var(--ui-color-palette-orange-20, #fff1d6);
 }
 
 .crm-timeline__card-logo_icon.--custom-bg > i{
@@ -149,6 +161,12 @@
 	mask-image: none;
 	background-color: transparent;
 	background-image: url('../../../images/timeline-card-logos/document/crm-timeline__document-addition.svg');
+}
+
+.crm-timeline__card-logo_icon.--document-draft > i {
+	mask-image: none;
+	background-color: transparent;
+	background-image: url('../../../images/timeline-card-logos/document/crm-timeline__document-draft.svg');
 }
 
 .crm-timeline__card-logo_icon.--call > i {
@@ -310,6 +328,12 @@
 	background-image: url('../../../images/timeline-card-logos/ai/crm-timeline__ai-copilot.svg');
 }
 
+.crm-timeline__card-logo_icon.--zoom > i {
+	background-color: transparent;
+	mask-image: none;
+	background-image: url('../../../images/timeline-card-logos/zoom/crm-timeline__zoom.svg');
+}
+
 .crm-timeline__card-logo_add-icon {
 	--add-icon-size: var(--ui-size-3xl, 34px);
 	display: block;
@@ -341,6 +365,10 @@
 
 .crm-timeline__card-logo_add-icon.--type-failure {
 	/*background-color: var(--ui-color-background-alert, #ffe8e8);*/
+}
+
+.crm-timeline__card-logo_add-icon.--type-secondary {
+	background-color: var(--ui-color-palette-gray-02, #f8fafb);
 }
 
 .crm-timeline__card-logo_add-icon.--type-success > i {
@@ -386,6 +414,20 @@
 	mask-image: url('../../../images/timeline-card-logos/document/additions/crm-timeline__sign.svg');
 }
 
+.crm-timeline__card-logo_add-icon.--icon-progress > i {
+	background-color: var(--ui-color-palette-gray-60, #959ca4);
+	mask-image: url('../../../images/timeline-card-logos/document/additions/crm-timeline__progress.svg');
+}
+
+.crm-timeline__card-logo_add-icon.--icon-pencil > i {
+	mask-image: url('../../../images/common/crm-timelime__pencil.svg');
+}
+
+.crm-timeline__card-logo_add-icon.--icon-unavailable > i {
+	background-color: var(--ui-color-text-warning, #ffa900);
+	mask-image: url('../../../images/timeline-card-logos/document/additions/crm-timeline__unavailable.svg');
+}
+
 .crm-timeline__card-logo_add-icon.--icon-a-letter > i {
 	mask-image: url('../../../images/timeline-card-logos/ai/additions/crm-timeline__a-letter.svg');
 }
@@ -400,6 +442,14 @@
 
 .crm-timeline__card-logo_add-icon.--type-failure > i {
 	background-color: var(--ui-color-background-on-alert, #e92f2a);
+}
+
+.crm-timeline__card-logo_add-icon.--type-secondary > i {
+	background-color: var(--ui-color-palette-gray-60, #959ca4);
+}
+
+.crm-timeline__card-logo_add-icon.--icon-cloud > i {
+	mask-image: url('../../../images/timeline-card-logos/zoom/additions/crm-timeline__cloud.svg');
 }
 
 .crm-timeline__card-logo_icon.--delivery > i {

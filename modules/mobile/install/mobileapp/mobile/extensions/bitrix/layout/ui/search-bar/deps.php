@@ -2,8 +2,10 @@
 return [
 	'extensions' => [
 		'apptheme',
+		'tokens',
 		'haptics',
 		'loc',
+		'type',
 		'qrauth/utils',
 		'utils/object',
 		'utils/string',
@@ -12,6 +14,7 @@ return [
 		'rest/run-action-executor',
 		'layout/ui/plan-restriction',
 		'layout/pure-component',
+		'ui-system/blocks/chips/chip-filter',
 	],
 	'bundle' => [
 		'./src/base-item',

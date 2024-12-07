@@ -8,8 +8,9 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\PageNavigation;
 use Bitrix\Market\AppFavoritesTable;
 use Bitrix\Market\Categories;
-use Bitrix\Market\NumberApps;
-use Bitrix\Rest\Marketplace\Transport;
+use Bitrix\Market\Rest\Actions;
+use Bitrix\Market\Toolbar;
+use Bitrix\Market\Rest\Transport;
 
 class Favorites extends BaseTemplate
 {
@@ -39,39 +40,37 @@ class Favorites extends BaseTemplate
 		}
 
 		$batch = [
-			Transport::METHOD_FILTER_APP => [
-				Transport::METHOD_FILTER_APP,
+			Actions::METHOD_GET_FAVORITES => [
+				Actions::METHOD_GET_FAVORITES,
 				[
 					'app_codes' => $this->result['ALL_CODES'],
-					'_market_' => 'Y',
 				],
 			],
-			Transport::METHOD_TOTAL_APPS => [
-				Transport::METHOD_TOTAL_APPS,
+			Actions::METHOD_TOTAL_APPS => [
+				Actions::METHOD_TOTAL_APPS,
 			],
 		];
 		if (!$isAjax && empty(Categories::get())) {
-			$batch[Transport::METHOD_GET_CATEGORIES_V2] = [Transport::METHOD_GET_CATEGORIES_V2];
+			$batch[Actions::METHOD_GET_CATEGORIES_V2] = [Actions::METHOD_GET_CATEGORIES_V2];
 		}
 
 		$response = Transport::instance()->batch($batch);
 		if (
-			isset($response[Transport::METHOD_FILTER_APP]) &&
-			isset($response[Transport::METHOD_FILTER_APP]['ITEMS']) &&
-			is_array($response[Transport::METHOD_FILTER_APP]['ITEMS'])
+			isset($response[Actions::METHOD_GET_FAVORITES]) &&
+			isset($response[Actions::METHOD_GET_FAVORITES]['ITEMS']) &&
+			is_array($response[Actions::METHOD_GET_FAVORITES]['ITEMS'])
 		) {
-			$this->prepareApps($response[Transport::METHOD_FILTER_APP]['ITEMS']);
+			$this->prepareApps($response[Actions::METHOD_GET_FAVORITES]['ITEMS']);
 		}
 
-		if (!empty($response[Transport::METHOD_GET_CATEGORIES_V2])) {
-			Categories::saveCache($response[Transport::METHOD_GET_CATEGORIES_V2]);
+		if (!empty($response[Actions::METHOD_GET_CATEGORIES_V2])) {
+			Categories::saveCache($response[Actions::METHOD_GET_CATEGORIES_V2]);
 			$this->result['CATEGORIES'] = Categories::get();
 		}
 
-		$this->result['TOTAL_APPS'] = NumberApps::get($response[Transport::METHOD_TOTAL_APPS]);
-		$this->result['SHOW_MARKET_ICON'] = $response[Transport::METHOD_TOTAL_APPS]['SHOW_MARKET_ICON'];
-		$this->result['ADDITIONAL_CONTENT'] = $response[Transport::METHOD_TOTAL_APPS]['ADDITIONAL_CONTENT'] ?? '';
-		$this->result['ADDITIONAL_MARKET_ACTION'] = $response[Transport::METHOD_TOTAL_APPS]['ADDITIONAL_MARKET_ACTION'] ?? '';
+		if (is_array($response[Actions::METHOD_TOTAL_APPS])) {
+			$this->result = array_merge($this->result, Toolbar::getTotalAppsInfo($response[Actions::METHOD_TOTAL_APPS]));
+		}
 	}
 
 	private function prepareApps($apps)

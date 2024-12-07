@@ -49,10 +49,12 @@ foreach ($arResult['ITEMS']['columns'] as $k => &$column)
 			'data' => [
 				'sort' => $column['sort'],
 				'type' => $column['type'],
-				'sum' => round($column['total']),
+				'sum' => round($column['total'] ?? 0),
 				'sum_init' => 0,
 				'sum_format' => $column['total_format'] ?? null,
 				'blockedIncomingMoving' => ($column['blockedIncomingMoving'] ?? false),
+				'hiddenTotalSum' => ($column['hiddenTotalSum'] ?? false),
+				'currencyFormat' => ($column['currencyFormat'] ?? false),
 			],
 		];
 	}

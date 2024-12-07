@@ -186,7 +186,7 @@ $registeredDomain = (boolean) ($arResult['SETTINGS']['flags'] & CMail::F_DOMAIN_
 	</div>
 </div>
 
-<script type="text/javascript">
+<script>
 
 	BX.bind(BX('check-confirm'), 'click', function()
 	{
@@ -408,7 +408,7 @@ $registeredDomain = (boolean) ($arResult['SETTINGS']['flags'] & CMail::F_DOMAIN_
 
 </div>
 
-<script type="text/javascript">
+<script>
 
 	BX.bind(BX('domain_form'), 'submit', function(e) {
 		BX.addClass(BX('domain_save'), 'webform-button-accept-active webform-button-wait');
@@ -521,7 +521,7 @@ $registeredDomain = (boolean) ($arResult['SETTINGS']['flags'] & CMail::F_DOMAIN_
 	</div>
 </div>
 
-<script type="text/javascript">
+<script>
 
 	var lastCheckedDomain = false;
 	var getPopup = false;
@@ -837,7 +837,7 @@ $registeredDomain = (boolean) ($arResult['SETTINGS']['flags'] & CMail::F_DOMAIN_
 
 <? } ?>
 
-<script type="text/javascript">
+<script>
 
 	var deletePopup = false;
 	BX.bind(BX('domain_remove'), 'click', function(e) {

@@ -9,19 +9,17 @@ jn.define('im/messenger/controller/recent/lib/recent-base', (require, exports, m
 	const { clone } = require('utils/object');
 	const { RecentRenderer } = require('im/messenger/controller/recent/lib/renderer');
 	const { ItemAction } = require('im/messenger/controller/recent/lib/item-action');
-	const { PageNavigation } = require('im/messenger/lib/page-navigation');
 	const { RecentConverter } = require('im/messenger/lib/converter');
 	const { ShareDialogCache } = require('im/messenger/cache/share-dialog');
 	const { Feature } = require('im/messenger/lib/feature');
-	const { CountersService } = require('im/messenger/provider/service');
+	const { RecentService } = require('im/messenger/provider/service');
 	const { Worker } = require('im/messenger/lib/helper');
-	const { restManager } = require('im/messenger/lib/rest-manager');
-	const { RestMethod, EventType, DialogType } = require('im/messenger/const');
+	const { DialogType, EventType } = require('im/messenger/const');
 	const { Counters } = require('im/messenger/lib/counters');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
-	const { RecentRest } = require('im/messenger/provider/rest');
 	const { DraftCache } = require('im/messenger/cache');
 	const { Logger } = require('im/messenger/lib/logger');
+	const { ChatPermission } = require('im/messenger/lib/permission-manager');
 
 	/**
 	 * @class BaseRecent
@@ -41,11 +39,6 @@ jn.define('im/messenger/controller/recent/lib/recent-base', (require, exports, m
 			this.view = options.view;
 
 			/**
-			 * @type {string|null}
-			 */
-			this.lastMessageDate = null;
-
-			/**
 			 * @type {Array<CallItem>}
 			 */
 			this.callList = [];
@@ -56,14 +49,14 @@ jn.define('im/messenger/controller/recent/lib/recent-base', (require, exports, m
 			this.itemAction = {};
 
 			/**
-			 * @type {PageNavigation|{}}
+			 * @type {MessengerInitService}
 			 */
-			this.pageNavigation = {};
+			this.messagerInitService = serviceLocator.get('messenger-init-service');
 
 			/**
-			 * @type {CountersService|{}}
+			 * @type {RecentService|{}}
 			 */
-			this.countersService = {};
+			this.recentService = {};
 		}
 
 		async init()
@@ -72,15 +65,15 @@ jn.define('im/messenger/controller/recent/lib/recent-base', (require, exports, m
 			this.initStore();
 			this.initServices();
 			await this.fillStoreFromCache();
-			this.initRequests();
 			this.bindMethods();
 			this.subscribeStoreEvents();
 			this.subscribeMessengerEvents();
+			this.subscribeInitCounters();
 			this.subscribeViewEvents();
 			this.initItemAction();
 			await this.drawCacheItems();
-			this.countersLoad();
 			this.initWorker();
+			this.subscribeInitMessengerEvent();
 		}
 
 		initView()
@@ -93,7 +86,7 @@ jn.define('im/messenger/controller/recent/lib/recent-base', (require, exports, m
 			}
 			else
 			{
-				throw new Error(`${this.getClassName()} options.view is required`);
+				throw new Error(`${this.constructor.name} options.view is required`);
 			}
 		}
 
@@ -101,25 +94,11 @@ jn.define('im/messenger/controller/recent/lib/recent-base', (require, exports, m
 		{
 			this.store = serviceLocator.get('core').getStore();
 			this.storeManager = serviceLocator.get('core').getStoreManager();
-			this.recentRepository = serviceLocator.get('core').getRepository().recent;
 		}
 
 		initServices()
 		{
-			this.pageNavigation = new PageNavigation(this.getOptionPageNavigation());
-			this.countersService = CountersService.getInstance();
-		}
-
-		/**
-		 * @return {object}
-		 */
-		getOptionPageNavigation()
-		{
-			return {
-				currentPage: 1,
-				itemsPerPage: 50,
-				isPageLoading: true,
-			};
+			this.recentService = new RecentService();
 		}
 
 		/**
@@ -127,30 +106,11 @@ jn.define('im/messenger/controller/recent/lib/recent-base', (require, exports, m
 		 */
 		async fillStoreFromCache()
 		{
-			return Promise.resolve(true);
+			await this.fillDraftStore();
 		}
 
-		/**
-		 * @param {object} cache
-		 * @return {Promise<any>}
-		 */
-		async fillStore(cache)
+		async fillDraftStore()
 		{
-			if (cache && cache.users)
-			{
-				await this.fillUserStore(cache);
-			}
-
-			if (cache && cache.dialogues)
-			{
-				await this.fillDialogStore(cache);
-			}
-
-			if (cache && cache.recent)
-			{
-				await this.fillRecentStore(cache);
-			}
-
 			const draftState = DraftCache.get();
 			if (draftState)
 			{
@@ -158,125 +118,13 @@ jn.define('im/messenger/controller/recent/lib/recent-base', (require, exports, m
 			}
 		}
 
-		async fillUserStore(cache)
-		{
-			let usersCache = cache.users;
-			if (Feature.isLocalStorageEnabled)
-			{
-				const userIdList = Object.keys(cache.users.collection);
-				const userList = await serviceLocator.get('core').getRepository().user.userTable.getListByIds(userIdList);
-				if (userList.items.length > 0)
-				{
-					const dbUserCache = {
-						collection: {},
-					};
-
-					userList.items.forEach((user) => {
-						dbUserCache.collection[user.id] = user;
-					});
-
-					usersCache = dbUserCache;
-				}
-			}
-
-			return this.store.dispatch('usersModel/setState', usersCache);
-		}
-
-		async fillDialogStore(cache)
-		{
-			let dialogCache = cache.dialogues;
-			if (Feature.isLocalStorageEnabled)
-			{
-				const dialogIdList = Object.keys(cache.dialogues.collection);
-				const dialogList = await serviceLocator.get('core').getRepository().dialog.dialogTable.getListByDialogIds(dialogIdList);
-				if (dialogList.items.length > 0)
-				{
-					const dbDialogCache = {
-						collection: {},
-					};
-
-					dialogList.items.forEach((dialog) => {
-						dbDialogCache.collection[dialog.dialogId] = dialog;
-					});
-
-					dialogCache = dbDialogCache;
-				}
-			}
-
-			return this.store.dispatch('dialoguesModel/setState', dialogCache);
-		}
-
-		async fillRecentStore(cache)
-		{
-			// invalidation of recent elements without dialog
-			// eslint-disable-next-line no-param-reassign
-			cache.recent.collection = cache.recent.collection.filter((recentItem) => {
-				if (cache.dialogues.collection[recentItem.id])
-				{
-					return true;
-				}
-
-				this.logger.error(
-					`${this.getClassName()}.save: there is no dialog ${recentItem.id} in model`,
-					cache.recent,
-					cache.dialogues,
-					cache.users,
-				);
-
-				return false;
-			});
-
-			return this.store.dispatch('recentModel/setState', cache.recent);
-		}
-
-		initRequests()
-		{
-			restManager.on(
-				RestMethod.imRecentList,
-				this.getRestRecentListOptions(),
-				this.firstPageHandler.bind(this),
-			);
-
-			restManager.once(
-				RestMethod.imDepartmentColleaguesGet,
-				this.getRestDepartmentOptions(),
-				this.departmentColleaguesGetHandler.bind(this),
-			);
-
-			this.countersInitRequest();
-		}
-
-		/**
-		 * @return {object}
-		 */
-		getRestRecentListOptions()
-		{
-			return { SKIP_OPENLINES: 'Y' };
-		}
-
-		/**
-		 * @return {object}
-		 */
-		getRestDepartmentOptions()
-		{
-			return {
-				USER_DATA: 'Y',
-				LIMIT: 50,
-			};
-		}
-
-		countersInitRequest()
-		{
-			Counters.initRequests();
-		}
-
 		bindMethods()
 		{
-			this.firstPageHandler = this.firstPageHandler.bind(this);
 			this.loadPage = this.loadPage.bind(this);
-			this.departmentColleaguesGetHandler = this.departmentColleaguesGetHandler.bind(this);
 			this.stopRefreshing = this.stopRefreshing.bind(this);
 			this.renderInstant = this.renderInstant.bind(this);
+			this.subscribeInitMessengerEvent = this.subscribeInitMessengerEvent.bind(this);
+			this.updatePageFromServer = this.updatePageFromServer.bind(this);
 		}
 
 		subscribeStoreEvents()
@@ -288,6 +136,16 @@ jn.define('im/messenger/controller/recent/lib/recent-base', (require, exports, m
 		subscribeViewEvents()
 		{}
 
+		subscribeInitMessengerEvent()
+		{
+			this.messagerInitService.onInit(this.updatePageFromServer);
+		}
+
+		subscribeInitCounters()
+		{
+			Counters.subscribeInitMessengerEvent();
+		}
+
 		initItemAction()
 		{
 			this.itemAction = new ItemAction();
@@ -297,12 +155,11 @@ jn.define('im/messenger/controller/recent/lib/recent-base', (require, exports, m
 		{
 			if (Feature.isLocalStorageEnabled)
 			{
-				const recentList = await this.recentRepository.getList();
-				this.logger.info(`${this.getClassName()}.drawCacheItems.recentList:`, recentList);
+				await this.fillStoreFromFirstDbPage();
 			}
 
 			let firstPage = clone(
-				this.store.getters['recentModel/getRecentPage'](1, this.pageNavigation.itemsPerPage),
+				this.store.getters['recentModel/getRecentPage'](1, this.recentService.pageNavigation.itemsPerPage),
 			);
 
 			if (firstPage.length === 0)
@@ -319,12 +176,68 @@ jn.define('im/messenger/controller/recent/lib/recent-base', (require, exports, m
 			firstPage = RecentConverter.toList(firstPage);
 
 			this.view.setItems([...this.callList, ...firstPage]);
+
+			this.recentService.pageNavigation.isPageLoading = false;
+			if (this.recentService.hasMoreFromDb && !this.view.isLoaderShown)
+			{
+				this.view.showLoader();
+				// This is a solution to add a loader before scrolling in advance. After scrolling, the loader will hide
+			}
 		}
 
-		countersLoad()
+		/**
+		 * @return {Promise<{items: Array, users: Array, hasMore: boolean}>}
+		 */
+		async fillStoreFromFirstDbPage()
 		{
-			this.countersService.load()
-				.catch((err) => this.logger.error(`${this.getClassName()}.init.countersLoad.catch:`, err));
+			const recentList = await this.getFirstPageFromDb();
+			await this.getSubDataFromDb();
+			this.logger.info(`${this.constructor.name}.drawCacheItems.recentList:`, recentList);
+			const dialogues = recentList.items.map((item) => item.chat);
+			await this.store.dispatch('dialoguesModel/setCollectionFromLocalDatabase', dialogues);
+			if (recentList?.users.length > 0)
+			{
+				const collection = recentList.users.reduce((acc, user) => {
+					// eslint-disable-next-line no-param-reassign
+					acc[user.id] = user;
+
+					return acc;
+				}, {});
+
+				await this.store.dispatch('usersModel/setState', { collection });
+			}
+
+			if (recentList?.messages.length > 0)
+			{
+				await this.store.dispatch('messagesModel/store', recentList?.messages);
+			}
+
+			if (recentList?.files.length > 0)
+			{
+				await this.store.dispatch('filesModel/setFromLocalDatabase', recentList?.files);
+			}
+
+			await this.store.dispatch('recentModel/setState', { collection: recentList.items });
+
+			return recentList;
+		}
+
+		/**
+		 * @return {Promise<{items: Array, users: Array, messages: Array, files: Array, hasMore: boolean}>}
+		 */
+		async getFirstPageFromDb()
+		{
+			return this.recentService.getFirstPageFromDb(this.getDbFilter());
+		}
+
+		/**
+		 * @return {Promise<{any}>}
+		 */
+		async getSubDataFromDb()
+		{
+			return new Promise((resolve, reject) => {
+				resolve(true);
+			});
 		}
 
 		initWorker()
@@ -340,77 +253,117 @@ jn.define('im/messenger/controller/recent/lib/recent-base', (require, exports, m
 		 */
 		getWorkerCallBack()
 		{
-			return this.loadPage;
+			return this.loadPageFromServerHandler.bind(this);
 		}
 
 		loadNextPage()
 		{
-			this.pageNavigation.turnPage();
-
-			this.loadPage();
+			this.loadPage()
+				.catch((error) => {
+					this.logger.error(`${this.constructor.name}.loadNextPage.loadPage catch:`, error);
+				});
 		}
 
-		firstPageHandler(response)
+		async loadPage()
 		{
-			const error = response.error();
-			if (error)
+			const isHasNextPage = this.recentService.pageNavigation.hasNextPage;
+			if (!isHasNextPage)
 			{
-				this.logger.error(`${this.getClassName()}.firstPageHandler`, error);
-
 				return;
 			}
 
-			this.pageHandler(response)
-				.then(() => {
-					if (response.data().hasMore && !this.view.isLoaderShown)
-					{
-						this.view.showLoader();
-					}
-				})
-				.catch((err) => this.logger.error(`${this.getClassName()}.pageHandler.catch:`, err));
+			await this.loadPageFromDbHandler();
+			await this.loadPageFromServerHandler();
 		}
 
-		loadPage()
+		async loadPageFromDbHandler()
 		{
-			this.pageNavigation.isPageLoading = true;
+			if (Feature.isLocalStorageEnabled && this.recentService.hasMoreFromDb)
+			{
+				await this.getPageFromDb();
+				this.renderInstant();
+				if (this.recentService.hasMoreFromDb === false)
+				{
+					this.view.hideLoader();
+				}
+			}
+		}
 
-			this.getPageFromService()
-				.then((response) => this.pageHandler(response))
+		async loadPageFromServerHandler()
+		{
+			this.recentService.pageNavigation.isPageLoading = true;
+			this.getPageFromServer()
+				.then((response) => this.pageHandler(response.data()))
 				.catch(() => {
 					this.logger.error(
-						`${this.getClassName()}.loadPage: page ${this.pageNavigation.currentPage} loading error, try again in ${this.loadPageAfterErrorWorker.frequency / 1000} seconds.`,
+						`${this.constructor.name}.loadPage.getPageFromServer: page ${this.recentService.pageNavigation.currentPage} loading error, try again in ${this.loadPageAfterErrorWorker.frequency / 1000} seconds.`,
 					);
-					this.loadPageAfterErrorWorker.startOnce();
+
+					if (!this.loadPageAfterErrorWorker.isHasOnce())
+					{
+						this.loadPageAfterErrorWorker.startOnce();
+					}
 				})
 			;
 		}
 
 		/**
-		 * @param {object} response
+		 * @param {
+		 * immobileTabChatLoadResult.recentList
+		 * | immobileTabCopilotLoadResult.recentList
+		 * | immobileTabChannelLoadResult.recentList
+		 * } data.recentList
 		 */
-		pageHandler(response)
+		updatePageFromServer(data)
+		{
+			const recentList = data.recentList;
+
+			if (Type.isNil(recentList) || !Type.isPlainObject(recentList))
+			{
+				this.logger.error(`${this.constructor.name}.updatePageFromServer`, recentList);
+
+				return;
+			}
+
+			this.pageHandler(recentList)
+				.then(() => {
+					if (recentList.hasMore && !this.view.isLoaderShown)
+					{
+						this.view.showLoader();
+					}
+				})
+				.catch((err) => this.logger.error(`${this.constructor.name}.pageHandler.catch:`, err));
+		}
+
+		/**
+		 * @param {object} data
+		 */
+		pageHandler(data)
 		{
 			return new Promise((resolve) => {
-				const data = response.data();
-				this.logger.info(`${this.getClassName()}.pageHandler data:`, data);
+				this.logger.info(`${this.constructor.name}.pageHandler data:`, data);
+				this.recentService.pageNavigation.turnPage();
 
-				if (data.hasMore === false)
+				if (Type.isBoolean(data.hasMore))
 				{
-					this.pageNavigation.hasNextPage = false;
+					this.recentService.pageNavigation.hasNextPage = data.hasMore;
 				}
 
 				if (data.items.length > 0)
 				{
-					this.lastMessageDate = data.items[data.items.length - 1].message.date;
+					const lastItem = data.items[data.items.length - 1];
+					const lastActivityDate = lastItem.date_last_activity ?? lastItem.message.date;
+					this.recentService.lastActivityDateFromServer = lastActivityDate;
+					this.recentService.lastActivityDate = new Date(lastActivityDate).toISOString();
 				}
 				else
 				{
 					this.view.hideLoader();
 				}
 
-				this.saveRecentItems(data.items)
+				this.saveRecentData(data.items)
 					.then(() => {
-						this.pageNavigation.isPageLoading = false;
+						this.recentService.pageNavigation.isPageLoading = false;
 
 						this.renderInstant();
 						this.checkEmpty();
@@ -418,7 +371,7 @@ jn.define('im/messenger/controller/recent/lib/recent-base', (require, exports, m
 						resolve();
 					})
 					.catch((error) => {
-						this.logger.error(`${this.getClassName()}.saveRecentItems error:`, error);
+						this.logger.error(`${this.constructor.name}.saveRecentData error:`, error);
 					})
 				;
 			});
@@ -438,7 +391,7 @@ jn.define('im/messenger/controller/recent/lib/recent-base', (require, exports, m
 			}
 
 			this.renderer.do('add', items);
-			if (!this.pageNavigation.hasNextPage && this.view.isLoaderShown)
+			if (!this.recentService.pageNavigation.hasNextPage && this.view.isLoaderShown)
 			{
 				this.renderer.nextTick(() => this.view.hideLoader());
 			}
@@ -457,9 +410,9 @@ jn.define('im/messenger/controller/recent/lib/recent-base', (require, exports, m
 			}
 
 			this.renderer.do('update', items);
-			if (!this.pageNavigation.hasNextPage && this.view.isLoaderShown)
+			if (!this.recentService.pageNavigation.hasNextPage && this.view.isLoaderShown)
 			{
-				this.renderer.nextTick(() => this.view.hideLoader());
+				this.view.hideLoader();
 			}
 
 			this.checkEmpty();
@@ -469,7 +422,7 @@ jn.define('im/messenger/controller/recent/lib/recent-base', (require, exports, m
 		 * @param {Array<object>} recentItems
 		 * @return {Promise<any>}
 		 */
-		async saveRecentItems(recentItems)
+		async saveRecentData(recentItems)
 		{
 			const modelData = this.prepareDataForModels(recentItems);
 
@@ -477,7 +430,7 @@ jn.define('im/messenger/controller/recent/lib/recent-base', (require, exports, m
 			const dialoguesPromise = await this.store.dispatch('dialoguesModel/set', modelData.dialogues);
 			const recentPromise = await this.store.dispatch('recentModel/set', modelData.recent);
 
-			if (this.pageNavigation.currentPage === 1)
+			if (this.recentService.pageNavigation.currentPage === 1)
 			{
 				const recentIndex = [];
 				modelData.recent.forEach((item) => recentIndex.push(item.id.toString()));
@@ -492,7 +445,7 @@ jn.define('im/messenger/controller/recent/lib/recent-base', (require, exports, m
 					});
 
 				idListForDeleteFromCache.forEach((id) => {
-					this.store.dispatch('recentModel/delete', { id });
+					this.store.dispatch('recentModel/deleteFromModel', { id });
 				});
 
 				await this.saveShareDialogCache(modelData.recent);
@@ -534,82 +487,49 @@ jn.define('im/messenger/controller/recent/lib/recent-base', (require, exports, m
 
 		stopRefreshing()
 		{
-			this.logger.info(`${this.getClassName()}.stopRefreshing`);
+			this.logger.info(`${this.constructor.name}.stopRefreshing`);
 			this.view.stopRefreshing();
 		}
 
 		renderInstant()
 		{
-			this.logger.info(`${this.getClassName()}.renderInstant`);
+			this.logger.info(`${this.constructor.name}.renderInstant`);
 			this.renderer.render();
 		}
 
 		/**
 		 * @param {string|number} dialogId
 		 * @param {string|null} [componentCode=null]
+		 * @param checkComponentCode
 		 */
-		openDialog(dialogId, componentCode = null)
+		openDialog(dialogId, componentCode = null, checkComponentCode = false)
 		{
-			this.removeUnreadState(dialogId);
+			this.recentService.removeUnreadState(dialogId);
 
-			MessengerEmitter.emit(EventType.messenger.openDialog, { dialogId }, componentCode);
-		}
-
-		/**
-		 * @param {string|number} dialogId
-		 */
-		removeUnreadState(dialogId)
-		{
-			const recentItem = clone(this.store.getters['recentModel/getById'](dialogId));
-			if (!recentItem)
-			{
-				return;
-			}
-
-			const unreadBeforeChange = recentItem.unread;
-
-			this.setRecentModelWithCounters({
-				id: dialogId,
-				unread: false,
-			});
-
-			RecentRest.read({ dialogId }).catch((result) => {
-				this.logger.error(`${this.getClassName()}.removeUnreadState.recentRest.read is item read error`, result.error());
-
-				this.setRecentModelWithCounters({
-					id: dialogId,
-					unread: unreadBeforeChange,
-				});
-			});
-		}
-
-		/**
-		 * @param {object} params
-		 * @param {string|number} params.id
-		 * @param {boolean} params.unread
-		 */
-		setRecentModelWithCounters(params)
-		{
-			this.store.dispatch('recentModel/set', [params])
-				.then(() => {
-					Counters.update();
-				})
-				.catch((err) => this.logger.error(`${this.getClassName()}.setRecentModelWithCounters.recentModel/set.catch:`, err));
+			MessengerEmitter.emit(
+				EventType.messenger.openDialog,
+				{
+					dialogId,
+					checkComponentCode,
+				},
+				componentCode,
+			);
 		}
 
 		/**
 		 * @return {Promise<any>}
 		 */
-		getPageFromService()
+		getPageFromDb()
 		{
-			const options = this.getRestListOptions();
+			return this.recentService.getPageFromDb(this.getDbFilter());
+		}
 
-			if (this.pageNavigation.currentPage > 1)
-			{
-				options.lastMessageDate = this.lastMessageDate;
-			}
-
-			return RecentRest.getList(options);
+		/**
+		 * @return {Promise<any>}
+		 */
+		getPageFromServer()
+		{
+			return this.recentService.getPageFromServer(this.getRestListOptions());
 		}
 
 		/**
@@ -618,6 +538,14 @@ jn.define('im/messenger/controller/recent/lib/recent-base', (require, exports, m
 		getRestListOptions()
 		{
 			return { skipOpenlines: true, onlyCopilot: false };
+		}
+
+		/**
+		 * @return {ListByDialogTypeFilter}
+		 */
+		getDbFilter()
+		{
+			return { exceptDialogTypes: [DialogType.copilot], limit: this.recentService.getRecentListRequestLimit() };
 		}
 
 		/**
@@ -663,6 +591,9 @@ jn.define('im/messenger/controller/recent/lib/recent-base', (require, exports, m
 						name: item.user.name,
 						type: DialogType.user,
 						counter: item.counter,
+
+						// required to update the added column in the b_im_dialog table
+						permissions: ChatPermission.getActionGroupsByChatType(DialogType.user),
 					};
 					if (item.message)
 					{
@@ -674,6 +605,11 @@ jn.define('im/messenger/controller/recent/lib/recent-base', (require, exports, m
 					{
 						dialogItem.chatId = item.chat_id;
 					}
+				}
+
+				if (item.last_id)
+				{
+					dialogItem.last_id = item.last_id;
 				}
 
 				result.dialogues.push(dialogItem);
@@ -689,13 +625,18 @@ jn.define('im/messenger/controller/recent/lib/recent-base', (require, exports, m
 			return result;
 		}
 
-		/**
-		 * @desc get class name for logger
-		 * @return {string}
-		 */
-		getClassName()
+		recentDeleteHandler(mutation)
 		{
-			return this.constructor.name;
+			this.renderer.removeFromQueue(mutation.payload.data.id);
+
+			this.view.removeItem({ id: mutation.payload.data.id });
+			if (!this.recentService.pageNavigation.hasNextPage && this.view.isLoaderShown)
+			{
+				this.view.hideLoader();
+			}
+			Counters.update();
+
+			this.checkEmpty();
 		}
 	}
 

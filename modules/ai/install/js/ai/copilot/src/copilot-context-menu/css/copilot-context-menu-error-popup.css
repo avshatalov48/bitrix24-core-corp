@@ -1,0 +1,26 @@
+.ai__copilot-context-menu_error-popup {
+	border: var(--ui-border-width-thin) solid var(--ui-color-palette-red-40);
+}
+
+.ai__copilot-context-menu_error-popup .popup-window-content {
+	overflow: initial;
+	display: flex;
+	width: 100%;
+}
+
+.ai__copilot-context-menu-error-content {
+	display: flex;
+	padding: 2px 16px 0 2px;
+	flex-direction: row;
+	align-items: flex-start;
+	justify-content: flex-start;
+	font-size: var(--ui-font-size-lg);
+	line-height: var(--ui-font-line-height-lg);
+}
+
+.ai__copilot-context-menu-error-content-icon {
+	display: flex;
+	width: 24px;
+	height: 24px;
+	margin-right: 2px;
+}

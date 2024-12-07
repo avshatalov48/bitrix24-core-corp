@@ -87,7 +87,6 @@ if ($_SERVER['REQUEST_METHOD'] != 'POST')
 }
 
 \Bitrix\Main\Localization\Loc::loadMessages(__FILE__);
-CUtil::JSPostUnescape();
 $GLOBALS['APPLICATION']->RestartBuffer();
 Header('Content-Type: application/x-javascript; charset='.LANG_CHARSET);
 

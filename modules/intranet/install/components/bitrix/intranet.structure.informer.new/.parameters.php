@@ -3,16 +3,17 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
 CModule::IncludeModule('intranet');
 
-$IBLOCK_ID = COption::GetOptionInt('intranet', 'iblock_structure', false);
-
 $arSections = array(0 => '');
-if ($IBLOCK_ID !== false)
+
+$departmentRepository = \Bitrix\Intranet\Service\ServiceContainer::getInstance()->departmentRepository();
+$departments = $departmentRepository->getAllTree(
+	null,
+	\Bitrix\Intranet\Enum\DepthLevel::FULL,
+	\Bitrix\Intranet\Enum\DepartmentActiveFilter::ONLY_ACTIVE
+);
+foreach ($departments as $department)
 {
-	$dbRes = CIBlockSection::GetTreeList(array('IBLOCK_ID' => $IBLOCK_ID, 'ACTIVE' => 'Y'));
-	while ($arRes = $dbRes->Fetch())
-	{
-		$arSections[$arRes['ID']] = trim(str_repeat('. ', $arRes['DEPTH_LEVEL']-1).' '.$arRes['NAME']);
-	}
+	$arSections[$department->getId()] = trim(str_repeat('. ', $department->getDepth()).' '.$department->getName());
 }
 
 $arComponentParameters = array(

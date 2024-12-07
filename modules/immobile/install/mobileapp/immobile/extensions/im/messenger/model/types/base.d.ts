@@ -2,6 +2,7 @@ import {MessengerStoreActions} from "../../core/types/store";
 
 export interface MutationPayload<TData extends PayloadData, TActions extends string = ''> {
     actionName: TActions,
+    actionUuid?: string,
     data: TData,
 }
 

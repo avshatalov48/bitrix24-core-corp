@@ -15,6 +15,6 @@ return [
 	],
 	'skip_core' => false,
 	'settings' => [
-		'qr' => Crm\Terminal\AuthLink::get(),
+		'intent' => Crm\Terminal\AuthLink::getIntent(),
 	]
 ];

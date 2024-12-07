@@ -29,7 +29,7 @@ else:
 	)?>
 </div><?
 endif;
-?><script type="text/javascript">
+?><script>
 	BX.ready(
 		function()
 		{

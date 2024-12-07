@@ -247,7 +247,7 @@ abstract class UserField // todo: extends Dictionary, to iterate over user field
 		if(!isset($map[$code]))
 		{
 			$code = trim((string) $code);
-			$code = ToLower(preg_replace('#^TASKS_#', '', $code));
+			$code = mb_strtolower(preg_replace('#^TASKS_#', '', $code));
 			if($code == '' || !preg_match('#^[a-z0-9_]+$#', $code))
 			{
 				return '';
@@ -610,7 +610,7 @@ abstract class UserField // todo: extends Dictionary, to iterate over user field
 
 	private static function getCacheTagName()
 	{
-		return "tasks_uf_".ToLower(static::getEntityCode());
+		return "tasks_uf_".mb_strtolower(static::getEntityCode());
 	}
 
 	public static function getClass()

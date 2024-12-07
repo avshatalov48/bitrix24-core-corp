@@ -12,7 +12,7 @@ Loc::loadMessages(__FILE__);
  *
  * @package Bitrix\Tasks\Grid\Scrum
  */
-class Grid extends \Bitrix\Tasks\Grid
+class Grid extends \Bitrix\Tasks\Grid\Grid
 {
 	public function prepareHeaders(): array
 	{

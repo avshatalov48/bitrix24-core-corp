@@ -2,6 +2,7 @@
  * @module tasks/layout/dashboard/list-adapter
  */
 jn.define('tasks/layout/dashboard/list-adapter', (require, exports, module) => {
+	const { Feature } = require('feature');
 	const { SkeletonFactory } = require('layout/ui/simple-list/skeleton');
 	const { StatefulList } = require('layout/ui/stateful-list');
 	const { TypeGenerator } = require('layout/ui/stateful-list/type-generator');
@@ -46,6 +47,7 @@ jn.define('tasks/layout/dashboard/list-adapter', (require, exports, module) => {
 				},
 				new StatefulList({
 					testId: 'task-list',
+					showAirStyle: Feature.isAirStyleSupported(),
 					typeGenerator: {
 						generator: TypeGenerator.generators.bySelectedProperties,
 						properties: [
@@ -57,7 +59,10 @@ jn.define('tasks/layout/dashboard/list-adapter', (require, exports, module) => {
 							'isMuted',
 							'isPinned',
 							'priority',
-							'responsibleId',
+							'responsible',
+							'deadline',
+							'allowTimeTracking',
+							'isCreationErrorExist',
 						],
 						callbacks: {
 							counter: counterCallback,
@@ -83,7 +88,9 @@ jn.define('tasks/layout/dashboard/list-adapter', (require, exports, module) => {
 					menuButtons: (this.props.layoutMenuButtons || []),
 					itemType: ListItemType.TASK,
 					itemFactory: ListItemsFactory,
-					// itemParams: (params.itemParams || {}),
+					itemParams: {
+						view: this.getView(),
+					},
 					// getRuntimeParams: this.getRuntimeParams,
 					// showEmptySpaceItem: this.isEnabledKanbanToolbar(),
 					pull: this.props.pull,
@@ -106,6 +113,7 @@ jn.define('tasks/layout/dashboard/list-adapter', (require, exports, module) => {
 					// },
 					ref: this.bindRef,
 					animationTypes: this.props.animationTypes,
+					currentView: this.props.currentView,
 				}),
 			);
 		}
@@ -128,10 +136,21 @@ jn.define('tasks/layout/dashboard/list-adapter', (require, exports, module) => {
 		 */
 		reload(params = {})
 		{
+			const { skipUseCache = true } = params;
+
 			if (this.viewComponent)
 			{
-				this.viewComponent.reload(params, { useCache: false });
+				this.viewComponent.reload(params, { useCache: !skipUseCache });
 			}
+		}
+
+		/**
+		 * @private
+		 * @return {string}
+		 */
+		getView()
+		{
+			return this.props.loadStagesParams.view;
 		}
 	}
 

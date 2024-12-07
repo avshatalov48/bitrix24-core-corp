@@ -297,7 +297,7 @@ else
 									</div>
 									<div class="imconnector-livechat-public-link-inner-copy-description">
 									</div>
-									<script type="text/javascript">
+									<script>
 										BX.clipboard.bindCopyClick(BX('imconnector-copy-public-link'), {text: BX('imconnector-copy-public-link-content'), offsetLeft: 130});
 										BX.bind(BX('imconnector-livechat-public-link-url-code'), 'keyup', function(){
 											clearTimeout(BX.tempTimeout);
@@ -460,7 +460,7 @@ else
 									if($arResult['INFO_CONNECTION']['CAN_REMOVE_COPYRIGHT'] == 'N')
 									{
 										?>
-										<script type="text/javascript">
+										<script>
 											BX.bind(BX('logo'), 'change', function(e){
 												this.checked = false;
 

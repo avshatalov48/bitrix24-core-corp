@@ -44,7 +44,7 @@ final class ToDo implements \ArrayAccess
 
 	public function setAction($action)
 	{
-		$this->action = ToLower(trim((string) $action));
+		$this->action = mb_strtolower(trim((string) $action));
 	}
 
 	public function getAction()

@@ -731,7 +731,7 @@ function getColorText($color, &$iconClass, &$blockClass)
 }
 ?>
 
-<script type="text/javascript">
+<script>
 	function OnSelectBGColor(color, objColorPicker)
 	{
 		BX['<?=$jsClass?>'].paintElement(color, objColorPicker);
@@ -748,7 +748,7 @@ function getColorText($color, &$iconClass, &$blockClass)
 	); ?>
 </div>
 
-<script type="text/javascript">
+<script>
 	BX.ready(function(){
 
 		BX.message(

@@ -70,7 +70,7 @@ BX.Tasks.Kanban.Item.prototype = {
 		var seconds = sec_num - (hours * 3600) - (minutes * 60);
 		showSeconds = typeof(showSeconds) === "undefined" ? true : showSeconds;
 
-		if (hours   < 10)
+		if (hours < 10)
 		{
 			hours   = "0" + hours;
 		}
@@ -93,9 +93,9 @@ BX.Tasks.Kanban.Item.prototype = {
 	 */
 	clipTitle: function (fullTitle)
 	{
-		var title = fullTitle;
-		var arrTitle = title.split(" ");
-		var lastWord = "<span>" + arrTitle[arrTitle.length - 1] + "</span>";
+		let title = fullTitle;
+		const arrTitle = title.split(' ');
+		const lastWord = '<span>' + arrTitle[arrTitle.length - 1] + '</span>';
 
 		arrTitle.splice(arrTitle.length - 1);
 
@@ -143,7 +143,7 @@ BX.Tasks.Kanban.Item.prototype = {
 	 */
 	setStatus: function(code)
 	{
-		var data = this.getData();
+		const data = this.getData();
 
 		if (this.task_complete)
 		{
@@ -159,45 +159,6 @@ BX.Tasks.Kanban.Item.prototype = {
 
 		this.setDataKey("status", code);
 
-		// if (code === "deferred")
-		// {
-		// 	// BX.addClass(this.task_status_title, "tasks-kanban-item-blue");
-		// 	// this.task_status_title.textContent = BX.message("TASKS_KANBAN_STATUS_DEFERRED");
-		// }
-		// else if (code === "completed" || code === "completed_supposedly")
-		// {
-		// 	// BX.hide(this.task_complete);
-		// 	// BX.addClass(this.task_status_title, "tasks-kanban-item-gray");
-		// 	// if (code === "completed_supposedly")
-		// 	// {
-		// 	// 	this.task_status_title.textContent = BX.message("TASKS_KANBAN_STATUS_COMPLETED_SUPPOSEDLY");
-		// 	// }
-		// 	// else
-		// 	// {
-		// 	// 	this.task_status_title.textContent = BX.message("TASKS_KANBAN_STATUS_COMPLETED");
-		// 	// }
-		// }
-		// else if (code === "overdue")
-		// {
-		// 	// this.task_status_title.textContent = BX.message("TASKS_KANBAN_STATUS_OVERDUE");
-		// }
-		// else if (code === "in_progress")
-		// {
-		// 	// this.task_status_title.textContent = BX.message("TASKS_KANBAN_STATUS_PROGRESS");
-		// }
-		// else if (code === "pause")
-		// {
-		// 	// this.task_status_title.textContent = BX.message("TASKS_KANBAN_STATUS_PAUSE");
-		// }
-		// else if (code === "new")
-		// {
-		// 	// BX.addClass(this.task_status_title, "tasks-kanban-item-white-blue");
-		// 	// this.task_status_title.textContent = BX.message("TASKS_KANBAN_STATUS_NEW");
-		// }
-		// else
-		// {
-		// 	BX.hide(this.task_status_title);
-		// }
 		if (code === "completed")
 		{
 			if (this.task_complete)
@@ -248,25 +209,26 @@ BX.Tasks.Kanban.Item.prototype = {
 		var data = this.getData();
 		var action = data.muted ? "unmuteTask" : "muteTask";
 
-		this.getGrid().ajax({
-				action: action,
-				taskId: taskId
-			},
-			function(data)
-			{
-				if (data && !data.error)
+		this.getGrid().ajax(action, {
+			taskId: taskId
+		}).then(
+			(response) => {
+				const data = response.data;
+				const error = response.errors.pop();
+
+				if (data && !error)
 				{
 					this.getGrid().updateItem(this.getId(), data);
 				}
-				else if (data)
+				else if (error)
 				{
-					BX.Kanban.Utils.showErrorDialog(data.error, data.fatal);
+					BX.Kanban.Utils.showErrorDialog(error.message, true);
 				}
-			}.bind(this),
-			function(error)
-			{
-				BX.Kanban.Utils.showErrorDialog("Error: " + error, true);
-			}.bind(this)
+			},
+			(response) => {
+				const error = response.errors.pop();
+				BX.Kanban.Utils.showErrorDialog("Error: " + error.message, true);
+			},
 		);
 	},
 
@@ -298,25 +260,26 @@ BX.Tasks.Kanban.Item.prototype = {
 			action === "pauseTask"
 		)
 		{
-			this.getGrid().ajax({
-					action: action,
-					taskId: taskId
-				},
-				function(data)
-				{
-					if (data && !data.error)
+			this.getGrid().ajax(action, {
+				taskId: taskId
+			}).then(
+				(response) => {
+					const data = response.data;
+					const error = response.errors.pop();
+
+					if (data && !error)
 					{
 						this.getGrid().updateItem(this.getId(), data);
 					}
-					else if (data)
+					else if (error)
 					{
-						BX.Kanban.Utils.showErrorDialog(data.error, data.fatal);
+						BX.Kanban.Utils.showErrorDialog(error.message, true);
 					}
-				}.bind(this),
-				function(error)
-				{
-					BX.Kanban.Utils.showErrorDialog("Error: " + error, true);
-				}.bind(this)
+				},
+				(response) => {
+					const error = response.errors.pop();
+					BX.Kanban.Utils.showErrorDialog("Error: " + error.message, true);
+				},
 			);
 		}
 	},
@@ -331,28 +294,29 @@ BX.Tasks.Kanban.Item.prototype = {
 
 		this.setStatus("completed");
 
-		this.getGrid().ajax({
-				action: "completeTask",
-				taskId: this.getId(),
-				columnId: this.getColumnId()
-			},
-			function(data)
-			{
-				if (data && !data.error)
+		this.getGrid().ajax('completeTask', {
+			taskId: this.getId(),
+			columnId: this.getColumnId()
+		}).then(
+			(response) => {
+				const data = response.data;
+				const error = response.errors.pop();
+
+				if (data && !error)
 				{
 					this.getGrid().updateItem(this.getId(), data);
 				}
-				else if (data)
+				else if (error)
 				{
 					this.setStatus(currentStatus);
-					BX.Kanban.Utils.showErrorDialog(data.error, data.fatal);
+					BX.Kanban.Utils.showErrorDialog(error.message, true);
 				}
-			}.bind(this),
-			function(error)
-			{
+			},
+			(response) => {
+				const error = response.errors.pop();
 				this.setStatus(currentStatus);
-				BX.Kanban.Utils.showErrorDialog("Error: " + error, true);
-			}.bind(this)
+				BX.Kanban.Utils.showErrorDialog("Error: " + error.message, true);
+			},
 		);
 	},
 
@@ -378,27 +342,29 @@ BX.Tasks.Kanban.Item.prototype = {
 			),
 			callback: function(data)
 			{
-				this.getGrid().ajax({
-						action: "deadlineTask",
+				this.getGrid().ajax('deadlineTask', {
 						taskId: this.getId(),
 						deadline: BX.date.format(format, data),
 						columnId: this.getColumnId()
 					},
-					function(data)
-					{
-						if (data && !data.error)
+				).then(
+					(response) => {
+						const data = response.data;
+						const error = response.errors.pop();
+
+						if (data && !error)
 						{
 							this.getGrid().updateItem(data.id, data);
 						}
-						else if (data)
+						else if (error)
 						{
-							BX.Kanban.Utils.showErrorDialog(data.error, data.fatal);
+							BX.Kanban.Utils.showErrorDialog(error.message, true);
 						}
-					}.bind(this),
-					function(error)
-					{
-						BX.Kanban.Utils.showErrorDialog("Error: " + error, true);
-					}.bind(this)
+					},
+					(response) => {
+						const error = response.errors.pop();
+						BX.Kanban.Utils.showErrorDialog("Error: " + error.message, true);
+					},
 				);
 			}.bind(this),
 			callback_after: function(value) {
@@ -502,30 +468,31 @@ BX.Tasks.Kanban.Item.prototype = {
 				entities: entities,
 				events: {
 					'Item:onSelect': function(event) {
-						var item = event.getData().item;
-						var data = this.prepareUserData(item, userRole);
+						const item = event.getData().item;
+						const data = this.prepareUserData(item, userRole);
 
-						this.getGrid().ajax({
-								action: action,
-								taskId: this.getId(),
-								columnId: this.getColumnId(),
-								userId: data.id
-							},
-							function(data)
-							{
-								if (data && !data.error)
+						this.getGrid().ajax(action, {
+							taskId: this.getId(),
+							columnId: this.getColumnId(),
+							userId: data.id
+						}).then(
+							(response) => {
+								const data = response.data;
+								const error = response.errors.pop();
+
+								if (data && !error)
 								{
 									this.getGrid().updateItem(data.id, data);
 								}
-								else if (data)
+								else if (error)
 								{
-									BX.Kanban.Utils.showErrorDialog(data.error, data.fatal);
+									BX.Kanban.Utils.showErrorDialog(error.message, true);
 								}
-							}.bind(this),
-							function(error)
-							{
-								BX.Kanban.Utils.showErrorDialog("Error: " + error, true);
-							}.bind(this)
+							},
+							(response) => {
+								const error = response.errors.pop();
+								BX.Kanban.Utils.showErrorDialog("Error: " + error.message, true);
+							},
 						);
 					}.bind(this)
 				}
@@ -537,8 +504,8 @@ BX.Tasks.Kanban.Item.prototype = {
 
 	prepareUserData: function(user, userRole)
 	{
-		var customData = user.getCustomData();
-		var entityType = user.getEntityType();
+		const customData = user.getCustomData();
+		const entityType = user.getEntityType();
 
 		return {
 			avatar: user.avatar,
@@ -591,7 +558,7 @@ BX.Tasks.Kanban.Item.prototype = {
 
 	/**
 	 * Add or remove class for element.
-	 * @param {DOMNode} el
+	 * @param {HTMLElement} el
 	 * @param {String} className
 	 * @param {Boolean} mode
 	 * @returns {void}
@@ -610,7 +577,7 @@ BX.Tasks.Kanban.Item.prototype = {
 
 	/**
 	 * Show or hide element.
-	 * @param {DOMNode} el
+	 * @param {HTMLElement} el
 	 * @param {Boolean} mode
 	 * @returns {void}
 	 */
@@ -730,7 +697,7 @@ BX.Tasks.Kanban.Item.prototype = {
 
 	/**
 	 * Return full node for item.
-	 * @returns {DOMNode}
+	 * @returns {HTMLElement}
 	 */
 	render: function()
 	{
@@ -1339,21 +1306,6 @@ BX.Tasks.Kanban.Item.prototype = {
 			this.container.appendChild(this.date_deadline_container);
 		}
 
-		//endregion
-
-		//region comments / checklist / files
-	/*	this.count_comments = BX.create("a", {
-			props: {
-				className: "tasks-kanban-item-comments"
-			},
-			events: {
-				click: function(e) {
-					e.stopPropagation();
-				}
-			}
-		});
-		this.task_content.appendChild(this.count_comments);*/
-
 		this.check_list = BX.create("div", {
 			props: {
 				className: "tasks-kanban-item-checklist"
@@ -1498,7 +1450,7 @@ BX.Tasks.Kanban.Item.prototype = {
 
 	/**
 	 * Add shadow to item.
-	 * @returns {DOMNode}
+	 * @returns {HTMLElement}
 	 */
 	createShadow: function ()
 	{
@@ -1508,7 +1460,7 @@ BX.Tasks.Kanban.Item.prototype = {
 	},
 
 	/**
-	 * @returns {Element}
+	 * @returns {HTMLElement}
 	 */
 	getContainer: function()
 	{
@@ -1535,33 +1487,19 @@ BX.Tasks.Kanban.Item.prototype = {
 		if(this.grid.firstRenderComplete && !this.draftContainer)
 		{
 			this.layout.container.classList.add("main-kanban-item-new");
-			var cleanAnimate = function() {
-				this.layout.container.classList.remove("main-kanban-item-new");
-				this.getBodyContainer().removeEventListener("animationend", cleanAnimate);
-			}.bind(this);
+			const cleanAnimate = () => {
+				this.layout.container.classList.remove('main-kanban-item-new');
+				this.getBodyContainer().removeEventListener('animationend', cleanAnimate);
+			};
 			this.getBodyContainer().addEventListener("animationend", cleanAnimate);
 		}
-
-		BX.addCustomEvent(this.getGrid(), "Kanban.Grid:onItemDragStart", function() {
-			if(this.getGrid().isRealtimeMode())
-			{
-				this.disableDropping();
-			}
-		}.bind(this));
-
-		BX.addCustomEvent(this.getGrid(), "Kanban.Grid:onItemDragStop", function() {
-			if(this.getGrid().isRealtimeMode())
-			{
-				this.enableDropping();
-			}
-		}.bind(this));
 
 		return this.layout.container;
 	},
 
 	/**
 	 * Add hover to item.
-	 * @param {DOMNode} itemBlock
+	 * @param {HTMLElement} itemBlock
 	 * @returns {void}
 	 */
 	addHoverClass: function (itemBlock)
@@ -1574,7 +1512,7 @@ BX.Tasks.Kanban.Item.prototype = {
 
 	/**
 	 * Remove hover from item.
-	 * @param {DOMNode} itemBlock
+	 * @param {HTMLElement} itemBlock
 	 * @returns {void}
 	 */
 	removeHoverClass: function (itemBlock)
@@ -1585,8 +1523,8 @@ BX.Tasks.Kanban.Item.prototype = {
 
 	createEpicLayout: function ()
 	{
-		var colorBorder = this.convertHexToRGBA(this.epic.color, 0.7);
-		var colorBackground = this.convertHexToRGBA(this.epic.color, 0.3);
+		const colorBorder = this.convertHexToRGBA(this.epic.color, 0.7);
+		const colorBackground = this.convertHexToRGBA(this.epic.color, 0.3);
 
 		return BX.create("span", {
 			props: {
@@ -1608,20 +1546,19 @@ BX.Tasks.Kanban.Item.prototype = {
 
 	convertHexToRGBA: function (hexCode, opacity)
 	{
-		var hex = hexCode.replace('#', '');
+		let hex = hexCode.replace('#', '');
 
 		if (hex.length === 3)
 		{
 			hex = String(hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2]);
 		}
 
-		var r = parseInt(hex.substring(0, 2), 16);
-		var g = parseInt(hex.substring(2, 4), 16);
-		var b = parseInt(hex.substring(4, 6), 16);
+		const r = parseInt(hex.substring(0, 2), 16);
+		const g = parseInt(hex.substring(2, 4), 16);
+		const b = parseInt(hex.substring(4, 6), 16);
 
 		return 'rgba(' + r + ',' + g + ',' + b + ',' + opacity + ')';
 	}
-
 };
 
 })();

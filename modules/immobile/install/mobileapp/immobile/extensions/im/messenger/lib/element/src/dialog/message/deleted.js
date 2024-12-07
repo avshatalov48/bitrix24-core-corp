@@ -3,6 +3,8 @@
  */
 jn.define('im/messenger/lib/element/dialog/message/deleted', (require, exports, module) => {
 	const { Loc } = require('loc');
+
+	const { MessageType } = require('im/messenger/const');
 	const { Message } = require('im/messenger/lib/element/dialog/message/base');
 
 	/**
@@ -24,11 +26,12 @@ jn.define('im/messenger/lib/element/dialog/message/deleted', (require, exports, 
 			this.setFontColor('#959CA4');
 			this.setShowTail(true);
 			this.forwardText = '';
+			this.setUserNameColor(modelMessage.authorId);
 		}
 
 		getType()
 		{
-			return 'deleted';
+			return MessageType.deleted;
 		}
 	}
 

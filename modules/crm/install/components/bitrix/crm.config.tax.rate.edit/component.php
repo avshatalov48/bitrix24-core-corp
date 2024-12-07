@@ -16,7 +16,7 @@ CUtil::InitJSCore();
 
 $lpEnabled = CSaleLocation::isLocationProEnabled();
 
-if ($_SERVER['REQUEST_METHOD'] == 'POST') // process data from popup dialog
+if ($_SERVER['REQUEST_METHOD'] === 'POST') // process data from popup dialog
 {
 	if (check_bitrix_sessid())
 	{
@@ -25,8 +25,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') // process data from popup dialog
 		if(isset($_REQUEST['RATE_PAGE']))
 		{
 			$arResult['RATE_PAGE'] = CHTTP::urlAddParams(
-						$_REQUEST['RATE_PAGE'],
-						array($_REQUEST['FORM_ID'].'_active_tab' => 'tab_rateslist')
+				$_REQUEST['RATE_PAGE'],
+				[$_REQUEST['FORM_ID'].'_active_tab' => 'tab_rateslist']
 			);
 		}
 		else
@@ -34,46 +34,60 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') // process data from popup dialog
 			$arResult['RATE_PAGE'] = '';
 		}
 
-		$arFields = array();
+		$arFields = [];
 		$ID = 0;
 
-		if(isset($_POST['ID']))
-			$arFields['ID'] = $ID = intval($_POST['ID']);
+		if (isset($_POST['ID']))
+		{
+			$ID = (int)$_POST['ID'];
+			if ($ID > 0)
+			{
+				$arFields['ID'] = $ID;
+			}
+		}
 
-		if(isset($_POST['TAX_ID']))
-			$arFields['TAX_ID'] = intval($_POST['TAX_ID']);
+		if (isset($_POST['TAX_ID']))
+		{
+			$arFields['TAX_ID'] = (int)$_POST['TAX_ID'];
+		}
 
-		$arFields['ACTIVE'] =  isset($_POST['ACTIVE']) && $_POST['ACTIVE'] == 'Y' ? 'Y' : 'N';
+		$arFields['ACTIVE'] =  isset($_POST['ACTIVE']) && $_POST['ACTIVE'] === 'Y' ? 'Y' : 'N';
 
-		if(isset($_POST['PERSON_TYPE_ID']))
+		if (isset($_POST['PERSON_TYPE_ID']))
+		{
 			$arFields['PERSON_TYPE_ID'] = $_POST['PERSON_TYPE_ID'];
+		}
 
-		if(isset($_POST['VALUE']))
+		if (isset($_POST['VALUE']))
+		{
 			$arFields['VALUE'] = $_POST['VALUE'];
+		}
 
-		$arFields['IS_IN_PRICE'] = isset($_POST['IS_IN_PRICE']) && $_POST['IS_IN_PRICE'] =='Y' ? 'Y' : 'N';
+		$arFields['IS_IN_PRICE'] = isset($_POST['IS_IN_PRICE']) && $_POST['IS_IN_PRICE'] === 'Y' ? 'Y' : 'N';
 
-		if(isset($_POST['APPLY_ORDER']))
+		if (isset($_POST['APPLY_ORDER']))
+		{
 			$arFields['APPLY_ORDER'] = $_POST['APPLY_ORDER'];
+		}
 
 		$arLocation = array();
 
 		if($lpEnabled)
 		{
-			if($_REQUEST['LOCATION']['L'] <> '')
+			if($_REQUEST['LOCATION']['L'] !== '')
 			{
 				$LOCATION1 = explode(':', $_REQUEST['LOCATION']['L']);
 			}
 
-			if($_REQUEST['LOCATION']['G'] <> '')
+			if($_REQUEST['LOCATION']['G'] !== '')
 			{
 				$LOCATION2 = explode(':', $_REQUEST['LOCATION']['G']);
 			}
 		}
 		else
 		{
-			$LOCATION1 = isset($_POST['LOCATION1']) ? $_POST['LOCATION1'] : array();
-			$LOCATION2 = isset($_POST['LOCATION2']) ? $_POST['LOCATION2'] : array();
+			$LOCATION1 = $_POST['LOCATION1'] ?? [];
+			$LOCATION2 = $_POST['LOCATION2'] ?? [];
 		}
 
 		if (is_array($LOCATION1) && count($LOCATION1)>0)
@@ -81,7 +95,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') // process data from popup dialog
 			$countLocation = count($LOCATION1);
 			for ($i = 0; $i < $countLocation; $i++)
 			{
-				if ((string) $LOCATION1[$i] != '')
+				if ((string)$LOCATION1[$i] !== '')
 				{
 					$arLocation[] = array(
 						"LOCATION_ID" => $LOCATION1[$i],
@@ -96,7 +110,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') // process data from popup dialog
 			$countLocation2 = count($LOCATION2);
 			for ($i = 0; $i < $countLocation2; $i++)
 			{
-				if ((string) $LOCATION2[$i] != '')
+				if ((string) $LOCATION2[$i] !== '')
 				{
 					$arLocation[] = array(
 						"LOCATION_ID" => $LOCATION2[$i],
@@ -111,16 +125,20 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') // process data from popup dialog
 
 		$arFields['TAX_LOCATION'] = $arLocation;
 
-		if ($strError == '')
+		if ($strError === '')
 		{
 			if ($ID > 0)
 			{
 				if (!CSaleTaxRate::Update($ID, $arFields, array("EXPECT_LOCATION_CODES" => $lpEnabled)))
 				{
 					if ($ex = $GLOBALS['APPLICATION']->GetException())
+					{
 						$strError .= $ex->GetString();
+					}
 					else
+					{
 						$strError .= GetMessage("CRM_ERROR_EDIT_TAX_RATE")."<br>";
+					}
 				}
 			}
 			else
@@ -129,9 +147,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') // process data from popup dialog
 				if ($ID <= 0)
 				{
 					if ($ex = $GLOBALS['APPLICATION']->GetException())
+					{
 						$strError .= $ex->GetString();
+					}
 					else
+					{
 						$strError .= GetMessage("CRM_ERROR_ADD_TAX_RATE")."<br>";
+					}
 				}
 			}
 		}

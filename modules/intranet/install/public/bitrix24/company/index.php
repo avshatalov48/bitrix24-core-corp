@@ -17,7 +17,8 @@ $APPLICATION->IncludeComponent(
 		'POPUP_COMPONENT_NAME' => "bitrix:intranet.user.list",
 		"POPUP_COMPONENT_TEMPLATE_NAME" => "",
 		"POPUP_COMPONENT_PARAMS" => $componentParams,
-		"USE_UI_TOOLBAR" => "Y"
+		"USE_UI_TOOLBAR" => "Y",
+		"POPUP_COMPONENT_USE_BITRIX24_THEME" => "Y",
 	)
 );
 ?>

@@ -95,3 +95,7 @@ div.recyclebin-list-page-nav{
 	display: flex;
 	justify-content: center;
 }
+
+.recyclebin-confirm-popup .popup-window-content{
+	text-align: center;
+}

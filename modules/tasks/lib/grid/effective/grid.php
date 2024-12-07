@@ -7,7 +7,7 @@ use Bitrix\Main\LoaderException;
  * Class Grid
  * @package Bitrix\Tasks\Grid\Effective
  */
-class Grid extends \Bitrix\Tasks\Grid
+class Grid extends \Bitrix\Tasks\Grid\Grid
 {
 	/**
 	 * @return array[]

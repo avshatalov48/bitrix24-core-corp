@@ -46,7 +46,7 @@ if (!empty($arResult['BUTTONS']))
 
 if (isset($arResult['SONET_SUBSCRIBE']) && is_array($arResult['SONET_SUBSCRIBE'])):
 	$subscribe = $arResult['SONET_SUBSCRIBE'];
-?><script type="text/javascript">
+?><script>
 BX.ready(
 	function()
 	{
@@ -66,7 +66,7 @@ if (isset($arResult['EXPORT_CSV_PARAMS']) && is_array($arResult['EXPORT_CSV_PARA
 {
 	\Bitrix\Main\UI\Extension::load('ui.stepprocessing');
 	?>
-	<script type="text/javascript">
+	<script>
 		BX.ready(
 			function()
 			{

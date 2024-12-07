@@ -2,18 +2,22 @@
 
 namespace Bitrix\Intranet\Site\Sections;
 
+use Bitrix\BIConnector\Superset\Scope\ScopeService;
 use Bitrix\Crm;
-use Bitrix\Crm\Service\Router;
-use Bitrix\Sign;
-use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Service\Router;
+use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ModuleManager;
 use Bitrix\Rpa\Driver;
+use Bitrix\Sign;
 
 class AutomationSection
 {
+	private const WORKFLOW_COUNTER_CODE = 'bp_workflow';
+	private const TASK_COUNTER_CODE = 'bp_tasks';
+
 	private static array $items;
 	private static array $bpSubMenu;
 
@@ -38,6 +42,7 @@ class AutomationSection
 				static::getSmartProcesses(),
 				static::getRpa(),
 				static::getOnec(),
+				static::getBIBuilder(),
 				static::getScripts(),
 				static::getLists(),
 				static::getAI(),
@@ -63,6 +68,8 @@ class AutomationSection
 			array_column($subMenu, 1)
 		);
 
+		$counterId = self::getCounterCode();
+
 		return [
 			'id' => 'bizproc',
 			'title' => Loc::getMessage('AUTOMATION_SECTION_BIZPROC_ITEM_TITLE'),
@@ -72,7 +79,7 @@ class AutomationSection
 			'iconClass' => 'ui-icon intranet-automation-bp-icon',
 			'menuData' => [
 				'real_link' => $urls[0] ?? (SITE_DIR . 'company/personal/bizproc/'),
-				'counter_id' => 'bp_tasks',
+				'counter_id' => $counterId,
 				'menu_item_id' => self::MENU_ITEMS_ID['bizproc_automation'],
 				'top_menu_id' => 'top_menu_id_bizproc',
 			],
@@ -94,7 +101,8 @@ class AutomationSection
 		);
 
 		$userId = \Bitrix\Main\Engine\CurrentUser::get()->getId();
-		$tasksCount = (int)\CUserCounter::getValue($userId, 'bp_tasks');
+		$counterId = self::getCounterCode();
+		$counter = (int)\CUserCounter::getValue($userId, $counterId);
 		$menu = [];
 
 		$menu[] = [
@@ -102,8 +110,8 @@ class AutomationSection
 			SITE_DIR . 'bizproc/userprocesses/',
 			[],
 			[
-				'counter_id' => 'bp_tasks',
-				'counter_num' => $tasksCount,
+				'counter_id' => $counterId,
+				'counter_num' => $counter,
 				'menu_item_id' => 'menu_processes_and_tasks',
 			],
 		];
@@ -166,13 +174,46 @@ class AutomationSection
 			return [];
 		}
 
-		$menuDefaultItems = [];
-		$menuCustomSections = [];
-
 		$router = Container::getInstance()->getRouter();
 
 		$currentUser = CurrentUser::get();
 		$userPermissions = Container::getInstance()->getUserPermissions($currentUser->getId());
+
+		if (self::isAutomatedSolutionListEnabled())
+		{
+			$menuSubItems = self::getAutomatedSolutionsMenuSubItems($router, $userPermissions);
+		}
+		else
+		{
+			$menuSubItems = self::getSmartProcessesMenuSubItems($router, $userPermissions);
+		}
+
+		if (empty($menuSubItems))
+		{
+			return [];
+		}
+
+		return [
+			'id' => 'crm-dynamic',
+			'title' => Loc::getMessage('AUTOMATION_SECTION_CRM_DYNAMIC_SUBTITLE_1'),
+			'available' => true,
+			'iconClass' => 'ui-icon intranet-automation-bp-icon',
+			'menuData' => [
+				'menu_item_id' => self::MENU_ITEMS_ID['smart_process'],
+				'top_menu_id' => 'top_menu_id_crm_dynamic',
+				'sub_menu' => $menuSubItems,
+				'is_new' => self::isAutomatedSolutionListEnabled(),
+			],
+		];
+	}
+
+	private static function getSmartProcessesMenuSubItems(
+		Router $router,
+		Crm\Service\UserPermissions $userPermissions,
+	): array
+	{
+		$menuDefaultItems = [];
+		$menuCustomSections = [];
 
 		$customSections = Crm\Integration\IntranetManager::getCustomSections() ?? [];
 		foreach ($customSections as $customSection)
@@ -224,23 +265,84 @@ class AutomationSection
 			];
 		}
 
-		$menuSubItems = array_merge($menuCustomSections, $menuDefaultItems);
-		if (empty($menuSubItems))
+		return array_merge($menuCustomSections, $menuDefaultItems);
+	}
+
+	private static function getAutomatedSolutionsMenuSubItems(
+		Router $router,
+		Crm\Service\UserPermissions $userPermissions,
+	): array
+	{
+		$container = Container::getInstance();
+		$automatedSolutionManager = $container->getAutomatedSolutionManager();
+
+		$menuItems = [];
+
+		foreach ($automatedSolutionManager->getExistingAutomatedSolutions() as $automatedSolution)
 		{
-			return [];
+			$automatedSolutionSubItems = [];
+			foreach ($automatedSolution['TYPE_IDS'] as $typeId)
+			{
+				$type = $container->getType($typeId);
+				if ($userPermissions->canReadType($type->getEntityTypeId()))
+				{
+					$automatedSolutionSubItems[] = [
+						'TEXT' => $type->getTitle(),
+						'URL' => $router->getItemListUrlInCurrentView($type->getEntityTypeId()),
+					];
+				}
+			}
+
+			// user can read at least one type in the solution
+			if (!empty($automatedSolutionSubItems))
+			{
+				if ($userPermissions->canWriteConfig())
+				{
+					$automatedSolutionSubItems[] = [
+						'IS_DELIMITER' => true,
+					];
+
+					$automatedSolutionSubItems[] = [
+						'TEXT' => Loc::getMessage('AUTOMATION_SECTION_CRM_DYNAMIC_DEFAULT_SUBTITLE'),
+						'URL' => $router->getExternalTypeListUrl()->addParams([
+							'AUTOMATED_SOLUTION' => $automatedSolution['ID'],
+							'apply_filter' => 'Y',
+						]),
+					];
+				}
+
+				$menuItems[] = [
+					'TEXT' => $automatedSolution['TITLE'],
+					'ITEMS' => $automatedSolutionSubItems,
+				];
+			}
 		}
 
-		return [
-			'id' => 'crm-dynamic',
-			'title' => Loc::getMessage('AUTOMATION_SECTION_CRM_DYNAMIC_SUBTITLE_1'),
-			'available' => true,
-			'iconClass' => 'ui-icon intranet-automation-bp-icon',
-			'menuData' => [
-				'menu_item_id' => self::MENU_ITEMS_ID['smart_process'],
-				'top_menu_id' => 'top_menu_id_crm_dynamic',
-				'sub_menu' => $menuSubItems,
-			],
-		];
+		if ($userPermissions->canWriteConfig())
+		{
+			if (!empty($menuItems))
+			{
+				$menuItems[] = [
+					'IS_DELIMITER' => true,
+				];
+			}
+
+			$menuItems[] = [
+				'TEXT' => Loc::getMessage('AUTOMATION_SECTION_CRM_DYNAMIC_AUTOMATED_SOLUTION_LIST'),
+				'URL' => $router->getAutomatedSolutionListUrl(),
+				'IS_NEW' => true,
+			];
+		}
+
+		return $menuItems;
+	}
+
+	private static function isAutomatedSolutionListEnabled(): bool
+	{
+		return (
+			method_exists(Crm\Settings\Crm::class, 'isAutomatedSolutionListEnabled')
+			&& Crm\Settings\Crm::isAutomatedSolutionListEnabled()
+		);
 	}
 
 	public static function getRpa(): array
@@ -447,7 +549,7 @@ class AutomationSection
 
 		$items = [
 			[
-				'TEXT' => Loc::getMessage('AUTOMATION_SECTION_SIGN_SIGN_TITLE'),
+				'TEXT' => Loc::getMessage('AUTOMATION_SECTION_SIGN_SIGN_TITLE_MSGVER_1'),
 				'URL' => '/sign/#robots',
 			],
 		];
@@ -456,13 +558,13 @@ class AutomationSection
 		{
 			$router = Crm\Service\Container::getInstance()->getRouter();
 			$items[] = [
-				'TEXT' => Loc::getMessage('AUTOMATION_SECTION_SIGN_CRM_TITLE'),
+				'TEXT' => Loc::getMessage('AUTOMATION_SECTION_SIGN_CRM_TITLE_MSGVER_1'),
 				'URL' => $router->getItemListUrlInCurrentView(\CCrmOwnerType::Deal) . '#robots',
 			];
 		}
 
 		return [
-			'TEXT' => Loc::getMessage('AUTOMATION_SECTION_SIGN_ITEM_TITLE'),
+			'TEXT' => Loc::getMessage('AUTOMATION_SECTION_SIGN_ITEM_TITLE_MSGVER_1'),
 			'URL' => '/sign/',
 			'ITEMS' => $items,
 		];
@@ -482,6 +584,20 @@ class AutomationSection
 				'menu_item_id' => self::MENU_ITEMS_ID['ai'],
 			],
 		];
+	}
+
+	public static function getBIBuilder(): array
+	{
+		if (
+			Loader::includeModule('biconnector')
+			&& class_exists('\Bitrix\BIConnector\Superset\Scope\ScopeService')
+		)
+		{
+			/** @see \Bitrix\BIConnector\Superset\Scope\MenuItem\MenuItemCreatorBizproc::getMenuItemData */
+			return ScopeService::getInstance()->prepareScopeMenuItem(ScopeService::BIC_SCOPE_BIZPROC);
+		}
+
+		return [];
 	}
 
 	public static function getOnec(): array
@@ -590,6 +706,8 @@ class AutomationSection
 			}
 		}
 
+		$counterId = self::getCounterCode();
+
 		return [
 			Loc::getMessage('AUTOMATION_SECTION_ROOT_ITEM_TITLE'),
 			static::getPath(),
@@ -597,10 +715,20 @@ class AutomationSection
 			[
 				'menu_item_id' => 'menu_automation',
 				'top_menu_id' => 'top_menu_id_automation',
-				'counter_id' => 'bp_tasks',
+				'counter_id' => $counterId,
 				'first_item_url' => $firstItemUrl,
 			],
 			'',
 		];
+	}
+
+	private static function getCounterCode(): string
+	{
+		if (Loader::includeModule('bizproc') && class_exists('\Bitrix\Bizproc\Workflow\WorkflowUserCounters'))
+		{
+			return self::WORKFLOW_COUNTER_CODE;
+		}
+
+		return self::TASK_COUNTER_CODE;
 	}
 }

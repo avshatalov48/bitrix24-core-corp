@@ -29,7 +29,7 @@ elseif (isset($_GET["help"]) && $_GET["help"] == "Y")
 		</div>
 		<hr class="b_line_gray">
 		<div class="login-text">
-			<?=GetMessage("AUTH_OTP_HELP_TEXT", array("#PATH#" => $this->GetFolder()))?>
+			<?=GetMessage("AUTH_OTP_HELP_TEXT_MSGVER_1", array("#PATH#" => $this->GetFolder()))?>
 			<div class="log-popup-footer">
 				<a href="<?=htmlspecialcharsbx($arResult["AUTH_OTP_LINK"])?>" class="login-tr-btn"><?=GetMessage("AUTH_OTP_BACK")?></a>
 			</div>
@@ -60,7 +60,7 @@ else
 	?>
 	<div class="">
 		<div class="login-item">
-			<span class="login-label"><?=GetMessage("AUTH_OTP_OTP")?>:</span>
+			<span class="login-label"><?=GetMessage("AUTH_OTP_OTP_MSGVER_1")?></span>
 			<input type="text" name="USER_OTP" class="login-inp" maxlength="50" value="" autocomplete="off" />
 		</div>
 
@@ -85,7 +85,7 @@ else
 	</div>
 </form>
 
-<script type="text/javascript">
+<script>
 	try{document.form_auth.USER_OTP.focus();}catch(e){}
 </script>
 <?

@@ -27,11 +27,18 @@ class NotifyAgent
 	public static function notifyAboutRepeatLead()
 	{
 		Notification::create()
-			->withMessage(Loc::getMessage('CRM_AGENT_NOTICE_NOTIFY_AGENT_ABOUT_REPEAT_LEAD'))
+			->withMessage(self::getNotifyMessage())
 			->toList(UserList::getPortalAdmins())
 			->toList(UserList::getLeadAssignedUsers())
 			->toList(UserList::getContactAssignedUsers())
 			->toList(UserList::getCompanyAssignedUsers())
 			->send();
+	}
+
+	protected static function getNotifyMessage(): callable
+	{
+		return static fn (?string $languageId = null) =>
+			Loc::getMessage('CRM_AGENT_NOTICE_NOTIFY_AGENT_ABOUT_REPEAT_LEAD', null, $languageId)
+		;
 	}
 }

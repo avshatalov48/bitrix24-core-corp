@@ -1,25 +1,28 @@
 /**
+ * Attention!
+ * This file is generated automatically from the apptheme generator
+ * Any manual changes to this file are not allowed.
+ */
+
+/**
  * @module tokens/src/corner
- * @return String
  */
 jn.define('tokens/src/corner', (require, exports, module) => {
-	const CornerTypes = Object.freeze({
-		circle: 'circle',
-		XL: 'XL',
-		L: 'L',
-		M: 'M',
-		S: 'S',
-		XS: 'XS',
-	});
+	const AppTheme = require('apptheme');
+	const { BaseEnum } = require('utils/enums/base');
 
-	const Corner = Object.freeze({
-		[CornerTypes.circle]: 512,
-		[CornerTypes.XL]: 18,
-		[CornerTypes.L]: 12,
-		[CornerTypes.M]: 8,
-		[CornerTypes.S]: 6,
-		[CornerTypes.XS]: 4,
-	});
+	/**
+	 * @class Corner
+	 * @extends {BaseEnum<Corner>}
+	 */
+	class Corner extends BaseEnum
+	{}
 
-	module.exports = { Corner, CornerTypes };
+	Corner.XL = new Corner('XL', AppTheme.styles.cornerXL);
+	Corner.L = new Corner('L', AppTheme.styles.cornerL);
+	Corner.M = new Corner('M', AppTheme.styles.cornerM);
+	Corner.S = new Corner('S', AppTheme.styles.cornerS);
+	Corner.XS = new Corner('XS', AppTheme.styles.cornerXS);
+
+	module.exports = { Corner };
 });

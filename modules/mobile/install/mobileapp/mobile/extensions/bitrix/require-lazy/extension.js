@@ -21,6 +21,10 @@
 		{
 			await jn.import(extensionNameWithColon);
 		}
+		catch (error)
+		{
+			console.error(`${extensionNameWithColon}, extension not found`, error);
+		}
 		finally
 		{
 			if (showLoader)

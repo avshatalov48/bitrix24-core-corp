@@ -3,8 +3,6 @@ require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_befo
 
 if($_SERVER["REQUEST_METHOD"]=="POST" && $_POST["action"] <> '' && check_bitrix_sessid())
 {
-	CUtil::decodeURIComponent($_POST);
-
 	$action = $_POST["action"];
 	$gridId = $_POST["gridId"];
 	$curOption = CUserOptions::GetOption("mobile.interface.grid", $gridId);

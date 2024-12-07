@@ -11,15 +11,16 @@ jn.define('im/messenger/model/messages/reactions', (require, exports, module) =>
 	const logger = LoggerManager.getInstance().getLogger('model--messages-reactions');
 
 	/** @type{ReactionsModelState} */
-	const reactionState = {
+	const reactionDefaultElement = Object.freeze({
 		messageId: 0,
 		ownReactions: new Set(),
 		reactionCounters: {},
 		reactionUsers: new Map(),
-	};
+	});
 
 	const USERS_TO_SHOW = 3;
 
+	/** @type {ReactionsMessengerModel} */
 	const reactionsModel = {
 		namespaced: true,
 		state: () => ({
@@ -178,6 +179,31 @@ jn.define('im/messenger/model/messages/reactions', (require, exports, module) =>
 				});
 			},
 
+			/**
+			 * @function messagesModel/reactionsModel/removeReaction
+			 * @param store
+			 * @param {ReactionsDeleteByChatIdPayload} payload
+			 */
+			deleteByChatId: (store, payload) => {
+				const { chatId } = payload;
+
+				const messageIdList = store.rootGetters['messagesModel/getByChatId'](chatId)
+					.map((message) => message.id)
+				;
+
+				if (messageIdList.length === 0)
+				{
+					return;
+				}
+
+				store.commit('deleteByChatId', {
+					actionName: 'deleteByChatId',
+					data: {
+						messageIdList,
+					},
+				});
+			},
+
 		},
 		mutations: {
 			/**
@@ -257,6 +283,19 @@ jn.define('im/messenger/model/messages/reactions', (require, exports, module) =>
 
 				state.collection[messageId] = payload.data.reaction;
 			},
+
+			/**
+			 * @param state
+			 * @param {MutationPayload<ReactionsDeleteByChatIdData, ReactionsDeleteByChatIdActions>} payload
+			 */
+			deleteByChatId: (state, payload) => {
+				const { messageIdList } = payload.data;
+
+				for (const messageId of messageIdList)
+				{
+					delete state.collection[messageId];
+				}
+			},
 		},
 	};
 
@@ -313,7 +352,7 @@ jn.define('im/messenger/model/messages/reactions', (require, exports, module) =>
 	 */
 	function prepareAddPayload(payload)
 	{
-		const result = clone(reactionState);
+		const result = clone(reactionDefaultElement);
 		result.messageId = payload.messageId;
 		result.ownReactions.add(payload.reaction);
 		result.reactionCounters[payload.reaction] = 1;
@@ -394,5 +433,5 @@ jn.define('im/messenger/model/messages/reactions', (require, exports, module) =>
 		reactions.ownReactions = new Set();
 	}
 
-	module.exports = { reactionsModel };
+	module.exports = { reactionsModel, reactionDefaultElement };
 });

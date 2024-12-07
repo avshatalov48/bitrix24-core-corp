@@ -48,7 +48,7 @@ if (!empty($arResult['BUTTONS']))
 
 if(isset($arResult['SONET_SUBSCRIBE']) && is_array($arResult['SONET_SUBSCRIBE'])):
 	$subscribe = $arResult['SONET_SUBSCRIBE'];
-	?><script type="text/javascript">
+	?><script>
 BX.ready(
 	function()
 	{
@@ -67,7 +67,7 @@ endif;
 
 if(isset($arResult['CATEGORY_CHANGER'])):
 	$categoryChanger = $arResult['CATEGORY_CHANGER'];
-	?><script type="text/javascript">
+	?><script>
 	BX.ready(
 		function()
 		{
@@ -107,7 +107,7 @@ if (is_array($exportCsvParams))
 {
 	\Bitrix\Main\UI\Extension::load('ui.stepprocessing');
 	?>
-	<script type="text/javascript">
+	<script>
 		BX.ready(
 			function()
 			{

@@ -21,13 +21,13 @@ Loc::loadMessages(__FILE__);
 
 <?if(is_array($arResult['ERROR']['FATAL']) && !empty($arResult['ERROR']['FATAL'])):?>
 	<?foreach($arResult['ERROR']['FATAL'] as $error):?>
-		<?=ShowError($error)?>
+		<? ShowError($error)?>
 	<?endforeach?>
 <?else:?>
 
 	<?if(is_array($arResult['ERROR']['WARNING'])):?>
 		<?foreach($arResult['ERROR']['WARNING'] as $error):?>
-			<?=ShowError($error)?>
+			<? ShowError($error)?>
 		<?endforeach?>
 	<?endif?>
 

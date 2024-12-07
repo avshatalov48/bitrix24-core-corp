@@ -21,6 +21,7 @@ jn.define('im/messenger/controller/user-add/view', (require, exports, module) =>
 				onSearchClose: () => this.onSearchClose(),
 				onChangeText: (text) => this.search(text),
 				carouselSize: 'L',
+				isSuperEllipseAvatar: this.props.isSuperEllipseAvatar,
 			});
 
 			this.saveButton = new WidgetHeaderButton({

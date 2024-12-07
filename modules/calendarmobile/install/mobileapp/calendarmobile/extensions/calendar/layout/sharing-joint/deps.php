@@ -14,6 +14,7 @@ return [
 		'bottom-sheet',
 		'layout/ui/context-menu',
 		'layout/ui/user/avatar',
+		'tokens',
 		'calendar:layout/avatars',
 		'calendar:layout/icons',
 		'calendar:sharing/analytics',

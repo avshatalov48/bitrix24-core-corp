@@ -38,8 +38,6 @@ class CrmProductAjaxController
 	{
 		try
 		{
-			\CUtil::JSPostUnescape();
-
 			$this->checkRequest();
 
 			$this->processAction();

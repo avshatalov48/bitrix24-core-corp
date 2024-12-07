@@ -27,11 +27,11 @@ else
 {
 	if (IsModuleInstalled('bitrix24'))
 	{
-		$arResult['LINK_TO_DOC'] = "http://www.bitrixsoft.com/support/training/course/index.php?COURSE_ID=55&LESSON_ID=7121";
+		$arResult['LINK_TO_DOC'] = "https://www.bitrixsoft.com/support/training/course/index.php?COURSE_ID=55&LESSON_ID=7121";
 	}
 	else
 	{
-		$arResult['LINK_TO_DOC'] = "http://www.bitrixsoft.com/support/training/course/index.php?COURSE_ID=26&LESSON_ID=7121";
+		$arResult['LINK_TO_DOC'] = "https://www.bitrixsoft.com/support/training/course/index.php?COURSE_ID=26&LESSON_ID=7121";
 	}
 }
 

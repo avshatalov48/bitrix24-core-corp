@@ -28,8 +28,13 @@ export class StoryPoints  extends EventEmitter
 				title="${Loc.getMessage('TASKS_SCRUM_SPRINT_HEADER_STORY_POINTS')}"
 			>
 				<div class="tasks-scrum__item--story-points-content">
-					<div class="tasks-scrum__item--story-points-element">
-						${this.storyPointsStorage.isEmpty() ? '-' : value}
+					<div 
+						class="tasks-scrum__item--story-points-element" 
+						title="${this.storyPointsStorage.isEmpty() ? '' : value}"
+					>
+						<span class="tasks-scrum__item--story-points-element-text">
+							${this.storyPointsStorage.isEmpty() ? '-' : value}
+						</span>
 					</div>
 					<div class="tasks-scrum__item--story-points-input-container">
 						<input

@@ -2,7 +2,7 @@
 $MESS["TASK_COLUMN_TITLE"] = "Название задачи";
 $MESS["TASK_COLUMN_DEADLINE"] = "Срок";
 $MESS["TASK_COLUMN_CREATED_BY"] = "Постановщик";
-$MESS["TASK_COLUMN_RESPONSIBLE_ID"] = "Ответственный";
+$MESS["TASK_COLUMN_RESPONSIBLE_ID_MSGVER_1"] = "Исполнитель";
 $MESS["TASK_COLUMN_PRIORITY"] = "Приоритет";
 $MESS["TASK_COLUMN_MARK"] = "Оценка";
 $MESS["TASK_COLUMN_TIME_ESTIMATE"] = "Плановые трудозатраты";

@@ -19,7 +19,8 @@
 	display: flex;
 	height: calc(100vh - 175px);
 	overflow-y: scroll;
-	scrollbar-color: #FFF #FFF;
+	scrollbar-color: #EDEEF0 transparent;
+	scrollbar-width: thin;
 }
 
 .bx-crm-ai-merge-fields-layout.hidden-footer {

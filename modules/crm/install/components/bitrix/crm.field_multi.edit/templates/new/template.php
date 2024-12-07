@@ -44,7 +44,7 @@ endif;
 <span class="bx-crm-edit-fm-add bx-crm-edit-label" onclick="BX.CrmFieldMultiEditor.items['<?= CUtil::addslashes($editorID)?>'].createItem();"><?=htmlspecialcharsbx(GetMessage('CRM_STATUS_LIST_ADD'))?></span>
 </div>
 
-<script type="text/javascript">
+<script>
 	BX.ready(
 		function()
 		{

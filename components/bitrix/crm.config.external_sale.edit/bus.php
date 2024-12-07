@@ -66,12 +66,6 @@ if ($errorMessage == '')
 		"PORT" => $crmUrlPort,
 	);
 
-	if (!defined("BX_UTF"))
-	{
-		if ($arFields["NAME"])
-			$arFields["NAME"] = CharsetConverter::ConvertCharset($arFields["NAME"], "UTF-8", SITE_CHARSET);
-	}
-
 	$res = CCrmExternalSale::Add($arFields);
 
 	if (!$res)

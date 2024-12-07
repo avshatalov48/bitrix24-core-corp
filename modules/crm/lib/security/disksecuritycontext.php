@@ -17,7 +17,13 @@ class DiskSecurityContext extends SecurityContext
 	{
 		parent::__construct($user);
 
-		$this->userPermissions = Container::getInstance()->getUserPermissions($this->getUserId());
+		$userId = $this->getUserId();
+		if ($userId === self::GUEST_USER)
+		{
+			$userId = 0;
+		}
+
+		$this->userPermissions = Container::getInstance()->getUserPermissions($userId);
 	}
 
 	public function setOptions(array $options): self

@@ -13,9 +13,9 @@ use Bitrix\Main\Type\DateTime;
  *
  * <<< ORMENTITYANNOTATION
  * @method static EO_CallerId_Query query()
- * @method static EO_CallerId_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_CallerId_Result getByPrimary($primary, array $parameters = [])
  * @method static EO_CallerId_Result getById($id)
- * @method static EO_CallerId_Result getList(array $parameters = array())
+ * @method static EO_CallerId_Result getList(array $parameters = [])
  * @method static EO_CallerId_Entity getEntity()
  * @method static \Bitrix\Voximplant\Model\EO_CallerId createObject($setDefaultValues = true)
  * @method static \Bitrix\Voximplant\Model\EO_CallerId_Collection createCollection()
@@ -34,7 +34,7 @@ class CallerIdTable extends Base
 		return [
 			new Entity\IntegerField("ID", [
 				"primary" => true,
-				"auto_complete" => true
+				"autocomplete" => true
 			]),
 			new Entity\StringField("NUMBER"),
 			new Entity\BooleanField("VERIFIED", [

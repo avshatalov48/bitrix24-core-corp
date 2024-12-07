@@ -78,10 +78,11 @@ class CBPDiskUploadActivity
 
 		if ($entityType)
 		{
-			$storage = \Bitrix\Disk\Storage::load(array(
+			$storage = \Bitrix\Disk\Storage::load([
+				'=MODULE_ID' => 'disk',
 				'=ENTITY_ID' => $entityId,
 				'=ENTITY_TYPE' => $entityType,
-			));
+			]);
 			if ($storage)
 				return $storage->getRootObject();
 		}

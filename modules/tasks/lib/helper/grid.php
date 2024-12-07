@@ -3,19 +3,20 @@
 namespace Bitrix\Tasks\Helper;
 
 use Bitrix\Main\Grid as MainGrid;
+use Bitrix\Tasks\Flow\FlowFeature;
 use Bitrix\Tasks\Grid\Scope\Scope;
 
 class Grid extends Common
 {
 	protected static ?array $instance = null;
 
-	public function getVisibleColumns(): array
+	public function getVisibleColumns(bool $isExport = false): array
 	{
 		$columns = $this->getOptions()->GetVisibleColumns();
 
 		if (empty($columns))
 		{
-			$columns = $this->getDefaultVisibleColumns();
+			$columns = $this->getDefaultVisibleColumns($isExport);
 		}
 
 		return $columns;
@@ -46,7 +47,7 @@ class Grid extends Common
 
 	public function getAllColumns(): array
 	{
-		return [
+		$columns = [
 			'ID',
 			'TITLE',
 			'DESCRIPTION',
@@ -69,6 +70,7 @@ class Grid extends Common
 			'TIME_SPENT_IN_LOGS',
 			'FLAG_COMPLETE',
 			'TAG',
+			'STAGE_ID',
 			'UF_CRM_TASK_LEAD',
 			'UF_CRM_TASK_CONTACT',
 			'UF_CRM_TASK_COMPANY',
@@ -78,6 +80,13 @@ class Grid extends Common
 			'PARENT_ID',
 			'PARENT_TITLE',
 		];
+
+		if (FlowFeature::isOn())
+		{
+			$columns[] = 'FLOW';
+		}
+
+		return $columns;
 	}
 
 	protected function resolveChangedScope(): void
@@ -87,9 +96,9 @@ class Grid extends Common
 		static::$instance[$this->id] = $this;
 	}
 
-	private function getDefaultVisibleColumns(): array
+	private function getDefaultVisibleColumns(bool $isExport = false): array
 	{
-		return [
+		$columns = [
 			'TITLE',
 			'ACTIVITY_DATE',
 			'DEADLINE',
@@ -97,6 +106,14 @@ class Grid extends Common
 			'RESPONSIBLE_NAME',
 			'GROUP_NAME',
 			'TAG',
+			'STAGE_ID',
 		];
+
+		if (!$isExport && FlowFeature::isOn())
+		{
+			$columns[] = 'FLOW';
+		}
+
+		return $columns;
 	}
 }

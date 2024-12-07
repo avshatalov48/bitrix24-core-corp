@@ -129,6 +129,10 @@ CREATE TABLE b_intranet_invitation (
   INVITATION_TYPE varchar(50),
   DATE_CREATE timestamp NOT NULL,
   INITIALIZED char(1) NOT NULL DEFAULT 'N',
+  IS_MASS char(1) NOT NULL DEFAULT 'N',
+  IS_DEPARTMENT char(1) NOT NULL DEFAULT 'N',
+  IS_INTEGRATOR char(1) NOT NULL DEFAULT 'N',
+  IS_REGISTER char(1) NOT NULL DEFAULT 'N',
   PRIMARY KEY (ID)
 );
 CREATE INDEX ix_b_intranet_invitation_date_create ON b_intranet_invitation (date_create);

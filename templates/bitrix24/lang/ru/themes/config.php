@@ -141,4 +141,16 @@ $MESS["BITRIX24_THEME_FOGGY_HORIZON"] = "Туманный горизонт";
 $MESS["BITRIX24_THEME_MYSTERIOUS_VEGA"] = "Таинственная Вега";
 $MESS["BITRIX24_THEME_PANCAKES_CAT"] = "Коту - Масленица!";
 $MESS["BITRIX24_THEME_PANCAKES"] = "Классический блин";
+$MESS["BITRIX24_THEME_VIDEO_ORION"] = "Орион (видео)";
+$MESS["BITRIX24_THEME_ORION"] = "Орион";
+$MESS["BITRIX24_THEME_VIDEO_SHINING_INTELLIGENCE"] = "Сияющий интеллект (видео)";
+$MESS["BITRIX24_THEME_SHINING_INTELLIGENCE"] = "Сияющий интеллект";
+$MESS["BITRIX24_THEME_CONTRAST_HORIZON"] = "Горизонт контрастов";
+$MESS["BITRIX24_THEME_AMETHYST_INSPIRATION"] = "Аметистовое вдохновение";
+$MESS["BITRIX24_THEME_ASTRONOMICAL_WATERCOLOR"] = "Астрономическая акварель";
+$MESS["BITRIX24_THEME_GALACTIC_DREAM"] = "Галактическая мечта";
+$MESS["BITRIX24_THEME_COSMIC_DREAMS"] = "Космические грёзы";
+$MESS["BITRIX24_THEME_SUNSET_MAGIC"] = "Магия заката";
+$MESS["BITRIX24_THEME_DAWN_HARMONY"] = "Рассветная гармония";
+$MESS["BITRIX24_THEME_NORTHERN_LIGHTS"] = "Северное сияние";
 ?>

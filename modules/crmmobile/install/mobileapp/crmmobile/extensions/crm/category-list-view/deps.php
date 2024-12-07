@@ -13,7 +13,7 @@ return [
 		'layout/ui/stage-list/actions',
 		'layout/ui/plan-restriction',
 
-		'crm:type/id',
+		'crm:type',
 		'crm:category-list',
 
 		'crm:statemanager/redux/slices/kanban-settings',

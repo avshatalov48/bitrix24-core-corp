@@ -27,7 +27,9 @@ class Tracker
 		$this->entityId = (int)$entityId;
 
 		$this->target = Factory::createTarget($entityTypeId);
-		$this->target->setEntityById($entityId);
+		$this->target->setEntityId($entityId);
+		$documentId = \CCrmOwnerType::ResolveName($this->target->getEntityTypeId()) . '_' . $entityId;
+		$this->target->setDocumentId($documentId);
 	}
 
 	public function getLog()

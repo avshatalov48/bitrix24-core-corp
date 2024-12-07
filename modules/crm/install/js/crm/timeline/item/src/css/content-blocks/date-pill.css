@@ -22,8 +22,24 @@
 	background-color: var(--ui-color-accent-yellow, #FEF3B8);
 }
 
+.crm-timeline__date-pill.--inline-group {
+	padding-left: 0;
+	color: #151515;
+	font-weight: var(--ui-font-weight-normal);
+	padding-right: 13px;
+}
+
+.crm-timeline__date-pill.--inline-group .crm-timeline__date-pill_caret {
+	right: -2px;
+}
+
 .crm-timeline__date-pill.--readonly {
 	padding-right: 9px;
+	cursor: default;
+}
+
+.crm-timeline__date-pill.--readonly.--inline-group {
+	padding-right: 0;
 	cursor: default;
 }
 

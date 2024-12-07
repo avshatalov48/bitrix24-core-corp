@@ -8,6 +8,10 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+/** @var array $arParams */
+/** @var array $arResult */
+/** @global \CMain $APPLICATION */
+
 \Bitrix\Main\UI\Extension::load([
 	'ui.design-tokens',
 	'ui.fonts.opensans',
@@ -19,14 +23,16 @@ Loc::loadLanguageFile(__FILE__);
 
 if ($arParams['FEEDBACK_TYPE'] === 'integration_request')
 {
-	$pageTitle = Loc::getMessage('SALESCENTER_FEEDBACK_INTEGRATION_REQUEST_TITLE_MSGVER_1');
+	$pageTitle = Loc::getMessage('SALESCENTER_FEEDBACK_INTEGRATION_REQUEST_TITLE_MSGVER_2');
 }
 else
 {
 	$pageTitle = Loc::getMessage('SALESCENTER_FEEDBACK_TITLE');
 }
 
-if(isset($_REQUEST["IFRAME"]) && $_REQUEST["IFRAME"] === "Y")
+$isIframe = ($_REQUEST['IFRAME'] ?? null) === 'Y';
+
+if ($isIframe)
 {
 	$APPLICATION->RestartBuffer();
 	?>
@@ -89,8 +95,10 @@ unset($arResult['domain']);
 				</script>
 			</div>
 		</div>
-<?php if(isset($_REQUEST["IFRAME"]) && $_REQUEST["IFRAME"] === "Y")
-{?>
+<?php
+if ($isIframe)
+{
+	?>
 		</body>
 	</html><?php
 	\Bitrix\Main\Application::getInstance()->terminate();

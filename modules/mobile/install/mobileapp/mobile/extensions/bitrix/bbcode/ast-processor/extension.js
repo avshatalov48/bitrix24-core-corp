@@ -12,6 +12,17 @@
 jn.define('bbcode/ast-processor', (require, exports, module) => {
 	const {Type} = require('type');
 
+	function getByIndex(array, index) {
+	  if (!Type.isArray(array)) {
+	    throw new TypeError('array is not a array');
+	  }
+	  if (!Type.isInteger(index)) {
+	    throw new TypeError('index is not a integer');
+	  }
+	  const preparedIndex = index < 0 ? array.length + index : index;
+	  return array[preparedIndex];
+	}
+
 	class AstProcessor {
 	  /**
 	   * Makes flat list from AST
@@ -87,11 +98,27 @@ jn.define('bbcode/ast-processor', (require, exports, module) => {
 	   */
 	  static findParentNode(node, selector) {
 	    if (node) {
+	      const preparedSelector = (() => {
+	        if (Type.isStringFilled(selector)) {
+	          return AstProcessor.parseSelector(selector)[0];
+	        }
+	        return selector;
+	      })();
 	      const parent = node.getParent();
-	      if (AstProcessor.matchesNodeWithSelector(parent, selector)) {
+	      if (AstProcessor.matchesNodeWithSelector(parent, preparedSelector)) {
 	        return parent;
 	      }
-	      return AstProcessor.findParentNode(parent, selector);
+	      return AstProcessor.findParentNode(parent, preparedSelector);
+	    }
+	    return null;
+	  }
+	  static findParentNodeByName(node, name) {
+	    if (node) {
+	      const parent = node.getParent();
+	      if (parent && parent.getName() === name) {
+	        return parent;
+	      }
+	      return AstProcessor.findParentNodeByName(parent, name);
 	    }
 	    return null;
 	  }
@@ -102,7 +129,7 @@ jn.define('bbcode/ast-processor', (require, exports, module) => {
 	  static findElements(ast, selector) {
 	    const flattenedAst = AstProcessor.flattenAst(ast);
 	    const parsedSelector = AstProcessor.parseSelector(selector);
-	    const lastSelector = parsedSelector.at(-1);
+	    const lastSelector = getByIndex(parsedSelector, -1);
 	    let checkClosestParent = false;
 	    return parsedSelector.reduceRight((acc, currentSelector) => {
 	      if (Type.isPlainObject(currentSelector)) {

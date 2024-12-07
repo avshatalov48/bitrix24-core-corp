@@ -250,7 +250,6 @@ else
 	if (isset($_GET['title']))
 	{
 		$arFields['~TITLE'] = $_GET['title'];
-		CUtil::decodeURIComponent($arFields['~TITLE']);
 		$arFields['TITLE'] = htmlspecialcharsbx($arFields['~TITLE']);
 	}
 

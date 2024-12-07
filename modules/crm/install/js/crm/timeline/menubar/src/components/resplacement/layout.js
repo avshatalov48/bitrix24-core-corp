@@ -36,7 +36,7 @@ export const Layout = {
 	mounted() {
 		this.showLoader(true);
 	},
-	beforeDestroy(): void
+	beforeUnmount(): void
 	{
 		this.$Bitrix.eventEmitter.unsubscribe(ITEM_ACTION_EVENT, this.onActionEvent);
 	},

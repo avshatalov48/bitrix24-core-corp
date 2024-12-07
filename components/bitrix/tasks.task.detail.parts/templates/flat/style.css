@@ -24,3 +24,7 @@
 	max-width: 300px;
 	display: inline-block !important;
 }
+
+.tasks-log-pseudo-link {
+	cursor: pointer;
+}

@@ -1,7 +1,7 @@
 <?php
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
 global $APPLICATION;
-$APPLICATION->AddHeadString('<script type="text/javascript" src="' . CUtil::GetAdditionalFileURL(SITE_TEMPLATE_PATH . '/crm_mobile.js') . '"></script>', true, \Bitrix\Main\Page\AssetLocation::AFTER_JS_KERNEL);
+$APPLICATION->AddHeadString('<script src="' . CUtil::GetAdditionalFileURL(SITE_TEMPLATE_PATH . '/crm_mobile.js') . '"></script>', true, \Bitrix\Main\Page\AssetLocation::AFTER_JS_KERNEL);
 $APPLICATION->SetPageProperty('BodyClass', 'crm-page');
 
 $UID = $arResult['UID'];
@@ -26,7 +26,7 @@ $dispatcherData = array();
 	unset($item);
 ?></ul></div>
 
-<script type="text/javascript">
+<script>
 	BX.ready(
 		function()
 		{

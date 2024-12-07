@@ -1655,15 +1655,23 @@
 
 .crm-wait-popup-settings-title {
 	display: inline-block;
-	margin-right: 10px;
 	color: #80868e;
 	font-size: 13px;
+}
+
+.crm-wait-duration-input-container,
+.crm-wait-target-date-container {
+	display: inline-block;
+	margin: 0 6px;
+}
+
+.crm-wait-target-date-container {
+	color: #333;
 }
 
 .crm-wait-popup-settings-input {
 	display: inline-block;
 	overflow: hidden;
-	margin: 0 10px 0 0;
 	padding: 0 5px;
 	width: 30px;
 	height: 36px;
@@ -2734,7 +2742,7 @@ table.blogquote td {
 /*endregion*/
 
 /* Popup menu window */
-.crm-timeline-popup-menu-item-disabled { opacity: .7 }
+.crm-timeline-popup-menu-item-disabled { opacity: .5 }
 
 .crm-timeline-wait {
 	display: block;

@@ -22,6 +22,7 @@ $APPLICATION->includeComponent(
 	'',
 	[
 		'COLLECTION' => $arResult["VARIABLES"]["collection"],
+		'CURRENT_PAGE' => $arResult['CURRENT_PAGE'],
 		'IS_COLLECTION' => 'Y',
 	]
 );

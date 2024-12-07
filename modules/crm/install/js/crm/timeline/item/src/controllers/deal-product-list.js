@@ -1,8 +1,8 @@
 import ConfigurableItem from '../configurable-item';
 import type {ActionParams} from './base';
-import {BaseEvent, EventEmitter} from 'main.core.events';
+import {EventEmitter} from 'main.core.events';
 import {UI} from 'ui.notification';
-import {ajax as Ajax, Loc} from 'main.core';
+import {Loc} from 'main.core';
 import {ActionAnimationCallbacks, Base} from './base';
 import ExpandableList from '../components/content-blocks/expandable-list/list';
 
@@ -65,13 +65,8 @@ export class DealProductList extends Base
 
 	#addProductToDeal(actionData: ?Object, animationCallbacks: ?ActionAnimationCallbacks): void
 	{
-		if (
-			!(
-				actionData
-				&& actionData.dealId
-				&& actionData.productId
-			)
-		) {
+		if (!(actionData && actionData.productId))
+		{
 			return;
 		}
 
@@ -80,51 +75,20 @@ export class DealProductList extends Base
 			animationCallbacks.onStart();
 		}
 
-		Ajax.runAction(
-			'crm.timeline.dealproduct.addtodeal',
-			{
-				data: {
-					dealId: actionData.dealId,
-					productId: actionData.productId,
-					options: actionData.options || {},
-				}
-			}
-		).then(() => {
-			BX.Crm.EntityEditor.getDefault().reload();
-			if (this.#productsGrid)
-			{
-				this.#productsGrid.reloadGrid(false);
-			}
+		BX.onCustomEvent('onAddViewedProductToDeal', [actionData.productId]);
 
-			UI.Notification.Center.notify({
-				content: Loc.getMessage('CRM_TIMELINE_ENCOURAGE_BUY_PRODUCTS_PRODUCTS_ADDED_TO_DEAL'),
-				actions: [
-					{
-						title: Loc.getMessage('CRM_TIMELINE_ENCOURAGE_BUY_PRODUCTS_EDIT_PRODUCTS'),
-						events: {
-							click: (event, balloon, action) => {
-								BX.onCustomEvent(window, 'OpenEntityDetailTab', ['tab_products']);
-								balloon.close();
-							},
-						},
-					},
-				],
-				autoHideDelay: 5000,
-			});
+		setTimeout(() => {
+			BX.onCustomEvent('OpenEntityDetailTab', ['tab_products']);
+		}, 500);
 
-			this.#item.reloadFromServer().then(() => {
-				if (animationCallbacks.onStop)
-				{
-					animationCallbacks.onStop();
-				}
-			});
-		}, response => {
-			if (animationCallbacks.onStop)
-			{
-				animationCallbacks.onStop();
-			}
-
-			return true;
+		UI.Notification.Center.notify({
+			content: Loc.getMessage('CRM_TIMELINE_ENCOURAGE_BUY_PRODUCTS_PRODUCTS_ADDED_TO_DEAL'),
+			autoHideDelay: 5000,
 		});
+
+		if (animationCallbacks.onStop)
+		{
+			animationCallbacks.onStop();
+		}
 	}
 }

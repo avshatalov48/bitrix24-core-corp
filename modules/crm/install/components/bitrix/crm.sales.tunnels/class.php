@@ -29,20 +29,6 @@ class SalesTunnels extends Bitrix\Crm\Component\Base implements Controllerable
 	/** @var Crm\Automation\TunnelManager */
 	protected $tunnelManager;
 
-	protected function addError(Error $error): self
-	{
-		$this->errorCollection[] = $error;
-
-		return $this;
-	}
-
-	protected function addErrors(array $errors): self
-	{
-		$this->errorCollection->add($errors);
-
-		return $this;
-	}
-
 	public function onPrepareComponentParams($arParams): array
 	{
 		$this->fillParameterFromRequest('entityTypeId', $arParams);
@@ -78,7 +64,7 @@ class SalesTunnels extends Bitrix\Crm\Component\Base implements Controllerable
 			return;
 		}
 
-		if(!$this->userPermissions->canWriteConfig())
+		if(!$this->userPermissions->isAdminForEntity($this->factory->getEntityTypeId()))
 		{
 			$this->addError(new Error(Loc::getMessage('CRM_SALES_TUNNELS_ACCESS_DENIED2')));
 
@@ -204,9 +190,10 @@ class SalesTunnels extends Bitrix\Crm\Component\Base implements Controllerable
 
 			$category['STAGES'] = $reducedStages;
 
+			$categoryId = $this->factory->isCategoriesSupported() ? $category['ID'] : 0;
 			$permissionEntityName = $this->userPermissions::getPermissionEntityType(
 				$this->factory->getEntityTypeId(),
-				$category['ID']
+				$categoryId
 			);
 
 			$permissions = Crm\Security\Role\RolePermission::getByEntityId($permissionEntityName);
@@ -338,19 +325,22 @@ class SalesTunnels extends Bitrix\Crm\Component\Base implements Controllerable
 
 	private function isCategoryEditable()
 	{
-		return Crm\Service\Container::getInstance()->getUserPermissions()->canWriteConfig()
-			&& $this->factory->getEntityTypeId() !== \CCrmOwnerType::Lead;
+		$entityTypeId = $this->factory->getEntityTypeId();
+		return Crm\Service\Container::getInstance()->getUserPermissions()->isAdminForEntity($entityTypeId)
+			&& $entityTypeId !== \CCrmOwnerType::Lead;
 	}
 
 	private function isCategoryCreatable()
 	{
-		return Crm\Service\Container::getInstance()->getUserPermissions()->canWriteConfig()
-			&& $this->factory->getEntityTypeId() !== \CCrmOwnerType::Lead;
+		$entityTypeId = $this->factory->getEntityTypeId();
+		return Crm\Service\Container::getInstance()->getUserPermissions()->isAdminForEntity($entityTypeId)
+			&& $entityTypeId !== \CCrmOwnerType::Lead;
 	}
 
 	private function areStagesEditable()
 	{
-		return Crm\Service\Container::getInstance()->getUserPermissions()->canWriteConfig();
+		$entityTypeId = $this->factory->getEntityTypeId();
+		return Crm\Service\Container::getInstance()->getUserPermissions()->isAdminForEntity($entityTypeId);
 	}
 
 	private function isAutomationEnabled()
@@ -511,14 +501,13 @@ HTML;
 	public function accessCategoryAction(array $data = []): void
 	{
 		$this->init();
-		if($this->getErrors())
+		if ($this->getErrors())
 		{
 			return;
 		}
-		$permissionEntity = $this->userPermissions::getPermissionEntityType(
-			$this->factory->getEntityTypeId(),
-			(int)$data['id']
-		);
+		$entityTypeId = $this->factory->getEntityTypeId();
+		$categoryId = (int)$data['id'];
+
 		$isNewPermissionsCorrect = in_array(
 			$data['access'],
 			[$this->userPermissions::PERMISSION_ALL, $this->userPermissions::PERMISSION_SELF],
@@ -526,14 +515,11 @@ HTML;
 		);
 		$newPermissions = $isNewPermissionsCorrect
 			? $data['access']
-			: BX_CRM_PERM_NONE;
-		$permissions = \CCrmRole::GetDefaultPermissionSet();
-		foreach ($permissions as $key => $permission)
-		{
-			$permissions[$key]["-"] = $newPermissions;
-		}
+			: BX_CRM_PERM_NONE
+		;
 
-		$result = RolePermission::setByEntityIdForAllNotAdminRoles($permissionEntity, $permissions);
+		$result = Crm\Category\CategoryPermissionsManager::getInstance()->setPermissions(new \Bitrix\Crm\CategoryIdentifier($entityTypeId, $categoryId), $newPermissions);
+
 		if (!$result->isSuccess())
 		{
 			$this->addErrors($result->getErrors());
@@ -551,17 +537,12 @@ HTML;
 		{
 			return;
 		}
-		$permissionEntity = $this->userPermissions::getPermissionEntityType(
-			$this->factory->getEntityTypeId(),
-			(int)$data['id']
-		);
-		$donorPermissionEntity = $this->userPermissions::getPermissionEntityType(
-			$this->factory->getEntityTypeId(),
-			(int)$data['donorId']
-		);
-		$permissionSet = RolePermission::getByEntityId($donorPermissionEntity);
 
-		$result = RolePermission::setByEntityId($permissionEntity, $permissionSet, true);
+		$result = Crm\Category\CategoryPermissionsManager::getInstance()->copyPermissions(
+			new \Bitrix\Crm\CategoryIdentifier($this->factory->getEntityTypeId(), (int)$data['donorId']),
+			new \Bitrix\Crm\CategoryIdentifier($this->factory->getEntityTypeId(), (int)$data['id']),
+		);
+
 		if (!$result->isSuccess())
 		{
 			$this->addErrors($result->getErrors());

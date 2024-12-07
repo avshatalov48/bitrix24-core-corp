@@ -175,6 +175,7 @@ jn.define('testing/matchers', (require, exports, module) => {
 			try
 			{
 				this.actualValue();
+
 				return false;
 			}
 			catch (error)
@@ -190,6 +191,24 @@ jn.define('testing/matchers', (require, exports, module) => {
 
 				return true;
 			}
+		}
+	}
+
+	class AsyncExceptionMatcher extends ExceptionMatcher
+	{
+		match()
+		{
+			if (typeof this.expectedValue === 'function')
+			{
+				return this.actualValue instanceof this.expectedValue;
+			}
+
+			if (typeof this.expectedValue === 'string')
+			{
+				return this.expectedValue === this.actualValue;
+			}
+
+			return true;
 		}
 	}
 
@@ -294,6 +313,7 @@ jn.define('testing/matchers', (require, exports, module) => {
 		ExactMatcher,
 		EqualityMatcher,
 		ExceptionMatcher,
+		AsyncExceptionMatcher,
 		DefinedMatcher,
 		NullMatcher,
 		BooleanMatcher,

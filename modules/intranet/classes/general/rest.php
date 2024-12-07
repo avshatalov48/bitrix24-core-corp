@@ -15,6 +15,8 @@ class CIntranetRestService extends IRestService
 		"ID", "NAME", "SORT", "IBLOCK_SECTION_ID", "UF_HEAD"
 	);
 
+	private static bool $checkAccess = true;
+
 	public static function OnRestServiceBuildDescription()
 	{
 		$result = array(
@@ -138,23 +140,26 @@ class CIntranetRestService extends IRestService
 
 			$params = array_change_key_case($params, CASE_UPPER);
 
-			$arFields = array(
-				'IBLOCK_ID' => self::getDeptIblock(),
-				'NAME' => $params['NAME'] ?? null,
-				'SORT' => $params['SORT'] ?? null,
-				'IBLOCK_SECTION_ID' => $params['PARENT'] ?? null,
-				'UF_HEAD' => $params['UF_HEAD'] ?? null
-			);
+			try
+			{
+				$departmentRepository = \Bitrix\Intranet\Service\ServiceContainer::getInstance()
+					->departmentRepository();
+				$department = new \Bitrix\Intranet\Entity\Department(
+					$params['NAME'] ?? '',
+					parentId: $params['PARENT'] ?? null,
+					sort: (int)$params['SORT'] > 0 ? (int)$params['SORT'] : null,
+				);
+				$department = $departmentRepository->save($department);
+				if (isset($params['UF_HEAD']) && (int)$params['UF_HEAD'] > 0)
+				{
+					$departmentRepository->setHead($department->getId(), (int)$params['UF_HEAD']);
+				}
 
-			$ob = new CIBlockSection();
-			$section = $ob->Add($arFields);
-			if($section > 0)
-			{
-				return $section;
+				return $department->getId();
 			}
-			else
+			catch (\Exception $exception)
 			{
-				throw new Exception($ob->LAST_ERROR);
+				throw new Exception($exception->getMessage());
 			}
 		}
 		else
@@ -171,27 +176,24 @@ class CIntranetRestService extends IRestService
 
 			$params = array_change_key_case($params, CASE_UPPER);
 
-			$arDept = self::getDepartment($params['ID']);
-			if(is_array($arDept))
+			$departmentRepository = \Bitrix\Intranet\Service\ServiceContainer::getInstance()
+				->departmentRepository();
+			$oldDepartment = $departmentRepository->getById((int)$params['ID']);
+
+			if($oldDepartment)
 			{
-				$arFields = array();
-
-				if(isset($params['NAME']))
-					$arFields['NAME'] = $params['NAME'];
-				if(isset($params['SORT']))
-					$arFields['SORT'] = $params['SORT'];
-				if(isset($params['PARENT']))
-					$arFields['IBLOCK_SECTION_ID'] = $params['PARENT'];
+				$department = new \Bitrix\Intranet\Entity\Department(
+					$params['NAME'] ?? $oldDepartment->getName(),
+					id: $oldDepartment->getId(),
+					parentId: $params['PARENT'] ?? $oldDepartment->getParentId(),
+					sort: (int)$params['SORT'] > 0 ? (int)$params['SORT'] : null,
+				);
+				$departmentRepository = \Bitrix\Intranet\Service\ServiceContainer::getInstance()
+					->departmentRepository();
+				$departmentRepository->save($department);
 				if(isset($params['UF_HEAD']))
-					$arFields['UF_HEAD'] = $params['UF_HEAD'];
-
-				if(count($arFields) > 0)
 				{
-					$ob = new CIBlockSection();
-					if(!$ob->Update($arDept['ID'], $arFields))
-					{
-						throw new Exception($ob->LAST_ERROR);
-					}
+					$departmentRepository->setHead($department->getId(), (int)$params['UF_HEAD']);
 				}
 
 				return true;
@@ -218,11 +220,9 @@ class CIntranetRestService extends IRestService
 			$arDept = self::getDepartment($params['ID']);
 			if(is_array($arDept))
 			{
-				$ob = new CIBlockSection();
-				if(!$ob->Delete($arDept['ID']))
-				{
-					throw new Exception($ob->LAST_ERROR);
-				}
+				$departmentRepository = \Bitrix\Intranet\Service\ServiceContainer::getInstance()
+					->departmentRepository();
+				$departmentRepository->delete((int)$arDept['ID']);
 
 				return true;
 			}
@@ -339,11 +339,11 @@ class CIntranetRestService extends IRestService
 		$ID = intval($ID);
 		if($ID > 0)
 		{
-			$dbRes = CIBlockSection::GetList(array(), array(
-				'ID' => $ID,
-				'IBLOCK_ID' => self::getDeptIblock()
-			), false, array('ID'));
-			return $dbRes->Fetch();
+			$departmentRepository = \Bitrix\Intranet\Service\ServiceContainer::getInstance()
+				->departmentRepository();
+			$department = $departmentRepository->getById($ID);
+
+			return $department ? ['ID' => $department->getId()] : false;
 		}
 
 		return false;
@@ -351,8 +351,23 @@ class CIntranetRestService extends IRestService
 
 	protected static function canEdit()
 	{
+		if (!self::isCheckAccess())
+		{
+			return true;
+		}
+
 		CModule::IncludeModule('iblock');
 		$perm = CIBlock::GetPermission(self::getDeptIblock());
 		return $perm  >= 'U';
+	}
+
+	public static function isCheckAccess(): bool
+	{
+		return self::$checkAccess;
+	}
+
+	public static function setCheckAccess(bool $checkAccess): void
+	{
+		self::$checkAccess = $checkAccess;
 	}
 }

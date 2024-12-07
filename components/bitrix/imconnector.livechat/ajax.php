@@ -70,7 +70,6 @@ class ImConnectorLiveChatAjaxController
 			'CONFIG_ID' => intval($this->request->get('CONFIG_ID')),
 			'ALIAS' => $this->request->get('ALIAS')
 		);
-		\CUtil::decodeURIComponent($this->requestData);
 	}
 
 	protected function giveResponse()

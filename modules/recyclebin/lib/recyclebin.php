@@ -5,6 +5,7 @@ namespace Bitrix\Recyclebin;
 use Bitrix\Main\AccessDeniedException;
 use Bitrix\Main\Event;
 use Bitrix\Main\EventResult;
+use Bitrix\Main\Result;
 use Bitrix\Recyclebin\Internals\Entity;
 use Bitrix\Recyclebin\Internals\Models\RecyclebinDataTable;
 use Bitrix\Recyclebin\Internals\Models\RecyclebinFileTable;
@@ -30,12 +31,23 @@ class Recyclebin
 
 		if (!class_exists($handler))
 		{
-			return null;
+			return new Result();
 		}
 
 		$result = call_user_func([$handler, 'moveFromRecyclebin'], $entity);
 
-		if ($result)
+		$canRemoveRecyclebinInternal = true;
+		if (!($result instanceof Result))
+		{
+			$canRemoveRecyclebinInternal = (bool)$result;
+		}
+
+		if ($result instanceof Result && !$result->isSuccess())
+		{
+			$canRemoveRecyclebinInternal = false;
+		}
+
+		if ($canRemoveRecyclebinInternal)
 		{
 			self::removeRecyclebinInternal($recyclebinId);
 		}
@@ -201,12 +213,23 @@ class Recyclebin
 
 		if (!class_exists($handler))
 		{
-			return null;
+			return new Result();
 		}
 
 		$result = call_user_func([$handler, 'removeFromRecyclebin'], $entity, $params);
 
-		if ($result)
+		$canRemoveRecyclebinInternal = true;
+		if (!($result instanceof Result))
+		{
+			$canRemoveRecyclebinInternal = (bool)$result;
+		}
+
+		if ($result instanceof Result && !$result->isSuccess())
+		{
+			$canRemoveRecyclebinInternal = false;
+		}
+
+		if ($canRemoveRecyclebinInternal)
 		{
 			self::removeRecyclebinInternal($recyclebinId);
 		}

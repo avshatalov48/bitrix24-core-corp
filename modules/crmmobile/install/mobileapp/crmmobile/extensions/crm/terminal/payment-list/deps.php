@@ -10,7 +10,6 @@ return [
 		'layout/pure-component',
 		'layout/ui/empty-screen',
 		'layout/ui/stateful-list',
-		'crm:terminal/payment-details',
 		'crm:terminal/payment-create',
 		'crm:terminal/payment-pay',
 		'pull/client/events',
@@ -22,6 +21,6 @@ return [
 		'assets/common',
 		'layout/ui/search-bar',
 		'layout/ui/kanban/filter',
-		'crm:type/name',
+		'crm:type',
 	],
 ];

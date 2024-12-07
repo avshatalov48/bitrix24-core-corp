@@ -8,7 +8,6 @@
 
 namespace Bitrix\Crm\Tracking;
 
-use Bitrix\Main\Text\Encoding;
 use Bitrix\Main\Web\Json;
 use Bitrix\Rest\RestException;
 
@@ -87,8 +86,7 @@ class Rest
 
 		try
 		{
-			$traceString = Encoding::convertEncoding($trace, SITE_CHARSET, 'UTF-8');
-			Json::decode($traceString);
+			Json::decode($trace);
 		}
 		catch (\Exception $exception)
 		{

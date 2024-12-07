@@ -63,7 +63,7 @@ $MESS["WD_DISK_LEARNING_TITLE"] = "Что это такое?";
 $MESS["WD_DISK_LEARNING_TEXT"] = "Узнайте обо всех возможностях Битрикс 24.Диск в ознакомительном видеоролике.";
 $MESS["WD_DISK_LEARNING_BUTTON"] = "Узнать больше";
 $MESS["WD_DISK_VIDEO_WINDOW_TITLE"] = "Работа с файлами и документами";
-$MESS["WD_DISK_LEARNING_URL"] = "http://dev.1c-bitrix.ru/learning/course/index.php?COURSE_ID=52&LESSON_ID=3730";
+$MESS["WD_DISK_LEARNING_URL"] = "https://dev.1c-bitrix.ru/learning/course/index.php?COURSE_ID=52&LESSON_ID=3730";
 $MESS["WD_DISK_HISTORY_TITLE"] = "История загрузок";
 $MESS["WD_DISK_HISTORY_DEFAULT_TEXT"] = "Добавьте файлы в свой Битрикс24.Диск, чтобы работать с ними где бы вы ни находились и с любого устройства";
 $MESS["WD_DISK_HISTORY_OPEN_DISK"] = "Открыть Мой диск";

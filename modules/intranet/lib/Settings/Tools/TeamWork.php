@@ -3,6 +3,7 @@
 namespace Bitrix\Intranet\Settings\Tools;
 
 use Bitrix\Intranet\UI\LeftMenu\Preset;
+use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ModuleManager;
@@ -43,6 +44,15 @@ class TeamWork extends Tool
 			'mail' => '/mail/',
 			'instant_messenger' => '/online/',
 		];
+	}
+
+	public function getSubgroupNameById(string $id): string
+	{
+		return match ($id) {
+			'instant_messenger' => Loc::getMessage('INTRANET_SETTINGS_TOOLS_TEAMWORK_SUBGROUP_MESSENGER'),
+			'news' => Loc::getMessage('INTRANET_SETTINGS_TOOLS_TEAMWORK_SUBGROUP_NEWS_FEED'),
+			default => Loc::getMessage('INTRANET_SETTINGS_TOOLS_TEAMWORK_SUBGROUP_' . strtoupper($id)),
+		};
 	}
 
 	protected function getSubgroupSettingsTitle(): array
@@ -91,7 +101,6 @@ class TeamWork extends Tool
 
 	public function getSubgroups(): array
 	{
-		global $USER;
 		$result = [];
 
 		$settingsPath = $this->getSubgroupSettingsPath();
@@ -116,12 +125,12 @@ class TeamWork extends Tool
 			}
 
 			$result[$id] = [
-				'name' => Loc::getMessage('INTRANET_SETTINGS_TOOLS_TEAMWORK_SUBGROUP_' . strtoupper($id)),
+				'name' => $this->getSubgroupNameById($id),
 				'id' => $id,
 				'code' => $this->getSubgroupCode($id),
 				'enabled' => $this->isEnabledSubgroupById($id),
 				'menu_item_id' => $menuId,
-				'settings_path' => !empty($settingsPath[$id]) ? str_replace("#USER_ID#", $USER->GetID(), $settingsPath[$id]) : null,
+				'settings_path' => !empty($settingsPath[$id]) ? str_replace("#USER_ID#", CurrentUser::get()->getId(), $settingsPath[$id]) : null,
 				'settings_title' => $settingsTitle[$id] ?? null,
 			];
 		}

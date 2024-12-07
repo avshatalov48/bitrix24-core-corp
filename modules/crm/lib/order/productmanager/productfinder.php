@@ -73,11 +73,6 @@ trait ProductFinder
 	 */
 	protected function searchProduct(array $searchableProduct, array $productList)
 	{
-		if ((int)$searchableProduct['PRODUCT_ID'] === 0)
-		{
-			return false;
-		}
-
 		foreach ($productList as $index => $item)
 		{
 			if (

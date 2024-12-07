@@ -6,8 +6,8 @@ jn.define('crm/entity-detail/component/smart-activity-menu-item', (require, expo
 	const { getEntityMessage } = require('crm/loc');
 	const { Haptics } = require('haptics');
 	const { Loc } = require('loc');
-
-	const pathToIcons = `${currentDomain}/bitrix/mobileapp/crmmobile/components/crm/crm.entity.details/icons/`;
+	const { ContextMenu } = require('layout/ui/context-menu');
+	const { Icon } = require('ui-system/blocks/icon');
 
 	const getSmartActivityMenuItem = (checked, entityTypeId) => ({
 		id: 'smartActivityItem',
@@ -24,7 +24,7 @@ jn.define('crm/entity-detail/component/smart-activity-menu-item', (require, expo
 		},
 		title: Loc.getMessage('M_CRM_ACTION_SMART_ACTIVITY2'),
 		checked,
-		iconUrl: `${pathToIcons}smart_activities.png`,
+		icon: Icon.SMART_ACTIVITY,
 	});
 
 	const askDisableSmartActivity = (entityTypeId) => {

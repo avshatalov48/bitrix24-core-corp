@@ -3,7 +3,8 @@
  */
 jn.define('crm/selector/utils/processing', (require, exports, module) => {
 	const { isEmpty } = require('utils/object');
-	const TYPE_ADVANCED_INFO = new Set(['EMAIL', 'PHONE', 'IM']);
+	const { Type } = require('crm/type');
+	const TYPE_ADVANCED_INFO = ['EMAIL', 'PHONE', 'IM'];
 
 	/**
 	 * @class SelectorProcessing
@@ -12,7 +13,16 @@ jn.define('crm/selector/utils/processing', (require, exports, module) => {
 	{
 		static prepareContact(secondaryData)
 		{
-			const { id, title, type, desc, hidden = false, advancedInfo = {}, notFound = false } = secondaryData;
+			const {
+				id,
+				title,
+				type,
+				desc,
+				hidden = false,
+				advancedInfo = {},
+				notFound = false,
+				modelMultiFieldData,
+			} = secondaryData;
 
 			const params = {
 				id: Number(id),
@@ -52,16 +62,16 @@ jn.define('crm/selector/utils/processing', (require, exports, module) => {
 			{
 				multiFields.forEach(({ TITLE = '', TYPE_ID, VALUE_TYPE, COMPLEX_NAME, VALUE_FORMATTED }) => {
 					const key = TYPE_ID.toLowerCase();
-					if (TYPE_ADVANCED_INFO.has(TYPE_ID) && VALUE_FORMATTED)
+					if (TYPE_ADVANCED_INFO.includes(TYPE_ID) && VALUE_FORMATTED)
 					{
-						const fieldValue = {
-							title: TITLE,
-							value: VALUE_FORMATTED,
-							complexName: COMPLEX_NAME,
-							valueType: VALUE_TYPE,
-						};
+						const fieldValue = SelectorProcessing.prepareValue({
+							TITLE,
+							VALUE: VALUE_FORMATTED,
+							COMPLEX_NAME,
+							VALUE_TYPE,
+						});
 
-						if (params.hasOwnProperty(key))
+						if (key in params)
 						{
 							params[key].push(fieldValue);
 						}
@@ -72,10 +82,56 @@ jn.define('crm/selector/utils/processing', (require, exports, module) => {
 					}
 				});
 			}
+			// for hidden contacts
+			else if (modelMultiFieldData)
+			{
+				const entityTypeId = Type.resolveIdByName(type);
+				const connectionId = `${entityTypeId}_${id}`;
+				const entityInfo = SelectorProcessing.getMultiFieldClientInfo(modelMultiFieldData, connectionId);
+
+				Object.keys(entityInfo).forEach((key) => {
+					if (key in params)
+					{
+						params[key].push(...entityInfo[key]);
+					}
+					else
+					{
+						params[key] = entityInfo[key];
+					}
+				});
+			}
 
 			return params;
 		}
+
+		static getMultiFieldClientInfo(multiFieldData, connectionId)
+		{
+			const contactsInfo = {};
+
+			TYPE_ADVANCED_INFO.forEach((connectionType) => {
+				const connectionsByType = multiFieldData?.[connectionType]?.[connectionId] ?? [];
+
+				if (connectionsByType.length > 0)
+				{
+					contactsInfo[connectionType.toLowerCase()] = connectionsByType
+						.map((value) => SelectorProcessing.prepareValue(value))
+						.filter(Boolean);
+				}
+			});
+
+			return contactsInfo;
+		}
+
+		static prepareValue(data)
+		{
+			return {
+				title: data.TITLE,
+				value: data.VALUE,
+				complexName: data.COMPLEX_NAME,
+				valueType: data.VALUE_TYPE,
+			};
+		}
 	}
 
-	module.exports = { SelectorProcessing };
+	module.exports = { SelectorProcessing, TYPE_ADVANCED_INFO };
 });

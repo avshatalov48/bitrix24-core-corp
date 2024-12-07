@@ -382,7 +382,7 @@ abstract class EntityBase
 
 	private function getTopIdsFromPermissions(\CCrmPerms $userPermissions, $limit, $sortOrder = 'asc', array $categories = [0]): array
 	{
-		$optionBuilder = new OptionsBuilder(new Result\RawQueryResult(
+		$optionBuilder = new OptionsBuilder(new Result\RawQueryObserverUnionResult(
 			order: (string)$sortOrder,
 			limit: (int)$limit,
 			useDistinct: $limit > 1

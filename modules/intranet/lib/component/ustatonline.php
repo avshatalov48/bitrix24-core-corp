@@ -480,6 +480,7 @@ class UstatOnline extends \CBitrixComponent implements \Bitrix\Main\Engine\Contr
 		$currentDate = $currentDate->getTimestamp();
 
 		$option = Option::get('intranet', 'ustat_online_users', '');
+		$isChanged = false;
 		if (!empty($option))
 		{
 			$data = unserialize($option, ["allowed_classes" => false]);
@@ -488,6 +489,7 @@ class UstatOnline extends \CBitrixComponent implements \Bitrix\Main\Engine\Contr
 
 			if ($currentDate > $optionDate)
 			{
+				$isChanged = true;
 				$newValue = [
 					"date" => $currentDate,
 					"userIds" => $this->arResult['ONLINE_USERS_ID']
@@ -495,18 +497,27 @@ class UstatOnline extends \CBitrixComponent implements \Bitrix\Main\Engine\Contr
 			}
 			else
 			{
-				$newValue["userIds"] = array_unique(array_merge($data["userIds"], $this->arResult['ONLINE_USERS_ID']));
+				$diffAr = array_diff($data["userIds"], $this->arResult['ONLINE_USERS_ID']);
+				if (count($diffAr) > 0)
+				{
+					$isChanged = true;
+					$newValue["userIds"] = array_unique(array_merge($data["userIds"], $this->arResult['ONLINE_USERS_ID']));
+				}
 			}
 		}
 		else
 		{
+			$isChanged = true;
 			$newValue = [
 				"date" => $currentDate,
 				"userIds" => $this->arResult['ONLINE_USERS_ID']
 			];
 		}
 
-		Option::set('intranet', 'ustat_online_users', serialize($newValue));
+		if ($isChanged)
+		{
+			Option::set('intranet', 'ustat_online_users', serialize($newValue));
+		}
 
 		$this->arResult["MAX_ONLINE_USER_COUNT_TODAY"] = count($newValue["userIds"]);
 		$this->arResult["ALL_ONLINE_USER_ID_TODAY"] = $this->arResult['ONLINE_USERS_ID'];

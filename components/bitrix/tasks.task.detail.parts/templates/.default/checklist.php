@@ -9,7 +9,7 @@ $APPLICATION->SetAdditionalCSS("/bitrix/js/intranet/intranet-common.css");
 
 
 <div class="task-detail-checklist" id="task-detail-checklist-scope">
-	<script type="text/javascript">
+	<script>
 		BX.message({
 			TASKS_DETAIL_CHECKLIST : '<?php echo GetMessageJS('TASKS_DETAIL_CHECKLIST'); ?>',
 			TASKS_DETAIL_CHECKLIST_DETAILED : '<?php echo GetMessageJS('TASKS_DETAIL_CHECKLIST_DETAILED'); ?>'
@@ -23,7 +23,7 @@ $APPLICATION->SetAdditionalCSS("/bitrix/js/intranet/intranet-common.css");
 	<div id="task-detail-checklist-items" style="position: relative;">
 		<div id="task-detail-checklist-top-land-zone" style="height:3px;">
 		</div>
-		<script type="text/javascript">
+		<script>
 		(function(){
 			BX.ready(function(){
 				window.jsDD.Reset();
@@ -41,7 +41,7 @@ $APPLICATION->SetAdditionalCSS("/bitrix/js/intranet/intranet-common.css");
 	{
 		echo '<div id="task-detail-checklist-items-loader">' . GetMessage('TASKS_DETAIL_CHECKLIST_LOADING') . '</div>';
 
-		?><script type="text/javascript">
+		?><script>
 		(function(){
 			BX.ready(function(){
 				window.jsDD.Reset();

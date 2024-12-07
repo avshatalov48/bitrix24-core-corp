@@ -72,11 +72,6 @@ trait AjaxProcessorTrait
 			}
 		}
 
-		if (!empty($files))
-		{
-			\CUtil::decodeURIComponent($files);
-		}
-
 		return $files;
 	}
 

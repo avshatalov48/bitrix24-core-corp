@@ -14,4 +14,5 @@ class EntityOperation
 	public const UPDATE = 'UPDATE';
 	public const DELETE = 'DELETE';
 	public const REPLY = 'REPLY';
+	public const ADD_TO_FLOW_WITH_MANUAL_DISTRIBUTION = 'ADD_TO_FLOW_WITH_MANUAL_DISTRIBUTION';
 }

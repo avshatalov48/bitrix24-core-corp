@@ -18,6 +18,7 @@ return [
 		'native/contacts',
 		'notify',
 		'notify-manager',
+		'ui-system/blocks/icon',
 		'utils/prop',
 		'utils/object',
 		'utils/string',

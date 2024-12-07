@@ -1,0 +1,22 @@
+
+.bx-crm-perms-edit-permission_control {
+
+}
+
+.bx-crm-perms-edit-permission_control-text {
+	border-bottom: 1px dashed #999;
+	color: #333;
+	cursor: pointer;
+	display: inline;
+	padding: 0 1px;
+}
+
+.bx-crm-perms-edit-permission_control-text.--readonly {
+	color: #838383;
+	border-bottom: 0;
+	cursor: default;
+}
+
+.bx-crm-perms-edit-permission_control-text.--inherited {
+	color: #838383;
+}

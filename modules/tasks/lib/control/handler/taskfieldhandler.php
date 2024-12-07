@@ -5,11 +5,14 @@ namespace Bitrix\Tasks\Control\Handler;
 use Bitrix\Main\Entity\DatetimeField;
 use Bitrix\Main\Loader;
 use Bitrix\Main\LoaderException;
+use Bitrix\Main\ObjectException;
 use Bitrix\Main\Text\Emoji;
-use Bitrix\Tasks\Access\ActionDictionary;
-use Bitrix\Tasks\Access\TaskAccessController;
 use Bitrix\Tasks\Control\Handler\Exception\TaskFieldValidateException;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Tasks\Flow\Control\Task\Exception\FlowTaskException;
+use Bitrix\Tasks\Flow\Control\Task\Field\FlowFieldHandler;
+use Bitrix\Tasks\Flow\Provider\Exception\FlowNotFoundException;
+use Bitrix\Tasks\Integration\Bitrix24;
 use Bitrix\Tasks\Integration\Intranet\Department;
 use Bitrix\Tasks\Internals\Helper\Task\Dependence;
 use Bitrix\Tasks\Internals\Registry\TaskRegistry;
@@ -29,14 +32,23 @@ use Bitrix\Tasks\Replication\Repository\TaskRepository;
 use Bitrix\Tasks\Util;
 use Bitrix\Tasks\Util\Type\DateTime;
 use Bitrix\Tasks\Util\User;
+use CTimeZone;
+use Throwable;
 
 class TaskFieldHandler
 {
 	private $taskId;
+	private array $skipTimeZoneFields = [];
 
 	public function __construct(private int $userId, private array $fields = [], private ?array $taskData = null)
 	{
 		$this->setTaskId();
+	}
+
+	public function skipTimeZoneFields(string ...$fields): static
+	{
+		$this->skipTimeZoneFields = $fields;
+		return $this;
 	}
 
 	/**
@@ -45,6 +57,31 @@ class TaskFieldHandler
 	public function prepareId(): self
 	{
 		unset($this->fields['ID']);
+		return $this;
+	}
+
+	/**
+	 * @throws TaskFieldValidateException
+	 */
+	public function prepareFlow(): self
+	{
+		if ($this->skipModifyByFlow())
+		{
+			return $this;
+		}
+
+		$flowId = (int)($this->fields['FLOW_ID'] ?? 0);
+		$handler = new FlowFieldHandler($flowId, $this->userId);
+
+		try
+		{
+			$handler->modify($this->fields);
+		}
+		catch (FlowTaskException|FlowNotFoundException $e)
+		{
+			throw new TaskFieldValidateException($e->getMessage());
+		}
+
 		return $this;
 	}
 
@@ -65,7 +102,7 @@ class TaskFieldHandler
 			'filter' => [
 				'=GUID' => $this->fields['GUID'],
 			],
-			'limit' => 1
+			'limit' => 1,
 		]);
 		$task = $res->fetch();
 
@@ -433,7 +470,7 @@ class TaskFieldHandler
 			'ADD_IN_REPORT',
 			'MATCH_WORK_TIME',
 			'REPLICATE',
-			'IS_REGULAR'
+			'IS_REGULAR',
 		];
 
 		foreach ($flags as $flag)
@@ -568,6 +605,7 @@ class TaskFieldHandler
 			&& (string) $this->fields['DEADLINE'] != ''
 			&& isset($this->fields['MATCH_WORK_TIME'])
 			&& $this->fields['MATCH_WORK_TIME'] == 'Y'
+			&& !isset($this->fields['FLOW_ID']) // skip, because the deadline has already been set
 		)
 		{
 			$this->fields['DEADLINE'] = $this->getDeadlineMatchWorkTime($this->fields['DEADLINE']);
@@ -791,7 +829,20 @@ class TaskFieldHandler
 				&& !empty($value)
 			)
 			{
-				$fields[$fieldName] = \Bitrix\Main\Type\DateTime::createFromUserTime($value);
+				$this->isTimeZoneSkip($fieldName) && CTimeZone::Disable();
+
+				try
+				{
+					$fields[$fieldName] = \Bitrix\Main\Type\DateTime::createFromUserTime($value);
+				}
+				catch (Throwable)
+				{
+					throw new ObjectException('Incorrect date/time');
+				}
+				finally
+				{
+					$this->isTimeZoneSkip($fieldName) && CTimeZone::Enable();
+				}
 			}
 		}
 
@@ -904,7 +955,8 @@ class TaskFieldHandler
 		foreach ($this->fields['SE_PARAMETER'] as $parameter)
 		{
 			if (
-				(int)$parameter['CODE'] === ParameterTable::PARAM_SUBTASKS_TIME
+				is_array($parameter)
+				&& (int)$parameter['CODE'] === ParameterTable::PARAM_SUBTASKS_TIME
 				&& $parameter['VALUE'] === 'Y'
 			)
 			{
@@ -1178,5 +1230,40 @@ class TaskFieldHandler
 	{
 		return ($this->taskData['IS_REGULAR'] ?? null) === 'Y'
 			&& isset($this->fields['REGULAR_PARAMS']);
+	}
+
+	private function isTimeZoneSkip(string $field): bool
+	{
+		return in_array($field, $this->skipTimeZoneFields, true);
+	}
+
+	private function isExistingTask(): bool
+	{
+		return isset($this->taskId) && $this->taskId > 0;
+	}
+
+	protected function skipModifyByFlow(): bool
+	{
+		$flowId = (int)($this->fields['FLOW_ID'] ?? 0);
+		if ($flowId <= 0)
+		{
+			return true;
+		}
+
+		if ($this->isNewTask())
+		{
+			return false;
+		}
+
+		if ($this->isExistingTask())
+		{
+			$currentFlowId = (int)($this->taskData['FLOW_ID'] ?? 0);
+			if ($currentFlowId === $flowId)
+			{
+				return true;
+			}
+		}
+
+		return false;
 	}
 }

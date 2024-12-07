@@ -2,6 +2,7 @@
 
 namespace Bitrix\Crm\Service\Timeline\Item;
 
+use Bitrix\Crm\Activity\Entity\ConfigurableRestApp\Dto\ContentBlockDto;
 use Bitrix\Crm\Integration\Intranet\BindingMenu\CodeBuilder;
 use Bitrix\Crm\Integration\Intranet\BindingMenu\SectionCode;
 use Bitrix\Crm\Service\Container;
@@ -13,6 +14,8 @@ use Bitrix\Crm\Service\Timeline\Layout\Action\RunAjaxAction;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\Note;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\Text;
 use Bitrix\Crm\Service\Timeline\Layout\Converter;
+use Bitrix\Crm\Service\Timeline\Layout\Factory\RestAppConfigurable\ActionFactory;
+use Bitrix\Crm\Service\Timeline\Layout\Factory\RestAppConfigurable\ContentBlockFactory;
 use Bitrix\Crm\Service\Timeline\Layout\Header\ChangeStreamButton;
 use Bitrix\Crm\Service\Timeline\Layout\MarketPanel;
 use Bitrix\Crm\Service\Timeline\Layout\Menu\MenuItem;
@@ -21,6 +24,7 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\Web\Uri;
+use Bitrix\Rest\AppTable;
 
 abstract class Configurable extends Item
 {
@@ -107,6 +111,7 @@ abstract class Configurable extends Item
 			'languageId' => \Bitrix\Main\Context::getCurrent()?->getLanguage(),
 			'targetUsersList' => $this->getListOfTargetUsers(),
 			'canBeReloaded' => $this->canBeReloaded(),
+			'color' => $this->getColor(),
 		];
 	}
 
@@ -145,6 +150,7 @@ abstract class Configurable extends Item
 				->setCode($iconCode)
 				->setCounterType($this->getCounterType())
 				->setBackgroundColorToken($this->getBackgroundColorToken())
+				->setBackgroundColor($this->isScheduled() ? $this->getIconBackgroundColor() : null)
 			: null
 		;
 	}
@@ -178,6 +184,28 @@ abstract class Configurable extends Item
 		return Layout\Icon::BACKGROUND_PRIMARY;
 	}
 
+	public function getIconBackgroundColor(): ?string
+	{
+		$color = $this->getColor();
+
+		if (!$color)
+		{
+			return null;
+		}
+
+		return $color['iconBackground'] ?? null;
+	}
+
+	public function canUseColorSelector(): bool
+	{
+		return false;
+	}
+
+	public function getColor(): ?array
+	{
+		return null;
+	}
+
 	/**
 	 * Change stream button used to change item stream:
 	 * Scheduled -> History or History <--> Fixed history
@@ -201,7 +229,7 @@ abstract class Configurable extends Item
 	{
 		$canBeUnFixed =
 			$this->isPinnable()
-			&& !$this->getModel()->isScheduled()
+			&& !$this->isScheduled()
 			&& $this->getModel()->isFixed()
 		;
 		if (!$canBeUnFixed)
@@ -209,7 +237,7 @@ abstract class Configurable extends Item
 			return null;
 		}
 
-		return (new ChangeStreamButton)
+		return (new ChangeStreamButton())
 			->setTypeUnpin()
 			->setDisableIfReadonly()
 			->setAction($this->getUnpinAction())
@@ -328,9 +356,20 @@ abstract class Configurable extends Item
 	public function getCommonContentBlocksBlocks(): array
 	{
 		$blocks = [];
-		if($this->needShowNotes()) {
+
+		if ($this->needShowRestAppLayoutBlocks())
+		{
+			foreach ($this->getBuiltRestAppLayoutBlocks() as $restAppLayoutBlock)
+			{
+				$blocks[$restAppLayoutBlock->getContentBlockName()] = $restAppLayoutBlock;
+			}
+		}
+
+		if ($this->needShowNotes())
+		{
 			$blocks['note'] =  $this->buildNoteBlock();
 		}
+
 		return $blocks;
 	}
 
@@ -374,6 +413,11 @@ abstract class Configurable extends Item
 		return false;
 	}
 
+	public function needShowRestAppLayoutBlocks(): bool
+	{
+		return true;
+	}
+
 	/**
 	 * Get footer context menu items
 	 *
@@ -391,13 +435,13 @@ abstract class Configurable extends Item
 	{
 		$canBeFixed =
 			$this->isPinnable()
-			&& !$this->getModel()->isScheduled()
+			&& !$this->isScheduled()
 			&& !$this->getModel()->isFixed()
 		;
 
 		$canBeUnFixed =
 			$this->isPinnable()
-			&& !$this->getModel()->isScheduled()
+			&& !$this->isScheduled()
 			&& $this->getModel()->isFixed()
 		;
 
@@ -411,12 +455,7 @@ abstract class Configurable extends Item
 			$menuItems['pin'] = (new MenuItem(Loc::getMessage('CRM_TIMELINE_MENU_FASTEN')))
 				->setHideIfReadonly()
 				->setSort(9900)
-				->setAction(
-					(new RunAjaxAction('crm.timeline.item.pin'))
-						->addActionParamInt('id', $this->getModel()->getId())
-						->addActionParamInt('ownerTypeId', $this->getContext()->getEntityTypeId())
-						->addActionParamInt('ownerId', $this->getContext()->getEntityId())
-				)
+				->setAction($this->getPinAction())
 			;
 		}
 		if ($canBeUnFixed)
@@ -438,6 +477,11 @@ abstract class Configurable extends Item
 	public function isLogMessage(): bool
 	{
 		return false;
+	}
+
+	public function isScheduled(): bool
+	{
+		return $this->getModel()->isScheduled();
 	}
 
 	public function getMarketPanel(): ?MarketPanel
@@ -513,9 +557,18 @@ abstract class Configurable extends Item
 		return null;
 	}
 
-	private function getUnpinAction(): Layout\Action
+	protected function getUnpinAction(): Layout\Action
 	{
 		return (new RunAjaxAction('crm.timeline.item.unpin'))
+			->addActionParamInt('id', $this->getModel()->getId())
+			->addActionParamInt('ownerTypeId', $this->getContext()->getEntityTypeId())
+			->addActionParamInt('ownerId', $this->getContext()->getEntityId())
+		;
+	}
+
+	protected function getPinAction(): Layout\Action
+	{
+		return (new RunAjaxAction('crm.timeline.item.pin'))
 			->addActionParamInt('id', $this->getModel()->getId())
 			->addActionParamInt('ownerTypeId', $this->getContext()->getEntityTypeId())
 			->addActionParamInt('ownerId', $this->getContext()->getEntityId())
@@ -547,6 +600,50 @@ abstract class Configurable extends Item
 		}
 
 		return $note;
+	}
+
+	/**
+	 * @return Layout\Body\ContentBlock\RestAppLayoutBlocks[]
+	 */
+	protected function getBuiltRestAppLayoutBlocks(): array
+	{
+		$layoutBlocksModels = $this->model->getRestAppLayoutBlocksModels();
+
+		$builtRestAppLayoutBlocks = [];
+		foreach ($layoutBlocksModels as $layoutBlocksModel)
+		{
+			$clientId = $layoutBlocksModel->getClientId();
+			$restApp = $this->getAppInfo($clientId);
+			if ($restApp === null)
+			{
+				continue;
+			}
+
+			$actionFactory = new ActionFactory($this, $clientId, $restApp['ID'] ?? 0);
+			$contentBlockFactory = new ContentBlockFactory($this, $actionFactory);
+
+			$createContentBlock = static fn(ContentBlockDto $dto) => $contentBlockFactory->createByDto($dto);
+			$contentBlocks = array_map($createContentBlock, $layoutBlocksModel->getContentBlocks());
+
+			$builtRestAppLayoutBlocks[] = (new Layout\Body\ContentBlock\RestAppLayoutBlocks(
+				$layoutBlocksModel->getItemTypeId(),
+				$layoutBlocksModel->getItemId(),
+				$restApp,
+				$contentBlocks,
+			))->setSort(PHP_INT_MAX - 1);
+		}
+
+		return $builtRestAppLayoutBlocks;
+	}
+
+	private function getAppInfo(string $clientId): ?array
+	{
+		if (Loader::includeModule('rest'))
+		{
+			return AppTable::getByClientId($clientId) ?? null;
+		}
+
+		return null;
 	}
 
 	public function getNoteItemType(): int

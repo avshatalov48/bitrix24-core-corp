@@ -2,8 +2,8 @@
 
 namespace Bitrix\Crm\Service\Scenario;
 
-use Bitrix\Main\Result;
 use Bitrix\Crm\Service\Scenario;
+use Bitrix\Main\Result;
 
 class Collection implements \Iterator, \Countable
 {
@@ -67,7 +67,7 @@ class Collection implements \Iterator, \Countable
 		reset($this->scenarios);
 	}
 
-	public function count()
+	public function count(): int
 	{
 		return count($this->scenarios);
 	}

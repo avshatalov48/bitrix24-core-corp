@@ -9,12 +9,19 @@ use Bitrix\Main\Localization\Loc;
 
 class CBPCrmGoToChat extends CBPActivity
 {
+	private const TELEGRAM_BOT_CONNECTOR_ID = 'telegrambot';
+
 	public function __construct($name)
 	{
 		parent::__construct($name);
 		$this->arProperties = [
 			'Title' => '',
 		];
+	}
+
+	protected function getConnectorId()
+	{
+		return static::TELEGRAM_BOT_CONNECTOR_ID;
 	}
 
 	public function execute()
@@ -43,7 +50,12 @@ class CBPCrmGoToChat extends CBPActivity
 		/* @var \Bitrix\Crm\MessageSender\Channel\Correspondents\To $toListItem */
 		$to = $toListItem ? $toListItem->getAddress()->getId() : 0;
 
-		$result = $goToChat->setOwner($owner)->send('bitrix24', (int)$to);
+		$result =
+			$goToChat
+				->setOwner($owner)
+				->setConnectorId($this->getConnectorId())
+				->send('bitrix24', $to)
+		;
 
 		if (!$result->isSuccess())
 		{
@@ -68,7 +80,7 @@ class CBPCrmGoToChat extends CBPActivity
 		$siteId = ''
 	)
 	{
-		$dialog = new \Bitrix\Bizproc\Activity\PropertiesDialog(__FILE__, array(
+		$dialog = new \Bitrix\Bizproc\Activity\PropertiesDialog(static::getFileName(), array(
 			'documentType' => $documentType,
 			'activityName' => $activityName,
 			'workflowTemplate' => $arWorkflowTemplate,
@@ -76,7 +88,7 @@ class CBPCrmGoToChat extends CBPActivity
 			'workflowVariables' => $arWorkflowVariables,
 			'currentValues' => $arCurrentValues,
 			'formName' => $formName,
-			'siteId' => $siteId
+			'siteId' => $siteId,
 		));
 
 		$dialog->setMap(static::getPropertiesMap($documentType));
@@ -108,5 +120,10 @@ class CBPCrmGoToChat extends CBPActivity
 		$currentActivity['Properties'] = $properties;
 
 		return true;
+	}
+
+	protected static function getFileName(): string
+	{
+		return __FILE__;
 	}
 }

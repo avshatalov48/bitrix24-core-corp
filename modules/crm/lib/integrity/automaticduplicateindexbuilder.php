@@ -74,6 +74,7 @@ class AutomaticDuplicateIndexBuilder extends DuplicateIndexBuilder
 		{
 			$this->step = $progressData['STEP'];
 		}
+
 		if ($this->step === self::STEP_BUILD_NEW_ITEMS)
 		{
 			$this->params->setLimitByDirtyIndexItems(false);
@@ -85,19 +86,54 @@ class AutomaticDuplicateIndexBuilder extends DuplicateIndexBuilder
 			elseif ($this->rebuildChangedOnly)
 			{
 				$progressData['STEP'] = self::STEP_PROCESS_UPDATED_ITEMS;
+				if ($this->isUsingDedupeCache())
+				{
+					$progressData['PROCESS_UPDATED_ITEMS_COUNT'] = 0;
+					$progressData['OFFSET'] = 0;
+				}
+
+				// The PROCESS_UPDATED_ITEMS step uses a different cache table, so the current one must be deleted
+				$this->dropDataSourceCache();
 				return true;
 			}
 		}
-
-		if ($this->step === self::STEP_PROCESS_UPDATED_ITEMS)
+		elseif ($this->step === self::STEP_PROCESS_UPDATED_ITEMS)
 		{
-			$progressData['OFFSET'] = 0;
+			if (!$this->isUsingDedupeCache())
+			{
+				$progressData['OFFSET'] = 0;
+			}
+
 			$this->params->clearIndexDate();
 			$this->params->setLimitByDirtyIndexItems(true);
+
 			$inProgress = $this->internalBuild($progressData);
+
+			$isSetUpdatedItemsCount = (
+				$this->isUsingDedupeCache()
+				&& isset($progressData['PROCESS_UPDATED_ITEMS_COUNT'])
+			);
+
 			if ($inProgress)
 			{
 				return true;
+			}
+			elseif ($isSetUpdatedItemsCount && $progressData['PROCESS_UPDATED_ITEMS_COUNT'] > 0)
+			{
+				$progressData['PROCESS_UPDATED_ITEMS_COUNT'] = 0;
+				$progressData['OFFSET'] = 0;
+
+				// Clear the cache to get the latest data in the next step.
+				// If there are no duplicates left at the next step, then the
+				// PROCESS_UPDATED_ITEMS step is considered completed.
+				$this->dropDataSourceCache();
+
+				return true;
+			}
+
+			if ($isSetUpdatedItemsCount)
+			{
+				$progressData['PROCESS_UPDATED_ITEMS_COUNT']++;
 			}
 
 			// remove dirty index items
@@ -391,5 +427,10 @@ class AutomaticDuplicateIndexBuilder extends DuplicateIndexBuilder
 				'IS_DIRTY' => false,
 			]
 		);
+	}
+
+	protected function isUsingDedupeCache(): bool
+	{
+		return ($this->params->getContextId() !== '' && MatchHashDedupeCache::isEnabled());
 	}
 }

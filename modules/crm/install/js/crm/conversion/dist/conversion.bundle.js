@@ -669,14 +669,14 @@ this.BX = this.BX || {};
 	  });
 	}
 	function _sendAnalyticsData2(dstEntityTypeId, status) {
-	  const builder = crm_integration_analytics.Builder.Entity.ConvertEvent.createDefault(babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$2)[_entityTypeId$2], dstEntityTypeId).setSubSection(babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].analytics.c_sub_section).setElement(babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].analytics.c_element).setStatus(status);
+	  const builder = crm_integration_analytics.Builder.Entity.ConvertEvent.createDefault(babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$2)[_entityTypeId$2], dstEntityTypeId).setSection(babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].analytics.c_section).setSubSection(babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].analytics.c_sub_section).setElement(babelHelpers.classPrivateFieldLooseBase(this, _params)[_params].analytics.c_element).setStatus(status);
 	  ui_analytics.sendData(builder.buildData());
 	}
 	function _filterExternalAnalytics2(analytics) {
 	  if (!main_core.Type.isPlainObject(analytics)) {
 	    return {};
 	  }
-	  const allowedKeys = new Set(['c_sub_section', 'c_element']);
+	  const allowedKeys = new Set(['c_section', 'c_sub_section', 'c_element']);
 	  const result = {};
 	  for (const [key, value] of Object.entries(analytics)) {
 	    if (allowedKeys.has(key) && main_core.Type.isStringFilled(value)) {
@@ -1136,8 +1136,12 @@ this.BX = this.BX || {};
 	        display: 'flex',
 	        'justify-content': 'center'
 	      }
+	    },
+	    tagSelectorOptions: {
+	      textBoxWidth: 565 // same as default dialog width
 	    }
 	  });
+
 	  babelHelpers.classPrivateFieldLooseBase(this, _dialogProp)[_dialogProp].subscribe('Item:onSelect', babelHelpers.classPrivateFieldLooseBase(this, _handleItemSelect)[_handleItemSelect].bind(this));
 	  return babelHelpers.classPrivateFieldLooseBase(this, _dialogProp)[_dialogProp];
 	}

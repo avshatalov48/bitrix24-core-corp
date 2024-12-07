@@ -29,7 +29,7 @@ $APPLICATION->IncludeComponent("bitrix:ui.info.helper", "", array());
 
 <div id="voximplant-rent" class="voximplant-container"></div>
 
-<script type="text/javascript">
+<script>
 	BX.ready(function()
 	{
 		window.test = new BX.Voximplant.Rent({

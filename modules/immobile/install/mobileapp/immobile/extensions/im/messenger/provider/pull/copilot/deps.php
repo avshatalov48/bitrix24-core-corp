@@ -2,7 +2,7 @@
 
 return [
 	'extensions' => [
-		'im:messenger/provider/pull/lib',
+		'im:messenger/provider/pull/base',
 		'type',
 		'loc',
 		'utils/object',

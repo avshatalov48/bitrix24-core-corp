@@ -1,9 +1,13 @@
 <?php
+$MESS["CRM_SEMA_ACTIVITY_EMAIL_MAX_SIZE_EXCEED"] = "Maximum possible attachment size exceeded (#SIZE#)";
 $MESS["CRM_SEMA_ACTIVITY_LINK_LABEL"] = "Open message";
 $MESS["CRM_SEMA_ATTACHMENT"] = "Attachments";
+$MESS["CRM_SEMA_ATTACHMENT_1"] = "Files";
 $MESS["CRM_SEMA_ATTACHMENT_DISK"] = "Drive";
 $MESS["CRM_SEMA_ATTACHMENT_FILE_1"] = "Element files";
+$MESS["CRM_SEMA_ATTACHMENT_FILE_2"] = "Item fields";
 $MESS["CRM_SEMA_ATTACHMENT_TYPE"] = "Attachment type";
+$MESS["CRM_SEMA_ATTACHMENT_TYPE_1"] = "Source";
 $MESS["CRM_SEMA_DEFAULT_BODY"] = "[no text]";
 $MESS["CRM_SEMA_DEFAULT_SUBJECT"] = "New e-mail (#DATE#)";
 $MESS["CRM_SEMA_EMAIL_CREATION_CANCELED"] = "Email message has been canceled";

@@ -21,7 +21,7 @@ CJSCore::Init(['crm_common']);
 	?>
 </div>
 
-<script type="text/javascript">
+<script>
 	BX.message({
 		'CRM_REPORT_DEAL_ALL_DEALS': '<?= GetMessageJS("CRM_REPORT_DEAL_ALL_DEALS")?>'
 	});

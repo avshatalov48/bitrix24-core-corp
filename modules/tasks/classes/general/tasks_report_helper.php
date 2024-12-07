@@ -577,21 +577,21 @@ class CTasksReportHelper extends CReportHelper
 						case 'START_WITH':
 							$compareSql = $where->_Upper('TG.NAME')
 								. " LIKE '"
-								. $where->ForLIKE(ToUpper($v))
+								. $where->ForLIKE(mb_strtoupper($v))
 								. "%' ESCAPE '!'";
 							$caseResult = [1, 0];
 							break;
 						case 'CONTAINS':
 							$compareSql = $where->_Upper('TG.NAME')
 								. " LIKE '%"
-								. $where->ForLIKE(ToUpper($v))
+								. $where->ForLIKE(mb_strtoupper($v))
 								. "%' ESCAPE '!'";
 							$caseResult = [1, 0];
 							break;
 						case 'NOT_CONTAINS':
 							$compareSql = $where->_Upper('TG.NAME')
 								. " LIKE '%"
-								. $where->ForLIKE(ToUpper($v))
+								. $where->ForLIKE(mb_strtoupper($v))
 								. "%' ESCAPE '!'";
 							$caseResult = [0, 1];
 							break;

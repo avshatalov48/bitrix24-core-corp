@@ -139,7 +139,7 @@ jn.define('catalog/store/product-details', (require, exports, module) => {
 					ref: (ref) => this.nameFieldRef = ref,
 					title: Loc.getMessage('CSPD_FIELDS_PRODUCT_NAME'),
 					value: this.state.product.name,
-					readOnly: this.isReadonly(),
+					readOnly: this.areProductInfoFieldsReadonly(),
 					required: true,
 					onChange: (newVal) => this.updateFieldState('name', newVal),
 					...this.getAccessProps(true, hasProductEditAccess),
@@ -147,7 +147,7 @@ jn.define('catalog/store/product-details', (require, exports, module) => {
 				EntitySelectorField({
 					title: Loc.getMessage('CSPD_FIELDS_PRODUCT_SECTIONS'),
 					value: this.state.product.sections.map((section) => section.id),
-					readOnly: this.isReadonly(),
+					readOnly: this.areProductInfoFieldsReadonly(),
 					multiple: true,
 					showEditIcon: false,
 					config: {
@@ -177,7 +177,7 @@ jn.define('catalog/store/product-details', (require, exports, module) => {
 				BarcodeField({
 					title: Loc.getMessage('CSPD_FIELDS_BARCODE'),
 					value: this.state.product.barcode,
-					readOnly: this.isReadonly(),
+					readOnly: this.areProductInfoFieldsReadonly(),
 					onChange: (newVal) => this.updateFieldState('barcode', newVal),
 					...this.getAccessProps(true, hasProductEditAccess),
 					config: {
@@ -201,7 +201,7 @@ jn.define('catalog/store/product-details', (require, exports, module) => {
 							},
 						},
 					},
-					readOnly: this.isReadonly(),
+					readOnly: this.areProductInfoFieldsReadonly(),
 					onChange: (images) => this.updateFieldState('gallery', images),
 					...this.getAccessProps(true, hasProductEditAccess),
 				}),
@@ -364,7 +364,25 @@ jn.define('catalog/store/product-details', (require, exports, module) => {
 				config: {
 					currencyReadOnly: true,
 				},
-				onChange: (newVal) => this.updateFieldState('price.sell', newVal),
+				onChange: (newVal) => {
+					this.updateFieldState('price.sell', newVal);
+					const priceSellAmount = Number(newVal.amount);
+					let vatValue;
+					let priceWithVat;
+					const vatRate = this.state.product.price.vat.vatRate;
+					if (this.state.product.price.vat.vatIncluded === 'Y')
+					{
+						vatValue = (priceSellAmount * vatRate) / (vatRate + 1);
+						priceWithVat = priceSellAmount;
+					}
+					else
+					{
+						vatValue = priceSellAmount * vatRate;
+						priceWithVat = priceSellAmount + vatValue;
+					}
+					this.updateFieldState('price.vat.vatValue', vatValue);
+					this.updateFieldState('price.vat.priceWithVat', priceWithVat);
+				},
 				...this.getAccessProps(true, hasSellingPriceEditAccess),
 			});
 
@@ -406,6 +424,7 @@ jn.define('catalog/store/product-details', (require, exports, module) => {
 					measure: get(this.state.product, 'measure.code', ''),
 				},
 				onChange: ({ amount, measure }) => {
+					amount = amount === '' ? null : Number(amount);
 					this.updateFieldState('amount', amount);
 					this.updateFieldState('measure', this.props.measures[measure]);
 				},
@@ -780,6 +799,14 @@ jn.define('catalog/store/product-details', (require, exports, module) => {
 				null,
 				Loc.getMessage('CSPD_FIELDS_PHOTOS_UPLOADING_BUTTON'),
 			);
+		}
+
+		areProductInfoFieldsReadonly()
+		{
+			const editable = Boolean(this.props.document.editable);
+			const isCatalogHidden = Boolean(this.props.config.isCatalogHidden);
+
+			return !editable || isCatalogHidden;
 		}
 
 		isReadonly()

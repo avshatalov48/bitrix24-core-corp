@@ -24,6 +24,6 @@ if($component->hasErrors())
 <? foreach($arResult['LINKS'] as $link) {?>
 	<div>
 		<a href="<?= $link['LINK'] ?>"><?= $link['LINK'] ?></a><br/>
-		Скачано: <b><?= $link['DOWNLOAD_COUNT'] ?></b>
+		РЎРєР°С‡Р°РЅРѕ: <b><?= $link['DOWNLOAD_COUNT'] ?></b>
 	</div>
 <? }?>

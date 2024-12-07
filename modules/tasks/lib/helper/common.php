@@ -18,7 +18,7 @@ abstract class Common
 	{
 	}
 
-	public static function getInstance(int $userId, ?int $groupId = 0, ?string $id = null): static
+	public static function getInstance(int $userId = 0, ?int $groupId = 0, ?string $id = null): static
 	{
 		if (is_null($id))
 		{

@@ -14,16 +14,6 @@ if(!CModule::IncludeModule('webdav')) //|| !check_bitrix_sessid()
 
 $compPath = $this->getPath();
 
-function CheckStrCharsetForJson($str)
-{
-	global $APPLICATION;
-	if (ToUpper(SITE_CHARSET) !== 'UTF-8')
-	{
-		$str = $APPLICATION->ConvertCharsetArray($str, SITE_CHARSET, 'utf-8');
-	}
-	return $str;
-}
-
 function GetRequestTupe($arParams)
 {
 	$pageQ = $_SERVER['REQUEST_URI'];
@@ -50,7 +40,7 @@ function GetTableSettings($foldersNum, $filesNum)
 	$sFF = str_replace("#folders#", ($foldersNum > 0 ? $foldersNum : "0"), $sFF);
 	$sFF = str_replace("#files#", ($filesNum > 0 ? $filesNum : "0"), $sFF);
 	$res = array(
-		"footer" => CheckStrCharsetForJson($sFF),
+		"footer" => $sFF,
 		//"searchField" => (($foldersNum+$filesNum) > 0 ? "YES" : "NO"),
 	);
 	return $res;
@@ -216,7 +206,7 @@ elseif( $requestTupe == "group")
 		while ($arG = $dbGroups->Fetch())
 		{
 			$arResFiles[] = array(
-				"NAME" => CheckStrCharsetForJson($arG["GROUP_NAME"]),
+				"NAME" => $arG["GROUP_NAME"],
 				"TABLE_URL" => $arParams["BASE_URL"] . $arG["GROUP_ID"] . "/",
 				"IMAGE" => $compPath . "/images/folder.png",
 				"TABLE_SETTINGS" => array(
@@ -333,8 +323,8 @@ if($ob->IsDir())
 	{
 		while ($arF = $resQ["NAV_RESULT"]->Fetch())
 		{
-			$nameQ = CheckStrCharsetForJson($arF["NAME"]);
-			$pathQ = CheckStrCharsetForJson($arF["PATH"]);
+			$nameQ = $arF["NAME"];
+			$pathQ = $arF["PATH"];
 			if($arF["TYPE"] == "S")
 			{
 				$arResFiles[] = array(
@@ -372,11 +362,11 @@ if($ob->IsDir())
 //						"URL" => $ob->base_url . $pathQ . "?action=ObjectProperties",
 //						"EXTERNAL" => "NO",
 //					),
-					"IMAGE" => CheckStrCharsetForJson($fIcon),
+					"IMAGE" => $fIcon,
 				);
 				if($fSize . $fDateCreate <> '')
 				{
-					$arQQ["TAGS"] = CheckStrCharsetForJson($fSize ."  " . $fDateCreate);
+					$arQQ["TAGS"] = $fSize ."  " . $fDateCreate;
 				}
 
 				$arResFiles[] = $arQQ;
@@ -418,7 +408,7 @@ elseif($action == "ObjectProperties")
 				$arResult["FILE_SIZE"] = intval($arF["PROPERTY_WEBDAV_SIZE_VALUE"]);
 			}
 			$arResult["IMAGE"] = GetFilrIcon($compPath, $arF["PATH"], $arParams, $arF);
-			$arResult["URL"] = $ob->base_url . CheckStrCharsetForJson($arF["PATH"]);
+			$arResult["URL"] = $ob->base_url . $arF["PATH"];
 			$arResult["DESCRIPTION"] = $arF["PREVIEW_TEXT"];
 			$arResult["DATE_MODIFIED"] = GetFileModificationDate($arF);
 		}

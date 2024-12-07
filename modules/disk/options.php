@@ -74,7 +74,7 @@ if(\Bitrix\Main\Loader::includeModule('disk'))
 	if(ZipNginx\Configuration::isEnabled() && !ZipNginx\Configuration::isModInstalled())
 	{
 		$notices['disk_nginx_mod_zip_enabled'] = Loc::getMessage('DISK_ENABLE_NGINX_MOD_ZIP_SUPPORT_NOTICE', array(
-			'#LINK#' => 'https://www.nginx.com/resources/wiki/modules/zip/',
+			'#LINK#' => 'https://github.com/evanmiller/mod_zip',
 		));
 	}
 
@@ -136,6 +136,10 @@ if($_SERVER["REQUEST_METHOD"]=="POST" && ($_POST['Update'] || $_POST['Apply'] ||
 	{
 		foreach($arAllOptions as $arOption)
 		{
+			if (!is_array($arOption))
+			{
+				continue;
+			}
 			if (isset($arOption['section']))
 			{
                 continue;

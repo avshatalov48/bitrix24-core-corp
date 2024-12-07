@@ -55,7 +55,8 @@ global $APPLICATION;
 
 $arDefaultUrlTemplates404 = [
 	'perms_list' => '',
-	'role_edit' => '#role_id#/edit/'
+	'role_edit' => '#role_id#/edit/',
+	'permsv2' => 'v2/',
 ];
 $arDefaultVariableAliases404 = [];
 $arDefaultVariableAliases = [];

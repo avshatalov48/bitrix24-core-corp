@@ -1,0 +1,182 @@
+.user-grid_custom-field-container {
+	max-width: 100%;
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+}
+
+.user-grid_label {
+	margin-top: 8px;
+	margin-left: -6px;
+}
+
+.user-grid_label .ui-label-inner {
+	font-weight: 400;
+	font-size: 12px;
+}
+
+.user-grid_employee-card-container {
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+}
+
+.user-grid_position-label {
+	font-size: 12px;
+	line-height: 14px;
+	margin-top: 3px;
+	white-space: normal;
+	max-width: 100%;
+	-o-text-overflow: ellipsis;
+	   text-overflow: ellipsis;
+	overflow: clip;
+}
+
+.user-grid_role-label {
+	font-size: 11px;
+	line-height: 13px;
+	margin-top: 2px;
+}
+
+.user-grid_role-label.--integrator {
+	color: #47AAB7;
+}
+
+.user-grid_role-label.--admin {
+	color: var(--ui-color-palette-green-60);
+}
+
+.user-grid_role-label.--extranet {
+	color: var(--ui-color-palette-orange-60);
+}
+
+.user-grid_full-name-label {
+	font-size: 14px;
+}
+
+.user-grid_full-name-container {
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	-webkit-box-orient: vertical;
+	-webkit-box-direction: normal;
+	    -ms-flex-direction: column;
+	        flex-direction: column;
+	-webkit-box-align: start;
+	    -ms-flex-align: start;
+	        align-items: flex-start;
+	white-space: nowrap;
+	max-width: 100%;
+}
+
+.user-grid_user-photo {
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	-webkit-box-align: center;
+	    -ms-flex-align: center;
+	        align-items: center;
+	-webkit-box-pack: center;
+	    -ms-flex-pack: center;
+	        justify-content: center;
+	margin: 0;
+	min-width: 40px;
+	min-height: 40px;
+	max-width: 40px;
+	max-height: 40px;
+	background-color: var(--ui-color-base-30);
+	border-radius: 50%;
+	white-space: nowrap;
+	background-position: center;
+	background-size: cover;
+}
+
+.user-grid_employee-card-container > .user-grid_user-photo {
+	margin-right: 10px;
+}
+
+.ui-btn.user-grid_add-department-btn {
+	padding: 5px;
+	opacity: 0;
+}
+
+.user-grid_department-icon-container {
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	margin-left: -4px;
+	margin-right: 2px;
+}
+
+.user-grid_department-container {
+	margin-top: -3.5px;
+	margin-left: -10px;
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	-ms-flex-wrap: wrap;
+	    flex-wrap: wrap;
+	gap: 2px;
+}
+
+.user-grid_department-btn {
+	height: 20px;
+	border: none;
+	border-radius: 14px;
+	padding: 3.5px 10px 3.5px 10px;
+	background-color: var(--ui-color-background-transparent);
+	color: #525C69;
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	-webkit-box-align: center;
+	    -ms-flex-align: center;
+	        align-items: center;
+	cursor: pointer;
+	-webkit-transition: 250ms linear all;
+	-o-transition: 250ms linear all;
+	transition: 250ms linear all;
+}
+
+.user-grid_department-btn:hover,
+.user-grid_department-btn.--selected {
+	background-color: #D9F4FF;
+}
+
+.ui-btn.user-grid_department-btn:hover {
+	text-decoration: none;
+}
+
+.user-grid_department-name-container {
+	white-space: nowrap;
+	overflow: hidden;
+	-ms-flex-item-align: start;
+	    align-self: flex-start;
+}
+
+.user-grid_department-btn-remove {
+	display: block;
+	height: 16px;
+	width: 16px;
+	margin-left: 4px;
+	margin-right: -4px;
+	opacity: .3;
+	-webkit-transition: .2s;
+	-o-transition: .2s;
+	transition: .2s;
+	cursor: pointer;
+}
+
+.user-grid_department-btn-remove:hover {
+	opacity: 1;
+}
+
+.user-grid_invitation-counter {
+	margin-right: 10px;
+	-ms-flex-item-align: center;
+	    align-self: center;
+}
+
+.user-grid_full-name-wrapper {
+	max-width: calc(100% - 50px);
+}

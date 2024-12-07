@@ -33,7 +33,7 @@ if (!$messageId)
 }
 
 $message = new \Bitrix\Im\V2\Message($messageId);
-if($message->hasAccess())
+if($message->checkAccess()->isSuccess())
 {
 	$arResult['ATTACH'] = $message->toRestFormat()['params'][\Bitrix\Im\V2\Message\Params::ATTACH] ?? [];
 }

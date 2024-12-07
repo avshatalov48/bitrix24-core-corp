@@ -6,7 +6,7 @@ use Bitrix\Main\Error;
 
 class Deeplink extends Controller
 {
-	public function getAction($intent): array
+	public function getAction($intent, int $ttl = null): array
 	{
 		global $USER;
 
@@ -17,6 +17,6 @@ class Deeplink extends Controller
 			return [];
 		}
 
-		return ['link' => \Bitrix\Mobile\Deeplink::getAuthLink($intent, $id)];
+		return ['link' => \Bitrix\Mobile\Deeplink::getAuthLink($intent, $id, $ttl)];
 	}
 }

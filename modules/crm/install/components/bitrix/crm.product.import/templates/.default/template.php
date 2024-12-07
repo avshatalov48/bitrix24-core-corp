@@ -124,7 +124,7 @@ $APPLICATION->IncludeComponent(
 );
 
 if(!empty($arUserSearchFields)):
-?><script type="text/javascript">
+?><script>
 	BX.ready(
 		function()
 		{<?
@@ -152,7 +152,7 @@ if(!empty($arUserSearchFields)):
 endif;
 CJSCore::Init(array('crm_import_csv'));?>
 
-<script type="text/javascript">
+<script>
 	crmImportStep(<?=$arResult['STEP']?>, '<?=$arResult['FORM_ID']?>');
 	BX.remove(BX('bxForm_<?=$arResult['FORM_ID']?>_expand_link'));
 

@@ -274,20 +274,15 @@ class Deal extends Entity
 	{
 		$result = new Result();
 
-		$categoryPermissions = \CCrmDeal::GetPermittedToReadCategoryIDs($permissions);
-		if(!in_array($categoryId, $categoryPermissions))
-		{
-			return $result->addError(new Error('Access Denied'));
-		}
-
 		foreach($ids as $id)
 		{
-			if(!(
-				$id > 0 &&
-				\CCrmDeal::checkUpdatePermission($id, $permissions) &&
-				\CCrmDeal::CheckCreatePermission($permissions, $categoryId)
+			if (!(
+				$id > 0
+				&& \CCrmDeal::checkUpdatePermission($id, $permissions)
+				&& \CCrmDeal::CheckCreatePermission($permissions, $categoryId)
 			))
 			{
+				$result->addError(new Error(Loc::getMessage('CRM_COMMON_ERROR_ACCESS_DENIED')));
 				continue;
 			}
 			$recurringData = Recurring\Manager::getList(
@@ -331,6 +326,7 @@ class Deal extends Entity
 		foreach (DealCategory::getAll(true) as $id => $category)
 		{
 			$categoryId = $category['ID'];
+
 			if (isset($categoryPermissions[$categoryId]))
 			{
 				$category['url'] = Container::getInstance()->getRouter()->getKanbanUrl($this->getTypeId(), $categoryId);
@@ -507,5 +503,34 @@ class Deal extends Entity
 	final protected function isItemsAssignedNotificationSupported(): bool
 	{
 		return true;
+	}
+
+	protected function getHideSumForStagePermissionType(string $stageId, \CCrmPerms $userPermissions): ?string
+	{
+		return $userPermissions->GetPermType(
+			DealCategory::convertToPermissionEntityType($this->categoryId),
+			'HIDE_SUM',
+			["STAGE_ID{$stageId}"]
+		);
+	}
+
+	public function getCategoriesWithAddPermissions(\CCrmPerms $permissions): array
+	{
+		$result = [];
+
+		$permissions = Container::getInstance()->getUserPermissions();
+
+		foreach (DealCategory::getAll(true) as $id => $category)
+		{
+			$categoryId = $category['ID'];
+
+			if ($permissions->checkAddPermissions($this->getTypeId(), $categoryId))
+			{
+				$category['url'] = Container::getInstance()->getRouter()->getKanbanUrl($this->getTypeId(), $categoryId);
+				$result[$id] = $category;
+			}
+		}
+
+		return $result;
 	}
 }

@@ -6,6 +6,7 @@ use Bitrix\ImOpenLines\Config;
 use Bitrix\ImOpenLines\Model\RoleAccessTable;
 use Bitrix\ImOpenLines\Model\RolePermissionTable;
 use Bitrix\ImOpenlines\Security\Permissions;
+use Bitrix\ImOpenLines\Integrations\HumanResources\StructureService;
 use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\ArgumentOutOfRangeException;
 use Bitrix\Main\Loader;
@@ -719,9 +720,9 @@ class ListsDataManager extends DataManager
 				}
 			}
 			$departments = array_unique($departments);
-			foreach($departments as $department)
+			foreach ($departments as $department)
 			{
-				$users[] = \CIntranetUtils::GetDepartmentManagerID($department);
+				$users[] = StructureService::getInstance()->getDepartmentHeadId($department);
 			}
 			$users = array_unique($users);
 

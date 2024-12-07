@@ -1,7 +1,8 @@
-<? if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
+<?php
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
+
 use Bitrix\Main\UI\Extension;
 use Bitrix\Main\Localization\Loc;
-
 use Bitrix\Imopenlines\Limit;
 
 /**
@@ -29,7 +30,7 @@ Extension::load([
 	'ui.hint',
 ]);
 ?>
-<script type="text/javascript">
+<script>
 	function openTrialInfoHelper(dialogId)
 	{
 		BX.UI.InfoHelper.show(dialogId);

@@ -11,6 +11,8 @@ import {ProductModel} from "catalog.product-model";
 import {PULL} from 'pull.client';
 import {FieldHintManager} from "./field.hint.manager";
 import {Guide} from 'ui.tour';
+import { OneCPlanRestrictionSlider } from 'catalog.tool-availability-manager';
+
 import 'ui.hint';
 
 const GRID_TEMPLATE_ROW = 'template_0';
@@ -58,6 +60,7 @@ export class Editor
 	showSettingsPopupHandler = this.handleShowSettingsPopup.bind(this);
 
 	onDialogSelectProductHandler = this.handleOnDialogSelectProduct.bind(this);
+	onAddViewedProductToDealHandler = this.handleOnAddViewedProductToDeal.bind(this);
 	onSaveHandler = this.handleOnSave.bind(this);
 	onFocusToProductList = this.handleProductListFocus.bind(this);
 	onEntityUpdateHandler = this.handleOnEntityUpdate.bind(this);
@@ -156,6 +159,11 @@ export class Editor
 			if (!this.getSettingValue('disabledAddRowButton', false))
 			{
 				container.querySelectorAll('[data-role="product-list-add-button"]').forEach((addButton) => {
+					if (this.getSettingValue('isOnecInventoryManagementRestricted') === true)
+					{
+						Dom.addClass(addButton, 'ui-btn-icon-lock');
+					}
+
 					Event.bind(
 						addButton,
 						'click',
@@ -210,6 +218,7 @@ export class Editor
 	{
 		this.unsubscribeCustomEvents();
 		EventEmitter.subscribe('CrmProductSearchDialog_SelectProduct', this.onDialogSelectProductHandler);
+		EventEmitter.subscribe('onAddViewedProductToDeal', this.onAddViewedProductToDealHandler);
 		EventEmitter.subscribe('BX.Crm.EntityEditor:onSave', this.onSaveHandler);
 		EventEmitter.subscribe('onFocusToProductList', this.onFocusToProductList);
 		EventEmitter.subscribe('onCrmEntityUpdate', this.onEntityUpdateHandler);
@@ -243,6 +252,7 @@ export class Editor
 	unsubscribeCustomEvents()
 	{
 		EventEmitter.unsubscribe('CrmProductSearchDialog_SelectProduct', this.onDialogSelectProductHandler);
+		EventEmitter.unsubscribe('onAddViewedProductToDeal', this.onAddViewedProductToDealHandler);
 		EventEmitter.unsubscribe('BX.Crm.EntityEditor:onSave', this.onSaveHandler);
 		EventEmitter.unsubscribe('onFocusToProductList', this.onFocusToProductList);
 		EventEmitter.unsubscribe('onCrmEntityUpdate', this.onEntityUpdateHandler);
@@ -282,6 +292,37 @@ export class Editor
 		this.selectProductInRow(id, productId)
 	}
 
+	handleOnAddViewedProductToDeal(event: BaseEvent)
+	{
+		const [productId] = event.getCompatData();
+		let id;
+		if (this.getProductCount() > 0)
+		{
+			id = this.addProductRow();
+		}
+		else
+		{
+			id = this.products[0]?.getField('ID');
+		}
+		this.selectViewedProductInRow(id, productId);
+	}
+
+	selectViewedProductInRow(id: string, productId: number): void
+	{
+		if (!Type.isStringFilled(id) || Text.toNumber(productId) <= 0)
+		{
+			return;
+		}
+
+		requestAnimationFrame(() => {
+			const productSelector = this.getProductSelector(id);
+			if (productSelector)
+			{
+				productSelector.onProductSelect(productId);
+			}
+		});
+	}
+
 	selectProductInRow(id: string, productId: number): void
 	{
 		if (!Type.isStringFilled(id) || Text.toNumber(productId) <= 0)
@@ -290,10 +331,12 @@ export class Editor
 		}
 
 		requestAnimationFrame(() => {
-			this
-				.getProductSelector(id)
-				?.onProductSelect(productId)
-			;
+			const productSelector = this.getProductSelector(id);
+			if (productSelector)
+			{
+				productSelector.searchInput.clearErrors();
+				productSelector.onProductSelect(productId);
+			}
 		});
 	}
 
@@ -1159,6 +1202,7 @@ export class Editor
 
 		const isReserveBlocked = this.getSettingValue('isReserveBlocked', false);
 		const isInventoryManagementToolEnabled = this.getSettingValue('isInventoryManagementToolEnabled', false);
+		const inventoryManagementMode = this.getSettingValue('inventoryManagementMode', null);
 
 		for (const item of list)
 		{
@@ -1167,6 +1211,7 @@ export class Editor
 				selectorId: item.selectorId,
 				isReserveBlocked,
 				isInventoryManagementToolEnabled,
+				inventoryManagementMode,
 			};
 			this.products.push(new Row(item.rowId, fields, settings, this));
 		}
@@ -1365,6 +1410,13 @@ export class Editor
 
 	handleProductRowAdd(): void
 	{
+		if (this.getSettingValue('isOnecInventoryManagementRestricted') === true)
+		{
+			OneCPlanRestrictionSlider.show();
+
+			return;
+		}
+
 		const id = this.addProductRow();
 		this.focusProductSelector(id);
 	}
@@ -1514,9 +1566,12 @@ export class Editor
 		delete(fields.RESERVE_ID);
 		const isReserveBlocked = this.getSettingValue('isReserveBlocked', false);
 		const isInventoryManagementToolEnabled = this.getSettingValue('isInventoryManagementToolEnabled', false);
+		const inventoryManagementMode = this.getSettingValue('inventoryManagementMode', null);
+
 		const settings = {
 			isReserveBlocked,
 			isInventoryManagementToolEnabled,
+			inventoryManagementMode,
 			selectorId: 'crm_grid_' + rowId,
 		};
 		const product = new Row(rowId, fields, settings, this);

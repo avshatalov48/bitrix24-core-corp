@@ -8,7 +8,7 @@ jn.define('im/messenger/controller/dialog/lib/web', (require, exports, module) =
 	const { Loc } = require('loc');
 	const { clone } = require('utils/object');
 
-	const { Theme } = require('im/lib/theme');
+	const AppTheme = require('apptheme');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const {
 		ChatAvatar,
@@ -66,8 +66,7 @@ jn.define('im/messenger/controller/dialog/lib/web', (require, exports, module) =
 				quoteEnable: ChatPerformance.isGestureQuoteSupported(),
 				quoteFromRight: false,
 			});
-			chatSettings.backgroundType = Theme.getInstance().getId() === 'dark' ? 'DARK' : 'LIGHT_GRAY';
-
+			chatSettings.backgroundType = AppTheme.id === 'dark' ? 'DARK' : 'LIGHT_GRAY';
 			const backgroundConfig = { ...ChatDialogBackground[chatSettings.backgroundType] };
 			backgroundConfig.url = currentDomain + backgroundConfig.url;
 
@@ -115,7 +114,7 @@ jn.define('im/messenger/controller/dialog/lib/web', (require, exports, module) =
 				WIDGET_CHAT_RECIPIENTS_VERSION: MessengerParams.get('WIDGET_CHAT_RECIPIENTS_VERSION', '1.0.0'),
 				WIDGET_CHAT_TRANSFER_VERSION: MessengerParams.get('WIDGET_CHAT_TRANSFER_VERSION', '1.0.0'),
 				WIDGET_BACKDROP_MENU_VERSION: MessengerParams.get('WIDGET_BACKDROP_MENU_VERSION', '1.0.0'),
-				THEME_ID: Theme.getInstance().getId(),
+				THEME_ID: AppTheme.id,
 			};
 
 			if (this.isOpenlineDialog(dialogId, dialogTitleParams, userCode))
@@ -167,10 +166,27 @@ jn.define('im/messenger/controller/dialog/lib/web', (require, exports, module) =
 			};
 		}
 
-		static getOpenLineParams(userCode, dialogTitleParams = null)
+		static getOpenLineParams(options)
 		{
+			const {
+				userCode,
+				sessionId,
+				dialogTitleParams,
+			} = options;
+
 			return new Promise((resolve) => {
-				this.getOpenlineDialogByUserCode(userCode).then((dialog) => {
+				let getOpenlineDialogPromise = Promise.resolve({ dialog_id: 0 });
+				if (userCode)
+				{
+					getOpenlineDialogPromise = this.getOpenlineDialogByUserCode(userCode);
+				}
+				else if (sessionId)
+				{
+					getOpenlineDialogPromise = this.getOpenlineDialogBySessionId(sessionId);
+				}
+
+				// eslint-disable-next-line promise/catch-or-return
+				getOpenlineDialogPromise.then((dialog) => {
 					let titleParams;
 					if (dialogTitleParams)
 					{
@@ -215,7 +231,7 @@ jn.define('im/messenger/controller/dialog/lib/web', (require, exports, module) =
 							WIDGET_CHAT_RECIPIENTS_VERSION: MessengerParams.get('WIDGET_CHAT_RECIPIENTS_VERSION', '1.0.0'),
 							WIDGET_CHAT_TRANSFER_VERSION: MessengerParams.get('WIDGET_CHAT_TRANSFER_VERSION', '1.0.0'),
 							WIDGET_BACKDROP_MENU_VERSION: MessengerParams.get('WIDGET_BACKDROP_MENU_VERSION', '1.0.0'),
-							THEME_ID: Theme.getInstance().getId(),
+							THEME_ID: AppTheme.id,
 						},
 						url: `/mobile/web_mobile_component/im.dialog/?version=${MessengerParams.get('COMPONENT_CHAT_DIALOG_VERSION', '1.0.0')}`,
 						animated: true,
@@ -244,7 +260,24 @@ jn.define('im/messenger/controller/dialog/lib/web', (require, exports, module) =
 					.then((response) => {
 						resolve(response.data());
 					})
-					.catch(() => {
+					.catch((error) => {
+						console.error('WebDialog.getOpenlineDialogByUserCode error:', error, userCode);
+
+						resolve({ dialog_id: 0 });
+					});
+			});
+		}
+
+		static getOpenlineDialogBySessionId(sessionId)
+		{
+			return new Promise((resolve) => {
+				OpenLinesRest.getBySessionId(sessionId)
+					.then((response) => {
+						resolve(response.data());
+					})
+					.catch((error) => {
+						console.error('WebDialog.getOpenlineDialogBySessionId error:', error, sessionId);
+
 						resolve({ dialog_id: 0 });
 					});
 			});

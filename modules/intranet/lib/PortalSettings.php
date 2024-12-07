@@ -15,138 +15,44 @@ use Bitrix\Main\IO\File;
 class PortalSettings
 {
 	private static array $instances = [];
-	protected string $siteId = 's1';
 	protected string $siteName;
 	protected string $siteTitle;
 	protected string $siteLogo24 = '24';
-	protected ?int $siteLogoId = null;
-	protected ?int $siteLogoIdForRetina = null;
 	protected ?string $settingsPath = null;
+	private ?array $desktopDownloadLinks = null;
+	private Portal\PortalLogo $siteLogo;
 
-	protected function __construct(?string $siteId = null)
+	protected function __construct()
 	{
-		if (is_string($siteId))
-		{
-			$this->siteId = $siteId;
-		}
-		else if (
-			defined('SITE_ID')
-			&& Main\Config\Option::get('main', '~wizard_id', null, SITE_ID) === 'portal'
-		)
-		{
-			$this->siteId = SITE_ID;
-		}
 		$this->init();
 	}
 
 	protected function init()
 	{
-		$this->siteTitle = Main\Config\Option::get('bitrix24', 'site_title', null, $this->siteId) ??
-			Main\Config\Option::get('bitrix24', 'site_title', null) ?? $this->getTitleByDefault();
-
-		// bitrix24 as module id here is for the migrated CPs
-		if (Main\Config\Option::get('bitrix24', 'logo24show', 'Y', $this->siteId) === 'N')
-		{
-			$this->siteLogo24 = '';
-		}
-
-		$this->siteLogoIdForRetina = Main\Config\Option::get('bitrix24', 'client_logo_retina', null, $this->siteId)
-			?? Main\Config\Option::get('bitrix24', 'client_logo_retina', null);
-
-		$this->siteLogoId = Main\Config\Option::get('bitrix24', 'client_logo', null, $this->siteId)
-			?? Main\Config\Option::get('bitrix24', 'client_logo', null) ?? $this->siteLogoIdForRetina;
+		$this->siteTitle = $this->getSettingsService()->titleSettings()->getTitle();
+		$this->siteLogo24 = $this->getSettingsService()->logo24Settings()->getLogo24();
+		$this->siteLogo = new Intranet\Portal\PortalLogo($this->getSettingsService());
+		$this->siteName = $this->getSettingsService()->nameSettings()->getName();
 	}
 
 	public function getName(): string
 	{
-		if (!isset($this->siteName))
-		{
-			$siteName = Main\Config\Option::get('main', 'site_name', '', $this->siteId);
-			if (strlen($siteName) <= 0)
-			{
-				$siteName = Main\Config\Option::get('main', 'site_name');
-			}
-			$this->siteName = strlen($siteName) > 0 ? $siteName : Main\Context::getCurrent()->getServer()->getServerName();
-		}
-
 		return $this->siteName;
 	}
 
-	public function setName(string $siteName): Main\Result
+	public function setName(string $siteName): void
 	{
-		$result = new Main\Result();
-		$siteName = trim($siteName);
-		$siteName  = $siteName <> '' ? $siteName : Main\Context::getCurrent()->getServer()->getServerName();
-		$currentSiteName = $this->getName();
-
-		if ($siteName <> '' && $siteName !== $currentSiteName)
-		{
-			$this->siteName = $siteName;
-			Main\Config\Option::set('main', 'site_name', $siteName, $this->siteId);
-			$result->setData(['value' => $siteName]);
-		}
-
-		return $result;
-	}
-
-	public function setLogo24(string $showLogo24 = 'Y')
-	{
-		$result = new Main\Result();
-
-		if ($this->canCurrentUserEditTitle())
-		{
-			$logo24 = $showLogo24 === 'Y' ? '24' : '';
-
-			if ($this->siteLogo24 !== $logo24)
-			{
-				$this->siteLogo24 = $logo24;
-				Main\Config\Option::set('bitrix24', 'logo24show', $showLogo24, $this->siteId);
-			}
-
-			$result->setData(['value' => $logo24]);
-		}
-
-		return $result;
+		$this->getSettingsService()->nameSettings()->setName($siteName);
 	}
 
 	public function getTitle(): string
 	{
-		$this->siteTitle = strlen($this->siteTitle) > 0 ? $this->siteTitle : $this->getTitleByDefault();
-
 		return $this->siteTitle;
 	}
 
-	protected function getTitleByDefault(): string
+	public function setTitle(string $siteTitle): void
 	{
-		return $this->getName();
-	}
-
-	public function canCurrentUserEditTitle(): bool
-	{
-		return Intranet\CurrentUser::get()->isAdmin();
-	}
-
-	public function setTitle(string $siteTitle)
-	{
-		$result = new Main\Result();
-		$siteTitle = trim($siteTitle);
-		$siteTitle = $siteTitle <> '' ? $siteTitle : $this->getTitleByDefault();
-		$currentSiteTitle = $this->getTitle();
-
-		if ($siteTitle !== $currentSiteTitle)
-		{
-			$this->siteTitle = $siteTitle;
-			// bitrix24 as a module_id here is for a historical reason
-			Main\Config\Option::set('bitrix24', 'site_title', $siteTitle, $this->siteId);
-			$result->setData(['value' => $siteTitle]);
-		}
-
-		return $result;
-	}
-
-	public function canCurrentUserEditName(): bool
-	{
-		return Intranet\CurrentUser::get()->isAdmin();
+		$this->getSettingsService()->titleSettings()->setTitle($siteTitle);
 	}
 
 	public function getLogo24(): string
@@ -154,60 +60,9 @@ class PortalSettings
 		return $this->siteLogo24;
 	}
 
-	public function canCurrentUserEditLogo24(): bool
-	{
-		return Intranet\CurrentUser::get()->isAdmin();
-	}
-
-	public function setLogo(int $logo, ?int $logo2x = null)
-	{
-		$this->removeLogo();
-		$this->siteLogoId = $logo;
-		Main\Config\Option::set('bitrix24', 'client_logo', $this->siteLogoId, $this->siteId);
-		if (!empty($logo2x))
-		{
-			$this->siteLogoIdForRetina = (int) $logo2x;
-			Main\Config\Option::set('bitrix24', 'client_logo_retina', $this->siteLogoIdForRetina, $this->siteId);
-		}
-	}
-
-	public function removeLogo(): void
-	{
-		\CFile::Delete($this->siteLogoId);
-		\CFile::Delete($this->siteLogoIdForRetina);
-
-		$this->siteLogoId = null;
-		$this->siteLogoIdForRetina = null;
-
-		Main\Config\Option::delete('bitrix24', ['name' => 'client_logo']);
-		Main\Config\Option::delete('bitrix24', ['name' => 'client_logo_retina']);
-	}
-
 	public function getLogo(): ?array
 	{
-		$result = null;
-
-		if ($this->siteLogoId && $image = \CFile::_GetImgParams($this->siteLogoId))
-		{
-			$result = [
-				'id' => $this->siteLogoId,
-				'src' => $image['SRC'],
-				'width' => $image['WIDTH'],
-				'height' => $image['HEIGHT'],
-			];
-
-			if ($this->siteLogoIdForRetina && $image = \CFile::_GetImgParams($this->siteLogoIdForRetina))
-			{
-				$result['srcset'] = $image['SRC'];
-			}
-		}
-
-		return $result;
-	}
-
-	public function canCurrentUserEditLogo(): bool
-	{
-		return Intranet\CurrentUser::get()->isAdmin();
+		return $this->siteLogo->getLogo();
 	}
 
 	public function getSettingsUrl(): string
@@ -216,13 +71,114 @@ class PortalSettings
 		{
 			$this->settingsPath = '/configs/';
 
-			if(!File::isFileExists($_SERVER['DOCUMENT_ROOT'] . $this->settingsPath . '/index.php'))
+			if (!File::isFileExists($_SERVER['DOCUMENT_ROOT'] . $this->settingsPath . '/index.php'))
 			{
 				$this->settingsPath = '/settings/configs/';
 			}
 		}
 
 		return $this->settingsPath;
+	}
+
+	public function getDefaultLogo(): array
+	{
+		if (LANGUAGE_ID === 'ru')
+		{
+			$region = \Bitrix\Main\Application::getInstance()->getLicense()->getRegion();
+
+			if ($region === 'by')
+			{
+				return [
+					'white' => '/bitrix/images/intranet/logo/bitrix24/by/bitrix24-logo-by-white.svg',
+					'black' => '/bitrix/images/intranet/logo/bitrix24/by/bitrix24-logo-by-black.svg',
+				];
+			}
+			else
+			{
+				return [
+					'white' => '/bitrix/images/intranet/logo/bitrix24/ru/bitrix24-logo-ru-white.svg',
+					'black' => '/bitrix/images/intranet/logo/bitrix24/ru/bitrix24-logo-ru-black.svg',
+				];
+			}
+		}
+
+		return [
+			'white' => '/bitrix/images/intranet/logo/bitrix24/en/bitrix24-logo-en-white.svg',
+			'black' => '/bitrix/images/intranet/logo/bitrix24/en/bitrix24-logo-en-black.svg',
+		];
+	}
+
+	final public function getDesktopDownloadLinks(): array
+	{
+		if (isset($this->desktopDownloadLinks))
+		{
+			return $this->desktopDownloadLinks;
+		}
+
+		$region = \Bitrix\Main\Application::getInstance()->getLicense()->getRegion();
+
+		if (in_array($region, ['ru', 'by']))
+		{
+			$this->desktopDownloadLinks = [
+				'windows' => 'https://repos.1c-bitrix.ru/b24/bitrix24_desktop_ru.exe',
+				'macos' => 'https://repos.1c-bitrix.ru/b24/bitrix24_desktop_ru.dmg',
+				'linuxDeb' => 'https://repos.1c-bitrix.ru/b24/bitrix24_desktop_ru.deb',
+				'linuxRpm' => 'https://repos.1c-bitrix.ru/b24/bitrix24_desktop_ru.rpm',
+				'msi' => 'https://repos.1c-bitrix.ru/b24/bitrix24_desktop_ru.msi',
+				'macosArm' => 'https://repos.1c-bitrix.ru/b24/bitrix24_macos_arm_ru.dmg',
+			];
+		}
+		else
+		{
+			$this->desktopDownloadLinks = [
+				'windows' => 'https://dl.bitrix24.com/b24/bitrix24_desktop.exe',
+				'macos' => 'https://dl.bitrix24.com/b24/bitrix24_desktop.dmg',
+				'linuxDeb' => 'https://dl.bitrix24.com/b24/bitrix24_desktop.deb',
+				'linuxRpm' => 'https://dl.bitrix24.com/b24/bitrix24_desktop.rpm',
+				'msi' => 'https://dl.bitrix24.com/b24/bitrix24_desktop.msi',
+				'macosArm' => 'https://dl.bitrix24.com/b24/bitrix24_macos_arm.dmg',
+			];
+		}
+
+		return $this->desktopDownloadLinks;
+	}
+
+	/**
+	 * @param string $userAgent from \Bitrix\Main\Application::getInstance()->getContext()->getRequest()->getUserAgent()
+	 * @return string
+	 */
+	final public function getDesktopDownloadLinkByUserAgent(string $userAgent): string
+	{
+		$links = $this->getDesktopDownloadLinks();
+
+		if (mb_stripos($userAgent, 'Windows') !== false)
+		{
+			return $links['windows'];
+		}
+
+		if (
+			mb_stripos($userAgent, 'Macintosh') !== false
+			|| mb_stripos($userAgent, 'Mac OS X') !== false
+		)
+		{
+			return $links['macos'];
+		}
+
+		if (mb_stripos($userAgent, 'Linux') !== false)
+		{
+			if (
+				mb_stripos($userAgent, 'Fedora') !== false
+				|| mb_stripos($userAgent, 'CentOS') !== false
+				|| mb_stripos($userAgent, 'Red Hat') !== false
+			)
+			{
+				return $links['linuxRpm'];
+			}
+
+			return $links['linuxDeb'];
+		}
+
+		return $links['windows'];
 	}
 
 	final public static function getInstance(): static
@@ -233,5 +189,10 @@ class PortalSettings
 		}
 
 		return self::$instances[static::class];
+	}
+
+	protected function getSettingsService(): Intranet\Service\PortalSettings
+	{
+		return Intranet\Service\PortalSettings::getInstance();
 	}
 }

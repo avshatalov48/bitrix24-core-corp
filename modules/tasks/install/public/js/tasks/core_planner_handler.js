@@ -147,8 +147,6 @@ BX.CTasksPlannerHandler.prototype.draw = function(obPlanner, DATA)
 
 		BX.removeClass(this.TASKS, 'tm-popup-tasks-empty');
 
-		//debugger;
-
 		for (var i=0,l=DATA.TASKS.length; i<l; i++)
 		{
 			isComplete = (DATA.TASKS[i].STATUS == 4) || (DATA.TASKS[i].STATUS == 5);

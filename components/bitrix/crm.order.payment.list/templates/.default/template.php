@@ -30,13 +30,11 @@ if (CModule::IncludeModule('bitrix24') && !\Bitrix\Crm\CallList\CallList::isAvai
 	CBitrix24::initLicenseInfoPopupJS();
 }
 
-\Bitrix\Main\UI\Extension::load('ui.fonts.opensans');
+\Bitrix\Main\UI\Extension::load(['ui.fonts.opensans', 'crm.autorun']);
 
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/progress_control.js');
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/activity.js');
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/interface_grid.js');
-Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/autorun_proc.js');
-Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/js/crm/css/autorun_proc.css');
 
 ?><div id="rebuildMessageWrapper"><?
 
@@ -460,7 +458,7 @@ $APPLICATION->IncludeComponent(
 if ($isInternal && (int)$arParams['INTERNAL_FILTER']['ORDER_ID'] > 0)
 {
 	?>
-	<script type="text/javascript">
+	<script>
 		BX.ready(
 			function()
 			{
@@ -490,7 +488,7 @@ if ($isInternal && (int)$arParams['INTERNAL_FILTER']['ORDER_ID'] > 0)
 }
 
 ?>
-<script type="text/javascript">
+<script>
 	BX.ready(
 		function()
 		{
@@ -506,7 +504,7 @@ if ($isInternal && (int)$arParams['INTERNAL_FILTER']['ORDER_ID'] > 0)
 	);
 </script><?
 if(!$isInternal):
-?><script type="text/javascript">
+?><script>
 	BX.ready(
 			function()
 			{
@@ -530,7 +528,7 @@ if(!$isInternal):
 <?endif;?>
 
 <?if($arResult['NEED_FOR_BUILD_TIMELINE']):?>
-	<script type="text/javascript">
+	<script>
 		BX.ready(
 			function()
 			{
@@ -558,7 +556,7 @@ if(!$isInternal):
 	</script>
 <?endif;?>
 <?if($arResult['NEED_FOR_REBUILD_ORDER_PAYMENT_ATTRS']):?>
-<script type="text/javascript">
+<script>
 	BX.ready(
 		function()
 		{

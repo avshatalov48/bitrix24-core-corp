@@ -4,7 +4,7 @@
  * @module im/messenger/provider/pull/chat/user
  */
 jn.define('im/messenger/provider/pull/chat/user', (require, exports, module) => {
-	const { BasePullHandler } = require('im/messenger/provider/pull/lib');
+	const { BasePullHandler } = require('im/messenger/provider/pull/base');
 	const { RecentConverter } = require('im/messenger/lib/converter');
 	const { Counters } = require('im/messenger/lib/counters');
 	const { LoggerManager } = require('im/messenger/lib/logger');

@@ -361,7 +361,11 @@ else
 									<tr>
 										<td class="task-detail-info-layout-name"><?php echo GetMessage("TASKS_SIDEBAR_STATUS")?>:</td>
 										<td class="task-detail-info-layout-value">
-											<span class="task-detail-info-status task-detail-info-status-in-progress"><span class="task-detail-info-status-text"><?php echo GetMessage("TASKS_STATUS_".$arResult["TASK"]["REAL_STATUS"])?></span>
+											<span class="task-detail-info-status task-detail-info-status-in-progress">
+												<span class="task-detail-info-status-text"><?=
+														Loc::getMessage('TASKS_STATUS_' . $arResult['TASK']['REAL_STATUS'] . '_MSGVER_1')
+														?? Loc::getMessage('TASKS_STATUS_' . $arResult['TASK']['REAL_STATUS'])
+													?></span>
 												<span class="task-detail-info-status-date">
 													<?php if ($arResult["TASK"]["REAL_STATUS"] != 4 && $arResult["TASK"]["REAL_STATUS"] != 5):?>
 														<?php echo GetMessage("TASKS_SIDEBAR_START_DATE")?>

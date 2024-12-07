@@ -213,7 +213,7 @@ class CCrmVCard
 						$arParamValue = (trim(mb_substr(mb_strstr($paramValue, '='), 1)));
 						if(mb_strtoupper(LANG_CHARSET) != $arParamValue)
 						{
-							$value = $GLOBALS['APPLICATION']->ConvertCharset($value, $arParamValue, LANG_CHARSET);
+							$value = \Bitrix\Main\Text\Encoding::convertEncoding($value, $arParamValue, LANG_CHARSET);
 						}
 					}
 				}

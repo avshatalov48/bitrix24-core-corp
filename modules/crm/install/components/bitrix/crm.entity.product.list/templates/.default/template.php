@@ -22,7 +22,6 @@ Extension::load([
 	'ui.hint',
 	'ui.notification',
 	'catalog.product-calculator',
-	'catalog.store-use',
 	'ui.design-tokens',
 ]);
 
@@ -144,9 +143,13 @@ $editorConfig = [
 	'items' => [],
 
 	'isInventoryManagementToolEnabled' => $arResult['IS_INVENTORY_MANAGEMENT_TOOL_ENABLED'],
+	'inventoryManagementMode' => \Bitrix\Catalog\Store\EnableWizard\Manager::getCurrentMode(),
+	'isOnecInventoryManagementRestricted' => (
+		\Bitrix\Catalog\Store\EnableWizard\Manager::isOnecMode()
+		&& \Bitrix\Catalog\Store\EnableWizard\TariffChecker::isOnecInventoryManagementRestricted()
+	),
 	'isReserveBlocked' => $arResult['IS_RESERVE_BLOCKED'],
 	'isReserveEqualProductQuantity' => $arResult['IS_RESERVE_EQUAL_PRODUCT_QUANTITY'],
-
 	'restrictedProductTypes' => $arResult['RESTRICTED_PRODUCT_TYPES'],
 ];
 
@@ -516,7 +519,7 @@ foreach ($grid['ROWS'] as $product)
 		if (in_array('TAX_INCLUDED', $visibleColumnsIds, true))
 		{
 			$columns['TAX_INCLUDED'] =
-				$rawProduct['TAX_INCLUDED']
+				$rawProduct['TAX_INCLUDED'] === 'Y'
 					? Loc::getMessage('CRM_ENTITY_PL_YES')
 					: Loc::getMessage('CRM_ENTITY_PL_NO')
 			;
@@ -689,6 +692,7 @@ foreach ($rows as $key => $row)
 				>
 					<?=Loc::getMessage('CRM_ENTITY_PL_ADD_PRODUCT')?>
 				</a>
+				<?php if (!$arResult['IS_EXTERNAL_CATALOG']): ?>
 				<a class="ui-btn ui-btn-light-border <?=$disabledSelectProductButton ? $lockedClasses : ''?>"
 				   data-role="product-list-select-button"
 				   title="<?=Loc::getMessage('CRM_ENTITY_PL_SELECT_PRODUCT_TITLE')?>"
@@ -697,6 +701,7 @@ foreach ($rows as $key => $row)
 				>
 					<?=Loc::getMessage('CRM_ENTITY_PL_SELECT_PRODUCT')?>
 				</a>
+				<?php endif; ?>
 			</div>
 			<button class="ui-btn ui-btn-light-border ui-btn-icon-setting"
 					data-role="product-list-settings-button"></button>
@@ -743,6 +748,9 @@ foreach ($rows as $key => $row)
 			'SHOW_ACTION_PANEL' => !empty($grid['ACTION_PANEL']),
 			'SHOW_ROW_CHECKBOXES' => false,
 			'SETTINGS_WINDOW_TITLE' => $arResult['ENTITY']['TITLE'],
+			'USE_CHECKBOX_LIST_FOR_SETTINGS_POPUP' => (bool)(
+				$grid['USE_CHECKBOX_LIST_FOR_SETTINGS_POPUP'] ?? \Bitrix\Main\ModuleManager::isModuleInstalled('ui')
+			),
 		],
 		$component
 	);
@@ -771,6 +779,7 @@ foreach ($rows as $key => $row)
 				>
 					<?=Loc::getMessage('CRM_ENTITY_PL_ADD_PRODUCT')?>
 				</a>
+				<?php if (!$arResult['IS_EXTERNAL_CATALOG']): ?>
 				<a class="ui-btn ui-btn-light-border <?=$disabledSelectProductButton ? $lockedClasses : ''?>"
 				   data-role="product-list-select-button"
 				   title="<?=Loc::getMessage('CRM_ENTITY_PL_SELECT_PRODUCT_TITLE')?>"
@@ -779,6 +788,7 @@ foreach ($rows as $key => $row)
 				>
 					<?=Loc::getMessage('CRM_ENTITY_PL_SELECT_PRODUCT')?>
 				</a>
+				<?php endif; ?>
 			</div>
 			<button class="ui-btn ui-btn-light-border ui-btn-icon-setting"
 					data-role="product-list-settings-button"></button>
@@ -858,7 +868,6 @@ foreach ($rows as $key => $row)
 		{
 			BX.Crm.Entity.ProductList.Instance = new BX.Crm.Entity.ProductList.Editor('<?=$arResult['ID']?>');
 		}
-
 		BX.Crm.Entity.ProductList.Instance.init(<?=Json::encode($editorConfig)?>);
 		BX.Crm["<?=$jsEventsManagerId?>"] = BX.Crm.Entity.ProductList.Instance.getPageEventsManager();
 	});

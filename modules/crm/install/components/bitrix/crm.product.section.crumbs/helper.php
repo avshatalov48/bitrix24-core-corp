@@ -93,7 +93,7 @@ class CCrmProductSectionCrumbsHelper
 		{
 			$result .= ($i % 2)
 				? $part
-				: rawurlencode($APPLICATION->ConvertCharset($part, LANG_CHARSET, 'UTF-8'));
+				: rawurlencode($part);
 		}
 
 		return $result;

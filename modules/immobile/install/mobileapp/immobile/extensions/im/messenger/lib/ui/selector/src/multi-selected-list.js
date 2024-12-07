@@ -5,7 +5,7 @@ jn.define('im/messenger/lib/ui/selector/multi-selected-list', (require, exports,
 	const { SelectedItem, EmptySearchItem } = require('im/messenger/lib/ui/base/item');
 	const { List } = require('im/messenger/lib/ui/base/list');
 	const { LoaderItem } = require('im/messenger/lib/ui/base/loader');
-	const AppTheme = require('apptheme');
+	const { Theme } = require('im/lib/theme');
 
 	class MultiSelectedList extends List
 	{
@@ -35,7 +35,7 @@ jn.define('im/messenger/lib/ui/selector/multi-selected-list', (require, exports,
 				{
 					style: {
 						flex: 1,
-						backgroundColor: AppTheme.colors.bgContentTertiary,
+						backgroundColor: Theme.colors.bgContentTertiary,
 						borderTopRightRadius: 12,
 						borderTopLeftRadius: 12,
 					},
@@ -44,7 +44,7 @@ jn.define('im/messenger/lib/ui/selector/multi-selected-list', (require, exports,
 				ListView({
 					style: {
 						flex: 1,
-						backgroundColor: AppTheme.colors.bgContentPrimary,
+						backgroundColor: Theme.colors.bgContentPrimary,
 					},
 					data: [{ items: this.state.itemList }],
 					renderItem: (props) => {
@@ -71,6 +71,7 @@ jn.define('im/messenger/lib/ui/selector/multi-selected-list', (require, exports,
 									this.props.onUnselectItem(itemData);
 								},
 								parentEmitter: this.emitter,
+								isSuperEllipseAvatar: this.props.isSuperEllipseAvatar,
 							},
 						);
 					},

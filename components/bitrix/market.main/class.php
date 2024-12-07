@@ -8,15 +8,14 @@ use Bitrix\Main\Security\Random;
 use Bitrix\Main\Web\Uri;
 use Bitrix\Market\Categories;
 use Bitrix\Market\History;
-use Bitrix\Market\Link;
 use Bitrix\Market\Loadable;
-use Bitrix\Market\NumberApps;
 use Bitrix\Market\PageRules;
 use Bitrix\Market\PricePolicy;
+use Bitrix\Market\Rest\Actions;
+use Bitrix\Market\Rest\Transport;
 use Bitrix\Market\Tag\TagTable;
 use Bitrix\Market\AppFavoritesTable;
 use Bitrix\Market\Toolbar;
-use Bitrix\Rest\Marketplace\Transport;
 
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) {
 	die();
@@ -37,7 +36,8 @@ class MarketMain extends CBitrixComponent implements Controllerable, Loadable
 		$this->prepareResult();
 
 		$marketAction = $this->arResult['ADDITIONAL_MARKET_ACTION'] ?? '';
-		$this->arResult = array_merge($this->arResult, Toolbar::getInfo($marketAction));
+		$searchAction = $this->arResult['ADDITIONAL_SEARCH_ACTION'] ?? '';
+		$this->arResult = array_merge($this->arResult, Toolbar::getInfo($marketAction, $searchAction));
 
 		$this->includeComponentTemplate();
 
@@ -60,16 +60,19 @@ class MarketMain extends CBitrixComponent implements Controllerable, Loadable
 
 			$this->arResult['CATEGORIES'] = Categories::get();
 			if (empty($this->arResult['CATEGORIES'])) {
-				$batch[Transport::METHOD_GET_CATEGORIES_V2] = [Transport::METHOD_GET_CATEGORIES_V2];
+				$batch[Actions::METHOD_GET_CATEGORIES_V2] = [Actions::METHOD_GET_CATEGORIES_V2];
 			}
 
-			$batch[Transport::METHOD_TOTAL_APPS] = [
-				Transport::METHOD_TOTAL_APPS,
+			$batch[Actions::METHOD_TOTAL_APPS] = [
+				Actions::METHOD_TOTAL_APPS,
+				[
+					'placement' => $this->request->get('placement'),
+				]
 			];
 		}
 
 		if (empty($this->arParams['PLACEMENT']) && empty($this->arParams['TAGS'])) {
-			$batch[Transport::METHOD_GET_SLIDER] = [Transport::METHOD_GET_SLIDER];
+			$batch[Actions::METHOD_GET_SLIDER] = [Actions::METHOD_GET_SLIDER];
 		}
 
 		$response = Transport::instance()->batch($batch);
@@ -79,8 +82,8 @@ class MarketMain extends CBitrixComponent implements Controllerable, Loadable
 	private function getCollectionBatch($placement, $tags, $page = 1): array
 	{
 		return [
-			Transport::METHOD_GET_COLLECTIONS => [
-				Transport::METHOD_GET_COLLECTIONS,
+			Actions::METHOD_GET_COLLECTIONS => [
+				Actions::METHOD_GET_COLLECTIONS,
 				[
 					'collection_params' => TagTable::getAll(),
 					'placement' => (empty($placement)) ? TagTable::MARKET_INDEX_TAG : $placement,
@@ -94,28 +97,26 @@ class MarketMain extends CBitrixComponent implements Controllerable, Loadable
 	private function prepareResponse($response)
 	{
 		if (
-			isset($response[Transport::METHOD_GET_COLLECTIONS]) &&
-			!empty($response[Transport::METHOD_GET_COLLECTIONS]['ITEMS'])
+			isset($response[Actions::METHOD_GET_COLLECTIONS]) &&
+			!empty($response[Actions::METHOD_GET_COLLECTIONS]['ITEMS'])
 		) {
-			$this->arResult['COLLECTIONS'] = $this->prepareCollections($response[Transport::METHOD_GET_COLLECTIONS]['ITEMS']);
-			$this->arResult['ENABLE_NEXT_PAGE'] = $response[Transport::METHOD_GET_COLLECTIONS]['ENABLE_NEXT_PAGE'];
+			$this->arResult['COLLECTIONS'] = $this->prepareCollections($response[Actions::METHOD_GET_COLLECTIONS]['ITEMS']);
+			$this->arResult['ENABLE_NEXT_PAGE'] = $response[Actions::METHOD_GET_COLLECTIONS]['ENABLE_NEXT_PAGE'];
+			$this->arResult['ADDITIONAL_HIT_ACTION'] = $response[Actions::METHOD_GET_COLLECTIONS]['ADDITIONAL_HIT_ACTION'];
 		}
 
-		if (!empty($response[Transport::METHOD_GET_SLIDER])) {
-			$this->arResult['SLIDER'] = $response[Transport::METHOD_GET_SLIDER];
+		if (!empty($response[Actions::METHOD_GET_SLIDER])) {
+			$this->arResult['SLIDER'] = $response[Actions::METHOD_GET_SLIDER];
 			$this->prepareSliderLinks();
 		}
 
-		if (!empty($response[Transport::METHOD_GET_CATEGORIES_V2])) {
-			Categories::saveCache($response[Transport::METHOD_GET_CATEGORIES_V2]);
+		if (!empty($response[Actions::METHOD_GET_CATEGORIES_V2])) {
+			Categories::saveCache($response[Actions::METHOD_GET_CATEGORIES_V2]);
 			$this->arResult['CATEGORIES'] = Categories::get();
 		}
 
-		if (isset($response[Transport::METHOD_TOTAL_APPS])) {
-			$this->arResult['TOTAL_APPS'] = NumberApps::get($response[Transport::METHOD_TOTAL_APPS]);
-			$this->arResult['SHOW_MARKET_ICON'] = $response[Transport::METHOD_TOTAL_APPS]['SHOW_MARKET_ICON'];
-			$this->arResult['ADDITIONAL_CONTENT'] = $response[Transport::METHOD_TOTAL_APPS]['ADDITIONAL_CONTENT'] ?? '';
-			$this->arResult['ADDITIONAL_MARKET_ACTION'] = $response[Transport::METHOD_TOTAL_APPS]['ADDITIONAL_MARKET_ACTION'] ?? '';
+		if (is_array($response[Actions::METHOD_TOTAL_APPS])) {
+			$this->arResult = array_merge($this->arResult, Toolbar::getTotalAppsInfo($response[Actions::METHOD_TOTAL_APPS]));
 		}
 	}
 
@@ -187,7 +188,6 @@ class MarketMain extends CBitrixComponent implements Controllerable, Loadable
 			$this->arParams['PLACEMENT'] = $requestPlacement;
 		}
 
-		$this->arParams['CREATE_URI_SITE_TEMPLATE'] = Link::getCreateUri();
 		$this->arParams['TAGS'] = (array)$this->request->get('tag');
 		$this->arParams['CATEGORY'] = (array)$this->request->get('category');
 		if (isset($this->arParams['REQUEST'])) {

@@ -359,7 +359,7 @@ abstract class DataSource
 		}
 
 		$userID = \CCrmSecurityHelper::GetCurrentUserID();
-		$cacheID .= '_'.ConvertDateTime(getmicrotime()).'_'.$userID;
+		$cacheID .= '_'.ConvertDateTime(microtime(true)).'_'.$userID;
 		$cacheDir = '/crm/start/widget/'.md5(__CLASS__).'/'.mb_substr($userID, 0, 2).'/';
 
 		$this->cache = new \CPHPCache();

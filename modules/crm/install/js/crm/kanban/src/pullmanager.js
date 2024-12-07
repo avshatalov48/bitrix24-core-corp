@@ -31,9 +31,11 @@ export default class PullManager
 		this.grid = grid;
 
 		const data = grid.getData();
+
 		const options = {
 			moduleId: data.moduleId,
 			pullTag: data.pullTag,
+			additionalPullTags: data.additionalPullTags ?? [],
 			userId: data.userId,
 			additionalData: {
 				viewMode: data.viewMode,
@@ -162,11 +164,6 @@ export default class PullManager
 
 	#onPullItemUpdated(event: BaseEvent): void
 	{
-		if (Type.isNil(event.data))
-		{
-			return;
-		}
-
 		const { pullData: { params }, promises } = event.data;
 
 		const item = this.grid.getItem(params.item.id);
@@ -180,18 +177,13 @@ export default class PullManager
 			return;
 		}
 
-		this.#onPullItemAdded(params);
-
-		event.preventDefault();
+		// eslint-disable-next-line no-param-reassign
+		params.eventName = EventName.itemAdded;
+		this.#onPullItemAdded(event);
 	}
 
 	#onPullItemAdded(event: BaseEvent): void
 	{
-		if (Type.isNil(event.data))
-		{
-			return;
-		}
-
 		const { pullData: { params }, promises } = event.data;
 
 		const itemId = params.item.id;

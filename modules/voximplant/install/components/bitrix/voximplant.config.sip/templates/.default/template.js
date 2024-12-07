@@ -211,7 +211,7 @@
 			this.openConnectionConfig(configId);
 		},
 
-		connectModule: function(url)
+		connectModule: function(url, key)
 		{
 			if (!this.isTelephonyAvailable)
 			{
@@ -231,7 +231,16 @@
 			{
 				if(result)
 				{
-					window.open(url, '_top');
+					if(key != '')
+					{
+						document.body.innerHTML += '<form id="licFom" action="'+url+'" method="post" target="_blank"><input type="hidden" name="license_key" value="'+key+'"></form>';
+						document.getElementById("licFom").submit();
+
+					}
+					else
+					{
+						window.open(url, '_top');
+					}
 				}
 			});
 		}

@@ -74,7 +74,7 @@ jn.define('tasks/layout/deadline-friendly-date', (require, exports, module) => {
 			{
 				return this.timeFormat
 					? Loc.getMessage('TASKSMOBILE_DEADLINE_FRIENDLY_DATE_YESTERDAY', { '#TIME#': this.timeFormat })
-					: Loc.getMessage('MOBILE_UI_FRIENDLY_DATE_YESTERDAY');
+					: Loc.getMessage('MOBILE_UI_FRIENDLY_DATE_YESTERDAY_MSGVER_1');
 			}
 
 			const startOfDay = new Date(moment.date);
@@ -118,14 +118,14 @@ jn.define('tasks/layout/deadline-friendly-date', (require, exports, module) => {
 			{
 				return this.timeFormat
 					? Loc.getMessage('TASKSMOBILE_DEADLINE_FRIENDLY_DATE_TODAY', { '#TIME#': this.timeFormat })
-					: Loc.getMessage('MOBILE_UI_FRIENDLY_DATE_TODAY');
+					: Loc.getMessage('MOBILE_UI_FRIENDLY_DATE_TODAY_MSGVER_1');
 			}
 
 			if (moment.isTomorrow)
 			{
 				return this.timeFormat
 					? Loc.getMessage('TASKSMOBILE_DEADLINE_FRIENDLY_DATE_TOMORROW', { '#TIME#': this.timeFormat })
-					: Loc.getMessage('MOBILE_UI_FRIENDLY_DATE_TOMORROW');
+					: Loc.getMessage('MOBILE_UI_FRIENDLY_DATE_TOMORROW_MSGVER_1');
 			}
 
 			let date = null;

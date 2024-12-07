@@ -20,6 +20,8 @@ final class Mail extends SendFacilitator
 	private ?string $messageBody = null;
 	private int $messageBodyContentType = \CCrmContentType::Html;
 
+	private bool $addEmailSignature = true;
+
 	public function __construct(Channel $channel)
 	{
 		if ($channel->getSender()::getSenderCode() !== MailManager::getSenderCode())
@@ -45,6 +47,7 @@ final class Mail extends SendFacilitator
 			'MESSAGE_BODY_CONTENT_TYPE' => $this->messageBodyContentType,
 			'MESSAGE_FROM' => $this->getFrom()->getName(),
 			'MAILBOX_ID' => $this->getFrom()->getId(),
+			'ADD_EMAIL_SIGNATURE' => $this->addEmailSignature,
 		];
 	}
 
@@ -91,6 +94,13 @@ final class Mail extends SendFacilitator
 	public function setMessageSubject(string $subject): self
 	{
 		$this->messageSubject = $subject;
+
+		return $this;
+	}
+
+	public function setAddEmailSignature(bool $addEmailSignature): self
+	{
+		$this->addEmailSignature = $addEmailSignature;
 
 		return $this;
 	}

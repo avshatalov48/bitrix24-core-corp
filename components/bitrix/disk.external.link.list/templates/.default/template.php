@@ -72,7 +72,7 @@ CJSCore::Init(array('disk'));
 	);
 	?>
 </div>
-<script type="text/javascript">
+<script>
 BX(function () {
 	BX.Disk.storePathToUser('<?= CUtil::JSUrlEscape($arParams['PATH_TO_USER']) ?>');
 	BX.Disk['ExternalLinkListClass_<?= $component->getComponentId() ?>'] = new BX.Disk.ExternalLinkListClass({

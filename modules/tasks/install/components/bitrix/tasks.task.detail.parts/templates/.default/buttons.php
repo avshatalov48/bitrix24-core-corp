@@ -198,13 +198,20 @@ if ((int)$arResult["TASK"]["REAL_STATUS"] === \Bitrix\Tasks\Internals\Task\Statu
 				return false;" href="javascript:void(0);" class="webform-small-button webform-small-button-decline"><span class="webform-small-button-left"></span><span class="webform-small-button-text"><?php echo GetMessage("TASKS_REDO_TASK_MSGVER_1")?></span><span class="webform-small-button-right"></span></a><?php
 		}
 
-		$copyUrl = CComponentEngine::MakePathFromTemplate($arParams["PATH_TO_TASKS_TASK"], array("task_id" => 0, "action" => "edit"));
+		$addUrl = CComponentEngine::MakePathFromTemplate($arParams["PATH_TO_TASKS_TASK"], array("task_id" => 0, "action" => "edit"));
+		$copyUrl = (new \Bitrix\Main\Web\Uri($addUrl))->addParams([
+			'COPY' => $arResult["TASK"]["ID"],
+		])->getUri();
+		$createSubtaskUrl = (new \Bitrix\Main\Web\Uri($addUrl))->addParams([
+			'PARENT_ID' => $arResult["TASK"]["ID"],
+		])->getUri();
+
 
 		$showPopupMenu = false;
 
 		$inFavorite = $arResult['TASK']['FAVORITE'] == 'Y';
 		$favoriteItemMessage = GetMessage("TASKS_".($inFavorite ? 'DELETE' : 'ADD')."_FAVORITE");
-		?><script type="text/javascript">
+		?><script>
 			var taskMenu = [
 
 				<?if(is_array($arParams['MENU_ITEMS'])):?>
@@ -219,8 +226,8 @@ if ((int)$arResult["TASK"]["REAL_STATUS"] === \Bitrix\Tasks\Internals\Task\Statu
 
 				<?else:?>
 
-					{ code: 'COPY', text : '<?php echo CUtil::JSEscape(GetMessage("TASKS_COPY_TASK")); ?>', title : '<?php echo CUtil::JSEscape(GetMessage("TASKS_COPY_TASK_EX")); ?>', className : "menu-popup-item-copy", href : "<?php echo $copyUrl.(mb_strpos($copyUrl, "?") === false ? "?" : "&")."COPY=".$arResult["TASK"]["ID"].($arResult["IS_IFRAME"] ? "&IFRAME=Y" : "")?>" }
-					,{ code: 'ADD_SUBTASK', text : '<?php echo CUtil::JSEscape(GetMessage("TASKS_ADD_SUBTASK_2")); ?>', title : '<?php echo CUtil::JSEscape(GetMessage("TASKS_ADD_SUBTASK_2")); ?>', className : "menu-popup-item-create", href: "<?php echo CUtil::JSEscape($createSubtaskUrl)?>", onclick : function(event, item) {AddPopupSubtask(<?php echo $arResult["TASK"]["ID"]?>, event);} }
+					{ code: 'COPY', text : '<?php echo CUtil::JSEscape(GetMessage("TASKS_COPY_TASK")); ?>', title : '<?php echo CUtil::JSEscape(GetMessage("TASKS_COPY_TASK_EX")); ?>', className : "menu-popup-item-copy", href : "<?php echo $copyUrl?>" }
+					,{ code: 'ADD_SUBTASK', text : '<?php echo CUtil::JSEscape(GetMessage("TASKS_ADD_SUBTASK_2")); ?>', title : '<?php echo CUtil::JSEscape(GetMessage("TASKS_ADD_SUBTASK_2")); ?>', className : "menu-popup-item-create", href: "<?php echo CUtil::JSEscape($createSubtaskUrl)?>" } }
 					,{ code: 'FAVORITE', inFavorite: <?=($inFavorite ? 'true' : 'false')?>, text : '<?=CUtil::JSEscape($favoriteItemMessage)?>', title : '<?=CUtil::JSEscape($favoriteItemMessage)?>', className : "task-menu-popup-item-favorite", onclick : function(event, item) {
 							item.inFavorite = !item.inFavorite;
 

@@ -39,6 +39,13 @@ abstract class AbstractDateTimeConverter implements ConverterInterface
 			return null;
 		}
 
+		if (\Bitrix\Tasks\Integration\Calendar\Calendar::useCalendar('regular_template'))
+		{
+			return \Bitrix\Tasks\Integration\Calendar\Calendar::getInstance()->getClosestDate(
+				new \Bitrix\Main\Type\DateTime(), $seconds, $matchWorkTime
+			);
+		}
+
 		if ($matchWorkTime)
 		{
 			return $this->getDateMatchedWorkTime($seconds);

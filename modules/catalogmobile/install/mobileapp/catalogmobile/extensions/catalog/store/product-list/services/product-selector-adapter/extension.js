@@ -2,6 +2,10 @@
  * @module catalog/store/product-list/services/product-selector-adapter
  */
 jn.define('catalog/store/product-list/services/product-selector-adapter', (require, exports, module) => {
+
+	const { Loc } = require('loc');
+	const { PlanRestriction } = require('layout/ui/plan-restriction');
+
 	/**
 	 * @class StoreProductSelectorAdapter
 	 */
@@ -15,7 +19,9 @@ jn.define('catalog/store/product-list/services/product-selector-adapter', (requi
 			currency,
 			enableCreation,
 			onCreate,
-			onSelect
+			onSelect,
+			isCatalogHidden,
+			isOnecRestrictedByPlan,
 		})
 		{
 			/** @type StoreProductList */
@@ -25,6 +31,8 @@ jn.define('catalog/store/product-list/services/product-selector-adapter', (requi
 			this.basePriceId = basePriceId;
 			this.currency = currency;
 			this.enableCreation = enableCreation;
+			this.isCatalogHidden = isCatalogHidden;
+			this.isOnecRestrictedByPlan = isOnecRestrictedByPlan;
 
 			const emptyCallback = () => {};
 			this.onCreate = onCreate || emptyCallback;
@@ -33,6 +41,22 @@ jn.define('catalog/store/product-list/services/product-selector-adapter', (requi
 
 		openSelector()
 		{
+			const extraCreateOptions = {};
+			if (this.isCatalogHidden)
+			{
+				extraCreateOptions.createText = Loc.getMessage('CATALOG_PRODUCT_SEARCH_IN_1C');
+				extraCreateOptions.creatingText = Loc.getMessage('CATALOG_PRODUCT_SEARCH_IN_1C');
+			}
+
+			const searchOptions = {};
+			if (this.isCatalogHidden)
+			{
+				searchOptions.startTypingWithCreationText = Loc.getMessage('CATALOG_PRODUCT_SEARCH_IN_1C_HINT_TEXT');
+				searchOptions.startTypingText = Loc.getMessage('CATALOG_PRODUCT_SEARCH_IN_1C_HINT_TEXT');
+				searchOptions.searchPlaceholderWithCreation = Loc.getMessage('CATALOG_PRODUCT_SEARCH_PLACEHOLDER');
+				searchOptions.noResultsText = Loc.getMessage('CATALOG_PRODUCT_SEARCH_IN_1C_NO_RESULTS');
+			}
+
 			const selector = EntitySelectorFactory.createByType(EntitySelectorFactory.Type.PRODUCT, {
 				provider: {
 					options: {
@@ -48,12 +72,21 @@ jn.define('catalog/store/product-list/services/product-selector-adapter', (requi
 					enableCreation: this.enableCreation,
 					handler: (name) => {
 						selector.close().then(() => {
-							this.onCreate(name);
+							if (this.isCatalogHidden)
+							{
+								this.showExternalCatalogWebBackdrop();
+							}
+							else
+							{
+								this.onCreate(name);
+							}
 						});
 
 						return Promise.reject();
-					}
+					},
+					...extraCreateOptions,
 				},
+				searchOptions,
 				events: {
 					onWidgetClosed: (products) => {
 						if (products && products.length && products.length > 0)
@@ -61,16 +94,36 @@ jn.define('catalog/store/product-list/services/product-selector-adapter', (requi
 							const product = products[0];
 							this.onSelect(product.id);
 						}
-					}
+					},
 				},
 				widgetParams: {
 					backdrop: {
 						mediumPositionPercent: 70,
 						horizontalSwipeAllowed: false,
-					}
-				}
+					},
+				},
 			});
 			selector.show();
+		}
+
+		showExternalCatalogWebBackdrop()
+		{
+			if (this.isOnecRestrictedByPlan)
+			{
+				PlanRestriction.open({
+					title: Loc.getMessage('CATALOG_PRODUCT_SEARCH_IN_1C'),
+				});
+
+				return Promise.resolve();
+			}
+
+			qrauth.open({
+				title: Loc.getMessage('CATALOG_PRODUCT_SEARCH_IN_1C'),
+				hintText: Loc.getMessage('CATALOG_PRODUCT_SEARCH_IN_1C_HINT_TEXT'),
+				redirectUrl: '/crm/',
+			});
+
+			return Promise.resolve();
 		}
 	}
 

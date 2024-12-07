@@ -1,0 +1,4 @@
+<?php
+$MESS['TASKS_FLOW_TASK_QUEUE_POPUP_LABEL_PENDING'] = 'Задачи в ожидании';
+$MESS['TASKS_FLOW_TASK_QUEUE_POPUP_LABEL_AT_WORK'] = 'Задачи в работе';
+$MESS['TASKS_FLOW_TASK_QUEUE_POPUP_LABEL_COMPLETED'] = 'Завершённые задачи';

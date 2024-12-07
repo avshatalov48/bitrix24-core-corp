@@ -2,7 +2,7 @@
 
 return [
 	'extensions' => [
-		'tokens',
+		'apptheme',
 		'layout/ui/textarea',
 		'layout/ui/widget-header-button',
 	],

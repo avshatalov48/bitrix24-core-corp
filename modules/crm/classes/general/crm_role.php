@@ -5,6 +5,7 @@ use Bitrix\Crm\Security\Role\Model\RolePermissionTable;
 use Bitrix\Crm\Security\Role\Model\RoleRelationTable;
 use Bitrix\Crm\Security\Role\RolePermission;
 use Bitrix\Main;
+use Bitrix\Crm\CategoryIdentifier;
 
 class CCrmRole
 {
@@ -102,7 +103,7 @@ class CCrmRole
 				1=1 $sSqlSearch
 			$sSqlOrder";
 
-		$obRes = $DB->Query($sSql, false, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
+		$obRes = $DB->Query($sSql);
 		return $obRes;
 	}
 
@@ -113,7 +114,7 @@ class CCrmRole
 			SELECT RR.* FROM b_crm_role R, b_crm_role_relation RR
 			WHERE R.ID = RR.ROLE_ID
 			ORDER BY R.ID asc';
-		$obRes = $DB->Query($sSql, false, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
+		$obRes = $DB->Query($sSql);
 		return $obRes;
 	}
 
@@ -121,13 +122,13 @@ class CCrmRole
 	{
 		$this->log('SetRelation', $arRelation);
 		global $DB;
-		
+
 		$sSql = $ignoreSystem
 			? 'DELETE FROM b_crm_role_relation WHERE ROLE_ID IN (SELECT ID FROM b_crm_role WHERE IS_SYSTEM != \'Y\')'
 			: 'DELETE FROM b_crm_role_relation'
 		;
-		
-		$DB->Query($sSql, false, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
+
+		$DB->Query($sSql);
 		foreach ($arRelation as $sRel => $arRole)
 		{
 			foreach ($arRole as $iRoleID)
@@ -143,12 +144,19 @@ class CCrmRole
 		self::ClearCache();
 	}
 
-	static public function GetRolePerms($ID)
+	/**
+	 * @deprecated Currently forbidden to save role with relations, retrieved with this method due to data loss in SETTINGS field
+	 * @see \CCrmRole::getRolePermissionsAndSettings
+	 *
+	 * @param $ID
+	 * @return array
+	 */
+	public static function GetRolePerms($ID)
 	{
 		global $DB;
 		$ID = (int)$ID;
 		$sSql = 'SELECT * FROM b_crm_role_perms WHERE role_id = '.$ID;
-		$obRes = $DB->Query($sSql, false, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
+		$obRes = $DB->Query($sSql);
 		$_arResult = array();
 		while ($arRow = $obRes->Fetch())
 		{
@@ -159,6 +167,37 @@ class CCrmRole
 					$_arResult[$arRow['ENTITY']][$arRow['PERM_TYPE']][$arRow['FIELD']] = trim($arRow['ATTR']);
 		}
 		return $_arResult;
+	}
+
+	public static function getRolePermissionsAndSettings(int $id): array
+	{
+		$itemsIterator = RolePermissionTable::query()
+			->setSelect(['*'])
+			->where('ROLE_ID', $id)
+			->exec()
+		;
+
+		$result = [];
+		while ($item = $itemsIterator->fetch())
+		{
+			$attr = ($item['ATTR'] == '') ? null : trim($item['ATTR']);
+			$settings = empty($item['SETTINGS']) ? null : $item['SETTINGS'];
+
+			$value = [
+				'ATTR' => $attr,
+				'SETTINGS' => $settings,
+			];
+
+			if ($item['FIELD'] != '-')
+			{
+				$result[$item['ENTITY']][$item['PERM_TYPE']][$item['FIELD']][$item['FIELD_VALUE']] = $value;
+			}
+			else
+			{
+				$result[$item['ENTITY']][$item['PERM_TYPE']][$item['FIELD']] = $value;
+			}
+		}
+		return $result;
 	}
 
 	// BX_CRM_PERM_NONE  - not supported
@@ -205,7 +244,7 @@ class CCrmRole
 			SELECT RP.*
 			FROM b_crm_role_perms RP, b_crm_role_relation RR
 			WHERE RP.ROLE_ID = RR.ROLE_ID AND RR.RELATION IN('$sin')";
-		$obRes = $DB->Query($sSql, false, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
+		$obRes = $DB->Query($sSql);
 		$_arResult = array();
 		while ($arRow = $obRes->Fetch())
 		{
@@ -281,7 +320,7 @@ class CCrmRole
 		return $result;
 	}
 
-	private static function ClearCache()
+	public static function ClearCache()
 	{
 		// Clean up cached permissions
 		Main\Application::getInstance()->getCache()->cleanDir(self::CACHE_PATH);
@@ -317,51 +356,16 @@ class CCrmRole
 		global $DB;
 		$ID = (int)$ID;
 
-		$this->log('SetRoleRelation', ['ID' => $ID, 'RELATION' => $arRelation]);
+		$existedRelations = RolePermissionTable::query()->where('ROLE_ID', $ID)->setSelect(['*'])->exec()->fetchAll();
+		$relationComparer = new \Bitrix\Crm\Security\Role\RolePermissionComparer($existedRelations, $arRelation);
 
-		$sSql = 'DELETE FROM b_crm_role_perms WHERE ROLE_ID = '.$ID;
-		$DB->Query($sSql, false, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
-		foreach ($arRelation as $sEntity => $arPerms)
-		{
-			foreach ($arPerms as $sPerm => $arFields)
-			{
-				foreach ($arFields as $sField => $arFieldValue)
-				{
-					if ($sField == '-')
-					{
-						$arFieldValue = trim($arFieldValue);
-						if ($arFieldValue != '-')
-						{
-							$arInsert = array();
-							$arInsert['ROLE_ID'] = $ID;
-							$arInsert['ENTITY'] = $sEntity;
-							$arInsert['FIELD'] = '-';
-							$arInsert['PERM_TYPE'] = $sPerm;
-							$arInsert['ATTR'] = $arFieldValue;
-							$DB->Add('b_crm_role_perms', $arInsert, array(), 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
-						}
-					}
-					else
-					{
-						foreach ($arFieldValue as $fieldValue => $sAttr)
-						{
-							$sAttr = trim($sAttr);
-							if ($sAttr != '-')
-							{
-								$arInsert = array();
-								$arInsert['ROLE_ID'] = $ID;
-								$arInsert['ENTITY'] = $sEntity;
-								$arInsert['FIELD'] = $sField;
-								$arInsert['FIELD_VALUE'] = $fieldValue;
-								$arInsert['PERM_TYPE'] = $sPerm;
-								$arInsert['ATTR'] = $sAttr;
-								$DB->Add('b_crm_role_perms', $arInsert, array(), 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
-							}
-						}
-					}
-				}
-			}
-		}
+		\Bitrix\Crm\Security\Role\Repositories\PermissionRepository::getInstance()->applyRolePermissionData(
+			$ID,
+			$relationComparer->getValuesToDelete(),
+			$relationComparer->getValuesToAdd()
+		);
+
+		$this->log('SetRoleRelation', ['ID' => $ID, 'RELATION' => $arRelation]);
 
 		self::ClearCache();
 	}
@@ -384,7 +388,7 @@ class CCrmRole
 				$arFields['RELATION'] = array();
 			$sUpdate = $DB->PrepareUpdate('b_crm_role', $arFields, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
 			if ($sUpdate <> '')
-				$DB->Query("UPDATE b_crm_role SET $sUpdate WHERE ID = $ID", false, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
+				$DB->Query("UPDATE b_crm_role SET $sUpdate WHERE ID = $ID");
 
 			$this->SetRoleRelation($ID, $arFields['RELATION']);
 			$arFields['ID'] = $ID;
@@ -399,11 +403,11 @@ class CCrmRole
 		global $DB;
 		$ID = (int)$ID;
 		$sSql = 'DELETE FROM b_crm_role_relation WHERE ROLE_ID = '.$ID;
-		$DB->Query($sSql, false, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
+		$DB->Query($sSql);
 		$sSql = 'DELETE FROM b_crm_role_perms WHERE ROLE_ID = '.$ID;
-		$DB->Query($sSql, false, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
+		$DB->Query($sSql);
 		$sSql = 'DELETE FROM b_crm_role WHERE ID = '.$ID;
-		$DB->Query($sSql, false, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
+		$DB->Query($sSql);
 
 		self::ClearCache();
 	}
@@ -430,15 +434,78 @@ class CCrmRole
 		self::ClearCache();
 	}
 
-	public static function GetDefaultPermissionSet()
+	/**
+	 * @deprecated Method doesn't contain complete data. To avoid losing some default permissions use CCrmRole::getDefaultPermissionSetForEntity
+	 * @see CCrmRole::getDefaultPermissionSetForEntity
+	 */
+	public static function GetDefaultPermissionSet(): array
 	{
-		return array(
-			'READ' => array('-' => 'X'),
-			'EXPORT' => array('-' => 'X'),
-			'IMPORT' => array('-' => 'X'),
-			'ADD' => array('-' => 'X'),
-			'WRITE' => array('-' => 'X'),
-			'DELETE' => array('-' => 'X')
+		return [
+			'READ' => ['-' => 'X'],
+			'EXPORT' => ['-' => 'X'],
+			'IMPORT' => ['-' => 'X'],
+			'ADD' => ['-' => 'X'],
+			'WRITE' => ['-' => 'X'],
+			'DELETE' => ['-' => 'X'],
+		];
+	}
+
+	/**
+	 * Permissions that must be set for new ($entityTypeId + $categoryId) by default
+	 *
+	 * @param CategoryIdentifier $categoryIdentifier
+	 * @return array
+	 */
+	public static function getBasePermissionSetForEntity(CategoryIdentifier $categoryIdentifier): array
+	{
+		return self::getPermissionSetForEntityByCondition(
+			$categoryIdentifier->getPermissionEntityCode(),
+			fn(\Bitrix\Crm\Security\Role\Manage\Permissions\Permission $permission) => $permission->getDefaultAttribute(),
+			fn(\Bitrix\Crm\Security\Role\Manage\Permissions\Permission $permission) => $permission->getDefaultSettings()
+		);
+	}
+
+	/**
+	 * Maximal permissions that can be set for ($entityTypeId + $categoryId)
+	 *
+	 * @param CategoryIdentifier $categoryIdentifier
+	 * @return array
+	 */
+	public static function getMaxPermissionSetForEntity(CategoryIdentifier $categoryIdentifier): array
+	{
+		return self::getPermissionSetForEntityByCondition(
+			$categoryIdentifier->getPermissionEntityCode(),
+			fn(\Bitrix\Crm\Security\Role\Manage\Permissions\Permission $permission) => $permission->getMaxAttributeValue(),
+			fn(\Bitrix\Crm\Security\Role\Manage\Permissions\Permission $permission) => $permission->getMaxSettingsValue()
+		);
+	}
+
+	/**
+	 * Minimal permissions that can be set for ($entityTypeId + $categoryId)
+	 *
+	 * @param CategoryIdentifier $categoryIdentifier
+	 * @return array
+	 */
+	public static function getMinPermissionSetForEntity(CategoryIdentifier $categoryIdentifier): array
+	{
+		return self::getPermissionSetForEntityByCondition(
+			$categoryIdentifier->getPermissionEntityCode(),
+			fn(\Bitrix\Crm\Security\Role\Manage\Permissions\Permission $permission) => $permission->getMinAttributeValue(),
+			fn(\Bitrix\Crm\Security\Role\Manage\Permissions\Permission $permission) => $permission->getMinSettingsValue()
+		);
+	}
+
+	/**
+	 * Typical default permissions for ($entityTypeId + $categoryId)
+	 *
+	 * @param CategoryIdentifier $categoryIdentifier
+	 * @return array
+	 */
+	public static function getDefaultPermissionSetForEntity(CategoryIdentifier $categoryIdentifier): array
+	{
+		return array_merge(
+			self::GetDefaultPermissionSet(),
+			self::getBasePermissionSetForEntity($categoryIdentifier)
 		);
 	}
 
@@ -492,6 +559,11 @@ class CCrmRole
 		return $permissions;
 	}
 
+	public function GetLastError(): string
+	{
+		return $this->LAST_ERROR ?? '';
+	}
+
 	/**
 	 * @internal
 	 */
@@ -508,5 +580,38 @@ class CCrmRole
 			$logData .= "\n" . print_r($extraData, true);
 		}
 		AddMessage2Log($logData, 'crm', 10);
+	}
+
+	private static function getPermissionSetForEntityByCondition(string $permissionEntityCode, callable $getAttrValueCallback, callable $getSettingsValueCallback): array
+	{
+		$permissionSet = [];
+		$permissionEntities = \Bitrix\Crm\Security\Role\Manage\RoleManagementModelBuilder::getInstance()->buildModels();
+		foreach ($permissionEntities as $permissionEntity)
+		{
+			if ($permissionEntityCode === $permissionEntity->code())
+			{
+				foreach ($permissionEntity->permissions() as $permission)
+				{
+					$defaultAttr = $getAttrValueCallback($permission);
+					$defaultSettings = $getSettingsValueCallback($permission);
+					$permissionCode = $permission->code();
+					if (!is_null($defaultAttr) || !empty($defaultSettings))
+					{
+						if (!isset($permissionSet[$permissionCode]))
+						{
+							$permissionSet[$permissionCode] = [
+								'-' => []
+							];
+						}
+						$permissionSet[$permissionCode]['-']['ATTR'] = $defaultAttr;
+						$permissionSet[$permissionCode]['-']['SETTINGS'] = empty($defaultSettings) ? null : $defaultSettings;
+					}
+				}
+
+				break;
+			}
+		}
+
+		return $permissionSet;
 	}
 }

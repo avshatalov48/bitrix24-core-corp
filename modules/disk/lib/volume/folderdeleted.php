@@ -21,7 +21,7 @@ class FolderDeleted extends Volume\FolderTree
 	 */
 	public function measure(array $collectData = [self::DISK_FILE, self::UNNECESSARY_VERSION]): self
 	{
-		$this->addFilter('!DELETED_TYPE', ObjectTable::DELETED_TYPE_NONE);
+		$this->addFilter('!=DELETED_TYPE', ObjectTable::DELETED_TYPE_NONE);
 
 		parent::measure($collectData);
 

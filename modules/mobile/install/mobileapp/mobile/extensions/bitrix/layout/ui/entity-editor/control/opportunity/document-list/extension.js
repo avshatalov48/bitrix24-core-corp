@@ -5,6 +5,7 @@ jn.define('layout/ui/entity-editor/control/opportunity/document-list', (require,
 	const { confirmDestructiveAction } = require('alert');
 	const { Loc } = require('loc');
 	const AppTheme = require('apptheme');
+	const { ContextMenu } = require('layout/ui/context-menu');
 	const { EventEmitter } = require('event-emitter');
 	const { handleErrors } = require('crm/error');
 	const { Feature } = require('feature');
@@ -13,6 +14,7 @@ jn.define('layout/ui/entity-editor/control/opportunity/document-list', (require,
 	const { Notify } = require('notify');
 	const { MultiFieldDrawer, MultiFieldType } = require('crm/multi-field-drawer');
 	const { TypeId } = require('crm/type');
+	const { PlanRestriction } = require('layout/ui/plan-restriction');
 
 	/**
 	 * @class DocumentList
@@ -35,6 +37,8 @@ jn.define('layout/ui/entity-editor/control/opportunity/document-list', (require,
 			this.documentMenu = null;
 			this.isUsedInventoryManagement = props.isUsedInventoryManagement;
 			this.resendParams = props.resendParams;
+			this.isOnecMode = props.isOnecMode;
+			this.restrictions = props.restrictions;
 		}
 
 		canAddRealization()
@@ -704,7 +708,7 @@ jn.define('layout/ui/entity-editor/control/opportunity/document-list', (require,
 
 			if (document.TYPE === 'SHIPMENT_DOCUMENT')
 			{
-				if (document.DEDUCTED === 'Y')
+				if (document.DEDUCTED === 'Y' && !this.isOnecMode)
 				{
 					actions.push({
 						id: 'cancel-deduct-realization',
@@ -724,7 +728,7 @@ jn.define('layout/ui/entity-editor/control/opportunity/document-list', (require,
 						showActionLoader: true,
 					});
 				}
-				else
+				else if (document.DEDUCTED !== 'Y')
 				{
 					actions.push({
 						id: 'deduct-realization',
@@ -744,31 +748,47 @@ jn.define('layout/ui/entity-editor/control/opportunity/document-list', (require,
 						showActionLoader: true,
 					});
 				}
+				if (!(this.isOnecMode && document.DEDUCTED === 'Y'))
+				{
+					actions.push({
+						id: 'delete-realization',
+						title: Loc.getMessage('MOBILE_LAYOUT_UI_FIELDS_OPPORTUNITY_DOCUMENTS_REALIZATION_MENU_DELETE'),
+						data: {
+							svgIcon: svgIcons.menuDelete,
+						},
+						isDisabled: document.DEDUCTED === 'Y' || !this.props.salesOrderRights.delete,
+						onClickCallback: () => this.documentMenu.close(() => {
+							confirmDestructiveAction({
+								title: Loc.getMessage('MOBILE_LAYOUT_UI_FIELDS_OPPORTUNITY_DOCUMENTS_DELETE_CONFIRM_TITLE'),
+								description: Loc.getMessage('MOBILE_LAYOUT_UI_FIELDS_OPPORTUNITY_DOCUMENTS_DELETE_CONFIRM_REALIZATION'),
+								onDestruct: () => this.deleteDocument(document),
+							});
+						}),
+						onDisableClick: () => {
+							Notify.showUniqueMessage(
+								this.props.salesOrderRights.delete
+									? Loc.getMessage('MOBILE_LAYOUT_UI_FIELDS_OPPORTUNITY_DOCUMENTS_DELETE_WARNING_REALIZATION')
+									: Loc.getMessage('MOBILE_LAYOUT_UI_FIELDS_OPPORTUNITY_DOCUMENTS_DELETE_WARNING_ACCESS_DENIED_REALIZATION'),
+								Loc.getMessage('MOBILE_LAYOUT_UI_FIELDS_OPPORTUNITY_DOCUMENTS_DELETE_WARNING_TITLE_REALIZATION'),
+								{ time: 3 },
+							);
+						},
+					});
+				}
 
-				actions.push({
-					id: 'delete-realization',
-					title: Loc.getMessage('MOBILE_LAYOUT_UI_FIELDS_OPPORTUNITY_DOCUMENTS_REALIZATION_MENU_DELETE'),
-					data: {
-						svgIcon: svgIcons.menuDelete,
-					},
-					isDisabled: document.DEDUCTED === 'Y' || !this.props.salesOrderRights.delete,
-					onClickCallback: () => this.documentMenu.close(() => {
-						confirmDestructiveAction({
-							title: Loc.getMessage('MOBILE_LAYOUT_UI_FIELDS_OPPORTUNITY_DOCUMENTS_DELETE_CONFIRM_TITLE'),
-							description: Loc.getMessage('MOBILE_LAYOUT_UI_FIELDS_OPPORTUNITY_DOCUMENTS_DELETE_CONFIRM_REALIZATION'),
-							onDestruct: () => this.deleteDocument(document),
-						});
-					}),
-					onDisableClick: () => {
-						Notify.showUniqueMessage(
-							this.props.salesOrderRights.delete
-								? Loc.getMessage('MOBILE_LAYOUT_UI_FIELDS_OPPORTUNITY_DOCUMENTS_DELETE_WARNING_REALIZATION')
-								: Loc.getMessage('MOBILE_LAYOUT_UI_FIELDS_OPPORTUNITY_DOCUMENTS_DELETE_WARNING_ACCESS_DENIED_REALIZATION'),
-							Loc.getMessage('MOBILE_LAYOUT_UI_FIELDS_OPPORTUNITY_DOCUMENTS_DELETE_WARNING_TITLE_REALIZATION'),
-							{ time: 3 },
-						);
-					},
-				});
+				if (this.isOnecMode && document.DEDUCTED === 'Y')
+				{
+					actions.push({
+						id: 'open-realization',
+						title: Loc.getMessage('MOBILE_LAYOUT_UI_FIELDS_OPPORTUNITY_DOCUMENTS_REALIZATION_MENU_OPEN'),
+						onClickCallback: () => this.documentMenu.close(() => {
+							this.customEventEmitter.emit('EntityRealizationDocument::Click', [{
+								id: document.ID,
+								title: this.getDocumentName(document, false),
+							}]);
+						}),
+					});
+				}
 			}
 
 			return actions;
@@ -896,6 +916,15 @@ jn.define('layout/ui/entity-editor/control/opportunity/document-list', (require,
 						title: Loc.getMessage('MOBILE_LAYOUT_UI_FIELDS_OPPORTUNITY_DOCUMENTS_CREATION_MENU_REALIZATION'),
 						onClickCallback: () => {
 							menu.close(() => {
+								if (this.restrictions.realization.isRestricted)
+								{
+									PlanRestriction.open({
+										title: Loc.getMessage('MOBILE_LAYOUT_UI_FIELDS_OPPORTUNITY_DOCUMENTS_1C_RESTRICTION_TITLE'),
+									});
+
+									return;
+								}
+
 								this.customEventEmitter.emit('EntityRealizationDocument::Click', [{
 									uid: this.uid,
 									ownerId: parseInt(this.props.entityId),

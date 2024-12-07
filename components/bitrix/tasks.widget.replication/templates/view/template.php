@@ -2,12 +2,22 @@
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Tasks\Integration\Bitrix24;
+use Bitrix\Tasks\Integration\Bitrix24\FeatureDictionary;
 use Bitrix\Tasks\UI;
+use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\TaskLimit;
 
 Loc::loadMessages(__FILE__);
 
 $helper = $arResult['HELPER'];
 $arParams =& $helper->getComponent()->arParams; // make $arParams the same variable as $this->__component->arParams, as it really should be
+
+$taskRecurrentRestrict = !Bitrix24::checkFeatureEnabled(
+	FeatureDictionary::TASK_RECURRING_TASKS
+);
+
+$taskLimitExceeded = TaskLimit::isLimitExceeded();
+
 ?>
 
 <?//$helper->displayFatals();?>
@@ -30,7 +40,14 @@ $arParams =& $helper->getComponent()->arParams; // make $arParams the same varia
 			</div>
 			<?if($arParams['ENABLE_SYNC']):?>
 				<span class="js-id-replication-switch task-dashed-link tasks-replication-view-switch">
-					<span class="task-dashed-link-inner tasks-replication-view-enable"><?=Loc::getMessage('TASKS_TWRV_ENABLE_REPLICATION');?></span>
+					<span class="task-dashed-link-inner tasks-replication-view-enable">
+						<?= Loc::getMessage('TASKS_TWRV_ENABLE_REPLICATION') ?>
+						<?php
+						if ($taskRecurrentRestrict): ?>
+							<div class="tariff-lock"></div>
+						<?php
+						endif; ?>
+					</span>
 					<span class="task-dashed-link-inner tasks-replication-view-disable"><?=Loc::getMessage('TASKS_TWRV_DISABLE_REPLICATION');?></span>
 				</span>
 			<?endif?>

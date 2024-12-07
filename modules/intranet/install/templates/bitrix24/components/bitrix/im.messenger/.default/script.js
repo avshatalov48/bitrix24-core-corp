@@ -9,12 +9,8 @@ BX.namespace("BX.Intranet.Bitrix24.ImBar");
 	var isScrollMode = false;
 	var scrollModeThreshold = 20;
 
-	let isV2Messenger = false;
-
-	function init(messengerV2 = false)
+	function init({ copilotAvailable })
 	{
-		isV2Messenger = messengerV2;
-
 		var adminPanel = getAdminPanel();
 		if (adminPanel)
 		{
@@ -63,6 +59,18 @@ BX.namespace("BX.Intranet.Bitrix24.ImBar");
 		});
 
 		BX.bind(BX("bx-im-bar-copilot"), "click", function(){
+			if (!copilotAvailable)
+			{
+				const sliderCode = BX.Messenger.v2.Const.SliderCode?.copilotDisabled ?? 'limit_copilot_off';
+				const promoter = new BX.UI.FeaturePromoter({ code: sliderCode });
+				promoter.show();
+
+				const analyticsManager = BX.Messenger.v2.Lib.Analytics.getInstance();
+				analyticsManager.onOpenCopilotTab({ isAvailable: false });
+
+				return;
+			}
+
 			BX.Messenger.Public.openCopilot();
 		});
 

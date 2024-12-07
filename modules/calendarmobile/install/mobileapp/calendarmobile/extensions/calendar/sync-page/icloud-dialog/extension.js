@@ -9,6 +9,7 @@ jn.define('calendar/sync-page/icloud-dialog', (require, exports, module) => {
 	const { Alert } = require('alert');
 	const { NotifyManager } = require('notify-manager');
 	const { inAppUrl } = require('in-app-url');
+	const { Color } = require('tokens');
 
 	const appleIdUrl = 'https://appleid.apple.com/';
 
@@ -50,7 +51,7 @@ jn.define('calendar/sync-page/icloud-dialog', (require, exports, module) => {
 			// eslint-disable-next-line promise/catch-or-return
 			bottomSheet.setParentWidget(parentWidget)
 				.setHelpUrl(helpdeskUrl)
-				.setBackgroundColor(AppTheme.colors.bgNavigation)
+				.setBackgroundColor(Color.bgNavigation.toHex())
 				.setMediumPositionPercent(85)
 				.disableContentSwipe()
 				.open()
@@ -63,7 +64,7 @@ jn.define('calendar/sync-page/icloud-dialog', (require, exports, module) => {
 		{
 			return View(
 				{
-					testId: `sync_page_icloud_dialog_container`,
+					testId: 'sync_page_icloud_dialog_container',
 				},
 				this.renderHeader(),
 				this.state.isStepperClosed ? this.renderForm() : this.renderStepper(),
@@ -83,7 +84,7 @@ jn.define('calendar/sync-page/icloud-dialog', (require, exports, module) => {
 					},
 					clickable: true,
 					onClick: () => this.layoutWidget.close(),
-					testId: `sync_page_icloud_dialog_header`,
+					testId: 'sync_page_icloud_dialog_header',
 				},
 				this.renderLeftArrow(),
 				this.renderTitle(),
@@ -117,7 +118,7 @@ jn.define('calendar/sync-page/icloud-dialog', (require, exports, module) => {
 			return Text(
 				{
 					style: {
-						fontSize: 17,
+						fontSize: 19,
 						fontWeight: '400',
 					},
 					text: Loc.getMessage('M_CALENDAR_SYNC_ICLOUD_DIALOG_TITLE'),

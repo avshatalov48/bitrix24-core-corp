@@ -1,6 +1,8 @@
 <?php
 
 use Bitrix\Crm\Category\Entity\Category;
+use Bitrix\Crm\Integration\Analytics\Dictionary;
+use Bitrix\Crm\Integration\IntranetManager;
 use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Crm\Service;
 use Bitrix\Crm\Service\Router;
@@ -46,6 +48,8 @@ class CrmItemKanbanComponent extends Bitrix\Crm\Component\ItemList
 		$this->arResult['categoryId'] = $this->category->getId();
 		$this->arResult['entityTypeDescription'] = $this->factory->getEntityDescription();
 		$this->arResult['isCountersEnabled'] = $this->factory->getCountersSettings()->isCountersEnabled();
+		$this->arResult['performance'] = $this->arParams['performance'] ?? [];
+		$this->arResult['pathToMerge'] = $this->router->getEntityMergeUrl($this->entityTypeId);
 
 		$addOperationRestriction = RestrictionManager::getAddOperationRestriction($this->factory->getEntityTypeId());
 		$this->arResult['addItemPermittedByTariff'] = $addOperationRestriction->hasPermission();
@@ -54,6 +58,22 @@ class CrmItemKanbanComponent extends Bitrix\Crm\Component\ItemList
 		{
 			LocalRedirect($this->router->getItemListUrl($this->entityTypeId, $this->category->getId()));
 		}
+
+		$isEntityInCustomSection = IntranetManager::isEntityTypeInCustomSection($this->entityTypeId);
+		if ($isEntityInCustomSection)
+		{
+			$section = Dictionary::SECTION_CUSTOM;
+		}
+		else
+		{
+			$section = Dictionary::getAnalyticsEntityType($this->entityTypeId) . '_section';
+		}
+		$this->arResult['analytics'] = [
+			'c_section' => $section,
+			'c_sub_section' => Dictionary::SUB_SECTION_KANBAN,
+		];
+
+		$this->arResult['isCustomSection'] = $isEntityInCustomSection;
 
 		$this->includeComponentTemplate();
 	}
@@ -89,7 +109,7 @@ class CrmItemKanbanComponent extends Bitrix\Crm\Component\ItemList
 
 		if (!$this->isEmbedded())
 		{
-			$builder->setSubSection(\Bitrix\Crm\Integration\Analytics\Dictionary::SUB_SECTION_KANBAN);
+			$builder->setSubSection(Dictionary::SUB_SECTION_KANBAN);
 		}
 	}
 }

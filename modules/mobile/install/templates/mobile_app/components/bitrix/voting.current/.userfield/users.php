@@ -159,10 +159,7 @@ if (!empty($arVoteList["items"]))
 
 
 $APPLICATION->RestartBuffer();
-if (SITE_CHARSET != "utf-8")
-{
-	$data = $APPLICATION->ConvertCharsetArray($data, SITE_CHARSET, "utf-8");
-}
+
 header('Content-Type: application/x-javascript; charset='.LANG_CHARSET);
 echo json_encode($data);
 define('PUBLIC_AJAX_MODE', true);

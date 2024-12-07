@@ -163,7 +163,7 @@ for($i = 0; $i < $itemCount; $i++)
 }
 ?>
 
-<script type="text/javascript">
+<script>
 	BX.ready(function() {
 		if(BX.getClass('BX.Crm.ToolbarComponent'))
 		{

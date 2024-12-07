@@ -11,7 +11,9 @@ use Bitrix\Main\Localization\Loc;
 
 class RuleUpdated extends LogMessage
 {
-	use CalendarSharing;
+	use CalendarSharing\FormatTrait;
+	use CalendarSharing\ModelDataTrait;
+	use CalendarSharing\MessageTrait;
 
 	public function getType(): string
 	{

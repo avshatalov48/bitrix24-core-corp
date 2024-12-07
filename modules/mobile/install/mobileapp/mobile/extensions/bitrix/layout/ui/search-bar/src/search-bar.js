@@ -10,19 +10,19 @@ jn.define('layout/ui/search-bar/search-bar', (require, exports, module) => {
 	const { PropTypes } = require('utils/validation');
 	const { Preset } = require('layout/ui/search-bar/preset');
 	const { Counter } = require('layout/ui/search-bar/counter');
+	const { Color, Component } = require('tokens');
 	const {
 		MoreButton,
 		MINIMAL_SEARCH_LENGTH,
 		DEFAULT_ICON_BACKGROUND,
 		ENTER_PRESSED_EVENT,
 	} = require('layout/ui/search-bar/ui');
-	const { PureComponent } = require('layout/pure-component');
 
 	/**
 	 * @class SearchBar
 	 * @typedef {LayoutComponent<SearchBarProps, SearchBarState>}
 	 */
-	class SearchBar extends PureComponent
+	class SearchBar extends LayoutComponent
 	{
 		// region init
 
@@ -324,7 +324,8 @@ jn.define('layout/ui/search-bar/search-bar', (require, exports, module) => {
 
 			if (!isEqual(this.state.counters, counters) || !isEqual(this.state.presets, presets))
 			{
-				this.setState({ counters, presets, visible });
+				// double setState - hack to render presets with right width
+				this.setState({ counters, presets, visible }, () => this.setState());
 			}
 		}
 
@@ -542,6 +543,7 @@ jn.define('layout/ui/search-bar/search-bar', (require, exports, module) => {
 				visible && ScrollView(
 					{
 						horizontal: true,
+						showsHorizontalScrollIndicator: false,
 						style: styles.presetsScrollView,
 						ref: (ref) => {
 							this.scrollRef = ref;
@@ -668,50 +670,27 @@ jn.define('layout/ui/search-bar/search-bar', (require, exports, module) => {
 	};
 
 	const styles = {
-		wrapper: (isVisible) => {
-			return {
-				top: 3,
-				position: isVisible ? 'absolute' : 'relative',
-				zIndex: 10,
-				height: isVisible ? 44 : 0,
-				width: '100%',
-				backgroundColor: AppTheme.colors.bgNavigation,
-				opacity: 1,
-			};
-		},
+		wrapper: (isVisible) => ({
+			top: 0,
+			position: isVisible ? 'absolute' : 'relative',
+			zIndex: 10,
+			height: isVisible ? 44 : 0,
+			width: '100%',
+			backgroundColor: Color.bgNavigation.toHex(),
+			opacity: 1,
+			borderBottomWidth: 1,
+			paddingTop: Application.getPlatform() === 'ios' ? 3 : 0,
+		}),
 		presetsScrollView: {
 			height: 44,
 		},
 		presetsWrapper: {
 			flexDirection: 'row',
 			alignItems: 'center',
-			marginTop: -6,
-			paddingRight: 10,
-		},
-		contentWrapper: {
-			borderTopLeftRadius: 20,
-			borderTopRightRadius: 20,
-		},
-		listWrapper: {
-			width: '100%',
-			height: 600,
-		},
-		emptyResultsWrapper: {
-			justifyContent: 'center',
-			alignItems: 'center',
-			width: '100%',
-			height: '100%',
-		},
-		emptyResultsIcon: {
-			width: 86,
-			height: 86,
-			marginTop: -86,
-		},
-		searchContentTitle: {
-			fontSize: 13,
-			color: AppTheme.colors.baseWhiteFixed,
-			marginBottom: 10,
-			marginLeft: 20,
+			alignContent: 'center',
+			marginTop: 0,
+			height: 34,
+			paddingHorizontal: Component.paddingLr.toNumber(),
 		},
 	};
 

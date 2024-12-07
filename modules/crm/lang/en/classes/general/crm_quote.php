@@ -92,6 +92,7 @@ $MESS["CRM_QUOTE_FIELD_WEBFORM_ID"] = "Created by CRM form";
 $MESS["CRM_QUOTE_FILE_ADD"] = "File added";
 $MESS["CRM_QUOTE_FILE_REMOVE"] = "File deleted";
 $MESS["CRM_QUOTE_NOT_RESPONSIBLE_IM_NOTIFY"] = "You are no longer responsible for the quote \"#title#\".";
+$MESS["CRM_QUOTE_NO_PERMISSIONS_TO_DELETE"] = "Insufficient permission to delete estimate \"#QUOTE_NAME#\".";
 $MESS["CRM_QUOTE_PROGRESS_IM_NOTIFY"] = "Status for \"#title#\" changed from \"#start_status_title#\" to \"#final_status_title#\"";
 $MESS["CRM_QUOTE_RESPONSIBLE_IM_NOTIFY"] = "You are now responsible for the quote \"#title#\".";
 $MESS["CRM_QUOTE_SEARCH_FIELD_ASSIGNED_BY_INFO"] = "Responsible person";

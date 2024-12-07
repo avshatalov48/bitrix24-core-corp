@@ -23,8 +23,6 @@ $jsEventsManagerId = isset($_GET['JS_EVENTS_MANAGER_ID'])? strval($_GET['JS_EVEN
 if ($jsEventsManagerId === '')
 	return;
 
-CUtil::JSPostUnescape();
-
 $APPLICATION->ShowAjaxHead();
 
 $APPLICATION->IncludeComponent(

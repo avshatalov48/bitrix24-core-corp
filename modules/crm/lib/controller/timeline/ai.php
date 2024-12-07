@@ -2,8 +2,8 @@
 
 namespace Bitrix\Crm\Controller\Timeline;
 
+use Bitrix\Crm\Badge\Badge;
 use Bitrix\Crm\Category\EditorHelper;
-use Bitrix\Crm\Comparer\ComparerBase;
 use Bitrix\Crm\Controller\ErrorCode;
 use Bitrix\Crm\Entity\FieldDataProvider;
 use Bitrix\Crm\Integration\AI\AIManager;
@@ -21,7 +21,9 @@ use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Context;
 use Bitrix\Crm\Service\Factory;
 use Bitrix\Crm\Service\Timeline\Config;
+use Bitrix\Crm\Service\Timeline\Monitor;
 use Bitrix\Crm\Service\UserPermissions;
+use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Engine\ActionFilter;
 use Bitrix\Main\Error;
 use Bitrix\Main\Event;
@@ -29,9 +31,12 @@ use Bitrix\Main\EventResult;
 use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\UserField\Dispatcher;
 use CCrmOwnerType;
+use CUserOptions;
 
 class AI extends Activity
 {
+	private const OPTION_NAME_NUMBER_OF_MANUAL_STARTS = 'timeline-copilot-button-in-call-manual-starts-v2';
+
 	private UserPermissions $permissions;
 	private JobRepository $jobRepository;
 	private Dispatcher $dispatcher;
@@ -68,33 +73,40 @@ class AI extends Activity
 	}
 
 	/** @noinspection PhpUnused */
-	public function launchRecordingTranscriptionAction(int $activityId, int $ownerTypeId, int $ownerId): void
+	public function launchRecordingTranscriptionAction(int $activityId, int $ownerTypeId, int $ownerId): ?array
 	{
 		$activity = $this->loadActivity($activityId, $ownerTypeId, $ownerId);
 		if (!$activity)
 		{
-			return;
+			return null;
 		}
 
 		if (!$this->isUpdateEnable($ownerTypeId, $ownerId))
 		{
-			return;
+			return null;
 		}
 
 		if (
 			AIManager::isAiCallProcessingEnabled()
 			&& in_array($ownerTypeId, AIManager::SUPPORTED_ENTITY_TYPE_IDS, true)
-			&& !ComparerBase::isClosed(
-				new ItemIdentifier($ownerTypeId, $ownerId)
-			)
 		)
 		{
 			$result = AIManager::launchFillItemFromCallRecordingScenario($activityId); // async start transcription
 			if (!$result->isSuccess())
 			{
 				$this->addErrors($result->getErrors());
+
+				return null;
 			}
+
+			return [
+				'numberOfManualStarts' => $this->processNumberOfManualStarts(),
+			];
 		}
+
+		$this->addError(AIErrorCode::getAIEngineNotFoundError());
+
+		return null;
 	}
 
 	/** @noinspection PhpUnused */
@@ -169,10 +181,15 @@ class AI extends Activity
 
 	public function fieldsFillingStatusAction(int $mergeId): array
 	{
-		$operationStatus = JobRepository::getInstance()->getFieldsFillingOperationStatusById($mergeId);
+		$operation = JobRepository::getInstance()->getFieldsFillingOperationById($mergeId);
+
+		if ($operation)
+		{
+			$this->removeEntityBadgeByOwner(new ItemIdentifier($operation->getEntityTypeId(), $operation->getEntityId()));
+		}
 
 		return [
-			'operationStatus' => $operationStatus,
+			'operationStatus' => $operation?->getOperationStatus(),
 		];
 	}
 
@@ -194,7 +211,7 @@ class AI extends Activity
 				$elementIds[0],
 				$storageTypeId,
 				true,
-				['OWNER_ID' => $activity['ID'], 'OWNER_TYPE_ID' => \CCrmOwnerType::Activity,]
+				['OWNER_ID' => $activity['ID'], 'OWNER_TYPE_ID' => CCrmOwnerType::Activity,]
 			);
 		}
 		catch (NotSupportedException $exception)
@@ -237,6 +254,8 @@ class AI extends Activity
 			return null;
 		}
 
+		$this->removeEntityBadgeByOwner(new ItemIdentifier($ownerTypeId, $ownerId));
+
 		return [
 			'aiJobResult' => $summary,
 			'callRecord' => $callRecord,
@@ -258,6 +277,8 @@ class AI extends Activity
 		{
 			return null;
 		}
+
+		$this->removeEntityBadgeByOwner(new ItemIdentifier($ownerTypeId, $ownerId));
 
 		return [
 			'aiJobResult' => $transcription,
@@ -290,15 +311,15 @@ class AI extends Activity
 			return null;
 		}
 
-		$factory = Container::getInstance()->getFactory($result->getTarget()->getEntityTypeId());
-		if (!$factory || !\CCrmOwnerType::isUseFactoryBasedApproach($factory->getEntityTypeId()))
+		$factory = Container::getInstance()->getFactory($result->getTarget()?->getEntityTypeId());
+		if (!$factory || !CCrmOwnerType::isUseFactoryBasedApproach($factory->getEntityTypeId()))
 		{
-			$this->addError(ErrorCode::getEntityTypeNotSupportedError($result->getTarget()->getEntityTypeId()));
+			$this->addError(ErrorCode::getEntityTypeNotSupportedError($result->getTarget()?->getEntityTypeId()));
 
 			return null;
 		}
 
-		$item = $factory->getItem($result->getTarget()->getEntityId());
+		$item = $factory->getItem($result->getTarget()?->getEntityId());
 		if (!$item)
 		{
 			$this->addError(ErrorCode::getOwnerNotFoundError());
@@ -335,12 +356,12 @@ class AI extends Activity
 				[
 					'entityTypeName' => $factory->getEntityName(),
 					'editorId' => $this->makeEditorId(
-						$result->getTarget()->getEntityTypeId(),
+						$result->getTarget()?->getEntityTypeId(),
 						$item->isCategoriesSupported() ? $item->getCategoryId() : null,
 					),
 					'feedbackWasSent' => Feedback::wasSent($feedbackResult),
 				]
-				+ $result->getTarget()->jsonSerialize()
+				+ $result->getTarget()?->jsonSerialize()
 			,
 			'editMode' => true,
 		];
@@ -357,7 +378,7 @@ class AI extends Activity
 		//todo move to operation?
 		$whitelist =
 			(new FieldDataProvider($factory->getEntityTypeId(), Context::SCOPE_AI))
-				->getDisplayedInEntityEditorFieldData($this->getCurrentUser()->getId())
+				->getDisplayedInEntityEditorFieldData($this->getCurrentUser()?->getId())
 		;
 
 		foreach (array_merge($payload->singleFields, $payload->multipleFields) as $dtoField)
@@ -422,7 +443,7 @@ class AI extends Activity
 		{
 			CCrmOwnerType::Lead => 'lead_details',
 			CCrmOwnerType::Deal => 'deal_details',
-			default => throw new \Exception('Unknown entity type'),
+			default => throw new ArgumentException('Unknown entity type'),
 		};
 
 		return (new EditorHelper($entityTypeId))
@@ -450,15 +471,15 @@ class AI extends Activity
 			return;
 		}
 
-		$factory = Container::getInstance()->getFactory($result->getTarget()->getEntityTypeId());
-		if (!$factory || !\CCrmOwnerType::isUseFactoryBasedApproach($factory->getEntityTypeId()))
+		$factory = Container::getInstance()->getFactory($result->getTarget()?->getEntityTypeId());
+		if (!$factory || !CCrmOwnerType::isUseFactoryBasedApproach($factory->getEntityTypeId()))
 		{
-			$this->addError(ErrorCode::getEntityTypeNotSupportedError($result->getTarget()->getEntityTypeId()));
+			$this->addError(ErrorCode::getEntityTypeNotSupportedError($result->getTarget()?->getEntityTypeId()));
 
 			return;
 		}
 
-		$item = $factory->getItem($result->getTarget()->getEntityId());
+		$item = $factory->getItem($result->getTarget()?->getEntityId());
 		if (!$item)
 		{
 			$this->addError(ErrorCode::getOwnerNotFoundError());
@@ -476,12 +497,11 @@ class AI extends Activity
 		//todo move to operation?
 		$whitelist =
 			(new FieldDataProvider($factory->getEntityTypeId(), Context::SCOPE_AI))
-				->getDisplayedInEntityEditorFieldData($this->getCurrentUser()->getId())
+				->getDisplayedInEntityEditorFieldData($this->getCurrentUser()?->getId())
 		;
 
 		$payload = $result->getPayload();
-
-		foreach ($payload->singleFields as $singleField)
+		foreach ($payload?->singleFields as $singleField)
 		{
 			if (
 				isset($whitelist[$singleField->name])
@@ -495,7 +515,7 @@ class AI extends Activity
 			}
 		}
 
-		foreach ($payload->multipleFields as $multipleField)
+		foreach ($payload?->multipleFields as $multipleField)
 		{
 			if (
 				isset($whitelist[$multipleField->name])
@@ -515,7 +535,7 @@ class AI extends Activity
 
 		$context =
 			(new Context())
-				->setUserId($this->getCurrentUser()->getId())
+				->setUserId($this->getCurrentUser()?->getId())
 				->setScope(Context::SCOPE_AI)
 		;
 
@@ -651,5 +671,39 @@ class AI extends Activity
 		}
 
 		return Feedback::wasSent($result);
+	}
+
+	private function processNumberOfManualStarts(): int
+	{
+		$numberOfManualStarts = (int)CUserOptions::getOption(
+			'crm',
+			self::OPTION_NAME_NUMBER_OF_MANUAL_STARTS,
+			0
+		);
+
+		$newNumberOfManualStarts = $numberOfManualStarts + 1;
+
+		CUserOptions::setOption(
+			'crm',
+			self::OPTION_NAME_NUMBER_OF_MANUAL_STARTS,
+			$newNumberOfManualStarts
+		);
+
+		return $newNumberOfManualStarts;
+	}
+
+	private function removeEntityBadgeByOwner(ItemIdentifier $identifier): void
+	{
+		$currentUserId = (int)$this->getCurrentUser()->getId();
+
+		$assignedById = Container::getInstance()
+			->getFactory($identifier->getEntityTypeId())?->getItem($identifier->getEntityId())?->getAssignedById();
+
+		if ($currentUserId === $assignedById)
+		{
+			Badge::deleteByEntity($identifier, Badge::AI_CALL_FIELDS_FILLING_RESULT);
+
+			Monitor::getInstance()->onBadgesSync($identifier);
+		}
 	}
 }

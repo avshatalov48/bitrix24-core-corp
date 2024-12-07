@@ -63,7 +63,10 @@ class CBPCrmCreateDynamicActivity extends \Bitrix\Bizproc\Activity\BaseActivity
 		}
 		$this->preparedProperties['DynamicEntitiesFields'] = $entityFieldsValues;
 
-		$this->writeDebugInfo($this->getDebugInfo());
+		if ($this->workflow->isDebug())
+		{
+			$this->writeDebugInfo($this->getDebugInfo());
+		}
 	}
 
 	protected function checkProperties(): \Bitrix\Main\ErrorCollection
@@ -170,12 +173,15 @@ class CBPCrmCreateDynamicActivity extends \Bitrix\Bizproc\Activity\BaseActivity
 
 	private function logDocumentFields(array $fields)
 	{
-		$this->writeDebugInfo(
-			$this->getDebugInfo(
-				$fields,
-				array_intersect_key(static::getEntityFields($this->DynamicTypeId), $fields),
-			)
-		);
+		if ($this->workflow->isDebug())
+		{
+			$this->writeDebugInfo(
+				$this->getDebugInfo(
+					$fields,
+					array_intersect_key(static::getEntityFields($this->DynamicTypeId), $fields),
+				)
+			);
+		}
 	}
 
 	private function bindElements(Crm\ItemIdentifier $parent, Crm\ItemIdentifier $child): void
@@ -424,7 +430,7 @@ class CBPCrmCreateDynamicActivity extends \Bitrix\Bizproc\Activity\BaseActivity
 		return (
 			is_array($currentActivity)
 			&& is_array($currentActivity['Properties'])
-			&& $currentActivity['Properties']['OnlyDynamicEntities'] === 'Y'
+			&& ($currentActivity['Properties']['OnlyDynamicEntities'] ?? 'N') === 'Y'
 		);
 	}
 
@@ -433,7 +439,7 @@ class CBPCrmCreateDynamicActivity extends \Bitrix\Bizproc\Activity\BaseActivity
 		return array_filter(
 			$dynamicTypeIdOptions,
 			static function($key) {
-				return ($key >= CCrmOwnerType::DynamicTypeStart && $key <= CCrmOwnerType::DynamicTypeEnd);
+				return (CCrmOwnerType::isPossibleDynamicTypeId($key));
 			},
 			ARRAY_FILTER_USE_KEY
 		);

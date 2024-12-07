@@ -74,7 +74,6 @@ $arResult["AJAX_PATH"] = '/mobile/?mobile_action=mobile_crm_invoice_actions';
 $filter = array();
 if(isset($_REQUEST["search"]))
 {
-	CUtil::JSPostUnescape();
 	$v = trim($_REQUEST["search"]);
 	if (!empty($v))
 	{

@@ -23,7 +23,7 @@ $langMessageJS = <<<JS
 	(window.BX||top.BX).message($jsLangMessages);
 JS;
 
-\Bitrix\Main\Page\Asset::getInstance()->addString("<script type=\"text/javascript\">$langMessageJS</script>");
+\Bitrix\Main\Page\Asset::getInstance()->addString("<script>$langMessageJS</script>");
 
 $APPLICATION->SetPageProperty("BodyClass", "menu-page");
 $bExtranet = (CModule::IncludeModule("extranet") && CExtranet::IsExtranetSite());
@@ -104,7 +104,7 @@ if (CModule::IncludeModule('im'))
 
 </div>
 
-<script type="text/javascript">
+<script>
 
 	BX.ready(function ()
 	{

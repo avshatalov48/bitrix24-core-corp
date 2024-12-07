@@ -4,7 +4,7 @@
 jn.define('im/messenger/provider/service/classes/chat/read', (require, exports, module) => {
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { LoggerManager } = require('im/messenger/lib/logger');
-	const { RestMethod } = require('im/messenger/const/rest');
+	const { RestMethod, DialogType } = require('im/messenger/const');
 	const { Counters } = require('im/messenger/lib/counters');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const { EventType } = require('im/messenger/const');
@@ -152,6 +152,16 @@ jn.define('im/messenger/provider/service/classes/chat/read', (require, exports, 
 
 		async updateDialogCounters(dialogId, counter)
 		{
+			const dialog = this.store.getters['dialoguesModel/getById'](dialogId);
+			if (dialog.type === DialogType.comment)
+			{
+				await this.store.dispatch('commentModel/setCounters', {
+					[dialog.parentChatId]: {
+						[dialog.chatId]: counter,
+					},
+				});
+			}
+
 			return this.store.dispatch('dialoguesModel/update', {
 				dialogId,
 				fields: {
@@ -162,7 +172,19 @@ jn.define('im/messenger/provider/service/classes/chat/read', (require, exports, 
 
 		async updateRecentCounters(dialogId, counter)
 		{
+			const dialog = this.store.getters['dialoguesModel/getById'](dialogId);
+
+			if (dialog.type === DialogType.comment)
+			{
+				dialogId = `chat${dialog.parentChatId}`;
+			}
+
 			const recentItem = this.store.getters['recentModel/getById'](dialogId);
+
+			if (!recentItem)
+			{
+				return;
+			}
 
 			await this.store.dispatch('recentModel/set', [{
 				...recentItem,

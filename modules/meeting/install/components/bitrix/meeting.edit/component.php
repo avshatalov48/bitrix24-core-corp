@@ -684,7 +684,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_REQUEST['save']) && $arResu
 		{
 			$APPLICATION->RestartBuffer();
 ?>
-<script type="text/javascript">
+<script>
 if (top.document.forms.meeting_edit)
 {
 	top.document.forms.meeting_edit.MEETING_ID.value = '<?=$MEETING_ID?>';

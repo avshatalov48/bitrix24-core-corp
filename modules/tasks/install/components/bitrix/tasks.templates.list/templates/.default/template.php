@@ -261,7 +261,7 @@ if ($hideFilter !== 'Y')
 			if (!empty($selectors))
 			{
 				?>
-				<script type="text/javascript"><?
+				<script><?
 					foreach ($selectors as $groupSelector)
 					{
 					$selectorID = $groupSelector['ID'];

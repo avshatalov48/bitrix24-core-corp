@@ -29,22 +29,10 @@ class SharingSlotsList extends ContentBlock
 		return $this;
 	}
 
-	public function getIsEditable(): bool
-	{
-		return $this->isEditable;
-	}
-
-	public function setIsEditable(bool $isEditable = true): self
-	{
-		$this->isEditable = $isEditable;
-		return $this;
-	}
-
 	protected function getProperties(): ?array
 	{
 		return [
 			'listItems' => $this->getListItems(),
-			'isEditable' => $this->getIsEditable(),
 		];
 	}
 }

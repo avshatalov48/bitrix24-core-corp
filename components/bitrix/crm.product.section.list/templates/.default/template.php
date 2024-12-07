@@ -80,7 +80,7 @@ if(!isset($extMgrId[0]))
 <?
 }?>
 
-<script type="text/javascript">
+<script>
 	<?
 	if(!isset($extMgrId[0]))
 	{?>

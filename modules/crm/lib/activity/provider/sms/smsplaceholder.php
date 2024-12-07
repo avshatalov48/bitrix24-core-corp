@@ -9,6 +9,22 @@ use Bitrix\Main\ORM\Fields\IntegerField;
 use Bitrix\Main\ORM\Fields\StringField;
 use Bitrix\Main\ORM\Fields\Validators\LengthValidator;
 
+/**
+ * Class SmsPlaceholderTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_SmsPlaceholder_Query query()
+ * @method static EO_SmsPlaceholder_Result getByPrimary($primary, array $parameters = [])
+ * @method static EO_SmsPlaceholder_Result getById($id)
+ * @method static EO_SmsPlaceholder_Result getList(array $parameters = [])
+ * @method static EO_SmsPlaceholder_Entity getEntity()
+ * @method static \Bitrix\Crm\Activity\Provider\Sms\EO_SmsPlaceholder createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\Activity\Provider\Sms\EO_SmsPlaceholder_Collection createCollection()
+ * @method static \Bitrix\Crm\Activity\Provider\Sms\EO_SmsPlaceholder wakeUpObject($row)
+ * @method static \Bitrix\Crm\Activity\Provider\Sms\EO_SmsPlaceholder_Collection wakeUpCollection($rows)
+ */
 class SmsPlaceholderTable extends \Bitrix\Main\Entity\DataManager
 {
 	public static function getTableName()

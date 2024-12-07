@@ -1,0 +1,26 @@
+.ai__picker_image-history-empty-state {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	margin-top: 58px;
+}
+
+.ai__picker_image-history-empty-state-icon {
+	width: 112px;
+	height: 112px;
+	margin-right: 5px;
+	mask-image: url("../../../images/ai-image-icon.svg");
+	mask-size: contain;
+	mask-position: center center;
+	mask-repeat: no-repeat;
+	background-color: var(--ui-color-base-10);
+}
+
+.ai__picker_image-history-empty-state-text {
+	margin-top: 4px;
+	font-size: var(--ui-font-size-2xl);
+	line-height: var(--ui-font-line-height-reset);
+	color: var(--ui-color-base-30);
+	font-weight: var(--ui-font-weight-light);
+	letter-spacing: 0.5px;
+}

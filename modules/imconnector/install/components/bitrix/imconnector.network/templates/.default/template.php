@@ -56,10 +56,10 @@ if(empty($arResult['PAGE']) && $arResult['ACTIVE_STATUS']) //case when first tim
 			</div>
 			<div class="imconnector-field-box">
 				<div class="imconnector-field-main-subtitle">
-					<?=Loc::getMessage('IMCONNECTOR_COMPONENT_NETWORK_CONNECTED')?>
+					<?=Loc::getMessage('IMCONNECTOR_COMPONENT_NETWORK_CONNECTED_MSGVER_1')?>
 				</div>
 				<div class="imconnector-field-box-content">
-					<?=Loc::getMessage('IMCONNECTOR_COMPONENT_NETWORK_SIMPLE_FORM_DESCRIPTION_1')?>
+					<?=Loc::getMessage('IMCONNECTOR_COMPONENT_NETWORK_SIMPLE_FORM_DESCRIPTION_1_MSGVER_1')?>
 				</div>
 				<div class="ui-btn-container">
 					<a href="<?=$arResult['URL']['SIMPLE_FORM']?>"
@@ -126,7 +126,7 @@ elseif(!empty($arResult['ACTIVE_STATUS']))
 			</div>
 			<div class="imconnector-field-box">
 				<div class="imconnector-field-main-subtitle">
-					<?=Loc::getMessage('IMCONNECTOR_COMPONENT_NETWORK_CONNECTED')?>
+					<?=Loc::getMessage('IMCONNECTOR_COMPONENT_NETWORK_CONNECTED_MSGVER_1')?>
 				</div>
 				<div class="imconnector-field-box-entity-row">
 					<div class="imconnector-field-box-subtitle">
@@ -170,7 +170,7 @@ elseif(!empty($arResult['ACTIVE_STATUS']))
 				<div class="imconnector-field-section imconnector-field-section-control">
 					<div class="imconnector-field-box-content">
 						<span class="imconnector-field-box-subtitle">
-							<?=Loc::getMessage('IMCONNECTOR_COMPONENT_NETWORK_SIMPLE_FORM_DESCRIPTION_1')?>
+							<?=Loc::getMessage('IMCONNECTOR_COMPONENT_NETWORK_SIMPLE_FORM_DESCRIPTION_1_MSGVER_1')?>
 						</span>
 					</div>
 					<div class="imconnector-field-box">
@@ -311,12 +311,12 @@ else //case when open not active connector
 			</div>
 			<div class="imconnector-field-box" data-role="more-info">
 				<div class="imconnector-field-main-subtitle imconnector-field-section-main-subtitle">
-					<?= Loc::getMessage('IMCONNECTOR_COMPONENT_NETWORK_INDEX_TITLE')?>
+					<?= Loc::getMessage('IMCONNECTOR_COMPONENT_NETWORK_INDEX_TITLE_MSGVER_1')?>
 				</div>
 				<div class="imconnector-field-box-content">
 
 					<div class="imconnector-field-box-content-text-light">
-						<?= Loc::getMessage('IMCONNECTOR_COMPONENT_NETWORK_INDEX_SUBTITLE') ?>
+						<?= Loc::getMessage('IMCONNECTOR_COMPONENT_NETWORK_INDEX_SUBTITLE_MSGVER_1') ?>
 					</div>
 
 					<ul class="imconnector-field-box-content-text-items">

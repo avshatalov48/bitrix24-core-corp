@@ -10,16 +10,18 @@ jn.define('layout/ui/detail-card', (require, exports, module) => {
 	const { Haptics } = require('haptics');
 	const { NotifyManager } = require('notify-manager');
 	const { ActionsPanel } = require('layout/ui/detail-card/toolbar/actions-panel');
-	const { FloatingButton } = require('layout/ui/detail-card/floating-button');
+	const { FloatingButton, FloatingActionButtonSupportNative } = require('layout/ui/detail-card/floating-button');
 	const { ToolbarPadding } = require('layout/ui/detail-card/toolbar/toolbar-padding');
 	const { TabFactory } = require('layout/ui/detail-card/tabs/factory');
 	const { FocusManager } = require('layout/ui/fields/focus-manager');
 	const { debounce } = require('utils/function');
 	const { merge, mergeImmutable, isEqual, clone } = require('utils/object');
 	const { Loc } = require('loc');
+	const { Feature } = require('feature');
+	const { qrauth } = require('qrauth/utils');
 
 	const CACHE_ID = 'DETAIL_CARD';
-	const TAB_HEADER_HEIGHT = 44;
+	const TAB_HEADER_HEIGHT = Feature.isAirStyleSupported() ? 50 : 44;
 	const TOP_TOOLBAR_HEIGHT = 60;
 	const MAIN_TAB = 'main';
 	const MAX_TAB_COUNTER_VALUE = 99;
@@ -406,6 +408,8 @@ jn.define('layout/ui/detail-card', (require, exports, module) => {
 		{
 			new RunActionExecutor(`${this.props.endpoint}.loadTabConfig`, { ...this.getTabParams() })
 				.setCacheId(this.getTabCacheId())
+				.setSkipRequestIfCacheExists()
+				.setCacheTtl(60 * 60 * 24)
 				.setCacheHandler((response) => this.setTabs(response))
 				.setHandler((response) => this.setTabs(response))
 				.enableJson()
@@ -574,7 +578,9 @@ jn.define('layout/ui/detail-card', (require, exports, module) => {
 			return TabView({
 				style: {
 					height: TAB_HEADER_HEIGHT,
-					backgroundColor: AppTheme.colors.bgNavigation,
+					backgroundColor: Feature.isAirStyleSupported()
+						? AppTheme.realColors.bgNavigation
+						: AppTheme.colors.bgNavigation,
 				},
 				params: {
 					styles: {
@@ -810,15 +816,9 @@ jn.define('layout/ui/detail-card', (require, exports, module) => {
 
 		renderFloatingButton()
 		{
-			if (this.isFloatingButtonEnabled)
+			if (this.isFloatingButtonEnabled && !FloatingActionButtonSupportNative(this.layout))
 			{
-				return new FloatingButton({
-					ref: (ref) => {
-						this.floatingButtonRef = ref;
-					},
-					detailCard: this,
-					provider: this.floatingButtonProvider,
-				});
+				return this.createFloatingButton();
 			}
 
 			return null;
@@ -919,6 +919,17 @@ jn.define('layout/ui/detail-card', (require, exports, module) => {
 			console.error('DetailCard::handleActionFailure', args);
 		}
 
+		createFloatingButton()
+		{
+			return new FloatingButton({
+				ref: (ref) => {
+					this.floatingButtonRef = ref;
+				},
+				detailCard: this,
+				provider: this.floatingButtonProvider,
+			});
+		}
+
 		isActionsPanelVisible()
 		{
 			if (this.isSaving)
@@ -950,6 +961,8 @@ jn.define('layout/ui/detail-card', (require, exports, module) => {
 			{
 				return Promise.resolve();
 			}
+
+			this.originalEntityModel = this.entityModel;
 
 			if (this.props.reloadWithDataHandler)
 			{
@@ -1180,6 +1193,11 @@ jn.define('layout/ui/detail-card', (require, exports, module) => {
 				return;
 			}
 
+			if (!this.originalEntityModel)
+			{
+				this.originalEntityModel = clone(entityModel);
+			}
+
 			this.entityModel = entityModel;
 
 			if (this.getEntityIdFromParams() && !this.getEntityIdFromModel() && !this.isCopyMode())
@@ -1281,7 +1299,7 @@ jn.define('layout/ui/detail-card', (require, exports, module) => {
 						return this.processSave(response);
 					})
 					.then(() => this.scrollTabsToTop(isNewEntity, previousActiveTab))
-					.then(() => this.emitSaveEvents(isNewEntity))
+					.then(() => this.emitSaveEvents(isNewEntity, additionalData))
 					.then(() => NotifyManager.hideLoadingIndicator(true))
 					.catch((errors) => {
 						this.isSaving = false;
@@ -1864,7 +1882,7 @@ jn.define('layout/ui/detail-card', (require, exports, module) => {
 			return FocusManager.blurFocusedFieldIfHas();
 		}
 
-		emitSaveEvents(isNewEntity)
+		emitSaveEvents(isNewEntity, additionalData = null)
 		{
 			if (isNewEntity)
 			{
@@ -1872,7 +1890,7 @@ jn.define('layout/ui/detail-card', (require, exports, module) => {
 			}
 			else
 			{
-				this.emitEntityUpdate();
+				this.emitEntityUpdate(null, additionalData);
 			}
 		}
 
@@ -1885,12 +1903,14 @@ jn.define('layout/ui/detail-card', (require, exports, module) => {
 			this.customEventEmitter.emit('DetailCard::onCreate', [params]);
 		}
 
-		emitEntityUpdate(actionName)
+		emitEntityUpdate(actionName, additionalData)
 		{
 			const params = this.getComponentParams();
 			params.actionName = actionName;
+			params.additionalData = additionalData;
 			params.eventUid = this.createUid();
 			params.entityModel = this.entityModel;
+			params.originalEntityModel = this.originalEntityModel;
 
 			this.customEventEmitter.emit('DetailCard::onUpdate', [params, this.header]);
 		}
@@ -1920,6 +1940,12 @@ jn.define('layout/ui/detail-card', (require, exports, module) => {
 				this.checkToolbarPanel();
 
 				this.layout.showComponent(this);
+
+				if (this.isFloatingButtonEnabled)
+				{
+					this.floatingButtonRef = this.createFloatingButton();
+					this.floatingButtonRef.initNativeButton(this.layout);
+				}
 			});
 
 			return this;

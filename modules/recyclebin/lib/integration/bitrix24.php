@@ -27,11 +27,6 @@ abstract class Bitrix24 extends \Bitrix\Recyclebin\Integration
 
 	public static function checkToolAvailable($toolName)
 	{
-		if($GLOBALS['__TASKS_DEVEL_ENV__'])
-		{
-			return true;
-		}
-
 		if(!static::includeModule()) // box installation, say yes
 		{
 			return true;
@@ -42,11 +37,6 @@ abstract class Bitrix24 extends \Bitrix\Recyclebin\Integration
 
 	public static function checkFeatureEnabled($featureName)
 	{
-		if($GLOBALS['__TASKS_DEVEL_ENV__'])
-		{
-			return true;
-		}
-
 		if(!static::includeModule()) // box installation, say yes
 		{
 			return true;

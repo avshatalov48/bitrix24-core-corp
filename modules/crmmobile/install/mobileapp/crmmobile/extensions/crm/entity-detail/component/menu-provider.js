@@ -16,6 +16,7 @@ jn.define('crm/entity-detail/component/menu-provider', (require, exports, module
 	const { getPaymentAutomationMenuItem } = require('crm/entity-detail/component/payment-automation-menu-item');
 	const { getOpenLinesMenuItems } = require('crm/entity-detail/component/open-lines-menu-items');
 	const { EntityChatOpener } = require('crm/entity-chat-opener');
+	const { Icon } = require('ui-system/blocks/icon');
 
 	/**
 	 * @param {DetailCardComponent} detailCard
@@ -60,92 +61,15 @@ jn.define('crm/entity-detail/component/menu-provider', (require, exports, module
 				result.push(
 					{
 						id: 'documents',
-						sectionCode: 'action',
+						sectionCode: 'top',
+						sort: 100,
 						onItemSelected: () => showEntityDocuments(detailCard),
 						title: Loc.getMessage('M_CRM_ENTITY_ACTION_DOCUMENTS'),
-						iconUrl: `${component.path}/icons/documents.png`,
+						icon: Icon.FILE,
 						disable: false, // todo check rights to documents
 					},
 				);
 			}
-
-			if (isChatSupported)
-			{
-				result.push(
-					{
-						id: 'openChat',
-						sectionCode: 'action',
-						onItemSelected: () => openChat(detailCard),
-						title: Loc.getMessage('M_CRM_ENTITY_ACTION_CHAT'),
-						iconUrl: `${component.path}/icons/chat.png`,
-						disable: false,
-					},
-				);
-			}
-
-			result.push(
-				{
-					...getCopyEntity(detailCard, canAdd),
-					showTopSeparator: isDocumentGenerationEnabled,
-				},
-			);
-
-			if (isCategoriesEnabled)
-			{
-				result.push(getChangeEntityCategory(detailCard, canUpdate));
-			}
-
-			if (entityTypeId === TypeId.Deal || entityTypeId === TypeId.Lead)
-			{
-				result.push({
-					id: 'excludeItem',
-					sectionCode: 'action',
-					onItemSelected: () => excludeEntity(detailCard),
-					title: Loc.getMessage('M_CRM_ENTITY_ACTION_EXCLUDE'),
-					iconUrl: `${component.path}/icons/exclude2.png`,
-					disable: !canExclude,
-				});
-			}
-
-			result.push({
-				id: 'deleteItem',
-				sectionCode: 'action',
-				onItemSelected: () => deleteEntity(detailCard),
-				title: getEntityMessage('M_CRM_ENTITY_ACTION_DELETE', detailCard.getEntityTypeId()),
-				iconUrl: `${component.path}/icons/delete.png`,
-				disable: !canDelete,
-			});
-
-			if (isLinkWithProductsEnabled)
-			{
-				result.push({
-					id: 'disableManualOpportunity',
-					sectionCode: 'action',
-					onItemSelected: () => detailCard.customEventEmitter.emit('EntityDetails::onChangeManualOpportunity'),
-					title: Loc.getMessage('M_CRM_CHANGE_MANUAL_OPPORTUNITY_SET_TO_AUTOMATIC'),
-					checked: entityModel.IS_MANUAL_OPPORTUNITY !== 'Y',
-					iconUrl: `${component.path}/icons/manual_opportunity.png`,
-					disable: !canUpdate,
-					showTopSeparator: showTopSeparatorForSwitchSection,
-				});
-
-				showTopSeparatorForSwitchSection = false;
-			}
-
-			if (todoNotificationParams && todoNotificationParams.notificationSupported)
-			{
-				result.push({
-					...getSmartActivityMenuItem(todoNotificationParams.notificationEnabled, entityTypeId),
-					showTopSeparator: showTopSeparatorForSwitchSection,
-				});
-			}
-
-			const {
-				id: shareId,
-				title: shareTitle,
-				iconUrl: shareIconUrl,
-				onAction: onShareAction,
-			} = getActionToShare();
 
 			const hasOpenLinesPermission = BX.prop.getBoolean(permissions, 'openLinesAccess', null);
 			const isClientRelatedEntity = entityTypeId === TypeId.Contact
@@ -166,6 +90,11 @@ jn.define('crm/entity-detail/component/menu-provider', (require, exports, module
 				showTopSeparatorForSettingsMenu = false;
 			}
 
+			if (isCategoriesEnabled)
+			{
+				result.push(getChangeEntityCategory(detailCard, canUpdate));
+			}
+
 			if (entityTypeId === TypeId.Deal)
 			{
 				result.push({
@@ -176,32 +105,113 @@ jn.define('crm/entity-detail/component/menu-provider', (require, exports, module
 				showTopSeparatorForSettingsMenu = false;
 			}
 
+			if (entityTypeId === TypeId.Deal || entityTypeId === TypeId.Lead)
+			{
+				result.push({
+					id: 'excludeItem',
+					sectionCode: 'top',
+					sort: 500,
+					onItemSelected: () => excludeEntity(detailCard),
+					title: Loc.getMessage('M_CRM_ENTITY_ACTION_EXCLUDE'),
+					icon: Icon.CIRCLE_CROSS,
+					disable: !canExclude,
+				});
+			}
+
+			if (isLinkWithProductsEnabled)
+			{
+				result.push({
+					id: 'disableManualOpportunity',
+					sectionCode: 'action',
+					sort: 600,
+					onItemSelected: () => detailCard.customEventEmitter.emit('EntityDetails::onChangeManualOpportunity'),
+					title: Loc.getMessage('M_CRM_CHANGE_MANUAL_OPPORTUNITY_SET_TO_AUTOMATIC'),
+					checked: entityModel.IS_MANUAL_OPPORTUNITY !== 'Y',
+					icon: Icon.SIGMA_SUMM,
+					disable: !canUpdate,
+					showTopSeparator: showTopSeparatorForSwitchSection,
+				});
+
+				showTopSeparatorForSwitchSection = false;
+			}
+
+			if (todoNotificationParams && todoNotificationParams.notificationSupported)
+			{
+				result.push({
+					...getSmartActivityMenuItem(todoNotificationParams.notificationEnabled, entityTypeId),
+					showTopSeparator: showTopSeparatorForSwitchSection,
+				});
+			}
+
+			if (isChatSupported)
+			{
+				result.push(
+					{
+						id: 'openChat',
+						sectionCode: 'additional',
+						sort: 800,
+						onItemSelected: () => openChat(detailCard),
+						title: Loc.getMessage('M_CRM_ENTITY_ACTION_CHAT'),
+						icon: Icon.EMPTY_MESSAGE,
+						disable: false,
+					},
+				);
+			}
+
+			const {
+				id: shareId,
+				title: shareTitle,
+				onAction: onShareAction,
+			} = getActionToShare();
+
 			result.push({
 				id: shareId,
 				title: shareTitle,
-				iconUrl: shareIconUrl,
+				sort: 900,
+				icon: Icon.SHARE,
 				onItemSelected: () => onShareAction(qrUrl),
-				sectionCode: 'action',
+				sectionCode: 'additional',
 				showTopSeparator: showTopSeparatorForSettingsMenu,
 			});
 
-			showTopSeparatorForSettingsMenu = false;
-		}
-
-		result.push({
-			type: UI.Menu.Types.DESKTOP,
-			showHint: false,
-			data: { qrUrl },
-			showTopSeparator: showTopSeparatorForSettingsMenu,
-		});
-
-		const articleCode = getArticleCodeByType(detailCard.getEntityTypeId());
-		if (articleCode)
-		{
 			result.push({
-				type: UI.Menu.Types.HELPDESK,
-				data: { articleCode },
+				type: UI.Menu.Types.DESKTOP,
+				showHint: false,
+				data: { qrUrl },
+				sectionCode: 'additional',
+				showTopSeparator: showTopSeparatorForSettingsMenu,
 			});
+
+			const articleCode = getArticleCodeByType(detailCard.getEntityTypeId());
+			if (articleCode)
+			{
+				result.push({
+					type: UI.Menu.Types.HELPDESK,
+					data: { articleCode },
+					sectionCode: 'additional',
+					sort: 1050,
+				});
+			}
+
+			result.push(
+				{
+					...getCopyEntity(detailCard, canAdd),
+					showTopSeparator: isDocumentGenerationEnabled,
+				},
+			);
+
+			result.push({
+				id: 'deleteItem',
+				sectionCode: 'additional',
+				sort: 1200,
+				isDestructive: true,
+				onItemSelected: () => deleteEntity(detailCard),
+				title: Loc.getMessage('M_CRM_ENTITY_ACTION_DELETE_MSGVER_1'),
+				icon: Icon.TRASHCAN,
+				disable: !canDelete,
+			});
+
+			showTopSeparatorForSettingsMenu = false;
 		}
 
 		result = mixinAnalyticsSend(result, detailCard);
@@ -252,17 +262,18 @@ jn.define('crm/entity-detail/component/menu-provider', (require, exports, module
 		const entityTypeId = detailCard.getEntityTypeId();
 		const entityId = detailCard.getEntityId();
 		const { categoryId } = detailCard.getComponentParams();
-		const { id, title, iconUrl, onAction } = getActionToCopyEntity(entityTypeId);
-		const analytics = new AnalyticsEvent()
+		const { id, title, onAction } = getActionToCopyEntity(entityTypeId);
+		const analytics = new AnalyticsEvent(BX.componentParameters.get('analytics', {}))
 			.setSubSection('element_card')
 			.setElement('top_context_menu');
 
 		return {
 			id,
 			title,
-			iconUrl,
+			icon: Icon.COPY,
+			sort: 1100,
 			disable: !canCreate,
-			sectionCode: 'action',
+			sectionCode: 'additional',
 			onItemSelected: () => onAction({ entityTypeId, entityId, categoryId, analytics }),
 		};
 	};
@@ -273,14 +284,15 @@ jn.define('crm/entity-detail/component/menu-provider', (require, exports, module
 	 */
 	const getChangeEntityCategory = (detailCard, canUpdate) => {
 		const entityTypeId = detailCard.getEntityTypeId();
-		const { id, title, iconUrl, onAction } = getActionToChangePipeline();
+		const { id, title, onAction } = getActionToChangePipeline();
 
 		return {
 			id,
 			title,
-			iconUrl,
+			icon: Icon.CHANGE_FUNNEL,
+			sort: 300,
 			disable: !canUpdate,
-			sectionCode: 'action',
+			sectionCode: 'top',
 			onItemSelected: () => {
 				let promise = Promise.resolve();
 				let selectedCategoryId = null;
@@ -302,7 +314,7 @@ jn.define('crm/entity-detail/component/menu-provider', (require, exports, module
 
 						return detailCard.refreshDetailCard();
 					})
-					.then(() => detailCard.handleSave({ CATEGORY_ID: selectedCategoryId }));
+					.then(() => detailCard.handleSave({ CATEGORY_ID: selectedCategoryId, isCategoryUpdated: true }));
 			},
 		};
 	};

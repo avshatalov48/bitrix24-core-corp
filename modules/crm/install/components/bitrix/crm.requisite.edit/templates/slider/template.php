@@ -163,7 +163,7 @@ $APPLICATION->IncludeComponent(
 	)
 );
 ?></div><?
-?><script type="text/javascript">
+?><script>
 	BX.ready(function()
 	{
 		BX.Crm.ExternalRequisiteDialog.messages =
@@ -219,7 +219,7 @@ if($arResult['DUPLICATE_CONTROL']['ENABLED'] && !$arResult['NEED_CLOSE_POPUP'])
 {
 	$entityTypeCategories = CCrmOwnerType::GetAllCategoryCaptions();
 
-	?><script type="text/javascript">
+	?><script>
 	BX.ready(function()
 	{
 		var formId = "form_" + "<?=CUtil::JSEscape($arResult['FORM_ID'])?>";

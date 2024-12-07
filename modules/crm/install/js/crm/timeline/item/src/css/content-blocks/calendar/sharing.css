@@ -1,32 +1,78 @@
-.crm-timeline-calendar-sharing-item-editable,
-.crm-timeline-calendar-sharing-item-non-editable {
-	position: relative;
-	flex-direction: row;
+.crm-timeline-calendar-sharing-slots {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+}
+
+.crm-timeline-calendar-sharing-slots-block {
+	display: flex;
 	align-items: center;
-	min-height: 21px;
-	margin-bottom: 5px;
-	width: max-content;
-	padding: 0 9px;
-	font-family: var(--ui-font-family-secondary, --ui-font-family-open-sans, 'Open Sans', sans-serif);
-	font-size: var(--ui-font-size-xs, 12px);
-	font-weight: var(--ui-font-weight-semi-bold, 600);
-	line-height: var(--ui-font-line-height-xl, 1.62);
-	border-radius: 64px;
-	color: var(--ui-color-text-subtle, #828b95);
+	gap: 4px;
 }
 
-.crm-timeline-calendar-sharing-item-editable:last-child,
-.crm-timeline-calendar-sharing-item-non-editable:last-child {
-	margin-bottom: 0;
-}
-
-.crm-timeline-calendar-sharing-item-editable {
-	background-color: #FFE9BE;
-	padding-right: 21px;
+.crm-timeline-calendar-sharing-slots-more {
+	display: flex;
+	flex-direction: row;
+	justify-content: center;
+	align-items: center;
 	cursor: pointer;
+	color: var(--ui-color-palette-gray-70, #828B95);
 }
 
-.crm-timeline-calendar-sharing-item-non-editable {
-	background-color: var(--ui-color-base-04, #F1F4F6);
-	cursor: default;
+.crm-timeline-calendar-sharing-slots-more-text {
+}
+
+.crm-timeline-calendar-sharing-slots-more > i {
+	width: 14px;
+	height: 14px;
+	mask-image: url("../../../images/common/crm-timeline__bottom-caret.svg");
+	mask-size: contain;
+	mask-position: center center;
+	--crm-timeline__date-pill_caret-color: 130, 139, 149;
+	background-color: var(--ui-color-palette-gray-70, #828B95);
+}
+
+.crm-timeline-calendar-sharing-slots-more-popup-item {
+	padding: 5px 8px;
+	color: var(--ui-color-text-secondary, #525C69);
+	font-size: 14px;
+	font-style: normal;
+	font-weight: 400;
+	line-height: 19px;
+}
+
+.crm-timeline-sharing-members-popup {
+	border-radius: 15px;
+	overflow: hidden;
+}
+
+.crm-timeline-sharing-members-popup-item {
+	min-width: 100px;
+	min-height: 30px;
+	display: flex;
+	padding: 5px 15px;
+	gap: 5px;
+	align-items: center;
+}
+
+.crm-timeline-sharing-members-popup-item-image {
+	min-width: 23px;
+	min-height: 23px;
+	width: 23px;
+	height: 23px;
+	border-radius: 100%;
+}
+
+.crm-timeline-sharing-members-popup-item-title {
+	color: var(--ui-color-text-secondary);
+	text-overflow: ellipsis;
+	overflow: hidden;
+}
+
+.crm-timeline-sharing-members-popup-item:hover > .crm-timeline-sharing-members-popup-item-title {
+	color: var(--ui-color-text-primary);
+}
+
+.crm-timeline-sharing-members-popup .menu-popup-item-text {
+	padding: 0;
 }

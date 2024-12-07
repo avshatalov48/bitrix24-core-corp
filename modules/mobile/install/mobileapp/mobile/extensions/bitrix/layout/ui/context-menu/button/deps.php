@@ -6,6 +6,6 @@ return [
 		'layout/ui/context-menu/item',
 	],
 	'bundle' => [
-		'./cancel',
+		'./src/cancel',
 	],
 ];

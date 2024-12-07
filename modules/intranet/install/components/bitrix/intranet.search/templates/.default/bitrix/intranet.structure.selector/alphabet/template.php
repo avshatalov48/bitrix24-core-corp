@@ -95,7 +95,7 @@ $clearFilterLink = $arParams['LIST_URL'] . http_build_query(array(
 	</span>
 <? endforeach; ?>
 <? if ($bMultipleLang): ?>
-	<script type="text/javascript">
+	<script>
 		BXToggleAlphabet('<?=CUtil::JSEscape(!$currentLang? $langs[0] : $currentLang)?>');
 	</script>
 <? endif; ?>

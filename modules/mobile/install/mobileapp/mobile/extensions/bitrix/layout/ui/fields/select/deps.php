@@ -4,10 +4,11 @@ return [
 	'extensions' => [
 		'apptheme',
 		'assets/common',
-		'layout/ui/fields/base-select',
+		'layout/ui/context-menu',
 		'layout/ui/empty-screen',
-		'utils/string',
-		'utils/search',
+		'layout/ui/fields/base-select',
 		'utils/object',
+		'utils/search',
+		'utils/string',
 	],
 ];

@@ -10,6 +10,7 @@ return [
 	'rel' => [
 		'main.popup',
 		'ui.buttons',
+		'ui.banner-dispatcher',
 		'ui.design-tokens',
 		'main.core',
 		'main.date',

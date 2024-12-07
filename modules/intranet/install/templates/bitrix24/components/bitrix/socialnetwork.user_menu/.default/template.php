@@ -11,12 +11,13 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 /** @global CUser $USER */
 /** @global CMain $APPLICATION */
 
+use Bitrix\Intranet\Settings\Tools\ToolsManager;
 use Bitrix\Main\Application;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Web\Uri;
 use Bitrix\Tasks\Internals\Counter;
 use Bitrix\Tasks\Internals\Counter\Name;
-use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\KpiLimit;
+use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\TaskLimit;
 use Bitrix\Tasks\Util\User;
 
 CUtil::InitJSCore(array("popup"));
@@ -119,6 +120,7 @@ $items = array_merge($items, $profileItem);
 if (
 	is_array($arResult["CanView"])
 	&& $arResult["CanView"]['tasks']
+	&& ToolsManager::getInstance()->checkAvailabilityByToolId('tasks')
 )
 {
 	$uri = new Uri($arResult["Urls"]['tasks']);
@@ -157,6 +159,7 @@ if (
 if (
 	is_array($arResult["CanView"])
 	&& $arResult["CanView"]['calendar']
+	&& ToolsManager::getInstance()->checkAvailabilityByToolId('calendar')
 )
 {
 	$uri = new Uri($arResult["Urls"]['calendar']);
@@ -244,9 +247,25 @@ if(
 }
 
 if (
+	Loader::includeModule('biconnector')
+	&& class_exists('\Bitrix\BIConnector\Superset\Scope\ScopeService')
+)
+{
+	/** @see \Bitrix\BIConnector\Superset\Scope\MenuItem\MenuItemCreatorProfile::getMenuItemData */
+	$menuItem = \Bitrix\BIConnector\Superset\Scope\ScopeService::getInstance()->prepareScopeMenuItem(
+		\Bitrix\BIConnector\Superset\Scope\ScopeService::BIC_SCOPE_PROFILE
+	);
+	if ($menuItem)
+	{
+		$items[] = $menuItem;
+	}
+}
+
+if (
 	is_array($arResult['CanView'])
 	&& $arResult['CanView']['tasks']
 	&& checkEffectiveRights($userId)
+	&& ToolsManager::getInstance()->checkAvailabilityByToolId('effective')
 )
 {
 	$uri = new Uri($arResult['Urls']['tasks']);
@@ -260,7 +279,7 @@ if (
 			? SITE_DIR . "contacts/personal/user/{$userId}/tasks/effective/"
 			: SITE_DIR . "company/personal/user/{$userId}/tasks/effective/"
 	);
-	$efficiencyCounter = (KpiLimit::isLimitExceeded() ? 0 : Counter::getInstance($userId)->get(Name::EFFECTIVE));
+	$efficiencyCounter = (TaskLimit::isLimitExceeded() ? 0 : Counter::getInstance($userId)->get(Name::EFFECTIVE));
 
 	$items['effective_counter'] = [
 		'TEXT' => GetMessage('SONET_UM_EFFICIENCY'),
@@ -322,6 +341,7 @@ if (
 	is_array($arResult["CurrentUserPerms"])
 	&& is_array($arResult["CurrentUserPerms"]["Operations"])
 	&& $arResult["CurrentUserPerms"]["Operations"]['viewgroups']
+	&& ToolsManager::getInstance()->checkAvailabilityByToolId('workgroups')
 )
 {
 	$uri = new Uri($arResult["Urls"]['groups']);

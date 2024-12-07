@@ -68,8 +68,22 @@ class ActivityHandler
 	 */
 	private function setCompletedStatus(string $status): bool
 	{
+		return $this->updateSettings([
+			$status => true,
+		]);
+	}
+
+	/**
+	 * @param string $status
+	 * @return bool
+	 */
+	public function updateSettings(array $updatedSettings): bool
+	{
 		$settings = $this->activity['SETTINGS'];
-		$settings[$status] = true;
+		foreach($updatedSettings as $field => $value)
+		{
+			$settings[$field] = $value;
+		}
 
 		return \CCrmActivity::Update($this->activity['ID'], ['SETTINGS' => $settings]);
 	}

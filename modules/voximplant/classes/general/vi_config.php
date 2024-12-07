@@ -49,14 +49,7 @@ class CVoxImplantConfig
 			return false;
 		}
 		COption::SetOptionString("voximplant", "portal_number", $number);
-
-		CVoxImplantUser::clearCache();
-
-		$users = CVoxImplantUser::getOnlineUsersWithNotDefaultNumber();
-		if(!empty($users))
-		{
-			VI\Integration\Pull::sendDefaultLineId($users, $number);
-		}
+		self::clearUserCache($number, true);
 
 		return true;
 	}
@@ -89,6 +82,7 @@ class CVoxImplantConfig
 			return false;
 
 		COption::SetOptionString("voximplant", "portal_number", $element['SEARCH_ID']);
+		self::clearUserCache($element['SEARCH_ID'], true);
 
 		return true;
 	}
@@ -1018,6 +1012,17 @@ class CVoxImplantConfig
 		while ($row = $cursor->fetch())
 		{
 			VI\ConfigTable::delete($row['ID']);
+		}
+	}
+
+	public static function clearUserCache($number = '', $sendPull = true): void
+	{
+		CVoxImplantUser::clearCache();
+
+		$users = CVoxImplantUser::getOnlineUsersWithNotDefaultNumber();
+		if(!empty($users) && $sendPull)
+		{
+			VI\Integration\Pull::sendDefaultLineId($users, $number);
 		}
 	}
 }

@@ -468,12 +468,20 @@ class TaskFilterBuilder
 					break;
 
 				case 'TAG_ID':
-					if ((int)$val < 0)
+					$val = (int)$val;
+					if ($val < 0)
 					{
 						break;
 					}
 					$this->registerRuntimeField(TaskQueryBuilder::ALIAS_TASK_TAG);
-					$conditionTree->where(TaskQueryBuilder::ALIAS_TASK_TAG.'.TAG_ID', $val);
+					$conditionTree->where(TaskQueryBuilder::ALIAS_TASK_TAG . '.TAG_ID', $val);
+					break;
+
+				case 'FLOW':
+				case 'FLOW_ID':
+					$this->registerRuntimeField(TaskQueryBuilder::ALIAS_TASK_FLOW_ID);
+					$subFilter = $this->createSubfilter(TaskQueryBuilder::ALIAS_TASK_FLOW_ID . '.FLOW_ID', $val, $operation, self::CAST_NUMBER);
+					$conditionTree->where($subFilter);
 					break;
 
 				case 'REAL_STATUS':
@@ -847,8 +855,8 @@ class TaskFilterBuilder
 						->skipTitleEscape()
 						->setSelect(['ID'])
 						->setWhere($where)
-						->setLimit(0)
 						->setOrder([])
+						->setLimit(0)
 						->setGroupBy([])
 					;
 
@@ -2339,7 +2347,7 @@ class TaskFilterBuilder
 		{
 			if ($userField['USER_TYPE_ID'] === 'datetime')
 			{
-				$value = new Date($value);
+				$value = new DateTime($value);
 			}
 
 			if (is_null($value))
@@ -2405,6 +2413,7 @@ class TaskFilterBuilder
 			switch ($filterKey)
 			{
 				case 'META::ID_OR_NAME':
+				case 'TITLE':
 					$filter[$filterKey] = '%' . $this->prepareForSprintf((string)$field) . '%';
 					break;
 

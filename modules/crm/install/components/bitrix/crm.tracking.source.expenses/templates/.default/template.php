@@ -177,7 +177,7 @@ $APPLICATION->IncludeComponent(
 
 		</div>
 	</div>
-	<script type="text/javascript">
+	<script>
 		BX.ready(function () {
 			BX.Crm.Tracking.Expenses.init(<?=Json::encode(array(
 				"gridId" => $arParams['GRID_ID'],

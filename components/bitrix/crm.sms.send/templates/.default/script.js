@@ -57,6 +57,7 @@
 	      this._templateCode = BX.prop.getString(settings, 'templateCode');
 	      this._templatePlaceholders = BX.prop.getObject(settings, 'templatePlaceholders');
 	      this._linkToMarket = BX.prop.getString(settings, 'linkToMarket');
+	      this._selectedProviderId = BX.prop.getString(settings, 'selectedProviderId', null);
 	      this._title = this._container.querySelector('[data-role="sender-title"]');
 	      this._senderContainerNode = this._container.querySelector('[data-role="sender-container"]');
 	      this._senderSelectorNode = this._container.querySelector('[data-role="sender-selector"]');
@@ -99,8 +100,8 @@
 	  }, {
 	    key: "initSenderSelector",
 	    value: function initSenderSelector() {
-	      var _this$_senderId;
-	      var defaultSenderId = (_this$_senderId = this._senderId) !== null && _this$_senderId !== void 0 ? _this$_senderId : this._defaults.senderId;
+	      var _ref, _this$_selectedProvid;
+	      var defaultSenderId = (_ref = (_this$_selectedProvid = this._selectedProviderId) !== null && _this$_selectedProvid !== void 0 ? _this$_selectedProvid : this._senderId) !== null && _ref !== void 0 ? _ref : this._defaults.senderId;
 	      var defaultSender = this._senders[0].canUse ? this._senders[0] : null;
 	      var restSender = null;
 	      var menuItems = [];
@@ -181,7 +182,7 @@
 	    key: "initFromSelector",
 	    value: function initFromSelector() {
 	      if (this._fromList.length > 0) {
-	        var defaultFromId = this._defaults.from || this._fromList[0].id;
+	        var defaultFromId = this._selectedProviderId || this._defaults.from || this._fromList[0].id;
 	        var defaultFrom = null;
 	        for (var i = 0; i < this._fromList.length; ++i) {
 	          if (this._fromList[i].id === defaultFromId || !defaultFrom) {

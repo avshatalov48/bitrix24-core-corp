@@ -13,6 +13,7 @@ jn.define('im/messenger/const/app-status', (require, exports, module) => {
 		networkWaiting: 'networkWaiting',
 		connection: 'connection',
 		sync: 'sync',
+		backgroundSync: 'backgroundSync',
 		running: 'running',
 	});
 

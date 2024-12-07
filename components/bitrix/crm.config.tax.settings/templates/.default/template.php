@@ -6,7 +6,7 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 if ($_SERVER['REQUEST_METHOD'] == 'POST'):
 	$APPLICATION->RestartBuffer();
 	?>
-	<script type="text/javascript">
+	<script>
 			top.location.href = '<?=CUtil::JSEscape($arResult['BACK_URL'])?>';
 	</script><?
 	die();
@@ -31,7 +31,7 @@ endif;
 </table>
 </form>
 
-<script type="text/javascript">
+<script>
 	BX('BACK_URL').value = window.location.href;
 
 	BX.WindowManager.Get().SetTitle("<?=GetMessage('CRM_TAX_SETTINGS_TITLE');?>");

@@ -75,7 +75,7 @@ foreach($arResult['ITEMS'] as $item)
 	?><tr class="bx-odd bx-top bx-double-open" data-node-id="<?=htmlspecialcharsbx($itemID)?>"></tr><?
 }
 ?></tbody></table></div>
-<script type="text/javascript">
+<script>
 	BX.ready(
 		function()
 		{

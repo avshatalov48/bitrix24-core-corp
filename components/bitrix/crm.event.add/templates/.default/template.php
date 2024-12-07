@@ -57,7 +57,7 @@ var str = '';
 		<?=GetMessage('CRM_EVENT_DATE')?>:
 	</td>
 	<td class="bx-field-value bx-padding event_date_text2" style="height: 35px">
-		<div class="event_date" id="crm_event_date" style="display: inline-block;text-decoration: none; border-bottom: 1px dashed #000;outline:none; cursor: pointer; color: #000" onclick="eventShowDateBox()"><?=ToLower(FormatDate("j F Y", time()));?></div>
+		<div class="event_date" id="crm_event_date" style="display: inline-block;text-decoration: none; border-bottom: 1px dashed #000;outline:none; cursor: pointer; color: #000" onclick="eventShowDateBox()"><?=mb_strtolower(FormatDate("j F Y", time()));?></div>
 		<div class="event_date_box" id="crm_event_date_box" style="display:none">
 			<?$APPLICATION->IncludeComponent(
 				'bitrix:main.calendar',
@@ -126,7 +126,7 @@ var str = '';
 </tr>
 <?endif;?>
 </form>
-<script type="text/javascript">
+<script>
 	var eventAddFile = false;
 	function eventAddFileInput(el)
 	{

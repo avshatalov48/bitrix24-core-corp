@@ -1,11 +1,23 @@
-import { Tag } from 'main.core';
+import { Tag, Loc, Type, Text } from 'main.core';
 import { UI } from 'ui.notification';
 import { Slider } from 'crm.ai.slider';
-import { Textbox } from 'crm.ai.textbox';
+import { Textbox, Attention, AttentionPresets } from 'crm.ai.textbox';
 import { AudioPlayer } from 'crm.audio-player';
+
+declare type aiCallData = {
+	activityId: number,
+	ownerTypeId: number,
+	ownerId: number,
+	languageTitle ?: string,
+};
 
 export class Base
 {
+	activityId: number;
+	ownerTypeId: number;
+	ownerId: number;
+	languageTitle: ?string = null;
+
 	id: string;
 	sliderTitle: string;
 	sliderWidth: number;
@@ -16,13 +28,14 @@ export class Base
 	audioPlayerApp: AudioPlayer;
 	textbox: Textbox;
 
-	constructor(data)
+	constructor(data: aiCallData)
 	{
 		this.initDefaultOptions();
 
 		this.activityId = data.activityId;
 		this.ownerTypeId = data.ownerTypeId;
 		this.ownerId = data.ownerId;
+		this.languageTitle = data.languageTitle ?? null;
 
 		const audioPlayerNode = Tag.render`<div id="crm-textbox-audio-player"></div>`;
 
@@ -33,6 +46,7 @@ export class Base
 		this.textbox = new Textbox({
 			title: this.textboxTitle,
 			previousTextContent: audioPlayerNode,
+			attentions: this.getTextboxAttentions(),
 		});
 
 		this.sliderId = `${this.id}-${Math.floor(Math.random() * 1000)}`;
@@ -114,6 +128,58 @@ export class Base
 			title: callRecord.title,
 			context: window.top,
 		};
+	}
+
+	getTextboxAttentions(): Array
+	{
+		const attentions = [this.getNotAccurateAttention()];
+
+		const jobLanguageAttention = this.getJobLanguageAttention();
+		if (jobLanguageAttention !== null)
+		{
+			attentions.push(jobLanguageAttention);
+		}
+
+		return attentions;
+	}
+
+	getNotAccurateAttention(): Attention
+	{
+		const helpdeskCode = '20412666';
+
+		const content = Loc.getMessage(this.getNotAccuratePhraseCode(), {
+			'[helpdesklink]': `<a href="##" onclick="top.BX.Helper.show('redirect=detail&code=${helpdeskCode}');">`,
+			'[/helpdesklink]': '</a>',
+		});
+
+		return new Attention({
+			content,
+		});
+	}
+
+	getJobLanguageAttention(): ?Attention
+	{
+		if (!Type.isStringFilled(this.languageTitle))
+		{
+			return null;
+		}
+
+		const helpdeskCode = '20423978';
+		const content = Loc.getMessage('CRM_COPILOT_CALL_JOB_LANGUAGE_ATTENTION', {
+			'#LANGUAGE_TITLE#': `<span style="text-transform: lowercase">${Text.encode(this.languageTitle)}</span>`,
+			'[helpdesklink]': `<a href="##" onclick="top.BX.Helper.show('redirect=detail&code=${helpdeskCode}');">`,
+			'[/helpdesklink]': '</a>',
+		});
+
+		return new Attention({
+			preset: AttentionPresets.COPILOT,
+			content,
+		});
+	}
+
+	getNotAccuratePhraseCode(): string
+	{
+		return '';
 	}
 
 	getSliderTitle(): string

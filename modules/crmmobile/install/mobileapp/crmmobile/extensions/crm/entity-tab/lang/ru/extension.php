@@ -1,7 +1,7 @@
 <?php
 $MESS['M_CRM_ENTITY_TAB_ITEM_ACTION_OPEN_TEXT'] = 'Открыть';
-$MESS['M_CRM_ENTITY_TAB_ITEM_ACTION_EDIT_TEXT'] = 'Редактировать';
-$MESS['M_CRM_ENTITY_TAB_ITEM_ACTION_COPY_TEXT'] = 'Копировать';
+$MESS['M_CRM_ENTITY_TAB_ITEM_ACTION_EDIT_TEXT_MSGVER_1'] = 'Изменить';
+$MESS['M_CRM_ENTITY_TAB_ITEM_ACTION_COPY_TEXT_MSGVER_1'] = 'Скопировать';
 $MESS['M_CRM_ENTITY_TAB_ITEM_ACTION_DELETE_TEXT'] = 'Удалить';
 
 $MESS['M_CRM_ENTITY_TAB_ITEM_ACTION_OPEN'] = 'Открыть элемент';
@@ -30,7 +30,7 @@ $MESS['M_CRM_ENTITY_TAB_ITEM_ACTION_DELETE_SMART_INVOICE'] = 'Удалить с�
 
 $MESS['M_CRM_ENTITY_TAB_ITEM_ACTION_DELETE_CONFIRMATION'] = 'Вы уверены, что хотите удалить элемент?';
 
-$MESS['M_CRM_ENTITY_TAB_ITEM_ACTION_ACTIVITIES2'] = 'Таймлайн';
+$MESS['M_CRM_ENTITY_TAB_ITEM_ACTION_ACTIVITIES2_MSGVER_1'] = 'Открыть таймлайн';
 
 $MESS['M_CRM_ENTITY_TAB_FORBIDDEN_DELETE_TITLE'] = 'Недостаточно прав на удаление элемента';
 $MESS['M_CRM_ENTITY_TAB_FORBIDDEN_DELETE_TITLE_LEAD'] = 'Недостаточно прав на удаление лида';

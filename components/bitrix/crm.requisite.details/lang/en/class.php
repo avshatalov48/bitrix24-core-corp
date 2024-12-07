@@ -1,6 +1,6 @@
-<?
+<?php
 $MESS["CRM_MODULE_NOT_INSTALLED"] = "The CRM module is not installed.";
-$MESS["CRM_REQUISITE_DETAILS_AUTOCOMPLETE"] = "Search details";
+$MESS["CRM_REQUISITE_DETAILS_AUTOCOMPLETE"] = "Find details";
 $MESS["CRM_REQUISITE_DETAILS_ERR_COMPANY_REQUISITE_READ_DENIED"] = "Read access to company details was denied (ID = #ID#)";
 $MESS["CRM_REQUISITE_DETAILS_ERR_COMPANY_REQUISITE_WRITE_DENIED"] = "Write access to company details was denied (ID = #ID#)";
 $MESS["CRM_REQUISITE_DETAILS_ERR_CONTACT_REQUISITE_READ_DENIED"] = "Read access to contact details was denied (ID = #ID#)";
@@ -22,4 +22,3 @@ $MESS["CRM_REQUISITE_DETAILS_ERR_REQUISITE_READ_PERMISSIONS"] = "Read access to 
 $MESS["CRM_REQUISITE_DETAILS_FORM_TITLE"] = "Edit details";
 $MESS["CRM_REQUISITE_DETAILS_FORM_TITLE_READ_ONLY"] = "View details";
 $MESS["CRM_REQUISITE_DETAILS_PRESET"] = "Template";
-?>

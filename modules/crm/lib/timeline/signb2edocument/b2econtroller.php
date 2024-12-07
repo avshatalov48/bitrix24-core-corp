@@ -2,6 +2,7 @@
 
 namespace Bitrix\Crm\Timeline\SignB2eDocument;
 
+use Bitrix\Crm\Activity\Provider\SignB2eDocument;
 use Bitrix\Crm\Item;
 use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Service\Container;
@@ -62,6 +63,18 @@ final class B2eController extends Timeline\Controller
 			$identifier,
 			$documentData,
 			$messageData,
+		);
+	}
+
+	public function onSignedDocumentDelivered(
+		ItemIdentifier $identifier,
+		DocumentData $documentData
+	): array
+	{
+		return $this->handleSignEvent(
+			Entry::TYPE_CATEGORY_MEMBER_SIGNED_DELIVERED,
+			$identifier,
+			$documentData
 		);
 	}
 
@@ -262,6 +275,48 @@ final class B2eController extends Timeline\Controller
 		);
 	}
 
+	public function onMemberStoppedByAssignee(
+		ItemIdentifier $identifier,
+		DocumentData $documentData,
+		MessageData $messageData,
+	): array
+	{
+		return $this->handleSignEvent(
+			Entry::TYPE_CATEGORY_MEMBER_STOPPED_BY_ASSIGNEE,
+			$identifier,
+			$documentData,
+			$messageData
+		);
+	}
+
+	public function onMemberStoppedByReviewer(
+		ItemIdentifier $identifier,
+		DocumentData $documentData,
+		MessageData $messageData,
+	): array
+	{
+		return $this->handleSignEvent(
+			Entry::TYPE_CATEGORY_MEMBER_STOPPED_BY_REVIEWER,
+			$identifier,
+			$documentData,
+			$messageData
+		);
+	}
+
+	public function onMemberStoppedByEditor(
+		ItemIdentifier $identifier,
+		DocumentData $documentData,
+		MessageData $messageData,
+	): array
+	{
+		return $this->handleSignEvent(
+			Entry::TYPE_CATEGORY_MEMBER_STOPPED_BY_EDITOR,
+			$identifier,
+			$documentData,
+			$messageData
+		);
+	}
+
 	protected function handleSignEvent(
 		int $typeCategoryId,
 		ItemIdentifier $identifier,
@@ -328,9 +383,9 @@ final class B2eController extends Timeline\Controller
 	protected function getCategoryMap(): array
 	{
 		return [
-			Entry::TYPE_CATEGORY_CREATED => [TimelineEntry\Facade::SIGN_B2E_DOCUMENT,],
-			Entry::TYPE_CATEGORY_STOPPED => [TimelineEntry\Facade::SIGN_B2E_DOCUMENT,],
-			Entry::TYPE_CATEGORY_DONE => [TimelineEntry\Facade::SIGN_B2E_DOCUMENT,],
+			Entry::TYPE_CATEGORY_CREATED => [TimelineEntry\Facade::SIGN_B2E_DOCUMENT_LOG,],
+			Entry::TYPE_CATEGORY_STOPPED => [TimelineEntry\Facade::SIGN_B2E_DOCUMENT_LOG,],
+			Entry::TYPE_CATEGORY_DONE => [TimelineEntry\Facade::SIGN_B2E_DOCUMENT_LOG,],
 			Entry::TYPE_CATEGORY_SIGNED_BY_RESPONSIBILITY_PERSON => [TimelineEntry\Facade::SIGN_B2E_DOCUMENT_LOG,],
 			Entry::TYPE_CATEGORY_SIGNED_BY_EMPLOYEE => [TimelineEntry\Facade::SIGN_B2E_DOCUMENT_LOG,],
 			Entry::TYPE_CATEGORY_SIGNED_BY_REVIEWER => [TimelineEntry\Facade::SIGN_B2E_DOCUMENT_LOG,],
@@ -345,6 +400,11 @@ final class B2eController extends Timeline\Controller
 			Entry::TYPE_CATEGORY_MEMBER_SIGNING_ERROR => [TimelineEntry\Facade::SIGN_B2E_DOCUMENT_LOG,],
 			Entry::TYPE_CATEGORY_MEMBER_SIGNING_EXPIRED => [TimelineEntry\Facade::SIGN_B2E_DOCUMENT_LOG,],
 			Entry::TYPE_CATEGORY_MEMBER_SNILS_ERROR => [TimelineEntry\Facade::SIGN_B2E_DOCUMENT_LOG,],
+			Entry::TYPE_CATEGORY_MEMBER_STOPPED_BY_REVIEWER => [TimelineEntry\Facade::SIGN_B2E_DOCUMENT_LOG,],
+			Entry::TYPE_CATEGORY_MEMBER_STOPPED_BY_EDITOR => [TimelineEntry\Facade::SIGN_B2E_DOCUMENT_LOG,],
+			Entry::TYPE_CATEGORY_MEMBER_STOPPED_BY_ASSIGNEE => [TimelineEntry\Facade::SIGN_B2E_DOCUMENT_LOG,],
+			Entry::TYPE_CATEGORY_MEMBER_SIGNED_DELIVERED => [TimelineEntry\Facade::SIGN_B2E_DOCUMENT_LOG,],
+			Entry::TYPE_CATEGORY_CONFIGURATION_ERROR => [TimelineEntry\Facade::SIGN_B2E_DOCUMENT_LOG,],
 		];
 	}
 
@@ -358,5 +418,51 @@ final class B2eController extends Timeline\Controller
 		}
 
 		return $factory->getItem($identifier->getEntityId());
+	}
+
+	public function completeActivity(ItemIdentifier $identifier): void
+	{
+		$activity = SignB2eDocument::getActivityByAssociatedEntity($identifier->getEntityId(), false);
+		if (!empty($activity['ID']))
+		{
+			\CCrmActivity::Complete($activity['ID'], true, ['REGISTER_SONET_EVENT' => true]);
+		}
+	}
+
+	public function notifyAboutActivityChange(ItemIdentifier $identifier): void
+	{
+		$activity = SignB2eDocument::getActivityByAssociatedEntity($identifier->getEntityId(), false);
+		if (!empty($activity['ID']))
+		{
+			Timeline\ActivityController::getInstance()->notifyTimelinesAboutActivityUpdate($activity);
+		}
+	}
+
+	public function onSignConfigureError(
+		ItemIdentifier $identifier,
+		DocumentData $documentData,
+		MessageData $messageData
+	): array
+	{
+		return $this->handleSignEvent(
+			Entry::TYPE_CATEGORY_CONFIGURATION_ERROR,
+			$identifier,
+			$documentData,
+			$messageData,
+		);
+	}
+
+	public function onSending(
+		ItemIdentifier $identifier,
+		DocumentData $documentData,
+		MessageData $messageData
+	): array
+	{
+		return $this->handleSignEvent(
+			Entry::TYPE_CATEGORY_CONFIGURATION_ERROR,
+			$identifier,
+			$documentData,
+			$messageData,
+		);
 	}
 }

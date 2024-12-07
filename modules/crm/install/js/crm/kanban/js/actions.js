@@ -18,225 +18,53 @@
 		 */
 		startCallList: function(grid, createActivity)
 		{
-			if (typeof BX.CrmCallListHelper === "undefined")
-			{
-				return;
-			}
-			if (typeof createActivity === "undefined")
-			{
-				createActivity = true;
-			}
-
-			var gridData = grid.getData();
-
-			BX.CrmCallListHelper.createCallList(
-				{
-					entityType: gridData.entityType,
-					entityIds: grid.getCheckedId(),
-					createActivity: createActivity
-				},
-				function(response)
-				{
-					if( !BX.type.isPlainObject(response))
+			BX.Runtime.loadExtension('crm.entity-list.panel')
+				.then(({ createCallList }) => {
+					if (BX.Type.isUndefined(createActivity))
 					{
-						return;
+						createActivity = true;
 					}
-					if (!response.SUCCESS && response.ERRORS)
+
+					const gridData = grid.getData();
+
+					/** @see BX.Crm.EntityList.Panel.createCallList */
+					return createCallList(gridData.entityTypeInt, grid.getCheckedId(), createActivity);
+				}).then(({ errorMessages }) => {
+					if (BX.Type.isArrayFilled(errorMessages))
 					{
-						var error = response.ERRORS.join(". \n");
+						const error = errorMessages.join('. \n');
 						BX.Kanban.Utils.showErrorDialog(error);
 					}
-					else if (response.SUCCESS && response.DATA)
-					{
-						var data = response.DATA;
-						if (data.RESTRICTION)
-						{
-							if (BX.Type.isPlainObject(data.RESTRICTION) && B24 && B24.licenseInfoPopup)
-							{
-								B24.licenseInfoPopup.show('ivr-limit-popup', data.RESTRICTION.HEADER, data.RESTRICTION.CONTENT);
-							}
-							else if (BX.Type.isStringFilled(data.RESTRICTION))
-							{
-								eval(data.RESTRICTION);
-							}
-						}
-						else
-						{
-							var callListId = data.ID;
-							if (createActivity && top.BXIM)
-							{
-								top.BXIM.startCallList(callListId, {});
-							}
-							else
-							{
-								(new BX.Crm.Activity.Planner()).showEdit({
-									PROVIDER_ID: "CALL_LIST",
-									PROVIDER_TYPE_ID: "CALL_LIST",
-									ASSOCIATED_ENTITY_ID: callListId
-								});
-							}
-						}
-					}
-				}
-			);
+				})
+			;
 		},
 
 		/**
-		 * Notify by message code (if exists).
-		 * @param {Strings} code Message code.
-		 * @param {Object params Some params.
-		 * @return {void}
-		 */
-		notifySimpleAction: function(code, params)
-		{
-			if (code === "DEAL_CHANGECATEGORY")
-			{
-				code = "DEAL_CHANGECATEGORY_LINK2";
-			}
-			if (code === "DYNAMIC_CHANGECATEGORY")
-			{
-				code = "DYNAMIC_CHANGECATEGORY_LINK2";
-			}
-			code = "CRM_KANBAN_NOTIFY_" + code;
-			if ([
-				'CRM_KANBAN_NOTIFY_LEAD_STATUS',
-				'CRM_KANBAN_NOTIFY_DYNAMIC_STATUS',
-				'CRM_KANBAN_NOTIFY_INVOICE_STATUS',
-				'CRM_KANBAN_NOTIFY_QUOTE_DELETE',
-				'CRM_KANBAN_NOTIFY_QUOTE_SETASSIGNED',
-			].indexOf(code) >= 0)
-			{
-				code += '_MSGVER_1';
-			}
-			if ([
-				'CRM_KANBAN_NOTIFY_QUOTE_STATUS',
-			].indexOf(code) >= 0)
-			{
-				code += '_MSGVER_2';
-			}
-			if (typeof BX.message[code] !== "undefined")
-			{
-				var mess = BX.message[code];
-				if (BX.type.isPlainObject(params))
-				{
-					for (var k in params)
-					{
-						mess = mess.replace(
-							"#" + k + "#",
-							params[k]
-						);
-					}
-				}
-				BX.UI.Notification.Center.notify({
-					content: mess
-				});
-			}
-		},
-
-		/**
-		 *Some simple action.
+		 * Some simple action.
 		 * @param {BX.CRM.Kanban.Grid} grid
 		 * @param {Object} params
 		 * @param {boolean} disableNotify
-		 * @returns {void}
+		 * @returns {Promise}
 		 */
 		simpleAction: function(grid, params, disableNotify)
 		{
-			if (grid.isMultiSelectMode())
-			{
-				grid.resetMultiSelectMode();
-			}
-
-			params.eventId = (params.eventId || BX.Pull?.QueueManager?.registerRandomEventId());
-
-			return new Promise(function(resolve,reject){
-				grid.ajax(
-					params,
-					function(data)
-					{
-						var gridData = grid.getData();
-
-						if (data && !data.error)
-						{
-							if (!disableNotify)
-							{
-								grid.onApplyFilter();
-							}
-							grid.stopActionPanel();
-							var code = gridData.entityType;
-							if (code.indexOf('DYNAMIC') === 0)
-							{
-								code = 'DYNAMIC';
-							}
-							if (
-								params.action === "delete" &&
-								params.ignore === "Y"
-							)
-							{
-								code += "_IGNORE";
-							}
-							else
-							{
-								code += "_" + params.action.toUpperCase();
-							}
-							if (disableNotify !== true)
-							{
-								this.notifySimpleAction(code, params);
-							}
-							resolve(data);
-						}
-						else if (data)
-						{
-							// for change column
-							if (params.action === "status")
-							{
-								grid.stopActionPanel();
-								grid.onApplyFilter();
-								if (grid.getTypeInfoParam('showPersonalSetStatusNotCompletedText'))
-								{
-									var messageCode = gridData.isDynamicEntity
-										? 'CRM_KANBAN_SET_STATUS_NOT_COMPLETED_TEXT_DYNAMIC_MSGVER_1'
-										: (`CRM_KANBAN_SET_STATUS_NOT_COMPLETED_TEXT_${gridData.entityType}_MSGVER_1` || `CRM_KANBAN_SET_STATUS_NOT_COMPLETED_TEXT_${gridData.entityType}_MSGVER_2`);
-
-									BX.Kanban.Utils.showErrorDialog(BX.message(messageCode));
-									reject(new Error(BX.message(messageCode)));
-								}
-								else
-								{
-									BX.Kanban.Utils.showErrorDialog(data.error, data.fatal);
-									reject(new Error(data.error));
-								}
-							}
-							else
-							{
-								BX.Kanban.Utils.showErrorDialog(data.error, data.fatal);
-								reject(new Error(data.error));
-							}
-						}
-					}.bind(this),
-					function(error)
-					{
-						BX.Kanban.Utils.showErrorDialog("Error: " + error, true);
-						reject(new Error(error));
-					}.bind(this)
-				);
-			}.bind(this));
+			return (new BX.CRM.Kanban.Actions.SimpleAction(grid, params))
+				.showNotify(!disableNotify)
+				.applyFilterAfterAction(!disableNotify)
+				.execute()
+			;
 		},
 
-		/**
-		 * Start calling list.
-		 * @param {BX.CRM.Kanban.Grid} grid
-		 * @param {Object} assigned
-		 * @returns {void}
-		 */
 		setAssigned: function(grid, assigned)
 		{
-			this.simpleAction(grid, {
-				action: "setAssigned",
+			const params = {
+				action: 'setAssigned',
 				ids: grid.getCheckedId(),
 				assignedId: assigned.entityId,
-				assignedName: assigned.name
-			}, false);
+				assignedName: assigned.name,
+			};
+
+			void this.simpleAction(grid, params, false);
 		},
 
 		/**
@@ -301,90 +129,27 @@
 		},
 
 		/**
+		 * @deprecated since crm 24.0.0. Use BX.CRM.Kanban.Actions.DeleteAction
+		 *
 		 * Delete one item.
 		 * @param {BX.CRM.Kanban.Grid} grid
-		 * @param ids
-		 * @param {BX.CRM.Kanban.DropZone} drop
+		 * @param {Number[] | Number | null} ids
+		 * @param {BX.Crm.Kanban.DropZone} drop
 		 */
 		delete: function(grid, ids, drop)
 		{
-			ids = ids ? ids : grid.getCheckedId();
+			// eslint-disable-next-line no-param-reassign
+			ids = ids ?? grid.getCheckedId();
 
-			this.simpleAction(grid, {
-				action: "delete",
-				id: ids
-			}, true)
-				.then(
-					function(response){
+			const params = {
+				ids,
+				showNotify: false,
+			};
 
-						if (drop)
-						{
-							var removedItems = (ids.length ? drop.droppedItems : [drop.droppedItem]);
-							var deleteTitle = (
-								ids.length
-								? BX.message('CRM_KANBAN_DELETE_SUCCESS_MULTIPLE')
-								: BX.message('CRM_KANBAN_DELETE_SUCCESS').replace('#ELEMENT_NAME#', drop.droppedItem.data.name)
-							);
-
-							drop.empty();
-							drop.getDropZoneArea().hide();
-							drop.droppedItems = [];
-							grid.dropZonesShow = false;
-							grid.resetMultiSelectMode();
-							grid.resetActionPanel();
-							grid.resetDragMode();
-
-							var ballonOptions = {
-								content: deleteTitle
-							};
-
-							if (grid.getTypeInfoParam('isRecyclebinEnabled'))
-							{
-								ballonOptions.actions = [
-									{
-										title: BX.message('CRM_KANBAN_DELETE_CANCEL'),
-										events: {
-											click: function() {
-												balloon.close();
-
-												BX.ajax.runComponentAction('bitrix:crm.kanban', 'restore', {
-													mode: 'ajax',
-													data: {
-														entityIds: (Array.isArray(ids) ? ids : [ids]),
-														entityTypeId: grid.data.entityTypeInt
-													}
-												}).then(function(response) {
-													removedItems.forEach(function(item){
-														var column = grid.getColumn(item.options.columnId);
-														var items = column.getItems();
-														var beforeItem = items.length ? items[0] : null;
-														item.visible = true;
-														column.addItem(item, beforeItem);
-													});
-													var autoHideDelay = 6000;
-													BX.UI.Notification.Center.notify({
-														content: BX.message('CRM_KANBAN_DELETE_RESTORE_SUCCESS'),
-														autoHideDelay: autoHideDelay,
-													});
-												}, function(response) {
-													BX.UI.Notification.Center.notify({
-														content: response.errors[0].message
-													});
-												});
-											}
-										}
-									}
-								];
-							}
-
-							var balloon = BX.UI.Notification.Center.notify(ballonOptions);
-						}
-					}, function(response) {
-						BX.UI.Notification.Center.notify({
-							content: response.errors[0].message
-						});
-					}
-				);
+			(new BX.CRM.Kanban.Actions.DeleteAction(grid, params))
+				.setDropZone(drop)
+				.execute()
+			;
 		},
 
 		/**
@@ -395,15 +160,20 @@
 		deleteAll: function(grid)
 		{
 			this.confirm(
-				BX.message("CRM_KANBAN_PANEL_ACTION_CONFIRM"),
-				function()
+				BX.Loc.getMessage('CRM_KANBAN_PANEL_ACTION_CONFIRM'),
+				() => {
+
+					const params = {
+						ids: grid.getCheckedId(),
+						applyFilterAfterAction: true,
+						showNotify: false,
+					};
+
+					(new BX.CRM.Kanban.Actions.DeleteAction(grid, params)).execute();
+				},
 				{
-					this.simpleAction(grid, {
-						action: "delete",
-						id: grid.getCheckedId()
-					}, false);
-				}.bind(this),
-				{ grid }
+					grid,
+				},
 			);
 		},
 
@@ -611,7 +381,6 @@
 			dialog.show();
 
 			return dialog;
-		}
+		},
 	};
-
 })();

@@ -101,7 +101,9 @@ class EntityController extends Controller
 			$settings['ENTITIES'][] = ['ENTITY_TYPE_ID' => $entityTypeID, 'ENTITY_ID' => $entityID];
 		}
 
-		$authorID = \CCrmSecurityHelper::GetCurrentUserID();
+		$authorID = isset($params['USER_ID'])
+			? (int)$params['USER_ID']
+			: \CCrmSecurityHelper::GetCurrentUserID();
 		if ($authorID <= 0)
 		{
 			$authorID = static::getDefaultAuthorId();

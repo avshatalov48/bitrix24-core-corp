@@ -3,6 +3,7 @@ import {EventEmitter} from 'main.core.events';
 import getItem from '../items/index';
 import Item from '../items/item';
 import ItemActive from '../items/item-active';
+import { ItemMainPage } from '../items/item-main-page';
 import ItemUserSelf from '../items/item-user-self';
 import ItemUserFavorites from '../items/item-user-favorites';
 import Options from "../options";
@@ -55,7 +56,11 @@ export default class ItemsController extends DefaultController{
 		const itemClass = getItem(node);
 		const item = new itemClass(this.container, node);
 		this.items.set(item.getId(), item);
-		this.#registerDND(item);
+
+		if (!(item instanceof ItemMainPage))
+		{
+			this.#registerDND(item);
+		}
 
 		if (this.#activeItem.checkAndSet(
 			item,
@@ -89,7 +94,7 @@ export default class ItemsController extends DefaultController{
 		;
 		item.container
 			.querySelector('[data-role="item-edit-control"]')
-			.addEventListener('click', (event) => {
+			?.addEventListener('click', (event) => {
 				this.openItemMenu(item, event.target)
 			});
 		return item;
@@ -775,7 +780,17 @@ export default class ItemsController extends DefaultController{
 		}
 		const contextMenuItems = [];
 		// region hide/show item
-		if (item.container.getAttribute("data-status") === "show")
+
+		if (item instanceof ItemMainPage)
+		{
+			contextMenuItems.push({
+				text: Loc.getMessage('MENU_OPEN_SETTINGS_MAIN_PAGE'),
+				onclick: () => {
+					item.openSettings();
+				},
+			});
+		}
+		else if (item.container.getAttribute("data-status") === "show")
 		{
 			contextMenuItems.push({
 				text: Loc.getMessage("hide_item"),
@@ -798,6 +813,7 @@ export default class ItemsController extends DefaultController{
 		//region set as main page
 		if (
 			!Options.isExtranet
+			&& !Options.isMainPageEnabled
 			&& !(item instanceof ItemUserSelf)
 			&& !(item instanceof ItemGroup)
 			&& this.container.querySelector('li.menu-item-block[data-role="item"]') !== item.container
@@ -818,12 +834,15 @@ export default class ItemsController extends DefaultController{
 				contextMenuItems.push(actionItem);
 			});
 
-		contextMenuItems.push({
-			text: this.#isEditMode ? Loc.getMessage("MENU_EDIT_READY_FULL") : Loc.getMessage("MENU_SETTINGS_MODE"),
-			onclick: () => {
-				this.#isEditMode ? this.switchToViewMode() : this.switchToEditMode();
-			}
-		});
+		if (!(item instanceof ItemMainPage))
+		{
+			contextMenuItems.push({
+				text: this.#isEditMode ? Loc.getMessage("MENU_EDIT_READY_FULL") : Loc.getMessage("MENU_SETTINGS_MODE"),
+				onclick: () => {
+					this.#isEditMode ? this.switchToViewMode() : this.switchToEditMode();
+				}
+			});
+		}
 
 		contextMenuItems.forEach((item) => {
 			item['className'] = ["menu-popup-no-icon", item['className'] ?? ''].join(' ');
@@ -1103,6 +1122,7 @@ export default class ItemsController extends DefaultController{
 	#menuItemDragStop(/*item*/)
 	{
 		const item = this.dnd.item;
+		console.log(item);
 		const oldParent = this.dnd.oldParent;
 
 		const dragElement = item.container;

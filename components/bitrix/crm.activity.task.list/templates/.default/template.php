@@ -5,7 +5,7 @@ Bitrix\Main\UI\Extension::load(["ui.tooltip", "ui.fonts.opensans"]);
 
 $APPLICATION->SetAdditionalCSS('/bitrix/js/crm/css/crm.css');
 ?>
-<script type="text/javascript">
+<script>
 function crm_activity_task_delete_grid(title, message, btnTitle, path)
 {
 	var d;

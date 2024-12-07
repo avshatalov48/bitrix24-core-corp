@@ -203,6 +203,87 @@ Class intranet extends CModule
 		$eventManager->registerEventHandler('crm', 'OnCrmEntityDetailsFrameBelowPage', 'intranet', 'Bitrix\Intranet\UI\Sidepanel\EventHandler', 'onBelowPage');
 		$eventManager->registerEventHandler('main', 'MainSenderSmtpLimitDecrease', 'intranet', 'Bitrix\Intranet\Integration\Main\EventHandler', 'onSenderSmtpLimitDecrease');
 
+		// for user filter provider integration and extension
+		$eventManager->registerEventHandler('main', 'OnBuildFilterFactoryMethods', 'intranet', '\Bitrix\Intranet\User\Filter\FactoryIntranet', 'onBuildFilterFactoryMethods');
+
+		$eventManager->registerEventHandler(
+				'intranet',
+				'onUserInvited',
+				'intranet',
+				\Bitrix\Intranet\Invitation::class,
+				'onUserInvitedHandler',
+				50
+			);
+
+		$eventManager->registerEventHandler(
+				'main',
+				'OnUserInitialize',
+				'intranet',
+				\Bitrix\Intranet\Invitation::class,
+				'onUserInitializeHandler',
+				50
+			);
+
+		$eventManager->registerEventHandler(
+				'main',
+				'OnAfterUserAuthorize',
+				'intranet',
+				\Bitrix\Intranet\Invitation::class,
+				'onAfterUserAuthorizeHandler',
+				50
+			);
+
+		$eventManager->registerEventHandler(
+				'main',
+				'OnBeforeUserDelete',
+				'intranet',
+				\Bitrix\Intranet\Invitation::class,
+				'onBeforeUserDeleteHandler',
+				50
+			);
+
+		$eventManager->registerEventHandler(
+				'intranet',
+				'OnRegisterUser',
+				'intranet',
+				\Bitrix\Intranet\Invitation::class,
+				'onRegisterUser',
+				50
+			);
+
+		$eventManager->registerEventHandler(
+				'main',
+				'OnAfterSetUserGroup',
+				'intranet',
+				\Bitrix\Intranet\Invitation::class,
+				'onAfterSetUserGroupHandler',
+				50
+			);
+
+		$eventManager->registerEventHandler(
+				'socialnetwork',
+				'OnSocNetUserToGroupAdd',
+				'intranet',
+				\Bitrix\Intranet\Invitation::class,
+				'onSocNetUserToGroupAddHandler'
+			);
+
+		$eventManager->registerEventHandler(
+				'socialnetwork',
+				'OnSocNetUserToGroupUpdate',
+				'intranet',
+				\Bitrix\Intranet\Invitation::class,
+				'onSocNetUserToGroupUpdateHandler'
+			);
+
+		$eventManager->registerEventHandler(
+				'socialnetwork',
+				'OnAfterSocNetUserToGroupDelete',
+				'intranet',
+				\Bitrix\Intranet\Invitation::class,
+				'onSocNetUserToGroupDeleteHandler'
+			);
+
 		CAgent::AddAgent('\\Bitrix\\Intranet\\UStat\\UStat::recountHourlyCompanyActivity();', "intranet", "N", 60);
 		CAgent::AddAgent('\\Bitrix\\Intranet\\UStat\\UStat::recount();', "intranet", "N", 3600);
 
@@ -258,7 +339,7 @@ Class intranet extends CModule
 		global $DB;
 
 		$sIn = "'INTRANET_USER_INVITATION'";
-		$rs = $DB->Query("SELECT count(*) C FROM b_event_type WHERE EVENT_NAME IN (".$sIn.") ", false, "File: ".__FILE__."<br>Line: ".__LINE__);
+		$rs = $DB->Query("SELECT count(*) C FROM b_event_type WHERE EVENT_NAME IN (".$sIn.") ");
 		$ar = $rs->Fetch();
 		if($ar["C"] <= 0)
 		{
@@ -276,71 +357,68 @@ Class intranet extends CModule
 	{
 		global $APPLICATION;
 
-		if($_ENV["COMPUTERNAME"]!='BX')
+		CopyDirFiles(
+			$_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/intranet/install/components",
+			$_SERVER["DOCUMENT_ROOT"]."/bitrix/components",
+			true, true
+		);
+
+		CopyDirFiles(
+			$_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/intranet/install/gadgets",
+			$_SERVER["DOCUMENT_ROOT"]."/bitrix/gadgets",
+			true, true
+		);
+
+		CopyDirFiles(
+			$_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/intranet/install/admin",
+			$_SERVER["DOCUMENT_ROOT"]."/bitrix/admin",
+			true, true
+		);
+
+		CopyDirFiles(
+			$_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/intranet/install/js",
+			$_SERVER["DOCUMENT_ROOT"]."/bitrix/js",
+			true, true
+		);
+
+		CopyDirFiles(
+			$_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/intranet/install/themes",
+			$_SERVER["DOCUMENT_ROOT"]."/bitrix/themes",
+			true, true
+		);
+
+		// here: set access rights for all of the services
+		CopyDirFiles(
+			$_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/intranet/install/tools",
+			$_SERVER["DOCUMENT_ROOT"]."/bitrix/tools",
+			true, true
+		);
+
+		CopyDirFiles(
+			$_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/intranet/install/images",
+			$_SERVER["DOCUMENT_ROOT"]."/bitrix/images",
+			true, true
+		);
+
+		CopyDirFiles(
+			$_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/intranet/install/services",
+			$_SERVER["DOCUMENT_ROOT"]."/bitrix/services",
+			true, true
+		);
+
+		foreach (["portal", "portal_clear"] as $wizard)
 		{
-			CopyDirFiles(
-				$_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/intranet/install/components",
-				$_SERVER["DOCUMENT_ROOT"]."/bitrix/components",
-				true, true
-			);
-
-			CopyDirFiles(
-				$_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/intranet/install/gadgets",
-				$_SERVER["DOCUMENT_ROOT"]."/bitrix/gadgets",
-				true, true
-			);
-
-			CopyDirFiles(
-				$_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/intranet/install/admin",
-				$_SERVER["DOCUMENT_ROOT"]."/bitrix/admin",
-				true, true
-			);
-
-			CopyDirFiles(
-				$_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/intranet/install/js",
-				$_SERVER["DOCUMENT_ROOT"]."/bitrix/js",
-				true, true
-			);
-
-			CopyDirFiles(
-				$_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/intranet/install/themes",
-				$_SERVER["DOCUMENT_ROOT"]."/bitrix/themes",
-				true, true
-			);
-
-			// here: set access rights for all of the services
-			CopyDirFiles(
-				$_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/intranet/install/tools",
-				$_SERVER["DOCUMENT_ROOT"]."/bitrix/tools",
-				true, true
-			);
-
-			CopyDirFiles(
-				$_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/intranet/install/images",
-				$_SERVER["DOCUMENT_ROOT"]."/bitrix/images",
-				true, true
-			);
-
-			CopyDirFiles(
-				$_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/intranet/install/services",
-				$_SERVER["DOCUMENT_ROOT"]."/bitrix/services",
-				true, true
-			);
-
-			foreach (["portal", "portal_clear"] as $wizard)
+			if (IO\Directory::isDirectoryExists(
+				$_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/intranet/install/wizards/bitrix/".$wizard)
+			)
 			{
-				if (IO\Directory::isDirectoryExists(
-					$_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/intranet/install/wizards/bitrix/".$wizard)
-				)
-				{
-					CopyDirFiles(
-						$_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/intranet/install/wizards/bitrix/".$wizard,
-						$_SERVER["DOCUMENT_ROOT"]."/bitrix/wizards/bitrix/".$wizard,
-						true,
-						true,
-						true
-					);
-				}
+				CopyDirFiles(
+					$_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/intranet/install/wizards/bitrix/".$wizard,
+					$_SERVER["DOCUMENT_ROOT"]."/bitrix/wizards/bitrix/".$wizard,
+					true,
+					true,
+					true
+				);
 			}
 		}
 
@@ -678,21 +756,4 @@ Class intranet extends CModule
 
 		return $arResult;
 	}
-
-	public function migrateToBox()
-	{
-		\Bitrix\Main\Config\Option::set('intranet', '~bitrix24_migrated_from_cloud', 'Y');
-		\Bitrix\Main\Config\Option::set('main', 'wizard_firstportal_s1', 'Y', 's1');
-		\Bitrix\Main\Config\Option::set('main', '~wizard_id', 'portal', 's1');
-		\Bitrix\Main\Config\Option::set('main', 'wizard_solution', 'bitrix:portal', 's1');
-
-		if (
-			\Bitrix\Main\ModuleManager::isModuleInstalled('extranet')
-			&& \Bitrix\Main\IO\Directory::isDirectoryExists(\Bitrix\Main\Application::getDocumentRoot().'/bitrix/modules/extranet')
-		)
-		{
-			\Bitrix\Main\ModuleManager::delete('extranet');
-		}
-	}
 }
-?>

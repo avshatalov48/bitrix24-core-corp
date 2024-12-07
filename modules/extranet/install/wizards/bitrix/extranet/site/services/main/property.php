@@ -82,7 +82,7 @@ foreach ($arProperties as $arProperty)
 					else
 					{
 						list($arCustomFieldID, $arCustomFieldName) = explode("--#--", $customField);
-						$arCustomFieldName = ltrim($arCustomFieldName, defined("BX_UTF")? "* -\xa0\xc2": "* -\xa0");
+						$arCustomFieldName = ltrim($arCustomFieldName, "* -\xa0\xc2");
 						$arCustomTabs[$arCustomTabID]["FIELDS"][$arCustomFieldID] = $arCustomFieldName;
 					}
 				}

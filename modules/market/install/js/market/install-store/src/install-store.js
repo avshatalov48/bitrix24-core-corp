@@ -201,16 +201,19 @@ export const marketInstallState = defineStore('market-install', {
 					top.BX.onCustomEvent(top, 'Rest:AppLayout:ApplicationInstall', [true, eventResult], false);
 				}
 
-				if (this.appInfo.TYPE === 'B')
-				{
+				if (this.appInfo.TYPE === 'B') {
 					this.openApplication();
-
 					return;
 				}
 
 				if (this.isConfigurationAppInstall()) {
 					this.reloadSlider();
 					return;
+				}
+
+				const timerAfterInstall = parseInt(this.appInfo.INSTALL_INFO.OPEN_APP_AFTER_INSTALL, 10);
+				if (Number.isInteger(timerAfterInstall) && timerAfterInstall > 0) {
+					this.openAppAfterInstall = timerAfterInstall;
 				}
 
 				this.installStep = 3;
@@ -236,13 +239,21 @@ export const marketInstallState = defineStore('market-install', {
 		openApplication: function () {
 			clearTimeout(this.timer);
 
+			let closeCallback = this.closeDetailAfterInstall() ? this.closePreviousSlider : false;
+
 			if (!!this.installResult.open) {
-				top.BX.rest.AppLayout.openApplication(this.installResult.id, {});
+				top.BX.rest.AppLayout.openApplication(
+					this.installResult.id,
+					this.appInfo.INSTALL_INFO.PLACEMENT_OPTIONS,
+					false,
+					closeCallback
+				);
 			}
 
 			const current = BX.SidePanel.Instance.getTopSlider();
 			const previous = BX.SidePanel.Instance.getPreviousSlider(current);
-			if (previous) {
+
+			if (previous && !this.closeDetailAfterInstall()) {
 				previous.reload();
 			}
 
@@ -252,8 +263,23 @@ export const marketInstallState = defineStore('market-install', {
 				BX.SidePanel.Instance.open(this.installResult.openSlider);
 			}
 		},
+		closePreviousSlider: function() {
+			const current = BX.SidePanel.Instance.getTopSlider();
+			const previous = BX.SidePanel.Instance.getPreviousSlider(current);
+			if (previous) {
+				previous.close();
+			}
+		},
+		closeDetailAfterInstall: function() {
+			return this.appInfo.INSTALL_INFO &&
+				this.appInfo.INSTALL_INFO.hasOwnProperty('CLOSE_DETAIL_AFTER_INSTALL') &&
+				this.appInfo.INSTALL_INFO.CLOSE_DETAIL_AFTER_INSTALL === 'Y';
+		},
 		isConfigurationAppInstall: function () {
 			return !!this.installResult.openSlider;
+		},
+		canShowAppForm: function () {
+			return !!this.installResult.canShowForm;
 		},
 		reloadSlider: function () {
 			BX.SidePanel.Instance.getTopSlider().reload();
@@ -329,6 +355,9 @@ export const marketInstallState = defineStore('market-install', {
 			}
 
 			this.goTo(nextItem)
+		},
+		buildAppForm: function(clientId) {
+			return top.BX.Rest.AppForm.buildByApp(clientId, top.BX.Rest.EventType.INSTALL);
 		},
 	},
 });

@@ -1,5 +1,6 @@
 <?php
 
+use Bitrix\Crm\Integration\Analytics\Dictionary;
 use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Crm\Service;
 use Bitrix\Crm\Service\Router;
@@ -20,9 +21,10 @@ class CrmItemDeadlinesComponent extends Bitrix\Crm\Component\ItemList
 
 		$this->init();
 
-		if($this->getErrors())
+		if ($this->getErrors())
 		{
 			$this->includeComponentTemplate();
+
 			return;
 		}
 
@@ -32,6 +34,7 @@ class CrmItemDeadlinesComponent extends Bitrix\Crm\Component\ItemList
 			$this->arResult['restriction'] = $restriction;
 			$this->arResult['entityName'] = \CCrmOwnerType::ResolveName($this->entityTypeId);
 			$this->includeComponentTemplate('restrictions');
+
 			return;
 		}
 
@@ -39,6 +42,13 @@ class CrmItemDeadlinesComponent extends Bitrix\Crm\Component\ItemList
 		$this->arResult['categoryId'] = $this->category->getId();
 		$this->arResult['entityTypeDescription'] = $this->factory->getEntityDescription();
 		$this->arResult['isCountersEnabled'] = $this->factory->getCountersSettings()->isCountersEnabled();
+		$this->arResult['pathToMerge'] = $this->router->getEntityMergeUrl($this->entityTypeId);
+
+		$section = Dictionary::getAnalyticsEntityType($this->entityTypeId) . '_section';
+		$this->arResult['analytics'] = [
+			'c_section' => $section,
+			'c_sub_section' => Dictionary::SUB_SECTION_DEADLINES,
+		];
 
 		$this->includeComponentTemplate();
 	}

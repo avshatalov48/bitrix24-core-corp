@@ -524,9 +524,7 @@ class CVoxImplantUser
 			}
 			else
 			{
-				$tmUser->GetCurrentInfo(true); // need for reload cache
-
-				if ($tmUser->State() == 'OPENED')
+				if ($tmUser->getCurrentRecordStatus() === 'OPENED')
 				{
 					$result = true;
 				}

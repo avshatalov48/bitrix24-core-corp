@@ -2,7 +2,6 @@
 
 namespace Bitrix\Crm\Entity;
 
-use Bitrix\Crm\Service\Container;
 use Bitrix\Main;
 use Bitrix\Crm;
 use Bitrix\Crm\Workflow\PaymentStage;
@@ -10,9 +9,6 @@ use Bitrix\Crm\Workflow\PaymentWorkflow;
 use Bitrix\Crm\Workflow\EntityStageTable;
 use Bitrix\Sale;
 use Bitrix\Catalog;
-use Bitrix\Sale\Payment;
-use Bitrix\Sale\Shipment;
-use CCrmOwnerType;
 
 /**
  * Class retrieves documents related to the entity.
@@ -104,24 +100,54 @@ class PaymentDocumentsRepository
 		return $result;
 	}
 
-	/**
-	 * @param array $filter
-	 * @param array $select
-	 * @param array $order
-	 * @return array
-	 */
+	public function doDocumentsExistForEntity(int $ownerTypeId, int $ownerId): bool
+	{
+		$this->ownerTypeId = $ownerTypeId;
+		$this->ownerId = $ownerId;
+
+		$paymentDocuments = $this->getPaymentDocumentsForEntityByFilter($this->ownerId, $this->ownerTypeId);
+		if (!empty($paymentDocuments))
+		{
+			return true;
+		}
+
+		$emptyDeliveryServiceId = Sale\Delivery\Services\EmptyDeliveryService::getEmptyDeliveryServiceId();
+		$shipments = $this->getDeliveriesForEntityByFilter($this->ownerId, $this->ownerTypeId, select: ['ID', 'DELIVERY_ID']);
+		$shipmentDocuments = array_filter($shipments, static function ($shipment) use ($emptyDeliveryServiceId) {
+			return (int)$shipment['DELIVERY_ID'] !== $emptyDeliveryServiceId;
+		});
+		if (!empty($shipmentDocuments))
+		{
+			return true;
+		}
+
+		$realizationDocuments = $this->getRealizationDocumentsIdsByShipments($shipments);
+		if (!empty($realizationDocuments))
+		{
+			return true;
+		}
+
+		$checkDocuments = $this->fetchCheckDocuments();
+		if (!empty($checkDocuments))
+		{
+			return true;
+		}
+
+		return false;
+	}
+
 	public function getPaymentDocumentsForEntityByFilter(
 		int $ownerId,
 		int $ownerTypeId,
-		array $filter,
-		array $select,
-		array $order
+		array $filter = [],
+		array $select = ['ID'],
+		array $order = []
 	): array
 	{
 		$this->ownerTypeId = $ownerTypeId;
 		$this->ownerId = $ownerId;
 
-		if ($this->fetchEntity())
+		if ($this->doesEntityExist())
 		{
 			$this->fetchOrderIds();
 
@@ -142,24 +168,31 @@ class PaymentDocumentsRepository
 		return [];
 	}
 
-	/**
-	 * @param array $filter
-	 * @param array $select
-	 * @param array $order
-	 * @return array
-	 */
 	public function getDeliveryDocumentsForEntityByFilter(
 		int $ownerId,
 		int $ownerTypeId,
-		array $filter,
-		array $select,
-		array $order
+		array $filter = [],
+		array $select = ['ID'],
+		array $order = []
+	): array
+	{
+		$filter['!DELIVERY_ID'] = Sale\Delivery\Services\EmptyDeliveryService::getEmptyDeliveryServiceId();
+
+		return $this->getDeliveriesForEntityByFilter($ownerId, $ownerTypeId, $filter, $select, $order);
+	}
+
+	public function getDeliveriesForEntityByFilter(
+		int $ownerId,
+		int $ownerTypeId,
+		array $filter = [],
+		array $select = ['ID'],
+		array $order = []
 	): array
 	{
 		$this->ownerTypeId = $ownerTypeId;
 		$this->ownerId = $ownerId;
 
-		if ($this->fetchEntity())
+		if ($this->doesEntityExist())
 		{
 			$this->fetchOrderIds();
 
@@ -169,7 +202,6 @@ class PaymentDocumentsRepository
 			}
 
 			$filter = array_merge($filter, ['=ORDER_ID' => $this->orderIds]);
-			$filter['!DELIVERY_ID'] = Sale\Delivery\Services\EmptyDeliveryService::getEmptyDeliveryServiceId();
 			$filter['=SYSTEM'] = 'N';
 
 			$dbRes = Sale\Shipment::getList([
@@ -184,8 +216,47 @@ class PaymentDocumentsRepository
 		return [];
 	}
 
+	public function getRealizationDocumentsIdsByShipments(array $shipments): array
+	{
+		$result = [];
+
+		$shipmentIds = array_column($shipments, 'ID');
+
+		$shipmentRealizations = Crm\Order\Internals\ShipmentRealizationTable::getList([
+			'select' => ['SHIPMENT_ID'],
+			'filter' => [
+				'=SHIPMENT_ID' => $shipmentIds,
+				'=IS_REALIZATION' => 'Y',
+			],
+		]);
+		while ($shipmentRealization = $shipmentRealizations->fetch())
+		{
+			$result[] = (int)$shipmentRealization['SHIPMENT_ID'];
+		}
+
+		return $result;
+	}
+
+	private function doesEntityExist(): bool
+	{
+		$factory = Crm\Service\Container::getInstance()->getFactory($this->ownerTypeId);
+		$item = null;
+
+		if ($factory && $factory->isLinkWithProductsEnabled())
+		{
+			$item = $factory->getItem($this->ownerId, ['ID']);
+		}
+
+		return (bool)$item;
+	}
+
 	private function fetchEntity(): bool
 	{
+		if ((int)$this->ownerTypeId < 0 || (int)$this->ownerId < 0)
+		{
+			return false;
+		}
+
 		$factory = Crm\Service\Container::getInstance()->getFactory($this->ownerTypeId);
 		if ($factory && $factory->isLinkWithProductsEnabled())
 		{
@@ -453,7 +524,13 @@ class PaymentDocumentsRepository
 
 		$shipmentIds = array_column($documentList, 'ID');
 		$shipmentBasketResult = Sale\ShipmentItem::getList([
-			'select' => ['PRICE' => 'BASKET.PRICE', 'ORDER_DELIVERY_ID', 'QUANTITY'],
+			'select' => [
+				'PRICE' => 'BASKET.PRICE',
+				'VAT_INCLUDED' => 'BASKET.VAT_INCLUDED',
+				'VAT_RATE' => 'BASKET.VAT_RATE',
+				'ORDER_DELIVERY_ID',
+				'QUANTITY',
+			],
 			'filter' => ['=ORDER_DELIVERY_ID' => $shipmentIds]
 		]);
 		while ($shipmentItem = $shipmentBasketResult->fetch())
@@ -461,6 +538,11 @@ class PaymentDocumentsRepository
 			if (!isset($documentTotals[$shipmentItem['ORDER_DELIVERY_ID']]))
 			{
 				$documentTotals[$shipmentItem['ORDER_DELIVERY_ID']] = 0;
+			}
+
+			if ($shipmentItem['VAT_INCLUDED'] !== 'Y')
+			{
+				$shipmentItem['PRICE'] += (float)$shipmentItem['PRICE'] * (float)$shipmentItem['VAT_RATE'];
 			}
 
 			$documentTotals[$shipmentItem['ORDER_DELIVERY_ID']] += (float)$shipmentItem['PRICE'] * $shipmentItem['QUANTITY'];
@@ -486,7 +568,7 @@ class PaymentDocumentsRepository
 			],
 			'filter' => [
 				'=ORDER_ID' => $this->orderIds,
-				'!SYSTEM' => 'Y',
+				'!=SYSTEM' => 'Y',
 			],
 		]);
 		while ($shipment = $shipments->fetch())
@@ -573,39 +655,5 @@ class PaymentDocumentsRepository
 			}
 		}
 		return true;
-	}
-
-	/**
-	 * @param Payment $payment
-	 * @return bool
-	 */
-	public function checkPaymentPermission(Payment $payment): bool
-	{
-		$order = $payment->getOrder();
-
-		return $this->checkPermission(CCrmOwnerType::Order, $order->getId());
-	}
-
-	/**
-	 * @param Shipment $shipment
-	 * @return bool
-	 */
-	public function checkShipmentPermission(Shipment $shipment): bool
-	{
-		$order = $shipment->getOrder();
-
-		return $this->checkPermission(CCrmOwnerType::Order, $order->getId());
-	}
-
-	/**
-	 * @param int $entityTypeId
-	 * @param int $entityId
-	 * @return bool
-	 */
-	public function checkPermission(int $entityTypeId, int $entityId): bool
-	{
-		$userPermissions = Container::getInstance()->getUserPermissions();
-
-		return $userPermissions->checkReadPermissions($entityTypeId, $entityId);
 	}
 }

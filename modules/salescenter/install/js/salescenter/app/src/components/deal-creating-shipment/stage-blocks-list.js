@@ -11,55 +11,54 @@ import {StageMixin} from '../stage-blocks/stage-mixin';
 
 export default {
 	components: {
-		'send-block'			: Send,
-		'product-block'			: Product,
-		'delivery-block'		: DeliveryVuex,
-		'automation-block'		: Automation,
+		'send-block': Send,
+		'product-block': Product,
+		'delivery-block': DeliveryVuex,
+		'automation-block': Automation,
 	},
-	props:{
+	props: {
 		sendAllowed: {
 			type: Boolean,
-			required: true
+			required: true,
 		},
 	},
 	data()
 	{
-		let stages =  {
-			product:{
-				status:				this.$root.$app.options.basket && this.$root.$app.options.basket.length > 0
-					?	Status.complete
-					:	Status.current,
+		const stages = {
+			product: {
+				status: this.$root.$app.options.basket && this.$root.$app.options.basket.length > 0
+					? Status.complete
+					: Status.current,
 				title: this.$root.$app.options.templateMode === 'view'
 					? Loc.getMessage('SALESCENTER_PRODUCT_BLOCK_TITLE_SHIPMENT_VIEW')
 					: Loc.getMessage('SALESCENTER_PRODUCT_BLOCK_TITLE_SHORT_SHIPMENT'),
 			},
-			delivery:{
-				status: 			this.$root.$app.options.deliveryList.isInstalled
-					?	Status.complete
-					:	Status.disabled,
-				tiles:			this.getTileCollection(
-					this.$root.$app.options.deliveryList.items),
-				installed:			this.$root.$app.options.deliveryList.isInstalled,
+			delivery: {
+				status: this.$root.$app.options.deliveryList.isInstalled
+					? Status.complete
+					: Status.disabled,
+				tiles: this.getTileCollection(this.$root.$app.options.deliveryList.items),
+				installed: this.$root.$app.options.deliveryList.isInstalled,
 				initialCollapseState: this.$root.$app.options.isDeliveryCollapsed ? this.$root.$app.options.isDeliveryCollapsed === 'Y' : this.$root.$app.options.deliveryList.isInstalled,
 			},
-			automation:{}
+			automation: {},
 		};
 
 		if (this.$root.$app.options.isAutomationAvailable)
 		{
 			stages.automation = {
-				status:						Status.complete,
-				stageOnDeliveryFinished:	this.$root.$app.options.stageOnDeliveryFinished,
-				items:						this.$root.$app.options.entityStageList,
-				initialCollapseState: 		this.$root.$app.options.isAutomationCollapsed ? this.$root.$app.options.isAutomationCollapsed === 'Y' : false,
+				status: Status.complete,
+				stageOnDeliveryFinished: this.$root.$app.options.stageOnDeliveryFinished,
+				items: this.$root.$app.options.entityStageList,
+				initialCollapseState: this.$root.$app.options.isAutomationCollapsed ? this.$root.$app.options.isAutomationCollapsed === 'Y' : false,
 			};
 		}
 
 		return {
-			stages: stages,
-		}
+			stages,
+		};
 	},
-	mixins:[StageMixin, MixinTemplatesType],
+	mixins: [StageMixin, MixinTemplatesType],
 	computed:
 		{
 			hasStageAutomation()
@@ -84,16 +83,17 @@ export default {
 
 			getTileCollection(items)
 			{
-				let tiles = [];
+				const tiles = [];
 				Object.values(items).forEach(
-					options => tiles.push(Tile.Factory.create(options)));
+					(options) => tiles.push(Tile.Factory.create(options))
+				);
 
 				return tiles;
 			},
 
 			getTitleItems(items)
 			{
-				let result = [];
+				const result = [];
 				items.forEach((item) => {
 					if (![Tile.More.type(), Tile.Offer.type()].includes(item.type))
 					{
@@ -107,36 +107,38 @@ export default {
 			stageRefresh(e, type)
 			{
 				Ajax.runComponentAction(
-					"bitrix:salescenter.app",
-					"getAjaxData",
+					'bitrix:salescenter.app',
+					'getAjaxData',
 					{
-						mode: "class",
+						mode: 'class',
 						data: {
-							type: type,
+							type,
+						},
+					},
+				).then(
+					(response) => {
+						if (response.data)
+						{
+							this.refreshTilesByType(response.data, type);
 						}
-					}
-				).then(function(response) {
-					if (response.data)
-					{
-						this.refreshTilesByType(response.data, type);
-					}
-				}.bind(this),
-				function() {
-					UI.Notification.Center.notify({
-						content: Loc.getMessage('SALESCENTER_DATA_UPDATE_ERROR'),
-					});
-				});
+					},
+					() => {
+						UI.Notification.Center.notify({
+							content: Loc.getMessage('SALESCENTER_DATA_UPDATE_ERROR'),
+						});
+					},
+				);
 			},
 
 			refreshTilesByType(data, type)
 			{
-				if(type === 'DELIVERY')
+				if (type === 'DELIVERY')
 				{
-					this.stages.delivery.status = 		data.isSet
-						?	Status.complete
-						:	Status.disabled;
-					this.stages.delivery.tiles = 		this.getTileCollection(data.items);
-					this.stages.delivery.installed = 	data.isInstalled;
+					this.stages.delivery.status = data.isInstalled
+						? Status.complete
+						: Status.disabled;
+					this.stages.delivery.tiles = this.getTileCollection(data.items);
+					this.stages.delivery.installed = data.isInstalled;
 				}
 			},
 
@@ -161,28 +163,29 @@ export default {
 	template: `
 		<div>
 			<product-block 
-				:counter=	"counter++"
-				:status= 	"stages.product.status"
-				:title=		"stages.product.title"		
-				:hintTitle=		"''"
+				:counter="counter++"
+				:status="stages.product.status"
+				:title=	"stages.product.title"
+				:hintTitle="''"
 			/>
 			
-			<delivery-block							v-on:on-stage-tile-collection-slider-close="stageRefresh($event, 'DELIVERY')"
-				:counter=	"counter++"
-				:status=  	"stages.delivery.status"
-				:tiles=  	"stages.delivery.tiles"
-				:installed=	"stages.delivery.installed"
+			<delivery-block v-on:on-stage-tile-collection-slider-close="stageRefresh($event, 'DELIVERY')"
+				:counter="counter++"
+				:status="stages.delivery.status"
+				:tiles="stages.delivery.tiles"
+				:installed="stages.delivery.installed"
 				:isCollapsible="false"
-				:initialCollapseState = "stages.delivery.initialCollapseState"
+				:initialCollapseState="stages.delivery.initialCollapseState"
 				@on-save-collapsed-option="saveCollapsedOption"
 			/>
-									
+
 			<automation-block v-if="editable && hasStageAutomation"
-				:counter=	"counter++"
-				:status=	"stages.automation.status"
-				:stageOnDeliveryFinished=	"stages.automation.stageOnDeliveryFinished"
-				:items=		"stages.automation.items"
-				:initialCollapseState = "stages.automation.initialCollapseState"
+				:counter="counter++"
+				:status="stages.automation.status"
+				:stageOnDeliveryFinished="stages.automation.stageOnDeliveryFinished"
+				:items="stages.automation.items"
+				:initialCollapseState="stages.automation.initialCollapseState"
+				:isDeliveryStageVisible=true
 				@on-save-collapsed-option="saveCollapsedOption"
 			/>
 			

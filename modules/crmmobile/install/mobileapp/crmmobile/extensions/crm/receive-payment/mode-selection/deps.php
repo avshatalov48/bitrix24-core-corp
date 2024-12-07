@@ -2,7 +2,9 @@
 
 return [
 	'extensions' => [
+		'analytics',
 		'analytics-label',
+		'layout/ui/context-menu',
 		'layout/ui/context-menu/item',
 		'layout/ui/plan-restriction',
 		'notify-manager',

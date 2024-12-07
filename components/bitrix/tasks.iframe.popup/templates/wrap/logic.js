@@ -83,8 +83,10 @@ BX.namespace('Tasks.Component');
 
                     if (!params.options.STAY_AT_PAGE)
                     {
-                        // just forward "close" event to the side slider controller
-                        window.top.BX.onCustomEvent("BX.Bitrix24.PageSlider:close", [false]);
+						const topSlider = window.top.BX.SidePanel.Instance.getTopSlider();
+						window.top.BX.SidePanel.Instance.close(false, () => {
+							topSlider.destroy();
+						});
                     }
                 }
             }

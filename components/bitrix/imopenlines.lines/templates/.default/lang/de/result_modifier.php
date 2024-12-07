@@ -1,5 +1,0 @@
-<?
-$MESS["OL_COMPONENT_LIST_ACTIONS_VIEW"] = "Anzeigen";
-$MESS["OL_COMPONENT_LIST_ACTIONS_EDIT"] = "Bearbeiten";
-$MESS["OL_COMPONENT_LIST_ACTIONS_REMOVE"] = "Kanal löschen";
-?>

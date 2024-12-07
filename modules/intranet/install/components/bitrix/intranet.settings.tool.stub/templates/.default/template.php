@@ -18,7 +18,7 @@ $APPLICATION->SetPageProperty(
 );
 ?>
 
-<script type="text/javascript">
+<script>
 	BX.ready(() => {
 		if (!top.BX || !top.BX.Reflection.getClass('BX.UI.InfoHelper'))
 		{

@@ -4,6 +4,7 @@
 jn.define('im/messenger/core/copilot/application', (require, exports, module) => {
 	const { CoreApplication } = require('im/messenger/core/base/application');
 	const { createStore } = require('statemanager/vuex');
+	const { EntityReady } = require('entity-ready');
 	const {
 		VuexManager,
 		StateStorageSaveStrategy,
@@ -14,6 +15,14 @@ jn.define('im/messenger/core/copilot/application', (require, exports, module) =>
 	 */
 	class CopilotApplication extends CoreApplication
 	{
+		async init()
+		{
+			// Copilot uses the immobile-messenger-store and must be initialized after chat
+			await EntityReady.wait('chat-core');
+
+			return super.init();
+		}
+
 		initStore()
 		{
 			super.initStore();

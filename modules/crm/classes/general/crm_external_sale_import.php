@@ -1712,7 +1712,7 @@ class CCrmExternalSaleImport
 		if (preg_match("/^<"."\?xml[^>]+?encoding=[\"']([^>\"']+)[\"'][^>]*\?".">/i", $orderData, $matches))
 			$charset = trim($matches[1]);
 		if (!empty($charset) && (mb_strtoupper($charset) != mb_strtoupper(SITE_CHARSET)))
-			$orderData = CharsetConverter::ConvertCharset($orderData, $charset, SITE_CHARSET);
+			$orderData = \Bitrix\Main\Text\Encoding::convertEncoding($orderData, $charset, SITE_CHARSET);
 
 		$objXML = new CDataXML();
 		if ($objXML->LoadString($orderData))

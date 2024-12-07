@@ -81,6 +81,7 @@ class GridHeaders
 			|| $userField['USER_TYPE']['BASE_TYPE'] === 'file'
 			|| $userField['USER_TYPE']['USER_TYPE_ID'] === 'employee'
 			|| $userField['USER_TYPE']['USER_TYPE_ID'] === 'crm'
+			|| $userField['USER_TYPE']['USER_TYPE_ID'] === 'hlblock'
 		)
 		{
 			$editable = false;

@@ -9,7 +9,8 @@ return [
 		'reload/listeners',
 		'tasks:entry',
 		'user/profile',
-		'utils'
+		'utils',
+		'ava-menu',
 	],
 	'components' => ['user.profile'],
 ];

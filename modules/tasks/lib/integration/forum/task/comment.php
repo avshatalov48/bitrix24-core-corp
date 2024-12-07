@@ -738,7 +738,7 @@ final class Comment extends \Bitrix\Tasks\Integration\Forum\Comment
 				);
 
 				// todo: some garbage?
-				$strURL = $GLOBALS['APPLICATION']->getCurPageParam("", array("IFRAME", "IFRAME_TYPE", "MID", "SEF_APPLICATION_CUR_PAGE_URL", BX_AJAX_PARAM_ID, "result"));
+				$strURL = $GLOBALS['APPLICATION']->getCurPageParam("", array("IFRAME", "IFRAME_TYPE", "MID", BX_AJAX_PARAM_ID, "result"));
 				$strURL = \ForumAddPageParams(
 					$strURL,
 					array(
@@ -921,6 +921,7 @@ final class Comment extends \Bitrix\Tasks\Integration\Forum\Comment
 				'USER_ID' => (int) $occurAsUserId,
 				'SERVICE_TYPE' => $commentType,
 				'GROUP_ID' => $arTask['GROUP_ID'] ?? null,
+				'MESSAGE_ID' => $messageId,
 			]
 		);
 
@@ -1197,7 +1198,7 @@ final class Comment extends \Bitrix\Tasks\Integration\Forum\Comment
 							if ($log_id > 0)
 							{
 								$sText = (\COption::GetOptionString("forum", "FILTER", "Y") == "Y" ? $arMessage["POST_MESSAGE_FILTER"] : $arMessage["POST_MESSAGE"]);
-								$strURL = $GLOBALS['APPLICATION']->GetCurPageParam("", array("IFRAME", "IFRAME_TYPE", "MID", "SEF_APPLICATION_CUR_PAGE_URL", BX_AJAX_PARAM_ID, "result"));
+								$strURL = $GLOBALS['APPLICATION']->GetCurPageParam("", array("IFRAME", "IFRAME_TYPE", "MID", BX_AJAX_PARAM_ID, "result"));
 								$strURL = \ForumAddPageParams(
 									$strURL,
 									array(
@@ -1454,7 +1455,7 @@ final class Comment extends \Bitrix\Tasks\Integration\Forum\Comment
 		}
 
 		preg_match_all(
-			"/\[user\s*=\s*([^\]]*)\](.+?)\[\/user\]/is" . BX_UTF_PCRE_MODIFIER,
+			"/\[user\s*=\s*([^\]]*)\](.+?)\[\/user\]/isu",
 			$fields['MESSAGE']['POST_MESSAGE'],
 			$matches
 		);
@@ -1476,7 +1477,7 @@ final class Comment extends \Bitrix\Tasks\Integration\Forum\Comment
 
 		if (isset($fields['PARAMS']['XML_ID']))
 		{
-			preg_match("/TASK_(\d+)/is" . BX_UTF_PCRE_MODIFIER, $fields['PARAMS']['XML_ID'], $matches);
+			preg_match("/TASK_(\d+)/isu", $fields['PARAMS']['XML_ID'], $matches);
 			if (is_array($matches) && !empty($matches[1]) && (int)$matches[1])
 			{
 				try

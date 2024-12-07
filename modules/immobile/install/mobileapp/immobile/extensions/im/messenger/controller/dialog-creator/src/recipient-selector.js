@@ -6,21 +6,23 @@ jn.define('im/messenger/controller/dialog-creator/recipient-selector', (require,
 	const { Loc } = require('loc');
 	const { DialogInfo } = require('im/messenger/controller/dialog-creator/dialog-info');
 	const { RecipientSelectorView } = require('im/messenger/controller/dialog-creator/recipient-selector/view');
-	const AppTheme = require('apptheme');
+	const { Theme } = require('im/lib/theme');
+	const { Analytics } = require('im/messenger/const');
 	class RecipientSelector
 	{
 
-		static open({ userList = [], dialogDTO}, parentLayout = null)
+		static open({ userList = [], dialogDTO, analytics = {} }, parentLayout = null)
 		{
-			const widget = new RecipientSelector(userList, dialogDTO, parentLayout);
+			const widget = new RecipientSelector(userList, dialogDTO, parentLayout, analytics);
 			widget.show();
 		}
 
-		constructor(userList, dialogDTO, parentLayout)
+		constructor(userList, dialogDTO, parentLayout, analytics)
 		{
 			this.userList = userList || [];
 			this.dialogDTO = dialogDTO;
 			this.layout = parentLayout || null;
+			this.analytics = analytics || {};
 
 			this.view = new RecipientSelectorView({
 				userList: userList,
@@ -31,7 +33,7 @@ jn.define('im/messenger/controller/dialog-creator/recipient-selector', (require,
 		{
 			const config = {
 				title: Loc.getMessage('IMMOBILE_DIALOG_CREATOR_RECIPIENT_SELECTOR_TITLE'),
-				backgroundColor: AppTheme.colors.bgContentTertiary,
+				backgroundColor: Theme.isDesignSystemSupported ? Theme.colors.bgContentPrimary : Theme.colors.bgContentTertiary,
 				onReady: layoutWidget =>
 				{
 					this.layout = layoutWidget;
@@ -40,6 +42,7 @@ jn.define('im/messenger/controller/dialog-creator/recipient-selector', (require,
 				onError: error => reject(error),
 			};
 
+			this.sendAnalyticsStartCreateChat();
 
 			if (this.layout !== null)
 			{
@@ -84,7 +87,7 @@ jn.define('im/messenger/controller/dialog-creator/recipient-selector', (require,
 							this.layout
 						);
 					},
-					color: AppTheme.colors.accentMainLinks,
+					color: Theme.isDesignSystemSupported ? Theme.colors.accentMainLink : Theme.colors.accentMainLinks,
 				},
 			]);
 		}
@@ -92,6 +95,25 @@ jn.define('im/messenger/controller/dialog-creator/recipient-selector', (require,
 		setRecipientList()
 		{
 			this.dialogDTO.setRecipientList(this.view.getSelectedItems());
+		}
+
+		sendAnalyticsStartCreateChat()
+		{
+			try
+			{
+				const analytics = this.analytics
+					.setTool(Analytics.Tool.im)
+					.setCategory(Analytics.Category.chat)
+					.setEvent(Analytics.Event.clickCreateNew)
+					.setType(Analytics.Type.chat)
+					.setSection(Analytics.Section.chatTab);
+
+				analytics.send();
+			}
+			catch (e)
+			{
+				console.error(`${this.constructor.name}.sendAnalyticsStartCreateChat.catch:`, e);
+			}
 		}
 	}
 

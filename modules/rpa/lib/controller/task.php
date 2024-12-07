@@ -102,17 +102,18 @@ class Task extends Base
 	{
 		$result = [];
 		$formData = $this->getRequest()->getPostList()->getValues();
+		$taskId = (int)($formData['taskId'] ?? 0);
 
 		$taskManager = Driver::getInstance()->getTaskManager();
-		if(!$taskManager)
+		if (!$taskManager || !$taskId)
 		{
 			$this->addError(new Error(Loc::getMessage("RPA_CONTROLLER_TASK_NOT_FOUND")));
 			return null;
 		}
-		$task = $taskManager->getTaskById($formData['taskId']);
+		$task = $taskManager->getTaskById($taskId);
 		if ($task)
 		{
-			$eventHandlerKey = $this->subscribeOnTimelineAddEvent((int)$formData['taskId']);
+			$eventHandlerKey = $this->subscribeOnTimelineAddEvent($taskId);
 			$userId = $this->getCurrentUser()->getId();
 			if (\CBPDocument::PostTaskForm($task, $userId, $formData, $errors))
 			{

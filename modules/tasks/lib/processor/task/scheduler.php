@@ -19,7 +19,7 @@ use Bitrix\Tasks\Processor\Task\Scheduler\RelationManager\SubTask;
 
 use Bitrix\Tasks\Item;
 
-final class Scheduler extends \Bitrix\Tasks\Processor
+final class Scheduler extends \Bitrix\Tasks\Processor\Processor
 {
 	protected $queue = array();
 

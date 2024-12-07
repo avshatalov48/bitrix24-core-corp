@@ -1,4 +1,5 @@
 import { TourInterface } from './tour.js';
+import { BannerDispatcher } from 'crm.integration.ui.banner-dispatcher';
 import Queue from './queue.js';
 
 export class TourManager
@@ -8,6 +9,7 @@ export class TourManager
 	static instance: ?TourManager = null;
 	#queue: Queue = new Queue();
 	#current: ?TourInterface = null;
+	#bannerDispatcher: BannerDispatcher;
 
 	static getInstance(): TourManager
 	{
@@ -19,6 +21,11 @@ export class TourManager
 		return TourManager.instance;
 	}
 
+	constructor()
+	{
+		this.#bannerDispatcher = new BannerDispatcher();
+	}
+
 	registerWithLaunch(tour: TourInterface): void
 	{
 		this.register(tour);
@@ -27,7 +34,7 @@ export class TourManager
 
 	launch(): void
 	{
-		if (this.#current)
+		if (this.#current || this.#isBannerDispatcherAvailable())
 		{
 			return;
 		}
@@ -43,16 +50,36 @@ export class TourManager
 			return;
 		}
 
+		if (this.#isBannerDispatcherAvailable())
+		{
+			this.#toBannerDispatcherQueue(tour);
+
+			return;
+		}
+
 		this.#queue.push(tour);
 		this.#subscribeTourFinish(tour);
 	}
 
-	#subscribeTourFinish(tour: TourInterface): void
+	#isBannerDispatcherAvailable(): boolean
 	{
-		tour.getGuide().subscribe(TourManager.TOUR_FINISH_EVENT, this.showNextTour.bind(this));
+		return this.#bannerDispatcher.isAvailable();
 	}
 
-	showNextTour(): void
+	#toBannerDispatcherQueue(tour: TourInterface): void
+	{
+		this.#bannerDispatcher.toQueue((onDone: Function) => {
+			tour.getGuide().subscribe(TourManager.TOUR_FINISH_EVENT, onDone);
+			tour.show();
+		});
+	}
+
+	#subscribeTourFinish(tour: TourInterface): void
+	{
+		tour.getGuide().subscribe(TourManager.TOUR_FINISH_EVENT, this.#showNextTour.bind(this));
+	}
+
+	#showNextTour(): void
 	{
 		const nextTour = this.#queue.peek();
 		if (!nextTour)

@@ -126,7 +126,7 @@ BX.MTimeManEdit(
 		</div>
 	</div>
 </div>
-<script type="text/javascript">
+<script>
 	BX.message({
 		PAGE_TITLE : '<?=GetMEssageJS("PAGE_TITLE2")?>',
 		PULLDOWN_PULL : '<?=GetMessageJS('PULLDOWN_PULL')?>',
@@ -196,7 +196,7 @@ $feedFrame->end();
 			<input type="submit" class="mobile-button mobile-button-decline" data-bx-timeman="stop-button" value="<?=GetMessage("TM_FINISH")?>" />
 		</div>
 	</div>
-<script type="text/javascript">
+<script>
 	BX.message({
 		PAGE_TITLE : '<?=GetMessageJS("PAGE_TITLE2")?>',
 		TM_MENU_START : '<?=GetMessageJS("TM_MENU_START")?>',

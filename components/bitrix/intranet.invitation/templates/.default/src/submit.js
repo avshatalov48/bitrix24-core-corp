@@ -8,6 +8,7 @@ export class Submit extends EventEmitter
 	constructor(parent)
 	{
 		super();
+		this.waitingResponse = false;
 		this.parent = parent;
 		this.setEventNamespace("BX.Intranet.Invitation.Submit");
 		this.parent.subscribe("onButtonClick", (event) => {});
@@ -354,10 +355,12 @@ export class Submit extends EventEmitter
 
 		if (isDisable)
 		{
+			this.waitingResponse = true;
 			Dom.addClass(button, ["ui-btn-wait", "invite-cursor-auto"]);
 		}
 		else
 		{
+			this.waitingResponse = false;
 			Dom.removeClass(button, ["ui-btn-wait", "invite-cursor-auto"]);
 		}
 	}

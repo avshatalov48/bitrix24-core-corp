@@ -2,14 +2,25 @@
  * @module bizproc/task/buttons
  */
 jn.define('bizproc/task/buttons', (require, exports, module) => {
-	const { Alert } = require('alert');
 	const AppTheme = require('apptheme');
-	const { Loc } = require('loc');
-	const { PureComponent } = require('layout/pure-component');
-	const { isFunction } = require('utils/object');
-	const { Type } = require('type');
+	const { Alert } = require('alert');
 	const { EventEmitter } = require('event-emitter');
 	const { Haptics } = require('haptics');
+	const { Loc } = require('loc');
+	const { Type } = require('type');
+	const { isFunction, isObjectLike } = require('utils/object');
+	const { useCallback } = require('utils/function');
+	const { PureComponent } = require('layout/pure-component');
+
+	const { TaskUserStatus } = require('bizproc/task/task-constants');
+
+	const { ButtonsWrapper } = require('bizproc/task/buttons/buttons-wrapper');
+	const { Button } = require('bizproc/task/buttons/button');
+	const { AcceptButton } = require('bizproc/task/buttons/accept-button');
+	const { DeclineButton } = require('bizproc/task/buttons/decline-button');
+	const { StartButton } = require('bizproc/task/buttons/start-button');
+	const { DetailButton } = require('bizproc/task/buttons/detail-button');
+	const { DelegateButton } = require('bizproc/task/buttons/delegate-button');
 
 	class TaskButtons extends PureComponent
 	{
@@ -17,20 +28,37 @@ jn.define('bizproc/task/buttons', (require, exports, module) => {
 		{
 			super(props);
 
-			this.testId = 'MBP_TASK_BUTTONS';
+			this.testId = Type.isStringFilled(props.testId) ? props.testId : 'MBP_TASK_BUTTONS';
 
-			this.customEventEmitter = EventEmitter.createWithUid('bizproc');
+			this.uid = props.uid || 'bizproc';
+			if (this.shouldUseEvents)
+			{
+				this.customEventEmitter = EventEmitter.createWithUid(this.uid);
+			}
+
 			this.onTaskTouch = this.onTaskTouch.bind(this);
+			this.onStartClick = this.onStartClick.bind(this);
+		}
+
+		get shouldUseEvents()
+		{
+			return BX.prop.getBoolean(this.props, 'shouldUseEvents', true);
 		}
 
 		componentDidMount()
 		{
-			this.customEventEmitter.on('Task:onTouch', this.onTaskTouch);
+			if (this.shouldUseEvents)
+			{
+				this.customEventEmitter.on('Task:onTouch', this.onTaskTouch);
+			}
 		}
 
 		componentWillUnmount()
 		{
-			this.customEventEmitter.off('Task:onTouch', this.onTaskTouch);
+			if (this.shouldUseEvents)
+			{
+				this.customEventEmitter.off('Task:onTouch', this.onTaskTouch);
+			}
 		}
 
 		onTaskTouch({ task })
@@ -41,6 +69,19 @@ jn.define('bizproc/task/buttons', (require, exports, module) => {
 			}
 		}
 
+		onStartClick()
+		{
+			void requireLazy('bizproc:task/details').then(({ TaskDetails }) => {
+				void TaskDetails.open(
+					this.props.layout,
+					{
+						taskId: this.task.id,
+						title: this.props.title,
+					},
+				);
+			});
+		}
+
 		get task()
 		{
 			return this.props.task || {};
@@ -48,14 +89,8 @@ jn.define('bizproc/task/buttons', (require, exports, module) => {
 
 		render()
 		{
-			return View(
+			return ButtonsWrapper(
 				{
-					style: {
-						width: '100%',
-						flexDirection: 'row',
-						flexWrap: 'no-wrap',
-						height: 36,
-					},
 					ref: (ref) => {
 						this.elementRef = ref;
 					},
@@ -79,44 +114,29 @@ jn.define('bizproc/task/buttons', (require, exports, module) => {
 			{
 				buttons.push(this.renderStartButton(
 					Loc.getMessage('BPMOBILE_TASK_BUTTONS_DETAILS'),
-					() => {
-						void requireLazy('bizproc:task/details').then(({ TaskDetails }) => {
-							void TaskDetails.open(
-								this.props.layout,
-								{
-									taskId: task.id,
-									title: this.props.title,
-								},
-							);
-						});
-					},
+					this.onStartClick,
 				));
 			}
 			else if (task.buttons && task.buttons.length > 0)
 			{
 				buttons = task.buttons.map((button) => {
-					const isDecline = (
-						button.TARGET_USER_STATUS === 2
-						|| button.TARGET_USER_STATUS === 4
-					);
-
-					if (isDecline)
+					if (TaskUserStatus.isDecline(button.TARGET_USER_STATUS))
 					{
 						return this.renderDeclineButton(
 							button.TEXT,
-							() => {
+							useCallback(() => {
 								Haptics.notifySuccess();
 								this.onTaskButtonAction(task, button);
-							},
+							}),
 						);
 					}
 
 					return this.renderAcceptButton(
 						button.TEXT,
-						() => {
+						useCallback(() => {
 							Haptics.impactMedium();
 							this.onTaskButtonAction(task, button);
-						},
+						}),
 					);
 				});
 			}
@@ -154,102 +174,63 @@ jn.define('bizproc/task/buttons', (require, exports, module) => {
 
 		renderStartButton(text, onClick)
 		{
-			return this.renderButton('start', text, onClick);
+			return new StartButton({
+				style: this.alignButton(buttonStyles.start),
+				testId: `${this.testId}_BUTTON_START`,
+				text,
+				onClick,
+			});
 		}
 
 		renderAcceptButton(text, onClick)
 		{
-			return this.renderButton('accept', text, onClick);
+			return new AcceptButton({
+				style: this.alignButton(buttonStyles.accept),
+				testId: `${this.testId}_BUTTON_ACCEPT`,
+				text,
+				onClick,
+			});
 		}
 
 		renderDeclineButton(text, onClick)
 		{
-			return this.renderButton('decline', text, onClick);
+			return new DeclineButton({
+				style: this.alignButton(buttonStyles.decline),
+				testId: `${this.testId}_BUTTON_DECLINE`,
+				text,
+				onClick,
+			});
 		}
 
-		renderButton(type, text, onClick)
+		alignButton(style)
 		{
 			const alone = !this.props.isInline && this.task.buttons.length === 1;
 
-			return View(
-				{
-					style: {
-						flexGrow: 1,
-						flexShrink: 1,
-						flexDirection: 'row',
-						marginLeft: buttonStyles[type].marginLeft,
-						marginRight: alone ? 0 : buttonStyles[type].marginRight,
-						justifyContent: 'center',
-						height: 36,
-						borderRadius: 100,
-						borderWidth: 1,
-						borderColor: buttonStyles[type].borderColor,
-						padding: 8,
-						paddingHorizontal: 16,
-						width: alone ? '100%' : '50%',
-						maxWidth: alone ? '100%' : '50%',
-					},
-					testId: `${this.testId}_BUTTON_${type.toUpperCase()}`,
-					onClick,
-				},
-				icons[type] && Image({
-					style: {
-						width: 28,
-						height: 28,
-						alignSelf: 'center',
-					},
-					svg: {
-						content: icons[type],
-					},
-				}),
-				Text({
-					style: {
-						fontWeight: '500',
-						fontSize: this.props.isInline ? 15 : 14,
-						color: buttonStyles[type].textColor,
-					},
-					text,
-					ellipsize: 'end',
-					numberOfLines: 1,
-				}),
-			);
+			const alignment = {
+				width: alone ? '100%' : '50%',
+				maxWidth: alone ? '100%' : '50%',
+				fontSize: this.props.isInline ? 15 : 14,
+			};
+			if (alone)
+			{
+				alignment.marginRight = 0;
+			}
+
+			return {
+				...style,
+				...alignment,
+			};
 		}
 
 		renderDetailButton(text)
 		{
-			return View(
-				{
-					style: {
-						flexGrow: 1,
-						flexDirection: 'row',
-						justifyContent: 'center',
-						height: 36,
-						padding: 8,
-					},
-					testId: `${this.testId}_BUTTON_DETAILS`,
-					onClick: () => {
-						void requireLazy('bizproc:task/details').then(({ TaskDetails }) => {
-							void TaskDetails.open(
-								this.props.layout,
-								{
-									taskId: this.task.id,
-									title: this.props.title,
-								},
-							);
-						});
-					},
-				},
-				Text({
-					style: {
-						fontWeight: '500',
-						fontSize: 14,
-						ellipsize: 'end',
-						numberOfLines: 1,
-						color: AppTheme.colors.base3,
-					},
-					text,
-				}),
-			);
+			return new DetailButton({
+				layout: this.props.layout,
+				text,
+				testId: `${this.testId}_BUTTON_DETAILS`,
+				taskId: this.task.id,
+				title: this.props.title,
+			});
 		}
 
 		onTaskButtonAction(task, button)
@@ -285,19 +266,31 @@ jn.define('bizproc/task/buttons', (require, exports, module) => {
 
 		doTask(props)
 		{
-			this.customEventEmitter.emit(
-				'Task:onTouch',
-				{ task: this.task, isInline: this.props.isInline },
+			if (this.shouldUseEvents)
+			{
+				this.customEventEmitter.emit(
+					'Task:onTouch',
+					{ task: this.task, isInline: this.props.isInline },
+				);
+			}
+
+			const defaultCallback = () => BX.ajax.runAction('bizprocmobile.Task.do', { data: props });
+			const callback = BX.prop.getFunction(
+				this.props,
+				'onTaskButtonClick',
+				defaultCallback,
 			);
 
-			BX.ajax.runAction('bizprocmobile.Task.do', {
-				data: props,
-			}).then((response) => {
+			const result = callback(props, defaultCallback);
+
+			const onSuccess = (response) => {
 				if (isFunction(this.props.onComplete))
 				{
-					this.props.onComplete(response.data);
+					this.props.onComplete(response.data, props);
 				}
-			}).catch(({ errors }) => {
+			};
+
+			const onErrors = ({ errors }) => {
 				if (isFunction(this.props.onFail))
 				{
 					this.props.onFail(errors);
@@ -306,7 +299,23 @@ jn.define('bizproc/task/buttons', (require, exports, module) => {
 				{
 					Alert.alert(errors.pop().message);
 				}
-			});
+			};
+
+			if (isObjectLike(result))
+			{
+				if (isFunction(result.then))
+				{
+					result.then(onSuccess).catch(onErrors);
+				}
+				else if (result.data)
+				{
+					onSuccess(result.data);
+				}
+				else if (result.errors)
+				{
+					onErrors(result.errors);
+				}
+			}
 		}
 
 		setIsDoing(flag)
@@ -334,43 +343,16 @@ jn.define('bizproc/task/buttons', (require, exports, module) => {
 		}
 	}
 
-	const icons = {
-		accept: (() => {
-			const fill = AppTheme.colors.accentMainSuccess;
-
-			return `
-				<svg xmlns="http://www.w3.org/2000/svg" width="23" height="22" viewBox="0 0 23 22" fill="none">
-					<path fill-rule="evenodd" clip-rule="evenodd" d="M5.33044 12.102L9.88012 16.7472L18.1638 8.28963L16.5714 6.66382L9.88012 13.4955L6.92283 10.4762L5.33044 12.102Z" fill="${fill}"/>
-				</svg>
-			`;
-		})(),
-		decline: (() => {
-			const fill = AppTheme.colors.base2;
-
-			return `
-				<svg xmlns="http://www.w3.org/2000/svg" width="23" height="22" viewBox="0 0 23 22" fill="none">
-					<path fill-rule="evenodd" clip-rule="evenodd" d="M15.6939 17.1677L17.6673 15.1943L13.7205 11.2475L17.6673 7.30077L15.6939 5.32739L11.7472 9.27415L7.8004 5.32739L5.82703 7.30077L9.77378 11.2475L5.82703 15.1943L7.8004 17.1677L11.7472 13.2209L15.6939 17.1677Z" fill="${fill}"/>
-				</svg>
-			`;
-		})(),
-	};
-
 	const buttonStyles = {
 		accept: {
-			borderColor: AppTheme.colors.accentMainSuccess,
-			textColor: AppTheme.colors.accentMainSuccess,
 			marginLeft: 0,
 			marginRight: 6,
 		},
 		decline: {
-			borderColor: AppTheme.colors.base5,
-			textColor: AppTheme.colors.base2,
 			marginLeft: 6,
 			marginRight: 0,
 		},
 		start: {
-			borderColor: AppTheme.colors.accentMainPrimary,
-			textColor: AppTheme.colors.accentMainPrimary,
 			marginLeft: 0,
 			marginRight: 6,
 		},
@@ -391,5 +373,14 @@ jn.define('bizproc/task/buttons', (require, exports, module) => {
 		},
 	};
 
-	module.exports = { TaskButtons };
+	module.exports = {
+		TaskButtons,
+		Button,
+		ButtonsWrapper,
+		DetailButton,
+		AcceptButton,
+		DeclineButton,
+		StartButton,
+		DelegateButton,
+	};
 });

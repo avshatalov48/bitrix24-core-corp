@@ -11,6 +11,7 @@ return [
 	'css' => 'dist/phone-calls.bundle.css',
 	'js' => 'dist/phone-calls.bundle.js',
 	'rel' => [
+		'intranet.desktop-download',
 		'main.core.events',
 		'main.core',
 		'im.v2.lib.desktop-api',

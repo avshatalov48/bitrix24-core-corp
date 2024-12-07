@@ -1,7 +1,6 @@
 <?php
 namespace Bitrix\Crm\Automation\Target;
 
-use Bitrix\Bizproc\Automation\Engine\ConditionGroup;
 use Bitrix\Crm\PhaseSemantics;
 use Bitrix\Crm\Order;
 use Bitrix\Main\Localization\Loc;
@@ -17,56 +16,53 @@ class OrderTarget extends BaseTarget
 		return \CCrmOwnerType::Order;
 	}
 
-	public function getEntityId()
+	protected function getEntityIdByDocumentId(string $documentId): int
 	{
-		$entity = $this->getEntity();
-		return isset($entity['ID']) ? (int)$entity['ID'] : 0;
+		return (int)str_replace('ORDER_', '', $documentId);
+	}
+
+	protected function getEntityFields(array $select): array
+	{
+		$id = $this->getEntityId();
+		if (empty($id))
+		{
+			return [];
+		}
+
+		$order = Order\Order::loadByFilter([
+			'filter' => ['ID' => $id],
+			'select' => $select
+		]);
+		if (!empty($order) && is_array($order))
+		{
+			$order = reset($order);
+			$fields = $order ? $order->getFieldValues() : [];
+		}
+
+		return $fields ?? [];
 	}
 
 	public function getResponsibleId()
 	{
-		$entity = $this->getEntity();
-		return isset($entity['RESPONSIBLE_ID']) ? (int)$entity['RESPONSIBLE_ID'] : 0;
-	}
+		$entity = $this->getEntityFields(['RESPONSIBLE_ID']);
 
-	public function setEntityById($id)
-	{
-		$id = (int)$id;
-		if ($id > 0)
-		{
-			$order = Order\Order::load($id);
-			$fields = $order ? $order->getFieldValues() : null;
-
-			if ($fields)
-			{
-				$this->setEntity($fields);
-				$this->setDocumentId('ORDER_'.$id);
-			}
-		}
-	}
-
-	public function getEntity()
-	{
-		if ($this->entity === null && $id = $this->getDocumentId())
-		{
-			$id = (int) str_replace('ORDER_', '', $id);
-			$this->setEntityById($id);
-		}
-
-		return parent::getEntity();
+		return (int)$entity['RESPONSIBLE_ID'];
 	}
 
 	public function getEntityStatus()
 	{
-		$entity = $this->getEntity();
-		return isset($entity['STATUS_ID']) ? $entity['STATUS_ID'] : '';
+		$entity = $this->getEntityFields(['STATUS_ID']);
+
+		return $entity['STATUS_ID'] ?? '';
 	}
 
 	public function setEntityStatus($statusId, $executeBy = null)
 	{
 		$id = $this->getEntityId();
-		$oldStatus = $this->getEntityStatus();
-		$this->setEntityField('STATUS_ID', $oldStatus);
+		if (empty($id))
+		{
+			return false;
+		}
 
 		$result = Order\Manager::setOrderStatus($id, $statusId, Loc::getMessage('CRM_AUTOMATION_TARGET_ORDER_TRIGGER_APPLY'));
 		if (!$result->isSuccess())
@@ -81,7 +77,7 @@ class OrderTarget extends BaseTarget
 	{
 		if ($this->entityStatuses === null)
 		{
-			$this->entityStatuses = array_keys(static::getStatusInfos());
+			$this->entityStatuses = array_keys($this->getStatusInfos());
 		}
 
 		return $this->entityStatuses;

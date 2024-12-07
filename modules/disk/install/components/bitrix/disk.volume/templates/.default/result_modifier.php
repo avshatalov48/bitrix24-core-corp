@@ -460,7 +460,7 @@ if (!isset($fileUsingCountTitle) || !is_callable($fileUsingCountTitle))
 
 					$usingCountTitle = <<< JSMENU
 							<span id="bx-disk-volume-file-using-{$rowId}" class="disk-volume-file-using-count">{$usingCountTitle}</span>
-							<script type="text/javascript">
+							<script>
 							BX.ready(function(){
 								var menuItemsOptions = [{$usingCountMenuLinks}];
 								var item, domItems = [];

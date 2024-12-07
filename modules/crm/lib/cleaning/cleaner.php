@@ -50,7 +50,13 @@ final class Cleaner
 		EntityPermsTable::clearByEntity(\CCrmOwnerType::ResolveName($this->getEntityTypeId()), $this->getEntityId());
 		TimelineEntry::deleteByOwner($this->getEntityTypeId(), $this->getEntityId());
 		EventRelationsTable::deleteByItem($this->getEntityTypeId(), $this->getEntityId());
-		\CCrmActivity::DeleteByOwner($this->getEntityTypeId(), $this->getEntityId());
+		\CCrmActivity::DeleteByOwner(
+			$this->getEntityTypeId(),
+			$this->getEntityId(),
+			[
+				'RECYCLE_BIN_FORCE_USER_ID' => $this->options->getForceUserId()
+			]
+		);
 		Requisite\EntityLink::unregister($this->getEntityTypeId(), $this->getEntityId());
 		UtmTable::deleteEntityUtm($this->getEntityTypeId(), $this->getEntityId());
 		Tracking\Entity::deleteTrace($this->getEntityTypeId(), $this->getEntityId());

@@ -41,7 +41,7 @@ $APPLICATION->IncludeComponent(
 	array('HIDE_ICONS' => 'Y')
 );
 ?>
-<script type="text/javascript">
+<script>
 
 BX.ready(
 	function(){

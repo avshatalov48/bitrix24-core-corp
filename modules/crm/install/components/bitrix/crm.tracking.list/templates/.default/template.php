@@ -23,7 +23,7 @@ $sourceTileManagerId = 'crm-analytics-sources';
 $channelTileManagerId = 'crm-analytics-channels';
 ?>
 <div class="crm-analytics-list-wrapper">
-	<script type="text/javascript">
+	<script>
 		BX.ready(function () {
 			top.BX.addCustomEvent(
 				top,
@@ -128,7 +128,7 @@ $channelTileManagerId = 'crm-analytics-channels';
     </div>
 	</div>
 
-	<script type="text/javascript">
+	<script>
 		BX.ready(function () {
 			BX.Crm.Tracking.Grid.init(<?=Json::encode(array(
 				'actionUri' => $arResult['ACTION_URI'] ?? '',

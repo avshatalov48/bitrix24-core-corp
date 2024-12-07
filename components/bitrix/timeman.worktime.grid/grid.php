@@ -215,8 +215,7 @@ class Grid
 				{
 					continue;
 				}
-				//
-				$plan = $shiftPlansByUserShiftDate[$user->getId()][$shift->getId()][$periodDateFormatted];
+				$plan = $shiftPlansByUserShiftDate[$user->getId()][$shift->getId()][$periodDateFormatted] ?? null;
 				if ($plan)
 				{
 					// draw shiftplan

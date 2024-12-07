@@ -10,6 +10,10 @@ use Bitrix\Main\Error;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
 
+/**
+ * Class ObjectNameService
+ * Helps to prepare unique name for object in folder in concurrent environment.
+ */
 final class ObjectNameService
 {
 	public const ERROR_NON_UNIQUE_NAME = BaseObject::ERROR_NON_UNIQUE_NAME;
@@ -19,7 +23,7 @@ final class ObjectNameService
 	public const TYPE_FOLDER = ObjectTable::TYPE_FOLDER;
 
 	protected const MAX_ATTEMPT = 10;
-	protected const LOCK_LIMIT = 3;
+	protected const LOCK_DEFAULT_WAITING_TIMEOUT = 3;
 
 	private string $desiredName;
 	private bool $shouldGenerateUniqueName = false;
@@ -143,7 +147,7 @@ final class ObjectNameService
 		return $this->underObjectId;
 	}
 
-	private function lock(int $timeout = self::LOCK_LIMIT): bool
+	private function lock(int $timeout = self::LOCK_DEFAULT_WAITING_TIMEOUT): bool
 	{
 		return Application::getConnection()->lock($this->getLockKey(), $timeout);
 	}
@@ -228,7 +232,7 @@ final class ObjectNameService
 	 */
 	private function generateUniqueName(): string
 	{
-		if ($this->lock(1) && $this->isUniqueName($this->excludeId ?? null)->isSuccess())
+		if ($this->isUniqueName($this->excludeId ?? null)->isSuccess())
 		{
 			return $this->desiredName;
 		}

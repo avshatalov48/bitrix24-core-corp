@@ -1,10 +1,8 @@
 <?php
 namespace Bitrix\ImConnector\Tools\Connectors;
 
-use Bitrix\Main\Application;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Main\Text\Encoding;
 use Bitrix\MessageService\Sender\Sms\Ednaru;
 use Bitrix\MessageService\Sender\SmsManager;
 
@@ -59,11 +57,6 @@ class Messageservice
 		$phoneNumber = self::getChannelPhoneNumber($lineId);
 
 		$text = Loc::getMessage('IMCONNECTOR_MESSAGESERVICE_WHATSAPP_EDNA_DEFAULT_MESSAGE', [], $langId);
-
-		if (!Application::isUtfMode() && !defined('BX_UTF'))
-		{
-			$text = Encoding::convertEncoding($text, SITE_CHARSET, 'UTF-8');
-		}
 
 		return "https://api.whatsapp.com/send/?phone={$phoneNumber}&text=". rawurlencode($text);
 	}

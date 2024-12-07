@@ -277,13 +277,4 @@ abstract class ResumableUpload implements IErrorable
 
 		return true;
 	}
-
-	protected function convertToUtf8($data)
-	{
-		if (Application::getInstance()->isUtfMode())
-		{
-			return $data;
-		}
-		return Encoding::convertEncodingArray($data, SITE_CHARSET, 'UTF-8');
-	}
 }

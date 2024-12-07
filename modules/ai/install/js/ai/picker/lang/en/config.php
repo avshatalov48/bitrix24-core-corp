@@ -1,0 +1,25 @@
+<?php
+$MESS["AI_JS_PICKER_GENERAL_AGREE_WITH_TERMS"] = "I agree";
+$MESS["AI_JS_PICKER_GENERAL_HELP_LINK"] = "How to write effective prompts";
+$MESS["AI_JS_PICKER_HISTORY_LOADING"] = "Loading history...";
+$MESS["AI_JS_PICKER_IMAGE_ACTION_COPY"] = "Copy";
+$MESS["AI_JS_PICKER_IMAGE_ACTION_COPY_NOTIFY"] = "Image copied";
+$MESS["AI_JS_PICKER_IMAGE_ACTION_USE"] = "Insert";
+$MESS["AI_JS_PICKER_IMAGE_EMPTY_STATE"] = "Your images will show here";
+$MESS["AI_JS_PICKER_IMAGE_HEADER"] = "Describe your image";
+$MESS["AI_JS_PICKER_IMAGE_HINT_TEXT"] = "ImageAssistant AI will soon understand your language. Please use English for now.";
+$MESS["AI_JS_PICKER_IMAGE_HINT_TITLE"] = "Image description needs to be written in English";
+$MESS["AI_JS_PICKER_IMAGE_MAX_CAPACITY"] = "Keeping #capacity# recent queries";
+$MESS["AI_JS_PICKER_IMAGE_PLACEHOLDER"] = "Example: large, heart shaped bouquet of red roses on a white background";
+$MESS["AI_JS_PICKER_IMAGE_SUBMIT"] = "Generate image";
+$MESS["AI_JS_PICKER_INIT_ERROR"] = "AI error. Try refreshing the page.";
+$MESS["AI_JS_PICKER_TEXT_ACTION_COPY"] = "Copy";
+$MESS["AI_JS_PICKER_TEXT_ACTION_COPY_NOTIFY"] = "Text copied";
+$MESS["AI_JS_PICKER_TEXT_ACTION_USE"] = "Insert";
+$MESS["AI_JS_PICKER_TEXT_GENERATE_FAILED"] = "Something's gone wrong. Please try again.";
+$MESS["AI_JS_PICKER_TEXT_HEADER"] = "What do you want to write about?";
+$MESS["AI_JS_PICKER_TEXT_LOADER"] = "Writing";
+$MESS["AI_JS_PICKER_TEXT_MAX_CAPACITY"] = "Keeping #capacity# recent queries";
+$MESS["AI_JS_PICKER_TEXT_PLACEHOLDER"] = "Example: write a news piece about discounts for rose bouquets";
+$MESS["AI_JS_PICKER_TEXT_PREVIOUS_ITEMS_LABEL"] = "Previous versions";
+$MESS["AI_JS_PICKER_TEXT_SUBMIT"] = "Generate text";

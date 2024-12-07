@@ -1,5 +1,4 @@
 <?php
-
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
 
 /**
@@ -12,17 +11,16 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
  * @var \CBitrixComponent $component
  */
 
-use \Bitrix\Imopenlines\Limit,
-	\Bitrix\Main\Localization\Loc;
-
-use \Bitrix\ImOpenLines\Config;
+use Bitrix\Imopenlines\Limit;
+use Bitrix\Main\Localization\Loc;
+use Bitrix\ImOpenLines\Config;
 
 \Bitrix\Main\UI\Extension::load([
 	'ui.design-tokens',
 	'ui.fonts.opensans',
 ]);
 ?>
-<script type="text/javascript">
+<script>
 	BX.ready(function(){
 		BX.message({
 			LM_ADD: '<?=GetMessageJS('IMOL_CONFIG_EDIT_LM_ADD')?>',

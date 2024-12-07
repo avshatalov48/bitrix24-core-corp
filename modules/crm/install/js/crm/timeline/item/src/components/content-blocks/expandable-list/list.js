@@ -51,10 +51,6 @@ export default {
 		{
 			return this.isShortList && this.listItems.length > this.shortListItemsCnt;
 		},
-		cnt()
-		{
-			return this.listItems.length;
-		},
 	},
 	// language=Vue
 	template: `
@@ -76,7 +72,7 @@ export default {
 				class="crm-entity-stream-advice-link"
 				href="#"
 			>
-				{{showMoreText}} ({{cnt}})
+				{{showMoreText}}
 			</a>
 		</div>
 	`

@@ -34,4 +34,3 @@ $MESS['CRM_BIC_DEAL_PRODUCT_ROW_FIELD_CATEGORY_NAME'] = "Название вор
 $MESS['CRM_BIC_DEAL_PRODUCT_ROW_FIELD_PARENT'] = "Раздел товара";
 $MESS['CRM_BIC_DEAL_PRODUCT_ROW_FIELD_SUPERPARENT'] = "Раздел товара на уровень выше";
 $MESS['CRM_BIC_DEAL_PRODUCT_ROW_FIELD_SUPERSUPERPARENT'] = "Раздел товара на два уровня выше";
-$MESS['CRM_BIC_DEAL_PRODUCT_ROW_FIELD_INSTOCK'] = "Остаток товара на момент продажи";

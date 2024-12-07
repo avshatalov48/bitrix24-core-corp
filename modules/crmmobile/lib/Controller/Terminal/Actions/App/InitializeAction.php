@@ -11,6 +11,7 @@ use Bitrix\CrmMobile\Integration\Sale\Payment\EntityEditorFieldsProvider;
 use Bitrix\Main\Loader;
 use Bitrix\Main\PhoneNumber\Parser;
 use Bitrix\Sale\PaySystem;
+use Bitrix\SalesCenter\Integration\LandingManager;
 
 class InitializeAction extends Action
 {
@@ -26,6 +27,12 @@ class InitializeAction extends Action
 
 		$fieldsProvider = new EntityEditorFieldsProvider();
 
+		if (Loader::includeModule('salescenter'))
+		{
+			$connectedSiteId = LandingManager::getInstance()->getConnectedSiteId();
+			$isPhoneConfirmed = LandingManager::getInstance()->isPhoneConfirmed();
+		}
+
 		return array_merge(
 			[
 				'defaultCountry' => Parser::getDefaultCountry(),
@@ -35,6 +42,10 @@ class InitializeAction extends Action
 					$fieldsProvider->getPhoneField(),
 					$fieldsProvider->getClientName(),
 				],
+			],
+			[
+				'isPhoneConfirmed' => $isPhoneConfirmed ?? true,
+				'connectedSiteId' => $connectedSiteId ?? 0,
 			],
 			self::getPsCreationActionProviders(),
 			self::getPullConfig(),

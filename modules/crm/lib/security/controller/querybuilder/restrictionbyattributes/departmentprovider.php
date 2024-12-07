@@ -2,6 +2,8 @@
 
 namespace Bitrix\Crm\Security\Controller\QueryBuilder\RestrictionByAttributes;
 
+use Bitrix\Crm\Integration\HumanResources\DepartmentQueries;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Traits\Singleton;
 
 class DepartmentProvider
@@ -24,7 +26,7 @@ class DepartmentProvider
 			return $userDepartmentIDs[$userId];
 		}
 
-		$allUserAttrs = $this->departmentQueries->getUserAttributes($userId);
+		$allUserAttrs = $this->getUserAttributes($userId);
 
 		$userDepartmentIDs[$userId] = [];
 
@@ -44,26 +46,31 @@ class DepartmentProvider
 		return $userDepartmentIDs[$userId];
 	}
 
-	public function getDepartmentsUsers(array $departmentIds): array
+	public function getDepartmentsUsers(array $departmentAccessCodes): array
 	{
 		static $users = [];
 
-		if (empty($departmentIds))
+		if (empty($departmentAccessCodes))
 		{
 			return [];
 		}
 
-		$cacheKey = md5(implode(',', $departmentIds));
+		$cacheKey = md5(implode(',', $departmentAccessCodes));
 
 		if (!isset($users[$cacheKey]))
 		{
-			$userIds = $this->departmentQueries->queryUserIdsByDepartments($departmentIds);
-			$cIBlockIds =  $this->departmentQueries->queryCIBlockSectionByIds($departmentIds);
-			$userIds = array_merge($userIds, $cIBlockIds);
-
+			$userIds = $this->departmentQueries->queryUserIdsByDepartments($departmentAccessCodes);
 			$users[$cacheKey] = array_unique($userIds);
 		}
 
 		return $users[$cacheKey];
+	}
+
+	private function getUserAttributes(int $userId): array
+	{
+		$userPermissions = Container::getInstance()->getUserPermissions($userId);
+		$attributesProvider = $userPermissions->getAttributesProvider();
+
+		return $attributesProvider->getUserAttributes();
 	}
 }

@@ -2,6 +2,22 @@
  * @module utils/date/moment
  */
 jn.define('utils/date/moment', (require, exports, module) => {
+	const { Duration } = require('utils/date/duration');
+
+	const DurationLengths = Duration.getLengthFormat();
+
+	const toSeconds = (ms) => ms / 1000;
+
+	const MomentDuration = {
+		SECOND: toSeconds(DurationLengths.SECOND),
+		MINUTE: toSeconds(DurationLengths.MINUTE),
+		HOUR: toSeconds(DurationLengths.HOUR),
+		DAY: toSeconds(DurationLengths.DAY),
+		WEEK: toSeconds(DurationLengths.DAY * 7),
+		MONTH: toSeconds(DurationLengths.MONTH),
+		YEAR: toSeconds(DurationLengths.YEAR),
+	};
+
 	const MMMregex = /\bMMM\b/;
 
 	const NATIVE_LANGS_MAP = {
@@ -306,7 +322,7 @@ jn.define('utils/date/moment', (require, exports, module) => {
 		 */
 		get withinMinute()
 		{
-			return this.isWithinSeconds(60);
+			return this.isWithinSeconds(MomentDuration.MINUTE);
 		}
 
 		/**
@@ -314,7 +330,7 @@ jn.define('utils/date/moment', (require, exports, module) => {
 		 */
 		get withinHour()
 		{
-			return this.isWithinSeconds(3600);
+			return this.isWithinSeconds(MomentDuration.HOUR);
 		}
 
 		/**
@@ -322,7 +338,7 @@ jn.define('utils/date/moment', (require, exports, module) => {
 		 */
 		get withinDay()
 		{
-			return this.isWithinSeconds(86400);
+			return this.isWithinSeconds(MomentDuration.DAY);
 		}
 
 		/**
@@ -330,7 +346,7 @@ jn.define('utils/date/moment', (require, exports, module) => {
 		 */
 		get withinWeek()
 		{
-			return this.isWithinSeconds(604_800);
+			return this.isWithinSeconds(MomentDuration.WEEK);
 		}
 
 		/**
@@ -338,8 +354,7 @@ jn.define('utils/date/moment', (require, exports, module) => {
 		 */
 		get withinMonth()
 		{
-			// 2.592.000 seconds = 30 days
-			return this.isWithinSeconds(2_592_000);
+			return this.isWithinSeconds(MomentDuration.MONTH);
 		}
 
 		/**
@@ -347,8 +362,7 @@ jn.define('utils/date/moment', (require, exports, module) => {
 		 */
 		get withinYear()
 		{
-			// 31.536.000 seconds = 365 days
-			return this.isWithinSeconds(31_536_000);
+			return this.isWithinSeconds(MomentDuration.YEAR);
 		}
 
 		/**

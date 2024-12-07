@@ -74,20 +74,19 @@ jn.define('calendar/layout/sharing-joint/link-item', (require, exports, module) 
 
 		openLinkPage()
 		{
-			const component = new LinkPage({
+			const component = (layoutWidget) => new LinkPage({
+				layoutWidget,
 				link: this.link,
 				deleteLink: this.showDeleteLinkPopup,
 				sendLink: this.sendLink,
 			});
 
-			// eslint-disable-next-line promise/catch-or-return
-			new BottomSheet({ component })
+			void new BottomSheet({ component })
 				.setParentWidget(this.layoutWidget)
 				.setBackgroundColor(AppTheme.colors.bgNavigation)
 				.disableContentSwipe()
 				.setMediumPositionPercent(80)
 				.open()
-				.then((widget) => component.setLayoutWidget(widget))
 			;
 		}
 

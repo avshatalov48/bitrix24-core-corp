@@ -86,7 +86,7 @@ class Cleaner extends Base
 		Option::delete('crm', ['name' => $this->getOptionName()]);
 	}
 
-	protected function getMessage($messageId): ?string
+	protected function getMessage(string $messageId, ?string $languageId = null): ?string
 	{
 		static $isMessagesLoaded = false;
 
@@ -96,11 +96,11 @@ class Cleaner extends Base
 			$isMessagesLoaded = true;
 		}
 
-		$message = Loc::getMessage($messageId);
+		$message = Loc::getMessage($messageId, null, $languageId);
 
 		if ($message === null)
 		{
-			return parent::getMessage($messageId);
+			return parent::getMessage($messageId, $languageId);
 		}
 
 		return $message;

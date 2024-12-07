@@ -3,6 +3,7 @@
  */
 jn.define('communication/email-menu', (require, exports, module) => {
 	const { email: emailSvg } = require('assets/communication/menu');
+	const { ContextMenu } = require('layout/ui/context-menu');
 	const { Loc } = require('loc');
 	const { copyToClipboard } = require('utils/copy');
 	const { stringify } = require('utils/string');

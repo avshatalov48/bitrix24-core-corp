@@ -23,16 +23,6 @@ if(empty($_REQUEST['entityId']) || empty($_REQUEST['type']))
 	return $data;
 }
 
-function mobileDiskPrepareForJson($string)
-{
-	if(!Application::getInstance()->isUtfMode())
-	{
-		return Encoding::convertEncodingArray($string, SITE_CHARSET, 'UTF-8');
-	}
-	return $string;
-}
-
-CUtil::JSPostUnescape();
 $data = array();
 $type = $_REQUEST['type'];
 $path = urldecode($_REQUEST['path']);
@@ -104,7 +94,7 @@ foreach($folder->getChildren($securityContext) as $item)
 	{
 		$icon = CMobileHelper::mobileDiskGetIconByFilename($item->getName());
 		$items[] = array(
-			'NAME' => mobileDiskPrepareForJson($item->getName()),
+			'NAME' => $item->getName(),
 			'UPDATE_TIME' => $item->getUpdateTime()->getTimestamp(),
 			'TABLE_URL' => SITE_DIR . 'mobile/index.php?' .
 					'mobile_action=' . 'disk_folder_list'.
@@ -127,13 +117,13 @@ foreach($folder->getChildren($securityContext) as $item)
 			'ID' => $item->getId(),
 			'VALUE' => \Bitrix\Disk\Uf\FileUserType::NEW_FILE_PREFIX.$item->getId(),
 			'UPDATE_TIME' => $item->getUpdateTime()->getTimestamp(),
-			'NAME' => mobileDiskPrepareForJson($item->getName()),
+			'NAME' => $item->getName(),
 			'URL' => array(
-				'URL' => SITE_DIR . "mobile/ajax.php?mobile_action=disk_download_file&action=downloadFile&fileId={$item->getId()}&filename=" . mobileDiskPrepareForJson($item->getName()),
+				'URL' => SITE_DIR . "mobile/ajax.php?mobile_action=disk_download_file&action=downloadFile&fileId={$item->getId()}&filename=" . $item->getName(),
 				'EXTERNAL' => 'YES',
 			),
 			'IMAGE' => CComponentEngine::makePathFromTemplate('/bitrix/components/bitrix/mobile.disk.file.detail/images/' . $icon."?2"),
-			'TAGS' => mobileDiskPrepareForJson(\CFile::FormatSize($item->getSize()) . ' ' . $item->getUpdateTime()),
+			'TAGS' => CFile::FormatSize($item->getSize()) . ' ' . $item->getUpdateTime(),
 		);
 
 		if (\Bitrix\Disk\TypeFile::isImage($item))
@@ -167,10 +157,10 @@ $data = array(
 		'folderId' => $folder->getId(),
 		'storageId' => $folder->getStorageId(),
 		'allowUpload'=>"YES",
-		'footer' => mobileDiskPrepareForJson(Loc::getMessage('MD_DISK_TABLE_FOLDERS_FILES', array(
+		'footer' => Loc::getMessage('MD_DISK_TABLE_FOLDERS_FILES', array(
 			'#FOLDERS#' => $countFolders,
 			'#FILES#' => $countFiles,
-		))),
+		)),
 	),
 );
 

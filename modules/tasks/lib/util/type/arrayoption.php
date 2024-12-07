@@ -1,9 +1,8 @@
-<?
+<?php
 namespace Bitrix\Tasks\Util\Type;
 
 use Bitrix\Tasks\Util\User;
 use Bitrix\Tasks\Util;
-use Bitrix\Tasks\Util\Type\StructureChecker;
 
 class ArrayOption
 {
@@ -12,6 +11,8 @@ class ArrayOption
 	protected $type = null;
 
 	protected $checker = null;
+	protected int $userId = 0;
+	protected bool $isCommon = false;
 
 	const TYPE_USER = 1;
 	const TYPE_GLOBAL = 2;
@@ -32,6 +33,18 @@ class ArrayOption
 		{
 			$this->type = static::TYPE_USER;
 		}
+	}
+
+	public function setUserId(int $userId): static
+	{
+		$this->userId = $userId;
+		return $this;
+	}
+
+	public function setIsCommon(bool $isCommon = true): static
+	{
+		$this->isCommon = $isCommon;
+		return $this;
 	}
 
 	/**
@@ -62,7 +75,7 @@ class ArrayOption
 
 		if($this->type == static::TYPE_USER)
 		{
-			User::setOption($name, $value);
+			User::setOption($name, $value, $this->userId, $this->isCommon);
 		}
 		else
 		{

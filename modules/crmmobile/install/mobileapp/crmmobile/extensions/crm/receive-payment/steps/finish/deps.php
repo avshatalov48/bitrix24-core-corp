@@ -7,7 +7,7 @@ return [
 		'layout/ui/wizard/step',
 		'layout/pure-component',
 		'crm:loc',
-		'crm:type/id',
+		'crm:type',
 		'event-emitter',
 	],
 	'bundle' => [

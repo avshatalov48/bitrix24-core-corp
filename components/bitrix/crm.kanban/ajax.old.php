@@ -143,7 +143,8 @@ if ($version == 2)
 	{
 		$result['ITEMS']['dropzones'] = array();
 
-		$isCrmAdmin = Container::getInstance()->getUserPermissions()->canWriteConfig();
+		$entityTypeId = CCrmOwnerType::ResolveID($type);
+		$isAdminForEntity = Container::getInstance()->getUserPermissions()->isAdminForEntity($entityTypeId);
 
 		foreach ($result['ITEMS']['columns'] as $k => &$column)
 		{
@@ -173,27 +174,38 @@ if ($version == 2)
 				}
 			}
 
+			$currency = $column['currency'] ?? null;
+
 			if (!$column['dropzone'])
 			{
-				$column = array(
+				$canSort = (
+					$isAdminForEntity
+					&& $column['type'] === 'PROGRESS'
+					&& !\Bitrix\Crm\Kanban\ViewMode::isDatesBasedView($viewMode)
+				);
+
+				$column = [
 					'id' => $column['id'],
 					'total' => (int) $column['count'],
 					'color' => $column['color'],
 					'name' => htmlspecialcharsback($column['name']),
-					'canSort' => ($isCrmAdmin && $column['type'] === 'PROGRESS'),
+					'canSort' => $canSort,
 					'canAddItem' => $column['canAddItem'],
-					'data' => array(
+					'data' => [
 						'sort' => $column['sort'],
 						'type' => $column['type'],
-						'sum' => round($column['total']),
+						'sum' => round($column['total'] ?? 0),
 						'sum_init' => 0,
 						'sum_format' => $column['total_format'] ?? null,
 						'blockedIncomingMoving' => ($column['blockedIncomingMoving'] ?? false),
-					)
-				);
+						'hiddenTotalSum' => ($column['hiddenTotalSum'] ?? false),
+						'currencyFormat' => ($column['currencyFormat'] ?? false),
+					],
+				];
 			}
 		}
 		unset($column);
+
 		$result['ITEMS']['dropzones'] = array_values($result['ITEMS']['dropzones']);
 		$result['ITEMS']['columns'] = array_values($result['ITEMS']['columns']);
 	}
@@ -234,10 +246,6 @@ if ($version == 2)
 if ($result !== null)
 {
 	$GLOBALS['APPLICATION']->RestartBuffer();
-	if (SITE_CHARSET != 'UTF-8')
-	{
-		$result = $GLOBALS['APPLICATION']->ConvertCharsetArray($result, SITE_CHARSET, 'UTF-8');
-	}
 
 	header('Content-Type: application/json');
 

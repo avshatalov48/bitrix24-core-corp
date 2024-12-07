@@ -11,6 +11,8 @@ if (!CModule::IncludeModule('im'))
 
 session_write_close();
 
+\Bitrix\Main\UI\Extension::load("rest.client");
+
 $CIMNotify = new CIMNotify(false);
 $result = $CIMNotify->GetNotifyList(['PAGE' => 0]);
 
@@ -70,6 +72,8 @@ $arResult['DATE_FORMATS'] = [
 	'shortTimeFormat' => $culture->getShortTimeFormat(),
 	'longDateFormat' => $culture->getLongDateFormat(),
 ];
+
+$arResult['CURRENT_USER_ID'] = $USER->GetID();
 
 if (!(isset($arParams['TEMPLATE_HIDE']) && $arParams['TEMPLATE_HIDE'] == 'Y'))
 	$this->IncludeComponentTemplate();

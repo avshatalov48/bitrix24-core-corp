@@ -9,7 +9,6 @@ jn.define('crm/communication/button', (require, exports, module) => {
 	const { CommunicationMenu } = require('communication/menu');
 	const { Loc } = require('loc');
 	const { get, isObjectLike, mergeImmutable } = require('utils/object');
-	const { TypeName } = require('crm/type');
 
 	const connections = [PhoneType, EmailType, ImType];
 
@@ -165,23 +164,11 @@ jn.define('crm/communication/button', (require, exports, module) => {
 
 		showHighlighted()
 		{
-			const { ownerInfo = {}, showConnectionStubs, clientOptions } = this.props;
-			const { ownerTypeName } = ownerInfo;
-
-			if (
-				showConnectionStubs
-				&& clientOptions
-				&& (
-					ownerTypeName
-					&& ownerTypeName !== TypeName.Contact
-					&& ownerTypeName !== TypeName.Company
-				)
-			)
-			{
-				return this.hasPermissionsForAdd() || this.hasPermissionsForEdit();
-			}
-
-			return this.hasConnections();
+			return (
+				this.hasPermissionsForAdd()
+				|| this.hasPermissionsForEdit()
+				|| this.hasConnections()
+			);
 		}
 
 		hasPermissionsForAdd()
@@ -196,6 +183,13 @@ jn.define('crm/communication/button', (require, exports, module) => {
 			return Object.values(this.permissions)
 				.filter((item) => isObjectLike(item))
 				.some(({ update = false }) => Boolean(update));
+		}
+
+		hasPermissionsForRead()
+		{
+			return Object.values(this.permissions)
+				.filter((item) => isObjectLike(item))
+				.some(({ read = false }) => Boolean(read));
 		}
 
 		hasConnections()

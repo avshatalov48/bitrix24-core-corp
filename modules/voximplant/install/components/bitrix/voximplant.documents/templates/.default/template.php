@@ -117,7 +117,7 @@ CJSCore::Init(["voximplant.common", "ui.alerts", "ui.buttons", "ui.sidepanel-con
 							</td>
 						</tr>
 					</table>
-					<script type="text/javascript">
+					<script>
 						BX.bind(BX('vi_docs_table_btn_<?=$key?>'), 'click', function(e)
 						{
 							if (BX('vi_docs_table_body_<?=$key?>').style.display == 'none')
@@ -159,7 +159,7 @@ CJSCore::Init(["voximplant.common", "ui.alerts", "ui.buttons", "ui.sidepanel-con
 					</script>
 				<?endif?>
 			<?endif?>
-            <script type="text/javascript">
+            <script>
 				<?if(isset($verification['UPLOAD_IFRAME_URL'])):?>
 					BX.Voximplant.Documents.initUploader('<?=CUtil::JSEscape($verification['COUNTRY_CODE'])?>');
 				<?endif?>
@@ -168,7 +168,7 @@ CJSCore::Init(["voximplant.common", "ui.alerts", "ui.buttons", "ui.sidepanel-con
         <?endforeach;?>
     </div>
 
-	<script type="text/javascript">
+	<script>
 		BX.Voximplant.Documents.initAdditionalDocumentsUploader();
 	</script>
 </div>

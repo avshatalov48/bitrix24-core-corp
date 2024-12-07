@@ -1,4 +1,4 @@
-import {EntityEditorFieldsetField} from "crm.entity-editor.field.fieldset";
+﻿import {EntityEditorFieldsetField} from "crm.entity-editor.field.fieldset";
 import {BaseEvent, EventEmitter} from "main.core.events";
 import {Loc, Tag, Type} from "main.core";
 
@@ -8,7 +8,7 @@ export class EntityEditorBankDetailsField extends EntityEditorFieldsetField
 	{
 		return Tag.render`
 		<div class="ui-entity-editor-container-actions">
-			<span>${Loc.getMessage('CRM_EDITOR_REQUISITE_BANK_DETAILS_ADD_LABEL')}</span>
+			<span>${Loc.getMessage('CRM_EDITOR_REQUISITE_BANK_DETAILS_ADD_LABEL')}</span><span> </span>
 			<span class="ui-entity-editor-content-create-lnk" onclick="${this.onAddButtonClick.bind(this)}">${Loc.getMessage('CRM_EDITOR_REQUISITE_BANK_DETAILS_ADD_LINK_TEXT')}</span>
 		</div>`;
 	}
@@ -52,6 +52,25 @@ export class EntityEditorBankDetailsField extends EntityEditorFieldsetField
 			}, 10);
 		}
 		return editor;
+	}
+
+	getResolverProperty()
+	{
+		return BX.prop.getArray(this.getSchemeElement().getData(), 'resolverProperty', {});
+	}
+
+	prepareEntityEditorContext()
+	{
+		const context = super.prepareEntityEditorContext();
+
+		const schemeData = this.getSchemeElement().getData();
+		const resolverProperty = BX.prop.getObject(schemeData, "resolverProperty", null)
+		if (resolverProperty)
+		{
+			context["resolverProperty"] = resolverProperty;
+		}
+
+		return context;
 	}
 }
 

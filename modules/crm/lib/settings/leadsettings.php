@@ -327,13 +327,13 @@ class LeadSettings
 		\CJSCore::Init(array('popup', 'sidepanel'));
 
 		$isCrmAdmin = "N";
-		$CrmPerms = \CCrmPerms::GetCurrentUserPermissions();
-		if ($CrmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE'))
+		$crmPerms = \CCrmPerms::GetCurrentUserPermissions();
+		if ($crmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE'))
 		{
 			$isCrmAdmin = "Y";
 		}
 
-		$arParams = array(
+		$params = array(
 			"ajaxPath" => "/bitrix/tools/crm_lead_mode.php",
 			"dealPath" => (\Bitrix\Crm\Settings\DealSettings::getCurrent()->getCurrentListViewID() == \Bitrix\Crm\Settings\DealSettings::VIEW_KANBAN)
 				? SITE_DIR."crm/deal/kanban/" : \CCrmOwnerType::GetListUrl(\CCrmOwnerType::Deal),
@@ -358,7 +358,7 @@ class LeadSettings
 			)
 		);
 
-		return "BX.CrmLeadMode.init(".\CUtil::PhpToJSObject($arParams)."); BX.CrmLeadMode.preparePopup();";
+		return "BX.CrmLeadMode.init(".\CUtil::PhpToJSObject($params)."); BX.CrmLeadMode.preparePopup();";
 	}
 	/**
 	 * Include language file

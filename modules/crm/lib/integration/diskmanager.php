@@ -446,6 +446,11 @@ class DiskManager
 				'MODULE_ID' => 'crm',
 				'CLASS' => MailTemplateConnector::className()
 			],
+			'CRM_QUOTE' => [
+				'ENTITY_TYPE' => 'crm_quote',
+				'MODULE_ID' => 'crm',
+				'CLASS' => Disk\QuoteConnector::className()
+			]
 		]);
 	}
 }

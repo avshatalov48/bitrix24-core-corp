@@ -2,6 +2,8 @@
  * @module calendar/sharing/analytics
  */
 jn.define('calendar/sharing/analytics', (require, exports, module) => {
+	const { AnalyticsEvent } = require('analytics');
+
 	/**
 	 * @class Analytics
 	 */
@@ -149,23 +151,43 @@ jn.define('calendar/sharing/analytics', (require, exports, module) => {
 		 */
 		static sendAnalytics(event, params)
 		{
-			const data = {
-				tool: Analytics.tool,
-				category: Analytics.category,
-				event,
-				...params,
-			};
+			const analytics = new AnalyticsEvent()
+				.setTool(Analytics.tool)
+				.setCategory(Analytics.category)
+				.setEvent(event)
+			;
 
-			const queryParams = [];
-			for (const [key, value] of Object.entries(data))
+			if (params.c_section)
 			{
-				queryParams.push(`st[${key}]=${encodeURIComponent(value)}`);
+				analytics.setSection(params.c_section);
 			}
 
-			BX.ajax({
-				method: 'GET',
-				url: `/_analytics/?${queryParams.join('&')}`,
-			});
+			if (params.c_element)
+			{
+				analytics.setElement(params.c_element);
+			}
+
+			if (params.type)
+			{
+				analytics.setType(params.type);
+			}
+
+			if (params.p1)
+			{
+				analytics.setP1(params.p1);
+			}
+
+			if (params.p2)
+			{
+				analytics.setP2(params.p2);
+			}
+
+			if (params.p3)
+			{
+				analytics.setP3(params.p3);
+			}
+
+			analytics.send();
 		}
 	}
 

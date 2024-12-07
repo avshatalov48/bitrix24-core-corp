@@ -183,7 +183,7 @@ $APPLICATION->IncludeComponent("bitrix:ui.info.helper", "", array());
 	});
 </script>
 
-<script type="text/javascript">
+<script>
 	<?if (!\Bitrix\Voximplant\Limits::isQueueAllAllowed()):?>
 	var queueType = BX('QUEUE_TYPE');
 	for (var i = 0; i < queueType.options.length; i++)

@@ -12,6 +12,9 @@ use Bitrix\Main\Grid\Panel\Snippet;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Grid\Panel\Actions;
 use Bitrix\Main\Grid\Panel\Types;
+use Bitrix\Tasks\Integration\Bitrix24;
+use Bitrix\Tasks\Integration\Bitrix24\FeatureDictionary;
+use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\ProjectLimit;
 
 Loc::loadMessages(__FILE__);
 
@@ -179,38 +182,45 @@ class GroupAction
 			'ONCHANGE' => $this->getMoveDeadlineConfig(),
 		];
 
-		$actionList[] = [
-			'NAME' => Loc::getMessage('TASKS_LIST_GROUP_ACTION_SET_TASK_CONTROL_V2'),
-			'VALUE' => self::ACTION_SET_TASK_CONTROL,
-			'ONCHANGE' => [
-				[
-					'ACTION' => Actions::CREATE,
-					'DATA' => [
-						[
-							'TYPE' => Types::DROPDOWN,
-							'ID' => 'action_set_task_control',
-							'NAME' => 'value',
-							'ITEMS' => [
-								[
-									'NAME' => Loc::getMessage('TASKS_LIST_GROUP_ACTION_SET_TASK_CONTROL_YES'),
-									'VALUE' => 'N',
-								],
-								[
-									'NAME' => Loc::getMessage('TASKS_LIST_GROUP_ACTION_SET_TASK_CONTROL_NO'),
-									'VALUE' => 'Y',
+		$taskControlEnabled = Bitrix24::checkFeatureEnabled(
+			FeatureDictionary::TASK_CONTROL
+		);
+
+		if($taskControlEnabled)
+		{
+			$actionList[] = [
+				'NAME' => Loc::getMessage('TASKS_LIST_GROUP_ACTION_SET_TASK_CONTROL_V2'),
+				'VALUE' => self::ACTION_SET_TASK_CONTROL,
+				'ONCHANGE' => [
+					[
+						'ACTION' => Actions::CREATE,
+						'DATA' => [
+							[
+								'TYPE' => Types::DROPDOWN,
+								'ID' => 'action_set_task_control',
+								'NAME' => 'value',
+								'ITEMS' => [
+									[
+										'NAME' => Loc::getMessage('TASKS_LIST_GROUP_ACTION_SET_TASK_CONTROL_YES'),
+										'VALUE' => 'N',
+									],
+									[
+										'NAME' => Loc::getMessage('TASKS_LIST_GROUP_ACTION_SET_TASK_CONTROL_NO'),
+										'VALUE' => 'Y',
+									],
 								],
 							],
 						],
 					],
-				],
-				[
-					'ACTION' => Actions::CALLBACK,
-					'DATA' => [
-						['JS' => "BX.Tasks.GridActions.setCurrentGroupAction('settaskcontrol')"],
+					[
+						'ACTION' => Actions::CALLBACK,
+						'DATA' => [
+							['JS' => "BX.Tasks.GridActions.setCurrentGroupAction('settaskcontrol')"],
+						],
 					],
 				],
-			],
-		];
+			];
+		}
 
 		$roles = $this->getRoles();
 
@@ -313,39 +323,42 @@ class GroupAction
 			],
 		];
 
-		$actionList[] = [
-			'NAME' => Loc::getMessage('TASKS_LIST_GROUP_ACTION_SET_GROUP'),
-			'VALUE' => self::ACTION_SET_GROUP,
-			'ONCHANGE' => [
-				[
-					'ACTION' => Actions::CREATE,
-					'DATA' => [
-						[
-							'TYPE' => Types::TEXT,
-							'ID' => 'action_set_group_search',
-							'NAME' => 'ACTION_SET_GROUP_SEARCH',
+		if (ProjectLimit::isFeatureEnabledOrTrial())
+		{
+			$actionList[] = [
+				'NAME' => Loc::getMessage('TASKS_LIST_GROUP_ACTION_SET_GROUP'),
+				'VALUE' => self::ACTION_SET_GROUP,
+				'ONCHANGE' => [
+					[
+						'ACTION' => Actions::CREATE,
+						'DATA' => [
+							[
+								'TYPE' => Types::TEXT,
+								'ID' => 'action_set_group_search',
+								'NAME' => 'ACTION_SET_GROUP_SEARCH',
+							],
+							[
+								'TYPE' => Types::HIDDEN,
+								'ID' => 'action_set_group_id',
+								'NAME' => 'groupId',
+							],
 						],
-						[
-							'TYPE' => Types::HIDDEN,
-							'ID' => 'action_set_group_id',
-							'NAME' => 'groupId',
+					],
+					[
+						'ACTION' => Actions::CALLBACK,
+						'DATA' => [
+							['JS' => "BX.Tasks.GridActions.initPopupBalloon('group','action_set_group_search','action_set_group_id');"],
+						],
+					],
+					[
+						'ACTION' => Actions::CALLBACK,
+						'DATA' => [
+							['JS' => "BX.Tasks.GridActions.setCurrentGroupAction('setgroup')"],
 						],
 					],
 				],
-				[
-					'ACTION' => Actions::CALLBACK,
-					'DATA' => [
-						['JS' => "BX.Tasks.GridActions.initPopupBalloon('group','action_set_group_search','action_set_group_id');"],
-					],
-				],
-				[
-					'ACTION' => Actions::CALLBACK,
-					'DATA' => [
-						['JS' => "BX.Tasks.GridActions.setCurrentGroupAction('setgroup')"],
-					],
-				],
-			],
-		];
+			];
+		}
 
 		$actionList[] = [
 			'NAME' => Loc::getMessage('TASKS_LIST_GROUP_ACTION_REMOVE'),
@@ -414,7 +427,7 @@ class GroupAction
 	 */
 	private function getRoles(): array
 	{
-		return [
+		$roles = [
 			[
 				'NAME' => Loc::getMessage('TASKS_LIST_GROUP_ACTION_CHANGE_ASSIGNEE'),
 				'VALUE' => self::ACTION_SET_RESPONSIBLE,
@@ -425,16 +438,27 @@ class GroupAction
 				'VALUE' => self::ACTION_SET_ORIGINATOR,
 				'KEY' => 'originator',
 			],
-			[
+		];
+
+		$taskObserversParticipantsEnabled = Bitrix24::checkFeatureEnabled(
+			FeatureDictionary::TASK_OBSERVERS_PARTICIPANTS
+		);
+
+		if ($taskObserversParticipantsEnabled)
+		{
+			$roles[] = [
 				'NAME' => Loc::getMessage('TASKS_LIST_GROUP_ACTION_ADD_AUDITOR'),
 				'VALUE' => self::ACTION_ADD_AUDITOR,
 				'KEY' => 'auditor',
-			],
-			[
+			];
+
+			$roles[] = [
 				'NAME' => Loc::getMessage('TASKS_LIST_GROUP_ACTION_ADD_ACCOMPLICE'),
 				'VALUE' => self::ACTION_ADD_ACCOMPLICE,
 				'KEY' => 'accomplice',
-			],
-		];
+			];
+		}
+
+		return $roles;
 	}
 }

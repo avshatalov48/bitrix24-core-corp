@@ -8,6 +8,7 @@ jn.define('im/messenger/api/dialog-opener', (require, exports, module) => {
 		EventType,
 		FeatureFlag,
 		ComponentCode,
+		OpenRequest,
 	} = require('im/messenger/const');
 
 	/**
@@ -20,7 +21,7 @@ jn.define('im/messenger/api/dialog-opener', (require, exports, module) => {
 	{
 		static getVersion()
 		{
-			return 2;
+			return 4;
 		}
 
 		/**
@@ -38,21 +39,11 @@ jn.define('im/messenger/api/dialog-opener', (require, exports, module) => {
 		 *
 		 * @param {object} [options.parentWidget]
 		 *
-		 * @return {Promise}
+		 * @return {Promise<DialoguesModelState>}
 		 */
 		static open(options)
 		{
 			return new Promise((resolve, reject) => {
-				if (!FeatureFlag.native.openWebComponentParentWidgetSupported)
-				{
-					reject({
-						text: 'This method is not supported in applications with the API version less than 45.',
-						code: 'UNSUPPORTED_APP_VERSION',
-					});
-
-					return;
-				}
-
 				if (!Type.isObject(options))
 				{
 					reject({
@@ -73,30 +64,47 @@ jn.define('im/messenger/api/dialog-opener', (require, exports, module) => {
 					return;
 				}
 
+				const openDialogCompleteHandler = ({ chatData, error }) => {
+					if (String(chatData?.dialogId) !== String(options.dialogId))
+					{
+						return;
+					}
+
+					BX.removeCustomEvent(EventType.messenger.openDialogComplete, openDialogCompleteHandler);
+
+					if (error)
+					{
+						reject(new Error(error));
+					}
+					else
+					{
+						resolve(chatData);
+					}
+				};
+				BX.addCustomEvent(EventType.messenger.openDialogComplete, openDialogCompleteHandler);
+
+				if (BX.componentParameters.get('COMPONENT_CODE') === ComponentCode.imMessenger)
+				{
+					EntityReady.wait('chat').then(() => {
+						BX.postComponentEvent(EventType.messenger.openDialog, [options], ComponentCode.imMessenger);
+					});
+
+					return;
+				}
+
 				EntityReady.wait('chat').then(() => {
-					const openDialogParamsEvent = `${EventType.messenger.openDialogParams}::${options.dialogId}`;
+					if (Type.isFunction(jnComponent.sendOpenRequest))
+					{
+						jnComponent.sendOpenRequest(ComponentCode.imMessenger, {
+							[OpenRequest.dialog]: {
+								options,
+							},
+						});
 
-					const onOpenDialogParams = (params) => {
-						BX.removeCustomEvent(openDialogParamsEvent, onOpenDialogParams);
+						return;
+					}
 
-						if (options.parentWidget)
-						{
-							PageManager.openWebComponent(params, options.parentWidget);
-						}
-						else
-						{
-							PageManager.openWebComponent(params);
-						}
-
-						resolve();
-					};
-
-					BX.addCustomEvent(openDialogParamsEvent, onOpenDialogParams);
-
-					BX.postComponentEvent(EventType.messenger.getOpenDialogParams, [{
-						dialogId: options.dialogId,
-						dialogTitleParams: options.dialogTitleParams,
-					}], ComponentCode.imMessenger);
+					BX.postComponentEvent(EventType.messenger.openDialog, [options], ComponentCode.imMessenger);
 				});
 			});
 		}
@@ -106,7 +114,9 @@ jn.define('im/messenger/api/dialog-opener', (require, exports, module) => {
 		 *
 		 * @param {object} options
 		 *
-		 * @param {string} options.userCode
+		 * one of them must be passed on:
+		 * @param {string} [options.userCode]
+		 * @param {number} [options.sessionId]
 		 *
 		 * @param {object} [options.dialogTitleParams]
 		 * @param {string} [options.dialogTitleParams.name]
@@ -141,10 +151,22 @@ jn.define('im/messenger/api/dialog-opener', (require, exports, module) => {
 					return;
 				}
 
-				if (!Type.isStringFilled(options.userCode))
+				let shouldOpenByUserCode = false;
+				if (Type.isStringFilled(options.userCode))
+				{
+					shouldOpenByUserCode = true;
+				}
+
+				let shouldOpenBySessionId = false;
+				if (Type.isNumber(options.sessionId))
+				{
+					shouldOpenBySessionId = true;
+				}
+
+				if (!shouldOpenByUserCode && !shouldOpenBySessionId)
 				{
 					reject({
-						text: `options.userCode must be a filled string, ${options.userCode} given.`,
+						text: 'one of the required options.userCode or options.sessionId is not specified or invalid',
 						code: 'INVALID_ARGUMENT',
 					});
 
@@ -152,7 +174,18 @@ jn.define('im/messenger/api/dialog-opener', (require, exports, module) => {
 				}
 
 				EntityReady.wait('chat').then(() => {
-					const openLineParamsEvent = `${EventType.messenger.openLineParams}::${options.userCode}`;
+					// eslint-disable-next-line init-declarations
+					let requestId;
+					if (shouldOpenByUserCode)
+					{
+						requestId = options.userCode;
+					}
+					else if (shouldOpenBySessionId)
+					{
+						requestId = options.sessionId;
+					}
+
+					const openLineParamsEvent = `${EventType.messenger.openLineParams}::${requestId}`;
 
 					const onOpenLineParams = (params) => {
 						BX.removeCustomEvent(openLineParamsEvent, onOpenLineParams);
@@ -181,10 +214,20 @@ jn.define('im/messenger/api/dialog-opener', (require, exports, module) => {
 
 					BX.addCustomEvent(openLineParamsEvent, onOpenLineParams);
 
-					BX.postComponentEvent(EventType.messenger.getOpenLineParams, [{
-						userCode: options.userCode,
+					const getOpenLineParams = {
 						dialogTitleParams: options.dialogTitleParams,
-					}], ComponentCode.imMessenger);
+					};
+
+					if (shouldOpenByUserCode)
+					{
+						getOpenLineParams.userCode = options.userCode;
+					}
+					else if (shouldOpenBySessionId)
+					{
+						getOpenLineParams.sessionId = options.sessionId;
+					}
+
+					BX.postComponentEvent(EventType.messenger.getOpenLineParams, [getOpenLineParams], ComponentCode.imMessenger);
 				});
 			});
 		}

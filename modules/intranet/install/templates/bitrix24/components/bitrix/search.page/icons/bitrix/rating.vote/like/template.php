@@ -18,7 +18,7 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 	</span>
 </span>
 <?$APPLICATION->AddHeadScript("/bitrix/js/main/rating_like.js");?>
-<script type="text/javascript">
+<script>
 	RatingLike.Set(
 		{
 			likeId: '<?=CUtil::JSEscape(htmlspecialcharsbx($arResult['VOTE_ID']))?>',

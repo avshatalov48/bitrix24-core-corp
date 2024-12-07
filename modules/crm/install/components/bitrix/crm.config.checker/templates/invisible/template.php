@@ -27,7 +27,7 @@ if (is_integer($config["lastTime"]))
 	$nextTime = max($period - (time() - $config["lastTime"]), 5);
 }
 ?>
-<script type="text/javascript">
+<script>
 	BX.ready(function(){
 		var sideSlider = function(period)
 		{

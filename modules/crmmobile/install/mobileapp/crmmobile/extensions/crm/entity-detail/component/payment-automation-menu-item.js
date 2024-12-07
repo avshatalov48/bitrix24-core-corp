@@ -20,8 +20,7 @@ jn.define('crm/entity-detail/component/payment-automation-menu-item', (require, 
 	const {
 		selectEntities,
 	} = require('crm/statemanager/redux/slices/stage-settings');
-
-	const pathToIcons = `${currentDomain}/bitrix/mobileapp/crmmobile/components/crm/crm.entity.details/icons/`;
+	const { Icon } = require('ui-system/blocks/icon');
 
 	/**
 	 * @class AutomationStageComponent
@@ -304,7 +303,7 @@ jn.define('crm/entity-detail/component/payment-automation-menu-item', (require, 
 	const getPaymentAutomationMenuItem = (entityId, entityTypeId, categoryId, isAutomationAvailable) => {
 		return {
 			id: 'paymentAutomationItem',
-			sectionCode: 'action',
+			sectionCode: 'top',
 			onItemSelected: () => {
 				if (isAutomationAvailable)
 				{
@@ -321,7 +320,7 @@ jn.define('crm/entity-detail/component/payment-automation-menu-item', (require, 
 				}
 			},
 			title: Loc.getMessage('M_CRM_ACTION_PAYMENT_AUTOMATION'),
-			iconUrl: `${pathToIcons}payment_automation.png`,
+			icon: Icon.PAYMENT,
 		};
 	};
 

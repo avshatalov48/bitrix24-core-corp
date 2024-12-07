@@ -4,7 +4,7 @@
 jn.define('im/messenger/lib/ui/base/item/empty-search-item', (require, exports, module) => {
 
 	const { Loc } = require('loc');
-	const Apptheme = require('apptheme');
+	const { Theme } = require('im/lib/theme');
 	class EmptySearchItem extends LayoutComponent
 	{
 		constructor(props = {})
@@ -25,7 +25,7 @@ jn.define('im/messenger/lib/ui/base/item/empty-search-item', (require, exports, 
 				},
 				Text({
 					style: {
-						color: Apptheme.colors.base3,
+						color: Theme.colors.base3,
 						fontSize: 18,
 					},
 					text: Loc.getMessage('MESSENGER_ITEM_EMPTY_SEARCH_TEXT'),

@@ -1,5 +1,6 @@
 <?php
 
+use Bitrix\Ldap\EncryptionType;
 use Bitrix\Ldap\Internal\Security\Encryption;
 
 IncludeModuleLangFile(__FILE__);
@@ -219,6 +220,8 @@ class CLdapServer
 		global $DB, $APPLICATION;
 		$APPLICATION->ResetException();
 
+		$encryptionType = EncryptionType::tryFrom((int)$arFields['CONNECTION_TYPE']) ?? EncryptionType::None;
+
 		if(is_set($arFields, "ACTIVE") && $arFields["ACTIVE"]!="Y")
 			$arFields["ACTIVE"]="N";
 
@@ -230,6 +233,8 @@ class CLdapServer
 
 		if(is_set($arFields, "USER_GROUP_ACCESSORY") && $arFields["USER_GROUP_ACCESSORY"]!="Y")
 			$arFields["USER_GROUP_ACCESSORY"]="N";
+
+		$arFields['PORT'] = empty($arFields['PORT']) ? (string)$encryptionType->port() : $arFields['PORT'];
 
 		if(!CLdapServer::CheckFields($arFields))
 			return false;
@@ -305,6 +310,12 @@ class CLdapServer
 
 		if(is_set($arFields, "SET_DEPARTMENT_HEAD") && $arFields["SET_DEPARTMENT_HEAD"]!="Y")
 			$arFields["SET_DEPARTMENT_HEAD"]="N";
+
+		if (empty($arFields['PORT']) && isset($arFields['CONNECTION_TYPE']))
+		{
+			$encryptionType = EncryptionType::tryFrom((int)$arFields['CONNECTION_TYPE']) ?? EncryptionType::None;
+			$arFields['PORT'] = (string)$encryptionType->port();
+		}
 
 		if(!CLdapServer::CheckFields($arFields, $ID))
 			return false;

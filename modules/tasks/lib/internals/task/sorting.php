@@ -113,10 +113,10 @@ class SortingTable extends TaskDataManager
 	 * @param array $items Items.
 	 * @return void
 	 */
-	public static function insertBatch(array $items): void
+	public static function insertBatch(array $items, bool $ignore = false): void
 	{
 		$tableName = static::getTableName();
-		Helper::insertBatch($tableName, $items);
+		Helper::insertBatch($tableName, $items, $ignore);
 	}
 
 	public static function insertIgnore(array $fields): void
@@ -279,7 +279,7 @@ class SortingTable extends TaskDataManager
 
 		[$items, $targetFound] = static::getSortedItems($result, $userId, $groupId, $prevTaskSort, $prevTaskId,
 			$sourceId, $targetId);
-		static::insertBatch($items);
+		static::insertBatch($items, true);
 
 		if (count($items) > 0)
 		{

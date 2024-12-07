@@ -2,18 +2,19 @@
 namespace Bitrix\Crm\Integration;
 
 use Bitrix\Crm\Entity\EntityEditorConfigScope;
+use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Extension;
-use Bitrix\Ui\EntityForm\Scope;
+use CCalendarSect;
 
 class Calendar
 {
     public const EVENT_FIELD_NAME = 'UF_CRM_CAL_EVENT';
     public const USER_FIELD_ENTITY_ID = 'CALENDAR_EVENT';
 
-	private static
-		$isResourceBookingEnabled,
-		$fieldsMap = array();
+	private static ?bool $isResourceBookingEnabled = null;
+	private static array $fieldsMap = [];
+	private static array $calendarEvents = [];
 
 	public static function isResourceBookingEnabled()
 	{
@@ -49,26 +50,26 @@ class Calendar
 	public static function showCalendarSpotlight()
 	{
 		global $USER;
-		$user_id = false;
+		$userId = false;
 		if (is_object($USER) && ((get_class($USER) === 'CUser') || ($USER instanceof CUser)))
 		{
-			$user_id = intval($USER->GetID());
+			$userId = intval($USER->GetID());
 		}
 
-		if (!self::isResourceBookingEnabled() || !$user_id)
+		if (!self::isResourceBookingEnabled() || !$userId)
 		{
 			return;
 		}
 
 		$spotlight = new \Bitrix\Main\UI\Spotlight("CRM_CALENDAR_VIEW");
-		if(!$spotlight->isViewed($user_id))
+		if(!$spotlight->isViewed($userId))
 		{
 			\CJSCore::init("spotlight");
 
 			$message = \CUtil::JSEscape(Loc::getMessage('CRM_CALENDAR_VIEW_SPOTLIGHT'));
 			$message .= ' <a href="javascript:void(0);" onclick="BX.Helper.show(\\\'redirect=detail&code=7481073\\\')">'.Loc::getMessage('CRM_CALENDAR_HELP_LINK').'</a>';
 			?>
-			<script type="text/javascript">
+			<script>
 				BX.ready(function()
 				{
 					var i, viewSwitcherListItems = document.querySelectorAll(".crm-view-switcher-list-item");
@@ -101,19 +102,19 @@ class Calendar
 	public static function showViewModeCalendarSpotlight($entityName)
 	{
 		global $USER;
-		$user_id = false;
+		$userId = false;
 		if (is_object($USER) && ((get_class($USER) === 'CUser') || ($USER instanceof CUser)))
 		{
-			$user_id = intval($USER->GetID());
+			$userId = intval($USER->GetID());
 		}
 
-		if (!self::isResourceBookingEnabled() || !$user_id)
+		if (!self::isResourceBookingEnabled() || !$userId)
 		{
 			return;
 		}
 
 		$spotlight = new \Bitrix\Main\UI\Spotlight("CRM_CALENDAR_VIEW_MODE_SELECTOR_".$entityName);
-		if(!$spotlight->isViewed($user_id))
+		if(!$spotlight->isViewed($userId))
 		{
 			\CJSCore::init("spotlight");
 			$message = $entityName == 'LEAD'
@@ -122,7 +123,7 @@ class Calendar
 
 			$message .= ' <a href="javascript:void(0);" onclick="BX.Helper.show(\\\'redirect=detail&code=18797220\\\')">'.Loc::getMessage('CRM_CALENDAR_HELP_LINK').'</a>';
 			?>
-			<script type="text/javascript">
+			<script>
 				BX.ready(function()
 				{
 					var viewMode = document.querySelector(".calendar-view-switcher-text-mode-inner");
@@ -396,5 +397,60 @@ class Calendar
 			$js = 'BX.Calendar.UserField.ResourceBooking.openExternalSettingsSlider('.\Bitrix\Main\Web\Json::encode($settingsParams).')';
 		}
 		return $js;
+	}
+
+	public static function getEvent(int $id, bool $checkPermissions = false): ?array
+	{
+		if (
+			empty(self::$calendarEvents[$id])
+			&& $id > 0
+			&& Loader::includeModule('calendar')
+		)
+		{
+			$calendarEvent = \CCalendarEvent::GetById($id, $checkPermissions);
+			if (is_array($calendarEvent))
+			{
+				self::$calendarEvents[$id] = $calendarEvent;
+			}
+		}
+
+		return self::$calendarEvents[$id] ?? null;
+	}
+
+	public static function getSectionListAvailableForUser(int $userId): array
+	{
+		if (!Loader::includeModule('calendar'))
+		{
+			return [];
+		}
+
+		return \CCalendar::getSectionListAvailableForUser($userId);
+	}
+
+	public static function getCrmSectionId(int $userId, bool $autoCreate = false): ?int
+	{
+		if (!Loader::includeModule('calendar'))
+		{
+			return null;
+		}
+
+		$crmSection = \CCalendar::GetCrmSection($userId, $autoCreate);
+
+		return is_string($crmSection) ? (int)$crmSection : null;
+	}
+
+	public static function createDefault(array $params = []): ?array
+	{
+		if (!Loader::includeModule('calendar'))
+		{
+			return null;
+		}
+
+		$result = CCalendarSect::CreateDefault([
+			'type' => $params['type'] ?? null,
+			'ownerId' => $params['ownerId'] ?? null,
+		]);
+
+		return is_array($result) ? $result : null;
 	}
 }

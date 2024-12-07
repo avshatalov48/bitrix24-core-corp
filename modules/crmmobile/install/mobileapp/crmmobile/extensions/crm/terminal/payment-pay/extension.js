@@ -19,6 +19,8 @@ jn.define('crm/terminal/payment-pay', (require, exports, module) => {
 	const { PaymentSystemService } = require('crm/terminal/services/payment-system');
 	const { PaymentService } = require('crm/terminal/services/payment');
 	const { ProductList } = require('crm/terminal/product-list');
+	const { WarningBlock } = require('layout/ui/warning-block');
+	const { ContextMenu } = require('layout/ui/context-menu');
 
 	const {
 		FieldManagerService,
@@ -70,6 +72,10 @@ jn.define('crm/terminal/payment-pay', (require, exports, module) => {
 
 			this.onPaymentMethodSelected = this.onPaymentMethodSelectedHandler.bind(this);
 			this.onBackToPaymentMethods = this.onBackToPaymentMethodsHandler.bind(this);
+
+			this.isPhoneConfirmed = props.isPhoneConfirmed ?? true;
+			this.connectedSiteId = props.connectedSiteId ?? 0;
+			this.phoneConfirmationWarningContexMenu = null;
 		}
 
 		render()
@@ -342,6 +348,42 @@ jn.define('crm/terminal/payment-pay', (require, exports, module) => {
 			});
 		}
 
+		openPhoneConfirmationWarning()
+		{
+			if (this.phoneConfirmationWarningContexMenu === null)
+			{
+				const menuProps = {
+					customSection: {
+						layout: View(
+							{
+								style: styles.warningBlockContainer,
+							},
+							new WarningBlock({
+								title: Loc.getMessage('M_CRM_TL_PAYMENT_PAY_PHONE_CONFIRMATION_WARNING_TITLE'),
+								description: Loc.getMessage('M_CRM_TL_PAYMENT_PAY_PHONE_CONFIRMATION_WARNING_DESCRIPTION'),
+								onClickCallback: () => {
+									qrauth.open({
+										title: Loc.getMessage('M_CRM_TL_PAYMENT_PAY_PHONE_CONFIRMATION_TITLE'),
+										redirectUrl: `/shop/stores/?force_verify_site_id=${this.connectedSiteId}`,
+										layout: this.phoneConfirmationWarningContexMenu.getActionParentWidget(),
+									});
+								},
+							}),
+						),
+						height: 180,
+					},
+					params: {
+						title: Loc.getMessage('M_CRM_TL_PAYMENT_PAY_PAYMENT_LINK_NOT_CONNECTED'),
+						showCancelButton: true,
+					},
+				};
+
+				this.phoneConfirmationWarningContexMenu = new ContextMenu(menuProps);
+			}
+
+			this.phoneConfirmationWarningContexMenu.show(this.layout);
+		}
+
 		renderSuccess()
 		{
 			return new PaymentResultSuccess({
@@ -555,6 +597,13 @@ jn.define('crm/terminal/payment-pay', (require, exports, module) => {
 
 		payWithPaymentLink()
 		{
+			if (!this.isPhoneConfirmed && this.connectedSiteId > 0)
+			{
+				this.openPhoneConfirmationWarning();
+
+				return;
+			}
+
 			this.setStep(Steps.loading);
 
 			this.paymentService
@@ -564,10 +613,34 @@ jn.define('crm/terminal/payment-pay', (require, exports, module) => {
 					Haptics.notifySuccess();
 					this.setStep(Steps.payment);
 				})
-				.catch(() => {
-					this.showError();
+				.catch((response) => {
+					const { connectedSiteId, isPhoneConfirmed } = response.data;
+
+					if (isPhoneConfirmed !== null)
+					{
+						this.isPhoneConfirmed = isPhoneConfirmed;
+					}
+
+					if (
+						connectedSiteId
+						&& connectedSiteId > 0
+						&& connectedSiteId !== this.connectedSiteId
+					)
+					{
+						this.connectedSiteId = connectedSiteId;
+					}
+
 					Haptics.notifyFailure();
 					this.setStep(Steps.view);
+
+					if (!this.isPhoneConfirmed && this.connectedSiteId > 0)
+					{
+						this.openPhoneConfirmationWarning();
+
+						return;
+					}
+
+					this.showError();
 				});
 		}
 
@@ -850,6 +923,9 @@ jn.define('crm/terminal/payment-pay', (require, exports, module) => {
 			marginTop: PAYMENT_METHODS_CONTAINER_MARGIN_TOP,
 			marginBottom: PAYMENT_METHODS_CONTAINER_MARGIN_BOTTOM,
 			marginHorizontal: 38,
+		},
+		warningBlockContainer: {
+			margin: 10,
 		},
 		paymentMethodContainer: (isFirst) => {
 			return {

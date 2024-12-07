@@ -22,6 +22,16 @@ jn.define('im/messenger/db/repository/file', (require, exports, module) => {
 			this.fileTable = new FileTable();
 		}
 
+		/**
+		 * @param {number} chatId
+		 */
+		async deleteByChatId(chatId)
+		{
+			return this.fileTable.delete({
+				chatId,
+			});
+		}
+
 		async saveFromModel(fileList)
 		{
 			const fileListToAdd = [];

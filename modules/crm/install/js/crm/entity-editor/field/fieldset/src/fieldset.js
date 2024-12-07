@@ -14,6 +14,8 @@ export class EntityEditorFieldsetField extends BX.UI.EntityEditorField
 		this._addEmptyValue = false;
 
 		this._nextIndex = 0;
+
+		this._isDeleted = false;
 	}
 
 	static create(id, settings)
@@ -172,6 +174,33 @@ export class EntityEditorFieldsetField extends BX.UI.EntityEditorField
 			}
 		);
 		entityEditor._enableCloseConfirmation = false;
+
+		// Set CRM attribute manager
+		const settings = this.getAttributeManagerSettings();
+		if (BX.Type.isPlainObject(settings))
+		{
+			const attributeManager = BX.Crm.EntityFieldAttributeManager.create(
+				entityEditor.getId() + "_ATTR_MANAGER",
+				{
+					entityTypeId: BX.prop.getInteger(
+						settings,
+						"ENTITY_TYPE_ID",
+						BX.CrmEntityType.enumeration.undefined
+					),
+					entityScope: BX.prop.getString(settings, "ENTITY_SCOPE", ""),
+					isPermitted: BX.prop.getBoolean(settings, "IS_PERMITTED", true),
+					isPhaseDependent: BX.prop.getBoolean(settings, "IS_PHASE_DEPENDENT", true),
+					isAttrConfigButtonHidden: BX.prop.getBoolean(
+						settings, "IS_ATTR_CONFIG_BUTTON_HIDDEN", true
+					),
+					lockScript: BX.prop.getString(settings, "LOCK_SCRIPT", ""),
+					captions: BX.prop.getObject(settings, "CAPTIONS", {}),
+					entityPhases: BX.prop.getArray(settings, 'ENTITY_PHASES', null)
+				}
+			);
+			entityEditor.setAttributeManager(attributeManager);
+		}
+
 		EventEmitter.subscribe(
 			entityEditor,
 			'onControlChanged',
@@ -188,6 +217,7 @@ export class EntityEditorFieldsetField extends BX.UI.EntityEditorField
 			[
 				'onControlMove',
 				'onFieldModify',
+				'onFieldModifyAttributeConfigs',
 				'onControlAdd',
 				'onControlRemove',
 				'onSchemeSave',
@@ -202,6 +232,7 @@ export class EntityEditorFieldsetField extends BX.UI.EntityEditorField
 
 		if(values.hasOwnProperty("DELETED") && values["DELETED"] === 'Y')
 		{
+			this._isDeleted = true;
 			this.layoutDeletedValue(entityEditor, id);
 		}
 
@@ -265,6 +296,7 @@ export class EntityEditorFieldsetField extends BX.UI.EntityEditorField
 			"onControlAdd": "add",
 			"onControlMove": "move",
 			"onFieldModify": "modify",
+			"onFieldModifyAttributeConfigs": "modifyAttributes",
 			"onControlRemove": "remove",
 			"onSchemeSave": "saveScheme",
 		};
@@ -304,7 +336,7 @@ export class EntityEditorFieldsetField extends BX.UI.EntityEditorField
 						const editor = this._entityEditorList[index];
 						if (editor instanceof BX.UI.EntityEditor && editor !== target)
 						{
-							if (eventMap[eventName] === "modify")
+							if (eventMap[eventName] === "modify" || eventMap[eventName] === "modifyAttributes")
 							{
 								setTimeout(() => {
 									const field = BX.prop.get(eventParams, "field", null);
@@ -317,10 +349,59 @@ export class EntityEditorFieldsetField extends BX.UI.EntityEditorField
 										);
 										if (control)
 										{
-											const label = BX.prop.getString(eventParams, "label", "");
-											if (Type.isStringFilled(label))
+											let needRefreshTitleLayout = false;
+											if (eventMap[eventName] === "modifyAttributes")
 											{
-												control.getSchemeElement().setTitle(label);
+												const exists = [];
+												const configs = BX.prop.getArray(eventParams, "attrConfigs", null);
+												if (Type.isArray(configs) && configs.length > 0)
+												{
+													for(let i = 0, length = configs.length; i < length; i++)
+													{
+														const config = configs[i];
+														const typeId = BX.prop.getInteger(
+															config,
+															"typeId",
+															BX.UI.EntityFieldAttributeType.undefined
+														);
+														if (typeId !== BX.UI.EntityFieldAttributeType.undefined)
+														{
+															exists.push(typeId);
+															control.getSchemeElement()
+																.setAttributeConfiguration(config)
+															;
+														}
+													}
+												}
+												for (let index in BX.UI.EntityFieldAttributeType)
+												{
+													if (BX.UI.EntityFieldAttributeType.hasOwnProperty(index))
+													{
+														const typeId = BX.UI.EntityFieldAttributeType[index];
+														if (
+															typeId !== BX.UI.EntityFieldAttributeType.undefined
+															&& exists.indexOf(typeId) < 0
+														)
+														{
+															control.getSchemeElement()
+																.removeAttributeConfiguration(typeId)
+															;
+														}
+													}
+												}
+												needRefreshTitleLayout = true;
+											}
+											else
+											{
+												const label = BX.prop.getString(eventParams, "label", "");
+												if (Type.isStringFilled(label))
+												{
+													control.getSchemeElement().setTitle(label);
+													needRefreshTitleLayout = true;
+												}
+											}
+											if (needRefreshTitleLayout)
+											{
 												control.refreshTitleLayout();
 											}
 										}
@@ -402,6 +483,11 @@ export class EntityEditorFieldsetField extends BX.UI.EntityEditorField
 		EventEmitter.unsubscribeAll(editor);
 	}
 
+	isDeleted()
+	{
+		return this._isDeleted;
+	}
+
 	layoutDeletedValue(entityEditor, id)
 	{
 		if (entityEditor instanceof BX.UI.EntityEditor)
@@ -429,6 +515,7 @@ export class EntityEditorFieldsetField extends BX.UI.EntityEditorField
 		{
 			this.unsubscribeEditorEvents(this._entityEditorList[id]);
 
+			this._isDeleted = true;
 			this.layoutDeletedValue(this._entityEditorList[id], id);
 			this.markAsChanged();
 		}
@@ -451,7 +538,7 @@ export class EntityEditorFieldsetField extends BX.UI.EntityEditorField
 
 		this.getModel().setField(this.getName(), value);
 
-		this._entityEditorList[id] = this.createEntityEditor(id);
+		this._entityEditorList[id] = this.createEntityEditor(id, {}, this.prepareEntityEditorContext());
 		this.markAsChanged();
 
 		return this._entityEditorList[id];
@@ -648,7 +735,11 @@ export class EntityEditorFieldsetField extends BX.UI.EntityEditorField
 			{
 				if (!this._entityEditorList[item.ID])
 				{
-					this._entityEditorList[item.ID] = this.createEntityEditor(item.ID, item);
+					this._entityEditorList[item.ID] = this.createEntityEditor(
+						item.ID,
+						item,
+						this.prepareEntityEditorContext()
+					);
 				}
 			}
 		}
@@ -656,6 +747,61 @@ export class EntityEditorFieldsetField extends BX.UI.EntityEditorField
 		{
 			this.addEmptyValue();
 		}
+	}
+
+	getAttributeManagerSettings()
+	{
+		return BX.prop.getObject(this._config, "ATTRIBUTE_CONFIG", null);
+	}
+
+	getResolverProperty()
+	{
+		return BX.prop.getObject(this._settings, "resolverProperty", null);
+	}
+
+	getActiveControlById(id)
+	{
+		for (let pseudoId in this._entityEditorList)
+		{
+			if (this._entityEditorList.hasOwnProperty(pseudoId))
+			{
+				const control = this._entityEditorList[pseudoId].getActiveControlById(id, true);
+				if (control)
+				{
+					return control;
+				}
+			}
+		}
+	}
+
+	validate(result)
+	{
+		if(this._isDeleted || this._mode !== BX.UI.EntityEditorMode.edit)
+		{
+			return true;
+		}
+
+		const validator = BX.UI.EntityAsyncValidator.create();
+		for (let pseudoId in this._entityEditorList)
+		{
+			if (this._entityEditorList.hasOwnProperty(pseudoId))
+			{
+				const field = this._entityEditorList[pseudoId];
+				if(field.getMode() !== BX.UI.EntityEditorMode.edit)
+				{
+					continue;
+				}
+
+				validator.addResult(field.validate(result));
+			}
+		}
+
+		return validator.validate();
+	}
+
+	prepareEntityEditorContext()
+	{
+		return {};
 	}
 }
 

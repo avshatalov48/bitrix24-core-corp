@@ -2,15 +2,19 @@
 
 namespace Bitrix\Crm\Component\EntityDetails\Traits;
 
+use Bitrix\BIConnector\Integration\Crm\Contact;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\UserField\Router;
 
 trait InitializeUFConfig
 {
 	abstract protected function getCategoryId();
 
+	//@codingStandardsIgnoreStart
 	private function initializeUFConfig(): void
 	{
-		$enableUfCreation = \CCrmAuthorizationHelper::CheckConfigurationUpdatePermission();
+		$entityTypeId = $this->factory->getEntityTypeId();
+		$enableUfCreation = Container::getInstance()->getUserPermissions($this->userID)->isAdminForEntity($entityTypeId);
 
 		$this->arResult['ENABLE_USER_FIELD_CREATION'] = $enableUfCreation;
 		$this->arResult['USER_FIELD_ENTITY_ID'] = $this->userFieldEntityID;
@@ -33,6 +37,7 @@ trait InitializeUFConfig
 		$this->arResult['USER_FIELD_CREATE_PAGE_URL'] = $ufCreatePageUrl;
 		$this->arResult['USER_FIELD_FILE_URL_TEMPLATE'] = $this->getFileUrlTemplate();
 	}
+	//@codingStandardsIgnoreEnd
 
 	protected function getFileUrlTemplate(): string
 	{

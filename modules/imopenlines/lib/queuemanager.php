@@ -2,17 +2,10 @@
 namespace Bitrix\ImOpenLines;
 
 use Bitrix\Main\Loader;
-use Bitrix\Main\UserTable;
-use Bitrix\Main\Application;
-use Bitrix\Main\Config\Option;
-use Bitrix\Main\Localization\Loc;
-
 use Bitrix\Im\User;
-
 use Bitrix\ImOpenLines\Model\QueueTable;
 use Bitrix\ImOpenLines\Model\ConfigQueueTable;
-
-Loc::loadMessages(__FILE__);
+use Bitrix\ImOpenLines\Integrations\HumanResources\StructureService;
 
 /**
  * Class QueueManager
@@ -20,12 +13,13 @@ Loc::loadMessages(__FILE__);
  */
 class QueueManager
 {
-	private $error = null;
-	private $idLine = null;
+	private ?BasicError $error = null;
+	private ?int $lineId = null;
 
+	/** @var QueueManager[] */
 	protected static $instance = [];
-	protected static $idIblockStructure = 0;
-	protected static $structureDepartments = [];
+
+
 
 	public const EVENT_QUEUE_OPERATORS_ADD = 'OnQueueOperatorsAdd';
 	public const EVENT_QUEUE_OPERATORS_DELETE = 'OnQueueOperatorsDelete';
@@ -37,6 +31,35 @@ class QueueManager
 	];
 
 	/**
+	 * QueueManager constructor.
+	 *
+	 * @param $lineId
+	 */
+	public function __construct($lineId)
+	{
+		$this->error = new BasicError(null, '', '');
+		$this->lineId = (int)$lineId;
+		Loader::includeModule('im');
+	}
+
+	/**
+	 * @param int $lineId
+	 * @return self
+	 */
+	public static function getInstance($lineId): self
+	{
+		if (
+			empty(self::$instance[$lineId])
+			|| !(self::$instance[$lineId] instanceof self)
+		)
+		{
+			self::$instance[$lineId] = new self($lineId);
+		}
+
+		return self::$instance[$lineId];
+	}
+
+	/**
 	 * @param $fields
 	 * @return bool
 	 */
@@ -46,7 +69,7 @@ class QueueManager
 
 		foreach ($fields as $fieldsEntity)
 		{
-			if(!(
+			if (!(
 				!empty($fieldsEntity['ENTITY_ID']) &&
 				is_numeric($fieldsEntity['ENTITY_ID']) &&
 				$fieldsEntity['ENTITY_ID'] > 0 &&
@@ -54,6 +77,7 @@ class QueueManager
 			))
 			{
 				$result = false;
+				break;
 			}
 		}
 
@@ -68,28 +92,30 @@ class QueueManager
 	{
 		$result = true;
 
-		if(
+		if (
 			!empty($fields)
 			&& is_array($fields)
 		)
 		{
 			foreach ($fields as $fieldsEntity)
 			{
-				if(
+				if (
 					$result === true
 					&& !empty($fieldsEntity['ENTITY_ID'])
 				)
 				{
-					if($fieldsEntity['ENTITY_TYPE'] === 'user')
+					if ($fieldsEntity['ENTITY_TYPE'] === 'user')
 					{
 						$result = false;
+						break;
 					}
-					elseif($fieldsEntity['ENTITY_TYPE'] === 'department')
+					elseif ($fieldsEntity['ENTITY_TYPE'] === 'department')
 					{
-						$usersDepartment = self::getUsersDepartment($fieldsEntity['ENTITY_ID']);
-						if($usersDepartment->fetch())
+						$usersDepartment = StructureService::getInstance()->getDepartmentUserIds($fieldsEntity['ENTITY_ID']);
+						if (!empty($usersDepartment))
 						{
 							$result = false;
+							break;
 						}
 					}
 				}
@@ -105,18 +131,11 @@ class QueueManager
 	 */
 	public static function validateQueueTypeField($type): bool
 	{
-		$result = false;
-
-		if(
-			!empty($type) &&
-			is_string($type) &&
-			in_array($type, self::validQueueTypeField, true)
-		)
-		{
-			$result = true;
-		}
-
-		return $result;
+		return
+			!empty($type)
+			&& is_string($type)
+			&& in_array($type, self::validQueueTypeField, true)
+		;
 	}
 
 	/**
@@ -157,7 +176,7 @@ class QueueManager
 			'ENTITY_TYPE' => $currentFields['ENTITY_TYPE'],
 		];
 
-		if(!empty(array_diff_assoc($updateFields, $currentFields)))
+		if (!empty(array_diff_assoc($updateFields, $currentFields)))
 		{
 			$result = $updateFields;
 		}
@@ -182,7 +201,7 @@ class QueueManager
 			'DEPARTMENT_ID' => $departmentId
 		];
 
-		if($usersFields !== false)
+		if ($usersFields !== false)
 		{
 			if (!empty($usersFields[$userId]['USER_NAME']))
 			{
@@ -223,7 +242,7 @@ class QueueManager
 			'DEPARTMENT_ID' => $departmentId
 		];
 
-		if($usersFields !== false)
+		if ($usersFields !== false)
 		{
 			if (!empty($usersFields[$userId]['USER_NAME']))
 			{
@@ -258,11 +277,11 @@ class QueueManager
 			{
 				$dataUpdate['USER_AVATAR_ID'] = 0;
 			}
-			if(
-				!empty($currentUser['USER_AVATAR_ID']) &&
-				(
-					empty($dataUpdate['USER_AVATAR_ID']) ||
-					$dataUpdate['USER_AVATAR_ID'] != $currentUser['USER_AVATAR_ID']
+			if (
+				!empty($currentUser['USER_AVATAR_ID'])
+				&& (
+					empty($dataUpdate['USER_AVATAR_ID'])
+					|| $dataUpdate['USER_AVATAR_ID'] != $currentUser['USER_AVATAR_ID']
 				)
 			)
 			{
@@ -270,7 +289,7 @@ class QueueManager
 			}
 		}
 
-		if($usersFields === false)
+		if ($usersFields === false)
 		{
 			$currentUser = [
 				'SORT' => $currentUser['SORT'],
@@ -291,7 +310,7 @@ class QueueManager
 			];
 		}
 
-		if(!empty(array_diff_assoc($dataUpdate, $currentUser)))
+		if (!empty(array_diff_assoc($dataUpdate, $currentUser)))
 		{
 			$result = $dataUpdate;
 		}
@@ -300,207 +319,14 @@ class QueueManager
 	}
 
 	/**
-	 * @return int
-	 */
-	public static function getIdIblockStructure(): int
-	{
-		if(empty(self::$idIblockStructure))
-		{
-			self::$idIblockStructure = (int)Option::get('intranet', 'iblock_structure', 0);
-		}
-		return self::$idIblockStructure;
-	}
-
-	/**
-	 * @return array
-	 */
-	protected static function getStructureDepartments(): array
-	{
-		if(
-			empty(self::$structureDepartments) &&
-			Loader::includeModule('iblock')
-		)
-		{
-			$departmentIblockId = self::getIdIblockStructure();
-
-			if($departmentIblockId > 0)
-			{
-				$raw = \CIBlockSection::GetList(
-					['left_margin'=>'asc', 'SORT'=>'ASC'],
-					['ACTIVE'=>'Y', 'IBLOCK_ID'=>$departmentIblockId],
-					false,
-					['ID', 'NAME', 'DEPTH_LEVEL', 'UF_HEAD', 'IBLOCK_SECTION_ID']
-				);
-
-				while($row = $raw->GetNext(true, false))
-				{
-					self::$structureDepartments[$row['ID']] = [
-						'id' => (int)$row['ID'],
-						'name' => (string)$row['NAME'],
-						'depthLevel' => (int)$row['DEPTH_LEVEL'],
-						'headUserId' => (int)$row['UF_HEAD'],
-						'parent' => (int)$row['IBLOCK_SECTION_ID'],
-					];
-				}
-			}
-		}
-
-		return self::$structureDepartments;
-	}
-
-	/**
-	 * @return true
-	 */
-	public static function resetCacheStructureDepartments(): bool
-	{
-		self::$structureDepartments = [];
-
-		return true;
-	}
-
-	/**
-	 * @param $idDepartment
-	 * @param false $recursion
-	 * @param false $includeCurrentDepartment
-	 * @return array
-	 */
-	public static function getChildDepartments($idDepartment, $recursion = false, $includeCurrentDepartment = false): array
-	{
-		$result = [];
-		$idDepartment = (int)$idDepartment;
-
-		foreach (self::getStructureDepartments() as $department)
-		{
-			if($department['parent'] === $idDepartment)
-			{
-				$result[$department['id']] = $department;
-			}
-		}
-
-		if(
-			$recursion === true &&
-			!empty($result)
-		)
-		{
-			foreach ($result as $department)
-			{
-				$subordinateDepartments = self::getChildDepartments($department['id'], $recursion, false);
-				if(!empty($subordinateDepartments))
-				{
-					foreach ($subordinateDepartments as $id=>$subordinateDepartment)
-					{
-						$result[$id] = $subordinateDepartment;
-					}
-				}
-			}
-		}
-
-		if($includeCurrentDepartment === true)
-		{
-			$result[$idDepartment] = self::getStructureDepartments()[$idDepartment];
-		}
-
-		return $result;
-	}
-
-	/**
-	 * @param $idDepartment
-	 * @param false $recursion
-	 * @param false $includeCurrentDepartment
-	 * @return array
-	 */
-	public static function getParentDepartments($idDepartment, $recursion = false, $includeCurrentDepartment = false): array
-	{
-		$result = [];
-		$idDepartment = (int)$idDepartment;
-
-		$structureDepartments = self::getStructureDepartments();
-		$currentDepartment = $structureDepartments[$idDepartment];
-
-		foreach ($structureDepartments as $department)
-		{
-			if($department['id'] === $currentDepartment['parent'])
-			{
-				$result[$department['id']] = $department;
-			}
-		}
-
-		if(
-			$recursion === true &&
-			!empty($result)
-		)
-		{
-			foreach ($result as $department)
-			{
-				$parentDepartments = self::getParentDepartments($department['id'], $recursion, false);
-				if(!empty($parentDepartments))
-				{
-					foreach ($parentDepartments as $id=>$parentDepartment)
-					{
-						$result[$id] = $parentDepartment;
-					}
-				}
-			}
-		}
-
-		if($includeCurrentDepartment === true)
-		{
-			$result[$idDepartment] = $currentDepartment;
-		}
-
-		return $result;
-	}
-
-	/**
-	 * @param int $departmentId
-	 * @param string[] $select
-	 * @param bool $excludeHead
-	 */
-	public static function getUsersDepartment($departmentId, array $select = ['ID'], bool $excludeHead = true)
-	{
-		$query = UserTable::query();
-
-		$query->setSelect($select);
-
-		$departments = self::getChildDepartments($departmentId, true, true);
-		$subDepartments = [];
-		$excludeUsers = [];
-		foreach ($departments as $department)
-		{
-			$subDepartments[] = $department['id'];
-			if ($excludeHead && $department['headUserId'] > 0)
-			{
-				$excludeUsers[] = $department['headUserId'];
-			}
-		}
-		$filter = [
-			'UF_DEPARTMENT' => $subDepartments,
-			'=ACTIVE' => 'Y',
-			'!=BLOCKED' => 'Y'
-		];
-		if ($excludeHead && !empty($excludeUsers))
-		{
-			$filter['!=ID'] = $excludeUsers;
-		}
-		$query->addFilter(null, $filter);
-
-		$query->setCacheTtl(3600);
-
-		$query->setOrder(['ID' => 'asc']);
-
-		return $query->exec();
-	}
-
-	/**
 	 * @param $userId
 	 * @return bool
 	 */
 	public static function isValidUser($userId): bool
 	{
-		$result = false;
-
-		if(
-			$userId > 0 &&
+		return
+			$userId > 0
+			&&
 			(
 				!Loader::includeModule('im') ||
 				(
@@ -508,13 +334,9 @@ class QueueManager
 					&& User::getInstance($userId)->isActive()
 				)
 			)
-		)
-		{
-			$result = true;
-		}
-
-		return $result;
+		;
 	}
+
 	/**
 	 * @param $queue
 	 * @return array
@@ -523,19 +345,19 @@ class QueueManager
 	{
 		$result = [];
 
-		if(
-			!empty($queue) &&
-			is_array($queue)
+		if (
+			!empty($queue)
+			&& is_array($queue)
 		)
 		{
 			foreach ($queue as $entity)
 			{
-				if(self::validateQueueTypeField($entity['type']))
+				if (self::validateQueueTypeField($entity['type']))
 				{
-					if(
-						(string)$entity['type'] === 'user' &&
-						empty($result[$entity['id']]) &&
-						self::isValidUser($entity['id'])
+					if (
+						(string)$entity['type'] === 'user'
+						&& empty($result[$entity['id']])
+						&& self::isValidUser($entity['id'])
 					)
 					{
 						$result[$entity['id']] = [
@@ -544,14 +366,14 @@ class QueueManager
 							'department' => '0'
 						];
 					}
-					elseif((string)$entity['type'] === 'department')
+					elseif ((string)$entity['type'] === 'department')
 					{
-						$usersDepartment = self::getUsersDepartment($entity['id']);
-						while ($userId = $usersDepartment->fetch()['ID'])
+						$usersDepartment = StructureService::getInstance()->getDepartmentUserIds($entity['id']);
+						foreach ($usersDepartment as $userId)
 						{
-							if(
-								empty($result[$userId]) &&
-								self::isValidUser($userId)
+							if (
+								empty($result[$userId])
+								&& self::isValidUser($userId)
 							)
 							{
 								$result[$userId] = [
@@ -587,35 +409,6 @@ class QueueManager
 	}
 
 	/**
-	 * @param $idLine
-	 * @return QueueManager
-	 * @throws \Bitrix\Main\LoaderException
-	 */
-	public static function getInstance($idLine): QueueManager
-	{
-		if (
-			empty(self::$instance[$idLine]) ||
-			!(self::$instance[$idLine] instanceof self)
-		)
-		{
-			self::$instance[$idLine] = new self($idLine);
-		}
-
-		return self::$instance[$idLine];
-	}
-
-	/**
-	 * QueueManager constructor.
-	 * @param $idLine
-	 */
-	public function __construct($idLine)
-	{
-		$this->error = new BasicError(null, '', '');
-		$this->idLine = (int)$idLine;
-		Loader::includeModule('im');
-	}
-
-	/**
 	 * @return array
 	 */
 	protected function getDefaultUsers(): array
@@ -623,7 +416,7 @@ class QueueManager
 		$result = [];
 		$userId = User::getInstance()->getId();
 
-		if(!self::isValidUser($userId))
+		if (!self::isValidUser($userId))
 		{
 			$userId = 0;
 		}
@@ -631,7 +424,7 @@ class QueueManager
 		if (!empty($userId))
 		{
 			$data = [
-				'CONFIG_ID' => $this->idLine,
+				'CONFIG_ID' => $this->lineId,
 				'USER_ID' => $userId,
 			];
 			$userFields = $this->getUserFields($userId);
@@ -663,7 +456,7 @@ class QueueManager
 				'ENTITY_ID',
 				'ENTITY_TYPE'
 			],
-			'filter' => ['=CONFIG_ID' => $this->idLine],
+			'filter' => ['=CONFIG_ID' => $this->lineId],
 			'order' => [
 				'SORT' => 'ASC',
 				'ID' => 'ASC'
@@ -676,7 +469,7 @@ class QueueManager
 		}
 
 		//TODO: For migration
-		if(count($result) === 0)
+		if (count($result) === 0)
 		{
 			$raw = Queue::getList([
 				'select' => [
@@ -684,7 +477,7 @@ class QueueManager
 					'USER_ID'
 				],
 				'filter' => [
-					'=CONFIG_ID' => $this->idLine,
+					'=CONFIG_ID' => $this->lineId,
 					'=USER.ACTIVE' => 'Y'
 				],
 				'order' => [
@@ -697,13 +490,13 @@ class QueueManager
 			{
 				$fieldsAdd = [
 					'SORT' => $row['SORT'],
-					'CONFIG_ID' => $this->idLine,
+					'CONFIG_ID' => $this->lineId,
 					'ENTITY_ID' => $row['USER_ID'],
 					'ENTITY_TYPE' => 'user',
 				];
 
 				$resultAdd = ConfigQueueTable::add($fieldsAdd);
-				if($resultAdd->isSuccess())
+				if ($resultAdd->isSuccess())
 				{
 					$idAdd = $resultAdd->getId();
 					$result[$idAdd] = array_merge(['ID' => $idAdd], $fieldsAdd);
@@ -728,13 +521,13 @@ class QueueManager
 		foreach ($currentItems as $currentItem)
 		{
 			$delete = false;
-			if(!empty($items))
+			if (!empty($items))
 			{
 				foreach ($items as $id=>$item)
 				{
-					if(
-						(int)$currentItem['ENTITY_ID'] === (int)$item['ENTITY_ID'] &&
-						$currentItem['ENTITY_TYPE'] === $item['ENTITY_TYPE']
+					if (
+						(int)$currentItem['ENTITY_ID'] === (int)$item['ENTITY_ID']
+						&& $currentItem['ENTITY_TYPE'] === $item['ENTITY_TYPE']
 					)
 					{
 						$delete = true;
@@ -743,7 +536,7 @@ class QueueManager
 					}
 				}
 			}
-			if($delete === false)
+			if ($delete === false)
 			{
 				$resultItems[] = [
 					'ENTITY_ID' => $currentItem['ENTITY_ID'],
@@ -759,10 +552,6 @@ class QueueManager
 
 	/**
 	 * @return bool
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public function refresh()
 	{
@@ -790,7 +579,7 @@ class QueueManager
 	{
 		foreach ($fields as $cell=>$field)
 		{
-			if(!is_array($field))
+			if (!is_array($field))
 			{
 				$fields[$cell] = [
 					'ENTITY_TYPE' => 'user',
@@ -815,19 +604,17 @@ class QueueManager
 
 		foreach ($fields as $cell => $fieldsEntity)
 		{
-			if(
-				$fieldsEntity['ENTITY_TYPE'] === 'user' &&
-				!self::isValidUser($fieldsEntity['ENTITY_ID'])
+			if (
+				$fieldsEntity['ENTITY_TYPE'] === 'user'
+				&& !self::isValidUser($fieldsEntity['ENTITY_ID'])
 			)
 			{
 				unset($fields[$cell], $usersFields[$fieldsEntity['ENTITY_ID']]);
 			}
 		}
 
-		if(self::validateQueueFields($fields))
+		if (self::validateQueueFields($fields))
 		{
-			$taggedCache = Application::getInstance()->getTaggedCache();
-
 			$queueUsersBefore = [];
 			$queueUsersAfter = [];
 
@@ -841,7 +628,7 @@ class QueueManager
 
 			$usersRaw = QueueTable::getList([
 				'filter' => [
-					'=CONFIG_ID' => $this->idLine
+					'=CONFIG_ID' => $this->lineId
 				],
 				'order' => [
 					'SORT' => 'ASC',
@@ -857,7 +644,7 @@ class QueueManager
 
 			$configQueueRaw = ConfigQueueTable::getList([
 				'filter' => [
-					'=CONFIG_ID' => $this->idLine
+					'=CONFIG_ID' => $this->lineId
 				],
 				'order' => [
 					'SORT' => 'ASC',
@@ -875,73 +662,72 @@ class QueueManager
 			$newUsers = [];
 			foreach ($fields as $fieldsEntity)
 			{
-				if(!empty($currentConfigQueue[$fieldsEntity['ENTITY_TYPE']][$fieldsEntity['ENTITY_ID']]))
+				if (!empty($currentConfigQueue[$fieldsEntity['ENTITY_TYPE']][$fieldsEntity['ENTITY_ID']]))
 				{
 					unset($deleteQueue[$fieldsEntity['ENTITY_TYPE']][$fieldsEntity['ENTITY_ID']]);
 
 					$updateFields = self::getDataUpdateConfigQueue($fieldsEntity, $currentConfigQueue[$fieldsEntity['ENTITY_TYPE']][$fieldsEntity['ENTITY_ID']], $numQueue);
-					if(!empty($updateFields))
+					if (!empty($updateFields))
 					{
 						$updateQueue[$currentConfigQueue[$fieldsEntity['ENTITY_TYPE']][$fieldsEntity['ENTITY_ID']]['ID']] = $updateFields;
 					}
 				}
 				else
 				{
-					$addQueue[] = self::getDataAddConfigQueue($this->idLine, $fieldsEntity, $numQueue);
+					$addQueue[] = self::getDataAddConfigQueue($this->lineId, $fieldsEntity, $numQueue);
 				}
 
-				if($fieldsEntity['ENTITY_TYPE'] === 'user')
+				if ($fieldsEntity['ENTITY_TYPE'] === 'user')
 				{
-					if(empty($newUsers[$fieldsEntity['ENTITY_ID']]))
+					if (empty($newUsers[$fieldsEntity['ENTITY_ID']]))
 					{
 						$queueUsersAfter[] = $fieldsEntity['ENTITY_ID'];
 
-						if(!empty($currentUsers[$fieldsEntity['ENTITY_ID']]))
+						if (!empty($currentUsers[$fieldsEntity['ENTITY_ID']]))
 						{
 							unset($deleteUsers[$fieldsEntity['ENTITY_ID']]);
 
 							$updateFields = self::getDataUpdateUser($fieldsEntity['ENTITY_ID'], $currentUsers[$fieldsEntity['ENTITY_ID']], $usersFields, $numUser);
 
-							if(!empty($updateFields))
+							if (!empty($updateFields))
 							{
 								$updateUsers[$currentUsers[$fieldsEntity['ENTITY_ID']]['ID']] = $updateFields;
 							}
 						}
 						else
 						{
-							$addUsers[] = self::getDataAddUser($this->idLine, $fieldsEntity['ENTITY_ID'], $usersFields, $numUser);
+							$addUsers[] = self::getDataAddUser($this->lineId, $fieldsEntity['ENTITY_ID'], $usersFields, $numUser);
 						}
 					}
 
 					$newUsers[$fieldsEntity['ENTITY_ID']] = true;
 					$numUser++;
 				}
-				elseif($fieldsEntity['ENTITY_TYPE'] === 'department')
+				elseif ($fieldsEntity['ENTITY_TYPE'] === 'department')
 				{
-					$usersDepartment = self::getUsersDepartment($fieldsEntity['ENTITY_ID']);
-
-					while ($userId = $usersDepartment->fetch()['ID'])
+					$usersDepartment = StructureService::getInstance()->getDepartmentUserIds($fieldsEntity['ENTITY_ID']);
+					foreach ($usersDepartment as $userId)
 					{
-						if(self::isValidUser($userId))
+						if (self::isValidUser($userId))
 						{
-							if(empty($newUsers[$userId]))
+							if (empty($newUsers[$userId]))
 							{
 								$queueUsersAfter[] = $userId;
 
-								if(!empty($currentUsers[$userId]))
+								if (!empty($currentUsers[$userId]))
 								{
 									unset($deleteUsers[$userId]);
 
 									$updateFields = self::getDataUpdateUser($userId, $currentUsers[$userId], $usersFields, $numUser, $fieldsEntity['ENTITY_ID']);
 
-									if(!empty($updateFields))
+									if (!empty($updateFields))
 									{
 										$updateUsers[$currentUsers[$userId]['ID']] = $updateFields;
 									}
 								}
 								else
 								{
-									$addUsers[] = self::getDataAddUser($this->idLine, $userId, $usersFields, $numUser, $fieldsEntity['ENTITY_ID']);
+									$addUsers[] = self::getDataAddUser($this->lineId, $userId, $usersFields, $numUser, $fieldsEntity['ENTITY_ID']);
 								}
 							}
 
@@ -954,25 +740,25 @@ class QueueManager
 				$numQueue++;
 			}
 
-			if(empty($fields))
+			if (empty($fields))
 			{
 				$addUsers = $this->getDefaultUsers();
 
-				if(!empty($addUsers))
+				if (!empty($addUsers))
 				{
 					foreach ($addUsers as $addUser)
 					{
-						$addQueue[] = self::getDataAddConfigQueue($this->idLine, ['ENTITY_TYPE' => 'user', 'ENTITY_ID' => $addUser['USER_ID']], $numQueue);
+						$addQueue[] = self::getDataAddConfigQueue($this->lineId, ['ENTITY_TYPE' => 'user', 'ENTITY_ID' => $addUser['USER_ID']], $numQueue);
 						$numQueue++;
 					}
 				}
 			}
 
-			if(!empty($deleteQueue))
+			if (!empty($deleteQueue))
 			{
 				foreach ($deleteQueue as $typeEntity)
 				{
-					if(!empty($typeEntity))
+					if (!empty($typeEntity))
 					{
 						foreach ($typeEntity as $entity)
 						{
@@ -982,7 +768,7 @@ class QueueManager
 					}
 				}
 			}
-			if(!empty($updateQueue))
+			if (!empty($updateQueue))
 			{
 				foreach ($updateQueue as $id => $queue)
 				{
@@ -990,7 +776,7 @@ class QueueManager
 				}
 				$result->setResult(true);
 			}
-			if(!empty($addQueue))
+			if (!empty($addQueue))
 			{
 				foreach ($addQueue as $queue)
 				{
@@ -999,7 +785,7 @@ class QueueManager
 				$result->setResult(true);
 			}
 
-			if(!empty($deleteUsers))
+			if (!empty($deleteUsers))
 			{
 				foreach ($deleteUsers as $user)
 				{
@@ -1007,7 +793,7 @@ class QueueManager
 				}
 				$result->setResult(true);
 			}
-			if(!empty($updateUsers))
+			if (!empty($updateUsers))
 			{
 				foreach ($updateUsers as $id => $user)
 				{
@@ -1015,7 +801,7 @@ class QueueManager
 				}
 				$result->setResult(true);
 			}
-			if(!empty($addUsers))
+			if (!empty($addUsers))
 			{
 				foreach ($addUsers as $user)
 				{
@@ -1041,7 +827,7 @@ class QueueManager
 	 *
 	 * @return array
 	 */
-	private function getUserFields($userId)
+	private function getUserFields($userId): array
 	{
 		$fields = [];
 		$user = User::getInstance($userId);
@@ -1103,10 +889,10 @@ class QueueManager
 	 *
 	 * @param $operators
 	 */
-	private function sendQueueOperatorsAddEvent($operators)
+	private function sendQueueOperatorsAddEvent($operators): void
 	{
 		$eventData = [
-			'line' => $this->idLine,
+			'line' => $this->lineId,
 			'operators' => $operators
 		];
 		$event = new \Bitrix\Main\Event('imopenlines', self::EVENT_QUEUE_OPERATORS_ADD, $eventData);
@@ -1118,10 +904,10 @@ class QueueManager
 	 *
 	 * @param $operators
 	 */
-	private function sendQueueOperatorsDeleteEvent($operators)
+	private function sendQueueOperatorsDeleteEvent($operators): void
 	{
 		$eventData = [
-			'line' => $this->idLine,
+			'line' => $this->lineId,
 			'operators' => $operators
 		];
 		$event = new \Bitrix\Main\Event('imopenlines', self::EVENT_QUEUE_OPERATORS_DELETE, $eventData);
@@ -1137,7 +923,7 @@ class QueueManager
 	private function sendQueueOperatorsChangeEvent($queueBefore, $queueAfter): void
 	{
 		$eventData = [
-			'line' => $this->idLine,
+			'line' => $this->lineId,
 			'operators_before' => $queueBefore,
 			'operators_after' => $queueAfter
 		];
@@ -1152,10 +938,6 @@ class QueueManager
 	 * @param $users
 	 * @param array|false $usersFields
 	 * @return bool
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public function updateUsers($users, $usersFields = false)
 	{

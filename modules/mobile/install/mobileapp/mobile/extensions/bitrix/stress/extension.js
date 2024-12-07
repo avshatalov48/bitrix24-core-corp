@@ -43,7 +43,7 @@
 			this.ui = ui;
 			BX.onViewLoaded(() =>
 			{
-				this.ui.setTitle({text: BX.message("STRESS_LEVEL_TITLE")});
+				this.ui.setTitle({text: BX.message("STRESS_LEVEL_TITLE"), type: "section"});
 				this.ui.setRightButtons([
 					{
 						type: 'more',

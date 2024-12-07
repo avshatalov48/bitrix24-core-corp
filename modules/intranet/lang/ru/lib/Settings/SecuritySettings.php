@@ -11,4 +11,10 @@ $MESS["INTRANET_SETTINGS_SECTION_TITLE_PASSWORD_RECOVERY"] = 'Восстанов
 $MESS["INTRANET_SETTINGS_SECTION_TITLE_DEVICES_HISTORY"] = 'История входов';
 $MESS["INTRANET_SETTINGS_SECTION_TITLE_BLACK_LIST"] = 'Черный список';
 $MESS["INTRANET_SETTINGS_SECTION_TITLE_EVENT_LOG"] = 'Журнал событий';
+$MESS["INTRANET_SETTINGS_SECTION_TITLE_MOBILE_APP"] = 'Мобильное приложение';
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_SECURITY_OTP"] = 'Обязательно для всех сотрудников';
+
+$MESS["INTRANET_SETTINGS_FIELD_LABEL_DISABLE_COPY"] = 'Запретить копировать текст';
+$MESS["INTRANET_SETTINGS_FIELD_HINT_DISABLE_COPY"] = 'При включённой настройке сотрудники не смогут копировать текст в мобильном приложении';
+$MESS["INTRANET_SETTINGS_FIELD_LABEL_DISABLE_SCREENSHOT"] = 'Запретить делать скриншоты';
+$MESS["INTRANET_SETTINGS_FIELD_HINT_DISABLE_SCREENSHOT"] = 'При включённой настройке сотрудники не смогут делать скриншоты в мобильном приложении';

@@ -185,7 +185,7 @@ $backToListLinkId = 'backToEntityList';
 	<?endif?>
 </div>
 
-<script type="text/javascript">
+<script>
 	BX.ready(
 		function()
 		{

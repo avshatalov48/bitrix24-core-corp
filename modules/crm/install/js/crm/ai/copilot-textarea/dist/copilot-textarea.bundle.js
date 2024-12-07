@@ -304,14 +304,21 @@ this.BX.Crm = this.BX.Crm || {};
 	  event.preventDefault();
 	}
 	function _handleSelect2(event) {
+	  var _babelHelpers$classPr,
+	    _this5 = this;
 	  var target = event.target;
 	  if (!target) {
+	    return;
+	  }
+	  if ((_babelHelpers$classPr = babelHelpers.classPrivateFieldGet(this, _copilotBtnPopup)) !== null && _babelHelpers$classPr !== void 0 && _babelHelpers$classPr.isShown()) {
 	    return;
 	  }
 	  babelHelpers.classPrivateFieldSet(this, _currentSelectedText, target.value.slice(target.selectionStart, target.selectionEnd));
 	  if (main_core.Type.isStringFilled(babelHelpers.classPrivateFieldGet(this, _currentSelectedText))) {
 	    _classPrivateMethodGet(this, _logEventInfo, _logEventInfo2).call(this, 'Text selected', event);
-	    _classPrivateMethodGet(this, _showCopilotButton, _showCopilotButton2).call(this);
+	    setTimeout(function () {
+	      return _classPrivateMethodGet(_this5, _showCopilotButton, _showCopilotButton2).call(_this5);
+	    }, 100);
 	  }
 	}
 	function _handleKeyUpEscape2(event) {

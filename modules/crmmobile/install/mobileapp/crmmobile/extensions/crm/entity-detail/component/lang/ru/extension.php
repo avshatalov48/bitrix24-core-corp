@@ -5,7 +5,7 @@ $MESS['M_CRM_ENTITY_ACTION_EXCLUDE_CONFIRMATION_LEAD'] = 'Это действи�
 $MESS['M_CRM_ENTITY_ACTION_EXCLUDE_CONFIRMATION_DEAL'] = 'Это действие нельзя отменить. Вы уверены, что хотите добавить сделку в список исключений?';
 $MESS['M_CRM_ENTITY_ACTION_EXCLUDE_CONFIRMATION_OK'] = 'Добавить';
 
-$MESS['M_CRM_ENTITY_ACTION_DELETE'] = 'Удалить элемент';
+$MESS['M_CRM_ENTITY_ACTION_DELETE_MSGVER_1'] = 'Удалить';
 $MESS['M_CRM_ENTITY_ACTION_DELETE_LEAD'] = 'Удалить лид';
 $MESS['M_CRM_ENTITY_ACTION_DELETE_DEAL'] = 'Удалить сделку';
 $MESS['M_CRM_ENTITY_ACTION_DELETE_CONTACT'] = 'Удалить контакт';
@@ -100,4 +100,4 @@ $MESS['M_CRM_ACTION_PAYMENT_AUTOMATION_STAGE_SAVING'] = 'Сохранение...
 $MESS['M_CRM_ENTITY_ACTION_DOCUMENTS'] = 'Документы';
 $MESS['M_CRM_ENTITY_ACTION_CHAT'] = 'Обсудить с коллегами';
 
-$MESS['M_CRM_ACTION_SMART_ACTIVITY_OPEN_LINES_TELEGRAM_MSGVER_1'] = 'Telegram';
+$MESS['M_CRM_ACTION_SMART_ACTIVITY_OPEN_LINES_TELEGRAM_MSGVER_2'] = 'Написать в Telegram';

@@ -4,6 +4,26 @@ use Bitrix\Main\Type;
 
 CModule::IncludeModule('intranet');
 
+if (!\Bitrix\Intranet\UStat\UStat::checkAvailableCompanyPulseAndNotifyAdmin())
+{
+	$arResult = [
+		'SECTION' => 'TOTAL',
+		'INTERVAL' => 'hour',
+		'SUM_INVOLVEMENT' => 0,
+		'SUM_ACTIVITY' => 0,
+		'MAX_ACTIVITY' => 1,
+		'ALLOW_TELL_ABOUT' => false,
+		'USERS_RATING' => [],
+		'USERS_INFO' => [],
+		'SECTION_DATA' => [],
+		'DATA' => [],
+		'ENABLED' => false
+	];
+
+	$this->IncludeComponentTemplate();
+	return;
+}
+
 $nowDate = new Type\DateTime();
 $toDate = new Type\DateTime();
 $arParams['PERIOD'] ??= null;
@@ -368,7 +388,8 @@ $arResult = array(
 	'USERS_RATING' => $usersRating,
 	'USERS_INFO' => $usersInfo,
 	'SECTION_DATA' => $sectionData,
-	'DATA' => array_values($data)
+	'DATA' => array_values($data),
+	'ENABLED' => true
 );
 
 //var_dump($arResult, $rawData, $arParams);

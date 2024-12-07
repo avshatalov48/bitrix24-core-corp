@@ -1,7 +1,7 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
-(function (exports,ui_cnt,rest_client,ui_analytics,ui_label,main_date,main_popup,ui_buttons,ui_hint,main_core_events,main_loader,ui_vue3,ui_notification,main_core,crm_timeline_item,crm_timeline_tools) {
+(function (exports,rest_client,ui_analytics,main_date,ui_buttons,ui_vue3,main_loader,crm_field_colorSelector,main_core_events,ui_vue3_directives_hint,main_popup,ui_label,ui_hint,ui_cnt,ui_notification,crm_timeline_item,main_core,crm_timeline_tools) {
 	'use strict';
 
 	let _ = t => t,
@@ -119,7 +119,11 @@ this.BX.Crm = this.BX.Crm || {};
 	        main_core.bindOnce(babelHelpers.classPrivateFieldGet(this, _overlay), 'transitionend', () => {
 	          main_core.Dom.remove(babelHelpers.classPrivateFieldGet(this, _overlay));
 	          babelHelpers.classPrivateFieldSet(this, _overlay, null);
+	          const color = main_core.Dom.style(babelHelpers.classPrivateFieldGet(this, _node), '--crm-timeline__card-color-background');
 	          main_core.Dom.style(babelHelpers.classPrivateFieldGet(this, _node), null);
+	          if (main_core.Type.isStringFilled(color)) {
+	            main_core.Dom.style(babelHelpers.classPrivateFieldGet(this, _node), '--crm-timeline__card-color-background', color);
+	          }
 	        });
 	        main_core.Dom.style(babelHelpers.classPrivateFieldGet(this, _overlay), 'opacity', 0);
 	        if (babelHelpers.classPrivateFieldGet(this, _callback)) {
@@ -1721,208 +1725,10 @@ this.BX.Crm = this.BX.Crm || {};
 	  return Shift;
 	}();
 
-	let Item$2 = /*#__PURE__*/function () {
-	  function Item() {
-	    babelHelpers.classCallCheck(this, Item);
-	    this._id = '';
-	    this._isTerminated = false;
-	    this._wrapper = null;
-	  }
-	  babelHelpers.createClass(Item, [{
-	    key: "getId",
-	    value: function getId() {
-	      return this._id;
-	    }
-	  }, {
-	    key: "_setId",
-	    value: function _setId(id) {
-	      this._id = BX.type.isNotEmptyString(id) ? id : BX.util.getRandomString(4);
-	    }
-	    /**
-	     * @abstract
-	     */
-	  }, {
-	    key: "setData",
-	    value: function setData(data) {
-	      throw new Error('Item.setData() must be overridden');
-	    }
-	    /**
-	     * @abstract
-	     */
-	  }, {
-	    key: "layout",
-	    value: function layout(options) {
-	      throw new Error('Item.layout() must be overridden');
-	    }
-	  }, {
-	    key: "refreshLayout",
-	    value: function refreshLayout() {
-	      const anchor = this._wrapper.previousSibling;
-	      this.clearLayout();
-	      this.layout({
-	        anchor: anchor
-	      });
-	    }
-	  }, {
-	    key: "clearLayout",
-	    value: function clearLayout() {
-	      main_core.Dom.remove(this._wrapper);
-	      this._wrapper = undefined;
-	    }
-	  }, {
-	    key: "destroy",
-	    value: function destroy() {
-	      this.clearLayout();
-	    }
-	  }, {
-	    key: "getWrapper",
-	    value: function getWrapper() {
-	      return this._wrapper;
-	    }
-	  }, {
-	    key: "setWrapper",
-	    value: function setWrapper(wrapper) {
-	      this._wrapper = wrapper;
-	    }
-	  }, {
-	    key: "addWrapperClass",
-	    value: function addWrapperClass(className, timeout) {
-	      if (!this._wrapper) {
-	        return;
-	      }
-	      main_core.Dom.addClass(this._wrapper, className);
-	      if (main_core.Type.isNumber(timeout) && timeout >= 0) {
-	        window.setTimeout(this.removeWrapperClass.bind(this, className), timeout);
-	      }
-	    }
-	  }, {
-	    key: "removeWrapperClass",
-	    value: function removeWrapperClass(className, timeout) {
-	      if (!this._wrapper) {
-	        return;
-	      }
-	      main_core.Dom.removeClass(this._wrapper, className);
-	      if (main_core.Type.isNumber(timeout) && timeout >= 0) {
-	        window.setTimeout(this.addWrapperClass.bind(this, className), timeout);
-	      }
-	    }
-	  }, {
-	    key: "isTerminated",
-	    value: function isTerminated() {
-	      return this._isTerminated;
-	    }
-	  }, {
-	    key: "markAsTerminated",
-	    value: function markAsTerminated(terminated) {
-	      terminated = !!terminated;
-	      if (this._isTerminated === terminated) {
-	        return;
-	      }
-	      this._isTerminated = terminated;
-	      if (!this._wrapper) {
-	        return;
-	      }
-	      if (terminated) {
-	        main_core.Dom.addClass(this._wrapper, 'crm-entity-stream-section-last');
-	      } else {
-	        main_core.Dom.removeClass(this._wrapper, 'crm-entity-stream-section-last');
-	      }
-	    }
-	  }, {
-	    key: "getAssociatedEntityTypeId",
-	    value: function getAssociatedEntityTypeId() {
-	      return null;
-	    }
-	  }, {
-	    key: "getAssociatedEntityId",
-	    value: function getAssociatedEntityId() {
-	      return null;
-	    }
-	  }]);
-	  return Item;
-	}();
-
-	let IconBackgroundColor = function IconBackgroundColor() {
-	  babelHelpers.classCallCheck(this, IconBackgroundColor);
-	};
-	babelHelpers.defineProperty(IconBackgroundColor, "PRIMARY", 'primary');
-	babelHelpers.defineProperty(IconBackgroundColor, "PRIMARY_ALT", 'primary_alt');
-	babelHelpers.defineProperty(IconBackgroundColor, "FAILURE", 'failure');
-
-	const Icon = {
-	  props: {
-	    code: {
-	      type: String,
-	      required: false,
-	      default: 'none'
-	    },
-	    counterType: {
-	      type: String,
-	      required: false,
-	      default: ''
-	    },
-	    backgroundColorToken: {
-	      type: String,
-	      required: false,
-	      default: IconBackgroundColor.PRIMARY
-	    },
-	    backgroundUri: String
-	  },
-	  inject: ['isLogMessage'],
-	  computed: {
-	    className() {
-	      return {
-	        'crm-timeline__card_icon': true,
-	        [`--bg-${this.backgroundColorToken}`]: !!this.backgroundColorToken,
-	        [`--code-${this.code}`]: !!this.code && !this.backgroundUri,
-	        [`--custom-bg`]: !!this.backgroundUri,
-	        ['--muted']: this.isLogMessage
-	      };
-	    },
-	    counterNodeContainer() {
-	      return this.$refs.counter;
-	    },
-	    styles() {
-	      if (!this.backgroundUri) {
-	        return {};
-	      }
-	      return {
-	        backgroundImage: "url('" + encodeURI(main_core.Text.encode(this.backgroundUri)) + "')"
-	      };
-	    }
-	  },
-	  methods: {
-	    renderCounter() {
-	      if (!this.counterType) {
-	        return;
-	      }
-	      main_core.Dom.clean(this.counterNodeContainer);
-	      const counter = new ui_cnt.Counter({
-	        value: 1,
-	        border: true,
-	        color: ui_cnt.Counter.Color[this.counterType.toUpperCase()]
-	      });
-	      counter.renderTo(this.counterNodeContainer);
-	    }
-	  },
-	  mounted() {
-	    this.renderCounter();
-	  },
-	  watch: {
-	    counterType(newCounterType)
-	    // update if counter state changed
-	    {
-	      this.$nextTick(() => {
-	        this.renderCounter();
-	      });
-	    }
-	  },
-	  template: `
-		<div :class="className">
-			<i :style="styles"></i>
-			<div ref="counter" v-show="!!counterType" class="crm-timeline__card_icon_counter"></div>
-		</div>
-	`
+	const StreamType = {
+	  history: 0,
+	  scheduled: 1,
+	  pinned: 2
 	};
 
 	function _classPrivateFieldInitSpec$1(obj, privateMap, value) { _checkPrivateRedeclaration$1(obj, privateMap); privateMap.set(obj, value); }
@@ -2370,6 +2176,827 @@ this.BX.Crm = this.BX.Crm || {};
 	  }
 	}
 
+	const Logo = {
+	  props: {
+	    type: String,
+	    addIcon: String,
+	    addIconType: String,
+	    icon: String,
+	    iconType: String,
+	    backgroundUrl: String,
+	    backgroundSize: Number,
+	    inCircle: {
+	      type: Boolean,
+	      required: false,
+	      default: false
+	    },
+	    action: Object
+	  },
+	  data() {
+	    return {
+	      currentIcon: this.icon
+	    };
+	  },
+	  computed: {
+	    className() {
+	      return ['crm-timeline__card-logo', `--${this.type}`, {
+	        '--clickable': this.action
+	      }];
+	    },
+	    iconClassname() {
+	      return ['crm-timeline__card-logo_icon', `--${this.currentIcon}`, {
+	        '--in-circle': this.inCircle,
+	        [`--type-${this.iconType}`]: !!this.iconType && !this.backgroundUrl,
+	        '--custom-bg': !!this.backgroundUrl
+	      }];
+	    },
+	    addIconClassname() {
+	      return ['crm-timeline__card-logo_add-icon', `--type-${this.addIconType}`, `--icon-${this.addIcon}`];
+	    },
+	    iconInteriorStyle() {
+	      const result = {};
+	      if (this.backgroundUrl) {
+	        result.backgroundImage = 'url(' + encodeURI(main_core.Text.encode(this.backgroundUrl)) + ')';
+	      }
+	      if (this.backgroundSize) {
+	        result.backgroundSize = parseInt(this.backgroundSize) + 'px';
+	      }
+	      return result;
+	    }
+	  },
+	  watch: {
+	    icon(newIcon) {
+	      this.currentIcon = newIcon;
+	    }
+	  },
+	  methods: {
+	    executeAction() {
+	      if (!this.action) {
+	        return;
+	      }
+	      const action = new Action(this.action);
+	      action.execute(this);
+	    },
+	    setIcon(icon) {
+	      this.currentIcon = icon;
+	    }
+	  },
+	  template: `
+		<div :class="className" @click="executeAction">
+			<div class="crm-timeline__card-logo_content">
+				<div :class="iconClassname">
+					<i :style="iconInteriorStyle"></i>
+				</div>
+				<div :class="addIconClassname" v-if="addIcon">
+					<i></i>
+				</div>
+			</div>
+		</div>
+	`
+	};
+
+	const CalendarIcon = {
+	  props: {
+	    timestamp: {
+	      type: Number,
+	      required: true,
+	      default: 0
+	    },
+	    calendarEventId: {
+	      type: Number,
+	      required: false,
+	      default: null
+	    }
+	  },
+	  computed: {
+	    date() {
+	      return this.formatUserTime('d');
+	    },
+	    month() {
+	      return this.formatUserTime('F');
+	    },
+	    dayWeek() {
+	      return this.formatUserTime('D');
+	    },
+	    time() {
+	      return this.getDateTimeConverter().toTimeString();
+	    },
+	    userTime() {
+	      return this.getDateTimeConverter().getValue();
+	    },
+	    hasCalendarEventId() {
+	      return this.calendarEventId > 0;
+	    }
+	  },
+	  methods: {
+	    getDateTimeConverter() {
+	      return crm_timeline_tools.DatetimeConverter.createFromServerTimestamp(this.timestamp).toUserTime();
+	    },
+	    formatUserTime(format) {
+	      return main_date.DateTimeFormat.format(format, this.userTime);
+	    }
+	  },
+	  template: `
+		<div class="crm-timeline__calendar-icon-container">
+			<div v-if="hasCalendarEventId" class="crm-timeline__calendar-icon_event_icon"></div>
+			<div class="crm-timeline__calendar-icon">
+				<header class="crm-timeline__calendar-icon_top">
+					<div class="crm-timeline__calendar-icon_bullets">
+						<div class="crm-timeline__calendar-icon_bullet"></div>
+						<div class="crm-timeline__calendar-icon_bullet"></div>
+					</div>
+				</header>
+				<main class="crm-timeline__calendar-icon_content">
+					<div class="crm-timeline__calendar-icon_day">{{ date }}</div>
+					<div class="crm-timeline__calendar-icon_month">{{ month }}</div>
+					<div class="crm-timeline__calendar-icon_date">
+						<span class="crm-timeline__calendar-icon_day-week">{{ dayWeek }}</span>
+						<span class="crm-timeline__calendar-icon_time">{{ time }}</span>
+					</div>
+				</main>
+			</div>
+		</div>
+	`
+	};
+
+	const LogoCalendar = ui_vue3.BitrixVue.cloneComponent(Logo, {
+	  components: {
+	    CalendarIcon
+	  },
+	  props: {
+	    timestamp: {
+	      type: Number,
+	      required: false,
+	      default: 0
+	    },
+	    addIcon: String,
+	    addIconType: String,
+	    calendarEventId: {
+	      type: Number,
+	      required: false,
+	      default: null
+	    },
+	    backgroundColor: {
+	      type: String,
+	      required: false,
+	      default: null
+	    }
+	  },
+	  computed: {
+	    addIconClassname() {
+	      return ['crm-timeline__card-logo_add-icon', `--type-${this.addIconType}`, `--icon-${this.addIcon}`];
+	    },
+	    logoStyle() {
+	      if (main_core.Type.isStringFilled(this.backgroundColor)) {
+	        return {
+	          '--crm-timeline__logo-background': main_core.Text.encode(this.backgroundColor)
+	        };
+	      }
+	      return {};
+	    }
+	  },
+	  template: `
+		<div 
+			:class="className"
+			:style="logoStyle"
+			@click="executeAction"
+		>
+			<div class="crm-timeline__card-logo_content">
+				<CalendarIcon :timestamp="timestamp" :calendar-event-id="calendarEventId" />
+				<div :class="addIconClassname" v-if="addIcon">
+					<i></i>
+				</div>
+			</div>
+		</div>
+	`
+	});
+
+	const Body = {
+	  components: {
+	    Logo,
+	    LogoCalendar
+	  },
+	  props: {
+	    logo: Object,
+	    blocks: Object
+	  },
+	  data() {
+	    return {
+	      blockRefs: {}
+	    };
+	  },
+	  mounted() {
+	    const blocks = this.$refs.blocks;
+	    if (!blocks || !this.visibleBlocks) {
+	      return;
+	    }
+	    this.visibleBlocks.forEach((block, index) => {
+	      if (main_core.Type.isDomNode(blocks[index].$el)) {
+	        blocks[index].$el.setAttribute('data-id', block.id);
+	      } else {
+	        throw new Error('Vue component "' + block.rendererName + '" was not found');
+	      }
+	    });
+	  },
+	  beforeUpdate() {
+	    this.blockRefs = {};
+	  },
+	  computed: {
+	    visibleBlocks() {
+	      if (!main_core.Type.isPlainObject(this.blocks)) {
+	        return [];
+	      }
+	      return Object.keys(this.blocks).map(id => ({
+	        id,
+	        ...this.blocks[id]
+	      })).filter(item => item.scope !== 'mobile').sort((a, b) => {
+	        let aSort = a.sort === undefined ? 0 : a.sort;
+	        let bSort = b.sort === undefined ? 0 : b.sort;
+	        if (aSort < bSort) {
+	          return -1;
+	        }
+	        if (aSort > bSort) {
+	          return 1;
+	        }
+	        return 0;
+	      });
+	    },
+	    contentContainerClassname() {
+	      return ['crm-timeline__card-container', {
+	        '--without-logo': !this.logo
+	      }];
+	    }
+	  },
+	  methods: {
+	    getContentBlockById(blockId) {
+	      var _this$blockRefs$block;
+	      return (_this$blockRefs$block = this.blockRefs[blockId]) !== null && _this$blockRefs$block !== void 0 ? _this$blockRefs$block : null;
+	    },
+	    getLogo() {
+	      return this.$refs.logo;
+	    },
+	    saveRef(ref, id) {
+	      this.blockRefs[id] = ref;
+	    }
+	  },
+	  template: `
+		<div class="crm-timeline__card-body">
+			<div v-if="logo" class="crm-timeline__card-logo_container">
+				<LogoCalendar v-if="logo.icon === 'calendar'" v-bind="logo"></LogoCalendar>
+				<Logo v-else v-bind="logo" ref="logo"></Logo>
+			</div>
+			<div :class="contentContainerClassname">
+				<div
+					v-for="block in visibleBlocks"
+					:key="block.id"
+					class="crm-timeline__card-container_block"
+				>
+					<component
+						:is="block.rendererName"
+						v-bind="block.properties"
+						:ref="(el) => this.saveRef(el, block.id)"
+					/>
+				</div>
+			</div>
+		</div>
+	`
+	};
+
+	let ButtonScope = function ButtonScope() {
+	  babelHelpers.classCallCheck(this, ButtonScope);
+	};
+	babelHelpers.defineProperty(ButtonScope, "MOBILE", 'mobile');
+
+	let ButtonState = function ButtonState() {
+	  babelHelpers.classCallCheck(this, ButtonState);
+	};
+	babelHelpers.defineProperty(ButtonState, "DEFAULT", '');
+	babelHelpers.defineProperty(ButtonState, "LOADING", 'loading');
+	babelHelpers.defineProperty(ButtonState, "DISABLED", 'disabled');
+	babelHelpers.defineProperty(ButtonState, "HIDDEN", 'hidden');
+	babelHelpers.defineProperty(ButtonState, "AI_LOADING", 'ai-loading');
+
+	let ButtonType = function ButtonType() {
+	  babelHelpers.classCallCheck(this, ButtonType);
+	};
+	babelHelpers.defineProperty(ButtonType, "ICON", 'icon');
+	babelHelpers.defineProperty(ButtonType, "PRIMARY", 'primary');
+	babelHelpers.defineProperty(ButtonType, "SECONDARY", 'secondary');
+	babelHelpers.defineProperty(ButtonType, "LIGHT", 'light');
+	babelHelpers.defineProperty(ButtonType, "AI", 'ai');
+
+	const BaseButton = {
+	  props: {
+	    id: {
+	      type: String,
+	      required: false,
+	      default: ''
+	    },
+	    title: {
+	      type: String,
+	      required: false,
+	      default: ''
+	    },
+	    tooltip: {
+	      type: String,
+	      required: false,
+	      default: ''
+	    },
+	    state: {
+	      type: String,
+	      required: false,
+	      default: ButtonState.DEFAULT
+	    },
+	    props: Object,
+	    action: Object
+	  },
+	  data() {
+	    return {
+	      currentState: this.state
+	    };
+	  },
+	  computed: {
+	    itemStateToButtonStateDict() {
+	      return {
+	        [ButtonState.LOADING]: ui_buttons.Button.State.WAITING,
+	        [ButtonState.DISABLED]: ui_buttons.Button.State.DISABLED,
+	        [ButtonState.AI_LOADING]: ui_buttons.Button.State.AI_WAITING
+	      };
+	    }
+	  },
+	  methods: {
+	    setDisabled(disabled) {
+	      if (disabled) {
+	        this.setButtonState(ButtonState.DISABLED);
+	      } else {
+	        this.setButtonState(ButtonState.DEFAULT);
+	      }
+	    },
+	    setLoading(loading) {
+	      if (loading) {
+	        this.setButtonState(ButtonState.LOADING);
+	      } else {
+	        this.setButtonState(ButtonState.DEFAULT);
+	      }
+	    },
+	    setButtonState(state) {
+	      if (this.currentState !== state) {
+	        this.currentState = state;
+	      }
+	    },
+	    onLayoutUpdated() {
+	      this.setButtonState(this.state);
+	    },
+	    executeAction() {
+	      if (this.action && this.currentState !== ButtonState.DISABLED && this.currentState !== ButtonState.LOADING && this.currentState !== ButtonState.AI_LOADING) {
+	        const action = new Action(this.action);
+	        action.execute(this);
+	      }
+	    }
+	  },
+	  created() {
+	    this.$Bitrix.eventEmitter.subscribe('layout:updated', this.onLayoutUpdated);
+	  },
+	  beforeUnmount() {
+	    this.$Bitrix.eventEmitter.unsubscribe('layout:updated', this.onLayoutUpdated);
+	  },
+	  template: `<button></button>`
+	};
+
+	const Button = ui_vue3.BitrixVue.cloneComponent(BaseButton, {
+	  props: {
+	    type: {
+	      type: String,
+	      required: false,
+	      default: ButtonType.SECONDARY
+	    },
+	    iconName: {
+	      type: String,
+	      required: false,
+	      default: ''
+	    },
+	    size: {
+	      type: String,
+	      required: false,
+	      default: 'extra_small'
+	    }
+	  },
+	  data() {
+	    return {
+	      popup: null,
+	      uiButton: Object.freeze(null),
+	      timerSecondsRemaining: 0,
+	      currentState: this.state,
+	      hintText: main_core.Type.isStringFilled(this.tooltip) ? main_core.Text.encode(this.tooltip) : ''
+	    };
+	  },
+	  computed: {
+	    itemTypeToButtonColorDict() {
+	      return {
+	        [ButtonType.PRIMARY]: ui_buttons.Button.Color.PRIMARY,
+	        [ButtonType.SECONDARY]: ui_buttons.Button.Color.LIGHT_BORDER,
+	        [ButtonType.LIGHT]: ui_buttons.Button.Color.LIGHT,
+	        [ButtonType.ICON]: ui_buttons.Button.Color.LINK,
+	        [ButtonType.AI]: ui_buttons.Button.Color.AI
+	      };
+	    },
+	    buttonContainerRef() {
+	      return this.$refs.buttonContainer;
+	    }
+	  },
+	  methods: {
+	    getButtonOptions() {
+	      const upperCaseIconName = main_core.Type.isString(this.iconName) ? this.iconName.toUpperCase() : '';
+	      const upperCaseButtonSize = main_core.Type.isString(this.size) ? this.size.toUpperCase() : 'extra_small';
+	      const btnColor = this.itemTypeToButtonColorDict[this.type] || ui_buttons.Button.Color.LIGHT_BORDER;
+	      const titleText = this.type === ButtonType.ICON ? '' : this.title;
+	      return {
+	        id: this.id,
+	        round: true,
+	        dependOnTheme: false,
+	        size: ui_buttons.Button.Size[upperCaseButtonSize],
+	        text: titleText,
+	        color: btnColor,
+	        state: this.itemStateToButtonStateDict[this.currentState],
+	        icon: ui_buttons.Button.Icon[upperCaseIconName],
+	        props: main_core.Type.isPlainObject(this.props) ? this.props : {}
+	      };
+	    },
+	    getUiButton() {
+	      return this.uiButton;
+	    },
+	    disableWithTimer(sec) {
+	      this.setButtonState(ButtonState.DISABLED);
+	      const btn = this.getUiButton();
+	      let remainingSeconds = sec;
+	      btn.setText(this.formatSeconds(remainingSeconds));
+	      const timer = setInterval(() => {
+	        if (remainingSeconds < 1) {
+	          clearInterval(timer);
+	          btn.setText(this.title);
+	          this.setButtonState(ButtonState.DEFAULT);
+	          return;
+	        }
+	        remainingSeconds--;
+	        btn.setText(this.formatSeconds(remainingSeconds));
+	      }, 1000);
+	    },
+	    formatSeconds(sec) {
+	      const minutes = Math.floor(sec / 60);
+	      const seconds = sec % 60;
+	      const formatMinutes = this.formatNumber(minutes);
+	      const formatSeconds = this.formatNumber(seconds);
+	      return `${formatMinutes}:${formatSeconds}`;
+	    },
+	    formatNumber(num) {
+	      return num < 10 ? `0${num}` : num;
+	    },
+	    setButtonState(state) {
+	      var _this$getUiButton, _this$itemStateToButt;
+	      this.parentSetButtonState(state);
+	      (_this$getUiButton = this.getUiButton()) === null || _this$getUiButton === void 0 ? void 0 : _this$getUiButton.setState((_this$itemStateToButt = this.itemStateToButtonStateDict[this.currentState]) !== null && _this$itemStateToButt !== void 0 ? _this$itemStateToButt : null);
+	    },
+	    renderButton() {
+	      if (!this.buttonContainerRef) {
+	        return;
+	      }
+	      this.buttonContainerRef.innerHTML = '';
+	      const button = new ui_buttons.Button(this.getButtonOptions());
+	      button.renderTo(this.buttonContainerRef);
+	      this.uiButton = button;
+	    },
+	    setTooltip(tooltip) {
+	      this.hintText = tooltip;
+	    },
+	    showTooltip() {
+	      if (this.hintText === '') {
+	        return;
+	      }
+	      BX.UI.Hint.show(this.$el, this.hintText, true);
+	    },
+	    hideTooltip() {
+	      if (this.hintText === '') {
+	        return;
+	      }
+	      BX.UI.Hint.hide(this.$el);
+	    },
+	    isInViewport() {
+	      const rect = this.$el.getBoundingClientRect();
+	      return rect.top >= 0 && rect.left >= 0 && rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) && rect.right <= (window.innerWidth || document.documentElement.clientWidth);
+	    },
+	    isPropEqual(propName, value) {
+	      return this.getButtonOptions().props[propName] === value;
+	    }
+	  },
+	  watch: {
+	    state(newValue) {
+	      this.setButtonState(newValue);
+	    },
+	    tooltip(newValue) {
+	      this.hintText = main_core.Type.isStringFilled(newValue) ? main_core.Text.encode(newValue) : '';
+	    }
+	  },
+	  mounted() {
+	    this.renderButton();
+	  },
+	  updated() {
+	    this.renderButton();
+	  },
+	  template: `
+		<div
+			:class="$attrs.class"
+			ref="buttonContainer"
+			@click="executeAction"
+			@mouseover="showTooltip"
+			@mouseleave="hideTooltip"
+		>
+		</div>
+	`
+	});
+
+	const AdditionalButtonIcon = Object.freeze({
+	  NOTE: 'note',
+	  SCRIPT: 'script',
+	  PRINT: 'print',
+	  DOTS: 'dots'
+	});
+	const AdditionalButtonColor = Object.freeze({
+	  DEFAULT: 'default',
+	  PRIMARY: 'primary'
+	});
+	const AdditionalButton = ui_vue3.BitrixVue.cloneComponent(BaseButton, {
+	  props: {
+	    iconName: {
+	      type: String,
+	      required: false,
+	      default: '',
+	      validator(value) {
+	        return Object.values(AdditionalButtonIcon).indexOf(value) > -1;
+	      }
+	    },
+	    color: {
+	      type: String,
+	      required: false,
+	      default: AdditionalButtonColor.DEFAULT,
+	      validator(value) {
+	        return Object.values(AdditionalButtonColor).indexOf(value) > -1;
+	      }
+	    }
+	  },
+	  computed: {
+	    className() {
+	      return ['crm-timeline__card_add-button', {
+	        [`--icon-${this.iconName}`]: this.iconName,
+	        [`--color-${this.color}`]: this.color,
+	        [`--state-${this.currentState}`]: this.currentState
+	      }];
+	    },
+	    ButtonState() {
+	      return ButtonState;
+	    },
+	    loaderHtml() {
+	      const loader = new main_loader.Loader({
+	        mode: 'inline',
+	        size: 20
+	      });
+	      loader.show();
+	      return loader.layout.outerHTML;
+	    }
+	  },
+	  template: `
+		<transition name="crm-timeline__card_add-button-fade" mode="out-in">
+			<div
+				v-if="currentState === ButtonState.LOADING"
+				v-html="loaderHtml"
+				class="crm-timeline__card_add-button"
+			></div>
+			<div
+				v-else
+				:title="title"
+				@click="executeAction"
+				:class="className">
+			</div>
+		</transition>
+	`
+	});
+
+	const Buttons = {
+	  components: {
+	    Button
+	  },
+	  props: {
+	    items: {
+	      type: Array,
+	      required: false,
+	      default: () => []
+	    }
+	  },
+	  methods: {
+	    getButtonById(buttonId) {
+	      const buttons = this.$refs.buttons;
+	      return this.items.reduce((found, button, index) => {
+	        if (found) {
+	          return found;
+	        }
+	        if (button.id === buttonId) {
+	          return buttons[index];
+	        }
+	        return null;
+	      }, null);
+	    }
+	  },
+	  template: `
+			<div class="crm-timeline__card-action_buttons">
+				<Button class="crm-timeline__card-action-btn" v-for="item in items" v-bind="item" ref="buttons" />
+			</div>
+		`
+	};
+
+	const MenuId = 'timeline-more-button-menu';
+	const Menu$1 = {
+	  components: {
+	    AdditionalButton
+	  },
+	  props: {
+	    buttons: Array,
+	    // buttons that didn't fit into footer
+	    items: Object // real menu items
+	  },
+
+	  inject: ['isReadOnly'],
+	  computed: {
+	    isMenuFilled() {
+	      const menuItems = this.menuItems;
+	      return menuItems.length > 0;
+	    },
+	    itemsArray() {
+	      if (!this.items) {
+	        return [];
+	      }
+	      return Object.values(this.items).filter(item => item.state !== 'hidden' && item.scope !== 'mobile' && (!this.isReadOnly || !item.hideIfReadonly)).sort((a, b) => a.sort - b.sort);
+	    },
+	    menuItems() {
+	      let result = this.buttons;
+	      if (this.buttons.length && this.itemsArray.length) {
+	        result.push({
+	          delimiter: true
+	        });
+	      }
+	      result = [...result, ...this.itemsArray];
+	      return result;
+	    },
+	    buttonProps() {
+	      return {
+	        color: AdditionalButtonColor.DEFAULT,
+	        icon: AdditionalButtonIcon.DOTS
+	      };
+	    }
+	  },
+	  beforeUnmount() {
+	    const menu = main_popup.MenuManager.getMenuById(MenuId);
+	    if (menu) {
+	      menu.destroy();
+	    }
+	  },
+	  methods: {
+	    showMenu() {
+	      Menu.showMenu(this, this.menuItems, {
+	        id: MenuId,
+	        className: 'crm-timeline__card_more-menu',
+	        width: 230,
+	        angle: false,
+	        cacheable: false,
+	        bindElement: this.$el
+	      });
+	    }
+	  },
+	  // language=Vue
+	  template: `
+		<div v-if="isMenuFilled" class="crm-timeline__card-action_menu-item" @click="showMenu">
+			<AdditionalButton iconName="dots" color="default"></AdditionalButton>
+		</div>
+	`
+	};
+
+	const Footer = {
+	  components: {
+	    Buttons,
+	    Menu: Menu$1,
+	    Button,
+	    AdditionalButton
+	  },
+	  props: {
+	    buttons: Object,
+	    menu: Object,
+	    additionalButtons: {
+	      type: Object,
+	      required: false,
+	      default: () => ({})
+	    },
+	    maxBaseButtonsCount: {
+	      type: Number,
+	      required: false,
+	      default: 3
+	    }
+	  },
+	  inject: ['isReadOnly'],
+	  computed: {
+	    containerClassname() {
+	      return ['crm-timeline__card-action', {
+	        '--no-margin-top': this.baseButtons.length < 1
+	      }];
+	    },
+	    baseButtons() {
+	      return this.visibleAndSortedButtons.slice(0, this.maxBaseButtonsCount);
+	    },
+	    moreButtons() {
+	      return this.visibleAndSortedButtons.slice(this.maxBaseButtonsCount);
+	    },
+	    visibleAndSortedButtons() {
+	      return this.visibleButtons.sort(this.buttonsSorter);
+	    },
+	    visibleAndSortedAdditionalButtons() {
+	      return this.visibleAdditionalButtons.sort(this.buttonsSorter);
+	    },
+	    visibleButtons() {
+	      if (!main_core.Type.isPlainObject(this.buttons)) {
+	        return [];
+	      }
+	      return this.buttons ? Object.keys(this.buttons).map(id => ({
+	        id,
+	        ...this.buttons[id]
+	      })).filter(this.visibleButtonsFilter) : [];
+	    },
+	    visibleAdditionalButtons() {
+	      return this.additionalButtonsArray ? Object.values(this.additionalButtonsArray).filter(this.visibleButtonsFilter) : [];
+	    },
+	    additionalButtonsArray() {
+	      return Object.entries(this.additionalButtons).map(([id, button]) => {
+	        return {
+	          id,
+	          type: ButtonType.ICON,
+	          ...button
+	        };
+	      });
+	    },
+	    hasMenu() {
+	      return this.moreButtons.length || main_core.Type.isPlainObject(this.menu) && Object.keys(this.menu).length;
+	    }
+	  },
+	  methods: {
+	    visibleButtonsFilter(buttonItem) {
+	      return buttonItem.state !== ButtonState.HIDDEN && buttonItem.scope !== ButtonScope.MOBILE && (!this.isReadOnly || !buttonItem.hideIfReadonly);
+	    },
+	    buttonsSorter(buttonA, buttonB) {
+	      return (buttonA === null || buttonA === void 0 ? void 0 : buttonA.sort) - (buttonB === null || buttonB === void 0 ? void 0 : buttonB.sort);
+	    },
+	    getButtonById(buttonId) {
+	      if (this.$refs.buttons) {
+	        const foundButton = this.$refs.buttons.getButtonById(buttonId);
+	        if (foundButton) {
+	          return foundButton;
+	        }
+	      }
+	      if (this.$refs.additionalButtons) {
+	        return this.visibleAndSortedAdditionalButtons.reduce((found, button, index) => {
+	          if (found) {
+	            return found;
+	          }
+	          if (button.id === buttonId) {
+	            return buttons[index];
+	          }
+	          return null;
+	        }, null);
+	      }
+	      return null;
+	    },
+	    getMenu() {
+	      if (this.$refs.menu) {
+	        return this.$refs.menu;
+	      }
+	      return null;
+	    }
+	  },
+	  template: `
+		<div :class="containerClassname">
+			<div class="crm-timeline__card-action_menu">
+				<div
+					v-for="button in visibleAndSortedAdditionalButtons"
+					:key="button.id"
+					class="crm-timeline__card-action_menu-item"
+				>
+					<additional-button
+						v-bind="button"
+					>
+					</additional-button>
+				</div>
+				<Menu v-if="hasMenu" :buttons="moreButtons" v-bind="menu" ref="menu"/>
+			</div>
+			<Buttons ref="buttons" :items="baseButtons" />
+		</div>
+	`
+	};
+
 	const ChangeStreamButton = {
 	  props: {
 	    disableIfReadonly: Boolean,
@@ -2402,7 +3029,9 @@ this.BX.Crm = this.BX.Crm || {};
 	      }
 	      this.isComplete = true;
 	      const action = new Action(this.action);
-	      action.execute(this);
+	      action.execute(this).then(() => {}).catch(() => {
+	        this.isComplete = false;
+	      });
 	    },
 	    onClick() {
 	      if (this.action) {
@@ -2448,191 +3077,95 @@ this.BX.Crm = this.BX.Crm || {};
 	`
 	};
 
-	const Title = {
+	const ColorSelector = {
+	  directives: {
+	    hint: ui_vue3_directives_hint.hint
+	  },
 	  props: {
-	    title: String,
-	    action: Object
-	  },
-	  inject: ['isLogMessage'],
-	  computed: {
-	    className() {
-	      return ['crm-timeline__card-title', {
-	        '--light': this.isLogMessage,
-	        '--action': !!this.action
-	      }];
-	    },
-	    href() {
-	      if (!this.action) {
-	        return null;
-	      }
-	      const action = new Action(this.action);
-	      if (action.isRedirect()) {
-	        return action.getValue();
-	      }
-	      return null;
-	    }
-	  },
-	  methods: {
-	    executeAction() {
-	      if (!this.action) {
-	        return;
-	      }
-	      const action = new Action(this.action);
-	      action.execute(this);
-	    }
-	  },
-	  template: `
-		<a
-			v-if="href"
-			:href="href"
-			:class="className"
-			tabindex="0"
-			:title="title"
-		>
-			{{title}}
-		</a>
-		<span
-			v-else
-			@click="executeAction"
-			:class="className"
-			tabindex="0"
-			:title="title"
-		>
-			{{title}}
-		</span>`
-	};
-
-	let TagType = function TagType() {
-	  babelHelpers.classCallCheck(this, TagType);
-	};
-	babelHelpers.defineProperty(TagType, "PRIMARY", 'primary');
-	babelHelpers.defineProperty(TagType, "SECONDARY", 'secondary');
-	babelHelpers.defineProperty(TagType, "SUCCESS", 'success');
-	babelHelpers.defineProperty(TagType, "WARNING", 'warning');
-	babelHelpers.defineProperty(TagType, "FAILURE", 'failure');
-	babelHelpers.defineProperty(TagType, "LAVENDER", 'lavender');
-
-	const Tag = {
-	  props: {
-	    title: {
-	      type: String,
-	      required: false,
-	      default: ''
-	    },
-	    hint: {
-	      type: String,
-	      required: false,
-	      default: ''
-	    },
-	    action: {
+	    valuesList: {
 	      type: Object,
-	      required: false,
-	      default: null
+	      required: true
 	    },
-	    type: {
+	    selectedValueId: {
 	      type: String,
+	      default: 'default'
+	    },
+	    readOnlyMode: {
+	      type: Boolean,
 	      required: false,
-	      default: TagType.SECONDARY
-	    },
-	    state: String
-	  },
-	  computed: {
-	    className() {
-	      return {
-	        'crm-timeline__card-status': true,
-	        '--clickable': !!this.action,
-	        '--hint': !!this.hint
-	      };
-	    },
-	    tagTypeToLabelColorDict() {
-	      return {
-	        [TagType.PRIMARY]: ui_label.Label.Color.LIGHT_BLUE,
-	        [TagType.SECONDARY]: ui_label.Label.Color.LIGHT,
-	        [TagType.LAVENDER]: ui_label.Label.Color.LAVENDER,
-	        [TagType.SUCCESS]: ui_label.Label.Color.LIGHT_GREEN,
-	        [TagType.WARNING]: ui_label.Label.Color.LIGHT_YELLOW,
-	        [TagType.FAILURE]: ui_label.Label.Color.LIGHT_RED
-	      };
-	    },
-	    tagContainerRef() {
-	      return this.$refs.tag;
+	      default: false
 	    }
 	  },
+	  data() {
+	    return {
+	      currentValueId: this.selectedValueId
+	    };
+	  },
 	  methods: {
-	    getLabelColorFromTagType(tagType) {
-	      const lowerCaseTagType = tagType ? tagType.toLowerCase() : '';
-	      const labelColor = this.tagTypeToLabelColorDict[lowerCaseTagType];
-	      return labelColor || ui_label.Label.Color.LIGHT;
+	    getValue() {
+	      return this.currentValueId;
 	    },
-	    // eslint-disable-next-line consistent-return
-	    renderTag(tagOptions) {
-	      if (!tagOptions || !this.tagContainerRef) {
-	        return null;
+	    setValue(value) {
+	      this.currentValueId = value;
+	      if (this.itemSelector) {
+	        this.itemSelector.setValue(value);
 	      }
-	      const {
-	        title,
-	        type
-	      } = tagOptions;
-	      const uppercaseTitle = title && main_core.Type.isString(title) ? title.toUpperCase() : '';
-	      const label = new ui_label.Label({
-	        text: uppercaseTitle,
-	        color: this.getLabelColorFromTagType(type),
-	        fill: true
+	    },
+	    onItemSelectorValueChange({
+	      data
+	    }) {
+	      const valueId = data.value;
+	      if (this.currentValueId !== valueId) {
+	        this.currentValueId = valueId;
+	        this.emitEvent('ColorSelector:Change', {
+	          colorId: valueId
+	        });
+	      }
+	    },
+	    emitEvent(eventName, actionParams) {
+	      const action = new Action({
+	        type: 'jsEvent',
+	        value: eventName,
+	        actionParams
 	      });
-	      main_core.Dom.clean(this.tagContainerRef);
-	      main_core.Dom.append(label.render(), this.tagContainerRef);
-	    },
-	    executeAction() {
-	      if (!this.action) {
-	        return;
-	      }
-	      const action = new Action(this.action);
 	      action.execute(this);
 	    }
 	  },
 	  mounted() {
-	    this.renderTag({
-	      title: this.title,
-	      type: this.type
+	    void this.$nextTick(() => {
+	      this.itemSelector = new crm_field_colorSelector.ColorSelector({
+	        target: this.$refs.itemSelectorRef,
+	        colorList: this.valuesList,
+	        selectedColorId: this.currentValueId,
+	        readOnlyMode: this.readOnlyMode
+	      });
+	      if (!this.readOnlyMode) {
+	        main_core_events.EventEmitter.subscribe(this.itemSelector, crm_field_colorSelector.ColorSelectorEvents.EVENT_COLORSELECTOR_VALUE_CHANGE, this.onItemSelectorValueChange);
+	      }
 	    });
 	  },
-	  updated() {
-	    this.renderTag({
-	      title: this.title,
-	      type: this.type
-	    });
-	  },
-	  template: `
-		<div ref="tag" :title="hint" :class="className" @click="executeAction"></div>
-	`
-	};
-
-	const User = {
-	  props: {
-	    title: String,
-	    detailUrl: String,
-	    imageUrl: String
-	  },
-	  inject: ['isLogMessage'],
 	  computed: {
-	    styles() {
-	      if (!this.imageUrl) {
-	        return {};
+	    hint() {
+	      if (this.readOnlyMode) {
+	        return null;
 	      }
 	      return {
-	        backgroundImage: "url('" + encodeURI(main_core.Text.encode(this.imageUrl)) + "')",
-	        backgroundSize: '21px'
+	        text: this.$Bitrix.Loc.getMessage('CRM_ACTIVITY_TODO_COLOR_SELECTOR_HINT'),
+	        popupOptions: {
+	          angle: {
+	            offset: 30,
+	            position: 'top'
+	          },
+	          offsetTop: 2
+	        }
 	      };
-	    },
-	    className() {
-	      return ['ui-icon', 'ui-icon-common-user', 'crm-timeline__user-icon', {
-	        '--muted': this.isLogMessage
-	      }];
 	    }
 	  },
-	  // language=Vue
-	  template: `<a :class="className" :href="detailUrl"
-				  target="_blank" :title="title"><i :style="styles"></i></a>`
+	  template: `
+		<div class="crm-activity__todo-editor-v2_color-selector">
+			<div ref="itemSelectorRef" v-hint="hint"></div>
+		</div>
+	`
 	};
 
 	const FormatDate = {
@@ -2872,8 +3405,216 @@ this.BX.Crm = this.BX.Crm || {};
 	`
 	};
 
+	let TagType = function TagType() {
+	  babelHelpers.classCallCheck(this, TagType);
+	};
+	babelHelpers.defineProperty(TagType, "PRIMARY", 'primary');
+	babelHelpers.defineProperty(TagType, "SECONDARY", 'secondary');
+	babelHelpers.defineProperty(TagType, "SUCCESS", 'success');
+	babelHelpers.defineProperty(TagType, "WARNING", 'warning');
+	babelHelpers.defineProperty(TagType, "FAILURE", 'failure');
+	babelHelpers.defineProperty(TagType, "LAVENDER", 'lavender');
+
+	const Tag = {
+	  props: {
+	    title: {
+	      type: String,
+	      required: false,
+	      default: ''
+	    },
+	    hint: {
+	      type: String,
+	      required: false,
+	      default: ''
+	    },
+	    action: {
+	      type: Object,
+	      required: false,
+	      default: null
+	    },
+	    type: {
+	      type: String,
+	      required: false,
+	      default: TagType.SECONDARY
+	    },
+	    state: String
+	  },
+	  computed: {
+	    className() {
+	      return {
+	        'crm-timeline__card-status': true,
+	        '--clickable': Boolean(this.action),
+	        '--hint': Boolean(this.hint)
+	      };
+	    },
+	    tagTypeToLabelColorDict() {
+	      return {
+	        [TagType.PRIMARY]: ui_label.Label.Color.LIGHT_BLUE,
+	        [TagType.SECONDARY]: ui_label.Label.Color.LIGHT,
+	        [TagType.LAVENDER]: ui_label.Label.Color.LAVENDER,
+	        [TagType.SUCCESS]: ui_label.Label.Color.LIGHT_GREEN,
+	        [TagType.WARNING]: ui_label.Label.Color.LIGHT_YELLOW,
+	        [TagType.FAILURE]: ui_label.Label.Color.LIGHT_RED
+	      };
+	    },
+	    tagContainerRef() {
+	      return this.$refs.tag;
+	    }
+	  },
+	  methods: {
+	    getLabelColorFromTagType(tagType) {
+	      const lowerCaseTagType = tagType ? tagType.toLowerCase() : '';
+	      const labelColor = this.tagTypeToLabelColorDict[lowerCaseTagType];
+	      return labelColor || ui_label.Label.Color.LIGHT;
+	    },
+	    // eslint-disable-next-line consistent-return
+	    renderTag(tagOptions) {
+	      if (!tagOptions || !this.tagContainerRef) {
+	        return null;
+	      }
+	      const {
+	        title,
+	        type
+	      } = tagOptions;
+	      const uppercaseTitle = title && main_core.Type.isString(title) ? title.toUpperCase() : '';
+	      const label = new ui_label.Label({
+	        text: uppercaseTitle,
+	        color: this.getLabelColorFromTagType(type),
+	        fill: true
+	      });
+	      main_core.Dom.clean(this.tagContainerRef);
+	      main_core.Dom.append(label.render(), this.tagContainerRef);
+	    },
+	    executeAction() {
+	      if (!this.action) {
+	        return;
+	      }
+	      const action = new Action(this.action);
+	      action.execute(this);
+	    },
+	    showTooltip() {
+	      if (this.hint === '') {
+	        return;
+	      }
+	      main_core.Runtime.debounce(() => {
+	        BX.UI.Hint.show(this.$el, this.hint, true);
+	      }, 50, this)();
+	    },
+	    hideTooltip() {
+	      if (this.hint === '') {
+	        return;
+	      }
+	      BX.UI.Hint.hide(this.$el);
+	    }
+	  },
+	  mounted() {
+	    this.renderTag({
+	      title: this.title,
+	      type: this.type
+	    });
+	  },
+	  updated() {
+	    this.renderTag({
+	      title: this.title,
+	      type: this.type
+	    });
+	  },
+	  template: `
+		<div
+			ref="tag"
+			:class="className"
+			@mouseover="showTooltip"
+			@mouseleave="hideTooltip"
+			@click="executeAction"
+		></div>
+	`
+	};
+
+	const Title = {
+	  props: {
+	    title: String,
+	    action: Object
+	  },
+	  inject: ['isLogMessage'],
+	  computed: {
+	    className() {
+	      return ['crm-timeline__card-title', {
+	        '--light': this.isLogMessage,
+	        '--action': !!this.action
+	      }];
+	    },
+	    href() {
+	      if (!this.action) {
+	        return null;
+	      }
+	      const action = new Action(this.action);
+	      if (action.isRedirect()) {
+	        return action.getValue();
+	      }
+	      return null;
+	    }
+	  },
+	  methods: {
+	    executeAction() {
+	      if (!this.action) {
+	        return;
+	      }
+	      const action = new Action(this.action);
+	      action.execute(this);
+	    }
+	  },
+	  template: `
+		<a
+			v-if="href"
+			:href="href"
+			:class="className"
+			tabindex="0"
+			:title="title"
+		>
+			{{title}}
+		</a>
+		<span
+			v-else
+			@click="executeAction"
+			:class="className"
+			tabindex="0"
+			:title="title"
+		>
+			{{title}}
+		</span>`
+	};
+
+	const User = {
+	  props: {
+	    title: String,
+	    detailUrl: String,
+	    imageUrl: String
+	  },
+	  inject: ['isLogMessage'],
+	  computed: {
+	    styles() {
+	      if (!this.imageUrl) {
+	        return {};
+	      }
+	      return {
+	        backgroundImage: "url('" + encodeURI(main_core.Text.encode(this.imageUrl)) + "')",
+	        backgroundSize: '21px'
+	      };
+	    },
+	    className() {
+	      return ['ui-icon', 'ui-icon-common-user', 'crm-timeline__user-icon', {
+	        '--muted': this.isLogMessage
+	      }];
+	    }
+	  },
+	  // language=Vue
+	  template: `<a :class="className" :href="detailUrl"
+				  target="_blank" :title="title"><i :style="styles"></i></a>`
+	};
+
 	const Header = {
 	  components: {
+	    ColorSelector,
 	    ChangeStreamButton,
 	    Title,
 	    Tag,
@@ -2890,7 +3631,12 @@ this.BX.Crm = this.BX.Crm || {};
 	    changeStreamButton: Object | null,
 	    tags: Object,
 	    user: Object,
-	    infoHelper: Object
+	    infoHelper: Object,
+	    colorSettings: {
+	      type: Object,
+	      required: false,
+	      default: null
+	    }
 	  },
 	  inject: ['isReadOnly', 'isLogMessage'],
 	  computed: {
@@ -2898,7 +3644,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      if (!main_core.Type.isPlainObject(this.tags)) {
 	        return [];
 	      }
-	      return this.tags ? Object.values(this.tags).filter(this.isVisibleTagFilter) : [];
+	      return this.tags ? Object.values(this.tags).filter(element => this.isVisibleTagFilter(element)) : [];
 	    },
 	    visibleAndAscSortedTags() {
 	      const tagsCopy = main_core.Runtime.clone(this.visibleTags);
@@ -2924,11 +3670,22 @@ this.BX.Crm = this.BX.Crm || {};
 	      return this.$refs.changeStreamButton;
 	    }
 	  },
+	  created() {
+	    this.$watch('colorSettings', newColorSettings => {
+	      this.$refs.colorSelector.setValue(newColorSettings.selectedValueId);
+	    }, {
+	      deep: true
+	    });
+	  },
 	  template: `
 		<div :class="className">
 			<div class="crm-timeline__card-top_info">
 				<div class="crm-timeline__card-top_info_left">
-					<ChangeStreamButton v-if="changeStreamButton" v-bind="changeStreamButton" ref="changeStreamButton"></ChangeStreamButton>
+					<ChangeStreamButton 
+						v-if="changeStreamButton" 
+						v-bind="changeStreamButton" 
+						ref="changeStreamButton"
+					/>
 					<Title :title="title" :action="titleAction"></Title>
 					<Hint v-if="infoHelper" v-bind="infoHelper"></Hint>
 				</div>
@@ -2947,786 +3704,112 @@ this.BX.Crm = this.BX.Crm || {};
 					/>
 				</div>
 			</div>
-			<div class="crm-timeline__card-top_user">
+			<div class="crm-timeline__card-top_components-container">
+				<ColorSelector
+					v-if="colorSettings"
+					ref="colorSelector"
+					:valuesList="colorSettings.valuesList"
+					:selectedValueId="colorSettings.selectedValueId"
+					:readOnlyMode="colorSettings.readOnlyMode"
+				/>
 				<User v-bind="user"></User>
 			</div>
 		</div>
 	`
 	};
 
-	const Logo = {
+	let IconBackgroundColor = function IconBackgroundColor() {
+	  babelHelpers.classCallCheck(this, IconBackgroundColor);
+	};
+	babelHelpers.defineProperty(IconBackgroundColor, "PRIMARY", 'primary');
+	babelHelpers.defineProperty(IconBackgroundColor, "PRIMARY_ALT", 'primary_alt');
+	babelHelpers.defineProperty(IconBackgroundColor, "FAILURE", 'failure');
+
+	const Icon = {
 	  props: {
-	    type: String,
-	    addIcon: String,
-	    addIconType: String,
-	    icon: String,
-	    iconType: String,
-	    backgroundUrl: String,
-	    backgroundSize: Number,
-	    inCircle: {
-	      type: Boolean,
+	    code: {
+	      type: String,
 	      required: false,
-	      default: false
+	      default: 'none'
 	    },
-	    action: Object
+	    counterType: {
+	      type: String,
+	      required: false,
+	      default: ''
+	    },
+	    backgroundColorToken: {
+	      type: String,
+	      required: false,
+	      default: IconBackgroundColor.PRIMARY
+	    },
+	    backgroundUri: String,
+	    backgroundColor: {
+	      type: String,
+	      required: false,
+	      default: null
+	    }
 	  },
-	  data() {
-	    return {
-	      currentIcon: this.icon
-	    };
-	  },
+	  inject: ['isLogMessage'],
 	  computed: {
 	    className() {
-	      return ['crm-timeline__card-logo', `--${this.type}`, {
-	        '--clickable': this.action
-	      }];
-	    },
-	    iconClassname() {
-	      return ['crm-timeline__card-logo_icon', `--${this.currentIcon}`, {
-	        '--in-circle': this.inCircle,
-	        [`--type-${this.iconType}`]: !!this.iconType && !this.backgroundUrl,
-	        '--custom-bg': !!this.backgroundUrl
-	      }];
-	    },
-	    addIconClassname() {
-	      return ['crm-timeline__card-logo_add-icon', `--type-${this.addIconType}`, `--icon-${this.addIcon}`];
-	    },
-	    iconInteriorStyle() {
-	      const result = {};
-	      if (this.backgroundUrl) {
-	        result.backgroundImage = 'url(' + encodeURI(main_core.Text.encode(this.backgroundUrl)) + ')';
-	      }
-	      if (this.backgroundSize) {
-	        result.backgroundSize = parseInt(this.backgroundSize) + 'px';
-	      }
-	      return result;
-	    }
-	  },
-	  watch: {
-	    icon(newIcon) {
-	      this.currentIcon = newIcon;
-	    }
-	  },
-	  methods: {
-	    executeAction() {
-	      if (!this.action) {
-	        return;
-	      }
-	      const action = new Action(this.action);
-	      action.execute(this);
-	    },
-	    setIcon(icon) {
-	      this.currentIcon = icon;
-	    }
-	  },
-	  template: `
-		<div :class="className" @click="executeAction">
-			<div class="crm-timeline__card-logo_content">
-				<div :class="iconClassname">
-					<i :style="iconInteriorStyle"></i>
-				</div>
-				<div :class="addIconClassname" v-if="addIcon">
-					<i></i>
-				</div>
-			</div>
-		</div>
-	`
-	};
-
-	const CalendarIcon = {
-	  props: {
-	    timestamp: {
-	      type: Number,
-	      required: true,
-	      default: 0
-	    }
-	  },
-	  computed: {
-	    userTime() {
-	      return crm_timeline_tools.DatetimeConverter.createFromServerTimestamp(this.timestamp).toUserTime().getValue();
-	    },
-	    date() {
-	      return main_date.DateTimeFormat.format('d', this.userTime);
-	    },
-	    month() {
-	      return main_date.DateTimeFormat.format('F', this.userTime);
-	    },
-	    dayWeek() {
-	      return main_date.DateTimeFormat.format('D', this.userTime);
-	    },
-	    time() {
-	      return crm_timeline_tools.DatetimeConverter.createFromServerTimestamp(this.timestamp).toUserTime().toTimeString();
-	    }
-	  },
-	  template: `
-		<div class="crm-timeline__calendar-icon">
-			<header class="crm-timeline__calendar-icon_top">
-				<div class="crm-timeline__calendar-icon_bullets">
-					<div class="crm-timeline__calendar-icon_bullet"></div>
-					<div class="crm-timeline__calendar-icon_bullet"></div>
-				</div>
-			</header>
-			<main class="crm-timeline__calendar-icon_content">
-				<div class="crm-timeline__calendar-icon_day">{{ date }}</div>
-				<div class="crm-timeline__calendar-icon_month">{{ month }}</div>
-				<div class="crm-timeline__calendar-icon_date">
-					<span class="crm-timeline__calendar-icon_day-week">{{ dayWeek }}</span>
-					<span class="crm-timeline__calendar-icon_time">{{ time }}</span>
-				</div>
-			</main>
-		</div>
-	`
-	};
-
-	const LogoCalendar = ui_vue3.BitrixVue.cloneComponent(Logo, {
-	  components: {
-	    CalendarIcon
-	  },
-	  props: {
-	    timestamp: {
-	      type: Number,
-	      required: false,
-	      default: 0
-	    },
-	    addIcon: String,
-	    addIconType: String
-	  },
-	  computed: {
-	    addIconClassname() {
-	      return ['crm-timeline__card-logo_add-icon', `--type-${this.addIconType}`, `--icon-${this.addIcon}`];
-	    }
-	  },
-	  template: `
-		<div :class="className" @click="executeAction">
-			<div class="crm-timeline__card-logo_content">
-				<CalendarIcon :timestamp="timestamp" />
-				<div :class="addIconClassname" v-if="addIcon">
-					<i></i>
-				</div>
-			</div>
-		</div>
-	`
-	});
-
-	const Body = {
-	  components: {
-	    Logo,
-	    LogoCalendar
-	  },
-	  props: {
-	    logo: Object,
-	    blocks: Object
-	  },
-	  data() {
-	    return {
-	      blockRefs: {}
-	    };
-	  },
-	  mounted() {
-	    const blocks = this.$refs.blocks;
-	    if (!blocks || !this.visibleBlocks) {
-	      return;
-	    }
-	    this.visibleBlocks.forEach((block, index) => {
-	      if (main_core.Type.isDomNode(blocks[index].$el)) {
-	        blocks[index].$el.setAttribute('data-id', block.id);
-	      } else {
-	        throw new Error('Vue component "' + block.rendererName + '" was not found');
-	      }
-	    });
-	  },
-	  beforeUpdate() {
-	    this.blockRefs = {};
-	  },
-	  computed: {
-	    visibleBlocks() {
-	      if (!main_core.Type.isPlainObject(this.blocks)) {
-	        return [];
-	      }
-	      return Object.keys(this.blocks).map(id => ({
-	        id,
-	        ...this.blocks[id]
-	      })).filter(item => item.scope !== 'mobile').sort((a, b) => {
-	        let aSort = a.sort === undefined ? 0 : a.sort;
-	        let bSort = b.sort === undefined ? 0 : b.sort;
-	        if (aSort < bSort) {
-	          return -1;
-	        }
-	        if (aSort > bSort) {
-	          return 1;
-	        }
-	        return 0;
-	      });
-	    },
-	    contentContainerClassname() {
-	      return ['crm-timeline__card-container', {
-	        '--without-logo': !this.logo
-	      }];
-	    }
-	  },
-	  methods: {
-	    getContentBlockById(blockId) {
-	      var _this$blockRefs$block;
-	      return (_this$blockRefs$block = this.blockRefs[blockId]) !== null && _this$blockRefs$block !== void 0 ? _this$blockRefs$block : null;
-	    },
-	    getLogo() {
-	      return this.$refs.logo;
-	    },
-	    saveRef(ref, id) {
-	      this.blockRefs[id] = ref;
-	    }
-	  },
-	  template: `
-		<div class="crm-timeline__card-body">
-			<div v-if="logo" class="crm-timeline__card-logo_container">
-				<LogoCalendar v-if="logo.icon === 'calendar'" v-bind="logo"></LogoCalendar>
-				<Logo v-else v-bind="logo" ref="logo"></Logo>
-			</div>
-			<div :class="contentContainerClassname">
-				<div
-					v-for="block in visibleBlocks"
-					:key="block.id"
-					class="crm-timeline__card-container_block"
-				>
-					<component
-						:is="block.rendererName"
-						v-bind="block.properties"
-						:ref="(el) => this.saveRef(el, block.id)"
-					/>
-				</div>
-			</div>
-		</div>
-	`
-	};
-
-	let ButtonState = function ButtonState() {
-	  babelHelpers.classCallCheck(this, ButtonState);
-	};
-	babelHelpers.defineProperty(ButtonState, "DEFAULT", '');
-	babelHelpers.defineProperty(ButtonState, "LOADING", 'loading');
-	babelHelpers.defineProperty(ButtonState, "DISABLED", 'disabled');
-	babelHelpers.defineProperty(ButtonState, "HIDDEN", 'hidden');
-	babelHelpers.defineProperty(ButtonState, "AI_LOADING", 'ai-loading');
-
-	const BaseButton = {
-	  props: {
-	    id: {
-	      type: String,
-	      required: false,
-	      default: ''
-	    },
-	    title: {
-	      type: String,
-	      required: false,
-	      default: ''
-	    },
-	    tooltip: {
-	      type: String,
-	      required: false,
-	      default: ''
-	    },
-	    state: {
-	      type: String,
-	      required: false,
-	      default: ButtonState.DEFAULT
-	    },
-	    props: Object,
-	    action: Object
-	  },
-	  data() {
-	    return {
-	      currentState: this.state
-	    };
-	  },
-	  computed: {
-	    itemStateToButtonStateDict() {
 	      return {
-	        [ButtonState.LOADING]: ui_buttons.Button.State.WAITING,
-	        [ButtonState.DISABLED]: ui_buttons.Button.State.DISABLED,
-	        [ButtonState.AI_LOADING]: ui_buttons.Button.State.AI_WAITING
-	      };
-	    }
-	  },
-	  methods: {
-	    setDisabled(disabled) {
-	      if (disabled) {
-	        this.setButtonState(ButtonState.DISABLED);
-	      } else {
-	        this.setButtonState(ButtonState.DEFAULT);
-	      }
-	    },
-	    setLoading(loading) {
-	      if (loading) {
-	        this.setButtonState(ButtonState.LOADING);
-	      } else {
-	        this.setButtonState(ButtonState.DEFAULT);
-	      }
-	    },
-	    setButtonState(state) {
-	      if (this.currentState !== state) {
-	        this.currentState = state;
-	      }
-	    },
-	    onLayoutUpdated() {
-	      this.setButtonState(this.state);
-	    },
-	    executeAction() {
-	      if (this.action && this.currentState !== ButtonState.DISABLED && this.currentState !== ButtonState.LOADING && this.currentState !== ButtonState.AI_LOADING) {
-	        const action = new Action(this.action);
-	        action.execute(this);
-	      }
-	    }
-	  },
-	  created() {
-	    this.$Bitrix.eventEmitter.subscribe('layout:updated', this.onLayoutUpdated);
-	  },
-	  beforeDestroy() {
-	    this.$Bitrix.eventEmitter.unsubscribe('layout:updated', this.onLayoutUpdated);
-	  },
-	  template: `<button></button>`
-	};
-
-	const AdditionalButtonIcon = Object.freeze({
-	  NOTE: 'note',
-	  SCRIPT: 'script',
-	  PRINT: 'print',
-	  DOTS: 'dots'
-	});
-	const AdditionalButtonColor = Object.freeze({
-	  DEFAULT: 'default',
-	  PRIMARY: 'primary'
-	});
-	const AdditionalButton = ui_vue3.BitrixVue.cloneComponent(BaseButton, {
-	  props: {
-	    iconName: {
-	      type: String,
-	      required: false,
-	      default: '',
-	      validator(value) {
-	        return Object.values(AdditionalButtonIcon).indexOf(value) > -1;
-	      }
-	    },
-	    color: {
-	      type: String,
-	      required: false,
-	      default: AdditionalButtonColor.DEFAULT,
-	      validator(value) {
-	        return Object.values(AdditionalButtonColor).indexOf(value) > -1;
-	      }
-	    }
-	  },
-	  computed: {
-	    className() {
-	      return ['crm-timeline__card_add-button', {
-	        [`--icon-${this.iconName}`]: this.iconName,
-	        [`--color-${this.color}`]: this.color,
-	        [`--state-${this.currentState}`]: this.currentState
-	      }];
-	    },
-	    ButtonState() {
-	      return ButtonState;
-	    },
-	    loaderHtml() {
-	      const loader = new main_loader.Loader({
-	        mode: 'inline',
-	        size: 20
-	      });
-	      loader.show();
-	      return loader.layout.outerHTML;
-	    }
-	  },
-	  template: `
-		<transition name="crm-timeline__card_add-button-fade" mode="out-in">
-			<div
-				v-if="currentState === ButtonState.LOADING"
-				v-html="loaderHtml"
-				class="crm-timeline__card_add-button"
-			></div>
-			<div
-				v-else
-				:title="title"
-				@click="executeAction"
-				:class="className">
-			</div>
-		</transition>
-	`
-	});
-
-	const MenuId = 'timeline-more-button-menu';
-	const Menu$1 = {
-	  components: {
-	    AdditionalButton
-	  },
-	  props: {
-	    buttons: Array,
-	    // buttons that didn't fit into footer
-	    items: Object // real menu items
-	  },
-
-	  inject: ['isReadOnly'],
-	  computed: {
-	    isMenuFilled() {
-	      const menuItems = this.menuItems;
-	      return menuItems.length > 0;
-	    },
-	    itemsArray() {
-	      if (!this.items) {
-	        return [];
-	      }
-	      return Object.values(this.items).filter(item => item.state !== 'hidden' && item.scope !== 'mobile' && (!this.isReadOnly || !item.hideIfReadonly)).sort((a, b) => a.sort - b.sort);
-	    },
-	    menuItems() {
-	      let result = this.buttons;
-	      if (this.buttons.length && this.itemsArray.length) {
-	        result.push({
-	          delimiter: true
-	        });
-	      }
-	      result = [...result, ...this.itemsArray];
-	      return result;
-	    },
-	    buttonProps() {
-	      return {
-	        color: AdditionalButtonColor.DEFAULT,
-	        icon: AdditionalButtonIcon.DOTS
-	      };
-	    }
-	  },
-	  beforeUnmount() {
-	    const menu = main_popup.MenuManager.getMenuById(MenuId);
-	    if (menu) {
-	      menu.destroy();
-	    }
-	  },
-	  methods: {
-	    showMenu() {
-	      Menu.showMenu(this, this.menuItems, {
-	        id: MenuId,
-	        className: 'crm-timeline__card_more-menu',
-	        width: 230,
-	        angle: false,
-	        cacheable: false,
-	        bindElement: this.$el
-	      });
-	    }
-	  },
-	  // language=Vue
-	  template: `
-		<div v-if="isMenuFilled" class="crm-timeline__card-action_menu-item" @click="showMenu">
-			<AdditionalButton iconName="dots" color="default"></AdditionalButton>
-		</div>
-	`
-	};
-
-	let ButtonType = function ButtonType() {
-	  babelHelpers.classCallCheck(this, ButtonType);
-	};
-	babelHelpers.defineProperty(ButtonType, "ICON", 'icon');
-	babelHelpers.defineProperty(ButtonType, "PRIMARY", 'primary');
-	babelHelpers.defineProperty(ButtonType, "SECONDARY", 'secondary');
-	babelHelpers.defineProperty(ButtonType, "LIGHT", 'light');
-	babelHelpers.defineProperty(ButtonType, "AI", 'ai');
-
-	const Button = ui_vue3.BitrixVue.cloneComponent(BaseButton, {
-	  props: {
-	    type: {
-	      type: String,
-	      required: false,
-	      default: ButtonType.SECONDARY
-	    },
-	    iconName: {
-	      type: String,
-	      required: false,
-	      default: ''
-	    },
-	    size: {
-	      type: String,
-	      required: false,
-	      default: 'extra_small'
-	    }
-	  },
-	  data() {
-	    return {
-	      popup: null,
-	      uiButton: Object.freeze(null),
-	      timerSecondsRemaining: 0,
-	      currentState: this.state,
-	      hintText: main_core.Type.isStringFilled(this.tooltip) ? main_core.Text.encode(this.tooltip) : ''
-	    };
-	  },
-	  computed: {
-	    itemTypeToButtonColorDict() {
-	      return {
-	        [ButtonType.PRIMARY]: ui_buttons.Button.Color.PRIMARY,
-	        [ButtonType.SECONDARY]: ui_buttons.Button.Color.LIGHT_BORDER,
-	        [ButtonType.LIGHT]: ui_buttons.Button.Color.LIGHT,
-	        [ButtonType.ICON]: ui_buttons.Button.Color.LINK,
-	        [ButtonType.AI]: ui_buttons.Button.Color.AI
+	        'crm-timeline__card_icon': true,
+	        [`--bg-${this.backgroundColorToken}`]: Boolean(this.backgroundColorToken),
+	        [`--code-${this.code}`]: Boolean(this.code) && !this.backgroundUri,
+	        '--custom-bg': Boolean(this.backgroundUri),
+	        '--muted': this.isLogMessage
 	      };
 	    },
-	    buttonContainerRef() {
-	      return this.$refs.buttonContainer;
-	    }
-	  },
-	  methods: {
-	    getButtonOptions() {
-	      const upperCaseIconName = main_core.Type.isString(this.iconName) ? this.iconName.toUpperCase() : '';
-	      const upperCaseButtonSize = main_core.Type.isString(this.size) ? this.size.toUpperCase() : 'extra_small';
-	      const btnColor = this.itemTypeToButtonColorDict[this.type] || ui_buttons.Button.Color.LIGHT_BORDER;
-	      const titleText = this.type === ButtonType.ICON ? '' : this.title;
+	    counterNodeContainer() {
+	      return this.$refs.counter;
+	    },
+	    styles() {
+	      if (!this.backgroundUri) {
+	        return {};
+	      }
 	      return {
-	        id: this.id,
-	        round: true,
-	        dependOnTheme: false,
-	        size: ui_buttons.Button.Size[upperCaseButtonSize],
-	        text: titleText,
-	        color: btnColor,
-	        state: this.itemStateToButtonStateDict[this.currentState],
-	        icon: ui_buttons.Button.Icon[upperCaseIconName],
-	        props: main_core.Type.isPlainObject(this.props) ? this.props : {}
+	        backgroundImage: `url('${encodeURI(main_core.Text.encode(this.backgroundUri))}')`
 	      };
 	    },
-	    getUiButton() {
-	      return this.uiButton;
-	    },
-	    disableWithTimer(sec) {
-	      this.setButtonState(ButtonState.DISABLED);
-	      const btn = this.getUiButton();
-	      let remainingSeconds = sec;
-	      btn.setText(this.formatSeconds(remainingSeconds));
-	      const timer = setInterval(() => {
-	        if (remainingSeconds < 1) {
-	          clearInterval(timer);
-	          btn.setText(this.title);
-	          this.setButtonState(ButtonState.DEFAULT);
-	          return;
-	        }
-	        remainingSeconds--;
-	        btn.setText(this.formatSeconds(remainingSeconds));
-	      }, 1000);
-	    },
-	    formatSeconds(sec) {
-	      const minutes = Math.floor(sec / 60);
-	      const seconds = sec % 60;
-	      const formatMinutes = this.formatNumber(minutes);
-	      const formatSeconds = this.formatNumber(seconds);
-	      return `${formatMinutes}:${formatSeconds}`;
-	    },
-	    formatNumber(num) {
-	      return num < 10 ? `0${num}` : num;
-	    },
-	    setButtonState(state) {
-	      var _this$getUiButton, _this$itemStateToButt;
-	      this.parentSetButtonState(state);
-	      (_this$getUiButton = this.getUiButton()) === null || _this$getUiButton === void 0 ? void 0 : _this$getUiButton.setState((_this$itemStateToButt = this.itemStateToButtonStateDict[this.currentState]) !== null && _this$itemStateToButt !== void 0 ? _this$itemStateToButt : null);
-	    },
-	    renderButton() {
-	      if (!this.buttonContainerRef) {
-	        return;
-	      }
-	      this.buttonContainerRef.innerHTML = '';
-	      const button = new ui_buttons.Button(this.getButtonOptions());
-	      button.renderTo(this.buttonContainerRef);
-	      this.uiButton = button;
-	    },
-	    setTooltip(tooltip) {
-	      this.hintText = tooltip;
-	    },
-	    showTooltip() {
-	      if (this.hintText === '') {
-	        return;
-	      }
-	      BX.UI.Hint.show(this.$el, this.hintText, true);
-	    },
-	    hideTooltip() {
-	      if (this.hintText === '') {
-	        return;
-	      }
-	      BX.UI.Hint.hide(this.$el);
-	    },
-	    isInViewport() {
-	      const rect = this.$el.getBoundingClientRect();
-	      return rect.top >= 0 && rect.left >= 0 && rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) && rect.right <= (window.innerWidth || document.documentElement.clientWidth);
-	    }
-	  },
-	  watch: {
-	    state(newValue) {
-	      this.setButtonState(newValue);
-	    },
-	    tooltip(newValue) {
-	      this.hintText = main_core.Type.isStringFilled(newValue) ? main_core.Text.encode(newValue) : '';
-	    }
-	  },
-	  mounted() {
-	    this.renderButton();
-	  },
-	  updated() {
-	    this.renderButton();
-	  },
-	  template: `
-		<div
-			:class="$attrs.class"
-			ref="buttonContainer"
-			@click="executeAction"
-			@mouseover="showTooltip"
-			@mouseleave="hideTooltip"
-		>
-		</div>
-	`
-	});
-
-	const Buttons = {
-	  components: {
-	    Button
-	  },
-	  props: {
-	    items: {
-	      type: Array,
-	      required: false,
-	      default: () => []
-	    }
-	  },
-	  methods: {
-	    getButtonById(buttonId) {
-	      const buttons = this.$refs.buttons;
-	      return this.items.reduce((found, button, index) => {
-	        if (found) {
-	          return found;
-	        }
-	        if (button.id === buttonId) {
-	          return buttons[index];
-	        }
-	        return null;
-	      }, null);
-	    }
-	  },
-	  template: `
-			<div class="crm-timeline__card-action_buttons">
-				<Button class="crm-timeline__card-action-btn" v-for="item in items" v-bind="item" ref="buttons" />
-			</div>
-		`
-	};
-
-	let ButtonScope = function ButtonScope() {
-	  babelHelpers.classCallCheck(this, ButtonScope);
-	};
-	babelHelpers.defineProperty(ButtonScope, "MOBILE", 'mobile');
-
-	const Footer = {
-	  components: {
-	    Buttons,
-	    Menu: Menu$1,
-	    Button,
-	    AdditionalButton
-	  },
-	  props: {
-	    buttons: Object,
-	    menu: Object,
-	    additionalButtons: {
-	      type: Object,
-	      required: false,
-	      default: () => ({})
-	    },
-	    maxBaseButtonsCount: {
-	      type: Number,
-	      required: false,
-	      default: 3
-	    }
-	  },
-	  inject: ['isReadOnly'],
-	  computed: {
-	    containerClassname() {
-	      return ['crm-timeline__card-action', {
-	        '--no-margin-top': this.baseButtons.length < 1
-	      }];
-	    },
-	    baseButtons() {
-	      return this.visibleAndSortedButtons.slice(0, this.maxBaseButtonsCount);
-	    },
-	    moreButtons() {
-	      return this.visibleAndSortedButtons.slice(this.maxBaseButtonsCount);
-	    },
-	    visibleAndSortedButtons() {
-	      return this.visibleButtons.sort(this.buttonsSorter);
-	    },
-	    visibleAndSortedAdditionalButtons() {
-	      return this.visibleAdditionalButtons.sort(this.buttonsSorter);
-	    },
-	    visibleButtons() {
-	      if (!main_core.Type.isPlainObject(this.buttons)) {
-	        return [];
-	      }
-	      return this.buttons ? Object.keys(this.buttons).map(id => ({
-	        id,
-	        ...this.buttons[id]
-	      })).filter(this.visibleButtonsFilter) : [];
-	    },
-	    visibleAdditionalButtons() {
-	      return this.additionalButtonsArray ? Object.values(this.additionalButtonsArray).filter(this.visibleButtonsFilter) : [];
-	    },
-	    additionalButtonsArray() {
-	      return Object.entries(this.additionalButtons).map(([id, button]) => {
+	    iconStyle() {
+	      if (main_core.Type.isStringFilled(this.backgroundColor)) {
 	        return {
-	          id,
-	          type: ButtonType.ICON,
-	          ...button
+	          '--crm-timeline-card-icon-background': main_core.Text.encode(this.backgroundColor)
 	        };
-	      });
-	    },
-	    hasMenu() {
-	      return this.moreButtons.length || main_core.Type.isPlainObject(this.menu) && Object.keys(this.menu).length;
+	      }
+	      return {};
 	    }
 	  },
 	  methods: {
-	    visibleButtonsFilter(buttonItem) {
-	      return buttonItem.state !== ButtonState.HIDDEN && buttonItem.scope !== ButtonScope.MOBILE && (!this.isReadOnly || !buttonItem.hideIfReadonly);
-	    },
-	    buttonsSorter(buttonA, buttonB) {
-	      return (buttonA === null || buttonA === void 0 ? void 0 : buttonA.sort) - (buttonB === null || buttonB === void 0 ? void 0 : buttonB.sort);
-	    },
-	    getButtonById(buttonId) {
-	      if (this.$refs.buttons) {
-	        const foundButton = this.$refs.buttons.getButtonById(buttonId);
-	        if (foundButton) {
-	          return foundButton;
-	        }
+	    renderCounter() {
+	      if (!this.counterType) {
+	        return;
 	      }
-	      if (this.$refs.additionalButtons) {
-	        return this.visibleAndSortedAdditionalButtons.reduce((found, button, index) => {
-	          if (found) {
-	            return found;
-	          }
-	          if (button.id === buttonId) {
-	            return buttons[index];
-	          }
-	          return null;
-	        }, null);
-	      }
-	      return null;
-	    },
-	    getMenu() {
-	      if (this.$refs.menu) {
-	        return this.$refs.menu;
-	      }
-	      return null;
+	      main_core.Dom.clean(this.counterNodeContainer);
+	      const counter = new ui_cnt.Counter({
+	        value: 1,
+	        border: true,
+	        color: ui_cnt.Counter.Color[this.counterType.toUpperCase()]
+	      });
+	      counter.renderTo(this.counterNodeContainer);
+	    }
+	  },
+	  mounted() {
+	    this.renderCounter();
+	  },
+	  watch: {
+	    counterType(newCounterType)
+	    // update if counter state changed
+	    {
+	      void this.$nextTick(() => {
+	        this.renderCounter();
+	      });
 	    }
 	  },
 	  template: `
-		<div :class="containerClassname">
-			<Buttons ref="buttons" :items="baseButtons" />
-			<div class="crm-timeline__card-action_menu">
-				<div
-					v-for="button in visibleAndSortedAdditionalButtons"
-					:key="button.id"
-					class="crm-timeline__card-action_menu-item"
-				>
-					<additional-button
-						v-bind="button"
-					>
-					</additional-button>
-				</div>
-				<Menu v-if="hasMenu" :buttons="moreButtons" v-bind="menu" ref="menu"/>
-			</div>
+		<div :class="className" :style="iconStyle">
+			<i :style="styles"></i>
+			<div ref="counter" v-show="!!counterType" class="crm-timeline__card_icon_counter"></div>
 		</div>
 	`
 	};
@@ -3795,13 +3878,7 @@ this.BX.Crm = this.BX.Crm || {};
 	`
 	};
 
-	const StreamType = {
-	  history: 0,
-	  scheduled: 1,
-	  pinned: 2
-	};
-
-	const Item$3 = {
+	const Item$2 = {
 	  components: {
 	    Icon,
 	    Header,
@@ -3818,6 +3895,11 @@ this.BX.Crm = this.BX.Crm || {};
 	    isReadOnly: Boolean,
 	    currentUser: Object | null,
 	    onAction: Function,
+	    initialColor: {
+	      type: Object,
+	      required: false,
+	      default: null
+	    },
 	    streamType: {
 	      type: Number,
 	      required: false,
@@ -3827,6 +3909,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  data() {
 	    return {
 	      layout: this.initialLayout,
+	      color: this.initialColor,
 	      isFaded: false,
 	      loader: Object.freeze(null)
 	    };
@@ -3834,7 +3917,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  provide() {
 	    var _this$initialLayout;
 	    return {
-	      isLogMessage: !!((_this$initialLayout = this.initialLayout) !== null && _this$initialLayout !== void 0 && _this$initialLayout.isLogMessage),
+	      isLogMessage: Boolean((_this$initialLayout = this.initialLayout) === null || _this$initialLayout === void 0 ? void 0 : _this$initialLayout.isLogMessage),
 	      isReadOnly: this.isReadOnly,
 	      currentUser: this.currentUser
 	    };
@@ -3842,7 +3925,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  created() {
 	    this.$Bitrix.eventEmitter.subscribe('crm:timeline:item:action', this.onActionEvent);
 	  },
-	  beforeDestroy() {
+	  beforeUnmount() {
 	    this.$Bitrix.eventEmitter.unsubscribe('crm:timeline:item:action', this.onActionEvent);
 	  },
 	  methods: {
@@ -3854,6 +3937,9 @@ this.BX.Crm = this.BX.Crm || {};
 	      this.layout = newLayout;
 	      this.isFaded = false;
 	      this.$Bitrix.eventEmitter.emit('layout:updated');
+	    },
+	    setColor(newColor) {
+	      this.color = newColor;
 	    },
 	    setFaded(faded) {
 	      this.isFaded = faded;
@@ -3927,8 +4013,16 @@ this.BX.Crm = this.BX.Crm || {};
 	        '--stream-type-history': this.streamType === StreamType.history,
 	        '--stream-type-scheduled': this.streamType === StreamType.scheduled,
 	        '--stream-type-pinned': this.streamType === StreamType.pinned,
-	        '--log-message': !!this.layout.isLogMessage
+	        '--log-message': this.isLogMessage
 	      };
+	    },
+	    timelineCardStyle() {
+	      if (main_core.Type.isPlainObject(this.color) && this.streamType === StreamType.scheduled) {
+	        return {
+	          '--crm-timeline__card-color-background': main_core.Text.encode(this.color.itemBackground)
+	        };
+	      }
+	      return {};
 	    }
 	  },
 	  template: `
@@ -3936,9 +4030,19 @@ this.BX.Crm = this.BX.Crm || {};
 			<div class="crm-timeline__card_icon_container">
 				<Icon v-bind="layout.icon"></Icon>
 			</div>
-			<div :data-id="id" ref="timelineCard" :class="timelineCardClassname">
+			<div 
+				:data-id="id" 
+				ref="timelineCard" 
+				:class="timelineCardClassname"
+				:style="timelineCardStyle"
+			>
 				<div class="crm-timeline__card_fade" v-if="isFaded"></div>
-				<Header v-if="layout.header" v-bind="layout.header" :use-short-time-format="useShortTimeFormat" ref="header"></Header>
+				<Header 
+					v-if="layout.header"
+					v-bind="layout.header"
+					:use-short-time-format="useShortTimeFormat"
+					ref="header"
+				/>
 				<Body v-if="layout.body" v-bind="layout.body" ref="body"></Body>
 				<Footer v-if="layout.footer" v-bind="layout.footer" ref="footer"></Footer>
 				<MarketPanel v-if="layout.marketPanel" v-bind="layout.marketPanel"></MarketPanel>
@@ -3949,39 +4053,62 @@ this.BX.Crm = this.BX.Crm || {};
 
 	function _classPrivateFieldInitSpec$3(obj, privateMap, value) { _checkPrivateRedeclaration$3(obj, privateMap); privateMap.set(obj, value); }
 	function _checkPrivateRedeclaration$3(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
-	var _layout = /*#__PURE__*/new WeakMap();
-	let Layout = /*#__PURE__*/function () {
-	  function Layout(layout) {
-	    babelHelpers.classCallCheck(this, Layout);
-	    _classPrivateFieldInitSpec$3(this, _layout, {
+	function _classStaticPrivateFieldSpecGet(receiver, classConstructor, descriptor) { _classCheckPrivateStaticAccess(receiver, classConstructor); _classCheckPrivateStaticFieldDescriptor(descriptor, "get"); return _classApplyDescriptorGet(receiver, descriptor); }
+	function _classCheckPrivateStaticFieldDescriptor(descriptor, action) { if (descriptor === undefined) { throw new TypeError("attempted to " + action + " private static field before its declaration"); } }
+	function _classCheckPrivateStaticAccess(receiver, classConstructor) { if (receiver !== classConstructor) { throw new TypeError("Private static access of wrong provenance"); } }
+	function _classApplyDescriptorGet(receiver, descriptor) { if (descriptor.get) { return descriptor.get.call(receiver); } return descriptor.value; }
+	var _id = /*#__PURE__*/new WeakMap();
+	let ControllerManager = /*#__PURE__*/function () {
+	  function ControllerManager(id) {
+	    babelHelpers.classCallCheck(this, ControllerManager);
+	    _classPrivateFieldInitSpec$3(this, _id, {
 	      writable: true,
 	      value: null
 	    });
-	    babelHelpers.classPrivateFieldSet(this, _layout, layout);
+	    babelHelpers.classPrivateFieldSet(this, _id, id);
 	  }
-	  babelHelpers.createClass(Layout, [{
-	    key: "asPlainObject",
-	    value: function asPlainObject() {
-	      return main_core.Runtime.clone(babelHelpers.classPrivateFieldGet(this, _layout));
+	  babelHelpers.createClass(ControllerManager, [{
+	    key: "getItemControllers",
+	    value: function getItemControllers(item) {
+	      const foundControllers = [];
+	      for (const controller of ControllerManager.getRegisteredControllers()) {
+	        if (controller.isItemSupported(item)) {
+	          const controllerInstance = new controller();
+	          controllerInstance.onInitialize(item);
+	          foundControllers.push(controllerInstance);
+	        }
+	      }
+	      return foundControllers;
+	    }
+	  }], [{
+	    key: "getInstance",
+	    value: function getInstance(timelineId) {
+	      if (!_classStaticPrivateFieldSpecGet(this, ControllerManager, _instances).hasOwnProperty(timelineId)) {
+	        _classStaticPrivateFieldSpecGet(this, ControllerManager, _instances)[timelineId] = new ControllerManager(timelineId);
+	      }
+	      return _classStaticPrivateFieldSpecGet(this, ControllerManager, _instances)[timelineId];
 	    }
 	  }, {
-	    key: "getFooterMenuItemById",
-	    value: function getFooterMenuItemById(id) {
-	      var _babelHelpers$classPr, _babelHelpers$classPr2, _babelHelpers$classPr3, _babelHelpers$classPr4;
-	      const items = (_babelHelpers$classPr = (_babelHelpers$classPr2 = babelHelpers.classPrivateFieldGet(this, _layout)) === null || _babelHelpers$classPr2 === void 0 ? void 0 : (_babelHelpers$classPr3 = _babelHelpers$classPr2.footer) === null || _babelHelpers$classPr3 === void 0 ? void 0 : (_babelHelpers$classPr4 = _babelHelpers$classPr3.menu) === null || _babelHelpers$classPr4 === void 0 ? void 0 : _babelHelpers$classPr4.items) !== null && _babelHelpers$classPr !== void 0 ? _babelHelpers$classPr : {};
-	      return items.hasOwnProperty(id) ? items.id : null;
+	    key: "registerController",
+	    value: function registerController(controller) {
+	      _classStaticPrivateFieldSpecGet(this, ControllerManager, _availableControllers).push(controller);
 	    }
 	  }, {
-	    key: "addFooterMenuItem",
-	    value: function addFooterMenuItem(menuItem) {
-	      babelHelpers.classPrivateFieldGet(this, _layout).footer = babelHelpers.classPrivateFieldGet(this, _layout).footer || {};
-	      babelHelpers.classPrivateFieldGet(this, _layout).footer.menu = babelHelpers.classPrivateFieldGet(this, _layout).footer.menu || {};
-	      babelHelpers.classPrivateFieldGet(this, _layout).footer.menu.items = babelHelpers.classPrivateFieldGet(this, _layout).footer.menu.items || {};
-	      babelHelpers.classPrivateFieldGet(this, _layout).footer.menu.items[menuItem.id] = menuItem;
+	    key: "getRegisteredControllers",
+	    value: function getRegisteredControllers() {
+	      return _classStaticPrivateFieldSpecGet(this, ControllerManager, _availableControllers);
 	    }
 	  }]);
-	  return Layout;
+	  return ControllerManager;
 	}();
+	var _instances = {
+	  writable: true,
+	  value: {}
+	};
+	var _availableControllers = {
+	  writable: true,
+	  value: []
+	};
 
 	let Base = /*#__PURE__*/function () {
 	  function Base() {
@@ -4061,6 +4188,27 @@ this.BX.Crm = this.BX.Crm || {};
 	        return true;
 	      });
 	    }
+	    /**
+	     * Schedule TODO activity action
+	     *
+	     * @param activityId Activity ID
+	     * @param scheduleDate Date to use in editor
+	     *
+	     * @protected
+	     */
+	  }, {
+	    key: "runScheduleAction",
+	    value: function runScheduleAction(activityId, scheduleDate) {
+	      var _BX$Crm, _BX$Crm$Timeline, _BX$Crm$Timeline$Menu;
+	      const menuBar = (_BX$Crm = BX.Crm) === null || _BX$Crm === void 0 ? void 0 : (_BX$Crm$Timeline = _BX$Crm.Timeline) === null || _BX$Crm$Timeline === void 0 ? void 0 : (_BX$Crm$Timeline$Menu = _BX$Crm$Timeline.MenuBar) === null || _BX$Crm$Timeline$Menu === void 0 ? void 0 : _BX$Crm$Timeline$Menu.getDefault();
+	      if (menuBar) {
+	        menuBar.setActiveItemById('todo');
+	        const todoEditor = menuBar.getItemById('todo');
+	        todoEditor.focus();
+	        todoEditor.setParentActivityId(activityId);
+	        todoEditor.setDeadLine(scheduleDate);
+	      }
+	    }
 	  }], [{
 	    key: "isItemSupported",
 	    value: function isItemSupported(item) {
@@ -4070,64 +4218,162 @@ this.BX.Crm = this.BX.Crm || {};
 	  return Base;
 	}();
 
+	let Item$3 = /*#__PURE__*/function () {
+	  function Item() {
+	    babelHelpers.classCallCheck(this, Item);
+	    this._id = '';
+	    this._isTerminated = false;
+	    this._wrapper = null;
+	  }
+	  babelHelpers.createClass(Item, [{
+	    key: "getId",
+	    value: function getId() {
+	      return this._id;
+	    }
+	  }, {
+	    key: "_setId",
+	    value: function _setId(id) {
+	      this._id = BX.type.isNotEmptyString(id) ? id : BX.util.getRandomString(4);
+	    }
+	    /**
+	     * @abstract
+	     */
+	  }, {
+	    key: "setData",
+	    value: function setData(data) {
+	      throw new Error('Item.setData() must be overridden');
+	    }
+	    /**
+	     * @abstract
+	     */
+	  }, {
+	    key: "layout",
+	    value: function layout(options) {
+	      throw new Error('Item.layout() must be overridden');
+	    }
+	  }, {
+	    key: "refreshLayout",
+	    value: function refreshLayout() {
+	      const anchor = this._wrapper.previousSibling;
+	      this.clearLayout();
+	      this.layout({
+	        anchor: anchor
+	      });
+	    }
+	  }, {
+	    key: "clearLayout",
+	    value: function clearLayout() {
+	      main_core.Dom.remove(this._wrapper);
+	      this._wrapper = undefined;
+	    }
+	  }, {
+	    key: "destroy",
+	    value: function destroy() {
+	      this.clearLayout();
+	    }
+	  }, {
+	    key: "getWrapper",
+	    value: function getWrapper() {
+	      return this._wrapper;
+	    }
+	  }, {
+	    key: "setWrapper",
+	    value: function setWrapper(wrapper) {
+	      this._wrapper = wrapper;
+	    }
+	  }, {
+	    key: "addWrapperClass",
+	    value: function addWrapperClass(className, timeout) {
+	      if (!this._wrapper) {
+	        return;
+	      }
+	      main_core.Dom.addClass(this._wrapper, className);
+	      if (main_core.Type.isNumber(timeout) && timeout >= 0) {
+	        window.setTimeout(this.removeWrapperClass.bind(this, className), timeout);
+	      }
+	    }
+	  }, {
+	    key: "removeWrapperClass",
+	    value: function removeWrapperClass(className, timeout) {
+	      if (!this._wrapper) {
+	        return;
+	      }
+	      main_core.Dom.removeClass(this._wrapper, className);
+	      if (main_core.Type.isNumber(timeout) && timeout >= 0) {
+	        window.setTimeout(this.addWrapperClass.bind(this, className), timeout);
+	      }
+	    }
+	  }, {
+	    key: "isTerminated",
+	    value: function isTerminated() {
+	      return this._isTerminated;
+	    }
+	  }, {
+	    key: "markAsTerminated",
+	    value: function markAsTerminated(terminated) {
+	      terminated = !!terminated;
+	      if (this._isTerminated === terminated) {
+	        return;
+	      }
+	      this._isTerminated = terminated;
+	      if (!this._wrapper) {
+	        return;
+	      }
+	      if (terminated) {
+	        main_core.Dom.addClass(this._wrapper, 'crm-entity-stream-section-last');
+	      } else {
+	        main_core.Dom.removeClass(this._wrapper, 'crm-entity-stream-section-last');
+	      }
+	    }
+	  }, {
+	    key: "getAssociatedEntityTypeId",
+	    value: function getAssociatedEntityTypeId() {
+	      return null;
+	    }
+	  }, {
+	    key: "getAssociatedEntityId",
+	    value: function getAssociatedEntityId() {
+	      return null;
+	    }
+	  }]);
+	  return Item;
+	}();
+
 	function _classPrivateFieldInitSpec$4(obj, privateMap, value) { _checkPrivateRedeclaration$4(obj, privateMap); privateMap.set(obj, value); }
 	function _checkPrivateRedeclaration$4(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
-	function _classStaticPrivateFieldSpecGet(receiver, classConstructor, descriptor) { _classCheckPrivateStaticAccess(receiver, classConstructor); _classCheckPrivateStaticFieldDescriptor(descriptor, "get"); return _classApplyDescriptorGet(receiver, descriptor); }
-	function _classCheckPrivateStaticFieldDescriptor(descriptor, action) { if (descriptor === undefined) { throw new TypeError("attempted to " + action + " private static field before its declaration"); } }
-	function _classCheckPrivateStaticAccess(receiver, classConstructor) { if (receiver !== classConstructor) { throw new TypeError("Private static access of wrong provenance"); } }
-	function _classApplyDescriptorGet(receiver, descriptor) { if (descriptor.get) { return descriptor.get.call(receiver); } return descriptor.value; }
-	var _id = /*#__PURE__*/new WeakMap();
-	let ControllerManager = /*#__PURE__*/function () {
-	  function ControllerManager(id) {
-	    babelHelpers.classCallCheck(this, ControllerManager);
-	    _classPrivateFieldInitSpec$4(this, _id, {
+	var _layout = /*#__PURE__*/new WeakMap();
+	let Layout = /*#__PURE__*/function () {
+	  function Layout(layout) {
+	    babelHelpers.classCallCheck(this, Layout);
+	    _classPrivateFieldInitSpec$4(this, _layout, {
 	      writable: true,
 	      value: null
 	    });
-	    babelHelpers.classPrivateFieldSet(this, _id, id);
+	    babelHelpers.classPrivateFieldSet(this, _layout, layout);
 	  }
-	  babelHelpers.createClass(ControllerManager, [{
-	    key: "getItemControllers",
-	    value: function getItemControllers(item) {
-	      const foundControllers = [];
-	      for (const controller of ControllerManager.getRegisteredControllers()) {
-	        if (controller.isItemSupported(item)) {
-	          const controllerInstance = new controller();
-	          controllerInstance.onInitialize(item);
-	          foundControllers.push(controllerInstance);
-	        }
-	      }
-	      return foundControllers;
-	    }
-	  }], [{
-	    key: "getInstance",
-	    value: function getInstance(timelineId) {
-	      if (!_classStaticPrivateFieldSpecGet(this, ControllerManager, _instances).hasOwnProperty(timelineId)) {
-	        _classStaticPrivateFieldSpecGet(this, ControllerManager, _instances)[timelineId] = new ControllerManager(timelineId);
-	      }
-	      return _classStaticPrivateFieldSpecGet(this, ControllerManager, _instances)[timelineId];
+	  babelHelpers.createClass(Layout, [{
+	    key: "asPlainObject",
+	    value: function asPlainObject() {
+	      return main_core.Runtime.clone(babelHelpers.classPrivateFieldGet(this, _layout));
 	    }
 	  }, {
-	    key: "registerController",
-	    value: function registerController(controller) {
-	      _classStaticPrivateFieldSpecGet(this, ControllerManager, _availableControllers).push(controller);
+	    key: "getFooterMenuItemById",
+	    value: function getFooterMenuItemById(id) {
+	      var _babelHelpers$classPr, _babelHelpers$classPr2, _babelHelpers$classPr3, _babelHelpers$classPr4;
+	      const items = (_babelHelpers$classPr = (_babelHelpers$classPr2 = babelHelpers.classPrivateFieldGet(this, _layout)) === null || _babelHelpers$classPr2 === void 0 ? void 0 : (_babelHelpers$classPr3 = _babelHelpers$classPr2.footer) === null || _babelHelpers$classPr3 === void 0 ? void 0 : (_babelHelpers$classPr4 = _babelHelpers$classPr3.menu) === null || _babelHelpers$classPr4 === void 0 ? void 0 : _babelHelpers$classPr4.items) !== null && _babelHelpers$classPr !== void 0 ? _babelHelpers$classPr : {};
+	      return items.hasOwnProperty(id) ? items.id : null;
 	    }
 	  }, {
-	    key: "getRegisteredControllers",
-	    value: function getRegisteredControllers() {
-	      return _classStaticPrivateFieldSpecGet(this, ControllerManager, _availableControllers);
+	    key: "addFooterMenuItem",
+	    value: function addFooterMenuItem(menuItem) {
+	      babelHelpers.classPrivateFieldGet(this, _layout).footer = babelHelpers.classPrivateFieldGet(this, _layout).footer || {};
+	      babelHelpers.classPrivateFieldGet(this, _layout).footer.menu = babelHelpers.classPrivateFieldGet(this, _layout).footer.menu || {};
+	      babelHelpers.classPrivateFieldGet(this, _layout).footer.menu.items = babelHelpers.classPrivateFieldGet(this, _layout).footer.menu.items || {};
+	      babelHelpers.classPrivateFieldGet(this, _layout).footer.menu.items[menuItem.id] = menuItem;
 	    }
 	  }]);
-	  return ControllerManager;
+	  return Layout;
 	}();
-	var _instances = {
-	  writable: true,
-	  value: {}
-	};
-	var _availableControllers = {
-	  writable: true,
-	  value: []
-	};
 
 	function _classPrivateMethodInitSpec$2(obj, privateSet) { _checkPrivateRedeclaration$5(obj, privateSet); privateSet.add(obj); }
 	function _classPrivateFieldInitSpec$5(obj, privateMap, value) { _checkPrivateRedeclaration$5(obj, privateMap); privateMap.set(obj, value); }
@@ -4150,6 +4396,7 @@ this.BX.Crm = this.BX.Crm || {};
 	var _layoutApp = /*#__PURE__*/new WeakMap();
 	var _layout$1 = /*#__PURE__*/new WeakMap();
 	var _streamType = /*#__PURE__*/new WeakMap();
+	var _color = /*#__PURE__*/new WeakMap();
 	var _useAnchorNextSibling = /*#__PURE__*/new WeakSet();
 	var _initLayoutApp = /*#__PURE__*/new WeakSet();
 	var _getLayoutAppProps = /*#__PURE__*/new WeakSet();
@@ -4234,6 +4481,10 @@ this.BX.Crm = this.BX.Crm || {};
 	      writable: true,
 	      value: null
 	    });
+	    _classPrivateFieldInitSpec$5(babelHelpers.assertThisInitialized(_this), _color, {
+	      writable: true,
+	      value: null
+	    });
 	    return _this;
 	  }
 	  babelHelpers.createClass(ConfigurableItem, [{
@@ -4258,11 +4509,18 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "setData",
 	    value: function setData(data) {
+	      var _data$color;
 	      babelHelpers.classPrivateFieldSet(this, _type$1, data.type || null);
 	      babelHelpers.classPrivateFieldSet(this, _timestamp, data.timestamp || null);
 	      babelHelpers.classPrivateFieldSet(this, _sort, data.sort || []);
 	      babelHelpers.classPrivateFieldSet(this, _layout$1, new Layout(data.layout || {}));
 	      babelHelpers.classPrivateFieldSet(this, _dataPayload, data.payload || {});
+	      babelHelpers.classPrivateFieldSet(this, _color, (_data$color = data.color) !== null && _data$color !== void 0 ? _data$color : null);
+	    }
+	  }, {
+	    key: "getColor",
+	    value: function getColor() {
+	      return babelHelpers.classPrivateFieldGet(this, _color);
 	    }
 	  }, {
 	    key: "getLayout",
@@ -4340,6 +4598,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    value: function refreshLayout() {
 	      // try to refresh layout via vue reactivity, if possible:
 	      if (babelHelpers.classPrivateFieldGet(this, _layoutComponent)) {
+	        babelHelpers.classPrivateFieldGet(this, _layoutComponent).setColor(this.getColor());
 	        babelHelpers.classPrivateFieldGet(this, _layoutComponent).setLayout(this.getLayout().asPlainObject());
 	        for (const controller of babelHelpers.classPrivateFieldGet(this, _controllers)) {
 	          controller.onAfterItemRefreshLayout(this);
@@ -4368,32 +4627,38 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "getLayoutContentBlockById",
 	    value: function getLayoutContentBlockById(id) {
-	      return babelHelpers.classPrivateFieldGet(this, _layoutComponent).getContentBlockById(id);
+	      var _babelHelpers$classPr;
+	      return (_babelHelpers$classPr = babelHelpers.classPrivateFieldGet(this, _layoutComponent)) === null || _babelHelpers$classPr === void 0 ? void 0 : _babelHelpers$classPr.getContentBlockById(id);
 	    }
 	  }, {
 	    key: "getLogo",
 	    value: function getLogo() {
-	      return babelHelpers.classPrivateFieldGet(this, _layoutComponent).getLogo();
+	      var _babelHelpers$classPr2;
+	      return (_babelHelpers$classPr2 = babelHelpers.classPrivateFieldGet(this, _layoutComponent)) === null || _babelHelpers$classPr2 === void 0 ? void 0 : _babelHelpers$classPr2.getLogo();
 	    }
 	  }, {
 	    key: "getLayoutFooterButtonById",
 	    value: function getLayoutFooterButtonById(id) {
-	      return babelHelpers.classPrivateFieldGet(this, _layoutComponent).getFooterButtonById(id);
+	      var _babelHelpers$classPr3;
+	      return (_babelHelpers$classPr3 = babelHelpers.classPrivateFieldGet(this, _layoutComponent)) === null || _babelHelpers$classPr3 === void 0 ? void 0 : _babelHelpers$classPr3.getFooterButtonById(id);
 	    }
 	  }, {
 	    key: "getLayoutFooterMenu",
 	    value: function getLayoutFooterMenu() {
-	      return babelHelpers.classPrivateFieldGet(this, _layoutComponent).getFooterMenu();
+	      var _babelHelpers$classPr4;
+	      return (_babelHelpers$classPr4 = babelHelpers.classPrivateFieldGet(this, _layoutComponent)) === null || _babelHelpers$classPr4 === void 0 ? void 0 : _babelHelpers$classPr4.getFooterMenu();
 	    }
 	  }, {
 	    key: "getLayoutHeaderChangeStreamButton",
 	    value: function getLayoutHeaderChangeStreamButton() {
-	      return babelHelpers.classPrivateFieldGet(this, _layoutComponent).getHeaderChangeStreamButton();
+	      var _babelHelpers$classPr5;
+	      return (_babelHelpers$classPr5 = babelHelpers.classPrivateFieldGet(this, _layoutComponent)) === null || _babelHelpers$classPr5 === void 0 ? void 0 : _babelHelpers$classPr5.getHeaderChangeStreamButton();
 	    }
 	  }, {
 	    key: "highlightContentBlockById",
 	    value: function highlightContentBlockById(blockId, isHighlighted) {
-	      babelHelpers.classPrivateFieldGet(this, _layoutComponent).highlightContentBlockById(blockId, isHighlighted);
+	      var _babelHelpers$classPr6;
+	      (_babelHelpers$classPr6 = babelHelpers.classPrivateFieldGet(this, _layoutComponent)) === null || _babelHelpers$classPr6 === void 0 ? void 0 : _babelHelpers$classPr6.highlightContentBlockById(blockId, isHighlighted);
 	    }
 	  }, {
 	    key: "clearLayout",
@@ -4516,7 +4781,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    }
 	  }]);
 	  return ConfigurableItem;
-	}(Item$2);
+	}(Item$3);
 	function _useAnchorNextSibling2(options) {
 	  if (main_core.Type.isPlainObject(options)) {
 	    return main_core.Type.isBoolean(options['useAnchorNextSibling']) ? options['useAnchorNextSibling'] : true;
@@ -4525,7 +4790,7 @@ this.BX.Crm = this.BX.Crm || {};
 	}
 	function _initLayoutApp2() {
 	  if (!babelHelpers.classPrivateFieldGet(this, _layoutApp)) {
-	    babelHelpers.classPrivateFieldSet(this, _layoutApp, ui_vue3.BitrixVue.createApp(Item$3, _classPrivateMethodGet$2(this, _getLayoutAppProps, _getLayoutAppProps2).call(this)));
+	    babelHelpers.classPrivateFieldSet(this, _layoutApp, ui_vue3.BitrixVue.createApp(Item$2, _classPrivateMethodGet$2(this, _getLayoutAppProps, _getLayoutAppProps2).call(this)));
 	    const contentBlockComponents = _classPrivateMethodGet$2(this, _getContentBlockComponents, _getContentBlockComponents2).call(this);
 	    for (const componentName in contentBlockComponents) {
 	      babelHelpers.classPrivateFieldGet(this, _layoutApp).component(componentName, contentBlockComponents[componentName]);
@@ -4536,6 +4801,7 @@ this.BX.Crm = this.BX.Crm || {};
 	function _getLayoutAppProps2() {
 	  return {
 	    initialLayout: this.getLayout().asPlainObject(),
+	    initialColor: babelHelpers.classPrivateFieldGet(this, _streamType) === crm_timeline_item.StreamType.scheduled ? babelHelpers.classPrivateFieldGet(this, _color) : null,
 	    id: String(this.getId()),
 	    useShortTimeFormat: babelHelpers.classPrivateFieldGet(this, _useShortTimeFormat),
 	    isReadOnly: this.isReadOnly(),
@@ -11872,25 +12138,26 @@ this.BX.Crm = this.BX.Crm || {};
 	  babelHelpers.createClass(Scoring, [{
 	    key: "prepareContent",
 	    value: function prepareContent() {
-	      const outerWrapper = BX.create("DIV", {
+	      const isScoringAvailable = BX.prop.getBoolean(this._data, 'SCORING_IS_AVAILABLE', true);
+	      const outerWrapper = BX.create('DIV', {
 	        attrs: {
-	          className: "crm-entity-stream-section crm-entity-stream-section-history crm-entity-stream-section-scoring"
+	          className: 'crm-entity-stream-section crm-entity-stream-section-history crm-entity-stream-section-scoring'
 	        },
-	        events: {
+	        events: isScoringAvailable ? {
 	          click: function () {
-	            let url = "/crm/ml/#entity#/#id#/detail";
+	            let url = '/crm/ml/#entity#/#id#/detail';
 	            const ownerTypeId = this.getOwnerTypeId();
 	            const ownerId = this.getOwnerId();
-	            let ownerType;
+	            let ownerType = '';
 	            if (ownerTypeId === 1) {
-	              ownerType = "lead";
+	              ownerType = 'lead';
 	            } else if (ownerTypeId === 2) {
-	              ownerType = "deal";
+	              ownerType = 'deal';
 	            } else {
 	              return;
 	            }
-	            url = url.replace("#entity#", ownerType);
-	            url = url.replace("#id#", ownerId);
+	            url = url.replace('#entity#', ownerType);
+	            url = url.replace('#id#', ownerId);
 	            if (BX.SidePanel) {
 	              BX.SidePanel.Instance.open(url, {
 	                width: 840
@@ -11899,7 +12166,7 @@ this.BX.Crm = this.BX.Crm || {};
 	              top.location.href = url;
 	            }
 	          }.bind(this)
-	        }
+	        } : null
 	      });
 	      const scoringInfo = BX.prop.getObject(this._data, "SCORING_INFO", null);
 	      if (!scoringInfo) {
@@ -13548,65 +13815,6 @@ this.BX.Crm = this.BX.Crm || {};
 	}(Scheduled);
 
 	/** @memberof BX.Crm.Timeline.Items.Scheduled */
-	let Email$2 = /*#__PURE__*/function (_Activity) {
-	  babelHelpers.inherits(Email, _Activity);
-	  function Email() {
-	    babelHelpers.classCallCheck(this, Email);
-	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Email).call(this));
-	  }
-	  babelHelpers.createClass(Email, [{
-	    key: "getWrapperClassName",
-	    value: function getWrapperClassName() {
-	      return "crm-entity-stream-section-email";
-	    }
-	  }, {
-	    key: "getIconClassName",
-	    value: function getIconClassName() {
-	      return "crm-entity-stream-section-icon crm-entity-stream-section-icon-email";
-	    }
-	  }, {
-	    key: "prepareActions",
-	    value: function prepareActions() {
-	      if (this.isReadOnly()) {
-	        return;
-	      }
-	      this._actions.push(BX.CrmScheduleEmailAction.create("email", {
-	        item: this,
-	        container: this._actionContainer,
-	        entityData: this.getAssociatedEntityData(),
-	        activityEditor: this._activityEditor
-	      }));
-	    }
-	  }, {
-	    key: "getTypeDescription",
-	    value: function getTypeDescription(direction) {
-	      return this.getMessage(direction === BX.CrmActivityDirection.incoming ? "incomingEmail" : "outgoingEmail");
-	    }
-	  }, {
-	    key: "getRemoveMessage",
-	    value: function getRemoveMessage() {
-	      const entityData = this.getAssociatedEntityData();
-	      let title = BX.prop.getString(entityData, "SUBJECT", "");
-	      title = BX.util.htmlspecialchars(title);
-	      return this.getMessage('emailRemove').replace("#TITLE#", title);
-	    }
-	  }, {
-	    key: "isEditable",
-	    value: function isEditable() {
-	      return false;
-	    }
-	  }], [{
-	    key: "create",
-	    value: function create(id, settings) {
-	      const self = new Email();
-	      self.initialize(id, settings);
-	      return self;
-	    }
-	  }]);
-	  return Email;
-	}(Activity$1);
-
-	/** @memberof BX.Crm.Timeline.Items.Scheduled */
 	let Call$2 = /*#__PURE__*/function (_Activity) {
 	  babelHelpers.inherits(Call, _Activity);
 	  function Call() {
@@ -13708,6 +13916,65 @@ this.BX.Crm = this.BX.Crm || {};
 	}(Call$2);
 
 	/** @memberof BX.Crm.Timeline.Items.Scheduled */
+	let Email$2 = /*#__PURE__*/function (_Activity) {
+	  babelHelpers.inherits(Email, _Activity);
+	  function Email() {
+	    babelHelpers.classCallCheck(this, Email);
+	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Email).call(this));
+	  }
+	  babelHelpers.createClass(Email, [{
+	    key: "getWrapperClassName",
+	    value: function getWrapperClassName() {
+	      return "crm-entity-stream-section-email";
+	    }
+	  }, {
+	    key: "getIconClassName",
+	    value: function getIconClassName() {
+	      return "crm-entity-stream-section-icon crm-entity-stream-section-icon-email";
+	    }
+	  }, {
+	    key: "prepareActions",
+	    value: function prepareActions() {
+	      if (this.isReadOnly()) {
+	        return;
+	      }
+	      this._actions.push(BX.CrmScheduleEmailAction.create("email", {
+	        item: this,
+	        container: this._actionContainer,
+	        entityData: this.getAssociatedEntityData(),
+	        activityEditor: this._activityEditor
+	      }));
+	    }
+	  }, {
+	    key: "getTypeDescription",
+	    value: function getTypeDescription(direction) {
+	      return this.getMessage(direction === BX.CrmActivityDirection.incoming ? "incomingEmail" : "outgoingEmail");
+	    }
+	  }, {
+	    key: "getRemoveMessage",
+	    value: function getRemoveMessage() {
+	      const entityData = this.getAssociatedEntityData();
+	      let title = BX.prop.getString(entityData, "SUBJECT", "");
+	      title = BX.util.htmlspecialchars(title);
+	      return this.getMessage('emailRemove').replace("#TITLE#", title);
+	    }
+	  }, {
+	    key: "isEditable",
+	    value: function isEditable() {
+	      return false;
+	    }
+	  }], [{
+	    key: "create",
+	    value: function create(id, settings) {
+	      const self = new Email();
+	      self.initialize(id, settings);
+	      return self;
+	    }
+	  }]);
+	  return Email;
+	}(Activity$1);
+
+	/** @memberof BX.Crm.Timeline.Items.Scheduled */
 	let Meeting$1 = /*#__PURE__*/function (_Activity) {
 	  babelHelpers.inherits(Meeting, _Activity);
 	  function Meeting() {
@@ -13757,6 +14024,207 @@ this.BX.Crm = this.BX.Crm || {};
 	}(Activity$1);
 
 	/** @memberof BX.Crm.Timeline.Items.Scheduled */
+	let OpenLine$2 = /*#__PURE__*/function (_Activity) {
+	  babelHelpers.inherits(OpenLine$$1, _Activity);
+	  function OpenLine$$1() {
+	    babelHelpers.classCallCheck(this, OpenLine$$1);
+	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(OpenLine$$1).call(this));
+	  }
+	  babelHelpers.createClass(OpenLine$$1, [{
+	    key: "getWrapperClassName",
+	    value: function getWrapperClassName() {
+	      return "crm-entity-stream-section-IM";
+	    }
+	  }, {
+	    key: "getIconClassName",
+	    value: function getIconClassName() {
+	      return "crm-entity-stream-section-icon crm-entity-stream-section-icon-IM";
+	    }
+	  }, {
+	    key: "prepareActions",
+	    value: function prepareActions() {
+	      if (this.isReadOnly()) {
+	        return;
+	      }
+	      this._actions.push(OpenLine.create("openline", {
+	        item: this,
+	        container: this._actionContainer,
+	        entityData: this.getAssociatedEntityData(),
+	        activityEditor: this._activityEditor,
+	        ownerInfo: this._schedule.getOwnerInfo()
+	      }));
+	    }
+	  }, {
+	    key: "getTypeDescription",
+	    value: function getTypeDescription() {
+	      return this.getMessage("openLine");
+	    }
+	  }, {
+	    key: "getPrepositionText",
+	    value: function getPrepositionText(direction) {
+	      return this.getMessage("reciprocal");
+	    }
+	  }, {
+	    key: "prepareCommunicationNode",
+	    value: function prepareCommunicationNode(communicationValue) {
+	      return null;
+	    }
+	  }, {
+	    key: "prepareDetailNodes",
+	    value: function prepareDetailNodes() {
+	      const wrapper = BX.create("DIV", {
+	        attrs: {
+	          className: "crm-entity-stream-content-detail-IM"
+	        }
+	      });
+	      const messageWrapper = BX.create("DIV", {
+	        attrs: {
+	          className: "crm-entity-stream-content-detail-IM-messages"
+	        }
+	      });
+	      wrapper.appendChild(messageWrapper);
+	      const openLineData = BX.prop.getObject(this.getAssociatedEntityData(), "OPENLINE_INFO", null);
+	      if (openLineData) {
+	        const messages = BX.prop.getArray(openLineData, "MESSAGES", []);
+	        let i = 0;
+	        const length = messages.length;
+	        for (; i < length; i++) {
+	          const message = messages[i];
+	          const isExternal = BX.prop.getBoolean(message, "IS_EXTERNAL", true);
+	          messageWrapper.appendChild(BX.create("DIV", {
+	            attrs: {
+	              className: isExternal ? "crm-entity-stream-content-detail-IM-message-incoming" : "crm-entity-stream-content-detail-IM-message-outgoing"
+	            },
+	            html: BX.prop.getString(message, "MESSAGE", "")
+	          }));
+	        }
+	      }
+	      return [wrapper];
+	    }
+	  }, {
+	    key: "view",
+	    value: function view() {
+	      if (typeof window.top['BXIM'] === 'undefined') {
+	        window.alert(this.getMessage("openLineNotSupported"));
+	        return;
+	      }
+	      let slug = "";
+	      const communication = BX.prop.getObject(this.getAssociatedEntityData(), "COMMUNICATION", null);
+	      if (communication) {
+	        if (BX.prop.getString(communication, "TYPE") === "IM") {
+	          slug = BX.prop.getString(communication, "VALUE");
+	        }
+	      }
+	      if (slug !== "") {
+	        window.top['BXIM'].openMessengerSlider(slug, {
+	          RECENT: 'N',
+	          MENU: 'N'
+	        });
+	      }
+	    }
+	  }], [{
+	    key: "create",
+	    value: function create(id, settings) {
+	      const self = new OpenLine$$1();
+	      self.initialize(id, settings);
+	      return self;
+	    }
+	  }]);
+	  return OpenLine$$1;
+	}(Activity$1);
+
+	/** @memberof BX.Crm.Timeline.Items.Scheduled */
+	let Request$1 = /*#__PURE__*/function (_Activity) {
+	  babelHelpers.inherits(Request, _Activity);
+	  function Request() {
+	    babelHelpers.classCallCheck(this, Request);
+	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Request).call(this));
+	  }
+	  babelHelpers.createClass(Request, [{
+	    key: "getWrapperClassName",
+	    value: function getWrapperClassName() {
+	      return "";
+	    }
+	  }, {
+	    key: "getIconClassName",
+	    value: function getIconClassName() {
+	      return "crm-entity-stream-section-icon crm-entity-stream-section-icon-robot";
+	    }
+	  }, {
+	    key: "getTypeDescription",
+	    value: function getTypeDescription() {
+	      return this.getMessage("activityRequest");
+	    }
+	  }, {
+	    key: "isEditable",
+	    value: function isEditable() {
+	      return false;
+	    }
+	  }], [{
+	    key: "create",
+	    value: function create(id, settings) {
+	      const self = new Request();
+	      self.initialize(id, settings);
+	      return self;
+	    }
+	  }]);
+	  return Request;
+	}(Activity$1);
+
+	/** @memberof BX.Crm.Timeline.Items.Scheduled */
+	let Rest$1 = /*#__PURE__*/function (_Activity) {
+	  babelHelpers.inherits(Rest, _Activity);
+	  function Rest() {
+	    babelHelpers.classCallCheck(this, Rest);
+	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Rest).call(this));
+	  }
+	  babelHelpers.createClass(Rest, [{
+	    key: "getWrapperClassName",
+	    value: function getWrapperClassName() {
+	      return "";
+	    }
+	  }, {
+	    key: "getIconClassName",
+	    value: function getIconClassName() {
+	      return "crm-entity-stream-section-icon crm-entity-stream-section-icon-rest";
+	    }
+	  }, {
+	    key: "prepareContent",
+	    value: function prepareContent(options) {
+	      const wrapper = babelHelpers.get(babelHelpers.getPrototypeOf(Rest.prototype), "prepareContent", this).call(this, options);
+	      const data = this.getAssociatedEntityData();
+	      if (data['APP_TYPE'] && data['APP_TYPE']['ICON_SRC']) {
+	        const iconNode = wrapper.querySelector('.' + this.getIconClassName().replace(/\s+/g, '.'));
+	        if (iconNode) {
+	          iconNode.style.backgroundImage = "url('" + data['APP_TYPE']['ICON_SRC'] + "')";
+	          iconNode.style.backgroundPosition = "center center";
+	          iconNode.style.backgroundSize = "cover";
+	          iconNode.style.backgroundColor = "transparent";
+	        }
+	      }
+	      return wrapper;
+	    }
+	  }, {
+	    key: "getTypeDescription",
+	    value: function getTypeDescription() {
+	      const entityData = this.getAssociatedEntityData();
+	      if (entityData['APP_TYPE'] && entityData['APP_TYPE']['NAME']) {
+	        return entityData['APP_TYPE']['NAME'];
+	      }
+	      return this.getMessage("restApplication");
+	    }
+	  }], [{
+	    key: "create",
+	    value: function create(id, settings) {
+	      const self = new Rest();
+	      self.initialize(id, settings);
+	      return self;
+	    }
+	  }]);
+	  return Rest;
+	}(Activity$1);
+
+	/** @memberof BX.Crm.Timeline.Items.Scheduled */
 	let Task$1 = /*#__PURE__*/function (_Activity) {
 	  babelHelpers.inherits(Task, _Activity);
 	  function Task() {
@@ -13800,47 +14268,6 @@ this.BX.Crm = this.BX.Crm || {};
 	    }
 	  }]);
 	  return Task;
-	}(Activity$1);
-
-	/** @memberof BX.Crm.Timeline.Items.Scheduled */
-	let WebForm$1 = /*#__PURE__*/function (_Activity) {
-	  babelHelpers.inherits(WebForm, _Activity);
-	  function WebForm() {
-	    babelHelpers.classCallCheck(this, WebForm);
-	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(WebForm).call(this));
-	  }
-	  babelHelpers.createClass(WebForm, [{
-	    key: "getWrapperClassName",
-	    value: function getWrapperClassName() {
-	      return "";
-	    }
-	  }, {
-	    key: "getIconClassName",
-	    value: function getIconClassName() {
-	      return "crm-entity-stream-section-icon crm-entity-stream-section-icon-crmForm";
-	    }
-	  }, {
-	    key: "prepareActions",
-	    value: function prepareActions() {}
-	  }, {
-	    key: "getPrepositionText",
-	    value: function getPrepositionText() {
-	      return this.getMessage("from");
-	    }
-	  }, {
-	    key: "getTypeDescription",
-	    value: function getTypeDescription() {
-	      return this.getMessage("webform");
-	    }
-	  }], [{
-	    key: "create",
-	    value: function create(id, settings) {
-	      const self = new WebForm();
-	      self.initialize(id, settings);
-	      return self;
-	    }
-	  }]);
-	  return WebForm;
 	}(Activity$1);
 
 	/** @memberof BX.Crm.Timeline.Items.Scheduled */
@@ -14112,13 +14539,13 @@ this.BX.Crm = this.BX.Crm || {};
 	}(Scheduled);
 
 	/** @memberof BX.Crm.Timeline.Items.Scheduled */
-	let Request$1 = /*#__PURE__*/function (_Activity) {
-	  babelHelpers.inherits(Request, _Activity);
-	  function Request() {
-	    babelHelpers.classCallCheck(this, Request);
-	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Request).call(this));
+	let WebForm$1 = /*#__PURE__*/function (_Activity) {
+	  babelHelpers.inherits(WebForm, _Activity);
+	  function WebForm() {
+	    babelHelpers.classCallCheck(this, WebForm);
+	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(WebForm).call(this));
 	  }
-	  babelHelpers.createClass(Request, [{
+	  babelHelpers.createClass(WebForm, [{
 	    key: "getWrapperClassName",
 	    value: function getWrapperClassName() {
 	      return "";
@@ -14126,190 +14553,30 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "getIconClassName",
 	    value: function getIconClassName() {
-	      return "crm-entity-stream-section-icon crm-entity-stream-section-icon-robot";
-	    }
-	  }, {
-	    key: "getTypeDescription",
-	    value: function getTypeDescription() {
-	      return this.getMessage("activityRequest");
-	    }
-	  }, {
-	    key: "isEditable",
-	    value: function isEditable() {
-	      return false;
-	    }
-	  }], [{
-	    key: "create",
-	    value: function create(id, settings) {
-	      const self = new Request();
-	      self.initialize(id, settings);
-	      return self;
-	    }
-	  }]);
-	  return Request;
-	}(Activity$1);
-
-	/** @memberof BX.Crm.Timeline.Items.Scheduled */
-	let Rest$1 = /*#__PURE__*/function (_Activity) {
-	  babelHelpers.inherits(Rest, _Activity);
-	  function Rest() {
-	    babelHelpers.classCallCheck(this, Rest);
-	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Rest).call(this));
-	  }
-	  babelHelpers.createClass(Rest, [{
-	    key: "getWrapperClassName",
-	    value: function getWrapperClassName() {
-	      return "";
-	    }
-	  }, {
-	    key: "getIconClassName",
-	    value: function getIconClassName() {
-	      return "crm-entity-stream-section-icon crm-entity-stream-section-icon-rest";
-	    }
-	  }, {
-	    key: "prepareContent",
-	    value: function prepareContent(options) {
-	      const wrapper = babelHelpers.get(babelHelpers.getPrototypeOf(Rest.prototype), "prepareContent", this).call(this, options);
-	      const data = this.getAssociatedEntityData();
-	      if (data['APP_TYPE'] && data['APP_TYPE']['ICON_SRC']) {
-	        const iconNode = wrapper.querySelector('.' + this.getIconClassName().replace(/\s+/g, '.'));
-	        if (iconNode) {
-	          iconNode.style.backgroundImage = "url('" + data['APP_TYPE']['ICON_SRC'] + "')";
-	          iconNode.style.backgroundPosition = "center center";
-	          iconNode.style.backgroundSize = "cover";
-	          iconNode.style.backgroundColor = "transparent";
-	        }
-	      }
-	      return wrapper;
-	    }
-	  }, {
-	    key: "getTypeDescription",
-	    value: function getTypeDescription() {
-	      const entityData = this.getAssociatedEntityData();
-	      if (entityData['APP_TYPE'] && entityData['APP_TYPE']['NAME']) {
-	        return entityData['APP_TYPE']['NAME'];
-	      }
-	      return this.getMessage("restApplication");
-	    }
-	  }], [{
-	    key: "create",
-	    value: function create(id, settings) {
-	      const self = new Rest();
-	      self.initialize(id, settings);
-	      return self;
-	    }
-	  }]);
-	  return Rest;
-	}(Activity$1);
-
-	/** @memberof BX.Crm.Timeline.Items.Scheduled */
-	let OpenLine$2 = /*#__PURE__*/function (_Activity) {
-	  babelHelpers.inherits(OpenLine$$1, _Activity);
-	  function OpenLine$$1() {
-	    babelHelpers.classCallCheck(this, OpenLine$$1);
-	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(OpenLine$$1).call(this));
-	  }
-	  babelHelpers.createClass(OpenLine$$1, [{
-	    key: "getWrapperClassName",
-	    value: function getWrapperClassName() {
-	      return "crm-entity-stream-section-IM";
-	    }
-	  }, {
-	    key: "getIconClassName",
-	    value: function getIconClassName() {
-	      return "crm-entity-stream-section-icon crm-entity-stream-section-icon-IM";
+	      return "crm-entity-stream-section-icon crm-entity-stream-section-icon-crmForm";
 	    }
 	  }, {
 	    key: "prepareActions",
-	    value: function prepareActions() {
-	      if (this.isReadOnly()) {
-	        return;
-	      }
-	      this._actions.push(OpenLine.create("openline", {
-	        item: this,
-	        container: this._actionContainer,
-	        entityData: this.getAssociatedEntityData(),
-	        activityEditor: this._activityEditor,
-	        ownerInfo: this._schedule.getOwnerInfo()
-	      }));
+	    value: function prepareActions() {}
+	  }, {
+	    key: "getPrepositionText",
+	    value: function getPrepositionText() {
+	      return this.getMessage("from");
 	    }
 	  }, {
 	    key: "getTypeDescription",
 	    value: function getTypeDescription() {
-	      return this.getMessage("openLine");
-	    }
-	  }, {
-	    key: "getPrepositionText",
-	    value: function getPrepositionText(direction) {
-	      return this.getMessage("reciprocal");
-	    }
-	  }, {
-	    key: "prepareCommunicationNode",
-	    value: function prepareCommunicationNode(communicationValue) {
-	      return null;
-	    }
-	  }, {
-	    key: "prepareDetailNodes",
-	    value: function prepareDetailNodes() {
-	      const wrapper = BX.create("DIV", {
-	        attrs: {
-	          className: "crm-entity-stream-content-detail-IM"
-	        }
-	      });
-	      const messageWrapper = BX.create("DIV", {
-	        attrs: {
-	          className: "crm-entity-stream-content-detail-IM-messages"
-	        }
-	      });
-	      wrapper.appendChild(messageWrapper);
-	      const openLineData = BX.prop.getObject(this.getAssociatedEntityData(), "OPENLINE_INFO", null);
-	      if (openLineData) {
-	        const messages = BX.prop.getArray(openLineData, "MESSAGES", []);
-	        let i = 0;
-	        const length = messages.length;
-	        for (; i < length; i++) {
-	          const message = messages[i];
-	          const isExternal = BX.prop.getBoolean(message, "IS_EXTERNAL", true);
-	          messageWrapper.appendChild(BX.create("DIV", {
-	            attrs: {
-	              className: isExternal ? "crm-entity-stream-content-detail-IM-message-incoming" : "crm-entity-stream-content-detail-IM-message-outgoing"
-	            },
-	            html: BX.prop.getString(message, "MESSAGE", "")
-	          }));
-	        }
-	      }
-	      return [wrapper];
-	    }
-	  }, {
-	    key: "view",
-	    value: function view() {
-	      if (typeof window.top['BXIM'] === 'undefined') {
-	        window.alert(this.getMessage("openLineNotSupported"));
-	        return;
-	      }
-	      let slug = "";
-	      const communication = BX.prop.getObject(this.getAssociatedEntityData(), "COMMUNICATION", null);
-	      if (communication) {
-	        if (BX.prop.getString(communication, "TYPE") === "IM") {
-	          slug = BX.prop.getString(communication, "VALUE");
-	        }
-	      }
-	      if (slug !== "") {
-	        window.top['BXIM'].openMessengerSlider(slug, {
-	          RECENT: 'N',
-	          MENU: 'N'
-	        });
-	      }
+	      return this.getMessage("webform");
 	    }
 	  }], [{
 	    key: "create",
 	    value: function create(id, settings) {
-	      const self = new OpenLine$$1();
+	      const self = new WebForm();
 	      self.initialize(id, settings);
 	      return self;
 	    }
 	  }]);
-	  return OpenLine$$1;
+	  return WebForm;
 	}(Activity$1);
 
 	/** @memberof BX.Crm.Timeline.Items.Scheduled */
@@ -15291,6 +15558,8 @@ this.BX.Crm = this.BX.Crm || {};
 	    this._readOnly = false;
 	    this._currentUser = null;
 	    this._pingSettings = null;
+	    this._calendarSettings = null;
+	    this._colorSettings = null;
 	    this._pullTagName = "";
 	  }
 	  babelHelpers.createClass(Manager, [{
@@ -15317,6 +15586,8 @@ this.BX.Crm = this.BX.Crm || {};
 	      this._readOnly = BX.prop.getBoolean(this._settings, "readOnly", false);
 	      this._currentUser = BX.prop.getObject(this._settings, "currentUser", null);
 	      this._pingSettings = BX.prop.getObject(this._settings, "pingSettings", null);
+	      this._calendarSettings = BX.prop.getObject(this._settings, "calendarSettings", null);
+	      this._colorSettings = BX.prop.getObject(this._settings, "colorSettings", null);
 	      const activityEditorId = this.getSetting("activityEditorId");
 	      if (BX.type.isNotEmptyString(activityEditorId)) {
 	        this._activityEditor = BX.CrmActivityEditor.items[activityEditorId];
@@ -15919,6 +16190,22 @@ this.BX.Crm = this.BX.Crm || {};
 	      return null;
 	    }
 	  }, {
+	    key: "getCalendarSettings",
+	    value: function getCalendarSettings() {
+	      if (BX.type.isObjectLike(this._calendarSettings) && Object.keys(this._calendarSettings).length > 0) {
+	        return this._calendarSettings;
+	      }
+	      return null;
+	    }
+	  }, {
+	    key: "getColorSettings",
+	    value: function getColorSettings() {
+	      if (BX.type.isObjectLike(this._colorSettings) && Object.keys(this._colorSettings).length > 0) {
+	        return this._colorSettings;
+	      }
+	      return null;
+	    }
+	  }, {
 	    key: "getAudioPlaybackRateSelector",
 	    value: function getAudioPlaybackRateSelector() {
 	      if (!this.audioPlaybackRateSelector) {
@@ -16306,5 +16593,5 @@ this.BX.Crm = this.BX.Crm || {};
 	exports.Animations = Animations;
 	exports.CompatibleItem = CompatibleItem;
 
-}((this.BX.Crm.Timeline = this.BX.Crm.Timeline || {}),BX.UI,BX,BX.UI.Analytics,BX.UI,BX.Main,BX.Main,BX.UI,BX,BX.Event,BX,BX.Vue3,BX,BX,BX.Crm.Timeline,BX.Crm.Timeline));
+}((this.BX.Crm.Timeline = this.BX.Crm.Timeline || {}),BX,BX.UI.Analytics,BX.Main,BX.UI,BX.Vue3,BX,BX.Crm.Field,BX.Event,BX.Vue3.Directives,BX.Main,BX.UI,BX,BX.UI,BX,BX.Crm.Timeline,BX,BX.Crm.Timeline));
 //# sourceMappingURL=timeline.bundle.js.map

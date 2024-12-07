@@ -49,7 +49,6 @@ if (!$USER->IsAuthorized() || !check_bitrix_sessid() || $_SERVER['REQUEST_METHOD
 
 \Bitrix\Main\Localization\Loc::loadMessages(__FILE__);
 
-CUtil::JSPostUnescape();
 $APPLICATION->RestartBuffer();
 header('Content-Type: application/x-javascript; charset='.LANG_CHARSET);
 
@@ -446,7 +445,14 @@ elseif($mode === 'SAVE_PRODUCTS')
 	}
 
 	$prodJson = isset($_POST['PRODUCT_ROW_DATA']) ? strval($_POST['PRODUCT_ROW_DATA']) : '';
-	$arProducts = $arResult['PRODUCT_ROWS'] = $prodJson <> '' ? CUtil::JsObjectToPhp($prodJson) : array();
+	try
+	{
+		$arProducts = $arResult['PRODUCT_ROWS'] = $prodJson <> '' ? \Bitrix\Main\Web\Json::decode($prodJson) : [];
+	}
+	catch (\Bitrix\Main\ArgumentException $e)
+	{
+		$arProducts = [];
+	}
 
 	if (!\Bitrix\Crm\Security\EntityAuthorization::checkUpdatePermission($ownerTypeID, $ownerID, $perms))
 	{

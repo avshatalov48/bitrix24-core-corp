@@ -58,7 +58,6 @@ if (!CCrmSecurityHelper::IsAuthorized() || !check_bitrix_sessid() || $_SERVER['R
 	return;
 }
 
-CUtil::JSPostUnescape();
 $APPLICATION->RestartBuffer();
 Header('Content-Type: application/x-javascript; charset='.LANG_CHARSET);
 
@@ -283,9 +282,7 @@ elseif($action === 'SAVE')
 	{
 		try
 		{
-			$clientData = Main\Web\Json::decode(
-				Main\Text\Encoding::convertEncoding($_POST['CLIENT_DATA'], LANG_CHARSET, 'UTF-8')
-			);
+			$clientData = Main\Web\Json::decode($_POST['CLIENT_DATA']);
 		}
 		catch (Main\SystemException $e)
 		{
@@ -493,7 +490,14 @@ elseif($action === 'SAVE')
 		&& !(isset($_POST['SKIP_PRODUCT_DATA']) && strcasecmp($_POST['SKIP_PRODUCT_DATA'], 'Y') === 0)
 	)
 	{
-		$productRows = \CUtil::JsObjectToPhp($_POST['DEAL_PRODUCT_DATA']);
+		try
+		{
+			$productRows = \Bitrix\Main\Web\Json::decode($_POST['DEAL_PRODUCT_DATA']);
+		}
+		catch (\Bitrix\Main\ArgumentException $e)
+		{
+			$productRows = [];
+		}
 		if(!is_array($productRows))
 		{
 			$productRows = array();
@@ -560,7 +564,14 @@ elseif($action === 'SAVE')
 
 		if(isset($_POST['DEAL_PRODUCT_DATA_SETTINGS']) && $_POST['DEAL_PRODUCT_DATA_SETTINGS'] !== '')
 		{
-			$settings = \CUtil::JsObjectToPhp($_POST['DEAL_PRODUCT_DATA_SETTINGS']);
+			try
+			{
+				$settings = \Bitrix\Main\Web\Json::decode($_POST['DEAL_PRODUCT_DATA_SETTINGS']);
+			}
+			catch (\Bitrix\Main\ArgumentException $e)
+			{
+				$settings = [];
+			}
 			if(is_array($settings))
 			{
 				$productRowSettings['ENABLE_DISCOUNT'] = isset($settings['ENABLE_DISCOUNT'])
@@ -1223,6 +1234,7 @@ elseif($action === 'SAVE')
 			{
 				$starter->runOnUpdate($fields, $previousFields);
 			}
+			(new OrderDealSynchronizer())->updateOrderFromDeal($ID);
 		}
 
 		if($conversionWizard !== null)

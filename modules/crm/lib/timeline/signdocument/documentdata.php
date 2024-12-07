@@ -23,6 +23,7 @@ final class DocumentData implements \JsonSerializable, Arrayable
 	protected array $signers = [];
 	protected ?Item $item = null;
 	protected ?int $fieldsCount = null;
+	protected ?int $initiatorUserId = null;
 
 	public function __construct(int $documentId)
 	{
@@ -111,6 +112,10 @@ final class DocumentData implements \JsonSerializable, Arrayable
 			$eventData->setFieldsCount((int)$data['fieldsCount']);
 		}
 		$eventData->bindDocumentEntities();
+		if (!empty($data['initiatorUserId']) && is_numeric($data['initiatorUserId']))
+		{
+			$eventData->setInitiatorUserId((int)$data['initiatorUserId']);
+		}
 
 		return $eventData;
 	}
@@ -265,7 +270,7 @@ final class DocumentData implements \JsonSerializable, Arrayable
 
 		return $this;
 	}
-	
+
 	public function addSigner(Signer $signer): self
 	{
 		$this->signers[] = $signer;
@@ -337,6 +342,18 @@ final class DocumentData implements \JsonSerializable, Arrayable
 		return $this;
 	}
 
+	public function setInitiatorUserId(?int $userId): DocumentData
+	{
+		$this->initiatorUserId = $userId;
+
+		return $this;
+	}
+
+	public function getInitiatorUserId(): ?int
+	{
+		return $this->initiatorUserId;
+	}
+
 
 	public function toArray(): array
 	{
@@ -376,6 +393,11 @@ final class DocumentData implements \JsonSerializable, Arrayable
 		if ($this->fieldsCount > 0)
 		{
 			$data['fieldsCount'] = $this->fieldsCount;
+		}
+
+		if ($this->initiatorUserId)
+		{
+			$data['initiatorUserId'] = $this->initiatorUserId;
 		}
 
 		return $data;

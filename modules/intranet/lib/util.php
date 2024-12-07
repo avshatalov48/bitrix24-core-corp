@@ -10,6 +10,7 @@ namespace Bitrix\Intranet;
 
 use Bitrix\Bitrix24\Integrator;
 use Bitrix\Bitrix24\Feature;
+use Bitrix\Intranet\Internals\InvitationTable;
 use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\ArgumentOutOfRangeException;
 use Bitrix\Main\Event;
@@ -17,9 +18,13 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\ModuleManager;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Security\Random;
 use Bitrix\Main\Web\Uri;
 use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Intranet;
+use Bitrix\Main;
+use Bitrix\Bitrix24;
+use Bitrix\Extranet;
 
 Loc::loadMessages(__FILE__);
 
@@ -205,7 +210,7 @@ class Util
 			}
 			if (isset($b24Languages) && is_array($b24Languages))
 			{
-				$langFromTemplate = \Bitrix\Main\Text\Encoding::convertEncoding($b24Languages, 'UTF-8', SITE_CHARSET);
+				$langFromTemplate = $b24Languages;
 			}
 		}
 
@@ -286,40 +291,13 @@ class Util
 
 	public static function isExtranetUser(int $userId = null): bool
 	{
-		if (!\Bitrix\Main\Loader::includeModule('extranet'))
+		$userId = $userId ?? Intranet\CurrentUser::get()->getId();
+		if (Main\Loader::includeModule('extranet'))
 		{
-			return false;
+			return (new Extranet\User($userId))->isExtranet();
 		}
 
-		$extranetGroupId = (int)\Bitrix\Main\Config\Option::get('extranet', 'extranet_group', 0);
-		if (!$extranetGroupId)
-		{
-			return false;
-		}
-
-		if (is_null($userId))
-		{
-			global $USER;
-			$userId = $USER->GetID();
-			if ($userId <= 0)
-			{
-				return false;
-			}
-
-			$userGroups =  $USER->GetUserGroupArray();
-		}
-		else
-		{
-			if ($userId <= 0)
-			{
-				return false;
-			}
-
-			$userGroups = \Bitrix\Main\UserTable::getUserGroupIds($userId);
-		}
-		$userGroups = array_map('intval', $userGroups);
-
-		return in_array($extranetGroupId, $userGroups, true);
+		return false;
 	}
 
 	public static function getUserFieldListConfigUrl(string $moduleId, string $entityId = ''): Uri
@@ -625,7 +603,7 @@ class Util
 		}
 
 		$user = new \CUser;
-		$res = $user->Update($userId, array("ACTIVE" => "N"));
+		$res = $user->Update($userId, ['ACTIVE' => 'N', 'CONFIRM_CODE' => '']);
 
 		if (!$res)
 		{
@@ -651,12 +629,32 @@ class Util
 			return false;
 		}
 
+		$updateFields = ['ACTIVE' => 'Y'];
+
+		$res = InvitationTable::getList([
+			'select' => ['INITIALIZED'],
+			'filter' => [
+				'USER_ID' => $userId
+			]
+		])->fetch();
+
+		if ($res && isset($res['INITIALIZED']) && $res['INITIALIZED'] === 'N')
+		{
+			$updateFields['CONFIRM_CODE'] = Random::getString(8, true);
+		}
+
 		$user = new \CUser;
-		$res = $user->Update($userId, array("ACTIVE" => "Y"));
+		$res = $user->Update($userId, $updateFields);
 
 		if (!$res)
 		{
 			return false;
+		}
+
+		if (!empty($updateFields['CONFIRM_CODE']) && $userId > 0)
+		{
+			$deactivateUser = new User($userId);
+			Invitation::fullSyncCounterByUser($deactivateUser->fetchOriginatorUser());
 		}
 
 		return true;
@@ -691,74 +689,93 @@ class Util
 		return [ $employeesGroupId, $portalAdminGroupId ];
 	}
 
-	public static function getUserStatus($id)
+	public static function getUserStatus($userId)
 	{
-		global $USER;
-		$status = "";
+		$status = '';
+		$currentUser = CurrentUser::get();
+		$isCurrentUser = $currentUser->getId() == $userId;
 
-		$result = \Bitrix\Main\UserTable::getList([
-			'select' => ['ID', 'ACTIVE', 'CONFIRM_CODE', 'EXTERNAL_AUTH_ID', 'UF_DEPARTMENT'],
-			'filter' => ['=ID' => $id],
-		]);
-
-		if ($user = $result->fetch())
+		if ($isCurrentUser)
 		{
-			$groups = $USER->getUserGroup($id);
+			$user = \CUser::getById($userId)->fetch();
+		}
+		else
+		{
+			$user = \Bitrix\Main\UserTable::query()
+				->setSelect(['ID', 'ACTIVE', 'CONFIRM_CODE', 'EXTERNAL_AUTH_ID', 'UF_DEPARTMENT'])
+				->where('ID', '=', $userId)
+				->fetch();
+		}
 
-			$extranetGroupId = (
-			Loader::includeModule('extranet')
-				? intval(\CExtranet::getExtranetUserGroupId())
-				: 0
-			);
-
-			if(in_array(1, $groups))
+		if ($user)
+		{
+			if ($user['ACTIVE'] == 'N')
 			{
-				$status = "admin";
+				$status = 'fired';
+			}
+			else if (!empty($user['CONFIRM_CODE']))
+			{
+				$status = 'invited';
+			}
+			else if ($user["EXTERNAL_AUTH_ID"] === 'email')
+			{
+				$status = 'email';
+			}
+			elseif (in_array($user["EXTERNAL_AUTH_ID"], ['shop', 'sale', 'saleanonymous']))
+			{
+				$status = 'shop';
+			}
+			else if (Main\Loader::includeModule("bitrix24") && Bitrix24\Integrator::isIntegrator($userId))
+			{
+				$status = 'integrator';
+			}
+			else if ($isCurrentUser)
+			{
+				if ($currentUser->isAdmin())
+				{
+					$status = 'admin';
+				}
+				else if (self::isIntranetUser($userId))
+				{
+					$status = 'employee';
+				}
+				else
+				{
+					$status = 'extranet';
+				}
 			}
 			else
 			{
-				$status = "employee";
+				$groups = \CUser::getUserGroup($userId);
 
-				if(
-					!is_array($user['UF_DEPARTMENT'])
-					|| empty($user['UF_DEPARTMENT'][0])
-				)
+				if (in_array(1, $groups))
 				{
-					if (
-						$extranetGroupId
-						&& in_array($extranetGroupId, $groups)
+					$status = "admin";
+				}
+				else
+				{
+					$status = "employee";
+
+					if (empty($user['UF_DEPARTMENT'])
+						|| !is_array($user['UF_DEPARTMENT'])
+						|| empty($user['UF_DEPARTMENT'][0])
 					)
 					{
-						$status = "extranet";
+						$extranetGroupId = (
+						Loader::includeModule('extranet')
+							? intval(\CExtranet::getExtranetUserGroupId())
+							: 0
+						);
+
+						if (
+							$extranetGroupId
+							&& in_array($extranetGroupId, $groups)
+						)
+						{
+							$status = 'extranet';
+						}
 					}
 				}
-			}
-
-			if (Loader::includeModule("bitrix24") && \Bitrix\Bitrix24\Integrator::isIntegrator($user["ID"]))
-			{
-				$status = "integrator";
-			}
-
-			if($user["ACTIVE"] == "N")
-			{
-				$status = "fired";
-			}
-
-			if (
-				$user["ACTIVE"] == "Y"
-				&& !empty($user["CONFIRM_CODE"])
-			)
-			{
-				$status = "invited";
-			}
-
-			if (in_array($user["EXTERNAL_AUTH_ID"], [ 'email' ]))
-			{
-				$status = $user["EXTERNAL_AUTH_ID"];
-			}
-			elseif (in_array($user["EXTERNAL_AUTH_ID"], [ 'shop', 'sale', 'saleanonymous' ]))
-			{
-				$status = 'shop';
 			}
 		}
 
@@ -775,10 +792,11 @@ class Util
 			'APP_ANDROID_INSTALLED' => \CUserOptions::GetOption('mobile', 'AndroidLastActivityDate', '', $userId),
 			'APP_LINUX_INSTALLED' => \CUserOptions::GetOption('im', 'LinuxLastActivityDate', '', $userId),
 		];
+		$appsActivityTimeout = self::getAppsActivityTimeout();
 
 		foreach ($appActivity as $key => $lastActivity)
 		{
-			if ((int)$lastActivity <= 0 || $lastActivity < time() - 6 * 30 * 24 * 60 * 60)
+			if ((int)$lastActivity <= 0 || $lastActivity < time() - $appsActivityTimeout)
 			{
 				$result[$key] = false;
 			}
@@ -789,6 +807,13 @@ class Util
 		}
 
 		return $result;
+	}
+
+	public static function getAppsActivityTimeout(): int
+	{
+		$defaultLastActivityTimeout = 30 * 24 * 60 * 60; // 30 days
+
+		return (int)Option::get('intranet', 'app_last_activity_ttl', $defaultLastActivityTimeout);
 	}
 }
 

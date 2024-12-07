@@ -9,7 +9,8 @@ return [
 		'layout/ui/context-menu',
 		'layout/ui/fields/boolean',
 		'utils/date/moment',
-		'calendar:layout/ui/loader'
+		'tokens',
+		'calendar:layout/ui/loader',
 	],
 	'bundle' => [
 		'./menu',

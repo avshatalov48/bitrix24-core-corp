@@ -9,7 +9,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
  */
 
 if ($ex = $APPLICATION->GetException()):
-	echo CAdminMessage::ShowMessage(Array(
+	CAdminMessage::ShowMessage(Array(
 		"TYPE" => "ERROR",
 		"MESSAGE" => GetMessage("MOD_INST_ERR"),
 		"DETAILS" => $ex->GetString(),

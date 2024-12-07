@@ -53,7 +53,7 @@ class Collection extends Dictionary
 		$code = $e->getCode();
 		if($code)
 		{
-			$code = ToUpper($code);
+			$code = mb_strtoupper($code);
 		}
 		else
 		{
@@ -159,7 +159,7 @@ class Collection extends Dictionary
 
 		$fields = array_keys($conditions);
 		$field = $fields[0];
-		$way = ToLower($conditions[0]) == 'desc' ? 0 : 1;
+		$way = mb_strtolower($conditions[0]) == 'desc' ? 0 : 1;
 
 		$cb = function($a, $b) use ($field, $way) {
 
@@ -212,7 +212,7 @@ class Collection extends Dictionary
 
 	public function updateOne(array $conditions, $data)
 	{
-		return $this->update($conditions, $data, 1);
+		$this->update($conditions, $data, 1);
 	}
 
 	/**

@@ -145,7 +145,11 @@ final class Operation extends Adapter
 
 		if ($operation->isCheckFieldsEnabled() && $operation->isCheckRequiredUserFields())
 		{
-			$result = $this->checkRequiredFields($fields, $compatibleOptions, $operation->getRequiredFields());
+			$result = $this->checkRequiredFields(
+				$fields,
+				$compatibleOptions + ['__OPERATION' => $operation],
+				$operation->getRequiredFields(),
+			);
 			if (!$result->isSuccess())
 			{
 				Service\Operation\Action\Compatible\SendEvent::detachProvidedFields($item);
@@ -238,8 +242,13 @@ final class Operation extends Adapter
 
 	protected function doCheckRequiredFields(array $fields, array $compatibleOptions, array $requiredFields): Result
 	{
-		// required fields will be checked inside the operation
-		return new Result();
+		$operation = $compatibleOptions['__OPERATION'] ?? null;
+		if (!($operation instanceof Service\Operation))
+		{
+			return new Result();
+		}
+
+		return $operation->checkRequiredFields($requiredFields, $this->factory);
 	}
 
 	/**
@@ -394,7 +403,11 @@ final class Operation extends Adapter
 
 		if ($operation->isCheckFieldsEnabled() && $operation->isCheckRequiredUserFields())
 		{
-			$result = $this->checkRequiredFields($fields, $compatibleOptions, $operation->getRequiredFields());
+			$result = $this->checkRequiredFields(
+				$fields,
+				$compatibleOptions + ['__OPERATION' => $operation],
+				$operation->getRequiredFields(),
+			);
 			if (!$result->isSuccess())
 			{
 				Service\Operation\Action\Compatible\SendEvent::detachProvidedFields($item);

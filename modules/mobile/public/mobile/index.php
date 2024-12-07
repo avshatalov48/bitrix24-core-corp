@@ -155,6 +155,13 @@ elseif (isset($_GET["blog"]) && $_GET["blog"] === "Y")
 	$filter = "blog";
 }
 
+$analytics = [
+	'data-analytics' => [
+		'c_section' => 'feed',
+		'c_element' => 'title_click',
+	],
+];
+
 $APPLICATION->IncludeComponent("bitrix:mobile.socialnetwork.log.ex", ".default", array(
 		"GROUP_ID" => intval($_GET["group_id"] ?? 0),
 		"LOG_ID" => intval($_GET["detail_log_id"] ?? 0),
@@ -178,6 +185,10 @@ $APPLICATION->IncludeComponent("bitrix:mobile.socialnetwork.log.ex", ".default",
 		"IMAGE_MAX_WIDTH" => 550,
 		"DATE_TIME_FORMAT" => ((intval($_GET["detail_log_id"] ?? null) > 0 || ($_REQUEST["ACTION"] ?? null) == "CONVERT") ? "j F Y G:i" : ""),
 		"CHECK_PERMISSIONS_DEST" => "N",
+		"ATTRIBUTES" => [
+			'ANCHOR' => $analytics,
+			'TEXT_ANCHOR' => $analytics,
+		],
 	),
 	false,
 	Array("HIDE_ICONS" => "Y")

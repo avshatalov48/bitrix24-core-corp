@@ -2,11 +2,11 @@
  * @module calendar/sync-page
  */
 jn.define('calendar/sync-page', (require, exports, module) => {
-	const AppTheme = require('apptheme');
 	const { SyncProviderFactory } = require('calendar/sync-page/provider');
 	const { Title } = require('calendar/sync-page/title');
 	const { EventEmitter } = require('event-emitter');
 	const { SyncAjax } = require('calendar/ajax');
+	const { Color } = require('tokens');
 
 	/**
 	 * @class SyncPage
@@ -93,10 +93,10 @@ jn.define('calendar/sync-page', (require, exports, module) => {
 				View(
 					{
 						style: {
-							backgroundColor: AppTheme.colors.bgContentPrimary,
+							backgroundColor: Color.bgContentPrimary.toHex(),
 							borderRadius: 12,
 						},
-						testId: `sync_page_container`,
+						testId: 'sync_page_container',
 					},
 					Title(),
 					this.renderProviders(),

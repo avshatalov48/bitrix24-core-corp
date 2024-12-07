@@ -250,7 +250,7 @@ $arResult['HEADERS'][] = array('id' => 'CLIENT', 'type'=> 'text', 'name' => GetM
 $arResult['HEADERS'][] = array('id' => 'DESCRIPTION', 'type'=> 'text', 'name' => GetMessage('CRM_ACTIVITY_COLUMN_DESCRIPTION'), 'default' => false, 'editable' => true);
 $arResult['HEADERS'][] = array('id' => 'RESPONSIBLE_FULL_NAME', 'type'=> 'text', 'name' => GetMessage('CRM_ACTIVITY_COLUMN_RESPONSIBLE'), 'sort' => 'RESPONSIBLE', 'default' => true, 'editable' => false, 'class' => 'username');
 $arResult['HEADERS'][] = array('id' => 'COMPLETED', 'type'=> 'list', 'name' => GetMessage('CRM_ACTIVITY_COLUMN_COMPLETED'), 'sort' => 'COMPLETED', 'default' => true, 'prevent_default' => false, 'editable' => array('items' => array('N' => GetMessage('CRM_ACTIVITY_STATUS_NOT_COMPLETED'), 'Y' => GetMessage('CRM_ACTIVITY_STATUS_COMPLETED'))));
-$arResult['HEADERS'][] = array('id' => 'CREATED', 'type'=> 'date', 'name' => GetMessage('CRM_ACTIVITY_COLUMN_CREATED'), 'sort' => 'CREATED', 'default' => false, 'editable' => false, 'class' => 'date');
+$arResult['HEADERS'][] = array('id' => 'CREATED', 'type'=> 'date', 'name' => GetMessage('CRM_ACTIVITY_COLUMN_CREATED'), 'sort' => 'ID', 'default' => false, 'editable' => false, 'class' => 'date');
 
 $arResult['FILTER'] = array();
 $arResult['FILTER_PRESETS'] = array();
@@ -423,8 +423,6 @@ if(check_bitrix_sessid())
 	$controls = isset($_POST['controls']) && is_array($_POST['controls']) ? $_POST['controls'] : array();
 	if ($actionData['METHOD'] == 'POST' && (isset($controls[$postAction]) || isset($_POST[$postAction])))
 	{
-		CUtil::JSPostUnescape();
-
 		$actionData['ACTIVE'] = true;
 
 		if(isset($controls[$postAction]))
@@ -617,7 +615,7 @@ foreach ($arFilter as $k => $v)
 		}
 		unset($arFilter[$k]);
 	}
-	elseif (preg_match('/(.*)_from$/i'.BX_UTF_PCRE_MODIFIER, $k, $arMatch))
+	elseif (preg_match('/(.*)_from$/iu', $k, $arMatch))
 	{
 		$fieldID = $arMatch[1];
 		if($fieldID === 'END')
@@ -635,7 +633,7 @@ foreach ($arFilter as $k => $v)
 		}
 		unset($arFilter[$k]);
 	}
-	elseif (preg_match('/(.*)_to$/i'.BX_UTF_PCRE_MODIFIER, $k, $arMatch))
+	elseif (preg_match('/(.*)_to$/iu', $k, $arMatch))
 	{
 		$fieldID = $arMatch[1];
 		if($fieldID === 'END')
@@ -649,7 +647,7 @@ foreach ($arFilter as $k => $v)
 
 		if($v <> '' && in_array($fieldID, $arDatetimeFields, true))
 		{
-			if (!preg_match('/\d{1,2}:\d{1,2}(:\d{1,2})?$/'.BX_UTF_PCRE_MODIFIER, $v))
+			if (!preg_match('/\d{1,2}:\d{1,2}(:\d{1,2})?$/u', $v))
 			{
 				$v = CCrmDateTimeHelper::SetMaxDayTime($v);
 			}
@@ -1151,7 +1149,7 @@ while($arRes = $dbRes->GetNext())
 	{
 		$arRes['DESCRIPTION_RAW'] = strip_tags(
 			preg_replace(
-				'/(<br[^>]*>)+/is'.BX_UTF_PCRE_MODIFIER, "\n",
+				'/(<br[^>]*>)+/isu', "\n",
 				$bbCodeParser->convertText($description)
 			)
 		);
@@ -1161,7 +1159,7 @@ while($arRes = $dbRes->GetNext())
 		$arRes['DESCRIPTION_RAW'] =
 			strip_tags(
 				preg_replace(
-					'/(<br[^>]*>)+/is'.BX_UTF_PCRE_MODIFIER,
+					'/(<br[^>]*>)+/isu',
 					"\n",
 					html_entity_decode($description)
 				)
@@ -1170,7 +1168,7 @@ while($arRes = $dbRes->GetNext())
 	else//CCrmContentType::PlainText and other
 	{
 		$arRes['DESCRIPTION_RAW'] = preg_replace(
-			"/[\r\n]+/".BX_UTF_PCRE_MODIFIER,
+			"/[\r\n]+/u",
 			"<br/>",
 			htmlspecialcharsbx($description)
 		);

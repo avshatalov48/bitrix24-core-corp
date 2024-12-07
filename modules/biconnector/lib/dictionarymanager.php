@@ -1,6 +1,7 @@
 <?php
 namespace Bitrix\BIConnector;
 
+use Bitrix\Main\EO_User;
 use Bitrix\Main\Localization\Loc;
 
 Loc::loadMessages(__FILE__);
@@ -13,13 +14,13 @@ Loc::loadMessages(__FILE__);
 
 class DictionaryManager
 {
-	protected static $userBefore = null;
+	protected static ?EO_User $userBefore = null;
 
 	/**
 	 * Returns user object by its idintifier.
 	 *
 	 * @param int $userId User identifier.
-	 * @return \Bitrix\Main\EO_User
+	 * @return EO_User
 	 */
 	protected static function getUser($userId)
 	{
@@ -79,20 +80,20 @@ class DictionaryManager
 	 */
 	public static function onAfterUserUpdateHandler(&$userFields)
 	{
-		if ($userFields['RESULT'] && static::$userBefore && $userFields['ID'] == static::$userBefore->getId())
+		if (
+			$userFields['RESULT']
+			&& isset($userFields['UF_DEPARTMENT'])
+			&& (int)$userFields['ID'] === static::$userBefore?->getId()
+		)
 		{
 			$departmentBefore = static::$userBefore->getUfDepartment();
-			$userAfter = static::getUser($userFields['ID']);
-			if ($userAfter)
+			$departmentAfter = $userFields['UF_DEPARTMENT'];
+			if (static::arrayToKey($departmentBefore) !== static::arrayToKey($departmentAfter))
 			{
-				$departmentAfter = $userAfter->getUfDepartment();
-				if (static::arrayToKey($departmentBefore) !== static::arrayToKey($departmentAfter))
-				{
-					static::invalidateCache(Dictionary::USER_DEPARTMENT);
-				}
+				static::invalidateCache(Dictionary::USER_DEPARTMENT);
+				static::$userBefore = null;
 			}
 		}
-		static::$userBefore = null;
 	}
 
 	protected static $available = [];
@@ -143,6 +144,7 @@ class DictionaryManager
 		if (!$select)
 		{
 			static::$validated[$dictionaryId] = false;
+
 			return false;
 		}
 
@@ -156,6 +158,7 @@ class DictionaryManager
 		if ($updateDate)
 		{
 			static::$validated[$dictionaryId] = true;
+
 			return true;
 		}
 
@@ -180,13 +183,23 @@ class DictionaryManager
 			$connection->queryExecute($query);
 		}
 
-		DictionaryDataTable::deleteByFilter([
-			'=DICTIONARY_ID' => $dictionaryId,
-		]);
+		try
+		{
+			DictionaryDataTable::deleteByFilter([
+				'=DICTIONARY_ID' => $dictionaryId,
+			]);
 
-		DictionaryDataTable::insertSelect($select);
+			DictionaryDataTable::insertSelect($select);
+		}
+		catch (\Exception $exception)
+		{
+			static::$validated[$dictionaryId] = false;
+
+			return false;
+		}
 
 		static::$validated[$dictionaryId] = true;
+
 		return true;
 	}
 

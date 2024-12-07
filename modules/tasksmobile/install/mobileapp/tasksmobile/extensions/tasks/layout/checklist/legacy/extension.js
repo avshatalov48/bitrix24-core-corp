@@ -4,6 +4,7 @@
 jn.define('tasks/layout/checklist/legacy', (require, exports, module) => {
 	const platform = Application.getPlatform();
 	const AppTheme = require('apptheme');
+	const { ContextMenu } = require('layout/ui/context-menu');
 	const { CheckListController } = require('tasks/checklist/legacy');
 	const { Loc } = require('loc');
 	const { CheckBox } = require('layout/ui/checkbox');

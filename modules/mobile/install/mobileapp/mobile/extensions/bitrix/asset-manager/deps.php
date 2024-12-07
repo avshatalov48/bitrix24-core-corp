@@ -3,5 +3,6 @@
 return [
 	'extensions' => [
 		'type',
+		'apptheme'
 	],
 ];

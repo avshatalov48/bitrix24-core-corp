@@ -474,7 +474,7 @@ class NotificationsManager implements ICanSendMessage
 	{
 		$connectUrl = (static::canUse() && !static::isConnected()) ? static::getConnectUrl() : null;
 		?>
-		<script type="text/javascript">
+		<script>
 			BX.ready(
 				function()
 				{

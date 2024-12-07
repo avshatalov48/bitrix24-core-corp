@@ -1,13 +1,15 @@
 <?php
 namespace Bitrix\Controller;
 
-use Bitrix\Main,
-	Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\ORM\Data\DataManager;
+use Bitrix\Main\ORM\Fields;
+
 Loc::loadMessages(__FILE__);
 
 /**
  * Class AuthGrantTable
- * 
+ *
  * Fields:
  * <ul>
  * <li> ID int mandatory
@@ -43,7 +45,7 @@ Loc::loadMessages(__FILE__);
  * @method static \Bitrix\Controller\EO_AuthGrant_Collection wakeUpCollection($rows)
  */
 
-class AuthGrantTable extends Main\Entity\DataManager
+class AuthGrantTable extends DataManager
 {
 	/**
 	 * Returns DB table name for entity.
@@ -64,99 +66,121 @@ class AuthGrantTable extends Main\Entity\DataManager
 	{
 		$connection = \Bitrix\Main\Application::getConnection();
 		$helper = $connection->getSqlHelper();
-		return array(
-			'ID' => array(
-				'data_type' => 'integer',
-				'primary' => true,
-				'autocomplete' => true,
-				'title' => Loc::getMessage('AUTH_GRANT_ENTITY_ID_FIELD'),
+		return [
+			new Fields\IntegerField(
+				'ID',
+				[
+					'primary' => true,
+					'autocomplete' => true,
+					'title' => Loc::getMessage('AUTH_GRANT_ENTITY_ID_FIELD'),
+				]
 			),
-			'TIMESTAMP_X' => array(
-				'data_type' => 'datetime',
-				'required' => true,
-				'title' => Loc::getMessage('AUTH_GRANT_ENTITY_TIMESTAMP_X_FIELD'),
+			new Fields\DatetimeField(
+				'TIMESTAMP_X',
+				[
+					'required' => true,
+					'title' => Loc::getMessage('AUTH_GRANT_ENTITY_TIMESTAMP_X_FIELD'),
+				]
 			),
-			'GRANTED_BY' => array(
-				'data_type' => 'integer',
-				'required' => true,
-				'title' => Loc::getMessage('AUTH_GRANT_ENTITY_GRANTED_BY_FIELD'),
+			new Fields\IntegerField(
+				'GRANTED_BY',
+				[
+					'required' => true,
+					'title' => Loc::getMessage('AUTH_GRANT_ENTITY_GRANTED_BY_FIELD'),
+				]
 			),
-			'CONTROLLER_MEMBER_ID' => array(
-				'data_type' => 'integer',
-				'required' => true,
-				'title' => Loc::getMessage('AUTH_GRANT_ENTITY_CONTROLLER_MEMBER_ID_FIELD'),
+			new Fields\IntegerField(
+				'CONTROLLER_MEMBER_ID',
+				[
+					'required' => true,
+					'title' => Loc::getMessage('AUTH_GRANT_ENTITY_CONTROLLER_MEMBER_ID_FIELD'),
+				]
 			),
-			'GRANTEE_USER_ID' => array(
-				'data_type' => 'integer',
-				'title' => Loc::getMessage('AUTH_GRANT_ENTITY_GRANTEE_USER_ID_FIELD'),
+			new Fields\IntegerField(
+				'GRANTEE_USER_ID',
+				[
+					'title' => Loc::getMessage('AUTH_GRANT_ENTITY_GRANTEE_USER_ID_FIELD'),
+				]
 			),
-			'GRANTEE_GROUP_ID' => array(
-				'data_type' => 'integer',
-				'title' => Loc::getMessage('AUTH_GRANT_ENTITY_GRANTEE_GROUP_ID_FIELD'),
+			new Fields\IntegerField(
+				'GRANTEE_GROUP_ID',
+				[
+					'title' => Loc::getMessage('AUTH_GRANT_ENTITY_GRANTEE_GROUP_ID_FIELD'),
+				]
 			),
-			'ACTIVE' => array(
-				'data_type' => 'boolean',
-				'values' => array('N', 'Y'),
-				'title' => Loc::getMessage('AUTH_GRANT_ENTITY_ACTIVE_FIELD'),
+			new Fields\BooleanField(
+				'ACTIVE',
+				[
+					'values' => ['N', 'Y'],
+					'default' => 'Y',
+					'title' => Loc::getMessage('AUTH_GRANT_ENTITY_ACTIVE_FIELD'),
+				]
 			),
-			'SCOPE' => array(
-				'data_type' => 'string',
-				'required' => true,
-				'validation' => array(__CLASS__, 'validateScope'),
-				'title' => Loc::getMessage('AUTH_GRANT_ENTITY_SCOPE_FIELD'),
+			new Fields\StringField(
+				'SCOPE',
+				[
+					'required' => true,
+					'validation' => [__CLASS__, 'validateScope'],
+					'title' => Loc::getMessage('AUTH_GRANT_ENTITY_SCOPE_FIELD'),
+				]
 			),
-			'DATE_START' => array(
-				'data_type' => 'datetime',
-				'title' => Loc::getMessage('AUTH_GRANT_ENTITY_DATE_START_FIELD'),
+			new Fields\DatetimeField(
+				'DATE_START',
+				[
+					'title' => Loc::getMessage('AUTH_GRANT_ENTITY_DATE_START_FIELD'),
+				]
 			),
-			'DATE_END' => array(
-				'data_type' => 'datetime',
-				'title' => Loc::getMessage('AUTH_GRANT_ENTITY_DATE_END_FIELD'),
+			new Fields\DatetimeField(
+				'DATE_END',
+				[
+					'title' => Loc::getMessage('AUTH_GRANT_ENTITY_DATE_END_FIELD'),
+				]
 			),
-			'NOTE' => array(
-				'data_type' => 'string',
-				'validation' => array(__CLASS__, 'validateNote'),
-				'title' => Loc::getMessage('AUTH_GRANT_ENTITY_NOTE_FIELD'),
+			new Fields\StringField(
+				'NOTE',
+				[
+					'validation' => [__CLASS__, 'validateNote'],
+					'title' => Loc::getMessage('AUTH_GRANT_ENTITY_NOTE_FIELD'),
+				]
 			),
-			'CONTROLLER_MEMBER' => array(
-				'data_type' => 'Bitrix\Controller\MemberTable',
-				'reference' => array('=this.CONTROLLER_MEMBER_ID' => 'ref.ID'),
+			new Fields\Relations\Reference(
+				'CONTROLLER_MEMBER',
+				'Bitrix\Controller\MemberTable',
+				['=this.CONTROLLER_MEMBER_ID' => 'ref.ID']
 			),
-			'GRANTED' => array(
-				'data_type' => 'Bitrix\Main\UserTable',
-				'reference' => array('=this.GRANTED_BY' => 'ref.ID'),
+			new Fields\Relations\Reference(
+				'GRANTED',
+				'Bitrix\Main\UserTable',
+				['=this.GRANTED_BY' => 'ref.ID']
 			),
-			'GRANTED_NAME' => array(
-				'data_type' => 'string',
-				'expression' => array(
-					$helper->getConcatFunction("'('", "%s"," ') '", "%s", "' '", "%s"),
-					'GRANTED.LOGIN', 'GRANTED.NAME', 'GRANTED.LAST_NAME'
-				),
+			new Fields\ExpressionField(
+				'GRANTED_NAME',
+				$helper->getConcatFunction("'('", '%s'," ') '", '%s', "' '", '%s'),
+				['GRANTED.LOGIN', 'GRANTED.NAME', 'GRANTED.LAST_NAME']
 			),
-			'GRANTEE_USER' => array(
-				'data_type' => 'Bitrix\Main\UserTable',
-				'reference' => array('=this.GRANTEE_USER_ID' => 'ref.ID'),
+			new Fields\Relations\Reference(
+				'GRANTEE_USER',
+				'Bitrix\Main\UserTable',
+				['=this.GRANTEE_USER_ID' => 'ref.ID']
 			),
-			'GRANTEE_USER_NAME' => array(
-				'data_type' => 'string',
-				'expression' => array(
-					$helper->getConcatFunction("'('", "%s"," ') '", "%s", "' '", "%s"),
-					'GRANTEE_USER.LOGIN', 'GRANTEE_USER.NAME', 'GRANTEE_USER.LAST_NAME'
-				),
+			new Fields\ExpressionField(
+				'GRANTEE_USER_NAME',
+				$helper->getConcatFunction("'('", '%s'," ') '", '%s', "' '", '%s'),
+				['GRANTEE_USER.LOGIN', 'GRANTEE_USER.NAME', 'GRANTEE_USER.LAST_NAME']
 			),
-			'GRANTEE_GROUP' => array(
-				'data_type' => 'Bitrix\Main\GroupTable',
-				'reference' => array('=this.GRANTEE_GROUP_ID' => 'ref.ID'),
+			new Fields\Relations\Reference(
+				'GRANTEE_GROUP',
+				'Bitrix\Main\GroupTable',
+				['=this.GRANTEE_GROUP_ID' => 'ref.ID']
 			),
-			'GRANTEE_GROUP_NAME' => array(
-				'data_type' => 'string',
-				'expression' => array(
-					$helper->getConcatFunction("'['", "%s"," '] '", "%s"),
-					'GRANTEE_GROUP.ID', 'GRANTEE_GROUP.NAME'
-				),
+			new Fields\ExpressionField(
+				'GRANTEE_GROUP_NAME',
+				$helper->getConcatFunction("'['", '%s'," '] '", '%s'),
+				['GRANTEE_GROUP.ID', 'GRANTEE_GROUP.NAME'],
 			),
-		);
+		];
 	}
+
 	/**
 	 * Returns validators for NAME field.
 	 *
@@ -164,9 +188,9 @@ class AuthGrantTable extends Main\Entity\DataManager
 	 */
 	public static function validateScope()
 	{
-		return array(
-			new Main\Entity\Validator\Length(null, 20),
-		);
+		return [
+			new Fields\Validators\LengthValidator(null, 20),
+		];
 	}
 
 	/**
@@ -176,9 +200,9 @@ class AuthGrantTable extends Main\Entity\DataManager
 	 */
 	public static function validateNote()
 	{
-		return array(
-			new Main\Entity\Validator\Length(null, 255),
-		);
+		return [
+			new Fields\Validators\LengthValidator(null, 255),
+		];
 	}
 
 	/**
@@ -186,49 +210,49 @@ class AuthGrantTable extends Main\Entity\DataManager
 	 * If $granteeGroups provided, then checks users groups as well.
 	 * It is recommended to use \Bitrix\Controller\AuthGrantTable::getControllerMemberScopes instead.
 	 *
-	 * @param integer $controllerMemberId Member identifier.
-	 * @param integer $granteeUserId User identifier.
+	 * @param int $controllerMemberId Member identifier.
+	 * @param int $granteeUserId User identifier.
 	 * @param array[] $granteeGroups Optional array of user groups.
 	 * @return \Bitrix\Main\DB\Result
 	 * @throws \Bitrix\Main\ArgumentException
 	 * @see \Bitrix\Controller\AuthGrantTable::getControllerMemberScopes
 	 */
-	public static function getActiveForControllerMember($controllerMemberId, $granteeUserId, $granteeGroups = array())
+	public static function getActiveForControllerMember($controllerMemberId, $granteeUserId, $granteeGroups = [])
 	{
-		$filter = array(
-			"=CONTROLLER_MEMBER_ID" => $controllerMemberId,
-			"=ACTIVE" => "Y",
-			array(
-				"LOGIC" => "OR",
-				"=DATE_START" => false,
-				"<=DATE_START" => new \Bitrix\Main\Type\DateTime(),
-			),
-			array(
-				"LOGIC" => "OR",
-				"=DATE_END" => false,
-				">=DATE_END" => new \Bitrix\Main\Type\DateTime(),
-			),
-			"!=GRANTED_BY" => $granteeUserId,
-		);
+		$filter = [
+			'=CONTROLLER_MEMBER_ID' => $controllerMemberId,
+			'=ACTIVE' => 'Y',
+			[
+				'LOGIC' => 'OR',
+				'=DATE_START' => false,
+				'<=DATE_START' => new \Bitrix\Main\Type\DateTime(),
+			],
+			[
+				'LOGIC' => 'OR',
+				'=DATE_END' => false,
+				'>=DATE_END' => new \Bitrix\Main\Type\DateTime(),
+			],
+			'!=GRANTED_BY' => $granteeUserId,
+		];
 
 		if (is_array($granteeGroups) && $granteeGroups)
 		{
-			$filter[] = array(
-				"LOGIC" => "OR",
-				"=GRANTEE_USER.ID" => $granteeUserId,
-				"@GRANTEE_GROUP_ID" => $granteeGroups,
-			);
+			$filter[] = [
+				'LOGIC' => 'OR',
+				'=GRANTEE_USER.ID' => $granteeUserId,
+				'@GRANTEE_GROUP_ID' => $granteeGroups,
+			];
 		}
 		else
 		{
-			$filter["=GRANTEE_USER.ID"] = $granteeUserId;
+			$filter['=GRANTEE_USER.ID'] = $granteeUserId;
 		}
 
-		return self::getList(array(
-			"select" => array("ID", "SCOPE"),
-			"filter" => $filter,
-			"order" => array("ID" => "asc"),
-		));
+		return self::getList([
+			'select' => ['ID', 'SCOPE'],
+			'filter' => $filter,
+			'order' => ['ID' => 'asc'],
+		]);
 	}
 
 	/**
@@ -236,59 +260,60 @@ class AuthGrantTable extends Main\Entity\DataManager
 	 * If $granteeGroups provided, then checks users groups as well.
 	 * Fires event OnControllerMemberScopes to add/delete scopes.
 	 *
-	 * @param integer $controllerMemberId Member identifier.
-	 * @param integer $granteeUserId User identifier.
+	 * @param int $controllerMemberId Member identifier.
+	 * @param int $granteeUserId User identifier.
 	 * @param array[] $granteeGroups Optional array of user groups.
 	 * @return \Bitrix\Main\DB\Result
 	 * @throws \Bitrix\Main\ArgumentException
 	 * @see \Bitrix\Controller\AuthGrantTable::getActiveForControllerMember
 	 */
-	public static  function getControllerMemberScopes($controllerMemberId, $granteeUserId, $granteeGroups = array())
+	public static  function getControllerMemberScopes($controllerMemberId, $granteeUserId, $granteeGroups = [])
 	{
-		$result = array();
+		$result = [];
 		$grantList = self::getActiveForControllerMember($controllerMemberId, $granteeUserId, $granteeGroups);
 		while ($authGrant = $grantList->fetch())
 		{
 			$result[] = $authGrant;
 		}
-		$event = new \Bitrix\Main\Event("controller", "OnControllerMemberScopes", array(&$result, $controllerMemberId, $granteeUserId, $granteeGroups));
+		$event = new \Bitrix\Main\Event('controller', 'OnControllerMemberScopes', [&$result, $controllerMemberId, $granteeUserId, $granteeGroups]);
 		$event->send();
 		return $result;
 	}
+
 	/**
 	 * Returns array of users who can get a grant on a member.
 	 * This users must have controller_member_view operation.
 	 *
-	 * @param integer $currentUserId Identifier of the current user.
+	 * @param int $currentUserId Identifier of the current user.
 	 * @return array
 	 * @throws Main\ArgumentException
 	 */
 	public static function getGranteeUserList($currentUserId)
 	{
-		$tasks = array();
-		$groups = array();
-		$users = array();
+		$tasks = [];
+		$groups = [];
+		$users = [];
 
-		$tasksList = \Bitrix\Main\TaskOperationTable::getList(array(
-			"select" => array("TASK_ID"),
-			"filter" => array(
-				"=OPERATION.NAME" => "controller_member_view",
-			),
-		));
-		while($a = $tasksList->fetch())
+		$tasksList = \Bitrix\Main\TaskOperationTable::getList([
+			'select' => ['TASK_ID'],
+			'filter' => [
+				'=OPERATION.NAME' => 'controller_member_view',
+			],
+		]);
+		while ($a = $tasksList->fetch())
 		{
 			$tasks[$a['TASK_ID']] = $a['TASK_ID'];
 		}
 
 		if ($tasks)
 		{
-			$groupsList = \Bitrix\Main\GroupTaskTable::getList(array(
-				"select" => array("GROUP_ID"),
-				"filter" => array(
-					"=TASK_ID" => $tasks,
-				),
-			));
-			while($a = $groupsList->fetch())
+			$groupsList = \Bitrix\Main\GroupTaskTable::getList([
+				'select' => ['GROUP_ID'],
+				'filter' => [
+					'=TASK_ID' => $tasks,
+				],
+			]);
+			while ($a = $groupsList->fetch())
 			{
 				$groups[$a['GROUP_ID']] = $a['GROUP_ID'];
 			}
@@ -296,32 +321,32 @@ class AuthGrantTable extends Main\Entity\DataManager
 
 		if ($groups)
 		{
-			$usersList = \Bitrix\Main\UserGroupTable::getList(array(
-				"select" => array(
-					"ID" => "USER.ID",
-					"LOGIN" => "USER.LOGIN",
-					"NAME" => "USER.NAME",
-					"LAST_NAME" => "USER.LAST_NAME",
-				),
-				"filter" => array(
-					"=GROUP_ID" => $groups,
-					array(
-						"LOGIC" => "OR",
-						"=DATE_ACTIVE_FROM" => false,
-						"<=DATE_ACTIVE_FROM" => new \Bitrix\Main\Type\DateTime(),
-					),
-					array(
-						"LOGIC" => "OR",
-						"=DATE_ACTIVE_TO" => false,
-						">=DATE_ACTIVE_TO" => new \Bitrix\Main\Type\DateTime(),
-					),
-				),
-			));
-			while($a = $usersList->fetch())
+			$usersList = \Bitrix\Main\UserGroupTable::getList([
+				'select' => [
+					'ID' => 'USER.ID',
+					'LOGIN' => 'USER.LOGIN',
+					'NAME' => 'USER.NAME',
+					'LAST_NAME' => 'USER.LAST_NAME',
+				],
+				'filter' => [
+					'=GROUP_ID' => $groups,
+					[
+						'LOGIC' => 'OR',
+						'=DATE_ACTIVE_FROM' => false,
+						'<=DATE_ACTIVE_FROM' => new \Bitrix\Main\Type\DateTime(),
+					],
+					[
+						'LOGIC' => 'OR',
+						'=DATE_ACTIVE_TO' => false,
+						'>=DATE_ACTIVE_TO' => new \Bitrix\Main\Type\DateTime(),
+					],
+				],
+			]);
+			while ($a = $usersList->fetch())
 			{
 				if ($a['ID'] != $currentUserId)
 				{
-					$users[$a['ID']] = $a['LAST_NAME'].' '.$a['NAME'].' ('.$a['LOGIN'].')';
+					$users[$a['ID']] = $a['LAST_NAME'] . ' ' . $a['NAME'] . ' (' . $a['LOGIN'] . ')';
 				}
 			}
 		}

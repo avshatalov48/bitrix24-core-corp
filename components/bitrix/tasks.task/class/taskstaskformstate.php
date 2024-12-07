@@ -102,7 +102,7 @@ final class TasksTaskFormState
 			}
 		}
 
-		if (is_array($state['BLOCKS']))
+		if (is_array($state['BLOCKS'] ?? null))
 		{
 			foreach ($state['BLOCKS'] as $blockName => &$blockOpts)
 			{

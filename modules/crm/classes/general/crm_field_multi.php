@@ -296,8 +296,6 @@ class CCrmFieldMulti
 
 	public function Add($arFields, array $options = null)
 	{
-		$err_mess = (self::err_mess()).'<br />Function: Add<br>Line: ';
-
 		if(isset($arFields['VALUE']))
 		{
 			$arFields['VALUE'] = trim($arFields['VALUE']);
@@ -344,8 +342,6 @@ class CCrmFieldMulti
 
 	public function Update($ID, $arFields, array $options = null)
 	{
-		$err_mess = (self::err_mess()).'<br />Function: Update<br>Line: ';
-
 		$ID = (int)$ID;
 		if($ID <= 0)
 		{
@@ -367,7 +363,7 @@ class CCrmFieldMulti
 			'VALUE'		=> $arFields['VALUE'],
 		);
 		$strUpdate = $this->cdb->PrepareUpdate('b_crm_field_multi', $arFields_u);
-		if (!$this->cdb->Query("UPDATE b_crm_field_multi SET $strUpdate WHERE ID=$ID", false, $err_mess.__LINE__))
+		if (!$this->cdb->Query("UPDATE b_crm_field_multi SET $strUpdate WHERE ID=$ID"))
 			return false;
 
 		if(is_array($options) && (!isset($options['ENABLE_NOTIFICATION']) || $options['ENABLE_NOTIFICATION']))
@@ -421,8 +417,6 @@ class CCrmFieldMulti
 
 	public function Delete($ID, array $options = null)
 	{
-		$err_mess = (self::err_mess()).'<br />Function: Delete<br>Line: ';
-
 		$ID = (int)$ID;
 		if($ID <= 0)
 		{
@@ -435,7 +429,7 @@ class CCrmFieldMulti
 			$info = $this->GetOwerInfo($ID);
 		}
 
-		$result = $this->cdb->Query("DELETE FROM b_crm_field_multi WHERE ID={$ID}", false, $err_mess.__LINE__);
+		$result = $this->cdb->Query("DELETE FROM b_crm_field_multi WHERE ID={$ID}");
 		if(is_array($info) && isset($info['ENTITY_ID']) && isset($info['ELEMENT_ID']))
 		{
 			$entityTypeId = CCrmOwnerType::ResolveID($info['ENTITY_ID']);
@@ -454,8 +448,6 @@ class CCrmFieldMulti
 
 	public function DeleteByElement($entityId, $elementId)
 	{
-		$err_mess = (self::err_mess()).'<br>Function: DeleteByElement<br>Line: ';
-
 		$elementId = intval($elementId);
 
 		if ($entityId == '' || $elementId == 0)
@@ -465,9 +457,7 @@ class CCrmFieldMulti
 
 		$idsToRemove = [];
 		$dbResult = $this->cdb->Query(
-			"SELECT ID FROM b_crm_field_multi WHERE ENTITY_ID='" . $this->cdb->ForSql($entityId) . "' AND ELEMENT_ID=" . $elementId,
-			false,
-			$err_mess . __LINE__
+			"SELECT ID FROM b_crm_field_multi WHERE ENTITY_ID='" . $this->cdb->ForSql($entityId) . "' AND ELEMENT_ID=" . $elementId
 		);
 		while ($row = $dbResult->Fetch())
 		{
@@ -476,9 +466,7 @@ class CCrmFieldMulti
 
 		$res = $this->cdb->Query(
 			"DELETE FROM b_crm_field_multi "
-			. "WHERE ENTITY_ID = '" . $this->cdb->ForSql($entityId) . "' AND ELEMENT_ID = '" . $elementId . "'",
-			false,
-			$err_mess . __LINE__
+			. "WHERE ENTITY_ID = '" . $this->cdb->ForSql($entityId) . "' AND ELEMENT_ID = '" . $elementId . "'"
 		);
 
 		$entityTypeId = CCrmOwnerType::ResolveID($entityId);
@@ -503,12 +491,8 @@ class CCrmFieldMulti
 	{
 		$result = null;
 
-		$err_mess = (self::err_mess()).'<br>Function: GetOwerInfo<br>Line: ';
-
 		$dbResult = $this->cdb->Query(
-			"SELECT ENTITY_ID, ELEMENT_ID FROM b_crm_field_multi WHERE ID={$ID}",
-			false,
-			$err_mess . __LINE__
+			"SELECT ENTITY_ID, ELEMENT_ID FROM b_crm_field_multi WHERE ID={$ID}"
 		);
 		$fields = is_object($dbResult) ? $dbResult->Fetch() : null;
 		if(is_array($fields))
@@ -722,7 +706,6 @@ class CCrmFieldMulti
 		global $DB;
 
 		$arSqlSearch = array();
-		$err_mess = (self::err_mess()).'<br />Function: GetList<br>Line: ';
 		if (is_array($arFilter))
 		{
 			self::PrepareSearchQuery($arFilter, $arSqlSearch);
@@ -761,7 +744,7 @@ class CCrmFieldMulti
 		if ($sOrder == '')
 			$sOrder = 'CFM.ID DESC';
 
-		$strSqlOrder = ' ORDER BY '.TrimEx($sOrder,",");
+		$strSqlOrder = ' ORDER BY '.trim($sOrder, ", ");
 
 		$strSqlSearch = GetFilterSqlSearch($arSqlSearch);
 		$strSql = "
@@ -772,7 +755,7 @@ class CCrmFieldMulti
 			WHERE
 			$strSqlSearch
 			$strSqlOrder";
-		$res = $DB->Query($strSql, false, $err_mess.__LINE__);
+		$res = $DB->Query($strSql);
 
 		return $res;
 	}
@@ -1597,8 +1580,7 @@ class CCrmFieldMulti
 		$elementSql = implode(',', $elementIDs);
 		$sql = "SELECT m1.ELEMENT_ID AS ELEMENT_ID, m1.VALUE AS VALUE, m2.CNT AS CNT FROM b_crm_field_multi m1 INNER JOIN (SELECT MIN(ID) AS MIN_ID, COUNT(*) AS CNT FROM b_crm_field_multi m0 WHERE ENTITY_ID = '{$entityID}' AND ELEMENT_ID IN ({$elementSql}) AND TYPE_ID = '{$typeID}' GROUP BY ENTITY_ID, ELEMENT_ID) m2 ON m1.ID = m2.MIN_ID";
 
-		$err_mess = (self::err_mess()).'<br />Function: GetInfoBatch<br>Line: ';
-		$dbResult = $DB->Query($sql, false, $err_mess.__LINE__);
+		$dbResult = $DB->Query($sql);
 		if(is_object($dbResult))
 		{
 			while($fields = $dbResult->Fetch())
@@ -1758,11 +1740,6 @@ class CCrmFieldMulti
 			CCrmOwnerType::ResolveID($dstEntityID),
 			$dstElementID
 		);
-	}
-
-	private static function err_mess()
-	{
-		return '<br />Class: CCrmFieldMulti<br>File: '.__FILE__;
 	}
 
 	private static function fetchCountryCode(string $typeId, array $input): string

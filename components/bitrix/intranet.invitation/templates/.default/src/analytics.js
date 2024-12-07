@@ -11,6 +11,15 @@ export class Analytics
 	static IS_ADMIN_Y = 'isAdmin_Y';
 	static IS_ADMIN_N = 'isAdmin_N';
 
+	static EVENT_TAB_VIEW = 'tab_view';
+	static TAB_EMAIL = 'tab_by_email';
+	static TAB_MASS = 'tab_mass';
+	static TAB_DEPARTMENT = 'tab_department';
+	static TAB_INTEGRATOR = 'tab_integrator';
+	static TAB_LINK = 'by_link';
+	static TAB_REGISTRATION = 'registration';
+	static TAB_AD = 'AD';
+
 	#cSection: Object;
 	#isAdmin: boolean;
 
@@ -46,6 +55,22 @@ export class Analytics
 			c_section: this.#getCSection(),
 			p1: this.#getIsAdmin(),
 			p2: this.#getAdminAllowMode(),
+		});
+	}
+
+	sendTabData(section, subSection): void
+	{
+		if (!section)
+		{
+			return;
+		}
+
+		sendData({
+			tool: Analytics.TOOLS,
+			category: Analytics.CATEGORY_INVITATION,
+			event: Analytics.EVENT_TAB_VIEW,
+			c_section: section,
+			c_sub_section: subSection
 		});
 	}
 }

@@ -20,8 +20,8 @@ class SignB2eDocument extends Configurable
 	protected const BLOCK_DOCUMENT = 'document';
 	protected const BLOCK_MY_SIGNER = 'mySigner';
 	protected const BLOCK_SIGNERS = 'signers';
-	protected const BLOCK_AUTHOR= 'author';
-	protected const BLOCK_DATE= 'date';
+	protected const BLOCK_AUTHOR = 'author';
+	protected const BLOCK_DATE = 'date';
 	protected const BLOCK_FIELDS_COUNT = 'fieldsCount';
 	protected const BLOCK_REQUEST = 'request';
 

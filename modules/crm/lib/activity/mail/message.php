@@ -6,6 +6,7 @@ use Bitrix\Crm\Activity\Provider\Email;
 use Bitrix\Crm\ActivityTable;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Mail\Internals\UserSignatureTable;
+use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Error;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main;
@@ -159,6 +160,7 @@ class Message
 		}
 
 		$result->addError(new Error(Loc::getMessage('CRM_LIB_ACTIVITY_PERMISSION_DENIED', 'access_denied')));
+
 		return $result;
 	}
 
@@ -222,10 +224,15 @@ class Message
 
 	public static function getSignature($email, $name)
 	{
+		$userId = CurrentUser::get()->getId();
+
 		$signatureList = UserSignatureTable::getList([
 			'select' => ["SIGNATURE"],
 			'order' => ['ID' => 'desc'],
-			'filter' => ['=SENDER' => (trim($name).' <'.trim($email).'>')],
+			'filter' => [
+				'=SENDER' => (trim($name).' <'.trim($email).'>'),
+				'=USER_ID' => $userId,
+			],
 			'limit' => 1,
 		])->fetchAll();
 
@@ -239,7 +246,10 @@ class Message
 			$signatureList = UserSignatureTable::getList([
 				'select' => ["SIGNATURE"],
 				'order' => ['ID' => 'desc'],
-				'filter' => ['=SENDER' => trim($email)],
+				'filter' => [
+					'=SENDER' => trim($email),
+					'=USER_ID' => $userId,
+				],
 				'limit' => 1,
 			])->fetchAll();
 		}
@@ -561,6 +571,12 @@ class Message
 					}
 				}
 				$header[$key] = $contactsFromField;
+
+				if ($key === 'from' && count($header[$key]) === 1)
+				{
+					$header[$key][0]['senderName'] = (new Address($value))->getName();
+				}
+
 				if (!empty($contactsFromField))
 				{
 					$foundContacts[] = $contactsFromField;
@@ -595,9 +611,10 @@ class Message
 
 	public static function getMessageBody($id): Main\Result
 	{
-		if (!self::checkModules())
+		$checkModules = self::checkModules();
+		if (!$checkModules->isSuccess())
 		{
-			return new Main\Result();
+			return (new Main\Result())->addErrors($checkModules->getErrors());
 		}
 
 		$body = [
@@ -614,18 +631,21 @@ class Message
 			]
 		);
 
-		if (!self::checkActivityPermission(self::PERMISSION_READ, $activities))
+		$checkActivities = self::checkActivityPermission(self::PERMISSION_READ, $activities);
+		if (!$checkActivities->isSuccess())
 		{
-			return new Main\Result();
+			return (new Main\Result())->addErrors($checkActivities->getErrors());
 		}
 
 		$activity = $activities[0];
 
-		Email::uncompressActivity($activity);
-
-		if ($activity)
+		if (is_array($activity))
 		{
-			$body['HTML'] = $activity['DESCRIPTION'];
+			Email::uncompressActivity($activity);
+			if (isset($activity['DESCRIPTION']))
+			{
+				$body['HTML'] = $activity['DESCRIPTION'];
+			}
 		}
 
 		return (new Main\Result())->setData($body);

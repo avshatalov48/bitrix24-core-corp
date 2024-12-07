@@ -3,6 +3,7 @@ namespace Bitrix\Crm\Automation\Target;
 
 use Bitrix\Crm\Automation\Factory;
 use Bitrix\Crm\Category\DealCategory;
+use Bitrix\Crm\DealTable;
 use Bitrix\Crm\PhaseSemantics;
 
 class DealTarget extends BaseTarget
@@ -24,52 +25,42 @@ class DealTarget extends BaseTarget
 		return \CCrmOwnerType::Deal;
 	}
 
-	public function getEntityId()
+	public function getEntityIdByDocumentId(string $documentId): int
 	{
-		$entity = $this->getEntity();
-		return isset($entity['ID']) ? (int)$entity['ID'] : 0;
+		return (int)str_replace('DEAL_', '', $documentId);
+	}
+
+	protected function getEntityFields(array $select): array
+	{
+		$id = $this->getEntityId();
+		if (empty($id))
+		{
+			return [];
+		}
+
+		return DealTable::query()
+			->setSelect($select)
+			->where('ID', $id)
+			->fetch() ?: [];
 	}
 
 	public function getResponsibleId()
 	{
-		$entity = $this->getEntity();
-		return isset($entity['ASSIGNED_BY_ID']) ? (int)$entity['ASSIGNED_BY_ID'] : 0;
-	}
+		$entity = $this->getEntityFields(['ASSIGNED_BY_ID']);
 
-	public function setEntityById($id)
-	{
-		$id = (int)$id;
-		if ($id > 0)
-		{
-			$entity = \CCrmDeal::GetByID($id, false);
-			if ($entity)
-			{
-				$this->setEntity($entity);
-				$this->setDocumentId('DEAL_'.$id);
-			}
-		}
-	}
-
-	public function getEntity()
-	{
-		if ($this->entity === null && $id = $this->getDocumentId())
-		{
-			$id = (int) str_replace('DEAL_', '', $id);
-			$this->setEntityById($id);
-		}
-
-		return parent::getEntity();
+		return (int)$entity['ASSIGNED_BY_ID'];
 	}
 
 	public function getEntityStatus()
 	{
-		$entity = $this->getEntity();
-		return isset($entity['STAGE_ID']) ? $entity['STAGE_ID'] : '';
+		$entity = $this->getEntityFields(['STAGE_ID']);
+
+		return $entity['STAGE_ID'] ?? '';
 	}
 
 	public function getDocumentCategory(): int
 	{
-		$entity = $this->getEntity();
+		$entity = $this->getEntityFields(['CATEGORY_ID']);
 
 		return (int)$entity['CATEGORY_ID'];
 	}
@@ -77,6 +68,10 @@ class DealTarget extends BaseTarget
 	public function setEntityStatus($statusId, $executeBy = null)
 	{
 		$id = $this->getEntityId();
+		if (empty($id))
+		{
+			return false;
+		}
 
 		$fields = ['STAGE_ID' => $statusId];
 		if ($executeBy)
@@ -85,16 +80,11 @@ class DealTarget extends BaseTarget
 		}
 
 		$CCrmDeal = new \CCrmDeal(false);
-		$updateResult = $CCrmDeal->Update($id, $fields, true, true, array(
+		$updateResult = $CCrmDeal->Update($id, $fields, true, true, [
 			'DISABLE_USER_FIELD_CHECK' => true,
 			'REGISTER_SONET_EVENT' => true,
-			'CURRENT_USER' => $executeBy ?? 0 //System user
-		));
-
-		if ($updateResult)
-		{
-			$this->setEntityField('STAGE_ID', $statusId);
-		}
+			'CURRENT_USER' => $executeBy ?? 0, //System user
+		]);
 
 		return $updateResult;
 	}
@@ -103,7 +93,7 @@ class DealTarget extends BaseTarget
 	{
 		if ($this->entityStages === null)
 		{
-			$entity = $this->getEntity();
+			$entity = $this->getEntityFields(['CATEGORY_ID']);
 			$categoryId = isset($entity['CATEGORY_ID']) ? (int)$entity['CATEGORY_ID'] : 0;
 			$this->entityStages = array_keys(DealCategory::getStageList($categoryId));
 		}
@@ -113,7 +103,7 @@ class DealTarget extends BaseTarget
 
 	public function getStatusInfos($categoryId = 0)
 	{
-		$entity = $this->getEntity();
+		$entity = $this->getEntityFields(['CATEGORY_ID']);
 		if ($entity && !empty($entity['CATEGORY_ID']))
 		{
 			$categoryId = (int)$entity['CATEGORY_ID'];
@@ -123,7 +113,7 @@ class DealTarget extends BaseTarget
 		$successColor = \CCrmViewHelper::SUCCESS_COLOR;
 		$failureColor = \CCrmViewHelper::FAILURE_COLOR;
 
-		$statuses = \CCrmViewHelper::GetDealStageInfos($categoryId);
+		$statuses = DealCategory::getStageInfos($categoryId);
 
 		foreach ($statuses as $id => $stageInfo)
 		{

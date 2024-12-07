@@ -44,5 +44,24 @@ jn.define('bizproc/in-app-url/routes', (require, exports, module) => {
 			)
 			.name('bizproc:task')
 		;
+		inAppUrl
+			.register(
+				'/bizproc/userprocesses/',
+				(pathParams, props) => {
+					// eslint-disable-next-line no-undef
+					ComponentHelper.openLayout(
+						{
+							name: 'bizproc:tab',
+							canOpenInDefault: true,
+							componentParams: {
+								setTitle: true,
+							},
+							object: 'layout',
+						},
+					);
+				},
+			)
+			.name('bizproc:tab')
+		;
 	};
 });

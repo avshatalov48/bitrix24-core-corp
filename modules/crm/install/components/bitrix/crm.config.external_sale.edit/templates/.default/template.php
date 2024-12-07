@@ -65,7 +65,7 @@ else
 		$arUser = $dbUser->GetNext();
 	}
 	?>
-	<script type="text/javascript">
+	<script>
 		function __BXOnImportResponsibleChange()
 		{
 			var ddd = document.getElementById("id_IMPORT_RESPONSIBLE_TXT");
@@ -119,7 +119,7 @@ else
 	if (intval($arResult["BP"]["IMPORT_GROUP_ID"]) > 0)
 		$arGroup = CSocNetGroup::GetByID($arResult["BP"]["IMPORT_GROUP_ID"]);
 	?>
-	<script type="text/javascript">
+	<script>
 	function __BXOnImportGroupChange()
 	{
 		var ddd = document.getElementById("id_GROUP_TXT");

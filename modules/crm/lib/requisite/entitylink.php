@@ -2045,8 +2045,6 @@ class EntityLink
 			Item::FIELD_NAME_ID,
 		];
 
-		$myCompanyFieldName = $factory->getEntityFieldNameByMap(Item::FIELD_NAME_MYCOMPANY_ID);
-
 		$companyIdFieldName = $factory->getEntityFieldNameByMap(Item::FIELD_NAME_COMPANY_ID);
 		if ($factory->isFieldExists($companyIdFieldName))
 		{
@@ -2057,6 +2055,12 @@ class EntityLink
 		if ($factory->isFieldExists($contactIdFieldName))
 		{
 			$select[] = $contactIdFieldName;
+		}
+
+		$myCompanyFieldName = $factory->getEntityFieldNameByMap(Item::FIELD_NAME_MYCOMPANY_ID);
+		if ($factory->isFieldExists($myCompanyFieldName))
+		{
+			$select[] = $myCompanyFieldName;
 		}
 
 		foreach ($parentFields as $parentField)

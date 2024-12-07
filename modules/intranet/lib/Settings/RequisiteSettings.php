@@ -79,7 +79,11 @@ class RequisiteSettings extends AbstractSettings
 		$fieldsPreset = $this->getPresetFields((int)$defaultPreset['ID']);
 
 		$data['BITRIX_TITLE'] = \COption::GetOptionString('main', 'site_name', 'Bitrix24');
-		$data['EMPTY_REQUISITE'] = $this->fieldFormat($fieldsPreset['FIELDS_NAMES'], $fieldTitles[EntityPreset::getCurrentCountryId()], []);
+		$data['EMPTY_REQUISITE'] = $this->fieldFormat(
+			$fieldsPreset['FIELDS_NAMES'] ?? [],
+			$fieldTitles[EntityPreset::getCurrentCountryId()] ?? [],
+			[]
+		);
 		$data['REQUISITES'] = $this->prepareRequisite($companyList->getRequisiteList(), $fieldTitles);
 		[$phonesNumber, $sites, $emails] = $this->getCompanyCommunicationByIds($companyList->getIds());
 		$data['PHONES'] = $phonesNumber;
@@ -261,8 +265,8 @@ class RequisiteSettings extends AbstractSettings
 		{
 			$companyId = (int)$company['ID'];
 			$requisite = $companyList->getRequisiteList()->getByCompanyId($companyId);
-			$requisiteId = (int)$requisite['ID'];
-			$requisiteBank = $companyList->getRequisiteList()->getBankRequisiteList()->getByRequisiteId($requisiteId);
+			$requisiteId = isset($requisite['ID']) ? (int)$requisite['ID'] : 0;
+			$requisiteBank = $requisiteId ? $companyList->getRequisiteList()->getBankRequisiteList()->getByRequisiteId($requisiteId) : 0;
 
 			$landingId = [
 				'company_id' => $companyId,

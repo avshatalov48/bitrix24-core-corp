@@ -83,6 +83,19 @@ class IntranetCustomSectionComponent extends \CBitrixComponent implements \Bitri
 			$items[] = $this->prepareInterfaceItem($sectionCode, $page, ($page->getCode() === $activePage->getCode()));
 		}
 
+		if (
+			Bitrix\Main\Loader::includeModule('biconnector')
+			&& class_exists('\Bitrix\BIConnector\Superset\Scope\ScopeService')
+		)
+		{
+			/** @see \Bitrix\BIConnector\Superset\Scope\MenuItem\MenuItemCreatorAutomatedSolution::getMenuItemData */
+			$menuItem = \Bitrix\BIConnector\Superset\Scope\ScopeService::getInstance()->prepareAutomatedSolutionMenuItem($sectionCode);
+			if ($menuItem)
+			{
+				$items[] = $menuItem;
+			}
+		}
+
 		return $items;
 	}
 

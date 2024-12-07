@@ -10,3 +10,13 @@
 .ui-nav-panel__item.--active:after {
 	bottom: 5px;
 }
+
+.ui-btn.ui-btn-icon-funnel.ui-btn-collapsed .ui-btn-counter {
+	padding: 0 3px;
+	font-size: var(--ui-font-size-6xs);
+	line-height: 16px;
+}
+
+.ui-btn.ui-btn-icon-funnel.ui-btn-collapsed .ui-btn-text + .ui-btn-counter {
+	margin-left: 8px;
+}

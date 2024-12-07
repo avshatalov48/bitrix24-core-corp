@@ -5,14 +5,14 @@
 		<?if ($arResult['MESSAGE']):?>
 			<?if (isset($arResult['MESSAGE']['PHONE_NUMBER'])):?>
 				<div class="crm-task-list-call-info-container">
-					<span class="crm-task-list-call-info-name"><?=GetMessage('CRM_ACTIVITY_NOTIFICATION_PHONE_NUMBER')?>:</span>
+					<span class="crm-task-list-call-info-name"><?=GetMessage('CRM_ACTIVITY_NOTIFICATION_PHONE_NUMBER_MSGVER_1')?></span>
 					<span class="crm-task-list-call-info-item"><?=htmlspecialcharsbx($arResult['MESSAGE']['PHONE_NUMBER'])?></span>
 				</div>
 			<?endif;?>
 
 			<?if ($arResult['HISTORY_ITEMS']):?>
 				<div class="crm-task-list-call-info-container">
-					<span class="crm-task-list-call-info-name"><?=GetMessage('CRM_ACTIVITY_NOTIFICATION_MESSAGE_STATUS')?>:</span>
+					<span class="crm-task-list-call-info-name"><?=GetMessage('CRM_ACTIVITY_NOTIFICATION_MESSAGE_STATUS_MSGVER_1')?></span>
 					<span class="crm-task-list-call-info-item">
 						<?=htmlspecialcharsbx($arResult['HISTORY_ITEMS'][0]['STATUS_DATA']['DESCRIPTION'])?>
 						<?if ($arResult['HISTORY_ITEMS'][0]['REASON'] && $arResult['HISTORY_ITEMS'][0]['STATUS_DATA']['IS_FAILURE']):?>
@@ -23,7 +23,7 @@
 				<?if ($arResult['HISTORY_ITEMS'][0]['PROVIDER_CODE']):?>
 					<div class="crm-task-list-call-info-container">
 						<span class="crm-task-list-call-info-name">
-							<?=GetMessage('CRM_ACTIVITY_NOTIFICATION_MESSAGE_CHANNEL')?>:
+							<?=GetMessage('CRM_ACTIVITY_NOTIFICATION_MESSAGE_CHANNEL_MSGVER_1')?>
 						</span>
 						<span class="crm-task-list-call-info-item">
 							<?=htmlspecialcharsbx($arResult['HISTORY_ITEMS'][0]['PROVIDER_DATA']['DESCRIPTION'])?>
@@ -34,7 +34,7 @@
 			<?if ($arResult['MESSAGE']['TEXT']):?>
 				<div class="crm-task-list-call-info-container">
 					<span class="crm-task-list-call-info-name">
-						<?=GetMessage('CRM_ACTIVITY_NOTIFICATION_DESCRIPTION')?>:
+						<?=GetMessage('CRM_ACTIVITY_NOTIFICATION_DESCRIPTION_MSGVER_1')?>
 					</span>
 				</div>
 				<span><?=htmlspecialcharsbx($arResult['MESSAGE']['TEXT'])?></span>

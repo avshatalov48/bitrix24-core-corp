@@ -3,7 +3,7 @@
  * @module tasks/statemanager/redux/slices/stage-settings/src/extra-reducer
  */
 jn.define('tasks/statemanager/redux/slices/stage-settings/src/extra-reducer', (require, exports, module) => {
-	const { statusTypes } = require('tasks/statemanager/redux/types');
+	const { statusTypes, Views } = require('tasks/statemanager/redux/types');
 	const { adapter } = require('tasks/statemanager/redux/slices/stage-settings/meta');
 	const { getStagesFromCache } = require('tasks/statemanager/redux/slices/kanban-settings/thunk/src/data-provider');
 
@@ -93,6 +93,58 @@ jn.define('tasks/statemanager/redux/slices/stage-settings/src/extra-reducer', (r
 		state.status = statusTypes.failure;
 	};
 
+	const setKanbanSettings = (state, action) => {
+		const { stages, projectId, view } = action.payload;
+
+		if (Array.isArray(stages))
+		{
+			const preparedStages = stages.map(
+				(stage) => {
+					const newStage = {
+						...stage,
+						view,
+						projectId,
+					};
+
+					delete newStage.counters;
+
+					return newStage;
+				},
+			);
+
+			adapter.upsertMany(state, preparedStages);
+		}
+	};
+
+	const updateTaskFulfilled = (state, action) => {
+		const { data } = action.payload;
+
+		if (data?.kanban && Array.isArray(data?.kanban?.stages))
+		{
+			const {
+				reduxFields,
+			} = action.meta.arg;
+			if (Number.isInteger(reduxFields?.groupId) && reduxFields?.groupId > 0)
+			{
+				const preparedStages = data?.kanban?.stages.map(
+					(stage) => {
+						const newStage = {
+							...stage,
+							viewMode: Views.KANBAN,
+							projectId: reduxFields?.groupId,
+						};
+
+						delete newStage.counters;
+
+						return newStage;
+					},
+				);
+
+				adapter.upsertMany(state, preparedStages);
+			}
+		}
+	};
+
 	module.exports = {
 		fetchStagesPending,
 		fetchStagesFulfilled,
@@ -105,5 +157,7 @@ jn.define('tasks/statemanager/redux/slices/stage-settings/src/extra-reducer', (r
 		deleteStagePending,
 		deleteStageFulfilled,
 		deleteStageRejected,
+		setKanbanSettings,
+		updateTaskFulfilled,
 	};
 });

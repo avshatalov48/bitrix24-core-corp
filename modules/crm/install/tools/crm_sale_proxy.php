@@ -108,10 +108,8 @@ $body = $response["BODY"];
 if (isset($response["CONTENT"]["ENCODING"]) && (in_array($response["CONTENT"]["TYPE"], array("text/xml", "application/xml", "text/html", "application/x-javascript"))))
 {
 	$utf8Encoding = (mb_strtoupper($response["CONTENT"]["ENCODING"]) == "UTF-8");
-	if (!$utf8Encoding && defined("BX_UTF"))
-		$body = CharsetConverter::ConvertCharset($body, $response["CONTENT"]["ENCODING"], "UTF-8");
-	elseif ($utf8Encoding && !defined("BX_UTF"))
-		$body = CharsetConverter::ConvertCharset($body, "UTF-8", SITE_CHARSET);
+	if (!$utf8Encoding)
+		$body = \Bitrix\Main\Text\Encoding::convertEncoding($body, $response["CONTENT"]["ENCODING"], "UTF-8");
 }
 
 $body = preg_replace(

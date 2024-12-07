@@ -1,9 +1,16 @@
+import { MarketLinks } from "market.market-links";
+
 import "./categories.css";
 
 export const Categories = {
 	props: [
 		'categories',
 	],
+	data() {
+		return {
+			MarketLinks: MarketLinks,
+		}
+	},
 	template: `
 		<div class="market-category-items">
 			<span class="market-category-list-container"
@@ -15,7 +22,7 @@ export const Categories = {
 				<span class="market-category-list-content">
 					<a class="market-category-list-item"
 					   v-for="category in categories.ITEMS"
-					   :href="$root.getCategoryUri(category.CODE)"
+					   :href="MarketLinks.categoryLink(category.CODE)"
 					   data-slider-ignore-autobinding="true"
 					   data-load-content="list"
 					   @click.prevent="$root.emitLoadContent"

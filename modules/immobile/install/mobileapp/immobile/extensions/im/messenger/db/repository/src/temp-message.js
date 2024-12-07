@@ -58,6 +58,17 @@ jn.define('im/messenger/db/repository/temp-message', (require, exports, module) 
 		{
 			return this.tempMessageTable.deleteByIdList(idList);
 		}
+
+		/**
+		 * @param {number} chatId
+		 * @return {Promise<void>}
+		 */
+		async deleteByChatId(chatId)
+		{
+			return this.tempMessageTable.delete({
+				chatId,
+			});
+		}
 	}
 
 	module.exports = {

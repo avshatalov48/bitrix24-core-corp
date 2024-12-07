@@ -23,6 +23,7 @@
 			this.isExistsOnlyCommonSettings = parameters.isExistsOnlyCommonSettings;
 			this.settingsMenu = null;
 			this.settingsMenuNode = BX(parameters.settingsMenuId);
+			this.buttonPanelId = parameters.buttonPanelId;
 
 			this.uiNodes = {
 				'name': this.containerNode.querySelector('[data-bx-salescenter-auth-name]'),
@@ -84,6 +85,16 @@
 					self.openSlider();
 				}.bind(this)
 			});
+			if (this.paySystemId > 0)
+			{
+				this.settingsMenu.addMenuItem({
+					text: BX.message('SALESCENTER_SP_PAY_SYSTEM_DELETE'),
+					onclick: function (event) {
+						self.settingsMenu.close();
+						self.remove(event);
+					}.bind(this)
+				});
+			}
 
 			if (this.isExistsOnlyCommonSettings)
 			{
@@ -157,24 +168,34 @@
 
 		logoutAction: function()
 		{
-			BX.ajax.runComponentAction(
-				'bitrix:salescenter.paysystem',
-				'logoutProfile',
-				{
-					mode: 'ajax',
-					data: {
-						type: this.auth.TYPE
-					}
-				}
-			).then(
-				function (response)
-				{
-					this.toggleLogoutBlock();
-				}.bind(this),
-				function (response)
-				{
-					this.showErrorPopup(response.errors);
-				}.bind(this)
+			BX.UI.Dialogs.MessageBox.confirm(
+				BX.message('SALESCENTER_SP_LOGOUT_CONFIRMATION_TEXT'),
+				BX.message('SALESCENTER_SP_LOGOUT_CONFIRMATION_TITLE'),
+				(messageBox) => {
+					messageBox.close();
+					BX.ajax.runComponentAction(
+						'bitrix:salescenter.paysystem',
+						'logoutProfile',
+						{
+							mode: 'ajax',
+							data: {
+								type: this.auth.TYPE
+							}
+						}
+					).then(
+						function (response)
+						{
+							this.toggleLogoutBlock();
+						}.bind(this),
+						function (response)
+						{
+							this.showErrorPopup(response.errors);
+						}.bind(this)
+					);
+				},
+				BX.message('SALESCENTER_SP_LOGOUT_CONFIRMATION_OK'),
+				(messageBox) => messageBox.close(),
+				BX.message('SALESCENTER_SP_LOGOUT_CONFIRMATION_CANCEL'),
 			);
 		},
 
@@ -210,10 +231,17 @@
 			{
 				this.setProfileData(profile);
 				this.showBlock(['profile', 'settings', 'form']);
+				BX.removeClass(BX(this.buttonPanelId), 'ui-button-panel-wrapper-hide');
 			}
 			else
 			{
 				this.showBlock(['settings', 'form']);
+				BX.addClass(BX(this.buttonPanelId), 'ui-button-panel-wrapper-hide');
+			}
+
+			if(this.slider)
+			{
+				this.slider.reload();
 			}
 		},
 
@@ -381,14 +409,14 @@
 			var connectPath = '/shop/settings/sale_pay_system_edit/?publicSidePanel=Y';
 			if (this.paySystemId > 0)
 			{
-				connectPath += ("&ID=" + this.paySystemId);
+				connectPath += ('&ID=' + this.paySystemId);
 			}
 			else if (this.paySystemHandler)
 			{
-				connectPath += ("&ACTION_FILE=" + this.paySystemHandler);
+				connectPath += ('&ACTION_FILE=' + this.paySystemHandler);
 				if (this.paySystemMode)
 				{
-					connectPath += ("&PS_MODE=" + this.paySystemMode);
+					connectPath += ('&PS_MODE=' + this.paySystemMode);
 				}
 			}
 
@@ -963,6 +991,25 @@
 			}
 		},
 
+		change: function()
+		{
+			if (this.paySystemId <= 0)
+			{
+				return;
+			}
+
+			var sliderDocument = this.getSliderDocument(this.slider);
+			var formData = this.getAllFormDataJson(sliderDocument);
+			if (this.formData === formData)
+			{
+				BX.addClass(BX(this.buttonPanelId), 'ui-button-panel-wrapper-hide');
+
+				return;
+			}
+
+			BX.removeClass(BX(this.buttonPanelId), 'ui-button-panel-wrapper-hide');
+		},
+
 		openSettingsForm(url)
 		{
 			BX.SidePanel.Instance.open(url, {
@@ -1371,6 +1418,7 @@
 
 		onToggleCashboxSwitcher: function (switcher)
 		{
+			BX.SalecenterPaySystem.change();
 			if (switcher.isChecked())
 			{
 				this.canPrintCheckNode.checked = true;

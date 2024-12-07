@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["CRM_ACTIVITY_TYPE_CALL"] = "Звонок";
 $MESS["CRM_ACTIVITY_TYPE_MEETING"] = "Встреча";
 $MESS["CRM_ACTIVITY_TYPE_TASK"] = "Задача";
@@ -109,4 +109,5 @@ $MESS["CRM_ACTIVITY_FIELD_END_TIME"] = "Дата и время окончани�
 $MESS["CRM_ACTIVITY_FIELD_DEADLINE"] = "Крайний срок";
 $MESS["CRM_ACTIVITY_FIELD_CREATED"] = "Дата создания";
 $MESS["CRM_ACTIVITY_FIELD_LAST_UPDATED"] = "Дата изменения";
-?>
+$MESS["CRM_ACTIVITY_CALENDAR_SUBTITLE"] = "Обновление от #DATE#";
+$MESS["CRM_ACTIVITY_CALENDAR_DESCRIPTION_TITLE"] = "Описание:";

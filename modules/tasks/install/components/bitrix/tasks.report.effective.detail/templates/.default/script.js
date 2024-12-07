@@ -7,7 +7,7 @@ BX.Tasks.TasksReportEffectiveDetail = function(options)
 	this.pathToTasks = options.pathToTasks;
 
 	this.bindEvents();
-	this.handleFeatureDisabling(options.taskLimitExceeded || options.kpiLimitExceeded);
+	this.handleFeatureDisabling(options.taskLimitExceeded);
 };
 
 BX.Tasks.TasksReportEffectiveDetail.prototype = {

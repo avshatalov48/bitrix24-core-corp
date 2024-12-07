@@ -56,4 +56,28 @@ class Sender
 
 		return static::send($userId, $message, $channels);
 	}
+
+	/**
+	 * For sending different messages through different channels,
+	 * for example, to send a message without a body through
+	 * an internal channel to instantly intercept an event.
+	 *
+	 * @param int $userId
+	 * @param Message $applicationMessage
+	 * @param Message $deviceMessage
+	 * @return Result
+	 */
+	public static function sendContextMessage(int $userId, Message $applicationMessage, Message $deviceMessage): Result
+	{
+		$result = new Result();
+
+		$applicationChannelResult = static::send($userId, $applicationMessage, [ new ApplicationChannel() ]);
+		$deviceMessageResult = static::send($userId, $deviceMessage, [ new DeviceChannel() ]);
+
+		$result->addErrors($applicationChannelResult->getErrors());
+		$result->addErrors($deviceMessageResult->getErrors());
+
+		return $result;
+	}
+
 }

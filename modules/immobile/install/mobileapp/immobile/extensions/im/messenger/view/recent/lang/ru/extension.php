@@ -8,3 +8,6 @@ $MESS['IMMOBILE_RECENT_VIEW_EMPTY_TEXT_CREATE'] = 'Нажмите на кноп�
 $MESS['IMMOBILE_RECENT_VIEW_EMPTY_TEXT_INVITE'] = 'Нажмите на кнопку ниже и пригласите коллег в ваш Битрикс24';
 $MESS['IMMOBILE_RECENT_VIEW_EMPTY_EMPTY_BUTTON'] = 'Начать общение';
 $MESS['IMMOBILE_RECENT_VIEW_ITEMS_LOADING'] = 'Загрузка...';
+
+$MESS['IMMOBILE_RECENT_VIEW_EMPTY_CHANNEL_UPPER_TEXT'] = 'Каналы';
+$MESS['IMMOBILE_RECENT_VIEW_EMPTY_CHANNEL_LOWER_TEXT'] = "Пока нет каналов\nВы можете создать свой канал";

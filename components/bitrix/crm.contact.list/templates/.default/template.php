@@ -15,9 +15,9 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)
 * @var CBitrixComponent $component
 */
 
+use Bitrix\Crm\Activity\ToDo\CalendarSettings\CalendarSettingsProvider;
+use Bitrix\Crm\Activity\ToDo\ColorSettings\ColorSettingsProvider;
 use Bitrix\Crm\Activity\TodoPingSettingsProvider;
-use Bitrix\Crm\Component\EntityList\ActionManager;
-use Bitrix\Crm\Integration;
 use Bitrix\Crm\Restriction\AvailabilityManager;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Tracking;
@@ -39,19 +39,23 @@ Bitrix\Main\UI\Extension::load(
 		'ui.fonts.opensans',
 		'ui.progressbar',
 		'ui.icons.b24',
+		'crm.autorun',
+		'crm.entity-list.panel',
+		'crm.badge',
+		'ui.design-tokens',
+		'crm.template.editor',
 	]
 );
 
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/activity.js');
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/interface_grid.js');
-Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/autorun_proc.js');
-Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/js/crm/css/autorun_proc.css');
-Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/batch_deletion.js');
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/dialog.js');
 
-?><div id="batchDeletionWrapper"></div><?
+?><div id="crm-contact-list-progress-bar-container"></div><div id="batchDeletionWrapper"></div><?
 
 echo (\Bitrix\Crm\Tour\NumberOfClients::getInstance())->build();
+
+echo \Bitrix\Crm\Tour\GridGroupWhatsAppMessage::getInstance()->build();
 
 if($arResult['NEED_TO_CONVERT_ADDRESSES']):
 	?><div id="convertContactAddressesWrapper"></div><?
@@ -109,9 +113,6 @@ if($arResult['NEED_FOR_TRANSFER_REQUISITES']):
 endif;
 
 $isInternal = $arResult['INTERNAL'];
-$callListUpdateMode = $arResult['CALL_LIST_UPDATE_MODE'];
-$allowWrite = $arResult['PERMS']['WRITE'] && !$callListUpdateMode;
-$allowDelete = $arResult['PERMS']['DELETE'] && !$callListUpdateMode;
 $currentUserID = $arResult['CURRENT_USER_ID'];
 $activityEditorID = '';
 if(!$isInternal):
@@ -226,9 +227,24 @@ foreach($arResult['CONTACT'] as $sKey =>  $arContact)
 
 		if($arResult['PERM_QUOTE'] && !$arResult['CATEGORY_ID'])
 		{
+			$analyticsEventBuilderForQuote = \Bitrix\Crm\Integration\Analytics\Builder\Entity\AddOpenEvent::createDefault(\CCrmOwnerType::Quote)
+				->setSection(
+				!empty($arParams['ANALYTICS']['c_section']) && is_string($arParams['ANALYTICS']['c_section'])
+					? $arParams['ANALYTICS']['c_section']
+					: null
+				)
+				->setSubSection(
+				!empty($arParams['ANALYTICS']['c_sub_section']) && is_string($arParams['ANALYTICS']['c_sub_section'])
+					? $arParams['ANALYTICS']['c_sub_section']
+					: null
+				)
+				->setElement(\Bitrix\Crm\Integration\Analytics\Dictionary::ELEMENT_GRID_ROW_CONTEXT_MENU)
+			;
 			if ($isQuoteAvailable)
 			{
-				$onClick = "jsUtils.Redirect([], '" . CUtil::JSEscape($arContact['PATH_TO_QUOTE_ADD']) . "');";
+				$onClick = "jsUtils.Redirect([], '" . CUtil::JSEscape($analyticsEventBuilderForQuote->buildUri(
+					$arContact['PATH_TO_QUOTE_ADD'])->getUri()
+				) . "');";
 			}
 			else
 			{
@@ -251,7 +267,7 @@ foreach($arResult['CONTACT'] as $sKey =>  $arContact)
 				$link->addParams([
 					'contact_id' => $arContact['ID'],
 				]);
-				$quoteAction['HREF'] = $link;
+				$quoteAction['HREF'] = $analyticsEventBuilderForQuote->buildUri($link)->getUri();
 			}
 			$arEntitySubMenuItems[] = $quoteAction;
 		}
@@ -262,9 +278,24 @@ foreach($arResult['CONTACT'] as $sKey =>  $arContact)
 			&& !$arResult['CATEGORY_ID']
 		)
 		{
+			$analyticsEventBuilderForInvoice = \Bitrix\Crm\Integration\Analytics\Builder\Entity\AddOpenEvent::createDefault(\CCrmOwnerType::Invoice)
+				->setSection(
+					!empty($arParams['ANALYTICS']['c_section']) && is_string($arParams['ANALYTICS']['c_section'])
+						? $arParams['ANALYTICS']['c_section']
+						: null
+				)
+				->setSubSection(
+					!empty($arParams['ANALYTICS']['c_sub_section']) && is_string($arParams['ANALYTICS']['c_sub_section'])
+						? $arParams['ANALYTICS']['c_sub_section']
+						: null
+				)
+				->setElement(\Bitrix\Crm\Integration\Analytics\Dictionary::ELEMENT_GRID_ROW_CONTEXT_MENU)
+			;
 			if ($isInvoiceAvailable)
 			{
-				$onClick = "jsUtils.Redirect([], '" . CUtil::JSEscape($arContact['PATH_TO_INVOICE_ADD']) . "');";
+				$onClick = "jsUtils.Redirect([], '" . CUtil::JSEscape(
+					$analyticsEventBuilderForInvoice->buildUri($arContact['PATH_TO_INVOICE_ADD'])->getUri()
+				) . "');";
 			}
 			else
 			{
@@ -283,6 +314,19 @@ foreach($arResult['CONTACT'] as $sKey =>  $arContact)
 			&& !$arResult['CATEGORY_ID']
 		)
 		{
+			$analyticsEventBuilderFoSmartrInvoice = \Bitrix\Crm\Integration\Analytics\Builder\Entity\AddOpenEvent::createDefault(\CCrmOwnerType::SmartInvoice)
+				->setSection(
+					!empty($arParams['ANALYTICS']['c_section']) && is_string($arParams['ANALYTICS']['c_section'])
+						? $arParams['ANALYTICS']['c_section']
+						: null
+				)
+				->setSubSection(
+					!empty($arParams['ANALYTICS']['c_sub_section']) && is_string($arParams['ANALYTICS']['c_sub_section'])
+						? $arParams['ANALYTICS']['c_sub_section']
+						: null
+				)
+				->setElement(\Bitrix\Crm\Integration\Analytics\Dictionary::ELEMENT_GRID_ROW_CONTEXT_MENU)
+			;
 			$subMenuItem = [
 				'TITLE' => \CCrmOwnerType::GetDescription(\CCrmOwnerType::SmartInvoice),
 				'TEXT' => \CCrmOwnerType::GetDescription(\CCrmOwnerType::SmartInvoice),
@@ -290,7 +334,7 @@ foreach($arResult['CONTACT'] as $sKey =>  $arContact)
 
 			if ($isInvoiceAvailable)
 			{
-				$subMenuItem['HREF'] = \Bitrix\Crm\Service\Container::getInstance()->getRouter()->getItemDetailUrl(
+				$link = \Bitrix\Crm\Service\Container::getInstance()->getRouter()->getItemDetailUrl(
 					\CCrmOwnerType::SmartInvoice,
 					0,
 					null,
@@ -299,6 +343,7 @@ foreach($arResult['CONTACT'] as $sKey =>  $arContact)
 						$arContact['ID']
 					)
 				);
+				$subMenuItem['HREF'] = $analyticsEventBuilderFoSmartrInvoice->buildUri($link)->getUri();
 			}
 			else
 			{
@@ -322,12 +367,25 @@ foreach($arResult['CONTACT'] as $sKey =>  $arContact)
 		if($arContact['EDIT'])
 		{
 			$currentUser = CUtil::PhpToJSObject(CCrmViewHelper::getUserInfo(true, false));
-			$pingSettings = CUtil::PhpToJSObject(
-				(new TodoPingSettingsProvider(\CCrmOwnerType::Contact, (int)($arResult['CATEGORY_ID'] ?? 0)))->fetchForJsComponent()
-			);
+
+			$pingSettings = (new TodoPingSettingsProvider(
+				\CCrmOwnerType::Contact,
+				(int)($arResult['CATEGORY_ID'] ?? 0)
+			))->fetchForJsComponent();
+			$calendarSettings = (new CalendarSettingsProvider())->fetchForJsComponent();
+			$colorSettings = (new ColorSettingsProvider())->fetchForJsComponent();
+
+			$settings = CUtil::PhpToJSObject([
+				'pingSettings' => $pingSettings,
+				'calendarSettings' => $calendarSettings,
+				'colorSettings' => $colorSettings,
+			]);
+
+			$analytics = CUtil::PhpToJSObject($arParams['ANALYTICS'] ?? []);
+
 			$arActivitySubMenuItems[] = [
 				'TEXT' => GetMessage('CRM_CONTACT_ADD_TODO'),
-				'ONCLICK' => "BX.CrmUIGridExtension.showActivityAddingPopupFromMenu('".$preparedGridId."', " . CCrmOwnerType::Contact . ", " . (int)$arContact['ID'] . ", " . $currentUser . ", " . $pingSettings . ");"
+				'ONCLICK' => "BX.CrmUIGridExtension.showActivityAddingPopupFromMenu('".$preparedGridId."', " . CCrmOwnerType::Contact . ", " . (int)$arContact['ID'] . ", " . $currentUser . ", " . $settings . ", " . $analytics .");"
 			];
 
 			if(IsModuleInstalled('subscribe'))
@@ -564,6 +622,11 @@ foreach($arResult['CONTACT'] as $sKey =>  $arContact)
 		}
 	}
 
+	if (isset($arContact['badges']) && is_array($arContact['badges']))
+	{
+		$resultItem['columns']['CONTACT_SUMMARY'] .= Bitrix\Crm\Component\EntityList\BadgeBuilder::render($arContact['badges']);
+	}
+
 	$arResult['GRID_DATA'][] = &$resultItem;
 	unset($resultItem);
 }
@@ -588,299 +651,6 @@ if($arResult['ENABLE_TOOLBAR'])
 		array('HIDE_ICONS' => 'Y')
 	);
 }
-
-//region Action Panel
-$controlPanel = array('GROUPS' => array(array('ITEMS' => array())));
-
-if(!$isInternal
-	&& ($allowWrite || $allowDelete || $callListUpdateMode))
-{
-	$yesnoList = array(
-		array('NAME' => GetMessage('MAIN_YES'), 'VALUE' => 'Y'),
-		array('NAME' => GetMessage('MAIN_NO'), 'VALUE' => 'N')
-	);
-
-	$snippet = new \Bitrix\Main\Grid\Panel\Snippet();
-	$applyButton = $snippet->getApplyButton(
-		array(
-			'ONCHANGE' => array(
-				array(
-					'ACTION' => Bitrix\Main\Grid\Panel\Actions::CALLBACK,
-					'DATA' => array(array('JS' => "BX.CrmUIGridExtension.processApplyButtonClick('{$gridManagerID}')"))
-				)
-			)
-		)
-	);
-
-	$actionList = array(array('NAME' => GetMessage('CRM_CONTACT_LIST_CHOOSE_ACTION'), 'VALUE' => 'none'));
-
-	if($allowWrite)
-	{
-		//region Add letter & Add to segment
-		Integration\Sender\GridPanel::appendActions($actionList, $applyButton, $gridManagerID);
-		//endregion
-		//region Add Task
-		if (IsModuleInstalled('tasks'))
-		{
-			$actionList[] = array(
-				'NAME' => GetMessage('CRM_CONTACT_TASK'),
-				'VALUE' => 'tasks',
-				'ONCHANGE' => array(
-					array(
-						'ACTION' => Bitrix\Main\Grid\Panel\Actions::CREATE,
-						'DATA' => array($applyButton)
-					),
-					array(
-						'ACTION' => Bitrix\Main\Grid\Panel\Actions::CALLBACK,
-						'DATA' => array(array('JS' => "BX.CrmUIGridExtension.processActionChange('{$gridManagerID}', 'tasks')"))
-					)
-				)
-			);
-		}
-		//endregion
-		//region Assign To
-		//region Render User Search control
-		if(!Bitrix\Main\Grid\Context::isInternalRequest())
-		{
-			//action_assigned_by_search + _control
-			//Prefix control will be added by main.ui.grid
-			$APPLICATION->IncludeComponent(
-				'bitrix:intranet.user.selector.new',
-				'',
-				array(
-					'MULTIPLE' => 'N',
-					'NAME' => "{$prefix}_ACTION_ASSIGNED_BY",
-					'INPUT_NAME' => 'action_assigned_by_search_control',
-					'SHOW_EXTRANET_USERS' => 'NONE',
-					'POPUP' => 'Y',
-					'SITE_ID' => SITE_ID,
-					'NAME_TEMPLATE' => $arResult['NAME_TEMPLATE'] ?? null,
-				),
-				null,
-				array('HIDE_ICONS' => 'Y')
-			);
-		}
-		//endregion
-		$actionList[] = array(
-			'NAME' => GetMessage('CRM_CONTACT_ASSIGN_TO'),
-			'VALUE' => 'assign_to',
-			'ONCHANGE' => array(
-				array(
-					'ACTION' => Bitrix\Main\Grid\Panel\Actions::CREATE,
-					'DATA' => array(
-						array(
-							'TYPE' => Bitrix\Main\Grid\Panel\Types::TEXT,
-							'ID' => 'action_assigned_by_search',
-							'NAME' => 'ACTION_ASSIGNED_BY_SEARCH'
-						),
-						array(
-							'TYPE' => Bitrix\Main\Grid\Panel\Types::HIDDEN,
-							'ID' => 'action_assigned_by_id',
-							'NAME' => 'ACTION_ASSIGNED_BY_ID'
-						),
-						$applyButton
-					)
-				),
-				array(
-					'ACTION' => Bitrix\Main\Grid\Panel\Actions::CALLBACK,
-					'DATA' => array(
-						array('JS' => "BX.CrmUIGridExtension.prepareAction('{$gridManagerID}', 'assign_to',  { searchInputId: 'action_assigned_by_search_control', dataInputId: 'action_assigned_by_id_control', componentName: '{$prefix}_ACTION_ASSIGNED_BY' })")
-					)
-				),
-				array(
-					'ACTION' => Bitrix\Main\Grid\Panel\Actions::CALLBACK,
-					'DATA' => array(array('JS' => "BX.CrmUIGridExtension.processActionChange('{$gridManagerID}', 'assign_to')"))
-				)
-			)
-		);
-		//endregion
-		//region Create call list
-		if(IsModuleInstalled('voximplant'))
-		{
-			$actionList[] = array(
-				'NAME' => GetMessage('CRM_CONTACT_CREATE_CALL_LIST'),
-				'VALUE' => 'create_call_list',
-				'ONCHANGE' => array(
-					array(
-						'ACTION' => Bitrix\Main\Grid\Panel\Actions::CREATE,
-						'DATA' => array(
-							$applyButton
-						)
-					),
-					array(
-						'ACTION' => Bitrix\Main\Grid\Panel\Actions::CALLBACK,
-						'DATA' => array(array('JS' => "BX.CrmUIGridExtension.processActionChange('{$gridManagerID}', 'create_call_list')"))
-					)
-				)
-			);
-		}
-		//endregion
-	}
-
-	if($allowDelete)
-	{
-		//region Remove button
-		//$controlPanel['GROUPS'][0]['ITEMS'][] = $snippet->getRemoveButton();
-		$button = $snippet->getRemoveButton();
-		$snippet->setButtonActions(
-			$button,
-			array(
-				array(
-					'ACTION' => Bitrix\Main\Grid\Panel\Actions::CALLBACK,
-					'CONFIRM' => false,
-					'DATA' => array(array('JS' => "BX.CrmUIGridExtension.applyAction('{$gridManagerID}', 'delete')"))
-				)
-			)
-		);
-		$controlPanel['GROUPS'][0]['ITEMS'][] = $button;
-		//endregion
-
-		//$actionList[] = $snippet->getRemoveAction();
-
-		if(!$arResult['IS_EXTERNAL_FILTER'])
-		{
-			$actionList[] = array(
-				'NAME' => GetMessage('CRM_CONTACT_ACTION_MERGE'),
-				'VALUE' => 'merge',
-				'ONCHANGE' => array(
-					array(
-						'ACTION' => Bitrix\Main\Grid\Panel\Actions::CREATE,
-						'DATA' => array(
-							array_merge(
-								$applyButton,
-								['SETTINGS' => [
-									'minSelectedRows' => 2,
-									'buttonId' => 'apply_button'
-								]]
-							)
-						)
-					),
-					array(
-						'ACTION' => Bitrix\Main\Grid\Panel\Actions::CALLBACK,
-						'DATA' => array(array('JS' => "BX.CrmUIGridExtension.applyAction('{$gridManagerID}', 'merge')"))
-					)
-				)
-			);
-		}
-
-		$actionList[] = array(
-			'NAME' => GetMessage('CRM_CONTACT_ACTION_DELETE'),
-			'VALUE' => 'delete',
-			'ONCHANGE' => array(
-				array(
-					'ACTION' => Bitrix\Main\Grid\Panel\Actions::RESET_CONTROLS,
-				),
-				array(
-					'ACTION' => Bitrix\Main\Grid\Panel\Actions::CALLBACK,
-					'DATA' => array(array('JS' => "BX.CrmUIGridExtension.applyAction('{$gridManagerID}', 'delete')"))
-				)
-			)
-		);
-	}
-
-	if($allowWrite)
-	{
-		//region Edit Button
-		$actionManager = new ActionManager($gridManagerID);
-		$controlPanel['GROUPS'][0]['ITEMS'][] = $actionManager->getEditButton();
-		$actionList[] = $actionManager->getEditAction();
-		//endregion
-
-		//region Mark as Opened
-		$actionList[] = array(
-			'NAME' => GetMessage('CRM_CONTACT_MARK_AS_OPENED'),
-			'VALUE' => 'mark_as_opened',
-			'ONCHANGE' => array(
-				array(
-					'ACTION' => Bitrix\Main\Grid\Panel\Actions::CREATE,
-					'DATA' => array(
-						array(
-							'TYPE' => Bitrix\Main\Grid\Panel\Types::DROPDOWN,
-							'ID' => 'action_opened',
-							'NAME' => 'ACTION_OPENED',
-							'ITEMS' => $yesnoList
-						),
-						$applyButton
-					)
-				),
-				array(
-					'ACTION' => Bitrix\Main\Grid\Panel\Actions::CALLBACK,
-					'DATA' => array(array('JS' => "BX.CrmUIGridExtension.processActionChange('{$gridManagerID}', 'mark_as_opened')"))
-				)
-			)
-		);
-		//endregion
-		//region Export
-		$actionList[] = array(
-			'NAME' => GetMessage('CRM_CONTACT_EXPORT_NEW'),
-			'VALUE' => 'export',
-			'ONCHANGE' => array(
-				array(
-					'ACTION' => Bitrix\Main\Grid\Panel\Actions::CREATE,
-					'DATA' => array(
-						array(
-							'TYPE' => Bitrix\Main\Grid\Panel\Types::DROPDOWN,
-							'ID' => 'action_export',
-							'NAME' => 'ACTION_EXPORT',
-							'ITEMS' => $yesnoList
-						),
-						$applyButton
-					)
-				),
-				array(
-					'ACTION' => Bitrix\Main\Grid\Panel\Actions::CALLBACK,
-					'DATA' => array(array('JS' => "BX.CrmUIGridExtension.processActionChange('{$gridManagerID}', 'mark_as_opened')"))
-				)
-			)
-		);
-		//endregion
-	}
-
-	if($callListUpdateMode)
-	{
-		$callListContext = \CUtil::jsEscape($arResult['CALL_LIST_CONTEXT']);
-		$controlPanel['GROUPS'][0]['ITEMS'][] = [
-			"TYPE" => \Bitrix\Main\Grid\Panel\Types::BUTTON,
-			"TEXT" => GetMessage("CRM_CONTACT_UPDATE_CALL_LIST"),
-			"ID" => "update_call_list",
-			"NAME" => "update_call_list",
-			'ONCHANGE' => [
-				[
-					'ACTION' => Bitrix\Main\Grid\Panel\Actions::CALLBACK,
-					'DATA' => [['JS' => "BX.CrmUIGridExtension.updateCallList('{$gridManagerID}', {$arResult['CALL_LIST_ID']}, '{$callListContext}')"]]
-				]
-			]
-		];
-	}
-	else
-	{
-		//region Create & start call list
-		if(IsModuleInstalled('voximplant'))
-		{
-			$controlPanel['GROUPS'][0]['ITEMS'][] = array(
-				"TYPE" => \Bitrix\Main\Grid\Panel\Types::BUTTON,
-				"TEXT" => GetMessage('CRM_CONTACT_START_CALL_LIST'),
-				"VALUE" => "start_call_list",
-				"ONCHANGE" => array(
-					array(
-						"ACTION" => Bitrix\Main\Grid\Panel\Actions::CALLBACK,
-						"DATA" => array(array('JS' => "BX.CrmUIGridExtension.createCallList('{$gridManagerID}', true)"))
-					)
-				)
-			);
-		}
-		//endregion
-		$controlPanel['GROUPS'][0]['ITEMS'][] = array(
-			"TYPE" => \Bitrix\Main\Grid\Panel\Types::DROPDOWN,
-			"ID" => "action_button_{$prefix}",
-			"NAME" => "action_button_{$prefix}",
-			"ITEMS" => $actionList
-		);
-	}
-
-	$controlPanel['GROUPS'][0]['ITEMS'][] = $snippet->getForAllCheckbox();
-}
-//endregion
 
 $APPLICATION->IncludeComponent(
 	'bitrix:crm.newentity.counter.panel',
@@ -942,7 +712,13 @@ $APPLICATION->IncludeComponent(
 		'LIVE_SEARCH_LIMIT_INFO' => isset($arResult['LIVE_SEARCH_LIMIT_INFO'])
 			? $arResult['LIVE_SEARCH_LIMIT_INFO'] : null,
 		'ENABLE_LIVE_SEARCH' => true,
-		'ACTION_PANEL' => $controlPanel,
+		'ACTION_PANEL' => [
+			'GROUPS' => [
+				[
+					'ITEMS' => $isInternal ? [] : $arResult['PANEL']?->getControls(),
+				],
+			],
+		],
 		'PAGINATION' => isset($arResult['PAGINATION']) && is_array($arResult['PAGINATION'])
 			? $arResult['PAGINATION'] : array(),
 		'ENABLE_ROW_COUNT_LOADER' => true,
@@ -972,7 +748,7 @@ $APPLICATION->IncludeComponent(
 	)
 );
 
-?><script type="text/javascript">
+?><script>
 BX.ready(
 		function()
 		{
@@ -992,45 +768,32 @@ BX.ready(
 		}
 );
 </script>
-<?php if(
+<?php
+
+if (
 	!$isInternal
 	&& \Bitrix\Main\Application::getInstance()->getContext()->getRequest()->get('IFRAME') !== 'Y'
-):
-	\Bitrix\Main\UI\Extension::load(['crm.settings-button-extender', 'crm.toolbar-component']);
-	?>
-<script type="text/javascript">
-	BX.ready(
-		function()
-		{
-			const settingsButton = BX.Crm.ToolbarComponent.Instance.getSettingsButton();
-			const settingsMenu = settingsButton ? settingsButton.getMenuWindow() : undefined;
-			if (settingsMenu)
-			{
-				new BX.Crm.SettingsButtonExtender({
-					smartActivityNotificationSupported: <?= Container::getInstance()->getFactory(\CCrmOwnerType::Contact)->isSmartActivityNotificationSupported() ? 'true' : 'false' ?>,
-					entityTypeId: <?= \CCrmOwnerType::Contact ?>,
-					categoryId: <?= isset($arResult['CATEGORY_ID']) ? (int)$arResult['CATEGORY_ID'] : 'null' ?>,
-					pingSettings: <?= CUtil::PhpToJSObject((new TodoPingSettingsProvider(\CCrmOwnerType::Contact, (int)($arResult['CATEGORY_ID'] ?? 0)))->fetchAll()) ?>,
-					rootMenu: settingsMenu,
-					grid: BX.Reflection.getClass('BX.Main.gridManager') ? BX.Main.gridManager.getInstanceById('<?= \CUtil::JSEscape($arResult['GRID_ID']) ?>') : undefined,
-					<?php if (
-						\Bitrix\Crm\Integration\AI\AIManager::isAiCallAutomaticProcessingAllowed()
-						&& in_array(\CCrmOwnerType::Contact, \Bitrix\Crm\Integration\AI\AIManager::SUPPORTED_ENTITY_TYPE_IDS, true)
-						&& Container::getInstance()->getUserPermissions()->isAdmin()
-					): ?>
-					aiAutostartSettings: '<?= \Bitrix\Main\Web\Json::encode(\Bitrix\Crm\Integration\AI\Operation\AutostartSettings::get(
-						\CCrmOwnerType::Contact,
-						isset($arResult['CATEGORY_ID']) ? (int)$arResult['CATEGORY_ID'] : null
-					)) ?>',
-					<?php endif; ?>
-				});
-			}
-		}
+)
+{
+	$settingsButtonExtenderParams = \Bitrix\Crm\UI\SettingsButtonExtender\SettingsButtonExtenderParams::createDefaultForGrid(
+		\CCrmOwnerType::Contact,
+		$arResult['GRID_ID'],
 	);
+	$settingsButtonExtenderParams
+		->setCategoryId(isset($arResult['CATEGORY_ID']) ? (int)$arResult['CATEGORY_ID'] : null)
+	;
+
+	echo <<<HTML
+<script>
+	BX.ready(() => {
+		{$settingsButtonExtenderParams->buildJsInitCode()}
+	});
 </script>
-<?php endif; ?>
-<?if(!$isInternal):?>
-<script type="text/javascript">
+HTML;
+}
+
+if(!$isInternal):?>
+<script>
 BX.ready(
 		function()
 		{
@@ -1055,7 +818,7 @@ BX.ready(
 );
 </script>
 <?endif;?>
-<script type="text/javascript">
+<script>
 BX.ready(
 	function()
 	{
@@ -1068,39 +831,15 @@ BX.ready(
 			requestError: "<?=GetMessageJS('CRM_CONTACT_LRP_DLG_REQUEST_ERR')?>"
 		};
 
-		var gridId = "<?= CUtil::JSEscape($arResult['GRID_ID'])?>";
-		BX.Crm.BatchDeletionManager.create(
-			gridId,
-			{
-				gridId: gridId,
-				entityTypeId: <?=CCrmOwnerType::Contact?>,
-				extras: { CATEGORY_ID: <?=(int)$arResult['CATEGORY_ID']?> },
-				container: "batchDeletionWrapper",
-				stateTemplate: "<?=GetMessageJS('CRM_CONTACT_STEPWISE_STATE_TEMPLATE')?>",
-				messages:
-					{
-						title: "<?=GetMessageJS('CRM_CONTACT_LIST_DEL_PROC_DLG_TITLE')?>",
-						confirmation: "<?=GetMessageJS('CRM_CONTACT_LIST_DEL_PROC_DLG_SUMMARY')?>",
-						summaryCaption: "<?=GetMessageJS('CRM_CONTACT_BATCH_DELETION_COMPLETED')?>",
-						summarySucceeded: "<?=GetMessageJS('CRM_CONTACT_BATCH_DELETION_COUNT_SUCCEEDED')?>",
-						summaryFailed: "<?=GetMessageJS('CRM_CONTACT_BATCH_DELETION_COUNT_FAILED')?>"
-					}
-			}
-		);
-
-		BX.Crm.BatchMergeManager.create(
-			gridId,
-			{
-				gridId: gridId,
-				entityTypeId: <?=CCrmOwnerType::Contact?>,
-				mergerUrl: "<?=\CUtil::JSEscape($arParams['PATH_TO_CONTACT_MERGE'])?>"
-			}
-		);
+		BX.Crm.EntityList.Panel.init(<?= \CUtil::PhpToJSObject([
+			'gridId' => $arResult['GRID_ID'],
+			'progressBarContainerId' => 'crm-contact-list-progress-bar-container',
+		]) ?>);
 	}
 );
 </script>
 <?if($arResult['NEED_FOR_REBUILD_DUP_INDEX']):?>
-<script type="text/javascript">
+<script>
 BX.ready(
 	function()
 	{
@@ -1141,7 +880,7 @@ BX.ready(
 </script>
 <?endif;?>
 <?if($arResult['NEED_FOR_REBUILD_SEARCH_CONTENT']):?>
-	<script type="text/javascript">
+	<script>
 		BX.ready(
 			function()
 			{
@@ -1169,7 +908,7 @@ BX.ready(
 	</script>
 <?endif;?>
 <?if($arResult['NEED_FOR_REBUILD_SECURITY_ATTRS']):?>
-	<script type="text/javascript">
+	<script>
 		BX.ready(
 			function()
 			{
@@ -1189,7 +928,7 @@ BX.ready(
 	</script>
 <?endif;?>
 <?if($arResult['NEED_FOR_BUILD_TIMELINE']):?>
-	<script type="text/javascript">
+	<script>
 		BX.ready(
 			function()
 			{
@@ -1217,7 +956,7 @@ BX.ready(
 	</script>
 <?endif;?>
 <?if($arResult['NEED_FOR_BUILD_DUPLICATE_INDEX']):?>
-	<script type="text/javascript">
+	<script>
 		BX.ready(
 			function()
 			{
@@ -1245,7 +984,7 @@ BX.ready(
 	</script>
 <?endif;?>
 <?if($arResult['NEED_FOR_REBUILD_CONTACT_ATTRS']):?>
-<script type="text/javascript">
+<script>
 BX.ready(
 	function()
 	{
@@ -1270,7 +1009,7 @@ BX.ready(
 </script>
 <?endif;?>
 <?if($arResult['NEED_FOR_TRANSFER_REQUISITES']):?>
-<script type="text/javascript">
+<script>
 BX.ready(
 	function()
 	{
@@ -1347,7 +1086,7 @@ BX.ready(
 <?endif;?><?
 if($arResult['NEED_TO_CONVERT_ADDRESSES'])
 {?>
-<script type="text/javascript">
+<script>
 	BX.ready(function () {
 		if (BX.AutorunProcessPanel.isExists("convertContactAddresses"))
 		{
@@ -1374,7 +1113,7 @@ if($arResult['NEED_TO_CONVERT_ADDRESSES'])
 
 if($arResult['NEED_TO_CONVERT_UF_ADDRESSES'])
 {?>
-<script type="text/javascript">
+<script>
 	BX.ready(function () {
 		if (BX.AutorunProcessPanel.isExists("convertContactUfAddresses"))
 		{
@@ -1401,7 +1140,7 @@ if($arResult['NEED_TO_CONVERT_UF_ADDRESSES'])
 
 if($arResult['NEED_TO_SHOW_DUP_INDEX_PROCESS'])
 {?>
-	<script type="text/javascript">
+	<script>
 		BX.ready(function () {
 			if (BX.AutorunProcessPanel.isExists("backgroundContactIndexRebuild"))
 			{
@@ -1427,7 +1166,7 @@ if($arResult['NEED_TO_SHOW_DUP_INDEX_PROCESS'])
 }
 if($arResult['NEED_TO_SHOW_DUP_MERGE_PROCESS'])
 {?>
-	<script type="text/javascript">
+	<script>
 		BX.ready(function () {
 			if (BX.AutorunProcessPanel.isExists("backgroundContactMerge"))
 			{
@@ -1453,7 +1192,7 @@ if($arResult['NEED_TO_SHOW_DUP_MERGE_PROCESS'])
 }
 if($arResult['NEED_TO_SHOW_DUP_VOL_DATA_PREPARE'])
 {?>
-	<script type="text/javascript">
+	<script>
 		BX.ready(function () {
 			if (BX.AutorunProcessPanel.isExists("backgroundContactIndexRebuild"))
 			{
@@ -1484,3 +1223,25 @@ if (!empty($arResult['RESTRICTED_FIELDS_ENGINE']))
 
 	echo $arResult['RESTRICTED_FIELDS_ENGINE'];
 }
+
+if (\Bitrix\Crm\Settings\Crm::isWhatsAppScenarioEnabled()):
+/**
+ * @see \Bitrix\Crm\Tour\GridGroupWhatsAppMessage select row event proxy
+ */
+?>
+	<script>
+		BX.ready(function () {
+			BX.Event.EventEmitter.subscribeOnce('Grid::selectRow', function (event) {
+				BX.Event.EventEmitter.emit(
+					'BX.Crm.Tour.GridGroupWhatsAppMessage::selectRow',
+					{
+						stepId: 'grid-group-whatsapp-message',
+						target: document.getElementById('whatsapp-message_control'),
+						delay: 500
+					}
+				);
+			});
+		})
+	</script>
+<?php
+endif;

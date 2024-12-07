@@ -7,4 +7,5 @@ $MESS["MENU_GROUPS"] = "Workgroups";
 $MESS["MENU_GROUPS_EXTRANET_ALL"] = "All Workgroups";
 $MESS["MENU_LIVE_FEED"] = "Activity Stream";
 $MESS["MENU_LIVE_FEED2"] = "Feed";
+$MESS["MENU_LIVE_FEED3"] = "Feed";
 $MESS["MENU_TASKS"] = "Tasks";

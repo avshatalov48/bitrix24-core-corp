@@ -131,7 +131,7 @@ class Manager
 				include_once $fileName;
 				if (isset($b24Languages) && is_array($b24Languages))
 				{
-					$list = \Bitrix\Main\Text\Encoding::convertEncoding($b24Languages, 'UTF-8', SITE_CHARSET);
+					$list = $b24Languages;
 					$found = !empty($list);
 				}
 			}
@@ -306,7 +306,7 @@ class Manager
 
 		$isAdded = true;
 
-		$agent = new \CAllAgent();
+		$agent = new \CAgent();
 		$list = $agent->getList(
 			["ID" => "DESC"],
 			[
@@ -361,8 +361,11 @@ class Manager
 				$buttonData['PAGES_USE_DISPLAY'] = Loc::getMessage('CRM_BUTTON_MANAGER_PAGES_USE_DISPLAY_ALL');
 			}
 
-
-			$buttonData['LOCATION_DISPLAY'] = $locationList[$buttonData['LOCATION']];
+			$buttonData['LOCATION_DISPLAY'] = null;
+			if (isset($buttonData['LOCATION']))
+			{
+				$buttonData['LOCATION_DISPLAY'] = $locationList[$buttonData['LOCATION']] ?? null;
+			}
 			$buttonData['PATH_EDIT'] = $domain . str_replace(
 				'#id#',
 				$buttonData['ID'],

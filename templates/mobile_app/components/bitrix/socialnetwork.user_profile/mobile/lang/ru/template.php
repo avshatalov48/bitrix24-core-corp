@@ -1,5 +1,5 @@
 <?
-$MESS["SONET_MANAGERS"] = "Начальник";
+$MESS["SONET_MANAGERS_MSGVER_1"] = "Руководитель";
 $MESS["SONET_SUBORDINATE"] = "Подчиненные";
 $MESS["SONET_GROUPS"] = "Группы";
 $MESS["SONET_ACTIVITY_STATUS"] = "Статус на сайте";

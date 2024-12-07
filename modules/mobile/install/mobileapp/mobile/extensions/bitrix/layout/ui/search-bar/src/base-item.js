@@ -2,9 +2,10 @@
  * @module layout/ui/search-bar/base-item
  */
 jn.define('layout/ui/search-bar/base-item', (require, exports, module) => {
-	const AppTheme = require('apptheme');
+	const { Indent } = require('tokens');
 	const { Haptics } = require('haptics');
 	const { Loc } = require('loc');
+	const { ChipFilter, BadgeCounterDesign } = require('ui-system/blocks/chips/chip-filter');
 
 	class BaseItem extends LayoutComponent
 	{
@@ -14,37 +15,26 @@ jn.define('layout/ui/search-bar/base-item', (require, exports, module) => {
 		 */
 		render()
 		{
-			const { active, last, id } = this.props;
+			const { active, last, id, value } = this.props;
 
-			return View(
+			return ChipFilter(
 				{
 					testId: id,
-					style: {
-						paddingHorizontal: 10,
-						backgroundColor: active ? AppTheme.colors.accentSoftBlue1 : 'inherit',
-						borderRadius: 30,
-						justifyContent: 'center',
-						alignItems: 'center',
-						flexDirection: 'row',
-						height: 32,
-						marginLeft: this.isDefault() ? 8 : 0,
-						marginRight: (last && active) ? 8 : 0,
-					},
+					text: this.props.name,
+					selected: active,
+					counterValue: value,
+					counterDesign: BadgeCounterDesign.ALERT,
 					onClick: () => this.onClick(),
+					style: {
+						marginRight: (last) ? 0 : Indent.M.toNumber(),
+						flexShrink: null,
+						flexGrow: 2,
+					},
+					textStyles: {
+						maxWidth: 250,
+					},
 				},
-				...this.renderContent(),
 			);
-		}
-
-		/**
-		 * @protected
-		 * @return {object[]}
-		 */
-		renderContent()
-		{
-			this.abstract();
-
-			return [];
 		}
 
 		/**

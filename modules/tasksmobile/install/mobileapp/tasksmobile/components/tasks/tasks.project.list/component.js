@@ -3,15 +3,17 @@
 
 	const { Loc } = require('loc');
 	const AppTheme = require('apptheme');
+	const { Feature } = require('feature');
 	const { debounce } = require('utils/function');
-	const { EntityReady } = require('entity-ready');
 	const { Logger, LogType } = require('utils/logger');
-	const { magnifierWithMenuAndDot } = require('assets/common');
 	const { PresetList } = require('tasks/layout/presetList');
 	const { Project } = require('tasks/project');
 	const { StorageCache } = require('storage-cache');
+	const { WorkgroupUtil } = require('project/utils');
+	const { RunActionExecutor } = require('rest/run-action-executor');
 
 	const platform = Application.getPlatform();
+	const isAirStyleSupported = Feature.isAirStyleSupported();
 
 	const Mode = {
 		PROJECT: 'tasks_project',
@@ -210,21 +212,18 @@
 
 			this.cache = new StorageCache(this.list.mode, 'filterCounters');
 			this.total = this.cache.get().counterValue || 0;
-
-			EntityReady.wait('chat').then(() => this.updateCounters()).catch(console.error);
 		}
 
 		updateCounters()
 		{
 			logger.log('ProjectList.Filter.updateCounters');
 
-			(new RequestExecutor('tasksmobile.Task.Counter.getByType'))
-				.call()
-				.then((response) => {
+			(new RunActionExecutor('tasksmobile.Task.Counter.getByType'))
+				.setHandler((response) => {
 					this.counters = {};
 					this.total = 0;
 
-					Object.entries(response.result).forEach(([type, value]) => {
+					Object.entries(response.data).forEach(([type, value]) => {
 						this.counters[type] = value;
 
 						const typesToCollectInTotal = (
@@ -241,7 +240,8 @@
 					this.setVisualCounters();
 					this.saveCache();
 				})
-				.catch(console.error);
+				.call(false)
+			;
 		}
 
 		pseudoUpdateCounters(value)
@@ -363,10 +363,23 @@
 		}
 	}
 
+	const DEFAULT_SECTION = 'default';
+	const MY_COUNTERS_SECTION = 'my-counters';
+	const OTHER_COUNTERS_SECTION = 'other-counters';
+
 	class MoreMenu
 	{
 		static get counterColors()
 		{
+			if (isAirStyleSupported)
+			{
+				return {
+					gray: AppTheme.realColors.base4,
+					green: AppTheme.realColors.accentMainSuccess,
+					red: AppTheme.realColors.accentMainAlert,
+				};
+			}
+
 			return {
 				gray: AppTheme.colors.base4,
 				green: AppTheme.colors.accentMainSuccess,
@@ -386,7 +399,17 @@
 		show()
 		{
 			const menuItems = this.prepareItems();
-			const menuSections = [{ id: 'default' }];
+			const menuSections = [
+				{
+					id: MY_COUNTERS_SECTION,
+					title: Loc.getMessage('MOBILE_TASKS_PROJECT_LIST_FILTER_COUNTER_MY_COUNTERS_SECTION'),
+				},
+				{
+					id: OTHER_COUNTERS_SECTION,
+					title: Loc.getMessage('MOBILE_TASKS_PROJECT_LIST_FILTER_COUNTER_OTHER_COUNTERS_SECTION'),
+				},
+				{ id: DEFAULT_SECTION },
+			];
 
 			if (!this.popupMenu)
 			{
@@ -405,19 +428,13 @@
 		{
 			const projectListItems = [
 				{
-					id: Filter.counterTypes.sonetTotalComments,
-					title: Loc.getMessage('MOBILE_TASKS_PROJECT_LIST_FILTER_COUNTER_MY_NEW_COMMENTS'),
-					sectionCode: 'default',
-					checked: (this.filter.getCounter() === Filter.counterTypes.sonetTotalComments),
-					counterValue: this.filter.getCounterValue(Filter.counterTypes.sonetTotalComments),
-					counterStyle: {
-						backgroundColor: MoreMenu.counterColors.green,
-					},
-				},
-				{
 					id: Filter.counterTypes.sonetTotalExpired,
-					title: Loc.getMessage('MOBILE_TASKS_PROJECT_LIST_FILTER_COUNTER_MY_EXPIRED'),
-					sectionCode: 'default',
+					title: (
+						isAirStyleSupported
+							? Loc.getMessage('MOBILE_TASKS_PROJECT_LIST_FILTER_COUNTER_EXPIRED')
+							: Loc.getMessage('MOBILE_TASKS_PROJECT_LIST_FILTER_COUNTER_MY_EXPIRED')
+					),
+					sectionCode: MY_COUNTERS_SECTION,
 					checked: (this.filter.getCounter() === Filter.counterTypes.sonetTotalExpired),
 					counterValue: this.filter.getCounterValue(Filter.counterTypes.sonetTotalExpired),
 					counterStyle: {
@@ -425,21 +442,43 @@
 					},
 				},
 				{
-					id: Filter.counterTypes.sonetForeignComments,
-					title: Loc.getMessage('MOBILE_TASKS_PROJECT_LIST_FILTER_COUNTER_OTHER_NEW_COMMENTS'),
-					sectionCode: 'default',
-					checked: (this.filter.getCounter() === Filter.counterTypes.sonetForeignComments),
-					counterValue: this.filter.getCounterValue(Filter.counterTypes.sonetForeignComments),
+					id: Filter.counterTypes.sonetTotalComments,
+					title: (
+						isAirStyleSupported
+							? Loc.getMessage('MOBILE_TASKS_PROJECT_LIST_FILTER_COUNTER_COMMENTS')
+							: Loc.getMessage('MOBILE_TASKS_PROJECT_LIST_FILTER_COUNTER_MY_NEW_COMMENTS')
+					),
+					sectionCode: MY_COUNTERS_SECTION,
+					checked: (this.filter.getCounter() === Filter.counterTypes.sonetTotalComments),
+					counterValue: this.filter.getCounterValue(Filter.counterTypes.sonetTotalComments),
+					counterStyle: {
+						backgroundColor: MoreMenu.counterColors.green,
+					},
+				},
+				{
+					id: Filter.counterTypes.sonetForeignExpired,
+					title: (
+						isAirStyleSupported
+							? Loc.getMessage('MOBILE_TASKS_PROJECT_LIST_FILTER_COUNTER_EXPIRED')
+							: Loc.getMessage('MOBILE_TASKS_PROJECT_LIST_FILTER_COUNTER_OTHER_EXPIRED')
+					),
+					sectionCode: OTHER_COUNTERS_SECTION,
+					checked: (this.filter.getCounter() === Filter.counterTypes.sonetForeignExpired),
+					counterValue: this.filter.getCounterValue(Filter.counterTypes.sonetForeignExpired),
 					counterStyle: {
 						backgroundColor: MoreMenu.counterColors.gray,
 					},
 				},
 				{
-					id: Filter.counterTypes.sonetForeignExpired,
-					title: Loc.getMessage('MOBILE_TASKS_PROJECT_LIST_FILTER_COUNTER_OTHER_EXPIRED'),
-					sectionCode: 'default',
-					checked: (this.filter.getCounter() === Filter.counterTypes.sonetForeignExpired),
-					counterValue: this.filter.getCounterValue(Filter.counterTypes.sonetForeignExpired),
+					id: Filter.counterTypes.sonetForeignComments,
+					title: (
+						isAirStyleSupported
+							? Loc.getMessage('MOBILE_TASKS_PROJECT_LIST_FILTER_COUNTER_COMMENTS')
+							: Loc.getMessage('MOBILE_TASKS_PROJECT_LIST_FILTER_COUNTER_OTHER_NEW_COMMENTS')
+					),
+					sectionCode: OTHER_COUNTERS_SECTION,
+					checked: (this.filter.getCounter() === Filter.counterTypes.sonetForeignComments),
+					counterValue: this.filter.getCounterValue(Filter.counterTypes.sonetForeignComments),
 					counterStyle: {
 						backgroundColor: MoreMenu.counterColors.gray,
 					},
@@ -449,7 +488,7 @@
 				{
 					id: Filter.counterTypes.scrumTotalComments,
 					title: Loc.getMessage('MOBILE_TASKS_PROJECT_LIST_FILTER_COUNTER_MY_NEW_COMMENTS'),
-					sectionCode: 'default',
+					sectionCode: DEFAULT_SECTION,
 					checked: (this.filter.getCounter() === Filter.counterTypes.scrumTotalComments),
 					counterValue: this.filter.getCounterValue(Filter.counterTypes.scrumTotalComments),
 					counterStyle: {
@@ -459,7 +498,7 @@
 				{
 					id: Filter.counterTypes.scrumForeignComments,
 					title: Loc.getMessage('MOBILE_TASKS_PROJECT_LIST_FILTER_COUNTER_OTHER_NEW_COMMENTS'),
-					sectionCode: 'default',
+					sectionCode: DEFAULT_SECTION,
 					checked: (this.filter.getCounter() === Filter.counterTypes.scrumForeignComments),
 					counterValue: this.filter.getCounterValue(Filter.counterTypes.scrumForeignComments),
 					counterStyle: {
@@ -472,8 +511,8 @@
 			items.push({
 				id: 'readAll',
 				title: Loc.getMessage('MOBILE_TASKS_PROJECT_LIST_ACTION_READ_ALL'),
-				iconName: 'read',
-				sectionCode: 'default',
+				iconName: isAirStyleSupported ? 'chats_with_check' : 'read',
+				sectionCode: DEFAULT_SECTION,
 				showTopSeparator: true,
 			});
 
@@ -871,19 +910,9 @@
 		startWatch()
 		{
 			return new Promise((resolve, reject) => {
-				(new RequestExecutor('tasksmobile.Project.startWatchList'))
-					.call()
-					.then(
-						(response) => resolve(response),
-						(response) => {
-							logger.error(response);
-							reject(response);
-						},
-					)
-					.catch((response) => {
-						logger.error(response);
-						reject(response);
-					})
+				new RunActionExecutor('tasksmobile.Project.startWatchList')
+					.setHandler((response) => (response.status === 'success' ? resolve(response.data) : reject(response)))
+					.call(false)
 				;
 			});
 		}
@@ -1327,10 +1356,9 @@
 		{
 			const methodName = (this.isScrum() ? 'getScrumListPresets' : 'getProjectListPresets');
 
-			(new RequestExecutor(`tasksmobile.Filter.${methodName}`))
-				.call()
-				.then((response) => {
-					this.presets = response.result;
+			new RunActionExecutor(`tasksmobile.Filter.${methodName}`)
+				.setHandler((response) => {
+					this.presets = response.data;
 					if (this.searchLayout)
 					{
 						this.searchLayout.updateState({
@@ -1339,7 +1367,8 @@
 						});
 					}
 				})
-				.catch(console.error);
+				.call(false)
+			;
 		}
 
 		setTopButtons()
@@ -1350,16 +1379,12 @@
 				{
 					type: 'search',
 					badgeCode: `${this.mode}_SearchButton`,
-					svg: {
-						content: magnifierWithMenuAndDot(
-							AppTheme.colors.base4,
-							(isDefaultSearch ? null : AppTheme.colors.accentMainLinks),
-						),
-					},
+					accent: !isDefaultSearch,
 					callback: () => this.onSearchClick(),
 				},
 				{
-					type: (this.filter.getCounter() === Filter.counterTypes.none ? 'more' : 'more_active'),
+					type: 'more',
+					accent: this.filter.getCounter() !== Filter.counterTypes.none,
 					badgeCode: `${this.mode}_MoreButton`,
 					callback: () => this.moreMenu.show(),
 				},
@@ -1378,7 +1403,7 @@
 				this.list.search.on('cancel', () => {
 					if (
 						this.filter.getSearchText()
-							|| this.filter.getPreset() !== Filter.presetTypes.default
+						|| this.filter.getPreset() !== Filter.presetTypes.default
 					)
 					{
 						this.filter.setSearchText('');
@@ -1637,7 +1662,6 @@
 			else if (this.projectList.has(projectId))
 			{
 				const project = this.projectList.get(projectId);
-
 				const projectItem = {
 					id: project.id,
 					title: project.name,
@@ -1650,19 +1674,16 @@
 						opened: project.isOpened,
 					},
 				};
-
-				const projectData = {
+				const params = {
+					projectId: project.id,
 					siteId: BX.componentParameters.get('SITE_ID', env.siteId),
 					siteDir: BX.componentParameters.get('SITE_DIR', env.siteDir),
-					projectId: project.id,
-					action: 'view',
-					item: projectItem,
 					newsPathTemplate: this.newsPathTemplate,
 					calendarWebPathTemplate: this.calendarWebPathTemplate,
 					currentUserId: parseInt(this.userId || 0, 10),
 				};
 
-				BX.postComponentEvent('projectbackground::project::action', [projectData], 'background');
+				void WorkgroupUtil.openProject(projectItem, params);
 			}
 		}
 

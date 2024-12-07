@@ -22,6 +22,11 @@ class Text extends ContentBlock implements TextPropertiesInterface
 	public const FONT_SIZE_SM = 'sm';
 	public const FONT_SIZE_MD = 'md';
 
+	public const DECORATION_NONE = 'none';
+	public const DECORATION_UNDERLINE = 'underline';
+	public const DECORATION_DOTTED = 'dotted';
+	public const DECORATION_DASHED = 'dashed';
+
 	protected ?string $value = null;
 	protected ?string $title = null;
 	protected ?bool $isMultiline = null;

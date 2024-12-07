@@ -264,7 +264,7 @@ else
 	if ($arParams['IS_AJAX_REQUEST'])
 	{
 		?>
-		<script type="text/javascript">
+		<script>
 			<? if ($arResult['TOTALS']['TOTAL_SIZE'] > 0): ?>
 			BX.Crm.measureManager.updateTotalSize({
 				size: <?= $arResult['TOTALS']['TOTAL_SIZE'] ?>,
@@ -347,7 +347,7 @@ else
 if (!$arParams['IS_AJAX_REQUEST'])
 {
 	?>
-	<script type="text/javascript">
+	<script>
 		BX.message({
 			CRM_VOLUME_DELETE: '<?= GetMessageJS("CRM_VOLUME_DELETE") ?>',
 			CRM_VOLUME_CANCEL: '<?= GetMessageJS("CRM_VOLUME_CANCEL") ?>',

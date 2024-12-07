@@ -4,5 +4,5 @@ namespace Bitrix\Tasks\Grid;
 
 interface ScopeStrategyInterface
 {
-	public function apply(array $gridHeaders): array;
+	public function apply(array &$gridHeaders, array $parameters = []): void;
 }

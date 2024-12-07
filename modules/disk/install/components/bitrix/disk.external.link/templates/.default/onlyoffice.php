@@ -25,7 +25,7 @@ if(!empty($arResult['SESSION_EXPIRED']))
 
 	$this->SetViewTarget("below_page");
 	echo <<<JS
-		<script type="text/javascript">
+		<script>
 			BX.UI.Notification.Center.notify({
 				content: '{$sessionExpireMessage}',
 			});

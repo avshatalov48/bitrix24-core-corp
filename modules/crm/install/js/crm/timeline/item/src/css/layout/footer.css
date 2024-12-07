@@ -2,6 +2,7 @@
 .crm-timeline__card-action {
 	padding: calc(var(--ui-space-inset-sm, 12px) * -1) var(--ui-space-inset-md, 16px) 0 var(--ui-space-inset-md, 16px);
 	display: flex;
+	flex-direction: row-reverse;
 	margin-top: 16px;
 	margin-bottom: 16px;
 }
@@ -19,6 +20,8 @@
 	flex-wrap: wrap;
 	flex: 1;
 	margin-bottom: -4px;
+	width: 100%;
+	overflow: hidden;
 }
 
 .crm-timeline__card-action_menu {
@@ -40,7 +43,7 @@
 .crm-timeline__card-action-btn {
 	display: inline-block;
 	min-width: 126px;
-	max-width: 50%;
+	max-width: calc(50% - 8px);
 	margin: 0 8px 8px 0;
 }
 
@@ -141,4 +144,12 @@
 .crm-timeline__card_add-button-fade-enter-from,
 .crm-timeline__card_add-button-fade-leave-to {
 	opacity: 0;
+}
+
+.crm-timeline__card-action-btn:has(.ui-btn:empty) {
+	min-width: 32px;
+}
+
+.crm-timeline__card-action-btn .ui-btn:empty {
+	min-width: 32px;
 }

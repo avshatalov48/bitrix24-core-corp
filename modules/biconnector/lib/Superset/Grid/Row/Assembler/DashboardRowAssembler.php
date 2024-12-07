@@ -28,11 +28,32 @@ class DashboardRowAssembler extends RowAssembler
 				],
 				$this->settings,
 			),
-			new Field\CreatedByFieldAssembler([
-				'CREATED_BY_ID',
-			]),
+			new Field\CreatedByFieldAssembler(
+				[
+					'CREATED_BY_ID',
+				],
+				$this->settings,
+			),
+			new Field\OwnerFieldAssembler(
+				[
+					'OWNER_ID',
+				],
+				$this->settings,
+			),
 			new Field\ActionFieldAssembler([
 				'EDIT_URL',
+			]),
+			new Field\TagFieldAssembler(
+				[
+					'TAGS',
+				],
+				$this->settings,
+			),
+			new Field\ScopeFieldAssembler([
+				'SCOPE',
+			]),
+			new Field\UrlParamsFieldAssembler([
+				'URL_PARAMS',
 			]),
 			new Field\BasedOnFieldAssembler([
 				'SOURCE_ID',
@@ -40,7 +61,7 @@ class DashboardRowAssembler extends RowAssembler
 			new Field\FilterPeriodFieldAssembler([
 				'FILTER_PERIOD',
 			]),
-			new Field\ExternalIdFieldAssembler([
+			new Field\IdFieldAssembler([
 				'ID',
 			]),
 			new Field\DateFieldAssembler([

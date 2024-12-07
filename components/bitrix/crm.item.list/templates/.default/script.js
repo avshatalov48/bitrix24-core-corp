@@ -1,5 +1,5 @@
 /* eslint-disable */
-(function (exports,crm_router,crm_settingsButtonExtender,main_core,main_core_events,ui_dialogs_messagebox) {
+(function (exports,crm_entityList_panel,crm_router,crm_settingsButtonExtender,main_core,main_core_events,ui_dialogs_messagebox) {
 	'use strict';
 
 	function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
@@ -10,25 +10,21 @@
 	function _classPrivateMethodGet(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 	var namespace = main_core.Reflection.namespace('BX.Crm');
 	var _isIframe = /*#__PURE__*/new WeakMap();
-	var _smartActivityNotificationSupported = /*#__PURE__*/new WeakMap();
 	var _isEmbedded = /*#__PURE__*/new WeakMap();
-	var _pingSettings = /*#__PURE__*/new WeakMap();
-	var _aiAutostartSettings = /*#__PURE__*/new WeakMap();
+	var _settingsButtonExtenderParams = /*#__PURE__*/new WeakMap();
 	var _getToolbarComponent = /*#__PURE__*/new WeakSet();
 	var _initSettingsButtonExtender = /*#__PURE__*/new WeakSet();
+	var _initGridPanel = /*#__PURE__*/new WeakSet();
 	var ItemListComponent = /*#__PURE__*/function () {
 	  // is the list is embedded in another entity detail tab
 
 	  function ItemListComponent(params) {
 	    var _this = this;
 	    babelHelpers.classCallCheck(this, ItemListComponent);
+	    _classPrivateMethodInitSpec(this, _initGridPanel);
 	    _classPrivateMethodInitSpec(this, _initSettingsButtonExtender);
 	    _classPrivateMethodInitSpec(this, _getToolbarComponent);
 	    _classPrivateFieldInitSpec(this, _isIframe, {
-	      writable: true,
-	      value: false
-	    });
-	    _classPrivateFieldInitSpec(this, _smartActivityNotificationSupported, {
 	      writable: true,
 	      value: false
 	    });
@@ -36,11 +32,7 @@
 	      writable: true,
 	      value: false
 	    });
-	    _classPrivateFieldInitSpec(this, _pingSettings, {
-	      writable: true,
-	      value: void 0
-	    });
-	    _classPrivateFieldInitSpec(this, _aiAutostartSettings, {
+	    _classPrivateFieldInitSpec(this, _settingsButtonExtenderParams, {
 	      writable: true,
 	      value: void 0
 	    });
@@ -49,10 +41,10 @@
 	      this.entityTypeId = main_core.Text.toInteger(params.entityTypeId);
 	      this.entityTypeName = params.entityTypeName;
 	      this.categoryId = main_core.Text.toInteger(params.categoryId);
-	      babelHelpers.classPrivateFieldSet(this, _smartActivityNotificationSupported, main_core.Text.toBoolean(params.smartActivityNotificationSupported));
 	      if (main_core.Type.isString(params.gridId)) {
 	        this.gridId = params.gridId;
 	      }
+	      this.progressBarContainerId = String(params.progressBarContainerId);
 	      if (this.gridId && BX.Main.grid && BX.Main.gridManager) {
 	        this.grid = BX.Main.gridManager.getInstanceById(this.gridId);
 	        if (this.grid && params.backendUrl) {
@@ -79,10 +71,9 @@
 	      if (main_core.Type.isBoolean(params.isEmbedded)) {
 	        babelHelpers.classPrivateFieldSet(this, _isEmbedded, params.isEmbedded);
 	      }
-	      if (main_core.Type.isPlainObject(params.pingSettings)) {
-	        babelHelpers.classPrivateFieldSet(this, _pingSettings, params.pingSettings);
+	      if (main_core.Type.isPlainObject(params.settingsButtonExtenderParams)) {
+	        babelHelpers.classPrivateFieldSet(this, _settingsButtonExtenderParams, params.settingsButtonExtenderParams);
 	      }
-	      babelHelpers.classPrivateFieldSet(this, _aiAutostartSettings, main_core.Type.isString(params.aiAutostartSettings) ? params.aiAutostartSettings : null);
 	    }
 	    this.reloadGridTimeoutId = 0;
 	  }
@@ -91,6 +82,7 @@
 	    value: function init() {
 	      this.bindEvents();
 	      _classPrivateMethodGet(this, _initSettingsButtonExtender, _initSettingsButtonExtender2).call(this);
+	      _classPrivateMethodGet(this, _initGridPanel, _initGridPanel2).call(this);
 	    }
 	  }, {
 	    key: "bindEvents",
@@ -130,24 +122,8 @@
 	        }
 	        _this2.reloadGridAfterTimeout();
 	      });
-	      main_core_events.EventEmitter.subscribe("onLocalStorageSet", function (event) {
-	        var parameters = event.data;
-	        if (!main_core.Type.isArray(parameters) || !parameters[0]) {
-	          return;
-	        }
-	        var params = parameters[0];
-	        var key = params.key || '';
-	        if (key !== "onCrmEntityCreate" && key !== "onCrmEntityUpdate" && key !== "onCrmEntityDelete" && key !== "onCrmEntityConvert") {
-	          return;
-	        }
-	        var eventData = params.value;
-	        if (!main_core.Type.isPlainObject(eventData)) {
-	          return;
-	        }
-	        if (!_this2.entityTypeName || !eventData.entityTypeName) {
-	          return;
-	        }
-	        _this2.reloadGridAfterTimeout();
+	      BX.Crm.EntityEvent.subscribeToEntityType(this.entityTypeId, function () {
+	        return _this2.reloadGridAfterTimeout();
 	      });
 	      var addItemButton = document.querySelector('[data-role="add-new-item-button-' + this.gridId + '"]');
 	      if (addItemButton) {
@@ -298,7 +274,7 @@
 	}
 	function _initSettingsButtonExtender2() {
 	  var _toolbar$getSettingsB;
-	  if (babelHelpers.classPrivateFieldGet(this, _isIframe) || babelHelpers.classPrivateFieldGet(this, _isEmbedded)) {
+	  if (babelHelpers.classPrivateFieldGet(this, _isIframe) || babelHelpers.classPrivateFieldGet(this, _isEmbedded) || !babelHelpers.classPrivateFieldGet(this, _settingsButtonExtenderParams)) {
 	    return;
 	  }
 	  var toolbar = _classPrivateMethodGet(this, _getToolbarComponent, _getToolbarComponent2).call(this);
@@ -308,19 +284,20 @@
 	  }
 	  var settingsMenu = (_toolbar$getSettingsB = toolbar.getSettingsButton()) === null || _toolbar$getSettingsB === void 0 ? void 0 : _toolbar$getSettingsB.getMenuWindow();
 	  if (settingsMenu) {
+	    babelHelpers.classPrivateFieldGet(this, _settingsButtonExtenderParams).grid = this.grid;
+	    babelHelpers.classPrivateFieldGet(this, _settingsButtonExtenderParams).rootMenu = settingsMenu;
+
 	    /** @see BX.Crm.SettingsButtonExtender */
-	    new crm_settingsButtonExtender.SettingsButtonExtender({
-	      smartActivityNotificationSupported: babelHelpers.classPrivateFieldGet(this, _smartActivityNotificationSupported),
-	      entityTypeId: this.entityTypeId,
-	      categoryId: this.categoryId,
-	      aiAutostartSettings: babelHelpers.classPrivateFieldGet(this, _aiAutostartSettings),
-	      pingSettings: babelHelpers.classPrivateFieldGet(this, _pingSettings),
-	      rootMenu: settingsMenu,
-	      grid: this.grid
-	    });
+	    new crm_settingsButtonExtender.SettingsButtonExtender(babelHelpers.classPrivateFieldGet(this, _settingsButtonExtenderParams));
 	  }
+	}
+	function _initGridPanel2() {
+	  crm_entityList_panel.init({
+	    gridId: this.gridId,
+	    progressBarContainerId: this.progressBarContainerId
+	  });
 	}
 	namespace.ItemListComponent = ItemListComponent;
 
-}((this.window = this.window || {}),BX.Crm,BX.Crm,BX,BX.Event,BX.UI.Dialogs));
+}((this.window = this.window || {}),BX.Crm.EntityList.Panel,BX.Crm,BX.Crm,BX,BX.Event,BX.UI.Dialogs));
 //# sourceMappingURL=script.js.map

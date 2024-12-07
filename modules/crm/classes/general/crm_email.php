@@ -1,11 +1,11 @@
 <?php
 
-use Bitrix\Main\Localization\Loc;
-use Bitrix\Crm\Integration\StorageManager;
 use Bitrix\Crm\Integration\Channel;
+use Bitrix\Crm\Integration\StorageManager;
 use Bitrix\Crm\Settings\ActivitySettings;
-use Bitrix\Crm\Tracking;
 use Bitrix\Crm\Timeline;
+use Bitrix\Crm\Tracking;
+use Bitrix\Main\Localization\Loc;
 
 if(!IsModuleInstalled('bitrix24'))
 {
@@ -863,20 +863,24 @@ class CCrmEMail
 							$mailboxId,
 							\Bitrix\Main\Config\Option::get('intranet', 'path_mail_config', '/mail/', $mailbox['LID'])
 						);
+						$absoluteConfigUrl = CCrmUrlUtil::ToAbsoluteUrl($configUrl);
 
-						$internalMessage = getMessage('CRM_EMAIL_BAD_RESP_QUEUE', array(
-							'#EMAIL#'      => htmlspecialcharsbx($mailbox['NAME']),
-							'#CONFIG_URL#' => htmlspecialcharsbx($configUrl),
-						));
-						$externalMessage = getMessage('CRM_EMAIL_BAD_RESP_QUEUE', array(
-							'#EMAIL#'      => htmlspecialcharsbx($mailbox['NAME']),
-							'#CONFIG_URL#' => htmlspecialcharsbx(\CCrmUrlUtil::toAbsoluteUrl($configUrl)),
-						));
+						$getMessageCallback = static function (string $url) use ($mailbox) {
+							$code = 'CRM_EMAIL_BAD_RESP_QUEUE';
+							$replace = [
+								'#EMAIL#' => htmlspecialcharsbx($mailbox['NAME']),
+								'#CONFIG_URL#' => htmlspecialcharsbx($url),
+							];
+
+							return static fn (?string $languageId = null) =>
+								Loc::getMessage($code, $replace, $languageId)
+							;
+						};
 
 						\CCrmNotifier::notify(
 							$mailbox['USER_ID'],
-							$internalMessage,
-							$externalMessage,
+							$getMessageCallback($configUrl),
+							$getMessageCallback($absoluteConfigUrl),
 							0,
 							'email_resp_queue_ok_' . $mailboxId
 						);
@@ -1632,6 +1636,7 @@ class CCrmEMail
 							'ASSOCIATED_ENTITY_ID' => $activityId,
 						],
 						Timeline\LogMessageType::EMAIL_INCOMING_MESSAGE,
+						$activityFields['AUTHOR_ID'] ?? null
 					);
 				}
 			}
@@ -1950,7 +1955,7 @@ class CCrmEMail
 					continue;
 				}
 
-				$regexp = '/'.${$regexVar}.'/i'.BX_UTF_PCRE_MODIFIER;
+				$regexp = '/'.${$regexVar}.'/iu';
 				$match = array();
 				if (preg_match($regexp, $subject, $match) === 1)
 				{
@@ -2204,13 +2209,13 @@ class CCrmEMail
 				{
 					$email = $arCommEmails[$i];
 					$match = array();
-					if(preg_match('/"([^"]+)"\s*<'.$email.'>/i'.BX_UTF_PCRE_MODIFIER, $body, $match) === 1 && count($match) > 1)
+					if(preg_match('/"([^"]+)"\s*<'.$email.'>/iu', $body, $match) === 1 && count($match) > 1)
 					{
 						$name = $match[1];
 						break;
 					}
 
-					if(preg_match('/"([^"]+)"\s*[\s*mailto\:\s*'.$email.']/i'.BX_UTF_PCRE_MODIFIER, $body, $match) === 1 && count($match) > 1)
+					if(preg_match('/"([^"]+)"\s*[\s*mailto\:\s*'.$email.']/iu', $body, $match) === 1 && count($match) > 1)
 					{
 						$name = $match[1];
 						break;

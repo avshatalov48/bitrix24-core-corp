@@ -11,7 +11,7 @@ Loader::requireModule('pull');
 
 /**
  * Messages, sent through this channel will be delivered as system push-notification, even mobile app is closed.
- * Keep in mind, that if mobile app is already opened, this channel will not work.
+ * Keep in mind, that if mobile app is already opened, you need to use the Application push object API 54.
  */
 final class DeviceChannel extends Channel
 {

@@ -59,8 +59,8 @@ class TaskList
 
 		$this->query
 			->addSelect(['COUNT'])
-			->setOrder([])
-			->setLimit(0);
+			->setLimit(0)
+			->setOrder([]);
 
 		$dbQuery = TaskQueryBuilder::build($this->query);
 		$result = $dbQuery->fetch();

@@ -1,6 +1,8 @@
 <?php
 $MESS['CHAT_QUESTION_TITLE'] = "Вопрос в поддержку - #NUMBER#";
 $MESS['CHAT_QUESTION_DESC'] = "Задайте в этом чате новый вопрос нашим специалистам поддержки";
+$MESS['CHAT_QUESTION_DESCRIPTION_BOT'] = "Чат-бот";
+$MESS['CHAT_QUESTION_GREETING_TITLE'] = "Поддержка Битрикс24";
 $MESS['CHAT_QUESTION_GREETING'] = "В этом чате вы можете задать дополнительный вопрос нашим специалистам поддержки.[br] Чат можно переименовать, изменив его заголовок, чтобы в будущем быстро найти его.";
 $MESS['CHAT_QUESTION_DESC_FROM_OPERATOR'] = "Давайте обсудим ваш вопрос в этом диалоге";
 $MESS['SUPPORT_QUESTION_TITLE'] = 'Задать новый вопрос специалистам поддержки';

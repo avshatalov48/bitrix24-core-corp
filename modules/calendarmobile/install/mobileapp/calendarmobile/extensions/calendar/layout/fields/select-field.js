@@ -30,6 +30,11 @@ jn.define('calendar/layout/fields/select-field', (require, exports, module) => {
 			});
 		}
 
+		get style()
+		{
+			return this.props.style ?? {};
+		}
+
 		render()
 		{
 			return View(
@@ -40,6 +45,7 @@ jn.define('calendar/layout/fields/select-field', (require, exports, module) => {
 						paddingVertical: 5,
 						paddingHorizontal: 15,
 						alignItems: 'center',
+						...(this.style.field || {}),
 					},
 					clickable: true,
 					onClick: this.onFieldClickHandler.bind(this),
@@ -50,6 +56,7 @@ jn.define('calendar/layout/fields/select-field', (require, exports, module) => {
 						style: {
 							fontSize: 15,
 							color: AppTheme.colors.accentMainLinks,
+							...(this.style.text || {}),
 						},
 						text: this.item.name,
 					},

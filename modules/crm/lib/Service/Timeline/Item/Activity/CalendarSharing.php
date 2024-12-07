@@ -3,18 +3,21 @@
 namespace Bitrix\Crm\Service\Timeline\Item\Activity;
 
 use Bitrix\Crm\Integration\Calendar\ActivityHandler;
-use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Timeline\Item\Activity;
+use Bitrix\Crm\Service\Timeline\Item\Mixin;
 use Bitrix\Crm\Service\Timeline\Layout;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock;
 use Bitrix\Crm\Service\Timeline\Layout\Common\Icon;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Main\Web\Uri;
 
 Loc::loadMessages($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/crm/lib/Badge/Type/CalendarSharingStatus.php");
 
 class CalendarSharing extends Activity
 {
+	use Mixin\CalendarSharing\SharingLinkUrlTrait;
+	use Mixin\CalendarSharing\ContactTrait;
+	use Mixin\CalendarSharing\MembersBlockTrait;
+
 	protected function getActivityTypeId(): string
 	{
 		return 'CalendarSharing';
@@ -22,16 +25,9 @@ class CalendarSharing extends Activity
 
 	public function getIconCode(): ?string
 	{
-		if (!$this->isScheduled())
+		if (!$this->isScheduled() && ($this->isCanceled() || $this->isNotHeldMeeting()))
 		{
-			if (
-				$this->isCanceledByClient()
-				|| $this->isCanceledByManager()
-				|| $this->isNotHeldMeeting()
-			)
-			{
-				return Icon::CIRCLE_CROSSED;
-			}
+			return Icon::CIRCLE_CROSSED;
 		}
 
 		return Icon::CIRCLE_CHECK;
@@ -66,10 +62,11 @@ class CalendarSharing extends Activity
 		}
 
 		$logo = new Layout\Body\CalendarLogo($deadline);
+		$logo->setIconType(Layout\Body\Logo::ICON_TYPE_ORANGE);
 
 		if (!$this->isScheduled())
 		{
-			if ($this->isCanceledByManager() || $this->isCanceledByClient() || $this->isNotHeldMeeting())
+			if ($this->isCanceled() || $this->isNotHeldMeeting())
 			{
 				$logo->setAdditionalIconCode('cross')
 					->setAdditionalIconType(Layout\Body\Logo::ICON_TYPE_FAILURE);
@@ -121,12 +118,17 @@ class CalendarSharing extends Activity
 			$result['openCalendarEvent'] = $openCalendarEventBlock;
 		}
 
-		$clientCommentBlock = $this->buildClientCommentBlock();
-		$descriptionBlock = $this->buildDescriptionBlock();
+		$memberIds = $this->getAssociatedEntityModel()?->get('SETTINGS')['CALENDAR_EVENT_MEMBER_IDS'] ?? null;
+		if (!empty($memberIds) && !$this->isCanceled() && !$this->isNotHeldMeeting())
+		{
+			$result['membersTitle'] = $this->buildMembersTitleBlock();
+			$result['members'] = $this->buildMembersBlock($memberIds);
+		}
 
+		$descriptionBlock = $this->buildDescriptionBlock();
 		if ($descriptionBlock)
 		{
-			$result['clientComment'] = $clientCommentBlock;
+			$result['clientComment'] = $this->buildClientCommentBlock();
 			$result['description'] = $descriptionBlock;
 		}
 
@@ -163,12 +165,29 @@ class CalendarSharing extends Activity
 					->setAnimation(Layout\Action\Animation::disableItem()->setForever()
 				)
 			);
+
+			$linkUrl = $this->getCopyLinkUrl();
+			if ($linkUrl)
+			{
+				$buttons['copyLink'] = (
+					new Layout\Footer\Button(
+						'',
+						Layout\Footer\Button::TYPE_SECONDARY,
+						Icon::COPY,
+					)
+				)
+					->setScopeWeb()
+					->setAction((new Layout\Action\JsEvent($this->getType() . ':CopyLink'))
+						->addActionParamString('url', $linkUrl)
+					)
+				;
+			}
 		}
 		else if ($this->getEventId())
 		{
 			$buttons['openEvent'] = (
 				new Layout\Footer\Button(
-					Loc::getMessage('CRM_TIMELINE_ITEM_CALENDAR_SHARING_OPEN_MEETING'),
+					Loc::getMessage('CRM_TIMELINE_ITEM_CALENDAR_SHARING_OPEN_MEETING_MSGVER_2'),
 					Layout\Footer\Button::TYPE_SECONDARY
 				)
 			)
@@ -178,7 +197,7 @@ class CalendarSharing extends Activity
 					->addActionParamInt('eventId', $this->getEventId())
 					->addActionParamBoolean(
 						'isSharing',
-						$this->isCanceledByClient() || $this->isCanceledByManager()
+						$this->isCanceled(),
 					)
 			);
 		}
@@ -217,6 +236,12 @@ class CalendarSharing extends Activity
 			{
 				$menuItems['cancelMeeting'] = $cancelMeetingMenuItem;
 			}
+
+			$createCopyLinkMenuItem = $this->createCopyLinkMenuItem();
+			if ($createCopyLinkMenuItem)
+			{
+				$menuItems['copyLink'] = $createCopyLinkMenuItem;
+			}
 		}
 
 		return $menuItems;
@@ -233,8 +258,9 @@ class CalendarSharing extends Activity
 
 		return (new ContentBlock\ContentBlockWithTitle())
 			->setInline()
+			->setAlignItems('center')
 			->setTitle(
-				Loc::getMessage('CRM_TIMELINE_ITEM_CALENDAR_SHARING_DATE_AND_TIME')
+				Loc::getMessage('CRM_TIMELINE_ITEM_CALENDAR_SHARING_DATE_AND_TIME_MSGVER_2')
 			)
 			->setContentBlock(
 				(new ContentBlock\EditableDate())
@@ -276,6 +302,7 @@ class CalendarSharing extends Activity
 
 		return (new ContentBlock\ContentBlockWithTitle())
 			->setInline()
+			->setAlignItems('center')
 			->setTitle(
 				Loc::getMessage('CRM_TIMELINE_ITEM_CALENDAR_SHARING_CLIENT')
 			)
@@ -294,15 +321,17 @@ class CalendarSharing extends Activity
 			return null;
 		}
 
+		$eventName = $this->getEventName();
+		$title = !empty($eventName) ? Loc::getMessage('CRM_TIMELINE_ITEM_CALENDAR_SHARING_EVENT') : '';
+		$linkText = !empty($eventName) ? $eventName : Loc::getMessage('CRM_TIMELINE_ITEM_CALENDAR_SHARING_OPEN_CALENDAR_EVENT');
+
 		return (new ContentBlock\ContentBlockWithTitle())
 			->setInline()
-			->setTitle(
-				''
-			)
+			->setTitle($title)
 			->setContentBlock(
 				(new ContentBlock\Link())
 					->setIsBold(false)
-					->setValue(Loc::getMessage('CRM_TIMELINE_ITEM_CALENDAR_SHARING_OPEN_CALENDAR_EVENT'))
+					->setValue($linkText)
 					->setAction(
 						(new Layout\Action\JsEvent($this->getType() . ':OpenCalendarEvent'))
 							->addActionParamInt('eventId', $this->getEventId())
@@ -341,51 +370,14 @@ class CalendarSharing extends Activity
 		;
 	}
 
-	private function getContactName($contactTypeId, $contactId): string
-	{
-		$contactData = Container::getInstance()
-			->getEntityBroker($contactTypeId)
-			->getById($contactId)
-		;
-
-		$result = false;
-		if ($contactData)
-		{
-			if ($contactTypeId === \CCrmOwnerType::Contact)
-			{
-				$result = $contactData->getFullName();
-			}
-			else if ($contactTypeId === \CCrmOwnerType::Company)
-			{
-				$result = $contactData->getTitle();
-			}
-		}
-
-		return $result ?: Loc::getMessage('CRM_TIMELINE_ITEM_CALENDAR_SHARING_NOT_FOUND');
-	}
-
-	private function getContactUrl($contactTypeId, $contactId): ?Uri
-	{
-		$result = null;
-
-		$detailUrl = Container::getInstance()
-			->getRouter()
-			->getItemDetailUrl(
-				$contactTypeId,
-				$contactId
-			)
-		;
-		if ($detailUrl)
-		{
-			$result = new Uri($detailUrl);
-		}
-
-		return $result;
-	}
-
 	private function getEventId(): ?int
 	{
 		return $this->getAssociatedEntityModel()->get('CALENDAR_EVENT_ID');
+	}
+
+	private function getEventName(): ?string
+	{
+		return $this->getAssociatedEntityModel()->get('SETTINGS')['CALENDAR_EVENT_NAME'] ?? null;
 	}
 
 	private function createCancelMeetingMenuItem(): ?Layout\Menu\MenuItem
@@ -405,6 +397,32 @@ class CalendarSharing extends Activity
 			);
 	}
 
+	private function createCopyLinkMenuItem(): ?Layout\Menu\MenuItem
+	{
+		$linkUrl = $this->getCopyLinkUrl();
+		if (!$linkUrl)
+		{
+			return null;
+		}
+
+		return (new Layout\Menu\MenuItem(Loc::getMessage('CRM_TIMELINE_ITEM_CALENDAR_SHARING_COPY_LINK')))
+			->setScopeMobile()
+			->setAction(
+				(new Layout\Action\JsEvent('Clipboard:Copy'))
+					->addActionParamString('content', $linkUrl)
+					->addActionParamString('type', 'link')
+			)
+		;
+	}
+
+	private function getCopyLinkUrl(): ?string
+	{
+		$settings = $this->getAssociatedEntityModel()->get('SETTINGS');
+		$eventLinkHash = $settings['EVENT_LINK_HASH'] ?? null;
+
+		return $eventLinkHash ? $this->getSharingLinkUrl($eventLinkHash) : null;
+	}
+
 	private function canEditEntity(): bool
 	{
 		$userId = ($this->getContext()->getType() === \Bitrix\Crm\Service\Timeline\Context::PULL)
@@ -412,6 +430,11 @@ class CalendarSharing extends Activity
 			: $this->getContext()->getUserId()
 		;
 		return \Bitrix\Crm\Activity\Provider\CalendarSharing::checkUpdatePermission($this->getAssociatedEntityModel()->toArray(), $userId);
+	}
+
+	private function isCanceled(): bool
+	{
+		return $this->isCanceledByClient() || $this->isCanceledByManager();
 	}
 
 	private function isCanceledByManager(): bool

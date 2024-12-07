@@ -1,8 +1,10 @@
 <?php
 namespace Bitrix\Controller;
 
-use Bitrix\Main,
-	Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\ORM\Data\DataManager;
+use Bitrix\Main\ORM\Fields;
+
 Loc::loadMessages(__FILE__);
 
 /**
@@ -39,7 +41,7 @@ Loc::loadMessages(__FILE__);
  * @method static \Bitrix\Controller\EO_AuthLog_Collection wakeUpCollection($rows)
  */
 
-class AuthLogTable extends Main\Entity\DataManager
+class AuthLogTable extends DataManager
 {
 	/**
 	 * Returns DB table name for entity.
@@ -58,58 +60,80 @@ class AuthLogTable extends Main\Entity\DataManager
 	 */
 	public static function getMap()
 	{
-		return array(
-			'ID' => array(
-				'data_type' => 'integer',
-				'primary' => true,
-				'autocomplete' => true,
-				'title' => Loc::getMessage('AUTH_LOG_ENTITY_ID_FIELD'),
+		return [
+			new Fields\IntegerField(
+				'ID',
+				[
+					'primary' => true,
+					'autocomplete' => true,
+					'title' => Loc::getMessage('AUTH_LOG_ENTITY_ID_FIELD'),
+				]
 			),
-			'TIMESTAMP_X' => array(
-				'data_type' => 'datetime',
-				'title' => Loc::getMessage('AUTH_LOG_ENTITY_TIMESTAMP_X_FIELD'),
+			new Fields\DatetimeField(
+				'TIMESTAMP_X',
+				[
+					'required' => true,
+					'title' => Loc::getMessage('AUTH_LOG_ENTITY_TIMESTAMP_X_FIELD'),
+				]
 			),
-			'FROM_CONTROLLER_MEMBER_ID' => array(
-				'data_type' => 'integer',
-				'title' => Loc::getMessage('AUTH_LOG_ENTITY_FROM_CONTROLLER_MEMBER_ID_FIELD'),
+			new Fields\IntegerField(
+				'FROM_CONTROLLER_MEMBER_ID',
+				[
+					'title' => Loc::getMessage('AUTH_LOG_ENTITY_FROM_CONTROLLER_MEMBER_ID_FIELD'),
+				]
 			),
-			'TO_CONTROLLER_MEMBER_ID' => array(
-				'data_type' => 'integer',
-				'title' => Loc::getMessage('AUTH_LOG_ENTITY_TO_CONTROLLER_MEMBER_ID_FIELD'),
+			new Fields\IntegerField(
+				'TO_CONTROLLER_MEMBER_ID',
+				[
+					'title' => Loc::getMessage('AUTH_LOG_ENTITY_TO_CONTROLLER_MEMBER_ID_FIELD'),
+				]
 			),
-			'TYPE' => array(
-				'data_type' => 'string',
-				'validation' => array(__CLASS__, 'validateType'),
-				'title' => Loc::getMessage('AUTH_LOG_ENTITY_TYPE_FIELD'),
+			new Fields\StringField(
+				'TYPE',
+				[
+					'validation' => [__CLASS__, 'validateType'],
+					'title' => Loc::getMessage('AUTH_LOG_ENTITY_TYPE_FIELD'),
+				]
 			),
-			'STATUS' => array(
-				'data_type' => 'boolean',
-				'values' => array('N', 'Y'),
-				'title' => Loc::getMessage('AUTH_LOG_ENTITY_STATUS_FIELD'),
+			new Fields\BooleanField(
+				'STATUS',
+				[
+					'values' => ['N', 'Y'],
+					'default' => 'Y',
+					'title' => Loc::getMessage('AUTH_LOG_ENTITY_STATUS_FIELD'),
+				]
 			),
-			'USER_ID' => array(
-				'data_type' => 'integer',
-				'title' => Loc::getMessage('AUTH_LOG_ENTITY_USER_ID_FIELD'),
+			new Fields\IntegerField(
+				'USER_ID',
+				[
+					'title' => Loc::getMessage('AUTH_LOG_ENTITY_USER_ID_FIELD'),
+				]
 			),
-			'USER_NAME' => array(
-				'data_type' => 'string',
-				'validation' => array(__CLASS__, 'validateUserName'),
-				'title' => Loc::getMessage('AUTH_LOG_ENTITY_USER_NAME_FIELD'),
+			new Fields\StringField(
+				'USER_NAME',
+				[
+					'validation' => [__CLASS__, 'validateUserName'],
+					'title' => Loc::getMessage('AUTH_LOG_ENTITY_USER_NAME_FIELD'),
+				]
 			),
-			'FROM_CONTROLLER_MEMBER' => array(
-				'data_type' => 'Bitrix\Controller\MemberTable',
-				'reference' => array('=this.FROM_CONTROLLER_MEMBER_ID' => 'ref.ID'),
+			new Fields\Relations\Reference(
+				'FROM_CONTROLLER_MEMBER',
+				'Bitrix\Controller\MemberTable',
+				['=this.FROM_CONTROLLER_MEMBER_ID' => 'ref.ID']
 			),
-			'TO_CONTROLLER_MEMBER' => array(
-				'data_type' => 'Bitrix\Controller\MemberTable',
-				'reference' => array('=this.TO_CONTROLLER_MEMBER_ID' => 'ref.ID'),
+			new Fields\Relations\Reference(
+				'TO_CONTROLLER_MEMBER',
+				'Bitrix\Controller\MemberTable',
+				['=this.TO_CONTROLLER_MEMBER_ID' => 'ref.ID']
 			),
-			'USER' => array(
-				'data_type' => 'Bitrix\Main\UserTable',
-				'reference' => array('=this.USER_ID' => 'ref.ID'),
+			new Fields\Relations\Reference(
+				'USER',
+				'Bitrix\Main\UserTable',
+				['=this.USER_ID' => 'ref.ID']
 			),
-		);
+		];
 	}
+
 	/**
 	 * Returns validators for TYPE field.
 	 *
@@ -117,10 +141,11 @@ class AuthLogTable extends Main\Entity\DataManager
 	 */
 	public static function validateType()
 	{
-		return array(
-			new Main\Entity\Validator\Length(null, 50),
-		);
+		return [
+			new Fields\Validators\LengthValidator(null, 50),
+		];
 	}
+
 	/**
 	 * Returns validators for USER_NAME field.
 	 *
@@ -128,16 +153,16 @@ class AuthLogTable extends Main\Entity\DataManager
 	 */
 	public static function validateUserName()
 	{
-		return array(
-			new Main\Entity\Validator\Length(null, 255),
-		);
+		return [
+			new Fields\Validators\LengthValidator(null, 255),
+		];
 	}
 
 	/**
 	 * Returns true if logging is enabled.
 	 * Check before logging.
-	 * 
-	 * @return boolean
+	 *
+	 * @return bool
 	 * @see \Bitrix\Controller\AuthLogTable::logSiteToControllerAuth
 	 * @see \Bitrix\Controller\AuthLogTable::logControllerToSiteAuth
 	 * @see \Bitrix\Controller\AuthLogTable::logSiteToSiteAuth
@@ -149,92 +174,92 @@ class AuthLogTable extends Main\Entity\DataManager
 
 	/**
 	 * Logs authorization on the controller.
-	 * 
-	 * @param integer $controllerMemberId Controller member identifier.
-	 * @param integer $userId User identifier.
-	 * @param boolean $isSuccess Success flag.
+	 *
+	 * @param int $controllerMemberId Controller member identifier.
+	 * @param int $userId User identifier.
+	 * @param bool $isSuccess Success flag.
 	 * @param string $type Optional type string.
 	 * @param string $userName Optional user name details.
-	 * 
-	 * @return Main\Entity\AddResult
+	 *
+	 * @return \Bitrix\Main\ORM\Data\AddResult
 	 * @throws \Exception
 	 * @see \Bitrix\Controller\AuthLogTable::isEnabled
 	 */
 	public static function logSiteToControllerAuth($controllerMemberId, $userId, $isSuccess = true, $type = '', $userName = '')
 	{
-		$fields = array(
-			"FROM_CONTROLLER_MEMBER_ID" => $controllerMemberId,
-			"USER_ID" => $userId,
-			"STATUS" => $isSuccess? "Y": "N",
-			"TYPE" => $type?: false,
-			"USER_NAME" => $userName?: false,
-		);
+		$fields = [
+			'FROM_CONTROLLER_MEMBER_ID' => $controllerMemberId,
+			'USER_ID' => $userId,
+			'STATUS' => $isSuccess ? 'Y' : 'N',
+			'TYPE' => $type ?: false,
+			'USER_NAME' => $userName ?: false,
+		];
 		return self::add($fields);
 	}
 
 	/**
 	 * Logs authorization on the site (from the controller).
 	 *
-	 * @param integer $controllerMemberId Controller member identifier.
-	 * @param integer $userId User identifier.
-	 * @param boolean $isSuccess Success flag.
+	 * @param int $controllerMemberId Controller member identifier.
+	 * @param int $userId User identifier.
+	 * @param bool $isSuccess Success flag.
 	 * @param string $type Optional type.
 	 * @param string $userName Optional user name details.
 	 *
-	 * @return Main\Entity\AddResult
+	 * @return \Bitrix\Main\ORM\Data\AddResult
 	 * @throws \Exception
 	 * @see \Bitrix\Controller\AuthLogTable::isEnabled
 	 */
 	public static function logControllerToSiteAuth($controllerMemberId, $userId, $isSuccess = true, $type = '', $userName = '')
 	{
-		$fields = array(
-			"TO_CONTROLLER_MEMBER_ID" => $controllerMemberId,
-			"USER_ID" => $userId,
-			"STATUS" => $isSuccess? "Y": "N",
-			"TYPE" => $type?: false,
-			"USER_NAME" => $userName?: false,
-		);
+		$fields = [
+			'TO_CONTROLLER_MEMBER_ID' => $controllerMemberId,
+			'USER_ID' => $userId,
+			'STATUS' => $isSuccess ? 'Y' : 'N',
+			'TYPE' => $type ?: false,
+			'USER_NAME' => $userName ?: false,
+		];
 		return self::add($fields);
 	}
 
 	/**
 	 * Logs authorization between sites.
 	 *
-	 * @param integer $fromControllerMemberId Controller member identifier.
-	 * @param integer $toControllerMemberId Controller member identifier.
-	 * @param boolean $isSuccess Success flag.
+	 * @param int $fromControllerMemberId Controller member identifier.
+	 * @param int $toControllerMemberId Controller member identifier.
+	 * @param bool $isSuccess Success flag.
 	 * @param string $type Optional type.
 	 * @param string $userName Optional user name details.
 	 *
-	 * @return Main\Entity\AddResult
+	 * @return \Bitrix\Main\ORM\Data\AddResult
 	 * @throws \Exception
 	 * @see \Bitrix\Controller\AuthLogTable::isEnabled
 	 */
 	public static function logSiteToSiteAuth($fromControllerMemberId, $toControllerMemberId, $isSuccess = true, $type = '', $userName = '')
 	{
-		$fields = array(
-			"FROM_CONTROLLER_MEMBER_ID" => $fromControllerMemberId,
-			"TO_CONTROLLER_MEMBER_ID" => $toControllerMemberId,
-			"STATUS" => $isSuccess? "Y": "N",
-			"TYPE" => $type?: false,
-			"USER_NAME" => $userName?: false,
-		);
+		$fields = [
+			'FROM_CONTROLLER_MEMBER_ID' => $fromControllerMemberId,
+			'TO_CONTROLLER_MEMBER_ID' => $toControllerMemberId,
+			'STATUS' => $isSuccess ? 'Y' : 'N',
+			'TYPE' => $type ?: false,
+			'USER_NAME' => $userName ?: false,
+		];
 		return self::add($fields);
 	}
-	
-	private static $agentName = "\\Bitrix\\Controller\\AuthLogTable::cleanupAgent";
+
+	private static $agentName = '\\Bitrix\\Controller\\AuthLogTable::cleanupAgent';
 
 	/**
 	 * Adds agent function for log cleanup.
 	 *
-	 * @param integer $days How many days to preserve in the log.
+	 * @param int $days How many days to preserve in the log.
 	 * @return void
 	 */
 	public static function setupAgent($days)
 	{
 		$days = intval($days);
 
-		$agentList = \CAgent::GetList(array(), array("NAME" => self::$agentName."%"));
+		$agentList = \CAgent::GetList([], ['NAME' => self::$agentName . '%']);
 		while ($agent = $agentList->Fetch())
 		{
 			\CAgent::Delete($agent['ID']);
@@ -242,27 +267,26 @@ class AuthLogTable extends Main\Entity\DataManager
 
 		if ($days > 0)
 		{
-			\CAgent::AddAgent(self::$agentName.'('.$days.');', "controller", "N", $days * 3600 *24);
+			\CAgent::AddAgent(self::$agentName . '(' . $days . ');', 'controller', 'N', $days * 3600 * 24);
 		}
-		
+
 	}
 
 	/**
 	 * Agent function. Deletes obsolete records.
 	 *
-	 * @param integer $days How many days to preserve in the log.
+	 * @param int $days How many days to preserve in the log.
 	 * @return string
 	 */
 	public static function cleanupAgent($days)
 	{
 		$days = intval($days);
-		$application = \Bitrix\Main\Application::getInstance();
-		$connection = $application->getConnection();
+		$connection = \Bitrix\Main\Application::getConnection();
 		$sqlHelper = $connection->getSqlHelper();
-		$connection->query("
-			DELETE FROM ".self::getTableName()."
-			WHERE TIMESTAMP_X < ".$sqlHelper->addSecondsToDateTime(-$days * 3600 *24, $sqlHelper->getCurrentDateTimeFunction())
+		$connection->query('
+			DELETE FROM ' . self::getTableName() . '
+			WHERE TIMESTAMP_X < ' . $sqlHelper->addSecondsToDateTime(-$days * 3600 * 24, $sqlHelper->getCurrentDateTimeFunction())
 		);
-		return self::$agentName.'('.$days.');';
+		return self::$agentName . '(' . $days . ');';
 	}
 }

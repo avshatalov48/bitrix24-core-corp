@@ -6,5 +6,7 @@ return [
 	],
 	'bundle' => [
 		'./src/style',
+		'./src/avatar-base',
+		'./src/avatar-safe',
 	],
 ];

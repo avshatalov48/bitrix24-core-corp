@@ -125,7 +125,7 @@ class Chat
 					$this->isDataLoaded = true;
 
 					//TODO: Hack for telegram 22.04.2022
-					$this->isNoSession($chat);
+					$this->determineSessionCreation($chat);
 				}
 			}
 		}
@@ -142,29 +142,44 @@ class Chat
 	 * @param array $chat
 	 * @return void
 	 */
-	private function isNoSession(array $chat): void
+	private function determineSessionCreation(array $chat): void
 	{
-		$isSession = true;
+		$this->isCreated = false;
 
 		if (self::parseLinesChatEntityId($chat['ENTITY_ID'])['connectorId'] === 'telegrambot')
 		{
+			$orderDirection = 'ASC';
+
+			$configId = (int)self::parseLinesChatEntityId($chat['ENTITY_ID'])['lineId'];
+			$config = ConfigTable::getRow([
+				'select' => ['SEND_WELCOME_EACH_SESSION'],
+				'filter' => [
+					'=ID' => $configId,
+				],
+			]);
+			if (is_array($config) && $config['SEND_WELCOME_EACH_SESSION'] === 'Y')
+			{
+				$orderDirection = 'DESC';
+			}
+
 			$session = SessionTable::getList([
-				'select' => ['ID'],
+				'select' => ['ID', 'STATUS', 'MESSAGE_COUNT'],
 				'filter' => [
 					'=CHAT_ID' => $chat['ID'],
 				],
+				'order' => ['ID' => $orderDirection],
 				'limit' => 1
 			])->fetch();
 
-			if ($session === false)
+			if (
+				$session === false
+				|| (
+					$session['STATUS'] < Session::STATUS_ANSWER
+					&& (int)$session['MESSAGE_COUNT'] === 0)
+				)
 			{
-				$isSession = false;
+				$this->isCreated = true;
 			}
-		}
-
-		if ($isSession === false)
-		{
-			$this->isCreated = true;
 		}
 	}
 
@@ -203,7 +218,7 @@ class Chat
 				$result = true;
 
 				//TODO: Hack for telegram 22.04.2022
-				$this->isNoSession($chat);
+				$this->determineSessionCreation($chat);
 			}
 			elseif ($params['ONLY_LOAD'] !== 'Y')
 			{
@@ -3291,7 +3306,14 @@ class Chat
 			}
 		}
 
-		return Config::canJoin($lineId, $crmEntityType, $crmEntityId);
+		$hasAccess = Config::canJoin($lineId, $crmEntityType, $crmEntityId);
+		if (!$hasAccess)
+		{
+			$chat = \Bitrix\Im\V2\Chat::getInstance($chatId);
+			$hasAccess = $chat->checkAccess()->isSuccess();
+		}
+
+		return $hasAccess;
 	}
 
 	public static function getChatIdBySession(int $sessionId)

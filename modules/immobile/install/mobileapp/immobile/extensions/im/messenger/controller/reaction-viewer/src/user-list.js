@@ -2,9 +2,9 @@
  * @module im/messenger/controller/reaction-viewer/user-list
  */
 jn.define('im/messenger/controller/reaction-viewer/user-list', (require, exports, module) => {
+	const { Theme } = require('im/lib/theme');
 	const { Item } = require('im/messenger/lib/ui/base/item');
 	const { LoaderItem } = require('im/messenger/lib/ui/base/loader');
-	const AppTheme = require('apptheme');
 	const { DateFormatter } = require('im/messenger/lib/date-formatter');
 	const { Loc } = require('loc');
 	const { ChatTitle } = require('im/messenger/lib/element');
@@ -191,7 +191,7 @@ jn.define('im/messenger/controller/reaction-viewer/user-list', (require, exports
 		{
 			return {
 				parentView: {
-					backgroundColor: AppTheme.colors.bgContentPrimary,
+					backgroundColor: Theme.colors.bgContentPrimary,
 				},
 				itemContainer: {
 					flexDirection: 'row',
@@ -202,7 +202,7 @@ jn.define('im/messenger/controller/reaction-viewer/user-list', (require, exports
 				itemInfoContainer: {
 					flexDirection: 'row',
 					borderBottomWidth: 1,
-					borderBottomColor: AppTheme.colors.bgSeparatorSecondary,
+					borderBottomColor: Theme.colors.bgSeparatorSecondary,
 					flex: 1,
 					paddingTop: 8.5,
 					paddingBottom: 8.5,
@@ -224,11 +224,11 @@ jn.define('im/messenger/controller/reaction-viewer/user-list', (require, exports
 					isYouTitle: {
 						marginLeft: 4,
 						marginBottom: 1,
-						color: AppTheme.colors.base4,
+						color: Theme.colors.base4,
 						fontSize: 14,
 					},
 					subtitle: {
-						color: AppTheme.colors.base4,
+						color: Theme.colors.base4,
 						fontSize: 14,
 					},
 				},

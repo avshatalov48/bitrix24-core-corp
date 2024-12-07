@@ -6,6 +6,9 @@ jn.define('calendar/layout/sharing-settings/dialog/rule-edit', (require, exports
 	const { Loc } = require('loc');
 	const { Duration } = require('utils/date');
 	const { plus, chevronLeft } = require('assets/common');
+	const { lighten, withPressed } = require('utils/color');
+
+	const { SharingContext } = require('calendar/model/sharing');
 	const { SelectField } = require('calendar/layout/fields');
 	const { RangeEditComponent } = require('calendar/layout/sharing-settings/dialog/range-edit');
 
@@ -18,14 +21,16 @@ jn.define('calendar/layout/sharing-settings/dialog/rule-edit', (require, exports
 		{
 			super(props);
 
+			this.layoutWidget = props.layoutWidget || PageManager;
+
 			this.hasChanges = false;
-			this.layoutWidget = null;
 			this.rangeHeight = 0;
 			this.customEventEmitter = this.props.customEventEmitter;
 
 			this.onHeaderClickHandler = this.onHeaderClickHandler.bind(this);
 			this.onAddRangeButtonClickHandler = this.onAddRangeButtonClickHandler.bind(this);
 			this.onRangeRemoveHandler = this.onRangeRemoveHandler.bind(this);
+			this.emitRuleSave = this.emitRuleSave.bind(this);
 
 			this.state = this.getState();
 		}
@@ -40,11 +45,25 @@ jn.define('calendar/layout/sharing-settings/dialog/rule-edit', (require, exports
 			return this.model.getSettings().getRule();
 		}
 
-		setLayoutWidget(widget)
+		get isCrmContext()
 		{
-			this.layoutWidget = widget;
-			this.layoutWidget.on('onViewRemoved', () => this.emitRuleSave());
-			this.layoutWidget.on('onViewHidden', () => this.emitRuleSave());
+			return this.model.getContext() === SharingContext.CRM;
+		}
+
+		componentDidMount()
+		{
+			this.layoutWidget.on('onViewRemoved', this.emitRuleSave);
+			this.layoutWidget.on('onViewHidden', this.emitRuleSave);
+
+			super.componentDidMount();
+		}
+
+		componentWillUnmount()
+		{
+			super.componentWillUnmount();
+
+			this.layoutWidget.off('onViewRemoved', this.emitRuleSave);
+			this.layoutWidget.off('onViewHidden', this.emitRuleSave);
 		}
 
 		redraw()
@@ -124,6 +143,7 @@ jn.define('calendar/layout/sharing-settings/dialog/rule-edit', (require, exports
 		renderEditRange(range)
 		{
 			return new RangeEditComponent({
+				isCrmContext: this.isCrmContext,
 				range,
 				rule: this.rule,
 				layoutWidget: this.layoutWidget,
@@ -148,10 +168,8 @@ jn.define('calendar/layout/sharing-settings/dialog/rule-edit', (require, exports
 				View(
 					{
 						style: styles.addRangeButton,
-						clickable: true,
-						onClick: this.onAddRangeButtonClickHandler,
 					},
-					Image({
+					!this.isCrmContext && Image({
 						tintColor: AppTheme.colors.accentMainLinks,
 						svg: {
 							content: plus(),
@@ -160,10 +178,14 @@ jn.define('calendar/layout/sharing-settings/dialog/rule-edit', (require, exports
 					}),
 					View(
 						{
-							style: styles.addRangeButtonTextContainer,
+							style: {
+								...styles.addRangeButtonTextContainer,
+								...(!this.isCrmContext ? styles.addRangeButtonTextContainerBorder : {}),
+							},
 						},
-						Text({
-							text: Loc.getMessage('M_CALENDAR_SETTINGS_SELECT_ADD'),
+						Button({
+							onClick: this.onAddRangeButtonClickHandler,
+							text: Loc.getMessage('M_CALENDAR_SETTINGS_SELECT_ADD_MSGVER_1'),
 							style: styles.addRangeButtonText,
 						}),
 					),
@@ -212,6 +234,10 @@ jn.define('calendar/layout/sharing-settings/dialog/rule-edit', (require, exports
 					name: this.state.formattedSlotSize,
 				},
 				onChange: (value) => this.onSlotSizeSelectedHandler(value),
+				style: {
+					field: this.isCrmContext ? styles.field : null,
+					text: this.isCrmContext ? styles.fieldText : null,
+				},
 			});
 		}
 
@@ -305,17 +331,20 @@ jn.define('calendar/layout/sharing-settings/dialog/rule-edit', (require, exports
 			height: 20,
 		},
 		addRangeButtonTextContainer: {
-			borderBottomColor: AppTheme.colors.accentSoftBlue1,
+			marginLeft: 4,
+		},
+		addRangeButtonTextContainerBorder: {
+			borderBottomColor: lighten(AppTheme.colors.accentMainLinks, 0.4),
 			borderBottomWidth: 2,
 			borderStyle: 'dash',
 			borderDashSegmentLength: 5,
 			borderDashGapLength: 5,
-			marginLeft: 4,
 		},
 		addRangeButtonText: {
-			color: AppTheme.colors.accentMainLinks,
+			color: withPressed(AppTheme.colors.accentMainLinks),
 			fontSize: 14,
 			fontWeight: '400',
+			height: 20,
 		},
 		editSlotSizeContainer: {
 			...containerStyle,
@@ -327,6 +356,16 @@ jn.define('calendar/layout/sharing-settings/dialog/rule-edit', (require, exports
 		},
 		slotSizeTitleText: {
 			fontSize: 16,
+			color: AppTheme.colors.base1,
+		},
+		field: {
+			borderColor: AppTheme.colors.base6,
+			borderWidth: 1,
+			borderRadius: 6,
+			backgroundColor: undefined,
+			paddingHorizontal: 10,
+		},
+		fieldText: {
 			color: AppTheme.colors.base1,
 		},
 	};

@@ -1,5 +1,6 @@
 import {ajax, Loc, Reflection, Runtime} from 'main.core';
 import {rest} from 'rest.client';
+import { Dialog, Item } from 'ui.entity-selector';
 
 class CommentActionController
 {
@@ -14,6 +15,7 @@ class CommentActionController
 			taskApprove: 'taskApprove',
 			taskDisapprove: 'taskDisapprove',
 			taskComplete: 'taskComplete',
+			taskChangeResponsible: 'taskChangeResponsible',
 		};
 	}
 
@@ -24,6 +26,7 @@ class CommentActionController
 			taskApprove: 'APPROVE',
 			taskDisapprove: 'DISAPPROVE',
 			taskComplete: 'COMPLETE',
+			taskChangeResponsible: 'CHANGE_RESPONSIBLE',
 		};
 	}
 
@@ -34,6 +37,7 @@ class CommentActionController
 			taskApprove: 'tasks.task.approve',
 			taskDisapprove: 'tasks.task.disapprove',
 			taskComplete: 'tasks.task.complete',
+			taskChangeResponsible: 'tasks.task.update',
 		};
 	}
 
@@ -46,6 +50,7 @@ class CommentActionController
 			taskApprove: Loc.getMessage(`${prefix}_TASK_APPROVE`),
 			taskDisapprove: Loc.getMessage(`${prefix}_TASK_DISAPPROVE`),
 			taskComplete: Loc.getMessage(`${prefix}_TASK_COMPLETE`),
+			taskChangeResponsible: Loc.getMessage(`${prefix}_TASK_CHANGE_RESPONSIBLE`),
 		};
 	}
 
@@ -143,6 +148,13 @@ class CommentActionController
 			return;
 		}
 
+		if (action === CommentActionController.possibleActions.taskChangeResponsible)
+		{
+			CommentActionController.showResponsibleSelector(link.anchor, taskId);
+
+			return;
+		}
+
 		CommentActionController.checkCanRun(action, taskId).then(
 			(response) => {
 				if (response)
@@ -187,6 +199,52 @@ class CommentActionController
 					: false
 			),
 			callback_after: value => CommentActionController.onDeadlinePicked(value, taskId),
+		});
+	}
+
+	static showResponsibleSelector(target: HTMLElement, taskId: number)
+	{
+		const dialog = new Dialog({
+			targetNode: target,
+			enableSearch: true,
+			multiple: false,
+			cacheable: false,
+			entities: [
+				{
+					id: 'user',
+					options: {
+						intranetUsersOnly: true,
+						emailUsers: false,
+						inviteEmployeeLink: false,
+						inviteGuestLink: false,
+					},
+				},
+			],
+			clearSearchOnSelect: true,
+			events: {
+				'Item:onSelect': (event) => {
+					const item: Item = event?.data?.item;
+
+					if (item)
+					{
+						CommentActionController.onResponsibleSelected(item.id, taskId);
+					}
+					dialog.hide();
+				},
+			},
+		});
+
+		dialog.show();
+	}
+
+	static onResponsibleSelected(userId: number, taskId: number)
+	{
+		const action = CommentActionController.possibleActions.taskChangeResponsible;
+
+		CommentActionController.runAjaxAction(action, taskId, {
+			fields: {
+				RESPONSIBLE_ID: userId,
+			},
 		});
 	}
 
@@ -250,10 +308,6 @@ class CommentActionController
 		}
 
 		CommentActionController.isAjaxRunning = true;
-		if (action !== 'taskComplete')
-		{
-			CommentActionController.showNotification(action);
-		}
 
 		const defaultData = {
 			taskId,
@@ -270,10 +324,7 @@ class CommentActionController
 			data: data,
 		}).then(
 			() => {
-				if (action === 'taskComplete')
-				{
-					CommentActionController.showNotification(action);
-				}
+				CommentActionController.showNotification(action);
 				CommentActionController.isAjaxRunning = false;
 			},
 			(response) => {

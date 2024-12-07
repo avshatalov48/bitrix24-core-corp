@@ -46,6 +46,8 @@ class CCrmLeadDetailsComponent
 	use Traits\InitializeAdditionalFieldsData;
 	use Crm\Entity\Traits\VisibilityConfig;
 
+	private const PRODUCT_EDITOR_ID = 'lead_product_editor';
+
 	/** @var int */
 	private $customerType = CustomerType::GENERAL;
 	/** @var string|null */
@@ -154,7 +156,7 @@ class CCrmLeadDetailsComponent
 		$this->arResult['ACTION_URI'] = $this->arResult['POST_FORM_URI'] = POST_FORM_ACTION_URI;
 
 		$this->arResult['PRODUCT_DATA_FIELD_NAME'] = 'LEAD_PRODUCT_DATA';
-		$this->arResult['PRODUCT_EDITOR_ID'] = 'lead_product_editor';
+		$this->arResult['PRODUCT_EDITOR_ID'] = self::PRODUCT_EDITOR_ID;
 
 		$this->enableSearchHistory = !isset($this->arParams['~ENABLE_SEARCH_HISTORY'])
 			|| mb_strtoupper($this->arParams['~ENABLE_SEARCH_HISTORY']) === 'Y';
@@ -252,19 +254,20 @@ class CCrmLeadDetailsComponent
 		$this->arResult['ENABLE_PROGRESS_CHANGE'] = !$this->arResult['READ_ONLY'];
 
 		$this->arResult['CONVERSION_TYPE_ID'] = LeadConversionDispatcher::resolveTypeID($this->entityData);
+		$config = LeadConversionDispatcher::getConfiguration(array('FIELDS' => $this->entityData));
+		$schemeID = $config->getSchemeID();
+
+		// always prepare a scheme. we need it for correct rendering of termination control
+		$this->arResult['CONVERSION_SCHEME'] = array(
+			'ORIGIN_URL' => $APPLICATION->GetCurPage(),
+			'SCHEME_ID' => $schemeID,
+			'SCHEME_NAME' => LeadConversionScheme::resolveName($schemeID),
+			'SCHEME_DESCRIPTION' => LeadConversionScheme::getDescription($schemeID),
+			'SCHEME_CAPTION' => GetMessage('CRM_LEAD_CREATE_ON_BASIS')
+		);
+
 		if($this->arResult['CAN_CONVERT'])
 		{
-			$config = LeadConversionDispatcher::getConfiguration(array('FIELDS' => $this->entityData));
-			$schemeID = $config->getSchemeID();
-
-			$this->arResult['CONVERSION_SCHEME'] = array(
-				'ORIGIN_URL' => $APPLICATION->GetCurPage(),
-				'SCHEME_ID' => $schemeID,
-				'SCHEME_NAME' => LeadConversionScheme::resolveName($schemeID),
-				'SCHEME_DESCRIPTION' => LeadConversionScheme::getDescription($schemeID),
-				'SCHEME_CAPTION' => GetMessage('CRM_LEAD_CREATE_ON_BASIS')
-			);
-
 			$this->arResult['CONVERSION_CONFIG'] = $config;
 
 			$this->arResult['CONVERTER_ID'] = $this->guid;
@@ -369,7 +372,7 @@ class CCrmLeadDetailsComponent
 							'ADD_EVENT_NAME' => 'CrmCreateQuoteFromLead',
 							'ANALYTICS' => [
 								// we dont know where from this component was opened from - it could be anywhere on portal
-								// 'c_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SECTION_LEAD,
+								'c_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SECTION_LEAD,
 								'c_sub_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SUB_SECTION_DETAILS,
 							],
 						], 'crm.quote.list'),
@@ -914,7 +917,11 @@ class CCrmLeadDetailsComponent
 				'type' => 'boolean',
 				'editable' => true
 			),
-			Crm\Entity\CommentsHelper::compileFieldDescriptionForDetails(\CCrmOwnerType::Lead, 'COMMENTS'),
+			Crm\Entity\CommentsHelper::compileFieldDescriptionForDetails(
+				\CCrmOwnerType::Lead,
+				'COMMENTS',
+				$this->entityID,
+			),
 			EditorAdapter::getProductRowSummaryField(
 				Loc::getMessage('CRM_LEAD_FIELD_PRODUCTS'),
 				'PRODUCT_ROW_SUMMARY'
@@ -2565,7 +2572,7 @@ class CCrmLeadDetailsComponent
 				'name' => 'PRODUCT_LIST',
 				'type' => 'product_list',
 				'config' => [
-					'productListId' => $this->arResult['PRODUCT_EDITOR_ID'],
+					'productListId' => $this->arResult['PRODUCT_EDITOR_ID'] ?? self::PRODUCT_EDITOR_ID,
 					'currencyList' => $currencyList,
 					'currencyId' => $this->getCurrencyId(),
 				],

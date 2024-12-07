@@ -69,7 +69,7 @@ $APPLICATION->IncludeComponent(
 	), null, array("HIDE_ICONS" => "Y")
 );
 ?>
-<script type="text/javascript" bxrunfirst="true">
+<script bxrunfirst="true">
 window.bx_user_url_tpl = '<?=CUtil::JSEscape(COption::GetOptionString('intranet', 'path_user', '', SITE_ID))?>';
 window.arMembersList = [];
 
@@ -181,7 +181,7 @@ $APPLICATION->IncludeComponent('bitrix:main.clock', '', array(
 					<label><?=GetMessage('ME_TIME')?></label><span></span><input type="text" class="meeting-new-create-d-time" name="DATE_START_TIME" value="<?=$date_time?>" onclick="if(BX.isReady){bxShowClock_meeting_time();}" onchange="checkMeetingRoom()" />
 					<label><?=GetMessage('ME_DURATION')?></label><input type="text" class="meeting-new-create-d-duration" name="DURATION" value="<?=$duration?>" onchange="checkMeetingRoom()" />
 					<span class="meeting-new-duration-time"><span onclick="BXChangeCoef(60);  checkMeetingRoom();" class="meeting-dash-link meeting-new-dur-active" id="me_coef_60"><?=GetMessage('ME_DURATION_60')?></span><span onclick="BXChangeCoef(3600); checkMeetingRoom();" class="meeting-dash-link" id="me_coef_3600"><?=GetMessage('ME_DURATION_3600')?></span></span><input type="hidden" name="DURATION_COEF" value="<?=$duration_coef?>" />
-<script type="text/javascript">
+<script>
 BX.ready(function() {
 	BX.cleanNode(BX('meeting_time'), true); BX.cleanNode(BX('meeting_time_icon'), true);
 	var input = document.forms.meeting_edit.DATE_START_TIME, icon = input.previousSibling, pos = BX.pos(input, true);
@@ -227,7 +227,7 @@ endif;
 <?
 if (is_array($arResult['MEETING_ROOMS_LIST']) && count($arResult['MEETING_ROOMS_LIST']) > 0):
 ?>
-<script type="text/javascript">
+<script>
 var meetingRooms = <?=CUtil::PhpToJsObject($arResult['MEETING_ROOMS_LIST'], false, true);?>,
 	meetingRoomCheckTimeout = null;
 
@@ -313,7 +313,7 @@ BX.ready(function(){
 <?
 else:
 ?>
-<script type="text/javascript">window.onMeetingRoomChange=window.checkMeetingRoom=BX.DoNothing;</script>
+<script>window.onMeetingRoomChange=window.checkMeetingRoom=BX.DoNothing;</script>
 <?
 endif;
 ?>
@@ -381,7 +381,7 @@ if (IsModuleInstalled('socialnetwork')):
 		'ON_SELECT' => 'BXOnGroupChange'
 	), null, array('HIDE_ICONS' => 'Y'))
 ?>
-<script type="text/javascript">
+<script>
 function BXOnGroupChange(group)
 {
 	if (!!group && group.length > 0)
@@ -417,7 +417,7 @@ if (isset($arResult['MEETING']['PARENT_ID'])):
 				<div class="meeting-new-ag-bl-title" onclick="BX.toggle(BX('parent_agenda'))"><?=GetMessage('ME_AGENDA_EX')?></div>
 				<div class="meeting-new-ag-bl-cont" id="parent_agenda"<?=$arParams['COPY'] ? '' : ' style="display:none;"'?>></div>
 			</div>
-<script type="text/javascript">
+<script>
 BX.ready(function() {
 	BX.ajax.insertToNode(
 		'<?=CUtil::JSEscape(str_replace('#MEETING_ID#', $arResult['MEETING']['PARENT_ID'], $arParams["MEETING_EDIT_URL_TPL"])).'?AGENDA_EX=Y&'.bitrix_sessid_get()?>',
@@ -429,7 +429,7 @@ BX.ready(function() {
 endif;
 ?>
 		</div>
-<script type="text/javascript">
+<script>
 window.saveData = BX.DoNothing;
 window.BXMEETINGCANEDIT = true;
 </script>

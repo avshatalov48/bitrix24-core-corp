@@ -24,7 +24,10 @@ final class Sms extends SendFacilitator
 
 	protected function getActivityProviderTypeId(): string
 	{
-		return \Bitrix\Crm\Activity\Provider\Sms::PROVIDER_TYPE_SMS;
+		return SmsManager::isEdnaWhatsAppSendingEnabled($this->channel->getId())
+			? \Bitrix\Crm\Activity\Provider\WhatsApp::PROVIDER_TYPE_WHATSAPP
+			: \Bitrix\Crm\Activity\Provider\Sms::PROVIDER_TYPE_SMS
+		;
 	}
 
 	public function setMessageBody(string $body): self

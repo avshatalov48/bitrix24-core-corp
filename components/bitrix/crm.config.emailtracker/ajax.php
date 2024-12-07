@@ -43,8 +43,6 @@ class CCrmConfigEmailtrackerAjax
 			}
 		}
 
-		\CUtil::jsPostUnescape();
-
 		if ($error === false)
 		{
 			if (!empty($_REQUEST['siteid']))
@@ -735,6 +733,8 @@ class CCrmConfigEmailtrackerAjax
 
 		if ($error === false)
 			\CMailbox::delete($mailbox['ID']);
+
+		return [];
 	}
 
 	private static function executeCheckMailbox(&$error)

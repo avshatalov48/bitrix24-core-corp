@@ -59,7 +59,7 @@ if (!empty($tbButtons))
 		<div class="crm-instant-editor-fld-block">
 			<div class="crm-detail-comments-text" style="padding-left: 0;">
 				<p><?= htmlspecialcharsbx(GetMessage('CRM_EXCH1C_COMMENT_FREE_P1')) ?></p>
-				<p><?= htmlspecialcharsbx(GetMessage('CRM_EXCH1C_COMMENT_FREE_P2')) ?><a href="http://www.1c-bitrix.ru/products/intranet/features/crm/1c.php"><?= htmlspecialcharsbx(GetMessage('CRM_EXCH1C_BITRIX24_LINK1')) ?></a>.</p>
+				<p><?= htmlspecialcharsbx(GetMessage('CRM_EXCH1C_COMMENT_FREE_P2')) ?><a href="https://www.1c-bitrix.ru/products/intranet/features/crm/1c.php"><?= htmlspecialcharsbx(GetMessage('CRM_EXCH1C_BITRIX24_LINK1')) ?></a>.</p>
 				<p><?= htmlspecialcharsbx(GetMessage('CRM_EXCH1C_COMMENT_FREE_P3')) ?></p>
 				<p><?= htmlspecialcharsbx(GetMessage('CRM_EXCH1C_COMMENT_FREE_P4')) ?><a href="/settings/license.php"><?= htmlspecialcharsbx(GetMessage('CRM_EXCH1C_BITRIX24_LINK2')) ?></a>.</p>
 			</div>

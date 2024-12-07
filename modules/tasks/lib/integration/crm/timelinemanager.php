@@ -3,7 +3,6 @@
 namespace Bitrix\Tasks\Integration\CRM;
 
 use Bitrix\Forum\EO_Message;
-use Bitrix\Main\Config\Option;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Tasks\Integration\CRM\Timeline\Event\EventsController;
@@ -40,13 +39,15 @@ use Bitrix\Tasks\Internals\TaskObject;
 
 class TimeLineManager
 {
+	use StorageTrait;
+
 	private int $userId;
 	private int $taskId;
 	private bool $isAvailable = true;
 	private TaskRepository $taskRepository;
 	private EventsController $eventsController;
 
-	public function __construct(int $taskId, int $userId = 0, bool $isImmediately = false)
+	public function __construct(int $taskId, int $userId = 0)
 	{
 		if (!Loader::includeModule('crm'))
 		{
@@ -56,9 +57,14 @@ class TimeLineManager
 
 		$this->userId = $userId;
 		$this->taskId = $taskId;
-		$this->taskRepository = new TaskRepository($taskId, $userId);
-		$this->eventsController = EventsController::getInstance()
-			->setImmediately($isImmediately);
+		$this->taskRepository = new TaskRepository($this->taskId, $this->userId);
+		$this->eventsController = EventsController::getInstance();
+	}
+
+	public function setUserId(int $userId): static
+	{
+		$this->userId = $userId;
+		return $this;
 	}
 
 	public function onTaskCreated(bool $restored = false): self
@@ -69,6 +75,11 @@ class TimeLineManager
 		}
 
 		if ($this->taskRepository->getBindings()->isEmpty())
+		{
+			return $this;
+		}
+
+		if ($this->taskRepository->getTask() === null)
 		{
 			return $this;
 		}
@@ -102,17 +113,17 @@ class TimeLineManager
 			return $this;
 		}
 
-		if (is_null($this->taskRepository->getTask()))
+		if ($this->taskRepository->getTask() === null)
 		{
 			return $this;
 		}
 
-		if (empty($taskBeforeUpdate->getCrmFields(false)) && empty($this->taskRepository->getTask()->getCrmFields()))
+		if (empty($taskBeforeUpdate->getCachedCrmFields()) && empty($this->taskRepository->getTask()->getCrmFields()))
 		{
 			return $this;
 		}
 
-		if (!empty($taskBeforeUpdate->getCrmFields(false)) && empty($this->taskRepository->getTask()->getCrmFields()))
+		if (!empty($taskBeforeUpdate->getCachedCrmFields()) && empty($this->taskRepository->getTask()->getCrmFields()))
 		{
 			$this->eventsController->addEvent(new OnTaskBindingsUpdated($this->taskRepository->getTask(), $this->userId));
 			return $this;
@@ -204,7 +215,7 @@ class TimeLineManager
 			$this->eventsController->addEvent(new OnTaskFilesUpdated($this->taskRepository->getTask(), $this->userId));
 		}
 
-		if ($this->isArrayFieldChanged($taskBeforeUpdate->getCrmFields(false), $this->taskRepository->getTask()->getCrmFields()))
+		if ($this->isArrayFieldChanged($taskBeforeUpdate->getCachedCrmFields(), $this->taskRepository->getTask()->getCrmFields()))
 		{
 			$this->eventsController->addEvent(new OnTaskBindingsUpdated($this->taskRepository->getTask(), $this->userId));
 		}
@@ -285,6 +296,11 @@ class TimeLineManager
 			return $this;
 		}
 
+		if ($this->taskRepository->getTask() === null)
+		{
+			return $this;
+		}
+
 		if (
 			(int)$this->taskRepository->getTask()->getStatus() !== Status::COMPLETED
 			&& $this->userId !== $this->taskRepository->getTask()->getCreatedBy()
@@ -318,6 +334,7 @@ class TimeLineManager
 
 		if (
 			is_null($message)
+			|| is_null($this->taskRepository->getTask())
 			|| ResultTable::isResult($message->getId(), $this->taskRepository->getTask()?->getId())
 		)
 		{
@@ -343,7 +360,7 @@ class TimeLineManager
 			return $this;
 		}
 
-		if (is_null($this->taskRepository->getTask()))
+		if ($this->taskRepository->getTask() === null)
 		{
 			return $this;
 		}
@@ -366,6 +383,18 @@ class TimeLineManager
 		}
 
 		$this->eventsController->addEvent(new OnTaskCommentDeleted($this->taskRepository->getTask(), $this->userId, $fileIds));
+
+		return $this;
+	}
+
+	public function onTaskFilesUpdated(): static
+	{
+		if (!$this->isAvailable())
+		{
+			return $this;
+		}
+
+		$this->eventsController->addEvent(new OnTaskFilesUpdated($this->taskRepository->getTask(), $this->userId));
 
 		return $this;
 	}

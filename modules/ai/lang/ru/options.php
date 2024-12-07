@@ -1,0 +1,26 @@
+<?php
+$MESS['AI_OPT_CHECK_LIMITS'] = 'Проверять лимиты';
+$MESS['AI_OPT_PROMPT_HOST_REMOTE_DB'] = 'База промптов';
+$MESS['AI_OPT_PROMPT_HOST_REMOTE_DB_CLEAR'] = 'обновить';
+$MESS['AI_OPT_PROMPT_HOST_REMOTE_DB_SYSTEM'] = 'По умолчанию';
+$MESS['AI_OPT_MAX_HISTORY_PER_USER'] = 'Максимальное количество записей истории на пользователя';
+$MESS['AI_OPT_PUBLIC_URL'] = 'Публичный URL, включая протокол и порт';
+$MESS['AI_OPT_HEADER_QUEUE'] = 'Очередь';
+$MESS['AI_OPT_FORCE_QUEUE'] = 'Всегда работать с очередью';
+$MESS['AI_OPT_QUEUE_URL'] = 'URL очереди, включая протокол и порт';
+$MESS['AI_OPT_OPENAI_BEARER'] = 'Ключ Open AI';
+$MESS['AI_OPT_STABLE_DIFFUSION_BEARER'] = 'Ключ Stable Diffusion';
+$MESS['AI_OPT_HEADER_ENGINES'] = 'Провайдеры';
+$MESS['AI_OPT_ENGINE_TEXT'] = 'Провайдер для AI-текстов';
+$MESS['AI_OPT_ENGINE_IMAGE'] = 'Провайдер для AI-изображений';
+$MESS['AI_OPT_ENGINE_AUDIO'] = 'Провайдер для AI-аудио';
+$MESS['AI_OPT_HEADER_HISTORY'] = 'История запросов';
+$MESS['AI_OPT_HEADER_CLOUD'] = 'Регистрация';
+$MESS['AI_OPT_CLOUD_LABEL_BUTTON_REGISTER'] = 'Облачный сервис';
+$MESS['AI_OPT_CLOUD_BUTTON_REGISTER'] = 'Подключить';
+$MESS['AI_OPT_CLOUD_BUTTON_UNREGISTER'] = 'Отключить';
+$MESS['AI_OPT_WRITE_HISTORY_ALWAYS'] = 'Писать историю всегда';
+$MESS['AI_OPT_WRITE_HISTORY_REQUEST'] = 'Писать в историю полные запросы';
+$MESS['AI_OPT_WRITE_ERRORS'] = 'Писать в историю ошибочные запросы';
+$MESS['AI_OPT_DISABLE_HISTORY_FOR_USERS'] = 'Не писать запросы для пользователей';
+$MESS['AI_OPT_DISABLE_HISTORY_FOR_USERS_ADD'] = 'Добавить пользователей';

@@ -34,7 +34,7 @@ foreach($arResult['BREADCRUMBS'] as $crumb)
 	</div>
 </div>
 
-<script type="text/javascript">
+<script>
 	BX.ready(function () {
 		BX.Disk['BreadcrumbsClass_<?= $component->getComponentId() ?>'] = new BX.Disk.BreadcrumbsClass({
 			storageId: <?= $arResult['STORAGE_ID'] ?>,

@@ -1,13 +1,14 @@
 import { Base } from './base';
+import type { ActionParams } from './base';
 import { Type } from 'main.core';
 import ConfigurableItem from '../configurable-item';
-import ContactList from "../components/content-blocks/mail/contact-list";
+import ContactList from '../components/content-blocks/mail/contact-list';
 
 export class Email extends Base
 {
 	onItemAction(item: ConfigurableItem, actionParams: ActionParams): void
 	{
-		const {action, actionType, actionData} = actionParams;
+		const { action, actionType, actionData } = actionParams;
 
 		if (actionType !== 'jsEvent')
 		{
@@ -21,7 +22,7 @@ export class Email extends Base
 
 		if (action === 'Email::Schedule' && actionData)
 		{
-			this.#schedule(actionData.activityId, actionData.scheduleDate);
+			this.runScheduleAction(actionData.activityId, actionData.scheduleDate);
 		}
 	}
 
@@ -35,7 +36,7 @@ export class Email extends Base
 					ID: id,
 				},
 				editor,
-				{}
+				{},
 			);
 
 			emailActivity.openDialog(BX.CrmDialogMode.view);
@@ -45,20 +46,6 @@ export class Email extends Base
 	#getActivityEditor(): BX.CrmActivityEditor
 	{
 		return BX.CrmActivityEditor.getDefault();
-	}
-
-	#schedule(activityId: Number, scheduleDate: String): void
-	{
-		const menuBar = BX.Crm?.Timeline?.MenuBar?.getDefault();
-		if (menuBar)
-		{
-			menuBar.setActiveItemById('todo');
-
-			const todoEditor = menuBar.getItemById('todo');
-			todoEditor.focus();
-			todoEditor.setParentActivityId(activityId);
-			todoEditor.setDeadLine(scheduleDate);
-		}
 	}
 
 	#openMessage(actionData): void

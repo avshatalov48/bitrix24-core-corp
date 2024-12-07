@@ -70,7 +70,6 @@ $arDefaultUrlTemplates404 = [
 	'dedupewizard' => 'dedupewizard/',
 	'analytics/list' => 'analytics/list/',
 	'widget' => 'widget/',
-	'portrait' => 'portrait/#contact_id#/',
 	'details' => 'details/#contact_id#/',
 	'merge' => 'merge/',
 	'requisiteselect' => 'requisite/select/#contact_id#/',
@@ -138,7 +137,8 @@ else
 	{
 		$componentPage = 'show';
 	}
-	else if (isset($_REQUEST['details'])){
+	else if (isset($_REQUEST['details']))
+	{
 		$componentPage = 'details';
 	}
 	else if (isset($_REQUEST['merge']))
@@ -173,21 +173,22 @@ else
 	{
 		$componentPage = 'widget';
 	}
-	elseif (isset($_REQUEST['portrait']))
-	{
-		$componentPage = 'portrait';
-	}
 
-	$arResult['PATH_TO_CONTACT_LIST'] = $arResult['PATH_TO_CONTACT_DEDUPE'] = $arResult['PATH_TO_CONTACT_DEDUPEWIZARD'] = $APPLICATION->GetCurPage();
-	$arResult['PATH_TO_CONTACT_DETAILS'] = $APPLICATION->GetCurPage() . "?$arVariableAliases[contact_id]=#contact_id#&details";
-	$arResult['PATH_TO_CONTACT_REQUISITE_SELECT'] = $APPLICATION->GetCurPage() . "?$arVariableAliases[contact_id]=#contact_id#&requisiteselect";
-	$arResult['PATH_TO_CONTACT_SHOW'] = $APPLICATION->GetCurPage() . "?$arVariableAliases[contact_id]=#contact_id#&show";
-	$arResult['PATH_TO_CONTACT_DETAILS'] = $APPLICATION->GetCurPage() . "?$arVariableAliases[contact_id]=#contact_id#&details";
-	$arResult['PATH_TO_CONTACT_EDIT'] = $APPLICATION->GetCurPage() . "?$arVariableAliases[contact_id]=#contact_id#&edit";
-	$arResult['PATH_TO_CONTACT_IMPORT'] = $APPLICATION->GetCurPage() . "?import";
-	$arResult['PATH_TO_CONTACT_IMPORTVCARD'] = $APPLICATION->GetCurPage();
-	$arResult['PATH_TO_CONTACT_WIDGET'] = $APPLICATION->GetCurPage() . "?widget";
-	$arResult['PATH_TO_CONTACT_PORTRAIT'] = $APPLICATION->GetCurPage() . "?portrait";
+	$currentPage = $APPLICATION->GetCurPage();
+
+	$arResult['PATH_TO_CONTACT_DETAILS'] = $currentPage . "?$arVariableAliases[contact_id]=#contact_id#&details";
+	$arResult['PATH_TO_CONTACT_REQUISITE_SELECT'] = $currentPage . "?$arVariableAliases[contact_id]=#contact_id#&requisiteselect";
+	$arResult['PATH_TO_CONTACT_SHOW'] = $currentPage . "?$arVariableAliases[contact_id]=#contact_id#&show";
+	$arResult['PATH_TO_CONTACT_DETAILS'] = $currentPage . "?$arVariableAliases[contact_id]=#contact_id#&details";
+	$arResult['PATH_TO_CONTACT_EDIT'] = $currentPage . "?$arVariableAliases[contact_id]=#contact_id#&edit";
+	$arResult['PATH_TO_CONTACT_IMPORT'] = $currentPage . '?import';
+	$arResult['PATH_TO_CONTACT_WIDGET'] = $currentPage . '?widget';
+
+	$arResult['PATH_TO_CONTACT_LIST'] = $currentPage;
+	$arResult['PATH_TO_CONTACT_DEDUPE'] = $currentPage;
+	$arResult['PATH_TO_CONTACT_DEDUPEWIZARD'] = $currentPage;
+	$arResult['PATH_TO_CONTACT_PORTRAIT'] = $currentPage;
+	$arResult['PATH_TO_CONTACT_IMPORTVCARD'] = $currentPage;
 }
 
 $arResult = array_merge(

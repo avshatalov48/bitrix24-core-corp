@@ -43,7 +43,6 @@ if(!function_exists('__CrmDealCategoryEndJsonResonse'))
 	}
 }
 
-CUtil::JSPostUnescape();
 $mode = isset($_POST['MODE']) ? $_POST['MODE'] : '';
 if($mode === '' && isset($_POST['ACTION']))
 {

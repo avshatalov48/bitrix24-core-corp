@@ -1,0 +1,12 @@
+.ai__prompt-master_hint-popup a {
+	display: inline-block;
+	color: inherit;
+	border-bottom: var(--ui-border-width-thin) dashed rgba(var(--ui-color-on-primary-rgb), 0.5);
+	text-decoration: none;
+}
+
+.ai__prompt-master_hint-popup a:hover {
+	color: inherit;
+	border-bottom-color: rgba(var(--ui-color-on-primary-rgb), 1);
+	text-decoration: none;
+}

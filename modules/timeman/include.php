@@ -53,7 +53,17 @@ CJSCore::RegisterExt('timeman', array(
 		'/bitrix/themes/.default/clock.css'
 	),
 	'lang' => '/bitrix/modules/timeman/lang/'.LANGUAGE_ID.'/js_core_timeman.php',
-	'rel' => ['ui.design-tokens', 'ui.fonts.opensans', 'ajax', 'timer', 'popup', 'ls', 'planner', 'ui.layout-form'],
+	'rel' => [
+		'ui.design-tokens',
+		'ui.fonts.opensans',
+		'ajax',
+		'timer',
+		'popup',
+		'ls',
+		'planner',
+		'ui.layout-form',
+		'ui.analytics',
+	],
 ));
 
 CJSCore::RegisterExt('timecontrol', array(

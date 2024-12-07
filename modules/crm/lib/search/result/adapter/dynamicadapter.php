@@ -2,6 +2,7 @@
 
 namespace Bitrix\Crm\Search\Result\Adapter;
 
+use Bitrix\Crm\Integration\IntranetManager;
 use Bitrix\Crm\Item;
 use Bitrix\Crm\Search\Result\Adapter;
 use Bitrix\Crm\Service\Factory;
@@ -19,6 +20,11 @@ class DynamicAdapter extends Adapter
 	protected function getEntityTypeId(): int
 	{
 		return $this->factory->getEntityTypeId();
+	}
+
+	private function isInCustomSection(): bool
+	{
+		return IntranetManager::isEntityTypeInCustomSection($this->getEntityTypeId());
 	}
 
 	protected function loadItemsByIds(array $ids): array
@@ -54,5 +60,28 @@ class DynamicAdapter extends Adapter
 	protected function areMultifieldsSupported(): bool
 	{
 		return false;
+	}
+
+	protected function prepareAttributes(array $item): array
+	{
+		if (!$this->isInCustomSection())
+		{
+			return [];
+		}
+
+		$customSectionTitle = $this->getCustomSectionTitle();
+		if ($customSectionTitle === null)
+		{
+			return [];
+		}
+
+		return [ 'customSectionTitle' => $customSectionTitle ];
+	}
+
+	private function getCustomSectionTitle(): ?string
+	{
+		return IntranetManager::getCustomSectionByEntityTypeId($this->getEntityTypeId())
+			?->getTitle()
+		;
 	}
 }

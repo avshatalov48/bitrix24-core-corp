@@ -1,11 +1,11 @@
 <?php
-global $MESS;
-$PathInstall = str_replace("\\", "/", __FILE__);
-$PathInstall = mb_substr($PathInstall, 0, mb_strlen($PathInstall) - mb_strlen("/index.php"));
 
-IncludeModuleLangFile($PathInstall."/install.php");
+if(class_exists("salescenter"))
+{
+	return;
+}
 
-if(class_exists("salescenter")) return;
+IncludeModuleLangFile(__FILE__);
 
 class salescenter extends CModule
 {
@@ -37,6 +37,7 @@ class salescenter extends CModule
 	function DoInstall()
 	{
 		global $APPLICATION, $step;
+
 		$step = intval($step);
 		if($step < 2)
 		{
@@ -67,6 +68,7 @@ class salescenter extends CModule
 	function InstallDB($params = [])
 	{
 		global $DB, $APPLICATION;
+
 		$connection = \Bitrix\Main\Application::getConnection();
 		$errors = false;
 
@@ -169,18 +171,18 @@ class salescenter extends CModule
 
 	function DoUninstall()
 	{
-		global $DOCUMENT_ROOT, $APPLICATION, $step;
+		global $APPLICATION, $step;
+
 		$step = intval($step);
 		if($step < 2)
 		{
-			$APPLICATION->IncludeAdminFile(GetMessage("SALESCENTER_UNINSTALL_TITLE_MSGVER_1"), $DOCUMENT_ROOT."/bitrix/modules/".$this->MODULE_ID."/install/unstep1.php");
+			$APPLICATION->IncludeAdminFile(GetMessage("SALESCENTER_UNINSTALL_TITLE_MSGVER_1"), $_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/".$this->MODULE_ID."/install/unstep1.php");
 		}
 		elseif($step==2)
 		{
 			$this->UnInstallDB(["savedata" => $_REQUEST["savedata"]]);
-			$this->UnInstallFiles();
 
-			$APPLICATION->IncludeAdminFile(GetMessage("SALESCENTER_UNINSTALL_TITLE_MSGVER_1"), $DOCUMENT_ROOT."/bitrix/modules/".$this->MODULE_ID."/install/unstep2.php");
+			$APPLICATION->IncludeAdminFile(GetMessage("SALESCENTER_UNINSTALL_TITLE_MSGVER_1"), $_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/".$this->MODULE_ID."/install/unstep2.php");
 		}
 
 		\Bitrix\Main\EventManager::getInstance()->unRegisterEventHandler('sale', 'OnSaleOrderSaved', 'salescenter', '\Bitrix\SalesCenter\Integration\SaleManager', 'OnSaleOrderSaved');
@@ -250,6 +252,7 @@ class salescenter extends CModule
 	function UnInstallDB($params = [])
 	{
 		global $DB, $APPLICATION;
+
 		$connection = \Bitrix\Main\Application::getConnection();
 		$errors = false;
 
@@ -265,11 +268,6 @@ class salescenter extends CModule
 		}
 
 		UnRegisterModule($this->MODULE_ID);
-		return true;
-	}
-
-	function UnInstallFiles()
-	{
 		return true;
 	}
 }

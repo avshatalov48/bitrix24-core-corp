@@ -14,8 +14,8 @@ if (
 )
 {
 	$APPLICATION->IncludeComponent(
-		"bitrix:event_list",
-		"grid",
+		"bitrix:intranet.event.log",
+		"",
 		Array(
 			"COMPOSITE_FRAME_MODE" => "A",
 			"COMPOSITE_FRAME_TYPE" => "AUTO",

@@ -2,7 +2,7 @@
 
 return [
 	'extensions' => [
-		'apptheme',
+		'im:lib/theme',
 		'utils/object',
 	],
 	'bundle' => [

@@ -5,15 +5,19 @@ namespace Bitrix\Tasks\Helper;
 use Bitrix\Main\Context;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Filter\Options;
+use Bitrix\Tasks\Flow\FlowFeature;
 use Bitrix\Tasks\Internals\Counter\Deadline;
 use Bitrix\Tasks\Internals\Counter\Role;
 use Bitrix\Tasks\Internals\Counter\Type;
 use Bitrix\Tasks\Internals\SearchIndex;
 use Bitrix\Tasks\Internals\Task\Status;
 use Bitrix\Tasks\Item\Task;
+use Bitrix\Tasks\Kanban\StagesTable;
 use Bitrix\Tasks\Replication\Replicator\RegularTaskReplicator;
 use Bitrix\Tasks\Scrum\Form\EntityForm;
 use Bitrix\Tasks\Scrum\Service\EpicService;
+use Bitrix\Tasks\Scrum\Service\SprintService;
+use Bitrix\Tasks\Scrum\Utility\ViewHelper;
 use Bitrix\Tasks\Update\Preset;
 use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\FilterLimit;
 use Bitrix\Tasks\Util\User;
@@ -34,6 +38,8 @@ class Filter extends Common
 
 	private bool $isFilterDataSet = false;
 	private array $filterData = [];
+
+	private static bool $isRolePresetsEnabledForMobile = false;
 
 	/**
 	 * @return false|mixed|string|null
@@ -303,7 +309,12 @@ class Filter extends Common
 
 	public static function isRolesEnabled(): bool
 	{
-		return Preset::isRolePresetsEnabled();
+		return Preset::isRolePresetsEnabled() || self::$isRolePresetsEnabledForMobile;
+	}
+
+	public static function setRolePresetsEnabledForMobile(bool $enabled): void
+	{
+		self::$isRolePresetsEnabledForMobile = $enabled;
 	}
 
 	public static function getRegularPresets(int $startSort = 0): array
@@ -401,6 +412,7 @@ class Filter extends Common
 					break;
 
 				case 'dest_selector':
+				case 'entity_selector':
 					$data = $this->getSelectorFilterFieldData($filterRow);
 					if ($data)
 					{
@@ -585,19 +597,20 @@ class Filter extends Common
 			$filter['CREATED_BY'] = [
 				'id' => 'CREATED_BY',
 				'name' => Loc::getMessage('TASKS_HELPER_FLT_CREATED_BY'),
-				'type' => 'dest_selector',
+				'type' => 'entity_selector',
 				'params' => [
-					'apiVersion' => '3',
-					'context' => 'TASKS_FILTER_CREATED_BY',
 					'multiple' => 'Y',
-					'contextCode' => 'U',
-					'enableAll' => 'N',
-					'enableSonetgroups' => 'N',
-					'allowEmailInvitation' => 'N',
-					'allowSearchEmailUsers' => 'Y',
-					'departmentSelectDisable' => 'Y',
-					'isNumeric' => 'Y',
-					'prefix' => 'U',
+					'dialogOptions' => [
+						'context' => 'TASKS_FILTER_CREATED_BY',
+						'entities' => [
+							[
+								'id' => 'user',
+								'options' => [
+									'inviteEmployeeLink' => false
+								],
+							],
+						]
+					],
 				],
 			];
 		}
@@ -607,19 +620,20 @@ class Filter extends Common
 			$filter['RESPONSIBLE_ID'] = [
 				'id' => 'RESPONSIBLE_ID',
 				'name' => Loc::getMessage('TASKS_HELPER_FLT_ASSIGNEE_ID'),
-				'type' => 'dest_selector',
+				'type' => 'entity_selector',
 				'params' => [
-					'apiVersion' => '3',
-					'context' => 'TASKS_FILTER_RESPONSIBLE_ID',
 					'multiple' => 'Y',
-					'contextCode' => 'U',
-					'enableAll' => 'N',
-					'enableSonetgroups' => 'N',
-					'allowEmailInvitation' => 'N',
-					'allowSearchEmailUsers' => 'Y',
-					'departmentSelectDisable' => 'Y',
-					'isNumeric' => 'Y',
-					'prefix' => 'U',
+					'dialogOptions' => [
+						'context' => 'TASKS_FILTER_RESPONSIBLE_ID',
+						'entities' => [
+							[
+								'id' => 'user',
+								'options' => [
+									'inviteEmployeeLink' => false
+								],
+							],
+						]
+					],
 				],
 				'default' => $isScrumProject,
 			];
@@ -660,19 +674,22 @@ class Filter extends Common
 			$filter['GROUP_ID'] = [
 				'id' => 'GROUP_ID',
 				'name' => Loc::getMessage('TASKS_HELPER_FLT_GROUP'),
-				'type' => 'dest_selector',
+				'type' => 'entity_selector',
 				'params' => [
-					'context' => 'TASKS_FILTER_GROUP_ID',
 					'multiple' => 'Y',
-					'contextCode' => 'SG',
-					'enableUsers' => 'N',
-					'enableSonetgroups' => 'Y',
-					'enableDepartments' => 'N',
-					'departmentSelectDisable' => 'Y',
-					'allowAddSocNetGroup' => 'N',
-					'isNumeric' => 'Y',
-					'prefix' => 'SG',
-				],
+					'dialogOptions' => [
+						'context' => 'TASKS_FILTER_GROUP_ID',
+						'entities' => [
+							[
+								'id' => 'project',
+								'options' => [
+									'dynamicLoad' => true,
+									'dynamicSearch' => true,
+								],
+							],
+						]
+					],
+				]
 			];
 		}
 
@@ -811,20 +828,21 @@ class Filter extends Common
 			$filter['ACCOMPLICE'] = [
 				'id' => 'ACCOMPLICE',
 				'name' => Loc::getMessage('TASKS_HELPER_FLT_ACCOMPLICES'),
-				'type' => 'dest_selector',
+				'type' => 'entity_selector',
 				'params' => [
-					'apiVersion' => '3',
-					'context' => 'TASKS_FILTER_ACCOMPLICE',
 					'multiple' => 'Y',
-					'contextCode' => 'U',
-					'enableAll' => 'N',
-					'enableSonetgroups' => 'N',
-					'allowEmailInvitation' => 'N',
-					'allowSearchEmailUsers' => 'Y',
-					'departmentSelectDisable' => 'Y',
-					'isNumeric' => 'Y',
-					'prefix' => 'U',
-				],
+					'dialogOptions' => [
+						'context' => 'TASKS_FILTER_ACCOMPLICE',
+						'entities' => [
+							[
+								'id' => 'user',
+								'options' => [
+									'inviteEmployeeLink' => false
+								],
+							],
+						]
+					],
+				]
 			];
 		}
 		if (in_array('AUDITOR', $fields))
@@ -832,20 +850,21 @@ class Filter extends Common
 			$filter['AUDITOR'] = [
 				'id' => 'AUDITOR',
 				'name' => Loc::getMessage('TASKS_HELPER_FLT_AUDITOR'),
-				'type' => 'dest_selector',
+				'type' => 'entity_selector',
 				'params' => [
-					'apiVersion' => '3',
-					'context' => 'TASKS_FILTER_AUDITOR',
 					'multiple' => 'Y',
-					'contextCode' => 'U',
-					'enableAll' => 'N',
-					'enableSonetgroups' => 'N',
-					'allowEmailInvitation' => 'N',
-					'allowSearchEmailUsers' => 'Y',
-					'departmentSelectDisable' => 'Y',
-					'isNumeric' => 'Y',
-					'prefix' => 'U',
-				],
+					'dialogOptions' => [
+						'context' => 'TASKS_FILTER_AUDITOR',
+						'entities' => [
+							[
+								'id' => 'user',
+								'options' => [
+									'inviteEmployeeLink' => false
+								],
+							],
+						]
+					],
+				]
 			];
 		}
 
@@ -870,6 +889,27 @@ class Filter extends Common
 									]
 									: ['filter' => true]
 								,
+							],
+						],
+						'dropdownMode' => true,
+						'compactView' => true,
+					],
+				],
+			];
+		}
+
+		if (FlowFeature::isOn())
+		{
+			$filter['FLOW'] = [
+				'id' => 'FLOW',
+				'name' => Loc::getMessage('TASKS_FILTER_FLOW'),
+				'type' => 'entity_selector',
+				'params' => [
+					'dialogOptions' => [
+						'entities' => [
+							[
+								'id' => 'flow',
+								'options' => ['filter' => true],
 							],
 						],
 						'dropdownMode' => true,
@@ -933,6 +973,23 @@ class Filter extends Common
 				'name' => Loc::getMessage('TASKS_FILTER_ACTIVITY_DATE'),
 				'type' => 'date',
 			];
+		}
+
+		if (in_array('STAGE_ID', $fields))
+		{
+			$items = $isScrumProject ? $this->getScrumStages() : $this->getGroupStages();
+
+			if (!empty($items))
+			{
+				$filter['STAGE_ID'] = [
+					'id' => 'STAGE_ID',
+					'name' => Loc::getMessage('TASKS_FILTER_STAGE_ID'),
+					'type' => 'list',
+					'params' => ['multiple' => 'Y'],
+					'default' => true,
+					'items' => $items,
+				];
+			}
 		}
 
 		if (!empty($uf = $this->getUF()))
@@ -1018,9 +1075,14 @@ class Filter extends Common
 			'ROLEID',
 			'COMMENT',
 			'ACTIVITY_DATE',
+			'FLOW',
 		];
 
-		if ((int)$this->getGroupId() === 0)
+		if ((int)$this->getGroupId() > 0)
+		{
+			$fields[] = 'STAGE_ID';
+		}
+		else
 		{
 			$fields[] = 'GROUP_ID';
 		}
@@ -1129,9 +1191,9 @@ class Filter extends Common
 	/**
 	 * @param $field
 	 * @param $default
-	 * @return mixed|null
+	 * @return mixed
 	 */
-	private function getFilterFieldData($field, $default = null)
+	private function getFilterFieldData($field, $default = null): mixed
 	{
 		$filterData = $this->getFilterData();
 
@@ -1201,17 +1263,19 @@ class Filter extends Common
 		$rowId = $row['id'];
 		$equalSign = ($this->getFilterFieldData("{$rowId}_numsel") === 'range' ? '=' : '');
 
-		if ($from = $this->getFilterFieldData("{$rowId}_from"))
+		$from = $this->getFilterFieldData("{$rowId}_from");
+		if ($from || $from === '0')
 		{
 			$filter[">{$equalSign}{$rowId}"] = $from;
 		}
 
-		if ($to = $this->getFilterFieldData("{$rowId}_to"))
+		$to = $this->getFilterFieldData("{$rowId}_to");
+		if ($to || $to === '0')
 		{
 			$filter["<{$equalSign}{$rowId}"] = $to;
 		}
 
-		if ($from && $to && $from == $to) // values of type double may be here
+		if (isset($from, $to) && $from == $to) // values of type double may be here
 		{
 			unset(
 				$filter[">{$equalSign}{$rowId}"],
@@ -1373,7 +1437,18 @@ class Filter extends Common
 					}
 				}
 				break;
+			case 'STAGE_ID':
+				if (!empty($field) && is_array($field))
+				{
+					$firstStage = current(array_keys($row['items']));
+					if (in_array($firstStage, $field))
+					{
+						$field[] = '0';
+					}
 
+					$filter[$rowId] = $field;
+				}
+				break;
 			default:
 				if ($field)
 				{
@@ -1446,5 +1521,40 @@ class Filter extends Common
 			$this->isGrid() => [FilterRegistry::FILTER_GRID],
 			default => FilterRegistry::getList(),
 		};
+	}
+
+	private function getScrumStages(): array
+	{
+		$items = [];
+
+		$viewHelper = new ViewHelper();
+		$activeTab = $viewHelper->getActiveView($this->groupId);
+
+		if ($activeTab === ViewHelper::VIEW_ACTIVE_SPRINT)
+		{
+			$sprintService = new SprintService();
+			$sprint = $sprintService->getActiveSprintByGroupId($this->groupId);
+			if ($sprint->isActiveSprint())
+			{
+				foreach (StagesTable::getActiveSprintStages($sprint->getId(), true) as $stage)
+				{
+					$items[(int)$stage['ID']] = $stage['TITLE'];
+				}
+			}
+		}
+
+		return $items;
+	}
+
+	private function getGroupStages(): array
+	{
+		$items = [];
+
+		foreach (StagesTable::getGroupStages($this->groupId, true) as $stage)
+		{
+			$items[(int)$stage['ID']] = $stage['TITLE'];
+		}
+
+		return $items;
 	}
 }

@@ -1,0 +1,101 @@
+.sign-settings__scope {
+	--head-icon-size: 56px;
+
+	--icon-file-col: 14;
+
+	--font_os_bold: 	"OpenSans-Bold", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	--font_os_light: 	"OpenSans-Light", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	--font_os_regular: 	"OpenSans-Regular", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	--font_helvetica:	"Helvetica Neue", Helvetica, Arial, sans-serif;
+
+	--color_text-1: rgba(106, 115, 127, 1);
+	--color-2: #16b5e8;
+	--color-3: #b9bfc1;
+	--color-4: #d9dadc;
+	--color-5: rgba(82, 92, 105, .08);
+	--color-5-1: rgba(82, 92, 105, .04);
+	--color-5-2: rgba(82, 92, 105, .3);
+	--color-5-3: rgba(82, 92, 105, .5);
+	--color-5-4: rgba(82, 92, 105, .7);
+	--color-6: rgba(51, 51, 51, .5);
+	--color-7: #b3b3b3;
+	--color-8: rgba(232, 236, 238, 1);
+	--color-9: #c6cdd3;
+	--color-10: #5d5b69;
+}
+
+.sign-settings {
+	display: flex;
+	position: relative;
+	padding: 20px 33px 33px 33px;
+	min-height: 100vh;
+	box-sizing: border-box;
+	background: url(images/background-one.svg) top right no-repeat,
+				url(images/background-two.svg) left bottom no-repeat;
+	background-attachment: fixed;
+}
+
+.sign-settings__sidebar {
+	flex: 1;
+	margin-right: 24px;
+	overflow-x: hidden;
+}
+
+.sign-settings__head {
+	display: flex;
+	padding: 18px 22px;
+	margin-bottom: 17px;
+	box-sizing: border-box;
+	background: var(--ui-color-palette-white-base);
+	border-radius: 12px;
+}
+
+.sign-settings__head:before {
+	background: url("data:image/svg+xml;charset=utf-8,%3Csvg width='56' height='56' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='28' cy='28' r='28' fill='%2347E4C2'/%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M16 16a2 2 0 012-2h14.101a2 2 0 011.364.537l5.899 5.498A2 2 0 0140 21.498V41a2 2 0 01-2 2H18a2 2 0 01-2-2V16z' fill='%23fff'/%3E%3Cmask id='a' style='mask-type:alpha' maskUnits='userSpaceOnUse' x='16' y='14' width='24' height='29'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M16 16a2 2 0 012-2h14.101a2 2 0 011.364.537l5.899 5.498A2 2 0 0140 21.498V41a2 2 0 01-2 2H18a2 2 0 01-2-2V16z' fill='%23fff'/%3E%3C/mask%3E%3Cg mask='url(%23a)' fill-rule='evenodd' clip-rule='evenodd'%3E%3Cpath opacity='.12' d='M32.118 14H40v7.364c0-.245-.223-.321-.358-.321h-5.199a1.998 1.998 0 01-1.998-1.999V14.31c0-.094-.11-.31-.327-.31z' fill='%23525C69'/%3E%3Cpath d='M19.692 24.875c0-.5.406-.906.907-.906h12.033a.906.906 0 110 1.812H20.6a.906.906 0 01-.907-.906zm0 4.531c0-.5.406-.906.907-.906h12.033a.906.906 0 110 1.813H20.6a.906.906 0 01-.907-.907zm.907 3.625a.906.906 0 000 1.813h8.341a.906.906 0 000-1.813h-8.341z' fill='%233FD3B4'/%3E%3C/g%3E%3C/svg%3E") center no-repeat;
+	border-radius: 50%;
+	content: '';
+	display: block;
+	width: var(--head-icon-size);
+	min-width: var(--head-icon-size);
+	height: var(--head-icon-size);
+	margin-right: 13px;
+}
+
+.sign-settings__head_title {
+	font: 26px/26px var(--font_os_light);
+	color: var(--ui-color-palette-black-base);
+	margin: 4px 0 7px;
+}
+
+.sign-settings__head_title.--sub {
+	font-family: var(--font_os_regular);
+	font-size: 13px;
+	color: var(--ui-color-palette-gray-70);
+	line-height: normal;
+}
+
+.sign-settings.--b2e .sign-settings__head {
+	background: none;
+	padding: 0;
+}
+
+.sign-settings.--b2e .sign-settings__head:before {
+	display: none;
+}
+
+.sign-settings.--b2e .sign-settings__head_title {
+	font: 28px/33.41px var(--ui-font-family-system);
+	font-weight: var(--ui-font-weight-medium);
+	color: var(--ui-color-palette-black-base);
+}
+
+.sign-settings.--b2e .sign-settings__head_title.--sub {
+	font: 16px/22px var(--ui-font-family-system);
+	color: var(--ui-color-palette-gray-90);
+}
+
+.sign-settings__overlay {
+	position: relative;
+	height: 100vh;
+	width: 100%;
+}

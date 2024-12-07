@@ -16,7 +16,10 @@ final class DiskDocumentsController extends Disk\Internals\Engine\Controller
 	{
 		if (!$trackedObject->canRead($this->getCurrentUser()->getId()))
 		{
-			$trackedObject->delete();
+			if ($trackedObject->getUserId() == $this->getCurrentUser()->getId())
+			{
+				$trackedObject->delete();
+			}
 
 			return Main\Engine\Response\AjaxJson::createDenied()->setStatus('403 Forbidden');
 		}
@@ -36,7 +39,10 @@ final class DiskDocumentsController extends Disk\Internals\Engine\Controller
 		$urlManager = Disk\Driver::getInstance()->getUrlManager();
 		if (!$trackedObject->canRead($this->getCurrentUser()->getId()))
 		{
-			$trackedObject->delete();
+			if ($trackedObject->getUserId() == $this->getCurrentUser()->getId())
+			{
+				$trackedObject->delete();
+			}
 
 			return Main\Engine\Response\AjaxJson::createDenied()->setStatus('403 Forbidden');
 		}
@@ -166,6 +172,10 @@ final class DiskDocumentsController extends Disk\Internals\Engine\Controller
 	protected function belongsToDiskStorages(File $file): bool
 	{
 		$storage = $file->getStorage();
+		if (!$storage)
+		{
+			return false;
+		}
 
 		return $storage->getProxyType() instanceof Disk\ProxyType\Common
 			|| $storage->getProxyType() instanceof Disk\ProxyType\Group
@@ -173,36 +183,36 @@ final class DiskDocumentsController extends Disk\Internals\Engine\Controller
 		;
 	}
 
-	public function getInfoAction(array $trackedObjectIds)
+	public function getInfoAction(array $trackedObjectIds): array
 	{
 		$result = [];
 		$fileController = Main\Engine\ControllerBuilder::build(Disk\Controller\File::class, []);
-		foreach ($trackedObjectIds as $trackedObjectId => $action)
+		$userId = $this->getCurrentUser()?->getId();
+		if (!$userId)
 		{
-			$result[$trackedObjectId] = [];
+			return $result;
+		}
 
-			/** @var Disk\Document\TrackedObject $trackedObject */
-			if (empty(array_intersect(['shared', 'externalLink'], $action))
-				||
-				!($trackedObject = Disk\Document\TrackedObject::loadById((int)$trackedObjectId))
-				||
-				!$trackedObject->canRead($this->getCurrentUser()->getId())
-			)
+		foreach ($trackedObjectIds as $trackedObjectId => $actions)
+		{
+			$result[$trackedObjectId] = [
+				'shared' => null,
+				'externalLink' => null,
+			];
+
+			$trackedObject = Disk\Document\TrackedObject::getById((int)$trackedObjectId);
+			if (!$trackedObject || !$trackedObject->canRead($userId))
 			{
 				continue;
 			}
 
-			if (in_array('shared', $action))
+			if (\in_array('shared', $actions, true))
 			{
-				$result[$trackedObjectId]['shared'] = null;
-				if (!$trackedObject->canShare($this->getCurrentUser()->getId())
-					&&
-					!$trackedObject->canChangeRights($this->getCurrentUser()->getId()))
+				if (!$trackedObject->canShare($userId) && !$trackedObject->canChangeRights($userId))
 				{
-					/** @var Disk\User $user */
-					$user = Disk\User::getById($this->getCurrentUser()->getId());
+					$user = Disk\User::getById($userId);
 					$result[$trackedObjectId]['shared'] = [[
-						'entityId' => Disk\Sharing::CODE_USER . $this->getCurrentUser()->getId(),
+						'entityId' => Disk\Sharing::CODE_USER . $userId,
 						'name' => $user->getFormattedName(),
 						'url' => $user->getDetailUrl(),
 						'avatar' => $user->getAvatarSrc(),
@@ -215,15 +225,13 @@ final class DiskDocumentsController extends Disk\Internals\Engine\Controller
 				}
 			}
 
-			if (in_array('externalLink', $action))
+			if (\in_array('externalLink', $actions, true))
 			{
-				$result[$trackedObjectId]['externalLink'] = null;
-				if ($res = $fileController->getExternalLinkAction($trackedObject->getFile()))
-				{
-					$result[$trackedObjectId]['externalLink'] = $res['externalLink'];
-				}
+				$externalLinkData = $fileController->getExternalLinkAction($trackedObject->getFile());
+				$result[$trackedObjectId]['externalLink'] = $externalLinkData['externalLink'] ?? null;
 			}
 		}
+
 		return $result;
 	}
 

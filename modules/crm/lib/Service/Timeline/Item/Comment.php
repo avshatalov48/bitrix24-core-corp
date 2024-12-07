@@ -12,6 +12,8 @@ use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\CommentContent;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\FileList;
 use Bitrix\Crm\Service\Timeline\Layout\Body\Logo;
 use Bitrix\Crm\Service\Timeline\Layout\Common;
+use Bitrix\Crm\Service\Timeline\Layout\Footer\Button;
+use Bitrix\Crm\Service\Timeline\Layout\Header\ChangeStreamButton;
 use Bitrix\Crm\Service\Timeline\Layout\Menu\MenuItemFactory;
 use Bitrix\Crm\Timeline\CommentController;
 use Bitrix\Crm\Timeline\TimelineEntry;
@@ -47,6 +49,11 @@ class Comment extends Configurable
 		return Common\Logo::getInstance(Common\Logo::COMMENT)->createLogo();
 	}
 
+	private function isCurrentUserAuthor(): bool
+	{
+		return $this->getAuthorId() === $this->getContext()->getUserId();
+	}
+
 	public function getContentBlocks(): ?array
 	{
 		$result = [];
@@ -76,17 +83,18 @@ class Comment extends Configurable
 	{
 		$items = parent::getMenuItems();
 
-		$updateCommentAction = (new JsEvent('Comment:Edit')) // use single event to edit comment text and update files
-			->setAnimation(Animation::disableItem()->setForever())
-		;
-
-		$items['edit'] = MenuItemFactory::createEditMenuItem()
-			->setAction($updateCommentAction)
-			->setScopeWeb()
-		;
-
 		if ($this->hasUpdatePermission())
 		{
+			$updateCommentAction = (new JsEvent('Comment:Edit')) // use single event to edit comment text and update files
+				->setAnimation(Animation::disableItem()->setForever())
+			;
+
+			$items['edit'] = MenuItemFactory::createEditMenuItem()
+											->setAction($updateCommentAction)
+											->setScopeWeb()
+			;
+
+
 			$ownerTypeId = $this->getContext()->getIdentifier()->getEntityTypeId();
 			$ownerId = $this->getContext()->getIdentifier()->getEntityId();
 			$files = implode(',', array_column($this->getUserFieldFiles(), 'FILE_ID'));
@@ -103,18 +111,47 @@ class Comment extends Configurable
 			;
 		}
 
-		$items['delete'] = MenuItemFactory::createDeleteMenuItem()
-			->setAction(
-				(new JsEvent('Comment:Delete'))
+		if ($this->hasDeletePermission())
+		{
+			$items['delete'] = MenuItemFactory::createDeleteMenuItem()
+				->setAction((new JsEvent('Comment:Delete'))
 					->addActionParamInt('commentId', $this->getModel()->getId())
 					->addActionParamInt('ownerTypeId', $this->getContext()->getEntityTypeId())
 					->addActionParamInt('ownerId', $this->getContext()->getEntityId())
 					->addActionParamString('confirmationText', Loc::getMessage('CRM_TIMELINE_COMMENT_DELETION_CONFIRM'))
 					->setAnimation(Animation::disableItem()->setForever())
-			)
-		;
+				)
+			;
+		}
 
 		return $items;
+	}
+
+	public function getButtons(): ?array
+	{
+		$buttons = parent::getButtons() ?? [];
+
+		$isFixed = $this->getModel()->isFixed();
+		$buttons['changeStreamButton'] = !$isFixed
+			? $this->getPinFooterButton()
+			: $this->getUnpinFooterButton()
+		;
+
+		return $buttons;
+	}
+
+	private function getPinFooterButton(): Button
+	{
+		return (new Button(ChangeStreamButton::getPinTitle(), Button::TYPE_SECONDARY))
+			->setAction($this->getPinAction())
+		;
+	}
+
+	private function getUnpinFooterButton(): Button
+	{
+		return (new Button(ChangeStreamButton::getUnpinTitle(), Button::TYPE_SECONDARY))
+			->setAction($this->getUnpinAction())
+		;
 	}
 
 	public function needShowNotes(): bool
@@ -124,18 +161,16 @@ class Comment extends Configurable
 
 	protected function hasUpdatePermission(): bool
 	{
-		$model = $this->getModel();
-		$context = $this->getContext();
+		return $this->isCurrentUserAuthor();
+	}
 
-		$fields = [
-			'ID' => $model->getId(),
-			'OWNER_TYPE_ID' => $context->getEntityTypeId(),
-			'OWNER_ID' => $context->getEntityId(),
-		];
-
-		$userPermissions = $this->getContext()->getUserPermissions()->getCrmPermissions();
-
-		return CCrmActivity::CheckItemUpdatePermission($fields, $userPermissions);
+	protected function hasDeletePermission(): bool
+	{
+		if ($this->getContext()->getUserPermissions()->isAdminForEntity($this->getContext()->getEntityTypeId()))
+		{
+			return true;
+		}
+		return $this->isCurrentUserAuthor();
 	}
 
 	private function buildContentWebBlock(): ?ContentBlock
@@ -172,6 +207,7 @@ class Comment extends Configurable
 
 		$data = TimelineEntry::getByID($this->getModel()->getId()) ?? [];
 
+		$block->setEditable($this->isCurrentUserAuthor());
 		if ($scope === ContentBlock::SCOPE_MOBILE)
 		{
 			$comment = $data['COMMENT'] ?? '';

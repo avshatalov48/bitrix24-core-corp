@@ -2,15 +2,15 @@
  * @module layout/ui/search-bar/counter
  */
 jn.define('layout/ui/search-bar/counter', (require, exports, module) => {
-	const AppTheme = require('apptheme');
 	const { BaseItem } = require('layout/ui/search-bar/base-item');
-	const { CloseIcon, Title, CounterValue } = require('layout/ui/search-bar/ui');
+	const { ChipFilter, BadgeCounterDesign } = require('ui-system/blocks/chips/chip-filter');
+	const { Indent } = require('tokens');
 
-	const COUNTER_COLORS = {
-		8: AppTheme.colors.accentMainSuccess, // incoming
-		20: AppTheme.colors.accentMainAlert, // current
-		999: AppTheme.colors.accentBrandBlue,
-		default: AppTheme.colors.base5,
+	const COUNTER_DESIGNS = {
+		8: BadgeCounterDesign.SUCCESS, // incoming
+		20: BadgeCounterDesign.ALERT, // current
+		999: BadgeCounterDesign.PRIMARY,
+		default: BadgeCounterDesign.GREY,
 	};
 
 	/**
@@ -31,25 +31,36 @@ jn.define('layout/ui/search-bar/counter', (require, exports, module) => {
 			};
 		}
 
-		/**
-		 * @protected
-		 * @override
-		 * @return {object[]}
-		 */
-		renderContent()
+		render()
 		{
-			const { active, showValue, typeId, title } = this.props;
+			const {
+				id,
+				title,
+				active,
+				showValue,
+				value,
+				last,
+				typeId,
+			} = this.props;
 
-			return [
-				Title({
+			return ChipFilter(
+				{
+					testId: id,
 					text: title,
-				}),
-				showValue && CounterValue({
-					color: this.getCounterColor(typeId),
-					value: this.getCounterValue(),
-				}),
-				active && CloseIcon(),
-			];
+					selected: active,
+					counterValue: showValue ? value : null,
+					counterDesign: this.getCounterDesign(typeId),
+					onClick: () => this.onClick(),
+					style: {
+						marginRight: (last) ? 0 : Indent.M.toNumber(),
+						flexShrink: null,
+						flexGrow: 2,
+					},
+					textStyles: {
+						maxWidth: 250,
+					},
+				},
+			);
 		}
 
 		/**
@@ -59,30 +70,16 @@ jn.define('layout/ui/search-bar/counter', (require, exports, module) => {
 		 */
 		getSearchButtonBackgroundColor()
 		{
-			return this.getCounterColor(this.props.typeId);
+			return this.getCounterDesign(this.props.typeId).getBackgroundColor().toHex();
 		}
 
 		/**
 		 * @protected
 		 * @return {string}
 		 */
-		getCounterColor(typeId)
+		getCounterDesign(typeId)
 		{
-			return COUNTER_COLORS[Number(typeId)] ?? COUNTER_COLORS.default;
-		}
-
-		/**
-		 * @private
-		 * @return {string}
-		 */
-		getCounterValue()
-		{
-			if (this.props.value > 99)
-			{
-				return '99+';
-			}
-
-			return String(this.props.value);
+			return COUNTER_DESIGNS[Number(typeId)] ?? COUNTER_DESIGNS.default;
 		}
 
 		/**

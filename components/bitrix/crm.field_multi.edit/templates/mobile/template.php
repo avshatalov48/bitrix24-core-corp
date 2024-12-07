@@ -58,7 +58,7 @@ foreach($arResult['TYPE_BOX']["REFERENCE"] as $key=>$name)
 	</div>
 </div>
 
-<script type="text/javascript">
+<script>
 	BX.ready(
 		function()
 		{

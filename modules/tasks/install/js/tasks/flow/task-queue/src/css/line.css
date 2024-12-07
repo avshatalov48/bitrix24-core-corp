@@ -1,0 +1,25 @@
+.tasks-flow__task-queue-line {
+	--ui-icon-set__icon-color: var(--ui-color-base-35);
+	display: flex;
+	align-items: center;
+	gap: 3px;
+	padding: 7px 0;
+	font-size: var(--ui-font-size-md);
+	color: var(--ui-color-base-35);
+	line-height: var(--ui-font-line-height-sm);
+}
+
+.tasks-flow__task-queue-line_time {
+	overflow: hidden;
+	margin-left: auto;
+	padding-left: 10px;
+	font-size: var(--ui-font-size-sm);
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	color: var(--ui-color-text-secondary);
+}
+
+.tasks-flow__task-queue-line_number {
+	min-width: 16px;
+	margin-right: 2px;
+}

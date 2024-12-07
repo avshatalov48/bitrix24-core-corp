@@ -36,7 +36,8 @@ jn.define('toast/remove', (require, exports, module) => {
 	function showRemoveToast(params = {}, layoutWidget = null)
 	{
 		const mergedParams = mergeImmutable(defaultParams, params);
-		showToast(mergedParams, layoutWidget);
+
+		return showToast(mergedParams, layoutWidget);
 	}
 
 	const defaultParams = {

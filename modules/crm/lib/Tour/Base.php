@@ -3,15 +3,22 @@
 namespace Bitrix\Crm\Tour;
 
 use Bitrix\Crm\Traits;
-use Bitrix\Main\Config\Option;
-use CUserOptions;
 
 abstract class Base
 {
 	use Traits\Singleton;
 
+	private const COMPONENT_NAME = 'bitrix:crm.whats_new';
+
 	protected const OPTION_CATEGORY = 'crm.tour';
 	protected const OPTION_NAME = '';
+
+	/**
+	 * Number of times the tour was shown (Default: 1)
+	 *
+	 * @return int
+	 */
+	protected int $numberOfViewsLimit = 1;
 
 	/**
 	 * Determine whether to show a tour
@@ -22,11 +29,7 @@ abstract class Base
 
 	public function build(): string
 	{
-		if (!$this->canShow())
-		{
-			return '';
-		}
-		if ($this->isDeactivated())
+		if ($this->isBuildComponentDisabled())
 		{
 			return '';
 		}
@@ -34,7 +37,7 @@ abstract class Base
 		ob_start();
 		global $APPLICATION;
 		$APPLICATION->IncludeComponent(
-			'bitrix:crm.whats_new',
+			self::COMPONENT_NAME,
 			$this->getComponentTemplate(),
 			[
 				'SLIDES' => $this->getSlides(),
@@ -46,13 +49,6 @@ abstract class Base
 		);
 
 		return ob_get_clean();
-	}
-
-	protected function isUserSeenTour(): bool
-	{
-		$option = CUserOptions::GetOption(static::OPTION_CATEGORY, static::OPTION_NAME, []);
-
-		return (isset($option['closed']) && $option['closed'] === 'Y');
 	}
 
 	protected function getComponentTemplate(): string
@@ -85,8 +81,47 @@ abstract class Base
 		return static::OPTION_NAME;
 	}
 
-	private function isDeactivated(): bool
+	protected function isBuildComponentDisabled(): bool
 	{
-		return (Option::get(static::OPTION_CATEGORY, 'HIDE_ALL_TOURS', 'N') === 'Y');
+		return Config::isToursDeactivated($this->getOptionCategory())
+			|| $this->isNumberOfViewsExceeded()
+			|| !$this->canShow()
+		;
+	}
+
+	protected function isUserSeenTour(): bool
+	{
+		$option = Config::getPersonalValue(
+			static::OPTION_CATEGORY,
+			static::OPTION_NAME,
+			Config::CODE_CLOSED
+		);
+
+		return ($option ?? null) === 'Y';
+	}
+
+	protected function isNumberOfViewsExceeded(): bool
+	{
+		$option = Config::getPersonalValue(
+			static::OPTION_CATEGORY,
+			static::OPTION_NAME,
+			Config::CODE_NUMBER_OF_VIEWS
+		);
+
+		if (isset($option))
+		{
+			$currentNumberOfViews = (int)$option;
+		}
+		else
+		{
+			$currentNumberOfViews = $this->isUserSeenTour() ? 1 : 0;
+		}
+
+		return $currentNumberOfViews > $this->numberOfViewsLimit;
+	}
+
+	protected function isMultipleViewsAllowed(): bool
+	{
+		return $this->numberOfViewsLimit > 1;
 	}
 }

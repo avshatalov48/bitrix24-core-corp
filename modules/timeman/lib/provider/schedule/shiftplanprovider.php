@@ -15,7 +15,7 @@ class ShiftPlanProvider extends ShiftPlanRepository
 			return null;
 		}
 		$key = $this->buildComplexIdKey($shiftId, $userId, $dateAssigned);
-		if ($this->activePlansByComplexId[$key] === null)
+		if (($this->activePlansByComplexId[$key] ?? null) === null)
 		{
 			$this->activePlansByComplexId[$key] = false;
 			$result = parent::findActiveByComplexId($shiftId, $userId, $dateAssigned);

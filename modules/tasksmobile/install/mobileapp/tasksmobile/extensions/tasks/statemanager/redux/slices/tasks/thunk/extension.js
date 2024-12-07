@@ -5,11 +5,52 @@ jn.define('tasks/statemanager/redux/slices/tasks/thunk', (require, exports, modu
 	const { createAsyncThunk } = require('statemanager/redux/toolkit');
 	const { RunActionExecutor } = require('rest/run-action-executor');
 	const { isOnline } = require('device/connection');
+	const { selectRelatedTasksById } = require('tasks/statemanager/redux/slices/tasks/selector');
+
+	const { Views } = require('tasks/statemanager/redux/types');
+	const { selectStages } = require('tasks/statemanager/redux/slices/kanban-settings/selector');
+	const { selectById } = require('tasks/statemanager/redux/slices/stage-settings/selector');
 
 	const runActionPromise = ({ action, options }) => new Promise((resolve) => {
 		(new RunActionExecutor(action, options)).setHandler(resolve).call(false);
 	});
 	const condition = () => isOnline();
+
+	const create = createAsyncThunk(
+		'tasks:tasks/create',
+		async ({ taskId, serverFields, relatedTaskId = null }, store) => {
+			const response = await runActionPromise({
+				action: 'tasksmobile.Task.add',
+				options: { fields: serverFields },
+			});
+
+			if (response.status === 'success' && relatedTaskId)
+			{
+				const currentRelatedTasks = selectRelatedTasksById(store.getState(), relatedTaskId);
+				const currentRelatedTasksIds = currentRelatedTasks.map((task) => task.id);
+				const newRelatedTasks = [...currentRelatedTasksIds, response.data.task.id];
+
+				await store.dispatch(updateRelatedTasks({
+					taskId: relatedTaskId,
+					newRelatedTasks: [response.data.task.id],
+					deletedRelatedTasks: [],
+					relatedTasks: newRelatedTasks,
+				}));
+			}
+
+			return response;
+		},
+		{ condition },
+	);
+
+	const update = createAsyncThunk(
+		'tasks:tasks/update',
+		({ taskId, serverFields, withStageData }) => runActionPromise({
+			action: 'tasksmobile.Task.update',
+			options: { taskId, fields: serverFields, withStageData },
+		}),
+		{ condition },
+	);
 
 	const updateDeadline = createAsyncThunk(
 		'tasks:tasks/updateDeadline',
@@ -20,14 +61,35 @@ jn.define('tasks/statemanager/redux/slices/tasks/thunk', (require, exports, modu
 				deadline: (deadline ? (new Date(deadline)).toISOString() : null),
 			},
 		}),
-		{ condition },
+		{
+			condition,
+			getPendingMeta: (action, store) => {
+				// prepare stages for deadline view to update task-stages in case of deadline change
+				// this is needed to prepare data for pending reducers
+				const stageIds = selectStages(store.getState(), Views.DEADLINE);
+				const deadlineStages = stageIds.map((id) => selectById(store.getState(), id)).filter(Boolean);
+
+				return {
+					stages: deadlineStages,
+				};
+			},
+		},
 	);
 
 	const delegate = createAsyncThunk(
 		'tasks:tasks/delegate',
 		({ taskId, userId }) => runActionPromise({
-			action: 'tasks.task.delegate',
+			action: 'tasksmobile.Task.delegate',
 			options: { taskId, userId },
+		}),
+		{ condition },
+	);
+
+	const follow = createAsyncThunk(
+		'tasks:tasks/follow',
+		({ taskId }) => runActionPromise({
+			action: 'tasksmobile.Task.follow',
+			options: { taskId },
 		}),
 		{ condition },
 	);
@@ -44,7 +106,7 @@ jn.define('tasks/statemanager/redux/slices/tasks/thunk', (require, exports, modu
 	const startTimer = createAsyncThunk(
 		'tasks:tasks/startTimer',
 		({ taskId }) => runActionPromise({
-			action: 'tasks.task.startTimer',
+			action: 'tasksmobile.Task.startTimer',
 			options: { taskId },
 		}),
 		{ condition },
@@ -53,7 +115,7 @@ jn.define('tasks/statemanager/redux/slices/tasks/thunk', (require, exports, modu
 	const pauseTimer = createAsyncThunk(
 		'tasks:tasks/pauseTimer',
 		({ taskId }) => runActionPromise({
-			action: 'tasks.task.pauseTimer',
+			action: 'tasksmobile.Task.pauseTimer',
 			options: { taskId },
 		}),
 		{ condition },
@@ -62,7 +124,7 @@ jn.define('tasks/statemanager/redux/slices/tasks/thunk', (require, exports, modu
 	const start = createAsyncThunk(
 		'tasks:tasks/start',
 		({ taskId }) => runActionPromise({
-			action: 'tasks.task.start',
+			action: 'tasksmobile.Task.start',
 			options: { taskId },
 		}),
 		{ condition },
@@ -71,7 +133,7 @@ jn.define('tasks/statemanager/redux/slices/tasks/thunk', (require, exports, modu
 	const pause = createAsyncThunk(
 		'tasks:tasks/pause',
 		({ taskId }) => runActionPromise({
-			action: 'tasks.task.pause',
+			action: 'tasksmobile.Task.pause',
 			options: { taskId },
 		}),
 		{ condition },
@@ -90,6 +152,15 @@ jn.define('tasks/statemanager/redux/slices/tasks/thunk', (require, exports, modu
 		'tasks:tasks/renew',
 		({ taskId }) => runActionPromise({
 			action: 'tasksmobile.Task.renew',
+			options: { taskId },
+		}),
+		{ condition },
+	);
+
+	const defer = createAsyncThunk(
+		'tasks:tasks/defer',
+		({ taskId }) => runActionPromise({
+			action: 'tasksmobile.Task.defer',
 			options: { taskId },
 		}),
 		{ condition },
@@ -212,9 +283,30 @@ jn.define('tasks/statemanager/redux/slices/tasks/thunk', (require, exports, modu
 		{ condition },
 	);
 
+	const updateSubTasks = createAsyncThunk(
+		'tasks:tasks/updateSubTasks',
+		({ parentId, newSubTasks, deletedSubTasks }) => runActionPromise({
+			action: 'tasksmobile.Task.updateParentIdToTaskIds',
+			options: { parentId, newSubTasks, deletedSubTasks },
+		}),
+		{ condition },
+	);
+
+	const updateRelatedTasks = createAsyncThunk(
+		'tasks:tasks/updateRelatedTasks',
+		({ taskId, newRelatedTasks, deletedRelatedTasks, relatedTasks }) => runActionPromise({
+			action: 'tasksmobile.Task.updateRelatedTasks',
+			options: { taskId, newRelatedTasks, deletedRelatedTasks, relatedTasks },
+		}),
+		{ condition },
+	);
+
 	module.exports = {
+		create,
+		update,
 		updateDeadline,
 		delegate,
+		follow,
 		unfollow,
 		startTimer,
 		pauseTimer,
@@ -222,6 +314,7 @@ jn.define('tasks/statemanager/redux/slices/tasks/thunk', (require, exports, modu
 		pause,
 		complete,
 		renew,
+		defer,
 		approve,
 		disapprove,
 		ping,
@@ -235,5 +328,7 @@ jn.define('tasks/statemanager/redux/slices/tasks/thunk', (require, exports, modu
 		read,
 		readAllForRole,
 		readAllForProject,
+		updateSubTasks,
+		updateRelatedTasks,
 	};
 });

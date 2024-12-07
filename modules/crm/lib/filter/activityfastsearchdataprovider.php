@@ -170,4 +170,17 @@ class ActivityFastSearchDataProvider extends EntityDataProvider
 		}
 	}
 
+	public function prepareFilterValue(array $rawFilterValue): array
+	{
+		$parentEntityDataProvider = $this->settings->getParentEntityDataProvider();
+		$parentEntityTypeId = $this->settings->getParentFilterEntityTypeId();
+
+		$parentEntityDataProvider->applyActivityFastSearchFilter(
+			$parentEntityTypeId,
+			$rawFilterValue,
+		);
+
+		return $rawFilterValue;
+	}
+
 }

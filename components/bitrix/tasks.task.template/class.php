@@ -1,11 +1,15 @@
 <?php
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
 
+use Bitrix\Main\Engine\Contract\Controllerable;
+use Bitrix\Main\Errorable;
 use Bitrix\Main\Localization\Loc;
 
+use Bitrix\Main\Web\Uri;
 use Bitrix\Tasks\Access\Model\UserModel;
 use Bitrix\Tasks\CheckList\Template\TemplateCheckListConverterHelper;
 use Bitrix\Tasks\CheckList\Template\TemplateCheckListFacade;
+use Bitrix\Tasks\Integration\Bitrix24;
 use Bitrix\Tasks\Integration\Intranet\Settings;
 use Bitrix\Tasks\Provider\TemplateProvider;
 use Bitrix\Tasks\Util\Error\Collection;
@@ -18,14 +22,12 @@ use Bitrix\Tasks\Util\User;
 use Bitrix\Tasks\Integration\SocialNetwork\Group;
 use Bitrix\Tasks\UI;
 use Bitrix\Tasks\Item\Converter\Task\Template\ToTemplate;
-use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\TemplateSubtaskLimit;
 
 Loc::loadMessages(__FILE__);
 
 CBitrixComponent::includeComponentClass("bitrix:tasks.base");
 
-class TasksTaskTemplateComponent extends TasksBaseComponent
-	implements \Bitrix\Main\Errorable, \Bitrix\Main\Engine\Contract\Controllerable
+class TasksTaskTemplateComponent extends TasksBaseComponent implements Errorable, Controllerable
 {
 	/** @var null|Template */
 	protected $template = 		null;
@@ -442,8 +444,21 @@ class TasksTaskTemplateComponent extends TasksBaseComponent
 		);
 
 		$this->arResult['AUX_DATA']['TASK_LIMIT_EXCEEDED'] = TaskLimit::isLimitExceeded();
-		$this->arResult['AUX_DATA']['TEMPLATE_SUBTASK_LIMIT_EXCEEDED'] = TemplateSubtaskLimit::isLimitExceeded();
-		$this->arResult['AUX_DATA']['TASK_RECURRENT_RESTRICT'] = Util\Restriction\Bitrix24Restriction\Limit\RecurringLimit::isLimitExceeded();
+
+		$taskTemplatesSubtasksEnabled = Bitrix24::checkFeatureEnabled(
+			Bitrix24\FeatureDictionary::TASK_TEMPLATES_SUBTASKS
+		);
+		$this->arResult['AUX_DATA']['TEMPLATE_SUBTASK_LIMIT_EXCEEDED'] = !$taskTemplatesSubtasksEnabled;
+
+		$taskRecurringEnabled = Bitrix24::checkFeatureEnabled(
+			Bitrix24\FeatureDictionary::TASK_RECURRING_TASKS
+		);
+		$this->arResult['AUX_DATA']['TASK_RECURRENT_RESTRICT'] = !$taskRecurringEnabled;
+
+		$taskTimeTrackingEnabled = Bitrix24::checkFeatureEnabled(
+			Bitrix24\FeatureDictionary::TASK_TIME_TRACKING
+		);
+		$this->arResult['AUX_DATA']['TASK_TIME_TRACKING_RESTRICT'] = !$taskTimeTrackingEnabled;
 
 		parent::getAuxData();
 	}
@@ -575,13 +590,21 @@ class TasksTaskTemplateComponent extends TasksBaseComponent
 		$url = $backUrl != '' ? Util::secureBackUrl($backUrl) : $GLOBALS["APPLICATION"]->GetCurPageParam('');
 		$action = 'view'; // having default backurl after success edit we go to view ...
 
-        $isIframe = $_REQUEST['IFRAME'] && $_REQUEST['IFRAME']=='Y';
-        if($isIframe)
-        {
-            $url .= '?IFRAME=Y';
-        }
+		$uri = new Uri(
+			UI\Task\Template::makeActionUrl($url, static::getOperationTaskId($operation), $action)
+		);
+		$isIframe = $_REQUEST['IFRAME'] && $_REQUEST['IFRAME'] == 'Y';
+		if ($isIframe)
+		{
+			$uri->addParams(['IFRAME' => 'Y']);
+		}
 
-		return UI\Task\Template::makeActionUrl($url, static::getOperationTaskId($operation), $action);
+		if ($this->onContext())
+		{
+			$uri->addParams(['context' => $this->getContext()]);
+		}
+
+		return $uri->getUri();
 	}
 
 	private function getBackUrl()
@@ -735,5 +758,15 @@ class TasksTaskTemplateComponent extends TasksBaseComponent
 		}
 
 		return $ids;
+	}
+
+	private function onContext(): bool
+	{
+		return $this->getContext() !== '';
+	}
+
+	private function getContext(): string
+	{
+		return (string)($this->request->get('context') ?? null);
 	}
 }

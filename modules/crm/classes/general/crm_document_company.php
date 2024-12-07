@@ -1,6 +1,7 @@
 <?php
 
 use Bitrix\Crm;
+use Bitrix\Crm\Restriction\RestrictionManager;
 
 if (!CModule::IncludeModule('bizproc'))
 	return;
@@ -241,6 +242,14 @@ class CCrmDocumentCompany extends CCrmDocument implements IBPWorkflowDocument
 				'Editable' => true,
 				'Required' => false,
 			],
+			"OBSERVER_IDS" => [
+				"Name" => GetMessage("CRM_FIELD_OBSERVER_IDS"),
+				"Type" => "user",
+				"Editable" => !RestrictionManager::getObserversFieldRestriction(\CCrmOwnerType::Company)->isExceeded(),
+				"Required" => false,
+				"Multiple" => true,
+				'Default' => [],
+			],
 		);
 
 		$arResult += static::getCommunicationFields();
@@ -291,7 +300,7 @@ class CCrmDocumentCompany extends CCrmDocument implements IBPWorkflowDocument
 	{
 		if(!is_array($arFields))
 		{
-			throw new Exception("Entity fields must be array");
+			throw new \Bitrix\Main\ArgumentException("Entity fields must be array");
 		}
 
 		global $DB;
@@ -348,7 +357,7 @@ class CCrmDocumentCompany extends CCrmDocument implements IBPWorkflowDocument
 				unset($value);
 			}
 
-			if (!$arDocumentFields[$key]["Multiple"] && is_array($arFields[$key]))
+			if (!($arDocumentFields[$key]["Multiple"] ?? false) && is_array($arFields[$key]))
 			{
 				if (count($arFields[$key]) > 0)
 				{
@@ -400,7 +409,7 @@ class CCrmDocumentCompany extends CCrmDocument implements IBPWorkflowDocument
 			{
 				$DB->Rollback();
 			}
-			throw new Exception($CCrmEntity->LAST_ERROR);
+			throw new \Bitrix\Main\SystemException($CCrmEntity->LAST_ERROR);
 		}
 
 		//region Try to create requisite
@@ -421,7 +430,7 @@ class CCrmDocumentCompany extends CCrmDocument implements IBPWorkflowDocument
 			$CCrmBizProc = new CCrmBizProc(CCrmOwnerType::CompanyName);
 			if ($CCrmBizProc->CheckFields(false, true) === false)
 			{
-				throw new Exception($CCrmBizProc->LAST_ERROR);
+				throw new \Bitrix\Main\SystemException($CCrmBizProc->LAST_ERROR);
 			}
 
 			if (!$CCrmBizProc->StartWorkflow($ID))
@@ -430,7 +439,7 @@ class CCrmDocumentCompany extends CCrmDocument implements IBPWorkflowDocument
 				{
 					$DB->Rollback();
 				}
-				throw new Exception($CCrmBizProc->LAST_ERROR);
+				throw new \Bitrix\Main\SystemException($CCrmBizProc->LAST_ERROR);
 			}
 		}
 
@@ -468,7 +477,7 @@ class CCrmDocumentCompany extends CCrmDocument implements IBPWorkflowDocument
 
 		$arResult = $dbDocumentList->Fetch();
 		if (!$arResult)
-			throw new Exception(GetMessage('CRM_DOCUMENT_ELEMENT_IS_NOT_FOUND'));
+			throw new \Bitrix\Main\SystemException(GetMessage('CRM_DOCUMENT_ELEMENT_IS_NOT_FOUND'));
 
 		$complexDocumentId = [$arDocumentID['DOCUMENT_TYPE'][0], $arDocumentID['DOCUMENT_TYPE'][1], $documentId];
 		$arDocumentFields = self::GetDocumentFields($arDocumentID['TYPE']);
@@ -577,14 +586,14 @@ class CCrmDocumentCompany extends CCrmDocument implements IBPWorkflowDocument
 			{
 				$DB->Rollback();
 			}
-			throw new Exception($CCrmEntity->LAST_ERROR);
+			throw new \Bitrix\Main\SystemException($CCrmEntity->LAST_ERROR);
 		}
 
 		if (COption::GetOptionString("crm", "start_bp_within_bp", "N") == "Y")
 		{
 			$CCrmBizProc = new CCrmBizProc('COMPANY');
 			if (false === $CCrmBizProc->CheckFields($arDocumentID['ID'], true))
-				throw new Exception($CCrmBizProc->LAST_ERROR);
+				throw new \Bitrix\Main\SystemException($CCrmBizProc->LAST_ERROR);
 
 			if ($res && !$CCrmBizProc->StartWorkflow($arDocumentID['ID']))
 			{
@@ -592,7 +601,7 @@ class CCrmDocumentCompany extends CCrmDocument implements IBPWorkflowDocument
 				{
 					$DB->Rollback();
 				}
-				throw new Exception($CCrmBizProc->LAST_ERROR);
+				throw new \Bitrix\Main\SystemException($CCrmBizProc->LAST_ERROR);
 			}
 		}
 

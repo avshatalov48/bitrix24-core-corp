@@ -6,12 +6,23 @@ use Bitrix\Crm\Activity\Provider\Sms\PlaceholderContext;
 use Bitrix\Crm\Activity\Provider\Sms\PlaceholderManager;
 use Bitrix\Crm\Controller\Base;
 use Bitrix\Crm\Controller\ErrorCode;
+use Bitrix\Crm\Integration\DocumentGeneratorManager;
 use Bitrix\Crm\Service\Container;
+use Bitrix\Main\Engine\ActionFilter;
 use Bitrix\Main\Error;
 use Bitrix\Main\Result;
+use CCrmOwnerType;
 
 class SmsPlaceholder extends Base
 {
+	protected function getDefaultPreFilters(): array
+	{
+		$filters = parent::getDefaultPreFilters();
+		$filters[] = new ActionFilter\Scope(ActionFilter\Scope::NOT_REST);
+
+		return $filters;
+	}
+
 	public function createOrUpdatePlaceholderAction(
 		int $templateId,
 		string $placeholderId,
@@ -49,7 +60,7 @@ class SmsPlaceholder extends Base
 			return $result;
 		}
 
-		if (!\CCrmOwnerType::isCorrectEntityTypeId($entityTypeId))
+		if (!CCrmOwnerType::isCorrectEntityTypeId($entityTypeId))
 		{
 			$this->addError(ErrorCode::getEntityTypeNotSupportedError($entityTypeId));
 
@@ -84,7 +95,7 @@ class SmsPlaceholder extends Base
 	{
 		$result = new Result();
 
-		if (!\CCrmOwnerType::isCorrectEntityTypeId($entityTypeId))
+		if (!CCrmOwnerType::isCorrectEntityTypeId($entityTypeId))
 		{
 			$this->addError(ErrorCode::getEntityTypeNotSupportedError($entityTypeId));
 
@@ -101,6 +112,45 @@ class SmsPlaceholder extends Base
 		$context = PlaceholderContext::createInstance($entityTypeId, $entityCategoryId);
 
 		return (new PlaceholderManager())->delete($templateId, $placeholderId, $context);
+	}
+
+	public function previewAction(int $entityTypeId, int $entityId, string $message, ?int $entityCategoryId = null): ?array
+	{
+		$docGen = DocumentGeneratorManager::getInstance();
+
+		if (!$docGen->isEnabled())
+		{
+			$this->addError(new Error('Module "documentgenerator" is not installed'));
+
+			return null;
+		}
+
+		if (!CCrmOwnerType::isCorrectEntityTypeId($entityTypeId))
+		{
+			$this->addError(ErrorCode::getEntityTypeNotSupportedError($entityTypeId));
+
+			return null;
+		}
+
+		if (!$this->checkPermissions($entityTypeId, $entityCategoryId))
+		{
+			$this->addError(ErrorCode::getAccessDeniedError());
+
+			return null;
+		}
+
+		$htmlMessage = $docGen->replacePlaceholdersInText(
+			$entityTypeId,
+			$entityId,
+			$message,
+			' '
+		);
+
+		return [
+			'preview' => html_entity_decode(
+				preg_replace('/<br\/?>/i', PHP_EOL, $htmlMessage)
+			),
+		];
 	}
 
 	private function checkPermissions(int $entityTypeId, ?int $entityCategoryId = null): bool

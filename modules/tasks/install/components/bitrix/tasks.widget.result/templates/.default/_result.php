@@ -31,6 +31,13 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 Extension::load('ui.fonts.opensans');
 
 $author = $arResult['USERS'][$result->getCreatedBy()] ?: null;
+$currentUserId = CurrentUser::get()->getId();
+
+$createdDate = CComponentUtil::GetDateTimeFormatted(
+	timestamp: $result->getCreatedAt()->getTimestamp() + CTimeZone::GetOffset($currentUserId),
+	offset: CTimeZone::GetOffset($currentUserId)
+);
+
 ?>
 
 <div
@@ -40,7 +47,7 @@ $author = $arResult['USERS'][$result->getCreatedBy()] ?: null;
 >
 	<div class="tasks-widget-result__item--header">
 		<div class="tasks-widget-result__item--header-title"><?= Loc::getMessage('TASKS_RESULT_HEADER'); ?></div>
-			<?php if(ResultAccessController::can(CurrentUser::get()->getId(), ActionDictionary::ACTION_TASK_REMOVE_RESULT, $result->getId())): ?>
+			<?php if(ResultAccessController::can($currentUserId, ActionDictionary::ACTION_TASK_REMOVE_RESULT, $result->getId())): ?>
 			<div class="tasks-widget-result-remove" onclick="BX.Tasks.ResultAction.getInstance().deleteFromComment('<?= $result->getCommentId() ?>')"><?= Loc::getMessage('TASKS_RESULTS_REMOVE_RESULT') ?></div>
 			<?php endif;?>
 		</div>
@@ -54,7 +61,7 @@ $author = $arResult['USERS'][$result->getCreatedBy()] ?: null;
 				<div class="tasks-widget-result__item-header--time-block">
 					<i class="tasks-widget-result__item-header--time-img"></i>
 					<a class="tasks-widget-result__item-header--time ui-link ui-link-secondary" rel="nofollow">
-						<?= \CComponentUtil::GetDateTimeFormatted(\Bitrix\Tasks\UI::parseDateTime($result->getCreatedAt())); ?>
+						<?= $createdDate; ?>
 					</a>
 				</div>
 			</div>

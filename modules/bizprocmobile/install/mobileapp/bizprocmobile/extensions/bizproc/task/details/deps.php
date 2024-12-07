@@ -3,6 +3,7 @@
 return [
 	'bundle' => [
 		'./skeleton',
+		'./buttons',
 	],
 	'extensions' => [
 		'alert',
@@ -14,18 +15,21 @@ return [
 		'haptics',
 		'event-emitter',
 		'notify-manager',
+		'toast',
+
 		'utils/file',
 		'utils/function',
 		'utils/skeleton',
 		'utils/random',
-		'bizproc:task/buttons',
-		'bizproc:task/fields',
+
 		'layout/ui/context-menu',
 		'layout/pure-component',
 		'layout/ui/fields/focus-manager',
-		'layout/ui/collapsible-text',
 		'selector/widget/factory',
 
 		'bizproc:workflow/comments',
+		'bizproc:task/task-constants',
+		'bizproc:task/buttons',
+		'bizproc:task/fields',
 	],
 ];

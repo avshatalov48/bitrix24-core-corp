@@ -7,6 +7,7 @@ jn.define('crm/entity-detail/toolbar/content/templates/audio-player-wrapper', (r
 	const { throttle, debounce } = require('utils/function');
 	const { Loc } = require('loc');
 	const { Feature } = require('feature');
+	const { ContextMenu } = require('layout/ui/context-menu');
 
 	const MARKER_SIZE = 20;
 

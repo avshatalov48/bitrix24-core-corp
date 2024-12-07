@@ -38,6 +38,11 @@ jn.define('im/messenger/provider/rest/message', (require, exports, module) => {
 				messageAddParams.fields.forwardIds = options.forwardIds;
 			}
 
+			if (Type.isObject(options.copilot))
+			{
+				messageAddParams.fields.copilot = options.copilot;
+			}
+
 			return runAction(RestMethod.imV2ChatMessageSend, {
 				data: messageAddParams,
 			});

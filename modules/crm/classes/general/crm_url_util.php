@@ -72,24 +72,18 @@ class CCrmUrlUtil
 
 		return $scheme.'://'.$host.(($port !== 80 && $port !== 443) ? ':'.$port : '').'/'.$url;
 	}
-	public static function UrnEncode($str, $charset = false)
+	public static function UrnEncode($str)
 	{
 		global $APPLICATION;
 
 		$result = '';
 		$arParts = preg_split("#(://|:\\d+/|/|\\?|=|&)#", $str, -1, PREG_SPLIT_DELIM_CAPTURE);
 
-		if($charset === false)
-		{
-			$charset = LANG_CHARSET;
-		}
-
 		foreach($arParts as $i => $part)
 		{
 			$result .= ($i % 2)
 				? $part
-				: rawurlencode($APPLICATION->ConvertCharset($part, $charset, 'UTF-8'));
-			//$result .= ($i % 2) ? $part : urlencode(iconv('windows-1251', 'UTF-8', $part));
+				: rawurlencode($part);
 		}
 
 		return $result;
@@ -420,7 +414,7 @@ class CCrmUrlTemplate
 		$this->nodes = array();
 
 		$this->template = preg_replace('/[\r\n]/', '', $this->template);
-		$result = preg_match_all('/\[\s*\/?\s*[a-z0-9_]+\s*\/?\s*\]/i'.BX_UTF_PCRE_MODIFIER,
+		$result = preg_match_all('/\[\s*\/?\s*[a-z0-9_]+\s*\/?\s*\]/iu',
 			$this->template,
 			$matches,
 			PREG_SET_ORDER|PREG_OFFSET_CAPTURE

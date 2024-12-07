@@ -2,11 +2,26 @@
 
 namespace Bitrix\Intranet\Invitation;
 
+use Bitrix\Intranet\CurrentUser;
+use Bitrix\Intranet\Entity\Collection\InvitationCollection;
+use Bitrix\Intranet\Enum\InvitationType;
+use Bitrix\Intranet\Exception\CreationFailedException;
+use Bitrix\Intranet\Service\InviteMessageFactory;
+use Bitrix\Intranet\Service\InviteService;
+use Bitrix\Intranet\Service\RegistrationService;
+use Bitrix\Intranet\Service\ServiceContainer;
+use Bitrix\Intranet\Entity\Invitation as InvitationEntity;
 use Bitrix\Intranet\Internals\InvitationTable;
+use Bitrix\Intranet\User;
 use Bitrix\Main\Config\Option;
+use Bitrix\Main\Error;
+use Bitrix\Main\ErrorCollection;
+use Bitrix\Main\Event;
+use Bitrix\Main\EventManager;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ModuleManager;
+use Bitrix\Main\Result;
 use Bitrix\Main\Security\Random;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\UserTable;
@@ -48,7 +63,7 @@ class Register
 		return 100;
 	}
 
-	public static function checkItems($items, &$errors)
+	public static function checkItems($items): Result
 	{
 		$emailItems = [];
 		$phoneItems = [];
@@ -98,7 +113,6 @@ class Register
 					else
 					{
 						$dailyPhoneLimitExceeded = true;
-//						$errorPhoneItems[] = $item["PHONE"];
 					}
 				}
 				else
@@ -121,35 +135,40 @@ class Register
 			}
 		}
 
+		$result = new Result();
 		if ($dailyPhoneLimitExceeded)
 		{
-			$errors[] = Loc::getMessage("INTRANET_INVITATION_DAILY_PHONE_LIMIT_EXCEEDED");
+			$result->addError(new Error(Loc::getMessage("INTRANET_INVITATION_DAILY_PHONE_LIMIT_EXCEEDED")));
 		}
 
 		if ($phoneCnt >= 5)
 		{
-			$errors[] = Loc::getMessage("INTRANET_INVITATION_PHONE_LIMIT_EXCEEDED");
+			$result->addError(new Error(Loc::getMessage("INTRANET_INVITATION_PHONE_LIMIT_EXCEEDED")));
 		}
 
 		if ($emailCnt > self::getMaxEmailCount())
 		{
-			$errors[] = Loc::getMessage("INTRANET_INVITATION_EMAIL_LIMIT_EXCEEDED");
+			$result->addError(new Error(Loc::getMessage("INTRANET_INVITATION_EMAIL_LIMIT_EXCEEDED")));
 		}
 
 		if (!empty($errorEmailItems))
 		{
-			$errors[] = Loc::getMessage("INTRANET_INVITATION_EMAIL_ERROR")." ".implode(", ", $errorEmailItems);
+			$result->addError(
+				new Error(
+					Loc::getMessage("INTRANET_INVITATION_EMAIL_ERROR")." ".implode(", ", $errorEmailItems)
+				)
+			);
 		}
 
 		if (!empty($errorPhoneItems))
 		{
-			$errors[] = Loc::getMessage("INTRANET_INVITATION_PHONE_ERROR")." ".implode(", ", $errorPhoneItems);
+			$result->addError(new Error(Loc::getMessage("INTRANET_INVITATION_PHONE_ERROR")." ".implode(", ", $errorPhoneItems)));
 		}
 
-		return [
+		return $result->setData([
 			"PHONE_ITEMS" => $phoneItems,
 			"EMAIL_ITEMS" => $emailItems
-		];
+		]);
 	}
 
 	public static function checkExistingUserByPhone(array $phoneItems): array
@@ -170,36 +189,46 @@ class Register
 			);
 		}
 
+		$phoneList = array_column($phoneItems, 'PHONE_NUMBER');
+		$filter = [];
+		if (!empty($phoneList))
+		{
+			$filter["=PHONE_NUMBER"] = $phoneList;
+		}
+		if (!empty($externalAuthIdList))
+		{
+			$filter['!=USER.EXTERNAL_AUTH_ID'] = $externalAuthIdList;
+		}
+
+		$rsUser = \Bitrix\Main\UserPhoneAuthTable::getList([
+			'filter' => $filter,
+			'select' => [
+				"USER_ID",
+				"PHONE_NUMBER",
+				"USER_CONFIRM_CODE" => "USER.CONFIRM_CODE",
+				"USER_EXTERNAL_AUTH_ID" => "USER.EXTERNAL_AUTH_ID",
+				"USER_UF_DEPARTMENT" => "USER.UF_DEPARTMENT"
+			]
+		]);
+
+		$authUserList = [];
+		while ($arUser = $rsUser->fetch())
+		{
+			$authUserList[$arUser["PHONE_NUMBER"]][] = $arUser;
+		}
+
 		foreach ($phoneItems as $item)
 		{
-			$filter = array(
-				"=PHONE_NUMBER" => $item["PHONE_NUMBER"]
-			);
-
-			if (!empty($externalAuthIdList))
-			{
-				$filter['!=USER.EXTERNAL_AUTH_ID'] = $externalAuthIdList;
-			}
-
-			$rsUser = \Bitrix\Main\UserPhoneAuthTable::getList(array(
-				'filter' => $filter,
-				'select' => array(
-					"USER_ID",
-					"USER_CONFIRM_CODE" => "USER.CONFIRM_CODE",
-					"USER_EXTERNAL_AUTH_ID" => "USER.EXTERNAL_AUTH_ID",
-					"USER_UF_DEPARTMENT" => "USER.UF_DEPARTMENT"
-				)
-			));
-
 			$bFound = false;
-			while ($arUser = $rsUser->Fetch())
+			foreach (($authUserList[$item["PHONE_NUMBER"]] ?? []) as $arUser)
 			{
-				$arUser = array(
+				$arUser = [
 					'ID' => $arUser["USER_ID"],
 					'CONFIRM_CODE' => $arUser["USER_CONFIRM_CODE"],
 					'EXTERNAL_AUTH_ID' => $arUser["USER_ID"],
 					'UF_DEPARTMENT' => $arUser["USER_UF_DEPARTMENT"],
-				);
+					'PHONE_NUMBER' => $item["PHONE_NUMBER"],
+				];
 
 				$bFound = true;
 
@@ -239,13 +268,7 @@ class Register
 					)
 				)
 				{
-					$arPhoneToReinvite[] = array(
-						"PHONE_NUMBER" => $item["PHONE_NUMBER"],
-						"REINVITE" => true,
-						"ID" => $arUser["ID"],
-						"CONFIRM_CODE" => $arUser["CONFIRM_CODE"],
-						"UF_DEPARTMENT" => $arUser["UF_DEPARTMENT"]
-					);
+					$arPhoneToReinvite[] = \Bitrix\Intranet\Entity\User::initByArray($arUser);
 				}
 				else
 				{
@@ -255,8 +278,8 @@ class Register
 
 			if (!$bFound)
 			{
-				$item["REINVITE"] = false;
-				$arPhoneToRegister[] = $item;
+				$item["LOGIN"] = $item["PHONE_NUMBER"];
+				$arPhoneToRegister[] = \Bitrix\Intranet\Entity\User::initByArray($item);
 			}
 		}
 
@@ -286,62 +309,67 @@ class Register
 			);
 		}
 
+		$emailtList = array_column($emailItems, 'EMAIL');
+		$filter = [];
+		if (!empty($emailtList))
+		{
+			$filter["=EMAIL"] = $emailtList;
+		}
+		if (!empty($externalAuthIdList))
+		{
+			$filter['!=EXTERNAL_AUTH_ID'] = $externalAuthIdList;
+		}
+
+		$rsUser = UserTable::getList([
+			'filter' => $filter,
+			'select' => ["ID", "CONFIRM_CODE", "EXTERNAL_AUTH_ID", "UF_DEPARTMENT", 'EMAIL']
+		]);
+		$userList = [];
+		while ($arUser = $rsUser->fetch())
+		{
+			$userList[$arUser['EMAIL']][] = \Bitrix\Intranet\Entity\User::initByArray($arUser);
+		}
+
 		foreach ($emailItems as $item)
 		{
-			$filter = array(
-				"=EMAIL" => $item["EMAIL"]
-			);
-
-			if (!empty($externalAuthIdList))
-			{
-				$filter['!=EXTERNAL_AUTH_ID'] = $externalAuthIdList;
-			}
-
-			$rsUser = UserTable::getList([
-				'filter' => $filter,
-				'select' => array("ID", "CONFIRM_CODE", "EXTERNAL_AUTH_ID", "UF_DEPARTMENT")
-			]);
-
 			$bFound = false;
-			while ($arUser = $rsUser->Fetch())
+
+			foreach (($userList[$item["EMAIL"]] ?? []) as $arUser)
 			{
+				/**
+				 * @var \Bitrix\Intranet\Entity\User $arUser
+				 */
 				$bFound = true;
 
 				if (
-					$arUser["EXTERNAL_AUTH_ID"] === 'email'
-					|| $arUser["EXTERNAL_AUTH_ID"] === 'shop'
+					$arUser->getExternalAuthId() === 'email'
+					|| $arUser->getExternalAuthId() === 'shop'
 				)
 				{
 					if (isset($item["UF_DEPARTMENT"]))
 					{
-						$arUser["UF_DEPARTMENT"] = $item["UF_DEPARTMENT"];
+						$arUser->setDepartmetnsIds(!is_array($item["UF_DEPARTMENT"]) ? [$item["UF_DEPARTMENT"]] : $item["UF_DEPARTMENT"]);
 					}
 					$arUserForTransfer[] = $arUser;
 				}
 				elseif (
-					(string)$arUser["CONFIRM_CODE"] !== ''
+					$arUser->getConfirmCode() !== ''
 					&& (
 						!$bExtranetInstalled
 						|| ( // both intranet
 							isset($item["UF_DEPARTMENT"])
 							&& !empty($item["UF_DEPARTMENT"])
-							&& static::isIntranetUser($arUser)
+							&& $arUser->isIntranet()
 						)
 						||
 						(	// both extranet
 							(!isset($item["UF_DEPARTMENT"]) || empty($item["UF_DEPARTMENT"]))
-							&& static::isExtranetUser($arUser)
+							&& $arUser->isExtranet()
 						)
 					)
 				)
 				{
-					$arEmailToReinvite[] = array(
-						"EMAIL" => $item["EMAIL"],
-						"REINVITE" => true,
-						"ID" => $arUser["ID"],
-						"CONFIRM_CODE" => $arUser["CONFIRM_CODE"],
-						"UF_DEPARTMENT" => $arUser["UF_DEPARTMENT"]
-					);
+					$arEmailToReinvite[] = $arUser;
 				}
 				else
 				{
@@ -351,8 +379,8 @@ class Register
 
 			if (!$bFound)
 			{
-				$item["REINVITE"] = false;
-				$arEmailToRegister[] = $item;
+				$item['LOGIN'] = $item["EMAIL"];
+				$arEmailToRegister[] = \Bitrix\Intranet\Entity\User::initByArray($item);
 			}
 		}
 
@@ -364,61 +392,24 @@ class Register
 		];
 	}
 
-	private static function isIntranetUser(array $user): bool
-	{
-		return isset($user["UF_DEPARTMENT"])
-		&& (
-			(
-				is_array($user["UF_DEPARTMENT"])
-				&& (int)$user["UF_DEPARTMENT"][0] > 0
-			)
-			|| (
-				!is_array($user["UF_DEPARTMENT"])
-				&& (int)$user["UF_DEPARTMENT"] > 0
-			)
-		);
-	}
-
-	private static function isExtranetUser(array $user): bool
-	{
-		return (
-			!isset($user["UF_DEPARTMENT"])
-			|| (
-				is_array($user["UF_DEPARTMENT"])
-				&& (int)$user["UF_DEPARTMENT"][0] <= 0
-			)
-			|| (
-				!is_array($user["UF_DEPARTMENT"])
-				&& (int)$user["UF_DEPARTMENT"] <= 0
-			)
-		);
-	}
-
 	public static function transferUser($usersForTransfer, &$errors)
 	{
 		global $APPLICATION, $USER;
 
 		$transferedUserIds = [];
-
+		$messageFactory = new InviteMessageFactory(Loc::getMessage("INTRANET_INVITATION_INVITE_MESSAGE_TEXT"));
 		foreach ($usersForTransfer as $user)
 		{
-			$bExtranetUser = !isset($user["UF_DEPARTMENT"]) || empty($user["UF_DEPARTMENT"]);
-			$siteIdByDepartmentId = \CIntranetInviteDialog::getUserSiteId(array(
-				"UF_DEPARTMENT" => isset($user["UF_DEPARTMENT"]) && is_array($user["UF_DEPARTMENT"])
-					? $user["UF_DEPARTMENT"][0] : "",
-				"SITE_ID" => SITE_ID
-			));
-
-			$userGroups = \CIntranetInviteDialog::getUserGroups($siteIdByDepartmentId, $bExtranetUser);
-			if ($user["EXTERNAL_AUTH_ID"] === "shop" && Loader::includeModule("crm"))
+			if ($user->getExternalAuthId() === "shop" && Loader::includeModule("crm"))
 			{
-				$userGroups[] = \Bitrix\Crm\Order\BuyerGroup::getSystemGroupId();
+				$groupIds = array_merge($user->getGroupIds(), [\Bitrix\Crm\Order\BuyerGroup::getSystemGroupId()]);
+				$user->setGroupIds($groupIds);
 			}
 
-			$transferedUserId = \CIntranetInviteDialog::TransferEmailUser($user["ID"], array(
+			$transferedUserId = \CIntranetInviteDialog::TransferEmailUser($user->getId(), array(
 				"CONFIRM_CODE" => \Bitrix\Main\Security\Random::getString(8),
-				"GROUP_ID" => $userGroups,
-				"UF_DEPARTMENT" => $user["UF_DEPARTMENT"],
+				"GROUP_ID" => $user->getGroupIds(), //$userGroups,
+				"UF_DEPARTMENT" => $user->getDepartmetnsIds(),
 				"SITE_ID" => SITE_ID
 			));
 
@@ -432,7 +423,7 @@ class Register
 			}
 
 			$transferedUserIds[] = $transferedUserId;
-			\CIntranetInviteDialog::InviteUser($user, Loc::getMessage("INTRANET_INVITATION_INVITE_MESSAGE_TEXT"), array('checkB24' => false));
+			$messageFactory->create($user)->sendImmediately();
 		}
 
 		if (!empty($transferedUserIds))
@@ -464,106 +455,44 @@ class Register
 		return $transferedUserIds;
 	}
 
-	public static function registerUsersByPhone($items, &$errors)
+	public static function prepareUserData($userData): \Bitrix\Intranet\Entity\User
 	{
-		$invitedUserIdList = [];
-		foreach ($items as $userData)
-		{
-			$bExtranet = !isset($userData["UF_DEPARTMENT"]);
-			$siteIdByDepartmentId = \CIntranetInviteDialog::getUserSiteId(array(
-				"UF_DEPARTMENT" => isset($userData["UF_DEPARTMENT"]) && is_array($userData["UF_DEPARTMENT"])
-					  ? $userData["UF_DEPARTMENT"][0] : "",
-				"SITE_ID" => SITE_ID
-			));
-			$arGroups = \CIntranetInviteDialog::getUserGroups($siteIdByDepartmentId, $bExtranet);
+		$isExtranet = !isset($userData["UF_DEPARTMENT"]) || empty($user["UF_DEPARTMENT"]);
+		$siteIdByDepartmentId = \CIntranetInviteDialog::getUserSiteId(array(
+			"UF_DEPARTMENT" => isset($userData["UF_DEPARTMENT"]) && is_array($userData["UF_DEPARTMENT"])
+				? $userData["UF_DEPARTMENT"][0] : "",
+			"SITE_ID" => SITE_ID
+		));
+		$arGroups = \CIntranetInviteDialog::getUserGroups($siteIdByDepartmentId, $isExtranet);
 
-			$userData['LOGIN'] = $userData['PHONE_NUMBER'];
-			$userData["CONFIRM_CODE"] = Random::getString(8, true);
-			$userData["GROUP_ID"] = $arGroups;
+		$userData["CONFIRM_CODE"] = Random::getString(8, true);
+		$userData["GROUP_ID"] = $arGroups;
 
-			$ID = \CIntranetInviteDialog::RegisterUser($userData, SITE_ID);
+		$entityUser = \Bitrix\Intranet\Entity\User::initByArray($userData);
 
-			if (is_array($ID))
-			{
-				$errors = array_merge($errors, $ID);
-
-				return false;
-			}
-
-			$arCreatedUserId[] = $ID;
-			$invitedUserIdList[] = $ID;
-			$userData['ID'] = $ID;
-			//TODO: invite user self::InviteUserByPhone($userData);
-		}
-
-		if (!empty($invitedUserIdList))
-		{
-			Invitation::add([
-								'USER_ID' => $invitedUserIdList,
-								'TYPE' => Invitation::TYPE_PHONE
-							]);
-		}
-
-		return $invitedUserIdList;
+		return $entityUser;
 	}
 
-	public static function registerUsersByEmail($items, &$errors)
+	public static function inviteNewUsers($SITE_ID, $fields, $type): Result
 	{
-		$invitedUserIdList = [];
-		foreach ($items as $userData)
-		{
-			$isExtranet = !isset($userData["UF_DEPARTMENT"]);
-			$siteIdByDepartmentId = \CIntranetInviteDialog::getUserSiteId(array(
-				"UF_DEPARTMENT" => isset($userData["UF_DEPARTMENT"]) && is_array($userData["UF_DEPARTMENT"])
-					? $userData["UF_DEPARTMENT"][0] : "",
-				"SITE_ID" => SITE_ID
-			));
-			$arGroups = \CIntranetInviteDialog::getUserGroups($siteIdByDepartmentId, $isExtranet);
-
-			$userData["CONFIRM_CODE"] = Random::getString(8, true);
-			$userData["GROUP_ID"] = $arGroups;
-			$ID = \CIntranetInviteDialog::RegisterUser($userData, SITE_ID);
-
-			if (is_array($ID))
-			{
-				$errors = array_merge($errors, $ID);
-
-				return false;
-			}
-
-			$arCreatedUserId[] = $ID;
-			$invitedUserIdList[] = $ID;
-			$userData['ID'] = $ID;
-
-			\CIntranetInviteDialog::InviteUser($userData, Loc::getMessage("INTRANET_INVITATION_INVITE_MESSAGE_TEXT"), array('checkB24' => false));
-		}
-
-		if (!empty($invitedUserIdList))
-		{
-			Invitation::add([
-				'USER_ID' => $invitedUserIdList,
-				'TYPE' => Invitation::TYPE_EMAIL
-			]);
-		}
-
-		return $invitedUserIdList;
-	}
-
-	public static function inviteNewUsers($SITE_ID, $fields, &$errors = [])
-	{
+		$result = new Result();
 		if (!is_array($fields) || empty($fields))
 		{
-			return false;
+			$result->addError(new Error(Loc::getMessage("INTRANET_INVITATION_EMAIL_ERROR")));
+
+			return $result;
 		}
 
-		$res = self::checkItems($fields["ITEMS"], $errors);
-		if (!empty($errors))
+		$res = self::checkItems($fields["ITEMS"]);
+		if (!$res->isSuccess())
 		{
-			return false;
+			$result->addErrors($res->getErrors());
+
+			return $result;
 		}
 
-		$emailItems = $res["EMAIL_ITEMS"];
-		$phoneItems = $res["PHONE_ITEMS"];
+		$emailItems = $res->getData()['EMAIL_ITEMS'];
+		$phoneItems = $res->getData()["PHONE_ITEMS"];
 
 		$resPhone =	self::checkExistingUserByPhone($phoneItems);
 		$resEmail = self::checkExistingUserByEmail($emailItems);
@@ -578,55 +507,94 @@ class Register
 		{
 			if (!empty($resEmail["EMAIL_EXIST"]))
 			{
-				$errors[] = Loc::getMessage("INTRANET_INVITATION_USER_EXIST_ERROR", [
+				$result->addError(new Error(Loc::getMessage("INTRANET_INVITATION_USER_EXIST_ERROR", [
 					"#EMAIL_LIST#" => implode(', ', $resEmail["EMAIL_EXIST"]),
-				]);
-
+				])));
 			}
 			if (!empty($resPhone["PHONE_EXIST"]))
 			{
-				$errors[] = Loc::getMessage("INTRANET_INVITATION_USER_PHONE_EXIST_ERROR", [
+				$result->addError(new Error(Loc::getMessage("INTRANET_INVITATION_USER_PHONE_EXIST_ERROR", [
 					"#PHONE_LIST#" => implode(', ', $resPhone["PHONE_EXIST"]),
-				]);
+				])));
 			}
 
-			return false;
+			return $result;
 		}
 
-		$messageText = Loc::getMessage("INTRANET_INVITATION_INVITE_MESSAGE_TEXT");
-
+		$messageFactory = new InviteMessageFactory(Loc::getMessage("INTRANET_INVITATION_INVITE_MESSAGE_TEXT"));
+		EventManager::getInstance()->addEventHandler(
+			'intranet',
+			'onAfterUserRegistration',
+			function (Event $event) use($messageFactory) {
+				$ivitation = $event->getParameter('invitation');
+				$user = $event->getParameter('user');
+				if (InvitationType::EMAIL === $ivitation->getType())
+				{
+					$messageFactory->create($user)->sendImmediately();
+				}
+			}
+		);
 		//reinvite users by email
 		$reinvitedUserIds = [];
-		foreach ($resEmail["EMAIL_TO_REINVITE"] as $userData)
+		foreach ($resEmail["EMAIL_TO_REINVITE"] as $user)
 		{
-			\CIntranetInviteDialog::InviteUser($userData, $messageText, array('checkB24' => false));
-			$reinvitedUserIds[] = (int)$userData['ID'];
+			$messageFactory->create($user)->sendImmediately();
+			$reinvitedUserIds[] = (int)$user->getId();
 		}
-		// TODO: reinvite: self::InviteUserByPhone($userData)
+
+		foreach ($resPhone['PHONE_TO_REINVITE'] as $userData)
+		{
+			$userId = $userData->getId();
+
+			\CIntranetInviteDialog::reinviteUserByPhone($userId, array('checkB24' => true));
+			$reinvitedUserIds[] = $userId;
+		}
 
 		$transferedUserIds = [];
 		if (!empty($resEmail["TRANSFER_USER"]))
 		{
+			$errors = [];
 			$transferedUserIds = self::transferUser($resEmail["TRANSFER_USER"], $errors);
+			if (!empty($errors))
+			{
+				$result->addError(new Error($errors[0]));
+			}
 		}
 
+		$registrationService = new RegistrationService();
 		$phoneUserIds = [];
 		if (!empty($resPhone["PHONE_TO_REGISTER"]))
 		{
-			$phoneUserIds = self::registerUsersByPhone($resPhone["PHONE_TO_REGISTER"], $errors);
+			try
+			{
+				$inviteCollection = $registrationService->registerUsers($resPhone["PHONE_TO_REGISTER"], InvitationType::PHONE, $type);
+				$phoneUserIds = $inviteCollection->getUserIds();
+			}
+			catch (CreationFailedException $e)
+			{
+				$result->addErrors($e->getErrors()->toArray());
+			}
 		}
 
 		$emailUserIds = [];
 		if (!empty($resEmail["EMAIL_TO_REGISTER"]))
 		{
-			$emailUserIds = self::registerUsersByEmail($resEmail["EMAIL_TO_REGISTER"], $errors);
+			try
+			{
+				$inviteCollection = $registrationService->registerUsers($resEmail["EMAIL_TO_REGISTER"], InvitationType::EMAIL, $type);
+				$emailUserIds = $inviteCollection->getUserIds();
+			}
+			catch (CreationFailedException $e)
+			{
+				$result->addErrors($e->getErrors()->toArray());
+			}
 		}
 
-		if (!empty($errors))
+		if (!$result->isSuccess())
 		{
-			return false;
+			return $result;
 		}
 
-		return array_merge($phoneUserIds, $emailUserIds, $reinvitedUserIds, $transferedUserIds);
+		return $result->setData(array_merge($phoneUserIds, $emailUserIds, $reinvitedUserIds, $transferedUserIds));
 	}
 }

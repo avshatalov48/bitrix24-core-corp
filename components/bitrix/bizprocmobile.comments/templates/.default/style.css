@@ -1,0 +1,63 @@
+#workflow-comments-block {
+	background-color: var(--bg-content-primary);
+}
+
+.workflow-detail-no-comments {
+	display: flex;
+	justify-content: center;
+	background-color: var(--bg-secondary);
+	height: 300px;
+}
+
+.workflow-detail-no-comments.--full-height {
+	height: 100%;
+}
+
+.workflow-detail-no-comments.--hidden {
+	display: none;
+}
+
+.--hidden {
+	display: none;
+}
+
+.workflow-detail-no-comments-inner {
+	display: table;
+	align-self: center;
+}
+
+.workflow-detail-no-comments-top-image-container {
+	display: table-row;
+}
+
+.workflow-detail-no-comments-top-image {
+	width: 75px;
+	height: 68px;
+	margin-left: auto;
+	margin-right: auto;
+	padding-bottom: 30px;
+	background: url(images/no-comments-top-img.svg) no-repeat;
+}
+
+.workflow-detail-no-comments-text {
+	display: block;
+	padding-bottom: 30px;
+	text-align: center;
+	color: var(--base0);
+}
+
+.workflow-detail-no-comments-arrow-container {
+	display: table-row;
+}
+
+.workflow-detail-no-comments-arrow {
+	width: 20px;
+	height: 38px;
+	margin-left: auto;
+	margin-right: auto;
+	background: url(images/no-comments-arrow.svg) no-repeat;
+}
+
+.post-comments-wrap {
+	padding-bottom: 15px !important;
+}

@@ -1,13 +1,13 @@
 <?php
 
 $MESS['M_CRM_ENTITY_ACTION_ERROR_ON_CHANGE'] = 'Не удалось сменить воронку';
-$MESS['M_CRM_ENTITY_ACTION_CHANGE_CATEGORY'] = 'Сменить воронку';
+$MESS['M_CRM_ENTITY_ACTION_CHANGE_CATEGORY_MSGVER_1'] = 'Изменить воронку';
 $MESS['M_CRM_ENTITY_ACTION_DEFAULT_ERROR'] = 'Возникла внутренняя ошибка. Повторите попытку чуть позже.';
 $MESS['M_CRM_ENTITY_ACTION_CONFIRM_CHANGE_STAGE_TITLE'] = 'Вы уверены, что хотите вернуть лид в работу?';
 $MESS['M_CRM_ENTITY_ACTION_CONFIRM_CHANGE_STAGE_DESCRIPTION'] = 'Связи лида с созданными элементами пропадут, но сами элементы останутся в вашей CRM';
 $MESS['M_CRM_ENTITY_ACTION_CONFIRM_CHANGE_STAGE_CONTINUE'] = 'Вернуть в работу';
 
-$MESS['M_CRM_ENTITY_ACTION_COPY_ENTITY'] = 'Копировать элемент';
+$MESS['M_CRM_ENTITY_ACTION_COPY_ENTITY_MSGVER_1'] = 'Скопировать';
 $MESS['M_CRM_ENTITY_ACTION_COPY_ENTITY_LEAD'] = 'Копировать лид';
 $MESS['M_CRM_ENTITY_ACTION_COPY_ENTITY_DEAL'] = 'Копировать сделку';
 $MESS['M_CRM_ENTITY_ACTION_COPY_ENTITY_CONTACT'] = 'Копировать контакт';

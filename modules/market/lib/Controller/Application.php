@@ -6,12 +6,14 @@ use Bitrix\Main\Engine\Controller;
 use Bitrix\Main\Engine\Response\AjaxJson;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Market\Application\Installed;
+use Bitrix\Market\Rest\Actions;
+use Bitrix\Market\Rest\Transport;
 use Bitrix\Rest\AppTable;
 use Bitrix\Main\Engine\ActionFilter;
 use Bitrix\Market\Link;
 use Bitrix\Rest\Engine\Access;
 use Bitrix\Rest\Marketplace\Client;
-use Bitrix\Rest\Marketplace\Transport;
 
 class Application extends Controller
 {
@@ -106,6 +108,47 @@ class Application extends Controller
 
 	public function addReviewAction(string $appCode, string $reviewText, int $currentRating): AjaxJson
 	{
+		if (empty(Installed::getByCode($appCode))) {
+			return AjaxJson::createError();
+		}
+
+		$response = Transport::instance()->call(
+			Actions::METHOD_ADD_REVIEW,
+			$this->getReviewFields($appCode, $reviewText, $currentRating),
+		);
+
+		return AjaxJson::createSuccess([
+			'success' => $response['SUCCESS'] === 'Y' ? 'Y' : 'N',
+			'can_review' => $response['CAN_REVIEW'] === 'Y' ? 'Y' : 'N',
+			'review_info' => $response['REVIEW_INFO'] ?? [],
+			'rating' => $response['RATING'] ?? [],
+			'error' => (array)($response['ERROR'] ?? []),
+		]);
+	}
+
+	public function editReviewAction(int $reviewId, string $appCode, string $reviewText, int $currentRating): AjaxJson
+	{
+		if (empty(Installed::getByCode($appCode))) {
+			return AjaxJson::createError();
+		}
+
+		$fields = $this->getReviewFields($appCode, $reviewText, $currentRating);
+		$fields['review_id'] = $reviewId;
+
+		$response = Transport::instance()->call(
+			Actions::METHOD_EDIT_REVIEW,
+			$fields,
+		);
+
+		return AjaxJson::createSuccess([
+			'success' => $response['SUCCESS'] === 'Y' ? 'Y' : 'N',
+			'review_info' => $response['REVIEW_INFO'] ?? [],
+			'error' => (array)($response['ERROR'] ?? []),
+		]);
+	}
+
+	private function getReviewFields(string $appCode, string $reviewText, int $currentRating): array
+	{
 		global $USER;
 
 		$userName = $USER->GetFirstName() . ' ' . mb_substr($USER->GetLastName(), 0, 1) . '.';
@@ -125,18 +168,7 @@ class Application extends Controller
 		$fields['user_email'] = $USER->GetEmail();
 		$fields['text'] = $reviewText;
 
-		$response = Transport::instance()->call(
-			Transport::METHOD_ADD_REVIEW,
-			$fields,
-		);
-		$error = (array)($response['ERROR'] ?? []);
-
-		return AjaxJson::createSuccess([
-			'success' => $response['SUCCESS'] === 'Y' ? 'Y' : 'N',
-			'can_review' => $response['CAN_REVIEW'] === 'Y' ? 'Y' : 'N',
-			'review_info' => $response['REVIEW_INFO'] ?? [],
-			'error' => $error,
-		]);
+		return $fields;
 	}
 
 	protected function getDefaultPreFilters(): array

@@ -3,7 +3,6 @@
 namespace Bitrix\Tasks\TourGuide;
 
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Tasks\TourGuide;
 use Bitrix\Tasks\Update\Preset;
 
 class PresetsMoved extends TourGuide

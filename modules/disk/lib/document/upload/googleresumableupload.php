@@ -26,7 +26,6 @@ class GoogleResumableUpload extends ResumableUpload
 		}
 
 		$fileName = $this->fileData->getName();
-		$fileName = $this->convertToUtf8($fileName);
 
 		$http = new HttpClient(array(
 			'redirect' => false,

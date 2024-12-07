@@ -55,7 +55,6 @@ if(!function_exists('__CrmInvoiceShowEndHtmlResonse'))
 	}
 }
 
-CUtil::JSPostUnescape();
 $APPLICATION->RestartBuffer();
 header('Content-Type: application/x-javascript; charset='.LANG_CHARSET);
 

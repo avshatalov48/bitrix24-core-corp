@@ -23,12 +23,13 @@
 
 		async initOptions()
 		{
-			// Add your options in this array
+			const section = await this.createBetaForm();
+
 			/**
 			 * @private
 			 * @type {FormSection[]}
 			 */
-			this.options = [];
+			this.options = [section].filter(Boolean);
 		}
 
 		hasOptions()

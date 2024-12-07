@@ -86,19 +86,6 @@ if (is_array($paymentData) && $paySystemID > 0)
 					include($pathToAction);
 				}
 			}
-
-			if ($arPaySysAction["ENCODING"] <> '')
-			{
-				define("BX_SALE_ENCODING", $arPaySysAction["ENCODING"]);
-				AddEventHandler("main", "OnEndBufferContent", "ChangeEncoding");
-				function ChangeEncoding($content)
-				{
-					global $APPLICATION;
-					header("Content-Type: text/html; charset=".BX_SALE_ENCODING);
-					$content = $APPLICATION->ConvertCharset($content, SITE_CHARSET, BX_SALE_ENCODING);
-					$content = str_replace("charset=".SITE_CHARSET, "charset=".BX_SALE_ENCODING, $content);
-				}
-			}
 		}
 	}
 }

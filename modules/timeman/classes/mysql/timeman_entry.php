@@ -124,7 +124,7 @@ FROM
 
 		if (is_array($arGroupBy) && count($arGroupBy)==0)
 		{
-			$dbRes = $DB->Query($strSql, false, "File: ".__FILE__."<br>Line: ".__LINE__);
+			$dbRes = $DB->Query($strSql);
 			if ($arRes = $dbRes->Fetch())
 				return $arRes["CNT"];
 			else
@@ -155,7 +155,7 @@ FROM
 			if ($arSqls["GROUPBY"] <> '')
 				$strSql_tmp .= "GROUP BY ".$arSqls["GROUPBY"]." ";
 
-			$dbRes = $DB->Query($strSql_tmp, false, "File: ".__FILE__."<br>Line: ".__LINE__);
+			$dbRes = $DB->Query($strSql_tmp);
 			$cnt = 0;
 			if ($arSqls["GROUPBY"] == '')
 			{
@@ -177,7 +177,7 @@ FROM
 			if (is_array($arNavStartParams) && intval($arNavStartParams["nTopCount"]) > 0)
 				$strSql .= "LIMIT ".$arNavStartParams["nTopCount"];
 //echo '<pre>',$strSql,'</pre>'; die();
-			$dbRes = $DB->Query($strSql, false, "File: ".__FILE__."<br>Line: ".__LINE__);
+			$dbRes = $DB->Query($strSql);
 			$dbRes->SetUserFields($USER_FIELD_MANAGER->GetUserFields("USER"));
 		}
 
@@ -188,17 +188,30 @@ FROM
 	{
 		global $DB;
 
-		return $DB->TopSql('
-SELECT
-	E.*,
-	'.$DB->DateToCharFunction("TIMESTAMP_X", "FULL").' TIMESTAMP_X,
-	'.$DB->DateToCharFunction("DATE_START", "FULL").' DATE_START,
-	'.$DB->DateToCharFunction("DATE_FINISH", "FULL").' DATE_FINISH
-FROM b_timeman_entries E
-WHERE USER_ID=\''.intval($USER_ID).'\'
-ORDER BY ID DESC
-', 1);
-	}
+		$sqlGetLastId = '
+			SELECT ID
+			FROM b_timeman_entries
+			WHERE USER_ID = \''.(int)$USER_ID.'\'
+			ORDER BY ID DESC
+			LIMIT 1
+		';
 
+		$result = $DB->Query($sqlGetLastId);
+		if ($row = $result->fetch())
+		{
+			$lastId = (int)$row['ID'];
+
+			return '
+				SELECT
+					E.*,
+					'.$DB->DateToCharFunction("TIMESTAMP_X", "FULL").' TIMESTAMP_X,
+					'.$DB->DateToCharFunction("DATE_START", "FULL").' DATE_START,
+					'.$DB->DateToCharFunction("DATE_FINISH", "FULL").' DATE_FINISH
+				FROM b_timeman_entries E
+				WHERE ID = '.$lastId.'
+			';
+		}
+
+		return null;
+	}
 }
-?>

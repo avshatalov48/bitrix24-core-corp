@@ -477,6 +477,7 @@ abstract class Service
 			. "\nfrom\n  " . $tableInfo['TABLE_NAME'] . ' AS ' . $tableInfo['TABLE_ALIAS']
 			. ($additionalJoins ? "\n  " . $additionalJoins : '')
 			. ($strQueryWhere ? "\nWHERE " . $strQueryWhere : '')
+			. (isset($tableInfo['UNION']) && $tableInfo['UNION'] ? "\n " . $tableInfo['UNION'] : '')
 			. "\n";
 
 		$i = 0;

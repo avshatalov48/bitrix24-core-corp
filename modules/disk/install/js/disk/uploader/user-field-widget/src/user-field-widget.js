@@ -13,7 +13,7 @@ export default class UserFieldWidget extends VueUploaderWidget
 {
 	constructor(uploaderOptions: UploaderOptions, options: UserFieldWidgetOptions)
 	{
-		const widgetOptions: UserFieldWidgetOptions = Type.isPlainObject(options) ? Object.assign({}, options) : {};
+		const widgetOptions: UserFieldWidgetOptions = Type.isPlainObject(options) ? { ...options } : {};
 		super(UserFieldWidget.prepareUploaderOptions(uploaderOptions), widgetOptions);
 	}
 
@@ -24,11 +24,10 @@ export default class UserFieldWidget extends VueUploaderWidget
 
 	static prepareUploaderOptions(uploaderOptions: UploaderOptions): UploaderOptions
 	{
-		return Object.assign(
-			{},
-			UserFieldWidget.getDefaultUploaderOptions(),
-			Type.isPlainObject(uploaderOptions) ? uploaderOptions : {}
-		);
+		return {
+			...UserFieldWidget.getDefaultUploaderOptions(),
+			...(Type.isPlainObject(uploaderOptions) ? uploaderOptions : {}),
+		};
 	}
 
 	static getDefaultUploaderOptions(): UploaderOptions

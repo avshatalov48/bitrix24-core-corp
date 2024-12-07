@@ -1,4 +1,5 @@
 <?php
+
 namespace Bitrix\Crm\Activity\Provider;
 
 use Bitrix\Crm\Activity\CommunicationStatistics;
@@ -14,11 +15,11 @@ Loc::loadMessages(__FILE__);
 
 class Base
 {
-	const ACTION_UPDATE = 'UPDATE';
-	const ACTION_ADD = 'ADD';
-	const COMMUNICATION_TYPE_UNDEFINED = '';
-	const COMMUNICATION_TYPE_PHONE = 'PHONE';
-	const COMMUNICATION_TYPE_EMAIL = 'EMAIL';
+	public const ACTION_UPDATE = 'UPDATE';
+	public const ACTION_ADD = 'ADD';
+	public const COMMUNICATION_TYPE_UNDEFINED = '';
+	public const COMMUNICATION_TYPE_PHONE = 'PHONE';
+	public const COMMUNICATION_TYPE_EMAIL = 'EMAIL';
 
 	private static ?Error $completionDeniedError = null;
 
@@ -164,6 +165,11 @@ class Base
 	public static function canUseCalendarEvents($providerTypeId = null)
 	{
 		return false;
+	}
+
+	public static function canAddCalendarEvents(?string $providerTypeId = null): bool
+	{
+		return static::canUseCalendarEvents($providerTypeId);
 	}
 
 	public static function canKeepCompletedInCalendar($providerTypeId = null)
@@ -807,5 +813,20 @@ class Base
 		}
 
 		return $typeListItems;
+	}
+
+	public static function getMoveBindingsLogMessageType(): ?string
+	{
+		return null;
+	}
+
+	public static function getActivityTitle(array $activity): string
+	{
+		return $activity['SUBJECT'] ?? '';
+	}
+
+	public static function needSynchronizePingQueue(array $activity): bool
+	{
+		return true;
 	}
 }

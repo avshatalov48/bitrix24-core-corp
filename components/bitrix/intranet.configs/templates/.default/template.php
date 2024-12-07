@@ -1378,7 +1378,7 @@ if ($isLogoFeatureAvailable)
 if (isset($_GET["otp"]))
 {
 ?>
-	<form id="bitrix24-otp-tell-about-form" style="display: none" action="/bitrix/urlrewrite.php?SEF_APPLICATION_CUR_PAGE_URL=<?=str_replace("%23", "#", urlencode($arParams["CONFIG_PATH_TO_POST"]))?>" method="POST">
+	<form id="bitrix24-otp-tell-about-form" style="display: none" action="<?= htmlspecialcharsbx($arParams["CONFIG_PATH_TO_POST"]) ?>" method="POST">
 		<div style="padding: 4px">
 			<?=bitrix_sessid_post()?>
 			<input type="hidden" name="POST_TITLE" value="<?=GetMessage("CONFIG_OTP_IMPORTANT_TITLE")?>">

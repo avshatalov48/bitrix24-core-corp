@@ -19,7 +19,7 @@ if (
 {
 	$arSwitchStateTo = (array) $_GET['F_STATE'];
 }
-elseif ( ! (isset($_GET["F_CANCEL"]) || isset($_GET['F_FILTER_SWITCH_PRESET'])) )
+elseif ( !(isset($_GET["F_CANCEL"]) || isset($_GET['F_FILTER_SWITCH_PRESET'])) )
 {
 	$currentRole = $oListState->getUserRole();
 	$arSwitchStateTo = array(intval($currentRole) ? 'sR'.base_convert($currentRole, 10, 32) : 'sR400');
@@ -121,14 +121,14 @@ $fields = array(
 	'STATUS' => array('id' => 'STATUS', 'name' => GetMessage('TASK_COLUMN_STATUS'), 'class' => '', 'type' => ''),
 	'DEADLINE' => array('id' => 'DEADLINE', 'name' => GetMessage('TASK_COLUMN_DEADLINE'), 'class' => 'date', 'type' => 'date'),
 	'CREATED_BY' => array('id' => 'CREATED_BY', 'name' => GetMessage('TASK_COLUMN_CREATED_BY'), 'class' => 'username'),
-	'RESPONSIBLE_ID' => array('id' => 'RESPONSIBLE_ID', 'name' => GetMessage('TASK_COLUMN_RESPONSIBLE_ID'), 'class' => 'username', 'type' => ''),
+	'RESPONSIBLE_ID' => array('id' => 'RESPONSIBLE_ID', 'name' => GetMessage('TASK_COLUMN_RESPONSIBLE_ID_MSGVER_1'), 'class' => 'username', 'type' => ''),
 	'PRIORITY' => array('id' => 'PRIORITY', 'name' => GetMessage('TASK_COLUMN_PRIORITY'), 'class' => '', 'type' => ''),
 	'MARK' => array('id' => 'MARK', 'name' => GetMessage('TASK_COLUMN_MARK'), 'class' => '', 'type' => ''),
 	'GROUP_ID' => array('id' => 'GROUP_ID', 'name' => GetMessage('TASK_COLUMN_GROUP_ID'), 'class' => '', 'type' => 'date'),
 	'TIME_ESTIMATE' => array('id' => 'TIME_ESTIMATE', 'name' => GetMessage('TASK_COLUMN_TIME_ESTIMATE'), 'class' => '', 'type' => 'date'),
 	'ALLOW_TIME_TRACKING' => array('id' => 'ALLOW_TIME_TRACKING', 'name' => GetMessage('TASK_COLUMN_ALLOW_TIME_TRACKING'), 'class' => 'date', 'type' => 'date'),
 	'TIME_SPENT_IN_LOGS' => array('id' => 'TIME_SPENT_IN_LOGS', 'name' => GetMessage('TASK_COLUMN_TIME_SPENT_IN_LOGS'), 'class' => '', 'type' => 'date'),
-	'ALLOW_CHANGE_DEADLINE' => array('id' => 'ALLOW_CHANGE_DEADLINE', 'name' => GetMessage('TASK_COLUMN_ALLOW_CHANGE_DEADLINE'), 'class' => '', 'type' => 'date'),
+	'ALLOW_CHANGE_DEADLINE' => array('id' => 'ALLOW_CHANGE_DEADLINE', 'name' => GetMessage('TASK_COLUMN_ALLOW_CHANGE_DEADLINE_MSGVER_1'), 'class' => '', 'type' => 'date'),
 	'CREATED_DATE' => array('id' => 'CREATED_DATE', 'name' => GetMessage('TASK_COLUMN_CREATED_DATE'), 'class' => '', 'type' => 'date'),
 	'CHANGED_DATE' => array('id' => 'CHANGED_DATE', 'name' => GetMessage('TASK_COLUMN_CHANGED_DATE'), 'class' => '', 'type' => 'date'),
 	//'UF_CRM_TASK' => array('id' => 'CLOSED_DATE', 'name' => "CRM", 'class' => '', 'type' => 'date'),

@@ -9,7 +9,8 @@ require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_befo
 
 if (\Bitrix\Main\Loader::includeModule("intranet"))
 {
-	$firstPageLink = CIntranetUtils::getB24FirstPageLink();
+	$firstPageLink = \Bitrix\Intranet\Portal\FirstPage::getInstance()->getLink();
+
 	if ($firstPageLink)
 	{
 		LocalRedirect($firstPageLink);

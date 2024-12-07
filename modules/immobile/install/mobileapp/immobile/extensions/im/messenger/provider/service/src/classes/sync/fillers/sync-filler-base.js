@@ -6,7 +6,12 @@ jn.define('im/messenger/provider/service/classes/sync/fillers/sync-filler-base',
 	const { DialogType, EventType } = require('im/messenger/const');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { UserManager } = require('im/messenger/lib/user-manager');
+	const { MessageContextCreator } = require('im/messenger/provider/service/classes/message-context-creator');
 	const { LoggerManager } = require('im/messenger/lib/logger');
+	const { MessengerEmitter } = require('im/messenger/lib/emitter');
+	const { DialogHelper } = require('im/messenger/lib/helper');
+	const { ChatDataProvider, RecentDataProvider } = require('im/messenger/provider/data');
+
 	const logger = LoggerManager.getInstance().getLogger('sync-service');
 
 	/**
@@ -27,6 +32,9 @@ jn.define('im/messenger/provider/service/classes/sync/fillers/sync-filler-base',
 			this.reactionRepository = this.core.getRepository().reaction;
 			this.messageRepository = this.core.getRepository().message;
 			this.pinMessageRepository = this.core.getRepository().pinMessage;
+			this.recentRepository = this.core.getRepository().recent;
+
+			this.messageContextCreator = new MessageContextCreator();
 
 			this.bindMethods();
 			this.subscribeEvents();
@@ -43,14 +51,22 @@ jn.define('im/messenger/provider/service/classes/sync/fillers/sync-filler-base',
 		}
 
 		/**
-		 * @param {SyncListResult} event
+		 * @param {object} event
+		 * @param {string} event.uuid
+		 * @param {SyncListResult} event.result
 		 */
 		async onSyncRequestResultReceive(event)
 		{
+			if (!this.checkEventUuid(event.uuid))
+			{
+				return;
+			}
+
 			await this.fillData(event);
 		}
 
 		/**
+		 * @abstract
 		 * @param {object} data
 		 * @param {string} data.uuid
 		 * @param {SyncListResult} data.result
@@ -58,6 +74,28 @@ jn.define('im/messenger/provider/service/classes/sync/fillers/sync-filler-base',
 		async fillData(data)
 		{
 			throw new Error('SyncFillerBase.fillData must be override in subclass');
+		}
+
+		/**
+		 * @abstract
+		 * @return {string}
+		 *
+		 * @desc the method should return a prefix unique for each filler, which determines the need for event processing
+		 */
+		getUuidPrefix()
+		{
+			throw new Error('SyncFillerBase.getUuidPrefix must be override in subclass');
+		}
+
+		/**
+		 * @param {string} uuid
+		 * @return {boolean}
+		 *
+		 * @desc the method should check whether the uuid of the event is valid for this filler or not
+		 */
+		checkEventUuid(uuid)
+		{
+			return uuid.startsWith(this.getUuidPrefix());
 		}
 
 		/**
@@ -74,190 +112,6 @@ jn.define('im/messenger/provider/service/classes/sync/fillers/sync-filler-base',
 		 * @param {SyncListResult} syncListResult
 		 * @return Promise
 		 */
-		async updateDatabase(syncListResult)
-		{
-			const {
-				messages,
-				updatedMessages = {},
-				addedChats,
-				addedRecent,
-				completeDeletedMessages,
-				deletedChats,
-				addedPins,
-				deletedPins,
-			} = syncListResult;
-
-			await this.fillDatabaseFromMessages(messages);
-			await this.updateDatabaseFromMessages(updatedMessages);
-			await this.updateDatabaseFromPins(addedPins, deletedPins);
-
-			if (Type.isArrayFilled(addedChats))
-			{
-				// TODO: refactor when the dialogId will be in addedChats
-				const addedRecentChatIds = {};
-				addedRecent.forEach((recentItem) => {
-					addedRecentChatIds[recentItem.chat_id] = recentItem.id;
-				});
-
-				const addedChatsWithDialogIds = [];
-				addedChats.forEach((chat) => {
-					const chatId = chat.id;
-					const dialogId = chat.dialogId;
-					if (chatId && !dialogId)
-					{
-						// eslint-disable-next-line no-param-reassign
-						chat.dialogId = addedRecentChatIds[chatId];
-					}
-
-					addedChatsWithDialogIds.push(chat);
-				});
-
-				await this.dialogRepository.saveFromRest(addedChatsWithDialogIds);
-			}
-
-			const deletedChatsIdList = Object.values(deletedChats);
-			if (Type.isArrayFilled(deletedChatsIdList))
-			{
-				await this.dialogRepository.deleteByChatIdList(deletedChatsIdList);
-				await this.messageRepository.deleteByChatIdList(deletedChatsIdList);
-				await this.pinMessageRepository.deleteByChatIdList(deletedChatsIdList);
-			}
-
-			const completeDeletedMessageIdList = Object.values(completeDeletedMessages);
-			if (Type.isArrayFilled(completeDeletedMessageIdList))
-			{
-				await this.messageRepository.deleteByIdList(completeDeletedMessageIdList);
-				await this.pinMessageRepository.deleteByMessageIdList(completeDeletedMessageIdList);
-			}
-		}
-
-		/**
-		 *
-		 * @param {SyncListResult['messages']} syncMessages
-		 * @return {Promise<void>}
-		 */
-		async fillDatabaseFromMessages(syncMessages)
-		{
-			const {
-				users,
-				files,
-				reactions,
-				messages,
-			} = syncMessages;
-
-			if (Type.isArrayFilled(users))
-			{
-				await this.userRepository.saveFromRest(users);
-			}
-
-			if (Type.isArrayFilled(files))
-			{
-				await this.fileRepository.saveFromRest(files);
-			}
-
-			if (Type.isArrayFilled(reactions))
-			{
-				await this.reactionRepository.saveFromRest(reactions);
-			}
-
-			if (Type.isArrayFilled(messages))
-			{
-				await this.messageRepository.saveFromRest(messages);
-			}
-		}
-
-		/**
-		 *
-		 * @param {SyncListResult['updatedMessages']} updatedMessages
-		 * @return {Promise<void>}
-		 */
-		async updateDatabaseFromMessages(updatedMessages)
-		{
-			const {
-				users,
-				files,
-				reactions,
-				messages,
-			} = updatedMessages;
-
-			if (Type.isArrayFilled(users))
-			{
-				await this.userRepository.saveFromRest(users);
-			}
-
-			if (Type.isArrayFilled(files))
-			{
-				await this.fileRepository.saveFromRest(files);
-			}
-
-			if (Type.isArrayFilled(reactions))
-			{
-				await this.reactionRepository.saveFromRest(reactions);
-			}
-
-			if (Type.isArrayFilled(messages))
-			{
-				logger.log('SyncService: updatedMessages', messages);
-
-				const updatedMessageIdList = messages.map((message) => message.id);
-				const existingMessages = await this.messageRepository.messageTable.getListByIds(updatedMessageIdList, false);
-				const existingMessagesIdCollection = {};
-				existingMessages.items.forEach((message) => {
-					existingMessagesIdCollection[message.id] = true;
-				});
-
-				const updatedMessagesToSave = messages.filter((message) => existingMessagesIdCollection[message.id]);
-				if (Type.isArrayFilled(updatedMessagesToSave))
-				{
-					logger.log('SyncService: updatedMessagesToSave', updatedMessagesToSave);
-
-					await this.messageRepository.saveFromRest(updatedMessagesToSave);
-				}
-			}
-		}
-
-		/**
-		 *
-		 * @param {SyncListResult['addedPins']} addedPins
-		 * @param {SyncListResult['deletedPins']} deletedPins
-		 * @return {Promise<void>}
-		 */
-		async updateDatabaseFromPins(addedPins, deletedPins)
-		{
-			const {
-				additionalMessages,
-				users,
-				pins,
-				files,
-			} = addedPins;
-
-			if (Type.isArrayFilled(users))
-			{
-				await this.userRepository.saveFromRest(users);
-			}
-
-			if (Type.isArrayFilled(files))
-			{
-				await this.fileRepository.saveFromRest(files);
-			}
-
-			if (Type.isArrayFilled(pins) && Type.isArrayFilled(additionalMessages))
-			{
-				await this.pinMessageRepository.saveFromRest(pins, additionalMessages);
-			}
-
-			const deletedPinIdList = Object.values(deletedPins);
-			if (Type.isArrayFilled(deletedPinIdList))
-			{
-				await this.pinMessageRepository.deletePinsByIdList(deletedPinIdList);
-			}
-		}
-
-		/**
-		 * @private
-		 * @param {SyncListResult} syncListResult
-		 * @return Promise
-		 */
 		async updateModels(syncListResult)
 		{
 			const {
@@ -267,6 +121,9 @@ jn.define('im/messenger/provider/service/classes/sync/fillers/sync-filler-base',
 				completeDeletedMessages,
 				addedPins,
 				deletedPins,
+				deletedChats,
+				completeDeletedChats,
+				dialogIds,
 			} = syncListResult;
 
 			const {
@@ -274,34 +131,30 @@ jn.define('im/messenger/provider/service/classes/sync/fillers/sync-filler-base',
 				files,
 				reactions,
 			} = messages;
-
-			const pinnedUsers = addedPins.users ?? [];
-			const pinnedFiles = addedPins.files ?? [];
-
 			const messagesToSave = messages.messages;
 
-			const usersPromise = this.store.dispatch('usersModel/set', [...users, ...pinnedUsers]);
+			const pinnedUsers = addedPins.users ?? [];
+			const recentUsers = addedRecent.map((recentItem) => recentItem.user) ?? [];
+			const pinnedFiles = addedPins.files ?? [];
 
-			// TODO: refactor when the dialogId will be in addedChats
-			const addedRecentChatIds = {};
-			addedRecent.forEach((recentItem) => {
-				addedRecentChatIds[recentItem.chat_id] = recentItem.id;
-			});
+			const filteredUsers = [...users, ...pinnedUsers, ...recentUsers].filter((user) => user.id !== 0);
+			const usersUniqueCollection = [...new Map(filteredUsers.map((user) => [user.id, user])).values()];
+			const usersPromise = this.store.dispatch('usersModel/set', usersUniqueCollection);
 
-			const dialogs = addedChats.map((chat) => {
+			const addedChatsWithDialogIds = addedChats.map((chat) => {
 				const dialog = chat;
 				const chatId = dialog.id;
 				const dialogId = dialog.dialogId;
 				if (chatId && !dialogId)
 				{
 					// eslint-disable-next-line no-param-reassign
-					chat.dialogId = addedRecentChatIds[chatId];
+					chat.dialogId = dialogIds[chatId];
 				}
 
 				return dialog;
 			});
 
-			const dialoguesPromise = this.store.dispatch('dialoguesModel/set', dialogs);
+			const dialoguesPromise = this.store.dispatch('dialoguesModel/set', addedChatsWithDialogIds);
 			const filesPromise = this.store.dispatch('filesModel/set', [...files, ...pinnedFiles]);
 			const reactionPromise = this.store.dispatch('messagesModel/reactionsModel/set', {
 				reactions,
@@ -326,30 +179,34 @@ jn.define('im/messenger/provider/service/classes/sync/fillers/sync-filler-base',
 
 			await Promise.all(pinPromises);
 
+			await this.store.dispatch('recentModel/update', addedRecent);
+
 			const openChatIdList = this.getOpenChatsToAddMessages();
-			if (!Type.isArrayFilled(openChatIdList))
+			if (Type.isArrayFilled(openChatIdList))
 			{
-				return Promise.resolve();
+				const openChatsMessages = messagesToSave.filter((message) => {
+					return openChatIdList.includes(message.chat_id);
+				});
+				const completeDeletedMessageIdList = Object.values(completeDeletedMessages);
+
+				const messagesPromise = [
+					this.store.dispatch('messagesModel/setChatCollection', {
+						messages: openChatsMessages,
+					}),
+					this.store.dispatch('messagesModel/deleteByIdList', {
+						idList: completeDeletedMessageIdList,
+					}),
+					this.store.dispatch('messagesModel/pinModel/deleteMessagesByIdList', {
+						idList: completeDeletedMessageIdList,
+					}),
+				];
+
+				await Promise.all(messagesPromise);
 			}
 
-			const openChatsMessages = messagesToSave.filter((message) => {
-				return openChatIdList.includes(message.chat_id);
-			});
-
-			const completeDeletedMessageIdList = Object.values(completeDeletedMessages);
-			const messagesPromise = [
-				this.store.dispatch('messagesModel/setChatCollection', {
-					messages: openChatsMessages,
-				}),
-				this.store.dispatch('messagesModel/deleteByIdList', {
-					idList: completeDeletedMessageIdList,
-				}),
-				this.store.dispatch('messagesModel/pinModel/deleteMessagesByIdList', {
-					idList: completeDeletedMessageIdList,
-				}),
-			];
-
-			return Promise.all(messagesPromise);
+			this.closeDeletedCommentsChats(completeDeletedMessages);
+			await this.processDeletedChats(ChatDataProvider.source.model, deletedChats);
+			await this.processCompletelyDeletedChats(ChatDataProvider.source.model, completeDeletedChats);
 		}
 
 		/**
@@ -408,6 +265,120 @@ jn.define('im/messenger/provider/service/classes/sync/fillers/sync-filler-base',
 			}
 
 			return result;
+		}
+
+		/**
+		 * @param {ChatDataProvider['source']} source
+		 * @param {SyncListResult['deletedChats']} deletedChats
+		 * @returns {Promise<void>}
+		 */
+		async processDeletedChats(source, deletedChats)
+		{
+			await this.processCompletelyDeletedChats(source, deletedChats);
+		}
+
+		/**
+		 * @param {ChatDataProvider['source']} source
+		 * @param {SyncListResult['completeDeletedChats']} completeDeletedChats
+		 * @returns {Promise<void>}
+		 */
+		async processCompletelyDeletedChats(source, completeDeletedChats)
+		{
+			const chatIdList = Object.values(completeDeletedChats);
+			if (!Type.isArrayFilled(chatIdList))
+			{
+				return;
+			}
+			logger.log(`${this.constructor.name}.processCompletelyDeletedChats`, chatIdList);
+
+			const chatProvider = new ChatDataProvider();
+			const recentProvider = new RecentDataProvider();
+
+			for (const chatId of chatIdList)
+			{
+				const chatData = this.store.getters['dialoguesModel/getByChatId'](chatId);
+
+				if (Type.isPlainObject(chatData))
+				{
+					const helper = DialogHelper.createByModel(chatData);
+					if (helper.isChannel)
+					{
+						const commentChatData = this.store.getters['dialoguesModel/getByParentChatId'](chatData.chatId);
+
+						if (
+							Type.isPlainObject(commentChatData)
+							&& this.store.getters['applicationModel/isDialogOpen'](commentChatData.dialogId)
+						)
+						{
+							chatProvider.delete({ dialogId: commentChatData.dialogId });
+							this.closeDeletedChat({
+								dialogId: commentChatData.dialogId,
+								chatType: commentChatData.type,
+								shouldSendDeleteAnalytics: false,
+								shouldShowAlert: false,
+								parentChatId: commentChatData.parentChatId,
+							});
+						}
+					}
+
+					this.closeDeletedChat({
+						dialogId: chatData.dialogId,
+						chatType: chatData.type,
+					});
+				}
+				// recent should be first deleting because he's find chat by ChatDataProvider by chatId
+				// eslint-disable-next-line no-await-in-loop
+				await recentProvider.deleteFromSource(source, { chatId })
+					.then(() => chatProvider.deleteFromSource(source, { chatId }))
+				;
+			}
+		}
+
+		/**
+		 * @param {SyncListResult['completeDeletedMessages']} completeDeletedMessages
+		 */
+		closeDeletedCommentsChats(completeDeletedMessages)
+		{
+			for (const messageId of Object.values(completeDeletedMessages))
+			{
+				const commentInfo = this.store.getters['commentModel/getByMessageId'](messageId);
+				if (!commentInfo)
+				{
+					continue;
+				}
+				const messageData = this.store.getters['messagesModel/getById'](messageId);
+
+				if (!messageData.id)
+				{
+					continue;
+				}
+
+				this.closeDeletedChat({
+					dialogId: commentInfo.dialogId,
+					parentChatId: messageData.chatId,
+					chatType: DialogType.comment,
+				});
+			}
+		}
+
+		closeDeletedChat({
+			dialogId,
+			chatType,
+			parentChatId = 0,
+			shouldSendDeleteAnalytics = true,
+			shouldShowAlert = true,
+		})
+		{
+			if (this.store.getters['applicationModel/isDialogOpen'](dialogId))
+			{
+				MessengerEmitter.emit(EventType.dialog.external.delete, {
+					dialogId,
+					chatType,
+					parentChatId,
+					shouldSendDeleteAnalytics,
+					shouldShowAlert,
+				});
+			}
 		}
 	}
 

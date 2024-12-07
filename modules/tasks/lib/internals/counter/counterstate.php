@@ -137,6 +137,7 @@ abstract class CounterState implements \Iterator
 			$groupId = $item['GROUP_ID'];
 			$value = $item['VALUE'];
 			$type = $item['TYPE'];
+			$flowId = $item['FLOW_ID'] ?? 0;
 
 			$meta = $this->getMetaProp($item, $groups, $projects, $scrum);
 			$subType = $this->getItemSubType($type);
@@ -168,6 +169,20 @@ abstract class CounterState implements \Iterator
 			if (!isset($this->counters[CounterDictionary::META_PROP_ALL][$subType][$groupId]))
 			{
 				$this->counters[CounterDictionary::META_PROP_ALL][$subType][$groupId] = 0;
+			}
+
+			// flow
+			if (
+				$flowId
+				&& in_array($type, CounterDictionary::FLOW_TYPES)
+				&& !isset($tmpHeap[CounterDictionary::META_PROP_FLOW][$type][$flowId][$taskId]))
+			{
+				$tmpHeap[CounterDictionary::META_PROP_FLOW][$type][$flowId][$taskId] = $value;
+				$currentTypeValue = $this->counters[CounterDictionary::META_PROP_FLOW][$type][$flowId] ?? 0;
+				$this->counters[CounterDictionary::META_PROP_FLOW][$type][$flowId] = $currentTypeValue + $value;
+				// common flow
+				$commonFlowValue = $this->counters[CounterDictionary::META_PROP_FLOW][$type][0] ?? 0;
+				$this->counters[CounterDictionary::META_PROP_FLOW][$type][0] = $commonFlowValue + $value;
 			}
 
 			if (!isset($tmpHeap[$meta][$type][$groupId][$taskId]))
@@ -351,6 +366,7 @@ abstract class CounterState implements \Iterator
 			CounterDictionary::META_PROP_GROUP => [],
 			CounterDictionary::META_PROP_SONET => [],
 			CounterDictionary::META_PROP_SCRUM => [],
+			CounterDictionary::META_PROP_FLOW => [],
 			CounterDictionary::META_PROP_NONE => [],
 		];
 	}

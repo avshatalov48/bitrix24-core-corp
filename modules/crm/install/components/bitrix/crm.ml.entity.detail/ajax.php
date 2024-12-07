@@ -9,6 +9,7 @@ use Bitrix\Crm\Ml\Agent\ModelTrainer;
 use Bitrix\Crm\Ml\Internals\PredictionHistoryTable;
 use Bitrix\Crm\Ml\Scoring;
 use Bitrix\Crm\Ml\TrainingState;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Engine\ActionFilter\CloseSession;
 use Bitrix\Main\Engine\Controller;
 use Bitrix\Main\Error;
@@ -83,8 +84,18 @@ class CrmMlEntityDetailAjaxController extends Controller
 	 */
 	public function getCurrentPredictionAction($entityTypeId, $entityId): ?array
 	{
-		$userPermissions = CCrmPerms::GetCurrentUserPermissions();
-		if (!CCrmAuthorizationHelper::CheckReadPermission($entityTypeId, $entityId, $userPermissions))
+		$categoryId = Container::getInstance()
+			->getFactory($entityTypeId)
+			?->getItemCategoryId($entityId)
+		;
+
+		if (
+			!Container::getInstance()->getUserPermissions()->checkReadPermissions(
+				$entityTypeId,
+				$entityId,
+				$categoryId
+			)
+		)
 		{
 			$this->addError(new Error('Access denied'));
 
@@ -123,8 +134,19 @@ class CrmMlEntityDetailAjaxController extends Controller
 
 	public function getResultAction($entityType, $entityId): ?array
 	{
-		$userPermissions = CCrmPerms::GetCurrentUserPermissions();
-		if (!CCrmAuthorizationHelper::CheckReadPermission($entityType, $entityId, $userPermissions))
+		$entityTypeId = CCrmOwnerType::ResolveID($entityType);
+		$categoryId = Container::getInstance()
+			->getFactory($entityTypeId)
+			?->getItemCategoryId($entityId)
+		;
+
+		if (
+			!Container::getInstance()->getUserPermissions()->checkReadPermissions(
+				$entityTypeId,
+				$entityId,
+				$categoryId
+			)
+		)
 		{
 			$this->addError(new Error('Access denied'));
 

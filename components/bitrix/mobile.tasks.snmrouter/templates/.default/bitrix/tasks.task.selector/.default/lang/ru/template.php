@@ -1,6 +1,6 @@
 <?
 $MESS["TASK_COLUMN_CREATED_BY"] = "постановщик";
-$MESS["TASK_COLUMN_RESPONSIBLE_ID"] = "ответственный";
+$MESS["TASK_COLUMN_RESPONSIBLE_ID_MSGVER_1"] = "исполнитель";
 $MESS["TASK_COLUMN_DEADLINE"] = "срок";
 $MESS["TASK_COLUMN_PRIORITY"] = "приоритет";
 $MESS["TASK_COLUMN_STATUS"] = "статус";

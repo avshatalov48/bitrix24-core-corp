@@ -39,7 +39,7 @@ $className =
 </div>
 
 <? $frame = $this->createFrame()->begin(""); ?>
-<script type="text/javascript">
+<script>
 new BX.B24SearchTitle({
 	'AJAX_PAGE' : '<?=CUtil::JSEscape(POST_FORM_ACTION_URI)?>',
 	'CONTAINER_ID': '<?=$containerId?>',

@@ -150,29 +150,25 @@ echo '<?xml version="1.0" encoding="utf-8" ?>
 	public static function isDigestEnabled()
 	{
 		$digest = true;
-		if (mb_strpos($_SERVER['HTTP_USER_AGENT'], "Microsoft-WebDAV-MiniRedir") !== false)
+		if (str_contains($_SERVER['HTTP_USER_AGENT'] ?? '', "Microsoft-WebDAV-MiniRedir"))
 		{
 			if (preg_match("/([^\/]*)\/(\d+).(\d+).(\d+)/", $_SERVER['HTTP_USER_AGENT'], $matches) > 0) // Redir/5.1.2600
 			{
-				if (intval($matches[2]) < 6) // less then vista
+				if ((int)$matches[2] < 6) // less then vista
 				{
 					$digest = false;
 				}
 			}
 		}
 		elseif (
-			(mb_strpos($_SERVER['HTTP_USER_AGENT'], "Microsoft Data Access Internet Publishing Provider") !== false)
+			(str_contains($_SERVER['HTTP_USER_AGENT'] ?? '', "Microsoft Data Access Internet Publishing Provider"))
 			|| (
 				(self::GetWindowsVersion() === 5)
-				&& (mb_strpos($_SERVER['HTTP_USER_AGENT'], "Microsoft Office Protocol Discovery") !== false)
+				&& (str_contains($_SERVER['HTTP_USER_AGENT'] ?? '', "Microsoft Office Protocol Discovery"))
 			)
 		)
 		{
 			$digest = false;
-		}
-		else
-		{
-			$digest = true;
 		}
 
 		return $digest;

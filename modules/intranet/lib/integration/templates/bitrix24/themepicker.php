@@ -14,6 +14,7 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Page\Asset;
 use Bitrix\Main\Page\AssetLocation;
+use Bitrix\Main\Security\Sign\Signer;
 use Bitrix\Main\SystemException;
 use Bitrix\Socialnetwork\WorkgroupSiteTable;
 
@@ -39,7 +40,7 @@ class ThemePicker
 		self::BEHAVIOUR_RETURN,
 	];
 
-	public const DEFAULT_THEME_ID = 'light:video-jupiter';
+	public const DEFAULT_THEME_ID = 'light:video-orion';
 
 	private static $instance = null;
 	private static $config = null;
@@ -107,15 +108,7 @@ class ThemePicker
 			$this->entityId = $this->userId;
 		}
 
-		if (Loader::includeModule('bitrix24'))
-		{
-			$this->zoneId = \CBitrix24::getPortalZone();
-		}
-		else
-		{
-			$context = Context::getCurrent();
-			$this->zoneId = $context !== null ? $context->getLanguage() : "en";
-		}
+		$this->zoneId = Application::getInstance()->getLicense()->getRegion() ?? 'en';
 
 		$res = ThemeTable::getList([
 			'filter' => [
@@ -295,13 +288,13 @@ class ThemePicker
 
 	public function getCurrentBaseThemeId()
 	{
-		list($baseThemeId) = static::getThemeIdParts($this->getCurrentThemeId());
+		[$baseThemeId] = static::getThemeIdParts($this->getCurrentThemeId());
 		return $baseThemeId;
 	}
 
 	public function getCurrentSubThemeId()
 	{
-		list(, $subThemeId) = static::getThemeIdParts($this->getCurrentThemeId());
+		[, $subThemeId] = static::getThemeIdParts($this->getCurrentThemeId());
 		return $subThemeId;
 	}
 
@@ -448,6 +441,9 @@ class ThemePicker
 			}
 
 			$theme["bgImage"] = $imageId;
+
+			$signer = new Signer();
+			$theme["bgImageSignature"] = $signer->sign((string)$imageId, 'theme-picker');
 		}
 
 		if (empty($theme))
@@ -577,7 +573,7 @@ class ThemePicker
 			return null;
 		}
 
-		list($baseThemeId) = static::getThemeIdParts($customThemeId);
+		[$baseThemeId] = static::getThemeIdParts($customThemeId);
 		$customThemeOptions = $customThemes[$customThemeId];
 
 		$customTheme = array(
@@ -588,7 +584,7 @@ class ThemePicker
 		);
 
 		$style = "body { ";
-		if (isset($customThemeOptions["bgImage"]))
+		if ($this->validateBgImage($customThemeOptions))
 		{
 			$bgImage = \CFile::getPath($customThemeOptions["bgImage"]);
 			$customTheme["prefetchImages"] = array($bgImage);
@@ -628,13 +624,25 @@ class ThemePicker
 		return $customTheme;
 	}
 
+	protected function validateBgImage(array $customTheme): bool
+	{
+		if (!isset($customTheme["bgImage"]) || empty($customTheme["bgImageSignature"]))
+		{
+			return false;
+		}
+
+		$signer = new Signer();
+
+		return $signer->sign((string)$customTheme["bgImage"], 'theme-picker') === $customTheme["bgImageSignature"];
+	}
+
 	public function getPatternThemes(): array
 	{
 		$result = [];
 
 		foreach ($this->getStandardThemes() as $theme)
 		{
-			if (!preg_match('/^(dark|light):pattern-(.+)/is' . BX_UTF_PCRE_MODIFIER, $theme['id'], $matches))
+			if (!preg_match('/^(dark|light):pattern-(.+)/isu', $theme['id'], $matches))
 			{
 				continue;
 			}
@@ -676,7 +684,7 @@ class ThemePicker
 			return null;
 		}
 
-		list($baseThemeId, $subThemeId) = static::getThemeIdParts($themeId);
+		[$baseThemeId, $subThemeId] = static::getThemeIdParts($themeId);
 		if (!isset($config["baseThemes"][$baseThemeId]) || !isset($config["subThemes"][$themeId]))
 		{
 			return null;
@@ -796,18 +804,24 @@ class ThemePicker
 
 	public function getInitialDefaultThemeId(): string
 	{
+		$eastReleaseDate = \DateTime::createFromFormat('d.m.Y H:i', '15.05.2024 10:00', new \DateTimeZone('Europe/Moscow'));
 		if (in_array($this->getZoneId(), ['ru', 'kz', 'by']))
 		{
-			return 'light:video-jupiter';
+			if (time() > $eastReleaseDate->getTimestamp())
+			{
+				return 'light:video-orion'; // New Default East Theme
+			}
+
+			return 'light:video-jupiter'; // Old Default East Theme
 		}
 
-		$westernReleaseDate = \DateTime::createFromFormat('d.m.Y H:i', '29.11.2023 10:00', new \DateTimeZone('Europe/Moscow'));
+		$westernReleaseDate = \DateTime::createFromFormat('d.m.Y H:i', '30.05.2024 10:00', new \DateTimeZone('Europe/Moscow'));
 		if (time() > $westernReleaseDate->getTimestamp())
 		{
-			return 'light:orbital-symphony';
+			return 'light:contrast-horizon'; // New Default West Theme
 		}
 
-		return 'light:milky-way';
+		return 'light:orbital-symphony'; // Old Default West Theme
 	}
 
 	public function setDefaultTheme($themeId, $currentUserId = 0): bool
@@ -976,7 +990,7 @@ class ThemePicker
 		}
 
 		//Check physical existence
-		list($baseThemeId, $subThemeId) = static::getThemeIdParts($themeId);
+		[$baseThemeId, $subThemeId] = static::getThemeIdParts($themeId);
 		$baseThemePath = Application::getDocumentRoot().$this->getThemesPath()."/".$baseThemeId;
 
 		if (!Path::validateFilename($baseThemeId) || !Directory::isDirectoryExists($baseThemePath))
@@ -1105,7 +1119,7 @@ class ThemePicker
 			}
 		}
 
-		sortByColumn($themes, array("sort" => SORT_ASC));
+		sortByColumn($themes, array("new" => SORT_DESC, "sort" => SORT_ASC));
 	}
 
 	private function getConfig()
@@ -1163,7 +1177,7 @@ class ThemePicker
 			return false;
 		}
 
-		list(, $subThemeId) = static::getThemeIdParts($themeId);
+		[, $subThemeId] = static::getThemeIdParts($themeId);
 		return preg_match("/^".$this->getCustomThemePrefix()."[0-9]{10}/", $subThemeId);
 	}
 

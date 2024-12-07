@@ -2,18 +2,32 @@
  * @module ui-system/form/checkbox
  */
 jn.define('ui-system/form/checkbox', (require, exports, module) => {
-	const AppTheme = require('apptheme');
 	const { Corner, Color } = require('tokens');
 	const { PropTypes } = require('utils/validation');
-	const { IconView } = require('ui-system/blocks/icon');
-	const { OutlineIconTypes } = require('assets/icons/types');
+	const { IconView, Icon } = require('ui-system/blocks/icon');
 
 	const DEFAULT_COLOR = Color.accentMainPrimary;
 	const DISABLED_COLOR = Color.base7;
 	const DEFAULT_SIZE = 20;
 
+	/**
+	 * @typedef CheckboxProps
+	 * @property {string} testId
+	 * @property {number} size
+	 * @property {boolean} [checked]
+	 * @property {boolean} [disabled]
+	 * @property {boolean} [useState]
+	 * @property {boolean} [indeterminate]
+	 * @property {Color} [background]
+	 * @property {Function} [onClick]
+	 *
+	 * @class Checkbox
+	 */
 	class Checkbox extends LayoutComponent
 	{
+		/**
+		 * @param {CheckboxProps} props
+		 */
 		constructor(props)
 		{
 			super(props);
@@ -37,11 +51,11 @@ jn.define('ui-system/form/checkbox', (require, exports, module) => {
 		render()
 		{
 			const { checked } = this.state;
-			const { testId, disabled, useState = true } = this.props;
+			const { disabled, useState = true } = this.props;
 
 			return View(
 				{
-					testId,
+					testId: this.#getTestId(),
 					clickable: !disabled && useState,
 					style: this.getStyle(),
 					onClick: this.handleOnClick,
@@ -55,15 +69,15 @@ jn.define('ui-system/form/checkbox', (require, exports, module) => {
 			const { indeterminate, size = DEFAULT_SIZE } = this.props;
 
 			const iconProps = {
-				iconSize: size - 2,
-				icon: OutlineIconTypes.check,
-				iconColor: Color.baseWhiteFixed,
+				size: size - 2,
+				icon: Icon.CHECK,
+				color: Color.baseWhiteFixed,
 			};
 
 			if (indeterminate)
 			{
-				iconProps.icon = OutlineIconTypes.minus;
-				iconProps.iconColor = this.getBaseColor();
+				iconProps.icon = Icon.MINUS;
+				iconProps.color = this.getBaseColor();
 			}
 
 			return IconView(iconProps);
@@ -98,16 +112,27 @@ jn.define('ui-system/form/checkbox', (require, exports, module) => {
 			});
 		}
 
-		getBaseColor()
+		/**
+		 * @private
+		 * @param {boolean} [hex]
+		 * @return {Color}
+		 */
+		getBaseColor(hex)
 		{
 			const { background = null, disabled } = this.props;
+			let color = background || DEFAULT_COLOR;
 
 			if (disabled)
 			{
-				return DISABLED_COLOR;
+				color = DISABLED_COLOR;
 			}
 
-			return background || DEFAULT_COLOR;
+			if (hex)
+			{
+				return color.toHex();
+			}
+
+			return color;
 		}
 
 		getStyle()
@@ -120,52 +145,58 @@ jn.define('ui-system/form/checkbox', (require, exports, module) => {
 				justifyContent: 'center',
 				width: size,
 				height: size,
-				borderRadius: Corner.XS,
+				borderRadius: Corner.XS.toNumber(),
 			};
 
 			if (indeterminate)
 			{
 				style.borderWidth = 1;
-				style.borderColor = this.getBaseColor();
+				style.borderColor = this.getBaseColor(true);
 
 				return style;
 			}
 
 			if (checked)
 			{
-				style.backgroundColor = this.getBaseColor();
+				style.backgroundColor = this.getBaseColor(true);
 			}
 			else
 			{
 				style.borderWidth = 1;
-				style.borderColor = Color.base6;
+				style.borderColor = Color.base6.toHex();
 			}
 
 			return style;
+		}
+
+		#getTestId()
+		{
+			const { testId } = this.props;
+			const { checked } = this.state;
+			const prefix = checked ? '' : 'un';
+
+			return `${testId}_${prefix}selected`;
 		}
 	}
 
 	Checkbox.defaultProps = {
 		size: DEFAULT_SIZE,
+		checked: true,
+		disabled: false,
+		background: Color.accentMainPrimary,
 		useState: true,
+		indeterminate: false,
 	};
 
 	Checkbox.propTypes = {
+		testId: PropTypes.string.isRequired,
 		size: PropTypes.number,
 		checked: PropTypes.bool,
 		disabled: PropTypes.bool,
-		background: PropTypes.string,
+		background: PropTypes.object,
 		useState: PropTypes.bool,
 		indeterminate: PropTypes.bool,
-	};
-
-	Checkbox.defaultProps = {
-		size: 24,
-		checked: true,
-		disabled: false,
-		background: AppTheme.colors.accentMainPrimary,
-		useState: true,
-		indeterminate: false,
+		onClick: PropTypes.func,
 	};
 
 	module.exports = { Checkbox };

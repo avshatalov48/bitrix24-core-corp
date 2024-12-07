@@ -58,7 +58,7 @@ else
 				?><a class="webform-small-button webform-small-button-blue webform-small-button-video" id="im-call-button" href="javascript:void(0)" onclick="if (BXIM) { BXIM.callTo(<?=$arUser['ID']?>); return false; }"><span class="webform-small-button-icon"></span><span><?=GetMessage("SONET_VIDEO_CALL")?></span></a><br/><br/><?
 			endif;
 			?>
-			<script type="text/javascript">
+			<script>
 				BX.ready(function(){
 					if (!BXIM || !BXIM.checkCallSupport())
 					{
@@ -683,7 +683,7 @@ $arJSParams = array(
 	"codesUrl" => $arResult["Urls"]["Codes"],
 );
 ?>
-<script type="text/javascript">
+<script>
 	BX.message({
 		USER_PROFILE_CONFIRM : "<?=$confirmMess?>",
 		SONET_ERROR_DELETE : "<?=GetMessageJS("SONET_ERROR_DELETE")?>",

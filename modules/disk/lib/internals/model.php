@@ -582,12 +582,18 @@ abstract class Model implements \ArrayAccess, IErrorable
 	/**
 	 * Export model to array. Use map attributes and field getter.
 	 * @param array $with
+	 * @param array|null $allowedFields
 	 * @return array
 	 */
-	public function toArray(array $with = []): array
+	public function toArray(array $with = [], array $allowedFields = null): array
 	{
 		$data = [];
 		$referenceAttributes = self::getMapReferenceAttributes();
+		if ($allowedFields)
+		{
+			$allowedFields = array_flip($allowedFields);
+			$allowedFields = array_change_key_case($allowedFields, CASE_LOWER);
+		}
 		foreach (static::getMapAttributes() as $name => $attribute)
 		{
 			if (is_array($attribute))
@@ -595,6 +601,10 @@ abstract class Model implements \ArrayAccess, IErrorable
 				$attribute = array_pop($attribute);
 			}
 			if (isset($referenceAttributes[$name]) && !in_array($name, $with, true))
+			{
+				continue;
+			}
+			if ($allowedFields && !isset($allowedFields[strtolower($name)]))
 			{
 				continue;
 			}

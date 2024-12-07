@@ -75,6 +75,26 @@ class InvitationTable extends Entity\DataManager
 				'values' => [ 'N','Y' ],
 				'default_value' => 'N'
 			],
+			'IS_MASS' => [
+				'data_type' => 'boolean',
+				'values' => [ 'N','Y' ],
+				'default_value' => 'N'
+			],
+			'IS_DEPARTMENT' => [
+				'data_type' => 'boolean',
+				'values' => [ 'N','Y' ],
+				'default_value' => 'N'
+			],
+			'IS_INTEGRATOR' => [
+				'data_type' => 'boolean',
+				'values' => [ 'N','Y' ],
+				'default_value' => 'N'
+			],
+			'IS_REGISTER' => [
+				'data_type' => 'boolean',
+				'values' => [ 'N','Y' ],
+				'default_value' => 'N'
+			],
 			'USER' => array(
 				'data_type' => 'Bitrix\Main\User',
 				'reference' => array('=this.USER_ID' => 'ref.ID')

@@ -120,26 +120,4 @@ class CXDImport
 		fwrite($f, date("Y-m-d H:i:s")." ".str_pad($code, 7)." ".htmlspecialcharsbx($text)."\n");
 		fclose($f);
 	}
-
-	public static function DetectUTF8($url)
-	{
-		$arBytes = array();
-		for($i=0, $n = mb_strlen($url); $i<$n; $i++)
-			$arBytes[] = ord($url[$i]);
-
-		$is_utf = 0;
-		foreach($arBytes as $i => $byte)
-		{
-			if( ($byte & 0xC0) == 0x80 )
-			{
-				if( ($i > 0) && (($arBytes[$i-1] & 0xC0) == 0xC0) )
-					$is_utf++;
-				elseif( ($i > 0) && (($arBytes[$i-1] & 0x80) == 0x00) )
-					$is_utf--;
-			}
-			elseif( ($i > 0) && (($arBytes[$i-1] & 0xC0) == 0xC0) )
-				$is_utf--;
-		}
-		return $is_utf > 0;
-	}
 }

@@ -134,6 +134,8 @@ jn.define('im/messenger/controller/search/experimental/selector', (require, expo
 				if (!item)
 				{
 					Logger.error('RecentSelector.drawRecent: unknown chat or user id', recentId);
+
+					return;
 				}
 
 				result.push(item);

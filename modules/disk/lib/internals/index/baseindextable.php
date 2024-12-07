@@ -6,7 +6,6 @@ use Bitrix\Disk\Internals\DataManager;
 use Bitrix\Disk\Internals\ObjectTable;
 use Bitrix\Main\Entity\Query\Join;
 use Bitrix\Main\ORM\Fields;
-use Bitrix\Main\Text\BinaryString;
 use Bitrix\Main\Type\DateTime;
 
 abstract class BaseIndexTable extends DataManager
@@ -43,7 +42,7 @@ abstract class BaseIndexTable extends DataManager
 	public static function limitValue($value)
 	{
 		//yes, we know that substr may kills some last characters
-		return BinaryString::getSubstring($value, 0, (int)static::getMaxIndexSize());
+		return substr($value, 0, (int)static::getMaxIndexSize());
 	}
 
 	public static function upsert($objectId, $searchIndex)

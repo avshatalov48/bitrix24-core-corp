@@ -26,6 +26,16 @@ class TagHandler implements TagHandlerInterface
 	 */
 	public static function onUpdatePaySystem(Event $event)
 	{
+		$oldFields = $event->getParameter('OLD_FIELDS');
+		$newFields = $event->getParameter('NEW_FIELDS');
+		if (
+			!isset($oldFields['ACTIVE']) ||
+			!isset($newFields['ACTIVE']) ||
+			$oldFields['ACTIVE'] == $newFields['ACTIVE']
+		) {
+			return true;
+		}
+
 		$tag = static::getCountPaySystemTag();
 		if ($tag['MODULE_ID'])
 		{

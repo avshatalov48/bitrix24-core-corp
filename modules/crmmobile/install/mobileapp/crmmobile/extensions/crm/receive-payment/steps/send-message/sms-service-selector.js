@@ -3,6 +3,7 @@
  */
 jn.define('crm/receive-payment/steps/send-message/sms-service-selector', (require, exports, module) => {
 	const { Loc } = require('loc');
+	const { ContextMenu } = require('layout/ui/context-menu');
 	const AppTheme = require('apptheme');
 	const { PureComponent } = require('layout/pure-component');
 	const { ImageAfterTypes } = require('layout/ui/context-menu/item');

@@ -1,0 +1,2 @@
+<?php
+$MESS['INTRANET_USER_LIST_GROUP_ACTION_CREATE_CHAT_TITLE'] = 'Создать чат';

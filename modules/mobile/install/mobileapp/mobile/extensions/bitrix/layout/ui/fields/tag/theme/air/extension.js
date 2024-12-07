@@ -6,6 +6,7 @@ jn.define('layout/ui/fields/tag/theme/air', (require, exports, module) => {
 	const { withTheme } = require('layout/ui/fields/theme');
 	const { FieldWrapper } = require('layout/ui/fields/theme/air/elements/field-wrapper');
 	const { Color, Indent, Corner } = require('tokens');
+	const { Text4, Text5 } = require('ui-system/typography/text');
 	const { IconView } = require('ui-system/blocks/icon');
 	const { AddButton } = require('layout/ui/fields/theme/air/elements/add-button');
 
@@ -20,42 +21,43 @@ jn.define('layout/ui/fields/tag/theme/air', (require, exports, module) => {
 		{ field },
 		View(
 			{
+				testId: `${field.testId}_CONTENT`,
 				style: {
 					flexDirection: 'column',
 				},
 				onLongClick: field.getContentLongClickHandler(),
-				onClick: () => field.focus(),
+				onClick: field.getContentClickHandler(),
 			},
 			View(
 				{
 					style: {
 						flexDirection: 'row',
 						alignItems: 'flex-start',
-						marginTop: Indent.XS2,
-						marginBottom: Indent.XS2,
 					},
 				},
-				field.isEmpty() && field.getLeftIcon().icon && IconView({
-					icon: field.getLeftIcon().icon,
+				field.isEmpty() && field.getDefaultLeftIcon() && IconView({
+					testId: `${field.testId}_ICON`,
+					icon: field.getDefaultLeftIcon(),
 					size: {
 						width: IMAGE_SIZE,
 						height: IMAGE_SIZE,
 					},
-					iconColor: Color.accentMainPrimaryalt,
+					color: Color.accentMainPrimaryalt,
 				}),
 				field.isEmpty() && View(
 					{
-						onClick: field.openSelector,
+						testId: `${field.testId}_EMPTY_VIEW`,
+						onClick: field.getContentClickHandler(),
 						style: {
-							paddingVertical: Indent.S,
+							paddingVertical: Number(Indent.S),
 						},
 					},
-					Text({
+					Text4({
+						testId: `${field.testId}_EMPTY_VIEW_TEXT`,
 						text: field.getEmptyText(),
 						style: {
-							color: Color.base3,
-							fontSize: 14,
-							marginLeft: Indent.M,
+							color: Color.base3.toHex(),
+							marginLeft: Number(Indent.M),
 							flexShrink: 2,
 						},
 						numberOfLines: 1,
@@ -72,31 +74,33 @@ jn.define('layout/ui/fields/tag/theme/air', (require, exports, module) => {
 					},
 					...field.getEntityList().map((entity) => View(
 						{
+							testId: `${field.testId}_TAG_${entity.id}`,
 							style: {
-								marginLeft: Indent.M,
-								marginVertical: Indent.XS,
-
-								paddingHorizontal: Indent.XS,
-								borderRadius: Corner.XL,
-								backgroundColor: Color.bgContentTertiary,
+								marginRight: Number(Indent.M),
+								marginBottom: Number(Indent.M),
+								paddingLeft: Number(Indent.XS),
+								paddingRight: Number(Indent.M),
+								borderRadius: Number(Corner.XL),
+								backgroundColor: Color.bgContentTertiary.toHex(),
 								flexDirection: 'row',
 								flexShrink: 2,
+								alignItems: 'center',
 							},
 						},
-						field.getLeftIcon().icon && IconView({
-							icon: field.getLeftIcon().icon,
+						field.getDefaultLeftIcon() && IconView({
+							testId: `${field.testId}_${entity.id}_ICON`,
+							icon: field.getDefaultLeftIcon(),
 							size: {
 								width: ICON_SIZE,
 								height: ICON_SIZE,
 							},
 							iconColor: Color.base4,
 						}),
-						Text({
+						Text5({
+							testId: `${field.testId}_${entity.id}_VALUE`,
 							text: entity.title,
 							style: {
-								color: Color.base2,
-								fontSize: 12,
-								marginLeft: Indent.XS,
+								color: Color.base2.toHex(),
 								flexShrink: 2,
 							},
 							numberOfLines: 1,
@@ -105,12 +109,15 @@ jn.define('layout/ui/fields/tag/theme/air', (require, exports, module) => {
 					)),
 				),
 			),
-			field.getAddButtonText()
+			field.shouldShowAddButton()
+			&& field.getAddButtonText()
 			&& !field.isReadOnly()
-			&& field.isMultiple()
+			&& !field.isRestricted()
 			&& !field.isEmpty()
+			&& field.isMultiple()
 			&& AddButton({
-				onClick: field.openSelector,
+				testId: field.testId,
+				onClick: field.getContentClickHandler(),
 				text: field.getAddButtonText(),
 			}),
 		),

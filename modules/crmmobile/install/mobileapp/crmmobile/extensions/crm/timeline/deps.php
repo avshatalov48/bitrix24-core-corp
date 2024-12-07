@@ -3,7 +3,6 @@
 return [
 	'extensions' => [
 		'layout/ui/floating-button',
-		'layout/ui/empty-list',
 		'layout/ui/context-menu',
 		'layout/ui/widget-header-button',
 		'layout/ui/snackbar-text',
@@ -30,6 +29,8 @@ return [
 		'crm:timeline/stream',
 		'crm:timeline/scheduler',
 		'crm:document/details',
+
+		'crm:type',
 
 		'tasks:task',
 		'loc',

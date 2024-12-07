@@ -153,8 +153,8 @@ class LocationManager extends Base
 			: [];
 
 		return implode('_', [
-			(string)$location['sourceCode'],
-			(string)$location['externalId'],
+			(string)($location['sourceCode'] ?? ''),
+			(string)($location['externalId'] ?? ''),
 			md5(serialize($fieldCollection))
 		]);
 	}

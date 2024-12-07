@@ -215,8 +215,14 @@ class LeadConversionScheme
 		}
 		else
 		{
+			$permissions = null;
+			if (is_array($options) && isset($options['PERMISSIONS']) && $options['PERMISSIONS'] instanceof \CCrmPerms)
+			{
+				$permissions = $options['PERMISSIONS'];
+			}
+
 			$flags = array();
-			\CCrmLead::PrepareConversionPermissionFlags(0, $flags);
+			\CCrmLead::PrepareConversionPermissionFlags(0, $flags, $permissions);
 			$isDealPermitted = $flags['CAN_CONVERT_TO_DEAL'];
 			$isContactPermitted = $flags['CAN_CONVERT_TO_CONTACT'];
 			$isCompanyPermitted = $flags['CAN_CONVERT_TO_COMPANY'];

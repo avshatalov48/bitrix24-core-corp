@@ -12,6 +12,8 @@ use LogicException;
 
 final class UpdateDefaultStagesAgent extends AgentBase
 {
+	public const IS_DISABLED = true;
+
 	private const OLD_STATUSES_MAP = [
 		'COORDINATION_AND_FILLING' => ['NOTSIGNED'],
 		'SIGNING' => ['PROCESSING', 'SEMISIGNED', 'SENT'],
@@ -45,6 +47,11 @@ final class UpdateDefaultStagesAgent extends AgentBase
 
 	public static function doRun(): bool
 	{
+		if (self::IS_DISABLED)
+		{
+			return false;
+		}
+
 		$typeService = Container::getInstance()->getSignB2eTypeService();
 		$statusService = Container::getInstance()->getSignB2eStatusService();
 		$stageService = Container::getInstance()->getSignB2eStageService();

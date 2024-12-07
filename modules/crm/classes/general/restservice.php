@@ -14,6 +14,7 @@ use Bitrix\Crm\EntityPreset;
 use Bitrix\Crm\EntityRequisite;
 use Bitrix\Crm\Integration\Bitrix24Manager;
 use Bitrix\Crm\Integration\DiskManager;
+use Bitrix\Crm\Integration\Rest\AppPlacement;
 use Bitrix\Crm\Integration\StorageFileType;
 use Bitrix\Crm\Integration\StorageType;
 use Bitrix\Crm\Requisite;
@@ -442,15 +443,22 @@ final class CCrmRestService extends IRestService
 				$bindings[$name] = $callback;
 			}
 
-			$allActivityPlacementsCodes = \Bitrix\Crm\Integration\Rest\AppPlacement::getAllDetailActivityCodes();
+			$allActivityPlacementsCodes = AppPlacement::getAllDetailActivityCodes();
 			$bindings[\CRestUtil::PLACEMENTS] = [];
-			foreach(\Bitrix\Crm\Integration\Rest\AppPlacement::getAll() as $name)
+			foreach(AppPlacement::getAll() as $name)
 			{
-				if ($name === 'CRM_REQUISITE_AUTOCOMPLETE')
+				if (
+					$name === AppPlacement::REQUISITE_AUTOCOMPLETE
+					|| $name === AppPlacement::BANK_DETAIL_AUTOCOMPLETE
+				)
 				{
-					$bindings[\CRestUtil::PLACEMENTS][$name] = ['options' => ['countries' => 'string']];
+					$bindings[\CRestUtil::PLACEMENTS][$name] = [
+						'options' => [
+							'countries' => 'string',
+						],
+					];
 				}
-				if (in_array($name, $allActivityPlacementsCodes, true))
+				elseif (in_array($name, $allActivityPlacementsCodes, true))
 				{
 					$bindings[\CRestUtil::PLACEMENTS][$name] = [
 						'options' => [
@@ -1303,6 +1311,13 @@ abstract class CCrmRestProxyBase implements ICrmRestProxy
 		{
 			throw new RestException(implode("\n", $errors));
 		}
+
+		$result = \Bitrix\Crm\Entity\CommentsHelper::prepareFieldsFromCompatibleRestToRead(
+			$this->getOwnerTypeID(),
+			(int)$ID,
+			$result,
+		);
+
 		$fieldsInfo = $this->getFieldsInfo();
 		$this->externalizeFields($result, $fieldsInfo);
 		return $result;
@@ -1314,36 +1329,12 @@ abstract class CCrmRestProxyBase implements ICrmRestProxy
 
 		$navigation = CCrmRestService::getNavData($start);
 
-		$enableMultiFields = false;
-		$selectedFmTypeIDs = array();
-		if(is_array($select) && !empty($select))
+		$selectedFmTypeIDs = $this->findSelectedFmTypeIds((array)$select);
+		$wasIdentityFieldAdded = false;
+		if ($this->shouldAddIdentityFieldToSelect((array)$select, !empty($selectedFmTypeIDs)))
 		{
-			$supportedFmTypeIDs = $this->getSupportedMultiFieldTypeIDs();
-
-			if(is_array($supportedFmTypeIDs) && !empty($supportedFmTypeIDs))
-			{
-				foreach($supportedFmTypeIDs as $fmTypeID)
-				{
-					if(in_array($fmTypeID, $select, true))
-					{
-						$selectedFmTypeIDs[] = $fmTypeID;
-					}
-				}
-			}
-			$enableMultiFields = !empty($selectedFmTypeIDs);
-			if($enableMultiFields)
-			{
-				$identityFieldName = $this->getIdentityFieldName();
-				if($identityFieldName === '')
-				{
-					throw new RestException('Could not find identity field name.');
-				}
-
-				if(!in_array($identityFieldName, $select, true))
-				{
-					$select[] = $identityFieldName;
-				}
-			}
+			$select = $this->addIdentityFieldInSelect((array)$select);
+			$wasIdentityFieldAdded = true;
 		}
 
 		$fieldsInfo = $this->getFieldsInfo();
@@ -1355,14 +1346,20 @@ abstract class CCrmRestProxyBase implements ICrmRestProxy
 		{
 			return $this->prepareListFromDbResult(
 				$result,
-				array('SELECTED_FM_TYPES' => $selectedFmTypeIDs)
+				[
+					'SELECTED_FM_TYPES' => $selectedFmTypeIDs,
+					'USE_ENTITY_MAP_APPROACH' => $wasIdentityFieldAdded,
+				]
 			);
 		}
 		elseif(is_array($result))
 		{
 			return $this->prepareListFromArray(
 				$result,
-				array('SELECTED_FM_TYPES' => $selectedFmTypeIDs)
+				[
+					'SELECTED_FM_TYPES' => $selectedFmTypeIDs,
+					'USE_ENTITY_MAP_APPROACH' => $wasIdentityFieldAdded,
+				]
 			);
 		}
 
@@ -1373,23 +1370,83 @@ abstract class CCrmRestProxyBase implements ICrmRestProxy
 
 		throw new RestException(implode("\n", $errors));
 	}
+
+	private function findSelectedFmTypeIds(array $select): array
+	{
+		if (empty($select))
+		{
+			return [];
+		}
+
+		$supportedFmTypeIDs = $this->getSupportedMultiFieldTypeIDs();
+
+		$selectedFmTypeIDs = [];
+		if(is_array($supportedFmTypeIDs) && !empty($supportedFmTypeIDs))
+		{
+			foreach($supportedFmTypeIDs as $fmTypeID)
+			{
+				if(in_array($fmTypeID, $select, true))
+				{
+					$selectedFmTypeIDs[] = $fmTypeID;
+				}
+			}
+		}
+
+		return $selectedFmTypeIDs;
+	}
+
+	private function shouldAddIdentityFieldToSelect(array $select, bool $isMultifieldsEnabled): bool
+	{
+		if (empty($this->getIdentityFieldName()))
+		{
+			// identity is not supported
+			return false;
+		}
+
+		if ($isMultifieldsEnabled)
+		{
+			return true;
+		}
+
+		if (empty($select) || in_array('*', $select, true))
+		{
+			// empty select essentially means SELECT *
+			return true;
+		}
+
+		$isFlexibleFieldsSelected = (bool)array_intersect($select, \Bitrix\Crm\Entity\CommentsHelper::getFieldsWithFlexibleContentType($this->getOwnerTypeID()));
+
+		return $isFlexibleFieldsSelected;
+	}
+
+	private function addIdentityFieldInSelect(array $select): ?array
+	{
+		if (empty($select))
+		{
+			// empty select essentially means SELECT *
+			return $select;
+		}
+
+		$identityFieldName = $this->getIdentityFieldName();
+		if($identityFieldName === '')
+		{
+			throw new RestException('Could not find identity field name.');
+		}
+
+		if(!in_array($identityFieldName, $select, true))
+		{
+			$select[] = $identityFieldName;
+		}
+
+		return $select;
+	}
+
 	protected function prepareListFromDbResult(CDBResult $dbResult, array $options)
 	{
 		$result = array();
 		$fieldsInfo = $this->getFieldsInfo();
 
-		$selectedFmTypeIDs = $options['SELECTED_FM_TYPES'] ?? array();
-		if(empty($selectedFmTypeIDs))
-		{
-			while($fields = $dbResult->Fetch())
-			{
-				$this->prepareListItemFields($fields);
-
-				$this->externalizeFields($fields, $fieldsInfo);
-				$result[] = $fields;
-			}
-		}
-		else
+		if ($options['USE_ENTITY_MAP_APPROACH'] ?? false)
 		{
 			$entityMap = array();
 			while($fields = $dbResult->Fetch())
@@ -1404,7 +1461,15 @@ abstract class CCrmRestProxyBase implements ICrmRestProxy
 				$entityMap[$entityID] = $fields;
 			}
 
-			$this->prepareListItemMultiFields($entityMap, $this->getOwnerTypeID(), $selectedFmTypeIDs);
+			$selectedFmTypeIDs = $options['SELECTED_FM_TYPES'] ?? array();
+			if (!empty($selectedFmTypeIDs))
+			{
+				$this->prepareListItemMultiFields($entityMap, $this->getOwnerTypeID(), $selectedFmTypeIDs);
+			}
+			$entityMap = \Bitrix\Crm\Entity\CommentsHelper::prepareFieldsFromCompatibleRestToReadInList(
+				$this->getOwnerTypeID(),
+				$entityMap,
+			);
 
 			foreach($entityMap as &$fields)
 			{
@@ -1412,6 +1477,16 @@ abstract class CCrmRestProxyBase implements ICrmRestProxy
 				$result[] = $fields;
 			}
 			unset($fields);
+		}
+		else
+		{
+			while($fields = $dbResult->Fetch())
+			{
+				$this->prepareListItemFields($fields);
+
+				$this->externalizeFields($fields, $fieldsInfo);
+				$result[] = $fields;
+			}
 		}
 
 		return CCrmRestService::setNavData($result, $dbResult);
@@ -1421,18 +1496,7 @@ abstract class CCrmRestProxyBase implements ICrmRestProxy
 		$result = array();
 		$fieldsInfo = $this->getFieldsInfo();
 
-		$selectedFmTypeIDs = $options['SELECTED_FM_TYPES'] ?? array();
-		if(empty($selectedFmTypeIDs))
-		{
-			foreach($list as $fields)
-			{
-				$this->prepareListItemFields($fields);
-
-				$this->externalizeFields($fields, $fieldsInfo);
-				$result[] = $fields;
-			}
-		}
-		else
+		if ($options['USE_ENTITY_MAP_APPROACH'] ?? false)
 		{
 			$entityMap = array();
 			foreach($list as $fields)
@@ -1447,7 +1511,15 @@ abstract class CCrmRestProxyBase implements ICrmRestProxy
 				$entityMap[$entityID] = $fields;
 			}
 
-			$this->prepareListItemMultiFields($entityMap, $this->getOwnerTypeID(), $selectedFmTypeIDs);
+			$selectedFmTypeIDs = $options['SELECTED_FM_TYPES'] ?? array();
+			if (!empty($selectedFmTypeIDs))
+			{
+				$this->prepareListItemMultiFields($entityMap, $this->getOwnerTypeID(), $selectedFmTypeIDs);
+			}
+			$entityMap = \Bitrix\Crm\Entity\CommentsHelper::prepareFieldsFromCompatibleRestToReadInList(
+				$this->getOwnerTypeID(),
+				$entityMap,
+			);
 
 			foreach($entityMap as &$fields)
 			{
@@ -1455,6 +1527,16 @@ abstract class CCrmRestProxyBase implements ICrmRestProxy
 				$result[] = $fields;
 			}
 			unset($fields);
+		}
+		else
+		{
+			foreach($list as $fields)
+			{
+				$this->prepareListItemFields($fields);
+
+				$this->externalizeFields($fields, $fieldsInfo);
+				$result[] = $fields;
+			}
 		}
 
 		return CCrmRestService::setNavData($result, array('offset' => 0, 'count' => count($result)));
@@ -2300,13 +2382,20 @@ abstract class CCrmRestProxyBase implements ICrmRestProxy
 						$fileName = $fileInfo['name'];
 					}
 
-					$file = $folder->uploadFile(
-						$fileInfo,
-						array('NAME' => $fileName, 'CREATED_BY' => $this->getCurrentUserID()),
-						array(),
-						true
-					);
-					unlink($fileInfo['tmp_name']);
+					try
+					{
+						$file = $folder->uploadFile(
+							$fileInfo,
+							array('NAME' => $fileName, 'CREATED_BY' => $this->getCurrentUserID()),
+							array(),
+							true
+						);
+						unlink($fileInfo['tmp_name']);
+					}
+					catch (Main\ArgumentException $e)
+					{
+						$file = null;
+					}
 
 					if(!$file)
 					{
@@ -2533,16 +2622,6 @@ abstract class CCrmRestProxyBase implements ICrmRestProxy
 			{
 				$this->externalizeFields($fields[$k], $fieldsInfo[$k]['FIELDS']);
 			}
-		}
-
-		$id = (int)($fields['ID'] ?? 0);
-		if ($id > 0 && \CCrmOwnerType::IsDefined($this->getOwnerTypeID()))
-		{
-			$fields = \Bitrix\Crm\Entity\CommentsHelper::prepareFieldsFromCompatibleRestToRead(
-				$this->getOwnerTypeID(),
-				$id,
-				$fields,
-			);
 		}
 	}
 	protected function tryExternalizeFileField(&$fields, $fieldName, $multiple = false, $dynamic = true)
@@ -8189,252 +8268,334 @@ class CCrmCurrencyRestProxy extends CCrmRestProxyBase
 {
 	private $FIELDS_INFO = null;
 	private $LOC_FIELDS_INFO = null;
+
 	/**
 	 * @return array
 	 */
 	protected function getFieldsInfo()
 	{
-		if(!$this->FIELDS_INFO)
+		if (!$this->FIELDS_INFO)
 		{
 			$this->FIELDS_INFO = CCrmCurrency::GetFieldsInfo();
-			foreach ($this->FIELDS_INFO  as $code=>&$field)
+			foreach (array_keys($this->FIELDS_INFO) as $code)
 			{
-				$field['CAPTION'] = CCrmCurrency::GetFieldCaption($code);
+				$this->FIELDS_INFO[$code]['CAPTION'] = CCrmCurrency::GetFieldCaption($code);
 			}
 
-			$this->FIELDS_INFO['LANG'] = array(
+			$this->FIELDS_INFO['LANG'] = [
 				'TYPE' => 'currency_localization',
-				'ATTRIBUTES' => array(CCrmFieldInfoAttr::Multiple),
-				'CAPTION' => Loc::getMessage("CRM_REST_CURRENCY_FIELD_LANG")
-			);
+				'ATTRIBUTES' => [
+					CCrmFieldInfoAttr::Multiple,
+				],
+				'CAPTION' => Loc::getMessage('CRM_REST_CURRENCY_FIELD_LANG'),
+			];
 		}
+
 		return $this->FIELDS_INFO;
 	}
+
 	public function getLocalizationFieldsInfo()
 	{
-		if(!$this->LOC_FIELDS_INFO)
+		if (!$this->LOC_FIELDS_INFO)
 		{
 			$this->LOC_FIELDS_INFO = CCrmCurrency::GetCurrencyLocalizationFieldsInfo();
-			foreach ($this->LOC_FIELDS_INFO  as $code=>&$field)
+			foreach (array_keys($this->LOC_FIELDS_INFO) as $code)
 			{
-				$field['CAPTION'] = CCrmCurrency::GetFieldCaption($code);
+				$this->LOC_FIELDS_INFO[$code]['CAPTION'] = CCrmCurrency::GetFieldCaption($code);
 			}
 		}
+
 		return $this->LOC_FIELDS_INFO;
 	}
+
 	public function isValidID($ID)
 	{
 		return is_string($ID) && $ID !== '';
 	}
+
 	protected function innerAdd(&$fields, &$errors, array $params = null)
 	{
-		if(!CCrmCurrency::CheckCreatePermission())
+		if (!CCrmCurrency::CheckCreatePermission())
 		{
 			$errors[] = 'Access denied.';
+
 			return false;
 		}
 
 		$result = CCrmCurrency::Add($fields);
-		if($result === false)
+		if ($result === false)
 		{
 			$errors[] = CCrmCurrency::GetLastError();
 		}
+
 		return $result;
 	}
+
+	private function getClearedLocalizations(array $rawLocalizations): array
+	{
+		if (empty($rawLocalizations))
+		{
+			return [];
+		}
+
+		$result = [];
+
+		$whiteList = $this->getLocalizationFieldsInfo();
+
+		foreach (array_keys($rawLocalizations) as $langId)
+		{
+			$result[$langId] = array_intersect_key(
+				$rawLocalizations[$langId],
+				$whiteList
+			);
+		}
+
+		return $result;
+	}
+
 	protected function innerGet($ID, &$errors)
 	{
-		if(!CCrmCurrency::CheckReadPermission($ID))
+		if (!CCrmCurrency::CheckReadPermission($ID))
 		{
 			$errors[] = 'Access denied.';
+
 			return false;
 		}
 
 		$result = CCrmCurrency::GetByID($ID);
-		if(is_array($result))
+		if (!is_array($result))
 		{
-			return $result;
+			$errors[] = 'Not found';
+
+			return false;
 		}
 
-		$errors[] = 'Not found';
-		return false;
+		$result['LANG'] = $this->getClearedLocalizations(\CCrmCurrency::GetCurrencyLocalizations($ID));
+
+		return $result;
 	}
+
 	protected function innerGetList($order, $filter, $select, $navigation, &$errors)
 	{
-		if(!CCrmCurrency::CheckReadPermission(0))
+		if (!CCrmCurrency::CheckReadPermission(0))
 		{
 			$errors[] = 'Access denied.';
+
 			return false;
 		}
 
 		return CCrmCurrency::GetList($order);
 	}
+
 	protected function innerUpdate($ID, &$fields, &$errors, array $params = null)
 	{
-		if(!CCrmCurrency::CheckUpdatePermission($ID))
+		if (!CCrmCurrency::CheckUpdatePermission($ID))
 		{
 			$errors[] = 'Access denied.';
+
 			return false;
 		}
 
-		if(!CCrmCurrency::IsExists($ID))
+		if (!CCrmCurrency::IsExists($ID))
 		{
 			$errors[] = 'Currency is not found';
+
 			return false;
 		}
 
 		$result = CCrmCurrency::Update($ID, $fields);
-		if($result !== true)
+		if ($result !== true)
 		{
 			$errors[] = CCrmCurrency::GetLastError();
 		}
+
 		return $result;
 	}
+
 	protected function innerDelete($ID, &$errors, array $params = null)
 	{
 		if(!CCrmCurrency::CheckDeletePermission($ID))
 		{
 			$errors[] = 'Access denied.';
+
 			return false;
 		}
 
 		$result = CCrmCurrency::Delete($ID);
-		if($result !== true)
+		if ($result !== true)
 		{
 			$errors[] = CCrmCurrency::GetLastError();
 		}
 
 		return $result;
 	}
+
 	protected function resolveEntityID(&$arParams)
 	{
-		return isset($arParams['ID'])
-			? mb_strtoupper($arParams['ID'])
-			: (isset($arParams['id'])? mb_strtoupper($arParams['id']) : '');
+		$currencyId = '';
+		if (isset($arParams['ID']))
+		{
+			$currencyId = $arParams['ID'];
+		}
+		elseif (isset($arParams['id']))
+		{
+			$currencyId = $arParams['id'];
+		}
+
+		if (!is_string($currencyId))
+		{
+			throw new RestException('The parameter id is not string.');
+		}
+
+		return mb_strtoupper(trim($currencyId));
 	}
+
 	protected function checkEntityID($ID)
 	{
 		return is_string($ID) && $ID !== '';
 	}
+
 	public function getLocalizations($ID)
 	{
-		$ID = strval($ID);
-		if($ID === '')
+		$ID = (string)$ID;
+		if ($ID === '')
 		{
 			throw new RestException('The parameter id is invalid or not defined.');
 		}
 
-		if(!CCrmCurrency::CheckReadPermission($ID))
+		if (!CCrmCurrency::CheckReadPermission($ID))
 		{
 			throw new RestException('Access denied.');
 		}
 
-		return CCrmCurrency::GetCurrencyLocalizations($ID);
+		return $this->getClearedLocalizations(CCrmCurrency::GetCurrencyLocalizations($ID));
 	}
+
 	public function setLocalizations($ID, $localizations)
 	{
-		$ID = strval($ID);
-		if($ID === '')
+		$ID = (string)$ID;
+		if ($ID === '')
 		{
 			throw new RestException('The parameter id is invalid or not defined.');
 		}
 
-		if(!is_array($localizations) || empty($localizations))
+		if (!is_array($localizations) || empty($localizations))
 		{
 			return false;
 		}
 
-		if(!CCrmCurrency::CheckUpdatePermission($ID))
+		if (!CCrmCurrency::CheckUpdatePermission($ID))
 		{
 			throw new RestException('Access denied.');
 		}
 
 		return CCrmCurrency::SetCurrencyLocalizations($ID, $localizations);
 	}
+
 	public function deleteLocalizations($ID, $langs)
 	{
-		$ID = strval($ID);
-		if($ID === '')
+		$ID = (string)$ID;
+		if ($ID === '')
 		{
 			throw new RestException('The parameter id is invalid or not defined.');
 		}
 
-		if(!is_array($langs) || empty($langs))
+		if (!is_array($langs) || empty($langs))
 		{
 			return false;
 		}
 
-		if(!CCrmCurrency::CheckUpdatePermission($ID))
+		if (!CCrmCurrency::CheckUpdatePermission($ID))
 		{
 			throw new RestException('Access denied.');
 		}
 
 		return CCrmCurrency::DeleteCurrencyLocalizations($ID, $langs);
 	}
+
 	public function processMethodRequest($name, $nameDetails, $arParams, $nav, $server)
 	{
 		$name = mb_strtoupper($name);
-		if($name === 'LOCALIZATIONS')
+		if ($name === 'LOCALIZATIONS')
 		{
 			$nameSuffix = mb_strtoupper(!empty($nameDetails)? implode('_', $nameDetails) : '');
-			if($nameSuffix === 'FIELDS')
+			if ($nameSuffix === 'FIELDS')
 			{
 				$fildsInfo = $this->getLocalizationFieldsInfo();
+
 				return parent::prepareFields($fildsInfo);
 			}
-			elseif($nameSuffix === 'GET')
+			elseif ($nameSuffix === 'GET')
 			{
 				return $this->getLocalizations($this->resolveEntityID($arParams));
 			}
-			elseif($nameSuffix === 'SET')
+			elseif ($nameSuffix === 'SET')
 			{
 				$ID = $this->resolveEntityID($arParams);
 				$localizations = $this->resolveArrayParam($arParams, 'localizations');
+
 				return $this->setLocalizations($ID, $localizations);
 			}
-			elseif($nameSuffix === 'DELETE')
+			elseif ($nameSuffix === 'DELETE')
 			{
 				$ID = $this->resolveEntityID($arParams);
 				$lids = $this->resolveArrayParam($arParams, 'lids');
+
 				return $this->deleteLocalizations($ID, $lids);
 			}
 		}
-		elseif($name === 'BASE')
+		elseif ($name === 'BASE')
 		{
 			$nameSuffix = mb_strtoupper(!empty($nameDetails)? implode('_', $nameDetails) : '');
-			if($nameSuffix === 'GET')
+			if ($nameSuffix === 'GET')
 			{
 				return \CCrmCurrency::GetBaseCurrencyID();
 			}
-			elseif($nameSuffix === 'SET')
+			elseif ($nameSuffix === 'SET')
 			{
 				$ID = $this->resolveEntityID($arParams);
-				if(!CCrmCurrency::CheckUpdatePermission($ID))
+				if (!CCrmCurrency::CheckUpdatePermission($ID))
 				{
 					throw new RestException('Access denied.');
 				}
+
 				return \CCrmCurrency::SetBaseCurrencyID($ID);
 			}
 		}
+
 		return parent::processMethodRequest($name, $nameDetails, $arParams, $nav, $server);
 	}
 
 	public static function registerEventBindings(array &$bindings)
 	{
-		if(!isset($bindings[CRestUtil::EVENTS]))
+		if (!isset($bindings[CRestUtil::EVENTS]))
 		{
-			$bindings[CRestUtil::EVENTS] = array();
+			$bindings[CRestUtil::EVENTS] = [];
 		}
 
-		$callback = array('CCrmCurrencyRestProxy', 'processEvent');
+		$callback = ['CCrmCurrencyRestProxy', 'processEvent'];
 
-		$bindings[CRestUtil::EVENTS]['onCrmCurrencyAdd'] = self::createEventInfo('currency', 'OnCurrencyAdd', $callback);
-		$bindings[CRestUtil::EVENTS]['onCrmCurrencyUpdate'] = self::createEventInfo('currency', 'OnCurrencyUpdate', $callback);
-		$bindings[CRestUtil::EVENTS]['onCrmCurrencyDelete'] = self::createEventInfo('currency', 'OnCurrencyDelete', $callback);
+		$bindings[CRestUtil::EVENTS]['onCrmCurrencyAdd'] = self::createEventInfo(
+			'currency',
+			'OnCurrencyAdd',
+			$callback
+		);
+		$bindings[CRestUtil::EVENTS]['onCrmCurrencyUpdate'] = self::createEventInfo(
+			'currency',
+			'OnCurrencyUpdate',
+			$callback
+		);
+		$bindings[CRestUtil::EVENTS]['onCrmCurrencyDelete'] = self::createEventInfo(
+			'currency',
+			'OnCurrencyDelete',
+			$callback
+		);
 	}
+
 	public static function processEvent(array $arParams, array $arHandler)
 	{
 		$eventName = $arHandler['EVENT_NAME'];
-		switch(mb_strtolower($eventName))
+		switch (mb_strtolower($eventName))
 		{
 			case 'oncrmcurrencyadd':
 			case 'oncrmcurrencyupdate':
@@ -8447,11 +8608,16 @@ class CCrmCurrencyRestProxy extends CCrmRestProxyBase
 				throw new RestException("The Event \"{$eventName}\" is not supported in current context");
 		}
 
-		if($ID === '')
+		if ($ID === '')
 		{
 			throw new RestException("Could not find entity ID in fields of event \"{$eventName}\"");
 		}
-		return array('FIELDS' => array('ID' => $ID));
+
+		return [
+			'FIELDS' => [
+				'ID' => $ID,
+			],
+		];
 	}
 }
 
@@ -8552,6 +8718,21 @@ class CCrmStatusRestProxy extends CCrmRestProxyBase
 		if(empty($order))
 		{
 			$order['sort'] = 'asc';
+		}
+
+		$stringOnlyFields = [
+			'ENTITY_ID',
+			'STATUS_ID',
+			'SORT',
+			'SEMANTICS',
+		];
+		foreach ($stringOnlyFields as $stringOnlyField)
+		{
+			if (is_array($filter[$stringOnlyField] ?? null))
+			{
+				$errors[] = "Filter by {$stringOnlyField} must be a string";
+				return false;
+			}
 		}
 
 		$results = array();
@@ -12594,9 +12775,15 @@ class CCrmRequisiteRestProxy extends CCrmRestProxyBase
 			return false;
 		}
 
+		$options = [];
+		if(!$this->isRequiredUserFieldCheckEnabled())
+		{
+			$options['DISABLE_REQUIRED_USER_FIELD_CHECK'] = true;
+		}
+
 		$entity = self::getEntity();
 
-		$result = $entity->add($fields);
+		$result = $entity->add($fields, $options);
 
 		if(!$result->isSuccess())
 		{
@@ -12735,6 +12922,15 @@ class CCrmRequisiteRestProxy extends CCrmRestProxyBase
 		{
 			$errors[] = 'Access denied.';
 			return false;
+		}
+
+		if(!$this->isRequiredUserFieldCheckEnabled())
+		{
+			if (!is_array($params))
+			{
+				$params = [];
+			}
+			$params['DISABLE_REQUIRED_USER_FIELD_CHECK'] = true;
 		}
 
 		$entity = self::getEntity();
@@ -12927,7 +13123,12 @@ class CCrmRequisiteBankDetailRestProxy extends CCrmRestProxyBase
 
 		$entity = self::getEntity();
 
-		$options = array();
+		$options = [];
+		if(!$this->isRequiredUserFieldCheckEnabled())
+		{
+			$options['DISABLE_REQUIRED_USER_FIELD_CHECK'] = true;
+		}
+
 		$result = $entity->add($fields, $options);
 		if(!$result->isSuccess())
 		{
@@ -13024,6 +13225,15 @@ class CCrmRequisiteBankDetailRestProxy extends CCrmRestProxyBase
 		{
 			$errors[] = 'Access denied.';
 			return false;
+		}
+
+		if(!$this->isRequiredUserFieldCheckEnabled())
+		{
+			if (!is_array($params))
+			{
+				$params = [];
+			}
+			$params['DISABLE_REQUIRED_USER_FIELD_CHECK'] = true;
 		}
 
 		$entity = self::getEntity();
@@ -13426,9 +13636,9 @@ class CCrmAddressRestProxy extends CCrmRestProxyBase
 
 		$entity = self::getEntity();
 
-		$page = isset($navigation['iNumPage']) ? (int)$navigation['iNumPage'] : 1;
+		$page = isset($navigation['iNumPage']) ? (int)$navigation['iNumPage'] : false;
 		$limit = isset($navigation['nPageSize']) ? (int)$navigation['nPageSize'] : CCrmRestService::LIST_LIMIT;
-		$offset = $limit * $page;
+		$offset = $limit * ($page - 1);
 
 		if(!is_array($select))
 			$select = array();
@@ -13450,15 +13660,20 @@ class CCrmAddressRestProxy extends CCrmRestProxyBase
 			}
 		}
 
-		$result = $entity->getList(
-				array(
-						'order' => $order,
-						'filter' => $filter,
-						'select' => $select,
-						'offset' => $offset,
-						'count_total' => true
-				)
-		);
+		$listParams = [
+			'order' => $order,
+			'filter' => $filter,
+			'select' => $select,
+			'count_total' => true
+		];
+
+		if ($page !== false)
+		{
+			$listParams['limit'] = $limit;
+			$listParams['offset'] = $offset;
+		}
+
+		$result = $entity->getList($listParams);
 
 		if (is_object($result))
 		{
@@ -13469,6 +13684,12 @@ class CCrmAddressRestProxy extends CCrmRestProxyBase
 			$dbResult = new CDBResult();
 			$dbResult->InitFromArray(array());
 		}
+
+		if ($page === false)
+		{
+			$limit = $result->getSelectedRowsCount();
+		}
+
 		$dbResult->NavStart($limit, false, $page);
 
 		return $dbResult;
@@ -14609,8 +14830,8 @@ class CCrmPaySystemRestProxy extends CCrmRestProxyBase
 			{
 				$actionFile = $row['ACTION_FILE'] ?? '';
 				/*// only quote or invoice handlers
-				if (preg_match('/quote(_\w+)*$/i'.BX_UTF_PCRE_MODIFIER, $actionFile)
-					|| preg_match('/bill(\w+)*$/i'.BX_UTF_PCRE_MODIFIER, $actionFile))
+				if (preg_match('/quote(_\w+)*$/iu', $actionFile)
+					|| preg_match('/bill(\w+)*$/iu', $actionFile))
 				{*/
 				$paySystemPersonTypes = array();
 				if (isset($row['ID']) && $row['ID'] > 0)
@@ -15080,6 +15301,11 @@ class CCrmTimelineCommentRestProxy extends CCrmRestProxyBase
 
 		$page = isset($navigation['iNumPage']) ? (int)$navigation['iNumPage'] : 1;
 		$limit = isset($navigation['nPageSize']) ? (int)$navigation['nPageSize'] : CCrmRestService::LIST_LIMIT;
+		$offset = $limit * ($page - 1);
+
+		$params['limit'] = $limit;
+		$params['offset'] = $offset;
+		$params['count_total'] = true;
 
 		$dataRaw = \Bitrix\Crm\Timeline\Entity\TimelineTable::getList($params);
 		$items = [];
@@ -15093,6 +15319,12 @@ class CCrmTimelineCommentRestProxy extends CCrmRestProxyBase
 		$dbResult = new CDBResult();
 		$dbResult->InitFromArray($items);
 		$dbResult->NavStart($limit, false, $page);
+
+		// reassign pager values because original NavStart method does not support array response limited by limit offset.
+		$dbResult->NavPageCount = ceil($dataRaw->getCount() / $limit);
+		$dbResult->NavRecordCount = $dataRaw->getCount();
+		$dbResult->NavPageNomer = $page;
+
 		return $dbResult;
 	}
 	private function prepareGetResult(array $comment, $select = null)

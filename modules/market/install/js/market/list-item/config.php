@@ -18,9 +18,10 @@ return [
 		'ui.vue3.pinia',
 		'market.install-store',
 		'market.uninstall-store',
-		'market.rating-store',
+		'market.rating-stars',
 		'ui.icon-set.api.vue',
 		'main.popup',
+		'market.market-links',
 	],
 	'skip_core' => true,
 ];

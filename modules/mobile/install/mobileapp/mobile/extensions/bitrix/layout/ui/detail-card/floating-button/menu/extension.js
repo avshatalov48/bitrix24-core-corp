@@ -5,6 +5,7 @@ jn.define('layout/ui/detail-card/floating-button/menu', (require, exports, modul
 	const { RecentGridView } = require('layout/ui/detail-card/floating-button/menu/recent/grid-view');
 	const { MenuRecentStorage } = require('layout/ui/detail-card/floating-button/menu/recent/storage');
 	const { ImageAfterTypes } = require('layout/ui/context-menu/item');
+	const { ContextMenu } = require('layout/ui/context-menu');
 
 	const UNSUPPORTED_SECTION = 'unsupported';
 
@@ -116,20 +117,19 @@ jn.define('layout/ui/detail-card/floating-button/menu', (require, exports, modul
 
 		getGridViewRecentItems()
 		{
-			const recentItems = this.getRecentItems();
-			if (recentItems.length < 3)
+			const items = this.getRecentItems();
+
+			if (items.length < 3)
 			{
 				return null;
 			}
 
-			const height = 108;
-
 			return {
-				layout: View(
-					{ style: { height } },
-					RecentGridView(this.detailCard, recentItems),
-				),
-				height,
+				layout: new RecentGridView({
+					items,
+					detailCard: this.detailCard,
+				}),
+				height: RecentGridView.getHeight(),
 			};
 		}
 
@@ -207,7 +207,7 @@ jn.define('layout/ui/detail-card/floating-button/menu', (require, exports, modul
 					return;
 				}
 
-				if (item && item.isActive())
+				if (item && item.isActive() && item.isAvailableRecentMenu())
 				{
 					item.setIsRecent(true);
 					recentItems.push(item);
@@ -274,6 +274,7 @@ jn.define('layout/ui/detail-card/floating-button/menu', (require, exports, modul
 				showActionLoader: menuItem.shouldShowLoader(),
 				showArrow: menuItem.shouldShowArrow(),
 				badges: menuItem.getBadges(),
+				icon: menuItem.getIcon(),
 				data: {
 					svgIcon: menuItem.getIcon(),
 					svgIconAfter: {

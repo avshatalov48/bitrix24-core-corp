@@ -1,0 +1,488 @@
+.crm-activity__todo-editor-v2 {
+	--crm-activity__todo-editor-v2-min-height: 38px;
+	--crm-activity__todo-editor-v2_input_control-max-height: 126px;
+	--crm-activity__todo-editor-v2-border-radius: var(--ui-border-radius-xs);
+
+	box-sizing: border-box;
+	position: relative;
+	display: block;
+	background-color: var(--ui-color-background-primary, #fff);
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica), 'Helvetica Neue');
+	border-radius: var(--crm-activity__todo-editor-v2-border-radius);
+}
+
+.crm-activity__todo-editor-v2.--is-edit .crm-activity__todo-editor-v2_input_control {
+	min-height: var(--crm-activity__todo-editor-v2-min-height);
+	transition-property: border-color;
+}
+
+.crm-activity__todo-editor-v2 .crm-activity__todo-editor-v2_input_control::placeholder {
+	line-height: 32px;
+}
+
+.crm-activity__todo-editor-v2.--is-edit .crm-activity__todo-editor-v2_input_control::placeholder {
+	line-height: inherit;
+}
+
+.crm-activity__todo-editor-v2_editor {
+	position: relative;
+}
+
+.crm-activity__todo-editor-v2_container:focus-within .crm-activity__todo-editor-v2_deadline-pill {
+	border-color: var(--ui-color-palette-blue-40);
+}
+
+.crm-activity__todo-editor-v2_header {
+	opacity: 1;
+	padding: 11px 14px 11px 14px;
+	position: relative;
+	min-height: 20px;
+	display: flex;
+	align-items: center;
+	justify-content: end;
+}
+
+/*.crm-activity__todo-editor-v2.--is-edit .crm-activity__todo-editor-v2_header {
+	display: flex;
+	animation-name: crm-activity__todo-editor-v2_block__fade-in;
+	animation-duration: 450ms;
+	animation-iteration-count: 1;
+	animation-fill-mode: both;
+}*/
+
+.crm-activity__todo-editor-v2_responsible-user-selector {
+	transition: opacity .2s linear;
+}
+
+.crm-activity__todo-editor-v2_responsible-user-selector:hover {
+	opacity: var(--ui-opacity-80);
+}
+
+.crm-activity__todo-editor-v2_header .crm-activity__todo-editor-v2_responsible-user-selector i {
+	height: 20px;
+	width: 20px;
+	padding-top: 0;
+}
+
+.crm-activity__todo-editor-v2_body {
+	display: block;
+	position: relative;
+	outline: none;
+}
+
+.crm-activity__todo-editor-v2_body:focus-within {
+	cursor: text;
+	outline: none;
+}
+
+.crm-activity__todo-editor-v2_input_control {
+	box-sizing: border-box;
+	display: block;
+	width: 100%;
+	min-height: 34px;
+	padding: 7px 14px;
+	color: var(--ui-color-text-primary);
+	font-family: inherit;
+	font-size: var(--ui-font-size-lg);
+	line-height: 17px;
+	outline: none;
+	resize: none;
+	background-color: transparent;
+	overflow: hidden;
+	border: none;
+}
+
+.crm-activity__todo-editor-v2_input_control.--title {
+	color: var(--ui-typography-color-text);
+	padding: 0;
+	min-height: auto !important;
+	height: var(--ui-size-lg);
+	line-height: var(--ui-size-lg);
+	margin-right: 14px;
+}
+
+.crm-activity__todo-editor-v2_input_control.--has-scroll {
+	max-height: var(--crm-activity__todo-editor-v2_input_control-max-height);
+	overflow-y: scroll;
+}
+
+.crm-activity__todo-editor-v2_input_control::placeholder {
+	color: var(--ui-color-base-35);
+}
+
+.crm-activity__todo-editor-v2.--is-edit .crm-activity__todo-editor-v2_input_control::placeholder {
+	color: var(--ui-color-base-40);
+}
+
+.crm-activity__todo-editor-v2_tools {
+	display: flex;
+	align-items: flex-end;
+	padding-top: 8px;
+	padding-bottom: 8px;
+}
+
+.crm-activity__todo-editor-v2_left_tools {
+	width: 75%;
+	display: flex;
+}
+
+.crm-activity__todo-editor-v2_deadline {
+	padding-left: 14px;
+	display: flex;
+	flex-direction: row;
+	justify-content: flex-start;
+	align-items: flex-start;
+	font-family: inherit;
+	cursor: pointer;
+}
+
+.crm-activity__todo-editor-v2_deadline .crm-activity__todo-editor-v2_deadline-pill {
+	border-radius: var(--ui-border-radius-sm);
+}
+
+.crm-activity__todo-editor-v2_deadline-pill {
+	position: relative;
+	display: inline-flex;
+	flex-direction: row;
+	align-items: center;
+	padding: 6px 8px 6px 4px;
+	color: var(--ui-color-base-default);
+	cursor: pointer;
+	white-space: nowrap;
+	border: var(--ui-border-width-thin) solid var(--ui-color-base-20);
+}
+
+.crm-activity__todo-editor-v2_deadline-icon {
+	width: 20px;
+	height: 20px;
+	background-image: url('./images/crm-activity__todo-editor-v2_deadline.svg');
+	display: inline-block;
+	margin-right: 4px;
+}
+
+.crm-activity__todo-editor-v2_deadline-text {
+	font-size: var(--ui-font-size-sm);
+	color: var(--ui-color-base-90);
+}
+
+.crm-activity__todo-editor-v2_deadline:hover .crm-activity__todo-editor-v2_deadline-text {
+	border-color: transparent;
+	transition-duration: unset;
+}
+
+.crm-activity__todo-editor-v2_ping_selector {
+	margin-left: 12px;
+	display: flex;
+	align-items: center;
+}
+
+.crm-activity__todo-editor-v2_action-btn {
+	position: relative;
+	padding: 0;
+	margin-right: 10px;
+	border: none;
+	outline: none;
+	background-color: transparent;
+	cursor: pointer;
+}
+
+.crm-activity__todo-editor-v2_action-btn:hover {
+	transition-duration: unset;
+}
+
+.crm-activity__todo-editor-v2_action-btn:hover .crm-activity__todo-editor-v2_action-btn-icon,
+.crm-activity__todo-editor-v2_action-btn:hover .crm-activity__todo-editor-v2_action-user-selector-tick-icon {
+	background-color: var(--ui-color-base-40, #bdc1c6);
+	transition-duration: unset;
+}
+
+.crm-activity__todo-editor-v2_action-btn:last-child {
+	margin-right: 0;
+}
+
+.crm-activity__todo-editor-v2_action-btn-icon {
+	display: inline-block;
+	width: 26px;
+	height: 26px;
+	mask-size: 22px 22px;
+	mask-position: center center;
+	mask-repeat: no-repeat;
+	background-color: var(--ui-color-base-30, #D5D7DB);
+	transition: background-color 0.2s linear;
+}
+
+.crm-activity__todo-editor-v2_action-btn-icon.--micro {
+	mask-image: url("./images/crm-activity__todo-editor-v2_micro-icon.svg");
+}
+
+.crm-activity__todo-editor-v2_action-btn-icon.--settings {
+	mask-image: url("./images/crm-activity__todo-editor-v2_settings-icon.svg");
+}
+
+.crm-activity__todo-editor-v2_action-btn-icon.--attach {
+	mask-image: url("./images/crm-activity__todo-editor-v2_attach-icon.svg");
+}
+
+.crm-activity__todo-editor-v2_action-btn-icon.--attach-2 {
+	mask-image: url("./images/crm-activity__todo-editor-v2_attach-2-icon.svg");
+}
+
+.crm-activity__todo-editor-v2_deadline {
+	z-index: -999;
+}
+
+.crm-activity__todo-editor-v2.--is-edit .crm-activity__todo-editor-v2_deadline {
+	z-index: 1;
+}
+
+.crm-activity__todo-show-actions-popup-button {
+	position: absolute;
+	right: 8px;
+	top: calc(50% - 16px);
+	height: 32px;
+	border: var(--ui-border-width-thin) solid var(--ui-color-palette-white-base);
+	text-transform: lowercase;
+	color: var(--ui-color-palette-gray-80);
+	font-weight: var(--ui-font-weight-normal);
+	background: none;
+	border-radius: var(--ui-border-radius-sm);
+	padding: 0 var(--ui-space-inset-xs2);
+	z-index: 10;
+}
+
+.crm-activity__todo-show-actions-popup-button:hover {
+	background: none;
+	border-color: var(--ui-color-palette-blue-40);
+}
+
+.crm-activity__todo-editor-v2.--is-edit .crm-activity__todo-show-actions-popup-button {
+	top: auto;
+	bottom: 8px;
+	border-color: var(--ui-color-palette-blue-40);
+}
+
+.crm-activity__todo-editor-v2.--is-edit .crm-activity__todo-show-actions-popup-button:hover {
+	border-color: var(--ui-color-palette-blue-50);
+}
+
+.crm-activity__todo-show-actions-popup-button-arrow {
+	display: inline-block;
+	position: relative;
+	width: 14px;
+	height: 14px;
+	margin-left: 3px;
+	background-image: url('./images/arrow.svg');
+	background-repeat: no-repeat;
+}
+
+.crm-activity__todo-editor-v2-actions-menu-item {
+	display: flex;
+	align-items: center;
+}
+
+.crm-activity__todo-editor-v2-actions-menu-item-icon{
+	display:inline-block;
+	width: 25px;
+	height: 25px;
+	margin-right: 8px;
+}
+
+.crm-activity__todo-editor-v2_block-wrapper {
+	padding: 14px;
+	margin-top: 9px;
+	background: var(--ui-color-palette-gray-02);
+	animation-name: crm-activity__todo-editor-v2_block__fade-in;
+	animation-duration: 450ms;
+	animation-iteration-count: 1;
+	animation-fill-mode: both;
+}
+
+.crm-activity__todo-editor-v2_block-header {
+	display: flex;
+	align-items: flex-start;
+	position: relative;
+	flex-wrap: nowrap;
+	padding-right: 50px;
+}
+
+.crm-activity__todo-editor-v2_block-header-icon {
+	display: inline-block;
+	width: 20px;
+	height: 20px;
+	margin-right: var(--ui-space-inset-2xs2);
+	background-size: cover;
+	flex-shrink: 0;
+}
+
+.crm-activity__todo-editor-v2_block-header-icon.--calendar-room {
+	background-image: url('./images/crm-activity__todo-editor-v2_calendar-room-icon.svg');
+}
+
+.crm-activity__todo-editor-v2_block-header-action,
+.crm-activity__todo-editor-v2_block-subheader-action {
+	font-size: var(--ui-font-size-sm);
+	cursor: pointer;
+	color: var(--ui-color-palette-gray-40);
+}
+
+.crm-activity__todo-editor-v2_block-header-action {
+	margin-left: var(--ui-space-inset-2xs2);
+}
+
+.crm-activity__todo-editor-v2_block-subheader-action {
+	margin-left: calc(20px + var(--ui-space-inset-2xs2));
+	border-bottom: var(--ui-border-width-thin) var(--ui-color-palette-gray-40) var(--ui-text-decoration-style-dashed);
+}
+
+.crm-activity__todo-editor-v2_block-header-close {
+	position: absolute;
+	width: 24px;
+	height: 24px;
+	right: 0;
+	top: -2px;
+	background-image: url('./images/crm-activity__todo-editor-v2_cross.svg');
+	cursor: pointer;
+}
+
+.crm-activity__todo-editor-v2_block-header-data {
+	color: var(--ui-color-link-primary-base);
+	padding: 0 0 0 6px;
+	word-break: break-all;
+}
+
+.crm-activity__todo-editor-v2_block-header-data span {
+	cursor: pointer;
+}
+
+.crm-activity__todo-editor-v2_block-body {
+	overflow: hidden;
+}
+
+.crm-activity__todo-editor-v2_block-body.--file {
+	margin-top: 10px;
+}
+
+.crm-activity__settings_popup__calendar__planner-container {
+	padding-top: var(--ui-space-inset-md);
+	padding-bottom: var(--ui-space-inset-md);
+}
+
+.crm-activity__settings_popup__calendar-container .crm-activity__settings_popup__calendar__recall-container .ui-btn {
+	border-color: var(--ui-color-palette-gray-03);
+}
+
+.crm-activity__settings_popup__calendar-container .crm-activity__settings_popup__calendar__recall-container .ui-btn + .ui-btn {
+	margin-top: 0;
+}
+
+.crm-activity__settings_popup__calendar-container .crm-activity__settings_popup__calendar__recall-container .ui-btn.active {
+	background-color: var(--ui-color-tag-1);
+}
+
+.crm-activity__settings_popup__calendar-container .calendar-planner-settings-icon-container {
+	display: none;
+}
+
+.crm-activity__todo-editor-v2_block-popup-wrapper {
+	padding: 17px 21px;
+}
+
+.crm-activity__todo-editor-v2_block-popup-title {
+	color: var(--ui-color-palette-gray-40);
+	font-size: var(--ui-font-size-md);
+}
+
+.crm-activity__todo-editor-v2_block-popup-content {
+	margin-top: 9px;
+	display: flex;
+	justify-content: space-between;
+	/*align-items: end;*/
+}
+
+.crm-activity__todo-editor-v2_block-popup-content input {
+	color: var(--ui-color-palette-gray-60);
+}
+
+.crm-activity__todo-editor-v2_block-popup-content button {
+	margin-left: 10px;
+}
+
+.crm-activity__todo-editor-v2_block-popup-content .fields.address.field-item {
+	margin-bottom: 0;
+}
+
+.crm-activity__todo-editor-v2_block-header.--link .crm-activity__todo-editor-v2_block-header-data {
+	cursor: pointer;
+}
+
+.crm-activity__todo-editor-v2_block-popup-wrapper.--address .crm-activity__todo-editor-v2_block-popup-content {
+	margin-top: 0;
+}
+
+.crm-activity__todo-editor-v2_block-popup-wrapper.--address .ui-btn-primary {
+	margin-top: 5px;
+}
+
+.crm-activity__todo-editor-v2_block-popup-address-input-container{
+	margin-top: 5px;
+	width: 100%;
+}
+
+.crm-activity__todo-editor-v2_block-popup-address-input-container .ui-ctl-element {
+	font-size: var(--ui-font-size-sm);
+}
+
+.crm-activity__todo-editor-v2_color-selector {
+	margin-right: 11px;
+	width: 12px;
+	height: 12px;
+}
+
+.crm-activity__todo-editor-v2_block-header.--skeleton {
+	background: url('./images/skeletons/header.svg') no-repeat;
+	display: block;
+	height: 20px;
+}
+
+.crm-activity__todo-editor-v2_block-header-data__calendar-container {
+	display: flex;
+	flex-direction: column;
+}
+
+.crm-activity__todo-editor-v2_block-header-data__calendar-container.--skeleton {
+	background: url('./images/skeletons/container.svg') no-repeat;
+	height: 20px;
+	width: 100px;
+}
+
+.crm-activity__todo-editor-v2_block-header-data__calendar-container span+span {
+	opacity: 0;
+}
+
+.crm-activity__todo-editor-v2-actions-menu-item.--locked {
+	background: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI5IiBoZWlnaHQ9IjEyIj48cGF0aCBmaWxsPSIjMjhCQUU5IiBmaWxsLXJ1bGU9ImV2ZW5vZGQiIGQ9Ik03Ljk1MiA1SDl2N0gwVjVoMS4wNTJWMy40MTJhMy40NTIgMy40NTIgMCAwMTYuOSAwVjV6bS0uOTU2IDBsLjAxMi0xLjU4OEEyLjcgMi43IDAgMDA0LjUuOTNhMi43IDIuNyAwIDAwLTIuNTA4IDIuNDgyTDIuMDA1IDVoNC45OTF6TTUuMDIgOC44Nzl2MS4yODdIMy45ODFWOC44NzlhLjgxLjgxIDAgMDEtLjMwNi0uNjM0LjgyNS44MjUgMCAxMTEuNjUgMCAuODEuODEgMCAwMS0uMzA2LjYzNHoiLz48L3N2Zz4=) no-repeat center right;
+	cursor: pointer;
+	padding-right: 17px;
+}
+
+/* region Animations */
+@keyframes crm-activity__todo-editor-v2_block__fade-out {
+	0% {
+		opacity: 1;
+	}
+
+	100% {
+		opacity: 0;
+	}
+}
+
+@keyframes crm-activity__todo-editor-v2_block__fade-in {
+	0% {
+		opacity: 0;
+	}
+
+	100% {
+		opacity: 1;
+	}
+}
+/* endregion*/

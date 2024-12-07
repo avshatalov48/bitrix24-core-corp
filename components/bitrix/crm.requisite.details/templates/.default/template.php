@@ -31,6 +31,7 @@ Extension::load([
 	'crm.entity-editor.field.bank-details',
 	'crm.entity-editor.field.requisite-autocomplete',
 	'crm.entity-editor.field.image',
+	'crm.entity-editor.field-attr',
 ]);
 
 $requisiteFields = [];
@@ -60,7 +61,6 @@ $APPLICATION->IncludeComponent(
 		'ENABLE_CONFIGURATION_UPDATE' => $formParams['~ENABLE_CONFIGURATION_UPDATE'] ?? null,
 		'ENABLE_COMMON_CONFIGURATION_UPDATE' => $formParams['~ENABLE_COMMON_CONFIGURATION_UPDATE'] ?? null,
 		'ENABLE_PERSONAL_CONFIGURATION_UPDATE' => $formParams['~ENABLE_PERSONAL_CONFIGURATION_UPDATE'] ?? null,
-		'ENABLE_USER_FIELD_MANDATORY_CONTROL' => false,
 		'ENTITY_CONFIG' => [
 			[
 				'name' => 'REQUISITES_SECTION',
@@ -104,7 +104,7 @@ $APPLICATION->IncludeComponent(
 );
 ?>
 
-<script type="text/javascript">
+<script>
 	BX.ready(
 		function()
 		{

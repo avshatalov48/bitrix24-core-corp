@@ -201,27 +201,32 @@ class Shipment extends CrmEntityDataProvider
 
 	public function getEmpAllowDelivery()
 	{
-		return $this->source['EMP_ALLOW_DELIVERY_ID'] ?? null;
+		return $this->data['EMP_ALLOW_DELIVERY_ID'] ?? null;
 	}
 
 	public function getEmpDeducted()
 	{
-		return $this->source['EMP_DEDUCTED_ID'] ?? null;
+		return $this->data['EMP_DEDUCTED_ID'] ?? null;
 	}
 
 	public function getEmpMarked()
 	{
-		return $this->source['EMP_MARKED_ID'] ?? null;
+		return $this->data['EMP_MARKED_ID'] ?? null;
 	}
 
 	public function getEmpCanceled()
 	{
-		return $this->source['EMP_CANCELED_ID'] ?? null;
+		return $this->data['EMP_CANCELED_ID'] ?? null;
 	}
 
 	public function getResponsibleId()
 	{
-		return $this->source['RESPONSIBLE_ID'] ?? '';
+		if ($this->shipment)
+		{
+			return (int)$this->shipment->getField('RESPONSIBLE_ID');
+		}
+
+		return (int)($this->data['RESPONSIBLE_ID'] ?? null);
 	}
 
 	public function getOrderId(): ?int

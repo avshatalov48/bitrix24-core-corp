@@ -491,7 +491,7 @@ if(!$strError)
 					&& strcasecmp(LANGUAGE_ID, 'DE') !== 0
 				)
 				{
-					$arComment["DateFormated"] = ToLower($arComment["DateFormated"]);
+					$arComment["DateFormated"] = mb_strtolower($arComment["DateFormated"]);
 				}
 
 				$arAuthor = CBlogUser::GetUserInfo(

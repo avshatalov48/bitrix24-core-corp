@@ -13,4 +13,9 @@ class Workspace
 	{
 		return '/bitrix/mobileapp/immobile/';
 	}
+	
+	public static function getImmobileJNDevWorkspace()
+	{
+		return "/dev/immobile/imdevmobile/mobileapp";
+	}
 }

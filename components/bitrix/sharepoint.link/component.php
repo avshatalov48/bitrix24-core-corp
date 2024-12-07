@@ -118,7 +118,6 @@ else
 			if ($_REQUEST['server'])
 			{
 				$STEP = 2;
-				CUtil::JSPostUnEscape();
 				$arResult['URL'] = parse_url($_REQUEST['server']);
 
 				if (is_array($arResult['URL']) && isset($arResult['URL']['host']))

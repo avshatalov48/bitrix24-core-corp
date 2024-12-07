@@ -1,4 +1,4 @@
-<?
+<?php
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 {
 	die();
@@ -11,6 +11,7 @@ return array(
 		'ui.entity-editor',
 		'fx',
 		'ui.design-tokens',
+		'crm.entity-editor.field-attr',
 	],
 	'skip_core' => true,
 );

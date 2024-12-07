@@ -4,8 +4,7 @@
  */
 jn.define('crm/entity-detail/component/open-lines-menu-items', (require, exports, module) => {
 	const { Loc } = require('loc');
-
-	const pathToIcons = `${currentDomain}/bitrix/mobileapp/crmmobile/components/crm/crm.entity.details/icons/`;
+	const { Icon } = require('ui-system/blocks/icon');
 
 	const TelegramConnectorManagerOpener = () => {
 		try
@@ -31,11 +30,11 @@ jn.define('crm/entity-detail/component/open-lines-menu-items', (require, exports
 	const getTelegramItem = (manager, layout) => {
 		return {
 			id: 'openLinesTelegramItem',
-			sectionCode: 'action',
+			sectionCode: 'top',
 			onItemSelected: () => manager.openEditor(layout),
-			title: Loc.getMessage('M_CRM_ACTION_SMART_ACTIVITY_OPEN_LINES_TELEGRAM_MSGVER_1'),
+			title: Loc.getMessage('M_CRM_ACTION_SMART_ACTIVITY_OPEN_LINES_TELEGRAM_MSGVER_2'),
 			checked: false,
-			iconUrl: `${pathToIcons}ol_telegram.png`,
+			icon: Icon.TELEGRAM,
 		};
 	};
 

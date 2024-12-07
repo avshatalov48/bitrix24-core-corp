@@ -3,9 +3,11 @@
 return [
 	'extensions' => [
 		'tokens',
-		'ui-system/blocks/plain-view',
+		'haptics',
+		'utils/url',
+		'ui-system/typography/text',
 		'ui-system/blocks/icon',
-		'ui-system/blocks/chip',
+		'ui-system/blocks/chips/chip',
 		'layout/ui/safe-image',
 
 		'layout/ui/fields/theme',

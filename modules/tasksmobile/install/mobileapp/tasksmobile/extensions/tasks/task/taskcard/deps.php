@@ -1,9 +1,8 @@
 <?php
 
 return [
-	'extensions'=> [
+	'extensions' => [
 		'notify',
-		'reload/listeners',
 		'selector/recipient',
 		'tasks:task',
 		'tasks:enum',
@@ -13,5 +12,5 @@ return [
 	'components' => [
 		'tasks:tasks.dashboard',
 		'tasks:tasks.view',
-	]
+	],
 ];

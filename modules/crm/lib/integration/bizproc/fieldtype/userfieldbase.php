@@ -192,6 +192,14 @@ class UserFieldBase extends BaseType\Base
 				//TODO: fix checkboxes values
 				$arUserField['SETTINGS']['DISPLAY'] = 'LIST';
 			}
+
+			if (
+				empty($arUserField['SETTINGS']['DISPLAY'])
+				&& in_array($sType, ['iblock_element', 'iblock_section'], true)
+			)
+			{
+				$arUserField['SETTINGS']['DISPLAY'] = 'UI';
+			}
 		}
 		elseif ($sType == 'crm')
 		{

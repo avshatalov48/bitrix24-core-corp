@@ -4,17 +4,17 @@ namespace Bitrix\ImConnector\Controller;
 
 use Bitrix\Im\User;
 use Bitrix\ImConnector\Connector;
-use Bitrix\ImConnector\Controller\Filter\LineAccess;
 use Bitrix\ImConnector\Controller\Filter\Connector as ConnectorFilter;
+use Bitrix\ImConnector\Controller\Filter\LineAccess;
 use Bitrix\ImConnector\Controller\Filter\LinesAccess;
 use Bitrix\ImConnector\Controller\Filter\LineViewAccess;
+use Bitrix\ImConnector\InfoConnectors;
 use Bitrix\ImConnector\Library;
 use Bitrix\ImConnector\Output;
-use Bitrix\ImConnector\InfoConnectors;
-use Bitrix\ImOpenlines\Security\Permissions;
 use Bitrix\ImConnector\Status;
 use Bitrix\ImOpenLines\Config;
 use Bitrix\ImOpenLines\Queue;
+use Bitrix\ImOpenlines\Security\Permissions;
 use Bitrix\Intranet\ActionFilter\IntranetUser;
 use Bitrix\Main\Data\Cache;
 use Bitrix\Main\Engine\Action;
@@ -33,7 +33,8 @@ class Openlines extends Controller
 			'usernameField' => 'username',
 			'titleField' => 'name',
 			'urlPrefix' => 'https://t.me/'
-		]
+		],
+		Library::ID_NOTIFICATIONS_CONNECTOR => [],
 	];
 
 	public const ERROR_ACCESS_DENIED = [
@@ -334,8 +335,11 @@ class Openlines extends Controller
 			if ($infoConnect->isSuccess())
 			{
 				$connectInfoData = $infoConnect->getData();
-				$botName = $connectInfoData[self::CONNECTORS[$connectorId]['titleField']];
-				$botUrl = $connectInfoData['url'];
+				if (count($connectInfoData))
+				{
+					$botName = $connectInfoData[self::CONNECTORS[$connectorId]['titleField']];
+					$botUrl = $connectInfoData['url'];
+				}
 			}
 			else
 			{
@@ -361,8 +365,8 @@ class Openlines extends Controller
 			'lineId' => $lineId,
 			'lineName' => $line['LINE_NAME'],
 			'userIds' => array_map('intval', $line['QUEUE'] ?? []),
-			'botName' => $botName,
-			'url' => $botUrl,
+			'botName' => $botName ?? null,
+			'url' => $botUrl ?? null,
 			'canEditLine' => Config::canEditLine($lineId),
 			'canEditConnector' => Config::canEditConnector($lineId)
 		];

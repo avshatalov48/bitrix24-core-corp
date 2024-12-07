@@ -13,11 +13,16 @@ declare type MenuBarParams = {
 	isReadonly: Boolean,
 	menuId: String,
 	items: MenuBarItemParams[],
+	extras?: Extras,
 }
 
 declare type MenuBarItemParams = {
 	id: String,
 	settings: ?Object,
+}
+
+declare type Extras = {
+	analytics: Object;
 }
 
 export class MenuBar
@@ -28,6 +33,7 @@ export class MenuBar
 	#isReadonly: Boolean = false;
 	#container: HTMLElement = null;
 	#items = {};
+	#extras: Extras = {};
 	#selectedItemId: String = null;
 	#menu: BX.Main.interfaceButtons = null;
 
@@ -37,6 +43,7 @@ export class MenuBar
 		this.#entityId = params.entityId;
 		this.#entityCategoryId = params.entityCategoryId;
 		this.#isReadonly = params.isReadonly;
+		this.#extras = params.extras ?? {};
 
 		this.#container = document.getElementById(params.containerId);
 		const menuId = params.menuId ?? (BX.CrmEntityType.resolveName(this.#entityTypeId) + '_menu').toLowerCase();
@@ -48,6 +55,7 @@ export class MenuBar
 			entityCategoryId: this.#entityCategoryId,
 			isReadonly: this.#isReadonly,
 			menuBarContainer: this.#container,
+			extras: this.#extras,
 		});
 
 		(params.items).forEach((itemData) => {
@@ -60,12 +68,17 @@ export class MenuBar
 			}
 		});
 
-		this.setActiveItemById(this.#getFirstItemIdWithLayout());
+		this.setActiveItemById(this.getFirstItemIdWithLayout());
 	}
 
 	getItemById(id: String): ?Item
 	{
 		return this.#items[id] ?? null;
+	}
+
+	getContainer(): HTMLElement
+	{
+		return this.#container;
 	}
 
 	onMenuItemClick(selectedItemId: String): void
@@ -107,12 +120,24 @@ export class MenuBar
 		return false;
 	}
 
-	#onItemFinishEdit(): void
+	scrollIntoView(): void
 	{
-		this.setActiveItemById(this.#getFirstItemIdWithLayout());
+		this
+			.getContainer()
+			.scrollIntoView({
+				behavior: 'smooth',
+				block: 'end',
+				inline: 'nearest',
+			})
+		;
 	}
 
-	#getFirstItemIdWithLayout(): ?Item
+	#onItemFinishEdit(): void
+	{
+		this.setActiveItemById(this.getFirstItemIdWithLayout());
+	}
+
+	getFirstItemIdWithLayout(): ?Item
 	{
 		if (this.#isReadonly)
 		{

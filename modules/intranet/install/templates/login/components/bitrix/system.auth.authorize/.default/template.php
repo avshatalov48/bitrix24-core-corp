@@ -88,7 +88,7 @@ if ($arResult['ALLOW_QRCODE_AUTH'])
 				<?if ($arResult["STORE_PASSWORD"] == "Y"):?>
 				<input type="checkbox" id="USER_REMEMBER" name="USER_REMEMBER" value="Y" class="login-checkbox-user-remember"/><label class="login-item-checkbox-label" for="USER_REMEMBER"><?=GetMessage("AUTH_REMEMBER_ME")?></label>
 				<?endif?>
-				<?if($arParams["NOT_SHOW_LINKS"] != "Y" && $arResult["NEW_USER_REGISTRATION"] == "Y" && ($arParams["AUTHORIZE_REGISTRATION"] ?? null) != "Y"):?>
+				<?if($arParams["NOT_SHOW_LINKS"] != "Y" && $arResult["NEW_USER_REGISTRATION"] == "Y"):?>
 					<noindex>
 						<div class="login-links"><a  href="<?=$arResult["AUTH_REGISTER_URL"]?>" rel="nofollow"><?=GetMessage("AUTH_REGISTER")?></a></div>
 					</noindex>
@@ -126,7 +126,7 @@ if ($arResult['ALLOW_QRCODE_AUTH'])
 
 <?php endif ?>
 
-<script type="text/javascript">
+<script>
 	function fireEnterKey(event)
 	{
 		event = event || window.event;
@@ -164,7 +164,7 @@ if ($arResult['ALLOW_QRCODE_AUTH'])
 			colorLight : '#ffffff'
 		});
 
-		var pullConfig = <?= CUtil::PhpToJSObject($arResult['QRCODE_CONFIG']) ?>;
+		var pullConfig = <?= \Bitrix\Main\Web\Json::encode($arResult['QRCODE_CONFIG']) ?>;
 		if (pullConfig)
 		{
 			var Pull = new BX.PullClient();

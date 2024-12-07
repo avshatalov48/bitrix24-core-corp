@@ -415,7 +415,7 @@ if(typeof(BX.CrmEntityFieldSelector) == "undefined")
 						{
 							id: 'department',
 							options: {
-								selectMode: 'usersAndDepartments',
+								selectMode: 'departmentsOnly',
 							},
 						},
 						{

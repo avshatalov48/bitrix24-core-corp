@@ -1,1 +1,1 @@
-<?require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/controller/admin/controller_member_history.php");?>
+<?php require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/controller/admin/controller_member_history.php';

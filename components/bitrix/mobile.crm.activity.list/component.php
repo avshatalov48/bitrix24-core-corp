@@ -22,12 +22,6 @@ $enablePaging = $arResult['ENABLE_PAGING'] = isset($_REQUEST['PAGING']) && mb_st
 $enableSearch = $arResult['ENABLE_SEARCH'] = isset($_REQUEST['SEARCH']) && mb_strtoupper($_REQUEST['SEARCH']) === 'Y';
 $arResult['SEARCH_VALUE'] = '';
 
-if($enableSearch)
-{
-	// decode encodeURIComponent params
-	CUtil::JSPostUnescape();
-}
-
 $entityTypeID = $arResult['ENTITY_TYPE_ID'] = isset($_REQUEST['entity_type_id']) ? intval($_REQUEST['entity_type_id']) : 0;
 $entityTypeName = CCrmOwnerType::ResolveName($entityTypeID);
 $entityID = $arResult['ENTITY_ID'] = isset($_REQUEST['entity_id']) ? intval($_REQUEST['entity_id']) : 0;

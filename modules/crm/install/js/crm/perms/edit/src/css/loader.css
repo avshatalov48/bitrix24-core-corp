@@ -1,0 +1,18 @@
+.bx-crm-perms-edit-loader {
+	position: absolute;
+	top: -15px;
+	left: -15px;
+	right: -15px;
+	bottom: -20px;
+	opacity: 0.1;
+	border-radius: 15px;
+	background-color: #ccc;
+}
+
+.bx-crm-perms-edit-loader-progress {
+	position: fixed;
+	top: 45%;
+	left: 50%;
+	width: 200px;
+	height: 200px;
+}

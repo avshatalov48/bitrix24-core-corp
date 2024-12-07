@@ -92,6 +92,8 @@ class CTaskListState
 	private $userId = null;
 	private static $instancesOfSelf = array();
 
+	private bool $hasState = true;
+
 	/**
 	 * Get instance of multiton
 	 *
@@ -168,9 +170,17 @@ class CTaskListState
 			{
 				$this->state = array_merge($this->state, $state);
 			}
+			else
+			{
+				$this->hasState = false;
+			}
 		}
 	}
 
+	public function hasState(): bool
+	{
+		return $this->hasState;
+	}
 
 	/**
 	 * @access private

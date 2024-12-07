@@ -2,17 +2,32 @@
  * @module in-app-url/routes
  */
 jn.define('in-app-url/routes', (require, exports, module) => {
+	const { Feature } = require('feature');
+	const { getHttpPath } = require('utils/url');
 	const { ProfileView } = require('user/profile');
+	const { WorkgroupUtil } = require('project/utils');
 
 	/**
 	 * @param {InAppUrl} inAppUrl
 	 */
 	module.exports = function(inAppUrl) {
-		inAppUrl.register('/bitrix/tools/disk/focus.php', (params, { queryParams }) => {
-			const folderId = queryParams.folderId || queryParams.objectId;
-			const diskParams = Number(folderId) > 0 ? { folderId } : {};
+		inAppUrl.register('/bitrix/tools/disk/focus.php', (params, { queryParams, url }) => {
+			const diskParams = {};
+			const resolveParams = ['folderId', 'objectId'];
+			resolveParams.forEach((param) => {
+				const value = queryParams[param];
+				if (value)
+				{
+					diskParams[param] = value;
+				}
+			});
 
-			BX.postComponentEvent('onDiskFolderOpen', [diskParams], 'background');
+			if (!Feature.isOpenImageNonContextSupported())
+			{
+				return Application.openUrl(getHttpPath(url));
+			}
+
+			return BX.postComponentEvent('onDiskFolderOpen', [diskParams], 'background');
 		}).name('disk:entity');
 
 		inAppUrl.register(`/company/personal/user/${env.userId}/disk/path/`, () => {
@@ -29,10 +44,12 @@ jn.define('in-app-url/routes', (require, exports, module) => {
 
 			if (folders.includes(folder))
 			{
-				params = [{
-					entityType: 'common',
-					ownerId: `shared_files_${env.siteId}`,
-				}];
+				params = [
+					{
+						entityType: 'common',
+						ownerId: `shared_files_${env.siteId}`,
+					},
+				];
 			}
 
 			BX.postComponentEvent('onDiskFolderOpen', params, 'background');
@@ -54,7 +71,8 @@ jn.define('in-app-url/routes', (require, exports, module) => {
 			}
 
 			PageManager.openWidget('list', widgetParams)
-				.then((list) => ProfileView.open({ userId, backdrop }, list));
+				.then((list) => ProfileView.open({ userId, backdrop }, list))
+				.catch(console.error);
 		}).name('open:user');
 
 		inAppUrl.register('/company/personal/user/:userId/blog/:postId/$', ({ postId }) => {
@@ -63,11 +81,14 @@ jn.define('in-app-url/routes', (require, exports, module) => {
 			});
 		}).name('blog:post');
 
-		inAppUrl.register('/company/personal/user/:userId/blog/:postId/\\?commentId=:commentId#com:com', ({ postId, commentId, com }) => {
-			PageManager.openPage({
-				url: `mobile/log/?ACTION=CONVERT&ENTITY_TYPE_ID=BLOG_POST&ENTITY_ID=${postId}&commentId=${commentId}#com${com}`,
-			});
-		}).name('blog:post:comment');
+		inAppUrl.register(
+			'/company/personal/user/:userId/blog/:postId/\\?commentId=:commentId#com:com',
+			({ postId, commentId, com }) => {
+				PageManager.openPage({
+					url: `mobile/log/?ACTION=CONVERT&ENTITY_TYPE_ID=BLOG_POST&ENTITY_ID=${postId}&commentId=${commentId}#com${com}`,
+				});
+			},
+		).name('blog:post:comment');
 
 		inAppUrl.register('/company/personal/log/:logId/$', ({ logId }) => {
 			PageManager.openPage({
@@ -76,14 +97,11 @@ jn.define('in-app-url/routes', (require, exports, module) => {
 		}).name('log:entry');
 
 		inAppUrl.register('/workgroups/group/:groupId/$', ({ groupId }) => {
-			const data = {
+			void WorkgroupUtil.openProject(null, {
 				projectId: groupId,
-				action: 'view',
 				siteId: env.siteId,
 				siteDir: env.siteDir,
-			};
-
-			BX.postComponentEvent('projectbackground::project::action', [data], 'background');
+			});
 		}).name('group:open');
 	};
 });

@@ -196,7 +196,7 @@ class CAllDavVirtualFileSystem
 		$strSql =
 			"INSERT INTO b_dav_locks (".$arInsert[0].", CREATED, MODIFIED) ".
 			"VALUES(".$arInsert[1].", ".$DB::CurrentTimeFunction().", ".$DB::CurrentTimeFunction().")";
-		$DB->Query($strSql, false, "File: ".__FILE__."<br>Line: ".__LINE__);
+		$DB->Query($strSql);
 
 		return $arFields["ID"];
 	}
@@ -220,7 +220,7 @@ class CAllDavVirtualFileSystem
 			"	".$strUpdate.", ".
 			"	MODIFIED = ".$DB::CurrentTimeFunction()." ".
 			"WHERE ID = '".$DB->ForSql($id)."' ";
-		$DB->Query($strSql, false, "File: ".__FILE__."<br>Line: ".__LINE__);
+		$DB->Query($strSql);
 
 		return $id;
 	}

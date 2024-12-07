@@ -30,8 +30,9 @@ elseif (LANGUAGE_ID === "de")
 $arResult["IMAGE_PATH"] =
 	$this->getFolder()."/images/".($arResult["PAGE"] === "MACOS" ? "macos" : "windows").$postfix.".png";
 
+$downloadLinks = \Bitrix\Intranet\Portal::getInstance()->getSettings()->getDesktopDownloadLinks();
 $arResult["DOWNLOAD_PATH"] =
 	$arResult["PAGE"] === "MACOS" ?
-		"https://dl.bitrix24.com/b24/bitrix24_desktop.dmg" :
-		"https://dl.bitrix24.com/b24/bitrix24_desktop.exe"
+		htmlspecialcharsbx($downloadLinks['macos']) :
+		htmlspecialcharsbx($downloadLinks['windows'])
 ;

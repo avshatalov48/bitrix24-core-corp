@@ -22,7 +22,10 @@ class Files extends Base
 		);
 	}
 
-	public function attachAction(CTaskItem $task, int $fileId, array $params = [])
+	/**
+	 * @restMethod tasks.task.files.attach
+	 */
+	public function attachAction(CTaskItem $task, int $fileId, array $params = []): ?array
 	{
 		if (!$task->checkAccess(ActionDictionary::ACTION_TASK_EDIT))
 		{
@@ -51,6 +54,8 @@ class Files extends Base
 
 			return null;
 		}
+
+		(new Integration\CRM\TimeLineManager($task->getId(), $this->getUserId()))->onTaskFilesUpdated()->save();
 
 		return ['attachmentId' => $attachmentId];
 	}

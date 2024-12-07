@@ -62,20 +62,34 @@ class Filter extends \Bitrix\Main\Filter\Filter
 	 */
 	public function prepareListFilterParams(array &$filter): void
 	{
+		/**
+		 * possible subtype values for example:
+		 *   null | employee | string | url | address | money | integer | double | boolean | datetime |
+		 *   date | enumeration | crm_status | iblock_element | iblock_section | crm
+		 * may also take other value
+		 */
+		$filterSubtype = ['address'];
+
 		foreach ($filter as $k => $v)
 		{
 			$match = array();
-			if (preg_match('/(.*)_from$/i'.BX_UTF_PCRE_MODIFIER, $k, $match))
+			if (preg_match('/(.*)_from$/iu', $k, $match))
 			{
 				Crm\UI\Filter\Range::prepareFrom($filter, $match[1], $v);
 			}
-			elseif (preg_match('/(.*)_to$/i'.BX_UTF_PCRE_MODIFIER, $k, $match))
+			elseif (preg_match('/(.*)_to$/iu', $k, $match))
 			{
-				if ($v != '' && in_array($match[1], $this->getDateFieldNames()) && !preg_match('/\d{1,2}:\d{1,2}(:\d{1,2})?$/'.BX_UTF_PCRE_MODIFIER, $v))
+				if ($v != '' && in_array($match[1], $this->getDateFieldNames()) && !preg_match('/\d{1,2}:\d{1,2}(:\d{1,2})?$/u', $v))
 				{
 					$v = \CCrmDateTimeHelper::SetMaxDayTime($v);
 				}
 				Crm\UI\Filter\Range::prepareTo($filter, $match[1], $v);
+			}
+
+			if (in_array($this->getField($k)?->getSubtype(), $filterSubtype) && mb_strpos($k, 'UF_CRM_') === 0)
+			{
+				$filter['%' . $k] = $filter[$k];
+				unset($filter[$k]);
 			}
 
 			$this->entityDataProvider->prepareListFilterParam($filter, $k);

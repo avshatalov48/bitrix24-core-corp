@@ -5,6 +5,8 @@ export type InvitationWidgetOptions = {
 	isInvitationAvailable?: boolean,
 	structureLink?: string,
 	invitationLink?: string,
+	invitationCounter?: number,
+	counterId?: string,
 }
 
 export type InvitationPopupOptions = {

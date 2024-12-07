@@ -1,13 +1,21 @@
-<?
+<?php
+
 define("BX_MOBILE_LOG", true);
 
 require($_SERVER["DOCUMENT_ROOT"]."/mobile/headers.php");
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/header.php");
+
+if (!\CModule::IncludeModule('intranet'))
+{
+	return;
+}
+
 AddEventHandler("blog", "BlogImageSize", "ResizeMobileLogImages", 100, $_SERVER["DOCUMENT_ROOT"].SITE_TEMPLATE_PATH."/components/bitrix/socialnetwork.blog.post/mobile/functions.php");
 
 if (IsModuleInstalled("bitrix24"))
 	GetGlobalID();
 
+use Bitrix\Intranet\Integration\Wizards\Portal\Ids;
 if (
 	$_POST["ACTION"] == "ADD_POST"
 	|| $_POST["ACTION"] == "EDIT_POST"
@@ -97,13 +105,13 @@ if (
 	$LocalRedirectHandlerId = AddEventHandler('main', 'OnBeforeLocalRedirect', "LocalRedirectHandler");
 
 	$APPLICATION->IncludeComponent("bitrix:socialnetwork.blog.post.edit", "mobile_empty", array(
-			"ID" => ($_POST["ACTION"] == "EDIT_POST" && intval($_POST["post_id"]) > 0 ? intval($_POST["post_id"]) : 0),	
+			"ID" => ($_POST["ACTION"] == "EDIT_POST" && intval($_POST["post_id"]) > 0 ? intval($_POST["post_id"]) : 0),
 			"USER_ID" => ($_POST["ACTION"] == "EDIT_POST" && intval($_POST["post_user_id"]) > 0 ? intval($_POST["post_user_id"]) : $GLOBALS["USER"]->GetID()),
 			"PATH_TO_POST_EDIT" => $APPLICATION->GetCurPageParam("success=Y&new_post_id=#post_id#"), // redirect when success
 			"PATH_TO_POST" => "/company/personal/user/".$GLOBALS["USER"]->GetID()."/blog/#post_id#/", // search index
 			"USE_SOCNET" => "Y",
 			"SOCNET_GROUP_ID" => intval($_REQUEST["group_id"]),
-			"GROUP_ID" => (IsModuleInstalled("bitrix24") ? $GLOBAL_BLOG_GROUP[SITE_ID] : false),
+			"GROUP_ID" => (IsModuleInstalled("bitrix24") ? ids::getBlogId() : false),
 			"MOBILE" => "Y"
 		),
 		false,

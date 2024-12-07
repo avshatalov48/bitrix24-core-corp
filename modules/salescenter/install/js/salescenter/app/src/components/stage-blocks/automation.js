@@ -31,6 +31,11 @@ const Automation = {
 			type: Boolean,
 			required: true,
 		},
+		isDeliveryStageVisible: {
+			type: Boolean,
+			required: false,
+			default: false,
+		},
 	},
 	mixins: [StageMixin, MixinTemplatesType],
 	data()
@@ -112,7 +117,7 @@ const Automation = {
 			},
 			isHideDeliveryStage()
 			{
-				return this.$root.$app.options.mode === 'payment' || this.$root.$app.options.mode === 'terminal_payment';
+				return !this.isDeliveryStageVisible;
 			},
 		},
 	created()

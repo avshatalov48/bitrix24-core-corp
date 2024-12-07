@@ -146,9 +146,7 @@ class FileField extends BaseLinkedEntitiesField
 
 	protected function isFileIsImage(array $file): bool
 	{
-		$fileSrc = \CFile::GetFileSRC($file);
-
-		return \CFile::IsImage($fileSrc, \CFile::GetContentType($fileSrc));
+		return \CFile::IsImage($file['ORIGINAL_NAME'], $file['CONTENT_TYPE']);
 	}
 
 	protected function getFileHtml(

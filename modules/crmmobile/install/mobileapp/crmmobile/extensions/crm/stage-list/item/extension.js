@@ -11,6 +11,7 @@ jn.define('crm/stage-list/item', (require, exports, module) => {
 	const {
 		selectById: selectStageCounterById,
 	} = require('crm/statemanager/redux/slices/stage-counters');
+	const { selectItemsByIds } = require('crm/statemanager/redux/slices/tunnels');
 
 	const FIRST_TUNNEL_ADDITIONAL_HEIGHT = 5;
 	const TUNNEL_HEIGHT = 22;
@@ -58,13 +59,9 @@ jn.define('crm/stage-list/item', (require, exports, module) => {
 
 		isStageEnabled()
 		{
-			const {
-				tunnels,
-			} = this.stage;
-
-			if (tunnels && tunnels.length > 0)
+			if (this.props.tunnels && this.props.tunnels.length > 0 && this.disabledStageIds.length > 0)
 			{
-				const intersection = tunnels.filter((tunnel) => this.disabledStageIds.includes(tunnel.dstStageId));
+				const intersection = this.props.tunnels.filter((tunnel) => this.disabledStageIds.includes(tunnel.dstStageId));
 
 				return intersection.length === 0;
 			}
@@ -144,10 +141,16 @@ jn.define('crm/stage-list/item', (require, exports, module) => {
 		tunnelVector: `<svg width="8" height="23" viewBox="0 0 8 23" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="8" height="23" fill="none"/><path d="M1 -7V20C1 21.1046 1.89543 22 3 22H7" stroke="${AppTheme.colors.base5}" stroke-width="1.5" stroke-linecap="round"/></svg>`,
 	};
 
-	const mapStateToProps = (state, ownProps) => ({
-		stage: ownProps.stage ?? selectStageById(state, ownProps.id),
-		counter: selectStageCounterById(state, ownProps.id),
-	});
+	const mapStateToProps = (state, ownProps) => {
+		const stage = ownProps.stage ?? selectStageById(state, ownProps.id);
+		const tunnelIds = stage.tunnels ?? [];
+
+		return {
+			stage,
+			counter: selectStageCounterById(state, ownProps.id),
+			tunnels: selectItemsByIds(state, tunnelIds),
+		};
+	};
 
 	module.exports = {
 		CrmStageListItem: connect(mapStateToProps)(CrmStageListItem),

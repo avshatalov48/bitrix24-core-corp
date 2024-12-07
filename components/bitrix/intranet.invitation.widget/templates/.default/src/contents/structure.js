@@ -1,7 +1,8 @@
-import { Content } from "./content";
-import { Tag, Loc } from "main.core";
-import type { StructureContentOptions } from "../types/options";
-import type { ConfigContent } from "../types/content";
+import { Content } from './content';
+import { Tag, Loc } from 'main.core';
+import { Analytics } from '../analytics';
+import type { StructureContentOptions } from '../types/options';
+import type { ConfigContent } from '../types/content';
 
 export class StructureContent extends Content
 {
@@ -21,6 +22,10 @@ export class StructureContent extends Content
 	getLayout(): HTMLDivElement
 	{
 		return this.cache.remember('layout', () => {
+			const onclick = () => {
+				Analytics.send(Analytics.EVENT_OPEN_STRUCTURE);
+			};
+
 			return Tag.render`
 				<div class="intranet-invitation-widget-item intranet-invitation-widget-item--company intranet-invitation-widget-item--active">
 					<div class="intranet-invitation-widget-item-logo"></div>
@@ -30,7 +35,7 @@ export class StructureContent extends Content
 								${Loc.getMessage('INTRANET_INVITATION_WIDGET_STRUCTURE')}
 							</span>
 						</div>
-						<a href="${this.getOptions().link}" class="intranet-invitation-widget-item-btn"> 
+						<a onclick="${onclick}" href="${this.getOptions().link}" class="intranet-invitation-widget-item-btn"> 
 							${Loc.getMessage('INTRANET_INVITATION_WIDGET_EDIT')}
 						</a>
 					</div>

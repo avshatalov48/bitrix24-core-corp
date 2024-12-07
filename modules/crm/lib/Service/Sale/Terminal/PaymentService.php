@@ -175,6 +175,8 @@ final class PaymentService
 		if (!$payment)
 		{
 			$result->addError(new Error('Payment not found'));
+
+			return $result;
 		}
 
 		if ($createOptions->getPhoneNumber())

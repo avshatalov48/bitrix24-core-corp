@@ -27,7 +27,7 @@ class CAllIntranetSharepointLog
 			if (!($query = CIntranetSharepointLog::_LimitQuery($strWhere, $cnt)))
 				return false;
 
-			$dbRes = $DB->Query($query, false, "FILE: ".__FILE__."<br> LINE:".__LINE__);
+			$dbRes = $DB->Query($query);
 			
 			while ($arRes = $dbRes->Fetch())
 			{
@@ -57,7 +57,7 @@ class CAllIntranetSharepointLog
 
 	public static function ItemUpdated($IBLOCK_ID, $ID)
 	{
-		$dbRes = $GLOBALS['DB']->Query('SELECT VERSION FROM b_intranet_sharepoint_log WHERE IBLOCK_ID='.intval($IBLOCK_ID).' AND ELEMENT_ID='.intval($ID), false, "FILE: ".__FILE__."<br> LINE:".__LINE__);
+		$dbRes = $GLOBALS['DB']->Query('SELECT VERSION FROM b_intranet_sharepoint_log WHERE IBLOCK_ID='.intval($IBLOCK_ID).' AND ELEMENT_ID='.intval($ID));
 		if ($arRes = $dbRes->Fetch())
 			return $arRes['VERSION'];
 
@@ -66,7 +66,7 @@ class CAllIntranetSharepointLog
 
 	public static function ItemUpdatedClear($IBLOCK_ID, $ID)
 	{
-		return $GLOBALS['DB']->Query('DELETE FROM b_intranet_sharepoint_log WHERE IBLOCK_ID='.intval($IBLOCK_ID).' AND ELEMENT_ID='.intval($ID), false, "FILE: ".__FILE__."<br> LINE:".__LINE__);
+		return $GLOBALS['DB']->Query('DELETE FROM b_intranet_sharepoint_log WHERE IBLOCK_ID='.intval($IBLOCK_ID).' AND ELEMENT_ID='.intval($ID));
 	}
 
 	public static function Clear($arIDs)
@@ -77,7 +77,7 @@ class CAllIntranetSharepointLog
 		return $GLOBALS['DB']->Query('
 DELETE FROM b_intranet_sharepoint_log
 WHERE ID IN ('.implode(', ', $arKeys).')
-', false, "FILE: ".__FILE__."<br> LINE:".__LINE__);
+');
 	}
 
 	public static function IsLog($IBLOCK_ID = 0)
@@ -86,7 +86,7 @@ WHERE ID IN ('.implode(', ', $arKeys).')
 
 		$strWhere = $IBLOCK_ID > 0 ? 'WHERE ISPL.IBLOCK_ID='.intval($IBLOCK_ID) : '';
 		$query = CIntranetSharepointLog::_LimitQuery($strWhere, 1);
-		$dbRes = $DB->Query($query, false, "FILE: ".__FILE__."<br> LINE:".__LINE__);
+		$dbRes = $DB->Query($query);
 
 		return ($dbRes->Fetch() ? true : false);
 	}

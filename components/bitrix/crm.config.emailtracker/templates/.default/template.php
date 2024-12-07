@@ -422,7 +422,7 @@ foreach ($arParams['LEAD_RESP_SELECTED'] as $item)
 							</form>
 						</div>
 
-						<script type="text/javascript">
+						<script>
 
 							BX.SocNetLogDestination.init({
 								name : 'edit_imap_lead_resp_selector',
@@ -761,7 +761,7 @@ foreach ($arParams['LEAD_RESP_SELECTED'] as $item)
 								</form>
 							</div>
 
-							<script type="text/javascript">
+							<script>
 
 								BX.SocNetLogDestination.init({
 									name : 'create_imap_<?=$id ?>_lead_resp_selector',
@@ -871,7 +871,7 @@ foreach ($arParams['LEAD_RESP_SELECTED'] as $item)
 
 					</div>
 
-					<script type="text/javascript">
+					<script>
 
 						function toggleSubordinateBlock(id, show)
 						{
@@ -1127,7 +1127,7 @@ foreach ($arParams['LEAD_RESP_SELECTED'] as $item)
 	</div>
 </div>
 
-<script type="text/javascript">
+<script>
 
 	var imapDirsPopup = new BX.PopupWindow('imap_dirs_popup', null, {
 		titleBar: '<?=CUtil::jsEscape(getMessage('INTR_MAIL_IMAP_DIRS_TITLE')) ?>',

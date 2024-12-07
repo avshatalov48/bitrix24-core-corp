@@ -36,8 +36,6 @@ if (
 	&& ($_POST['controller_id'] === 'tasks.templates.list') // to aviod conflict of several components placed at the same page
 )
 {
-	CUtil::JSPostUnescape();
-
 	switch ($_POST['action'])
 	{
 		case 'group_action':
@@ -296,7 +294,7 @@ foreach($allowed as $itemId => $itemOps)
 		$flipped = array();
 		foreach($itemOps as $opId)
 		{
-			$flipped[ToUpper($ops[$opId]['NAME'])] = true;
+			$flipped[mb_strtoupper($ops[$opId]['NAME'])] = true;
 		}
 		$arResult["TEMPLATES"][$itemId]['ALLOWED_ACTIONS'] = $flipped;
 	}

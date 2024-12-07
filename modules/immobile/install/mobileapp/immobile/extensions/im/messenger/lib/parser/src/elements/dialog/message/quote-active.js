@@ -28,15 +28,17 @@ jn.define('im/messenger/lib/parser/elements/dialog/message/quote-active', (requi
 				this.text = text;
 			}
 
-			if (Type.isStringFilled(dialogId))
+			if (Type.isStringFilled(dialogId) || Type.isNumber(dialogId))
 			{
-				this.dialogId = dialogId;
+				this.dialogId = dialogId.toString();
 			}
 
 			if (Type.isStringFilled(messageId))
 			{
 				this.messageId = messageId;
 			}
+
+			this.displayLinesNumber = 2;
 		}
 
 		static getType()

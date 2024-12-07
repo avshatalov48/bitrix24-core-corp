@@ -64,7 +64,13 @@ class Content
 			'ACTIVITY_DATE' => Content\Date\ActivityDate::class,
 			'DEADLINE' => Content\Date\Deadline::class,
 			'DATE' => Content\Date\FormattedDate::class,
+			'FLOW' => Content\Flow::class,
 		];
+
+		if ($this->getParameter('GROUP_ID'))
+		{
+			$prepareMap['STAGE_ID'] = Content\StageId::class;
+		}
 
 		foreach ($this->rowData as $key => $value)
 		{
@@ -116,6 +122,11 @@ class Content
 		return $this->rowData;
 	}
 
+	public function getRowDataByName(string $name): mixed
+	{
+		return $this->rowData[$name] ?? null;
+	}
+
 	public function setRowData(array $rowData): void
 	{
 		$this->rowData = $rowData;
@@ -126,8 +137,23 @@ class Content
 		return $this->parameters;
 	}
 
+	public function getParameter(string $name): mixed
+	{
+		return $this->parameters[$name] ?? null;
+	}
+
+	public function getFilterField(string $name): mixed
+	{
+		return $this->parameters['FILTER_FIELDS'][$name] ?? null;
+	}
+
 	public function setParameters(array $parameters): void
 	{
 		$this->parameters = $parameters;
+	}
+
+	public function setParameter(string $name, mixed $data): void
+	{
+		$this->parameters[$name] = $data;
 	}
 }

@@ -2,6 +2,7 @@
 
 return [
 	'extensions' => [
+		//'im:messenger/lib/dev/action-timer',
 		'im:messenger/component/messenger-base',
 		'type',
 		'loc',
@@ -30,8 +31,12 @@ return [
 		'im:messenger/model',
 		'im:messenger/view/dialog',
 		'im:messenger/provider/pull/chat',
+		'im:messenger/provider/pull/sidebar',
+		'im:messenger/provider/pull/plan-limits',
 		'im:messenger/provider/push',
 		'im:messenger/provider/service',
+		'im:messenger/provider/data',
+		'im:messenger/provider/service/messenger-init',
 		'im:messenger/lib/rest-manager',
 		'im:messenger/lib/integration/mobile/communication',
 		'im:messenger/lib/promotion',
@@ -46,6 +51,7 @@ return [
 		'im:messenger/lib/feature',
 		'im:messenger/lib/smile-manager',
 		'im:messenger/lib/di/service-locator',
+		'im:messenger/lib/ui/notification',
 	],
 	'components' => [],
 	//'packer' => [],

@@ -1,0 +1,122 @@
+.select {
+	position: relative;
+	width: 100%;
+	height: fit-content;
+	margin: 0 auto;
+}
+
+.select .select-label,
+.select .select-label-container,
+.select .select-link,
+.select .select-link-container {
+	max-height: 40px;
+}
+
+.select .select-content {
+	pointer-events: none;
+}
+.select[data-state="active"] .select-content {
+	opacity: 1;
+	pointer-events: all;
+}
+
+.select-title {
+	box-sizing: border-box;
+	display: flex;
+	align-items: center;
+	width: 100%;
+	height: 40px;
+	padding: 8px 40px 8px 11px;
+	border: solid 1px #c7ccd1;
+	cursor: pointer;
+	border-radius: 6px;
+}
+.select-title:hover {
+	border-color: var(--ui-field-color-primary);
+}
+
+.select-content {
+	position: absolute;
+	top: 45px;
+	left: 0;
+	display: flex;
+	flex-direction: column;
+	width: 100%;
+	background-color: #ffffff;
+	border: 1px solid #00000033;
+	transition: opacity 0.3s ease-out;
+	opacity: 0;
+	z-index: 90;
+	box-shadow: 0 5px 24px 0 #535C694D;
+	border-radius: 6px;
+}
+.select-content.select-content-reverse {
+	box-shadow: 0 -5px 24px 0 #535C694D;
+}
+
+.select-label {
+	display: flex;
+	align-items: center;
+	width: 100%;
+	height: 40px;
+	max-height: 0;
+	padding: 0 16px;
+	cursor: pointer;
+	overflow: hidden;
+}
+.select-label-container {
+	display: inline-flex;
+	align-items: center;
+	height: 40px;
+	max-height: 0;
+	padding-right: 16px;
+}
+
+.select-link {
+	display: flex;
+	align-items: center;
+	width: 100%;
+	height: 40px;
+	max-height: 0;
+	padding-left: 4px;
+	padding-right: 16px;
+	cursor: pointer;
+	overflow: hidden;
+	color: #000;
+}
+.select-link-container {
+	padding: 0 16px;
+	display: inline-flex;
+	align-items: center;
+	border-top: 1px solid #00000033;
+	height: 40px;
+	max-height: 0;
+}
+
+.select-label, .select-label-container, .select-link, .select-link-container {
+	transition: all 0.2s ease-out;
+}
+
+.select-label-icon {
+	width: 20px;
+	opacity: .0;
+	background-color: #2066B0;
+}
+.select-label-container:hover .select-label-icon {
+	opacity: .5;
+}
+.select-label-container.selected .select-label-icon {
+	opacity: 1;
+}
+
+.select-link-icon {
+	opacity: .5;
+}
+
+#form-ai-page .ui-section__wrapper.--body-active .ui-section__section-section-body_container {
+	overflow: visible;
+}
+
+#form-ai-page .ui-section__wrapper.clickable.--body-active:last-child {
+	margin-bottom: 60px;
+}

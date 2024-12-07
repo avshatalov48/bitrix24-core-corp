@@ -119,7 +119,7 @@ use \Bitrix\Main\Localization\Loc;
 	<?endforeach;?>
 </div>
 
-<script type="text/javascript">
+<script>
 	BX.ready(function ()
 	{
 		BX.Crm.PaySystemList.init({

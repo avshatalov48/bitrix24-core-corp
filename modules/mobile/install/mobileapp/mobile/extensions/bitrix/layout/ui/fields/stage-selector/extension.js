@@ -115,8 +115,11 @@ jn.define('layout/ui/fields/stage-selector', (require, exports, module) => {
 		renderEditableContent()
 		{
 			this.currentStages = this.getSliderStages();
-
-			if (this.currentStages.length === 0 || !this.state.activeStageId || !this.isActiveStageExist())
+			if (
+				this.currentStages.length === 0
+				|| !(Number.isInteger(this.state.activeStageId))
+				|| !this.isActiveStageExist()
+			)
 			{
 				return this.renderEmptyContent();
 			}
@@ -636,5 +639,6 @@ jn.define('layout/ui/fields/stage-selector', (require, exports, module) => {
 	module.exports = {
 		StageSelectorType: 'stage-selector',
 		StageSelectorField,
+		StageItemClass,
 	};
 });

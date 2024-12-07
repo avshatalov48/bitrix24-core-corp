@@ -23,7 +23,14 @@ CModule::IncludeModule("dav");
 
 CDav::Report(
 	"<<<<<<<<<<<<<< REQUEST >>>>>>>>>>>>>>>>",
-	"\n".print_r(array("REQUEST_METHOD" => $_SERVER["REQUEST_METHOD"], "REQUEST_URI" => $_SERVER["REQUEST_URI"], "PATH_INFO" => $_SERVER["PATH_INFO"], "HTTP_DEPTH" => $_SERVER["HTTP_DEPTH"], "AUTH_TYPE" => $_SERVER["AUTH_TYPE"], "PHP_AUTH_USER" => $_SERVER["PHP_AUTH_USER"]), true)."\n",
+	"\n".print_r([
+		"REQUEST_METHOD" => $_SERVER["REQUEST_METHOD"] ?? null,
+		"REQUEST_URI" => $_SERVER["REQUEST_URI"] ?? null,
+		"PATH_INFO" => $_SERVER["PATH_INFO"] ?? null,
+		"HTTP_DEPTH" => $_SERVER["HTTP_DEPTH"] ?? null,
+		"AUTH_TYPE" => $_SERVER["AUTH_TYPE"] ?? null,
+		"PHP_AUTH_USER" => $_SERVER["PHP_AUTH_USER" ] ?? null
+	], true)."\n",
 	"UNDEFINED",
 	true
 );

@@ -11,6 +11,7 @@ class Link extends ContentBlock implements TextPropertiesInterface
 	use TextPropertiesMixin;
 
 	protected ?string $value = null;
+	protected ?string $icon = null;
 
 	public function getRendererName(): string
 	{
@@ -29,13 +30,29 @@ class Link extends ContentBlock implements TextPropertiesInterface
 		return $this;
 	}
 
+	public function getIcon(): ?string
+	{
+		return $this->icon;
+	}
+
+	public function setIcon(?string $icon): self
+	{
+		$this->icon = $icon;
+
+		return $this;
+	}
+
 	protected function getProperties(): array
 	{
-		return [
-			'text' => html_entity_decode($this->getValue()),
-			'bold' => $this->getIsBold(),
-			'title' => $this->getTitle(),
-			'action' => $this->getAction(),
-		];
+		return array_merge(
+			$this->getTextProperties(),
+			[
+				'text' => html_entity_decode($this->getValue()),
+				'bold' => $this->getIsBold(),
+				'title' => $this->getTitle(),
+				'icon' => $this->getIcon(),
+				'action' => $this->getAction(),
+			]
+		);
 	}
 }

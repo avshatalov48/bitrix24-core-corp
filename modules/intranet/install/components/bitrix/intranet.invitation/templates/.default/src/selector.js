@@ -36,11 +36,21 @@ export class Selector
 
 			if (type === "project" && !!this.options[type])
 			{
-				let optionValue = {
-					id: "project",
-					options: {
-						fillRecentTab: true
-					}
+				const options = {
+					fillRecentTab: true,
+				};
+				if (
+					Object.prototype.hasOwnProperty.call(this.options, 'projectLimitExceeded')
+					&& Object.prototype.hasOwnProperty.call(this.options, 'projectLimitFeatureId')
+				)
+				{
+					options.lockProjectLink = this.options.projectLimitExceeded;
+					options.lockProjectLinkFeatureId = this.options.projectLimitFeatureId;
+				}
+
+				const optionValue = {
+					id: 'project',
+					options,
 				};
 
 				if (this.options[type] === "extranet")

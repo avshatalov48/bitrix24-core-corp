@@ -12,7 +12,7 @@ class FieldSet extends Main\Engine\JsonController
 		return [];
 	}
 
-	public function loadAction(int $entityTypeId, int $entityId, ?int $presetId = null): array
+	public function loadAction(int $entityTypeId, int $entityId, ?int $presetId = null, ?string $documentUid = null): array
 	{
 		$hasReadAccessToEntity = Crm\Service\Container::getInstance()
 			->getUserPermissions()
@@ -34,7 +34,7 @@ class FieldSet extends Main\Engine\JsonController
 			return [];
 		}
 
-		return Crm\Service\Sign\Requisite::getBannerData($item, $entityId);
+		return Crm\Service\Sign\Requisite::getBannerData($item, $entityId, $documentUid);
 	}
 
 	public function getAction(int $id): array
@@ -61,10 +61,10 @@ class FieldSet extends Main\Engine\JsonController
 
 	public function setAction(array $options): array
 	{
-		$permissions = Crm\Service\Container::getInstance()->getUserPermissions();
-		if (!$permissions->canWriteConfig())
+		if (!$this->checkPermission())
 		{
 			$this->addError(new Main\Error(Loc::getMessage('CRM_CONTROLLER_FIELDSET_WRITE_CONFIG_DENIED')));
+
 			return [];
 		}
 
@@ -82,5 +82,33 @@ class FieldSet extends Main\Engine\JsonController
 		return [
 			'options' => $item->getOptions(),
 		];
+	}
+
+	private function checkPermission(): bool
+	{
+		$canWriteConfig = Crm\Service\Container::getInstance()->getUserPermissions()->canWriteConfig();
+		if ($canWriteConfig)
+		{
+			return true;
+		}
+
+		if (
+			Main\Loader::includeModule('sign')
+			&& class_exists(\Bitrix\Sign\Access\AccessController::class)
+			&& class_exists(\Bitrix\Sign\Access\ActionDictionary::class)
+		)
+		{
+			$signController = \Bitrix\Sign\Access\AccessController::getInstance(Main\Engine\CurrentUser::get()->getId());
+
+			return
+				(
+					defined(\Bitrix\Sign\Access\ActionDictionary::ACTION_B2E_DOCUMENT_ADD)
+					&& $signController->check(\Bitrix\Sign\Access\ActionDictionary::ACTION_B2E_DOCUMENT_ADD)
+				)
+				|| $signController->check(\Bitrix\Sign\Access\ActionDictionary::ACTION_DOCUMENT_ADD)
+			;
+		}
+
+		return false;
 	}
 }

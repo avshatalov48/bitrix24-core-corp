@@ -35,8 +35,8 @@ export default class SettingsMenu
 				onDestroy: (): void => {
 					button.deselect();
 					this.#menu = null;
-				}
-			}
+				},
+			},
 		});
 
 		return this.#menu;
@@ -64,7 +64,7 @@ export default class SettingsMenu
 				}
 
 				menuItem.getMenuWindow().close();
-			}
+			},
 		}];
 	}
 

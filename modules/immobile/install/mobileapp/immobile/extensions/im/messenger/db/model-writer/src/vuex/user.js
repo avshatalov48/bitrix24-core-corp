@@ -68,18 +68,28 @@ jn.define('im/messenger/db/model-writer/vuex/user', (require, exports, module) =
 				return;
 			}
 
+			const uniqueUserList = this.getUniqueUsers(userList);
 			if (actionName === 'addShort')
 			{
-				this.repository.user.saveShortFromModel(userList);
+				this.repository.user.saveShortFromModel(uniqueUserList);
 
 				return;
 			}
 
-			this.repository.user.saveFromModel(userList);
+			this.repository.user.saveFromModel(uniqueUserList);
 		}
 
 		deleteRouter(mutation)
 		{}
+
+		/**
+		 * @param {Array<UsersModelState>} users
+		 * @return {Array<UsersModelState>}
+		 */
+		getUniqueUsers(users)
+		{
+			return [...new Map(users.map((user) => [user.id, user])).values()];
+		}
 	}
 
 	module.exports = {

@@ -1,0 +1,2 @@
+<?php
+$MESS["CRM_GRID_PANEL_ACTION_CALL_LIST_ADD_ITEMS_TO_CALL_LIST"] = "Add to call list";

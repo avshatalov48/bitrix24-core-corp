@@ -36,6 +36,7 @@ class Icon
 	public const CHECK = 'check';
 	public const COMMENT = 'comment';
 	public const SMS = 'sms';
+	public const WHATSAPP = 'whatsapp';
 	public const TASK = 'task';
 	public const PIPELINE = 'pipeline';
 	public const WALLET = 'wallet';
@@ -53,6 +54,9 @@ class Icon
 	public const ARROW_UP = 'arrow-up';
 	public const ARROW_DOWN = 'arrow-down';
 	public const VISIT = 'visit';
+	public const CAMERA = 'camera';
+	public const COPY = 'copy';
+
 	//endregion
 
 	public static function getSystemIcons(): array

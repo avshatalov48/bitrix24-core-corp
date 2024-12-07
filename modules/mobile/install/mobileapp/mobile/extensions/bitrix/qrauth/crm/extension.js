@@ -1,5 +1,7 @@
-(function() {
-	const require = (ext) => jn.require(ext);
+/**
+ * @module qrauth/crm
+ */
+jn.define('qrauth/crm', (require, exports, module) => {
 	const AppTheme = require('apptheme');
 
 	const pathToExtension = '/bitrix/mobileapp/mobile/extensions/bitrix/qrauth/crm/';
@@ -120,6 +122,15 @@
 			);
 		}
 	}
+
+	module.exports = {
+		CRMDescriptionLayout,
+	};
+});
+
+(function() {
+	const require = (ext) => jn.require(ext);
+	const { CRMDescriptionLayout } = require('qrauth/crm');
 
 	jnexport([CRMDescriptionLayout, 'CRMDescriptionLayout']);
 })();

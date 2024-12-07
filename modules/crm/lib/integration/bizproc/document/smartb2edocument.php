@@ -8,7 +8,7 @@ class SmartB2eDocument extends Item
 {
 	public static function getEntityName($entity)
 	{
-		return Loc::getMessage('CRM_BP_DOCUMENT_SMART_DOCUMENT_ENTITY_NAME_1');
+		return Loc::getMessage('CRM_BP_DOCUMENT_SMART_B2E_DOCUMENT_ENTITY_NAME');
 	}
 
 	public static function getDocumentTypeName($documentType)

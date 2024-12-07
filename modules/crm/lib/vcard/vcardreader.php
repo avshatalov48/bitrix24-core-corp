@@ -85,7 +85,7 @@ class VCardReader
 		$borderPos = $endPos + 9; // 9 is strlen('END:VCARD')
 		$this->elementContent = mb_substr($this->buffer, $beginPos, $borderPos - $beginPos);
 		$this->buffer = mb_substr($this->buffer, $borderPos);
-		$this->elementBorderPosition = $this->filePosition - Main\Text\BinaryString::getLength($this->buffer);
+		$this->elementBorderPosition = $this->filePosition - strlen($this->buffer);
 
 		return $this->elementContent !== '';
 	}

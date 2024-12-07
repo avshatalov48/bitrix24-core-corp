@@ -24,13 +24,14 @@ jn.define('bizproc/workflow/details', (require, exports, module) => {
 				titleParams: {
 					text: props.title || Loc.getMessage('M_BP_WORKFLOW_DETAILS_WIDGET_TITLE'),
 					textColor: AppTheme.colors.base1,
+					type: 'dialog',
 				},
 				backgroundColor: AppTheme.colors.bgSecondary,
 				backdrop: {
 					mediumPositionPercent: 90,
 					onlyMediumPosition: true,
 					swipeAllowed: true,
-					swipeContentAllowed: false,
+					swipeContentAllowed: true,
 					horizontalSwipeAllowed: false,
 					hideNavigationBar: false,
 					navigationBarColor: AppTheme.colors.bgSecondary,
@@ -53,6 +54,7 @@ jn.define('bizproc/workflow/details', (require, exports, module) => {
 				workflow: null,
 				editorConfig: null,
 				taskCount: 0,
+				commentCounter: null,
 				canView: false,
 				showTimeline: false,
 
@@ -210,6 +212,7 @@ jn.define('bizproc/workflow/details', (require, exports, module) => {
 					const isLiveFeedProcess = response.data.isLiveFeedProcess || false;
 					const editorConfig = response.data.editor || null;
 					const taskCount = response.data.taskCount || 0;
+					const commentCounter = response.data.commentCounter;
 					const canView = response.data.canViewWorkflow || false;
 
 					if (isLiveFeedProcess)
@@ -218,6 +221,7 @@ jn.define('bizproc/workflow/details', (require, exports, module) => {
 						this.state.workflow = {};
 						this.state.editorConfig = editorConfig;
 						this.state.taskCount = taskCount;
+						this.state.commentCounter = commentCounter;
 						this.state.canView = canView;
 						this.state.showTimeline = true;
 						this.state.showRightError = false;
@@ -229,13 +233,17 @@ jn.define('bizproc/workflow/details', (require, exports, module) => {
 						const workflow = response.data.workflow || {};
 
 						this.layout.setTitle(
-							{ text: (workflow.title || Loc.getMessage('M_BP_WORKFLOW_DETAILS_WIDGET_TITLE')) },
+							{
+								text: (workflow.title || Loc.getMessage('M_BP_WORKFLOW_DETAILS_WIDGET_TITLE')),
+								type: 'dialog',
+							},
 						);
 
 						this.setState({
 							workflow,
 							editorConfig,
 							taskCount,
+							commentCounter,
 							canView,
 							additionalContentIsLoaded: true,
 							showTimeline: true,
@@ -320,7 +328,7 @@ jn.define('bizproc/workflow/details', (require, exports, module) => {
 								style: {
 									flexDirection: 'column',
 									backgroundColor: AppTheme.colors.bgContentPrimary,
-									minHeight: device.screen.height * 0.85 - 250,
+									minHeight: device.screen.height * 0.85 - 250, // ?
 									paddingHorizontal: 6,
 									paddingVertical: 12,
 								},
@@ -344,11 +352,13 @@ jn.define('bizproc/workflow/details', (require, exports, module) => {
 							),
 							this.state.showTimeline && this.renderTimelineButton(),
 						),
-						new WorkflowComments({
-							workflowId: this.workflowId,
-						}),
+						View({ style: { height: 100 } }),
 					),
 				),
+				this.isLoaded && new WorkflowComments({
+					workflowId: this.workflowId,
+					commentCounter: this.state.commentCounter,
+				}),
 			);
 		}
 
@@ -393,7 +403,7 @@ jn.define('bizproc/workflow/details', (require, exports, module) => {
 							fontSize: 14,
 							color: AppTheme.colors.base2,
 						},
-						text: Loc.getMessage('M_BP_WORKFLOW_DETAILS_TIMELINE_BTN'),
+						text: Loc.getMessage('M_BP_WORKFLOW_DETAILS_TIMELINE_BTN_MSGVER_1'),
 					}),
 				),
 				this.renderCounter(),

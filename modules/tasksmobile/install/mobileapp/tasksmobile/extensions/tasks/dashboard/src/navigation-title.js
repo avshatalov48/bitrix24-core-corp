@@ -31,9 +31,10 @@ jn.define('tasks/dashboard/src/navigation-title', (require, exports, module) => 
 			});
 		}
 
-		constructor({ layout })
+		constructor({ layout, statusTitleParamsMap = {} })
 		{
 			this.layout = layout;
+			this.statusTitleParamsMap = statusTitleParamsMap;
 
 			this.titleParams = null;
 
@@ -108,11 +109,18 @@ jn.define('tasks/dashboard/src/navigation-title', (require, exports, module) => 
 					break;
 			}
 
-			const actualTitleParams = {
+			let actualTitleParams = {
 				text: headerTitle,
 				useProgress,
 				largeMode: true,
 			};
+			if (this.statusTitleParamsMap[appStatus])
+			{
+				actualTitleParams = {
+					...actualTitleParams,
+					...this.statusTitleParamsMap[appStatus],
+				};
+			}
 
 			if (isEqual(this.titleParams, actualTitleParams))
 			{

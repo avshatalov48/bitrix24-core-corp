@@ -8,7 +8,6 @@ use Bitrix\Main\Application;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Main\Text\Encoding;
 use Bitrix\Main\UserConsent\Consent;
 use Bitrix\Main\UserConsent\Agreement;
 use Bitrix\Main\UserConsent\Internals\AgreementTable;
@@ -227,11 +226,6 @@ JS;
 			],
 			$langId
 		);
-
-		if (!Application::isUtfMode() && !defined('BX_UTF'))
-		{
-			$text = Encoding::convertEncoding($text, SITE_CHARSET, 'UTF-8');
-		}
 
 		return "https://api.whatsapp.com/send/?phone={$phoneNumber}&text=" . rawurlencode($text);
 	}

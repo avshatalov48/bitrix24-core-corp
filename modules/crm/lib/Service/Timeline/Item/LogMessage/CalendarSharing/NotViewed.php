@@ -11,7 +11,9 @@ use Bitrix\Crm\Service\Timeline\Layout;
 
 class NotViewed extends LogMessage
 {
-	use CalendarSharing;
+	use CalendarSharing\ModelDataTrait;
+	use CalendarSharing\SentContactContentBlockTrait;
+	use CalendarSharing\MessageTrait;
 
 	public function getType(): string
 	{
@@ -42,7 +44,7 @@ class NotViewed extends LogMessage
 	{
 		if ($this->hasContact())
 		{
-			$content = $this->getSendedContactContentBlock();
+			$content = $this->getSentContactContentBlock($this->getContactTypeId(), $this->getContactId(), $this->getTimestamp());
 		}
 		else
 		{

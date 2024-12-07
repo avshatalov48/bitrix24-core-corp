@@ -11,6 +11,7 @@ use Bitrix\Tasks\Replication\RepeaterInterface;
 use Bitrix\Tasks\Replication\ReplicationResult;
 use Bitrix\Tasks\Replication\Template\Common\TemplateTaskChecker;
 use Bitrix\Tasks\Replication\Fake\FakeRepeater;
+use Bitrix\Tasks\Replication\Template\Common\TemplateTaskProducer;
 use Bitrix\Tasks\Replication\Template\Repetition\RegularTemplateTaskProducer;
 use Bitrix\Tasks\Replication\Repository\TemplateRepository;
 use Bitrix\Tasks\Replication\RepositoryInterface;
@@ -36,8 +37,7 @@ class TemplateTaskReplicator extends AbstractReplicator
 
 	protected function getProducer(): ProducerInterface
 	{
-		// todo - replace this with a separate producer
-		return new RegularTemplateTaskProducer($this->getRepository());
+		return new TemplateTaskProducer($this->getRepository());
 	}
 
 

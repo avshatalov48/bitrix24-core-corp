@@ -24,7 +24,7 @@ else
 $arResult["NAME"] = htmlspecialcharsbx($arParams["NAME"]);
 $arResult["~NAME"] = $arParams["NAME"];
 
-if ($arParams["NAME_TEMPLATE"] == '')
+if (($arParams["NAME_TEMPLATE"]  ?? null)== '')
 	$arParams["NAME_TEMPLATE"] = CSite::GetNameFormat();
 
 $arSubDeps = CTasks::GetSubordinateDeps();
@@ -80,7 +80,7 @@ if (!CModule::IncludeModule('extranet') || CExtranet::IsIntranetUser())
 		if(CModule::IncludeModule('iblock'))
 		{
 			global $CACHE_MANAGER;
-			$CACHE_MANAGER->StartTagCache($cacheDir);
+			$CACHE_MANAGER->StartTagCache($cacheDir ?? null);
 			$CACHE_MANAGER->RegisterTag("iblock_id_".$IBlockID);
 
 			$dbRes = CIBlockSection::GetList(
@@ -98,7 +98,7 @@ if (!CModule::IncludeModule('extranet') || CExtranet::IsIntranetUser())
 					$iblockSectionID = 0;
 				}
 
-				if (!is_array($arStructure[$iblockSectionID]))
+				if (!is_array($arStructure[$iblockSectionID] ?? null))
 					$arStructure[$iblockSectionID] = array($arRes['ID']);
 				else
 					$arStructure[$iblockSectionID][] = $arRes['ID'];

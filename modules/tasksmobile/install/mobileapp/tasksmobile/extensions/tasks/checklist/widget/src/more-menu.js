@@ -4,8 +4,9 @@
 jn.define('tasks/checklist/widget/src/more-menu', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const { PropTypes } = require('utils/validation');
-	const { outline: { plus, trashCan, onlyMine, hideDone } } = require('assets/icons');
-	const { ContextMenu } = require('layout/ui/context-menu');
+	const { Icon } = require('assets/icons');
+	const { UIMenu } = require('layout/ui/menu');
+	const { confirmDestructiveAction } = require('alert');
 
 	const ACTION_IDS = {
 		hideCompleted: 'hide-completed',
@@ -21,15 +22,15 @@ jn.define('tasks/checklist/widget/src/more-menu', (require, exports, module) => 
 		{
 			super(props);
 
-			this.initState(props);
+			this.#initState(props);
 		}
 
 		componentWillReceiveProps(props)
 		{
-			this.initState(props);
+			this.#initState(props);
 		}
 
-		initState(props)
+		#initState(props)
 		{
 			this.state = {
 				onlyMine: props.onlyMine,
@@ -54,10 +55,7 @@ jn.define('tasks/checklist/widget/src/more-menu', (require, exports, module) => 
 
 		createMenu()
 		{
-			return new ContextMenu({
-				testId: 'checklist_more_menu',
-				actions: this.getAction(),
-			});
+			return new UIMenu(this.getActions());
 		}
 
 		selectedAction({ state, action })
@@ -70,9 +68,10 @@ jn.define('tasks/checklist/widget/src/more-menu', (require, exports, module) => 
 			);
 		}
 
-		getAction()
+		getActions()
 		{
 			const {
+				accessRestrictions = {},
 				onCreateChecklist,
 				onHideCompleted,
 				onShowOnlyMine,
@@ -80,71 +79,78 @@ jn.define('tasks/checklist/widget/src/more-menu', (require, exports, module) => 
 			} = this.props;
 
 			const { hideCompleted: hideCompletedState, onlyMine: onlyMineState } = this.state;
+			const actions = [];
+			const { remove: canRemove, add: canAdd } = accessRestrictions;
 
-			return [
-				{
+			if (canAdd)
+			{
+				actions.push({
 					id: 'create-checklist',
 					testId: 'create-checklist',
-					title: Loc.getMessage('TASKSMOBILE_LAYOUT_CHECKLIST_MORE_MENU_CREATE_CHECKLIST'),
-					onClickCallback: () => {
-						this.menu.close(onCreateChecklist);
-					},
-					data: {
-						svgIcon: plus(),
-					},
-				},
+					title: Loc.getMessage('TASKSMOBILE_LAYOUT_CHECKLIST_MORE_MENU_CREATE_CHECKLIST_MSGVER_1'),
+					onItemSelected: onCreateChecklist,
+					iconName: Icon.PLUS,
+				});
+			}
+
+			// actions.push({
+			// 	id: 'change-sort',
+			// 	title: Loc.getMessage('TASKSMOBILE_LAYOUT_CHECKLIST_MORE_MENU_SHOW_CHANGE_SORT'),
+			// 	isDisabled: true,
+			// 	onClickCallback: onChangeSort,
+			// 	data: {
+			// 		svgIcon: newsfeed(),
+			// 	},
+			// });
+
+			actions.push(
 				{
 					id: ACTION_IDS.hideCompleted,
 					testId: ACTION_IDS.hideCompleted,
-					title: Loc.getMessage('TASKSMOBILE_LAYOUT_CHECKLIST_MORE_MENU_HIDE_COMPLETED'),
-					onClickCallback: () => {
+					title: Loc.getMessage('TASKSMOBILE_LAYOUT_CHECKLIST_MORE_MENU_HIDE_COMPLETED_MSGVER_1'),
+					onItemSelected: () => {
 						this.selectedAction({
 							state: { hideCompleted: !hideCompletedState },
 							action: onHideCompleted,
 						});
 					},
-					isSelected: hideCompletedState,
-					data: {
-						svgIcon: hideDone(),
-					},
+					checked: hideCompletedState,
+					iconName: Icon.BAN,
 				},
 				{
 					id: 'show-only-mine',
 					testId: 'show-only-mine',
 					title: Loc.getMessage('TASKSMOBILE_LAYOUT_CHECKLIST_MORE_MENU_SHOW_ONLY_MINE_MSGVER_1'),
-					onClickCallback: () => {
+					onItemSelected: () => {
 						this.selectedAction({
 							state: { onlyMine: !onlyMineState },
 							action: onShowOnlyMine,
 						});
 					},
-					isSelected: onlyMineState,
-					data: {
-						svgIcon: onlyMine(),
-					},
+					checked: onlyMineState,
+					iconName: Icon.PERSON,
 				},
-				// {
-				// 	id: 'change-sort',
-				// 	title: Loc.getMessage('TASKSMOBILE_LAYOUT_CHECKLIST_MORE_MENU_SHOW_CHANGE_SORT'),
-				// 	isDisabled: true,
-				// 	onClickCallback: onChangeSort,
-				// 	data: {
-				// 		svgIcon: newsfeed(),
-				// 	},
-				// },
-				{
+			);
+
+			if (canRemove)
+			{
+				actions.push({
 					id: 'remove',
 					testId: 'remove',
 					title: Loc.getMessage('TASKSMOBILE_LAYOUT_CHECKLIST_MORE_MENU_SHOW_REMOVE'),
 					isDestructive: true,
-					onClickCallback: () => {
-						this.menu.close(onRemove);
+					onItemSelected: () => {
+						confirmDestructiveAction({
+							title: '',
+							description: Loc.getMessage('TASKSMOBILE_LAYOUT_CHECKLIST_MORE_MENU_SHOW_CONFIRM_REMOVE'),
+							onDestruct: onRemove,
+						});
 					},
-					data: {
-						svgIcon: trashCan(),
-					},
-				},
-			];
+					iconName: Icon.TRASHCAN,
+				});
+			}
+
+			return actions;
 		}
 	}
 
@@ -155,6 +161,7 @@ jn.define('tasks/checklist/widget/src/more-menu', (require, exports, module) => 
 		onShowOnlyMine: PropTypes.func,
 		onChangeSort: PropTypes.func,
 		onRemove: PropTypes.func,
+		accessRestrictions: PropTypes.object,
 	};
 
 	module.exports = { ChecklistMoreMenu };

@@ -1,0 +1,3 @@
+<?php
+$MESS["SIGN_CORE_INTEGRATION_FORM_NEXT"] = "Next";
+$MESS["SIGN_CORE_INTEGRATION_FORM_TITLE"] = "Complete document fields";

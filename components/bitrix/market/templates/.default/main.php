@@ -23,5 +23,6 @@ $APPLICATION->includeComponent(
 	[
 		'FROM' => 'main',
 		'VARIABLES' => $arResult['VARIABLES'],
+		'CURRENT_PAGE' => $arResult['CURRENT_PAGE'],
 	]
 );

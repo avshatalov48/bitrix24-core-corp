@@ -183,7 +183,15 @@ final class UpdateCatalogProductsCommand extends Command
 		/**
 		 * Add new
 		 */
-		$morePhotoProperty = $sku->getPropertyCollection()->findByCode(MorePhotoImage::CODE);
+		$propertyCollection = $sku->getPropertyCollection();
+		if (method_exists($propertyCollection, 'findByCodeLazy'))
+		{
+			$morePhotoProperty = $propertyCollection->findByCodeLazy(MorePhotoImage::CODE);
+		}
+		else
+		{
+			$morePhotoProperty = $propertyCollection->findByCode(MorePhotoImage::CODE);
+		}
 		$hasMorePhoto = $morePhotoProperty && $morePhotoProperty->isActive();
 
 		foreach ($newImageIds as $newImage)

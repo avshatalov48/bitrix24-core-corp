@@ -72,12 +72,8 @@ class EventHandler
 		switch ($config['QUEUE_TYPE'])
 		{
 			case Config::QUEUE_TYPE_ALL:
-				$queue = $config['QUEUE'];
-				foreach ($queue as $operatorIdFromQueue)
-				{
-					$params['OPERATOR_ID'] = $operatorIdFromQueue;
-					Manager::addToQueue($sessionId, Manager::DIALOG_CREATE_STATISTIC_KEY, $params);
-				}
+				$params['OPERATOR_ID'] = $config['QUEUE'];
+				Manager::addToQueue($sessionId, Manager::DIALOG_CREATE_STATISTIC_KEY, $params);
 				self::$newCreateSessionIdsWithAttachingToAll[$sessionId] = $sessionId;
 				break;
 			case Config::QUEUE_TYPE_EVENLY:

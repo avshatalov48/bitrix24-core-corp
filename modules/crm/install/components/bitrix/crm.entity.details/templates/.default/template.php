@@ -27,7 +27,6 @@ if ($arResult['TODO_CREATE_NOTIFICATION_PARAMS'])
 
 \Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/main/utils.js');
 \Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/interface_form.js');
-\Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/entity_event.js');
 
 $bodyClass = $APPLICATION->GetPageProperty('BodyClass');
 $APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass.' ' : '').'no-paddings no-background');
@@ -329,7 +328,7 @@ $tabs = array_map(static function(array $tab) {
 	return $tab;
 }, $tabs);
 
-?><script type="text/javascript">
+?><script>
 	BX.ready(
 		function()
 		{

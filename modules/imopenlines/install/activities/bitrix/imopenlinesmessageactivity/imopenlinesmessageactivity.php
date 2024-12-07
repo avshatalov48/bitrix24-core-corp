@@ -199,16 +199,16 @@ class CBPImOpenLinesMessageActivity extends CBPActivity
 				'Default' => 'N',
 			],
 			'AttachmentType' => [
-				'Name' => GetMessage('IMOL_MA_ATTACHMENT_TYPE'),
+				'Name' => GetMessage('IMOL_MA_ATTACHMENT_TYPE_1'),
 				'FieldName' => 'attachment_type',
 				'Type' => 'select',
 				'Options' => array(
-					static::ATTACHMENT_TYPE_FILE => GetMessage('IMOL_MA_ATTACHMENT_FILE_1'),
+					static::ATTACHMENT_TYPE_FILE => GetMessage('IMOL_MA_ATTACHMENT_FILE_2'),
 					static::ATTACHMENT_TYPE_DISK => GetMessage('IMOL_MA_ATTACHMENT_DISK')
 				),
 			],
 			'Attachment' => [
-				'Name' => GetMessage('IMOL_MA_ATTACHMENT'),
+				'Name' => GetMessage('IMOL_MA_ATTACHMENT_1'),
 				'FieldName' => 'attachment',
 				'Type' => 'file',
 				'Multiple' => true,

@@ -2,6 +2,7 @@
 
 use Bitrix\Catalog\StoreDocumentTable;
 use Bitrix\Catalog\AgentContractTable;
+use Bitrix\Crm\Item;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Crm\Security\EntityAuthorization;
@@ -67,6 +68,8 @@ class CCrmOwnerType
 
 	//Special quasi-types
 	public const System = 1024;
+
+	public const UnlimitedTypeStart = 1030;
 
 	public const LeadName = 'LEAD';
 	public const DealName = 'DEAL';
@@ -210,11 +213,21 @@ class CCrmOwnerType
 
 	public static function isPossibleDynamicTypeId(int $typeId): bool
 	{
-		return ($typeId >= static::DynamicTypeStart && $typeId < static::DynamicTypeEnd);
+		if ($typeId >= self::UnlimitedTypeStart)
+		{
+			return $typeId % 2 === 0;
+		}
+
+		return ($typeId >= static::DynamicTypeStart && $typeId < static::DynamicTypeEnd);;
 	}
 
 	public static function isPossibleSuspendedDynamicTypeId(int $typeId): bool
 	{
+		if ($typeId >= self::UnlimitedTypeStart)
+		{
+			return $typeId % 2 !== 0;
+		}
+
 		return ($typeId >= static::SuspendedDynamicTypeStart && $typeId < static::SuspendedDynamicTypeEnd);
 	}
 
@@ -222,6 +235,11 @@ class CCrmOwnerType
 	{
 		if (static::isPossibleSuspendedDynamicTypeId($typeId))
 		{
+			if ($typeId >= self::UnlimitedTypeStart)
+			{
+				return $typeId - 1;
+			}
+
 			$typeId -= (static::SuspendedDynamicTypeEnd - static::SuspendedDynamicTypeStart);
 		}
 
@@ -230,6 +248,11 @@ class CCrmOwnerType
 
 	public static function getSuspendedDynamicTypeId(int $typeId): int
 	{
+		if ($typeId >= self::UnlimitedTypeStart)
+		{
+			return ($typeId % 2 === 0) ? $typeId + 1 : $typeId;
+		}
+
 		if(static::isPossibleDynamicTypeId($typeId))
 		{
 			$typeId += (static::DynamicTypeEnd - static::DynamicTypeStart);
@@ -345,6 +368,10 @@ class CCrmOwnerType
 			case self::SuspendedSmartInvoiceName:
 				return self::SuspendedSmartInvoice;
 
+			case CCrmOwnerTypeAbbr::BankDetail:
+			case self::BankDetailName:
+				return self::BankDetail;
+
 			case CCrmOwnerTypeAbbr::SmartDocument:
 			case self::SmartDocumentName:
 				return self::SmartDocument;
@@ -375,13 +402,22 @@ class CCrmOwnerType
 				return self::AgentContractDocument;
 
 			default:
-				if (CCrmOwnerTypeAbbr::isDynamicTypeAbbreviation($name) || CCrmOwnerTypeAbbr::isSuspendedDynamicTypeAbbreviation($name))
+
+				$isDynamicType = preg_match('/^'.static::DynamicTypePrefixName.'(\d+)$/', $name, $matches);
+
+				if (
+					$isDynamicType &&
+					(
+						CCrmOwnerTypeAbbr::isDynamicTypeAbbreviation($name)
+						|| CCrmOwnerTypeAbbr::isSuspendedDynamicTypeAbbreviation($name)
+					)
+				)
 				{
 					$name = CCrmOwnerTypeAbbr::ResolveName($name);
 				}
 
 				$isSuspendedDynamicType = false;
-				$isDynamicType = preg_match('/^'.static::DynamicTypePrefixName.'(\d+)$/', $name, $matches);
+
 				if(!$isDynamicType)
 				{
 					$isSuspendedDynamicType = preg_match('/^'.static::SuspendedDynamicTypePrefixName.'(\d+)$/', $name, $matches);
@@ -1590,13 +1626,29 @@ class CCrmOwnerType
 			$factory = Container::getInstance()->getFactory($typeID);
 			if ($factory)
 			{
-				$item = $factory->getItem($ID);
+				$items = $factory->getItems([
+					'select' => [
+						Item::FIELD_NAME_ID,
+						Item::FIELD_NAME_TITLE,
+						Item::FIELD_NAME_CATEGORY_ID
+					],
+					'filter' => ['=ID' => $ID],
+				]);
+
+				/** @var Item|null $item */
+				$item = array_shift($items);
+
 				if (!$item)
 				{
 					self::$CAPTIONS[$key] = '';
 					return '';
 				}
-				if ($checkRights && !Container::getInstance()->getUserPermissions()->canReadItem($item))
+
+				$up = Container::getInstance()->getUserPermissions();
+				if (
+					$checkRights
+					&& !$up->checkReadPermissions($typeID, $ID, $item->getCategoryIdForPermissions())
+				)
 				{
 					self::$CAPTIONS[$key] = '';
 					return '';
@@ -3582,6 +3634,7 @@ class CCrmOwnerTypeAbbr
 	public const OrderShipment = 'OS';
 	public const OrderPayment = 'OP';
 	public const SmartInvoice = 'SI';
+	public const BankDetail = 'BD';
 	public const SmartDocument = 'DO';
 	public const SmartB2eDocument = 'SBD';
 
@@ -3858,7 +3911,17 @@ class CCrmOwnerTypeAbbr
 
 	private static function extractTypeIdFromDynamicTypeAbbreviation(string $abbr): ?int
 	{
+		if(!str_starts_with($abbr, self::DynamicTypeAbbreviationPrefix))
+		{
+			return null;
+		}
+
 		$typeId = mb_substr($abbr, mb_strlen(self::DynamicTypeAbbreviationPrefix));
+		if (!preg_match('/^[0-9a-fA-F]+$/', $typeId))
+		{
+			return null;
+		}
+
 		$typeIdNormalized = self::normalizeTypeIdFromAbbreviation($typeId);
 		if (CCrmOwnerType::isPossibleDynamicTypeId($typeIdNormalized))
 		{
@@ -3870,7 +3933,17 @@ class CCrmOwnerTypeAbbr
 
 	private static function extractTypeIdFromSuspendedDynamicTypeAbbreviation(string $abbr): ?int
 	{
+		if(!str_starts_with($abbr, self::SuspendedDynamicTypeAbbreviationPrefix))
+		{
+			return null;
+		}
+
 		$typeId = mb_substr($abbr, mb_strlen(self::SuspendedDynamicTypeAbbreviationPrefix));
+		if  (!preg_match('/^[0-9a-fA-F]+$/', $typeId))
+		{
+			return null;
+		}
+
 		$typeIdNormalized = self::normalizeTypeIdFromAbbreviation($typeId);
 		if (CCrmOwnerType::isPossibleSuspendedDynamicTypeId($typeIdNormalized))
 		{

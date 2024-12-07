@@ -31,6 +31,14 @@ if (!$generatorRestriction->hasPermission())
 	];
 }
 
+$tasksRestriction = Crm\Restriction\RestrictionManager::getTaskRestriction();
+if (!$tasksRestriction->hasPermission())
+{
+	$restrictions['task'] = [
+		'infoHelperScript' => $tasksRestriction->prepareInfoHelperScript()
+	];
+}
+
 return [
 	'css' => 'dist/index.bundle.css',
 	'js' => 'dist/index.bundle.js',

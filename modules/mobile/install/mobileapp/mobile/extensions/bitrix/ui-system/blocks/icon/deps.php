@@ -3,9 +3,11 @@
 return [
 	'extensions' => [
 		'tokens',
-		'assets/icons',
-		'assets/icons/types',
+		'feature',
+		'utils/url',
 		'utils/object',
 		'utils/validation',
+		'assets/icons',
+		'assets/icons/types',
 	],
 ];

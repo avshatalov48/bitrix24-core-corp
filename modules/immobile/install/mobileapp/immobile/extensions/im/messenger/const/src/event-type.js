@@ -11,6 +11,9 @@ jn.define('im/messenger/const/event-type', (require, exports, module) => {
 			failRestoreConnection: 'failRestoreConnection',
 			changeStatus: 'changeStatus',
 		},
+		jnComponent: {
+			openRequest: 'openRequest',
+		},
 		view: {
 			close: 'onViewRemoved',
 			show: 'onViewShown',
@@ -22,7 +25,7 @@ jn.define('im/messenger/const/event-type', (require, exports, module) => {
 		/** Messenger component events */
 		messenger: {
 			openDialog: 'ImMobile.Messenger.Dialog:open',
-			openSidebar: 'ImMobile.Messenger.Sidebar:open',
+			openDialogComplete: 'ImMobile.Messenger.Dialog:openComplete',
 			getOpenDialogParams: 'ImMobile.Messenger.Dialog:getOpenParams',
 			openDialogParams: 'ImMobile.Messenger.Dialog:openParams',
 			openLine: 'ImMobile.Messenger.Openlines:open',
@@ -32,7 +35,9 @@ jn.define('im/messenger/const/event-type', (require, exports, module) => {
 			showSearch: 'ImMobile.Messenger.Search:open',
 			hideSearch: 'ImMobile.Messenger.Search:close',
 			createChat: 'ImMobile.Messenger.Chat:create',
+			createChannel: 'ImMobile.Messenger.Channel:create',
 			refresh: 'ImMobile.Messenger:refresh',
+			init: 'ImMobile.Messenger.Init',
 			afterRefreshSuccess: 'ImMobile.Messenger:afterRefreshSuccess',
 			renderRecent: 'ImMobile.Messenger:renderRecent',
 			destroyDialog: 'ImMobile.Messenger:destroyDialog',
@@ -40,6 +45,7 @@ jn.define('im/messenger/const/event-type', (require, exports, module) => {
 			uploadFileError: 'ImMobile.Messenger:uploadFileError',
 			cancelFileUpload: 'ImMobile.Messenger:cancelFileUpload',
 			dialogAccessError: 'ImMobile.Messenger:dialogAccessError',
+			updatePlanLimitsData: 'ImMobile.Messenger:updatePlanLimitsData',
 		},
 		/** Extension events */
 		recent: {
@@ -60,6 +66,7 @@ jn.define('im/messenger/const/event-type', (require, exports, module) => {
 			loadNextPage: 'custom:loadNextPage',
 		},
 		dialog: {
+			titleClick: 'titleClick',
 			attachTap: 'attachTap',
 			topReached: 'topReached',
 			bottomReached: 'bottomReached',
@@ -76,6 +83,8 @@ jn.define('im/messenger/const/event-type', (require, exports, module) => {
 			scrollBegin: 'scrollBegin',
 			scrollEnd: 'scrollEnd',
 			messageTap: 'messageTap',
+			messageCheckInButtonTap: 'messageCheckInButtonTap',
+			messageBannerButtonTap: 'messageBannerButtonTap',
 			messageAvatarTap: 'avatarTap',
 			messageAvatarLongTap: 'avatarLongTap',
 			messageDoubleTap: 'messageDoubleTap',
@@ -86,12 +95,23 @@ jn.define('im/messenger/const/event-type', (require, exports, module) => {
 			messageFileDownloadTap: 'messageFileDownloadTap',
 			messageFileUploadCancelTap: 'messageFileUploadCancelTap',
 			messageButtonTap: 'messageButtonTap',
+			messageAttachUserTap: 'attachUserTap',
+			messageAttachUrlTap: 'attachUrlTap',
+			messageAttachImageTap: 'attachImageTap',
+			messageAttachFileTap: 'attachFileTap',
+			messageKeyboardButtonTap: 'messageKeyboardButtonTap',
 			copilotFootnoteTap: 'copilotFootnoteTap',
 			urlTap: 'urlTap',
 			imageTap: 'imageTap',
 			audioTap: 'audioTap',
+			audioRateTap: 'audioRateTap',
 			videoTap: 'videoTap',
 			fileTap: 'fileTap',
+			fileDownloadTap: 'fileDownloadTap',
+			forwardTap: 'forwardTap',
+			sendTap: 'sendTap',
+			putTap: 'putTap',
+			phoneTap: 'phoneTap',
 			statusFieldTap: 'statusFieldTap',
 			chatJoinButtonTap: 'chatJoinButtonTap',
 			mentionTap: 'mentionTap',
@@ -105,16 +125,22 @@ jn.define('im/messenger/const/event-type', (require, exports, module) => {
 			richNameTap: 'richNameTap',
 			richPreviewTap: 'richPreviewTap',
 			richCancelTap: 'richCancelTap',
+			channelCommentTap: 'channelCommentTap',
 			updateUploadProgressByMessageId: 'updateUploadProgressByMessageId',
 			external: {
+				goToMessageContext: 'ImMobile.Messenger.Dialog:goToMessageContext',
 				scrollToBottom: 'ImMobile.Messenger.Dialog:scrollToBottom',
 				scrollToFirstUnread: 'ImMobile.Messenger.Dialog:scrollToFirstUnread',
 				disableScrollToBottom: 'ImMobile.Messenger.Dialog:disableScrollToBottom',
 				mention: 'ImMobile.Messenger.Dialog:mention',
+				sendMessage: 'ImMobile.Messenger.Dialog:sendMessage',
+				textarea: {
+					insertText: 'ImMobile.Messenger.Dialog.Textarea:insertText',
+				},
 				close: 'ImMobile.Messenger.Dialog:close',
+				delete: 'ImMobile.Messenger.Dialog:delete',
+				deleteComment: 'ImMobile.Messenger.Dialog:deleteComment',
 			},
-			/** @deprecated */
-			like: 'like',
 
 			textField: {
 				submit: 'submit',
@@ -123,6 +149,8 @@ jn.define('im/messenger/const/event-type', (require, exports, module) => {
 				quoteTap: 'quoteTap',
 				changeText: 'changeText',
 				changeState: 'changeState',
+				focus: 'focus',
+				blur: 'blur',
 			},
 			statusField: {
 				tap: 'tap',
@@ -146,6 +174,7 @@ jn.define('im/messenger/const/event-type', (require, exports, module) => {
 			active: 'CallEvents::active',
 			inactive: 'CallEvents::inactive',
 			join: 'CallEvents::joinCall',
+			leave: 'CallEvents::leaveCall',
 		},
 		notification: {
 			open: 'onNotificationsOpen',
@@ -159,6 +188,12 @@ jn.define('im/messenger/const/event-type', (require, exports, module) => {
 		sync: {
 			requestResultReceived: 'requestResultReceived',
 			requestResultSaved: 'requestResultSaved',
+		},
+		navigation: {
+			tabChanged: 'ImMobile.Navigation:tabChanged',
+			broadCastEventWithTabChange: 'ImMobile.Navigation:broadCastEventWithChangeTab',
+			changeTab: 'ImMobile.Navigation:changeTab',
+			changeTabResult: 'ImMobile.Navigation:changeTabResult',
 		},
 	});
 

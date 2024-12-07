@@ -1,5 +1,4 @@
-(() =>
-{
+(() => {
 	class Livefeed
 	{
 		/**
@@ -18,7 +17,7 @@
 
 		getWorkgroupData(params)
 		{
-			const groupId = (params.groupId ? parseInt(params.groupId) : 0);
+			const groupId = (params.groupId ? parseInt(params.groupId, 10) : 0);
 			const returnEventName = (params.returnEventName ? params.returnEventName : '');
 
 			if (
@@ -29,12 +28,12 @@
 				BX.ajax.runAction('socialnetwork.api.workgroup.get', {
 					data: {
 						params: {
-							groupId
-						}
-					}
-				}).then(response => {
-					let errors = response.errors;
-					if(errors && errors.length > 0)
+							groupId,
+						},
+					},
+				}).then((response) => {
+					const errors = response.errors;
+					if (errors && errors.length > 0)
 					{
 						BX.postWebEvent(returnEventName, {
 							success: false,
@@ -47,7 +46,7 @@
 							groupData: response.data
 						});
 					}
-				}).catch(response => {
+				}).catch((response) => {
 					BX.postWebEvent(returnEventName, {
 						success: false,
 					});
@@ -63,7 +62,7 @@
 
 		getPostFullData(params)
 		{
-			const postId = (params.postId ? parseInt(params.postId) : 0);
+			const postId = (params.postId ? parseInt(params.postId, 10) : 0);
 			const returnEventName = (params.returnEventName ? params.returnEventName : '');
 
 			if (
@@ -79,11 +78,11 @@
 							htmlEncode: 'N',
 							previewImageSize: 250,
 							getAdditionalData: 'Y',
-						}
-					}
-				}).then(response => {
-					let errors = response.errors;
-					if(errors && errors.length > 0)
+						},
+					},
+				}).then((response) => {
+					const errors = response.errors;
+					if (errors && errors.length > 0)
 					{
 						BX.postWebEvent(returnEventName, {
 							success: false,
@@ -96,7 +95,7 @@
 							postData: response.data
 						});
 					}
-				}).catch(response => {
+				}).catch((response) => {
 					BX.postWebEvent(returnEventName, {
 						success: false,
 					});

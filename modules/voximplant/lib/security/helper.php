@@ -93,30 +93,10 @@ class Helper
 	 * @param $userId
 	 * @return array
 	 */
-	public static function getUserColleagues($userId)
+	public static function getUserColleagues(int $userId): array
 	{
-		if(!Loader::includeModule('intranet'))
-		{
-			return [];
-		}
-
-		$colleagues = [];
-		$cursor = \CIntranetUtils::getDepartmentColleagues($userId, true);
-		while ($row = $cursor->Fetch())
-		{
-			$colleagues[] = (int)$row['ID'];
-		}
-
-		$subordinateEmployees = [];
-		$cursor =\CIntranetUtils::getSubordinateEmployees($userId, true);
-		while ($row = $cursor->Fetch())
-		{
-			$subordinateEmployees[] = (int)$row['ID'];
-		}
-
-		$result = array_merge($colleagues, $subordinateEmployees);
-
-		return $result;
+		$structureService = \Bitrix\Voximplant\Integration\HumanResources\StructureService::getInstance();
+		return $structureService->getUserColleagues($userId);
 	}
 
 	public static function isMainMenuEnabled(): bool
@@ -378,25 +358,21 @@ class Helper
 
 	public static function getDefaultRoleAccess(): array
 	{
-		$result = [];
-
-		$result[] = [
-			'ROLE' => 'admin',
-			'ACCESS_CODE' => 'G1'
+		$result = [
+				[
+				'ROLE' => 'admin',
+				'ACCESS_CODE' => 'G1'
+			]
 		];
 
-		if(\Bitrix\Main\Loader::includeModule('intranet'))
+		$structureService = \Bitrix\Voximplant\Integration\HumanResources\StructureService::getInstance();
+		$rootDepartment = $structureService->getRootDepartmentId();
+		if ($rootDepartment > 0)
 		{
-			$departmentTree = \CIntranetUtils::GetDeparmentsTree();
-			$rootDepartment = (int)$departmentTree[0][0];
-
-			if($rootDepartment > 0)
-			{
-				$result[] = [
-					'ROLE' => 'manager',
-					'ACCESS_CODE' => 'DR'.$rootDepartment
-				];
-			}
+			$result[] = [
+				'ROLE' => 'manager',
+				'ACCESS_CODE' => 'DR'.$rootDepartment
+			];
 		}
 
 		return $result;

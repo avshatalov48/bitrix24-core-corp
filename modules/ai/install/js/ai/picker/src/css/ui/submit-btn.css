@@ -1,0 +1,22 @@
+.ai__picker_submit-btn {
+	/*background-color: #3CC3D4;*/
+	/*display: flex;*/
+	/*flex-direction: row;*/
+	/*align-items: center;*/
+	/*justify-content: center;*/
+	/*text-transform: uppercase;*/
+	/*font-size: var(--ui-font-size-sm);*/
+}
+
+.ai__picker_submit-btn.ui-btn-clock,
+.ai__picker_submit-btn.ui-btn-disabled {
+	pointer-events: none;
+}
+
+.ai__picker_submit-btn.--pencil::after {
+	--ui-btn-icon: url("../../../images/ai__picker_submit-btn-pencil-icon.svg");
+}
+
+.ai__picker_submit-btn.--brush::after {
+	--ui-btn-icon: url("../../../images/ai__picker_submit-btn-brush-icon.svg");
+}

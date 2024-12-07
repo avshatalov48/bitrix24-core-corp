@@ -43,8 +43,6 @@ if (!$curUser || !$curUser->IsAuthorized() || !check_bitrix_sessid() || $_SERVER
 	die();
 }
 
-CUtil::JSPostUnescape();
-
 if(!function_exists('__CrmMobileLocationListEndResponse'))
 {
 	function __CrmMobileLocationListEndResponse($result)

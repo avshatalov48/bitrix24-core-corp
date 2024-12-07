@@ -4,11 +4,13 @@ namespace Bitrix\Crm\Integration\AI\Operation;
 
 use Bitrix\AI\Context;
 use Bitrix\AI\Engine;
-use Bitrix\AI\Quality;
+use Bitrix\AI\Tuning\Manager;
 use Bitrix\Crm\Badge;
 use Bitrix\Crm\Dto\Dto;
 use Bitrix\Crm\Integration\AI\AIManager;
+use Bitrix\Crm\Integration\AI\Config;
 use Bitrix\Crm\Integration\AI\ErrorCode;
+use Bitrix\Crm\Integration\AI\EventHandler;
 use Bitrix\Crm\Integration\AI\Model\EO_Queue;
 use Bitrix\Crm\Integration\AI\Model\QueueTable;
 use Bitrix\Crm\Integration\AI\Result;
@@ -16,9 +18,11 @@ use Bitrix\Crm\Integration\Analytics\Builder\AI\AIBaseEvent;
 use Bitrix\Crm\Integration\Analytics\Builder\AI\CallParsingEvent;
 use Bitrix\Crm\Integration\Analytics\Dictionary;
 use Bitrix\Crm\ItemIdentifier;
+use Bitrix\Crm\Requisite\EntityLink;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Timeline\Monitor;
 use Bitrix\Crm\Timeline\ActivityController;
+use Bitrix\Crm\Timeline\AI\Call\Controller;
 use Bitrix\Main\Application;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\DB\SqlExpression;
@@ -39,11 +43,15 @@ abstract class AbstractOperation
 	public const TYPE_ID = 0;
 	public const CONTEXT_ID = '';
 
+	protected static int $engineId = 0;
+
 	/** @var class-string<Dto> */
 	protected const PAYLOAD_CLASS = Dto::class;
 	protected const ENGINE_CATEGORY = 'text';
+	protected const ENGINE_CODE = EventHandler::SETTINGS_FILL_ITEM_FROM_CALL_ENGINE_TEXT_CODE;
 
 	private bool $isManualLaunch = true;
+	private ?string $contextLanguageId;
 
 	public function __construct(
 		protected ItemIdentifier $target,
@@ -52,6 +60,7 @@ abstract class AbstractOperation
 	)
 	{
 		$this->userId ??= Container::getInstance()->getContext()->getUserId();
+		$this->contextLanguageId = $this->getContextLanguageId();
 	}
 
 	public static function isSuitableTarget(ItemIdentifier $target): bool
@@ -124,16 +133,26 @@ abstract class AbstractOperation
 			],
 		);
 
-		$result = new Result(static::TYPE_ID, $this->target, $this->userId, parentJobId: $this->parentJobId);
+		$result = new Result(
+			static::TYPE_ID,
+			$this->target,
+			$this->userId,
+			parentJobId: $this->parentJobId,
+			isManualLaunch: $this->isManualLaunch,
+		);
 
-		if (!AIManager::isAiLicenceExceededAccepted())
+		if (!AIManager::isAILicenceAccepted($this->userId))
 		{
 			AIManager::logger()->error(
 				'{date}: {class}: Cant start operation {operationType} on {target} because the license agreement to use AI has not been accepted' . PHP_EOL,
 				['class' => static::class, 'target' => $this->target, 'operationType' => static::TYPE_ID],
 			);
 
-			return $result->addError(ErrorCode::getAINotAvailableError());
+			$result->addError(ErrorCode::getLicenseNotAcceptedError());
+
+			static::notifyAboutJobError($result, false);
+
+			return $result;
 		}
 
 		if (!AIManager::isAvailable())
@@ -143,7 +162,11 @@ abstract class AbstractOperation
 				['class' => static::class, 'target' => $this->target, 'operationType' => static::TYPE_ID],
 			);
 
-			return $result->addError(ErrorCode::getAINotAvailableError());
+			$result->addError(ErrorCode::getAINotAvailableError());
+
+			static::notifyAboutJobError($result, false);
+
+			return $result;
 		}
 
 		if (!AIManager::isEnabledInGlobalSettings())
@@ -153,9 +176,11 @@ abstract class AbstractOperation
 				['class' => static::class, 'target' => $this->target, 'operationType' => static::TYPE_ID],
 			);
 
-			static::notifyAboutJobError($result, false, false);
+			$result->addError(ErrorCode::getAIDisabledError(['sliderCode' => AIManager::AI_DISABLED_SLIDER_CODE]));
 
-			return $result->addError(ErrorCode::getAIDisabledError(['sliderCode' => AIManager::AI_DISABLED_SLIDER_CODE]));
+			static::notifyAboutJobError($result, false);
+
+			return $result;
 		}
 
 		if (!static::isSuitableTarget($this->target))
@@ -165,20 +190,15 @@ abstract class AbstractOperation
 				['class' => static::class, 'target' => $this->target, 'operationType' => static::TYPE_ID],
 			);
 
-			static::notifyAboutJobError($result, false, false);
+			$result->addError(ErrorCode::getNotSuitableTargetError());
 
-			return $result->addError(ErrorCode::getNotSuitableTargetError());
+			static::notifyAboutJobError($result, false);
+
+			return $result;
 		}
 
 		$context = $this->getAIEngineContext();
-		$engine = Engine::getByCategory(
-			static::ENGINE_CATEGORY,
-			$context,
-			new Quality([
-				Quality::QUALITIES['fields_highlight'],
-				Quality::QUALITIES['translate'],
-			])
-		);
+		$engine = $this->getAIEngine($context);
 		if (!$engine)
 		{
 			AIManager::logger()->critical(
@@ -193,13 +213,13 @@ abstract class AbstractOperation
 				],
 			);
 
-			static::notifyAboutJobError($result, false, false);
-
-			$customData = [
+			$result->addError(ErrorCode::getAIEngineNotFoundError([
 				'isAiMarketplaceAppsExist' => $this->isAiMarketplaceAppsExist(),
-			];
+			]));
 
-			return $result->addError(ErrorCode::getAIEngineNotFoundError($customData));
+			static::notifyAboutJobError($result, false);
+
+			return $result;
 		}
 
 		if (method_exists($engine, 'skipAgreement'))
@@ -207,9 +227,13 @@ abstract class AbstractOperation
 			$engine->skipAgreement();
 		}
 
-		$sliderCode = AIManager::getLimitSliderCode($engine);
-		if (!empty($sliderCode))
+		$limitsResult = AIManager::getLimitResult($engine);
+		if (!$limitsResult->isSuccess())
 		{
+			$result->addErrors($limitsResult->getErrors());
+
+			$errorData = $result->getErrorCollection()->getErrorByCode(ErrorCode::AI_ENGINE_LIMIT_EXCEEDED)?->getCustomData() ?? [];
+
 			AIManager::logger()->error(
 				'{date}: {class}: Cant start operation {operationType} on {target} because limit of requests to AI exceeded!'
 				. ' Category {engineCategory}, context {engineContext}, slider code "{sliderCode}"' . PHP_EOL,
@@ -219,15 +243,18 @@ abstract class AbstractOperation
 					'operationType' => static::TYPE_ID,
 					'engineCategory' => static::ENGINE_CATEGORY,
 					'engineContext' => $context,
-					'sliderCode' => $sliderCode,
+					'sliderCode' => $errorData['sliderCode'] ?? null,
 				],
 			);
 
-			static::notifyAboutJobError($result, false, false);
+			if (!$this->isManualLaunch)
+			{
+				static::notifyAboutLimitExceededError($result);
+			}
 
-			return $result->addError(
-				ErrorCode::getAILimitOfRequestsExceededError(['sliderCode' => $sliderCode])
-			);
+			static::notifyAboutJobError($result, false);
+
+			return $result;
 		}
 
 		$checkJobsResult = static::checkPreviousJobs($this->target, (int)$this->parentJobId);
@@ -239,7 +266,11 @@ abstract class AbstractOperation
 				['class' => static::class, 'target' => $this->target, 'operationType' => static::TYPE_ID, 'errors' => $checkJobsResult->getErrors()],
 			);
 
-			return $result->addErrors($checkJobsResult->getErrors());
+			$result->addErrors($checkJobsResult->getErrors());
+
+			static::notifyAboutJobError($result, false);
+
+			return $result;
 		}
 
 		$previousJob = $checkJobsResult->getData()['previousJob'] ?? null;
@@ -258,7 +289,11 @@ abstract class AbstractOperation
 				],
 			);
 
-			return $result->addErrors($aiPayloadResult->getErrors());
+			$result->addErrors($aiPayloadResult->getErrors());
+
+			static::notifyAboutJobError($result, false);
+
+			return $result;
 		}
 
 		$hash = null;
@@ -325,7 +360,7 @@ abstract class AbstractOperation
 
 			if (empty($error->getMessage()))
 			{
-				$error = ErrorCode::getAIEngineNotFoundError();
+				$error = new Error(ErrorCode::getAIEngineNotFoundError()->getMessage());
 			}
 
 			$result->addError($error);
@@ -393,11 +428,6 @@ abstract class AbstractOperation
 			return $result;
 		}
 
-		if (static::TYPE_ID === 1)
-		{
-			static::notifyTimelinesAboutActivityUpdate($this->target->getEntityId());
-		}
-
 		$result->setJobId($dbSaveResult->getId());
 
 		if ($result->isSuccess())
@@ -423,6 +453,12 @@ abstract class AbstractOperation
 			],
 		);
 
+		if (static::TYPE_ID === 1)
+		{
+			static::notifyTimelinesAboutActivityUpdate($this->target->getEntityId());
+			self::sendCallParsingAnalyticsEvent($result, self::extractActivityIdFromResult($result));
+		}
+
 		return $result;
 	}
 
@@ -441,6 +477,8 @@ abstract class AbstractOperation
 			'ERROR_MESSAGE' => null,
 			'RETRY_COUNT' => new SqlExpression('?# + 1', 'RETRY_COUNT'),
 			'IS_MANUAL_LAUNCH' => $this->isManualLaunch,
+			'LANGUAGE_ID' => $this->contextLanguageId,
+			'ENGINE_ID' => self::$engineId,
 		];
 	}
 
@@ -453,7 +491,21 @@ abstract class AbstractOperation
 			'USER_ID' => $this->userId,
 			'PARENT_ID' => (int)$this->parentJobId,
 			'IS_MANUAL_LAUNCH' => $this->isManualLaunch,
+			'LANGUAGE_ID' => $this->contextLanguageId,
+			'ENGINE_ID' => self::$engineId,
 		];
+	}
+
+	protected function getContextAdditionalInfo(): array
+	{
+		return [
+			'myCompanyName' => Container::getInstance()->getCompanyBroker()->getTitle(EntityLink::getDefaultMyCompanyId()),
+		];
+	}
+
+	protected function getContextLanguageId(): string
+	{
+		return Config::getDefaultLanguageId();
 	}
 
 	private function getAIEngineContext(): Context
@@ -463,9 +515,34 @@ abstract class AbstractOperation
 			'target' => $this->target->toArray(),
 			'userId' => $this->userId,
 			'parentJobId' => $this->parentJobId,
+			'additionalInfo' => $this->getContextAdditionalInfo(),
 		]);
+		$context->setLanguage($this->contextLanguageId);
 
 		return $context;
+	}
+
+	protected function getAIEngine(Context $context): ?Engine
+	{
+		$manager = new Manager();
+		$item = $manager->getItem(static::ENGINE_CODE);
+		if ($item === null)
+		{
+			return null;
+		}
+
+		$engine = Engine::getByCode(
+			$item->getValue(),
+			$context,
+			static::ENGINE_CATEGORY,
+		);
+
+		if ($engine && $engine->getIEngine()->isThirdParty())
+		{
+			self::$engineId = $engine->getIEngine()->getRestItem()->getId();
+		}
+
+		return $engine;
 	}
 
 	private function isAiMarketplaceAppsExist(): bool
@@ -523,7 +600,7 @@ abstract class AbstractOperation
 				],
 			);
 
-			$dummyResult->addError(ErrorCode::getAIEngineNotFoundError());
+			$dummyResult->addError(ErrorCode::getAIResultFoundError());
 
 			static::notifyAboutJobError($dummyResult);
 
@@ -554,7 +631,7 @@ abstract class AbstractOperation
 			return self::saveErrorToJobAndReturnResult($job, $dummyResult);
 		}
 
-		$job->setResult(Json::encode($payload));
+		$job->setResult(Json::encode($payload, 0));
 		$job->setExecutionStatus(QueueTable::EXECUTION_STATUS_SUCCESS);
 
 		AIManager::logger()->debug(
@@ -610,11 +687,20 @@ abstract class AbstractOperation
 			static::notifyAboutJobError($result, true, false);
 		}
 
-		self::constructJobFinishEventBuilder($job)
+		$builder = self::constructJobFinishEventBuilder($job)
 			?->setStatus($result->isSuccess() ? Dictionary::STATUS_SUCCESS : Dictionary::STATUS_ERROR)
-			->buildEvent()
-			->send()
 		;
+		if ($builder)
+		{
+			$builder->buildEvent()->send();
+			// send the same analytics only with different TOOL and CATEGORY
+			$builder
+				->setTool(Dictionary::TOOL_CRM)
+				->setCategory(Dictionary::CATEGORY_AI_OPERATIONS)
+				->buildEvent()
+				->send()
+			;
+		}
 
 		AIManager::logger()->debug(
 			'{date}: {class}: Job for target {hash} finished with result {result}' . PHP_EOL,
@@ -664,11 +750,19 @@ abstract class AbstractOperation
 			);
 		}
 
-		self::constructJobFinishEventBuilder($job)
-			?->setStatus(Dictionary::STATUS_ERROR)
-			->buildEvent()
-			->send()
-		;
+		$builder = self::constructJobFinishEventBuilder($job)
+			?->setStatus(Dictionary::STATUS_ERROR);
+		if ($builder)
+		{
+			$builder->buildEvent()->send();
+			// send the same analytics only with different TOOL and CATEGORY
+			$builder
+				->setTool(Dictionary::TOOL_CRM)
+				->setCategory(Dictionary::CATEGORY_AI_OPERATIONS)
+				->buildEvent()
+				->send()
+			;
+		}
 
 		return $result;
 	}
@@ -685,6 +779,18 @@ abstract class AbstractOperation
 		bool $withSendAnalytics = true
 	): void;
 
+	protected static function notifyAboutLimitExceededError(Result $result): void
+	{
+		$activityId = $result->getTarget()?->getEntityId();
+		if ($activityId === null)
+		{
+			return;
+		}
+
+		self::syncBadges($activityId, Badge\Type\AiCallFieldsFillingResult::ERROR_LIMIT_EXCEEDED);
+		static::notifyTimelinesAboutAutomationLaunchError($result);
+	}
+
 	final protected static function notifyTimelinesAboutActivityUpdate(int $activityId, bool $forceUpdateHistoryItems = false): void
 	{
 		$activity = CCrmActivity::GetByID($activityId, false);
@@ -696,6 +802,22 @@ abstract class AbstractOperation
 		}
 	}
 
+	final protected static function notifyTimelinesAboutAutomationLaunchError(Result $result, int $activityId = null): void
+	{
+		$activityId = $activityId ?? $result->getTarget()?->getEntityId();
+		$target = (new Orchestrator())->findPossibleFillFieldsTarget($activityId);
+		if ($target)
+		{
+			$errorCodes = array_map(static fn($error) => $error->getCode(), $result->getErrors());
+			Controller::getInstance()->onAutomationLaunchError(
+				$target,
+				$activityId,
+				[ 'ERROR_CODES' => $errorCodes ],
+				$result->getUserId(),
+			);
+		}
+	}
+
 	final protected static function syncBadges(int $activityId, string $badgeValue = ''): void
 	{
 		$itemIdentifier = (new Orchestrator())->findPossibleFillFieldsTarget($activityId);
@@ -704,11 +826,8 @@ abstract class AbstractOperation
 			return;
 		}
 
-		if (empty($badgeValue))
-		{
-			Badge\Badge::deleteByEntity($itemIdentifier, Badge\Badge::AI_CALL_FIELDS_FILLING_RESULT);
-		}
-		else
+		Badge\Badge::deleteByEntity($itemIdentifier, Badge\Badge::AI_CALL_FIELDS_FILLING_RESULT);
+		if (!empty($badgeValue))
 		{
 			$badge = Container::getInstance()->getBadge(Badge\Badge::AI_CALL_FIELDS_FILLING_RESULT, $badgeValue);
 			$sourceIdentifier = new Badge\SourceIdentifier(
@@ -798,6 +917,7 @@ abstract class AbstractOperation
 			$job->requireParentId(),
 			$job->requireRetryCount(),
 			$job->requireIsManualLaunch(),
+			$job->requireLanguageId()
 		);
 
 		if ($job->requireExecutionStatus() === QueueTable::EXECUTION_STATUS_ERROR)
@@ -883,20 +1003,43 @@ abstract class AbstractOperation
 		return self::getTargetRealId(new ItemIdentifier($job->getEntityTypeId(), $job->getEntityId()), $job->getParentId());
 	}
 
-	final protected static function sendCallParsingAnalyticsEvent(int $activityId, string $status, bool $isManualLaunch): void
+	private static function extractActivityIdFromResult(Result $result): int
 	{
+		return self::getTargetRealId($result->getTarget(), $result->getParentJobId());
+	}
+
+	final protected static function sendCallParsingAnalyticsEvent(
+		Result $result,
+		int $activityId,
+		?int $totalScenarioDuration = null
+	): void
+	{
+		$activity = Container::getInstance()->getActivityBroker()->getById($activityId);
+		if (!$activity)
+		{
+			return;
+		}
+
 		$owner = Container::getInstance()->getActivityBroker()->getOwner($activityId);
 		if (!$owner)
 		{
 			return;
 		}
 
-		(new CallParsingEvent())
-			->setIsManualLaunch($isManualLaunch)
+		$builder = (new CallParsingEvent())
+			->setIsManualLaunch($result->isManualLaunch())
 			->setActivityOwnerTypeId($owner->getEntityTypeId())
 			->setActivityId($activityId)
+			->setActivityDirection($activity['DIRECTION'])
+			->setTotalScenarioDuration($totalScenarioDuration)
 			->setElement(Dictionary::ELEMENT_COPILOT_BUTTON)
-			->setStatus($status)
+			->setStatus(CallParsingEvent::resolveStatusByJobResult($result))
+		;
+		$builder->buildEvent()->send();
+		// send the same analytics only with different TOOL and CATEGORY
+		$builder
+			->setTool(Dictionary::TOOL_CRM)
+			->setCategory(Dictionary::CATEGORY_AI_OPERATIONS)
 			->buildEvent()
 			->send()
 		;

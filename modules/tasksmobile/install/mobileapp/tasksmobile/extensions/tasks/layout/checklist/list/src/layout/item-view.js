@@ -2,19 +2,21 @@
  * @module tasks/layout/checklist/list/src/layout/item-view
  */
 jn.define('tasks/layout/checklist/list/src/layout/item-view', (require, exports, module) => {
-	const AppTheme = require('apptheme');
+	const { Color } = require('tokens');
 
-	const BORDER_COLOR = AppTheme.colors.bgSeparatorSecondary;
+	const BORDER_COLOR = Color.bgSeparatorSecondary.toHex();
 
 	/**
 	 * @function ChecklistItemView
 	 * @param {Object} [props]
 	 * @param {View[]} [props.children]
+	 * @param {Boolean} [props.divider]
+	 * @param {Number} [props.dividerShift]
 	 * @param {...*} props.restProps
 	 * @return View
 	 */
 	const ChecklistItemView = (props = {}) => {
-		const { children, style, divider = false, ...restProps } = props;
+		const { children, style, divider = false, dividerShift = 0, ...restProps } = props;
 
 		return View(
 			{
@@ -38,6 +40,7 @@ jn.define('tasks/layout/checklist/list/src/layout/item-view', (require, exports,
 					backgroundColor: BORDER_COLOR,
 					width: '100%',
 					height: 1,
+					marginLeft: dividerShift,
 				},
 			}),
 		);

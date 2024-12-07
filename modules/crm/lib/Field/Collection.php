@@ -94,12 +94,12 @@ class Collection implements \Iterator, \ArrayAccess, \Countable
 		reset($this->fields);
 	}
 
-	public function offsetExists($offset): bool
+	public function offsetExists(mixed $offset): bool
 	{
 		return isset($this->fields[$offset]);
 	}
 
-	public function offsetGet($offset): ?Field
+	public function offsetGet(mixed $offset): ?Field
 	{
 		if(isset($this->fields[$offset]) && is_string($offset))
 		{
@@ -109,7 +109,7 @@ class Collection implements \Iterator, \ArrayAccess, \Countable
 		return null;
 	}
 
-	public function offsetSet($offset, $value)
+	public function offsetSet(mixed $offset, mixed $value): void
 	{
 		if($value instanceof Field && $value->getName() === $offset)
 		{
@@ -117,7 +117,7 @@ class Collection implements \Iterator, \ArrayAccess, \Countable
 		}
 	}
 
-	public function offsetUnset($offset)
+	public function offsetUnset(mixed $offset): void
 	{
 		unset($this->fields[$offset]);
 	}

@@ -24,10 +24,12 @@ jn.define('im/messenger/lib/converter/recent', (require, exports, module) => {
 		ExtranetUserItem,
 		InvitedUserItem,
 		NetworkUserItem,
+		ChannelItem,
 	} = require('im/messenger/lib/element');
 	const {
 		DialogType,
 		BotType,
+		ComponentCode,
 	} = require('im/messenger/const');
 	const { LoggerManager } = require('im/messenger/lib/logger');
 	const logger = LoggerManager.getInstance().getLogger('recent--converter');
@@ -47,37 +49,42 @@ jn.define('im/messenger/lib/converter/recent', (require, exports, module) => {
 			});
 		}
 
+		/**
+		 * @param {Array<RecentModelState>} recentItems
+		 * @return {Array<RecentItem>}
+		 */
 		toList(recentItems)
 		{
 			const listItems = [];
 
 			recentItems.forEach((item) => {
-				listItems.push(this.toItem(item));
+				listItems.push(this.prepareItemToNative(this.toItem(item)));
 			});
 
 			return listItems;
 		}
 
+		/**
+		 * @param {RecentModelState} item
+		 * @return {RecentItem}
+		 */
 		toItem(item)
 		{
 			const modelItem = serviceLocator.get('core').getStore().getters['recentModel/getById'](item.id);
-			const dialog = serviceLocator.get('core').getStore().getters['dialoguesModel/getById'](modelItem.id);
-			if (!dialog)
-			{
-				logger.error(`RecentConverter.toItem: there is no dialog "${item.id}" in model`);
 
-				return new RecentItem(modelItem);
+			if (DialogHelper.isChatId(modelItem.id))
+			{
+				return this.#toUserItem(modelItem);
 			}
 
-			if (DialogHelper.isDialogId(dialog.dialogId))
-			{
-				return this.toChatItem(item);
-			}
-
-			return this.toUserItem(modelItem);
+			return this.#toChatItem(modelItem);
 		}
 
-		toChatItem(modelItem)
+		/**
+		 * @param {RecentModelState} modelItem
+		 * @return {RecentItem}
+		 */
+		#toChatItem(modelItem)
 		{
 			const dialog = serviceLocator.get('core').getStore().getters['dialoguesModel/getById'](modelItem.id);
 			if (!dialog)
@@ -112,10 +119,21 @@ jn.define('im/messenger/lib/converter/recent', (require, exports, module) => {
 				return new CopilotItem(modelItem);
 			}
 
+			if ([DialogType.openChannel, DialogType.channel, DialogType.generalChannel].includes(dialog.type))
+			{
+				return new ChannelItem(modelItem, {
+					isNeedShowActions: MessengerParams.getComponentCode() !== ComponentCode.imChannelMessenger,
+				});
+			}
+
 			return new ChatItem(modelItem);
 		}
 
-		toUserItem(modelItem)
+		/**
+		 * @param {RecentModelState} modelItem
+		 * @return {RecentItem}
+		 */
+		#toUserItem(modelItem)
 		{
 			const user = serviceLocator.get('core').getStore().getters['usersModel/getById'](modelItem.id);
 			if (!user)
@@ -166,16 +184,7 @@ jn.define('im/messenger/lib/converter/recent', (require, exports, module) => {
 
 		toCallItem(callStatus, call)
 		{
-			const listItem = new CallItem(callStatus, call);
-
-			const dialogId = call.associatedEntity.id;
-			const recentItem = serviceLocator.get('core').getStore().getters['recentModel/getById'](dialogId);
-			if (recentItem && recentItem.color)
-			{
-				listItem.color = recentItem.color;
-			}
-
-			return listItem;
+			return new CallItem(callStatus, call);
 		}
 
 		// TODO: moved from old im.recent, need to refactor
@@ -253,6 +262,11 @@ jn.define('im/messenger/lib/converter/recent', (require, exports, module) => {
 				newElement.writing = element.writing;
 			}
 
+			if (typeof element.lastActivityDate !== 'undefined')
+			{
+				newElement.lastActivityDate = element.lastActivityDate;
+			}
+
 			if (typeof element.user !== 'undefined')
 			{
 				element.user.id = parseInt(element.user.id);
@@ -325,6 +339,36 @@ jn.define('im/messenger/lib/converter/recent', (require, exports, module) => {
 			}
 
 			return user;
+		}
+
+		/**
+		 * @param {RecentItem} recentItem
+		 * @return NativeRecentItem
+		*/
+		prepareItemToNative(recentItem)
+		{
+			const removeProperty = (item, propToRemove) => {
+				if (Array.isArray(item))
+				{
+					return item.map((elem) => removeProperty(elem, propToRemove));
+				}
+
+				if (item !== null && typeof item === 'object')
+				{
+					return Object.keys(item).reduce((acc, key) => {
+						if (key !== propToRemove)
+						{
+							acc[key] = removeProperty(item[key], propToRemove);
+						}
+
+						return acc;
+					}, {});
+				}
+
+				return item;
+			};
+
+			return removeProperty(recentItem, 'model');
 		}
 	}
 

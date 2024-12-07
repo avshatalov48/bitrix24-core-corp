@@ -8,23 +8,24 @@
 
 namespace Bitrix\Tasks\Access\Rule;
 
-use Bitrix\Main\Loader;
+use Bitrix\Main\Access\Rule\AbstractRule;
 use Bitrix\Tasks\Access\ActionDictionary;
 use Bitrix\Tasks\Access\Model\TaskModel;
 use Bitrix\Main\Access\AccessibleItem;
-use Bitrix\Tasks\Access\Model\UserModel;
 use Bitrix\Tasks\Access\Role\RoleDictionary;
 use Bitrix\Tasks\Access\Rule\Traits\AssignTrait;
+use Bitrix\Tasks\Access\Rule\Traits\FlowTrait;
 use Bitrix\Tasks\Access\Rule\Traits\GroupTrait;
 
-class TaskSaveRule extends \Bitrix\Main\Access\Rule\AbstractRule
+class TaskSaveRule extends AbstractRule
 {
+	use FlowTrait;
 	use AssignTrait;
 	use GroupTrait;
 
-	/* @var AccessibleItem $oldTask */
+	/* @var TaskModel $oldTask */
 	private $oldTask;
-	/* @var AccessibleItem $newTask */
+	/* @var TaskModel $newTask */
 	private $newTask;
 
 	public function execute(AccessibleItem $task = null, $params = null): bool
@@ -65,6 +66,11 @@ class TaskSaveRule extends \Bitrix\Main\Access\Rule\AbstractRule
 		{
 			$this->controller->addError(static::class, 'Access to create or update task denied');
 			return false;
+		}
+
+		if ($this->newTask->getFlowId() > 0 && $this->checkFlowPermissions($this->newTask->getFlowId()))
+		{
+			return true;
 		}
 
 		// user can set group

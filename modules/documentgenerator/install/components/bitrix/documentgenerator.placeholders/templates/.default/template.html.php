@@ -10,7 +10,7 @@ if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 <?
 if (isset($_REQUEST["IFRAME"]) && $_REQUEST["IFRAME"] === "Y")
 {
-	$APPLICATION->RestartBuffer(); //сбрасываем весь вывод
+	$APPLICATION->RestartBuffer(); //СЃР±СЂР°СЃС‹РІР°РµРј РІРµСЃСЊ РІС‹РІРѕРґ
 	?>
 
 	<!DOCTYPE html>
@@ -24,7 +24,7 @@ if (isset($_REQUEST["IFRAME"]) && $_REQUEST["IFRAME"] === "Y")
 				<div class="docs-template-pagetitle-wrap">
 					<div class="docs-template-pagetitle-inner pagetitle-inner-container">
 						<div class="pagetitle">
-							<span class="docs-template-pagetitle-item pagetitle-item" id="pagetitle">Коды полей</span>
+							<span class="docs-template-pagetitle-item pagetitle-item" id="pagetitle">РљРѕРґС‹ РїРѕР»РµР№</span>
 						</div>
 						<div class="pagetitle-container pagetitle-flexible-space">
 						</div>
@@ -34,43 +34,43 @@ if (isset($_REQUEST["IFRAME"]) && $_REQUEST["IFRAME"] === "Y")
 			<div class="docs-placeholder-inner docs-placeholder-inner-slider">
 				<div class="docs-placeholder-section">
 					<div class="docs-placeholder-title-inner">
-						<span class="docs-placeholder-title-item">Лиды</span>
+						<span class="docs-placeholder-title-item">Р›РёРґС‹</span>
 					</div>
 					<div class="docs-placeholder-content">
 						<div class="docs-placeholder-detail">
 							<div class="docs-placeholder-item">
 								<div class="docs-placeholder-item-inner">
-									<div class="docs-placeholder-name">Сумма и валюта</div>
+									<div class="docs-placeholder-name">РЎСѓРјРјР° Рё РІР°Р»СЋС‚Р°</div>
 									<div class="docs-placeholder-code">{summa_i_valuta_i_chtoto_eshe}</div>
 								</div>
 							</div>
 							<div class="docs-placeholder-item">
 								<div class="docs-placeholder-item-inner">
-									<div class="docs-placeholder-name">Сумма и валюта</div>
+									<div class="docs-placeholder-name">РЎСѓРјРјР° Рё РІР°Р»СЋС‚Р°</div>
 									<div class="docs-placeholder-code">{summa_i_valuta}</div>
 								</div>
 							</div>
 							<div class="docs-placeholder-item">
 								<div class="docs-placeholder-item-inner">
-									<div class="docs-placeholder-name">Сумма и валюта</div>
+									<div class="docs-placeholder-name">РЎСѓРјРјР° Рё РІР°Р»СЋС‚Р°</div>
 									<div class="docs-placeholder-code">{summa_i_valuta}</div>
 								</div>
 							</div>
 							<div class="docs-placeholder-item">
 								<div class="docs-placeholder-item-inner">
-									<div class="docs-placeholder-name">Обращение</div>
+									<div class="docs-placeholder-name">РћР±СЂР°С‰РµРЅРёРµ</div>
 									<div class="docs-placeholder-code">{obraschenie}</div>
 								</div>
 							</div>
 							<div class="docs-placeholder-item">
 								<div class="docs-placeholder-item-inner">
-									<div class="docs-placeholder-name">Обращение</div>
+									<div class="docs-placeholder-name">РћР±СЂР°С‰РµРЅРёРµ</div>
 									<div class="docs-placeholder-code">{obraschenie}</div>
 								</div>
 							</div>
 							<div class="docs-placeholder-item">
 								<div class="docs-placeholder-item-inner">
-									<div class="docs-placeholder-name">Обращение</div>
+									<div class="docs-placeholder-name">РћР±СЂР°С‰РµРЅРёРµ</div>
 									<div class="docs-placeholder-code">{obraschenie}</div>
 								</div>
 							</div>
@@ -79,86 +79,86 @@ if (isset($_REQUEST["IFRAME"]) && $_REQUEST["IFRAME"] === "Y")
 							<div class="docs-placeholder-detail">
 								<div class="docs-placeholder-item">
 									<div class="docs-placeholder-item-inner">
-										<div class="docs-placeholder-name">Сумма и валюта</div>
+										<div class="docs-placeholder-name">РЎСѓРјРјР° Рё РІР°Р»СЋС‚Р°</div>
 										<div class="docs-placeholder-code">{summa_i_valuta_i_chtoto_eshe}</div>
 									</div>
 								</div>
 								<div class="docs-placeholder-item">
 									<div class="docs-placeholder-item-inner">
-										<div class="docs-placeholder-name">Сумма и валюта</div>
+										<div class="docs-placeholder-name">РЎСѓРјРјР° Рё РІР°Р»СЋС‚Р°</div>
 										<div class="docs-placeholder-code">{summa_i_valuta}</div>
 									</div>
 								</div>
 								<div class="docs-placeholder-item">
 									<div class="docs-placeholder-item-inner">
-										<div class="docs-placeholder-name">Сумма и валюта</div>
+										<div class="docs-placeholder-name">РЎСѓРјРјР° Рё РІР°Р»СЋС‚Р°</div>
 										<div class="docs-placeholder-code">{summa_i_valuta}</div>
 									</div>
 								</div>
 								<div class="docs-placeholder-item">
 									<div class="docs-placeholder-item-inner">
-										<div class="docs-placeholder-name">Обращение</div>
+										<div class="docs-placeholder-name">РћР±СЂР°С‰РµРЅРёРµ</div>
 										<div class="docs-placeholder-code">{obraschenie}</div>
 									</div>
 								</div>
 								<div class="docs-placeholder-item">
 									<div class="docs-placeholder-item-inner">
-										<div class="docs-placeholder-name">Обращение</div>
+										<div class="docs-placeholder-name">РћР±СЂР°С‰РµРЅРёРµ</div>
 										<div class="docs-placeholder-code">{obraschenie}</div>
 									</div>
 								</div>
 								<div class="docs-placeholder-item">
 									<div class="docs-placeholder-item-inner">
-										<div class="docs-placeholder-name">Обращение</div>
+										<div class="docs-placeholder-name">РћР±СЂР°С‰РµРЅРёРµ</div>
 										<div class="docs-placeholder-code">{obraschenie}</div>
 									</div>
 								</div>
 							</div>
 						</div>
 						<div class="docs-placeholder-btn">
-							<button class="ui-btn ui-btn-md ui-btn-light-border js-docs-placeholder-btn docs-placeholder-btn">Показать еще</button>
+							<button class="ui-btn ui-btn-md ui-btn-light-border js-docs-placeholder-btn docs-placeholder-btn">РџРѕРєР°Р·Р°С‚СЊ РµС‰Рµ</button>
 						</div>
 					</div>
 				</div>
 				<div class="docs-placeholder-section">
 					<div class="docs-placeholder-title-inner">
-						<span class="docs-placeholder-title-item">Сделки (<span class="docs-placeholder-direction">Мебель ДСП</span>)</span>
+						<span class="docs-placeholder-title-item">РЎРґРµР»РєРё (<span class="docs-placeholder-direction">РњРµР±РµР»СЊ Р”РЎРџ</span>)</span>
 					</div>
 					<div class="docs-placeholder-content">
 						<div class="docs-placeholder-detail">
 							<div class="docs-placeholder-item">
 								<div class="docs-placeholder-item-inner">
-									<div class="docs-placeholder-name">Сумма и валюта</div>
+									<div class="docs-placeholder-name">РЎСѓРјРјР° Рё РІР°Р»СЋС‚Р°</div>
 									<div class="docs-placeholder-code">{summa_i_valuta_i_chtoto_eshe}</div>
 								</div>
 							</div>
 							<div class="docs-placeholder-item">
 								<div class="docs-placeholder-item-inner">
-									<div class="docs-placeholder-name">Сумма и валюта</div>
+									<div class="docs-placeholder-name">РЎСѓРјРјР° Рё РІР°Р»СЋС‚Р°</div>
 									<div class="docs-placeholder-code">{summa_i_valuta}</div>
 								</div>
 							</div>
 							<div class="docs-placeholder-item">
 								<div class="docs-placeholder-item-inner">
-									<div class="docs-placeholder-name">Сумма и валюта</div>
+									<div class="docs-placeholder-name">РЎСѓРјРјР° Рё РІР°Р»СЋС‚Р°</div>
 									<div class="docs-placeholder-code">{summa_i_valuta}</div>
 								</div>
 							</div>
 							<div class="docs-placeholder-item">
 								<div class="docs-placeholder-item-inner">
-									<div class="docs-placeholder-name">Обращение</div>
+									<div class="docs-placeholder-name">РћР±СЂР°С‰РµРЅРёРµ</div>
 									<div class="docs-placeholder-code">{obraschenie}</div>
 								</div>
 							</div>
 							<div class="docs-placeholder-item">
 								<div class="docs-placeholder-item-inner">
-									<div class="docs-placeholder-name">Обращение</div>
+									<div class="docs-placeholder-name">РћР±СЂР°С‰РµРЅРёРµ</div>
 									<div class="docs-placeholder-code">{obraschenie}</div>
 								</div>
 							</div>
 							<div class="docs-placeholder-item">
 								<div class="docs-placeholder-item-inner">
-									<div class="docs-placeholder-name">Обращение</div>
+									<div class="docs-placeholder-name">РћР±СЂР°С‰РµРЅРёРµ</div>
 									<div class="docs-placeholder-code">{obraschenie}</div>
 								</div>
 							</div>
@@ -167,86 +167,86 @@ if (isset($_REQUEST["IFRAME"]) && $_REQUEST["IFRAME"] === "Y")
 							<div class="docs-placeholder-detail">
 								<div class="docs-placeholder-item">
 									<div class="docs-placeholder-item-inner">
-										<div class="docs-placeholder-name">Сумма и валюта</div>
+										<div class="docs-placeholder-name">РЎСѓРјРјР° Рё РІР°Р»СЋС‚Р°</div>
 										<div class="docs-placeholder-code">{summa_i_valuta_i_chtoto_eshe}</div>
 									</div>
 								</div>
 								<div class="docs-placeholder-item">
 									<div class="docs-placeholder-item-inner">
-										<div class="docs-placeholder-name">Сумма и валюта</div>
+										<div class="docs-placeholder-name">РЎСѓРјРјР° Рё РІР°Р»СЋС‚Р°</div>
 										<div class="docs-placeholder-code">{summa_i_valuta}</div>
 									</div>
 								</div>
 								<div class="docs-placeholder-item">
 									<div class="docs-placeholder-item-inner">
-										<div class="docs-placeholder-name">Сумма и валюта</div>
+										<div class="docs-placeholder-name">РЎСѓРјРјР° Рё РІР°Р»СЋС‚Р°</div>
 										<div class="docs-placeholder-code">{summa_i_valuta}</div>
 									</div>
 								</div>
 								<div class="docs-placeholder-item">
 									<div class="docs-placeholder-item-inner">
-										<div class="docs-placeholder-name">Обращение</div>
+										<div class="docs-placeholder-name">РћР±СЂР°С‰РµРЅРёРµ</div>
 										<div class="docs-placeholder-code">{obraschenie}</div>
 									</div>
 								</div>
 								<div class="docs-placeholder-item">
 									<div class="docs-placeholder-item-inner">
-										<div class="docs-placeholder-name">Обращение</div>
+										<div class="docs-placeholder-name">РћР±СЂР°С‰РµРЅРёРµ</div>
 										<div class="docs-placeholder-code">{obraschenie}</div>
 									</div>
 								</div>
 								<div class="docs-placeholder-item">
 									<div class="docs-placeholder-item-inner">
-										<div class="docs-placeholder-name">Обращение</div>
+										<div class="docs-placeholder-name">РћР±СЂР°С‰РµРЅРёРµ</div>
 										<div class="docs-placeholder-code">{obraschenie}</div>
 									</div>
 								</div>
 							</div>
 						</div>
 						<div class="docs-placeholder-btn">
-							<button class="ui-btn ui-btn-md ui-btn-light-border js-docs-placeholder-btn docs-placeholder-btn">Показать еще</button>
+							<button class="ui-btn ui-btn-md ui-btn-light-border js-docs-placeholder-btn docs-placeholder-btn">РџРѕРєР°Р·Р°С‚СЊ РµС‰Рµ</button>
 						</div>
 					</div>
 				</div>
 				<div class="docs-placeholder-section">
 					<div class="docs-placeholder-title-inner">
-						<span class="docs-placeholder-title-item">Сделки</span>
+						<span class="docs-placeholder-title-item">РЎРґРµР»РєРё</span>
 					</div>
 					<div class="docs-placeholder-content">
 						<div class="docs-placeholder-detail">
 							<div class="docs-placeholder-item">
 								<div class="docs-placeholder-item-inner">
-									<div class="docs-placeholder-name">Сумма и валюта</div>
+									<div class="docs-placeholder-name">РЎСѓРјРјР° Рё РІР°Р»СЋС‚Р°</div>
 									<div class="docs-placeholder-code">{summa_i_valuta_i_chtoto_eshe}</div>
 								</div>
 							</div>
 							<div class="docs-placeholder-item">
 								<div class="docs-placeholder-item-inner">
-									<div class="docs-placeholder-name">Сумма и валюта</div>
+									<div class="docs-placeholder-name">РЎСѓРјРјР° Рё РІР°Р»СЋС‚Р°</div>
 									<div class="docs-placeholder-code">{summa_i_valuta}</div>
 								</div>
 							</div>
 							<div class="docs-placeholder-item">
 								<div class="docs-placeholder-item-inner">
-									<div class="docs-placeholder-name">Сумма и валюта</div>
+									<div class="docs-placeholder-name">РЎСѓРјРјР° Рё РІР°Р»СЋС‚Р°</div>
 									<div class="docs-placeholder-code">{summa_i_valuta}</div>
 								</div>
 							</div>
 							<div class="docs-placeholder-item">
 								<div class="docs-placeholder-item-inner">
-									<div class="docs-placeholder-name">Обращение</div>
+									<div class="docs-placeholder-name">РћР±СЂР°С‰РµРЅРёРµ</div>
 									<div class="docs-placeholder-code">{obraschenie}</div>
 								</div>
 							</div>
 							<div class="docs-placeholder-item">
 								<div class="docs-placeholder-item-inner">
-									<div class="docs-placeholder-name">Обращение</div>
+									<div class="docs-placeholder-name">РћР±СЂР°С‰РµРЅРёРµ</div>
 									<div class="docs-placeholder-code">{obraschenie}</div>
 								</div>
 							</div>
 							<div class="docs-placeholder-item">
 								<div class="docs-placeholder-item-inner">
-									<div class="docs-placeholder-name">Обращение</div>
+									<div class="docs-placeholder-name">РћР±СЂР°С‰РµРЅРёРµ</div>
 									<div class="docs-placeholder-code">{obraschenie}</div>
 								</div>
 							</div>
@@ -255,44 +255,44 @@ if (isset($_REQUEST["IFRAME"]) && $_REQUEST["IFRAME"] === "Y")
 							<div class="docs-placeholder-detail">
 								<div class="docs-placeholder-item">
 									<div class="docs-placeholder-item-inner">
-										<div class="docs-placeholder-name">Сумма и валюта</div>
+										<div class="docs-placeholder-name">РЎСѓРјРјР° Рё РІР°Р»СЋС‚Р°</div>
 										<div class="docs-placeholder-code">{summa_i_valuta_i_chtoto_eshe}</div>
 									</div>
 								</div>
 								<div class="docs-placeholder-item">
 									<div class="docs-placeholder-item-inner">
-										<div class="docs-placeholder-name">Сумма и валюта</div>
+										<div class="docs-placeholder-name">РЎСѓРјРјР° Рё РІР°Р»СЋС‚Р°</div>
 										<div class="docs-placeholder-code">{summa_i_valuta}</div>
 									</div>
 								</div>
 								<div class="docs-placeholder-item">
 									<div class="docs-placeholder-item-inner">
-										<div class="docs-placeholder-name">Сумма и валюта</div>
+										<div class="docs-placeholder-name">РЎСѓРјРјР° Рё РІР°Р»СЋС‚Р°</div>
 										<div class="docs-placeholder-code">{summa_i_valuta}</div>
 									</div>
 								</div>
 								<div class="docs-placeholder-item">
 									<div class="docs-placeholder-item-inner">
-										<div class="docs-placeholder-name">Обращение</div>
+										<div class="docs-placeholder-name">РћР±СЂР°С‰РµРЅРёРµ</div>
 										<div class="docs-placeholder-code">{obraschenie}</div>
 									</div>
 								</div>
 								<div class="docs-placeholder-item">
 									<div class="docs-placeholder-item-inner">
-										<div class="docs-placeholder-name">Обращение</div>
+										<div class="docs-placeholder-name">РћР±СЂР°С‰РµРЅРёРµ</div>
 										<div class="docs-placeholder-code">{obraschenie}</div>
 									</div>
 								</div>
 								<div class="docs-placeholder-item">
 									<div class="docs-placeholder-item-inner">
-										<div class="docs-placeholder-name">Обращение</div>
+										<div class="docs-placeholder-name">РћР±СЂР°С‰РµРЅРёРµ</div>
 										<div class="docs-placeholder-code">{obraschenie}</div>
 									</div>
 								</div>
 							</div>
 						</div>
 						<div class="docs-placeholder-btn">
-							<button class="ui-btn ui-btn-md ui-btn-light-border js-docs-placeholder-btn docs-placeholder-btn">Показать еще</button>
+							<button class="ui-btn ui-btn-md ui-btn-light-border js-docs-placeholder-btn docs-placeholder-btn">РџРѕРєР°Р·Р°С‚СЊ РµС‰Рµ</button>
 						</div>
 					</div>
 				</div>
@@ -304,47 +304,47 @@ if (isset($_REQUEST["IFRAME"]) && $_REQUEST["IFRAME"] === "Y")
 else
 { ?>
 	<div class="docs-placeholder-wrap">
-		<? $APPLICATION->SetTitle("Коды полей"); ?>
+		<? $APPLICATION->SetTitle("РљРѕРґС‹ РїРѕР»РµР№"); ?>
 		<div class="docs-placeholder-inner">
 			<div class="docs-placeholder-section">
 				<div class="docs-placeholder-title-inner">
-					<span class="docs-placeholder-title-item">Лиды</span>
+					<span class="docs-placeholder-title-item">Р›РёРґС‹</span>
 				</div>
 				<div class="docs-placeholder-content">
 					<div class="docs-placeholder-detail">
 						<div class="docs-placeholder-item">
 							<div class="docs-placeholder-item-inner">
-								<div class="docs-placeholder-name">Сумма и валюта</div>
+								<div class="docs-placeholder-name">РЎСѓРјРјР° Рё РІР°Р»СЋС‚Р°</div>
 								<div class="docs-placeholder-code">{summa_i_valuta_i_chtoto_eshe}</div>
 							</div>
 						</div>
 						<div class="docs-placeholder-item">
 							<div class="docs-placeholder-item-inner">
-								<div class="docs-placeholder-name">Сумма и валюта</div>
+								<div class="docs-placeholder-name">РЎСѓРјРјР° Рё РІР°Р»СЋС‚Р°</div>
 								<div class="docs-placeholder-code">{summa_i_valuta_i_chtoto_eshe}</div>
 							</div>
 						</div>
 						<div class="docs-placeholder-item">
 							<div class="docs-placeholder-item-inner">
-								<div class="docs-placeholder-name">Сумма и валюта</div>
+								<div class="docs-placeholder-name">РЎСѓРјРјР° Рё РІР°Р»СЋС‚Р°</div>
 								<div class="docs-placeholder-code">{summa_i_valuta_i_chtoto_eshe}</div>
 							</div>
 						</div>
 						<div class="docs-placeholder-item">
 							<div class="docs-placeholder-item-inner">
-								<div class="docs-placeholder-name">Обращение</div>
+								<div class="docs-placeholder-name">РћР±СЂР°С‰РµРЅРёРµ</div>
 								<div class="docs-placeholder-code">{obraschenie}</div>
 							</div>
 						</div>
 						<div class="docs-placeholder-item">
 							<div class="docs-placeholder-item-inner">
-								<div class="docs-placeholder-name">Обращение</div>
+								<div class="docs-placeholder-name">РћР±СЂР°С‰РµРЅРёРµ</div>
 								<div class="docs-placeholder-code">{obraschenie}</div>
 							</div>
 						</div>
 						<div class="docs-placeholder-item">
 							<div class="docs-placeholder-item-inner">
-								<div class="docs-placeholder-name">Обращение</div>
+								<div class="docs-placeholder-name">РћР±СЂР°С‰РµРЅРёРµ</div>
 								<div class="docs-placeholder-code">{obraschenie}</div>
 							</div>
 						</div>
@@ -353,86 +353,86 @@ else
 						<div class="docs-placeholder-detail">
 							<div class="docs-placeholder-item">
 								<div class="docs-placeholder-item-inner">
-									<div class="docs-placeholder-name">Сумма и валюта</div>
+									<div class="docs-placeholder-name">РЎСѓРјРјР° Рё РІР°Р»СЋС‚Р°</div>
 									<div class="docs-placeholder-code">{summa_i_valuta_i_chtoto_eshe}</div>
 								</div>
 							</div>
 							<div class="docs-placeholder-item">
 								<div class="docs-placeholder-item-inner">
-									<div class="docs-placeholder-name">Сумма и валюта</div>
+									<div class="docs-placeholder-name">РЎСѓРјРјР° Рё РІР°Р»СЋС‚Р°</div>
 									<div class="docs-placeholder-code">{summa_i_valuta}</div>
 								</div>
 							</div>
 							<div class="docs-placeholder-item">
 								<div class="docs-placeholder-item-inner">
-									<div class="docs-placeholder-name">Сумма и валюта</div>
+									<div class="docs-placeholder-name">РЎСѓРјРјР° Рё РІР°Р»СЋС‚Р°</div>
 									<div class="docs-placeholder-code">{summa_i_valuta}</div>
 								</div>
 							</div>
 							<div class="docs-placeholder-item">
 								<div class="docs-placeholder-item-inner">
-									<div class="docs-placeholder-name">Обращение</div>
+									<div class="docs-placeholder-name">РћР±СЂР°С‰РµРЅРёРµ</div>
 									<div class="docs-placeholder-code">{obraschenie}</div>
 								</div>
 							</div>
 							<div class="docs-placeholder-item">
 								<div class="docs-placeholder-item-inner">
-									<div class="docs-placeholder-name">Обращение</div>
+									<div class="docs-placeholder-name">РћР±СЂР°С‰РµРЅРёРµ</div>
 									<div class="docs-placeholder-code">{obraschenie}</div>
 								</div>
 							</div>
 							<div class="docs-placeholder-item">
 								<div class="docs-placeholder-item-inner">
-									<div class="docs-placeholder-name">Обращение</div>
+									<div class="docs-placeholder-name">РћР±СЂР°С‰РµРЅРёРµ</div>
 									<div class="docs-placeholder-code">{obraschenie}</div>
 								</div>
 							</div>
 						</div>
 					</div>
 					<div class="docs-placeholder-btn">
-						<button class="ui-btn ui-btn-md ui-btn-light-border js-docs-placeholder-btn docs-placeholder-btn">Показать еще</button>
+						<button class="ui-btn ui-btn-md ui-btn-light-border js-docs-placeholder-btn docs-placeholder-btn">РџРѕРєР°Р·Р°С‚СЊ РµС‰Рµ</button>
 					</div>
 				</div>
 			</div>
 			<div class="docs-placeholder-section">
 				<div class="docs-placeholder-title-inner">
-					<span class="docs-placeholder-title-item">Сделки (<span class="docs-placeholder-direction">Мебель ДСП</span>)</span>
+					<span class="docs-placeholder-title-item">РЎРґРµР»РєРё (<span class="docs-placeholder-direction">РњРµР±РµР»СЊ Р”РЎРџ</span>)</span>
 				</div>
 				<div class="docs-placeholder-content">
 					<div class="docs-placeholder-detail">
 						<div class="docs-placeholder-item">
 							<div class="docs-placeholder-item-inner">
-								<div class="docs-placeholder-name">Сумма и валюта</div>
+								<div class="docs-placeholder-name">РЎСѓРјРјР° Рё РІР°Р»СЋС‚Р°</div>
 								<div class="docs-placeholder-code">{summa_i_valuta_i_chtoto_eshe}</div>
 							</div>
 						</div>
 						<div class="docs-placeholder-item">
 							<div class="docs-placeholder-item-inner">
-								<div class="docs-placeholder-name">Сумма и валюта</div>
+								<div class="docs-placeholder-name">РЎСѓРјРјР° Рё РІР°Р»СЋС‚Р°</div>
 								<div class="docs-placeholder-code">{summa_i_valuta_i_chtoto_eshe}</div>
 							</div>
 						</div>
 						<div class="docs-placeholder-item">
 							<div class="docs-placeholder-item-inner">
-								<div class="docs-placeholder-name">Сумма и валюта</div>
+								<div class="docs-placeholder-name">РЎСѓРјРјР° Рё РІР°Р»СЋС‚Р°</div>
 								<div class="docs-placeholder-code">{summa_i_valuta_i_chtoto_eshe}</div>
 							</div>
 						</div>
 						<div class="docs-placeholder-item">
 							<div class="docs-placeholder-item-inner">
-								<div class="docs-placeholder-name">Обращение</div>
+								<div class="docs-placeholder-name">РћР±СЂР°С‰РµРЅРёРµ</div>
 								<div class="docs-placeholder-code">{obraschenie}</div>
 							</div>
 						</div>
 						<div class="docs-placeholder-item">
 							<div class="docs-placeholder-item-inner">
-								<div class="docs-placeholder-name">Обращение</div>
+								<div class="docs-placeholder-name">РћР±СЂР°С‰РµРЅРёРµ</div>
 								<div class="docs-placeholder-code">{obraschenie}</div>
 							</div>
 						</div>
 						<div class="docs-placeholder-item">
 							<div class="docs-placeholder-item-inner">
-								<div class="docs-placeholder-name">Обращение</div>
+								<div class="docs-placeholder-name">РћР±СЂР°С‰РµРЅРёРµ</div>
 								<div class="docs-placeholder-code">{obraschenie}</div>
 							</div>
 						</div>
@@ -441,86 +441,86 @@ else
 						<div class="docs-placeholder-detail">
 							<div class="docs-placeholder-item">
 								<div class="docs-placeholder-item-inner">
-									<div class="docs-placeholder-name">Сумма и валюта</div>
+									<div class="docs-placeholder-name">РЎСѓРјРјР° Рё РІР°Р»СЋС‚Р°</div>
 									<div class="docs-placeholder-code">{summa_i_valuta_i_chtoto_eshe}</div>
 								</div>
 							</div>
 							<div class="docs-placeholder-item">
 								<div class="docs-placeholder-item-inner">
-									<div class="docs-placeholder-name">Сумма и валюта</div>
+									<div class="docs-placeholder-name">РЎСѓРјРјР° Рё РІР°Р»СЋС‚Р°</div>
 									<div class="docs-placeholder-code">{summa_i_valuta}</div>
 								</div>
 							</div>
 							<div class="docs-placeholder-item">
 								<div class="docs-placeholder-item-inner">
-									<div class="docs-placeholder-name">Сумма и валюта</div>
+									<div class="docs-placeholder-name">РЎСѓРјРјР° Рё РІР°Р»СЋС‚Р°</div>
 									<div class="docs-placeholder-code">{summa_i_valuta}</div>
 								</div>
 							</div>
 							<div class="docs-placeholder-item">
 								<div class="docs-placeholder-item-inner">
-									<div class="docs-placeholder-name">Обращение</div>
+									<div class="docs-placeholder-name">РћР±СЂР°С‰РµРЅРёРµ</div>
 									<div class="docs-placeholder-code">{obraschenie}</div>
 								</div>
 							</div>
 							<div class="docs-placeholder-item">
 								<div class="docs-placeholder-item-inner">
-									<div class="docs-placeholder-name">Обращение</div>
+									<div class="docs-placeholder-name">РћР±СЂР°С‰РµРЅРёРµ</div>
 									<div class="docs-placeholder-code">{obraschenie}</div>
 								</div>
 							</div>
 							<div class="docs-placeholder-item">
 								<div class="docs-placeholder-item-inner">
-									<div class="docs-placeholder-name">Обращение</div>
+									<div class="docs-placeholder-name">РћР±СЂР°С‰РµРЅРёРµ</div>
 									<div class="docs-placeholder-code">{obraschenie}</div>
 								</div>
 							</div>
 						</div>
 					</div>
 					<div class="docs-placeholder-btn">
-						<button class="ui-btn ui-btn-md ui-btn-light-border js-docs-placeholder-btn docs-placeholder-btn">Показать еще</button>
+						<button class="ui-btn ui-btn-md ui-btn-light-border js-docs-placeholder-btn docs-placeholder-btn">РџРѕРєР°Р·Р°С‚СЊ РµС‰Рµ</button>
 					</div>
 				</div>
 			</div>
 			<div class="docs-placeholder-section">
 				<div class="docs-placeholder-title-inner">
-					<span class="docs-placeholder-title-item">Сделки</span>
+					<span class="docs-placeholder-title-item">РЎРґРµР»РєРё</span>
 				</div>
 				<div class="docs-placeholder-content">
 					<div class="docs-placeholder-detail">
 						<div class="docs-placeholder-item">
 							<div class="docs-placeholder-item-inner">
-								<div class="docs-placeholder-name">Сумма и валюта</div>
+								<div class="docs-placeholder-name">РЎСѓРјРјР° Рё РІР°Р»СЋС‚Р°</div>
 								<div class="docs-placeholder-code">{summa_i_valuta_i_chtoto_eshe}</div>
 							</div>
 						</div>
 						<div class="docs-placeholder-item">
 							<div class="docs-placeholder-item-inner">
-								<div class="docs-placeholder-name">Сумма и валюта</div>
+								<div class="docs-placeholder-name">РЎСѓРјРјР° Рё РІР°Р»СЋС‚Р°</div>
 								<div class="docs-placeholder-code">{summa_i_valuta_i_chtoto_eshe}</div>
 							</div>
 						</div>
 						<div class="docs-placeholder-item">
 							<div class="docs-placeholder-item-inner">
-								<div class="docs-placeholder-name">Сумма и валюта</div>
+								<div class="docs-placeholder-name">РЎСѓРјРјР° Рё РІР°Р»СЋС‚Р°</div>
 								<div class="docs-placeholder-code">{summa_i_valuta_i_chtoto_eshe}</div>
 							</div>
 						</div>
 						<div class="docs-placeholder-item">
 							<div class="docs-placeholder-item-inner">
-								<div class="docs-placeholder-name">Обращение</div>
+								<div class="docs-placeholder-name">РћР±СЂР°С‰РµРЅРёРµ</div>
 								<div class="docs-placeholder-code">{obraschenie}</div>
 							</div>
 						</div>
 						<div class="docs-placeholder-item">
 							<div class="docs-placeholder-item-inner">
-								<div class="docs-placeholder-name">Обращение</div>
+								<div class="docs-placeholder-name">РћР±СЂР°С‰РµРЅРёРµ</div>
 								<div class="docs-placeholder-code">{obraschenie}</div>
 							</div>
 						</div>
 						<div class="docs-placeholder-item">
 							<div class="docs-placeholder-item-inner">
-								<div class="docs-placeholder-name">Обращение</div>
+								<div class="docs-placeholder-name">РћР±СЂР°С‰РµРЅРёРµ</div>
 								<div class="docs-placeholder-code">{obraschenie}</div>
 							</div>
 						</div>
@@ -529,44 +529,44 @@ else
 						<div class="docs-placeholder-detail">
 							<div class="docs-placeholder-item">
 								<div class="docs-placeholder-item-inner">
-									<div class="docs-placeholder-name">Сумма и валюта</div>
+									<div class="docs-placeholder-name">РЎСѓРјРјР° Рё РІР°Р»СЋС‚Р°</div>
 									<div class="docs-placeholder-code">{summa_i_valuta_i_chtoto_eshe}</div>
 								</div>
 							</div>
 							<div class="docs-placeholder-item">
 								<div class="docs-placeholder-item-inner">
-									<div class="docs-placeholder-name">Сумма и валюта</div>
+									<div class="docs-placeholder-name">РЎСѓРјРјР° Рё РІР°Р»СЋС‚Р°</div>
 									<div class="docs-placeholder-code">{summa_i_valuta}</div>
 								</div>
 							</div>
 							<div class="docs-placeholder-item">
 								<div class="docs-placeholder-item-inner">
-									<div class="docs-placeholder-name">Сумма и валюта</div>
+									<div class="docs-placeholder-name">РЎСѓРјРјР° Рё РІР°Р»СЋС‚Р°</div>
 									<div class="docs-placeholder-code">{summa_i_valuta}</div>
 								</div>
 							</div>
 							<div class="docs-placeholder-item">
 								<div class="docs-placeholder-item-inner">
-									<div class="docs-placeholder-name">Обращение</div>
+									<div class="docs-placeholder-name">РћР±СЂР°С‰РµРЅРёРµ</div>
 									<div class="docs-placeholder-code">{obraschenie}</div>
 								</div>
 							</div>
 							<div class="docs-placeholder-item">
 								<div class="docs-placeholder-item-inner">
-									<div class="docs-placeholder-name">Обращение</div>
+									<div class="docs-placeholder-name">РћР±СЂР°С‰РµРЅРёРµ</div>
 									<div class="docs-placeholder-code">{obraschenie}</div>
 								</div>
 							</div>
 							<div class="docs-placeholder-item">
 								<div class="docs-placeholder-item-inner">
-									<div class="docs-placeholder-name">Обращение</div>
+									<div class="docs-placeholder-name">РћР±СЂР°С‰РµРЅРёРµ</div>
 									<div class="docs-placeholder-code">{obraschenie}</div>
 								</div>
 							</div>
 						</div>
 					</div>
 					<div class="docs-placeholder-btn">
-						<button class="ui-btn ui-btn-md ui-btn-light-border js-docs-placeholder-btn docs-placeholder-btn">Показать еще</button>
+						<button class="ui-btn ui-btn-md ui-btn-light-border js-docs-placeholder-btn docs-placeholder-btn">РџРѕРєР°Р·Р°С‚СЊ РµС‰Рµ</button>
 					</div>
 				</div>
 			</div>

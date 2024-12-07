@@ -175,7 +175,7 @@ class Product extends HashDataProvider
 				],
 				'TAX_RATE' => ['TITLE' => Loc::getMessage('CRM_DOCGEN_DATAPROVIDER_PRODUCT_TAX_RATE_TITLE'),],
 				'TAX_RATE_NAME' => [
-					'TITLE' => Loc::getMessage('CRM_DOCGEN_DATAPROVIDER_PRODUCT_TAX_RATE_NAME_TITLE'),
+					'TITLE' => Loc::getMessage('CRM_DOCGEN_DATAPROVIDER_PRODUCT_TAX_RATE_NAME_TITLE_MSGVER_1'),
 					'VALUE' => [$this, 'getTaxRate'],
 					'TYPE' => TaxRate::class,
 				],

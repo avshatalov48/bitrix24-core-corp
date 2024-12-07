@@ -4,7 +4,8 @@ namespace Bitrix\BIConnector\Superset\Grid\Row\Assembler\Field;
 
 use Bitrix\Main\Grid\Row\FieldAssembler;
 use Bitrix\Main\Type\Date;
-use \Bitrix\BIConnector\Superset\Dashboard\EmbeddedFilter;
+use Bitrix\Main\Localization\Loc;
+use Bitrix\BIConnector\Superset\Dashboard\EmbeddedFilter;
 
 class FilterPeriodFieldAssembler extends FieldAssembler
 {
@@ -27,7 +28,14 @@ class FilterPeriodFieldAssembler extends FieldAssembler
 			$dateEnd->toString();
 		}
 
-		return "{$dateStart} - {$dateEnd}";
+		$preparedValue = "{$dateStart} - {$dateEnd}";
+
+		if ($value['INCLUDE_LAST_FILTER_DATE'])
+		{
+			$preparedValue .= " {$this->getHint()}";
+		}
+
+		return $preparedValue;
 	}
 
 	protected function prepareRow(array $row): array
@@ -47,6 +55,7 @@ class FilterPeriodFieldAssembler extends FieldAssembler
 					'DATE_FILTER_START' => $row['data']['DATE_FILTER_START'],
 					'DATE_FILTER_END' => $row['data']['DATE_FILTER_END'],
 					'FILTER_PERIOD' => $row['data']['FILTER_PERIOD'],
+					'INCLUDE_LAST_FILTER_DATE' => $row['data']['INCLUDE_LAST_FILTER_DATE'],
 				];
 			}
 			else
@@ -57,5 +66,11 @@ class FilterPeriodFieldAssembler extends FieldAssembler
 		}
 
 		return $row;
+	}
+
+	private function getHint(): string
+	{
+		$hint = Loc::getMessage('BICONNECTOR_SUPERSET_DASHBOARD_GRID_PERIOD_INCLUDE_LAST_FILTER_DATE_HINT');
+		return "<span data-hint=\"{$hint}\" data-hint-interactivity><span class=\"ui-hint-icon\"></span></span>";
 	}
 }

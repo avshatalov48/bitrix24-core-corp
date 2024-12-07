@@ -12,7 +12,7 @@ $APPLICATION->IncludeComponent("bitrix:mobile.interface.grid", "", array(
 ));
 
 ?>
-<script type="text/javascript">
+<script>
 	app.pullDown({
 		enable:   true,
 		pulltext: '<?=GetMessageJS('M_CRM_CLIENT_LIST_PULL_TEXT');?>',

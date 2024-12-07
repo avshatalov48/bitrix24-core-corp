@@ -5,6 +5,7 @@ jn.define('im/messenger/lib/counters/copilot-counters', (require, exports, modul
 	const { BaseCounters } = require('im/messenger/lib/counters/lib/base-counters');
 	const { Counter } = require('im/messenger/lib/counters/lib/counter');
 	const { LoggerManager } = require('im/messenger/lib/logger');
+	const { Type } = require('type');
 	const logger = LoggerManager.getInstance().getLogger('copilot-counters');
 
 	/**
@@ -22,17 +23,20 @@ jn.define('im/messenger/lib/counters/copilot-counters', (require, exports, modul
 			this.copilotCounter = new Counter();
 		}
 
-		handleCountersGet(response)
+		/**
+		 * @param {immobileTabCopilotLoadResult} data
+		 */
+		handleCountersGet(data)
 		{
-			const error = response.error();
-			if (error)
+			const counters = data?.imCounters;
+
+			if (!Type.isPlainObject(counters))
 			{
-				logger.error(`${this.getClassName()}.handleCountersGet`, error);
+				logger.error(`${this.getClassName()}.handleCountersGet`, counters);
 
 				return;
 			}
 
-			const counters = response.data();
 			logger.log(`${this.getClassName()}.handleCountersGet`, counters);
 
 			Object.keys(counters.copilot).forEach((chatId) => {

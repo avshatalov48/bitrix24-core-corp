@@ -14,6 +14,11 @@ jn.define('im/messenger/db/table/queue', (require, exports, module) => {
 			return 'b_im_queue';
 		}
 
+		getPrimaryKey()
+		{
+			return 'id';
+		}
+
 		getFields()
 		{
 			return [

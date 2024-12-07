@@ -25,6 +25,7 @@ return [
 		'crm:timeline/item/ui/body/blocks/sms-message',
 		'crm:timeline/item/ui/body/blocks/mail-contact-list',
 		'crm:timeline/item/ui/body/blocks/item-selector',
+		'crm:timeline/item/ui/body/blocks/address-block',
 		'money',
 	],
 ];

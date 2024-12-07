@@ -157,7 +157,7 @@ class Button
 
 	public function getItemByType($type)
 	{
-		if (!is_array($this->data['ITEMS']) || !isset($this->data['ITEMS'][$type]))
+		if (!isset($this->data['ITEMS'][$type]) || !is_array($this->data['ITEMS'][$type]))
 		{
 			return null;
 		}
@@ -479,7 +479,7 @@ class Button
 	public function getItemWorkTime($typeId)
 	{
 		$item = $this->getItemByType($typeId);
-		if(!$item || !is_array($item['WORK_TIME']))
+		if(!$item || !isset($item['WORK_TIME']) || !is_array($item['WORK_TIME']))
 		{
 			$item['WORK_TIME'] = array();
 		}

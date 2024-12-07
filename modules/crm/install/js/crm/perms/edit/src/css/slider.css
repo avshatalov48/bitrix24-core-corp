@@ -1,0 +1,43 @@
+.bx-crm-perms-edit-slider {
+	padding: 16px;
+}
+
+.bx-crm-perms-edit-entity-permissions {
+	background-color: #fff;
+	border-radius: var(--ui-border-radius-md);
+	padding: 0 20px;
+	font-size: 16px;
+	margin-top: 20px;
+}
+
+.bx-crm-perms-edit-entity-permissions-item {
+	display: flex;
+	flex-direction: row;
+	flex-wrap: wrap;
+	width: 100%;
+	border-top: 1px solid #e3e3e3;
+	padding: 15px 0;
+}
+
+.bx-crm-perms-edit-entity-permissions-item:first-child {
+	border-top: 0;
+}
+
+.bx-crm-perms-edit-entity-permissions-item.stage-item {
+	border-top: 0;
+	padding: 10px 0;
+}
+
+.bx-crm-perms-edit-entity-permissions-item__column {
+	flex-direction: column;
+	flex-basis: 100%;
+	flex: 1;
+}
+
+.bx-crm-perms-edit-entity-permissions-item__name {
+
+}
+
+.bx-crm-perms-edit-entity-permissions-item__control {
+
+}

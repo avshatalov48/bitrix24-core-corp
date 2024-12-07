@@ -37,13 +37,17 @@ BX.namespace('Tasks.Component');
 			{
 				if (!this.vars.enabled && this.vars.taskLimitExceeded)
 				{
-					BX.UI.InfoHelper.show('limit_tasks_recurring_tasks', {
-						isLimit: true,
-						limitAnalyticsLabels: {
-							module: 'tasks',
-							source: 'templateSidebar'
-						}
+					BX.Runtime.loadExtension('tasks.limit').then((exports) => {
+						const { Limit } = exports;
+						Limit.showInstance({
+							featureId: 'tasks_recurring_tasks',
+							limitAnalyticsLabels: {
+								module: 'tasks',
+								source: 'templateSidebar',
+							},
+						});
 					});
+
 					return;
 				}
 

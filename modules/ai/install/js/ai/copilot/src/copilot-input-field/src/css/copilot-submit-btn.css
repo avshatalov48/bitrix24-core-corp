@@ -1,0 +1,60 @@
+.ai__copilot_input-submit-btn-container {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	transition: 200ms ease-out opacity;
+}
+
+.ai__copilot_input-submit-btn-container.--disabled {
+	opacity: 0.5;
+	pointer-events: none;
+}
+
+.ai__copilot_input-submit-hotkey {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	margin-right: 10px;
+}
+
+@container (max-width: 370px) {
+	.ai__copilot_input-submit-hotkey {
+		display: none;
+	}
+}
+
+.ai__copilot_input-submit-hotkey-text {
+	font-weight: var(--ui-font-weight-normal);
+	font-size: var(--ui-font-size-md);
+	line-height: var(--ui-font-line-height-3xs);
+	color: var(--ui-color-base-80);
+}
+
+.ai__copilot_input-submit-hotkey-icon .ui-icon-set {
+	--ui-icon-set__icon-color: var(--ui-color-base-80);
+}
+
+.ai__copilot_input-submit-btn {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 24px;
+	height: 24px;
+	border: none;
+	border-radius: var(--ui-border-radius-circle);
+	outline: none;
+	background-color: var(--ai__copilot_color-main);
+	transition: 0.2s ease-out background-color;
+}
+
+.ai__copilot_input-submit-btn:hover {
+	background-color: #A977FA;
+}
+
+.ai__copilot_input-submit-btn:active {
+	background-color: #8447E4;
+}
+
+.ai__copilot_input-submit-btn:hover {
+	cursor: pointer;
+}

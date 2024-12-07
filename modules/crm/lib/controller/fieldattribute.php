@@ -12,10 +12,10 @@ class FieldAttribute extends Main\Engine\Controller
 
 	protected function processBeforeAction(Action $action)
 	{
+		$entityTypeName = $action->getArguments()['entityTypeName'];
+		$entityTypeId = \CCrmOwnerType::ResolveID($entityTypeName);
 		return parent::processBeforeAction($action)
-			&& \CCrmAuthorizationHelper::CheckConfigurationUpdatePermission(
-				self::getCurrentUserPermissions()
-			);
+			&& Crm\Service\Container::getInstance()->getUserPermissions()->isAdminForEntity($entityTypeId);
 	}
 
 	//BX.ajax.runAction("crm.api.fieldAttribute.saveConfiguration", { data: { config: { typeId: 3, groups: [...] },

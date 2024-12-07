@@ -19,10 +19,16 @@ return [
 		'selector/widget/entity/socialnetwork/user',
 
 		'selector/widget/entity/tasks/task-tag',
+		'tasks:entity-selector/flow',
 
 		'crm:selector/entity/company',
 		'crm:selector/entity/contact',
 		'crm:selector/entity/element',
 		'crm:selector/documentgenerator/template',
+
+		'tasks:selector/task',
+
+		'utils/logger/warn-logger',
+		'selector/widget/entity/intranet/department',
 	],
 ];

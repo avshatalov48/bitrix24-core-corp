@@ -87,6 +87,31 @@ class TagQuery implements TaskQueryInterface
 		return $this;
 	}
 
+	public function getDistinct(): bool
+	{
+		return false;
+	}
+
+	public function getGroupBy(): array
+	{
+		return [];
+	}
+
+	public function needAccessCheck(): bool
+	{
+		return false;
+	}
+
+	public function getCountTotal(): int
+	{
+		return 0;
+	}
+
+	public function getUserId(): int
+	{
+		return 0;
+	}
+
 	private function generateId(): void
 	{
 		$this->id = sha1(microtime(true) + random_int(100000, 999999));

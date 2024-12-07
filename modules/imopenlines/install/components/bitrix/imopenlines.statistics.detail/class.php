@@ -1370,6 +1370,12 @@ class ImOpenLinesComponentStatisticsDetail extends \CBitrixComponent
 				'editable' => false,
 			],
 			[
+				'id' => 'CRM_URL_REFERER',
+				'name' => Loc::getMessage('OL_STATS_HEADER_CRM_URL_REFERER'),
+				'default' => true,
+				'editable' => false,
+			],
+			[
 				'id' => 'ACTION',
 				'name' => Loc::getMessage('OL_STATS_HEADER_ACTION'),
 				'default' => true,
@@ -1746,6 +1752,7 @@ class ImOpenLinesComponentStatisticsDetail extends \CBitrixComponent
 					$selectHeaders[] = 'CRM_CREATE_CONTACT';
 					$selectHeaders[] = 'CRM_CREATE_DEAL';
 					$selectHeaders[] = 'CRM_ACTIVITY_ID';
+				case 'CRM_URL_REFERER':
 					$selectHeaders[] = 'CRM_TRACE_DATA';
 					break;
 				case 'ACTION':
@@ -1877,6 +1884,13 @@ class ImOpenLinesComponentStatisticsDetail extends \CBitrixComponent
 			$newRow["SEND_HISTORY"] = $row["data"]["SEND_HISTORY"] == 'Y'? Loc::getMessage('OL_COMPONENT_TABLE_YES'): Loc::getMessage('OL_COMPONENT_TABLE_NO');
 
 			$newRow["CRM_TEXT"] = self::getFormattedCrmColumn($row);
+
+			$newRow["CRM_URL_REFERER"] = $this->excelMode ? '' : '-';
+			if (!empty($row["data"]["CRM_TRACE_DATA"]))
+			{
+				$crmTraceData = json_decode($row["data"]["CRM_TRACE_DATA"], true);
+				$newRow["CRM_URL_REFERER"] = $crmTraceData['url'];
+			}
 
 			if ($this->excelMode)
 			{

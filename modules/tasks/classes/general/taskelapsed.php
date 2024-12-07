@@ -48,7 +48,6 @@ class CTaskElapsedTime
 			// Maintance backward compatibility
 			if (isset($arFields['MINUTES'], $arFields['SECONDS']))
 			{
-				CTaskAssert::logError('[0x1e85844c] ');
 				CTaskAssert::assert(false);
 			}
 
@@ -58,7 +57,6 @@ class CTaskElapsedTime
 				$arFields['SECONDS'] = 60 * $arFields['MINUTES'];
 			else
 			{
-				CTaskAssert::logError('[0x85bbae77] ');
 				CTaskAssert::assert(false);
 			}
 
@@ -153,7 +151,6 @@ class CTaskElapsedTime
 			// Maintance backward compatibility
 			if (isset($arFields['MINUTES'], $arFields['SECONDS']))
 			{
-				CTaskAssert::logError('[0x63038b4f] ');
 				CTaskAssert::assert(false);
 			}
 
@@ -163,7 +160,6 @@ class CTaskElapsedTime
 				$arFields['SECONDS'] = 60 * $arFields['MINUTES'];
 			else
 			{
-				CTaskAssert::logError('[0x14e5d0eb] ');
 				CTaskAssert::assert(false);
 			}
 
@@ -404,7 +400,7 @@ class CTaskElapsedTime
 			$strSql .= " ORDER BY " . implode(', ', $arSqlOrder);
 		}
 
-		return $DB->Query($strSql, false, "File: ".__FILE__."<br>Line: ".__LINE__);
+		return $DB->Query($strSql);
 	}
 
 

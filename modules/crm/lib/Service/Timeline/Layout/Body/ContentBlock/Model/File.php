@@ -22,7 +22,7 @@ class File extends Base
 	private array $attributes;
 	private string $extension;
 
-	public function __construct(int $id, int $sourceFileId, string $name, int $size, string $viewUrl, ?string $previewUrl)
+	public function __construct(int $id, int $sourceFileId, string $name, int $size, string $viewUrl, ?string $previewUrl = null)
 	{
 		$this->id = $id;
 		$this->sourceFileId = $sourceFileId;
@@ -96,6 +96,11 @@ class File extends Base
 
 	private function fetchFileAttributes(int $fileId, string $fileName, string $viewUrl): array
 	{
+		if ($fileId <= 0)
+		{
+			return [];
+		}
+
 		$itemAttributes = ItemAttributes::tryBuildByFileId($fileId, $viewUrl)
 			->setTitle($fileName)
 			->addAction(['type' => 'download'])

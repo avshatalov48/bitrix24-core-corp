@@ -1,6 +1,6 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports,main_popup,main_core) {
+(function (exports,main_core,main_popup) {
 	'use strict';
 
 	var OrderType = function OrderType() {
@@ -154,10 +154,6 @@ this.BX = this.BX || {};
 	function _classPrivateMethodInitSpec(obj, privateSet) { _checkPrivateRedeclaration$2(obj, privateSet); privateSet.add(obj); }
 	function _classPrivateFieldInitSpec$2(obj, privateMap, value) { _checkPrivateRedeclaration$2(obj, privateMap); privateMap.set(obj, value); }
 	function _checkPrivateRedeclaration$2(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
-	function _classStaticPrivateFieldSpecGet(receiver, classConstructor, descriptor) { _classCheckPrivateStaticAccess(receiver, classConstructor); _classCheckPrivateStaticFieldDescriptor(descriptor, "get"); return _classApplyDescriptorGet(receiver, descriptor); }
-	function _classCheckPrivateStaticFieldDescriptor(descriptor, action) { if (descriptor === undefined) { throw new TypeError("attempted to " + action + " private static field before its declaration"); } }
-	function _classCheckPrivateStaticAccess(receiver, classConstructor) { if (receiver !== classConstructor) { throw new TypeError("Private static access of wrong provenance"); } }
-	function _classApplyDescriptorGet(receiver, descriptor) { if (descriptor.get) { return descriptor.get.call(receiver); } return descriptor.value; }
 	function _classPrivateMethodGet(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 	var _ajaxComponent = /*#__PURE__*/new WeakMap();
 	var _init = /*#__PURE__*/new WeakSet();
@@ -174,20 +170,17 @@ this.BX = this.BX || {};
 	  babelHelpers.createClass(KanbanRequestSender, [{
 	    key: "setOrder",
 	    value: function setOrder() {
+	      var _this = this;
 	      var order = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : '';
-	      main_core.ajax({
-	        method: 'POST',
-	        dataType: 'json',
-	        url: babelHelpers.classPrivateFieldGet(this, _ajaxComponent).getPath(),
+	      BX.ajax.runComponentAction('bitrix:tasks.kanban', 'setNewTaskOrder', {
+	        mode: 'class',
 	        data: {
-	          action: _classStaticPrivateFieldSpecGet(KanbanRequestSender, KanbanRequestSender, _ACTION),
 	          order: order,
-	          params: babelHelpers.classPrivateFieldGet(this, _ajaxComponent).getParams(),
-	          sessid: BX.bitrix_sessid()
-	        },
-	        onsuccess: function onsuccess(data) {
-	          BX.onCustomEvent(this, 'onTaskSortChanged', [data]);
+	          params: babelHelpers.classPrivateFieldGet(this, _ajaxComponent).getParams()
 	        }
+	      }).then(function (response) {
+	        var data = response.data;
+	        BX.onCustomEvent(_this, 'onTaskSortChanged', [data]);
 	      });
 	    }
 	  }]);
@@ -196,10 +189,6 @@ this.BX = this.BX || {};
 	function _init2() {
 	  babelHelpers.classPrivateFieldSet(this, _ajaxComponent, BX.Tasks.KanbanAjaxComponent.Parameters);
 	}
-	var _ACTION = {
-	  writable: true,
-	  value: 'setNewTaskOrder'
-	};
 
 	function _classPrivateMethodInitSpec$1(obj, privateSet) { _checkPrivateRedeclaration$3(obj, privateSet); privateSet.add(obj); }
 	function _classPrivateFieldInitSpec$3(obj, privateMap, value) { _checkPrivateRedeclaration$3(obj, privateMap); privateMap.set(obj, value); }
@@ -286,5 +275,5 @@ this.BX = this.BX || {};
 	exports.KanbanSort = KanbanSort;
 	exports.KanbanAjaxComponent = KanbanAjaxComponent;
 
-}((this.BX.Tasks = this.BX.Tasks || {}),BX.Main,BX));
+}((this.BX.Tasks = this.BX.Tasks || {}),BX,BX.Main));
 //# sourceMappingURL=kanban-sort.bundle.js.map

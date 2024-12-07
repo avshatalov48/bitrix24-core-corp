@@ -1,8 +1,8 @@
 <?php
 $MESS["TASKS_STATUS_1"] = "Новая";
-$MESS["TASKS_STATUS_2"] = "Ждет выполнения";
+$MESS["TASKS_STATUS_2"] = "Ждёт выполнения";
 $MESS["TASKS_STATUS_3"] = "Выполняется";
-$MESS["TASKS_STATUS_4"] = "Ждет контроля";
+$MESS["TASKS_STATUS_4"] = "Ждёт контроля";
 $MESS["TASKS_STATUS_5"] = "Завершена";
 $MESS["TASKS_STATUS_6"] = "Отложена";
 $MESS["TASKS_STATUS_7"] = "Отклонена";
@@ -59,3 +59,4 @@ $MESS['TASKS_EXCEL_U'] = 'Наблюдатели';
 $MESS['TASKS_EXCEL_A'] = 'Соисполнители';
 $MESS['TASKS_EXCEL_BASE_ID'] = 'ID базовой задачи';
 $MESS['TASKS_EXCEL_BASE_TITLE'] = 'Название базовой задачи';
+$MESS['TASKS_EXCEL_FLOW'] = 'Поток';

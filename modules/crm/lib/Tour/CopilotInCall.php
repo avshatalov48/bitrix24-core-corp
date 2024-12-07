@@ -10,7 +10,9 @@ class CopilotInCall extends Base
 {
 	protected const OPTION_NAME = 'copilot-button-in-call';
 
-	private static bool $isCopilotTourShown = false;
+	protected int $numberOfViewsLimit = 3;
+
+	private static bool $isWelcomeTourEnabled = false;
 	private ?int $entityTypeId = null;
 
 	public function setEntityTypeId(?int $entityTypeId): self
@@ -20,24 +22,37 @@ class CopilotInCall extends Base
 		return $this;
 	}
 
-	public function isCopilotTourCanShow(): bool
+	public function isWelcomeTourEnabled(): bool
 	{
-		if (static::$isCopilotTourShown)
+		if (static::$isWelcomeTourEnabled)
 		{
 			return false;
 		}
 
-		static::$isCopilotTourShown = true;
+		static::$isWelcomeTourEnabled = true;
 		
-		return $this->canShow();
+		return $this->isShowEnabled() && !$this->isUserSeenTour();
 	}
 
 	protected function canShow(): bool
 	{
-		return AIManager::isAiCallProcessingEnabled()
-			&& in_array($this->entityTypeId, AIManager::SUPPORTED_ENTITY_TYPE_IDS, true)
-			&& !$this->isUserSeenTour()
-		;
+		if (!$this->isShowEnabled())
+		{
+			return false;
+		}
+
+		if ($this->isUserSeenTour())
+		{
+			$userId = \Bitrix\Crm\Service\Container::getInstance()->getContext()->getUserId();
+			if (AIManager::isUserHasJobs($userId))
+			{
+				return false;
+			}
+
+			return true;
+		}
+
+		return true;
 	}
 
 	protected function getSteps(): array
@@ -65,11 +80,24 @@ class CopilotInCall extends Base
 		return [
 			'showOverlayFromFirstStep' => true,
 			'hideTourOnMissClick' => true,
+			'numberOfViewsLimit' => $this->numberOfViewsLimit,
+			'isNumberOfViewsExceeded' => $this->isNumberOfViewsExceeded(),
 			'steps' => [
 				'popup' => [
 					'width' => 400,
 				],
 			],
 		];
+	}
+
+	protected function isShowEnabled(): bool
+	{
+		return AIManager::isAiCallProcessingEnabled()
+			&& in_array(
+				$this->entityTypeId,
+				AIManager::SUPPORTED_ENTITY_TYPE_IDS,
+				true
+			)
+		;
 	}
 }

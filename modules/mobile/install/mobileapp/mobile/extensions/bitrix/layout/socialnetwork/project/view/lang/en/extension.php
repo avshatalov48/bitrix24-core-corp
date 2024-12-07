@@ -1,4 +1,6 @@
 <?php
+$MESS["MOBILE_LAYOUT_PROJECT_VIEW_ACCESS_DENIED_DESC"] = "Please contact project owner or your Bitrix24 administrator.";
+$MESS["MOBILE_LAYOUT_PROJECT_VIEW_ACCESS_DENIED_TITLE"] = "Project was not found or access denied";
 $MESS["MOBILE_LAYOUT_PROJECT_VIEW_JOIN_BUTTON_JOIN"] = "Join project";
 $MESS["MOBILE_LAYOUT_PROJECT_VIEW_JOIN_BUTTON_JOINED"] = "You have joined the project!";
 $MESS["MOBILE_LAYOUT_PROJECT_VIEW_JOIN_BUTTON_REQUEST_SENT"] = "Request has been sent";

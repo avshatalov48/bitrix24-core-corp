@@ -19,7 +19,7 @@ class CBPCrmChangeDynamicCategoryActivity extends CBPCrmCopyDynamicActivity
 	{
 		$this->preparedProperties = [
 			'CategoryId' => (int)$this->CategoryId,
-			'StageId' => $this->StageId,
+			'StageId' => CBPHelper::stringify($this->StageId),
 		];
 	}
 
@@ -67,9 +67,8 @@ class CBPCrmChangeDynamicCategoryActivity extends CBPCrmCopyDynamicActivity
 		$operation = $factory->getUpdateOperation($item);
 		$operation->getContext()->setScope(Crm\Service\Context::SCOPE_AUTOMATION);
 		$operation
-			->disableCheckAccess()
 			->disableBizProc()
-			->disableCheckFields()
+			->disableAllChecks()
 			->disableCheckWorkflows()
 			->disableAutomation()
 		;

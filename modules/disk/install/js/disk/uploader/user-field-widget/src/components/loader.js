@@ -49,5 +49,5 @@ export const Loader: BitrixVueComponentProps = {
 			this.loader = null;
 		}
 	},
-	template: `<span ref="container"></span>`
+	template: '<span ref="container"></span>',
 };

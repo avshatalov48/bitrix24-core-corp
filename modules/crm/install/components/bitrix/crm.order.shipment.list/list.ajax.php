@@ -41,7 +41,6 @@ global $APPLICATION;
 
 if ($action === 'SAVE_PROGRESS' && check_bitrix_sessid())
 {
-	CUtil::JSPostUnescape();
 	$ID = isset($_REQUEST['ID']) ? intval($_REQUEST['ID']) : 0;
 	$typeName = isset($_REQUEST['TYPE']) ? $_REQUEST['TYPE'] : '';
 	$statusId = isset($_REQUEST['VALUE']) ? $_REQUEST['VALUE'] : '';

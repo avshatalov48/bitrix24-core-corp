@@ -30,6 +30,7 @@ final class Uploader
 		'TRANSCRIPTION' => 'DEAL_UF_CRM_1696423934083',
 		'SUMMARY' => 'DEAL_UF_CRM_1696423954251',
 		'FIELDS' => 'DEAL_UF_CRM_1696423967344',
+		'LANGUAGE_ID' => 'copilot_crm_language',
 	];
 
 	private LoggerInterface $logger;
@@ -41,6 +42,7 @@ final class Uploader
 		private SummarizeCallTranscriptionPayload $summarize,
 		private ItemIdentifier $fillTarget,
 		private FillItemFieldsFromCallTranscriptionPayload $fill,
+		private string $languageId,
 	)
 	{
 		$this->logger = AIManager::logger();
@@ -136,7 +138,10 @@ final class Uploader
 				]),
 				'id' => self::FORM_ID,
 				'sec' => self::SECURITY_CODE,
-				'properties' => Json::encode($feedbackForm->getPresets()),
+				'properties' => Json::encode(array_merge(
+					[self::FIELD_NAMES['LANGUAGE_ID'] => $this->languageId],
+					$feedbackForm->getPresets(),
+				)),
 			])
 		);
 	}
@@ -151,6 +156,7 @@ final class Uploader
 		$result = [
 			'comment=' . $payload->unallocatedData,
 		];
+
 		foreach ($payload->singleFields as $singleField)
 		{
 			if (!isset($fields[$singleField->name]))

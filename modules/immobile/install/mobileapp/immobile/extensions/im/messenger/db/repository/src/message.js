@@ -10,6 +10,7 @@ jn.define('im/messenger/db/repository/message', (require, exports, module) => {
 		UserTable,
 		ReactionTable,
 		MessageTable,
+		MessageTableGetLinkedListDirection,
 	} = require('im/messenger/db/table');
 	const { LoggerManager } = require('im/messenger/lib/logger');
 
@@ -38,7 +39,7 @@ jn.define('im/messenger/db/repository/message', (require, exports, module) => {
 		 * @param {'top'|'bottom'} direction
 		 * @param {'asc'|'desc'} order
 		 *
-		 * @return {Promise<{messageList: [], userList: [], fileList: [], reactionList: []}>}
+		 * @return {Promise<MessageRepositoryPage>}
 		 */
 		async getList({
 			chatId,
@@ -51,12 +52,7 @@ jn.define('im/messenger/db/repository/message', (require, exports, module) => {
 		{
 			if (!Feature.isLocalStorageEnabled)
 			{
-				return {
-					messageList: [],
-					userList: [],
-					fileList: [],
-					reactionList: [],
-				};
+				return this.#getDefaultPageResult();
 			}
 
 			const options = {
@@ -98,7 +94,169 @@ jn.define('im/messenger/db/repository/message', (require, exports, module) => {
 
 			const messageList = await this.messageTable.getList(options);
 
+			return this.#getMessagesWithAdditionalData(messageList);
+		}
+
+		/**
+		 * @param {number} chatId
+		 * @param {number} messageId
+		 *
+		 * @return {Promise<MessageRepositoryPage>}
+		 */
+		async get(chatId, messageId)
+		{
+			logger.log('MessageRepository.get request: ', chatId, messageId);
+
+			const messageList = await this.getList({
+				chatId,
+				lastId: messageId,
+				limit: 1,
+			});
+
+			logger.log('MessageRepository.get result: ', messageList);
+
+			return messageList;
+		}
+
+		/**
+		 * @param {number} options.chatId
+		 * @param {number} [options.fromMessageId]
+		 * @param {number} options.limit
+		 *
+		 * @return {Promise<MessageRepositoryPage>}
+		 */
+		async getTopPage(options)
+		{
+			if (!Feature.isLocalStorageEnabled)
+			{
+				return this.#getDefaultPageResult();
+			}
+
+			const dateStart = Date.now();
+
+			const getListOptions = {
+				...options,
+				direction: MessageTableGetLinkedListDirection.top,
+				includeFromMessageId: false,
+			};
+
+			logger.log('MessageRepository.getTopPage request: ', getListOptions);
+
+			const getListResult = await this.messageTable.getLinkedList(getListOptions);
+			const messageList = await this.#getMessagesWithAdditionalData(getListResult);
+
+			const dateFinish = Date.now();
+			logger.log('MessageRepository.getTopPage result: ', messageList, `${dateFinish - dateStart} ms.`);
+
+			return messageList;
+		}
+
+		/**
+		 * @param {number} options.chatId
+		 * @param {number} [options.fromMessageId]
+		 * @param {number} options.limit
+		 *
+		 * @return {Promise<MessageRepositoryPage>}
+		 */
+		async getBottomPage(options)
+		{
+			if (!Feature.isLocalStorageEnabled)
+			{
+				return this.#getDefaultPageResult();
+			}
+
+			const dateStart = Date.now();
+
+			const getListOptions = {
+				...options,
+				direction: MessageTableGetLinkedListDirection.bottom,
+				includeFromMessageId: false,
+			};
+
+			logger.log('MessageRepository.getBottomPage request: ', getListOptions);
+
+			const getListResult = await this.messageTable.getLinkedList(getListOptions);
+			const messageList = await this.#getMessagesWithAdditionalData(getListResult);
+
+			const dateFinish = Date.now();
+			logger.log('MessageRepository.getBottomPage result: ', messageList, `${dateFinish - dateStart} ms.`);
+
+			return messageList;
+		}
+
+		/**
+		 * @param chatId
+		 * @param contextMessageId
+		 * @param limit
+		 *
+		 * @return {Promise<MessageRepositoryContext>}
+		 */
+		async getContext(chatId, contextMessageId, limit)
+		{
+			if (!Feature.isLocalStorageEnabled)
+			{
+				return {
+					...this.#getDefaultPageResult(),
+					hasContextMessage: false,
+				};
+			}
+
+			logger.info('MessageRepository.getContext request: ', chatId, contextMessageId, limit);
+
+			const topPage = await this.getTopPage({
+				chatId,
+				fromMessageId: contextMessageId,
+				limit,
+			});
+			const contextMessage = await this.get(chatId, contextMessageId);
+			const bottomPage = await this.getBottomPage({
+				chatId,
+				fromMessageId: contextMessageId,
+				limit,
+			});
+
+			const context = {
+				messageList: [
+					...topPage.messageList,
+					...contextMessage.messageList,
+					...bottomPage.messageList,
+				],
+				additionalMessageList: [
+					...topPage.additionalMessageList,
+					...contextMessage.additionalMessageList,
+					...bottomPage.additionalMessageList,
+				],
+				userList: [
+					...topPage.userList,
+					...contextMessage.userList,
+					...bottomPage.userList,
+				],
+				fileList: [
+					...topPage.fileList,
+					...contextMessage.fileList,
+					...bottomPage.fileList,
+				],
+				reactionList: [
+					...topPage.reactionList,
+					...contextMessage.reactionList,
+					...bottomPage.reactionList,
+				],
+				hasContextMessage: Type.isArrayFilled(contextMessage.messageList),
+			};
+
+			logger.info('MessageRepository.getContext result: ', context);
+
+			return context;
+		}
+
+		/**
+		 * @private
+		 * Supplement the list of messages with additional data from other tables
+		 */
+		async #getMessagesWithAdditionalData(messageList)
+		{
 			const modelMessageList = [];
+			const additionalMessageIdList = new Set();
 			const fileIdList = new Set();
 			const authorIdList = [];
 			const messageIdList = new Set();
@@ -107,6 +265,28 @@ jn.define('im/messenger/db/repository/message', (require, exports, module) => {
 
 				modelMessageList.push(modelMessage);
 				messageIdList.add(modelMessage.id);
+
+				if (Type.isArrayFilled(modelMessage.files))
+				{
+					modelMessage.files.forEach((fileId) => {
+						fileIdList.add(fileId);
+					});
+				}
+
+				if (Type.isInteger(modelMessage.authorId))
+				{
+					authorIdList.push(modelMessage.authorId);
+				}
+
+				if (Type.isObject(modelMessage.params) && Type.isNumber(modelMessage.params.replyId))
+				{
+					additionalMessageIdList.add(modelMessage.params.replyId);
+				}
+			});
+
+			const additionalMessageList = await this.messageTable.getListByIds([...additionalMessageIdList]);
+			additionalMessageList.items.forEach((message) => {
+				const modelMessage = message;
 
 				if (Type.isArrayFilled(modelMessage.files))
 				{
@@ -136,6 +316,7 @@ jn.define('im/messenger/db/repository/message', (require, exports, module) => {
 
 			return {
 				messageList: modelMessageList.reverse(),
+				additionalMessageList: additionalMessageList.items,
 				userList: userList.items,
 				fileList: fileList.items,
 				reactionList: reactionList.items,
@@ -230,6 +411,20 @@ jn.define('im/messenger/db/repository/message', (require, exports, module) => {
 			});
 
 			return Promise.all(deletePromiseList);
+		}
+
+		/**
+		 * @return {MessageRepositoryPage}
+		 */
+		#getDefaultPageResult()
+		{
+			return {
+				messageList: [],
+				additionalMessageList: [],
+				userList: [],
+				fileList: [],
+				reactionList: [],
+			};
 		}
 	}
 

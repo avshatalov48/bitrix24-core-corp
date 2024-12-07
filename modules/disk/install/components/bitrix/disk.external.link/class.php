@@ -24,6 +24,7 @@ use Bitrix\Main\Context;
 use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Security\Random;
+use Bitrix\Main\SystemException;
 use Bitrix\Main\Web\Uri;
 
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
@@ -37,6 +38,8 @@ Loc::loadMessages(__FILE__);
 
 class CDiskExternalLinkComponent extends DiskComponent
 {
+	protected const EXCEPTION_CODE_ACCESS_DENIED = 221880;
+
 	const PAGE_SIZE = 25;
 	const MAX_SIZE_TO_PREVIEW = 15728640; //1024 * 1024 * 15 bytes
 
@@ -136,13 +139,9 @@ class CDiskExternalLinkComponent extends DiskComponent
 
 	protected function runProcessingExceptionComponent(Exception $e)
 	{
-		if ($e instanceof \Bitrix\Main\ObjectNotFoundException)
+		if (($e instanceof SystemException) && $e->getCode() === self::EXCEPTION_CODE_ACCESS_DENIED)
 		{
 			$this->showNotFoundPage();
-		}
-		else
-		{
-			$this->includeComponentTemplate('error');
 		}
 	}
 
@@ -151,12 +150,12 @@ class CDiskExternalLinkComponent extends DiskComponent
 		$hash = $this->request->get('hash');
 		if(!$hash)
 		{
-			throw new \Bitrix\Main\ArgumentException('Empty hash');
+			throw new SystemException('Empty hash', self::EXCEPTION_CODE_ACCESS_DENIED);
 		}
 
 		if(!\Bitrix\Disk\ExternalLink::isValidValueForField('HASH', $hash, $this->errorCollection))
 		{
-			throw new \Bitrix\Main\ArgumentException('Hash contains invalid character');
+			throw new SystemException('Hash contains invalid character', self::EXCEPTION_CODE_ACCESS_DENIED);
 		}
 
 		$this->hash = $hash;
@@ -281,7 +280,7 @@ class CDiskExternalLinkComponent extends DiskComponent
 			[$targetFolder, $relativeItems] = $this->getTargetFolderData($rootFolder, $path);
 			if(!$targetFolder)
 			{
-				throw new \Bitrix\Main\SystemException('Wrong path');
+				throw new SystemException('Wrong path', self::EXCEPTION_CODE_ACCESS_DENIED);
 			}
 
 			$this->arResult['FOLDER'] = $this->getResultByFolder();
@@ -1078,7 +1077,7 @@ class CDiskExternalLinkComponent extends DiskComponent
 
 		if(!$this->externalLink || $this->externalLink->isExpired() || !$this->externalLink->getObject())
 		{
-			throw new \Bitrix\Main\ObjectNotFoundException('Invalid external link');
+			throw new SystemException('Invalid external link', self::EXCEPTION_CODE_ACCESS_DENIED);
 		}
 
 		return $this;

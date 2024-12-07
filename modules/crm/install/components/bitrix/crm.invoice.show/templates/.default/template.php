@@ -170,7 +170,7 @@ $APPLICATION->IncludeComponent(
 );
 
 ?>
-<script type="text/javascript">
+<script>
 	BX.ready(function(){
 		var treeContainerId = '<?=$arResult['TREE_CONTAINER_ID']?>';
 		if (!BX(treeContainerId))
@@ -198,7 +198,7 @@ $APPLICATION->IncludeComponent(
 		);
 	});
 </script>
-<script type="text/javascript">
+<script>
 <?if($arResult['ENABLE_INSTANT_EDIT']):?>
 	BX.ready(
 		function()
@@ -406,7 +406,7 @@ function getInvoicePdfContent()
 }
 </script><?php
 // -------------------- status info processing ------------------->
-?><script type="text/javascript">
+?><script>
 	BX.ready(function(){
 		if (typeof(BX.CrmInvoiceStatusManager) === 'function')
 		{

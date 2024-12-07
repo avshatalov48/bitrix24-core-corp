@@ -2,6 +2,7 @@
 
 namespace Bitrix\SalesCenter\Integration;
 
+use Bitrix\Main\Analytics\AnalyticsEvent;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Error;
 use Bitrix\Main\Result;
@@ -133,6 +134,14 @@ class SaleManager extends Base
 		return new EventResult( EventResult::SUCCESS, null, 'sale');
 	}
 
+	public static function onSalescenterPaymentCreated(Payment $payment): void
+	{
+		$constructor = new Analytics\LabelConstructor();
+
+		$event = $constructor->getAnalyticsEventForPayment('payment_created', $payment);
+		$event->send();
+	}
+
 	/**
 	 * @param Event $event
 	 * @return EventResult
@@ -149,6 +158,15 @@ class SaleManager extends Base
 
 			$constructor = new Analytics\LabelConstructor();
 
+			$analyticsEvent = $constructor->getAnalyticsEventForPayment('payment_proceeded', $payment);
+			$paySystemName = $constructor->getPaySystemTag($payment);
+			$analyticsEvent->setP1('paysystem_' . $paySystemName);
+			$analyticsEvent->setP2('sum_' . $payment->getSum());
+			$analyticsEvent->setP3('currency_' . $payment->getField('CURRENCY'));
+
+			$analyticsEvent->send();
+
+			// legacy analytics, to be removed later
 			AddEventToStatFile('salescenter', 'salescenterPayment', $payment->getId(), $constructor->getPaySystemTag($payment), 'pay_system');
 			AddEventToStatFile('salescenter', 'salescenterPayment', $payment->getId(), $payment->getSum(), 'amount');
 			AddEventToStatFile('salescenter', 'salescenterPayment', $payment->getId(), $payment->getField('CURRENCY'), 'currency');
@@ -179,6 +197,7 @@ class SaleManager extends Base
 		/** @var Crm\Order\Order $order */
 		$order = $event->getParameter('ENTITY');
 
+		// legacy analytics, to be removed later
 		if ($order->isNew())
 		{
 			$constructor = new Analytics\LabelConstructor();

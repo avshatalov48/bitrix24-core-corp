@@ -39,6 +39,7 @@ $MESS['OL_STATS_HEADER_USER_NAME'] = 'Клиент';
 $MESS['OL_STATS_HEADER_SEND_FORM'] = 'Заполнил форму';
 $MESS['OL_STATS_HEADER_SEND_HISTORY'] = 'Запросил историю';
 $MESS['OL_STATS_HEADER_CRM_TEXT'] = 'Запись в CRM';
+$MESS['OL_STATS_HEADER_CRM_URL_REFERER'] = 'Страница сайта';
 $MESS['OL_STATS_HEADER_CRM'] = 'CRM';
 $MESS['OL_STATS_HEADER_CRM_LINK'] = 'Ссылка в CRM';
 $MESS['OL_STATS_HEADER_EXTRA_REGISTER'] = 'День регистрации';

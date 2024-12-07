@@ -2,8 +2,10 @@
 
 namespace Bitrix\Crm\Service\Timeline\Item\Activity\Sms;
 
+use Bitrix\Crm\Component\EntityDetails\TimelineMenuBar;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Timeline\Item\Activity;
+use Bitrix\Crm\Service\Timeline\Layout\Action;
 use Bitrix\Crm\Service\Timeline\Layout\Action\JsEvent;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\Client;
@@ -46,55 +48,19 @@ abstract class Base extends Activity
 		return $result;
 	}
 
-	public function getButtons(): ?array
+	final public function getButtons(): ?array
 	{
 		$result = [];
 
-		$fields = $this->getAssociatedEntityModelFields();
-		$orderId = $fields['ORDER_ID'] ?? null;
-		$paymentId = $fields['PAYMENT_ID'] ?? null;
-		$factory = Container::getInstance()->getFactory($this->getContext()->getEntityTypeId());
-
-		if (
-			$orderId
-			&& $paymentId
-			&& $factory
-			&& $factory->isPaymentsEnabled()
-			&& $factory->isStagesEnabled()
-		)
+		$resendPaymentButton = $this->getResendPaymentButton();
+		$resendButton = $this->getResendButton();
+		if ($resendPaymentButton)
 		{
-			$ownerTypeId = $this->getContext()->getEntityTypeId();
-			$payment = PaymentRepository::getInstance()->getById($paymentId);
-			$formattedDate = $payment ? ConvertTimeStamp($payment->getField('DATE_BILL')->getTimestamp()) : null;
-			$accountNumber = $payment ? $payment->getField('ACCOUNT_NUMBER') : null;
-
-			$result['resendPayment'] =
-				(new Button(
-					Loc::getMessage('CRM_TIMELINE_TITLE_ACTIVITY_SMS_NOTIFICATION_RESEND_MSGVER_1'),
-					Button::TYPE_SECONDARY
-				))
-					->setAction(
-						(new JsEvent('SalescenterApp:Start'))
-							->addActionParamString(
-								'mode',
-								$ownerTypeId === CCrmOwnerType::Deal
-									? 'payment_delivery'
-									: 'payment'
-							)
-							->addActionParamInt('orderId', $orderId)
-							->addActionParamInt('paymentId', $paymentId)
-							->addActionParamInt('ownerTypeId', $ownerTypeId)
-							->addActionParamInt('ownerId', $this->getContext()->getEntityId())
-							->addActionParamString('formattedDate', $formattedDate)
-							->addActionParamString('accountNumber', $accountNumber)
-							->addActionParamString(
-								'analyticsLabel',
-								CCrmOwnerType::isUseDynamicTypeBasedApproach($ownerTypeId)
-									? 'crmDynamicTypeTimelineSmsResendPaymentSlider'
-									: 'crmDealTimelineSmsResendPaymentSlider'
-							)
-					)
-			;
+			$result['resendPayment'] = $resendPaymentButton;
+		}
+		elseif ($resendButton)
+		{
+			$result['resend'] = $resendButton;
 		}
 
 		return $result;
@@ -120,9 +86,12 @@ abstract class Base extends Activity
 
 	protected function getAssociatedEntityModelFields(): array
 	{
-		$settings = $this->getAssociatedEntityModel()->get('SETTINGS');
+		$settings = $this->getAssociatedEntityModel()?->get('SETTINGS');
 		$settings = is_array($settings) ? $settings : [];
-		return isset($settings['FIELDS']) && is_array($settings['FIELDS']) ? $settings['FIELDS'] : [];
+
+		return isset($settings['FIELDS']) && is_array($settings['FIELDS'])
+			? $settings['FIELDS']
+			: [];
 	}
 
 	protected function getSmsMessageContentBlock(): ContentBlock
@@ -134,9 +103,91 @@ abstract class Base extends Activity
 			->addActionParamString('content', $clipboardContent)
 			->addActionParamString('type', isset($fields['HIGHLIGHT_URL']) ? 'link' : 'text')
 		;
+
 		return (new SmsMessage())
 			->setText($messageText)
 			->setAction($copyToClipboardAction)
+		;
+	}
+
+	protected function getResendingAction(): ?Action
+	{
+		return null;
+	}
+
+	protected function getMenuBarContext(): TimelineMenuBar\Context
+	{
+		$menuBarContext = new TimelineMenuBar\Context(
+			$this->getContext()->getEntityTypeId(),
+			$this->getContext()->getEntityId()
+		);
+		$menuBarContext->setEntityCategoryId($this->getContext()->getEntityCategoryId());
+
+		return $menuBarContext;
+	}
+
+	private function getResendPaymentButton(): ?Button
+	{
+		$fields = $this->getAssociatedEntityModelFields();
+		$orderId = $fields['ORDER_ID'] ?? null;
+		$paymentId = $fields['PAYMENT_ID'] ?? null;
+		$factory = Container::getInstance()->getFactory($this->getContext()->getEntityTypeId());
+
+		if (
+			$orderId
+			&& $paymentId
+			&& $factory
+			&& $factory->isPaymentsEnabled()
+			&& $factory->isStagesEnabled()
+		)
+		{
+			$ownerTypeId = $this->getContext()->getEntityTypeId();
+			$payment = PaymentRepository::getInstance()->getById($paymentId);
+			$formattedDate = $payment
+				? ConvertTimeStamp($payment->getField('DATE_BILL')?->getTimestamp())
+				: null;
+			$accountNumber = $payment?->getField('ACCOUNT_NUMBER');
+
+			return (new Button(
+				Loc::getMessage('CRM_TIMELINE_TITLE_ACTIVITY_SMS_NOTIFICATION_RESEND_MSGVER_2'),
+				Button::TYPE_SECONDARY
+			))
+				->setAction(
+					(new JsEvent('SalescenterApp:Start'))
+						->addActionParamString(
+							'mode',
+							$ownerTypeId === CCrmOwnerType::Deal ? 'payment_delivery' : 'payment'
+						)
+						->addActionParamInt('orderId', $orderId)
+						->addActionParamInt('paymentId', $paymentId)
+						->addActionParamInt('ownerTypeId', $ownerTypeId)
+						->addActionParamInt('ownerId', $this->getContext()->getEntityId())
+						->addActionParamString('formattedDate', $formattedDate)
+						->addActionParamString('accountNumber', $accountNumber)
+						->addActionParamString(
+							'analyticsLabel',
+							CCrmOwnerType::isUseDynamicTypeBasedApproach($ownerTypeId)
+								? 'crmDynamicTypeTimelineSmsResendPaymentSlider'
+								: 'crmDealTimelineSmsResendPaymentSlider'
+						)
+				)
+			;
+		}
+
+		return null;
+	}
+
+	private function getResendButton(): ?Button
+	{
+		$action = $this->getResendingAction();
+		if (!$action)
+		{
+			return null;
+		}
+
+		return (new Button(Loc::getMessage('CRM_TIMELINE_TITLE_ACTIVITY_SMS_NOTIFICATION_RESEND_MSGVER_2'), Button::TYPE_SECONDARY))
+			->setAction($action)
+			->setScopeWeb() // temporary hide for mobile app
 		;
 	}
 }

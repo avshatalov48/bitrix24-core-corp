@@ -32,7 +32,7 @@ while ($arSite = $rsSite->Fetch())
 }
 
 if (
-	$REQUEST_METHOD == "POST"
+	$_SERVER['REQUEST_METHOD'] == "POST"
 	&& check_bitrix_sessid()
 )
 {

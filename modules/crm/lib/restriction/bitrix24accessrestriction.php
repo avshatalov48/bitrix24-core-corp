@@ -28,6 +28,12 @@ class Bitrix24AccessRestriction extends AccessRestriction
 	{
 		return $this->restrictionInfo->prepareInfoHelperScript();
 	}
+
+	public function prepareFeaturePromoterScript(): string
+	{
+		return $this->restrictionInfo?->prepareFeaturePromoterScript() ?? '';
+	}
+
 	/**
 	* @return string
 	*/

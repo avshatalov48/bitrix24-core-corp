@@ -10,6 +10,7 @@ return [
 	'rel' => [
 		'main.popup',
 		'ui.dialogs.messagebox',
+		'catalog.tool-availability-manager',
 		'main.core',
 		'main.core.events',
 		'ui.label',

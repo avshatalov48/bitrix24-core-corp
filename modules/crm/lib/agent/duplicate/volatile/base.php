@@ -144,7 +144,7 @@ abstract class Base
 
 		return $typeIds;
 	}
-	protected function getMessage($messageId): ?string
+	protected function getMessage(string $messageId, ?string $languageId = null): ?string
 	{
 		static $isMessagesLoaded = false;
 
@@ -154,7 +154,7 @@ abstract class Base
 			$isMessagesLoaded = true;
 		}
 
-		return Loc::getMessage($messageId);
+		return Loc::getMessage($messageId, null, $languageId);
 	}
 
 	protected function getTimeStamp(): int

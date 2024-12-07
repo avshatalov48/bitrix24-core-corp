@@ -1,4 +1,5 @@
-(function (exports,main_core,main_popup) {
+/* eslint-disable */
+(function (exports,main_core,main_popup,crm_integration_ui_bannerDispatcher) {
 	'use strict';
 
 	var _templateObject;
@@ -10,6 +11,7 @@
 	var _popup = /*#__PURE__*/new WeakMap();
 	var _data = /*#__PURE__*/new WeakMap();
 	var _options = /*#__PURE__*/new WeakMap();
+	var _bannerDispatcher = /*#__PURE__*/new WeakMap();
 	var _userOptionCategory = /*#__PURE__*/new WeakMap();
 	var _userOptionName = /*#__PURE__*/new WeakMap();
 	var _getPopupContent = /*#__PURE__*/new WeakSet();
@@ -33,6 +35,10 @@
 	      writable: true,
 	      value: void 0
 	    });
+	    _classPrivateFieldInitSpec(this, _bannerDispatcher, {
+	      writable: true,
+	      value: void 0
+	    });
 	    _classPrivateFieldInitSpec(this, _userOptionCategory, {
 	      writable: true,
 	      value: void 0
@@ -47,8 +53,9 @@
 	    babelHelpers.classPrivateFieldSet(this, _userOptionCategory, main_core.Type.isString(userOptionCategory) ? userOptionCategory : 'crm');
 	    babelHelpers.classPrivateFieldSet(this, _userOptionName, main_core.Type.isString(userOptionName) ? userOptionName : '');
 	    if (main_core.Type.isNumber(options.entityTypeId) && main_core.Type.isStringFilled(babelHelpers.classPrivateFieldGet(this, _userOptionName))) {
-	      babelHelpers.classPrivateFieldSet(this, _userOptionName, babelHelpers.classPrivateFieldGet(this, _userOptionName) + options.entityTypeId);
+	      babelHelpers.classPrivateFieldSet(this, _userOptionName, "".concat(babelHelpers.classPrivateFieldGet(this, _userOptionName)).concat(options.entityTypeId));
 	    }
+	    babelHelpers.classPrivateFieldSet(this, _bannerDispatcher, new crm_integration_ui_bannerDispatcher.BannerDispatcher());
 	  }
 	  babelHelpers.createClass(RichPopup, [{
 	    key: "show",
@@ -79,11 +86,14 @@
 	          height: 400,
 	          events: {
 	            onPopupClose: function onPopupClose() {
-	              return _this.save();
+	              _this.save();
 	            }
 	          }
 	        }));
-	        babelHelpers.classPrivateFieldGet(this, _popup).show();
+	        babelHelpers.classPrivateFieldGet(this, _bannerDispatcher).toQueue(function (onDone) {
+	          babelHelpers.classPrivateFieldGet(_this, _popup).subscribe('onClose', onDone);
+	          babelHelpers.classPrivateFieldGet(_this, _popup).show();
+	        });
 	      }
 	    }
 	  }, {
@@ -99,5 +109,5 @@
 	}
 	namespaceCrmWhatsNew.RichPopup = RichPopup;
 
-}((this.window = this.window || {}),BX,BX.Main));
+}((this.window = this.window || {}),BX,BX.Main,BX.Crm.Integration.UI));
 //# sourceMappingURL=script.js.map

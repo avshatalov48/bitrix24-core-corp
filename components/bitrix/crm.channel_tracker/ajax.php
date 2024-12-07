@@ -23,8 +23,6 @@ try
 	if (!$currentUser->IsAuthorized() || !check_bitrix_sessid() || !$request->isPost())
 		throw new \Bitrix\Main\AccessDeniedException();
 
-	$request->addFilter(new \Bitrix\Main\Web\PostDecodeFilter());
-
 	if ($lazyLoadWidgetsComponent = $request->getPost('LAZY_LOAD_COMPONENT'))
 	{
 		$currentUserID = CCrmSecurityHelper::GetCurrentUserID();

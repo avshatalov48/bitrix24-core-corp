@@ -2,7 +2,9 @@
 
 namespace Bitrix\Crm\Integration\Intranet\CustomSection;
 
-class Page
+use Bitrix\Main\Type\Contract\Arrayable;
+
+class Page implements Arrayable
 {
 	/** @var int|null */
 	protected $id;
@@ -159,5 +161,17 @@ class Page
 		$this->settings = $settings;
 
 		return $this;
+	}
+
+	public function toArray()
+	{
+		return [
+			'ID' => $this->id,
+			'CUSTOM_SECTION_ID' => $this->customSectionId,
+			'CODE' => $this->code,
+			'TITLE' => $this->title,
+			'SORT' => $this->sort,
+			'SETTINGS' => $this->settings,
+		];
 	}
 }

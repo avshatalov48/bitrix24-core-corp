@@ -43,7 +43,6 @@ if (!CCrmSecurityHelper::IsAuthorized() || !check_bitrix_sessid() || $_SERVER['R
 }
 
 
-CUtil::JSPostUnescape();
 $APPLICATION->RestartBuffer();
 Header('Content-Type: application/x-javascript; charset='.LANG_CHARSET);
 

@@ -1,5 +1,6 @@
 <?php
 
+use Bitrix\Main\Analytics\AnalyticsEvent;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Event;
 use Bitrix\Intranet\Internals\InvitationTable;
@@ -47,19 +48,12 @@ class CIntranetEventHandlers
 
 			if ($arFields['ACTIVE'] == 'N')
 			{
-				$obs = new CIBlockSection();
-				$dbRes = $obs->getList(
-					array(),
-					array(
-						'IBLOCK_ID' => (int) \Bitrix\Main\Config\Option::get('intranet', 'iblock_structure'),
-						'UF_HEAD' => $arFields['ID'],
-					),
-					false,
-					array('ID')
-				);
-				while ($arSection = $dbRes->Fetch())
+				$departmentRepository = \Bitrix\Intranet\Service\ServiceContainer::getInstance()
+					->departmentRepository();
+				$departmentCollection = $departmentRepository->getDepartmentByHeadId((int)$arFields['ID']);
+				foreach ($departmentCollection as $department)
 				{
-					$obs->Update($arSection['ID'], array('UF_HEAD' => null));
+					$departmentRepository->unsetHead($department->getId());
 				}
 			}
 		}
@@ -440,6 +434,14 @@ class CIntranetEventHandlers
 	RegisterModuleDependences("iblock", "OnBeforeIBlockSectionUpdate", "intranet", "CIntranetEventHandlers", "OnBeforeIBlockSectionUpdate");
 	RegisterModuleDependences("iblock", "OnBeforeIBlockSectionAdd", "intranet", "CIntranetEventHandlers", "OnBeforeIBlockSectionAdd");
 */
+	/**
+	 * @Deprecated
+	 *
+	 * Will be deleted after transferring department data to the "humanresources" module
+	 *
+	 * @param $arParams
+	 * @return false|void
+	 */
 	public static function OnBeforeIBlockSectionAdd($arParams)
 	{
 		global $APPLICATION;
@@ -460,6 +462,14 @@ class CIntranetEventHandlers
 		}
 	}
 
+	/**
+	 * @Deprecated
+	 *
+	 * Will be deleted after transferring department data to the "humanresources" module
+	 *
+	 * @param $arParams
+	 * @return false|void
+	 */
 	public static function OnBeforeIBlockSectionUpdate($arParams)
 	{
 		global $APPLICATION;
@@ -971,19 +981,14 @@ class CIntranetEventHandlers
 			}
 		}
 
-		if (CModule::IncludeModule('iblock'))
+		$departmentRepository = \Bitrix\Intranet\Service\ServiceContainer::getInstance()
+			->departmentRepository();
+		$departmentCollection = $departmentRepository->getDepartmentByHeadId((int)$USER_ID);
+		foreach ($departmentCollection as $department)
 		{
-			$IBLOCK_ID = COption::GetOptionInt('intranet', 'iblock_structure');
-			if ($IBLOCK_ID > 0)
-			{
-				$dbRes = CIBlockSection::GetList(array(), array('IBLOCK_ID' => $IBLOCK_ID, 'UF_HEAD' => $USER_ID), false, array('ID', 'IBLOCK_ID'));
-				$obSection = new CIBlockSection();
-				while ($arRes = $dbRes->Fetch())
-				{
-					$obSection->Update($arRes['ID'], array('UF_HEAD' => ''));
-				}
-			}
+			$departmentRepository->unsetHead($department->getId());
 		}
+
 	}
 
 	public static function OnAfterUserInitialize($userId)
@@ -1002,7 +1007,7 @@ class CIntranetEventHandlers
 				'USER_ID' => $userId,
 				'INITIALIZED' => 'N'
 			],
-			'select' => [ 'ID' ],
+			'select' => ['ID', 'INVITATION_TYPE', 'IS_MASS', 'IS_DEPARTMENT', 'IS_INTEGRATOR', 'IS_REGISTER'],
 			'limit' => 1
 		]);
 		if ($invitationFields = $res->fetch())
@@ -1010,6 +1015,11 @@ class CIntranetEventHandlers
 			InvitationTable::update($invitationFields['ID'], [
 				'INITIALIZED' => 'Y'
 			]);
+
+			(new \Bitrix\Main\Event('intranet', 'onUserFirstInitialization', [
+				'invitationFields' => $invitationFields,
+				'userId' => $userId
+			]))->send();
 		}
 	}
 
@@ -1059,7 +1069,7 @@ class CIntranetEventHandlers
 
 				'PROPERTY_VALUES' => array(
 					'USER' => $arUser['ID'],
-					'DEPARTMENT' => $arUser['UF_DEPARTMENT'],
+					'DEPARTMENT' => $arUser['UF_DEPARTMENT'] ?? null,
 					'POST' => $arUser['WORK_POSITION'] ? $arUser['WORK_POSITION'] : $arUser['PERSONAL_PROFESSION'],
 					'STATE' => $ACCEPTED_ENUM_ID
 				),
@@ -1793,7 +1803,7 @@ RegisterModuleDependences('main', 'OnBeforeProlog', 'intranet', 'CIntranetEventH
 				$parserLog->arUserfields = $arFields["UF"];
 				$parserLog->bMobile = ($arParams["MOBILE"] == "Y");
 				$arResult["EVENT_FORMATTED"]["MESSAGE"] = htmlspecialcharsbx($parserLog->convert(htmlspecialcharsback($arResult["EVENT_FORMATTED"]["MESSAGE"]), $arAllow));
-				$arResult["EVENT_FORMATTED"]["MESSAGE"] = preg_replace("/\[user\s*=\s*([^\]]*)\](.+?)\[\/user\]/is".BX_UTF_PCRE_MODIFIER, "\\2", $arResult["EVENT_FORMATTED"]["MESSAGE"]);
+				$arResult["EVENT_FORMATTED"]["MESSAGE"] = preg_replace("/\[user\s*=\s*([^\]]*)\](.+?)\[\/user\]/isu", "\\2", $arResult["EVENT_FORMATTED"]["MESSAGE"]);
 			}
 			else
 			{

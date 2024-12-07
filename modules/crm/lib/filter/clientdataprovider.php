@@ -140,4 +140,48 @@ class ClientDataProvider extends Main\Filter\EntityDataProvider
 			true
 		);
 	}
+
+	/**
+	 * @see \Bitrix\Crm\Filter\EntityDataProvider::prepareListFilterParam
+	 */
+	public function prepareFilterValue(array $rawFilterValue): array
+	{
+		static $forceSubstringSearch = [
+			'TITLE',
+			'COMMENTS',
+			'BANKING_DETAILS',
+			'NAME',
+			'LAST_NAME',
+			'SECOND_NAME',
+			'POST',
+			'COMPANY_TITLE',
+		];
+
+		$preparedFilter = parent::prepareFilterValue($rawFilterValue);
+
+		$handledFields = $this->prepareFields();
+		foreach ($preparedFilter as $fieldName => $value)
+		{
+			if (!isset($handledFields[$fieldName]))
+			{
+				continue;
+			}
+
+			$sourceFieldName = $this->clientFieldHelper->getFieldIdWithoutPrefix($fieldName);
+			if (!in_array($sourceFieldName, $forceSubstringSearch, true))
+			{
+				continue;
+			}
+
+			$value = trim($value);
+			if ($value !== '')
+			{
+				$preparedFilter["?{$fieldName}"] = $value;
+			}
+
+			unset($preparedFilter[$fieldName]);
+		}
+
+		return $preparedFilter;
+	}
 }

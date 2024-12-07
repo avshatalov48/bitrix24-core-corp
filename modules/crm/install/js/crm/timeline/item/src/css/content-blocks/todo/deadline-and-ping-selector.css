@@ -1,0 +1,26 @@
+.crm-timeline-block-deadline-and-ping-selector {
+	display: flex;
+	align-items: center;
+}
+
+.crm-timeline-block-deadline-and-ping-selector-deadline-wrapper {
+	margin-right: 5px;
+	padding: 6px 11px;
+	border-radius: var(--ui-border-radius-xs);
+	display: flex;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	overflow: hidden;
+	max-width: 100%;
+	flex-direction: row;
+	align-items: baseline;
+}
+
+.crm-timeline-block-deadline-and-ping-selector-deadline-wrapper.--orange {
+	--crm-timeline-block-deadline-and-ping-selector-deadline_bg-color: var(--ui-color-palette-orange-20);
+	background: var(--crm-timeline-block-deadline-and-ping-selector-deadline_bg-color);
+}
+
+.crm-timeline-block-deadline-and-ping-selector-deadline-wrapper.--gray {
+	background: var(--ui-color-palette-gray-02);
+}

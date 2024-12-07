@@ -1,5 +1,6 @@
 <?php
 
+use Bitrix\Intranet\Integration\Templates\Bitrix24\ThemePickerAnalytics;
 use Bitrix\Main;
 use Bitrix\Intranet\Integration\Templates\Bitrix24\ThemePicker;
 use Bitrix\Main\ArgumentException;
@@ -35,12 +36,16 @@ if (check_bitrix_sessid() && $USER->isAuthorized() && $request->getPost("templat
 	if ($theme && $request->getPost("action") === "save")
 	{
 		$themeId = $request->getPost("themeId");
+		$analytics = new ThemePickerAnalytics($themeId);
+
 		if ($request->getPost("setDefaultTheme") === "true" && ThemePicker::canSetDefaultTheme())
 		{
 			$success = $theme->setDefaultTheme($themeId);
+			$analytics->setDefaultTheme();
 		}
 
 		$success = $theme->setCurrentThemeId($themeId);
+		$analytics->send();
 
 		$result = array("success" => $success);
 

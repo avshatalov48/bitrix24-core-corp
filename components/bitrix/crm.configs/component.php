@@ -36,18 +36,37 @@ if(!CCrmPerms::IsAccessEnabled())
 	return;
 }
 
-$enableAICallProcessing = \Bitrix\Main\Application::getInstance()->getContext()->getRequest()->get('enableAICallProcessing');
+$request = \Bitrix\Main\Application::getInstance()->getContext()->getRequest();
+$enableAICallAutomaticProcessing = $request->get('enableAICallAutomaticProcessing');
 if (
-	\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->isAdmin()
-	&&  isset($enableAICallProcessing)
+	isset($enableAICallAutomaticProcessing)
+	&& \Bitrix\Crm\Integration\AI\AIManager::isAiCallProcessingEnabled()
+	&& \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->isAdmin()
 )
 {
-	$enableAICallProcessing = strtolower($enableAICallProcessing);
-	\Bitrix\Crm\Integration\AI\AIManager::setAiCallProcessingEnabled(in_array($enableAICallProcessing, ['y', 'a'], true));
-	if (in_array($enableAICallProcessing, ['n', 'y', 'a'], true))
+	$enableAICallAutomaticProcessing = strtolower($enableAICallAutomaticProcessing);
+	if (in_array($enableAICallAutomaticProcessing, ['n', 'y'], true))
 	{
-		\Bitrix\Crm\Integration\AI\AIManager::setAiCallAutomaticProcessingAllowed($enableAICallProcessing === 'a' ? true : null);
+		\Bitrix\Crm\Integration\AI\AIManager::setAiCallAutomaticProcessingAllowed(
+			$enableAICallAutomaticProcessing === 'n' ? null : true
+		);
 	}
+}
+
+$enableWhatsAppGoToChat = \Bitrix\Main\Application::getInstance()->getContext()->getRequest()->get('enableWhatsAppGoToChat');
+if (
+	isset($enableWhatsAppGoToChat)
+	&& \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->isAdmin()
+)
+{
+	$enableWhatsAppGoToChat = strtolower($enableWhatsAppGoToChat);
+	\Bitrix\Crm\Settings\Crm::setWhatsAppGoToChatEnabled($enableWhatsAppGoToChat === 'y');
+}
+
+$enableAutomatedSolutionList = $request->get('enableAutomatedSolutionList');
+if (isset($enableAutomatedSolutionList))
+{
+	\Bitrix\Crm\Settings\Crm::setAutomatedSolutionListEnabled(mb_strtolower($enableAutomatedSolutionList) === 'y');
 }
 
 $arResult['BITRIX24'] = \Bitrix\Main\ModuleManager::isModuleInstalled('bitrix24');
@@ -124,4 +143,12 @@ $title = GetMessage('CRM_TITLE1');
 if (!is_string($title) || empty($title))
 	$title = GetMessage('CRM_TITLE');
 $APPLICATION->SetTitle($title);
-$this->includeComponentTemplate();
+
+if (isset($_GET['expert']) || isset($_GET['enableFeature']) || isset($_GET['disableFeature']))
+{
+	$this->includeComponentTemplate('expert');
+}
+else
+{
+	$this->includeComponentTemplate();
+}

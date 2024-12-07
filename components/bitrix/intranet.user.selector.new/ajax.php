@@ -357,7 +357,6 @@ elseif($groupId = (int)$_REQUEST['GROUP_ID'])
 }
 elseif ($_REQUEST['MODE'] == 'SEARCH')
 {
-	CUtil::JSPostUnescape();
 	$APPLICATION->RestartBuffer();
 	$search = $_REQUEST['SEARCH_STRING'];
 	$arUsers = array();

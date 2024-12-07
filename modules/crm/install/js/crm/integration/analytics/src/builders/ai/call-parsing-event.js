@@ -9,9 +9,12 @@ import type { AICallParsingEvent as CallParsingEventStructure } from '../../type
 export class CallParsingEvent
 {
 	#entityType: string | number | null;
+	#tool: CallParsingEventStructure['tool'] = Dictionary.TOOL_AI;
+	#category: CallParsingEventStructure['category'] = Dictionary.CATEGORY_CRM_OPERATIONS;
 	#type: CallParsingEventStructure['type'] = Dictionary.TYPE_MANUAL;
 	#element: ?CallParsingEventStructure['c_element'];
 	#activityId: number;
+	#activityDirection: ?string;
 	#status: CallParsingEventStructure['status'];
 
 	static createDefault(
@@ -29,6 +32,20 @@ export class CallParsingEvent
 		return self;
 	}
 
+	setTool(tool: CallParsingEventStructure['tool']): CallParsingEvent
+	{
+		this.#tool = tool;
+
+		return this;
+	}
+
+	setCategory(category: CallParsingEventStructure['category']): CallParsingEvent
+	{
+		this.#category = category;
+
+		return this;
+	}
+
 	setType(type: CallParsingEventStructure['type']): CallParsingEvent
 	{
 		this.#type = type;
@@ -39,6 +56,13 @@ export class CallParsingEvent
 	setElement(element: ?CallParsingEventStructure['c_element']): CallParsingEvent
 	{
 		this.#element = element;
+
+		return this;
+	}
+
+	setActivityDirection(direction: 'incoming' | 'outgoing'): CallParsingEvent
+	{
+		this.#activityDirection = direction;
 
 		return this;
 	}
@@ -60,9 +84,16 @@ export class CallParsingEvent
 			return null;
 		}
 
+		if (this.#activityDirection !== 'incoming' && this.#activityDirection !== 'outgoing')
+		{
+			console.error('crm.integration.analytics: invalid activity direction', this.#activityDirection);
+
+			return null;
+		}
+
 		return filterOutNilValues({
-			tool: Dictionary.TOOL_AI,
-			category: Dictionary.CATEGORY_CRM_OPERATIONS,
+			tool: this.#tool,
+			category: this.#category,
 			event: Dictionary.EVENT_CALL_PARSING,
 			type: this.#type,
 			c_section: Dictionary.SECTION_CRM,
@@ -70,6 +101,7 @@ export class CallParsingEvent
 			c_element: this.#element,
 			status: this.#status,
 			p1: getCrmMode(),
+			p2: `callDirection_${this.#activityDirection}`,
 			p5: `idCall_${this.#activityId}`,
 		});
 	}

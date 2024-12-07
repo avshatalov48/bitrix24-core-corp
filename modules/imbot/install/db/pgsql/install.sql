@@ -11,6 +11,7 @@ CREATE TABLE b_im_bot_network_session (
 	DATE_LAST_ACTIVITY timestamp DEFAULT current_timestamp,
 	CLOSE_TERM int DEFAULT 1440,
 	TELEMETRY_SENT char(1) NOT NULL DEFAULT 'N',
+	STATUS varchar(50),
 	PRIMARY KEY (ID)
 );
 CREATE UNIQUE INDEX ux_b_im_bot_network_session_bot_id_dialog_id ON b_im_bot_network_session (bot_id, dialog_id);

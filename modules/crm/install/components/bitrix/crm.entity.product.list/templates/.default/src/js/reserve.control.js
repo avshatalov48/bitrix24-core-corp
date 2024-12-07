@@ -1,10 +1,12 @@
 import {Tag, Text, Loc, Event, Cache, Runtime, Dom} from 'main.core';
 import {EventEmitter, BaseEvent} from 'main.core.events';
 import { Row } from './product.list.row';
+import { ModeList } from 'catalog.store-enable-wizard';
 
 export default class ReserveControl
 {
 	static INPUT_NAME = 'INPUT_RESERVE_QUANTITY';
+	static VIEW_NAME = 'VIEW_RESERVE_QUANTITY';
 	static DATE_NAME = 'DATE_RESERVE_END';
 	static QUANTITY_NAME = 'QUANTITY';
 	static DEDUCTED_QUANTITY_NAME = 'DEDUCTED_QUANTITY';
@@ -19,12 +21,14 @@ export default class ReserveControl
 	{
 		this.#row = options.row;
 		this.inputFieldName = options.inputName || ReserveControl.INPUT_NAME;
+		this.viewName = ReserveControl.VIEW_NAME;
 		this.dateFieldName = options.dateFieldName || ReserveControl.DATE_NAME;
 		this.quantityFieldName = options.quantityFieldName || ReserveControl.QUANTITY_NAME;
 		this.deductedQuantityFieldName = options.deductedQuantityFieldName || ReserveControl.DEDUCTED_QUANTITY_NAME;
 		this.defaultDateReservation = options.defaultDateReservation || null;
 		this.isBlocked = options.isBlocked || false;
 		this.isInventoryManagementToolEnabled = options.isInventoryManagementToolEnabled || false;
+		this.inventoryManagementMode = options.inventoryManagementMode || '';
 		this.measureName = options.measureName;
 
 		this.isReserveEqualProductQuantity =
@@ -43,15 +47,18 @@ export default class ReserveControl
 		Dom.append(Tag.render`<div>${this.#getReserveInputNode()}</div>`, this.wrapper);
 		Event.bind(this.#getReserveInputNode().querySelector('input'), 'input', Runtime.debounce(this.onReserveInputChange, 800, this));
 
-		if (this.getReservedQuantity() > 0 || this.isReserveEqualProductQuantity)
+		if (!this.#isInventoryManagementMode1C())
 		{
-			this.#layoutDateReservation(this.getDateReservation());
+			if (this.getReservedQuantity() > 0 || this.isReserveEqualProductQuantity)
+			{
+				this.#layoutDateReservation(this.getDateReservation());
+			}
+
+			Dom.append(this.#getDateNode(), this.wrapper);
+
+			Event.bind(this.#getDateNode(), 'click', ReserveControl.#onDateInputClick.bind(this));
+			Event.bind(this.#getDateNode().querySelector('input'), 'change', this.onDateChange.bind(this));
 		}
-
-		Dom.append(this.#getDateNode(), this.wrapper);
-
-		Event.bind(this.#getDateNode(), 'click', ReserveControl.#onDateInputClick.bind(this));
-		Event.bind(this.#getDateNode().querySelector('input'), 'change', this.onDateChange.bind(this));
 	}
 
 	setReservedQuantity(value: Number, isTriggerEvent: ?Boolean)
@@ -153,7 +160,10 @@ export default class ReserveControl
 
 	isInputDisabled(): boolean
 	{
-		if (this.isBlocked || !this.isInventoryManagementToolEnabled)
+		if (
+			this.isBlocked
+			|| !this.isInventoryManagementToolEnabled
+		)
 		{
 			return true;
 		}
@@ -223,9 +233,24 @@ export default class ReserveControl
 	#getReserveInputNode(): HTMLElement
 	{
 		return this.#cache.remember('reserveInput', () => {
+			const viewReserveNode =
+				this.#isInventoryManagementMode1C()
+					? Tag.render`
+						<span>
+							<span data-name="${this.viewName}">
+								${this.getReservedQuantity()}
+							</span>
+							&nbsp;
+							${Text.encode(this.#row.getMeasureName())}
+						</span>
+					`
+					: null
+			;
+
 			const tag = Tag.render`
 				<div ${this.isInputDisabled() ? 'class="crm-entity-product-list-locked-field-wrapper"' : ''}>
-					<input type="text"
+					${viewReserveNode}
+					<input type="${this.#isInventoryManagementMode1C() ? 'hidden' : 'text'}"
 						data-name="${this.inputFieldName}"
 						name="${this.inputFieldName}"
 						class="ui-ctl-element ui-ctl-textbox ${this.isInputDisabled() ? 'crm-entity-product-list-locked-field' : ''}"
@@ -288,5 +313,10 @@ export default class ReserveControl
 		{
 			node.innerHTML = this.getReservedQuantity() + ' ' + Text.encode(this.measureName);
 		}
+	}
+
+	#isInventoryManagementMode1C(): boolean
+	{
+		return this.inventoryManagementMode === ModeList.MODE_1C;
 	}
 }

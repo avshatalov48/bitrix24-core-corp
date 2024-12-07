@@ -6,7 +6,6 @@ use Bitrix\Tasks\Integration\CRM\Timeline\BackGroundJob;
 
 class EventsController
 {
-	private bool $isImmediately = false;
 	private static ?EventsController $instance = null;
 	/** @var TimeLineEvent[] */
 	private static array $events = [];
@@ -46,21 +45,9 @@ class EventsController
 				$event->getPayload(),
 				$event->getEndpoint(),
 				$event->getPriority(),
-				$this->isImmediately(),
 			);
 			unset(self::$events[$key]);
 		}
-	}
-
-	public function isImmediately(): bool
-	{
-		return $this->isImmediately;
-	}
-
-	public function setImmediately(bool $isImmediately): static
-	{
-		$this->isImmediately = $isImmediately;
-		return $this;
 	}
 
 	private function __construct() {}

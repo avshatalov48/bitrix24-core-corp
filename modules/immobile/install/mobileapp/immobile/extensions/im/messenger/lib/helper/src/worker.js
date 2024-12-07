@@ -38,8 +38,13 @@ jn.define('im/messenger/lib/helper/worker', (require, exports, module) => {
 		stop()
 		{
 			clearInterval(this.tickIntervalId);
-
+			this.tickIntervalId = null;
 			this.isStarted = false;
+		}
+
+		isHasOnce()
+		{
+			return Boolean(this.tickIntervalId);
 		}
 
 		startOnce()

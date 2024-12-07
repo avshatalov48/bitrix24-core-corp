@@ -395,26 +395,35 @@ export class KanbanManager
 	{
 		this.fadeOutKanbans();
 
-		this.kanban.ajax({
-			action: 'applyFilter'
-		}, (data: Response) => {
-			this.refreshKanban(this.kanban, data);
-			this.cleanNeighborKanbans();
-			if (this.existsTasksGroupedBySubTasks(data))
-			{
-				Object.entries(data.parentTasks)
-					.forEach((parentTask) => {
-						const [, parentTaskData] = parentTask;
-						this.createParentTaskKanban(parentTaskData);
-					})
-				;
-			}
-			this.fillNeighborKanbans();
-			this.adjustGroupHeadersWidth();
-			this.fadeInKanbans();
-		}, (error) => {
-			this.fadeInKanbans();
-		});
+		this.kanban.ajax('applyFilter', {}).then(
+			(response) => {
+				const data = response.data;
+
+				if (this.kanban.differentColumnCount(data))
+				{
+					this.kanbanHeader.getColumns().forEach((column) => this.kanbanHeader.removeColumn(column));
+					this.kanban.getColumns().forEach((column) => this.kanban.removeColumn(column));
+					this.refreshKanban(this.kanbanHeader, data);
+				}
+
+				this.refreshKanban(this.kanban, data);
+				this.cleanNeighborKanbans();
+				if (this.existsTasksGroupedBySubTasks(data))
+				{
+					Object.entries(data.parentTasks)
+						.forEach((parentTask) => {
+							const [, parentTaskData] = parentTask;
+							this.createParentTaskKanban(parentTaskData);
+						})
+					;
+				}
+				this.fillNeighborKanbans();
+				this.adjustGroupHeadersWidth();
+				this.fadeInKanbans();
+			},
+			(response) => {
+				this.fadeInKanbans();
+			});
 	}
 
 	onChangeSprint(baseEvent: BaseEvent)
@@ -426,28 +435,29 @@ export class KanbanManager
 
 		this.kanban.setData(gridData);
 
-		this.kanban.ajax({
-			action: 'changeSprint'
-		}, (data: Response) => {
-			this.cleanNeighborKanbans();
-			this.kanbanHeader.getColumns().forEach((column) => this.kanbanHeader.removeColumn(column));
-			this.kanban.getColumns().forEach((column) => this.kanban.removeColumn(column));
+		this.kanban.ajax('changeSprint', {}).then(
+			(response) => {
+				const data = response.data;
+				this.cleanNeighborKanbans();
+				this.kanbanHeader.getColumns().forEach((column) => this.kanbanHeader.removeColumn(column));
+				this.kanban.getColumns().forEach((column) => this.kanban.removeColumn(column));
 
-			this.refreshKanban(this.kanbanHeader, data);
-			this.refreshKanban(this.kanban, data);
+				this.refreshKanban(this.kanbanHeader, data);
+				this.refreshKanban(this.kanban, data);
 
-			if (this.existsTasksGroupedBySubTasks(data))
-			{
-				Object.entries(data.parentTasks)
-					.forEach((parentTask) => {
-						const [, parentTaskData] = parentTask;
-						this.createParentTaskKanban(parentTaskData);
-					})
-				;
-			}
-			this.fillNeighborKanbans();
-			this.adjustGroupHeadersWidth();
-		}, (error) => {});
+				if (this.existsTasksGroupedBySubTasks(data))
+				{
+					Object.entries(data.parentTasks)
+						.forEach((parentTask) => {
+							const [, parentTaskData] = parentTask;
+							this.createParentTaskKanban(parentTaskData);
+						})
+					;
+				}
+				this.fillNeighborKanbans();
+				this.adjustGroupHeadersWidth();
+			}, (error) => {}
+		);
 	}
 
 	onItemUpdated(baseEvent: BaseEvent)

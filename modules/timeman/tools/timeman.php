@@ -102,7 +102,7 @@ if (check_bitrix_sessid() && $USER->IsAuthorized())
 			{
 				echo $clock1;
 				?>
-				<script type="text/javascript">BX.onCustomEvent('onTMClockRegister', [{<?=CUtil::JSEscape($_REQUEST['clock_id'] ?? '')?>:
+				<script>BX.onCustomEvent('onTMClockRegister', [{<?=CUtil::JSEscape($_REQUEST['clock_id'] ?? '')?>:
 					'<?=$clock_input_id_1?>'
 					}])</script><?
 			}
@@ -116,7 +116,7 @@ if (check_bitrix_sessid() && $USER->IsAuthorized())
 					 . $clock2 . str_replace('#TYPE#', 'end', $dateSelect)
 					 . '</td></tr></table>';
 				?>
-				<script type="text/javascript">BX.onCustomEvent('onTMClockRegister', [{<?=CUtil::JSEscape($_REQUEST['clock_id'] ?? '')?>:
+				<script>BX.onCustomEvent('onTMClockRegister', [{<?=CUtil::JSEscape($_REQUEST['clock_id'] ?? '')?>:
 					'<?=$clock_input_id_1?>',<?=CUtil::JSEscape($_REQUEST['clock_id_1'] ?? '')?>:
 					'<?=$clock_input_id_2?>'
 					}])</script><?
@@ -277,7 +277,7 @@ if (check_bitrix_sessid() && $USER->IsAuthorized())
 				$APPLICATION->RestartBuffer();
 				Header('Content-Type: text/html; charset=' . LANG_CHARSET);
 				?>
-				<script type="text/javascript">
+				<script>
 					window.parent.window['<?=CUtil::JSescape($_POST["form_id"])?>'].RefreshUpload(<?php echo CUtil::PhpToJsObject($arResult);?>, <?php echo intval($_POST["uniqueID"])?>);
 				</script>
 				<?
@@ -406,8 +406,6 @@ if (check_bitrix_sessid() && $USER->IsAuthorized())
 			}
 			else
 			{
-				CUtil::JSPostUnescape();
-
 				$error = false;
 				$bReturnRes = false;
 
@@ -789,6 +787,8 @@ if (check_bitrix_sessid() && $USER->IsAuthorized())
 						$curUser = $USER->GetID();
 						$toUser = intval($_POST["TO_USER"]);
 						$bSameUser = ($toUser == $curUser);
+						$action = $_POST['ACTION'] ?? '';
+						$active = $action === 'send' ? 'Y' : 'N';
 						if ($_POST['ACTIVE'])
 						{
 							if ($_POST['DELAY'] == "Y")
@@ -808,7 +808,7 @@ if (check_bitrix_sessid() && $USER->IsAuthorized())
 								"EVENTS" => is_string($_POST["EVENTS"] ?? null)
 									? CUtil::JsObjectToPhp($_POST["EVENTS"], true)
 									: null,
-								"ACTIVE" => $_POST["ACTIVE"],
+								"ACTIVE" => $active,
 								"REPORT" => $sanitizer->SanitizeHtml($_POST["REPORT"]),
 								"PLANS" => $sanitizer->SanitizeHtml($_POST["PLANS"]),
 							];
@@ -862,7 +862,6 @@ if (check_bitrix_sessid() && $USER->IsAuthorized())
 								{
 									$last_date = MakeTimeStamp($arFields["DATE_TO"]);
 									$last_date = ConvertTimeStampForReport($last_date, "SHORT");
-									$tm_user->SetLastDate($arReport["USER_ID"], $last_date);
 									$tm_user->CancelDelay();
 									if (!$bSameUser)
 									{
@@ -1021,6 +1020,7 @@ if (check_bitrix_sessid() && $USER->IsAuthorized())
 							'LAT_CLOSE' => isset($_REQUEST['lat']) ? doubleval($_REQUEST['lat']) : '',
 							'LON_CLOSE' => isset($_REQUEST['lon']) ? doubleval($_REQUEST['lon']) : '',
 							'DEVICE' => $device,
+							'RECORD_ID' =>  isset($_REQUEST['recordId']) ? (int)$_REQUEST['recordId'] : null,
 						]);
 
 						if ($res !== false && $bClose)
@@ -1348,6 +1348,7 @@ if (check_bitrix_sessid() && $USER->IsAuthorized())
 								'LAT_CLOSE' => isset($_REQUEST['lat']) ? doubleval($_REQUEST['lat']) : '',
 								'LON_CLOSE' => isset($_REQUEST['lon']) ? doubleval($_REQUEST['lon']) : '',
 								'DEVICE' => $device,
+								'RECORD_ID' =>  isset($_REQUEST['recordId']) ? (int)$_REQUEST['recordId'] : null,
 							]);
 						}
 						else
@@ -1361,6 +1362,7 @@ if (check_bitrix_sessid() && $USER->IsAuthorized())
 									'LON_CLOSE' => isset($_REQUEST['lon']) ? doubleval($_REQUEST['lon']) : '',
 									'DEVICE' => $device,
 									'CUSTOM_DATE' => isset($_REQUEST['customUserDate']) ? $_REQUEST['customUserDate'] : null,
+									'RECORD_ID' =>  isset($_REQUEST['recordId']) ? (int)$_REQUEST['recordId'] : null,
 								]
 							);
 						}
@@ -1412,6 +1414,7 @@ if (check_bitrix_sessid() && $USER->IsAuthorized())
 							'IP_OPEN' => $_SERVER['REMOTE_ADDR'],
 							'DEVICE' => $device,
 							'CUSTOM_DATE' => isset($_REQUEST['customUserDate']) ? $_REQUEST['customUserDate'] : null,
+							'RECORD_ID' =>  isset($_REQUEST['recordId']) ? (int)$_REQUEST['recordId'] : null,
 						]);
 						break;
 
@@ -1422,6 +1425,7 @@ if (check_bitrix_sessid() && $USER->IsAuthorized())
 							[
 								'action' => $_REQUEST['newActionName'] ?? null,
 								'DEVICE' => $device,
+								'RECORD_ID' =>  isset($_REQUEST['recordId']) ? (int)$_REQUEST['recordId'] : null,
 							]
 						);
 						break;
@@ -1432,6 +1436,7 @@ if (check_bitrix_sessid() && $USER->IsAuthorized())
 							'LON_CLOSE' => isset($_REQUEST['lon']) ? doubleval($_REQUEST['lon']) : '',
 							'IP_CLOSE' => $_SERVER['REMOTE_ADDR'],
 							'DEVICE' => $device,
+							'RECORD_ID' =>  isset($_REQUEST['recordId']) ? (int)$_REQUEST['recordId'] : null,
 						]);
 						break;
 
@@ -1946,7 +1951,7 @@ if (check_bitrix_sessid() && $USER->IsAuthorized())
 							$res['DEPARTMENTS'][] = $old_res['DEPARTMENTS'][$dpt_id];
 							foreach ($arDptUsers as $user_id)
 							{
-								if ($old_res['USERS'][$user_id])
+								if ($old_res['USERS'][$user_id] ?? null)
 								{
 									$old_res['USERS'][$user_id]['DEPARTMENT'] = $dpt_id;
 									$old_res['USERS'][$user_id]['HEAD'] =

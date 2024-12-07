@@ -2,7 +2,7 @@
 
 namespace Bitrix\Crm\Controller\Activity;
 
-use Bitrix\Crm\Binding\EntityBinding;
+use Bitrix\Crm\Component\EntityDetails\TimelineMenuBar\Communications;
 use Bitrix\Crm\Controller\Base;
 use Bitrix\Crm\Controller\ErrorCode;
 use Bitrix\Crm\Integration\Market\Router;
@@ -13,58 +13,26 @@ use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\MessageSender\Channel;
 use Bitrix\Crm\MessageSender\Channel\ChannelRepository;
 use Bitrix\Crm\MessageSender\SenderPicker;
-use Bitrix\Crm\Multifield\Type\Phone;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Factory;
+use Bitrix\Crm\Settings\Crm;
 use Bitrix\Intranet\ContactCenter;
 use Bitrix\Main\Application;
 use Bitrix\Main\Context;
 use Bitrix\Main\Error;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Main\PhoneNumber\Parser;
 use Bitrix\Main\Result;
 
 class GoToChat extends Base
 {
 	public function bindClientAction(Factory $factory, Item $entity, int $clientId, int $clientTypeId): ?array
 	{
-		if (!Container::getInstance()->getUserPermissions()->canUpdateItem($entity))
-		{
-			$this->addError(new Error(Loc::getMessage('CRM_ACCESS_DENIED')));
+		$clientIdentifier = new ItemIdentifier($clientTypeId, $clientId);
+		$clientBinder = Container::getInstance()->getClientBinder();
+		$result = $clientBinder->bind($factory, $entity, $clientIdentifier);
 
-			return null;
-		}
-
-		if ($clientTypeId === \CCrmOwnerType::Contact)
-		{
-			$contact = Container::getInstance()->getFactory(\CCrmOwnerType::Contact)->getItem($clientId);
-			if (!$contact)
-			{
-				$this->addError(new Error(Loc::getMessage('CRM_INVITATION_WRONG_CONTACT')));
-
-				return null;
-			}
-
-			$bindings = EntityBinding::prepareEntityBindings($clientTypeId, [$clientId]);
-			$entity->bindContacts($bindings);
-		}
-		else if ($clientTypeId === \CCrmOwnerType::Company)
-		{
-			$company = Container::getInstance()->getFactory(\CCrmOwnerType::Company)->getItem($clientId);
-			if (!$company)
-			{
-				$this->addError(new Error(Loc::getMessage('CRM_INVITATION_WRONG_COMPANY')));
-
-				return null;
-			}
-
-			$entity->setCompanyId($clientId);
-		}
-
-		$saveResult = $factory->getUpdateOperation($entity)->launch();
-
-		if ($saveResult->isSuccess())
+		if ($result->isSuccess())
 		{
 			$channels = $this->getChannels($entity->getEntityTypeId(), $entity->getId());
 
@@ -75,15 +43,7 @@ class GoToChat extends Base
 			];
 		}
 
-		$errors = $saveResult->getErrorCollection()->getValues();
-		if (empty($errors))
-		{
-			$this->addError(new Error(Loc::getMessage('CRM_INVITATION_CLIENT_BIND_ERROR')));
-		}
-		else
-		{
-			$this->addErrors($errors);
-		}
+		$this->addErrors($result->getErrors());
 
 		return null;
 	}
@@ -110,11 +70,20 @@ class GoToChat extends Base
 		$from = (string)($params['from'] ?? '');
 		$to = (int)($params['to'] ?? '');
 		$lineId = (string)($params['lineId'] ?? '');
+		$connectorId = (string)($params['connectorId'] ?? '');
 
 		$owner = new ItemIdentifier($ownerTypeId, $ownerId);
 
-		$goToChat = new \Bitrix\Crm\Integration\ImOpenLines\GoToChat($senderType, $senderChannelId);
-		$result = $goToChat->setOwner($owner)->send($from, $to, $lineId);
+		$goToChat = (new \Bitrix\Crm\Integration\ImOpenLines\GoToChat($senderType, $senderChannelId))
+			->setOwner($owner)
+		;
+
+		if (!empty($connectorId))
+		{
+			$goToChat->setConnectorId($connectorId);
+		}
+
+		$result = $goToChat->send($from, $to, $lineId);
 
 		if (!$result->isSuccess())
 		{
@@ -157,6 +126,8 @@ class GoToChat extends Base
 		$channels = $this->getChannels($entityTypeId, $entityId);
 		$currentChannelId = $this->getCurrentChannelId($channels);
 
+		$isBox = Crm::isBox();
+
 		return [
 			'region' => Application::getInstance()->getLicense()->getRegion() ?? Context::getCurrent()->getLanguage(),
 			'channels' => $channels,
@@ -166,6 +137,11 @@ class GoToChat extends Base
 			'openLineItems' => $this->getOpenLineItems(),
 			'contactCenterUrl' => Container::getInstance()->getRouter()->getContactCenterUrl(), // @todo for crmmobile
 			'marketplaceUrl' => Router::getBasePath() . 'category/crm_robot_sms/',
+			'services' => [
+				'telegrambot' => true,
+				'ru-whatsapp' => !$isBox,
+				'whatsapp' => !$isBox,
+			],
 		];
 	}
 
@@ -224,7 +200,7 @@ class GoToChat extends Base
 	{
 		foreach ($channels as $channel)
 		{
-			if ($channel['default'])
+			if ($channel['default'] && $channel['canUse'])
 			{
 				return $channel['id'];
 			}
@@ -240,8 +216,10 @@ class GoToChat extends Base
 			return [];
 		}
 
-		// @todo maybe leave only supported items?
-		$itemsList = (new ContactCenter())->imopenlinesGetItems()->getData();
+		$filter = [
+			'PRESERVE_NOTIFICATIONS_CONNECTOR' => Crm::isWhatsAppGoToChatEnabled(),
+		];
+		$itemsList = (new ContactCenter())->imopenlinesGetItems($filter)->getData();
 
 		$result = [];
 		foreach ($itemsList as $itemCode => $item)
@@ -319,127 +297,7 @@ class GoToChat extends Base
 
 	private function getCommunications(int $entityTypeId, int $entityId): array
 	{
-		$communications = SmsManager::getEntityPhoneCommunications($entityTypeId, $entityId);
-
-		$factory = Container::getInstance()->getFactory($entityTypeId);
-		$item = $factory->getItem($entityId);
-
-		$this->addPhonesFromContacts($communications, $item);
-		$this->addPhonesFromCompanies($communications, $item);
-		$this->addPhonesFromCompany($communications, $item);
-
-		return $communications;
-	}
-
-	private function addPhonesFromContacts(array &$communications, ?Item $item): void
-	{
-		if (!$item || !$item->hasField(Item::FIELD_NAME_CONTACT_BINDINGS))
-		{
-			return;
-		}
-
-		$contacts = $item->getContacts();
-		foreach ($contacts as $contact)
-		{
-			$clientEntityTypeId = \CCrmOwnerType::Contact;
-			$clientEntityId = $contact->getId();
-			$canReadClient = Container::getInstance()->getUserPermissions()->checkReadPermissions($clientEntityTypeId, $clientEntityId);
-
-			if (!$canReadClient)
-			{
-				continue;
-			}
-
-			$this->appendClientPhones($communications, \CCrmOwnerType::Contact, $contact);
-		}
-	}
-
-	private function addPhonesFromCompanies(array &$communications, ?Item $item): void
-	{
-		if (
-			!$item
-			|| $item->getEntityTypeId() !== \CCrmOwnerType::Contact
-			|| !$item->hasField(Item\Contact::FIELD_NAME_COMPANY_BINDINGS)
-		)
-		{
-			return;
-		}
-
-		/** @var Item\Contact $item */
-		$companies = $item->getCompanies();
-		foreach ($companies as $company)
-		{
-			$clientEntityTypeId = \CCrmOwnerType::Company;
-			$clientEntityId = $company->getId();
-			$canReadClient = Container::getInstance()->getUserPermissions()->checkReadPermissions($clientEntityTypeId, $clientEntityId);
-
-			if (!$canReadClient)
-			{
-				continue;
-			}
-
-			$this->appendClientPhones($communications, \CCrmOwnerType::Company, $company);
-		}
-	}
-
-	private function addPhonesFromCompany(array &$communications, ?Item $item): void
-	{
-		if (!$item || !$item->hasField(Item::FIELD_NAME_COMPANY))
-		{
-			return;
-		}
-
-		$company = $item->getCompany();
-		if($company)
-		{
-			$clientEntityTypeId = \CCrmOwnerType::Contact;
-			$clientEntityId = $company->getId();
-			$canReadCompany = Container::getInstance()->getUserPermissions()->checkReadPermissions($clientEntityTypeId, $clientEntityId);
-
-			if($canReadCompany)
-			{
-				$this->appendClientPhones($communications, \CCrmOwnerType::Company, $company);
-			}
-		}
-	}
-
-	private function appendClientPhones(array &$communications, int $entityTypeId, $client): void
-	{
-		$clientId = $client->getId();
-		$clientTypeName = \CCrmOwnerType::ResolveName($entityTypeId);
-		$clientInfo = \CCrmEntitySelectorHelper::PrepareEntityInfo($clientTypeName, $clientId);
-
-		if (isset($clientInfo['ADVANCED_INFO']['MULTI_FIELDS']))
-		{
-			$communication = [
-				'entityId' => $clientId,
-				'entityTypeId' => $entityTypeId,
-				'entityTypeName' => $clientTypeName,
-				'caption' => (
-					$entityTypeId === \CCrmOwnerType::Contact
-						? $client->getFormattedName()
-						: $client->getTitle()
-				),
-			];
-
-			$multiFieldEntityTypes = \CCrmFieldMulti::GetEntityTypes();
-			foreach ($clientInfo['ADVANCED_INFO']['MULTI_FIELDS'] as $mf)
-			{
-				if ($mf['TYPE_ID'] !== Phone::ID)
-				{
-					continue;
-				}
-
-				$communication['phones'][] = [
-					'value' => $mf['VALUE'],
-					'valueFormatted' => Parser::getInstance()->parse($mf['VALUE'])->format(),
-					'type' => $mf['VALUE_TYPE'],
-					'typeLabel' => $multiFieldEntityTypes[Phone::ID][$mf['VALUE_TYPE']]['SHORT'],
-					'id' => $mf['ENTITY_ID'],
-				];
-			}
-			$communications[] = $communication;
-		}
+		return (new Communications($entityTypeId, $entityId))->get();
 	}
 
 	private function validateEntity(int $entityTypeId, int $entityId): Result

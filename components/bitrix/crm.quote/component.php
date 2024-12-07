@@ -171,6 +171,7 @@ else
 }
 
 $arResult['PATH_TO_QUOTE_DETAILS'] = Container::getInstance()->getRouter()->getItemDetailUrlCompatibleTemplate(\CCrmOwnerType::Quote);
+$arResult['PATH_TO_MERGE'] = Container::getInstance()->getRouter()->getEntityMergeUrl(CCrmOwnerType::Quote);
 
 $arResult = array_merge(
 	[

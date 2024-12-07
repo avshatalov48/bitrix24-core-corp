@@ -30,13 +30,11 @@ if (CModule::IncludeModule('bitrix24') && !\Bitrix\Crm\CallList\CallList::isAvai
 	CBitrix24::initLicenseInfoPopupJS();
 }
 
-\Bitrix\Main\UI\Extension::load('ui.fonts.opensans');
+\Bitrix\Main\UI\Extension::load(['ui.fonts.opensans', 'crm.autorun']);
 
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/progress_control.js');
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/activity.js');
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/interface_grid.js');
-Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/autorun_proc.js');
-Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/js/crm/css/autorun_proc.css');
 ?><div id="rebuildMessageWrapper"><?
 
 if (!empty($arResult['NEED_FOR_REBUILD_SEARCH_CONTENT']))
@@ -318,7 +316,7 @@ if ($arResult['IS_AJAX_CALL'])
 	function OnCrmCrmOrderShipmentListAfterAjaxHandlerParams()
 	{
 		?>
-		<script type="text/javascript">
+		<script>
 			BX.ready(function(){
 				if (typeof(BX.CrmOrderStatusManager) === 'function')
 				{
@@ -409,7 +407,7 @@ $APPLICATION->IncludeComponent(
 if (!$arResult['IS_AJAX_CALL'])
 {
 	?>
-	<script type="text/javascript">
+	<script>
 		BX.ready(function ()
 		{
 			if (typeof(BX.CrmOrderStatusManager) === 'function')
@@ -423,7 +421,7 @@ if (!$arResult['IS_AJAX_CALL'])
 if ($isInternal && (int)$arParams['INTERNAL_FILTER']['ORDER_ID'] > 0)
 {
 	?>
-	<script type="text/javascript">
+	<script>
 		BX.ready(
 			function()
 			{

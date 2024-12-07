@@ -36,6 +36,7 @@ jn.define('tasks/layout/task/create', (require, exports, module) => {
 	const { Type } = require('type');
 	const { AnalyticsLabel } = require('analytics-label');
 	const { RequestExecutor } = require('rest');
+	const { RunActionExecutor } = require('rest/run-action-executor');
 
 	const fieldHeight = 66;
 
@@ -231,7 +232,6 @@ jn.define('tasks/layout/task/create', (require, exports, module) => {
 			this.task.updateData({
 				creator: this.currentUser,
 				responsible: this.currentUser,
-				deadline: this.getPredefinedDeadline(),
 				...this.initialTaskData,
 			});
 
@@ -249,19 +249,6 @@ jn.define('tasks/layout/task/create', (require, exports, module) => {
 			setTimeout(() => this.setState({ focus: null }));
 		}
 
-		getPredefinedDeadline()
-		{
-			const { workTime, serverOffset, clientOffset } = CalendarSettings;
-			const { hours, minutes } = workTime[0].end;
-
-			const deadline = new Date();
-			deadline.setSeconds(serverOffset - clientOffset, 0);
-			deadline.setHours(hours, minutes, clientOffset - serverOffset);
-			deadline.setDate(deadline.getDate() + 7);
-
-			return deadline;
-		}
-
 		getCurrentUserData()
 		{
 			return new Promise((resolve) => {
@@ -271,13 +258,13 @@ jn.define('tasks/layout/task/create', (require, exports, module) => {
 
 					return;
 				}
-				(new RequestExecutor('tasksmobile.User.getUsersData', { userIds: [env.userId] }))
-					.call()
-					.then((response) => {
-						this.currentUser = response.result[env.userId];
+				(new RunActionExecutor('tasksmobile.User.getCurrentUserDataLegacy'))
+					.setHandler((response) => {
+						this.currentUser = response.data;
 						resolve();
 					})
-					.catch(console.error);
+					.call(false)
+				;
 			});
 		}
 

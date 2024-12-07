@@ -103,7 +103,7 @@ $APPLICATION->IncludeComponent(
 	$component
 );
 ?>
-<script type="text/javascript">
+<script>
 	function crm_vat_delete_grid(title, message, btnTitle, path)
 	{
 		var d =
@@ -152,7 +152,7 @@ if ($arResult['VAT_MODE']) :
 		</div>
 		<div class="crm-dup-control-type-info" style="margin-top: 10px; max-width: none;"><?= htmlspecialcharsbx(GetMessage('CRM_PRODUCT_ROW_TAX_UNIFORM_ALERT')) ?></div>
 	</form>
-	<script type="text/javascript">
+	<script>
 		BX.ready(function () {
 			var form =BX('<?=$formId?>');
 			var check = BX('<?=$checkBoxId?>');

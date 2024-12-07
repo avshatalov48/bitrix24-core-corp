@@ -15,7 +15,7 @@ class InvitationWidget extends Engine\Controller
 	{
 		$configureActions = parent::configureActions();
 
-		$accessControl = new Intranet\ActionFilter\InviteAccessControl();
+		$accessControl = new Intranet\ActionFilter\InviteIntranetAccessControl();
 		$configureActions['saveInvitationRight'] = [
 			'+prefilters' => [
 				$accessControl

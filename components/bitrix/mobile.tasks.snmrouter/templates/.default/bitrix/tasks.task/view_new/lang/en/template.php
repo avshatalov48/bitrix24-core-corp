@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["MB_TASKS_ADD_COMMENT_FIRST"] = "Leave a comment to the task";
 $MESS["MB_TASKS_BASE_SETTINGS"] = "Main task parameters";
 $MESS["MB_TASKS_BASE_SETTINGS_DESCRIPTION"] = "things to do";
@@ -58,7 +58,7 @@ $MESS["MB_TASKS_TASK_SETTINGS_MARK_N"] = "Negative";
 $MESS["MB_TASKS_TASK_SETTINGS_MARK_NULL"] = "No score";
 $MESS["MB_TASKS_TASK_SETTINGS_MARK_P"] = "Positive";
 $MESS["MB_TASKS_TASK_SETTINGS_PARENT_ID"] = "parent task";
-$MESS["MB_TASKS_TASK_SETTINGS_RESPONSIBLE"] = "responsible person";
+$MESS["MB_TASKS_TASK_SETTINGS_RESPONSIBLE_MSGVER_1"] = "assignee";
 $MESS["MB_TASKS_TASK_SETTINGS_STATUS"] = "status";
 $MESS["MB_TASKS_TASK_SETTINGS_SUBTASKS"] = "subtasks";
 $MESS["MB_TASKS_TASK_SETTINGS_TAGS"] = "tags";
@@ -87,4 +87,3 @@ $MESS["TASKS_TT_ERROR1_DESC"] = "You are currently tracking time for the task \"
 $MESS["TASKS_TT_ERROR1_TITLE"] = "Time tracker is now being used with another task.";
 $MESS["TASKS_TT_PAUSE"] = "Stop";
 $MESS["TASKS_TT_START"] = "Start time tracker";
-?>

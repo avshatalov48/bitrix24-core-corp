@@ -111,7 +111,7 @@ $isTrashcan = ($arResult['INDICATOR'] === \Bitrix\Disk\Volume\FileDeleted::getIn
 	?>
 </div>
 
-<script type="text/javascript">
+<script>
 	BX(function () {
 
 		var goToFolder = function(event){

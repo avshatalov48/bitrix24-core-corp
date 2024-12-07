@@ -10,3 +10,5 @@ $this->__component->tryParseStringParameter($arParams['INPUT_PREFIX'], '');
 
 // $arResult['TEMPLATE_DATA'] // contains data generated in result_modifier.php
 // $arResult['JS_DATA'] // everything you put here, will be accessible inside js controller through this.option('keyName')
+
+$arResult['JS_DATA']['timeTrackingRestrict'] = $arResult['TIME_TRACKING_RESTRICT'];

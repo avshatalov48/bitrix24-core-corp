@@ -1,31 +1,32 @@
 /**
+ * Attention!
+ * This file is generated automatically from the apptheme generator
+ * Any manual changes to this file are not allowed.
+ */
+
+/**
  * @module tokens/src/indent
- * @return String
  */
 jn.define('tokens/src/indent', (require, exports, module) => {
-	const IndentTypes = Object.freeze({
-		XL4: 'XL4',
-		XL3: 'XL3',
-		XL2: 'XL2',
-		XL: 'XL',
-		L: 'L',
-		M: 'M',
-		S: 'S',
-		XS: 'XS',
-		XS2: 'XS2',
-	});
+	const AppTheme = require('apptheme');
+	const { BaseEnum } = require('utils/enums/base');
 
-	const Indent = Object.freeze({
-		[IndentTypes.XL4]: 24,
-		[IndentTypes.XL3]: 18,
-		[IndentTypes.XL2]: 12,
-		[IndentTypes.XL]: 12,
-		[IndentTypes.L]: 10,
-		[IndentTypes.M]: 8,
-		[IndentTypes.S]: 6,
-		[IndentTypes.XS]: 4,
-		[IndentTypes.XS2]: 2,
-	});
+	/**
+	 * @class Indent
+	 * @extends {BaseEnum<Indent>}
+	 */
+	class Indent extends BaseEnum
+	{}
 
-	module.exports = { Indent, IndentTypes };
+	Indent.XL4 = new Indent('XL4', AppTheme.styles.indentXL4);
+	Indent.XL3 = new Indent('XL3', AppTheme.styles.indentXL3);
+	Indent.XL2 = new Indent('XL2', AppTheme.styles.indentXL2);
+	Indent.XL = new Indent('XL', AppTheme.styles.indentXL);
+	Indent.L = new Indent('L', AppTheme.styles.indentL);
+	Indent.M = new Indent('M', AppTheme.styles.indentM);
+	Indent.S = new Indent('S', AppTheme.styles.indentS);
+	Indent.XS = new Indent('XS', AppTheme.styles.indentXS);
+	Indent.XS2 = new Indent('XS2', AppTheme.styles.indent2XS);
+
+	module.exports = { Indent };
 });

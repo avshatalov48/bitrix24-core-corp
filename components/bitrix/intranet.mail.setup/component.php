@@ -191,7 +191,7 @@ switch ($arResult['STEP'])
 		$response = array(
 			'result' => $error === false ? 'ok' : 'error',
 			'unseen' => $unseen,
-			'error'  => CharsetConverter::ConvertCharset($error, SITE_CHARSET, 'UTF-8')
+			'error'  => $error,
 		);
 
 		header('Content-Type: application/x-javascript; charset='.LANG_CHARSET);

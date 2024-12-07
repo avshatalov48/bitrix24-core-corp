@@ -3,6 +3,7 @@
 
 	const AppTheme = require('apptheme');
 	const colorUtils = require('utils/color');
+	const { ContextMenu } = require('layout/ui/context-menu');
 	const platform = Application.getPlatform();
 	const caches = new Map();
 
@@ -1096,7 +1097,8 @@
 					callback: () => this.list.showSearchBar(),
 				},
 				{
-					type: (this.filter.getRequestInitiatingType() ? 'more_active' : 'more'),
+					type: 'more',
+					accent: Boolean(this.filter.getRequestInitiatingType()),
 					badgeCode: `projectMemberList_${this.userId}`,
 					callback: () => this.moreMenu.show(),
 				},

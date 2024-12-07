@@ -21,12 +21,10 @@ trait HasOrderDetailsContentBlock
 {
 	public function getOrderDetailsContentBlock(array $options = []): ContentBlock\LineOfTextBlocks
 	{
-		$result = new ContentBlock\LineOfTextBlocks();
-
 		$blockData = $this->getOrderDetailsContentBlockData();
 		if (!$blockData)
 		{
-			return $result;
+			return new ContentBlock\LineOfTextBlocks();
 		}
 
 		$id = $blockData['ID'] ?? 0;
@@ -34,12 +32,18 @@ trait HasOrderDetailsContentBlock
 		$date = $blockData['DATE'] ?? null;
 
 		$title = Loc::getMessage(
-			'CRM_TIMELINE_ECOMMERCE_ORDER_ENTITY_TITLE',
+			'CRM_TIMELINE_ECOMMERCE_ORDER_ENTITY_TITLE_MSGVER_1',
 			[
 				'#NUMBER#' => empty($accountNumber) ? $id : $accountNumber,
 				'#DATE#' => $date,
 			]
 		);
+
+		$pregMatchResult = null;
+		preg_match('/\<a\>(.*)\<\/a\>/', $title, $pregMatchResult);
+		[$linkNumberAndDate, $numberAndDate] = $pregMatchResult;
+		$title = str_replace($linkNumberAndDate, '#NUMBER_AND_DATE#', $title);
+
 		$entityNameBlock =
 			(new ContentBlock\Text())
 				->setValue(Loc::getMessage('CRM_TIMELINE_ECOMMERCE_ORDER_ENTITY_NAME'))
@@ -52,54 +56,35 @@ trait HasOrderDetailsContentBlock
 				->setFontSize(ContentBlock\Text::FONT_SIZE_SM)
 				->setColor(ContentBlock\Text::COLOR_BASE_70)
 			;
-			$titleBlock = (new ContentBlock\Link())
-				->setValue($title)
+			$numberAndDateBlock = (new ContentBlock\Link())
+				->setValue($numberAndDate)
 				->setAction($action)
 			;
 		}
 		else
 		{
 			$entityNameBlock->setColor(ContentBlock\Text::COLOR_BASE_90);
-			$titleBlock = (new ContentBlock\Text())
-				->setValue($title)
+			$numberAndDateBlock = (new ContentBlock\Text())
+				->setValue($numberAndDate)
 				->setColor(ContentBlock\Text::COLOR_BASE_90)
 			;
 		}
 
-		$result
-			->addContentBlock('entityName', $entityNameBlock)
-			->addContentBlock('title', $titleBlock)
-		;
-
 		$price = $blockData['PRICE'] ?? null;
 		$currency = $blockData['CURRENCY'] ?? null;
-		if ($price && $currency)
-		{
-			$amountBlocks = ContentBlockFactory::getBlocksFromTemplate(
-				Loc::getMessage('CRM_TIMELINE_ECOMMERCE_FOR_AMOUNT'),
-				[
-					'#AMOUNT#' => (new ContentBlock\Money())
-						->setOpportunity((float)$price)
-						->setCurrencyId((string)$currency)
-					,
-				]
-			);
+		$amountBlock = (new ContentBlock\Money())
+			->setOpportunity((float)$price)
+			->setCurrencyId((string)$currency)
+		;
 
-			foreach ($amountBlocks as $index => $amountBlock)
-			{
-				if (!$amountBlock instanceof ContentBlock\TextPropertiesInterface)
-				{
-					continue;
-				}
-
-				$result->addContentBlock(
-					'amountBlock' . $index,
-					$amountBlock->setColor(ContentBlock\Text::COLOR_BASE_90)
-				);
-			}
-		}
-
-		return $result;
+		return ContentBlockFactory::createLineOfTextFromTemplate(
+			$title,
+			[
+				'#NAME#' => $entityNameBlock,
+				'#NUMBER_AND_DATE#' => $numberAndDateBlock,
+				'#AMOUNT#' => $amountBlock,
+			],
+		);
 	}
 
 	abstract protected function getAssociatedEntityModel(): ?AssociatedEntityModel;

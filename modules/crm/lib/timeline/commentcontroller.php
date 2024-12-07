@@ -3,14 +3,11 @@
 namespace Bitrix\Crm\Timeline;
 
 use Bitrix\Crm\Format\TextHelper;
+use Bitrix\Crm\Integration\Disk\AttachedObjectService;
 use Bitrix\Crm\ItemIdentifier;
-use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Timeline\Context;
 use Bitrix\Disk\AttachedObject;
-use Bitrix\Disk\Driver;
 use Bitrix\Disk\File;
-use Bitrix\Disk\TypeFile;
-use Bitrix\Disk\Uf\FileUserType;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
@@ -44,7 +41,9 @@ class CommentController extends EntityController
 			self::$parser = new \CTextParser();
 		}
 
+		//@codingStandardsIgnoreStart
 		self::$parser->arUserfields = array();
+		//@codingStandardsIgnoreEnd
 
 		return self::$parser;
 	}
@@ -127,78 +126,7 @@ class CommentController extends EntityController
 
 	private static function loadFilesData(array $ids, int $ownerId, int $ownerTypeId): array
 	{
-		$userId = Container::getInstance()->getContext()->getUserId();
-
-		$values = $ids;
-
-		$files = [];
-		$driver = Driver::getInstance();
-		$urlManager = $driver->getUrlManager();
-		$userFieldManager = $driver->getUserFieldManager();
-
-		$userFieldManager->loadBatchAttachedObject($values);
-		foreach ($values as $id)
-		{
-			$attachedModel = null;
-			[$type, $realValue] = FileUserType::detectType($id);
-			if (empty($realValue) || $realValue <= 0)
-			{
-				continue;
-			}
-
-			if ($type === FileUserType::TYPE_NEW_OBJECT)
-			{
-				$fileModel = File::loadById($realValue);
-				if (!$fileModel || !$fileModel->canRead($fileModel->getStorage()->getCurrentUserSecurityContext()))
-				{
-					continue;
-				}
-			}
-			else
-			{
-				$attachedModel = $userFieldManager->getAttachedObjectById($realValue);
-				if (!$attachedModel)
-				{
-					continue;
-				}
-
-				$attachedModel->setOperableEntity(array(
-					'ENTITY_ID' => $ownerTypeId,
-					'ENTITY_VALUE_ID' => $ownerId,
-				));
-
-				$fileModel = $attachedModel->getFile();
-			}
-
-			$securityContext = $fileModel->getStorage()->getCurrentUserSecurityContext();
-
-			$name = $fileModel->getName();
-			$data = [
-				'ID' => $id,
-				'NAME' => $name,
-				'SIZE' => $fileModel->getSize(),
-				'FILE_ID' => $fileModel->getFileId(),
-				'CAN_READ' => (
-					$attachedModel
-						? $attachedModel->canRead($userId)
-						: $fileModel->canRead($securityContext)
-				),
-				'VIEW_URL' => $urlManager::getUrlUfController('show', ['attachedId' => $id]),
-			];
-
-			if (TypeFile::isImage($fileModel) || TypeFile::isVideo($fileModel))
-			{
-				$data['VIEW_URL'] = (
-					$attachedModel === null
-						? $urlManager->getUrlForShowFile($fileModel)
-						: $urlManager::getUrlUfController('show', ['attachedId' => $id])
-				);
-			}
-
-			$files[] = $data;
-		}
-
-		return $files;
+		return AttachedObjectService::loadFilesData($ids, $ownerId, $ownerTypeId);
 	}
 
 	public static function convertToHtml(array $data, array $options = null)
@@ -229,12 +157,15 @@ class CommentController extends EntityController
 				{
 					$parser->LAZYLOAD = 'Y';
 				}
-
+				//@codingStandardsIgnoreStart
 				$parser->arUserfields = $fileFields;
+				//@codingStandardsIgnoreEnd
 			}
 		}
-		
+
+		//@codingStandardsIgnoreStart
 		$parser->bMobile = (($options['MOBILE'] ?? null) === 'Y');
+		//@codingStandardsIgnoreEnd
 		$data['TEXT'] = $parser::clearAllTags($data['COMMENT']);
 		if (self::$parser instanceof \blogTextParser)
 		{
@@ -294,7 +225,7 @@ class CommentController extends EntityController
 
 	public static function getMentionIds($text)
 	{
-		preg_match_all("/\[user\s*=\s*([^\]]*)\](.+?)\[\/user\]/is" . BX_UTF_PCRE_MODIFIER, $text, $mentionList);
+		preg_match_all("/\[user\s*=\s*([^\]]*)\](.+?)\[\/user\]/isu", $text, $mentionList);
 		$mentionList = $mentionList[1];
 		if (empty($mentionList) || !is_array($mentionList))
 			return array();
@@ -395,9 +326,9 @@ class CommentController extends EntityController
 				$entityName = \CCrmOwnerType::ResolveName($data['ENTITY_TYPE_ID']);
 			}
 			$genderSuffix = "";
-			if ($arUser = $userDB->Fetch())
+			if ($user = $userDB->Fetch())
 			{
-				switch ($arUser["PERSONAL_GENDER"])
+				switch ($user["PERSONAL_GENDER"])
 				{
 					case "M":
 						$genderSuffix = "_M";
@@ -417,15 +348,33 @@ class CommentController extends EntityController
 			{
 				$phrase = "CRM_ENTITY_TITLE_" . \CCrmOwnerType::InvoiceName;
 			}
-			$entityTitle = Loc::getMessage($phrase, ["#ENTITY_NAME#" => $nameLink]);
-			if (!$entityTitle)
-			{
-				$entityTitle = Loc::getMessage($phrase . '_MSGVER_1', ["#ENTITY_NAME#" => $nameLink]);
-			}
-			$message = Loc::getMessage("CRM_COMMENT_IM_MENTION_POST" . $genderSuffix, [
-				"#COMMENT#" => $cuttedComment,
-				"#ENTITY_TITLE#" => $entityTitle
-			]);
+
+			$notifyMessageCallback = static function (?string $languageId = null) use (
+				$genderSuffix,
+				$nameLink,
+				$cuttedComment,
+				$phrase,
+			) {
+				$entityTitle = Loc::getMessage($phrase, ["#ENTITY_NAME#" => $nameLink], $languageId);
+				if (!$entityTitle)
+				{
+					$entityTitle = Loc::getMessage(
+						$phrase . '_MSGVER_1',
+						["#ENTITY_NAME#" => $nameLink],
+						$languageId,
+					);
+				}
+
+				return Loc::getMessage(
+					"CRM_COMMENT_IM_MENTION_POST" . $genderSuffix,
+					[
+						"#COMMENT#" => $cuttedComment,
+						"#ENTITY_TITLE#" => $entityTitle
+					],
+					$languageId,
+				);
+			};
+
 			$oldMentionList = $data['OLD_MENTION_LIST'] ?? [];
 			foreach ($mentionList as $mentionId)
 			{
@@ -440,7 +389,7 @@ class CommentController extends EntityController
 					'NOTIFY_MODULE' => 'crm',
 					'NOTIFY_EVENT' => 'mention',
 					'NOTIFY_TAG' => 'CRM|MESSAGE_TIMELINE_MENTION|' . $id,
-					'NOTIFY_MESSAGE' => $message
+					'NOTIFY_MESSAGE' => $notifyMessageCallback
 				));
 			}
 		}
@@ -451,7 +400,7 @@ class CommentController extends EntityController
 		$data['HAS_FILES'] = $data['SETTINGS']['HAS_FILES'] ?? 'N';
 		if (
 			$data['HAS_FILES'] === 'Y'
-			&& preg_match("/\\[(\\/?)(file|document id|disk file id)(.*?)\\]/is".BX_UTF_PCRE_MODIFIER, $data['COMMENT'])
+			&& preg_match("/\\[(\\/?)(file|document id|disk file id)(.*?)\\]/isu", $data['COMMENT'])
 		)
 		{
 			$data['HAS_INLINE_ATTACHMENT'] = 'Y';

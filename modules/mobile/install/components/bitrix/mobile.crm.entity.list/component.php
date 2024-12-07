@@ -101,7 +101,6 @@ if(CCrmOwnerType::ContactName == $effectiveEntityType)
 	$filter = [];
 	if(isset($_REQUEST["search"]))
 	{
-		CUtil::JSPostUnescape();
 		$v = trim($_REQUEST["search"]);
 		if (!empty($v))
 		{
@@ -239,7 +238,6 @@ if (CCrmOwnerType::CompanyName == $effectiveEntityType)
 	$filter = array();
 	if(isset($_REQUEST["search"]))
 	{
-		CUtil::JSPostUnescape();
 		$v = trim($_REQUEST["search"]);
 		if (!empty($v))
 		{
@@ -359,7 +357,6 @@ if(CCrmOwnerType::LeadName == $effectiveEntityType)
 	$filter = array();
 	if(isset($_REQUEST["search"]))
 	{
-		CUtil::JSPostUnescape();
 		$v = trim($_REQUEST["search"]);
 		if (!empty($v))
 		{
@@ -473,7 +470,6 @@ if(CCrmOwnerType::DealName == $effectiveEntityType)
 	$filter = array();
 	if(isset($_REQUEST["search"]))
 	{
-		CUtil::JSPostUnescape();
 		$v = trim($_REQUEST["search"]);
 		if (!empty($v))
 		{
@@ -539,7 +535,6 @@ if(CCrmOwnerType::QuoteName == $effectiveEntityType)
 	$filter = array();
 	if(isset($_REQUEST["search"]))
 	{
-		CUtil::JSPostUnescape();
 		$v = trim($_REQUEST["search"]);
 		if (!empty($v))
 		{

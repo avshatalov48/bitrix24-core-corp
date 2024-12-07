@@ -1,0 +1,20 @@
+.recyclebin-list-grid-panel {
+	border-bottom: 3px var(--ui-color-palette-gray-05) solid;
+	background: #fff8d5;
+	transition: opacity 0.4s ease-in-out;
+	padding: 11px 0;
+}
+
+.recyclebin-list-grid-panel.--hidden{
+	opacity: 0;
+}
+
+.recyclebin-list-grid-panel-row{
+	padding: 5px 16px 0;
+	font-size: var(--ui-font-size-sm);
+	color: var(--ui-color-palette-gray-90);
+}
+
+.recyclebin-list-grid-panel .ui-progressbar-text-after{
+	cursor: pointer;
+}

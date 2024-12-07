@@ -11,5 +11,5 @@ return array(
 		'/bitrix/js/disk/document/local.js',
 	],
 	'css' => '/bitrix/js/disk/document/style.css',
-	'rel' => ['disk', 'disk_information_popups', 'ui.viewer', 'im_desktop_utils'],
+	'rel' => ['disk', 'disk_information_popups', 'ui.viewer', 'im_desktop_utils', 'intranet.desktop-download'],
 );

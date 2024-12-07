@@ -10,10 +10,12 @@ $MESS["INTRANET_SETTINGS_FIELD_LABEL_USERS_TO_INVITE"] = 'Разрешить в�
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_SHOW_QUIT_EMPLOYEE"] = 'Показывать уволенных в списке сотрудников';
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_SHOW_MESSAGE_NEW_EMPLOYEE"] = 'Показывать сообщение о новом сотруднике';
 $MESS["INTRANET_SETTINGS_FIELD_LABEL_SHOW_MESSAGE_NEW_EMPLOYEE_LF"] = 'Добавлять в ленту новостей запись о новом сотруднике';
-
+$MESS["INTRANET_SETTINGS_FIELD_LABEL_SHOW_MESSAGE_COMPANY_PULSE"] = 'Пульс компании';
+$MESS["INTRANET_SETTINGS_FIELD_LABEL_SHOW_WIDGET"] = 'Виджет будет показывать активность использования Битрикс24 в вашей компании — как часто сотрудники ставят задачи, пишут сообщения, заходят в мобильное приложение. [helpdesklink]Подробнее[/helpdesklink]';
 
 $MESS["INTRANET_SETTINGS_SECTION_TITLE_INVITE"] = 'Приглашения';
 $MESS["INTRANET_SETTINGS_SECTION_TITLE_PROFILE"] = 'Профиль сотрудника';
+$MESS["INTRANET_SETTINGS_SECTION_TITLE_ADDITIONAL"] = 'Дополнительные настройки';
 $MESS["INTRANET_SETTINGS_FIELD_HINT_FAST_REQ_ON_MSGVER_1"] = 'Пользователи могут регистрироваться по ссылке. #MORE_DETAILS#';
 $MESS["INTRANET_SETTINGS_FIELD_HINT_USERS_TO_INVITE_ON"] = 'Все сотрудники могут приглашать в Битрикс24. При выключенной настройке приглашать пользователей может только администратор.';
 $MESS["INTRANET_SETTINGS_FIELD_HINT_TITLE_BIRTH_YEAR"] = 'Как будет выглядеть дата рождения';

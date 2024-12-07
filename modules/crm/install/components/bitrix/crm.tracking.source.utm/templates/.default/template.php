@@ -96,7 +96,7 @@ use Bitrix\Main\UI\Extension;
 	</form>
 </div>
 
-<script type="text/javascript">
+<script>
 	BX.ready(function () {
 		var title = BX('crm-analytics-utm-editor-addition-title');
 		var block = BX('crm-analytics-utm-editor-addition');

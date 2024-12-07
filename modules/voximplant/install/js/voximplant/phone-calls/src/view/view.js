@@ -82,6 +82,7 @@ const lsKeys = {
 	callView: 'bx-vox-call-view',
 	callInited: 'viInitedCall',
 	externalCall: 'viExternalCard',
+	currentCall: 'bx-vox-current-call',
 };
 
 export const desktopEvents = {
@@ -3844,13 +3845,13 @@ export class PhoneCallView
 
 	autoCloseAfterTimeout()
 	{
-		console.log('Auto close after timeout', this.commentShown, this.autoCloseTimer, BX.localStorage.get(lsKeys.callInited));
+		console.log('Auto close after timeout', this.commentShown, this.autoCloseTimer, BX.localStorage.get(lsKeys.currentCall));
 		if (this.commentShown)
 		{
-				this._onAddCommentButtonClick();
+			this._onAddCommentButtonClick();
 		}
 
-		if (!BX.localStorage.get(lsKeys.callInited))
+		if (!BX.localStorage.get(lsKeys.currentCall))
 		{
 			this.close();
 		}

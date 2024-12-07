@@ -33,7 +33,7 @@ jn.define('bizproc/workflow/starter', (require, exports, module) => {
 						onlyMediumPosition: true,
 						shouldResizeContent: true,
 						swipeAllowed: true,
-						swipeContentAllowed: false,
+						swipeContentAllowed: true,
 					},
 					onReady: (readyLayout) => {
 						readyLayout.showComponent(new WorkflowStarter({ ...props, layout: readyLayout }));

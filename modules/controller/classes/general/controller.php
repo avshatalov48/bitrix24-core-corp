@@ -2,11 +2,11 @@
 
 class CControllerServerRequestTo extends __CControllerPacketRequest
 {
-	var $url;
-	var $debug_const = "CONTROLLER_SERVER_DEBUG";
-	var $debug_file_const = "CONTROLLER_SERVER_LOG_DIR";
+	public $url;
+	public $debug_const = 'CONTROLLER_SERVER_DEBUG';
+	public $debug_file_const = 'CONTROLLER_SERVER_LOG_DIR';
 
-	public function __construct($member, $operation, $arParameters = array())
+	public function __construct($member, $operation, $arParameters = [])
 	{
 		if (is_array($member))
 		{
@@ -20,25 +20,27 @@ class CControllerServerRequestTo extends __CControllerPacketRequest
 
 		if ($arMember)
 		{
-			$this->url = $arMember["URL"];
-			$this->hostname = $arMember["HOSTNAME"];
-			$this->member_id = $arMember["MEMBER_ID"];
-			$this->secret_id = $arMember["SECRET_ID"];
+			$this->url = $arMember['URL'];
+			$this->hostname = $arMember['HOSTNAME'];
+			$this->member_id = $arMember['MEMBER_ID'];
+			$this->secret_id = $arMember['SECRET_ID'];
 			$this->operation = $operation;
 			$this->arParameters = $arParameters;
 			$this->session_id = \Bitrix\Main\Security\Random::getString(32);
 		}
 	}
 
-	public function Send($url = "", $page = "/bitrix/admin/main_controller.php")
+	public function Send($url = '', $page = '/bitrix/admin/main_controller.php')
 	{
-		$event = new \Bitrix\Main\Event("controller", "OnBeforeControllerServerRequestSend", array($this));
+		$event = new \Bitrix\Main\Event('controller', 'OnBeforeControllerServerRequestSend', [$this]);
 		$event->send();
 
 		$this->Sign();
 		$result = parent::Send($this->url, $page);
 		if ($result === false)
+		{
 			return false;
+		}
 
 		$oResponse = new CControllerServerResponseFrom($result);
 		return $oResponse;
@@ -47,12 +49,12 @@ class CControllerServerRequestTo extends __CControllerPacketRequest
 
 class CControllerServerResponseFrom extends __CControllerPacketResponse
 {
-	var $debug_const = "CONTROLLER_SERVER_DEBUG";
-	var $debug_file_const = "CONTROLLER_SERVER_LOG_DIR";
+	public $debug_const = 'CONTROLLER_SERVER_DEBUG';
+	public $debug_file_const = 'CONTROLLER_SERVER_LOG_DIR';
 
 	public function __construct($oPacket = false)
 	{
-		$this->_InitFromRequest($oPacket, array());
+		$this->_InitFromRequest($oPacket, []);
 	}
 }
 //
@@ -60,17 +62,17 @@ class CControllerServerResponseFrom extends __CControllerPacketResponse
 //
 class CControllerServerRequestFrom extends __CControllerPacketRequest
 {
-	var $debug_const = "CONTROLLER_SERVER_DEBUG";
-	var $debug_file_const = "CONTROLLER_SERVER_LOG_DIR";
+	public $debug_const = 'CONTROLLER_SERVER_DEBUG';
+	public $debug_file_const = 'CONTROLLER_SERVER_LOG_DIR';
 
 	public function __construct()
 	{
 		$this->InitFromRequest();
-		$this->Debug(array(
-			'Request received from #'.$this->member_id,
-			'security check' => ($this->Check()? 'passed': 'failed'),
+		$this->Debug([
+			'Request received from' => $this->member_id,
+			'security check' => ($this->Check() ? 'passed' : 'failed'),
 			'Packet' => $this,
-		));
+		]);
 	}
 
 	public function Check()
@@ -81,11 +83,11 @@ class CControllerServerRequestFrom extends __CControllerPacketRequest
 		$ar_member = $dbr_member->Fetch();
 		if (!$ar_member)
 		{
-			$e = new CApplicationException("Bad member_id: ".$this->member_id."");
+			$e = new CApplicationException('Bad member_id: ' . $this->member_id);
 			$APPLICATION->ThrowException($e);
 			return false;
 		}
-		$this->secret_id = $ar_member["SECRET_ID"];
+		$this->secret_id = $ar_member['SECRET_ID'];
 
 		return parent::Check();
 	}
@@ -93,8 +95,8 @@ class CControllerServerRequestFrom extends __CControllerPacketRequest
 
 class CControllerServerResponseTo extends __CControllerPacketResponse
 {
-	var $debug_const = "CONTROLLER_SERVER_DEBUG";
-	var $debug_file_const = "CONTROLLER_SERVER_LOG_DIR";
+	public $debug_const = 'CONTROLLER_SERVER_DEBUG';
+	public $debug_file_const = 'CONTROLLER_SERVER_LOG_DIR';
 
 	public function __construct($oPacket = false)
 	{
@@ -112,14 +114,13 @@ class CControllerServerResponseTo extends __CControllerPacketResponse
 			$ar_member = $dbr_member->Fetch();
 			if (!$ar_member)
 			{
-				$e = new CApplicationException("Bad member_id: ".$this->member_id."");
+				$e = new CApplicationException('Bad member_id: ' . $this->member_id);
 				$APPLICATION->ThrowException($e);
 				return false;
 			}
-			$this->secret_id = $ar_member["SECRET_ID"];
+			$this->secret_id = $ar_member['SECRET_ID'];
 		}
 
 		return parent::Sign();
 	}
 }
-

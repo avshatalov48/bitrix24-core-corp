@@ -1,6 +1,6 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports,main_core,rest_client) {
+(function (exports,main_core,rest_client,ui_entitySelector) {
 	'use strict';
 
 	class CommentActionController {
@@ -9,7 +9,8 @@ this.BX = this.BX || {};
 	      deadlineChange: 'deadlineChange',
 	      taskApprove: 'taskApprove',
 	      taskDisapprove: 'taskDisapprove',
-	      taskComplete: 'taskComplete'
+	      taskComplete: 'taskComplete',
+	      taskChangeResponsible: 'taskChangeResponsible'
 	    };
 	  }
 	  static get accessActions() {
@@ -17,7 +18,8 @@ this.BX = this.BX || {};
 	      deadlineChange: 'CHANGE_DEADLINE',
 	      taskApprove: 'APPROVE',
 	      taskDisapprove: 'DISAPPROVE',
-	      taskComplete: 'COMPLETE'
+	      taskComplete: 'COMPLETE',
+	      taskChangeResponsible: 'CHANGE_RESPONSIBLE'
 	    };
 	  }
 	  static get ajaxActions() {
@@ -25,7 +27,8 @@ this.BX = this.BX || {};
 	      deadlineChange: 'tasks.task.update',
 	      taskApprove: 'tasks.task.approve',
 	      taskDisapprove: 'tasks.task.disapprove',
-	      taskComplete: 'tasks.task.complete'
+	      taskComplete: 'tasks.task.complete',
+	      taskChangeResponsible: 'tasks.task.update'
 	    };
 	  }
 	  static get actionNotificationMessages() {
@@ -34,7 +37,8 @@ this.BX = this.BX || {};
 	      deadlineChange: main_core.Loc.getMessage(`${prefix}_DEADLINE_CHANGE`),
 	      taskApprove: main_core.Loc.getMessage(`${prefix}_TASK_APPROVE`),
 	      taskDisapprove: main_core.Loc.getMessage(`${prefix}_TASK_DISAPPROVE`),
-	      taskComplete: main_core.Loc.getMessage(`${prefix}_TASK_COMPLETE`)
+	      taskComplete: main_core.Loc.getMessage(`${prefix}_TASK_COMPLETE`),
+	      taskChangeResponsible: main_core.Loc.getMessage(`${prefix}_TASK_CHANGE_RESPONSIBLE`)
 	    };
 	  }
 	  static init(parameters = {}) {
@@ -106,6 +110,10 @@ this.BX = this.BX || {};
 	      });
 	      return;
 	    }
+	    if (action === CommentActionController.possibleActions.taskChangeResponsible) {
+	      CommentActionController.showResponsibleSelector(link.anchor, taskId);
+	      return;
+	    }
 	    CommentActionController.checkCanRun(action, taskId).then(response => {
 	      if (response) {
 	        CommentActionController.runAjaxAction(action, taskId);
@@ -129,6 +137,43 @@ this.BX = this.BX || {};
 	      bCategoryTimeVisibilityOption: 'tasks.bx.calendar.deadline',
 	      bTimeVisibility: CommentActionController.workSettings ? CommentActionController.workSettings.deadlineTimeVisibility === 'Y' : false,
 	      callback_after: value => CommentActionController.onDeadlinePicked(value, taskId)
+	    });
+	  }
+	  static showResponsibleSelector(target, taskId) {
+	    const dialog = new ui_entitySelector.Dialog({
+	      targetNode: target,
+	      enableSearch: true,
+	      multiple: false,
+	      cacheable: false,
+	      entities: [{
+	        id: 'user',
+	        options: {
+	          intranetUsersOnly: true,
+	          emailUsers: false,
+	          inviteEmployeeLink: false,
+	          inviteGuestLink: false
+	        }
+	      }],
+	      clearSearchOnSelect: true,
+	      events: {
+	        'Item:onSelect': event => {
+	          var _event$data;
+	          const item = event == null ? void 0 : (_event$data = event.data) == null ? void 0 : _event$data.item;
+	          if (item) {
+	            CommentActionController.onResponsibleSelected(item.id, taskId);
+	          }
+	          dialog.hide();
+	        }
+	      }
+	    });
+	    dialog.show();
+	  }
+	  static onResponsibleSelected(userId, taskId) {
+	    const action = CommentActionController.possibleActions.taskChangeResponsible;
+	    CommentActionController.runAjaxAction(action, taskId, {
+	      fields: {
+	        RESPONSIBLE_ID: userId
+	      }
 	    });
 	  }
 	  static onDeadlinePicked(value, taskId) {
@@ -169,9 +214,6 @@ this.BX = this.BX || {};
 	      return;
 	    }
 	    CommentActionController.isAjaxRunning = true;
-	    if (action !== 'taskComplete') {
-	      CommentActionController.showNotification(action);
-	    }
 	    const defaultData = {
 	      taskId
 	    };
@@ -186,9 +228,7 @@ this.BX = this.BX || {};
 	    main_core.ajax.runAction(CommentActionController.ajaxActions[action], {
 	      data: data
 	    }).then(() => {
-	      if (action === 'taskComplete') {
-	        CommentActionController.showNotification(action);
-	      }
+	      CommentActionController.showNotification(action);
 	      CommentActionController.isAjaxRunning = false;
 	    }, response => {
 	      if (response && response.errors) {
@@ -219,5 +259,5 @@ this.BX = this.BX || {};
 
 	exports.CommentActionController = CommentActionController;
 
-}((this.BX.Tasks = this.BX.Tasks || {}),BX,BX));
+}((this.BX.Tasks = this.BX.Tasks || {}),BX,BX,BX.UI.EntitySelector));
 //# sourceMappingURL=comment-action-controller.bundle.js.map

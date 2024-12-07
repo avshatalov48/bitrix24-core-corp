@@ -40,6 +40,14 @@ class MenuItemFactory
 		;
 	}
 
+	public static function createRepeatMenuItem(): MenuItem
+	{
+		return (new MenuItem(Loc::getMessage('CRM_TIMELINE_MENU_REPEAT')))
+			->setHideIfReadonly()
+			->setSort(9991)
+		;
+	}
+
 	public static function createDownloadFileMenuItem(string $filename = null): MenuItem
 	{
 		$title = (string)Loc::getMessage('CRM_TIMELINE_MENU_DOWNLOAD_FILE');
@@ -51,6 +59,14 @@ class MenuItemFactory
 		return (new MenuItem($title))
 			->setHideIfReadonly()
 			->setSort(9995)
+		;
+	}
+
+	public static function createMoveToMenuItem(): MenuItem
+	{
+		return (new MenuItem(Loc::getMessage('CRM_TIMELINE_MENU_MOVE_TO')))
+			->setHideIfReadonly()
+			->setSort(9998)
 		;
 	}
 

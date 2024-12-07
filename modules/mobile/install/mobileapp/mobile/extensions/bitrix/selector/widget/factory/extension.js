@@ -2,7 +2,21 @@
 	const require = (ext) => jn.require(ext);
 
 	const { ProjectSelector } = require('selector/widget/entity/socialnetwork/project');
-	const { TaskTagSelector } = require('selector/widget/entity/tasks/task-tag');
+	const { WarnLogger } = require('utils/logger/warn-logger');
+	const { DepartmentSelector } = require('selector/widget/entity/intranet/department');
+
+	let TaskTagSelector = null;
+	let TaskFlowSelector = null;
+
+	try
+	{
+		TaskTagSelector = require('selector/widget/entity/tasks/task-tag').TaskTagSelector;
+		TaskFlowSelector = require('tasks/entity-selector/flow').TaskFlowSelector;
+	}
+	catch (e)
+	{
+		(new WarnLogger()).warn(e);
+	}
 
 	let CrmContactSelector = null;
 	let CrmCompanySelector = null;
@@ -18,7 +32,17 @@
 	}
 	catch (e)
 	{
-		console.warn(e);
+		(new WarnLogger()).warn(e);
+	}
+
+	let TaskSelector = null;
+	try
+	{
+		TaskSelector = require('tasks/selector/task').TaskSelector;
+	}
+	catch (e)
+	{
+		(new WarnLogger()).warn(e);
 	}
 
 	/**
@@ -37,11 +61,14 @@
 		CRM_ELEMENT: 'crm-element',
 		DOCUMENTGENERATOR_TEMPLATE: 'documentgenerator-template',
 		TASK_TAG: 'task_tag',
+		TASK_FLOW: 'task_flow',
 		MAIL_CONTACT: 'mail_contact',
 		IBLOCK_PROPERTY_ELEMENT: 'iblock-property-element',
 		IBLOCK_PROPERTY_SECTION: 'iblock-property-section',
 		IBLOCK_ELEMENT_USER_FIELD: 'iblock-element-user-field',
 		IBLOCK_SECTION_USER_FIELD: 'iblock-section-user-field',
+		DEPARTMENT: 'department',
+		TASK: 'task',
 	};
 
 	/**
@@ -106,9 +133,24 @@
 				return DocumentGeneratorTemplateSelector.make(data);
 			}
 
+			if (type === Type.TASK)
+			{
+				return TaskSelector.make(data);
+			}
+
 			if (type === Type.TASK_TAG)
 			{
 				return TaskTagSelector.make(data);
+			}
+
+			if (type === Type.TASK_FLOW && TaskFlowSelector)
+			{
+				return TaskFlowSelector.make(data);
+			}
+
+			if (type === Type.DEPARTMENT)
+			{
+				return DepartmentSelector.make(data);
 			}
 
 			if (type === Type.IBLOCK_PROPERTY_ELEMENT)
@@ -145,6 +187,8 @@
 jn.define('selector/widget/factory', (require, exports, module) => {
 	module.exports = {
 		EntitySelectorFactory: this.EntitySelectorFactory,
+
+		/** @type EntitySelectorFactory.Type */
 		EntitySelectorFactoryType: this.EntitySelectorFactory.Type,
 	};
 });

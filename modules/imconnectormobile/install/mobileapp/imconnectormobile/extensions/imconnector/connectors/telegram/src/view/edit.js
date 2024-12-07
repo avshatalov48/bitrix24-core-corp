@@ -5,7 +5,7 @@ jn.define('imconnector/connectors/telegram/view/edit', (require, exports, module
 	const { Loc } = require('loc');
 	const { Type } = require('type');
 	const AppTheme = require('apptheme');
-	const { Alert, makeCancelButton, makeDestructiveButton } = require('alert');
+	const { confirmDestructiveAction } = require('alert');
 	const { QueueField } = require('imconnector/connector/telegram/layout-components/queue-field');
 	const { Banner } = require('imconnector/lib/ui/banner');
 	const { ButtonSwitcher } = require('imconnector/lib/ui/button-switcher');
@@ -80,9 +80,9 @@ jn.define('imconnector/connectors/telegram/view/edit', (require, exports, module
 							paddingLeft: 24,
 							paddingRight: 24,
 							paddingBottom: 26,
-							backgroundColor: '#fff',
 							borderRadius: 12,
 							marginBottom: 12,
+							backgroundColor: AppTheme.colors.bgContentPrimary,
 						},
 					},
 					View(
@@ -226,7 +226,7 @@ jn.define('imconnector/connectors/telegram/view/edit', (require, exports, module
 			return View(
 				{
 					style: {
-						backgroundColor: withPressed(AppTheme.colors.baseWhiteFixed),
+						backgroundColor: withPressed(AppTheme.colors.base8),
 						borderRadius: 12,
 						height: 46,
 						justifyContent: 'center',
@@ -234,17 +234,12 @@ jn.define('imconnector/connectors/telegram/view/edit', (require, exports, module
 						marginBottom: 20,
 					},
 					onClick: () => {
-						Alert.confirm(
-							Loc.getMessage('IMCONNECTORMOBILE_TELEGRAM_EDIT_DISABLE_ALERT_TITLE'),
-							'',
-							[
-								makeCancelButton(),
-								makeDestructiveButton(
-									Loc.getMessage('IMCONNECTORMOBILE_TELEGRAM_EDIT_DISABLE_ALERT_BUTTON'),
-									() => this.props.onConnectorDisable(this.props.connectorSettings),
-								),
-							],
-						);
+						confirmDestructiveAction({
+							title: Loc.getMessage('IMCONNECTORMOBILE_TELEGRAM_EDIT_DISABLE_ALERT_TITLE'),
+							description: '',
+							destructionText: Loc.getMessage('IMCONNECTORMOBILE_TELEGRAM_EDIT_DISABLE_ALERT_BUTTON'),
+							onDestruct: () => this.props.onConnectorDisable(this.props.connectorSettings),
+						});
 					},
 				},
 				Text({

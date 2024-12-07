@@ -24,7 +24,8 @@ class IntranetInvitationWidgetComponent extends \CBitrixComponent
 			return;
 		}
 
-		$this->arResult['isCurrentUserAdmin'] = Intranet\CurrentUser::get()->isAdmin();
+		$intranetUser = new Intranet\User();
+		$this->arResult['isCurrentUserAdmin'] = $intranetUser->isAdmin();
 		$this->arResult['isInvitationAvailable'] = \CBitrix24::isInvitingUsersAllowed();
 		$this->arResult['structureLink'] = '/company/vis_structure.php';
 		$this->arResult['invitationLink'] = $this->arResult['isCurrentUserAdmin'] || $this->arResult['isInvitationAvailable']
@@ -34,6 +35,8 @@ class IntranetInvitationWidgetComponent extends \CBitrixComponent
 				'analyticsLabel[source]' => 'headerPopup',
 			]) : '';
 		$this->arResult['isExtranetAvailable'] = Main\ModuleManager::isModuleInstalled('extranet');
+		$this->arResult['invitationCounter'] = $intranetUser->getTotalInvitationCounterValue();
+		$this->arResult['counterId'] = Intranet\Invitation::getTotalInvitationCounterId();
 
 		$this->includeComponentTemplate();
 	}

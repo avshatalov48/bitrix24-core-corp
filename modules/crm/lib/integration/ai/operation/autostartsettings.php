@@ -5,32 +5,56 @@ namespace Bitrix\Crm\Integration\AI\Operation;
 use Bitrix\Crm\Integration\AI\AIManager;
 use Bitrix\Crm\Integration\AI\ErrorCode;
 use Bitrix\Crm\Service\Container;
+use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Error;
 use Bitrix\Main\Result;
+use Bitrix\Main\Web\Json;
+use CCrmActivityDirection;
+use CCrmOwnerType;
 
 final class AutostartSettings implements \JsonSerializable
 {
+	private const DEFAULT_CALL_DIRECTION = CCrmActivityDirection::Incoming;
+
 	public function __construct(
 		private array $autostartOperationTypes,
 		private bool $autostartTranscriptionOnlyOnFirstCallWithRecording,
+		private array $autostartCallDirections
 	)
 	{
 	}
 
-	public function shouldAutostart(int $operationType, bool $checkAutomaticProcessingParams = true): bool
+	public function shouldAutostart(
+		int $operationType,
+		int $callDirection,
+		bool $checkAutomaticProcessingParams = true
+	): bool
 	{
-		if ($checkAutomaticProcessingParams && !AIManager::isAiCallAutomaticProcessingAllowed())
+		if (
+			$checkAutomaticProcessingParams
+			&& !(AIManager::isAiCallAutomaticProcessingAllowed() && AIManager::isBaasServiceHasPackage())
+		)
 		{
 			return false;
 		}
 
-		return in_array($operationType, $this->autostartOperationTypes, true);
+		$isAllowedOperationType = in_array($operationType, $this->autostartOperationTypes, true);
+		$isAllowedDirection = in_array($callDirection, $this->autostartCallDirections, true);
+
+		if ($operationType !== \Bitrix\Crm\Integration\AI\Operation\TranscribeCallRecording::TYPE_ID) // only autostart of first step should be configured
+		{
+			return true;
+		}
+
+		return $isAllowedOperationType && $isAllowedDirection;
 	}
 
 	public function isAutostartTranscriptionOnlyOnFirstCallWithRecording(): bool
 	{
-		return $this->autostartTranscriptionOnlyOnFirstCallWithRecording;
+		return $this->autostartTranscriptionOnlyOnFirstCallWithRecording
+			&& in_array(self::DEFAULT_CALL_DIRECTION, $this->autostartCallDirections, true)
+		;
 	}
 
 	public function jsonSerialize(): array
@@ -38,6 +62,7 @@ final class AutostartSettings implements \JsonSerializable
 		return [
 			'autostartOperationTypes' => $this->autostartOperationTypes,
 			'autostartTranscriptionOnlyOnFirstCallWithRecording' => $this->autostartTranscriptionOnlyOnFirstCallWithRecording,
+			'autostartCallDirections' => $this->autostartCallDirections,
 		];
 	}
 
@@ -57,9 +82,28 @@ final class AutostartSettings implements \JsonSerializable
 			$json['autostartTranscriptionOnlyOnFirstCallWithRecording'] ?? null
 		;
 
-		if (is_array($types) && is_bool($autostartTranscriptionOnlyOnFirstCallWithRecording))
+		// Incoming call by default (for old saved records)
+		$autostartCallDirections = $json['autostartCallDirections'] ?? null;
+		if (is_array($autostartCallDirections))
 		{
-			return new self($types, $autostartTranscriptionOnlyOnFirstCallWithRecording);
+			$validDirections = [CCrmActivityDirection::Incoming, CCrmActivityDirection::Outgoing];
+			$autostartCallDirections = array_filter(
+				array_map('intval', $json['autostartCallDirections']),
+				fn(int $x) => in_array($x, $validDirections, true)
+			);
+		}
+
+		if (
+			is_array($types)
+			&& is_bool($autostartTranscriptionOnlyOnFirstCallWithRecording)
+			&& is_array($autostartCallDirections)
+		)
+		{
+			return new self(
+				$types,
+				$autostartTranscriptionOnlyOnFirstCallWithRecording,
+				$autostartCallDirections
+			);
 		}
 
 		return null;
@@ -68,26 +112,47 @@ final class AutostartSettings implements \JsonSerializable
 	public static function getDefault(): self
 	{
 		return new self(
-			AIManager::getAllOperationTypes(),
-			true,
+			[
+				SummarizeCallTranscription::TYPE_ID,
+				FillItemFieldsFromCallTranscription::TYPE_ID,
+			],
+			false,
+			[self::DEFAULT_CALL_DIRECTION]
 		);
 	}
 
 	public static function get(int $entityTypeId, ?int $categoryId = null): self
 	{
-		$settings = unserialize(
-			Option::get('crm', self::getOptionName($entityTypeId, $categoryId)),
-			['allowed_classes' => [self::class]],
-		);
+		$settingsRaw = Option::get('crm', self::getOptionName($entityTypeId, $categoryId));
+		if ($settingsRaw === '')
+		{
+			return self::getDefault();
+		}
 
-		return $settings instanceof self ? $settings : self::getDefault();
+		try
+		{
+			$settingsJson = Json::decode($settingsRaw);
+		}
+		catch (ArgumentException)
+		{
+			$settingsJson = [];
+		}
+
+		$settings = self::fromJson($settingsJson);
+		$settings = $settings instanceof self ? $settings : self::getDefault();
+		if (!isset($settings->autostartCallDirections))
+		{
+			$settings->autostartCallDirections = [self::DEFAULT_CALL_DIRECTION];
+		}
+
+		return $settings;
 	}
 
 	public static function save(self $settings, int $entityTypeId, ?int $categoryId = null): Result
 	{
 		$result = new Result();
 
-		if (!\CCrmOwnerType::IsDefined($entityTypeId))
+		if (!CCrmOwnerType::IsDefined($entityTypeId))
 		{
 			return $result->addError(new Error('Unknown entityTypeId', ErrorCode::INVALID_ARG_VALUE));
 		}
@@ -95,7 +160,7 @@ final class AutostartSettings implements \JsonSerializable
 		Option::set(
 			'crm',
 			self::getOptionName($entityTypeId, $categoryId),
-			serialize($settings),
+			Json::encode($settings->jsonSerialize()),
 		);
 
 		return $result;
@@ -106,7 +171,7 @@ final class AutostartSettings implements \JsonSerializable
 		$factory = Container::getInstance()->getFactory($entityTypeId);
 		if ($factory?->isCategoriesSupported() && $categoryId === null)
 		{
-			$categoryId = $factory->createDefaultCategoryIfNotExist()->getId();
+			$categoryId = $factory?->createDefaultCategoryIfNotExist()->getId();
 		}
 
 		$typeKey = "{$entityTypeId}";
@@ -116,5 +181,15 @@ final class AutostartSettings implements \JsonSerializable
 		}
 
 		return "ai_autostart_settings_{$typeKey}";
+	}
+
+	public static function checkSavePermissions(int $entityTypeId, ?int $categoryId = null, ?int $userId = null): bool
+	{
+		return self::checkReadPermissions($entityTypeId, $categoryId, $userId);
+	}
+
+	public static function checkReadPermissions(int $entityTypeId, ?int $categoryId = null, ?int $userId = null): bool
+	{
+		return Container::getInstance()->getUserPermissions($userId)->checkUpdatePermissions($entityTypeId, 0, $categoryId);
 	}
 }

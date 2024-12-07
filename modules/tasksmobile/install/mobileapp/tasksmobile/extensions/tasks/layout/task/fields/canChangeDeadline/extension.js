@@ -55,7 +55,7 @@ jn.define('tasks/layout/task/fields/canChangeDeadline', (require, exports, modul
 					config: {
 						deepMergeStyles: this.props.deepMergeStyles,
 						mode: BooleanMode.SWITCHER,
-						description: Loc.getMessage('TASKSMOBILE_LAYOUT_TASK_FIELDS_CAN_CHANGE_DEADLINE'),
+						description: Loc.getMessage('TASKSMOBILE_LAYOUT_TASK_FIELDS_CAN_CHANGE_DEADLINE_MSGVER_1'),
 						showSwitcher: true,
 					},
 					testId: 'canChangeDeadline',

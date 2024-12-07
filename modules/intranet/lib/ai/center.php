@@ -1,4 +1,5 @@
-<?
+<?php
+
 namespace Bitrix\Intranet\AI;
 
 use Bitrix\Bitrix24\Feature;
@@ -84,15 +85,24 @@ class Center
 		return $items;
 	}
 
-	public static function getCrmScoring()
+	public static function getCrmScoring(): array
 	{
-		if (!ModuleManager::isModuleInstalled("crm"))
+		if (!ModuleManager::isModuleInstalled('crm'))
+		{
+			return [];
+		}
+
+		if (!self::isCrmMlFeaturesAvailable())
 		{
 			return [];
 		}
 
 		$scoringExists = false;
-		if(Loader::includeModule("ml") && Loader::includeModule("crm") && class_exists("Bitrix\Crm\Ml\Scoring"))
+		if (
+			Loader::includeModule('ml')
+			&& Loader::includeModule('crm')
+			&& class_exists(Scoring::class)
+		)
 		{
 			$modelNames = Scoring::getAvailableModelNames();
 			foreach ($modelNames as $modelName)
@@ -108,34 +118,39 @@ class Center
 
 		return [
 			[
-				"id" => "crm-scoring",
-				"name" => Loc::getMessage("INTRANET_AI_CRM_SCORING"),
-				"iconClass" => "intranet-ai-center-icon intranet-ai-center-icon-crm",
-				"iconColor" => "#12bff5",
-				"comingSoon" => false,
-				"selected" => $scoringExists,
-				"data" => [
-					"url" => "/crm/ml/model/list/"
+				'id' => 'crm-scoring',
+				'name' => Loc::getMessage("INTRANET_AI_CRM_SCORING"),
+				'iconClass' => 'intranet-ai-center-icon intranet-ai-center-icon-crm',
+				'iconColor' => '#12bff5',
+				'comingSoon' => false,
+				'selected' => $scoringExists,
+				'data' => [
+					'url' => self::isCrmMlFeaturesAvailable() ? '/crm/ml/model/list/' : '/ai/'
 				]
 			]
 		];
 	}
 
-	public static function getSegmentScoring()
+	public static function getSegmentScoring(): array
 	{
-		if (!ModuleManager::isModuleInstalled("crm"))
+		if (!ModuleManager::isModuleInstalled('crm'))
+		{
+			return [];
+		}
+
+		if (!self::isCrmMlFeaturesAvailable())
 		{
 			return [];
 		}
 
 		return [
 			[
-				"id" => "segment-scoring",
-				"name" => Loc::getMessage("INTRANET_AI_SEGMENT_SCORING"),
-				"iconClass" => "intranet-ai-center-icon intranet-ai-center-icon-segment",
-				"iconColor" => "#34cde0",
-				"comingSoon" => true,
-				"data" => []
+				'id' => 'segment-scoring',
+				'name' => Loc::getMessage('INTRANET_AI_SEGMENT_SCORING'),
+				'iconClass' => 'intranet-ai-center-icon intranet-ai-center-icon-segment',
+				'iconColor' => '#34cde0',
+				'comingSoon' => true,
+				'data' => []
 			]
 		];
 	}
@@ -189,5 +204,20 @@ class Center
 				)
 			]
 		];
+	}
+
+	private static function isCrmMlFeaturesAvailable(): bool
+	{
+		if (Loader::includeModule('crm'))
+		{
+			if (method_exists(Scoring::class, 'isScoringAvailable'))
+			{
+				return Scoring::isScoringAvailable();
+			}
+
+			return true;
+		}
+
+		return false;
 	}
 }

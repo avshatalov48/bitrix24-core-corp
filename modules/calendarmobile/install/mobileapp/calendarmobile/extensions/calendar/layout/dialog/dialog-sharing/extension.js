@@ -11,11 +11,6 @@ jn.define('calendar/layout/dialog/dialog-sharing', (require, exports, module) =>
 	const { SharingEmptyState } = require('calendar/layout/sharing-empty-state');
 	const { SharingSettings } = require('calendar/layout/sharing-settings');
 
-	const Status = {
-		NONE: 'none',
-		WAIT: 'wait',
-	};
-
 	/**
 	 * @class DialogSharing
 	 */
@@ -26,27 +21,16 @@ jn.define('calendar/layout/dialog/dialog-sharing', (require, exports, module) =>
 			super(props);
 
 			this.state = {
-				status: Status.NONE,
 				model: {
 					...this.sharing.getModel().getFieldsValues(),
 				},
 			};
 
-			this.context = this.sharing.getModel().getContext();
-			this.readOnly = this.props.readOnly || false;
 			this.onSwitcherChangeHandler = this.onSwitcherChangeHandler.bind(this);
 
-			this.layoutWidget = null;
-		}
+			this.sharingSettings = null;
 
-		get sharing()
-		{
-			return this.props.sharing;
-		}
-
-		setLayoutWidget(widget)
-		{
-			this.layoutWidget = widget;
+			this.layoutWidget = props.layoutWidget || PageManager;
 			this.layoutWidget.setListener((eventName) => {
 				if (eventName === 'onViewHidden')
 				{
@@ -55,9 +39,19 @@ jn.define('calendar/layout/dialog/dialog-sharing', (require, exports, module) =>
 			});
 		}
 
+		get readOnly()
+		{
+			return this.props.readOnly || false;
+		}
+
+		get sharing()
+		{
+			return this.props.sharing;
+		}
+
 		isCalendarContext()
 		{
-			return this.context === SharingContext.CALENDAR;
+			return this.sharing.getModel().getContext() === SharingContext.CALENDAR;
 		}
 
 		render()
@@ -65,10 +59,9 @@ jn.define('calendar/layout/dialog/dialog-sharing', (require, exports, module) =>
 			return View(
 				{
 					safeArea: {
-						bottom: true,
+						bottom: this.isCalendarContext(),
 					},
 				},
-				// eslint-disable-next-line no-undef
 				this.isLoading() && new LoadingScreenComponent(),
 				!this.isLoading() && this.renderContent(),
 			);
@@ -76,20 +69,15 @@ jn.define('calendar/layout/dialog/dialog-sharing', (require, exports, module) =>
 
 		isLoading()
 		{
-			return this.state.status === Status.WAIT;
+			return !this.props.sharing.model.userInfo;
 		}
 
 		renderContent()
 		{
-			return ScrollView(
-				{
-					style: styles.scrollView,
-				},
-				View(
-					{},
-					this.renderSwitcher(),
-					this.renderBodyContainer(),
-				),
+			return View(
+				{},
+				this.renderSwitcher(),
+				this.renderBodyContainer(),
 			);
 		}
 
@@ -100,6 +88,7 @@ jn.define('calendar/layout/dialog/dialog-sharing', (require, exports, module) =>
 					style: styles.switcher,
 				},
 				new SharingSwitcher({
+					onSettingsClick: this.props.onSettingsClick,
 					isCalendarContext: this.isCalendarContext(),
 					isOn: this.isSharingEnabled(),
 					onChange: this.onSwitcherChangeHandler,
@@ -167,18 +156,20 @@ jn.define('calendar/layout/dialog/dialog-sharing', (require, exports, module) =>
 			return View(
 				{},
 				this.renderSettings(),
-				this.renderPanelContainer(),
+				this.isCalendarContext() && this.renderPanelContainer(),
 			);
 		}
 
 		renderSettings()
 		{
-			return new SharingSettings({
+			this.sharingSettings = new SharingSettings({
 				model: this.sharing.getModel(),
 				readOnly: this.readOnly,
 				customEventEmitter: this.props.customEventEmitter || null,
 				layoutWidget: this.layoutWidget,
 			});
+
+			return this.sharingSettings;
 		}
 
 		renderPanelContainer()
@@ -196,15 +187,10 @@ jn.define('calendar/layout/dialog/dialog-sharing', (require, exports, module) =>
 	}
 
 	const styles = {
-		scrollView: {
-			boxSizing: 'border-box',
-			flex: 1,
-		},
 		switcher: {
 			borderRadius: 12,
-			marginBottom: 15,
-			marginTop: 20,
-			backgroundColor: AppTheme.colors.accentSoftBlue2,
+			marginBottom: 10,
+			marginTop: 10,
 		},
 		panelContainer: {
 			borderRadius: 12,
@@ -212,5 +198,5 @@ jn.define('calendar/layout/dialog/dialog-sharing', (require, exports, module) =>
 		},
 	};
 
-	module.exports = { DialogSharing, DialogStatus: Status };
+	module.exports = { DialogSharing };
 });

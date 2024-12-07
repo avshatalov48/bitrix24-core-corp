@@ -1,4 +1,4 @@
-import { Dom, Tag, bindOnce } from 'main.core';
+import { bindOnce, Dom, Tag, Type } from 'main.core';
 
 type ExpandOptions = {
 	startHeight: number;
@@ -67,8 +67,20 @@ export default class Expand
 					(new BX.easing(
 						{
 							duration: 400,
-							start: { height: startHeight, overlayOpacity: 0, paddingTop: 0, paddingBottom: 0, marginBottom: 0 },
-							finish: { height: position.height, overlayOpacity: 50, paddingTop, paddingBottom, marginBottom },
+							start: {
+								height: startHeight,
+								overlayOpacity: 0,
+								paddingTop: 0,
+								paddingBottom: 0,
+								marginBottom: 0,
+							},
+							finish: {
+								height: position.height,
+								overlayOpacity: 50,
+								paddingTop,
+								paddingBottom,
+								marginBottom,
+							},
 							transition: BX.easing.makeEaseOut(BX.easing.transitions.quart),
 							step: this.onNodeHeightStep.bind(this),
 							complete: this.onNodeHeightComplete.bind(this),
@@ -97,7 +109,13 @@ export default class Expand
 			bindOnce(this.#overlay, 'transitionend', () => {
 				Dom.remove(this.#overlay);
 				this.#overlay = null;
+
+				const color = Dom.style(this.#node, '--crm-timeline__card-color-background');
 				Dom.style(this.#node, null);
+				if (Type.isStringFilled(color))
+				{
+					Dom.style(this.#node, '--crm-timeline__card-color-background', color);
+				}
 			});
 			Dom.style(this.#overlay, 'opacity', 0);
 			if (this.#callback)

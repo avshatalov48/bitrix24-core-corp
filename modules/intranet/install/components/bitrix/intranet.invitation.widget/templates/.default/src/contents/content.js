@@ -2,6 +2,7 @@ import { BaseEvent, EventEmitter } from 'main.core.events';
 import { ajax, Cache, Text } from 'main.core';
 import { ConfigContent } from '../types/content';
 import { Popup } from 'main.popup';
+import { Analytics } from '../analytics';
 
 export class Content extends EventEmitter
 {
@@ -11,6 +12,7 @@ export class Content extends EventEmitter
 	{
 		super();
 		this.setOptions(options);
+		this.analytics = new Analytics();
 	}
 
 	setOptions(options: Object): void
@@ -113,8 +115,14 @@ export class Content extends EventEmitter
 		if (type === 'extranet')
 		{
 			link = `${link}&firstInvitationBlock=extranet`;
+			Analytics.send(Analytics.EVENT_OPEN_SLIDER_EXTRANET_INVITATION);
+		}
+		else
+		{
+			Analytics.send(Analytics.EVENT_OPEN_SLIDER_INVITATION);
 		}
 
+		this.analytics.sendLegacy(Analytics.SECTION_POPUP);
 		BX.SidePanel.Instance.open(
 			link,
 			{ cacheable: false, allowChangeHistory: false, width: 1100 }

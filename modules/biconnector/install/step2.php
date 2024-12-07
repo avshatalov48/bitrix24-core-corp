@@ -10,7 +10,7 @@ IncludeModuleLangFile(__FILE__);
 $ex = $APPLICATION->GetException();
 if ($ex)
 {
-	echo CAdminMessage::ShowMessage([
+	CAdminMessage::ShowMessage([
 		'TYPE' => 'ERROR',
 		'MESSAGE' => GetMessage('MOD_INST_ERR'),
 		'DETAILS' => $ex->GetString(),
@@ -19,7 +19,7 @@ if ($ex)
 }
 else
 {
-	echo CAdminMessage::ShowNote(GetMessage('MOD_INST_OK'));
+	CAdminMessage::ShowNote(GetMessage('MOD_INST_OK'));
 }
 ?>
 <form action="<?php echo $APPLICATION->GetCurPage()?>">

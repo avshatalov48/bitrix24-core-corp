@@ -8,13 +8,17 @@ use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Requisite\DefaultRequisite;
 use Bitrix\Crm\Requisite\EntityLink;
 use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Service\Sign\DocumentService as SignDocumentService;
+use Bitrix\Crm\Service\Sign\MemberService;
 use Bitrix\Crm\Service\Timeline\Item\Activity;
 use Bitrix\Crm\Service\Timeline\Layout\Common\Icon;
 use Bitrix\Crm\Service\Timeline\Layout;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock;
 use Bitrix\Crm\Service\Timeline\Layout\Common\Logo;
+use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Sign\Config\Storage;
+use Bitrix\Sign\Item\Member;
 
 Container::getInstance()->getLocalization()->loadMessages();
 
@@ -22,6 +26,8 @@ final class SignDocument extends Activity
 {
 	private ?\Bitrix\Crm\Item $document = null;
 	private ?\Bitrix\Sign\Document $signDocument = null;
+	private ?\Bitrix\Sign\Item\Document $signDocumentItem = null;
+	private ?\Bitrix\Sign\Item\MemberCollection $signDocumentMembers = null;
 
 	protected function getActivityTypeId(): string
 	{
@@ -146,24 +152,30 @@ final class SignDocument extends Activity
 							->setValue($this->getMyCompanyCaption())
 		);
 
-		if ($document)
-		{
-			$clientCount = 1;
-			/** @var Contact $contact */
-			foreach ($document->getContacts() as $contact)
-			{
-				$blocks['client' . $clientCount] =
-					(new Layout\Body\ContentBlock\ContentBlockWithTitle())
-						->setTitle(
-							Loc::getMessage('CRM_TIMELINE_ACTIVITY_SIGN_DOCUMENT_CONTER_AGENT')
-						)
-						->setContentBlock(
-							(new Layout\Body\ContentBlock\Text())
-								->setValue($contact->getFormattedName())
-						)
-				;
+		$signDocumentItem = $this->getSignDocumentItem();
 
-				$clientCount++;
+		if ($signDocumentItem)
+		{
+			$signDocumentContacts = $this->getSignDocumentContacts();
+			if ($signDocumentContacts)
+			{
+				$clientCount = 1;
+				/** @var Contact $contact */
+				foreach ($signDocumentContacts as $member)
+				{
+					$blocks['client' . $clientCount] =
+						(new Layout\Body\ContentBlock\ContentBlockWithTitle())
+							->setTitle(
+								Loc::getMessage('CRM_TIMELINE_ACTIVITY_SIGN_DOCUMENT_CONTER_AGENT')
+							)
+							->setContentBlock(
+								(new Layout\Body\ContentBlock\Text())
+									->setValue($this->getSignMemberName($member))
+							)
+					;
+
+					$clientCount++;
+				}
 			}
 		}
 
@@ -214,22 +226,27 @@ final class SignDocument extends Activity
 		return (int)$this->getAssociatedEntityModel()->get('ASSOCIATED_ENTITY_ID');
 	}
 
-	private function getEntityTypeId(): int
+	private function getOwnerEntityTypeId(): int
 	{
 		return (int)$this->getAssociatedEntityModel()->get('OWNER_TYPE_ID');
+	}
+
+	private function getOwnerEntityId(): int
+	{
+		return (int)$this->getAssociatedEntityModel()->get('OWNER_ID');
 	}
 
 	private function getDocument(): ?\Bitrix\Crm\Item
 	{
 		if (!$this->document)
 		{
-			$factory = Container::getInstance()->getFactory($this->getEntityTypeId());
+			$factory = Container::getInstance()->getFactory($this->getOwnerEntityTypeId());
 			if (!$factory)
 			{
 				return null;
 			}
 
-			$documentId = $this->getDocumentId();
+			$documentId = $this->getOwnerEntityId();
 
 			$this->document = $factory->getItem($documentId);
 		}
@@ -239,12 +256,27 @@ final class SignDocument extends Activity
 
 	private function getMyCompanyCaption(): string
 	{
-		//todo validate if this way of getting requisites is correct
-		$link = EntityLink::getByEntity($this->getEntityTypeId(), $this->getDocumentId());
-		if ($link)
+		$signCompany = $this->getSignDocumentCompany();
+		if ($signCompany)
 		{
-			$requisiteId = $link['MC_REQUISITE_ID'] ?? null;
-			$linkedRequisiteId = ((int)$requisiteId > 0) ? (int)$requisiteId : null;
+			$requisiteIds = EntityRequisite::getSingleInstance()?->getEntityRequisiteIDs(
+				\CCrmOwnerType::Company,
+				$signCompany->entityId,
+			);
+			if (!empty($requisiteIds[0]))
+			{
+				$requisites = EntityRequisite::getSingleInstance()?->getById((int)$requisiteIds[0]);
+			}
+		}
+
+		if (empty($requisites))
+		{
+			$link = EntityLink::getByEntity(\CCrmOwnerType::SmartDocument, $this->getDocumentId());
+			if ($link)
+			{
+				$requisiteId = $link['MC_REQUISITE_ID'] ?? null;
+				$linkedRequisiteId = ((int)$requisiteId > 0) ? (int)$requisiteId : null;
+			}
 		}
 
 		$document = $this->getDocument();
@@ -252,7 +284,8 @@ final class SignDocument extends Activity
 		{
 			$requisites = EntityRequisite::getSingleInstance()->getById($linkedRequisiteId);
 		}
-		elseif ($document && isset($document->getData()['MYCOMPANY_ID']) && $document->getMycompanyId() > 0)
+
+		if (empty($requisites) && $document && isset($document->getData()['MYCOMPANY_ID']) && $document->getMycompanyId() > 0)
 		{
 			$defaultRequisite = new DefaultRequisite(
 				new ItemIdentifier(\CCrmOwnerType::Company, $document->getMycompanyId())
@@ -269,6 +302,73 @@ final class SignDocument extends Activity
 		return $myCompanyCaption ?? Loc::getMessage('CRM_COMMON_EMPTY_VALUE');
 	}
 
+	private function getSignDocumentItem(): ?\Bitrix\Sign\Item\Document
+	{
+		if (!$this->signDocumentItem)
+		{
+			/** @var SignDocumentService $signService */
+			$signService = ServiceLocator::getInstance()->get('crm.service.sign.document');
+			$this->signDocumentItem = $signService->getSignDocumentBySmartDocument($this->getDocumentId());
+		}
+
+		return $this->signDocumentItem;
+	}
+
+	private function getSignDocumentMembers(): ?\Bitrix\Sign\Item\MemberCollection
+	{
+		if (
+			!$this->signDocumentMembers
+			&& $signDocumentItem = $this->getSignDocumentItem()
+		)
+		{
+			/** @var MemberService $signMemberService */
+			$signMemberService = ServiceLocator::getInstance()->get('crm.service.sign.member');
+			$this->signDocumentMembers = $signMemberService->getMembersForSignDocument($signDocumentItem->getId());
+		}
+
+		return $this->signDocumentMembers;
+	}
+
+	private function getSignDocumentContacts(): ?\Bitrix\Sign\Item\MemberCollection
+	{
+		if ($members = $this->getSignDocumentMembers())
+		{
+			return $members->filter(
+				static fn(Member $member) => $member->entityType === \Bitrix\Sign\Type\Member\EntityType::CONTACT,
+			);
+		}
+
+		return null;
+	}
+
+	private function getSignDocumentCompany(): ?\Bitrix\Sign\Item\Member
+	{
+		if ($members = $this->getSignDocumentMembers())
+		{
+			$members = $members->filter(static fn(Member $member) => $member->entityType === \Bitrix\Sign\Type\Member\EntityType::COMPANY);
+			foreach ($members as $member)
+			{
+				if ($member->entityType === \Bitrix\Sign\Type\Member\EntityType::COMPANY)
+				{
+					return $member;
+				}
+			}
+		}
+
+		return null;
+	}
+
+	private function getSignMemberName(Member $member): ?string
+	{
+		/** @var MemberService $signMemberService */
+		$signMemberService = ServiceLocator::getInstance()->get('crm.service.sign.member');
+		return $signMemberService->getSignMemberRepresentedName($member);
+	}
+
+	/**
+	 * @deprecated entity from old api
+	 * @see self::getSignDocumentItem()
+	 */
 	private function getSignDocument(): ?\Bitrix\Sign\Document
 	{
 		if (!$this->signDocument)

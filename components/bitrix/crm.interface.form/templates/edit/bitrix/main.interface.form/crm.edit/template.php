@@ -46,7 +46,7 @@ if($GLOBALS['USER']->IsAuthorized() && $arParams["SHOW_SETTINGS"] == true):?>
 	<a href="javascript:void(0)" onclick="bxForm_<?=$arParams["FORM_ID"]?>.menu.ShowMenu(this, bxForm_<?=$arParams["FORM_ID"]?>.settingsMenu);" title="<?=htmlspecialcharsbx(GetMessage("interface_form_settings"))?>" class="bx-context-button bx-form-menu"><span></span></a>
 </div><?
 endif;
-?><script type="text/javascript">
+?><script>
 	var bxForm_<?=$arParams['FORM_ID']?> = null;
 </script><?
 if($arParams['SHOW_FORM_TAG']):
@@ -291,7 +291,7 @@ foreach($arSections as &$arSection):
 				$viewID = "{$arParams['FORM_ID']}_{$field['id']}_VIEW";
 				?><span id="<?=htmlspecialcharsbx($viewID)?>" class="bx-crm-edit-datetime-link"><?=htmlspecialcharsEx($val !== '' ? $val : GetMessage('interface_form_set_datetime'))?></span>
 				<input id="<?=htmlspecialcharsbx($dataID)?>" type="hidden" name="<?=htmlspecialcharsbx($field['id'])?>" value="<?=$valEncoded?>" <?=$params?>>
-				<script type="text/javascript">BX.ready(function(){ BX.CrmDateLinkField.create(BX('<?=CUtil::addslashes($dataID)?>'), BX('<?=CUtil::addslashes($viewID)?>'), { showTime: false }); });</script><?
+				<script>BX.ready(function(){ BX.CrmDateLinkField.create(BX('<?=CUtil::addslashes($dataID)?>'), BX('<?=CUtil::addslashes($viewID)?>'), { showTime: false }); });</script><?
 				break;
 			case 'intranet_user_search':
 				$params = isset($field['componentParams']) ? $field['componentParams'] : array();
@@ -397,7 +397,7 @@ foreach($arSections as &$arSection):
 					{
 						$dialogSettings['titleTitle'] = GetMessage('interface_form_add_company_fld_title_name');
 					}
-					?><script type="text/javascript">
+					?><script>
 					BX.ready(
 							function()
 							{
@@ -513,7 +513,7 @@ foreach($arSections as &$arSection):
 						'companyTypeItems' => CCrmEntitySelectorHelper::PrepareListItems(CCrmStatus::GetStatusList('COMPANY_TYPE')),
 						'industryItems' => CCrmEntitySelectorHelper::PrepareListItems(CCrmStatus::GetStatusList('INDUSTRY'))
 					);
-					?><script type="text/javascript">
+					?><script>
 					BX.ready(
 						function()
 						{
@@ -779,7 +779,7 @@ $variables = array(
 	"GRID_ID"=>$arParams["THEME_GRID_ID"],
 );
 
-?><script type="text/javascript">
+?><script>
 var formSettingsDialog<?=$arParams["FORM_ID"]?>;
 bxForm_<?=$arParams["FORM_ID"]?> = new BxCrmInterfaceForm('<?=$arParams["FORM_ID"]?>', <?=CUtil::PhpToJsObject(array_keys($arResult["TABS"]))?>);
 bxForm_<?=$arParams["FORM_ID"]?>.vars = <?=CUtil::PhpToJsObject($variables)?>;<?
@@ -810,7 +810,7 @@ bxForm_<?=$arParams["FORM_ID"]?>.EnableSigleSubmit(true);
 
 ?></div><!-- bx-interface-form --><?
 if(!empty($arUserSearchFields)):
-?><script type="text/javascript">
+?><script>
 	BX.ready(
 		function()
 		{<?

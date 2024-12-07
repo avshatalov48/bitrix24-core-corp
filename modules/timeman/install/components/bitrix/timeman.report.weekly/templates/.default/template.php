@@ -135,7 +135,7 @@ $cur_date_m = date('n'); $cur_date_y = date('Y');
 <?
 $APPLICATION->IncludeComponent('bitrix:main.calendar', '', array('SHOW_INPUT' => 'Y', 'SHOW_TIME' => 'N', 'HIDE_TIMEBAR' => 'Y', 'INPUT_NAME' => 'bx_goto_date', 'SILENT'=>'Y'), null, array('HIDE_ICONS' => 'Y'));
 ?>
-<script type="text/javascript">
+<script>
 function jsCalendarInsertDate(value)
 {
 	if (BX.type.isDate(value))
@@ -186,7 +186,7 @@ if (count($arResult['arAccessUsers']['READ']) > 1 || $arResult['arAccessUsers'][
 	function __tmr_replace($str)
 	{
 		$str = preg_replace(
-			'/<option([^>]*)>'.GetMessage('MAIN_NO').'<\/option>/i'.BX_UTF_PCRE_MODIFIER,
+			'/<option([^>]*)>'.GetMessage('MAIN_NO').'<\/option>/iu',
 			'<option\\1>'.GetMessage('TMR_FILTER_DEPT_0').'</option>',
 			$str
 		);
@@ -198,7 +198,7 @@ if (count($arResult['arAccessUsers']['READ']) > 1 || $arResult['arAccessUsers'][
 
 	CIntranetUtils::ShowDepartmentFilter($arResult['UF_DEPARTMENT_field'], true, false, '__tmr_replace');
 ?>
-<script type="text/javascript">
+<script>
 	document.forms.REPORT_FILTER.department.value = "<?=$arResult["DEPARTMENT_ID"];?>";
 </script>
 <a href="javascript:void(0);" class="filter-reset" onclick="this.blur(); document.forms.REPORT_FILTER.department.value = ''; window.BXTMREPORT.Filter(); return false;"></a>
@@ -222,7 +222,7 @@ endif;
 	</div>
 	<div id="bx-report-overdue" style="display:none" class="bx-tm-overdue"></div>
 </div>
-<script type="text/javascript">
+<script>
 window.BXTMREPORT = new JCTimeManReport('bx_tm_report', {
 	DEPARTMENTS: 'tm_report_conrol_departments',
 	FILTER: 'REPORT_FILTER',

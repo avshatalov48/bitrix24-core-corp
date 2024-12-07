@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["CRM_QUOTE_STATUS_DRAFT"] = "Черновик";
 $MESS["CRM_QUOTE_STATUS_SENT"] = "Отправлено клиенту";
 $MESS["CRM_QUOTE_STATUS_RECEIVED"] = "Рассматривается клиентом";
@@ -121,4 +121,4 @@ $MESS["CRM_QUOTE_FIELD_UTM_CONTENT"] = "Содержание кампании";
 $MESS["CRM_QUOTE_FIELD_UTM_MEDIUM"] = "Тип трафика";
 $MESS["CRM_QUOTE_FIELD_UTM_SOURCE"] = "Рекламная система";
 $MESS["CRM_QUOTE_FIELD_UTM_TERM"] = "Условие поиска кампании";
-?>
+$MESS["CRM_QUOTE_NO_PERMISSIONS_TO_DELETE"] = "#QUOTE_NAME#: недостаточно прав для удаления";

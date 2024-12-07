@@ -2,7 +2,7 @@
  * @module layout/ui/textarea
  */
 jn.define('layout/ui/textarea', (require, exports, module) => {
-	const { Color } = require('tokens');
+	const AppTheme = require('apptheme');
 	const isAndroid = Application.getPlatform() === 'android';
 
 	function Textarea({ ref, text, placeholder, onChange, onLinkClick, style, testId })
@@ -18,7 +18,7 @@ jn.define('layout/ui/textarea', (require, exports, module) => {
 				ref,
 				testId,
 				placeholder,
-				placeholderTextColor: Color.base5,
+				placeholderTextColor: AppTheme.colors.base5,
 				value: text,
 				multiline: true,
 				style: {
@@ -27,7 +27,7 @@ jn.define('layout/ui/textarea', (require, exports, module) => {
 					fontSize: 18,
 					flexGrow: 1,
 					height: '100%',
-					color: Color.base1,
+					color: AppTheme.colors.base1,
 					...style,
 				},
 				onChangeText: onChange,

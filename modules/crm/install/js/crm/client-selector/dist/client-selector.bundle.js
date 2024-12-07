@@ -3,6 +3,7 @@ this.BX = this.BX || {};
 	'use strict';
 
 	const DEFAULT_TAB_ID = 'client';
+	var _multiple = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("multiple");
 	var _getEntityAvatarPath = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getEntityAvatarPath");
 	var _prepareEvents = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("prepareEvents");
 	class ClientSelector {
@@ -10,11 +11,13 @@ this.BX = this.BX || {};
 	    targetNode,
 	    context = null,
 	    communications,
+	    multiple = false,
 	    selected = [],
 	    events = {}
 	  }) {
 	    const instance = new ClientSelector({
 	      targetNode,
+	      multiple,
 	      context,
 	      events
 	    });
@@ -26,11 +29,13 @@ this.BX = this.BX || {};
 	    targetNode,
 	    context = null,
 	    items,
+	    multiple = false,
 	    selected = [],
 	    events = {}
 	  }) {
 	    const instance = new ClientSelector({
 	      targetNode,
+	      multiple,
 	      context,
 	      events
 	    });
@@ -40,6 +45,7 @@ this.BX = this.BX || {};
 	  }
 	  constructor({
 	    targetNode,
+	    multiple = false,
 	    context = null,
 	    events: _events = {}
 	  }) {
@@ -51,13 +57,27 @@ this.BX = this.BX || {};
 	    });
 	    this.items = [];
 	    this.events = {};
+	    Object.defineProperty(this, _multiple, {
+	      writable: true,
+	      value: false
+	    });
 	    this.targetNode = targetNode;
+	    babelHelpers.classPrivateFieldLooseBase(this, _multiple)[_multiple] = multiple;
 	    this.context = main_core.Type.isStringFilled(context) ? context : `crm-client-selector-${main_core.Text.getRandom()}`;
 	    this.events = main_core.Type.isObjectLike(_events) ? _events : {};
 	  }
 	  setSelected(ids) {
 	    // eslint-disable-next-line no-return-assign,no-param-reassign
 	    this.items.forEach(item => item.selected = ids.includes(item.id));
+	    return this;
+	  }
+	  setSelectedItemByEntityData(entityId, entityTypeId) {
+	    this.items.forEach(item => {
+	      if (item.customData.entityId === entityId && item.customData.entityTypeId === entityTypeId) {
+	        // eslint-disable-next-line no-param-reassign
+	        item.selected = true;
+	      }
+	    });
 	    return this;
 	  }
 	  getPhoneSelectorItems(communications) {
@@ -125,7 +145,7 @@ this.BX = this.BX || {};
 	      targetNode,
 	      id: 'client-phone-selector-dialog',
 	      context,
-	      multiple: false,
+	      multiple: babelHelpers.classPrivateFieldLooseBase(this, _multiple)[_multiple],
 	      dropdownMode: true,
 	      showAvatars: true,
 	      enableSearch: true,
@@ -159,6 +179,7 @@ this.BX = this.BX || {};
 	  const {
 	    events: {
 	      onSelect,
+	      onDeselect,
 	      onHide,
 	      onShow
 	    }
@@ -166,6 +187,9 @@ this.BX = this.BX || {};
 	  const events = {};
 	  if (onSelect) {
 	    events['Item:onSelect'] = onSelect;
+	  }
+	  if (onDeselect) {
+	    events['Item:onDeselect'] = onDeselect;
 	  }
 	  if (onHide) {
 	    events.onHide = onHide;

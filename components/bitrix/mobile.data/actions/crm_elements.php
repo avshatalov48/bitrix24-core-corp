@@ -88,10 +88,6 @@ foreach($arResult['ENTITY_TYPE'] as $entityTypeId => $type)
 		);
 	}
 
-	if(SITE_CHARSET !== 'utf-8')
-	{
-		$typeName = $APPLICATION->ConvertCharsetArray($typeName, SITE_CHARSET, 'utf-8');
-	}
 	$names[$type] = $typeName;
 
 	foreach($arResult['ELEMENT'] as $element)
@@ -105,11 +101,6 @@ foreach($arResult['ENTITY_TYPE'] as $entityTypeId => $type)
 				'LINK' => $element['url'],
 				'TYPE' => $element['type']
 			];
-
-			if(SITE_CHARSET !== 'utf-8')
-			{
-				$item = $APPLICATION->ConvertCharsetArray($item, SITE_CHARSET, 'utf-8');
-			}
 
 			$elements[$type][] = $item;
 		}

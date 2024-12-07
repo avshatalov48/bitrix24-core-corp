@@ -221,16 +221,16 @@ class CAllCrmMailTemplate
 		}
 		else
 		{
-			$DB->Query($sql, false, 'File: '.__FILE__.'<br>Line: '.__LINE__);
+			$DB->Query($sql);
 		}
 
 		self::updateUserFields($ID, $arFields);
 
 		$curAccessRelation = \Bitrix\Crm\MailTemplate\MailTemplateAccess::getAccessDataByTemplateID($ID);
 
-		if($arFields['ACCESS'])
+		if(!empty($arFields['ACCESS'] ?? []) || !empty($curAccessRelation))
 		{
-			\Bitrix\Crm\MailTemplate\MailTemplateAccess::setLimitedAccessToTemplate($ID, $arFields['ACCESS'], $curAccessRelation);
+			\Bitrix\Crm\MailTemplate\MailTemplateAccess::setLimitedAccessToTemplate($ID, $arFields['ACCESS'] ?? [], $curAccessRelation);
 		}
 
 		$rsEvents = GetModuleEvents('crm', 'OnMailTemplateUpdate');
@@ -549,9 +549,9 @@ class CAllCrmMailTemplate
 
 		$html = $parser->convertText($html);
 		$html = htmlspecialcharsback($html);
-		$html = preg_replace("/\<br\s*\/*\>/i".BX_UTF_PCRE_MODIFIER, "\n", $html);
-		$html = preg_replace("/&nbsp;/i".BX_UTF_PCRE_MODIFIER, ' ', $html);
-		$html = preg_replace("/\<[^>]+>/".BX_UTF_PCRE_MODIFIER, '', $html);
+		$html = preg_replace("/\<br\s*\/*\>/iu", "\n", $html);
+		$html = preg_replace("/&nbsp;/iu", ' ', $html);
+		$html = preg_replace("/\<[^>]+>/u", '', $html);
 		$html = htmlspecialcharsbx($html);
 
 		RemoveEventHandler('main', 'TextParserBeforeTags', $eventID);
@@ -560,10 +560,10 @@ class CAllCrmMailTemplate
 
 	public static function __ConvertHtmlToBbCode(&$text, &$parser)
 	{
-		$text = preg_replace(array("/\</".BX_UTF_PCRE_MODIFIER, "/\>/".BX_UTF_PCRE_MODIFIER), array('<', '>'), $text);
-		$text = preg_replace("/\<br\s*\/*\>/i".BX_UTF_PCRE_MODIFIER, "", $text);
-		$text = preg_replace("/\<(\w+)[^>]*\>(.+?)\<\/\\1[^>]*\>/is".BX_UTF_PCRE_MODIFIER, "\\2", $text);
-		$text = preg_replace("/\<*\/li\>/i".BX_UTF_PCRE_MODIFIER, "", $text);
+		$text = preg_replace(array("/\</u", "/\>/u"), array('<', '>'), $text);
+		$text = preg_replace("/\<br\s*\/*\>/iu", "", $text);
+		$text = preg_replace("/\<(\w+)[^>]*\>(.+?)\<\/\\1[^>]*\>/isu", "\\2", $text);
+		$text = preg_replace("/\<*\/li\>/iu", "", $text);
 		$text = str_replace(array("<", ">"),array("<", ">"), $text);
 		$parser->allow = array();
 		return true;

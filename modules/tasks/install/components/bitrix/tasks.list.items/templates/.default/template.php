@@ -10,9 +10,12 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 /** @var CBitrixComponentTemplate $this */
 /** @var CBitrixComponent $component */
 
+use Bitrix\Main\Text\HtmlFilter;
 use Bitrix\Main\UI;
+use Bitrix\Tasks\Integration\Bitrix24\FeatureDictionary;
 use Bitrix\Tasks\Internals\Task\Priority;
 use Bitrix\Tasks\Internals\Task\Status;
+use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\TaskLimit;
 
 UI\Extension::load("ui.tooltip");
 
@@ -125,25 +128,12 @@ foreach ($arResult['ITEMS'] as &$arItem)
 								onmouseover="ShowTaskQuickInfo(<?php echo $task["ID"]?>, event);"
 								onmouseout="HideTaskQuickInfo(<?php echo $task["ID"]?>, event);"
 							<?endif?>
-
-							<?php
-							if ($bShowInPopup)
-							{
-								?>onclick="ShowPopupTask(<?php echo $task["ID"]?>, event);"<?php
-							}
-							?>
 						><?php echo $task["TITLE"]; ?></a><?php
 
 						if ($updatesCount)
 						{
 							?><a href="<?php echo $viewUrl->getUri()?>#updates"
 								class="task-item-updates"
-							<?php
-						if ($bShowInPopup)
-						{
-							?>onclick="ShowPopupTask(<?php echo $task["ID"]?>, event);"<?php
-						}
-							?>
 								title="<?php
 								echo str_replace(
 									"#NUM#",
@@ -169,12 +159,6 @@ foreach ($arResult['ITEMS'] as &$arItem)
 							{
 								?><a href="<?php echo $viewUrl->getUri()?>#comments"
 									class="task-title-comments"
-								<?php
-							if ($bShowInPopup)
-							{
-								?>onclick="ShowPopupTask(<?php echo $task["ID"]?>, event);"<?php
-							}
-								?>
 									title="<?php
 									echo str_replace(
 										"#NUM#",
@@ -385,7 +369,19 @@ foreach ($arResult['ITEMS'] as &$arItem)
 			break;
 
 			case CTaskColumnList::COLUMN_GRADE:
-				if ($arItem['ALLOWED_ACTIONS']['ACTION_EDIT'])
+				if (!\Bitrix\Tasks\Integration\Bitrix24::checkFeatureEnabled(FeatureDictionary::TASK_RATE))
+				{
+					$lockClassName = 'tariff-lock';
+					$onLockClick = TaskLimit::getLimitLockClick(
+						FeatureDictionary::TASK_RATE,
+						null,
+						'taskSidebar'
+					);
+					$lockClassStyle = "cursor: pointer;";
+					?>
+					<span class="<?=$lockClassName?>" onclick="<?=HtmlFilter::encode($onLockClick)?>" style="<?=$lockClassStyle?>"></span><?
+				}
+				else if ($arItem['ALLOWED_ACTIONS']['ACTION_EDIT'])
 				{
 					?><a href="javascript: void(0)"
 						class="task-grade-and-report<?php if ($task["MARK"] == "N" || $task["MARK"] == "P"):?> task-grade-<?php echo ($task["MARK"] == "N" ? "minus" : "plus")?><?php endif?><?php if ($task["ADD_IN_REPORT"] == "Y"):?> task-in-report<?php endif?>" onclick="return ShowGradePopup(<?php echo $task["ID"]?>, this, {listValue : '<?php echo ($task["MARK"] == "N" || $task["MARK"] == "P" ? $task["MARK"] : "NULL")?>' });" title="<?php echo GetMessage("TASKS_MARK")?>: <?php echo GetMessage("TASKS_MARK_".($task["MARK"] == "N" || $task["MARK"] == "P" ? $task["MARK"] : "NONE"))?>"><span class="task-grade-and-report-inner"><i class="task-grade-and-report-icon"></i></span></a><?php
@@ -600,7 +596,7 @@ foreach ($arResult['ITEMS'] as &$arItem)
 		<?endif?>
 	</tr>
 
-	<script type="text/javascript"<?php echo $arParams["DEFER"] ? "  defer=\"defer\"" : ""?>>
+	<script<?php echo $arParams["DEFER"] ? "  defer=\"defer\"" : ""?>>
 		tasksMenuPopup[<?php echo $task["ID"]?>] = [<?
 			if ((string)($arParams['CUSTOM_ACTIONS_CALLBACK'] ?? null) != '' && is_callable($arParams['CUSTOM_ACTIONS_CALLBACK']))
 			{
@@ -613,7 +609,7 @@ foreach ($arResult['ITEMS'] as &$arItem)
 		?>];
 
 		<?if (($arParams['SHOW_QUICK_INFORMERS'] ?? null) !== false):?>
-			quickInfoData[<?php echo $task["ID"]?>] = <?=tasksRenderJSON($task, $childrenCount, $arParams["PATHS"], false, false, false, $arParams["NAME_TEMPLATE"], array(), false, array('VIEW_STATE' => $arParams['VIEW_STATE']))?>;
+			quickInfoData[<?php echo $task["ID"]?>] = <? tasksRenderJSON($task, $childrenCount, $arParams["PATHS"], false, false, false, $arParams["NAME_TEMPLATE"], array(), false, array('VIEW_STATE' => $arParams['VIEW_STATE']))?>;
 		<?endif?>
 		<?php if($arParams["TASK_ADDED"]):?>
 			BX.onCustomEvent("onTaskListTaskAdd", [quickInfoData[<?php echo $task["ID"]?>]]);

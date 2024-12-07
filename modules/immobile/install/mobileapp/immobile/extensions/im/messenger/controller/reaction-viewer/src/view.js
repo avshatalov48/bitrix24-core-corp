@@ -6,7 +6,7 @@ jn.define('im/messenger/controller/reaction-viewer/view', (require, exports, mod
 	const { ReactionUserList } = require('im/messenger/controller/reaction-viewer/user-list');
 	const { ReactionType } = require('im/messenger/const');
 	const { ReactionAssets } = require('im/messenger/assets/common');
-	const AppTheme = require('apptheme');
+	const { Theme } = require('im/lib/theme');
 
 	/**
 	 * @class ReactionViewerView
@@ -35,7 +35,7 @@ jn.define('im/messenger/controller/reaction-viewer/view', (require, exports, mod
 				{
 					style: {
 						flexDirection: 'column',
-						backgroundColor: AppTheme.colors.bgNavigation,
+						backgroundColor: Theme.colors.bgNavigation,
 					},
 				},
 				GridView(
@@ -44,7 +44,7 @@ jn.define('im/messenger/controller/reaction-viewer/view', (require, exports, mod
 							height: 46,
 							paddingLeft: 10,
 							paddingRight: 10,
-							backgroundColor: AppTheme.colors.bgNavigation,
+							backgroundColor: Theme.colors.bgNavigation,
 						},
 						params: {
 							orientation: 'horizontal',
@@ -85,7 +85,7 @@ jn.define('im/messenger/controller/reaction-viewer/view', (require, exports, mod
 						style: {
 							borderRadius: 12,
 							flex: 1,
-							backgroundColor: AppTheme.colors.bgContentPrimary,
+							backgroundColor: Theme.colors.bgContentPrimary,
 							paddingTop: 12,
 						},
 					},

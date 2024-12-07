@@ -2,6 +2,8 @@
 
 namespace Bitrix\CatalogMobile\InventoryControl\DataProvider\DocumentProducts;
 
+use Bitrix\Catalog\Config\State;
+use Bitrix\Catalog\Store\EnableWizard\TariffChecker;
 use Bitrix\Catalog\StoreDocumentTable;
 use Bitrix\Catalog\Access\AccessController;
 use Bitrix\Catalog\StoreTable;
@@ -38,7 +40,10 @@ class Facade
 		];
 		$measures = MeasureRepository::findAll();
 
-		$config = [];
+		$config = [
+			'isCatalogHidden' => State::isExternalCatalog(),
+			'isOnecRestrictedByPlan' => TariffChecker::isOnecInventoryManagementRestricted(),
+		];
 		$defaultStoreId = AccessController::getCurrent()->getAllowedDefaultStoreId();
 		if ($defaultStoreId)
 		{

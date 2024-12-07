@@ -1,0 +1,65 @@
+.sign-mysafe-grid-user {
+	text-decoration: none !important;
+	padding: 3.5px 13px 3.5px 4px;
+	border-radius: 14.5px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: start;
+	background: transparent;
+	transition: 250ms linear all;
+}
+.sign-mysafe-grid-user:hover {
+	background: #C0EDFD;
+	transition: .1s;
+	opacity: 1;
+}
+
+.sign-mysafe-grid-user-name {
+	display: inline-block;
+	width: 100%;
+	vertical-align: middle;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	color: #525C69;
+	text-decoration: none;
+	border-bottom: none;
+	padding-left: 11px;
+}
+
+.sign-mysafe-download-result-file-wrapper {
+	display: flex;
+	flex-direction: row;
+
+	width: max-content;
+	height: max-content;
+	padding-top: 3px;
+	padding-bottom: 3px;
+
+	text-decoration: none !important;
+}
+
+.sign-mysafe-download-result-file-wrapper:hover {
+	background-color: rgb(205, 205, 205) !important;
+}
+
+.sign-mysafe-download-result-file-wrapper:active {
+	background-color: rgb(175, 175, 175) !important;
+}
+
+.sign-mysafe-download-result-file-inner {
+	display: flex;
+
+	border-bottom: none !important;
+}
+
+.sign-mysafe-download-result-file-text {
+	align-self: center;
+	margin-left: 5px;
+
+	text-transform: uppercase;
+}
+
+.sign-mysafe-download-result-icon {
+	width: 18px;
+}

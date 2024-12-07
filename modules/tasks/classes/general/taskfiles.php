@@ -607,7 +607,7 @@ class CTaskFiles
 			return (false);
 
 		$strSql = "DELETE FROM b_tasks_file WHERE TASK_ID = ".$TASK_ID." AND FILE_ID = ".$FILE_ID;
-		$result = $DB->Query($strSql, false, "File: ".__FILE__."<br>Line: ".__LINE__);
+		$result = $DB->Query($strSql);
 
 		if ($result)
 		{
@@ -714,7 +714,7 @@ class CTaskFiles
 
 		$strSql .= $strSqlOrder;
 
-		return $DB->Query($strSql, false, "File: ".__FILE__."<br>Line: ".__LINE__);
+		return $DB->Query($strSql);
 	}
 
 
@@ -730,7 +730,7 @@ class CTaskFiles
 
 		$FILE_ID = intval($FILE_ID);
 		$strSql = "DELETE FROM b_tasks_file WHERE FILE_ID = ".$FILE_ID;
-		$result = $DB->Query($strSql, false, "File: ".__FILE__."<br>Line: ".__LINE__);
+		$result = $DB->Query($strSql);
 
 		if ($result)
 		{
@@ -760,7 +760,7 @@ class CTaskFiles
 
 		$TASK_ID = intval($TASK_ID);
 		$strSql = "DELETE FROM b_tasks_file WHERE TASK_ID = " . $TASK_ID . ' ' . $sqrWhereAdditional;
-		$result = $DB->Query($strSql, false, "File: ".__FILE__."<br>Line: ".__LINE__);
+		$result = $DB->Query($strSql);
 
 		if ($result)
 		{

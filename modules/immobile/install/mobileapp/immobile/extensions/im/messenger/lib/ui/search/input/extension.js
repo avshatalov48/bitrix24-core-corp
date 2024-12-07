@@ -4,7 +4,7 @@
 jn.define('im/messenger/lib/ui/search/input', (require, exports, module) => {
 	const { lens, cross } = require('im/messenger/assets/common');
 	const { Loc } = require('loc');
-	const AppTheme = require('apptheme');
+	const { Theme } = require('im/lib/theme');
 	const { transparent } = require('utils/color');
 
 	class SearchInput extends LayoutComponent
@@ -33,7 +33,7 @@ jn.define('im/messenger/lib/ui/search/input', (require, exports, module) => {
 			return View(
 				{
 					style: {
-						backgroundColor: transparent(AppTheme.colors.base5, 0.25),
+						backgroundColor: transparent(Theme.colors.base5, 0.25),
 						flexDirection: 'row',
 						padding: 8,
 						borderRadius: 8,
@@ -66,10 +66,10 @@ jn.define('im/messenger/lib/ui/search/input', (require, exports, module) => {
 					TextInput({
 						testId: 'search_field',
 						placeholder: Loc.getMessage('IMMOBILE_MESSENGER_UI_SEARCH_INPUT_PLACEHOLDER_TEXT'),
-						placeholderTextColor: AppTheme.colors.base4,
+						placeholderTextColor: Theme.colors.base4,
 						multiline: false,
 						style: {
-							color: AppTheme.colors.base1,
+							color: Theme.colors.base1,
 							fontSize: 18,
 							backgroundColor: '#00000000',
 						},

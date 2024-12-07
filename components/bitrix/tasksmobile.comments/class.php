@@ -44,6 +44,7 @@ class TasksMobileCommentsComponent extends CBitrixComponent
 
 	private function checkParameters(): void
 	{
+		$this->arResult['TASK_ID'] = (int)$this->arParams['TASK_ID'];
 		$this->arResult['NAME_TEMPLATE'] = (
 			empty($this->arParams['NAME_TEMPLATE'])
 				? CSite::GetNameFormat(false)
@@ -74,7 +75,6 @@ class TasksMobileCommentsComponent extends CBitrixComponent
 		}
 
 		$taskId = (int)$taskData['ID'];
-
 		$this->arResult['TASK'] = $taskData;
 		$this->arResult['FORUM_ID'] = ($taskData['FORUM_ID'] ?: CTasksTools::getForumIdForIntranet());
 		$this->arResult['LOG_ID'] = $this->getLogId($taskId);

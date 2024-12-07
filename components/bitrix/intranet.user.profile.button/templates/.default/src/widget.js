@@ -8,6 +8,7 @@ import 'main.qrcode';
 import Options from "./options";
 import Ustat from "./ustat";
 import UserLoginHistory from './user-login-history';
+import { SignDocument } from './sign-document';
 import {QrAuthorization} from "ui.qrauthorization";
 import {Otp} from "./otp";
 import {DesktopApi} from 'im.v2.lib.desktop-api';
@@ -20,12 +21,20 @@ export default class Widget extends EventEmitter
 	#profile = null;
 	#features = {};
 	#cache = new Cache.MemoryCache();
-
+	#desktopDownloadLinks: {
+		windows: string,
+		macos: string,
+		linuxDeb: string,
+		linuxRpm: string,
+	};
+	#networkProfileUrl;
 
 	constructor(container, {
 		profile: {ID, FULL_NAME, PHOTO, MASK, STATUS, URL, WORK_POSITION},
 		component: {componentName, signedParameters},
-		features
+		features,
+		desktopDownloadLinks,
+		networkProfileUrl,
 	})
 	{
 		super();
@@ -42,6 +51,8 @@ export default class Widget extends EventEmitter
 				)
 			;
 		}
+		this.#desktopDownloadLinks = desktopDownloadLinks;
+		this.#networkProfileUrl = networkProfileUrl;
 
 		this.#cache.set('componentParams', {componentName, signedParameters});
 		this.hide = this.hide.bind(this);
@@ -76,12 +87,21 @@ export default class Widget extends EventEmitter
 			return this.#popup;
 		}
 		this.emit('init');
+		let signDocument = Type.isNull(this.#getSignDocument())
+			? null
+			: {
+				html: this.#getSignDocument(),
+				marginBottom: 24,
+				minHeight: '99px',
+			}
+		;
 		let content = [
 			this.#getProfileContainer(),
 			(this.#getAdminPanelContainer() ? {
 				html: this.#getAdminPanelContainer(),
 				backgroundColor: '#fafafa'
 			} : null),
+			signDocument,
 			[
 				{
 					html: this.#getThemeContainer(),
@@ -201,6 +221,7 @@ export default class Widget extends EventEmitter
 				secondary: item['secondary'] || false,
 			};
 		}
+
 		this.#popup = new PopupComponentsMaker({
 			target: this.#container,
 			content: content.map(prepareFunc),
@@ -317,7 +338,7 @@ export default class Widget extends EventEmitter
 			}
 
 			return Tag.render`
-				<a class="system-auth-form__item system-auth-form__scope --center --padding-sm --clickable" href="https://www.bitrix24.net/">
+				<a class="system-auth-form__item system-auth-form__scope --center --padding-sm --clickable" href="${this.#networkProfileUrl}">
 					<div class="system-auth-form__item-logo">
 						<div class="system-auth-form__item-logo--image --network"></div>
 					</div>
@@ -437,6 +458,24 @@ export default class Widget extends EventEmitter
 		}.bind(this));
 	}
 
+	#getSignDocument(): Promise<HTMLElement> | null
+	{
+		if (this.#features['signDocument'] !== 'Y')
+		{
+			return null;
+		}
+
+		return this.#cache.remember('getSignDocument', (): Promise<HTMLElement> => {
+			EventEmitter.subscribe(
+				SignDocument,
+				SignDocument.events.onDocumentCreateSidePanelOpen,
+				() => this.hide(),
+			);
+
+			return SignDocument.getPromise();
+		});
+	}
+
 	#getStressLevel(): Promise
 	{
 		if (this.#features['stressLevel'] !== 'Y')
@@ -458,14 +497,11 @@ export default class Widget extends EventEmitter
 		return this.#cache.remember('getQrContainer', () => {
 			return new Promise((resolve, reject) => {
 				BX.loadExt(['ui.qrauthorization', 'qrcode']).then(() => {
-					const isInstalled = this.#features['appInstalled']['APP_ANDROID_INSTALLED'] === 'Y'
-						|| this.#features['appInstalled']['APP_IOS_INSTALLED'] === 'Y';
 					const onclick = () => {
 						this.hide();
 						(new QrAuthorization({
 							title: Loc.getMessage('INTRANET_USER_PROFILE_QRCODE_TITLE2'),
 							content: Loc.getMessage('INTRANET_USER_PROFILE_QRCODE_BODY2'),
-							helpLink: '',
 						})).show();
 					}
 					const onclickHelp = (event: MouseEvent) => {
@@ -480,7 +516,7 @@ export default class Widget extends EventEmitter
 					{
 						// for a small size
 						node = Tag.render`
-					<div class="system-auth-form__item system-auth-form__scope ${isInstalled ? '--active' : ''}  --clickable" onclick="${onclick}" style="padding: 10px 14px">
+					<div class="system-auth-form__item system-auth-form__scope" style="padding: 10px 14px">
 						<div class="system-auth-form__item-container --center --column --center">
 							<div class="system-auth-form__item-title --center --margin-xl">${Loc.getMessage('INTRANET_USER_PROFILE_MOBILE_TITLE2_SMALL')}</div>
 							<div class="system-auth-form__qr" style="margin-bottom: 12px">
@@ -495,7 +531,7 @@ export default class Widget extends EventEmitter
 					{
 						//full size
 						node = Tag.render`
-					<div class="system-auth-form__item system-auth-form__scope ${isInstalled ? '--active' : ''} --padding-qr-xl">
+					<div class="system-auth-form__item system-auth-form__scope --padding-qr-xl">
 						<div class="system-auth-form__item-container --column --flex --flex-start">
 							<div class="system-auth-form__item-title --l">${Loc.getMessage('INTRANET_USER_PROFILE_MOBILE_TITLE2')}</div>
 							<div class="system-auth-form__item-title --link-dotted" onclick="${onclickHelp}">
@@ -515,7 +551,7 @@ export default class Widget extends EventEmitter
 					{
 						// for flex 2. It is kind of middle
 						node = Tag.render`
-					<div class="system-auth-form__item system-auth-form__scope ${isInstalled ? '--active' : ''} --padding-mid-qr  --clickable" onclick="${onclick}">
+					<div class="system-auth-form__item system-auth-form__scope --padding-mid-qr">
 						<div class="system-auth-form__item-container --column --flex --flex-start">
 							<div class="system-auth-form__item-title --block">
 								${Loc.getMessage('INTRANET_USER_PROFILE_MOBILE_TITLE2_SMALL')}
@@ -542,15 +578,15 @@ export default class Widget extends EventEmitter
 			let isInstalled = this.#features['appInstalled']['APP_MAC_INSTALLED'] === 'Y';
 			let cssPostfix = '--apple';
 			let title = Loc.getMessage('INTRANET_USER_PROFILE_DESKTOP_APPLE');
-			let linkToDistributive = 'https://dl.bitrix24.com/b24/bitrix24_desktop.dmg';
+			let linkToDistributive = this.#desktopDownloadLinks.macos;
 			const typesInstallersForLinux = {
 				'DEB': {
 					text: Loc.getMessage('INTRANET_USER_PROFILE_DOWNLOAD_LINUX_DEB'),
-					href: 'https://dl.bitrix24.com/b24/bitrix24_desktop.deb',
+					href: this.#desktopDownloadLinks.linuxDeb,
 				},
 				'RPM': {
 					text: Loc.getMessage('INTRANET_USER_PROFILE_DOWNLOAD_LINUX_RPM'),
-					href: 'https://dl.bitrix24.com/b24/bitrix24_desktop.rpm',
+					href: this.#desktopDownloadLinks.linuxRpm,
 				},
 			};
 
@@ -559,7 +595,7 @@ export default class Widget extends EventEmitter
 				isInstalled = this.#features['appInstalled']['APP_WINDOWS_INSTALLED'] === 'Y';
 				cssPostfix = '--windows';
 				title = Loc.getMessage('INTRANET_USER_PROFILE_DESKTOP_WINDOWS');
-				linkToDistributive = 'https://dl.bitrix24.com/b24/bitrix24_desktop.exe'
+				linkToDistributive = this.#desktopDownloadLinks.windows;
 			}
 
 			let onclick = isInstalled ? (event) => {

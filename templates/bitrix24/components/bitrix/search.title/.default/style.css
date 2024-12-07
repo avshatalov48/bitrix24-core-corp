@@ -128,6 +128,16 @@
 	margin-bottom: 10px;
 }
 
+.search-title-top-subtitle-prefix-wrapper{
+	max-width: 60%;
+	overflow: hidden;
+	white-space: nowrap;
+	-ms-text-overflow: ellipsis;
+	text-overflow: ellipsis;
+	display: inline-block;
+	vertical-align: bottom;
+}
+
 .search-title-top-block-section .search-title-top-subtitle {
 	margin-bottom: 16px;
 }

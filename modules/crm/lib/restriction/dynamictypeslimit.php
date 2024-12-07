@@ -11,7 +11,6 @@ use Bitrix\UI\Buttons\JsHandler;
 
 class DynamicTypesLimit
 {
-	public const FEATURE_SLIDER_NAME = 'limit_smart_process_automation';
 	public const FEATURE_NAME = 'crm_smart_processes';
 
 	public const ERROR_CODE_CREATE_TYPE_RESTRICTED = 'CREATE_DYNAMIC_TYPE_RESTRICTED';
@@ -19,11 +18,13 @@ class DynamicTypesLimit
 	public const ERROR_CODE_CREATE_ITEM_RESTRICTED = 'CREATE_DYNAMIC_ITEM_RESTRICTED';
 	public const ERROR_CODE_UPDATE_ITEM_RESTRICTED = 'UPDATE_DYNAMIC_ITEM_RESTRICTED';
 
-	protected $isEnabled;
-	/** @var Feature */
-	protected $feature = Feature::class;
+	/** @var Feature|string */
+	protected Feature|string $feature = Feature::class;
+	protected bool $isEnabled;
 
-	public function __construct()
+	public function __construct(
+		protected DynamicTypesQuantityRestriction $typesQuantityRestriction,
+	)
 	{
 		$this->isEnabled = $this->includeModule();
 	}
@@ -57,7 +58,27 @@ class DynamicTypesLimit
 	 */
 	public function isCreateTypeRestricted(): bool
 	{
-		return !$this->isFeatureEnabled();
+		if (!$this->isFeatureEnabled())
+		{
+			return true;
+		}
+
+		return $this->typesQuantityRestriction->isExceeded();
+	}
+
+	public function getCreateTypeRestrictionSliderCode(): string
+	{
+		if (!$this->isFeatureEnabled())
+		{
+			return $this->typesQuantityRestriction::UNAVAILABLE_SLIDER_CODE;
+		}
+
+		return $this->typesQuantityRestriction->getRestrictionSliderCode();
+	}
+
+	public function canShowRestrictionSlider(): bool
+	{
+		return $this->isEnabled();
 	}
 
 	/**
@@ -121,8 +142,8 @@ class DynamicTypesLimit
 	public function getCreateTypeRestrictedError(): Error
 	{
 		return new Error(
-			Loc::getMessage('CRM_RESTRICTION_DYNAMIC_TYPES_CREATE_RESTRICTED'),
-			static::ERROR_CODE_CREATE_TYPE_RESTRICTED
+			Loc::getMessage('CRM_RESTRICTION_DYNAMIC_TYPES_LIMIT_EXCEEDED_ERROR'),
+			static::ERROR_CODE_CREATE_TYPE_RESTRICTED,
 		);
 	}
 

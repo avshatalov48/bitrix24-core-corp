@@ -112,7 +112,7 @@ $APPLICATION->IncludeComponent(
 	$component
 );
 ?>
-<script type="text/javascript">
+<script>
 		BX.ready(function ()
 		{
 			<?=$jsObjName?> = BX.Crm.Order.Shipment.ProductAdd.List.create(

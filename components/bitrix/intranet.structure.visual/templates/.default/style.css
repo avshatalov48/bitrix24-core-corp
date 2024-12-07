@@ -372,6 +372,10 @@
     position: fixed; top: 10px;
 }
 
+.structure-undo-link {
+	text-transform: capitalize;
+}
+
 .structure-undo-link:link, .structure-undo-link:hover, .structure-undo-link:active, .structure-undo-link:visited {color: red; text-decoration: underline;}
 
 .structure-undo-close {

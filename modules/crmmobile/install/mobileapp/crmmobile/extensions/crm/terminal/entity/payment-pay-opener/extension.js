@@ -36,6 +36,8 @@ jn.define('crm/terminal/entity/payment-pay-opener', (require, exports, module) =
 						.then((response) => {
 							const {
 								payment,
+								isPhoneConfirmed,
+								connectedSiteId,
 								psCreationActionProviders,
 								pullConfig,
 							} = response.data;
@@ -47,6 +49,8 @@ jn.define('crm/terminal/entity/payment-pay-opener', (require, exports, module) =
 								psCreationActionProviders,
 								pullConfig,
 								isStatusVisible: BX.prop.getBoolean(props, 'isStatusVisible', false),
+								isPhoneConfirmed,
+								connectedSiteId,
 							}));
 						})
 						.catch(console.error);

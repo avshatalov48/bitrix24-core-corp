@@ -14,6 +14,9 @@ class AiCallFieldsFillingResult extends Badge
 	public const CONFLICT_FIELDS_VALUE = 'conflict_fields';
 	public const SUCCESS_FIELDS_VALUE = 'success_fields';
 	public const ERROR_PROCESS_VALUE = 'error_process';
+	public const ERROR_PROCESS_THIRDPARTY_VALUE = 'error_process_thirdparty';
+
+	public const ERROR_LIMIT_EXCEEDED = 'error_limit_exceeded';
 
 	public function getFieldName(): string
 	{
@@ -41,11 +44,28 @@ class AiCallFieldsFillingResult extends Badge
 				ValueItemOptions::TEXT_COLOR_FAILURE,
 				ValueItemOptions::BG_COLOR_FAILURE
 			),
+			new ValueItem(
+				self::ERROR_PROCESS_THIRDPARTY_VALUE,
+				Loc::getMessage('CRM_BADGE_AI_CALL_FIELDS_FILLING_THIRDPARTY_RESULT_ERROR'),
+				ValueItemOptions::TEXT_COLOR_FAILURE,
+				ValueItemOptions::BG_COLOR_FAILURE
+			),
+			new ValueItem(
+				self::ERROR_LIMIT_EXCEEDED,
+				self::getLimitExceededTextValue(),
+				ValueItemOptions::TEXT_COLOR_FAILURE,
+				ValueItemOptions::BG_COLOR_FAILURE
+			),
 		];
 	}
 
 	public function getType(): string
 	{
 		return self::TYPE;
+	}
+
+	public static function getLimitExceededTextValue(): string
+	{
+		return Loc::getMessage('CRM_BADGE_AI_CALL_FIELDS_FILLING_RESULT_ERROR_LIMIT_EXCEEDED');
 	}
 }

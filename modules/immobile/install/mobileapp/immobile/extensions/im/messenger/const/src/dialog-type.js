@@ -6,6 +6,7 @@ jn.define('im/messenger/const/dialog-type', (require, exports, module) => {
 		user: 'user',
 		chat: 'chat',
 		open: 'open',
+		lines: 'lines',
 		general: 'general',
 		videoconf: 'videoconf',
 		announcement: 'announcement',
@@ -21,6 +22,10 @@ jn.define('im/messenger/const/dialog-type', (require, exports, module) => {
 		private: 'private',
 		copilot: 'copilot',
 		default: 'default',
+		comment: 'comment',
+		channel: 'channel',
+		openChannel: 'openChannel',
+		generalChannel: 'generalChannel',
 	});
 
 	module.exports = { DialogType };

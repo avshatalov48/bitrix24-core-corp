@@ -1,0 +1,16 @@
+.ai__picker_icon-close {
+	position: absolute;
+	top: 9px;
+	right: 9px;
+	cursor: pointer;
+}
+
+.ai__picker_icon-close .ui-icon-set {
+	--ui-icon-set__icon-color: var(--ui-color-base-30);
+
+}
+
+.ai__picker_icon-close:hover .ui-icon-set {
+	--ui-icon-set__icon-color: var(--ui-color-base-40);
+	transition-duration: 0s;
+}

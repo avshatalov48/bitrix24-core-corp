@@ -99,7 +99,7 @@ class Bitrix24SearchLimitRestriction extends Bitrix24QuantityRestriction
 				throw new NotSupportedException("Entity type: '{$entityTypeName}' is not supported in current context");
 			}
 		}
-		
+
 		$this->cache->endDataCache(['count' => $count]);
 
 		return $count;
@@ -186,26 +186,56 @@ class Bitrix24SearchLimitRestriction extends Bitrix24QuantityRestriction
 		{
 			$helpdeskUrl = Util::getArticleUrlByCode('9745327');
 
-			$message =
-				Loc::getMessage('CRM_B24_SEARCH_LIMIT_RESTRICTION_'.$entityTypeName.'_WARNING_TEXT1', [
-					'#COUNT#' => $warningCount,
-					'#LIMIT#' => $this->getQuantityLimit(),
-				]).
-				"\n\n".
-				Loc::getMessage('CRM_B24_SEARCH_LIMIT_RESTRICTION_'.$entityTypeName.'_WARNING_TEXT2', [
-					'#HELPDESK_LINK#' => '<a href="'.$helpdeskUrl.'">'.Loc::getMessage('CRM_B24_SEARCH_LIMIT_RESTRICTION_HELPDESK_LINK').'</a>'
-				]);
+			$notifyMessageCallback = function (?string $languageId = null) use (
+				$entityTypeName,
+				$warningCount,
+				$helpdeskUrl,
+			)
+			{
+				$firstWarningText = Loc::getMessage(
+					"CRM_B24_SEARCH_LIMIT_RESTRICTION_{$entityTypeName}_WARNING_TEXT1",
+					[
+						'#COUNT#' => $warningCount,
+						'#LIMIT#' => $this->getQuantityLimit(),
+					],
+					$languageId,
+				);
 
-			$messageOut =
-				Loc::getMessage('CRM_B24_SEARCH_LIMIT_RESTRICTION_'.$entityTypeName.'_WARNING_TEXT1', [
-					'#COUNT#' => $warningCount,
-					'#LIMIT#' => $this->getQuantityLimit(),
-				])
-				. ' '
-				. Loc::getMessage('CRM_B24_SEARCH_LIMIT_RESTRICTION_'.$entityTypeName.'_WARNING_TEXT2', [
-					'#HELPDESK_LINK#' => '('.Loc::getMessage('CRM_B24_SEARCH_LIMIT_RESTRICTION_HELPDESK_LINK').': '.$helpdeskUrl.')'
-				])
-			;
+				$helpdeskTitle = Loc::getMessage('CRM_B24_SEARCH_LIMIT_RESTRICTION_HELPDESK_LINK', null, $languageId);
+				$secondWarningText = Loc::getMessage(
+					"CRM_B24_SEARCH_LIMIT_RESTRICTION_{$entityTypeName}_WARNING_TEXT2",
+					[ '#HELPDESK_LINK#' => '<a href="'.$helpdeskUrl.'">'. $helpdeskTitle .'</a>' ],
+					$languageId,
+				);
+
+				return "{$firstWarningText}\n\n{$secondWarningText}";
+			};
+
+			$notifyMessageOutCallback = function (?string $languageId = null) use (
+				$entityTypeName,
+				$warningCount,
+				$helpdeskUrl,
+			){
+				$firstWarningText = Loc::getMessage(
+					"CRM_B24_SEARCH_LIMIT_RESTRICTION_{$entityTypeName}_WARNING_TEXT1",
+					[
+						'#COUNT#' => $warningCount,
+						'#LIMIT#' => $this->getQuantityLimit(),
+					],
+					$languageId,
+				);
+
+				$helpdeskTitle = Loc::getMessage('CRM_B24_SEARCH_LIMIT_RESTRICTION_HELPDESK_LINK', null, $languageId);
+				$secondWarningText = Loc::getMessage(
+					"CRM_B24_SEARCH_LIMIT_RESTRICTION_{$entityTypeName}_WARNING_TEXT2",
+					[
+						'#HELPDESK_LINK#' => "({$helpdeskTitle}: {$helpdeskUrl})",
+					],
+					$languageId,
+				);
+
+				return "{$firstWarningText} {$secondWarningText}";
+			};
 
 			CIMNotify::Add([
 				'MESSAGE_TYPE' => IM_MESSAGE_SYSTEM,
@@ -214,8 +244,8 @@ class Bitrix24SearchLimitRestriction extends Bitrix24QuantityRestriction
 				'NOTIFY_MODULE' => 'crm',
 				'NOTIFY_EVENT' => 'other',
 				'NOTIFY_TAG' => 'CRM|SEARCH_LIMIT_WARNING|' . $entityTypeName,
-				'NOTIFY_MESSAGE' => $message,
-				'NOTIFY_MESSAGE_OUT' => $messageOut
+				'NOTIFY_MESSAGE' => $notifyMessageCallback,
+				'NOTIFY_MESSAGE_OUT' => $notifyMessageOutCallback,
 			]);
 		}
 	}

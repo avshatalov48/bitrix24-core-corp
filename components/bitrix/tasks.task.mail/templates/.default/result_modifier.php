@@ -1,10 +1,20 @@
 <?
-use \Bitrix\Tasks\Util;
-use \Bitrix\Tasks\UI;
 
-if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
+use Bitrix\Tasks\Internals\Task\Status;
+use Bitrix\Tasks\Util;
+use Bitrix\Tasks\UI;
 
-$userId = Util\User::getId();
+if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)
+{
+	die();
+}
+
+/**
+ * @var array $arParams
+ * @var array $arResult
+ */
+
+$userId = $arResult['USER_ID'];
 $data =& $arResult['DATA']['TASK'];
 $path = $arResult["AUX_DATA"]['ENTITY_URL'];
 $siteId = $arResult['AUX_DATA']['SITE']['SITE_ID'];
@@ -14,9 +24,9 @@ $arResult['TEMPLATE_FOLDER'] = $arResult['SERVER_PREFIX'].$this->__component->__
 
 //Description
 // todo: remove this when you get array access in $arResult['DATA']['TASK']
-if((string) $data['DESCRIPTION'] != '')
+if((string)$data['DESCRIPTION'] !== '')
 {
-	if($data['DESCRIPTION_IN_BBCODE'] == 'Y')
+	if($data['DESCRIPTION_IN_BBCODE'] === 'Y')
 	{
 		// convert to bbcode to html to show inside a document body
 		$data['DESCRIPTION'] = UI::convertBBCodeToHtml($data['DESCRIPTION'], array(
@@ -34,17 +44,17 @@ if((string) $data['DESCRIPTION'] != '')
 // checklist pre-format
 // todo: remove this when use object with array access instead of ['ITEMS']['DATA']
 $code = \Bitrix\Tasks\Manager\Task\CheckList::getCode(true);
-if(is_array($arResult['DATA']['TASK'][$code]))
+if (isset($data[$code]) && is_array($data[$code]))
 {
-	foreach($arResult['DATA']['TASK'][$code] as &$item)
+	foreach($data[$code] as &$item)
 	{
 		$item['TITLE_HTML'] = UI::convertBBCodeToHtmlSimple($item['TITLE']);
 	}
 	unset($item);
 
 	$limit = 5;
-	$arResult['CHECKLIST_LIMIT'] = count($arResult['DATA']['TASK'][$code]) - $limit > 2 ? $limit : count($arResult['DATA']['TASK'][$code]);
-	$arResult['CHECKLIST_MORE'] = count($arResult['DATA']['TASK'][$code]) - $arResult['CHECKLIST_LIMIT'];
+	$arResult['CHECKLIST_LIMIT'] = count($data[$code]) - $limit > 2 ? $limit : count($data[$code]);
+	$arResult['CHECKLIST_MORE'] = count($data[$code]) - $arResult['CHECKLIST_LIMIT'];
 }
 
 // members
@@ -56,22 +66,22 @@ if(!$sender['AVATAR'])
 }
 
 $sender['NAME_FORMATTED'] = \Bitrix\Tasks\Util\User::formatName($sender, $siteId);
-$sender['PERSONAL_GENDER'] = $sender['PERSONAL_GENDER'] == 'F' ? 'F' : 'M';
+$sender['PERSONAL_GENDER'] = $sender['PERSONAL_GENDER'] === 'F' ? 'F' : 'M';
 
 $receiver =& $arResult['DATA']['MEMBERS']['RECEIVER'];
 $receiver['NAME_FORMATTED'] = \Bitrix\Tasks\Util\User::formatName($receiver, $siteId);
 
 // date field translation
 // we get date fields in local time of the current user, but we send the letter to some other user, whose time zone may differ, so..
-if((string) $data['DEADLINE'] != '')
+if((string)$data['DEADLINE'] !== '')
 {
 	$data['DEADLINE'] = \Bitrix\Tasks\Integration\SocialNetwork::formatDateTimeToGMT($data['DEADLINE'], $userId);
 }
-if((string) $data['START_DATE_PLAN'] != '')
+if((string)$data['START_DATE_PLAN'] !== '')
 {
 	$data['START_DATE_PLAN'] = \Bitrix\Tasks\Integration\SocialNetwork::formatDateTimeToGMT($data['START_DATE_PLAN'], $userId);
 }
-if((string) $data['END_DATE_PLAN'] != '')
+if((string)$data['END_DATE_PLAN'] !== '')
 {
 	$data['END_DATE_PLAN'] = \Bitrix\Tasks\Integration\SocialNetwork::formatDateTimeToGMT($data['END_DATE_PLAN'], $userId);
 }
@@ -82,7 +92,7 @@ if(is_array($arResult['AUX_DATA']['CHANGES']) && !empty($arResult['AUX_DATA']['C
 	$changes =& $arResult['AUX_DATA']['CHANGES'];
 	foreach($changes as $k => $v)
 	{
-		if($k == 'AUDITORS' || $k == 'ACCOMPLICES')
+		if($k === 'AUDITORS' || $k === 'ACCOMPLICES')
 		{
 			$toValueFormatted = array();
 
@@ -95,7 +105,7 @@ if(is_array($arResult['AUX_DATA']['CHANGES']) && !empty($arResult['AUX_DATA']['C
 					if($arResult['DATA']['USER'][$mId])
 					{
 						$name = \Bitrix\Tasks\Util\User::formatName($arResult['DATA']['USER'][$mId], $siteId);
-						if((string) $name != '')
+						if((string)$name !== '')
 						{
 							$toValueFormatted[$mId] = $name;
 						}
@@ -109,4 +119,6 @@ if(is_array($arResult['AUX_DATA']['CHANGES']) && !empty($arResult['AUX_DATA']['C
 }
 
 // stuff
-$arResult['S_NEEDED'] = $arResult['DATA']['TASK']["REAL_STATUS"] != 4 && $arResult['DATA']['TASK']["REAL_STATUS"] != 5;
+$arResult['S_NEEDED'] = (int)$data["REAL_STATUS"] !== Status::SUPPOSEDLY_COMPLETED
+	&& (int)$data["REAL_STATUS"] !== Status::COMPLETED
+;

@@ -1,7 +1,7 @@
 <?php
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
 global $APPLICATION;
-$APPLICATION->AddHeadString('<script type="text/javascript" src="' . CUtil::GetAdditionalFileURL(SITE_TEMPLATE_PATH . '/crm_mobile.js') . '"></script>', true, \Bitrix\Main\Page\AssetLocation::AFTER_JS_KERNEL);
+$APPLICATION->AddHeadString('<script src="' . CUtil::GetAdditionalFileURL(SITE_TEMPLATE_PATH . '/crm_mobile.js') . '"></script>', true, \Bitrix\Main\Page\AssetLocation::AFTER_JS_KERNEL);
 $APPLICATION->SetPageProperty('BodyClass', 'crm-page');
 
 $UID = $arResult['UID'];
@@ -39,18 +39,6 @@ $storageTypeID = $entity['STORAGE_TYPE_ID'];
 $webdavElements =  isset($entity['WEBDAV_ELEMENTS']) ? $entity['WEBDAV_ELEMENTS'] : array();
 $files =  isset($entity['FILES']) ? $entity['FILES'] : array();
 $diskFiles =  isset($entity['DISK_FILES']) ? $entity['DISK_FILES'] : array();
-
-if(!function_exists('__CrmActivityViewPrepareNameForJson'))
-{
-	function __CrmActivityViewPrepareNameForJson($string)
-	{
-		if(!\Bitrix\Main\Application::getInstance()->isUtfMode())
-		{
-			return \Bitrix\Main\Text\Encoding::convertEncodingArray($string, SITE_CHARSET, 'UTF-8');
-		}
-		return $string;
-	}
-}
 
 ?><div id="<?=htmlspecialcharsbx($UID)?>" class="crm_wrapper">
 	<div class="crm_head_title_pic">
@@ -181,7 +169,7 @@ if(!function_exists('__CrmActivityViewPrepareNameForJson'))
 					<ul>
 						<?foreach($diskFiles as $diskFileInfo):?>
 						<li>
-							<a href="#" onclick="app.openDocument({ url: '<?=htmlspecialcharsbx(SITE_DIR."mobile/disk/{$diskFileInfo['ID']}/download/?filename=".__CrmActivityViewPrepareNameForJson($diskFileInfo['NAME']))?>' }); return false;">
+							<a href="#" onclick="app.openDocument({ url: '<?=htmlspecialcharsbx(SITE_DIR."mobile/disk/{$diskFileInfo['ID']}/download/?filename=".$diskFileInfo['NAME'])?>' }); return false;">
 								<?=htmlspecialcharsbx($diskFileInfo['NAME'])?><span> (<?=htmlspecialcharsbx($diskFileInfo['SIZE'])?>)</span>
 							</a>
 						</li>
@@ -223,7 +211,7 @@ if(!function_exists('__CrmActivityViewPrepareNameForJson'))
 		</div>
 	</div>
 </div>
-<script type="text/javascript">
+<script>
 	BX.ready(
 		function()
 		{

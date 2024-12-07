@@ -1,3 +1,4 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 (function (exports,main_popup,main_core) {
 	'use strict';
@@ -11,7 +12,7 @@ this.BX = this.BX || {};
 	function _classCheckPrivateStaticAccess(receiver, classConstructor) { if (receiver !== classConstructor) { throw new TypeError("Private static access of wrong provenance"); } }
 	function _classApplyDescriptorGet(receiver, descriptor) { if (descriptor.get) { return descriptor.get.call(receiver); } return descriptor.value; }
 	var _menuLinux = /*#__PURE__*/new WeakMap();
-	var _typesInstallersForLinux = /*#__PURE__*/new WeakMap();
+	var _installersForLinux = /*#__PURE__*/new WeakMap();
 	var Bitrix24Banner = /*#__PURE__*/function () {
 	  function Bitrix24Banner() {
 	    babelHelpers.classCallCheck(this, Bitrix24Banner);
@@ -19,36 +20,28 @@ this.BX = this.BX || {};
 	      writable: true,
 	      value: void 0
 	    });
-	    _classPrivateFieldInitSpec(this, _typesInstallersForLinux, {
+	    _classPrivateFieldInitSpec(this, _installersForLinux, {
 	      writable: true,
-	      value: {
-	        'DEB': {
-	          text: main_core.Loc.getMessage('B24_BANNER_DOWNLOAD_LINUX_DEB'),
-	          href: 'https://dl.bitrix24.com/b24/bitrix24_desktop.deb'
-	        },
-	        'RPM': {
-	          text: main_core.Loc.getMessage('B24_BANNER_DOWNLOAD_LINUX_RPM'),
-	          href: 'https://dl.bitrix24.com/b24/bitrix24_desktop.rpm'
-	        }
-	      }
+	      value: void 0
 	    });
 	  }
 	  babelHelpers.createClass(Bitrix24Banner, [{
 	    key: "showMenuForLinux",
-	    value: function showMenuForLinux(event, target) {
+	    value: function showMenuForLinux(event, target, links) {
 	      event.preventDefault();
+	      babelHelpers.classPrivateFieldSet(this, _installersForLinux, links);
 	      babelHelpers.classPrivateFieldSet(this, _menuLinux, babelHelpers.classPrivateFieldGet(this, _menuLinux) || new main_popup.Menu({
 	        className: 'system-auth-form__popup',
 	        bindElement: target,
 	        items: [{
-	          text: babelHelpers.classPrivateFieldGet(this, _typesInstallersForLinux).DEB.text,
-	          href: babelHelpers.classPrivateFieldGet(this, _typesInstallersForLinux).DEB.href,
+	          text: main_core.Loc.getMessage('B24_BANNER_DOWNLOAD_LINUX_DEB'),
+	          href: babelHelpers.classPrivateFieldGet(this, _installersForLinux).deb,
 	          onclick: function onclick(element) {
 	            element.close();
 	          }
 	        }, {
-	          text: babelHelpers.classPrivateFieldGet(this, _typesInstallersForLinux).RPM.text,
-	          href: babelHelpers.classPrivateFieldGet(this, _typesInstallersForLinux).RPM.href,
+	          text: main_core.Loc.getMessage('B24_BANNER_DOWNLOAD_LINUX_RPM'),
+	          href: babelHelpers.classPrivateFieldGet(this, _installersForLinux).rpm,
 	          onclick: function onclick(element) {
 	            element.close();
 	          }

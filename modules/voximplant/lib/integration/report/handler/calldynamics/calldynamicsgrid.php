@@ -110,8 +110,8 @@ class CallDynamicsGrid extends Base implements IReportMultipleData
 
 		$filterParameters = $this->getFilterParameters();
 
-		$startDate = new DateTime($filterParameters['TIME_PERIOD_from']);
-		$finishDate = new DateTime($filterParameters['TIME_PERIOD_to']);
+		$startDate = DateTime::createFromUserTime($filterParameters['TIME_PERIOD_from']);
+		$finishDate = DateTime::createFromUserTime($filterParameters['TIME_PERIOD_to']);
 
 		$previousPeriod = $this->getPreviousPeriod($startDate, $finishDate);
 		$previousStartDate = $previousPeriod['from'];

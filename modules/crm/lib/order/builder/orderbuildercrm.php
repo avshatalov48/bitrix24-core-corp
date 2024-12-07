@@ -203,8 +203,31 @@ class OrderBuilderCrm extends OrderBuilder
 		return $fields;
 	}
 
+	private function fillPaymentsByBasketBuilder(): void
+	{
+		$basketFormData = $this->getBasketBuilder()->getFormData();
+
+		if (isset($this->formData['PRODUCT'], $basketFormData['PRODUCT']))
+		{
+			$this->formData['PRODUCT'] = $basketFormData['PRODUCT'];
+		}
+
+		if (isset($this->formData['PAYMENT'], $basketFormData['PAYMENT']))
+		{
+			foreach ($basketFormData['PAYMENT'] as $index => $payment)
+			{
+				if (isset($this->formData['PAYMENT'][$index], $payment['PRODUCT']))
+				{
+					$this->formData['PAYMENT'][$index]['PRODUCT'] = $payment['PRODUCT'];
+				}
+			}
+		}
+	}
+
 	public function buildPayments()
 	{
+		$this->fillPaymentsByBasketBuilder();
+
 		$dateTypeFields = [
 			'DATE_PAID', 'DATE_PAY_BEFORE', 'DATE_BILL',
 			'PAY_RETURN_DATE', 'PAY_VOUCHER_DATE'

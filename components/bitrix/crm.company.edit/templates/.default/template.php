@@ -69,7 +69,7 @@ $APPLICATION->IncludeComponent(
 	)
 );
 if($arResult['DUPLICATE_CONTROL']['ENABLED']):?>
-<script type="text/javascript">
+<script>
 	BX.ready(
 		function()
 		{

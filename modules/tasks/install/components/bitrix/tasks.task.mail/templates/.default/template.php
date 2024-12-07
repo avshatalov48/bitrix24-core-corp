@@ -1,6 +1,14 @@
-<?if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();?>
+<?php
+if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)
+{
+	die();
+}
 
-<?
+/**
+ * @var array $arParams
+ * @var array $arResult
+ */
+
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Tasks\Internals\Task\MetaStatus;
 use Bitrix\Tasks\Internals\Task\Priority;
@@ -13,12 +21,14 @@ if(!empty($arResult['ERROR']))
 	ShowError(Loc::getMessage('TASKS_FORMAT_ERROR'));
 	return;
 }
+
+$data = $arResult['DATA']['TASK'];
+$sender = $arResult['DATA']['MEMBERS']['SENDER'];
+$receiver = $arResult['DATA']['MEMBERS']['RECEIVER'];
+$path = $arResult['AUX_DATA']["ENTITY_URL"];
+
 ?>
 
-<?$data = $arResult['DATA']['TASK'];?>
-<?$sender = $arResult['DATA']['MEMBERS']['SENDER'];?>
-<?$receiver = $arResult['DATA']['MEMBERS']['RECEIVER'];?>
-<?$path = $arResult['AUX_DATA']["ENTITY_URL"];?>
 
 <table cellpadding="0" cellspacing="0" border="0" align="left" style="border-collapse: collapse;mso-table-lspace: 0pt;font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;font-size: 14px;width: 100%;max-width: 600px;">
 
@@ -60,11 +70,11 @@ if(!empty($arResult['ERROR']))
 	<?//body?>
 
 	<?//task add?>
-	<?if($arParams['ENTITY'] == 'TASK'):?>
+	<?if($arParams['ENTITY'] === 'TASK'):?>
 		<tr>
 			<td valign="top" style="background: #fffae3; border-collapse: collapse;border-spacing: 0;color: #000000;font-size: 14px;vertical-align: top;padding: 18px 15px 10px;">
 
-				<?if($arParams['ENTITY_ACTION'] == 'ADD'):?>
+				<?if($arParams['ENTITY_ACTION'] === 'ADD'):?>
 
 					<b style="font-size:14px;"><?=htmlspecialcharsbx($data['TITLE'])?></b>
 					<br />
@@ -205,7 +215,7 @@ if(!empty($arResult['ERROR']))
 
 								case "GROUP_ID":
 
-									if(($change['TO_VALUE'] = intval($change['TO_VALUE'])) && $arResult['DATA']['GROUP'][$change['TO_VALUE']])
+									if(($change['TO_VALUE'] = (int)$change['TO_VALUE']) && $arResult['DATA']['GROUP'][$change['TO_VALUE']])
 									{
 										$value = htmlspecialcharsbx($arResult['DATA']['GROUP'][$change['TO_VALUE']]['NAME']);
 									}
@@ -222,7 +232,7 @@ if(!empty($arResult['ERROR']))
 									break;
 
 								case "MARK":
-									$value = ($data['MARK'] != 'P' && $data['MARK'] != 'N') ? Loc::getMessage('TASKS_FIELD_MARK_NONE') : Loc::getMessage('TASKS_FIELD_MARK_'.$data['MARK']);
+									$value = ($data['MARK'] !== 'P' && $data['MARK'] !== 'N') ? Loc::getMessage('TASKS_FIELD_MARK_NONE') : Loc::getMessage('TASKS_FIELD_MARK_'.$data['MARK']);
 									break;
 
 								default:
@@ -241,7 +251,7 @@ if(!empty($arResult['ERROR']))
 			</td>
 		</tr>
 
-	<?elseif($arParams['ENTITY'] == 'COMMENT'):?>
+	<?elseif($arParams['ENTITY'] === 'COMMENT'):?>
 		<?
 		$APPLICATION->IncludeComponent(
 			"bitrix:forum.comments",

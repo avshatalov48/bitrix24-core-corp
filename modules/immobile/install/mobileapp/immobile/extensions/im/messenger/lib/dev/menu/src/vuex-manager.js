@@ -79,13 +79,13 @@ jn.define('im/messenger/lib/dev/menu/vuex-manager', (require, exports, module) =
 			;
 		}
 
-		onWidgetReady(widget)
+		async onWidgetReady(widget)
 		{
 			this.widget = widget;
-			this.initStore();
+			await this.initStore();
 		}
 
-		initStore()
+		async initStore()
 		{
 			this.store = createStore({
 				modules: {
@@ -93,26 +93,34 @@ jn.define('im/messenger/lib/dev/menu/vuex-manager', (require, exports, module) =
 				},
 			});
 
-			this.storeManager = new VuexManager(this.store)
-				.build()
-			;
+			this.storeManager = new VuexManager(this.store);
+			await this.storeManager.buildAsync();
 
-			this.storeManager.on('testModel/add', (mutation) => {
+			this.storeManager.on('testModel/add', async (mutation) => {
 				const data = mutation.payload.data;
 
-				console.log('render1', data);
+				return new Promise((resolve) => {
+					console.log('render1', data);
+					resolve();
+				});
 			});
 
-			this.storeManager.on('testModel/add', (mutation) => {
+			this.storeManager.on('testModel/add', async (mutation) => {
 				const data = mutation.payload.data;
 
-				console.log('render2', data);
+				return new Promise((resolve) => {
+					console.log('render2', data);
+					resolve();
+				});
 			});
 
-			this.storeManager.on('testModel/add', (mutation) => {
+			this.storeManager.on('testModel/add', async (mutation) => {
 				const data = mutation.payload.data;
 
-				console.log('render3', data);
+				return new Promise((resolve) => {
+					console.log('render3', data);
+					resolve();
+				});
 			});
 		}
 

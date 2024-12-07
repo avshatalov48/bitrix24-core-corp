@@ -2,7 +2,7 @@
  * @module tasks/layout/simple-list/skeleton/src/list-skeleton
  */
 jn.define('tasks/layout/simple-list/skeleton/src/list-skeleton', (require, exports, module) => {
-	const AppTheme = require('apptheme');
+	const { Color } = require('tokens');
 	const {
 		Line,
 		Circle,
@@ -22,8 +22,8 @@ jn.define('tasks/layout/simple-list/skeleton/src/list-skeleton', (require, expor
 				View(
 					{
 						style: {
-							borderBottomWidth: index === count - 1 ? 0 : 1,
-							borderBottomColor: AppTheme.colors.bgSeparatorPrimary,
+							borderBottomWidth: index === count - 1 ? 0 : 0.5,
+							borderBottomColor: Color.bgSeparatorSecondary.toHex(),
 							paddingTop: 17,
 							paddingBottom: 16,
 						},
@@ -31,7 +31,7 @@ jn.define('tasks/layout/simple-list/skeleton/src/list-skeleton', (require, expor
 					View(
 						{
 							style: {
-								backgroundColor: AppTheme.colors.bgContentPrimary,
+								backgroundColor: Color.bgContentPrimary.toHex(),
 								flexGrow: 1,
 								flexDirection: 'column',
 							},
@@ -52,6 +52,7 @@ jn.define('tasks/layout/simple-list/skeleton/src/list-skeleton', (require, expor
 						flexDirection: 'row',
 						justifyContent: 'space-between',
 						flexGrow: 1,
+						marginTop: 1,
 					},
 				},
 				Line('90%', 8, 2),
@@ -65,7 +66,7 @@ jn.define('tasks/layout/simple-list/skeleton/src/list-skeleton', (require, expor
 				{
 					style: {
 						flexGrow: 1,
-						marginTop: 11,
+						marginTop: 12,
 					},
 				},
 				Line(81, 8),
@@ -77,15 +78,20 @@ jn.define('tasks/layout/simple-list/skeleton/src/list-skeleton', (require, expor
 			return View(
 				{
 					style: {
-						width: 125,
 						flexDirection: 'row',
-						justifyContent: 'space-between',
 						alignItems: 'center',
 						flexGrow: 1,
 						marginTop: 18,
 					},
 				},
-				Circle(24),
+				View(
+					{
+						style: {
+							marginRight: 10,
+						},
+					},
+					Circle(28),
+				),
 				Line(92, 18),
 			);
 		}

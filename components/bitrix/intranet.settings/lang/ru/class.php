@@ -3,6 +3,7 @@ $MESS['MENU_ITEM_NAME_SAMPLE'] = 'Пример работы';
 $MESS['MENU_ITEM_NAME_EMPLOYEE'] = 'Сотрудники';
 $MESS['MENU_ITEM_NAME_PORTAL'] = 'Мой Битрикс24';
 $MESS['MENU_ITEM_NAME_TOOLS'] = 'Инструменты';
+$MESS['MENU_ITEM_NAME_MAINPAGE'] = 'Главная страница';
 $MESS['MENU_ITEM_NAME_COMMUNICATION'] = 'Коммуникации';
 $MESS['MENU_ITEM_NAME_REQUISITE'] = 'Реквизиты';
 $MESS['MENU_ITEM_NAME_CONFIGURATION'] = 'Дополнительно';

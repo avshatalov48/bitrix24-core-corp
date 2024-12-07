@@ -4,6 +4,10 @@ namespace Bitrix\Tasks\Internals\Counter;
 
 use Bitrix\Main\Application;
 use Bitrix\Main\Data\Cache;
+use Bitrix\Main\ORM\Fields\Relations\Reference;
+use Bitrix\Main\ORM\Query\Join;
+use Bitrix\Tasks\Flow\FlowFeature;
+use Bitrix\Tasks\Flow\Internal\FlowTaskTable;
 use Bitrix\Tasks\Internals\Counter;
 
 /**
@@ -28,7 +32,6 @@ class Loader
 	public function __construct(int $userId)
 	{
 		$this->userId = $userId;
-		$this->fetchCounters();
 	}
 
 	public function isCounterFlag(string $type): bool
@@ -38,6 +41,7 @@ class Loader
 
 	public function getRawCounters(): array
 	{
+		$this->fetchCounters();
 		return $this->rows;
 	}
 
@@ -89,6 +93,19 @@ class Loader
 				'TYPE'
 			])
 			->where('USER_ID', $this->userId);
+
+		if (FlowFeature::isOn())
+		{
+			$query->addSelect('FLOW.FLOW_ID', 'FLOW_ID');
+			$query->registerRuntimeField(
+				new Reference(
+					'FLOW',
+					FlowTaskTable::class,
+					Join::on('this.TASK_ID', 'ref.TASK_ID'),
+					['join_type' => 'LEFT']
+				)
+			);
+		}
 
 		$rowsFlag = null;
 		if (!is_null($limit))

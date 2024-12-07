@@ -138,18 +138,27 @@ class Quote extends Factory
 			Item\Quote::FIELD_NAME_CONTENT => [
 				'TYPE' => Field::TYPE_TEXT,
 				'VALUE_TYPE' => Field::VALUE_TYPE_BB,
+				'SETTINGS' => [
+					'isFlexibleContentType' => true,
+				],
 				'ATTRIBUTES' => [],
 				'CLASS' => Field\Comments::class,
 			],
 			Item\Quote::FIELD_NAME_TERMS => [
 				'TYPE' => Field::TYPE_TEXT,
 				'VALUE_TYPE' => Field::VALUE_TYPE_BB,
+				'SETTINGS' => [
+					'isFlexibleContentType' => true,
+				],
 				'ATTRIBUTES' => [],
 				'CLASS' => Field\Comments::class,
 			],
 			Item::FIELD_NAME_COMMENTS => [
 				'TYPE' => Field::TYPE_TEXT,
 				'VALUE_TYPE' => Field::VALUE_TYPE_BB,
+				'SETTINGS' => [
+					'isFlexibleContentType' => true,
+				],
 				'ATTRIBUTES' => [],
 				'CLASS' => Field\Comments::class,
 			],
@@ -452,6 +461,14 @@ class Quote extends Factory
 				Operation::ACTION_AFTER_SAVE,
 				$this->getProductRowsSaveEventAction()
 			)
+			->addAction(
+				Operation::ACTION_AFTER_SAVE,
+				new Operation\Action\Compatible\SocialNetwork\ProcessSendNotification\WhenAddingEntity(),
+			)
+			->addAction(
+				Operation::ACTION_AFTER_SAVE,
+				new Operation\Action\QuoteAttachedFilesCreate()
+			)
 		;
 	}
 
@@ -466,6 +483,10 @@ class Quote extends Factory
 					'OnBeforeCrmQuoteUpdate',
 					'CRM_QUOTE_UPDATE_CANCELED_MSGVER_1'
 				)
+			)
+			->addAction(
+				Operation::ACTION_BEFORE_SAVE,
+				new Operation\Action\QuoteAttachedFilesUpdate()
 			)
 			->addAction(
 				Operation::ACTION_AFTER_SAVE,
@@ -486,6 +507,10 @@ class Quote extends Factory
 			->addAction(
 				Operation::ACTION_AFTER_SAVE,
 				$this->getProductRowsSaveEventAction()
+			)
+			->addAction(
+				Operation::ACTION_AFTER_SAVE,
+				new Operation\Action\Compatible\SocialNetwork\ProcessSendNotification\WhenUpdatingEntity(),
 			)
 		;
 	}
@@ -597,6 +622,11 @@ class Quote extends Factory
 	}
 
 	public function isCountersEnabled(): bool
+	{
+		return true;
+	}
+
+	public function isCommunicationRoutingSupported(): bool
 	{
 		return true;
 	}

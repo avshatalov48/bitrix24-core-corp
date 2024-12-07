@@ -57,7 +57,8 @@ class TimemanWorktimeStatsComponent extends Timeman\Component\BaseComponent
 				->getScheduleRepository()
 				->findById($this->arResult['SCHEDULE_ID'])))
 		{
-			return showError('Schedule not found.');
+			showError('Schedule not found.');
+			return;
 		}
 		$this->arResult['GRID_ID'] = $this->arResult['SCHEDULE_ID'] ? $this->gridId . '_' . $this->arResult['SCHEDULE_ID'] : $this->gridId;
 		$this->arResult['SHOW_ADD_SCHEDULE_BTN'] = $this->userPermissionsManager->canCreateSchedule();

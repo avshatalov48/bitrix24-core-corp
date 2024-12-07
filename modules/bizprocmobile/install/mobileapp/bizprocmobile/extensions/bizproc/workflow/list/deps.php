@@ -2,32 +2,35 @@
 
 return [
 	'bundle' => [
+		'./bottom-panel',
 		'./item',
 		'./skeleton',
 	],
 	'extensions' => [
 		'apptheme',
 		'assets/common',
-		'alert',
 		'loc',
-		'rest',
+		'type',
 		'require-lazy',
+		//'rest',
 		'toast',
-		'event-emitter',
-		'statemanager/redux/slices/users',
-		'statemanager/redux/store',
-		'layout/pure-component',
-		'utils/function',
 		'utils/object',
 		'utils/skeleton',
-		'utils/date/formats',
-		'layout/ui/friendly-date',
+
+		'statemanager/redux/slices/users',
+		'statemanager/redux/store',
+
+		'layout/pure-component',
+		'layout/ui/bottom-toolbar',
 		'layout/ui/empty-screen',
 		'layout/ui/search-bar',
 		'layout/ui/stateful-list',
-		'layout/ui/simple-list/items/base',
+		'layout/ui/simple-list/items',
 		'layout/ui/simple-list/skeleton',
-		'bizproc:workflow/faces',
-		'bizproc:task/buttons',
+
+		'bizproc:workflow/list/simple-list',
+		'bizproc:workflow/list/view-mode',
+
+		'bizproc:task/tasks-performer',
 	],
 ];

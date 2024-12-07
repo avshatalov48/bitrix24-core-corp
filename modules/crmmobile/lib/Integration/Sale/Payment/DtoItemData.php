@@ -32,6 +32,10 @@ final class DtoItemData extends Data
 	public array $permissions = [];
 
 	public ?bool $isTerminalPayment;
+
+	public ?bool $isPhoneConfirmed;
+	public ?int $connectedSiteId;
+
 	public array $terminalPaymentSystems = [];
 
 	public array $paymentSystems = [];

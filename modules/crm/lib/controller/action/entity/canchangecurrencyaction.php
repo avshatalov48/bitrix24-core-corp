@@ -65,13 +65,6 @@ class CanChangeCurrencyAction extends Action
 		 */
 		$repository = ServiceLocator::getInstance()->get('crm.entity.paymentDocumentsRepository');
 
-		$result = $repository->getDocumentsForEntity($entityTypeId, $entityId);
-		if ($result->isSuccess())
-		{
-			$documents = $result->getData()['DOCUMENTS'] ?? [];
-			return !empty($documents);
-		}
-
-		return false;
+		return $repository->doDocumentsExistForEntity($entityTypeId, $entityId);
 	}
 }

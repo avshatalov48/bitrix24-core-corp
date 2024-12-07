@@ -111,7 +111,7 @@ final class SignB2eDocument extends Base
 		return $result;
 	}
 
-	private static function getActivityByAssociatedEntity(int $associatedEntityId): ?array
+	public static function getActivityByAssociatedEntity(int $associatedEntityId, bool $checkPermissions = true): ?array
 	{
 		$activity = \CCrmActivity::GetList(
 			[],
@@ -120,6 +120,7 @@ final class SignB2eDocument extends Base
 				'PROVIDER_ID' => self::getId(),
 				'PROVIDER_TYPE_ID' => self::PROVIDER_TYPE_ID_SIGN,
 				'ASSOCIATED_ENTITY_ID' => $associatedEntityId,
+				'CHECK_PERMISSIONS' => $checkPermissions ? 'Y' : 'N',
 			],
 		)->Fetch();
 

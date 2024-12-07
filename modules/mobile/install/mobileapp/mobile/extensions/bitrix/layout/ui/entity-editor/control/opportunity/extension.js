@@ -93,10 +93,19 @@ jn.define('layout/ui/entity-editor/control/opportunity', (require, exports, modu
 				modeWithOrders: this.model.getField('MODE_WITH_ORDERS', false),
 				salesOrderRights: this.model.getField('SALES_ORDERS_RIGHTS', {}),
 				isTerminalAvailable: this.model.getField('IS_TERMINAL_AVAILABLE', false),
+				isOnecMode: this.model.getField('IS_ONEC_MODE', false),
 				resendParams: {
 					entityHasContact: contactId > 0,
 					contactId,
 					contactHasPhone: this.model.getField('CONTACT_HAS_PHONE', 'N') === 'Y',
+				},
+				restrictions: {
+					realization: {
+						isRestricted:
+							this.model.getField('IS_1C_PLAN_RESTRICTED', false)
+							&& this.model.getField('IS_ONEC_MODE', false)
+						,
+					},
 				},
 			};
 

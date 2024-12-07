@@ -61,6 +61,7 @@ this.BX = this.BX || {};
 	      }
 	      return {
 	        isPlacement: BX.prop.getBoolean(params, "isPlacement", false),
+	        placementCode: BX.prop.getString(params, "placementCode", ""),
 	        numberOfPlacements: BX.prop.getInteger(params, "numberOfPlacements", 0),
 	        countryId: BX.prop.getInteger(params, "countryId", 0),
 	        defaultAppInfo: BX.prop.getObject(params, "defaultAppInfo", {})
@@ -274,6 +275,12 @@ this.BX = this.BX || {};
 	      }
 	    }
 	  }, {
+	    key: "getPlacementCode",
+	    value: function getPlacementCode() {
+	      var placementCode = BX.prop.getString(this.clientResolverPlacementParams, "placementCode", "");
+	      return placementCode === "" ? "CRM_REQUISITE_AUTOCOMPLETE" : placementCode;
+	    }
+	  }, {
 	    key: "onSearchStringClear",
 	    value: function onSearchStringClear() {
 	      this.emit('onClear');
@@ -378,7 +385,7 @@ this.BX = this.BX || {};
 	      if (!this.detailAutocompletePlacement) {
 	        var isAutocompletePlacementEnabled = main_core.Type.isPlainObject(this.clientResolverPlacementParams) && this.clientResolverPlacementParams.hasOwnProperty("numberOfPlacements") && main_core.Type.isNumber(this.clientResolverPlacementParams["numberOfPlacements"]) && this.clientResolverPlacementParams["numberOfPlacements"] > 0;
 	        if (isAutocompletePlacementEnabled) {
-	          this.detailAutocompletePlacement = new crm_placement_detailsearch.DetailSearch("CRM_REQUISITE_AUTOCOMPLETE");
+	          this.detailAutocompletePlacement = new crm_placement_detailsearch.DetailSearch(this.getPlacementCode());
 	        }
 	        if (this.detailAutocompletePlacement) {
 	          var dropdownPopup = this.getDropdownPopup(true);

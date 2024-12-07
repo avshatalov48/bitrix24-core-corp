@@ -9,6 +9,7 @@
 namespace Bitrix\Crm\Agent\Notice;
 
 use Bitrix\Main\Loader;
+use CIMNotify;
 
 /**
  * Class Notification
@@ -16,58 +17,40 @@ use Bitrix\Main\Loader;
  */
 class Notification
 {
-	/** @var array $to */
-	protected $to = array();
+	protected array $to = [];
 
-	/** @var string $message */
+	/** @var string|callable $message */
 	protected $message;
 
-	/**
-	 * Can use.
-	 *
-	 * @return bool|null
-	 */
-	public static function canUse()
+	public static function canUse(): bool
 	{
 		if (!Loader::includeModule('im'))
 		{
 			return false;
 		}
-		else
-		{
-			return true;
-		}
+
+		return true;
 	}
 
-	/**
-	 * Create.
-	 *
-	 * @return static
-	 */
-	public static function create()
+	public static function create(): static
 	{
 		return new static();
 	}
 
-	/**
-	 * Set to.
-	 *
-	 * @param integer[] $list List.
-	 * @return $this
-	 */
-	public function setTo(array $list)
+	public function setTo(array $list): static
 	{
 		$this->to = $list;
+
 		return $this;
 	}
 
 	/**
 	 * Add list of recipients.
 	 *
-	 * @param integer[] $list List.
+	 * @param int[] $list List.
 	 * @return $this
 	 */
-	public function toList(array $list)
+	public function toList(array $list): static
 	{
 		foreach ($list as $userId)
 		{
@@ -77,15 +60,9 @@ class Notification
 		return $this;
 	}
 
-	/**
-	 * Add to.
-	 *
-	 * @param integer $userId User ID.
-	 * @return $this
-	 */
-	public function addTo($userId)
+	public function addTo(int $userId): static
 	{
-		if (!in_array($userId, $this->to))
+		if (!in_array($userId, $this->to, true))
 		{
 			$this->to[] = $userId;
 		}
@@ -93,31 +70,24 @@ class Notification
 		return $this;
 	}
 
-	/**
-	 * With message.
-	 *
-	 * @param string $message Text.
-	 * @return $this
-	 */
-	public function withMessage($message)
+	public function withMessage(string|callable $message): static
 	{
 		$this->message = $message;
+
 		return $this;
 	}
 
-	/**
-	 * Send.
-	 *
-	 * @return void
-	 */
-	public function send()
+	public function send(): void
 	{
 		if (!static::canUse())
 		{
 			return;
 		}
 
-		if (count($this->to) === 0 || !$this->message)
+		if (
+			!$this->message
+			|| count($this->to) === 0
+		)
 		{
 			return;
 		}
@@ -133,7 +103,8 @@ class Notification
 				//"NOTIFY_TAG" => $notifyTag,
 				"NOTIFY_MESSAGE" => $this->message
 			);
-			\CIMNotify::Add($fields);
+
+			CIMNotify::Add($fields);
 		}
 	}
 }

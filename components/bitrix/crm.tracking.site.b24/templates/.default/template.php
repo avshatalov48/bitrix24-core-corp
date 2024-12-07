@@ -120,7 +120,7 @@ $containerId = 'crm-tracking-site-b24';
 
 	</form>
 
-	<script type="text/javascript">
+	<script>
 		BX.ready(function () {
 			BX.Crm.Tracking.B24Site.init(<?=Json::encode([
 				'containerId' => $containerId,

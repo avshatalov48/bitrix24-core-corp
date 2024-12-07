@@ -9,6 +9,7 @@ return [
 		'notify-manager',
 		'bottom-sheet',
 		'calendar:layout/fields',
+		'tokens',
 	],
 	'bundle' => [
 	],

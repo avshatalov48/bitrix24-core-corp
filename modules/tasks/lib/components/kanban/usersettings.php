@@ -3,6 +3,7 @@
 namespace Bitrix\Tasks\Components\Kanban;
 
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Tasks\Flow\FlowFeature;
 
 class UserSettings
 {
@@ -32,18 +33,25 @@ class UserSettings
 
 	public function getDefaultFieldCodes(): array
 	{
-		return [
+		$defaultFieldCodes = [
 			'TITLE',
 			'DEADLINE',
 			'CHECKLIST',
 			'TAGS',
 			'FILES',
 		];
+
+		if (in_array($this->viewMode, ['kanban_scrum', 'kanban'], true) && FlowFeature::isOn())
+		{
+			$defaultFieldCodes[] = 'FLOW';
+		}
+
+		return $defaultFieldCodes;
 	}
 
 	public function getPopupSections(): array
 	{
-		return [
+		$popupSections = [
 			'title' => Loc::getMessage('TASK_KANBAN_USER_SETTINGS_POPUP_TITLE'),
 			// 'sections' => [
 			// 	[
@@ -71,11 +79,24 @@ class UserSettings
 				$this->getTags()->toArray(),
 				$this->getFiles()->toArray(),
 				$this->getProject()->toArray(),
+			],
+		];
+
+		if (FlowFeature::isOn())
+		{
+			$popupSections['options'][] = $this->getFlow()->toArray();
+		}
+
+		$popupSections['options'] = array_merge(
+			$popupSections['options'],
+			[
 				$this->getDateFinished()->toArray(),
 				$this->getMark()->toArray(),
 				$this->getCrm()->toArray(),
 			],
-		];
+		);
+
+		return $popupSections;
 	}
 
 	public function saveUserSelectedFields(array $selectedFields): bool
@@ -251,6 +272,17 @@ class UserSettings
 			'task',
 			$this->isFieldSelected('PROJECT'),
 			$this->isFieldDefault('PROJECT'),
+		);
+	}
+
+	public function getFlow(): ItemField
+	{
+		return new ItemField(
+			'FLOW',
+			Loc::getMessage('TASK_KANBAN_USER_SETTINGS_FIELD_FLOW'),
+			'task',
+			$this->isFieldSelected('FLOW'),
+			$this->isFieldDefault('FLOW'),
 		);
 	}
 

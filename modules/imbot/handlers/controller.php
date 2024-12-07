@@ -138,8 +138,6 @@ elseif
 	)
 )
 {
-	$params = \Bitrix\Main\Text\Encoding::convertEncoding($params, 'UTF-8', SITE_CHARSET);
-
 	if (isset($params['BX_SERVICE_NAME']) && !empty($params['BX_SERVICE_NAME']))
 	{
 		$result = \Bitrix\ImBot\Controller::sendToService($params['BX_SERVICE_NAME'], $params['BX_COMMAND'], $params);

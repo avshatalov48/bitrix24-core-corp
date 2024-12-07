@@ -31,10 +31,10 @@ class Evenly extends Queue
 				'DATE_QUEUE' => 'ASC',
 				'SESSION_ID' => 'ASC',
 			],
-		])->fetchAll();
+		]);
 
-		$undistributedSessions = array();
-		foreach ($sessionList as $session)
+		$undistributedSessions = [];
+		while ($session = $sessionList->fetch())
 		{
 			if ($session['UNDISTRIBUTED'] == 'Y')
 			{

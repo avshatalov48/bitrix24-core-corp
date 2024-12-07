@@ -15,7 +15,6 @@ use Bitrix\Crm\Component\EntityList\ActivityFieldRestrictionManager;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Page\Asset;
 use Bitrix\Main\UI\Extension;
-use Bitrix\Crm\Tour;
 
 Extension::load(['ui.fonts.opensans', 'ui.counterpanel']);
 Asset::getInstance()->addJs('/bitrix/js/crm/message.js');
@@ -75,7 +74,6 @@ if ($activityFieldRestrictionManager->hasRestrictions())
 			entityTypeName: "<?= CUtil::JSEscape($entityTypeName ?? '') ?>",
 			userId: <?= (int)$arResult['USER_ID'] ?>,
 			userName: "<?= CUtil::JSEscape($arResult['USER_NAME']) ?>",
-			serviceUrl: "<?= '/bitrix/components/bitrix/crm.entity.counter.panel/ajax.php?'.bitrix_sessid_get() ?>",
 			data: <?= CUtil::PhpToJSObject($data) ?>,
 			codes: <?= CUtil::PhpToJSObject($arResult['CODES']) ?>,
 			extras: <?= CUtil::PhpToJSObject($arResult['EXTRAS']) ?>,

@@ -8,7 +8,7 @@ jn.define('im/messenger/lib/ui/base/list', (require, exports, module) => {
 	const { mapPromise } = require('utils/function');
 	const { LoaderItem } = require('im/messenger/lib/ui/base/loader');
 	const { Type } = require('type');
-	const AppTheme = require('apptheme');
+	const { Theme } = require('im/lib/theme');
 	const { LoggerManager } = require('im/messenger/lib/logger');
 
 	const logger = LoggerManager.getInstance().getLogger('ui--list');
@@ -50,14 +50,14 @@ jn.define('im/messenger/lib/ui/base/list', (require, exports, module) => {
 						flex: 1,
 						borderTopLeftRadius: 12,
 						borderTopRightRadius: 12,
-						backgroundColor: AppTheme.colors.bgContentTertiary,
+						backgroundColor: Theme.colors.bgContentTertiary,
 					},
 				},
 				this.renderRecentText(),
 				ListView({
 					style: {
 						flex: 1,
-						backgroundColor: AppTheme.colors.bgContentPrimary,
+						backgroundColor: Theme.colors.bgContentPrimary,
 					},
 					data: [{ items: this.state.itemList }],
 					// isScrollable: this.isScrollable(),
@@ -102,7 +102,7 @@ jn.define('im/messenger/lib/ui/base/list', (require, exports, module) => {
 			return View(
 				{
 					style: {
-						backgroundColor: AppTheme.colors.bgContentPrimary,
+						backgroundColor: Theme.colors.bgContentPrimary,
 						borderTopRightRadius: 12,
 						borderTopLeftRadius: 12,
 						paddingLeft: 20,
@@ -112,7 +112,7 @@ jn.define('im/messenger/lib/ui/base/list', (require, exports, module) => {
 				Text({
 					text: this.props.recentText,
 					style: {
-						color: AppTheme.colors.base2,
+						color: Theme.colors.base2,
 						fontSize: 14,
 						fontWeight: 400,
 						textStyle: 'normal',

@@ -43,6 +43,13 @@ class TasksMobile extends CModule
 			$this->workspaceClass,
 			'getPath'
 		);
+		$eventManager->registerEventHandler(
+			'mobile',
+			'onTariffRestrictionsCollect',
+			'tasksmobile',
+			\Bitrix\TasksMobile\Provider\TariffPlanRestrictionProvider::class,
+			'getTariffPlanRestrictions',
+		);
 
 		return true;
 	}
@@ -56,6 +63,13 @@ class TasksMobile extends CModule
 			$this->MODULE_ID,
 			$this->workspaceClass,
 			'getPath'
+		);
+		$eventManager->unRegisterEventHandler(
+			'mobile',
+			'onTariffRestrictionsCollect',
+			'tasksmobile',
+			\Bitrix\TasksMobile\Provider\TariffPlanRestrictionProvider::class,
+			'getTariffPlanRestrictions',
 		);
 
 		ModuleManager::unRegisterModule($this->MODULE_ID);
@@ -85,9 +99,9 @@ class TasksMobile extends CModule
 		return true;
 	}
 
-	public function uninstallFiles()
+	public function uninstallFiles(): void
 	{
-
+		DeleteDirFilesEx('/bitrix/mobileapp/' . $this->MODULE_ID);
 	}
 
 	public function installEvents()

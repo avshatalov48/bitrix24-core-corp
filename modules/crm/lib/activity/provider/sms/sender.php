@@ -29,15 +29,21 @@ final class Sender
 	private ?int $paymentId = null;
 	private ?int $shipmentId = null;
 	private array $compilationProductIds = [];
+	private SenderExtra $senderExtra;
 
-	public function __construct(ItemIdentifier $owner, MessageDto $message)
+	public function __construct(
+		ItemIdentifier $owner,
+		MessageDto $message,
+		?SenderExtra $senderExtra = null,
+	)
 	{
 		$this->owner = $owner;
 		$this->message = $message;
 		$this->responsibleId = Container::getInstance()->getContext()->getUserId();
+		$this->senderExtra = $senderExtra ?? new SenderExtra();
 	}
 
-	public function send(): Result
+	public function send(bool $checkUserPermissions = true): Result
 	{
 		$ownerTypeId = $this->owner->getEntityTypeId();
 		$ownerId = $this->owner->getEntityId();
@@ -62,7 +68,10 @@ final class Sender
 			return $result;
 		}
 
-		if (!Container::getInstance()->getUserPermissions()->checkUpdatePermissions($ownerTypeId, $ownerId))
+		if (
+			$checkUserPermissions
+			&& !Container::getInstance()->getUserPermissions()->checkUpdatePermissions($ownerTypeId, $ownerId)
+		)
 		{
 			$result->addError(new Error('CRM_PERMISSION_DENIED'));
 
@@ -217,11 +226,10 @@ final class Sender
 
 		$comEntityId = $this->getComEntityItemIdentifier()->getEntityId();
 		$comEntityTypeId = $this->getComEntityItemIdentifier()->getEntityTypeId();
-
 		$bindings = $this->getBindings();
 
 		$additionalFields = [
-			'ACTIVITY_PROVIDER_TYPE_ID' => \Bitrix\Crm\Activity\Provider\Sms::PROVIDER_TYPE_SMS,
+			'ACTIVITY_PROVIDER_TYPE_ID' => $this->getActivityProviderTypeId($message->senderId),
 			'ENTITY_TYPE' => \CCrmOwnerType::ResolveName($comEntityTypeId),
 			'ENTITY_TYPE_ID' => $comEntityTypeId,
 			'ENTITY_ID' => $comEntityId,
@@ -229,10 +237,16 @@ final class Sender
 			'ACTIVITY_AUTHOR_ID' => $this->responsibleId,
 			'ACTIVITY_DESCRIPTION' => $message->body,
 			'MESSAGE_TO' => $message->to,
+			'ORIGINAL_TEMPLATE_ID' => $message->templateOriginalId,
 		];
 
 		$this->prepareOrderAdditionalFields($additionalFields, $bindings);
 		$this->prepareDealAdditionalFields($additionalFields);
+
+		if ($this->senderExtra->sentMessageTag)
+		{
+			$additionalFields['ASSOCIATED_MESSAGE_TAG'] = $this->senderExtra->sentMessageTag;
+		}
 
 		return $additionalFields;
 	}
@@ -259,6 +273,7 @@ final class Sender
 				'PAYMENT' => $payment,
 				'SHIPMENT' => $this->shipmentId ? ShipmentRepository::getInstance()->getById($this->shipmentId) : null,
 			];
+			$additionalFields['CREATE_VIEWED_TIMELINE_ITEM'] = true;
 		}
 	}
 
@@ -279,6 +294,13 @@ final class Sender
 		$additionalFields['ENTITIES'] = [
 			'DEAL' => $deal,
 		];
+	}
+
+	private function getActivityProviderTypeId(string $senderId): string
+	{
+		return SmsManager::isEdnaWhatsAppSendingEnabled($senderId)
+			? \Bitrix\Crm\Activity\Provider\WhatsApp::PROVIDER_TYPE_WHATSAPP
+			: \Bitrix\Crm\Activity\Provider\Sms::PROVIDER_TYPE_SMS;
 	}
 
 	public function setEntityIdentifier(ItemIdentifier $entity): self

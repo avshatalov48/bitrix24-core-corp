@@ -5,6 +5,7 @@ jn.define('crm/mail/message/elements/contact/card', (require, exports, module) =
 	const AppTheme = require('apptheme');
 	const { PureComponent } = require('layout/pure-component');
 	const { ProfileView } = require('user/profile');
+	const { AnalyticsEvent } = require('analytics');
 
 	function Email(props)
 	{
@@ -175,11 +176,14 @@ jn.define('crm/mail/message/elements/contact/card', (require, exports, module) =
 		{
 			const { EntityDetailOpener } = await requireLazy('crm:entity-detail/opener');
 
+			const analytics = new AnalyticsEvent(BX.componentParameters.get('analytics', {}));
+
 			EntityDetailOpener.open({
 				payload: {
 					entityTypeId: typeNameId,
 					entityId: id,
 				},
+				analytics,
 			});
 		}
 	}

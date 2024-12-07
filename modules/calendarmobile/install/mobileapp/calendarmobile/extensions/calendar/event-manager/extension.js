@@ -29,6 +29,8 @@ jn.define('calendar/event-manager', (require, exports, module) => {
 
 			this.nowDate = new Date();
 
+			this.isFilteredMode = false;
+
 			this.loadedRange = {
 				start: null,
 				end: null,
@@ -390,7 +392,7 @@ jn.define('calendar/event-manager', (require, exports, module) => {
 		 */
 		appendEvent(event, storage, index)
 		{
-			if (!this.props.showDeclined && event.isDeclined())
+			if (!this.isFilteredMode && !this.props.showDeclined && event.isDeclined())
 			{
 				return;
 			}
@@ -532,6 +534,15 @@ jn.define('calendar/event-manager', (require, exports, module) => {
 			{
 				this.loadedRange.end = endDate;
 			}
+		}
+
+		/**
+		 *
+		 * @param filteredMode
+		 */
+		setFilteredMode(filteredMode)
+		{
+			this.isFilteredMode = filteredMode;
 		}
 	}
 

@@ -34,34 +34,37 @@ class CleaningTable extends Main\ORM\Data\DataManager
 	 * Returns entity map definition.
 	 * @return array
 	 */
-	public static function getMap()
+	public static function getMap(): array
 	{
-		return array(
-			'ENTITY_TYPE_ID' => array('data_type' => 'integer', 'primary' => true),
-			'ENTITY_ID' => array('data_type' => 'integer', 'primary' => true),
-			'CREATED_TIME' => array('data_type' => 'datetime', 'required' => true),
-			'LAST_UPDATED_TIME' => array('data_type' => 'datetime', 'required' => true)
-		);
+		return [
+			'ENTITY_TYPE_ID' => ['data_type' => 'integer', 'primary' => true],
+			'ENTITY_ID' => ['data_type' => 'integer', 'primary' => true],
+			'CREATED_TIME' => ['data_type' => 'datetime', 'required' => true],
+			'LAST_UPDATED_TIME' => ['data_type' => 'datetime', 'required' => true],
+			'FORCE_USER_ID' => ['data_type' => 'integer', 'required' => false],
+		];
 	}
 
 	public static function upsert(array $data)
 	{
 		$entityTypeID = isset($data['ENTITY_TYPE_ID']) ? (int)$data['ENTITY_TYPE_ID'] : \CCrmOwnerType::Undefined;
 		$entityID = isset($data['ENTITY_ID']) ? (int)$data['ENTITY_ID'] : 0;
+		$forceUserId = $data['FORCE_USER_ID'] ?? null;
 
 		$now = new Main\Type\DateTime();
 
 		$connection = Main\Application::getConnection();
 		$queries = $connection->getSqlHelper()->prepareMerge(
 			'b_crm_cleaning',
-			array('ENTITY_TYPE_ID', 'ENTITY_ID'),
-			array(
+			['ENTITY_TYPE_ID', 'ENTITY_ID'],
+			[
 				'ENTITY_TYPE_ID' => $entityTypeID,
 				'ENTITY_ID' => $entityID,
 				'CREATED_TIME' => $now,
-				'LAST_UPDATED_TIME' => $now
-			),
-			array('LAST_UPDATED_TIME' => $now)
+				'LAST_UPDATED_TIME' => $now,
+				'FORCE_USER_ID' => $forceUserId,
+			],
+			['LAST_UPDATED_TIME' => $now]
 		);
 
 		foreach($queries as $query)

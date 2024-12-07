@@ -21,9 +21,12 @@ if(typeof BX.Crm.EntityDetailProgressControl === "undefined")
 		this._failureDlg = null;
 		this._isReadOnly = false;
 		this._terminationControl = null;
+		this._permissionChecker = null;
+		this._beforeFailureDialogOpenStepId = null;
 
 		this._entityEditorDialog = null;
 		this._entityEditorDialogHandler = BX.delegate(this.onEntityEditorDialogClose, this);
+		this._analyticsData = null;
 	};
 	BX.Crm.EntityDetailProgressControl.prototype =
 		{
@@ -66,6 +69,8 @@ if(typeof BX.Crm.EntityDetailProgressControl === "undefined")
 								canConvert: BX.prop.getBoolean(settings, "canConvert", false),
 								conversionScheme: BX.prop.get(settings, "conversionScheme", null),
 								converterId: BX.prop.getString(settings, 'converterId', null),
+								permissionCheckCallback: this.isHasPermissionToMoveSuccessStage.bind(this),
+								showPermissionErrorCallback: this.showMissPermissionError.bind(this),
 							}
 						)
 					);
@@ -100,28 +105,29 @@ if(typeof BX.Crm.EntityDetailProgressControl === "undefined")
 						stepContainer.style.maxWidth = stepContainerText.scrollWidth + 23 + "px"
 					}
 
-					this._steps.push(
-						BX.Crm.EntityDetailProgressStep.create(
-							stepId,
-							{
-								name: info["name"],
-								hint: BX.prop.getString(info, "hint", ""),
-								sort: BX.prop.getNumber(info, "sort", 0),
-								semantics: BX.prop.getString(info, "semantics", ""),
-								index: i,
-								isPassed: currentStepIndex >= 0 && i <= currentStepIndex,
-								isReadOnly: this._isReadOnly,
-								isVisible: stepContainer.style.display !== "none",
-								container: stepContainer,
-								control: this
-							}
-						)
+					const step = BX.Crm.EntityDetailProgressStep.create(
+						stepId,
+						{
+							name: info["name"],
+							hint: BX.prop.getString(info, "hint", ""),
+							sort: BX.prop.getNumber(info, "sort", 0),
+							semantics: BX.prop.getString(info, "semantics", ""),
+							index: i,
+							isPassed: currentStepIndex >= 0 && i <= currentStepIndex,
+							isReadOnly: this._isReadOnly,
+							isVisible: stepContainer.style.display !== "none",
+							container: stepContainer,
+							control: this
+						}
 					);
+
+					this._steps.push(step);
 				}
 
-				if(currentStepIndex >= 0)
+				if (currentStepIndex >= 0)
 				{
-					this.adjustSteps(currentStepIndex, BX.Crm.EntityDetailProgressControl.getStepColor(currentStepInfo));
+					this.adjustStepsByCurrentStep();
+					this.adjustStepDisabling();
 				}
 
 				BX.addCustomEvent(window, 'Crm.EntityModel.Change', this.onEntityModelChange.bind(this));
@@ -180,6 +186,48 @@ if(typeof BX.Crm.EntityDetailProgressControl === "undefined")
 				}
 
 				this.setCurrentStepByIdAndAdjustSteps(currentStepId);
+			},
+			getPermissionChecker()
+			{
+				if (this._permissionChecker === null)
+				{
+					const stepInfos = this._stepInfos ?? this._manager.getInfos(this._stepInfoTypeId);
+					this._permissionChecker = BX.Crm.Stage.PermissionChecker.createFromStageInfos(stepInfos);
+				}
+
+				return this._permissionChecker;
+			},
+			isHasPermissionToMove(stepId)
+			{
+				return this.getPermissionChecker().isHasPermissionToMove(this.getCurrentStepId(), stepId);
+			},
+			isHasPermissionToMoveTerminationStages()
+			{
+				return this.isHasPermissionToMoveSuccessStage() || this.isHasPermissionToMoveFailureStages();
+			},
+			isHasPermissionToMoveFailureStages()
+			{
+				return this.getPermissionChecker().isHasPermissionToMoveAtLeastOneFailureStage(this.getCurrentStepId());
+			},
+			isHasPermissionToMoveSuccessStage()
+			{
+				const canConvert = !this._terminationControl || this._terminationControl.isEnabled();
+
+				return canConvert && this.getPermissionChecker()
+					.isHasPermissionToMoveSuccessStage(this.getCurrentStepId())
+				;
+			},
+			getTerminationSemantics()
+			{
+				return ['success', 'failure'];
+			},
+			isTerminationSemantics(semantics)
+			{
+				return this.getTerminationSemantics().includes(semantics);
+			},
+			showMissPermissionError()
+			{
+				this.getPermissionChecker().showMissPermissionError();
 			},
 			getSettings()
 			{
@@ -246,6 +294,21 @@ if(typeof BX.Crm.EntityDetailProgressControl === "undefined")
 
 				return -1;
 			},
+			isStepDisable(id)
+			{
+				const step = this.getStepById(id);
+				if (!step)
+				{
+					return false;
+				}
+
+				if (this.isTerminationSemantics(step.getSemantics()))
+				{
+					return !this.isHasPermissionToMoveTerminationStages();
+				}
+
+				return !this.isHasPermissionToMove(step.getId());
+			},
 			findStepInfoBySemantics: function(semantics)
 			{
 				for(var i = 0, l = this._stepInfos.length; i < l; i++)
@@ -276,13 +339,13 @@ if(typeof BX.Crm.EntityDetailProgressControl === "undefined")
 			},
 			setCurrentStep: function(stepInfo, options)
 			{
-				var stepId = stepInfo["id"];
+				const stepId = stepInfo.id;
 				if(this._currentStepId === stepId)
 				{
 					return false;
 				}
 
-				if(BX.prop.getBoolean(options, "keepPreviousStep", true))
+				if(BX.prop.getBoolean(options, 'keepPreviousStep', true))
 				{
 					this._previousStepId = this._currentStepId;
 					this._previousSemantics = this._currentSemantics;
@@ -298,6 +361,7 @@ if(typeof BX.Crm.EntityDetailProgressControl === "undefined")
 
 				this.adjustStepsVisibility();
 				this.adjustFinalStepName();
+				this.adjustStepDisabling();
 
 				BX.onCustomEvent(
 					window,
@@ -375,23 +439,37 @@ if(typeof BX.Crm.EntityDetailProgressControl === "undefined")
 					index = (this._steps.length - 1);
 				}
 
-				var i, l;
-				for(i = index, l = this._steps.length; i < l; i++)
+				let i, l;
+				for (i = index, l = this._steps.length; i < l; i++)
 				{
 					this._steps[i].recoverColors();
 					this._steps[i].saveStyles();
 				}
 
-				var textColor = BX.Crm.EntityDetailProgressStep.calculateTextColor(baseColor);
-				for(i = 0, l = index; i <= l; i++)
+				let textColor = BX.Crm.EntityDetailProgressStep.calculateTextColor(baseColor);
+				for (i = 0, l = index; i <= l; i++)
 				{
 					this._steps[i].setColor(textColor);
 					this._steps[i].setBackgroundColor(baseColor);
 				}
 
-				for(i = 0, l = index; i <= l; i++)
+				for (i = 0, l = index; i <= l; i++)
 				{
 					this._steps[i].saveStyles();
+				}
+			},
+			adjustStepDisabling: function()
+			{
+				for (let i = 0, l = this._steps.length; i < l; i++)
+				{
+					if (this.isStepDisable(this._steps[i].getId()))
+					{
+						this._steps[i].setDisabled();
+					}
+					else
+					{
+						this._steps[i].removeDisabled();
+					}
 				}
 			},
 			setStepColorsBefore: function(step)
@@ -422,6 +500,24 @@ if(typeof BX.Crm.EntityDetailProgressControl === "undefined")
 				{
 					return;
 				}
+
+				const step = this._stepInfos.find((obj) => obj.id === value);
+
+				if (step.semantics === 'apology' || step.semantics === 'failure')
+				{
+					this._analyticsData.c_element = BX.Crm.Integration.Analytics.Dictionary.ELEMENT_LOSE_BUTTON;
+					this._registerAnalyticsCloseEvent(BX.Crm.Integration.Analytics.Dictionary.STATUS_ATTEMPT);
+				}
+				else if (step.semantics === 'success')
+				{
+					this._analyticsData.c_element = BX.Crm.Integration.Analytics.Dictionary.ELEMENT_WON_BUTTON;
+					this._registerAnalyticsCloseEvent(BX.Crm.Integration.Analytics.Dictionary.STATUS_ATTEMPT);
+				}
+				else
+				{
+					this._analyticsData = null;
+				}
+
 
 				var data = {
 					"ACTION" : "SAVE_PROGRESS",
@@ -457,8 +553,28 @@ if(typeof BX.Crm.EntityDetailProgressControl === "undefined")
 							context: BX.prop.getObject(data, "CONTEXT", null)
 						}
 					);
+
+					this._registerAnalyticsCloseEvent(BX.Crm.Integration.Analytics.Dictionary.STATUS_ERROR);
+
 					return;
 				}
+
+				const errorMessage = BX.prop.getString(data, 'ERROR', null);
+				if (errorMessage)
+				{
+					BX.UI.Notification.Center.notify({
+						content: errorMessage,
+						autoHideDelay: 5000,
+					});
+
+					this.setCurrentStepByIdAndAdjustSteps(this._previousStepId);
+
+					this._registerAnalyticsCloseEvent(BX.Crm.Integration.Analytics.Dictionary.STATUS_ERROR);
+
+					return;
+				}
+
+				this._registerAnalyticsCloseEvent(BX.Crm.Integration.Analytics.Dictionary.STATUS_SUCCESS);
 
 				BX.onCustomEvent(
 					window,
@@ -528,23 +644,43 @@ if(typeof BX.Crm.EntityDetailProgressControl === "undefined")
 					this._terminationDlg.close();
 					this._terminationDlg = null;
 				}
-				var apologies = this.findAllStepInfoBySemantics("apology");
+				const apologies = this.findAllStepInfoBySemantics("apology");
+
 				this._terminationDlg = BX.CrmProcessTerminationDialog.create(
 					(this._id + "_TERMINATION"),
 					BX.CrmParamBag.create(
 						{
-							"title": this._manager.getMessage("dialogTitle"),
-							"failureTitle": apologies.length > 0 ? this._manager.getMessage("failureTitle") : "",
-							//"anchor": this._container,
-							"success": this.findStepInfoBySemantics("success"),
-							"failure": this.findStepInfoBySemantics("failure"),
-							"apologies": apologies,
-							"callback": BX.delegate(this.onTerminationDialogClose, this),
-							"terminationControl": this._terminationControl
+							title: this._manager.getMessage("dialogTitle"),
+							failureTitle: apologies.length > 0 ? this._manager.getMessage("failureTitle") : "",
+							// anchor: this._container,
+							success: this.findStepInfoBySemantics("success"),
+							failure: this.findStepInfoBySemantics("failure"),
+							apologies: apologies,
+							callback: this.onTerminationDialogClose.bind(this),
+							buttonPrepareCallback: this.terminationButtonPrepareCallback.bind(this),
+							terminationControl: this._terminationControl,
 						}
 					)
 				);
+
 				this._terminationDlg.open();
+			},
+			terminationButtonPrepareCallback(button, stepInfo)
+			{
+				if (this.isHasPermissionToMove(stepInfo.id))
+				{
+					return;
+				}
+
+				if (
+					stepInfo.semantics === 'failure'
+					&& this.isHasPermissionToMoveFailureStages()
+				)
+				{
+					return;
+				}
+
+				BX.Dom.addClass(button, '--disabled');
 			},
 			closeTerminationDialog: function()
 			{
@@ -563,59 +699,99 @@ if(typeof BX.Crm.EntityDetailProgressControl === "undefined")
 					return;
 				}
 
+				this._analyticsData = BX.Crm.Integration.Analytics.Builder.Entity.CloseEvent.createDefault(
+						this._entityTypeId,
+						this._entityId,
+					)
+					.setSubSection(BX.Crm.Integration.Analytics.Dictionary.SUB_SECTION_DETAILS)
+					.setElement(BX.Crm.Integration.Analytics.Dictionary.ELEMENT_DETAILS_PROGRESS_BAR)
+					.buildData();
+				this._registerAnalyticsCloseEvent(BX.Crm.Integration.Analytics.Dictionary.STATUS_ATTEMPT);
+
 				this.closeTerminationDialog();
 
-				var stepId = BX.type.isNotEmptyString(params["result"]) ? params["result"] : "";
-
-				var stepIndex = this.findStepInfoIndex(stepId);
+				let stepId = BX.type.isNotEmptyString(params.result) ? params.result : '';
+				let stepIndex = this.findStepInfoIndex(stepId);
 				if(stepIndex < 0)
 				{
-					var currentStepIndex = this.findStepInfoIndex(this._currentStepId);
-					this.adjustSteps(
-						currentStepIndex,
-						BX.Crm.EntityDetailProgressControl.getStepColor(this._stepInfos[currentStepIndex])
-					);
+					this.adjustStepsByCurrentStep();
+
 					return;
 				}
 
-				var stepInfo = this._stepInfos[stepIndex];
-				this.setCurrentStep(stepInfo);
+				let stepInfo = this._stepInfos[stepIndex];
 
-				var openFailureDialog = false;
-				var failure = this.findStepInfoBySemantics("failure");
+				let openFailureDialog = false;
+				const failure = this.findStepInfoBySemantics("failure");
 				if(failure && failure["id"] === stepId)
 				{
 					openFailureDialog = true;
+					if (!this.isHasPermissionToMove(stepId))
+					{
+						const availableApology = this.findAllStepInfoBySemantics('apology')
+							.find((apology) => this.isHasPermissionToMove(apology.id))
+						;
+
+						if (
+							!this.isHasPermissionToMoveFailureStages()
+							|| !availableApology
+						)
+						{
+							this.showMissPermissionError();
+							this.adjustStepsByCurrentStep();
+
+							this._registerAnalyticsCloseEvent(BX.Crm.Integration.Analytics.Dictionary.STATUS_ERROR);
+							return;
+						}
+
+						stepId = availableApology.id;
+						stepIndex = this.findStepInfoIndex(stepId);
+						stepInfo = { ...availableApology };
+					}
 				}
 				else if(stepInfo["semantics"] === "success")
 				{
+					if (!this.isHasPermissionToMove(stepId))
+					{
+						this.showMissPermissionError();
+						this.adjustStepsByCurrentStep();
+
+						this._registerAnalyticsCloseEvent(BX.Crm.Integration.Analytics.Dictionary.STATUS_ERROR);
+						return;
+					}
+
 					if(typeof(stepInfo["hasParams"]) !== "undefined" && stepInfo["hasParams"] === true)
 					{
 						openFailureDialog = true;
 					}
 					else
 					{
-						var finalScript = BX.prop.getString(this._settings, "finalScript", "");
+						const finalScript = BX.prop.getString(this._settings, "finalScript", "");
 						if(finalScript !== "")
 						{
+							this._registerAnalyticsCloseEvent(BX.Crm.Integration.Analytics.Dictionary.STATUS_ERROR);
 							eval(finalScript);
 							return;
 						}
 
-						var finalUrl = BX.prop.getString(this._settings, "finalUrl", "");
+						const finalUrl = BX.prop.getString(this._settings, "finalUrl", "");
 						if(finalUrl !== "")
 						{
+							this._registerAnalyticsCloseEvent(BX.Crm.Integration.Analytics.Dictionary.STATUS_ERROR);
 							window.location = finalUrl;
 							return;
 						}
 					}
 				}
 
+				this._beforeFailureDialogOpenStepId = openFailureDialog ? this._currentStepId : null;
+				this.setCurrentStep(stepInfo);
 				this.adjustSteps(stepIndex, BX.Crm.EntityDetailProgressControl.getStepColor(stepInfo));
 
 				if(openFailureDialog)
 				{
 					this.openFailureDialog();
+
 					return;
 				}
 
@@ -629,28 +805,31 @@ if(typeof BX.Crm.EntityDetailProgressControl === "undefined")
 					this._failureDlg = null;
 				}
 
-				var currentStepIndex = this.findStepInfoIndex(this._currentStepId);
-				var info = currentStepIndex >= 0 ? this._stepInfos[currentStepIndex] : null;
-				var initValue = info ? info["id"] : "";
+				const currentStepIndex = this.findStepInfoIndex(this._currentStepId);
+				const info = currentStepIndex >= 0 ? this._stepInfos[currentStepIndex] : null;
+				const initValue = info ? info["id"] : "";
 
-				var apologies = this.findAllStepInfoBySemantics("apology");
+				const apologies = this.findAllStepInfoBySemantics("apology");
 				this._failureDlg = BX.CrmProcessFailureDialog.create(
 					(this._id + "_FAILURE"),
 					BX.CrmParamBag.create(
 						{
-							"entityType": this._entityType,
-							"entityId": this._entityId,
-							"initValue": initValue,
-							"failureTitle": apologies.length > 0 ? this._manager.getMessage("failureTitle") : "",
-							"selectorTitle": this._manager.getMessage("selectorTitle"),
-							//"anchor": this._container,
-							"success": this.findStepInfoBySemantics("success"),
-							"failure": this.findStepInfoBySemantics("failure"),
-							"apologies": apologies,
-							"callback": BX.delegate(this.onFailureDialogClose, this)
+							entityType: this._entityType,
+							entityId: this._entityId,
+							initValue: initValue,
+							failureTitle: apologies.length > 0 ? this._manager.getMessage("failureTitle") : "",
+							selectorTitle: this._manager.getMessage("selectorTitle"),
+							// anchor: this._container,
+							success: this.findStepInfoBySemantics("success"),
+							failure: this.findStepInfoBySemantics("failure"),
+							apologies: apologies,
+							callback: this.onFailureDialogClose.bind(this),
 						}
 					)
 				);
+
+				BX.addCustomEvent('CrmProcessFailureDialogContentCreated', this.onCrmProcessFailureDialogContentCreated.bind(this));
+
 				this._failureDlg.open();
 			},
 			closeFailureDialog: function()
@@ -670,11 +849,12 @@ if(typeof BX.Crm.EntityDetailProgressControl === "undefined")
 					return;
 				}
 
-				var stepInfo, stepIndex;
+				let stepInfo, stepIndex;
 				BX.onCustomEvent(this, 'CrmProgressControlBeforeFailureDialogClose', [ this, this._failureDlg ]);
 				this.closeFailureDialog();
-				var bid = BX.type.isNotEmptyString(params["bid"]) ? params["bid"] : "";
-				if(bid !== 'accept')
+
+				let bid = BX.type.isNotEmptyString(params["bid"]) ? params["bid"] : "";
+				if (bid !== 'accept')
 				{
 					//Rollback current step
 					if(this._previousStepId !== '')
@@ -685,28 +865,41 @@ if(typeof BX.Crm.EntityDetailProgressControl === "undefined")
 					return;
 				}
 
-				var id = BX.type.isNotEmptyString(params["result"]) ? params["result"] : "";
+				const id = BX.type.isNotEmptyString(params.result) ? params.result : '';
+				const fromId = this._beforeFailureDialogOpenStepId ?? this._currentStepId;
+				if (!this.getPermissionChecker().isHasPermissionToMove(fromId, id))
+				{
+					this.showMissPermissionError();
+					//Rollback current step
+					if (this._previousStepId !== '')
+					{
+						this.setCurrentStepByIdAndAdjustSteps(this._previousStepId);
+					}
+
+					return;
+				}
+
 				stepIndex = this.findStepInfoIndex(id);
 				if(stepIndex >= 0)
 				{
 					stepInfo = this._stepInfos[stepIndex];
-					if(stepInfo["semantics"] === "success")
+					if(stepInfo.semantics === 'success')
 					{
-						var finalScript = BX.prop.getString(this._settings, "finalScript", "");
+						const finalScript = BX.prop.getString(this._settings, "finalScript", "");
 						if(finalScript !== "")
 						{
 							eval(finalScript);
 							return;
 						}
 
-						var finalUrl = BX.prop.getString(this._settings, "finalUrl", "");
+						const finalUrl = BX.prop.getString(this._settings, "finalUrl", "");
 						if(finalUrl !== "")
 						{
 							window.location = finalUrl;
 							return;
 						}
 
-						var verboseMode = BX.prop.getBoolean(this._settings, "verboseMode", false);
+						const verboseMode = BX.prop.getBoolean(this._settings, "verboseMode", false);
 						if(verboseMode)
 						{
 							//Rollback current step
@@ -729,8 +922,43 @@ if(typeof BX.Crm.EntityDetailProgressControl === "undefined")
 					this.save();
 				}
 			},
+			onCrmProcessFailureDialogContentCreated(failureDialog, wrapper)
+			{
+				if (this._failureDlg !== failureDialog)
+				{
+					return;
+				}
+
+				const fromId = this._beforeFailureDialogOpenStepId ?? this.getCurrentStepId();
+
+				const radioButtonWrappers = wrapper.querySelectorAll('.crm-list-end-deal-button-wrapper');
+				radioButtonWrappers.forEach((radioButtonWrapper) => {
+					const radioButton = radioButtonWrapper.querySelector('input');
+					if (!radioButton)
+					{
+						return;
+					}
+
+					const stepId = radioButton.value;
+					if (this.getPermissionChecker().isHasPermissionToMove(fromId, stepId))
+					{
+						return;
+					}
+
+					BX.Dom.addClass(radioButtonWrapper, '--disabled');
+					radioButton.onclick = (event) => {
+						this.showMissPermissionError();
+						event.preventDefault();
+					};
+				});
+			},
 			processStepHover: function(step)
 			{
+				if (step.isDisabled())
+				{
+					return;
+				}
+
 				if(step.getIndex() < (this._steps.length - 1))
 				{
 					this.setStepColorsBefore(step);
@@ -796,8 +1024,10 @@ if(typeof BX.Crm.EntityDetailProgressControl === "undefined")
 					|| (stepSemantics === "success" && (this._terminationControl || this.findStepInfoBySemantics("failure")))
 				)
 				{
-					if(this._terminationControl && !this._terminationControl.isEnabled())
+					if (!this.isHasPermissionToMoveTerminationStages())
 					{
+						this.showMissPermissionError();
+
 						return;
 					}
 
@@ -807,12 +1037,43 @@ if(typeof BX.Crm.EntityDetailProgressControl === "undefined")
 				}
 				else
 				{
+					if (!this.isHasPermissionToMove(step.getId()))
+					{
+						this.showMissPermissionError();
+
+						return;
+					}
+
 					this.adjustSteps(step.getIndex(), step.getBackgroundColor());
 					if(this._currentStepId !== stepInfo["id"] && this.setCurrentStep(stepInfo))
 					{
 						this.save();
 					}
 				}
+			},
+			adjustStepsByCurrentStep: function()
+			{
+				const currentStepIndex = this.findStepInfoIndex(this._currentStepId);
+				if (currentStepIndex < 0)
+				{
+					return;
+				}
+
+				this.adjustSteps(
+					currentStepIndex,
+					BX.Crm.EntityDetailProgressControl.getStepColor(this._stepInfos[currentStepIndex])
+				);
+			},
+			_registerAnalyticsCloseEvent(status)
+			{
+				if (!this._analyticsData)
+				{
+					return;
+				}
+
+				this._analyticsData.status = status;
+
+				BX.UI.Analytics.sendData(this._analyticsData);
 			}
 		};
 
@@ -855,6 +1116,7 @@ if(typeof BX.Crm.EntityDetailProgressStep === "undefined")
 		this._leaveHandler = BX.delegate(this.onMouseLeave, this);
 
 		this._isVisible = true;
+		this._isDisabled = false;
 		this._displayName = "";
 	};
 	BX.Crm.EntityDetailProgressStep.prototype =
@@ -983,7 +1245,31 @@ if(typeof BX.Crm.EntityDetailProgressStep === "undefined")
 			recoverStyles: function()
 			{
 				this._element.style.cssText = (this._element.getAttribute("data-style")) ? this._element.getAttribute("data-style") : "";
-			}
+			},
+			isDisabled: function()
+			{
+				return this._isDisabled;
+			},
+			setDisabled: function()
+			{
+				if (this._isDisabled)
+				{
+					return;
+				}
+
+				BX.addClass(this._container, '--disabled');
+				this._isDisabled = true;
+			},
+			removeDisabled: function()
+			{
+				if (!this._isDisabled)
+				{
+					return;
+				}
+
+				BX.removeClass(this._container, '--disabled');
+				this._isDisabled = false;
+			},
 		};
 
 	if(BX.Crm.EntityDetailProgressStep.backgroundImageCss === "undefined")

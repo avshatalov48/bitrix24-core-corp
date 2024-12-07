@@ -53,7 +53,7 @@ class TerminalEmptyState {
 				<div class="crm-terminal-payment-list__empty--all-info">
 					<div class="crm-terminal-payment-list__empty--info-text-container">
 						<div class="crm-terminal-payment-list__empty--info-block-title">
-							<div class="crm-terminal-payment-list__empty--title-quickly">${Loc.getMessage('CRM_TERMINAL_EMPTY_STATE_COMPONENT_TEMPLATE_TITLE')}</div>
+							<div class="crm-terminal-payment-list__empty--title-quickly">${Loc.getMessage('CRM_TERMINAL_EMPTY_STATE_COMPONENT_TEMPLATE_TITLE_MSGVER_1')}</div>
 							<div class="crm-terminal-payment-list__empty--title">${Loc.getMessage('CRM_TERMINAL_EMPTY_STATE_COMPONENT_TEMPLATE_SUB_TITLE')}</div>
 						</div>
 						<div class="crm-terminal-payment-list__empty--info-block-content">

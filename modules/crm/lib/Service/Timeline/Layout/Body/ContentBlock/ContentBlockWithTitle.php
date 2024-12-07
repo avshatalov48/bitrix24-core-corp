@@ -13,6 +13,7 @@ class ContentBlockWithTitle extends ContentBlock
 	public const ALIGN_BASELINE = 'baseline';
 
 	protected ?string $title = null;
+	protected ?int $titleBottomPadding = null;
 	protected ?bool $inline = null;
 	protected ?bool $wordWrap = null;
     protected bool $fixedWidth = true;
@@ -84,6 +85,18 @@ class ContentBlockWithTitle extends ContentBlock
 		return $this;
 	}
 
+	public function getTitleBottomPadding(): ?int
+	{
+		return $this->titleBottomPadding;
+	}
+
+	public function setTitleBottomPadding(?int $titleBottomPadding): self
+	{
+		$this->titleBottomPadding = $titleBottomPadding;
+
+		return $this;
+	}
+
 	public function getContentBlock(): ?ContentBlock
 	{
 		return $this->contentBlock;
@@ -100,6 +113,7 @@ class ContentBlockWithTitle extends ContentBlock
 	{
 		return [
 			'title' => $this->getTitle(),
+			'titleBottomPadding' => $this->getTitleBottomPadding(),
 			'inline' => $this->getInline(),
 			'wordWrap' => $this->getWordWrap(),
             'fixedWidth' => $this->getFixedWidth(),

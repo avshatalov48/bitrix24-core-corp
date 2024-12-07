@@ -13,6 +13,7 @@ use Bitrix\Crm\Integrity\DuplicateCommunicationCriterion;
 use Bitrix\Crm\Integrity\DuplicateCriterion;
 use Bitrix\Crm\Integrity\DuplicateEntity;
 use Bitrix\Crm\Integrity\DuplicateSearchParams;
+use Bitrix\Crm\Service\Container;
 
 global $DB, $APPLICATION;
 if(!function_exists('__CrmRequisiteEditEndResponse'))
@@ -47,7 +48,6 @@ if ($_SERVER['REQUEST_METHOD'] != 'POST')
 	__CrmRequisiteEditEndResponse(array('ERROR' => 'Request method is not allowed.'));
 }
 
-CUtil::JSPostUnescape();
 $GLOBALS['APPLICATION']->RestartBuffer();
 header('Content-Type: application/x-javascript; charset='.LANG_CHARSET);
 
@@ -310,96 +310,116 @@ if ($action === 'FIND_DUPLICATES')
 					'ENTITY_ID' => $entityID,
 				];
 
-				if (isset($entityInfoByType[$entityTypeID]) && isset($entityInfoByType[$entityTypeID][$entityID]))
-				{
-					$entityInfo = $entityInfoByType[$entityTypeID][$entityID];
-					if (isset($entityInfo['TITLE']))
-					{
-						$info['TITLE'] = $entityInfo['TITLE'];
-					}
-					if (isset($entityInfo['RESPONSIBLE_ID']))
-					{
-						$responsibleID = $entityInfo['RESPONSIBLE_ID'];
-
-						$info['RESPONSIBLE_ID'] = $responsibleID;
-						if (isset($entityInfo['RESPONSIBLE_FULL_NAME']))
-						{
-							$info['RESPONSIBLE_FULL_NAME'] = $entityInfo['RESPONSIBLE_FULL_NAME'];
-						}
-						if (isset($entityInfo['RESPONSIBLE_PHOTO_URL']))
-						{
-							$info['RESPONSIBLE_PHOTO_URL'] = $entityInfo['RESPONSIBLE_PHOTO_URL'];
-						}
-						$info['RESPONSIBLE_URL'] = CComponentEngine::MakePathFromTemplate(
-							$userProfileUrlTemplate,
-							['user_id' => $responsibleID, 'USER_ID' => $responsibleID]
-						);
-
-						$entityTypeName = CCrmOwnerType::ResolveName($entityTypeID);
-						$isReadable = CCrmAuthorizationHelper::CheckReadPermission(
-							$entityTypeName,
-							$entityID,
-							$userPermissions
-						);
-						$isEditable = CCrmAuthorizationHelper::CheckUpdatePermission(
-							$entityTypeName,
-							$entityID,
-							$userPermissions
-						);
-
-						if ($isEditable && isset($entityInfo['EDIT_URL']))
-						{
-							$info['URL'] = $entityInfo['EDIT_URL'];
-						}
-						elseif ($isReadable && isset($entityInfo['SHOW_URL']))
-						{
-							$info['URL'] = $entityInfo['SHOW_URL'];
-						}
-						else
-						{
-							$info['URL'] = '';
-						}
-					}
-				}
+				$isReadable = Container::getInstance()
+					->getUserPermissions()
+					->checkReadPermissions(
+						$entityTypeID,
+						$entityID
+					)
+				;
 
 				if (
-					isset($entityMultiFields[$entityTypeID])
-					&& isset($entityMultiFields[$entityTypeID][$entityID])
+					$isReadable
+					&& $entityTypeID === CCrmOwnerType::Company
+					&& $entityID > 0
+					&& CCrmCompany::isMyCompany((int)$entityID)
 				)
 				{
-					$multiFields = $entityMultiFields[$entityTypeID][$entityID];
-					foreach (['PHONE', 'EMAIL'] as $matchType)
-					{
-						if (isset($multiFields[$matchType]))
-						{
-							$info[$matchType] = $multiFields[$matchType];
+					$isReadable = $userPermissions->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE');
+				}
 
-							if (
-								$criterionMatchType !== ''
-								&& $criterionMatchValue !== ''
-								&& $matchType === $criterionMatchType
-								&& is_array($info[$matchType])
-							)
+				if ($isReadable)
+				{
+					if (isset($entityInfoByType[$entityTypeID][$entityID]))
+					{
+						$entityInfo = $entityInfoByType[$entityTypeID][$entityID];
+						if (isset($entityInfo['TITLE']))
+						{
+							$info['TITLE'] = $entityInfo['TITLE'];
+						}
+						if (isset($entityInfo['RESPONSIBLE_ID']))
+						{
+							$responsibleID = $entityInfo['RESPONSIBLE_ID'];
+
+							$info['RESPONSIBLE_ID'] = $responsibleID;
+							if (isset($entityInfo['RESPONSIBLE_FULL_NAME']))
 							{
-								foreach ($info[$matchType] as $index => $matchValue)
+								$info['RESPONSIBLE_FULL_NAME'] = $entityInfo['RESPONSIBLE_FULL_NAME'];
+							}
+							if (isset($entityInfo['RESPONSIBLE_PHOTO_URL']))
+							{
+								$info['RESPONSIBLE_PHOTO_URL'] = $entityInfo['RESPONSIBLE_PHOTO_URL'];
+							}
+							$info['RESPONSIBLE_URL'] = CComponentEngine::MakePathFromTemplate(
+								$userProfileUrlTemplate,
+								['user_id' => $responsibleID, 'USER_ID' => $responsibleID]
+							);
+
+							$isEditable = CCrmAuthorizationHelper::CheckUpdatePermission(
+								$entityTypeName,
+								$entityID,
+								$userPermissions
+							);
+
+							if ($isEditable && isset($entityInfo['EDIT_URL']))
+							{
+								$info['URL'] = $entityInfo['EDIT_URL'];
+							}
+							elseif (isset($entityInfo['SHOW_URL']))
+							{
+								$info['URL'] = $entityInfo['SHOW_URL'];
+							}
+							else
+							{
+								$info['URL'] = '';
+							}
+						}
+					}
+
+					if (
+						isset($entityMultiFields[$entityTypeID])
+						&& isset($entityMultiFields[$entityTypeID][$entityID])
+					)
+					{
+						$multiFields = $entityMultiFields[$entityTypeID][$entityID];
+						foreach (['PHONE', 'EMAIL'] as $matchType)
+						{
+							if (isset($multiFields[$matchType]))
+							{
+								$info[$matchType] = $multiFields[$matchType];
+
+								if (
+									$criterionMatchType !== ''
+									&& $criterionMatchValue !== ''
+									&& $matchType === $criterionMatchType
+									&& is_array($info[$matchType])
+								)
 								{
-									if (
-										$criterionMatchValue === DuplicateCommunicationCriterion::prepareCode(
-											$matchType,
-											$matchValue
-										)
-									)
+									foreach ($info[$matchType] as $index => $matchValue)
 									{
-										if (!isset($info['MATCH_INDEX'][$matchType]))
+										if (
+											$criterionMatchValue === DuplicateCommunicationCriterion::prepareCode(
+												$matchType,
+												$matchValue
+											)
+										)
 										{
-											$info['MATCH_INDEX'][$matchType] = [];
+											if (!isset($info['MATCH_INDEX'][$matchType]))
+											{
+												$info['MATCH_INDEX'][$matchType] = [];
+											}
+											$info['MATCH_INDEX'][$matchType][] = $index;
 										}
-										$info['MATCH_INDEX'][$matchType][] = $index;
 									}
 								}
 							}
 						}
 					}
+				}
+				else
+				{
+					$info['TITLE'] = CCrmViewHelper::GetHiddenEntityCaption($entityTypeID);
+					$info['IS_HIDDEN'] = 'Y';
 				}
 
 				$dupInfo['ENTITIES'][] = &$info;

@@ -22,7 +22,7 @@ $targetHtml = '';
 
 if(!empty($arResult["Post"]))
 {
-	if ($_REQUEST["empty_get_comments"] === "Y")
+	if (isset($_REQUEST["empty_get_comments"]) && $_REQUEST["empty_get_comments"] === "Y")
 	{
 		$APPLICATION->IncludeComponent(
 			"bitrix:socialnetwork.blog.post.comment",
@@ -70,6 +70,7 @@ if(!empty($arResult["Post"]))
 				"CAN_USER_COMMENT" => (!isset($arResult["CanComment"]) || $arResult["CanComment"] ? 'Y' : 'N'),
 				"NAV_TYPE_NEW" => "Y",
 				'UNREAD_BLOG_COMMENT_ID' => ($arParams['UNREAD_BLOG_COMMENT_ID'] ?? []),
+				"ATTRIBUTES" => $arParams["ATTRIBUTES"],
 			),
 			$component,
 			array("HIDE_ICONS" => "Y")
@@ -872,7 +873,7 @@ if(!empty($arResult["Post"]))
 						ob_start(); // inner buffer
 					}
 
-					if ($arResult["GetCommentsOnly"])
+					if (!empty($arResult["GetCommentsOnly"]))
 					{
 						$APPLICATION->RestartBuffer();
 					}
@@ -907,7 +908,7 @@ if(!empty($arResult["Post"]))
 							"IMAGE_MAX_WIDTH" => $arParams["IMAGE_MAX_WIDTH"],
 							"IMAGE_MAX_HEIGHT" => $arParams["IMAGE_MAX_HEIGHT"],
 							"ALLOW_VIDEO"  => $arParams["ALLOW_VIDEO"],
-							"ALLOW_IMAGE_UPLOAD" => $arParams["BLOG_COMMENT_ALLOW_IMAGE_UPLOAD"],
+							"ALLOW_IMAGE_UPLOAD" => $arParams["BLOG_COMMENT_ALLOW_IMAGE_UPLOAD"] ?? null,
 							"ALLOW_POST_CODE" => $arParams["ALLOW_POST_CODE"],
 							"AJAX_POST" => "Y",
 							"POST_DATA" => $arResult["PostSrc"],
@@ -924,6 +925,7 @@ if(!empty($arResult["Post"]))
 							"SITE_TEMPLATE_ID" => (!empty($arParams["SITE_TEMPLATE_ID"]) ? $arParams["SITE_TEMPLATE_ID"] : ''),
 							'UNREAD_BLOG_COMMENT_ID' => ($arParams['UNREAD_BLOG_COMMENT_ID'] ?? []),
 							'MARK_NEW_COMMENTS' => 'Y',
+							'ATTRIBUTES' => $arParams["ATTRIBUTES"],
 						),
 						$component,
 						array("HIDE_ICONS" => "Y")
@@ -934,7 +936,7 @@ if(!empty($arResult["Post"]))
 
 					ob_end_clean(); // inner buffer
 
-					if ($arResult["GetCommentsOnly"])
+					if (!empty($arResult["GetCommentsOnly"]))
 					{
 						?><?=$strCommentsBlock?><?php
 						die();

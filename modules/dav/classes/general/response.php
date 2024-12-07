@@ -143,8 +143,6 @@ class CDavResponse
 		if ($this->encoding == "utf-8")
 			return $text;
 
-		global $APPLICATION;
-		return $APPLICATION->ConvertCharset($text, $this->encoding, "utf-8");
+		return \Bitrix\Main\Text\Encoding::convertEncoding($text, $this->encoding, "utf-8");
 	}
 }
-?>

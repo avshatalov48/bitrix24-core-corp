@@ -18,13 +18,16 @@ class SmsService extends AbstractService
 	{
 		$repo = MessageSender\Channel\ChannelRepository::create($entity);
 
-		$channel = $repo->getBestUsableBySender(SmsManager::getSenderCode());
-		if (is_null($channel))
+		$channels = $repo->getListBySender(SmsManager::getSenderCode());
+		foreach ($channels as $channel)
 		{
-			return false;
+			if ($channel->checkChannel()->isSuccess())
+			{
+				return true;
+			}
 		}
 
-		return $channel->checkChannel()->isSuccess();
+		return false;
 	}
 
 	/**

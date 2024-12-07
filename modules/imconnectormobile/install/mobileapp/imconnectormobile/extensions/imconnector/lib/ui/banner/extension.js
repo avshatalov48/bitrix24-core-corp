@@ -2,6 +2,7 @@
  * @module imconnector/lib/ui/banner
  */
 jn.define('imconnector/lib/ui/banner', (require, exports, module) => {
+	const AppTheme = require('apptheme');
 
 	/**
 	 * @param {BannerProps} props

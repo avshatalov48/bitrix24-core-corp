@@ -9,6 +9,7 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Tasks\Helper\RestrictionUrl;
 use Bitrix\Tasks\Integration\Bitrix24\User;
 use Bitrix\Tasks\Internals\Task\Priority;
+use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit;
 use Bitrix\Tasks\Util\Type;
 use Bitrix\Tasks\Util;
 use Bitrix\Tasks\Integration\CRM;
@@ -38,6 +39,16 @@ if (($arResult['IS_TOOL_AVAILABLE'] ?? null) === false)
 
 	return;
 }
+
+$taskMailUserIntegrationEnabled = Bitrix24::checkFeatureEnabled(
+	Bitrix24\FeatureDictionary::TASK_MAIL_USER_INTEGRATION
+);
+$taskMailUserIntegrationFeatureId = Bitrix24\FeatureDictionary::TASK_MAIL_USER_INTEGRATION;
+
+$taskObserversParticipantsEnabled = Bitrix24::checkFeatureEnabled(
+	Bitrix24\FeatureDictionary::TASK_OBSERVERS_PARTICIPANTS
+);
+$taskLimitExceeded = $arResult['AUX_DATA']['TASK_LIMIT_EXCEEDED'];
 
 if ($arParams['ENABLE_MENU_TOOLBAR'])
 {
@@ -111,8 +122,18 @@ if ($arParams['ENABLE_MENU_TOOLBAR'])
 		$jsData = $arResult['JS_DATA'];
 
 		$taskLimitExceeded = $arResult['AUX_DATA']['TASK_LIMIT_EXCEEDED'];
+		$taskControlEnabled = Bitrix24::checkFeatureEnabled(
+			Bitrix24\FeatureDictionary::TASK_CONTROL
+		);
+		$taskSkipWeekendsEnabled = Bitrix24::checkFeatureEnabled(
+			Bitrix24\FeatureDictionary::TASK_SKIP_WEEKENDS
+		);
+		$taskObserversParticipantsEnabled = Bitrix24::checkFeatureEnabled(
+			Bitrix24\FeatureDictionary::TASK_OBSERVERS_PARTICIPANTS
+		);
 		$templateSubtaskLimitExceeded = $arResult['AUX_DATA']['TEMPLATE_SUBTASK_LIMIT_EXCEEDED'];
 		$templateTaskRecurrentLimitExceeded = $arResult['AUX_DATA']['TASK_RECURRENT_RESTRICT'];
+		$taskTimeTrackingRestrict = $arResult['AUX_DATA']['TASK_TIME_TRACKING_RESTRICT'];
 		$lockClass = '';
 		if (
 			$taskLimitExceeded
@@ -120,8 +141,9 @@ if ($arParams['ENABLE_MENU_TOOLBAR'])
 			|| $templateTaskRecurrentLimitExceeded
 		)
 		{
+			\Bitrix\Main\UI\Extension::load('ui.info-helper');
+
 			$lockClass = 'tasks-btn-restricted';
-			$APPLICATION->IncludeComponent('bitrix:ui.info.helper', '', []);
 		}
 
 		$taskUrlTemplate = str_replace(
@@ -252,7 +274,7 @@ if ($arParams['ENABLE_MENU_TOOLBAR'])
 					'INPUT_PREFIX' => $inputPrefix . '[SE_CHECKLIST]',
 					'PATH_TO_USER_PROFILE' => $arParams['PATH_TO_USER_PROFILE'],
 					'CONVERTED' => $arResult['CHECKLIST_CONVERTED'],
-					'CAN_ADD_ACCOMPLICE' => true,
+					'CAN_ADD_ACCOMPLICE' => $taskObserversParticipantsEnabled,
 				),
 				$helper->getComponent(),
 				array("HIDE_ICONS" => "Y", "ACTIVE_COMPONENT" => "Y")
@@ -285,6 +307,8 @@ if ($arParams['ENABLE_MENU_TOOLBAR'])
 					'DATA' => $arResult['TEMPLATE_DATA']['TEMPLATE']['SE_RESPONSIBLE'],
 					'READ_ONLY' => $template['TPARAM_TYPE'] == 1,
 					'CONTEXT' => 'template',
+					'taskMailUserIntegrationEnabled' => $taskMailUserIntegrationEnabled,
+					'taskMailUserIntegrationFeatureId' => $taskMailUserIntegrationFeatureId,
 				),
 				$helper->getComponent(),
 				array("HIDE_ICONS" => "Y", "ACTIVE_COMPONENT" => "Y")
@@ -326,6 +350,8 @@ if ($arParams['ENABLE_MENU_TOOLBAR'])
 					'SOLE_INPUT_IF_MAX_1' => 'Y',
 					'DATA' => $arResult['TEMPLATE_DATA']['TEMPLATE']['SE_ORIGINATOR'],
 					'CONTEXT' => 'template',
+					'taskMailUserIntegrationEnabled' => $taskMailUserIntegrationEnabled,
+					'taskMailUserIntegrationFeatureId' => $taskMailUserIntegrationFeatureId,
 				),
 				$helper->getComponent(),
 				array("HIDE_ICONS" => "Y", "ACTIVE_COMPONENT" => "Y")
@@ -339,6 +365,11 @@ if ($arParams['ENABLE_MENU_TOOLBAR'])
 			);
 
 			ob_start();
+			?>
+				<?php if (!$taskObserversParticipantsEnabled):?>
+					<?= Limit::getLimitLock(Bitrix24\FeatureDictionary::TASK_OBSERVERS_PARTICIPANTS, 'this')?>
+				<?php endif;?>
+			<?php
 			$APPLICATION->IncludeComponent(
 				'bitrix:tasks.widget.member.selector',
 				'',
@@ -356,6 +387,9 @@ if ($arParams['ENABLE_MENU_TOOLBAR'])
 					'DATA' => $arResult['TEMPLATE_DATA']['TEMPLATE']['SE_ACCOMPLICE'],
 					'TASK_LIMIT_EXCEEDED' => $taskLimitExceeded,
 					'CONTEXT' => 'template',
+					'taskMailUserIntegrationEnabled' => $taskMailUserIntegrationEnabled,
+					'taskMailUserIntegrationFeatureId' => $taskMailUserIntegrationFeatureId,
+					'viewSelectorEnabled' => $taskObserversParticipantsEnabled,
 				),
 				$helper->getComponent(),
 				array("HIDE_ICONS" => "Y", "ACTIVE_COMPONENT" => "Y")
@@ -366,10 +400,15 @@ if ($arParams['ENABLE_MENU_TOOLBAR'])
 				'HTML' => ob_get_clean(),
 				'IS_PINABLE' => true,
 				'FILLED' => $blockData['SE_ACCOMPLICE']['FILLED'],
-				'RESTRICTED' => $taskLimitExceeded,
+				'RESTRICTED' => !$taskObserversParticipantsEnabled,
+				'RESTRICTED_FEATURE_ID' => Bitrix24\FeatureDictionary::TASK_OBSERVERS_PARTICIPANTS,
 			);
-
 			ob_start();
+			?>
+				<?php if (!$taskObserversParticipantsEnabled):?>
+					<?= Limit::getLimitLock(Bitrix24\FeatureDictionary::TASK_OBSERVERS_PARTICIPANTS, 'this')?>
+				<?php endif;?>
+			<?php
 			$APPLICATION->IncludeComponent(
 				'bitrix:tasks.widget.member.selector',
 				'',
@@ -387,6 +426,9 @@ if ($arParams['ENABLE_MENU_TOOLBAR'])
 					'DATA' => $arResult['TEMPLATE_DATA']['TEMPLATE']['SE_AUDITOR'],
 					'TASK_LIMIT_EXCEEDED' => $taskLimitExceeded,
 					'CONTEXT' => 'template',
+					'taskMailUserIntegrationEnabled' => $taskMailUserIntegrationEnabled,
+					'taskMailUserIntegrationFeatureId' => $taskMailUserIntegrationFeatureId,
+					'viewSelectorEnabled' => $taskObserversParticipantsEnabled,
 				),
 				$helper->getComponent(),
 				array("HIDE_ICONS" => "Y", "ACTIVE_COMPONENT" => "Y")
@@ -397,7 +439,8 @@ if ($arParams['ENABLE_MENU_TOOLBAR'])
 				'HTML' => ob_get_clean(),
 				'IS_PINABLE' => true,
 				'FILLED' => $blockData['SE_AUDITOR']['FILLED'],
-				'RESTRICTED' => $taskLimitExceeded,
+				'RESTRICTED' => !$taskObserversParticipantsEnabled,
+				'RESTRICTED_FEATURE_ID' => Bitrix24\FeatureDictionary::TASK_OBSERVERS_PARTICIPANTS,
 			);
 
 			ob_start();
@@ -525,6 +568,8 @@ if ($arParams['ENABLE_MENU_TOOLBAR'])
 						'INPUT_PREFIX' => $inputPrefix,
 						'OPTIONS' => $options,
 						'TASK_LIMIT_EXCEEDED' => $taskLimitExceeded,
+						'TASK_CONTROL_LIMIT_EXCEEDED' => !$taskControlEnabled,
+						'TASK_SKIP_WEEKENDS_LIMIT_EXCEEDED' => !$taskSkipWeekendsEnabled,
 					),
 					$helper->getComponent(),
 					array("HIDE_ICONS" => "Y", "ACTIVE_COMPONENT" => "Y")
@@ -614,26 +659,38 @@ if ($arParams['ENABLE_MENU_TOOLBAR'])
 			{
 				ob_start();
 				if($blockCode == 'PROJECT')
-				{
-					$APPLICATION->IncludeComponent(
-						'bitrix:tasks.widget.member.selector',
-						'',
-						array(
-							'TEMPLATE_CONTROLLER_ID' => $helper->getId().'-project',
-							'MAX' => 1,
-							'MAX_WIDTH' => 786,
-							'TYPES' => array('PROJECT'),
-							'INPUT_PREFIX' => $inputPrefix.'[GROUP_ID]',
-							'ATTRIBUTE_PASS' => array(
-								'ID',
+				{ ?>
+					<div class="task-options-item-open-inner --tariff-lock">
+						<?php if (!Limit\ProjectLimit::isFeatureEnabledOrTrial()): ?>
+							<?= Limit::getLimitLock(Limit\ProjectLimit::getFeatureId()); ?>
+						<?php endif;?>
+					<?php
+						$APPLICATION->IncludeComponent(
+							'bitrix:tasks.widget.member.selector',
+							'',
+							array(
+								'TEMPLATE_CONTROLLER_ID' => $helper->getId().'-project',
+								'MAX' => 1,
+								'MAX_WIDTH' => 786,
+								'TYPES' => array('PROJECT'),
+								'INPUT_PREFIX' => $inputPrefix.'[GROUP_ID]',
+								'ATTRIBUTE_PASS' => array(
+									'ID',
+								),
+								'DATA' => $arResult['TEMPLATE_DATA']['TEMPLATE']['SE_PROJECT'],
+								'SOLE_INPUT_IF_MAX_1' => 'Y',
+								'CONTEXT' => 'template',
+								'taskMailUserIntegrationEnabled' => $taskMailUserIntegrationEnabled,
+								'taskMailUserIntegrationFeatureId' => $taskMailUserIntegrationFeatureId,
+								'isProjectLimitExceeded' => !Limit\ProjectLimit::isFeatureEnabledOrTrial(),
+								'projectFeatureId' => Limit\ProjectLimit::getFeatureId(),
 							),
-							'DATA' => $arResult['TEMPLATE_DATA']['TEMPLATE']['SE_PROJECT'],
-							'SOLE_INPUT_IF_MAX_1' => 'Y',
-							'CONTEXT' => 'template',
-						),
-						$helper->getComponent(),
-						array("HIDE_ICONS" => "Y", "ACTIVE_COMPONENT" => "Y")
-					);
+							$helper->getComponent(),
+							array("HIDE_ICONS" => "Y", "ACTIVE_COMPONENT" => "Y")
+						);
+					?>
+					</div>
+			<?php
 				}
 				elseif($blockCode == 'CRM')
 				{
@@ -643,8 +700,19 @@ if ($arParams['ENABLE_MENU_TOOLBAR'])
 					))->get($crmUfCode);
 					$crmUf['FIELD_NAME'] = $inputPrefix.'['.$crmUfCode.']';
 					?>
-					<div class="tasks-crm-offset">
-						<?\Bitrix\Tasks\Util\UserField\UI::showEdit($crmUf)?>
+					<div class="tasks-crm-offset task-options-item-open-inner --tariff-lock">
+						<?php if (!Bitrix24::checkFeatureEnabled(Bitrix24\FeatureDictionary::TASK_CRM_INTEGRATION)):?>
+							<?= Limit::getLimitLock(Bitrix24\FeatureDictionary::TASK_CRM_INTEGRATION) ?>
+							<?php
+							$handler = 'BX.Tasks.handleLimitCrmDialog.bind(BX.Tasks, \''
+								. Bitrix24\FeatureDictionary::TASK_CRM_INTEGRATION . '\')';
+							$crmParameters['CALLBACK_BEFORE'] = [
+								'openDialog' => $handler,
+								'context' => 'BX.Tasks',
+							];
+							?>
+						<?php endif;?>
+						<?php \Bitrix\Tasks\Util\UserField\UI::showEdit($crmUf, $crmParameters ?? [])?>
 					</div>
 					<?
 				}
@@ -709,6 +777,7 @@ if ($arParams['ENABLE_MENU_TOOLBAR'])
 						array(
 							'INPUT_PREFIX' => $inputPrefix,
 							'ENTITY_DATA' => $template,
+							'TIME_TRACKING_RESTRICT' => $taskTimeTrackingRestrict,
 						),
 						$helper->getComponent(),
 						array("HIDE_ICONS" => "Y", "ACTIVE_COMPONENT" => "Y")
@@ -779,11 +848,10 @@ if ($arParams['ENABLE_MENU_TOOLBAR'])
 							if (!empty($lockClass))
 							{
 								$lockClassName = "tasks-parent-selector {$lockClass}";
-								$onLockClick =
-									"top.BX.UI.InfoHelper.show('"
-									. RestrictionUrl::TEMPLATE_LIMIT_SUBTASKS_SLIDER_URL
-									. "',{isLimit: true,limitAnalyticsLabels: {module: 'tasks'}});"
-								;
+								$onLockClick = Util\Restriction\Bitrix24Restriction\Limit\TaskLimit::getLimitLockClick(
+									Bitrix24\FeatureDictionary::TASK_TEMPLATES_SUBTASKS,
+									null,
+								);
 								$lockClassStyle = "cursor: pointer;";
 						?>
 								<div class="<?=$lockClassName?>" onclick="<?=$onLockClick?>" style="<?=$lockClassStyle?>">
@@ -863,6 +931,7 @@ if ($arParams['ENABLE_MENU_TOOLBAR'])
 					'FILLED' => ($blockData[$blockCode]['FILLED'] ?? null),
 				];
 			}
+
 
 			//////// OUTPUT FRAME ////////////////////////////////////////////
 			$APPLICATION->IncludeComponent(

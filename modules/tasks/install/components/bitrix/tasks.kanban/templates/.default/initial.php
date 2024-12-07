@@ -21,7 +21,7 @@ Loc::loadMessages(__FILE__);
 	</form>
 </div>
 
-<script type="text/javascript">
+<script>
 	BX.ready(function(){
 
 		BX.bind(BX("tasks-kanban-views-select"), "change", BX.delegate(function()

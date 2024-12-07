@@ -3,9 +3,6 @@
 namespace Bitrix\Crm\UserField;
 
 use Bitrix\Crm\Service\Container;
-use Bitrix\Crm\Service\Factory\SmartInvoice;
-use Bitrix\Crm\Settings\InvoiceSettings;
-use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\UserField\UserFieldAccess;
 use Bitrix\Main\UserFieldTable;
 
@@ -13,29 +10,14 @@ class Access extends UserFieldAccess
 {
 	protected function getAvailableEntityIds(): array
 	{
-		if (!Container::getInstance()->getUserPermissions()->canWriteConfig())
+		$entityIds = [];
+		$types = Container::getInstance()->getTypesMap()->getFactories();
+		foreach ($types as $type)
 		{
-			return [];
-		}
-
-		$entityIds = [
-			\CCrmLead::GetUserFieldEntityID(),
-			\CCrmDeal::GetUserFieldEntityID(),
-			\CCrmContact::GetUserFieldEntityID(),
-			\CCrmCompany::GetUserFieldEntityID(),
-			\CCrmQuote::GetUserFieldEntityID(),
-			\CCrmInvoice::GetUserFieldEntityID(),
-		];
-
-		if (InvoiceSettings::getCurrent()->isSmartInvoiceEnabled())
-		{
-			$entityIds[] = SmartInvoice::USER_FIELD_ENTITY_ID;
-		}
-
-		$dynamicTypes = Container::getInstance()->getDynamicTypesMap()->getTypesCollection();
-		foreach ($dynamicTypes as $type)
-		{
-			$entityIds[] = ServiceLocator::getInstance()->get('crm.type.factory')->getUserFieldEntityId($type->getId());
+			if (Container::getInstance()->getUserPermissions($this->userId)->isAdminForEntity($type->getEntityTypeId()))
+			{
+				$entityIds[] = $type->getUserFieldEntityId();
+			}
 		}
 
 		return $entityIds;

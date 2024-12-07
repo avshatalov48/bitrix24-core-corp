@@ -1,8 +1,8 @@
-import { DateTimeFormat } from "main.date";
-import { Runtime } from "main.core";
+import { DatetimeConverter } from 'crm.timeline.tools';
+import { Runtime } from 'main.core';
+import { DateTimeFormat } from 'main.date';
+import { Action } from '../../action';
 import Link from './link';
-import { Action } from "../../action";
-import { DatetimeConverter } from "crm.timeline.tools";
 
 export default {
 	components: {

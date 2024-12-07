@@ -1215,6 +1215,11 @@ if(typeof(BX.CrmActivityEditor) == 'undefined')
 				return;
 			}
 
+			if (BX.getClass('BX.Crm.Restriction.Bitrix24') && BX.Crm.Restriction.Bitrix24.isRestricted('task'))
+			{
+				return BX.Crm.Restriction.Bitrix24.getHandler('task').call();
+			}
+
 			if(typeof(settings) !== 'object')
 			{
 				settings = {};

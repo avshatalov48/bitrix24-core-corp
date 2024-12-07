@@ -3,6 +3,7 @@
 return [
 	'extensions' => [
 		'apptheme',
+		'tokens',
 		'utils/validation',
 		'layout/polyfill',
 	],

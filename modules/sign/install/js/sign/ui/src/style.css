@@ -1,0 +1,8 @@
+.menu-popup-item.--sign-popupmenu-active .menu-popup-item-icon {
+	background: url(../images/sign-popupmenu-check.svg) center no-repeat;
+	background-size: contain !important;
+}
+
+.menu-popup-item.sign-popupmenu-item .menu-popup-item-icon {
+	width: 12px;
+}

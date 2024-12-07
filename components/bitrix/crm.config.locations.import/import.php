@@ -33,8 +33,6 @@ if(isset($_REQUEST['TMP_PATH']))
 
 $arImportResult = saleLocationImport($arImportParams);
 
-$arImportResult = $APPLICATION->ConvertCharsetArray($arImportResult, SITE_CHARSET, 'utf-8');
-
 echo json_encode($arImportResult);
 
 require_once($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/include/epilog_after.php");

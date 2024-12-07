@@ -76,13 +76,18 @@ BX.namespace('Tasks.Component');
 				{
 					if (code === 'CREATE_SUB' && this.option('templateSubtaskLimitExceeded'))
 					{
-						BX.UI.InfoHelper.show('limit_tasks_templates_subtasks', {
-							isLimit: true,
-							limitAnalyticsLabels: {
-								module: 'tasks',
-								source: 'templateView'
-							}
+						BX.Runtime.loadExtension('tasks.limit').then((exports) => {
+							const { Limit } = exports;
+							Limit.showInstance({
+								featureId: 'tasks_templates_subtasks',
+								bindElement: null,
+								limitAnalyticsLabels: {
+									module: 'tasks',
+									source: 'templateView',
+								},
+							});
 						});
+
 						return;
 					}
 					this.fireEvent('button-click', [code]);

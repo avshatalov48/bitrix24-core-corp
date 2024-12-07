@@ -3,7 +3,7 @@
  */
 jn.define('tasks/layout/checklist/list/src/base-item', (require, exports, module) => {
 	const { Loc } = require('loc');
-	const { useCallback } = require('utils/function');
+	const { Random } = require('utils/random');
 	const { ItemTextField } = require('tasks/layout/checklist/list/src/text-field');
 	const { ChecklistItemView } = require('tasks/layout/checklist/list/src/layout/item-view');
 	const { confirmDestructiveAction } = require('alert');
@@ -29,10 +29,9 @@ jn.define('tasks/layout/checklist/list/src/base-item', (require, exports, module
 
 			this.handleOnBlur = this.handleOnBlur.bind(this);
 			this.handleOnFocus = this.handleOnFocus.bind(this);
-			this.handleOnRemove = this.handleOnRemove.bind(this);
 			this.handleOnChange = this.handleOnChange.bind(this);
-			this.handleOnSubmit = this.handleOnSubmit.bind(this);
 			this.handleOnChangeTitle = this.handleOnChangeTitle.bind(this);
+			this.handleOnSubmit = this.handleOnSubmit.bind(this);
 		}
 
 		/**
@@ -44,14 +43,14 @@ jn.define('tasks/layout/checklist/list/src/base-item', (require, exports, module
 			return null;
 		}
 
-		renderContent(children)
+		renderContent(itemProps)
 		{
 			const { item } = this.props;
 
 			return ChecklistItemView({
 				testId: this.getTestId(`depth-${item.getDepth()}`),
-				divider: true,
-				children,
+				divider: !item.isFirstListDescendant(),
+				...itemProps,
 			});
 		}
 
@@ -61,21 +60,23 @@ jn.define('tasks/layout/checklist/list/src/base-item', (require, exports, module
 		 */
 		renderTextField()
 		{
-			const { item, parentWidget, isFocused } = this.props;
+			const { item, parentWidget, isFocused, showToastNoRights } = this.props;
 
 			return new ItemTextField({
-				ref: useCallback((ref) => {
+				ref: (ref) => {
 					this.textRef = ref;
-				}),
+				},
 				item,
 				isFocused,
 				parentWidget,
+				showToastNoRights,
+				enable: this.canUpdateItem(),
 				placeholder: this.getPlaceholder(item),
 				onBlur: this.handleOnBlur,
 				onFocus: this.handleOnFocus,
 				onSubmit: this.handleOnSubmit,
-				onChangeText: useCallback(this.handleOnChangeTitle),
-				style: this.getTextFieldStyle(),
+				onChangeText: this.handleOnChangeTitle,
+				...this.getTextFieldStyle(),
 			});
 		}
 
@@ -117,13 +118,13 @@ jn.define('tasks/layout/checklist/list/src/base-item', (require, exports, module
 			}
 		}
 
-		handleOnBlur()
+		handleOnBlur(blurProps)
 		{
 			const { onBlur, item } = this.props;
 
 			if (onBlur)
 			{
-				onBlur(item);
+				onBlur({ item });
 			}
 		}
 
@@ -147,23 +148,24 @@ jn.define('tasks/layout/checklist/list/src/base-item', (require, exports, module
 			}
 		}
 
-		handleOnRemove()
-		{
-			const { item, onRemove } = this.props;
-			const removeAction = item.hasItemTitle() ? onRemove : this.handleOnBlur;
-			const remove = (force) => {
-				if (onRemove)
+		handleOnRemove = () => {
+			const { item, onRemove, onBlur } = this.props;
+			const removeAction = item.hasItemTitle() ? onRemove : onBlur;
+
+			const remove = (forceDelete) => {
+				if (removeAction)
 				{
-					removeAction({ item, force });
+					removeAction({ item, forceDelete });
 				}
 			};
 
 			if (!item.shouldRemove())
 			{
 				confirmDestructiveAction({
-					title: Loc.getMessage('TASKSMOBILE_LAYOUT_CHECKLIST_REMOVE_ITEM'),
+					title: '',
+					description: Loc.getMessage('TASKSMOBILE_LAYOUT_CHECKLIST_REMOVE_ITEM'),
 					onDestruct: () => {
-						remove();
+						remove(true);
 					},
 				});
 
@@ -171,7 +173,7 @@ jn.define('tasks/layout/checklist/list/src/base-item', (require, exports, module
 			}
 
 			remove(true);
-		}
+		};
 
 		textInputFocus()
 		{
@@ -189,15 +191,6 @@ jn.define('tasks/layout/checklist/list/src/base-item', (require, exports, module
 			}
 		}
 
-		clearText(item)
-		{
-			if (item.getTitle())
-			{
-				this.handleOnChangeTitle('');
-				this.textRef.clear();
-			}
-		}
-
 		addFile()
 		{
 			this.attachmentsRef.addFile();
@@ -212,9 +205,44 @@ jn.define('tasks/layout/checklist/list/src/base-item', (require, exports, module
 			return suffix ? `${prefix}_${suffix}` : prefix;
 		}
 
+		/**
+		 * @param {number} additionalShift
+		 * @return {number}
+		 */
+		getLeftShift(additionalShift = 0)
+		{
+			const { item } = this.props;
+
+			return (item.getDepth() * 18) + additionalShift;
+		}
+
+		toggleCompleteText()
+		{
+			if (this.textRef)
+			{
+				this.textRef.toggleCompleted();
+			}
+		}
+
 		reload()
 		{
-			this.setState({});
+			this.setState({
+				random: Random.getString(),
+			});
+		}
+
+		canUpdateItem()
+		{
+			const { item } = this.props;
+
+			return item.checkCanUpdate();
+		}
+
+		canRemoveItem()
+		{
+			const { item } = this.props;
+
+			return item.checkCanRemove();
 		}
 	}
 

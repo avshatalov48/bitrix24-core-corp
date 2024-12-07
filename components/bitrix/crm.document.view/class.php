@@ -112,7 +112,7 @@ class CrmDocumentViewComponent extends ViewComponent
 			}
 		}
 		$this->arResult['isDisplayTransformationErrors'] =
-			\Bitrix\Main\Config\Option::get('crm', 'display_transformation_errors_in_document_slider', 'N') === 'Y'
+			\Bitrix\Main\Config\Option::get('crm', 'display_transformation_errors_in_document_slider', 'Y') === 'Y'
 		;
 		if ($isNewDocument)
 		{
@@ -235,11 +235,13 @@ class CrmDocumentViewComponent extends ViewComponent
 				'entityTypeId' => (int)$this->getCrmOwnerType(),
 				'entityId' => (int)$this->getValue(),
 				'documentTitle' => $this->document->getTitle(),
-				'body' => Loc::getMessage('CRM_DOCUMENT_VIEW_COMPONENT_BODY'),
-				'fullBody' => Loc::getMessage('CRM_DOCUMENT_VIEW_COMPONENT_FULL_BODY'),
+				'body' => Loc::getMessage('CRM_DOCUMENT_VIEW_COMPONENT_BODY_MSGVER_1'),
+				'fullBody' => Loc::getMessage('CRM_DOCUMENT_VIEW_COMPONENT_FULL_BODY_MSGVER_1'),
 				'configureContext' => 'crm.document.view',
 				'link' => $link,
 				'isLinkObtainable' => true,
+				'isCombineMessageWithLink' => false,
+				'isInsertLinkInMessage' => true,
 				'isConfigurable' => true,
 				'templateCode' => self::TEMPLATE_CODE,
 				'templatePlaceholders' => [
@@ -256,6 +258,11 @@ class CrmDocumentViewComponent extends ViewComponent
 
 		$this->arResult['isSigningEnabledInCurrentTariff'] = $signIntegration->isEnabledInCurrentTariff();
 		$this->arResult['signingInfoHelperSliderCode'] = 'limit_crm_sign_integration';
+
+		$this->arResult['baas']['fastTransform'] = [
+			'isAvailable' => DocumentGeneratorManager::getInstance()->isBaasFastTransformFeatureAvailable(),
+			'isActive' => DocumentGeneratorManager::getInstance()->isBaasFastTransformFeatureActive(),
+		];
 
 		$this->includeComponentTemplate();
 	}

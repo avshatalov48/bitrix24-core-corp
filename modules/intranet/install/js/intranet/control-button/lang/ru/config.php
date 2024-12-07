@@ -1,6 +1,7 @@
 <?php
 
 $MESS["INTRANET_JS_CONTROL_BUTTON_NAME"] = "Видеозвонок HD";
+$MESS["INTRANET_JS_CONTROL_BUTTON_NAME_MSG_1"] = "Видеозвонок";
 $MESS["INTRANET_JS_CONTROL_BUTTON_CHAT"] = "Открыть чат";
 $MESS["INTRANET_JS_CONTROL_BUTTON_VIDEOCALL"] = "Начать видеозвонок";
 $MESS["INTRANET_JS_CONTROL_BUTTON_POST"] = "Написать пост";

@@ -18,6 +18,7 @@ jn.define('tasks/checklist/widget/src/manager/page-layout', (require, exports, m
 				.openWidget('layout', {
 					titleParams: {
 						text: this.getTitle(),
+						type: 'entity',
 					},
 				}).catch(console.error);
 
@@ -47,8 +48,6 @@ jn.define('tasks/checklist/widget/src/manager/page-layout', (require, exports, m
 					type: 'back',
 					callback: () => {
 						this.handleOnClose();
-
-						this.close();
 					},
 				},
 			]);

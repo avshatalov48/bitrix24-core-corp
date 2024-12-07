@@ -1,4 +1,3 @@
-/* eslint-disable */
 this.BX = this.BX || {};
 (function (exports,market_slider,market_listItem,market_rating,market_popupInstall,market_popupUninstall,market_scopeList,market_installStore,market_uninstallStore,main_core_events,main_popup,ui_designTokens,ui_vue3_pinia) {
 	'use strict';
@@ -96,6 +95,9 @@ this.BX = this.BX || {};
 	      }
 	      return 0;
 	    },
+	    canShowAppForm: function () {
+	      return this.result.APP.hasOwnProperty('HAS_APP_FORM') && this.result.APP.HAS_APP_FORM === true && this.result.APP.hasOwnProperty('INSTALLED') && this.result.APP.INSTALLED === 'Y';
+	    },
 	    ...ui_vue3_pinia.mapState(market_installStore.marketInstallState, ['installStep', 'slider', 'timer', 'installError'])
 	  },
 	  created() {
@@ -143,6 +145,9 @@ this.BX = this.BX || {};
 	      } else if (this.installStep === 3) {
 	        clearTimeout(this.timer);
 	        this.reloadSlider();
+	        if (this.closeDetailAfterInstall()) {
+	          this.openApplication();
+	        }
 	      }
 	    },
 	    handleScroll: function () {
@@ -236,6 +241,11 @@ this.BX = this.BX || {};
 	        this.result.APP.REVIEWS.ITEMS.unshift(userReview);
 	      }
 	    },
+	    updateRating: function (rating) {
+	      if (rating.hasOwnProperty('RATING_DETAIL')) {
+	        this.result.APP.REVIEWS.RATING = rating;
+	      }
+	    },
 	    createPopupMenu: function () {
 	      if (this.result.APP.MENU_ITEMS.length <= 0 && !this.showRightsButton) {
 	        return;
@@ -247,6 +257,18 @@ this.BX = this.BX || {};
 	            this.menuPopup1.close();
 	            this.menuPopup2.close();
 	            this.setRights();
+	          }
+	        });
+	      }
+	      if (this.canShowAppForm) {
+	        this.result.APP.MENU_ITEMS.push({
+	          text: this.$Bitrix.Loc.getMessage('MARKET_DETAIL_ACTION_JS_CONFIG'),
+	          onclick: event => {
+	            this.menuPopup1.close();
+	            this.menuPopup2.close();
+	            top.BX.Rest.AppForm.buildByAppWithLoader(this.result.APP.CODE, top.BX.Rest.EventType.DISPLAY).then(form => {
+	              form.show();
+	            });
 	          }
 	        });
 	      }
@@ -320,7 +342,7 @@ this.BX = this.BX || {};
 	      }
 	      BX.UI.InfoHelper.show(this.pricePolicySlider);
 	    },
-	    ...ui_vue3_pinia.mapActions(market_installStore.marketInstallState, ['showInstallPopup', 'setAppInfo', 'openSliderWithContent', 'reloadSlider', 'isSubscriptionApp', 'isHiddenBuy']),
+	    ...ui_vue3_pinia.mapActions(market_installStore.marketInstallState, ['showInstallPopup', 'setAppInfo', 'openSliderWithContent', 'reloadSlider', 'isSubscriptionApp', 'isHiddenBuy', 'closeDetailAfterInstall', 'openApplication']),
 	    ...ui_vue3_pinia.mapActions(market_uninstallStore.marketUninstallState, ['deleteAction', 'setDeleteActionInfo'])
 	  },
 	  template: `
@@ -728,6 +750,7 @@ this.BX = this.BX || {};
 				:showNoAccessInstallButton="showNoAccessInstallButton"
 				@can-review="result.APP.REVIEWS.CAN_REVIEW = $event"
 				@review-info="addUserReview"
+				@update-rating="updateRating"
 			/>
 
 			<div class="market-detail__catalog-element" v-if="showYouMayLike">

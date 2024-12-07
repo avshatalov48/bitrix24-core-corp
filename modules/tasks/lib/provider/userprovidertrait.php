@@ -12,6 +12,7 @@ namespace Bitrix\Tasks\Provider;
 use Bitrix\Main\Access\User\AccessibleUser;
 use Bitrix\Tasks\Access\Model\UserModel;
 use Bitrix\Tasks\Access\Permission\PermissionDictionary;
+use Bitrix\Tasks\Access\Permission\PermissionRegistry;
 use Bitrix\Tasks\Access\Permission\TasksPermissionTable;
 
 trait UserProviderTrait
@@ -34,28 +35,14 @@ trait UserProviderTrait
 
 	private function getPermissions(): array
 	{
-		if ($this->permissions === null)
+		if (is_array($this->permissions))
 		{
-			$roles = $this->getUserRoles();
-			if (empty($roles))
-			{
-				return [];
-			}
-
-			$res = TasksPermissionTable::getList([
-				'select' => ['PERMISSION_ID'],
-				'filter' => [
-					'@ROLE_ID' => $roles,
-					'=VALUE' => PermissionDictionary::VALUE_YES
-				]
-			]);
-
-			$this->permissions = [];
-			foreach ($res as $row)
-			{
-				$this->permissions[$row['PERMISSION_ID']] = $row['PERMISSION_ID'];
-			}
+			return $this->permissions;
 		}
+
+		$roles = $this->getUserRoles();
+
+		$this->permissions = PermissionRegistry::getInstance()->getPermissions($roles);
 
 		return $this->permissions;
 	}

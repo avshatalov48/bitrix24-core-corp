@@ -78,9 +78,7 @@ class UserRepository implements UserRepositoryInterface
 	{
 		return array_unique(
 			array_merge(
-				[$task->getCreatedBy(), $task->getResponsibleId()],
-				$task->getAccompliceMembersIds(),
-				$task->getAuditorMembersIds(),
+				$task->getAllMemberIds($optional['forceFetchMembers'] ?? true),
 				(array)($optional['additional_recepients'] ?? [])
 			)
 		);
@@ -172,10 +170,8 @@ class UserRepository implements UserRepositoryInterface
 			return [];
 		}
 
-		$userIds = [];
 		foreach ($users as $user)
 		{
-			$userIds[] = $user->getId();
 			$this->cache[$user->getId()] = new User(
 				$user->getId(),
 				$user->getName(),
@@ -190,19 +186,12 @@ class UserRepository implements UserRepositoryInterface
 			);
 		}
 
-		return array_map(fn (int $userId): User => $this->cache[$userId], $userIds);
+		return array_filter(array_map(fn (int $userId): ?User => $this->cache[$userId] ?? null, $userIds));
 	}
 
-	public function getUserTimeZoneOffset(int $userId): int
+	public function getUserTimeZoneOffset(int $userId, bool $force = false): int
 	{
-		if (isset($this->timeZoneCache[$userId]))
-		{
-			return $this->timeZoneCache[$userId];
-		}
-
-		$this->timeZoneCache[$userId] = \Bitrix\Tasks\Util\User::getTimeZoneOffset($userId);
-
-		return $this->timeZoneCache[$userId];
+		return \Bitrix\Tasks\Util\User::getTimeZoneOffset($userId, false, $force);
 	}
 
 	private function ignoreRecepient(int $recepientId, array $options): bool

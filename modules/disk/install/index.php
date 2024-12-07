@@ -81,32 +81,6 @@ Class disk extends CModule
 		);
 	}
 
-	public function migrateToBox()
-	{
-		if (\Bitrix\Main\Loader::includeModule('disk'))
-		{
-			$commonStorage = \Bitrix\Disk\Driver::getInstance()->getStorageByCommonId('shared_files_s1');
-			if ($commonStorage)
-			{
-				$commonStorage->changeBaseUrl('/docs/shared/');
-			}
-
-			$defaultViewerServiceCode = Configuration::getDefaultViewerServiceCode();
-			if ($defaultViewerServiceCode === OnlyOfficeHandler::getCode())
-			{
-				UserConfiguration::resetDocumentServiceForAllUsers();
-
-				Configuration::setDefaultViewerService(BitrixHandler::getCode());
-				DocumentSessionTable::clearTable();
-
-				Option::set('disk', 'documents_enabled', 'N');
-				Option::delete('disk', [
-					'name' => 'disk_onlyoffice_server',
-				]);
-			}
-		}
-	}
-
 	function InstallDB($install_wizard = true)
 	{
 		global $DB, $APPLICATION;
@@ -349,79 +323,76 @@ Class disk extends CModule
 	function InstallFiles()
 	{
 		global $APPLICATION;
-		if($_ENV["COMPUTERNAME"]!='BX')
-		{
-			CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/disk/install/admin", $_SERVER["DOCUMENT_ROOT"]."/bitrix/admin", true);
-			CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/disk/install/components", $_SERVER["DOCUMENT_ROOT"]."/bitrix/components", true, true);
-			CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/disk/install/js", $_SERVER["DOCUMENT_ROOT"]."/bitrix/js", true, true);
-			CopyDirFiles($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/disk/install/tools/', $_SERVER['DOCUMENT_ROOT'].'/bitrix/tools', true, true);
-			CopyDirFiles($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/disk/install/services/', $_SERVER['DOCUMENT_ROOT'].'/bitrix/services', true, true);
-			CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/disk/install/images", $_SERVER["DOCUMENT_ROOT"]."/bitrix/images", true, true);
-			CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/disk/install/public/docs", $_SERVER["DOCUMENT_ROOT"]."/docs", true, true);
-			CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/disk/install/public/templates", $_SERVER["DOCUMENT_ROOT"]."/bitrix/templates", true, true);
-			CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/disk/install/webdav", $_SERVER["DOCUMENT_ROOT"]."/bitrix/webdav", true, true);
-			CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/disk/install/activities", $_SERVER["DOCUMENT_ROOT"]."/bitrix/activities", true, true);
 
-			CUrlRewriter::add(
-					array(
-						"CONDITION" => "#^/docs/pub/(?<hash>[0-9a-f]{32})/(?<action>[0-9a-zA-Z]+)/\?#",
-						"RULE" => "hash=$1&action=$2&",
-						"ID" => "bitrix:disk.external.link",
-						"PATH" => "/docs/pub/index.php"
-					)
-			);
+		CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/disk/install/admin", $_SERVER["DOCUMENT_ROOT"]."/bitrix/admin", true);
+		CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/disk/install/components", $_SERVER["DOCUMENT_ROOT"]."/bitrix/components", true, true);
+		CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/disk/install/js", $_SERVER["DOCUMENT_ROOT"]."/bitrix/js", true, true);
+		CopyDirFiles($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/disk/install/tools/', $_SERVER['DOCUMENT_ROOT'].'/bitrix/tools', true, true);
+		CopyDirFiles($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/disk/install/services/', $_SERVER['DOCUMENT_ROOT'].'/bitrix/services', true, true);
+		CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/disk/install/images", $_SERVER["DOCUMENT_ROOT"]."/bitrix/images", true, true);
+		CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/disk/install/public/docs", $_SERVER["DOCUMENT_ROOT"]."/docs", true, true);
+		CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/disk/install/public/templates", $_SERVER["DOCUMENT_ROOT"]."/bitrix/templates", true, true);
+		CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/disk/install/webdav", $_SERVER["DOCUMENT_ROOT"]."/bitrix/webdav", true, true);
+		CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/disk/install/activities", $_SERVER["DOCUMENT_ROOT"]."/bitrix/activities", true, true);
 
-			CUrlRewriter::add(
+		CUrlRewriter::add(
 				array(
-					"CONDITION" => "#^/disk/(?<action>[0-9a-zA-Z]+)/(?<fileId>[0-9]+)/\?#",
-					"RULE" => "action=$1&fileId=$2&",
-					"ID" => "bitrix:disk.services",
-					"PATH" => "/bitrix/services/disk/index.php",
+					"CONDITION" => "#^/docs/pub/(?<hash>[0-9a-f]{32})/(?<action>[0-9a-zA-Z]+)/\?#",
+					"RULE" => "hash=$1&action=$2&",
+					"ID" => "bitrix:disk.external.link",
+					"PATH" => "/docs/pub/index.php"
 				)
-			);
+		);
 
-			$APPLICATION->SetFileAccessPermission('/bitrix/tools/disk/', array('*' => 'R'));
-			$APPLICATION->SetFileAccessPermission('/bitrix/services/disk/', array('*' => 'R'));
-			$APPLICATION->SetFileAccessPermission('/docs/pub/', array('*' => 'R'));
-			$APPLICATION->SetFileAccessPermission('/bitrix/admin/disk_bizproc_activity_settings.php', array('2' => 'R'));
-			$APPLICATION->SetFileAccessPermission('/bitrix/admin/disk_bizproc_selector.php', array('2' => 'R'));
-			$APPLICATION->SetFileAccessPermission('/bitrix/admin/disk_bizproc_wf_settings.php', array('2' => 'R'));
+		CUrlRewriter::add(
+			array(
+				"CONDITION" => "#^/disk/(?<action>[0-9a-zA-Z]+)/(?<fileId>[0-9]+)/\?#",
+				"RULE" => "action=$1&fileId=$2&",
+				"ID" => "bitrix:disk.services",
+				"PATH" => "/bitrix/services/disk/index.php",
+			)
+		);
 
-			\Bitrix\Main\UrlPreview\Router::setRouteHandler(
-				'/disk/#action#/#fileId#/',
+		$APPLICATION->SetFileAccessPermission('/bitrix/tools/disk/', array('*' => 'R'));
+		$APPLICATION->SetFileAccessPermission('/bitrix/services/disk/', array('*' => 'R'));
+		$APPLICATION->SetFileAccessPermission('/docs/pub/', array('*' => 'R'));
+		$APPLICATION->SetFileAccessPermission('/bitrix/admin/disk_bizproc_activity_settings.php', array('2' => 'R'));
+		$APPLICATION->SetFileAccessPermission('/bitrix/admin/disk_bizproc_selector.php', array('2' => 'R'));
+		$APPLICATION->SetFileAccessPermission('/bitrix/admin/disk_bizproc_wf_settings.php', array('2' => 'R'));
+
+		\Bitrix\Main\UrlPreview\Router::setRouteHandler(
+			'/disk/#action#/#fileId#/',
+			'disk',
+			'\Bitrix\Disk\Ui\Preview\File',
+			array(
+				'action' => '$action',
+				'fileId' => '$fileId',
+			)
+		);
+
+		\Bitrix\Main\UrlPreview\Router::setRouteHandler(
+				'/docs/pub/#hash#/#action#/',
 				'disk',
-				'\Bitrix\Disk\Ui\Preview\File',
+				'\Bitrix\Disk\Ui\Preview\ExternalLink',
 				array(
-					'action' => '$action',
-					'fileId' => '$fileId',
+						'action' => '$action',
+						'hash' => '$hash',
 				)
-			);
+		);
 
-			\Bitrix\Main\UrlPreview\Router::setRouteHandler(
-					'/docs/pub/#hash#/#action#/',
-					'disk',
-					'\Bitrix\Disk\Ui\Preview\ExternalLink',
-					array(
-							'action' => '$action',
-							'hash' => '$hash',
-					)
-			);
-
-			self::tryToEnableZipNginx();
-		}
+		self::tryToEnableZipNginx();
 
 		return true;
 	}
 	function UnInstallFiles()
 	{
 		global $APPLICATION;
-		if($_ENV["COMPUTERNAME"]!='BX')
-		{
-			DeleteDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/disk/install/admin", $_SERVER["DOCUMENT_ROOT"]."/bitrix/admin");
-			DeleteDirFilesEx("/bitrix/js/disk/");
-			DeleteDirFilesEx("/bitrix/tools/disk/");
-			DeleteDirFilesEx("/bitrix/services/disk/");
-		}
+
+		DeleteDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/disk/install/admin", $_SERVER["DOCUMENT_ROOT"]."/bitrix/admin");
+		DeleteDirFilesEx("/bitrix/js/disk/");
+		DeleteDirFilesEx("/bitrix/tools/disk/");
+		DeleteDirFilesEx("/bitrix/services/disk/");
+
 		$APPLICATION->SetFileAccessPermission('/bitrix/tools/disk/', array('*' => 'D'));
 		$APPLICATION->SetFileAccessPermission('/bitrix/services/disk/', array('*' => 'D'));
 

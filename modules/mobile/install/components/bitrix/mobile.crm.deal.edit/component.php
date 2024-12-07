@@ -289,7 +289,6 @@ else
 	if (isset($_GET['title']))
 	{
 		$arFields['~TITLE'] = $_GET['title'];
-		CUtil::decodeURIComponent($arFields['~TITLE']);
 		$arFields['TITLE'] = htmlspecialcharsbx($arFields['~TITLE']);
 	}
 }
@@ -368,8 +367,6 @@ else
 		$bVarsFromForm = true;
 		if(isset($_POST['save']) || isset($_POST['continue']))
 		{
-			CUtil::JSPostUnescape();
-
 			$arSrcElement = ($isEditMode || $isCopyMode) ? $arResult['ELEMENT'] : array();
 			$arFields = array();
 

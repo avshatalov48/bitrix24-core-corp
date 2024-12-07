@@ -207,6 +207,10 @@ class GroupSender
 			if (array_key_exists('TASK_ID', $push))
 			{
 				$task = TaskRegistry::getInstance()->get((int)$push['TASK_ID']);
+				if (!$task)
+				{
+					continue;
+				}
 				$push['GROUP_ID'] = $task['GROUP_ID'];
 			}
 

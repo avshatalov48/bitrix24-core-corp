@@ -40,7 +40,7 @@ class ChangeStreamButton extends Base
 	public function setTypePin(): self
 	{
 		$this->setType(self::TYPE_PIN);
-		$this->setTitle(Loc::getMessage('CRM_TIMELINE_MENU_FASTEN'));
+		$this->setTitle(self::getPinTitle());
 
 		return $this;
 	}
@@ -48,7 +48,7 @@ class ChangeStreamButton extends Base
 	public function setTypeUnpin(): self
 	{
 		$this->setType(self::TYPE_UNPIN);
-		$this->setTitle(Loc::getMessage('CRM_TIMELINE_MENU_UNFASTEN'));
+		$this->setTitle(self::getUnpinTitle());
 
 		return $this;
 	}
@@ -75,6 +75,16 @@ class ChangeStreamButton extends Base
 		$this->title = $title;
 
 		return $this;
+	}
+
+	public static function getPinTitle(): string
+	{
+		return Loc::getMessage('CRM_TIMELINE_MENU_FASTEN');
+	}
+
+	public static function getUnpinTitle(): string
+	{
+		return Loc::getMessage('CRM_TIMELINE_MENU_UNFASTEN');
 	}
 
 	public function toArray(): array

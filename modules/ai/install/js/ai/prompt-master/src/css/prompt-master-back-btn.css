@@ -1,0 +1,18 @@
+.ai__prompt-master_back-btn {
+	--ai__prompt-master_back-btn-color: var(--ui-color-copilot-secondary);
+	--ui-icon-set__icon-color: var(--ai__prompt-master_back-btn-color);
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: flex-start;
+	color: var(--ai__prompt-master_back-btn-color);
+	font-size: var(--ui-font-size-sm);
+	background: transparent;
+	border: none;
+	cursor: pointer;
+}
+
+.ai__prompt-master_back-btn:hover,
+.ai__prompt-master_back-btn:focus {
+	--ai__prompt-master_back-btn-color: var(--ui-color-copilot-primary);
+}

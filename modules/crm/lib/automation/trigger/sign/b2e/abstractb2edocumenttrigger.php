@@ -46,7 +46,7 @@ class AbstractB2eDocumentTrigger extends Automation\Trigger\BaseTrigger
 		if (
 			static::isEnabled()
 			&& Loader::includeModule('bitrix24')
-			&& !\Bitrix\Bitrix24\Feature::isFeatureEnabled('sign_b2e_automation')
+			&& !\Bitrix\Bitrix24\Feature::isFeatureEnabled('sign_b2e')
 		)
 		{
 			$result['LOCKED'] = [

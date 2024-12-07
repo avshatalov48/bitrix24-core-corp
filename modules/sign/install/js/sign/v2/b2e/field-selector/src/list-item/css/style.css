@@ -1,0 +1,14 @@
+.sign-b2e-fields-selector-field {
+	border-bottom: 1px solid #EDEEF0;
+	user-select: none;
+}
+
+.sign-b2e-fields-selector-field--disabled {
+	opacity: 0.5;
+	pointer-events: none;
+	user-select: none;
+}
+
+.sign-b2e-fields-selector-field-checkbox {
+	margin-bottom: 0;
+}

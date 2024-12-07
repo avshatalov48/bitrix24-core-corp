@@ -29,7 +29,7 @@ export default {
 	},
 	data()
 	{
-		let stages = {
+		const stages = {
 			message: {
 				status: Status.complete,
 				manager: this.$root.$app.options.entityResponsible,
@@ -118,24 +118,21 @@ export default {
 		{
 			stages.timeline = {
 				items: this.getTimelineCollection(this.$root.$app.options.timeline)
-			}
+			};
 		}
 
-		if (this.$root.$app.hasOwnProperty('documentSelector'))
+		if (this.$root.$app.hasOwnProperty('documentSelector') && this.$root.$app.documentSelector.templateAddUrl)
 		{
-			if (this.$root.$app.documentSelector.templateAddUrl)
-			{
-				stages.documentSelector.templateAddUrl = this.$root.$app.documentSelector.templateAddUrl;
-			}
+			stages.documentSelector.templateAddUrl = this.$root.$app.documentSelector.templateAddUrl;
 		}
 
 		return {
-			stages: stages,
-		}
+			stages,
+		};
 	},
 	mixins: [
 		StageMixin,
-		MixinTemplatesType
+		MixinTemplatesType,
 	],
 	computed: {
 		isSendAllowed()
@@ -159,7 +156,7 @@ export default {
 			return this.editable && !this.$root.$app?.compilation
 				? Loc.getMessage('SALESCENTER_SEND')
 				: Loc.getMessage('SALESCENTER_RESEND')
-				;
+			;
 		},
 		isFacebookForm()
 		{
@@ -177,7 +174,7 @@ export default {
 		},
 		getTimelineCollection(items)
 		{
-			let list = [];
+			const list = [];
 
 			Object.values(items).forEach((options) => {
 				list.push(TimeLineItem.Factory.create(options))
@@ -187,7 +184,7 @@ export default {
 		},
 		getTileCollection(items)
 		{
-			let tiles = [];
+			const tiles = [];
 
 			Object.values(items).forEach((options) => {
 				tiles.push(Tile.Factory.create(options))
@@ -197,7 +194,7 @@ export default {
 		},
 		getTitleItems(items)
 		{
-			let result = [];
+			const result = [];
 			items.forEach((item) => {
 				if (![Tile.More.type(), Tile.Offer.type()].includes(item.type))
 				{
@@ -215,24 +212,26 @@ export default {
 				{
 					mode: 'class',
 					data: {
-						type: type,
+						type,
+					},
+				},
+			).then(
+				(response) => {
+					if (response.data)
+					{
+						this.refreshTilesByType(response.data, type);
 					}
-				}
-			).then(function(response) {
-				if (response.data)
-				{
-					this.refreshTilesByType(response.data, type);
-				}
-			}.bind(this),
-			function() {
-				UI.Notification.Center.notify({
-					content: Loc.getMessage('SALESCENTER_DATA_UPDATE_ERROR'),
-				});
-			});
+				},
+				() => {
+					UI.Notification.Center.notify({
+						content: Loc.getMessage('SALESCENTER_DATA_UPDATE_ERROR'),
+					});
+				},
+			);
 		},
 		refreshTilesByType(data, type)
 		{
-			if(type === 'PAY_SYSTEM')
+			if (type === 'PAY_SYSTEM')
 			{
 				this.stages.paysystem.status = data.isSet
 					? Status.complete
@@ -241,7 +240,7 @@ export default {
 				this.stages.paysystem.installed = data.isSet;
 				this.stages.paysystem.titleItems = this.getTitleItems(data.items);
 			}
-			else if(type === 'CASHBOX')
+			else if (type === 'CASHBOX')
 			{
 				this.stages.cashbox.status = data.isSet
 					? Status.complete
@@ -250,9 +249,9 @@ export default {
 				this.stages.cashbox.installed = data.isSet;
 				this.stages.cashbox.titleItems = this.getTitleItems(data.items);
 			}
-			else if(type === 'DELIVERY')
+			else if (type === 'DELIVERY')
 			{
-				this.stages.delivery.status = data.isSet
+				this.stages.delivery.status = data.isInstalled
 					? Status.complete
 					: Status.disabled;
 				this.stages.delivery.tiles = this.getTileCollection(data.items);
@@ -289,9 +288,12 @@ export default {
 			}
 			else
 			{
-				this.stages.delivery.status = this.$root.$app.options.deliveryList.isInstalled
-					? Status.complete
-					: Status.disabled;
+				if (this.stages.delivery)
+				{
+					this.stages.delivery.status = this.$root.$app.options.deliveryList.isInstalled
+						? Status.complete
+						: Status.disabled;
+				}
 
 				this.stages.message.selectedMode = 'payment';
 				this.$root.$app.sendingMethodDesc.text = this.$root.$app.sendingMethodDesc.text_modes.payment;
@@ -373,6 +375,7 @@ export default {
 				:stageOnDeliveryFinished="stages.automation.stageOnDeliveryFinished"
 				:items="stages.automation.items"
 				:initialCollapseState="stages.automation.initialCollapseState"
+				:isDeliveryStageVisible="stages.delivery && stages.delivery.installed"
 				@on-save-collapsed-option="saveCollapsedOption"
 			/>
 			<send-block

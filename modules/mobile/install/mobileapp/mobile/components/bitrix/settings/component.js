@@ -67,6 +67,8 @@
 		 */
 		openForm(data, formId, onReady = null)
 		{
+			data.titleParams = { text: data.title ?? "", type: 'section'};
+			delete data.title;
 			data.onReady = (obj) => {
 				this.forms[formId] = obj;
 

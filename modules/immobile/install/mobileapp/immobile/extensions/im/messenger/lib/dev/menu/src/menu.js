@@ -11,6 +11,7 @@ jn.define('im/messenger/lib/dev/menu/menu', (require, exports, module) => {
 	const { BannerButton } = require('layout/ui/banners/banner-button');
 	const { Playground } = require('im/messenger/lib/dev/menu/playground');
 	const { DialogSnippets } = require('im/messenger/lib/dev/menu/dialog-snippets');
+	const { MessengerParams } = require('im/messenger/lib/params');
 	class DeveloperMenu extends LayoutComponent
 	{
 		constructor(props)
@@ -116,6 +117,28 @@ jn.define('im/messenger/lib/dev/menu/menu', (require, exports, module) => {
 				},
 			});
 
+			let unitTestDashboard = null;
+			if (MessengerParams.get('ENABLE_DEV_WORKSPACE', 'N') === 'Y')
+			{
+				unitTestDashboard = BannerButton({
+					title: 'Unit Tests',
+					description: 'Messenger Tests',
+					backgroundColor: AppTheme.colors.accentSoftBlue1,
+					onClick: async () => {
+						try
+						{
+							const result = await requireLazy('imdev:entry/unit-tests');
+							const { UnitTestsEntry } = result;
+							UnitTestsEntry.openTests();
+						}
+						catch(e)
+						{
+							console.error(e);
+						}
+					},
+				});
+			}
+
 			return View(
 				{},
 				developerSettingsButton,
@@ -125,6 +148,7 @@ jn.define('im/messenger/lib/dev/menu/menu', (require, exports, module) => {
 				vuexPlaygroundButton,
 				playground,
 				dialog,
+				unitTestDashboard,
 			);
 		}
 

@@ -14,7 +14,7 @@ jn.define('im/messenger/controller/user-add', (require, exports, module) => {
 	const { DialogHelper } = require('im/messenger/lib/helper/dialog');
 	const { UserAddView } = require('im/messenger/controller/user-add/view');
 	const { runAction } = require('im/messenger/lib/rest');
-	const AppTheme = require('apptheme');
+	const { Theme } = require('im/lib/theme');
 
 	class UserAdd
 	{
@@ -32,9 +32,10 @@ jn.define('im/messenger/controller/user-add', (require, exports, module) => {
 		 */
 		static open(options = {}, parentLayout = null)
 		{
+			Logger.log('UserAdd.open:', options);
 			const { dialogId } = options;
 
-			const createChat = !(new DialogHelper()).isDialogId(dialogId);
+			const createChat = !DialogHelper.isDialogId(dialogId);
 
 			const widget = new UserAdd(dialogId, createChat, parentLayout, options);
 			widget.preparedUserList();
@@ -51,15 +52,14 @@ jn.define('im/messenger/controller/user-add', (require, exports, module) => {
 			this.core = serviceLocator.get('core');
 			this.store = this.core.getMessengerStore();
 			this.setControls();
-
-			this.onClickRightBtn = this.onClickRightBtn.bind(this);
+			this.bindMethods();
 		}
 
 		setControls()
 		{
 			this.textRightBtn = this.options.textRightBtn
 				|| Loc.getMessage('IMMOBILE_MESSENGER_WIDGET_ADD_USER_BUTTON_RESULT');
-			this.loadingTextRightBtn = this.options.loadingTextRightBtn || null;
+			this.loadingTextRightBtn = this.options.loadingTextRightBtn || this.options.textRightBtn;
 			this.title = this.options.title || Loc.getMessage('IMMOBILE_MESSENGER_WIDGET_ADD_USER_TITLE');
 			this.recentText = Loc.getMessage('IMMOBILE_MESSENGER_WIDGET_ADD_USER_RECENT_TEXT');
 		}
@@ -143,11 +143,12 @@ jn.define('im/messenger/controller/user-add', (require, exports, module) => {
 			};
 		}
 
-		show()
+		async show()
 		{
+			this.subscribeExternalEvents()
 			// eslint-disable-next-line es/no-optional-chaining
 			const mediumPositionPercent = this.options.widgetOptions?.mediumPositionPercent || 50;
-			const backgroundColor = AppTheme.colors.bgContentTertiary;
+			const backgroundColor = Theme.isDesignSystemSupported ? Theme.colors.bgSecondary : Theme.colors.bgContentTertiary;
 			const widgetConfig = {
 				title: this.title,
 				backgroundColor,
@@ -157,23 +158,20 @@ jn.define('im/messenger/controller/user-add', (require, exports, module) => {
 				},
 			};
 
-			PageManager.openWidget(
+			this.widget = await PageManager.openWidget(
 				'layout',
 				widgetConfig,
-			).then(
-				(widget) => {
-					this.widget = widget;
-					this.onWidgetReady();
-				},
-			).catch((error) => {
-				Logger.error('UserAdd.openWidget.error', error);
-			});
+			);
+			this.onWidgetReady();
 		}
 
 		onWidgetReady()
 		{
 			this.createView();
 			this.widget.showComponent(this.view);
+			this.widget.on(EventType.view.close, () => {
+				this.unsubscribeExternalEvents();
+			});
 		}
 
 		createView()
@@ -185,13 +183,40 @@ jn.define('im/messenger/controller/user-add', (require, exports, module) => {
 				loadingTextRightBtn: this.loadingTextRightBtn,
 				recentText: this.recentText,
 				callback: {
-					onClickRightBtn: this.onClickRightBtn,
+					onClickRightBtn: this.clickRightBtnHandler,
 				},
 				isCopilotDialog: this.options.isCopilotDialog,
+				isSuperEllipseAvatar: this.isSuperEllipseAvatar(),
 			});
 		}
 
-		onClickRightBtn()
+		bindMethods()
+		{
+			this.clickRightBtnHandler = this.clickRightBtnHandler.bind(this);
+			this.deleteDialogHandler = this.deleteDialogHandler.bind(this);
+		}
+
+		subscribeExternalEvents()
+		{
+			BX.addCustomEvent(EventType.dialog.external.delete, this.deleteDialogHandler);
+		}
+
+		unsubscribeExternalEvents()
+		{
+			BX.removeCustomEvent(EventType.dialog.external.delete, this.deleteDialogHandler);
+		}
+
+		deleteDialogHandler({ dialogId })
+		{
+			if (String(this.dialogId) !== String(dialogId))
+			{
+				return;
+			}
+
+			this.widget.close();
+		}
+
+		clickRightBtnHandler()
 		{
 			if (this.isChatCreate)
 			{
@@ -266,6 +291,11 @@ jn.define('im/messenger/controller/user-add', (require, exports, module) => {
 					}
 				}).catch((err) => Logger.error('UserAdd.Rest.imChatAdd.catch:', err));
 			});
+		}
+
+		isSuperEllipseAvatar()
+		{
+			return false;
 		}
 	}
 

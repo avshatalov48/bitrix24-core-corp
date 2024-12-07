@@ -2,14 +2,17 @@
 
 use Bitrix\Crm\Integration\IntranetManager;
 use Bitrix\Crm\Service\Container;
+use Bitrix\DiskMobile\AirDiskFeature;
 use Bitrix\Intranet\AI;
 use Bitrix\Intranet\Settings\Tools\ToolsManager;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ModuleManager;
+use Bitrix\Mobile\Config\Feature;
 use Bitrix\MobileApp\Janative\Manager;
 use Bitrix\Main\EventManager;
+use Bitrix\MobileApp\Mobile;
 
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 {
@@ -34,15 +37,14 @@ if (CModule::IncludeModule("socialnetwork"))
 {
 	$socNetFeatures = new \Bitrix\Mobile\Component\SocNetFeatures($USER->getId());
 	$allowedFeatures = [];
-	foreach (["tasks", "files", "calendar"] as $feature)
+	foreach (['tasks', 'files'] as $feature)
 	{
-		$allowedFeatures[$feature] = $feature === "calendar"
-			? $socNetFeatures->isEnabledForGroup($feature)
-			: $socNetFeatures->isEnabledForUser($feature);
+		$allowedFeatures[$feature] = $socNetFeatures->isEnabledForUser($feature);
 	}
 }
 
 $diskEnabled = Option::get('disk', 'successfully_converted', false) && CModule::includeModule('disk');
+$airDiskEnabled = Feature::isEnabled(AirDiskFeature::class);
 $userId = $USER->getId();
 $siteDir = SITE_DIR;
 $siteId = SITE_ID;
@@ -74,7 +76,7 @@ $workgroupsComponentVersion = Manager::getComponentVersion("workgroups");
 $menuStructure = [];
 $favoriteItems = [];
 
-if (\Bitrix\MobileApp\Mobile::getApiVersion() < 41)
+if (Mobile::getApiVersion() < 41)
 {
 	$favoriteItems[] = [
 		"hidden" => ($isExtranetUser || !ModuleManager::isModuleInstalled("bizproc")),
@@ -89,65 +91,7 @@ if (\Bitrix\MobileApp\Mobile::getApiVersion() < 41)
 	];
 }
 
-$calendarComponentPath = Manager::getComponentPath("calendar:calendar.events");
-$calendarMobileJSComponentsIsUsed = false;
-if (Loader::includeModule('calendarmobile'))
-{
-	$calendarMobileJSComponentsIsUsed = \Bitrix\CalendarMobile\JSComponent::isUsed();
-}
-
-if (!$calendarMobileJSComponentsIsUsed)
-{
-	$favoriteItems[] = [
-		"title" => Loc::getMessage("MB_CALENDAR_LIST"),
-		"imageUrl" => $imageDir . "favorite/icon-calendar.png",
-		"color" => "#F5A200",
-		"actions" => [
-			[
-				"title" => Loc::getMessage("MORE_ADD"),
-				"identifier" => "add",
-				"color" => "#7CB316",
-			],
-		],
-		"attrs" => [
-			"actionOnclick" => <<<JS
-					PageManager.openPage({url:"/mobile/calendar/edit_event.php", modal:true, data:{ modal:"Y"}});
-JS
-			,
-			"onclick" => <<<JS
-
-			PageManager.openList(
-			{
-				url:"/mobile/?mobile_action=calendar&user_id="+$userId,
-				table_id:"calendar_list",
-				table_settings:
-				{
-					showTitle:"YES",
-					name:"{$hereDocGetMessage("MB_CALENDAR_LIST")}",
-					useTagsInSearch:"NO",
-					button:{
-						type: 'plus',
-						eventName:"onCalendarEventAddButtonPushed"
-					}
-				}
-			});
-
-			if(typeof calendarEventAttached == "undefined")
-			{
-				calendarEventAttached = true;
-				BX.addCustomEvent("onCalendarEventAddButtonPushed", ()=>{
-					PageManager.openPage({url:"/mobile/calendar/edit_event.php", modal:true, data:{ modal:"Y"}});
-				});
-			}
-JS
-			,
-		],
-
-		"hidden" => !(ModuleManager::isModuleInstalled('calendar') && !$isExtranetUser && $allowedFeatures["calendar"]),
-	];
-}
-
-if (\Bitrix\MobileApp\Mobile::getApiVersion() < 41)
+if (Mobile::getApiVersion() < 41)
 {
 	$favoriteItems[] = [
 		"title" => Loc::getMessage("MB_CURRENT_USER_FILES_MAIN_MENU_ITEM_NEW"),
@@ -177,29 +121,68 @@ JS
 	];
 }
 
-$favoriteItems[] = [
-	"title" => Loc::getMessage("MB_CURRENT_USER_FILES_MAIN_MENU_ITEM_NEW"),
-	"imageUrl" => $imageDir . "favorite/icon-mydisk.png",
-	"color" => "#20A1E7",
-	"attrs" => [
-		"url" => '/mobile/?mobile_action=disk_folder_list&type=user&path=/&entityId=' . $USER->GetID(),
-		"table_settings" => [
-			"useTagsInSearch" => "NO",
-			"type" => "files",
-		],
-		"_type" => "list",
-		"id" => "doc_user",
-	],
-	"hidden" => $diskEnabled || !$allowedFeatures["files"],
-];
+if (
+	IsModuleInstalled('intranetmobile')
+	&& Bitrix\Main\Loader::includeModule('intranetmobile')
+	&& Mobile::getInstance()::getApiVersion() >= 54
+)
+{
 
-$favoriteItems[] = [
-	"imageUrl" => $imageDir . "favorite/icon-users.png",
-	"color" => "#AF9245",
-	"title" => Loc::getMessage($isExtranetUser ? "MB_CONTACTS" : "MB_COMPANY"),
-	"attrs" => [
-		"onclick" =>
-			<<<JS
+	$componentPath = Manager::getComponentPath('intranet:user.list');
+
+	$canUseTelephony = (
+		Bitrix\Main\Loader::includeModule('voximplant')
+		&& \Bitrix\Voximplant\Security\Helper::canCurrentUserPerformCalls()
+	) ? "Y" : "N";
+
+	$favoriteItems[] = [
+		'imageUrl' => $imageDir . 'favorite/icon-users.png',
+		'color' => '#AF22AF',
+		'title' => Loc::getMessage($isExtranetUser ? 'MB_CONTACTS' : 'MB_COMPANY'),
+		'attrs' => [
+			"counter" => "total_invitation",
+			'onclick' =>
+				<<<JS
+			let inviteParams = {};
+			try
+			{
+				inviteParams = JSON.parse(Application.sharedStorage('menuComponentSettings').get("invite"));
+			}
+			catch (e)
+			{
+				//do nothing
+			}
+			PageManager.openComponent('JSStackComponent', {
+				scriptPath: "{$componentPath}",
+				componentCode: "intranet.user.list",
+				params: {
+					canInvite: (inviteParams.canInviteUsers ? inviteParams.canInviteUsers : false),
+					canUseTelephony: "{$canUseTelephony}",
+				},
+				rootWidget: {
+					name: 'layout',
+					componentCode: 'users',
+					settings: {
+						objectName: "layout",
+						titleParams: {text: "{$hereDocGetMessage($isExtranetUser ? "MB_CONTACTS" : "MB_COMPANY")}", type: "section"},
+					},
+				},
+			});
+JS
+			,
+		],
+		"id" => "users",
+	];
+}
+else
+{
+	$favoriteItems[] = [
+		"imageUrl" => $imageDir . "favorite/icon-users.png",
+		"color" => "#AF9245",
+		"title" => Loc::getMessage($isExtranetUser ? "MB_CONTACTS" : "MB_COMPANY"),
+		"attrs" => [
+			"onclick" =>
+				<<<JS
 			var inviteParams = {};
 			try
 			{
@@ -213,8 +196,7 @@ $favoriteItems[] = [
 			PageManager.openComponent(
 			"JSComponentList",
 			{
-				title:"{$hereDocGetMessage($isExtranetUser ? "MB_CONTACTS" : "MB_COMPANY")}",
-				settings: {useSearch: true},
+				settings: {useSearch: true, titleParams:{ text: "{$hereDocGetMessage($isExtranetUser ? "MB_CONTACTS" : "MB_COMPANY")}", type: "section" }},
 				componentCode: "users",
 				scriptPath: availableComponents["users"]["publicUrl"],
 				params:{
@@ -229,10 +211,12 @@ $favoriteItems[] = [
 				}
 			})
 JS
-		,
-	],
-	"id" => "users",
-];
+			,
+		],
+		"id" => "users",
+	];
+}
+
 
 $favoriteItems[] = [
 	"imageUrl" => $imageDir . "favorite/icon-disk.png",
@@ -241,19 +225,19 @@ $favoriteItems[] = [
 	"attrs" => [
 		"onclick" => <<<JS
 
-			ComponentHelper.openList({
-				name:"user.disk",
-				object:"list",
-				version:"{$diskComponentVersion}",
-				componentParams:{userId: env.userId, ownerId: "shared_files_"+env.siteId, entityType:"common"},
-				widgetParams:{title:"{$hereDocGetMessage("MB_SHARED_FILES_MAIN_MENU_ITEM_NEW")}", useSearch: true}
-			});
+		ComponentHelper.openList({
+			name:"user.disk",
+			object:"list",
+			version:"{$diskComponentVersion}",
+			componentParams:{userId: env.userId, ownerId: "shared_files_"+env.siteId, entityType:"common"},
+			widgetParams:{titleParams: { text:"{$hereDocGetMessage("MB_SHARED_FILES_MAIN_MENU_ITEM_NEW")}", type: "section"}, useSearch: true}
+		});
 
 JS
 		,
 		"id" => "doc_shared",
 	],
-	"hidden" => !$diskEnabled || $isExtranetUser || !$allowedFeatures["files"],
+	"hidden" => $airDiskEnabled || !$diskEnabled || $isExtranetUser || !$allowedFeatures["files"],
 ];
 
 $favoriteItems[] = [
@@ -263,24 +247,25 @@ $favoriteItems[] = [
 	"attrs" => [
 		"onclick" => <<<JS
 
-			PageManager.openList(
+		PageManager.openList(
+		{
+			url:"/mobile/?mobile_action=disk_folder_list&type=common&path=/&entityId=shared_files_"+env.siteId,
+			table_settings:
 			{
-				url:"/mobile/?mobile_action=disk_folder_list&type=common&path=/&entityId=shared_files_"+env.siteId,
-				table_settings:
-				{
-					useTagsInSearch:"NO",
-					type:"files"
-				}
-			});
+				useTagsInSearch:"NO",
+				type:"files"
+			}
+		});
 JS
 		,
 		"id" => "doc_shared",
 	],
-	"hidden" => $diskEnabled || $isExtranetUser || !$allowedFeatures["files"],
+	"hidden" => $airDiskEnabled || $diskEnabled || $isExtranetUser || !$allowedFeatures["files"],
 ];
 
+
 $favorite = [
-	"title" => Loc::getMessage("MB_SEC_FAVORITE"),
+	"title" => Loc::getMessage("MB_SEC_FAVORITE_MSGVER_1"),
 	"hidden" => false,
 	"_code" => "favorite",
 	"sort" => 100,
@@ -496,6 +481,7 @@ if (
 	&& IsModuleInstalled('catalog')
 	&& CModule::IncludeModule('catalog')
 	&& \Bitrix\Catalog\Restriction\ToolAvailabilityManager::getInstance()->checkInventoryManagementAvailability()
+	&& !\Bitrix\Catalog\Store\EnableWizard\Manager::isOnecMode()
 )
 {
 	$menuStructure[] = [
@@ -538,7 +524,7 @@ $features = implode(',', \Bitrix\Mobile\Project\Helper::getMobileFeatures());
 $mandatoryFeatures = implode(',', \Bitrix\Mobile\Project\Helper::getMobileMandatoryFeatures());
 
 $groupSection = [
-	"title" => Loc::getMessage('MB_SEC_GROUPS'),
+	"title" => Loc::getMessage('MB_SEC_GROUPS_MSGVER_1'),
 	"sort" => 130,
 	"hidden" => false,
 	"items" => [],
@@ -571,7 +557,7 @@ if (!$isExtranetUser && $projectsEnabled)
 						currentUserId: "{$userId}"
 					},
 					widgetParams: {
-						title: "{$menuName}",
+						titleParams: {text: "{$menuName}", type: "section"},
 						useSearch: false,
 						doNotHideSearchResult: true
 					}
@@ -606,7 +592,7 @@ if (
 						currentUserId: "{$userId}"
 					},
 					widgetParams: {
-						title: "{$menuName}",
+						titleParams: {text: "{$menuName}", type: "section"},
 						useSearch: false,
 						doNotHideSearchResult: true
 					}
@@ -620,28 +606,32 @@ JS
 
 $menuStructure[] = $groupSection;
 
-$timemanEnabledForUser = false;
-if (Loader::includeModule('timeman'))
+$isAvaMenuAvailable = Mobile::getInstance()::getApiVersion() >= 54;
+if (!$isAvaMenuAvailable)
 {
-	$timemanEnabledForUser = CTimeMan::CanUse();
-}
-$menuStructure[] = [
-	"title" => GetMessage("MENU_WORK_DAY"),
-	"sort" => 2,
-	"hidden" => ($isExtranetUser || !IsModuleInstalled("timeman") || !$timemanEnabledForUser),
-	"items" => [
-		[
-			"title" => Loc::getMessage("MENU_WORK_DAY_MANAGE"),
-			"imageUrl" => $imageDir . "favorite/icon-timeman.png",
-			"color" => "#2FC6F6",
-			"type" => "info",
-			"params" => [
-				"url" => $siteDir . "mobile/timeman/",
-				"backdrop" => ["onlyMediumPosition" => false, "mediumPositionPercent" => 80],
+	$timemanEnabledForUser = false;
+	if (Loader::includeModule('timeman'))
+	{
+		$timemanEnabledForUser = CTimeMan::CanUse();
+	}
+	$menuStructure[] = [
+		"title" => GetMessage("MENU_WORK_DAY_MSGVER_1"),
+		"sort" => 2,
+		"hidden" => ($isExtranetUser || !IsModuleInstalled("timeman") || !$timemanEnabledForUser),
+		"items" => [
+			[
+				"title" => Loc::getMessage("MENU_WORK_DAY_MANAGE"),
+				"imageUrl" => $imageDir . "favorite/icon-timeman.png",
+				"color" => "#2FC6F6",
+				"type" => "info",
+				"params" => [
+					"url" => $siteDir . "mobile/timeman/",
+					"backdrop" => ["onlyMediumPosition" => false, "mediumPositionPercent" => 80],
+				],
 			],
 		],
-	],
-];
+	];
+}
 
 $voximplantInstalled = false;
 if ($voximplantInstalled = Loader::includeModule('voximplant'))
@@ -669,43 +659,45 @@ JS
 	];
 }
 
-$settingsComponentPath = Manager::getComponentPath("settings");
-$qrComponentPath = Manager::getComponentPath("qrcodeauth");
-$settingsUserId = $USER->GetID();
-$settingsSiteId = SITE_ID;
-$isUserAdmin = ((\CModule::IncludeModule('bitrix24') ? \CBitrix24::isPortalAdmin($settingsUserId) : $USER->isAdmin()))
-	? "true" : "false";
+if (!$isAvaMenuAvailable)
+{
+	$settingsComponentPath = Manager::getComponentPath("settings");
+	$qrComponentPath = Manager::getComponentPath("qrcodeauth");
+	$settingsUserId = $USER->GetID();
+	$settingsSiteId = SITE_ID;
+	$isUserAdmin = ((\CModule::IncludeModule('bitrix24') ? \CBitrix24::isPortalAdmin($settingsUserId) : $USER->isAdmin()))
+		? "true" : "false";
 
-$settingsLanguageId = LANGUAGE_ID;
+	$settingsLanguageId = LANGUAGE_ID;
 
-$menuStructure[] = [
-	'title' => Loc::getMessage('MB_SEC_B24'),
-	'min_api_version' => 25,
-	'sort' => 1,
-	"items" => [
-		[
-			"title" => Loc::getMessage("TO_LOGIN_ON_DESKTOP_MSGVER_1"),
-			"useLetterImage" => true,
-			"color" => "#4BA3FB",
-			'type' => 'info',
-			"imageUrl" => $imageDir . "settings/desktop_login.png",
-			'attrs' => [
-				"onclick" => <<<JS
+	$menuStructure[] = [
+		'title' => Loc::getMessage('MB_SEC_B24_MSGVER_1'),
+		'min_api_version' => 25,
+		'sort' => 1,
+		"items" => [
+			[
+				"title" => Loc::getMessage("TO_LOGIN_ON_DESKTOP_MSGVER_1"),
+				"useLetterImage" => true,
+				"color" => "#4BA3FB",
+				'type' => 'info',
+				"imageUrl" => $imageDir . "settings/desktop_login.png",
+				'attrs' => [
+					"onclick" => <<<JS
 				qrauth.open({
 					title: this.title,
 					showHint: false
 				})
 JS
-				,
+					,
+				],
 			],
-		],
-		[
-			"title" => Loc::getMessage("MENU_SETTINGS"),
-			"useLetterImage" => false,
-			"color" => "#666475",
-			"imageUrl" => $imageDir . "settings/settings.png",
-			"attrs" => [
-				"onclick" => <<<JS
+			[
+				"title" => Loc::getMessage("MENU_SETTINGS"),
+				"useLetterImage" => false,
+				"color" => "#666475",
+				"imageUrl" => $imageDir . "settings/settings.png",
+				"attrs" => [
+					"onclick" => <<<JS
 						PageManager.openComponent("JSStackComponent",
 						{
 							scriptPath:"$settingsComponentPath",
@@ -716,20 +708,22 @@ JS
 								"LANGUAGE_ID": "$settingsLanguageId",
 								"IS_ADMIN": $isUserAdmin
 							},
-							rootWidget:{
-								name:"settings",
-								settings:{
+							rootWidget: {
+								name: "settings",
+								settings: {
 									objectName: "settings",
-									title: this.title
+									title: this.title,
 								}
 							}
 						});
 JS
-				,
+					,
+				],
 			],
 		],
-	],
-];
+	];
+
+}
 
 if (Loader::includeModule("intranet") && !$isExtranetUser)
 {
@@ -875,6 +869,44 @@ JS,
 		],
 	];
 
+	$developerMenuItems[] = [
+		"title" => "Rich-text editor sandbox",
+		"imageUrl" => $imageDir . "catalog/icon-catalog-store.png",
+		"color" => '#8590a2',
+		"hidden" => false,
+		"attrs" => [
+			"id" => "text-editor-demo",
+			"onclick" => <<<JS
+				ComponentHelper.openLayout({
+					name: 'dev:text-editor-sandbox',
+					object: 'layout',
+					widgetParams: {
+						title: 'Text editor sandbox'
+					}
+				});
+			JS,
+		],
+	];
+
+	$developerMenuItems[] = [
+		"title" => "Formatter sandbox",
+		"imageUrl" => $imageDir . "catalog/icon-catalog-store.png",
+		"color" => '#8590a2',
+		"hidden" => false,
+		"attrs" => [
+			"id" => "formatter-sandbox",
+			"onclick" => <<<JS
+				ComponentHelper.openLayout({
+					name: 'dev:formatter-sandbox',
+					object: 'layout',
+					widgetParams: {
+						title: 'Formatter sandbox',
+					}
+				});
+			JS,
+		],
+	];
+
 	if (!empty($developerMenuItems))
 	{
 		$menuStructure[] = [
@@ -886,26 +918,26 @@ JS,
 	}
 }
 
-return [
-	"menu" => $menuStructure,
-	"popupMenuItems" => [
-		[
-			"title" => Loc::getMessage("MENU_CHANGE_ACCOUNT"),
-			"sectionCode" => "menu",
-			"id" => "switch_account",
-			"iconUrl" => $imageDir . "settings/change_account_popup.png?5",
-			"onclick" => <<<JS
+$useAssets = Mobile::getApiVersion() >= 54;
+$popupMenuItems = [
+	[
+		"title" => Loc::getMessage("MENU_CHANGE_ACCOUNT"),
+		"sectionCode" => "menu",
+		"id" => "switch_account",
+		"iconName" => "log_out",
+		"iconUrl" => !$useAssets ? $imageDir . "settings/change_account_popup.png?5" : null,
+		"onclick" => <<<JS
 				Application.exit();
 JS
-			,
-
-		],
-		[
-			"title" => Loc::getMessage("MENU_PRESET_TAB"),
-			"sectionCode" => "menu",
-			"id" => "tab.settings",
-			"iconUrl" => $imageDir . "settings/tab_settings.png?9",
-			"onclick" => <<<JS
+		,
+	],
+	[
+		"title" => Loc::getMessage("MENU_PRESET_TAB"),
+		"sectionCode" => "menu",
+		"id" => "tab.settings",
+		"iconName" => "bottom_menu",
+		"iconUrl" => !$useAssets ? $imageDir . "settings/tab_settings.png?9" : null,
+		"onclick" => <<<JS
 				PageManager.openComponent("JSStackComponent",{
 						scriptPath: availableComponents["tab.presets"].publicUrl,
 						rootWidget:{
@@ -918,8 +950,11 @@ JS
 						}
 					});
 JS
-			,
-
-		],
+		,
 	],
+];
+
+return [
+	"menu" => $menuStructure,
+	"popupMenuItems" => $popupMenuItems,
 ];

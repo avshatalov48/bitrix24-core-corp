@@ -2,6 +2,6 @@
 
 return [
 	'extensions' => [
-		'utils/date/duration',
+		'utils/date',
 	],
 ];

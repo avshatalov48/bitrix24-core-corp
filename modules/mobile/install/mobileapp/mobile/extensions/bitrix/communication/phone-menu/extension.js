@@ -7,6 +7,7 @@ jn.define('communication/phone-menu', (require, exports, module) => {
 	const { copyToClipboard } = require('utils/copy');
 	const { getFormattedNumber } = require('utils/phone');
 	const { stringify } = require('utils/string');
+	const { ContextMenu } = require('layout/ui/context-menu');
 
 	const pathToExtension = currentDomain + '/bitrix/mobileapp/mobile/extensions/bitrix/communication/phone-menu/';
 	const imagePath = pathToExtension + 'images/banner.png';
@@ -23,6 +24,10 @@ jn.define('communication/phone-menu', (require, exports, module) => {
 	 */
 	function openPhoneMenu(params)
 	{
+		const {
+			isNumberHidden = false,
+		} = params;
+
 		params = {
 			...params,
 			number: stringify(params.number).trim(),
@@ -38,7 +43,9 @@ jn.define('communication/phone-menu', (require, exports, module) => {
 			params: {
 				showActionLoader: false,
 				showCancelButton: true,
-				title: Loc.getMessage('PHONE_CALL_TO', { '#PHONE#': getFormattedNumber(params.number) }),
+				title: isNumberHidden
+					? Loc.getMessage('PHONE_HIDDEN')
+					: Loc.getMessage('PHONE_CALL_TO_MSGVER_1', { '#PHONE#': getFormattedNumber(params.number) }),
 			},
 		});
 
@@ -47,7 +54,7 @@ jn.define('communication/phone-menu', (require, exports, module) => {
 
 	function getMenuActions(params)
 	{
-		const { number, canUseTelephony } = params;
+		const { number, canUseTelephony, isNumberHidden } = params;
 
 		return [
 			{
@@ -59,9 +66,10 @@ jn.define('communication/phone-menu', (require, exports, module) => {
 
 					return Promise.resolve({ closeCallback });
 				},
+				disabled: isNumberHidden,
 			},
 			{
-				title: Loc.getMessage('PHONE_CALL_B24'),
+				title: Loc.getMessage('PHONE_CALL_B24_MSGVER_1'),
 				code: 'callUseTelephony',
 				subtitle: !canUseTelephony && Loc.getMessage('PHONE_CALL_B24_DISABLED'),
 				subtitleType: !canUseTelephony && 'warning',
@@ -88,6 +96,7 @@ jn.define('communication/phone-menu', (require, exports, module) => {
 
 					return Promise.resolve({ closeCallback });
 				},
+				disabled: isNumberHidden,
 			},
 		];
 	}

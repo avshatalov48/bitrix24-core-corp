@@ -5,5 +5,6 @@ return [
 		'type',
 		'apptheme',
 		'utils/color',
+		'utils/object',
 	],
 ];

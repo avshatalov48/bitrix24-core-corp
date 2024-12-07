@@ -1,15 +1,14 @@
 <?php
-
 namespace Bitrix\Crm\Controller;
 
 use Bitrix\Crm\Order\EntityBinding;
+use Bitrix\Crm\Order\Order;
 use Bitrix\Main\Engine\Response\DataType\Page;
 use Bitrix\Main\Error;
+use Bitrix\Main\Loader;
 use Bitrix\Main\UI\PageNavigation;
-use Bitrix\Sale\Order;
 use Bitrix\Sale\Registry;
 use Bitrix\Sale\Result;
-
 
 class OrderEntity extends Controller
 {
@@ -20,12 +19,12 @@ class OrderEntity extends Controller
 	 */
 	public function getFieldsAction()
 	{
-		$view = $this->getViewManager()
-			->getView($this);
+		/** @var \Bitrix\Crm\RestView\OrderEntity $view */
+		$view = $this->getViewManager()->getView($this);
 
-		return ['ORDER_ENTITY'=>$view->prepareFieldInfos(
-			$view->getFields()
-		)];
+		return [
+			'ORDER_ENTITY' => $view->prepareFieldInfos($view->getFields()),
+		];
 	}
 
 	/**
@@ -37,56 +36,67 @@ class OrderEntity extends Controller
 	 */
 	public function addAction(array $fields): ?array
 	{
-		$r = new Result();
-
-		$res = $this->existsByFilter([
-			'OWNER_TYPE_ID'=>$fields['OWNER_TYPE_ID'],
-			'OWNER_ID'=>$fields['OWNER_ID'],
-			'ORDER_ID'=>$fields['ORDER_ID']
-		]);
-
-		if($res->isSuccess() == false)
+		$internalResult = $this->checkFields($fields);
+		if (!$internalResult->isSuccess())
 		{
-			/** @var Order $order */
-			$order = $this->loadOrder($fields['ORDER_ID']);
+			$this->addErrors($internalResult->getErrors());
 
-			if($this->setEntityBinding($order, $fields['OWNER_ID'], $fields['OWNER_TYPE_ID'])
-				->isSuccess())
-			{
-				$r = $order->save();
-			}
-			else
-			{
-				$r->addError(new Error('setEntityBinding error', 201650000010));
-			}
-		}
-		else
-		{
-			$r->addError(new Error('Duplicate entry for key [ownerId, ownerTypeId, orderId]', 201650000001));
-		}
-
-		if(!$r->isSuccess())
-		{
-			$this->addErrors($r->getErrors());
 			return null;
 		}
-		else
-		{
-			$registry = Registry::getInstance(Registry::REGISTRY_TYPE_ORDER);
-			/** @var EntityBinding $entityBindingClassName */
-			$entityBindingClassName = $registry->get(ENTITY_CRM_ORDER_ENTITY_BINDING);
 
-			return [
-				'DEAL_ORDER'=>
-					$entityBindingClassName::getList([
-						'filter'=>[
-							'OWNER_TYPE_ID'=>$fields['OWNER_TYPE_ID'],
-							'OWNER_ID'=>$fields['OWNER_ID'],
-							'ORDER_ID'=>$fields['ORDER_ID']
-						]
-					])->fetchAll()[0]
-			];
+		$internalResult = $this->existsByFilter($fields);
+		if ($internalResult->isSuccess()) // already exists
+		{
+			$this->addError(new Error(
+				'Duplicate entry for key [ownerId, ownerTypeId, orderId]',
+				201650000001
+			));
+
+			return null;
 		}
+
+		/** @var Order $order */
+		$order = $this->loadOrder($fields['ORDER_ID']);
+		if ($order === null)
+		{
+			return null;
+		}
+
+		$internalResult = $this->setEntityBinding($order, $fields['OWNER_ID'], $fields['OWNER_TYPE_ID']);
+		if (!$internalResult->isSuccess())
+		{
+			$this->addError(new Error('setEntityBinding error', 201650000010));
+
+			return null;
+		}
+
+		$result = $order->save();
+		if (!$result->isSuccess())
+		{
+			$this->addErrors($result->getErrors());
+
+			return null;
+		}
+
+		$registry = Registry::getInstance(Registry::REGISTRY_TYPE_ORDER);
+		/** @var EntityBinding $entityBindingClassName */
+		$entityBindingClassName = $registry->get(ENTITY_CRM_ORDER_ENTITY_BINDING);
+
+		$iterator = $entityBindingClassName::getList([
+			'select' => ['*'],
+			'filter'=>[
+				'OWNER_TYPE_ID'=>$fields['OWNER_TYPE_ID'],
+				'OWNER_ID'=>$fields['OWNER_ID'],
+				'ORDER_ID'=>$fields['ORDER_ID'],
+			],
+			'limit' => 1,
+		]);
+		$deal = $iterator->fetch();
+		unset($iterator);
+
+		return [
+			'DEAL_ORDER' => $deal,
+		];
 	}
 
 	/**
@@ -96,126 +106,164 @@ class OrderEntity extends Controller
 	 */
 	public function deleteByFilterAction($fields): ?bool
 	{
-		$r = $this->checkFields($fields);
-
-		if($r->isSuccess())
+		$result = $this->checkFields($fields);
+		if (!$result->isSuccess())
 		{
-			$r = $this->existsByFilter($fields);
-			if($r->isSuccess())
-			{
-				/** @var Order $order */
-				$order = $this->loadOrder($fields['ORDER_ID']);
+			$this->addErrors($result->getErrors());
 
-				$this->deleteEntityBinding($order);
-				$r = $order->save();
-			}
-		}
-
-		if($r->isSuccess())
-		{
-			return true;
-		}
-		else
-		{
-			$this->addErrors($r->getErrors());
 			return null;
 		}
+
+		$result = $this->existsByFilter($fields);
+		if (!$result->isSuccess())
+		{
+			$this->addErrors($result->getErrors());
+
+			return null;
+		}
+
+		/** @var Order $order */
+		$order = $this->loadOrder($fields['ORDER_ID']);
+		if ($order === null)
+		{
+			return null;
+		}
+
+		$this->deleteEntityBinding($order);
+		$result = $order->save();
+
+		if (!$result->isSuccess())
+		{
+			$this->addErrors($result->getErrors());
+
+			return null;
+		}
+
+		return true;
 	}
 
-	public function listAction(PageNavigation $pageNavigation, array $select = [], array $filter = [], array $order = []): Page
+	//@codingStandardsIgnoreStart
+	public function listAction(
+		PageNavigation $pageNavigation,
+		array $select = [],
+		array $filter = [],
+		array $order = [],
+		bool $__calculateTotalCount = true
+	): ?Page
 	{
-		$select = empty($select)? ['*']:$select;
-		$order = empty($order)? ['OWNER_ID'=>'ASC']:$order;
+		if (!Loader::includeModule('sale'))
+		{
+			$this->addErrorModuleSaleAbsent();
+
+			return null;
+		}
+
+		$select = empty($select) ? ['*'] : $select;
+		$order = empty($order) ? ['OWNER_ID' => 'ASC'] : $order;
 
 		$registry = Registry::getInstance(Registry::REGISTRY_TYPE_ORDER);
-		/** @var DealBinding $entityBindingClassName */
+		/** @var EntityBinding $entityBindingClassName */
 		$entityBindingClassName = $registry->get(ENTITY_CRM_ORDER_ENTITY_BINDING);
 
-		$tradeBindings = $entityBindingClassName::getList(
-			[
-				'select'=>$select,
-				'filter'=>$filter,
-				'order'=>$order,
-				'offset' => $pageNavigation->getOffset(),
-				'limit' => $pageNavigation->getLimit()
-			]
-		)->fetchAll();
+		$iterator = $entityBindingClassName::getList([
+			'select' => $select,
+			'filter' => $filter,
+			'order' => $order,
+			'offset' => $pageNavigation->getOffset(),
+			'limit' => $pageNavigation->getLimit(),
+			'count_total' => $__calculateTotalCount,
+		]);
+		$tradeBindings = $iterator->fetchAll();
+		$totalCount = $__calculateTotalCount ? $iterator->getCount() : 0;
+		unset($iterator);
 
-		return new Page('ORDER_ENTITY', $tradeBindings, function() use ($filter)
-		{
-			$registry = Registry::getInstance(Registry::REGISTRY_TYPE_ORDER);
-			/** @var EntityBinding $entityBindingClassName */
-			$entityBindingClassName = $registry->get(ENTITY_CRM_ORDER_ENTITY_BINDING);
-
-			return count(
-				$entityBindingClassName::getList(['filter'=>$filter])->fetchAll()
-			);
-		});
+		return new Page('ORDER_ENTITY', $tradeBindings, $totalCount);
 	}
+	//@codingStandardsIgnoreEnd
 	//endregion
 
-	protected function checkFields($fields)
+	protected function checkFields($fields): Result
 	{
-		$r = new Result();
+		$result = new Result();
 
-		if(isset($fields['OWNER_ID']) == false && $fields['OWNER_ID'] <> '')
-			$r->addError(new Error('ownerId - parameter is empty', 201640400001));
+		if (($fields['OWNER_ID'] ?? 0) <= 0)
+		{
+			$result->addError(new Error('ownerId - parameter is empty', 201640400001));
+		}
 
-		if(isset($fields['OWNER_TYPE_ID']) == false && $fields['OWNER_TYPE_ID'] <> '')
-			$r->addError(new Error('ownerTypeId - parameter is empty', 201640400002));
+		if (($fields['OWNER_TYPE_ID'] ?? 0) <= 0)
+		{
+			$result->addError(new Error('ownerTypeId - parameter is empty', 201640400002));
+		}
 
-		if(isset($fields['ORDER_ID'])  == false && $fields['ORDER_ID'] <> '')
-			$r->addError(new Error('orderId - parameter is empty', 201640400003));
+		if (($fields['ORDER_ID'] ?? 0) <= 0)
+		{
+			$result->addError(new Error('orderId - parameter is empty', 201640400003));
+		}
 
-		return $r;
+		return $result;
 	}
 
 	protected function existsByFilter($filter)
 	{
-		$r = new \Bitrix\Main\Result();
+		$result = new \Bitrix\Main\Result();
 
 		$registry = \Bitrix\Sale\Registry::getInstance(Registry::REGISTRY_TYPE_ORDER);
 		/** @var EntityBinding $entityBindingClassName */
 		$entityBindingClassName = $registry->get(ENTITY_CRM_ORDER_ENTITY_BINDING);
 
 		$row = $entityBindingClassName::getList([
+			'select' => [
+				'ORDER_ID'
+			],
 			'filter' => [
-				'=OWNER_TYPE_ID'=>$filter['OWNER_TYPE_ID'],
-				'=OWNER_ID'=>$filter['OWNER_ID'],
-				'=ORDER_ID'=>$filter['ORDER_ID']],
-			'limit' => 1
-		])->fetchAll();
-		if(isset($row[0]['ORDER_ID']) == false)
-			$r->addError(new Error('entity relation is not exists', 201640400004));
+				'=OWNER_TYPE_ID' => $filter['OWNER_TYPE_ID'],
+				'=OWNER_ID' => $filter['OWNER_ID'],
+				'=ORDER_ID' => $filter['ORDER_ID'],
+			],
+			'limit' => 1,
+		])->fetch();
+		if (empty($row))
+		{
+			$result->addError(new Error('entity relation is not exists', 201640400004));
+		}
 
-		return $r;
+		return $result;
 	}
 
-	protected function loadOrder($id)
+	protected function loadOrder($id): ?Order
 	{
-		$registry = \Bitrix\Sale\Registry::getInstance(Registry::REGISTRY_TYPE_ORDER);
+		if (!Loader::includeModule('sale'))
+		{
+			$this->addErrorModuleSaleAbsent();
 
-		/** @var \Bitrix\Sale\Order $className */
+			return null;
+		}
+
+		$registry = Registry::getInstance(Registry::REGISTRY_TYPE_ORDER);
+
+		/** @var Order $orderClass */
 		$orderClass = $registry->getOrderClassName();
 
-		/** @var \Bitrix\Sale\Order $className */
+		/** @var null|Order $order */
 		$order = $orderClass::load($id);
-		if ($order )
+		if ($order)
 		{
 			return $order;
 		}
-		else
-		{
-			$this->addError(new Error('order is not exists', 200540400001));
-		}
+
+		$this->addError(new Error('order does not exist', 200540400001));
+
+		return null;
 	}
 
 	/**
 	 * @param Order $order
 	 * @param int $entityId
+	 * @param int $entityTypeId
 	 * @return Result
 	 */
-	protected function setEntityBinding(Order $order, $entityId = 0, $entityTypeId = 0 ): Result
+	protected function setEntityBinding(Order $order, int $entityId = 0, int $entityTypeId = 0): Result
 	{
 		$entityId = $entityId ?? 0;
 		$entityTypeId = $entityTypeId ?? 0;
@@ -241,7 +289,6 @@ class OrderEntity extends Controller
 
 	/**
 	 * @param Order $order
-	 * @param int $dialId
 	 * @return Result
 	 */
 	protected function deleteEntityBinding(Order $order): Result
@@ -251,43 +298,57 @@ class OrderEntity extends Controller
 		{
 			$binding->delete();
 		}
+
 		return new Result();
 	}
 
-	protected function checkPermissionEntity($name, $arguments=[])
+	protected function checkPermissionEntity($name, $arguments = [])
 	{
-		if($name == 'deletebyfilter')
+		if ($name === 'deletebyfilter')
 		{
-			$r = $this->checkModifyPermissionEntity();
+			$result = $this->checkModifyPermissionEntity();
 		}
 		else
 		{
-			$r = parent::checkPermissionEntity($name);
+			$result = parent::checkPermissionEntity($name);
 		}
-		return $r;
+
+		return $result;
 	}
 
 	protected function checkReadPermissionEntity(): Result
 	{
-		$r = new Result();
+		$result = new Result();
 
-		$saleModulePermissions = self::getApplication()->GetGroupRight("sale");
-		if ($saleModulePermissions  == "D")
+		$saleModulePermissions = self::getApplication()->GetGroupRight('sale');
+		if ($saleModulePermissions === 'D')
 		{
-			$r->addError(new Error('Access Denied', 200040300010));
+			$result->addError(new Error('Access Denied', 200040300010));
 		}
-		return $r;
+
+		return $result;
 	}
 
 	protected function checkModifyPermissionEntity(): Result
 	{
-		$r = new Result();
+		$result = new Result();
 
-		$saleModulePermissions = self::getApplication()->GetGroupRight("sale");
-		if ($saleModulePermissions  < "W")
+		$saleModulePermissions = self::getApplication()->GetGroupRight('sale');
+		if ($saleModulePermissions  < 'W')
 		{
-			$r->addError(new Error('Access Denied', 200040300020));
+			$result->addError(new Error('Access Denied', 200040300020));
 		}
-		return $r;
+
+		return $result;
+	}
+
+	private function getErrorModuleSaleAbsent(): Error
+	{
+		return new Error('module sale does not exist', '200540400002');
+	}
+
+	private function addErrorModuleSaleAbsent(): void
+	{
+		$this->addError($this->getErrorModuleSaleAbsent());
 	}
 }

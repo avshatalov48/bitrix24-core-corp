@@ -1,14 +1,17 @@
 <?php
 $MESS['CRM_TIMELINE_SAVE_BUTTON'] = 'Сохранить';
 $MESS["CRM_TIMELINE_CANCEL_BTN"] = "Отмена";
+$MESS["CRM_TIMELINE_CONNECT_BTN"] = "Подключить";
 $MESS["CRM_TIMELINE_WAIT_PLACEHOLDER"] = "Оставьте комментарий или инструкцию";
 $MESS["CRM_TIMELINE_SEND"] = "Отправить";
 $MESS["CRM_TIMELINE_COMMENT_PLACEHOLDER"] = "Оставьте комментарий";
+$MESS["CRM_TIMELINE_MENU_SETTINGS_HEADER"] = "Настройки отправки";
+$MESS['CRM_TIMELINE_MENU_SETTINGS_RECEIVER'] = 'Получатель';
+$MESS["CRM_TIMELINE_MENU_SETTINGS_SENDER"] = "Отправитель";
 
 $MESS["CRM_TIMELINE_CREATE_WAITING"] = "Установить";
 $MESS["CRM_TIMELINE_WAIT_COMPLETION_TYPE_AFTER"] = "<a href=\"#\">Ждать #DURATION#</a> или <span>любую активность клиента</span>";
 $MESS["CRM_TIMELINE_WAIT_COMPLETION_TYPE_BEFORE"] = "<a href=\"#\">Ждать #DURATION# до даты \"#TARGET_DATE#\"</a> или <span>любую активность клиента</span>";
-$MESS["CRM_TIMELINE_WAIT_TARGET_PREFIX_TYPE_BEFORE"] = "до даты";
 $MESS["CRM_TIMELINE_WAIT_1D"] = "1 день";
 $MESS["CRM_TIMELINE_WAIT_2D"] = "2 дня";
 $MESS["CRM_TIMELINE_WAIT_3D"] = "3 дня";
@@ -25,8 +28,12 @@ $MESS["CRM_TIMELINE_WAIT_CUSTOM"] = "Свой вариант";
 $MESS["CRM_TIMELINE_WAIT_AFTER_CUSTOM_DAYS"] = "Ждать указанное количество дней";
 $MESS["CRM_TIMELINE_WAIT_BEFORE_CUSTOM_DATE"] = "Ждать указанное количество дней до выбранной даты";
 $MESS["CRM_TIMELINE_WAIT_CONFIG_TITLE"] = "Настройка ожидания";
-$MESS["CRM_TIMELINE_WAIT_CONFIG_PREFIX_TYPE_AFTER"] = "Завершить через";
-$MESS["CRM_TIMELINE_WAIT_CONFIG_PREFIX_TYPE_BEFORE"] = "Завершить за";
+$MESS["CRM_TIMELINE_WAIT_CONFIG_DIALOG_BEFORE_CONTENT_TEXT_PLURAL_0"] = 'Завершить за #DAY_INPUT# день до даты #TARGET_DATE#';
+$MESS["CRM_TIMELINE_WAIT_CONFIG_DIALOG_BEFORE_CONTENT_TEXT_PLURAL_1"] = 'Завершить за #DAY_INPUT# дня до даты #TARGET_DATE#';
+$MESS["CRM_TIMELINE_WAIT_CONFIG_DIALOG_BEFORE_CONTENT_TEXT_PLURAL_2"] = 'Завершить за #DAY_INPUT# дней до даты #TARGET_DATE#';
+$MESS["CRM_TIMELINE_WAIT_CONFIG_DIALOG_AFTER_CONTENT_TEXT_PLURAL_0"] = 'Завершить через #DAY_INPUT# день';
+$MESS["CRM_TIMELINE_WAIT_CONFIG_DIALOG_AFTER_CONTENT_TEXT_PLURAL_1"] = 'Завершить через #DAY_INPUT# дня';
+$MESS["CRM_TIMELINE_WAIT_CONFIG_DIALOG_AFTER_CONTENT_TEXT_PLURAL_2"] = 'Завершить через #DAY_INPUT# дней';
 $MESS["CRM_TIMELINE_CHOOSE"] = "Выбрать";
 $MESS["CRM_TIMELINE_SMS_MANAGE_TEXT_1"] = "Используйте все возможности мобильного СМС маркетинга";
 $MESS["CRM_TIMELINE_SMS_MANAGE_TEXT_2"] = "Отправку СМС легко настроить и использовать в CRM Битрикс24";
@@ -96,9 +103,6 @@ $MESS["CRM_TIMELINE_GOTOCHAT_EDITOR_HAVE_UNSAVED_CHANGES_TEXT_QUOTE"] = "Сох�
 $MESS["CRM_TIMELINE_GOTOCHAT_EDITOR_HAVE_UNSAVED_CHANGES_SAVE_AND_CONTINUE"] = "Да, сохранить";
 $MESS["CRM_TIMELINE_GOTOCHAT_EDITOR_HAVE_UNSAVED_CHANGES_FORCE_CONTINUE"] = "Продолжить без сохранения";
 
-$MESS["CRM_TIMELINE_GOTOCHAT_GUIDE_TITLE"] = "Пригласите клиента в чат";
-$MESS["CRM_TIMELINE_GOTOCHAT_GUIDE_TEXT"] = "Выбирайте удобный для клиента формат общения. Пригласите его в мессенджер, чтобы продолжить диалог. Вся история общения сохранится в этой сделке.";
-$MESS["CRM_TIMELINE_GOTOCHAT_GUIDE_ARTICLE_TITLE"] = "Как это работает";
 $MESS["CRM_TIMELINE_GOTOCHAT_SEND_SUCCESS"] = "Приглашение в чат отправлено";
 
 $MESS['CRM_TIMELINE_CALENDAR_SHARING_INFO_TITLE'] = 'Отправьте клиенту ссылку для записи на встречу';
@@ -106,6 +110,8 @@ $MESS['CRM_TIMELINE_CALENDAR_SHARING_INFO_ITEM_1'] = 'Клиент сам выб
 $MESS['CRM_TIMELINE_CALENDAR_SHARING_INFO_ITEM_2'] = 'Встреча появится у вас в делах';
 $MESS['CRM_TIMELINE_CALENDAR_SHARING_CONFIGURE_SLOTS'] = 'Как это работает';
 $MESS['CRM_TIMELINE_CALENDAR_SHARING_SEND_BUTTON'] = 'Отправить';
+$MESS['CRM_TIMELINE_CALENDAR_SHARING_SEND_BUTTON_MSGVER_2'] = 'Отправить ссылку';
+$MESS['CRM_TIMELINE_CALENDAR_SHARING_COPY_BUTTON'] = 'Копировать ссылку';
 $MESS['CRM_TIMELINE_CALENDAR_SHARING_CANCEL_BUTTON'] = 'Отменить';
 $MESS['CRM_TIMELINE_CALENDAR_SHARING_MORE_INFO_BUTTON'] = 'Подробнее о слотах в CRM';
 $MESS['CRM_TIMELINE_CALENDAR_SHARING_RECEIVER'] = 'Получатель';
@@ -122,5 +128,26 @@ $MESS['CRM_TIMELINE_CALENDAR_SHARING_NO_CUSTOM_COMMUNICATION_CHANNELS_WARNING_TI
 $MESS['CRM_TIMELINE_CALENDAR_SHARING_NO_CUSTOM_COMMUNICATION_CHANNELS_WARNING_TITLE_1'] = '<a href="/marketplace/category/crm_robot_sms/" target="_blank">Подключите СМС-сервис</a>, чтобы мгновенно отправлять клиентам ссылку на ваши свободные слоты.';
 $MESS['CRM_TIMELINE_CALENDAR_SHARING_NO_CONTACT_WARNING_TITLE'] = 'Укажите контакты клиента в сделке';
 $MESS['CRM_TIMELINE_CALENDAR_SHARING_NO_CONTACT_WARNING_TEXT'] = 'Укажите номер телефона клиента, чтобы мы могли отправить ссылку на свободные слоты.';
+$MESS['CRM_TIMELINE_CALENDAR_SHARING_NO_CONTACT_WARNING_TEXT_V2'] = 'Укажите номер телефона или почту клиента, чтобы мы могли отправить ссылку на свободные слоты';
 
+$MESS["CRM_TIMELINE_SMS_WHATSAPP_HEADER_TITLE_SETUP"] = "Подключите WhatsApp";
+$MESS["CRM_TIMELINE_SMS_WHATSAPP_HEADER_TITLE"] = "WhatsApp подключён";
+$MESS["CRM_TIMELINE_SMS_WHATSAPP_HEADER_DESCRIPTION_SETUP"] = "Зарегистрируйтесь, чтобы писать клиентам первыми и использовать удобные шаблоны сообщений";
+$MESS["CRM_TIMELINE_SMS_WHATSAPP_HEADER_DESCRIPTION"] = "Пишите клиентам в WhatsApp первыми";
+$MESS["CRM_TIMELINE_SMS_WHATSAPP_HEADER_HELP_LINK"] = "Как это работает";
+$MESS["CRM_TIMELINE_SMS_WHATSAPP_BUTTON_SELECTOR"] = "Шаблоны сообщений";
+$MESS["CRM_TIMELINE_SMS_WHATSAPP_NO_PHONE_ERROR"] = "Укажите номер телефона в карточке клиента";
+$MESS["CRM_TIMELINE_SMS_WHATSAPP_SELECTOR_FOOTER_BUTTON"] = "Предложить шаблон";
 
+$MESS["CRM_TIMELINE_SMS_WHATSAPP_GUIDE_PROVIDER_OFF_TITLE"] = "Напишите клиенту в WhatsApp первыми";
+$MESS["CRM_TIMELINE_SMS_WHATSAPP_GUIDE_PROVIDER_OFF_TEXT_LEAD"] = "Отправляйте подтверждения заказов, уведомления о доставке и информацию о специальных предложениях прямо из лида. Мы собрали больше 20 шаблонов сообщений, нужно просто выбрать подходящий";
+$MESS["CRM_TIMELINE_SMS_WHATSAPP_GUIDE_PROVIDER_OFF_TEXT_DEAL"] = "Отправляйте подтверждения заказов, уведомления о доставке и информацию о специальных предложениях прямо из сделки. Мы собрали больше 20 шаблонов сообщений, нужно просто выбрать подходящий";
+$MESS["CRM_TIMELINE_SMS_WHATSAPP_GUIDE_TEMPLATES_READY_TITLE"] = "Шаблоны готовы к работе";
+$MESS["CRM_TIMELINE_SMS_WHATSAPP_GUIDE_TEMPLATES_READY_TEXT"] = "Личный кабинет edna подключён, осталось написать клиенту. Выберите подходящий шаблон и отправьте сообщение";
+$MESS["CRM_TIMELINE_SMS_WHATSAPP_GUIDE_PROVIDER_ON_TITLE"] = "Общаться с клиентами стало проще";
+$MESS["CRM_TIMELINE_SMS_WHATSAPP_GUIDE_PROVIDER_ON_TEXT_LEAD"] = "Мы сделали вкладку для быстрого доступа к WhatsApp и добавили более 20 шаблонов сообщений. Пишите клиентам первыми, вся история переписки сохранится в лиде";
+$MESS["CRM_TIMELINE_SMS_WHATSAPP_GUIDE_PROVIDER_ON_TEXT_DEAL"] = "Мы сделали вкладку для быстрого доступа к WhatsApp и добавили более 20 шаблонов сообщений.  Пишите клиентам первыми, вся история переписки сохранится в сделке";
+
+$MESS["CRM_TIMELINE_TODO_GUIDE_TITLE"] = "Планируйте всё и сразу";
+$MESS["CRM_TIMELINE_TODO_GUIDE_TEXT"] = "Добавляйте дела в календарь, приглашайте коллег, выбирайте клиента и адрес встречи, выделяйте дела цветом";
+$MESS["CRM_TIMELINE_TODO_GUIDE_ARTICLE_TITLE"] = "Как это работает";

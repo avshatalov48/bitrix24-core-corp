@@ -398,16 +398,6 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 		$this->arResult['SITE_ID'] = $this->order->getSiteId();
 	}
 
-	/** Main\Error[] $errors */
-	protected function addErrors(array $errors)
-	{
-		/** @var Main\Error $error */
-		foreach($errors as $error)
-		{
-			parent::addError($error->getMessage());
-		}
-	}
-
 	public function executeComponent()
 	{
 		/** @global \CMain $APPLICATION */

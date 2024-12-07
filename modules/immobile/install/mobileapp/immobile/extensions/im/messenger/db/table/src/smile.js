@@ -17,6 +17,11 @@ jn.define('im/messenger/db/table/smile', (require, exports, module) => {
 			return 'b_im_smile';
 		}
 
+		getPrimaryKey()
+		{
+			return 'id';
+		}
+
 		getFields()
 		{
 			return [

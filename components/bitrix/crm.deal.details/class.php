@@ -26,6 +26,8 @@ use Bitrix\Crm\Tracking;
 use Bitrix\Currency;
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Catalog;
+use Bitrix\SalesCenter\Integration\LandingManager;
 
 if (!Main\Loader::includeModule('crm'))
 {
@@ -705,7 +707,7 @@ class CCrmDealDetailsComponent
 									'ADD_EVENT_NAME' => 'CrmCreateQuoteFromDeal',
 									'ANALYTICS' => [
 										// we dont know where from this component was opened from - it could be anywhere on portal
-										// 'c_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SECTION_DEAL,
+										'c_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SECTION_DEAL,
 										'c_sub_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SUB_SECTION_DETAILS,
 									],
 								], 'crm.quote.list'),
@@ -758,7 +760,7 @@ class CCrmDealDetailsComponent
 									'ADD_EVENT_NAME' => 'CrmCreateInvoiceFromDeal',
 									'ANALYTICS' => [
 										// we dont know where from this component was opened from - it could be anywhere on portal
-										// 'c_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SECTION_DEAL,
+										'c_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SECTION_DEAL,
 										'c_sub_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SUB_SECTION_DETAILS,
 									],
 								], 'crm.invoice.list'),
@@ -807,7 +809,7 @@ class CCrmDealDetailsComponent
 									'BUILDER_CONTEXT' => Crm\Product\Url\ProductBuilder::TYPE_ID,
 									'ANALYTICS' => [
 										// we dont know where from this component was opened from - it could be anywhere on portal
-										// 'c_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SECTION_DEAL,
+										'c_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SECTION_DEAL,
 										'c_sub_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SUB_SECTION_DETAILS,
 									],
 								], 'crm.order.list')
@@ -1385,6 +1387,10 @@ class CCrmDealDetailsComponent
 					'disableSendButton' => Crm\Integration\SmsManager::canSendMessage() ? '' : 'y',
 					'isShowPaymentDocuments' => ($this->entityData['IS_RECURRING'] ?? 'N') !== 'Y',
 					'isWithOrdersMode' => \CCrmSaleHelper::isWithOrdersMode(),
+					'isOnecMode' => $this->isCatalogModuleIncluded
+						? Catalog\Store\EnableWizard\Manager::isOnecMode()
+						: false
+					,
 					'isInventoryManagementToolEnabled' => $this->isCatalogModuleIncluded
 						? \Bitrix\Catalog\Restriction\ToolAvailabilityManager::getInstance()->checkInventoryManagementAvailability()
 						: false
@@ -1429,7 +1435,11 @@ class CCrmDealDetailsComponent
 				"type" => "boolean",
 				"editable" => true
 			),
-			Crm\Entity\CommentsHelper::compileFieldDescriptionForDetails(\CCrmOwnerType::Deal, 'COMMENTS'),
+			Crm\Entity\CommentsHelper::compileFieldDescriptionForDetails(
+				\CCrmOwnerType::Deal,
+				'COMMENTS',
+				$this->entityID,
+			),
 			array(
 				'name' => 'CLIENT',
 				'title' => Loc::getMessage('CRM_DEAL_FIELD_CLIENT'),
@@ -2541,7 +2551,7 @@ class CCrmDealDetailsComponent
 		$salesOrderRights = [];
 		if ($this->isCatalogModuleIncluded)
 		{
-			$isUsedInventoryManagement = \Bitrix\Catalog\Config\State::isUsedInventoryManagement();
+			$isUsedInventoryManagement = \Bitrix\Catalog\Config\State::isEnabledInventoryManagement();
 			$actionController = AccessController::getCurrent();
 			$rightMap = [
 				'view' => ActionDictionary::ACTION_STORE_DOCUMENT_VIEW,
@@ -2561,8 +2571,10 @@ class CCrmDealDetailsComponent
 		}
 
 		$this->entityData['IS_USED_INVENTORY_MANAGEMENT'] = $isUsedInventoryManagement;
+		$this->entityData['IS_ONEC_MODE'] = $this->isCatalogModuleIncluded && Catalog\Store\EnableWizard\Manager::isOnecMode();
 		$this->entityData['SALES_ORDERS_RIGHTS'] = $salesOrderRights;
 		$this->entityData['IS_INVENTORY_MANAGEMENT_RESTRICTED'] = !\Bitrix\Crm\Restriction\RestrictionManager::getInventoryControlIntegrationRestriction()->hasPermission();
+		$this->entityData['IS_1C_PLAN_RESTRICTED'] = !\Bitrix\Crm\Restriction\RestrictionManager::getInventoryControl1cRestriction()->hasPermission();
 		$this->entityData['IS_INVENTORY_MANAGEMENT_TOOL_ENABLED'] =
 			$this->isCatalogModuleIncluded
 			&& \Bitrix\Catalog\Restriction\ToolAvailabilityManager::getInstance()->checkInventoryManagementAvailability()
@@ -2576,6 +2588,9 @@ class CCrmDealDetailsComponent
 		$this->entityData['RECEIVE_PAYMENT_MODE'] = CUserOptions::GetOption('crm', 'receive_payment_mode', 'payment_delivery');
 		$this->entityData['IS_TERMINAL_AVAILABLE'] = Crm\Terminal\AvailabilityManager::getInstance()->isAvailable();
 		$this->entityData['IS_TERMINAL_TOOL_ENABLED'] = Container::getInstance()->getIntranetToolsManager()->checkTerminalAvailability();
+
+		$this->entityData['IS_PHONE_CONFIRMED'] = $this->isSalescenterModuleIncluded && LandingManager::getInstance()->isPhoneConfirmed();
+		$this->entityData['CONNECTED_SITE_ID'] = $this->isSalescenterModuleIncluded ? LandingManager::getInstance()->getConnectedSiteId() : 0;
 
 		Tracking\UI\Details::prepareEntityData(
 			\CCrmOwnerType::Deal,

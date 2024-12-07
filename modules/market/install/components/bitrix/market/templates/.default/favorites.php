@@ -21,6 +21,7 @@ $APPLICATION->includeComponent(
 	'bitrix:market.list',
 	'',
 	[
-		'IS_FAVORITES' => 'Y'
+		'CURRENT_PAGE' => $arResult['CURRENT_PAGE'],
+		'IS_FAVORITES' => 'Y',
 	]
 );

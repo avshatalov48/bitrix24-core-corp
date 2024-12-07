@@ -174,7 +174,7 @@ $containerId = 'crm-tracking-channel-pool';
 		</div>
 	</div>
 
-	<script type="text/javascript">
+	<script>
 		BX.ready(function () {
 			BX.Crm.Tracking.Channel.Pool.init(<?=Json::encode([
 				'containerId' => $containerId,

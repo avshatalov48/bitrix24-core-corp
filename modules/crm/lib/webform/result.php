@@ -316,7 +316,13 @@ class Result extends Model
 		return true;
 	}
 
-	public static function formatFieldsByTemplate(array $fields, $fieldTemplate = "%caption%%required%: %values%\n", $valueTemplate = "%value%\n", $valueListTemplate = "\n%value%")
+	public static function formatFieldsByTemplate(
+		array $fields,
+		$fieldTemplate = "%caption%%required%: %values%\n",
+		$valueTemplate = "%value%\n",
+		$valueListTemplate = "\n%value%",
+		?string $languageId = null,
+	)
 	{
 		$result = '';
 		foreach($fields as $field)
@@ -350,9 +356,11 @@ class Result extends Model
 						if (in_array($value, ['Y', 'N']))
 						{
 							EntityFieldProvider::getBooleanFieldItems();
-							$value = Loc::getMessage('CRM_WEBFORM_FIELD_PROVIDER_' . (
-								$value === 'Y' ? 'YES' : 'NO'
-							));
+
+							$codePostfix = $value === 'Y' ? 'YES' : 'NO';
+							$code = "CRM_WEBFORM_FIELD_PROVIDER_{$codePostfix}";
+
+							$value = Loc::getMessage($code, null, $languageId);
 						}
 						break;
 					case Internals\FieldTable::TYPE_ENUM_DATETIME:

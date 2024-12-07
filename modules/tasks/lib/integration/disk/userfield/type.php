@@ -88,7 +88,7 @@ class Type extends \Bitrix\Tasks\Util\UserField\Type
 	private static function removeRawAttachments($message, $attachmentData)
 	{
 		return preg_replace_callback(
-			"/\[DISK FILE ID\s*=\s*([^\]]*)\]/is".BX_UTF_PCRE_MODIFIER,
+			"/\[DISK FILE ID\s*=\s*([^\]]*)\]/isu",
 			function ($matches) use ($attachmentData)
 			{
 				if($matches[1])
@@ -124,7 +124,7 @@ class Type extends \Bitrix\Tasks\Util\UserField\Type
 		}
 
 		return preg_replace_callback(
-			"/\[DISK FILE ID\s*=\s*([^\]]*)\]/is".BX_UTF_PCRE_MODIFIER,
+			"/\[DISK FILE ID\s*=\s*([^\]]*)\]/isu",
 			function ($matches) use ($map, $objMap)
 			{
 				$from = $matches[1];

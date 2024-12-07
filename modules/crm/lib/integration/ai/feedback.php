@@ -130,6 +130,7 @@ final class Feedback
 			$summarizePayload,
 			$fillFieldsResult->getTarget(),
 			$fillFieldsResult->getPayload(),
+			$fillFieldsResult->getLanguageId() ?? ''
 		));
 
 		$uploader->sendAsync(
@@ -185,7 +186,7 @@ final class Feedback
 			return ['', ''];
 		}
 
-		$fileArray = StorageManager::makeFileArray($storageElementId, $storageTypeId);;
+		$fileArray = StorageManager::makeFileArray($storageElementId, $storageTypeId);
 		if (!is_array($fileArray) || empty($fileArray['tmp_name']))
 		{
 			return ['', ''];

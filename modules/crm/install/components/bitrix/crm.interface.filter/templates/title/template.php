@@ -66,7 +66,7 @@ if (isset($arParams['~FILTER']) && is_array($arParams['~FILTER']))
 	// region CRM Entity Selectors
 	// It is always required for dynamic filter fields
 	Asset::getInstance()->addJs('/bitrix/js/crm/crm.js');
-	?><script type="text/javascript">
+	?><script>
 	BX.ready(function() {
 		BX.CrmEntityType.setCaptions(<?=CUtil::PhpToJSObject(CCrmOwnerType::GetJavascriptDescriptions())?>);
 		if(typeof(BX.CrmEntitySelector) !== "undefined")
@@ -83,7 +83,7 @@ if (isset($arParams['~FILTER']) && is_array($arParams['~FILTER']))
 	</script><?
 	if (!empty($entitySelectors))
 	{
-		?><script type="text/javascript"><?
+		?><script><?
 			foreach($entitySelectors as $entitySelector)
 			{
 				$selectorID = $entitySelector['ID'];
@@ -133,7 +133,7 @@ if($isBitrix24Template)
 	$belowPageTitleFilled = true;
 ?>
 	<div id="<?=$navigationBarId?>" class="crm-view-switcher"></div>
-	<script type="text/javascript">
+	<script>
 		BX.ready(function() {
 			// init navigation bar panel
 			(new BX.Crm.NavigationBar({

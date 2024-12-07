@@ -277,7 +277,7 @@ $APPLICATION->SetAdditionalCSS("/bitrix/js/crm/css/slider.css");
 										</div>
 									</div>
 									<?php //if (\Bitrix\Crm\Settings\InvoiceSettings::getCurrent()->isOldInvoicesEnabled()): ?>
-										<div class="crm-entity-widget-content-block crm-entity-widget-content-block-field-checkbox">
+										<div class="crm-entity-widget-content-block crm-entity-widget-content-block-field-checkbox --last-block">
 											<div class="crm-entity-widget-content-block-inner">
 												<label class="crm-entity-widget-content-block-checkbox-label">
 													<input class="crm-entity-widget-content-checkbox" id="edit_base_for_count" name="edit_base_for_count" type="checkbox"
@@ -457,7 +457,7 @@ $APPLICATION->SetAdditionalCSS("/bitrix/js/crm/css/slider.css");
 	</div>
 </form>
 
-<script type="text/javascript">
+<script>
 	BX(function () {
 		BX.message({
 			CRM_CURRENCY_CLASSIFIER_FORM_POPUP_WINDOW_TITLE: '<?= GetMessageJS('CRM_CURRENCY_CLASSIFIER_FORM_POPUP_WINDOW_TITLE')?>',

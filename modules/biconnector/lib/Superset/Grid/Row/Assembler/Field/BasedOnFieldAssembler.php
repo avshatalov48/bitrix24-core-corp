@@ -11,7 +11,7 @@ class BasedOnFieldAssembler extends FieldAssembler
 	protected function prepareColumn($value): string
 	{
 		$sourceId = $value['SOURCE_ID'];
-		$sourceTitle = $value['SOURCE_TITLE'];
+		$sourceTitle = htmlspecialcharsbx($value['SOURCE_TITLE']);
 		$type = $value['TYPE'];
 
 		if ($type === SupersetDashboardTable::DASHBOARD_TYPE_MARKET)
@@ -24,7 +24,25 @@ class BasedOnFieldAssembler extends FieldAssembler
 			return Loc::getMessage('BICONNECTOR_DASHBOARD_GRID_SOURCE_TYPE_SYSTEM');
 		}
 
-		return "<a href='/bi/dashboard/detail/{$sourceId}/'>" . htmlspecialcharsbx($sourceTitle) . "</a>";
+		$detailUrl = $value['SOURCE_DETAIL_URL'] ?? "/bi/dashboard/detail/{$sourceId}/";
+
+		if (empty($value['SOURCE_HAS_ZONE_URL_PARAMS']))
+		{
+			$link = "<a href='{$detailUrl}'>{$sourceTitle}</a>";
+		}
+		else
+		{
+			$link = "
+				<a 
+					style='cursor: pointer' 
+					onclick='BX.BIConnector.SupersetDashboardGridManager.Instance.showLockedByParamsPopup()'
+				>
+					{$sourceTitle}
+				</a>
+			";
+		}
+
+		return $link;
 	}
 
 	protected function prepareRow(array $row): array
@@ -42,6 +60,8 @@ class BasedOnFieldAssembler extends FieldAssembler
 				'SOURCE_ID' => $row['data']['SOURCE_ID'],
 				'SOURCE_TITLE' => $row['data']['SOURCE_TITLE'],
 				'TYPE' => $row['data']['TYPE'],
+				'SOURCE_HAS_ZONE_URL_PARAMS' => $row['data']['SOURCE_HAS_ZONE_URL_PARAMS'],
+				'SOURCE_DETAIL_URL' => $row['data']['SOURCE_DETAIL_URL'],
 			];
 			$row['columns'][$columnId] = $this->prepareColumn($value);
 		}

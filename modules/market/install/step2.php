@@ -15,14 +15,14 @@ if(!check_bitrix_sessid())
 IncludeModuleLangFile(__FILE__);
 
 if($ex = $APPLICATION->GetException()):
-	echo CAdminMessage::ShowMessage(Array(
+	CAdminMessage::ShowMessage(Array(
 		"TYPE" => "ERROR",
 		"MESSAGE" => GetMessage("MOD_INST_ERR"),
 		"DETAILS" => $ex->GetString(),
 		"HTML" => true,
 	));
 else:
-	echo CAdminMessage::ShowNote(GetMessage("MOD_INST_OK"));
+	CAdminMessage::ShowNote(GetMessage("MOD_INST_OK"));
 endif;
 ?>
 <form action="<?echo $APPLICATION->GetCurPage()?>">

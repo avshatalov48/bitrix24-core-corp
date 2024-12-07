@@ -1,7 +1,516 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
-(function (exports,ui_notification,main_popup,main_core_events,pull_queuemanager,crm_kanban_sort,main_core) {
+(function (exports,crm_integration_analytics,ui_notification,main_popup,main_core_events,pull_queuemanager,crm_kanban_sort,main_core) {
 	'use strict';
+
+	function _classPrivateMethodInitSpec(obj, privateSet) { _checkPrivateRedeclaration(obj, privateSet); privateSet.add(obj); }
+	function _classPrivateFieldInitSpec(obj, privateMap, value) { _checkPrivateRedeclaration(obj, privateMap); privateMap.set(obj, value); }
+	function _checkPrivateRedeclaration(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	function _classPrivateMethodGet(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+	var NAMESPACE = main_core.Reflection.namespace('BX.CRM.Kanban.Actions');
+	var _grid = /*#__PURE__*/new WeakMap();
+	var _params = /*#__PURE__*/new WeakMap();
+	var _isShowNotify = /*#__PURE__*/new WeakMap();
+	var _isApplyFilterAfterAction = /*#__PURE__*/new WeakMap();
+	var _useIgnorePostfixForCode = /*#__PURE__*/new WeakMap();
+	var _analyticsData = /*#__PURE__*/new WeakMap();
+	var _prepareExecute = /*#__PURE__*/new WeakSet();
+	var _onSuccess = /*#__PURE__*/new WeakSet();
+	var _handleErrorOnSimpleAction = /*#__PURE__*/new WeakSet();
+	var _handleSuccessOnSimpleAction = /*#__PURE__*/new WeakSet();
+	var _notify = /*#__PURE__*/new WeakSet();
+	var _getPreparedNotifyCode = /*#__PURE__*/new WeakSet();
+	var _getPreparedNotifyContent = /*#__PURE__*/new WeakSet();
+	var _onFailure = /*#__PURE__*/new WeakSet();
+	var _prepareAnalyticsData = /*#__PURE__*/new WeakSet();
+	var SimpleAction = /*#__PURE__*/function () {
+	  function SimpleAction(_grid2, _params2) {
+	    babelHelpers.classCallCheck(this, SimpleAction);
+	    _classPrivateMethodInitSpec(this, _prepareAnalyticsData);
+	    _classPrivateMethodInitSpec(this, _onFailure);
+	    _classPrivateMethodInitSpec(this, _getPreparedNotifyContent);
+	    _classPrivateMethodInitSpec(this, _getPreparedNotifyCode);
+	    _classPrivateMethodInitSpec(this, _notify);
+	    _classPrivateMethodInitSpec(this, _handleSuccessOnSimpleAction);
+	    _classPrivateMethodInitSpec(this, _handleErrorOnSimpleAction);
+	    _classPrivateMethodInitSpec(this, _onSuccess);
+	    _classPrivateMethodInitSpec(this, _prepareExecute);
+	    _classPrivateFieldInitSpec(this, _grid, {
+	      writable: true,
+	      value: void 0
+	    });
+	    _classPrivateFieldInitSpec(this, _params, {
+	      writable: true,
+	      value: void 0
+	    });
+	    _classPrivateFieldInitSpec(this, _isShowNotify, {
+	      writable: true,
+	      value: true
+	    });
+	    _classPrivateFieldInitSpec(this, _isApplyFilterAfterAction, {
+	      writable: true,
+	      value: false
+	    });
+	    _classPrivateFieldInitSpec(this, _useIgnorePostfixForCode, {
+	      writable: true,
+	      value: false
+	    });
+	    _classPrivateFieldInitSpec(this, _analyticsData, {
+	      writable: true,
+	      value: null
+	    });
+	    babelHelpers.classPrivateFieldSet(this, _grid, _grid2);
+	    babelHelpers.classPrivateFieldSet(this, _params, _params2);
+	  }
+	  babelHelpers.createClass(SimpleAction, [{
+	    key: "showNotify",
+	    value: function showNotify() {
+	      var value = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : true;
+	      babelHelpers.classPrivateFieldSet(this, _isShowNotify, value);
+	      return this;
+	    }
+	  }, {
+	    key: "applyFilterAfterAction",
+	    value: function applyFilterAfterAction() {
+	      var value = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
+	      babelHelpers.classPrivateFieldSet(this, _isApplyFilterAfterAction, value);
+	      return this;
+	    }
+	  }, {
+	    key: "setIgnorePostfixForCode",
+	    value: function setIgnorePostfixForCode() {
+	      var value = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : true;
+	      babelHelpers.classPrivateFieldSet(this, _useIgnorePostfixForCode, value);
+	      return this;
+	    }
+	  }, {
+	    key: "execute",
+	    value: function execute() {
+	      var _this = this;
+	      _classPrivateMethodGet(this, _prepareExecute, _prepareExecute2).call(this);
+	      if (babelHelpers.classPrivateFieldGet(this, _params).action === 'status') {
+	        _classPrivateMethodGet(this, _prepareAnalyticsData, _prepareAnalyticsData2).call(this);
+	        babelHelpers.classPrivateFieldGet(this, _grid).registerAnalyticsCloseEvent(babelHelpers.classPrivateFieldGet(this, _analyticsData), BX.Crm.Integration.Analytics.Dictionary.STATUS_ATTEMPT);
+	      }
+	      return new Promise(function (resolve, reject) {
+	        babelHelpers.classPrivateFieldGet(_this, _grid).ajax(babelHelpers.classPrivateFieldGet(_this, _params), function (data) {
+	          return _classPrivateMethodGet(_this, _onSuccess, _onSuccess2).call(_this, data, resolve);
+	        }, function (error) {
+	          return _classPrivateMethodGet(_this, _onFailure, _onFailure2).call(_this, error, reject);
+	        });
+	      });
+	    }
+	  }]);
+	  return SimpleAction;
+	}();
+	function _prepareExecute2() {
+	  if (babelHelpers.classPrivateFieldGet(this, _grid).isMultiSelectMode()) {
+	    babelHelpers.classPrivateFieldGet(this, _grid).resetMultiSelectMode();
+	  }
+	  if (!main_core.Type.isStringFilled(babelHelpers.classPrivateFieldGet(this, _params).eventId) && pull_queuemanager.QueueManager) {
+	    // eslint-disable-next-line no-param-reassign
+	    babelHelpers.classPrivateFieldGet(this, _params).eventId = pull_queuemanager.QueueManager.registerRandomEventId();
+	  }
+	}
+	function _onSuccess2(data, resolve) {
+	  if (!data || data.error) {
+	    babelHelpers.classPrivateFieldGet(this, _grid).registerAnalyticsCloseEvent(babelHelpers.classPrivateFieldGet(this, _analyticsData), BX.Crm.Integration.Analytics.Dictionary.STATUS_ERROR);
+	    _classPrivateMethodGet(this, _handleErrorOnSimpleAction, _handleErrorOnSimpleAction2).call(this, data, resolve);
+	  } else {
+	    babelHelpers.classPrivateFieldGet(this, _grid).registerAnalyticsCloseEvent(babelHelpers.classPrivateFieldGet(this, _analyticsData), BX.Crm.Integration.Analytics.Dictionary.STATUS_SUCCESS);
+	    _classPrivateMethodGet(this, _handleSuccessOnSimpleAction, _handleSuccessOnSimpleAction2).call(this, data, resolve);
+	  }
+	  babelHelpers.classPrivateFieldSet(this, _analyticsData, null);
+	}
+	function _handleErrorOnSimpleAction2(data, callback) {
+	  var grid = babelHelpers.classPrivateFieldGet(this, _grid);
+	  var gridData = grid.getData();
+	  var params = babelHelpers.classPrivateFieldGet(this, _params);
+	  if (params.action === 'status') {
+	    grid.stopActionPanel();
+	    grid.onApplyFilter();
+	    if (grid.getTypeInfoParam('showPersonalSetStatusNotCompletedText')) {
+	      var messageCode = gridData.isDynamicEntity ? 'CRM_KANBAN_SET_STATUS_NOT_COMPLETED_TEXT_DYNAMIC_MSGVER_1' : null;
+	      if (!messageCode) {
+	        var codeVer = "CRM_KANBAN_SET_STATUS_NOT_COMPLETED_TEXT_".concat(gridData.entityType);
+	        var codeVer1 = "".concat(codeVer, "_MSGVER_1");
+	        var codeVer2 = "".concat(codeVer, "_MSGVER_2");
+	        messageCode = BX.Loc.hasMessage(codeVer2) ? codeVer2 : codeVer1;
+	      }
+	      BX.Kanban.Utils.showErrorDialog(main_core.Loc.getMessage(messageCode));
+	      callback(new Error(main_core.Loc.getMessage(messageCode)));
+	    } else {
+	      BX.Kanban.Utils.showErrorDialog(data.error, data.fatal);
+	      callback(new Error(data.error));
+	    }
+	  } else {
+	    BX.Kanban.Utils.showErrorDialog(data.error, data.fatal);
+	    callback(new Error(data.error));
+	  }
+	}
+	function _handleSuccessOnSimpleAction2(data, callback) {
+	  var grid = babelHelpers.classPrivateFieldGet(this, _grid);
+	  var params = babelHelpers.classPrivateFieldGet(this, _params);
+	  if (babelHelpers.classPrivateFieldGet(this, _isApplyFilterAfterAction)) {
+	    grid.onApplyFilter();
+	  }
+	  grid.stopActionPanel();
+	  if (babelHelpers.classPrivateFieldGet(this, _isShowNotify)) {
+	    var code = grid.getData().entityType;
+	    if (code.startsWith('DYNAMIC')) {
+	      code = 'DYNAMIC';
+	    }
+
+	    // @todo replace to useIgnorePostfixForCode check later
+	    if (params.action === 'delete' && params.ignore === 'Y') {
+	      code = "".concat(code, "_IGNORE");
+	    } else {
+	      code = "".concat(code, "_").concat(params.action.toUpperCase());
+	    }
+	    _classPrivateMethodGet(this, _notify, _notify2).call(this, code);
+	  }
+	  callback(data);
+	}
+	function _notify2(code) {
+	  // eslint-disable-next-line no-param-reassign
+	  code = _classPrivateMethodGet(this, _getPreparedNotifyCode, _getPreparedNotifyCode2).call(this, code);
+	  var content = _classPrivateMethodGet(this, _getPreparedNotifyContent, _getPreparedNotifyContent2).call(this, code);
+	  if (main_core.Type.isStringFilled(content)) {
+	    ui_notification.UI.Notification.Center.notify({
+	      content: content
+	    });
+	  }
+	}
+	function _getPreparedNotifyCode2(code) {
+	  if (code === 'DEAL_CHANGECATEGORY') {
+	    // eslint-disable-next-line no-param-reassign
+	    code = 'DEAL_CHANGECATEGORY_LINK2';
+	  } else if (code === 'DYNAMIC_CHANGECATEGORY') {
+	    // eslint-disable-next-line no-param-reassign
+	    code = 'DYNAMIC_CHANGECATEGORY_LINK2';
+	  }
+
+	  // eslint-disable-next-line no-param-reassign
+	  code = "CRM_KANBAN_NOTIFY_".concat(code);
+	  var msgVer1Codes = ['CRM_KANBAN_NOTIFY_LEAD_STATUS', 'CRM_KANBAN_NOTIFY_DYNAMIC_STATUS', 'CRM_KANBAN_NOTIFY_INVOICE_STATUS', 'CRM_KANBAN_NOTIFY_QUOTE_DELETE', 'CRM_KANBAN_NOTIFY_QUOTE_SETASSIGNED'];
+	  if (msgVer1Codes.includes(code)) {
+	    // eslint-disable-next-line no-param-reassign
+	    code = "".concat(code, "_MSGVER_1");
+	  }
+	  var msgVer2Codes = ['CRM_KANBAN_NOTIFY_QUOTE_STATUS'];
+	  if (msgVer2Codes.includes(code)) {
+	    // eslint-disable-next-line no-param-reassign
+	    code = "".concat(code, "_MSGVER_2");
+	  }
+	  return code;
+	}
+	function _getPreparedNotifyContent2(code) {
+	  var content = main_core.Loc.getMessage(code);
+	  if (!main_core.Type.isStringFilled(content)) {
+	    return null;
+	  }
+	  var params = babelHelpers.classPrivateFieldGet(this, _params);
+	  if (main_core.Type.isPlainObject(params)) {
+	    Object.entries(params).forEach(function (entryData) {
+	      content = content.replace("#".concat(entryData[0], "#"), entryData[1]);
+	    });
+	  }
+	  return content;
+	}
+	function _onFailure2(error, callback) {
+	  babelHelpers.classPrivateFieldGet(this, _grid).registerAnalyticsCloseEvent(babelHelpers.classPrivateFieldGet(this, _analyticsData), BX.Crm.Integration.Analytics.Dictionary.STATUS_ERROR);
+	  babelHelpers.classPrivateFieldSet(this, _analyticsData, null);
+	  BX.Kanban.Utils.showErrorDialog("Error: ".concat(error), true);
+	  callback(new Error(error));
+	}
+	function _prepareAnalyticsData2() {
+	  var _babelHelpers$classPr = babelHelpers.slicedToArray(babelHelpers.classPrivateFieldGet(this, _params).entity_id, 1),
+	    entityId = _babelHelpers$classPr[0];
+	  var item = babelHelpers.classPrivateFieldGet(this, _grid).getItem(entityId);
+	  var targetColumn = babelHelpers.classPrivateFieldGet(this, _grid).getColumn(babelHelpers.classPrivateFieldGet(this, _params).status);
+	  var type = targetColumn ? targetColumn.getData().type : babelHelpers.classPrivateFieldGet(this, _params).type;
+	  babelHelpers.classPrivateFieldSet(this, _analyticsData, babelHelpers.classPrivateFieldGet(this, _grid).getDefaultAnalyticsCloseEvent(item, type, babelHelpers.classPrivateFieldGet(this, _params).entity_id.toString()));
+	  babelHelpers.classPrivateFieldGet(this, _analyticsData).c_element = BX.Crm.Integration.Analytics.Dictionary.ELEMENT_WON_TOP_ACTIONS;
+	  if (type === 'LOOSE') {
+	    babelHelpers.classPrivateFieldGet(this, _analyticsData).c_element = BX.Crm.Integration.Analytics.Dictionary.ELEMENT_LOSE_TOP_ACTIONS;
+	  }
+	}
+	NAMESPACE.SimpleAction = SimpleAction;
+
+	function _classPrivateMethodInitSpec$1(obj, privateSet) { _checkPrivateRedeclaration$1(obj, privateSet); privateSet.add(obj); }
+	function _classPrivateFieldInitSpec$1(obj, privateMap, value) { _checkPrivateRedeclaration$1(obj, privateMap); privateMap.set(obj, value); }
+	function _checkPrivateRedeclaration$1(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	function _classPrivateMethodGet$1(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+	var NAMESPACE$1 = main_core.Reflection.namespace('BX.CRM.Kanban.Actions');
+	var _grid$1 = /*#__PURE__*/new WeakMap();
+	var _dropZone = /*#__PURE__*/new WeakMap();
+	var _deletedItems = /*#__PURE__*/new WeakMap();
+	var _ids = /*#__PURE__*/new WeakMap();
+	var _showNotify = /*#__PURE__*/new WeakMap();
+	var _applyFilterAfterAction = /*#__PURE__*/new WeakMap();
+	var _action = /*#__PURE__*/new WeakMap();
+	var _onResolve = /*#__PURE__*/new WeakSet();
+	var _getDeletedItems = /*#__PURE__*/new WeakSet();
+	var _prepareDropZone = /*#__PURE__*/new WeakSet();
+	var _prepareGrid = /*#__PURE__*/new WeakSet();
+	var _unHideUndeletedItems = /*#__PURE__*/new WeakSet();
+	var _showResult = /*#__PURE__*/new WeakSet();
+	var _getDeleteTitle = /*#__PURE__*/new WeakSet();
+	var _onDeletionCancelClick = /*#__PURE__*/new WeakSet();
+	var _showActionError = /*#__PURE__*/new WeakSet();
+	var _restoreItemInColumn = /*#__PURE__*/new WeakSet();
+	var _onReject = /*#__PURE__*/new WeakSet();
+	var DeleteAction = /*#__PURE__*/function () {
+	  function DeleteAction(_grid2, params) {
+	    babelHelpers.classCallCheck(this, DeleteAction);
+	    _classPrivateMethodInitSpec$1(this, _onReject);
+	    _classPrivateMethodInitSpec$1(this, _restoreItemInColumn);
+	    _classPrivateMethodInitSpec$1(this, _showActionError);
+	    _classPrivateMethodInitSpec$1(this, _onDeletionCancelClick);
+	    _classPrivateMethodInitSpec$1(this, _getDeleteTitle);
+	    _classPrivateMethodInitSpec$1(this, _showResult);
+	    _classPrivateMethodInitSpec$1(this, _unHideUndeletedItems);
+	    _classPrivateMethodInitSpec$1(this, _prepareGrid);
+	    _classPrivateMethodInitSpec$1(this, _prepareDropZone);
+	    _classPrivateMethodInitSpec$1(this, _getDeletedItems);
+	    _classPrivateMethodInitSpec$1(this, _onResolve);
+	    _classPrivateFieldInitSpec$1(this, _grid$1, {
+	      writable: true,
+	      value: void 0
+	    });
+	    _classPrivateFieldInitSpec$1(this, _dropZone, {
+	      writable: true,
+	      value: void 0
+	    });
+	    _classPrivateFieldInitSpec$1(this, _deletedItems, {
+	      writable: true,
+	      value: null
+	    });
+	    _classPrivateFieldInitSpec$1(this, _ids, {
+	      writable: true,
+	      value: []
+	    });
+	    _classPrivateFieldInitSpec$1(this, _showNotify, {
+	      writable: true,
+	      value: void 0
+	    });
+	    _classPrivateFieldInitSpec$1(this, _applyFilterAfterAction, {
+	      writable: true,
+	      value: void 0
+	    });
+	    _classPrivateFieldInitSpec$1(this, _action, {
+	      writable: true,
+	      value: SimpleAction
+	    });
+	    babelHelpers.classPrivateFieldSet(this, _grid$1, _grid2);
+	    if (!main_core.Type.isArrayFilled(params.ids)) {
+	      throw new Error('Param ids must be filled array');
+	    }
+	    babelHelpers.classPrivateFieldSet(this, _ids, params.ids);
+	    babelHelpers.classPrivateFieldSet(this, _showNotify, main_core.Type.isBoolean(params.showNotify) ? params.showNotify : true);
+	    babelHelpers.classPrivateFieldSet(this, _applyFilterAfterAction, main_core.Type.isBoolean(params.applyFilterAfterAction) ? params.applyFilterAfterAction : false);
+	  }
+	  babelHelpers.createClass(DeleteAction, [{
+	    key: "setDropZone",
+	    value: function setDropZone(dropZone) {
+	      babelHelpers.classPrivateFieldSet(this, _dropZone, dropZone);
+	      return this;
+	    }
+	  }, {
+	    key: "execute",
+	    value: function execute() {
+	      var _this = this;
+	      var actionParams = {
+	        action: 'delete',
+	        id: babelHelpers.classPrivateFieldGet(this, _ids)
+	      };
+	      new (babelHelpers.classPrivateFieldGet(this, _action))(babelHelpers.classPrivateFieldGet(this, _grid$1), actionParams).showNotify(babelHelpers.classPrivateFieldGet(this, _showNotify)).applyFilterAfterAction(babelHelpers.classPrivateFieldGet(this, _applyFilterAfterAction)).execute().then(function (response) {
+	        return _classPrivateMethodGet$1(_this, _onResolve, _onResolve2).call(_this, response);
+	      }, function (response) {
+	        return _classPrivateMethodGet$1(_this, _onReject, _onReject2).call(_this, response);
+	      })["catch"](function () {
+	        _classPrivateMethodGet$1(_this, _showActionError, _showActionError2).call(_this);
+	      });
+	    }
+	  }]);
+	  return DeleteAction;
+	}();
+	function _onResolve2(response) {
+	  var dropZone = babelHelpers.classPrivateFieldGet(this, _dropZone);
+	  if (dropZone) {
+	    _classPrivateMethodGet$1(this, _prepareDropZone, _prepareDropZone2).call(this);
+	  }
+	  _classPrivateMethodGet$1(this, _prepareGrid, _prepareGrid2).call(this);
+	  _classPrivateMethodGet$1(this, _unHideUndeletedItems, _unHideUndeletedItems2).call(this, response);
+	  _classPrivateMethodGet$1(this, _showResult, _showResult2).call(this, response);
+	}
+	function _getDeletedItems2() {
+	  var _this2 = this;
+	  if (babelHelpers.classPrivateFieldGet(this, _deletedItems) === null) {
+	    var grid = babelHelpers.classPrivateFieldGet(this, _grid$1);
+	    var ids = babelHelpers.classPrivateFieldGet(this, _ids);
+	    ids.forEach(function (id) {
+	      var item = grid.getItem(id);
+	      if (item) {
+	        if (babelHelpers.classPrivateFieldGet(_this2, _deletedItems) === null) {
+	          babelHelpers.classPrivateFieldSet(_this2, _deletedItems, []);
+	        }
+	        babelHelpers.classPrivateFieldGet(_this2, _deletedItems).push(item);
+	      }
+	    });
+	  }
+	  return babelHelpers.classPrivateFieldGet(this, _deletedItems);
+	}
+	function _prepareDropZone2() {
+	  var dropZone = babelHelpers.classPrivateFieldGet(this, _dropZone);
+	  dropZone.empty();
+	  dropZone.getDropZoneArea().hide();
+	  dropZone.droppedItems = [];
+	}
+	function _prepareGrid2() {
+	  var grid = babelHelpers.classPrivateFieldGet(this, _grid$1);
+	  grid.dropZonesShow = false;
+	  grid.resetMultiSelectMode();
+	  grid.resetActionPanel();
+	  grid.resetDragMode();
+	}
+	function _unHideUndeletedItems2(data) {
+	  var _this3 = this;
+	  var deletedItems = _classPrivateMethodGet$1(this, _getDeletedItems, _getDeletedItems2).call(this);
+	  var deletedIds = data.deletedIds,
+	    errors = data.errors;
+	  var undeletedItems = deletedItems.filter(function (item) {
+	    return !deletedIds.includes(Number(item.getId()));
+	  });
+	  if (main_core.Type.isArrayFilled(undeletedItems)) {
+	    undeletedItems.forEach(function (item) {
+	      return _classPrivateMethodGet$1(_this3, _restoreItemInColumn, _restoreItemInColumn2).call(_this3, item);
+	    });
+	    errors.forEach(function (_ref) {
+	      var content = _ref.message,
+	        id = _ref.data.id;
+	      ui_notification.UI.Notification.Center.notify({
+	        content: content,
+	        actions: [{
+	          title: main_core.Loc.getMessage('CRM_KANBAN_OPEN_ITEM'),
+	          events: {
+	            click: function click() {
+	              BX.fireEvent(babelHelpers.classPrivateFieldGet(_this3, _grid$1).getItem(id).link, 'click');
+	            }
+	          }
+	        }]
+	      });
+	    });
+	  }
+	}
+	function _showResult2(data) {
+	  var _this4 = this;
+	  var deletedItems = _classPrivateMethodGet$1(this, _getDeletedItems, _getDeletedItems2).call(this);
+	  var deletedIds = data.deletedIds;
+	  var removedItems = deletedItems.filter(function (item) {
+	    return deletedIds.includes(Number(item.getId()));
+	  });
+	  if (!main_core.Type.isArrayFilled(removedItems)) {
+	    return;
+	  }
+	  var balloonOptions = {
+	    content: _classPrivateMethodGet$1(this, _getDeleteTitle, _getDeleteTitle2).call(this, removedItems)
+	  };
+	  var grid = babelHelpers.classPrivateFieldGet(this, _grid$1);
+	  if (grid.getTypeInfoParam('isRecyclebinEnabled')) {
+	    balloonOptions.actions = [{
+	      title: main_core.Loc.getMessage('CRM_KANBAN_DELETE_CANCEL'),
+	      events: {
+	        click: function click() {
+	          return _classPrivateMethodGet$1(_this4, _onDeletionCancelClick, _onDeletionCancelClick2).call(_this4, balloon, removedItems);
+	        }
+	      }
+	    }];
+	  }
+	  var balloon = ui_notification.UI.Notification.Center.notify(balloonOptions);
+	}
+	function _getDeleteTitle2(removedItems) {
+	  var ids = babelHelpers.classPrivateFieldGet(this, _ids);
+	  if (ids.length === 1) {
+	    return main_core.Loc.getMessage('CRM_KANBAN_DELETE_SUCCESS', {
+	      '#ELEMENT_NAME#': removedItems[0].getData().name
+	    });
+	  }
+	  var difference = ids.length - removedItems.length;
+	  if (difference === 0) {
+	    return main_core.Loc.getMessage('CRM_KANBAN_DELETE_SUCCESS_MULTIPLE');
+	  }
+	  return main_core.Loc.getMessage('CRM_KANBAN_DELETE_SUCCESS_MULTIPLE_WITH_ERRORS', {
+	    '#COUNT#': difference
+	  });
+	}
+	function _onDeletionCancelClick2(balloon, removedItems) {
+	  var _this5 = this;
+	  balloon.close();
+	  var grid = babelHelpers.classPrivateFieldGet(this, _grid$1);
+	  var entityIds = babelHelpers.classPrivateFieldGet(this, _ids);
+	  var _grid$getData = grid.getData(),
+	    entityTypeId = _grid$getData.entityTypeInt;
+	  main_core.ajax.runComponentAction('bitrix:crm.kanban', 'restore', {
+	    mode: 'ajax',
+	    data: {
+	      entityIds: entityIds,
+	      entityTypeId: entityTypeId
+	    }
+	  }).then(function (_ref2) {
+	    var data = _ref2.data;
+	    if (!main_core.Type.isPlainObject(data)) {
+	      return;
+	    }
+	    var ids = Object.values(data).filter(function (id) {
+	      return main_core.Type.isNumber(id);
+	    });
+	    if (main_core.Type.isArrayFilled(ids)) {
+	      babelHelpers.classPrivateFieldGet(_this5, _grid$1).loadNew(ids, false, true, true, true).then(function (response) {
+	        var autoHideDelay = 6000;
+	        ui_notification.UI.Notification.Center.notify({
+	          content: main_core.Loc.getMessage('CRM_KANBAN_DELETE_RESTORE_SUCCESS'),
+	          autoHideDelay: autoHideDelay
+	        });
+	      }, function () {
+	        _classPrivateMethodGet$1(_this5, _showActionError, _showActionError2).call(_this5);
+	      })["catch"](function () {
+	        _classPrivateMethodGet$1(_this5, _showActionError, _showActionError2).call(_this5);
+	      });
+	    }
+	  }, function (response) {
+	    return _classPrivateMethodGet$1(_this5, _onReject, _onReject2).call(_this5, response);
+	  })["catch"](function () {
+	    _classPrivateMethodGet$1(_this5, _showActionError, _showActionError2).call(_this5);
+	  });
+	}
+	function _showActionError2() {
+	  ui_notification.UI.Notification.Center.notify({
+	    content: main_core.Loc.getMessage('CRM_KANBAN_ACTION_ERROR')
+	  });
+	}
+	function _restoreItemInColumn2(item) {
+	  var lastPosition = item.getLastPosition();
+	  if (!lastPosition.columnId) {
+	    return;
+	  }
+	  var data = item.getData();
+	  data.columnId = lastPosition.columnId;
+	  data.targetId = lastPosition.targetId;
+	  var grid = babelHelpers.classPrivateFieldGet(this, _grid$1);
+	  var price = parseFloat(data.price);
+	  grid.getColumn(item.columnId).incPrice(price);
+	  grid.updateItem(item.getId(), data);
+	  grid.unhideItem(item);
+	}
+	function _onReject2(response) {
+	  var content = response.errors[0].message;
+	  ui_notification.UI.Notification.Center.notify({
+	    content: content
+	  });
+	}
+	NAMESPACE$1.DeleteAction = DeleteAction;
 
 	var _templateObject, _templateObject2, _templateObject3, _templateObject4, _templateObject5, _templateObject6, _templateObject7, _templateObject8, _templateObject9, _templateObject10;
 	var TYPE_VIEW = 'view';
@@ -361,6 +870,22 @@ this.BX.Crm = this.BX.Crm || {};
 	  return FieldsSelector;
 	}();
 
+	var ViewMode = {
+	  MODE_STAGES: 'STAGES',
+	  MODE_ACTIVITIES: 'ACTIVITIES',
+	  MODE_DEADLINES: 'DEADLINES',
+	  getDefault: function getDefault() {
+	    return this.MODE_STAGES;
+	  },
+	  getAll: function getAll() {
+	    return [this.MODE_STAGES, this.MODE_ACTIVITIES, this.MODE_DEADLINES];
+	  },
+	  normalize: function normalize(mode) {
+	    return this.getAll().includes(mode) ? mode : this.getDefault();
+	  }
+	};
+	Object.freeze(ViewMode);
+
 	var PullOperation = /*#__PURE__*/function () {
 	  babelHelpers.createClass(PullOperation, null, [{
 	    key: "createInstance",
@@ -420,10 +945,18 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "updateItem",
 	    value: function updateItem() {
+	      var _this$grid$itemMoving, _this$grid$itemMoving2, _this$grid$itemMoving3;
 	      var params = this.getActionParams();
 	      var item = this.grid.getItem(params.item.id);
 	      var paramsItem = params.item;
 	      if (!item) {
+	        return;
+	      }
+	      var _this$grid$getData = this.grid.getData(),
+	        viewMode = _this$grid$getData.viewMode;
+	      if ([ViewMode.MODE_ACTIVITIES, ViewMode.MODE_DEADLINES].includes(viewMode)) {
+	        item.useAnimation = false;
+	        this.grid.insertItem(item);
 	        return;
 	      }
 	      var insertItemParams = {};
@@ -464,9 +997,12 @@ this.BX.Crm = this.BX.Crm || {};
 	        }
 	        return;
 	      }
-	      var oldColumn = this.grid.getColumn(oldColumnId);
-	      oldColumn.decPrice(oldPrice);
-	      oldColumn.renderSubTitle();
+	      var groupIds = (_this$grid$itemMoving = (_this$grid$itemMoving2 = this.grid.itemMoving) === null || _this$grid$itemMoving2 === void 0 ? void 0 : (_this$grid$itemMoving3 = _this$grid$itemMoving2.dropEvent) === null || _this$grid$itemMoving3 === void 0 ? void 0 : _this$grid$itemMoving3.groupIds) !== null && _this$grid$itemMoving !== void 0 ? _this$grid$itemMoving : [];
+	      if (!groupIds.includes(item.id)) {
+	        var oldColumn = this.grid.getColumn(oldColumnId);
+	        oldColumn.decPrice(oldPrice);
+	        oldColumn.renderSubTitle();
+	      }
 	      if (newColumn) {
 	        newColumn.incPrice(newPrice);
 	        newColumn.renderSubTitle();
@@ -495,24 +1031,9 @@ this.BX.Crm = this.BX.Crm || {};
 	  return PullOperation;
 	}();
 
-	var ViewMode = {
-	  MODE_STAGES: 'STAGES',
-	  MODE_ACTIVITIES: 'ACTIVITIES',
-	  getDefault: function getDefault() {
-	    return this.MODE_STAGES;
-	  },
-	  getAll: function getAll() {
-	    return [this.MODE_STAGES, this.MODE_ACTIVITIES];
-	  },
-	  normalize: function normalize(mode) {
-	    return this.getAll().includes(mode) ? mode : this.getDefault();
-	  }
-	};
-	Object.freeze(ViewMode);
-
-	function _classPrivateMethodInitSpec(obj, privateSet) { _checkPrivateRedeclaration(obj, privateSet); privateSet.add(obj); }
-	function _checkPrivateRedeclaration(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
-	function _classPrivateMethodGet(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+	function _classPrivateMethodInitSpec$2(obj, privateSet) { _checkPrivateRedeclaration$2(obj, privateSet); privateSet.add(obj); }
+	function _checkPrivateRedeclaration$2(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	function _classPrivateMethodGet$2(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 	var EventName = {
 	  itemUpdated: 'ITEMUPDATED',
 	  itemAdded: 'ITEMADDED',
@@ -533,19 +1054,20 @@ this.BX.Crm = this.BX.Crm || {};
 	var _onPullStageChanged = /*#__PURE__*/new WeakSet();
 	var _onPullStageDeleted = /*#__PURE__*/new WeakSet();
 	var PullManager = function PullManager(_grid) {
-	  var _this = this;
+	  var _data$additionalPullT,
+	    _this = this;
 	  babelHelpers.classCallCheck(this, PullManager);
-	  _classPrivateMethodInitSpec(this, _onPullStageDeleted);
-	  _classPrivateMethodInitSpec(this, _onPullStageChanged);
-	  _classPrivateMethodInitSpec(this, _onPullItemDeleted);
-	  _classPrivateMethodInitSpec(this, _getPullData);
-	  _classPrivateMethodInitSpec(this, _onPullItemAdded);
-	  _classPrivateMethodInitSpec(this, _onPullItemUpdated);
-	  _classPrivateMethodInitSpec(this, _onPull);
-	  _classPrivateMethodInitSpec(this, _onBeforePull);
-	  _classPrivateMethodInitSpec(this, _onReload);
-	  _classPrivateMethodInitSpec(this, _onQueueExecute);
-	  _classPrivateMethodInitSpec(this, _onBeforeQueueExecute);
+	  _classPrivateMethodInitSpec$2(this, _onPullStageDeleted);
+	  _classPrivateMethodInitSpec$2(this, _onPullStageChanged);
+	  _classPrivateMethodInitSpec$2(this, _onPullItemDeleted);
+	  _classPrivateMethodInitSpec$2(this, _getPullData);
+	  _classPrivateMethodInitSpec$2(this, _onPullItemAdded);
+	  _classPrivateMethodInitSpec$2(this, _onPullItemUpdated);
+	  _classPrivateMethodInitSpec$2(this, _onPull);
+	  _classPrivateMethodInitSpec$2(this, _onBeforePull);
+	  _classPrivateMethodInitSpec$2(this, _onReload);
+	  _classPrivateMethodInitSpec$2(this, _onQueueExecute);
+	  _classPrivateMethodInitSpec$2(this, _onBeforeQueueExecute);
 	  if (!BX.PULL) {
 	    console.info('BX.PULL is not initialized');
 	    return;
@@ -555,27 +1077,28 @@ this.BX.Crm = this.BX.Crm || {};
 	  var _options = {
 	    moduleId: _data.moduleId,
 	    pullTag: _data.pullTag,
+	    additionalPullTags: (_data$additionalPullT = _data.additionalPullTags) !== null && _data$additionalPullT !== void 0 ? _data$additionalPullT : [],
 	    userId: _data.userId,
 	    additionalData: {
 	      viewMode: _data.viewMode
 	    },
 	    events: {
 	      onBeforePull: function onBeforePull(event) {
-	        _classPrivateMethodGet(_this, _onBeforePull, _onBeforePull2).call(_this, event);
+	        _classPrivateMethodGet$2(_this, _onBeforePull, _onBeforePull2).call(_this, event);
 	      },
 	      onPull: function onPull(event) {
-	        _classPrivateMethodGet(_this, _onPull, _onPull2).call(_this, event);
+	        _classPrivateMethodGet$2(_this, _onPull, _onPull2).call(_this, event);
 	      }
 	    },
 	    callbacks: {
 	      onBeforeQueueExecute: function onBeforeQueueExecute(items) {
-	        return _classPrivateMethodGet(_this, _onBeforeQueueExecute, _onBeforeQueueExecute2).call(_this, items);
+	        return _classPrivateMethodGet$2(_this, _onBeforeQueueExecute, _onBeforeQueueExecute2).call(_this, items);
 	      },
 	      onQueueExecute: function onQueueExecute(items) {
-	        return _classPrivateMethodGet(_this, _onQueueExecute, _onQueueExecute2).call(_this, items);
+	        return _classPrivateMethodGet$2(_this, _onQueueExecute, _onQueueExecute2).call(_this, items);
 	      },
 	      onReload: function onReload() {
-	        _classPrivateMethodGet(_this, _onReload, _onReload2).call(_this);
+	        _classPrivateMethodGet$2(_this, _onReload, _onReload2).call(_this);
 	      }
 	    }
 	  };
@@ -624,50 +1147,46 @@ this.BX.Crm = this.BX.Crm || {};
 	function _onPull2(event) {
 	  var params = event.data.pullData.params;
 	  if (params.eventName === EventName.itemUpdated) {
-	    _classPrivateMethodGet(this, _onPullItemUpdated, _onPullItemUpdated2).call(this, event);
+	    _classPrivateMethodGet$2(this, _onPullItemUpdated, _onPullItemUpdated2).call(this, event);
 	    return;
 	  }
 	  if (params.eventName === EventName.itemAdded) {
-	    _classPrivateMethodGet(this, _onPullItemAdded, _onPullItemAdded2).call(this, event);
+	    _classPrivateMethodGet$2(this, _onPullItemAdded, _onPullItemAdded2).call(this, event);
 	    return;
 	  }
 	  if (params.eventName === EventName.itemDeleted) {
-	    _classPrivateMethodGet(this, _onPullItemDeleted, _onPullItemDeleted2).call(this, event);
+	    _classPrivateMethodGet$2(this, _onPullItemDeleted, _onPullItemDeleted2).call(this, event);
 	    return;
 	  }
 	  if (params.eventName === EventName.stageAdded) {
-	    _classPrivateMethodGet(this, _onPullStageChanged, _onPullStageChanged2).call(this, event);
+	    _classPrivateMethodGet$2(this, _onPullStageChanged, _onPullStageChanged2).call(this, event);
 	    return;
 	  }
 	  if (params.eventName === EventName.stageUpdated) {
-	    _classPrivateMethodGet(this, _onPullStageChanged, _onPullStageChanged2).call(this, event);
+	    _classPrivateMethodGet$2(this, _onPullStageChanged, _onPullStageChanged2).call(this, event);
 	    return;
 	  }
 	  if (params.eventName === EventName.stageDeleted) {
-	    _classPrivateMethodGet(this, _onPullStageDeleted, _onPullStageDeleted2).call(this, event);
+	    _classPrivateMethodGet$2(this, _onPullStageDeleted, _onPullStageDeleted2).call(this, event);
 	  }
 	}
 	function _onPullItemUpdated2(event) {
-	  if (main_core.Type.isNil(event.data)) {
-	    return;
-	  }
 	  var _event$data2 = event.data,
 	    params = _event$data2.pullData.params,
 	    promises = _event$data2.promises;
 	  var item = this.grid.getItem(params.item.id);
 	  if (item) {
 	    promises.push(Promise.resolve({
-	      data: _classPrivateMethodGet(this, _getPullData, _getPullData2).call(this, 'updateItem', params)
+	      data: _classPrivateMethodGet$2(this, _getPullData, _getPullData2).call(this, 'updateItem', params)
 	    }));
 	    return;
 	  }
-	  _classPrivateMethodGet(this, _onPullItemAdded, _onPullItemAdded2).call(this, params);
-	  event.preventDefault();
+
+	  // eslint-disable-next-line no-param-reassign
+	  params.eventName = EventName.itemAdded;
+	  _classPrivateMethodGet$2(this, _onPullItemAdded, _onPullItemAdded2).call(this, event);
 	}
 	function _onPullItemAdded2(event) {
-	  if (main_core.Type.isNil(event.data)) {
-	    return;
-	  }
 	  var _event$data3 = event.data,
 	    params = _event$data3.pullData.params,
 	    promises = _event$data3.promises;
@@ -678,7 +1197,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    return;
 	  }
 	  promises.push(Promise.resolve({
-	    data: _classPrivateMethodGet(this, _getPullData, _getPullData2).call(this, 'addItem', params)
+	    data: _classPrivateMethodGet$2(this, _getPullData, _getPullData2).call(this, 'addItem', params)
 	  }));
 	}
 	function _getPullData2(action, actionParams) {
@@ -730,9 +1249,11 @@ this.BX.Crm = this.BX.Crm || {};
 	  this.grid.removeColumn(params.stage.id);
 	}
 
-	exports.PullManager = PullManager;
+	exports.DeleteAction = DeleteAction;
+	exports.SimpleAction = SimpleAction;
 	exports.FieldsSelector = FieldsSelector;
+	exports.PullManager = PullManager;
 	exports.ViewMode = ViewMode;
 
-}((this.BX.Crm.Kanban = this.BX.Crm.Kanban || {}),BX,BX.Main,BX.Event,BX.Pull,BX.CRM.Kanban,BX));
+}((this.BX.Crm.Kanban = this.BX.Crm.Kanban || {}),BX.Crm.Integration.Analytics,BX,BX.Main,BX.Event,BX.Pull,BX.CRM.Kanban,BX));
 //# sourceMappingURL=kanban.js.map

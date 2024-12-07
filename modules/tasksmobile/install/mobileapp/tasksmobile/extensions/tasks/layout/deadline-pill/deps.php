@@ -2,18 +2,21 @@
 
 return [
 	'extensions' => [
-		'apptheme',
-		'loc',
+		'toast',
+		'haptics',
+		'tokens',
+		'assets/icons',
 		'statemanager/redux/connect',
-		'tasks:deadline-picker',
-		'tasks:layout/deadline-friendly-date',
-		'tasks:layout/online',
-		'tasks:statemanager/redux/slices/tasks',
-		'tasks:enum',
 		'utils/color',
 		'utils/date',
 		'utils/validation',
-		'toast',
-		'haptics',
+		'ui-system/typography/text',
+
+		'tasks:enum',
+		'tasks:deadline-picker',
+		'tasks:loc',
+		'tasks:layout/deadline-friendly-date',
+		'tasks:layout/online',
+		'tasks:statemanager/redux/slices/tasks',
 	],
 ];

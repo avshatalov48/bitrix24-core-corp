@@ -2,13 +2,14 @@
  * @module tasks/layout/checklist/list/src/actions/attachments
  */
 jn.define('tasks/layout/checklist/list/src/actions/attachments', (require, exports, module) => {
-	const { Color } = require('tokens');
+	const { Color, Indent } = require('tokens');
 	const { RequestExecutor } = require('rest');
 	const { withCurrentDomain } = require('utils/url');
 	const { FileField } = require('layout/ui/fields/file');
-	const { useCallback } = require('utils/function');
-	const { IconView, iconTypes } = require('ui-system/blocks/icon');
+	const { IconView, Icon } = require('ui-system/blocks/icon');
 	const { isEqual } = require('utils/object');
+	const { Text4 } = require('ui-system/typography/text');
+	const { NotifyManager } = require('notify-manager');
 
 	const ICON_SIZE = 24;
 
@@ -17,43 +18,6 @@ jn.define('tasks/layout/checklist/list/src/actions/attachments', (require, expor
 	 */
 	class ItemAttachments extends LayoutComponent
 	{
-		constructor(props)
-		{
-			super(props);
-
-			/** @type {FileField} */
-			this.ref = null;
-			this.initialAttachedInfo(props);
-			this.handleAddAttachedFiles = this.handleAddAttachedFiles.bind(this);
-			this.handleOnOpenAttachmentList = this.handleOnOpenAttachmentList.bind(this);
-		}
-
-		componentDidMount()
-		{
-			this.getAttachmentsInfo().then((files) => {
-				this.handleAddAttachedFiles(files);
-			}).catch((e) => {
-				if (e)
-				{
-					console.error(e);
-				}
-			});
-		}
-
-		componentWillReceiveProps(props)
-		{
-			this.initialAttachedInfo(props);
-		}
-
-		initialAttachedInfo(props)
-		{
-			const { item } = props;
-
-			this.state = {
-				fileInfo: item.getAttachments(),
-			};
-		}
-
 		async getAttachmentsInfo()
 		{
 			const { item } = this.props;
@@ -78,21 +42,20 @@ jn.define('tasks/layout/checklist/list/src/actions/attachments', (require, expor
 				}
 			});
 
-			const attachmentsData = await new RequestExecutor('mobile.disk.getattachmentsdata', {
-				attachmentsIds,
-			}).call(true).then((data) => {
-				if (data?.errors)
-				{
-					console.error(data?.errors);
-				}
+			const attachmentsData = await new RequestExecutor('mobile.disk.getattachmentsdata', { attachmentsIds })
+				.call(true).then((data) => {
+					if (data?.errors)
+					{
+						console.error(data?.errors);
+					}
 
-				if (data?.result && Array.isArray(data.result) && data.result.length > 0)
-				{
-					return this.prepareAttachmentData(data.result);
-				}
+					if (data?.result && Array.isArray(data.result) && data.result.length > 0)
+					{
+						return this.prepareAttachmentData(data.result);
+					}
 
-				return [];
-			});
+					return [];
+				}).catch(console.error);
 
 			return [...attachmentsInfo, ...attachmentsData];
 		}
@@ -103,74 +66,119 @@ jn.define('tasks/layout/checklist/list/src/actions/attachments', (require, expor
 				const { ID: id, NAME: name, EXTENSION: type, URL, OBJECT_ID: fileId } = attachment;
 				const url = withCurrentDomain(URL);
 
-				return { id, name, url, type, fileId: Number(id), serverFileId: `n${fileId}` };
+				return { id, name, url, type, fileId: Number(id), serverFileId: `n${fileId}`, isUploading: false };
 			});
 		}
 
-		handleAddAttachedFiles(files)
-		{
-			const { fileInfo } = this.state;
-
+		handleUpdateAttachedFiles = (files) => {
+			const fileInfo = this.getFileInfo();
 			const attachedFiles = Array.isArray(files) ? files : [];
 			const attachedFilesInfo = {};
 
-			attachedFiles.forEach((file) => {
+			attachedFiles.filter(Boolean).forEach((file) => {
 				let fileId = file?.id;
 				let attachedFileInfo = file;
 
 				if (BX.type.isNumber(Number(file)))
 				{
 					fileId = file;
-					attachedFileInfo = fileInfo[file];
+					attachedFileInfo = fileInfo[fileId];
 				}
 
 				attachedFilesInfo[fileId] = attachedFileInfo;
 			});
 
-			this.updateAttachments(attachedFilesInfo);
-		}
+			void this.handleOnChangeInfo(attachedFilesInfo);
+		};
 
 		isChangedFiles(fileInfo)
 		{
-			const { fileInfo: stateFileInfo } = this.state;
+			const stateFileInfo = this.getFileInfo();
 
-			return !isEqual(Object.keys(fileInfo), Object.keys(stateFileInfo));
+			return !isEqual(this.prepareUploadingInfo(fileInfo), this.prepareUploadingInfo(stateFileInfo));
 		}
 
-		updateAttachments(fileInfo)
+		prepareUploadingInfo = (info) => Object.values(info).map((file) => ({
+			id: file?.id,
+			isUploading: file?.isUploading,
+		}));
+
+		async handleOnChangeInfo(fileInfo)
 		{
-			const { fileInfo: stateFileInfo } = this.state;
+			const isChanged = this.isChangedFiles(fileInfo);
+			const prevFilesCount = this.getFilesCount();
+			const shouldRender = prevFilesCount === 0 || this.getFilesCount() === 0;
+			this.setFileInfo(fileInfo);
+
+			if (isChanged && this.getFilesCount() > 0)
+			{
+				this.setState({
+					fileInfo: this.prepareUploadingInfo(fileInfo),
+				}, () => {
+					this.handleOnChange(shouldRender);
+				});
+			}
+		}
+
+		handleOnChange(shouldRender = true)
+		{
 			const { item, onChange } = this.props;
 
-			if (!this.isChangedFiles(fileInfo, stateFileInfo))
+			if (onChange)
 			{
-				return;
+				return onChange({ item, shouldRender });
 			}
 
-			item.setAttachments(fileInfo);
-			this.setState({ fileInfo }, () => {
-				if (onChange)
-				{
-					onChange(item);
-				}
-			});
+			return Promise.resolve();
 		}
 
 		addFile()
 		{
-			this.ref.openFilePicker();
+			this.getFieldRef().openFilePicker();
 		}
 
-		handleOnOpenAttachmentList()
-		{
-			this.ref.onOpenAttachmentList();
-		}
+		handleOnOpenAttachmentList = async () => {
+			let fileInfo = this.getFileInfo();
+			const isUploadedFileInfo = Object.values(fileInfo).every((attachment) => typeof attachment?.isUploading === 'boolean' && !attachment.isUploading);
+
+			if (!isUploadedFileInfo)
+			{
+				void NotifyManager.showLoadingIndicator(true);
+				fileInfo = await this.getAttachmentsInfo();
+				NotifyManager.hideLoadingIndicatorWithoutFallback();
+			}
+
+			const { layoutWidget } = await this.getFieldRef().onOpenAttachmentList();
+
+			layoutWidget.preventBottomSheetDismiss(true);
+			layoutWidget.on('preventDismiss', () => {
+				this.handleOnChange();
+
+				layoutWidget.close();
+			});
+
+			void this.handleOnChangeInfo(fileInfo);
+		};
 
 		getFilesCount()
 		{
-			const { fileInfo } = this.state;
+			const { item } = this.props;
 
-			return Object.keys(fileInfo).length;
+			return item.getAttachmentsCount();
+		}
+
+		getFileInfo()
+		{
+			const { item } = this.props;
+
+			return item.getAttachments();
+		}
+
+		setFileInfo(fileInfo)
+		{
+			const { item } = this.props;
+
+			return item.setAttachments(fileInfo);
 		}
 
 		getAttachmentsCount()
@@ -185,17 +193,30 @@ jn.define('tasks/layout/checklist/list/src/actions/attachments', (require, expor
 			return String(count);
 		}
 
+		setFieldRef = (ref) => {
+			const { item } = this.props;
+
+			if (!layout.fileFieldRef)
+			{
+				layout.fileFieldRef = new Map();
+			}
+
+			layout.fileFieldRef.set(item.getNodeId(), ref);
+		};
+
+		/**
+		 * @return {FileField}
+		 */
+		getFieldRef()
+		{
+			const { item } = this.props;
+
+			return layout.fileFieldRef.get(item.getNodeId());
+		}
+
 		render()
 		{
-			const { parentWidget, diskConfig, testId } = this.props;
-			const { fileInfo } = this.state;
-			const value = Object.values(fileInfo);
-			const showFileCounter = this.getFilesCount() > 0;
-
-			if (!diskConfig?.folderId)
-			{
-				console.error('FolderId not found');
-			}
+			const { testId } = this.props;
 
 			return View(
 				{
@@ -204,56 +225,78 @@ jn.define('tasks/layout/checklist/list/src/actions/attachments', (require, expor
 						flexDirection: 'row',
 					},
 				},
-				showFileCounter && View(
-					{
-						style: {
-							flexDirection: 'row',
-							marginRight: 14,
-						},
-						onClick: this.handleOnOpenAttachmentList,
-					},
-					IconView({
-						iconSize: ICON_SIZE,
-						iconColor: Color.base3,
-						icon: iconTypes.outline.attach1,
-					}),
-					Text({
-						style: {
-							color: Color.base3,
-							fontSize: 14,
-						},
-						text: this.getAttachmentsCount(),
-					}),
-				),
-				FileField({
-					ref: useCallback((ref) => {
-						this.ref = ref;
-					}),
-					value,
-					showTitle: false,
-					showAddButton: false,
-					multiple: true,
-					showLeftIcon: false,
-					hasHiddenEmptyView: true,
-					config: {
-						deepMergeStyles: {
-							wrapper: {
-								display: 'none',
-								paddingTop: 0,
-								paddingBottom: 0,
-							},
-						},
-						mediaType: 'file',
-						parentWidget,
-						controller: {
-							options: {
-								folderId: diskConfig?.folderId,
-							},
-							endpoint: 'disk.uf.integration.diskUploaderController',
+				this.renderFileField(),
+			);
+		}
+
+		renderFileField()
+		{
+			const { parentWidget, diskConfig, readOnly } = this.props;
+			const fileInfo = this.getFileInfo();
+			const value = Object.values(fileInfo);
+
+			if (!diskConfig?.folderId)
+			{
+				console.warn('Checklist: folderId not found, cannot save');
+			}
+
+			return FileField({
+				value,
+				showTitle: false,
+				showAddButton: false,
+				multiple: true,
+				showLeftIcon: false,
+				hasHiddenEmptyView: true,
+				config: {
+					deepMergeStyles: {
+						wrapper: {
+							display: 'none',
+							paddingTop: 0,
+							paddingBottom: 0,
 						},
 					},
-					readOnly: false,
-					onChange: this.handleAddAttachedFiles,
+					mediaType: 'file',
+					parentWidget,
+					controller: {
+						options: {
+							folderId: diskConfig?.folderId,
+						},
+						endpoint: 'disk.uf.integration.diskUploaderController',
+					},
+				},
+				readOnly,
+				onChange: this.handleUpdateAttachedFiles,
+				ThemeComponent: ({ field }) => {
+					this.setFieldRef(field);
+
+					return this.renderFileCounter();
+				},
+			});
+		}
+
+		renderFileCounter()
+		{
+			if (!this.getFilesCount())
+			{
+				return null;
+			}
+
+			return View(
+				{
+					style: {
+						flexDirection: 'row',
+						marginRight: Indent.M.toNumber(),
+					},
+					onClick: this.handleOnOpenAttachmentList,
+				},
+				IconView({
+					size: ICON_SIZE,
+					color: Color.base3,
+					icon: Icon.ATTACH,
+				}),
+				Text4({
+					color: Color.base3,
+					text: this.getAttachmentsCount(),
 				}),
 			);
 		}

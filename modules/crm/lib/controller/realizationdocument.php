@@ -2,6 +2,7 @@
 
 namespace Bitrix\Crm\Controller;
 
+use Bitrix\Catalog\Config\State;
 use Bitrix\Main;
 use Bitrix\Crm;
 use Bitrix\Sale;
@@ -223,7 +224,7 @@ class RealizationDocument extends Main\Engine\Controller
 	 */
 	public function setShippedAction(int $id, string $value): void
 	{
-		if (!Catalog\Component\UseStore::isUsed())
+		if (!State::isUsedInventoryManagement())
 		{
 			$this->addError(
 				new Main\Error(

@@ -32,6 +32,23 @@ jn.define('im/messenger/model/validators/message', (require, exports, module) =>
 			result.templateId = fields.id;
 		}
 
+		if (Type.isNumber(fields.previousId))
+		{
+			// from database
+			result.previousId = fields.previousId;
+		}
+		else if (Type.isNumber(fields.prevId))
+		{
+			// from push & pull
+			result.previousId = fields.prevId;
+		}
+
+		if (Type.isNumber(fields.nextId))
+		{
+			// from database
+			result.nextId = fields.nextId;
+		}
+
 		if (!Type.isUndefined(fields.chat_id))
 		{
 			fields.chatId = fields.chat_id;
@@ -91,6 +108,11 @@ jn.define('im/messenger/model/validators/message', (require, exports, module) =>
 			result.attach = fields.attach;
 		}
 
+		if (Type.isArray(fields.keyboard))
+		{
+			result.keyboard = fields.keyboard;
+		}
+
 		if (Type.isNumber(fields.richLinkId) || Type.isNull(fields.richLinkId))
 		{
 			result.richLinkId = fields.richLinkId;
@@ -98,7 +120,7 @@ jn.define('im/messenger/model/validators/message', (require, exports, module) =>
 
 		if (Type.isPlainObject(fields.params))
 		{
-			const { params, fileIds, attach, richLinkId } = validateParams(fields.params);
+			const { params, fileIds, attach, richLinkId, keyboard } = validateParams(fields.params);
 			result.params = params;
 			result.files = fileIds;
 			result.richLinkId = richLinkId;
@@ -111,6 +133,11 @@ jn.define('im/messenger/model/validators/message', (require, exports, module) =>
 			if (Type.isUndefined(result.richLinkId))
 			{
 				result.richLinkId = richLinkId;
+			}
+
+			if (Type.isUndefined(result.keyboard))
+			{
+				result.keyboard = keyboard;
 			}
 		}
 
@@ -201,6 +228,7 @@ jn.define('im/messenger/model/validators/message', (require, exports, module) =>
 		const params = {};
 		let fileIds = [];
 		let attach = [];
+		let keyboard = [];
 		let richLinkId = null;
 
 		Object.entries(rawParams).forEach(([key, value]) => {
@@ -225,6 +253,28 @@ jn.define('im/messenger/model/validators/message', (require, exports, module) =>
 				attach = ObjectUtils.convertKeysToCamelCase(clone(value), true);
 				params.ATTACH = value;
 			}
+			else if (key === 'KEYBOARD')
+			{
+				if (Type.isArray(value))
+				{
+					keyboard = ObjectUtils.convertKeysToCamelCase(clone(value), true);
+					keyboard = keyboard.map((rawButton) => {
+						return {
+							...rawButton,
+							block: rawButton.block === 'Y',
+							disabled: rawButton.disabled === 'Y',
+							vote: rawButton.vote === 'Y',
+							wait: rawButton.wait === 'Y',
+						};
+					});
+
+					params.KEYBOARD = value;
+				}
+				else
+				{
+					params.KEYBOARD = [];
+				}
+			}
 			else if (key === 'URL_ID')
 			{
 				richLinkId = value[0] ? Number(value[0]) : null;
@@ -236,7 +286,7 @@ jn.define('im/messenger/model/validators/message', (require, exports, module) =>
 			}
 		});
 
-		return { params, fileIds, attach, richLinkId };
+		return { params, fileIds, attach, richLinkId, keyboard };
 	}
 
 	module.exports = { validate };

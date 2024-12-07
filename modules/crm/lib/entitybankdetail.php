@@ -2,6 +2,9 @@
 
 namespace Bitrix\Crm;
 
+use Bitrix\Crm\Attribute\FieldAttributeManager;
+use Bitrix\Crm\Attribute\FieldOrigin;
+use Bitrix\Crm\Entity\BankDetailValidator;
 use Bitrix\Crm\Integrity\DuplicateBankDetailCriterion;
 use Bitrix\Crm\Integrity\DuplicateVolatileCriterion;
 use Bitrix\Crm\Integrity\Volatile\FieldCategory;
@@ -23,6 +26,7 @@ class EntityBankDetail
 	const ERR_NOTHING_TO_DELETE     = 204;
 	const ERR_FIELD_LENGTH_MIN      = 205;
 	const ERR_FIELD_LENGTH_MAX      = 206;
+	const ERR_FIELD_REQUIRED        = 207;
 
 	private static $singleInstance = null;
 
@@ -390,6 +394,51 @@ class EntityBankDetail
 		return $countryId;
 	}
 
+	public function getPresetIdByOwnerEntity(int $entityTypeId, int $entityId): int
+	{
+		$presetId = 0;
+
+		if ($entityTypeId === CCrmOwnerType::Requisite && $entityId > 0)
+		{
+			$presetId = EntityRequisite::getSingleInstance()->getPresetIdByRequisiteId($entityId);
+		}
+
+		return $presetId;
+	}
+
+	public function getCountryIdByFields(int $bankDetailId, array $fields): int
+	{
+		$countryId = 0;
+		$entityTypeId = CCrmOwnerType::Undefined;
+		$entityId = 0;
+		$isUpdate = ($bankDetailId > 0);
+
+		if (isset($fields['COUNTRY_ID']))
+		{
+			$countryId = (int)$fields['COUNTRY_ID'];
+		}
+
+		if ($isUpdate && $countryId <= 0)
+		{
+			if (isset($fields['ENTITY_TYPE_ID']))
+			{
+				$entityTypeId = (int)$fields['ENTITY_TYPE_ID'];
+			}
+			if (isset($fields['ENTITY_ID']))
+			{
+				$entityId = (int)$fields['ENTITY_ID'];
+			}
+			$countryId = $this->getCountryIdByOwnerEntity($entityTypeId, $entityId);
+		}
+
+		if ($countryId < 0)
+		{
+			$countryId = 0;
+		}
+
+		return $countryId;
+	}
+
 	public function getRqFieldValidationMap()
 	{
 		if (self::$rqFieldValidationMap === null)
@@ -420,37 +469,100 @@ class EntityBankDetail
 		return self::$rqFieldValidationMap;
 	}
 
+	public function getPresetIdByFields(int $bankDetailId, array $fields): int
+	{
+		$entityTypeId = (int)($fields['ENTITY_TYPE_ID'] ?? 0);
+		$entityId = (int)($fields['ENTITY_ID'] ?? 0);
+
+		$presetId = $this->getPresetIdByOwnerEntity($entityTypeId, $entityId);
+
+		if ($presetId <= 0 && $bankDetailId > 0)
+		{
+			$ownerInfo = static::getOwnerEntityById($bankDetailId);
+			$presetId = $this->getPresetIdByOwnerEntity(
+				$ownerInfo['ENTITY_TYPE_ID'] ?? 0,
+				$ownerInfo['ENTITY_ID'] ?? 0
+			);
+		}
+
+		return $presetId;
+	}
+
+	public function checkRequiredFieldsBeforeSave(int $bankDetailId, array $fields, array $options = []): Main\Result
+	{
+		$result = new Main\Result();
+
+		$isUpdate = ($bankDetailId > 0);
+		$enableUserFieldCheck = !(
+			isset($options['DISABLE_USER_FIELD_CHECK'])
+			&& $options['DISABLE_USER_FIELD_CHECK'] === true
+		);
+		$enableRequiredUserFieldCheck = !(
+			isset($options['DISABLE_REQUIRED_USER_FIELD_CHECK'])
+			&& $options['DISABLE_REQUIRED_USER_FIELD_CHECK'] === true
+		);
+		if ($enableUserFieldCheck && $enableRequiredUserFieldCheck)
+		{
+			$fieldCheckOptions =
+				(
+					isset($options['FIELD_CHECK_OPTIONS'])
+					&& is_array($options['FIELD_CHECK_OPTIONS'])
+				)
+					? $options['FIELD_CHECK_OPTIONS']
+					: []
+			;
+
+			$requiredFields = FieldAttributeManager::getRequiredFields(
+				CCrmOwnerType::BankDetail,
+				$bankDetailId,
+				$fields,
+				FieldOrigin::UNDEFINED,
+				$fieldCheckOptions
+			);
+
+			$checkErrors = [];
+
+			$requiredSystemFields = $requiredFields[FieldOrigin::SYSTEM] ?? [];
+			if (!empty($requiredSystemFields))
+			{
+				$validator = new BankDetailValidator(
+					$bankDetailId,
+					$fields,
+					$this->getCountryIdByFields($bankDetailId, $fields)
+				);
+				$validationErrors = [];
+				foreach($requiredSystemFields as $fieldName)
+				{
+					if (!$isUpdate || array_key_exists($fieldName, $fields))
+					{
+						$validator->checkFieldPresence($fieldName, $validationErrors);
+					}
+				}
+
+				if (!empty($validationErrors))
+				{
+					foreach ($validationErrors as $error)
+					{
+						$result->addError(new Main\Error($error['text'], static::ERR_FIELD_REQUIRED));
+						$checkErrors[] = new Main\Error($error['text'], $error['id']);
+					}
+				}
+			}
+
+			if (!empty($checkErrors))
+			{
+				$result->setData(['CHECK_ERRORS' => $checkErrors]);
+			}
+		}
+
+		return $result;
+	}
+
 	public function checkRqFieldsBeforeSave($bankDetailId, $fields)
 	{
 		$result = new Main\Result();
 
-		$countryId = 0;
-		$bankDetailId = (int)$bankDetailId;
-		$entityTypeId = CCrmOwnerType::Undefined;
-		$entityId = 0;
-		$isUpdate = ($bankDetailId > 0);
-
-		if (isset($fields['ENTITY_TYPE_ID']))
-		{
-			$entityTypeId = (int)$fields['ENTITY_TYPE_ID'];
-		}
-		if (isset($fields['ENTITY_ID']))
-		{
-			$entityId = (int)$fields['ENTITY_ID'];
-		}
-		if (isset($fields['COUNTRY_ID']))
-		{
-			$countryId = (int)$fields['COUNTRY_ID'];
-		}
-
-		if ($isUpdate && $countryId <= 0)
-		{
-			$countryId = $this->getCountryIdByOwnerEntity($entityTypeId, $entityId);
-		}
-		if ($countryId < 0)
-		{
-			$countryId = 0;
-		}
+		$countryId = $this->getCountryIdByFields($bankDetailId, $fields);
 
 		$validationMap = $this->getRqFieldValidationMap();
 		$titleMap = $this->getRqFieldTitleMap();
@@ -512,11 +624,17 @@ class EntityBankDetail
 		return $result;
 	}
 
-	public function checkBeforeAdd($fields, $options = array())
+	public function checkBeforeAdd($fields, $options = [])
 	{
 		unset($fields['ID'], $fields['DATE_MODIFY'], $fields['MODIFY_BY_ID']);
 		$fields['DATE_CREATE'] = new \Bitrix\Main\Type\DateTime();
 		$fields['CREATED_BY_ID'] = \CCrmSecurityHelper::GetCurrentUserID();
+
+		$result = $this->checkRequiredFieldsBeforeSave(0, $fields, $options);
+		if (!$result->isSuccess())
+		{
+			return $result;
+		}
 
 		$result = $this->checkRqFieldsBeforeSave(0, $fields);
 		if (!$result->isSuccess())
@@ -627,7 +745,7 @@ class EntityBankDetail
 		$fields['CREATED_BY_ID'] = \CCrmSecurityHelper::GetCurrentUserID();
 
 		// rewrite some fields
-		$entity = RequisiteTable::getEntity();
+		$entity = BankDetailTable::getEntity();
 		foreach ($entity->getFields() as $field)
 		{
 			$fieldName = $field->getName();
@@ -639,6 +757,12 @@ class EntityBankDetail
 					$fields[$fieldName] = $field->getDefaultValue();
 				}
 			}
+		}
+
+		$result = $this->checkRequiredFieldsBeforeSave(0, $fields, $options);
+		if (!$result->isSuccess())
+		{
+			return $result;
 		}
 
 		$result = $this->checkRqFieldsBeforeSave(0, $fields);
@@ -683,11 +807,18 @@ class EntityBankDetail
 		return $result;
 	}
 
-	public function checkBeforeUpdate($id, $fields)
+	public function checkBeforeUpdate($id, $fields, array $options = [])
 	{
+		$id = (int)$id;
 		unset($fields['ID'], $fields['DATE_CREATE'], $fields['CREATED_BY_ID']);
 		$fields['DATE_MODIFY'] = new \Bitrix\Main\Type\DateTime();
 		$fields['MODIFY_BY_ID'] = \CCrmSecurityHelper::GetCurrentUserID();
+
+		$result = $this->checkRequiredFieldsBeforeSave($id, $fields, $options);
+		if (!$result->isSuccess())
+		{
+			return $result;
+		}
 
 		$result = $this->checkRqFieldsBeforeSave($id, $fields);
 		if (!$result->isSuccess())
@@ -919,7 +1050,7 @@ class EntityBankDetail
 		}
 
 		// rewrite some fields
-		$entity = RequisiteTable::getEntity();
+		$entity = BankDetailTable::getEntity();
 		foreach ($entity->getFields() as $field)
 		{
 			$fieldName = $field->getName();
@@ -931,6 +1062,12 @@ class EntityBankDetail
 					$fields[$fieldName] = $field->getDefaultValue();
 				}
 			}
+		}
+
+		$result = $this->checkRequiredFieldsBeforeSave($id, $fields, $options);
+		if (!$result->isSuccess())
+		{
+			return $result;
 		}
 
 		$result = $this->checkRqFieldsBeforeSave($id, $fields);
@@ -1204,7 +1341,7 @@ class EntityBankDetail
 	public function getFormFieldsTypes()
 	{
 		return array(
-			'AUTOCOMPLETE' => 'requisite_qutocomplete',
+			'AUTOCOMPLETE' => 'requisite_autocomplete',
 			'RQ_BANK_ADDR' => 'textarea',
 			'COMMENTS' => 'textarea'
 		);
@@ -1871,7 +2008,11 @@ class EntityBankDetail
 		);
 		while($fields = $res->Fetch())
 		{
-			$bankDetail->update($fields['ID'], array('ENTITY_TYPE_ID' => $entityTypeId, 'ENTITY_ID' => $targEntityId));
+			$bankDetail->update(
+				$fields['ID'],
+				['ENTITY_TYPE_ID' => $entityTypeId, 'ENTITY_ID' => $targEntityId],
+				['DISABLE_REQUIRED_USER_FIELD_CHECK' => true]
+			);
 		}
 	}
 

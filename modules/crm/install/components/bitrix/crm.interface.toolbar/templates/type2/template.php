@@ -221,7 +221,7 @@ $prefix =  $toolbarID.'_';
 				</span>
 			</a>
 			<span class="crm-btn-convert-arrow" id="<?=htmlspecialcharsbx($buttonID);?>"></span><?
-			?><script type="text/javascript">
+			?><script>
 				BX.ready(
 					function()
 					{
@@ -390,7 +390,7 @@ $prefix =  $toolbarID.'_';
 		<span class="bx-context-button-icon"></span>
 		<span><?=htmlspecialcharsbx(GetMessage('CRM_INTERFACE_TOOLBAR_BTN_MORE'))?></span>
 	</a>
-		<script type="text/javascript">
+		<script>
 			BX.ready(
 				function()
 				{

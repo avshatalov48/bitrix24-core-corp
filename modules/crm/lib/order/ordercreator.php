@@ -197,7 +197,7 @@ class OrderCreator
 		$factory = Container::getInstance()->getFactory($this->ownerTypeId);
 		if ($factory)
 		{
-			$item = $factory->getItem($this->ownerId);
+			$item = $factory->getItem($this->ownerId, ['ASSIGNED_BY_ID', 'CURRENCY_ID']);
 			if ($item && $item->hasField('ASSIGNED_BY_ID'))
 			{
 				$result['ASSIGNED_BY_ID'] = (int)$item->getAssignedById();

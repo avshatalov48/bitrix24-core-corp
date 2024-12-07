@@ -178,13 +178,11 @@ export class SearchItems extends EventEmitter
 	fadeOutAll()
 	{
 		this.entityStorage.getBacklog().fadeOut();
-		this.entityStorage.getBacklog().setActiveLoadItems(true);
 
 		const activeSprint = this.entityStorage.getActiveSprint();
 		if (activeSprint)
 		{
 			activeSprint.fadeOut();
-			activeSprint.setActiveLoadItems(true);
 
 			if (activeSprint.isHideContent())
 			{
@@ -195,7 +193,6 @@ export class SearchItems extends EventEmitter
 		this.entityStorage.getPlannedSprints()
 			.forEach((sprint: Sprint) => {
 				sprint.fadeOut();
-				sprint.setActiveLoadItems(true);
 				if (sprint.isHideContent())
 				{
 					sprint.toggleVisibilityContent(sprint.getContentContainer());

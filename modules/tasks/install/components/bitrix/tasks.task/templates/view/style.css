@@ -443,7 +443,7 @@ input.task-detail-field-add {
 
 .task-detail-extra {
 	display: flex;
-	align-items: flex-start;
+	align-items: center;
 }
 
 .task-detail-extra.--flex-wrap {
@@ -475,8 +475,25 @@ input.task-detail-field-add {
 	min-width: auto;
 }
 
+.task-detail-extra-copilot-readonly a {
+	color: #965fee;
+	margin: 0 0 0 8px;
+	font-size: var(--ui-font-size-sm);
+	cursor: pointer;
+}
+
+.task-detail-extra-copilot-readonly a:hover {
+	color: #843bf6;
+}
+
 .task-detail-group-member-selector {
 	display: inline-flex;
+}
+
+.tasks-detail-tariff-lock-container {
+	display: flex;
+	flex-wrap: wrap;
+	cursor: pointer;
 }
 
 .task-detail-group.--flex-center {
@@ -517,11 +534,13 @@ input.task-detail-field-add {
 	display: none;
 }
 
+.task-flow-field-inner,
 .task-group-field-inner {
 	display: inline-block;
 	position: relative;
 }
 
+.task-detail-flow-wrap .task-flow-field-inner,
 .task-detail-group-wrap .task-group-field-inner {
 	padding-right: 22px;
 	margin-right: 20px;
@@ -535,6 +554,18 @@ input.task-detail-field-add {
 	color: #2067b0;
 	border-bottom: 1px solid transparent;
 	transition: border-bottom-color .2s linear;
+}
+
+.task-flow-field-label {
+	font-size: 14px;
+	line-height: 18px;
+	color: #2067b0;
+	border-bottom: 1px solid transparent;
+	transition: border-bottom-color .2s linear;
+}
+
+.task-flow-field-label:hover {
+	border-bottom: 1px solid;
 }
 
 .task-group-field-inner a.task-group-field-label {

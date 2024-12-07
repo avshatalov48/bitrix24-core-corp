@@ -107,6 +107,7 @@
 				backgroundColor: '#E6000000',
 				message: message.body,
 				time: SHOW_NOTIFICATION_FOR_SECONDS,
+				imageUrl: message.imageUrl,
 			});
 		}
 	}
@@ -116,13 +117,14 @@
 	 */
 	class Message
 	{
-		constructor({id, type, title, body, payload})
+		constructor({ id, type, title, body, payload, imageUrl })
 		{
 			this.id = id;
 			this.type = type;
 			this.title = title;
 			this.body = body;
 			this.payload = payload;
+			this.imageUrl = imageUrl;
 		}
 
 		/**
@@ -179,4 +181,10 @@
 	 */
 	this.PushListener = pushListener;
 
+	/**
+	 * @module push/listeners
+	 */
+	jn.define('push/listeners', (require, exports, module) => {
+		module.exports = { PushListener: this.PushListener };
+	});
 })();

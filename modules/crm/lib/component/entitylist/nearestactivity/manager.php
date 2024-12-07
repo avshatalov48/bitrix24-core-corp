@@ -1,10 +1,9 @@
 <?php
 
-
 namespace Bitrix\Crm\Component\EntityList\NearestActivity;
 
-
 use Bitrix\Crm\Activity\Entity\EntityUncompletedActivityTable;
+use Bitrix\Crm\Component\EntityList\NearestActivity\FrontIntegration\FrontIntegration;
 use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Service\Container;
 
@@ -19,7 +18,10 @@ class Manager
 		$this->userId = Container::getInstance()->getContext()->getUserId();
 	}
 
-	public function appendNearestActivityBlock(array $items): array
+	public function appendNearestActivityBlock(
+		array $items,
+		bool $isItemListMode = false
+	): array
 	{
 		if (empty($items))
 		{
@@ -34,11 +36,15 @@ class Manager
 		{
 			$entityId = (int)$item['ID'];
 			$categoryId = isset($item['CATEGORY_ID']) ? (int)$item['CATEGORY_ID'] : null;
+			$allowEdit = $item['EDIT'] ?? false;
+
 			$block = new Block(
 				new ItemIdentifier($this->entityTypeId, $entityId, $categoryId),
 				$activitiesData[$entityId] ?? null,
-				$item['EDIT'] ?? false
+				$allowEdit,
+				FrontIntegration::make($isItemListMode, $allowEdit)
 			);
+
 			if (!isset($activitiesData[$entityId]))
 			{
 				$waitText = $waitsData[$entityId] ?? null;

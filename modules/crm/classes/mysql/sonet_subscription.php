@@ -40,13 +40,13 @@ class CCrmSonetSubscription extends CAllCrmSonetSubscription
 		{
 			// Multiple responsibility is not allowed
 			$deleteSql = "DELETE FROM {$tableName} WHERE SL_ENTITY_TYPE = '{$slEntityType}' AND ENTITY_ID = {$entityID} AND TYPE_ID = {$typeID}";
-			$DB->Query($deleteSql, false, 'File: '.__FILE__.'<br/>Line: '.__LINE__);
+			$DB->Query($deleteSql);
 		}
 
 		$connection = \Bitrix\Main\Application::getConnection();
 		$helper = $connection->getSqlHelper();
 		$insertSql = $helper->getInsertIgnore($tableName, "(USER_ID, SL_ENTITY_TYPE, ENTITY_ID, TYPE_ID)", "VALUES ({$userID}, '{$slEntityType}', {$entityID}, {$typeID})");
-		$dbResult = $DB->Query($insertSql, false, 'File: '.__FILE__.'<br/>Line: '.__LINE__);
+		$dbResult = $DB->Query($insertSql);
 		return is_object($dbResult) && $dbResult->AffectedRowsCount() > 0;
 	}
 	public function UpdateByEntity($entityTypeID, $entityID, $typeID, $userID)
@@ -73,7 +73,7 @@ class CCrmSonetSubscription extends CAllCrmSonetSubscription
 		$tableName = self::TABLE_NAME;
 		$slEntityType = $DB->ForSql(CCrmLiveFeedEntity::GetByEntityTypeID($entityTypeID));
 		$updateSql = "UPDATE {$tableName} SET USER_ID = {$userID} WHERE SL_ENTITY_TYPE = '{$slEntityType}' AND ENTITY_ID = {$entityID} AND TYPE_ID = {$typeID}";
-		$dbResult = $DB->Query($updateSql, false, 'File: '.__FILE__.'<br/>Line: '.__LINE__);
+		$dbResult = $DB->Query($updateSql);
 		return is_object($dbResult) && $dbResult->AffectedRowsCount() > 0;
 	}
 	public function UnRegister($entityTypeID, $entityID, $typeID, $userID, $options = array())
@@ -106,7 +106,7 @@ class CCrmSonetSubscription extends CAllCrmSonetSubscription
 		$tableName = self::TABLE_NAME;
 		$slEntityType = $DB->ForSql(CCrmLiveFeedEntity::GetByEntityTypeID($entityTypeID));
 		$deleteSql = "DELETE{$modifiers} FROM {$tableName} WHERE USER_ID = $userID AND SL_ENTITY_TYPE = '{$slEntityType}' AND ENTITY_ID = {$entityID} AND TYPE_ID = {$typeID}";
-		$dbResult = $DB->Query($deleteSql, false, 'File: '.__FILE__.'<br/>Line: '.__LINE__);
+		$dbResult = $DB->Query($deleteSql);
 		return is_object($dbResult) && $dbResult->AffectedRowsCount() > 0;
 	}
 	public function UnRegisterByEntity($entityTypeID, $entityID)
@@ -126,7 +126,7 @@ class CCrmSonetSubscription extends CAllCrmSonetSubscription
 		$tableName = self::TABLE_NAME;
 		$slEntityType = $DB->ForSql(CCrmLiveFeedEntity::GetByEntityTypeID($entityTypeID));
 		$deleteSql = "DELETE FROM {$tableName} WHERE SL_ENTITY_TYPE = '{$slEntityType}' AND ENTITY_ID = {$entityID}";
-		$dbResult = $DB->Query($deleteSql, false, 'File: '.__FILE__.'<br/>Line: '.__LINE__);
+		$dbResult = $DB->Query($deleteSql);
 		return is_object($dbResult) && $dbResult->AffectedRowsCount() > 0;
 	}
 	public function UnRegisterByType($entityTypeID, $entityID, $typeID)
@@ -152,7 +152,7 @@ class CCrmSonetSubscription extends CAllCrmSonetSubscription
 		$tableName = self::TABLE_NAME;
 		$slEntityType = $DB->ForSql(CCrmLiveFeedEntity::GetByEntityTypeID($entityTypeID));
 		$deleteSql = "DELETE FROM {$tableName} WHERE SL_ENTITY_TYPE = '{$slEntityType}' AND ENTITY_ID = {$entityID} AND TYPE_ID = {$typeID}";
-		$dbResult = $DB->Query($deleteSql, false, 'File: '.__FILE__.'<br/>Line: '.__LINE__);
+		$dbResult = $DB->Query($deleteSql);
 		return is_object($dbResult) && $dbResult->AffectedRowsCount() > 0;
 	}
 	public function ImportResponsibility($entityTypeID, $userID, $top)
@@ -222,10 +222,10 @@ class CCrmSonetSubscription extends CAllCrmSonetSubscription
 		{
 			$deleteSql .= " AND USER_ID = {$userID}";
 		}
-		$DB->Query($deleteSql, false, 'File: '.__FILE__.'<br/>Line: '.__LINE__);
+		$DB->Query($deleteSql);
 
 		$insertSql = "INSERT INTO {$tableName}(USER_ID, SL_ENTITY_TYPE, ENTITY_ID, TYPE_ID) ".$selectSql;
-		$dbResult = $DB->Query($insertSql, false, 'File: '.__FILE__.'<br/>Line: '.__LINE__);
+		$dbResult = $DB->Query($insertSql);
 		return is_object($dbResult);
 	}
 	public static function GetList($arOrder = array(), $arFilter = array(), $arGroupBy = false, $arNavStartParams = false, $arSelectFields = array(), $arOptions = array())

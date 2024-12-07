@@ -1,0 +1,120 @@
+.sign-preview__image {
+	position: relative;
+	overflow: hidden;
+	padding-top: 120%;
+	border: 4px solid #fff;
+	pointer-events: none;
+}
+
+.sign-preview__image::-webkit-scrollbar {
+	width: 6px;
+	height: 6px;
+}
+
+.sign-preview__image::-webkit-scrollbar-track {
+	background: transparent;
+}
+
+.sign-preview__image::-webkit-scrollbar-thumb {
+	background: #dde2e6;
+	-webkit-border-radius: 5px;
+	border-radius: 5px;
+	cursor: pointer;
+	opacity: .4;
+	-webkit-transition: .2s;
+	transition: .2s;
+}
+
+.sign-preview__image:hover::-webkit-scrollbar-thumb {
+	background: #d1d6da;
+}
+
+.sign-preview__image:hover::-webkit-scrollbar-thumb:hover {
+	background: #c8cdd2;
+}
+
+.sign-preview__image.--overflow-auto {
+	cursor: grab;
+	overflow: auto;
+	pointer-events: auto;
+	margin-bottom: -6px;
+}
+
+.sign-preview__image-container {
+	position: absolute;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	left: 0;
+	pointer-events: none;
+	transform-origin: 0 0;
+}
+
+.sign-preview__image-container.--lock > * {
+	opacity: .5;
+	pointer-events: none;
+}
+
+.sign-preview__image-container_img {
+	max-width: 100%;
+}
+
+.sign-preview__image-container_img.--show-next-page {
+	animation: sign-preview__image-show-next .2s linear forwards;
+}
+
+.sign-preview__image-container_img.--show-prev-page {
+	animation: sign-preview__image-show-prev .2s linear forwards;
+}
+
+@keyframes sign-preview__image-show-next {
+	0% {
+		transform: translateX(20%);
+		opacity: .5;
+	}
+	100% {
+		transform: translateX(0);
+		opacity: 1;
+	}
+}
+
+@keyframes sign-preview__image-show-prev {
+	0% {
+		transform: translateX(-20%);
+		opacity: .5;
+	}
+	100% {
+		transform: translateX(0);
+		opacity: 1;
+	}
+}
+
+.sign-preview__image-error {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	max-width: calc(100% - 30px);
+	text-align: center;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-open-sans));
+	font-size: var(--ui-typography-heading-h5-font-size, 16px);
+	line-height: var(--ui-typography-heading-h5-line-height, 1.35);
+	color: var(--ui-typography-heading-h6-color, #333);
+	pointer-events: auto;
+	cursor: auto;
+}
+
+.sign-preview__image-error span {
+	display: inline-block;
+	color: rgba(var(--ui-color-link-primary-base-rgb), 1);
+	--color-base: 32, 102, 176;
+	border-top: 1px solid transparent;
+	border-bottom: 1px solid rgba(var(--ui-color-link-primary-base-rgb, var(--color-base)), .4);
+	cursor: pointer;
+	transition: .2s;
+}
+
+.sign-preview__image-error span:hover {
+	transition: unset;
+	border-bottom-color: rgba(var(--ui-color-link-primary-base-rgb, var(--color-base)), .4);
+}

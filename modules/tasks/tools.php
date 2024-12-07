@@ -101,6 +101,24 @@ class TasksException extends \Bitrix\Tasks\Exception
 
 		return ($strErrCode);
 	}
+
+	public function isSerialized(): bool
+	{
+		try
+		{
+			$result = unserialize($this->getMessage(), ['allowed_classes' => false]);
+			if ($result === false)
+			{
+				return false;
+			}
+
+			return true;
+		}
+		catch (ErrorException)
+		{
+			return false;
+		}
+	}
 }
 
 
@@ -377,35 +395,29 @@ function tasksGetItemMenu($task, $arPaths, $site_id = SITE_ID, $bGantt = false, 
 			'action' => 'view'
 		])
 	);
+
+	$addPath = \Bitrix\Tasks\Slider\Path\TaskPathMaker::getPath([
+		"task_id" => 0,
+		"action" => 'edit',
+		'user_id' => $userId,
+		'group_id' => $task['GROUP_ID']
+	]);
+
 	$viewUrl->addParams([
 		'ta_sec' => $analyticsSectionCode,
 		'ta_sub' => \Bitrix\Tasks\Helper\Analytics::SUB_SECTION['gantt'],
 		'ta_el' => \Bitrix\Tasks\Helper\Analytics::ELEMENT['context_menu'],
 	]);
 
-	$createUrl = new \Bitrix\Main\Web\Uri(
-		\Bitrix\Tasks\Slider\Path\TaskPathMaker::getPath([
-			"task_id" => 0,
-			"action" => 'edit',
-			'user_id' => $userId,
-			'group_id' => $task['GROUP_ID']
-		])
-	);
-	$createUrl->addParams([
+	$subtaskUrl = new \Bitrix\Main\Web\Uri($addPath);
+	$subtaskUrl->addParams([
 		'PARENT_ID' => $task['ID'],
 		'ta_sec' => $analyticsSectionCode,
 		'ta_sub' => \Bitrix\Tasks\Helper\Analytics::SUB_SECTION['gantt'],
 		'ta_el' => \Bitrix\Tasks\Helper\Analytics::ELEMENT['context_menu'],
 	]);
 
-	$copyUrl = new \Bitrix\Main\Web\Uri(
-		\Bitrix\Tasks\Slider\Path\TaskPathMaker::getPath([
-			'task_id' => 0,
-			'action' => 'edit',
-			'user_id' => $userId,
-			'group_id' => $task['GROUP_ID']
-		])
-	);
+	$copyUrl = new \Bitrix\Main\Web\Uri($addPath);
 	$copyUrl->addParams([
 		'COPY' => $task['ID'],
 		'ta_sec' => $analyticsSectionCode,
@@ -430,25 +442,6 @@ function tasksGetItemMenu($task, $arPaths, $site_id = SITE_ID, $bGantt = false, 
 			title : "<?=GetMessage("TASKS_VIEW_TASK_EX")?>",
 			className : "menu-popup-item-view",
 			href : "<? echo CUtil::JSEscape($viewUrl->getUri())?>"
-			<?
-			if ($bGantt && !($params['DISABLE_IFRAME_POPUP'] ?? null))
-			{
-				?>,
-				onclick : BX.CJSTask.fixWindow(function(window, top, event) {
-					var fn = (window && window.ShowPopupTask) || (top && top.ShowPopupTask) || BX.DoNothing;
-					fn(<?= (int)$task["ID"] ?>, event);
-					this.popupWindow.close();
-				})
-				<?
-			}
-			else
-			{
-				?>,
-				onclick : function(window, top, event) {
-					this.popupWindow.close();
-				}
-				<?
-			}?>
 		},
 
 		<? if ($arAllowedTaskActions['ACTION_EDIT']):?>
@@ -457,25 +450,6 @@ function tasksGetItemMenu($task, $arPaths, $site_id = SITE_ID, $bGantt = false, 
 			title : "<?=GetMessage("TASKS_EDIT_TASK_EX")?>",
 			className : "menu-popup-item-edit",
 			href : "<? echo CUtil::JSEscape($editUrl)?>"
-			<?
-			if ($bGantt && !($params['DISABLE_IFRAME_POPUP'] ?? null))
-			{
-				?>,
-				onclick : BX.CJSTask.fixWindow(function(window, top, event) {
-					var fn = (window && window.EditPopupTask) || (top && top.EditPopupTask) || BX.DoNothing;
-					fn(<?= (int)$task["ID"] ?>, event);
-					this.popupWindow.close();}
-				)
-				<?
-			}
-			else
-			{
-				?>,
-				onclick : function(window, top, event) {
-					this.popupWindow.close();
-				}
-				<?
-			}?>
 		},
 		<? endif?>
 
@@ -483,26 +457,7 @@ function tasksGetItemMenu($task, $arPaths, $site_id = SITE_ID, $bGantt = false, 
 			text : "<?=GetMessage("TASKS_ADD_SUBTASK"); ?>",
 			title : "<?=GetMessage("TASKS_ADD_SUBTASK"); ?>",
 			className : "menu-popup-item-create",
-			href : "<? echo CUtil::JSEscape($createUrl->getUri())?>"
-			<?
-			if ($bGantt && !($params['DISABLE_IFRAME_POPUP'] ?? null))
-			{
-				?>,
-				onclick : BX.CJSTask.fixWindow(function(window, top, event) {
-					var fn = (window && window.AddPopupSubtask) || (top && top.AddPopupSubtask) || BX.DoNothing;
-					fn(<?= (int)$task["ID"] ?>, event);
-					this.popupWindow.close();
-				})
-				<?
-			}
-			else
-			{
-				?>,
-				onclick : function(window, top, event) {
-					this.popupWindow.close();
-				}
-				<?
-			}?>
+			href : "<? echo CUtil::JSEscape($subtaskUrl->getUri())?>"
 		},
 
 		<?
@@ -700,18 +655,6 @@ function tasksGetItemMenu($task, $arPaths, $site_id = SITE_ID, $bGantt = false, 
 			title : "<?=GetMessage("TASKS_COPY_TASK_EX")?>",
 			className : "menu-popup-item-copy",
 			href : "<? echo CUtil::JSEscape($copyUrl->getUri())?>"
-			<?
-			if ($bGantt)
-			{
-				?>,
-				onclick : BX.CJSTask.fixWindow(function(window, top, event) {
-					var fn = (window && window.CopyPopupTask) || (top && top.CopyPopupTask) || BX.DoNothing;
-					fn(<?= (int)$task["ID"] ?>, event);
-					this.popupWindow.close();
-				})
-				<?
-			}
-			?>
 		},
 
 		<?
@@ -759,7 +702,7 @@ function tasksGetItemMenu($task, $arPaths, $site_id = SITE_ID, $bGantt = false, 
 					var fn = (window && window.DeleteTask) || (top && top.DeleteTask) || BX.DoNothing;
 					this.menuItems = [];
 					this.bindElement.onclick = function() { return (false); };
-					fn(<?=intval($task["ID"])?>);
+					fn(<?= (int)$task["ID"] ?>);
 					this.popupWindow.close();
 				})
 			},<?
@@ -839,7 +782,7 @@ function templatesRenderListItem($template, $arPaths, $depth = 0, $plain = false
 	$addUrl .= (mb_strpos($addUrl, "?") === false ? "?" : "&")."TEMPLATE=".$template["ID"];
 	$editUrl = CComponentEngine::MakePathFromTemplate($arPaths["PATH_TO_TEMPLATES_TEMPLATE"], array("template_id" => $template["ID"], "action" => "edit"));
 	?>
-	<script type="text/javascript"<?php echo $defer ? "  defer=\"defer\"" : ""?>>
+	<script<?php echo $defer ? "  defer=\"defer\"" : ""?>>
 		tasksMenuPopup[<?php echo $template["ID"]?>] = [
 			<?templatesGetListItemActions($template, $arPaths)?>
 		];
@@ -1208,7 +1151,7 @@ function tasksGetLastSelected($arManagers, $bSubordinateOnly = false, $nameTempl
 		$arSubDeps = CTasks::GetSubordinateDeps();
 
 		$arLastSelected = CUserOptions::GetOption("tasks", "user_search", array());
-		if (is_array($arLastSelected) && $arLastSelected['last_selected'] <> '')
+		if (is_array($arLastSelected) && ($arLastSelected['last_selected'] ?? null) <> '')
 			$arLastSelected = array_unique(explode(',', $arLastSelected['last_selected']));
 		else
 			$arLastSelected = false;
@@ -1224,6 +1167,8 @@ function tasksGetLastSelected($arManagers, $bSubordinateOnly = false, $nameTempl
 		}
 		else
 		{
+			$arLastSelected = is_array($arLastSelected) ? $arLastSelected : [];
+
 			$arLastSelected[] = $userId;
 		}
 

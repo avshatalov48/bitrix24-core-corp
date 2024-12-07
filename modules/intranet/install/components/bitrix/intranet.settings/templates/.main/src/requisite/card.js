@@ -41,7 +41,7 @@ export class Card
 					<div class="intranet-settings__contact_bar"> 
 						<span class="intranet-settings__contact_bar_item">
 							${
-			this.#buildField(
+			this.#buildCompanyField(
 				Type.isStringFilled(this.#options.phone)
 					? this.#options.phone
 					: Loc.getMessage('INTRANET_SETTINGS_BUTTON_REQ_EMPTY_FIELD_STUB_PHONE')
@@ -50,7 +50,7 @@ export class Card
 						</span> 
 						<span class="intranet-settings__contact_bar_item">
 							${
-			this.#buildField(
+			this.#buildCompanyField(
 				Type.isStringFilled(this.#options.email)
 					? this.#options.email
 					: Loc.getMessage('INTRANET_SETTINGS_BUTTON_REQ_EMPTY_FIELD_STUB_EMAIL')
@@ -59,7 +59,7 @@ export class Card
 						</span> 
 						<span class="intranet-settings__contact_bar_item">
 							${
-			this.#buildField(
+			this.#buildCompanyField(
 				Type.isStringFilled(this.#options.site)
 					? this.#options.site
 					: Loc.getMessage('INTRANET_SETTINGS_BUTTON_REQ_EMPTY_FIELD_STUB_SITE')
@@ -77,7 +77,7 @@ export class Card
 		return this.#cardElement;
 	}
 
-	#buildField(label: string): HTMLElement
+	#buildCompanyField(label: string): HTMLElement
 	{
 		return Dom.create('a', {
 			text: label,
@@ -85,6 +85,30 @@ export class Card
 				href: this.getCompanyUrl(),
 			}
 		});
+	}
+
+	#buildField(label: string): HTMLElement
+	{
+		return Dom.create('a', {
+			text: label,
+			attrs: {
+				href: this.getRequisiteUrl(),
+			}
+		});
+	}
+
+	getRequisiteUrl(): string
+	{
+		const requisiteId = this.#options.landingData.requisite_id;
+
+		if (requisiteId)
+		{
+			return '/crm/company/requisite/' + requisiteId + '/';
+		}
+		else
+		{
+			return '/crm/company/requisite/0/?itemId=' + this.#options.company.ID;
+		}
 	}
 
 	getCompanyUrl(): string
@@ -113,8 +137,9 @@ export class Card
 				<div class="intranet-settings__req-table_row">
 					<div class="intranet-settings__table-cell">${field.TITLE}</div>
 					<div class="intranet-settings__table-cell">
-						${
-				Type.isStringFilled(field.VALUE)
+						${!this.#options.company.ID
+				? this.#buildCompanyField(Loc.getMessage('INTRANET_SETTINGS_BUTTON_REQ_EMPTY_FIELD_STUB'))
+				: Type.isStringFilled(field.VALUE)
 					? this.#buildField(
 						field.VALUE
 					)

@@ -2,6 +2,32 @@
 	const { mergeImmutable } = jn.require('utils/object');
 
 	/**
+	 * @param {Array} array
+	 * @param {number} size
+	 * @returns {Array}
+	 */
+	function chunk(array, size)
+	{
+		if (!Array.isArray(array))
+		{
+			throw new TypeError('The first argument must be an array');
+		}
+
+		if (typeof size !== 'number' || size <= 0)
+		{
+			throw new TypeError('The second argument must be a positive number');
+		}
+
+		const result = [];
+		for (let i = 0; i < array.length; i += size)
+		{
+			result.push(array.slice(i, i + size));
+		}
+
+		return result;
+	}
+
+	/**
 	 * Gets the last element of array
 	 * @param array
 	 */
@@ -15,21 +41,27 @@
 		return [...new Set(array)];
 	}
 
+	/**
+	 * Returns a new array with unique items by predicate
+	 * @param {[]} arr
+	 * @param {string|function} predicate
+	 * @returns {any[]}
+	 */
 	function uniqBy(arr, predicate)
 	{
-		const cb = typeof predicate === 'function' ? predicate : (o) => o[predicate];
+		const callbackFunction = typeof predicate === 'function' ? predicate : (o) => o[predicate];
+		const uniqueItems = new Map();
 
-		return [...arr.reduce((map, item) => {
-			const key = (item === null || item === undefined) ? item : cb(item);
-
-			if (!map.has(key))
+		for (const item of arr)
+		{
+			const key = item === null || item === undefined ? item : callbackFunction(item);
+			if (!uniqueItems.has(key))
 			{
-				map.set(key, item);
+				uniqueItems.set(key, item);
 			}
+		}
 
-			return map;
-
-		}, new Map()).values()];
+		return [...uniqueItems.values()];
 	}
 
 	/**
@@ -41,9 +73,9 @@
 	 */
 	function sortBy(collection, predicate)
 	{
-		const sortBy = (key) => (a, b) => (a[key] > b[key]) ? 1 : ((b[key] > a[key]) ? -1 : 0);
+		const sortBy = (key) => (a, b) => ((a[key] > b[key]) ? 1 : ((b[key] > a[key]) ? -1 : 0));
 
-		return collection.concat().sort(sortBy(predicate));
+		return [...collection].sort(sortBy(predicate));
 	}
 
 	/**
@@ -117,16 +149,14 @@
 	 * @module utils/array
 	 */
 	jn.define('utils/array', (require, exports, module) => {
-
 		module.exports = {
 			last,
+			chunk,
 			unique,
 			uniqBy,
 			mergeBy,
 			sortBy,
 			replaceBy,
 		};
-
 	});
-
 })();

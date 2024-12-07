@@ -3,7 +3,10 @@
 namespace Bitrix\Crm;
 
 use Bitrix\Crm;
+use Bitrix\Crm\Attribute\FieldAttributeManager;
+use Bitrix\Crm\Attribute\FieldOrigin;
 use Bitrix\Crm\Component\EntityDetails;
+use Bitrix\Crm\Entity\RequisiteValidator;
 use Bitrix\Crm\Format\AddressFormatter;
 use Bitrix\Crm\Format\RequisiteAddressFormatter;
 use Bitrix\Crm\Integrity\DuplicateBankDetailCriterion;
@@ -45,6 +48,7 @@ class EntityRequisite
 	const ERR_CREATE_REQUISITE             = 215;
 	const ERR_FIELD_LENGTH_MIN             = 216;
 	const ERR_FIELD_LENGTH_MAX             = 217;
+	const ERR_FIELD_REQUIRED               = 218;
 
 	const CONFIG_TABLE_NAME = 'b_crm_requisite_cfg';
 
@@ -316,6 +320,35 @@ class EntityRequisite
 		return $countryId;
 	}
 
+	/**
+	 * @param $requisiteId
+	 * @return int
+	 */
+	public function getPresetIdByRequisiteId(int $requisiteId): int
+	{
+		$presetId = 0;
+
+		if ($requisiteId > 0)
+		{
+			$requisite = EntityRequisite::getSingleInstance();
+			$res = $requisite->getList(
+				[
+					'filter' => array(
+						'=ID' => $requisiteId
+					),
+					'select' => ['PRESET_ID'],
+					'limit' => 1
+				]
+			);
+			if (($row = $res->fetch()) && isset($row['PRESET_ID']))
+			{
+				$presetId = (int)$row['PRESET_ID'];
+			}
+		}
+
+		return $presetId;
+	}
+
 	public function getRqFieldValidationMap()
 	{
 		if (self::$rqFieldValidationMap === null)
@@ -388,13 +421,35 @@ class EntityRequisite
 		return self::$rqFieldValidationMap;
 	}
 
-	public function checkRqFieldsBeforeSave($requisiteId, $fields)
+	public function getPresetIdFromFields(array $fields): int
 	{
-		$result = new Main\Result();
+		$presetId = 0;
 
+		if (isset($fields['PRESET_ID']))
+		{
+			$presetId = (int)$fields['PRESET_ID'];
+		}
+
+		return $presetId;
+	}
+
+	public function getPresetIdByFields(int $requisiteId, array $fields): int
+	{
+		$presetId = $this->getPresetIdFromFields($fields);
+		$isUpdate = ($requisiteId > 0);
+
+		if ($isUpdate && $presetId <= 0)
+		{
+			$presetId = $this->getPresetIdByRequisiteId($requisiteId);
+		}
+
+		return $presetId;
+	}
+
+	public function getCountryIdByFields(int $requisiteId, array $fields): int
+	{
 		$countryId = 0;
 		$presetId = 0;
-		$requisiteId = (int)$requisiteId;
 		$isUpdate = ($requisiteId > 0);
 
 		if (isset($fields['PRESET_ID']))
@@ -415,6 +470,116 @@ class EntityRequisite
 		{
 			$countryId = 0;
 		}
+
+		return $countryId;
+	}
+
+	public function checkRequiredFieldsBeforeSave(int $requisiteId, array $fields, array $options = []): Main\Result
+	{
+		/** @global \CMain $APPLICATION */
+		global $APPLICATION;
+
+		/** @global \CUserTypeManager $USER_FIELD_MANAGER */
+		global $USER_FIELD_MANAGER;
+
+		$result = new Main\Result();
+
+		$isUpdate = ($requisiteId > 0);
+		$enableUserFieldCheck = !(
+			isset($options['DISABLE_USER_FIELD_CHECK'])
+			&& $options['DISABLE_USER_FIELD_CHECK'] === true
+		);
+		$enableRequiredUserFieldCheck = !(
+			isset($options['DISABLE_REQUIRED_USER_FIELD_CHECK'])
+			&& $options['DISABLE_REQUIRED_USER_FIELD_CHECK'] === true
+		);
+		if ($enableUserFieldCheck && $enableRequiredUserFieldCheck)
+		{
+			$fieldCheckOptions =
+				(
+					isset($options['FIELD_CHECK_OPTIONS'])
+					&& is_array($options['FIELD_CHECK_OPTIONS'])
+				)
+					? $options['FIELD_CHECK_OPTIONS']
+					: []
+			;
+
+			$requiredFields = FieldAttributeManager::getRequiredFields(
+				CCrmOwnerType::Requisite,
+				$requisiteId,
+				$fields,
+				FieldOrigin::UNDEFINED,
+				$fieldCheckOptions
+			);
+
+			$checkErrors = [];
+
+			$requiredSystemFields = $requiredFields[FieldOrigin::SYSTEM] ?? [];
+			if (!empty($requiredSystemFields))
+			{
+				$validator = new RequisiteValidator(
+					$requisiteId,
+					$fields,
+					$this->getCountryIdByFields($requisiteId, $fields)
+				);
+				$validationErrors = [];
+				foreach($requiredSystemFields as $fieldName)
+				{
+					if (!$isUpdate || array_key_exists($fieldName, $fields))
+					{
+						$validator->checkFieldPresence($fieldName, $validationErrors);
+					}
+				}
+
+				if (!empty($validationErrors))
+				{
+					foreach ($validationErrors as $error)
+					{
+						$result->addError(new Main\Error($error['text'], static::ERR_FIELD_REQUIRED));
+						$checkErrors[] = new Main\Error($error['text'], $error['id']);
+					}
+				}
+			}
+
+			$requiredUserFields = $requiredFields[FieldOrigin::CUSTOM] ?? [];
+			if (
+				!$USER_FIELD_MANAGER->CheckFields(
+					static::$sUFEntityID,
+					$requisiteId,
+					$fields,
+					false,
+					$enableRequiredUserFieldCheck,
+					$requiredUserFields
+				)
+			)
+			{
+				/** @var \CAdminException $e */
+				$e = $APPLICATION->GetException();
+				$errors = $e->GetMessages() ?? [];
+				if (is_array($errors))
+				{
+					foreach ($errors as $error)
+					{
+						$result->addError(new Main\Error($error['text'], static::ERR_FIELD_REQUIRED));
+						$checkErrors[] = new Main\Error($error['text'], $error['id']);
+					}
+				}
+			}
+
+			if (!empty($checkErrors))
+			{
+				$result->setData(['CHECK_ERRORS' => $checkErrors]);
+			}
+		}
+
+		return $result;
+	}
+
+	public function checkRqFieldsBeforeSave($requisiteId, $fields)
+	{
+		$result = new Main\Result();
+
+		$countryId = $this->getCountryIdByFields((int)$requisiteId, $fields);
 
 		$validationMap = $this->getRqFieldValidationMap();
 		$titleMap = $this->getRqFieldTitleMap();
@@ -478,11 +643,29 @@ class EntityRequisite
 		return $result;
 	}
 
-	public function checkBeforeAdd($fields, $options = array())
+	public function checkBeforeAdd($fields, $options = [])
 	{
 		unset($fields['ID'], $fields['DATE_MODIFY'], $fields['MODIFY_BY_ID']);
 		$fields['DATE_CREATE'] = new \Bitrix\Main\Type\DateTime();
 		$fields['CREATED_BY_ID'] = \CCrmSecurityHelper::GetCurrentUserID();
+
+		$addressOnly = false;
+		if (isset($fields['ADDRESS_ONLY']) &&
+			($fields['ADDRESS_ONLY'] === true || $fields['ADDRESS_ONLY'] === 'Y'))
+		{
+			$addressOnly = true;
+		}
+		if ($addressOnly)
+		{
+			$fields = $this->removeNonAddressFields($fields);
+			$options['DISABLE_REQUIRED_USER_FIELD_CHECK'] = true;
+		}
+
+		$result = $this->checkRequiredFieldsBeforeSave(0, $fields, $options);
+		if (!$result->isSuccess())
+		{
+			return $result;
+		}
 
 		$result = $this->checkRqFieldsBeforeSave(0, $fields);
 		if (!$result->isSuccess())
@@ -588,7 +771,7 @@ class EntityRequisite
 		return $result;
 	}
 
-	public function add($fields, $options = array())
+	public function add($fields, $options = [])
 	{
 		unset($fields['ID'], $fields['DATE_MODIFY'], $fields['MODIFY_BY_ID']);
 
@@ -630,6 +813,13 @@ class EntityRequisite
 		if ($addressOnly)
 		{
 			$fields = $this->removeNonAddressFields($fields);
+			$options['DISABLE_REQUIRED_USER_FIELD_CHECK'] = true;
+		}
+
+		$result = $this->checkRequiredFieldsBeforeSave(0, $fields, $options);
+		if (!$result->isSuccess())
+		{
+			return $result;
 		}
 
 		$result = $this->checkRqFieldsBeforeSave(0, $fields);
@@ -794,11 +984,48 @@ class EntityRequisite
 		return $result;
 	}
 
-	public function checkBeforeUpdate($id, $fields)
+	public function checkBeforeUpdate($id, $fields, array $options = [])
 	{
 		unset($fields['ID'], $fields['DATE_CREATE'], $fields['CREATED_BY_ID']);
 		$fields['DATE_MODIFY'] = new \Bitrix\Main\Type\DateTime();
 		$fields['MODIFY_BY_ID'] = \CCrmSecurityHelper::GetCurrentUserID();
+
+		$id = (int)$id;
+		$requisite = $this->getList(
+			array(
+				'filter' => ['=ID' => $id],
+				'select' => ['ADDRESS_ONLY'],
+				'limit' => 1,
+			)
+		)->fetch();
+		if(!is_array($requisite))
+		{
+			$result = new Main\Result();
+			$result->addError(new Main\Error("The Requisite with ID '{$id}' is not found"));
+			return $result;
+		}
+
+		$addressOnly = false;
+		if (isset($fields['ADDRESS_ONLY']))
+		{
+			$addressOnly = ($fields['ADDRESS_ONLY'] === true || $fields['ADDRESS_ONLY'] === 'Y');
+		}
+		elseif ($requisite['ADDRESS_ONLY'] === 'Y')
+		{
+			$addressOnly = true;
+		}
+
+		if ($addressOnly)
+		{
+			$fields = $this->clearNonAddressFields($fields);
+			$options['DISABLE_REQUIRED_USER_FIELD_CHECK'] = true;
+		}
+
+		$result = $this->checkRequiredFieldsBeforeSave($id, $fields, $options);
+		if (!$result->isSuccess())
+		{
+			return $result;
+		}
 
 		$result = $this->checkRqFieldsBeforeSave($id, $fields);
 		if (!$result->isSuccess())
@@ -1064,6 +1291,13 @@ class EntityRequisite
 		if ($addressOnly)
 		{
 			$fields = $this->clearNonAddressFields($fields);
+			$options['DISABLE_REQUIRED_USER_FIELD_CHECK'] = true;
+		}
+
+		$result = $this->checkRequiredFieldsBeforeSave($id, $fields, $options);
+		if (!$result->isSuccess())
+		{
+			return $result;
 		}
 
 		$result = $this->checkRqFieldsBeforeSave($id, $fields);
@@ -3063,8 +3297,7 @@ class EntityRequisite
 		$tableName = self::CONFIG_TABLE_NAME;
 		$entityTypeID = $DB->ForSql($entityTypeID);
 		$dbResult = $DB->Query(
-			"SELECT SETTINGS FROM {$tableName} WHERE ENTITY_TYPE_ID = '{$entityTypeID}' AND ENTITY_ID = {$entityId}",
-			false, 'File: '.__FILE__.'<br/>Line: '.__LINE__
+			"SELECT SETTINGS FROM {$tableName} WHERE ENTITY_TYPE_ID = '{$entityTypeID}' AND ENTITY_ID = {$entityId}"
 		);
 		$fields = is_object($dbResult) ? $dbResult->Fetch() : null;
 		$settingsValue = is_array($fields) && isset($fields['SETTINGS']) ? $fields['SETTINGS'] : '';
@@ -3559,10 +3792,10 @@ class EntityRequisite
 	{
 		$result = new Result();
 		$resultData = [];
+		$requisite = new self();
 
 		if(!empty($entityRequisites))
 		{
-			$requisite = new self();
 			foreach($entityRequisites as $requisiteID => $requisiteData)
 			{
 				if(isset($requisiteData['isDeleted']) && $requisiteData['isDeleted'] === true)
@@ -3624,6 +3857,12 @@ class EntityRequisite
 				}
 				else
 				{
+					$bankDetailOptions = [];
+					$presetId = $requisite->getPresetIdFromFields($entityRequisites[$requisiteID]['fields']);
+					if ($presetId > 0)
+					{
+						$bankDetailOptions['FIELD_CHECK_OPTIONS'] = ['PRESET_ID' => $presetId];
+					}
 					foreach ($bankDetails as $pseudoID => $bankDetailFields)
 					{
 						if (isset($bankDetailFields['isDeleted']) && $bankDetailFields['isDeleted'] === true)
@@ -3645,7 +3884,11 @@ class EntityRequisite
 
 						if ((int)$pseudoID > 0)
 						{
-							$saveBankDetailsResult = $bankDetail->update($pseudoID, $bankDetailFields);
+							$saveBankDetailsResult = $bankDetail->update(
+								$pseudoID,
+								$bankDetailFields,
+								$bankDetailOptions
+							);
 							if ($saveBankDetailsResult->isSuccess())
 							{
 								$resultData['updatedBankDetails'][] = (int)$pseudoID;
@@ -3666,7 +3909,7 @@ class EntityRequisite
 							{
 								$bankDetailFields['ENTITY_ID'] = $requisiteID;
 								$bankDetailFields['ENTITY_TYPE_ID'] = CCrmOwnerType::Requisite;
-								$saveBankDetailsResult = $bankDetail->add($bankDetailFields);
+								$saveBankDetailsResult = $bankDetail->add($bankDetailFields, $bankDetailOptions);
 								if ($saveBankDetailsResult->isSuccess())
 								{
 									$resultData['addedBankDetails'][$pseudoID] = $saveBankDetailsResult->getId();
@@ -5839,7 +6082,7 @@ class EntityRequisite
 									'id' => "$fieldName|$countryId|$addressTypeId|$addrFieldKey",
 									'name' => GetMessage('CRM_REQUISITE_FILTER_PREFIX').
 										($hideCountry ? '' : ' ('.$countryList[$countryId].')').': '.
-										$addressTypeName.' - '.ToLower($addressLabels[$addrFieldKey]),
+										$addressTypeName.' - '.mb_strtolower($addressLabels[$addrFieldKey]),
 									'type' => 'text'
 								);
 							}
@@ -5894,7 +6137,7 @@ class EntityRequisite
 			$fieldParsed = false;
 
 			$matches = array();
-			if (preg_match('/^(RQ_\w+)\|(\d+)\|(\d+)\|(\w+)$/'.BX_UTF_PCRE_MODIFIER, $filterFieldId, $matches))
+			if (preg_match('/^(RQ_\w+)\|(\d+)\|(\d+)\|(\w+)$/u', $filterFieldId, $matches))
 			{
 				$fieldName = $matches[1];
 				$countryId = (int)$matches[2];
@@ -5910,7 +6153,7 @@ class EntityRequisite
 					&& in_array($addressFieldName, EntityRequisite::getAddressFiltrableFields(), true)
 				;
 			}
-			else if (preg_match('/^(RQ_\w+)\|(\d+)$/'.BX_UTF_PCRE_MODIFIER, $filterFieldId, $matches))
+			else if (preg_match('/^(RQ_\w+)\|(\d+)$/u', $filterFieldId, $matches))
 			{
 				$fieldName = $matches[1];
 				$countryId = (int)$matches[2];
@@ -6395,7 +6638,7 @@ class EntityRequisite
 				$fieldParsed = false;
 				if (
 					preg_match(
-						'/^((UF_|RQ_)\w+)\|(\d+)$/'.BX_UTF_PCRE_MODIFIER,
+						'/^((UF_|RQ_)\w+)\|(\d+)$/u',
 						mb_substr($fieldString, $prefixLength),
 						$matches
 					)
@@ -7720,7 +7963,11 @@ class EntityRequisite
 		);
 		while($fields = $res->Fetch())
 		{
-			$entity->update($fields['ID'], array('ENTITY_TYPE_ID' => $entityTypeID, 'ENTITY_ID' => $targID));
+			$entity->update(
+				$fields['ID'],
+				['ENTITY_TYPE_ID' => $entityTypeID, 'ENTITY_ID' => $targID],
+				['DISABLE_REQUIRED_USER_FIELD_CHECK' => true]
+			);
 		}
 	}
 
@@ -7741,7 +7988,11 @@ class EntityRequisite
 		);
 		while($fields = $res->Fetch())
 		{
-			$requisite->update($fields['ID'], array('ENTITY_TYPE_ID' => $entityTypeID, 'ENTITY_ID' => $targEntityID));
+			$requisite->update(
+				$fields['ID'],
+				['ENTITY_TYPE_ID' => $entityTypeID, 'ENTITY_ID' => $targEntityID],
+				['DISABLE_REQUIRED_USER_FIELD_CHECK' => true]
+			);
 		}
 	}
 

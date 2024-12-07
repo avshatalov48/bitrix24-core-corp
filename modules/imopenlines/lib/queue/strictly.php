@@ -28,67 +28,59 @@ class Strictly extends Queue
 			'QUEUE_HISTORY' => [],
 		];
 
-		$operators = [];
 		$queueHistory = $this->session['QUEUE_HISTORY'];
-		$operatorId = 0;
-		$fullCountOperators = 0;
-
-		$select = [
-			'ID',
-			'USER_ID'
-		];
-
-		$filter = ['=CONFIG_ID' => $this->config['ID']];
-		$order = [
-			'SORT' => 'ASC',
-			'ID' => 'ASC'
-		];
+		$currentOperatorId = 0;
 
 		$res = ImOpenLines\Queue::getList([
-			'select' => $select,
-			'filter' => $filter,
-			'order' => $order
+			'select' => [
+				'ID',
+				'USER_ID'
+			],
+			'filter' => [
+				'=CONFIG_ID' => $this->config['ID']
+			],
+			'order' => [
+				'SORT' => 'ASC',
+				'ID' => 'ASC'
+			],
 		]);
 
-		while($queueUser = $res->fetch())
-		{
-			$fullCountOperators++;
-			if($this->isOperatorAvailable($queueUser['USER_ID'], $currentOperator))
-			{
-				$operators[$queueUser['USER_ID']] = $queueUser;
-			}
-		}
+		$queueUsers = $res->fetchAll();
+		$userIds = array_map(function ($user) {
+			return (int)$user['USER_ID'];
+		}, $queueUsers);
 
-		$this->processingEmptyQueue($this->config['ID'], $fullCountOperators);
+		$operatorList = $this->getAvailableOperators($userIds, $currentOperator);
 
-		if(!empty($operators))
+		$this->processingEmptyQueue($this->config['ID'], count($userIds));
+
+		if(!empty($operatorList))
 		{
-			foreach ($operators as $operator)
+			foreach ($operatorList as $operatorId)
 			{
-				if(!empty($queueHistory[$operator['USER_ID']]))
+				if(!empty($queueHistory[$operatorId]))
 				{
 					continue;
 				}
 
-				$operatorId = $operator['USER_ID'];
-
+				$currentOperatorId = $operatorId;
 				break;
 			}
 
-			if(empty($operatorId))
+			if(empty($currentOperatorId))
 			{
-				$operatorId = reset($operators)['USER_ID'];
-				$queueHistory = [$operatorId => true];
+				$currentOperatorId = reset($operatorList);
+				$queueHistory = [$currentOperatorId => true];
 			}
 			else
 			{
-				$queueHistory[$operatorId] = true;
+				$queueHistory[$currentOperatorId] = true;
 			}
 
 			$result = [
 				'RESULT' => true,
-				'OPERATOR_ID' => $operatorId,
-				'OPERATOR_LIST' => [$operatorId],
+				'OPERATOR_ID' => $currentOperatorId,
+				'OPERATOR_LIST' => [$currentOperatorId],
 				'DATE_QUEUE' => (new DateTime())->add($queueTime . ' SECONDS'),
 				'QUEUE_HISTORY' => $queueHistory,
 			];

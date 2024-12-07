@@ -1,0 +1,50 @@
+.ai__copilot_input-popup {
+	margin-bottom: 5px;
+	box-shadow: 0 9px 18px 0 rgba(0, 0, 0, 0.12);
+}
+
+.ai__copilot_input-popup,
+.ai__copilot_input,
+.ai__copilot {
+	border-radius: var(--ui-border-radius-sm);
+}
+
+.ai__copilot-scope {
+	--ai__copilot_color-pastel: #DED0F4;
+	--ai__copilot_color-soft: #B095DC;
+	--ai__copilot_color-main: #8E52EC;
+}
+
+.ai__copilot {
+	font-size: var(--ui-font-size-lg);
+	line-height: var(--ui-font-line-height-3xs);
+	border: var(--ui-border-width-thin) solid var(--ai__copilot_color-soft);
+	overflow: hidden;
+}
+
+.ai__copilot.--error {
+	border-color: var(--ui-color-palette-red-40);
+}
+
+.ai__copilot-result {
+	padding-left: 11px;
+	padding-right: 12px;
+	color: var(--ai__copilot_color-main);
+	max-height: 25vh;
+	overflow-y: auto;
+}
+
+.ai__copilot-result:not(:empty) {
+	padding-top: 11px;
+	padding-bottom: 10px;
+	box-shadow: inset 0 -7px 9px -9px var(--ui-color-base-40);
+}
+
+.ai__copilot .ai__copilot_waning-field {
+	border-top: var(--ui-border-width-thin) solid transparent;
+}
+
+.ai__copilot .ai__copilot_waning-field.--expanded {
+	border-color: var(--ai__copilot_color-pastel);
+	padding: 6px 10px;
+}

@@ -32,7 +32,7 @@ if (
 	&& isset($arResult['INSTALL_FINISH']['success'])
 	&& !isset($arResult['INSTALL_FINISH']['error'])
 ):?>
-	<script type="text/javascript">
+	<script>
 		BX.ready(
 			function ()
 			{
@@ -187,7 +187,7 @@ else:
 			</div>
 		</form>
 	</div>
-	<script type="text/javascript">
+	<script>
 		BX.message({
 			"MARKET_INSTALL_LICENSE_ERROR" : "<?= GetMessageJS("MARKET_INSTALL_LICENSE_ERROR") ?>",
 			"MARKET_INSTALL_TOS_ERROR" : "<?= GetMessageJS("MARKET_INSTALL_TOS_ERROR") ?>",

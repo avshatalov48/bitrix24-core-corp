@@ -19,6 +19,16 @@ jn.define('im/messenger/provider/rest/openlines', (require, exports, module) => 
 
 			return BX.rest.callMethod(RestMethod.openlinesDialogGet, { USER_CODE: userCode });
 		}
+
+		getBySessionId(sessionId)
+		{
+			if (!sessionId || !Type.isNumber(sessionId))
+			{
+				throw new Error('OpenLinesRest: sessionId must be a number.');
+			}
+
+			return BX.rest.callMethod(RestMethod.openlinesDialogGet, { SESSION_ID: sessionId });
+		}
 	}
 
 	module.exports = {

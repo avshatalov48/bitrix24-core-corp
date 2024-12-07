@@ -58,7 +58,7 @@ class Helper
 
 			\Bitrix\Main\UI\Extension::load('ui.fonts.opensans');
 			Asset::getInstance()->addCss('/bitrix/js/crm/css/crm.css');
-			?><script type="text/javascript">
+			?><script>
 			BX.ready(
 				function()
 				{
@@ -117,7 +117,7 @@ class Helper
 				null,
 				array('HIDE_ICONS' => 'Y')
 			);
-			?><script type="text/javascript"><?
+			?><script><?
 
 
 		foreach($userSelectors as $userSelector)

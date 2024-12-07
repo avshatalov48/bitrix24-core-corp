@@ -2,9 +2,9 @@
 
 return [
 	'extensions' => [
-		'apptheme',
-        'type',
+		'type',
 		'loc',
+		'im:lib/theme',
 		'im:messenger/lib/di/service-locator',
 		'im:messenger/const',
 		'im:messenger/controller/search',

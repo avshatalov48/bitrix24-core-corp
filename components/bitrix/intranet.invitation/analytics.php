@@ -59,15 +59,25 @@ class Analytics
 				{
 					$event->setP2($onaAnalytic['p2']);
 				}
+				if (isset($onaAnalytic['p3']))
+				{
+					$event->setP3($onaAnalytic['p3']);
+				}
+				if (isset($onaAnalytic['p5']))
+				{
+					$event->setP5($onaAnalytic['p5']);
+				}
 				$event->send();
 			}
 		}
 	}
 
 	public function sendRegistration(
+		int $userId,
 		string $category = self::ANALYTIC_CATEGORY_REGISTRATION,
 		string $event = self::ANALYTIC_CATEGORY_REGISTRATION,
 		string $status = '',
+		array $userData = []
 	): void
 	{
 		$analyticData = $this->getData();
@@ -77,11 +87,14 @@ class Analytics
 			'event' => $event,
 			'section' => $analyticData['source'] ?? '',
 			'p1' => $this->getAdmin(),
+			'p2' => isset($userData['ADD_SEND_PASSWORD']) && $userData['ADD_SEND_PASSWORD'] === 'Y' ? 'Сonfirm_Y' : 'Сonfirm_N',
+			'p3' => isset($userData['UF_DEPARTMENT']) && count($userData['UF_DEPARTMENT']) > 0 ? 'department_Y' : 'department_N',
+			'p5' => 'userId_' . $userId,
 		];
 
 		if ($status !== '')
 		{
-			$analytic['status'] = $status === 'Y' ? 'on' : 'off';
+			$analytic['status'] = $status === 'Y' ? 'success' : 'fail';
 		}
 		$analytics[] = $analytic;
 		$this->send($analytics);
@@ -100,6 +113,7 @@ class Analytics
 	}
 
 	public function sendInvitation(
+		int $userId,
 		string $subSection,
 		int $analyticEmails = 0,
 		int $analyticPhones = 0
@@ -114,6 +128,7 @@ class Analytics
 			'section' => $analyticData['source'] ?? '',
 			'subSection' => $subSection,
 			'p1' => $this->getAdmin(),
+			'p5' => 'userId_' . $userId,
 		];
 
 		if ($analyticEmails > 0)

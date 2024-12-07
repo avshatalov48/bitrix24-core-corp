@@ -1,0 +1,2 @@
+<?php
+$MESS["RECYCLEBIN_PROCESS_RESTORE_ACTION_COMMON_RESTORE_ERROR"] = "Cannot recover item(s).";

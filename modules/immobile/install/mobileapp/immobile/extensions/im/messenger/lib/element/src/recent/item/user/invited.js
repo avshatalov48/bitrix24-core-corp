@@ -2,9 +2,9 @@
  * @module im/messenger/lib/element/recent/item/user/invited
  */
 jn.define('im/messenger/lib/element/recent/item/user/invited', (require, exports, module) => {
-	const AppTheme = require('apptheme');
 	const { Loc } = require('loc');
 
+	const { Theme } = require('im/lib/theme');
 	const { UserItem } = require('im/messenger/lib/element/recent/item/user');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const {
@@ -28,7 +28,7 @@ jn.define('im/messenger/lib/element/recent/item/user/invited', (require, exports
 
 		createSubtitle()
 		{
-			this.subtitle = Loc.getMessage('IMMOBILE_ELEMENT_RECENT_USER_INVITED_2');
+			this.subtitle = Loc.getMessage('IMMOBILE_ELEMENT_RECENT_USER_INVITED_3');
 
 			return this;
 		}
@@ -38,12 +38,12 @@ jn.define('im/messenger/lib/element/recent/item/user/invited', (require, exports
 			this.styles.subtitle = {
 				font: {
 					size: '14',
-					color: AppTheme.colors.accentSoftElementBlue1,
+					color: Theme.colors.accentSoftElementBlue,
 					useColor: true,
 					fontStyle: 'medium',
 				},
 				cornerRadius: 12,
-				backgroundColor: AppTheme.colors.accentSoftBlue1,
+				backgroundColor: Theme.colors.accentSoftBlue1,
 				padding: {
 					top: 3.5,
 					right: 12,

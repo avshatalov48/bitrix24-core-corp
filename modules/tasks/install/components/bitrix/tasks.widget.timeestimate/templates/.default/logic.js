@@ -81,9 +81,36 @@ BX.namespace('Tasks.Component');
 						flagNode.value = node.checked ? yesValue : noValue;
 					}
 
-					BX.Tasks.Util.fadeToggleByClass(this.control('inputs'), 200);
+					if (this.option('timeTrackingRestrict'))
+					{
+						this.performExceededActions(flagNode, node);
+
+						BX.Runtime.loadExtension('tasks.limit').then((exports) => {
+							const { Limit } = exports;
+							Limit.showInstance({
+								featureId: 'tasks_time_tracking',
+								limitAnalyticsLabels: {
+									module: 'tasks',
+									source: 'taskEdit',
+								},
+							});
+						});
+					}
+					else
+					{
+						BX.Tasks.Util.fadeToggleByClass(this.control('inputs'), 200);
+					}
 				}
-			}
+			},
+
+			performExceededActions(flagNode, parenNode)
+			{
+				if (flagNode.value === 'Y')
+				{
+					flagNode.value = 'N';
+					parenNode.checked = false;
+				}
+			},
 		}
 	});
 

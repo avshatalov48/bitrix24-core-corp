@@ -318,34 +318,34 @@ final class Driver implements IErrorable
 	 * Returns storage by user id.
 	 * If storage doesn't exist returns null.
 	 *
-	 * @param integer $userId Id of user.
+	 * @param int $userId Id of user.
 	 * @return null|Storage
 	 * @throws \Bitrix\Main\ArgumentException
 	 * @throws \Bitrix\Main\SystemException
 	 */
-	public function getStorageByUserId($userId)
+	public function getStorageByUserId(int $userId): ?Storage
 	{
-		return Storage::load(array(
+		return $this->getStorageByEntityType([
 			'MODULE_ID' => self::INTERNAL_MODULE_ID,
-			'ENTITY_TYPE' => ProxyType\User::className(),
-			'ENTITY_ID' => (int)$userId,
-		), array('ROOT_OBJECT'));
+			'ENTITY_TYPE' => ProxyType\User::class,
+			'ENTITY_ID' => $userId,
+		]);
 	}
 
 	/**
 	 * Returns storage by group id.
 	 * If storage doesn't exist returns null.
 	 *
-	 * @param integer $groupId Id of group.
+	 * @param int $groupId Id of group.
 	 * @return null|Storage
 	 */
-	public function getStorageByGroupId($groupId)
+	public function getStorageByGroupId(int $groupId): ?Storage
 	{
-		return Storage::load(array(
+		return $this->getStorageByEntityType([
 			'MODULE_ID' => self::INTERNAL_MODULE_ID,
-			'ENTITY_TYPE' => ProxyType\Group::className(),
-			'ENTITY_ID' => (int)$groupId,
-		), array('ROOT_OBJECT'));
+			'ENTITY_TYPE' => ProxyType\Group::class,
+			'ENTITY_ID' => $groupId,
+		]);
 	}
 
 	/**
@@ -357,13 +357,13 @@ final class Driver implements IErrorable
 	 * @param string $commonId Id of storage.
 	 * @return null|Storage
 	 */
-	public function getStorageByCommonId($commonId)
+	public function getStorageByCommonId(string $commonId): ?Storage
 	{
-		return Storage::load(array(
+		return $this->getStorageByEntityType([
 			'MODULE_ID' => self::INTERNAL_MODULE_ID,
-			'ENTITY_TYPE' => ProxyType\Common::className(),
+			'ENTITY_TYPE' => ProxyType\Common::class,
 			'ENTITY_ID' => $commonId,
-		), array('ROOT_OBJECT'));
+		]);
 	}
 
 	/**
@@ -372,13 +372,24 @@ final class Driver implements IErrorable
 	 * @param string $appId Id of application in REST.
 	 * @return null|Storage
 	 */
-	public function getStorageByRestApp($appId)
+	public function getStorageByRestApp(string $appId): ?Storage
 	{
-		return Storage::load(array(
+		return $this->getStorageByEntityType([
 			'MODULE_ID' => self::INTERNAL_MODULE_ID,
-			'ENTITY_TYPE' => ProxyType\RestApp::className(),
+			'ENTITY_TYPE' => ProxyType\RestApp::class,
 			'ENTITY_ID' => $appId,
-		), array('ROOT_OBJECT'));
+		]);
+	}
+
+	private function getStorageByEntityType(array $entityType): ?Storage
+	{
+		$runtimeCache = ServiceLocator::getInstance()->get('disk.storageRuntimeCache');
+		if ($runtimeCache->isLoadedByEntityType($entityType))
+		{
+			return $runtimeCache->getByEntityType($entityType);
+		}
+
+		return Storage::load($entityType, ['ROOT_OBJECT']);
 	}
 
 	/**

@@ -369,7 +369,6 @@ else
 	if (isset($_GET['title']))
 	{
 		$arFields['~TITLE'] = $_GET['title'];
-		CUtil::decodeURIComponent($arFields['~TITLE']);
 		$arFields['TITLE'] = htmlspecialcharsbx($arFields['~TITLE']);
 	}
 }
@@ -1311,10 +1310,10 @@ if (!$isEditMode)
 	$salesListCount = count($arSalesList);
 	if ($salesListCount > 0)
 	{
-		$strCreateOrderHtml  = '<script type="text/javascript">var extSaleGetRemoteFormLocal = {"PRINT":"'.GetMessage("CRM_EXT_SALE_DEJ_PRINT").'","SAVE":"'.GetMessage("CRM_EXT_SALE_DEJ_SAVE").'","ORDER":"'.GetMessage("CRM_EXT_SALE_DEJ_ORDER").'","CLOSE":"'.GetMessage("CRM_EXT_SALE_DEJ_CLOSE").'"};</script>'.
+		$strCreateOrderHtml  = '<script>var extSaleGetRemoteFormLocal = {"PRINT":"'.GetMessage("CRM_EXT_SALE_DEJ_PRINT").'","SAVE":"'.GetMessage("CRM_EXT_SALE_DEJ_SAVE").'","ORDER":"'.GetMessage("CRM_EXT_SALE_DEJ_ORDER").'","CLOSE":"'.GetMessage("CRM_EXT_SALE_DEJ_CLOSE").'"};</script>'.
 			'<input type="hidden" name="SYNC_ORDER_ID" id="ID_SYNC_ORDER_ID" value="" />'.
 			'<input type="hidden" name="SYNC_ORDER_FORM_NAME" id="ID_SYNC_ORDER_FORM_NAME" value="form_'.htmlspecialcharsbx($arResult['FORM_ID']).'" />';
-		$strCreateOrderHtml .= '<script type="text/javascript">'.
+		$strCreateOrderHtml .= '<script>'.
 			'function DoChangeExternalSaleId(val)'.
 			'{'.
 			'	var frm = document.forms[document.getElementById("ID_SYNC_ORDER_FORM_NAME").value];'.
@@ -1373,7 +1372,7 @@ else
 {
 	if ($isExternal)
 	{
-		$strEditOrderHtml = '<script type="text/javascript">var extSaleGetRemoteFormLocal = {"PRINT":"'.GetMessage("CRM_EXT_SALE_DEJ_PRINT").'","SAVE":"'.GetMessage("CRM_EXT_SALE_DEJ_SAVE").'","ORDER":"'.GetMessage("CRM_EXT_SALE_DEJ_ORDER").'","CLOSE":"'.GetMessage("CRM_EXT_SALE_DEJ_CLOSE").'"};</script>'.
+		$strEditOrderHtml = '<script>var extSaleGetRemoteFormLocal = {"PRINT":"'.GetMessage("CRM_EXT_SALE_DEJ_PRINT").'","SAVE":"'.GetMessage("CRM_EXT_SALE_DEJ_SAVE").'","ORDER":"'.GetMessage("CRM_EXT_SALE_DEJ_ORDER").'","CLOSE":"'.GetMessage("CRM_EXT_SALE_DEJ_CLOSE").'"};</script>'.
 			'<input type="hidden" name="SYNC_ORDER_ID" id="ID_SYNC_ORDER_ID" value="" />'.
 			'<input type="hidden" name="SYNC_ORDER_FORM_NAME" id="ID_SYNC_ORDER_FORM_NAME" value="form_'.htmlspecialcharsbx($arResult['FORM_ID']).'" />';
 

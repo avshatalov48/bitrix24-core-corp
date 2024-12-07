@@ -2,18 +2,17 @@
 namespace Bitrix\Crm\Filter;
 
 use Bitrix\Catalog\Config\State;
-use Bitrix\Crm\Service\Container;
-use Bitrix\Crm\Service\ParentFieldManager;
-use Bitrix\Crm\UI\EntitySelector;
-use Bitrix\Main;
-use Bitrix\Main\Config\Option;
-use Bitrix\Main\Localization\Loc;
 use Bitrix\Crm;
 use Bitrix\Crm\Category\DealCategory;
 use Bitrix\Crm\Counter\EntityCounterType;
 use Bitrix\Crm\PhaseSemantics;
-use Bitrix\Sale;
+use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Service\ParentFieldManager;
+use Bitrix\Crm\UI\EntitySelector;
+use Bitrix\Main;
 use Bitrix\Main\Loader;
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Sale;
 
 Loc::loadMessages(__FILE__);
 
@@ -806,27 +805,6 @@ class DealDataProvider extends EntityDataProvider implements FactoryOptionable
 		}
 
 		return null;
-	}
-
-	/**
-	 * Prepare field parameter for specified field.
-	 * @param array $filter Filter params.
-	 * @param string $fieldID Field ID.
-	 * @return void
-	 */
-	public function prepareListFilterParam(array &$filter, $fieldID)
-	{
-		if($fieldID === 'TITLE'
-			|| $fieldID === 'COMMENTS'
-		)
-		{
-			$value = isset($filter[$fieldID]) ? trim($filter[$fieldID]) : '';
-			if($value !== '')
-			{
-				$filter["?{$fieldID}"] = $value;
-			}
-			unset($filter[$fieldID]);
-		}
 	}
 
 	protected function applySettingsDependantFilter(array &$filterFields): void

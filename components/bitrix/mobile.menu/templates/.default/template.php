@@ -21,7 +21,7 @@ $initData = array(
 
 ?>
 
-<script type="text/javascript">
+<script>
 	MenuSettings.setSettings(<?=CUtil::PhpToJsObject($initData)?>);
 	BX.ready(function ()
 	{

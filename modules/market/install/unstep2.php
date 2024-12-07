@@ -16,7 +16,7 @@ if (!check_bitrix_sessid())
 $ex = $APPLICATION->GetException();
 if ($ex)
 {
-	echo CAdminMessage::ShowMessage([
+	CAdminMessage::ShowMessage([
 		'TYPE' => 'ERROR',
 		'MESSAGE' => GetMessage('MOD_UNINST_ERR'),
 		'DETAILS' => $ex->GetString(),
@@ -25,7 +25,7 @@ if ($ex)
 }
 else
 {
-	echo CAdminMessage::ShowNote(GetMessage('MOD_UNINST_OK'));
+	CAdminMessage::ShowNote(GetMessage('MOD_UNINST_OK'));
 }
 ?>
 <form action="<?php echo $APPLICATION->GetCurPage()?>">

@@ -146,6 +146,14 @@ class ChecklistSaveRule extends \Bitrix\Main\Access\Rule\AbstractRule
 			}
 		}
 
+		foreach ($new as $id => $row)
+		{
+			if (!array_key_exists($id, $old))
+			{
+				$delta[self::ADDED] = true;
+			}
+		}
+
 		return $delta;
 	}
 
@@ -190,6 +198,29 @@ class ChecklistSaveRule extends \Bitrix\Main\Access\Rule\AbstractRule
 		{
 			$new['ATTACHMENTS'] = [];
 		}
+
+		$newMembers = [];
+		foreach ($new['MEMBERS'] as $id => $member)
+		{
+			$newMembers[] = [
+				'ID' => $id,
+				'TYPE' => $member['TYPE'],
+			];
+		}
+
+		$new['MEMBERS'] = $newMembers;
+
+		$oldMembers = [];
+		foreach ($old['MEMBERS'] as $id => $member)
+		{
+			$oldMembers[] = [
+				'ID' => $id,
+				'TYPE' => $member['TYPE'],
+			];
+		}
+
+		$old['MEMBERS'] = $oldMembers;
+
 		$new['IS_COMPLETE'] = ((int) $new['IS_COMPLETE']) ? 'Y' : 'N';
 		$new['IS_IMPORTANT'] = ((int) $new['IS_IMPORTANT']) ? 'Y' : 'N';
 

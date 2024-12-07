@@ -18,6 +18,14 @@ jn.define('im/messenger/db/repository/reaction', (require, exports, module) => {
 			this.reactionTable = new ReactionTable();
 		}
 
+		/**
+		 * @param {number} chatId
+		 */
+		async deleteByChatId(chatId)
+		{
+			return this.reactionTable.deleteByChatId(chatId);
+		}
+
 		async saveFromModel(reactionList)
 		{
 			const reactionListToAdd = [];

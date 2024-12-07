@@ -153,18 +153,6 @@ jn.define('crm/conversion/wizard/layouts/entities', (require, exports, module) =
 				},
 				this.renderBooleanEntities(),
 				this.renderSelectorButton(),
-				menuButton({
-					type: 'cancel',
-					onClickCallback: () => {
-						const { getLayoutWidget } = this.props;
-						const layoutWidget = getLayoutWidget();
-
-						if (layoutWidget)
-						{
-							layoutWidget.close();
-						}
-					},
-				}),
 			);
 		}
 	}

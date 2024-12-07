@@ -325,6 +325,7 @@ class UserFieldManager
 
 		$userField = Main\UserFieldTable::getList([
 			'filter' => $filter,
+			'cache' => ['ttl' => 60],
 		])->fetch();
 		if (!$userField)
 		{

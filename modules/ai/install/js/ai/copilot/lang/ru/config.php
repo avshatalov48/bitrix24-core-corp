@@ -1,0 +1,51 @@
+<?php
+$MESS['AI_COPILOT_INPUT_START_PLACEHOLDER'] = ' Опишите, что нужно сделать';
+$MESS['AI_COPILOT_IMAGE_INPUT_START_PLACEHOLDER'] = 'Опишите изображение';
+$MESS['AI_COPILOT_SELECT_COMMAND_BELOW'] = 'Выберите действие ниже';
+$MESS['AI_COPILOT_INPUT_LOADER_TEXT'] = 'CoPilot пишет';
+$MESS['AI_COPILOT_INPUT_IMAGE_LOADER_TEXT'] = 'CoPilot создаёт изображение';
+$MESS['AI_COPILOT_INPUT_LOADER_CANCEL'] = 'Отмена';
+$MESS['AI_COPILOT_ERROR'] = 'CoPilot не смог написать текст. Попробуйте ещё раз или измените запрос';
+$MESS['AI_COPILOT_ERROR_DETAIL'] = 'Подробнее';
+$MESS['AI_COPILOT_COMMAND_SAVE'] = 'Сохранить';
+$MESS['AI_COPILOT_COMMAND_ADD_BELOW'] = 'Вставить снизу';
+$MESS['AI_COPILOT_COMMAND_EDIT'] = 'Изменить запрос';
+$MESS['AI_COPILOT_READONLY_COMMAND_EDIT'] = 'Изменить запрос';
+$MESS['AI_COPILOT_COMMAND_REPLACE'] = 'Заменить';
+$MESS['AI_COPILOT_COMMAND_REPEAT'] = 'Попробовать ещё';
+$MESS['AI_COPILOT_COMMAND_CANCEL'] = 'Отменить';
+$MESS['AI_COPILOT_COMMAND_COPY'] = 'Скопировать текст';
+$MESS['AI_COPILOT_COMMAND_CLOSE'] = 'Закрыть';
+$MESS['AI_COPILOT_COMMAND_CONNECT_AI'] = 'Подключить свою модель (скоро)';
+$MESS['AI_COPILOT_SEARCH_IN_MARKET'] = 'Найти решения в Маркете';
+$MESS['AI_COPILOT_PROVIDER_MENU_SECTION'] = 'Провайдер';
+$MESS['AI_COPILOT_USER_PROMPTS_MENU_SECTION'] = 'Сохраненные';
+$MESS['AI_COPILOT_FAVOURITE_PROMPTS_MENU_SECTION'] = 'Избранное';
+$MESS['AI_COPILOT_VOICE_INPUT_NOT_SUPPORT'] = 'Голосовой ввод недоступен в вашем браузере';
+$MESS['AI_COPILOT_VOICE_INPUT_UNKNOWN_ERROR'] = 'Не удалось выполнить действие, попробуйте позже';
+$MESS['AI_COPILOT_VOICE_INPUT_MICRO_NOT_ALLOWED'] = 'Разрешите использование микрофона в настройках браузера';
+$MESS['AI_COPILOT_TEXT_IS_COPIED'] = 'Текст скопирован';
+$MESS['AI_COPILOT_MENU_ITEM_LABEL_NEW'] = 'НОВОЕ';
+$MESS['AI_COPILOT_MENU_ITEM_OPEN_COPILOT'] = 'Открытый CoPilot';
+$MESS['AI_COPILOT_MENU_ITEM_AI_IMAGE'] = 'Создать AI изображение';
+$MESS['AI_COPILOT_MENU_ITEM_ABOUT_COPILOT'] = 'Подробнее о CoPilot';
+$MESS['AI_COPILOT_MENU_ITEM_AI_SETTINGS'] = 'Настройки';
+$MESS['AI_COPILOT_MENU_ITEM_AI_FEEDBACK'] = 'Обратная связь';
+$MESS['AI_COPILOT_MENU_ITEM_CREATE_PROMPT'] = 'Сохранить промпт';
+$MESS['AI_COPILOT_RESULT_WARNING'] = 'Ответы CoPilot могут быть не всегда точны.';
+$MESS['AI_COPILOT_RESULT_WARNING_MORE'] = 'Подробнее';
+$MESS['AI_COPILOT_ERROR_PROVIDER'] = 'Ошибка на стороне провайдера модели AI. Попробуйте ещё раз или смените модель AI. [link]Подробнее[/link]';
+$MESS['AI_COPILOT_ERROR_OTHER'] = 'Не удалось выполнить запрос. Попробуйте позже. Если ошибка повторится, [feedback_form]свяжитесь с нами[/feedback_form]';
+$MESS['AI_COPILOT_ADD_PROMPT_TO_FAVOURITE'] = 'Добавить в избранное';
+$MESS['AI_COPILOT_REMOVE_PROMPT_FROM_FAVOURITE'] = 'Удалить из избранного';
+$MESS['AI_COPILOT_ADD_PROMPT_TO_FAVOURITE_ERROR'] = 'Не удалось добавить промпт "#NAME#" в избранное';
+$MESS['AI_COPILOT_ADD_PROMPT_TO_FAVOURITE_ERROR'] = 'Не удалось добавить промпт "#NAME#" в избранное';
+$MESS['AI_COPILOT_REMOVE_PROMPT_FROM_FAVOURITE_ERROR'] = 'Не удалось удалить промпт "#NAME#" из избранное';
+$MESS['AI_COPILOT_UPDATE_MENU_ERROR'] = 'Не удалось обновить меню копилота';
+
+
+$MESS['AI_COPILOT_GENERAL_MENU_ROLE_SUBTITLE'] = 'Изменить роль';
+$MESS['AI_COPILOT_RESULT_MENU_ROLE_SUBTITLE'] = 'Ответ этой роли';
+$MESS['AI_COPILOT_ROLES_DIALOG_TITLE'] = 'Выбрать роль';
+
+$MESS['AI_COPILOT_MENU_ITEM_AI_PROMPT_LIB'] = 'Библиотека промптов';

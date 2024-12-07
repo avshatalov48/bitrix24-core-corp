@@ -115,6 +115,26 @@ final class StageProvider
 		return $result;
 	}
 
+	public function getKanbanInfoByWorkMode(int $projectId, int $taskId, string $workMode): Result
+	{
+		if ($workMode === StagesTable::WORK_MODE_GROUP)
+		{
+			return $this->getProjectStages($projectId, $taskId);
+		}
+
+		if ($workMode === StagesTable::WORK_MODE_TIMELINE)
+		{
+			return $this->getDeadlineStages($projectId);
+		}
+
+		if ($workMode === StagesTable::WORK_MODE_USER)
+		{
+			return $this->getPlannerStages($projectId);
+		}
+
+		return (new Result())->setData([]);
+	}
+
 	public function addStage(?int $projectId, string $name, string $color, ?int $afterId = null): Result
 	{
 		$result = new Result();
@@ -466,8 +486,9 @@ final class StageProvider
 			);
 		}
 
-		foreach ($stages as $stage)
+		foreach ($stages as $index => $stage)
 		{
+			$isFirstStage = ($index === array_key_first($stages));
 			$count = 0;
 
 			if (!empty($stage['ADDITIONAL_FILTER']))
@@ -524,6 +545,7 @@ final class StageProvider
 
 			$stagesWithCounters[] = Stage::make([
 				'id' => $stage['ID'],
+				'aliasId' => $isFirstStage ? 0 : $stage['ID'],
 				'name' => $stage['TITLE'],
 				'color' => '#' . $stage['COLOR'],
 				'statusId' => (string)$stage['SYSTEM_TYPE'],
@@ -599,5 +621,26 @@ final class StageProvider
 		}
 
 		return true;
+	}
+
+	public function getProjectTaskStageId(int $taskId, int $projectId): int
+	{
+		$taskItem = new \CTaskItem($taskId, $this->userId);
+		if (!$taskItem->checkCanRead())
+		{
+			return 0;
+		}
+
+		$taskData = $taskItem->getData();
+		$stageId = (int)($taskData['STAGE_ID'] ?? 0);
+		if ($stageId === 0)
+		{
+			return StagesTable::getStageIdByCode(
+				$stageId,
+				$projectId
+			);
+		}
+
+		return $stageId;
 	}
 }

@@ -60,7 +60,7 @@ else
 if ($_REQUEST["do_show_wizard"] == "Y")
 {
 	?>
-	<script type="text/javascript">
+	<script>
 		BX.ready(function(){bxExtSaleWizard.Start('<?= SITE_ID ?>', 2, <?= intval($_REQUEST["do_show_wizard_id"]) ?>);});
 	</script>
 	<?

@@ -262,34 +262,29 @@ class DynamicController extends BaseController
 		);
 	}
 
-	/**
-	 * @param int $entityID
-	 * @param array $params
-	 * @return bool
-	 */
-	public function recover($entityID, array $params = []): bool
+	public function recover(int $entityID, array $params = []): ?int
 	{
 		if($entityID <= 0)
 		{
-			return false;
+			return null;
 		}
 
 		$recyclingEntityID = (int)($params['ID'] ?? 0);
 		if($recyclingEntityID <= 0)
 		{
-			return false;
+			return null;
 		}
 
 		$slots = ($params['SLOTS'] ?? null);
 		if(!is_array($slots))
 		{
-			return false;
+			return null;
 		}
 
 		$fields = ($slots['FIELDS'] ?? null);
 		if(!(is_array($fields) && !empty($fields)))
 		{
-			return false;
+			return null;
 		}
 
 		unset($fields['ID'], $fields['COMPANY_ID'], $fields['CONTACT_ID'], $fields['CONTACT_IDS'], $fields['PRODUCT_ROWS']);
@@ -310,13 +305,13 @@ class DynamicController extends BaseController
 		$result = $operation->launch();
 		if (!$result->isSuccess())
 		{
-			return false;
+			return null;
 		}
 
 		$newEntityID = $item->getId();
 		if($newEntityID <= 0)
 		{
-			return false;
+			return null;
 		}
 
 		//region Relation
@@ -342,7 +337,7 @@ class DynamicController extends BaseController
 		Relation::deleteJunks();
 		//endregion
 
-		return true;
+		return $newEntityID;
 	}
 
 	protected function recoverDependenceElements(int $recyclingEntityID, int $newEntityID): void

@@ -54,6 +54,7 @@ jn.define('crm/type/id', (require, exports, module) => {
 		End: 192,
 		SuspendedStart: 192,
 		SuspendedEnd: 256,
+		UnlimitedTypeStart: 1030,
 	};
 
 	module.exports = { TypeId, DynamicTypeId };

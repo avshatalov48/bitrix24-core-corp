@@ -70,8 +70,6 @@ $needle = '';
 $enableSearch = $arResult['ENABLE_SEARCH'] = isset($_REQUEST['SEARCH']) && mb_strtoupper($_REQUEST['SEARCH']) === 'Y';
 if($enableSearch)
 {
-	// decode encodeURIComponent params
-	CUtil::JSPostUnescape();
 	$needle = isset($_REQUEST['NEEDLE']) ? $_REQUEST['NEEDLE'] : '';
 }
 

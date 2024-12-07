@@ -258,7 +258,7 @@ else:
 								$dataInputID = "CONTACT_{$arParams['FORM_ID']}_{$itemLocality['NAME']}";
 								?><input class="crm-offer-item-inp" id="<?=$searchInputID?>" name="CONTACT_<?=$itemName?>" type="text" value="<?=htmlspecialcharsEx($itemValue)?>" />
 								<input type="hidden" id="<?=$dataInputID?>" name="CONTACT_<?=$itemLocality['NAME']?>" value="<?=htmlspecialcharsbx($itemLocality['VALUE'])?>"/>
-								<script type="text/javascript">
+								<script>
 									BX.ready(
 										function()
 										{
@@ -305,7 +305,7 @@ endforeach;
 </table>
 </div><?
 if(!empty($arUserSearchFields)):
-?><script type="text/javascript">
+?><script>
 	BX.ready(
 		function()
 		{<?

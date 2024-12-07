@@ -705,10 +705,17 @@ class CrmManager extends Base
 			return false;
 		}
 
-		$paymentLink = LandingManager::getInstance()->getUrlInfoByOrder(
+		$urlInfoByOrder = LandingManager::getInstance()->getUrlInfoByOrder(
 			$order,
 			['paymentId' => $payment->getId()]
-		)['shortUrl'];
+		);
+
+		if (!isset($urlInfoByOrder['shortUrl']))
+		{
+			return false;
+		}
+
+		$paymentLink = $urlInfoByOrder['shortUrl'];
 
 		$messageBody = str_replace(
 			'#LINK#',
@@ -954,6 +961,7 @@ class CrmManager extends Base
 				$manager->bindChannelToOrder($order, $channel);
 
 				static::addAnalyticsOnSendOrderBySms($order);
+				static::addAnalyticsOnSendPaymentBySms($payment);
 			}
 		}
 	}
@@ -978,9 +986,21 @@ class CrmManager extends Base
 	{
 		$constructor = new Analytics\LabelConstructor();
 
+		// legacy analytics, to be removed later
 		AddEventToStatFile('salescenter', 'orderSend', $order->getId(), $constructor->getContextLabel($order), 'context');
 		AddEventToStatFile('salescenter', 'orderSend', $order->getId(), $constructor->getChannelLabel($order), 'channel');
 		AddEventToStatFile('salescenter', 'orderSend', $order->getId(), $constructor->getChannelNameLabel($order), 'channel_name');
+	}
+
+	protected static function addAnalyticsOnSendPaymentBySms(Order\Payment $payment)
+	{
+		$constructor = new Analytics\LabelConstructor();
+
+		$event = $constructor->getAnalyticsEventForPayment('payment_link_sent', $payment);
+		$channelName = $constructor->getChannelNameLabel($payment->getOrder());
+		$event->setP1('provider_' . $channelName);
+
+		$event->send();
 	}
 
 	public function saveSmsTemplate($template, $mode = self::SMS_MODE_PAYMENT)

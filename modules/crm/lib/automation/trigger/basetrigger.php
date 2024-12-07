@@ -223,10 +223,10 @@ class BaseTrigger extends \Bitrix\Bizproc\Automation\Trigger\BaseTrigger
 			$trigger->setInputData($inputData);
 		}
 
-		return $trigger->send();
+		return $trigger->send($entityId);
 	}
 
-	public function send()
+	public function send($entityId)
 	{
 		$applied = false;
 		$triggers = $this->getPotentialTriggers();

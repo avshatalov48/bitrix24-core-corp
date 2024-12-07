@@ -38,6 +38,20 @@ final class StageService
 		return count($result) === count($stages);
 	}
 
+	/**
+	 * @throws SystemException
+	 * @throws ArgumentException
+	 */
+	public function isStagesCreatedByNames(array $stageNames, int $documentCategoryId): bool
+	{
+		$result = StatusTable::query()
+			->where('ENTITY_ID', $this->getStageEntityId($documentCategoryId))
+			->whereIn('NAME', $stageNames)->fetchAll()
+		;
+
+		return count($result) === count($stageNames);
+	}
+
 	public function removeByStage(string $stage, int $documentCategoryId): bool
 	{
 		$status = Container::getInstance()->getSignB2eStatusService()->makeName($documentCategoryId, $stage);
@@ -71,25 +85,9 @@ final class StageService
 		{
 			$result = [
 				'ID' => $stage->getId(),
-				'SORT' => $stage->getSort()
+				'SORT' => $stage->getSort(),
+				'NAME' => $stage->getName()
 			];
-		}
-
-		return $result;
-	}
-
-	public function removeByStatusId(string $status): bool
-	{
-		$result = false;
-		$stage = StatusTable::query()
-			->where('STATUS_ID', $status)
-			->setLimit(1)
-			->fetchObject()
-		;
-		if ($stage)
-		{
-			$deleteResult = $stage->delete();
-			$result = $deleteResult->isSuccess();
 		}
 
 		return $result;

@@ -1112,6 +1112,7 @@ class Support24 extends Network implements MenuBot, SupportBot, SupportQuestion
 
 		// welcome message
 		$message = '';
+		$isPositiveWelcome = false;
 		if (
 			self::isActivePartnerSupport()
 			&& !self::isUserIntegrator($messageFields['USER_ID'])
@@ -1124,12 +1125,14 @@ class Support24 extends Network implements MenuBot, SupportBot, SupportQuestion
 			if (self::isUserIntegrator($messageFields['USER_ID']))
 			{
 				$message = self::getMessage('WELCOME_INTEGRATOR');
+				$isPositiveWelcome = true;
 			}
 			else if (self::isActiveFreeSupport())
 			{
 				if (self::isActiveFreeSupportForUser($messageFields['USER_ID']))
 				{
 					$message = self::getMessage('WELCOME');
+					$isPositiveWelcome = true;
 				}
 				else
 				{
@@ -1146,16 +1149,19 @@ class Support24 extends Network implements MenuBot, SupportBot, SupportQuestion
 			if (self::isUserIntegrator($messageFields['USER_ID']))
 			{
 				$message = self::getMessage('WELCOME_INTEGRATOR');
+				$isPositiveWelcome = true;
 			}
 			else if (self::isActivePaidSupportForUser($messageFields['USER_ID']))
 			{
 				$message = self::getMessage('WELCOME');
+				$isPositiveWelcome = true;
 			}
 			else
 			{
 				$message = self::getMessage('WELCOME_LIMITED');
 			}
 		}
+
 		if (!empty($message))
 		{
 			\CUserOptions::setOption(
@@ -1166,11 +1172,14 @@ class Support24 extends Network implements MenuBot, SupportBot, SupportQuestion
 				$messageFields['USER_ID']
 			);
 
-			self::sendMessage([
-				'DIALOG_ID' => $messageFields['USER_ID'],
-				'MESSAGE' => $message,
-				'URL_PREVIEW' => 'N'
-			]);
+			if (!$isPositiveWelcome || $joinFields['CHAT_ENTITY_TYPE'] !== self::CHAT_ENTITY_TYPE)
+			{
+				self::sendMessage([
+					'DIALOG_ID' => $messageFields['USER_ID'],
+					'MESSAGE' => $message,
+					'URL_PREVIEW' => 'N'
+				]);
+			}
 		}
 
 		if (
@@ -1241,6 +1250,11 @@ class Support24 extends Network implements MenuBot, SupportBot, SupportQuestion
 	 */
 	protected static function checkMessageRestriction(array $messageFields): bool
 	{
+		if (!self::isUserAdmin(self::getCurrentUser()->getId()) && !self::isUserIntegrator(self::getCurrentUser()->getId()))
+		{
+			return false;
+		}
+
 		$bot = Im\Bot::getCache($messageFields['BOT_ID']);
 		if (mb_substr($bot['CODE'], 0, 7) != parent::BOT_CODE)
 		{
@@ -2948,7 +2962,7 @@ class Support24 extends Network implements MenuBot, SupportBot, SupportQuestion
 
 			$sessionActive = (
 				$session->getSessionId() > 0
-				&& $session->getParam('DATE_FINISH') === null
+				&& $session->getParam('STATUS') !== self::MULTIDIALOG_STATUS_CLOSE
 			);
 
 			if (!$sessionActive)// don't hide active session

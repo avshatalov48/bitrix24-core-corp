@@ -13,7 +13,7 @@
 
 ?>
 
-<script type="text/javascript">
+<script>
 
 BX.INTRANET_USTAT_LAST_PARAMETERS = null;
 
@@ -290,7 +290,7 @@ function loadIntranetUstatRating(parameters)
 </script>
 
 
-<script type="text/javascript">
+<script>
 
 var pulse_loading = {
 

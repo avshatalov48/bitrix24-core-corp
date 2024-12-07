@@ -5,9 +5,9 @@ use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Timeline\Tasks\Controller;
 use Bitrix\Main\Application;
 use Bitrix\Main\ArgumentException;
+use Bitrix\Main\Config\Option;
 use Bitrix\Main\Loader;
 use Bitrix\Tasks\Integration\CRM\Fields\Mapper;
-use Bitrix\Tasks\Internals\Task\ScenarioTable;
 use Bitrix\Tasks\Internals\TaskObject;
 use Bitrix\Tasks\Provider\TaskList;
 use Bitrix\Tasks\Provider\TaskQuery;
@@ -16,6 +16,7 @@ class TaskRepository implements BackGroundJob
 {
 	private int $taskId;
 	private int $userId;
+	private bool $isImmediately;
 	private Controller $controller;
 	private Application $application;
 	private ?TaskObject $task = null;
@@ -30,8 +31,8 @@ class TaskRepository implements BackGroundJob
 
 		$this->taskId = $taskId;
 		$this->userId = $userId;
-		$this->controller = Controller::getInstance();
-		$this->application = Application::getInstance();
+
+		$this->init();
 	}
 
 	/**
@@ -63,7 +64,6 @@ class TaskRepository implements BackGroundJob
 		array $payload,
 		string $endpoint = '',
 		int $priority = 0,
-		bool $isImmediately = false
 	): void
 	{
 		if (!$endpoint)
@@ -71,8 +71,8 @@ class TaskRepository implements BackGroundJob
 			return;
 		}
 		if (
-			(isset($payload['IMMEDIATELY']) && $payload['IMMEDIATELY'] === true)
-			|| $isImmediately
+			$this->isImmediately
+			&& ($payload['RUN_IN_BACKGROUND'] ?? false) !== true
 		)
 		{
 			$this->controller->$endpoint($this->getBindings(), $payload);
@@ -172,5 +172,12 @@ class TaskRepository implements BackGroundJob
 		$this->bindings = new Bindings(...$bindings);
 
 		return $this->bindings;
+	}
+
+	private function init()
+	{
+		$this->controller = Controller::getInstance();
+		$this->application = Application::getInstance();
+		$this->isImmediately = Option::get('tasks', 'tasks_crm_immediately_event', 'Y') === 'Y';
 	}
 }

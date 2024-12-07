@@ -256,9 +256,7 @@ class ResultParameters
 							continue;
 						}
 
-						$placeholders[$queryParamKey] = Encoding::convertEncoding(
-							$queryParamVal, 'UTF-8', SITE_CHARSET
-						);
+						$placeholders[$queryParamKey] = $queryParamVal;
 					}
 				}
 

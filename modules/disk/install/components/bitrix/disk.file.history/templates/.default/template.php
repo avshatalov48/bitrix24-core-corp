@@ -65,7 +65,7 @@ CJSCore::Init([
 
 </div>
 
-<script type="text/javascript">
+<script>
 	BX(function () {
 
 		BX.Disk['FileHistoryComponent_<?= $component->getComponentId() ?>'] = new BX.Disk.FileHistoryComponent({

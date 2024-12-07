@@ -1,11 +1,11 @@
-BX.namespace("BX.Crm");
+BX.namespace('BX.Crm');
 
-if(typeof(BX.Crm.OrderPaymentCheckList) === "undefined")
+if(typeof(BX.Crm.OrderPaymentCheckList) === 'undefined')
 {
 	BX.Crm.OrderPaymentCheckList = function()
 	{
-		this._id = "";
-		this._settings = "";
+		this._id = '';
+		this._settings = '';
 	};
 
 	BX.Crm.OrderPaymentCheckList.prototype =
@@ -61,6 +61,16 @@ if(typeof(BX.Crm.OrderPaymentCheckList) === "undefined")
 
 	BX.Crm.OrderPaymentCheckList.refreshCheck = function(id, settings)
 	{
+		this._ajaxAction(id, settings, 'REFRESH_CHECK');
+	};
+
+	BX.Crm.OrderPaymentCheckList.reprintCheck = function(id, settings)
+	{
+		this._ajaxAction(id, settings, 'REPRINT_CHECK');
+	};
+
+	BX.Crm.OrderPaymentCheckList._ajaxAction = function(id, settings, action)
+	{
 		var _settings = settings ? settings : {};
 		var _ajaxUrl = BX.type.isNotEmptyString(_settings.AJAX_URL) ? _settings.AJAX_URL : '';
 		var _gridId = BX.type.isNotEmptyString(_settings.GRID_ID) ? _settings.GRID_ID : '';
@@ -71,7 +81,7 @@ if(typeof(BX.Crm.OrderPaymentCheckList) === "undefined")
 		}
 
 		var data = {
-			ACTION: 'REFRESH_CHECK',
+			ACTION: action,
 			ID: id
 		};
 
@@ -95,6 +105,7 @@ if(typeof(BX.Crm.OrderPaymentCheckList) === "undefined")
 				onfailure: function (data)
 				{
 				}
-			});
-	}
+			}
+		);
+	};
 }

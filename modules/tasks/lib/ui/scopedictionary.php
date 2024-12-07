@@ -14,4 +14,5 @@ class ScopeDictionary
 	public const SCOPE_TASKS_KANBAN_TIMELINE = 'tasks_kanban_timeline';
 	public const SCOPE_TASKS_KANBAN_SPRINT = 'tasks_kanban_sprint';
 	public const SCOPE_TASKS_PLANNING = 'tasks_planning';
+	public const SCOPE_TASKS_FLOW = 'tasks_flow';
 }

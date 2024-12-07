@@ -66,6 +66,12 @@ jn.define('im/messenger/controller/dialog/lib/mention/manager', (require, export
 
 			/**
 			 * @private
+			 * @type {number}
+			 */
+			this.focusIndexPosition = 1;
+
+			/**
+			 * @private
 			 * @type {boolean}
 			 */
 			this.isDialogShow = true;
@@ -75,6 +81,13 @@ jn.define('im/messenger/controller/dialog/lib/mention/manager', (require, export
 			 * @type {Array<{id: string|number, type: string}>}
 			 */
 			this.externalMentionQueue = [];
+			this.bindMethods();
+			this.initProvider();
+			this.subscribeEvents();
+		}
+
+		bindMethods()
+		{
 			/**
 			 * @private
 			 * @type {function}
@@ -90,9 +103,6 @@ jn.define('im/messenger/controller/dialog/lib/mention/manager', (require, export
 			 * @type {function}
 			 */
 			this.externalMention = this.onExternalMention.bind(this);
-
-			this.initProvider();
-			this.subscribeEvents();
 		}
 
 		/**
@@ -141,6 +151,7 @@ jn.define('im/messenger/controller/dialog/lib/mention/manager', (require, export
 		{
 			this.hideLoader();
 			this.closeMentionPanel();
+			this.recoverFocusIndexPosition();
 		}
 
 		/**
@@ -183,6 +194,11 @@ jn.define('im/messenger/controller/dialog/lib/mention/manager', (require, export
 			this.lastQuerySymbolPosition = null;
 
 			this.provider.closeSession();
+		}
+
+		recoverFocusIndexPosition()
+		{
+			this.focusIndexPosition = 1;
 		}
 
 		/**
@@ -249,7 +265,6 @@ jn.define('im/messenger/controller/dialog/lib/mention/manager', (require, export
 			logger.log('Mention.onChangeText', text, inputCharacters, cursorPosition);
 			if (this.isMentionProcessed)
 			{
-				logger.log(text, inputCharacters, cursorPosition);
 				this.onProcessedMentionChangeText(text, inputCharacters, cursorPosition);
 
 				return;
@@ -266,6 +281,7 @@ jn.define('im/messenger/controller/dialog/lib/mention/manager', (require, export
 		 */
 		async onProcessedMentionChangeText(text, inputCharacters, cursorPosition)
 		{
+			logger.log('Mention.onProcessedMentionChangeText', text, inputCharacters, cursorPosition);
 			if (this.checkToClose(text, inputCharacters, cursorPosition))
 			{
 				logger.log('Mention: close panel');
@@ -397,8 +413,13 @@ jn.define('im/messenger/controller/dialog/lib/mention/manager', (require, export
 				bbCodeText = this.wrapTextInBBCode(item.title, BBCode.user, item.id);
 			}
 
-			const fromIndex = this.mentionSymbolPosition;
-			const toIndex = (this.lastQuerySymbolPosition ?? this.mentionSymbolPosition) + 1;
+			const fromIndex = this.mentionSymbolPosition ?? this.view.textField.getCursorIndex();
+			let toIndex = (this.lastQuerySymbolPosition ?? this.mentionSymbolPosition) + this.focusIndexPosition;
+
+			if (toIndex < fromIndex)
+			{
+				toIndex = fromIndex;
+			}
 
 			logger.warn('Mention: replace text', fromIndex, toIndex, bbCodeText);
 
@@ -412,13 +433,18 @@ jn.define('im/messenger/controller/dialog/lib/mention/manager', (require, export
 		 * @param {string|number} id
 		 * @param {string} type
 		 */
-		onExternalMention(id, type)
+		onExternalMention(id, type, fromDialogId = null)
 		{
+			if (this.dialogId !== fromDialogId)
+			{
+				return;
+			}
+
 			logger.log('Mention.onExternalMention', id, type, this.isDialogShow);
 
 			if (!this.isDialogShow)
 			{
-				this.externalMentionQueue.push({ id, type });
+				this.externalMentionQueue.push({ id, type, fromDialogId });
 
 				return;
 			}
@@ -464,7 +490,7 @@ jn.define('im/messenger/controller/dialog/lib/mention/manager', (require, export
 			if (this.externalMentionQueue.length > 0)
 			{
 				this.externalMentionQueue.forEach((externalMention) => {
-					this.onExternalMention(externalMention.id, externalMention.type);
+					this.onExternalMention(externalMention.id, externalMention.type, externalMention.fromDialogId);
 				});
 
 				this.externalMentionQueue = [];
@@ -505,6 +531,7 @@ jn.define('im/messenger/controller/dialog/lib/mention/manager', (require, export
 				imageUrl: avatarTitleParams.getAvatarUrl(),
 				imageColor: avatarTitleParams.getColor(),
 				titleColor: chatTitleParams.getTitleColor(),
+				isSuperEllipseIcon: avatarTitleParams.getIsSuperEllipseIcon(),
 				testId: itemId.toString(),
 			};
 		}

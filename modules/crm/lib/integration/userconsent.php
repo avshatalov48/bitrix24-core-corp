@@ -179,7 +179,7 @@ class UserConsent
 					{
 						$data['COMPANY_NAME'] = $reqData['RQ_NAME'];
 					}
-					$data['COMPANY_NAME'] = Text::replace($data['COMPANY_NAME'], $reqData);
+					$data['COMPANY_NAME'] = Text::replace($data['COMPANY_NAME'] ?? '', $reqData);
 
 					if (isset($reqData['COMPANY_ADDRESS']) && $reqData['COMPANY_ADDRESS'])
 					{

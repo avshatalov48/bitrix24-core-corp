@@ -4,8 +4,9 @@
 jn.define('tasks/layout/checklist/list/src/buttons/button-add-item', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const { Color } = require('tokens');
-	const { IconView, iconTypes } = require('ui-system/blocks/icon');
+	const { IconView, Icon } = require('ui-system/blocks/icon');
 	const { PropTypes } = require('utils/validation');
+	const { Text2 } = require('ui-system/typography/text');
 	const { ChecklistItemView } = require('tasks/layout/checklist/list/src/layout/item-view');
 
 	const ICON_SIZE = 24;
@@ -43,16 +44,14 @@ jn.define('tasks/layout/checklist/list/src/buttons/button-add-item', (require, e
 						},
 					},
 					IconView({
-						icon: iconTypes.outline.plus,
-						iconColor: Color.base4,
-						iconSize: ICON_SIZE,
+						icon: Icon.PLUS,
+						color: Color.base4,
+						size: ICON_SIZE,
 					}),
-					Text({
+					Text2({
 						style: {
 							marginLeft: 10,
-							fontSize: 16,
-							color: Color.base4,
-							fontWeight: '400',
+							color: Color.base4.toHex(),
 						},
 						text: Loc.getMessage('TASKSMOBILE_LAYOUT_CHECKLIST_ADD_ITEM_TEXT'),
 					}),

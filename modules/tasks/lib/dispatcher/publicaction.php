@@ -87,10 +87,7 @@ abstract class PublicAction
 	 */
 	protected function getRequest()
 	{
-		\CUtil::JSPostUnescape();
-
 		$request = Context::getCurrent()->getRequest();
-		$request->addFilter(new \Bitrix\Main\Web\PostDecodeFilter);
 		return $request->getPostList();
 	}
 

@@ -1,8 +1,8 @@
 <?
 $MESS["TASKS_STATUS_1"] = "Новая";
-$MESS["TASKS_STATUS_2"] = "Ждет выполнения";
+$MESS["TASKS_STATUS_2"] = "Ждёт выполнения";
 $MESS["TASKS_STATUS_3"] = "Выполняется";
-$MESS["TASKS_STATUS_4"] = "Ждет контроля";
+$MESS["TASKS_STATUS_4"] = "Ждёт контроля";
 $MESS["TASKS_STATUS_5"] = "Завершена";
 $MESS["TASKS_STATUS_6"] = "Отложена";
 $MESS["TASKS_STATUS_7"] = "Отклонена";
@@ -18,9 +18,9 @@ $MESS["TASKS_SIDEBAR_START_DATE"] = "с";
 $MESS["TASKS_TASK_TITLE_LABEL"] = "Задача";
 $MESS["TASKS_STATUS_OVERDUE"] = "Просрочена";
 $MESS["TASKS_STATUS_NEW"] = "Новая";
-$MESS["TASKS_STATUS_ACCEPTED"] = "Ждет выполнения";
+$MESS["TASKS_STATUS_ACCEPTED"] = "Ждёт выполнения";
 $MESS["TASKS_STATUS_IN_PROGRESS"] = "Выполняется";
-$MESS["TASKS_STATUS_WAITING"] = "Ждет контроля";
+$MESS["TASKS_STATUS_WAITING"] = "Ждёт контроля";
 $MESS["TASKS_STATUS_COMPLETED"] = "Завершена";
 $MESS["TASKS_STATUS_DELAYED"] = "Отложена";
 $MESS["TASKS_STATUS_DECLINED"] = "Отклонена";

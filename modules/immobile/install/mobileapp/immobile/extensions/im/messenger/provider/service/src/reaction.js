@@ -7,7 +7,6 @@ jn.define('im/messenger/provider/service/reaction', (require, exports, module) =
 	const { Logger } = require('im/messenger/lib/logger');
 	const { runAction } = require('im/messenger/lib/rest');
 
-	const { DateHelper } = require('im/messenger/lib/helper');
 	class ReactionService
 	{
 		static getReactionRequestLimit()

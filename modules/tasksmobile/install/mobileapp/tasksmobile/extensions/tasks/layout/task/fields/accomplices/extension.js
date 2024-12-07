@@ -96,6 +96,7 @@ jn.define('tasks/layout/task/fields/accomplices', (require, exports, module) => 
 					multiple: true,
 					value: Object.keys(this.state.accomplices),
 					config: {
+						canOpenUserList: true,
 						mode: UserFieldMode.ICONS,
 						useLettersForEmptyAvatar: true,
 						deepMergeStyles: this.props.deepMergeStyles,

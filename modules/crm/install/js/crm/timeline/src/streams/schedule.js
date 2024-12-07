@@ -1,22 +1,20 @@
+import { ConfigurableItem, StreamType } from 'crm.timeline.item';
+import { DatetimeConverter } from 'crm.timeline.tools';
 import { bindOnce, Dom, Tag } from 'main.core';
-import Stream from "../stream";
-import Activity from "../items/scheduled/activity";
-import Email from "../items/scheduled/email";
-import Call from "../items/scheduled/call";
-import CallTracker from "../items/scheduled/call-tracker";
-import Meeting from "../items/scheduled/meeting";
-import Task from "../items/scheduled/task";
-import WebForm from "../items/scheduled/webform";
-import Wait from "../items/scheduled/wait";
-import Request from "../items/scheduled/request";
-import Rest from "../items/scheduled/rest";
-import OpenLine from "../items/scheduled/openline";
-import Zoom from "../items/scheduled/zoom";
-import ItemNew from "../animations/item-new";
-import {ConfigurableItem} from "crm.timeline.item";
-import {StreamType} from 'crm.timeline.item';
-import {DatetimeConverter} from "crm.timeline.tools";
 import Expand from '../animations/expand';
+import ItemNew from '../animations/item-new';
+import Call from '../items/scheduled/call';
+import CallTracker from '../items/scheduled/call-tracker';
+import Email from '../items/scheduled/email';
+import Meeting from '../items/scheduled/meeting';
+import OpenLine from '../items/scheduled/openline';
+import Request from '../items/scheduled/request';
+import Rest from '../items/scheduled/rest';
+import Task from '../items/scheduled/task';
+import Wait from '../items/scheduled/wait';
+import WebForm from '../items/scheduled/webform';
+import Zoom from '../items/scheduled/zoom';
+import Stream from '../stream';
 
 /** @memberof BX.Crm.Timeline.Streams */
 export default class Schedule extends Stream

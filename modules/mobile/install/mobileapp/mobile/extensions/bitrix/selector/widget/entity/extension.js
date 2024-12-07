@@ -2,6 +2,7 @@
 	const require = (ext) => jn.require(ext);
 
 	const { EntitySelectorWidget } = require('selector/widget');
+	const { Type } = require('type');
 
 	/**
 	 * @class BaseSelectorEntity
@@ -19,11 +20,21 @@
 				widgetParams,
 				allowMultipleSelection,
 				closeOnSelect,
+				leftButtons,
+			} = props;
+			const {
+				selectOptions,
+				canUseRecent,
+				events,
+				initSelectedIds,
+				undeselectableIds,
+				sectionTitles,
+				shouldRenderHiddenItemsInList,
 			} = props;
 
 			if (!Array.isArray(entityIds) || entityIds.length === 0)
 			{
-				entityIds = [this.getEntityId()];
+				entityIds = Array.isArray(this.getEntityId()) ? this.getEntityId() : [this.getEntityId()];
 			}
 
 			provider = this.prepareProvider(provider, entityIds);
@@ -41,20 +52,27 @@
 				closeOnSelect = true;
 			}
 
+			leftButtons = Type.isArrayFilled(leftButtons) ? leftButtons : [];
+
 			const entitySelectorWidget = new EntitySelectorWidget({
 				entityIds,
 				provider,
 				searchOptions,
 				createOptions,
-				selectOptions: props.selectOptions || {},
-				canUseRecent: props.canUseRecent,
+				selectOptions: selectOptions || {},
+				canUseRecent,
 				allowMultipleSelection,
 				closeOnSelect,
 				widgetParams,
-				events: props.events || {},
-				initSelectedIds: props.initSelectedIds || [],
-				undeselectableIds: props.undeselectableIds || [],
+				events: events || {},
+				initSelectedIds: initSelectedIds || [],
+				undeselectableIds: undeselectableIds || [],
 				returnKey: BaseSelectorEntity.getReturnKey(),
+				scopes: this.getScopes(),
+				sectionTitles,
+				shouldRenderHiddenItemsInList,
+				animation: this.getPickerAnimation(),
+				leftButtons,
 			});
 
 			entitySelectorWidget.provider.setHandlerPrepareItem(this.prepareItemForDrawing);
@@ -77,9 +95,11 @@
 			}
 
 			provider.options = {
-				entities: this.getEntitiesOptions(provider.options, entityIds),
+				...provider.options,
+				entities: this.getEntitiesOptions(provider.options, entityIds, provider.filters),
 				useRawResult: this.useRawResult(),
 				useLettersForEmptyAvatar: Boolean(provider?.options?.useLettersForEmptyAvatar),
+				recentItemsLimit: provider?.options?.recentItemsLimit,
 			};
 
 			return provider;
@@ -89,9 +109,10 @@
 		{
 			widgetParams = widgetParams || {};
 
-			if (!widgetParams.title)
+			if (!widgetParams.title && !widgetParams.titleParams?.text)
 			{
-				widgetParams.title = this.getTitle();
+				widgetParams.titleParams = widgetParams.titleParams || {};
+				widgetParams.titleParams.text = this.getTitle();
 			}
 
 			return widgetParams;
@@ -180,15 +201,16 @@
 			return createOptions;
 		}
 
-		static getEntitiesOptions(providerOptions, entityIds)
+		static getEntitiesOptions(providerOptions, entityIds, providerFilters)
 		{
-			return [{
-				id: entityIds[0],
+			return entityIds.map((entityId) => ({
+				id: entityId,
 				options: providerOptions || {},
+				filters: providerFilters || {},
 				searchable: true,
 				dynamicLoad: true,
 				dynamicSearch: true,
-			}];
+			}));
 		}
 
 		static getContext()
@@ -279,7 +301,26 @@
 		{
 			return false;
 		}
+
+		static getScopes()
+		{
+			return [];
+		}
+
+		static getPickerAnimation()
+		{
+			return 'none';
+		}
 	}
 
 	this.BaseSelectorEntity = BaseSelectorEntity;
+
+	/**
+	 * @module selector/widget/entity
+	 */
+	jn.define('selector/widget/entity', (require, exports, module) => {
+		module.exports = {
+			BaseSelectorEntity: this.BaseSelectorEntity,
+		};
+	});
 })();

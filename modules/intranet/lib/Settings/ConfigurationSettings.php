@@ -7,6 +7,7 @@ use Bitrix\Intranet\Settings\Controls\Selector;
 use Bitrix\Intranet\Settings\Controls\Switcher;
 use Bitrix\Intranet\Settings\Controls\Text;
 use Bitrix\Intranet\Settings\Search\SearchEngine;
+use Bitrix\Bitrix24\Portal;
 use Bitrix\Main\Error;
 use Bitrix\Main\ErrorCollection;
 use Bitrix\Main\Loader;
@@ -293,7 +294,7 @@ class ConfigurationSettings extends AbstractSettings
 			'settings-configuration-field-is_format_24_hours',
 			'isFormat24Hour',
 			Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_TIME_FORMAT24'),
-			$this->is24HourFormat($currentSite),
+			IsAmPmMode() ? 'N' : 'Y',
 			[
 				'hintTitle' => Loc::getMessage('INTRANET_SETTINGS_FIELD_HINT_TITLE_TIME_FORMAT24'),
 				'on' => $this->get24HourTime(),
@@ -390,15 +391,15 @@ class ConfigurationSettings extends AbstractSettings
 			helpDesk: 'redirect=detail&code=17697808',
 		);
 
-
-		$data["collectGeoData"] = new Switcher(
+		//TODO: commented on issue task#488392
+		/*$data["collectGeoData"] = new Switcher(
 			'settings-configuration-field-collectGeoData',
 			'collectGeoData',
 			Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_COLLECT_GEO_DATA'),
 			$this->getCollectGeoData(),
 			['on' => Loc::getMessage('INTRANET_SETTINGS_FIELD_HINT_COLLECT_GEO_DATA_CLICK_ON_MSGVER_1')],
 			helpDesk: 'redirect=detail&code=18213320',
-		);
+		);*/
 
 		$data["showSettingsAllUsers"] = $this->getShowSettingsAllUsers();
 		//endregion
@@ -422,7 +423,7 @@ class ConfigurationSettings extends AbstractSettings
 		{
 			$data['sectionMapsInCrm'] = new Section(
 				'settings-configuration-section-maps_in_crm',
-				Loc::getMessage('INTRANET_SETTINGS_SECTION_TITLE_CONFIGURATION_MAPS'),
+				Loc::getMessage('INTRANET_SETTINGS_SECTION_TITLE_CONFIGURATION_MAPS_LIST'),
 				'ui-icon-set --crm-map',
 				false
 			);
@@ -441,6 +442,26 @@ class ConfigurationSettings extends AbstractSettings
 			'ui-icon-set --apps',
 			false
 		);
+
+		if ($this->isBitrix24 && Option::get('bitrix24', 'is_delete_portal_feature_enabled', 'N') === 'Y')
+		{
+			$validator = new Portal\Remove\RemoveValidator();
+
+			$data['sectionDeletePortal'] = new Section(
+				'settings-configuration-section-delete-portal',
+				Loc::getMessage('INTRANET_SETTINGS_SECTION_TITLE_DELETE_PORTAL'),
+				'ui-icon-set --trash-bin',
+				false
+			);
+
+			$data['deletePortalOptions'] = [
+				'isEmployeesLeft' => \Bitrix\Bitrix24\License\UserActive::getInstance()->getCount() > 1,
+				'portalUrl' => \Bitrix\Bitrix24\PortalSettings::getInstance()->getDomain()->getHostname(),
+				'isFreeLicense' => \CBitrix24::isLicenseNeverPayed(),
+				'checkWord' => $validator->getCheckWord(),
+				'mailForRequest' => $validator->getMailToRequest(),
+			];
+		}
 
 		return new static($data);
 	}
@@ -721,13 +742,6 @@ class ConfigurationSettings extends AbstractSettings
 		return $this->getCurrentDateTime()->format("g:i A");
 	}
 
-	private function is24HourFormat(array $currentSite): string
-	{
-		$currentTimeFormat = str_replace($currentSite["FORMAT_DATE"]." ", "", $currentSite["FORMAT_DATETIME"]);
-
-		return $currentTimeFormat === 'HH:MI:SS' ? 'Y' : 'N';
-	}
-
 	public function find(string $query): array
 	{
 		$searchSections = [
@@ -739,7 +753,7 @@ class ConfigurationSettings extends AbstractSettings
 
 		if (!empty($this->getMapsProviderCRM()))
 		{
-			$searchSections['settings-configuration-section-maps_in_crm'] = Loc::getMessage('INTRANET_SETTINGS_SECTION_TITLE_CONFIGURATION_MAPS');
+			$searchSections['settings-configuration-section-maps_in_crm'] = Loc::getMessage('INTRANET_SETTINGS_SECTION_TITLE_CONFIGURATION_MAPS_LIST');
 		}
 
 		$searchEngine = SearchEngine::initWithDefaultFormatter($searchSections + [
@@ -753,7 +767,8 @@ class ConfigurationSettings extends AbstractSettings
 			'allowUserInstallApplication' => Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_ALLOW_ALL_USER_INSTALL_APPLICATION'),
 			'allCanBuyTariff' => Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_ALL_CAN_BUY_TARIFF'),
 			'allowMeasureStressLevel' => Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_ALLOW_MEASURE_STRESS_LEVEL'),
-			'collectGeoData' => Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_COLLECT_GEO_DATA'),
+			//TODO: commented on issue task#488392
+			//'collectGeoData' => Loc::getMessage('INTRANET_SETTINGS_FIELD_LABEL_COLLECT_GEO_DATA'),
 		]);
 
 		return $searchEngine->find($query);

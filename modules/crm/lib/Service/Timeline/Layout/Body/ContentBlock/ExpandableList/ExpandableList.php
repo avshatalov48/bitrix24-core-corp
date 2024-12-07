@@ -84,14 +84,22 @@ final class ExpandableList extends ContentBlock
 
 	protected function getProperties(): array
 	{
+		$listItems = $this->getListItems();
+
 		$showMoreText = $this->getShowMoreText();
+		$showMoreText ??= Loc::getMessage(
+			'CRM_TIMELINE_CONTENT_BLOCK_EXPANDABLE_LIST_SHOW_ALL_MSGVER_1',
+			[
+				'#COUNT#' => count($listItems),
+			]
+		);
 
 		return [
 			'title' => $this->title,
-			'listItems' => $this->getListItems(),
+			'listItems' => $listItems,
 			'showMoreEnabled' => $this->isShowMoreEnabled(),
 			'showMoreCnt' => $this->getShowMoreCnt(),
-			'showMoreText' => $showMoreText ?? Loc::getMessage('CRM_TIMELINE_CONTENT_BLOCK_EXPANDABLE_LIST_SHOW_ALL'),
+			'showMoreText' => $showMoreText,
 		];
 	}
 }

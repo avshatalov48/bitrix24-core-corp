@@ -25,7 +25,7 @@ use Bitrix\Main\Localization\Loc;
 
 ?><div id="next_page_refresh_needed" style="display: none;">
 	<div class="feed-nextpage-locked--container">
-		<div class="feed-nextpage-locked--title"><?= Loc::getMessage('MOBILE_LOG_REFRESH_NEEDED_TITLE2')?></div>
+		<div class="feed-nextpage-locked--title"><?= Loc::getMessage('MOBILE_LOG_REFRESH_NEEDED_TITLE3')?></div>
 		<div class="feed-nextpage-locked--content">
 			<span class="feed-nextpage-locked--btn" id="next_page_refresh_needed_button"><?= Loc::getMessage('MOBILE_LOG_REFRESH_NEEDED_BUTTON')?></span>
 			<div class="feed-nextpage-locked--prompt"><?= Loc::getMessage('MOBILE_LOG_REFRESH_NEEDED_SUBTITLE')?></div>

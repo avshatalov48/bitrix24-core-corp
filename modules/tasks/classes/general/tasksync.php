@@ -49,7 +49,7 @@ class CTaskSync
 			WHERE 
 				EXCHANGE_ID IS NOT NULL 
 				AND RESPONSIBLE_ID = ".intval($userId);
-		$rsIDs = $DB->Query($strSql, false, "File: ".__FILE__."<br>Line: ".__LINE__);
+		$rsIDs = $DB->Query($strSql);
 
 		while ($arID = $rsIDs->Fetch())
 			$arDelete[] = (int) $arID["ID"];
@@ -61,7 +61,7 @@ class CTaskSync
 				WHERE 
 					EXCHANGE_ID = '" . $DB->ForSql($taskItem["XML_ID"]) . "' 
 					AND RESPONSIBLE_ID = ".intval($userId);
-			$rsTask = $DB->Query($strSql, false, "File: ".__FILE__."<br>Line: ".__LINE__);
+			$rsTask = $DB->Query($strSql);
 			if ($task = $rsTask->Fetch())
 			{
 				$key = array_search($task["ID"], $arDelete);
@@ -91,7 +91,7 @@ class CTaskSync
 		{
 			// Remove only tasks with RESPONSIBLE_ID = $userId
 			$strSql = "SELECT ID FROM b_tasks WHERE ID IN (" . implode(",", $arDelete).") AND RESPONSIBLE_ID = " . (int) $userId;
-			$rc = $DB->Query($strSql, false, "File: ".__FILE__."<br>Line: ".__LINE__);
+			$rc = $DB->Query($strSql);
 
 			while ($arItem = $rc->Fetch())
 				CTasks::Delete($arItem['ID'], array('skipExchangeSync' => true));
@@ -171,7 +171,7 @@ class CTaskSync
 			$strUpdate = $DB->PrepareUpdate("b_tasks", $arFields, "tasks");
 			$strSql = "UPDATE b_tasks SET ".$strUpdate." WHERE ID=".$ID;
 			$arBinds = array('DESCRIPTION' => $arFields['DESCRIPTION']);
-			$result = $DB->QueryBind($strSql, $arBinds, false, "File: ".__FILE__."<br>Line: ".__LINE__);
+			$result = $DB->QueryBind($strSql, $arBinds);
 
 			if ($result)
 			{
@@ -253,7 +253,7 @@ class CTaskSync
 			);
 			$strUpdate = $DB->PrepareUpdate("b_tasks", $arExchangeFields, "tasks");
 			$strSql = "UPDATE b_tasks SET ".$strUpdate." WHERE ID=".$arFields["ID"];
-			$DB->Query($strSql, false, "File: ".__FILE__."<br>Line: ".__LINE__);
+			$DB->Query($strSql);
 		}
 	}
 
@@ -285,7 +285,7 @@ class CTaskSync
 		{
 			// Prevent unexpected resynchronization of this task in case if DeleteItem() or AddItem() will not complete they work
 			$strSql = "UPDATE b_tasks SET EXCHANGE_ID = NULL, EXCHANGE_MODIFIED = NULL WHERE ID = " . (int) $arTask['ID'];
-			$DB->Query($strSql, false, "File: ".__FILE__."<br>Line: ".__LINE__);
+			$DB->Query($strSql);
 
 			self::DeleteItem($arTask);
 			$arActualTaskData = array_merge($arTask, $arFields);
@@ -373,7 +373,7 @@ class CTaskSync
 			);
 			$strUpdate = $DB->PrepareUpdate("b_tasks", $arExchangeFields, "tasks");
 			$strSql = "UPDATE b_tasks SET ".$strUpdate." WHERE ID=".$arFields["ID"];
-			$DB->Query($strSql, false, "File: ".__FILE__."<br>Line: ".__LINE__);
+			$DB->Query($strSql);
 		}
 	}
 

@@ -76,6 +76,19 @@ class ItemIdentifier implements \JsonSerializable
 		return null;
 	}
 
+	public static function createByParams(int $entityTypeId, int $entityId, ?int $categoryId = null): self|null
+	{
+		if (
+			$entityId <= 0
+			|| !\CCrmOwnerType::isCorrectEntityTypeId($entityTypeId)
+		)
+		{
+			return null;
+		}
+
+		return new self($entityTypeId, $entityId, $categoryId);
+	}
+
 	/**
 	 * Returns $entityTypeId of the item
 	 *

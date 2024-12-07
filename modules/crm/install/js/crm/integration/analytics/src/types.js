@@ -47,6 +47,28 @@ export type EntityAddEvent = {
 	p3?: 'myCompany_1' | 'myCompany_0',
 };
 
+export type EntityCloseEvent = {
+	tool: Dictionary.TOOL_CRM,
+	category: Dictionary.CATEGORY_ENTITY_OPERATIONS,
+	event: Dictionary.EVENT_ENTITY_CLOSE,
+	type: 'lead' | 'deal',
+	c_section: Dictionary.SECTION_LEAD
+		| Dictionary.SECTION_DEAL
+	,
+	c_sub_section: Dictionary.SUB_SECTION_LIST
+		| Dictionary.SUB_SECTION_KANBAN
+		| Dictionary.SUB_SECTION_KANBAN_DROPZONE
+		| Dictionary.SUB_SECTION_DETAILS
+	,
+	c_element?: Dictionary.ELEMENT_WON_BUTTON
+		| Dictionary.ELEMENT_LOSE_BUTTON
+		| Dictionary.ELEMENT_CANCEL_BUTTON
+	,
+	status?: EventStatus,
+	p1: CrmMode,
+	p2: string
+};
+
 export type EntityConvertEvent = {
 	tool: Dictionary.TOOL_CRM,
 	category: Dictionary.CATEGORY_ENTITY_OPERATIONS,
@@ -73,8 +95,8 @@ export type EntityConvertBatchEvent = EntityConvertEvent & {
 };
 
 export type AICallParsingEvent = {
-	tool: Dictionary.TOOL_AI,
-	category: Dictionary.CATEGORY_CRM_OPERATIONS,
+	tool: Dictionary.TOOL_CRM | Dictionary.TOOL_AI,
+	category: Dictionary.CATEGORY_CRM_OPERATIONS | Dictionary.CATEGORY_AI_OPERATIONS,
 	event: Dictionary.EVENT_CALL_PARSING,
 	type: Dictionary.TYPE_MANUAL | Dictionary.TYPE_AUTO,
 	c_section: Dictionary.SECTION_CRM,
@@ -85,4 +107,16 @@ export type AICallParsingEvent = {
 		| Dictionary.ELEMENT_CONFLICT_ACCEPT_CHANGES
 		| Dictionary.ELEMENT_CONFLICT_CANCEL_CHANGES
 	,
+	status: Dictionary.STATUS_SUCCESS
+		| Dictionary.STATUS_SUCCESS_FIELDS
+		| Dictionary.STATUS_SUCCESS_COMMENT
+		| Dictionary.STATUS_ERROR_B24
+		| Dictionary.STATUS_ERROR_PROVIDER
+		| Dictionary.STATUS_ERROR_AGREEMENT
+		| Dictionary.STATUS_ERROR_NO_LIMITS
+		| Dictionary.STATUS_ERROR_LIMIT_MONTHLY
+		| Dictionary.STATUS_ERROR_LIMIT_DAILY
+	,
+	p2: 'callDirection_incoming' | 'callDirection_outgoing',
+	p4: 'duration_',
 };

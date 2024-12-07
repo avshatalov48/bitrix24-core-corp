@@ -4,7 +4,7 @@ namespace Bitrix\BIConnector\Integration\Superset;
 
 
 use Bitrix\BIConnector\Integration\Superset\Model\SupersetUserTable;
-use Bitrix\BIConnector\Integration\Superset\Integrator\SupersetIntegrator;
+use Bitrix\BIConnector\Integration\Superset\Integrator\Integrator;
 use Bitrix\BIConnector\Integration\Superset\Repository\DashboardRepository;
 use Bitrix\BIConnector\Integration\Superset\Repository\SupersetUserRepository;
 use Bitrix\Main;
@@ -13,7 +13,7 @@ final class SupersetController
 {
 	private DashboardRepository $dashboardRepository;
 
-	public function __construct(private SupersetIntegrator $integrator)
+	public function __construct(private Integrator $integrator)
 	{
 		$this->initRepositories();
 	}
@@ -33,19 +33,14 @@ final class SupersetController
 	 *
 	 * @return void
 	 */
-	public function initSuperset(): void
+	public function initializeOrCheckSupersetStatus(): void
 	{
-		if (SupersetInitializer::isSupersetActive())
-		{
-			return;
-		}
-
-		SupersetInitializer::createSuperset();
+		SupersetInitializer::initializeOrCheckSupersetStatus();
 	}
 
 	public function isSupersetEnabled(): bool
 	{
-		return SupersetInitializer::isSupersetActive();
+		return SupersetInitializer::isSupersetReady();
 	}
 
 	public function createUser(int $userId): Main\Result
@@ -68,8 +63,7 @@ final class SupersetController
 		$response = $this->integrator->createUser($user);
 		if ($response->hasErrors())
 		{
-			$result->addErrors($response->getErrors());
-			return $result;
+			return $result->addErrors($response->getErrors())->setData(['response' => $response]);
 		}
 
 		$data = $response->getData();
@@ -80,6 +74,7 @@ final class SupersetController
 			$user->clientId = $data['client_id'];
 			$result->setData([
 				'user' => $user,
+				'response' => $response,
 			]);
 		}
 		else

@@ -1,49 +1,13 @@
-(function() {
-	/**
-	 * @global {{open: qrauth.open}} qrauth
-	 */
-	const require = (ext) => jn.require(ext);
-	const AppTheme = require('apptheme');
+/**
+ * @module qrauth/utils
+ */
+jn.define('qrauth/utils', (require, exports, module) => {
+	const { Loc } = require('loc');
+	const { openManager } = require('qrauth/utils/src/manager');
 
 	const qrauth = {
 		urlTemplate: 'https://b24.to/a/',
-		open: ({
-			title,
-			redirectUrl,
-			external,
-			urlData,
-			type,
-			showHint,
-			hintText,
-			layout,
-		}) => {
-			layout = (layout && layout !== PageManager) ? layout : null;
-			const componentUrl = availableComponents.qrcodeauth.publicUrl;
-			PageManager.openComponent('JSStackComponent', {
-				scriptPath: componentUrl,
-				componentCode: 'qrauth',
-				params: {
-					redirectUrl,
-					external,
-					urlData,
-					type,
-					showHint,
-					hintText,
-				},
-				rootWidget: {
-					name: 'layout',
-					settings: {
-						objectName: 'layout',
-						title: title || BX.message('LOGIN_ON_DESKTOP_DEFAULT_TITLE_MSGVER_1'),
-						backdrop: {
-							bounceEnable: true,
-							mediumPositionHeight: 500,
-							navigationBarColor: AppTheme.colors.bgSecondary,
-						},
-					},
-				},
-			}, layout);
-		},
+		open: openManager,
 		listenUniversalLink: () => {
 			const handler = (data) => {
 				if (!data.url || !String(data.url).startsWith('https://b24.to/a/'))
@@ -53,7 +17,7 @@
 				qrauth.open({
 					urlData: data,
 					external: true,
-					title: BX.message('QR_EXTERNAL_AUTH'),
+					title: Loc.getMessage('QR_EXTERNAL_AUTH'),
 				});
 			};
 			const unhandled = Application.getUnhandledUniversalLink();
@@ -95,11 +59,18 @@
 				}
 				else
 				{
-					reject({ message: BX.message('WRONG_QR') });
+					reject({ message: Loc.getMessage('WRONG_QR') });
 				}
 			});
 		},
 	};
+
+	module.exports = { qrauth };
+});
+
+(function() {
+	const require = (ext) => jn.require(ext);
+	const { qrauth } = require('qrauth/utils');
 
 	jnexport([qrauth, 'qrauth']);
 })();

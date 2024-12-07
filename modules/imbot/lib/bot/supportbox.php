@@ -649,9 +649,9 @@ class SupportBox extends Network implements SupportBot, SupportQuestion
 	 */
 	protected static function checkMessageRestriction(array $messageFields): bool
 	{
-		if (!self::getCurrentUser()->isAdmin())
+		if (!self::isUserAdmin(self::getCurrentUser()->getId()) && !self::isUserIntegrator(self::getCurrentUser()->getId()))
 		{
-			return true;
+			return false;
 		}
 
 		$bot = Im\Bot::getCache($messageFields['BOT_ID']);

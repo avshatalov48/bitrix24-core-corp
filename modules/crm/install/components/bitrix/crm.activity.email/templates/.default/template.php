@@ -58,7 +58,7 @@ $arParams['ACTIVITY']['DESCRIPTION_HTML'] = $arParams['~ACTIVITY']['DESCRIPTION_
 	</div>
 </div>
 
-<script type="text/javascript">
+<script>
 
 	BX.ready(function() {
 

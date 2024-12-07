@@ -1,7 +1,6 @@
 <?php
 namespace Bitrix\Crm\Restriction;
-use Bitrix\Main;
-use \Bitrix\Crm\Integration;
+use Bitrix\Crm\Integration;
 
 class Bitrix24RestrictionInfo
 {
@@ -49,15 +48,30 @@ class Bitrix24RestrictionInfo
 			? Integration\Bitrix24Manager::prepareLicenseInfoPopupScript($this->popupInfo)
 			: '';
 	}
+
 	/**
-	* @return string
-	*/
+	 * @deprecated
+	 */
 	public function prepareInfoHelperScript()
 	{
-		return $this->popupInfo !== null
-			? Integration\Bitrix24Manager::prepareLicenseInfoHelperScript($this->popupInfo)
-			: '';
+		if ($this->popupInfo === null)
+		{
+			return '';
+		}
+
+		return Integration\Bitrix24Manager::prepareLicenseInfoHelperScript($this->popupInfo);
 	}
+
+	public function prepareFeaturePromoterScript(): string
+	{
+		if ($this->popupInfo === null)
+		{
+			return '';
+		}
+
+		return Integration\Bitrix24Manager::prepareLicenseFeaturePromoterScript($this->popupInfo);
+	}
+
 	/**
 	* @return string
 	*/

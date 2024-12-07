@@ -2,8 +2,8 @@
 
 namespace Bitrix\Crm\Integration\Sender;
 
-use Bitrix\Main\Loader;
 use Bitrix\Main\Grid;
+use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Extension;
 use Bitrix\Sender;
@@ -15,6 +15,11 @@ use Bitrix\Sender;
  */
 class GridPanel
 {
+	final public static function isEntityTypeSupported(int $entityTypeId): bool
+	{
+		return \CCrmOwnerType::IsClient($entityTypeId);
+	}
+
 	/**
 	 * Return true if can use.
 	 * @param array $actionList Action list.
@@ -115,23 +120,6 @@ class GridPanel
 
 		$id = 'sender_letter_add';
 
-		$letterTypes = array_map(
-			function ($message)
-			{
-				/** @var Sender\Message\iBase $message */
-				return ['NAME' => $message->getName(), 'VALUE' => $message->getCode()];
-			},
-			array_filter(
-				Sender\Message\Factory::getMailingMessages(),
-				function ($message)
-				{
-					/** @var Sender\Message\iBase $message */
-					return $message->getCode() !== Sender\Message\iBase::CODE_IM;
-				}
-			)
-		);
-		sort($letterTypes);
-
 		return [
 			'NAME' => Loc::getMessage('CRM_INTEGRATION_SENDER_GRID_PANEL_ACTION_LETTER_ADD'),
 			'VALUE' => $id,
@@ -143,7 +131,7 @@ class GridPanel
 							'TYPE' => Grid\Panel\Types::DROPDOWN,
 							'ID' => 'sender_letter_code',
 							'NAME' => 'SENDER_LETTER_CODE',
-							'ITEMS' => $letterTypes
+							'ITEMS' => self::getLetterTypesDropdownItems(),
 						],
 						[
 							'TYPE' => Grid\Panel\Types::HIDDEN,
@@ -157,14 +145,14 @@ class GridPanel
 							'NAME' => 'SENDER_PATH_TO_LETTER_ADD',
 							'VALUE' => self::getPathToAddLetter(),
 						],
-						$applyButton
-					]
+						$applyButton,
+					],
 				],
 				[
 					'ACTION' => Grid\Panel\Actions::CALLBACK,
-					'DATA' => [['JS' => "BX.CrmUIGridExtension.processActionChange('{$gridManagerID}', '{$id}')"]]
-				]
-			]
+					'DATA' => [['JS' => "BX.CrmUIGridExtension.processActionChange('{$gridManagerID}', '{$id}')"]],
+				],
+			],
 		];
 	}
 
@@ -179,25 +167,6 @@ class GridPanel
 	{
 		self::includeJsLibs();
 
-		$segments = array_map(
-			function ($segment)
-			{
-				return ['NAME' => $segment['NAME'], 'VALUE' => $segment['ID']];
-			},
-			Sender\Entity\Segment::getList([
-				'select' => ['ID', 'NAME'],
-				'filter' => ['=HIDDEN' => 'N'],
-				'order' => ['ID' => 'DESC']
-			])->fetchAll()
-		);
-		$segments = array_merge(
-			[[
-				'NAME' => Loc::getMessage('CRM_INTEGRATION_SENDER_GRID_PANEL_ADD_NEW_SEGMENT'),
-				'VALUE' => '',
-			]],
-			$segments
-		);
-
 		$id = 'sender_segment_add';
 		return [
 			'NAME' => Loc::getMessage('CRM_INTEGRATION_SENDER_GRID_PANEL_ACTION_SEGMENT_ADD'),
@@ -210,7 +179,7 @@ class GridPanel
 							'TYPE' => Grid\Panel\Types::DROPDOWN,
 							'ID' => 'sender_segment_list',
 							'NAME' => 'SENDER_SEGMENT_ID',
-							'ITEMS' => $segments
+							'ITEMS' => self::getSegmentsDropdownItems(),
 						],
 						[
 							'TYPE' => Grid\Panel\Types::HIDDEN,
@@ -218,14 +187,14 @@ class GridPanel
 							'NAME' => 'SENDER_PATH_TO_SEGMENT_EDIT',
 							'VALUE' => self::getPathToEditSegment(),
 						],
-						$applyButton
-					]
+						$applyButton,
+					],
 				],
 				[
 					'ACTION' => Grid\Panel\Actions::CALLBACK,
-					'DATA' => [['JS' => "BX.CrmUIGridExtension.processActionChange('{$gridManagerID}', '{$id}')"]]
-				]
-			]
+					'DATA' => [['JS' => "BX.CrmUIGridExtension.processActionChange('{$gridManagerID}', '{$id}')"]],
+				],
+			],
 		];
 	}
 
@@ -251,5 +220,54 @@ class GridPanel
 	public static function getPathToEditSegment()
 	{
 		return "/marketing/segment/edit/#id#/";
+	}
+
+	final public static function getLetterTypesDropdownItems(): array
+	{
+		if (!self::canUse())
+		{
+			return [];
+		}
+
+		$filteredMessages = array_filter(
+			Sender\Message\Factory::getMailingMessages(),
+			fn($message) => $message->getCode() !== Sender\Message\iBase::CODE_IM,
+		);
+
+		$letterTypes = array_map(
+			fn($message) => ['NAME' => $message->getName(), 'VALUE' => $message->getCode()],
+			$filteredMessages,
+		);
+
+		sort($letterTypes);
+
+		return $letterTypes;
+	}
+
+	final public static function getSegmentsDropdownItems(): array
+	{
+		if (!self::canUse())
+		{
+			return [];
+		}
+
+		$segments = array_map(
+			fn($segment) => ['NAME' => $segment['NAME'], 'VALUE' => $segment['ID']],
+			Sender\Entity\Segment::getList([
+				'select' => ['ID', 'NAME'],
+				'filter' => ['=HIDDEN' => 'N'],
+				'order' => ['ID' => 'DESC'],
+			])->fetchAll()
+		);
+
+		return array_merge(
+			[
+				[
+					'NAME' => Loc::getMessage('CRM_INTEGRATION_SENDER_GRID_PANEL_ADD_NEW_SEGMENT'),
+					'VALUE' => '',
+				]
+			],
+			$segments
+		);
 	}
 }

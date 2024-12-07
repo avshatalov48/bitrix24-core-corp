@@ -125,7 +125,19 @@ if(!empty($arResult['STORAGE']['CAN_CHANGE_RIGHTS_ON_STORAGE']))
 		'href' => "javascript: {$onclickRightsOnStorage}; BX.PopupMenu.destroy('settings_disk');",
 	);
 }
-if(!empty($arResult['STORAGE']['CAN_CHANGE_SETTINGS_ON_STORAGE']) && $arResult['STORAGE']['CAN_CHANGE_SETTINGS_ON_BIZPROC_EXCEPT_USER'] && BizProcManager::isAvailable())
+
+$isBpAccessible = BizProcManager::isAccessible();
+
+if (!$isBpAccessible)
+{
+	$bpSliderCode = BizProcManager::getInaccessibilitySliderCode();
+	$jsSettingsDropdown[] = array(
+		'text' => Loc::getMessage('DISK_FOLDER_LIST_PAGE_TITLE_BIZPROC_SETTINGS'),
+		'title' => Loc::getMessage('DISK_FOLDER_LIST_PAGE_TITLE_BIZPROC_SETTINGS'),
+		'href' => "javascript:top && top.BX.loadExt('ui.info-helper').then(() => { top.BX.UI.InfoHelper.show('{$bpSliderCode}'); });",
+	);
+}
+if ($isBpAccessible && !empty($arResult['STORAGE']['CAN_CHANGE_SETTINGS_ON_STORAGE']) && $arResult['STORAGE']['CAN_CHANGE_SETTINGS_ON_BIZPROC_EXCEPT_USER'] && BizProcManager::isAvailable())
 {
 	$jsSettingsDropdown[] = array(
 		'text' => Loc::getMessage('DISK_FOLDER_LIST_PAGE_TITLE_BIZPROC_SETTINGS'),
@@ -133,7 +145,7 @@ if(!empty($arResult['STORAGE']['CAN_CHANGE_SETTINGS_ON_STORAGE']) && $arResult['
 		'href' => "javascript:BX.Disk['FolderListClass_{$component->getComponentId()}'].showSettingsOnBizproc(); BX.PopupMenu.destroy('settings_disk');",
 	);
 }
-if(!empty($arResult['STORAGE']['CAN_CHANGE_SETTINGS_ON_BIZPROC']) && $arResult['STORAGE']['CAN_CHANGE_SETTINGS_ON_BIZPROC_EXCEPT_USER'] && $arResult['STORAGE']['SHOW_BIZPROC'])
+if ($isBpAccessible && !empty($arResult['STORAGE']['CAN_CHANGE_SETTINGS_ON_BIZPROC']) && $arResult['STORAGE']['CAN_CHANGE_SETTINGS_ON_BIZPROC_EXCEPT_USER'] && $arResult['STORAGE']['SHOW_BIZPROC'])
 {
 	$jsSettingsDropdown[] = array(
 		'text' => Loc::getMessage('DISK_FOLDER_LIST_PAGE_TITLE_BIZPROC'),
@@ -348,7 +360,7 @@ if (
 	</div>
 <? } ?>
 
-<script type="text/javascript">
+<script>
 BX.message({
 	DISK_FOLDER_LIST_INVITE_MODAL_TAB_PROCESS_DIE_ACCESS: '<?=GetMessageJS("DISK_FOLDER_LIST_INVITE_MODAL_TAB_PROCESS_DIE_ACCESS")?>',
 	DISK_FOLDER_LIST_INVITE_MODAL_TAB_PROCESS_DIE_ACCESS_SUCCESS: '<?=GetMessageJS("DISK_FOLDER_LIST_INVITE_MODAL_TAB_PROCESS_DIE_ACCESS_SUCCESS")?>',
@@ -489,7 +501,7 @@ include('only_grid.php');
 echo $isInIframe? "</div>" : "";
 ?>
 
-<script type="text/javascript">
+<script>
 BX(function () {
 	if (BX.getClass('BX.UI.Viewer.Instance.setOptionsByGroup'))
 	{
@@ -715,7 +727,7 @@ if(
 	<div id="bx-bitrix24-business-tools-info" style="display: none; width: 600px; margin: 9px;">
 		<? $APPLICATION->IncludeComponent('bitrix:bitrix24.business.tools.info', '', array()); ?>
 	</div>
-	<script type="text/javascript">
+	<script>
 	BX.message({
 		disk_restriction: <?= (!Bitrix24Manager::checkAccessEnabled('disk', $USER->getId())? 'true' : 'false') ?>
 	});

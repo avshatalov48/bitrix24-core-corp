@@ -1,9 +1,16 @@
-import {PayloadData} from "./base";
-import {DialogId} from "../../types/common";
+import { MessengerModel, PayloadData } from './base';
+import { DialogId } from '../../types/common';
+
+export type SidebarModel = MessengerModel<SidebarModelState>
 
 export type SidebarModelState = {
-	dialogId: string,
+	collection: Record<DialogId, SidebarCollection>,
+};
+
+export type SidebarCollection = {
+	dialogId: DialogId,
 	isMute: boolean,
+	isHistoryLimitExceeded: boolean,
 };
 
 export type SidebarModelActions =
@@ -12,11 +19,14 @@ export type SidebarModelActions =
 	| 'sidebarModel/delete'
 	| 'sidebarModel/update'
 	| 'sidebarModel/changeMute'
+	| 'sidebarModel/setHistoryLimitExceeded'
+	| 'sidebarModel/removeHistoryLimitExceeded'
 
 export type SidebarModelMutation =
 	'sidebarModel/add'
 	| 'sidebarModel/delete'
 	| 'sidebarModel/update'
+	| 'sidebarModel/setHistoryLimitExceeded'
 ;
 
 
@@ -24,10 +34,21 @@ export type SidebarAddActions =
 	'set'
 	| 'add'
 ;
+
+export interface SidebarSetHistoryLimitExceededData extends PayloadData
+{
+	dialogId?: DialogId;
+	isHistoryLimitExceeded: boolean
+}
+
+export type SidebarSetHistoryLimitExceededActions =
+	'set'
+;
+
 export interface SidebarAddData extends PayloadData
 {
 	dialogId?: DialogId;
-	fields: SidebarModelState
+	fields: SidebarCollection
 }
 
 
@@ -39,7 +60,7 @@ export type SidebarUpdateActions =
 export interface SidebarUpdateData extends PayloadData
 {
 	dialogId?: DialogId;
-	fields: Partial<SidebarModelState>
+	fields: Partial<SidebarCollection>
 }
 
 

@@ -118,7 +118,7 @@ jn.define('crm/simple-list/items/crm-entity', (require, exports, module) => {
 						},
 						this.renderFields('fields'),
 						this.renderFields('userFields'),
-						this.renderBadges(),
+						...this.renderBadges(),
 					),
 					this.renderRightBlock(),
 				),
@@ -179,6 +179,9 @@ jn.define('crm/simple-list/items/crm-entity', (require, exports, module) => {
 			this.props.modifyItemsListHandler([itemsData]);
 		}
 
+		/**
+		 * @return {array}
+		 */
 		renderBadges()
 		{
 			const { data } = this.props.item;

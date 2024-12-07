@@ -52,7 +52,7 @@ class DatetimeField extends BaseField
 
 	protected function convertToWebType($value): ?string
 	{
-		if (is_numeric($value) && (int)$value > 0)
+		if (is_numeric($value))
 		{
 			$value = (int)$value;
 			$date = new \Bitrix\Bizproc\BaseType\Value\DateTime($value, \CTimeZone::GetOffset());

@@ -352,13 +352,18 @@ class CIntranetNotify
 							}
 						}
 
-						$dbRes = CIBlockSection::GetList(array('ID' => 'ASC'), array('ID' => $arUser['UF_DEPARTMENT']));
-						if ($arSection = $dbRes->fetch())
+						$departmentRepository = \Bitrix\Intranet\Service\ServiceContainer::getInstance()
+							->departmentRepository();
+						$departmentId = is_array($arUser['UF_DEPARTMENT'])
+							? (int)$arUser['UF_DEPARTMENT'][0]
+							: (int)$arUser['UF_DEPARTMENT'];
+						$department = $departmentRepository->getById($departmentId);
+						if ($department)
 						{
 							$arResult['CREATED_BY']['FORMATTED'] = (
 								$url <> ''
-									? '<a href="'.str_replace('#ID#', $arSection['ID'], $url).'">'.htmlspecialcharsEx($arSection['NAME']).'</a>'
-									: htmlspecialcharsEx($arSection['NAME'])
+									? '<a href="'.str_replace('#ID#', $department->getId(), $url).'">'.htmlspecialcharsEx($department->getName()).'</a>'
+									: htmlspecialcharsEx($department->getName())
 							);
 						}
 					}
@@ -431,7 +436,7 @@ class CIntranetNotify
 				$parserLog->arUserfields = $arFields["UF"];
 				$parserLog->bMobile = (isset($arParams["MOBILE"]) && $arParams["MOBILE"] === "Y");
 				$arResult["EVENT_FORMATTED"]["MESSAGE"] = htmlspecialcharsbx($parserLog->convert(htmlspecialcharsback($arResult["EVENT_FORMATTED"]["MESSAGE"]), $arAllow));
-				$arResult["EVENT_FORMATTED"]["MESSAGE"] = preg_replace("/\[user\s*=\s*([^\]]*)\](.+?)\[\/user\]/is".BX_UTF_PCRE_MODIFIER, "\\2", $arResult["EVENT_FORMATTED"]["MESSAGE"]);
+				$arResult["EVENT_FORMATTED"]["MESSAGE"] = preg_replace("/\[user\s*=\s*([^\]]*)\](.+?)\[\/user\]/isu", "\\2", $arResult["EVENT_FORMATTED"]["MESSAGE"]);
 			}
 			else
 			{

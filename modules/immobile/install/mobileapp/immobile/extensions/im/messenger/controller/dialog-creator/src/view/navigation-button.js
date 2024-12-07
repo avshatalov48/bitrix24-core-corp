@@ -2,7 +2,7 @@
  * @module im/messenger/controller/dialog-creator/navigation-button
  */
 jn.define('im/messenger/controller/dialog-creator/navigation-button', (require, exports, module) => {
-	const AppTheme = require('apptheme');
+	const { Theme } = require('im/lib/theme');
 	const { withPressed } = require('utils/color');
 
 	function navigationButton({ iconSvg, text, onClick, withSeparator, testId = '' })
@@ -13,7 +13,7 @@ jn.define('im/messenger/controller/dialog-creator/navigation-button', (require, 
 				style: {
 					flexDirection: 'row',
 					paddingLeft: 18,
-					backgroundColor: withPressed(AppTheme.colors.bgContentPrimary),
+					backgroundColor: withPressed(Theme.colors.bgContentPrimary),
 					height: 60,
 				},
 				clickable: true,
@@ -45,13 +45,13 @@ jn.define('im/messenger/controller/dialog-creator/navigation-button', (require, 
 						paddingBottom: 10,
 						marginLeft: 12,
 						borderBottomWidth: withSeparator ? 1 : 0,
-						borderBottomColor: withSeparator ? AppTheme.colors.bgSeparatorPrimary : null,
+						borderBottomColor: withSeparator ? Theme.colors.bgSeparatorPrimary : null,
 					},
 				},
 				Text({
 					text,
 					style: {
-						color: AppTheme.colors.base1,
+						color: Theme.colors.base1,
 						fontSize: 18,
 					},
 				}),

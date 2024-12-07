@@ -1,0 +1,42 @@
+.crm-field-color-selector {
+	width: 12px;
+	height: 12px;
+	border-radius: var(--ui-border-radius-3xs);
+	cursor: pointer;
+	--crm-field-color-selector-color: var(--ui-color-palette-white-base);
+	background-color: var(--crm-field-color-selector-color);
+}
+
+.crm-field-color-selector.--readonly {
+	cursor: default;
+}
+
+.crm-field-color-selector-popup {
+	padding: 4px 6px;
+}
+
+.crm-field-color-selector-menu-container {
+	display: flex;
+	flex-wrap: wrap;
+}
+
+.crm-field-color-selector-menu-item {
+	display: flex;
+	justify-content: left;
+	align-items: center;
+	width: 24px;
+	height: 24px;
+	margin: 10px;
+	cursor: pointer;
+	--crm-field-color-selector-color: var(--ui-color-palette-white-base);
+	background-color: var(--crm-field-color-selector-color);
+	border-radius: var(--ui-border-radius-3xs);
+}
+
+.crm-field-color-selector-menu-item.--selected {
+	width: 18px;
+	height: 18px;
+	outline: 2px solid var(--crm-field-color-selector-color);
+	border: 2px solid white;
+	margin: 11px;
+}

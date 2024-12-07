@@ -39,7 +39,6 @@ if (!(CCrmPerms::IsAccessEnabled($CrmPerms) && $CrmPerms->HavePerm('CONFIG', BX_
 
 \Bitrix\Main\Localization\Loc::loadMessages(__FILE__);
 
-CUtil::JSPostUnescape();
 $GLOBALS['APPLICATION']->RestartBuffer();
 
 $search = trim($_REQUEST['VALUE']);
@@ -56,7 +55,7 @@ if ($enableSearchByID && is_numeric($search))
 {
 	$arFilter['ID'] = (int)$search;
 }
-elseif (preg_match('/(.*)\[(\d+?)\]/i'.BX_UTF_PCRE_MODIFIER, $search, $arMatches))
+elseif (preg_match('/(.*)\[(\d+?)\]/iu', $search, $arMatches))
 {
 	$arFilter['ID'] = intval($arMatches[2]);
 	$arFilter['ACTIVE'] = 'Y';
@@ -92,7 +91,7 @@ $obRes = CCrmProduct::GetList(
 );
 $arProducts = $arProductId = array();
 $pos = 0;
-$searchUpper = ToUpper($search);
+$searchUpper = mb_strtoupper($search);
 $nameUpper = '';
 $arSort = array('RANK1' => array(), 'NAME' => array(), 'ID' => array());
 while ($arRes = $obRes->Fetch())
@@ -101,7 +100,7 @@ while ($arRes = $obRes->Fetch())
 		$arRes[$fieldName] = null;
 	foreach ($arVatsSelect as $fieldName)
 		$arRes[$fieldName] = null;
-	$nameUpper = ToUpper($arRes['NAME']);
+	$nameUpper = mb_strtoupper($arRes['NAME']);
 	$pos = mb_strpos($nameUpper, $searchUpper);
 	$arRes['RANK1'] = ($pos === false) ? 0 : $pos + 1;
 	$arProductId[] = $arRes['ID'];

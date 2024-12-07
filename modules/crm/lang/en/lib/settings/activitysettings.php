@@ -1,4 +1,4 @@
-<?
-$MESS["CRM_ACTIVITY_SETTINGS_VIEW_WIDGET"] = "Activity analytics";
+<?php
 $MESS["CRM_ACTIVITY_SETTINGS_VIEW_LIST"] = "Standard activity list";
-?>
+$MESS["CRM_ACTIVITY_SETTINGS_VIEW_WIDGET"] = "Activity analytics";
+$MESS["CRM_BADGE_TTL_SETTINGS_QUANTITY_DAYS_REMOVE"] = "#DAYS# days";

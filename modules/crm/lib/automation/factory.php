@@ -3,17 +3,17 @@ namespace Bitrix\Crm\Automation;
 
 use Bitrix\Bitrix24\Feature;
 use Bitrix\Bizproc;
+use Bitrix\Crm\Activity\AutocompleteRule;
+use Bitrix\Crm\ActivityTable;
 use Bitrix\Crm\Automation\Trigger\BaseTrigger;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Integration\Sign;
-use Bitrix\Crm\Settings\QuoteSettings;
 use Bitrix\Crm\Settings\InvoiceSettings;
+use Bitrix\Crm\Settings\LeadSettings;
+use Bitrix\Crm\Settings\QuoteSettings;
 use Bitrix\Main\Error;
 use Bitrix\Main\Loader;
 use Bitrix\Main\NotSupportedException;
-use Bitrix\Crm\Settings\LeadSettings;
-use Bitrix\Crm\Activity\AutocompleteRule;
-use Bitrix\Crm\ActivityTable;
 
 class Factory
 {
@@ -293,8 +293,6 @@ class Factory
 		static::doAutocompleteActivities($entityTypeId, $entityId);
 
 		$automationTarget = static::getTarget($entityTypeId, $entityId);
-		//refresh target entity fields
-		$automationTarget->setEntityById($entityId);
 		$automationTarget->getRuntime()->onDocumentStatusChanged();
 
 		if ($conversionResult = self::shiftConversionResult($entityTypeId, $entityId))
@@ -313,8 +311,6 @@ class Factory
 		}
 
 		$automationTarget = static::getTarget($entityTypeId, $entityId);
-		//refresh target entity fields
-		$automationTarget->setEntityById($entityId);
 		$automationTarget->getRuntime()->onFieldsChanged($changedFields);
 	}
 
@@ -386,7 +382,8 @@ class Factory
 			return self::$targets[$entityTypeId][$entityId];
 		}
 		$target = self::createTarget($entityTypeId);
-		$target->setEntityById($entityId);
+		$target->setEntityId($entityId);
+		$target->setDocumentId(\CCrmOwnerType::ResolveName($target->getEntityTypeId()) . "_" . $entityId);
 
 		self::setTarget($target);
 
@@ -605,7 +602,15 @@ class Factory
 			$converter->setTargetItem($itemTypeId, $itemOptions);
 		}
 
-		$result->setConversionResult($converter->execute());
+		$contextData = [];
+
+		$userId = \CCrmOwnerType::GetResponsibleID(\CCrmOwnerType::Lead, $entityId, false);
+		if ($userId > 0)
+		{
+			$contextData['USER_ID'] = $userId;
+		}
+
+		$result->setConversionResult($converter->execute($contextData));
 
 		return $result;
 	}

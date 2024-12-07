@@ -1,0 +1,2 @@
+<?php
+$MESS["TIMEMAN_STAFFTRACK_CHECK_IN"] = "Check-in";

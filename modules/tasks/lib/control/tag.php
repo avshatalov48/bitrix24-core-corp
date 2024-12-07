@@ -456,10 +456,13 @@ class Tag
 		$add = [];
 		foreach ($addToTask as $tag)
 		{
-			$add[] = [
-				'NAME' => $tag,
-				'USER_ID' => $this->userId,
-			];
+			if (is_string($tag))
+			{
+				$add[] = [
+					'NAME' => $tag,
+					'USER_ID' => $this->userId,
+				];
+			}
 		}
 
 		return $add;

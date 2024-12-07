@@ -32,9 +32,14 @@ final class LanguageService
 			])->fetch()['ID'] ?? null;
 		}
 
-		if (!in_array($defaultLanguage, ['ru', 'en', 'de']))
+		if(!is_string($defaultLanguage))
 		{
 			$defaultLanguage = 'en';
+		}
+
+		if (!in_array($defaultLanguage, ['ru', 'en', 'de']))
+		{
+			$defaultLanguage = Loc::getDefaultLang($defaultLanguage);
 		}
 
 		return $defaultLanguage;

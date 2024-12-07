@@ -8,6 +8,49 @@
 	word-break: break-all;
 }
 
+.crm-timeline__card_link_icon {
+	display: inline-block;
+	width: 18px;
+	height: 18px;
+	vertical-align: top;
+	background-position: center;
+	background-repeat: no-repeat;
+}
+
+.crm-timeline__card_link_icon.--code-copy {
+	background-image: url(../../images/common/crm-timeline__copy.svg);
+}
+
+.crm-timeline__card_link_icon.--code-bottom-caret {
+	width: 12px;
+	height: 12px;
+	margin-top: 2px;
+	mask-image: url("../../images/common/crm-timeline__bottom-caret.svg");
+	mask-size: contain;
+	mask-position: center center;
+	background-color: var(--ui-color-palette-gray-70, #828B95);
+}
+
+.crm-timeline__card_link_icon.--code-chat {
+	background-image: url(../../images/common/crm-timeline__chat.svg);
+}
+
+.crm-timeline__card_link.--color-base-50 {
+	color: var(--ui-color-base-50, #a8adb4);
+}
+
+.crm-timeline__card_link.--color-base-60 {
+	color: var(--ui-color-base-60, #959ca4);
+}
+
+.crm-timeline__card_link.--color-base-70 {
+	color: var(--ui-color-base-70, #828b95);
+}
+
+.crm-timeline__card_link.--color-base-90 {
+	color: var(--ui-color-base-90, #525c69);
+}
+
 .crm-timeline__card_link.--bold {
 	font-weight: var(--ui-font-weight-medium);
 }
@@ -34,4 +77,18 @@
 
 .crm-timeline__card_link.--size-xl {
 	font-size: var(--ui-font-size-xl);
+}
+
+.crm-timeline__card_link.--decoration-underline {
+	text-decoration: underline !important;
+	text-decoration-color: currentColor !important;
+}
+
+.crm-timeline__card_link.--decoration-dotted {
+	text-decoration: underline dotted !important;
+	text-decoration-color: currentColor !important;
+}
+
+.crm-timeline__card_link.--decoration-dashed {
+	border-bottom: var(--ui-border-width-thin) dashed;
 }

@@ -4,16 +4,17 @@
 jn.define('calendar/layout/sharing-settings/settings', (require, exports, module) => {
 	const AppTheme = require('apptheme');
 	const { Loc } = require('loc');
+	const { BottomSheet } = require('bottom-sheet');
+	const { EventEmitter } = require('event-emitter');
 	const { chevronRight } = require('assets/common');
+
 	const { SharingContext } = require('calendar/model/sharing');
 	const { SharingSettingsCard } = require('calendar/layout/sharing-settings/card');
-	const { SharingSettingsRule } = require('calendar/layout/sharing-settings/rule');
 	const { SharingSettingsMembers } = require('calendar/layout/sharing-settings/members');
-	const { BottomSheet } = require('bottom-sheet');
 	const { RuleEditDialog } = require('calendar/layout/sharing-settings/dialog/rule-edit');
-	const { EventEmitter } = require('event-emitter');
 	const { SharingAjax } = require('calendar/ajax');
 	const { Analytics } = require('calendar/sharing/analytics');
+	const { Color } = require('tokens');
 
 	/**
 	 * @class SharingSettings
@@ -41,6 +42,8 @@ jn.define('calendar/layout/sharing-settings/settings', (require, exports, module
 			this.onRuleSave = this.onRuleSave.bind(this);
 
 			Analytics.sendPopupOpened(this.model.getContext());
+
+			this.layoutWidget = props.layoutWidget;
 		}
 
 		componentDidMount()
@@ -124,7 +127,7 @@ jn.define('calendar/layout/sharing-settings/settings', (require, exports, module
 					testId: 'SharingPanelSettings',
 				},
 				this.renderRuleContainer(),
-				this.model.getContext() === SharingContext.CALENDAR && this.renderMembers(),
+				this.renderMembers(),
 			);
 		}
 
@@ -138,26 +141,25 @@ jn.define('calendar/layout/sharing-settings/settings', (require, exports, module
 						onClick: this.readOnly ? this.showReadOnlyWarning : this.openRuleEditBackdrop,
 					},
 					this.renderHeaderContainer(),
-					this.model.getContext() === SharingContext.CRM && this.renderRule(),
 				),
 			);
 		}
 
 		openRuleEditBackdrop()
 		{
-			const parentLayoutWidget = this.props.layoutWidget;
-			const component = this.getRuleEditDialog();
+			const component = (layoutWidget) => new RuleEditDialog({
+				layoutWidget,
+				model: this.model,
+				customEventEmitter: this.customEventEmitter,
+			});
 
-			// eslint-disable-next-line promise/catch-or-return
-			new BottomSheet({ component })
-				.setBackgroundColor(AppTheme.colors.bgNavigation)
+			void new BottomSheet({ component })
+				.setBackgroundColor(Color.bgNavigation.toHex())
 				.setMediumPositionPercent(60)
 				.disableContentSwipe()
-				.setParentWidget(parentLayoutWidget)
+				.setParentWidget(this.layoutWidget)
 				.open()
-				.then((widget) => {
-					component.setLayoutWidget(widget);
-				});
+			;
 		}
 
 		showReadOnlyWarning()
@@ -204,12 +206,14 @@ jn.define('calendar/layout/sharing-settings/settings', (require, exports, module
 
 		renderClock()
 		{
+			const isCalendarContext = this.model.getContext() === SharingContext.CALENDAR;
+
 			return View(
 				{
 					style: styles.clockContainer,
 				},
 				Image({
-					tintColor: AppTheme.colors.accentMainPrimary,
+					tintColor: isCalendarContext ? AppTheme.colors.accentMainPrimary : AppTheme.colors.base2,
 					svg: {
 						content: icons.clock,
 					},
@@ -243,7 +247,7 @@ jn.define('calendar/layout/sharing-settings/settings', (require, exports, module
 		{
 			if (this.model.getSettings().isDefaultRule())
 			{
-				return Loc.getMessage('M_CALENDAR_SETTINGS_SUBTITLE_DEFAULT');
+				return Loc.getMessage('M_CALENDAR_SETTINGS_SUBTITLE_DEFAULT_MSGVER_1');
 			}
 
 			return Loc.getMessage('M_CALENDAR_SETTINGS_SUBTITLE_PERSONAL');
@@ -260,31 +264,11 @@ jn.define('calendar/layout/sharing-settings/settings', (require, exports, module
 			});
 		}
 
-		renderRule()
-		{
-			return View(
-				{
-					style: styles.ruleContainer,
-				},
-				new SharingSettingsRule({
-					model: this.model,
-				}),
-			);
-		}
-
-		getRuleEditDialog()
-		{
-			return new RuleEditDialog({
-				model: this.model,
-				customEventEmitter: this.customEventEmitter,
-			});
-		}
-
 		renderMembers()
 		{
 			return new SharingSettingsMembers({
 				model: this.model,
-				layoutWidget: this.props.layoutWidget,
+				layoutWidget: this.layoutWidget,
 			});
 		}
 	}

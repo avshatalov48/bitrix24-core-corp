@@ -43,6 +43,11 @@ class Menu extends Base
 		$this->menuItems = [];
 		foreach ($menuItems as $id => $menuItem)
 		{
+			if (is_null($menuItem))
+			{
+				continue;
+			}
+
 			$this->addItem((string)$id, $menuItem);
 		}
 

@@ -15,6 +15,7 @@ $MESS["TASKS_STATUS_1"] = "Neu";
 $MESS["TASKS_STATUS_2"] = "Anstehend";
 $MESS["TASKS_STATUS_3"] = "In Arbeit";
 $MESS["TASKS_STATUS_4"] = "Angeblich fertiggestellt";
+$MESS["TASKS_STATUS_4_MSGVER_1"] = "Muss kontrolliert werden";
 $MESS["TASKS_STATUS_5"] = "Fertiggestellt";
 $MESS["TASKS_STATUS_6"] = "Verschoben";
 $MESS["TASKS_STATUS_7"] = "Abgelehnt";

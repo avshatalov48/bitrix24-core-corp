@@ -11,7 +11,6 @@ use Bitrix\Crm\PhaseSemantics;
 use Bitrix\Crm\Settings\LeadSettings;
 use Bitrix\Main\Result;
 use Bitrix\Main\UI\Filter\Options;
-use PHPUnit\TextUI\TestRunnerTest;
 
 class Lead extends Entity
 {
@@ -214,9 +213,7 @@ class Lead extends Entity
 		$item['DATE'] = $item['DATE_CREATE'];
 		$item['OBSERVER'] = $item['OBSERVER'] ?? null;
 
-		$item = parent::prepareItemCommonFields($item);
-
-		return $item;
+		return parent::prepareItemCommonFields($item);
 	}
 
 	public function updateItemStage(int $id, string $stageId, array $newStateParams, array $stages): Result
@@ -274,5 +271,33 @@ class Lead extends Entity
 		}
 
 		return $fields;
+	}
+
+	protected function getHideSumForStagePermissionType(string $statusId, \CCrmPerms $userPermissions): ?string
+	{
+		return $userPermissions->GetPermType(
+			$this->getTypeName(),
+			'HIDE_SUM',
+			["STATUS_ID{$statusId}"]
+		);
+	}
+
+	public function skipClientField(array $row, string $code): bool
+	{
+		if (empty($row['CONTACT_TYPE']))
+		{
+			return false;
+		}
+
+		$clientFields = [
+			Item::FIELD_NAME_NAME,
+			Item::FIELD_NAME_SECOND_NAME,
+			Item::FIELD_NAME_LAST_NAME,
+			Item::FIELD_NAME_BIRTHDATE,
+			\Bitrix\Crm\Item\Lead::FIELD_NAME_COMPANY_TITLE,
+			Item::FIELD_NAME_POST,
+		];
+
+		return in_array($code, $clientFields, true);
 	}
 }

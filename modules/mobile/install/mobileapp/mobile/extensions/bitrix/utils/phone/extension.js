@@ -2,10 +2,14 @@
  * @module utils/phone
  */
 jn.define('utils/phone', (require, exports, module) => {
+	// eslint-disable-next-line no-undef
+	include('SharedBundle');
 	const { phoneUtils } = require('native/phonenumber');
 	const { stringify } = require('utils/string');
 	const storageKey = 'PhoneDefaultCountryCode';
-	const storage = Application.storageById(storageKey);
+	const storage = Application.storageById?.(storageKey);
+
+	const GLOBAL_COUNTRY_CODE = 'XX';
 
 	/**
 	 * Returns the phone number formatted according
@@ -45,7 +49,7 @@ jn.define('utils/phone', (require, exports, module) => {
 		const defaultCountryCode = defaultCountry || getMainDefaultCountryCode();
 
 		return phone.startsWith('+')
-			? phoneUtils.getCountryCode(phone) || defaultCountryCode
+			? phoneUtils.getCountryCode(phone) || GLOBAL_COUNTRY_CODE
 			: defaultCountryCode;
 	};
 
@@ -103,5 +107,60 @@ jn.define('utils/phone', (require, exports, module) => {
 
 	fetchDefaultCountryCode();
 
-	module.exports = { getMainDefaultCountryCode, getFormattedNumber, getCountryCode, isPhoneNumber };
+	/**
+	 * @param {string} [phoneNumber]
+	 * @param {boolean} [useRecent=true]
+	 * @return Promise<CountyPickerResultType>
+	 */
+	const showCountryPicker = async ({ phoneNumber, useRecent = true }) => {
+		const result = await dialogs.showCountryPicker({ useRecent }).catch(console.error);
+
+		return {
+			...result,
+			phoneNumber: preparePhoneNumberByPhoneCode(phoneNumber, result.phoneCode),
+		};
+	};
+
+	const preparePhoneNumberByPhoneCode = (phoneNumber, phoneCode) => {
+		if (phoneNumber === '')
+		{
+			return phoneCode;
+		}
+
+		const currentCountryPhoneCode = phoneUtils.getPhoneCode(phoneNumber);
+
+		if (currentCountryPhoneCode)
+		{
+			const countryPhoneCode = `+${currentCountryPhoneCode}`;
+
+			return phoneNumber.startsWith(countryPhoneCode)
+				? phoneNumber.replace(countryPhoneCode, phoneCode)
+				: `${phoneCode}${phoneNumber}`;
+		}
+
+		return `${phoneCode}${phoneNumber}`;
+	};
+
+	const getFlagImageByCountryCode = (countryCode) => {
+		if (!countryCode)
+		{
+			return null;
+		}
+
+		// eslint-disable-next-line no-undef
+		return sharedBundle.getImage(`flags/${countryCode}.png`);
+	};
+
+	const getGlobalCountryCode = () => GLOBAL_COUNTRY_CODE;
+
+	module.exports = {
+		preparePhoneNumberByPhoneCode,
+		getMainDefaultCountryCode,
+		getFlagImageByCountryCode,
+		getGlobalCountryCode,
+		getFormattedNumber,
+		getCountryCode,
+		isPhoneNumber,
+		showCountryPicker,
+	};
 });

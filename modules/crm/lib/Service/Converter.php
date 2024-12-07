@@ -3,10 +3,10 @@
 namespace Bitrix\Crm\Service;
 
 use Bitrix\Crm\Service\Converter\CaseCache;
+use Bitrix\Main\Engine\Response;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Type\Date;
 use Bitrix\Main\Type\DateTime;
-use Bitrix\Main\Engine\Response;
 
 abstract class Converter
 {
@@ -288,6 +288,9 @@ abstract class Converter
 		return $this->camelConverter;
 	}
 
+	/**
+	 * Serialize data. Mainly handling of REST special cases
+	 */
 	protected function prepareData(array $data): array
 	{
 		$result = [];
@@ -304,7 +307,7 @@ abstract class Converter
 			{
 				$result[$name] = $this->processDate($value);
 			}
-			elseif (is_bool($value) && Container::getInstance()->getContext()->getScope() === Context::SCOPE_REST)
+			elseif (is_bool($value) && $this->isRest())
 			{
 				$result[$name] = $value ? 'Y' : 'N';
 			}
@@ -320,7 +323,7 @@ abstract class Converter
 	protected function processDate(Date $date): string
 	{
 		if (
-			Container::getInstance()->getContext()->getScope() === Context::SCOPE_REST
+			$this->isRest()
 			&& Loader::includeModule('rest')
 		)
 		{
@@ -355,5 +358,10 @@ abstract class Converter
 		}
 
 		return $result;
+	}
+
+	final protected function isRest(): bool
+	{
+		return Container::getInstance()->getContext()->getScope() === Context::SCOPE_REST;
 	}
 }

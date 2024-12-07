@@ -28,6 +28,7 @@ jn.define('im/messenger/lib/converter/chat-layout', (require, exports, module) =
 				},
 				type: 'chats',
 				isPressed,
+				isSuperEllipseAvatar: chatAvatar.getIsSuperEllipseIcon(),
 			};
 		}
 
@@ -57,6 +58,7 @@ jn.define('im/messenger/lib/converter/chat-layout', (require, exports, module) =
 				isPressed,
 				selected,
 				disable,
+				isSuperEllipseAvatar: chatAvatar.getIsSuperEllipseIcon(),
 			};
 		}
 	}

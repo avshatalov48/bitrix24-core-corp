@@ -6,12 +6,7 @@ $APPLICATION->includeComponent(
 	'bitrix:crm.router',
 	'',
 	[
-		'root' => '/crm/',
-		'useUrlParsing' => false,
-		'componentName' => 'bitrix:crm.type.list',
-		'componentParameters' => [
-			'isExternal' => true,
-		],
+		'root' => '/automation/',
 	]
 );
 

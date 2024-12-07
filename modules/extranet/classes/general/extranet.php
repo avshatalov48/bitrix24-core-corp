@@ -323,9 +323,13 @@ class CExtranet
 	{
 		global $USER, $obUsersCache;
 
-		if (mb_strlen($site) < 0)
+		if (
+			mb_strlen($site) < 0
+			|| !isset($USER)
+			|| !($USER instanceof CUser)
+		)
 		{
-			return array();
+			return [];
 		}
 
 		$arUsersInMyGroups = $obUsersCache->get($site, $bGadget);
@@ -335,8 +339,8 @@ class CExtranet
 			return $arUsersInMyGroups;
 		}
 
-		$arUsersInMyGroups = array();
-		$arUserSocNetGroups = array();
+		$arUsersInMyGroups = [];
+		$arUserSocNetGroups = [];
 
 		if (
 			Loader::includeModule('socialnetwork')
@@ -347,51 +351,51 @@ class CExtranet
 		)
 		{
 			$dbUsersInGroup = CSocNetUserToGroup::GetList(
-				array(),
-				array(
-					"USER_ID" => $USER->GetID(),
-					"<=ROLE" => SONET_ROLES_USER,
-					"GROUP_SITE_ID" => $site,
-					"GROUP_ACTIVE" => "Y"
-				),
+				[],
+				[
+					'USER_ID' => $USER->GetID(),
+					'<=ROLE' => SONET_ROLES_USER,
+					'GROUP_SITE_ID' => $site,
+					'GROUP_ACTIVE' => 'Y'
+				],
 				false,
 				false,
-				array("ID", "GROUP_ID")
+				['ID', 'GROUP_ID']
 			);
 
 			if ($dbUsersInGroup)
 			{
 				while ($arUserInGroup = $dbUsersInGroup->GetNext())
 				{
-					$arUserSocNetGroups[] = $arUserInGroup["GROUP_ID"];
+					$arUserSocNetGroups[] = $arUserInGroup['GROUP_ID'];
 				}
 			}
 
 			if (count($arUserSocNetGroups) > 0)
 			{
-				$arFilter = array(
-					"@GROUP_ID" => $arUserSocNetGroups,
-					"<=ROLE" => SONET_ROLES_USER
-				);
+				$arFilter = [
+					'@GROUP_ID' => $arUserSocNetGroups,
+					'<=ROLE' => SONET_ROLES_USER
+				];
 
 				if ($bOnlyActive)
 				{
-					$arFilter["USER_ACTIVE"] = "Y";
+					$arFilter['USER_ACTIVE'] = 'Y';
 				}
 
 				$dbUsersInGroup = CSocNetUserToGroup::GetList(
-					array(),
+					[],
 					$arFilter,
 					false,
 					false,
-					array("ID", "USER_ID")
+					['ID', 'USER_ID']
 				);
 
 				if ($dbUsersInGroup)
 				{
 					while ($arUserInGroup = $dbUsersInGroup->GetNext())
 					{
-						$arUsersInMyGroups[] = $arUserInGroup["USER_ID"];
+						$arUsersInMyGroups[] = $arUserInGroup['USER_ID'];
 					}
 				}
 			}
@@ -402,8 +406,8 @@ class CExtranet
 				'ID',
 				'ASC',
 				[
-					"ACTIVE" => "Y",
-					"GROUPS_ID" => [ self::GetExtranetUserGroupID() ],
+					'ACTIVE' => 'Y',
+					'GROUPS_ID' => [ self::GetExtranetUserGroupID() ],
 				]
 			);
 
@@ -411,7 +415,7 @@ class CExtranet
 			{
 				while ($arUser = $dbUsers->GetNext())
 				{
-					$arUsersInMyGroups[] = $arUser["ID"];
+					$arUsersInMyGroups[] = $arUser['ID'];
 				}
 			}
 		}

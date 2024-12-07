@@ -1,4 +1,5 @@
-import {ajax} from 'main.core';
+import { ajax } from 'main.core';
+import { sendData } from 'ui.analytics';
 
 export class ResultAction
 {
@@ -10,12 +11,8 @@ export class ResultAction
 		{
 			ResultAction.instance = new ResultAction();
 		}
+
 		return ResultAction.instance;
-	}
-
-	constructor()
-	{
-
 	}
 
 	canCreateResult(taskId: number)
@@ -25,39 +22,48 @@ export class ResultAction
 
 	deleteFromComment(commentId: number)
 	{
-		ajax.runComponentAction('bitrix:tasks.widget.result', 'deleteFromComment', {
-			mode: 'class',
-			data: {
-				commentId: commentId
-			}
-		}).then(
-			function(response)
-			{
-				if (!response.data)
-				{
-					return;
-				}
-
-			}.bind(this)
-		);
+		ajax
+			.runComponentAction('bitrix:tasks.widget.result', 'deleteFromComment', {
+				mode: 'class',
+				data: { commentId },
+			})
+			.catch(console.error);
 	}
 
-	createFromComment(commentId: number)
+	createFromComment(commentId: number, shouldSendAnalytics = false)
 	{
-		ajax.runComponentAction('bitrix:tasks.widget.result', 'createFromComment', {
-			mode: 'class',
-			data: {
-				commentId: commentId
-			}
-		}).then(
-			function(response)
-			{
-				if (!response.data)
-				{
-					return;
-				}
+		const analyticsLabel = {
+			tool: 'tasks',
+			category: 'task_operations',
+			event: 'status_summary_add',
+			type: 'task',
+			c_section: 'task',
+			c_sub_section: 'task_card',
+			c_element: 'comment_context_menu',
+		};
 
-			}.bind(this)
-		);
+		ajax
+			.runComponentAction('bitrix:tasks.widget.result', 'createFromComment', {
+				mode: 'class',
+				data: { commentId },
+			})
+			.then(() => {
+				if (shouldSendAnalytics)
+				{
+					sendData({
+						...analyticsLabel,
+						status: 'success',
+					});
+				}
+			})
+			.catch(() => {
+				if (shouldSendAnalytics)
+				{
+					sendData({
+						...analyticsLabel,
+						status: 'error',
+					});
+				}
+			});
 	}
 }

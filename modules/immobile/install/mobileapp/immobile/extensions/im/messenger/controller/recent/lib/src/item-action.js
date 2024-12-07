@@ -4,6 +4,7 @@
  * @module im/messenger/controller/recent/lib/item-action
  */
 jn.define('im/messenger/controller/recent/lib/item-action', (require, exports, module) => {
+	/* global InAppNotifier  */
 	const { Loc } = require('loc');
 	const { clone } = require('utils/object');
 
@@ -12,13 +13,20 @@ jn.define('im/messenger/controller/recent/lib/item-action', (require, exports, m
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const { EventType } = require('im/messenger/const');
 	const { Counters } = require('im/messenger/lib/counters');
+	const { isOnline } = require('device/connection');
 	const {
 		RecentRest,
 		ChatRest,
 		UserRest,
 	} = require('im/messenger/provider/rest');
 	const { ProfileView } = require('user/profile');
+	const { Notification } = require('im/messenger/lib/ui/notification');
 	const { LoggerManager } = require('im/messenger/lib/logger');
+	const {
+		RecentDataProvider,
+		ChatDataProvider,
+	} = require('im/messenger/provider/data');
+
 	const logger = LoggerManager.getInstance().getLogger('recent--item-action');
 
 	/**
@@ -35,6 +43,13 @@ jn.define('im/messenger/controller/recent/lib/item-action', (require, exports, m
 		do(action, itemId)
 		{
 			logger.info('Recent item action: ', action, `dialogId: ${itemId}`);
+
+			if (!isOnline())
+			{
+				Notification.showOfflineToast();
+
+				return false;
+			}
 
 			switch (action)
 			{
@@ -118,15 +133,23 @@ jn.define('im/messenger/controller/recent/lib/item-action', (require, exports, m
 		leave(itemId)
 		{
 			const recentItem = this.getRecentItemById(itemId);
+			const recentProvider = new RecentDataProvider();
 
-			this.store.dispatch('recentModel/delete', { id: recentItem.id })
+			recentProvider.deleteFromSource(RecentDataProvider.source.model, { dialogId: recentItem.id })
 				.then(() => Counters.update())
 				.catch((err) => logger.error('Recent item leave error: ', err))
 			;
 
 			ChatRest.leave({ dialogId: recentItem.id })
 				.then(() => {
-					this.store.dispatch('dialoguesModel/delete', { id: itemId });
+					const chatProvider = new ChatDataProvider();
+
+					return recentProvider.delete({ dialogId: recentItem.id })
+						.then(() => chatProvider.delete({ dialogId: recentItem.id }))
+						.catch((error) => {
+							logger.error('ChatRest.leave delete error', error);
+						})
+					;
 				})
 				.catch((result) => {
 					logger.error('Recent item leave error: ', result.error());
@@ -141,7 +164,7 @@ jn.define('im/messenger/controller/recent/lib/item-action', (require, exports, m
 
 		call(itemId)
 		{
-			console.log('call');
+			logger.log('call itemId:', itemId);
 		}
 
 		pin(itemId, shouldPin)

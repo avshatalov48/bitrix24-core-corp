@@ -6,9 +6,8 @@ import { loadDiskFileDialog } from './helpers/load-disk-file-dialog';
 import type { TileWidgetItem } from 'ui.uploader.tile-widget';
 import type { Menu, MenuItem } from 'main.popup';
 import type { BaseEvent } from 'main.core.events';
-import type { Button, ButtonSize, ButtonColor } from 'ui.buttons';
+import { Button, ButtonSize, ButtonColor } from 'ui.buttons';
 import type UserFieldControl from './user-field-control';
-import type MainPostForm from './integration/main-post-form';
 
 import './css/item-rename-form.css';
 
@@ -29,40 +28,17 @@ export default class ItemMenu
 
 	build(): void
 	{
-		const firstItemId: string = this.#menu.getMenuItems()[0]?.id ?? '';
-
 		this.#menu.getPopupWindow().setMaxWidth(500);
-
-		this.#menu.addMenuItem({
-			id: 'filesize',
-			text: Loc.getMessage('DISK_UF_WIDGET_FILE_SIZE', { '#filesize#': this.#item.sizeFormatted }),
-			disabled: true,
-		}, firstItemId);
-
-		this.#menu.addMenuItem({ delimiter: true }, firstItemId);
-
-		const postForm: ?MainPostForm = this.#userFieldControl.getMainPostForm();
-		if (postForm)
-		{
-			this.#menu.addMenuItem({
-				id: 'insert-into-text',
-				text: Loc.getMessage('DISK_UF_WIDGET_INSERT_INTO_THE_TEXT'),
-				onclick : (): void => {
-					this.#menu.close();
-					postForm.getParser().insertFile(this.#item);
-				},
-			}, firstItemId);
-		}
 
 		if (this.#userFieldControl.canItemAllowEdit(this.#item))
 		{
 			this.#menu.addMenuItem({ delimiter: true });
 			this.#menu.addMenuItem({
 				id: 'allow-edit',
-				className: this.#item.customData['allowEdit'] === true ? 'disk-user-field-item-checked' : '',
+				className: this.#item.customData.allowEdit === true ? 'disk-user-field-item-checked' : '',
 				text: Loc.getMessage('DISK_UF_WIDGET_ALLOW_DOCUMENT_EDIT'),
 				onclick: (event, menuItem: MenuItem): void => {
-					if (this.#item.customData['allowEdit'] === true)
+					if (this.#item.customData.allowEdit === true)
 					{
 						this.#userFieldControl.setDocumentEdit(this.#item, false);
 					}
@@ -72,11 +48,11 @@ export default class ItemMenu
 					}
 
 					menuItem.getMenuWindow().close();
-				}
+				},
 			});
 		}
 
-		if (this.#item.customData['canRename'])
+		if (this.#item.customData.canRename)
 		{
 			this.#menu.addMenuItem({ delimiter: true });
 
@@ -87,40 +63,40 @@ export default class ItemMenu
 					'SubMenu:onShow': (event: BaseEvent): void => {
 						const renameItem: MenuItem = event.getTarget();
 						this.#showRenameMenu(renameItem);
-					}
+					},
 				},
 				items: [{
 					id: 'rename-textarea',
 					html: '<div class="disk-user-field-rename-loading"></div>',
 					className: 'disk-user-field-rename-menu-item',
-				}]
+				}],
 			});
 		}
 
-		if (Type.isStringFilled(this.#item.customData['storage']))
+		if (Type.isStringFilled(this.#item.customData.storage))
 		{
 			this.#menu.addMenuItem({
 				delimiter: true,
-				//text: Loc.getMessage('DISK_UF_WIDGET_SAVED_IN_DISK_FOLDER'),
+				// text: Loc.getMessage('DISK_UF_WIDGET_SAVED_IN_DISK_FOLDER'),
 			});
 
-			if (this.#item.customData['canMove'])
+			if (this.#item.customData.canMove)
 			{
 				this.#menu.addMenuItem({
 					id: 'storage',
-					text: this.#item.customData['storage'] + '&mldr;',
-					onclick : (): void => {
+					text: `${this.#item.customData.storage}&mldr;`,
+					onclick: (): void => {
 						this.openFolderDialog();
 						this.#menu.close();
 					},
-					disabled: this.#item.tileWidgetData.selected === true,
+					disabled: this.#item.customData.tileSelected === true,
 				});
 			}
 			else
 			{
 				this.#menu.addMenuItem({
 					id: 'storage',
-					text: this.#item.customData['storage'],
+					text: this.#item.customData.storage,
 					disabled: true,
 				});
 			}
@@ -131,13 +107,13 @@ export default class ItemMenu
 	{
 		return new Promise((resolve, reject): void => {
 			Ajax.runAction('disk.api.commonActions.rename', {
-					data: {
-						objectId: this.#item.customData['objectId'],
-						newName: newName,
-						autoCorrect: true,
-						generateUniqueName: true,
-					}
-				})
+				data: {
+					objectId: this.#item.customData.objectId,
+					newName,
+					autoCorrect: true,
+					generateUniqueName: true,
+				},
+			})
 				.then((response): void => {
 					if (response?.status === 'success' && response?.data?.object?.name !== this.#item.name)
 					{
@@ -150,7 +126,7 @@ export default class ItemMenu
 				.catch((response): void => {
 					BX.Disk.showModalWithStatusAction(response);
 					reject();
-				})
+				});
 		});
 	}
 
@@ -209,7 +185,7 @@ export default class ItemMenu
 				size: ButtonSize.SMALL,
 				onclick: (): void => {
 					renameItem.getMenuWindow().close();
-				}
+				},
 			});
 
 			const submenu: Menu = renameItem.getSubMenu();
@@ -244,33 +220,33 @@ export default class ItemMenu
 
 					Ajax.runAction('disk.api.commonActions.move', {
 						data: {
-							objectId: this.#item.customData['objectId'],
+							objectId: this.#item.customData.objectId,
 							toFolderId: folderId,
-						}
+						},
 					})
-					.then((response): void => {
-						if (response?.status === 'success')
-						{
-							const file: UploaderFile = this.#userFieldControl.getFile(this.#item.id);
-							const name = response.data.object.name;
-							const id = response.data.object.id;
-
-							file.setServerFileId(`n${id}`);
-							file.setName(name);
-
-							if (selectedItem.id === 'root')
+						.then((response): void => {
+							if (response?.status === 'success')
 							{
-								file.setCustomData('storage', `${tab.name} / `);
+								const file: UploaderFile = this.#userFieldControl.getFile(this.#item.id);
+								const name = response.data.object.name;
+								const id = response.data.object.id;
+
+								file.setServerFileId(`n${id}`);
+								file.setName(name);
+
+								if (selectedItem.id === 'root')
+								{
+									file.setCustomData('storage', `${tab.name} / `);
+								}
+								else
+								{
+									file.setCustomData('storage', `${tab.name} / ${selectedItem.name}`);
+								}
 							}
-							else
-							{
-								file.setCustomData('storage', `${tab.name} / ${selectedItem.name}`);
-							}
-						}
-					})
-					.catch((response): void => {
-						BX.Disk.showModalWithStatusAction(response);
-					});
+						})
+						.catch((response): void => {
+							BX.Disk.showModalWithStatusAction(response);
+						});
 				},
 			};
 
@@ -278,6 +254,9 @@ export default class ItemMenu
 			{
 				BX.DiskFileDialog.openDialog(this.#folderDialogId);
 			}
-		});
+		})
+			.catch(() => {
+				// just ignore
+			});
 	}
 }

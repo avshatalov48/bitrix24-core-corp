@@ -76,18 +76,19 @@ class CMobileEvent
 	 * @param Component $component
 	 * @return string|null
 	 */
-	public static function onBeforeComponentContentGet(Component $component): ?string {
+	public static function onBeforeComponentContentGet(Component $component): ?string
+	{
 		$content = "";
-		if (defined('JN_HOTRELOAD_ENABLED') && defined('JN_HOTRELOAD_HOST')) {
+		if (defined('JN_HOTRELOAD_ENABLED') && defined('JN_HOTRELOAD_HOST'))
+		{
 			$hotreloadHost = JN_HOTRELOAD_HOST;
-			$content  = (new Extension("hotreload"))->getContent();
+			$content = (Extension::getInstance("hotreload"))->getContent();
 			$content .= "\n(()=>{ let wsclient = startHotReload(this.env.userId, '$hotreloadHost') })();\n";
 		}
 
-		$apptheme  = (new Extension("apptheme"))->getContent();
+		$apptheme = (new Extension("apptheme"))->getContent();
 		$apptheme .= "\nvar AppTheme = jn.require('apptheme')\n";
 		$content .= $apptheme;
-
 
 		return $content;
 	}
@@ -114,7 +115,8 @@ class CMobileEvent
 		foreach ($diff as $tabId)
 		{
 			$tab = $manager->getTabInstance($tabId);
-			if ($tab->shouldShowInMenu())
+
+			if ($tab && $tab->isAvailable() && $tab->shouldShowInMenu())
 			{
 				$item = $tab->getMenuData();
 				if ($item["imageUrl"])
@@ -186,6 +188,7 @@ class MobileApplication extends Bitrix\Main\Authentication\Application
 		"/bitrix/components/bitrix/main.file.input/",
 		"/mobileapp/",
 		"/rest/",
+		"/_analytics/",
 	];
 
 	public function __construct()

@@ -1,8 +1,19 @@
 .task-form-field.readonly .task-form-field-item {
   background: #b8bcbf;
 }
+.task-form-field.readonly.flow .task-form-field-item {
+	background: #e2e3e5;
+}
 .task-form-field.readonly .task-form-field-item .task-form-field-item-text {
   color: #f8f9fa;
+}
+.task-form-field.readonly.flow .task-form-field-item .task-form-field-item-text {
+	color: #535c69;
+}
+
+.task-form-field-item-text-ellipsis {
+	overflow: hidden;
+	text-overflow: ellipsis;
 }
 .task-form-field.readonly .task-form-field-item.hover-delete {
   background-color: #9da3a7;
@@ -60,4 +71,25 @@
   width: 0;
   opacity: 0;
   overflow: hidden;
+}
+
+.task-form-field-item-flow {
+	display: inline-flex;
+	width: 10px;
+	height: 30px;
+	margin: auto;
+	z-index: 1;
+}
+
+.task-form-field-project-icon {
+	display: inline-block;
+	margin-right: 8px;
+	min-width: 22px;
+	width: 22px;
+	height: 22px;
+	border-radius: 50%;
+	background-position: center;
+	background-repeat: no-repeat;
+	background-size: cover;
+	overflow: hidden;
 }

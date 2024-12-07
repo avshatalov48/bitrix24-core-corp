@@ -44,7 +44,7 @@ if($arResult['HELPER']->getErrors()->checkNoFatals())
 			}
 			$statuses[] = array(
 				'VALUE' => $id,
-				'DISPLAY' => ToLower(Loc::getMessage('TASKS_TASK_STATUS_'.$id)), // defined in tasks/lang/**/include.php
+				'DISPLAY' => mb_strtolower(Loc::getMessage('TASKS_TASK_STATUS_'.$id)), // defined in tasks/lang/**/include.php
 			);
 		}
 	}

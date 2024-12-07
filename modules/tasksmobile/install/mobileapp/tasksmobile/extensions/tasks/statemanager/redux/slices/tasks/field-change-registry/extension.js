@@ -21,16 +21,57 @@ jn.define('tasks/statemanager/redux/slices/tasks/field-change-registry', (requir
 
 		/**
 		 * @public
+		 * @param {string} requestId
+		 * @param {number} taskId
+		 * @returns {Object}
+		 */
+		getChangedFields(requestId, taskId)
+		{
+			return (this.fieldsRegistry.get(requestId)?.[taskId] ?? {});
+		}
+
+		/**
+		 * @public
+		 * @param {string} requestId
+		 * @param {number} taskId
+		 * @param {Object} fields
+		 */
+		updateChangedFieldsAfterRequest(requestId, taskId, fields)
+		{
+			let canUpdateRequest = false;
+
+			this.fieldsRegistry.forEach((tasks, key) => {
+				if (canUpdateRequest)
+				{
+					const changedFields = Object.keys(tasks[taskId] || {});
+					if (changedFields.length > 0)
+					{
+						const fieldsToUpdate = Object.fromEntries(
+							Object.entries(fields).filter(([field]) => changedFields.includes(field)),
+						);
+						this.fieldsRegistry.set(key, { ...tasks, [taskId]: { ...tasks[taskId], ...fieldsToUpdate } });
+					}
+				}
+				else if (key === requestId)
+				{
+					canUpdateRequest = true;
+				}
+			});
+		}
+
+		/**
+		 * @public
+		 * @param {number} taskId
 		 * @param {Object} task
 		 * @returns {Object}
 		 */
-		removeChangedFields(task)
+		removeChangedFields(taskId, task)
 		{
 			const resultTask = { ...task };
 
 			let changedFields = [];
 			this.fieldsRegistry.forEach((tasks) => {
-				changedFields = [...changedFields, ...(tasks[resultTask.id] || [])];
+				changedFields = [...changedFields, ...(Object.keys(tasks[taskId] || {}))];
 			});
 			changedFields.forEach((field) => delete resultTask[field]);
 
@@ -41,7 +82,7 @@ jn.define('tasks/statemanager/redux/slices/tasks/field-change-registry', (requir
 		 * @public
 		 * @param {string} requestId
 		 * @param {number} taskId
-		 * @param {Array<string>} fields
+		 * @param {Object} fields
 		 */
 		registerFieldsChange(requestId, taskId, fields)
 		{

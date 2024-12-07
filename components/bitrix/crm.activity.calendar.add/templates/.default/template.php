@@ -7,7 +7,7 @@ if (empty($arResult['ERROR_MESSAGE']))
 	{
 		$APPLICATION->RestartBuffer();
 		?>
-		<script type="text/javascript">
+		<script>
 		top.BX.closeWait();
 		<?
 		if (!empty($arResult['EVENT_PAGE']))
@@ -115,7 +115,7 @@ endif;
 </tr>
 </table>
 </form>
-<script type="text/javascript">
+<script>
 	function eventShowReminBox(obj)
 	{
 		BX('crm_event_remind_box').style.display = (obj.checked ? 'inline-block' : 'none');

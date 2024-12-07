@@ -122,28 +122,41 @@ WHERE 1=1';
 
 		foreach ($arFilter as $fld => $val)
 		{
-			$fld = ToUpper($fld);
+			$prefix = '=';
+			if (preg_match('/^(>=|<=|>|<|!=|=)/', $fld, $matches))
+			{
+				$prefix = $matches[1];
+				$fld = mb_strtoupper(substr($fld, strlen($prefix)));
+			}
+			else
+			{
+				$fld = mb_strtoupper($fld);
+			}
 
-			if ($arFields[$fld])
+			if (isset($arFields[$fld]))
 			{
 				if ($arFields[$fld]['TYPE'] == 'int')
-					$val = intval($val);
+				{
+					$val = (int)$val;
+				}
 				else
+				{
 					$val = $DB->ForSQL($val);
+				}
 
-				$strSql .= ' AND ('.$arFields[$fld]['FIELD'].'=\''.$val.'\')';
+				$strSql .= ' AND ('.$arFields[$fld]['FIELD'].' '.$prefix.' \''.$val.'\')';
 			}
 		}
 
 		$strOrder = '';
 		foreach ($arOrder as $fld => $dir)
 		{
-			$fld = ToUpper($fld);
+			$fld = mb_strtoupper($fld);
 
 			if ($arFields[$fld])
 			{
 				$strOrder .= ($strOrder == '' ? '' : ', ')
-					.$arFields[$fld]['FIELD'].' '.(ToUpper($dir) == 'DESC' ? 'DESC' : 'ASC');
+					.$arFields[$fld]['FIELD'].' '.(mb_strtoupper($dir) == 'DESC' ? 'DESC' : 'ASC');
 			}
 		}
 
@@ -152,7 +165,7 @@ WHERE 1=1';
 			$strSql .= ' ORDER BY '.$strOrder;
 		}
 
-		return ($DB->Query($strSql, false, "File: ".__FILE__."<br>Line: ".__LINE__));
+		return ($DB->Query($strSql));
 	}
 
 	public static function Reopen($ENTRY_ID)

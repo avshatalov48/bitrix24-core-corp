@@ -5,6 +5,7 @@ return [
 		'loc',
 		'apptheme',
 		'assets/common',
+		'layout/ui/context-menu',
 
 		'crm:loc',
 		'crm:error',

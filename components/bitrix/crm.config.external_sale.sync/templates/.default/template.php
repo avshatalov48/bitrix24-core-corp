@@ -101,7 +101,7 @@ else
 	);
 }
 ?>
-<script type="text/javascript">
+<script>
 	var extSaleSyncStep = 0;
 	var statLoadDeal = 0;
 	var statLoadContact = 0;

@@ -4,6 +4,11 @@ this.BX = this.BX || {};
 
 	const PopupInstall = {
 	  props: ['appInfo', 'licenseInfo'],
+	  data() {
+	    return {
+	      isLoadForm: false
+	    };
+	  },
 	  computed: {
 	    showMoreScopes: function () {
 	      return this.appInfo.SCOPES_MORE_BUTTON === 'Y';
@@ -20,7 +25,15 @@ this.BX = this.BX || {};
 	    this.setPopupNode(this.appInfo.CODE, this.$refs['market-popup-install']);
 	  },
 	  methods: {
-	    ...ui_vue3_pinia.mapActions(market_installStore.marketInstallState, ['cleanLicenseError', 'isRestOnlyApp', 'openSliderWithContent', 'reloadSlider', 'isSubscriptionApp', 'isHiddenBuy', 'prevVersion', 'nextVersion', 'setPopupNode', 'openApplication'])
+	    ...ui_vue3_pinia.mapActions(market_installStore.marketInstallState, ['cleanLicenseError', 'isRestOnlyApp', 'openSliderWithContent', 'reloadSlider', 'isSubscriptionApp', 'isHiddenBuy', 'prevVersion', 'nextVersion', 'setPopupNode', 'openApplication', 'buildAppForm', 'canShowAppForm']),
+	    clickDone: function () {
+	      this.isLoadForm = true;
+	      this.buildAppForm(this.appInfo.CODE).then(form => {
+	        this.reloadSlider();
+	        form.show();
+	        this.isLoadForm = false;
+	      });
+	    }
 	  },
 	  template: `
 		<div class="market-popup" ref="market-popup-install">
@@ -295,17 +308,10 @@ this.BX = this.BX || {};
 				<div class="market-popup__body">
 					<ul class="market-popup__points">
 						<li class="market-popup__points-item"
-							v-html="$Bitrix.Loc.getMessage('MARKET_POPUP_INSTALL_JS_APPLICATION', {'#APP_NAME#' : '<span>' + appInfo.NAME + '</span>'})"
+							v-html="$Bitrix.Loc.getMessage(this.appInfo.INSTALL_INFO.INSTALLED_TITLE_CODE, {'#APP_NAME#' : '<span>' + appInfo.NAME + '</span>'})"
 						></li>
-						<li class="market-popup__points-item --light"
-							v-if="isRestOnlyApp()"
-						>
-							{{ $Bitrix.Loc.getMessage('MARKET_POPUP_INSTALL_JS_APP_WORKS_AUTOMATICALLY') }}
-						</li>
-						<li class="market-popup__points-item --light"
-							v-else
-						>
-							{{ $Bitrix.Loc.getMessage('MARKET_POPUP_INSTALL_JS_INSTALLED_APP_LOCATED_APP_TAB') }}
+						<li class="market-popup__points-item --light">
+							{{ $Bitrix.Loc.getMessage(this.appInfo.INSTALL_INFO.INSTALLED_MESSAGE_CODE) }}
 						</li>
 					</ul>
 
@@ -313,13 +319,27 @@ this.BX = this.BX || {};
 						v-if="isRestOnlyApp()"
 					>
 						<img class="market-popup__points-img"
+							 v-if="this.appInfo.INSTALL_INFO.INSTALLED_IMAGE_SHOW === 'Y'"
 							 :src="$Bitrix.Loc.getMessage('MARKET_POPUP_INSTALL_JS_IMAGE_ESTABLISHED')"
 							 alt="img"
 							 
 						>
 						<div class="market-popup__success-button">
-							<button class="ui-btn ui-btn-success"
-									@click="reloadSlider"
+							<button
+								v-if="canShowAppForm()"
+								class="ui-btn ui-btn-success"
+									:class="{
+										'ui-btn-wait': isLoadForm,
+									}"
+									:disabled="isLoadForm"
+									@click="clickDone"
+							>
+								{{ $Bitrix.Loc.getMessage('MARKET_POPUP_INSTALL_JS_READY') }}
+							</button>
+							<button
+								v-else
+								class="ui-btn ui-btn-success"
+								@click="reloadSlider"
 							>
 								{{ $Bitrix.Loc.getMessage('MARKET_POPUP_INSTALL_JS_READY') }}
 							</button>
@@ -329,6 +349,7 @@ this.BX = this.BX || {};
 						v-else
 					>
 						<img class="market-popup__points-img"
+							 v-if="this.appInfo.INSTALL_INFO.INSTALLED_IMAGE_SHOW === 'Y'"
 							 :src="$Bitrix.Loc.getMessage('MARKET_POPUP_INSTALL_JS_IMAGE_ESTABLISHED_INTERFACE')"
 							 alt="img"
 						>

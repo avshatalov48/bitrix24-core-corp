@@ -5,9 +5,10 @@ return [
 		'loc',
 		'type',
 		'utils/object',
+		'layout/ui/context-menu',
 	],
 	'bundle' => [
 		'./src/provider-selector',
-		'./src/number-selector',
+		'./src/from-selector',
 	],
 ];

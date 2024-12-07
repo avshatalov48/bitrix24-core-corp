@@ -1,4 +1,4 @@
-import {Dom, Type} from 'main.core'
+import { Dom, Type } from 'main.core';
 
 export default class Item
 {

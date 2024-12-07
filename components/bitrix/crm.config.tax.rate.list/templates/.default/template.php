@@ -98,7 +98,7 @@ $APPLICATION->IncludeComponent(
 	$component
 );
 ?>
-<script type="text/javascript">
+<script>
 	function crm_taxrate_delete_grid(title, message, btnTitle, path)
 	{
 		var d =

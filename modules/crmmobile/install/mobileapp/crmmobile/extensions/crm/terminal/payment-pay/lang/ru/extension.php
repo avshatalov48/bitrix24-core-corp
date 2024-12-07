@@ -25,3 +25,8 @@ $MESS['M_CRM_TL_PAYMENT_PAY_FAILURE_GET_NEW_QR_GET_NEW_QR'] = 'Получить 
 $MESS['M_CRM_TL_PAYMENT_PAY_FAILURE_CHOOSE_OTHER_PAYMENT_METHOD'] = 'Выбрать другой способ оплаты';
 
 $MESS['M_CRM_TL_PAYMENT_PAY_PRODUCTS_CNT'] = 'Товары: #CNT#';
+
+$MESS['M_CRM_TL_PAYMENT_PAY_PHONE_CONFIRMATION_WARNING_TITLE'] = 'Подтвердите номер телефона';
+$MESS['M_CRM_TL_PAYMENT_PAY_PHONE_CONFIRMATION_WARNING_DESCRIPTION'] = 'Чтобы принимать оплату по ссылке, подтвердите номер телефона. Это можно сделать в веб-версии Битрикс24';
+$MESS['M_CRM_TL_PAYMENT_PAY_PHONE_CONFIRMATION_TITLE'] = 'Подтверждение номера телефона';
+$MESS['M_CRM_TL_PAYMENT_PAY_PAYMENT_LINK_NOT_CONNECTED'] = 'Оплата по ссылке не подключена';

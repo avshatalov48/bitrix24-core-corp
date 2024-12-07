@@ -3,12 +3,30 @@
  */
 jn.define('crm/timeline/scheduler/providers/task', (require, exports, module) => {
 	const { Loc } = require('loc');
-	const AppTheme = require('apptheme');
+	const { Icon } = require('assets/icons');
 	const { TimelineSchedulerBaseProvider } = require('crm/timeline/scheduler/providers/base');
 	const { Type } = require('crm/type');
+	const { AnalyticsEvent } = require('analytics');
 	const { AnalyticsLabel } = require('analytics-label');
 	const { get } = require('utils/object');
-	const { TaskCreate } = require('tasks/layout/task/create');
+	const { getFeatureRestriction, tariffPlanRestrictionsReady } = require('tariff-plan-restriction');
+
+	let TaskCreate = null;
+	let openTaskCreateForm = null;
+	let FeatureId = null;
+
+	try
+	{
+		TaskCreate = require('tasks/layout/task/create')?.TaskCreate;
+		openTaskCreateForm = require('tasks/layout/task/create/opener')?.openTaskCreateForm;
+		FeatureId = require('tasks/enum').FeatureId;
+
+		setTimeout(() => tariffPlanRestrictionsReady(), 2000);
+	}
+	catch (e)
+	{
+		console.warn('Failed to load extensions from tasksmobile', e);
+	}
 
 	/**
 	 * @class TimelineSchedulerTaskProvider
@@ -37,7 +55,12 @@ jn.define('crm/timeline/scheduler/providers/task', (require, exports, module) =>
 
 		static getMenuIcon()
 		{
-			return `<svg width="30" height="31" viewBox="0 0 30 31" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M21.0404 21.3792C21.0404 21.7331 20.7503 22.0084 20.3772 22.0084H7.98426C7.61123 22.0084 7.32109 21.7331 7.32109 21.3792V9.62079C7.32109 9.26685 7.61123 8.99157 7.98426 8.99157H16.5226L18.8851 6.75H7.19675C5.99475 6.75 5 7.69382 5 8.83427V22.1657C5 23.3062 5.99475 24.25 7.19675 24.25H21.2476C22.4496 24.25 23.4444 23.3062 23.4444 22.1657V17.014L21.0819 19.2556V21.3792H21.0404ZM24.7707 9.62079L23.6931 8.59832C23.4029 8.32303 22.947 8.32303 22.6983 8.59832L15.1962 15.677L11.8389 12.4916C11.5488 12.2163 11.0929 12.2163 10.8442 12.4916L9.76653 13.514C9.47639 13.7893 9.47639 14.2219 9.76653 14.4579L14.7403 19.177C14.9061 19.3343 15.1548 19.4129 15.4035 19.3736C15.5278 19.3343 15.6522 19.2949 15.7765 19.177L24.8536 10.5646C25.0609 10.3287 25.0609 9.89607 24.7707 9.62079Z" fill="${AppTheme.colors.base3}"/></svg>`;
+			if (FeatureId && getFeatureRestriction(FeatureId.CRM).isRestricted())
+			{
+				return Icon.LOCK;
+			}
+
+			return Icon.CIRCLE_CHECK;
 		}
 
 		static getDefaultPosition()
@@ -47,6 +70,11 @@ jn.define('crm/timeline/scheduler/providers/task', (require, exports, module) =>
 
 		static isAvailableInMenu(context = {})
 		{
+			if ((!openTaskCreateForm && !TaskCreate) || !FeatureId)
+			{
+				return false;
+			}
+
 			if (!context.detailCard)
 			{
 				return false;
@@ -64,27 +92,54 @@ jn.define('crm/timeline/scheduler/providers/task', (require, exports, module) =>
 
 		static async open(data)
 		{
-			const { entity } = data.scheduler;
-
-			if (TaskCreate)
+			if ((!openTaskCreateForm && !TaskCreate) || !FeatureId)
 			{
-				TaskCreate.open({
-					initialTaskData: {
-						crm: {
-							[`${entity.typeId}_${entity.id}`]: {
-								id: entity.id,
-								title: entity.title,
-								type: Type.resolveNameById(entity.typeId).toLowerCase(),
-							},
+				return;
+			}
+
+			const { entity } = data.scheduler;
+			const type = Type.resolveNameById(entity.typeId).toLowerCase();
+			const analyticsEvent = new AnalyticsEvent({
+				c_section: 'crm',
+				c_sub_section: type,
+				c_element: 'create_button',
+			});
+
+			const { isRestricted, showRestriction } = getFeatureRestriction(FeatureId.CRM);
+			if (isRestricted())
+			{
+				showRestriction({ analyticsData: analyticsEvent });
+
+				return;
+			}
+
+			const openParams = {
+				closeAfterSave: true,
+				initialTaskData: {
+					crm: {
+						[`${entity.typeId}_${entity.id}`]: {
+							id: entity.id,
+							title: entity.title,
+							type,
 						},
 					},
-				});
+				},
+				analyticsLabel: analyticsEvent.exportToObject(),
+			};
 
-				AnalyticsLabel.send({
-					event: 'onTaskAdd',
-					scenario: 'task_add',
-				});
+			if (openTaskCreateForm)
+			{
+				openTaskCreateForm(openParams);
 			}
+			else
+			{
+				TaskCreate.open(openParams);
+			}
+
+			AnalyticsLabel.send({
+				event: 'onTaskAdd',
+				scenario: 'task_add',
+			});
 		}
 	}
 

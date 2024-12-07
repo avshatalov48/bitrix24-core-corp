@@ -57,7 +57,7 @@ jn.define('bizproc/workflow/faces/timeline', (require, exports, module) => {
 				text: (
 					this.props.isCompleted
 						? Loc.getMessage('BPMOBILE_WORKFLOW_FACES_DURATION_TITLE_FINAL')
-						: Loc.getMessage('BPMOBILE_WORKFLOW_FACES_DURATION_TITLE')
+						: Loc.getMessage('BPMOBILE_WORKFLOW_FACES_DURATION_TITLE_MSGVER_1')
 				),
 				numberOfLines: 1,
 				ellipsize: 'end',
@@ -147,7 +147,7 @@ jn.define('bizproc/workflow/faces/timeline', (require, exports, module) => {
 					color: AppTheme.colors.accentMainLinks,
 					marginTop: 1,
 				},
-				text: Loc.getMessage('BPMOBILE_WORKFLOW_FACES_TIMELINE'),
+				text: Loc.getMessage('BPMOBILE_WORKFLOW_FACES_TIMELINE_MSGVER_1'),
 				numberOfLines: 1,
 				ellipsize: 'end',
 			});

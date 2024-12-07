@@ -13,7 +13,6 @@ use Bitrix\Main\Application;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Web\Json;
 use Bitrix\Main\ModuleManager;
-use Bitrix\Main\Text\Encoding;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Web\HttpClient;
 use Bitrix\Main\Localization\Loc;
@@ -332,7 +331,6 @@ class Output extends Base\Output
 				$params['DATA'] = $data;
 
 				$params = Converter::convertStubInEmpty($params);
-				$params = Encoding::convertEncoding($params, SITE_CHARSET, 'UTF-8');
 
 				$params['DATA'] = \base64_encode(\serialize($params['DATA']));
 				$params['BX_HASH'] = self::requestSign($this->type, \md5(implode('|', $params)));
@@ -344,8 +342,16 @@ class Output extends Base\Output
 				}
 
 				$httpClient = $this->instanceHttpClient($waitResponse);
+				$httpClient
+					->setHeader('Connection', 'close')
+					->setHeader('Expect', ''); // to disable "100 Continue" behavior
 
-				$response = $httpClient->post($this->controllerUrl, $params);
+				$url = $this->controllerUrl
+					. '?connector='. $this->connector
+					. '&command='. $command
+				;
+
+				$response = $httpClient->post($url, $params);
 
 				// Header 'x-bitrix-error' workaround.
 				$errorCode = $httpClient->getHeaders()->get('x-bitrix-error');
@@ -363,6 +369,11 @@ class Output extends Base\Output
 							__METHOD__,
 							$errors
 						));
+
+						$errors[] = 'url:'.$this->controllerUrl;
+						$errors[] = 'connector:'.$this->connector;
+						$systemException = new \Bitrix\Main\SystemException('Network connection error: '.implode('; ', $errors));
+						\Bitrix\Main\Application::getInstance()->getExceptionHandler()->writeToLog($systemException);
 					}
 				}
 				elseif ($waitResponse)
@@ -459,8 +470,9 @@ class Output extends Base\Output
 			->setTimeout(20)
 			->setStreamTimeout(60)
 			->disableSslVerification() //TODO: Enable if you have not signed the certificate
-			->setHeader('User-Agent', 'Bitrix Connector Client')
+			->setHeader('User-Agent', 'Bitrix Connector Client '.$this->getPortalType())
 			->setHeader('x-bitrix-licence', $this->licenceCode)
+			->setHeader('Referer', $this->domain)
 		;
 
 		return $httpClient;

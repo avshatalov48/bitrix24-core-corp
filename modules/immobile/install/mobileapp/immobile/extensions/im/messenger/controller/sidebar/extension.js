@@ -2,9 +2,13 @@
  * @module im/messenger/controller/sidebar
  */
 jn.define('im/messenger/controller/sidebar', (require, exports, module) => {
-	const { SidebarController } = require('im/messenger/controller/sidebar/sidebar-controller');
+	const { ChannelSidebarController } = require('im/messenger/controller/sidebar/channel/sidebar-controller');
+	const { ChatSidebarController } = require('im/messenger/controller/sidebar/chat/sidebar-controller');
+	const { CommentSidebarController } = require('im/messenger/controller/sidebar/comment/sidebar-controller');
 
 	module.exports = {
-		SidebarController,
+		ChatSidebarController,
+		ChannelSidebarController,
+		CommentSidebarController,
 	};
 });

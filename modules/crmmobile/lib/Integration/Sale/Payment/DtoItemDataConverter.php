@@ -13,6 +13,7 @@ use Bitrix\Crm\Terminal\OrderProperty;
 use Bitrix\Sale\Payment;
 use Bitrix\SalesCenter\Component\PaymentSlip;
 use Bitrix\Crm\Terminal\Config\TerminalPaysystemManager;
+use Bitrix\SalesCenter\Integration\LandingManager;
 
 Loc::loadMessages(__DIR__ . '/Payment.php');
 
@@ -33,6 +34,12 @@ class DtoItemDataConverter
 			->getTerminalPaymentService()
 			->isTerminalPayment($payment->getId())
 		;
+
+		if (Loader::includeModule('salescenter'))
+		{
+			$connectedSiteId = LandingManager::getInstance()->getConnectedSiteId();
+			$isPhoneConfirmed = LandingManager::getInstance()->isPhoneConfirmed();
+		}
 
 		$itemData = DtoItemData::make([
 			'id' => $payment->getId(),
@@ -66,12 +73,14 @@ class DtoItemDataConverter
 			'responsibleId' => $payment->getField('RESPONSIBLE_ID'),
 			'permissions' => self::getPermissions($payment),
 			'isTerminalPayment' => $isTerminalPayment,
+			'connectedSiteId' => $connectedSiteId ?? 0,
 			'terminalPaymentSystems' =>
 				$isTerminalPayment
 					? Terminal\PaymentSystemRepository::getByPayment($payment)
 					: []
 			,
 			'paymentSystems' => [],
+			'isPhoneConfirmed' => $isPhoneConfirmed ?? true,
 			'fields' => [],
 			'isLinkPaymentEnabled' => TerminalPaysystemManager::getInstance()->getConfig()->isLinkPaymentEnabled(),
 		]);

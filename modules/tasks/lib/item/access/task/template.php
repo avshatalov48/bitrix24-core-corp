@@ -263,7 +263,7 @@ final class Template extends \Bitrix\Tasks\Item\Access
 		if (!$res)
 		{
 			$result->addError('ACCESS_DENIED', Loc::getMessage('TASKS_TASK_TEMPLATE_ACCESS_DENIED', array(
-				'#OP_NAME#' => Loc::getMessage('TASKS_COMMON_OP_'.ToUpper($operation))
+				'#OP_NAME#' => Loc::getMessage('TASKS_COMMON_OP_'.mb_strtoupper($operation))
 			)));
 		}
 		return $result;

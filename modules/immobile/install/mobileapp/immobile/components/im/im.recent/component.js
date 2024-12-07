@@ -8,7 +8,6 @@ var { ChatSelector } = jn.require('im/chat/selector/chat');
 var { EntityReady } = jn.require('entity-ready');
 var { SelectorDialogListAdapter } = jn.require('im/chat/selector/adapter/dialog-list');
 var { Theme } = jn.require('im/lib/theme');
-var { openIntranetInviteWidget } = jn.require('intranet/invite-opener');
 var { AnalyticsEvent } = jn.require('analytics');
 
 var REVISION = 19; // api revision - sync with im/lib/revision.php
@@ -1384,9 +1383,7 @@ RecentList.openEmptyScreen = function()
 				upperText: BX.message('IM_EMPTY_TEXT_1'),
 				lowerText: BX.message('IM_EMPTY_TEXT_INVITE'),
 				iconName: 'ws_employees',
-				listener: () => openIntranetInviteWidget({
-					analytics: new AnalyticsEvent().setSection('chat'),
-				}),
+				listener: () => {},
 			};
 		}
 		else

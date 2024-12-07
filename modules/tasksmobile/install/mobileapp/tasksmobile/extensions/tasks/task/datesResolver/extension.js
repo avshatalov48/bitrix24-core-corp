@@ -518,6 +518,33 @@ jn.define('tasks/task/datesResolver', (require, exports, module) => {
 		{
 			this.durationInSeconds = this.getDurationInSeconds(this.durationType, this.durationByType);
 		}
+
+		/**
+		 * @public
+		 * @returns {number|null} Timestamp in seconds
+		 */
+		getStartDatePlanTs()
+		{
+			return this.startDateStamp > 0 ? this.startDateStamp : null;
+		}
+
+		/**
+		 * @public
+		 * @returns {number|null} Timestamp in seconds
+		 */
+		getEndDatePlanTs()
+		{
+			return this.endDateStamp > 0 ? this.endDateStamp : null;
+		}
+
+		/**
+		 * @public
+		 * @returns {number|null} Timestamp in seconds
+		 */
+		getDeadlineTs()
+		{
+			return this.deadline > 0 ? this.deadline : null;
+		}
 	}
 
 	module.exports = { DatesResolver };

@@ -3,7 +3,7 @@
 return [
 	'extensions' => [
 		'loc',
-		'tokens',
+		'apptheme',
 		'bbcode/parser',
 		'type',
 		'utils/string',

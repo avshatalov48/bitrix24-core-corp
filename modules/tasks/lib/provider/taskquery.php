@@ -2,6 +2,7 @@
 
 namespace Bitrix\Tasks\Provider;
 
+use Bitrix\Main\ORM\Fields\ExpressionField;
 use Bitrix\Tasks\Access\ActionDictionary;
 use Bitrix\Tasks\Access\TaskAccessController;
 use Bitrix\Tasks\Provider\Exception\InvalidGroupByException;
@@ -335,6 +336,11 @@ class TaskQuery
 		return $this->id;
 	}
 
+	public function getCountTotal(): int
+	{
+		return 0;
+	}
+
 	/**
 	 * @param string $key
 	 * @param $value
@@ -468,7 +474,7 @@ class TaskQuery
 
 		foreach ($select as $row)
 		{
-			if (!is_string($row))
+			if (!is_string($row) && !$row instanceof ExpressionField)
 			{
 				throw new InvalidSelectException();
 			}

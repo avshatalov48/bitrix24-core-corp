@@ -58,14 +58,16 @@ class Shipment extends Sale\Shipment
 
 	protected function onFieldModify($name, $oldValue, $value)
 	{
-		if (
-			$name === 'DEDUCTED'
-			&& $value === 'Y'
-			&& $this->getField('IS_REALIZATION') === 'N'
-			&& Sale\Configuration::useStoreControl()
-		)
+		if ($name === 'DEDUCTED')
 		{
-			$this->setField('IS_REALIZATION', 'Y');
+			if (
+				$value === 'Y'
+				&& $this->getField('IS_REALIZATION') === 'N'
+				&& Sale\Configuration::useStoreControl()
+			)
+			{
+				$this->setField('IS_REALIZATION', 'Y');
+			}
 		}
 
 		return parent::onFieldModify($name, $oldValue, $value);

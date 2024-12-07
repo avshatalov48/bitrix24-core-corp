@@ -1,5 +1,6 @@
 <?php
 
+use Bitrix\Intranet\MainPage;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Tasks\Internals\Counter\CounterDictionary as TasksCounterDictionary;
 
@@ -10,7 +11,10 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 CJSCore::Init([
 	'main.core',
 	'ui.draganddrop.draggable',
-	'ui.dialogs.messagebox']);
+	'ui.dialogs.messagebox',
+	'ui.banner-dispatcher',
+	'intranet.menu.analytics',
+]);
 $isCompositeMode = defined("USE_HTML_STATIC_CACHE") ? true : false;
 $this->setFrameMode(true);
 
@@ -23,6 +27,7 @@ $sumHiddenCounters = 0;
 $arHiddenItemsCounters = array();
 $arAllItemsCounters = array();
 $groupPopupExists = false;
+$mainPage = new \Bitrix\Intranet\Site\FirstPage\MainFirstPage();
 
 ?>
 <div class="menu-items-block menu-items-view-mode" id="menu-items-block">
@@ -148,7 +153,7 @@ $groupPopupExists = false;
 					{
 						$itemClass .= " menu-item-group";
 					}
-					else if ($item["ITEM_TYPE"] !== "default" || $isCustomItem || $isCustomSection)
+					else if (!in_array($item["ITEM_TYPE"], ['default', 'main']) || $isCustomItem || $isCustomSection)
 					{
 						$itemClass .= " menu-item-no-icon-state";
 					}
@@ -188,12 +193,12 @@ $groupPopupExists = false;
 						data-disable-first-item="Y"
 						<? endif ?>
 						class="<?=$itemClass?>"
-					><?
+					><? if ($item['ITEM_TYPE'] !== 'main'):
 						?><span
 							class="menu-favorites-btn menu-favorites-draggable"
 						><?
 							?><span class="menu-fav-draggable-icon"></span>
-						</span><?
+						</span><?endif;
 
 						if (isset($item["PARAMS"]["sub_link"])):
 							?><a href="<?=htmlspecialcharsbx($item["PARAMS"]["sub_link"])?>" class="menu-item-plus">
@@ -247,10 +252,11 @@ $groupPopupExists = false;
 							$groupPopupExists = true;
 							$editBtnHideClass = " menu-fav-editable-btn-hide";
 							?><span class="menu-item-show-link" id="menu-all-groups-link"><?=Loc::getMessage("MENU_SHOW")?></span><?
-						endif
+						endif;
+						if ($item['ITEM_TYPE'] !== 'main' || $arResult['IS_ADMIN']):
 						?><span data-role="item-edit-control" class="menu-fav-editable-btn menu-favorites-btn<?=$editBtnHideClass?>"><?
 							?><span class="menu-favorites-btn-icon"></span><?
-						?></span><?
+						?></span><?php endif;
 					?></li><?
 
 					if (isset($item['IS_GROUP']) && $item['IS_GROUP'] === 'Y')
@@ -413,6 +419,7 @@ $arJSParams = array(
 	'workgroupsCounterData' => $arResult["WORKGROUP_COUNTER_DATA"],
 	'availablePresetTools' => $arResult['PRESET_TOOLS_AVAILABILITY'],
 	'settingsPath' => $arResult['SETTINGS_PATH'],
+	'isMainPageEnabled' => $mainPage->isEnabled() ? 'Y' : 'N',
 );
 ?>
 
@@ -424,6 +431,7 @@ BX.message({
 	show_item: '<?=CUtil::JSEscape(GetMessage('MENU_SHOW_ITEM_MSGVER_1'))?>',
 	delete_from_favorite_all: '<?=CUtil::JSEscape(GetMessage('MENU_DELETE_FROM_FAVORITE_ALL'))?>',
 	MENU_SET_MAIN_PAGE: '<?=GetMessageJS("MENU_SET_MAIN_PAGE_MSGVER_1")?>',
+	MENU_OPEN_SETTINGS_MAIN_PAGE: '<?=GetMessageJS("MENU_OPEN_SETTINGS_MAIN_PAGE")?>',
 	more_items_hide: '<?=CUtil::JSEscape(GetMessage('MENU_MORE_ITEMS_HIDE'))?>',
 	more_items_show: '<?=CUtil::JSEscape(GetMessage('MENU_MORE_ITEMS_SHOW'))?>',
 	edit_error: '<?=CUtil::JSEscape(GetMessage('MENU_ITEM_EDIT_ERROR'))?>',

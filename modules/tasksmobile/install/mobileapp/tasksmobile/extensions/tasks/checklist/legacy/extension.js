@@ -4,6 +4,7 @@
 jn.define('tasks/checklist/legacy', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const { Type } = require('type');
+	const AppTheme = require('apptheme');
 
 	/**
 	 * @class CheckListTree

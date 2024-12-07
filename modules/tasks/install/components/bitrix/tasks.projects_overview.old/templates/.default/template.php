@@ -134,7 +134,7 @@ $APPLICATION->IncludeComponent(
 											);
 										}
 									?></span>
-									<script type="text/javascript">
+									<script>
 									(function(){
 										var x1 = new tasksProjectsOverviewNS.userPopupList(<?php echo $arProject['MEMBERS_FOR_JS']; ?>);
 										BX.bind(BX('<?php echo $listId; ?>'), "click", BX.proxy(x1.showEmployees, x1));

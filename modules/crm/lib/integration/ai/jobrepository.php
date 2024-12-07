@@ -5,6 +5,7 @@ namespace Bitrix\Crm\Integration\AI;
 use Bitrix\Crm\Integration\AI\Dto\FillItemFieldsFromCallTranscriptionPayload;
 use Bitrix\Crm\Integration\AI\Dto\SummarizeCallTranscriptionPayload;
 use Bitrix\Crm\Integration\AI\Dto\TranscribeCallRecordingPayload;
+use Bitrix\Crm\Integration\AI\Model\EO_Queue;
 use Bitrix\Crm\Integration\AI\Model\QueueTable;
 use Bitrix\Crm\Integration\AI\Operation\FillItemFieldsFromCallTranscription;
 use Bitrix\Crm\Integration\AI\Operation\SummarizeCallTranscription;
@@ -266,7 +267,7 @@ final class JobRepository
 		}
 
 		$job->setOperationStatus($result->getOperationStatus());
-		$job->setResult(Json::encode($result->getPayload()));
+		$job->setResult(Json::encode($result->getPayload(), 0));
 
 		$saveResult = $job->save();
 		if (!$saveResult->isSuccess())
@@ -295,14 +296,47 @@ final class JobRepository
 		return is_array($anotherJobOfSameTypeForThisTarget);
 	}
 
-	public function getFieldsFillingOperationStatusById(int $id): ?string
+	public function getFieldsFillingOperationById(int $id): ?EO_Queue
 	{
 		$query = QueueTable::query()
-			->setSelect(['OPERATION_STATUS'])
+			->setSelect(['OPERATION_STATUS', 'ENTITY_TYPE_ID', 'ENTITY_ID'])
 			->where('ID', $id)
 			->where('TYPE_ID', FillItemFieldsFromCallTranscription::TYPE_ID);
 
-		return $query->fetchObject()?->getOperationStatus();
+		return $query->fetchObject();
+	}
+
+	public function getTotalFillItemFromCallRecordingScenarioDuration(int $fillFieldsJobId): ?int
+	{
+		$fillFieldsJob = QueueTable::query()
+			->setSelect(['PARENT_ID', 'FINISHED_TIME'])
+			->where('ID', $fillFieldsJobId)
+			->where('TYPE_ID', FillItemFieldsFromCallTranscription::TYPE_ID)
+			->fetchObject()
+		;
+		if (!$fillFieldsJob)
+		{
+			return null;
+		}
+
+		$summarizeJobSubQuery =  QueueTable::query()
+			->setSelect(['PARENT_ID'])
+			->where('ID', $fillFieldsJob->requireParentId())
+			->where('TYPE_ID', SummarizeCallTranscription::TYPE_ID)
+		;
+
+		$transcribeJob = QueueTable::query()
+			->setSelect(['CREATED_TIME'])
+			->whereIn('ID', $summarizeJobSubQuery)
+			->where('TYPE_ID', TranscribeCallRecording::TYPE_ID)
+			->fetchObject()
+		;
+		if (!$transcribeJob)
+		{
+			return null;
+		}
+
+		return $fillFieldsJob->requireFinishedTime()->getTimestamp() - $transcribeJob->requireCreatedTime()->getTimestamp();
 	}
 
 	/**

@@ -5,7 +5,8 @@ jn.define('im/messenger/lib/integration/immobile/calls', (require, exports, modu
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { Logger } = require('im/messenger/lib/logger');
 	const { DialogHelper } = require('im/messenger/lib/helper');
-	const { EventType } = require('im/messenger/const');
+	const { EventType, Analytics, DialogType } = require('im/messenger/const');
+	const { AnalyticsEvent } = require('analytics');
 
 	/**
 	 * @class Calls
@@ -75,6 +76,42 @@ jn.define('im/messenger/lib/integration/immobile/calls', (require, exports, modu
 			Logger.info('Calls.joinCall', callId);
 
 			BX.postComponentEvent(EventType.call.join, [callId], 'calls');
+		}
+
+		static leaveCall(dialogId)
+		{
+			Logger.info('Calls.leaveCall', dialogId);
+			const chatData = serviceLocator.get('core').getStore().getters['dialoguesModel/getById'](dialogId);
+
+			const eventData = {
+				dialogId,
+				chatData,
+				userId: serviceLocator.get('core').getUserId(),
+			};
+
+			BX.postComponentEvent(EventType.call.leave, [eventData], 'calls');
+		}
+
+		static sendAnalyticsEvent(dialogId, callElement, analyticSection)
+		{
+			const dialogData = serviceLocator.get('core').getStore().getters['dialoguesModel/getById'](dialogId);
+			const callType = dialogData.type === DialogType.videoconf
+				? Analytics.Type.videoconf
+				: DialogHelper.isDialogId(dialogId)
+					? Analytics.Type.groupCall
+					: Analytics.Type.privateCall;
+
+			const analytics = new AnalyticsEvent()
+				.setTool(Analytics.Tool.im)
+				.setCategory(Analytics.Category.messenger)
+				.setEvent(Analytics.Event.clickCallButton)
+				.setType(callType)
+				.setSection(analyticSection)
+				.setSubSection(Analytics.SubSection.window)
+				.setElement(callElement)
+				.setP5(`chatId_${dialogData.chatId}`);
+
+			analytics.send();
 		}
 	}
 

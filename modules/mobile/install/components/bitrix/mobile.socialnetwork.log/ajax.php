@@ -184,7 +184,6 @@ if(CModule::IncludeModule("socialnetwork"))
 					$parser = new logTextParser(LANGUAGE_ID, $arParams["PATH_TO_SMILE"]);
 
 					$comment_text = $_REQUEST["message"];
-					CUtil::decodeURIComponent($comment_text);
 					$comment_text = Trim($comment_text);
 
 					if ($comment_text <> '')
@@ -287,8 +286,8 @@ if(CModule::IncludeModule("socialnetwork"))
 				);
 				if (strcasecmp(LANGUAGE_ID, 'EN') !== 0 && strcasecmp(LANGUAGE_ID, 'DE') !== 0)
 				{
-					$dateFormated = ToLower($dateFormated);
-					$dateTimeFormated = ToLower($dateTimeFormated);
+					$dateFormated = mb_strtolower($dateFormated);
+					$dateTimeFormated = mb_strtolower($dateTimeFormated);
 				}
 				// strip current year
 				if (!empty($arParams['DATE_TIME_FORMAT']) && ($arParams['DATE_TIME_FORMAT'] == 'j F Y G:i' || $arParams['DATE_TIME_FORMAT'] == 'j F Y g:i a'))

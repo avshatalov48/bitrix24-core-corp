@@ -1,0 +1,75 @@
+.bx-crm-group-actions-messages__item {
+	padding: var(--ui-space-inset-md, 16px);
+}
+
+.bx-crm-group-actions-messages__item-title {
+	font-size: var(--ui-font-size-md);
+	margin-bottom: 16px;
+	color: var(--ui-color-palette-gray-50);
+}
+
+.bx-crm-group-actions-messages__editor {
+	padding: 16px;
+	border-radius: var(--ui-border-radius-xl);
+	border: 1px solid #f0f0f0;
+	border: var(--ui-border-width-thin) var(--ui-text-decoration-style-solid) #f0f0f0;
+}
+
+.bx-crm-group-actions-messages__button
+{
+	margin-top: 16px;
+	min-width: 199px;
+}
+
+.bx-crm-group-actions-messages-compliance {
+	margin-top: 16px;
+	background-color: var(--ui-color-palette-blue-15);
+	border-radius: 8px;
+	padding: 16px;
+	font-size: 14px;
+	line-height: 17px;
+	color: var(--ui-color-palette-gray-70);
+}
+
+.bx-crm-group-actions-messages-whatsapp-icon {
+	width: 42px;
+	height: 42px;
+	background-image: url("../images/whatsapp.svg");
+	background-size: cover;
+}
+
+.bx-crm-group-actions-messages-settings-icon {
+	cursor: pointer;
+	width: 30px;
+	height: 30px;
+	background-image: url("../images/gear.svg");
+}
+
+.bx-crm-group-actions-messages-tpl-header {
+	margin-top: 8px;
+	display: flex;
+	line-height: 1.55em;
+}
+
+.bx-crm-group-actions-messages-tpl-header-left {
+	flex-basis: 42px;
+	padding: 4px 8px;
+}
+
+.bx-crm-group-actions-messages-tpl-header-center {
+	flex-grow: 1;
+	font-size: var(--ui-font-size-md);
+}
+
+.bx-crm-group-actions-messages-tpl-header-center-title {
+	font-weight: bold;
+}
+
+.bx-crm-group-actions-messages-tpl-header-right {
+	flex-basis: 60px;
+	margin-top: -1px
+}
+
+.bx-crm-group-actions-messages-tpl-header_gray {
+	color: var(--ui-color-palette-gray-60);
+}

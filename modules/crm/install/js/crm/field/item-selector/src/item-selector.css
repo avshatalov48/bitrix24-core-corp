@@ -24,7 +24,6 @@
 	flex-direction: row;
 	align-items: center;
 	padding-right: 10px;
-	text-transform: lowercase;
 	color: var(--color-text);
 	font-size: var(--font-size);
 	font-weight: var(--font-weight);
@@ -92,6 +91,27 @@
 .crm-field-item-selector__add-btn.ui-btn.ui-btn-dropdown:before {
 	border-color: rgba(var(--ui-color-text-subtle-rgb, var(--crm-timeline__date-pill_caret-color)), 0.54)
 }
+
+.crm-field-item-selector-compact-icon {
+	display: block;
+	width: 20px;
+	height: 20px;
+	cursor: pointer;
+	background-size: contain;
+}
+
+.crm-field-item-selector-compact-icon:hover {
+	opacity: var(--ui-opacity-80);
+}
+
+.crm-field-item-selector-compact-icon.--bell {
+	background-image: url('./images/crm-field__item-selector_compact-icon-bell.svg');
+}
+
+.crm-field-item-selector-compact-icon.--bell.--empty {
+	background-image: url('./images/crm-field__item-selector_compact-empty-icon-bell.svg');
+}
+
 /* endregion*/
 
 /* region Animations */

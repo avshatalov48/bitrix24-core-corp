@@ -85,7 +85,7 @@ if ($isBitrix24Template)
 		if ($arResult["ADMIN_MODE_ALLOW"] || $arResult["WORKER_COUNT"] > 0)
 		{
 			?>
-			<script type="text/javascript">
+			<script>
 				BX.ready(function()
 				{
 					var menuItemsOptions = [];
@@ -196,7 +196,7 @@ if ($isBitrix24Template && !$arResult['DISK_EMPTY'] && !$isQueueRunning && $arRe
 
 
 ?>
-<script type="text/javascript">
+<script>
 	BX.message({
 		DISK_VOLUME_PERFORMING_MEASURE_DATA: '<?= GetMessageJS("DISK_VOLUME_PERFORMING_MEASURE_DATA") ?>',
 		DISK_VOLUME_PERFORMING_MEASURE_QUEUE: '<?= GetMessageJS("DISK_VOLUME_PERFORMING_QUEUE", array(
@@ -476,7 +476,7 @@ if (
 
 			<? if(count($arResult['ACTION_MENU']) > 0):?>
 				<span id="bx-disk-volume-popupMenuStorage" class="ui-btn ui-btn-light-border ui-btn-icon-list"></span>
-				<script type="text/javascript">
+				<script>
 					BX.ready(function()
 					{
 						var menuItemsOptions = [];

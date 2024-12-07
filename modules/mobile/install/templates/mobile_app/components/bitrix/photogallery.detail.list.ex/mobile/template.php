@@ -11,7 +11,7 @@ $arParams["ID"] = md5(serialize(array("default", $arParams["FILTER"], $arParams[
 ********************************************************************/
 
 if (!empty($arResult["ERROR_MESSAGE"])):
-	?><div class="photo-error"><?=ShowError($arResult["ERROR_MESSAGE"])?></div><?
+	?><div class="photo-error"><? ShowError($arResult["ERROR_MESSAGE"]) ?></div><?
 endif;
 
 if ($arParams["LIVEFEED_EVENT_ID"] === "photo")

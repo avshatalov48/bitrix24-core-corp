@@ -27,7 +27,7 @@ RegisterModuleDependences("main", "OnGetStaticCacheProvider", "intranet", "\\Bit
 COption::SetOptionString("main", "~show_composite_banner", "N");
 COption::SetOptionString("intranet", "composite_enabled", "Y");
 
-$defaultThemeId = in_array(LANGUAGE_ID, ['ru', 'kz', 'by']) ? ThemePicker::DEFAULT_THEME_ID : 'light:orbital-symphony';
+$defaultThemeId = in_array(LANGUAGE_ID, ['ru', 'kz', 'by']) ? ThemePicker::DEFAULT_THEME_ID : 'light:contrast-horizon';
 $theme = new ThemePicker(WIZARD_TEMPLATE_ID, WIZARD_SITE_ID);
 $theme->setDefaultTheme($defaultThemeId);
 
@@ -69,11 +69,17 @@ if ($structure_iblock_id = COption::GetOptionInt('intranet', 'iblock_structure',
 		));
 	}
 
-	$res_sect = CIBlockSection::GetList(array(), array("IBLOCK_ID"=>$structure_iblock_id, "DEPTH_LEVEL"=>1));
-	if($res_sect_arr = $res_sect->Fetch())
+	$departmentRepository = \Bitrix\Intranet\Service\ServiceContainer::getInstance()->departmentRepository();
+	$rootDepartment = $departmentRepository->getRootDepartment();
+	if ($rootDepartment)
 	{
 		$admin = new CUser();
-		$admin->Update(1, array("UF_DEPARTMENT"=>array($res_sect_arr["ID"])));
+		$admin->Update(
+			1,
+			[
+				"UF_DEPARTMENT" => [$rootDepartment->getId()]
+			]
+		);
 	}
 }
 

@@ -161,7 +161,10 @@ class CIntranetMailConfigHomeComponent extends CBitrixComponent
 		global $USER, $APPLICATION;
 
 		if (!empty($this->arParams['MAILBOX']) && empty($page))
-			return $this->redirect();
+		{
+			$this->redirect();
+			return;
+		}
 
 		$this->arParams['CRM_AVAILABLE'] = false;
 		if (\CModule::includeModule('crm') && \CCrmPerms::isAccessEnabled())

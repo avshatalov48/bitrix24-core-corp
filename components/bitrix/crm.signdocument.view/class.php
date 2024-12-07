@@ -70,7 +70,7 @@ class CrmSignDocumentViewComponent extends Bitrix\Crm\Component\Base
 		$this->arResult['documentResendEnabled'] = false;
 		$documentService = \Bitrix\Sign\Service\Container::instance()->getDocumentService();
 		$docItem = method_exists($documentService, 'getById') ? $documentService->getById($document->getId()) : null;
-			if ($docItem !== null && !\Bitrix\Sign\Type\DocumentScenario::isB2EScenario($docItem->scenario ?? ''))
+		if ($docItem !== null && !\Bitrix\Sign\Type\DocumentScenario::isB2EScenario($docItem->scenario ?? ''))
 		{
 			$members = \Bitrix\Sign\Service\Container::instance()
 				->getMemberRepository()

@@ -8,6 +8,7 @@ use Bitrix\Crm\Field\Collection;
 use Bitrix\Crm\Integration\PullManager;
 use Bitrix\Crm\Integrity;
 use Bitrix\Crm\Item;
+use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Operation;
@@ -18,6 +19,7 @@ use Bitrix\Main\Error;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ORM\Objectify\Values;
 use Bitrix\Main\Result;
+use CCrmActivity;
 
 class Update extends Operation
 {
@@ -159,11 +161,13 @@ class Update extends Operation
 				$authorId = $this->getItem()->getUpdatedBy();
 			}
 
-			\CCrmActivity::SetAutoCompletedByOwner(
+			CCrmActivity::SetAutoCompletedByOwner(
 				$this->getItem()->getEntityTypeId(),
 				$this->getItem()->getId(),
 				$this->getActivityProvidersToAutocomplete(),
-				['CURRENT_USER' => $authorId]
+				[
+					'CURRENT_USER' => $authorId,
+				]
 			);
 		}
 
@@ -251,8 +255,7 @@ class Update extends Operation
 			);
 		}
 
-		$factory = Container::getInstance()->getFactory($this->getItem()->getEntityTypeId());
-		if ($factory?->isStagesEnabled() && $this->wasItemMovedToFinalStage())
+		if ($this->isFinalizedWithStages())
 		{
 			MarkController::getInstance()->onItemMoveToFinalStage(
 				$this->getItemIdentifier(),
@@ -338,5 +341,59 @@ class Update extends Operation
 	protected function isClearItemCategoryCacheNeeded(): bool
 	{
 		return $this->item->isCategoriesSupported() && $this->item->isChangedCategoryId();
+	}
+
+	public function isFinalizedWithStages(): bool
+	{
+		$factory = Container::getInstance()->getFactory($this->getItem()->getEntityTypeId());
+
+		return $factory?->isStagesEnabled() && $this->wasItemMovedToFinalStage();
+	}
+
+	private function isTransitionAllowed(): bool
+	{
+		if ($this->item->getStageId() === $this->item->remindActual('STAGE_ID'))
+		{
+			return true;
+		}
+
+		if ($this->item->isCategoriesSupported() && ($this->item->getCategoryId() !== $this->item->remindActual('CATEGORY_ID')))
+		{
+			return true;
+		}
+
+		return Container::getInstance()->getUserPermissions($this->getContext()->getUserId())->isStageTransitionAllowed(
+			$this->item->remindActual('STAGE_ID'),
+			$this->item->getStageId(),
+			ItemIdentifier::createByItem($this->item),
+		);
+	}
+
+	protected function preSaveChecks(): ?Result
+	{
+		$checkResult = parent::preSaveChecks();
+		if ($checkResult)
+		{
+			return $checkResult;
+		}
+
+		if (!$this->isCheckAccessEnabled())
+		{
+			return null;
+		}
+
+		$userPermissions = Container::getInstance()->getUserPermissions($this->getContext()->getUserId());
+
+		if ($userPermissions->isAdminForEntity($this->item->getEntityTypeId()))
+		{
+			return null;
+		}
+
+		if ($this->item->isStagesEnabled() && !$this->isTransitionAllowed())
+		{
+			return (new Result())->addError(new Error(Loc::getMessage('CRM_PERMISSION_STAGE_TRANSITION_NOT_ALLOWED')));
+		}
+
+		return null;
 	}
 }

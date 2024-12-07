@@ -32,10 +32,13 @@ class CBPCrmSetObserverField extends CBPActivity
 		$documentId = mb_split('_(?=[^_]*$)', $this->GetDocumentId()[2])[1];
 		$observerIds = CBPHelper::ExtractUsers($this->Observers, $this->GetDocumentId());
 
-		$this->writeDebugInfo($this->getDebugInfo([
-			'ActionOnObservers' => $this->ActionOnObservers,
-			'Observers' => $this->Observers,
-		]));
+		if ($this->workflow->isDebug())
+		{
+			$this->writeDebugInfo($this->getDebugInfo([
+				'ActionOnObservers' => $this->ActionOnObservers,
+				'Observers' => $this->Observers,
+			]));
+		}
 
 		if ($documentType === CCrmOwnerType::LeadName || $documentType === CCrmOwnerType::DealName)
 		{
@@ -94,13 +97,12 @@ class CBPCrmSetObserverField extends CBPActivity
 	protected function setItemObservers(int $typeId, int $entityId, array $observerIds)
 	{
 		$factory = \Bitrix\Crm\Service\Container::getInstance()->getFactory($typeId);
-		if (is_null($factory) || !$factory->isAutomationEnabled())
+		if (is_null($factory))
 		{
 			return;
 		}
 
 		$item = $factory->getItem($entityId);
-
 		switch ($this->ActionOnObservers)
 		{
 			case self::ACTION_ADD_OBSERVERS:
@@ -111,12 +113,16 @@ class CBPCrmSetObserverField extends CBPActivity
 				$observerIds = array_diff($item->getObservers(), $observerIds);
 				break;
 
+			case self::ACTION_REPLACE_OBSERVERS:
+				// if we're replacing observers then identifiers list is ready-to-use, keep as is
+				break;
+
 			default:
 				$observerIds = [];
 		}
 
 		$item->setObservers($observerIds);
-		$factory->getUpdateOperation($item)->launch();
+		$factory->getUpdateOperation($item)->disableAllChecks()->launch();
 	}
 
 	public static function getPropertiesDialog($documentType, $activityName, $workflowTemplate, $workflowParameters, $workflowVariables, $currentValues = null, $formName = '', $popupWindow = null, $siteId = '')

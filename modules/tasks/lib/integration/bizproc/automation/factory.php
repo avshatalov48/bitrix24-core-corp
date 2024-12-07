@@ -1,9 +1,10 @@
 <?php
 namespace Bitrix\Tasks\Integration\Bizproc\Automation;
 
-use Bitrix\Bitrix24\Feature;
+use Bitrix\Bizproc;
+use Bitrix\Tasks\Flow\FlowFeature;
+use Bitrix\Tasks\Integration\Bitrix24;
 use Bitrix\Tasks\Integration\Bitrix24\FeatureDictionary;
-use Bitrix\Tasks\Integration\Bizproc\Automation\Target;
 use Bitrix\Main\Loader;
 use Bitrix\Main\NotSupportedException;
 use Bitrix\Tasks\Integration\Bizproc\Document;
@@ -13,9 +14,37 @@ class Factory
 	private static $isBizprocEnabled;
 	private static $triggerRegistry;
 
-	public static function canUseAutomation()
+	public static function canUseAutomation(): bool
 	{
-		return static::isBizprocEnabled() && static::isFeatureEnabled();
+		if (!static::isBizprocEnabled())
+		{
+			return false;
+		}
+
+		if (static::isFeatureEnabled())
+		{
+			return true;
+		}
+
+		if (static::isFeatureEnabledByFlowTrial())
+		{
+			return true;
+		}
+
+		return false;
+	}
+
+	public static function isAutomationEnabled(): bool
+	{
+		if (
+			static::isBizprocEnabled()
+			&& class_exists(Bizproc\Integration\Intranet\ToolsManager::class)
+		)
+		{
+			return Bizproc\Integration\Intranet\ToolsManager::getInstance()->isRobotsAvailable();
+		}
+
+		return static::canUseAutomation();
 	}
 
 	public static function runOnAdd($documentType, $documentId, array $fields = null)
@@ -187,21 +216,16 @@ class Factory
 		static $enabled;
 		if ($enabled === null)
 		{
-			if (
-				class_exists(\Bitrix\Bizproc\Integration\Intranet\ToolsManager::class)
-				&& !\Bitrix\Bizproc\Integration\Intranet\ToolsManager::getInstance()->isRobotsAvailable()
-			)
-			{
-				$enabled = false;
-
-				return $enabled;
-			}
-
 			$enabled = Loader::includeModule('bitrix24')
-				? Feature::isFeatureEnabled(FeatureDictionary::TASKS_AUTOMATION)
+				? Bitrix24::checkFeatureEnabled(FeatureDictionary::TASK_ROBOTS)
 				: true;
 		}
 
 		return $enabled;
+	}
+
+	private static function isFeatureEnabledByFlowTrial(): bool
+	{
+		return FlowFeature::isFeatureEnabledByTrial();
 	}
 }

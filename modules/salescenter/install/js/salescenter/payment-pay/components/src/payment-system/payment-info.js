@@ -29,7 +29,7 @@ BitrixVue.component('salescenter-payment_pay-components-payment_system-payment_i
 	template: `
 		<div>
 			<div class="order-payment-title" v-if="title">{{ title }}</div>
-			<div class="order-payment-inner d-flex align-items-center justify-content-between">
+			<div class="order-payment-inner d-flex flex-wrap align-items-center justify-content-between">
 				<salescenter-payment_pay-components-payment_system-payment_info-pay_system_small_card :name="paySystem.NAME" :logo="paySystem.LOGOTIP"/>
             	<div class="order-payment-status d-flex align-items-center" v-if="paid">
                 	<div class="order-payment-status-ok"></div>

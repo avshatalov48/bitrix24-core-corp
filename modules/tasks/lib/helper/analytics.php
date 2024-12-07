@@ -8,11 +8,17 @@ use Bitrix\Tasks\Ui\Filter;
 
 class Analytics extends Common
 {
+	protected static ?array $instance = null;
+
 	public const TOOL = 'tasks';
+
 	public const TASK_CATEGORY = 'task_operations';
 	public const COMMENT_CATEGORY = 'comments_operations';
+	public const FLOW_CATEGORY = 'flows';
+
 	public const TASK_TYPE = 'task';
 	public const COMMENT_TYPE = 'comment';
+
 	public const STATUS_SUCCESS = 'success';
 	public const STATUS_ERROR = 'error';
 
@@ -25,6 +31,9 @@ class Analytics extends Common
 		'subtask_add' => 'subtask_add',
 		'overdue_counters_on' => 'overdue_counters_on',
 		'comments_counters_on' => 'comments_counters_on',
+		'flow_create_start' => 'flow_create_start',
+		'flow_create_finish' => 'flow_create_finish',
+		'flows_view' => 'flows_view',
 	];
 
 	public const SECTION = [
@@ -38,6 +47,7 @@ class Analytics extends Common
 		'calendar' => 'calendar',
 		'user' => 'user',
 		'comment' => 'comment',
+		'flows' => 'flows',
 	];
 
 	public const SUB_SECTION = [
@@ -53,6 +63,10 @@ class Analytics extends Common
 		'deal' => 'deal',
 		'contact' => 'contact',
 		'company' => 'company',
+		'flows' => 'flows',
+		'flows_grid' => 'flows_grid',
+		'group_card' => 'group_card',
+		'flow_guide' => 'flow_guide',
 	];
 
 	public const ELEMENT = [
@@ -68,6 +82,13 @@ class Analytics extends Common
 		'send_button' => 'send_button',
 		'checkbox' => 'checkbox',
 		'complete_button' => 'complete_button',
+		'flows_grid_button' => 'flows_grid_button',
+		'flow_popup' => 'flow_popup',
+		'flow_selector' => 'flow_selector',
+		'section_button' => 'section_button',
+		'my_tasks_column' => 'my_tasks_column',
+		'create_demo_button' => 'create_demo_button',
+		'guide_button' => 'guide_button',
 	];
 
 	/**
@@ -106,11 +127,13 @@ class Analytics extends Common
 	 * @throws ArgumentException
 	 */
 	public function onTaskCreate(
+		string $category,
 		string $event,
 		?string $section,
 		?string $element,
 		?string $subSection,
-		bool $status
+		bool $status,
+		array $params = [],
 	): void
 	{
 		if (!in_array($event, [self::EVENT['task_create'], self::EVENT['subtask_add']], true))
@@ -121,10 +144,18 @@ class Analytics extends Common
 		$analyticsEvent = new AnalyticsEvent(
 			$event,
 			self::TOOL,
-			self::TASK_CATEGORY,
+			$category,
 		);
 
-		$this->sendAnalytics($analyticsEvent, $section, $element, $subSection, $status);
+		$this->sendAnalytics(
+			$analyticsEvent,
+			$section,
+			$element,
+			$subSection,
+			$status,
+			self::TASK_TYPE,
+			$params,
+		);
 	}
 
 	/**
@@ -134,7 +165,12 @@ class Analytics extends Common
 	 * @return void
 	 * @throws ArgumentException
 	 */
-	public function onTaskView(string $section, ?string $element = null, ?string $subSection = null): void
+	public function onTaskView(
+		string $section,
+		?string $element = null,
+		?string $subSection = null,
+		array $params = [],
+	): void
 	{
 		$analyticsEvent = new AnalyticsEvent(
 			self::EVENT['task_view'],
@@ -142,7 +178,73 @@ class Analytics extends Common
 			self::TASK_CATEGORY,
 		);
 
-		$this->sendAnalytics($analyticsEvent, $section, $element, $subSection);
+		$this->sendAnalytics(
+			$analyticsEvent,
+			$section,
+			$element,
+			$subSection,
+			true,
+			self::TASK_TYPE,
+			$params,
+		);
+	}
+
+	public function onFlowCreate(
+		string $event,
+		string $section,
+		?string $element = null,
+		?string $subSection = null,
+		array $params = []
+	): void
+	{
+		$availableEvents = [
+			'flow_create_start',
+			'flow_create_finish',
+		];
+		if (!in_array($event, $availableEvents, true))
+		{
+			return;
+		}
+
+		$analyticsEvent = new AnalyticsEvent(
+			$event,
+			self::TOOL,
+			self::FLOW_CATEGORY,
+		);
+
+		$this->sendAnalytics(
+			$analyticsEvent,
+			$section,
+			$element,
+			$subSection,
+			true,
+			self::TASK_TYPE,
+			$params,
+		);
+	}
+
+	public function onFlowsView(
+		string $section,
+		?string $element = null,
+		?string $subSection = null,
+		array $params = []
+	): void
+	{
+		$analyticsEvent = new AnalyticsEvent(
+			self::EVENT['flows_view'],
+			self::TOOL,
+			self::FLOW_CATEGORY,
+		);
+
+		$this->sendAnalytics(
+			$analyticsEvent,
+			$section,
+			$element,
+			$subSection,
+			true,
+			self::TASK_TYPE,
+			$params,
+		);
 	}
 
 	/**
@@ -211,6 +313,61 @@ class Analytics extends Common
 		$this->sendAnalytics($analyticsEvent, $section, $element, $subSection);
 	}
 
+	public function onFirstProjectCreation(): void
+	{
+		$this->logToFile(
+			'markShowedStep',
+			'firstProjectCreation',
+			'0',
+			'tourGuide'
+		);
+	}
+
+	public function onFirstScrumCreation(): void
+	{
+		$this->logToFile(
+			'markShowedStep',
+			'firstScrumCreation',
+			'0',
+			'tourGuide'
+		);
+	}
+
+	public function onFirstTaskGridCreation(): void
+	{
+		$this->logToFile(
+			'markShowedStep',
+			'firstGridTaskCreation',
+			'0',
+			'tourGuide'
+		);
+	}
+
+	public function onQrMobile(): void
+	{
+		$this->logToFile(
+			'send',
+			'QrMobile',
+			0,
+			'QrMobile',
+			$this->userId
+		);
+	}
+
+	public function logToFile(
+		string $action,
+		string $tag = '',
+		string $label = '',
+		string $actionType = '',
+		?int $userId = null
+	): void
+	{
+		if (function_exists('AddEventToStatFile'))
+		{
+			AddEventToStatFile('tasks', $action, $tag, $label, $actionType, $userId);
+		}
+	}
+
 	/**
 	 * @param AnalyticsEvent $analyticsEvent
 	 * @param string|null $section
@@ -227,7 +384,8 @@ class Analytics extends Common
 		?string $element = null,
 		?string $subSection = null,
 		bool $status = true,
-		string $type = self::TASK_TYPE
+		string $type = self::TASK_TYPE,
+		array $params = [],
 	): void
 	{
 		$analyticsEvent
@@ -246,6 +404,18 @@ class Analytics extends Common
 		if (in_array($subSection, self::SUB_SECTION, true))
 		{
 			$analyticsEvent->setSubSection($subSection);
+		}
+
+		for ($i = 1; $i <= 5; $i++)
+		{
+			if (!empty($params['p' . $i]) && is_string($params['p' . $i]))
+			{
+				$methodName = 'setP' . ($i);
+				if (method_exists($analyticsEvent, $methodName))
+				{
+					$analyticsEvent->$methodName($params['p' . $i]);
+				}
+			}
 		}
 
 		$analyticsEvent->send();

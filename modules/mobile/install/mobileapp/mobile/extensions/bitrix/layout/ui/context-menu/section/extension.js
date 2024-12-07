@@ -1,169 +1,127 @@
-(() => {
-	const AppTheme = jn.require('apptheme');
+/**
+ * @module layout/ui/context-menu/section
+ */
+jn.define('layout/ui/context-menu/section', (require, exports, module) => {
+	const { Color, Indent, Component } = require('tokens');
+	const { Icon } = require('assets/icons');
+	const { Area } = require('ui-system/layout/area');
+	const { Link4 } = require('ui-system/blocks/link');
+	const { Text4 } = require('ui-system/typography/text');
+	const { PropTypes } = require('utils/validation');
+
+	const SECTION_TITLE_HEIGHT = 38;
 	const SECTION_DEFAULT = 'default';
 	const SECTION_SERVICE = 'service';
-	const svgIcons = {
-		add: {
-			content: '<svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9.73364 3.75H8.25V8.25H3.75V9.71066H8.25V14.2423H9.73364V9.71066H14.2813V8.25H9.73364V3.75Z" fill="#2066B0"/></svg>',
-		},
-	};
-
-	const isAndroid = Application.getPlatform() === 'android';
-	const navigationBarLeftMargin = isAndroid ? 20 : 16;
 
 	/**
+	 * @param {string} testId
+	 * @param {string | number} [id]
+	 * @param {string} title
+	 * @param {Object} [titleAction]
+	 * @param {ContextMenuItemProps[]} actions
+	 * @param {Function} [renderAction]
+	 * @param {Function} [closeHandler]
 	 * @class ContextMenuSection
 	 */
 	class ContextMenuSection extends LayoutComponent
 	{
 		static create(props)
 		{
-			return new this(props);
-		}
-
-		get id()
-		{
-			return this.props.id;
-		}
-
-		get title()
-		{
-			return this.props.title;
-		}
-
-		get titleAction()
-		{
-			return this.props.titleAction;
-		}
-
-		get actions()
-		{
-			return BX.prop.getArray(this.props, 'actions', []);
-		}
-
-		get showTitleBorder()
-		{
-			return BX.prop.getBoolean(this.props, 'showTitleBorder', true);
-		}
-
-		get closeMenuHandler()
-		{
-			return this.props.closeHandler;
+			return new ContextMenuSection(props);
 		}
 
 		render()
 		{
-			return View(
+			return Area(
 				{
-					style: {
-						...styles.sectionView(this.id === SECTION_SERVICE),
-						...this.props.style,
+					isFirst: !this.getTitle(),
+					title: this.getTitle(),
+					excludePaddingSide: {
+						horizontal: true,
+						bottom: true,
 					},
 				},
-				this.renderTitle(),
+				this.renderTitleAction(),
 				...this.renderActions(),
 			);
 		}
 
-		renderTitle()
+		getTitle()
 		{
-			if (!this.title)
+			const { title, titleAction } = this.props;
+
+			if (titleAction)
 			{
 				return null;
 			}
 
-			return View(
-				{
-					style: {
-						paddingVertical: 10,
-						paddingHorizontal: 20,
-						paddingLeft: 0,
-						marginLeft: navigationBarLeftMargin,
-						flexDirection: 'row',
-						borderBottomWidth: this.showTitleBorder ? 1 : 0,
-						borderBottomColor: AppTheme.colors.bgSeparatorPrimary,
-						justifyContent: 'space-between',
-					},
-				},
-				this.getTitleText(),
-				this.renderTitleAction(),
-			);
+			return title;
 		}
 
-		getTitleText()
-		{
-			if (!this.title)
-			{
-				return null;
-			}
-
-			if (typeof this.title !== 'string')
-			{
-				return this.title;
-			}
-
-			return Text(
-				{
-					style: styles.title,
-					numberOfLines: 1,
-					ellipsize: 'end',
-					text: this.title,
-				},
-			);
-		}
-
+		/**
+		 * @deprecated
+		 * @returns {Link|null}
+		 */
 		renderTitleAction()
 		{
-			if (!this.titleAction)
+			const svgIcons = {
+				add: Icon.PLUS,
+			};
+			const { title, titleAction, testId } = this.props;
+
+			if (!titleAction)
 			{
 				return null;
 			}
 
-			let titleActionIcon = null;
-			const icon = this.titleAction.iconType ? svgIcons[this.titleAction.iconType] : null;
-			if (icon)
-			{
-				titleActionIcon = Image({
-					style: {
-						width: 18,
-						height: 18,
-						marginRight: 2,
-					},
-					resizeMode: 'center',
-					svg: icon,
-				});
-			}
+			const { iconType, text, action } = titleAction;
+
+			const icon = svgIcons[iconType] || null;
 
 			return View(
 				{
 					style: {
+						width: '100%',
+						alignItems: 'center',
 						flexDirection: 'row',
-						flexShrink: 2,
+						paddingVertical: Indent.L.toNumber(),
 					},
-					onClick: this.handleTitleActionClick.bind(this),
 				},
-				titleActionIcon,
-				Text({
-					style: {
-						fontSize: 14,
-						color: AppTheme.colors.accentMainLinks,
-						flexShrink: 2,
+				View(
+					{
+						style: {
+							flex: 1,
+							alignItems: 'center',
+							flexDirection: 'row',
+							marginHorizontal: Component.areaPaddingLr.toNumber(),
+						},
 					},
-					numberOfLines: 1,
-					text: this.titleAction.text,
-					ellipsize: 'end',
-				}),
+					Text4({
+						text: title,
+						color: Color.base4,
+						style: {
+							marginRight: Indent.XS2.toNumber(),
+						},
+					}),
+					Link4({
+						text,
+						testId: `${testId}_title_action`,
+						rightIcon: icon,
+						useInAppLink: false,
+						onClick: this.handleTitleActionClick(action),
+					}),
+				),
 			);
 		}
 
-		handleTitleActionClick()
-		{
-			if (!this.titleAction || !this.titleAction.action)
-			{
-				return;
-			}
+		/**
+		 * @deprecated
+		 * @returns {Link|null}
+		 */
+		handleTitleActionClick = (callback) => () => {
+			const { closeHandler } = this.props;
 
-			let promise = this.titleAction.action();
+			let promise = callback();
 
 			if (!(promise instanceof Promise))
 			{
@@ -171,37 +129,25 @@
 			}
 
 			promise.then(({ closeMenu = true, closeCallback } = {}) => {
-				if (closeMenu)
+				if (closeMenu && closeHandler)
 				{
-					this.closeMenuHandler(closeCallback);
+					closeHandler(closeCallback);
 				}
-			});
-		}
+			}).catch(console.error);
+		};
 
 		renderActions()
 		{
-			const renderAction = this.props.renderAction;
+			const { renderAction } = this.props;
+
 			if (!renderAction)
 			{
 				return [];
 			}
 
-			const hasIcons = this.actions.some((action) => {
-				if (action.data)
-				{
-					return action.data.svgIcon || action.data.svgUri || action.data.imgUri;
-				}
+			const { actions } = this.props;
 
-				return false;
-			});
-
-			return this.actions.map((action, i) => renderAction(action, {
-				onClick: this.props.onClick,
-				showIcon: hasIcons,
-				firstInSection: !i,
-				lastInSection: this.actions.length - 1 === i,
-				enabled: this.props.enabled,
-			}));
+			return actions.map((action, i) => renderAction(action, { divider: actions.length - 1 !== i }));
 		}
 
 		static getDefaultSectionName()
@@ -213,19 +159,35 @@
 		{
 			return SECTION_SERVICE;
 		}
+
+		static getHeight()
+		{
+			return SECTION_TITLE_HEIGHT;
+		}
+
+		static getIndentBetweenSections()
+		{
+			return Component.areaPaddingLr.toNumber();
+		}
 	}
 
-	const styles = {
-		sectionView: () => ({
-			backgroundColor: AppTheme.colors.bgContentPrimary,
-			fontSize: 18,
-			borderRadius: 12,
-		}),
-		title: {
-			color: AppTheme.colors.base2,
-			fontSize: 13,
-		},
+	ContextMenuSection.propTypes = {
+		testId: PropTypes.string.isRequired,
+		id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+		titleAction: PropTypes.object,
+		title: PropTypes.string,
+		actions: PropTypes.array,
+		renderAction: PropTypes.func,
+		closeHandler: PropTypes.func,
 	};
+
+	module.exports = {
+		ContextMenuSection,
+	};
+});
+
+(() => {
+	const { ContextMenuSection } = jn.require('layout/ui/context-menu/section');
 
 	this.ContextMenuSection = ContextMenuSection;
 })();

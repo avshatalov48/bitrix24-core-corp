@@ -14,7 +14,7 @@ if (!$CrmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE'))
 }
 
 $arResult['ENTITY_NAME'] = isset($arParams['ENTITY_NAME'])? mb_substr(strval($arParams['ENTITY_NAME']), 0, 100) : '';
-$arResult['ENTITY_NAME'] = ToLower(preg_replace('/[^A-Za-z_0-9]/', '_', $arResult['ENTITY_NAME']));
+$arResult['ENTITY_NAME'] = mb_strtolower(preg_replace('/[^A-Za-z_0-9]/', '_', $arResult['ENTITY_NAME']));
 $arResult['RND'] = rand(1000, 9999).rand(1000, 9999);
 
 $arResult['NUM_TEMPLATES'] = array(

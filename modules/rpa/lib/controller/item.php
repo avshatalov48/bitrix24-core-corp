@@ -408,7 +408,7 @@ class Item extends Base
 		];
 	}
 
-	public function deleteAction(\Bitrix\Rpa\Model\Type $type, $id): void
+	public function deleteAction(\Bitrix\Rpa\Model\Type $type, int $id): void
 	{
 		$item = $type->getItem($id);
 		if(!$item)

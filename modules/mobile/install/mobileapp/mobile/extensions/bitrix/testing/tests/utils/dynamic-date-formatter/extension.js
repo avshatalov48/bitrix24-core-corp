@@ -2,7 +2,7 @@
 	const require = (ext) => jn.require(ext);
 
 	const { describe, test, expect } = require('testing');
-	const { DynamicDateFormatter } = require('utils/date/dynamic-date-formatter');
+	const { DynamicDateFormatter } = require('utils/date');
 	const { Moment } = require('utils/date/moment');
 	const { datetime, shortTime, longTime } = require('utils/date/formats');
 	const { clone } = require('utils/object');
@@ -26,6 +26,8 @@
 		'5MinsAgo': new Moment('Oct 16 2023 11:55:00'),
 		'1HourAgo': new Moment('Oct 16 2023 11:00:00'),
 		'3HoursAgo': new Moment('Oct 16 2023 09:00:00'),
+		'23HoursAgo': new Moment('Oct 15 2023 13:00:00'),
+		'1DayAndHourAgo': new Moment('Oct 15 2023 11:00:00'),
 		'2DaysAgo': new Moment('Oct 14 2023 12:00:00'),
 		'1WeekAgo': new Moment('Oct 9 2023 12:00:00'),
 	};
@@ -35,9 +37,13 @@
 		in45Secs: new Moment('Oct 16 2023 12:00:45'),
 		in1Min: new Moment('Oct 16 2023 12:01:00'),
 		in5Mins: new Moment('Oct 16 2023 12:05:00'),
+		in30Mins: new Moment('Oct 16 2023 12:30:00'),
+		in31Mins: new Moment('Oct 16 2023 12:31:00'),
 		in59Mins: new Moment('Oct 16 2023 12:59:00'),
 		in1Hour: new Moment('Oct 16 2023 13:00:00'),
 		in3Hours: new Moment('Oct 16 2023 15:00:00'),
+		in23Hours: new Moment('Oct 17 2023 11:00:00'),
+		in1DayAndHour: new Moment('Oct 17 2023 13:00:00'),
 		in2Days: new Moment('Oct 18 2023 12:00:00'),
 		in1Week: new Moment('Oct 23 2023 12:00:00'),
 	};
@@ -136,6 +142,59 @@
 					45: () => 'general settings prioritised',
 					[DynamicDateFormatter.scope.PAST]: {
 						45: () => 'specific settings prioritised',
+					},
+				},
+			});
+
+			runTests(formatter, expectedResults);
+		});
+
+		test('yesterday and tomorrow periods', () => {
+			const expectedResults = {
+				'1DayAndHourAgo': 'yesterday',
+				'23HoursAgo': 'yesterday',
+				in1DayAndHour: 'tomorrow',
+				in23Hours: 'tomorrow',
+				'1HourAgo': 'today',
+			};
+
+			const formatter = new DynamicDateFormatter({
+				defaultFormat: datetime(),
+				config: {
+					[DynamicDateFormatter.periods.DAY]: () => 'today',
+					[DynamicDateFormatter.scope.PAST]: {
+						[DynamicDateFormatter.periods.YESTERDAY]: () => 'yesterday',
+					},
+					[DynamicDateFormatter.scope.FUTURE]: {
+						[DynamicDateFormatter.periods.TOMORROW]: () => 'tomorrow',
+					},
+				},
+			});
+
+			runTests(formatter, expectedResults);
+		});
+
+		test('test of potential conflict of periods and deltas', () => {
+			const expectedResults = {
+				in5Mins: 'через 5 минут',
+				in30Mins: 'через 30 минут',
+				in31Mins: 'сегодня в 12:31',
+				in1Hour: 'сегодня в 13:00',
+			};
+
+			const formatter = new DynamicDateFormatter({
+				defaultFormat: datetime(),
+				config: {
+					[DynamicDateFormatter.scope.FUTURE]: {
+						1800: (moment) => {
+							const remainSeconds = moment.timestamp - moment.getNow().timestamp;
+							const remainMinutes = Math.round(remainSeconds / 60);
+
+							return `через ${remainMinutes} минут`;
+						},
+						[DynamicDateFormatter.periods.DAY]: (moment) => {
+							return `сегодня в ${moment.format(shortTime())}`;
+						},
 					},
 				},
 			});

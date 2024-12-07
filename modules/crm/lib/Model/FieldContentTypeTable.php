@@ -8,6 +8,7 @@ use Bitrix\Main\ORM\Fields\EnumField;
 use Bitrix\Main\ORM\Fields\IntegerField;
 use Bitrix\Main\ORM\Fields\StringField;
 use Bitrix\Main\Result;
+use Bitrix\Main\DB\SqlQueryException;
 
 /**
  * Class FieldContentTypeTable
@@ -119,6 +120,12 @@ final class FieldContentTypeTable extends \Bitrix\Main\ORM\Data\DataManager
 
 		if (!empty($itemsToLoad))
 		{
+			self::$cache[$entityTypeId] ??= [];
+			foreach ($itemsToLoad as $itemId)
+			{
+				self::$cache[$entityTypeId][$itemId] ??= [];
+			}
+
 			$dbResult =
 				self::query()
 					->setSelect(['ENTITY_ID', 'FIELD_NAME', 'CONTENT_TYPE_ID'])
@@ -127,7 +134,6 @@ final class FieldContentTypeTable extends \Bitrix\Main\ORM\Data\DataManager
 					->exec()
 			;
 
-			self::$cache[$entityTypeId] ??= [];
 			while ($row = $dbResult->fetchObject())
 			{
 				self::$cache[$entityTypeId][$row->getEntityId()][$row->getFieldName()] = (int)$row->getContentTypeId();
@@ -139,12 +145,6 @@ final class FieldContentTypeTable extends \Bitrix\Main\ORM\Data\DataManager
 			fn(int $itemId) => in_array($itemId, $itemIds, true),
 			ARRAY_FILTER_USE_KEY,
 		);
-	}
-
-	public static function cleanCache(): void
-	{
-		parent::cleanCache();
-		self::cleanRuntimeCache();
 	}
 
 	public static function cleanRuntimeCache(): void
@@ -179,10 +179,20 @@ final class FieldContentTypeTable extends \Bitrix\Main\ORM\Data\DataManager
 		/** @var EO_FieldContentType $entityObject */
 		foreach ($toSave as $entityObject)
 		{
-			$saveResult = $entityObject->save();
-			if (!$saveResult->isSuccess())
+			try
 			{
-				$result->addErrors($saveResult->getErrors());
+				$saveResult = $entityObject->save();
+				if (!$saveResult->isSuccess())
+				{
+					$result->addErrors($saveResult->getErrors());
+				}
+			}
+			catch (SqlQueryException $e)
+			{
+				if (mb_strpos($e->getMessage(), 'Duplicate entry') === false)
+				{
+					throw $e;
+				}
 			}
 		}
 
@@ -305,16 +315,36 @@ final class FieldContentTypeTable extends \Bitrix\Main\ORM\Data\DataManager
 
 	public static function onAfterAdd(Event $event)
 	{
-		self::cleanRuntimeCache();
+		self::cleanRuntimeCacheByEvent($event);
 	}
 
 	public static function onAfterUpdate(Event $event)
 	{
-		self::cleanRuntimeCache();
+		self::cleanRuntimeCacheByEvent($event);
 	}
 
 	public static function onAfterDelete(Event $event)
 	{
-		self::cleanRuntimeCache();
+		self::cleanRuntimeCacheByEvent($event);
+	}
+
+	private static function cleanRuntimeCacheByEvent(Event $event): void
+	{
+		$object = $event->getParameter('object');
+
+		$canFindExactCacheKey =
+			$object instanceof EO_FieldContentType
+			&& $object->hasEntityTypeId()
+			&& $object->hasEntityId()
+		;
+
+		if (!$canFindExactCacheKey)
+		{
+			// flush the whole cache
+			self::cleanRuntimeCache();
+			return;
+		}
+
+		unset(self::$cache[$object->requireEntityTypeId()][$object->requireEntityId()]);
 	}
 }

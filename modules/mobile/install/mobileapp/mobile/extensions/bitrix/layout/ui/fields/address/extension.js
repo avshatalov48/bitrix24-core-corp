@@ -5,11 +5,11 @@ jn.define('layout/ui/fields/address', (require, exports, module) => {
 
 	const { BaseField } = require('layout/ui/fields/base');
 	const { AddressEditorOpener, AddressEditorModes } = require('layout/ui/address-editor-opener');
-	const { MapOpener } = require('layout/ui/map-opener');
-	const { GeoPoint } = require('layout/ui/map-opener/geo-point');
+	const { MapOpener, GeoPoint } = require('layout/ui/map-opener');
 	const { location } = require('assets/common');
 	const { throttle } = require('utils/function');
 	const { Loc } = require('loc');
+	const { ContextMenu } = require('layout/ui/context-menu');
 	const { AddressValueConverter } = require('layout/ui/fields/address/value-converter');
 	const { stringify } = require('utils/string');
 
@@ -288,7 +288,6 @@ jn.define('layout/ui/fields/address', (require, exports, module) => {
 	module.exports = {
 		AddressType: 'address',
 		AddressField: (props) => new AddressField(props),
+		AddressValueConverter,
 	};
-
 });
-

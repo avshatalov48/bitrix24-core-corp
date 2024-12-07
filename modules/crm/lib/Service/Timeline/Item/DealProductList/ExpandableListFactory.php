@@ -45,6 +45,7 @@ final class ExpandableListFactory
 			$productsData
 		);
 		$dealSkuIds = self::getDealSkuIds($dealId);
+		$dealCurrency = self::getDealCurrency($dealId);
 		foreach ($products as $product)
 		{
 			$isInDeal = in_array($product->getOfferId(), $dealSkuIds, true);
@@ -74,6 +75,13 @@ final class ExpandableListFactory
 				&& $product->getCurrency()
 			)
 			{
+				if ($dealCurrency !== $product->getCurrency())
+				{
+					$convertedPrice = \CCrmCurrency::ConvertMoney($product->getPrice(), $product->getCurrency(), $dealCurrency);
+					$product->setPrice($convertedPrice);
+					$product->setCurrency($dealCurrency);
+				}
+
 				$bottomBlock->addContentBlock(
 					'price',
 					(new Money())
@@ -99,11 +107,7 @@ final class ExpandableListFactory
 			{
 				$buttonText = Loc::getMessage('CRM_TIMELINE_CONTENT_BLOCK_PRODUCT_LIST_TO_DEAL');
 				$buttonAction = (new Action\JsEvent('ProductList:AddToDeal'))
-					->addActionParamInt('dealId', $dealId)
 					->addActionParamInt('productId', $product->getOfferId())
-					->addActionParamArray('options', [
-						'price' => $product->getPrice(),
-					])
 					->setAnimation(Action\Animation::disableItem())
 				;
 			}
@@ -144,12 +148,30 @@ final class ExpandableListFactory
 		return $hasCatalogRead;
 	}
 
-	private static function getDealSkuIds(int $dealId): array
+	private static function getDeal(int $dealId): ?Deal
 	{
 		$factory = Container::getInstance()->getFactory(\CCrmOwnerType::Deal);
 
 		/** @var Deal|null $deal */
 		$deal = $factory->getItem($dealId);
+
+		return $deal;
+	}
+
+	private static function getDealCurrency(int $dealId): string
+	{
+		$deal = self::getDeal($dealId);
+		if (!$deal)
+		{
+			return '';
+		}
+
+		return $deal->get('CURRENCY_ID');
+	}
+
+	private static function getDealSkuIds(int $dealId): array
+	{
+		$deal = self::getDeal($dealId);
 		if (!$deal)
 		{
 			return [];

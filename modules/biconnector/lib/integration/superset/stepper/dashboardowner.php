@@ -2,12 +2,14 @@
 
 namespace Bitrix\BIConnector\Integration\Superset\Stepper;
 
+use Bitrix\BIConnector\Integration\Superset\Model\SupersetDashboard;
 use Bitrix\Main;
 use Bitrix\BIConnector\Integration\Superset\Repository\SupersetUserRepository;
 use Bitrix\BIConnector\Integration\Superset\SupersetController;
 use Bitrix\BIConnector\Integration\Superset\SupersetInitializer;
-use Bitrix\BIConnector\Integration\Superset\Integrator\ProxyIntegrator;
+use Bitrix\BIConnector\Integration\Superset\Integrator\Integrator;
 use Bitrix\BIConnector\Integration\Superset\Model\SupersetDashboardTable;
+use Bitrix\BIConnector\Integration\Superset\Integrator\Request\IntegratorResponse;
 
 class DashboardOwner extends Main\Update\Stepper
 {
@@ -60,7 +62,7 @@ class DashboardOwner extends Main\Update\Stepper
 
 		$timeStart = Main\Diag\Helper::getCurrentMicrotime();
 
-		$integrator = ProxyIntegrator::getInstance();
+		$integrator = Integrator::getInstance();
 
 		$customDashboardList = $this->getCustomDashboardList();
 		if ($customDashboardList)
@@ -69,7 +71,7 @@ class DashboardOwner extends Main\Update\Stepper
 			{
 				$dashboardId = (int)$dashboard['ID'];
 				$externalDashboardId = (int)$dashboard['EXTERNAL_ID'];
-				$createdById = (int)$dashboard['CREATED_BY_ID'];
+				$createdById = (int)$dashboard['OWNER_ID'];
 
 				$ownerId = $this->isUserAcceptable($createdById) ? $createdById : $adminUserId;
 
@@ -80,8 +82,11 @@ class DashboardOwner extends Main\Update\Stepper
 					return self::CONTINUE_EXECUTION;
 				}
 
-				$setOwnerDashboardResult = $integrator->setOwnerDashboard($user, $externalDashboardId);
-				if ($setOwnerDashboardResult->hasErrors())
+				$setOwnerDashboardResult = $integrator->setDashboardOwner($externalDashboardId, $user);
+				if (
+					$setOwnerDashboardResult->hasErrors()
+					&& $setOwnerDashboardResult->getStatus() !== IntegratorResponse::STATUS_NOT_FOUND
+				)
 				{
 					return self::CONTINUE_EXECUTION;
 				}
@@ -103,8 +108,11 @@ class DashboardOwner extends Main\Update\Stepper
 				$user = (new SupersetUserRepository)->getById($adminUserId);
 				foreach ($supersetDashboardList as $supersetDashboardId)
 				{
-					$setOwnerDashboardResult = $integrator->setOwnerDashboard($user, $supersetDashboardId);
-					if ($setOwnerDashboardResult->hasErrors())
+					$setOwnerDashboardResult = $integrator->setDashboardOwner($supersetDashboardId, $user);
+					if (
+						$setOwnerDashboardResult->hasErrors()
+						&& $setOwnerDashboardResult->getStatus() !== IntegratorResponse::STATUS_NOT_FOUND
+					)
 					{
 						return self::CONTINUE_EXECUTION;
 					}
@@ -130,26 +138,29 @@ class DashboardOwner extends Main\Update\Stepper
 
 	private function createUser(int $userId): void
 	{
-		$superset = new SupersetController(ProxyIntegrator::getInstance());
+		$superset = new SupersetController(Integrator::getInstance());
 		$superset->createUser($userId);
 	}
 
 	private function getAdminUserId(): ?int
 	{
-		$user = Main\UserTable::getList([
-			'select' => ['ID', 'GROUPS'],
+		$user = Main\UserGroupTable::getList([
+			'select' => ['USER_ID'],
 			'filter' => [
-				'=ACTIVE' => 'Y',
-				'=GROUPS.GROUP_ID' => 1,
-				'=IS_REAL_USER' => 'Y',
+				'=GROUP_ID' => 1,
+				'=DATE_ACTIVE_TO' => null,
+				'=USER.ACTIVE' => 'Y',
+				'=USER.IS_REAL_USER' => 'Y',
 			],
-			'order' => ['ID' => 'ASC'],
+			'order' => ['USER_ID' => 'ASC'],
 			'limit' => 1,
-		])->fetch();
+		])
+			->fetch()
+		;
 
 		if ($user)
 		{
-			return (int)$user['ID'];
+			return (int)$user['USER_ID'];
 		}
 
 		return null;
@@ -170,15 +181,16 @@ class DashboardOwner extends Main\Update\Stepper
 	private function getDashboardList(array $filter = []): array
 	{
 		$parameters = [
-			'select' => ['ID', 'EXTERNAL_ID', 'CREATED_BY_ID'],
+			'select' => ['ID', 'EXTERNAL_ID', 'OWNER_ID'],
 			'order' => ['ID' => 'ASC'],
 			'cache' => ['ttl' => 3600],
 			'count_total' => true,
+			'filter' => ['=STATUS' => SupersetDashboard::getActiveDashboardStatuses()],
 		];
 
 		if ($filter)
 		{
-			$parameters['filter'] = $filter;
+			$parameters['filter'] += $filter;
 		}
 
 		return SupersetDashboardTable::getList($parameters)->fetchAll();
@@ -190,7 +202,7 @@ class DashboardOwner extends Main\Update\Stepper
 		$localDashboardsIds = array_column($localDashboards, 'EXTERNAL_ID');
 		$localDashboardsIds = array_map('intval', $localDashboardsIds);
 
-		$integrator = ProxyIntegrator::getInstance();
+		$integrator = Integrator::getInstance();
 		$integratorResult = $integrator->getDashboardList($localDashboardsIds);
 
 		if ($integratorResult->hasErrors())

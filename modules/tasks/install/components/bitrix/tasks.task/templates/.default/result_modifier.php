@@ -27,7 +27,7 @@ $folder = $this->GetFolder();
 $id = trim((string) ($this->__component->arParams['TEMPLATE_CONTROLLER_ID'] ?? null));
 if($id)
 {
-	$id = ToLower($id);
+	$id = mb_strtolower($id);
 	if(!preg_match('#^[a-z0-9_-]+$#', $id))
 	{
 		$this->__component->getErrors()->addWarning('ILLEGAL_CONTROLLER_ID', 'Illegal TEMPLATE_CONTROLLER_ID passed');

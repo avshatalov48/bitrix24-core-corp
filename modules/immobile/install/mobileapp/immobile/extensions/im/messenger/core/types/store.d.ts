@@ -1,15 +1,22 @@
-import {DialoguesModelActions, DialoguesModelMutation} from "../../model/types/dialogues";
+import {DialoguesMessengerModel, DialoguesModelActions, DialoguesModelMutation} from "../../model/types/dialogues";
 import {ApplicationModelActions, ApplicationModelMutation} from "../../model/types/application";
 import {FilesModelActions, FilesModelMutation} from "../../model/types/files";
-import {MessagesModelActions, MessagesModelMutation} from "../../model/types/messages";
-import {RecentModelActions, RecentModelMutation} from "../../model/types/recent";
-import {UsersModelActions, UsersModelMutation} from "../../model/types/users";
+import {MessagesMessengerModel, MessagesModelActions, MessagesModelMutation} from "../../model/types/messages";
+import {RecentMessengerModel, RecentModelActions, RecentModelMutation} from "../../model/types/recent";
+import {UsersMessengerModel, UsersModelActions, UsersModelMutation} from "../../model/types/users";
 import {DraftModelActions, DraftModelMutation} from "../../model/types/draft";
 import {ReactionsModelActions, ReactionsModelMutation} from "../../model/types/messages/reactions";
 import {SidebarModelActions, SidebarModelMutation} from "../../model/types/sidebar";
-import {RecentSearchModelActions, RecentSearchModelMutation} from "../../model/types/recent/search";
+import {
+	RecentSearchMessengerModel,
+	RecentSearchModelActions,
+	RecentSearchModelMutation
+} from "../../model/types/recent/search";
 import {QueueModelActions, QueueModelMutation} from "../../model/types/queue";
 import {PinModelActions, PinModelMutation} from "../../model/types/messages/pin";
+import {CommentMessengerModel, CommentModelActions, CommentModelMutation} from "../../model/types/comment";
+import {SidebarFilesModelActions, SidebarFilesModelMutation} from "../../model/types/sidebar/files";
+import {SidebarLinksModelActions, SidebarLinksModelMutation} from "../../model/types/sidebar/links";
 
 
 export type MessengerStoreActions =
@@ -25,6 +32,9 @@ export type MessengerStoreActions =
 	| RecentSearchModelActions
 	| QueueModelActions
 	| PinModelActions
+	| CommentModelActions
+	| SidebarFilesModelActions
+	| SidebarLinksModelActions
 
 export type MessengerStoreMutation =
 	ApplicationModelMutation
@@ -39,10 +49,22 @@ export type MessengerStoreMutation =
 	| RecentSearchModelMutation
 	| QueueModelMutation
 	| PinModelMutation
+	| CommentModelMutation
+	| SidebarFilesModelMutation
+	| SidebarLinksModelMutation
 
 type MessengerCoreStore = {
 	dispatch(actionName: MessengerStoreActions, params?: any) : Promise<any>,
 	getters: any
+	state: { // use it only for testing!!!
+		messagesModel: ReturnType<MessagesMessengerModel['state']>,
+		commentModel: ReturnType<CommentMessengerModel['state']>,
+		dialoguesModel: ReturnType<DialoguesMessengerModel['state']>,
+		recentModel: ReturnType<RecentMessengerModel['state']>
+			& { searchModel: ReturnType<RecentSearchMessengerModel['state']> }
+		,
+		usersModel: ReturnType<UsersMessengerModel['state']>
+	}
 }
 
 export class MessengerCoreStoreManager

@@ -38,7 +38,11 @@ class EntityEditorConfigScope
 				self::COMMON => Loc::getMessage('CRM_ENTITY_ED_CONFIG_SCOPE_COMMON')
 			);
 
-			if ($entityTypeId && $customScopes = Scope::getInstance()->getUserScopes($entityTypeId, $moduleId))
+			$customScopes = method_exists(\Bitrix\Ui\EntityForm\Scope::class, 'getAllUserScopes')
+				? Scope::getInstance()->getAllUserScopes($entityTypeId, $moduleId)
+				: Scope::getInstance()->getUserScopes($entityTypeId, $moduleId)
+			;
+			if ($entityTypeId && $customScopes)
 			{
 				self::$captions[LANGUAGE_ID] = array_merge(
 					self::$captions[LANGUAGE_ID], ['CUSTOM' => $customScopes]

@@ -9,11 +9,13 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 	const { DateHelper } = require('im/messenger/lib/helper');
 	const { Color } = require('im/messenger/const');
 	const { MessengerParams } = require('im/messenger/lib/params');
-	const { clone } = require('utils/object');
+	const { clone, mergeImmutable, isEqual } = require('utils/object');
+	const { copilotModel } = require('im/messenger/model/dialogues/copilot');
 	const { LoggerManager } = require('im/messenger/lib/logger');
+	const { ChatPermission } = require('im/messenger/lib/permission-manager');
 	const logger = LoggerManager.getInstance().getLogger('model--dialogues');
 
-	const dialogState = {
+	const dialogDefaultElement = Object.freeze({
 		dialogId: '0',
 		chatId: 0,
 		type: DialogType.chat,
@@ -56,20 +58,31 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 		diskFolderId: 0,
 		role: UserRole.guest,
 		permissions: {
+			manageMessages: UserRole.none,
 			manageUsersAdd: UserRole.none,
 			manageUsersDelete: UserRole.none,
 			manageUi: UserRole.none,
 			manageSettings: UserRole.none,
 			canPost: UserRole.none,
 		},
+		tariffRestrictions: {
+			isHistoryLimitExceeded: false,
+		},
 		aiProvider: '',
-	};
+		parentChatId: 0, // unsafe in local database
+		parentMessageId: 0, // unsafe in local database
+		messageCount: 0, // unsafe in local database
+	});
 
+	/** @type {DialoguesMessengerModel} */
 	const dialoguesModel = {
 		namespaced: true,
 		state: () => ({
 			collection: {},
 		}),
+		modules: {
+			copilotModel,
+		},
 		getters: {
 			/**
 			 * @function dialoguesModel/getById
@@ -162,12 +175,32 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 
 				return Math.min(lastReadId, markedId);
 			},
+
+			/**
+			 * @function dialoguesModel/getByParentMessageId
+			 * @return {DialoguesModelState | undefined}
+			 */
+			getByParentMessageId: (state) => (parentMessageId) => {
+				return Object.values(state.collection).find((item) => {
+					return item.parentMessageId === parentMessageId;
+				});
+			},
+
+			/**
+			 * @function dialoguesModel/getByParentChatId
+			 * @return {DialoguesModelState | undefined}
+			 */
+			getByParentChatId: (state) => (parentChatId) => {
+				return Object.values(state.collection).find((item) => {
+					return item.parentChatId === parentChatId;
+				});
+			},
 		},
 		actions: {
 			/** @function dialoguesModel/setState */
 			setState: (store, payload) => {
 				Object.entries(payload.collection).forEach(([key, value]) => {
-					payload.collection[key] = { ...dialogState, ...payload.collection[key] };
+					payload.collection[key] = { ...dialogDefaultElement, ...payload.collection[key] };
 				});
 
 				store.commit('setState', {
@@ -206,7 +239,7 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 							actionName: 'set',
 							data: {
 								dialogId: element.dialogId,
-								fields: { ...dialogState, ...element },
+								fields: { ...dialogDefaultElement, ...element },
 							},
 						});
 					}
@@ -241,11 +274,58 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 							actionName: 'setFromLocalDatabase',
 							data: {
 								dialogId: element.dialogId,
-								fields: { ...dialogState, ...element },
+								fields: { ...dialogDefaultElement, ...element },
 							},
 						});
 					}
 				});
+			},
+
+			/** @function dialoguesModel/setCollectionFromLocalDatabase */
+			setCollectionFromLocalDatabase: (store, payload) => {
+				if (!Array.isArray(payload) && Type.isPlainObject(payload))
+				{
+					payload = [payload];
+				}
+
+				const updateItems = [];
+				const addItems = [];
+				payload.map((element) => {
+					return validate(store, element);
+				}).forEach((element) => {
+					/** @type {DialoguesModelState} */
+					const existingItem = store.state.collection[element.dialogId];
+					if (existingItem)
+					{
+						updateItems.push({
+							dialogId: element.dialogId,
+							fields: element,
+						});
+					}
+					else
+					{
+						addItems.push({
+							dialogId: element.dialogId,
+							fields: { ...dialogDefaultElement, ...element },
+						});
+					}
+				});
+
+				if (updateItems.length > 0)
+				{
+					store.commit('updateCollection', {
+						actionName: 'setCollectionFromLocalDatabase',
+						data: { updateItems },
+					});
+				}
+
+				if (addItems.length > 0)
+				{
+					store.commit('addCollection', {
+						actionName: 'setCollectionFromLocalDatabase',
+						data: { addItems },
+					});
+				}
 			},
 
 			/** @function dialoguesModel/add */
@@ -265,7 +345,7 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 							actionName: 'add',
 							data: {
 								dialogId: element.dialogId,
-								fields: { ...dialogState, ...element },
+								fields: { ...dialogDefaultElement, ...element },
 							},
 						});
 					}
@@ -285,6 +365,37 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 					data: {
 						dialogId: payload.dialogId,
 						fields: validate(store, payload.fields),
+					},
+				});
+
+				return true;
+			},
+
+			/**
+			 * @function dialoguesModel/updateTariffRestrictions
+			 * @param store
+			 * @param {DialogUpdateTariffRestrictionsPayload} payload
+			 */
+			updateTariffRestrictions: (store, payload) => {
+				const existingItem = store.state.collection[payload.dialogId];
+				if (!existingItem)
+				{
+					return false;
+				}
+
+				if (payload.isForceUpdate === false
+					&& isEqual(existingItem.tariffRestrictions, payload.tariffRestrictions, true))
+				{
+					return false;
+				}
+
+				store.commit('update', {
+					actionName: 'updateTariffRestrictions',
+					data: {
+						dialogId: payload.dialogId,
+						fields: {
+							tariffRestrictions: payload.tariffRestrictions,
+						},
 					},
 				});
 
@@ -340,6 +451,18 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 			delete: (store, payload) => {
 				store.commit('delete', {
 					actionName: 'delete',
+					data: {
+						dialogId: payload.dialogId,
+					},
+				});
+
+				return true;
+			},
+
+			/** @function dialoguesModel/deleteFromModel */
+			deleteFromModel: (store, payload) => {
+				store.commit('delete', {
+					actionName: 'deleteFromModel',
 					data: {
 						dialogId: payload.dialogId,
 					},
@@ -436,6 +559,34 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 				return true;
 			},
 
+			/** @function dialoguesModel/updateManagerList */
+			updateManagerList(store, payload)
+			{
+				const existingItem = store.state.collection[payload.dialogId];
+				if (!existingItem)
+				{
+					return false;
+				}
+
+				if (existingItem.managerList === payload.managerList)
+				{
+					return false;
+				}
+
+				store.commit('update', {
+					actionName: 'updateManagerList',
+					data: {
+						dialogId: payload.dialogId,
+						fields: {
+							managerList: payload.managerList,
+						},
+					},
+				});
+
+				return true;
+			},
+
+			/** @function dialoguesModel/mute */
 			mute(store, payload)
 			{
 				const existingItem = store.state.collection[payload.dialogId];
@@ -463,6 +614,7 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 				return true;
 			},
 
+			/** @function dialoguesModel/unmute */
 			unmute(store, payload)
 			{
 				const existingItem = store.state.collection[payload.dialogId];
@@ -567,7 +719,7 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 
 				const {
 					lastMessageViews: defaultLastMessageViews,
-				} = dialogState;
+				} = dialogDefaultElement;
 				store.commit('update', {
 					actionName: 'clearLastMessageViews',
 					data: {
@@ -690,6 +842,23 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 
 			/**
 			 * @param state
+			 * @param {MutationPayload<DialoguesAddCollectionData, DialoguesAddActions>} payload
+			 */
+			addCollection: (state, payload) => {
+				logger.log('dialoguesModel: addCollection mutation', payload);
+
+				payload.data.addItems.forEach((item) => {
+					const {
+						dialogId,
+						fields,
+					} = item;
+
+					state.collection[dialogId] = fields;
+				});
+			},
+
+			/**
+			 * @param state
 			 * @param {MutationPayload<DialoguesUpdateData, DialoguesUpdateActions>} payload
 			 */
 			update: (state, payload) => {
@@ -701,6 +870,23 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 				} = payload.data;
 
 				state.collection[dialogId] = { ...state.collection[dialogId], ...fields };
+			},
+
+			/**
+			 * @param state
+			 * @param {MutationPayload<DialoguesUpdateCollectionData, DialoguesUpdateActions>} payload
+			 */
+			updateCollection: (state, payload) => {
+				logger.log('dialoguesModel: updateCollection mutation', payload);
+
+				payload.data.updateItems.forEach((item) => {
+					const {
+						dialogId,
+						fields,
+					} = item;
+
+					state.collection[dialogId] = { ...state.collection[dialogId], ...fields };
+				});
 			},
 
 			/**
@@ -719,6 +905,12 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 		},
 	};
 
+	/**
+	 *
+	 * @param {MessengerStore<DialoguesMessengerModel>} store
+	 * @param fields
+	 * @return {{}}
+	 */
 	function validate(store, fields)
 	{
 		const result = {};
@@ -1001,13 +1193,15 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 			result.role = fields.role;
 		}
 
-		if (fields.permissions)
+		if (!Type.isUndefined(fields.permissions))
 		{
-			const preparedPermissions = preparePermissions(fields.permissions);
-			if (Object.values(preparedPermissions).length > 0)
+			result.permissions = {};
+			if (Type.isObject(fields.permissions))
 			{
-				result.permissions = preparedPermissions;
+				result.permissions = preparePermissions(fields.permissions);
 			}
+
+			result.permissions = mergeImmutable(ChatPermission.getActionGroupsByChatType(result.type), result.permissions);
 		}
 
 		if (Type.isStringFilled(fields.aiProvider))
@@ -1018,6 +1212,21 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 		if (Type.isStringFilled(fields.ai_provider))
 		{
 			result.aiProvider = fields.ai_provider;
+		}
+
+		if (Type.isNumber(fields.parentChatId))
+		{
+			result.parentChatId = fields.parentChatId;
+		}
+
+		if (Type.isNumber(fields.parentMessageId))
+		{
+			result.parentMessageId = fields.parentMessageId;
+		}
+
+		if (fields.tariffRestrictions)
+		{
+			result.tariffRestrictions = fields.tariffRestrictions;
 		}
 
 		return result;
@@ -1037,7 +1246,10 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 
 		try
 		{
-			if (Type.isUndefined(countOfViewers) && rawLastMessageViews.count_of_viewers) // old rest response
+			if (
+				Type.isUndefined(countOfViewers)
+				&& !Type.isUndefined(rawLastMessageViews.count_of_viewers)
+			) // old rest response
 			{
 				countOfViewers = rawLastMessageViews.count_of_viewers;
 				rawFirstViewers = rawLastMessageViews.first_viewers;
@@ -1060,6 +1272,16 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 			}
 			else
 			{
+				if (Type.isNil(rawFirstViewers))
+				{
+					// case for get data from local db (lastMessageViews is empty object)
+					return {
+						countOfViewers: 0,
+						firstViewer: null,
+						messageId: 0,
+					};
+				}
+
 				for (const rawFirstViewer of rawFirstViewers)
 				{
 					if (rawFirstViewer.userId === MessengerParams.getUserId())
@@ -1139,7 +1361,7 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 		}
 		else
 		{
-			result = store.rootState.applicationModel.common.host + avatar;
+			result = currentDomain + avatar;
 		}
 
 		if (result)
@@ -1202,11 +1424,16 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 
 		if (Type.isStringFilled(fields.can_post) || Type.isStringFilled(fields.canPost))
 		{
-			result.canPost = fields.can_post || fields.canPost;
+			fields.manageMessages = fields.can_post || fields.canPost;
+		}
+
+		if (Type.isStringFilled(fields.manage_messages) || Type.isStringFilled(fields.manageMessages))
+		{
+			result.manageMessages = fields.manage_messages || fields.manageMessages;
 		}
 
 		return result;
 	}
 
-	module.exports = { dialoguesModel };
+	module.exports = { dialoguesModel, dialogDefaultElement };
 });

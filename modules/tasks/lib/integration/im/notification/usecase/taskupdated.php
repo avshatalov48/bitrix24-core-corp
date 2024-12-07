@@ -409,7 +409,8 @@ class TaskUpdated
 		return match ($key)
 		{
 			'RESPONSIBLE_ID' => 'ASSIGNEE',
-			'END_DATE_PLAN' => 'END_DATE_PLAN_MSGVER_1',
+			'START_DATE_PLAN' => 'START_DATE_PLAN',
+			'END_DATE_PLAN' => 'END_DATE_PLAN',
 			'MARK' => 'MARK_MSGVER_1',
 			default => $key,
 		};

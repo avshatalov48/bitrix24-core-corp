@@ -136,4 +136,35 @@
 	}
 }
 
-/* -- -- */
+/* -- Spotlight usage only  -- */
+.header-logo-block .intranet-settings-widget__logo-btn {
+	visibility: hidden;
+}
+
+.menu-collapsed-mode .header-logo-block .intranet-settings-widget__logo-btn {
+	visibility: visible;
+}
+
+.menu-scroll-mode .menu-items-block .intranet-settings-widget__logo-btn {
+	visibility: hidden;
+}
+
+.intranet-settings-widget-spotlight__wrapper {
+	display: flex;
+	flex-direction: column;
+}
+
+.intranet-settings-widget-spotlight__title {
+	font-size: var(--ui-font-size-3xl, 22px);
+	font-weight: var(--ui-font-weight-light, 300);
+	color: var(--ui-color-palette-black-solid, #000000);
+	text-align: left;
+	margin-bottom: 10px;
+}
+
+.intranet-settings-widget-spotlight__description {
+	font-size: var(--ui-font-size-lg, 15px);
+	font-weight: var(--ui-font-weight-normal, 400);
+	color: var(--ui-color-palette-gray-90, #525c69);
+	text-align: left;
+}

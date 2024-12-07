@@ -9,6 +9,7 @@ $asset = Bitrix\Main\Page\Asset::getInstance();
 $asset->addJs('/bitrix/js/crm/common.js');
 
 // some common langs
+use Bitrix\Crm\Integration\Analytics\Dictionary;
 use Bitrix\Crm\UI\NavigationBarPanel;
 use Bitrix\Main\Localization\Loc;
 
@@ -160,6 +161,13 @@ else
 					'selected' => true,
 				],
 			],
+			'EXTRA' => [
+				'ANALYTICS' => [
+					'c_section' => Dictionary::SECTION_QUOTE,
+					'c_sub_section' => Dictionary::SUB_SECTION_DEADLINES,
+				],
+			],
+			'PATH_TO_MERGE' => $arResult['PATH_TO_MERGE'] ?? null,
 		],
 		$component
 	);

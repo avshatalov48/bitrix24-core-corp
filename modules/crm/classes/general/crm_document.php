@@ -7,6 +7,7 @@ if (!CModule::IncludeModule('bizproc'))
 
 use Bitrix\Crm;
 use \Bitrix\Crm\Service;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Localization\Loc;
 
 class CCrmDocument
@@ -95,7 +96,7 @@ class CCrmDocument
 		$ignoredUserTypes = array(
 			'string', 'double', 'boolean', 'integer', 'datetime', 'file', 'employee', 'enumeration', 'video',
 			'string_formatted', 'webdav_element_history', 'disk_version', 'disk_file', 'vote', 'url_preview', 'hlblock',
-			'mail_message',
+			'mail_message', 'snils',
 		);
 		$arTypes = $USER_FIELD_MANAGER->GetUserType();
 		foreach ($arTypes as $arType)
@@ -276,7 +277,7 @@ class CCrmDocument
 			{
 				$GLOBALS['CBPVirtualDocumentCloneRowPrinted_'.$documentType] = 1;
 				?>
-				<script language="JavaScript">
+				<script>
 				<!--
 				function CBPVirtualDocumentCloneRow(tableID)
 				{
@@ -694,7 +695,7 @@ class CCrmDocument
 			$result .= '<textarea id="WFSFormOptionsX" rows="5" cols="30">'.htmlspecialcharsbx($str).'</textarea><br />';
 			$result .= GetMessage("IBD_DOCUMENT_XFORMOPTIONS1").'<br />';
 			$result .= GetMessage("IBD_DOCUMENT_XFORMOPTIONS2").'<br />';
-			$result .= '<script type="text/javascript">
+			$result .= '<script>
 				function WFSFormOptionsXFunction()
 				{
 					var result = {};
@@ -1292,7 +1293,7 @@ class CCrmDocument
 		$entityTypeId = CCrmOwnerType::ResolveID($arDocumentID['TYPE']);
 		$factory = \Bitrix\Crm\Service\Container::getInstance()->getFactory($entityTypeId);
 
-		if (isset($factory) && ($factory->isAutomationEnabled() || $factory->isBizProcEnabled()))
+		if (isset($factory))
 		{
 			return new Crm\Integration\BizProc\Document\ValueCollection\Item(
 				$entityTypeId,
@@ -1622,6 +1623,7 @@ class CCrmDocument
 
 		$permissionEntity = static::ResolvePermissionEntity($arDocumentID, $arParameters);
 		$userPermissions = CCrmPerms::GetUserPermissions($userId);
+		$entityTypeId = CCrmOwnerType::ResolveID($documentType);
 
 		if (
 			$operation == \CBPCanUserOperateOperation::CreateWorkflow
@@ -1633,19 +1635,26 @@ class CCrmDocument
 
 		if ($operation == \CBPCanUserOperateOperation::CreateAutomation)
 		{
-			if (isset($arParameters['DocumentCategoryId']) && $arParameters['DocumentCategoryId'] > 0)
-			{
-				$documentType .= '_C' . $arParameters['DocumentCategoryId'];
-			}
+			$categoryId = (
+				isset($arParameters['DocumentCategoryId'])
+				&& is_numeric($arParameters['DocumentCategoryId'])
+				&& (int)$arParameters['DocumentCategoryId'] >= 0
+			)
+				? (int)$arParameters['DocumentCategoryId']
+				: null;
 
-			return \CCrmAuthorizationHelper::CheckAutomationCreatePermission($documentType, $userPermissions);
+			return Service\Container::getInstance()->getUserPermissions($userId)->canEditAutomation($entityTypeId, $categoryId);
 		}
 
 		if( $operation === CBPCanUserOperateOperation::ViewWorkflow
 			|| $operation === CBPCanUserOperateOperation::ReadDocument
 		)
 		{
-			return CCrmAuthorizationHelper::CheckReadPermission($permissionEntity, 0, $userPermissions);
+			return
+				Container::getInstance()
+							->getUserPermissions($userId)
+							->canReadType(CCrmOwnerType::ResolveID($documentType))
+				;
 		}
 
 		return CCrmAuthorizationHelper::CheckCreatePermission($permissionEntity, $userPermissions);
@@ -1853,7 +1862,7 @@ class CCrmDocument
 
 		if (!static::isDocumentExists($documentId))
 		{
-			throw new Exception(GetMessage('CRM_DOCUMENT_ELEMENT_IS_NOT_FOUND'));
+			throw new \Bitrix\Main\ArgumentException(GetMessage('CRM_DOCUMENT_ELEMENT_IS_NOT_FOUND'));
 		}
 
 		return $arDocumentID['TYPE'];
@@ -2233,6 +2242,16 @@ class CCrmDocument
 		unset($arFields[$typeName]);
 	}
 
+	public static function prepareEntityMultiFieldsValue(&$fields, $typeName): void
+	{
+		self::PrepareEntityMultiFields($fields, $typeName);
+		if (isset($fields['FM']) && isset($fields['FM'][$typeName]))
+		{
+			$fields[$typeName] = $fields['FM'][$typeName];
+			unset($fields['FM'][$typeName]);
+		}
+	}
+
 	public static function prepareCrmUserTypeValueView($value, $defaultTypeName = '')
 	{
 		$parts = explode('_', $value);
@@ -2385,7 +2404,7 @@ class CCrmDocument
 			&& !self::isResumeWorkflowAvailable($documentId, $rootActivity->getDocumentEventType())
 		)
 		{
-			throw new Exception(GetMessage('CRM_DOCUMENT_RESUME_RESTRICTED'));
+			throw new \Bitrix\Main\SystemException(GetMessage('CRM_DOCUMENT_RESUME_RESTRICTED'));
 		}
 
 		if ($status === CBPWorkflowStatus::Running && $rootActivity->workflow->isNew())

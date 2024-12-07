@@ -18,7 +18,7 @@ jn.define('calendar/layout/sharing-settings/dialog/range-edit', (require, export
 			super(props);
 
 			this.rangeHeight = props.rangeHeight;
-			this.sortedWeekdays = this.range.sortWeekdays([1, 2, 3, 4, 5, 6, 0]);
+			this.sortedWeekdays = this.range.sortWeekdays([...Array(7).keys()]);
 			this.weekdaysLoc = this.range.getWeekdaysLoc(true);
 
 			this.onWeekdaysSelectedHandler = this.onWeekdaysSelectedHandler.bind(this);
@@ -35,6 +35,11 @@ jn.define('calendar/layout/sharing-settings/dialog/range-edit', (require, export
 		get range()
 		{
 			return this.props.range;
+		}
+
+		get isCrmContext()
+		{
+			return this.props.isCrmContext;
 		}
 
 		redraw()
@@ -81,12 +86,10 @@ jn.define('calendar/layout/sharing-settings/dialog/range-edit', (require, export
 
 		renderWeekdaysSelect()
 		{
-			const items = this.sortedWeekdays.map((weekday) => {
-				return {
-					value: weekday,
-					name: this.weekdaysLoc[weekday],
-				};
-			});
+			const items = this.sortedWeekdays.map((weekday) => ({
+				value: weekday,
+				name: this.weekdaysLoc[weekday],
+			}));
 
 			return View(
 				{
@@ -99,6 +102,12 @@ jn.define('calendar/layout/sharing-settings/dialog/range-edit', (require, export
 					selected: this.range.getWeekDays(),
 					onChange: this.onWeekdaysSelectedHandler,
 					formatValue: () => this.range.getWeekdaysFormatted(),
+					style: {
+						field: this.isCrmContext ? styles.field : null,
+						text: this.isCrmContext ? styles.fieldText : null,
+						checkedBackground: this.isCrmContext ? null : AppTheme.colors.accentSoftBlue2,
+						checkColor: this.isCrmContext ? AppTheme.colors.accentMainLinks : null
+					},
 				}),
 			);
 		}
@@ -135,6 +144,9 @@ jn.define('calendar/layout/sharing-settings/dialog/range-edit', (require, export
 				},
 				onChange: this.onTimeFromSelectedHandler,
 				renderValue: () => this.renderTimeValue(this.range.getFromFormatted()),
+				style: {
+					field: this.isCrmContext ? styles.field : null,
+				},
 			});
 		}
 
@@ -158,6 +170,9 @@ jn.define('calendar/layout/sharing-settings/dialog/range-edit', (require, export
 				},
 				onChange: this.onTimeToSelectedHandler,
 				renderValue: () => this.renderTimeValue(this.range.getToFormatted()),
+				style: {
+					field: this.isCrmContext ? styles.field : null,
+				},
 			});
 		}
 
@@ -179,11 +194,17 @@ jn.define('calendar/layout/sharing-settings/dialog/range-edit', (require, export
 				},
 				Text({
 					text: timeWithoutAmPm,
-					style: styles.timeValue,
+					style: {
+						...styles.timeValue,
+						...(this.isCrmContext ? styles.fieldText : {}),
+					},
 				}),
 				Text({
 					text: amPm.toUpperCase(),
-					style: styles.timeValueAmPm,
+					style: {
+						...styles.timeValueAmPm,
+						...(this.isCrmContext ? styles.fieldText : {}),
+					},
 				}),
 			);
 		}
@@ -265,6 +286,16 @@ jn.define('calendar/layout/sharing-settings/dialog/range-edit', (require, export
 			width: 24,
 			height: 24,
 			marginLeft: 10,
+		},
+		field: {
+			borderColor: AppTheme.colors.base6,
+			borderWidth: 1,
+			borderRadius: 6,
+			backgroundColor: undefined,
+			paddingHorizontal: 10,
+		},
+		fieldText: {
+			color: AppTheme.colors.base1,
 		},
 	};
 

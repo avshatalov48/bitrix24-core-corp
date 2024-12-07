@@ -8,10 +8,10 @@ this.BX.Crm.AI = this.BX.Crm.AI || {};
 	/**
 	 * @memberof BX.Crm.AI.Feedback
 	 */
-	function showSendFeedbackPopupIfFeedbackWasNeverSent(mergeUuid, ownerType, callId) {
+	function showSendFeedbackPopupIfFeedbackWasNeverSent(mergeUuid, ownerType, activityId, activityDirection) {
 	  return wasFeedbackSent(mergeUuid).then(wasSent => {
 	    if (!wasSent) {
-	      return showSendFeedbackPopup(mergeUuid, ownerType, callId);
+	      return showSendFeedbackPopup(mergeUuid, ownerType, activityId, activityDirection);
 	    }
 
 	    // eslint-disable-next-line promise/no-return-wrap
@@ -46,13 +46,14 @@ this.BX.Crm.AI = this.BX.Crm.AI || {};
 	/**
 	 * @memberof BX.Crm.AI.Feedback
 	 */
-	function sendFeedback(mergeUuid, ownerType, activityId) {
+	function sendFeedback(mergeUuid, ownerType, activityId, activityDirection) {
 	  main_core.ajax.runAction('crm.timeline.ai.sendFeedback', {
 	    data: {
 	      mergeUuid
 	    }
 	  }).then(() => {
-	    ui_analytics.sendData(crm_integration_analytics.Builder.AI.CallParsingEvent.createDefault(ownerType, activityId, crm_integration_analytics.Dictionary.STATUS_SUCCESS).setElement(crm_integration_analytics.Dictionary.ELEMENT_FEEDBACK_SEND).buildData());
+	    ui_analytics.sendData(crm_integration_analytics.Builder.AI.CallParsingEvent.createDefault(ownerType, activityId, crm_integration_analytics.Dictionary.STATUS_SUCCESS).setElement(crm_integration_analytics.Dictionary.ELEMENT_FEEDBACK_SEND).setActivityDirection(activityDirection).buildData());
+	    ui_analytics.sendData(crm_integration_analytics.Builder.AI.CallParsingEvent.createDefault(ownerType, activityId, crm_integration_analytics.Dictionary.STATUS_SUCCESS).setTool(crm_integration_analytics.Dictionary.TOOL_CRM).setCategory(crm_integration_analytics.Dictionary.CATEGORY_AI_OPERATIONS).setElement(crm_integration_analytics.Dictionary.ELEMENT_FEEDBACK_SEND).setActivityDirection(activityDirection).buildData());
 	  }).catch(({
 	    errors
 	  }) => console.error('Error sending feedback', errors));
@@ -61,17 +62,18 @@ this.BX.Crm.AI = this.BX.Crm.AI || {};
 	/**
 	 * @memberof BX.Crm.AI.Feedback
 	 */
-	function showSendFeedbackPopup(mergeUuid, ownerType, activityId) {
+	function showSendFeedbackPopup(mergeUuid, ownerType, activityId, activityDirection) {
 	  return new Promise(resolve => {
 	    const messageBox = createFeedbackMessageBox({
 	      onOk: () => {
-	        sendFeedback(mergeUuid, ownerType, activityId);
+	        sendFeedback(mergeUuid, ownerType, activityId, activityDirection);
 	        messageBox.close();
 	        resolve();
 	      },
 	      onCancel: () => {
 	        messageBox.close();
-	        ui_analytics.sendData(crm_integration_analytics.Builder.AI.CallParsingEvent.createDefault(ownerType, activityId, crm_integration_analytics.Dictionary.STATUS_SUCCESS).setElement(crm_integration_analytics.Dictionary.ELEMENT_FEEDBACK_REFUSED).buildData());
+	        ui_analytics.sendData(crm_integration_analytics.Builder.AI.CallParsingEvent.createDefault(ownerType, activityId, crm_integration_analytics.Dictionary.STATUS_SUCCESS).setElement(crm_integration_analytics.Dictionary.ELEMENT_FEEDBACK_REFUSED).setActivityDirection(activityDirection).buildData());
+	        ui_analytics.sendData(crm_integration_analytics.Builder.AI.CallParsingEvent.createDefault(ownerType, activityId, crm_integration_analytics.Dictionary.STATUS_SUCCESS).setTool(crm_integration_analytics.Dictionary.TOOL_CRM).setCategory(crm_integration_analytics.Dictionary.CATEGORY_AI_OPERATIONS).setElement(crm_integration_analytics.Dictionary.ELEMENT_FEEDBACK_REFUSED).setActivityDirection(activityDirection).buildData());
 	        resolve();
 	      }
 	    });

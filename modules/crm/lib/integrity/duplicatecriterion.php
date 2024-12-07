@@ -1,5 +1,7 @@
 <?php
+
 namespace Bitrix\Crm\Integrity;
+
 use Bitrix\Crm\CompanyTable;
 use Bitrix\Crm\ContactTable;
 use Bitrix\Main;
@@ -90,12 +92,38 @@ abstract class DuplicateCriterion
 		return DuplicateIndexType::DEFAULT_SCOPE;
 	}
 
+	public function isEmpty(int $entityTypeId, int $rootEntityId, $userId, bool $enablePermissionCheck = false): bool
+	{
+		$dedupeParams = new DedupeParams(
+			$entityTypeId,
+			$userId,
+			$enablePermissionCheck,
+			$this->getScope()
+		);
+		$dedupeParams->setLimitByAssignedUser($this->limitByAssignedUser());
+
+		return DedupeDataSource::create($this->getIndexTypeID(), $dedupeParams)->isEmptyEntity($this, $rootEntityId);
+	}
+
+	/**
+	 * @deprecated
+	 */
 	public function getActualCount($entityTypeID, $rootEntityID, $userID, $enablePermissionCheck = false, $limit = 0)
 	{
-		$dedupeParams = new DedupeParams($entityTypeID, $userID, $enablePermissionCheck, $this->getScope());
+		$dedupeParams = new DedupeParams(
+			$entityTypeID,
+			$userID,
+			$enablePermissionCheck,
+			$this->getScope()
+		);
 		$dedupeParams->setLimitByAssignedUser($this->limitByAssignedUser());
-		$dataSource = DedupeDataSource::create($this->getIndexTypeID(), $dedupeParams);
-		return $dataSource->calculateEntityCount($this, array('ROOT_ENTITY_ID' => $rootEntityID, 'LIMIT' => $limit));
+
+		return DedupeDataSource::create($this->getIndexTypeID(), $dedupeParams)
+			->calculateEntityCount($this, [
+				'ROOT_ENTITY_ID' => $rootEntityID,
+				'LIMIT' => $limit,
+			])
+		;
 	}
 
 	public function getEntityIDs($entityTypeID, $rootEntityID, $userID, $enablePermissionCheck, array $options = null)

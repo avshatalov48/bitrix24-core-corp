@@ -1,18 +1,31 @@
 import { Router } from 'crm.router';
-import { ajax, Dom, Loc, Text } from 'main.core';
-import { Button as ButtonUI, ButtonState } from 'ui.buttons';
+import { Messenger } from 'im.public';
+import { ajax, Dom, Loc, Text, Runtime } from 'main.core';
 import { MessageBox, MessageBoxButtons } from 'ui.dialogs.messagebox';
 import { UI } from 'ui.notification';
 import ConfigurableItem from '../configurable-item';
 import { Base } from './base';
+import type { Api } from 'sign.v2.api';
+import type { FeatureResolver } from 'sign.feature-resolver';
 
-declare type Signer = {
-	title: string,
-}
+let featureResolver: FeatureResolver | null = null;
+let api: Api | null = null;
+Runtime.loadExtension(['sign.v2.api', 'sign.feature-resolver']).then(async (exports) => {
+	if (exports?.Api && exports?.FeatureResolver)
+	{
+		featureResolver = exports?.FeatureResolver.instance();
+		api = new exports.Api();
+	}
+}).catch((errors) => {
+	UI.Notification.Center.notify({
+		content: errors[0].message,
+		autoHideDelay: 5000,
+	});
+});
 
 export class SignB2eDocument extends Base
 {
-	#isCancellationInProgress: false;
+	#isCancellationInProgress: boolean = false;
 	static isItemSupported(item: ConfigurableItem): boolean
 	{
 		return (
@@ -34,47 +47,23 @@ export class SignB2eDocument extends Base
 
 		if (action === 'Activity:SignB2eDocument:ShowSigningCancel')
 		{
-			if (this.#isCancellationInProgress)
-			{
-				return;
-			}
-			const documentUid = actionData?.documentUid;
-			const signingCancelationDialog = new MessageBox({
-				title: Loc.getMessage('CRM_TIMELINE_ITEM_SIGNING_CANCEL_DIALOG_TITLE'),
-				message: Loc.getMessage('CRM_TIMELINE_ITEM_SIGNING_CANCEL_DIALOG_TEXT'),
-				modal: true,
-			});
-			const cancellationButton = item.getLayoutFooterButtonById(actionData.buttonId);
-			const cancellationButtonUI: ButtonUI = cancellationButton.getUiButton();
-			signingCancelationDialog.setButtons([new BX.UI.Button({
-				text: Loc.getMessage('CRM_TIMELINE_ITEM_SIGNING_CANCEL_DIALOG_YES_BUTTON_TEXT'),
-				color: BX.UI.Button.Color.DANGER,
-				onclick: (event) => {
-					this.#isCancellationInProgress = true;
-					cancellationButtonUI.setState(ButtonState.WAITING);
-					signingCancelationDialog.close();
-					this.#cancelSigningProcess(documentUid).then(() => {
-						Dom.hide(cancellationButton.buttonContainerRef);
-					}).catch(() => {
-						cancellationButtonUI.setState(null);
-					}).finally(() => {
-						this.#isCancellationInProgress = false;
-					});
-				},
-			}), new BX.UI.Button({
-				text: Loc.getMessage('CRM_TIMELINE_ITEM_SIGNING_CANCEL_DIALOG_NO_BUTTON_TEXT'),
-				color: BX.UI.Button.Color.LIGHT_BORDER,
-				onclick: () => {
-					signingCancelationDialog.close();
-				},
-			})]);
-
-			signingCancelationDialog.show();
+			this.#cancelWithConfirm(actionData?.documentUid);
 		}
 		else if ((action === 'SignB2eDocument:ShowSigningProcess'
 			|| action === 'Activity:SignB2eDocument:ShowSigningProcess') && processUri.length > 0)
 		{
 			this.#showSigningProcess(processUri);
+		}
+		else if ((action === 'SignB2eDocument:Preview' || action === 'Activity:SignB2eDocument:Preview') && documentId > 0)
+		{
+			this.#previewDocument(actionData);
+		}
+		else if ((action === 'SignB2eDocument:CreateDocumentChat' || action === 'Activity:SignB2eDocument:CreateDocumentChat') && documentId > 0)
+		{
+			if (featureResolver && featureResolver.released('createDocumentChat'))
+			{
+				this.#createDocumentChat(actionData);
+			}
 		}
 		else if ((action === 'SignB2eDocument:Modify' || action === 'Activity:SignB2eDocument:Modify') && documentId > 0)
 		{
@@ -113,6 +102,40 @@ export class SignB2eDocument extends Base
 				},
 			});
 		}
+	}
+
+	#cancelWithConfirm(documentUid: string): void
+	{
+		if (this.#isCancellationInProgress)
+		{
+			return;
+		}
+
+		const signingCancelationDialog = new MessageBox({
+			title: Loc.getMessage('CRM_TIMELINE_ITEM_SIGNING_CANCEL_DIALOG_TITLE'),
+			message: Loc.getMessage('CRM_TIMELINE_ITEM_SIGNING_CANCEL_DIALOG_TEXT'),
+			modal: true,
+		});
+
+		signingCancelationDialog.setButtons([new BX.UI.Button({
+			text: Loc.getMessage('CRM_TIMELINE_ITEM_SIGNING_CANCEL_DIALOG_YES_BUTTON_TEXT'),
+			color: BX.UI.Button.Color.DANGER,
+			onclick: () => {
+				this.#isCancellationInProgress = true;
+				signingCancelationDialog.close();
+				this.#cancelSigningProcess(documentUid).finally(() => {
+					this.#isCancellationInProgress = false;
+				});
+			},
+		}), new BX.UI.Button({
+			text: Loc.getMessage('CRM_TIMELINE_ITEM_SIGNING_CANCEL_DIALOG_NO_BUTTON_TEXT'),
+			color: BX.UI.Button.Color.LIGHT_BORDER,
+			onclick: () => {
+				signingCancelationDialog.close();
+			},
+		})]);
+
+		signingCancelationDialog.show();
 	}
 
 	#cancelSigningProcess(documentUid): Promise
@@ -163,6 +186,20 @@ export class SignB2eDocument extends Base
 	#modifyDocument({ documentId }): Promise
 	{
 		return Router.openSlider(`/sign/b2e/doc/0/?docId=${documentId}&stepId=changePartner&noRedirect=Y`);
+	}
+
+	#previewDocument({ documentId }): Promise
+	{
+		return Router.openSlider(`/sign/b2e/preview/0/?docId=${documentId}&noRedirect=Y`);
+	}
+
+	async #createDocumentChat({ chatType, documentId }: { chatType: number, documentId: number }): void
+	{
+		if (api && featureResolver && featureResolver.released('createDocumentChat'))
+		{
+			const chatId = (await api.createDocumentChat(chatType, documentId, false)).chatId;
+			Messenger.openChat(`chat${chatId}`);
+		}
 	}
 
 	#resendDocument({ documentId, recipientHash }, animationCallbacks): Promise

@@ -71,7 +71,7 @@ $MESS["INTR_MAIL_DOMAIN_CHOOSE_HINT"] = "Choose a name in .ru domain";
 $MESS["INTR_MAIL_DOMAIN_SUGGEST_WAIT"] = "Searching for possible names...";
 $MESS["INTR_MAIL_DOMAIN_SUGGEST_TITLE"] = "Please come up with another name or pick one";
 $MESS["INTR_MAIL_DOMAIN_SUGGEST_MORE"] = "Show other options";
-$MESS["INTR_MAIL_DOMAIN_EULA_CONFIRM"] = "I accept the terms of the <a href=\"http://www.bitrix24.ru/about/domain.php\" target=\"_blank\">License Agreement</a>";
+$MESS["INTR_MAIL_DOMAIN_EULA_CONFIRM"] = "I accept the terms of the <a href=\"https://www.bitrix24.ru/about/domain.php\" target=\"_blank\">License Agreement</a>";
 $MESS["INTR_MAIL_DOMAIN_EMPTY_NAME"] = "enter name";
 $MESS["INTR_MAIL_DOMAIN_SHORT_NAME"] = "at least two characters before .ru";
 $MESS["INTR_MAIL_DOMAIN_LONG_NAME"] = "max. 63 characters before .ru";

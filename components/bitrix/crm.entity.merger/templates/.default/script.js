@@ -1,3 +1,5 @@
+/* eslint-disable */
+
 BX.namespace("BX.Crm");
 
 if(typeof BX.Crm.EntityMerger === "undefined")
@@ -45,6 +47,7 @@ if(typeof BX.Crm.EntityMerger === "undefined")
 		this._panel = null;
 		this._externalContextId = "";
 		this._externalEventHandler = null;
+		this.isReceiveEntityEditorFromController = false;
 	};
 
 	BX.Crm.EntityMerger.prototype =
@@ -69,6 +72,7 @@ if(typeof BX.Crm.EntityMerger === "undefined")
 			this._isDedupeQueueEnabled = BX.prop.getInteger(this._dedupeQueueInfo, "length", 0) > 0;
 
 			this._isAutomatic = BX.prop.getBoolean(this._settings, 'isAutomatic', false);
+			this.isReceiveEntityEditorFromController = BX.prop.getBoolean(this._settings, 'isReceiveEntityEditorFromController', false);
 
 			this.entityWrapper = document.querySelector('.crm-entity-merger-wrapper');
 
@@ -558,9 +562,54 @@ if(typeof BX.Crm.EntityMerger === "undefined")
 				entityEditorUrl = BX.Crm.EntityMerger.getEntityEditorUrl(entityTypeName);
 			}
 
-			if(entityEditorUrl === "")
+			const sharedParameters = {
+				// force using of common scope
+				SCOPE: 'C',
+				ENABLE_CONFIG_SCOPE_TOGGLE: 'N',
+				ENABLE_CONFIGURATION_UPDATE: 'N',
+				ENABLE_FIELDS_CONTEXT_MENU: 'N',
+				ENABLE_REQUIRED_USER_FIELD_CHECK: 'Y',
+				ENABLE_AVAILABLE_FIELDS_INJECTION: 'Y',
+				ENABLE_EXTERNAL_LAYOUT_RESOLVERS: 'Y',
+				SHOW_EMPTY_FIELDS: 'Y',
+				INITIAL_MODE: 'view',
+				READ_ONLY: 'Y',
+				IS_EMBEDDED: 'Y',
+			};
+
+			if (this.isReceiveEntityEditorFromController)
 			{
-				throw "Crm.EntityMerger: Could not resolve entity editor URL.";
+				const promise = new BX.Promise();
+				BX.ajax.runAction('crm.api.item.getEditor', {
+					data: {
+						entityTypeId: this.getEntityTypeId(),
+						id: entityId,
+						guid: editorId,
+						configId: '',
+						params: {
+							enableSingleSectionCombining: 'N',
+							forceDefaultConfig: 'N',
+							ENABLE_VISIBILITY_POLICY: 'N',
+							...sharedParameters,
+						},
+					},
+				}).then((response) => {
+					const html = response?.data?.html ?? '';
+
+					this.createSecondaryEditorLayout(entityId);
+					BX.Runtime.html(this._editorWrappers[entityId], html);
+
+					promise.fulfill(entityId);
+				}).catch((response) => {
+					throw response.errors;
+				});
+
+				return promise;
+			}
+
+			if(entityEditorUrl === '')
+			{
+				throw 'Crm.EntityMerger: Could not resolve entity editor URL.';
 			}
 
 			var promise = new BX.Promise();
@@ -575,21 +624,10 @@ if(typeof BX.Crm.EntityMerger === "undefined")
 					ENABLE_COMMUNICATION_CONTROLS: "N",
 					//Disable entity editor config change depends on entity state (for example general or return customer lead)
 					ENABLE_CONFIG_VARIABILITY: "N",
+					FORCE_DEFAULT_CONFIG: 'N',
 					PARAMS: {},
 					TITLE: "",
-					//Force using of common scope
-					SCOPE: "C",
-					FORCE_DEFAULT_CONFIG: "N",
-					ENABLE_CONFIG_SCOPE_TOGGLE: "N",
-					ENABLE_CONFIGURATION_UPDATE: "N",
-					ENABLE_FIELDS_CONTEXT_MENU: "N",
-					ENABLE_REQUIRED_USER_FIELD_CHECK: "Y",
-					ENABLE_AVAILABLE_FIELDS_INJECTION: "Y",
-					ENABLE_EXTERNAL_LAYOUT_RESOLVERS: "Y",
-					SHOW_EMPTY_FIELDS: "Y",
-					INITIAL_MODE: "view",
-					READ_ONLY: "Y",
-					IS_EMBEDDED: "Y"
+					...sharedParameters,
 				},
 				function(result)
 				{
@@ -600,6 +638,7 @@ if(typeof BX.Crm.EntityMerger === "undefined")
 
 				}.bind(this)
 			);
+
 			return promise;
 		},
 		areEditorsLoaded: function()
@@ -968,15 +1007,17 @@ if(typeof BX.Crm.EntityMerger === "undefined")
 				this._editorColumns = null;
 			}
 		},
-		getEntityCreationDate: function(entityId)
+		getEntityCreationDate(entityId)
 		{
-			var editor = this.getSecondaryEditorByEntityId(entityId);
-			if(editor)
+			const editor = this.getSecondaryEditorByEntityId(entityId);
+			if (editor)
 			{
-				return editor.getModel().getStringField("DATE_CREATE");
+				const model = editor.getModel();
+
+				return model.getStringField('DATE_CREATE') ?? model.getStringField('CREATED_TIME');
 			}
 
-			return "";
+			return '';
 		},
 		registerEntityEditor: function(editor)
 		{

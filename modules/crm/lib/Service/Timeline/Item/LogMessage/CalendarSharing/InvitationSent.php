@@ -4,14 +4,17 @@ namespace Bitrix\Crm\Service\Timeline\Item\LogMessage\CalendarSharing;
 
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Timeline\Item\Configurable;
-use Bitrix\Crm\Service\Timeline\Item\Mixin\CalendarSharing;
+use Bitrix\Crm\Service\Timeline\Item\Mixin;
 use Bitrix\Crm\Service\Timeline\Layout;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\Client;
 use CCrmOwnerType;
 
 class InvitationSent extends Configurable
 {
-	use CalendarSharing;
+	use Mixin\CalendarSharing\SharingLinkUrlTrait;
+	use Mixin\CalendarSharing\ModelDataTrait;
+	use Mixin\CalendarSharing\MessageTrait;
+	use Mixin\CalendarSharing\MembersBlockTrait;
 
 	public function getType(): string
 	{
@@ -48,13 +51,22 @@ class InvitationSent extends Configurable
 			->build()
 		;
 
-		return [
+		$result = [
 			'guest' => $guestContentBlock,
 			'communicationChannel' => $this->getCommunicationChannelContentBlock(),
 			'accessibilityTitleMobile' => $this->getAccessibilityTitleBlock()->setScopeMobile(),
 			'accessibilityMobile' => $this->getSlotsListBlock()->setScopeMobile(),
 			'accessibilityWeb' => $this->getAccessibilityContentBlock()->setScopeWeb(),
 		];
+
+		$memberIds = $this->getHistoryItemModel()?->get('MEMBER_IDS');
+		if (!empty($memberIds))
+		{
+			$result['membersTitle'] = $this->buildMembersTitleBlock();
+			$result['members'] = $this->buildMembersBlock($memberIds);
+		}
+
+		return $result;
 	}
 
 	private function getContactNameFromHistoryModel(): string
@@ -114,7 +126,7 @@ class InvitationSent extends Configurable
 	public function getAdditionalIconButton(): ?Layout\Footer\IconButton
 	{
 		$result = null;
-		$linkUrl = $this->getLinkUrl();
+		$linkUrl = $this->getSharingLinkUrl($this->getLinkHash());
 		if ($linkUrl)
 		{
 			$result = (new Layout\Footer\IconButton(
@@ -187,11 +199,36 @@ class InvitationSent extends Configurable
 				'slotSize' => $rule['slotSize'],
 			];
 			$slotListItem = (new Layout\Body\ContentBlock\Calendar\SharingSlotsListItem())
-				->setRule($ruleArray);
+				->setRule($ruleArray)
+			;
 
 			$slotsListBlock->addListItem($slotListItem);
 		}
 
 		return $slotsListBlock;
+	}
+
+	public function getButtons(): ?array
+	{
+		$result = [];
+		$linkUrl = $this->getSharingLinkUrl($this->getLinkHash());
+		if ($linkUrl)
+		{
+			$action = new Layout\Action\Redirect($linkUrl);
+			if ($linkUrl->getHost())
+			{
+				$action->addActionParamString('target', '_blank');
+			}
+
+			$result['openSlots'] = (new Layout\Footer\Button(
+				$this->getMessage('CRM_TIMELINE_CALENDAR_SHARING_OPEN_SLOTS_BUTTON'),
+				Layout\Footer\Button::TYPE_SECONDARY)
+			)
+				->setAction($action)
+				->setScopeWeb()
+			;
+		}
+
+		return $result;
 	}
 }

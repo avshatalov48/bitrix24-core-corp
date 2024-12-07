@@ -104,8 +104,7 @@ if(isset($_REQUEST['getSample']) && $_REQUEST['getSample'] == 'csv')
 	Header("Content-Transfer-Encoding: binary");
 
 	// add UTF-8 BOM marker
-	if (defined('BX_UTF') && BX_UTF)
-		echo chr(239).chr(187).chr(191);
+	echo chr(239).chr(187).chr(191);
 
 	$arPropertyListDemoCache = array();
 	$arPropertyListDemoCacheUsedIndex = array();
@@ -272,7 +271,7 @@ if(isset($_REQUEST['getSample']) && $_REQUEST['getSample'] == 'csv')
 							if ($nFileExt > 0)
 							{
 								$randFileExt = rand(0, $nFileExt - 1);
-								$fileExt = ToLower(trim($arFileExt[$randFileExt]));
+								$fileExt = mb_strtolower(trim($arFileExt[$randFileExt]));
 							}
 							unset($arFileExt, $nFileExt, $randFileExt);
 							if ($fileExt == 'bmp')
@@ -687,7 +686,7 @@ else if (isset($_REQUEST['import']) && isset($_SESSION['CRM_IMPORT_FILE']))
 	$arUserListCache = null;
 	$sanitizer = null;
 
-	$upperYes = ToUpper(GetMessage('MAIN_YES'));
+	$upperYes = mb_strtoupper(GetMessage('MAIN_YES'));
 
 	$filePos = 0;
 
@@ -708,7 +707,7 @@ else if (isset($_REQUEST['import']) && isset($_SESSION['CRM_IMPORT_FILE']))
 			$propID = null;
 			if (isset($_SESSION['CRM_IMPORT_FILE_FIELD_'.$key]) && !empty($_SESSION['CRM_IMPORT_FILE_FIELD_'.$key]))
 			{
-				$currentKey = ToUpper($_SESSION['CRM_IMPORT_FILE_FIELD_'.$key]);
+				$currentKey = mb_strtoupper($_SESSION['CRM_IMPORT_FILE_FIELD_'.$key]);
 				$data = trim($data);
 
 				if ($currentKey === 'ID')
@@ -722,7 +721,7 @@ else if (isset($_REQUEST['import']) && isset($_SESSION['CRM_IMPORT_FILE']))
 				}
 				else if ($currentKey === 'ACTIVE' || $currentKey === 'VAT_INCLUDED')
 				{
-					$dataUpper = ToUpper($data);
+					$dataUpper = mb_strtoupper($data);
 					$data = ($dataUpper === $upperYes || $dataUpper === 'Y' || $dataUpper === 'YES'
 						|| (is_numeric($dataUpper) && intval($dataUpper) > 0)) ? 'Y' : 'N';
 
@@ -1190,7 +1189,7 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 							$arFields[$arField['id'].'_'.$i] =
 								GetMessage('CRM_PRODUCT_IMP_SECTION_HEADER', array('#LEVEL_NUM#' => $i));
 							$arFieldsUpper[$arField['id'].'_'.$i] =
-								ToUpper(GetMessage('CRM_PRODUCT_IMP_SECTION_HEADER', array('#LEVEL_NUM#' => $i)));
+								mb_strtoupper(GetMessage('CRM_PRODUCT_IMP_SECTION_HEADER', array('#LEVEL_NUM#' => $i)));
 						}
 					}
 					else
@@ -1198,7 +1197,7 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 						//echo '"'.$arField['name'].'";';
 						$fieldName = htmlspecialcharsback($arField['name']);
 						$arFields[$arField['id']] = $fieldName;
-						$arFieldsUpper[$arField['id']] = ToUpper($fieldName);
+						$arFieldsUpper[$arField['id']] = mb_strtoupper($fieldName);
 						if ($arField['mandatory'] == 'Y')
 						{
 							$arRequireFields[$arField['id']] = $fieldName;
@@ -1230,7 +1229,6 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 
 					if($fileEncoding !== '' && $fileEncoding !== '_' && $fileEncoding !== mb_strtolower(SITE_CHARSET))
 					{
-						$convertCharsetErrorMsg = '';
 						$fileHandle = fopen($_SESSION['CRM_IMPORT_FILE'], 'rb');
 						$fileContents = fread($fileHandle, filesize($_SESSION['CRM_IMPORT_FILE']));
 						fclose($fileHandle);
@@ -1241,7 +1239,7 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 							$fileContents = mb_substr($fileContents, 3);
 						}
 
-						$fileContents = CharsetConverter::ConvertCharset($fileContents, $fileEncoding, SITE_CHARSET, $convertCharsetErrorMsg);
+						$fileContents = \Bitrix\Main\Text\Encoding::convertEncoding($fileContents, $fileEncoding, SITE_CHARSET);
 
 						$fileHandle = fopen($_SESSION['CRM_IMPORT_FILE'], 'wb');
 						fwrite($fileHandle, $fileContents);
@@ -1327,7 +1325,7 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 						'name' => $value,
 						'items' => $arFields,
 						'type' => 'list',
-						'value' => isset($arFields[ToUpper($value)])? ToUpper($value): array_search(ToUpper($value), $arFieldsUpper),
+						'value' => isset($arFields[mb_strtoupper($value)])? mb_strtoupper($value): array_search(mb_strtoupper($value), $arFieldsUpper),
 					);
 				}
 				$arResult['FIELDS']['tab_2'][] = array(
@@ -1353,7 +1351,7 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 						<?endforeach;?>
 					</table>
 				</div>
-				<script type="text/javascript">
+				<script>
 					windowSizes = BX.GetWindowSize(document);
 					if (windowSizes.innerWidth > 1024)
 						BX('crm_import_example').style.width = '870px';
@@ -1403,7 +1401,7 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 						</tbody>
 					</table>
 				</div>
-				<script type="text/javascript">
+				<script>
 					windowSizes = BX.GetWindowSize(document);
 					BX('crm_import_example').style.height = "44px";
 					if (windowSizes.innerWidth > 1024)

@@ -33,7 +33,7 @@ $jsObjName = 'barcodesSlider';
 ?><!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="<?=LANGUAGE_ID ?>" lang="<?=LANGUAGE_ID ?>">
 <head>
-	<script type="text/javascript">
+	<script>
 		// Prevent loading page without header and footer
 		if(window === window.top)
 		{
@@ -75,7 +75,7 @@ $jsObjName = 'barcodesSlider';
 		</div>
 	</div>
 
-	<script type="text/javascript">
+	<script>
 		<?=$jsObjName?> = BX.Crm.Order.Shipment.Product.Barcodes.create(
 			{
 				contentContainerId: 'crm-order-shipment-product-barcode-content-root',

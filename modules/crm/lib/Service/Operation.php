@@ -2,6 +2,7 @@
 
 namespace Bitrix\Crm\Service;
 
+use Bitrix\Crm\Agent\Security\DynamicTypes\AttrConvertOptions;
 use Bitrix\Crm\Attribute\FieldAttributeManager;
 use Bitrix\Crm\Automation\Starter;
 use Bitrix\Crm\Field;
@@ -11,6 +12,7 @@ use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Kanban\Entity;
 use Bitrix\Crm\Multifield;
 use Bitrix\Crm\Search\SearchContentBuilderFactory;
+use Bitrix\Crm\Security\Controller\DynamicItem;
 use Bitrix\Crm\Service\Operation\Action;
 use Bitrix\Crm\Statistics;
 use Bitrix\Crm\UserField\Visibility\VisibilityManager;
@@ -80,7 +82,7 @@ abstract class Operation
 		return ItemIdentifier::createByItem($this->getItem());
 	}
 
-	public function getItemBeforeSave(): Item
+	public function getItemBeforeSave(): ?Item
 	{
 		return $this->itemBeforeSave;
 	}
@@ -125,72 +127,10 @@ abstract class Operation
 			$this->item->fill();
 		}
 
-		if ($this->isCheckLimitsEnabled())
+		$checkResult = $this->preSaveChecks();
+		if ($checkResult)
 		{
-			$checkLimitsResult = $this->checkLimits();
-			if (!$checkLimitsResult->isSuccess())
-			{
-				return $checkLimitsResult;
-			}
-		}
-
-		if ($this->isCheckAccessEnabled())
-		{
-			$checkAccessResult = $this->checkAccess();
-			if (!$checkAccessResult->isSuccess())
-			{
-				return $checkAccessResult;
-			}
-
-			$processFieldsResult = $this->processFieldsWithPermissions();
-			if (!$processFieldsResult->isSuccess())
-			{
-				return $processFieldsResult;
-			}
-		}
-
-		if ($this->isCheckWorkflowsEnabled())
-		{
-			$checkWorkflowsResult = $this->checkRunningWorkflows();
-			if (!$checkWorkflowsResult->isSuccess())
-			{
-				return $checkWorkflowsResult;
-			}
-		}
-
-		if ($this->isFieldProcessionEnabled())
-		{
-			$processFieldsResult = $this->processFieldsBeforeSave();
-			if (!$processFieldsResult->isSuccess())
-			{
-				return $processFieldsResult;
-			}
-		}
-
-		if ($this->isCheckFieldsEnabled())
-		{
-			$checkFieldsResult = $this->checkFields();
-			if (!$checkFieldsResult->isSuccess())
-			{
-				return $checkFieldsResult;
-			}
-		}
-
-		if ($this->isItemChanged() && $this->isBeforeSaveActionsEnabled())
-		{
-			$actionsResult = $this->processActions(static::ACTION_BEFORE_SAVE);
-			if (!$actionsResult->isSuccess())
-			{
-				return $actionsResult;
-			}
-		}
-
-		// no changes - no actions
-		if (!$this->isItemChanged())
-		{
-			$this->item->reset(Item::FIELD_NAME_UPDATED_TIME);
-			$this->item->reset(Item::FIELD_NAME_UPDATED_BY);
-			return new Result();
+			return $checkResult;
 		}
 
 		$this->itemBeforeSave = clone $this->item;
@@ -576,6 +516,9 @@ abstract class Operation
 		return $result;
 	}
 
+	/**
+	 * @see \Bitrix\Crm\Service\Operation\TransactionWrapper::runBizProc() - copy-paste
+	 */
 	protected function runBizProc(): Result
 	{
 		$result = new Result();
@@ -613,6 +556,9 @@ abstract class Operation
 		return $result;
 	}
 
+	/**
+	 * @see \Bitrix\Crm\Service\Operation\TransactionWrapper::runAutomation()
+	 */
 	protected function runAutomation(): Result
 	{
 		$starter = new Starter($this->item->getEntityTypeId(), $this->item->getId());
@@ -1166,13 +1112,33 @@ abstract class Operation
 			->setEntityAttributes($userPermissions->prepareItemPermissionAttributes($this->item))
 		;
 
-		\Bitrix\Crm\Security\Manager::resolveController($permissionEntityType)
-			->register(
+		$controller = \Bitrix\Crm\Security\Manager::resolveController($permissionEntityType);
+		$controller->register(
 				$permissionEntityType,
 				$this->item->getId(),
 				$securityRegisterOptions
 			)
 		;
+
+		// While the conversion of the rights storage type is in progress, it is necessary to register the
+		// rights in both controllers.
+		if (
+			AttrConvertOptions::getCurrentEntityTypeId() === $this->item->getEntityTypeId()
+			&& !$controller instanceof DynamicItem
+		)
+		{
+			try {
+				$additionalController = new DynamicItem($this->item->getEntityTypeId());
+				$additionalController->register(
+					$permissionEntityType,
+					$this->item->getId(),
+					$securityRegisterOptions
+				);
+			}
+			catch (\Exception $e)
+			{
+			}
+		}
 	}
 
 	protected function updateSearchIndexes(): void
@@ -1390,5 +1356,78 @@ abstract class Operation
 		{
 			$factory->clearItemCategoryCache($this->item->getId());
 		}
+	}
+
+	protected function preSaveChecks(): ?Result
+	{
+		if ($this->isCheckLimitsEnabled())
+		{
+			$checkLimitsResult = $this->checkLimits();
+			if (!$checkLimitsResult->isSuccess())
+			{
+				return $checkLimitsResult;
+			}
+		}
+
+		if ($this->isCheckAccessEnabled())
+		{
+			$checkAccessResult = $this->checkAccess();
+			if (!$checkAccessResult->isSuccess())
+			{
+				return $checkAccessResult;
+			}
+
+			$processFieldsResult = $this->processFieldsWithPermissions();
+			if (!$processFieldsResult->isSuccess())
+			{
+				return $processFieldsResult;
+			}
+		}
+
+		if ($this->isCheckWorkflowsEnabled())
+		{
+			$checkWorkflowsResult = $this->checkRunningWorkflows();
+			if (!$checkWorkflowsResult->isSuccess())
+			{
+				return $checkWorkflowsResult;
+			}
+		}
+
+		if ($this->isFieldProcessionEnabled())
+		{
+			$processFieldsResult = $this->processFieldsBeforeSave();
+			if (!$processFieldsResult->isSuccess())
+			{
+				return $processFieldsResult;
+			}
+		}
+
+		if ($this->isCheckFieldsEnabled())
+		{
+			$checkFieldsResult = $this->checkFields();
+			if (!$checkFieldsResult->isSuccess())
+			{
+				return $checkFieldsResult;
+			}
+		}
+
+		if ($this->isItemChanged() && $this->isBeforeSaveActionsEnabled())
+		{
+			$actionsResult = $this->processActions(static::ACTION_BEFORE_SAVE);
+			if (!$actionsResult->isSuccess())
+			{
+				return $actionsResult;
+			}
+		}
+
+		// no changes - no actions
+		if (!$this->isItemChanged())
+		{
+			$this->item->reset(Item::FIELD_NAME_UPDATED_TIME);
+			$this->item->reset(Item::FIELD_NAME_UPDATED_BY);
+			return new Result();
+		}
+
+		return null;
 	}
 }

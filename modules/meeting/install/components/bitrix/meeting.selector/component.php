@@ -19,9 +19,6 @@ $arFilter = array(
 if($skip > 0)
 	$arFilter['!ID'] = intval($skip);
 
-if (($_REQUEST['mode'] ?? null) == 'selector_search')
-	CUtil::JSPostUnEscape();
-
 if (isset($_REQUEST['FILTER']))
 {
 	$arFilterValues = $_REQUEST['FILTER'];

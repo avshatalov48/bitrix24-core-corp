@@ -1,13 +1,18 @@
-(() => {
-	const require = (ext) => jn.require(ext);
-
-	const { withPressed } = require('utils/color');
-	const AppTheme = require('apptheme');
+/**
+ * @module layout/ui/floating-button
+ */
+jn.define('layout/ui/floating-button', (require, exports, module) => {
 	const { Haptics } = require('haptics');
+	const { Feature } = require('feature');
+	const AppTheme = require('apptheme');
+	const { withPressed } = require('utils/color');
 	const { HideOnScrollAnimator } = require('animation/hide-on-scroll');
+	const { FloatingActionButton, FloatingActionButtonSupportNative } = require(
+		'ui-system/form/buttons/floating-action-button',
+	);
 
 	/**
-	 * @class UI.FloatingButtonComponent
+	 * @class FloatingButtonComponent
 	 */
 	class FloatingButtonComponent extends LayoutComponent
 	{
@@ -52,7 +57,7 @@
 		{
 			if (!this.animator)
 			{
-				const { bottom } = styles.view;
+				const { bottom } = this.getButtonViewStyle();
 
 				this.animator = new HideOnScrollAnimator({ initialTopPosition: bottom });
 			}
@@ -70,7 +75,31 @@
 			return this.getAnimator().hide(this.viewRef);
 		}
 
-		render()
+		renderAirStyleButton()
+		{
+			if (FloatingActionButtonSupportNative(this.getLayout()))
+			{
+				return null;
+			}
+
+			return View(
+				{
+					ref: (ref) => {
+						this.viewRef = ref;
+					},
+					safeArea: {
+						bottom: true,
+						top: true,
+						left: true,
+						right: true,
+					},
+					style: this.getButtonStyle(),
+				},
+				this.renderFloatingActionButton(),
+			);
+		}
+
+		renderButton()
 		{
 			return View(
 				{
@@ -84,10 +113,7 @@
 						right: true,
 					},
 					testId: this.props.testId,
-					style: {
-						...styles.view,
-						...this.position,
-					},
+					style: this.getButtonStyle(),
 				},
 				Shadow(
 					{
@@ -116,22 +142,64 @@
 			);
 		}
 
-		onClick()
+		getButtonStyle()
 		{
-			if (this.props.onClick)
-			{
-				this.props.onClick();
-			}
+			return {
+				...this.getButtonViewStyle(),
+				...this.position,
+			};
 		}
 
-		onLongClick()
+		getButtonViewStyle()
 		{
-			if (this.props.onLongClick)
+			return Feature.isAirStyleSupported() ? styles.airView : styles.view;
+		}
+
+		render()
+		{
+			return Feature.isAirStyleSupported()
+				? this.renderAirStyleButton()
+				: this.renderButton();
+		}
+
+		getLayout()
+		{
+			const { parentLayout } = this.props;
+
+			return parentLayout;
+		}
+
+		renderFloatingActionButton()
+		{
+			const { testId, accent, parentLayout } = this.props;
+
+			return FloatingActionButton({
+				testId,
+				accent,
+				parentLayout,
+				onClick: this.onClick,
+				onLongClick: this.onLongClick,
+			});
+		}
+
+		onClick = () => {
+			const { onClick } = this.props;
+
+			if (onClick)
+			{
+				onClick();
+			}
+		};
+
+		onLongClick = () => {
+			const { onLongClick } = this.props;
+
+			if (onLongClick)
 			{
 				this.vibrate();
-				this.props.onLongClick();
+				onLongClick();
 			}
-		}
+		};
 
 		vibrate()
 		{
@@ -143,6 +211,11 @@
 	}
 
 	const styles = {
+		airView: {
+			position: 'absolute',
+			right: 24,
+			bottom: 18,
+		},
 		view: {
 			position: 'absolute',
 			right: Application.getPlatform() === 'android' ? 14 : 13,
@@ -164,6 +237,12 @@
 			height: 16,
 		},
 	};
+
+	module.exports = { FloatingButtonComponent };
+});
+
+(() => {
+	const { FloatingButtonComponent } = jn.require('layout/ui/floating-button');
 
 	this.UI = this.UI || {};
 	this.UI.FloatingButtonComponent = FloatingButtonComponent;

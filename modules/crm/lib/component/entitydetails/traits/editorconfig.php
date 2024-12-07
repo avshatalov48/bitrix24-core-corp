@@ -3,11 +3,14 @@
 namespace Bitrix\Crm\Component\EntityDetails\Traits;
 
 use Bitrix\Crm\Attribute\FieldAttributeManager;
+use Bitrix\Crm\Integration\Analytics\Builder\Entity\CloseEvent;
+use Bitrix\Crm\PhaseSemantics;
 use Bitrix\Crm\Service\Container;
 
 trait EditorConfig
 {
 	use EditorInitialMode;
+	use EditorRequisiteEditMode;
 
 	abstract protected function getEntityId();
 
@@ -17,7 +20,6 @@ trait EditorConfig
 	{
 		$entityTypeId = $this->factory->getEntityTypeId();
 		$editorGuid = "{$this->arResult['GUID']}_editor";
-
 		$componentNameWithoutBitrixPrefix = mb_substr($this->getDetailComponentName(), 7);
 		$sessionId = bitrix_sessid_get();
 
@@ -41,7 +43,7 @@ trait EditorConfig
 		{
 			$analyticsBuilder = \Bitrix\Crm\Integration\Analytics\Builder\Entity\AddEvent::createDefault($this->factory->getEntityTypeId());
 		}
-
+		//@codingStandardsIgnoreStart
 		return [
 			'ENTITY_TYPE_ID' => $entityTypeId,
 			'ENTITY_ID' => $this->isCopyMode ? 0 :$this->getEntityId(),
@@ -85,9 +87,13 @@ trait EditorConfig
 			// this data is used to send analytics when user clicks 'save' button
 			'ANALYTICS_CONFIG' => [
 				'data' => $analyticsBuilder->buildData(),
+
 				'appendParamsFromCurrentUrl' => true,
+				'entityClose' => $this->getCloseEventConfig()?->buildData(),
+				'finalStagesSemantics' => $this->getFinalStagesSemantics(),
 			],
 		];
+		//@codingStandardsIgnoreEnd
 	}
 
 	private function getDetailComponentName(): ?string
@@ -109,5 +115,37 @@ trait EditorConfig
 		}
 
 		return [];
+	}
+
+	private function getFinalStagesSemantics(): array
+	{
+		$stages =
+			$this->factory->isCategoriesSupported()
+				? $this->factory->getStages($this->getCategoryId())
+				: $this->factory->getStages()
+		;
+		$finalStages = [];
+		foreach ($stages as $stage)
+		{
+			if (PhaseSemantics::isFinal($stage->getSemantics()))
+			{
+				$finalStages[$stage->getStatusId()] = $stage->getSemantics();
+			}
+		}
+
+		return $finalStages;
+	}
+
+	/**
+	 * @return CloseEvent|null
+	 */
+	public function getCloseEventConfig(): ?CloseEvent
+	{
+		if (!$this->factory || !$this->factory->isStagesSupported() || !$this->factory->isStagesEnabled())
+		{
+			return null;
+		}
+
+		return  CloseEvent::createDefault($this->factory->getEntityTypeId());
 	}
 }

@@ -2,48 +2,14 @@
 
 namespace Bitrix\Crm\Reservation\Actions;
 
-use Bitrix\Main;
 use Bitrix\Crm;
-use Bitrix\Catalog;
 use Bitrix\Crm\Reservation\QuantityCheckerTrait;
+use Bitrix\Crm\Reservation\AvailabilityServicesCheckerTrait;
 
 abstract class Base extends Crm\Service\Operation\Action
 {
 	use QuantityCheckerTrait;
-
-	protected static function checkAvailabilityServices(Crm\ProductRowCollection $productRows): Main\Result
-	{
-		$result = new Main\Result();
-
-		$products = $productRows->toArray();
-
-		$productIds = array_column($products, 'PRODUCT_ID');
-		if (!$productIds)
-		{
-			return $result;
-		}
-
-		$productIterator = Catalog\ProductTable::getList([
-			'select' => [
-				'ID',
-				'AVAILABLE',
-			],
-			'filter' => [
-				'=ID' => $productIds,
-			],
-		]);
-		while ($product = $productIterator->fetch())
-		{
-			if ($product['AVAILABLE'] === Catalog\ProductTable::STATUS_NO)
-			{
-				$result->addError(
-					new Main\Error("Product with id {$product['ID']} is not available")
-				);
-			}
-		}
-
-		return $result;
-	}
+	use AvailabilityServicesCheckerTrait;
 
 	protected function isFinalStage(Crm\Item $item): bool
 	{

@@ -316,13 +316,27 @@ class QuoteTable extends DataManager
 			$elementIds = unserialize($value, ['allowed_classes' => false]);
 			if(is_array($elementIds))
 			{
-				$value = array_map('intval', $elementIds);
-				$value = array_unique($value, SORT_NUMERIC);
+				$value = array_filter($elementIds, fn($fileId) => static::isValidStorageElementId($fileId));
+				$value = array_unique($value);
 				$value = serialize($value);
 			}
 		}
 
 		return $value;
+	}
+
+	/**
+	 * @see \Bitrix\Disk\Uf\FileUserType::detectType()
+	 */
+	private static function isValidStorageElementId(mixed $fileId): bool
+	{
+		if (intval($fileId) > 0)
+		{
+			return true;
+		}
+
+		// newly attached files has 'n' prefix before file id. example: 'n150'
+		return preg_match('/^n\d+$/', $fileId);
 	}
 
 	public static function onAfterUpdate(Event $event): EventResult

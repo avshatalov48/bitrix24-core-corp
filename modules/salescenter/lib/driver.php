@@ -56,11 +56,13 @@ final class Driver
 		if(LandingManager::getInstance()->isEnabled())
 		{
 			LandingManager::getInstance()->tryInstallDefaultSiteOnce();
+			LandingManager::getInstance()->tryPublishDefaultSiteOnce();
 			$params['siteTemplateCode'] = LandingManager::SITE_MAINPAGE_TEMPLATE_CODE;
 			$params['connectedSiteId'] = LandingManager::getInstance()->getConnectedSiteId();
 			$params['isSitePublished'] = LandingManager::getInstance()->isSitePublished();
 			$params['isSiteExists'] = LandingManager::getInstance()->isSiteExists();
 			$params['isOrderPublicUrlAvailable'] = LandingManager::getInstance()->isOrderPublicUrlAvailable();
+			$params['isPhoneConfirmed'] = LandingManager::getInstance()->isPhoneConfirmed();
 
 			$urlInfo = LandingManager::getInstance()->getOrderPublicUrlInfo();
 			$params['orderPublicUrl'] = is_array($urlInfo) ? $urlInfo['url'] : '';

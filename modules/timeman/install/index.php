@@ -1,9 +1,11 @@
-<?
-global $DOCUMENT_ROOT, $MESS;
+<?php
+
+if (class_exists("timeman"))
+{
+	return;
+}
 
 IncludeModuleLangFile(__FILE__);
-
-if (class_exists("timeman")) return;
 
 class timeman extends CModule
 {
@@ -14,6 +16,7 @@ class timeman extends CModule
 	var $MODULE_DESCRIPTION;
 	var $MODULE_CSS;
 	var $MODULE_GROUP_RIGHTS = "N";
+	var $errors;
 
 	public function __construct()
 	{
@@ -110,10 +113,10 @@ class timeman extends CModule
 	function UnInstallDB($arParams = array())
 	{
 		global $DB, $APPLICATION;
-		$connection = \Bitrix\Main\Application::getConnection();
-		$errors = null;
 
-		if ((true == array_key_exists("savedata", $arParams)) && ($arParams["savedata"] != 'Y'))
+		$connection = \Bitrix\Main\Application::getConnection();
+
+		if (array_key_exists("savedata", $arParams) && ($arParams["savedata"] != 'Y'))
 		{
 			if(CModule::IncludeModule("socialnetwork"))
 			{
@@ -173,64 +176,44 @@ class timeman extends CModule
 		return true;
 	}
 
-	function InstallEvents()
-	{
-		return true;
-	}
-
-	function UnInstallEvents()
-	{
-		return true;
-	}
-
 	function InstallFiles()
 	{
-		global $APPLICATION;
+		CopyDirFiles(
+			$_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/".$this->MODULE_ID."/install/components",
+			$_SERVER["DOCUMENT_ROOT"]."/bitrix/components",
+			true, true
+		);
 
-		if($_ENV["COMPUTERNAME"]!='BX')
-		{
-			CopyDirFiles(
-				$_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/".$this->MODULE_ID."/install/components",
-				$_SERVER["DOCUMENT_ROOT"]."/bitrix/components",
-				true, true
-			);
+		CopyDirFiles(
+			$_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/".$this->MODULE_ID."/install/admin",
+			$_SERVER["DOCUMENT_ROOT"]."/bitrix/admin",
+			true, true
+		);
 
-			CopyDirFiles(
-				$_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/".$this->MODULE_ID."/install/admin",
-				$_SERVER["DOCUMENT_ROOT"]."/bitrix/admin",
-				true, true
-			);
+		CopyDirFiles(
+			$_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/".$this->MODULE_ID."/install/js",
+			$_SERVER["DOCUMENT_ROOT"]."/bitrix/js",
+			true, true
+		);
 
-			CopyDirFiles(
-				$_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/".$this->MODULE_ID."/install/js",
-				$_SERVER["DOCUMENT_ROOT"]."/bitrix/js",
-				true, true
-			);
+		CopyDirFiles(
+			$_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/".$this->MODULE_ID."/install/themes",
+			$_SERVER["DOCUMENT_ROOT"]."/bitrix/themes",
+			true, true
+		);
 
-			CopyDirFiles(
-				$_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/".$this->MODULE_ID."/install/themes",
-				$_SERVER["DOCUMENT_ROOT"]."/bitrix/themes",
-				true, true
-			);
+		CopyDirFiles(
+			$_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/".$this->MODULE_ID."/install/tools",
+			$_SERVER["DOCUMENT_ROOT"]."/bitrix/tools",
+			true, true
+		);
 
-			CopyDirFiles(
-				$_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/".$this->MODULE_ID."/install/tools",
-				$_SERVER["DOCUMENT_ROOT"]."/bitrix/tools",
-				true, true
-			);
+		CopyDirFiles(
+			$_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/".$this->MODULE_ID."/install/images",
+			$_SERVER["DOCUMENT_ROOT"]."/bitrix/images",
+			true, true
+		);
 
-			CopyDirFiles(
-				$_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/".$this->MODULE_ID."/install/images",
-				$_SERVER["DOCUMENT_ROOT"]."/bitrix/images",
-				true, true
-			);
-		}
-
-		return true;
-	}
-
-	function UnInstallFiles()
-	{
 		return true;
 	}
 
@@ -250,8 +233,7 @@ class timeman extends CModule
 			{
 				if ($this->InstallDB())
 				{
-					CBXFeatures::SetFeatureEnabled('timeman', true);
-					$this->InstallEvents();
+					CBXFeatures::SetFeatureEnabled('timeman');
 					$this->InstallFiles();
 				}
 			}
@@ -260,7 +242,8 @@ class timeman extends CModule
 
 	function DoUninstall()
 	{
-		global $DB, $APPLICATION, $USER, $step;
+		global $APPLICATION, $USER, $step;
+
 		if($USER->IsAdmin())
 		{
 			$step = intval($step);
@@ -273,8 +256,6 @@ class timeman extends CModule
 				$this->UnInstallDB(array(
 					"savedata" => $_REQUEST["savedata"],
 				));
-				$this->UnInstallEvents();
-				$this->UnInstallFiles();
 
 				CBXFeatures::SetFeatureEnabled('timeman', false);
 

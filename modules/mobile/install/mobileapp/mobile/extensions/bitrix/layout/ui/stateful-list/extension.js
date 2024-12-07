@@ -13,6 +13,12 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 	const { TypeGenerator } = require('layout/ui/stateful-list/type-generator');
 	const { ListItemType, ListItemsFactory } = require('layout/ui/simple-list/items');
 	const { RunActionExecutor } = require('rest/run-action-executor');
+	const {
+		FloatingActionButton,
+		FloatingActionButtonSupportNative,
+	} = require(
+		'ui-system/form/buttons/floating-action-button',
+	);
 	const { Type } = require('type');
 
 	const isGetConnectionStatusSupported = Type.isFunction(device?.getConnectionStatus);
@@ -46,6 +52,7 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 			this.needAnimateIds = [];
 			this.layoutRightButtons = null;
 			this.menuProps = null;
+			this.floatingButton = null;
 
 			this.menuButtons = this.getValue(props, 'menuButtons', []);
 			this.needInitMenu = this.getValue(props, 'needInitMenu', true);
@@ -134,7 +141,7 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 
 		get sorting()
 		{
-			return this.getValue(this.props, 'sortingConfig', null);
+			return this.getValue(this.props, 'sortingConfig', {}) ?? {};
 		}
 
 		get isCacheEnabled()
@@ -150,6 +157,7 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 			{
 				this.initMenu();
 				this.initSearchBar();
+				this.initFloatingButton();
 			}
 
 			this.layout.on('onViewShown', () => this.onViewShow());
@@ -285,7 +293,7 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 							return;
 						}
 
-						if (this.props.actionCallbacks && this.props.actionCallbacks.loadItems)
+						if (Type.isFunction(this.props.actionCallbacks?.loadItems))
 						{
 							this.props.actionCallbacks.loadItems(response?.data, renderType.cache);
 						}
@@ -303,7 +311,7 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 						const remainingTime = useCache ? 0 : Math.max(300 - serverResponseTime, 0);
 
 						this.requestRenderTimeout = setTimeout(() => {
-							if (this.props.actionCallbacks && this.props.actionCallbacks.loadItems)
+							if (Type.isFunction(this.props.actionCallbacks?.loadItems))
 							{
 								this.props.actionCallbacks.loadItems(response?.data, renderType.ajax);
 							}
@@ -332,7 +340,7 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 				this.cache.setRunActionExecutor(runActionExecutor);
 			}
 
-			runActionExecutor.call(useCache);
+			runActionExecutor.call(useCache).catch(console.error);
 		}
 
 		/**
@@ -347,8 +355,10 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 				throw new Error('StatefulList: loadItems action is not defined');
 			}
 
+			const idsToLoad = ids.filter(Boolean);
+
 			return new Promise((resolve, reject) => {
-				if (ids.length === 0)
+				if (idsToLoad.length === 0)
 				{
 					resolve([]);
 
@@ -358,7 +368,7 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 				const data = clone(this.state.actionParams.loadItems || {});
 				data.extra = data.extra || {};
 				const filterParams = data.extra.filterParams || {};
-				filterParams.ID = ids;
+				filterParams.ID = idsToLoad;
 
 				if (!useFilter)
 				{
@@ -377,7 +387,7 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 							return;
 						}
 
-						if (this.props.actionCallbacks && this.props.actionCallbacks.loadItems)
+						if (Type.isFunction(this.props.actionCallbacks?.loadItems))
 						{
 							this.props.actionCallbacks.loadItems(response?.data, renderType.ajax);
 						}
@@ -388,7 +398,7 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 						console.error(response.errors);
 						reject(response.errors);
 					},
-				);
+				).catch(console.error);
 			});
 		}
 
@@ -407,11 +417,29 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 			this.simpleList?.scrollToBegin(animated);
 		}
 
+		async scrollToTopItem(itemIds, animated = true, blink = false)
+		{
+			const existingItems = itemIds.filter((id) => this.hasItem(id));
+			if (existingItems.length === 0)
+			{
+				return;
+			}
+
+			await this.simpleList?.scrollToTopItem(existingItems, animated);
+
+			if (blink)
+			{
+				existingItems.forEach((itemId) => {
+					this.simpleList?.blinkItem(itemId);
+				});
+			}
+		}
+
 		addItemsFromPull(items)
 		{
 			if (this.state.items.length === 0 || this.shouldReloadDynamically)
 			{
-				const ids = items.map((item) => item.id);
+				const ids = items.map(({ id }) => id);
 
 				return this.updateItems(ids, false, true);
 			}
@@ -427,7 +455,6 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 		 */
 		groupItemsByOperations(itemsToProcess, itemsFromServer)
 		{
-			const preparedItemsToProcess = itemsToProcess.map((id) => String(id));
 			const { items } = this.state;
 			const currentItemsMap = new Map();
 
@@ -446,19 +473,21 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 			const toUpdateItems = [];
 			const toDeleteIds = [];
 
-			preparedItemsToProcess.forEach((id) => {
-				if (itemsFromServerMap.has(id))
+			itemsToProcess.forEach((id) => {
+				const preparedId = String(id);
+
+				if (itemsFromServerMap.has(preparedId))
 				{
-					if (currentItemsMap.has(id))
+					if (currentItemsMap.has(preparedId))
 					{
-						toUpdateItems.push(itemsFromServerMap.get(id));
+						toUpdateItems.push(itemsFromServerMap.get(preparedId));
 					}
 					else
 					{
-						toAddItems.push(itemsFromServerMap.get(id));
+						toAddItems.push(itemsFromServerMap.get(preparedId));
 					}
 				}
-				else if (currentItemsMap.has(id))
+				else if (currentItemsMap.has(preparedId))
 				{
 					toDeleteIds.push(id);
 				}
@@ -471,93 +500,125 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 			};
 		}
 
+		/**
+		 * @private
+		 * @param {array} addItems
+		 * @param {boolean} showAnimateOnView
+		 * @returns {boolean} wasChanged
+		 */
 		processItemsAddOperation(addItems, showAnimateOnView)
 		{
-			let wasChanged = false;
-			if (Type.isArrayFilled(addItems))
+			const preparedAddItems = addItems.filter(({ id }) => !this.hasItem(id));
+
+			if (!Type.isArrayFilled(preparedAddItems))
 			{
-				if (showAnimateOnView)
-				{
-					this.addToAnimateItems(addItems);
-				}
-				addItems.forEach((item, index) => {
-					if (this.hasItem(item.id))
-					{
-						return;
-					}
-
-					wasChanged = true;
-					const position = this.findItemPosition(item, this.state.items);
-					this.state.items.splice(position, 0, item);
-
-					if (this.props.onItemAdded)
-					{
-						this.props.onItemAdded(item);
-					}
-				});
+				return false;
 			}
 
-			return wasChanged;
+			if (showAnimateOnView)
+			{
+				this.addToAnimateItems(preparedAddItems);
+			}
+
+			this.state.items.unshift(...preparedAddItems);
+
+			this.sortItemsIfCallbackExists();
+
+			const { onItemAdded } = this.props;
+
+			if (Type.isFunction(onItemAdded))
+			{
+				preparedAddItems.forEach((item) => onItemAdded(item));
+			}
+
+			return true;
 		}
 
+		/**
+		 * @private
+		 * @param {array} deleteItems
+		 * @returns {boolean} wasChanged
+		 */
 		processItemsDeleteOperations(deleteItems)
 		{
-			let wasChanged = false;
-			if (Type.isArrayFilled(deleteItems))
-			{
-				deleteItems.forEach((itemId) => {
-					if (this.hasItem(itemId))
-					{
-						wasChanged = true;
-						const index = this.state.items.findIndex((item) => String(item.id) === String(itemId));
-						const itemToDelete = this.state.items.splice(index, 1)[0];
+			const preparedDeleteItems = deleteItems.filter((id) => this.hasItem(id));
 
-						if (this.props.onItemDeleted)
-						{
-							this.props.onItemDeleted(itemToDelete);
-						}
-					}
-				});
+			if (!Type.isArrayFilled(preparedDeleteItems))
+			{
+				return false;
 			}
 
-			return wasChanged;
+			preparedDeleteItems.forEach((itemId) => {
+				const index = this.getItemIndex(itemId);
+				const itemToDelete = this.state.items.splice(index, 1)[0];
+				const { onItemDeleted } = this.props;
+
+				if (Type.isFunction(onItemDeleted))
+				{
+					onItemDeleted(itemToDelete);
+				}
+			});
+
+			return true;
 		}
 
+		/**
+		 * @private
+		 * @param {array} updateItems
+		 * @param {boolean} showAnimateOnView
+		 * @returns {boolean} wasChanged
+		 */
 		processItemsUpdateOperations(updateItems, showAnimateOnView)
 		{
-			let wasChanged = false;
-			if (Type.isArrayFilled(updateItems))
+			const preparedUpdateItems = updateItems.filter(({ id }) => this.hasItem(id));
+
+			if (!Type.isArrayFilled(preparedUpdateItems))
 			{
-				if (showAnimateOnView)
-				{
-					this.addToAnimateItems(updateItems);
-				}
-
-				updateItems.forEach((item) => {
-					if (!this.hasItem(item.id))
-					{
-						return;
-					}
-					wasChanged = true;
-					const oldPosition = this.state.items.findIndex((elem) => item.id === elem.id);
-					this.state.items.splice(oldPosition, 1);
-					const newPosition = this.findItemPosition(item, this.state.items);
-
-					if (newPosition === this.state.items.length - 1)
-					{
-						item = this.getReloadedItemByIndex(this.state.items.length, item);
-					}
-
-					this.state.items.splice(newPosition, 0, item);
-
-					if (this.props.onItemUpdated)
-					{
-						this.props.onItemUpdated(item);
-					}
-				});
+				return false;
 			}
 
-			return wasChanged;
+			if (showAnimateOnView)
+			{
+				this.addToAnimateItems(preparedUpdateItems);
+			}
+
+			updateItems.forEach((item) => {
+				const index = this.getItemIndex(item.id);
+				this.state.items[index] = item;
+			});
+
+			this.sortItemsIfCallbackExists();
+
+			const { onItemUpdated } = this.props;
+
+			if (Type.isFunction(onItemUpdated))
+			{
+				preparedUpdateItems.forEach((item) => onItemUpdated(item));
+			}
+
+			return true;
+		}
+
+		/**
+		 * @private
+		 * @param {array} replaceItems
+		 * @returns {boolean} wasChanged
+		 */
+		processItemsReplaceOperations(replaceItems)
+		{
+			const preparedReplaceItems = replaceItems.filter(({ idToReplace }) => this.hasItem(idToReplace));
+
+			if (!Type.isArrayFilled(preparedReplaceItems))
+			{
+				return false;
+			}
+
+			preparedReplaceItems.forEach((item) => {
+				const position = this.getItemIndex(item.idToReplace);
+				this.state.items.splice(position, 1, item);
+			});
+
+			return true;
 		}
 
 		/**
@@ -565,6 +626,7 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 		 * @param {Object[]} [operations.add]
 		 * @param {Object[]} [operations.update]
 		 * @param {string[]} [operations.delete]
+		 * @param {Object[]} [operations.replace]
 		 * @param {boolean} [showAnimateOnView=false]
 		 * @param {boolean} [showAnimateImmediately=true]
 		 * @param {Object} [animationTypes]
@@ -577,51 +639,71 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 			animationTypes = null,
 		)
 		{
-			const { add: addItems = [], update: updateItems = [], delete: deleteItems = [] } = operations;
-			const preparedAnimationTypes = this.prepareAnimationTypes(animationTypes);
+			const {
+				add: addItems = [],
+				update: updateItems = [],
+				delete: deleteItems = [],
+				replace: replaceItems = [],
+			} = operations;
 
 			return new Promise((resolve, reject) => {
 				let shouldUpdateSimpleList = false;
+				shouldUpdateSimpleList = (
+					this.processItemsAddOperation(addItems, showAnimateOnView) || shouldUpdateSimpleList
+				);
+				shouldUpdateSimpleList = (
+					this.processItemsDeleteOperations(deleteItems) || shouldUpdateSimpleList
+				);
+				shouldUpdateSimpleList = (
+					this.processItemsUpdateOperations(updateItems, showAnimateOnView) || shouldUpdateSimpleList
+				);
+				shouldUpdateSimpleList = (
+					this.processItemsReplaceOperations(replaceItems) || shouldUpdateSimpleList
+				);
 
-				shouldUpdateSimpleList = this.processItemsAddOperation(addItems, showAnimateOnView) || shouldUpdateSimpleList;
-				shouldUpdateSimpleList = this.processItemsDeleteOperations(deleteItems) || shouldUpdateSimpleList;
-				shouldUpdateSimpleList = this.processItemsUpdateOperations(updateItems, showAnimateOnView)
-																	|| shouldUpdateSimpleList;
-				if (shouldUpdateSimpleList)
-				{
-					const preparedItems = this.prepareItemsForRender(this.state.items);
-
-					this.simpleList.changeItemsState(
-						preparedItems,
-						showAnimateImmediately
-							? preparedAnimationTypes
-							: {
-								insert: 'none',
-								delete: 'none',
-								update: 'none',
-								move: false,
-							},
-					)
-						.then(resolve)
-						.catch((error) => {
-							console.error(error);
-							reject();
-						});
-
-					this.modifyCache();
-				}
-				else
+				if (!shouldUpdateSimpleList)
 				{
 					resolve();
+
+					return;
 				}
+
+				this.updateSimpleList(resolve, reject, { shouldUpdateSimpleList, animationTypes });
 			});
 		}
+
+		updateSimpleList = (resolve = () => {}, reject = () => {}, animation = {}) => {
+			const defaultAnimationTypes = {
+				insert: 'none',
+				delete: 'none',
+				update: 'none',
+				move: false,
+			};
+
+			const preparedItems = this.prepareItemsForRender(this.state.items);
+			const {
+				showAnimateImmediately = true,
+				animationTypes = null,
+			} = animation;
+
+			this.simpleList.changeItemsState(
+				preparedItems,
+				(showAnimateImmediately ? this.prepareAnimationTypes(animationTypes) : defaultAnimationTypes),
+			)
+				.then(resolve)
+				.catch((error) => {
+					console.error(error);
+					reject();
+				})
+			;
+			this.modifyCache();
+		};
 
 		updateItemsFromPull(items)
 		{
 			if (this.shouldReloadDynamically)
 			{
-				const ids = items.map((item) => item.id);
+				const ids = items.map(({ id }) => id);
 
 				return this.updateItems(ids, false, true);
 			}
@@ -633,7 +715,7 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 
 		deleteItemsFromPull(items)
 		{
-			const ids = items.map((item) => item.id);
+			const ids = items.map(({ id }) => id);
 
 			return this.processItemsGroupsByData({ delete: ids }, false, true);
 		}
@@ -664,7 +746,7 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 			BX.postComponentEvent('UI.StatefulList::onDrawListFromAjax', [
 				{
 					renderType: renderType.ajax,
-					items: response.data.items,
+					items: response.data?.items,
 					blockPage: this.state.blockPage,
 					params: loadItems,
 				},
@@ -672,6 +754,7 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 
 			const params = {
 				append,
+				loadItemsParams: loadItems,
 				renderType: renderType.ajax,
 			};
 
@@ -685,21 +768,27 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 				return;
 			}
 
-			if (response.errors && response.errors.length > 0 && response.data)
+			if (response?.errors?.length > 0)
 			{
-				response.errors
-					.filter(({ code }) => code !== 'NETWORK_ERROR')
-					.forEach(({ message }) => this.showError(message));
+				console.error('StatefulList: drawList error', response.errors);
 
-				return;
+				if (response.data)
+				{
+					response.errors
+						.filter(({ code }) => code !== 'NETWORK_ERROR')
+						.forEach(({ message }) => this.showError(message));
+
+					return;
+				}
 			}
 
-			const { data } = response;
+			let { data } = response;
+
 			let items = [];
 
-			if (data.items)
+			if (data?.items)
 			{
-				items = this.prepareItems(data.items);
+				items = data.items;
 			}
 
 			const newState = {
@@ -715,6 +804,17 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 
 			if (items.length === 0)
 			{
+				if (params.append)
+				{
+					newState.items = [...this.state.items];
+				}
+				else
+				{
+					newState.items = [];
+				}
+				newState.items = this.prepareItemsState(newState.items, params);
+				newState.items = this.prepareItems(newState.items);
+
 				this.setState(newState);
 
 				return;
@@ -732,7 +832,7 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 			if (params.append)
 			{
 				newState.items = [...this.state.items];
-				const notAdded = items.filter((item) => !newState.items.some((element) => element.id === item.id));
+				const notAdded = items.filter((item) => !newState.items.some(({ id }) => id === item.id));
 				newState.items.push(...notAdded);
 			}
 			else
@@ -740,7 +840,8 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 				newState.items = items;
 			}
 
-			newState.items = this.prepareItemsState(newState.items);
+			newState.items = this.prepareItemsState(newState.items, params);
+			newState.items = this.prepareItems(newState.items);
 
 			const newStateKeys = Object.keys(newState);
 			const isEqualStateWithoutItems = (
@@ -821,6 +922,7 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 		{
 			const initialStateParams = {
 				skipItems: true,
+				force: true,
 			};
 			const loadItemsParams = {
 				useCache: false,
@@ -865,7 +967,7 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 					this.props.onListReloaded(isPullToReload);
 				}
 
-				callback();
+				callback(initialStateParams);
 			});
 		}
 
@@ -910,13 +1012,13 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 			return initialState;
 		}
 
-		prepareItemsState(items)
+		prepareItemsState(items, params = {})
 		{
 			let preparedItems = clone(items);
 
 			if (this.props.onBeforeItemsSetState)
 			{
-				preparedItems = this.props.onBeforeItemsSetState(preparedItems);
+				preparedItems = this.props.onBeforeItemsSetState(preparedItems, params);
 			}
 
 			return preparedItems;
@@ -924,6 +1026,8 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 
 		prepareItemsForRender(items)
 		{
+			this.updateFloatingButton();
+
 			let preparedItems = clone(items);
 
 			if (this.props.onBeforeItemsRender)
@@ -938,9 +1042,14 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 			return preparedItems;
 		}
 
+		get colors()
+		{
+			return this.props.showAirStyle ? AppTheme.realColors : AppTheme.colors;
+		}
+
 		render()
 		{
-			const testId = this.getValue(this.props, 'testId');
+			const testId = this.getTestId();
 			const title = this.getValue(this.props, 'title');
 
 			return View(
@@ -948,7 +1057,7 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 					testId,
 					onPan: this.props.onPanListHandler || null,
 					style: {
-						backgroundColor: AppTheme.colors.bgPrimary,
+						backgroundColor: this.colors.bgPrimary,
 						flex: 1,
 					},
 				},
@@ -958,14 +1067,14 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 							flex: 1,
 							flexDirection: 'column',
 							backgroundColor: title
-								? AppTheme.colors.bgContentPrimary
-								: AppTheme.colors.bgPrimary,
+								? this.colors.bgContentPrimary
+								: this.colors.bgPrimary,
 						},
 					},
 					title && Text({
 						style: {
 							fontSize: 13,
-							color: AppTheme.colors.base1,
+							color: this.colors.base1,
 							marginVertical: 10,
 							marginLeft: 20,
 						},
@@ -992,7 +1101,7 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 						reloadListHandler: this.reloadList,
 						updateItemHandler: this.updateItemHandler,
 						deleteItemHandler: this.deleteItemHandler,
-						showFloatingButton: BX.prop.getBoolean(this.props, 'isShowFloatingButton', true),
+						showFloatingButton: this.isShowFloatingButton(),
 						getNotificationText: this.getNotificationText,
 						itemsLoadLimit: this.itemsLoadLimit,
 						isRefreshing: this.state.isRefreshing,
@@ -1004,6 +1113,11 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 					}),
 				),
 			);
+		}
+
+		getTestId()
+		{
+			return this.getValue(this.props, 'testId') || 'STATEFUL-LIST';
 		}
 
 		bindRef(ref)
@@ -1034,11 +1148,54 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 		}
 
 		/**
+		 * @param {String|Number} id
+		 * @returns {number}
+		 */
+		getItemIndex(id)
+		{
+			return this.state.items.findIndex((item) => String(item.id) === String(id));
+		}
+
+		/**
 		 * @returns {Object[]}
 		 */
 		getItems()
 		{
 			return this.state.items;
+		}
+
+		isEmptyList()
+		{
+			return this.getItems().length === 0;
+		}
+
+		initFloatingButton()
+		{
+			if (!FloatingActionButtonSupportNative(this.layout) || !this.isShowFloatingButton())
+			{
+				return;
+			}
+
+			const { onFloatingButtonClick, onFloatingButtonLongClick } = this.props;
+
+			this.floatingButton = FloatingActionButton({
+				testId: `${this.getTestId()}_ADD_BTN`,
+				parentLayout: this.layout,
+				onClick: onFloatingButtonClick,
+				onLongClick: onFloatingButtonLongClick,
+			});
+		}
+
+		updateFloatingButton(params)
+		{
+			const { isRefreshing } = this.state;
+
+			const floatingButtonParams = params || {
+				accent: isRefreshing ? false : this.isEmptyList(),
+				hide: !this.isShowFloatingButton(),
+			};
+
+			this.floatingButton?.setFloatingButton(floatingButtonParams);
 		}
 
 		// search
@@ -1356,139 +1513,6 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 			return this.simpleList.getItemPosition(key);
 		}
 
-		sortItems(items)
-		{
-			if (!this.sorting)
-			{
-				return;
-			}
-
-			items.sort((a, b) => {
-				const aSection = this.sorting.getSection(a) ?? 0;
-				const bSection = this.sorting.getSection(b) ?? 0;
-				if (aSection < bSection)
-				{
-					return -1;
-				}
-
-				if (aSection > bSection)
-				{
-					return 1;
-				}
-
-				const noProperty = this.sorting.noPropertyValue;
-				const aSortProperty = this.sorting
-					.getPropertyValue(a, this.sorting.sortByProperty) ?? noProperty;
-				const bSortProperty = this.sorting
-					.getPropertyValue(b, this.sorting.sortByProperty) ?? noProperty;
-
-				if (aSortProperty < bSortProperty)
-				{
-					return this.sorting.isASC ? -1 : 1;
-				}
-
-				if (aSortProperty > bSortProperty)
-				{
-					return this.sorting.isASC ? 1 : -1;
-				}
-
-				return 0;
-			});
-		}
-
-		/**
-		 * @param {obj} newItem
-		 * @param {array|null} sortedItems
-		 * @returns {number}
-		 */
-		// sortedItems must not contain newItem
-		findItemPosition(newItem, sortedItems = [])
-		{
-			if (!this.sorting)
-			{
-				return 0;
-			}
-
-			const noPropertyValue = this.sorting.noPropertyValue;
-
-			let newItemSection = 0;
-			if (typeof this.sorting.getSection === 'function')
-			{
-				newItemSection = this.sorting.getSection(newItem) ?? 0;
-			}
-
-			let newSortPropertyValue = noPropertyValue;
-			if (typeof this.sorting.getPropertyValue === 'function')
-			{
-				newSortPropertyValue = this.sorting
-					.getPropertyValue(newItem, this.sorting.sortByProperty) ?? noPropertyValue;
-			}
-
-			let found = false;
-			let index = -1;
-
-			for (const item of sortedItems)
-			{
-				index++;
-				let currentItemSection = 0;
-				if (typeof this.sorting.getSection === 'function')
-				{
-					currentItemSection = this.sorting.getSection(item) ?? 0;
-				}
-
-				if (currentItemSection < newItemSection)
-				{
-					continue;
-				}
-				else if (currentItemSection > newItemSection)
-				{
-					found = true;
-					break;
-				}
-
-				let currentSortPropertyValue = noPropertyValue;
-				if (typeof this.sorting.getPropertyValue === 'function')
-				{
-					currentSortPropertyValue = this.sorting
-						.getPropertyValue(item, this.sorting.sortByProperty) ?? noPropertyValue;
-				}
-
-				if ((this.sorting.isASC && currentSortPropertyValue >= newSortPropertyValue)
-					|| (!this.sorting.isASC && currentSortPropertyValue <= newSortPropertyValue))
-				{
-					found = true;
-					break;
-				}
-			}
-
-			return found ? index : index + 1;
-		}
-
-		getReloadedItemByIndex(index, fallback)
-		{
-			let item = fallback;
-
-			const config = {
-				data: (this.state.actionParams.loadItems || {}),
-				navigation: {
-					page: index + 1,
-					size: 1,
-				},
-			};
-
-			new RunActionExecutor(this.props.actions.loadItems, config.data, config.navigation)
-				.setHandler((response) => {
-					if (response.errors.length > 0)
-					{
-						return;
-					}
-					item = response.data.items[0];
-				})
-				.call(false);
-
-			return item;
-		}
-
 		updateItemHandler(itemId, params = {})
 		{
 			const showAnimate = BX.prop.getBoolean(params, 'showAnimate', true);
@@ -1600,7 +1624,7 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 			showAnimateImmediately = true,
 		)
 		{
-			const itemIds = entities.map((entity) => entity.id);
+			const itemIds = entities.map(({ id }) => id);
 			const operations = this.groupItemsByOperations(itemIds, entities);
 
 			return this.processItemsGroupsByData(
@@ -1610,17 +1634,22 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 			);
 		}
 
+		replaceItems(items)
+		{
+			return this.processItemsGroupsByData({ replace: this.prepareItems(items) });
+		}
+
 		/**
-		 * @param {string} itemId
+		 * @param {string|Array<string>} itemIds
 		 * @param {string} [animationType]
 		 * @returns {Promise}
 		 */
-		deleteItem(itemId, animationType)
+		deleteItem(itemIds, animationType)
 		{
 			const animation = animationType || get(this.props, 'animationTypes.deleteRow', 'fade');
 
 			return this.processItemsGroupsByData(
-				{ delete: [itemId] },
+				{ delete: Array.isArray(itemIds) ? itemIds : [itemIds] },
 				false,
 				true,
 				{
@@ -1661,7 +1690,7 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 			if (!isEqual(buttons, this.layoutRightButtons))
 			{
 				this.layoutRightButtons = buttons;
-				layout.setRightButtons(buttons);
+				this.layout.setRightButtons(buttons);
 			}
 		}
 
@@ -1687,7 +1716,9 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 				}
 			}
 
-			if (this.layoutMenuActions.length > 0)
+			const layoutMenuActions = this.getValue(props, 'layoutMenuActions', []);
+
+			if (layoutMenuActions.length > 0)
 			{
 				this.menuProps = props;
 				buttons.push({
@@ -1757,7 +1788,7 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 
 		addToAnimateItems(items)
 		{
-			items.forEach((item) => this.addToAnimateIds(item.id));
+			items.forEach(({ id }) => this.addToAnimateIds(id));
 		}
 
 		addToAnimateIds(id)
@@ -1770,7 +1801,7 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 
 		getValue(object, property, defaultValue = null, isObjectClone = true)
 		{
-			if (isObjectClone && Object.prototype.hasOwnProperty.call(object, property))
+			if (object && isObjectClone && Object.prototype.hasOwnProperty.call(object, property))
 			{
 				return clone(object[property]);
 			}
@@ -1787,6 +1818,40 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 
 			this.deviceConnectionStatus = status;
 		}
+
+		getItemRef(itemId)
+		{
+			return this.simpleList.getItemComponent(itemId);
+		}
+
+		getItemRootViewRef(itemId)
+		{
+			return this.simpleList.getItemRootViewRef(itemId);
+		}
+
+		getItemMenuViewRef(itemId)
+		{
+			return this.simpleList.getItemMenuViewRef(itemId) ?? this.simpleList.getItemRootViewRef(itemId);
+		}
+
+		isShowFloatingButton()
+		{
+			return BX.prop.getBoolean(this.props, 'isShowFloatingButton', true);
+		}
+
+		sortItemsIfCallbackExists()
+		{
+			const { sortItemsCallback } = this.sorting;
+
+			if (Type.isFunction(sortItemsCallback))
+			{
+				this.state.items.sort(sortItemsCallback);
+			}
+		}
+
+		scrollBy = (props) => {
+			this.simpleList.scrollBy(props);
+		};
 	}
 
 	module.exports = { StatefulList };

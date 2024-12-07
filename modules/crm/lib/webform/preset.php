@@ -78,6 +78,17 @@ class Preset
 
 	public function install(): bool
 	{
+		if (
+			Loader::includeModule('bitrix24')
+			&& !\Bitrix\Bitrix24\Feature::isFeatureEnabled('crm_webform_edit')
+		)
+		{
+			UserConsent::getDefaultAgreementId();
+			self::updateInstalledVersion();
+
+			return true;
+		}
+
 		if(!self::checkVersion())
 		{
 			return true;

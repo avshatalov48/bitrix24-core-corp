@@ -12,11 +12,14 @@ use Bitrix\Main\UI\Extension;
 use Bitrix\Tasks\Integration\Network\MemberSelector;
 use Bitrix\Tasks\Internals\Routes\RouteDictionary;
 use Bitrix\Tasks\UI\ScopeDictionary;
+use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\ProjectLimit;
 
 Extension::load([
 	'ui.design-tokens',
 	'ui.entity-selector',
 ]);
+
+$isProjectEnabled = (ProjectLimit::isFeatureEnabled() || ProjectLimit::canTurnOnTrial());
 
 $projectId = 0;
 $projectName = Loc::getMessage('TASKS_QUICK_IN_GROUP');
@@ -77,7 +80,12 @@ $formattedUserName = CUser::FormatName(
 		</span>
 		<span class="task-top-panel-middle">
 			<span class="task-top-panel-leftmiddle" id="task-new-item-description-block">
-				<span id="task-new-item-project-link" class="task-top-panel-tab"><?= $projectName ?></span>
+				<span id="task-new-item-project-link" class="task-top-panel-tab">
+					<?= $projectName ?>
+					<?php if (!$isProjectEnabled): ?>
+						<span class="tasks-tariff-lock"></span>
+					<?php endif; ?>
+				</span>
 				<span
 					class="task-top-panel-tab-close<?= ($projectId > 0 ? " task-top-panel-tab-close-active" : "") ?>"
 					id="task-new-item-project-clearing">
@@ -123,6 +131,8 @@ $formattedUserName = CUser::FormatName(
 			networkEnabled: <?= MemberSelector::isNetworkEnabled() ? 'true' : 'false' ?>,
 			scope: '<?= CUtil::JSEscape($arParams['SCOPE']) ?>',
 			personalContext: '<?= $projectId === 0 ?>',
+			isProjectEnabled: <?= \Bitrix\Main\Web\Json::encode($isProjectEnabled); ?>,
+			projectFeatureId: '<?= ProjectLimit::getFeatureId() ?>',
 		});
 	</script>
 </div>

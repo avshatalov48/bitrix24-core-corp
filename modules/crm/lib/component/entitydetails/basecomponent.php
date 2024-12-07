@@ -112,11 +112,15 @@ abstract class BaseComponent extends Crm\Component\Base
 
 	public static function updateEntity($entityTypeID, $entityID, array $entityData, array $options = array())
 	{
-		$result = static::updateClient(new Crm\ItemIdentifier(
-				$entityTypeID,
-				$entityID
-			), $entityData, $options
-		);
+		$identifier = Crm\ItemIdentifier::createFromArray([
+			'ENTITY_TYPE_ID' => $entityTypeID,
+			'ENTITY_ID' => $entityID,
+		]);
+		if (!$identifier)
+		{
+			return false;
+		}
+		$result = static::updateClient($identifier, $entityData, $options);
 
 		return $result->isSuccess();
 	}
@@ -263,7 +267,7 @@ abstract class BaseComponent extends Crm\Component\Base
 		);
 	}
 
-	protected function addError($error)
+	protected function addError(mixed $error): void
 	{
 		if (!$error instanceof Main\Error)
 		{
@@ -356,8 +360,9 @@ abstract class BaseComponent extends Crm\Component\Base
 					: ComponentMode::VIEW;
 			}
 		}
-
+		//@codingStandardsIgnoreStart
 		$this->arResult['COMPONENT_MODE'] = $this->mode;
+		//@codingStandardsIgnoreEnd
 
 		return true;
 	}
@@ -395,11 +400,12 @@ abstract class BaseComponent extends Crm\Component\Base
 		{
 			$wizard = $this->initializeConversionWizardFromRequest($this->request);
 		}
-
+		//@codingStandardsIgnoreStart
 		if (is_null($wizard) && !empty($this->arParams['CONVERSION_SOURCE']))
 		{
 			$wizard = Conversion\ConversionManager::loadWizardByParams($this->arParams['CONVERSION_SOURCE']);
 		}
+		//@codingStandardsIgnoreEnd
 
 		if (!$wizard || !$wizard->isConvertingTo($this->getEntityTypeID()))
 		{
@@ -681,7 +687,7 @@ abstract class BaseComponent extends Crm\Component\Base
 					$entityTypeID,
 					$entityID,
 					\CCrmBizProcEventType::Create,
-					$arErrors
+					$errors
 				);
 			}
 		}
@@ -928,7 +934,7 @@ abstract class BaseComponent extends Crm\Component\Base
 					$entityTypeID,
 					$entityID,
 					\CCrmBizProcEventType::Edit,
-					$arErrors
+					$errors
 				);
 			}
 		}

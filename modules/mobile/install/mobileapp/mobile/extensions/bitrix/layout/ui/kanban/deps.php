@@ -4,7 +4,7 @@ return [
 	'extensions' => [
 		'layout/ui/kanban/counter',
 		'layout/ui/kanban/toolbar',
-		'layout/ui/pure-component',
+		'layout/pure-component',
 		'layout/ui/stateful-list',
 		'layout/ui/simple-list/items',
 		'loc',

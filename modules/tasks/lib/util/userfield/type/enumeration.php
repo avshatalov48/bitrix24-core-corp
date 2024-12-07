@@ -85,7 +85,7 @@ final class Enumeration extends Type
 					$item['XML_ID'] = 'id_'.$i++;
 				}
 
-				static::$enums[$id][ToLower(trim($item['XML_ID']))] = $item;
+				static::$enums[$id][mb_strtolower(trim($item['XML_ID']))] = $item;
 			}
 		}
 

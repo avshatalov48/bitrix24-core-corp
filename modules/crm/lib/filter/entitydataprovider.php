@@ -3,7 +3,6 @@
 namespace Bitrix\Crm\Filter;
 
 use Bitrix\Crm\Entity\EntityManager;
-use Bitrix\Crm\Filter\Activity;
 use Bitrix\Crm\Filter\Activity\CounterFilter;
 use Bitrix\Crm\Filter\Activity\FilterByActivityResponsible;
 use Bitrix\Crm\Filter\FieldsTransform\UserBasedField;
@@ -19,11 +18,42 @@ abstract class EntityDataProvider extends Main\Filter\EntityDataProvider
 	public const QUERY_APPROACH_ORM = 'orm';
 	public const QUERY_APPROACH_BUILDER = 'builder';
 
+	protected function getFactory(): ?\Bitrix\Crm\Service\Factory
+	{
+		return Container::getInstance()->getFactory($this->getSettings()->getEntityTypeID());
+	}
+
+	public function prepareListFilterParam(array &$filter, $fieldID)
+	{
+		static $forceSubstringSearch = [
+			'TITLE',
+			'COMMENTS',
+			'BANKING_DETAILS',
+			'NAME',
+			'LAST_NAME',
+			'SECOND_NAME',
+			'POST',
+			'COMPANY_TITLE'
+		];
+
+		if (in_array($fieldID, $forceSubstringSearch, true) && $this->getFactory()?->isFieldExists($fieldID))
+		{
+			$value = (string)($filter[$fieldID] ?? '');
+			$value = trim($value);
+			if ($value !== '')
+			{
+				$filter["?{$fieldID}"] = $value;
+			}
+
+			unset($filter[$fieldID]);
+		}
+	}
+
 	public function prepareFilterValue(array $rawFilterValue): array
 	{
 		$filterValue = parent::prepareFilterValue($rawFilterValue);
 
-		$factory = Container::getInstance()->getFactory($this->getSettings()->getEntityTypeID());
+		$factory = $this->getFactory();
 		if (!$factory)
 		{
 			return $filterValue;
@@ -82,7 +112,7 @@ abstract class EntityDataProvider extends Main\Filter\EntityDataProvider
 
 	public function applyActivityResponsibleFilter(int $entityTypeId, array &$filterFields): void
 	{
-		$dataProviderQueryApproach = $this->getDataProviderQueryApproach($entityTypeId);
+		$dataProviderQueryApproach = $this->getDataProviderQueryApproach();
 
 		if ($dataProviderQueryApproach === null)
 		{
@@ -98,7 +128,7 @@ abstract class EntityDataProvider extends Main\Filter\EntityDataProvider
 	public function applyCounterFilter(int $entityTypeId, array &$filterFields, array $extras = []): void
 	{
 
-		$dataProviderQueryApproach = $this->getDataProviderQueryApproach($entityTypeId);
+		$dataProviderQueryApproach = $this->getDataProviderQueryApproach();
 
 		if ($dataProviderQueryApproach === null)
 		{
@@ -113,20 +143,22 @@ abstract class EntityDataProvider extends Main\Filter\EntityDataProvider
 
 	public function applyActivityFastSearchFilter(int $entityTypeId, array &$filterFields): void
 	{
-		$dataProviderQueryApproach = $this->getDataProviderQueryApproach($entityTypeId);
+		$dataProviderQueryApproach = $this->getDataProviderQueryApproach();
 
 		if ($dataProviderQueryApproach === null)
 		{
 			return;
 		}
 
-		$actFastSearchFilter = new Activity\FastSearchSubFilter($dataProviderQueryApproach);
+		$actFastSearchFilter = new Activity\FastSearchSubFilter($this);
 
 		$actFastSearchFilter->applyFilter($entityTypeId, $filterFields);
 	}
 
-	private function getDataProviderQueryApproach(int $entityTypeId): ?string
+	public function getDataProviderQueryApproach(): ?string
 	{
+		$entityTypeId = $this->getSettings()->getEntityTypeID();
+
 		if ($this instanceof ItemDataProvider)
 		{
 			return self::QUERY_APPROACH_ORM;

@@ -46,11 +46,6 @@ class SmartDocument extends Dynamic
 		return false;
 	}
 
-	public function isPaymentsEnabled(): bool
-	{
-		return false;
-	}
-
 	public static function createTypeIfNotExists(): void
 	{
 		$type = TypeTable::getByEntityTypeId(\CCrmOwnerType::SmartDocument)->fetchObject();
@@ -272,7 +267,7 @@ class SmartDocument extends Dynamic
 						'OWNER_TYPE_ID' => $item->getEntityTypeId(),
 						'OWNER_ID' => $item->getId(),
 					]];
-					
+
 					$parent = $item->get('PARENT_ID_' . \CCrmOwnerType::Deal);
 					if ($parent)
 					{
@@ -324,5 +319,10 @@ class SmartDocument extends Dynamic
 		);
 
 		return $operation;
+	}
+
+	public function isCommunicationRoutingSupported(): bool
+	{
+		return false;
 	}
 }

@@ -1,11 +1,11 @@
 <?php
-global $MESS;
-$PathInstall = str_replace("\\", "/", __FILE__);
-$PathInstall = mb_substr($PathInstall, 0, mb_strlen($PathInstall) - mb_strlen("/index.php"));
 
-IncludeModuleLangFile($PathInstall."/install.php");
+if(class_exists("rpa"))
+{
+	return;
+}
 
-if(class_exists("rpa")) return;
+IncludeModuleLangFile(__FILE__);
 
 class rpa extends CModule
 {
@@ -70,7 +70,7 @@ class rpa extends CModule
 		static::installUserFields();
 
 		$eventManager = \Bitrix\Main\EventManager::getInstance();
-		$eventManager->registerEventHandler('main', 'onGetUserFieldTypeFactory', $this->MODULE_ID, '\Bitrix\Rpa\Driver', 'onGetTypeDataClassList', 100);
+		$eventManager->registerEventHandler('main', 'onGetUserFieldTypeFactory', $this->MODULE_ID, '\Bitrix\Rpa\Driver', 'onGetTypeDataClassList');
 		$eventManager->registerEventHandler('pull', 'OnGetDependentModule', $this->MODULE_ID, '\Bitrix\Rpa\Driver', 'onGetDependentModule', 800);
 		$eventManager->registerEventHandler('disk', 'onBuildAdditionalConnectorList', 'rpa', '\Bitrix\Rpa\Driver', 'onDiskBuildConnectorList');
 		$eventManager->registerEventHandler('rest', 'OnRestServiceBuildDescription', $this->MODULE_ID, '\Bitrix\Rpa\Driver', 'onRestServiceBuildDescription');
@@ -112,18 +112,18 @@ class rpa extends CModule
 
 	function DoUninstall()
 	{
-		global $DOCUMENT_ROOT, $APPLICATION, $step;
+		global $APPLICATION, $step;
+
 		$step = intval($step);
 		if($step<2)
 		{
-			$APPLICATION->IncludeAdminFile(GetMessage("RPA_UNINSTALL_TITLE"), $DOCUMENT_ROOT."/bitrix/modules/".$this->MODULE_ID."/install/unstep1.php");
+			$APPLICATION->IncludeAdminFile(GetMessage("RPA_UNINSTALL_TITLE"), $_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/".$this->MODULE_ID."/install/unstep1.php");
 		}
 		elseif($step==2)
 		{
 			$this->UnInstallDB(["savedata" => $_REQUEST["savedata"] ?? null]);
-			$this->UnInstallFiles();
 
-			$APPLICATION->IncludeAdminFile(GetMessage("RPA_UNINSTALL_TITLE"), $DOCUMENT_ROOT."/bitrix/modules/".$this->MODULE_ID."/install/unstep2.php");
+			$APPLICATION->IncludeAdminFile(GetMessage("RPA_UNINSTALL_TITLE"), $_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/".$this->MODULE_ID."/install/unstep2.php");
 		}
 
 		return true;
@@ -165,11 +165,6 @@ class rpa extends CModule
 		UnRegisterModuleDependences("main", "OnAfterRegisterModule", "main", $this->MODULE_ID, "installUserFields", "/modules/rpa/install/index.php");
 
 		UnRegisterModule($this->MODULE_ID);
-		return true;
-	}
-
-	function UnInstallFiles()
-	{
 		return true;
 	}
 
@@ -236,15 +231,5 @@ class rpa extends CModule
 		}
 
 		return $result;
-	}
-
-	function InstallEvents()
-	{
-		return true;
-	}
-
-	function UnInstallEvents()
-	{
-		return true;
 	}
 }

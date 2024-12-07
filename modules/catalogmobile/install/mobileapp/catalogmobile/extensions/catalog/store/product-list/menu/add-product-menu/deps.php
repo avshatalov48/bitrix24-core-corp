@@ -3,6 +3,6 @@
 return [
 	'extensions' => [
 		'analytics-label',
-		'layout/ui/context-menu/item',
+		'layout/ui/context-menu',
 	],
 ];

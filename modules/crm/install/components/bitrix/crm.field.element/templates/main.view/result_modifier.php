@@ -86,7 +86,7 @@ if(is_array($arResult['value']) && count($arResult['value']))
 
 		if (empty($arResult['value']['LEAD']['items']))
 		{
-			$emptyEntityLabels['LEAD'] = Loc::getMessage('CRM_ENTITY_ITEM_DELETED');
+			$emptyEntityLabels['LEAD'] = Loc::getMessage('CRM_ELEMENT_HIDDEN_OR_DELETED');
 		}
 	}
 
@@ -139,7 +139,7 @@ if(is_array($arResult['value']) && count($arResult['value']))
 
 		if (empty($arResult['value']['CONTACT']['items']))
 		{
-			$emptyEntityLabels['CONTACT'] = Loc::getMessage('CRM_ENTITY_ITEM_DELETED');
+			$emptyEntityLabels['CONTACT'] = Loc::getMessage('CRM_ELEMENT_HIDDEN_OR_DELETED');
 		}
 	}
 
@@ -174,7 +174,7 @@ if(is_array($arResult['value']) && count($arResult['value']))
 
 		if (empty($arResult['value']['COMPANY']['items']))
 		{
-			$emptyEntityLabels['COMPANY'] = Loc::getMessage('CRM_ENTITY_ITEM_DELETED');
+			$emptyEntityLabels['COMPANY'] = Loc::getMessage('CRM_ELEMENT_HIDDEN_OR_DELETED');
 		}
 	}
 
@@ -210,7 +210,7 @@ if(is_array($arResult['value']) && count($arResult['value']))
 
 		if (empty($arResult['value']['DEAL']['items']))
 		{
-			$emptyEntityLabels['DEAL'] = Loc::getMessage('CRM_ENTITY_ITEM_DELETED');
+			$emptyEntityLabels['DEAL'] = Loc::getMessage('CRM_ELEMENT_HIDDEN_OR_DELETED');
 		}
 	}
 
@@ -244,7 +244,7 @@ if(is_array($arResult['value']) && count($arResult['value']))
 
 		if (empty($arResult['value']['ORDER']['items']))
 		{
-			$emptyEntityLabels['ORDER'] = Loc::getMessage('CRM_ENTITY_ITEM_DELETED');
+			$emptyEntityLabels['ORDER'] = Loc::getMessage('CRM_ELEMENT_HIDDEN_OR_DELETED');
 		}
 	}
 
@@ -288,7 +288,7 @@ if(is_array($arResult['value']) && count($arResult['value']))
 				$arResult['value'][$entityTypeName]['items'][$itemId] = [
 					'ENTITY_TYPE_ID' => $entityTypeId,
 					'ENTITY_TYPE_ID_WITH_ENTITY_ID' => $entityTypeId.'-'.$itemId,
-					'SHORT_ENTITY_TYPE_ID_WITH_ENTITY_ID' => $entityTypeId . '-' . $itemId,
+					'SHORT_ENTITY_TYPE_ID_WITH_ENTITY_ID' => \CCrmOwnerTypeAbbr::ResolveByTypeID($entityTypeId) . '_' . $itemId,
 					'ENTITY_TITLE' => $item->getHeading(),
 					'ENTITY_LINK' => Container::getInstance()->getRouter()->getItemDetailUrl($entityTypeId, $itemId),
 				];
@@ -296,7 +296,7 @@ if(is_array($arResult['value']) && count($arResult['value']))
 
 			if (empty($arResult['value'][$entityTypeName]['items']))
 			{
-				$emptyEntityLabels[$entityTypeName] = Loc::getMessage('CRM_ENTITY_ITEM_DELETED');
+				$emptyEntityLabels[$entityTypeName] = Loc::getMessage('CRM_ELEMENT_HIDDEN_OR_DELETED');
 			}
 		}
 	}

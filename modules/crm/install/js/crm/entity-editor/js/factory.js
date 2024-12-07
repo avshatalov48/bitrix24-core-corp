@@ -99,6 +99,10 @@ if(typeof BX.Crm.EntityEditorControlFactory === "undefined")
 				{
 					return BX.UI.EntityEditorBB.create(controlId, settings);
 				}
+				else if(type === "bbcode")
+				{
+					return BX.UI.EntityEditorBBCode.create(controlId, settings);
+				}
 				else if(type === "file")
 				{
 					return BX.UI.EntityEditorFile.create(controlId, settings);

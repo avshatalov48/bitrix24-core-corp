@@ -498,7 +498,11 @@ $bodyLoaderMaxTime = ini_get('max_execution_time') ?: 60;
 					'name'        => 'DATA[subject]',
 					'title'       => getMessage('CRM_ACT_EMAIL_CREATE_SUBJECT'),
 					'placeholder' => getMessage('CRM_ACT_EMAIL_CREATE_SUBJECT_PH'),
-					'value'       => $activity['SUBJECT'],
+					'value'     => preg_replace(
+						'/^(Re:\s*)?/i',
+						'Re: ',
+						$activity['SUBJECT']
+					),
 					'folded'      => true,
 				),
 				array(
@@ -536,7 +540,7 @@ $bodyLoaderMaxTime = ini_get('max_execution_time') ?: 60;
 
 </form>
 
-<script type="text/javascript">
+<script>
 
 document.getElementById('<?=\CUtil::jsEscape($bodyElementId)?>').innerHTML = '<?=CUtil::jsEscape($arParams['~ACTIVITY']['DESCRIPTION_HTML']) ?>';
 

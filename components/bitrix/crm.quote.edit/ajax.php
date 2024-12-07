@@ -43,7 +43,6 @@ if (!CCrmSecurityHelper::IsAuthorized() || !check_bitrix_sessid() || $_SERVER['R
 }
 
 \Bitrix\Main\Localization\Loc::loadMessages(__FILE__);
-CUtil::JSPostUnescape();
 $APPLICATION->RestartBuffer();
 header('Content-Type: application/x-javascript; charset='.LANG_CHARSET);
 

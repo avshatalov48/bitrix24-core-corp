@@ -1,0 +1,62 @@
+.sign-preview__scope {
+
+}
+
+.sign-preview {
+	display: flex;
+	flex-direction: column;
+	position: sticky;
+	top: 10px;
+}
+
+.sign-preview__body {
+	flex: 1;
+}
+
+.sign-preview__footer {
+	position: relative;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	margin-top: 14px;
+	padding: 0 10px;
+}
+
+.sign-preview__document {
+	display: block;
+}
+
+.sign-preview__document-background {
+	display: block;
+	position: relative;
+	background-color: #fff;
+	box-shadow: 0 12px 20px rgba(82, 92, 105, .13);
+	/*padding: 5px;*/
+}
+
+.sign-preview__document-background:after,
+.sign-preview__document-background:before {
+	content: '';
+	position: absolute;
+	right: 0;
+	z-index: 9;
+}
+.sign-preview__document-background:after {
+	top: 0;
+	bottom: 0;
+	width: 4px;
+}
+
+.sign-preview__document-background:before {
+	left: 0;
+	bottom: 0;
+	height: 4px;
+}
+
+.sign-preview__first-image-ready {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	opacity: 0;
+	pointer-events: none;
+}

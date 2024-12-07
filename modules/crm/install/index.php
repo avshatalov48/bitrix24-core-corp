@@ -42,7 +42,7 @@ class crm extends CModule
 		global $APPLICATION;
 		global $USER_FIELD_MANAGER;
 
-		$USER_FIELD_MANAGER->arUserTypes = false;
+		$USER_FIELD_MANAGER->CleanCache();
 
 		$errors = null;
 
@@ -84,7 +84,7 @@ class crm extends CModule
 
 				$CAllUserTypeEntity = new CUserTypeEntity();
 				$intID = $CAllUserTypeEntity->Add($arFields, false);
-				if (false == $intID)
+				if (!$intID)
 				{
 					if ($strEx = $APPLICATION->GetException())
 					{
@@ -121,7 +121,7 @@ class crm extends CModule
 
 				$CAllUserTypeEntity = new CUserTypeEntity();
 				$intID = $CAllUserTypeEntity->Add($arFields, false);
-				if (false == $intID)
+				if (!$intID)
 				{
 					if ($strEx = $APPLICATION->GetException())
 					{
@@ -160,7 +160,7 @@ class crm extends CModule
 
 				$CAllUserTypeEntity = new CUserTypeEntity();
 				$intID = $CAllUserTypeEntity->Add($arFields, false);
-				if (false == $intID)
+				if (!$intID)
 				{
 					if ($strEx = $APPLICATION->GetException())
 					{
@@ -197,7 +197,7 @@ class crm extends CModule
 
 				$CAllUserTypeEntity = new CUserTypeEntity();
 				$intID = $CAllUserTypeEntity->Add($arFields, false);
-				if (false == $intID)
+				if (!$intID)
 				{
 					if ($strEx = $APPLICATION->GetException())
 					{
@@ -241,7 +241,7 @@ class crm extends CModule
 						'de' => 'Load files',
 					],
 				]);
-				if (false == $intID)
+				if (!$intID)
 				{
 					if ($strEx = $APPLICATION->GetException())
 					{
@@ -250,7 +250,7 @@ class crm extends CModule
 				}
 			}
 
-			$rsUserType = \CUserTypeEntity::getList(
+			$rsUserType = CUserTypeEntity::getList(
 				[],
 				[
 					'ENTITY_ID' => 'CRM_MAIL_TEMPLATE',
@@ -259,7 +259,7 @@ class crm extends CModule
 			);
 			if (!$rsUserType->fetch())
 			{
-				$CAllUserTypeEntity = new \CUserTypeEntity();
+				$CAllUserTypeEntity = new CUserTypeEntity();
 				$intID = $CAllUserTypeEntity->add([
 					'ENTITY_ID' => 'CRM_MAIL_TEMPLATE',
 					'FIELD_NAME' => 'UF_ATTACHMENT',
@@ -273,7 +273,7 @@ class crm extends CModule
 					'EDIT_IN_LIST' => 'N',
 					'IS_SEARCHABLE' => 'N',
 				]);
-				if (false == $intID)
+				if (!$intID)
 				{
 					if ($strEx = $APPLICATION->getException())
 					{
@@ -285,7 +285,7 @@ class crm extends CModule
 
 		if (in_array($moduleId, ['all', 'mail']) && isModuleInstalled('mail'))
 		{
-			$rsUserType = \CUserTypeEntity::getList(
+			$rsUserType = CUserTypeEntity::getList(
 				[],
 				[
 					'ENTITY_ID' => 'CRM_ACTIVITY',
@@ -294,7 +294,7 @@ class crm extends CModule
 			);
 			if (!$rsUserType->fetch())
 			{
-				$CAllUserTypeEntity = new \CUserTypeEntity();
+				$CAllUserTypeEntity = new CUserTypeEntity();
 				$intID = $CAllUserTypeEntity->add([
 					'ENTITY_ID' => 'CRM_ACTIVITY',
 					'FIELD_NAME' => 'UF_MAIL_MESSAGE',
@@ -308,7 +308,7 @@ class crm extends CModule
 					'EDIT_IN_LIST' => 'N',
 					'IS_SEARCHABLE' => 'N',
 				]);
-				if (false == $intID)
+				if (!$intID)
 				{
 					if ($strEx = $APPLICATION->getException())
 					{
@@ -521,62 +521,13 @@ class crm extends CModule
 				'adm' => [
 					'NAME' => Loc::getMessage('CRM_ROLE_ADMIN'),
 					'RELATION' => [
-						'LEAD' => [
-							'READ' => ['-' => 'X'],
-							'EXPORT' => ['-' => 'X'],
-							'IMPORT' => ['-' => 'X'],
-							'ADD' => ['-' => 'X'],
-							'WRITE' => ['-' => 'X'],
-							'DELETE' => ['-' => 'X'],
-						],
-						'DEAL' => [
-							'READ' => ['-' => 'X'],
-							'EXPORT' => ['-' => 'X'],
-							'IMPORT' => ['-' => 'X'],
-							'ADD' => ['-' => 'X'],
-							'WRITE' => ['-' => 'X'],
-							'DELETE' => ['-' => 'X'],
-						],
-						'CONTACT' => [
-							'READ' => ['-' => 'X'],
-							'EXPORT' => ['-' => 'X'],
-							'IMPORT' => ['-' => 'X'],
-							'ADD' => ['-' => 'X'],
-							'WRITE' => ['-' => 'X'],
-							'DELETE' => ['-' => 'X'],
-						],
-						'COMPANY' => [
-							'READ' => ['-' => 'X'],
-							'EXPORT' => ['-' => 'X'],
-							'IMPORT' => ['-' => 'X'],
-							'ADD' => ['-' => 'X'],
-							'WRITE' => ['-' => 'X'],
-							'DELETE' => ['-' => 'X'],
-						],
-						'QUOTE' => [
-							'READ' => ['-' => 'X'],
-							'EXPORT' => ['-' => 'X'],
-							'IMPORT' => ['-' => 'X'],
-							'ADD' => ['-' => 'X'],
-							'WRITE' => ['-' => 'X'],
-							'DELETE' => ['-' => 'X'],
-						],
-						'INVOICE' => [
-							'READ' => ['-' => 'X'],
-							'EXPORT' => ['-' => 'X'],
-							'IMPORT' => ['-' => 'X'],
-							'ADD' => ['-' => 'X'],
-							'WRITE' => ['-' => 'X'],
-							'DELETE' => ['-' => 'X'],
-						],
-						'ORDER' => [
-							'READ' => ['-' => 'X'],
-							'EXPORT' => ['-' => 'X'],
-							'IMPORT' => ['-' => 'X'],
-							'ADD' => ['-' => 'X'],
-							'WRITE' => ['-' => 'X'],
-							'DELETE' => ['-' => 'X'],
-						],
+						'LEAD' => $CCrmRole::getMaxPermissionSetForEntity(new \Bitrix\Crm\CategoryIdentifier(CCrmOwnerType::Lead)),
+						'DEAL' => $CCrmRole::getMaxPermissionSetForEntity(new \Bitrix\Crm\CategoryIdentifier(CCrmOwnerType::Deal)),
+						'CONTACT' => $CCrmRole::getMaxPermissionSetForEntity(new \Bitrix\Crm\CategoryIdentifier(CCrmOwnerType::Contact)),
+						'COMPANY' => $CCrmRole::getMaxPermissionSetForEntity(new \Bitrix\Crm\CategoryIdentifier(CCrmOwnerType::Company)),
+						'QUOTE' => $CCrmRole::getMaxPermissionSetForEntity(new \Bitrix\Crm\CategoryIdentifier(CCrmOwnerType::Quote)),
+						'INVOICE' => $CCrmRole::getMaxPermissionSetForEntity(new \Bitrix\Crm\CategoryIdentifier(CCrmOwnerType::Invoice)),
+
 						'WEBFORM' => [
 							'READ' => ['-' => 'X'],
 							'WRITE' => ['-' => 'X'],
@@ -593,62 +544,13 @@ class crm extends CModule
 				'man' => [
 					'NAME' => Loc::getMessage('CRM_ROLE_MAN'),
 					'RELATION' => [
-						'LEAD' => [
-							'READ' => ['-' => 'X'],
-							'EXPORT' => ['-' => 'X'],
-							'IMPORT' => ['-' => 'X'],
-							'ADD' => ['-' => 'X'],
-							'WRITE' => ['-' => 'X'],
-							'DELETE' => ['-' => 'X'],
-						],
-						'DEAL' => [
-							'READ' => ['-' => 'X'],
-							'EXPORT' => ['-' => 'X'],
-							'IMPORT' => ['-' => 'X'],
-							'ADD' => ['-' => 'X'],
-							'WRITE' => ['-' => 'X'],
-							'DELETE' => ['-' => 'X'],
-						],
-						'CONTACT' => [
-							'READ' => ['-' => 'X'],
-							'EXPORT' => ['-' => 'X'],
-							'IMPORT' => ['-' => 'X'],
-							'ADD' => ['-' => 'X'],
-							'WRITE' => ['-' => 'X'],
-							'DELETE' => ['-' => 'X'],
-						],
-						'COMPANY' => [
-							'READ' => ['-' => 'X'],
-							'EXPORT' => ['-' => 'X'],
-							'IMPORT' => ['-' => 'X'],
-							'ADD' => ['-' => 'X'],
-							'WRITE' => ['-' => 'X'],
-							'DELETE' => ['-' => 'X'],
-						],
-						'QUOTE' => [
-							'READ' => ['-' => 'X'],
-							'EXPORT' => ['-' => 'X'],
-							'IMPORT' => ['-' => 'X'],
-							'ADD' => ['-' => 'X'],
-							'WRITE' => ['-' => 'X'],
-							'DELETE' => ['-' => 'X'],
-						],
-						'INVOICE' => [
-							'READ' => ['-' => 'X'],
-							'EXPORT' => ['-' => 'X'],
-							'IMPORT' => ['-' => 'X'],
-							'ADD' => ['-' => 'X'],
-							'WRITE' => ['-' => 'X'],
-							'DELETE' => ['-' => 'X'],
-						],
-						'ORDER' => [
-							'READ' => ['-' => 'X'],
-							'EXPORT' => ['-' => 'X'],
-							'IMPORT' => ['-' => 'X'],
-							'ADD' => ['-' => 'X'],
-							'WRITE' => ['-' => 'X'],
-							'DELETE' => ['-' => 'X'],
-						],
+						'LEAD' => $CCrmRole::getMaxPermissionSetForEntity(new \Bitrix\Crm\CategoryIdentifier(CCrmOwnerType::Lead)),
+						'DEAL' => $CCrmRole::getMaxPermissionSetForEntity(new \Bitrix\Crm\CategoryIdentifier(CCrmOwnerType::Deal)),
+						'CONTACT' => $CCrmRole::getMaxPermissionSetForEntity(new \Bitrix\Crm\CategoryIdentifier(CCrmOwnerType::Contact)),
+						'COMPANY' => $CCrmRole::getMaxPermissionSetForEntity(new \Bitrix\Crm\CategoryIdentifier(CCrmOwnerType::Company)),
+						'QUOTE' => $CCrmRole::getMaxPermissionSetForEntity(new \Bitrix\Crm\CategoryIdentifier(CCrmOwnerType::Quote)),
+						'INVOICE' => $CCrmRole::getMaxPermissionSetForEntity(new \Bitrix\Crm\CategoryIdentifier(CCrmOwnerType::Invoice)),
+
 						'WEBFORM' => [
 							'READ' => ['-' => 'X'],
 							'WRITE' => ['-' => 'X'],
@@ -662,7 +564,7 @@ class crm extends CModule
 			];
 
 			$adminRoleID = $CCrmRole->Add($arRoles['adm']);
-			$managerRoleID = $CCrmRole->Add($arRoles['man']);
+			$CCrmRole->Add($arRoles['man']);
 			$dbGroup = CGroup::GetList('', '', ['STRING_ID' => 'MARKETING_AND_SALES']);
 			if ($arGroup = $dbGroup->Fetch())
 			{
@@ -682,7 +584,7 @@ class crm extends CModule
 		if ($qty === 0)
 		{
 			$allLangIDs = [];
-			$langEntity = new \CLanguage();
+			$langEntity = new CLanguage();
 			$dbLangs = $langEntity->GetList();
 			while ($lang = $dbLangs->Fetch())
 			{
@@ -748,6 +650,11 @@ class crm extends CModule
 		\Bitrix\Crm\Settings\LiveFeedSettings::getCurrent()->enableLiveFeedMerge(false);
 		\Bitrix\Crm\Integration\Socialnetwork\Livefeed\AvailabilityHelper::setAvailable(false);
 
+		\Bitrix\Crm\Settings\ActivitySettings::setValue(
+			\Bitrix\Crm\Settings\ActivitySettings::ENABLE_CALENDAR_EVENTS_SETTINGS,
+			false,
+		);
+
 		\Bitrix\Crm\EntityRequisite::installDefaultPresets();
 
 		// Adjust default address zone
@@ -791,9 +698,15 @@ class crm extends CModule
 			'IS_CUSTOM_FIELD' => false,
 		]);
 
+		$existedSequenceRecord = $DB->Query("select SEQUENCE_NAME from b_crm_sequences where SEQUENCE_NAME='dynamic_type_id'")->Fetch();
+		if (!$existedSequenceRecord)
+		{
+			$DB->Query("insert into b_crm_sequences (SEQUENCE_NAME, SEQUENCE_VALUE) VALUES ('dynamic_type_id', 1030);");
+		}
+
 		if (\Bitrix\Main\Loader::includeModule('intranet'))
 		{
-			\CIntranetUtils::clearMenuCache();
+			CIntranetUtils::clearMenuCache();
 		}
 
 		if (is_array($this->errors))
@@ -832,8 +745,8 @@ class crm extends CModule
 				}
 			}
 
-			$userFieldEntity = new \CUserTypeEntity;
-			$userField = \CUserTypeEntity::getList(
+			$userFieldEntity = new CUserTypeEntity;
+			$userField = CUserTypeEntity::getList(
 				[],
 				[
 					'ENTITY_ID' => 'CRM_ACTIVITY',
@@ -860,7 +773,7 @@ class crm extends CModule
 						{
 							$userFieldEntity->delete($userField['ID']);
 						}
-						catch(\Bitrix\Main\DB\SqlQueryException $e)
+						catch(\Bitrix\Main\DB\SqlQueryException)
 						{
 							// do nothing
 						}
@@ -870,6 +783,7 @@ class crm extends CModule
 				$tableNamesToDelete[] = $type->getTableName();
 				$tableNamesToDelete[] = $typeFactory->getItemIndexDataClass($type)::getTableName();
 				$tableNamesToDelete[] = $typeFactory->getItemFieldsContextDataClass($type)::getTableName();
+				$tableNamesToDelete[] = \Bitrix\Crm\Security\AccessAttribute\Manager::getEntity(CCrmOwnerType::ResolveName($type->getEntityTypeId()))->getDBTableName();
 			}
 			foreach ($tableNamesToDelete as $tableName)
 			{
@@ -940,7 +854,7 @@ class crm extends CModule
 			return true;
 		}
 
-		$langs = \CLanguage::getList($b = '', $o = '');
+		$langs = CLanguage::getList('', '');
 		while ($lang = $langs->fetch())
 		{
 			$lid = $lang['LID'];
@@ -956,12 +870,12 @@ class crm extends CModule
 				],
 			];
 
-			$type = new \CEventType;
+			$type = new CEventType;
 			foreach ($eventTypes as $item)
 				$type->add($item);
 
 			$sitesIds = [];
-			$sites = \CSite::getList($b = '', $o = '', ['LANGUAGE_ID' => $lid]);
+			$sites = CSite::getList('', '', ['LANGUAGE_ID' => $lid]);
 			while ($item = $sites->fetch())
 				$sitesIds[] = $item['LID'];
 
@@ -981,7 +895,7 @@ class crm extends CModule
 					],
 				];
 
-				$message = new \CEventMessage;
+				$message = new CEventMessage;
 				foreach ($eventMessages as $item)
 					$message->add($item);
 			}
@@ -1106,12 +1020,9 @@ class crm extends CModule
 
 	function UnInstallFiles()
 	{
-		if($_ENV['COMPUTERNAME']!='BX')
-		{
-			DeleteDirFiles($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/crm/install/js', $_SERVER['DOCUMENT_ROOT'] . '/bitrix/js');
-			DeleteDirFiles($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/crm/install/themes', $_SERVER['DOCUMENT_ROOT'] . '/bitrix/themes');
-			DeleteDirFiles($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/crm/install/gadgets', $_SERVER['DOCUMENT_ROOT'] . '/bitrix/gadgets');
-		}
+		DeleteDirFiles($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/crm/install/js', $_SERVER['DOCUMENT_ROOT'] . '/bitrix/js');
+		DeleteDirFiles($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/crm/install/themes', $_SERVER['DOCUMENT_ROOT'] . '/bitrix/themes');
+		DeleteDirFiles($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/crm/install/gadgets', $_SERVER['DOCUMENT_ROOT'] . '/bitrix/gadgets');
 
 		return true;
 	}
@@ -1355,6 +1266,7 @@ class crm extends CModule
 		$eventManager->registerEventHandler('rest', 'OnRestApplicationConfigurationEntity', 'crm', '\Bitrix\Crm\Integration\Rest\Configuration\Controller', 'getEntityList');
 		$eventManager->registerEventHandler('rest', 'OnRestApplicationConfigurationGetManifest', 'crm', '\Bitrix\Crm\Integration\Rest\Configuration\Manifest', 'getList');
 		$eventManager->registerEventHandler('rest', 'OnRestApplicationConfigurationFinish', 'crm', '\Bitrix\Crm\Integration\Rest\Configuration\ConfigChecker', 'onFinish');
+		$eventManager->registerEventHandler('rest', 'onRestAppDelete', 'crm', '\Bitrix\Crm\Integration\Rest\EventHandler', 'onRestAppDelete');
 
 		$eventManager->registerEventHandler('crm', '\Bitrix\Crm\WebForm\Internals\Form::OnAfterAdd', 'crm', '\Bitrix\Crm\Order\TradingPlatform\WebForm', 'onWebFormAdd');
 		$eventManager->registerEventHandler('crm', '\Bitrix\Crm\WebForm\Internals\Form::OnAfterUpdate', 'crm', '\Bitrix\Crm\Order\TradingPlatform\WebForm', 'onWebFormUpdate');
@@ -1390,7 +1302,7 @@ class crm extends CModule
 		$eventManager->registerEventHandler('intranet', 'onBuildBindingMenu', 'crm', '\Bitrix\Crm\Integration\Intranet\BindingMenu', 'onBuildBindingMenu');
 		$eventManager->registerEventHandler('intranet', 'onBuildBindingMap', 'crm', '\Bitrix\Crm\Integration\Intranet\BindingMenu', 'onBuildBindingMap');
 
-		$eventManager->registerEventHandler('main', 'onGetUserFieldTypeFactory', $this->MODULE_ID, '\Bitrix\Crm\Service\EventHandler', 'onGetUserFieldTypeFactory', 100);
+		$eventManager->registerEventHandler('main', 'onGetUserFieldTypeFactory', $this->MODULE_ID, '\Bitrix\Crm\Service\EventHandler', 'onGetUserFieldTypeFactory');
 
 		$eventManager->registerEventHandler(
 			'messageservice',
@@ -1402,9 +1314,25 @@ class crm extends CModule
 
 		$eventManager->registerEventHandler(
 			'messageservice',
+			'OnMessageSuccessfullySent',
+			'crm',
+			'\Bitrix\Crm\Activity\Provider\WhatsApp',
+			'onMessageSent'
+		);
+
+		$eventManager->registerEventHandler(
+			'messageservice',
 			'messageUpdated',
 			'crm',
 			'\Bitrix\Crm\Activity\Provider\Sms',
+			'onMessageStatusUpdated'
+		);
+
+		$eventManager->registerEventHandler(
+			'messageservice',
+			'messageUpdated',
+			'crm',
+			'\Bitrix\Crm\Activity\Provider\WhatsApp',
 			'onMessageStatusUpdated'
 		);
 
@@ -1722,7 +1650,7 @@ class crm extends CModule
 	private function installAgents()
 	{
 		//region Search Content
-		$startTime = ConvertTimeStamp(time() + \CTimeZone::GetOffset() + 60, 'FULL');
+		$startTime = ConvertTimeStamp(time() + CTimeZone::GetOffset() + 60, 'FULL');
 		if (COption::GetOptionString('crm', '~CRM_REBUILD_LEAD_SEARCH_CONTENT', 'N') === 'Y')
 		{
 			CAgent::AddAgent('\Bitrix\Crm\Agent\Search\LeadSearchContentRebuildAgent::run();', 'crm', 'Y', 2, '', 'Y', $startTime, 100, false, false);
@@ -1775,7 +1703,7 @@ class crm extends CModule
 
 		CAgent::AddAgent('\Bitrix\Crm\Ml\PredictionQueue::processQueue();', 'crm', 'N', 300);
 		CAgent::AddAgent('\Bitrix\Crm\Ml\Agent\Retraining::run();', 'crm', 'N', 86400);
-		CAgent::AddAgent('\Bitrix\Crm\Agent\Recyclebin\RecyclebinAgent::run();', 'crm', 'N', 86400);
+		CAgent::AddAgent('\Bitrix\Crm\Agent\Recyclebin\RecyclebinAgent::run();', 'crm', 'N', 3600);
 
 		CAgent::AddAgent(
 			'Bitrix\\Crm\\Agent\\Duplicate\\Automatic\\LeadDuplicateIndexRebuildAgent::run();',
@@ -1812,7 +1740,7 @@ class crm extends CModule
 			$startTime
 		);
 
-		\CAgent::AddAgent(
+		CAgent::AddAgent(
 			/** @see \Bitrix\Crm\Integration\Sign\Access::installDefaultRoles() */
 			'\Bitrix\Crm\Integration\Sign\Access::installDefaultRoles();',
 			'crm',
@@ -1852,28 +1780,28 @@ class crm extends CModule
 		CAgent::AddAgent('\Bitrix\Crm\Reservation\Agent\ReservedProductCleaner::runAgent();', 'crm', 'N', 86400);
 
 		if (\Bitrix\Main\Config\Option::get('crm', 'CRM_MOVE_OBSERVERS_TO_ACCESS_ATTR_IN_WORK', 'N')  === 'Y') {
-			\CAgent::AddAgent(
+			CAgent::AddAgent(
 				'Bitrix\Crm\Agent\Security\AssignAccessRightsToObserversAgent::run();',
 				'crm',
 				'N',
 				60,
 				'',
 				'Y',
-				\ConvertTimeStamp(time()+\CTimeZone::GetOffset()+600)
+				ConvertTimeStamp(time()+CTimeZone::GetOffset()+600)
 			);
 		}
 
-		\CAgent::AddAgent(
+		CAgent::AddAgent(
 			'Bitrix\Crm\Agent\Activity\CompleteOldActivities::run();',
 			'crm',
 			'N',
 			86400,
 			'',
 			'Y',
-			\ConvertTimeStamp(time() + \CTimeZone::GetOffset() + 600, 'FULL')
+			ConvertTimeStamp(time() + CTimeZone::GetOffset() + 600, 'FULL')
 		);
 
-		\CAgent::AddAgent(
+		CAgent::AddAgent(
 			'Bitrix\Crm\Agent\Activity\LightCounterAgent::run();',
 			'crm',
 			'N',
@@ -1889,7 +1817,25 @@ class crm extends CModule
 			60,
 			'',
 			'Y',
-			\ConvertTimeStamp(time() + \CTimeZone::GetOffset() + 600, 'FULL')
+			ConvertTimeStamp(time() + CTimeZone::GetOffset() + 600, 'FULL')
+		);
+
+		CAgent::AddAgent(
+			'Bitrix\Crm\Agent\Badge\RemoveOldEntityBadgesAgent::run();',
+			'crm'
+		);
+
+		CAgent::AddAgent(
+			'Bitrix\Crm\Agent\Duplicate\DedupeCacheCleanerAgent::run();',
+			'crm',
+			'N',
+			3600 * 24,
+			'',
+			'Y',
+			time() + CTimeZone::GetOffset() + 600,
+			100,
+			false,
+			false
 		);
 	}
 
@@ -2155,9 +2101,25 @@ class crm extends CModule
 
 		$eventManager->unRegisterEventHandler(
 			'messageservice',
+			'OnMessageSuccessfullySent',
+			'crm',
+			'\Bitrix\Crm\Activity\Provider\WhatsApp',
+			'onMessageSent'
+		);
+
+		$eventManager->unRegisterEventHandler(
+			'messageservice',
 			'messageUpdated',
 			'crm',
 			'\Bitrix\Crm\Activity\Provider\Sms',
+			'onMessageStatusUpdated'
+		);
+
+		$eventManager->unRegisterEventHandler(
+			'messageservice',
+			'messageUpdated',
+			'crm',
+			'\Bitrix\Crm\Activity\Provider\WhatsApp',
 			'onMessageStatusUpdated'
 		);
 
@@ -2509,7 +2471,7 @@ class crm extends CModule
 		{
 			$this->InstallDB();
 			$this->InstallFiles();
-			CBXFeatures::SetFeatureEnabled('crm', true);
+			CBXFeatures::SetFeatureEnabled('crm');
 			$this->showInstallStep(3);
 		}
 	}
@@ -2525,12 +2487,12 @@ class crm extends CModule
 
 		$APPLICATION->IncludeAdminFile(
 			Loc::getMessage('CRM_INSTALL_TITLE'),
-			$_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/crm/install/step' . (string)$step . '.php');
+			$_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/crm/install/step' . $step . '.php');
 	}
 
 	function DoUninstall()
 	{
-		global $DB, $DOCUMENT_ROOT, $APPLICATION, $step;
+		global $APPLICATION, $step;
 		$step = intval($step);
 
 		if (ModuleManager::isModuleInstalled('crmmobile'))
@@ -2557,13 +2519,6 @@ class crm extends CModule
 		}
 	}
 
-	public function migrateToBox()
-	{
-		\Bitrix\Main\Loader::includeModule('crm');
-		\Bitrix\Crm\Restriction\RestrictionManager::onMigrateToBox();
-		\CCrmExternalSale::OnMigrateToBox();
-	}
-
 	private static function __GetMessagesForAllLang($file, $MessID, $strDefMess = false, $arLangList = [])
 	{
 		$arResult = false;
@@ -2587,7 +2542,7 @@ class crm extends CModule
 		}
 		foreach ($arLangList as $strLID)
 		{
-			$MESS = \Bitrix\Main\Localization\Loc::loadLanguageFile($file, $strLID);
+			$MESS = Loc::loadLanguageFile($file, $strLID);
 			foreach ($MessID as $strMessID)
 			{
 				if ($strMessID == '')

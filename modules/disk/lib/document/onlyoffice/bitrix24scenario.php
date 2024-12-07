@@ -22,6 +22,22 @@ final class Bitrix24Scenario
 		$this->isEnabled = ModuleManager::isModuleInstalled('bitrix24');
 	}
 
+	public function trackFirstEditForLimitedEdit(): void
+	{
+		if (!$this->isEnabled)
+		{
+			return;
+		}
+
+		$limitedEditConfiguration = new LimitedEdit\Configuration();
+		if (!$limitedEditConfiguration->isLimitEditEnabled())
+		{
+			return;
+		}
+
+		LimitedEdit\DisablerAgent::register();
+	}
+
 	protected function getDateInstallationOnlyOffice(): ?DateTime
 	{
 		if (!$this->loadedDateInstallation)

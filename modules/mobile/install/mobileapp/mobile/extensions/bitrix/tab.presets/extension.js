@@ -1,12 +1,18 @@
+/*
+global Notify
+ */
+
 jn.define('tab.presets', (require, exports, module) => {
 	const AppTheme = require('apptheme');
 	const { Haptics } = require('haptics');
 	const { chain, transition } = require('animation');
 	const res = require('tab/settings/res');
-	const getSvg = res.getSvg;
+	const getIcon = res.getIcon;
 	const TabPresetUtils = require('tab.presets/utils');
 	const Editor = require('tab/presets/editor');
 	const { Loc } = require('loc');
+	const { Color } = require('tokens');
+	const { IconView, Icon } = require('ui-system/blocks/icon');
 
 	class TabPresetsComponent extends LayoutComponent
 	{
@@ -106,9 +112,9 @@ jn.define('tab.presets', (require, exports, module) => {
 			const { presets } = this.state;
 
 			return ScrollView(
-				{ style: { backgroundColor: AppTheme.colors.bgContentPrimary } },
+				{ style: { backgroundColor: Color.bgContentPrimary.toHex() } },
 				View(
-					{ style: { padding: 10, backgroundColor: AppTheme.colors.bgContentPrimary } },
+					{ style: { padding: 10, backgroundColor: Color.bgContentPrimary.toHex() } },
 					...this.renderList(presets),
 					this.renderManualPresetButton(),
 				),
@@ -126,8 +132,10 @@ jn.define('tab.presets', (require, exports, module) => {
 							marginTop: 10,
 							marginRight: 6,
 							borderRadius: 12,
-							backgroundColor: AppTheme.colors.bgNavigation,
+							backgroundColor: Color.bgContentSecondary,
 							alignItems: 'center',
+							borderWidth: 0.5,
+							borderColor: Color.base6.toHex(),
 							justifyContent: 'space-between',
 							flexDirection: 'row',
 							paddingLeft: 18,
@@ -141,9 +149,10 @@ jn.define('tab.presets', (require, exports, module) => {
 					style: { color: AppTheme.colors.base2, fontWeight: '600', fontSize: 18 },
 					text: Loc.getMessage('TAB_PRESET_USER_PRESET'),
 				}),
-				Image({
-					style: { color: AppTheme.colors.base2, width: 10, height: 16 },
-					svg: { content: getSvg('chevron') },
+				IconView({
+					color: Color.base2,
+					size: 24,
+					icon: Icon.CHEVRON_TO_THE_RIGHT,
 				}),
 			);
 		}
@@ -206,19 +215,6 @@ jn.define('tab.presets', (require, exports, module) => {
 			return View({
 				style: res.styles.tabBarPreview,
 			}, ...tabs);
-
-			return View(
-				{
-					style: {
-						clickable: false,
-						height: 70,
-						flexGrow: 1,
-					},
-				},
-				View({
-					style: res.styles.tabBarPreview,
-				}, ...tabs),
-			);
 		}
 
 		renderActiveStatus()
@@ -258,49 +254,34 @@ jn.define('tab.presets', (require, exports, module) => {
 				}
 
 				const title = tabsDesc?.[code]?.shortTitle ?? '';
+				const color = index === 0 ? Color.base1 : Color.base4;
+				const iconId = tabsDesc?.[code]?.iconId ?? code;
+				const iconNode = this.getIconView({
+					color,
+					code: iconId,
+					animated: index === 0 && active,
+				});
 
-				return View({
-					style: {
-						paddingTop: 12,
-						zIndex: 10000,
-						justifyContent: 'space-between',
-						alignItems: 'center',
+				return View(
+					{
+						style: {
+							width: 220,
+							paddingTop: 12,
+							zIndex: 10000,
+							justifyContent: 'space-between',
+							alignItems: 'center',
+						},
 					},
-				}, Image({
-					ref: (ref) => {
-						if (index === 0 && active)
-						{
-							setInterval(() => {
-								chain(
-									transition(ref, { bottom: -4, duration: 200, option: 'easeIn' }),
-									transition(ref, { bottom: 12, duration: 150, option: 'easeInOut' }),
-									transition(ref, { bottom: 0, duration: 100, option: 'easeIn' }),
-									transition(ref, { bottom: 6, duration: 100, option: 'easeIn' }),
-									transition(ref, { bottom: 0, duration: 50, option: 'easeIn' }),
-									transition(ref, { rotate: 10, duration: 100, option: 'easeInOut' }),
-									transition(ref, { rotate: -10, duration: 100, option: 'easeInOut' }),
-									transition(ref, { rotate: 5, duration: 100, option: 'easeInOut' }),
-									transition(ref, { rotate: -5, duration: 100, option: 'easeInOut' }),
-									transition(ref, { rotate: 0, duration: 100, option: 'easeInOut' }),
-								)();
-							}, 2500);
-						}
-					},
-					style: {
-						width: 30,
-						height: 30,
-					},
-					svg: {
-						content: getSvg(code, index === 0 ? AppTheme.colors.accentMainPrimary : AppTheme.colors.base6),
-					},
-				}), Text({
-					style: {
-						fontSize: 11,
-						fontWeight: '400',
-						color: index === 0 ? AppTheme.colors.base1 : AppTheme.colors.base4,
-					},
-					text: title,
-				}));
+					iconNode,
+					Text({
+						style: {
+							fontSize: 11,
+							fontWeight: '400',
+							color: index === 0 ? AppTheme.colors.base1 : AppTheme.colors.base4,
+						},
+						text: title,
+					}),
+				);
 			});
 		}
 
@@ -313,6 +294,37 @@ jn.define('tab.presets', (require, exports, module) => {
 				},
 			});
 			layout.showComponent(new Editor(this.state.tabs, layout));
+		}
+
+		getIconView({ code, color = Color.base4, animated = false })
+		{
+			return IconView({
+				forwardRef: (ref) => {
+					if (animated)
+					{
+						setInterval(() => {
+							chain(
+								transition(ref, { bottom: -4, duration: 200, option: 'easeIn' }),
+								transition(ref, { bottom: 12, duration: 150, option: 'easeInOut' }),
+								transition(ref, { bottom: 0, duration: 100, option: 'easeIn' }),
+								transition(ref, { bottom: 6, duration: 100, option: 'easeIn' }),
+								transition(ref, { bottom: 0, duration: 50, option: 'easeIn' }),
+								transition(ref, { rotate: 10, duration: 100, option: 'easeInOut' }),
+								transition(ref, { rotate: -10, duration: 100, option: 'easeInOut' }),
+								transition(ref, { rotate: 5, duration: 100, option: 'easeInOut' }),
+								transition(ref, { rotate: -5, duration: 100, option: 'easeInOut' }),
+								transition(ref, { rotate: 0, duration: 100, option: 'easeInOut' }),
+							)();
+						}, 2500);
+					}
+				},
+				size: 30,
+				iconColor: color,
+				icon: getIcon(code),
+				// svg: {
+				// 	content: getSvg(code, index === 0 ? AppTheme.colors.accentMainPrimary : AppTheme.colors.base6),
+				// },
+			});
 		}
 	}
 

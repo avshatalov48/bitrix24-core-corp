@@ -27,8 +27,6 @@ catch (\Bitrix\Main\Security\Sign\BadSignatureException $e)
 	die();
 }
 
-$request->addFilter(new \Bitrix\Main\Web\PostDecodeFilter);
-
 global $APPLICATION;
 
 $APPLICATION->IncludeComponent(

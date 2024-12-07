@@ -58,6 +58,8 @@ class CCrmTemplateManager
 			return '';
 		}
 
+		$template = self::decodeApostrophe($template);
+
 		$entityTypeName = \CCrmOwnerType::System == $entityTypeID ? 'SENDER' : \CCrmOwnerType::resolveName($entityTypeID);
 		$entityID = intval($entityID);
 
@@ -100,9 +102,20 @@ class CCrmTemplateManager
 			if (array_key_exists($key, $replacements) || empty($mapper))
 				continue;
 
-			$replacements[$key] = $mapper->mapPath(mb_substr($key, 1, -1));
+			$replacements[$key] = htmlspecialcharsback($mapper->mapPath(mb_substr($key, 1, -1)));
 		}
 
-		return str_replace(array_keys($replacements), array_values($replacements), $template);
+		$template = str_replace(array_keys($replacements), array_values($replacements), $template);
+		return self::encodeApostrophe($template);
+	}
+
+	private static function encodeApostrophe(string $template): string
+	{
+		return str_replace('\'', '&#039;', $template);
+	}
+
+	private static function decodeApostrophe(string $template): string
+	{
+		return str_replace('&#039;', '\'', $template);
 	}
 }

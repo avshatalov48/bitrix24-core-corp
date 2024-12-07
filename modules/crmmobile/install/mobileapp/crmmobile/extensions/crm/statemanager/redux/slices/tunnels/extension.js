@@ -3,15 +3,16 @@
  */
 jn.define('crm/statemanager/redux/slices/tunnels', (require, exports, module) => {
 	const { ReducerRegistry } = require('statemanager/redux/reducer-registry');
+	const { StateCache } = require('statemanager/redux/state-cache');
 	const {
 		createEntityAdapter,
 		createSlice,
+		createDraftSafeSelector,
 	} = require('statemanager/redux/toolkit');
 
 	const reducerName = 'crm:tunnels';
 	const adapter = createEntityAdapter({});
-	const initialState = adapter.getInitialState();
-	const filledState = adapter.upsertMany(initialState, []);
+	const initialState = StateCache.getReducerState(reducerName, adapter.getInitialState());
 
 	const prepareTunnelsToSave = (tunnels) => {
 		return tunnels.map((tunnel) => {
@@ -44,9 +45,6 @@ jn.define('crm/statemanager/redux/slices/tunnels', (require, exports, module) =>
 				srcStage: tunnel.srcStageStatusId,
 				dstCategory: tunnel.dstCategoryId,
 				dstStage: tunnel.dstStageStatusId,
-				robot: {
-					Name: tunnel.robot.name,
-				},
 			};
 		});
 	};
@@ -75,7 +73,7 @@ jn.define('crm/statemanager/redux/slices/tunnels', (require, exports, module) =>
 
 	const slice = createSlice({
 		name: reducerName,
-		initialState: filledState,
+		initialState,
 		reducers: {},
 		extraReducers: (builder) => {
 			builder
@@ -111,7 +109,7 @@ jn.define('crm/statemanager/redux/slices/tunnels', (require, exports, module) =>
 				.addCase('crm:kanban/fetchCrmKanbanList/fulfilled', (state, action) => {
 					const {
 						data: {
-							categories: kanbanSettingsList,
+							categories: kanbanSettingsList = [],
 						},
 					} = action.payload;
 
@@ -167,14 +165,20 @@ jn.define('crm/statemanager/redux/slices/tunnels', (require, exports, module) =>
 
 	const {
 		selectById,
-		selectEntities,
 	} = adapter.getSelectors((state) => state[reducerName]);
+
+	const selectItemsByIds = createDraftSafeSelector(
+		(state, ids) => ({ state, ids }),
+		({ state, ids }) => ids
+			.map((id) => selectById(state, id))
+			.filter(Boolean),
+	);
 
 	ReducerRegistry.register(reducerName, reducer);
 
 	module.exports = {
 		selectById,
-		selectEntities,
+		selectItemsByIds,
 		getTunnelUniqueId,
 		prepareTunnelsBeforeSave,
 	};

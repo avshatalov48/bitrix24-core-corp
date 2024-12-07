@@ -2,7 +2,7 @@
 
 
 
-<script type="text/javascript">
+<script>
 	BX.Voximplant.DefaultLine.init({
 		ajaxUrl: '<?=$this->__component->GetPath() . "/ajax.php" ?>'
 	});

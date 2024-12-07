@@ -13,6 +13,7 @@ namespace PHPSTORM_META
 		'disk.deletedLogManager',
 		'disk.deletionNotifyManager',
 		'disk.onlyofficeConfiguration',
+		'disk.storageRuntimeCache',
 	);
 
 	expectedArguments(\Bitrix\Main\DI\ServiceLocator::get(), 0, argumentsSet('bitrix_disk_serviceLocator_codes'));
@@ -30,6 +31,7 @@ namespace PHPSTORM_META
 		'disk.deletionNotifyManager' => \Bitrix\Disk\Internals\DeletionNotifyManager::class,
 		'disk.trackedObjectManager' => \Bitrix\Disk\TrackedObjectManager::class,
 		'disk.onlyofficeConfiguration' => \Bitrix\Disk\Document\OnlyOffice\Configuration::class,
+		'disk.storageRuntimeCache' => \Bitrix\Disk\Internals\Runtime\StorageRuntimeCache::class,
     ]));
 	
 	exitPoint(\Bitrix\Disk\Internals\Controller::end());

@@ -158,7 +158,8 @@ audio.vjs-tech {display: none;}
 	width: 540px;
 }
 
-.tel-stat-download-progress-container {
+.tel-stat-download-progress-container,
+.tel-stat-delete-progress-container {
 	width: 400px;
 	margin: 7px;
 }

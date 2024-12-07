@@ -55,6 +55,11 @@ class PresetList
 	{
 		$preset = $this->getById($id);
 
+		if (!is_array($preset['SETTINGS']))
+		{
+			$preset['SETTINGS'] = [];
+		}
+
 		return EntityPreset::getSingleInstance()->settingsGetFields($preset['SETTINGS']);
 	}
 }

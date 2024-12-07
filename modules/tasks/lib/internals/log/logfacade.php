@@ -8,16 +8,21 @@ use Throwable;
 
 final class LogFacade
 {
-	private static ?Log $logger = null;
+	private static array $loggers = [];
 
-	public static function log($data): void
+	public static function log(mixed $data, string $marker = Log::DEFAULT_MARKER): void
 	{
-		self::getLogger()->collect($data);
+		self::getLogger($marker)->collect($data);
 	}
 
-	public static function logThrowable(Throwable $throwable): void
+	public static function logThrowable(Throwable $throwable, string $marker = Log::DEFAULT_MARKER): void
 	{
-		self::getLogger()->collect($throwable->getMessage());
+		self::getLogger($marker)->collect([
+			'message' => $throwable->getMessage(),
+			'file' => $throwable->getFile(),
+			'line' => $throwable->getLine(),
+			'backtrace' => $throwable->getTraceAsString(),
+		]);
 	}
 
 	public static function logErrors(ErrorCollection $errors): void
@@ -33,13 +38,13 @@ final class LogFacade
 		self::getLogger()->collect($error->getMessage());
 	}
 
-	private static function getLogger(): Log
+	private static function getLogger(string $marker = Log::DEFAULT_MARKER): Log
 	{
-		if (is_null(self::$logger))
+		if (!isset(self::$loggers[$marker]))
 		{
-			self::$logger = new Log();
+			self::$loggers[$marker] = new Log($marker);
 		}
 
-		return self::$logger;
+		return self::$loggers[$marker];
 	}
 }

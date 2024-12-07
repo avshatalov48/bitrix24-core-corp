@@ -30,43 +30,54 @@ class ItemTarget extends BaseTarget
 		return $this->factory->getEntityTypeId();
 	}
 
-	public function getEntityId()
+	protected function getEntityIdByDocumentId(string $documentId): int
 	{
-		$entity = $this->getEntity();
-
-		return isset($entity) ? $entity->getId() : 0;
+		return (int)str_replace(
+			\CCrmOwnerType::ResolveName($this->getEntityTypeId()) . '_',
+			'' ,
+			$documentId
+		);
 	}
 
-	public function setEntityById($entityId)
+	protected function getEntityFields(array $select): array
 	{
-		$entityId = (int)$entityId;
-		if ($entityId > 0)
+		$id = $this->getEntityId();
+		if (empty($id))
 		{
-			if (!is_null($this->factory))
-			{
-				$this->setEntity($this->factory->getItem($entityId));
-				$this->setDocumentId(\CCrmOwnerType::ResolveName($this->getEntityTypeId()) . "_" . $entityId);
-			}
+			return [];
 		}
+
+		$item = $this->factory->getItem($id, $select);
+		if ($item)
+		{
+			return $item->getData();
+		}
+
+		return [];
 	}
 
 	public function getResponsibleId()
 	{
-		$entity = $this->getEntity();
+		$entity = $this->getEntityFields(['ASSIGNED_BY_ID']);
 
-		return isset($entity) ? $entity->getAssignedById() : 0;
+		return (int)$entity['ASSIGNED_BY_ID'];
 	}
 
 	public function getEntityStatus()
 	{
-		$entity = $this->getEntity();
+		$entity = $this->getEntityFields(['STAGE_ID']);
 
-		return isset($entity) ? $entity->getStageId() : '';
+		return $entity['STAGE_ID'] ?? '';
 	}
 
 	public function setEntityStatus($statusId, $executeBy = null)
 	{
-		$entity = $this->getEntity();
+		$id = $this->getEntityId();
+		if ($id)
+		{
+			$entity = $this->factory->getItem($id, ['ID']);
+		}
+
 		if (!isset($entity))
 		{
 			return false;
@@ -77,7 +88,7 @@ class ItemTarget extends BaseTarget
 		$context->setScope(Context::SCOPE_AUTOMATION);
 
 		$operation = $this->factory->getUpdateOperation(
-			$this->getEntity()->setStageId($statusId),
+			$entity->setStageId($statusId),
 			$context
 		);
 		$operation
@@ -92,10 +103,17 @@ class ItemTarget extends BaseTarget
 
 	public function getStatusInfos($categoryId = 0)
 	{
-		$entity = $this->getEntity();
-		if ($categoryId === 0 && $this->factory->isCategoriesSupported() && isset($entity))
+		if ($categoryId === 0 && $this->factory->isCategoriesSupported())
 		{
-			$categoryId = $entity->getCategoryId();
+			$id = $this->getEntityId();
+			if ($id)
+			{
+				$entity = $this->factory->getItem($id, ['ID', 'CATEGORY_ID']);
+				if ($entity)
+				{
+					$categoryId = $entity->getCategoryId();
+				}
+			}
 		}
 
 		$statusInfos = [];
@@ -103,12 +121,17 @@ class ItemTarget extends BaseTarget
 		{
 			$statusInfos[$status->getStatusId()] = $status->collectValues();
 		}
+
 		return $statusInfos;
 	}
 
 	public function getEntityStatuses()
 	{
-		$entity = $this->getEntity();
+		$id = $this->getEntityId();
+		if ($id)
+		{
+			$entity = $this->factory->getItem($id, ['ID']);
+		}
 
 		$categoryId = 0;
 		if ($this->factory->isCategoriesEnabled() && isset($entity))
@@ -117,16 +140,5 @@ class ItemTarget extends BaseTarget
 		}
 
 		return array_keys($this->getStatusInfos($categoryId));
-	}
-
-	public function getEntity()
-	{
-		if (is_null($this->entity) && $this->getDocumentId())
-		{
-			$documentId = mb_split('_(?=[^_]*$)', $this->getDocumentId());
-			$this->setEntityById($documentId[1] ?? 0);
-		}
-
-		return $this->entity;
 	}
 }

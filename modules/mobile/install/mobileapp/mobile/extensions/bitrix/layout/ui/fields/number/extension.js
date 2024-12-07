@@ -3,6 +3,7 @@
  */
 jn.define('layout/ui/fields/number', (require, exports, module) => {
 	const { StringFieldClass } = require('layout/ui/fields/string');
+	const { PropTypes } = require('utils/validation');
 	const { stringify } = require('utils/string');
 
 	/** @var NumberPrecision */
@@ -176,6 +177,10 @@ jn.define('layout/ui/fields/number', (require, exports, module) => {
 			return text;
 		}
 	}
+
+	NumberField.propTypes = {
+		value: PropTypes.number,
+	};
 
 	module.exports = {
 		NumberType: 'number',

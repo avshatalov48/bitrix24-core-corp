@@ -46,6 +46,7 @@ class Field
 	public const TYPE_CRM_MULTIFIELD = 'crm_multifield';
 	public const TYPE_CRM_ACTIVITY_PROVIDER = 'crm_activity_provider';
 	public const TYPE_CRM_ACTIVITY_PROVIDER_TYPE = 'crm_activity_provider_type';
+	public const TYPE_CRM_DYNAMIC_TYPE = 'crm_dynamic_type';
 
 	public const VALUE_TYPE_PLAIN_TEXT = 'text';
 	public const VALUE_TYPE_BB = 'bb';
@@ -506,7 +507,9 @@ class Field
 			$filter['!=' . Item::FIELD_NAME_ID] = $id;
 		}
 
-		return ((int) $tableClassName::getCount($filter) === 0);
+		$existsQuery = $tableClassName::query()->setSelect(['ID'])->setFilter($filter)->setLimit(1);
+
+		return $existsQuery->fetch() === false;
 	}
 
 	public function getValueNotValidError(): Error

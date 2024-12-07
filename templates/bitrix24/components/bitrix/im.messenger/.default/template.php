@@ -9,6 +9,8 @@ use Bitrix\Main\Localization\Loc;
 
 $v2MessengerEnabled = isset($arResult['MESSENGER_V2']) && $arResult['MESSENGER_V2'] === true;
 $copilotAvailable = $v2MessengerEnabled && isset($arResult['COPILOT_AVAILABLE']) && $arResult['COPILOT_AVAILABLE'] === true;
+$copilotAvailableTab = $v2MessengerEnabled && isset($arResult['COPILOT_AVAILABLE_TAB']) && $arResult['COPILOT_AVAILABLE_TAB'] === true;
+$desktopDownloadLinks = \Bitrix\Intranet\Portal::getInstance()->getSettings()->getDesktopDownloadLinks();
 
 if ($v2MessengerEnabled)
 {
@@ -54,9 +56,9 @@ $this->SetViewTarget("im-fullscreen");
 					<span class="bx-im-fullscreen-apps-title"><?=GetMessage('IM_FULLSCREEN_APPS')?>:</span>
 					<span class="bx-im-fullscreen-apps-buttons" id="im-workarea-apps">
 						<span class="bx-im-fullscreen-apps-buttons-group">
-							<a href="http://dl.bitrix24.com/b24/bitrix24_desktop.exe" class="bx-im-fullscreen-app-icon bx-im-fullscreen-app-windows" target="_blank"></a>
+							<a href="<?= htmlspecialcharsbx($desktopDownloadLinks['windows']) ?>" class="bx-im-fullscreen-app-icon bx-im-fullscreen-app-windows" target="_blank"></a>
 							<span class="bx-im-fullscreen-apps-buttons-delimiter"></span>
-							<a href="http://dl.bitrix24.com/b24/bitrix24_desktop.dmg" class="bx-im-fullscreen-app-icon bx-im-fullscreen-app-osx" target="_blank"></a>
+							<a href="<?= htmlspecialcharsbx($desktopDownloadLinks['macos']) ?>" class="bx-im-fullscreen-app-icon bx-im-fullscreen-app-osx" target="_blank"></a>
 							<span class="bx-im-fullscreen-apps-buttons-delimiter"></span>
 							<a href="https://github.com/buglloc/brick/" class="bx-im-fullscreen-app-icon bx-im-fullscreen-app-linux" target="_blank"></a>
 						</span>
@@ -96,8 +98,10 @@ $this->SetViewTarget("im-fullscreen");
 <?$this->EndViewTarget()?>
 <?
 $this->SetViewTarget("im", 100);
+
+$copilotClass = $copilotAvailableTab ? 'bx-im-bar-with-copilot' : '';
 ?>
-<div class="bx-im-bar bx-im-bar-with-ol <? if ($copilotAvailable): ?><?= 'bx-im-bar-with-copilot' ?><? endif ?>" id="bx-im-bar">
+<div class="bx-im-bar bx-im-bar-with-ol <?=$copilotClass?>" id="bx-im-bar">
 	<div class="help-block bx-im-border-b" id="bx-help-block" title="<?=GetMessage("AUTH_HELP")?>">
 		<div class="help-icon-border"></div>
 		<div class="help-block-icon"></div>
@@ -121,11 +125,11 @@ $this->SetViewTarget("im", 100);
 	}
 	?>
 	<div class="bx-im-helper-block bx-im-border-b">
-		<? if ($copilotAvailable): ?>
+		<?php if ($copilotAvailableTab): ?>
 			<div id="bx-im-bar-copilot" class="bx-im-informer bx-im-informer-copilot">
 				<div class="bx-im-informer-copilot-icon" title="<?=GetMessage('IM_MESSENGER_OPEN_COPILOT');?>"></div>
 			</div>
-		<? endif ?>
+		<?php endif; ?>
 		<div id="bx-im-bar-notify" class="bx-im-informer">
 			<div class="bx-im-informer-icon" title="<?=GetMessage('IM_MESSENGER_OPEN_NOTIFY');?>">
 				<div class="bx-im-informer-num"></div>
@@ -164,7 +168,9 @@ $this->SetViewTarget("im", 100);
 ?>
 <script>
 	BX.ready(function() {
-		BX.Intranet.Bitrix24.ImBar.init(<?= \Bitrix\Main\Web\Json::encode($v2MessengerEnabled) ?>);
+		BX.Intranet.Bitrix24.ImBar.init({
+			copilotAvailable: <?= \Bitrix\Main\Web\Json::encode($copilotAvailable) ?>,
+		});
 	});
 	<?php
 		if ($v2MessengerEnabled)

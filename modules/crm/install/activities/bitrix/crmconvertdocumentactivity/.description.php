@@ -36,7 +36,7 @@ $arActivityDescription = [
 			'TYPE' => 'int',
 		],
 		'QuoteId' => [
-			'NAME' => Loc::getMessage('CRM_CVTDA_RETURN_QUOTE_ID'),
+			'NAME' => Loc::getMessage('CRM_CVTDA_RETURN_QUOTE_ID_MSGVER_1'),
 			'TYPE' => 'int',
 		],
 		'DealId' => [
@@ -62,7 +62,7 @@ if (isset($documentType) && $documentType[2] === 'DEAL')
 			'TYPE' => 'int',
 		],
 		'QuoteId' => [
-			'NAME' => Loc::getMessage('CRM_CVTDA_RETURN_QUOTE_ID'),
+			'NAME' => Loc::getMessage('CRM_CVTDA_RETURN_QUOTE_ID_MSGVER_1'),
 			'TYPE' => 'int',
 		],
 	];

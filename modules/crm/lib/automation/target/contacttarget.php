@@ -2,6 +2,8 @@
 
 namespace Bitrix\Crm\Automation\Target;
 
+use Bitrix\Crm\ContactTable;
+
 class ContactTarget extends BaseTarget
 {
 	public function getEntityTypeId()
@@ -9,35 +11,23 @@ class ContactTarget extends BaseTarget
 		return \CCrmOwnerType::Contact;
 	}
 
-	public function getEntityId()
+	protected function getEntityIdByDocumentId(string $documentId): int
 	{
-		$entity = $this->getEntity();
-		return isset($entity['ID']) ? (int)$entity['ID'] : 0;
+		return (int)str_replace('CONTACT_', '', $documentId);
 	}
 
-	public function setEntityById($id)
+	protected function getEntityFields(array $select): array
 	{
-		$id = (int)$id;
-		if ($id > 0)
+		$id = $this->getEntityId();
+		if (empty($id))
 		{
-			$entity = \CCrmContact::GetByID($id, false);
-			if ($entity)
-			{
-				$this->setEntity($entity);
-				$this->setDocumentId('CONTACT_' . $id);
-			}
-		}
-	}
-
-	public function getEntity()
-	{
-		if ($this->entity === null && $id = $this->getDocumentId())
-		{
-			$id = (int)str_replace('CONTACT_', '', $id);
-			$this->setEntityById($id);
+			return [];
 		}
 
-		return parent::getEntity();
+		return ContactTable::query()
+			->setSelect($select)
+			->where('ID', $id)
+			->fetch() ?: [];
 	}
 
 	public function getEntityStatus()

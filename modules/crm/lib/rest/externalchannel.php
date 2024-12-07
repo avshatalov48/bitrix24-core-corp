@@ -1181,7 +1181,13 @@ class CCrmExternalChannelImportRequisite extends CCrmExternalChannelImportAgent
 		$result = new Result();
 		$entity = $this->getEntity();
 
-		$r = $entity->add($fields);
+		$options = [];
+		if(!$this->isRequiredUserFieldCheckEnabled())
+		{
+			$options['DISABLE_REQUIRED_USER_FIELD_CHECK'] = true;
+		}
+
+		$r = $entity->add($fields, $options);
 		if($r->isSuccess())
 		{
 			$result->setData(array('RESULT'=>$r->getId()));
@@ -1672,7 +1678,13 @@ class CCrmExternalChannelImportBank extends CCrmExternalChannelImportRequisite
 
 		if($result->isSuccess())
 		{
-			$r = $entity->update($id, $fields);
+			$options = [];
+			if(!$this->isRequiredUserFieldCheckEnabled())
+			{
+				$options['DISABLE_REQUIRED_USER_FIELD_CHECK'] = true;
+			}
+
+			$r = $entity->update($id, $fields, $options);
 			if(!$r->isSuccess())
 			{
 				$error = '';

@@ -1,5 +1,7 @@
 <?php
 
+use Bitrix\Main\Localization\Loc;
+
 IncludeModuleLangFile(__FILE__);
 
 define("TM_SHORT_FORMAT","DD.MM.YYYY");
@@ -46,7 +48,7 @@ class CTimeManReportFull
 		($arSqls["ORDERBY"] == '' ? "" : " ORDER BY ".$arSqls["ORDERBY"]).
 		($arSqls["LIMIT"] <> ''?" ".$arSqls["LIMIT"]:"");
 
-		$res = $DB->Query($strSql, false, "FILE: ".__FILE__."<br> LINE: ".__LINE__);
+		$res = $DB->Query($strSql);
 
 		return $res;
 	}
@@ -413,11 +415,6 @@ class CTimeManReportFull
 				{
 					ExecuteModuleEventEx($a, array($arFields));
 				}
-
-				if ($arFields["ACTIVE"] != "N")
-				{
-					$tm_user->SetLastDate($arFields["USER_ID"], $last_date);
-				}
 		}
 
 		return $ID;
@@ -441,7 +438,7 @@ class CTimeManReportFull
 		}
 
 		$period = CUserReportFull::GetEntityID($arFields["UF_REPORT_PERIOD"],$entity_id);
-		$arFields["UF_REPORT_PERIOD"] = $period["ID"];
+		$arFields["UF_REPORT_PERIOD"] = $period ? $period["ID"] : '';
 
 		$ID = $arFields["ID"];
 		unset($arFields["ID"]);
@@ -591,45 +588,113 @@ class CUserReportFull
 	public function Recalc()
 	{
 		$settings = $this->GetSettings();
-		$lastReportDate = $this->GetLastDate();
-
-		$submitDay = $settings["UF_TM_REPORT_DATE"];
-		$submitDayTime = CTimeman::MakeShortTS($settings["UF_TM_TIME"]);
-
-		$fields = [
-			"DATE_FROM" => "",
-			"DATE_TO" => "",
-			"DATE_SUBMIT" => ""
-		];
-
-		if (!$settings["UF_REPORT_PERIOD"])
+		if (!$settings['UF_REPORT_PERIOD'])
 		{
-			return $fields;
+			return [
+				'DATE_FROM' => '',
+				'DATE_TO' => '',
+				'DATE_SUBMIT' => '',
+				'LAST_REPORT' => '',
+			];
 		}
 
-		switch ($settings["UF_REPORT_PERIOD"])
+		$lastReportDate = $this->GetLastDate();
+
+		$shortFormat = CSite::getDateFormat("SHORT", SITE_ID);
+
+		$submitDay = (int) $settings['UF_TM_REPORT_DATE'];
+		$submitDayTime = CTimeman::MakeShortTS($settings['UF_TM_TIME']);
+		$tmDay = $settings["UF_TM_DAY"];
+
+		$dates = $this->calculateDatesForNewReport(
+			$lastReportDate,
+			$settings['UF_REPORT_PERIOD'],
+			$submitDay,
+			$submitDayTime,
+			$tmDay,
+		);
+
+		if ($this->hasWorkShift($dates['DATE_FROM'], $dates['DATE_TO']))
+		{
+			return $dates;
+		}
+		else
+		{
+			$firstWorkDayDate = $this->getFirstWorkDayDate($dates['DATE_TO']);
+			if ($firstWorkDayDate)
+			{
+				$newLastReportDate = $this->calculateLastReportDate(
+					MakeTimeStamp($firstWorkDayDate, $shortFormat),
+					$settings['UF_REPORT_PERIOD'],
+					$tmDay,
+				);
+
+				$dates = $this->calculateDatesForNewReport(
+					$newLastReportDate,
+					$settings['UF_REPORT_PERIOD'],
+					$submitDay,
+					$submitDayTime,
+					$tmDay,
+				);
+			}
+			else
+			{
+				// skip report and waiting new entry
+				return [
+					'DATE_FROM' => '',
+					'DATE_TO' => '',
+					'DATE_SUBMIT' => '',
+					'LAST_REPORT' => '',
+				];
+			}
+		}
+
+		return $dates;
+	}
+
+	private function calculateDatesForNewReport(
+		int $lastReportDate,
+		string $reportPeriod,
+		int $submitDay,
+		int $submitDayTime,
+		$tmDay
+	)
+	{
+		$fields = [
+			'DATE_FROM' => '',
+			'DATE_TO' => '',
+			'DATE_SUBMIT' => '',
+			'LAST_REPORT' => '',
+		];
+
+		switch ($reportPeriod)
 		{
 			case "WEEK":
-				if ($settings["UF_TM_DAY"]<=4)//mon,tue,wen,thu
+				if ($tmDay <= 4)//mon,tue,wen,thu
 				{
 					if ($lastReportDate>strtotime("last sun -1 week") && $lastReportDate<=strtotime("last sun"))
 						$fields["DATE_FROM"] = $lastReportDate+$this->oneDayTime;
 					else
 						$fields["DATE_FROM"] = strtotime("next mon",$lastReportDate);
 
-					$fields["DATE_TO"] = strtotime("next sun", $fields["DATE_FROM"]);
-					if (!is_numeric($settings["UF_TM_DAY"]))
+					$fields["DATE_TO"] = strtotime(
+						"next sun",
+						$fields["DATE_FROM"],
+					);
+
+					if (!is_numeric($tmDay))
 					{
 						$fields["DATE_SUBMIT"] = strtotime(
-							"next " . reset($this->days), $fields["DATE_TO"]
+							"next " . reset($this->days),
+							$fields["DATE_TO"]
 						) + $submitDayTime;
 					}
 					else
 					{
 						$fields["DATE_SUBMIT"] = strtotime(
-							"next " . $this->days[$settings["UF_TM_DAY"] - 1],
-							$fields["DATE_TO"]
-						) + $submitDayTime;
+								"next " . $this->days[$tmDay - 1],
+								$fields["DATE_TO"]
+							) + $submitDayTime;
 					}
 				}
 				else//fri,sat,sun
@@ -639,43 +704,74 @@ class CUserReportFull
 					else
 						$fields["DATE_FROM"] = strtotime("mon next week",$lastReportDate-date('Z'));
 
-					$fields["DATE_TO"] = strtotime("next sun", $fields["DATE_FROM"]);
+					$fields["DATE_TO"] = strtotime(
+						"next sun",
+						$fields["DATE_FROM"],
+					);
 
-					if (!is_numeric($settings["UF_TM_DAY"]))
+					if (!is_numeric($tmDay))
 					{
 						$fields["DATE_SUBMIT"] = strtotime(
-							"last " . reset($this->days),
-							$fields["DATE_TO"]
-						) + $submitDayTime;
+								"last " . reset($this->days),
+								$fields["DATE_TO"]
+							) + $submitDayTime;
 					}
 					else
 					{
 						$fields["DATE_SUBMIT"] = strtotime(
-							"last " . $this->days[$settings["UF_TM_DAY"] - 1],
-							$fields["DATE_TO"]
-						) + $submitDayTime;
+								"last " . $this->days[$tmDay - 1],
+								$fields["DATE_TO"]
+							) + $submitDayTime;
 					}
 				}
-			break;
+				break;
 			case "MONTH":
 				$fields["DATE_FROM"] = $lastReportDate + $this->oneDayTime;
 				$submitDate = $this->getSubmitDateForNextReport($lastReportDate, $submitDay);
 				$fields["DATE_TO"] = $submitDate;
-				$fields["DATE_SUBMIT"] = $submitDate + $submitDayTime;
-			break;
+				$fields["DATE_SUBMIT"] = CTimeMan::RemoveHoursTS($submitDate) + $submitDayTime;
+				break;
 			case "DAY":
 				$fields["DATE_FROM"] = $lastReportDate + $this->oneDayTime;
 				$fields["DATE_TO"] = $lastReportDate + $this->oneDayTime;
 				$fields["DATE_SUBMIT"] = CTimeMan::RemoveHoursTS($fields["DATE_FROM"]) + $submitDayTime;
-			break;
-
+				break;
 		}
 
 		$fields["DATE_FROM"] = ConvertTimeStampForReport($fields["DATE_FROM"], "SHORT");
 		$fields["DATE_TO"] = ConvertTimeStampForReport($fields["DATE_TO"], "SHORT");
 		$fields["DATE_SUBMIT"] = ConvertTimeStampForReport($fields["DATE_SUBMIT"], "FULL");
+		$fields["LAST_REPORT"] = ConvertTimeStampForReport($lastReportDate, "SHORT");
 
 		return $fields;
+	}
+
+	private function calculateLastReportDate(int $lastEntriesDate, string $reportPeriod, $tmDay): int
+	{
+		$lastReportDate = $lastEntriesDate - $this->oneDayTime;
+
+		switch ($reportPeriod)
+		{
+			case 'WEEK':
+				$inputTmDay = date('w', $lastEntriesDate);
+				$tmDayKey = is_numeric($tmDay) ? $this->days[$tmDay - 1] : reset($this->days);
+				$inputTmDayKey = $this->days[$inputTmDay - 1];
+				if ($tmDayKey !== $inputTmDayKey)
+				{
+					if ($inputTmDay > $tmDay)
+					{
+						$lastReportDate = strtotime('last ' . $tmDayKey, $lastEntriesDate) - $this->oneDayTime;
+					}
+				}
+				break;
+			case 'MONTH':
+				$lastReportDate = strtotime('first day of this month', $lastEntriesDate);
+				break;
+			case 'DAY':
+				$lastReportDate = $lastEntriesDate - $this->oneDayTime;
+		}
+
+		return $lastReportDate;
 	}
 
 	private function getSubmitDateForNextReport(int $lastReportDate, int $submitDay): int
@@ -737,133 +833,109 @@ class CUserReportFull
 	public function GetLastDate()
 	{
 		global $DB,$USER;
-		$arSettings=$this->GetSettings();
+
+		$arSettings = $this->GetSettings();
 
 		$shortFormat = CSite::getDateFormat("SHORT", SITE_ID);
 		$fullFormat = CSite::getDateFormat("FULL", SITE_ID);
 
-		if (!$arSettings["UF_LAST_REPORT_DATE"])
+		$lastDateReport = false;
+		$lastDate = false;
+
+		$queryObject = CTimeManReportFull::getList(
+			["DATE_TO"=>"desc"],
+			[
+				"USER_ID" => $this->USER_ID,
+				"=ACTIVE" => "Y",
+			],
+			[
+				"DATE_FROM",
+				"DATE_TO",
+			],
+			["nTopCount" => 1],
+		);
+		if ($lastReport = $queryObject->fetch())
 		{
-			$dbres = CTimeManReportFull::GetList(
-				Array("DATE_TO"=>"desc"),
-				Array("USER_ID"=>$this->USER_ID,"ACTIVE"=>"Y"),
-				Array("DATE_TO"),
-				Array("nTopCount"=>1)
-			);
-			$last_report = $dbres->Fetch();
-			$last_date_report = MakeTimeStamp($last_report["DATE_TO"] ?? null, $this->TimeShort);
-		}
-		else
-		{
-			$last_date_report = MakeTimeStamp($arSettings["UF_LAST_REPORT_DATE"], $shortFormat);
-			if (!$last_date_report)
-			{
-				// id=140000
-				$last_date_report = MakeTimeStamp($arSettings["UF_LAST_REPORT_DATE"], TM_SHORT_FORMAT);
-			}
+			$lastDateReport = MakeTimeStamp($lastReport["DATE_TO"], $shortFormat);
 		}
 
-		$last_settings = MakeTimeStamp($arSettings["UF_SETTING_DATE"], $fullFormat);
-		$last_date_report = max($last_date_report, $last_settings);
+		$dateOfLastSettingsUpdate = MakeTimeStamp($arSettings['UF_SETTING_DATE'], $fullFormat);
+		$lastDateReport = max($lastDateReport, $dateOfLastSettingsUpdate);
+
+		if ($lastDateReport)
+		{
+			return $lastDateReport;
+		}
 
 		switch ($arSettings["UF_REPORT_PERIOD"])
 		{
 			case "WEEK":
-
-					if($arSettings["UF_TM_DAY"]<=4)
-						$arLastDate = strtotime("last sun -1 week");
-					else
-						$arLastDate = strtotime("last sun");
-
-					if ($last_date_report)
-						$arLastDate = $last_date_report;
-			break;
-			case "DAY":
-				$arLastDate = strtotime("-1 day");
-				if ($last_date_report)
-						$arLastDate = $last_date_report;
-			break;
-
-			case "MONTH";
-
-				if($arSettings["UF_TM_REPORT_DATE"]<=20)
-					$arLastDate = strtotime("last day of last month -1 month");
+				if ($arSettings["UF_TM_DAY"] <= 4)
+					$lastDate = strtotime("last sun -1 week");
 				else
-					$arLastDate = strtotime("last day of last month");
-				if ($last_date_report)
-					$arLastDate = $last_date_report;
-			break;
+					$lastDate = strtotime("last sun");
+				break;
+			case "DAY":
+				$lastDate = strtotime("-1 day");
+				break;
+			case "MONTH";
+				if ($arSettings["UF_TM_REPORT_DATE"] <= 20)
+					$lastDate = strtotime("last day of last month -1 month");
+				else
+					$lastDate = strtotime("last day of last month");
+				break;
 		}
 
-		return $arLastDate;
+		return $lastDate;
 	}
 
-	private function FixDateByHoliday($DATE_FROM = false, $DATE_TO = false)
+	private function hasWorkShift($dateFrom, $dateTo): bool
 	{
-		$arResult = Array(
-			"NEED_TO_RECALC"=>false,
-			"DO_NOT_SHOW_THE_FORM"=>false
-		);
-		//$DATE_TO_INC = ConvertTimeStampForReport(strtotime('+1 day', MakeTimeStamp($DATE_TO,$this->TimeShort)),"SHORT");
-		// $DATE_TO_INC = ConvertTimeStampForReport(strtotime('+1 day', MakeTimeStamp($DATE_TO,TM_SHORT_FORMAT)),"SHORT");
-		// $DATE_FROM = ConvertTimeStampForReport(MakeTimeStamp($DATE_FROM, TM_SHORT_FORMAT),"SHORT");
+		$shortFormat = CSite::getDateFormat('SHORT', SITE_ID);
 
-		$shortFormat = CSite::getDateFormat("SHORT", SITE_ID);
-		$fullFormat = CSite::getDateFormat("FULL", SITE_ID);
+		$dateFrom = ConvertTimeStamp(MakeTimeStamp($dateFrom, $shortFormat));
+		$dateToInc = ConvertTimeStamp(strtotime('+1 day', MakeTimeStamp($dateTo, $shortFormat)));
 
-		$DATE_TO_INC = ConvertTimeStamp(strtotime('+1 day', MakeTimeStamp($DATE_TO, $shortFormat)),"SHORT");
-		$DATE_FROM = ConvertTimeStamp(MakeTimeStamp($DATE_FROM, $shortFormat),"SHORT");
-
-		// if($DATE_TO_INC == $DATE_FROM)
-		// {
-		// 	$DATE_TO_INC = ConvertTimeStamp(strtotime('+2 day', $ts_from),"SHORT");
-		// }
-
-		//was the work day is open between $DATE_FROM and $DATE_TO?
-
-		$dbRes = CTimeManEntry::GetList(
-			array('ID' => 'ASC'),
-			array(
+		$queryObject = CTimeManEntry::GetList(
+			['ID' => 'ASC'],
+			[
 				'USER_ID' => $this->USER_ID,
-				'>=DATE_START'=>$DATE_FROM,
-				'<DATE_START'=>$DATE_TO_INC,
-			),
-			false,false,Array("ID")
+				'>=DATE_START'=> $dateFrom,
+				'<DATE_START' => $dateToInc,
+			],
+			false,
+			false,
+			['ID'],
 		);
 
-		if (!$dbRes->Fetch())//it's all right, we found work between $DATE_FROM and $DATE_TO
-		{
-			//the work day was NOT open between $DATE_FROM and $DATE_TO...hmm, holidays?
-			//let's try to find first open work day after holidays
-			$dbRes = CTimeManEntry::GetList(
-				array('ID' => 'ASC'),
-				array(
-					'USER_ID' => $this->USER_ID,
-					'>DATE_START'=>$DATE_FROM,
-				),
-				false,false,Array("ID", "DATE_START")
-			);
-			if ($res = $dbRes->Fetch())
-			{
-				//we've found first open work day after holidays, now we should rewrite last report date
-				$FWorkDayDateTS = MakeTimeStamp($res['DATE_START'],$this->TimeFull);
-				$LastDate = ConvertTimeStampForReport(strtotime('-1 day',$FWorkDayDateTS),"SHORT");
+		return (bool) $queryObject->fetch();
+	}
 
-				//if we set the same value we will fall into the endless recursion
-				if($LastDate != ConvertTimeStampForReport($this->GetLastDate(),"SHORT"))
-				{
-					$this->SetLastDate($this->USER_ID,$LastDate);
-					$arResult["NEED_TO_RECALC"] = true;
-				}
-			}
-			else
-			{
-				//we not found the first open workday after holidays, it's mean that the holidays are not over yet and we can't show the report form
-				$arResult["DO_NOT_SHOW_THE_FORM"] = true;
-			}
+	private function getFirstWorkDayDate($dateTo)
+	{
+		$shortFormat = CSite::getDateFormat('SHORT', SITE_ID);
+
+		$dateToInc = ConvertTimeStamp(strtotime('+1 day', MakeTimeStamp($dateTo, $shortFormat)));
+
+		$queryObject = CTimeManEntry::GetList(
+			['ID' => 'ASC'],
+			[
+				'USER_ID' => $this->USER_ID,
+				'>DATE_START' => $dateToInc,
+			],
+			false,
+			false,
+			[
+				"ID",
+				"DATE_START"
+			],
+		);
+		if ($entry = $queryObject->fetch())
+		{
+			return $entry['DATE_START'];
 		}
 
-		return $arResult;
+		return null;
 	}
 
 	public static function getInfoCacheId($USER_ID)
@@ -891,9 +963,7 @@ class CUserReportFull
 
 		$cache_id = self::getInfoCacheId($USER->GetID());
 
-		$arReportInfo = null;
-
-		if($CACHE_MANAGER->Read(86400, $cache_id, "timeman_report_info"))
+		if($CACHE_MANAGER->Read(86400, $cache_id, 'timeman_report_info'))
 		{
 			$arReportInfo = $CACHE_MANAGER->Get($cache_id);
 		}
@@ -904,45 +974,29 @@ class CUserReportFull
 			$CACHE_MANAGER->Set($cache_id, $arReportInfo);
 		}
 
-		if(is_array($arReportInfo['_DATA']))
+		if ($this->isShowReportForm($arReportInfo['DATE_SUBMIT']) && $arReportInfo['MODE'])
 		{
-			$arData = $arReportInfo['_DATA'];
-			$fix = $arReportInfo['_FIX'] ?? null;
-
-			//is time to show a report form?
-			if ($this->isShowReportForm($arData["DATE_SUBMIT"]) && $arReportInfo["MODE"])
-			{
-				$arReportInfo["SHOW_REPORT_FORM"] = "Y";
-			}
-
-			if ($this->isReportDay($arData["DATE_SUBMIT"]))
-			{
-				$arReportInfo["IS_REPORT_DAY"] = "Y";
-
-				if ($fix["NEED_TO_RECALC"])
-				{
-					$CACHE_MANAGER->Clean($cache_id, 'timeman_report_info');
-
-					return $this->_GetReportInfo();
-				}
-				elseif($fix["DO_NOT_SHOW_THE_FORM"])
-				{
-					$arReportInfo["IS_REPORT_DAY"] = "N";
-					$arReportInfo["SHOW_REPORT_FORM"] = "N";
-				}
-			}
+			$arReportInfo['SHOW_REPORT_FORM'] = 'Y';
+		}
+		if ($this->isReportDay($arReportInfo['DATE_SUBMIT']))
+		{
+			$arReportInfo['IS_REPORT_DAY'] = 'Y';
 		}
 
-		unset($arReportInfo['_DATA']);
-		unset($arReportInfo['_FIX']);
+		if (!$this->isNeedSkipReport($arReportInfo, false))
+		{
+			self::clearReportCache($USER->GetID());
+
+			return $this->_GetReportInfo();
+		}
 
 		return $arReportInfo;
 	}
 
 	protected function _GetReportInfo()
 	{
-
 		global $DB,$USER;
+
 		$arSettings = $this->GetSettings();
 
 		$arReport = Array(
@@ -957,21 +1011,6 @@ class CUserReportFull
 			"IS_REPORT_DAY"=>"N"
 		);
 
-		//where is no last date report?
-		if (!$arSettings["UF_LAST_REPORT_DATE"] && $arSettings["UF_REPORT_PERIOD"] && $arSettings["UF_REPORT_PERIOD"] != "NONE")
-		{
-			//calc last date report
-			$lastDate = $this->GetLastDate();
-			if($lastDate)//return ts
-			{
-				$this->SetLastDate($this->USER_ID,ConvertTimeStampForReport($lastDate,"SHORT"));
-
-				$USER->Update($this->USER_ID,Array("UF_SETTING_DATE"=>$arSettings["UF_SETTING_DATE"]));
-
-				$arSettings["UF_LAST_REPORT_DATE"] = ConvertTimeStampForReport($lastDate,"SHORT");
-			}
-		}
-
 		if($arSettings["UF_REPORT_PERIOD"] != "NONE")
 		{
 			$arData = $this->Recalc();//calc date_from, date_to and date_submit
@@ -982,7 +1021,7 @@ class CUserReportFull
 				"DATE_TO"=>$arData["DATE_TO"],
 				"DATE_SUBMIT"=>$arData["DATE_SUBMIT"],
 				"SHOW_REPORT_FORM"=>"N",
-				"LAST_REPORT"=>$arSettings["UF_LAST_REPORT_DATE"],
+				"LAST_REPORT"=>$arData["LAST_REPORT"],
 				"DELAY_TIME"=>$arSettings["UF_DELAY_TIME"],
 				"IS_DELAY"=>"N",
 				"IS_REPORT_DAY"=>"N"
@@ -1007,22 +1046,7 @@ class CUserReportFull
 			if ($this->isReportDay($arData["DATE_SUBMIT"]))
 			{
 				$arReport["IS_REPORT_DAY"] = "Y";
-				$fix = $this->FixDateByHoliday($arData["DATE_FROM"],$arData["DATE_TO"]);
-
-				$arReport['_FIX'] = $fix;
-
-				if ($fix["NEED_TO_RECALC"] == true)
-				{
-					return $this->_GetReportInfo();
-				}
-				elseif($fix["DO_NOT_SHOW_THE_FORM"] == true)
-				{
-					$arReport["IS_REPORT_DAY"] = "N";
-					$arReport["SHOW_REPORT_FORM"] = "N";
-				}
 			}
-
-			$arReport['_DATA'] = $arData;
 		}
 		return $arReport;
 	}
@@ -1094,8 +1118,8 @@ class CUserReportFull
 			$entriesInfo['REPORT_DATE_TO'] = MakeTimeStamp($currentReportInfo['DATE_TO'], $shortFormat);
 		}
 
-		$dateFrom = (($currentReportInfo['DATE_FROM']) ? $currentReportInfo['DATE_FROM'] : $savedReport['DATE_FROM']);
-		$dateTo = (($currentReportInfo['DATE_TO']) ? $currentReportInfo['DATE_TO'] : $savedReport['DATE_TO']);
+		$dateFrom = (($currentReportInfo['DATE_FROM']) ?: $savedReport['DATE_FROM']);
+		$dateTo = (($currentReportInfo['DATE_TO']) ?: $savedReport['DATE_TO']);
 
 		$entriesInfo = $this->preparePlannerData($entriesInfo);
 
@@ -1104,10 +1128,18 @@ class CUserReportFull
 			'<=REPORT_DATE' => $dateTo,
 			'USER_ID' => $userId
 		];
+
 		list($entriesInfo, $entryIds) = $this->prepareDailyReports($filter, $entriesInfo);
+
+		list($taskIds, $eventIds) = $this->getTasksAndEventsIds($entriesInfo);
+		if ($eventIds)
+		{
+			$entriesInfo['EVENTS'] = $this->filterEventsByDate($entriesInfo['EVENTS'], $dateFrom, $dateTo);
+		}
+
 		if (!in_array($entriesInfo["ID"], $entryIds))
 		{
-			$entriesInfo = $this->addCurrentReport($entriesInfo);
+			$entriesInfo = $this->addCurrentReport($entriesInfo, $dateFrom, $dateTo);
 		}
 
 		$entriesInfo = $this->clearEventsByCheckStatus($entriesInfo);
@@ -1130,6 +1162,29 @@ class CUserReportFull
 		];
 
 		return $result;
+	}
+
+	private function filterEventsByDate(array $inputEvents, string $dateFrom, string $dateTo): array
+	{
+		$reportEvents = [];
+
+		$reportDateFrom = MakeTimeStamp($dateFrom, CSite::getDateFormat('SHORT', SITE_ID));
+		$reportDateTo = MakeTimeStamp($dateTo, CSite::getDateFormat('SHORT', SITE_ID));
+
+		foreach ($inputEvents as $event)
+		{
+			$eventDateTo = MakeTimeStamp($event['DATE_TO'], CSite::getDateFormat('SHORT', SITE_ID));
+
+			if (
+				$eventDateTo >= $reportDateFrom
+				&& $eventDateTo <= $reportDateTo
+			)
+			{
+				$reportEvents[] = $event;
+			}
+		}
+
+		return $reportEvents;
 	}
 
 	private function isNeedSkipReport(array $currentReportInfo, $force): bool
@@ -1306,12 +1361,9 @@ class CUserReportFull
 				{
 					foreach ($entriesInfo['TASKS'] as $key => $entryTask)
 					{
-						if (
-							$entryTask['ID'] == $task['ID']
-							&& isset($entriesInfo['TASKS'][$key]['TIME'])
-						)
+						if ($entryTask['ID'] == $task['ID'])
 						{
-							$entriesInfo['TASKS'][$key]['TIME'] += $task['TIME'];
+							$entriesInfo['TASKS'][$key]['TIME'] = $task['TIME'];
 						}
 					}
 				}
@@ -1364,11 +1416,24 @@ class CUserReportFull
 		return "<b>".$reportDate."</b><br>".nl2br(htmlspecialcharsbx($message))."<br>";
 	}
 
-	private function addCurrentReport(array $entriesInfo): array
+	private function addCurrentReport(array $entriesInfo, string $dateFrom, string $dateTo): array
 	{
+		$settings = $this->GetSettings();
+		$submitDayTime = CTimeman::MakeShortTS($settings['UF_TM_TIME']);
+
+		$dateTimeTo = new \Bitrix\Main\Type\DateTime($dateTo);
+		$dateTimeTo = \Bitrix\Main\Type\DateTime::createFromTimestamp(
+			$dateTimeTo->getTimestamp() + $submitDayTime
+		);
+
 		$queryObject = CTimeManReport::getList(
 			['ID' => 'ASC'],
-			['ENTRY_ID' => $entriesInfo['ID'], 'REPORT_TYPE' => 'REPORT']
+			[
+				'ENTRY_ID' => $entriesInfo['ID'],
+				'REPORT_TYPE' => 'REPORT',
+				'>=TIMESTAMP_X' => (new \Bitrix\Main\Type\Date($dateFrom))->format('Y-m-d'),
+				'<=TIMESTAMP_X' => $dateTimeTo->format('Y-m-d H:i:s'),
+			]
 		);
 		if ($currentReport = $queryObject->fetch())
 		{
@@ -1420,6 +1485,13 @@ class CUserReportFull
 		}
 
 		return $result;
+	}
+
+	public static function clearReportCache($userId)
+	{
+		global $CACHE_MANAGER;
+
+		$CACHE_MANAGER->Clean(static::getInfoCacheId($userId), 'timeman_report_info');
 	}
 
 	static function GetEntityID($XML_ID = false,$entity_id = false)
@@ -1657,16 +1729,10 @@ class CReportNotifications
 			&& ($arReport = $dbReport->Fetch())
 		)
 		{
-			$culture = \Bitrix\Main\Application::getInstance()->getContext()->getCulture();
-			$dayMonthFormat = $culture->getDayMonthFormat();
-			$date_from = FormatDate($dayMonthFormat, MakeTimeStamp($arReport["DATE_FROM"],CSite::GetDateFormat("FULL", SITE_ID)));
-			$date_to = FormatDate($dayMonthFormat, MakeTimeStamp($arReport["DATE_TO"],CSite::GetDateFormat("FULL", SITE_ID)));
-			if ($date_from == $date_to)
-				$date_text = $date_to;
-			else
-				$date_text = $date_from." - ".$date_to;
+			$date_text = self::getFormatDateRange($arReport["DATE_FROM"], $arReport["DATE_TO"]);
+
 			$message = GetMessage('REPORT_DONE');
-			$arSoFields = Array(
+			$arSoFields = [
 				"EVENT_ID" => "report",
 				"=LOG_DATE" =>$DB->CurrentTimeFunction(),
 				"MODULE_ID" => "timeman",
@@ -1676,19 +1742,19 @@ class CReportNotifications
 				"TEXT_MESSAGE" => $message,
 				"CALLBACK_FUNC" => false,
 				"SOURCE_ID" => $REPORT_ID,
-				"SITE_ID"=>SITE_ID,
+				"SITE_ID" => SITE_ID,
 				"ENABLE_COMMENTS" => "Y",
 				"PARAMS" => serialize(array(
 					"FORUM_ID" => COption::GetOptionInt("timeman","report_forum_id","")
 				))
-			);
+			];
 			$arSoFields["ENTITY_TYPE"] = SONET_WORK_REPORT_ENTITY;
 			$arSoFields["ENTITY_ID"] = $arReport["USER_ID"];
 			$arSoFields["USER_ID"] = $arReport["USER_ID"];
 //			CReportNotifications::Subscribe($arReport["USER_ID"]);
 			$logID = CSocNetLog::Add($arSoFields, false);
 
-			if (intval($logID) > 0)
+			if ((int)$logID > 0)
 			{
 				CSocNetLog::Update($logID, array("TMP_ID" => $logID));
 				$arRights = CReportNotifications::GetRights($arReport["USER_ID"]);
@@ -1701,8 +1767,7 @@ class CReportNotifications
 					$arReport["LOG_ID"] = $logID;
 					$arReport["PERIOD_TEXT"] = $date_text;
 
-					if (IsModuleInstalled("im"))
-						self::NotifyIm($arReport);
+					self::NotifyIm($arReport);
 				}
 			}
 
@@ -1713,10 +1778,25 @@ class CReportNotifications
 
 	}
 
+	protected static function getFormatDateRange($dateFrom, $dateTo, ?string $languageId = null)
+	{
+		$culture = \Bitrix\Main\Application::getInstance()->getContext()->getCulture();
+		$dayMonthFormat = $culture->getDayMonthFormat();
+		$dateToFormatted = FormatDate($dayMonthFormat, MakeTimeStamp($dateTo, CSite::GetDateFormat("FULL", SITE_ID)), false, $languageId);
+		$dateFromFormatted = FormatDate($dayMonthFormat, MakeTimeStamp($dateFrom, CSite::GetDateFormat("FULL", SITE_ID)), false, $languageId);
+
+		return $dateFromFormatted === $dateToFormatted
+			? $dateToFormatted
+			: $dateFromFormatted . " - " . $dateToFormatted
+		;
+	}
+
 	protected static function NotifyIm($arReport)
 	{
-		if(!CModule::IncludeModule("im"))
+		if(!\Bitrix\Main\Loader::includeModule('im'))
+		{
 			return;
+		}
 
 		$arMessageFields = array(
 			"MESSAGE_TYPE" => IM_MESSAGE_SYSTEM,
@@ -1750,13 +1830,21 @@ class CReportNotifications
 				$arMessageFields["TO_USER_ID"] = $managerID;
 				$arTmp = CSocNetLogTools::ProcessPath(array("REPORTS_PAGE" => $reports_page), $managerID);
 
-				$arMessageFields["NOTIFY_MESSAGE"] = GetMessage("REPORT_FULL_IM_ADD".$gender_suffix, Array(
-					"#period#" => "<a href=\"".$arTmp["URLS"]["REPORTS_PAGE"]."#user_id=".$arReport["USER_ID"]."&report=".$arReport["ID"]."\" class=\"bx-notifier-item-action\">".htmlspecialcharsbx($arReport["PERIOD_TEXT"])."</a>",
-				));
+				$arMessageFields["NOTIFY_MESSAGE"] = fn (?string $languageId = null) => Loc::getMessage(
+					"REPORT_FULL_IM_ADD" . $gender_suffix,
+					[
+						"#period#" => "<a href=\"".$arTmp["URLS"]["REPORTS_PAGE"]."#user_id=".$arReport["USER_ID"]."&report=".$arReport["ID"]."\" class=\"bx-notifier-item-action\">".htmlspecialcharsbx(self::getFormatDateRange($arReport["DATE_FROM"], $arReport["DATE_TO"], $languageId))."</a>",
+					],
+					$languageId
+				);
 
-				$arMessageFields["NOTIFY_MESSAGE_OUT"] = GetMessage("REPORT_FULL_IM_ADD".$gender_suffix, Array(
-					"#period#" => htmlspecialcharsbx($arReport["PERIOD_TEXT"]),
-				))." ( ".$arTmp["SERVER_NAME"].$arTmp["URLS"]["REPORTS_PAGE"]."#user_id=".$arReport["USER_ID"]."&report=".$arReport["ID"]." )";
+				$arMessageFields["NOTIFY_MESSAGE_OUT"] = fn (?string $languageId = null) => Loc::getMessage(
+					"REPORT_FULL_IM_ADD".$gender_suffix,
+					[
+						"#period#" => htmlspecialcharsbx(self::getFormatDateRange($arReport["DATE_FROM"], $arReport["DATE_TO"], $languageId)),
+					],
+					$languageId
+				) . " ( ".$arTmp["SERVER_NAME"].$arTmp["URLS"]["REPORTS_PAGE"]."#user_id=".$arReport["USER_ID"]."&report=".$arReport["ID"]." )";
 
 				CIMNotify::Add($arMessageFields);
 			}
@@ -1832,14 +1920,7 @@ class CReportNotifications
 				&& $arReport["USER_ID"] != $curUser
 			)
 			{
-				$culture = \Bitrix\Main\Application::getInstance()->getContext()->getCulture();
-				$dayMonthFormat = $culture->getDayMonthFormat();
-				$date_from = FormatDate($dayMonthFormat, MakeTimeStamp($arReport["DATE_FROM"], CSite::GetDateFormat("FULL", SITE_ID)));
-				$date_to = FormatDate($dayMonthFormat, MakeTimeStamp($arReport["DATE_TO"], CSite::GetDateFormat("FULL", SITE_ID)));
-				if ($date_from == $date_to)
-					$date_text = $date_to;
-				else
-					$date_text = $date_from." - ".$date_to;
+				$date_text = self::getFormatDateRange($arReport["DATE_FROM"], $arReport["DATE_TO"]);
 
 				$arMessageFields = array(
 					"MESSAGE_TYPE" => IM_MESSAGE_SYSTEM,
@@ -1855,59 +1936,59 @@ class CReportNotifications
 				$dbUser = CUser::GetByID($curUser);
 				if ($arUser = $dbUser->Fetch())
 				{
-					switch ($arUser["PERSONAL_GENDER"])
+					$gender_suffix = match ($arUser["PERSONAL_GENDER"])
 					{
-						case "M":
-							$gender_suffix = "_M";
-							break;
-						case "F":
-							$gender_suffix = "_F";
-							break;
-						default:
-							$gender_suffix = "";
-					}
+						"M" => "_M",
+						"F" => "_F",
+						default => "",
+					};
 				}
 
 				$reports_page = COption::GetOptionString("timeman", "WORK_REPORT_PATH", "/timeman/work_report.php");
 
 				$arTmp = CSocNetLogTools::ProcessPath(array("REPORTS_PAGE" => $reports_page), $arReport["USER_ID"]);
 
-				switch ($arFields["MARK"])
+				$mark = match ($arFields["MARK"])
 				{
-					case "G":
-						$mark = "G";
-						break;
-					case "B":
-						$mark = "B";
-						break;
-					case "X":
-						$mark = "X";
-						break;
-					default:
-						$mark = "N";
-				}
-				$arMessageFields["NOTIFY_MESSAGE"] = GetMessage("REPORT_FULL_IM_APPROVE".$gender_suffix."_".$mark, Array(
-					"#period#" => "<a href=\"".$arTmp["URLS"]["REPORTS_PAGE"]."#user_id=".$arReport["USER_ID"]."&report=".$REPORT_ID."\" class=\"bx-notifier-item-action\">".htmlspecialcharsbx($date_text)."</a>",
-				));
+					"G" => "G",
+					"B" => "B",
+					"X" => "X",
+					default => "N",
+				};
+				$arMessageFields["NOTIFY_MESSAGE"] = fn (?string $languageId = null) => Loc::getMessage(
+					"REPORT_FULL_IM_APPROVE".$gender_suffix."_".$mark,
+					[
+						"#period#" => "<a href=\"".$arTmp["URLS"]["REPORTS_PAGE"]."#user_id=".$arReport["USER_ID"]."&report=".$REPORT_ID."\" class=\"bx-notifier-item-action\">".htmlspecialcharsbx(self::getFormatDateRange($arReport["DATE_FROM"], $arReport["DATE_TO"], $languageId))."</a>",
+					],
+					$languageId
+				);
 
-				$arMessageFields["NOTIFY_MESSAGE_OUT"] = GetMessage("REPORT_FULL_IM_APPROVE".$gender_suffix."_".$mark, Array(
-					"#period#" => htmlspecialcharsbx($date_text),
-				))." ( ".$arTmp["SERVER_NAME"].$arTmp["URLS"]["REPORTS_PAGE"]."#user_id=".$arReport["USER_ID"]."&report=".$REPORT_ID." )";
+				$arMessageFields["NOTIFY_MESSAGE_OUT"] = fn (?string $languageId = null) => Loc::getMessage(
+					"REPORT_FULL_IM_APPROVE".$gender_suffix."_".$mark,
+					[
+						"#period#" => htmlspecialcharsbx(self::getFormatDateRange($arReport["DATE_FROM"], $arReport["DATE_TO"], $languageId)),
+					],
+					$languageId
+				) . " ( ".$arTmp["SERVER_NAME"].$arTmp["URLS"]["REPORTS_PAGE"]."#user_id=".$arReport["USER_ID"]."&report=".$REPORT_ID." )";
 
 				CIMNotify::Add($arMessageFields);
 			}
 
 			$dbLogRights = CSocNetLogRights::GetList(Array(),Array("LOG_ID"=>$LOG_ID));
 			while($arRight = $dbLogRights->Fetch())
+			{
 				$arRights[] = $arRight["GROUP_CODE"];
+			}
 
 			if(!in_array("U".$curUser,$arRights))
-				CSocNetLogRights::Add($LOG_ID,"U".$curUser);
+			{
+				CSocNetLogRights::Add($LOG_ID, "U" . $curUser);
+			}
 
 			return $LOG_ID;
 		}
-		else
-			return false;
+
+		return false;
 	}
 
 	public static function GetRights($USER_ID)
@@ -2208,7 +2289,7 @@ class CReportNotifications
 				$parserLog->pathToUser = $parserLog->userPath = $arParams["PATH_TO_USER"];
 				$parserLog->bMobile = (($arParams["MOBILE"] ?? '') == "Y");
 				$arResult["EVENT_FORMATTED"]["MESSAGE"] = htmlspecialcharsbx($parserLog->convert(htmlspecialcharsback($arResult["EVENT_FORMATTED"]["MESSAGE"]), $arAllow));
-				$arResult["EVENT_FORMATTED"]["MESSAGE"] = preg_replace("/\[user\s*=\s*([^\]]*)\](.+?)\[\/user\]/is".BX_UTF_PCRE_MODIFIER, "\\2", $arResult["EVENT_FORMATTED"]["MESSAGE"]);
+				$arResult["EVENT_FORMATTED"]["MESSAGE"] = preg_replace("/\[user\s*=\s*([^\]]*)\](.+?)\[\/user\]/isu", "\\2", $arResult["EVENT_FORMATTED"]["MESSAGE"]);
 			}
 			else
 			{
@@ -2299,19 +2380,9 @@ class CReportNotifications
 			&& intval($arFields["USER_ID"]) > 0
 		)
 		{
-			$date_text = "";
 			$dbReport = CTimeManReportFull::GetByID($arFields["REPORT_ID"]);
 			if ($arReport = $dbReport->Fetch())
 			{
-				$culture = \Bitrix\Main\Application::getInstance()->getContext()->getCulture();
-				$dayMonthFormat = $culture->getDayMonthFormat();
-				$date_from = FormatDate($dayMonthFormat, MakeTimeStamp($arReport["DATE_FROM"], CSite::GetDateFormat("FULL", SITE_ID)));
-				$date_to = FormatDate($dayMonthFormat, MakeTimeStamp($arReport["DATE_TO"], CSite::GetDateFormat("FULL", SITE_ID)));
-				if ($date_from == $date_to)
-					$date_text = $date_to;
-				else
-					$date_text = $date_from." - ".$date_to;
-
 				$arMessageFields = array(
 					"MESSAGE_TYPE" => IM_MESSAGE_SYSTEM,
 					"FROM_USER_ID" => $arFields["USER_ID"],
@@ -2329,22 +2400,19 @@ class CReportNotifications
 				$dbUser = CUser::GetByID($arFields["USER_ID"]);
 				if ($arUser = $dbUser->Fetch())
 				{
-					switch ($arUser["PERSONAL_GENDER"])
+					$gender_suffix = match ($arUser["PERSONAL_GENDER"])
 					{
-						case "M":
-							$gender_suffix = "_M";
-							break;
-						case "F":
-							$gender_suffix = "_F";
-								break;
-						default:
-							$gender_suffix = "";
-					}
+						"M" => "_M",
+						"F" => "_F",
+						default => "",
+					};
 				}
 
 				$arManagers = CTimeMan::GetUserManagers($arReport["USER_ID"]);
 				if (is_array($arManagers))
+				{
 					$arUserIDToSend = array_merge($arUserIDToSend, $arManagers);
+				}
 
 				$reports_page = COption::GetOptionString("timeman", "WORK_REPORT_PATH", "/timeman/work_report.php");
 
@@ -2359,7 +2427,9 @@ class CReportNotifications
 					array("USER_ID")
 				);
 				while ($arUnFollower = $rsUnFollower->Fetch())
+				{
 					$arUnFollowers[] = $arUnFollower["USER_ID"];
+				}
 
 				$arUserIDToSend = array_diff($arUserIDToSend, $arUnFollowers);
 
@@ -2373,13 +2443,21 @@ class CReportNotifications
 
 					$sender_type = ($arReport["USER_ID"] == $user_id ? "1" : ($arReport["USER_ID"] == $arFields["USER_ID"] ? "2" : "3"));
 
-					$arMessageFields["NOTIFY_MESSAGE"] = GetMessage("REPORT_FULL_IM_COMMENT_".$sender_type.$gender_suffix, Array(
-						"#period#" => "<a href=\"".$arTmp["URLS"]["REPORTS_PAGE"]."#user_id=".$arReport["USER_ID"]."&report=".$arReport["ID"]."\" class=\"bx-notifier-item-action\">".htmlspecialcharsbx($date_text)."</a>",
-					));
+					$arMessageFields["NOTIFY_MESSAGE"] = fn (?string $languageId = null) => Loc::getMessage(
+						"REPORT_FULL_IM_COMMENT_".$sender_type.$gender_suffix,
+						[
+							"#period#" => "<a href=\"".$arTmp["URLS"]["REPORTS_PAGE"]."#user_id=".$arReport["USER_ID"]."&report=".$arReport["ID"]."\" class=\"bx-notifier-item-action\">".htmlspecialcharsbx(self::getFormatDateRange($arReport["DATE_FROM"], $arReport["DATE_TO"], $languageId))."</a>",
+						],
+						$languageId
+					);
 
-					$arMessageFields["NOTIFY_MESSAGE_OUT"] = GetMessage("REPORT_FULL_IM_COMMENT_".$sender_type.$gender_suffix, Array(
-						"#period#" => htmlspecialcharsbx($date_text),
-					))." ( ".$arTmp["SERVER_NAME"].$arTmp["URLS"]["REPORTS_PAGE"]."#user_id=".$arReport["USER_ID"]."&report=".$arReport["ID"]." )#BR##BR#".$arFields["MESSAGE"];
+					$arMessageFields["NOTIFY_MESSAGE_OUT"] = fn (?string $languageId = null) => Loc::getMessage(
+						"REPORT_FULL_IM_COMMENT_".$sender_type.$gender_suffix,
+						[
+							"#period#" => htmlspecialcharsbx(self::getFormatDateRange($arReport["DATE_FROM"], $arReport["DATE_TO"], $languageId)),
+						],
+						$languageId
+					) . " ( ".$arTmp["SERVER_NAME"].$arTmp["URLS"]["REPORTS_PAGE"]."#user_id=".$arReport["USER_ID"]."&report=".$arReport["ID"]." )#BR##BR#".$arFields["MESSAGE"];
 
 					CIMNotify::Add($arMessageFields);
 				}

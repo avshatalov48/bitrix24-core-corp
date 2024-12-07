@@ -149,7 +149,7 @@ switch(mb_strtolower($langId))
 				</div>
 			</div>
 		</div>
-		<script type="text/javascript">
+		<script>
 		BX(function () {
 			BX.message({disk_document_service: 'gdrive'});
 

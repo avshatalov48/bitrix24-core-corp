@@ -3,10 +3,12 @@ namespace Bitrix\Tasks\Internals\Task;
 
 use Bitrix\Main\Application;
 use Bitrix\Main\ArgumentException;
-use Bitrix\Main\DB\SqlExpression;
 use Bitrix\Main\ObjectPropertyException;
+use Bitrix\Main\ORM\Fields\IntegerField;
+use Bitrix\Main\ORM\Fields\TextField;
 use Bitrix\Main\SystemException;
 use Bitrix\Tasks\Internals\TaskDataManager;
+use Exception;
 
 /**
  * Class SearchIndexTable
@@ -28,46 +30,27 @@ use Bitrix\Tasks\Internals\TaskDataManager;
  */
 class SearchIndexTable extends TaskDataManager
 {
-	/**
-	 * @return string
-	 */
-	public static function getTableName()
+	public static function getTableName(): string
 	{
 		return 'b_tasks_search_index';
 	}
 
-	/**
-	 * @return string
-	 */
-	public static function getClass()
+	public static function getClass(): string
 	{
-		return get_called_class();
+		return static::class;
 	}
 
-	/**
-	 * @return array
-	 */
-	public static function getMap()
+	public static function getMap(): array
 	{
 		return [
-			'ID' => [
-				'data_type' => 'integer',
-				'primary' => true,
-				'autocomplete' => true,
-			],
-			'TASK_ID' => [
-				'data_type' => 'integer',
-				'required' => true,
-			],
-			'MESSAGE_ID' => [
-				'data_type' => 'integer',
-				'required' => false,
-				'default' => 0,
-			],
-			'SEARCH_INDEX' => [
-				'data_type' => 'text',
-				'required' => false,
-			],
+			(new IntegerField('ID'))
+				->configurePrimary()
+				->configureAutocomplete(),
+			(new IntegerField('TASK_ID'))
+				->configureRequired(),
+			(new IntegerField('MESSAGE_ID'))
+				->configureDefaultValue(0),
+			(new TextField('SEARCH_INDEX')),
 		];
 	}
 
@@ -79,7 +62,7 @@ class SearchIndexTable extends TaskDataManager
 	 * @throws ArgumentException
 	 * @throws ObjectPropertyException
 	 * @throws SystemException
-	 * @throws \Exception
+	 * @throws Exception
 	 */
 	public static function set(int $taskId, int $messageId, string $searchIndex): bool
 	{
@@ -132,7 +115,7 @@ class SearchIndexTable extends TaskDataManager
 	 * @throws ArgumentException
 	 * @throws ObjectPropertyException
 	 * @throws SystemException
-	 * @throws \Exception
+	 * @throws Exception
 	 */
 	public static function deleteByTaskAndMessageIds(int $taskId, int $messageId): void
 	{

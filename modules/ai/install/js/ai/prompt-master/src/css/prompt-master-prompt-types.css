@@ -1,0 +1,79 @@
+.ai__prompt-master_prompt-types {
+	margin: 0;
+	padding: 0;
+	list-style-type: none;
+}
+
+.ai__prompt-master_prompt-types_type {
+	margin-bottom: 20px;
+}
+
+.ai__prompt-master_prompt-types_type:last-child {
+	margin-bottom: 0;
+}
+
+.ai__prompt-master_prompt-type {
+	box-sizing: border-box;
+	min-height: 177px;
+	padding: 18px 16px;
+	display: flex;
+	flex-direction: column;
+	justify-content: flex-start;
+	align-items: flex-start;
+	background-color: var(--ui-color-base-02);
+	border: 2px solid transparent;
+	border-radius: var(--ui-border-radius-xs);
+	cursor: pointer;
+	transition: 0.2s ease-in-out background-color, 0.2s ease-in-out  border-color;
+	letter-spacing: -0.6px;
+}
+
+.ai__prompt-master_prompt-type.--active,
+.ai__prompt-master_prompt-type:hover,
+.ai__prompt-master_prompt-type.focus {
+	border-color: var(--ui-color-copilot-secondary);
+	background-color: var(--ui-color-copilot-light, #F7F3FD);
+	transition-duration: 0s;
+}
+
+.ai__prompt-master_prompt-type_icon {
+	width: 36px;
+	height: 36px;
+	background-repeat: no-repeat;
+	background-position: center center;
+}
+
+.ai__prompt-master_prompt-type_icon.--icon-stars {
+	background-image: url(../../images/prompt-icon.svg);
+}
+
+.ai__prompt-master_prompt-type_icon.--icon-stars-question {
+	background-image: url(../../images/question-prompt-icon.svg);
+}
+
+.ai__prompt-master_prompt-type_title {
+	margin: 8px 0;
+	color: var(--ui-color-text-primary);
+	font-size: var(--ui-font-size-xl);
+	line-height: var(--ui-font-line-height-3xs);
+}
+
+.ai__prompt-master_prompt-type_description {
+	margin-top: 0;
+	margin-bottom: 6px;
+	color: var(--ui-color-text-secondary);
+	font-size: var(--ui-font-size-md);
+	line-height: var(--ui-font-line-height-2xs);
+}
+
+.ai__prompt-master_prompt-type_example {
+	color: var(--ui-color-base-80);
+	font-size: var(--ui-font-size-sm);
+	line-height: var(--ui-font-line-height-md);
+	font-style: italic;
+}
+
+.ai__prompt-master_prompt-type_example strong {
+	font-weight: var(--ui-font-weight-normal);
+	color: var(--ui-color-copilot-primary);
+}

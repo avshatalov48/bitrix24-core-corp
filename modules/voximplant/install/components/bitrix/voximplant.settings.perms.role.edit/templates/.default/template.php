@@ -96,7 +96,7 @@ if(!$arResult['CAN_EDIT'])
 {
 	$APPLICATION->IncludeComponent("bitrix:ui.info.helper", "", array());
 	?>
-	<script type="text/javascript">
+	<script>
 		BX.ready(function()
 		{
 			BX.UI.InfoHelper.show('limit_contact_center_telephony_access_permissions')

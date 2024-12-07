@@ -13,3 +13,10 @@
 	display: block;
 	border-radius: var(--crm-entity-stream-section-border-radius, var(--ui-border-radius-md, 2px));
 }
+
+.crm-entity-stream-content-new-detail-guide-link
+{
+	color: var(--ui-color-link-primary-base);
+	font-size: var(--ui-size-md);
+	border-bottom-style: var(--ui-text-decoration-style-dashed) !important;
+}

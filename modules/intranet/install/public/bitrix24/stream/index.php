@@ -105,7 +105,10 @@ $APPLICATION->IncludeComponent(
 if (Loader::includeModule('intranet'))
 {
 	$APPLICATION->IncludeComponent('bitrix:intranet.ustat.online', '', [], false);
-	$APPLICATION->IncludeComponent('bitrix:intranet.ustat.status', '', ['CREATE_FRAME' => 'N'], false);
+	if (\Bitrix\Intranet\UStat\UStat::checkAvailableCompanyPulseAndNotifyAdmin())
+	{
+		$APPLICATION->IncludeComponent('bitrix:intranet.ustat.status', '', ['CREATE_FRAME' => 'N'], false);
+	}
 }
 
 if (ToolsManager::getInstance()->checkAvailabilityByToolId('calendar'))
@@ -126,18 +129,20 @@ if (ToolsManager::getInstance()->checkAvailabilityByToolId('calendar'))
 		false
 	);
 }
-
-$APPLICATION->IncludeComponent(
-	"bitrix:tasks.widget.rolesfilter",
-	"",
-	[
-		"USER_ID" => $USER->GetID(),
-		"PATH_TO_TASKS" => "/company/personal/user/".$USER->GetID()."/tasks/",
-		"PATH_TO_TASKS_CREATE" => "/company/personal/user/".$USER->GetID()."/tasks/task/edit/0/",
-	],
-	null,
-	["HIDE_ICONS" => "N"]
-);
+if (Loader::includeModule('tasks'))
+{
+	$APPLICATION->IncludeComponent(
+		"bitrix:tasks.widget.rolesfilter",
+		"",
+		[
+			"USER_ID" => $USER->GetID(),
+			"PATH_TO_TASKS" => "/company/personal/user/".$USER->GetID()."/tasks/",
+			"PATH_TO_TASKS_CREATE" => "/company/personal/user/".$USER->GetID()."/tasks/task/edit/0/",
+		],
+		null,
+		["HIDE_ICONS" => "N"]
+	);
+}
 
 if ($USER->IsAuthorized())
 {

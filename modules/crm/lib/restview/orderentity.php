@@ -11,39 +11,41 @@ final class OrderEntity extends Base
 	public function getFields(): array
 	{
 		return [
-			'OWNER_ID'=>[
-				'TYPE'=>DataType::TYPE_INT,
-				'ATTRIBUTES'=>[
+			'OWNER_ID' => [
+				'TYPE' => DataType::TYPE_INT,
+				'ATTRIBUTES' => [
 					Attributes::IMMUTABLE,
-					Attributes::REQUIRED
-				]
+					Attributes::REQUIRED,
+				],
 			],
-			'OWNER_TYPE_ID'=>[
-				'TYPE'=>DataType::TYPE_INT,
-				'ATTRIBUTES'=>[
+			'OWNER_TYPE_ID' => [
+				'TYPE' => DataType::TYPE_INT,
+				'ATTRIBUTES' => [
 					Attributes::IMMUTABLE,
-					Attributes::REQUIRED
-				]
+					Attributes::REQUIRED,
+				],
 			],
-			'ORDER_ID'=>[
-				'TYPE'=>DataType::TYPE_INT,
-				'ATTRIBUTES'=>[
+			'ORDER_ID' => [
+				'TYPE' => DataType::TYPE_INT,
+				'ATTRIBUTES' => [
 					Attributes::IMMUTABLE,
-					Attributes::REQUIRED
-				]
-			]
+					Attributes::REQUIRED,
+				],
+			],
 		];
 	}
 
 	public function convertKeysToSnakeCaseArguments($name, $arguments)
 	{
-		if($name == 'deletebyfilter')
+		if ($name === 'deletebyfilter')
 		{
-			if(isset($arguments['fields']))
+			if (isset($arguments['fields']))
 			{
 				$fields = $arguments['fields'];
-				if(!empty($fields))
+				if (!empty($fields))
+				{
 					$arguments['fields'] = $this->convertKeysToSnakeCaseFields($fields);
+				}
 			}
 		}
 		else
@@ -56,25 +58,23 @@ final class OrderEntity extends Base
 
 	public function checkArguments($name, $arguments): Result
 	{
-		if($name == 'deletebyfilter')
+		if ($name === 'deletebyfilter')
 		{
-			$r = $this->checkFieldsAdd($arguments['fields']);
-		}
-		else
-		{
-			$r = parent::checkArguments($name, $arguments);
+			return $this->checkFieldsAdd($arguments['fields']);
 		}
 
-		return $r;
+		return parent::checkArguments($name, $arguments);
 	}
 
 	public function internalizeArguments($name, $arguments): array
 	{
-		if($name == 'deletebyfilter')
+		if ($name === 'deletebyfilter')
 		{
 			$fields = $arguments['fields'];
-			if(!empty($fields))
+			if (!empty($fields))
+			{
 				$arguments['fields'] = $this->internalizeFieldsAdd($fields);
+			}
 		}
 		else
 		{

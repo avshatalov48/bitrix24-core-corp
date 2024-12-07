@@ -12,7 +12,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 use Bitrix\Main\Loader;
 
-$arResult["is_ajax_post"] = ((int)$_REQUEST["comment_post_id"] > 0 ? "Y" : "N");
+$arResult["is_ajax_post"] = (isset($_REQUEST["comment_post_id"]) && (int)$_REQUEST["comment_post_id"] > 0 ? "Y" : "N");
 $arResult["Post"]["IS_IMPORTANT"] = false;
 if (
 	isset($arResult["POST_PROPERTIES"]["DATA"]["UF_BLOG_POST_IMPRTNT"])

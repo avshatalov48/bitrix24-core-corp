@@ -14,3 +14,4 @@ $MESS["SE_CHAT_HISTORY_TITLE"] = "Chat history";
 $MESS["SE_CHAT_LOCAL_STORAGE_ENABLE_DESCRIPTION"] = "This option allows caching and saving messages on your mobile device. This increases chat performance and guarantees quick access to messages without available network connection";
 $MESS["SE_CHAT_LOCAL_STORAGE_ENABLE_TITLE"] = "Cache messages";
 $MESS["SE_CHAT_TITLE"] = "Chats";
+$MESS["SE_MESSENGER_TITLE"] = "Messenger";

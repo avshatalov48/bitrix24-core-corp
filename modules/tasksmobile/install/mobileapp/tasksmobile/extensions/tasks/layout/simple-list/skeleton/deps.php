@@ -2,7 +2,7 @@
 
 return [
 	'extensions' => [
-		'apptheme',
+		'tokens',
 		'utils/skeleton',
 	],
 	'bundle' => [

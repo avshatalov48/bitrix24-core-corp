@@ -69,4 +69,15 @@ if (!isset($_GET['select_my_tasks']) && !isset($_GET['select_depts_tasks']) && !
 
 $arResult['IS_TOOL_AVAILABLE'] = (new Settings())->isToolAvailable(Settings::TOOLS['report']);
 
+$arResult['tasksReportEnabled'] = \Bitrix\Tasks\Integration\Bitrix24::checkFeatureEnabled(
+	\Bitrix\Tasks\Integration\Bitrix24\FeatureDictionary::TASK_REPORTS
+);
+$arResult['tasksReportFeatureId'] = \Bitrix\Tasks\Integration\Bitrix24\FeatureDictionary::TASK_REPORTS;
+
+$arResult['pathToTasks'] = str_replace(
+	'#user_id#',
+	$arResult['USER_ID'],
+	$arParams['PATH_TO_USER_TASKS'] ?? ''
+);
+
 $this->IncludeComponentTemplate();

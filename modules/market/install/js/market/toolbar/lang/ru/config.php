@@ -11,3 +11,4 @@ $MESS["MARKET_TOOLBAR_JS_DIDNT_FIND_SUITABLE_SOLUTION"] = "Не нашли по�
 $MESS["MARKET_TOOLBAR_JS_MAKE_OR_PUBLISH_YOUR_INTEGRATION"] = "Сделайте или опубликуйте собственную интеграцию";
 $MESS["MARKET_TOOLBAR_JS_DETAILED"] = "Подробнее";
 $MESS["MARKET_TOOLBAR_JS_MARKET_TOTAL_APPS"] = "#TOTAL_APPS#+ приложений";
+$MESS["MARKET_TOOLBAR_JS_SEARCH_RESULT_COUNT"] = "Найдено результатов: #RESULT_COUNT#";

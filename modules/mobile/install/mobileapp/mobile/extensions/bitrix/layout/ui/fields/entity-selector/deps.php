@@ -3,6 +3,7 @@ return [
 	'extensions' => [
 		'apptheme',
 		'assets/common',
+		'assets/icons',
 		'haptics',
 		'layout/ui/fields/base',
 		'selector/widget/factory',

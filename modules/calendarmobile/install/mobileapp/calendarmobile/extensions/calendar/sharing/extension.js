@@ -3,7 +3,7 @@
  */
 jn.define('calendar/sharing', (require, exports, module) => {
 	const { SharingAjax } = require('calendar/ajax');
-	const { ModelSharing, ModelSharingStatus, ModelRestrictionStatus, SharingContext } = require('calendar/model/sharing');
+	const { ModelSharing, ModelSharingStatus, SharingContext } = require('calendar/model/sharing');
 
 	/**
 	 * @class Sharing
@@ -29,7 +29,6 @@ jn.define('calendar/sharing', (require, exports, module) => {
 		{
 			const data = {
 				shortUrl: BX.prop.getString(sharingInfo, 'shortUrl', null),
-				isRestriction: BX.prop.getBoolean(sharingInfo, 'isRestriction', true),
 				isEnabled: BX.prop.getBoolean(sharingInfo, 'isEnabled', false),
 				userInfo: BX.prop.getObject(sharingInfo, 'userInfo', {}),
 				settings: BX.prop.getObject(sharingInfo, 'settings', {}),
@@ -109,9 +108,9 @@ jn.define('calendar/sharing', (require, exports, module) => {
 			return this.model.getStatus() === ModelSharingStatus.ENABLE;
 		}
 
-		isRestriction()
+		getFeatureCode()
 		{
-			return this.model.getRestrictionStatus() === ModelRestrictionStatus.ENABLE;
+			return 'calendar_sharing';
 		}
 
 		resolveAjaxResponse(response)

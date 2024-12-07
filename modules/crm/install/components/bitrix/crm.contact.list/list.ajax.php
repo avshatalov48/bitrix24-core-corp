@@ -75,7 +75,6 @@ if ($_REQUEST['MODE'] == 'SEARCH')
 		__CrmContactListEndResponse(array('ERROR' => 'Access denied.'));
 	}
 
-	CUtil::JSPostUnescape();
 	$APPLICATION->RestartBuffer();
 
 	// Limit count of items to be found
@@ -104,7 +103,7 @@ if ($_REQUEST['MODE'] == 'SEARCH')
 		{
 			$arFilter['ID'] = (int)$search;
 		}
-		else if (preg_match('/(.*)\[(\d+?)\]/i'.BX_UTF_PCRE_MODIFIER, $search, $arMatches))
+		else if (preg_match('/(.*)\[(\d+?)\]/iu', $search, $arMatches))
 		{
 			$arFilter['ID'] = (int) $arMatches[2];
 			$searchString = trim($arMatches[1]);

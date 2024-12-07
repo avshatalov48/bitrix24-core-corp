@@ -224,7 +224,7 @@ jn.define('layout/ui/product-grid/components/summary', (require, exports, module
 
 	function ItemsCount({ totalRows, countCaption })
 	{
-		countCaption = countCaption || Loc.getMessage('PRODUCT_GRID_SUMMARY_ITEMS_COUNT');
+		countCaption = countCaption || Loc.getMessage('PRODUCT_GRID_SUMMARY_ITEMS_COUNT_MSGVER_1');
 		countCaption = countCaption.replace('#NUM#', totalRows);
 
 		return View(

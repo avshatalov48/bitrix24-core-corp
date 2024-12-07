@@ -101,14 +101,6 @@ export const SmsSettingsSection = {
 			return Text.encode(text).replaceAll('#PAYMENT_SLIP_LINK#', link);
 		},
 
-		getSmsProviderMessage(): string
-		{
-			const providerSelect = '<span>Dummy SMS</span>';
-			const text = this.$Bitrix.Loc.getMessage('CRM_CFG_TERMINAL_SETTINGS_SECTION_SMS_SERVICE_SELECT');
-
-			return Text.encode(text).replaceAll('#SMS_SERVICE#', providerSelect);
-		},
-
 		onSmsMouseenter(event): void
 		{
 			const target = event.target;
@@ -207,7 +199,7 @@ export const SmsSettingsSection = {
 					></div>
 					<div v-else>
 						<div class="sms-provider-name" style="padding: 3px 0;">
-							{{ $Bitrix.Loc.getMessage('CRM_CFG_TERMINAL_SETTINGS_SECTION_SMS_SERVICE_SELECT_MSGVER_1') + ' ' + getSelectedService['NAME'] }}
+							{{ $Bitrix.Loc.getMessage('CRM_CFG_TERMINAL_SETTINGS_SECTION_SMS_SERVICE_SELECT_MSGVER_2', {'%PROVIDER_NAME%': getSelectedService['NAME']}) }}
 						</div>
 						<SmsProviderSelect v-on:onConnectSliderClosed="onServiceConnectSliderClosed"/>
 					</div>

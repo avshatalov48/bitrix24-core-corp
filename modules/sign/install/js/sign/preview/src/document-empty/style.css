@@ -1,0 +1,16 @@
+.sign-preview__document-empty {
+	display: block;
+	overflow: hidden;
+	position: relative;
+	padding-top: 141%;
+	/*background: url(../images/sign-preview-document-empty.svg) center no-repeat;*/
+	/*background-size: cover;*/
+}
+
+.sign-preview__document-empty video {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 101%;
+	height: 101%;
+}

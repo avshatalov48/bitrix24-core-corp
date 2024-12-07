@@ -1,0 +1,27 @@
+<svg width="22" height="23" viewBox="0 0 22 23" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g filter="url(#filter0_d_1075_40970)">
+<g filter="url(#filter1_b_1075_40970)">
+<path opacity="0.4" d="M13.5666 5.75273C13.5666 5.36613 13.88 5.05273 14.2666 5.05273H14.9666C15.3532 5.05273 15.6666 5.36614 15.6666 5.75273V13.6861C15.6666 14.0727 15.3532 14.3861 14.9666 14.3861H14.2666C13.88 14.3861 13.5666 14.0727 13.5666 13.6861V5.75273Z" fill="white"/>
+<path opacity="0.8" d="M9.95013 8.08672C9.95013 7.70012 10.2635 7.38672 10.6501 7.38672H11.3501C11.7367 7.38672 12.0501 7.70012 12.0501 8.08672V13.6867C12.0501 14.0733 11.7367 14.3867 11.3501 14.3867H10.6501C10.2635 14.3867 9.95013 14.0733 9.95013 13.6867V8.08672Z" fill="white"/>
+<path opacity="0.8" d="M6.33334 10.4187C6.33334 10.0322 6.64674 9.71875 7.03334 9.71875H7.73334C8.11994 9.71875 8.43334 10.0322 8.43334 10.4188V13.6854C8.43334 14.072 8.11994 14.3854 7.73334 14.3854H7.03334C6.64674 14.3854 6.33334 14.072 6.33334 13.6854V10.4187Z" fill="white"/>
+</g>
+</g>
+<defs>
+<filter id="filter0_d_1075_40970" x="0" y="0.71875" width="22" height="22" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+<feFlood flood-opacity="0" result="BackgroundImageFix"/>
+<feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+<feOffset dy="2"/>
+<feGaussianBlur stdDeviation="1"/>
+<feComposite in2="hardAlpha" operator="out"/>
+<feColorMatrix type="matrix" values="0 0 0 0 0.184314 0 0 0 0 0.184314 0 0 0 0 0.184314 0 0 0 0.1 0"/>
+<feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_1075_40970"/>
+<feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_1075_40970" result="shape"/>
+</filter>
+<filter id="filter1_b_1075_40970" x="0" y="-1.28125" width="22" height="22" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+<feFlood flood-opacity="0" result="BackgroundImageFix"/>
+<feGaussianBlur in="BackgroundImageFix" stdDeviation="1"/>
+<feComposite in2="SourceAlpha" operator="in" result="effect1_backgroundBlur_1075_40970"/>
+<feBlend mode="normal" in="SourceGraphic" in2="effect1_backgroundBlur_1075_40970" result="shape"/>
+</filter>
+</defs>
+</svg>

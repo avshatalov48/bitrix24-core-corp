@@ -192,7 +192,7 @@ if(SITE_TEMPLATE_ID === "bitrix24")
 }?>
 
 
-<script type="text/javascript">
+<script>
 
 	function showGanttFilter(bindElement)
 	{

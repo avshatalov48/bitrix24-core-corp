@@ -35,6 +35,7 @@ class PushSender
 		{
 			$pushData = [];
 			$pushData['userId'] = $userId;
+			$pushData['isSonetEnabled'] = Counter::isSonetEnable();
 
 			$counter = Counter::getInstance($userId);
 			$counters = $counter->getRawCounters();
@@ -47,6 +48,10 @@ class PushSender
 				+ $counter->get(CounterDictionary::COUNTER_PROJECTS_TOTAL_EXPIRED);
 
 			$pushData[CounterDictionary::COUNTER_SCRUM_TOTAL_COMMENTS] = $counter->get(CounterDictionary::COUNTER_SCRUM_TOTAL_COMMENTS);
+			// flow
+			$pushData[CounterDictionary::COUNTER_FLOW_TOTAL] = $counter->get(CounterDictionary::COUNTER_FLOW_TOTAL);
+			$pushData[0][Role::ALL][CounterDictionary::COUNTER_FLOW_TOTAL_COMMENTS] = $counter->get(CounterDictionary::COUNTER_FLOW_TOTAL_COMMENTS);
+			$pushData[0][Role::ALL][CounterDictionary::COUNTER_FLOW_TOTAL_EXPIRED] = $counter->get(CounterDictionary::COUNTER_FLOW_TOTAL_EXPIRED);
 
 			/**
 			 * for menu's counters group 0 is a total counters (tasks with any groups or without groups)

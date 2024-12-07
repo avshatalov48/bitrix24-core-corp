@@ -1,4 +1,4 @@
-<?
+<?php
 /**
  * Class implements all further interactions with "extranet" module
  *
@@ -140,11 +140,26 @@ final class Department extends \Bitrix\Tasks\Integration\Intranet
 		return $result;
 	}
 
+	public static function getMainDepartmentAccessCode(bool $onlyEmployees = false): string
+	{
+		$department = self::getMainDepartment();
+		$id = $department['ID'] ?? '';
+
+		if ('' === $id)
+		{
+			return '';
+		}
+
+		$prefix = $onlyEmployees ? 'D' : 'DR';
+
+		return $prefix . $id;
+	}
+
 	private static function getIBlockSections(array $select = array())
 	{
 		$result = array("SECTIONS" => array(), "STRUCTURE" => array());
 
-		if(!static::includeModule() || !Loader::includeModule('iblock') || !empty($ids))
+		if(!static::includeModule() || !Loader::includeModule('iblock'))
 		{
 			return $result;
 		}
@@ -271,8 +286,6 @@ final class Department extends \Bitrix\Tasks\Integration\Intranet
 		{
 			return $list;
 		}
-
-		dd($section);
 
 		$arFilter = Array("IBLOCK_ID" => $iblockId);
 		//		if($ACTIVE_FILTER === "Y")

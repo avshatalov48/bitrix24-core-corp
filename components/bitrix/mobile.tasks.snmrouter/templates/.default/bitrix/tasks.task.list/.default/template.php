@@ -71,7 +71,7 @@ else
 	);?></div><?
 }
 ?>
-<script type="text/javascript">
+<script>
 	BX.message({
 		PAGE_TITLE : '<?=CUtil::JSEscape($sTitleShort)?>',
 		TASKS_LIST_SORT : '<?=GetMessageJS("TASKS_LIST_SORT")?>',

@@ -7,19 +7,22 @@ jn.define('im/messenger/model/messages', (require, exports, module) => {
 	const { Type } = require('type');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { Uuid } = require('utils/uuid');
-	const { merge, clone } = require('utils/object');
+	const { mergeImmutable, clone } = require('utils/object');
 	const { reactionsModel } = require('im/messenger/model/messages/reactions');
 	const { pinModel } = require('im/messenger/model/messages/pin');
 	const { LoggerManager } = require('im/messenger/lib/logger');
 	const { validate } = require('im/messenger/model/validators/message');
+	const { MessengerMutationHandlersWaiter } = require('im/messenger/lib/state-manager/vuex-manager/mutation-handlers-waiter');
 
 	const logger = LoggerManager.getInstance().getLogger('model--messages');
 
 	const TEMPORARY_MESSAGE_PREFIX = 'temporary';
 
-	const messageState = {
+	const messageDefaultElement = Object.freeze({
 		id: 0,
 		templateId: '',
+		previousId: 0,
+		nextId: 0,
 		chatId: 0,
 		authorId: 0,
 		date: new Date(),
@@ -33,15 +36,17 @@ jn.define('im/messenger/model/messages', (require, exports, module) => {
 		viewedByOthers: false,
 		sending: false,
 		error: false,
-		errorReason: 0, // code from rest/classes/general/rest.php:25
+		errorReason: 0, // code from rest/classes/general/rest.php:25 or main/install/js/main/core/core_ajax.js:1044
 		retry: false,
 		audioPlaying: false,
 		playingTime: 0,
 		attach: [],
+		keyboard: [],
 		richLinkId: null,
 		forward: {},
-	};
+	});
 
+	/** @type {MessagesMessengerModel} */
 	const messagesModel = {
 		namespaced: true,
 		state: () => ({
@@ -74,7 +79,7 @@ jn.define('im/messenger/model/messages', (require, exports, module) => {
 
 			/**
 			 * @function messagesModel/getById
-			 * @return {MessagesModelState}
+			 * @return {MessagesModelState | {}}
 			 */
 			getById: (state, getters, rootState, rootGetters) => (messageId) => {
 				if (!Type.isNumber(messageId) && !Type.isStringFilled(messageId))
@@ -285,25 +290,42 @@ jn.define('im/messenger/model/messages', (require, exports, module) => {
 		},
 		actions: {
 			/** @function messagesModel/forceUpdateByChatId */
-			forceUpdateByChatId: (store, { chatId }) => {
+			forceUpdateByChatId: async (store, { chatId }) => {
+				const moduleName = 'messagesModel';
+				const actionName = 'forceUpdateByChatId';
+
+				const waiter = new MessengerMutationHandlersWaiter(moduleName, actionName);
+				waiter.addMutation('store');
+				waiter.addMutation('setChatCollection');
+				const handlersComplete = waiter.waitComplete();
+
 				const messages = store.getters.getByChatId(chatId);
 
 				store.commit('store', {
-					actionName: 'forceUpdateByChatId',
+					actionName,
+					actionUid: waiter.actionUid,
 					data: {
 						messageList: messages,
 					},
 				});
+
 				store.commit('setChatCollection', {
-					actionName: 'forceUpdateByChatId',
+					actionName,
+					actionUid: waiter.actionUid,
 					data: {
 						messageList: messages,
 					},
 				});
+
+				await handlersComplete;
 			},
 
 			/** @function messagesModel/setChatCollection */
-			setChatCollection: (store, { messages, clearCollection }) => {
+			setChatCollection: async (store, { messages, clearCollection }) => {
+				const moduleName = 'messagesModel';
+				const actionName = 'setChatCollection';
+				const waiter = new MessengerMutationHandlersWaiter(moduleName, actionName);
+
 				clearCollection = clearCollection || false;
 				if (!Array.isArray(messages) && Type.isPlainObject(messages))
 				{
@@ -311,14 +333,24 @@ jn.define('im/messenger/model/messages', (require, exports, module) => {
 				}
 
 				messages = messages.map((message) => {
-					return { ...messageState, ...validate(message) };
+					return { ...messageDefaultElement, ...validate(message) };
 				});
 
 				const chatId = messages[0]?.chatId;
 				if (chatId && clearCollection)
 				{
+					waiter.addMutation('clearCollection');
+				}
+
+				waiter.addMutation('store');
+				waiter.addMutation('setChatCollection');
+				const handlersComplete = waiter.waitComplete();
+
+				if (chatId && clearCollection)
+				{
 					store.commit('clearCollection', {
-						actionName: 'setChatCollection',
+						actionName,
+						actionUid: waiter.actionUid,
 						data: {
 							chatId,
 						},
@@ -326,17 +358,22 @@ jn.define('im/messenger/model/messages', (require, exports, module) => {
 				}
 
 				store.commit('store', {
-					actionName: 'setChatCollection',
+					actionName,
+					actionUid: waiter.actionUid,
 					data: {
 						messageList: messages,
 					},
 				});
+
 				store.commit('setChatCollection', {
-					actionName: 'setChatCollection',
+					actionName,
+					actionUid: waiter.actionUid,
 					data: {
 						messageList: messages,
 					},
 				});
+
+				await handlersComplete;
 			},
 
 			/** @function messagesModel/setFromLocalDatabase */
@@ -348,7 +385,7 @@ jn.define('im/messenger/model/messages', (require, exports, module) => {
 				}
 
 				messages = messages.map((message) => {
-					return { ...messageState, ...validate(message) };
+					return { ...messageDefaultElement, ...validate(message) };
 				});
 
 				const chatId = messages[0]?.chatId;
@@ -384,7 +421,7 @@ jn.define('im/messenger/model/messages', (require, exports, module) => {
 				}
 
 				messages = messages.map((message) => {
-					return { ...messageState, ...validate(message) };
+					return { ...messageDefaultElement, ...validate(message) };
 				});
 
 				if (messages.length === 0)
@@ -400,24 +437,62 @@ jn.define('im/messenger/model/messages', (require, exports, module) => {
 				});
 			},
 
+			/** @function messagesModel/storeToLocalDatabase */
+			storeToLocalDatabase: (store, messages) => {
+				if (!Array.isArray(messages) && Type.isPlainObject(messages))
+				{
+					messages = [messages];
+				}
+
+				messages = messages.map((message) => {
+					return { ...messageDefaultElement, ...validate(message) };
+				});
+
+				if (messages.length === 0)
+				{
+					return;
+				}
+
+				store.commit('store', {
+					actionName: 'storeToLocalDatabase',
+					data: {
+						messageList: messages,
+					},
+				});
+			},
+
 			/** @function messagesModel/add */
-			add: (store, payload) => {
+			add: async (store, payload) => {
+				const moduleName = 'messagesModel';
+				const actionName = 'add';
+
+				const waiter = new MessengerMutationHandlersWaiter(moduleName, actionName);
+				waiter.addMutation('store');
+				waiter.addMutation('setChatCollection');
+				const handlersComplete = waiter.waitComplete();
+
 				const message = {
-					...messageState,
+					...messageDefaultElement,
 					...validate(payload),
 				};
+
 				store.commit('store', {
-					actionName: 'add',
+					actionName,
+					actionUid: waiter.actionUid,
 					data: {
 						messageList: [message],
 					},
 				});
+
 				store.commit('setChatCollection', {
-					actionName: 'add',
+					actionName,
+					actionUid: waiter.actionUid,
 					data: {
 						messageList: [message],
 					},
 				});
+
+				await handlersComplete;
 			},
 
 			/** @function messagesModel/addToChatCollection */
@@ -428,7 +503,7 @@ jn.define('im/messenger/model/messages', (require, exports, module) => {
 				}
 
 				const message = {
-					...messageState,
+					...messageDefaultElement,
 					...validate(payload),
 				};
 
@@ -448,7 +523,7 @@ jn.define('im/messenger/model/messages', (require, exports, module) => {
 				}
 
 				messages = messages.map((message) => {
-					return { ...messageState, ...validate(message) };
+					return { ...messageDefaultElement, ...validate(message) };
 				});
 
 				store.commit('setTemporaryMessages', {
@@ -761,6 +836,48 @@ jn.define('im/messenger/model/messages', (require, exports, module) => {
 
 				return true;
 			},
+
+			/** @function messagesModel/disableKeyboardByMessageId */
+			disableKeyboardByMessageId: (store, messageId) => {
+				/** @type {MessagesModelState} */
+				const message = store.state.collection[messageId];
+				if (!message)
+				{
+					return;
+				}
+
+				const keyboard = message.keyboard.map((button) => {
+					button.disabled = true;
+
+					return button;
+				});
+
+				store.commit('update', {
+					actionName: 'disableKeyboardByMessageId',
+					data: {
+						id: messageId,
+						fields: {
+							keyboard,
+						},
+					},
+				});
+			},
+
+			/** @function messagesModel/clearChatCollection */
+			clearChatCollection: (store, payload) => {
+				const { chatId } = payload;
+				if (!Type.isNumber(chatId))
+				{
+					return;
+				}
+
+				store.commit('clearCollection', {
+					actionName: 'clearChatCollection',
+					data: {
+						chatId,
+					},
+				});
+			},
 		},
 		mutations: {
 			/**
@@ -795,7 +912,7 @@ jn.define('im/messenger/model/messages', (require, exports, module) => {
 				} = payload.data;
 
 				messageList.forEach((message) => {
-					message.params = { ...messageState.params, ...message.params };
+					message.params = { ...messageDefaultElement.params, ...message.params };
 
 					state.collection[message.id] = message;
 				});
@@ -813,7 +930,7 @@ jn.define('im/messenger/model/messages', (require, exports, module) => {
 				} = payload.data;
 
 				messageList.forEach((message) => {
-					message.params = { ...messageState.params, ...message.params };
+					message.params = { ...messageDefaultElement.params, ...message.params };
 
 					state.temporaryMessages[message.id] = message;
 				});
@@ -833,7 +950,7 @@ jn.define('im/messenger/model/messages', (require, exports, module) => {
 				const currentMessage = { ...state.collection[id] };
 
 				delete state.collection[id];
-				state.collection[fields.id] = merge(currentMessage, fields, { sending: false });
+				state.collection[fields.id] = mergeImmutable(currentMessage, fields, { sending: false });
 
 				if (state.chatCollection[currentMessage.chatId].has(id))
 				{
@@ -855,7 +972,7 @@ jn.define('im/messenger/model/messages', (require, exports, module) => {
 					fields,
 				} = payload.data;
 
-				state.collection[id] = merge(state.collection[id], fields);
+				state.collection[id] = mergeImmutable(state.collection[id], fields);
 			},
 
 			/**
@@ -962,5 +1079,6 @@ jn.define('im/messenger/model/messages', (require, exports, module) => {
 
 	module.exports = {
 		messagesModel,
+		messageDefaultElement
 	};
 });

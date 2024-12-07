@@ -230,7 +230,6 @@ class OneDriveHandler extends DocumentHandler implements FileCreatable, CloudImp
 	{
 		$fileName = $fileData->getName();
 		$fileName = 'document.' . getFileExtension($fileName);
-		$fileName = $this->convertToUtf8($fileName);
 		$fileName = rawurlencode($fileName);
 
 		return $this->getApiUrlRoot() . static::PREFIX_TO_CREATE_FILE . "{$fileName}:/";
@@ -289,7 +288,6 @@ class OneDriveHandler extends DocumentHandler implements FileCreatable, CloudImp
 	{
 		$fileName = $fileData->getName();
 		$fileName = 'document.' . getFileExtension($fileName);
-		$fileName = $this->convertToUtf8($fileName);
 
 		return rawurlencode($fileName);
 	}

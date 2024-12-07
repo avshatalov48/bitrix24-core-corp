@@ -5,6 +5,7 @@ namespace Bitrix\Crm\Component;
 use Bitrix\Crm\Category\Entity\Category;
 use Bitrix\Crm\Integration\IntranetManager;
 use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Service\Router;
 use Bitrix\Main\Error;
 use Bitrix\Main\Errorable;
 use Bitrix\Main\ErrorCollection;
@@ -19,7 +20,23 @@ abstract class Base extends \CBitrixComponent implements Errorable
 	protected $errorCollection;
 	/** @var \Bitrix\Crm\Service\UserPermissions */
 	protected $userPermissions;
+	protected Router $router;
 	protected $entityTypeId;
+
+	protected function addError(Error $error)
+	{
+		$this->errorCollection[] = $error;
+	}
+
+	/**
+	 * @param Error[] $errors
+	 *
+	 * @return void
+	 */
+	protected function addErrors(array $errors)
+	{
+		$this->errorCollection->add($errors);
+	}
 
 	/**
 	 * Getting array of errors.
@@ -64,6 +81,7 @@ abstract class Base extends \CBitrixComponent implements Errorable
 		{
 			$this->userPermissions = Container::getInstance()->getUserPermissions();
 		}
+		$this->router = Container::getInstance()->getRouter();
 	}
 
 	protected function isIframe(): bool

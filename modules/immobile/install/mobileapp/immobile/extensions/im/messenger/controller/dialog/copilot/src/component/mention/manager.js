@@ -13,6 +13,13 @@ jn.define('im/messenger/controller/dialog/copilot/component/mention/manager', (r
 	 */
 	class CopilotMentionManager extends MentionManager
 	{
+		bindMethods()
+		{
+			super.bindMethods();
+			this.onFocusInput = this.onFocusInput.bind(this);
+			this.onBlurInput = this.onBlurInput.bind(this);
+		}
+
 		/**
 		 * @override
 		 */
@@ -89,6 +96,8 @@ jn.define('im/messenger/controller/dialog/copilot/component/mention/manager', (r
 			}
 
 			this.view.textField.on(EventType.dialog.textField.changeState, this.changeTextStateHandler);
+			this.view.textField.on(EventType.dialog.textField.focus, this.onFocusInput);
+			this.view.textField.on(EventType.dialog.textField.blur, this.onBlurInput);
 			this.view.mentionPanel.on('itemTap', this.mentionItemSelectedHandler);
 		}
 
@@ -105,6 +114,8 @@ jn.define('im/messenger/controller/dialog/copilot/component/mention/manager', (r
 			}
 
 			this.view.textField.off(EventType.dialog.textField.changeState, this.changeTextStateHandler);
+			this.view.textField.off(EventType.dialog.textField.focus, this.onFocusInput);
+			this.view.textField.off(EventType.dialog.textField.blur, this.onBlurInput);
 			this.view.mentionPanel.off('itemTap', this.mentionItemSelectedHandler);
 		}
 
@@ -115,7 +126,6 @@ jn.define('im/messenger/controller/dialog/copilot/component/mention/manager', (r
 		drawItems(itemIds)
 		{
 			const result = itemIds.map((itemId) => this.prepareItemForDrawing(itemId));
-
 			if (this.isProcessed)
 			{
 				this.view.mentionPanel.setItems(result);
@@ -129,12 +139,68 @@ jn.define('im/messenger/controller/dialog/copilot/component/mention/manager', (r
 		}
 
 		/**
+		 * @private
+		 */
+		async onFocusInput()
+		{
+			logger.log(`${this.constructor.name}.onFocusInput`);
+			if (this.isMentionProcessed || this.isHasInputText())
+			{
+				return;
+			}
+
+			const curIndex = this.view.textField.getCursorIndex();
+			this.mentionSymbolPosition = curIndex;
+			this.lastQuerySymbolPosition = curIndex;
+			this.focusIndexPosition = 0;
+			const userIdList = await this.loadUsersForInitial();
+
+			this.drawUserFoInitial(userIdList);
+		}
+
+		isHasInputText()
+		{
+			return this.view.textField.getText()?.length;
+		}
+
+		/**
+		 * @private
+		 */
+		async onBlurInput()
+		{
+			logger.log(`${this.constructor.name}.onBlurInput`);
+			this.finishMentioning();
+		}
+
+		/**
 		 * @override
 		 * @return {Array<string>}
 		 */
 		getRecentUsers()
 		{
 			return [];
+		}
+
+		/**
+		 * @param {Array<string>} userIdList
+		 * @override
+		 * @void
+		 */
+		drawParticipantsItems(userIdList)
+		{
+			const result = [];
+
+			userIdList.forEach((itemId) => {
+				const item = this.prepareItemForDrawing(itemId);
+
+				result.push(item);
+			});
+
+			logger.log(`${this.constructor.name}.drawParticipantsItems:`, result);
+
+			this.view.mentionPanel.setItems(result);
+			this.view.mentionPanel.hideLoader();
+			this.view.mentionPanel.open(result);
 		}
 	}
 

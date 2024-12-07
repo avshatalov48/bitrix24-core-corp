@@ -121,6 +121,7 @@ class CategoryRepository
 		if ($merge[0])
 		{
 			$connection->query($merge[0]);
+			ItemCategoryTable::cleanCache();
 		}
 
 		$result = self::getByEntityTypeId($entityTypeId);
@@ -148,7 +149,7 @@ class CategoryRepository
 				continue;
 			}
 
-			$rolePerms = \CCrmRole::getRolePerms($role['ID']);
+			$rolePerms = \CCrmRole::getRolePermissionsAndSettings($role['ID']);
 
 			$entityName = \CCrmOwnerType::resolveName($entityTypeId);
 
@@ -158,7 +159,7 @@ class CategoryRepository
 					$entityName,
 					$categoryId
 				)
-			] = \CCrmRole::getDefaultPermissionSet();
+			] = \CCrmRole::getDefaultPermissionSetForEntity(new \Bitrix\Crm\CategoryIdentifier($entityTypeId, $categoryId));
 
 			$fields = ['RELATION' => $rolePerms];
 			(new \CCrmRole())->update($role['ID'], $fields);

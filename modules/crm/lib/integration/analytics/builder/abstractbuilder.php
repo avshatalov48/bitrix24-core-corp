@@ -157,7 +157,7 @@ abstract class AbstractBuilder implements BuilderContract
 
 		foreach ($data as $key => $value)
 		{
-			if (!empty($value) && preg_match('#^p(\d)$#' . BX_UTF_PCRE_MODIFIER, $key, $matches))
+			if (!empty($value) && preg_match('#^p(\d)$#u', $key, $matches))
 			{
 				$pNumber = (int)$matches[1];
 

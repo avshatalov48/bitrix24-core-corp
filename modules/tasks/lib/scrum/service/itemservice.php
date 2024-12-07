@@ -187,6 +187,11 @@ class ItemService implements Errorable
 	{
 		$item = new ItemForm();
 
+		if (!$itemId)
+		{
+			return $item;
+		}
+
 		$queryObject = ItemTable::getList([
 			'filter' => ['ID' => $itemId],
 			'order' => ['ID']
@@ -205,6 +210,11 @@ class ItemService implements Errorable
 	 */
 	public function getItemsByIds(array $itemIds): array
 	{
+		if (empty($itemIds))
+		{
+			return [];
+		}
+
 		try
 		{
 			$items = [];
@@ -243,6 +253,11 @@ class ItemService implements Errorable
 	 */
 	public function getItemsBySourceIds(array $sourceIds): array
 	{
+		if (empty($sourceIds))
+		{
+			return [];
+		}
+
 		$items = [];
 
 		$queryObject = ItemTable::getList([
@@ -262,6 +277,11 @@ class ItemService implements Errorable
 
 	public function getItemsStoryPointsBySourceId(array $sourceIds): array
 	{
+		if (empty($sourceIds))
+		{
+			return [];
+		}
+
 		try
 		{
 			$itemsStoryPoints = [];
@@ -292,6 +312,11 @@ class ItemService implements Errorable
 
 	public function getItemBySourceId(int $sourceId): ItemForm
 	{
+		if (!$sourceId)
+		{
+			return new ItemForm();
+		}
+
 		try
 		{
 			$itemId = 0;
@@ -321,6 +346,11 @@ class ItemService implements Errorable
 
 	public function getItemIdsBySourceIds(array $sourceIds, array $entityIds = []): array
 	{
+		if (empty($sourceIds))
+		{
+			return [];
+		}
+
 		$itemIds = [];
 
 		$filter = ['SOURCE_ID' => $sourceIds];
@@ -350,6 +380,11 @@ class ItemService implements Errorable
 
 	public function getItemIdsByEntityId(int $entityId): array
 	{
+		if (!$entityId)
+		{
+			return [];
+		}
+
 		$itemIds = [];
 
 		try
@@ -382,6 +417,11 @@ class ItemService implements Errorable
 
 	public function getItemIdsByTypeId(int $typeId): array
 	{
+		if (!$typeId)
+		{
+			return [];
+		}
+
 		$itemIds = [];
 
 		try
@@ -639,6 +679,11 @@ class ItemService implements Errorable
 	 */
 	public function getTaskIdsByEntityId(int $entityId): array
 	{
+		if (!$entityId)
+		{
+			return [];
+		}
+
 		$items = $this->getItemsFromDb(
 			['SOURCE_ID'],
 			[
@@ -661,6 +706,11 @@ class ItemService implements Errorable
 	 */
 	public function getTaskItemsByEntityId(int $entityId): array
 	{
+		if (!$entityId)
+		{
+			return [];
+		}
+
 		$items = $this->getItemsFromDb(
 			['*'],
 			[
@@ -688,6 +738,11 @@ class ItemService implements Errorable
 	 */
 	public function getItemsInfoBySourceIds(array $sourceIds): array
 	{
+		if (empty($sourceIds))
+		{
+			return [];
+		}
+
 		$itemsInfo = [];
 
 		try
@@ -716,6 +771,11 @@ class ItemService implements Errorable
 
 	public function getTaskIdByItemId(int $itemId): int
 	{
+		if (!$itemId)
+		{
+			return 0;
+		}
+
 		$queryObject = ItemTable::getList([
 			'select' => ['SOURCE_ID'],
 			'filter' => [
@@ -732,6 +792,11 @@ class ItemService implements Errorable
 
 	public function getSumStoryPointsBySourceIds(array $sourceIds): float
 	{
+		if (empty($sourceIds))
+		{
+			return 0;
+		}
+
 		$sumStoryPoints = 0;
 
 		try

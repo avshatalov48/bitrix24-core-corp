@@ -6,11 +6,12 @@ use Bitrix\Im\Model\LinkReminderTable;
 use Bitrix\Im\Model\MessageParamTable;
 use Bitrix\Im\Settings;
 use Bitrix\Im\Text;
+use Bitrix\Im\V2\Chat\OpenLineChat;
+use Bitrix\Im\V2\Message;
 use Bitrix\Im\V2\Message\Params;
 use Bitrix\Im\V2\Entity\File\FileCollection;
 use Bitrix\Im\V2\Entity\File\FileItem;
 use Bitrix\Im\V2\Message\CounterService;
-use Bitrix\Im\V2\Message\ViewedService;
 use Bitrix\ImOpenLines\Model\RecentTable;
 use Bitrix\ImOpenLines\Model\SessionTable;
 use Bitrix\Main\Loader;
@@ -147,6 +148,25 @@ class Recent
 			$result,
 			is_array($imRecent) ? $imRecent : [],
 			(isset($options['JSON']) && $options['JSON'])
+		);
+	}
+
+	public static function update(Message $message): void
+	{
+		$chat = $message->getChat();
+
+		if (!$chat instanceof OpenLineChat)
+		{
+			return;
+		}
+
+		RecentTable::updateByFilter(
+			['=CHAT_ID' => $chat->getId()],
+			[
+				'MESSAGE_ID' => $message->getId(),
+				'SESSION_ID' => $chat->getSessionId(),
+				'DATE_CREATE' => $message->getDateCreate()
+			]
 		);
 	}
 
@@ -593,6 +613,16 @@ class Recent
 		return false;
 	}
 
+	public static function isRecentAvailableByStatus(?int $status): bool
+	{
+		if ($status === null)
+		{
+			return false;
+		}
+
+		return $status < Session::STATUS_ANSWER;
+	}
+
 	/**
 	 * Returns true if the recent is empty or there is a current user
 	 * Used to create an entry or update without adding new rows
@@ -695,5 +725,56 @@ class Recent
 		}
 
 		return $result;
+	}
+
+	/**
+	 * @event 'imopenlines:OnQueueOperatorsDelete'
+	 * @param \Bitrix\Main\Event $event
+	 * @return bool
+	 */
+	public static function onQueueOperatorsDelete(\Bitrix\Main\Event $event): bool
+	{
+		$configId = $event->getParameter('line');
+		$operatorIds = $event->getParameter('operators');
+
+		if (!$configId || !is_array($operatorIds) || empty($operatorIds))
+		{
+			return false;
+		}
+
+		$sessions = SessionTable::getList([
+			'select' => [
+				'CHAT_ID'
+			],
+			'filter' => [
+				'=CONFIG_ID' => $configId,
+				'<STATUS' => Session::STATUS_ANSWER,
+			]
+		]);
+
+		$chatIds = [];
+		while ($session = $sessions->fetch())
+		{
+			$chatIds[] = (int)$session['CHAT_ID'];
+		}
+
+		foreach ($operatorIds as $operatorId)
+		{
+			$recentRows = RecentTable::getList([
+				'filter' => [
+					'=USER_ID' => $operatorId
+				],
+			]);
+
+			while ($row = $recentRows->fetch())
+			{
+				if (in_array((int)$row['CHAT_ID'], $chatIds, true))
+				{
+					self::removeRecent((int)$operatorId, (int)$row['CHAT_ID']);
+				}
+			}
+		}
+
+		return true;
 	}
 }

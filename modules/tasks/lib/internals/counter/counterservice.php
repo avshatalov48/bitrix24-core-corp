@@ -119,7 +119,14 @@ class CounterService
 				->setData(Main\Web\Json::decode($row['DATA']));
 			$this->getEventCollection()->push($event);
 
-			$taskData = !empty($row['TASK_DATA']) ? Main\Web\Json::decode($row['TASK_DATA']) : null;
+			try
+			{
+				$taskData = !empty($row['TASK_DATA']) ? Main\Web\Json::decode($row['TASK_DATA']) : null;
+			}
+			catch (\Exception)
+			{
+				continue;
+			}
 			if ($taskData && array_key_exists('ID', $taskData))
 			{
 				$this->getResourceCollection()->collectOrigin((int)$taskData['ID'], $taskData);
@@ -184,7 +191,7 @@ class CounterService
 				'HID' => self::$hitId,
 				'TYPE' => $event->getType(),
 				'DATA' => Main\Web\Json::encode($event->getData()),
-				'TASK_DATA' => $taskData ? Main\Web\Json::encode($taskData->toArray()) : null,
+				'TASK_DATA' => $taskData ? Main\Text\Emoji::encode(Main\Web\Json::encode($taskData->toArray())) : null,
 				'PROCESSED' => Main\Type\DateTime::createFromTimestamp(0),
 			]);
 		}

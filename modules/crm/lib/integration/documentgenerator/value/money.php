@@ -41,23 +41,15 @@ class Money extends Value implements Nameable
 
 		$isShowSign = isset($options['WITH_ZEROS']) && $options['WITH_ZEROS'] === true;
 
-		// use CrmCurrency to safely process strings with huge numbers
-		if($this->value !== '' && filter_var($this->value, FILTER_VALIDATE_INT|FILTER_VALIDATE_FLOAT) === false)
-		{
-			$result = $this->formatUsingCrmCurrency($options);
-		}
-		else
-		{
-			$format = \CCurrencyLang::GetFormatDescription($options['CURRENCY_ID']);
+		$format = \CCurrencyLang::GetFormatDescription($options['CURRENCY_ID']);
 
-			$format['HIDE_ZERO'] = ($isShowSign ? 'N' : 'Y');
+		$format['HIDE_ZERO'] = ($isShowSign ? 'N' : 'Y');
 
-			$result = \CCurrencyLang::formatValue(
-				$this->value,
-				$format,
-				(!isset($options['NO_SIGN']) || $options['NO_SIGN'] !== true)
-			);
-		}
+		$result = \CCurrencyLang::formatValue(
+			$this->value,
+			$format,
+			($options['NO_SIGN'] ?? null) !== true
+		);
 
 		$regionLanguageId = DataProviderManager::getInstance()->getRegionLanguageId();
 		if($regionLanguageId !== LANGUAGE_ID && $isShowSign)
@@ -74,6 +66,12 @@ class Money extends Value implements Nameable
 		return $result;
 	}
 
+	/**
+	 * @deprecated
+	 *
+	 * @param array $options
+	 * @return string
+	 */
 	protected function formatUsingCrmCurrency(array $options): string
 	{
 		if(isset($options['WITH_ZEROS']) && $options['WITH_ZEROS'] === true)
@@ -102,7 +100,7 @@ class Money extends Value implements Nameable
 	protected function getOptions($modifier = null): array
 	{
 		$options = parent::getOptions($modifier);
-		if(!isset($options['CURRENCY_ID']) || empty($options['CURRENCY_ID']))
+		if (empty($options['CURRENCY_ID']))
 		{
 			$options['CURRENCY_ID'] = static::getDefaultCurrencyId();
 		}
@@ -143,8 +141,10 @@ class Money extends Value implements Nameable
 
 	/**
 	 * Disable hide zero
+	 *
+	 * @deprecated
 	 */
-	protected function disableZeros()
+	protected function disableZeros(): void
 	{
 		$maxIterations = 1000;
 		while(\CCurrencyLang::isAllowUseHideZero())
@@ -160,8 +160,10 @@ class Money extends Value implements Nameable
 
 	/**
 	 * Enable hide zero
+	 *
+	 * @deprecated
 	 */
-	protected function enableZeros()
+	protected function enableZeros(): void
 	{
 		$maxIterations = 1000;
 		while(!\CCurrencyLang::isAllowUseHideZero())
@@ -181,15 +183,15 @@ class Money extends Value implements Nameable
 	 */
 	public static function getCurrencySymbol($currencyId, $languageId)
 	{
-		if(Loader::includeModule('currency'))
+		if (Loader::includeModule('currency'))
 		{
-			if(!isset(static::$currencyInfo[$currencyId][$languageId]))
+			if (!isset(static::$currencyInfo[$currencyId][$languageId]))
 			{
 				static::loadCurrency($currencyId, $languageId);
 			}
-			if(!is_array(static::$currencyInfo[$currencyId][$languageId]))
+			if (!is_array(static::$currencyInfo[$currencyId][$languageId]))
 			{
-				if($languageId !== LANGUAGE_ID)
+				if ($languageId !== LANGUAGE_ID)
 				{
 					return static::getCurrencySymbol($currencyId,LANGUAGE_ID);
 				}

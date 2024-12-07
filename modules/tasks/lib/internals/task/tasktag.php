@@ -60,36 +60,24 @@ class TaskTagTable extends TaskDataManager
 	public static function getMap(): array
 	{
 		return [
-			new IntegerField(
-				'ID',
-				[
-					'primary' => true,
-					'autocomplete' => true,
-				]
-			),
-			new IntegerField(
-				'TAG_ID',
-				[
-					'required' => true,
-				]
-			),
-			new IntegerField(
-				'TASK_ID',
-				[
-					'required' => true,
-				]
-			),
+			(new IntegerField('ID'))
+				->configurePrimary()
+				->configureAutocomplete(),
+			(new IntegerField('TAG_ID'))
+				->configureRequired(),
+			(new IntegerField('TASK_ID'))
+				->configureRequired(),
 
 			(new ReferenceField(
 				'TASK',
 				TaskTable::getEntity(),
-				['this.TASK_ID' => 'ref.ID']
+				Join::on('this.TASK_ID', 'ref.ID'),
 			))->configureJoinType(Join::TYPE_LEFT),
 
 			(new ReferenceField(
 				'TAG',
 				LabelTable::getEntity(),
-				['this.TAG_ID' => 'ref.ID']
+				Join::on('this.TAG_ID', 'ref.ID')
 			))->configureJoinType(Join::TYPE_LEFT),
 		];
 	}

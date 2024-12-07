@@ -89,6 +89,10 @@ class GroupRegistry
 			->addSelect('ID')
 			->addSelect('CLOSED')
 			->addSelect('NAME')
+			->addSelect('VISIBLE')
+			->addSelect('IMAGE_ID')
+			->addSelect('AVATAR_TYPE')
+			->addSelect('PROJECT')
 			->whereIn('ID', $groupIds)
 			->exec();
 
@@ -98,6 +102,10 @@ class GroupRegistry
 				'ID' => $row['ID'],
 				'CLOSED' => $row['CLOSED'],
 				'NAME' => $row['NAME'],
+				'IMAGE_ID' => $row['IMAGE_ID'],
+				'AVATAR_TYPE' => $row['AVATAR_TYPE'],
+				'VISIBLE' => $row['VISIBLE'] === 'Y',
+				'PROJECT' => $row['PROJECT'] === 'Y',
 				'TASKS_ENABLED' => false
 			];
 		}
@@ -107,7 +115,7 @@ class GroupRegistry
 		{
 			foreach ($isTasksEnabled as $id => $value)
 			{
-				if (!array_key_exists($id, $this->storage))
+				if (!array_key_exists($id, $this->storage) || empty($this->storage[$id]))
 				{
 					continue;
 				}

@@ -7,6 +7,7 @@ import { CurrencyCore } from 'currency.currency-core';
 import { MessageBox } from 'ui.dialogs.messagebox';
 import { Label, LabelColor } from 'ui.label';
 import DocumentManager from './document-manager';
+import { OneCPlanRestrictionSlider } from 'catalog.tool-availability-manager';
 
 declare var BX: {[key: string]: any};
 
@@ -84,7 +85,6 @@ const SPECIFIC_REALIZATION_ERROR_CODES = [
 	'REALIZATION_PRODUCT_NOT_FOUND',
 	'SHIPMENT_ACCESS_DENIED',
 	'PAYMENT_ACCESS_DENIED',
-	'CRM_REALIZATION_NOT_ENOUGH_PRODUCTS',
 ];
 
 const SPECIFIC_ERROR_CODES = [...SPECIFIC_REALIZATION_ERROR_CODES,
@@ -128,8 +128,10 @@ export class EntityEditorPaymentDocuments
 		this._isUsedInventoryManagement = this._options.IS_USED_INVENTORY_MANAGEMENT;
 		this._salesOrderRights = this._options.SALES_ORDERS_RIGHTS;
 		this._isInventoryManagementRestricted = this._options.IS_INVENTORY_MANAGEMENT_RESTRICTED;
+		this._isInventoryManagement1cRestricted = this._options.IS_1C_PLAN_RESTRICTED;
 		this._isWithOrdersMode = this._options.IS_WITH_ORDERS_MODE;
 		this._isInventoryManagementToolEnabled = this._options.IS_INVENTORY_MANAGEMENT_TOOL_ENABLED;
+		this._isOnecMode = this._options.IS_ONEC_MODE;
 		this._isSalescenterToolEnabled = this._options.IS_SALESCENTER_TOOL_ENABLED;
 		this._isTerminalToolEnabled = this._options.IS_TERMINAL_TOOL_ENABLED;
 		this._shouldShowCashboxChecks = this._options.SHOULD_SHOW_CASHBOX_CHECKS;
@@ -304,11 +306,11 @@ export class EntityEditorPaymentDocuments
 
 	_renderPaymentDocument(doc: PaymentDocument): HTMLElement
 	{
-		const title = Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_PAYMENT_DATE_MSGVER_1')
+		const title = Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_PAYMENT_DATE_MSGVER_2')
 			.replaceAll(/#date#/gi, doc.FORMATTED_DATE)
 			.replaceAll(/#account_number#/gi, doc.ACCOUNT_NUMBER)
+			.replaceAll(/#sum#/gi, this._renderMoney(doc.SUM))
 		;
-		const sum = Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_PAYMENT_AMOUNT').replaceAll(/#sum#/gi, this._renderMoney(doc.SUM));
 		const labelOptions = {
 			text: Loc.getMessage(`CRM_ENTITY_ED_PAYMENT_DOCUMENTS_STAGE_${doc.STAGE}`),
 			customClass: 'crm-entity-widget-payment-label',
@@ -444,7 +446,7 @@ export class EntityEditorPaymentDocuments
 
 		return Tag.render`
 			<div class="crm-entity-widget-payment-detail">
-				<a class="ui-link" onclick="${openSlider}">${title} (${sum})</a>
+				<a class="ui-link" onclick="${openSlider}">${title}</a>
 				<div class="crm-entity-widget-payment-detail-inner">
 					<div class="ui-label ui-label-md ui-label-light crm-entity-widget-payment-action" onclick="${openMenu}">
 						<span class="ui-label-inner">${Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_ACTIONS_MENU')}</span>
@@ -468,11 +470,12 @@ export class EntityEditorPaymentDocuments
 			labelOptions.text = Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_STATUS_DELIVERED');
 			labelOptions.color = LabelColor.LIGHT_GREEN;
 		}
-		const title = Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_DELIVERY_DATE_MSGVER_1')
+		const title = Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_DELIVERY_DATE_MSGVER_2')
 			.replaceAll(/#date#/gi, doc.FORMATTED_DATE)
 			.replaceAll(/#account_number#/gi, doc.ACCOUNT_NUMBER)
+			.replaceAll(/#sum#/gi, this._renderMoney(doc.SUM))
+			.replaceAll(/#delivery_name#/gi, doc.DELIVERY_NAME)
 		;
-		const sum = Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_PAYMENT_AMOUNT').replaceAll(/#sum#/gi, this._renderMoney(doc.SUM));
 
 		let popupMenu;
 		const menuItems = [
@@ -545,7 +548,7 @@ export class EntityEditorPaymentDocuments
 		return Tag.render`
 			<div class="crm-entity-widget-payment-detail">
 				<a class="ui-link" onclick="${openSlider}">
-					${title} (${doc.DELIVERY_NAME}, ${sum})
+					${title}
 				</a>
 				<div class="crm-entity-widget-payment-detail-inner">
 					<div class="ui-label ui-label-md ui-label-light crm-entity-widget-payment-action" onclick="${openMenu}">
@@ -580,18 +583,19 @@ export class EntityEditorPaymentDocuments
 			labelOptions.color = LabelColor.LIGHT;
 		}
 
-		let title = Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_SHIPMENT_DOCUMENT_DATE_MSGVER_1').replaceAll(/#date#/gi, doc.FORMATTED_DATE);
-		title = title.replaceAll(/#document_id#/gi, doc.ACCOUNT_NUMBER);
+		let title = Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_SHIPMENT_DOCUMENT_DATE_MSGVER_2')
+			.replaceAll(/#date#/gi, doc.FORMATTED_DATE)
+			.replaceAll(/#document_id#/gi, doc.ACCOUNT_NUMBER)
+		;
 		title = BX.util.htmlspecialchars(title);
-
-		const sum = Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_SHIPMENT_DOCUMENT_AMOUNT').replaceAll(/#sum#/gi, this._renderMoney(doc.SUM));
+		title = title.replaceAll(/#sum#/gi, this._renderMoney(doc.SUM));
 
 		let popupMenu;
 		const menuItems = [];
 
 		if (this._salesOrderRights?.view)
 		{
-			if (doc.DEDUCTED === 'Y' && this._salesOrderRights?.conduct)
+			if (doc.DEDUCTED === 'Y' && this._salesOrderRights?.conduct && !this._isOnecMode)
 			{
 				if (this._salesOrderRights?.conduct)
 				{
@@ -617,7 +621,7 @@ export class EntityEditorPaymentDocuments
 				});
 			}
 
-			if (this._salesOrderRights?.delete)
+			if (this._salesOrderRights?.delete && !(this._isOnecMode && doc.DEDUCTED === 'Y'))
 			{
 				menuItems.push({
 					text: Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_REMOVE'),
@@ -639,6 +643,17 @@ export class EntityEditorPaymentDocuments
 							Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_SHIPMENT_DOCUMENT_CONFIRM_REMOVE_BUTTON_BACK'),
 						);
 					}
+				});
+			}
+
+			if (this._isOnecMode && doc.DEDUCTED === 'Y')
+			{
+				menuItems.push({
+					text: Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_OPEN'),
+					onclick: () => {
+						popupMenu.close();
+						this._viewRealizationSlider(doc.ID);
+					},
 				});
 			}
 		}
@@ -677,7 +692,7 @@ export class EntityEditorPaymentDocuments
 		return Tag.render`
 			<div class="crm-entity-widget-payment-detail">
 				<a class="ui-link" onclick="${openSlider}">
-					${title} (${sum})
+					${title}
 				</a>
 				<div class="crm-entity-widget-payment-detail-inner">
 					${actionMenu}
@@ -760,7 +775,14 @@ export class EntityEditorPaymentDocuments
 				text,
 			};
 
-			if (this._isInventoryManagementRestricted)
+			if (this._isOnecMode && this._isInventoryManagement1cRestricted)
+			{
+				menuItem.onclick = () => {
+					OneCPlanRestrictionSlider.show();
+				};
+				menuItem.className = 'realization-document-tariff-lock';
+			}
+			else if (!this._isOnecMode && this._isInventoryManagementRestricted)
 			{
 				menuItem.onclick = () => top.BX.UI.InfoHelper.show('limit_store_crm_integration');
 				menuItem.className = 'realization-document-tariff-lock';
@@ -872,7 +894,7 @@ export class EntityEditorPaymentDocuments
 	}
 
 	/**
-	 *
+	 * @see #getAnalyticLabels for new analytics, this is for old analytics and will be deprecated in the future
 	 * @param labelMode converting to PascalCase before inserting into label template
 	 * @returns {string} final analytics label
 	 * @private
@@ -900,6 +922,20 @@ export class EntityEditorPaymentDocuments
 			.replace('#MODE#', mode);
 	}
 
+	#getAnalyticLabels(type: string): Object
+	{
+		const labels = {
+			tool: 'crm',
+			category: 'payments',
+			event: 'payment_create_click',
+			c_section: 'crm',
+			c_sub_section: 'web',
+			type,
+		};
+
+		return labels;
+	}
+
 	_createPaymentSlider(orderId: number)
 	{
 		if (!this._isSalescenterToolEnabled)
@@ -915,6 +951,7 @@ export class EntityEditorPaymentDocuments
 		const options = this._defaultCreatePaymentDocumentOptions();
 		options.mode = 'payment';
 		options.analyticsLabel = this._generateAnalyticsLabel('create_payment');
+		options.st = this.#getAnalyticLabels('payment');
 		options.orderId = orderId;
 
 		this._context().startSalescenterApplication(orderId, options);
@@ -955,6 +992,7 @@ export class EntityEditorPaymentDocuments
 		const options = this._defaultCreatePaymentDocumentOptions();
 		options.mode = 'payment_delivery';
 		options.analyticsLabel = this._generateAnalyticsLabel('create_payment_delivery');
+		options.st = this.#getAnalyticLabels('delivery_payment');
 		options.orderId = orderId;
 
 		this._context().startSalescenterApplication(orderId, options);
@@ -998,6 +1036,7 @@ export class EntityEditorPaymentDocuments
 		const options = this._defaultCreatePaymentDocumentOptions();
 		options.mode = 'terminal_payment';
 		options.analyticsLabel = this._generateAnalyticsLabel('create_terminal_payment');
+		options.st = this.#getAnalyticLabels('terminal_payment');
 		options.orderId = orderId;
 
 		this._context().startSalescenterApplication(orderId, options);

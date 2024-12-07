@@ -1,9 +1,13 @@
 <?php
 IncludeModuleLangFile(__FILE__);
+//@codingStandardsIgnoreFile
 
 use Bitrix\Crm;
+use Bitrix\Crm\Activity\Entity;
+use Bitrix\Crm\Activity\Provider\ToDo;
 use Bitrix\Crm\Binding\EntityBinding;
 use Bitrix\Crm\Binding\LeadContactTable;
+use Bitrix\Crm\Comparer\ComparerBase;
 use Bitrix\Crm\CustomerType;
 use Bitrix\Crm\Entity\Traits\EntityFieldsNormalizer;
 use Bitrix\Crm\Entity\Traits\UserFieldPreparer;
@@ -12,6 +16,7 @@ use Bitrix\Crm\FieldContext\EntityFactory;
 use Bitrix\Crm\FieldContext\ValueFiller;
 use Bitrix\Crm\Format\TextHelper;
 use Bitrix\Crm\Integration\Channel\LeadChannelBinding;
+use Bitrix\Crm\Integration\Im\ProcessEntity\NotificationManager;
 use Bitrix\Crm\Integration\PullManager;
 use Bitrix\Crm\Integrity\DuplicateCommunicationCriterion;
 use Bitrix\Crm\Integrity\DuplicateIndexMismatch;
@@ -19,10 +24,12 @@ use Bitrix\Crm\Integrity\DuplicateManager;
 use Bitrix\Crm\Item;
 use Bitrix\Crm\Kanban\ViewMode;
 use Bitrix\Crm\Security\QueryBuilder\OptionsBuilder;
+use Bitrix\Crm\Security\QueryBuilder\Result\JoinWithUnionSpecification;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Tracking;
 use Bitrix\Crm\UserField\Visibility\VisibilityManager;
 use Bitrix\Crm\UtmTable;
+use Bitrix\Main\Localization\Loc;
 
 class CAllCrmLead
 {
@@ -207,7 +214,6 @@ class CAllCrmLead
 				),
 				'TITLE' => array(
 					'TYPE' => 'string',
-					'ATTRIBUTES' => array(CCrmFieldInfoAttr::Required)
 				),
 				'HONORIFIC' => array(
 					'TYPE' => 'crm_status',
@@ -884,6 +890,12 @@ class CAllCrmLead
 			$arOptions['PERMISSION_SQL_UNION'] = 'DISTINCT';
 		}
 
+		if (JoinWithUnionSpecification::getInstance()->isSatisfiedBy($arFilter))
+		{
+			// When forming a request for restricting rights, the optimization mode with the use of union was used.
+			$arOptions['PERMISSION_BUILDER_OPTION_OBSERVER_JOIN_AS_UNION'] = true;
+		}
+
 		$lb = new CCrmEntityListBuilder(
 			CCrmLead::DB_TYPE,
 			CCrmLead::TABLE_NAME,
@@ -1344,7 +1356,7 @@ class CAllCrmLead
 			$sSql = $DB->TopSql($sSql, $nPageTop);
 		}
 
-		$obRes = $DB->Query($sSql, false, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
+		$obRes = $DB->Query($sSql);
 		$obRes->SetUserFields($USER_FIELD_MANAGER->GetUserFields(self::$sUFEntityID));
 		return $obRes;
 	}
@@ -1510,12 +1522,17 @@ class CAllCrmLead
 				: Bitrix\Crm\Security\EntityPermissionType::UNDEFINED
 		);
 
-		if(!isset($arFields['STATUS_ID']) || (string)$arFields['STATUS_ID'] === '')
+		$arFields['STATUS_ID'] ??= null;
+
+		$viewMode = ($options['ITEM_OPTIONS']['VIEW_MODE'] ?? null);
+
+		if (
+			$viewMode !== ViewMode::MODE_ACTIVITIES
+			&& !self::IsStatusExists($arFields['STATUS_ID'])
+		)
 		{
 			$arFields['STATUS_ID'] = self::GetStartStatusID($permissionTypeId);
 		}
-
-		$viewMode = ($options['ITEM_OPTIONS']['VIEW_MODE'] ?? null);
 
 		$viewModeActivitiesStatusId = null;
 		if ($viewMode === ViewMode::MODE_ACTIVITIES)
@@ -1717,7 +1734,7 @@ class CAllCrmLead
 		unset($arFields['ID']);
 
 		$this->normalizeEntityFields($arFields);
-		$ID = (int) $DB->Add(self::TABLE_NAME, $arFields, [], '', false, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
+		$ID = (int) $DB->Add(self::TABLE_NAME, $arFields, [], '');
 
 		//Append ID to TITLE if required
 		if($ID > 0 && $arFields['TITLE'] === self::GetDefaultTitle())
@@ -1726,7 +1743,7 @@ class CAllCrmLead
 			$sUpdate = $DB->PrepareUpdate('b_crm_lead', array('TITLE' => $arFields['TITLE']));
 			if($sUpdate <> '')
 			{
-				$DB->Query("UPDATE b_crm_lead SET {$sUpdate} WHERE ID = {$ID}", false, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
+				$DB->Query("UPDATE b_crm_lead SET {$sUpdate} WHERE ID = {$ID}");
 			};
 		}
 
@@ -1836,17 +1853,9 @@ class CAllCrmLead
 		Tracking\Entity::onAfterAdd(CCrmOwnerType::Lead, $ID, $arFields);
 
 		//region Save contacts
-		if(!empty($contactBindings))
+		if (!empty($contactBindings))
 		{
 			LeadContactTable::bindContacts($ID, $contactBindings);
-			if(isset($GLOBALS['USER']) && !empty($contactIDs))
-			{
-				CUserOptions::SetOption(
-					'crm',
-					'crm_contact_search',
-					array('last_selected' => $contactIDs[count($contactIDs) - 1])
-				);
-			}
 		}
 		//endregion
 
@@ -1915,30 +1924,20 @@ class CAllCrmLead
 
 			$logEventID = CCrmLiveFeed::CreateLogEvent($liveFeedFields, CCrmLiveFeedEvent::Add, ['CURRENT_USER' => $userID]);
 
-			if (
-				$logEventID !== false
-				&& $assignedByID != $createdByID
-				&& CModule::IncludeModule("im")
-				&& \Bitrix\Crm\Settings\LeadSettings::isEnabled()
-			)
+			if ($logEventID !== false && !$isRestoration)
 			{
-				$url = CCrmOwnerType::GetEntityShowPath(CCrmOwnerType::Lead, $ID);
-				$serverName = (CMain::IsHTTPS() ? "https" : "http")."://".((defined("SITE_SERVER_NAME") && SITE_SERVER_NAME <> '') ? SITE_SERVER_NAME : COption::GetOptionString("main", "server_name", ""));
+				$difference = Crm\Comparer\ComparerBase::compareEntityFields([], [
+					Item::FIELD_NAME_ID => $ID,
+					Item::FIELD_NAME_TITLE => $arFields['TITLE'],
+					Item::FIELD_NAME_CREATED_BY => $createdByID,
+					Item::FIELD_NAME_ASSIGNED => $assignedByID,
+					Item::FIELD_NAME_OBSERVERS => $observerIDs,
+				]);
 
-				$arMessageFields = array(
-					"MESSAGE_TYPE" => IM_MESSAGE_SYSTEM,
-					"TO_USER_ID" => $assignedByID,
-					"FROM_USER_ID" => $createdByID,
-					"NOTIFY_TYPE" => IM_NOTIFY_FROM,
-					"NOTIFY_MODULE" => "crm",
-					"LOG_ID" => $logEventID,
-					//"NOTIFY_EVENT" => "lead_add",
-					"NOTIFY_EVENT" => "changeAssignedBy",
-					"NOTIFY_TAG" => "CRM|LEAD|".$ID,
-					"NOTIFY_MESSAGE" => GetMessage("CRM_LEAD_RESPONSIBLE_IM_NOTIFY", Array("#title#" => "<a href=\"".$url."\" class=\"bx-notifier-item-action\">".htmlspecialcharsbx($arFields['TITLE'])."</a>")),
-					"NOTIFY_MESSAGE_OUT" => GetMessage("CRM_LEAD_RESPONSIBLE_IM_NOTIFY", Array("#title#" => htmlspecialcharsbx($arFields['TITLE'])))." (".$serverName.$url.")"
+				NotificationManager::getInstance()->sendAllNotificationsAboutAdd(
+					CCrmOwnerType::Lead,
+					$difference,
 				);
-				CIMNotify::Add($arMessageFields);
 			}
 		}
 
@@ -1970,11 +1969,8 @@ class CAllCrmLead
 
 				if ($deadline)
 				{
-					\Bitrix\Crm\Activity\Entity\ToDo::createWithDefaultDescription(
-						\CCrmOwnerType::Lead,
-						$ID,
-						$deadline
-					);
+					(new Entity\ToDo(new Crm\ItemIdentifier(\CCrmOwnerType::Lead, $ID), new ToDo\ToDo()))
+						->createWithDefaultSubjectAndDescription($deadline);
 				}
 			}
 
@@ -2146,9 +2142,18 @@ class CAllCrmLead
 
 		if (!empty($arFields['STATUS_ID']) && $arFields['STATUS_ID'] !== $arRow['STATUS_ID'])
 		{
-			self::EnsureStatusesLoaded();
-			if (in_array($arFields['STATUS_ID'], self::$LEAD_STATUSES_BY_GROUP['FINISHED']))
-				$arFields['~DATE_CLOSED'] = $DB->CurrentTimeFunction();
+			if (self::IsStatusExists($arFields['STATUS_ID'] ?? null))
+			{
+				self::EnsureStatusesLoaded();
+				if (in_array($arFields['STATUS_ID'], self::$LEAD_STATUSES_BY_GROUP['FINISHED']))
+				{
+					$arFields['~DATE_CLOSED'] = $DB->CurrentTimeFunction();
+				}
+			}
+			else
+			{
+				unset($arFields['STATUS_ID']); // not change status if new status is invalid
+			}
 		}
 
 		if(isset($arFields['ASSIGNED_BY_ID']) && $arFields['ASSIGNED_BY_ID'] <= 0)
@@ -2176,6 +2181,22 @@ class CAllCrmLead
 			{
 				$this->LAST_ERROR = GetMessage('CRM_PERMISSION_DENIED');
 				$arFields['RESULT_MESSAGE'] = &$this->LAST_ERROR;
+				return false;
+			}
+
+
+			if (
+				$this->bCheckPermission
+				&& $statusID !== $arRow['STATUS_ID']
+				&& !Container::getInstance()->getUserPermissions($iUserId)->isStageTransitionAllowed(
+					$arRow['STATUS_ID'],
+					$statusID,
+					new Crm\ItemIdentifier(CCrmOwnerType::Lead, $ID)
+				)
+			)
+			{
+				$this->LAST_ERROR = Loc::getMessage('CRM_PERMISSION_STAGE_TRANSITION_NOT_ALLOWED');
+
 				return false;
 			}
 
@@ -2255,11 +2276,6 @@ class CAllCrmLead
 				{
 					$arFields['OPENED'] = 'Y';
 				}
-			}
-
-			if (isset($arFields['ASSIGNED_BY_ID']) && $arRow['ASSIGNED_BY_ID'] != $arFields['ASSIGNED_BY_ID'])
-			{
-				CCrmEvent::SetAssignedByElement($arFields['ASSIGNED_BY_ID'], 'LEAD', $ID);
 			}
 
 			//region Preparation of contacts
@@ -2525,7 +2541,7 @@ class CAllCrmLead
 			}
 			else
 			{
-				$dbRes = $DB->Query("SELECT NAME, LAST_NAME FROM b_crm_lead WHERE ID = {$ID}", false, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
+				$dbRes = $DB->Query("SELECT NAME, LAST_NAME FROM b_crm_lead WHERE ID = {$ID}");
 				$arRes = $dbRes->Fetch();
 				$arFields['FULL_NAME'] = trim((isset($arFields['NAME'])? $arFields['NAME']: $arRes['NAME']).' '.(isset($arFields['LAST_NAME'])? $arFields['LAST_NAME']: $arRes['LAST_NAME']));
 			}
@@ -2552,7 +2568,7 @@ class CAllCrmLead
 
 			if ($sUpdate <> '')
 			{
-				$DB->Query("UPDATE b_crm_lead SET {$sUpdate} WHERE ID = {$ID}", false, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
+				$DB->Query("UPDATE b_crm_lead SET {$sUpdate} WHERE ID = {$ID}");
 
 				$bResult = true;
 			}
@@ -2722,35 +2738,39 @@ class CAllCrmLead
 			//endregion
 
 			//region Complete activities if entity is closed
-			if($arRow['STATUS_SEMANTIC_ID'] !== $currentFields['STATUS_SEMANTIC_ID']
+			if (
+				$arRow['STATUS_SEMANTIC_ID'] !== $currentFields['STATUS_SEMANTIC_ID']
 				&& $currentFields['STATUS_SEMANTIC_ID'] !== Bitrix\Crm\PhaseSemantics::PROCESS
 				&& (!isset($options['ENABLE_ACTIVITY_COMPLETION']) || $options['ENABLE_ACTIVITY_COMPLETION'] === true)
 			)
 			{
-				$providerIDs = array();
+				$providerIDs = [];
 				$completionConfig = \Bitrix\Crm\Settings\LeadSettings::getCurrent()->getActivityCompletionConfig();
-				foreach(\Bitrix\Crm\Activity\Provider\ProviderManager::getCompletableProviderList() as $providerInfo)
+				foreach (\Bitrix\Crm\Activity\Provider\ProviderManager::getCompletableProviderList() as $providerInfo)
 				{
 					$providerID = $providerInfo['ID'];
-					if(!isset($completionConfig[$providerID]) || $completionConfig[$providerID])
+					if (!isset($completionConfig[$providerID]) || $completionConfig[$providerID])
 					{
 						$providerIDs[] = $providerID;
 					}
 				}
 
 				$providerQty = count($providerIDs);
-				if($providerQty > 0)
+				if ($providerQty > 0)
 				{
 					$activityUserID = $iUserId;
-					if($activityUserID <= 0 && isset($arFields['MODIFY_BY_ID']))
+					if ($activityUserID <= 0 && isset($arFields['MODIFY_BY_ID']))
 					{
 						$activityUserID = $arFields['MODIFY_BY_ID'];
 					}
+
 					\CCrmActivity::SetAutoCompletedByOwner(
 						CCrmOwnerType::Lead,
 						$ID,
-						$providerQty < count($completionConfig) ? $providerIDs : array(),
-						array('CURRENT_USER' => $activityUserID)
+						$providerQty < count($completionConfig) ? $providerIDs : [],
+						[
+							'CURRENT_USER' => $activityUserID,
+						]
 					);
 				}
 			}
@@ -2806,7 +2826,7 @@ class CAllCrmLead
 					$hasImol !== (isset($arRow['HAS_IMOL']) ? $arRow['HAS_IMOL'] : 'N')
 				)
 				{
-					$DB->Query("UPDATE b_crm_lead SET HAS_EMAIL = '{$hasEmail}', HAS_PHONE = '{$hasPhone}', HAS_IMOL = '{$hasImol}' WHERE ID = {$ID}", false, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
+					$DB->Query("UPDATE b_crm_lead SET HAS_EMAIL = '{$hasEmail}', HAS_PHONE = '{$hasPhone}', HAS_IMOL = '{$hasImol}' WHERE ID = {$ID}");
 
 					$arFields['HAS_EMAIL'] = $hasEmail;
 					$arFields['HAS_PHONE'] = $hasPhone;
@@ -2921,9 +2941,24 @@ class CAllCrmLead
 				);
 			}
 
+			$title = CCrmOwnerType::GetCaption(CCrmOwnerType::Lead, $ID, false);
+			$modifiedByID = (int)$arFields['MODIFY_BY_ID'];
+			$difference = Crm\Comparer\ComparerBase::compareEntityFields([], [
+				Item::FIELD_NAME_ID => $ID,
+				Item::FIELD_NAME_TITLE => $title,
+				Item::FIELD_NAME_UPDATED_BY => $modifiedByID,
+			]);
+
+			if (!empty($addedObserverIDs) || !empty($removedObserverIDs))
+			{
+				$difference
+					->setPreviousValue(Item::FIELD_NAME_OBSERVERS, $originalObserverIDs ?? [])
+					->setCurrentValue(Item::FIELD_NAME_OBSERVERS, $observerIDs ?? [])
+				;
+			}
+
 			if($bResult && $bCompare && $registerSonetEvent && !empty($sonetEventData))
 			{
-				$modifiedByID = intval($arFields['MODIFY_BY_ID']);
 				foreach($sonetEventData as &$sonetEvent)
 				{
 					$sonetEventFields = &$sonetEvent['FIELDS'];
@@ -2935,56 +2970,25 @@ class CAllCrmLead
 
 					if (
 						$logEventID !== false
-						&& CModule::IncludeModule("im")
+						&& CModule::IncludeModule('im')
 						&& \Bitrix\Crm\Settings\LeadSettings::isEnabled()
 					)
 					{
-						$title = CCrmOwnerType::GetCaption(CCrmOwnerType::Lead, $ID, false);
 						$url = CCrmOwnerType::GetEntityShowPath(CCrmOwnerType::Lead, $ID);
-						$serverName = (CMain::IsHTTPS() ? "https" : "http")."://".((defined("SITE_SERVER_NAME") && SITE_SERVER_NAME <> '') ? SITE_SERVER_NAME : COption::GetOptionString("main", "server_name", ""));
+						$absoluteUrl = CCrmUrlUtil::ToAbsoluteUrl($url);
 
-						if (
-							$sonetEventFields['PARAMS']['FINAL_RESPONSIBLE_ID'] != $modifiedByID
-							&& $sonetEvent['TYPE'] == CCrmLiveFeedEvent::Responsible
-						)
+						if ($sonetEvent['TYPE'] === CCrmLiveFeedEvent::Responsible)
 						{
-							$arMessageFields = array(
-								"MESSAGE_TYPE" => IM_MESSAGE_SYSTEM,
-								"TO_USER_ID" => $sonetEventFields['PARAMS']['FINAL_RESPONSIBLE_ID'],
-								"FROM_USER_ID" => $modifiedByID,
-								"NOTIFY_TYPE" => IM_NOTIFY_FROM,
-								"NOTIFY_MODULE" => "crm",
-								"LOG_ID" => $logEventID,
-								//"NOTIFY_EVENT" => "lead_update",
-								"NOTIFY_EVENT" => "changeAssignedBy",
-								"NOTIFY_TAG" => "CRM|LEAD_RESPONSIBLE|".$ID,
-								"NOTIFY_MESSAGE" => GetMessage("CRM_LEAD_RESPONSIBLE_IM_NOTIFY", Array("#title#" => "<a href=\"".$url."\" class=\"bx-notifier-item-action\">".htmlspecialcharsbx($title)."</a>")),
-								"NOTIFY_MESSAGE_OUT" => GetMessage("CRM_LEAD_RESPONSIBLE_IM_NOTIFY", Array("#title#" => htmlspecialcharsbx($title)))." (".$serverName.$url.")"
-							);
-
-							CIMNotify::Add($arMessageFields);
-						}
-
-						if (
-							$sonetEvent['TYPE'] == CCrmLiveFeedEvent::Responsible
-							&& $sonetEventFields['PARAMS']['START_RESPONSIBLE_ID'] != $modifiedByID
-						)
-						{
-							$arMessageFields = array(
-								"MESSAGE_TYPE" => IM_MESSAGE_SYSTEM,
-								"TO_USER_ID" => $sonetEventFields['PARAMS']['START_RESPONSIBLE_ID'],
-								"FROM_USER_ID" => $modifiedByID,
-								"NOTIFY_TYPE" => IM_NOTIFY_FROM,
-								"NOTIFY_MODULE" => "crm",
-								"LOG_ID" => $logEventID,
-								//"NOTIFY_EVENT" => "lead_update",
-								"NOTIFY_EVENT" => "changeAssignedBy",
-								"NOTIFY_TAG" => "CRM|LEAD_RESPONSIBLE|".$ID,
-								"NOTIFY_MESSAGE" => GetMessage("CRM_LEAD_NOT_RESPONSIBLE_IM_NOTIFY", Array("#title#" => "<a href=\"".$url."\" class=\"bx-notifier-item-action\">".htmlspecialcharsbx($title)."</a>")),
-								"NOTIFY_MESSAGE_OUT" => GetMessage("CRM_LEAD_NOT_RESPONSIBLE_IM_NOTIFY", Array("#title#" => htmlspecialcharsbx($title)))." (".$serverName.$url.")"
-							);
-
-							CIMNotify::Add($arMessageFields);
+							$difference
+								->setPreviousValue(
+									Item::FIELD_NAME_ASSIGNED,
+									(int)$sonetEventFields['PARAMS']['START_RESPONSIBLE_ID'],
+								)
+								->setCurrentValue(
+									Item::FIELD_NAME_ASSIGNED,
+									(int)$sonetEventFields['PARAMS']['FINAL_RESPONSIBLE_ID'],
+								)
+							;
 						}
 
 						if (
@@ -3003,6 +3007,50 @@ class CAllCrmLead
 								&& array_key_exists($sonetEventFields['PARAMS']['FINAL_STATUS_ID'], $infos)
 							)
 							{
+								$messageTitle = "<a href=\"" . $url . "\" class=\"bx-notifier-item-action\">" . htmlspecialcharsbx($title) . "</a>";
+								$messageTitleOut = htmlspecialcharsbx($title);
+								$startStatusTitle = htmlspecialcharsbx($infos[$sonetEventFields['PARAMS']['START_STATUS_ID']]['NAME']);
+								$finalStatusTitle = htmlspecialcharsbx($infos[$sonetEventFields['PARAMS']['FINAL_STATUS_ID']]['NAME']);
+
+								$notifyMessage = static function (?string $languageId = null) use (
+									$messageTitle,
+									$startStatusTitle,
+									$finalStatusTitle,
+								) {
+									$replace = [
+										"#title#" => $messageTitle,
+										"#start_status_title#" => $startStatusTitle,
+										"#final_status_title#" => $finalStatusTitle,
+									];
+
+									return Loc::getMessage(
+										'CRM_LEAD_PROGRESS_IM_NOTIFY_MSGVER_1',
+										$replace,
+										$languageId,
+									);
+								};
+
+								$notifyMessageOut = static function (?string $languageId = null) use (
+									$messageTitleOut,
+									$startStatusTitle,
+									$finalStatusTitle,
+									$absoluteUrl,
+								){
+									$replace = [
+										"#title#" => $messageTitleOut,
+										"#start_status_title#" => $startStatusTitle,
+										"#final_status_title#" => $finalStatusTitle,
+									];
+
+									$message = Loc::getMessage(
+										'CRM_LEAD_PROGRESS_IM_NOTIFY_MSGVER_1',
+										$replace,
+										$languageId,
+									);
+
+									return "{$message} ({$absoluteUrl})";
+								};
+
 								$arMessageFields = array(
 									"MESSAGE_TYPE" => IM_MESSAGE_SYSTEM,
 									"TO_USER_ID" => $assignedByID,
@@ -3013,16 +3061,8 @@ class CAllCrmLead
 									//"NOTIFY_EVENT" => "lead_update",
 									"NOTIFY_EVENT" => "changeStage",
 									"NOTIFY_TAG" => "CRM|LEAD_PROGRESS|".$ID,
-									"NOTIFY_MESSAGE" => GetMessage("CRM_LEAD_PROGRESS_IM_NOTIFY_MSGVER_1", Array(
-										"#title#" => "<a href=\"".$url."\" class=\"bx-notifier-item-action\">".htmlspecialcharsbx($title)."</a>",
-										"#start_status_title#" => htmlspecialcharsbx($infos[$sonetEventFields['PARAMS']['START_STATUS_ID']]['NAME']),
-										"#final_status_title#" => htmlspecialcharsbx($infos[$sonetEventFields['PARAMS']['FINAL_STATUS_ID']]['NAME'])
-									)),
-									"NOTIFY_MESSAGE_OUT" => GetMessage("CRM_LEAD_PROGRESS_IM_NOTIFY_MSGVER_1", Array(
-											"#title#" => htmlspecialcharsbx($title),
-											"#start_status_title#" => htmlspecialcharsbx($infos[$sonetEventFields['PARAMS']['START_STATUS_ID']]['NAME']),
-											"#final_status_title#" => htmlspecialcharsbx($infos[$sonetEventFields['PARAMS']['FINAL_STATUS_ID']]['NAME'])
-										))." (".$serverName.$url.")"
+									"NOTIFY_MESSAGE" => $notifyMessage,
+									"NOTIFY_MESSAGE_OUT" => $notifyMessageOut,
 								);
 
 								CIMNotify::Add($arMessageFields);
@@ -3032,8 +3072,15 @@ class CAllCrmLead
 
 					unset($sonetEventFields);
 				}
+
 				unset($sonetEvent);
 			}
+
+			NotificationManager::getInstance()->sendAllNotificationsAboutUpdate(
+				CCrmOwnerType::Lead,
+				$difference,
+			);
+
 			//endregion
 			//region After update event
 			if($bResult && $enableSystemEvents)
@@ -3057,6 +3104,16 @@ class CAllCrmLead
 				$scope = \Bitrix\Crm\Service\Container::getInstance()->getContext()->getScope();
 				$filler = new ValueFiller(CCrmOwnerType::Lead, $ID, $scope);
 				$filler->fill($options['CURRENT_FIELDS'], $arFields);
+
+				if (
+					isset($arRow['STATUS_ID'])
+					&& isset($currentFields['STATUS_ID'])
+					&& ComparerBase::isMovedToFinalStage(CCrmOwnerType::Lead, $arRow['STATUS_ID'], $currentFields['STATUS_ID'])
+				)
+				{
+					$item = Container::getInstance()->getFactory(CCrmOwnerType::Lead)->getItem($ID);
+					(new Bitrix\Crm\Service\Operation\Action\DeleteEntityBadges())->process($item);
+				}
 			}
 
 			if ($bResult && !$syncStatusSemantics)
@@ -3163,11 +3220,12 @@ class CAllCrmLead
 			->getUserPermissions($iUserId)
 			->checkDeletePermissions(CCrmOwnerType::Lead, $ID);
 
-		if (
-			$this->bCheckPermission
-			&& !$hasDeletePerm
-		)
+		if ($this->bCheckPermission && !$hasDeletePerm)
 		{
+			$this->LAST_ERROR = Loc::getMessage('CRM_LEAD_NO_PERMISSIONS_TO_DELETE', [
+				'#LEAD_NAME#' => htmlspecialcharsbx($arFields['TITLE'] ?? $arFields['ID']),
+			]);
+
 			return false;
 		}
 
@@ -3206,7 +3264,7 @@ class CAllCrmLead
 
 		$tableName = CCrmLead::TABLE_NAME;
 		$sSql = "DELETE FROM {$tableName} WHERE ID = {$ID}";
-		$obRes = $DB->Query($sSql, false, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
+		$obRes = $DB->Query($sSql);
 		if (is_object($obRes) && $obRes->AffectedRowsCount() > 0)
 		{
 			if(defined('BX_COMP_MANAGED_CACHE'))
@@ -4144,7 +4202,16 @@ class CAllCrmLead
 			$userPermissions = CCrmPerms::GetCurrentUserPermissions();
 		}
 
-		$canEdit = CCrmAuthorizationHelper::CheckUpdatePermission(self::$TYPE_NAME, $ID, $userPermissions);
+		$canTransitionLeadToFinalStage = (
+			$ID <= 0 // backwards compatibility
+			|| self::canTransitionItemToFinalStage((int)$ID, $userPermissions->GetUserID())
+		);
+
+		$canEdit =
+			CCrmAuthorizationHelper::CheckUpdatePermission(self::$TYPE_NAME, $ID, $userPermissions)
+			&& $canTransitionLeadToFinalStage
+		;
+
 		$canCreateContact = CCrmContact::CheckCreatePermission($userPermissions);
 		$canCreateCompany = CCrmCompany::CheckCreatePermission($userPermissions);
 		$canCreateDeal = CCrmDeal::CheckCreatePermission($userPermissions);
@@ -4159,6 +4226,38 @@ class CAllCrmLead
 		{
 			$params['CAN_CONVERT'] = false;
 		}
+	}
+
+	private static function canTransitionItemToFinalStage(int $entityId, int $userId): bool
+	{
+		$factory = Container::getInstance()->getFactory(\CCrmOwnerType::Lead);
+		if (!$factory)
+		{
+			return false;
+		}
+
+		$items = $factory->getItems([
+			'select' => [Item::FIELD_NAME_ID, Item::FIELD_NAME_STAGE_ID],
+			'filter' => ['=ID' => $entityId],
+			'limit' => 1,
+		]);
+		$item = array_shift($items);
+		if (!$item)
+		{
+			return false;
+		}
+
+		$successfulStageId = $factory->getSuccessfulStage()?->getStatusId();
+		if (!$successfulStageId)
+		{
+			return false;
+		}
+
+		return Crm\Service\Container::getInstance()->getUserPermissions($userId)->isStageTransitionAllowed(
+			$item->getStageId(),
+			$successfulStageId,
+			Crm\ItemIdentifier::createByItem($item),
+		);
 	}
 
 	public static function PrepareFilter(&$arFilter, $arFilter2Logic = null)
@@ -4231,7 +4330,7 @@ class CAllCrmLead
 				$arFilter["=%{$k}"] = "{$v}%";
 				unset($arFilter[$k]);
 			}
-			elseif (preg_match('/(.*)_from$/i'.BX_UTF_PCRE_MODIFIER, $k, $arMatch))
+			elseif (preg_match('/(.*)_from$/iu', $k, $arMatch))
 			{
 				if($v <> '')
 				{
@@ -4239,12 +4338,12 @@ class CAllCrmLead
 				}
 				unset($arFilter[$k]);
 			}
-			elseif (preg_match('/(.*)_to$/i'.BX_UTF_PCRE_MODIFIER, $k, $arMatch))
+			elseif (preg_match('/(.*)_to$/iu', $k, $arMatch))
 			{
 				if($v <> '')
 				{
 					if (($arMatch[1] == 'DATE_CREATE' || $arMatch[1] == 'DATE_MODIFY' || $arMatch[1] == 'DATE_CLOSED')
-						&& !preg_match('/\d{1,2}:\d{1,2}(:\d{1,2})?$/'.BX_UTF_PCRE_MODIFIER, $v))
+						&& !preg_match('/\d{1,2}:\d{1,2}(:\d{1,2})?$/u', $v))
 					{
 						$v = CCrmDateTimeHelper::SetMaxDayTime($v);
 					}
@@ -4376,18 +4475,25 @@ class CAllCrmLead
 
 	public static function GetSemanticID($statusID)
 	{
-		if($statusID === 'CONVERTED')
+		if (is_null($statusID))
 		{
-			return Bitrix\Crm\PhaseSemantics::SUCCESS;
+			return (self::GetStatusSort($statusID) > self::GetFinalStatusSort())
+				? Bitrix\Crm\PhaseSemantics::FAILURE
+				: Bitrix\Crm\PhaseSemantics::PROCESS
+			;
 		}
 
-		if($statusID === 'JUNK')
+		if ($statusID === '')
 		{
-			return Bitrix\Crm\PhaseSemantics::FAILURE;
+			return Bitrix\Crm\PhaseSemantics::UNDEFINED;
 		}
 
-		return (self::GetStatusSort($statusID) > self::GetFinalStatusSort())
-			? Bitrix\Crm\PhaseSemantics::FAILURE : Bitrix\Crm\PhaseSemantics::PROCESS;
+		$semantics = Container::getInstance()
+			->getFactory(\CCrmOwnerType::Lead)
+			?->getStageSemantics($statusID)
+		;
+
+		return $semantics ?? Bitrix\Crm\PhaseSemantics::UNDEFINED;
 	}
 
 	/**
@@ -5052,7 +5158,7 @@ class CAllCrmLead
 			!isset($fields['HAS_IMOL']) || $fields['HAS_IMOL'] !== $hasImol
 		)
 		{
-			$DB->Query("UPDATE b_crm_lead SET HAS_EMAIL = '{$hasEmail}', HAS_PHONE = '{$hasPhone}', HAS_IMOL = '{$hasImol}' WHERE ID = {$sourceID}", false, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
+			$DB->Query("UPDATE b_crm_lead SET HAS_EMAIL = '{$hasEmail}', HAS_PHONE = '{$hasPhone}', HAS_IMOL = '{$hasImol}' WHERE ID = {$sourceID}");
 		}
 	}
 
@@ -5113,5 +5219,10 @@ class CAllCrmLead
 		{
 			$connection->query("UPDATE {$tableName} SET COMPANY_ID = {$newId} WHERE COMPANY_ID = {$oldId}");
 		}
+	}
+
+	public function getLastError(): string
+	{
+		return (string)$this->LAST_ERROR;
 	}
 }

@@ -2,7 +2,6 @@
  * @module tasks/layout/simple-list/items/task-kanban
  */
 jn.define('tasks/layout/simple-list/items/task-kanban', (require, exports, module) => {
-	const AppTheme = require('apptheme');
 	const { Base } = require('layout/ui/simple-list/items/base');
 	const { mergeImmutable } = require('utils/object');
 	const { withPressed } = require('utils/color');
@@ -14,8 +13,22 @@ jn.define('tasks/layout/simple-list/items/task-kanban', (require, exports, modul
 		{
 			super(props);
 
-			this.styles = mergeImmutable(this.styles, styles);
 			this.onContextMenuClick = this.onContextMenuClick.bind(this);
+		}
+
+		getStyles()
+		{
+			return mergeImmutable(super.getStyles(), {
+				wrapper: {
+					paddingBottom: 12,
+					backgroundColor: this.colors.bgPrimary,
+				},
+				item: {
+					position: 'relative',
+					backgroundColor: withPressed(this.colors.bgContentPrimary),
+					borderRadius: 12,
+				},
+			});
 		}
 
 		renderItemContent()
@@ -34,6 +47,7 @@ jn.define('tasks/layout/simple-list/items/task-kanban', (require, exports, modul
 				ownerId,
 				id: this.props.item.id,
 				testId: this.props.testId,
+				menuViewRef: this.props.menuViewRef,
 				itemLayoutOptions: this.props.itemLayoutOptions,
 				onContextMenuClick: this.onContextMenuClick,
 				layout: this.props.layout,
@@ -74,18 +88,6 @@ jn.define('tasks/layout/simple-list/items/task-kanban', (require, exports, modul
 			this.blink(callback);
 		}
 	}
-
-	const styles = {
-		wrapper: {
-			paddingBottom: 12,
-			backgroundColor: AppTheme.colors.bgPrimary,
-		},
-		item: {
-			position: 'relative',
-			backgroundColor: withPressed(AppTheme.colors.bgContentPrimary),
-			borderRadius: 12,
-		},
-	};
 
 	module.exports = { TaskKanban };
 });

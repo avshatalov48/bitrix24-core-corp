@@ -1,3 +1,4 @@
+/* eslint-disable no-underscore-dangle, @bitrix24/bitrix24-rules/no-pseudo-private */
 if(typeof(BX.CrmDealStageManager) === "undefined")
 {
 	BX.CrmDealStageManager = function() {};
@@ -155,6 +156,8 @@ if(typeof(BX.CrmLeadTerminationControl) === "undefined")
 		this._enabled = true;
 		this._schemeData = null;
 		this._selector = null;
+		this._permissionCheckCallback = null;
+		this._showPermissionErrorCallback = null;
 		this._dialogOpenListener = BX.delegate(this.onDialogOpen, this);
 		this._dialogCloseListener = BX.delegate(this.onDialogClose, this);
 	};
@@ -167,6 +170,8 @@ if(typeof(BX.CrmLeadTerminationControl) === "undefined")
 			this._entityId = parseInt(this.getSetting("entityId", 0));
 			this._enabled = this.getSetting("canConvert", true);
 			this._schemeData = this.getSetting("conversionScheme", {});
+			this._permissionCheckCallback = this.getSetting('permissionCheckCallback', null);
+			this._showPermissionErrorCallback = this.getSetting('showPermissionErrorCallback', null);
 		},
 		getSetting: function(name, defaultval)
 		{
@@ -198,11 +203,11 @@ if(typeof(BX.CrmLeadTerminationControl) === "undefined")
 			var bindEvents = false;
 
 			var success = sender.getSetting("success");
-			if(success)
+			if (success)
 			{
 				bindEvents = true;
 
-				results["successButton"] = BX.create("SPAN",
+				const successButton = BX.create("SPAN",
 					{
 						attrs:
 							{
@@ -246,15 +251,33 @@ if(typeof(BX.CrmLeadTerminationControl) === "undefined")
 							]
 					}
 				);
+
+				if (this.isPermissionsCheckAvailable() && !this._permissionCheckCallback())
+				{
+					bindEvents = false;
+
+					BX.Dom.addClass(successButton, '--disabled');
+					successButton.onclick = () => {
+						this._showPermissionErrorCallback();
+					};
+				}
+
+				results.successButton = successButton;
 			}
 
-			if(bindEvents)
+			if (bindEvents)
 			{
 				sender.addOpenListener(this._dialogOpenListener);
 				sender.addCloseListener(this._dialogCloseListener);
 			}
 
 			return results;
+		},
+		isPermissionsCheckAvailable()
+		{
+			return BX.type.isFunction(this._permissionCheckCallback)
+				&& BX.type.isFunction(this._showPermissionErrorCallback)
+			;
 		},
 		onDialogOpen: function(sender)
 		{
@@ -1160,6 +1183,7 @@ if(typeof(BX.CrmProgressControl) === "undefined")
 		this._failureDlg = null;
 		this._isFrozen = false;
 		this._isReadOnly = false;
+		this.permissionChecker = null;
 
 		this._entityEditorDialog = null;
 
@@ -1167,10 +1191,12 @@ if(typeof(BX.CrmProgressControl) === "undefined")
 		this._entityConvertHandler = null;
 		this._entityEditorDialogHandler = BX.delegate(this._onEntityEditorDialogClose, this);
 
+		this._enableFillContainerBackground = false;
 		this._enableCustomColors = false;
 		this._defaultProcessColor = "#ACE9FB";
 		this._defaultSuccessSuccessColor = "#DBF199";
 		this._defaultFailureColor = "#FFBEBD";
+		this._analyticsData = null;
 	};
 
 	BX.CrmProgressControl.prototype =
@@ -1215,8 +1241,10 @@ if(typeof(BX.CrmProgressControl) === "undefined")
 							canConvert: this.getSetting("canConvert", true),
 							typeId: this.getSetting("conversionTypeId", BX.CrmLeadConversionType.general),
 							converterId: this.getSetting('converterId', null),
-						}
-					)
+							permissionCheckCallback: this.isHasPermissionToMoveSuccessStage.bind(this),
+							showPermissionErrorCallback: this.showMissPermissionError.bind(this),
+						},
+					),
 				);
 			}
 			else if(this._entityType === 'QUOTE')
@@ -1262,17 +1290,20 @@ if(typeof(BX.CrmProgressControl) === "undefined")
 						info["id"],
 						BX.CrmParamBag.create(
 							{
-								"name": info["name"],
-								"hint": BX.type.isNotEmptyString(info["hint"]) ? info["hint"] : '',
-								"sort": sort,
-								"isPassed": i <= currentStepIndex,
-								"isReadOnly": this._isReadOnly,
-								"control": this
-							}
-						)
-					)
+								name: info["name"],
+								hint: BX.type.isNotEmptyString(info["hint"]) ? info["hint"] : '',
+								sort: sort,
+								isPassed: i <= currentStepIndex,
+								isReadOnly: this._isReadOnly,
+								control: this,
+								semantics: info.semantics,
+							},
+						),
+					),
 				);
 			}
+
+			this.adjustDisableOfSteps();
 		},
 		getSetting: function(name, defaultval)
 		{
@@ -1310,6 +1341,38 @@ if(typeof(BX.CrmProgressControl) === "undefined")
 			}
 			return null;
 		},
+		getPermissionChecker()
+		{
+			if (this.permissionChecker === null)
+			{
+				const stepInfos = this._stepInfos ?? this._manager.getInfos(this._infoTypeId);
+				this.permissionChecker = BX.Crm.Stage.PermissionChecker.createFromStageInfos(stepInfos);
+			}
+
+			return this.permissionChecker;
+		},
+		isHasPermissionToMove(id)
+		{
+			return this.getPermissionChecker().isHasPermissionToMove(this.getCurrentStepId(), id);
+		},
+		isHasPermissionToMoveTerminationStages()
+		{
+			return this.isHasPermissionToMoveSuccessStage() || this.isHasPermissionToMoveFailureStages();
+		},
+		isHasPermissionToMoveSuccessStage()
+		{
+			const canConvert = !this._terminationControl || this._terminationControl.isEnabled();
+
+			return canConvert && this.getPermissionChecker().isHasPermissionToMoveSuccessStage(this.getCurrentStepId());
+		},
+		isHasPermissionToMoveFailureStages()
+		{
+			return this.getPermissionChecker().isHasPermissionToMoveAtLeastOneFailureStage(this.getCurrentStepId());
+		},
+		showMissPermissionError()
+		{
+			this.getPermissionChecker().showMissPermissionError();
+		},
 		isFrozen: function()
 		{
 			return this._isFrozen;
@@ -1317,6 +1380,15 @@ if(typeof(BX.CrmProgressControl) === "undefined")
 		isReadOnly: function()
 		{
 			return this._isReadOnly;
+		},
+		isDisableStep(step)
+		{
+			if (['success', 'failure'].includes(step.getSemantics()))
+			{
+				return !this.isHasPermissionToMoveTerminationStages();
+			}
+
+			return !this.isHasPermissionToMove(step.getId());
 		},
 		onExternalEvent: function(params)
 		{
@@ -1379,29 +1451,43 @@ if(typeof(BX.CrmProgressControl) === "undefined")
 				this.setupStep(step);
 			}
 		},
-		setupStep: function(step)
+		setupStep(step)
 		{
-			var stepIndex = this._findStepInfoIndex(step.getId());
-			if(stepIndex < 0)
+			const stepIndex = this._findStepInfoIndex(step.getId());
+			if (stepIndex < 0)
 			{
 				return;
 			}
 
-			if(stepIndex === (this._steps.length - 1)
-				&& this._findStepInfoBySemantics("success")
-				&& this._findStepInfoBySemantics("failure"))
+			if (
+				stepIndex === (this._steps.length - 1)
+				&& this._findStepInfoBySemantics('success')
+				&& this._findStepInfoBySemantics('failure')
+			)
 			{
-				if(!this._terminationControl || this._terminationControl.isEnabled())
+				if (!this.isHasPermissionToMoveTerminationStages())
 				{
-					//User have to make choice
-					this._openTerminationDialog();
+					this.showMissPermissionError();
+
+					return;
 				}
+
+				// User have to make choice
+				this._openTerminationDialog();
+
 				return;
 			}
 
-			var stepId = step.getId();
-			if(this._currentStepId === stepId)
+			const stepId = step.getId();
+			if (this._currentStepId === stepId)
 			{
+				return;
+			}
+
+			if (!this.isHasPermissionToMove(stepId))
+			{
+				this.showMissPermissionError();
+
 				return;
 			}
 
@@ -1411,15 +1497,21 @@ if(typeof(BX.CrmProgressControl) === "undefined")
 			this._layout();
 			this._save();
 		},
-		setCurrentStepId: function(stepId)
+		setCurrentStepId(stepId)
 		{
-			if(this._currentStepId !== stepId)
+			if (this._currentStepId !== stepId)
 			{
 				this._previousStepId = this._currentStepId;
 				this._currentStepId = stepId;
 
 				this._layout();
 			}
+		},
+		adjustDisableOfSteps()
+		{
+			this._steps.forEach((step) => {
+				(this.isDisableStep(step)) ? step.setDisable() : step.removeDisable();
+			});
 		},
 		getCurrentStepInfo: function()
 		{
@@ -1437,8 +1529,7 @@ if(typeof(BX.CrmProgressControl) === "undefined")
 				return;
 			}
 
-			var wrappers = BX.findChildren(this._container,
-				{'tag': 'td', 'attribute': {'class': "crm-list-stage-bar-part"}}, true);
+			const wrappers = this._container.querySelectorAll('td.crm-list-stage-bar-part');
 			for(var k = 0; k < wrappers.length; k++)
 			{
 				if(k > stepIndex)
@@ -1489,6 +1580,20 @@ if(typeof(BX.CrmProgressControl) === "undefined")
 			this._isFrozen = BX.type.isBoolean(stepInfo["isFrozen"]) ? stepInfo["isFrozen"] : false;
 			var semantics = BX.type.isNotEmptyString(stepInfo["semantics"]) ? stepInfo["semantics"] : "";
 
+			if (this._enableFillContainerBackground)
+			{
+				this.prepareContainerBackground(semantics);
+			}
+
+			if (this._legendContainer)
+			{
+				this._legendContainer.innerHTML = BX.util.htmlspecialchars(BX.type.isNotEmptyString(stepInfo["name"]) ? stepInfo["name"] : stepInfo["id"]);
+			}
+
+			this.adjustDisableOfSteps();
+		},
+		prepareContainerBackground(semantics)
+		{
 			if(semantics === "success")
 			{
 				if(this._enableCustomColors)
@@ -1526,51 +1631,47 @@ if(typeof(BX.CrmProgressControl) === "undefined")
 					BX.removeClass(this._container, "crm-list-stage-end-bad");
 				}
 			}
-
-			if(this._legendContainer)
-			{
-				this._legendContainer.innerHTML = BX.util.htmlspecialchars(BX.type.isNotEmptyString(stepInfo["name"]) ? stepInfo["name"] : stepInfo["id"]);
-			}
 		},
-		_openTerminationDialog: function()
+		_openTerminationDialog()
 		{
 			this._enableStepHints(false);
 
-			if(this._terminationDlg)
+			if (this._terminationDlg)
 			{
 				this._terminationDlg.close();
 				this._terminationDlg = null;
 			}
 
-			var apologies = this._findAllStepInfoBySemantics("apology");
+			const terminationDialogId = `${this._id}_TERMINATION`;
+			const apologies = this._findAllStepInfoBySemantics('apology');
 			this._terminationDlg = BX.CrmProcessTerminationDialog.create(
-				(this._id + "_TERMINATION"),
-				BX.CrmParamBag.create(
-					{
-						"title": this._manager.getMessage("dialogTitle"),
-						//"apologyTitle": this._manager.getMessage("apologyTitle"),
-						"failureTitle": apologies.length > 0 ? this._manager.getMessage("failureTitle") : "",
-						"anchor": this._container,
-						"success": this._findStepInfoBySemantics("success"),
-						"failure": this._findStepInfoBySemantics("failure"),
-						"apologies": apologies,
-						"callback": BX.delegate(this._onTerminationDialogClose, this),
-						"terminationControl": this._terminationControl
-					}
-				)
+				terminationDialogId,
+				BX.CrmParamBag.create({
+					title: this._manager.getMessage('dialogTitle'),
+					// apologyTitle: this._manager.getMessage('apologyTitle'),
+					failureTitle: apologies.length > 0 ? this._manager.getMessage('failureTitle') : '',
+					anchor: this._container,
+					success: this._findStepInfoBySemantics('success'),
+					failure: this._findStepInfoBySemantics('failure'),
+					apologies,
+					callback: this._onTerminationDialogClose.bind(this),
+					terminationControl: this._terminationControl,
+					buttonPrepareCallback: this.terminationButtonPrepareCallback.bind(this),
+				}),
 			);
+
 			this._terminationDlg.open();
 
-			if(!this._externalEventHandler)
+			if (!this._externalEventHandler)
 			{
-				this._externalEventHandler = BX.delegate(this.onExternalEvent, this);
-				BX.addCustomEvent(window, "onLocalStorageSet", this._externalEventHandler);
+				this._externalEventHandler = this.onExternalEvent.bind(this);
+				BX.addCustomEvent(window, 'onLocalStorageSet', this._externalEventHandler);
 			}
 
-			if(!this._entityConvertHandler)
+			if (!this._entityConvertHandler)
 			{
-				this._entityConvertHandler = BX.delegate(this.onEntityConvert, this);
-				BX.addCustomEvent(window, "Crm.EntityConverter.Converted", this._entityConvertHandler);
+				this._entityConvertHandler = this.onEntityConvert.bind(this);
+				BX.addCustomEvent(window, 'Crm.EntityConverter.Converted', this._entityConvertHandler);
 			}
 		},
 		_closeTerminationDialog: function()
@@ -1590,107 +1691,167 @@ if(typeof(BX.CrmProgressControl) === "undefined")
 				this._externalEventHandler = null;
 			}
 		},
-		_onTerminationDialogClose: function(dialog, params)
+		_onTerminationDialogClose(dialog, params)
 		{
-			if(this._terminationDlg !== dialog)
+			if (this._terminationDlg !== dialog)
 			{
 				return;
+			}
+
+			if (BX?.Crm?.Integration?.Analytics) {
+				this._analyticsData = BX.Crm.Integration.Analytics.Builder.Entity.CloseEvent.createDefault(
+						this.getEntityType(),
+						this.getEntityId(),
+					)
+					.setSubSection(BX.Crm.Integration.Analytics.Dictionary.SUB_SECTION_LIST)
+					.setElement(BX.Crm.Integration.Analytics.Dictionary.ELEMENT_GRID_PROGRESS_BAR)
+					.buildData();
+				this._registerAnalyticsCloseEvent(BX.Crm.Integration.Analytics.Dictionary.STATUS_ATTEMPT);
 			}
 
 			this._closeTerminationDialog();
 
-			var stepId = BX.type.isNotEmptyString(params["result"]) ? params["result"] : "";
+			let stepId = BX.type.isNotEmptyString(params.result) ? params.result : '';
 
-			var index = this._findStepInfoIndex(stepId);
-			if(index < 0)
+			const index = this._findStepInfoIndex(stepId);
+			if (index < 0)
 			{
 				return;
 			}
 
-			this._previousStepId = this._currentStepId;
-			this._currentStepId = stepId;
+			let openFailureDialog = false;
 
-			var openFailureDialog = false;
+			const info = this._stepInfos[index];
+			const failure = this._findStepInfoBySemantics('failure');
 
-			var info = this._stepInfos[index];
-			var failure = this._findStepInfoBySemantics("failure");
-
-			if(failure && failure["id"] === stepId)
+			if (failure && failure.id === stepId)
 			{
 				openFailureDialog = true;
+				if (!this.isHasPermissionToMoveFailureStages())
+				{
+					this.showMissPermissionError();
+					this._registerAnalyticsCloseEvent(BX.Crm.Integration.Analytics.Dictionary.STATUS_ERROR);
+
+					return;
+				}
+
+				if (!this.isHasPermissionToMove(stepId))
+				{
+					const availableApology = this._findAllStepInfoBySemantics('apology')
+						.find((apology) => this.isHasPermissionToMove(apology.id))
+					;
+
+					stepId = availableApology.id;
+				}
 			}
-			else if(info["semantics"] === "success")
+			else if (info.semantics === 'success')
 			{
-				if(typeof(info["hasParams"]) !== "undefined" && info["hasParams"] === true)
+				if (!this.isHasPermissionToMove(stepId))
+				{
+					this.showMissPermissionError();
+					this._registerAnalyticsCloseEvent(BX.Crm.Integration.Analytics.Dictionary.STATUS_ERROR);
+
+					return;
+				}
+
+				if (typeof(info.hasParams) !== 'undefined' && info.hasParams === true)
 				{
 					openFailureDialog = true;
 				}
 				else
 				{
-					var finalScript = this.getSetting("finalScript", "");
-					if(finalScript !== "")
+					const finalScript = this.getSetting('finalScript', '');
+					if (finalScript !== '')
 					{
+						this._registerAnalyticsCloseEvent(BX.Crm.Integration.Analytics.Dictionary.STATUS_ERROR);
 						eval(finalScript);
+
 						return;
 					}
 
-					var finalUrl = this.getSetting("finalUrl", "");
-					if(finalUrl !== "")
+					const finalUrl = this.getSetting('finalUrl', '');
+					if (finalUrl !== '')
 					{
+						this._registerAnalyticsCloseEvent(BX.Crm.Integration.Analytics.Dictionary.STATUS_ERROR);
 						window.location = finalUrl;
+
 						return;
 					}
 				}
 			}
 
-			if(openFailureDialog)
+			this._previousStepId = this._currentStepId;
+			this._currentStepId = stepId;
+
+			if (openFailureDialog)
 			{
 				this._openFailureDialog();
+
 				return;
 			}
 
 			this._layout();
 			this._save();
 		},
+		terminationButtonPrepareCallback(button, stepInfo)
+		{
+			if (this.isHasPermissionToMove(stepInfo.id))
+			{
+				return;
+			}
+
+			if (
+				stepInfo.semantics === 'failure'
+				&& this.isHasPermissionToMoveFailureStages()
+			)
+			{
+				return;
+			}
+
+			BX.Dom.addClass(button, '--disabled');
+		},
 		_openFailureDialog: function()
 		{
 			this._enableStepHints(false);
 
-			if(this._failureDlg)
+			if (this._failureDlg)
 			{
 				this._failureDlg.close();
 				this._failureDlg = null;
 			}
 
-			var currentStepIndex = this._findStepInfoIndex(this._currentStepId);
-			var info = currentStepIndex >= 0 ? this._stepInfos[currentStepIndex] : null;
-			var initValue = info ? info["id"] : "";
+			const currentStepIndex = this._findStepInfoIndex(this._currentStepId);
+			const info = currentStepIndex >= 0 ? this._stepInfos[currentStepIndex] : null;
+			const initValue = info ? info.id : '';
 
-			var apologies = this._findAllStepInfoBySemantics("apology");
+			const apologies = this._findAllStepInfoBySemantics('apology');
+
+			const failureDialogId = `${this._id}_FAILURE`;
 			this._failureDlg = BX.CrmProcessFailureDialog.create(
-				(this._id + "_FAILURE"),
-				BX.CrmParamBag.create(
-					{
-						//"title": this._manager.getMessage("dialogTitle"),
-						"entityType": this._entityType,
-						"entityId": this._entityId,
-						"initValue": initValue,
-						"failureTitle": apologies.length > 0 ? this._manager.getMessage("failureTitle") : "",
-						"selectorTitle": this._manager.getMessage("selectorTitle"),
-						"anchor": this._container,
-						"success": this._findStepInfoBySemantics("success"),
-						"failure": this._findStepInfoBySemantics("failure"),
-						"apologies": apologies,
-						"callback": BX.delegate(this._onFailureDialogClose, this)
-					}
-				)
+				failureDialogId,
+				BX.CrmParamBag.create({
+					// title: this._manager.getMessage("dialogTitle"),
+					entityType: this._entityType,
+					entityId: this._entityId,
+					initValue,
+					failureTitle: apologies.length > 0 ? this._manager.getMessage('failureTitle') : '',
+					selectorTitle: this._manager.getMessage('selectorTitle'),
+					anchor: this._container,
+					success: this._findStepInfoBySemantics('success'),
+					failure: this._findStepInfoBySemantics('failure'),
+					apologies,
+					callback: this._onFailureDialogClose.bind(this),
+				}),
 			);
+
+			BX.addCustomEvent('CrmProcessFailureDialogContentCreated', this.onCrmProcessFailureDialogContentCreated.bind(this));
+
 			this._failureDlg.open();
 
-			if(!this._externalEventHandler)
+			if (!this._externalEventHandler)
 			{
 				this._externalEventHandler = BX.delegate(this.onExternalEvent, this);
-				BX.addCustomEvent(window, "onLocalStorageSet", this._externalEventHandler);
+				BX.addCustomEvent(window, 'onLocalStorageSet', this._externalEventHandler);
 			}
 		},
 		_closeFailureDialog: function()
@@ -1710,57 +1871,103 @@ if(typeof(BX.CrmProgressControl) === "undefined")
 				this._externalEventHandler = null;
 			}
 		},
-		_onFailureDialogClose: function(dialog, params)
+		_onFailureDialogClose(dialog, params)
 		{
-			if(this._failureDlg !== dialog)
+			if (this._failureDlg !== dialog)
 			{
 				return;
 			}
 
-			BX.onCustomEvent(this, 'CrmProgressControlBeforeFailureDialogClose', [ this, this._failureDlg ]);
+			BX.onCustomEvent(this, 'CrmProgressControlBeforeFailureDialogClose', [this, this._failureDlg]);
 			this._closeFailureDialog();
-			var bid = BX.type.isNotEmptyString(params["bid"]) ? params["bid"] : "";
-			if(bid !== "accept")
+			const bid = BX.type.isNotEmptyString(params.bid) ? params.bid : '';
+			if (bid !== 'accept')
+			{
+				this._currentStepId = this._previousStepId;
+
+				return;
+			}
+
+			const id = BX.type.isNotEmptyString(params.result) ? params.result : '';
+			const index = this._findStepInfoIndex(id);
+			if (index < 0)
 			{
 				return;
 			}
 
-			var id = BX.type.isNotEmptyString(params["result"]) ? params["result"] : "";
-			var index = this._findStepInfoIndex(id);
-			if(index >= 0)
+			if (!this.getPermissionChecker().isHasPermissionToMove(this._previousStepId, id))
 			{
-				var info = this._stepInfos[index];
-				if(info["semantics"] === "success")
-				{
-					var finalScript = this.getSetting("finalScript", "");
-					if(finalScript !== "")
-					{
-						eval(finalScript);
-						return;
-					}
+				this.showMissPermissionError();
+				this._currentStepId = this._previousStepId;
 
-					var finalUrl = this.getSetting("finalUrl", "");
-					if(finalUrl !== "")
-					{
-						window.location = finalUrl;
-						return;
-					}
-
-					var verboseMode = !!this.getSetting("verboseMode", false);
-					if(verboseMode)
-					{
-						//User have to make choice
-						this._openTerminationDialog();
-						return;
-					}
-				}
-				this._currentStepId = info["id"];
-
-				this._layout();
-				this._save();
+				return;
 			}
+
+			const info = this._stepInfos[index];
+			if (info.semantics === 'success')
+			{
+				const finalScript = this.getSetting('finalScript', '');
+				if (finalScript !== '')
+				{
+					eval(finalScript);
+
+					return;
+				}
+
+				const finalUrl = this.getSetting('finalUrl', '');
+				if (finalUrl !== '')
+				{
+					window.location = finalUrl;
+
+					return;
+				}
+
+				const verboseMode = Boolean(this.getSetting('verboseMode', false));
+				if (verboseMode)
+				{
+					// User have to make choice
+					this._openTerminationDialog();
+
+					return;
+				}
+			}
+			this._currentStepId = info.id;
+
+			this._layout();
+			this._save();
 		},
-		_save: function()
+		onCrmProcessFailureDialogContentCreated(failureDialog, wrapper)
+		{
+			if (this._failureDlg !== failureDialog)
+			{
+				return;
+			}
+
+			const fromId = this._previousStepId ?? this.getCurrentStepId();
+
+			const radioButtonWrappers = wrapper.querySelectorAll('.crm-list-end-deal-button-wrapper');
+			radioButtonWrappers.forEach((radioButtonWrapper) => {
+				const radioButton = radioButtonWrapper.querySelector('input');
+				if (!radioButton)
+				{
+					return;
+				}
+
+				const stepId = radioButton.value;
+				if (this.getPermissionChecker().isHasPermissionToMove(fromId, stepId))
+				{
+					return;
+				}
+
+				BX.Dom.addClass(radioButtonWrapper, '--disabled');
+
+				radioButton.onclick = (event) => {
+					this.showMissPermissionError();
+					event.preventDefault();
+				};
+			});
+		},
+		_save()
 		{
 			var serviceUrl = this.getSetting("serviceUrl");
 			var value = this.getCurrentStepId();
@@ -1771,7 +1978,28 @@ if(typeof(BX.CrmProgressControl) === "undefined")
 			{
 				return;
 			}
-			if (BX.CrmEntityType.isUseDynamicTypeBasedApproachByName(type))
+
+			if (BX?.Crm?.Integration?.Analytics)
+			{
+				const stepSemantics = this._stepInfos[this._findStepInfoIndex(value)].semantics;
+
+				if (stepSemantics === 'apology' || stepSemantics === 'failure')
+				{
+					this._analyticsData.c_element = BX.Crm.Integration.Analytics.Dictionary.ELEMENT_LOSE_BUTTON;
+					this._registerAnalyticsCloseEvent(BX.Crm.Integration.Analytics.Dictionary.STATUS_ATTEMPT);
+				}
+				else if (stepSemantics === 'success')
+				{
+					this._analyticsData.c_element = BX.Crm.Integration.Analytics.Dictionary.ELEMENT_WON_BUTTON;
+					this._registerAnalyticsCloseEvent(BX.Crm.Integration.Analytics.Dictionary.STATUS_ATTEMPT);
+				}
+				else
+				{
+					this._analyticsData = null;
+				}
+			}
+
+				if (BX.CrmEntityType.isUseDynamicTypeBasedApproachByName(type))
 			{
 				BX.ajax.runAction(serviceUrl, {
 						data: {
@@ -1866,14 +2094,28 @@ if(typeof(BX.CrmProgressControl) === "undefined")
 						stageId: BX.prop.getString(data, 'VALUE', null)
 					}
 				);
+				if (this._analyticsData)
+				{
+					this._registerAnalyticsCloseEvent(BX.Crm.Integration.Analytics.Dictionary.STATUS_ERROR);
+				}
+
 				return;
 			}
 
 			BX.onCustomEvent(this, 'CrmProgressControlAfterSaveSucces', [ this, data ]);
 			BX.CrmProgressControl._synchronize(this);
+
+			if (this._analyticsData)
+			{
+				this._registerAnalyticsCloseEvent(BX.Crm.Integration.Analytics.Dictionary.STATUS_SUCCESS);
+			}
 		},
 		_onSaveRequestFailure: function(data)
 		{
+			if (this._analyticsData)
+			{
+				this._registerAnalyticsCloseEvent(BX.Crm.Integration.Analytics.Dictionary.STATUS_ERROR);
+			}
 			BX.onCustomEvent(self, 'CrmProgressControlAfterSaveFailed', [ this, data ]);
 		},
 		_openEntityEditorDialog: function(params)
@@ -1977,6 +2219,12 @@ if(typeof(BX.CrmProgressControl) === "undefined")
 			{
 				this._steps[i].enableHint(enable);
 			}
+		},
+		_registerAnalyticsCloseEvent(status)
+		{
+			this._analyticsData.status = status;
+
+			BX.UI.Analytics.sendData(this._analyticsData);
 		}
 	};
 
@@ -2029,22 +2277,25 @@ if(typeof(BX.CrmProgressStep) === "undefined")
 		this._enableHint = true;
 		this._hintPopup = null;
 		this._hintPopupTimeoutId = null;
+		this.isDisabled = false;
+		this.semantics = null;
 	};
 
 	BX.CrmProgressStep.prototype =
 	{
-		initialize: function(id, settings)
+		initialize(id, settings)
 		{
 			this._id = id;
-			this._settings = settings ? settings : BX.CrmParamBag.create(null);
-			this._control = this.getSetting("control");
+			this._settings = settings || BX.CrmParamBag.create(null);
+			this._control = this.getSetting('control');
 			this._container = this._control.getStepContainer(this._id);
-			this._name = this.getSetting("name");
-			this._hint = this.getSetting("hint", "");
-			this._isPassed = this.getSetting("isPassed", false);
-			this._isReadOnly = this.getSetting("isReadOnly", false);
+			this._name = this.getSetting('name');
+			this._hint = this.getSetting('hint', '');
+			this._isPassed = this.getSetting('isPassed', false);
+			this._isReadOnly = this.getSetting('isReadOnly', false);
+			this.semantics = this.getSetting('semantics', '');
 
-			if(!this._isReadOnly)
+			if (!this._isReadOnly)
 			{
 				BX.bind(this._container, "mouseover", BX.delegate(this._onMouseOver, this));
 				BX.bind(this._container, "mouseout", BX.delegate(this._onMouseOut, this));
@@ -2112,39 +2363,45 @@ if(typeof(BX.CrmProgressStep) === "undefined")
 				this.hideStepHint();
 			}
 		},
-		displayStepHint: function(step)
+		getSemantics()
 		{
-			if(!this._enableHint || this._hintPopup)
+			return this.semantics;
+		},
+		displayStepHint(step)
+		{
+			if (!this._enableHint || this._hintPopup)
 			{
 				return;
 			}
 
-			var pos = BX.pos(this._container);
-			this._hintPopup = BX.PopupWindowManager.create(
-				"step-hint-" + this._id,
-				step,
-				{
-					"angle": {
-						"position": "bottom",
-						"offset": 0
-					},
-					"offsetLeft": pos["width"] / 2,
-					"offsetTop": 5,
-					"content": BX.create(
-						"SPAN",
-						{
-							"attrs": { "class": "crm-list-bar-popup-text" },
-							"text": this._hint !== '' ? this._hint : this._name
-						}
-					),
-					"className": "crm-list-bar-popup-table"
-				}
-			);
+			const contentText = this._hint === '' ? this._name : this._hint;
+			const content = BX.Tag.render`
+				<span class="crm-list-bar-popup-text">${BX.util.htmlspecialchars(contentText)}</span>
+			`;
+
+			if (this.isDisable())
+			{
+				BX.Dom.style(content, 'opacity', '0.6');
+			}
+
+			const pos = BX.pos(this._container);
+			const popupId = `step-hint-${this.getId()}`;
+			this._hintPopup = BX.PopupWindowManager.create(popupId, step, {
+				className: 'crm-list-bar-popup-table',
+				content,
+				offsetLeft: pos.width / 2,
+				offsetTop: 5,
+				angle: {
+					position: 'bottom',
+					offset: 0,
+				},
+			});
+
 			this._hintPopup.show();
 		},
-		hideStepHint: function()
+		hideStepHint()
 		{
-			if(!this._hintPopup)
+			if (!this._hintPopup)
 			{
 				return;
 			}
@@ -2159,18 +2416,23 @@ if(typeof(BX.CrmProgressStep) === "undefined")
 			{
 				this._control.setCurrentStep(this);
 			}
+
+			e.stopPropagation();
 		},
-		_onMouseOver: function(e)
+		_onMouseOver(e)
 		{
-			if(this._hintPopupTimeoutId !== null)
+			if (this._hintPopupTimeoutId !== null)
 			{
 				window.clearTimeout(this._hintPopupTimeoutId);
 			}
 
-			e = e || window.event;
-			var target = e.target || e.srcElement;
-			var self = this;
-			this._hintPopupTimeoutId = window.setTimeout(function(){ self._hintPopupTimeoutId = null; self.displayStepHint(target); }, 300 );
+			const event = e || window.event;
+			const target = event.target || event.srcElement;
+
+			this._hintPopupTimeoutId = window.setTimeout(() => {
+				this._hintPopupTimeoutId = null;
+				this.displayStepHint(target);
+			}, 300);
 		},
 		_onMouseOut: function(e)
 		{
@@ -2186,7 +2448,33 @@ if(typeof(BX.CrmProgressStep) === "undefined")
 
 			var self = this;
 			this._hintPopupTimeoutId = window.setTimeout(function(){ self._hintPopupTimeoutId = null; self.hideStepHint(); }, 300 );
-		}
+		},
+		isDisable()
+		{
+			return this.isDisabled;
+		},
+		setDisable()
+		{
+			if (this.isDisabled)
+			{
+				return;
+			}
+
+			this.isDisabled = true;
+			const target = this._container.parentElement;
+			BX.Dom.addClass(target, '--disabled');
+		},
+		removeDisable()
+		{
+			if (!this.isDisabled)
+			{
+				return;
+			}
+
+			this.isDisabled = false;
+			const target = this._container.parentElement;
+			BX.Dom.removeClass(target, '--disabled');
+		},
 	};
 
 	BX.CrmProgressStep.create = function(id, settings)
@@ -2297,102 +2585,98 @@ if(typeof(BX.CrmProcessTerminationDialog) === "undefined")
 			this._closeNotifier.notify();
 			this._executeCallback();
 		},
-		_prepareContent: function()
+		_prepareContent()
 		{
-			this._wrapper = BX.create("DIV");
-			var table = BX.create("TABLE",
-				{
-					attrs: { className: "crm-list-end-deal-block" },
-					props: { cellSpacing: "0", cellPadding: "0", border: "0" }
-				}
-			);
-			this._wrapper.appendChild(table);
+			this._wrapper = BX.Tag.render`<div></div>`;
 
-			var cell = table.insertRow(-1).insertCell(-1);
-			cell.className = "crm-list-end-deal-text";
-			cell.innerHTML = this.getSetting("title", "");
+			const table = BX.Tag.render`
+				<table class='crm-list-end-deal-block' cellspacing="0" cellpadding="0" border="0"></table>
+			`;
+			BX.Dom.append(table, this._wrapper);
+
+			let cell = table.insertRow(-1).insertCell(-1);
+			cell.className = 'crm-list-end-deal-text';
+			cell.innerHTML = this.getSetting('title', '');
 
 			cell = table.insertRow(-1).insertCell(-1);
-			cell.className = "crm-list-end-deal-buttons-block";
+			cell.className = 'crm-list-end-deal-buttons-block';
 
-			var controls = this._terminationControl !== null
-				? this._terminationControl.prepareDialogControls(this)
-				: null;
+			['success', 'failure'].forEach((semantics) => {
+				const button = this.getButtonBySemantics(semantics);
+				if (button !== null)
+				{
+					BX.Dom.append(button, cell);
+				}
+			});
 
-			if(!BX.type.isPlainObject(controls))
+			return this._wrapper;
+		},
+		getButtonBySemantics(semantics)
+		{
+			if (!['success', 'failure'].includes(semantics))
+			{
+				return null;
+			}
+
+			const controls = this.getControls();
+			const fieldName = `${semantics}Button`; // failureButton, successButton
+			if (BX.type.isElementNode(controls[fieldName]))
+			{
+				return controls[fieldName];
+			}
+
+			const info = this.getSetting(semantics, null);
+			if (!info)
+			{
+				return null;
+			}
+
+			const title = this.getTitleByInfo(info);
+			const classNamePostfix = semantics === 'success' ? 'accept' : 'decline';
+
+			const button = BX.Tag.render`
+				<a class="webform-small-button webform-small-button-${classNamePostfix}">
+					<span class="webform-small-button-left"></span>
+					<span class="webform-small-button-text">${BX.Text.encode(title)}</span>
+					<span class="webform-small-button-right"></span>
+				</a>
+			`;
+
+			this.prepareButtonByCallback(button, info);
+
+			BX.CrmSubscriber.subscribe(
+				`${this.getId()}_${info.id}`,
+				button,
+				'click',
+				this._onButtonClick.bind(this),
+				BX.CrmParamBag.create({ id: info.id, preventDefault: true }),
+			);
+
+			return button;
+		},
+		getTitleByInfo(stepInfo)
+		{
+			const semantics = stepInfo.semantics;
+
+			const customTitleFieldName = `${semantics}Title`; // successTitle, failureTitle
+
+			let title = this.getSetting(customTitleFieldName, '');
+			if (title === '')
+			{
+				title = BX.type.isNotEmptyString(stepInfo.name) ? stepInfo.name : semantics;
+			}
+
+			return title;
+		},
+		getControls()
+		{
+			let controls = this._terminationControl?.prepareDialogControls(this);
+			if (!BX.type.isPlainObject(controls))
 			{
 				controls = {};
 			}
 
-			if(BX.type.isElementNode(controls["successButton"]))
-			{
-				cell.appendChild(controls["successButton"]);
-			}
-			else
-			{
-				var success = this.getSetting("success");
-				if(success)
-				{
-					var successText = BX.type.isNotEmptyString(success["name"]) ? success["name"] : "Success";
-					var successButton = BX.create(
-						"A",
-						{
-							attrs: { className: "webform-small-button webform-small-button-accept", href: "#" },
-							children:
-							[
-								BX.create("SPAN", { attrs: { className: "webform-small-button-left" } }),
-								BX.create("SPAN", { attrs: { className: "webform-small-button-text" }, text: successText }),
-								BX.create("SPAN", { attrs: { className: "webform-small-button-right" } })
-							]
-						}
-					);
-					cell.appendChild(successButton);
-					var successId = BX.type.isNotEmptyString(success["id"]) ? success["id"] : "success";
-					BX.CrmSubscriber.subscribe(
-						this.getId() + "_" + successId,
-						successButton, "click", BX.delegate(this._onButtonClick, this),
-						BX.CrmParamBag.create({ id: successId, preventDefault: true })
-					);
-				}
-			}
-
-			if(BX.type.isElementNode(controls["failureButton"]))
-			{
-				cell.appendChild(controls["failureButton"]);
-			}
-			else
-			{
-				var failure = this.getSetting("failure");
-				if(failure)
-				{
-					// Check if custom failure text is defined
-					var failureTitle = this.getSetting("failureTitle", "");
-					if(failureTitle === "")
-					{
-						failureTitle = BX.type.isNotEmptyString(failure["name"]) ? failure["name"] : "Failure";
-					}
-					var failureButton = BX.create(
-						"A",
-						{
-							attrs: { className: "webform-small-button webform-small-button-decline", href: "#" },
-							children:
-							[
-								BX.create("SPAN", { attrs: { className: "webform-small-button-left" } }),
-								BX.create("SPAN", { attrs: { className: "webform-small-button-text" }, text: failureTitle }),
-								BX.create("SPAN", { attrs: { className: "webform-small-button-right" } })
-							]
-						}
-					);
-					cell.appendChild(failureButton);
-					var failureId = BX.type.isNotEmptyString(failure["id"]) ? failure["id"] : "failure";
-					BX.CrmSubscriber.subscribe(
-						this.getId() + '_' + failureId,
-						failureButton, "click", BX.delegate(this._onButtonClick, this),
-						BX.CrmParamBag.create({ id: failureId, preventDefault: true })
-					);
-				}
-			}
-			return this._wrapper;
+			return controls;
 		},
 		_onButtonClick: function(subscriber, params)
 		{
@@ -2409,7 +2693,15 @@ if(typeof(BX.CrmProcessTerminationDialog) === "undefined")
 					callback(this, { "result": this._result });
 				}
 			}
-		}
+		},
+		prepareButtonByCallback(button, info)
+		{
+			const callback = this.getSetting('buttonPrepareCallback', null);
+			if (BX.type.isFunction(callback))
+			{
+				callback(button, info);
+			}
+		},
 	};
 
 	BX.CrmProcessTerminationDialog.create = function(id, settings)
@@ -2539,6 +2831,21 @@ if(typeof(BX.CrmProcessFailureDialog) === "undefined")
 
 			BX.onCustomEvent(this, 'CrmProcessFailureDialogValueChanged', [ this, val ]);
 		},
+		selectFirstAvailableOption()
+		{
+			const radioButtons = this._wrapper.querySelectorAll('.crm-list-fail-deal-button');
+			for (const radioButton of radioButtons)
+			{
+				if (radioButton.disabled || BX.Dom.hasClass(radioButton.parentElement, '--disabled'))
+				{
+					continue;
+				}
+
+				radioButton.checked = true;
+
+				return;
+			}
+		},
 		getSuccessValue: function()
 		{
 			return this._successInfo["id"];
@@ -2658,82 +2965,75 @@ if(typeof(BX.CrmProcessFailureDialog) === "undefined")
 			wrapper.appendChild(this._selector);
 			return wrapper;
 		},
-		_prepareContent: function()
+		_prepareContent()
 		{
-			var wrapper = this._wrapper = BX.create("DIV", { attrs: { className: "crm-list-fail-deal-block" } });
-			var title = this.getSetting("title", "");
-			if(title !== "")
+			const wrapper = this._wrapper = BX.Tag.render`<div class="crm-list-fail-deal-block"></div>`;
+			const title = this.getSetting('title', '');
+			if (title !== '')
 			{
-				wrapper.appendChild(BX.create("DIV", { attrs: { className: "crm-list-end-deal-text" }, text: title }));
+				const textContainer = BX.Tag.render`<div class="crm-list-end-deal-text">${BX.utils.htmlspecialchars(title)}</div>`;
+				BX.Dom.append(textContainer, wrapper);
 			}
 
-			this._radioButtonBlock = BX.create("DIV", { attrs: { className: "crm-list-end-deal-block-section" } });
+			this._radioButtonBlock = BX.Tag.render`<div class="crm-list-end-deal-block-section"></div>`;
 
-			var infos = [ this._failureInfo ];
-			var apologies = this._apologyInfos;
-			if(BX.type.isArray(apologies) && apologies.length >0)
+			const infos = [this._failureInfo];
+			const apologies = this._apologyInfos;
+
+			if (BX.type.isArray(apologies) && apologies.length > 0)
 			{
-				for(var i = 0; i < apologies.length; i++)
-				{
-					infos.push(apologies[i]);
-				}
+				apologies.forEach((apology) => {
+					infos.push(apology);
+				});
 			}
 
-			for(var j = 0; j < infos.length; j++)
-			{
-				var radioButtonWrapper = BX.create("DIV", { attrs: { className: "crm-list-end-deal-button-wrapper" } });
+			infos.forEach((info) => {
+				const radioButtonWrapper = BX.Tag.render`<div class="crm-list-end-deal-button-wrapper"></div>`;
+				const infoId = info.id;
+				const buttonId = `${this._id}_${infoId}`;
 
-				var info = infos[j];
-				var curInfoId = info["id"];
-				var buttonId = this._id + '_' + curInfoId;
-				var button = BX.create(
-					"INPUT",
-					{
-						attrs:
-						{
-							id: buttonId,
-							name: this._id,
-							className: "crm-list-fail-deal-button",
-							type: "radio",
-							value: info["id"]
-						}
-					}
-				);
+				const radioButton = BX.Tag.render`
+					<input 
+						id="${buttonId}"
+						name="${this._id}"
+						class="crm-list-fail-deal-button"
+						type="radio"
+						value="${infoId}" 
+					>
+				`;
 
-				button.checked = this._value === curInfoId;
+				radioButton.checked = this._value === infoId;
 
 				BX.CrmSubscriber.subscribe(
-					this._id + "_" + curInfoId,
-					button, "change", BX.delegate(this._onRadioButtonClick, this),
-					BX.CrmParamBag.create({ "id": curInfoId })
+					`${this._id}_${infoId}`,
+					radioButton,
+					'change',
+					this._onRadioButtonClick.bind(this),
+					BX.CrmParamBag.create({ id: infoId }),
 				);
 
+				BX.Dom.append(radioButton, radioButtonWrapper);
 
-				radioButtonWrapper.appendChild(button);
-				radioButtonWrapper.appendChild(
-					BX.create(
-						"LABEL",
-						{
-							attrs:
-							{
-								className: "crm-list-fail-deal-button-label",
-								"for": buttonId
-							},
-							text: BX.type.isNotEmptyString(info["name"]) ? info["name"] : curInfoId
-						}
-					)
-				);
+				const labelText = (BX.type.isNotEmptyString(info.name)) ? info.name : infoId;
+				const label = BX.Tag.render`
+					<label for="${buttonId}" class="crm-list-fail-deal-button-label">
+						${BX.Text.encode(labelText)}
+					</label>
+				`;
+				BX.Dom.append(label, radioButtonWrapper);
 
-				this._radioButtonBlock.appendChild(radioButtonWrapper);
-			}
+				BX.Dom.append(radioButtonWrapper, this._radioButtonBlock);
+			});
 
-			if(this._value === this._successInfo["id"] || apologies.length === 0)
+			if (this._value === this._successInfo.id || apologies.length === 0)
 			{
-				this._radioButtonBlock.style.display = "none";
+				BX.Dom.style(this._radioButtonBlock, 'display', 'none');
 			}
 
-			wrapper.appendChild(this._radioButtonBlock);
-			BX.onCustomEvent(this, 'CrmProcessFailureDialogContentCreated', [ this, wrapper ]);
+			BX.Dom.append(this._radioButtonBlock, wrapper);
+
+			BX.onCustomEvent(this, 'CrmProcessFailureDialogContentCreated', [this, wrapper]);
+
 			return wrapper;
 		},
 		_onRadioButtonClick: function(subscriber, params)
@@ -2773,7 +3073,7 @@ if(typeof(BX.CrmProcessFailureDialog) === "undefined")
 						text: this.getFailureTitle(),
 						onclick: function()
 							{
-								this.setValue(this._failureInfo["id"], true);
+								this.selectFirstAvailableOption();
 								if(this._radioButtonBlock.style.display === "none" && this._apologyInfos.length > 0)
 								{
 									this._radioButtonBlock.style.display = "";
@@ -2813,7 +3113,7 @@ if(typeof(BX.CrmProcessFailureDialog) === "undefined")
 		},
 		_executeCallback: function()
 		{
-			if(this._enableCallback)
+			if (this._enableCallback)
 			{
 				var callback = this._callback;
 				if(BX.type.isFunction(callback))

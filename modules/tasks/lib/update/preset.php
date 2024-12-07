@@ -23,7 +23,7 @@ final class Preset extends Stepper
 
 	public static function isRolePresetsEnabled(): bool
 	{
-		return Option::get(self::$moduleId, self::REMOVE_CONTROL, 'N', '-') === 'Y';
+		return Option::get(self::$moduleId, self::REMOVE_CONTROL, 'N') === 'Y';
 	}
 
 	public function execute(array &$option): bool
@@ -35,7 +35,7 @@ final class Preset extends Stepper
 				->setFilters();
 			if (empty($this->filters))
 			{
-				Option::set(self::$moduleId, self::REMOVE_CONTROL, 'Y', '-');
+				Option::set(self::$moduleId, self::REMOVE_CONTROL, 'Y');
 				return self::FINISH_EXECUTION;
 			}
 

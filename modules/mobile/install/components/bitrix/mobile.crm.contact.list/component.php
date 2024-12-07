@@ -129,7 +129,6 @@ if (isset($gridOptions["currentFilter"]) && in_array($gridOptions["currentFilter
 
 if(isset($_REQUEST["search"]))
 {
-	CUtil::JSPostUnescape();
 	$v = trim($_REQUEST["search"]);
 	if (!empty($v))
 	{

@@ -19,6 +19,8 @@ class Logo
 	public const CALL_OUTGOING = 'call-outgoing';
 	public const DOCUMENT = 'document';
 	public const DOCUMENT_PRINT = 'document-print';
+	public const DOCUMENT_SIGNED = 'document-signed';
+	public const DOCUMENT_DRAFT = 'document-draft';
 	public const CHANNEL_CHAT = 'channel-chat';
 	public const CHANNEL_AVITO = 'channel-avito';
 	public const CHANNEL_APPLE = 'channel-apple';
@@ -46,6 +48,7 @@ class Logo
 	public const UNREAD_COMMENT = 'unread-comment';
 	public const TASK_ACTIVITY = 'task-activity';
 	public const AI_COPILOT = 'ai-copilot';
+	public const ZOOM = 'zoom';
 	//endregion
 
 	public static function getInstance(string $code): self
@@ -92,6 +95,8 @@ class Logo
 			case self::CALL_PLAY_RECORD:
 			case self::DOCUMENT:
 			case self::DOCUMENT_PRINT:
+			case self::DOCUMENT_SIGNED:
+			case self::DOCUMENT_DRAFT:
 			case self::MAIL_OUTCOME:
 				return (new Body\Logo($this->getCode()));
 
@@ -124,6 +129,7 @@ class Logo
 			case self::UNREAD_COMMENT:
 			case self::TASK_ACTIVITY:
 			case self::AI_COPILOT:
+			case self::ZOOM:
 				return (new Body\Logo($this->getCode()))
 					->setInCircle(true)
 				;

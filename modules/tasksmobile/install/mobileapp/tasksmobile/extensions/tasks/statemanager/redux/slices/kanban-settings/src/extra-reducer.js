@@ -3,10 +3,10 @@
  * @module tasks/statemanager/redux/slices/kanban-settings/src/extra-reducer
  */
 jn.define('tasks/statemanager/redux/slices/kanban-settings/src/extra-reducer', (require, exports, module) => {
-	const { statusTypes } = require('tasks/statemanager/redux/types');
+	const { statusTypes, Views } = require('tasks/statemanager/redux/types');
 	const { adapter } = require('tasks/statemanager/redux/slices/kanban-settings/meta');
 	const { getStagesFromCache } = require('tasks/statemanager/redux/slices/kanban-settings/thunk');
-	const { getStageIds, getUniqId } = require('tasks/statemanager/redux/slices/kanban-settings/src/tools');
+	const { getStageIds, getUniqId } = require('tasks/statemanager/redux/slices/kanban-settings/tools');
 	const { stringifyWithKeysSort } = require('tasks/statemanager/redux/utils');
 	const { md5 } = require('utils/hash');
 
@@ -101,6 +101,31 @@ jn.define('tasks/statemanager/redux/slices/kanban-settings/src/extra-reducer', (
 		}
 	};
 
+	const updateTaskFulfilled = (state, action) => {
+		const { data } = action.payload;
+		const {
+			reduxFields,
+			userId,
+		} = action.meta.arg;
+
+		if (data?.kanban && Number.isInteger(reduxFields?.groupId))
+		{
+			const kanbanSettingsId = getUniqId(
+				Views.KANBAN,
+				reduxFields?.groupId,
+				userId,
+			);
+
+			adapter.upsertOne(state, {
+				id: kanbanSettingsId,
+				kanbanSettingId: Views.KANBAN,
+				projectId: reduxFields?.groupId,
+				...data.kanban,
+				stages: getStageIds(data.kanban.stages),
+			});
+		}
+	};
+
 	module.exports = {
 		fetchStagesPending,
 		fetchStagesFulfilled,
@@ -109,5 +134,6 @@ jn.define('tasks/statemanager/redux/slices/kanban-settings/src/extra-reducer', (
 		updateStagesOrderRejected,
 		addStageFulfilled,
 		deleteStageFulfilled,
+		updateTaskFulfilled,
 	};
 });

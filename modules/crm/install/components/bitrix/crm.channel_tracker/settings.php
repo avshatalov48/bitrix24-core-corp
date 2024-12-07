@@ -32,7 +32,6 @@ if($USER->IsAuthorized() && check_bitrix_sessid())
 
 		$options = CUserOptions::GetOption('crm.entity.channeltracker', $guid, array());
 
-		CUtil::decodeURIComponent($_POST);
 		$config = isset($_POST['config']) && is_array($_POST['config']) ? $_POST['config'] : array();
 
 		if(isset($config['expanded']))

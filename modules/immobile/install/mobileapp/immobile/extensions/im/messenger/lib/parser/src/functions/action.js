@@ -1,35 +1,48 @@
 /* eslint-disable flowtype/require-return-type */
-/* eslint-disable bitrix-rules/no-bx */
-/* eslint-disable bitrix-rules/no-pseudo-private */
 
 /**
  * @module im/messenger/lib/parser/functions/action
  */
 jn.define('im/messenger/lib/parser/functions/action', (require, exports, module) => {
-
 	const parserAction = {
 		simplifyPut(text)
 		{
-			text = text.replace(/\[PUT(?:=(?:.+?))?](?:.+?)?\[\/PUT]/ig, (match) =>
-			{
-				return match.replace(/\[PUT(?:=(.+))?](.+?)?\[\/PUT]/ig, (whole, command, text) => {
-					return text ? text : command;
+			return text.replaceAll(/\[put(?:=.+?)?](?:.+?)?\[\/put]/gi, (match) => {
+				return match.replaceAll(/\[put(?:=(.+))?](.+?)?\[\/put]/gi, (whole, command, tagText) => {
+					return tagText || command;
 				});
 			});
-
-			return text;
 		},
 
 		simplifySend(text)
 		{
-			text = text.replace(/\[SEND(?:=(?:.+?))?](?:.+?)?\[\/SEND]/ig, (match) =>
-			{
-				return match.replace(/\[SEND(?:=(.+))?](.+?)?\[\/SEND]/ig, (whole, command, text) => {
-					return text ? text : command;
+			return text.replaceAll(/\[send(?:=.+?)?](?:.+?)?\[\/send]/gi, (match) => {
+				return match.replaceAll(/\[send(?:=(.+))?](.+?)?\[\/send]/gi, (whole, command, tagText) => {
+					return tagText || command;
 				});
 			});
+		},
 
-			return text;
+		/**
+		 * @param {string} text
+		 * @return {string}
+		 */
+		decodePut(text)
+		{
+			return text.replaceAll(/\[put=([^\]]+)]\[\/put]/gi, (match, command) => {
+				return `[put=${command}]${command}[/put]`;
+			});
+		},
+
+		/**
+		 * @param {string} text
+		 * @return {string}
+		 */
+		decodeSend(text)
+		{
+			return text.replaceAll(/\[send=([^\]]+)]\[\/send]/gi, (match, command) => {
+				return `[send=${command}]${command}[/send]`;
+			});
 		},
 	};
 

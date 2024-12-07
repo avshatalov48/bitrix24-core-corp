@@ -3,44 +3,51 @@
  */
 jn.define('layout/ui/context-menu/item', (require, exports, module) => {
 	const { Type } = require('type');
-	const AppTheme = require('apptheme');
+	const { Color, Corner, Indent } = require('tokens');
+	const { Loc } = require('loc');
+	const { PropTypes } = require('utils/validation');
 	const { AnalyticsLabel } = require('analytics-label');
-	const { CounterView } = require('layout/ui/counter-view');
-	const { chevronRight } = require('assets/common');
-	const { Badge } = require('layout/ui/context-menu/item/badge');
-	const { get, mergeImmutable } = require('utils/object');
-	const { changeFillColor } = require('utils/svg');
-
-	const TINT_COLOR = AppTheme.colors.base3;
-
-	const TYPE_BUTTON = 'button';
-	const TYPE_LAYOUT = 'layout';
-	const TYPE_CANCEL = 'cancel';
-
-	const WARNING_TYPE = 'warning';
-
-	const ImageAfterTypes = {
-		WEB: 'web',
-		LOCK: 'lock',
-	};
-
-	const svgIcons = {
-		[ImageAfterTypes.WEB]: {
-			content: `<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3.93726 0.9375H6.00552V3.18574H4.1855C3.63321 3.18574 3.1855 3.63346 3.1855 4.18574V11.8122C3.1855 12.3645 3.63321 12.8122 4.1855 12.8122H11.812C12.3643 12.8122 12.812 12.3645 12.812 11.8122V10.5903H15.0624V12.0627C15.0624 13.7195 13.7193 15.0627 12.0624 15.0627H3.93725C2.2804 15.0627 0.937256 13.7195 0.937256 12.0627V3.9375C0.937256 2.28064 2.2804 0.9375 3.93726 0.9375Z" fill="${TINT_COLOR}"/><path d="M8.98799 1.66387C8.799 1.47488 8.93285 1.15174 9.20012 1.15174H13.8782C14.4305 1.15174 14.8782 1.59945 14.8782 2.15174V6.82982C14.8782 7.09709 14.5551 7.23094 14.3661 7.04195L12.3898 5.06566L7.89355 9.56189C7.69829 9.75715 7.38171 9.75715 7.18644 9.56189L6.34414 8.71959C6.14888 8.52433 6.14888 8.20775 6.34414 8.01248L10.8404 3.51625L8.98799 1.66387Z" fill="${TINT_COLOR}"/></svg>`,
-		},
-		[ImageAfterTypes.LOCK]: {
-			content: '<svg width="28" height="29" viewBox="0 0 28 29" fill="none" xmlns="http://www.w3.org/2000/svg"><g opacity="0.8"><path fill-rule="evenodd" clip-rule="evenodd" d="M14.17 18.4443V20.3019H12.6987V18.4443C12.4339 18.2285 12.2644 17.8989 12.2644 17.5293C12.2644 16.8792 12.7882 16.3522 13.4344 16.3522C14.0804 16.3522 14.6043 16.8792 14.6043 17.5293C14.6043 17.8989 14.4348 18.2285 14.17 18.4443ZM10.2313 10.8976C10.2313 9.11768 11.6653 7.67481 13.4343 7.67481C15.2033 7.67481 16.6374 9.11768 16.6374 10.8976V13.6219H10.2313V10.8976ZM18.3301 13.6219V10.8976C18.3301 8.17704 16.1382 5.97168 13.4343 5.97168C10.7305 5.97168 8.53854 8.17704 8.53854 10.8976V13.6219H7.05225V22.9508H19.8164V13.6219H18.3301Z" fill="#2FC6F6"/></g></svg>',
-		},
-	};
+	const { ContextMenuSection } = require('layout/ui/context-menu/section');
+	const { SpinnerLoader, SpinnerDesign } = require('layout/ui/loaders/spinner');
+	const { mergeImmutable } = require('utils/object');
+	const { IconView, Icon } = require('ui-system/blocks/icon');
+	const { Text2, Text5, Text6 } = require('ui-system/typography');
+	const { BadgeCounter, BadgeCounterDesign } = require('ui-system/blocks/badges/counter');
+	const { IconAfterType } = require('layout/ui/context-menu/item/src/icon-after-type-enum');
+	const { ItemType } = require('layout/ui/context-menu/item/src/item-type-enum');
 
 	/**
+	 * @typedef {Object} ContextMenuItemProps
+	 * @property {string} testId
+	 * @property {boolean} [active]
+	 * @property {boolean} [selected]
+	 * @property {boolean} [showSelectedImage]
+	 * @property {boolean} [disabled]
+	 * @property {boolean} [destructive]
+	 * @property {boolean} [divide]
+	 * @property {boolean} [dimmed]
+	 * @property {boolean} [showArrow]
+	 * @property {boolean} [badgeNew=false]
+	 * @property {number} [counter]
+	 * @property {BadgeCounterDesign} [counterDesign]
+	 * @property {boolean} [showActionLoader]
+	 * @property {string} [title]
+	 * @property {string} [subtitle]
+	 * @property {Icon} [icon]
+	 * @property {Object} [analyticsLabel]
+	 * @property {IconAfterType} [iconAfter]
+	 * @property {Function} [onClickCallback]
+	 * @property {Function} [onDisableClick]
+	 * @property {Function} [onActiveCallback]
+	 *
 	 * @class ContextMenuItem
+	 * @param {...ContextMenuItemProps} props
 	 */
 	class ContextMenuItem extends LayoutComponent
 	{
 		static create(props)
 		{
-			return new this(props);
+			return new ContextMenuItem(props);
 		}
 
 		constructor(props)
@@ -54,89 +61,99 @@ jn.define('layout/ui/context-menu/item', (require, exports, module) => {
 			this.handleSelectItem = this.handleSelectItem.bind(this);
 		}
 
-		get id()
+		getId()
 		{
 			return this.props.id;
 		}
 
-		get parentId()
+		getParentId()
 		{
 			return this.props.parentId;
 		}
 
-		get parent()
+		getParent()
 		{
-			return this.props.parent;
+			const { parent } = this.props;
+
+			return parent || null;
 		}
 
-		get title()
+		/**
+		 * @returns {ItemType}
+		 */
+		get type()
 		{
-			return this.props.title;
+			const { type } = this.props;
+			let enumType = type;
+
+			if (typeof type === 'string')
+			{
+				enumType = ItemType.getEnum(type.toUpperCase());
+			}
+
+			return ItemType.resolve(enumType, ItemType.ITEM);
 		}
 
-		get subtitle()
+		/**
+		 * @returns {boolean}
+		 */
+		showArrow()
 		{
-			return this.props.subtitle;
+			const { showArrow = false } = this.props;
+
+			return Boolean(showArrow);
 		}
 
-		get subtitleType()
+		/**
+		 * @returns {boolean}
+		 */
+		showActionLoader()
 		{
-			return this.props.subtitleType;
+			const { showActionLoader = false } = this.props;
+
+			return Boolean(showActionLoader) && this.isProcessing();
 		}
 
-		get label()
+		/**
+		 * @returns {boolean}
+		 */
+		isSelected()
 		{
-			return this.props.label;
+			const { selected, isSelected } = this.props;
+
+			return (Boolean(selected) || Boolean(isSelected)) && !this.isDisabled();
 		}
 
-		get showArrow()
+		/**
+		 * @returns {boolean}
+		 */
+		isDimmed()
 		{
-			return this.props.showArrow;
-		}
-
-		get showActionLoader()
-		{
-			return BX.prop.getBoolean(this.props, 'showActionLoader', false);
-		}
-
-		get isCustomIconColor()
-		{
-			if (this.type === TYPE_CANCEL)
+			if (this.getSectionCode() === ContextMenuSection.getServiceSectionName())
 			{
 				return true;
 			}
 
-			return BX.prop.getBoolean(this.props, 'isCustomIconColor', false);
+			const { dimmed } = this.props;
+
+			return Boolean(dimmed);
 		}
 
-		get isSelected()
+		/**
+		 * @returns {boolean}
+		 */
+		isDestructive()
 		{
-			return BX.prop.getBoolean(this.props, 'isSelected', false);
+			const { destructive = false, isDestructive = false } = this.props;
+
+			return Boolean(destructive) || Boolean(isDestructive);
 		}
 
-		get showSelectedImage()
+		getSectionCode()
 		{
-			return BX.prop.getBoolean(this.props, 'showSelectedImage', false);
-		}
+			const { sectionCode } = this.props;
 
-		get isDisabled()
-		{
-			return BX.prop.getBoolean(this.props, 'isDisabled', false);
-		}
-
-		get isDestructive()
-		{
-			return BX.prop.getBoolean(this.props, 'isDestructive', false);
-		}
-
-		get sectionCode()
-		{
-			return this.props.sectionCode || ContextMenuSection.getDefaultSectionName();
-		}
-
-		get type()
-		{
-			return this.props.type || TYPE_BUTTON;
+			return sectionCode || ContextMenuSection.getDefaultSectionName();
 		}
 
 		get data()
@@ -159,67 +176,39 @@ jn.define('layout/ui/context-menu/item', (require, exports, module) => {
 			return this.props.onClickCallback;
 		}
 
-		get onActiveCallback()
-		{
-			return this.props.onActiveCallback;
-		}
-
 		get onDisableClick()
 		{
 			return this.props.onDisableClick;
 		}
 
-		get getParentWidget()
+		getParentWidget()
 		{
-			return this.props.getParentWidget;
-		}
+			const { getParentWidget } = this.props;
 
-		get showIcon()
-		{
-			return BX.prop.getBoolean(this.props, 'showIcon', Boolean(this.data.svgIcon));
-		}
-
-		get largeIcon()
-		{
-			return BX.prop.getBoolean(this.props, 'largeIcon', true);
-		}
-
-		get firstInSection()
-		{
-			return BX.prop.getBoolean(this.props, 'firstInSection', false);
-		}
-
-		get lastInSection()
-		{
-			return BX.prop.getBoolean(this.props, 'lastInSection', false);
-		}
-
-		get isActive()
-		{
-			return BX.prop.getBoolean(this.props, 'isActive', false);
-		}
-
-		get dimmed()
-		{
-			if (this.sectionCode === ContextMenuSection.getServiceSectionName())
+			if (typeof getParentWidget !== 'function')
 			{
-				return true;
+				return null;
 			}
 
-			return BX.prop.getBoolean(this.props, 'dimmed', false);
+			return getParentWidget();
 		}
 
-		get isSemitransparent()
+		/**
+		 * @returns {boolean}
+		 */
+		isActive()
 		{
-			return BX.prop.getBoolean(this.props, 'isSemitransparent', false);
+			const { isActive = false, active = false } = this.props;
+
+			return Boolean(isActive) || Boolean(active);
 		}
 
-		get analyticsLabel()
+		getAnalyticsLabel()
 		{
 			return BX.prop.getObject(this.props, 'analyticsLabel', null);
 		}
 
-		get isRawIcon()
+		isRawIcon()
 		{
 			return BX.prop.getBoolean(this.props, 'isRawIcon', false);
 		}
@@ -233,56 +222,100 @@ jn.define('layout/ui/context-menu/item', (require, exports, module) => {
 
 		render()
 		{
-			if (!this.isActive)
+			if (!this.isActive())
 			{
 				return null;
 			}
 
-			const containerStyle = get(this.props, 'data.style.container', {});
-			const itemStyle = get(this.props, 'data.style.item', {});
+			const { container: containerStyle = {} } = this.getCustomStyles();
 
 			return View(
 				{
-					style: mergeImmutable(styles.wrapper(this.dimmed), containerStyle),
 					testId: this.testId,
+					style: mergeImmutable({
+						height: 58,
+						width: '100%',
+						position: 'relative',
+						backgroundColor: this.isDimmed() ? this.getDimmedColor() : null,
+					}, containerStyle),
 					onClick: this.handleSelectItem,
 				},
-				...this.renderByType(itemStyle),
+				View(
+					{
+						style: this.getContainerStyle(),
+					},
+					this.renderIconContainer(this.renderIcon()),
+					this.renderContentContainer(),
+				),
+				this.renderDivider(),
 			);
+		}
+
+		getContainerStyle()
+		{
+			return {
+				flex: 1,
+				flexDirection: 'row',
+				paddingHorizontal: Indent.L.toNumber(),
+				marginHorizontal: Indent.M.toNumber(),
+				marginVertical: Indent.S.toNumber(),
+				borderRadius: Corner.M.toNumber(),
+				backgroundColor: this.isSelected() ? this.getSelectedColor() : null,
+			};
 		}
 
 		onClickSelected(callback)
 		{
-			return callback(
-				this.id,
-				this.parentId,
+			if (!callback)
+			{
+				return null;
+			}
+
+			const parentWidget = this.getParentWidget();
+			const ensureMenuClosed = (handler) => {
+				if (parentWidget)
 				{
-					parentWidget: this.getParentWidget ? this.getParentWidget() : null,
-					parent: this.parent || null,
+					parentWidget.close(handler);
+				}
+				else
+				{
+					handler();
+				}
+			};
+
+			return callback(
+				this.getId(),
+				this.getParentId(),
+				{
+					parentWidget,
+					ensureMenuClosed,
+					parent: this.getParent(),
 				},
 			);
 		}
 
 		sendAnalytics()
 		{
-			if (Type.isPlainObject(this.analyticsLabel))
+			const analyticsLabel = this.getAnalyticsLabel();
+
+			if (Type.isPlainObject(analyticsLabel))
 			{
 				AnalyticsLabel.send({
 					event: 'context-menu-click',
-					id: this.id,
-					...this.analyticsLabel,
+					id: this.getId(),
+					...analyticsLabel,
 				});
 			}
 		}
 
 		handleSelectItem()
 		{
-			if (this.isProcessing() || this.isTypeLayout())
+			if (this.isProcessing() || this.type.isLayout())
 			{
 				return;
 			}
 
-			if (this.isDisabled)
+			if (this.isDisabled())
 			{
 				if (this.onDisableClick)
 				{
@@ -311,31 +344,29 @@ jn.define('layout/ui/context-menu/item', (require, exports, module) => {
 					promise = Promise.resolve();
 				}
 
-				promise
-					.then(
-						({ action, id, params, closeMenu = true, closeCallback } = {}) => {
-							if (closeMenu)
-							{
-								this.closeMenuHandler(closeCallback);
-							}
+				promise.then(
+					({ action, id, params, closeMenu = true, closeCallback } = {}) => {
+						if (closeMenu)
+						{
+							this.closeMenuHandler(closeCallback);
+						}
 
-							this.setState({ isProcessing: false }, () => {
-								if (action && this.updateItemHandler)
-								{
-									this.updateItemHandler(action, id, params);
-								}
-							});
-						},
-						({ errors } = {}) => {
-							this.setState({ isProcessing: false }, () => {
-								if (errors && errors.length > 0)
-								{
-									this.showErrors(errors);
-								}
-							});
-						},
-					)
-				;
+						this.setState({ isProcessing: false }, () => {
+							if (action && this.updateItemHandler)
+							{
+								this.updateItemHandler(action, id, params);
+							}
+						});
+					},
+					({ errors } = {}) => {
+						this.setState({ isProcessing: false }, () => {
+							if (errors && errors.length > 0)
+							{
+								this.showErrors(errors);
+							}
+						});
+					},
+				).catch(console.error);
 			});
 		}
 
@@ -356,273 +387,364 @@ jn.define('layout/ui/context-menu/item', (require, exports, module) => {
 			);
 		}
 
-		renderByType(customStyle = {})
+		renderContentContainer()
 		{
-			let imageContainer;
-			let imageAfterContainer;
-			let labelContainer;
-			let title;
-			let subtitle;
-			let selectedImage;
-			let arrowImage;
-			let badgeContainer;
-
-			if (this.type === TYPE_CANCEL)
-			{
-				title = Text({
+			return View(
+				{
 					style: {
-						...styles.title(this.isActive, this.isDestructive),
-						...styles.cancel,
+						flex: 1,
+						flexDirection: 'row',
+						alignItems: 'center',
+						justifyContent: 'space-between',
 					},
-					text: this.title || BX.message('CONTEXT_MENU_CANCEL'),
-					numberOfLines: 1,
-					ellipsize: 'end',
-				});
-			}
-			else if (this.isTypeLayout())
-			{
-				title = this.title;
-			}
-			else
-			{
-				title = Text({
-					testId: `${this.testId}_title`,
-					style: styles.title(!this.isSemitransparent, this.isDestructive),
-					text: this.title,
-					numberOfLines: 1,
-					ellipsize: 'end',
-				});
-				if (this.subtitle)
-				{
-					const subtitleStyle = get(customStyle, 'subtitle', {});
-
-					subtitle = Text({
-						testId: `${this.testId}_subtitle`,
-						style: styles.subtitle(this.subtitleType, subtitleStyle),
-						text: this.subtitle,
-						numberOfLines: 1,
-						ellipsize: 'end',
-					});
-				}
-			}
-
-			if (this.showActionLoader && this.isProcessing())
-			{
-				imageContainer = View(
-					{
-						style: styles.imageContainerOuter(this.isSelected, this.dimmed, this.isTypeLayout()),
-					},
-					View(
-						{
-							style: styles.imageContainerInner(this.isDisabled),
-						},
-						Loader({
-							style: {
-								width: 25,
-								height: 25,
-							},
-							tintColor: AppTheme.colors.base0,
-							animating: true,
-							size: 'small',
-						}),
-					),
-				);
-			}
-			else if (this.showIcon)
-			{
-				const { imgUri, svgUri } = this.data;
-				let { svgIcon } = this.data;
-				let tintColor;
-
-				if (!this.isCustomIconColor)
-				{
-					tintColor = this.isDestructive ? AppTheme.colors.accentMainAlert : TINT_COLOR;
-
-					// Android can't change color of inline svg icons, only uri
-					if (svgIcon && Application.getPlatform() === 'android')
-					{
-						svgIcon = changeFillColor(svgIcon, tintColor);
-					}
-				}
-
-				imageContainer = View(
-					{
-						style: styles.imageContainerOuter(this.isSelected, this.dimmed, this.isTypeLayout()),
-					},
-					View(
-						{
-							style: styles.imageContainerInner(this.isDisabled),
-						},
-						Image({
-							uri: imgUri,
-							style: styles.icon(this.largeIcon),
-							resizeMode: this.getImageResizeMode(imgUri),
-							tintColor,
-							svg: {
-								content: svgIcon,
-								uri: svgUri,
-							},
-						}),
-					),
-				);
-			}
-
-			if (this.props.data && this.props.data.svgIconAfter)
-			{
-				const svgIconAfterProp = this.props.data.svgIconAfter;
-				const svgIconAfter = svgIconAfterProp.type && svgIcons.hasOwnProperty(svgIconAfterProp.type)
-					? svgIcons[svgIconAfterProp.type]
-					: svgIconAfterProp;
-
-				if (svgIconAfter)
-				{
-					imageAfterContainer = View(
-						{
-							style: styles.imageAfterContainerOuter,
-						},
-						View(
-							{
-								style: styles.imageAfterContainerInner,
-							},
-							Image({
-								style: {
-									width: 18,
-									height: 18,
-								},
-								resizeMode: 'center',
-								svg: svgIconAfter,
-							}),
-						),
-					);
-				}
-			}
-
-			if (this.props.label)
-			{
-				labelContainer = View(
-					{
-						style: styles.labelContainer,
-					},
-					CounterView(this.props.label),
-				);
-			}
-
-			if (this.isSelected && this.props.showSelectedImage)
-			{
-				selectedImage = Image({
-					testId: `${this.testId}_selected`,
-					style: {
-						width: 20,
-						height: 15,
-						marginRight: 15,
-						opacity: this.isDisabled ? 0.4 : 1,
-					},
-					svg: {
-						content: '<svg width="20" height="15" viewBox="0 0 20 15" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M7.34211 14.351L0.865234 8.03873L3.13214 5.82945L7.34211 9.9324L16.8677 0.648926L19.1346 2.85821L7.34211 14.351Z" fill="#828B95"/></svg>',
-					},
-				});
-			}
-
-			if (this.showArrow)
-			{
-				arrowImage = Image(
+				},
+				View(
 					{
 						style: {
-							width: 24,
-							height: 24,
-							marginRight: 6,
-						},
-						svg: {
-							content: chevronRight(),
+							flexDirection: 'column',
+							justifyContent: 'center',
 						},
 					},
-				);
+					this.renderTitle(),
+					this.renderSubTitle(),
+				),
+				View(
+					{
+						style: {
+							flexDirection: 'row',
+							alignItems: 'center',
+						},
+					},
+					this.renderBadgeCounter(),
+					this.renderSelected(),
+					this.renderArrow(),
+				),
+			);
+		}
+
+		renderIconContainer(view)
+		{
+			if (!view)
+			{
+				return null;
 			}
 
-			if (Array.isArray(this.props.badges) && this.props.badges.length > 0)
-			{
-				const items = [];
-				this.props.badges.forEach((params) => items.push(new Badge(params)));
+			return View(
+				{
+					style: {
+						justifyContent: 'center',
+						alignContent: 'center',
+						marginRight: Indent.L.toNumber(),
+					},
+				},
+				view,
+			);
+		}
 
-				badgeContainer = View({
+		renderIcon()
+		{
+			if (this.showActionLoader())
+			{
+				return this.renderLoader();
+			}
+
+			if (!this.showIcon())
+			{
+				return null;
+			}
+
+			const icon = this.getIcon();
+
+			if (icon)
+			{
+				return IconView({
+					icon,
+					color: this.getIconColor(),
+					size: this.getIconSize(),
+				});
+			}
+
+			if (this.isCustomIcon())
+			{
+				return this.renderImg();
+			}
+
+			return null;
+		}
+
+		renderImg()
+		{
+			const { imgUri, svgUri, svgIcon } = this.data;
+			const iconSize = this.getIconSize();
+			const imgParams = {
+				style: {
+					width: iconSize,
+					height: iconSize,
+				},
+				resizeMode: this.getImageResizeMode(imgUri),
+			};
+
+			if (imgUri)
+			{
+				imgParams.uri = imgUri;
+			}
+
+			if (svgUri || svgIcon)
+			{
+				imgParams.svg = {};
+				imgParams.tintColor = this.getIconColor(Color.base3)?.toHex();
+			}
+
+			if (svgUri)
+			{
+				imgParams.svg.uri = svgUri;
+			}
+
+			if (svgIcon)
+			{
+				imgParams.svg.content = svgIcon;
+			}
+
+			return Image(imgParams);
+		}
+
+		renderLoader()
+		{
+			const iconSize = this.getIconSize();
+
+			return SpinnerLoader({
+				size: iconSize,
+				design: SpinnerDesign.BLUE,
+			});
+		}
+
+		renderTitle()
+		{
+			const { title } = this.props;
+
+			if (!title)
+			{
+				return null;
+			}
+
+			return View(
+				{
 					style: {
 						flexDirection: 'row',
 					},
-				}, ...items);
+				},
+				View(
+					{
+						style: {
+							marginRight: Indent.XS.toNumber(),
+						},
+					},
+					this.type.isLayout()
+						? title
+						: Text2({
+							testId: `${this.testId}_title`,
+							text: title,
+							color: this.getTextColor(Color.base1),
+							numberOfLines: 1,
+							ellipsize: 'end',
+						}),
+				),
+				this.renderAfterContainer(),
+			);
+		}
+
+		renderSubTitle()
+		{
+			const { subtitle, subtitleType } = this.props;
+
+			if (!subtitle)
+			{
+				return null;
 			}
 
-			return [
-				imageContainer,
-				View(
-					{
-						style: styles.divider(
-							this.hasAnyLeftIcon(),
-							this.isSelected,
-							this.dimmed,
-							this.lastInSection,
-							this.isTypeLayout(),
-						),
+			const customStyles = this.getCustomStyles();
+			const isWarning = subtitleType === 'warning';
+			const color = isWarning ? Color.accentMainWarning : Color.base3;
+
+			return Text5({
+				testId: `${this.testId}_subtitle`,
+				style: customStyles?.item?.subtitle || {},
+				color: this.getTextColor(color),
+				text: subtitle,
+				numberOfLines: 1,
+				ellipsize: 'end',
+			});
+		}
+
+		renderBadgeCounter()
+		{
+			const { label, counter, counterDesign = BadgeCounterDesign.ALERT } = this.props;
+
+			if (!label && !counter)
+			{
+				return null;
+			}
+
+			const design = this.isDisabled() ? BadgeCounterDesign.GREY : counterDesign;
+			const value = counter || label;
+
+			return BadgeCounter({ testId: this.testId, value, design });
+		}
+
+		renderSelected()
+		{
+			const { showSelectedImage = true } = this.props;
+
+			if (!this.isSelected() || !showSelectedImage)
+			{
+				return null;
+			}
+
+			return IconView({
+				testId: `${this.testId}_selected`,
+				size: 28,
+				icon: Icon.CHECK_SIZE_S,
+				color: Color.accentMainPrimary,
+				style: {
+					marginLeft: Indent.XL.toNumber(),
+				},
+			});
+		}
+
+		renderArrow()
+		{
+			if (!this.showArrow())
+			{
+				return null;
+			}
+
+			const color = this.isDisabled() ? this.getDisabledColor() : Color.base4;
+
+			return IconView({
+				color,
+				size: 22,
+				icon: Icon.CHEVRON_TO_THE_RIGHT_SIZE_M,
+				style: {
+					marginLeft: Indent.XL.toNumber(),
+				},
+			});
+		}
+
+		renderAfterContainer()
+		{
+			const { iconAfter } = this.props;
+			const size = 22;
+			const svgIconAfter = this.data?.svgIconAfter;
+			const iconType = iconAfter || svgIconAfter?.type;
+
+			if (IconAfterType.has(iconType))
+			{
+				return IconView({
+					icon: iconType.getIcon(),
+					color: this.getIconColor(Color.base5),
+					size,
+				});
+			}
+
+			if (svgIconAfter)
+			{
+				return Image({
+					tintColor: this.isDisabled()
+						? this.getDisabledColor().toHex()
+						: null,
+					style: {
+						width: size,
+						height: size,
 					},
-				),
-				View(
+					resizeMode: 'center',
+					svg: svgIconAfter,
+				});
+			}
+
+			return this.renderAfterBadge();
+		}
+
+		renderAfterBadge()
+		{
+			const { badges = [], badgeNew = false } = this.props;
+
+			const badgeText = ({ text, color = Color.base3, style = {} }) => Text6({
+				text,
+				color,
+				style: {
+					alignSelf: 'flex-start',
+					...style,
+				},
+			});
+
+			if (badgeNew)
+			{
+				return badgeText({
+					color: Color.accentMainSuccess,
+					text: Loc.getMessage('CONTEXT_MENU_ITEM_BADGE_NEW'),
+				});
+			}
+
+			if (Array.isArray(badges) && badges.length > 0)
+			{
+				return View(
 					{
-						style: styles.container(this.lastInSection),
-					},
-					View(
-						{
-							style: styles.selectedView(this.isSelected, this.dimmed),
+						style: {
+							flexDirection: 'row',
 						},
-						View(
+					},
+					...badges
+						.filter(({ title }) => Boolean(title.trim()))
+						.map(({
+							color,
+							backgroundColor,
+							title,
+						}, index) => View(
 							{
-								style: styles.button(!this.lastInSection, this.isTypeLayout()),
-							},
-							View(
-								{
-									style: {
-										flexDirection: 'row',
-										alignItems: 'center',
-										opacity: this.isDisabled ? 0.4 : 1,
-										flex: 1,
-										justifyContent: 'space-between',
-										flexShrink: 2,
-									},
+								style: {
+									marginRight: index === 0 ? Indent.XL.toNumber() : 0,
 								},
-								View(
-									{
-										style: {
-											flexDirection: 'row',
-											flexShrink: 2,
-											justifyContent: 'center',
-											alignItems: 'center',
-										},
-									},
-									View(
-										{
-											style: {
-												flexDirection: 'column',
-												justifyContent: 'center',
-												flexShrink: 2,
-											},
-										},
-										title,
-										subtitle,
-									),
-									badgeContainer,
-									imageAfterContainer,
-								),
-								labelContainer,
-							),
-						),
-						selectedImage,
-						arrowImage,
-					),
-				),
-			];
+							},
+							badgeText({
+								text: title.toLocaleLowerCase(env.languageId),
+								style: {
+									color: color || backgroundColor,
+								},
+							}),
+						)),
+				);
+			}
+
+			return null;
+		}
+
+		renderDivider()
+		{
+			const { divider = true } = this.props;
+			if (!divider)
+			{
+				return null;
+			}
+
+			const { paddingHorizontal, marginHorizontal } = this.getContainerStyle();
+			const selectedHorizontalMargin = paddingHorizontal + marginHorizontal;
+			const iconContainerSize = this.getIconSize() + Indent.L.toNumber();
+			const left = selectedHorizontalMargin + (this.showIcon() || this.showActionLoader() ? iconContainerSize : 0);
+
+			return View({
+				style: {
+					left,
+					width: '100%',
+					bottom: 0,
+					borderBottomWidth: 1,
+					borderBottomColor: Color.bgSeparatorPrimary.toHex(),
+				},
+			});
 		}
 
 		getImageResizeMode(imgUri)
 		{
-			if (this.isRawIcon)
+			if (this.isRawIcon())
 			{
 				return 'cover';
 			}
@@ -635,175 +757,179 @@ jn.define('layout/ui/context-menu/item', (require, exports, module) => {
 			return 'center';
 		}
 
+		/**
+		 * @returns {Icon|null}
+		 */
+		getIcon()
+		{
+			const { icon } = this.props;
+			const itemIcon = icon || this.type.getIcon();
+
+			if (itemIcon instanceof Icon)
+			{
+				return itemIcon;
+			}
+
+			return null;
+		}
+
+		/**
+		 * @returns {number}
+		 */
+		getIconSize()
+		{
+			const { largeIcon = true } = this.props;
+
+			return largeIcon ? 30 : 16;
+		}
+
+		/**
+		 * @param {Color} [iconColor]
+		 * @returns {Color}
+		 */
+		getIconColor(iconColor)
+		{
+			const { isCustomIconColor = false } = this.props;
+
+			if (this.isDisabled())
+			{
+				return this.getDisabledColor();
+			}
+
+			if (isCustomIconColor)
+			{
+				return null;
+			}
+
+			if (this.isDestructive())
+			{
+				return Color.accentMainAlert;
+			}
+
+			if (iconColor)
+			{
+				return iconColor;
+			}
+
+			return Color.base1;
+		}
+
+		getSelectedColor()
+		{
+			return Color.accentSoftBlue2.toHex();
+		}
+
+		getDimmedColor()
+		{
+			return Color.bgContentTertiary.toHex();
+		}
+
+		/**
+		 * @returns {Color}
+		 */
+		getDisabledColor()
+		{
+			return Color.base5;
+		}
+
+		/**
+		 * @returns {Color}
+		 */
+		getTextColor(textColor)
+		{
+			if (this.isDestructive())
+			{
+				return Color.accentMainAlert;
+			}
+
+			if (this.isDisabled())
+			{
+				return this.getDisabledColor();
+			}
+
+			return textColor;
+		}
+
+		getCustomStyles()
+		{
+			return this.data?.style || {};
+		}
+
 		isProcessing()
 		{
 			return this.state.isProcessing;
 		}
 
+		isCustomIcon()
+		{
+			const { imgUri, svgUri, svgIcon } = this.data;
+
+			return Boolean(imgUri || svgUri || svgIcon);
+		}
+
+		showIcon()
+		{
+			const { showIcon = true } = this.props;
+
+			return showIcon && (Boolean(this.getIcon()) || this.isCustomIcon());
+		}
+
 		/**
 		 * @returns {boolean}
 		 */
-		isTypeLayout()
+		isDisabled()
 		{
-			return (this.type === TYPE_LAYOUT);
+			const { disabled = false, isDisabled = false } = this.props;
+
+			return Boolean(disabled) || Boolean(isDisabled);
 		}
 
-		static getTypeButtonName()
+		static getHeight()
 		{
-			return TYPE_BUTTON;
-		}
-
-		static getTypeCancelName()
-		{
-			return TYPE_CANCEL;
-		}
-
-		hasAnyLeftIcon()
-		{
-			return (this.showActionLoader && this.isProcessing() || this.showIcon);
+			return 58;
 		}
 	}
 
-	const styles = {
-		wrapper: () => {
-			return {
-				flexDirection: 'row',
-				alignItems: 'center',
-				backgroundColor: AppTheme.colors.bgContentPrimary,
-			};
-		},
-		container: (isLast) => {
-			return {
-				justifyContent: 'center',
-				alignItems: 'center',
-				borderBottomColor: (isLast ? null : AppTheme.colors.bgSeparatorPrimary),
-				borderBottomWidth: 1,
-				padding: 4,
-				paddingBottom: 3,
-				paddingLeft: 0,
-				flex: 1,
-				flexDirection: 'row',
-			};
-		},
-		divider: (hasAnyLeftIcon, isSelected, isService, isLastInSection, autoHeight = false) => {
-			const dividerStyles = {
-				backgroundColor: (isSelected && !isService ? AppTheme.colors.accentSoftBlue1 : null),
-				borderBottomLeftRadius: hasAnyLeftIcon ? 0 : 8,
-				borderTopLeftRadius: hasAnyLeftIcon ? 0 : 8,
-				width: hasAnyLeftIcon ? 0 : 11,
-				marginLeft: hasAnyLeftIcon ? 0 : 4,
-				borderBottomColor: (isLastInSection ? null : AppTheme.colors.bgSeparatorSecondar),
-			};
-
-			if (!autoHeight)
-			{
-				dividerStyles.height = 50;
-			}
-
-			return dividerStyles;
-		},
-		selectedView: (isSelected, isService) => {
-			return {
-				flex: 1,
-				flexDirection: 'row',
-				justifyContent: 'center',
-				alignItems: 'center',
-				backgroundColor: (isSelected && !isService ? AppTheme.colors.accentSoftBlue1 : null),
-				borderTopRightRadius: 8,
-				borderBottomRightRadius: 8,
-			};
-		},
-		button: (showBorderBottom, autoHeight = false) => {
-			const styles = {
-				flex: 1,
-				justifyContent: 'center',
-			};
-			if (!autoHeight)
-			{
-				styles.height = 50;
-			}
-
-			return styles;
-		},
-		title: (isSemitransparent, isDestructive) => {
-			let color = isSemitransparent ? AppTheme.colors.base1 : AppTheme.colors.base3;
-
-			if (isDestructive)
-			{
-				color = AppTheme.colors.accentMainAlert;
-			}
-
-			return {
-				fontSize: 18,
-				color,
-			};
-		},
-		subtitle: (type, subtitleStyle = {}) => {
-			let color = AppTheme.colors.base3;
-
-			if (type === WARNING_TYPE)
-			{
-				color = AppTheme.colors.accentMainWarning;
-			}
-
-			return mergeImmutable({
-				fontSize: 14,
-				color,
-			}, subtitleStyle);
-		},
-		cancel: {
-			color: AppTheme.colors.base4,
-		},
-		imageContainerOuter: (isSelected, isService, autoHeight = false) => {
-			const imageStyles = {
-				justifyContent: 'center',
-				alignContent: 'center',
-				backgroundColor: (isSelected && !isService ? AppTheme.colors.accentSoftBlue1 : null),
-				marginTop: 4,
-				marginLeft: 4,
-				marginBottom: 4,
-				paddingLeft: 11,
-				paddingRight: 15,
-				borderTopLeftRadius: 8,
-				borderBottomLeftRadius: 8,
-			};
-
-			if (!autoHeight)
-			{
-				imageStyles.height = 50;
-			}
-
-			return imageStyles;
-		},
-		imageContainerInner: (isDisabled) => {
-			return {
-				width: 30,
-				height: 30,
-				opacity: (isDisabled ? 0.4 : 1),
-				justifyContent: 'center',
-				alignItems: 'center',
-			};
-		},
-		imageAfterContainerOuter: {
-			width: 30,
-			height: 30,
-			justifyContent: 'center',
-			alignContent: 'center',
-		},
-		imageAfterContainerInner: {
-			flexDirection: 'row',
-			justifyContent: 'center',
-		},
-		icon: (largeIcon) => {
-			return {
-				width: largeIcon ? 30 : 16,
-				height: largeIcon ? 30 : 16,
-			};
-		},
-		labelContainer: {
-			marginHorizontal: 6,
-		},
+	ContextMenuItem.defaultProps = {
+		active: false,
+		selected: false,
+		divider: true,
+		disabled: false,
+		destructive: false,
+		showArrow: false,
+		badgeNew: false,
+		showActionLoader: false,
+		showSelectedImage: true,
 	};
 
-	module.exports = { ContextMenuItem, ImageAfterTypes };
+	ContextMenuItem.propTypes = {
+		testId: PropTypes.string.isRequired,
+		id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+		analyticsLabel: PropTypes.object,
+		active: PropTypes.bool,
+		selected: PropTypes.bool,
+		showSelectedImage: PropTypes.bool,
+		disabled: PropTypes.bool,
+		destructive: PropTypes.bool,
+		divider: PropTypes.bool,
+		showArrow: PropTypes.bool,
+		badgeNew: PropTypes.bool,
+		counter: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+		counterDesign: PropTypes.instanceOf(BadgeCounterDesign),
+		showActionLoader: PropTypes.bool,
+		title: PropTypes.string,
+		subtitle: PropTypes.string,
+		icon: PropTypes.instanceOf(Icon),
+		iconAfter: PropTypes.instanceOf(IconAfterType),
+		onClickCallback: PropTypes.func,
+		onDisableClick: PropTypes.func,
+		onActiveCallback: PropTypes.func,
+	};
+
+	module.exports = {
+		ContextMenuItem,
+		BadgeCounterDesign,
+		ContextMenuItemType: ItemType,
+		ImageAfterTypes: IconAfterType,
+	};
 });

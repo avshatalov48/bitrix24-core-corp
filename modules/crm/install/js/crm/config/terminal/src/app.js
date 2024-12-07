@@ -216,6 +216,26 @@ export class App
 				{
 					return state.isRuZone;
 				},
+
+				getIsPhoneConfirmed(state): boolean
+				{
+					return state.isPhoneConfirmed;
+				},
+
+				getConnectedSiteId(state)
+				{
+					return state.connectedSiteId;
+				},
+
+				getIsConnectedSitePublished(state): boolean
+				{
+					return state.isConnectedSitePublished;
+				},
+
+				getIsConnectedSiteExists(state): boolean
+				{
+					return state.isConnectedSiteExists;
+				},
 			},
 
 			mutations: {
@@ -377,6 +397,26 @@ export class App
 				{
 					state.availablePaysystems = value;
 				},
+
+				updateIsPhoneConfirmed(state, value): void
+				{
+					state.isPhoneConfirmed = value;
+				},
+
+				updateConnectedSiteId(state, value): void
+				{
+					state.connectedSiteId = value;
+				},
+
+				updateIsConnectedSitePublished(state, value): void
+				{
+					state.isConnectedSitePublished = value;
+				},
+
+				updateIsConnectedSiteExists(state, value): void
+				{
+					state.isConnectedSiteExists = value;
+				},
 			},
 		};
 
@@ -509,7 +549,7 @@ export class App
 								<span>{{ $Bitrix.Loc.getMessage('CRM_CFG_TERMINAL_SETTINGS_SECTION_PS_SBP') }}</span>
 							</div>
 							<div v-if="getIsSberQrEnabled" class="terminal-image-paysystem terminal-image-paysystem-sber-qr">
-								<span>{{ $Bitrix.Loc.getMessage('CRM_CFG_TERMINAL_SETTINGS_SECTION_PS_SBER_QR') }}</span>
+								<span>{{ $Bitrix.Loc.getMessage('CRM_CFG_TERMINAL_SETTINGS_SECTION_PS_SBER_QR_MSGVER_1') }}</span>
 							</div>
 							<template v-if="getAvailablePaysystems.length > 0" v-for="paysystem in getAvailablePaysystems">
 								<div class="terminal-image-paysystem terminal-image-paysystem-wallet" v-if="getTerminalDisabledPaysystems.indexOf(paysystem.id) === -1">

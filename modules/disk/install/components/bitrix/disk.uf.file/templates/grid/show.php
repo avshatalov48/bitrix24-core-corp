@@ -21,7 +21,9 @@ UI\Extension::load([
 	'ui.viewer',
 	'disk.document',
 	'disk.viewer.actions',
-	'loader'
+	'loader',
+	'ui.design-tokens',
+	'ui.icon-set.main'
 ]);
 
 if (
@@ -336,45 +338,65 @@ include_once(str_replace(array("\\", "//"), "/", __DIR__."/messages.php"));
 					?>><?=htmlspecialcharsbx($file['NAME'])?><?
 					?></a><?
 					?><span class="feed-com-file-size"><?=$file['SIZE']?></span><?
-					?><script type="text/javascript">
+					?><script>
 						BX.namespace("BX.Disk.Files");
 						BX.Disk.Files['<?= $file['ID'] ?>'] = [
-							{text : BX.message('JS_CORE_VIEWER_VIEW_ELEMENT'), className : "bx-viewer-popup-item item-view", href : "#", onclick: function(e){
-								top.BX.UI.Viewer.Instance.openByNode(BX("disk-attach-<?=$file['ID']?>"));
-								BX.PopupMenu.currentItem.popupWindow.close();
-								return e.preventDefault();
-							}},
+							{
+								className : 'disk-uf-file__popup-menu_item menu-popup-no-icon',
+								html : '<span class="ui-icon-set --document"></span><span>' + BX.message('JS_CORE_VIEWER_VIEW_ELEMENT') +'</span>',
+								onclick: function(e){
+									top.BX.UI.Viewer.Instance.openByNode(BX("disk-attach-<?=$file['ID']?>"));
+									BX.PopupMenu.currentItem.popupWindow.close();
+									return e.preventDefault();
+								}},
 							<? if($file['EDITABLE'] && $file['CAN_UPDATE'] && (!$file['IS_LOCKED'] || $file['IS_LOCKED_BY_SELF']) && !$arParams['DISABLE_LOCAL_EDIT']){ ?>
-							{text : BX.message('JS_CORE_VIEWER_EDIT'), className : "bx-viewer-popup-item item-edit", href : "#", onclick: function(e){
-								top.BX.UI.Viewer.Instance.runActionByNode(BX("disk-attach-<?=$file['ID']?>"), 'edit', {
-								modalWindow: BX.Disk.openBlankDocumentPopup()
-							});
-								BX.PopupMenu.currentItem.popupWindow.close();
-								return e.preventDefault();
-							}},
+							{
+								className : 'disk-uf-file__popup-menu_item menu-popup-no-icon',
+								html : '<span class="ui-icon-set --edit-pencil"></span><span>' + BX.message('JS_CORE_VIEWER_EDIT') +'</span>',
+								onclick: function(e){
+									top.BX.UI.Viewer.Instance.runActionByNode(BX("disk-attach-<?=$file['ID']?>"), 'edit', {
+										modalWindow: BX.Disk.openBlankDocumentPopup()
+									});
+									BX.PopupMenu.currentItem.popupWindow.close();
+									return e.preventDefault();
+								}},
 							<? } ?>
 							<? if(!$arParams['DISABLE_LOCAL_EDIT']){ ?>
-							{text : BX.message('JS_CORE_VIEWER_SAVE_TO_OWN_FILES_MSGVER_1'), className : "bx-viewer-popup-item item-b24", href : "#", onclick: function(e){
-								top.BX.UI.Viewer.Instance.runActionByNode(BX("disk-attach-<?=$file['ID']?>"), 'copyToMe');
-								BX.PopupMenu.currentItem.popupWindow.close();
-								return e.preventDefault();
-							}},
+							{
+								className : 'disk-uf-file__popup-menu_item menu-popup-no-icon',
+								html : '<span class="ui-icon-set --disk"></span><span>' + BX.message('JS_CORE_VIEWER_SAVE_TO_OWN_FILES_MSGVER_1') + '</span>',
+								href : "#",
+								onclick: function(e){
+									top.BX.UI.Viewer.Instance.runActionByNode(BX("disk-attach-<?=$file['ID']?>"), 'copyToMe');
+									BX.PopupMenu.currentItem.popupWindow.close();
+									return e.preventDefault();
+								}},
 							<? } ?>
 							<? if($file['FROM_EXTERNAL_SYSTEM'] && $file['CAN_UPDATE'] && (!$file['IS_LOCKED'] || $file['IS_LOCKED_BY_SELF'])){ ?>
-							{text : '<?= GetMessageJS('DISK_UF_FILE_RUN_FILE_IMPORT') ?>', className : "bx-viewer-popup-item item-toload", href : "#", onclick: function(e){
-								top.BX.Disk.UF.runImport({id: <?= $file['ID'] ?>, name: '<?= CUtil::JSEscape($file['NAME']) ?>'});
-								BX.PopupMenu.currentItem.popupWindow.close();
-								return e.preventDefault();
-							}},
+							{
+								className : 'disk-uf-file__popup-menu_item menu-popup-no-icon',
+								html : '<span class="ui-icon-set --upload"></span><span>' + '<?= GetMessageJS("DISK_UF_FILE_RUN_FILE_IMPORT") ?>' + '</span>',
+								onclick: function(e){
+									top.BX.Disk.UF.runImport({id: <?= $file['ID'] ?>, name: '<?= CUtil::JSEscape($file['NAME']) ?>'});
+									BX.PopupMenu.currentItem.popupWindow.close();
+									return e.preventDefault();
+								}},
 							<? } ?>
-							{text : BX.message('JS_CORE_VIEWER_DOWNLOAD_TO_PC'), className : "bx-viewer-popup-item item-download", href : "<?=$file["DOWNLOAD_URL"]?>", onclick: function(e){BX.PopupMenu.currentItem.popupWindow.close();}}
+							{
+								className : 'disk-uf-file__popup-menu_item menu-popup-no-icon',
+								html : '<span class="ui-icon-set --download-3"></span><span>' + BX.message('JS_CORE_VIEWER_DOWNLOAD_TO_PC') + '</span>',
+								href : "<?=$file["DOWNLOAD_URL"]?>",
+								onclick: function(e){BX.PopupMenu.currentItem.popupWindow.close();}}
 							<? if(!$arParams['DISABLE_LOCAL_EDIT']){ ?>
 							,
-							{text : '<?= GetMessageJS('DISK_UF_FILE_SETTINGS_DOCS') ?>', className : "bx-viewer-popup-item item-setting", href : "#", onclick: function(e){
-								BX.Disk.InformationPopups.openWindowForSelectDocumentService({viewInUf: true});
-								BX.PopupMenu.currentItem.popupWindow.close();
-								return e.preventDefault();
-							}}
+							{
+								className : 'disk-uf-file__popup-menu_item menu-popup-no-icon',
+								html : '<span class="ui-icon-set --settings-2"></span><span>' + '<?= GetMessageJS("DISK_UF_FILE_SETTINGS_DOCS") ?>' + '</span>',
+								onclick: function(e){
+									BX.Disk.InformationPopups.openWindowForSelectDocumentService({viewInUf: true});
+									BX.PopupMenu.currentItem.popupWindow.close();
+									return e.preventDefault();
+								}}
 							<? } ?>
 						];
 					</script><?

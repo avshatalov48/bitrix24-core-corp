@@ -806,7 +806,7 @@ class PSRequisiteConverter
 					$matches = array();
 					$curPsLocalization = '';
 					$psType = '';
-					if (preg_match('/(bill|quote)(_\w+)*$/i'.BX_UTF_PCRE_MODIFIER, $arPaySys['PSA_ACTION_FILE'], $matches))
+					if (preg_match('/(bill|quote)(_\w+)*$/iu', $arPaySys['PSA_ACTION_FILE'], $matches))
 					{
 						$psType = $matches[1];
 						if (count($matches) === 2 && $psType === 'bill')
@@ -1387,7 +1387,7 @@ class PSRequisiteConverter
 						$fields[$rqName] = $rqValue;
 					}
 				}
-				$result = $requisite->add($fields);
+				$result = $requisite->add($fields, ['DISABLE_REQUIRED_USER_FIELD_CHECK' => true]);
 				if ($result->isSuccess())
 					$requisiteId = $result->getId();
 			}
@@ -1440,7 +1440,7 @@ class PSRequisiteConverter
 				);
 				foreach ($info['BD'] as $bdName => $bdValue)
 					$fields[$bdName] = $bdValue;
-				$result = $bankDetail->add($fields);
+				$result = $bankDetail->add($fields, ['DISABLE_REQUIRED_USER_FIELD_CHECK' => true]);
 				if ($result->isSuccess())
 					$bankDetailId = $result->getId();
 			}

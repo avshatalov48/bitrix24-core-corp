@@ -2,6 +2,7 @@
 
 namespace Bitrix\Crm\Model\Dynamic;
 
+use Bitrix\Crm\AutomatedSolution\Entity\AutomatedSolutionTable;
 use Bitrix\Crm\Automation\Trigger\Entity\TriggerTable;
 use Bitrix\Crm\Binding\EntityContactTable;
 use Bitrix\Crm\Conversion\Entity\EntityConversionMapTable;
@@ -17,6 +18,8 @@ use Bitrix\Crm\Observer\Entity\ObserverTable;
 use Bitrix\Crm\ProductRowTable;
 use Bitrix\Crm\Recycling\DynamicController;
 use Bitrix\Crm\Relation\EntityRelationTable;
+use Bitrix\Crm\SequenceService;
+use Bitrix\Crm\Security\AccessAttribute\DynamicBasedAttrTableLifecycle;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Factory\Dynamic;
 use Bitrix\Crm\StatusTable;
@@ -26,6 +29,7 @@ use Bitrix\Main\Application;
 use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\DB\SqlExpression;
 use Bitrix\Main\DI\ServiceLocator;
+use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Main\Entity\Validator\RegExp;
 use Bitrix\Main\Error;
 use Bitrix\Main\InvalidOperationException;
@@ -127,6 +131,14 @@ class TypeTable extends UserField\Internal\TypeDataManager
 
 				return $nextId;
 			});
+		$fieldsMap[] = (new ORM\Fields\IntegerField('CUSTOM_SECTION_ID'))
+			->configureNullable()
+			->configureTitle(Loc::getMessage('CRM_TYPE_CUSTOM_SECTION_ID_TITLE'));
+		$fieldsMap[] = new ReferenceField(
+			'AUTOMATED_SOLUTION',
+			AutomatedSolutionTable::class,
+			['=this.CUSTOM_SECTION_ID' => 'ref.ID']
+		);
 		$fieldsMap[] = (new ORM\Fields\BooleanField('IS_CATEGORIES_ENABLED'))
 			->configureStorageValues('N', 'Y')
 			->configureDefaultValue('N')
@@ -275,37 +287,7 @@ class TypeTable extends UserField\Internal\TypeDataManager
 
 	public static function getNextAvailableEntityTypeId(): ?int
 	{
-		$entities = static::getList([
-			'select' => ['ENTITY_TYPE_ID'],
-		])->fetchAll();
-		$existingEntityIds = array_column($entities, 'ENTITY_TYPE_ID');
-		if (Loader::includeModule('recyclebin'))
-		{
-			$recycleHandlers = Recyclebin\Dynamic::getSurveyInfoFromRecyclebin();
-			foreach ($recycleHandlers as $handlerData)
-			{
-				$existingEntityIds[] = Recyclebin\Dynamic::resolveEntityTypeId($handlerData['NAME']);
-			}
-		}
-		$minimumIdentifier = \CCrmOwnerType::DynamicTypeStart;
-		$maximumIdentifier = (\CCrmOwnerType::DynamicTypeEnd - 1);
-		$availableIdentifiersCount = \CCrmOwnerType::DynamicTypeEnd - $minimumIdentifier;
-		if (empty($existingEntityIds))
-		{
-			return Random::getInt($minimumIdentifier, $maximumIdentifier);
-		}
-		$existingEntityIds = array_unique($existingEntityIds);
-		if (count($existingEntityIds) >= $availableIdentifiersCount)
-		{
-			return null;
-		}
-		$availableIdentifiers = array_diff(
-			range($minimumIdentifier, $maximumIdentifier),
-			$existingEntityIds
-		);
-		shuffle($availableIdentifiers);
-
-		return $availableIdentifiers[0];
+		return SequenceService::getInstance()->nextDynamicTypeId();
 	}
 
 	public static function getByEntityTypeId(int $entityTypeId): QueryResult
@@ -350,6 +332,8 @@ class TypeTable extends UserField\Internal\TypeDataManager
 			$factory = Container::getInstance()->getFactory($type->getEntityTypeId());
 			$factory?->createDefaultCategoryIfNotExist();
 
+			DynamicBasedAttrTableLifecycle::getInstance()->createTable($factory->getEntityName());
+
 			static::clearBindingMenuCache();
 		}
 
@@ -367,6 +351,10 @@ class TypeTable extends UserField\Internal\TypeDataManager
 
 		static::deleteItemIndexTable($typeData);
 		static::deleteItemFieldsContextTable($typeData);
+
+		DynamicBasedAttrTableLifecycle::getInstance()->dropTable(
+			 \CCrmOwnerType::ResolveName($typeData['ENTITY_TYPE_ID'] ?? '')
+		);
 
 		$entityTypeId = (int)$typeData['ENTITY_TYPE_ID'];
 
@@ -1001,6 +989,11 @@ class TypeTable extends UserField\Internal\TypeDataManager
 				'TYPE' => Field::TYPE_INTEGER,
 				'ATTRIBUTES' => [\CCrmFieldInfoAttr::Required, \CCrmFieldInfoAttr::Unique, \CCrmFieldInfoAttr::Immutable],
 				'TITLE' => Loc::getMessage('CRM_TYPE_ENTITY_TYPE_ID_TITLE_MSGVER_1'),
+			],
+			'CUSTOM_SECTION_ID' => [
+				'TYPE' => Field::TYPE_INTEGER,
+				'ATTRIBUTES' => [\CCrmFieldInfoAttr::Immutable],
+				'TITLE' => Loc::getMessage('CRM_TYPE_CUSTOM_SECTION_ID_TITLE'),
 			],
 			'IS_CATEGORIES_ENABLED' => [
 				'TYPE' => Field::TYPE_BOOLEAN,

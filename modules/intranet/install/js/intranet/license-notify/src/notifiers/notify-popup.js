@@ -5,6 +5,7 @@ import { DateTimeFormat } from 'main.date';
 import { LicenseNotify } from '../license-notify';
 import { LicenseNotificationPopupParams } from '../types/options';
 import { LicenseNotifier } from './license-notifier';
+import { BannerDispatcher } from 'ui.banner-dispatcher';
 
 export class NotifyPopup extends LicenseNotifier
 {
@@ -28,7 +29,13 @@ export class NotifyPopup extends LicenseNotifier
 
 	show(): void
 	{
-		this.#getPopup().show();
+		BannerDispatcher.critical.toQueue((onDone) => {
+			const popup = this.#getPopup();
+			popup.subscribe('onAfterClose', (event) => {
+				onDone();
+			});
+			popup.show();
+		});
 	}
 
 	close(): void

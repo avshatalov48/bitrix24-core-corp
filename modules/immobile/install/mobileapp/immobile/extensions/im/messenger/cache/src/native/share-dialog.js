@@ -31,7 +31,7 @@ jn.define('im/messenger/cache/share-dialog', (require, exports, module) => {
 					return;
 				}
 
-				const componentCode = MessengerParams.get('COMPONENT_CODE');
+				const componentCode = MessengerParams.getComponentCode();
 				if (componentCode === ComponentCode.imCopilotMessenger)
 				{
 					reject(new Error('Copilot recent cache not available for current app version'));

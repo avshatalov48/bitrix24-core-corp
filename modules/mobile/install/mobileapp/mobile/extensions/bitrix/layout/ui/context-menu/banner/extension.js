@@ -4,6 +4,7 @@
 jn.define('layout/ui/context-menu/banner', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const { Type } = require('type');
+	const { qrauth } = require('qrauth/utils');
 	const AppTheme = require('apptheme');
 
 	const BannerPositioning = {
@@ -14,10 +15,32 @@ jn.define('layout/ui/context-menu/banner', (require, exports, module) => {
 	const ButtonType = {
 		Transparent: 'transparent',
 		ActiveGreen: 'activeGreen',
+		Reject: 'reject',
 	};
 
 	/**
+	 * @typedef ContextMenuBannerProps
+	 * @property {?Object} banner
+	 * @property {string[]} banner.featureItems
+	 * @property {string} banner.imagePath
+	 * @property {string} banner.imageSvg
+	 * @property {?string} banner.positioning
+	 * @property {?string} banner.title
+	 * @property {?boolean} banner.showSubtitle
+	 * @property {?string} banner.buttonText
+	 * @property {?string} banner.rejectButtonText
+	 * @property {?string} banner.subtextAlign
+	 * @property {?string} banner.buttonType
+	 * @property {?object} banner.onButtonClick
+	 * @property {?object} banner.onRejectButtonClick
+	 * @property {?object} banner.onCloseBanner
+	 * @property {?object} banner.qrAuth
+	 * @property {string} banner.qrAuth.redirectUrl
+	 * @property {boolean} banner.showRejectButton
+	 * @property {boolean} banner.centerVertically
+	 *
 	 * @class ContextMenuBanner
+	 * @param {...ContextMenuBannerProps} props
 	 */
 	class ContextMenuBanner extends LayoutComponent
 	{
@@ -48,9 +71,18 @@ jn.define('layout/ui/context-menu/banner', (require, exports, module) => {
 			return BX.prop.getObject(this.props.banner, 'qrauth', {});
 		}
 
-		get bannerButtonText()
+		get buttonText()
 		{
 			return BX.prop.getString(this.props.banner, 'buttonText', Loc.getMessage('CONTEXT_MENU_BANNER_BUTTON'));
+		}
+
+		get rejectButtonText()
+		{
+			return BX.prop.getString(
+				this.props.banner,
+				'rejectButtonText',
+				Loc.getMessage('CONTEXT_MENU_REJECT_BANNER_BUTTON'),
+			);
 		}
 
 		get positioning()
@@ -68,9 +100,24 @@ jn.define('layout/ui/context-menu/banner', (require, exports, module) => {
 			return BX.prop.getString(this.props.banner, 'subtext', '');
 		}
 
+		get subtextAlign()
+		{
+			return BX.prop.getString(this.props.banner, 'subtextAlign', 'left');
+		}
+
 		get onButtonClick()
 		{
 			return BX.prop.getFunction(this.props.banner, 'onButtonClick', null);
+		}
+
+		get onRejectButtonClick()
+		{
+			return BX.prop.getFunction(this.props.banner, 'onRejectButtonClick', null);
+		}
+
+		get showRejectButton()
+		{
+			return BX.prop.getBoolean(this.props.banner, 'showRejectButton', false);
 		}
 
 		get onCloseBanner()
@@ -93,6 +140,11 @@ jn.define('layout/ui/context-menu/banner', (require, exports, module) => {
 			return BX.prop.getBoolean(this.props.banner, 'showSubtitle', true);
 		}
 
+		shouldCenterVertically()
+		{
+			return BX.prop.getBoolean(this.props.banner, 'centerVertically', false);
+		}
+
 		hasRedirectUrl()
 		{
 			return this.qrauthParameters && this.qrauthParameters.redirectUrl;
@@ -101,6 +153,11 @@ jn.define('layout/ui/context-menu/banner', (require, exports, module) => {
 		hasButtonAction()
 		{
 			return this.onButtonClick;
+		}
+
+		hasRejectButtonAction()
+		{
+			return this.onRejectButtonClick;
 		}
 
 		hasActionToCloseBanner()
@@ -140,7 +197,11 @@ jn.define('layout/ui/context-menu/banner', (require, exports, module) => {
 
 			return View(
 				{
-					style: styles.container(isHorizontalPositioning),
+					style: {
+						...styles.container(isHorizontalPositioning),
+						/*temporarily*/
+						marginTop: this.shouldCenterVertically() ? 120 : 0,
+					},
 				},
 				this.renderSubtitle(),
 				View(
@@ -162,6 +223,7 @@ jn.define('layout/ui/context-menu/banner', (require, exports, module) => {
 					this.renderSubtext(),
 				),
 				this.renderBannerButton(),
+				this.renderBannerButton(ButtonType.Reject),
 			);
 		}
 
@@ -234,16 +296,36 @@ jn.define('layout/ui/context-menu/banner', (require, exports, module) => {
 
 			return Text(
 				{
-					style: styles.subtext,
+					style: styles.subtext(this.subtextAlign),
 					text: this.subtext,
 				},
 			);
 		}
 
-		renderBannerButton()
+		getButtonType(forcedType = null)
+		{
+			if (forcedType !== null)
+			{
+				return forcedType;
+			}
+
+			if (this.hasButtonAction() || this.hasActionToCloseBanner())
+			{
+				return ButtonType.ActiveGreen;
+			}
+
+			return ButtonType.Transparent;
+		}
+
+		renderBannerButton(forcedType = null)
 		{
 			let action;
-			let buttonType = ButtonType.Transparent;
+			const buttonType = this.getButtonType(forcedType);
+
+			if (buttonType === ButtonType.Reject && !this.showRejectButton)
+			{
+				return null;
+			}
 
 			if (this.hasRedirectUrl())
 			{
@@ -257,16 +339,32 @@ jn.define('layout/ui/context-menu/banner', (require, exports, module) => {
 					}
 				};
 			}
-			else if (this.hasButtonAction())
+			else if (this.hasButtonAction() && buttonType !== ButtonType.Reject)
 			{
-				buttonType = ButtonType.ActiveGreen;
 				action = () => {
 					this.onButtonClick(this.parentWidget);
 				};
 			}
+			else if (this.hasRejectButtonAction() && buttonType === ButtonType.Reject)
+			{
+				if (this.hasActionToCloseBanner())
+				{
+					action = () => {
+						if (this.props.menu)
+						{
+							this.props.menu.close(() => this.onRejectButtonClick(this.parentWidget));
+						}
+					};
+				}
+				else
+				{
+					action = () => {
+						this.onRejectButtonClick(this.parentWidget);
+					};
+				}
+			}
 			else if (this.hasActionToCloseBanner())
 			{
-				buttonType = ButtonType.ActiveGreen;
 				action = () => {
 					if (this.props.menu)
 					{
@@ -288,7 +386,7 @@ jn.define('layout/ui/context-menu/banner', (require, exports, module) => {
 				Text(
 					{
 						style: styles.buttonText[buttonType],
-						text: this.bannerButtonText,
+						text: forcedType === ButtonType.Reject ? this.rejectButtonText : this.buttonText,
 					},
 				),
 			);
@@ -323,12 +421,14 @@ jn.define('layout/ui/context-menu/banner', (require, exports, module) => {
 			marginRight: 20,
 			marginBottom: 20,
 		},
-		subtext: {
+		subtext: (subtextAlign) => ({
+			textAlign: subtextAlign || 'left',
+			textAlign: 'center',
 			color: AppTheme.colors.base3,
 			fontSize: 13,
 			margin: 20,
 			marginBottom: 0,
-		},
+		}),
 		listContainer: (isHorizontalPositioning) => ({
 			flexDirection: isHorizontalPositioning ? 'row' : 'column',
 			flexGrow: 1,
@@ -390,6 +490,16 @@ jn.define('layout/ui/context-menu/banner', (require, exports, module) => {
 					borderRadius: 6,
 					borderWidth: 1,
 				},
+			reject:
+				{
+					borderColor: AppTheme.colors.bgContentPrimary,
+					marginTop: 8,
+					paddingHorizontal: 32,
+					paddingVertical: 11,
+					alignSelf: 'center',
+					borderRadius: 6,
+					borderWidth: 1,
+				},
 		},
 		buttonText: {
 			activeGreen:
@@ -400,6 +510,11 @@ jn.define('layout/ui/context-menu/banner', (require, exports, module) => {
 			transparent:
 				{
 					color: AppTheme.colors.base2,
+					fontSize: 15,
+				},
+			reject:
+				{
+					color: AppTheme.colors.baseWhiteFixed,
 					fontSize: 15,
 				},
 		},

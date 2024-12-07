@@ -28,7 +28,7 @@ if($component->hasItems())
 			'ITEMS' => $component->getItems()
 		)
 	);
-?><script type="text/javascript">
+?><script>
 	BX.ready(
 		function()
 		{

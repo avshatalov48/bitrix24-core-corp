@@ -12626,6 +12626,16 @@ namespace Bitrix\Crm\Security\Role\Model {
 	 * @method \Bitrix\Crm\Security\Role\Model\EO_RolePermission resetAttr()
 	 * @method \Bitrix\Crm\Security\Role\Model\EO_RolePermission unsetAttr()
 	 * @method \string fillAttr()
+	 * @method array getSettings()
+	 * @method \Bitrix\Crm\Security\Role\Model\EO_RolePermission setSettings(array|\Bitrix\Main\DB\SqlExpression $settings)
+	 * @method bool hasSettings()
+	 * @method bool isSettingsFilled()
+	 * @method bool isSettingsChanged()
+	 * @method array remindActualSettings()
+	 * @method array requireSettings()
+	 * @method \Bitrix\Crm\Security\Role\Model\EO_RolePermission resetSettings()
+	 * @method \Bitrix\Crm\Security\Role\Model\EO_RolePermission unsetSettings()
+	 * @method array fillSettings()
 	 *
 	 * Common methods:
 	 * ---------------
@@ -15905,6 +15915,208 @@ namespace Bitrix\Crm\Activity {
 	 */
 	class EO_MailMeta_Entity extends \Bitrix\Main\ORM\Entity {}
 }
+/* ORMENTITYANNOTATION:Bitrix\Crm\Activity\Provider\Sms\SmsPlaceholderTable:crm/lib/activity/provider/sms/smsplaceholder.php */
+namespace Bitrix\Crm\Activity\Provider\Sms {
+	/**
+	 * EO_SmsPlaceholder
+	 * @see \Bitrix\Crm\Activity\Provider\Sms\SmsPlaceholderTable
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 * @method \int getId()
+	 * @method \Bitrix\Crm\Activity\Provider\Sms\EO_SmsPlaceholder setId(\int|\Bitrix\Main\DB\SqlExpression $id)
+	 * @method bool hasId()
+	 * @method bool isIdFilled()
+	 * @method bool isIdChanged()
+	 * @method \int getEntityTypeId()
+	 * @method \Bitrix\Crm\Activity\Provider\Sms\EO_SmsPlaceholder setEntityTypeId(\int|\Bitrix\Main\DB\SqlExpression $entityTypeId)
+	 * @method bool hasEntityTypeId()
+	 * @method bool isEntityTypeIdFilled()
+	 * @method bool isEntityTypeIdChanged()
+	 * @method \int remindActualEntityTypeId()
+	 * @method \int requireEntityTypeId()
+	 * @method \Bitrix\Crm\Activity\Provider\Sms\EO_SmsPlaceholder resetEntityTypeId()
+	 * @method \Bitrix\Crm\Activity\Provider\Sms\EO_SmsPlaceholder unsetEntityTypeId()
+	 * @method \int fillEntityTypeId()
+	 * @method null|\int getEntityCategoryId()
+	 * @method \Bitrix\Crm\Activity\Provider\Sms\EO_SmsPlaceholder setEntityCategoryId(null|\int|\Bitrix\Main\DB\SqlExpression $entityCategoryId)
+	 * @method bool hasEntityCategoryId()
+	 * @method bool isEntityCategoryIdFilled()
+	 * @method bool isEntityCategoryIdChanged()
+	 * @method null|\int remindActualEntityCategoryId()
+	 * @method null|\int requireEntityCategoryId()
+	 * @method \Bitrix\Crm\Activity\Provider\Sms\EO_SmsPlaceholder resetEntityCategoryId()
+	 * @method \Bitrix\Crm\Activity\Provider\Sms\EO_SmsPlaceholder unsetEntityCategoryId()
+	 * @method null|\int fillEntityCategoryId()
+	 * @method \int getTemplateId()
+	 * @method \Bitrix\Crm\Activity\Provider\Sms\EO_SmsPlaceholder setTemplateId(\int|\Bitrix\Main\DB\SqlExpression $templateId)
+	 * @method bool hasTemplateId()
+	 * @method bool isTemplateIdFilled()
+	 * @method bool isTemplateIdChanged()
+	 * @method \int remindActualTemplateId()
+	 * @method \int requireTemplateId()
+	 * @method \Bitrix\Crm\Activity\Provider\Sms\EO_SmsPlaceholder resetTemplateId()
+	 * @method \Bitrix\Crm\Activity\Provider\Sms\EO_SmsPlaceholder unsetTemplateId()
+	 * @method \int fillTemplateId()
+	 * @method \string getPlaceholderId()
+	 * @method \Bitrix\Crm\Activity\Provider\Sms\EO_SmsPlaceholder setPlaceholderId(\string|\Bitrix\Main\DB\SqlExpression $placeholderId)
+	 * @method bool hasPlaceholderId()
+	 * @method bool isPlaceholderIdFilled()
+	 * @method bool isPlaceholderIdChanged()
+	 * @method \string remindActualPlaceholderId()
+	 * @method \string requirePlaceholderId()
+	 * @method \Bitrix\Crm\Activity\Provider\Sms\EO_SmsPlaceholder resetPlaceholderId()
+	 * @method \Bitrix\Crm\Activity\Provider\Sms\EO_SmsPlaceholder unsetPlaceholderId()
+	 * @method \string fillPlaceholderId()
+	 * @method \string getFieldName()
+	 * @method \Bitrix\Crm\Activity\Provider\Sms\EO_SmsPlaceholder setFieldName(\string|\Bitrix\Main\DB\SqlExpression $fieldName)
+	 * @method bool hasFieldName()
+	 * @method bool isFieldNameFilled()
+	 * @method bool isFieldNameChanged()
+	 * @method \string remindActualFieldName()
+	 * @method \string requireFieldName()
+	 * @method \Bitrix\Crm\Activity\Provider\Sms\EO_SmsPlaceholder resetFieldName()
+	 * @method \Bitrix\Crm\Activity\Provider\Sms\EO_SmsPlaceholder unsetFieldName()
+	 * @method \string fillFieldName()
+	 * @method \string getFieldEntityType()
+	 * @method \Bitrix\Crm\Activity\Provider\Sms\EO_SmsPlaceholder setFieldEntityType(\string|\Bitrix\Main\DB\SqlExpression $fieldEntityType)
+	 * @method bool hasFieldEntityType()
+	 * @method bool isFieldEntityTypeFilled()
+	 * @method bool isFieldEntityTypeChanged()
+	 * @method \string remindActualFieldEntityType()
+	 * @method \string requireFieldEntityType()
+	 * @method \Bitrix\Crm\Activity\Provider\Sms\EO_SmsPlaceholder resetFieldEntityType()
+	 * @method \Bitrix\Crm\Activity\Provider\Sms\EO_SmsPlaceholder unsetFieldEntityType()
+	 * @method \string fillFieldEntityType()
+	 * @method \string getFieldValue()
+	 * @method \Bitrix\Crm\Activity\Provider\Sms\EO_SmsPlaceholder setFieldValue(\string|\Bitrix\Main\DB\SqlExpression $fieldValue)
+	 * @method bool hasFieldValue()
+	 * @method bool isFieldValueFilled()
+	 * @method bool isFieldValueChanged()
+	 * @method \string remindActualFieldValue()
+	 * @method \string requireFieldValue()
+	 * @method \Bitrix\Crm\Activity\Provider\Sms\EO_SmsPlaceholder resetFieldValue()
+	 * @method \Bitrix\Crm\Activity\Provider\Sms\EO_SmsPlaceholder unsetFieldValue()
+	 * @method \string fillFieldValue()
+	 *
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @property-read \Bitrix\Main\ORM\Entity $entity
+	 * @property-read array $primary
+	 * @property-read int $state @see \Bitrix\Main\ORM\Objectify\State
+	 * @property-read \Bitrix\Main\Type\Dictionary $customData
+	 * @property \Bitrix\Main\Authentication\Context $authContext
+	 * @method mixed get($fieldName)
+	 * @method mixed remindActual($fieldName)
+	 * @method mixed require($fieldName)
+	 * @method bool has($fieldName)
+	 * @method bool isFilled($fieldName)
+	 * @method bool isChanged($fieldName)
+	 * @method \Bitrix\Crm\Activity\Provider\Sms\EO_SmsPlaceholder set($fieldName, $value)
+	 * @method \Bitrix\Crm\Activity\Provider\Sms\EO_SmsPlaceholder reset($fieldName)
+	 * @method \Bitrix\Crm\Activity\Provider\Sms\EO_SmsPlaceholder unset($fieldName)
+	 * @method void addTo($fieldName, $value)
+	 * @method void removeFrom($fieldName, $value)
+	 * @method void removeAll($fieldName)
+	 * @method \Bitrix\Main\ORM\Data\Result delete()
+	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
+	 * @method mixed[] collectValues($valuesType = \Bitrix\Main\ORM\Objectify\Values::ALL, $fieldsMask = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL)
+	 * @method \Bitrix\Main\ORM\Data\AddResult|\Bitrix\Main\ORM\Data\UpdateResult|\Bitrix\Main\ORM\Data\Result save()
+	 * @method static \Bitrix\Crm\Activity\Provider\Sms\EO_SmsPlaceholder wakeUp($data)
+	 */
+	class EO_SmsPlaceholder {
+		/* @var \Bitrix\Crm\Activity\Provider\Sms\SmsPlaceholderTable */
+		static public $dataClass = '\Bitrix\Crm\Activity\Provider\Sms\SmsPlaceholderTable';
+		/**
+		 * @param bool|array $setDefaultValues
+		 */
+		public function __construct($setDefaultValues = true) {}
+	}
+}
+namespace Bitrix\Crm\Activity\Provider\Sms {
+	/**
+	 * EO_SmsPlaceholder_Collection
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 * @method \int[] getIdList()
+	 * @method \int[] getEntityTypeIdList()
+	 * @method \int[] fillEntityTypeId()
+	 * @method null|\int[] getEntityCategoryIdList()
+	 * @method null|\int[] fillEntityCategoryId()
+	 * @method \int[] getTemplateIdList()
+	 * @method \int[] fillTemplateId()
+	 * @method \string[] getPlaceholderIdList()
+	 * @method \string[] fillPlaceholderId()
+	 * @method \string[] getFieldNameList()
+	 * @method \string[] fillFieldName()
+	 * @method \string[] getFieldEntityTypeList()
+	 * @method \string[] fillFieldEntityType()
+	 * @method \string[] getFieldValueList()
+	 * @method \string[] fillFieldValue()
+	 *
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @property-read \Bitrix\Main\ORM\Entity $entity
+	 * @method void add(\Bitrix\Crm\Activity\Provider\Sms\EO_SmsPlaceholder $object)
+	 * @method bool has(\Bitrix\Crm\Activity\Provider\Sms\EO_SmsPlaceholder $object)
+	 * @method bool hasByPrimary($primary)
+	 * @method \Bitrix\Crm\Activity\Provider\Sms\EO_SmsPlaceholder getByPrimary($primary)
+	 * @method \Bitrix\Crm\Activity\Provider\Sms\EO_SmsPlaceholder[] getAll()
+	 * @method bool remove(\Bitrix\Crm\Activity\Provider\Sms\EO_SmsPlaceholder $object)
+	 * @method void removeByPrimary($primary)
+	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
+	 * @method static \Bitrix\Crm\Activity\Provider\Sms\EO_SmsPlaceholder_Collection wakeUp($data)
+	 * @method \Bitrix\Main\ORM\Data\Result save($ignoreEvents = false)
+	 * @method void offsetSet() ArrayAccess
+	 * @method void offsetExists() ArrayAccess
+	 * @method void offsetUnset() ArrayAccess
+	 * @method void offsetGet() ArrayAccess
+	 * @method void rewind() Iterator
+	 * @method \Bitrix\Crm\Activity\Provider\Sms\EO_SmsPlaceholder current() Iterator
+	 * @method mixed key() Iterator
+	 * @method void next() Iterator
+	 * @method bool valid() Iterator
+	 * @method int count() Countable
+	 * @method EO_SmsPlaceholder_Collection merge(?EO_SmsPlaceholder_Collection $collection)
+	 * @method bool isEmpty()
+	 */
+	class EO_SmsPlaceholder_Collection implements \ArrayAccess, \Iterator, \Countable {
+		/* @var \Bitrix\Crm\Activity\Provider\Sms\SmsPlaceholderTable */
+		static public $dataClass = '\Bitrix\Crm\Activity\Provider\Sms\SmsPlaceholderTable';
+	}
+}
+namespace Bitrix\Crm\Activity\Provider\Sms {
+	/**
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @method EO_SmsPlaceholder_Result exec()
+	 * @method \Bitrix\Crm\Activity\Provider\Sms\EO_SmsPlaceholder fetchObject()
+	 * @method \Bitrix\Crm\Activity\Provider\Sms\EO_SmsPlaceholder_Collection fetchCollection()
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 */
+	class EO_SmsPlaceholder_Query extends \Bitrix\Main\ORM\Query\Query {}
+	/**
+	 * @method \Bitrix\Crm\Activity\Provider\Sms\EO_SmsPlaceholder fetchObject()
+	 * @method \Bitrix\Crm\Activity\Provider\Sms\EO_SmsPlaceholder_Collection fetchCollection()
+	 */
+	class EO_SmsPlaceholder_Result extends \Bitrix\Main\ORM\Query\Result {}
+	/**
+	 * @method \Bitrix\Crm\Activity\Provider\Sms\EO_SmsPlaceholder createObject($setDefaultValues = true)
+	 * @method \Bitrix\Crm\Activity\Provider\Sms\EO_SmsPlaceholder_Collection createCollection()
+	 * @method \Bitrix\Crm\Activity\Provider\Sms\EO_SmsPlaceholder wakeUpObject($row)
+	 * @method \Bitrix\Crm\Activity\Provider\Sms\EO_SmsPlaceholder_Collection wakeUpCollection($rows)
+	 */
+	class EO_SmsPlaceholder_Entity extends \Bitrix\Main\ORM\Entity {}
+}
 /* ORMENTITYANNOTATION:Bitrix\Crm\Activity\MailBodyTable:crm/lib/activity/mailbody.php */
 namespace Bitrix\Crm\Activity {
 	/**
@@ -18086,6 +18298,16 @@ namespace Bitrix\Crm\Integration\AI\Model {
 	 * @method \Bitrix\Crm\Integration\AI\Model\EO_Queue resetFinishedTime()
 	 * @method \Bitrix\Crm\Integration\AI\Model\EO_Queue unsetFinishedTime()
 	 * @method null|\Bitrix\Main\Type\DateTime fillFinishedTime()
+	 * @method null|\string getLanguageId()
+	 * @method \Bitrix\Crm\Integration\AI\Model\EO_Queue setLanguageId(null|\string|\Bitrix\Main\DB\SqlExpression $languageId)
+	 * @method bool hasLanguageId()
+	 * @method bool isLanguageIdFilled()
+	 * @method bool isLanguageIdChanged()
+	 * @method null|\string remindActualLanguageId()
+	 * @method null|\string requireLanguageId()
+	 * @method \Bitrix\Crm\Integration\AI\Model\EO_Queue resetLanguageId()
+	 * @method \Bitrix\Crm\Integration\AI\Model\EO_Queue unsetLanguageId()
+	 * @method null|\string fillLanguageId()
 	 *
 	 * Common methods:
 	 * ---------------
@@ -18168,6 +18390,8 @@ namespace Bitrix\Crm\Integration\AI\Model {
 	 * @method \Bitrix\Main\Type\DateTime[] fillCreatedTime()
 	 * @method null|\Bitrix\Main\Type\DateTime[] getFinishedTimeList()
 	 * @method null|\Bitrix\Main\Type\DateTime[] fillFinishedTime()
+	 * @method null|\string[] getLanguageIdList()
+	 * @method null|\string[] fillLanguageId()
 	 *
 	 * Common methods:
 	 * ---------------
@@ -20096,6 +20320,247 @@ namespace Bitrix\Crm\Terminal {
 	 * @method \Bitrix\Crm\Terminal\EO_TerminalPayment_Collection wakeUpCollection($rows)
 	 */
 	class EO_TerminalPayment_Entity extends \Bitrix\Main\ORM\Entity {}
+}
+/* ORMENTITYANNOTATION:Bitrix\Crm\AutomatedSolution\Entity\AutomatedSolutionTable:crm/lib/automatedsolution/entity/automatedsolutiontable.php */
+namespace Bitrix\Crm\AutomatedSolution\Entity {
+	/**
+	 * EO_AutomatedSolution
+	 * @see \Bitrix\Crm\AutomatedSolution\Entity\AutomatedSolutionTable
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 * @method \int getId()
+	 * @method \Bitrix\Crm\AutomatedSolution\Entity\EO_AutomatedSolution setId(\int|\Bitrix\Main\DB\SqlExpression $id)
+	 * @method bool hasId()
+	 * @method bool isIdFilled()
+	 * @method bool isIdChanged()
+	 * @method \int getIntranetCustomSectionId()
+	 * @method \Bitrix\Crm\AutomatedSolution\Entity\EO_AutomatedSolution setIntranetCustomSectionId(\int|\Bitrix\Main\DB\SqlExpression $intranetCustomSectionId)
+	 * @method bool hasIntranetCustomSectionId()
+	 * @method bool isIntranetCustomSectionIdFilled()
+	 * @method bool isIntranetCustomSectionIdChanged()
+	 * @method \int remindActualIntranetCustomSectionId()
+	 * @method \int requireIntranetCustomSectionId()
+	 * @method \Bitrix\Crm\AutomatedSolution\Entity\EO_AutomatedSolution resetIntranetCustomSectionId()
+	 * @method \Bitrix\Crm\AutomatedSolution\Entity\EO_AutomatedSolution unsetIntranetCustomSectionId()
+	 * @method \int fillIntranetCustomSectionId()
+	 * @method \Bitrix\Intranet\CustomSection\Entity\EO_CustomSection getIntranetCustomSection()
+	 * @method \Bitrix\Intranet\CustomSection\Entity\EO_CustomSection remindActualIntranetCustomSection()
+	 * @method \Bitrix\Intranet\CustomSection\Entity\EO_CustomSection requireIntranetCustomSection()
+	 * @method \Bitrix\Crm\AutomatedSolution\Entity\EO_AutomatedSolution setIntranetCustomSection(\Bitrix\Intranet\CustomSection\Entity\EO_CustomSection $object)
+	 * @method \Bitrix\Crm\AutomatedSolution\Entity\EO_AutomatedSolution resetIntranetCustomSection()
+	 * @method \Bitrix\Crm\AutomatedSolution\Entity\EO_AutomatedSolution unsetIntranetCustomSection()
+	 * @method bool hasIntranetCustomSection()
+	 * @method bool isIntranetCustomSectionFilled()
+	 * @method bool isIntranetCustomSectionChanged()
+	 * @method \Bitrix\Intranet\CustomSection\Entity\EO_CustomSection fillIntranetCustomSection()
+	 * @method \string getTitle()
+	 * @method \Bitrix\Crm\AutomatedSolution\Entity\EO_AutomatedSolution setTitle(\string|\Bitrix\Main\DB\SqlExpression $title)
+	 * @method bool hasTitle()
+	 * @method bool isTitleFilled()
+	 * @method bool isTitleChanged()
+	 * @method \string remindActualTitle()
+	 * @method \string requireTitle()
+	 * @method \Bitrix\Crm\AutomatedSolution\Entity\EO_AutomatedSolution resetTitle()
+	 * @method \Bitrix\Crm\AutomatedSolution\Entity\EO_AutomatedSolution unsetTitle()
+	 * @method \string fillTitle()
+	 * @method \string getCode()
+	 * @method \Bitrix\Crm\AutomatedSolution\Entity\EO_AutomatedSolution setCode(\string|\Bitrix\Main\DB\SqlExpression $code)
+	 * @method bool hasCode()
+	 * @method bool isCodeFilled()
+	 * @method bool isCodeChanged()
+	 * @method \string remindActualCode()
+	 * @method \string requireCode()
+	 * @method \Bitrix\Crm\AutomatedSolution\Entity\EO_AutomatedSolution resetCode()
+	 * @method \Bitrix\Crm\AutomatedSolution\Entity\EO_AutomatedSolution unsetCode()
+	 * @method \string fillCode()
+	 * @method \int getSort()
+	 * @method \Bitrix\Crm\AutomatedSolution\Entity\EO_AutomatedSolution setSort(\int|\Bitrix\Main\DB\SqlExpression $sort)
+	 * @method bool hasSort()
+	 * @method bool isSortFilled()
+	 * @method bool isSortChanged()
+	 * @method \int remindActualSort()
+	 * @method \int requireSort()
+	 * @method \Bitrix\Crm\AutomatedSolution\Entity\EO_AutomatedSolution resetSort()
+	 * @method \Bitrix\Crm\AutomatedSolution\Entity\EO_AutomatedSolution unsetSort()
+	 * @method \int fillSort()
+	 * @method \Bitrix\Main\Type\DateTime getCreatedTime()
+	 * @method \Bitrix\Crm\AutomatedSolution\Entity\EO_AutomatedSolution setCreatedTime(\Bitrix\Main\Type\DateTime|\Bitrix\Main\DB\SqlExpression $createdTime)
+	 * @method bool hasCreatedTime()
+	 * @method bool isCreatedTimeFilled()
+	 * @method bool isCreatedTimeChanged()
+	 * @method \Bitrix\Main\Type\DateTime remindActualCreatedTime()
+	 * @method \Bitrix\Main\Type\DateTime requireCreatedTime()
+	 * @method \Bitrix\Crm\AutomatedSolution\Entity\EO_AutomatedSolution resetCreatedTime()
+	 * @method \Bitrix\Crm\AutomatedSolution\Entity\EO_AutomatedSolution unsetCreatedTime()
+	 * @method \Bitrix\Main\Type\DateTime fillCreatedTime()
+	 * @method \Bitrix\Main\Type\DateTime getUpdatedTime()
+	 * @method \Bitrix\Crm\AutomatedSolution\Entity\EO_AutomatedSolution setUpdatedTime(\Bitrix\Main\Type\DateTime|\Bitrix\Main\DB\SqlExpression $updatedTime)
+	 * @method bool hasUpdatedTime()
+	 * @method bool isUpdatedTimeFilled()
+	 * @method bool isUpdatedTimeChanged()
+	 * @method \Bitrix\Main\Type\DateTime remindActualUpdatedTime()
+	 * @method \Bitrix\Main\Type\DateTime requireUpdatedTime()
+	 * @method \Bitrix\Crm\AutomatedSolution\Entity\EO_AutomatedSolution resetUpdatedTime()
+	 * @method \Bitrix\Crm\AutomatedSolution\Entity\EO_AutomatedSolution unsetUpdatedTime()
+	 * @method \Bitrix\Main\Type\DateTime fillUpdatedTime()
+	 * @method \int getCreatedBy()
+	 * @method \Bitrix\Crm\AutomatedSolution\Entity\EO_AutomatedSolution setCreatedBy(\int|\Bitrix\Main\DB\SqlExpression $createdBy)
+	 * @method bool hasCreatedBy()
+	 * @method bool isCreatedByFilled()
+	 * @method bool isCreatedByChanged()
+	 * @method \int remindActualCreatedBy()
+	 * @method \int requireCreatedBy()
+	 * @method \Bitrix\Crm\AutomatedSolution\Entity\EO_AutomatedSolution resetCreatedBy()
+	 * @method \Bitrix\Crm\AutomatedSolution\Entity\EO_AutomatedSolution unsetCreatedBy()
+	 * @method \int fillCreatedBy()
+	 * @method \int getUpdatedBy()
+	 * @method \Bitrix\Crm\AutomatedSolution\Entity\EO_AutomatedSolution setUpdatedBy(\int|\Bitrix\Main\DB\SqlExpression $updatedBy)
+	 * @method bool hasUpdatedBy()
+	 * @method bool isUpdatedByFilled()
+	 * @method bool isUpdatedByChanged()
+	 * @method \int remindActualUpdatedBy()
+	 * @method \int requireUpdatedBy()
+	 * @method \Bitrix\Crm\AutomatedSolution\Entity\EO_AutomatedSolution resetUpdatedBy()
+	 * @method \Bitrix\Crm\AutomatedSolution\Entity\EO_AutomatedSolution unsetUpdatedBy()
+	 * @method \int fillUpdatedBy()
+	 * @method \Bitrix\Crm\Model\Dynamic\EO_Type_Collection getTypes()
+	 * @method \Bitrix\Crm\Model\Dynamic\EO_Type_Collection requireTypes()
+	 * @method \Bitrix\Crm\Model\Dynamic\EO_Type_Collection fillTypes()
+	 * @method bool hasTypes()
+	 * @method bool isTypesFilled()
+	 * @method bool isTypesChanged()
+	 * @method void addToTypes(\Bitrix\Crm\Model\Dynamic\Type $type)
+	 * @method void removeFromTypes(\Bitrix\Crm\Model\Dynamic\Type $type)
+	 * @method void removeAllTypes()
+	 * @method \Bitrix\Crm\AutomatedSolution\Entity\EO_AutomatedSolution resetTypes()
+	 * @method \Bitrix\Crm\AutomatedSolution\Entity\EO_AutomatedSolution unsetTypes()
+	 *
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @property-read \Bitrix\Main\ORM\Entity $entity
+	 * @property-read array $primary
+	 * @property-read int $state @see \Bitrix\Main\ORM\Objectify\State
+	 * @property-read \Bitrix\Main\Type\Dictionary $customData
+	 * @property \Bitrix\Main\Authentication\Context $authContext
+	 * @method mixed get($fieldName)
+	 * @method mixed remindActual($fieldName)
+	 * @method mixed require($fieldName)
+	 * @method bool has($fieldName)
+	 * @method bool isFilled($fieldName)
+	 * @method bool isChanged($fieldName)
+	 * @method \Bitrix\Crm\AutomatedSolution\Entity\EO_AutomatedSolution set($fieldName, $value)
+	 * @method \Bitrix\Crm\AutomatedSolution\Entity\EO_AutomatedSolution reset($fieldName)
+	 * @method \Bitrix\Crm\AutomatedSolution\Entity\EO_AutomatedSolution unset($fieldName)
+	 * @method void addTo($fieldName, $value)
+	 * @method void removeFrom($fieldName, $value)
+	 * @method void removeAll($fieldName)
+	 * @method \Bitrix\Main\ORM\Data\Result delete()
+	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
+	 * @method mixed[] collectValues($valuesType = \Bitrix\Main\ORM\Objectify\Values::ALL, $fieldsMask = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL)
+	 * @method \Bitrix\Main\ORM\Data\AddResult|\Bitrix\Main\ORM\Data\UpdateResult|\Bitrix\Main\ORM\Data\Result save()
+	 * @method static \Bitrix\Crm\AutomatedSolution\Entity\EO_AutomatedSolution wakeUp($data)
+	 */
+	class EO_AutomatedSolution {
+		/* @var \Bitrix\Crm\AutomatedSolution\Entity\AutomatedSolutionTable */
+		static public $dataClass = '\Bitrix\Crm\AutomatedSolution\Entity\AutomatedSolutionTable';
+		/**
+		 * @param bool|array $setDefaultValues
+		 */
+		public function __construct($setDefaultValues = true) {}
+	}
+}
+namespace Bitrix\Crm\AutomatedSolution\Entity {
+	/**
+	 * EO_AutomatedSolution_Collection
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 * @method \int[] getIdList()
+	 * @method \int[] getIntranetCustomSectionIdList()
+	 * @method \int[] fillIntranetCustomSectionId()
+	 * @method \Bitrix\Intranet\CustomSection\Entity\EO_CustomSection[] getIntranetCustomSectionList()
+	 * @method \Bitrix\Crm\AutomatedSolution\Entity\EO_AutomatedSolution_Collection getIntranetCustomSectionCollection()
+	 * @method \Bitrix\Intranet\CustomSection\Entity\EO_CustomSection_Collection fillIntranetCustomSection()
+	 * @method \string[] getTitleList()
+	 * @method \string[] fillTitle()
+	 * @method \string[] getCodeList()
+	 * @method \string[] fillCode()
+	 * @method \int[] getSortList()
+	 * @method \int[] fillSort()
+	 * @method \Bitrix\Main\Type\DateTime[] getCreatedTimeList()
+	 * @method \Bitrix\Main\Type\DateTime[] fillCreatedTime()
+	 * @method \Bitrix\Main\Type\DateTime[] getUpdatedTimeList()
+	 * @method \Bitrix\Main\Type\DateTime[] fillUpdatedTime()
+	 * @method \int[] getCreatedByList()
+	 * @method \int[] fillCreatedBy()
+	 * @method \int[] getUpdatedByList()
+	 * @method \int[] fillUpdatedBy()
+	 * @method \Bitrix\Crm\Model\Dynamic\EO_Type_Collection[] getTypesList()
+	 * @method \Bitrix\Crm\Model\Dynamic\EO_Type_Collection getTypesCollection()
+	 * @method \Bitrix\Crm\Model\Dynamic\EO_Type_Collection fillTypes()
+	 *
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @property-read \Bitrix\Main\ORM\Entity $entity
+	 * @method void add(\Bitrix\Crm\AutomatedSolution\Entity\EO_AutomatedSolution $object)
+	 * @method bool has(\Bitrix\Crm\AutomatedSolution\Entity\EO_AutomatedSolution $object)
+	 * @method bool hasByPrimary($primary)
+	 * @method \Bitrix\Crm\AutomatedSolution\Entity\EO_AutomatedSolution getByPrimary($primary)
+	 * @method \Bitrix\Crm\AutomatedSolution\Entity\EO_AutomatedSolution[] getAll()
+	 * @method bool remove(\Bitrix\Crm\AutomatedSolution\Entity\EO_AutomatedSolution $object)
+	 * @method void removeByPrimary($primary)
+	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
+	 * @method static \Bitrix\Crm\AutomatedSolution\Entity\EO_AutomatedSolution_Collection wakeUp($data)
+	 * @method \Bitrix\Main\ORM\Data\Result save($ignoreEvents = false)
+	 * @method void offsetSet() ArrayAccess
+	 * @method void offsetExists() ArrayAccess
+	 * @method void offsetUnset() ArrayAccess
+	 * @method void offsetGet() ArrayAccess
+	 * @method void rewind() Iterator
+	 * @method \Bitrix\Crm\AutomatedSolution\Entity\EO_AutomatedSolution current() Iterator
+	 * @method mixed key() Iterator
+	 * @method void next() Iterator
+	 * @method bool valid() Iterator
+	 * @method int count() Countable
+	 * @method EO_AutomatedSolution_Collection merge(?EO_AutomatedSolution_Collection $collection)
+	 * @method bool isEmpty()
+	 */
+	class EO_AutomatedSolution_Collection implements \ArrayAccess, \Iterator, \Countable {
+		/* @var \Bitrix\Crm\AutomatedSolution\Entity\AutomatedSolutionTable */
+		static public $dataClass = '\Bitrix\Crm\AutomatedSolution\Entity\AutomatedSolutionTable';
+	}
+}
+namespace Bitrix\Crm\AutomatedSolution\Entity {
+	/**
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @method EO_AutomatedSolution_Result exec()
+	 * @method \Bitrix\Crm\AutomatedSolution\Entity\EO_AutomatedSolution fetchObject()
+	 * @method \Bitrix\Crm\AutomatedSolution\Entity\EO_AutomatedSolution_Collection fetchCollection()
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 */
+	class EO_AutomatedSolution_Query extends \Bitrix\Main\ORM\Query\Query {}
+	/**
+	 * @method \Bitrix\Crm\AutomatedSolution\Entity\EO_AutomatedSolution fetchObject()
+	 * @method \Bitrix\Crm\AutomatedSolution\Entity\EO_AutomatedSolution_Collection fetchCollection()
+	 */
+	class EO_AutomatedSolution_Result extends \Bitrix\Main\ORM\Query\Result {}
+	/**
+	 * @method \Bitrix\Crm\AutomatedSolution\Entity\EO_AutomatedSolution createObject($setDefaultValues = true)
+	 * @method \Bitrix\Crm\AutomatedSolution\Entity\EO_AutomatedSolution_Collection createCollection()
+	 * @method \Bitrix\Crm\AutomatedSolution\Entity\EO_AutomatedSolution wakeUpObject($row)
+	 * @method \Bitrix\Crm\AutomatedSolution\Entity\EO_AutomatedSolution_Collection wakeUpCollection($rows)
+	 */
+	class EO_AutomatedSolution_Entity extends \Bitrix\Main\ORM\Entity {}
 }
 /* ORMENTITYANNOTATION:Bitrix\Crm\DealTable:crm/lib/deal.php */
 namespace Bitrix\Crm {
@@ -26127,6 +26592,26 @@ namespace Bitrix\Crm\Model\Dynamic {
 	 * @method \Bitrix\Crm\Model\Dynamic\Type resetEntityTypeId()
 	 * @method \Bitrix\Crm\Model\Dynamic\Type unsetEntityTypeId()
 	 * @method \int fillEntityTypeId()
+	 * @method null|\int getCustomSectionId()
+	 * @method \Bitrix\Crm\Model\Dynamic\Type setCustomSectionId(null|\int|\Bitrix\Main\DB\SqlExpression $customSectionId)
+	 * @method bool hasCustomSectionId()
+	 * @method bool isCustomSectionIdFilled()
+	 * @method bool isCustomSectionIdChanged()
+	 * @method null|\int remindActualCustomSectionId()
+	 * @method null|\int requireCustomSectionId()
+	 * @method \Bitrix\Crm\Model\Dynamic\Type resetCustomSectionId()
+	 * @method \Bitrix\Crm\Model\Dynamic\Type unsetCustomSectionId()
+	 * @method null|\int fillCustomSectionId()
+	 * @method \Bitrix\Crm\AutomatedSolution\Entity\EO_AutomatedSolution getAutomatedSolution()
+	 * @method \Bitrix\Crm\AutomatedSolution\Entity\EO_AutomatedSolution remindActualAutomatedSolution()
+	 * @method \Bitrix\Crm\AutomatedSolution\Entity\EO_AutomatedSolution requireAutomatedSolution()
+	 * @method \Bitrix\Crm\Model\Dynamic\Type setAutomatedSolution(\Bitrix\Crm\AutomatedSolution\Entity\EO_AutomatedSolution $object)
+	 * @method \Bitrix\Crm\Model\Dynamic\Type resetAutomatedSolution()
+	 * @method \Bitrix\Crm\Model\Dynamic\Type unsetAutomatedSolution()
+	 * @method bool hasAutomatedSolution()
+	 * @method bool isAutomatedSolutionFilled()
+	 * @method bool isAutomatedSolutionChanged()
+	 * @method \Bitrix\Crm\AutomatedSolution\Entity\EO_AutomatedSolution fillAutomatedSolution()
 	 * @method \boolean getIsCategoriesEnabled()
 	 * @method \Bitrix\Crm\Model\Dynamic\Type setIsCategoriesEnabled(\boolean|\Bitrix\Main\DB\SqlExpression $isCategoriesEnabled)
 	 * @method bool hasIsCategoriesEnabled()
@@ -26383,6 +26868,11 @@ namespace Bitrix\Crm\Model\Dynamic {
 	 * @method \int[] fillCreatedBy()
 	 * @method \int[] getEntityTypeIdList()
 	 * @method \int[] fillEntityTypeId()
+	 * @method null|\int[] getCustomSectionIdList()
+	 * @method null|\int[] fillCustomSectionId()
+	 * @method \Bitrix\Crm\AutomatedSolution\Entity\EO_AutomatedSolution[] getAutomatedSolutionList()
+	 * @method \Bitrix\Crm\Model\Dynamic\EO_Type_Collection getAutomatedSolutionCollection()
+	 * @method \Bitrix\Crm\AutomatedSolution\Entity\EO_AutomatedSolution_Collection fillAutomatedSolution()
 	 * @method \boolean[] getIsCategoriesEnabledList()
 	 * @method \boolean[] fillIsCategoriesEnabled()
 	 * @method \boolean[] getIsStagesEnabledList()
@@ -38489,6 +38979,172 @@ namespace Bitrix\Crm\Timeline\Entity {
 	 * @method \Bitrix\Crm\Timeline\Entity\EO_Timeline_Collection wakeUpCollection($rows)
 	 */
 	class EO_Timeline_Entity extends \Bitrix\Main\ORM\Entity {}
+}
+/* ORMENTITYANNOTATION:Bitrix\Crm\Timeline\Entity\RestAppLayoutBlocksTable:crm\lib\timeline\entity\restapplayoutblocks.php */
+namespace Bitrix\Crm\Timeline\Entity {
+	/**
+	 * EO_RestAppLayoutBlocks
+	 * @see \Bitrix\Crm\Timeline\Entity\RestAppLayoutBlocksTable
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 * @method \int getId()
+	 * @method \Bitrix\Crm\Timeline\Entity\EO_RestAppLayoutBlocks setId(\int|\Bitrix\Main\DB\SqlExpression $id)
+	 * @method bool hasId()
+	 * @method bool isIdFilled()
+	 * @method bool isIdChanged()
+	 * @method \int getItemType()
+	 * @method \Bitrix\Crm\Timeline\Entity\EO_RestAppLayoutBlocks setItemType(\int|\Bitrix\Main\DB\SqlExpression $itemType)
+	 * @method bool hasItemType()
+	 * @method bool isItemTypeFilled()
+	 * @method bool isItemTypeChanged()
+	 * @method \int remindActualItemType()
+	 * @method \int requireItemType()
+	 * @method \Bitrix\Crm\Timeline\Entity\EO_RestAppLayoutBlocks resetItemType()
+	 * @method \Bitrix\Crm\Timeline\Entity\EO_RestAppLayoutBlocks unsetItemType()
+	 * @method \int fillItemType()
+	 * @method \int getItemId()
+	 * @method \Bitrix\Crm\Timeline\Entity\EO_RestAppLayoutBlocks setItemId(\int|\Bitrix\Main\DB\SqlExpression $itemId)
+	 * @method bool hasItemId()
+	 * @method bool isItemIdFilled()
+	 * @method bool isItemIdChanged()
+	 * @method \int remindActualItemId()
+	 * @method \int requireItemId()
+	 * @method \Bitrix\Crm\Timeline\Entity\EO_RestAppLayoutBlocks resetItemId()
+	 * @method \Bitrix\Crm\Timeline\Entity\EO_RestAppLayoutBlocks unsetItemId()
+	 * @method \int fillItemId()
+	 * @method \string getClientId()
+	 * @method \Bitrix\Crm\Timeline\Entity\EO_RestAppLayoutBlocks setClientId(\string|\Bitrix\Main\DB\SqlExpression $clientId)
+	 * @method bool hasClientId()
+	 * @method bool isClientIdFilled()
+	 * @method bool isClientIdChanged()
+	 * @method \string remindActualClientId()
+	 * @method \string requireClientId()
+	 * @method \Bitrix\Crm\Timeline\Entity\EO_RestAppLayoutBlocks resetClientId()
+	 * @method \Bitrix\Crm\Timeline\Entity\EO_RestAppLayoutBlocks unsetClientId()
+	 * @method \string fillClientId()
+	 * @method \string getLayout()
+	 * @method \Bitrix\Crm\Timeline\Entity\EO_RestAppLayoutBlocks setLayout(\string|\Bitrix\Main\DB\SqlExpression $layout)
+	 * @method bool hasLayout()
+	 * @method bool isLayoutFilled()
+	 * @method bool isLayoutChanged()
+	 * @method \string remindActualLayout()
+	 * @method \string requireLayout()
+	 * @method \Bitrix\Crm\Timeline\Entity\EO_RestAppLayoutBlocks resetLayout()
+	 * @method \Bitrix\Crm\Timeline\Entity\EO_RestAppLayoutBlocks unsetLayout()
+	 * @method \string fillLayout()
+	 *
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @property-read \Bitrix\Main\ORM\Entity $entity
+	 * @property-read array $primary
+	 * @property-read int $state @see \Bitrix\Main\ORM\Objectify\State
+	 * @property-read \Bitrix\Main\Type\Dictionary $customData
+	 * @property \Bitrix\Main\Authentication\Context $authContext
+	 * @method mixed get($fieldName)
+	 * @method mixed remindActual($fieldName)
+	 * @method mixed require($fieldName)
+	 * @method bool has($fieldName)
+	 * @method bool isFilled($fieldName)
+	 * @method bool isChanged($fieldName)
+	 * @method \Bitrix\Crm\Timeline\Entity\EO_RestAppLayoutBlocks set($fieldName, $value)
+	 * @method \Bitrix\Crm\Timeline\Entity\EO_RestAppLayoutBlocks reset($fieldName)
+	 * @method \Bitrix\Crm\Timeline\Entity\EO_RestAppLayoutBlocks unset($fieldName)
+	 * @method void addTo($fieldName, $value)
+	 * @method void removeFrom($fieldName, $value)
+	 * @method void removeAll($fieldName)
+	 * @method \Bitrix\Main\ORM\Data\Result delete()
+	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
+	 * @method mixed[] collectValues($valuesType = \Bitrix\Main\ORM\Objectify\Values::ALL, $fieldsMask = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL)
+	 * @method \Bitrix\Main\ORM\Data\AddResult|\Bitrix\Main\ORM\Data\UpdateResult|\Bitrix\Main\ORM\Data\Result save()
+	 * @method static \Bitrix\Crm\Timeline\Entity\EO_RestAppLayoutBlocks wakeUp($data)
+	 */
+	class EO_RestAppLayoutBlocks {
+		/* @var \Bitrix\Crm\Timeline\Entity\RestAppLayoutBlocksTable */
+		static public $dataClass = '\Bitrix\Crm\Timeline\Entity\RestAppLayoutBlocksTable';
+		/**
+		 * @param bool|array $setDefaultValues
+		 */
+		public function __construct($setDefaultValues = true) {}
+	}
+}
+namespace Bitrix\Crm\Timeline\Entity {
+	/**
+	 * EO_RestAppLayoutBlocks_Collection
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 * @method \int[] getIdList()
+	 * @method \int[] getItemTypeList()
+	 * @method \int[] fillItemType()
+	 * @method \int[] getItemIdList()
+	 * @method \int[] fillItemId()
+	 * @method \string[] getClientIdList()
+	 * @method \string[] fillClientId()
+	 * @method \string[] getLayoutList()
+	 * @method \string[] fillLayout()
+	 *
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @property-read \Bitrix\Main\ORM\Entity $entity
+	 * @method void add(\Bitrix\Crm\Timeline\Entity\EO_RestAppLayoutBlocks $object)
+	 * @method bool has(\Bitrix\Crm\Timeline\Entity\EO_RestAppLayoutBlocks $object)
+	 * @method bool hasByPrimary($primary)
+	 * @method \Bitrix\Crm\Timeline\Entity\EO_RestAppLayoutBlocks getByPrimary($primary)
+	 * @method \Bitrix\Crm\Timeline\Entity\EO_RestAppLayoutBlocks[] getAll()
+	 * @method bool remove(\Bitrix\Crm\Timeline\Entity\EO_RestAppLayoutBlocks $object)
+	 * @method void removeByPrimary($primary)
+	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
+	 * @method static \Bitrix\Crm\Timeline\Entity\EO_RestAppLayoutBlocks_Collection wakeUp($data)
+	 * @method \Bitrix\Main\ORM\Data\Result save($ignoreEvents = false)
+	 * @method void offsetSet() ArrayAccess
+	 * @method void offsetExists() ArrayAccess
+	 * @method void offsetUnset() ArrayAccess
+	 * @method void offsetGet() ArrayAccess
+	 * @method void rewind() Iterator
+	 * @method \Bitrix\Crm\Timeline\Entity\EO_RestAppLayoutBlocks current() Iterator
+	 * @method mixed key() Iterator
+	 * @method void next() Iterator
+	 * @method bool valid() Iterator
+	 * @method int count() Countable
+	 * @method \Bitrix\Crm\Timeline\Entity\EO_RestAppLayoutBlocks_Collection merge(?\Bitrix\Crm\Timeline\Entity\EO_RestAppLayoutBlocks_Collection $collection)
+	 * @method bool isEmpty()
+	 */
+	class EO_RestAppLayoutBlocks_Collection implements \ArrayAccess, \Iterator, \Countable {
+		/* @var \Bitrix\Crm\Timeline\Entity\RestAppLayoutBlocksTable */
+		static public $dataClass = '\Bitrix\Crm\Timeline\Entity\RestAppLayoutBlocksTable';
+	}
+}
+namespace Bitrix\Crm\Timeline\Entity {
+	/**
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @method EO_RestAppLayoutBlocks_Result exec()
+	 * @method \Bitrix\Crm\Timeline\Entity\EO_RestAppLayoutBlocks fetchObject()
+	 * @method \Bitrix\Crm\Timeline\Entity\EO_RestAppLayoutBlocks_Collection fetchCollection()
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 */
+	class EO_RestAppLayoutBlocks_Query extends \Bitrix\Main\ORM\Query\Query {}
+	/**
+	 * @method \Bitrix\Crm\Timeline\Entity\EO_RestAppLayoutBlocks fetchObject()
+	 * @method \Bitrix\Crm\Timeline\Entity\EO_RestAppLayoutBlocks_Collection fetchCollection()
+	 */
+	class EO_RestAppLayoutBlocks_Result extends \Bitrix\Main\ORM\Query\Result {}
+	/**
+	 * @method \Bitrix\Crm\Timeline\Entity\EO_RestAppLayoutBlocks createObject($setDefaultValues = true)
+	 * @method \Bitrix\Crm\Timeline\Entity\EO_RestAppLayoutBlocks_Collection createCollection()
+	 * @method \Bitrix\Crm\Timeline\Entity\EO_RestAppLayoutBlocks wakeUpObject($row)
+	 * @method \Bitrix\Crm\Timeline\Entity\EO_RestAppLayoutBlocks_Collection wakeUpCollection($rows)
+	 */
+	class EO_RestAppLayoutBlocks_Entity extends \Bitrix\Main\ORM\Entity {}
 }
 /* ORMENTITYANNOTATION:Bitrix\Crm\Timeline\Entity\CustomIconTable:crm/lib/timeline/entity/customicon.php */
 namespace Bitrix\Crm\Timeline\Entity {

@@ -2,9 +2,9 @@
  * @module im/messenger/lib/element/dialog/message/video
  */
 jn.define('im/messenger/lib/element/dialog/message/video', (require, exports, module) => {
-	const { Type } = require('type');
-
+	const { MessageType } = require('im/messenger/const');
 	const { Message } = require('im/messenger/lib/element/dialog/message/base');
+	const { Video } = require('im/messenger/lib/element/dialog/message/element/video/video');
 
 	/**
 	 * @class VideoMessage
@@ -20,145 +20,27 @@ jn.define('im/messenger/lib/element/dialog/message/video', (require, exports, mo
 		{
 			super(modelMessage, options);
 
-			/* region deprecated properties */
-			this.videoUrl = null;
-			this.localVideoUrl = null;
-			this.previewImage = null;
-			this.previewParams = {
-				height: 0,
-				width: 0,
-			};
-			/* end region */
-
-			this.video = {
-				id: 0,
-				localUrl: null,
-				url: null,
-				previewParams: {
-					height: 0,
-					width: 0,
-				},
-				size: 0,
-			};
-
 			if (modelMessage.text !== '')
 			{
-				this.setMessage(modelMessage.text);
+				this.setMessage(modelMessage.text, { dialogId: options.dialogId });
 			}
-
-			if (Type.isNumber(file.id))
-			{
-				this.setVideoId(file.id);
-			}
-
-			if (Type.isStringFilled(file.urlShow))
-			{
-				this.setVideoUrl(file.urlShow);
-			}
-
-			if (Type.isStringFilled(file.localUrl))
-			{
-				this.setLocalVideoUrl(file.localUrl);
-			}
-
-			if (Type.isStringFilled(file.urlPreview))
-			{
-				this.setPreviewImage(file.urlPreview);
-			}
-
-			if (Type.isNumber(file.size))
-			{
-				this.setSize(file.size);
-			}
-
-			this.setPreviewParams(file.image);
 
 			this.setShowTail(true);
 			this.setLoadText();
-		}
 
-		setVideoId(videoId)
-		{
-			if (!Type.isNumber(videoId))
-			{
-				return;
-			}
+			this.video = Video.createByFileModel(file).toMessageFormat();
 
-			this.video.id = videoId.toString();
-		}
-
-		/**
-		 * @param {string} value
-		 * @private
-		 */
-		setVideoUrl(value)
-		{
-			this.videoUrl = value;
-			this.video.url = value;
-		}
-
-		/**
-		 * @param {string} value
-		 * @private
-		 */
-		setLocalVideoUrl(value)
-		{
-			this.localVideoUrl = value;
-			this.video.localUrl = value;
-		}
-
-		/**
-		 * @param {string} value
-		 * @private
-		 */
-		setPreviewImage(value)
-		{
-			this.previewImage = value;
-			this.video.previewImage = value;
-		}
-
-		/**
-		 * @param {object|boolean} param
-		 * @param {number} param.height
-		 * @param {number} param.width
-		 * @private
-		 */
-		setPreviewParams(param)
-		{
-			if (Type.isObject(param))
-			{
-				this.previewParams = {
-					height: param.height || 0,
-					width: param.width || 0,
-				};
-
-				this.video.previewParams = {
-					height: param.height || 0,
-					width: param.width || 0,
-				};
-			}
-			else
-			{
-				this.previewParams = {
-					height: 0,
-					width: 0,
-				};
-
-				this.video.previewParams = {
-					height: 0,
-					width: 0,
-				};
-			}
-		}
-
-		setSize(size)
-		{
-			this.video.size = size;
+			/* region deprecated properties */
+			this.videoUrl = this.video.url;
+			this.localVideoUrl = this.video.localUrl;
+			this.previewImage = this.video.previewImage;
+			this.previewParams = this.video.previewParams;
+			/* end region */
 		}
 
 		getType()
 		{
-			return 'video';
+			return MessageType.video;
 		}
 
 		setShowTail()

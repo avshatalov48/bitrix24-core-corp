@@ -14,6 +14,7 @@ use Bitrix\Tasks\Access\Permission\TasksTemplatePermissionTable;
 use Bitrix\Tasks\Internals\Task\MemberTable;
 use Bitrix\Tasks\Internals\Task\Template\ScenarioTable;
 use Bitrix\Tasks\Internals\Task\Template\TemplateMemberTable;
+use Bitrix\Tasks\Internals\Task\Template\TemplateTagTable;
 use Bitrix\Tasks\Util\User;
 use \CDBResult;
 use \CUserTypeSQL;
@@ -129,7 +130,7 @@ class TemplateProvider
 
 		$query = $this->buildQuery();
 
-		if ($dbRes = $this->db->Query($query, false, "File: ".__FILE__."<br>Line: ".__LINE__))
+		if ($dbRes = $this->db->Query($query))
 		{
 			if ($arRes = $dbRes->Fetch())
 			{
@@ -138,6 +139,30 @@ class TemplateProvider
 		}
 
 		return 0;
+	}
+
+	public static function getById(int $id, array $select = ['*']): ?array
+	{
+		if ($id <= 0 || [] === $select)
+		{
+			return null;
+		}
+
+		global $DB, $USER_FIELD_MANAGER;
+		$provider = new self($DB, $USER_FIELD_MANAGER);
+
+		$template = $provider->getList(arFilter: ['ID' => $id], arSelect: $select)->Fetch();
+		if (false === $template)
+		{
+			return null;
+		}
+
+		if (in_array('TAGS', $select, true))
+		{
+			$template['TAGS'] = $provider->getTags($template['ID']);
+		}
+
+		return $template;
 	}
 
 	private function getMembers(array $templateIds): array
@@ -226,7 +251,7 @@ class TemplateProvider
 			if ($nTopCount > 0)
 			{
 				$query = $this->db->TopSql($query, $nTopCount);
-				$res = $this->db->Query($query, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
+				$res = $this->db->Query($query);
 
 				$res->SetUserFields($this->userFieldManager->GetUserFields("TASKS_TASK_TEMPLATE"));
 			}
@@ -241,7 +266,7 @@ class TemplateProvider
 		}
 		else
 		{
-			$res = $this->db->Query($query, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
+			$res = $this->db->Query($query);
 			$res->SetUserFields($this->userFieldManager->GetUserFields("TASKS_TASK_TEMPLATE"));
 		}
 
@@ -662,7 +687,7 @@ class TemplateProvider
 					$fieldsToLike = array(
 						"TT.TITLE",
 						"TT.DESCRIPTION",
-						"CONCAT_WS(' ', CU.NAME, CU.LAST_NAME, CU.SECOND_NAME, CU.LOGIN, RU.NAME, RU.LAST_NAME, RU.SECOND_NAME, RU.LOGIN)"
+						"CONCAT_WS(' ', CU.NAME, CU.LAST_NAME, CU.SECOND_NAME, CU.LOGIN, RU.NAME, RU.LAST_NAME, RU.SECOND_NAME, RU.LOGIN)",
 					);
 
 					$filter = '(';
@@ -735,5 +760,15 @@ class TemplateProvider
 		}
 
 		$this->executorId = $this->userId;
+	}
+
+	private function getTags(int $templateId): array
+	{
+		$tags = TemplateTagTable::query()
+			->setSelect(['NAME'])
+			->where('TEMPLATE_ID',$templateId)
+			->fetchAll();
+
+		return array_column($tags, 'NAME');
 	}
 }

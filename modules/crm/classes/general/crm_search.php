@@ -319,7 +319,7 @@ class CCrmSearch
 	{
 		$arFilter = array();
 		$ENTITY_TYPE = 'LEAD';
-		if (isset($NS['ID']) && $NS['ID'] <> '' && preg_match('/^[A-Z]+\.\d+$/'.BX_UTF_PCRE_MODIFIER, $NS['ID']))
+		if (isset($NS['ID']) && $NS['ID'] <> '' && preg_match('/^[A-Z]+\.\d+$/u', $NS['ID']))
 		{
 			$arTemp = explode('.', $NS['ID']);
 			$ENTITY_TYPE = $arTemp[0];

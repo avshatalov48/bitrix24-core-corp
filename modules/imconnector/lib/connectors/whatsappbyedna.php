@@ -49,8 +49,8 @@ class WhatsappByEdna extends Base
 	{
 		$text = str_replace(["\n", "[br]", "#br#", "[BR]", "#BR#"], "\n", $text);
 		$text = preg_replace("/\[[buis]\](.*?)\[\/[buis]\]/i", "$1", $text);
-		$text = preg_replace("/\\[url\\](.*?)\\[\\/url\\]/i" . BX_UTF_PCRE_MODIFIER, "$1", $text);
-		$text = preg_replace_callback("/\\[url\\s*=\\s*((?:[^\\[\\]]++|\\[ (?: (?>[^\\[\\]]+) | (?:\\1) )* \\])+)\\s*\\](.*?)\\[\\/url\\]/ixs" . BX_UTF_PCRE_MODIFIER,
+		$text = preg_replace("/\\[url\\](.*?)\\[\\/url\\]/iu", "$1", $text);
+		$text = preg_replace_callback("/\\[url\\s*=\\s*((?:[^\\[\\]]++|\\[ (?: (?>[^\\[\\]]+) | (?:\\1) )* \\])+)\\s*\\](.*?)\\[\\/url\\]/ixsu",
 			function (&$matches) {
 				if ($matches[2] != $matches[1])
 					return $matches[2] . ': ' . $matches[1];

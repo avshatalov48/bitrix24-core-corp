@@ -88,6 +88,6 @@ class Context
 
 	final public function isClosedEntity(): bool
 	{
-		return ComparerBase::isClosed($this->getIdentifier());
+		return ComparerBase::isClosed($this->getIdentifier(), true);
 	}
 }

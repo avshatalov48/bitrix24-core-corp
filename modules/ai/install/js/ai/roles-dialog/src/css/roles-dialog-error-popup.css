@@ -1,0 +1,38 @@
+.ai__roles-dialog_error-popup-inner {
+	width: 100%;
+	height: 100%;
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: center;
+}
+
+.ai__roles-dialog_error-popup-content {
+	max-width: 450px;
+	display: flex;
+	flex-direction: column;
+	justify-content: flex-start;
+	align-items: center;
+}
+
+.ai__roles-dialog_error-popup-content-warning-icon {
+	width: 100px;
+	height: 100px;
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: center;
+	border: 3px solid rgba(176, 149, 220, 0.25);
+	border-radius: var(--ui-border-radius-circle);
+	margin-bottom: 20px;
+}
+
+.ai__roles-dialog_error-popup-content-error-text {
+	margin: 0;
+	font-size: var(--ui-font-size-lg);
+	line-height: var(--ui-font-line-height-3xs);
+	color: var(--ui-color-base-50);
+	letter-spacing: 0;
+	text-align: center;
+}
+

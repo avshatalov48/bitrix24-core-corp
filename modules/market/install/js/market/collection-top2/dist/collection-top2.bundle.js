@@ -1,5 +1,5 @@
 this.BX = this.BX || {};
-(function (exports,market_collectionTop2List) {
+(function (exports,market_collectionTop2List,market_marketLinks) {
 	'use strict';
 
 	const CollectionTop2 = {
@@ -7,6 +7,11 @@ this.BX = this.BX || {};
 	    CollectionTop2List: market_collectionTop2List.CollectionTop2List
 	  },
 	  props: ['item', 'scrollable', 'showListButton'],
+	  data() {
+	    return {
+	      MarketLinks: market_marketLinks.MarketLinks
+	    };
+	  },
 	  mounted: function () {
 	    if (this.scrollable) {
 	      new BX.UI.Ears({
@@ -29,7 +34,7 @@ this.BX = this.BX || {};
 						:title="item.NAME"
 					>
 						<a class="market-toplist-title-text-link"
-						   :href="$root.getCollectionUri(item.COLLECTION_ID, item.SHOW_ON_PAGE)"
+						   :href="MarketLinks.collectionLink(item.COLLECTION_ID, item.SHOW_ON_PAGE)"
 						   data-slider-ignore-autobinding="true"
 						   data-load-content="list"
 						   @click.prevent="$root.emitLoadContent"
@@ -45,7 +50,7 @@ this.BX = this.BX || {};
 				</div>
 				<div class="market-toplist-header-block --not-compressible">
 					<a class="market-toplist-more-btn"
-					   :href="$root.getCollectionUri(item.COLLECTION_ID, item.SHOW_ON_PAGE)"
+					   :href="MarketLinks.collectionLink(item.COLLECTION_ID, item.SHOW_ON_PAGE)"
 					   data-slider-ignore-autobinding="true"
 					   data-load-content="list"
 					   @click.prevent="$root.emitLoadContent"
@@ -82,4 +87,4 @@ this.BX = this.BX || {};
 
 	exports.CollectionTop2 = CollectionTop2;
 
-}((this.BX.Market = this.BX.Market || {}),BX.Market));
+}((this.BX.Market = this.BX.Market || {}),BX.Market,BX.Market));

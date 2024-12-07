@@ -45,6 +45,8 @@ class PushService
 	 */
 	public static function addEvent($recipients, array $params): void
 	{
+		$params = self::preparePullManagerParams($params);
+
 		$parameters = [
 			'RECIPIENTS' => $recipients,
 			'PARAMS' => $params,
@@ -55,6 +57,8 @@ class PushService
 
 	public static function addEventByTag(string $tag, array $params): void
 	{
+		$params = self::preparePullManagerParams($params);
+
 		$parameters = [
 			'TAG' => $tag,
 			'PARAMS' => $params,
@@ -105,7 +109,14 @@ class PushService
 		{
 			if (isset($event['TAG']) && $event['TAG'] !== '')
 			{
-				\CPullWatch::AddToStack($event['TAG'], $event['PARAMS']);
+				$eventName = $event['PARAMS']['params']['eventName'] ?? null;
+				$userId = $event['PARAMS']['params']['userId'] ?? null;
+				$isPullUnsubscribe = $eventName === PushCommand::TASK_PULL_UNSUBSCRIBE;
+
+				($isPullUnsubscribe && $userId)
+					? \CPullWatch::Delete($userId, $event['TAG'])
+					: \CPullWatch::AddToStack($event['TAG'], $event['PARAMS'])
+				;
 			}
 			else
 			{
@@ -114,4 +125,18 @@ class PushService
 		}
 	}
 
+	private static function preparePullManagerParams(array $params): array
+	{
+		$pullManagerParams = [
+			'eventName' => $params['command'],
+			'item' => [],
+			'skipCurrentUser' => false,
+			'eventId' => null,
+			'ignoreDelay' => false,
+		];
+
+		$params['params'] = array_merge($params['params'], $pullManagerParams);
+
+		return $params;
+	}
 }

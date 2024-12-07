@@ -198,7 +198,7 @@ class WaitController extends EntityController
 	{
 		$description = isset($fields['DESCRIPTION']) ? $fields['DESCRIPTION'] : '';
 		$fields['DESCRIPTION_BBCODE'] = '';
-		$fields['DESCRIPTION_HTML'] = preg_replace("/[\r\n]+/".BX_UTF_PCRE_MODIFIER, "<br/>", htmlspecialcharsbx($description));
+		$fields['DESCRIPTION_HTML'] = preg_replace("/[\r\n]+/u", "<br/>", htmlspecialcharsbx($description));
 		$fields['DESCRIPTION_RAW'] = $description;
 		unset($fields['DESCRIPTION']);
 
@@ -214,7 +214,7 @@ class WaitController extends EntityController
 
 		$description = isset($data['DESCRIPTION']) ? $data['DESCRIPTION'] : '';
 		$data['DESCRIPTION_BBCODE'] = '';
-		$data['DESCRIPTION_HTML'] = preg_replace("/[\r\n]+/".BX_UTF_PCRE_MODIFIER, "<br/>", htmlspecialcharsbx($description));
+		$data['DESCRIPTION_HTML'] = preg_replace("/[\r\n]+/u", "<br/>", htmlspecialcharsbx($description));
 		$data['DESCRIPTION_RAW'] = $description;
 
 		if(isset($data['END_TIME']))

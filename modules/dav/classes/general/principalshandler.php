@@ -28,20 +28,26 @@ class CDavPrincipalsHandler
 	public function CheckPrivileges($testPrivileges, $principal, $collectionId)
 	{
 		if (is_object($principal) && ($principal instanceof CDavPrincipal))
+		{
 			$principal = $principal->Id();
+		}
 
 		if (!is_numeric($principal))
+		{
 			return false;
+		}
 
 		$principal = intval($principal);
 
-		return ($testPrivileges == "DAV::read");
+		return ($testPrivileges === "DAV::read");
 	}
 
 	public function GetHomeCollectionUrl($siteId, $account, $arPath)
 	{
 		if (is_null($siteId))
+		{
 			return "";
+		}
 
 		return "/principals/";
 	}
@@ -57,12 +63,16 @@ class CDavPrincipalsHandler
 		$currentPrincipal = $request->GetPrincipal();
 
 		if (!$this->CheckPrivileges('DAV::read', $currentPrincipal, 0))
+		{
 			return '403 Forbidden';
+		}
 
 		$requestDocument = $request->GetXmlDocument();
 
-		if ($requestDocument->GetRoot() && $requestDocument->GetRoot()->GetTag() != 'propfind')
+		if ($requestDocument->GetRoot() && $requestDocument->GetRoot()->GetTag() !== 'propfind')
+		{
 			return '501 Not Implemented';
+		}
 
 		if (!is_null($arPath) && count($arPath) > 0)
 		{
@@ -136,16 +146,20 @@ class CDavPrincipalsHandler
 
 			if ($depth)
 			{
-				$arGroups = CDavAccount::GetAccountsList("group");
+				$arGroups = CDavAccount::GetAccountsList("group", $siteId);
 				foreach ($arGroups as $v)
+				{
 					$this->AddGroup($arResources, $siteId, $v);
+				}
 			}
 		}
 		else
 		{
 			$arGroup = CDavAccount::GetAccountById($account);
 			if (!$arGroup)
+			{
 				return '404 Not Found';
+			}
 
 			$this->AddGroup($arResources, $siteId, $arGroup);
 		}
@@ -170,16 +184,20 @@ class CDavPrincipalsHandler
 
 			if ($depth)
 			{
-				$arUsers = CDavAccount::GetAccountsList("user", array(), array('!UF_DEPARTMENT' => false));
+				$arUsers = CDavAccount::GetAccountsList("user", $siteId, array(), array('!UF_DEPARTMENT' => false));
 				foreach ($arUsers as $u)
+				{
 					$this->AddUser($arResources, $siteId, $u);
+				}
 			}
 		}
 		else
 		{
 			$arUser = CDavAccount::GetAccountById($account);
 			if (!$arUser)
+			{
 				return '404 Not Found';
+			}
 
 			$this->AddUser($arResources, $siteId, $arUser);
 		}

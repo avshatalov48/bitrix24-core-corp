@@ -5,6 +5,7 @@ namespace Bitrix\Tasks\Integration\Bizproc\Document;
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\NotImplementedException;
+use Bitrix\Main\UserTable;
 use Bitrix\Tasks\Integration\Bizproc\Automation\Factory;
 use Bitrix\Tasks\Internals\Task\Mark;
 use Bitrix\Tasks\Internals\Task\MemberTable;
@@ -455,6 +456,8 @@ class Task implements \IBPWorkflowDocument
 			;
 			$fields['COMMENT_RESULT_LAST'] = \Bitrix\Tasks\Internals\Task\Result\ResultManager::getLastResult((int)$documentId);
 		}
+
+		$fields = self::setFlowMessages($fields);
 
 		static::convertFieldsToDocument($fields);
 
@@ -1029,5 +1032,45 @@ class Task implements \IBPWorkflowDocument
 		$result = array_filter($result, fn($date) => \CheckDateTime($date));
 
 		return $multiple ? $result : reset($result);
+	}
+
+	private static function setFlowMessages(array $fields): array
+	{
+		$userLang = self::getUserLanguage((int)$fields['RESPONSIBLE_ID']);
+
+		$fields['HALF_TIME_BEFORE_EXPIRE_MESSAGE'] = Loc::getMessage(
+			'TASKS_FLOW_NOTIFICATION_MESSAGE_HALF_TIME_BEFORE_EXPIRE_MESSAGE',
+			[
+				'{groupId}' => $fields['GROUP_ID'] ?? null,
+				'{taskId}' => $fields['ID'],
+				'{taskTitle}' => $fields['TITLE'],
+
+			],
+			$userLang
+		);
+
+		return $fields;
+	}
+
+	private static function getUserLanguage(null|int $userId): null|string
+	{
+		if (!$userId)
+		{
+			return null;
+		}
+
+		$res = UserTable::query()
+			->where('ID', $userId)
+			->setSelect([
+				'NOTIFICATION_LANGUAGE_ID'
+			])
+			->exec()
+			->fetchObject()
+		;
+
+		return ($res)
+			? $res->getNotificationLanguageId()
+			: null
+			;
 	}
 }

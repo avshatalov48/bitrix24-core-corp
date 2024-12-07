@@ -7,9 +7,9 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 $createTimeAliases = [];
 $isAIEnabledInGlobalSettings = false;
+$isAIHasPackages = false;
 $allAIOperationTypes = [];
 $transcribeAIOperationType = 0;
-$langAdditional = [];
 
 if (\Bitrix\Main\Loader::includeModule('crm'))
 {
@@ -24,13 +24,13 @@ if (\Bitrix\Main\Loader::includeModule('crm'))
 	}
 
 	$isAIEnabledInGlobalSettings = \Bitrix\Crm\Integration\AI\AIManager::isEnabledInGlobalSettings();
-	if (\Bitrix\Crm\Integration\AI\AIManager::isAiCallAutomaticProcessingAllowed())
+	$isAIHasPackages = \Bitrix\Crm\Integration\AI\AIManager::isBaasServiceHasPackage();
+
+	if ($isAIHasPackages && \Bitrix\Crm\Integration\AI\AIManager::isAiCallAutomaticProcessingAllowed())
 	{
 		$allAIOperationTypes = \Bitrix\Crm\Integration\AI\AIManager::getAllOperationTypes();
 		$transcribeAIOperationType = \Bitrix\Crm\Integration\AI\Operation\TranscribeCallRecording::TYPE_ID;
 	}
-
-	$langAdditional['CRM_COMMON_COPILOT'] = $container->getLocalization()->loadMessages()['CRM_COMMON_COPILOT'] ?? null;
 }
 
 return [
@@ -39,18 +39,21 @@ return [
 	'rel' => [
 		'crm.activity.todo-notification-skip-menu',
 		'crm.activity.todo-ping-settings-menu',
-		'main.core.events',
-		'main.core',
 		'crm.kanban.restriction',
 		'crm.kanban.sort',
+		'main.core.events',
 		'main.popup',
+		'ui.entity-selector',
+		'main.core',
 	],
 	'skip_core' => false,
 	'settings' => [
 		'createTimeAliases' => $createTimeAliases,
 		'isAIEnabledInGlobalSettings' => $isAIEnabledInGlobalSettings,
+		'isAIHasPackages' => $isAIHasPackages,
 		'allAIOperationTypes' => $allAIOperationTypes,
 		'transcribeAIOperationType' => $transcribeAIOperationType,
+		'aiDisabledSliderCode' => \Bitrix\Crm\Integration\AI\AIManager::AI_DISABLED_SLIDER_CODE,
+		'aiPackagesEmptySliderCode' => \Bitrix\Crm\Integration\AI\AIManager::AI_PACKAGES_EMPTY_SLIDER_CODE,
 	],
-	'lang_additional' => $langAdditional,
 ];

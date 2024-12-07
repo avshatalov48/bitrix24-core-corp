@@ -289,7 +289,7 @@ jn.define('im/messenger/lib/dev/menu/dialog-snippets', (require, exports, module
 					type: 'chats',
 					selected: false,
 					disable: false,
-					isPressed: true,
+					isWithPressed: true,
 				};
 			});
 		}

@@ -79,6 +79,7 @@ class BasketItemsSynchronizer
 			if ($existRow)
 			{
 				$row = array_merge($existRow, [
+					'PRODUCT_ID' => $row['PRODUCT_ID'],
 					'PRICE' => $row['PRICE'],
 					'PRICE_EXCLUSIVE' => $row['PRICE_EXCLUSIVE'],
 					'PRICE_NETTO' => $row['PRICE_NETTO'],

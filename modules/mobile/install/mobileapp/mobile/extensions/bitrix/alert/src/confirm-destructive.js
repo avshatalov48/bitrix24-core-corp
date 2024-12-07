@@ -11,8 +11,8 @@ jn.define('alert/src/confirm-destructive', (require, exports, module) => {
 	 * @param {object} props
 	 * @param {string} [props.title]
 	 * @param {string} [props.description]
-	 * @param {function} [props.onSave]
-	 * @param {function} [props.onClose]
+	 * @param {function} [props.onDestruct]
+	 * @param {function} [props.onCancel]
 	 */
 	const confirmDestructiveAction = (props = {}) => {
 		const {

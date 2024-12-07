@@ -3,6 +3,7 @@
  */
 jn.define('im/messenger/core/chat/application', (require, exports, module) => {
 	const { CoreApplication } = require('im/messenger/core/base/application');
+	const { EntityReady } = require('entity-ready');
 	const {
 		VuexManager,
 		StateStorageSaveStrategy,
@@ -15,6 +16,9 @@ jn.define('im/messenger/core/chat/application', (require, exports, module) => {
 	{
 		async initStoreManager()
 		{
+			this.isReady = false;
+			EntityReady.addCondition('chat-core', () => this.isReady);
+
 			this.storeManager = new VuexManager(this.getStore())
 				.enableMultiContext({
 					storeName: 'immobile-messenger-store',
@@ -29,7 +33,10 @@ jn.define('im/messenger/core/chat/application', (require, exports, module) => {
 				})
 			;
 
-			await this.storeManager.buildAsync();
+			await this.storeManager.buildAsync(this.getMutationManager());
+
+			this.isReady = true;
+			EntityReady.ready('chat-core');
 		}
 
 		/**

@@ -1,12 +1,14 @@
 import { ReceiverRepository } from 'crm.messagesender';
 import type { StageModelData } from 'crm.stage-model';
 import { StageModel } from 'crm.stage-model';
+import { PermissionChecker as StagePermissionChecker } from 'crm.stage.permission-checker';
 import { ajax as Ajax, Dom, Loc, Reflection, Runtime, Tag, Text, Type, Uri } from 'main.core';
 import { BaseEvent, EventEmitter } from 'main.core.events';
 import { Loader } from 'main.loader';
 import { PopupMenu } from 'main.popup';
 import { MessageBox, MessageBoxButtons } from 'ui.dialogs.messagebox';
 import { StageFlow } from 'ui.stageflow';
+import { Chart as ItemDetailsChart } from 'crm.item-details-component.stage-flow';
 
 export type ItemDetailsComponentParams = {
 	entityTypeId: number,
@@ -49,6 +51,7 @@ export class ItemDetailsComponent
 	categories: ?Category[];
 	errorTextContainer: HTMLElement;
 	stages: StageModel[];
+	permissionChecker: ?StagePermissionChecker = null;
 	stageflowChart: StageFlow.Chart;
 	currentStageId: number;
 	isProgress: boolean;
@@ -93,13 +96,17 @@ export class ItemDetailsComponent
 			{
 				this.errorTextContainer = params.errorTextContainer;
 			}
-			if(Type.isArray(params.stages))
+
+			if (Type.isArray(params.stages))
 			{
 				this.stages = [];
 				params.stages.forEach((data) => {
 					this.stages.push(new StageModel(data));
 				});
+
+				this.permissionChecker = StagePermissionChecker.createFromStageModels(this.stages);
 			}
+
 			this.currentStageId = params.currentStageId;
 			this.messages = params.messages;
 			this.signedParameters = params.signedParameters;
@@ -125,6 +132,11 @@ export class ItemDetailsComponent
 		this.container = document.querySelector('[data-role="crm-item-detail-container"]');
 		this.handleClosePartialEntityEditor = this.handleClosePartialEntityEditor.bind(this);
 		this.handleErrorPartialEntityEditor = this.handleErrorPartialEntityEditor.bind(this);
+	}
+
+	isNew(): boolean
+	{
+		return this.id <= 0;
 	}
 
 	getCurrentCategory(): ?Category
@@ -338,37 +350,49 @@ export class ItemDetailsComponent
 
 	initStageFlow()
 	{
-		if(this.stages)
+		if (!this.stages)
 		{
-			const flowStagesData = this.prepareStageFlowStagesData();
-			const stageFlowContainer = document.querySelector('[data-role="stageflow-wrap"]');
-			if(stageFlowContainer)
-			{
-				this.stageflowChart = new StageFlow.Chart({
-					backgroundColor: BACKGROUND_COLOR,
-					currentStage: this.currentStageId,
-					isActive: this.isStageFlowActive === true,
-					onStageChange: this.onStageChange.bind(this),
-					labels: {
-						finalStageName: Loc.getMessage('CRM_ITEM_DETAIL_STAGEFLOW_FINAL_STAGE_NAME'),
-						finalStagePopupTitle: Loc.getMessage('CRM_ITEM_DETAIL_STAGEFLOW_FINAL_STAGE_POPUP'),
-						finalStagePopupFail: Loc.getMessage('CRM_ITEM_DETAIL_STAGEFLOW_FINAL_STAGE_POPUP_FAIL'),
-						finalStageSelectorTitle: Loc.getMessage('CRM_ITEM_DETAIL_STAGEFLOW_FINAL_STAGE_SELECTOR'),
-					},
-				}, flowStagesData);
-				stageFlowContainer.appendChild(this.stageflowChart.render());
-			}
+			return;
 		}
+
+		const flowStagesData = this.prepareStageFlowStagesData();
+		const stageFlowContainer = document.querySelector('[data-role="stageflow-wrap"]');
+		if (!stageFlowContainer)
+		{
+			return;
+		}
+
+		const chartParams = {
+			backgroundColor: BACKGROUND_COLOR,
+			currentStage: this.currentStageId,
+			isActive: this.isStageFlowActive === true,
+			onStageChange: this.onStageChange.bind(this),
+			labels: {
+				finalStageName: Loc.getMessage('CRM_ITEM_DETAIL_STAGEFLOW_FINAL_STAGE_NAME'),
+				finalStagePopupTitle: Loc.getMessage('CRM_ITEM_DETAIL_STAGEFLOW_FINAL_STAGE_POPUP'),
+				finalStagePopupFail: Loc.getMessage('CRM_ITEM_DETAIL_STAGEFLOW_FINAL_STAGE_POPUP_FAIL'),
+				finalStageSelectorTitle: Loc.getMessage('CRM_ITEM_DETAIL_STAGEFLOW_FINAL_STAGE_SELECTOR'),
+			},
+		};
+
+		this.stageflowChart = new ItemDetailsChart(
+			chartParams,
+			flowStagesData,
+			this.permissionChecker,
+			this.getStageById.bind(this),
+			this.isNew(),
+		);
+
+		Dom.append(this.stageflowChart.render(), stageFlowContainer);
 	}
 
 	prepareStageFlowStagesData(): Array
 	{
 		const flowStagesData = [];
-		const isNew = (this.id <= 0);
 		this.stages.forEach((stage: StageModel) => {
 			const data = stage.getData();
 			let color = (stage.getColor().indexOf('#') === 0) ? stage.getColor().substr(1) : stage.getColor();
-			if(isNew)
+			if (this.isNew())
 			{
 				color = BACKGROUND_COLOR;
 			}

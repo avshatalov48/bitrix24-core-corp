@@ -10,10 +10,7 @@ jn.define('tasks/statemanager/redux/slices/kanban-settings/src/slice', (require,
 		updateStagesOrder,
 	} = require('tasks/statemanager/redux/slices/kanban-settings/thunk');
 
-	const {
-		sliceName,
-		adapter,
-	} = require('tasks/statemanager/redux/slices/kanban-settings/meta');
+	const { sliceName, initialState } = require('tasks/statemanager/redux/slices/kanban-settings/meta');
 
 	const {
 		fetchStagesPending,
@@ -23,7 +20,12 @@ jn.define('tasks/statemanager/redux/slices/kanban-settings/src/slice', (require,
 		updateStagesOrderRejected,
 		addStageFulfilled,
 		deleteStageFulfilled,
+		updateTaskFulfilled,
 	} = require('tasks/statemanager/redux/slices/kanban-settings/src/extra-reducer');
+
+	const { setKanbanSettingsActionName } = require('tasks/statemanager/redux/slices/kanban-settings/action');
+	const { setKanbanSettings: setKanbanSettingsReducer } = require('tasks/statemanager/redux/slices/kanban-settings/reducer');
+	const { update } = require('tasks/statemanager/redux/slices/tasks/thunk');
 
 	const {
 		addStage,
@@ -40,18 +42,18 @@ jn.define('tasks/statemanager/redux/slices/kanban-settings/src/slice', (require,
 				.addCase(updateStagesOrder.fulfilled, updateStagesOrderFulfilled)
 				.addCase(updateStagesOrder.rejected, updateStagesOrderRejected)
 				.addCase(addStage.fulfilled, addStageFulfilled)
-				.addCase(deleteStage.fulfilled, deleteStageFulfilled);
+				.addCase(deleteStage.fulfilled, deleteStageFulfilled)
+				.addCase(setKanbanSettingsActionName, setKanbanSettingsReducer)
+				.addCase(update.fulfilled, updateTaskFulfilled);
 		};
 	}
 
-	const initialState = adapter.getInitialState();
-	const filledState = adapter.upsertMany(initialState, []);
 	const slice = createSlice({
 		name: sliceName,
-		initialState: filledState,
-		reducers: {},
+		initialState,
 		extraReducers: getExtraReducers(),
 	});
+
 	ReducerRegistry.register(sliceName, slice.reducer);
 
 	module.exports = {

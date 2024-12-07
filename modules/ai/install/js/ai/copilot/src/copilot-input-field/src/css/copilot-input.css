@@ -1,0 +1,414 @@
+.ai__copilot {
+	container-type: inline-size;
+	width: 500px;
+	max-width: 100%;
+	min-width: 100%;
+}
+
+.ai__copilot,
+.ai__copilot_input-field,
+.ai__copilot_input-field-content,
+.ai__copilot_input {
+	box-sizing: border-box;
+}
+
+.ai__copilot_input-field-baas-point {
+	position: absolute;
+	bottom: 0;
+	left: 170px;
+	width: 0;
+	height: 0;
+}
+
+.ai__copilot_input {
+	overflow-y: auto;
+	white-space: pre-wrap;
+}
+
+.ai__copilot_input strong {
+	font-weight: normal;
+	color: var(--ui-color-copilot-primary);
+}
+
+.ai__copilot_input-field,
+.ai__copilot_input-field-content,
+.ai__copilot_input {
+	width: 100%;
+}
+
+.ai__copilot_input-field {
+	display: flex;
+	align-items: center;
+	transition: 0.25s ease-in-out opacity;
+}
+
+.ai__copilot_input-field-content {
+	display: flex;
+}
+
+.ai__copilot_input-field {
+	display: flex;
+	position: relative;
+	z-index: 1;
+}
+
+.ai__copilot_input-field-icon {
+	--ui-icon-set__icon-color: var(--ui-color-background-on-alert);
+	position: absolute;
+	top: 6px;
+	left: 6px;
+	width: 30px;
+	height: 30px;
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: center;
+	transition: opacity 0.1s ease-out;
+	opacity: 1;
+	z-index: 1;
+}
+
+/* hack for preloading icon */
+.ai__copilot_input-field-icon .ui-icon-set {
+	background-image: var(--ui-icon-set__path_warning);
+	background-size: 0 0;
+}
+
+.ai__copilot_input-field-content {
+	position: relative;
+}
+
+.ai__copilot_input,
+.ai_copilot_placeholder,
+.ai__copilot_input-field-error-container {
+	box-sizing: border-box;
+	margin: 0;
+	padding: 11px 130px 0 38px;
+	font-family: var(--ui-font-family-primary);
+	font-size: var(--ui-font-size-lg);
+	line-height: var(--ui-font-line-height-3xs);
+	color: var(--ui-color-text-primary);
+	letter-spacing: -0.6777px;
+	transition: 0.2s ease-in-out opacity;
+}
+
+.ai__copilot_input.--with-padding-bottom {
+	padding-bottom: 11px;
+}
+
+.ai__copilot_input-field-error-container {
+	padding-right: 40px;
+}
+
+.ai__copilot_input-field-error-title {
+	color: var(--ui-color-text-alert);
+}
+
+.ai__copilot_input-field-error-detail {
+	margin-left: 2px;
+	border-bottom: var(--ui-border-width-thin) dashed rgba(var(--ui-color-text-alert-rgb), 0.7);
+	cursor: pointer;
+	transition: 0.2s ease-in-out border-bottom-color;
+}
+
+.ai__copilot_input-field-error-detail:hover {
+	transition-duration: 0.2s;
+	border-bottom-color: rgba(var(--ui-color-text-alert-rgb), 1);
+}
+
+.ai_copilot_placeholder,
+.ai__copilot_input-field-error-container {
+	padding: 11px 108px 11px 38px;
+	box-sizing: border-box;
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	min-height: 100%;
+	opacity: 0;
+	z-index: -1;
+	color: var(--ui-color-base-80);
+	transition: 0.2s ease-in-out opacity;
+	user-select: none;
+	cursor: text;
+}
+
+.ai__copilot_input-field-error-container {
+	min-height: auto;
+}
+
+@container (max-width: 370px) {
+	.ai__copilot_input,
+	.ai_copilot_placeholder,
+	.ai__copilot_input-field-error-container {
+		padding-right: 74px;
+	}
+}
+
+.ai__copilot_input-field-error-container {
+	padding-right: 40px;
+}
+
+.ai__copilot_input-field.--show-placeholder.--loading .ai_copilot_placeholder,
+.ai__copilot_input-field.--show-placeholder.--error .ai_copilot_placeholder {
+	opacity: 0;
+	z-index: -1;
+	transition-duration: 0s;
+}
+
+.ai__copilot_input-field.--show-placeholder .ai_copilot_placeholder {
+	opacity: 1;
+	z-index: 0;
+}
+
+.ai__copilot_input-field.--error .ai__copilot_input-field-error-container {
+	z-index: 1;
+	opacity: 1;
+}
+
+.ai__copilot_input-field.--loading .ai__copilot_input-field-error-container {
+	z-index: -1;
+	opacity: 0;
+}
+
+.ai__copilot_input-field.--error .ai__copilot_input {
+	opacity: 0;
+}
+
+.ai__copilot_input-field.--error .ai__copilot_input-submit-block {
+	display: none;
+}
+
+.ai__copilot_error-popup-content {
+	word-break: break-word;
+	padding-right: 30px;
+}
+
+.ai__copilot_input {
+	min-height: 40px;
+	max-height: 120px;
+	position: relative;
+	border: none;
+	resize: none;
+	color: var(--ui-color-text-primary);
+	background-color: transparent;
+
+	scrollbar-arrow-color: #ccc;
+	scrollbar-track-color: transparent;
+	scrollbar-base-color: #ccc;
+	scrollbar-shadow-color: #fff;
+	scrollbar-highlight-color: #fff;
+	/*Firefox fix */
+	scrollbar-width: thin;
+	scrollbar-color: #ccc transparent;
+}
+
+.ai__copilot_input font {
+	color: inherit !important;
+}
+
+.ai__copilot_input::-webkit-scrollbar {
+	cursor: pointer;
+	width: 6px;
+}
+
+.ai__copilot_input::-webkit-scrollbar-track {
+	background: transparent;
+}
+
+.ai__copilot_input::-webkit-scrollbar-thumb {
+	background: #dde2e6;
+	-webkit-border-radius: 5px;
+	border-radius: 5px;
+	cursor: pointer;
+	opacity: .4;
+	-webkit-transition: .2s;
+	transition: .2s;
+}
+
+.ai__copilot_input:hover::-webkit-scrollbar-thumb {
+	background: #d1d6da;
+}
+
+.ai__copilot_input.--recording {
+	pointer-events: none;
+	color: var(--ui-color-base-90);
+	opacity: 1;
+	-webkit-text-fill-color: var(--ui-color-base-90);
+}
+
+.ai__copilot_input:focus {
+	outline: none;
+}
+
+.ai__copilot_input::placeholder {
+	color: var(--ui-color-base-50);
+}
+
+.ai__copilot_input-submit-block {
+	position: absolute;
+	top: 8px;
+	right: 9px;
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	z-index: 2;
+}
+
+.ai__copilot_input-submit-block-voice-btn {
+	margin-left: 8px;
+}
+
+.ai__copilot_input-field.--loading .ai__copilot_input-submit-block {
+	opacity: 0;
+	z-index: -1;
+	pointer-events: none;
+}
+
+.ai__copilot_input-field.--disabled .ai__copilot_input-submit-block {
+	z-index: -1;
+	pointer-events: none;
+}
+
+.ai__copilot_loader {
+	display: flex;
+	flex-direction: row;
+	align-items: center
+}
+
+.ai__copilot_loader-text {
+	margin-right: 14px;
+	color: var(--ai__copilot_color-main);
+	font-size: var(--ui-font-size-lg);
+	line-height: var(--ui-font-line-height-3xs);
+}
+
+.ai__copilot_loader-cancel-btn {
+	font-style: inherit;
+	font-size: inherit;
+	padding: 0;
+	background-color: transparent;
+	box-shadow: none;
+	border: none;
+	color: #A482D1;
+	cursor: pointer;
+	transition: 0.2s ease-in-out transform, 0.2s ease-in-out color, 0.1s ease-out opacity;
+	transform: translateX(-5px);
+	opacity: 0;
+}
+
+.ai__copilot_loader-cancel-btn:hover {
+	transition-duration: 0s;
+	color: var(--ai__copilot_color-main);
+}
+
+.dot-flashing,
+.dot-flashing::before,
+.dot-flashing::after {
+	--ai__copilot-loader-duration: 0.5s;
+	width: 5px;
+	height: 5px;
+	border-radius: var(--ui-border-radius-circle);
+	background-color: #DED0F4;
+	color: #DED0F4;
+	animation: dot-flashing var(--ai__copilot-loader-duration) infinite linear alternate;
+}
+.dot-flashing {
+	top: 2px;
+	position: relative;
+	animation-delay: calc(var(--ai__copilot-loader-duration) / 2);
+}
+.dot-flashing::before, .dot-flashing::after {
+	content: "";
+	display: inline-block;
+	position: absolute;
+	top: 0;
+}
+.dot-flashing::before {
+	left: -8px;
+	animation-delay: 0s;
+}
+.dot-flashing::after {
+	left: 8px;
+	animation-delay: var(--ai__copilot-loader-duration);
+}
+
+@keyframes dot-flashing {
+	0% {
+		background-color: var(--ai__copilot_color-pastel);
+	}
+	50%, 100% {
+		background-color: var(--ai__copilot_color-soft);;
+	}
+	100% {
+		background-color: var(--ai__copilot_color-main);;
+	}
+}
+
+.ai__copilot_loader {
+	z-index: -1;
+	position: absolute;
+	top: 11px;
+	right: 12px;
+	left: 38px;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	opacity: 0;
+	transition: 0.2s ease-in-out opacity;
+}
+
+.ai__copilot_loader-left {
+	display: flex;
+	align-items: center;
+}
+
+.ai__copilot_input-field.--loading .ai__copilot_loader {
+	z-index: 1;
+	opacity: 1;
+}
+
+.ai__copilot_loading-icon-wrapper {
+	opacity: 0;
+}
+
+.ai__copilot_static-icon-wrapper,
+.ai__copilot_loading-icon-wrapper {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	transition: 0.6s ease-out opacity;
+}
+
+.ai__copilot_static-icon {
+	width: 22px;
+	height: 22px;
+	mask-image: url(../../images/copilot-icon.svg);
+	mask-size: 100% 100%;
+	background-color: var(--ai__copilot_color-main);
+}
+
+.ai__copilot_input-field.--loading .ai__copilot_static-icon-wrapper {
+	opacity: 0;
+	transition-duration: 0.1s;
+}
+
+.ai__copilot_input-field.--loading .ai__copilot_loading-icon-wrapper {
+	opacity: 1;
+	transition-duration: 0.1s;
+}
+
+.ai__copilot_input-field.--loading .ai__copilot_loader-cancel-btn {
+	transform: translateX(0);
+	opacity: 1;
+}
+
+.ai__copilot_input-field.--loading .ai__copilot_input {
+	opacity: 0;
+	z-index: -1;
+}

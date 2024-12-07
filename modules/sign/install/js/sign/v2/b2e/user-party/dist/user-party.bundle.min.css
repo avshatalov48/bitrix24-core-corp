@@ -1,0 +1,4 @@
+.sign-document-b2e-user-party__item-list .ui-tag-selector-container{border-color:var(--ui-color-background-on-alert)}.sign-document-b2e-user-party__item-list.--view{border:1px solid var(--ui-color-palette-gray-10);border-radius:5px;padding:7px 10px 5px 10px;flex-wrap:wrap;overflow-x:auto;}
+
+.sign-document-b2e-user-party__item-list_item-avatar {
+	background-image: url("/bitrix/js/socialnetwork/entity-selector/src/images/default-user.svg"); object-fit:cover;width:36px;height:36px;margin:2px 5px 2px 0;border-radius:50%;vertical-align:middle}.sign-document-b2e-user-party__description{font:13px/15.51px var(--ui-font-family-system);color:var(--ui-color-palette-gray-60);margin:5px 0 0 0}.sign-b2e-settings__header-wrapper{display:flex;justify-content:space-between}

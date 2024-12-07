@@ -30,7 +30,7 @@ class SmsMessage extends ContentBlock
 	protected function getProperties(): array
 	{
 		return [
-			'text' => $this->getText(),
+			'text' => html_entity_decode($this->getText()),
 			'action' => $this->getAction(),
 		];
 	}

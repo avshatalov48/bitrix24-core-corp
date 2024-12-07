@@ -172,7 +172,7 @@ $APPLICATION->includeComponent(
 
 ?>
 
-<script type="text/javascript">
+<script>
 
 	var domains = {};
 	var services = {};

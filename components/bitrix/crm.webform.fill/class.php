@@ -1,8 +1,6 @@
 <?
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Loader;
-use Bitrix\Main\Text\Encoding;
-use Bitrix\Main\Web\PostDecodeFilter;
 use Bitrix\Main\UserConsent\Agreement;
 
 use Bitrix\Crm\WebForm;
@@ -77,9 +75,7 @@ class CCrmWebFormFillComponent extends \CBitrixComponent
 							continue;
 						}
 
-						$placeholders[$queryParamKey] = \Bitrix\Main\Text\Encoding::convertEncoding(
-							$queryParamVal, 'UTF-8', SITE_CHARSET
-						);
+						$placeholders[$queryParamKey] = $queryParamVal;
 					}
 				}
 
@@ -102,9 +98,7 @@ class CCrmWebFormFillComponent extends \CBitrixComponent
 					continue;
 				}
 
-				$placeholders[$presetKey] = Encoding::convertEncoding(
-					$presetVal, 'UTF-8', SITE_CHARSET
-				);
+				$placeholders[$presetKey] = $presetVal;
 			}
 		}
 
@@ -157,13 +151,7 @@ class CCrmWebFormFillComponent extends \CBitrixComponent
 
 	public function processPost()
 	{
-		\CUtil::JSPostUnescape();
 		$request = \Bitrix\Main\Context::getCurrent()->getRequest();
-		if($this->arParams['AJAX_POST'] == 'Y')
-		{
-			$request->addFilter(new PostDecodeFilter());
-		}
-
 
 		$resultError = false;
 		$resultText = '';
@@ -209,10 +197,6 @@ class CCrmWebFormFillComponent extends \CBitrixComponent
 				if($field['type'] == 'file')
 				{
 					$values = $request->getFile($field['name']);
-					if (!empty($values['name']))
-					{
-						$values['name'] = Encoding::convertEncoding($values['name'], 'UTF-8', SITE_CHARSET);
-					}
 					if(is_array($values['tmp_name']))
 					{
 						$valuesTmp = array();

@@ -32,13 +32,16 @@ jn.define('tasks/checklist/widget/src/manager/bottom-sheet', (require, exports, 
 		{
 			const checklistBottomSheet = new BottomSheet({
 				component: this.getComponent(),
-				title: this.getTitle(),
+				titleParams: {
+					text: this.getTitle(),
+					type: 'entity',
+				},
 			});
 
 			const layoutWidget = await checklistBottomSheet
 				.setParentWidget(this.getParentWidget())
-				.setBackgroundColor(Color.bgContentPrimary)
-				.setNavigationBarColor(Color.bgContentPrimary)
+				.setBackgroundColor(Color.bgContentPrimary.toHex())
+				.setNavigationBarColor(Color.bgContentPrimary.toHex())
 				.showNavigationBar()
 				.setMediumPositionPercent(85)
 				.disableContentSwipe()
@@ -57,7 +60,6 @@ jn.define('tasks/checklist/widget/src/manager/bottom-sheet', (require, exports, 
 		{
 			this.layoutWidget.preventBottomSheetDismiss(true);
 			this.layoutWidget.on('preventDismiss', this.handleOnPreventDismiss);
-			this.layoutWidget.on('onViewHidden', this.handleOnClose);
 		}
 
 		/**

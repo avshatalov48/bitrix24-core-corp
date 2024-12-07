@@ -8,7 +8,6 @@ define('BX_SECURITY_SHOW_MESSAGE', true);
 
 require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_before.php");
 
-CUtil::JSPostUnescape();
 $APPLICATION->RestartBuffer();
 
 CModule::IncludeModule('tasks');

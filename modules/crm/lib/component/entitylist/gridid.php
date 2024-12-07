@@ -6,7 +6,7 @@ class GridId
 {
 	public const DEFAULT_GRID_MY_COMPANY_SUFFIX = 'MYCOMPANY';
 
-	protected const DEFAULT_GRID_ID_PREFIX = 'CRM_';
+	public const DEFAULT_GRID_ID_PREFIX = 'CRM_';
 	protected const DEFAULT_GRID_ID_SUFFIX = '_LIST_V12';
 	protected const DYNAMIC_TYPE_GRID_ID_PREFIX = 'crm-type-item-list';
 

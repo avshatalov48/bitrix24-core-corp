@@ -13,8 +13,6 @@ jn.define('crm/entity-actions/change-crm-mode', (require, exports, module) => {
 
 		const title = Loc.getMessage('M_CRM_ENTITY_ACTION_CHANGE_CRM_MODE');
 
-		const iconUrl = '/bitrix/mobileapp/crmmobile/extensions/crm/entity-actions/images/gear.png';
-
 		/**
 		 * @method onAction
 		 */
@@ -24,7 +22,7 @@ jn.define('crm/entity-actions/change-crm-mode', (require, exports, module) => {
 			CrmMode.openWizard();
 		};
 
-		return { id, title, iconUrl, onAction };
+		return { id, title, onAction };
 	};
 
 	module.exports = { getActionChangeCrmMode };

@@ -3,6 +3,7 @@
  */
 jn.define('layout/ui/detail-card/tabs/crm-product', (require, exports, module) => {
 	const { Loc } = require('loc');
+	const { Icon } = require('assets/icons');
 	const AppTheme = require('apptheme');
 	const { Tab } = require('layout/ui/detail-card/tabs');
 	const { TabType } = require('layout/ui/detail-card/tabs/factory/type');
@@ -257,6 +258,10 @@ jn.define('layout/ui/detail-card/tabs/crm-product', (require, exports, module) =
 
 		getFloatingMenuItems()
 		{
+			const itemsParams = {
+				isSearchOnly: Boolean(this.getPayload()?.isExternalCatalog),
+			};
+
 			return [
 				new FloatingMenuItem({
 					id: TabType.CRM_PRODUCT,
@@ -272,8 +277,8 @@ jn.define('layout/ui/detail-card/tabs/crm-product', (require, exports, module) =
 						return !detailCard.isReadonly() && canReadCatalog;
 					},
 					position: 300,
-					nestedItems: CrmProductGrid.getFloatingMenuItems(),
-					icon: '<svg width="31" height="31" viewBox="0 0 31 31" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M15.3792 6.40512C15.3941 6.39736 15.4085 6.38984 15.4225 6.3856C15.4762 6.37018 15.522 6.38239 15.5803 6.41212L24.1246 9.79412C24.3439 9.89541 24.426 10.0892 24.4212 10.4195V13.8297C23.7518 13.6277 23.0419 13.5192 22.3066 13.5192C18.2696 13.5192 14.997 16.7918 14.997 20.8288C14.997 22.4638 15.5338 23.9734 16.4407 25.191L15.6371 25.5084C15.5243 25.5393 15.3879 25.5459 15.2838 25.4996L6.86545 22.1706C6.69821 22.1057 6.57121 21.8756 6.56885 21.6334V10.349C6.57517 10.0936 6.65247 9.87673 6.86545 9.77655L15.3657 6.41202L15.3792 6.40512ZM15.4728 8.27675L22.0816 10.9003L15.4728 13.5073L8.85809 10.892L15.4728 8.27675Z" fill="#767C87"/><path d="M21.2212 16.4501H23.3918V19.7433H26.6852V21.9139H23.3918V25.2074H21.2212V21.9139H17.9279V19.7433H21.2212V16.4501Z" fill="#767C87"/></svg>',
+					nestedItems: CrmProductGrid.getFloatingMenuItems(itemsParams),
+					icon: Icon.ADD_PRODUCT,
 					tabId: 'products',
 				}),
 			];

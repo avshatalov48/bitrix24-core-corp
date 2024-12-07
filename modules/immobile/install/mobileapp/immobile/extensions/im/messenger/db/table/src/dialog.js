@@ -8,15 +8,24 @@ jn.define('im/messenger/db/table/dialog', (require, exports, module) => {
 	const {
 		Table,
 		FieldType,
+		FieldDefaultValue,
 	} = require('im/messenger/db/table/table');
 	const { LoggerManager } = require('im/messenger/lib/logger');
 	const logger = LoggerManager.getInstance().getLogger('database-table--dialog');
 
+	/**
+	 * @extends {Table<DialogStoredData>}
+	 */
 	class DialogTable extends Table
 	{
 		getName()
 		{
 			return 'b_im_dialog';
+		}
+
+		getPrimaryKey()
+		{
+			return 'dialogId';
 		}
 
 		getFields()
@@ -35,22 +44,29 @@ jn.define('im/messenger/db/table/dialog', (require, exports, module) => {
 				{ name: 'lastReadId', type: FieldType.integer },
 				{ name: 'markedId', type: FieldType.integer },
 				{ name: 'lastMessageId', type: FieldType.integer },
-				{ name: 'lastMessageViews', type: FieldType.json },
+				{ name: 'lastMessageViews', type: FieldType.json, defaultValue: FieldDefaultValue.emptyObject },
 				{ name: 'countOfViewers', type: FieldType.integer },
-				{ name: 'managerList', type: FieldType.json },
-				{ name: 'readList', type: FieldType.json },
-				{ name: 'muteList', type: FieldType.json },
+				{ name: 'managerList', type: FieldType.json, defaultValue: FieldDefaultValue.emptyArray },
+				{ name: 'readList', type: FieldType.json, defaultValue: FieldDefaultValue.emptyArray },
+				{ name: 'muteList', type: FieldType.json, defaultValue: FieldDefaultValue.emptyArray },
 				{ name: 'owner', type: FieldType.integer },
 				{ name: 'entityType', type: FieldType.text },
 				{ name: 'entityId', type: FieldType.integer },
 				{ name: 'dateCreate', type: FieldType.date },
-				{ name: 'public', type: FieldType.json },
+				{ name: 'public', type: FieldType.json, defaultValue: FieldDefaultValue.emptyObject },
 				{ name: 'code', type: FieldType.text },
 				{ name: 'diskFolderId', type: FieldType.integer },
 				{ name: 'aiProvider', type: FieldType.text },
+				{ name: 'role', type: FieldType.text, defaultValue: FieldDefaultValue.noneText },
+				{ name: 'permissions', type: FieldType.json },
 			];
 		}
 
+		/**
+		 * @param {Array<DialogId>} dialogIdList
+		 * @param shouldRestoreRows
+		 * @return {Promise<{items: Array<DialogStoredData>}>}
+		 */
 		async getListByDialogIds(dialogIdList, shouldRestoreRows = true)
 		{
 			if (!this.isSupported || !Feature.isLocalStorageEnabled || !Type.isArrayFilled(dialogIdList))
@@ -68,59 +84,12 @@ jn.define('im/messenger/db/table/dialog', (require, exports, module) => {
 				`,
 			});
 
-			const {
-				columns,
-				rows,
-			} = result;
-
-			const list = {
-				items: [],
-			};
-
-			rows.forEach((row) => {
-				const listRow = {};
-				row.forEach((value, index) => {
-					const key = columns[index];
-					listRow[key] = value;
-				});
-
-				if (shouldRestoreRows === true)
-				{
-					list.items.push(this.restoreDatabaseRow(listRow));
-				}
-				else
-				{
-					list.items.push(listRow);
-				}
-			});
-
-			return list;
-		}
-
-		async deleteByIdList(idList)
-		{
-			if (!Feature.isLocalStorageEnabled || !Type.isArrayFilled(idList))
-			{
-				return Promise.resolve({});
-			}
-
-			const dialogIdList = idList.map((id) => `'${id}'`).join(',');
-			const result = await this.executeSql({
-				query: `
-					DELETE
-					FROM ${this.getName()}
-					WHERE dialogId IN (${dialogIdList})
-				`,
-			});
-
-			logger.log('DialogTable.deleteByIdList complete: ', idList);
-
-			return result;
+			return this.convertSelectResultToGetListResult(result, shouldRestoreRows);
 		}
 
 		async deleteByChatIdList(idList)
 		{
-			if (!Feature.isLocalStorageEnabled || !Type.isArrayFilled(idList))
+			if (!Feature.isLocalStorageEnabled || this.readOnly || !Type.isArrayFilled(idList))
 			{
 				return Promise.resolve({});
 			}

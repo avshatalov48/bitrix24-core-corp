@@ -20,7 +20,6 @@ $SITE_ID = ($_GET['SITE_ID'] ?? SITE_ID);
 
 if ($_REQUEST['MODE'] === 'SEARCH')
 {
-	CUtil::JSPostUnescape();
 	$APPLICATION->RestartBuffer();
 
 	$search = $_REQUEST['SEARCH_STRING'];

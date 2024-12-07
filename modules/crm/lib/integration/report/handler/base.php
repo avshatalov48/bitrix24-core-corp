@@ -398,33 +398,34 @@ abstract class Base extends BaseReport
 	}
 
 
-	protected function getFormattedPassTime($spentTime)
+	protected function getFormattedPassTime($spentTime): string
 	{
-		$spentTimeUnit = 'SECS';
-		$spentTimeValue = 0;
-
-		if ($spentTime > 60 * 60 *24)
+		if ($spentTime < 60)
 		{
-			$spentTimeUnit = 'DAYS';
-			$spentTimeValue = $spentTime / (60 * 60 * 24);
+			$spentTimeUnit = 'SECS';
+			$spentTimeValue = max($spentTime, 0);
 		}
-		elseif($spentTime >= 60 * 60)
-		{
-			$spentTimeUnit = 'HOURS';
-			$spentTimeValue = $spentTime / (60 * 60);
-		}
-		elseif ($spentTime > 60)
+		elseif ($spentTime < 60 * 60)
 		{
 			$spentTimeUnit = 'MINUTES';
 			$spentTimeValue = $spentTime / 60;
 		}
-		elseif ($spentTime > 0)
+		elseif ($spentTime < 60 * 60 * 24)
 		{
-			$spentTimeUnit = 'SECS';
-			$spentTimeValue = $spentTime;
+			$spentTimeUnit = 'HOURS';
+			$spentTimeValue = $spentTime / (60 * 60);
+		}
+		else
+		{
+			$spentTimeUnit = 'DAYS';
+			$spentTimeValue = $spentTime / (60 * 60 * 24);
 		}
 
-		return round($spentTimeValue, 2) . ' ' . Loc::getMessage("CRM_REPORT_BASE_HANDLER_DEAL_SPENT_TIME_{$spentTimeUnit}");
+		return Loc::getMessagePlural(
+			"CRM_REPORT_BASE_HANDLER_DEAL_SPENT_TIME_{$spentTimeUnit}",
+			$spentTimeValue,
+			[ '#TIME_VALUE#' => round($spentTimeValue, 2) ],
+		);
 	}
 
 	public function preloadUserInfo(array $userIds)

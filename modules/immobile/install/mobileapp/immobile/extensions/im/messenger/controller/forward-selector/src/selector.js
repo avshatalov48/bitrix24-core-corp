@@ -3,12 +3,13 @@
  */
 
 jn.define('im/messenger/controller/forward-selector/selector', (require, exports, module) => {
-	const AppTheme = require('apptheme');
 	const { Loc } = require('loc');
+
+	const { Theme } = require('im/lib/theme');
+	const { Feature } = require('im/messenger/lib/feature');
 	const { EventType } = require('im/messenger/const');
 	const { RecentProvider, RecentSelector } = require('im/messenger/controller/search/experimental');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
-
 	const { ForwardSelectorView } = require('im/messenger/controller/forward-selector/view');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { Notification } = require('im/messenger/lib/ui/notification');
@@ -33,48 +34,58 @@ jn.define('im/messenger/controller/forward-selector/selector', (require, exports
 			/** @type {ForwardSelectorView} */
 			this.view = null;
 			this.isFirstRender = true;
+			this.fromDialogId = null;
 
 			this.initProvider();
 		}
 
-		open({ messageId, fromDialogId, locator })
+		async open({ messageId, fromDialogId, locator })
 		{
-			PageManager.openWidget('layout', {
+			this.fromDialogId = fromDialogId;
+			this.bindMethods();
+			this.subscribeExternalEvents();
+
+			const layoutWidget = await PageManager.openWidget('layout', {
 				title: Loc.getMessage('IMMOBILE_MESSENGER_FORWARD_SELECTOR_TITLE'),
 				useLargeTitleMode: true,
 				modal: true,
-				backgroundColor: AppTheme.colors.bgNavigation,
+				backgroundColor: Theme.colors.bgNavigation,
 				backdrop: {
 					mediumPositionPercent: 85,
 					horizontalSwipeAllowed: false,
 					onlyMediumPosition: true,
 				},
-			}).then((layoutWidget) => {
-				this.layout = layoutWidget;
-				this.view = new ForwardSelectorView({
-					onChangeText: (text) => {
-						this.onUserTypeText({ text });
-					},
-					onItemSelected: (dialogParams) => {
-						this.forwardMessage({
-							messageId,
-							dialogParams,
-							fromDialogId,
-							locator,
-						});
-					},
-					onMount: () => {
-						if (this.isFirstRender)
-						{
-							this.provider.loadLatestSearch();
-							this.isFirstRender = false;
-						}
-					},
-					openingLoaderTitle: this.getLoadingItem().title,
-				});
-				layoutWidget.showComponent(this.view);
-				logger.log(`${this.constructor.name} show component`);
 			});
+
+			this.layout = layoutWidget;
+			this.view = new ForwardSelectorView({
+				onChangeText: (text) => {
+					this.onUserTypeText({ text });
+				},
+				onItemSelected: (dialogParams) => {
+					this.forwardMessage({
+						messageId,
+						dialogParams,
+						fromDialogId,
+						locator,
+					});
+				},
+				onMount: () => {
+					if (this.isFirstRender)
+					{
+						this.provider.loadLatestSearch();
+						this.isFirstRender = false;
+					}
+				},
+				openingLoaderTitle: this.getLoadingItem().title,
+			});
+			layoutWidget.showComponent(this.view);
+
+			layoutWidget.on(EventType.view.close, () => {
+				this.unsubscribeExternalEvents();
+			});
+
+			logger.log(`${this.constructor.name} show component`);
 		}
 
 		initProvider()
@@ -116,7 +127,7 @@ jn.define('im/messenger/controller/forward-selector/selector', (require, exports
 		{
 			logger.log(`${this.constructor.name} forwardMessage`, messageId, dialogParams, fromDialogId);
 			const userModel = serviceLocator.get('core').getStore().getters['usersModel/getById'](dialogParams.dialogId);
-			if (userModel?.bot)
+			if (userModel?.bot && !Feature.isChatDialogWidgetSupportsBots)
 			{
 				Notification.showComingSoon(); // TODO delete when bots are available
 
@@ -144,6 +155,31 @@ jn.define('im/messenger/controller/forward-selector/selector', (require, exports
 		{
 			super.close();
 			this.layout.close();
+		}
+
+		bindMethods()
+		{
+			this.deleteDialogHandler = this.deleteDialogHandler.bind(this);
+		}
+
+		subscribeExternalEvents()
+		{
+			BX.addCustomEvent(EventType.dialog.external.delete, this.deleteDialogHandler);
+		}
+
+		unsubscribeExternalEvents()
+		{
+			BX.removeCustomEvent(EventType.dialog.external.delete, this.deleteDialogHandler);
+		}
+
+		deleteDialogHandler({ dialogId })
+		{
+			if (String(this.fromDialogId) !== String(dialogId))
+			{
+				return;
+			}
+
+			this.close();
 		}
 
 		subscribeEvents() {}

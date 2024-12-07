@@ -310,6 +310,8 @@ jn.define('crm/product-grid/components/stateful-product-card', (require, exports
 							vatRates: this.getProps().vatRates,
 							isAllowedReservation: this.getProps().isAllowedReservation,
 							isReservationRestrictedByPlan: this.getProps().isReservationRestrictedByPlan,
+							inventoryControlMode: this.getProps().inventoryControlMode,
+							isCatalogHidden: this.getProps().isCatalogHidden,
 							defaultDateReserveEnd: this.getProps().defaultDateReserveEnd,
 							entityDetailPageUrl: this.getProps().entityDetailPageUrl,
 							permissions: this.getProps().permissions,

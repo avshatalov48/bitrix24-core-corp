@@ -2,8 +2,9 @@
 
 return [
 	'extensions' => [
-		'require-lazy',
 		'loc',
+		'require-lazy',
+		'assets/icons',
 
 		'crm:type',
 	],

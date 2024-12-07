@@ -1,17 +1,18 @@
+/* eslint-disable es/no-nullish-coalescing-operators */
+
 /**
  * @module im/messenger/controller/dialog/copilot/dialog
  */
 jn.define('im/messenger/controller/dialog/copilot/dialog', (require, exports, module) => {
-	const { Uuid } = require('utils/uuid');
-
 	const {
 		CopilotButtonType,
 		EventType,
 		BotCode,
+		Analytics,
+		OpenDialogContextType,
 	} = require('im/messenger/const');
 	const { MessageService } = require('im/messenger/provider/service');
-	const { LoggerManager } = require('im/messenger/lib/logger');
-	const { MessengerParams } = require('im/messenger/lib/params');
+	const { LoggerManager, Logger } = require('im/messenger/lib/logger');
 
 	const { Dialog } = require('im/messenger/controller/dialog/chat');
 	const { DialogTextHelper } = require('im/messenger/controller/dialog/lib/helper/text');
@@ -20,6 +21,7 @@ jn.define('im/messenger/controller/dialog/copilot/dialog', (require, exports, mo
 	const { CopilotMentionManager } = require('im/messenger/controller/dialog/copilot/component/mention/manager');
 
 	const logger = LoggerManager.getInstance().getLogger('dialog--dialog');
+	const { AnalyticsEvent } = require('analytics');
 
 	/**
 	 * @class CopilotDialog
@@ -30,8 +32,8 @@ jn.define('im/messenger/controller/dialog/copilot/dialog', (require, exports, mo
 		{
 			super();
 
-			this.messageButtonTapHandler = this.onMessageButtonTap.bind(this);
-			this.onCopilotFootnoteTap = this.onCopilotFootnoteTap.bind(this);
+			this.messageButtonTapHandler = this.messageButtonTapHandler.bind(this);
+			this.copilotFootnoteTapHandler = this.copilotFootnoteTapHandler.bind(this);
 		}
 
 		getDialogType()
@@ -62,11 +64,7 @@ jn.define('im/messenger/controller/dialog/copilot/dialog', (require, exports, mo
 		}
 
 		disableParentClassViewEvents()
-		{
-			this.view
-				.off(EventType.dialog.statusFieldTap, this.statusFieldTapHandler)
-			;
-		}
+		{}
 
 		subscribeCustomViewEvents()
 		{
@@ -74,8 +72,32 @@ jn.define('im/messenger/controller/dialog/copilot/dialog', (require, exports, mo
 				.on(EventType.dialog.messageButtonTap, this.messageButtonTapHandler)
 			;
 			this.view
-				.on(EventType.dialog.copilotFootnoteTap, this.onCopilotFootnoteTap)
+				.on(EventType.dialog.copilotFootnoteTap, this.copilotFootnoteTapHandler)
 			;
+		}
+
+		subscribeStoreEvents()
+		{
+			super.subscribeStoreEvents();
+			this.subscribeCopilotStoreEvents();
+		}
+
+		subscribeCopilotStoreEvents()
+		{
+			this.storeManager
+				.on('dialoguesModel/copilotModel/update', this.dialogUpdateHandlerRouter);
+		}
+
+		unsubscribeStoreEvents()
+		{
+			super.unsubscribeStoreEvents();
+			this.unsubscribeCopilotStoreEvents();
+		}
+
+		unsubscribeCopilotStoreEvents()
+		{
+			this.storeManager
+				.off('dialoguesModel/copilotModel/update', this.dialogUpdateHandlerRouter);
 		}
 
 		initManagers()
@@ -99,11 +121,14 @@ jn.define('im/messenger/controller/dialog/copilot/dialog', (require, exports, mo
 		{
 			const {
 				dialogId,
+				messageId,
+				withMessageHighlight,
 				dialogTitleParams,
 			} = options;
 
 			this.dialogId = dialogId;
-
+			this.contextMessageId = messageId ?? null;
+			this.withMessageHighlight = withMessageHighlight ?? false;
 			void this.store.dispatch('applicationModel/openDialogId', dialogId);
 
 			const hasDialog = await this.loadDialogFromDb();
@@ -159,19 +184,24 @@ jn.define('im/messenger/controller/dialog/copilot/dialog', (require, exports, mo
 		 * @param messageId
 		 * @param {CopilotButton} button
 		 */
-		onMessageButtonTap(messageId, button)
+		async messageButtonTapHandler(messageId, button)
 		{
-			logger.log('Dialog.onMessageButtonTap', messageId, button);
+			logger.log('Dialog.messageButtonTapHandler', messageId, button);
 
 			if (button.id === CopilotButtonType.copy)
 			{
 				const modelMessage = this.store.getters['messagesModel/getById'](messageId);
-				DialogTextHelper.copyToClipboard(modelMessage);
+				DialogTextHelper.copyToClipboard(
+					modelMessage.text,
+					{
+						parentWidget: this.view.ui,
+					},
+				);
 
-				return;
+				return true;
 			}
 
-			if (button.id === CopilotButtonType.promtEdit)
+			if (button.id === CopilotButtonType.promptEdit)
 			{
 				const currentText = this.view.textField.getText();
 				const text = (currentText.endsWith(' ') ? button.text : ` ${button.text}`)
@@ -180,30 +210,20 @@ jn.define('im/messenger/controller/dialog/copilot/dialog', (require, exports, mo
 				this.view.textField.replaceText(currentText.length, currentText.length, text);
 				this.view.textField.showKeyboard?.();
 
-				return;
+				return true;
 			}
 
-			if (button.id === CopilotButtonType.promtSend)
+			if (button.id === CopilotButtonType.promptSend)
 			{
-				this.sendMessage(button.text);
+				await this.sendMessage(button.text, button.code);
 			}
 		}
 
-		onCopilotFootnoteTap()
+		copilotFootnoteTapHandler()
 		{
 			const articleCode = '20418172';
-			logger.log('Dialog.onCopilotFootnoteTap, articleCode:', articleCode);
+			logger.log('Dialog.copilotFootnoteTapHandler, articleCode:', articleCode);
 			helpdesk.openHelpArticle(articleCode, 'helpdesk');
-		}
-
-		/**
-		 * @desc Create new status field by current dialog data and draw it in view
-		 * @param {boolean} [isCheckBottom=true]
-		 * @override
-		 */
-		drawStatusField(isCheckBottom = true)
-		{
-			// TODO if need show the status field then remove this override
 		}
 
 		/**
@@ -232,6 +252,45 @@ jn.define('im/messenger/controller/dialog/copilot/dialog', (require, exports, mo
 				this.mentionManager = null;
 			}
 		}
+
+		sendAnalyticsOpenDialog()
+		{
+			super.sendAnalyticsOpenDialog();
+
+			if (this.openingContext === OpenDialogContextType.chatCreation)
+			{
+				return;
+			}
+
+			const userCounter = this.getDialog().userCounter;
+
+			const element = this.openingContext === OpenDialogContextType.push
+				? Analytics.Element.push
+				: null
+			;
+			const p3type = userCounter > 2 ? Analytics.CopilotChatType.multiuser : Analytics.CopilotChatType.private;
+			const analytics = new AnalyticsEvent()
+				.setTool(Analytics.Tool.ai)
+				.setCategory(Analytics.Category.chatOperations)
+				.setEvent(Analytics.Event.openChat)
+				.setType(Analytics.Type.ai)
+				.setSection(Analytics.Section.copilotTab)
+				.setElement(element)
+				.setP3(p3type)
+				.setP5(`chatId_${this.getDialog()?.chatId}`);
+
+			try
+			{
+				analytics.send();
+			}
+			catch (err)
+			{
+				Logger.error(`${this.constructor.name}.sendAnalyticsOpenDialog.send.catch:`, err);
+			}
+		}
+
+		manageTextField(isFirstCall = false)
+		{}
 	}
 
 	module.exports = { CopilotDialog };

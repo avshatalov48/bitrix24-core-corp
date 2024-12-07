@@ -1,5 +1,4 @@
 (() => {
-
 	const { md5 } = jn.require('utils/hash');
 	const { useCallback } = jn.require('utils/function');
 
@@ -21,8 +20,11 @@
 		{
 			if (Array.isArray(source))
 			{
+				const l = source.length;
+
 				newObject = [];
-				for (let i = 0, l = source.length; i < l; i++)
+
+				for (let i = 0; i < l; i++)
 				{
 					if (typeof source[i] === 'object')
 					{
@@ -63,6 +65,7 @@
 					{
 						continue;
 					}
+
 					if (typeof source[i] === 'object')
 					{
 						newObject[i] = clone(source[i]);
@@ -91,13 +94,14 @@
 	 */
 	function merge(object, ...sources)
 	{
-		sources.map(source => {
+		sources.map((source) => {
 			for (const name in source)
 			{
 				if (!source.hasOwnProperty(name))
 				{
 					continue;
 				}
+
 				if (BX.type.isPlainObject(source[name]))
 				{
 					if (!BX.type.isPlainObject(object[name]))
@@ -153,6 +157,7 @@
 		}
 
 		schema[path[len - 1]] = value;
+
 		return object;
 	}
 
@@ -169,9 +174,8 @@
 
 		path = Array.isArray(path) ? path : path.split('.');
 
-		for (let i = 0; i < path.length; i++)
+		for (const elem of path)
 		{
-			const elem = path[i];
 			if (schema && typeof schema === 'object' && elem in schema)
 			{
 				schema = schema[elem];
@@ -199,9 +203,8 @@
 
 		path = Array.isArray(path) ? path : path.split('.');
 
-		for (let i = 0; i < path.length; i++)
+		for (const elem of path)
 		{
-			const elem = path[i];
 			if (schema && typeof schema === 'object' && elem in schema)
 			{
 				schema = schema[elem];
@@ -249,7 +252,7 @@
 			const bothArrays = Array.isArray(value) && Array.isArray(other);
 			if (bothArrays)
 			{
-				return arrayEquals(value, other);
+				return arrayEquals(value, other, logDifference);
 			}
 
 			const bothMaps = isMap(value) && isMap(other);
@@ -347,51 +350,67 @@
 
 		if (value instanceof Map || value instanceof Set)
 		{
-			return !value.size;
+			return value.size === 0;
 		}
 
 		if (Array.isArray(value) || typeof value === 'string')
 		{
-			return !value.length;
+			return value.length === 0;
 		}
 
-		return !Object.keys(value).length;
+		return Object.keys(value).length === 0;
 	}
 
 	/**
 	 * @private
 	 * @param {array} a
 	 * @param {array} b
+	 * @param {boolean} [logDifference=false]
 	 * @returns {boolean}
 	 */
-	function arrayEquals(a, b)
+	function arrayEquals(a, b, logDifference = false)
 	{
 		if (a === b)
 		{
 			return true;
 		}
+
 		if (a.length !== b.length)
 		{
+			if (logDifference)
+			{
+				// eslint-disable-next-line no-console
+				console.warn('isEqual diff', {
+					reason: 'different size',
+					keysDiff: [
+						...a.filter((x) => !b.includes(x)),
+						...b.filter((x) => !a.includes(x)),
+					],
+					value1: a,
+					value2: b,
+				});
+			}
+
 			return false;
 		}
 
-		for (let i = 0; i < a.length; i++)
+		for (const [i, element] of a.entries())
 		{
-			if (Array.isArray(a[i]) && Array.isArray(b[i]))
+			if (Array.isArray(element) && Array.isArray(b[i]))
 			{
-				if (!arrayEquals(a[i], b[i]))
+				if (!arrayEquals(element, b[i], logDifference))
 				{
 					return false;
 				}
 			}
-			else if (isObjectLike(a[i]) && isObjectLike(b[i]))
+			else if (isObjectLike(element) && isObjectLike(b[i]))
 			{
-				if (!objectEquals(a[i], b[i]))
+				if (!objectEquals(element, b[i], logDifference))
 				{
 					return false;
 				}
 			}
-			else if (a[i] !== b[i])
+			else if (element !== b[i])
 			{
 				return false;
 			}
@@ -624,10 +643,8 @@
 			const string = JSON.stringify(object);
 			result = md5(string);
 		}
-		catch (e)
-		{
-
-		}
+		catch
+		{}
 
 		return result;
 	};
@@ -655,7 +672,6 @@
 	 * @module utils/object
 	 */
 	jn.define('utils/object', (require, exports, module) => {
-
 		module.exports = {
 			clone,
 			merge,
@@ -671,7 +687,5 @@
 			isEmpty,
 			isFunction,
 		};
-
 	});
-
 })();

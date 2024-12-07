@@ -11,6 +11,7 @@ use Bitrix\Main\UI\Extension;
 use Bitrix\Tasks\Access\ActionDictionary;
 use Bitrix\Tasks\Access\TemplateAccessController;
 use Bitrix\Tasks\Helper\RestrictionUrl;
+use Bitrix\Tasks\Integration\Bitrix24;
 use Bitrix\Tasks\Internals\Task\Priority;
 use Bitrix\Tasks\Item\Task\Template;
 use Bitrix\Tasks\UI\Task\Tag;
@@ -31,6 +32,10 @@ $template = $arResult['ITEM'];
 $taskLimitExceeded = $arResult['AUX_DATA']['TASK_LIMIT_EXCEEDED'] ?? null;
 $templateSubtaskLimitExceeded = $arResult['AUX_DATA']['TEMPLATE_SUBTASK_LIMIT_EXCEEDED'] ?? null;
 $templateTaskRecurrentLimitExceeded = $arResult['AUX_DATA']['TASK_RECURRENT_RESTRICT'] ?? null;
+
+$taskObserversParticipantsEnabled = Bitrix24::checkFeatureEnabled(
+	Bitrix24\FeatureDictionary::TASK_OBSERVERS_PARTICIPANTS
+);
 
 $toList = str_replace("#user_id#", $arParams["USER_ID"], $arParams["PATH_TO_USER_TASKS_TEMPLATES"]);
 
@@ -150,7 +155,7 @@ endif?>
 			|| $templateTaskRecurrentLimitExceeded
 		)
 		{
-			$APPLICATION->IncludeComponent("bitrix:ui.info.helper", "", []);
+			\Bitrix\Main\UI\Extension::load('ui.info-helper');
 		}
 		?>
 
@@ -606,6 +611,7 @@ endif?>
 						'HIDE_IF_EMPTY' => !$canUpdate,
 						'TASK_LIMIT_EXCEEDED' => $taskLimitExceeded,
 						'CONTEXT' => 'template',
+						'viewSelectorEnabled' => $taskObserversParticipantsEnabled,
 					),
 					$helper->getComponent(),
 					array("HIDE_ICONS" => "Y", "ACTIVE_COMPONENT" => "Y")
@@ -627,6 +633,7 @@ endif?>
 						'HIDE_IF_EMPTY' => !$canUpdate,
 						'TASK_LIMIT_EXCEEDED' => $taskLimitExceeded,
 						'CONTEXT' => 'template',
+						'viewSelectorEnabled' => $taskObserversParticipantsEnabled,
 					),
 					$helper->getComponent(),
 					array("HIDE_ICONS" => "Y", "ACTIVE_COMPONENT" => "Y")

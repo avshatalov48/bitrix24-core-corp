@@ -5,10 +5,40 @@ import { ChatService } from './types';
 
 const ServicesConfig: ReadonlyMap<string, ChatService> = new Map([
 	[
+		'ru-whatsapp',
+		{
+			id: 'ru-whatsapp',
+			connectorId: 'notifications',
+			connectLabel: Loc.getMessage('CRM_TIMELINE_GOTOCHAT_CONNECT_WHATSAPP'),
+			inviteLabel: Loc.getMessage('CRM_TIMELINE_GOTOCHAT_INVITE_WHATSAPP'),
+			soonLabel: Loc.getMessage('CRM_TIMELINE_GOTOCHAT_SOON_WHATSAPP'),
+			title: Loc.getMessage('CRM_TIMELINE_GOTOCHAT_SERVICE_WHATSAPP'),
+			region: 'ru',
+			commonClass: '--whatsapp',
+			iconClass: Social.WHATSAPP,
+			checkServiceId: 'virtual_whatsapp',
+		},
+	],
+	[
+		'whatsapp',
+		{
+			id: 'whatsapp',
+			connectorId: 'notifications',
+			connectLabel: Loc.getMessage('CRM_TIMELINE_GOTOCHAT_CONNECT_WHATSAPP'),
+			inviteLabel: Loc.getMessage('CRM_TIMELINE_GOTOCHAT_INVITE_WHATSAPP'),
+			soonLabel: Loc.getMessage('CRM_TIMELINE_GOTOCHAT_SOON_WHATSAPP'),
+			title: Loc.getMessage('CRM_TIMELINE_GOTOCHAT_SERVICE_WHATSAPP'),
+			region: '!ru',
+			commonClass: '--whatsapp',
+			iconClass: Social.WHATSAPP,
+			checkServiceId: 'virtual_whatsapp',
+		},
+	],
+	[
 		'telegrambot',
 		{
 			id: 'telegrambot',
-			available: true,
+			connectorId: 'telegrambot',
 			connectLabel: Loc.getMessage('CRM_TIMELINE_GOTOCHAT_CONNECT_TELEGRAM'),
 			inviteLabel: Loc.getMessage('CRM_TIMELINE_GOTOCHAT_INVITE_TELEGRAM'),
 			title: Loc.getMessage('CRM_TIMELINE_GOTOCHAT_SERVICE_TELEGRAM'),
@@ -18,23 +48,10 @@ const ServicesConfig: ReadonlyMap<string, ChatService> = new Map([
 		},
 	],
 	[
-		'whatsappbyedna',
-		{
-			id: 'whatsappbyedna',
-			available: false,
-			connectLabel: Loc.getMessage('CRM_TIMELINE_GOTOCHAT_CONNECT_WHATSAPP'),
-			inviteLabel: Loc.getMessage('CRM_TIMELINE_GOTOCHAT_INVITE_WHATSAPP'),
-			soonLabel: Loc.getMessage('CRM_TIMELINE_GOTOCHAT_SOON_WHATSAPP'),
-			title: Loc.getMessage('CRM_TIMELINE_GOTOCHAT_SERVICE_WHATSAPP'),
-			commonClass: '--whatsapp',
-			iconClass: Social.WHATSAPP,
-		},
-	],
-	[
 		'vkgroup',
 		{
 			id: 'vkgroup',
-			available: false,
+			connectorId: '',
 			connectLabel: Loc.getMessage('CRM_TIMELINE_GOTOCHAT_CONNECT_VK'),
 			inviteLabel: Loc.getMessage('CRM_TIMELINE_GOTOCHAT_INVITE_VK'),
 			soonLabel: Loc.getMessage('CRM_TIMELINE_GOTOCHAT_SOON_VK'),
@@ -48,7 +65,7 @@ const ServicesConfig: ReadonlyMap<string, ChatService> = new Map([
 		'facebook',
 		{
 			id: 'facebook',
-			available: false,
+			connectorId: '',
 			connectLabel: Loc.getMessage('CRM_TIMELINE_GOTOCHAT_CONNECT_FACEBOOK'),
 			inviteLabel: Loc.getMessage('CRM_TIMELINE_GOTOCHAT_INVITE_FACEBOOK'),
 			soonLabel: Loc.getMessage('CRM_TIMELINE_GOTOCHAT_SOON_FACEBOOK'),

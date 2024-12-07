@@ -22,10 +22,10 @@ final class TypeService
 	{
 		$result = Container::getInstance()
 			->getFactory(CCrmOwnerType::SmartB2eDocument)
-			->getDefaultCategory()
+			?->getDefaultCategory()
 			?->getId()
 		;
 
-		return (int) $result;
+		return (int)$result;
 	}
 }

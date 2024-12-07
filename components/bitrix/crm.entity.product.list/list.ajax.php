@@ -3,7 +3,6 @@
 use Bitrix\Main\Component\ParameterSigner;
 use Bitrix\Main\Context;
 use Bitrix\Main\Loader;
-use Bitrix\Main\Web\PostDecodeFilter;
 
 const NO_KEEP_STATISTIC = 'Y';
 const NO_AGENT_STATISTIC = 'Y';
@@ -32,11 +31,9 @@ if (!CCrmSecurityHelper::IsAuthorized())
 
 global $APPLICATION;
 $APPLICATION->ShowAjaxHead();
-CUtil::JSPostUnescape();
 
 $componentName = 'bitrix:crm.entity.product.list';
 $request = Context::getCurrent()->getRequest();
-$request->addFilter(new PostDecodeFilter);
 
 $params = [];
 

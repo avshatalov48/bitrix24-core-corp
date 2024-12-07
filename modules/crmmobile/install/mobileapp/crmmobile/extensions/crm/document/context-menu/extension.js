@@ -5,6 +5,7 @@ jn.define('crm/document/context-menu', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const { get } = require('utils/object');
 	const { TypeId } = require('crm/type');
+	const { AnalyticsEvent } = require('analytics');
 
 	/**
 	 * @class CrmDocumentContextMenu
@@ -191,15 +192,13 @@ jn.define('crm/document/context-menu', (require, exports, module) => {
 
 			const { EntityDetailOpener } = await requireLazy('crm:entity-detail/opener');
 
+			const analytics = new AnalyticsEvent(BX.componentParameters.get('analytics', {}))
+				.setElement('document_context_menu');
 			EntityDetailOpener.open({
 				payload,
 				widgetParams,
 				parentWidget: this.props.layoutWidget,
-				/* analytics: {
-					c_section: 'document',
-					c_sub_section: 'top-menu',
-					c_element: 'company-details',
-				}, */
+				analytics,
 			});
 		}
 	}

@@ -161,16 +161,30 @@ class TasksQuickFormComponent extends TasksBaseComponent implements Errorable, C
 			],
 		]);
 
+		$result['currentUser'] = [
+			'id' => $this->userId,
+			'fullName' => CurrentUser::get()->getFormattedName(),
+		];
+
 		if (
 			!(new TaskAccessController($this->userId))->check(ActionDictionary::ACTION_TASK_SAVE,
 				TaskModel::createNew(), $task)
 		)
 		{
 			$this->addForbiddenError();
-			return [];
+			return $result;
 		}
 
-		$taskData = Task::add($this->userId, $fields);
+		try
+		{
+			$taskData = Task::add($this->userId, $fields);
+		}
+		catch (TasksException $exception)
+		{
+			$this->errorCollection->add('UNEXPECTED_ERROR', $exception->getFirstErrorMessage());
+			return $result;
+		}
+
 		$taskItem = \CTaskItem::getInstance($taskData["DATA"]["ID"], $this->userId);
 
 		try
@@ -180,7 +194,7 @@ class TasksQuickFormComponent extends TasksBaseComponent implements Errorable, C
 		catch (\TasksException $e)
 		{
 			$this->errorCollection->add('UNEXPECTED_ERROR', '');
-			return [];
+			return $result;
 		}
 
 		$task["GROUP_NAME"] = "";
@@ -222,10 +236,6 @@ class TasksQuickFormComponent extends TasksBaseComponent implements Errorable, C
 		{
 			$result["task"] = $this->getJson($task, $arPaths, $nameTemplate);
 		}
-		$result['currentUser'] = [
-			'id' => $this->userId,
-			'fullName' => CurrentUser::get()->getFormattedName(),
-		];
 
 		return $result;
 	}

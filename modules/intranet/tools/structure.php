@@ -335,8 +335,8 @@ else
 					<a href="javascript:void(0)" id="single-user-choice"><?=GetMessage("INTR_UF_HEAD_CHOOSE")?></a>
 					<?CUtil::InitJSCore(array('popup'));?>
 
-					<script type="text/javascript" src="/bitrix/components/bitrix/intranet.user.selector.new/templates/.default/users.js"></script>
-					<script type="text/javascript">BX.loadCSS('/bitrix/components/bitrix/intranet.user.selector.new/templates/.default/style.css');</script>
+					<script src="/bitrix/components/bitrix/intranet.user.selector.new/templates/.default/users.js"></script>
+					<script>BX.loadCSS('/bitrix/components/bitrix/intranet.user.selector.new/templates/.default/style.css');</script>
 					<script>// user_selector:
 						var multiPopup, singlePopup;
 
@@ -407,7 +407,7 @@ else
 <?
 	}
 ?>
-	<script type="text/javascript">
+	<script>
 		var myBX;
 		if(window.BX)
 			myBX = window.BX;

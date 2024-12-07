@@ -1,4 +1,6 @@
-<?if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();?><?
+<? use Bitrix\Main\Localization\Loc;
+
+if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();?><?
 if(count($arResult["TASKS"]) <= 0)
 	echo GetMessage("INTASK_LIST_EMPTY");
 $bFirst = true;
@@ -25,15 +27,17 @@ if (Array_Key_Exists("TASKS", $arResult) && Is_Array($arResult["TASKS"]))
 		?></a></b><br />
 
 		<?if ($arResult["TASK_TYPE"] == "group"):?>
-			<small><br /><?=\Bitrix\Main\Localization\Loc::getMessage('INTASK_TASKASSIGNEDTO_V2')?>: <?php echo tasksFormatNameShort($arTask["RESPONSIBLE_NAME"], $arTask["RESPONSIBLE_LAST_NAME"], $arTask["RESPONSIBLE_LOGIN"], $arTask["RESPONSIBLE_SECOND_NAME"], $arParams["NAME_TEMPLATE"])?></small>
+			<small><br /><?= Loc::getMessage('INTASK_TASKASSIGNEDTO_V2')?>: <?php echo tasksFormatNameShort($arTask["RESPONSIBLE_NAME"], $arTask["RESPONSIBLE_LAST_NAME"], $arTask["RESPONSIBLE_LOGIN"], $arTask["RESPONSIBLE_SECOND_NAME"], $arParams["NAME_TEMPLATE"])?></small>
 		<?endif;?>
 
 		<br clear="left"/>
 
 		<span class="sonet-forum-post-info">
 			<span class="sonet-forum-eye"><?=GetMessage("INTASK_TASKPRIORITY")?></span>:&nbsp;<?php echo GetMessage("TASKS_PRIORITY_".$arTask["PRIORITY"])?>&nbsp;
-			<span class="sonet-forum-comment-num "><?=GetMessage("INTASK_TASKSTATUS")?></span>:&nbsp;<?php echo GetMessage("TASKS_STATUS_".$arTask["REAL_STATUS"])?>
-		</span>
+			<span class="sonet-forum-comment-num "><?=GetMessage("INTASK_TASKSTATUS")?></span>:&nbsp;<?=
+				Loc::getMessage('TASKS_STATUS_' . $arTask['REAL_STATUS'] . '_MSGVER_1')
+				?? Loc::getMessage('TASKS_STATUS_' . $arTask['REAL_STATUS'])
+			?></span>
 		<?
 		$bFirst = false;
 	}

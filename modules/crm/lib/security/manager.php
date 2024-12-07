@@ -1,6 +1,9 @@
 <?php
 namespace Bitrix\Crm\Security;
 
+use Bitrix\Crm\Agent\Security\DynamicTypes\AttrConvertOptions;
+use Bitrix\Crm\Security\Controller\DynamicItem;
+use Bitrix\Crm\Service\UserPermissions;
 use Bitrix\Main;
 use Bitrix\Crm\Security\Controller\Contact;
 use Bitrix\Crm\Security\Controller\Company;
@@ -37,6 +40,13 @@ class Manager
 	public static function resolveController(string $permissionEntityType): ?Controller
 	{
 		$controllers = self::getControllers();
+
+		$controller = self::tryResolveControllerForDynamicType($permissionEntityType);
+		if ($controller !== null)
+		{
+			return $controller;
+		}
+
 		foreach($controllers as $controller)
 		{
 			if($controller->isPermissionEntityTypeSupported($permissionEntityType))
@@ -46,6 +56,31 @@ class Manager
 		}
 
 		return null;
+	}
+
+	private static function tryResolveControllerForDynamicType(string $permissionEntityType): ?Controller
+	{
+		$entityTypeName = UserPermissions::getEntityNameByPermissionEntityType($permissionEntityType);
+		if (isset(self::$controllers[$entityTypeName]))
+		{
+			return self::$controllers[$entityTypeName];
+		}
+
+		$entityTypeId = \CCrmOwnerType::ResolveID($entityTypeName);
+		if (!DynamicItem::isSupportedType($entityTypeId))
+		{
+			return null;
+		}
+
+		// To use the Dynamic Type controller, you need to make sure that the conference is completely completed.
+		if (AttrConvertOptions::isEntityTypeNotConvertedYet($entityTypeId))
+		{
+			return null;
+		}
+
+		self::$controllers[$entityTypeName] = new DynamicItem($entityTypeId);
+
+		return self::$controllers[$entityTypeName];
 	}
 
 	/**

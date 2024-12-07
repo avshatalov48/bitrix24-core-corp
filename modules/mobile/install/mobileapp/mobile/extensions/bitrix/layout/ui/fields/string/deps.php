@@ -11,6 +11,7 @@ return [
 		'utils/function',
 		'utils/object',
 		'utils/string',
+		'utils/validation',
 		'layout/ui/collapsible-text'
 	],
 ];

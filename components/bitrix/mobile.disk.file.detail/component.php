@@ -65,17 +65,8 @@ $arResult['DATE_CREATE'] = $file->getUpdateTime();
 $arResult['ICON'] = $this->getPath() . '/images/' . $icon;
 $arResult['DESCRIPTION'] = '';
 
-$mobileDiskPrepareForJson = function($string)
-{
-	if(!\Bitrix\Main\Application::getInstance()->isUtfMode())
-	{
-		return \Bitrix\Main\Text\Encoding::convertEncodingArray($string, SITE_CHARSET, 'UTF-8');
-	}
-	return $string;
-};
-
-//$arResult['URL'] = SITE_DIR . "mobile/disk/{$file->getId()}/download" .'/' . $mobileDiskPrepareForJson($file->getName());
+//$arResult['URL'] = SITE_DIR . "mobile/disk/{$file->getId()}/download" .'/' . $file->getName();
 $arResult['URL'] = SITE_DIR . "mobile/ajax.php?mobile_action=disk_download_file&action=downloadFile&fileId={$file->getId()}&filename="
-	. $mobileDiskPrepareForJson($file->getName());
+	. $file->getName();
 
 $this->IncludeComponentTemplate();

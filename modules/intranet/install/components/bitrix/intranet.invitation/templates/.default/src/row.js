@@ -88,20 +88,21 @@ export class Row
 
 				if (Type.isDomNode(node.parentNode))
 				{
-					const phoneBlock = node.parentNode.querySelector("[data-role='phone-block']");
+					const phoneBlock = node.parentNode.querySelector('input.ui-ctl-element');
+
 					if (Type.isDomNode(phoneBlock))
 					{
 						const newInput = Tag.render`
 							<input
-								name="EMAIL[]"
+								name="${phoneBlock.name}"
 								type="text"
 								maxlength="50"
 								data-num="${node.getAttribute('data-num')}"
 								class="ui-ctl-element js-email-phone-input"
-								placeholder="${Loc.getMessage('INTRANET_INVITE_DIALOG_EMAIL_OR_PHONE_INPUT')}"
+								placeholder="${phoneBlock.placeholder}"
 							/>`;
 
-						Dom.replace(node, newInput);
+						Dom.replace(phoneBlock, newInput);
 						this.bindCloseIcons(newInput.parentNode);
 						this.bindPhoneChecker(newInput.parentNode);
 						Dom.remove(phoneBlock);
@@ -158,21 +159,21 @@ export class Row
 							class="ui-ctl-element js-email-phone-input" 
 							placeholder="${Loc.getMessage('INTRANET_INVITE_DIALOG_EMAIL_OR_PHONE_INPUT')}"
 						/>
-						<button class="ui-ctl-after ui-ctl-icon-clear" style="display: none"></button>
+						<button type="button" class="ui-ctl-after ui-ctl-icon-clear" style="display: none"></button>
 					</div>
 				</div>
 				<div class="invite-form-col">
 					${showTitles ? nameTitle: ''}
 					<div class="ui-ctl ui-ctl-w100 ui-ctl-textbox ui-ctl-block ui-ctl-after-icon">
-						<input name="NAME[]" type="text" class="ui-ctl-element" placeholder="${Loc.getMessage('BX24_INVITE_DIALOG_ADD_NAME_TITLE')}">
-						<button class="ui-ctl-after ui-ctl-icon-clear" style="display: none"></button>
+						<input name="NAME[]" type="text" class="ui-ctl-element js-email-name-input" placeholder="${Loc.getMessage('BX24_INVITE_DIALOG_ADD_NAME_TITLE')}">
+						<button type="button" class="ui-ctl-after ui-ctl-icon-clear" style="display: none"></button>
 					</div>
 				</div>
 				<div class="invite-form-col">
 					${showTitles ? lastNameTitle: ''}
 					<div class="ui-ctl ui-ctl-w100 ui-ctl-textbox ui-ctl-block ui-ctl-after-icon">
-						<input name="LAST_NAME[]" type="text" class="ui-ctl-element" placeholder="${Loc.getMessage('BX24_INVITE_DIALOG_ADD_LAST_NAME_TITLE')}">
-						<button class="ui-ctl-after ui-ctl-icon-clear" style="display: none"></button>
+						<input name="LAST_NAME[]" type="text" class="ui-ctl-element js-email-last-name-input" placeholder="${Loc.getMessage('BX24_INVITE_DIALOG_ADD_LAST_NAME_TITLE')}">
+						<button type="button" class="ui-ctl-after ui-ctl-icon-clear" style="display: none"></button>
 					</div>
 				</div>
 			</div>
@@ -193,7 +194,7 @@ export class Row
 						<div class="ui-ctl-label-text">${Loc.getMessage("BX24_INVITE_DIALOG_ADD_NAME_TITLE")}</div>
 						<div class="ui-ctl ui-ctl-w100 ui-ctl-textbox ui-ctl-block ui-ctl-after-icon">
 							<input type="text" name="ADD_NAME" id="ADD_NAME" class="ui-ctl-element">
-							<button class="ui-ctl-after ui-ctl-icon-clear" style="display: none"></button>
+							<button type="button" class="ui-ctl-after ui-ctl-icon-clear" style="display: none"></button>
 						</div>
 					</div>
 				</div>
@@ -202,7 +203,7 @@ export class Row
 						<div class="ui-ctl-label-text">${Loc.getMessage("BX24_INVITE_DIALOG_ADD_LAST_NAME_TITLE")}</div>
 						<div class="ui-ctl ui-ctl-w100 ui-ctl-textbox ui-ctl-block ui-ctl-after-icon">
 							<input type="text" name="ADD_LAST_NAME" id="ADD_LAST_NAME" class="ui-ctl-element">
-							<button class="ui-ctl-after ui-ctl-icon-clear" style="display: none"></button>
+							<button type="button" class="ui-ctl-after ui-ctl-icon-clear" style="display: none"></button>
 						</div>
 					</div>
 				</div>
@@ -211,7 +212,7 @@ export class Row
 						<div class="ui-ctl-label-text">${Loc.getMessage("BX24_INVITE_DIALOG_ADD_EMAIL_TITLE")}</div>
 						<div class="ui-ctl ui-ctl-w100 ui-ctl-textbox ui-ctl-block ui-ctl-after-icon">
 							<input type="text" name="ADD_EMAIL" id="ADD_EMAIL" class="ui-ctl-element" maxlength="50">
-							<button class="ui-ctl-after ui-ctl-icon-clear" style="display: none"></button>
+							<button type="button" class="ui-ctl-after ui-ctl-icon-clear" style="display: none"></button>
 						</div>
 					</div>
 				</div>
@@ -220,7 +221,7 @@ export class Row
 						<div class="ui-ctl-label-text">${Loc.getMessage("BX24_INVITE_DIALOG_ADD_POSITION_TITLE")}</div>
 						<div class="ui-ctl ui-ctl-w100 ui-ctl-textbox ui-ctl-block ui-ctl-after-icon">
 							<input type="text" name="ADD_POSITION" id="ADD_POSITION" class="ui-ctl-element">
-							<button class="ui-ctl-after ui-ctl-icon-clear" style="display: none"></button>
+							<button type="button" class="ui-ctl-after ui-ctl-icon-clear" style="display: none"></button>
 						</div>			
 					</div>
 				</div>
@@ -248,7 +249,7 @@ export class Row
 							id="integrator_email" 
 							placeholder="${Loc.getMessage("INTRANET_INVITE_DIALOG_INTEGRATOR_EMAIL")}"
 						/>
-						<button class="ui-ctl-after ui-ctl-icon-clear" style="display: none"></button>
+						<button type="button" class="ui-ctl-after ui-ctl-icon-clear" style="display: none"></button>
 					</div>
 				</div>
 			</div>

@@ -38,4 +38,9 @@ class ProcessEntityStage extends BaseBuilder
 			static::PROCESS_STAGE_CHANGE
 		);
 	}
+
+	public static function getFilePath(): string
+	{
+		return __FILE__;
+	}
 }

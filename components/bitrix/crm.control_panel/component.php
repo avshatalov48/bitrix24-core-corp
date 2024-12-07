@@ -7,6 +7,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 use Bitrix\Catalog;
 use Bitrix\Catalog\Access\AccessController;
 use Bitrix\Catalog\Access\ActionDictionary;
+use Bitrix\Catalog\Store\EnableWizard\Manager;
 use Bitrix\Catalog\v2\Contractor;
 use Bitrix\Crm;
 use Bitrix\Crm\Component\ControlPanel\ControlPanelMenuMapper;
@@ -14,6 +15,7 @@ use Bitrix\Crm\Counter\EntityCounterFactory;
 use Bitrix\Crm\Counter\EntityCounterType;
 use Bitrix\Crm\Integration\Socialnetwork\Livefeed\AvailabilityHelper;
 use Bitrix\Crm\Restriction\RestrictionManager;
+use Bitrix\Crm\Security\Role\Utils\RoleManagerUtils;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Settings\ActivitySettings;
 use Bitrix\Crm\Settings\CompanySettings;
@@ -438,7 +440,7 @@ if($isAdmin || CCrmLead::CheckReadPermission(0, $userPermissions))
 	{
 		unset($leadItem['URL'], $leadItem['COUNTER'], $leadItem['COUNTER_ID']);
 		$leadItem['IS_LOCKED'] = true;
-		$leadItem['ON_CLICK'] = RestrictionManager::getLeadsRestriction()->prepareInfoHelperScript();
+		$leadItem['ON_CLICK'] = RestrictionManager::getLeadsRestriction()->prepareFeaturePromoterScript();
 	}
 }
 
@@ -676,6 +678,21 @@ if ($isAdmin || Container::getInstance()->getUserPermissions()->canReadType($inv
 	$stdItems[\CCrmOwnerType::ResolveName($invoiceEntityTypeId)] = $invoiceItem;
 }
 
+if (
+	Loader::includeModule('biconnector')
+	&& class_exists('\Bitrix\BIConnector\Superset\Scope\ScopeService')
+)
+{
+	/** @see \Bitrix\BIConnector\Superset\Scope\MenuItem\MenuItemCreatorCrm::getMenuItemData */
+	$menuItem = \Bitrix\BIConnector\Superset\Scope\ScopeService::getInstance()->prepareScopeMenuItem(
+		\Bitrix\BIConnector\Superset\Scope\ScopeService::BIC_SCOPE_CRM
+	);
+	if ($menuItem)
+	{
+		$stdItems['BIC_DASHBOARDS'] = $menuItem;
+	}
+}
+
 if (Loader::includeModule('report') && \Bitrix\Report\VisualConstructor\Helper\Analytic::isEnable())
 {
 	$stdItems['ANALYTICS'] = [
@@ -698,6 +715,12 @@ if ($isAdmin || $userPermissions->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'READ')
 			'URL' => CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_CATALOG']),
 			'ICON' => 'catalog',
 		);
+
+		if (Catalog\Config\State::isExternalCatalog())
+		{
+			\Bitrix\Main\UI\Extension::load('catalog.external-catalog-stub');
+			$stdItems['CATALOGUE']['ON_CLICK'] = 'event.preventDefault();BX.Catalog.ExternalCatalogStub.showCatalogStub();';
+		}
 	}
 	else
 	{
@@ -754,6 +777,12 @@ if (
 		'URL' => SITE_DIR."shop/documents/",
 		'ON_CLICK' => 'event.preventDefault();BX.SidePanel.Instance.open("/shop/documents/?inventoryManagementSource=crm", {cacheable: false, customLeftBoundary: 0,});',
 	];
+
+	if (Manager::isOnecMode())
+	{
+		\Bitrix\Main\UI\Extension::load('catalog.external-catalog-stub');
+		$stdItems['STORE_DOCUMENTS']['ON_CLICK'] = 'event.preventDefault();BX.Catalog.ExternalCatalogStub.showDocsStub();';
+	}
 
 	if (Contractor\Provider\Manager::isActiveProviderByModule(Contractor\Provider\Manager::PROVIDER_STORE_DOCUMENT, 'crm'))
 	{
@@ -838,11 +867,25 @@ if ($isAdmin || $userPermissions->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE'
 		'NAME' => GetMessage('CRM_CTRL_PANEL_ITEM_PERMISSIONS'),
 	];
 
-	$stdItems['CRM_PERMISSIONS'] = [
-		'ID' => 'CRM_PERMISSIONS',
-		'NAME' => GetMessage('CRM_CTRL_PANEL_ITEM_CRM_PERMISSIONS'),
-		'URL' => CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_PERMISSIONS']),
-	];
+	if (Crm\Feature::enabled(Crm\Feature\PermissionsLayoutV2::class))
+	{
+		$permsV2URL = '/crm/configs/perms/v2/';
+		$stdItems['CRM_PERMISSIONS'] = [
+			'ID' => 'CRM_PERMISSIONS',
+			'NAME' => GetMessage('CRM_CTRL_PANEL_ITEM_CRM_PERMISSIONS'),
+			'URL' => $permsV2URL, // CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_PERMISSIONS']),
+			'ON_CLICK' => 'BX.SidePanel.Instance.open("' . CUtil::JSEscape($permsV2URL) . '"); return false;'
+		];
+	}
+	else
+	{
+		$stdItems['CRM_PERMISSIONS'] = [
+			'ID' => 'CRM_PERMISSIONS',
+			'NAME' => GetMessage('CRM_CTRL_PANEL_ITEM_CRM_PERMISSIONS'),
+			'URL' => CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_PERMISSIONS']),
+		];
+	}
+
 }
 
 if (Loader::includeModule('catalog'))
@@ -881,6 +924,27 @@ if (Loader::includeModule('catalog'))
 		];
 
 		$stdItems['CATALOG_PERMISSIONS'] = $catalogRights;
+
+		if (Manager::isOnecMode())
+		{
+			$storeMenuCatalogRights = $catalogRights;
+			$storeMenuCatalogRights['ID'] = 'STORE_MENU_CATALOG_PERMISSIONS';
+			$storeMenuCatalogRights['NAME'] = Loc::getMessage('CRM_CTRL_PANEL_ITEM_STORE_MENU_CATALOG_PERMISSIONS');
+			$stdItems['STORE_MENU_CATALOG_PERMISSIONS'] = $storeMenuCatalogRights;
+		}
+	}
+
+	if (Manager::isOnecMode())
+	{
+		\Bitrix\Main\UI\Extension::load(['catalog.config.settings']);
+
+		$stdItems['CATALOG_SETTINGS'] = [
+			'TEXT' => Loc::getMessage('CRM_CTRL_PANEL_ITEM_CATALOG_SETTINGS'),
+			'SORT' => 60,
+			'ID' => 'CATALOG_SETTINGS',
+			'PARENT_ID' => '',
+			'ON_CLICK' => 'BX.Catalog.Config.Slider.open("crm");',
+		];
 	}
 }
 
@@ -1195,22 +1259,6 @@ if (\Bitrix\Crm\Tracking\Manager::isAccessible())
 		'URL' => '/crm/tracking/',
 		'MENU_ID' => ControlPanelMenuMapper::getCrmTabMenuIdById('CRM_TRACKING'), // 'menu_crm_tracking',
 	];
-}
-
-if (
-	Loader::includeModule('biconnector')
-	&& class_exists('\Bitrix\BIConnector\Integration\Crm\MenuItemsHelper')
-	&& Option::get('biconnector', 'release_bi_superset', 'N') === 'Y'
-)
-{
-	$stdItems['BI']['ID'] = 'BI';
-	$stdItems['BI']['NAME'] = Loc::getMessage('CRM_CTRL_PANEL_ITEM_BI');
-
-	$menuItems = \Bitrix\BIConnector\Integration\Crm\MenuItemsHelper::prepareBiMenu();
-	foreach ($menuItems as $index => $menuItem)
-	{
-		$stdItems[$index] = $menuItem;
-	}
 }
 
 if (Loader::includeModule('report') && \Bitrix\Report\VisualConstructor\Helper\Analytic::isEnable())

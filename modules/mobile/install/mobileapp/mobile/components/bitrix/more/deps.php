@@ -9,6 +9,8 @@ return [
 		'stress/more',
 		'qrauth/utils',
 		'intent/handlers',
+
+		'navigator/more-tab',
 	],
 	'components' => [
 		'users',

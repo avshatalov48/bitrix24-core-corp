@@ -307,6 +307,12 @@ ChatMessengerCommon.isBirthday = function(birthday) // after change this code, s
 	return birthday == currentDate;
 };
 
+/**
+ *
+ * @param {string} text
+ * @param params
+ * @return {string}
+ */
 ChatMessengerCommon.purifyText = function(text, params) // after change this code, sync with IM and MOBILE
 {
 	text = text? text.toString(): '';
@@ -388,7 +394,7 @@ ChatMessengerCommon.purifyText = function(text, params) // after change this cod
 			(whole, dialogId, messageId, message) => message
 		);
 
-		text = text.replace(/\[[buis]\](.*?)\[\/[buis]\]/ig, '$1');
+		text = text.replace(/\[[bui]\](.*?)\[\/[bui]\]/ig, '$1');
 		text = text.replace(/\[url\](.*?)\[\/url\]/ig, '$1');
 		text = text.replace(/\[url=([^\]]+)](.*?)\[\/url]/ig, '$2');
 		text = text.replace(/\[RATING=([1-5]{1})\]/ig, function(whole, rating) {return '['+BX.message('IM_F_RATING')+'] ';});
@@ -446,16 +452,21 @@ ChatMessengerCommon.purifyText = function(text, params) // after change this cod
 		text = this.trimText(text);
 	}
 
-	if (!text || text.length <= 0)
+	if (params && (params.WITH_FILE || params.withFile || params.FILE_ID && params.FILE_ID.length > 0))
 	{
-		if (params && (params.WITH_FILE || params.FILE_ID && params.FILE_ID.length > 0))
+		if (!text || text.length <= 0)
 		{
 			text = '['+BX.message('IM_F_FILE')+']';
 		}
 		else
 		{
-			text = BX.message('IM_M_DELETED');
+			text += ' ['+BX.message('IM_F_FILE')+']';
 		}
+	}
+
+	if (!text || text.length <= 0)
+	{
+		text = BX.message('IM_M_DELETED');
 	}
 
 	return text;

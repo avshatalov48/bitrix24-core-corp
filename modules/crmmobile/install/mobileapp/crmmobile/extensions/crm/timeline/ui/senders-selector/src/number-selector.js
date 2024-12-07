@@ -3,6 +3,7 @@
  */
 jn.define('crm/timeline/ui/senders-selector/number-selector', (require, exports, module) => {
 	const { Loc } = require('loc');
+	const { ContextMenu } = require('layout/ui/context-menu');
 
 	/**
 	 * @class NumberSelector

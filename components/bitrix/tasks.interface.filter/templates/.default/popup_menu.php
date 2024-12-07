@@ -5,6 +5,10 @@ use Bitrix\Main\Web\Json;
 use Bitrix\Tasks\Access\TaskAccessController;
 use Bitrix\Tasks\Helper\Filter;
 
+\Bitrix\Main\UI\Extension::load([
+	'ui.stepprocessing',
+]);
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
@@ -14,7 +18,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 <button id="tasks-popupMenuOptions" class="ui-btn ui-btn-light-border ui-btn-themes ui-btn-icon-setting webform-cogwheel"></button>
 
 
-<script type="text/javascript">
+<script>
 	(function()
 	{
 		var menuItemsOptions = [];
@@ -317,93 +321,17 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 		var baloonLifeTime = 5000;
 
 		var onClickExport = function(exportType = ''){
-			if (
-				typeof BX.Main.gridManager === 'undefined'
-				|| typeof BX.Main.gridManager.getInstanceById('<?=$arParams['GRID_ID']?>') === 'undefined'
-			)
-			{
-				return;
-			}
-
-			if (
-				!BX.Main.gridManager.getInstanceById('<?=$arParams['GRID_ID']?>').getEmptyStub()
-			)
-			{
-				var hrefExport =
-					'<?= $arParams['PATH_TO_TASKS'] ?? '' ?>'
-					+ '?F_STATE=sv'
-					+ '<?=CTaskListState::encodeState(CTaskListState::VIEW_MODE_LIST)?>'
-					+ '&EXPORT_AS=EXCEL&ncc=1'
-				;
-
-				if (exportType === 'all')
-				{
-					hrefExport += '&COLUMNS=ALL';
-				}
-
-				window.location.href = hrefExport;
-			}
-			else
-			{
-				if (!baloonShowed)
-				{
-					BX.UI.Notification.Center.notify({
-						content: '<?=Loc::getMessage('TASKS_INTERFACE_FILTER_NO_TASKS_FOR_EXPORT')?>',
-						autoHideDelay: baloonLifeTime,
-					});
-
-					baloonShowed = true;
-
-					setTimeout(function() {
-						baloonShowed = false;
-					}, baloonLifeTime + 500);
-				}
-			}
+			BX.UI.StepProcessing.ProcessManager.get('EXPORT_EXCEL_PARAMS').showDialog();
 		};
-		<?php if ($arParams['SCOPE'] === 'tasks_gantt'): ?>
-		<?php
-		$pathToTask = $arParams['PATH_TO_TASKS'] ?? '';
-		?>
-		menuItemsOptions.push({
-			tabId: "popupMenuOptions",
-			text: '<?=GetMessageJS('TASKS_BTN_EXPORT')?>',
-			className: 'menu-popup-item-none',
-			items: [
-				{
-					tabId: "popupMenuOptions",
-					text: '<?=GetMessageJS('TASKS_BTN_EXPORT_EXCEL')?>',
-					className: "tasks-interface-filter-icon-excel",
-					href: '<?= $pathToTask ?>?F_STATE=sV<?= CTaskListState::encodeState(CTaskListState::VIEW_MODE_LIST); ?>&EXPORT_AS=EXCEL&ncc=1',
-				}
-			]
 
-		})
-		<?php else:?>
 		menuItemsOptions.push({
 			tabId: "popupMenuOptions",
 			text: '<?=GetMessageJS('TASKS_BTN_EXPORT_TO_EXCEL')?>',
 			className: 'menu-popup-item-none',
-			items: [
-				{
-					tabId: "popupMenuOptions",
-					text: '<?=GetMessageJS('TASKS_BTN_EXPORT_EXCEL_GRID_FIELDS')?>',
-					className: "tasks-interface-filter-icon-excel",
-					onclick: function(){
-						onClickExport();
-					}
-				},
-				{
-					tabId: "popupMenuOptions",
-					text: '<?=GetMessageJS('TASKS_BTN_EXPORT_EXCEL_ALL_FIELDS')?>',
-					className: "tasks-interface-filter-icon-excel",
-					onclick: function(){
-						onClickExport('all');
-					},
-				},
-
-			]
+			onclick: function(){
+				onClickExport();
+			}
 		});
-		<?php endif;?>
 
 		<?php endif; ?>
 

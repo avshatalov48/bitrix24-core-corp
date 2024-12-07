@@ -96,7 +96,7 @@ final class ElapsedTimeTable extends \Bitrix\Tasks\ElapsedTimeTable
 
 		foreach($list as $key)
 		{
-			$key = (string) trim(ToUpper($key));
+			$key = (string) trim(mb_strtoupper($key));
 			if($key != '')
 			{
 				$found = array();

@@ -13,69 +13,26 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\ModuleManager;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Bitrix24\Integrator;
-use Bitrix\Intranet\Invitation;
 use Bitrix\Main\Config\Option;
 use Bitrix\Socialnetwork\Integration\UI\EntitySelector;
 use Bitrix\Main\HttpResponse;
-use Bitrix\Main\Text\Encoding;
 use Bitrix\Main\Web\Json;
 use Bitrix\Main\Engine\ActionFilter;
-use Bitrix\Intranet\Internals\InvitationTable;
-use Bitrix\Main\Type\Date;
-use Bitrix\Main\Entity;
 use Bitrix\Intranet;
 
 class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Controller
 {
 	private Analytics $analytics;
 
-	protected function isInvitingUsersAllowed(): bool
-	{
-		if (!Invitation::canCurrentUserInvite())
-		{
-			return false;
-		}
-
-		if (Loader::includeModule("bitrix24"))
-		{
-			if (!CBitrix24::isEmailConfirmed())
-			{
-				return false;
-			}
-
-			$licensePrefix = CBitrix24::getLicensePrefix();
-			$licenseType = CBitrix24::getLicenseType();
-			if (
-				$licenseType === "project"
-				&& in_array($licensePrefix, ['cn', 'en', 'vn', 'jp'])
-			)
-			{
-				$res = InvitationTable::getList([
-					'filter' => [
-						'>=DATE_CREATE' => new Date
-					],
-					'select' => ['CNT'],
-					'runtime' => array(
-						new Entity\ExpressionField('CNT', 'COUNT(*)')
-					)
-				])->fetch();
-
-				if ((int)$res['CNT'] >= 10)
-				{
-					$this->addError(new \Bitrix\Main\Error(Loc::getMessage('INTRANET_INVITE_DIALOG_USER_COUNT_ERROR')));
-					return false;
-				}
-			}
-		}
-
-		return true;
-	}
-
 	protected function getDefaultPreFilters()
 	{
 		return array_merge(
 			parent::getDefaultPreFilters(),
-			[ new \Bitrix\Intranet\ActionFilter\UserType(['employee']) ]
+			[
+				new Intranet\ActionFilter\UserType(['employee']),
+				new Intranet\ActionFilter\InviteIntranetAccessControl(),
+				new Intranet\ActionFilter\InviteLimitControl(),
+			]
 		);
 	}
 
@@ -85,7 +42,19 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 			'getSliderContent' => [
 				'-prefilters' => [
 					ActionFilter\Csrf::class,
+					Intranet\ActionFilter\InviteIntranetAccessControl::class,
+					Intranet\ActionFilter\InviteLimitControl::class,
 				]
+			],
+			'extranet' => [
+				'-prefilters' => [
+					Intranet\ActionFilter\InviteIntranetAccessControl::class,
+				],
+				'+prefilters' => [
+					new Intranet\ActionFilter\InviteExtranetAccessControl(
+						$this->request->getPost('SONET_GROUPS_CODE')
+					),
+				],
 			],
 		];
 	}
@@ -113,7 +82,7 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 	{
 		$params =
 			$componentParams
-				? Json::decode(Encoding::convertEncoding($componentParams, SITE_CHARSET, 'UTF-8'))
+				? Json::decode($componentParams)
 				: []
 		;
 
@@ -157,14 +126,12 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 		return Loader::includeModule("bitrix24") && Option::get('bitrix24', 'phone_invite_allowed', 'N') === 'Y';
 	}
 
-	protected function isMoreUserAvailable(): bool
-	{
-		return !(Loader::includeModule("bitrix24") && !CBitrix24::isMoreUserAvailable());
-	}
-
 	protected function getHeadDepartmentId(): ?int
 	{
-		return Intranet\DepartmentStructure::getInstance(SITE_ID)->getBaseDepartmentId();
+		return \Bitrix\Intranet\Service\ServiceContainer::getInstance()
+			->departmentRepository()
+			->getRootDepartment()
+			?->getId();
 	}
 
 	private function getCurrentUserDepartment(): array
@@ -280,21 +247,18 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 		return $formattedGroups;
 	}
 
-	protected function registerNewUser($newUsers, &$strError): array
+	protected function registerNewUser($newUsers, $type, &$strError): array
 	{
-		$arError = [];
-		$invitedUserIds = Register::inviteNewUsers(SITE_ID, $newUsers, $arError);
+		$result = Register::inviteNewUsers(SITE_ID, $newUsers, $type);
 
-		if (
-			is_array($arError)
-			&& count($arError) > 0
-		)
+		$invitedUserIds = $result->getData();
+		if (!$result->isSuccess())
 		{
-			foreach($arError as $strErrorText)
+			foreach($result->getErrors() as $error)
 			{
-				if ((string)$strErrorText !== '')
+				if ($error->getMessage() !== '')
 				{
-					$strError .= $strErrorText . " ";
+					$strError .= $error->getMessage() . " ";
 				}
 			}
 		}
@@ -320,17 +284,6 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 
 	public function inviteAction()
 	{
-		if (!$this->isInvitingUsersAllowed())
-		{
-			return false;
-		}
-
-		if (!$this->isMoreUserAvailable())
-		{
-			$this->addError(new \Bitrix\Main\Error("User limit"));
-			return "user_limit";
-		}
-
 		$departmentId = $this->getHeadDepartmentId();
 		$strError = "";
 		$items = $_POST["ITEMS"];
@@ -350,17 +303,11 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 			}
 		}
 
-		$this->getAnalyticsInstance()->sendInvitation(
-			Analytics::ANALYTIC_INVITATION_TYPE_C_SUB_SECTION_EMAIL,
-			$analyticEmails,
-			$analyticPhones
-		);
-
 		$newUsers = [
 			"ITEMS" => $items
 		];
 
-		$res = $this->registerNewUser($newUsers, $strError);
+		$res = $this->registerNewUser($newUsers, 'email', $strError);
 
 		if (!empty($strError))
 		{
@@ -368,22 +315,33 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 			return false;
 		}
 
+		foreach ($res as $obj)
+		{
+			$isEmail = true;
+
+			if (empty($obj->getId()))
+			{
+				continue;
+			}
+
+			if (!isset($obj->getCustomData()['email']) || empty($obj->getCustomData()['email']))
+			{
+				$isEmail = false;
+			}
+
+			$this->getAnalyticsInstance()->sendInvitation(
+				$obj->getId(),
+				Analytics::ANALYTIC_INVITATION_TYPE_C_SUB_SECTION_EMAIL,
+				$isEmail ? $analyticEmails : 0,
+				$isEmail ? 0 : $analyticPhones
+			);
+		}
+
 		return $res;
 	}
 
 	public function inviteWithGroupDpAction()
 	{
-		if (!$this->isInvitingUsersAllowed())
-		{
-			return false;
-		}
-
-		if (!$this->isMoreUserAvailable())
-		{
-			$this->addError(new \Bitrix\Main\Error("User limit"));
-			return "user_limit";
-		}
-
 		$userData = $_POST;
 		$departmentId = $this->filterDepartment($userData["UF_DEPARTMENT"]) ?: [$this->getHeadDepartmentId()];
 		$countEmails = 0;
@@ -401,19 +359,23 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 			}
 		}
 
-		$this->getAnalyticsInstance()->sendInvitation(
-			Analytics::ANALYTIC_INVITATION_TYPE_C_SUB_SECTION_DEPARTMENT,
-			$countEmails,
-			$countPhones
-		);
-
 		$newUsers = [
 			"ITEMS" => $userData["ITEMS"],
 			"UF_DEPARTMENT" => $departmentId,
 			"SONET_GROUPS_CODE" => $userData["SONET_GROUPS_CODE"] ?? []
 		];
 
-		$res = $this->registerNewUser($newUsers, $strError);
+		$res = $this->registerNewUser($newUsers, 'group', $strError);
+
+		foreach ($res as $obj)
+		{
+			$this->getAnalyticsInstance()->sendInvitation(
+				$obj->getId(),
+				Analytics::ANALYTIC_INVITATION_TYPE_C_SUB_SECTION_DEPARTMENT,
+				$countEmails,
+				$countPhones
+			);
+		}
 
 		if (!empty($strError))
 		{
@@ -427,11 +389,6 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 
 	public function massInviteAction()
 	{
-		if (!$this->isInvitingUsersAllowed())
-		{
-			return false;
-		}
-
 		$strError = "";
 		$errorFormatItems = [];
 		$errorLengthItems = [];
@@ -474,12 +431,6 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 			}
 		}
 
-		$this->getAnalyticsInstance()->sendInvitation(
-			Analytics::ANALYTIC_INVITATION_TYPE_C_SUB_SECTION_MASS,
-			$countEmails,
-			$countPhones
-		);
-
 		if (!empty($errorFormatItems))
 		{
 			$strError = Loc::getMessage("BX24_INVITE_DIALOG_ERROR_"
@@ -501,7 +452,17 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 
 		if (!empty($newUsers))
 		{
-			$res = $this->registerNewUser($newUsers, $strError);
+			$res = $this->registerNewUser($newUsers, 'mass', $strError);
+
+			foreach ($res as $obj)
+			{
+				$this->getAnalyticsInstance()->sendInvitation(
+					$obj->getId(),
+					Analytics::ANALYTIC_INVITATION_TYPE_C_SUB_SECTION_MASS,
+					$countEmails,
+					$countPhones
+				);
+			}
 		}
 
 		if (!empty($strError))
@@ -519,12 +480,6 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 		if (!$this->isExtranetInstalled())
 		{
 			return false;
-		}
-
-		if (!$this->isMoreUserAvailable())
-		{
-			$this->addError(new \Bitrix\Main\Error("User limit"));
-			return "user_limit";
 		}
 
 		$userOptions = \Bitrix\Main\Context::getCurrent()->getRequest()->getPost('userOptions');
@@ -561,7 +516,7 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 			}
 		}
 
-		$res = $this->registerNewUser($newUsers, $strError);
+		$res = $this->registerNewUser($newUsers, 'extranet', $strError);
 
 		if (!empty($strError))
 		{
@@ -575,15 +530,11 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 	public function selfAction()
 	{
 		$this->getAnalyticsInstance()->sendRegistration(
+			0,
 			Analytics::ANALYTIC_CATEGORY_SETTINGS,
 			Analytics::ANALYTIC_EVENT_CHANGE_QUICK_REG,
 			Bitrix\Main\Application::getInstance()->getContext()->getRequest()->getPost('allow_register')
 		);
-
-		if (!$this->isInvitingUsersAllowed())
-		{
-			return false;
-		}
 
 		$isCurrentUserAdmin = Intranet\CurrentUser::get()->isAdmin();
 
@@ -608,23 +559,10 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 
 	public function addAction()
 	{
-		$this->getAnalyticsInstance()->sendRegistration();
-
-		if (!$this->isInvitingUsersAllowed())
-		{
-			return false;
-		}
-
-		if (!$this->isMoreUserAvailable())
-		{
-			$this->addError(new \Bitrix\Main\Error("User limit"));
-			return "user_limit";
-		}
-
 		$userData = $_POST;
 		$userData["DEPARTMENT_ID"] = $this->filterDepartment($userData["UF_DEPARTMENT"] ?? null) ?: [$this->getHeadDepartmentId()];
 
-		$idAdded = CIntranetInviteDialog::AddNewUser(SITE_ID, $userData, $strError);
+		$idAdded = CIntranetInviteDialog::AddNewUser(SITE_ID, $userData, $strError, 'register');
 
 		if ($idAdded && isset($_POST["SONET_GROUPS_CODE"]) && is_array($_POST["SONET_GROUPS_CODE"]))
 		{
@@ -639,8 +577,11 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 		{
 			$strError = str_replace("<br>", " ", $strError);
 			$this->addError(new \Bitrix\Main\Error($strError));
+			$this->getAnalyticsInstance()->sendRegistration(0, status: 'N', userData: $userData);
 			return false;
 		}
+
+		$this->getAnalyticsInstance()->sendRegistration($idAdded, status: 'Y', userData: $userData);
 
 		$res = $this->prepareUsersForResponse([$idAdded]);
 
@@ -651,18 +592,7 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 
 	public function inviteIntegratorAction()
 	{
-
-		$this->getAnalyticsInstance()->sendInvitation(
-			Analytics::ANALYTIC_INVITATION_TYPE_C_SUB_SECTION_INTEGRATOR,
-			1
-		);
-
 		if (!Loader::includeModule("bitrix24"))
-		{
-			return false;
-		}
-
-		if (!$this->isInvitingUsersAllowed())
 		{
 			return false;
 		}
@@ -691,10 +621,10 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 			return false;
 		}
 
-		$error = "";
+		$error = new \Bitrix\Main\Error('');
 		if (!Integrator::checkPartnerEmail($_POST["integrator_email"], $error))
 		{
-			$this->addError(new \Bitrix\Main\Error($error));
+			$this->addError($error);
 
 			return false;
 		}
@@ -710,6 +640,12 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 
 			return false;
 		}
+
+		$this->getAnalyticsInstance()->sendInvitation(
+			$newIntegratorId,
+			Analytics::ANALYTIC_INVITATION_TYPE_C_SUB_SECTION_INTEGRATOR,
+			1
+		);
 
 		CIntranetInviteDialog::logAction($newIntegratorId, 'intranet', 'invite_user', 'integrator_dialog');
 

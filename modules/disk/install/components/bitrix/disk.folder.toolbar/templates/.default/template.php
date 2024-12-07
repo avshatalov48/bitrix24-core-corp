@@ -32,7 +32,7 @@ $APPLICATION->includeComponent(
 );
 ?>
 
-<script type="text/javascript">
+<script>
 BX.message({
 	<? if(!empty($arResult['CLOUD_DOCUMENT'])){ ?>
 	wd_service_edit_doc_default: '<?= CUtil::JSEscape($arResult['CLOUD_DOCUMENT']['DEFAULT_SERVICE']) ?>',

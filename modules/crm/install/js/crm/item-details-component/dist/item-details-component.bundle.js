@@ -1,6 +1,6 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports,crm_messagesender,crm_stageModel,main_core,main_core_events,main_loader,main_popup,ui_dialogs_messagebox,ui_stageflow) {
+(function (exports,crm_messagesender,crm_stageModel,crm_stage_permissionChecker,main_core,main_core_events,main_loader,main_popup,ui_dialogs_messagebox,ui_stageflow,crm_itemDetailsComponent_stageFlow) {
 	'use strict';
 
 	var _templateObject, _templateObject2, _templateObject3;
@@ -12,6 +12,7 @@ this.BX = this.BX || {};
 	    var _this = this;
 	    babelHelpers.classCallCheck(this, ItemDetailsComponent);
 	    babelHelpers.defineProperty(this, "categoryId", null);
+	    babelHelpers.defineProperty(this, "permissionChecker", null);
 	    babelHelpers.defineProperty(this, "receiversJSONString", '');
 	    if (main_core.Type.isPlainObject(params)) {
 	      this.entityTypeId = main_core.Text.toInteger(params.entityTypeId);
@@ -36,6 +37,7 @@ this.BX = this.BX || {};
 	        params.stages.forEach(function (data) {
 	          _this.stages.push(new crm_stageModel.StageModel(data));
 	        });
+	        this.permissionChecker = crm_stage_permissionChecker.PermissionChecker.createFromStageModels(this.stages);
 	      }
 	      this.currentStageId = params.currentStageId;
 	      this.messages = params.messages;
@@ -57,6 +59,11 @@ this.BX = this.BX || {};
 	    this.handleErrorPartialEntityEditor = this.handleErrorPartialEntityEditor.bind(this);
 	  }
 	  babelHelpers.createClass(ItemDetailsComponent, [{
+	    key: "isNew",
+	    value: function isNew() {
+	      return this.id <= 0;
+	    }
+	  }, {
 	    key: "getCurrentCategory",
 	    value: function getCurrentCategory() {
 	      var _this2 = this;
@@ -228,35 +235,38 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "initStageFlow",
 	    value: function initStageFlow() {
-	      if (this.stages) {
-	        var flowStagesData = this.prepareStageFlowStagesData();
-	        var stageFlowContainer = document.querySelector('[data-role="stageflow-wrap"]');
-	        if (stageFlowContainer) {
-	          this.stageflowChart = new ui_stageflow.StageFlow.Chart({
-	            backgroundColor: BACKGROUND_COLOR,
-	            currentStage: this.currentStageId,
-	            isActive: this.isStageFlowActive === true,
-	            onStageChange: this.onStageChange.bind(this),
-	            labels: {
-	              finalStageName: main_core.Loc.getMessage('CRM_ITEM_DETAIL_STAGEFLOW_FINAL_STAGE_NAME'),
-	              finalStagePopupTitle: main_core.Loc.getMessage('CRM_ITEM_DETAIL_STAGEFLOW_FINAL_STAGE_POPUP'),
-	              finalStagePopupFail: main_core.Loc.getMessage('CRM_ITEM_DETAIL_STAGEFLOW_FINAL_STAGE_POPUP_FAIL'),
-	              finalStageSelectorTitle: main_core.Loc.getMessage('CRM_ITEM_DETAIL_STAGEFLOW_FINAL_STAGE_SELECTOR')
-	            }
-	          }, flowStagesData);
-	          stageFlowContainer.appendChild(this.stageflowChart.render());
-	        }
+	      if (!this.stages) {
+	        return;
 	      }
+	      var flowStagesData = this.prepareStageFlowStagesData();
+	      var stageFlowContainer = document.querySelector('[data-role="stageflow-wrap"]');
+	      if (!stageFlowContainer) {
+	        return;
+	      }
+	      var chartParams = {
+	        backgroundColor: BACKGROUND_COLOR,
+	        currentStage: this.currentStageId,
+	        isActive: this.isStageFlowActive === true,
+	        onStageChange: this.onStageChange.bind(this),
+	        labels: {
+	          finalStageName: main_core.Loc.getMessage('CRM_ITEM_DETAIL_STAGEFLOW_FINAL_STAGE_NAME'),
+	          finalStagePopupTitle: main_core.Loc.getMessage('CRM_ITEM_DETAIL_STAGEFLOW_FINAL_STAGE_POPUP'),
+	          finalStagePopupFail: main_core.Loc.getMessage('CRM_ITEM_DETAIL_STAGEFLOW_FINAL_STAGE_POPUP_FAIL'),
+	          finalStageSelectorTitle: main_core.Loc.getMessage('CRM_ITEM_DETAIL_STAGEFLOW_FINAL_STAGE_SELECTOR')
+	        }
+	      };
+	      this.stageflowChart = new crm_itemDetailsComponent_stageFlow.Chart(chartParams, flowStagesData, this.permissionChecker, this.getStageById.bind(this), this.isNew());
+	      main_core.Dom.append(this.stageflowChart.render(), stageFlowContainer);
 	    }
 	  }, {
 	    key: "prepareStageFlowStagesData",
 	    value: function prepareStageFlowStagesData() {
+	      var _this4 = this;
 	      var flowStagesData = [];
-	      var isNew = this.id <= 0;
 	      this.stages.forEach(function (stage) {
 	        var data = stage.getData();
 	        var color = stage.getColor().indexOf('#') === 0 ? stage.getColor().substr(1) : stage.getColor();
-	        if (isNew) {
+	        if (_this4.isNew()) {
 	          color = BACKGROUND_COLOR;
 	        }
 	        data.isSuccess = stage.isSuccess();
@@ -280,7 +290,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "initPull",
 	    value: function initPull() {
-	      var _this4 = this;
+	      var _this5 = this;
 	      var Pull = BX.PULL;
 	      if (!Pull) {
 	        console.error('pull is not initialized');
@@ -293,17 +303,17 @@ this.BX = this.BX || {};
 	        moduleId: 'crm',
 	        command: this.pullTag,
 	        callback: function callback(params) {
-	          var _params$item, _this4$stageflowChart;
+	          var _params$item, _this5$stageflowChart;
 	          if (!(params !== null && params !== void 0 && (_params$item = params.item) !== null && _params$item !== void 0 && _params$item.data)) {
 	            return;
 	          }
 	          var columnId = params.item.data.columnId;
-	          if ((_this4$stageflowChart = _this4.stageflowChart) !== null && _this4$stageflowChart !== void 0 && _this4$stageflowChart.isActive) {
-	            var currentStage = _this4.getStageById(_this4.stageflowChart.currentStage);
+	          if ((_this5$stageflowChart = _this5.stageflowChart) !== null && _this5$stageflowChart !== void 0 && _this5$stageflowChart.isActive) {
+	            var currentStage = _this5.getStageById(_this5.stageflowChart.currentStage);
 	            if ((currentStage === null || currentStage === void 0 ? void 0 : currentStage.statusId) !== columnId) {
-	              var newStage = _this4.getStageByStatusId(columnId);
+	              var newStage = _this5.getStageByStatusId(columnId);
 	              if (newStage) {
-	                _this4.updateStage(newStage);
+	                _this5.updateStage(newStage);
 	              }
 	            }
 	          }
@@ -337,7 +347,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "onStageChange",
 	    value: function onStageChange(stageFlowStage) {
-	      var _this5 = this;
+	      var _this6 = this;
 	      if (this.isProgress) {
 	        return;
 	      }
@@ -357,7 +367,7 @@ this.BX = this.BX || {};
 	          }
 	        }
 	      }).then(function () {
-	        _this5.stopProgress();
+	        _this6.stopProgress();
 	        var currentSlider = null;
 	        if (main_core.Reflection.getClass('BX.SidePanel.Instance.getTopSlider')) {
 	          currentSlider = BX.SidePanel.Instance.getTopSlider();
@@ -370,14 +380,14 @@ this.BX = this.BX || {};
 	                "sliderUrl": currentSlider.getUrl()
 	              };
 	            }
-	            BX.Crm.EntityEvent.fireUpdate(_this5.entityTypeId, _this5.id, '', eventParams);
+	            BX.Crm.EntityEvent.fireUpdate(_this6.entityTypeId, _this6.id, '', eventParams);
 	          }
 	        }
-	        _this5.updateStage(stage);
+	        _this6.updateStage(stage);
 	      })["catch"](function (response) {
-	        _this5.stopProgress();
-	        if (!_this5.partialEditorId) {
-	          _this5.showErrorsFromResponse(response);
+	        _this6.stopProgress();
+	        if (!_this6.partialEditorId) {
+	          _this6.showErrorsFromResponse(response);
 	          return;
 	        }
 	        var requiredFields = [];
@@ -389,22 +399,22 @@ this.BX = this.BX || {};
 	          }
 	        });
 	        if (requiredFields.length > 0) {
-	          BX.Crm.PartialEditorDialog.close(_this5.partialEditorId);
-	          _this5.partialEntityEditor = BX.Crm.PartialEditorDialog.create(_this5.partialEditorId, {
-	            title: BX.prop.getString(_this5.messages, "partialEditorTitle", "Please fill in all required fields"),
-	            entityTypeName: _this5.entityTypeName,
-	            entityTypeId: _this5.entityTypeId,
-	            entityId: _this5.id,
+	          BX.Crm.PartialEditorDialog.close(_this6.partialEditorId);
+	          _this6.partialEntityEditor = BX.Crm.PartialEditorDialog.create(_this6.partialEditorId, {
+	            title: BX.prop.getString(_this6.messages, "partialEditorTitle", "Please fill in all required fields"),
+	            entityTypeName: _this6.entityTypeName,
+	            entityTypeId: _this6.entityTypeId,
+	            entityId: _this6.id,
 	            fieldNames: requiredFields,
 	            helpData: null,
-	            context: _this5.editorContext || null,
+	            context: _this6.editorContext || null,
 	            isController: true,
 	            stageId: stage.getStatusId()
 	          });
-	          _this5.bindPartialEntityEditorEvents();
-	          _this5.partialEntityEditor.open();
+	          _this6.bindPartialEntityEditorEvents();
+	          _this6.partialEntityEditor.open();
 	        } else {
-	          _this5.showErrorsFromResponse(response);
+	          _this6.showErrorsFromResponse(response);
 	        }
 	      });
 	    }
@@ -468,7 +478,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "handleItemDelete",
 	    value: function handleItemDelete() {
-	      var _this6 = this;
+	      var _this7 = this;
 	      if (this.isProgress) {
 	        return;
 	      }
@@ -478,16 +488,16 @@ this.BX = this.BX || {};
 	        modal: true,
 	        buttons: ui_dialogs_messagebox.MessageBoxButtons.YES_CANCEL,
 	        onYes: function onYes(messageBox) {
-	          _this6.startProgress();
+	          _this7.startProgress();
 	          main_core.ajax.runAction('crm.controller.item.delete', {
 	            analyticsLabel: 'crmItemDetailsDeleteItem',
 	            data: {
-	              entityTypeId: _this6.entityTypeId,
-	              id: _this6.id
+	              entityTypeId: _this7.entityTypeId,
+	              id: _this7.id
 	            }
 	          }).then(function (_ref4) {
 	            var data = _ref4.data;
-	            _this6.stopProgress();
+	            _this7.stopProgress();
 	            var currentSlider = null;
 	            if (main_core.Reflection.getClass('BX.SidePanel.Instance.getTopSlider')) {
 	              currentSlider = BX.SidePanel.Instance.getTopSlider();
@@ -500,17 +510,17 @@ this.BX = this.BX || {};
 	                    "sliderUrl": currentSlider.getUrl()
 	                  };
 	                }
-	                BX.Crm.EntityEvent.fireDelete(_this6.entityTypeId, _this6.id, '', eventParams);
+	                BX.Crm.EntityEvent.fireDelete(_this7.entityTypeId, _this7.id, '', eventParams);
 	              }
 	              currentSlider.close();
 	            } else {
 	              var link = data.redirectUrl;
 	              if (main_core.Type.isStringFilled(link)) {
-	                var url = _this6.normalizeUrl(new main_core.Uri(link));
+	                var url = _this7.normalizeUrl(new main_core.Uri(link));
 	                location.href = url.toString();
 	              }
 	            }
-	          })["catch"](_this6.showErrorsFromResponse.bind(_this6));
+	          })["catch"](_this7.showErrorsFromResponse.bind(_this7));
 	          messageBox.close();
 	        }
 	      });
@@ -598,13 +608,13 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "initTours",
 	    value: function initTours() {
-	      var _this7 = this;
+	      var _this8 = this;
 	      if (this.automationCheckAutomationTourGuideData) {
 	        main_core.Runtime.loadExtension('bizproc.automation.guide').then(function (exports) {
 	          var CrmCheckAutomationGuide = exports.CrmCheckAutomationGuide;
 	          if (CrmCheckAutomationGuide) {
-	            var _this7$categoryId;
-	            CrmCheckAutomationGuide.showCheckAutomation(_this7.entityTypeName, (_this7$categoryId = _this7.categoryId) !== null && _this7$categoryId !== void 0 ? _this7$categoryId : 0, _this7.automationCheckAutomationTourGuideData['options']);
+	            var _this8$categoryId;
+	            CrmCheckAutomationGuide.showCheckAutomation(_this8.entityTypeName, (_this8$categoryId = _this8.categoryId) !== null && _this8$categoryId !== void 0 ? _this8$categoryId : 0, _this8.automationCheckAutomationTourGuideData['options']);
 	          }
 	        });
 	      }
@@ -615,5 +625,5 @@ this.BX = this.BX || {};
 
 	exports.ItemDetailsComponent = ItemDetailsComponent;
 
-}((this.BX.Crm = this.BX.Crm || {}),BX.Crm.MessageSender,BX.Crm.Models,BX,BX.Event,BX,BX.Main,BX.UI.Dialogs,BX.UI));
+}((this.BX.Crm = this.BX.Crm || {}),BX.Crm.MessageSender,BX.Crm.Models,BX.Crm.Stage,BX,BX.Event,BX,BX.Main,BX.UI.Dialogs,BX.UI,BX.Crm.ItemDetailsComponent));
 //# sourceMappingURL=item-details-component.bundle.js.map

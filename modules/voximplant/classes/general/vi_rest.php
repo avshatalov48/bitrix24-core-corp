@@ -19,124 +19,128 @@ class CVoxImplantRestService extends IRestService
 {
 	private static $allowedFilterOperations = array('', '!', '<', '<=', '>', '>=', '><', '!><', '?', '=', '!=', '%', '!%', '');
 
-	public static function OnRestServiceBuildDescription()
+	public static function OnRestServiceBuildDescription(): array
 	{
 		return [
 			'telephony' => [
-				'voximplant.url.get' => ['CVoxImplantRestService', 'urlGet'],
-				'voximplant.sip.get' => ['CVoxImplantRestService', 'sipGet'],
-				'voximplant.sip.add' => ['CVoxImplantRestService', 'sipAdd'],
-				'voximplant.sip.update' => ['CVoxImplantRestService', 'sipUpdate'],
-				'voximplant.sip.delete' => ['CVoxImplantRestService', 'sipDelete'],
-				'voximplant.sip.status' => ['CVoxImplantRestService', 'sipStatus'],
-				'voximplant.sip.connector.status' => ['CVoxImplantRestService', 'sipConnectorStatus'],
-				'voximplant.statistic.get' => ['CVoxImplantRestService', 'statisticGet'],
-				'voximplant.line.outgoing.set' => ['CVoxImplantRestService', 'lineOutgoingSet'],
-				'voximplant.line.outgoing.get' => ['CVoxImplantRestService', 'lineOutgoingGet'],
-				'voximplant.line.outgoing.sip.set' => ['CVoxImplantRestService', 'lineOutgoingSipSet'],
-				'voximplant.line.get' => ['CVoxImplantRestService', 'lineGet'],
-				'voximplant.tts.voices.get' => ['CVoxImplantRestService', 'getVoiceList'],
-				'voximplant.user.get' => ['CVoxImplantRestService', 'getUser'],
-				'voximplant.user.getDefaultLineId' => ['CVoxImplantRestService', 'getUserDefaultLineId'],
-				'voximplant.user.activatePhone' => ['CVoxImplantRestService', 'activatePhone'],
-				'voximplant.user.deactivatePhone' => ['CVoxImplantRestService', 'deactivatePhone'],
+				'voximplant.url.get' => [__CLASS__, 'urlGet'],
+				'voximplant.sip.get' => [__CLASS__, 'sipGet'],
+				'voximplant.sip.add' => [__CLASS__, 'sipAdd'],
+				'voximplant.sip.update' => [__CLASS__, 'sipUpdate'],
+				'voximplant.sip.delete' => [__CLASS__, 'sipDelete'],
+				'voximplant.sip.status' => [__CLASS__, 'sipStatus'],
+				'voximplant.sip.connector.status' => [__CLASS__, 'sipConnectorStatus'],
+				'voximplant.statistic.get' => [__CLASS__, 'statisticGet'],
+				'voximplant.line.outgoing.set' => [__CLASS__, 'lineOutgoingSet'],
+				'voximplant.line.outgoing.get' => [__CLASS__, 'lineOutgoingGet'],
+				'voximplant.line.outgoing.sip.set' => [__CLASS__, 'lineOutgoingSipSet'],
+				'voximplant.line.get' => [__CLASS__, 'lineGet'],
+				'voximplant.tts.voices.get' => [__CLASS__, 'getVoiceList'],
+				'voximplant.user.get' => [__CLASS__, 'getUser'],
+				'voximplant.user.getDefaultLineId' => [__CLASS__, 'getUserDefaultLineId'],
+				'voximplant.user.activatePhone' => [__CLASS__, 'activatePhone'],
+				'voximplant.user.deactivatePhone' => [__CLASS__, 'deactivatePhone'],
+				'voximplant.user.getNode' => [
+					'callback' => [__CLASS__, 'getNode'],
+					'options' => ['private' => true]
+				],
 				'voximplant.authorization.get' => [
-					'callback' => ['CVoxImplantRestService', 'getAuthorization'],
+					'callback' => [__CLASS__, 'getAuthorization'],
 					'options' => ['private' => true]
 				],
 				'voximplant.authorization.signOneTimeKey' => [
-					'callback' => ['CVoxImplantRestService', 'signOneTimeKey'],
+					'callback' => [__CLASS__, 'signOneTimeKey'],
 					'options' => ['private' => true]
 				],
 				'voximplant.authorization.onError' => [
-					'callback' => ['CVoxImplantRestService', 'onAuthorizationError'],
+					'callback' => [__CLASS__, 'onAuthorizationError'],
 					'options' => ['private' => true]
 				],
 				'voximplant.call.init' => [ //not sure if this is still needed
-					'callback' => ['CVoxImplantRestService', 'initCall'],
+					'callback' => [__CLASS__, 'initCall'],
 					'options' => ['private' => true]
 				],
 				'voximplant.call.startWithDevice' => [
-					'callback' => ['CVoxImplantRestService', 'startCallWithDevice'],
+					'callback' => [__CLASS__, 'startCallWithDevice'],
 					'options' => ['private' => true]
 				],
 				'voximplant.call.hangupDevice' => [
-					'callback' => ['CVoxImplantRestService', 'hangupDeviceCall'],
+					'callback' => [__CLASS__, 'hangupDeviceCall'],
 					'options' => ['private' => true]
 				],
 				'voximplant.call.sendWait' => [
-					'callback' => ['CVoxImplantRestService', 'sendWait'],
+					'callback' => [__CLASS__, 'sendWait'],
 					'options' => ['private' => true]
 				],
 				'voximplant.call.sendReady' => [
-					'callback' => ['CVoxImplantRestService', 'sendReady'],
+					'callback' => [__CLASS__, 'sendReady'],
 					'options' => ['private' => true]
 				],
 				'voximplant.call.answer' => [
-					'callback' => ['CVoxImplantRestService', 'answerCall'],
+					'callback' => [__CLASS__, 'answerCall'],
 					'options' => ['private' => true]
 				],
 				'voximplant.call.skip' => [
-					'callback' => ['CVoxImplantRestService', 'skipCall'],
+					'callback' => [__CLASS__, 'skipCall'],
 					'options' => ['private' => true]
 				],
 				'voximplant.call.busy' => [
-					'callback' => ['CVoxImplantRestService', 'rejectCallWithBusy'],
+					'callback' => [__CLASS__, 'rejectCallWithBusy'],
 					'options' => ['private' => true]
 				],
 				'voximplant.call.hold' => [
-					'callback' => ['CVoxImplantRestService', 'holdCall'],
+					'callback' => [__CLASS__, 'holdCall'],
 					'options' => ['private' => true]
 				],
 				'voximplant.call.unhold' => [
-					'callback' => ['CVoxImplantRestService', 'unholdCall'],
+					'callback' => [__CLASS__, 'unholdCall'],
 					'options' => ['private' => true]
 				],
 				'voximplant.call.startViaRest' => [
-					'callback' => ['CVoxImplantRestService', 'startCallViaRest'],
+					'callback' => [__CLASS__, 'startCallViaRest'],
 					'options' => ['private' => true]
 				],
 				'voximplant.call.get' => [
-					'callback' => ['CVoxImplantRestService', 'getCall'],
+					'callback' => [__CLASS__, 'getCall'],
 					'options' => ['private' => true]
 				],
 				'voximplant.call.intercept' => [
-					'callback' => ['CVoxImplantRestService', 'interceptCall'],
+					'callback' => [__CLASS__, 'interceptCall'],
 					'options' => ['private' => true]
 				],
 				'voximplant.call.saveComment' => [
-					'callback' => ['CVoxImplantRestService', 'saveCallComment'],
+					'callback' => [__CLASS__, 'saveCallComment'],
 					'options' => ['private' => true]
 				],
 				'voximplant.call.startTransfer' => [
-					'callback' => ['CVoxImplantRestService', 'startCallTransfer'],
+					'callback' => [__CLASS__, 'startCallTransfer'],
 					'options' => ['private' => true]
 				],
 				'voximplant.call.completeTransfer' => [
-					'callback' => ['CVoxImplantRestService', 'completeCallTransfer'],
+					'callback' => [__CLASS__, 'completeCallTransfer'],
 					'options' => ['private' => true]
 				],
 				'voximplant.call.cancelTransfer' => [
-					'callback' => ['CVoxImplantRestService', 'cancelCallTransfer'],
+					'callback' => [__CLASS__, 'cancelCallTransfer'],
 					'options' => ['private' => true]
 				],
 				'voximplant.call.onConnectionError' => [
-					'callback' => ['CVoxImplantRestService', 'onCallConnectionError'],
+					'callback' => [__CLASS__, 'onCallConnectionError'],
 					'options' => ['private' => true]
 				],
 
-				'telephony.externalCall.searchCrmEntities' => ['CVoxImplantRestService', 'searchCrmEntities'],
-				'telephony.externalCall.register' => ['CVoxImplantRestService', 'registerExternalCall'],
-				'telephony.externalCall.finish' => ['CVoxImplantRestService', 'finishExternalCall'],
-				'telephony.externalCall.show' => ['CVoxImplantRestService', 'showExternalCall'],
-				'telephony.externalCall.hide' => ['CVoxImplantRestService', 'hideExternalCall'],
-				'telephony.externalCall.attachRecord' => ['CVoxImplantRestService', 'attachRecord'],
-				'telephony.call.attachTranscription' => ['CVoxImplantRestService', 'attachTranscription'],
-				'telephony.externalLine.add' => ['CVoxImplantRestService', 'addExternalLine'],
-				'telephony.externalLine.update' => ['CVoxImplantRestService', 'updateExternalLine'],
-				'telephony.externalLine.delete' => ['CVoxImplantRestService', 'deleteExternalLine'],
-				'telephony.externalLine.get' => ['CVoxImplantRestService', 'getExternalLines'],
-				CRestUtil::METHOD_UPLOAD => ['CVoxImplantRestService', 'uploadRecord'],
+				'telephony.externalCall.searchCrmEntities' => [__CLASS__, 'searchCrmEntities'],
+				'telephony.externalCall.register' => [__CLASS__, 'registerExternalCall'],
+				'telephony.externalCall.finish' => [__CLASS__, 'finishExternalCall'],
+				'telephony.externalCall.show' => [__CLASS__, 'showExternalCall'],
+				'telephony.externalCall.hide' => [__CLASS__, 'hideExternalCall'],
+				'telephony.externalCall.attachRecord' => [__CLASS__, 'attachRecord'],
+				'telephony.call.attachTranscription' => [__CLASS__, 'attachTranscription'],
+				'telephony.externalLine.add' => [__CLASS__, 'addExternalLine'],
+				'telephony.externalLine.update' => [__CLASS__, 'updateExternalLine'],
+				'telephony.externalLine.delete' => [__CLASS__, 'deleteExternalLine'],
+				'telephony.externalLine.get' => [__CLASS__, 'getExternalLines'],
+				CRestUtil::METHOD_UPLOAD => [__CLASS__, 'uploadRecord'],
 
 				CRestUtil::EVENTS => [
 					'OnVoximplantCallInit' => ['voximplant', 'onCallInit', [__CLASS__, 'onCallInit'], ["category" => \Bitrix\Rest\Sqs::CATEGORY_TELEPHONY]],
@@ -151,9 +155,9 @@ class CVoxImplantRestService extends IRestService
 				]
 			],
 			'call' => [
-				'voximplant.callback.start' => ['CVoxImplantRestService', 'startCallback'],
-				'voximplant.infocall.startwithtext' => ['CVoxImplantRestService', 'startInfoCallWithText'],
-				'voximplant.infocall.startwithsound' => ['CVoxImplantRestService', 'startInfoCallWithSound'],
+				'voximplant.callback.start' => [__CLASS__, 'startCallback'],
+				'voximplant.infocall.startwithtext' => [__CLASS__, 'startInfoCallWithText'],
+				'voximplant.infocall.startwithsound' => [__CLASS__, 'startInfoCallWithSound'],
 			]
 		];
 	}
@@ -858,6 +862,14 @@ class CVoxImplantRestService extends IRestService
 		$user->SetPhoneActive($userId, true);
 
 		return 1;
+	}
+
+	public static function getNode(): string
+	{
+		$ViHttp = new CVoxImplantHttp();
+		$accountNode = $ViHttp->GetAccountNode();
+
+		return $accountNode->node;
 	}
 
 

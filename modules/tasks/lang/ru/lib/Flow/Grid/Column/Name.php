@@ -1,0 +1,12 @@
+<?php
+$MESS['TASKS_FLOW_LIST_COLUMN_NAME'] = 'Название';
+$MESS['TASKS_FLOW_LIST_COLUMN_NAME_LABEL_DATE'] = 'Время на выполнение:';
+$MESS['TASKS_FLOW_LIST_COLUMN_NAME_LABEL_TEAM'] = 'Команда потока:';
+$MESS['TASKS_FLOW_LIST_COLUMN_NAME_LABEL_GROUP'] = 'Проект:';
+
+$MESS['TASKS_FLOW_LIST_COLUMN_NAME_TEAM_PLURAL_0'] = '{number} человек';
+$MESS['TASKS_FLOW_LIST_COLUMN_NAME_TEAM_PLURAL_1'] = '{number} человека';
+$MESS['TASKS_FLOW_LIST_COLUMN_NAME_TEAM_PLURAL_2'] = '{number} человек';
+
+$MESS['TASKS_FLOW_LIST_COLUMN_NAME_DEMO_PROJECT'] = 'поток не настроен';
+$MESS['TASKS_FLOW_LIST_COLUMN_NAME_DEMO_DATE'] = 'поток не настроен';

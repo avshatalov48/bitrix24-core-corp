@@ -1,9 +1,14 @@
 this.BX = this.BX || {};
-(function (exports) {
+(function (exports,market_marketLinks) {
 	'use strict';
 
 	const Categories = {
 	  props: ['categories'],
+	  data() {
+	    return {
+	      MarketLinks: market_marketLinks.MarketLinks
+	    };
+	  },
 	  template: `
 		<div class="market-category-items">
 			<span class="market-category-list-container"
@@ -15,7 +20,7 @@ this.BX = this.BX || {};
 				<span class="market-category-list-content">
 					<a class="market-category-list-item"
 					   v-for="category in categories.ITEMS"
-					   :href="$root.getCategoryUri(category.CODE)"
+					   :href="MarketLinks.categoryLink(category.CODE)"
 					   data-slider-ignore-autobinding="true"
 					   data-load-content="list"
 					   @click.prevent="$root.emitLoadContent"
@@ -43,4 +48,4 @@ this.BX = this.BX || {};
 
 	exports.Categories = Categories;
 
-}((this.BX.Market = this.BX.Market || {})));
+}((this.BX.Market = this.BX.Market || {}),BX.Market));

@@ -58,6 +58,39 @@ if(empty($arResult['NOTIFY'])):?>
 				);
 			}
 
+			$contextMatches = [];
+			$subTag = mb_substr($data['originalTag'], 0, 10);
+			$dialogId = null;
+			$user1 = null;
+			$user2 = null;
+			$messageId = null;
+			if ($subTag = 'RATING|IM|' || 'IM|MENTION|') /** parse context sync with @see CMobileHelper::createLink */
+			{
+				preg_match("/\[context=(chat\d+|(\d+):(\d+))\/(\d+)\](.*?)\[\/context\]/i", $data['text'], $contextMatches);
+				if (count($contextMatches) > 0) //tag without BB-code [context]
+				{
+					[,$dialogId, $user1, $user2, $messageId] = $contextMatches;
+					$dialogId = (string)$dialogId;
+					if (str_starts_with($dialogId, 'chat'))
+					{
+						if ($dialogId === 'chat0')
+						{
+							$dialogId = '';
+						}
+					}
+					else
+					{
+						$user1 = (int)$user1;
+						$user2 = (int)$user2;
+						$dialogId = $user1 === (int)$arResult['CURRENT_USER_ID'] ? $user2 : $user1;
+					}
+					$data['context'] = [
+						'dialogId' => $dialogId,
+						'messageId' => $messageId,
+					];
+				}
+			}
+
 			/** @see im.v2.lib.date-formatter */
 			$arFormat = [
 				"tommorow" => "tommorow, " . $arResult['DATE_FORMATS']['shortTimeFormat'],
@@ -113,7 +146,36 @@ if(empty($arResult['NOTIFY'])):?>
 						{
 							return;
 						}
-						<?=$data['link'] && $data['type'] != 1? $data['link']:""?>
+
+						let dialogId = '<?=isset($data['context']['dialogId']) ? $data['context']['dialogId'] : ''?>';
+						const messageId = '<?=isset($data['context']['messageId']) ? $data['context']['messageId'] : ''?>';
+
+						if (dialogId !== '')
+						{
+							dialogId = dialogId.startsWith('chat') ? dialogId : Number(dialogId);
+							const openDialogOptions = {
+								dialogId,
+							};
+
+							if (messageId !== '')
+							{
+								openDialogOptions.messageId = Number(messageId);
+								openDialogOptions.withMessageHighlight = true;
+							}
+
+							BXMobileApp.Events.postToComponent(
+								'ImMobile.Messenger.Dialog:open',
+								openDialogOptions,
+								'im.messenger'
+							);
+
+							return;
+						}
+
+						<?=!isset($data['context']) && $data['link'] && $data['type'] != 1
+							? $data['link']
+							: ""
+						?>
 					});
 				</script>
 				<div>

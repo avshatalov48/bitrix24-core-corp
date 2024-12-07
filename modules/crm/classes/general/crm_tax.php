@@ -96,7 +96,15 @@ class CCrmTax
 		}
 		else
 		{
-			self::$bVatMode = Catalog\VatTable::getCount(['=ACTIVE' => 'Y',]) > 0;
+			self::$bVatMode = (bool)Catalog\VatTable::getRow([
+				'select' => ['ID'],
+				'filter' => [
+					'=ACTIVE' => 'Y',
+				],
+				'cache' => [
+					'ttl' => 86400,
+				],
+			]);
 		}
 
 		return self::$bVatMode;
@@ -230,7 +238,7 @@ class CCrmTax
 
 		if ($value === null)
 		{
-			return Loc::getMessage('CRM_VAT_EMPTY_VALUE');
+			return Loc::getMessage('CRM_VAT_EMPTY_VALUE_MSGVER_1');
 		}
 
 		return "{$value}%";

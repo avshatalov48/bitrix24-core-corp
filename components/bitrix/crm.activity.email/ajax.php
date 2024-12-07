@@ -34,8 +34,6 @@ class CrmActivityEmailAjax
 				$error = getMessage('CRM_ACT_EMAIL_NOCRM');
 		}
 
-		\CUtil::jsPostUnescape();
-
 		if ($error === false)
 		{
 			$act = isset($_REQUEST['act']) ? $_REQUEST['act'] : null;

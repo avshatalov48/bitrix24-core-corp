@@ -1466,9 +1466,10 @@ class Config
 	 * @param int $configId
 	 * @param string|null $crmEntityType
 	 * @param int|null $crmEntityId
+	 * @param int|null $userId
 	 * @return bool
 	 */
-	public static function canJoin($configId, $crmEntityType = null, $crmEntityId = null): bool
+	public static function canJoin($configId, $crmEntityType = null, $crmEntityId = null, ?int $userId = null): bool
 	{
 		if (
 			!empty($crmEntityType)
@@ -1476,11 +1477,11 @@ class Config
 		)
 		{
 			return
-				self::canDoOperation($configId, Security\Permissions::ENTITY_JOIN, Security\Permissions::ACTION_PERFORM)
-				|| Crm\Common::hasAccessToEntity($crmEntityType, $crmEntityId);
+				self::canDoOperation($configId, Security\Permissions::ENTITY_JOIN, Security\Permissions::ACTION_PERFORM, $userId)
+				|| Crm\Common::hasAccessToEntity($crmEntityType, $crmEntityId, $userId);
 		}
 
-		return self::canDoOperation($configId, Security\Permissions::ENTITY_JOIN, Security\Permissions::ACTION_PERFORM);
+		return self::canDoOperation($configId, Security\Permissions::ENTITY_JOIN, Security\Permissions::ACTION_PERFORM, $userId);
 	}
 
 	/**

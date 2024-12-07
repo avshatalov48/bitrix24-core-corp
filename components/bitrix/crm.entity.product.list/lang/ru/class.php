@@ -35,10 +35,10 @@ $MESS["CRM_ENTITY_PRODUCT_LIST_SETTING_NEW_ROW_POSITION_TITLE"] = "Добавл�
 $MESS["CRM_ENTITY_PRODUCT_LIST_SETTING_SHOW_PRODUCT_IMAGES_TITLE"] = "Показать картинки товара";
 $MESS["CRM_ENTITY_PRODUCT_LIST_COLUMN_STORE_FROM_INFO"] = "Склад резервации";
 $MESS["CRM_ENTITY_PRODUCT_LIST_COLUMN_STORE_FROM_INFO_HINT"] = "Выберите склад, на котором хотите зарезервировать товар";
-$MESS["CRM_ENTITY_PRODUCT_LIST_COLUMN_STORE_FROM_RESERVED"] = "В резерв";
+$MESS["CRM_ENTITY_PRODUCT_LIST_COLUMN_STORE_FROM_RESERVED_MSGVER_1"] = "В резерв";
 $MESS["CRM_ENTITY_PRODUCT_LIST_COLUMN_STORE_FROM_RESERVED_HINT"] = "Общее количество товара, которое вы резервируете в сделке. #HELPER_HTML_LINK#";
 $MESS["CRM_ENTITY_PRODUCT_LIST_COLUMN_RESERVED"] = "Зарезервировано";
-$MESS["CRM_ENTITY_PRODUCT_LIST_COLUMN_RESERVED_INTO_DEAL"] = "Зарезервировано (в сделке)";
+$MESS["CRM_ENTITY_PRODUCT_LIST_COLUMN_RESERVED_INTO_DEAL_MSGVER_1"] = "Зарезервировано (в сделке)";
 $MESS["CRM_ENTITY_PRODUCT_LIST_COLUMN_RESERVED_INTO_DEAL_HINT"] = "Количество товара, которое осталось зарезервировано вами с учётом частичной отгрузки";
 $MESS["CRM_ENTITY_PRODUCT_LIST_COLUMN_AVAILABLE"] = "Доступный остаток";
 $MESS["CRM_ENTITY_PRODUCT_LIST_COLUMN_AVAILABLE_HINT_2"] = "Доступный остаток = Количество товара на складе – Количество зарезервированного товара. #HELPER_HTML_LINK#";

@@ -34,7 +34,7 @@ elseif ($arParams['EMPTY_PAGE'] === 'Y')
 {
 	$arResult['PAGE_MODE'] = 'detail_empty';
 }
-elseif ($_REQUEST['empty_get_comments'] === 'Y')
+elseif (isset($_REQUEST['empty_get_comments']) && $_REQUEST['empty_get_comments'] === 'Y')
 {
 	$arResult['PAGE_MODE'] = 'detail_comments';
 }

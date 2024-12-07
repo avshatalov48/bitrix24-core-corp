@@ -1,3 +1,5 @@
+/** eslint-disable */
+
 (function ()
 {
 	'use strict';
@@ -345,14 +347,17 @@
 							);
 							break;
 						case TrainingError.TooSoon:
+							const message = BX.message("CRM_ML_SCORING_ERROR_TOO_SOON_2");
+
 							this.elements.scoringDescBlock.appendChild(
 								BX.create("div", {
 									props: {className: "crm-ml-entity-content-desc"},
-									text: BX.message("CRM_ML_SCORING_ERROR_TOO_SOON_2").replace("#DATE#", this.currentTraining["NEXT_DATE"])
+									text: BX.Type.isPlainObject(this.currentTraining) && this.currentTraining["NEXT_DATE"]
+										? message.replace("#DATE#", this.currentTraining["NEXT_DATE"])
+										: message.substring(0, message.indexOf('.') + 1)
 								})
 							);
 					}
-
 				}
 			}
 			if(this.state == ViewState.Training)
@@ -930,10 +935,16 @@
 					]
 				});
 
-				if(this.currentTraining)
+				if (this.currentTraining)
 				{
 					popupContent.appendChild(BX.create("p", {
-						text: BX.message("CRM_ML_SCORING_REENABLE_WARNING").replace("#DATE#", this.currentTraining["NEXT_DATE"])
+						text: BX.message("CRM_ML_SCORING_REENABLE_WARNING")
+							.replace(
+								"#DATE#",
+								BX.Type.isPlainObject(this.currentTraining) && this.currentTraining["NEXT_DATE"]
+									? this.currentTraining["NEXT_DATE"]
+									: ""
+							)
 					}));
 				}
 

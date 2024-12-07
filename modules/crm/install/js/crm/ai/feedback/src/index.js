@@ -10,13 +10,14 @@ import './css/feedback-popup.css';
 export function showSendFeedbackPopupIfFeedbackWasNeverSent(
 	mergeUuid: number,
 	ownerType: string | number,
-	callId: string,
+	activityId: number,
+	activityDirection: string,
 ): Promise
 {
 	return wasFeedbackSent(mergeUuid).then((wasSent) => {
 		if (!wasSent)
 		{
-			return showSendFeedbackPopup(mergeUuid, ownerType, callId);
+			return showSendFeedbackPopup(mergeUuid, ownerType, activityId, activityDirection);
 		}
 
 		// eslint-disable-next-line promise/no-return-wrap
@@ -55,7 +56,12 @@ export function wasFeedbackSent(mergeUuid: number): Promise
 /**
  * @memberof BX.Crm.AI.Feedback
  */
-export function sendFeedback(mergeUuid: number, ownerType: string | number, activityId: number): void
+export function sendFeedback(
+	mergeUuid: number,
+	ownerType: string | number,
+	activityId: number,
+	activityDirection: string,
+): void
 {
 	Ajax.runAction('crm.timeline.ai.sendFeedback', {
 		data: {
@@ -66,6 +72,16 @@ export function sendFeedback(mergeUuid: number, ownerType: string | number, acti
 			sendData(
 				Builder.AI.CallParsingEvent.createDefault(ownerType, activityId, Dictionary.STATUS_SUCCESS)
 					.setElement(Dictionary.ELEMENT_FEEDBACK_SEND)
+					.setActivityDirection(activityDirection)
+					.buildData(),
+			);
+
+			sendData(
+				Builder.AI.CallParsingEvent.createDefault(ownerType, activityId, Dictionary.STATUS_SUCCESS)
+					.setTool(Dictionary.TOOL_CRM)
+					.setCategory(Dictionary.CATEGORY_AI_OPERATIONS)
+					.setElement(Dictionary.ELEMENT_FEEDBACK_SEND)
+					.setActivityDirection(activityDirection)
 					.buildData(),
 			);
 		})
@@ -79,12 +95,13 @@ export function showSendFeedbackPopup(
 	mergeUuid: number,
 	ownerType: string,
 	activityId: number,
+	activityDirection: string,
 ): Promise
 {
 	return new Promise((resolve) => {
 		const messageBox = createFeedbackMessageBox({
 			onOk: () => {
-				sendFeedback(mergeUuid, ownerType, activityId);
+				sendFeedback(mergeUuid, ownerType, activityId, activityDirection);
 				messageBox.close();
 				resolve();
 			},
@@ -94,6 +111,16 @@ export function showSendFeedbackPopup(
 				sendData(
 					Builder.AI.CallParsingEvent.createDefault(ownerType, activityId, Dictionary.STATUS_SUCCESS)
 						.setElement(Dictionary.ELEMENT_FEEDBACK_REFUSED)
+						.setActivityDirection(activityDirection)
+						.buildData(),
+				);
+
+				sendData(
+					Builder.AI.CallParsingEvent.createDefault(ownerType, activityId, Dictionary.STATUS_SUCCESS)
+						.setTool(Dictionary.TOOL_CRM)
+						.setCategory(Dictionary.CATEGORY_AI_OPERATIONS)
+						.setElement(Dictionary.ELEMENT_FEEDBACK_REFUSED)
+						.setActivityDirection(activityDirection)
 						.buildData(),
 				);
 

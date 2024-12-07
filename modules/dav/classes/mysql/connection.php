@@ -29,7 +29,7 @@ class CDavConnection extends CAllDavConnection
 		$strSql =
 			"INSERT INTO b_dav_connections (".$arInsert[0].", CREATED, MODIFIED) ".
 			"VALUES(".$arInsert[1].", ".$DB::CurrentTimeFunction().", ".$DB::CurrentTimeFunction().")";
-		$DB->Query($strSql, false, "File: ".__FILE__."<br>Line: ".__LINE__);
+		$DB->Query($strSql);
 
 		$id = (int)$DB->LastID();
 		if ($id > 0 && \Bitrix\Main\Loader::includeModule('calendar'))
@@ -149,7 +149,7 @@ class CDavConnection extends CAllDavConnection
 		}
 		if (is_array($arGroupBy) && empty($arGroupBy))
 		{
-			$dbRes = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
+			$dbRes = $DB->Query($strSql);
 			if ($arRes = $dbRes->Fetch())
 			{
 				return $arRes["CNT"];
@@ -178,7 +178,7 @@ class CDavConnection extends CAllDavConnection
 				$strSql_tmp .= "GROUP BY " . $arSqls["GROUPBY"] . " ";
 			}
 
-			$dbRes = $DB->Query($strSql_tmp, false, "File: ".__FILE__."<br>Line: ".__LINE__);
+			$dbRes = $DB->Query($strSql_tmp);
 			$cnt = 0;
 			if (!$arSqls["GROUPBY"])
 			{
@@ -203,7 +203,7 @@ class CDavConnection extends CAllDavConnection
 				$strSql .= "LIMIT " . (int)$arNavStartParams["nTopCount"];
 			}
 
-			$dbRes = $DB->Query($strSql, false, "File: ".__FILE__."<br>Line: ".__LINE__);
+			$dbRes = $DB->Query($strSql);
 		}
 
 		if (

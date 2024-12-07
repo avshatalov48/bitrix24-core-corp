@@ -25,7 +25,7 @@ jn.define('tasks/layout/stage-list/item', (require, exports, module) => {
 			{
 				return (
 					!this.props.active
-					&& (this.props.stage.statusId === 'PERIOD1' || this.props.stage.statusId === 'FINISH')
+					&& (this.props.stage.statusId === 'PERIOD1')
 				);
 			}
 

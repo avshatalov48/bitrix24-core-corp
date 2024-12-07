@@ -502,7 +502,7 @@ if(!function_exists('__CrmEntitySummaryRenderHorSectionItem'))
 </div>
 
 
-<script type="text/javascript">
+<script>
 	BX.ready(
 			function()
 			{
@@ -526,7 +526,7 @@ if(!function_exists('__CrmEntitySummaryRenderHorSectionItem'))
 	);
 </script>
 <?if(isset($sipData['ENTITY_TYPE']) && $sipData['ENTITY_TYPE'] !== ''):?>
-<script type="text/javascript">
+<script>
 	BX.ready(
 			function()
 			{

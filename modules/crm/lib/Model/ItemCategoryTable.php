@@ -251,6 +251,7 @@ class ItemCategoryTable extends DataManager
 			->where('ENTITY_TYPE_ID', $entityTypeId)
 			->setSelect(['*'])
 			->addOrder('SORT')
+			->setCacheTtl(3600)
 			->exec()
 		;
 

@@ -1,0 +1,39 @@
+.bx-crm-perms-main {
+	position: relative;
+}
+
+.bx-crm-perms-desk-input-role_name {
+	border: 1px solid #e3e3e3;
+	padding-left: 5px;
+	width: 275px;
+}
+
+.bx-crm-perms-desk-footer {
+	margin-top: 20px;
+	display: flex;
+}
+
+.bx-crm-perms-desk-footer-colleft {
+	text-align: left;
+	display: flex;
+	flex-grow: 1;
+}
+
+.bx-crm-perms-desk-footer-colright {
+	text-align: right;
+	display: flex;
+}
+
+.bx-crm-perms-desk-btn {
+	width: 83px;
+	margin-right: 5px;
+}
+
+.bx-crm-perms-desk-error {
+	color: red;
+}
+
+.bx-crm-perms-desk-delete {
+	cursor: pointer;
+	color: #E00000;
+}

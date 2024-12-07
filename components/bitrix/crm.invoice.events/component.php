@@ -271,14 +271,14 @@ unset($value);
 foreach ($arFilter as $k => $v)
 {
 	$arMatch = array();
-	if (preg_match('/(.*)_from$/i'.BX_UTF_PCRE_MODIFIER, $k, $arMatch))
+	if (preg_match('/(.*)_from$/iu', $k, $arMatch))
 	{
 		$arFilter['>='.$arMatch[1]] = $v;
 		unset($arFilter[$k]);
 	}
-	else if (preg_match('/(.*)_to$/i'.BX_UTF_PCRE_MODIFIER, $k, $arMatch))
+	else if (preg_match('/(.*)_to$/iu', $k, $arMatch))
 	{
-		if ($arMatch[1] == 'DATE_CREATE' && !preg_match('/\d{1,2}:\d{1,2}(:\d{1,2})?$/'.BX_UTF_PCRE_MODIFIER, $v))
+		if ($arMatch[1] == 'DATE_CREATE' && !preg_match('/\d{1,2}:\d{1,2}(:\d{1,2})?$/u', $v))
 			$v = CCrmDateTimeHelper::SetMaxDayTime($v);
 
 		$arFilter['<='.$arMatch[1]] = $v;

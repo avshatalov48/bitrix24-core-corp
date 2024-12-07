@@ -6,6 +6,7 @@
 	const { Loc } = require('loc');
 	const { SyncAjax } = require('calendar/ajax');
 	const { CalendarLoader } = require('calendar/layout/ui/loader');
+	const { Color } = require('tokens');
 
 	class CalendarSyncDetail extends LayoutComponent
 	{
@@ -68,7 +69,7 @@
 			return View(
 				{
 					style: {
-						backgroundColor: AppTheme.colors.bgNavigation,
+						backgroundColor: Color.bgNavigation.toHex(),
 					},
 				},
 				this.state.loading ? CalendarLoader() : this.renderContent(),

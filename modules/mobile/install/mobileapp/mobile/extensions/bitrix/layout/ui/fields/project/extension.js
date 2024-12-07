@@ -5,7 +5,7 @@ jn.define('layout/ui/fields/project', (require, exports, module) => {
 	const { EntitySelectorFieldClass } = require('layout/ui/fields/entity-selector');
 	const { checkDisabledToolById } = require('settings/disabled-tools');
 	const { InfoHelper } = require('layout/ui/info-helper');
-
+	const { Icon } = require('assets/icons');
 	const AppTheme = require('apptheme');
 	const DEFAULT_AVATAR = '/bitrix/mobileapp/mobile/extensions/bitrix/layout/ui/fields/project/images/default-avatar.png';
 	const DEFAULT_SELECTOR_AVATAR = '/bitrix/mobileapp/mobile/extensions/bitrix/selector/providers/common/images/project.png';
@@ -227,7 +227,7 @@ jn.define('layout/ui/fields/project', (require, exports, module) => {
 
 		getDefaultLeftIcon()
 		{
-			return 'folder4';
+			return Icon.FOLDER_WITH_CARD;
 		}
 
 		getAddButtonText()

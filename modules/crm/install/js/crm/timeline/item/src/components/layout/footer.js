@@ -1,11 +1,11 @@
-import { Menu } from './footer/menu';
-import { Buttons } from './footer/buttons';
 import { Type } from 'main.core';
-import { Button } from './button';
-import { ButtonState } from '../enums/button-state';
 import { ButtonScope } from '../enums/button-scope';
+import { ButtonState } from '../enums/button-state';
 import { ButtonType } from '../enums/button-type';
+import { Button } from './button';
 import { AdditionalButton } from './footer/add-button';
+import { Buttons } from './footer/buttons';
+import { Menu } from './footer/menu';
 
 export const Footer = {
 	components: {
@@ -144,7 +144,6 @@ export const Footer = {
 	},
 	template: `
 		<div :class="containerClassname">
-			<Buttons ref="buttons" :items="baseButtons" />
 			<div class="crm-timeline__card-action_menu">
 				<div
 					v-for="button in visibleAndSortedAdditionalButtons"
@@ -158,6 +157,7 @@ export const Footer = {
 				</div>
 				<Menu v-if="hasMenu" :buttons="moreButtons" v-bind="menu" ref="menu"/>
 			</div>
+			<Buttons ref="buttons" :items="baseButtons" />
 		</div>
 	`
 };

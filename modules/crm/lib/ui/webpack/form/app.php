@@ -4,6 +4,7 @@ namespace Bitrix\Crm\UI\Webpack\Form;
 
 use Bitrix\Crm\UI\Webpack;
 use Bitrix\Main;
+use Bitrix\Crm\WebForm;
 
 /**
  * Class App
@@ -70,21 +71,41 @@ class App extends Webpack\Base
 
 	protected function fixAppFileDuplicates()
 	{
-		$files = Main\FileTable::query()
-			->setSelect(['ID'])
-			->where('MODULE_ID', 'crm')
-			->where('SUBDIR', 'crm/form')
-			->where('FILE_NAME', 'app.js')
-			->setOrder(['ID' => 'DESC'])
-			->setLimit(3)
-			->fetchAll()
-		;
-		if (count($files) > 1)
+		$canUseWebPackFileTableForApp = Main\Config\Option::get('crm', 'can_use_webpack_table_for_app');
+
+		if ($canUseWebPackFileTableForApp === 'Y')
 		{
-			foreach ($files as $file)
+			$files = Webpack\Internals\WebPackFileLogTable::query()
+				->setSelect(['ID' => 'FILE_ID'])
+				->where('ENTITY_ID', $this->getId())
+				->where('ENTITY_TYPE', static::$type)
+				->fetchAll()
+			;
+		}
+		else
+		{
+			$files = Main\FileTable::query()
+				->setSelect(['ID'])
+				->where('MODULE_ID', 'crm')
+				->where('SUBDIR', 'crm/form')
+				->where('FILE_NAME', 'app.js')
+				->setOrder(['ID' => 'DESC'])
+				->fetchAll()
+			;
+		}
+
+		foreach ($files as $file)
+		{
+			if ($canUseWebPackFileTableForApp === 'Y')
 			{
-				\CFile::Delete($file['ID']);
+				Webpack\Internals\WebPackFileLogTable::delete($file['ID']);
 			}
+			\CFile::Delete($file['ID']);
+		}
+
+		if ($canUseWebPackFileTableForApp !== 'Y')
+		{
+			Main\Config\Option::set('crm', 'can_use_webpack_table_for_app', 'Y');
 		}
 	}
 
@@ -92,5 +113,34 @@ class App extends Webpack\Base
 	{
 		$this->fixAppFileDuplicates();
 		return parent::build();
+	}
+
+	public function onAfterBuild($result): void
+	{
+		if (!$result->isSuccess())
+		{
+			return;
+		}
+
+		$data = $result->getData();
+		if ($data['ENTITY_TYPE'] !== static::$type || $data['ENTITY_ID'] !== $this->getId())
+		{
+			return;
+		}
+
+		$webFormFile = Webpack\Internals\WebPackFileLogTable::query()
+			->setSelect(['FILE_ID'])
+			->where('FILE_ID', $result->getId())
+			->fetch()
+		;
+
+		if (!$webFormFile)
+		{
+			Webpack\Internals\WebPackFileLogTable::add([
+				'FILE_ID' => $result->getId(),
+				'ENTITY_TYPE' => $data['ENTITY_TYPE'],
+				'ENTITY_ID' => $data['ENTITY_ID'],
+			]);
+		}
 	}
 }

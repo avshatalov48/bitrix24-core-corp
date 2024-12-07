@@ -19,7 +19,7 @@ CModule::includeModule('mail');
 
 <div id="mail-entry-loader"></div>
 
-<script type="text/javascript">
+<script>
 
 BX.ready(function()
 {

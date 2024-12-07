@@ -296,7 +296,7 @@ class WorktimeActionList
 		{
 			$action->setRecordManager($this->recordManager);
 			$action->setShiftsManager($this->shiftsManager);
-			if (!$action->isStart())
+			if (!$action->isStart() && $this->recordManager)
 			{
 				$action->setRecord($this->recordManager->getRecord());
 				$action->setSchedule($this->recordManager->getRecordSchedule());

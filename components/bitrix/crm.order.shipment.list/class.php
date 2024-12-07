@@ -639,11 +639,11 @@ class CCrmOrderShipmentListComponent extends \CBitrixComponent
 
 			foreach($filter as $k => $v)
 			{
-				if (preg_match('/(.*)_from$/i'.BX_UTF_PCRE_MODIFIER, $k, $arMatch))
+				if (preg_match('/(.*)_from$/iu', $k, $arMatch))
 				{
 					\Bitrix\Crm\UI\Filter\Range::prepareFrom($filter, $arMatch[1], $v);
 				}
-				elseif (preg_match('/(.*)_to$/i'.BX_UTF_PCRE_MODIFIER, $k, $arMatch))
+				elseif (preg_match('/(.*)_to$/iu', $k, $arMatch))
 				{
 					if ($v != ''
 							&& ($arMatch[1] == 'DATE_INSERT'
@@ -651,7 +651,7 @@ class CCrmOrderShipmentListComponent extends \CBitrixComponent
 								|| $arMatch[1] == 'DATE_DEDUCTED'
 								|| $arMatch[1] == 'DATE_RESPONSIBLE_ID'
 								|| $arMatch[1] == 'DATE_MARKED')
-							&& !preg_match('/\d{1,2}:\d{1,2}(:\d{1,2})?$/'.BX_UTF_PCRE_MODIFIER, $v))
+							&& !preg_match('/\d{1,2}:\d{1,2}(:\d{1,2})?$/u', $v))
 					{
 						$v = CCrmDateTimeHelper::SetMaxDayTime($v);
 					}

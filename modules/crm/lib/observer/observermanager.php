@@ -1,12 +1,17 @@
 <?php
 namespace Bitrix\Crm\Observer;
 
+use Bitrix\Crm\Service\Container;
 use Bitrix\Main;
 
 class ObserverManager
 {
+	private static array $bulkObserverIDsCache = [];
+
 	public static function registerBulk(array $userIDs, $entityTypeID, $entityID, $sortOffset = 0)
 	{
+		self::resetBulkObserverIDsCache();
+
 		$entityTypeID = static::normalizeEntityTypeId($entityTypeID);
 		$entityID = static::normalizeEntityId($entityID);
 
@@ -38,33 +43,35 @@ class ObserverManager
 
 	public static function unregisterBulk(array $userIDs, $entityTypeID, $entityID)
 	{
+		self::resetBulkObserverIDsCache();
+
 		$entityTypeID = static::normalizeEntityTypeId($entityTypeID);
 		$entityID = static::normalizeEntityId($entityID);
-
-		foreach($userIDs as $userID)
+		foreach ($userIDs as $userId)
 		{
-			if(!is_int($userID))
-			{
-				$userID = (int)$userID;
-			}
-
-			if($userID <= 0)
+			$userId = (int)($userId ?? 0);
+			if ($userId <= 0)
 			{
 				continue;
 			}
 
-			Entity\ObserverTable::delete(
-				[
-					'ENTITY_TYPE_ID' => $entityTypeID,
-					'ENTITY_ID' => $entityID,
-					'USER_ID' => $userID
-				]
-			);
+			Entity\ObserverTable::delete([
+				'ENTITY_TYPE_ID' => $entityTypeID,
+				'ENTITY_ID' => $entityID,
+				'USER_ID' => $userId,
+			]);
+
+			Container::getInstance()
+				->getPullManager()
+				->unSubscribeUserPullEvents($userId, $entityTypeID, $entityID)
+			;
 		}
 	}
 
 	public static function unregister($userID, $entityTypeID, $entityID)
 	{
+		self::resetBulkObserverIDsCache();
+
 		if(!is_int($userID))
 		{
 			$userID = (int)$userID;
@@ -85,6 +92,11 @@ class ObserverManager
 				'USER_ID' => $userID
 			]
 		);
+
+		Container::getInstance()
+			->getPullManager()
+			->unSubscribeUserPullEvents($userID, $entityTypeID, $entityID)
+		;
 	}
 
 	public static function observersIdsByEntity(int $entityTypeId, int $entityId): array
@@ -123,11 +135,18 @@ class ObserverManager
 			return [];
 		}
 
+		$hash = 'type_'.$entityTypeID.'_ids_'.implode('_', $entityIDs);
+
+		if (isset(self::$bulkObserverIDsCache[$hash]))
+		{
+			return self::$bulkObserverIDsCache[$hash];
+		}
+
 		$dbResult = Entity\ObserverTable::getList(
 			[
 				'filter' => [
 					'=ENTITY_TYPE_ID' => $entityTypeID,
-					'@ENTITY_ID' => $entityIDs
+					'@ENTITY_ID' => $entityIDs,
 				],
 				'select' => ['ENTITY_ID', 'USER_ID'],
 				'order' => ['SORT' => 'ASC']
@@ -145,6 +164,8 @@ class ObserverManager
 			}
 			$results[$entityId][] = (int)$fields['USER_ID'];
 		}
+
+		self::$bulkObserverIDsCache[$hash] = $results;
 
 		return $results;
 	}
@@ -224,5 +245,13 @@ class ObserverManager
 		}
 
 		return $entityID;
+	}
+
+	/**
+	 * @internal
+	 */
+	final public static function resetBulkObserverIDsCache(): void
+	{
+		self::$bulkObserverIDsCache = [];
 	}
 }

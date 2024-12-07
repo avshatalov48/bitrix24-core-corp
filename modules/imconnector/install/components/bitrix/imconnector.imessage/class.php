@@ -35,7 +35,6 @@ class ImConnectorImessage extends CBitrixComponent
 	public $helpDeskParams = 'redirect=detail&code=10798618';
 	public $helpLimitDeskParams = 'redirect=detail&code=11735970';
 	public $cookieNameIdLine = 'IMESSAGE_ID_LINE';
-	public $urlNetwork = 'https://bitrix24.net/oauth/select/imessage/?domain=';
 
 	/**
 	 * Check the connection of the necessary modules.
@@ -78,7 +77,7 @@ class ImConnectorImessage extends CBitrixComponent
 			$cookieNameIdLine = $cookiePrefix . '_' . $cookieNameIdLine;
 		}
 
-		return '<script type="text/javascript">
+		return '<script>
 			BX.message({
 				IMCONNECTOR_COMPONENT_IMESSAGE_CONFIRM_TITLE: \'' . GetMessageJS('IMCONNECTOR_COMPONENT_IMESSAGE_CONFIRM_TITLE') . '\',
 				IMCONNECTOR_COMPONENT_IMESSAGE_CONFIRM_DESCRIPTION: \'' . GetMessageJS('IMCONNECTOR_COMPONENT_IMESSAGE_CONFIRM_DESCRIPTION_NEW_2', ['#ID#' => $this->helpDeskParams, '#ID_LIMIT#' => $this->helpLimitDeskParams]) . '\',
@@ -86,7 +85,7 @@ class ImConnectorImessage extends CBitrixComponent
 				IMCONNECTOR_COMPONENT_IMESSAGE_CONFIRM_BUTTON_CANCEL: \'' . GetMessageJS('IMCONNECTOR_COMPONENT_IMESSAGE_CONFIRM_BUTTON_CANCEL') . '\',
 				IMCONNECTOR_COMPONENT_IMESSAGE_LINE_ID: \'' . $this->arParams['LINE'] . '\',
 				IMCONNECTOR_COMPONENT_IMESSAGE_COOKIE_NAME: \'' . $cookieNameIdLine . '\',
-				IMCONNECTOR_COMPONENT_IMESSAGE_URL_NETWORK: \'' . $this->urlNetwork. Connector::getDomainDefault() . '\',
+				IMCONNECTOR_COMPONENT_IMESSAGE_URL_NETWORK: \'' . $this->getNetworkUrl() . Connector::getDomainDefault() . '\',
 			});
 		</script>';
 	}
@@ -459,5 +458,15 @@ class ImConnectorImessage extends CBitrixComponent
 				ShowError(Loc::getMessage('IMCONNECTOR_COMPONENT_IMESSAGE_NO_ACTIVE_CONNECTOR'));
 			}
 		}
+	}
+
+	private function getNetworkUrl(): ?string
+	{
+		if (Loader::includeModule('socialservices'))
+		{
+			return rtrim(CSocServBitrix24Net::NETWORK_URL, '/') . '/oauth/select/imessage/?domain=';
+		}
+
+		return null;
 	}
 }

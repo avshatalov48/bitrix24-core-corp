@@ -6,18 +6,24 @@
 	 */
 	class LoadingScreenComponent extends LayoutComponent
 	{
+		get colors()
+		{
+			return this.props.showAirStyle ? AppTheme.realColors : AppTheme.colors;
+		}
+
 		render()
 		{
-			const { backgroundColor, loaderSize, loaderColor } = this.props;
+			const { backgroundColor, loaderSize, loaderColor, testId } = this.props;
 
 			return View(
 				{
+					testId,
 					style: {
 						flexDirection: 'column',
 						flexGrow: 1,
 						justifyContent: 'center',
 						alignItems: 'center',
-						backgroundColor: backgroundColor || AppTheme.colors.bgPrimary,
+						backgroundColor: backgroundColor || this.colors.bgPrimary,
 					},
 				},
 				Loader({
@@ -25,7 +31,7 @@
 						width: 50,
 						height: 50,
 					},
-					tintColor: loaderColor || AppTheme.colors.base3,
+					tintColor: loaderColor || this.colors.base3,
 					animating: true,
 					size: loaderSize || 'small',
 				}),

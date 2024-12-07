@@ -227,7 +227,8 @@ class voximplant extends \CModule
 							'PERFORM' => 'X'
 						),
 						'CALL_RECORD' => array(
-							'LISTEN' => 'X'
+							'LISTEN' => 'X',
+							'MODIFY' => 'X',
 						),
 						'USER' => array(
 							'MODIFY' => 'X'
@@ -312,9 +313,8 @@ class voximplant extends \CModule
 
 			if (isset($roleIds['manager']) && \Bitrix\Main\Loader::includeModule('intranet'))
 			{
-				$departmentTree = \CIntranetUtils::GetDeparmentsTree();
-				$rootDepartment = (int)$departmentTree[0][0];
-
+				$structureService = \Bitrix\Voximplant\Integration\HumanResources\StructureService::getInstance();
+				$rootDepartment = $structureService->getRootDepartmentId();
 				if ($rootDepartment > 0)
 				{
 					\Bitrix\Voximplant\Model\RoleAccessTable::add([
@@ -668,10 +668,5 @@ class voximplant extends \CModule
 		}
 
 		return true;
-	}
-
-	public function migrateToBox()
-	{
-		\Bitrix\Main\Config\Option::delete($this->MODULE_ID);
 	}
 }

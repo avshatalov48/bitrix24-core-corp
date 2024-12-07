@@ -13,11 +13,6 @@ BX.loadCSS('/bitrix/components/bitrix/crm.event.add/templates/.default/style.css
 </script>
 <?
 //Crutch for BX.ajax.submitAjax (we have urlencoded multipart data)
-CUtil::JSPostUnescape();
-if(isset($_FILES['ATTACH']))
-{
-	CUtil::decodeURIComponent($_FILES['ATTACH']);
-}
 $APPLICATION->IncludeComponent(
 	'bitrix:crm.event.add',
 	'',

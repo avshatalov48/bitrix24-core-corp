@@ -40,6 +40,9 @@ jn.define('crm/terminal/payment-create', (require, exports, module) => {
 			/** @type {TerminalClientProps|null} */
 			this.client = null;
 
+			this.isPhoneConfirmed = props.isPhoneConfirmed;
+			this.connectedSiteId = props.connectedSiteId;
+
 			this.state = {
 				step: Steps.create,
 				isSumValid: false,
@@ -101,6 +104,8 @@ jn.define('crm/terminal/payment-create', (require, exports, module) => {
 			return new PaymentPay({
 				payment: this.payment,
 				layout: this.layout,
+				isPhoneConfirmed: this.isPhoneConfirmed,
+				connectedSiteId: this.connectedSiteId,
 				isStatusVisible: false,
 				...this.paymentPayProps,
 			});

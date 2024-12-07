@@ -240,6 +240,7 @@ final class Converter
 		{
 			$id = $property['Id'] ?? $name;
 			$property['Id'] = $id;
+			$property['Default'] = null;
 			$field = $this->getField($property, $id);
 			if ($field)
 			{

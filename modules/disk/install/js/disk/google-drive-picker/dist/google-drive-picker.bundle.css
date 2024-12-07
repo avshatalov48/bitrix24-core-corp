@@ -1,0 +1,7 @@
+.picker-dialog {
+	z-index: 2000 !important;
+}
+
+.picker-dialog-bg {
+	z-index: 1999 !important;
+}

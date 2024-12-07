@@ -2,7 +2,7 @@
  * @module im/messenger/lib/ui/base/item/style
  */
 jn.define('im/messenger/lib/ui/base/item/style', (require, exports, module) => {
-	const AppTheme = require('apptheme');
+	const { Theme } = require('im/lib/theme');
 	const { transparent } = require('utils/color');
 	// region ItemContainerStyles
 	/**
@@ -71,7 +71,7 @@ jn.define('im/messenger/lib/ui/base/item/style', (require, exports, module) => {
 	const styles = {
 		medium: {
 			parentView: {
-				backgroundColor: AppTheme.colors.bgContentPrimary,
+				backgroundColor: Theme.colors.bgContentPrimary,
 			},
 			itemContainer: {
 				flexDirection: 'row',
@@ -79,7 +79,7 @@ jn.define('im/messenger/lib/ui/base/item/style', (require, exports, module) => {
 				alignItems: 'center',
 				height: 70,
 				borderBottomWidth: 1,
-				borderBottomColor: AppTheme.colors.bgSeparatorPrimary,
+				borderBottomColor: Theme.colors.bgSeparatorPrimary,
 				paddingTop: 14,
 				paddingBottom: 15,
 			},
@@ -93,23 +93,23 @@ jn.define('im/messenger/lib/ui/base/item/style', (require, exports, module) => {
 					marginBottom: 1,
 					fontSize: 17,
 					fontWeight: '400',
-					color: AppTheme.colors.base1,
+					color: Theme.colors.base1,
 				},
 				isYouTitle: {
 					marginLeft: 4,
 					marginBottom: 1,
-					color: AppTheme.colors.base4,
+					color: Theme.colors.base4,
 					fontSize: 15,
 				},
 				subtitle: {
-					color: AppTheme.colors.base4,
+					color: Theme.colors.base4,
 					fontSize: 15,
 				},
 			},
 		},
 		large: {
 			parentView: {
-				backgroundColor: AppTheme.colors.bgContentPrimary,
+				backgroundColor: Theme.colors.bgContentPrimary,
 			},
 			itemContainer: {
 				flexDirection: 'row',
@@ -131,10 +131,10 @@ jn.define('im/messenger/lib/ui/base/item/style', (require, exports, module) => {
 					marginLeft: 4,
 					marginBottom: 2,
 					fontSize: 16,
-					color: AppTheme.colors.base4,
+					color: Theme.colors.base4,
 				},
 				subtitle: {
-					color: AppTheme.colors.base4,
+					color: Theme.colors.base4,
 					fontSize: 14,
 				},
 			},
@@ -142,8 +142,8 @@ jn.define('im/messenger/lib/ui/base/item/style', (require, exports, module) => {
 	};
 
 	const selectedItemStyles = {
-		selectColor: transparent(AppTheme.colors.accentSoftBlue2, 0.6),
-		unselectColor: AppTheme.colors.bgContentPrimary,
+		selectColor: transparent(Theme.colors.accentSoftBlue2, 0.6),
+		unselectColor: Theme.colors.bgContentPrimary,
 
 	};
 

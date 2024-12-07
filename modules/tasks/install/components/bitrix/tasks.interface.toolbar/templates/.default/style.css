@@ -148,7 +148,7 @@
 	font-size: 13px;
 }
 
-.task-interface-btn-toolbar {
+.task-interface-btn-toolbar.ui-btn {
 	margin-right: 10px;
 }
 
@@ -275,6 +275,10 @@
 
 .intranet-binding-menu-btn + script + .ui-btn {
 	margin-left: 0;
+}
+
+.task-interface-toolbar--item--scope .ui-btn-light-border:nth-last-child(2) {
+	margin-right: 0;
 }
 
 #crm_invoice_toolbar .intranet-binding-menu-btn,

@@ -1,6 +1,0 @@
-<?
-$MESS["CRM_ACTIVITY_CALENDAR_LIST_NAME"] = "Anrufe und Treffen";
-$MESS["CRM_ACTIVITY_CALENDAR_LIST_DESCRIPTION"] = "Kalendereinträge";
-$MESS["CRM_NAME"] = "CRM";
-$MESS["CRM_ACTIVITY_NAME"] = "Aktivitäten";
-?>

@@ -273,7 +273,7 @@ elseif(isset($arResult['ELEMENT']['DISK_FILES']))
 	$scriptSettings['filesFieldSettings']['diskfiles'] = $arResult['ELEMENT']['DISK_FILES'];
 }
 ?>
-<script type="text/javascript">
+<script>
 	BX.ready(function(){
 		var treeContainerId = '<?=$arResult['TREE_CONTAINER_ID']?>';
 		if (!BX(treeContainerId))
@@ -302,7 +302,7 @@ elseif(isset($arResult['ELEMENT']['DISK_FILES']))
 	});
 </script>
 <?if($arResult['CONVERSION_PERMITTED'] && $arResult['CAN_CONVERT'] && isset($arResult['CONVERSION_CONFIG'])):?>
-	<script type="text/javascript">
+	<script>
 		BX.ready(
 			function()
 			{
@@ -354,7 +354,7 @@ elseif(isset($arResult['ELEMENT']['DISK_FILES']))
 		);
 	</script>
 <?endif;?>
-<script type="text/javascript">
+<script>
 	BX.ready(
 		function()
 		{

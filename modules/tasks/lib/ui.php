@@ -19,7 +19,7 @@ class UI
 			return $str;
 		}
 
-		return ToLower(mb_substr($str, 0, 1)).mb_substr($str, 1);
+		return mb_strtolower(mb_substr($str, 0, 1)).mb_substr($str, 1);
 	}
 
 	/**
@@ -49,7 +49,7 @@ class UI
 			foreach($map as $from => $to)
 			{
 				$path = str_replace(
-					array('#'.$from.'#', '#'.ToLower($from).'#', '#'.ToUpper($from).'#'),
+					array('#'.$from.'#', '#'.mb_strtolower($from).'#', '#'.mb_strtoupper($from).'#'),
 					'{{'.$to.'}}',
 					$path);
 			}
@@ -57,7 +57,7 @@ class UI
 		else
 		{
 			$path = preg_replace_callback('/#([^#]+)#/', function($matches){
-				return '{{'.ToUpper($matches[1]).'}}';
+				return '{{'.mb_strtoupper($matches[1]).'}}';
 			}, $path);
 		}
 
@@ -481,11 +481,11 @@ class UI
 
 		$value = htmlspecialcharsback($value);
 		// Replace BR
-		$value = preg_replace("/\<br\s*\/*\>/is".BX_UTF_PCRE_MODIFIER,"\n", $value);
+		$value = preg_replace("/\<br\s*\/*\>/isu","\n", $value);
 		// Kill &nbsp;
-		$value = preg_replace("/&nbsp;/is".BX_UTF_PCRE_MODIFIER,"", $value);
+		$value = preg_replace("/&nbsp;/isu","", $value);
 		// Kill tags
-		$value = preg_replace("/\<([^>]*?)>/is".BX_UTF_PCRE_MODIFIER,"", $value);
+		$value = preg_replace("/\<([^>]*?)>/isu","", $value);
 		$value = htmlspecialcharsbx($value);
 
 		RemoveEventHandler("main", "TextParserBeforeAnchorTags", $id);
@@ -503,11 +503,11 @@ class UI
 	 */
 	public static function convertHtmlToBBCodeHack(&$text, &$TextParser)
 	{
-		$text = preg_replace(array("/\&lt;/is".BX_UTF_PCRE_MODIFIER, "/\&gt;/is".BX_UTF_PCRE_MODIFIER),array('<', '>'),$text);
+		$text = preg_replace(array("/\&lt;/isu", "/\&gt;/isu"),array('<', '>'),$text);
 
-		$text = preg_replace("/\<br\s*\/*\>/is".BX_UTF_PCRE_MODIFIER,"", $text);
-		$text = preg_replace("/\<(\w+)[^>]*\>(.+?)\<\/\\1[^>]*\>/is".BX_UTF_PCRE_MODIFIER,"\\2",$text);
-		$text = preg_replace("/\<*\/li\>/is".BX_UTF_PCRE_MODIFIER,"", $text);
+		$text = preg_replace("/\<br\s*\/*\>/isu","", $text);
+		$text = preg_replace("/\<(\w+)[^>]*\>(.+?)\<\/\\1[^>]*\>/isu","\\2",$text);
+		$text = preg_replace("/\<*\/li\>/isu","", $text);
 
 		$text = str_replace(array("<", ">"),array("&lt;", "&gt;"),$text);
 

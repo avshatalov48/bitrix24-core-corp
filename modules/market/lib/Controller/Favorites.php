@@ -13,7 +13,7 @@ class Favorites extends Controller
 		AppFavoritesTable::addItem($appCode);
 
 		return AjaxJson::createSuccess([
-			'total' => AppFavoritesTable::getUserFavoritesCount(),
+			'total' => count(AppFavoritesTable::getUserFavorites()),
 			'currentValue' => 'Y',
 		]);
 	}
@@ -23,7 +23,7 @@ class Favorites extends Controller
 		AppFavoritesTable::rmItem($appCode);
 
 		return AjaxJson::createSuccess([
-			'total' => AppFavoritesTable::getUserFavoritesCount(),
+			'total' => count(AppFavoritesTable::getUserFavorites()),
 			'currentValue' => 'N',
 		]);
 	}

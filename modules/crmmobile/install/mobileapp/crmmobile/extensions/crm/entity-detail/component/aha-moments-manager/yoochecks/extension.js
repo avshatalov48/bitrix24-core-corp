@@ -3,6 +3,7 @@
  */
 jn.define('crm/entity-detail/component/aha-moments-manager/yoochecks', (require, exports, module) => {
 	const { Loc } = require('loc');
+	const { ContextMenu } = require('layout/ui/context-menu');
 	const { Oauth } = require('crm/payment-system/creation/actions/oauth');
 	const { Before } = require('crm/payment-system/creation/actions/before');
 	const { handleErrors } = require('crm/error');

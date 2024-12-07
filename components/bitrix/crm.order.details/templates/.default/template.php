@@ -73,7 +73,7 @@ $APPLICATION->IncludeComponent(
 	$component
 );
 
-?><script type="text/javascript">
+?><script>
 		BX.ready(
 			function()
 			{
@@ -153,7 +153,7 @@ if (!empty($arResult['IS_AJAX_CALL']))
 	function OnCrmCrmOrderListAfterAjaxHandler()
 	{
 		?>
-		<script type="text/javascript">
+		<script>
 			BX.ready(function(){
 				if (typeof(BX.CrmOrderStatusManager) === 'function')
 				{
@@ -169,7 +169,7 @@ if (!empty($arResult['IS_AJAX_CALL']))
 else
 {
 	?>
-	<script type="text/javascript">
+	<script>
 		BX.ready(function ()
 		{
 			if (typeof(BX.CrmOrderStatusManager) === 'function')
@@ -179,7 +179,7 @@ else
 		});
 	</script>
 	<?php if (array_key_exists('AUTOMATION_CHECK_AUTOMATION_TOUR_GUIDE_DATA', $arResult)):?>
-		<script type="text/javascript">
+		<script>
 			BX.ready(function() {
 				BX.Runtime.loadExtension('bizproc.automation.guide')
 					.then((exports) => {

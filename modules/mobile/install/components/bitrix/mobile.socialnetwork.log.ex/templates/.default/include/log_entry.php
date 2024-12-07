@@ -23,11 +23,11 @@ $arComponentParams = array_merge($arParams, [
 		(int)$arParams["LOG_ID"] <= 0
 		|| $arParams["IS_LIST"] === 'Y'
 	),
-	"LAST_LOG_TS" => $arResult["LAST_LOG_TS"],
+	"LAST_LOG_TS" => $arResult["LAST_LOG_TS"] ?? null,
 	"COUNTER_TYPE" => $arResult["COUNTER_TYPE"],
 	"AJAX_CALL" => $arResult["AJAX_CALL"],
 	"PATH_TO_LOG_ENTRY_EMPTY" => $arParams["PATH_TO_LOG_ENTRY_EMPTY"],
-	"bReload" => $arResult["bReload"],
+	"bReload" => $arResult["bReload"] ?? null,
 	"IND" => $ind,
 	"EVENT" => [
 		"IS_UNREAD" => $isUnread,

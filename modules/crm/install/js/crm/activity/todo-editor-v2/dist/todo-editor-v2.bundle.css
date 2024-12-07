@@ -1,0 +1,495 @@
+.crm-activity__todo-editor-v2 {
+	--crm-activity__todo-editor-v2-min-height: 38px;
+	--crm-activity__todo-editor-v2_input_control-max-height: 126px;
+	--crm-activity__todo-editor-v2-border-radius: var(--ui-border-radius-xs);
+
+	box-sizing: border-box;
+	position: relative;
+	display: block;
+	background-color: var(--ui-color-background-primary, #fff);
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica), 'Helvetica Neue');
+	border-radius: var(--crm-activity__todo-editor-v2-border-radius);
+}
+
+.crm-activity__todo-editor-v2.--is-edit .crm-activity__todo-editor-v2_input_control {
+	min-height: var(--crm-activity__todo-editor-v2-min-height);
+	transition-property: border-color;
+}
+
+.crm-activity__todo-editor-v2 .crm-activity__todo-editor-v2_input_control::placeholder {
+	line-height: 32px;
+}
+
+.crm-activity__todo-editor-v2.--is-edit .crm-activity__todo-editor-v2_input_control::placeholder {
+	line-height: inherit;
+}
+
+.crm-activity__todo-editor-v2_editor {
+	position: relative;
+}
+
+.crm-activity__todo-editor-v2_container:focus-within .crm-activity__todo-editor-v2_deadline-pill {
+	border-color: var(--ui-color-palette-blue-40);
+}
+
+.crm-activity__todo-editor-v2_header {
+	opacity: 1;
+	padding: 11px 14px 11px 14px;
+	position: relative;
+	min-height: 20px;
+	display: flex;
+	align-items: center;
+	justify-content: end;
+}
+
+/*.crm-activity__todo-editor-v2.--is-edit .crm-activity__todo-editor-v2_header {
+	display: flex;
+	animation-name: crm-activity__todo-editor-v2_block__fade-in;
+	animation-duration: 450ms;
+	animation-iteration-count: 1;
+	animation-fill-mode: both;
+}*/
+
+.crm-activity__todo-editor-v2_responsible-user-selector {
+	transition: opacity .2s linear;
+}
+
+.crm-activity__todo-editor-v2_responsible-user-selector:hover {
+	opacity: var(--ui-opacity-80);
+}
+
+.crm-activity__todo-editor-v2_header .crm-activity__todo-editor-v2_responsible-user-selector i {
+	height: 20px;
+	width: 20px;
+	padding-top: 0;
+}
+
+.crm-activity__todo-editor-v2_body {
+	display: block;
+	position: relative;
+	outline: none;
+}
+
+.crm-activity__todo-editor-v2_body:focus-within {
+	cursor: text;
+	outline: none;
+}
+
+.crm-activity__todo-editor-v2_input_control {
+	box-sizing: border-box;
+	display: block;
+	width: 100%;
+	min-height: 34px;
+	padding: 7px 14px;
+	color: var(--ui-color-text-primary);
+	font-family: inherit;
+	font-size: var(--ui-font-size-lg);
+	line-height: 17px;
+	outline: none;
+	resize: none;
+	background-color: transparent;
+	overflow: hidden;
+	border: none;
+}
+
+.crm-activity__todo-editor-v2_input_control.--title {
+	color: var(--ui-typography-color-text);
+	padding: 0;
+	min-height: auto !important;
+	height: var(--ui-size-lg);
+	line-height: var(--ui-size-lg);
+	margin-right: 14px;
+}
+
+.crm-activity__todo-editor-v2_input_control.--has-scroll {
+	max-height: var(--crm-activity__todo-editor-v2_input_control-max-height);
+	overflow-y: scroll;
+}
+
+.crm-activity__todo-editor-v2_input_control::placeholder {
+	color: var(--ui-color-base-35);
+}
+
+.crm-activity__todo-editor-v2.--is-edit .crm-activity__todo-editor-v2_input_control::placeholder {
+	color: var(--ui-color-base-40);
+}
+
+.crm-activity__todo-editor-v2_tools {
+	display: flex;
+	align-items: flex-end;
+	padding-top: 8px;
+	padding-bottom: 8px;
+}
+
+.crm-activity__todo-editor-v2_left_tools {
+	width: 75%;
+	display: flex;
+}
+
+.crm-activity__todo-editor-v2_deadline {
+	padding-left: 14px;
+	display: flex;
+	flex-direction: row;
+	justify-content: flex-start;
+	align-items: flex-start;
+	font-family: inherit;
+	cursor: pointer;
+}
+
+.crm-activity__todo-editor-v2_deadline .crm-activity__todo-editor-v2_deadline-pill {
+	border-radius: var(--ui-border-radius-sm);
+}
+
+.crm-activity__todo-editor-v2_deadline-pill {
+	position: relative;
+	display: inline-flex;
+	flex-direction: row;
+	align-items: center;
+	padding: 6px 8px 6px 4px;
+	color: var(--ui-color-base-default);
+	cursor: pointer;
+	white-space: nowrap;
+	border: var(--ui-border-width-thin) solid var(--ui-color-base-20);
+}
+
+.crm-activity__todo-editor-v2_deadline-icon {
+	width: 20px;
+	height: 20px;
+	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg width='21' height='21' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cg clip-path='url(%23clip0_5437_924)'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M8.16 4.186v.974a.64.64 0 01-.629.651.64.64 0 01-.628-.65v-.975l.004-.085a.638.638 0 01.629-.57.641.641 0 01.624.655zm5.831.707v.443c0 .733-.574 1.329-1.282 1.329-.708 0-1.283-.596-1.283-1.33v-.442H8.814v.443c0 .733-.574 1.329-1.283 1.329S6.25 6.069 6.25 5.335v-.442h-.986c-.874-.002-1.583.73-1.585 1.635 0 .045.002.09.005.137v8.859c0 .489.383.886.855.886h11.164c.473 0 .855-.397.855-.886v-8.86c.016-.934-.68-1.714-1.58-1.771h-.986zm-8.598 9.745h9.454V7.6H5.393v7.037zm5.236-5.451h-.936a.34.34 0 00-.341.339v.93a.34.34 0 00.341.338h.936a.34.34 0 00.34-.339v-.93a.34.34 0 00-.34-.338zm-3.362 0h.936a.34.34 0 01.34.339v.93a.34.34 0 01-.34.338h-.936a.34.34 0 01-.341-.339v-.929a.34.34 0 01.341-.339zm.935 2.41h-.936a.34.34 0 00-.34.34v.929a.34.34 0 00.34.339h.936a.34.34 0 00.341-.339v-.93a.34.34 0 00-.341-.338zm1.491 0h.936a.34.34 0 01.34.34v.929a.34.34 0 01-.34.339h-.936a.34.34 0 01-.341-.339v-.93a.34.34 0 01.341-.338zm2.427-2.41h.936a.34.34 0 01.34.339v.93a.34.34 0 01-.34.338h-.936a.34.34 0 01-.341-.339v-.93a.34.34 0 01.341-.338zm1.182-4.053V4.21a.604.604 0 00-.593-.615.604.604 0 00-.594.615v.923c0 .34.264.615.593.616a.605.605 0 00.594-.615z' fill='%23828B95'/%3E%3C/g%3E%3Cdefs%3E%3CclipPath id='clip0_5437_924'%3E%3Cpath fill='%23fff' transform='translate(.118 .594)' d='M0 0h20v20H0z'/%3E%3C/clipPath%3E%3C/defs%3E%3C/svg%3E");
+	display: inline-block;
+	margin-right: 4px;
+}
+
+.crm-activity__todo-editor-v2_deadline-text {
+	font-size: var(--ui-font-size-sm);
+	color: var(--ui-color-base-90);
+}
+
+.crm-activity__todo-editor-v2_deadline:hover .crm-activity__todo-editor-v2_deadline-text {
+	border-color: transparent;
+	transition-duration: unset;
+}
+
+.crm-activity__todo-editor-v2_ping_selector {
+	margin-left: 12px;
+	display: flex;
+	align-items: center;
+}
+
+.crm-activity__todo-editor-v2_action-btn {
+	position: relative;
+	padding: 0;
+	margin-right: 10px;
+	border: none;
+	outline: none;
+	background-color: transparent;
+	cursor: pointer;
+}
+
+.crm-activity__todo-editor-v2_action-btn:hover {
+	transition-duration: unset;
+}
+
+.crm-activity__todo-editor-v2_action-btn:hover .crm-activity__todo-editor-v2_action-btn-icon,
+.crm-activity__todo-editor-v2_action-btn:hover .crm-activity__todo-editor-v2_action-user-selector-tick-icon {
+	background-color: var(--ui-color-base-40, #bdc1c6);
+	transition-duration: unset;
+}
+
+.crm-activity__todo-editor-v2_action-btn:last-child {
+	margin-right: 0;
+}
+
+.crm-activity__todo-editor-v2_action-btn-icon {
+	display: inline-block;
+	width: 26px;
+	height: 26px;
+	-webkit-mask-size: 22px 22px;
+	        mask-size: 22px 22px;
+	-webkit-mask-position: center center;
+	        mask-position: center center;
+	-webkit-mask-repeat: no-repeat;
+	        mask-repeat: no-repeat;
+	background-color: var(--ui-color-base-30, #D5D7DB);
+	transition: background-color 0.2s linear;
+}
+
+.crm-activity__todo-editor-v2_action-btn-icon.--micro {
+	-webkit-mask-image: url("data:image/svg+xml;charset=utf-8,%3Csvg width='24' height='24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M16.99 10.826a.909.909 0 01.927.89c.05 2.306-1.65 5.013-4.94 5.46v1.196h.393a.819.819 0 110 1.638h-2.74a.819.819 0 010-1.638h.392v-1.196c-3.286-.444-4.966-3.087-4.94-5.45a.91.91 0 011.813-.08l.005.099c-.005.471.258 1.377.744 2.08.698 1.012 1.77 1.598 3.365 1.598 1.586 0 2.655-.597 3.354-1.628.447-.658.707-1.494.735-1.944l.002-.097a.909.909 0 01.89-.928zM12 3.685a2.479 2.479 0 012.479 2.478v5.226a2.479 2.479 0 01-4.958 0V6.163A2.479 2.479 0 0112 3.685z' fill='%23828B95'/%3E%3C/svg%3E");
+	        mask-image: url("data:image/svg+xml;charset=utf-8,%3Csvg width='24' height='24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M16.99 10.826a.909.909 0 01.927.89c.05 2.306-1.65 5.013-4.94 5.46v1.196h.393a.819.819 0 110 1.638h-2.74a.819.819 0 010-1.638h.392v-1.196c-3.286-.444-4.966-3.087-4.94-5.45a.91.91 0 011.813-.08l.005.099c-.005.471.258 1.377.744 2.08.698 1.012 1.77 1.598 3.365 1.598 1.586 0 2.655-.597 3.354-1.628.447-.658.707-1.494.735-1.944l.002-.097a.909.909 0 01.89-.928zM12 3.685a2.479 2.479 0 012.479 2.478v5.226a2.479 2.479 0 01-4.958 0V6.163A2.479 2.479 0 0112 3.685z' fill='%23828B95'/%3E%3C/svg%3E");
+}
+
+.crm-activity__todo-editor-v2_action-btn-icon.--settings {
+	-webkit-mask-image: url("./images/crm-activity__todo-editor-v2_settings-icon.svg");
+	        mask-image: url("./images/crm-activity__todo-editor-v2_settings-icon.svg");
+}
+
+.crm-activity__todo-editor-v2_action-btn-icon.--attach {
+	-webkit-mask-image: url("./images/crm-activity__todo-editor-v2_attach-icon.svg");
+	        mask-image: url("./images/crm-activity__todo-editor-v2_attach-icon.svg");
+}
+
+.crm-activity__todo-editor-v2_action-btn-icon.--attach-2 {
+	-webkit-mask-image: url("data:image/svg+xml;charset=utf-8,%3Csvg width='22' height='22' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M20.319 6.474a.684.684 0 00-.682.686v6.318c0 1.187-.957 2.15-2.137 2.15a2.143 2.143 0 01-2.136-2.15V7.105a.73.73 0 01.727-.732.73.73 0 01.727.732v6.129c0 .379.306.686.682.686a.684.684 0 00.683-.686v-6.13A2.098 2.098 0 0016.09 5a2.098 2.098 0 00-2.09 2.105v6.373C14 15.424 15.566 17 17.5 17c1.933 0 3.5-1.578 3.5-3.523V7.16a.684.684 0 00-.682-.686zM1.555 6H12v2.246H1.912a.558.558 0 01-.526-.392L1.03 6.772a.59.59 0 01.344-.74A.533.533 0 011.555 6zm9.932 4.152c.231 0 .43.149.513.36v.445l-.38 1.063a.557.557 0 01-.52.378H3.88a.558.558 0 01-.524-.387l-.366-1.082a.59.59 0 01.338-.743.533.533 0 01.186-.034h7.973zm-5.499 4.163h3.023a.57.57 0 01.555.583.608.608 0 01-.023.167l-.31 1.082a.56.56 0 01-.532.415h-2.37a.559.559 0 01-.527-.4l-.343-1.08a.589.589 0 01.352-.737.532.532 0 01.175-.03z' fill='%23A8ADB4'/%3E%3C/svg%3E");
+	        mask-image: url("data:image/svg+xml;charset=utf-8,%3Csvg width='22' height='22' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M20.319 6.474a.684.684 0 00-.682.686v6.318c0 1.187-.957 2.15-2.137 2.15a2.143 2.143 0 01-2.136-2.15V7.105a.73.73 0 01.727-.732.73.73 0 01.727.732v6.129c0 .379.306.686.682.686a.684.684 0 00.683-.686v-6.13A2.098 2.098 0 0016.09 5a2.098 2.098 0 00-2.09 2.105v6.373C14 15.424 15.566 17 17.5 17c1.933 0 3.5-1.578 3.5-3.523V7.16a.684.684 0 00-.682-.686zM1.555 6H12v2.246H1.912a.558.558 0 01-.526-.392L1.03 6.772a.59.59 0 01.344-.74A.533.533 0 011.555 6zm9.932 4.152c.231 0 .43.149.513.36v.445l-.38 1.063a.557.557 0 01-.52.378H3.88a.558.558 0 01-.524-.387l-.366-1.082a.59.59 0 01.338-.743.533.533 0 01.186-.034h7.973zm-5.499 4.163h3.023a.57.57 0 01.555.583.608.608 0 01-.023.167l-.31 1.082a.56.56 0 01-.532.415h-2.37a.559.559 0 01-.527-.4l-.343-1.08a.589.589 0 01.352-.737.532.532 0 01.175-.03z' fill='%23A8ADB4'/%3E%3C/svg%3E");
+}
+
+.crm-activity__todo-editor-v2_deadline {
+	z-index: -999;
+}
+
+.crm-activity__todo-editor-v2.--is-edit .crm-activity__todo-editor-v2_deadline {
+	z-index: 1;
+}
+
+.crm-activity__todo-show-actions-popup-button {
+	position: absolute;
+	right: 8px;
+	top: calc(50% - 16px);
+	height: 32px;
+	border: var(--ui-border-width-thin) solid var(--ui-color-palette-white-base);
+	text-transform: lowercase;
+	color: var(--ui-color-palette-gray-80);
+	font-weight: var(--ui-font-weight-normal);
+	background: none;
+	border-radius: var(--ui-border-radius-sm);
+	padding: 0 var(--ui-space-inset-xs2);
+	z-index: 10;
+}
+
+.crm-activity__todo-show-actions-popup-button:hover {
+	background: none;
+	border-color: var(--ui-color-palette-blue-40);
+}
+
+.crm-activity__todo-editor-v2.--is-edit .crm-activity__todo-show-actions-popup-button {
+	top: auto;
+	bottom: 8px;
+	border-color: var(--ui-color-palette-blue-40);
+}
+
+.crm-activity__todo-editor-v2.--is-edit .crm-activity__todo-show-actions-popup-button:hover {
+	border-color: var(--ui-color-palette-blue-50);
+}
+
+.crm-activity__todo-show-actions-popup-button-arrow {
+	display: inline-block;
+	position: relative;
+	width: 14px;
+	height: 14px;
+	margin-left: 3px;
+	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg width='15' height='15' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M10.424 5.348l-2.641 2.64-.665.655-.653-.655-2.64-2.64-.933.932 4.232 4.231 4.231-4.231-.931-.932z' fill='%23959CA4'/%3E%3C/svg%3E");
+	background-repeat: no-repeat;
+}
+
+.crm-activity__todo-editor-v2-actions-menu-item {
+	display: flex;
+	align-items: center;
+}
+
+.crm-activity__todo-editor-v2-actions-menu-item-icon{
+	display:inline-block;
+	width: 25px;
+	height: 25px;
+	margin-right: 8px;
+}
+
+.crm-activity__todo-editor-v2_block-wrapper {
+	padding: 14px;
+	margin-top: 9px;
+	background: var(--ui-color-palette-gray-02);
+	animation-name: crm-activity__todo-editor-v2_block__fade-in;
+	animation-duration: 450ms;
+	animation-iteration-count: 1;
+	animation-fill-mode: both;
+}
+
+.crm-activity__todo-editor-v2_block-header {
+	display: flex;
+	align-items: flex-start;
+	position: relative;
+	flex-wrap: nowrap;
+	padding-right: 50px;
+}
+
+.crm-activity__todo-editor-v2_block-header-icon {
+	display: inline-block;
+	width: 20px;
+	height: 20px;
+	margin-right: var(--ui-space-inset-2xs2);
+	background-size: cover;
+	flex-shrink: 0;
+}
+
+.crm-activity__todo-editor-v2_block-header-icon.--calendar-room {
+	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg width='17' height='17' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M4.389 4.861a1 1 0 011-1h5.974a1 1 0 011 1v6.173a1 1 0 01-1 1H9.668v1.598a.5.5 0 01-.705.456l-3.983-1.789a1 1 0 01-.59-.912V4.86zm5.278 6.216V6.555A.5.5 0 009.37 6.1L6.52 4.819h4.657a.3.3 0 01.3.3v5.658a.3.3 0 01-.3.3h-1.51z' fill='%23525C69'/%3E%3C/svg%3E");
+}
+
+.crm-activity__todo-editor-v2_block-header-action,
+.crm-activity__todo-editor-v2_block-subheader-action {
+	font-size: var(--ui-font-size-sm);
+	cursor: pointer;
+	color: var(--ui-color-palette-gray-40);
+}
+
+.crm-activity__todo-editor-v2_block-header-action {
+	margin-left: var(--ui-space-inset-2xs2);
+}
+
+.crm-activity__todo-editor-v2_block-subheader-action {
+	margin-left: calc(20px + var(--ui-space-inset-2xs2));
+	border-bottom: var(--ui-border-width-thin) var(--ui-color-palette-gray-40) var(--ui-text-decoration-style-dashed);
+}
+
+.crm-activity__todo-editor-v2_block-header-close {
+	position: absolute;
+	width: 24px;
+	height: 24px;
+	right: 0;
+	top: -2px;
+	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg width='24' height='24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M15.059 8l.941.941L8.941 16 8 15.059 15.059 8z' fill='%23959CA4'/%3E%3Cpath d='M8 8.941L8.941 8 16 15.059l-.941.94L8 8.942z' fill='%23959CA4'/%3E%3C/svg%3E");
+	cursor: pointer;
+}
+
+.crm-activity__todo-editor-v2_block-header-data {
+	color: var(--ui-color-link-primary-base);
+	padding: 0 0 0 6px;
+	word-break: break-all;
+}
+
+.crm-activity__todo-editor-v2_block-header-data span {
+	cursor: pointer;
+}
+
+.crm-activity__todo-editor-v2_block-body {
+	overflow: hidden;
+}
+
+.crm-activity__todo-editor-v2_block-body.--file {
+	margin-top: 10px;
+}
+
+.crm-activity__settings_popup__calendar__planner-container {
+	padding-top: var(--ui-space-inset-md);
+	padding-bottom: var(--ui-space-inset-md);
+}
+
+.crm-activity__settings_popup__calendar-container .crm-activity__settings_popup__calendar__recall-container .ui-btn {
+	border-color: var(--ui-color-palette-gray-03);
+}
+
+.crm-activity__settings_popup__calendar-container .crm-activity__settings_popup__calendar__recall-container .ui-btn + .ui-btn {
+	margin-top: 0;
+}
+
+.crm-activity__settings_popup__calendar-container .crm-activity__settings_popup__calendar__recall-container .ui-btn.active {
+	background-color: var(--ui-color-tag-1);
+}
+
+.crm-activity__settings_popup__calendar-container .calendar-planner-settings-icon-container {
+	display: none;
+}
+
+.crm-activity__todo-editor-v2_block-popup-wrapper {
+	padding: 17px 21px;
+}
+
+.crm-activity__todo-editor-v2_block-popup-title {
+	color: var(--ui-color-palette-gray-40);
+	font-size: var(--ui-font-size-md);
+}
+
+.crm-activity__todo-editor-v2_block-popup-content {
+	margin-top: 9px;
+	display: flex;
+	justify-content: space-between;
+	/*align-items: end;*/
+}
+
+.crm-activity__todo-editor-v2_block-popup-content input {
+	color: var(--ui-color-palette-gray-60);
+}
+
+.crm-activity__todo-editor-v2_block-popup-content button {
+	margin-left: 10px;
+}
+
+.crm-activity__todo-editor-v2_block-popup-content .fields.address.field-item {
+	margin-bottom: 0;
+}
+
+.crm-activity__todo-editor-v2_block-header.--link .crm-activity__todo-editor-v2_block-header-data {
+	cursor: pointer;
+}
+
+.crm-activity__todo-editor-v2_block-popup-wrapper.--address .crm-activity__todo-editor-v2_block-popup-content {
+	margin-top: 0;
+}
+
+.crm-activity__todo-editor-v2_block-popup-wrapper.--address .ui-btn-primary {
+	margin-top: 5px;
+}
+
+.crm-activity__todo-editor-v2_block-popup-address-input-container{
+	margin-top: 5px;
+	width: 100%;
+}
+
+.crm-activity__todo-editor-v2_block-popup-address-input-container .ui-ctl-element {
+	font-size: var(--ui-font-size-sm);
+}
+
+.crm-activity__todo-editor-v2_color-selector {
+	margin-right: 11px;
+	width: 12px;
+	height: 12px;
+}
+
+.crm-activity__todo-editor-v2_block-header.--skeleton {
+	background: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns:xlink='http://www.w3.org/1999/xlink' xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100%25 20' preserveAspectRatio='xMinYMin meet' style='width:100%25;height:20' fill='none'%3E%3Csvg height='20' id='d'%3E%3Cdefs%3E%3Cg id='a' fill='%23ecedee'%3E%3Crect x='28' y='6' width='181' height='8' rx='2'/%3E%3Ccircle cx='10' cy='10' r='10'/%3E%3C/g%3E%3C/defs%3E%3Cuse xlink:href='%23a'/%3E%3C/svg%3E%3Crect id='e' width='100%25' fill='url(%23b)' mask='url(%23c)' height='20'/%3E%3Cmask id='c' fill='%23fff'%3E%3Cuse xlink:href='%23d'/%3E%3C/mask%3E%3ClinearGradient x1='66.6%25' y1='50%25' x2='33.3%25' y2='50%25' id='b'%3E%3Cstop stop-opacity='0' offset='0%25'/%3E%3Cstop stop-opacity='.07' offset='50%25'/%3E%3Cstop stop-opacity='0' offset='100%25'/%3E%3C/linearGradient%3E%3Canimate xlink:href='%23e' attributeName='x' from='-100%25' to='100%25' dur='1s' begin='0s' repeatCount='indefinite'/%3E%3C/svg%3E") no-repeat;
+	display: block;
+	height: 20px;
+}
+
+.crm-activity__todo-editor-v2_block-header-data__calendar-container {
+	display: flex;
+	flex-direction: column;
+}
+
+.crm-activity__todo-editor-v2_block-header-data__calendar-container.--skeleton {
+	background: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns:xlink='http://www.w3.org/1999/xlink' xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100%25 20' preserveAspectRatio='xMinYMin meet' style='width:100%25;height:20' fill='none'%3E%3Csvg height='20' id='d'%3E%3Cdefs%3E%3Crect y='6' width='181' height='10' rx='2' fill='%23ecedee' id='a'/%3E%3C/defs%3E%3Cuse xlink:href='%23a'/%3E%3C/svg%3E%3Crect id='e' width='100%25' fill='url(%23b)' mask='url(%23c)' height='20'/%3E%3Cmask id='c' fill='%23fff'%3E%3Cuse xlink:href='%23d'/%3E%3C/mask%3E%3ClinearGradient x1='66.6%25' y1='50%25' x2='33.3%25' y2='50%25' id='b'%3E%3Cstop stop-opacity='0' offset='0%25'/%3E%3Cstop stop-opacity='.07' offset='50%25'/%3E%3Cstop stop-opacity='0' offset='100%25'/%3E%3C/linearGradient%3E%3Canimate xlink:href='%23e' attributeName='x' from='-100%25' to='100%25' dur='1s' begin='0s' repeatCount='indefinite'/%3E%3C/svg%3E") no-repeat;
+	height: 20px;
+	width: 100px;
+}
+
+.crm-activity__todo-editor-v2_block-header-data__calendar-container span+span {
+	opacity: 0;
+}
+
+.crm-activity__todo-editor-v2-actions-menu-item.--locked {
+	background: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI5IiBoZWlnaHQ9IjEyIj48cGF0aCBmaWxsPSIjMjhCQUU5IiBmaWxsLXJ1bGU9ImV2ZW5vZGQiIGQ9Ik03Ljk1MiA1SDl2N0gwVjVoMS4wNTJWMy40MTJhMy40NTIgMy40NTIgMCAwMTYuOSAwVjV6bS0uOTU2IDBsLjAxMi0xLjU4OEEyLjcgMi43IDAgMDA0LjUuOTNhMi43IDIuNyAwIDAwLTIuNTA4IDIuNDgyTDIuMDA1IDVoNC45OTF6TTUuMDIgOC44Nzl2MS4yODdIMy45ODFWOC44NzlhLjgxLjgxIDAgMDEtLjMwNi0uNjM0LjgyNS44MjUgMCAxMTEuNjUgMCAuODEuODEgMCAwMS0uMzA2LjYzNHoiLz48L3N2Zz4=) no-repeat center right;
+	cursor: pointer;
+	padding-right: 17px;
+}
+
+/* region Animations */
+@keyframes crm-activity__todo-editor-v2_block__fade-out {
+	0% {
+		opacity: 1;
+	}
+
+	100% {
+		opacity: 0;
+	}
+}
+
+@keyframes crm-activity__todo-editor-v2_block__fade-in {
+	0% {
+		opacity: 0;
+	}
+
+	100% {
+		opacity: 1;
+	}
+}
+/* endregion*/

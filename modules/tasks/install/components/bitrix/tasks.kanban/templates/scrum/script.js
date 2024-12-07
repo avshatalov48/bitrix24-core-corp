@@ -1,7 +1,6 @@
-/* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
-(function (exports,pull_client,main_core_events,main_core) {
+(function (exports,main_core,pull_client,main_core_events) {
 	'use strict';
 
 	var PullItem = /*#__PURE__*/function (_EventEmitter) {
@@ -45,7 +44,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  babelHelpers.createClass(KanbanComponent, [{
 	    key: "onClickSort",
 	    value: function onClickSort(item, order) {
-	      if (!main_core.Dom.hasClass(item, 'menu-popup-item-accept')) {
+	      if (!Dom.hasClass(item, 'menu-popup-item-accept')) {
 	        this.refreshIcons(item);
 	        this.saveSelection(order);
 	      }
@@ -54,26 +53,23 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "refreshIcons",
 	    value: function refreshIcons(item) {
 	      item.parentElement.childNodes.forEach(function (element) {
-	        main_core.Dom.removeClass(element, 'menu-popup-item-accept');
+	        Dom.removeClass(element, 'menu-popup-item-accept');
 	      });
-	      main_core.Dom.addClass(item, 'menu-popup-item-accept');
+	      Dom.addClass(item, 'menu-popup-item-accept');
 	    }
 	  }, {
 	    key: "saveSelection",
 	    value: function saveSelection(order) {
-	      main_core.ajax({
-	        method: 'POST',
-	        dataType: 'json',
-	        url: this.ajaxComponentPath,
+	      var _this = this;
+	      BX.ajax.runComponentAction('bitrix:tasks.kanban', 'setNewTaskOrder', {
+	        mode: 'class',
 	        data: {
-	          action: 'setNewTaskOrder',
 	          order: order ? order : 'desc',
-	          params: this.ajaxComponentParams,
-	          sessid: BX.bitrix_sessid()
-	        },
-	        onsuccess: function onsuccess(data) {
-	          BX.onCustomEvent(this, 'onTaskSortChanged', [data]);
+	          params: this.ajaxComponentParams
 	        }
+	      }).then(function (response) {
+	        var data = response.data;
+	        BX.onCustomEvent(_this, 'onTaskSortChanged', [data]);
 	      });
 	    }
 	  }]);
@@ -348,9 +344,17 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    value: function onApplyFilter(filterId, values, filterInstance, promise, params) {
 	      var _this8 = this;
 	      this.fadeOutKanbans();
-	      this.kanban.ajax({
-	        action: 'applyFilter'
-	      }, function (data) {
+	      this.kanban.ajax('applyFilter', {}).then(function (response) {
+	        var data = response.data;
+	        if (_this8.kanban.differentColumnCount(data)) {
+	          _this8.kanbanHeader.getColumns().forEach(function (column) {
+	            return _this8.kanbanHeader.removeColumn(column);
+	          });
+	          _this8.kanban.getColumns().forEach(function (column) {
+	            return _this8.kanban.removeColumn(column);
+	          });
+	          _this8.refreshKanban(_this8.kanbanHeader, data);
+	        }
 	        _this8.refreshKanban(_this8.kanban, data);
 	        _this8.cleanNeighborKanbans();
 	        if (_this8.existsTasksGroupedBySubTasks(data)) {
@@ -363,7 +367,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        _this8.fillNeighborKanbans();
 	        _this8.adjustGroupHeadersWidth();
 	        _this8.fadeInKanbans();
-	      }, function (error) {
+	      }, function (response) {
 	        _this8.fadeInKanbans();
 	      });
 	    }
@@ -377,9 +381,8 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      var gridData = this.kanban.getData();
 	      gridData.params.SPRINT_ID = currentGroup.sprintId;
 	      this.kanban.setData(gridData);
-	      this.kanban.ajax({
-	        action: 'changeSprint'
-	      }, function (data) {
+	      this.kanban.ajax('changeSprint', {}).then(function (response) {
+	        var data = response.data;
 	        _this9.cleanNeighborKanbans();
 	        _this9.kanbanHeader.getColumns().forEach(function (column) {
 	          return _this9.kanbanHeader.removeColumn(column);
@@ -635,5 +638,5 @@ this.BX.Tasks = this.BX.Tasks || {};
 
 	exports.KanbanManager = KanbanManager;
 
-}((this.BX.Tasks.Scrum = this.BX.Tasks.Scrum || {}),BX,BX.Event,BX));
+}((this.BX.Tasks.Scrum = this.BX.Tasks.Scrum || {}),BX,BX,BX.Event));
 //# sourceMappingURL=script.js.map

@@ -2,6 +2,7 @@
 use Bitrix\Tasks\Util\Site;
 use Bitrix\Tasks\Integration\SocialNetwork;
 use Bitrix\Tasks\Util\User;
+use Bitrix\Main\Web\Uri;
 
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
 
@@ -77,6 +78,7 @@ foreach($arParams['DATA'] as $i => $item)
 	$item['VALUE'] = $entityType.$item['ID'];
 
 	// define display
+	$displayIcon = '';
 	$display = $item['ID'];
 	if($entityType == $uPref)
 	{
@@ -102,6 +104,20 @@ foreach($arParams['DATA'] as $i => $item)
 		}
 	}
 
+	if ($arParams['IS_FLOW_FORM'])
+	{
+		if ($entityType == $uPref)
+		{
+			$display = \Bitrix\Main\Localization\Loc::getMessage('TASKS_WIDGET_FLOW_SELECTOR_LABEL');
+		}
+		if ($entityType == $gPref)
+		{
+			$groupData = SocialNetwork\Group::getGroupData($item['ID']);
+			$displayIcon = Uri::urnEncode($groupData['IMAGE']);
+		}
+	}
+
+	$item['DISPLAY_ICON'] = $displayIcon;
 	$item['DISPLAY'] = $display;
 
 	// define URL
@@ -161,6 +177,11 @@ $arResult['JS_DATA'] = array(
 	'readOnly' => $arParams['READ_ONLY'],
 	'userType' => mb_substr($arParams['TEMPLATE_CONTROLLER_ID'], mb_strpos($arParams['TEMPLATE_CONTROLLER_ID'], '-') + 1),
 	'taskLimitExceeded' => $arResult['TASK_LIMIT_EXCEEDED'],
+	'viewSelectorEnabled' => $arResult['viewSelectorEnabled'],
+	'taskMailUserIntegrationEnabled' => $arResult['taskMailUserIntegrationEnabled'],
+	'taskMailUserIntegrationFeatureId' => $arResult['taskMailUserIntegrationFeatureId'],
 	'networkEnabled' => \Bitrix\Tasks\Integration\Network\MemberSelector::isNetworkEnabled(),
 	'context' => $arParams['CONTEXT'],
+	'isProjectLimitExceeded' => $arResult['isProjectLimitExceeded'],
+	'projectFeatureId' => $arResult['projectFeatureId'],
 );

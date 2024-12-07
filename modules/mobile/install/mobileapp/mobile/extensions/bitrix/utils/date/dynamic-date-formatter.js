@@ -24,7 +24,16 @@ jn.define('utils/date/dynamic-date-formatter', (require, exports, module) => {
 
 		/**
 		 * @public
-		 * @returns {{MONTH: string, YEAR: string, HOUR: string, MINUTE: string, WEEK: string, DAY: string}}
+		 * @returns {{
+		 * MONTH: string,
+		 * YEAR: string,
+		 * HOUR: string,
+		 * MINUTE: string,
+		 * WEEK: string,
+		 * DAY: string,
+		 * YESTERDAY: string,
+		 * TOMORROW: string
+		 * }}
 		 */
 		static get deltas()
 		{
@@ -32,6 +41,8 @@ jn.define('utils/date/dynamic-date-formatter', (require, exports, module) => {
 				MINUTE: 'DELTA_MINUTE',
 				HOUR: 'DELTA_HOUR',
 				DAY: 'DELTA_DAY',
+				YESTERDAY: 'DELTA_YESTERDAY',
+				TOMORROW: 'DELTA_TOMORROW',
 				WEEK: 'DELTA_WEEK',
 				MONTH: 'DELTA_MONTH',
 				YEAR: 'DELTA_YEAR',
@@ -40,7 +51,16 @@ jn.define('utils/date/dynamic-date-formatter', (require, exports, module) => {
 
 		/**
 		 * @public
-		 * @returns {{MONTH: string, YEAR: string, HOUR: string, MINUTE: string, WEEK: string, DAY: string}}
+		 * @returns {{
+		 * MONTH: string,
+		 * YEAR: string,
+		 * HOUR: string,
+		 * MINUTE: string,
+		 * WEEK: string,
+		 * DAY: string,
+		 * YESTERDAY: string,
+		 * TOMORROW: string
+		 * }}
 		 */
 		static get periods()
 		{
@@ -48,6 +68,8 @@ jn.define('utils/date/dynamic-date-formatter', (require, exports, module) => {
 				MINUTE: 'PERIOD_MINUTE',
 				HOUR: 'PERIOD_HOUR',
 				DAY: 'PERIOD_DAY',
+				YESTERDAY: 'PERIOD_YESTERDAY',
+				TOMORROW: 'PERIOD_TOMORROW',
 				WEEK: 'PERIOD_WEEK',
 				MONTH: 'PERIOD_MONTH',
 				YEAR: 'PERIOD_YEAR',
@@ -84,6 +106,9 @@ jn.define('utils/date/dynamic-date-formatter', (require, exports, module) => {
 					return 3600;
 				case DynamicDateFormatter.deltas.DAY:
 					return 86400;
+				case DynamicDateFormatter.deltas.YESTERDAY:
+				case DynamicDateFormatter.deltas.TOMORROW:
+					return 86400 * 2;
 				case DynamicDateFormatter.deltas.WEEK:
 					return 604_800;
 				case DynamicDateFormatter.deltas.MONTH:
@@ -106,25 +131,41 @@ jn.define('utils/date/dynamic-date-formatter', (require, exports, module) => {
 			const toSeconds = (number) => Math.round(number / 1000);
 			const getDelta = (timestamp) => Math.abs(moment.getNow().timestamp - timestamp);
 
+			const dateNow = moment.clone().getNow().date;
+
 			switch (period)
 			{
 				case DynamicDateFormatter.periods.MINUTE:
 					return getDelta(
 						toSeconds(moment.hasPassed
-							? moment.clone().getNow().date.setSeconds(0, 0)
-							: moment.clone().getNow().date.setSeconds(59, 0)),
+							? dateNow.setSeconds(0, 0)
+							: dateNow.setSeconds(59, 0)),
 					);
 				case DynamicDateFormatter.periods.HOUR:
 					return getDelta(
 						toSeconds(moment.hasPassed
-							? moment.clone().getNow().date.setMinutes(0, 0, 0)
-							: moment.clone().getNow().date.setMinutes(59, 59, 0)),
+							? dateNow.setMinutes(0, 0, 0)
+							: dateNow.setMinutes(59, 59, 0)),
 					);
 				case DynamicDateFormatter.periods.DAY:
 					return getDelta(
 						toSeconds(moment.hasPassed
-							? moment.clone().getNow().date.setHours(0, 0, 0, 0)
-							: moment.clone().getNow().date.setHours(23, 59, 59, 0)),
+							? dateNow.setHours(0, 0, 0, 0)
+							: dateNow.setHours(23, 59, 59, 0)),
+					);
+				case DynamicDateFormatter.periods.YESTERDAY:
+					// eslint-disable-next-line no-case-declarations
+					const dateYesterday = moment.clone().getNow().addDays(-1).date;
+
+					return getDelta(
+						toSeconds(dateYesterday.setHours(0, 0, 0, 0)),
+					);
+				case DynamicDateFormatter.periods.TOMORROW:
+					// eslint-disable-next-line no-case-declarations
+					const dateTomorrow = moment.clone().getNow().addDays(1).date;
+
+					return getDelta(
+						toSeconds(dateTomorrow.setHours(23, 59, 59, 0)),
 					);
 				case DynamicDateFormatter.periods.WEEK:
 					return getDelta(

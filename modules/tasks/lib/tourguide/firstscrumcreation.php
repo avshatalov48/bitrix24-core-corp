@@ -9,7 +9,6 @@ use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
 use Bitrix\Socialnetwork\UserToGroupTable;
 use Bitrix\Socialnetwork\WorkgroupTable;
-use Bitrix\Tasks\TourGuide;
 use Bitrix\Tasks\TourGuide\Exception\TourGuideException;
 use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\ScrumLimit;
 use Exception;
@@ -120,7 +119,13 @@ class FirstScrumCreation extends TourGuide
 	 */
 	private function isScrumLimit(): bool
 	{
-		return ScrumLimit::isLimitExceeded();
+		$isScrumLimitExceeded = ScrumLimit::isLimitExceeded() || !ScrumLimit::isFeatureEnabled();
+		if (ScrumLimit::canTurnOnTrial())
+		{
+			$isScrumLimitExceeded = false;
+		}
+
+		return $isScrumLimitExceeded;
 	}
 
 	protected function getDefaultSteps(): array

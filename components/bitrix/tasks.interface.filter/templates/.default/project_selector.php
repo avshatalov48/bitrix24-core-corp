@@ -37,7 +37,7 @@ else
 	</div>
 </div>
 
-<script type="text/javascript">
+<script>
 	(function() {
 		const dialog = new BX.UI.EntitySelector.Dialog({
 			targetNode: document.getElementById('<?= $containerID ?>'),

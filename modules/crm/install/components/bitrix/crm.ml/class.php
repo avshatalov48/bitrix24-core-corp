@@ -1,5 +1,6 @@
 <?php
 
+use Bitrix\Crm\Ml\Scoring;
 use Bitrix\Main\Error;
 use Bitrix\Main\ErrorCollection;
 use Bitrix\Main\Loader;
@@ -174,13 +175,20 @@ class CrmMlComponent extends CBitrixComponent
 			return;
 		}
 
-		if (empty($this->arResult['COMPONENT_PAGE']))
+		if (Scoring::isScoringAvailable())
 		{
-			LocalRedirect('/crm/');
+			if (empty($this->arResult['COMPONENT_PAGE']))
+			{
+				LocalRedirect('/crm/');
+			}
+			else
+			{
+				$this->includeComponentTemplate($this->arResult['COMPONENT_PAGE']);
+			}
 		}
 		else
 		{
-			$this->includeComponentTemplate($this->arResult['COMPONENT_PAGE']);
+			LocalRedirect('/ai/');
 		}
 	}
 }

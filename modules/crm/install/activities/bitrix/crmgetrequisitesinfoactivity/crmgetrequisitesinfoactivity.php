@@ -13,6 +13,7 @@ use \Bitrix\Crm\EntityAddressType;
 
 class CBPCrmGetRequisitesInfoActivity extends CBPActivity
 {
+	protected ?int $requisitePresetId = null;
 	public function __construct($name)
 	{
 		parent::__construct($name);
@@ -36,8 +37,7 @@ class CBPCrmGetRequisitesInfoActivity extends CBPActivity
 		}
 
 		[$this->CrmEntityType, $this->CrmEntityId] = $this->defineCrmEntityWithRequisites();
-		// Due to bug 165848. Necessary for correct execution of robots with old settings
-		$this->RequisitePresetId = (int)$this->RequisitePresetId;
+
 		$this->logRequisiteProperties();
 		$executionStatus = $this->assertProperties();
 		if ($executionStatus !== CBPActivityExecutionStatus::Executing)
@@ -45,7 +45,7 @@ class CBPCrmGetRequisitesInfoActivity extends CBPActivity
 			return $executionStatus;
 		}
 
-		$presetFieldIds = self::getPresetsFieldNames()[$this->RequisitePresetId];
+		$presetFieldIds = self::getPresetsFieldNames()[$this->getRequisitePresetId()];
 		$requisiteSettings = EntityRequisite::getSingleInstance()->loadSettings(
 			$this->CrmEntityType,
 			$this->CrmEntityId
@@ -75,6 +75,12 @@ class CBPCrmGetRequisitesInfoActivity extends CBPActivity
 		$this->logRequisiteValues($debugValues);
 
 		return CBPActivityExecutionStatus::Closed;
+	}
+
+	protected function ReInitialize()
+	{
+		parent::ReInitialize();
+		$this->requisitePresetId = null;
 	}
 
 	protected function defineCrmEntityWithRequisites(): array
@@ -114,11 +120,16 @@ class CBPCrmGetRequisitesInfoActivity extends CBPActivity
 
 	protected function logRequisiteProperties(): void
 	{
+		if (!$this->workflow->isDebug())
+		{
+			return;
+		}
+
 		$debugValues = [
 			'CrmEntityType' => $this->CrmEntityType,
-			'RequisitePresetId' => $this->RequisitePresetId,
+			'RequisitePresetId' => $this->getRequisitePresetId(),
 			'AddressTypeId' => $this->AddressTypeId,
-			'CountryId' => $this->CountryId
+			'CountryId' => $this->CountryId,
 		];
 
 		$debugInfo = $this->getDebugInfo($debugValues);
@@ -132,10 +143,15 @@ class CBPCrmGetRequisitesInfoActivity extends CBPActivity
 
 	protected function logRequisiteValues(array $requisiteValues): void
 	{
+		if (!$this->workflow->isDebug())
+		{
+			return;
+		}
+
 		$requisiteFieldValues = $requisiteValues['RequisiteFields'];
 		$addressFieldValues = $requisiteValues['RequisiteFields'][EntityRequisite::ADDRESS][$this->AddressTypeId] ?? [];
 		unset($requisiteFieldValues['RequisiteFields'][EntityRequisite::ADDRESS]);
-		$countryId = EntityRequisite::getSingleInstance()->getCountryIdByPresetId($this->RequisitePresetId);
+		$countryId = EntityRequisite::getSingleInstance()->getCountryIdByPresetId($this->getRequisitePresetId());
 
 		$debugValues = array_merge($requisiteFieldValues, $addressFieldValues, $requisiteValues['BankDetailFields']);
 
@@ -162,21 +178,10 @@ class CBPCrmGetRequisitesInfoActivity extends CBPActivity
 			$this->WriteToTrackingService(GetMessage("CRM_GRI_{$entityName}_NOT_EXISTS"), 0, CBPTrackingType::Error);
 			return CBPActivityExecutionStatus::Closed;
 		}
-		if (self::isRequisitePresetExists($this->CrmEntityType, $this->CrmEntityId, $this->RequisitePresetId) === false)
+		$requisitePresetId = $this->getRequisitePresetId();
+		if (self::isRequisitePresetExists($this->CrmEntityType, $this->CrmEntityId, $requisitePresetId) === false)
 		{
-			$presetName = self::getPropertiesDialogMap()['RequisitePresetId']['Options'][$this->RequisitePresetId];
-			$this->WriteToTrackingService(
-				GetMessage(
-					'CRM_GRI_REQUISITE_PRESET_NOT_EXIST',
-					[
-						'#TEMPLATE#' => $presetName,
-						'#TYPE#' => GetMessage('CRM_GRI_ENTITY_' . CCrmOwnerType::ResolveName($this->CrmEntityType)),
-						'#ID#' => $this->CrmEntityId,
-					]
-				),
-				0,
-				CBPTrackingType::Error
-			);
+			$this->WriteToTrackingService(GetMessage('CRM_GRI_REQUISITE_PRESET_NOT_EXIST_1'), 0, CBPTrackingType::Error);
 			return CBPActivityExecutionStatus::Closed;
 		}
 		return CBPActivityExecutionStatus::Executing;
@@ -198,12 +203,12 @@ class CBPCrmGetRequisitesInfoActivity extends CBPActivity
 			'filter' => [
 				'=ENTITY_ID' => $requisite['ID'],
 				'=ENTITY_TYPE_ID' => CCrmOwnerType::Requisite,
-				'=COUNTRY_ID' => EntityPreset::getSingleInstance()->getById($requisite['PRESET_ID'])['COUNTRY_ID']
+				'=COUNTRY_ID' => EntityPreset::getSingleInstance()->getById($requisite['PRESET_ID'])['COUNTRY_ID'],
 			],
 			'order' => [
 				'SORT' => 'ASC',
-				'ID' => 'ASC'
-			]
+				'ID' => 'ASC',
+			],
 		));
 
 		if (array_key_exists('BANK_DETAIL_ID_SELECTED', $requisiteSettings))
@@ -257,7 +262,7 @@ class CBPCrmGetRequisitesInfoActivity extends CBPActivity
 			'workflowVariables' => $workflowVariables,
 			'currentValues' => $currentValues,
 			'formName' => $formName,
-			'siteId' => $siteId
+			'siteId' => $siteId,
 		]);
 
 		$map = static::getPropertiesDialogMap();
@@ -268,7 +273,7 @@ class CBPCrmGetRequisitesInfoActivity extends CBPActivity
 		$dialog->setMap($map);
 
 		$dialog->setRuntimeData(array(
-			'PresetsInfo' => array_column(EntityPreset::getListForRequisiteEntityEditor(), 'COUNTRY_ID', 'ID')
+			'PresetsInfo' => array_column(EntityPreset::getListForRequisiteEntityEditor(), 'COUNTRY_ID', 'ID'),
 		));
 
 		return $dialog;
@@ -382,12 +387,12 @@ class CBPCrmGetRequisitesInfoActivity extends CBPActivity
 			'filter' => [
 				'=ENTITY_TYPE_ID' => $this->CrmEntityType,
 				'=ENTITY_ID' => $this->CrmEntityId,
-				'=PRESET_ID' => $this->RequisitePresetId
+				'=PRESET_ID' => $this->getRequisitePresetId(),
 			],
 			'order' => [
 				'SORT' => 'ASC',
-				'ID' => 'ASC'
-			]
+				'ID' => 'ASC',
+			],
 		));
 		if (array_key_exists('REQUISITE_ID_SELECTED', $requisiteSettings))
 		{
@@ -396,10 +401,8 @@ class CBPCrmGetRequisitesInfoActivity extends CBPActivity
 				$requisiteSettings['REQUISITE_ID_SELECTED']
 			);
 		}
-		else
-		{
-			return $dbRequisites->fetch();
-		}
+
+		return $dbRequisites->fetch() ?: [];
 	}
 
 	protected static function getPresetsFieldNames(): array
@@ -411,7 +414,7 @@ class CBPCrmGetRequisitesInfoActivity extends CBPActivity
 		}
 
 		$presets = EntityPreset::getSingleInstance()->getList([
-			'select' => ['ID', 'SETTINGS']
+			'select' => ['ID', 'SETTINGS'],
 		])->fetchAll();
 		foreach ($presets as $preset)
 		{
@@ -469,7 +472,7 @@ class CBPCrmGetRequisitesInfoActivity extends CBPActivity
 				$errors[] = [
 					'code' => 'NotExist',
 					'parameter' => 'FieldValue',
-					'message' => GetMessage("CRM_GRI_EMPTY_PROP", ['#PROPERTY#' => $fieldProperties['Name']])
+					'message' => GetMessage("CRM_GRI_EMPTY_PROP", ['#PROPERTY#' => $fieldProperties['Name']]),
 				];
 			}
 		}
@@ -532,7 +535,7 @@ class CBPCrmGetRequisitesInfoActivity extends CBPActivity
 				'filter' => [
 					'ENTITY_ID' => EntityRequisite::getSingleInstance()->getUfId(),
 					'?FIELD_NAME' => implode(' | ', $userFieldNames),
-				]
+				],
 			]
 		)->fetchAll();
 		$userFieldTitles = EntityRequisite::getSingleInstance()->getUserFieldsTitles();
@@ -582,7 +585,7 @@ class CBPCrmGetRequisitesInfoActivity extends CBPActivity
 				$fieldsMap[$name] = [
 					'Name' => $fieldTitles[$name],
 					'FieldName' => $name,
-					'Type' => $fieldType
+					'Type' => $fieldType,
 				];
 			}
 		}
@@ -605,7 +608,7 @@ class CBPCrmGetRequisitesInfoActivity extends CBPActivity
 				$addressFields[$fieldId] = [
 					'Name' => $fieldName,
 					'FieldName' => $fieldId,
-					'Type' => is_null($fieldType) ? $defaultFieldType : self::resolveAddressField($fieldType)
+					'Type' => is_null($fieldType) ? $defaultFieldType : self::resolveAddressField($fieldType),
 				];
 			}
 		}
@@ -672,7 +675,7 @@ class CBPCrmGetRequisitesInfoActivity extends CBPActivity
 				'Required' => true,
 				'Options' => [
 					CCrmOwnerType::Company => GetMessage('CRM_GRI_ENTITY_COMPANY'),
-					CCrmOwnerType::Contact => GetMessage('CRM_GRI_ENTITY_CONTACT')
+					CCrmOwnerType::Contact => GetMessage('CRM_GRI_ENTITY_CONTACT'),
 				],
 				'Getter' => function($dialog, $property, $currentActivity, $compatible)
 				{
@@ -682,7 +685,7 @@ class CBPCrmGetRequisitesInfoActivity extends CBPActivity
 						return CCrmOwnerType::ContactName;
 					}
 					return $currentActivity['Properties']['CrmEntityType'];
-				}
+				},
 			],
 			'RequisitePresetId' => [
 				'Name' => GetMessage('CRM_GRI_REQUISITE_TEMPLATES'),
@@ -707,7 +710,7 @@ class CBPCrmGetRequisitesInfoActivity extends CBPActivity
 				'FieldName' => 'country_id',
 				'Type' => \Bitrix\Bizproc\FieldType::SELECT,
 				'Options' => self::getCountryNamesByPresets($presetsInfo),
-			]
+			],
 		];
 	}
 
@@ -719,5 +722,22 @@ class CBPCrmGetRequisitesInfoActivity extends CBPActivity
 			$countryNames[$presetMap['COUNTRY_ID']] = GetCountryByID($presetMap['COUNTRY_ID']);
 		}
 		return $countryNames;
+	}
+	
+	protected function getRequisitePresetId(): int
+	{
+		if ($this->requisitePresetId)
+		{
+			return $this->requisitePresetId;
+		}
+
+		$requisitePresetId = $this->RequisitePresetId;
+		if (is_array($requisitePresetId))
+		{
+			$requisitePresetId = CBPHelper::flatten($this->RequisitePresetId)[0] ?? null;
+		}
+		$this->requisitePresetId = (int)$requisitePresetId;
+		
+		return $this->requisitePresetId;
 	}
 }

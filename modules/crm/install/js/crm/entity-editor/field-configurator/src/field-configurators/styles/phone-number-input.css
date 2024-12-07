@@ -1,0 +1,22 @@
+.crm-entity-country-tag-selector-popup .ui-selector-item-avatar
+{
+	min-width: var(--ui-size-3xl);
+	width: var(--ui-size-3xl);
+	height: var(--ui-size-xl);
+	border-radius: var(--ui-border-radius-2xs);
+	border: 1px solid rgba(82, 92, 105, 0.2);
+	-webkit-background-clip: padding-box;
+	background-clip: padding-box;
+}
+
+.crm-entity-country-tag-selector .ui-tag-selector-tag-avatar
+{
+	width: var(--ui-size-2xl);
+	border-radius: var(--ui-border-radius-2xs);
+	border: 1px solid rgba(82, 92, 105, 0.2);
+	-webkit-background-clip: padding-box;
+	background-clip: padding-box;
+	background-position: center;
+	background-size: contain;
+	background-repeat: no-repeat;
+}

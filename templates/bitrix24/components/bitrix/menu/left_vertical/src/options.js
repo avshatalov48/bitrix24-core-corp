@@ -11,6 +11,7 @@ export default class Options {
 	static isAdmin = false;
 	static isCustomPresetRestricted = false;
 	static settingsPath = null;
+	static isMainPageEnabled = false;
 
 	static availablePresetTools = null;
 }

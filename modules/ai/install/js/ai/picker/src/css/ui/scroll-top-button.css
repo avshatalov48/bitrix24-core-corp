@@ -1,0 +1,29 @@
+.ai__picker_go-top-btn {
+	width: 42px;
+	height: 42px;
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: center;
+	background-color: var(--ui-color-background-primary);
+	box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+	border-radius: 50%;
+	border: none;
+	cursor: pointer;
+	position: absolute;
+	bottom: 20px;
+	right: 20px;
+	transition: 0.25s ease-in-out opacity;
+}
+
+.ai__picker_go-top-btn .ui-icon-set {
+	--ui-icon-set__icon-color: var(--ui-color-base-50);
+}
+
+.ai__picker_go-top-btn:hover .ui-icon-set {
+	--ui-icon-set__icon-color: var(--ui-color-text-secondary);
+}
+
+.ai__picker_go-top-btn:focus {
+	outline: none;
+}

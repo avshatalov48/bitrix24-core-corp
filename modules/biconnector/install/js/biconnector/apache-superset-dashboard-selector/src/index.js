@@ -7,6 +7,8 @@ type Props = {
 	textNodeId: string,
 	dashboardId: number,
 	marketCollectionUrl: string,
+	isMarketInstalled: boolean,
+	dashboardUrlParams: Object,
 };
 
 class SupersetDashboardSelector
@@ -16,6 +18,8 @@ class SupersetDashboardSelector
 	#textNode: HTMLElement;
 	#dashboardId: number;
 	#marketCollectionUrl: string;
+	#isMarketInstalled: boolean;
+	#dashboardUrlParams: Object;
 
 	constructor(props: Props)
 	{
@@ -23,11 +27,14 @@ class SupersetDashboardSelector
 		this.#textNode = document.getElementById(props.textNodeId);
 		this.#dashboardId = props.dashboardId;
 		this.#marketCollectionUrl = props.marketCollectionUrl;
+		this.#isMarketInstalled = props.isMarketInstalled;
+		this.#dashboardUrlParams = props.dashboardUrlParams;
 		this.#initDialog(this.#selectorNode);
 
 		if (this.#selectorNode)
 		{
 			Event.bind(this.#selectorNode, 'click', this.#handleSearchClick.bind(this));
+			EventEmitter.subscribe('BIConnector.DashboardManager:onCopyDashboard', this.#handleCopyDashboard.bind(this));
 		}
 	}
 
@@ -59,6 +66,7 @@ class SupersetDashboardSelector
 			showAvatars: true,
 			compactView: false,
 			dynamicLoad: true,
+			clearUnavailableItems: true,
 			preselectedItems: [['biconnector-superset-dashboard', this.#dashboardId]],
 			events: {
 				'Item:onSelect': this.#onSelectItem.bind(this),
@@ -72,33 +80,38 @@ class SupersetDashboardSelector
 	{
 		EventEmitter.emit('BiConnector:DashboardSelector.onSelect');
 
-		return this.getDashboardEmbeddedData(event.data.item.id)
-			.then((response) => {
-				if (response.data.dashboard)
-				{
-					this.#setTitle(response.data.dashboard.title);
-					EventEmitter.emit('BiConnector:DashboardSelector.onSelectDataLoaded', {
-						item: event.data.item,
-						dashboardId: event.data.item.id,
-						credentials: response.data.dashboard,
-					});
-				}
-			})
-			.catch((response) => {
-				if (response.errors && Type.isStringFilled(response.errors[0]?.message))
-				{
-					BX.UI.Notification.Center.notify({
-						content: Text.encode(response.errors[0].message),
-					});
-				}
-			});
+		return new Promise((resolve, reject) => {
+			this.#getDashboardEmbeddedData(event.data.item.id)
+				.then((response) => {
+					if (response.data.dashboard)
+					{
+						this.#setTitle(response.data.dashboard.title);
+						EventEmitter.emit('BiConnector:DashboardSelector.onSelectDataLoaded', {
+							item: event.data.item,
+							dashboardId: event.data.item.id,
+							credentials: response.data.dashboard,
+						});
+					}
+					resolve(response);
+				})
+				.catch((response) => {
+					if (response.errors && Type.isStringFilled(response.errors[0]?.message))
+					{
+						BX.UI.Notification.Center.notify({
+							content: Text.encode(response.errors[0].message),
+						});
+					}
+					reject(response);
+				});
+		});
 	}
 
-	getDashboardEmbeddedData(dashboardId: number): Promise
+	#getDashboardEmbeddedData(dashboardId: number): Promise
 	{
 		return BX.ajax.runAction('biconnector.dashboard.getDashboardEmbeddedData', {
 			data: {
 				id: dashboardId,
+				urlParams: this.#dashboardUrlParams,
 			},
 		});
 	}
@@ -116,10 +129,19 @@ class SupersetDashboardSelector
 			</span>`;
 
 		Event.bind(footerLink, 'click', () => {
-			BX.SidePanel.Instance.open(this.#marketCollectionUrl, { customLeftBoundary: 0 });
-			BX.BIConnector.ApacheSupersetAnalytics.sendAnalytics('market', 'market_call', {
-				c_element: 'detail_button',
-			});
+			if (this.#isMarketInstalled)
+			{
+				BX.SidePanel.Instance.open(this.#marketCollectionUrl, { customLeftBoundary: 0 });
+				BX.BIConnector.ApacheSupersetAnalytics.sendAnalytics('market', 'market_call', {
+					c_element: 'detail_button',
+				});
+			}
+			else
+			{
+				BX.UI.Notification.Center.notify({
+					content: Loc.getMessage('SUPERSET_DASHBOARD_DETAIL_SELECTOR_FOOTER_MARKET_INSTALL_ERROR'),
+				});
+			}
 		});
 
 		return footerLink;
@@ -128,6 +150,24 @@ class SupersetDashboardSelector
 	#setTitle(text: string)
 	{
 		this.#textNode.innerHTML = Text.encode(text);
+	}
+
+	#handleCopyDashboard(event): Promise
+	{
+		const dashboard = event.data.dashboard;
+
+		return new Promise((resolve) => {
+			this.#setTitle(dashboard.title);
+			this.#dialog = null;
+			this.#dashboardId = dashboard.id;
+			this.#initDialog(this.#selectorNode);
+			EventEmitter.emit('BiConnector:DashboardSelector.onSelectDataLoaded', {
+				item: dashboard,
+				dashboardId: dashboard.id,
+				credentials: dashboard,
+			});
+			resolve();
+		});
 	}
 }
 

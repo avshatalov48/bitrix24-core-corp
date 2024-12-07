@@ -125,7 +125,7 @@ foreach($arParams["FILTER"] as $field):
 				array("HIDE_ICONS"=>true)
 			);
 			?>
-			<script type="text/javascript">
+			<script>
 				BX.ready(function(){BX.InterfaceGridFilterSidebar.initializeCalendarInterval(document.forms['filter_<?=$arParams["GRID_ID"]?>'].<?=$field["id"]?>_datesel)});
 			</script>
 			<?

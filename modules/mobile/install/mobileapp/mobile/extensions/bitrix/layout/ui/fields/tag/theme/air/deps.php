@@ -8,6 +8,7 @@ return [
 		'ui-system/blocks/icon',
 
 		'tokens',
+		'ui-system/typography/text',
 		'layout/ui/fields/theme/air/elements/add-button',
 	],
 ];

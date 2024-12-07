@@ -12,8 +12,7 @@ jn.define('layout/ui/user-selection-manager/src/selection-manager', (require, ex
 	const { Haptics } = require('haptics');
 	const { Loc } = require('loc');
 	const { showToast } = require('toast');
-	const { withPressed } = require('utils/color');
-	const { Button, buttonTypes } = require('ui-system/form/buttons/button');
+	const { Button, ButtonSize } = require('ui-system/form/buttons/button');
 	const { Color } = require('tokens');
 
 	/**
@@ -42,8 +41,8 @@ jn.define('layout/ui/user-selection-manager/src/selection-manager', (require, ex
 			const userSelectionWidget = await userSelectionBottomSheet
 				.setParentWidget(parentWidget)
 				.setMediumPositionPercent(70)
-				.setBackgroundColor(Color.bgSecondary)
-				.setNavigationBarColor(Color.bgContentPrimary)
+				.setBackgroundColor(Color.bgSecondary.toHex())
+				.setNavigationBarColor(Color.bgContentPrimary.toHex())
 				.showNavigationBarBorder()
 				.open()
 			;
@@ -229,7 +228,7 @@ jn.define('layout/ui/user-selection-manager/src/selection-manager', (require, ex
 			return View(
 				{
 					style: {
-						backgroundColor: Color.bgContentPrimary,
+						backgroundColor: Color.bgContentPrimary.toHex(),
 						paddingBottom: 66,
 					},
 					safeArea: {
@@ -308,11 +307,11 @@ jn.define('layout/ui/user-selection-manager/src/selection-manager', (require, ex
 						Button({
 							stretched: true,
 							text: Loc.getMessage('MOBILE_USER_SELECTION_MANAGER_SAVE'),
-							size: buttonTypes.L,
+							size: ButtonSize.L,
 							color: Color.baseWhiteFixed,
 							border: true,
 							borderColor: Color.accentMainPrimary,
-							backgroundColor: withPressed(Color.accentMainPrimary),
+							backgroundColor: Color.accentMainPrimary,
 							onClick: () => {
 								const users = this.getUsers();
 

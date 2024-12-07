@@ -2,8 +2,6 @@
 
 namespace Bitrix\Crm\Ml\Agent;
 
-use Bitrix\Crm\Ml\Model\DealScoring;
-use Bitrix\Crm\Ml\Model\LeadScoring;
 use Bitrix\Crm\Ml\Scoring;
 use Bitrix\Crm\Ml\TrainingState;
 use Bitrix\Main\Loader;
@@ -25,7 +23,12 @@ class Retraining
 	 */
 	public static function run()
 	{
-		if(!Loader::includeModule("ml"))
+		if (!Scoring::isScoringAvailable())
+		{
+			return '';
+		}
+
+		if (!Loader::includeModule('ml'))
 		{
 			return static::class . "::run();";
 		}
@@ -33,28 +36,30 @@ class Retraining
 		foreach (Scoring::getAvailableModelNames() as $modelName)
 		{
 			$model = Scoring::getModelByName($modelName);
-			if(!$model || $model->getState() !== Model::STATE_READY)
+			if (!$model || $model->getState() !== Model::STATE_READY)
 			{
 				continue;
 			}
 
 			$lastTraining = Scoring::getLastTraining($model);
-			if(!$lastTraining || !in_array($lastTraining["STATE"], [TrainingState::FINISHED, TrainingState::CANCELED]))
+			if (
+				!$lastTraining
+				|| !in_array($lastTraining['STATE'], [TrainingState::FINISHED, TrainingState::CANCELED]))
 			{
 				continue;
 			}
 
 			/** @var DateTime $trainingFinished */
-			$trainingFinished = $lastTraining["DATE_FINISH"];
+			$trainingFinished = $lastTraining['DATE_FINISH'];
 			$now = time();
 			$diffSeconds = $now - $trainingFinished->getTimestamp();
-			if($diffSeconds < Scoring::RETRAIN_PERIOD * 86400)
+			if ($diffSeconds < Scoring::RETRAIN_PERIOD * 86400)
 			{
 				continue;
 			}
 
 			$deletionResult = Scoring::deleteMlModel($model);
-			if(!$deletionResult->isSuccess())
+			if (!$deletionResult->isSuccess())
 			{
 				continue;
 			}

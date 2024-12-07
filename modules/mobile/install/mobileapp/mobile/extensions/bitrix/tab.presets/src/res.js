@@ -19,17 +19,37 @@ jn.define('tab/settings/res', (require, exports, module) => {
 		drag: '<svg width="6" height="14" viewBox="0 0 6 14" fill="none" xmlns="http://www.w3.org/2000/svg"><g opacity="0.54"><path d="M2 0H0V2H2V0Z" fill="#COLOR#"/><path d="M6 0H4V2H6V0Z" fill="#COLOR#"/><path d="M0 4H2V6H0V4Z" fill="#COLOR#"/><path d="M6 4H4V6H6V4Z" fill="#COLOR#"/><path d="M0 8H2V10H0V8Z" fill="#COLOR#"/><path d="M6 8H4V10H6V8Z" fill="#COLOR#"/><path d="M0 12H2V14H0V12Z" fill="#COLOR#"/><path d="M6 12H4V14H6V12Z" fill="#COLOR#"/></g></svg>',
 		bizproc: '<svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 30 30" fill="none"><path fill-rule="evenodd" clip-rule="evenodd" d="M13.2926 1.4509C13.2926 1.05 13.7774 0.84922 14.0608 1.1327L17.9561 5.02797C18.1318 5.20371 18.1318 5.48863 17.9561 5.66437L15.377 8.24348C15.2522 8.23679 15.1265 8.2334 15 8.2334C14.4108 8.2334 13.8388 8.30697 13.2926 8.44544V7.10972L13.2749 7.11385C9.86533 7.8414 7.2381 10.6815 6.82896 14.1983C6.80924 14.3679 6.70122 14.5158 6.54271 14.5791L3.60192 15.7539C3.31834 15.8672 3.00689 15.671 3.00174 15.3657C3.00058 15.297 3 15.2282 3 15.1592C3 9.16057 7.40153 4.18994 13.1511 3.30079C13.1998 3.29327 13.2474 3.29417 13.2926 3.30231V1.4509ZM21.6579 17.0733C21.4957 17.6386 21.2634 18.1742 20.9711 18.6703L22.1759 22.6368C22.2481 22.8746 22.4994 23.0088 22.7372 22.9365L28.0082 21.3356C28.3918 21.2191 28.443 20.6969 28.0894 20.508L26.1927 19.4951C26.7141 18.1503 27 16.6882 27 15.1592C27 10.1881 23.9772 5.92294 19.6694 4.10161C19.3822 3.98019 19.0726 4.19693 19.0726 4.50873V7.74862C19.0726 7.91017 19.1598 8.0585 19.2974 8.14301C21.6545 9.58976 23.2266 12.1909 23.2266 15.1592C23.2266 16.0451 23.0865 16.8983 22.8274 17.6979L21.6579 17.0733ZM10.1453 20.0986C9.6841 19.6453 9.28612 19.1279 8.96577 18.5609L5.19771 17.6926C4.95553 17.6367 4.71396 17.7878 4.65815 18.03L3.42115 23.3981C3.33113 23.7887 3.75838 24.0932 4.09828 23.8806L5.77371 22.8328C7.97491 25.4765 11.2909 27.1592 15 27.1592C17.0693 27.1592 19.0162 26.6355 20.7155 25.7133C20.9642 25.5783 21.0129 25.247 20.8232 25.037L18.8151 22.8146C18.6809 22.6661 18.4652 22.6252 18.2817 22.7052C17.2764 23.143 16.1665 23.3858 15 23.3858C12.6423 23.3858 10.5162 22.394 9.01627 20.8047L10.1453 20.0986ZM10.4692 11.7273C10.4692 11.4788 10.6668 11.2773 10.9105 11.2773H19.0904C19.3341 11.2773 19.5317 11.4788 19.5317 11.7273V13.8273C19.5317 14.0759 19.3341 14.2773 19.0904 14.2773H10.9105C10.6668 14.2773 10.4692 14.0759 10.4692 13.8273V11.7273ZM10.4692 16.491C10.4692 16.2425 10.6668 16.041 10.9105 16.041H19.0904C19.3341 16.041 19.5317 16.2425 19.5317 16.491V18.591C19.5317 18.8395 19.3341 19.041 19.0904 19.041H10.9105C10.6668 19.041 10.4692 18.8395 10.4692 18.591V16.491Z" fill="#COLOR#"/></svg>',
 	};
+	const { Icon } = require('ui-system/blocks/icon');
+	const { Color } = require('tokens');
+
+	const icons = {
+		chevron: Icon.CHEVRON_TO_THE_RIGHT,
+		task: Icon.CIRCLE_CHECK,
+		chat: Icon.MESSAGE,
+		crm: Icon.CRM,
+		menu: Icon.APPS,
+		terminal: Icon.PAYMENT_TERMINAL,
+		catalog_store: Icon.INVENTORY_MANAGEMENT,
+		projects: Icon.FOLDER,
+		calendar: Icon.CALENDAR,
+		stream: Icon.NEWSFEED,
+		crm_custom_section: Icon.ACTIVITY,
+		calendar_with_slots: Icon.CALENDAR_WITH_SLOTS,
+		drag: Icon.DRAG,
+		bizproc: Icon.BUSINESS_PROCESS,
+		file: Icon.FILE,
+	};
 
 	const colors = {
-		mainBackground: AppTheme.colors.bgPrimary,
-		listViewBackground: AppTheme.colors.bgPrimary,
-		sectionText: AppTheme.colors.base2,
-		icon: AppTheme.colors.base3,
-		unreachableIcon: AppTheme.colors.base4,
-		cellBorder: AppTheme.colors.base7,
-		cellTextUnreachable: AppTheme.colors.base4,
-		cellText: AppTheme.colors.base1,
-		descriptionText: AppTheme.colors.base4,
+		mainBackground: Color.bgPrimary.toHex(),
+		listViewBackground: Color.bgPrimary.toHex(),
+		sectionText: Color.base2.toHex(),
+		icon: Color.base4,
+		unreachableIcon: Color.base5,
+		cellBorder: Color.base7.toHex(),
+		cellTextUnreachable: Color.base4.toHex(),
+		cellText: Color.base1.toHex(),
+		descriptionText: Color.base4.toHex(),
 	};
 
 	const presetRoundedBorderStyle = {
@@ -55,7 +75,7 @@ jn.define('tab/settings/res', (require, exports, module) => {
 	 */
 	const styles = {
 		presetTitle: {
-			color: AppTheme.colors.base1, fontWeight: '600', fontSize: 18, lineHeight: 20,
+			color: Color.base1.toHex(), fontWeight: '600', fontSize: 18, lineHeight: 20,
 		},
 		presetBlockShadow: {
 			justifyContent: 'space-around',
@@ -73,21 +93,21 @@ jn.define('tab/settings/res', (require, exports, module) => {
 		},
 		tabPreviewRoundedBorderStyle,
 		tabBarPreview: {
-			backgroundColor: AppTheme.colors.bgContentPrimary,
+			backgroundColor: Color.bgContentPrimary.toHex(),
 			flexDirection: 'row',
 			paddingLeft: 10,
 			height: 70,
 			paddingRight: 10,
 			justifyContent: 'space-around',
 			alignItems: 'flex-start',
-			borderColor: AppTheme.colors.accentSoftGray2,
-			borderWidth: 1,
+			borderColor: Color.base6.toHex(),
+			borderWidth: 0.5,
 			...tabPreviewRoundedBorderStyle,
 		},
 		sectionHeader: {
 			height: 38,
 			flex: 1,
-			backgroundColor: AppTheme.colors.bgContentPrimary,
+			backgroundColor: Color.bgContentPrimary.toHex(),
 			justifyContent: 'center',
 			borderTopRightRadius: 12,
 			paddingLeft: 18,
@@ -95,25 +115,27 @@ jn.define('tab/settings/res', (require, exports, module) => {
 		},
 		sectionFooter: {
 			height: 24,
-			backgroundColor: AppTheme.colors.bgContentPrimary,
+			backgroundColor: Color.bgContentPrimary.toHex(),
 			borderBottomRightRadius: 12,
 			borderBottomLeftRadius: 12,
 		},
 	};
 
 	styles.presetBlockActive = {
-		borderColor: AppTheme.colors.accentSoftBlue1,
-		backgroundColor: AppTheme.colors.accentSoftBlue2,
+		borderColor: Color.accentSoftBlue1.toHex(),
+		backgroundColor: Color.accentSoftBlue2.toHex(),
 		borderWidth: 1,
 		check: true,
 		...styles.presetBlock,
 	};
 	styles.presetBlockNonActive = {
-		borderColor: AppTheme.colors.bgSeparatorPrimary,
-		backgroundColor: AppTheme.colors.bgNavigation,
+		borderColor: Color.base8.toHex(),
+		backgroundColor: Color.bgContentSecondary.toHex(),
+		borderWidth: 1,
 		check: false,
 		...styles.presetBlock,
 	};
+
 	const activeStatusLabelHeight = 20;
 	styles.activeStatus = {
 		position: 'absolute',
@@ -126,11 +148,11 @@ jn.define('tab/settings/res', (require, exports, module) => {
 		paddingLeft: 6,
 		paddingRight: 6,
 		height: activeStatusLabelHeight,
-		backgroundColor: AppTheme.colors.accentBrandBlue,
+		backgroundColor: Color.accentBrandBlue.toHex(),
 		borderRadius: 10,
 	};
 
-	const getSvg = (code, color = AppTheme.colors.base6) => {
+	const getSvg = (code, color = Color.base6.toHex()) => {
 		const modifiedCode = getModifiedCode(code);
 		if (typeof svg[modifiedCode] !== 'undefined')
 		{
@@ -140,11 +162,15 @@ jn.define('tab/settings/res', (require, exports, module) => {
 		return '';
 	};
 
+	const getIcon = (code) => {
+		return icons[getModifiedCode(code)] ?? '';
+	};
+
 	const getModifiedCode = (source) => {
 		const list = ['crm_custom_section'];
 
 		return list.find((id) => source.startsWith(id)) ?? source;
 	};
 
-	module.exports = { styles, colors, svg, getSvg };
+	module.exports = { styles, colors, svg, getSvg, getIcon };
 });

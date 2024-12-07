@@ -448,7 +448,10 @@ class Delivery extends Activity\Provider\Base
 						? $deliveryRequestHandler->getActions(null)
 						: []
 				;
-				if (isset($deliveryRequestActions[$deliveryRequestHandler::CANCEL_ACTION_CODE]))
+				if (
+					$deliveryRequestHandler
+					&& isset($deliveryRequestActions[$deliveryRequestHandler::CANCEL_ACTION_CODE])
+				)
 				{
 					$result['DELIVERY_SERVICE'] = array_merge(
 						$result['DELIVERY_SERVICE'],

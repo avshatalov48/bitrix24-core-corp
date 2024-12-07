@@ -3,8 +3,8 @@
  */
 jn.define('im/messenger/lib/rest-manager/rest-manager', (require, exports, module) => {
 	const { Type } = require('type');
-	const { Logger } = require('im/messenger/lib/logger');
-
+	const { LoggerManager } = require('im/messenger/lib/logger');
+	const logger = LoggerManager.getInstance().getLogger('network--batch');
 	/**
 	 * @class RestManager
 	 *
@@ -27,12 +27,17 @@ jn.define('im/messenger/lib/rest-manager/rest-manager', (require, exports, modul
 			this.methodCollection = new Map();
 		}
 
-		callBatch()
+		/**
+		 * @param {object} options
+		 * @param {boolean} options.shouldExtractResponseByMethod
+		 * @return {Promise}
+		 */
+		callBatch(options = {})
 		{
 			return new Promise((resolve, reject) => {
 				if (this.methodCollection.size === 0)
 				{
-					Logger.log('RestManager.callBatch: No registered methods');
+					logger.log('RestManager.callBatch: No registered methods');
 
 					resolve(true);
 
@@ -55,7 +60,7 @@ jn.define('im/messenger/lib/rest-manager/rest-manager', (require, exports, modul
 					;
 				});
 
-				Logger.info(
+				logger.info(
 					'RestManager.callBatch: ',
 					Object.keys(batchMethodCollection).map((methodKey) => batchMethodCollection[methodKey]),
 				);
@@ -76,13 +81,22 @@ jn.define('im/messenger/lib/rest-manager/rest-manager', (require, exports, modul
 
 					if (hasError)
 					{
-						Logger.error('RestManager.callBatch error: ', result);
+						logger.error('RestManager.callBatch error: ', result);
 						reject(result);
 
 						return;
 					}
 
-					Logger.info('RestManager.callBatch result: ', result);
+					logger.info('RestManager.callBatch result: ', result);
+
+					if (options.shouldExtractResponseByMethod)
+					{
+						// eslint-disable-next-line no-param-reassign
+						result = this.extractResponseByMethod(result);
+
+						logger.info('RestManager.callBatch result extracted by method: ', result);
+					}
+
 					resolve(result);
 				});
 			});
@@ -265,6 +279,21 @@ jn.define('im/messenger/lib/rest-manager/rest-manager', (require, exports, modul
 			;
 		}
 
+		extractResponseByMethod(response)
+		{
+			Object.keys(response).forEach((restManagerResponseKey) => {
+				const restMethod = restManagerResponseKey.split('|')[0];
+				const ajaxResult = response[restManagerResponseKey];
+
+				// eslint-disable-next-line no-param-reassign
+				delete response[restManagerResponseKey];
+				// eslint-disable-next-line no-param-reassign
+				response[restMethod] = ajaxResult.data();
+			});
+
+			return response;
+		}
+
 		/**
 		 * @desc Method call one request by name from the batch collection ( if it is )
 		 * @param {string} methodName
@@ -293,8 +322,8 @@ jn.define('im/messenger/lib/rest-manager/rest-manager', (require, exports, modul
 			}
 			BX.rest.callMethod(batchMethod.method, batchMethod.params).then((result) => {
 				this.emit(batchMethod.method, batchMethod.params, result);
-				Logger.info('RestManager.callByName result: ', result);
-			}).catch((err) => Logger.error(err));
+				logger.info('RestManager.callByName result: ', result);
+			}).catch((err) => logger.error(err));
 		}
 	}
 

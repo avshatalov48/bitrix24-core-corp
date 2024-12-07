@@ -255,32 +255,43 @@
 .market-detail__app-rating_feedback-form {
 	display: flex;
 	flex-direction: column;
-	align-items: flex-end;
 	min-width: 361px;
-	margin-right: 17px;
+	margin-top: 42px;
 }
 
 .market-detail__app-rating_feedback-buttons {
-	display: flex;
-	align-items: center;
-	margin-top: 12px;
+	width: 100%;
+	margin-top: 19px;
+	text-align: center;
+}
+
+.market-detail__app-rating_feedback-btn {
+	flex-shrink: 0;
 }
 
 .ui-ctl-checkbox.market-detail__app-rating_feedback-checkbox {
 	margin-bottom: 0;
 	cursor: pointer;
+	min-height: auto;
 }
 
 .market-detail__app-rating_feedback-label {
 	font-family:  var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
-	font-size: var(--ui-font-size-5xs, 9px);
-	line-height: var(--ui-font-line-height-lg, 1.5);
-	color: var(--ui-color-base-35, #c9ccd0);
+	font-size: var(--ui-font-size-xs, 12px);
+	line-height: var(--ui-font-line-height-reset, 1);
+	color: #525c69;
 }
 
-.market-detail__app-rating_feedback-textarea {
+.ui-ctl-textarea .market-detail__app-rating_feedback-textarea.ui-ctl-element {
 	border-radius: var(--ui-border-radius-sm, 8px);
 	background: transparent;
+	padding: 13px;
+	height: 130px;
+}
+
+.market-detail__app-rating_feedback-form .ui-ctl-textarea {
+	height: 130px;
+	min-height: 130px;
 }
 
 .market-detail__app-rating_feedback-content .market-detail__app-rating_feedback-ready {
@@ -292,6 +303,7 @@
 
 .market-detail__feedback-item {
 	font-family:  var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	word-break: break-word;
 	width: 362px;
 	min-width: 362px;
 	min-height: 200px;
@@ -408,4 +420,99 @@
 
 .market-detail__feedback-item_text.--last-element {
 	margin-bottom: 6px;
+}
+
+.market-detail__app-rating_feedback-subtitle {
+	font-weight: var(--ui-font-weight-medium);
+	font-size: var(--ui-font-size-2xl);
+	color: var(--ui-color-base-default);
+	text-align: center;
+}
+
+.market-detail__app-rating_feedback-subtitle span {
+	font-weight: var(--ui-font-weight-semi-bold);
+}
+
+.market-detail__app-rating_feedback-text {
+	font-size: var(--ui-font-size-md);
+	color: var(--ui-color-base-70);
+	text-align: center;
+	margin: 12px auto 17px;
+}
+
+.market-detail__app-rating_feedback-form .market-rating__app-rating-info_stars-container {
+	margin: 0 auto 12px;
+	width: 165px;
+}
+
+.market-detail__app-rating_feedback-img {
+	border: 1px solid var(--ui-color-base-30);
+	border-radius: 16px;
+	box-shadow: 0 9px 18px 0 rgba(0, 0, 0, 0.12);
+	width: 104px;
+	height: 104px;
+	position: absolute;
+	top: -52px;
+	left: 50%;
+	transform: translateX(-50%);
+	background: var(--ui-color-background-primary);
+}
+
+.market-detail__app-rating_feedback-img img {
+	max-width: 100%;
+	width: 100%;
+	height: auto;
+	border-radius: 16px;
+}
+
+.market-detail__app-rating_feedback-checkbox.ui-ctl + .ui-ctl {
+	margin-left: 0;
+	margin-top: 10px;
+}
+
+.market-detail__app-rating_feedback-checkbox-wrapper {
+	margin-top: 13px;
+}
+
+.market-detail__app-rating_feedback-form .market-rating__app-rating_star path,
+.market-detail__app-rating_feedback-form .market-rating__app-rating_star:not(.--active):hover path {
+	stroke: #ffa900;
+}
+
+.market-rating__app-rating_star.--active path {
+	fill: #ffa900;
+	stroke: transparent;
+}
+
+.market-detail__app-rating_feedback-form .market-rating__app-rating_star path {
+	transform: scale(1.1);
+}
+
+.market-detail__app-rating_feedback-form .market-rating__app-rating_star:hover {
+	transform: scale(1.15);
+}
+
+.market-detail__feedback-item.--empty {
+	opacity: .9;
+}
+
+.market-detail__feedback-empty-wrapper {
+	width: 100%;
+	height: calc(100% - 45px);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex-direction: column;
+	margin-top: 4px;
+}
+
+.market-detail__feedback-empty-text {
+	font-size: var(--ui-font-size-xs);
+	color: var(--ui-color-base-35);
+}
+
+.market-detail__feedback-empty-icon {
+	width: 100px;
+	height: 90px;
+	background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='101' height='90' viewBox='0 0 101 90' fill='none'%3E%3Cpath opacity='0.4' fill-rule='evenodd' clip-rule='evenodd' d='M97.8516 41.2631C97.8516 35.7538 93.3403 31.2876 87.7753 31.2876H54.7455C49.1805 31.2876 44.6692 35.7538 44.6692 41.2631V60.4635C44.6692 65.9728 49.1805 70.439 54.7455 70.439H73.4764L82.3252 79.4545C83.7963 80.9533 86.3625 79.9223 86.3625 77.8325L86.3625 70.439H87.7753C93.3403 70.439 97.8516 65.9728 97.8516 60.4635V41.2631ZM83.607 46.2163C83.9503 45.3999 85.1072 45.3999 85.4505 46.2163L86.1927 47.9808C86.3376 48.3255 86.6627 48.5605 87.0354 48.59L88.9415 48.7411C89.8313 48.8117 90.1899 49.9241 89.5089 50.501L88.0731 51.7173C87.7848 51.9615 87.6588 52.3474 87.7474 52.7148L88.1889 54.5452C88.3972 55.4087 87.4601 56.0949 86.6997 55.6356L85.0458 54.6366C84.7278 54.4446 84.3296 54.4446 84.0117 54.6366L82.3577 55.6356C81.5973 56.0949 80.6603 55.4087 80.8686 54.5452L81.3101 52.7148C81.3987 52.3474 81.2727 51.9615 80.9844 51.7173L79.5486 50.501C78.8675 49.9241 79.2261 48.8117 80.1159 48.7411L82.0221 48.59C82.3948 48.5605 82.7199 48.3255 82.8648 47.9808L83.607 46.2163ZM59.1579 46.2163C58.8145 45.3999 57.6577 45.3999 57.3143 46.2163L56.5722 47.9808C56.4273 48.3255 56.1022 48.5605 55.7295 48.59L53.8233 48.7411C52.9335 48.8117 52.5749 49.9241 53.256 50.501L54.6917 51.7173C54.9801 51.9615 55.1061 52.3474 55.0175 52.7148L54.576 54.5452C54.3677 55.4087 55.3047 56.0949 56.0651 55.6356L57.7191 54.6366C58.037 54.4446 58.4352 54.4446 58.7531 54.6366L60.4071 55.6356C61.1675 56.0949 62.1046 55.4087 61.8963 54.5452L61.4548 52.7148C61.3661 52.3474 61.4922 51.9615 61.7805 51.7173L63.2163 50.501C63.8973 49.9241 63.5387 48.8117 62.6489 48.7411L60.7428 48.59C60.3701 48.5605 60.045 48.3255 59.9 47.9808L59.1579 46.2163ZM70.621 43.0797C70.9561 42.2411 72.1431 42.2411 72.4782 43.0797L73.6951 46.1252C73.8357 46.477 74.163 46.7192 74.5405 46.7507L77.7689 47.0201C78.6443 47.0932 79.0069 48.1785 78.3513 48.763L75.8335 51.0081C75.5613 51.2508 75.4428 51.6224 75.5243 51.9778L76.2831 55.2892C76.4828 56.1605 75.5262 56.836 74.7718 56.3564L72.0861 54.6489C71.7587 54.4407 71.3405 54.4407 71.0131 54.6489L68.3274 56.3564C67.573 56.836 66.6164 56.1605 66.8161 55.2892L67.5749 51.9778C67.6564 51.6224 67.5379 51.2508 67.2657 51.0081L64.7479 48.763C64.0923 48.1785 64.4549 47.0932 65.3303 47.0201L68.5586 46.7507C68.9362 46.7192 69.2635 46.477 69.4041 46.1252L70.621 43.0797Z' fill='%23EAF3F5'/%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M3.15625 22.275C3.15625 14.9434 9.15971 9 16.5653 9H60.5203C67.9259 9 73.9294 14.9434 73.9294 22.275V47.8262C73.9294 55.1578 67.9259 61.1012 60.5203 61.1012H35.5939L23.8181 73.0988C21.8605 75.0934 18.4454 73.7213 18.4454 70.9402L18.4454 61.1012H16.5653C9.1597 61.1012 3.15625 55.1578 3.15625 47.8262V22.275ZM21.8124 28.1418C21.469 27.3254 20.3122 27.3254 19.9688 28.1418L18.5983 31.4004C18.4533 31.7451 18.1282 31.98 17.7555 32.0096L14.2183 32.29C13.3285 32.3606 12.9699 33.473 13.6509 34.0499L16.3294 36.3189C16.6178 36.5631 16.7438 36.9491 16.6552 37.3164L15.834 40.7209C15.6257 41.5844 16.5627 42.2706 17.3231 41.8113L20.3736 39.9688C20.6915 39.7767 21.0897 39.7767 21.4076 39.9688L24.4581 41.8113C25.2185 42.2706 26.1556 41.5844 25.9473 40.7209L25.1261 37.3164C25.0374 36.9491 25.1635 36.5631 25.4518 36.3189L28.1303 34.0499C28.8114 33.473 28.4528 32.3606 27.563 32.29L24.0257 32.0096C23.653 31.98 23.3279 31.7451 23.183 31.4004L21.8124 28.1418ZM54.9546 28.1422C55.298 27.3258 56.4548 27.3258 56.7982 28.1422L58.1688 31.4009C58.3137 31.7455 58.6388 31.9805 59.0115 32.01L62.5488 32.2905C63.4386 32.361 63.7972 33.4734 63.1161 34.0504L60.4376 36.3193C60.1493 36.5636 60.0232 36.9495 60.1119 37.3168L60.9331 40.7213C61.1414 41.5849 60.2043 42.271 59.4439 41.8118L56.3934 39.9692C56.0755 39.7772 55.6773 39.7772 55.3594 39.9692L52.3089 41.8118C51.5485 42.271 50.6115 41.5849 50.8198 40.7213L51.641 37.3168C51.7296 36.9495 51.6036 36.5636 51.3152 36.3193L48.6367 34.0504C47.9557 33.4734 48.3143 32.361 49.2041 32.2905L52.7413 32.01C53.114 31.9805 53.4391 31.7455 53.5841 31.4009L54.9546 28.1422ZM39.0849 23.9241C38.7498 23.0855 37.5627 23.0855 37.2276 23.9241L35.2252 28.9356C35.0847 29.2874 34.7573 29.5296 34.3798 29.5611L29.1125 30.0006C28.2371 30.0737 27.8745 31.159 28.5301 31.7435L32.6014 35.3738C32.8735 35.6165 32.992 35.9881 32.9106 36.3435L31.6771 41.726C31.4775 42.5973 32.4341 43.2728 33.1884 42.7932L37.6197 39.9758C37.9471 39.7676 38.3654 39.7676 38.6928 39.9758L43.1241 42.7932C43.8784 43.2728 44.835 42.5973 44.6354 41.726L43.4019 36.3435C43.3205 35.9881 43.439 35.6165 43.7111 35.3738L47.7824 31.7435C48.438 31.159 48.0754 30.0737 47.2 30.0006L41.9327 29.5611C41.5552 29.5296 41.2278 29.2874 41.0873 28.9356L39.0849 23.9241Z' fill='%23D0EEF7'/%3E%3C/svg%3E") no-repeat center;
 }

@@ -38,7 +38,7 @@ $className =
 </div>
 
 <? $frame = $this->createFrame()->begin(""); ?>
-<script type="text/javascript">
+<script>
 	BX.message({
 		"GLOBAL_SEARCH" : "<?=GetMessageJS("CT_BST_GLOBAL_SEARCH")?>",
 		"SEARCH_MORE" : "<?=GetMessageJS("CT_BST_GLOBAL_SEARCH_MORE")?>",

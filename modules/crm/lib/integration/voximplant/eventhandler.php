@@ -3,7 +3,6 @@
 namespace Bitrix\Crm\Integration\VoxImplant;
 
 use Bitrix\Crm\Activity\Provider\Call;
-use Bitrix\Crm\Settings\Crm;
 use Bitrix\Crm\Timeline\Entity\TimelineTable;
 use Bitrix\Crm\Timeline\LogMessageController;
 use Bitrix\Crm\Timeline\LogMessageEntry;
@@ -123,7 +122,7 @@ class EventHandler
 			&& (int)$data['CALL_FAILED_CODE'] !== 304 	// not missed call
 		;
 
-		if ($isSuccessfulCall && Crm::isUniversalActivityScenarioEnabled())
+		if ($isSuccessfulCall)
 		{
 			$activityFields = CCrmActivity::GetByID($activityId, false);
 

@@ -2,12 +2,12 @@
 
 namespace Bitrix\Crm\Service\Operation;
 
+use Bitrix\Crm\Agent\Security\DynamicTypes\AttrConvertOptions;
 use Bitrix\Crm\Cleaning;
 use Bitrix\Crm\Integration\PullManager;
 use Bitrix\Crm\Integrity;
-use Bitrix\Crm\Item;
+use Bitrix\Crm\Security\Controller\DynamicItem;
 use Bitrix\Crm\Service\Container;
-use Bitrix\Crm\Service\Context;
 use Bitrix\Crm\Service\Operation;
 use Bitrix\Crm\Statistics;
 use Bitrix\Crm\Timeline\TimelineManager;
@@ -31,15 +31,23 @@ class Delete extends Operation
 	{
 		$result = new Result();
 
-		if (!Container::getInstance()->getUserPermissions(
-				$this->getContext()->getUserId()
-			)->canDeleteItem($this->item)
-		)
+		$userId = $this->getContext()->getUserId();
+		if (!Container::getInstance()->getUserPermissions($userId)->canDeleteItem($this->item))
 		{
+			$title =  $this->item->getHeading() ?? '';
+			$message = Loc::getMessage(
+				'CRM_TYPE_ITEM_PERMISSIONS_DELETE_DENIED_MSGVER_1',
+				[
+					'#ITEM_TITLE#' => TruncateText($title, 80),
+				]
+			);
 			$result->addError(
 				new Error(
-					Loc::getMessage('CRM_TYPE_ITEM_PERMISSIONS_DELETE_DENIED'),
-					static::ERROR_CODE_ITEM_DELETE_ACCESS_DENIED
+					$message,
+					static::ERROR_CODE_ITEM_DELETE_ACCESS_DENIED,
+					[
+						'id' => $this->item->getId(),
+					]
 				)
 			);
 		}
@@ -58,7 +66,11 @@ class Delete extends Operation
 
 		if ($this->isDeferredCleaningEnabled())
 		{
-			Cleaning\CleaningManager::register($this->itemBeforeSave->getEntityTypeId(), $this->itemBeforeSave->getId());
+			Cleaning\CleaningManager::register(
+				$this->itemBeforeSave->getEntityTypeId(),
+				$this->itemBeforeSave->getId(),
+				$this->getContext()?->getUserId(),
+			);
 		}
 		else
 		{
@@ -215,12 +227,32 @@ class Delete extends Operation
 		$item = $this->getItemBeforeSave();
 		$permissionEntityType = \Bitrix\Crm\Service\UserPermissions::getItemPermissionEntityType($item);
 
-		\Bitrix\Crm\Security\Manager::resolveController($permissionEntityType)
+		$controller = \Bitrix\Crm\Security\Manager::resolveController($permissionEntityType);
+		$controller
 			->unregister(
 				$permissionEntityType,
 				$item->getId()
 			)
 		;
+
+		// While the conversion of the rights storage type is in progress, it is necessary to register the
+		// rights in both controllers.
+		if (
+			AttrConvertOptions::getCurrentEntityTypeId() === $item->getEntityTypeId()
+			&& !$controller instanceof DynamicItem
+		)
+		{
+			try {
+				$additionalController = new DynamicItem($item->getEntityTypeId());
+				$additionalController->unregister(
+					$permissionEntityType,
+					$item->getId(),
+				);
+			}
+			catch (\Exception $e)
+			{
+			}
+		}
 	}
 
 	protected function runCleaning(): Result

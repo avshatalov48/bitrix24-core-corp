@@ -6,7 +6,6 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
 use Bitrix\Tasks\Internals\Task\LogTable;
-use Bitrix\Tasks\TourGuide;
 use Bitrix\Tasks\TourGuide\Exception\TourGuideException;
 use Exception;
 

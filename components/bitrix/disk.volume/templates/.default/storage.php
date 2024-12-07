@@ -108,7 +108,7 @@ if (!empty($arResult['ERROR_MESSAGE']))
 	?>
 </div>
 
-<script type="text/javascript">
+<script>
 	BX(function () {
 
 		var goToFolder = function(event){

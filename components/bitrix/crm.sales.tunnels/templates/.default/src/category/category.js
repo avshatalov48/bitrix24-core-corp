@@ -879,21 +879,21 @@ export class Category extends Event.EventEmitter
 		});
 
 		const myItemsText = (this.entityTypeId === BX.CrmEntityType.enumeration.deal)
-			? Loc.getMessage('CRM_MENU_RIGHTS_CATEGORY_OWN_FOR_ALL')
-			: Loc.getMessage('CRM_MENU_RIGHTS_CATEGORY_OWN_FOR_ELEMENT')
+			? Loc.getMessage('CRM_MENU_RIGHTS_CATEGORY_OWN_FOR_ALL_MSGVER_1')
+			: Loc.getMessage('CRM_MENU_RIGHTS_CATEGORY_OWN_FOR_ELEMENT_MSGVER_1')
 		;
 		this.menuWindow = new Menu({
 			id: `crm-tunnels-menu-${Text.getRandom().toLowerCase()}`,
 			bindElement: this.getOptionButton(),
 			items: ([
 				{
-					text: Loc.getMessage('CRM_MENU_RIGHTS_CATEGORY_ALL_FOR_ALL'),
+					text: Loc.getMessage('CRM_MENU_RIGHTS_CATEGORY_ALL_FOR_ALL_MSGVER_1'),
 					dataset: {
 						access: 'X',
 					},
 				},
 				{
-					text: Loc.getMessage('CRM_MENU_RIGHTS_CATEGORY_NONE_FOR_ALL'),
+					text: Loc.getMessage('CRM_MENU_RIGHTS_CATEGORY_NONE_FOR_ALL_MSGVER_1'),
 					dataset: {
 						access: '',
 					},

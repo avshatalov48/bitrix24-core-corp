@@ -2,13 +2,19 @@
 
 namespace Bitrix\Tasks\Components\Kanban;
 
+use Bitrix\Main\Engine\CurrentUser;
+use Bitrix\Main\Text\Emoji;
+use Bitrix\Main\Web\Uri;
 use Bitrix\Tasks\Components\Kanban\Services\CheckList;
 use Bitrix\Tasks\Components\Kanban\Services\Crm;
 use Bitrix\Tasks\Components\Kanban\Services\Files;
 use Bitrix\Tasks\Components\Kanban\Services\Members;
 use Bitrix\Tasks\Components\Kanban\Services\Tags;
+use Bitrix\Tasks\Flow\FlowFeature;
+use Bitrix\Tasks\Flow\FlowRegistry;
 use Bitrix\Tasks\Internals\Registry\GroupRegistry;
 use Bitrix\Main\Type\DateTime;
+use Bitrix\Tasks\Internals\Routes\RouteDictionary;
 
 class DisplayService
 {
@@ -90,6 +96,48 @@ class DisplayService
 		return [
 			'collection' => $collection,
 			'label' => $projectField->getTitle(),
+		];
+	}
+
+	public function fillFlow(int $flowId): ?array
+	{
+		$flowField = $this->kanbanUserSettings->getFlow();
+
+		if (!$this->required($flowField->getCode()) || $flowId <= 0 || !FlowFeature::isOn())
+		{
+			return null;
+		}
+		$flow = FlowRegistry::getInstance()->get($flowId);
+		$collection = [];
+
+		if (isset($flow['ID'], $flow['NAME']))
+		{
+			$tasksPath = str_replace('#user_id#', CurrentUser::get()->getId(), RouteDictionary::PATH_TO_USER_TASKS_LIST);
+
+			$flowUri = new Uri($tasksPath . 'flow/');
+
+			$demoSuffix = \Bitrix\Tasks\Flow\FlowFeature::isFeatureEnabledByTrial() ? 'Y' : 'N';
+
+			$flowUri->addParams([
+				'apply_filter' => 'Y',
+				'ID_numsel' => 'exact',
+				'ID_from' => $flowId,
+				'ta_cat' => 'flows',
+				'ta_sec' => 'tasks',
+				'ta_sub' => \Bitrix\Tasks\Helper\Analytics::SUB_SECTION['kanban'],
+				'ta_el' => \Bitrix\Tasks\Helper\Analytics::ELEMENT['title_click'],
+				'p1' => 'isDemo_' . $demoSuffix,
+			]);
+
+			$collection[] = [
+				'name' => Emoji::decode($flow['NAME']),
+				'url' => $flowUri->getUri(),
+			];
+		}
+
+		return [
+			'collection' => $collection,
+			'label' => $flowField->getTitle(),
 		];
 	}
 

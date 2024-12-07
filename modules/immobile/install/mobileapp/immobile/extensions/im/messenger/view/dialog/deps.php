@@ -2,6 +2,7 @@
 
 return [
 	'extensions' => [
+		'apptheme',
 		'type',
 		'loc',
 		'im:messenger/lib/di/service-locator',

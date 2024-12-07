@@ -124,7 +124,7 @@
 				})
 			;
 
-			return items.join(' ');
+			return items.join(' ').replaceAll(/\s+/g, ' ');
 		},
 
 		formats: (() => data.formats || {})(),

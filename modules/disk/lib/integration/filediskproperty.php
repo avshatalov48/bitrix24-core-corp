@@ -534,7 +534,6 @@ class FileDiskProperty
 			switch($controlSettings['MODE'])
 			{
 				case 'CSV_EXPORT':
-					return self::convertToDB($property, $value);
 				case 'EXCEL_EXPORT':
 					$listFileName = array();
 					foreach($value['VALUE'] as $attachedId)

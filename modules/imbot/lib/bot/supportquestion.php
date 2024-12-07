@@ -39,4 +39,8 @@ interface SupportQuestion
 	 * @return array
 	 */
 	public static function getSupportQuestionList(array $params): array;
+
+	public static function getQuestionsCount(?int $botId = null): int;
+
+	public static function getQuestionsWithUnreadMessages(?int $botId = null): array;
 }

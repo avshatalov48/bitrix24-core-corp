@@ -287,6 +287,19 @@
 		})
 	};
 
+	const getNode = function()
+	{
+		return new Promise((resolve, reject) => {
+			restClient.callMethod('voximplant.user.getNode').then((result) => {
+				const data = result.data();
+
+				resolve(data);
+			}).catch((error) => {
+				reject(error);
+			})
+		})
+	};
+
 	BX.Voximplant.getClient = function(config)
 	{
 		config = BX.type.isPlainObject(config) ? config : {};
@@ -299,8 +312,9 @@
 			return result;
 		}
 
-		load().then(function()
-		{
+		load().then(() => {
+			return getNode();
+		}).then((node) => {
 			client = VoxImplant.getInstance();
 
 			var mediaServer = BX.message("voximplantMediaServer");
@@ -308,6 +322,7 @@
 			var clientParameters = {
 				micRequired: false,
 				progressTone: false,
+				node: `NODE_${node}`,
 				/*experiments: {
 					preventRendering: true
 				}*/

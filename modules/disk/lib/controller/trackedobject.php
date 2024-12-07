@@ -5,6 +5,7 @@ namespace Bitrix\Disk\Controller;
 use Bitrix\Disk;
 use Bitrix\Disk\Configuration;
 use Bitrix\Disk\Driver;
+use Bitrix\Disk\Integration\Bitrix24Manager;
 use Bitrix\Disk\Internals\Engine;
 use Bitrix\Disk\Internals\Error\Error;
 use Bitrix\Disk\Security\ParameterSigner;
@@ -50,6 +51,13 @@ class TrackedObject extends BaseObject
 
 	public function generateExternalLinkAction(Disk\Document\TrackedObject $object)
 	{
+		if (!Bitrix24Manager::isFeatureEnabled('disk_manual_external_link'))
+		{
+			$this->addError(new Error('Could not generate external link. Feature is disabled by tarif.'));
+
+			return null;
+		}
+
 		return $this->generateExternalLink($object->getFile());
 	}
 

@@ -10,6 +10,8 @@ use Bitrix\Main\Error;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
+use Bitrix\Sale\Label\Label;
+use Bitrix\Salescenter\Analytics\Dictionary\SubSectionDictionary;
 use Bitrix\SalesCenter\Controller\Order;
 use Bitrix\SalesCenter\Integration\CrmManager;
 
@@ -38,6 +40,9 @@ class Payment extends Base
 		$products = Product2BasketItemConverter::convert($options['products']);
 		unset($options['products']);
 		$options['orderId'] = CrmManager::getOrderIdByEntity($entity);
+		$options['paymentLabels'] = [
+			new Label('subSection', SubSectionDictionary::MOBILE->value)
+		];
 
 		$this->forward(
 			Order::class,

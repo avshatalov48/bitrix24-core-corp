@@ -25,11 +25,6 @@ $mode = mb_strtoupper(trim($mode));
 $arResult['MODE'] = $arParams['MODE'] = $mode;
 
 $enableSearch = $arResult['ENABLE_SEARCH'] = isset($_REQUEST['SEARCH']) && mb_strtoupper($_REQUEST['SEARCH']) === 'Y';
-if($enableSearch)
-{
-	// decode encodeURIComponent params
-	CUtil::JSPostUnescape();
-}
 
 $contextID = isset($arParams['CONTEXT_ID']) ? $arParams['CONTEXT_ID'] : '';
 if($contextID === '' && isset($_REQUEST['context_id']))

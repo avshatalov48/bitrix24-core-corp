@@ -4,7 +4,7 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 if ($_SERVER['REQUEST_METHOD'] == 'POST'):
 	$APPLICATION->RestartBuffer();
 	?>
-	<script type="text/javascript">
+	<script>
 	top.location.href = '<?=CUtil::JSEscape($arResult['EVENT_PAGE'])?>';
 	top.BX.WindowManager.Get().Close();
 	</script>
@@ -110,7 +110,7 @@ $LHE->Show($ar);
 	</td>
 </tr>
 </form>
-<script type="text/javascript">
+<script>
 
 	function subscribeAddFileInput(el)
 	{

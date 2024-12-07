@@ -85,7 +85,7 @@ class ProductRowTable extends DataManager
 			,
 			(new StringField('OWNER_TYPE'))
 				->configureRequired()
-				->configureSize(3),
+				->configureSize(20),
 			(new Reference(
 				'OWNER',
 				DealTable::class,

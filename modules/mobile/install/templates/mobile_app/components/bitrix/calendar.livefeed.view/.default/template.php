@@ -117,11 +117,13 @@ $event = $arResult['EVENT'];
 		if (window.ViewEventManager)
 		{
 			if (!window.oViewEventManager)
+			{
 				window.oViewEventManager = {};
+			}
 
 			<? $culture = \Bitrix\Main\Context::getCurrent()->getCulture(); ?>
 
-			window.oViewEventManager[('<?= $event['ID']?>' || 0)] = new window.ViewEventManager(<?=CUtil::PhpToJSObject(
+			window.oViewEventManager[('<?= $event['ID']?>' || 0)] = new window.ViewEventManager(<?=\Bitrix\Main\Web\Json::encode(
 				[
 					"id" => $id,
 					"eventId" => $event['ID'],

@@ -1,4 +1,5 @@
 /* eslint-disable */
+
 (function() {
 	BX.namespace("BX.CRM.Kanban");
 
@@ -56,7 +57,7 @@
 		},
 
 		/**
-		 * Custom format method from BXcrm-kanban-quick-form-show .2s cubic-bezier(0.88, -0.08, 0.46, 0.91) forwards.Currency.
+		 * Custom format method from BX.crm-kanban-quick-form-show .2s cubic-bezier(0.88, -0.08, 0.46, 0.91) forwards.Currency.
 		 * @param {float} price Price.
 		 * @param {string} currency Currency.
 		 * @param {boolean} useTemplate Use or not template.
@@ -105,7 +106,12 @@
 		 */
 		decPrice: function(val)
 		{
-			var data = this.getData();
+			if (this.isHiddenTotalSum() || !BX.Type.isNumber(val))
+			{
+				return;
+			}
+
+			const data = this.getData();
 			data.sum = parseFloat(data.sum) - val;
 			this.setData(data);
 		},
@@ -117,7 +123,12 @@
 		 */
 		incPrice: function(val)
 		{
-			var data = this.getData();
+			if (this.isHiddenTotalSum() || !BX.Type.isNumber(val))
+			{
+				return;
+			}
+
+			const data = this.getData();
 			data.sum = parseFloat(data.sum) + val;
 			this.setData(data);
 		},
@@ -247,28 +258,25 @@
 					item.layout.container.style.zIndex = -1;
 				},
 				useAnimation: item.useAnimation
-			}).then(function(){
+			}).then(() => {
 				this.setPullItemBackground(item, '#fff');
 				item.useAnimation = false;
 
-				Object.assign(
-					item.layout.container.style,
-					{
-						height: 'auto',
-						opacity: '100%',
-						zIndex: null,
-					}
-				);
+				const style = {
+					height: 'auto',
+					opacity: '100%',
+					zIndex: null,
+				};
+				BX.Dom.style(item.layout.container, style);
 
-				BX.Event.EventEmitter.emit(
-					'Crm.Kanban.Column:onItemAdded',
-					{
-						item:item,
-						targetColumn: this,
-						beforeItem: beforeItem,
-						oldColumn: this.grid.getColumn(oldColumnId),
-					});
-			}.bind(this));
+				const params = {
+					item,
+					targetColumn: this,
+					beforeItem,
+					oldColumn: this.grid.getColumn(oldColumnId),
+				}
+				BX.Event.EventEmitter.emit('Crm.Kanban.Column:onItemAdded', params);
+			});
 
 			if (this.getGrid().isRendered())
 			{
@@ -348,31 +356,22 @@
 				forSend.push(items[i].getId());
 			}
 
-			// ajax
-			this.getGrid().ajax(
-				{
-					action: "status",
-					entity_id: forSend,
-					prev_entity_id: afterItemId,
-					status: this.getId()
-				},
-				(data) => {
-					if (!data)
-					{
-						return;
-					}
+			const columnId = this.getId();
+			const params = {
+				action: 'status',
+				entity_id: forSend,
+				prev_entity_id: afterItemId,
+				status: columnId,
+			}
 
-					if (data.error)
-					{
-						BX.Kanban.Utils.showErrorDialog(data.error, true);
-					}
-					else if (data.isShouldUpdateCard)
-					{
-						const useAnimation = (!Array.isArray(forSend) || forSend.length <= 1);
-						void this.getGrid().loadNew(forSend, false, true, true, useAnimation);
-					}
+			this.getGrid().ajax(
+				params,
+				(data) => {
+					this.prepareGridAfterItemsAdded(forSend, data);
 				},
-				(error) => BX.Kanban.Utils.showErrorDialog('Error: ' + error, true)
+				(error) => {
+					BX.Kanban.Utils.showErrorDialog(`Error: ${error}`, true);
+				}
 			);
 
 			if (this.getGrid().isRendered())
@@ -389,6 +388,30 @@
 				}
 
 				this.render();
+			}
+		},
+
+		prepareGridAfterItemsAdded: function(itemIds, data)
+		{
+			if (!BX.Type.isObjectLike(data))
+			{
+				return;
+			}
+
+			const { grid } = this;
+			if (grid.hasResponseError(data))
+			{
+				grid.clearItemMoving();
+				grid.rollbackItemsMovement(itemIds, this.getId());
+				grid.showResponseError(data);
+
+				return;
+			}
+
+			if (data.isShouldUpdateCard)
+			{
+				const useAnimation = (!Array.isArray(itemIds) || itemIds.length <= 1);
+				void this.getGrid().loadNew(itemIds, false, true, true, useAnimation);
 			}
 		},
 
@@ -671,16 +694,27 @@
 
 				BX.addCustomEvent(
 					window,
-					"onCrmEntityCreateError",
-					function(params)
-					{
-						if (typeof params.error !== "undefined")
-						{
-							this.hideQuickEditorLoader();
+					'onCrmEntityCreateError',
+					({ error, checkErrors }) => {
+						this.hideQuickEditorLoader();
 
-							this.openQuickFormPartialEditor(Object.keys(params.checkErrors));
+						if (BX.type.isUndefined(error))
+						{
+							return;
 						}
-					}.bind(this)
+
+						if (BX.type.isObject(checkErrors))
+						{
+							this.openQuickFormPartialEditor(Object.keys(checkErrors));
+						}
+						else if (BX.type.isStringFilled(error))
+						{
+							BX.UI.Notification.Center.notify({
+								content: BX.Text.encode(error.replaceAll('<br />','\n')),
+								autoHideDelay: 5000,
+							});
+						}
+					}
 				);
 
 				if (!this.cancelEditHandler)
@@ -993,74 +1027,16 @@
 		},
 
 		/**
-		 * Renders subtitle content.
-		 * @returns {Element}
+		 * @returns {HTMLElement}
 		 */
 		renderSubTitle: function()
 		{
-			var data = this.getData();
-			var gridData = this.getGridData();
-
 			if (this.canAddItem === null)
 			{
 				this.canAddItem = true;
 			}
 
-			// render layout first time
-			if (this.getGrid().getTypeInfoParam('showTotalPrice'))
-			{
-				if (!this.layout.subTitlePrice)
-				{
-					this.layout.subTitlePriceText = BX.create("span", {
-						attrs: {
-							className: "crm-kanban-total-price-total"
-						}
-					});
-					this.layout.subTitlePrice = BX.create("div", {
-						attrs: {
-							className: "crm-kanban-total-price"
-						},
-						children: [
-							this.layout.subTitlePriceText
-						]
-					});
-				}
-			}
-			else
-			{
-				this.layout.subTitlePrice = null;
-			}
-
-			// animate change
-			if (this.layout.subTitlePriceText)
-			{
-				data.sum = parseFloat(data.sum);
-				data.sum_init = data.sum;
-				data.sum_old = data.sum_old ? data.sum_old : data.sum_init;
-
-				if (this.subTitleAnimationInterval)
-				{
-					clearInterval(this.subTitleAnimationInterval);
-				}
-
-				this.subTitleAnimationInterval = this.renderSubTitleAnimation(
-					data.sum_old,
-					data.sum,
-					Math.abs(data.sum_old - data.sum) / 20,
-					this.layout.subTitlePriceText,
-					function (element, value)
-					{
-						element.innerHTML = this.currencyFormat(
-							Math.round(value),
-							gridData.currency,
-							true
-						);
-						data.sum_old = data.sum;
-					}.bind(this)
-				);
-
-				this.setData(data);
-			}
+			this.createSubTitlePrice();
 
 			if (this.subtitleNode)
 			{
@@ -1068,9 +1044,11 @@
 			}
 
 			// create sum and button if no exists
+			let plusTitle = '';
+			let	quickForm = true;
 
-			var plusTitle = '',
-				quickForm = true;
+			const data = this.getData();
+			const gridData = this.getGridData();
 
 			if (data.sort === 100 && this.getGrid().getTypeInfoParam('hasPlusButtonTitle'))
 			{
@@ -1282,6 +1260,139 @@
 			return this.subtitleNode;
 		},
 
+		createSubTitlePrice: function()
+		{
+			this.createSubTitlePriceLayout();
+			this.renderSubTitlePrice();
+		},
+
+		createSubTitlePriceLayout: function()
+		{
+			const isShowTotalPrice = this.getGrid().getTypeInfoParam('showTotalPrice');
+
+			if (isShowTotalPrice && !this.layout.subTitlePrice)
+			{
+				this.layout.subTitlePriceText = BX.Tag.render`<span class="crm-kanban-total-price-total"></span>`;
+				this.layout.subTitlePrice = BX.Tag.render`<div class="crm-kanban-total-price">`;
+
+				BX.Dom.append(this.layout.subTitlePriceText, this.layout.subTitlePrice);
+			}
+			else if (!isShowTotalPrice)
+			{
+				this.layout.subTitlePrice = null;
+			}
+
+			if (this.isHiddenTotalSum())
+			{
+				const { subTitlePriceText } = this.layout;
+
+				BX.Event.unbindAll(subTitlePriceText, 'mouseenter');
+				BX.Event.unbindAll(subTitlePriceText, 'mouseleave');
+				BX.Event.bind(subTitlePriceText, 'mouseenter', this.onSubTitlePriceMouseEnter.bind(this));
+				BX.Event.bind(subTitlePriceText, 'mouseleave', this.onSubTitlePriceMouseLeave.bind(this));
+			}
+		},
+
+		onSubTitlePriceMouseEnter: function()
+		{
+			this.columnSumPopup = BX.PopupWindowManager.create(
+				this.getHideColumnSumPopupId(),
+				this.layout.subTitlePriceText,
+				{
+					autoHide: true,
+					angle: true,
+					animation: 'fading',
+					darkMode: true,
+					offsetTop: -10,
+					offsetLeft: this.layout.subTitlePriceText.offsetWidth / 2,
+					content: BX.Loc.getMessage('CRM_KANBAN_COLUMN_HIDDEN_SUM'),
+					bindOptions: {
+						position: 'top',
+					},
+					params: {
+						angleLeftOffset: 200,
+					},
+				}
+			);
+
+			this.columnSumPopup.show();
+		},
+
+		getHideColumnSumPopupId()
+		{
+			return `kanban-column-${this.getId()}-hidden-sum-popup`;
+		},
+
+		onSubTitlePriceMouseLeave: function()
+		{
+			this.columnSumPopup.close();
+		},
+
+		renderSubTitlePrice: function()
+		{
+			if (!this.layout.subTitlePriceText)
+			{
+				return;
+			}
+
+			if (this.isHiddenTotalSum())
+			{
+				this.renderHiddenTotalSum();
+			}
+			else
+			{
+				this.animateChangeSubTitlePrice();
+			}
+		},
+
+		renderHiddenTotalSum: function()
+		{
+			if (!this.layout.subTitlePriceText || !this.isHiddenTotalSum())
+			{
+				return;
+			}
+
+			const { currencyFormat } = this.getData();
+
+			this.layout.subTitlePriceText.innerHTML = `***** ${currencyFormat}`;
+		},
+
+		animateChangeSubTitlePrice: function()
+		{
+			const data = this.getData();
+
+			data.sum = parseFloat(data.sum);
+			data.sum_init = data.sum;
+			data.sum_old = data.sum_old ? data.sum_old : data.sum_init;
+
+			if (this.subTitleAnimationInterval)
+			{
+				clearInterval(this.subTitleAnimationInterval);
+			}
+
+			const currency = this.getGridData().currency;
+
+			this.subTitleAnimationInterval = this.renderSubTitleAnimation(
+				data.sum_old,
+				data.sum,
+				Math.abs(data.sum_old - data.sum) / 20,
+				this.layout.subTitlePriceText,
+				(element, value) => {
+					element.innerHTML = this.currencyFormat(Math.round(value), currency, true);
+					data.sum_old = data.sum;
+				}
+			);
+
+			this.setData(data);
+		},
+
+		isHiddenTotalSum: function()
+		{
+			const { hiddenTotalSum } = this.getData();
+
+			return Boolean(hiddenTotalSum);
+		},
+
 		isShowHiddenAddItemButton: function()
 		{
 			const columns = this.getGrid().getColumns();
@@ -1324,7 +1435,7 @@
 		 * @param {Number} step
 		 * @param {DOM} element
 		 * @param {Function} finalCall Call finally for element with val.
-		 * @returns {void}
+		 * @returns {number | null}
 		 */
 		renderSubTitleAnimation: function(start, value, step, element, finalCall)
 		{
@@ -1338,7 +1449,8 @@
 				{
 					finalCall(element, value);
 				}
-				return;
+
+				return null;
 			}
 
 			var sign = (start > value ? 'minus' : 'plus');
@@ -1380,11 +1492,7 @@
 				gridData.rights.canAddColumn
 			)
 			{
-				this.getGrid().getColumns().forEach(function(column){
-					column.getAddColumnButton().style.visibility = 'hidden';
-				});
-
-				var newColumn = this.getGrid().addColumn({
+				const newColumn = this.getGrid().addColumn({
 					id: "kanban-new-column-" + BX.util.getRandomString(5),
 					type: "BX.CRM.Kanban.DraftColumn",
 					canSort: false,
@@ -1555,7 +1663,12 @@
 					this.layout.items.removeChild(item);
 				}
 			}.bind(this));
-		}
+		},
+
+		hasItem: function(id)
+		{
+			return this.items.some((item) => item.id === id);
+		},
 	};
 
 	BX.CRM.Kanban.DraftColumn = function(options)

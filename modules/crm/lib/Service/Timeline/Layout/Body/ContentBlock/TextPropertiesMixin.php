@@ -8,6 +8,7 @@ trait TextPropertiesMixin
 	protected ?string $fontSize = null;
 	protected ?string $color = null;
 	protected ?string $title = null;
+	protected ?string $decoration = null;
 
 	public function getColor(): ?string
 	{
@@ -73,12 +74,25 @@ trait TextPropertiesMixin
 		return $this;
 	}
 
+	public function getDecoration(): ?string
+	{
+		return $this->decoration;
+	}
+
+	public function setDecoration(?string $decoration): self
+	{
+		$this->decoration = $decoration;
+
+		return $this;
+	}
+
 	protected function getTextProperties(): array
 	{
 		return [
 			'weight' => $this->getFontWeight(),
 			'size' => $this->getFontSize(),
 			'color' => $this->getColor(),
+			'decoration' => $this->getDecoration(),
 		];
 	}
 }

@@ -210,7 +210,6 @@ class Http
 		$params['BX_REGION'] = $this->region;
 		$params['BX_VERSION'] = Main\ModuleManager::getVersion('imbot');
 		$params['BX_LANG'] = \Bitrix\Main\Localization\Loc::getCurrentLang();
-		$params = \Bitrix\Main\Text\Encoding::convertEncoding($params, SITE_CHARSET, 'UTF-8');
 		$params['BX_HASH'] = self::requestSign($this->type, $params);
 
 		$waitResponse = $waitResponse ? true : (bool)Option::get('imbot', 'wait_response', false);

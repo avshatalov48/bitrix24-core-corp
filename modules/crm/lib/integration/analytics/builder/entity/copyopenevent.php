@@ -4,7 +4,6 @@ namespace Bitrix\Crm\Integration\Analytics\Builder\Entity;
 
 use Bitrix\Crm\Integration\Analytics\Builder\AbstractBuilder;
 use Bitrix\Crm\Integration\Analytics\Dictionary;
-use Bitrix\Main\Error;
 use Bitrix\Main\Result;
 
 final class CopyOpenEvent extends AbstractBuilder
@@ -30,7 +29,9 @@ final class CopyOpenEvent extends AbstractBuilder
 
 		if (!\CCrmOwnerType::IsDefined($this->entityTypeId))
 		{
-			$result->addError(new Error('Entity type id is unknown'));
+			return $result->addError(
+				\Bitrix\Crm\Controller\ErrorCode::getRequiredArgumentMissingError('entityTypeId'),
+			);
 		}
 
 		return $result;

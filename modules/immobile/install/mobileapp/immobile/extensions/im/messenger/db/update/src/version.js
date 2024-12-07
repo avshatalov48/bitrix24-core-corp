@@ -4,9 +4,10 @@
 jn.define('im/messenger/db/update/version', (require, exports, module) => {
 	const { Type } = require('type');
 
-	const { Logger } = require('im/messenger/lib/logger');
 	const { OptionRepository } = require('im/messenger/db/repository/option');
 	const { Updater } = require('im/messenger/db/update/updater');
+	const { LoggerManager } = require('im/messenger/lib/logger');
+	const logger = LoggerManager.getInstance().getLogger('database-update--version');
 
 	class Version
 	{
@@ -50,7 +51,7 @@ jn.define('im/messenger/db/update/version', (require, exports, module) => {
 			this.version = version;
 			this.cachedVersion = version;
 
-			Logger.warn('UpdaterVersion.set: ', version);
+			logger.warn('[DATABASE-UPDATE] Version.set: ', version);
 
 			return this.version;
 		}
@@ -74,6 +75,8 @@ jn.define('im/messenger/db/update/version', (require, exports, module) => {
 				const executeVersion = require(versionExtension);
 				await executeVersion(this.getUpdater());
 			}
+
+			logger.warn('[DATABASE-UPDATE] Version executed:', version);
 
 			await this.set(version);
 

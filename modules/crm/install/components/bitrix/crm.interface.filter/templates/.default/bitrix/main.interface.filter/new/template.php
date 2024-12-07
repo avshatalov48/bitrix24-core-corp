@@ -469,7 +469,7 @@ if(!(is_string($filterRows) && $filterRows !== ''))
 	$filterRows = implode(',', $fieldIDs);
 }
 
-?><script type="text/javascript">
+?><script>
 	BX.ready(
 			function()
 			{

@@ -3,15 +3,15 @@
 namespace Bitrix\Crm\Integration\UI\EntitySelector;
 
 use Bitrix\Crm\DealTable;
+use CCrmOwnerType;
 
 class DealProvider extends EntityProvider
 {
-	/** @var DealTable */
-	protected static $dataClass = DealTable::class;
+	protected static DealTable|string $dataClass = DealTable::class;
 
 	protected function getEntityTypeId(): int
 	{
-		return \CCrmOwnerType::Deal;
+		return CCrmOwnerType::Deal;
 	}
 
 	protected function fetchEntryIds(array $filter): array
@@ -22,5 +22,10 @@ class DealProvider extends EntityProvider
 		])->fetchCollection();
 
 		return $collection->getIdList();
+	}
+
+	protected function getDefaultItemAvatar(): ?string
+	{
+		return '/bitrix/images/crm/entity_provider_icons/deal.svg';
 	}
 }

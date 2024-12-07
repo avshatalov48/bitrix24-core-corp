@@ -21,7 +21,6 @@ return [
 		'crm:terminal/services/field-manager',
 		'crm:payment-system/creation/actions/oauth',
 		'crm:payment-system/creation/actions/before',
-		'crm:terminal/services/payment-service',
 		'crm:terminal/services/payment-system',
 		'crm:terminal/product-list',
 		'crm:terminal/services/payment',

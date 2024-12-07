@@ -3,8 +3,7 @@
 return [
 	'extensions' => [
 		'loc',
-		'apptheme',
-
+		'assets/icons',
 		'crm:mail/opener',
 		'crm:timeline/scheduler/providers/base',
 		'crm:type',

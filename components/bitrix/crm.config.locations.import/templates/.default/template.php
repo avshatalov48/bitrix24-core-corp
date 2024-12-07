@@ -4,7 +4,7 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 if ($_SERVER['REQUEST_METHOD'] == 'POST'):
 	//$APPLICATION->RestartBuffer();
 	?>
-	<script type="text/javascript">
+	<script>
 		<?if($arResult['ERROR_MSG'] <> '' ):?>
 			alert("<?=$arResult['ERROR_MSG']?>");
 			BX.closeWait();
@@ -18,7 +18,7 @@ endif;
 
 ?>
 <div id="form_container" style="display:block;">
-<script src="<?=$templateFolder.'/script.js'?>" type="text/javascript"></script>
+<script src="<?=$templateFolder.'/script.js'?>"></script>
 <link href="<?=$templateFolder.'/style.css'?>" type="text/css" rel="stylesheet" />
 <form action="<?=$componentPath?>/box.php" target="loc_import" name="import_form" method="post" enctype="multipart/form-data">
 <?=bitrix_sessid_post()?>
@@ -66,7 +66,7 @@ endif;
 <iframe name="loc_import" style="display: none;">
 </iframe>
 
-<script type="text/javascript">
+<script>
 	BX('BACK_URL').value = window.location.href;
 
 	BX.WindowManager.Get().SetTitle("<?=GetMessage('CRM_LOC_IMP_TITLE');?>");

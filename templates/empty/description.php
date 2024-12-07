@@ -1,1 +1,0 @@
-<?$arTemplate = Array("NAME"=>"Пустой шаблон", "DESCRIPTION"=>"");?>

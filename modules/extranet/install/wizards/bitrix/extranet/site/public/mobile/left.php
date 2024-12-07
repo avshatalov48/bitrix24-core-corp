@@ -19,7 +19,7 @@ $APPLICATION->IncludeComponent("bitrix:mobile.menu", "flat", array(), false, Arr
 $frame->finishDynamicWithID("menu", $stub = "", $containerId = null, $useBrowserStorage = true);
 $APPLICATION->IncludeComponent("bitrix:mobile.rtc", "", array(), false, Array("HIDE_ICONS" => "Y"));
 ?>
-<script type="text/javascript">
+<script>
 	app.enableSliderMenu(true);
 	app.getToken();
 </script>

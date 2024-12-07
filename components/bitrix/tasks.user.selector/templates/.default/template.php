@@ -9,18 +9,18 @@ $ajaxUrl = $this->__component->GetPath()
 	. "/ajax.php?lang=" . LANGUAGE_ID 
 	. "&SITE_ID=" . $arParams["SITE_ID"]
 	. "&GROUP_SITE_ID=" . $GLOBALS["GROUP_SITE_ID"]
-	. "&IS_EXTRANET=".($bExtranet ? "Y" : "N")
+	. "&IS_EXTRANET=".(($bExtranet ?? null) ? "Y" : "N")
 	. "&SHOW_INACTIVE_USERS=" . $arParams['SHOW_INACTIVE_USERS']
 	. "&nt=".urlencode($arParams["NAME_TEMPLATE"])
 ?>
-<script type="text/javascript">
+<script>
 	BX.message({
 		TASKS_EMP_HEAD : '<?php echo GetMessage("TASKS_EMP_HEAD")?>'
 	});
 	TasksUsers.lastUsers = <?php echo CUtil::PhpToJSObject($arResult["LAST_USERS_IDS"])?>;
 
 
-	var O_<?php echo $arResult["NAME"]?> = new TasksUsers("<?php echo $arResult["NAME"]?>", <?php echo $arParams["MULTIPLE"] == "Y" ? "true" : "false"?>, <?php echo $arParams["SUBORDINATE_ONLY"] == "Y" ? "true" : "false"?>);
+	var O_<?php echo $arResult["NAME"]?> = new TasksUsers("<?php echo $arResult["NAME"]?>", <?php echo $arParams["MULTIPLE"] == "Y" ? "true" : "false"?>, <?php echo ($arParams["SUBORDINATE_ONLY"] ?? null) == "Y" ? "true" : "false"?>);
 
 	O_<?php echo $arResult["NAME"]?>.ajaxUrl = '<?php echo $ajaxUrl; ?>';
 
@@ -42,7 +42,7 @@ $ajaxUrl = $this->__component->GetPath()
 			O_<?php echo $arResult["NAME"]?>.searchInput = BX("<?php echo $arResult["NAME"]?>_user_input");
 		<?php endif?>
 
-		<?php if ($arParams["ON_CHANGE"] <> ''):?>
+		<?php if (($arParams["ON_CHANGE"] ?? null) <> ''):?>
 			O_<?php echo $arResult["NAME"]?>.onChange = <?php echo CUtil::JSEscape($arParams["ON_CHANGE"])?>;
 		<?php endif?>
 
@@ -119,7 +119,7 @@ $ajaxUrl = $this->__component->GetPath()
 					<div class="finder-box-tab-content" id="<?php echo $arResult["NAME"]?>_structure">
 						<div class="company-structure">
 							<?php TasksEmployeeDrawStructure($arResult["STRUCTURE"], $arResult["SECTIONS"], 0, $arResult["NAME"]);?>
-							<script type="text/javascript">
+							<script>
 								TasksUsers.arEmployees['<?php echo CUtil::JSEscape($arResult["STRUCTURE"][0][0]); ?>'] = <?=$arResult['ROOT_DEP_USER'];?>;
 								O_<?php echo $arResult["NAME"]?>.load('<?php echo CUtil::JSEscape($arResult["STRUCTURE"][0][0]); ?>');
 							</script>

@@ -1108,7 +1108,7 @@ export class Plan extends View
 
 	onShowLinked(baseEvent: BaseEvent)
 	{
-		const item = baseEvent.getData();
+		const baseItem = baseEvent.getData();
 
 		if (this.searchItems.isActive())
 		{
@@ -1136,37 +1136,35 @@ export class Plan extends View
 		this.searchItems.fadeOutAll();
 
 		this.requestSender.showLinkedTasks({
-			taskId: item.getSourceId()
+			taskId: baseItem.getSourceId(),
 		})
 			.then((response: ShowLinkedTasksResponse) => {
-				const filteredItems = response.data.items;
-				const linkedItemIds = response.data.linkedItemIds;
+				const itemsData: Array<ItemParams> = response.data;
 
-				filteredItems.forEach((itemParams: ItemParams) => {
+				const items = new Set();
+				const itemIds = [];
+				itemsData.forEach((itemParams: ItemParams) => {
 					const item = Item.buildItem(itemParams);
 					const entity = this.entityStorage.findEntityByEntityId(item.getEntityId());
-
-					if (!entity.isCompleted() && !entity.hasItem(item))
+					if (entity)
 					{
-						item.setShortView(entity.getShortView());
-						entity.appendItemToList(item);
-						entity.setItem(item);
+						if (!entity.isCompleted() && !entity.hasItem(item))
+						{
+							item.setShortView(entity.getShortView());
+							entity.appendItemToList(item);
+							entity.setItem(item);
+						}
+
+						items.add(item);
+						itemIds.push(item.getId());
 					}
 				});
 
-				const allItems = this.entityStorage.getAllItems();
-				const items = new Set();
-				linkedItemIds.forEach((itemId: number) => {
-					if (allItems.has(itemId))
-					{
-						items.add(allItems.get(itemId));
-					}
-				});
 				this.itemDesigner.updateBorderColor(items);
 
-				if (linkedItemIds.length > 0)
+				if (items.size > 0)
 				{
-					this.searchItems.start(item, linkedItemIds);
+					this.searchItems.start(baseItem, itemIds);
 				}
 				else
 				{
@@ -1820,7 +1818,7 @@ export class Plan extends View
 		this.tagSearcher.unsubscribeAll('updateItemEpic');
 		this.tagSearcher.subscribe('updateItemEpic', (innerBaseEvent: BaseEvent) => {
 			const itemIds = [];
-			const epic: EpicType = innerBaseEvent.getData();
+			const epic: ?EpicType = innerBaseEvent.getData();
 
 			entity.getGroupModeItems()
 				.forEach((groupModeItem: Item) => {
@@ -1832,7 +1830,7 @@ export class Plan extends View
 
 			this.requestSender.updateItemEpics({
 				itemIds: itemIds,
-				epicId: epic.id
+				epicId: epic ? epic.id : 0,
 			})
 				.then((response) => {})
 				.catch((response) => {

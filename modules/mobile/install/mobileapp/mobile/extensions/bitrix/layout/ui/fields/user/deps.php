@@ -14,5 +14,6 @@ return [
 		'selector/widget/factory',
 		'utils/type',
 		'utils/phone',
+		'assets/icons',
 	],
 ];

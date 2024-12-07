@@ -1,0 +1,1 @@
+{"version":3,"file":"extension.map.js","names":["jn","define","require","exports","module","ModeList","ModeB24","Mode1C"],"sources":["extension.js"],"mappings":"AAGAA,GAAGC,OAAO,2BAA2B,CAACC,EAASC,EAASC,KAIvD,MAAMC,EAAW,CAChBC,QAAS,MACTC,OAAQ,MAGTH,EAAOD,QAAU,CAAEE,WAAU"}

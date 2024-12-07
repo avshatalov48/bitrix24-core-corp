@@ -40,7 +40,7 @@ $isFirstRunAfterConvert =
 
 IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/classes/general/file.php");
 ?>
-<script type="text/javascript">
+<script>
 	BX.message({
 		'disk_name': "<?= GetMessageJS('WD_DISK_NAME') ?>",
 		'disk_default': "<?= GetMessageJS('WD_DISK_JS_ERROR_DEFAULT') ?>",

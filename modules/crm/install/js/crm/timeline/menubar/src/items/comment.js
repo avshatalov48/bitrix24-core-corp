@@ -1,5 +1,6 @@
-import WithEditor from "./witheditor";
-import {Tag, Loc, ajax} from "main.core";
+import { ajax, Loc, Tag, Type } from 'main.core';
+
+import WithEditor from './witheditor';
 
 /** @memberof BX.Crm.Timeline.MenuBar */
 export default class Comment extends WithEditor
@@ -117,8 +118,9 @@ export default class Comment extends WithEditor
 
 	save()
 	{
-		let text = "";
+		let text = '';
 		const attachmentList = [];
+		const attachmentAllowEditOptions = {};
 
 		if (this._postForm)
 		{
@@ -126,16 +128,26 @@ export default class Comment extends WithEditor
 
 			this._postForm.eventNode
 				.querySelectorAll('input[name="UF_CRM_COMMENT_FILES[]"]')
-				.forEach(function(input) {
-					attachmentList.push(input.value)
+				.forEach((input) => attachmentList.push(input.value));
+
+			if (Type.isArrayFilled(attachmentList))
+			{
+				attachmentList.forEach((id: number | string) => {
+					const selectorName = `input[name="CRM_TIMELINE_DISK_ATTACHED_OBJECT_ALLOW_EDIT[${id}]"`;
+					const selector = this._postForm.eventNode.querySelector(selectorName);
+					if (selector)
+					{
+						attachmentAllowEditOptions[id] = selector.value;
+					}
 				});
+			}
 		}
 		else
 		{
 			text = this._input.value;
 		}
 
-		if (text === "")
+		if (text === '')
 		{
 			if (!this.emptyCommentMessage)
 			{
@@ -149,8 +161,10 @@ export default class Comment extends WithEditor
 						zIndex: 990,
 						angle: {position: 'top', offset: 77},
 						closeByEsc: true,
-						bindOptions: { forceBindPosition: true}
-					}
+						bindOptions: {
+							forceBindPosition: true,
+						},
+					},
 				);
 			}
 
@@ -166,18 +180,25 @@ export default class Comment extends WithEditor
 
 		this._isRequestRunning = this._isLocked = true;
 
+		const addedData = {
+			fields: {
+				ENTITY_ID: this.getEntityId(),
+				ENTITY_TYPE_ID: this.getEntityTypeId(),
+				COMMENT: text,
+				ATTACHMENTS: attachmentList,
+			},
+		};
+
+		if (Object.keys(attachmentAllowEditOptions).length > 0)
+		{
+			addedData.CRM_TIMELINE_DISK_ATTACHED_OBJECT_ALLOW_EDIT = attachmentAllowEditOptions;
+		}
+
 		return ajax.runAction(
 			'crm.timeline.comment.add',
 			{
-				data: {
-					fields: {
-						ENTITY_ID: this.getEntityId(),
-						ENTITY_TYPE_ID: this.getEntityTypeId(),
-						COMMENT: text,
-						ATTACHMENTS: attachmentList
-					}
-				}
-			}
+				data: addedData,
+			},
 		).then((result) => {
 			this.onSaveSuccess();
 
@@ -191,8 +212,8 @@ export default class Comment extends WithEditor
 
 	cancel()
 	{
-		this._input.value = "";
-		this._input.style.minHeight = "";
+		this._input.value = '';
+		this._input.style.minHeight = '';
 		if (BX.type.isDomNode(this._editorContainer))
 			this._postForm.eventNode.style.display = 'none';
 

@@ -12,7 +12,7 @@ jn.define('crm/category-list-view', (require, exports, module) => {
 	const { StageSelectActions } = require('layout/ui/stage-list/actions');
 	const { PlanRestriction } = require('layout/ui/plan-restriction');
 
-	const { TypeId } = require('crm/type/id');
+	const { TypeId } = require('crm/type');
 	const { CategoryList } = require('crm/category-list');
 
 	const {

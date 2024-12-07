@@ -2,9 +2,8 @@
  * @module im/messenger/lib/ui/base/buttons/icon-button
  */
 jn.define('im/messenger/lib/ui/base/buttons/icon-button', (require, exports, module) => {
-	/* global View */
 	const { withPressed } = require('utils/color');
-	const AppTheme = require('apptheme');
+	const { Theme } = require('im/lib/theme');
 
 	/**
 	 * @class IconButton
@@ -20,6 +19,7 @@ jn.define('im/messenger/lib/ui/base/buttons/icon-button', (require, exports, mod
 		 * @param {string} options.text
 		 * @param {Function} options.callback
 		 * @param {boolean} [options.disable=false]
+		 * @param {boolean} [options.disableClick=false]
 		 * @param {object} [options.style]
 		 * @param {string} [options.style.icon]
 		 * @param {string} [options.style.text]
@@ -30,38 +30,40 @@ jn.define('im/messenger/lib/ui/base/buttons/icon-button', (require, exports, mod
 		 */
 		constructor(options)
 		{
-			super({ disable: false, ...options });
+			super({ disable: false, disableClick: false, ...options });
 		}
 
 		render()
 		{
-			const backgroundColor = this.props.style?.backgroundColor || AppTheme.colors.bgContentPrimary;
-			const borderColor = this.props.disable ? AppTheme.colors.base7 : this.props.style?.border?.color;
+			const backgroundColor = this.props.style?.backgroundColor || Theme.colors.bgContentPrimary;
+			const borderColor = this.props.disable ? Theme.colors.base7 : this.props.style?.border?.color;
 			const backgroundColorChange = this.props.disable ? backgroundColor : withPressed(backgroundColor);
 			const textStyle = {
 				alignSelf: 'center',
-				color: AppTheme.colors.accentMainPrimaryalt,
+				color: Theme.colors.accentMainPrimaryalt,
 				fontSize: 12,
 				fontWeight: 500,
 				marginBottom: 12,
 				...this.props.style?.text,
 			};
 
-			textStyle.color = this.props.disable ? AppTheme.colors.base6 : textStyle.color;
+			textStyle.color = this.props.disable ? Theme.colors.base6 : textStyle.color;
 
 			return View(
 				{
 					style: {
 						marginHorizontal: 2,
-						width: this.props.style?.width || 83,
+						width: this.props.style?.width || null,
 						backgroundColor: backgroundColorChange,
+						maxWidth: '55%',
 						borderRadius: 16,
 						flexDirection: 'column',
 						justifyContent: 'center',
+						flex: 1,
 						borderWidth: this.props.style?.border?.width || 1,
-						borderColor: borderColor || AppTheme.colors.accentSoftBlue2,
+						borderColor: borderColor || Theme.colors.accentSoftBlue2,
 					},
-					clickable: !this.props.disable,
+					clickable: !this.props.disableClick,
 					onClick: () => this.onClick(),
 				},
 				Image({

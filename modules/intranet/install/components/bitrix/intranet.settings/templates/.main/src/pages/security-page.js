@@ -9,6 +9,7 @@ import { Switcher, SwitcherSize } from 'ui.switcher';
 import { Popup } from 'main.popup';
 import { SettingsSection, SettingsField, SettingsRow, BaseSettingsPage } from 'ui.form-elements.field';
 import {TagSelector} from "ui.entity-selector";
+import { AnalyticSettingsEvent } from '../analytic';
 
 export class SecurityPage extends BaseSettingsPage
 {
@@ -42,6 +43,7 @@ export class SecurityPage extends BaseSettingsPage
 		// }
 		this.#buildDevicesHistorySection()?.renderTo(contentNode);
 		this.#buildEventLogSection()?.renderTo(contentNode);
+		this.#buildMobileAppSection()?.renderTo(contentNode);
 		if (isBitrix24)
 		{
 			this.#buildAccessIPSection()?.renderTo(contentNode);
@@ -643,5 +645,34 @@ export class SecurityPage extends BaseSettingsPage
 		};
 
 		return new Section(params);
+	}
+
+	#buildMobileAppSection(): ?SettingsSection
+	{
+		if (!this.hasValue('sectionMobileApp'))
+		{
+			return;
+		}
+
+		const mobileAppSection = new Section(this.getValue('sectionMobileApp'));
+
+		const settingsSection = new SettingsSection({
+			section: mobileAppSection,
+			parent: this,
+		});
+
+		if (this.hasValue('switcherDisableCopy'))
+		{
+			let disableCopyField = new Checker(this.getValue('switcherDisableCopy'));
+			SecurityPage.addToSectionHelper(disableCopyField, settingsSection);
+		}
+
+		if (this.hasValue('switcherDisableScreenshot'))
+		{
+			let disableCopyScreenshotField = new Checker(this.getValue('switcherDisableScreenshot'));
+			SecurityPage.addToSectionHelper(disableCopyScreenshotField, settingsSection);
+		}
+
+		return settingsSection;
 	}
 }

@@ -31,4 +31,9 @@ abstract class LogMessage extends Configurable
 	{
 		return null;
 	}
+
+	public function needShowRestAppLayoutBlocks(): bool
+	{
+		return false;
+	}
 }

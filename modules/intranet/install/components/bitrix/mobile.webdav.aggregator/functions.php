@@ -40,8 +40,8 @@ if (!function_exists("__wd_check_uf_use_bp_property"))
 {
 	function __wd_check_uf_use_bp_property($iblock_id)
 	{
-		$iblock_id = intval($iblock_id); 
-		$db_res = CUserTypeEntity::GetList(array($by=>$order), array("ENTITY_ID" => "IBLOCK_".$iblock_id."_SECTION", "FIELD_NAME" => "UF_USE_BP"));
+		$iblock_id = intval($iblock_id);
+		$db_res = CUserTypeEntity::GetList(array(), array("ENTITY_ID" => "IBLOCK_".$iblock_id."_SECTION", "FIELD_NAME" => "UF_USE_BP"));
 		if (!$db_res || !($res = $db_res->GetNext()))
 		{
 			$arFields = Array(
@@ -64,7 +64,6 @@ if (!function_exists("__wd_check_uf_use_bp_property"))
 			$arFields["EDIT_FORM_LABEL"] = $arFieldName;
 			$obUserField  = new CUserTypeEntity;
 			$obUserField->Add($arFields);
-			$GLOBALS["USER_FIELD_MANAGER"]->arFieldsCache = array();
 		}
 	}
 }
@@ -85,21 +84,6 @@ if (!function_exists('_getPath'))
             return $path;
     }
 }
-
-
-if (!function_exists('_uencode'))
-{
-    function _uencode($t)
-    {
-        if (SITE_CHARSET != "UTF-8")
-        {
-            global $APPLICATION;
-            $t = $APPLICATION->ConvertCharset($t, SITE_CHARSET, "UTF-8");
-        }
-        return $t;
-    }
-}
-
 
 if (!function_exists('ParseFolderTreeData'))
 {
@@ -171,7 +155,7 @@ if (!function_exists('MakeDavRedirect'))
                         die();
                     }
                 } else {
-                    $ob->SetBaseURL(_uencode($baseURL));
+                    $ob->SetBaseURL($baseURL);
                 }
                 $ob->SetPath($path);
                 $fn = 'base_' . $_SERVER['REQUEST_METHOD'];
@@ -179,8 +163,8 @@ if (!function_exists('MakeDavRedirect'))
                 die();
             }
         } else {
-            $ob->SetBaseURL(_uencode($baseURL));
-            $ob->SetPath(_uencode(rtrim($path, '/')));
+            $ob->SetBaseURL($baseURL);
+            $ob->SetPath(rtrim($path, '/'));
             if ($is_root) return;
             $ob->IsDir();
             if ($ob->arParams['is_file'] )

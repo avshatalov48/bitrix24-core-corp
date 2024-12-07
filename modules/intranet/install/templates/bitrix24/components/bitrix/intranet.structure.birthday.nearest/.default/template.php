@@ -3,7 +3,7 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
 
 $arMonths_r = array();
 for ($i = 1; $i <= 12; $i++)
-	$arMonths_r[$i] = ToLower(GetMessage('MONTH_'.$i.'_S'));
+	$arMonths_r[$i] = mb_strtolower(GetMessage('MONTH_'.$i.'_S'));
 ?>
 <?
 if ($arParams['SHOW_FILTER'] == 'Y'):
@@ -28,7 +28,7 @@ if ($arParams['SHOW_FILTER'] == 'Y'):
 		<i class="r0"></i><i class="r1"></i><i class="r2"></i>
 	</div>
 	</form>
-	<script type="text/javascript">
+	<script>
 	window.onload = function() {document.forms.bx_birthday_filter.department.onchange = function() {this.form.submit()}}
 	</script>
 	<?

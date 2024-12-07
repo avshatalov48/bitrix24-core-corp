@@ -64,7 +64,7 @@ final class ToTask extends Converter
 
 		if(!intval($data['RESPONSIBLE_ID']) && count($data['RESPONSIBLES'])) // for broken templates
 		{
-			$newData['RESPONSIBLE_ID'] = $newData['RESPONSIBLES'][0];
+			$newData['RESPONSIBLE_ID'] = $newData['RESPONSIBLES'][0] ?? 0;
 		}
 
 		$now = $this->getContext()->getNow();

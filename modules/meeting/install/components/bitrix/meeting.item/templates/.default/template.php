@@ -260,7 +260,7 @@ if (!$bSingle):
 endif;
 if ($bEdit):
 ?>
-<script type="text/javascript">
+<script>
 function saveReport(el, form)
 {
 	if (BX.hasClass(el, 'webform-small-button-accept'))
@@ -338,7 +338,7 @@ endif;
 require($_SERVER['DOCUMENT_ROOT'].$this->GetFolder().'/comments.php');
 ?>
 </div>
-<script type="text/javascript">
+<script>
 <?
 if ($arResult['CAN_EDIT']):
 ?>

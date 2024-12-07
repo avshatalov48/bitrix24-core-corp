@@ -1697,76 +1697,138 @@ class ResultEntity
 				WebFormTracker::getInstance()->registerActivity($this->activityId, array('ORIGIN_ID' => $this->formId));
 			}
 
-			if(Loader::includeModule('im'))
+			if (Loader::includeModule('im'))
 			{
-				$url = "/crm/activity/?open_view=#log_id#";
-				$url = str_replace(array("#log_id#"), array($id), $url);
-				$serverName = (Context::getCurrent()->getRequest()->isHttps() ? "https" : "http") . "://";
-				if(defined("SITE_SERVER_NAME") && SITE_SERVER_NAME <> '')
-				{
-					$serverName .= SITE_SERVER_NAME;
-				}
-				else
-				{
-					$serverName .= Option::get("main", "server_name", "");
-				}
-
-				if ($this->isCallback)
-				{
-					$notifyTag = "CRM|CALLBACK|" . $id;
-					$imNotifyEvent = \CCrmNotifierSchemeType::CallbackName;
-					$imNotifyMessage = Loc::getMessage(
-						'CRM_WEBFORM_RESULT_ENTITY_NOTIFY_SUBJECT_CALL',
-						Array(
-							"%phone%" => '<a href="' . $url . '">' . htmlspecialcharsbx(
-									$this->callbackPhone ? $this->callbackPhone : $this->formData['NAME']
-								) . '</a>',
-						)
-					);
-				}
-				else
-				{
-					$notifyTag = "CRM|WEBFORM|" . $id;
-					$imNotifyEvent = \CCrmNotifierSchemeType::WebFormName;
-					$imNotifyMessage = Loc::getMessage(
-						'CRM_WEBFORM_RESULT_ENTITY_NOTIFY_SUBJECT',
-						Array(
-							"%title%" => '<a href="' . $url . '">' . htmlspecialcharsbx($this->formData['NAME']) . '</a>',
-						)
-					);
-				}
-
-				if (
-					isset($mainEntityLink)
-					&& isset($mainEntityName)
-					&& is_string($mainEntityName)
-				)
-				{
-					$additionalEntityInfo = $this->getAdditionalEntityInfo($mainEntityLink, $mainEntityName);
-					if ($additionalEntityInfo !== null)
-					{
-						$imNotifyMessage .= "\n";
-						$imNotifyMessage .= $additionalEntityInfo;
-					}
-				}
-
-				$imNotifyMessageOut = $imNotifyMessage . " (". $serverName . $url . ")";
-				$imNotifyMessageOut .= "\n\n";
-				$imNotifyMessageOut .= Result::formatFieldsByTemplate($this->activityFields);
+				$notifyMessageArgs = [$id, $mainEntityLink ?? null, $mainEntityName ?? null];
+				$notifyMessageCallback = $this->getAddActivityNotifyMessage(...$notifyMessageArgs);
+				$notifyMessageOutCallback = $this->getAddActivityNotifyMessageOut(...$notifyMessageArgs);
 
 				$imNotifyFields = array(
 					"TO_USER_ID" => $activityFields['RESPONSIBLE_ID'],
 					"FROM_USER_ID" => $activityFields['AUTHOR_ID'],
 					"NOTIFY_TYPE" => IM_NOTIFY_FROM,
 					"NOTIFY_MODULE" => "crm",
-					"NOTIFY_EVENT" => $imNotifyEvent,
-					"NOTIFY_TAG" => $notifyTag,
-					"NOTIFY_MESSAGE" => $imNotifyMessage,
-					"NOTIFY_MESSAGE_OUT" => $imNotifyMessageOut
+					"NOTIFY_EVENT" => $this->getAddActivityNotifyEvent(),
+					"NOTIFY_TAG" => $this->getAddActivityNotifyTag($id),
+					"NOTIFY_MESSAGE" => $notifyMessageCallback,
+					"NOTIFY_MESSAGE_OUT" => $notifyMessageOutCallback,
 				);
+
 				\CIMNotify::Add($imNotifyFields);
 			}
 		}
+	}
+
+	protected function getAddActivityNotifyMessage(
+		int $id,
+		?string $entityLink = null,
+		?string $entityName = null,
+	): callable
+	{
+		return fn (?string $languageId = null) =>
+			$this->getBaseAddActivityNotifyMessage(
+				$id,
+				$entityLink,
+				$entityName,
+				$languageId,
+			)
+		;
+	}
+
+	protected function getAddActivityNotifyMessageOut(
+		int $id,
+		?string $entityLink = null,
+		?string $entityName = null,
+	): callable
+	{
+		return function (?string $languageId = null) use ($id, $entityLink, $entityName)
+		{
+			$absoluteUrl = \CCrmUrlUtil::ToAbsoluteUrl($this->getActivityOpenViewUrl($id));
+			$formatFields = Result::formatFieldsByTemplate($this->activityFields, languageId: $languageId);
+
+			$message = $this->getBaseAddActivityNotifyMessage(
+				$id,
+				$entityLink,
+				$entityName,
+				$languageId,
+			);
+
+			$message .= " ({$absoluteUrl})";
+			$message .= "\n\n";
+			$message .= $formatFields;
+
+			return $message;
+		};
+	}
+
+	protected function getBaseAddActivityNotifyMessage(
+		int $id,
+		?string $entityLink = null,
+		?string $entityName = null,
+		?string $languageId = null
+	): string
+	{
+		$url = $this->getActivityOpenViewUrl($id);
+		$formDataName = $this->formData['NAME'] ?? '';
+
+		if ($this->isCallback)
+		{
+			$phone = '<a href="' . $url . '">' . htmlspecialcharsbx($this->callbackPhone ?: $formDataName) . '</a>';
+
+			$code = 'CRM_WEBFORM_RESULT_ENTITY_NOTIFY_SUBJECT_CALL';
+			$replace = [ "%phone%" => $phone ];
+		}
+		else
+		{
+			$code = 'CRM_WEBFORM_RESULT_ENTITY_NOTIFY_SUBJECT';
+			$replace = [ "%title%" => '<a href="' . $url . '">' . htmlspecialcharsbx($formDataName) . '</a>' ];
+		}
+
+		$message = Loc::getMessage($code, $replace, $languageId);
+
+		if (empty($entityName) || empty($entityLink))
+		{
+			return $message;
+		}
+
+		$additionalInfo = $this->getAdditionalEntityInfo(
+			$entityLink,
+			$entityName,
+			$languageId,
+		);
+
+		if ($additionalInfo === null)
+		{
+			return $message;
+		}
+
+		$message .= "\n";
+		$message .= $additionalInfo;
+
+		return $message;
+	}
+
+	protected function getActivityOpenViewUrl(int $id): string
+	{
+		$url = "/crm/activity/?open_view=#log_id#";
+
+		return str_replace(["#log_id#"], [$id], $url);
+	}
+
+	protected function getAddActivityNotifyTag(int $id): string
+	{
+		return $this->isCallback
+			? "CRM|CALLBACK|{$id}"
+			: "CRM|WEBFORM|{$id}"
+		;
+	}
+
+	protected function getAddActivityNotifyEvent(): string
+	{
+		return $this->isCallback
+			? \CCrmNotifierSchemeType::CallbackName
+			: \CCrmNotifierSchemeType::WebFormName
+		;
 	}
 
 	protected function runAutomation()
@@ -2406,11 +2468,15 @@ class ResultEntity
 	 * @param string $entityName
 	 * @return string|null
 	 */
-	private function getAdditionalEntityInfo(string $link, string $entityName): ?string
+	private function getAdditionalEntityInfo(string $link, string $entityName, ?string $languageId = null): ?string
 	{
-		return Loc::getMessage('CRM_WEBFORM_RESULT_ENTITY_NOTIFY_MESSAGE_LINK', [
-			'#ENTITY_LINK#' => '<a href="' . $link . '">' . htmlspecialcharsbx($entityName) . '</a>',
-		]);
+		return Loc::getMessage(
+			'CRM_WEBFORM_RESULT_ENTITY_NOTIFY_MESSAGE_LINK',
+			[
+				'#ENTITY_LINK#' => '<a href="' . $link . '">' . htmlspecialcharsbx($entityName) . '</a>',
+			],
+			$languageId,
+		);
 	}
 
 	private function removeIgnoredActivityBindings(array $bindings): array

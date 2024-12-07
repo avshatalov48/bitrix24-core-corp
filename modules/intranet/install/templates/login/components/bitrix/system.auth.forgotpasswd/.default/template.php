@@ -47,7 +47,7 @@ else
 		</div>
 	</form>
 
-	<script type="text/javascript">
+	<script>
 		BX.ready(function() {
 			BX.focus(document.forms["form_auth"]["USER_LOGIN"]);
 		});

@@ -3,15 +3,16 @@
 namespace Bitrix\Crm\Controller;
 
 use Bitrix\Crm\Field;
+use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Context;
 use Bitrix\Intranet\ActionFilter\IntranetUser;
+use Bitrix\Main\Engine\Action;
 use Bitrix\Main\Engine\AutoWire\ExactParameter;
 use Bitrix\Main\Engine\Controller;
 use Bitrix\Main\Engine\Response\Converter;
 use Bitrix\Main\Error;
 use Bitrix\Main\Event;
-use Bitrix\Main\Engine\Action;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Type\DateTime;
@@ -72,6 +73,14 @@ abstract class Base extends Controller
 					return Container::getInstance()->getType($typeId);
 				}
 			),
+			new ExactParameter(
+				ItemIdentifier::class,
+				'itemIdentifier',
+				static function($className, $entityTypeId, $entityId)
+				{
+					return new $className($entityTypeId, $entityId);
+				}
+			),
 		];
 	}
 
@@ -112,9 +121,9 @@ abstract class Base extends Controller
 		return Container::getInstance()->getOrmObjectConverter()->convertKeysToCamelCase($data);
 	}
 
-	protected function convertValuesToUpper(array $data): array
+	protected function convertValuesToUpper(array $data, int $format = null): array
 	{
-		$converter = new Converter(Converter::TO_UPPER | Converter::VALUES | Converter::TO_SNAKE);
+		$converter = new Converter($format ?? (Converter::TO_UPPER | Converter::VALUES | Converter::TO_SNAKE));
 
 		return $converter->process($data);
 	}
@@ -185,13 +194,51 @@ abstract class Base extends Controller
 
 	protected function isCorrectFieldName(string $filterName, string $field): bool
 	{
-		static $prefixes = [
-			'' => true, '=' => true, '%' => true, '>' => true, '<' => true, '@' => true, '!=' => true,
-			'!%' => true, '><' => true, '>=' => true, '<=' => true, '=%' => true, '%=' => true,
-			'!><' => true, '!=%' => true, '!%=' => true,
-		];
+		return Validator\Filter::isCorrectFilterFieldName($filterName, $field);
+	}
 
-		return isset($prefixes[str_replace($field, '', $filterName)]);
+	protected function validateOrder(array $order, array $allowedFields): bool
+	{
+		$result = (new Validator\Order($allowedFields))->validate($order);
+		if (!$result->isSuccess())
+		{
+			$this->addErrors($result->getErrors());
+		}
+
+		return $result->isSuccess();
+	}
+
+	protected function validateFilter(array $filter, array $allowedFields): bool
+	{
+		$result = (new Validator\Filter($allowedFields))->validate($filter);
+		if (!$result->isSuccess())
+		{
+			$this->addErrors($result->getErrors());
+		}
+
+		return $result->isSuccess();
+	}
+
+	protected function validateReadPermission(ItemIdentifier $itemIdentifier): bool
+	{
+		$result = (new Validator\Entity\ReadPermission())->validate($itemIdentifier);
+		if (!$result->isSuccess())
+		{
+			$this->addErrors($result->getErrors());
+		}
+
+		return $result->isSuccess();
+	}
+
+	protected function validateUpdatePermission(ItemIdentifier $itemIdentifier): bool
+	{
+		$result = (new Validator\Entity\UpdatePermission())->validate($itemIdentifier);
+		if (!$result->isSuccess())
+		{
+			$this->addErrors($result->getErrors());
+		}
+
+		return $result->isSuccess();
 	}
 
 	protected function uploadFile(Field $field, $fileContent): ?int
@@ -255,5 +302,32 @@ abstract class Base extends Controller
 
 			return null;
 		}
+	}
+
+	final protected function isAjax(): bool
+	{
+		return $this->getScope() === self::SCOPE_AJAX;
+	}
+
+	final protected function isRest(): bool
+	{
+		return $this->getScope() === self::SCOPE_REST;
+	}
+
+	final protected function isCli(): bool
+	{
+		return $this->getScope() === self::SCOPE_CLI;
+	}
+
+	final protected function setAccessDenied(): void
+	{
+		\Bitrix\Main\Context::getCurrent()->getResponse()->setStatus(403);
+
+		$this->addError(
+			new Error(
+				'Access denied',
+				ErrorCode::ACCESS_DENIED
+			)
+		);
 	}
 }

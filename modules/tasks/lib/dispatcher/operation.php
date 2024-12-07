@@ -166,7 +166,7 @@ final class Operation
 			foreach ($arguments as $arg)
 			{
 				$optional = $arg->isOptional();
-				$argName = ToLower($arg->getName());
+				$argName = mb_strtolower($arg->getName());
 				$argType = $arg->getType();
 				if (!$argType)
 				{
@@ -269,7 +269,7 @@ final class Operation
 
 	protected function parseQueryPath($path)
 	{
-		$path = ToLower(trim((string) $path));
+		$path = mb_strtolower(trim((string) $path));
 
 		// not empty
 		// contains at least two parts: entity.method, each part should not start with a digit, should not start from or end with comma

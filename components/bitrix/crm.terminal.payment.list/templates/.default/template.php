@@ -70,6 +70,8 @@ if ($arResult['IS_ROWS_EXIST'])
 		'ALLOW_SORT' => true,
 		'ALLOW_PIN_HEADER' => true,
 		'AJAX_OPTION_HISTORY' => 'N',
+		'USE_CHECKBOX_LIST_FOR_SETTINGS_POPUP' => $arResult['USE_CHECKBOX_LIST_FOR_SETTINGS_POPUP'] ?? false,
+		'ENABLE_FIELDS_SEARCH' => $arResult['ENABLE_FIELDS_SEARCH'] ?? 'N',
 	]);
 }
 else

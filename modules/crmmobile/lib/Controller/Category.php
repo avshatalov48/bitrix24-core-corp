@@ -367,14 +367,8 @@ class Category extends Base
 
 	private function setAccess(int $entityTypeId, int $categoryId, string $access): void
 	{
-		$permissionEntity = UserPermissions::getPermissionEntityType($entityTypeId, $categoryId);
-		$permissions = \CCrmRole::GetDefaultPermissionSet();
-		foreach ($permissions as $key => $permission)
-		{
-			$permissions[$key]["-"] = $access;
-		}
+		$result = Crm\Category\CategoryPermissionsManager::getInstance()->setPermissions(new \Bitrix\Crm\CategoryIdentifier($entityTypeId, $categoryId), $access);
 
-		$result = RolePermission::setByEntityIdForAllNotAdminRoles($permissionEntity, $permissions);
 		if (!$result->isSuccess())
 		{
 			$this->addErrors($result->getErrors());
@@ -383,11 +377,11 @@ class Category extends Base
 
 	private function copyAccessCategory(int $entityTypeId, int $categoryId, int $donorId): void
 	{
-		$permissionEntity = UserPermissions::getPermissionEntityType($entityTypeId, $categoryId);
-		$donorPermissionEntity = UserPermissions::getPermissionEntityType($entityTypeId, $donorId);
-		$permissionSet = RolePermission::getByEntityId($donorPermissionEntity);
+		$result = Crm\Category\CategoryPermissionsManager::getInstance()->copyPermissions(
+			new \Bitrix\Crm\CategoryIdentifier($entityTypeId, $donorId),
+			new \Bitrix\Crm\CategoryIdentifier($entityTypeId, $categoryId),
+		);
 
-		$result = RolePermission::setByEntityId($permissionEntity, $permissionSet, true);
 		if (!$result->isSuccess())
 		{
 			$this->addErrors($result->getErrors());

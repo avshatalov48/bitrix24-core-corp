@@ -768,7 +768,7 @@ class CVoxImplantMain
 		{
 			if ($accountLang == 'ru')
 			{
-				return 'http://www.1c-bitrix.ru/buy/intranet.php#tab-call-link';
+				return 'https://www.1c-bitrix.ru/buy/intranet.php#tab-call-link';
 			}
 			else if ($accountLang == 'ua')
 			{
@@ -821,13 +821,13 @@ class CVoxImplantMain
 		switch ($language)
 		{
 			case "ru":
-				return "http://www.bitrix24.ru/prices/tariffs.php";
+				return "https://www.bitrix24.ru/prices/tariffs.php";
 			case "ua":
-				return "http://www.bitrix24.ua/prices/tariffs.php";
+				return "https://www.bitrix24.ua/prices/tariffs.php";
 			case "de":
-				return "http://www.bitrix24.de/prices/calls.php";
+				return "https://www.bitrix24.de/prices/calls.php";
 			default:
-				return "http://www.bitrix24.com/prices/calls.php";
+				return "https://www.bitrix24.com/prices/calls.php";
 		}
 	}
 

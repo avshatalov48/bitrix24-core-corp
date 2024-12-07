@@ -3,7 +3,7 @@
 return [
 	'extensions' => [
 		'loc',
-		'tasks:layout/task/fields/tasks',
+		'tasks:layout/task/fields/task',
 		'type',
 	],
 ];

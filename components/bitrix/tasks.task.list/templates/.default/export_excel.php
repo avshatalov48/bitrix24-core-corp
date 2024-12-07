@@ -4,7 +4,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
-define('NO_KEEP_STATISTIC', 'Y');
+// define('NO_KEEP_STATISTIC', 'Y');
 define('NO_AGENT_STATISTIC','Y');
 define('NO_AGENT_CHECK', true);
 define('DisableEventsCheck', true);
@@ -12,6 +12,7 @@ define('DisableEventsCheck', true);
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Tasks\Flow\FlowFeature;
 use Bitrix\Tasks\Integration\SocialNetwork\Group;
 use Bitrix\Tasks\Provider\TasksUFManager;
 use Bitrix\Tasks\Util\User;
@@ -46,6 +47,8 @@ $locMap = [
 	'PARENT_ID' => 'BASE_ID',
 	'PARENT_TITLE' => 'BASE_TITLE',
 	'RESPONSIBLE_NAME' => 'ASSIGNEE_NAME',
+	'START_DATE_PLAN' => 'START_DATE_PLAN',
+	'END_DATE_PLAN' => 'END_DATE_PLAN',
 ];
 
 $columns = $arParams['COLUMNS'];
@@ -55,6 +58,8 @@ if ($arResult['EXPORT_ALL'])
 	$arParams['COLUMNS'] = array_unique($arParams['COLUMNS']);
 	$columns = array_unique($arResult['EXPORT_COLUMNS']);
 }
+
+if ($arResult['CURRENT_PAGE'] === 1):
 ?>
 
 <meta http-equiv="Content-type" content="text/html;charset=<?=LANG_CHARSET ?>"/>
@@ -68,24 +73,45 @@ if ($arResult['EXPORT_ALL'])
 				continue;
 			}
 
+			// todo: remove
+			if (($field === 'FLOW') && !FlowFeature::isOn())
+			{
+				continue;
+			}
+
 			$field = $locMap[$field] ?? $field;
 			$header = Loc::getMessage("TASKS_EXCEL_{$field}");
 			if ($header === null && array_key_exists($field, $arParams['UF']))
 			{
 				$header = $arParams['UF'][$field]['EDIT_FORM_LABEL'];
 			}
+
+			if ($header === null)
+			{
+				$columnsToIgnore[] = $field;
+				continue;
+			}
+
 			?><th><?=$header?></th>
 		<?php endforeach;?>
 	</tr>
 	</thead>
 
 	<tbody>
+	<?php endif; ?>
+
 	<?php foreach ($arResult['EXPORT_LIST'] as $task):?>
 		<tr>
 			<?php
 			foreach ($arParams['COLUMNS'] as $field)
 			{
 				if (in_array($field, $columnsToIgnore, true))
+				{
+					continue;
+				}
+
+				// todo: remove
+				if ($field === 'FLOW' && !FlowFeature::isOn())
 				{
 					continue;
 				}
@@ -108,7 +134,7 @@ if ($arResult['EXPORT_ALL'])
 						{
 							$prefix = str_repeat('&nbsp;&nbsp;&nbsp;', $task['__LEVEL']);
 						}
-						else if (preg_match('/^[0-9 \t]*$/', $columnValue))
+						else if (!is_null($columnValue) && preg_match('/^[0-9 \t]*$/', $columnValue))
 						{
 							// due to http://jabber.bx/view.php?id=39850
 							$columnValue = $rawColumnValue .' ';
@@ -193,9 +219,12 @@ if ($arResult['EXPORT_ALL'])
 
 					case 'STATUS':
 					case 'REAL_STATUS':
-						$columnValue = Loc::getMessage('TASKS_STATUS_'.$task['REAL_STATUS']);
-						break;
+						$columnValue =
+							Loc::getMessage('TASKS_STATUS_' . $task['REAL_STATUS'] . '_MSGVER_1')
+							?? Loc::getMessage('TASKS_STATUS_' . $task['REAL_STATUS'])
+						;
 
+					break;
 					case 'MARK':
 						$columnValue = Loc::getMessage('TASKS_MARK_'.($columnValue ?: 'NONE'));
 						break;
@@ -357,5 +386,7 @@ if ($arResult['EXPORT_ALL'])
 			?>
 		</tr>
 	<?php endforeach; ?>
+	<?php if ($arResult['CURRENT_PAGE'] === $arResult['TOTAL_PAGES']): ?>
 	</tbody>
 </table>
+<?php endif; ?>

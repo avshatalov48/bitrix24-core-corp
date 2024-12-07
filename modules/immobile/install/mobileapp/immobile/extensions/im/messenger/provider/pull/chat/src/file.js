@@ -2,8 +2,9 @@
  * @module im/messenger/provider/pull/chat/file
  */
 jn.define('im/messenger/provider/pull/chat/file', (require, exports, module) => {
-	const { BasePullHandler } = require('im/messenger/provider/pull/lib');
+	const { BasePullHandler } = require('im/messenger/provider/pull/base');
 	const { LoggerManager } = require('im/messenger/lib/logger');
+	const { FileUtils } = require('im/messenger/provider/pull/lib/file');
 	const logger = LoggerManager.getInstance().getLogger('pull-handler--chat-file');
 
 	/**
@@ -16,7 +17,7 @@ jn.define('im/messenger/provider/pull/chat/file', (require, exports, module) => 
 		 * @param {object} extra
 		 * @param {object} command
 		 */
-		handleFileAdd(params, extra, command)
+		async handleFileAdd(params, extra, command)
 		{
 			if (this.interceptEvent(params, extra, command))
 			{
@@ -24,9 +25,7 @@ jn.define('im/messenger/provider/pull/chat/file', (require, exports, module) => 
 			}
 
 			logger.info('ChatFilePullHandler.handleFileAdd:', params);
-
-			this.store.dispatch('filesModel/set', params.files)
-				.catch((err) => logger.error('ChatFilePullHandler.handleChatPin.filesModel/set.catch:', err));
+			await FileUtils.setFiles(params);
 		}
 	}
 

@@ -235,7 +235,7 @@ foreach ($arResult['shiftWorkdaysOptions'] as $index => $title)
 	];
 }
 ?>
-<script type="text/javascript">
+<script>
 	BX.ready(function ()
 	{
 		BX.message({

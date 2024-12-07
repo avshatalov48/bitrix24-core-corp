@@ -27,6 +27,7 @@ Extension::load([
 	'ui.hint',
 	'ui.sidepanel-content',
 	'ui.sidepanel-wrapper',
+	'ui.info-helper',
 	'crm.config.terminal',
 	'sidepanel',
 ]);

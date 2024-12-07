@@ -26,7 +26,7 @@ foreach($arResult['VERSIONS'] as $version)
 
 	?><div class="post-item-file-version"><?= Loc::getMessage('DISK_UF_VERSION_HISTORY_FILE_MOBILE', array('#NUMBER#' => $version['GLOBAL_CONTENT_VERSION'])) ?></div><?
 	?><div id="wdif-doc-version-<?=$version['ID'] . $arResult['UID']?>" class="post-item-attached-file"><?
-		if (in_array(ToLower($version["EXTENSION"]), array("exe")))
+		if (in_array(mb_strtolower($version["EXTENSION"]), array("exe")))
 		{
 			?><span><?
 				?><span><?=htmlspecialcharsbx($version['NAME'])?></span><span>(<?=$version['SIZE']?>)</span><?

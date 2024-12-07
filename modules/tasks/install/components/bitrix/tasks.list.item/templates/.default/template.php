@@ -69,12 +69,6 @@ if ($arResult['IFRAME'] === 'Y')
 					target="_top"
 					onmouseover="ShowTaskQuickInfo(<?php echo $task["ID"]?>, event);"
 					onmouseout="HideTaskQuickInfo(<?php echo $task["ID"]?>, event);"
-					<?php
-					if ($bShowInPopup)
-					{
-						?>onclick="ShowPopupTask(<?php echo $task["ID"]?>, event);"<?php
-					}
-					?>
 					><?php echo $task["TITLE"];
 				?></a><?php
 
@@ -82,12 +76,6 @@ if ($arResult['IFRAME'] === 'Y')
 				{
 					?><a href="<?php echo $viewUrl?>#updates"
 						class="task-item-updates"
-						<?php
-						if ($bShowInPopup)
-						{
-							?>onclick="ShowPopupTask(<?php echo $task["ID"]?>, event);"<?php
-						}
-						?>
 						title="<?php
 							echo str_replace(
 								"#NUM#",
@@ -113,12 +101,6 @@ if ($arResult['IFRAME'] === 'Y')
 						{
 							?><a href="<?php echo $viewUrl?>#comments"
 								class="task-title-comments"
-								<?php
-								if ($bShowInPopup)
-								{
-									?>onclick="ShowPopupTask(<?php echo $task["ID"]?>, event);"<?php
-								}
-								?>
 								title="<?php
 									echo str_replace(
 										"#NUM#",
@@ -365,7 +347,7 @@ if ($arResult['IFRAME'] === 'Y')
 		}
 		?></td>
 </tr>
-<script type="text/javascript"<?php echo $defer ? "  defer=\"defer\"" : ""?>>
+<script<?php echo $defer ? "  defer=\"defer\"" : ""?>>
 	tasksMenuPopup[<?php echo $task["ID"]?>] = [<?php tasksGetItemMenu($task, $arPaths, $site_id)?>];
 	quickInfoData[<?php echo $task["ID"]?>] = <?php tasksRenderJSON($task, $childrenCount, $arPaths, false, false, false, $nameFormat)?>;
 	<?php if($taskAdded):?>

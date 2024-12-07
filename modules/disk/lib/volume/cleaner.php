@@ -754,7 +754,7 @@ class Cleaner implements IErrorable, Volume\IVolumeTimeLimit
 		$task = $this->instanceTask();
 
 		$filter = [
-			'!DELETED_TYPE' => Disk\Internals\ObjectTable::DELETED_TYPE_NONE
+			'!=DELETED_TYPE' => Disk\Internals\ObjectTable::DELETED_TYPE_NONE
 		];
 		if ($task->getLastFileId() > 0)
 		{
@@ -815,7 +815,7 @@ class Cleaner implements IErrorable, Volume\IVolumeTimeLimit
 
 		$indicator->setLimit(self::MAX_FOLDER_PER_INTERACTION);
 
-		$folderList = $indicator->getCorrespondingFolderList(['!DELETED_TYPE' => Disk\Internals\ObjectTable::DELETED_TYPE_NONE]);
+		$folderList = $indicator->getCorrespondingFolderList(['!=DELETED_TYPE' => Disk\Internals\ObjectTable::DELETED_TYPE_NONE]);
 
 		foreach ($folderList as $row)
 		{

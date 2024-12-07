@@ -4,9 +4,11 @@ namespace Bitrix\Crm\Service;
 
 use Bitrix\Crm\Controller\ErrorCode;
 use Bitrix\Crm\Field;
+use Bitrix\Main\Application;
 use Bitrix\Main\Error;
 use Bitrix\Main\Result;
 use Bitrix\Main\UI\FileInputUtility;
+use Bitrix\Main\UserField\File\ManualUploadRegistry;
 
 class FileUploader
 {
@@ -140,10 +142,33 @@ class FileUploader
 	 */
 	public function registerFileId(Field $field, int $fileId): void
 	{
-		$controlId = $this->fileInputUtility->getUserFieldCid($field->getUserField());
+		if (!$field->isUserField())
+		{
+			return;
+		}
 
-		$this->fileInputUtility->registerControl($controlId, $controlId);
-		$this->fileInputUtility->registerFile($controlId, $fileId);
+		if ($this->isFileInputUtilityAccessible())
+		{
+			$controlId = $this->fileInputUtility->getUserFieldCid($field->getUserField());
+
+			$this->fileInputUtility->registerControl($controlId, $controlId);
+			$this->fileInputUtility->registerFile($controlId, $fileId);
+		}
+
+		if (class_exists('\Bitrix\Main\UserField\File\ManualUploadRegistry'))
+		{
+			ManualUploadRegistry::getInstance()->registerFile($field->getUserField(), $fileId);
+		}
+	}
+
+	private function isFileInputUtilityAccessible(): bool
+	{
+		if (method_exists($this->fileInputUtility, 'isAccessible'))
+		{
+			return $this->fileInputUtility->isAccessible();
+		}
+
+		return Application::getInstance()->getSession()->isAccessible();
 	}
 
 	/**

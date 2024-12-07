@@ -33,6 +33,7 @@ foreach ($items as $item)
 		'ID' => $item->getId(),
 		'URL' => 'javascript:void(0);',
 		'ON_CLICK' => "BX.Crm.Timeline.MenuBar.getById('" . $toolbarId . "').onMenuItemClick('" . \CUtil::JSEscape($item->getId()) . "')",
+		'IS_NEW' => $item->isNew(),
 	];
 
 	if ($item->hasTariffRestrictions())
@@ -44,7 +45,7 @@ foreach ($items as $item)
 
 	$item->loadAssets();
 }
-$editMode = ($arParams['ALLOW_MOVE_ITEMS'] ?? false)  ? 'common' : false;
+
 $menuId = $arParams['MENU_ID'] ?? 'timeline_toolbar-menu';
 ?>
 <div class="crm-entity-stream-section-menu"><?php
@@ -54,7 +55,7 @@ $menuId = $arParams['MENU_ID'] ?? 'timeline_toolbar-menu';
 		[
 			'ID' => $menuId,
 			'ITEMS' => $menuItems,
-			'EDIT_MODE' => $editMode,
+			'EDIT_MODE' => $arResult['editMode'] ?? false,
 			'THEME' => 'compact',
 		]
 	);
@@ -66,6 +67,7 @@ $jsParams = [
 	'entityId' => $arResult['entityId'],
 	'entityCategoryId' => $arResult['entityCategoryId'],
 	'isReadonly' => $arResult['isReadonly'],
+	'extras' => $arResult['extras'] ?? [],
 	'containerId' => $editorsContainerId,
 	'menuId' => $menuId,
 	'items' => [],
@@ -84,7 +86,7 @@ foreach ($items as $item)
 ?>
 <div id="<?=$editorsContainerId?>"></div>
 
-<script type="text/javascript">
+<script>
 	BX.ready(() => {
 		BX.Crm.Timeline.MenuBar.setDefault(BX.Crm.Timeline.MenuBar.create('<?=$toolbarId?>', <?=\Bitrix\Main\Web\Json::encode($jsParams)?>));
 	});

@@ -1,13 +1,20 @@
-<?
-if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+<?php
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
+/** @var bool $is_module_installed */
+/** @var array $arCurrentValues */
+/** @var array arSites */
+/** @var array arSiteGroups */
 ?>
-<?if($is_module_installed):?>
+<?php if ($is_module_installed):?>
 <tr id="tr_all" valign="top">
-	<td align="right" width="40%"><?echo GetMessage("BPCRIA_SITES_FILTER_TYPE") ?>:</td>
+	<td align="right" width="40%"><?php echo GetMessage('BPCRIA_SITES_FILTER_TYPE') ?>:</td>
 	<td width="60%">
-		<label><input onclick="ChangeFilterType(this.id)" type="radio" name="sites_filter_type" id="sites_filter_type_all" value="all" <?if($arCurrentValues["sites_filter_type"]!="groups" && $arCurrentValues["sites_filter_type"]!="sites") echo "checked"?>>&nbsp;<?echo GetMessage("BPCRIA_SITES_FILTER_ALL")?></label><br>
-		<label><input onclick="ChangeFilterType(this.id)" type="radio" name="sites_filter_type" id="sites_filter_type_groups" value="groups" <?if($arCurrentValues["sites_filter_type"]=="groups") echo "checked"?>>&nbsp;<?echo GetMessage("BPCRIA_SITES_FILTER_GROUPS")?></label><br>
-		<label><input onclick="ChangeFilterType(this.id)" type="radio" name="sites_filter_type" id="sites_filter_type_sites" value="sites" <?if($arCurrentValues["sites_filter_type"]=="sites") echo "checked"?>>&nbsp;<?echo GetMessage("BPCRIA_SITES_FILTER_SITES")?></label><br>
+		<label><input onclick="ChangeFilterType(this.id)" type="radio" name="sites_filter_type" id="sites_filter_type_all" value="all" <?php echo ($arCurrentValues['sites_filter_type'] != 'groups' && $arCurrentValues['sites_filter_type'] != 'sites') ? 'checked' : ''?>>&nbsp;<?php echo GetMessage('BPCRIA_SITES_FILTER_ALL')?></label><br>
+		<label><input onclick="ChangeFilterType(this.id)" type="radio" name="sites_filter_type" id="sites_filter_type_groups" value="groups" <?php echo ($arCurrentValues['sites_filter_type'] == 'groups') ? 'checked' : ''?>>&nbsp;<?php echo GetMessage('BPCRIA_SITES_FILTER_GROUPS')?></label><br>
+		<label><input onclick="ChangeFilterType(this.id)" type="radio" name="sites_filter_type" id="sites_filter_type_sites" value="sites" <?php echo ($arCurrentValues['sites_filter_type'] == 'sites') ? 'checked' : ''?>>&nbsp;<?php echo GetMessage('BPCRIA_SITES_FILTER_SITES')?></label><br>
 		<script>
 		function ChangeFilterType(to)
 		{
@@ -20,55 +27,55 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 		}
 		function ChangeSitesGroup(sel)
 		{
-			<?foreach($arSites as $group_id => $arGroupSites):?>
-				document.getElementById('sites_filter_sites_<?echo $group_id?>').style.display='none';
-			<?endforeach;?>
+			<?php foreach ($arSites as $group_id => $arGroupSites):?>
+				document.getElementById('sites_filter_sites_<?php echo $group_id?>').style.display='none';
+			<?php endforeach;?>
 			document.getElementById('sites_filter_sites_' + sel.value).style.display='inline';
 		}
 		</script>
 	</td>
 </tr>
-<tr id="tr_groups" valign="top" <?if($arCurrentValues["sites_filter_type"]!="groups") echo 'style="display:none"'?>>
-	<td align="right" width="40%"><?echo GetMessage("BPCRIA_SITES_GROUPS")?>:</td>
+<tr id="tr_groups" valign="top" <?php echo ($arCurrentValues['sites_filter_type'] != 'groups') ? 'style="display:none"' : ''?>>
+	<td align="right" width="40%"><?php echo GetMessage('BPCRIA_SITES_GROUPS')?>:</td>
 	<td width="60%">
 		<select multiple name="sites_filter_groups[]" size="5">
-		<?foreach($arSiteGroups as $key => $value):?>
-			<option value="<?echo $key?>" <?if(in_array($key, $arCurrentValues["sites_filter_groups"])) echo "selected"?>><?echo $value?></option>
-		<?endforeach;?>
+		<?php foreach ($arSiteGroups as $key => $value):?>
+			<option value="<?php echo $key?>" <?php echo (in_array($key, $arCurrentValues['sites_filter_groups'])) ? 'selected' : ''?>><?php echo $value?></option>
+		<?php endforeach;?>
 		</select>
 	</td>
 </tr>
-<tr id="tr_sites" <?if($arCurrentValues["sites_filter_type"]!="sites") echo 'style="display:none"'?>>
-	<?if(!array_key_exists($arCurrentValues["sites_filter_sites_group"], $arSites))
+<tr id="tr_sites" <?php echo ($arCurrentValues['sites_filter_type'] != 'sites') ? 'style="display:none"' : ''?>>
+	<?php if (!array_key_exists($arCurrentValues['sites_filter_sites_group'], $arSites))
 	{
-		$arCurrentValues["sites_filter_sites_group"] = key($arSites);
+		$arCurrentValues['sites_filter_sites_group'] = key($arSites);
 	}
 	?>
-	<td align="right" width="40%"><?echo GetMessage("BPCRIA_SITES_SITES")?>:</td>
+	<td align="right" width="40%"><?php echo GetMessage('BPCRIA_SITES_SITES')?>:</td>
 	<td width="60%" valign="top">
 		<select name="sites_filter_sites_group" size="1" OnChange="ChangeSitesGroup(this)" id="sites_filter_sites_group">
-		<?foreach($arSites as $group_id => $arGroupSites):?>
-			<option value="<?echo $group_id?>" <?if($group_id == $arCurrentValues["sites_filter_sites_group"]) echo "selected"?>><?echo $arSiteGroups[$group_id]?></option>
-		<?endforeach;?>
+		<?php foreach ($arSites as $group_id => $arGroupSites):?>
+			<option value="<?php echo $group_id?>" <?php echo ($group_id == $arCurrentValues['sites_filter_sites_group']) ? 'selected' : ''?>><?php echo $arSiteGroups[$group_id]?></option>
+		<?php endforeach;?>
 		</select><br>
-		<?foreach($arSites as $group_id => $arGroupSites):?>
-			<select multiple name="sites_filter_sites[]" size="5" id="sites_filter_sites_<?echo $group_id?>"  <?if($group_id != $arCurrentValues["sites_filter_sites_group"]) echo 'style="display:none"'?>>
-				<?foreach($arGroupSites as $site_id => $site_name):?>
-					<option value="<?echo $site_id?>" <?if(in_array($site_id, $arCurrentValues["sites_filter_sites"])) echo "selected"?>><?echo $site_name?></option>
-				<?endforeach;?>
+		<?php foreach ($arSites as $group_id => $arGroupSites):?>
+			<select multiple name="sites_filter_sites[]" size="5" id="sites_filter_sites_<?php echo $group_id?>"  <?php echo ($group_id != $arCurrentValues['sites_filter_sites_group']) ? 'style="display:none"' : ''?>>
+				<?php foreach ($arGroupSites as $site_id => $site_name):?>
+					<option value="<?php echo $site_id?>" <?php echo (in_array($site_id, $arCurrentValues['sites_filter_sites'])) ? 'selected' : ''?>><?php echo $site_name?></option>
+				<?php endforeach;?>
 			</select>
-		<?endforeach;?>
+		<?php endforeach;?>
 	</td>
 </tr>
 <tr id="tr_sync" valign="top">
-	<td align="right" width="40%"><?echo GetMessage("BPCRIA_SYNC_TIME")?>:</td>
+	<td align="right" width="40%"><?php echo GetMessage('BPCRIA_SYNC_TIME')?>:</td>
 	<td width="60%">
-		<label><input type="radio" name="sync_time" value="immediate" <?if($arCurrentValues["sync_time"]!="task") echo "checked"?>>&nbsp;<?echo GetMessage("BPCRIA_SYNC_IMMEDIATE")?></label><br>
-		<label><input type="radio" name="sync_time" value="task" <?if($arCurrentValues["sync_time"]=="task") echo "checked"?>>&nbsp;<?echo GetMessage("BPCRIA_SYNC_TASKS")?></label><br>
+		<label><input type="radio" name="sync_time" value="immediate" <?php echo ($arCurrentValues['sync_time'] != 'task') ? 'checked' : ''?>>&nbsp;<?php echo GetMessage('BPCRIA_SYNC_IMMEDIATE')?></label><br>
+		<label><input type="radio" name="sync_time" value="task" <?php echo ($arCurrentValues['sync_time'] == 'task') ? 'checked' : ''?>>&nbsp;<?php echo GetMessage('BPCRIA_SYNC_TASKS')?></label><br>
 	</td>
 </tr>
-<?else:?>
+<?php else:?>
 <tr valign="top">
-	<td align="center" colspan="2"><span style="color:#FF0000;"><?echo GetMessage("BPCRIA_NO_MODULE")?></span></td>
+	<td align="center" colspan="2"><span style="color:#FF0000;"><?php echo GetMessage('BPCRIA_NO_MODULE')?></span></td>
 </tr>
-<?endif;?>
+<?php endif;

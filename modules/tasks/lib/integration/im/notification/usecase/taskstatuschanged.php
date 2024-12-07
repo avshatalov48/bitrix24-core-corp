@@ -64,6 +64,6 @@ class TaskStatusChanged
 			$messageKey = 'TASKS_TASK_STATUS_MESSAGE_1';
 		}
 
-		return $messageKey;
+		return (new Notification\MessageKey($messageKey))->getWithVersion();
 	}
 }

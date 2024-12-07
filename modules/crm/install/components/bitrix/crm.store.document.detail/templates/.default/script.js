@@ -2,7 +2,7 @@
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
 this.BX.Crm.Store = this.BX.Crm.Store || {};
-(function (exports,ui_designTokens,catalog_entityCard,main_popup,ui_buttons,main_core,main_core_events) {
+(function (exports,ui_designTokens,catalog_entityCard,main_popup,ui_buttons,main_core,main_core_events,spotlight,catalog_storeEnableWizard,catalog_toolAvailabilityManager) {
 	'use strict';
 
 	function _createForOfIteratorHelper(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
@@ -164,6 +164,7 @@ this.BX.Crm.Store = this.BX.Crm.Store || {};
 	    _this.isInventoryManagementDisabled = settings.isInventoryManagementDisabled;
 	    _this.inventoryManagementFeatureCode = settings.inventoryManagementFeatureCode;
 	    _this.lockedCancellation = settings.isProductBatchMethodSelected;
+	    _this.isOnecMode = settings.isOnecMode;
 	    _this.addCopyLinkPopup();
 	    main_core_events.EventEmitter.subscribe('BX.Crm.EntityEditor:onFailedValidation', function (event) {
 	      main_core_events.EventEmitter.emit('BX.Catalog.EntityCard.TabManager:onOpenTab', {
@@ -252,8 +253,10 @@ this.BX.Crm.Store = this.BX.Crm.Store || {};
 	    key: "openMasterSlider",
 	    value: function openMasterSlider() {
 	      var card = this;
-	      BX.SidePanel.Instance.open(this.masterSliderUrl, {
-	        cacheable: false,
+	      new catalog_storeEnableWizard.EnableWizardOpener().open(this.masterSliderUrl, {
+	        urlParams: {
+	          analyticsContextSection: catalog_storeEnableWizard.AnalyticsContextList.DOCUMENT_CARD
+	        },
 	        data: {
 	          openGridOnDone: false
 	        },
@@ -265,8 +268,7 @@ this.BX.Crm.Store = this.BX.Crm.Store || {};
 	            }
 	            if (slider.getData().get('isInventoryManagementEnabled')) {
 	              card.isDeductLocked = false;
-	              var sliders = BX.SidePanel.Instance.getOpenSliders();
-	              sliders.forEach(function (slider) {
+	              BX.SidePanel.Instance.getOpenSliders().forEach(function (slider) {
 	                var _slider$getWindow, _slider$getWindow$BX$;
 	                if ((_slider$getWindow = slider.getWindow()) !== null && _slider$getWindow !== void 0 && (_slider$getWindow$BX$ = _slider$getWindow.BX.Catalog) !== null && _slider$getWindow$BX$ !== void 0 && _slider$getWindow$BX$.DocumentGridManager) {
 	                  slider.allowChangeHistory = false;
@@ -295,8 +297,8 @@ this.BX.Crm.Store = this.BX.Crm.Store || {};
 	      this.defaultSaveActionName = editor._ajaxForm._config.data.ACTION;
 	      this.defaultOnSuccessCallback = editor._ajaxForm._config.onsuccess;
 	      saveButton.onclick = function (event) {
-	        if (_this2.isInventoryManagementDisabled && _this2.inventoryManagementFeatureCode) {
-	          top.BX.UI.InfoHelper.show(_this2.inventoryManagementFeatureCode);
+	        if (_this2.isInventoryManagementDisabled) {
+	          _this2.showPlanRestrictedSlider();
 	          return;
 	        }
 	        _this2.showNotificationOnClose = false;
@@ -307,8 +309,8 @@ this.BX.Crm.Store = this.BX.Crm.Store || {};
 	      if (this.permissions.conduct && !this.isDocumentDeducted) {
 	        var deductAndSaveButton = main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["<button class=\"ui-btn ui-btn-light-border\">", "</button>"])), main_core.Loc.getMessage('CRM_STORE_DOCUMENT_DETAIL_SAVE_AND_DEDUCT_BUTTON'));
 	        deductAndSaveButton.onclick = function (event) {
-	          if (_this2.isInventoryManagementDisabled && _this2.inventoryManagementFeatureCode) {
-	            top.BX.UI.InfoHelper.show(_this2.inventoryManagementFeatureCode);
+	          if (_this2.isInventoryManagementDisabled) {
+	            _this2.showPlanRestrictedSlider();
 	            return;
 	          }
 	          if (_this2.isDeductLocked) {
@@ -335,8 +337,8 @@ this.BX.Crm.Store = this.BX.Crm.Store || {};
 	            if (savePanel.isLocked()) {
 	              return;
 	            }
-	            if (_this2.isInventoryManagementDisabled && _this2.inventoryManagementFeatureCode) {
-	              top.BX.UI.InfoHelper.show(_this2.inventoryManagementFeatureCode);
+	            if (_this2.isInventoryManagementDisabled) {
+	              _this2.showPlanRestrictedSlider();
 	              return;
 	            }
 	            if (_this2.isDeductLocked) {
@@ -390,7 +392,7 @@ this.BX.Crm.Store = this.BX.Crm.Store || {};
 	        }).render();
 	        saveButton.after(deductButton);
 	        this.deductButton = deductButton;
-	      } else if (this.permissions.cancel) {
+	      } else if (this.permissions.cancel && !this.isDisabledCancellation()) {
 	        var _deductButton = new ui_buttons.Button({
 	          text: main_core.Loc.getMessage('CRM_STORE_DOCUMENT_DETAIL_CANCEL_DEDUCT_BUTTON'),
 	          color: ui_buttons.ButtonColor.LIGHT_BORDER,
@@ -398,8 +400,8 @@ this.BX.Crm.Store = this.BX.Crm.Store || {};
 	            if (savePanel.isLocked()) {
 	              return;
 	            }
-	            if (_this2.isInventoryManagementDisabled && _this2.inventoryManagementFeatureCode) {
-	              top.BX.UI.InfoHelper.show(_this2.inventoryManagementFeatureCode);
+	            if (_this2.isInventoryManagementDisabled) {
+	              _this2.showPlanRestrictedSlider();
 	              return;
 	            }
 	            if (_this2.isDeductLocked) {
@@ -512,9 +514,23 @@ this.BX.Crm.Store = this.BX.Crm.Store || {};
 	      }
 	    }
 	  }, {
+	    key: "showPlanRestrictedSlider",
+	    value: function showPlanRestrictedSlider() {
+	      if (this.isOnecMode) {
+	        catalog_toolAvailabilityManager.OneCPlanRestrictionSlider.show();
+	      } else if (this.inventoryManagementFeatureCode) {
+	        top.BX.UI.InfoHelper.show(this.inventoryManagementFeatureCode);
+	      }
+	    }
+	  }, {
 	    key: "isLockedCancellation",
 	    value: function isLockedCancellation() {
 	      return this.lockedCancellation;
+	    }
+	  }, {
+	    key: "isDisabledCancellation",
+	    value: function isDisabledCancellation() {
+	      return this.isOnecMode;
 	    }
 	  }, {
 	    key: "showCancellationInfo",
@@ -710,5 +726,5 @@ this.BX.Crm.Store = this.BX.Crm.Store || {};
 
 	exports.Document = Document;
 
-}((this.BX.Crm.Store.DocumentCard = this.BX.Crm.Store.DocumentCard || {}),BX,BX.Catalog.EntityCard,BX.Main,BX.UI,BX,BX.Event));
+}((this.BX.Crm.Store.DocumentCard = this.BX.Crm.Store.DocumentCard || {}),BX,BX.Catalog.EntityCard,BX.Main,BX.UI,BX,BX.Event,BX,BX.Catalog.Store,BX.Catalog));
 //# sourceMappingURL=script.js.map

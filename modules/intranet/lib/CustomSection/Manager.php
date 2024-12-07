@@ -24,12 +24,12 @@ class Manager
 	public const ERROR_CODE_SECTION_NOT_AVAILABLE = 'CUSTOM_SECTION_MANAGER_SECTION_NOT_AVAILABLE';
 	public const ERROR_CODE_COMPONENT_NOT_FOUND = 'CUSTOM_SECTION_MANAGER_COMPONENT_NOT_FOUND';
 
-	public const VALID_CODE_REGEX = '|^[a-z0-9_.-]+$|' . BX_UTF_PCRE_MODIFIER;
+	public const VALID_CODE_REGEX = '|^[a-z0-9_.-]+$|u';
 
 	public const COUNTER_INFIX = '_custom_section_';
 
 	protected const SECTION_ROOT_URL_TEMPLATE = '/page/#customSectionCode#/';
-	protected const PAGE_URL_REGEX = "|^/page/(?'customSectionCode'[\\w]+)/(?'pageCode'[\\w]+)/?|" . BX_UTF_PCRE_MODIFIER;
+	protected const PAGE_URL_REGEX = "|^/page/(?'customSectionCode'[\\w]+)/(?'pageCode'[\\w]+)/?|u";
 	protected const PAGE_URL_TEMPLATE = self::SECTION_ROOT_URL_TEMPLATE . '#pageCode#/';
 
 	protected const MODULE_ID = 'intranet';
@@ -144,7 +144,11 @@ class Manager
 		{
 			if ($this->isCustomSectionAvailable($customSection))
 			{
-				$superLeftMenuSections[] = $this->compileLeftMenuSectionDescription($customSection);
+				$customSectionDescription = $this->compileLeftMenuSectionDescription($customSection);
+				$customSectionPages = $this->compileLeftMenuSectionPages($customSection);
+
+				$superLeftMenuSections[] = $customSectionDescription;
+				array_push($superLeftMenuSections, ...$customSectionPages);
 			}
 		}
 	}
@@ -243,6 +247,22 @@ class Manager
 		return $availablePages;
 	}
 
+	/**
+	 * @param CustomSection $customSection
+	 * @return CustomSectionPage[]
+	 */
+	protected function getAvailableNotSystemPages(CustomSection $customSection): array
+	{
+		$pages = $this->getAvailablePages($customSection);
+		$systemPageCodes = $this->getSystemPagesCodes($customSection->getCode());
+
+		return array_filter($pages, static fn($page) => !in_array(
+			$page->getCode(),
+			$systemPageCodes,
+			true,
+		));
+	}
+
 	protected function isPageAvailable(CustomSectionPage $page): bool
 	{
 		$provider = $this->getProvider($page->getModuleId());
@@ -308,31 +328,56 @@ class Manager
 
 	protected function compileLeftMenuSectionDescription(CustomSection $customSection): array
 	{
-		$availablePages = $this->getAvailablePages($customSection);
+		$availablePages = $this->getAvailableNotSystemPages($customSection);
 
-		$page = $this->getUserSelectedFirstPage($customSection->getCode(), $availablePages);
-		if (is_null($page))
-		{
-			$page = $this->getLastOpenedPage($customSection->getCode(), $availablePages);
-		}
-		if (is_null($page))
-		{
-			$page = $this->getPageWithMinSort($availablePages);
-		}
+		$page =
+			$this->getUserSelectedFirstPage($customSection->getCode(), $availablePages)
+			?? $this->getLastOpenedPage($customSection->getCode(), $availablePages)
+			?? $this->getPageWithMinSort($availablePages)
+		;
 
 		return [
 			htmlspecialcharsbx($customSection->getTitle()),
 			$this->getUrlForPage($customSection->getCode(), $page->getCode()),
-			[
-				$this->getSectionRootUrl($customSection),
-			],
+			[ $this->getSectionRootUrl($customSection) ],
 			[
 				'menu_item_id' => $this->getCustomSectionMenuId($customSection->getCode()),
 				'is_custom_section' => true,
-				'counter_id' => self::buildCustomSectionCounterId($customSection->getModuleId(), $customSection->getId())
+				'counter_id' => self::buildCustomSectionCounterId(
+					$customSection->getModuleId(),
+					$customSection->getId(),
+				),
+				'FROM_IBLOCK' => true,
+				'IS_PARENT' => true,
+				'DEPTH_LEVEL' => 1,
 			],
-			''
+			'',
 		];
+	}
+
+	protected function compileLeftMenuSectionPages(CustomSection $customSection): array
+	{
+		$compiledLeftMenuPages = [];
+
+		$params = [
+			'FROM_IBLOCK' => true,
+			'DEPTH_LEVEL' => 2,
+			'IS_PARENT' => false,
+		];
+
+		foreach ($this->getAvailableNotSystemPages($customSection) as $page)
+		{
+			$pageUrl = $this->getUrlForPage($customSection->getCode(), $page->getCode());
+			$compiledLeftMenuPages[] = [
+				htmlspecialcharsbx($page->getTitle()),
+				$pageUrl,
+				[],
+				$params,
+				'',
+			];
+		}
+
+		return $compiledLeftMenuPages;
 	}
 
 	/**

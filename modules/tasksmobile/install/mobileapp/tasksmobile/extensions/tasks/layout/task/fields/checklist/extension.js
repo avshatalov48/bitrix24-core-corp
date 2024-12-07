@@ -2,19 +2,14 @@
  * @module tasks/layout/task/fields/checklist
  */
 jn.define('tasks/layout/task/fields/checklist', (require, exports, module) => {
-	const { ChecklistPreview, ChecklistLegacy } = require('tasks/layout/checklist');
+	const { ChecklistLegacy } = require('tasks/layout/checklist');
 
 	/**
 	 * @class FieldChecklist
 	 */
 	class FieldChecklist extends LayoutComponent
 	{
-		isNewChecklist()
-		{
-			return Boolean(jnExtensionData.get('tasks:layout/task/fields/checklist')?.taskNewChecklistActive);
-		}
-
-		renderLegacyChecklist()
+		render()
 		{
 			return View(
 				{
@@ -33,24 +28,6 @@ jn.define('tasks/layout/task/fields/checklist', (require, exports, module) => {
 					onChange: () => (this.props.onChange && this.props.onChange()),
 				}),
 			);
-		}
-
-		render()
-		{
-			const { style, ...restProps } = this.props;
-
-			if (this.isNewChecklist())
-			{
-				return View(
-					{
-						testId: 'checklists',
-						style,
-					},
-					new ChecklistPreview(restProps),
-				);
-			}
-
-			return this.renderLegacyChecklist();
 		}
 	}
 

@@ -9,7 +9,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 $frame = $this->createFrame()->begin('');
 
 if ($arResult['SETTED_UP'] !== false): ?>
-	<script type="text/javascript">
+	<script>
 
 		var ExternalMail = {
 			interval: <?= intval($arResult['CHECK_INTERVAL']) ?>

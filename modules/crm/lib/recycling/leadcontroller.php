@@ -285,45 +285,29 @@ class LeadController extends BaseController
 		//endregion
 	}
 
-	/**
-	 * Recover entity from Recycle Bin.
-	 * @param int $entityID Entity ID.
-	 * @param array $params Additional operation parameters.
-	 * @return bool
-	 * @throws Crm\Synchronization\UserFieldSynchronizationException
-	 * @throws Main\AccessDeniedException
-	 * @throws Main\ArgumentException
-	 * @throws Main\ArgumentOutOfRangeException
-	 * @throws Main\Db\SqlQueryException
-	 * @throws Main\InvalidOperationException
-	 * @throws Main\LoaderException
-	 * @throws Main\ObjectException
-	 * @throws Main\ObjectNotFoundException
-	 * @throws Main\SystemException
-	 */
-	public function recover($entityID, array $params = array())
+	public function recover(int $entityID, array $params = array()): ?int
 	{
 		if($entityID <= 0)
 		{
-			return false;
+			return null;
 		}
 
 		$recyclingEntityID = isset($params['ID']) ? (int)$params['ID'] : 0;
 		if($recyclingEntityID <= 0)
 		{
-			return false;
+			return null;
 		}
 
 		$slots = isset($params['SLOTS']) ? $params['SLOTS'] : null;
 		if(!is_array($slots))
 		{
-			return false;
+			return null;
 		}
 
 		$fields = isset($slots['FIELDS']) ? $slots['FIELDS'] : null;
 		if(!(is_array($fields) && !empty($fields)))
 		{
-			return false;
+			return null;
 		}
 
 		unset($fields['ID'], $fields['COMPANY_ID'], $fields['CONTACT_ID'], $fields['CONTACT_IDS']);
@@ -362,7 +346,7 @@ class LeadController extends BaseController
 		);
 		if($newEntityID <= 0)
 		{
-			return false;
+			return null;
 		}
 
 		//region Relation
@@ -402,7 +386,7 @@ class LeadController extends BaseController
 		$this->startRecoveryWorkflows($newEntityID);
 		//TODO: start automation???
 
-		return true;
+		return $newEntityID;
 	}
 
 	/**

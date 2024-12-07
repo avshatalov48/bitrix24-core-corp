@@ -9,10 +9,9 @@ $MESS['M_CRM_TL_PAYMENT_LIST_DELETE_ERROR'] = 'При попытке удале�
 
 $MESS['M_CRM_TL_PAYMENT_LIST_NEW_PAYMENT'] = 'Новая оплата';
 
-$MESS['M_CRM_TL_PAYMENT_LIST_EMPTY_SCREEN_TITLE'] = 'Здесь будут ваши оплаты через Битрикс24.Терминал';
-$MESS['M_CRM_TL_PAYMENT_LIST_EMPTY_SCREEN_DESCRIPTION'] = 'Используйте мобильное приложение вместо банковского терминала';
+$MESS['M_CRM_TL_PAYMENT_LIST_EMPTY_SCREEN_DESCRIPTION_MSGVER_1'] = 'Используйте мобильное приложение вместо банковского терминала';
 
-$MESS['M_CRM_TL_PAYMENT_LIST_EMPTY_SCREEN_TITLE_V2'] = 'Битрикс24.Терминал';
+$MESS['M_CRM_TL_PAYMENT_LIST_EMPTY_SCREEN_TITLE_V2_MSGVER_1'] = 'Битрикс24.Терминал';
 $MESS['M_CRM_TL_PAYMENT_LIST_EMPTY_SCREEN_SEARCH_TITLE'] = 'Такой оплаты нет';
 $MESS['M_CRM_TL_PAYMENT_LIST_EMPTY_SCREEN_SEARCH_DESCRIPTION'] = 'Попробуйте выбрать другой фильтр';
 

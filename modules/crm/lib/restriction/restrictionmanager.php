@@ -88,7 +88,11 @@ class RestrictionManager
 	/** @var Bitrix24AccessRestriction|null  */
 	private static $inventoryControlIntegrationRestriction;
 	/** @var Bitrix24AccessRestriction|null  */
+	private static $inventoryControl1cRestriction;
+	/** @var Bitrix24AccessRestriction|null  */
 	private static $calendarSharingRestriction;
+	/** @var Bitrix24AccessRestriction */
+	private static $taskRestriction;
 
 	/**
 	 * @return SqlRestriction
@@ -736,7 +740,9 @@ class RestrictionManager
 					$permitted = $quota->checkDiskQuota(['size' => 0]);
 					if (!$permitted)
 					{
+						//@codingStandardsIgnoreStart
 						self::$diskQuotaRestriction->setErrorMessage((string)$quota->LAST_ERROR);
+						//@codingStandardsIgnoreEnd
 					}
 				}
 				self::$diskQuotaRestriction->permit($permitted);
@@ -745,20 +751,23 @@ class RestrictionManager
 		}
 	}
 
-	public static function onMigrateToBox()
-	{
-		Main\Config\Option::delete('crm', array('name' => 'crm_enable_permission_control'));
-		Main\Config\Option::delete('crm', array('name' => 'recurring_deal_enabled'));
-	}
-
 	public static function getDynamicTypesLimitRestriction(): DynamicTypesLimit
 	{
 		if (!static::$dynamicTypesLimit)
 		{
-			static::$dynamicTypesLimit = new DynamicTypesLimit();
+			static::$dynamicTypesLimit = new DynamicTypesLimit(
+				new DynamicTypesQuantityRestriction(),
+			);
 		}
 
 		return static::$dynamicTypesLimit;
+	}
+
+	final public static function getAutomatedSolutionLimitRestriction(): AutomatedSolutionLimit
+	{
+		static $restriction = new AutomatedSolutionLimit();
+
+		return $restriction;
 	}
 
 	public static function getLeadsRestriction(): Bitrix24AccessRestriction
@@ -836,7 +845,28 @@ class RestrictionManager
 		}
 
 		return self::$inventoryControlIntegrationRestriction;
+	}
 
+	public static function getInventoryControl1cRestriction(): Bitrix24AccessRestriction
+	{
+		if (self::$inventoryControl1cRestriction === null)
+		{
+			self::$inventoryControl1cRestriction = new Bitrix24AccessRestriction(
+				'catalog_inventory_management_1c',
+				false,
+				null,
+				['ID' => 'limit_crm_1c_inventory_control']
+			);
+
+			if(!self::$inventoryControl1cRestriction->load())
+			{
+				self::$inventoryControl1cRestriction->permit(
+					Bitrix24Manager::isFeatureEnabled('catalog_inventory_management_1c')
+				);
+			}
+		}
+
+		return self::$inventoryControl1cRestriction;
 	}
 
 	public static function getDealClientFieldsRestriction(): ClientFieldsRestriction
@@ -1335,5 +1365,29 @@ class RestrictionManager
 		}
 
 		return new Bitrix24AccessRestriction('', true);
+	}
+
+	public static function getTaskRestriction(): Bitrix24AccessRestriction
+	{
+		if (is_null(static::$taskRestriction))
+		{
+			static::$taskRestriction = new Bitrix24AccessRestriction(
+				'tasks_crm_integration',
+				false,
+				null,
+				[
+					'ID' => 'limit_tasks_crm_integration',
+				],
+			);
+
+			if (!static::$taskRestriction->load())
+			{
+				static::$taskRestriction->permit(
+					Bitrix24Manager::isFeatureEnabled('tasks_crm_integration')
+				);
+			}
+		}
+
+		return static::$taskRestriction;
 	}
 }

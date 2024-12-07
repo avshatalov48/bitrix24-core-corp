@@ -16,6 +16,7 @@ type Params = {
 	views: Views,
 	taskLimitExceeded: 'Y' | 'N',
 	canUseAutomation: 'Y' | 'N',
+	isAutomationEnabled: 'Y' | 'N',
 	canCompleteSprint: 'Y' | 'N'
 }
 
@@ -66,7 +67,8 @@ export class ActiveSprint extends View
 				sidePanel: this.sidePanel,
 				groupId: this.getCurrentGroupId(),
 				isTaskLimitsExceeded: this.isTaskLimitsExceeded(),
-				canUseAutomation: this.isCanUseAutomation()
+				canUseAutomation: this.isCanUseAutomation(),
+				isAutomationEnabled: this.checkIsAutomationEnabled(),
 			});
 
 			Dom.append(robotButton.render(), container);
@@ -88,6 +90,7 @@ export class ActiveSprint extends View
 
 		this.setTaskLimitsExceeded(params.taskLimitExceeded);
 		this.setCanUseAutomation(params.canUseAutomation);
+		this.setIsAutomationEnabled(params.isAutomationEnabled);
 
 		this.views = params.views;
 
@@ -112,6 +115,16 @@ export class ActiveSprint extends View
 	isCanUseAutomation(): boolean
 	{
 		return this.canUseAutomation;
+	}
+
+	setIsAutomationEnabled(isAutomationEnabled: string)
+	{
+		this.isAutomationEnabled = (isAutomationEnabled === 'Y');
+	}
+
+	checkIsAutomationEnabled(): boolean
+	{
+		return this.isAutomationEnabled;
 	}
 
 	existActiveSprint(): boolean

@@ -2,11 +2,13 @@
 
 namespace Bitrix\Crm\Rest\TypeCast;
 
+use Bitrix\Crm\Dto\Caster;
 use Bitrix\Crm\Dto\Caster\BoolCaster;
 use Bitrix\Crm\Traits\Singleton;
 use Bitrix\Main\ORM\Data\DataManager;
 use Bitrix\Main\ORM\Fields;
 use InvalidArgumentException;
+use Bitrix\Main\ORM\Entity;
 
 /**
  * It provides methods to cast records and fields to their appropriate types based on the type map of the data manager.
@@ -22,6 +24,8 @@ class OrmTypeCast
 
 	/** @var array<string, array> */
 	private array $typeMapCache = [];
+
+	private ?Caster $boolCaster = null;
 
 	/**
 	 * @param class-string<DataManager> $dataManager
@@ -54,14 +58,15 @@ class OrmTypeCast
 			return $value;
 		}
 
+		$boolCaster = $this->boolCaster ?: new BoolCaster();
+
 		return match ($map[$fieldName]) {
 			self::CAST_TO_INT => (int)$value,
 			self::CAST_TO_FLOAT => (float)$value,
-			self::CAST_TO_BOOL => (new BoolCaster)->cast($value),
+			self::CAST_TO_BOOL => $boolCaster->cast($value),
 			default => $value,
 		};
 	}
-
 
 	/**
 	 * @param class-string<DataManager> $dataManager
@@ -79,13 +84,13 @@ class OrmTypeCast
 			return $this->typeMapCache[$dataManager];
 		}
 
-
-
 		$ormFields = $dataManager::getMap();
 
 		$result = [];
-		foreach ($ormFields as $field)
+		foreach ($ormFields as $fieldId => $field)
 		{
+			$field = is_array($field) ? (new Entity)->initializeField($fieldId, $field) : $field;
+
 			$fieldClassName = get_class($field);
 
 			$castType = match ($fieldClassName) {
@@ -103,5 +108,10 @@ class OrmTypeCast
 		return $this->typeMapCache[$dataManager];
 	}
 
+	public function setBoolCaster(?Caster $boolCaster): OrmTypeCast
+	{
+		$this->boolCaster = $boolCaster;
 
+		return $this;
+	}
 }

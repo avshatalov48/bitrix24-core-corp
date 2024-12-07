@@ -3,52 +3,24 @@
 namespace Bitrix\Crm\Controller;
 
 use Bitrix\Crm\Integration;
-use Bitrix\Crm\Integration\Intranet\CustomSection;
+use Bitrix\Crm\Model\Dynamic;
 use Bitrix\Crm\Model\Dynamic\TypeTable;
 use Bitrix\Crm\Relation;
+use Bitrix\Crm\Relation\Collection;
 use Bitrix\Crm\RelationIdentifier;
 use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\UserField\UserFieldManager;
-use Bitrix\Intranet\CustomSection\Entity\CustomSectionPageTable;
-use Bitrix\Intranet\CustomSection\Entity\CustomSectionTable;
-use Bitrix\Main\Engine\ActionFilter;
 use Bitrix\Main\Engine\AutoWire\ExactParameter;
+use Bitrix\Main\Engine\Response\Converter;
 use Bitrix\Main\Engine\Response\DataType\Page;
 use Bitrix\Main\Error;
-use Bitrix\Main\Event;
-use Bitrix\Main\EventResult;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
 use Bitrix\Main\UI\PageNavigation;
-use \Bitrix\Crm\Model\Dynamic;
 
 class Type extends Base
 {
-	public function getDefaultPreFilters(): array
-	{
-		$preFilters = parent::getDefaultPreFilters();
-		$preFilters[] = new class extends ActionFilter\Base {
-			public function onBeforeAction(Event $event): ?EventResult
-			{
-				$userPermissions = Container::getInstance()->getUserPermissions();
-				if (!$userPermissions->canWriteConfig())
-				{
-					$this->addError(new Error(Loc::getMessage('CRM_COMMON_ERROR_ACCESS_DENIED')));
-				}
-
-				return new EventResult(
-					$this->errorCollection->isEmpty() ? EventResult::SUCCESS : EventResult::ERROR,
-					null,
-					null,
-					$this
-				);
-			}
-		};
-
-		return $preFilters;
-	}
-
 	public function getAutoWiredParameters(): array
 	{
 		$params = parent::getAutoWiredParameters();
@@ -76,6 +48,12 @@ class Type extends Base
 
 	public function fieldsAction(): ?array
 	{
+		$userPermissions = Container::getInstance()->getUserPermissions($this->getCurrentUser()->getId());
+		if (!$userPermissions->isCrmAdmin())
+		{
+			$this->addError(ErrorCode::getAccessDeniedError());
+			return null;
+		}
 		$fieldsInfo = TypeTable::getFieldsInfo();
 
 		return [
@@ -85,6 +63,12 @@ class Type extends Base
 
 	public function getAction(Dynamic\Type $type): ?array
 	{
+		$userPermissions = Container::getInstance()->getUserPermissions($this->getCurrentUser()->getId());
+		if (!$userPermissions->isAdminForEntity($type->getEntityTypeId()) && !$userPermissions->isCrmAdmin())
+		{
+			$this->addError(ErrorCode::getAccessDeniedError());
+			return null;
+		}
 		return [
 			'type' => $type->jsonSerialize(),
 		];
@@ -92,16 +76,42 @@ class Type extends Base
 
 	public function listAction(array $order = null, array $filter = null, PageNavigation $pageNavigation = null): ?Page
 	{
+		$userPermissions = Container::getInstance()->getUserPermissions($this->getCurrentUser()->getId());
+		if (!$userPermissions->isCrmAdmin())
+		{
+			$this->addError(ErrorCode::getAccessDeniedError());
+			return null;
+		}
 		$parameters = [];
 
 		$parameters['filter'] = $this->removeDotsFromKeys($this->convertKeysToUpper((array)$filter));
+
+		$typeTable = Container::getInstance()->getDynamicTypeDataClass();
+
+		$allowedFields = array_keys($typeTable::getFieldsInfo());
+
+		if (!$this->validateFilter($parameters['filter'], $allowedFields))
+		{
+			return null;
+		}
+
 		$parameters['filter'][] = [
 			'!@ENTITY_TYPE_ID' => \CCrmOwnerType::getDynamicTypeBasedStaticEntityTypeIds(),
 		];
+
 		if(is_array($order))
 		{
 			$parameters['order'] = $this->convertKeysToUpper($order);
+			$parameters['order'] = $this->convertValuesToUpper(
+				$parameters['order'],
+				Converter::TO_UPPER | Converter::VALUES,
+			);
+			if (!$this->validateOrder($parameters['order'], $allowedFields))
+			{
+				return null;
+			}
 		}
+
 		if($pageNavigation)
 		{
 			$parameters['offset'] = $pageNavigation->getOffset();
@@ -109,9 +119,8 @@ class Type extends Base
 		}
 
 		$types = [];
-		$typeTable = Container::getInstance()->getDynamicTypeDataClass();
+
 		$list = $typeTable::getList($parameters);
-		/** @var Dynamic\Type $type */
 		while($type = $list->fetchObject())
 		{
 			$types[] = $type->jsonSerialize(false);
@@ -125,9 +134,57 @@ class Type extends Base
 
 	public function addAction(array $fields): ?array
 	{
+		$builder = (new Integration\Analytics\Builder\Automation\Type\CreateEvent())
+			->setSection(Integration\Analytics\Dictionary::SECTION_REST)
+		;
+
+		if ($this->isRest())
+		{
+			$builder
+				->setStatus(Integration\Analytics\Dictionary::STATUS_ATTEMPT)
+				->buildEvent()
+				->send()
+			;
+		}
+
+		$result = $this->add($fields);
+
+		if ($this->isRest())
+		{
+			if (isset($result['type']['id']))
+			{
+				$builder->setId($result['type']['id']);
+			}
+
+			if ($this->getErrors())
+			{
+				$builder->setStatus(Integration\Analytics\Dictionary::STATUS_ERROR);
+			}
+			else
+			{
+				$builder->setStatus(Integration\Analytics\Dictionary::STATUS_SUCCESS);
+			}
+
+			$builder
+				->buildEvent()
+				->send()
+			;
+		}
+
+		return $result;
+	}
+
+	private function add(array $fields): ?array
+	{
+		$entityTypeId = $fields['entityTypeId'] ?? 0;
+		$userPermissions = Container::getInstance()->getUserPermissions($this->getCurrentUser()->getId());
+		if (!$userPermissions->isCrmAdmin())
+		{
+			$this->addError(ErrorCode::getAccessDeniedError());
+			return null;
+		}
 		$dataClass = Container::getInstance()->getDynamicTypeDataClass();
 		$fields['name'] = $dataClass::generateName($fields['title']);
-		$entityTypeId = $fields['entityTypeId'] ?? 0;
 		if (
 			!empty($entityTypeId)
 			&& in_array((int)$entityTypeId, \CCrmOwnerType::getDynamicTypeBasedStaticEntityTypeIds(), true)
@@ -140,18 +197,66 @@ class Type extends Base
 
 		$type = $dataClass::createObject();
 
-		return $this->updateAction($type, $fields);
+		return $this->update($type, $fields);
 	}
 
-	public function updateAction(?Dynamic\Type $type = null, array $fields): ?array
+	public function updateAction(?Dynamic\Type $type = null, array $fields = []): ?array
+	{
+		$builder = (new Integration\Analytics\Builder\Automation\Type\EditEvent())
+			->setSection(Integration\Analytics\Dictionary::SECTION_REST)
+		;
+		if ($type)
+		{
+			$builder->setId($type->getId());
+		}
+
+		if ($this->isRest())
+		{
+			$builder
+				->setStatus(Integration\Analytics\Dictionary::STATUS_ATTEMPT)
+				->buildEvent()
+				->send()
+			;
+		}
+
+		$result = $this->update($type, $fields);
+
+		if ($this->isRest())
+		{
+			if ($this->getErrors())
+			{
+				$builder->setStatus(Integration\Analytics\Dictionary::STATUS_ERROR);
+			}
+			else
+			{
+				$builder->setStatus(Integration\Analytics\Dictionary::STATUS_SUCCESS);
+			}
+
+			$builder
+				->buildEvent()
+				->send()
+			;
+		}
+
+		return $result;
+	}
+
+	private function update(?Dynamic\Type $type = null, array $fields = []): ?array
 	{
 		if($type === null)
 		{
 			return null;
 		}
+		$userPermissions = Container::getInstance()->getUserPermissions($this->getCurrentUser()->getId());
+		if (!$userPermissions->isAdminForEntity($type->getEntityTypeId()) && !$userPermissions->isCrmAdmin())
+		{
+			$this->addError(ErrorCode::getAccessDeniedError());
+			return null;
+		}
 		$originalFields = $fields;
 		$fields = $this->convertKeysToUpper($fields);
-		$fieldKeysToUnset = ['ID', 'IS_EXTERNAL', 'CREATED_TIME', 'CREATED_BY', 'UPDATED_TIME', 'UPDATED_BY', 'IS_SAVE_FROM_TYPE_DETAIL'];
+		$fieldKeysToUnset = ['ID', 'IS_EXTERNAL', 'CREATED_TIME', 'CREATED_BY', 'UPDATED_TIME', 'UPDATED_BY'];
+		$fieldKeysToNotSetToType = ['CUSTOM_SECTION_ID'];
 
 		$isNew = $type->getId() <= 0;
 		$restriction = RestrictionManager::getDynamicTypesLimitRestriction();
@@ -167,44 +272,22 @@ class Type extends Base
 			return null;
 		}
 
+		$isAdmin = Container::getInstance()->getUserPermissions($this->getCurrentUser()->getId())->isCrmAdmin();
+		if ($type->getCustomSectionId() !== (int)$fields['CUSTOM_SECTION_ID'] && !$isAdmin)
+		{
+			$this->addError(ErrorCode::getAccessDeniedError());
+			return null;
+		}
+
 		$isExternal = isset($fields['IS_EXTERNAL']) && $fields['IS_EXTERNAL'] === 'true';
 		$isCustomSectionSelected = isset($fields['CUSTOM_SECTION_ID']) && $fields['CUSTOM_SECTION_ID'] !== '0';
 		if ($isExternal && $isNew && !$isCustomSectionSelected)
 		{
-			$this->addError(new Error(Loc::getMessage('CRM_CONTROLLER_TYPE_EXTERNAL_TYPE_WITHOUT_CUSTOM_SECTION_ERROR')));
+			$this->addError(
+				new Error(Loc::getMessage('CRM_CONTROLLER_TYPE_EXTERNAL_TYPE_WITHOUT_CUSTOM_SECTION_ERROR')),
+			);
 
 			return null;
-		}
-
-		$customSectionsArrays = (isset($fields['CUSTOM_SECTIONS']) && is_array($fields['CUSTOM_SECTIONS']))
-			? $fields['CUSTOM_SECTIONS']
-			: []
-		;
-
-		$customSections = [];
-		foreach ($customSectionsArrays as $customSectionsArray)
-		{
-			$customSections[$customSectionsArray['ID']] = CustomSection\Assembler::constructCustomSection($customSectionsArray);
-		}
-
-		$existingCustomSections = $this->moveIdToKey(Integration\IntranetManager::getCustomSections() ?? []);
-
-		// disable deletion of smart processes if saving occurs not due to crm.type.detail
-		$isSaveFromTypeDetail = isset($fields['IS_SAVE_FROM_TYPE_DETAIL']) && $fields['IS_SAVE_FROM_TYPE_DETAIL'] === 'true';
-		if (!$isSaveFromTypeDetail)
-		{
-			$customSections = $this->getAugmentedCustomSections($customSections, $existingCustomSections);
-			$fields['CUSTOM_SECTIONS'] = $this->getCustomSectionsArray($customSections);
-		}
-
-		foreach ($existingCustomSections as $id => $section)
-		{
-			if (!isset($customSections[$id]) && !empty($section->getPages()))
-			{
-				$this->addError(new Error(Loc::getMessage('CRM_CONTROLLER_TYPE_DELETE_CUSTOM_SECTION_WITH_PAGES_ERROR')));
-
-				return null;
-			}
 		}
 
 		if (isset($fields['TITLE']))
@@ -227,7 +310,7 @@ class Type extends Base
 
 		foreach($fields as $name => $value)
 		{
-			if($type->entity->hasField($name))
+			if($type->entity->hasField($name) && !in_array($name, $fieldKeysToNotSetToType, true))
 			{
 				$type->set($name, $value);
 			}
@@ -267,69 +350,57 @@ class Type extends Base
 		return null;
 	}
 
-	/**
-	 * $customSections items must be with id in key
-	 *
-	 * @param CustomSection[] $customSections
-	 * @param CustomSection[] $customSectionsToAdd
-	 * @return CustomSection[]
-	 */
-	protected function getAugmentedCustomSections(array $customSections, array $customSectionsToAdd): array
-	{
-		foreach ($customSectionsToAdd as $id => $customSectionToAdd)
-		{
-			if (!isset($customSections[$id]))
-			{
-				$customSections[$id] = $customSectionToAdd;
-			}
-		}
-
-		return $customSections;
-	}
-
-	protected function getCustomSectionsArray(array $customSections): array
-	{
-		$customSectionsArray = [];
-
-		foreach ($customSections as $customSection)
-		{
-			if (is_array($customSection))
-			{
-				$customSectionsArray[] = $customSection;
-			}
-
-			if ($customSection instanceof CustomSection)
-			{
-				$pages = [];
-
-				foreach ($customSection->getPages() as $page)
-				{
-					$pages[] = [
-						'ID' => $page->getId(),
-						'CUSTOM_SECTION_ID' => $page->getCustomSectionId(),
-						'CODE' => $page->getCode(),
-						'TITLE' => $page->getTitle(),
-						'SORT' => $page->getSort(),
-						'SETTINGS' => $page->getSettings(),
-					];
-				}
-
-				$customSectionsArray[] = [
-					'ID' => $customSection->getId(),
-					'TITLE' => $customSection->getTitle(),
-					'CODE' => $customSection->getCode(),
-					'PAGES' => $pages,
-				];
-			}
-		}
-
-		return $customSectionsArray;
-	}
-
 	public function deleteAction(?Dynamic\Type $type = null): ?array
+	{
+		$builder = (new Integration\Analytics\Builder\Automation\Type\DeleteEvent())
+			->setSection(Integration\Analytics\Dictionary::SECTION_REST)
+		;
+		if ($type)
+		{
+			$builder->setId($type->getId());
+		}
+
+		if ($this->isRest())
+		{
+			$builder
+				->setStatus(Integration\Analytics\Dictionary::STATUS_ATTEMPT)
+				->buildEvent()
+				->send()
+			;
+		}
+
+		$result = $this->delete($type);
+
+		if ($this->isRest())
+		{
+			if ($this->getErrors())
+			{
+				$builder->setStatus(Integration\Analytics\Dictionary::STATUS_ERROR);
+			}
+			else
+			{
+				$builder->setStatus(Integration\Analytics\Dictionary::STATUS_SUCCESS);
+			}
+
+			$builder
+				->buildEvent()
+				->send()
+			;
+		}
+
+		return $result;
+	}
+
+	private function delete(?Dynamic\Type $type = null): ?array
 	{
 		if($type === null)
 		{
+			return null;
+		}
+		$userPermissions = Container::getInstance()->getUserPermissions($this->getCurrentUser()->getId());
+		if (!$userPermissions->isAdminForEntity($type->getEntityTypeId()) && !$userPermissions->isCrmAdmin())
+		{
+			$this->addError(ErrorCode::getAccessDeniedError());
 			return null;
 		}
 
@@ -393,12 +464,6 @@ class Type extends Base
 				);
 			}
 		}
-	}
-
-	protected function normalizeTypes(array $types): array
-	{
-		$arrayOfIntegers = array_map('intval', $types);
-		return array_filter($arrayOfIntegers);
 	}
 
 	protected function saveRelations(int $entityTypeId, array $fields): Result
@@ -484,9 +549,10 @@ class Type extends Base
 	 * If there is not data
 	 * - if relation exists - remove it
 	 *
-	 * @param Relation\RelationManager $relationManager
+	 * @param Collection $relations
 	 * @param RelationIdentifier $identifier
 	 * @param array|null $relationData
+	 *
 	 * @return Result
 	 */
 	protected function processRelation(
@@ -535,181 +601,9 @@ class Type extends Base
 	 * - if page exists and section is another - update record
 	 * - if page exists and there is not sectionId - delete record
 	 * - if page does not exist - add record.
-	 *
-	 * @param Dynamic\Type $type
-	 * @param array $fields
-	 * @return Result
-	 * @todo refactor it!
 	 */
 	protected function saveCustomSections(Dynamic\Type $type, array $fields): Result
 	{
-		$result = new Result();
-		$result->setData(['isCustomSectionChanged' => false]);
-
-		if (!Integration\IntranetManager::isCustomSectionsAvailable())
-		{
-			return $result;
-		}
-		$customSectionsArrays = $fields['CUSTOM_SECTIONS'] ?? null;
-		$settings = Integration\IntranetManager::preparePageSettingsForItemsList($type->getEntityTypeId());
-		if ($customSectionsArrays === null)
-		{
-			if (array_key_exists('CUSTOM_SECTION_ID', $fields) && (int)$fields['CUSTOM_SECTION_ID'] === 0)
-			{
-				$pagesList = CustomSectionPageTable::getList([
-					'select' => ['ID'],
-					'filter' => [
-						'=MODULE_ID' => 'crm',
-						'=SETTINGS' => $settings,
-					],
-				]);
-				/** @var array $pageRow */
-				while ($pageRow = $pagesList->fetch())
-				{
-					CustomSectionPageTable::delete($pageRow['ID']);
-					$result->setData(['isCustomSectionChanged' => true]);
-				}
-			}
-			return $result;
-		}
-		if (!is_array($customSectionsArrays))
-		{
-			$customSectionsArrays = [];
-		}
-		$customSectionId = $fields['CUSTOM_SECTION_ID'] ?? 0;
-		$realCustomSectionId = null;
-		if (!empty($customSectionId) && mb_strpos($customSectionId, 'new') !== 0)
-		{
-			$customSectionId = (int)$customSectionId;
-			$realCustomSectionId = $customSectionId;
-		}
-		$existingPageId = null;
-
-		$customSections = [];
-		foreach ($customSectionsArrays as $customSectionsArray)
-		{
-			$customSections[$customSectionsArray['ID']] = CustomSection\Assembler::constructCustomSection($customSectionsArray);
-		}
-
-		$existingCustomSections = $this->moveIdToKey(Integration\IntranetManager::getCustomSections() ?? []);
-
-		foreach ($existingCustomSections as $id => $section)
-		{
-			if (!isset($customSections[$id]))
-			{
-				$deleteResult = CustomSectionTable::delete($id);
-				if (!$deleteResult->isSuccess())
-				{
-					$result->addErrors($deleteResult->getErrors());
-				}
-			}
-		}
-
-		foreach ($customSections as $id => $section)
-		{
-			if (isset($existingCustomSections[$id]))
-			{
-				if (!empty($section->getTitle()) && ($section->getTitle() !== $existingCustomSections[$id]->getTitle()))
-				{
-					$updateResult = CustomSectionTable::update($id, [
-						'TITLE' => $section->getTitle(),
-					]);
-					if (!$updateResult->isSuccess())
-					{
-						$result->addErrors($updateResult->getErrors());
-					}
-				}
-				foreach ($existingCustomSections[$id]->getPages() as $page)
-				{
-					if ($page->getSettings() === $settings)
-					{
-						$existingPageId = $page->getId();
-						break;
-					}
-				}
-			}
-			elseif (!empty($section->getTitle()))
-			{
-				$addResult = CustomSectionTable::add([
-					'TITLE' => $section->getTitle(),
-					'MODULE_ID' => 'crm',
-				]);
-				if (!$addResult->isSuccess())
-				{
-					$result->addErrors($addResult->getErrors());
-				}
-				elseif ($id === $customSectionId)
-				{
-					$realCustomSectionId = $addResult->getId();
-				}
-			}
-		}
-
-		$isCustomSectionChanged = false;
-		if ($customSectionId !== null && $realCustomSectionId > 0)
-		{
-			$isCustomSectionChanged = true;
-			if ($existingPageId > 0)
-			{
-				$updatePageResult = CustomSectionPageTable::update($existingPageId, [
-					'CUSTOM_SECTION_ID' => $realCustomSectionId,
-					'TITLE' => $type->getTitle(),
-					// empty string to provoke CODE regeneration
-					'CODE' => '',
-				]);
-				if (!$updatePageResult->isSuccess())
-				{
-					$result->addErrors($updatePageResult->getErrors());
-				}
-			}
-			else
-			{
-				$addPageResult = CustomSectionPageTable::add([
-					'TITLE' => $type->getTitle(),
-					'MODULE_ID' => 'crm',
-					'CUSTOM_SECTION_ID' => $realCustomSectionId,
-					'SETTINGS' => $settings,
-					'SORT' => 100,
-				]);
-				if (!$addPageResult->isSuccess())
-				{
-					$result->addErrors($addPageResult->getErrors());
-				}
-			}
-		}
-		elseif ($existingPageId > 0)
-		{
-			$isCustomSectionChanged = true;
-			$deletePageResult = CustomSectionPageTable::delete($existingPageId);
-			if (!$deletePageResult->isSuccess())
-			{
-				$result->addErrors($deletePageResult->getErrors());
-			}
-		}
-
-		if ($result->isSuccess())
-		{
-			Container::getInstance()->getRouter()->reInit();
-		}
-
-		$result->setData(['isCustomSectionChanged' => $isCustomSectionChanged]);
-
-		return $result;
-	}
-
-	/**
-	 * @param CustomSection[] $array
-	 *
-	 * @return CustomSection[]
-	 */
-	protected function moveIdToKey(array $array): array
-	{
-		$result = [];
-		foreach ($array as $customSection)
-		{
-			$result[$customSection->getId()] = $customSection;
-		}
-
-		return $result;
+		return Container::getInstance()->getAutomatedSolutionManager()->setAutomatedSolutions($type, $fields);
 	}
 }

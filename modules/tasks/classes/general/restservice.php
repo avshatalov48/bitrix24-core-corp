@@ -585,7 +585,7 @@ final class CTaskRestService extends IRestService
 			{
 				foreach($columns as $col)
 				{
-					$result[] = ToUpper($col).'_'.ToUpper($func);
+					$result[] = mb_strtoupper($col).'_'.mb_strtoupper($func);
 				}
 			}
 		}
@@ -629,9 +629,9 @@ final class CTaskRestService extends IRestService
 		else if (is_array($returnValue) && isset($arMethodMetaInfo['allowedKeysInReturnValue']))
 		{
 			// add legal aggregated columns in result array
-			if(is_array($arMethodMetaInfo['allowedAggregations']))
+			if(is_array($arMethodMetaInfo['allowedAggregations'] ?? null))
 			{
-				if(is_array($arMethodMetaInfo['allowedValuesInAggregation']))
+				if(is_array($arMethodMetaInfo['allowedValuesInAggregation'] ?? null))
 					$fields = $arMethodMetaInfo['allowedValuesInAggregation'];
 				else
 					$fields = $arMethodMetaInfo['allowedKeysInReturnValue'];
@@ -708,7 +708,7 @@ final class CTaskRestService extends IRestService
 
 		$arMethodMetaInfo     = self::$arMethodsMetaInfo[$className][$methodName];
 		$arAllowedParams      = $arMethodMetaInfo['params'];
-		$mandatoryParamsCount = $arMethodMetaInfo['mandatoryParamsCount'];
+		$mandatoryParamsCount = $arMethodMetaInfo['mandatoryParamsCount'] ?? null;
 
 		$arDateFields = array();
 		if (isset(self::$arManifests[$className]['REST: date fields']))
@@ -808,7 +808,7 @@ final class CTaskRestService extends IRestService
 				}
 
 				// for values
-				if(is_array($paramMetaInfo['allowedValuesInAggregation']))
+				if(is_array($paramMetaInfo['allowedValuesInAggregation'] ?? null))
 					$fields = $paramMetaInfo['allowedValuesInAggregation'];
 				else
 					$fields = $paramMetaInfo['allowedValues'];

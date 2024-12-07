@@ -105,7 +105,6 @@ if(!function_exists('__CrmLeadShowErrorText'))
 	}
 }
 
-CUtil::JSPostUnescape();
 $APPLICATION->RestartBuffer();
 Header('Content-Type: application/x-javascript; charset='.LANG_CHARSET);
 

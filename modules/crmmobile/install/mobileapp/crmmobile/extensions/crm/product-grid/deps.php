@@ -12,6 +12,7 @@ return [
 		'utils/error-notifier',
 		'catalog:barcode-scanner',
 		'layout/ui/product-grid',
+		'layout/ui/detail-card/tabs/factory/type',
 
 		'crm:loc',
 		'crm:product-grid/components/product-details',

@@ -20,7 +20,6 @@ return [
 		'catalog:barcode-scanner',
 		'catalog:store/document-type',
 		'catalog:store/product-card',
-		'catalog:store/product-list-summary',
 		'catalog:store/sku-selector',
 
 		'catalog:store/product-list/model',

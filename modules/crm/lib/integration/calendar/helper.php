@@ -9,9 +9,13 @@ use Bitrix\Calendar\Sharing\Link\EventLink;
 use Bitrix\Calendar\Sharing\Link\Factory;
 use Bitrix\Calendar\Sharing\SharingConference;
 use Bitrix\Calendar\Sharing;
+use Bitrix\Crm\Integration\MailManager;
+use Bitrix\Crm\Integration\NotificationsManager;
 use Bitrix\Crm\Integration\SmsManager;
 use Bitrix\Crm\ItemIdentifier;
+use Bitrix\Crm\MessageSender\Channel;
 use Bitrix\Crm\MessageSender\Channel\ChannelRepository;
+use Bitrix\Crm\MessageSender\Channel\Correspondents\To;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Error;
@@ -51,7 +55,8 @@ class Helper
 		int $contactTypeId,
 		string $channelId,
 		string $senderId,
-		array $ruleArray
+		array $ruleArray,
+		array $memberIds,
 	): Result
 	{
 		$result = new Result();
@@ -62,14 +67,14 @@ class Helper
 			return $result;
 		}
 
-		$contact = $this->getContactPhoneCommunications(
-			$entityId,
-			\CCrmOwnerType::Deal,
+		$hasContact = $this->hasContact(
+			new ItemIdentifier(\CCrmOwnerType::Deal, $entityId),
+			$channelId,
 			$contactId,
 			$contactTypeId,
 		);
 
-		if ($contact === null)
+		if (!$hasContact)
 		{
 			$result->addError(new Error('Contact not found', 10020));
 
@@ -94,14 +99,12 @@ class Helper
 
 		$ownerId = $deal->getAssignedById();
 
-		$contactType = $contact['entityTypeId'];
-
 		$factory = self::getLinkFactory();
 		/** @var CrmDealLink $crmDealLink */
-		$crmDealLink = $factory->getCrmDealLink($entityId, $ownerId, $contactId, $contactType);
+		$crmDealLink = $factory->getCrmDealLink($entityId, $ownerId, $memberIds, $contactId, $contactTypeId);
 		if (!$crmDealLink)
 		{
-			$crmDealLink = $factory->createCrmDealLink($ownerId, $entityId, $contactId, $contactType, $channelId, $senderId);
+			$crmDealLink = $factory->createCrmDealLink($ownerId, $entityId, $memberIds, $contactId, $contactTypeId, $channelId, $senderId);
 		}
 
 		$linkObjectRule = (new Sharing\Link\Rule\Factory())->getLinkObjectRuleByLink($crmDealLink);
@@ -135,6 +138,30 @@ class Helper
 		return $result;
 	}
 
+	public function generateJointLink(int $entityId, int $ownerId, array $memberIds): Result
+	{
+		$result = new Result();
+		if (!$this->isAvailable())
+		{
+			$result->addError(new Error('Sharing is not available', 10010));
+
+			return $result;
+		}
+
+		$crmDealLink = (new Factory())->getCrmDealLink($entityId, $ownerId, $memberIds);
+		if ($crmDealLink === null)
+		{
+			$crmDealLink = (new Factory())->createCrmDealLink($ownerId, $entityId, $memberIds);
+		}
+
+		$result->setData([
+			'url' => Sharing\Helper::getShortUrl($crmDealLink->getUrl()),
+			'hash' => $crmDealLink->getHash(),
+		]);
+
+		return $result;
+	}
+
 	/**
 	 * adds new calendar sharing entry in timeline
 	 *
@@ -163,30 +190,24 @@ class Helper
 
 		$eventData = EventData::createFromCrmDealLink($crmDealLink, $eventType);
 
-		if ($eventType === EventData::SHARING_ON_INVITATION_SENT && $crmDealLink->getContactId())
+		if (
+			$eventType === EventData::SHARING_ON_INVITATION_SENT
+			&& $crmDealLink->getContactId()
+			&& $crmDealLink->getChannelId()
+		)
 		{
-			$contactCommunications = $this->getContactPhoneCommunications(
-				$crmDealLink->getEntityId(),
-				\CCrmOwnerType::Deal,
-				$crmDealLink->getContactId(),
-				$crmDealLink->getContactType(),
-			);
+			$entity = new ItemIdentifier(\CCrmOwnerType::Deal, $crmDealLink->getEntityId());
 
-			if ($contactCommunications && isset($contactCommunications['phones'][0]))
+			$channel = $this->getChannelById($entity, $crmDealLink->getChannelId());
+			if ($channel !== null)
 			{
-				$eventData->setContactCommunication($contactCommunications['phones'][0]['valueFormatted']);
+				$eventData->setChannelName($channel->getName());
 			}
 
-			if ($crmDealLink->getChannelId())
+			$contact = $this->getContactFromChannel($channel, $crmDealLink->getContactId(), $crmDealLink->getContactType());
+			if ($contact !== null)
 			{
-				$entity = new ItemIdentifier(\CCrmOwnerType::Deal, $crmDealLink->getEntityId());
-				$repo = ChannelRepository::create($entity);
-				$channel = $repo->getById(SmsManager::getSenderCode(), $crmDealLink->getChannelId());
-
-				if ($channel)
-				{
-					$eventData->setChannelName($channel->getName());
-				}
+				$eventData->setContactCommunication($contact->getAddress()->getValue());
 			}
 		}
 
@@ -196,27 +217,43 @@ class Helper
 	}
 
 	/**
-	 * gets phone communication of contact in entity
+	 * Returns whether channel has contact or not
 	 *
-	 * @param int $entityId
-	 * @param int $entityTypeId
+	 * @param ItemIdentifier $entity
+	 * @param string $channelId
 	 * @param int $contactId
 	 * @param int $contactTypeId
-	 * @return mixed|null
+	 * @return boolean
 	 */
-	public function getContactPhoneCommunications(int $entityId, int $entityTypeId, int $contactId, int $contactTypeId)
+	public function hasContact(ItemIdentifier $entity, string $channelId, int $contactId, int $contactTypeId): bool
 	{
-		$communications = SmsManager::getEntityPhoneCommunications($entityTypeId, $entityId);
-		$contact = current(array_filter($communications, static function ($communication) use ($contactId, $contactTypeId) {
-			return $communication['entityId'] === $contactId && $communication['entityTypeId'] === $contactTypeId;
-		}));
+		$channel = $this->getChannelById($entity, $channelId);
 
-		if (!$contact)
+		return $this->getContactFromChannel($channel, $contactId, $contactTypeId) !== null;
+	}
+
+	public function getChannelById(ItemIdentifier $entity, string $channelId): ?Channel
+	{
+		$repo = ChannelRepository::create($entity);
+
+		$smsChannel = $repo->getById(SmsManager::getSenderCode(), $channelId);
+		$mailChannel = $repo->getById(MailManager::getSenderCode(), $channelId);
+		$channel = $smsChannel ?? $mailChannel;
+
+		return $channel ?? $repo->getBestUsableBySender(NotificationsManager::getSenderCode());
+	}
+
+	public function getContactFromChannel(?Channel $channel, int $contactId, int $contactTypeId): ?To
+	{
+		if (is_null($channel))
 		{
 			return null;
 		}
 
-		return $contact;
+		return current(array_filter($channel->getToList(), static fn ($communication) =>
+			$communication->getAddressSource()->getEntityId() === $contactId
+			&& $communication->getAddressSource()->getEntityTypeId() === $contactTypeId
+		)) ?: null;
 	}
 
 	/**

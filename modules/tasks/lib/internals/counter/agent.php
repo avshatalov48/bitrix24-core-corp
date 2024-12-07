@@ -2,22 +2,20 @@
 
 namespace Bitrix\Tasks\Internals\Counter;
 
-use Bitrix\Main;
 use Bitrix\Main\Application;
 use Bitrix\Main\Event;
-use Bitrix\Tasks\Access\Role\RoleDictionary;
 use Bitrix\Tasks\Comments\Task\CommentPoster;
-use Bitrix\Tasks\Integration\Bizproc;
+use Bitrix\Tasks\Integration\Bizproc\Listener;
 use Bitrix\Tasks\Integration\CRM\TimeLineManager;
-use Bitrix\Tasks\Internals\Counter;
+use Bitrix\Tasks\Internals\Counter\Event\EventDictionary;
+use Bitrix\Tasks\Internals\Log\LogFacade;
+use Bitrix\Tasks\Internals\Notification\Controller;
+use Bitrix\Tasks\Internals\Registry\TaskRegistry;
 use Bitrix\Tasks\Internals\Task\Status;
-use Bitrix\Tasks\Item\Task;
+use Bitrix\Tasks\Internals\TaskObject;
 use Bitrix\Tasks\Util\Type\DateTime;
-use Bitrix\Tasks\Util\User;
 use CAgent;
-use CTasks;
 use CTimeZone;
-use Bitrix\Tasks\Integration\CRM\Timeline;
 
 /**
  * Class Agent
@@ -26,16 +24,29 @@ use Bitrix\Tasks\Integration\CRM\Timeline;
  */
 class Agent
 {
-	public const EVENT_TASK_EXPIRED = 'OnTaskExpired';
-	public const EVENT_TASK_EXPIRED_SOON = 'OnTaskExpiredSoon';
+	public const EVENT_TASK_EXPIRED = EventDictionary::EVENT_TASK_EXPIRED;
+	public const EVENT_TASK_EXPIRED_SOON = EventDictionary::EVENT_TASK_EXPIRED_SOON;
+
+	private TaskObject $task;
+	private Controller $notificationController;
+	private TimeLineManager $timeLineManager;
+	private ?CommentPoster $commentPoster;
+
+	private string $eventType;
+	private array $taskData;
+
+	private function __construct(string $eventType, TaskObject $task)
+	{
+		$this->task = $task;
+		$this->eventType = $eventType;
+		$this->init();
+	}
 
 	/**
-	 * @param $taskId
-	 * @param DateTime $deadline
-	 * @param bool $forceExpired
-	 * @return bool
+	 * @uses Agent::expired,
+	 * @uses Agent::expiredSoon,
 	 */
-	public static function add($taskId, DateTime $deadline, bool $forceExpired = false): bool
+	public static function add(int $taskId, DateTime $deadline, bool $forceExpired = false): bool
 	{
 		if (Deadline::isDeadlineExpired($deadline))
 		{
@@ -54,129 +65,164 @@ class Agent
 			$agentStart->addSecond(-Deadline::getDeadlineTimeLimit());
 		}
 
-		$agentName = self::getClass()."::expired{$soon}({$taskId});";
-		$agentStart = ($agentStart ?: new DateTime());
+		$agentName = static::class."::expired{$soon}({$taskId});";
 
 		self::remove($taskId);
+
+		CTimeZone::Disable();
 		CAgent::AddAgent($agentName, 'tasks', 'Y', 0, '', 'Y', $agentStart);
+		CTimeZone::Enable();
 
 		return true;
 	}
 
 	/**
-	 * @param $taskId
+	 * @uses Agent::expired,
+	 * @uses Agent::expiredSoon,
 	 */
-	public static function remove($taskId): void
+	public static function remove(int $taskId): void
 	{
-		CAgent::RemoveAgent(self::getClass()."::expired({$taskId});", 'tasks');
-		CAgent::RemoveAgent(self::getClass()."::expiredSoon({$taskId});", 'tasks');
+		CAgent::RemoveAgent(static::class . "::expired({$taskId});", 'tasks');
+		CAgent::RemoveAgent(static::class . "::expiredSoon({$taskId});", 'tasks');
 	}
 
-	/**
-	 * @return string
-	 */
-	public static function getClass(): string
+	public static function expired(int $taskId): string
 	{
-		return static::class;
-	}
-
-	/**
-	 * @param $taskId
-	 * @return string
-	 * @throws Main\SystemException
-	 */
-	public static function expired($taskId): string
-	{
-		$adminId = User::getAdminId();
-		$task = Task::getInstance($taskId, $adminId);
+		$task = TaskRegistry::getInstance()->getObject($taskId)?->fillAdditionalMembers();
 		$statesCompleted = [Status::DEFERRED, Status::COMPLETED, Status::SUPPOSEDLY_COMPLETED];
 
 		if (
-			!$task
-			|| !$task['RESPONSIBLE_ID']
-			|| in_array((int)$task['STATUS'], $statesCompleted, true)
-			|| !($taskData = $task->getData())
-			|| !array_key_exists('CREATED_BY', $taskData)
-			|| !$taskData['CREATED_BY']
+			$task === null
+			|| !$task->getResponsibleId()
+			|| !$task->getCreatedBy()
+			|| in_array((int)$task->getStatus(), $statesCompleted, true)
 		)
 		{
 			return '';
 		}
 
-		Counter\CounterService::addEvent(Counter\Event\EventDictionary::EVENT_TASK_EXPIRED, $taskData);
+		return static::run(static::EVENT_TASK_EXPIRED, $task);
+	}
 
-		$commentPoster = CommentPoster::getInstance($taskId, (int)$taskData['CREATED_BY']);
-		$commentPoster && $commentPoster->postCommentsOnTaskExpired($taskData);
+	public static function expiredSoon(int $taskId): string
+	{
+		$task = TaskRegistry::getInstance()->getObject($taskId)?->fillAdditionalMembers();
+		$statusesCompleted = [Status::DEFERRED, Status::COMPLETED, Status::SUPPOSEDLY_COMPLETED];
 
-		\CTaskNotifications::sendExpiredMessage($taskData);
-
-		$event = new Event('tasks', self::EVENT_TASK_EXPIRED, [
-			'TASK_ID' => $taskId,
-			'TASK' => $taskData,
-		]);
-		$event->send();
-
-		Bizproc\Listener::onTaskExpired($taskId, $taskData);
-		/** @var Task\Collection\Member $members */
-		$members = $taskData['SE_MEMBER'];
-		$responsibleId = 0;
-		foreach ($members as $member)
+		if ($task === null || !$task->getResponsibleId())
 		{
-			$memberData = $member->getData();
-			if ($memberData['TYPE'] === RoleDictionary::ROLE_RESPONSIBLE)
-			{
-				$responsibleId = (int)$memberData['USER_ID'];
-			}
+			return '';
 		}
-		(new TimeLineManager($taskId, $responsibleId))->onTaskExpired()->save();
 
+		if (!$task->hasDeadlineValue())
+		{
+			self::remove($taskId);
+			return '';
+		}
+
+		self::add($taskId, DateTime::createFromObjectOrString($task->getDeadline()), true);
+
+		if (in_array((int)$task->getStatus(), $statusesCompleted, true))
+		{
+			return '';
+		}
+
+		return static::run(static::EVENT_TASK_EXPIRED_SOON, $task);
+	}
+
+	private static function run(string $eventType, TaskObject $task): string
+	{
+		return (new static($eventType, $task))
+			->addCounterEvent()
+			->postComment()
+			->sendNotification()
+			->sendEvent()
+			->triggerAutomation()
+			->runCrmEvent()
+			->finish();
+	}
+
+	private function addCounterEvent(): static
+	{
+		CounterService::addEvent(
+			$this->eventType,
+			$this->taskData
+		);
+
+		return $this;
+	}
+
+	private function postComment(): static
+	{
+		match ($this->eventType)
+		{
+			static::EVENT_TASK_EXPIRED => $this->commentPoster?->postCommentsOnTaskExpired($this->taskData),
+			static::EVENT_TASK_EXPIRED_SOON => $this->commentPoster?->postCommentsOnTaskExpiredSoon($this->taskData),
+			default => LogFacade::log("Unexpected event type {$this->eventType}"),
+		};
+
+		return $this;
+	}
+
+	private function sendNotification(): static
+	{
+		match ($this->eventType)
+		{
+			static::EVENT_TASK_EXPIRED => $this->notificationController->onTaskExpired($this->task),
+			static::EVENT_TASK_EXPIRED_SOON => $this->notificationController->onTaskExpiresSoon($this->task),
+			default => LogFacade::log("Unexpected event type {$this->eventType}"),
+		};
+
+		$this->notificationController->push();
+
+		return $this;
+	}
+
+	private function sendEvent(): static
+	{
+		(new Event('tasks', $this->eventType, [
+			'TASK_ID' => $this->task->getId(),
+			'TASK' => $this->taskData,
+		]))->send();
+
+		return $this;
+	}
+
+	private function triggerAutomation(): static
+	{
+		match ($this->eventType)
+		{
+			static::EVENT_TASK_EXPIRED => Listener::onTaskExpired($this->task->getId(), $this->taskData),
+			static::EVENT_TASK_EXPIRED_SOON => Listener::onTaskExpiredSoon($this->task->getId(), $this->taskData),
+			default => LogFacade::log("Unexpected event type {$this->eventType}"),
+		};
+
+		return $this;
+	}
+
+	private function runCrmEvent(): static
+	{
+		if ($this->eventType == static::EVENT_TASK_EXPIRED)
+		{
+			$this->timeLineManager->onTaskExpired()->save();
+		}
+
+		$this->timeLineManager->save();
+
+		return $this;
+	}
+
+	private function finish(): string
+	{
 		return '';
 	}
 
-	/**
-	 * @param $taskId
-	 * @return string
-	 * @throws Main\SystemException
-	 */
-	public static function expiredSoon($taskId): string
+	private function init(): void
 	{
-		$task = Task::getInstance($taskId, User::getAdminId());
-		$statusesCompleted = [Status::DEFERRED, Status::COMPLETED, Status::SUPPOSEDLY_COMPLETED];
-
-		if (!$task || !$task['RESPONSIBLE_ID'] || !($taskData = $task->getData()))
-		{
-			return '';
-		}
-
-		if (is_null($taskData['DEADLINE']))
-		{
-			self::remove($taskData['ID']);
-			return '';
-		}
-
-		self::add($taskId, $taskData['DEADLINE'], true);
-
-		if (in_array((int)$taskData['STATUS'], $statusesCompleted, true))
-		{
-			return '';
-		}
-
-		Counter\CounterService::addEvent(Counter\Event\EventDictionary::EVENT_TASK_EXPIRED_SOON, $taskData);
-
-		$commentPoster = CommentPoster::getInstance($taskId, (int)$taskData['CREATED_BY']);
-		$commentPoster && $commentPoster->postCommentsOnTaskExpiredSoon($taskData);
-
-		\CTaskNotifications::sendExpiredSoonMessage($taskData);
-
-		$event = new Event('tasks', self::EVENT_TASK_EXPIRED_SOON, [
-			'TASK_ID' => $taskId,
-			'TASK' => $taskData,
-		]);
-		$event->send();
-
-		Bizproc\Listener::onTaskExpiredSoon($taskId, $taskData);
-
-		return '';
+		$this->notificationController = new Controller();
+		$this->timeLineManager = new TimeLineManager($this->task->getId(), $this->task->getResponsibleId());
+		$this->commentPoster = CommentPoster::getInstance($this->task->getId(), $this->task->getCreatedBy());
+		$this->taskData = $this->task->toArray(true);
 	}
 
 	/**
@@ -188,9 +234,6 @@ class Agent
 	}
 
 	/**
-	 * @param int $delay
-	 * @return string
-	 *
 	 * @deprecated
 	 * @see \Bitrix\Tasks\Update\ExpiredAgentCreator
 	 */
@@ -219,10 +262,6 @@ class Agent
 	}
 
 	/**
-	 * @param int $lastId
-	 * @return string
-	 * @throws Main\Db\SqlQueryException
-	 *
 	 * @deprecated
 	 * @see \Bitrix\Tasks\Update\ExpiredAgentCreator
 	 */

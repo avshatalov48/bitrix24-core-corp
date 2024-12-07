@@ -1,4 +1,7 @@
 BX.namespace("BX.Crm");
+
+BX.localStorage.set("BX.Crm.RequisiteSliderDetails:initStarted", {}, 10); // warmup local storage listeners
+
 if (typeof BX.Crm.RequisiteDetailsManager === "undefined")
 {
 	BX.Crm.RequisiteDetailsManager = function()
@@ -111,6 +114,30 @@ if (typeof BX.Crm.RequisiteDetailsManager === "undefined")
 					{
 						nameControl.markAsChanged();
 					});
+				}
+
+				// Set CRM attribute manager
+				const settings = this.getAttributeManagerSettings();
+				if (BX.Type.isPlainObject(settings))
+				{
+					const attributeManager = BX.Crm.EntityFieldAttributeManager.create(
+						this.entityEditor.getId() + "_ATTR_MANAGER",
+						{
+							entityTypeId: parseInt(
+								this.getSetting("entityTypeId", BX.CrmEntityType.enumeration.undefined)
+							),
+							entityScope: BX.prop.getString(settings, "ENTITY_SCOPE", ""),
+							isPermitted: BX.prop.getBoolean(settings, "IS_PERMITTED", true),
+							isPhaseDependent: BX.prop.getBoolean(settings, "IS_PHASE_DEPENDENT", true),
+							isAttrConfigButtonHidden: BX.prop.getBoolean(
+								settings, "IS_ATTR_CONFIG_BUTTON_HIDDEN", true
+							),
+							lockScript: BX.prop.getString(settings, "LOCK_SCRIPT", ""),
+							captions: BX.prop.getObject(settings, "CAPTIONS", {}),
+							entityPhases: BX.prop.getArray(settings, 'ENTITY_PHASES', null)
+						}
+					);
+					this.entityEditor.setAttributeManager(attributeManager);
 				}
 			}
 		},
@@ -238,15 +265,27 @@ if (typeof BX.Crm.RequisiteDetailsManager === "undefined")
 		},
 		onPresetChanged: function(control, prevPresetId)
 		{
-			var editor = control.getEditor();
+			const editor = control.getEditor();
 			if (editor)
 			{
-				var userFieldManager = BX.UI.EntityUserFieldManager.getById(editor.getId());
-				if (userFieldManager && typeof userFieldManager.setValidationEnabled === 'function')
+				if (typeof(editor.setValidationEnabled) === 'function')
 				{
-					userFieldManager.setValidationEnabled(false);
+					editor.setValidationEnabled(false);
 				}
-				BX.Event.EventEmitter.subscribe("BX.UI.EntityEditor:onSave", this.onSaveNewPreset.bind(this, prevPresetId));
+				else
+				{
+					const userFieldManager = BX.UI.EntityUserFieldManager.getById(editor.getId());
+					if (userFieldManager && typeof userFieldManager.setValidationEnabled === 'function')
+					{
+						userFieldManager.setValidationEnabled(false);
+					}
+				}
+
+				BX.Event.EventEmitter.subscribe(
+					"BX.UI.EntityEditor:onSave",
+					this.onSaveNewPreset.bind(this, prevPresetId)
+				);
+
 				editor.releaseAjaxForm();
 				editor.save();
 			}
@@ -390,6 +429,10 @@ if (typeof BX.Crm.RequisiteDetailsManager === "undefined")
 				}
 			}
 			return null;
+		},
+		getAttributeManagerSettings: function()
+		{
+			return this.getSetting("attributeConfig", null);
 		}
 	};
 

@@ -8,6 +8,7 @@ jn.define('crm/receive-payment/steps/finish', (require, exports, module) => {
 	const { StatusBlock } = require('crm/receive-payment/steps/finish/status-block');
 	const { Statuses } = require('crm/receive-payment/steps/finish/statuses');
 	const { AnalyticsLabel } = require('analytics-label');
+	const { EventEmitter } = require('event-emitter');
 
 	/**
 	 * @class FinishStep
@@ -26,6 +27,7 @@ jn.define('crm/receive-payment/steps/finish', (require, exports, module) => {
 			this.errorCode = null;
 
 			this.areAnalyticsSent = false;
+			this.customEventEmitter = EventEmitter.createWithUid(this.uid);
 		}
 
 		onEnterStep()
@@ -93,13 +95,20 @@ jn.define('crm/receive-payment/steps/finish', (require, exports, module) => {
 					.catch((response) => {
 						this.error = true;
 						this.errorCode = response.errors[0].code;
+						this.failedConnectedSiteId = response.errors[0].customData.connectedSiteId || 0;
 						if (this.startingAnimationFinished)
 						{
 							this.statusBlockRef.setState({
 								sendingStatus: Statuses.ERROR,
 								errorCode: this.errorCode,
+								connectedSiteId: this.failedConnectedSiteId,
 							});
 							this.sendingStatus = Statuses.ERROR;
+
+							if (this.failedConnectedSiteId > 0)
+							{
+								this.customEventEmitter.emit('DetailCard::reloadTabs');
+							}
 						}
 					})
 				;
@@ -134,6 +143,7 @@ jn.define('crm/receive-payment/steps/finish', (require, exports, module) => {
 								this.statusBlockRef.setState({
 									sendingStatus: Statuses.ERROR,
 									errorCode: this.errorCode,
+									connectedSiteId: this.failedConnectedSiteId,
 								});
 							}
 						}, 2000);

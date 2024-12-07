@@ -45,7 +45,6 @@ class ImopenlinesIframeQuickAjaxController
 		{
 			$offset = 0;
 		}
-		$search = \Bitrix\Main\Text\Encoding::convertEncoding($search, 'UTF-8', LANG_CHARSET);
 		$filter = [
 			[
 				'LOGIC' => 'OR',
@@ -87,7 +86,6 @@ class ImopenlinesIframeQuickAjaxController
 		$text = $this->requestData['TEXT'];
 		$converter = \Bitrix\Main\Text\Converter::getHtmlConverter();
 		$text = $converter->decode($text);
-		$text = \Bitrix\Main\Text\Encoding::convertEncoding($text, 'UTF-8', LANG_CHARSET);
 		if(empty($text))
 		{
 			$this->errors[] = 'Text cannot be empty';

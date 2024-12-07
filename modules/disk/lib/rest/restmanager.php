@@ -4,6 +4,7 @@ namespace Bitrix\Disk\Rest;
 
 use Bitrix\Disk\Driver;
 use Bitrix\Disk\Integration\Bitrix24Manager;
+use Bitrix\Disk\Internals\Diag;
 use Bitrix\Disk\Internals\Error\Error;
 use Bitrix\Disk\Internals\Error\ErrorCollection;
 use Bitrix\Disk\Internals\Error\IErrorable;
@@ -68,7 +69,7 @@ final class RestManager extends IRestService implements IErrorable
 			'disk.file.markDeleted',
 			'disk.file.restore',
 			'disk.file.uploadVersion',
-			'disk.file.getExternalLink',
+			Bitrix24Manager::isFeatureEnabled('disk_manual_external_link')? 'disk.file.getExternalLink' : null,
 			Bitrix24Manager::isFeatureEnabled('disk_file_history')? 'disk.file.getVersions' : null,
 			Bitrix24Manager::isFeatureEnabled('disk_file_history')? 'disk.file.restoreFromVersion': null,
 			'disk.file.listAllowedOperations',
@@ -158,6 +159,8 @@ final class RestManager extends IRestService implements IErrorable
 	 */
 	public function processMethodRequest(array $params, $start, \CRestServer $restServer)
 	{
+		Diag::getInstance()->collectDebugInfo($restServer->getMethod());
+
 		$service = $this
 			->checkMethodName($restServer->getMethod())
 			->buildService($params, $start, $restServer)
@@ -175,7 +178,11 @@ final class RestManager extends IRestService implements IErrorable
 		}
 
 		$externalizer = new Externalizer($service, $restServer);
-		return $externalizer->getExternalData($data);
+		$externalData = $externalizer->getExternalData($data);
+
+		Diag::getInstance()->logDebugInfo($restServer->getMethod());
+
+		return $externalData;
 	}
 
 	/**

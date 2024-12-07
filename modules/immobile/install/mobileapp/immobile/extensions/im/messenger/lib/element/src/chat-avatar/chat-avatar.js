@@ -28,6 +28,8 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 			this.store = serviceLocator.get('core').getStore();
 			this.avatar = null;
 			this.color = null;
+			this.isSuperEllipseIcon = false;
+			this.type = null;
 
 			if (DialogHelper.isDialogId(dialogId))
 			{
@@ -53,9 +55,23 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 			}
 			this.color = dialog.color;
 
+			this.type = dialog.type;
+
+			if ([DialogType.generalChannel, DialogType.openChannel, DialogType.channel].includes(dialog.type))
+			{
+				this.isSuperEllipseIcon = true;
+			}
+
 			if (dialog.chatId === MessengerParams.getGeneralChatId())
 			{
-				this.avatar = `${ChatAvatar.getImagePath()}avatar_general.png`;
+				this.avatar = `${ChatAvatar.getImagePath()}avatar_general_chat.png`;
+
+				return;
+			}
+
+			if (dialog.type === DialogType.generalChannel)
+			{
+				this.avatar = `${ChatAvatar.getImagePath()}avatar_general_channel.png`;
 
 				return;
 			}
@@ -69,7 +85,7 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 
 			if (dialog.type === DialogType.copilot)
 			{
-				this.avatar = `${ChatAvatar.getImagePath()}avatar_copilot.png`;
+				this.avatar = this.getCopilotRoleAvatar(dialog.dialogId) || `${ChatAvatar.getImagePath()}avatar_copilot_assistant.png`;
 
 				return;
 			}
@@ -87,7 +103,7 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 
 			if (this.isUser(userId) && !user.lastActivityDate && !user.avatar)
 			{
-				this.avatar = `${ChatAvatar.getImagePath()}avatar_wait.png`;
+				this.avatar = `${ChatAvatar.getImagePath()}avatar_wait_air.png`;
 				this.color = user.color;
 
 				return;
@@ -102,8 +118,14 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 		 */
 		getTitleParams()
 		{
+			if (this.type === DialogType.comment)
+			{
+				return {};
+			}
+
 			const titleParams = {
 				useLetterImage: true,
+				isSuperEllipseIcon: this.isSuperEllipseIcon,
 			};
 
 			if (this.avatar)
@@ -137,11 +159,29 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 			return this.color;
 		}
 
+		getIsSuperEllipseIcon()
+		{
+			return this.isSuperEllipseIcon;
+		}
+
 		isUser(userId)
 		{
 			const user = this.store.getters['usersModel/getById'](userId);
 
 			return !user.bot && !user.network && !user.connector;
+		}
+
+		/**
+		 * @desc get name copilot role
+		 * @param {string} dialogId
+		 * @return {string|null}
+		 * @private
+		 */
+		getCopilotRoleAvatar(dialogId)
+		{
+			const copilotMainRole = this.store.getters['dialoguesModel/copilotModel/getMainRoleByDialogId'](dialogId);
+
+			return copilotMainRole?.avatar?.small ? encodeURI(copilotMainRole?.avatar?.small) : null;
 		}
 	}
 

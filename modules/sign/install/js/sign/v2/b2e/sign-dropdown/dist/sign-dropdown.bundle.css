@@ -1,0 +1,36 @@
+.sign-b2e-dropdown {
+	border: 1px solid rgb(var(--ui-field-color-border-default));
+	border-radius: 2px;
+	cursor: pointer;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 5px 7px;
+	margin-top: 7px;
+}
+
+.sign-b2e-dropdown__text {
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	font: 14px/20px var(--ui-font-family-system);
+	color: var(--ui-color-palette-black-base);
+}
+
+.sign-b2e-dropdown__text_title {
+	color: var(--ui-color-palette-gray-90);
+	margin-right: 3px;
+}
+
+.sign-b2e-dropdown__text_caption {
+	color: rgba(83, 92, 105, 0.5);
+}
+
+.sign-b2e-dropdown__btn {
+	background: url("data:image/svg+xml;charset=utf-8,%3Csvg width='26' height='26' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23828B95'%3E%3Cpath d='M7.071 10.858l1.414-1.414 5.657 5.656-1.414 1.414z'/%3E%3Cpath d='M16.97 9.444l1.415 1.414-5.657 5.657-1.414-1.415z'/%3E%3C/g%3E%3C/svg%3E") no-repeat;
+	background-size: contain;
+	display: inline-block;
+	width: 26px;
+	min-width: 26px;
+	height: 26px;
+}

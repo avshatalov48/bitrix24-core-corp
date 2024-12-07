@@ -49,7 +49,11 @@ if ($_POST["hash"] <> '')
 				$arLogParams = array(
 					"SCHEME_ID" => $arScheme["ID"]
 				);
-				$strParams = CharsetConverter::ConvertCharset($_POST["params"], (CXDImport::DetectUTF8($_POST["params"]) ? "utf-8" : "windows-1251"), SITE_CHARSET);
+				$strParams = $_POST["params"];
+				if (!\Bitrix\Main\Text\Encoding::detectUtf8($strParams, false))
+				{
+					$strParams = \Bitrix\Main\Text\Encoding::convertEncoding($strParams, "windows-1251", "UTF-8");
+				}
 				$arParamPairs = explode("&", $strParams);
 				if (is_array($arParamPairs))
 				{
@@ -84,7 +88,11 @@ if ($_POST["hash"] <> '')
 			}
 			else
 			{
-				$strParams = CharsetConverter::ConvertCharset($_POST["params"], (CXDImport::DetectUTF8($_POST["params"]) ? "utf-8" : "windows-1251"), SITE_CHARSET);
+				$strParams = $_POST["params"];
+				if (!\Bitrix\Main\Text\Encoding::detectUtf8($strParams, false))
+				{
+					$strParams = \Bitrix\Main\Text\Encoding::convertEncoding($strParams, "windows-1251", "UTF-8");
+				}
 				if (is_array($strParams))
 				{
 					$strParams["SCHEME_ID"] = $arScheme["ID"];
@@ -96,6 +104,15 @@ if ($_POST["hash"] <> '')
 				}
 			}
 
+			foreach (["title", "message", "text_message", "url"] as $key)
+			{
+				$post[$key] = $_POST[$key];
+				if (!\Bitrix\Main\Text\Encoding::detectUtf8($post[$key], false))
+				{
+					$post[$key] = \Bitrix\Main\Text\Encoding::convertEncoding($post[$key], "Windows-1251", "UTF-8");
+				}
+			}
+
 			$arSonetFields = array(
 				"SITE_ID" => $arScheme["LID"],
 				"ENTITY_TYPE" => $arScheme["ENTITY_TYPE"],
@@ -104,10 +121,10 @@ if ($_POST["hash"] <> '')
 				"ENABLE_COMMENTS" => $arScheme["ENABLE_COMMENTS"],
 				"=LOG_DATE" => $GLOBALS["DB"]->CurrentTimeFunction(),
 				"TITLE_TEMPLATE" => false,
-				"TITLE" => CharsetConverter::ConvertCharset($_POST["title"], (CXDImport::DetectUTF8($_POST["title"]) ? "utf-8" : "windows-1251"), SITE_CHARSET),
-				"MESSAGE" => CharsetConverter::ConvertCharset($_POST["message"], (CXDImport::DetectUTF8($_POST["message"]) ? "utf-8" : "windows-1251"), SITE_CHARSET),
-				"TEXT_MESSAGE" => CharsetConverter::ConvertCharset($_POST["text_message"], (CXDImport::DetectUTF8($_POST["text_message"]) ? "utf-8" : "windows-1251"), SITE_CHARSET),
-				"URL" => CharsetConverter::ConvertCharset($_POST["url"], (CXDImport::DetectUTF8($_POST["url"]) ? "utf-8" : "windows-1251"), SITE_CHARSET),
+				"TITLE" => $post["title"],
+				"MESSAGE" => $post["message"],
+				"TEXT_MESSAGE" => $post["text_message"],
+				"URL" => $post["url"],
 				"PARAMS" => $strParams,
 				"MODULE_ID" => false,
 				"CALLBACK_FUNC" => false

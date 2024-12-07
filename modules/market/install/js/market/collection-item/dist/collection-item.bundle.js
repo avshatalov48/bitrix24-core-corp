@@ -1,12 +1,17 @@
 this.BX = this.BX || {};
-(function (exports) {
+(function (exports,market_marketLinks) {
 	'use strict';
 
 	const CollectionItem = {
 	  props: ['item'],
+	  data() {
+	    return {
+	      MarketLinks: market_marketLinks.MarketLinks
+	    };
+	  },
 	  template: `
 		<a class="market-item-container"
-		   :href="$root.getCollectionUri(item.COLLECTION_ID, item.SHOW_ON_PAGE)"
+		   :href="MarketLinks.collectionLink(item.COLLECTION_ID, item.SHOW_ON_PAGE)"
 		   data-slider-ignore-autobinding="true"
 		   data-load-content="list"
 		   @click.prevent="$root.emitLoadContent"
@@ -45,4 +50,4 @@ this.BX = this.BX || {};
 
 	exports.CollectionItem = CollectionItem;
 
-}((this.BX.Market = this.BX.Market || {})));
+}((this.BX.Market = this.BX.Market || {}),BX.Market));

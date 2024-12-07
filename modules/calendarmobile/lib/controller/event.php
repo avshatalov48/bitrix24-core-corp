@@ -2,6 +2,8 @@
 
 namespace Bitrix\CalendarMobile\Controller;
 
+use Bitrix\Calendar\Integration\Bitrix24\FeatureDictionary;
+use Bitrix\Calendar\Integration\Bitrix24Manager;
 use Bitrix\Calendar\Ui\CalendarFilter;
 use Bitrix\CalendarMobile\AhaMoments\Factory;
 use Bitrix\Main\Engine\Controller;
@@ -65,7 +67,7 @@ class Event extends Controller
 		$request = $this->getRequest();
 		$search = (string)$request->getPost('search');
 		$preset = $request->getPost('preset');
-		
+
 		$userId = \CCalendar::GetUserId();
 		$ownerId = $userId;
 		$calendarType = 'user';
@@ -81,19 +83,19 @@ class Event extends Controller
 		{
 			$sectionIds[] = (int)$section['ID'];
 		}
-		
+
 		$presetId = null;
 		$fields = [
 			'SECTION_ID' => $sectionIds,
 		];
-		
+
 		if (!empty($preset) && is_array($preset))
 		{
 			if (!empty($preset['id']))
 			{
 				$presetId = $preset['id'];
 			}
-			
+
 			if (!empty($preset['fields']))
 			{
 				$fields = array_merge($fields, $preset['fields']);
@@ -125,13 +127,21 @@ class Event extends Controller
 		];
 	}
 
+	/**
+	 * @return \Bitrix\CalendarMobile\Dto\Sharing|null
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\LoaderException
+	 * @throws \Bitrix\Main\SystemException
+	 * @throws \Bitrix\Mobile\Dto\InvalidDtoException
+	 */
 	private function getSharingInfo(): ?\Bitrix\CalendarMobile\Dto\Sharing
 	{
 		$sharing = new \Bitrix\Calendar\Sharing\Sharing(\CCalendar::GetCurUserId());
-		
+
 		return \Bitrix\CalendarMobile\Dto\Sharing::make([
 			'isEnabled' => !empty($sharing->getActiveLinkShortUrl()),
-			'isRestriction' => !\Bitrix\Calendar\Integration\Bitrix24Manager::isFeatureEnabled('calendar_sharing'),
+			'isRestriction' => !Bitrix24Manager::isFeatureEnabled(FeatureDictionary::CALENDAR_SHARING),
+			'isPromo' => Bitrix24Manager::isPromoFeatureEnabled(FeatureDictionary::CALENDAR_SHARING),
 			'shortUrl' => $sharing->getActiveLinkShortUrl(),
 			'userInfo' => $sharing->getUserInfo(),
 			'settings' => $sharing->getLinkSettings(),

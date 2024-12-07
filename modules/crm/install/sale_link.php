@@ -1402,7 +1402,7 @@ if ($billPsLocalization === 'ua')
 		$psParams[$paramName] = $paramValue;
 	}
 	unset($buyerParams);
-	$psParams[ToUpper($paySysName)."_PATH_TO_STAMP"] = array("TYPE" => "", "VALUE" => "");
+	$psParams[mb_strtoupper($paySysName)."_PATH_TO_STAMP"] = array("TYPE" => "", "VALUE" => "");
 	$arPaySystems[] = array(
 		"NAME" => Loc::getMessage("CRM_ORD_PS_BILL_UL"),
 		"PSA_NAME" => Loc::getMessage("CRM_ORD_PS_BILL_UL"),
@@ -1452,7 +1452,7 @@ if ($billPsLocalization === 'ua')
 		$psParams[$paramName] = $paramValue;
 	}
 	unset($buyerParams);
-	$psParams[ToUpper($paySysName)."_PATH_TO_STAMP"] = array("TYPE" => "", "VALUE" => "");
+	$psParams[mb_strtoupper($paySysName)."_PATH_TO_STAMP"] = array("TYPE" => "", "VALUE" => "");
 	$arPaySystems[] = array(
 		"NAME" => Loc::getMessage("CRM_ORD_PS_BILL_FL"),
 		"SORT" => 100,
@@ -1509,9 +1509,9 @@ else if ($billPsLocalization === 'kz')
 		$psParams[$paramName] = $paramValue;
 	}
 	unset($buyerParams);
-	$psParams[ToUpper($paySysName)."_COMMENT1"] = array("TYPE" => "ORDER", "VALUE" => "USER_DESCRIPTION");
-	$psParams[ToUpper($paySysName)."_COMMENT2"] = array("TYPE" => "", "VALUE" => "");
-	$psParams[ToUpper($paySysName)."_PATH_TO_STAMP"] = array("TYPE" => "", "VALUE" => "");
+	$psParams[mb_strtoupper($paySysName)."_COMMENT1"] = array("TYPE" => "ORDER", "VALUE" => "USER_DESCRIPTION");
+	$psParams[mb_strtoupper($paySysName)."_COMMENT2"] = array("TYPE" => "", "VALUE" => "");
+	$psParams[mb_strtoupper($paySysName)."_PATH_TO_STAMP"] = array("TYPE" => "", "VALUE" => "");
 	$arPaySystems[] = array(
 		"NAME" => Loc::getMessage("CRM_ORD_PS_BILL_UL"),
 		"PSA_NAME" => Loc::getMessage("CRM_ORD_PS_BILL_UL"),
@@ -1565,9 +1565,9 @@ else if ($billPsLocalization === 'kz')
 		$psParams[$paramName] = $paramValue;
 	}
 	unset($buyerParams);
-	$psParams[ToUpper($paySysName)."_COMMENT1"] = array("TYPE" => "ORDER", "VALUE" => "USER_DESCRIPTION");
-	$psParams[ToUpper($paySysName)."_COMMENT2"] = array("TYPE" => "", "VALUE" => "");
-	$psParams[ToUpper($paySysName)."_PATH_TO_STAMP"] = array("TYPE" => "", "VALUE" => "");
+	$psParams[mb_strtoupper($paySysName)."_COMMENT1"] = array("TYPE" => "ORDER", "VALUE" => "USER_DESCRIPTION");
+	$psParams[mb_strtoupper($paySysName)."_COMMENT2"] = array("TYPE" => "", "VALUE" => "");
+	$psParams[mb_strtoupper($paySysName)."_PATH_TO_STAMP"] = array("TYPE" => "", "VALUE" => "");
 	$arPaySystems[] = array(
 		"NAME" => Loc::getMessage("CRM_ORD_PS_BILL_FL"),
 		"PSA_NAME" => Loc::getMessage("CRM_ORD_PS_BILL_FL"),
@@ -1626,9 +1626,9 @@ else if ($billPsLocalization === 'by')
 		$psParams[$paramName] = $paramValue;
 	}
 	unset($buyerParams);
-	$psParams[ToUpper($paySysName)."_COMMENT1"] = array("TYPE" => "ORDER", "VALUE" => "USER_DESCRIPTION");
-	$psParams[ToUpper($paySysName)."_COMMENT2"] = array("TYPE" => "", "VALUE" => "");
-	$psParams[ToUpper($paySysName)."_PATH_TO_STAMP"] = array("TYPE" => "", "VALUE" => "");
+	$psParams[mb_strtoupper($paySysName)."_COMMENT1"] = array("TYPE" => "ORDER", "VALUE" => "USER_DESCRIPTION");
+	$psParams[mb_strtoupper($paySysName)."_COMMENT2"] = array("TYPE" => "", "VALUE" => "");
+	$psParams[mb_strtoupper($paySysName)."_PATH_TO_STAMP"] = array("TYPE" => "", "VALUE" => "");
 	$arPaySystems[] = array(
 		"NAME" => Loc::getMessage("CRM_ORD_PS_BILL_UL"),
 		"PSA_NAME" => Loc::getMessage("CRM_ORD_PS_BILL_UL"),
@@ -1683,9 +1683,9 @@ else if ($billPsLocalization === 'by')
 		$psParams[$paramName] = $paramValue;
 	}
 	unset($buyerParams);
-	$psParams[ToUpper($paySysName)."_COMMENT1"] = array("TYPE" => "ORDER", "VALUE" => "USER_DESCRIPTION");
-	$psParams[ToUpper($paySysName)."_COMMENT2"] = array("TYPE" => "", "VALUE" => "");
-	$psParams[ToUpper($paySysName)."_PATH_TO_STAMP"] = array("TYPE" => "", "VALUE" => "");
+	$psParams[mb_strtoupper($paySysName)."_COMMENT1"] = array("TYPE" => "ORDER", "VALUE" => "USER_DESCRIPTION");
+	$psParams[mb_strtoupper($paySysName)."_COMMENT2"] = array("TYPE" => "", "VALUE" => "");
+	$psParams[mb_strtoupper($paySysName)."_PATH_TO_STAMP"] = array("TYPE" => "", "VALUE" => "");
 	$arPaySystems[] = array(
 		"NAME" => Loc::getMessage("CRM_ORD_PS_BILL_FL"),
 		"PSA_NAME" => Loc::getMessage("CRM_ORD_PS_BILL_FL"),
@@ -1742,9 +1742,9 @@ else
 		$psParams[$paramName] = $paramValue;
 	}
 	unset($buyerParams);
-	$psParams[ToUpper($paySysName)."_COMMENT1"] = array("TYPE" => "ORDER", "VALUE" => "USER_DESCRIPTION");
-	$psParams[ToUpper($paySysName)."_COMMENT2"] = array("TYPE" => "", "VALUE" => "");
-	$psParams[ToUpper($paySysName)."_PATH_TO_STAMP"] = array("TYPE" => "", "VALUE" => "");
+	$psParams[mb_strtoupper($paySysName)."_COMMENT1"] = array("TYPE" => "ORDER", "VALUE" => "USER_DESCRIPTION");
+	$psParams[mb_strtoupper($paySysName)."_COMMENT2"] = array("TYPE" => "", "VALUE" => "");
+	$psParams[mb_strtoupper($paySysName)."_PATH_TO_STAMP"] = array("TYPE" => "", "VALUE" => "");
 	$arPaySystems[] = array(
 		"NAME" => Loc::getMessage("CRM_ORD_PS_BILL_UL"),
 		"PSA_NAME" => Loc::getMessage("CRM_ORD_PS_BILL_UL"),
@@ -1799,9 +1799,9 @@ else
 		$psParams[$paramName] = $paramValue;
 	}
 	unset($buyerParams);
-	$psParams[ToUpper($paySysName)."_COMMENT1"] = array("TYPE" => "ORDER", "VALUE" => "USER_DESCRIPTION");
-	$psParams[ToUpper($paySysName)."_COMMENT2"] = array("TYPE" => "", "VALUE" => "");
-	$psParams[ToUpper($paySysName)."_PATH_TO_STAMP"] = array("TYPE" => "", "VALUE" => "");
+	$psParams[mb_strtoupper($paySysName)."_COMMENT1"] = array("TYPE" => "ORDER", "VALUE" => "USER_DESCRIPTION");
+	$psParams[mb_strtoupper($paySysName)."_COMMENT2"] = array("TYPE" => "", "VALUE" => "");
+	$psParams[mb_strtoupper($paySysName)."_PATH_TO_STAMP"] = array("TYPE" => "", "VALUE" => "");
 	$arPaySystems[] = array(
 		"NAME" => Loc::getMessage("CRM_ORD_PS_BILL_FL"),
 		"PSA_NAME" => Loc::getMessage("CRM_ORD_PS_BILL_FL"),
@@ -2310,34 +2310,6 @@ if (!empty($arCatalogId) && !$bError)
 			return;
 		}
 	}
-}
-
-if(!$bError)
-{
-	//Copy perms from deals to invoices
-	$CCrmRole = new CCrmRole();
-	$dbRoles = $CCrmRole->GetList();
-
-	while($arRole = $dbRoles->Fetch())
-	{
-		$arPerms = $CCrmRole->GetRolePerms($arRole['ID']);
-
-		if(!isset($arPerms['INVOICE']) && is_array($arPerms['DEAL'] ?? null))
-		{
-			foreach ($arPerms['DEAL'] as $key => $value)
-			{
-				if(isset($value['-']) && $value['-'] != 'O')
-					$arPerms['INVOICE'][$key]['-'] = $value['-'];
-				else
-					$arPerms['INVOICE'][$key]['-'] = 'X';
-			}
-		}
-
-		$arFields = array('RELATION' => $arPerms);
-		$CCrmRole->Update($arRole['ID'], $arFields);
-	}
-
-	\Bitrix\Crm\Order\Permissions\Order::copyPermsFromInvoices();
 }
 
 if(Main\ModuleManager::isModuleInstalled('intranet'))

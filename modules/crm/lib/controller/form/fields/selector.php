@@ -7,6 +7,8 @@ use Bitrix\Crm\WebForm\EntityFieldProvider;
 use Bitrix\Main;
 use Bitrix\Crm\WebForm;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Sign\Access\AccessController;
+use Bitrix\Sign\Access\ActionDictionary;
 
 class Selector extends Main\Engine\JsonController
 {
@@ -27,7 +29,7 @@ class Selector extends Main\Engine\JsonController
 
 	protected function getFieldsList($options = []): array
 	{
-		if (!WebForm\Manager::checkReadPermission())
+		if (!$this->checkPermissionForFieldList())
 		{
 			$this->addError(new Main\Error(Loc::getMessage('CRM_CONTROLLER_FORM_FIELD_ACCESS_DENIED'), 510));
 			return [];
@@ -62,7 +64,7 @@ class Selector extends Main\Engine\JsonController
 		$fields = EntityFieldProvider::getFieldsTree($hiddenTypes, $presetId);
 		foreach ($fields as $key => $item)
 		{
-			if (strpos($key, 'DYNAMIC_') === 0)
+			if (str_starts_with($key, 'DYNAMIC_'))
 			{
 				$dynamicId = str_replace('DYNAMIC_', '', $key);
 				$fields[$key]["DYNAMIC_ID"] = \CCrmOwnerType::ResolveUserFieldEntityID($dynamicId);
@@ -70,5 +72,24 @@ class Selector extends Main\Engine\JsonController
 		}
 
 		return $fields;
+	}
+
+	public function checkPermissionForFieldList(): bool
+	{
+		$result = WebForm\Manager::checkReadPermission();
+		if (!$result && Main\Loader::includeModule('sign'))
+		{
+			$canAddDocumentB2e = AccessController::can(
+				Main\Engine\CurrentUser::get()->getId(),
+				ActionDictionary::ACTION_B2E_DOCUMENT_ADD
+			);
+			$canAddDocumentB2b = AccessController::can(
+				Main\Engine\CurrentUser::get()->getId(),
+				ActionDictionary::ACTION_DOCUMENT_ADD
+			);
+			$result = $canAddDocumentB2b || $canAddDocumentB2e;
+		}
+
+		return $result;
 	}
 }

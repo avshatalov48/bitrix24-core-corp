@@ -181,7 +181,6 @@ class MyOfficeHandler extends DocumentHandler
 		}
 
 		$fileName = $fileData->getName();
-		$fileName = $this->convertToUtf8($fileName);
 		$file = new IO\File(IO\Path::convertPhysicalToLogical($fileData->getSrc()));
 
 		$http = new HttpClient(array(

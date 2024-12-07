@@ -1,11 +1,8 @@
-/* eslint-disable flowtype/require-return-type */
-
 /**
  * @module im/messenger/controller/recent/chat/recent
  */
 jn.define('im/messenger/controller/recent/chat/recent', (require, exports, module) => {
 	const { clone } = require('utils/object');
-	const { ChatRecentCache } = require('im/messenger/cache');
 	const { Counters } = require('im/messenger/lib/counters');
 	const { Calls } = require('im/messenger/lib/integration/immobile/calls');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
@@ -28,28 +25,15 @@ jn.define('im/messenger/controller/recent/chat/recent', (require, exports, modul
 
 		bindMethods()
 		{
+			super.bindMethods();
 			this.recentAddHandler = this.recentAddHandler.bind(this);
 			this.recentUpdateHandler = this.recentUpdateHandler.bind(this);
 			this.recentDeleteHandler = this.recentDeleteHandler.bind(this);
 			this.dialogUpdateHandler = this.dialogUpdateHandler.bind(this);
+			this.commentCountersDeleteHandler = this.commentCountersDeleteHandler.bind(this);
 
-			this.firstPageHandler = this.firstPageHandler.bind(this);
 			this.departmentColleaguesGetHandler = this.departmentColleaguesGetHandler.bind(this);
-			this.stopRefreshing = this.stopRefreshing.bind(this);
-			this.renderInstant = this.renderInstant.bind(this);
-			this.loadPage = this.loadPage.bind(this);
-		}
-
-		fillStoreFromCache()
-		{
-			this.recentCache = new ChatRecentCache({
-				storeManager: this.storeManager,
-			});
-
-			const cache = this.recentCache.get();
-			this.logger.info(`${this.getClassName()}.fillStoreFromCache cache:`, cache);
-
-			return this.fillStore(cache);
+			this.initMessengerHandler = this.initMessengerHandler.bind(this);
 		}
 
 		subscribeViewEvents()
@@ -74,6 +58,7 @@ jn.define('im/messenger/controller/recent/chat/recent', (require, exports, modul
 				.on('recentModel/delete', this.recentDeleteHandler)
 				.on('dialoguesModel/add', this.dialogUpdateHandler)
 				.on('dialoguesModel/update', this.dialogUpdateHandler)
+				.on('commentModel/deleteChannelCounters', this.commentCountersDeleteHandler)
 			;
 		}
 
@@ -81,6 +66,11 @@ jn.define('im/messenger/controller/recent/chat/recent', (require, exports, modul
 		{
 			BX.addCustomEvent(EventType.messenger.afterRefreshSuccess, this.stopRefreshing);
 			BX.addCustomEvent(EventType.messenger.renderRecent, this.renderInstant);
+		}
+
+		subscribeInitMessengerEvent()
+		{
+			this.messagerInitService.onInit(this.initMessengerHandler);
 		}
 
 		/* region Events */
@@ -121,12 +111,6 @@ jn.define('im/messenger/controller/recent/chat/recent', (require, exports, modul
 
 		onLoadNextPage()
 		{
-			const canLoadNextPage = !this.pageNavigation.isPageLoading && this.pageNavigation.hasNextPage;
-			if (!canLoadNextPage)
-			{
-				return;
-			}
-
 			this.loadNextPage();
 		}
 
@@ -157,17 +141,21 @@ jn.define('im/messenger/controller/recent/chat/recent', (require, exports, modul
 					return DialogRest.readAllMessages();
 				})
 				.then((result) => {
-					this.logger.info(`${this.getClassName()}.readAllMessages result:`, result);
+					this.logger.info(`${this.constructor.name}.readAllMessages result:`, result);
 				})
 				.catch((error) => {
-					this.logger.error(`${this.getClassName()}.readAllMessages catch:`, error);
+					this.logger.error(`${this.constructor.name}.readAllMessages catch:`, error);
 				})
 			;
 		}
 
 		onRefresh()
 		{
-			MessengerEmitter.emit(EventType.messenger.refresh, true, ComponentCode.imMessenger);
+			MessengerEmitter.emit(
+				EventType.messenger.refresh,
+				{ redrawHeaderTruly: true, shortMode: true },
+				ComponentCode.imMessenger,
+			);
 		}
 
 		joinCall(callId)
@@ -251,19 +239,6 @@ jn.define('im/messenger/controller/recent/chat/recent', (require, exports, modul
 			this.updateItems(recentList);
 		}
 
-		recentDeleteHandler(mutation)
-		{
-			this.renderer.removeFromQueue(mutation.payload.data.id);
-
-			this.view.removeItem({ id: mutation.payload.data.id });
-			if (!this.pageNavigation.hasNextPage && this.view.isLoaderShown)
-			{
-				this.view.hideLoader();
-			}
-
-			this.checkEmpty();
-		}
-
 		dialogUpdateHandler(mutation)
 		{
 			const dialogId = mutation.payload.data.dialogId;
@@ -274,23 +249,36 @@ jn.define('im/messenger/controller/recent/chat/recent', (require, exports, modul
 			}
 		}
 
-		departmentColleaguesGetHandler(response)
+		commentCountersDeleteHandler(mutation)
 		{
-			const error = response.error();
-			if (error)
+			const { channelId } = mutation.payload.data;
+			const dialog = this.store.getters['dialoguesModel/getByChatId'](channelId);
+			const recentItem = clone(this.store.getters['recentModel/getById'](dialog.dialogId));
+
+			if (recentItem)
 			{
-				this.logger.error(`${this.getClassName()}.departmentColleaguesGetHandler`, error);
-
-				return;
+				this.updateItems([recentItem]);
+				Counters.update();
 			}
+		}
 
-			const userList = response.data();
+		initMessengerHandler(data)
+		{
+			void this.updatePageFromServer(data);
 
-			this.logger.log(`${this.getClassName()}.departmentColleaguesGetHandler`, userList);
+			if (data?.departmentColleagues)
+			{
+				this.departmentColleaguesGetHandler(data.departmentColleagues);
+			}
+		}
+
+		departmentColleaguesGetHandler(userList)
+		{
+			this.logger.log(`${this.constructor.name}.departmentColleaguesGetHandler`, userList);
 
 			this.store.dispatch('usersModel/set', userList)
 				.catch((err) => {
-					this.logger.error(`${this.getClassName()}.departmentColleaguesGetHandler.usersModel/set.catch:`, err);
+					this.logger.error(`${this.constructor.name}.departmentColleaguesGetHandler.usersModel/set.catch:`, err);
 				});
 		}
 	}

@@ -17,7 +17,6 @@ if (!$USER->IsAuthorized()/* || CModule::IncludeModule('extranet') && !CExtranet
 
 if ($_REQUEST['MODE'] == 'SEARCH')
 {
-	CUtil::JSPostUnescape();
 	$APPLICATION->RestartBuffer();
 	
 	$EXTERNAL = isset($_GET['EXTERNAL']) && $_GET['EXTERNAL'] != 'I' && CModule::IncludeModule('extranet') ? $_GET['EXTERNAL'] : 'I';

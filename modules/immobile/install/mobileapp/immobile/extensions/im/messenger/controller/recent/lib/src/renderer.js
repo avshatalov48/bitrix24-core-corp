@@ -9,6 +9,7 @@ jn.define('im/messenger/controller/recent/lib/renderer', (require, exports, modu
 	const { RecentConverter } = require('im/messenger/lib/converter');
 	const { Worker } = require('im/messenger/lib/helper/worker');
 	const { LoggerManager } = require('im/messenger/lib/logger');
+	const { isEqual } = require('utils/object');
 	const logger = LoggerManager.getInstance().getLogger('recent--renderer');
 
 	/**
@@ -73,19 +74,35 @@ jn.define('im/messenger/controller/recent/lib/renderer', (require, exports, modu
 		add(itemList)
 		{
 			this.view.addItems(RecentConverter.toList(itemList));
+
+			return true;
 		}
 
 		update(itemList)
 		{
 			let viewItemList = RecentConverter.toList(itemList);
 			viewItemList = viewItemList.map((item) => {
+				const collectionItem = this.view.getItem(item.id.toString());
+				if (collectionItem && isEqual(collectionItem, item))
+				{
+					return null;
+				}
+
 				return {
 					filter: { id: item.id.toString() },
 					element: item,
 				};
 			});
+			viewItemList = viewItemList.filter((item) => item);
 
-			this.view.updateItems(viewItemList);
+			if (viewItemList.length > 0)
+			{
+				this.view.updateItems(viewItemList);
+
+				return true;
+			}
+
+			return false;
 		}
 
 		removeFromQueue(itemId)
@@ -111,11 +128,18 @@ jn.define('im/messenger/controller/recent/lib/renderer', (require, exports, modu
 
 				if (itemList.length > 0)
 				{
-					isViewChanged = true;
+					const result = this[action](itemList);
+					// TODO if isViewChanged was true at least once, then we do not change it to false
+					isViewChanged = isViewChanged || result;
 
-					this[action](itemList);
-
-					logger.info(`RecentRenderer.${action} items:`, itemList);
+					if (Type.isBoolean(result) && result === false)
+					{
+						logger.info(`RecentRenderer.${action} is canceled, the exact same element already exists`);
+					}
+					else
+					{
+						logger.info(`RecentRenderer.${action} items:`, itemList);
+					}
 				}
 			});
 

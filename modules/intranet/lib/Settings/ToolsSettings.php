@@ -6,6 +6,7 @@ use Bitrix\Intranet\Settings\Controls\Section;
 use Bitrix\Intranet\Settings\Search\SearchEngine;
 use Bitrix\Main\Analytics\AnalyticsEvent;
 use Bitrix\Main\ArgumentException;
+use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
 use Bitrix\Main\Web\Json;
@@ -103,7 +104,6 @@ class ToolsSettings extends AbstractSettings
 
 	public function get(): SettingsInterface
 	{
-		global $USER;
 		$data = [];
 
 		$data['sectionTools'] = new Section(
@@ -122,7 +122,7 @@ class ToolsSettings extends AbstractSettings
 				'menuId' => $tool->getMenuItemId(),
 				'code' => $tool->getOptionCode(),
 				'subgroups' => $tool->getSubgroups(),
-				'settings-path' => $tool->getSettingsPath() ? str_replace("#USER_ID#", $USER->GetID(), $tool->getSettingsPath()) : null,
+				'settings-path' => $tool->getSettingsPath() ? str_replace("#USER_ID#", CurrentUser::get()->getId(), $tool->getSettingsPath()) : null,
 				'settings-title' => $tool->getSettingsTitle(),
 				'infohelper-slider' => $tool->getInfoHelperSlider(),
 				'default' => $tool->isDefault(),

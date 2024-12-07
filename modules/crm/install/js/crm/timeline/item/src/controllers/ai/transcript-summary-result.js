@@ -36,6 +36,7 @@ export class TranscriptSummaryResult extends Base
 			activityId: actionData.activityId,
 			ownerTypeId: actionData.ownerTypeId,
 			ownerId: actionData.ownerId,
+			languageTitle: actionData.languageTitle,
 		});
 
 		summary.open();

@@ -94,7 +94,7 @@ final class MessengerCall extends Engine\Controller
 
 		if (!Loader::includeModule('im'))
 		{
-			$this->addError(new Error("Required module `im` was not found"));
+			$this->addError(new Error("Required module 'im' was not found"));
 
 			return false;
 		}

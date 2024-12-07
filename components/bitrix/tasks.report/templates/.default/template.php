@@ -16,7 +16,7 @@ $APPLICATION->IncludeComponent(
 	'bitrix:tasks.interface.topmenu',
 	'',
 	array(
-		'USER_ID' => $arResult['USER_ID'],
+		'USER_ID' => $arResult['USER_ID'] ?? null,
 		'GROUP_ID' => $arParams['GROUP_ID'],
 		'SECTION_URL_PREFIX' => '',
 		'PATH_TO_GROUP_TASKS' => $arParams['PATH_TO_GROUP_TASKS'],
@@ -26,7 +26,7 @@ $APPLICATION->IncludeComponent(
 		'PATH_TO_USER_TASKS' => $arParams['PATH_TO_TASKS'],
 		'PATH_TO_USER_TASKS_TASK' => $arParams['PATH_TO_USER_TASKS_TASK'],
 		'PATH_TO_USER_TASKS_VIEW' => $arParams['PATH_TO_USER_TASKS_VIEW'],
-		'PATH_TO_USER_TASKS_REPORT' => $arParams['PATH_TO_TASKS_REPORT'],
+		'PATH_TO_USER_TASKS_REPORT' => $arParams['PATH_TO_TASKS_REPORT'] ?? null,
 		'PATH_TO_USER_TASKS_TEMPLATES' => $arParams['PATH_TO_USER_TASKS_TEMPLATES'],
 		'PATH_TO_USER_TASKS_PROJECTS_OVERVIEW' => $arParams['PATH_TO_USER_TASKS_PROJECTS_OVERVIEW'],
 		'PATH_TO_CONPANY_DEPARTMENT' => $arParams['PATH_TO_CONPANY_DEPARTMENT'],
@@ -64,8 +64,8 @@ if (!defined('TASKS_MUL_INCLUDED')):
 			"AJAX_ONLY" => "Y",
 			"PATH_TO_SONET_USER_PROFILE" => $arParams["~PATH_TO_USER_PROFILE"],
 			"PATH_TO_SONET_MESSAGES_CHAT" => $arParams["~PATH_TO_MESSAGES_CHAT"],
-			"DATE_TIME_FORMAT" => $arParams["~DATE_TIME_FORMAT"],
-			"SHOW_YEAR" => $arParams["SHOW_YEAR"],
+			"DATE_TIME_FORMAT" => $arParams["~DATE_TIME_FORMAT"] ?? null,
+			"SHOW_YEAR" => $arParams["SHOW_YEAR"] ?? null,
 			"NAME_TEMPLATE" => $arParams["NAME_TEMPLATE"],
 			"SHOW_LOGIN" => $arParams["SHOW_LOGIN"],
 			"PATH_TO_CONPANY_DEPARTMENT" => $arParams["~PATH_TO_CONPANY_DEPARTMENT"],
@@ -161,7 +161,13 @@ endif;
 							<span class="task-report-efficiency" title="<?php echo $report["POSITIVE"]?>"><span class="task-report-efficiency-number"><?php echo $report["MARKED_IN_REPORT"] > 0 ? round(($report["POSITIVE"] / $report["MARKED_IN_REPORT"]) * 100) : 0?></span><span class="task-report-efficiency-percent">%</span></span>
 						</td>
 					</tr>
-					<?php if (!is_set($arResult["REPORTS"][$key+1]) || $arResult["REPORTS"][$key]["DEPARTMENT_ID"] != $arResult["REPORTS"][$key+1]["DEPARTMENT_ID"]):?>
+					<?php if (
+						!is_set($arResult["REPORTS"][$key+1] ?? null)
+						|| (
+							($arResult["REPORTS"][$key]["DEPARTMENT_ID"] ?? null)
+							!= ($arResult["REPORTS"][$key+1]["DEPARTMENT_ID"] ?? null)
+						)
+					):?>
 						<?php $stats = $arResult["DEPARTMENTS"][$arResult["REPORTS"][$key]["DEPARTMENT_ID"]]["STATS"]?>
 						<tr class="task-report-item task-report-item-summary">
 							<td class="task-report-employee-column"><?php echo GetMessage("TASKS_REPORT_DEPARTMENT_SUMMARY")?>:</td>
@@ -239,7 +245,7 @@ endif;
 
 				</div>
 
-				<script type="text/javascript">
+				<script>
 
 					function OnTaskIntervalChange(select)
 					{
@@ -281,7 +287,7 @@ endif;
 						<label for="filter-field-employee" class="filter-field-title"><?php echo GetMessage("TASKS_REPORT_WORKGROUP")?></label>
 						<?php
 							$groupName = "";
-							if (intval($arResult["FILTER"]["F_GROUP_ID"]) > 0)
+							if (intval($arResult["FILTER"]["F_GROUP_ID"] ?? null) > 0)
 							{
 								$arGroup = CSocNetGroup::GetById(intval($arResult["FILTER"]["F_GROUP_ID"]));
 								if ($arGroup)
@@ -296,14 +302,14 @@ endif;
 								<a class="webform-field-textbox-clear" href=""></a>
 							</span>
 						</span>
-						<input type="hidden" name="F_GROUP_ID" value="<?php echo intval($arResult["FILTER"]["F_GROUP_ID"])?>" />
+						<input type="hidden" name="F_GROUP_ID" value="<?php echo intval($arResult["FILTER"]["F_GROUP_ID"] ?? null)?>" />
 						<?php
 							$name = $APPLICATION->IncludeComponent(
 								"bitrix:socialnetwork.group.selector", ".default", array(
 									"BIND_ELEMENT" => "task-report-filter-group",
 									"ON_SELECT" => "onFilterGroupSelect",
 									"SEARCH_INPUT" => "filter-field-group",
-									"SELECTED" => $arResult["FILTER"]["F_GROUP_ID"] ? $arResult["FILTER"]["F_GROUP_ID"] : 0
+									"SELECTED" => ($arResult["FILTER"]["F_GROUP_ID"] ?? null) ? $arResult["FILTER"]["F_GROUP_ID"] : 0
 								), null, array("HIDE_ICONS" => "Y")
 							);
 						?>
@@ -313,7 +319,7 @@ endif;
 					<label for="filter-field-employee" class="filter-field-title"><?php echo GetMessage("TASKS_REPORT_SUBORDINATE")?></label>
 					<?php
 						$userName = "";
-						if (intval($arResult["FILTER"]["F_RESPONSIBLE_ID"]) > 0)
+						if (intval($arResult["FILTER"]["F_RESPONSIBLE_ID"] ?? null) > 0)
 						{
 							$rsUser = CUser::GetById(intval($arResult["FILTER"]["F_RESPONSIBLE_ID"]));
 							if ($arUser = $rsUser->Fetch())
@@ -328,7 +334,7 @@ endif;
 							<a class="webform-field-textbox-clear" href=""></a>
 						</span>
 					</span>
-					<input type="hidden" name="F_RESPONSIBLE_ID" value="<?php echo intval($arResult["FILTER"]["F_RESPONSIBLE_ID"])?>" />
+					<input type="hidden" name="F_RESPONSIBLE_ID" value="<?php echo intval($arResult["FILTER"]["F_RESPONSIBLE_ID"] ?? null)?>" />
 					<?php
 						$name = $APPLICATION->IncludeComponent(
 							"bitrix:tasks.user.selector",
@@ -337,10 +343,10 @@ endif;
 								"MULTIPLE" => "N",
 								"NAME" => "FILTER_RESPONSIBLE_ID",
 								"INPUT_NAME" => "filter-field-employee",
-								"VALUE" => intval($arResult["FILTER"]["F_RESPONSIBLE_ID"]),
+								"VALUE" => intval($arResult["FILTER"]["F_RESPONSIBLE_ID"] ?? null),
 								"POPUP" => "Y",
 								"ON_SELECT" => "onFilterResponsibleSelect",
-								"GROUP_ID_FOR_SITE" => (intval($_GET["GROUP_ID"]) > 0 ? $_GET["GROUP_ID"] : (intval($arParams["GROUP_ID"]) > 0 ? $arParams["GROUP_ID"] : false))
+								"GROUP_ID_FOR_SITE" => (intval($_GET["GROUP_ID"] ?? null) > 0 ? $_GET["GROUP_ID"] : (intval($arParams["GROUP_ID"]) > 0 ? $arParams["GROUP_ID"] : false))
 							),
 							null,
 							array("HIDE_ICONS" => "Y")
@@ -365,7 +371,7 @@ endif;
 		<input class="textbox" type="checkbox" id="task-title-checkbox" onclick="BX.toggleClass(BX('task-report-table'), 'task-report-table-full')" />
 		<label for="task-title-checkbox"><?= GetMessage("TASKS_REPORT_SHOW_ALL")?></label>
 	</span>
-	<? if ($arParams["BACK_TO_TASKS"] != "N"):?>
+	<? if (($arParams["BACK_TO_TASKS"] ?? null) != "N"):?>
 		<span class="task-title-button-separator"></span>
 		<a href="<?= CComponentEngine::MakePathFromTemplate($arParams["PATH_TO_TASKS"], array());?>">
 			<i class="task-title-button-back-icon"></i>

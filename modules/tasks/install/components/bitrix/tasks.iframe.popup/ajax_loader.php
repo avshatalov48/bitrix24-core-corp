@@ -19,7 +19,6 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_be
 
 $APPLICATION->ShowAjaxHead();
 
-CUtil::JSPostUnescape();
 CModule::IncludeModule('tasks');
 CModule::IncludeModule('intranet');
 CModule::IncludeModule('socialnetwork');

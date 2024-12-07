@@ -3,6 +3,7 @@ namespace Bitrix\Imbot\Update;
 
 use Bitrix\Im;
 use Bitrix\Imbot;
+use Bitrix\ImBot\Bot\SaleSupport24;
 use Bitrix\Imbot\Bot\Support24;
 use Bitrix\Imbot\Bot\SupportBox;
 use Bitrix\Imbot\Bot\Partner24;
@@ -31,7 +32,7 @@ final class Agent
 				'class' => Support24::class,
 				'agent' => 'refreshAgent()',
 				'regular' => false,
-				'delay' => random_int(60, 6600),
+				'delay' => random_int(60, 3600),
 			]);
 		}
 
@@ -192,6 +193,30 @@ final class Agent
 			if (Partner24::getBotId() > 0)
 			{
 				Partner24::registerCommands(Partner24::getBotId());
+			}
+		}
+		return '';
+	}
+
+	public static function installSaleSupport24Command(): string
+	{
+		if (
+			!\Bitrix\Main\ModuleManager::isModuleInstalled('bitrix24')
+			|| !\Bitrix\Main\Loader::includeModule('im')
+			|| !\Bitrix\Main\Loader::includeModule('imbot')
+		)
+		{
+			return '';
+		}
+
+		if (
+			class_exists('\\Bitrix\\ImBot\\Bot\\SaleSupport24', true)
+			&& method_exists('\\Bitrix\\ImBot\\Bot\\SaleSupport24', 'registerCommands')
+		)
+		{
+			if (SaleSupport24::getBotId() > 0)
+			{
+				SaleSupport24::registerCommands(SaleSupport24::getBotId());
 			}
 		}
 		return '';

@@ -8,7 +8,7 @@ jn.define('im/messenger/lib/element/recent/item/copilot', (require, exports, mod
 	const { ChatTitle } = require('im/messenger/lib/element/chat-title');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { merge } = require('utils/object');
-	const AppTheme = require('apptheme');
+	const { Theme } = require('im/lib/theme');
 
 	/**
 	 * @class CopilotItem
@@ -45,8 +45,7 @@ jn.define('im/messenger/lib/element/recent/item/copilot', (require, exports, mod
 		 */
 		createCounterStyle()
 		{
-			const color = AppTheme.colors.accentMainCopilot
-				? AppTheme.colors.accentMainCopilot : AppTheme.colors.accentMainPrimaryalt;
+			const color = Theme.colors.accentMainCopilot ?? Theme.colors.accentMainPrimaryalt;
 			this.styles.counter.backgroundColor = color;
 
 			return this;
@@ -67,7 +66,7 @@ jn.define('im/messenger/lib/element/recent/item/copilot', (require, exports, mod
 			const isYourMessage = item.message.senderId === serviceLocator.get('core').getUserId();
 			if (isYourMessage)
 			{
-				this.subtitle = Loc.getMessage('IMMOBILE_ELEMENT_RECENT_YOU_WROTE') + message.text;
+				this.subtitle = Loc.getMessage('IMMOBILE_ELEMENT_RECENT_YOU_WROTE') + this.getMessageText(item);
 
 				return this;
 			}
@@ -75,7 +74,7 @@ jn.define('im/messenger/lib/element/recent/item/copilot', (require, exports, mod
 			const hasAuthor = item.message.senderId;
 			if (!hasAuthor)
 			{
-				this.subtitle = message.text;
+				this.subtitle = this.getMessageText(item);
 
 				return this;
 			}
@@ -91,7 +90,7 @@ jn.define('im/messenger/lib/element/recent/item/copilot', (require, exports, mod
 				authorInfo = `${user.name}: `;
 			}
 
-			this.subtitle = authorInfo + message.text;
+			this.subtitle = authorInfo + this.getMessageText(item);
 
 			return this;
 		}

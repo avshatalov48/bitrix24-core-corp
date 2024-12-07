@@ -124,4 +124,15 @@ class SummaryFactory
 			throw new ArgumentException('Only contact or company supported');
 		}
 	}
+
+	public function getDynamicTypeSummary(int $typeId): ?DynamicTypeSummary
+	{
+		$type = Container::getInstance()->getType($typeId);
+		if (!$type)
+		{
+			return null;
+		}
+
+		return new DynamicTypeSummary(Container::getInstance()->getDynamicFactoryByType($type));
+	}
 }

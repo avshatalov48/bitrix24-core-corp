@@ -275,7 +275,7 @@ $taxValue = isset($arResult['TAX_VALUE_WT']) ? $arResult['TAX_VALUE_WT'] : 0.00;
 		</div>
 	</div>
 </div>
-<script type="text/javascript">
+<script>
 if (!typeof(BX.CrmProductEditor) != 'undefined')
 {
 	BX.CrmProductSavingMode =

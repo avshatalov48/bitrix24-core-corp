@@ -271,12 +271,14 @@ if (isset($arAllowableMethods["DELETE"])) unset($arAllowableMethods["DELETE"]);
 				if (!isset($collectionProps))
 				{
 					$collectionProps = $this->ConvertPropertiesToArray($arResourceProps);
-					$response->AddLine("<h3>Collection listing: %s</h3>", htmlspecialcharsbx($collectionProps['DAV:displayname']));
+					$response->AddLine("<h3>Collection listing: %s</h3>", htmlspecialcharsbx($collectionProps['DAV:displayname'] ?? null));
 					continue;
 				}
 
 				if (!$n++)
+				{
 					$response->AddLine("<table>\n\t<tr class='th'><th>#</th><th>Name</th><th>Size</th><th>Last modified</th><th>ETag</th><th>Content type</th><th>Resource type</th></tr>");
+				}
 
 				$props = $this->ConvertPropertiesToArray($arResourceProps);
 
@@ -291,10 +293,10 @@ if (isset($arAllowableMethods["DELETE"])) unset($arAllowableMethods["DELETE"]);
 					$name = basename($resource->GetPath());
 				}
 				$response->AddLine("\t<tr class='$class'>\n\t\t<td>%s</td>\n\t\t<td><a href=\"%s\">%s</td>", $n, htmlspecialcharsbx('/bitrix/groupdav.php'.$resource->GetPath()), htmlspecialcharsbx($name));
-				$response->AddLine("\t\t<td>%s</td>", $props['DAV:getcontentlength']);
+				$response->AddLine("\t\t<td>%s</td>", $props['DAV:getcontentlength'] ?? null);
 				$response->AddLine("\t\t<td>%s</td>", (!empty($props['DAV:getlastmodified']) ? date('Y-m-d H:i:s', $props['DAV:getlastmodified']) : ''));
-				$response->AddLine("\t\t<td>%s</td>", $props['DAV:getetag']);
-				$response->AddLine("\t\t<td>%s</td>", htmlspecialcharsbx($props['DAV:getcontenttype']));
+				$response->AddLine("\t\t<td>%s</td>", $props['DAV:getetag'] ?? null);
+				$response->AddLine("\t\t<td>%s</td>", htmlspecialcharsbx($props['DAV:getcontenttype'] ?? null));
 				$response->AddLine("\t\t<td>%s</td>\n\t</tr>", $this->RenderPropertyValue($props['DAV:resourcetype']));
 			}
 

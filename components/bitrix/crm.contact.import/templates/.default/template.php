@@ -137,7 +137,7 @@ $APPLICATION->IncludeComponent(
 );
 
 if(!empty($arUserSearchFields)):
-?><script type="text/javascript">
+?><script>
 	BX.ready(
 		function()
 		{<?
@@ -165,7 +165,7 @@ if(!empty($arUserSearchFields)):
 endif;
 CJSCore::Init(array('crm_import_csv'));?>
 
-<script type="text/javascript">
+<script>
 	BX.ready(
 		function()
 		{

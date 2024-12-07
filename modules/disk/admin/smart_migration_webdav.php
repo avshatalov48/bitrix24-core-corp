@@ -3805,7 +3805,7 @@ class SmartMigrationWebdav
 		}
 		else
 		{
-			$this->useGZipCompression = (function_exists("gzcompress") && !defined('BX_UTF'));
+			$this->useGZipCompression = false;
 		}
 		$sqlHelper = $this->connection->getSqlHelper();
 
@@ -4558,7 +4558,7 @@ class SmartMigrationWebdav
 			}
 
 			$enumValueInfos = array();
-			$rs = $DB->Query("SELECT * FROM b_user_field_lang WHERE USER_FIELD_ID = ".intval($arUserField['ID']), false, "FILE: ".__FILE__."<br>LINE: ".__LINE__);
+			$rs = $DB->Query("SELECT * FROM b_user_field_lang WHERE USER_FIELD_ID = ".intval($arUserField['ID']));
 			while($ar = $rs->Fetch())
 			{
 				foreach(array("EDIT_FORM_LABEL", "LIST_COLUMN_LABEL", "LIST_FILTER_LABEL", "ERROR_MESSAGE", "HELP_MESSAGE") as $label)

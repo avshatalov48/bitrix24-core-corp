@@ -229,6 +229,7 @@ jn.define('crm/mail/sending-form', (require, exports, module) => {
 				const {
 					value = false,
 					customData = {},
+					isEmailHidden,
 				} = item;
 
 				if (value)
@@ -273,6 +274,7 @@ jn.define('crm/mail/sending-form', (require, exports, module) => {
 						id: 0,
 						name: value,
 						type: 'email',
+						isEmailHidden,
 						...additionalData,
 					};
 
@@ -1030,6 +1032,7 @@ jn.define('crm/mail/sending-form', (require, exports, module) => {
 									title: item.name,
 									id: item.id,
 									type: item.type,
+									isEmailHidden: item.isEmailHidden,
 								})),
 							},
 						});

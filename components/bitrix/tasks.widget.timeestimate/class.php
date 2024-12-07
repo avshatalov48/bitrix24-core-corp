@@ -17,6 +17,10 @@ class TasksWidgetTimeEstimateComponent extends TasksBaseComponent
 			$this->arParams['ENTITY_DATA'] = array();
 		}
 
+		$this->arResult['TIME_TRACKING_RESTRICT'] = static::tryParseBooleanParameter(
+			$this->arParams['TIME_TRACKING_RESTRICT']
+		);
+
 		return $this->errors->checkNoFatals();
 	}
 

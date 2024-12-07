@@ -134,7 +134,7 @@ class CIntranetCalendarWS extends IWebService
 				'Wrong GUID - '.$listName
 			);
 		}
-		$listName = ToUpper(CIntranetUtils::makeGUID($listName_original));
+		$listName = mb_strtoupper(CIntranetUtils::makeGUID($listName_original));
 
 		$obRes = CIBlockSection::GetList(array('SORT' => 'ASC'), array('XML_ID' => $listName_original));
 		if (!$arSection = $obRes->Fetch())
@@ -399,7 +399,7 @@ class CIntranetCalendarWS extends IWebService
 			return new CSoapFault('Data error', 'Wrong GUID - '.$listName);
 		}
 
-		$listName = ToUpper(CIntranetUtils::makeGUID($listName_original));
+		$listName = mb_strtoupper(CIntranetUtils::makeGUID($listName_original));
 
 		$obRes = CIBlockSection::GetList(array('SORT' => 'ASC'), array('XML_ID' => $listName_original));
 		if (!$arSection = $obRes->Fetch())
@@ -514,7 +514,7 @@ class CIntranetCalendarWS extends IWebService
 
 		$obResponse = new CXMLCreator('Results');
 
-		$listName = ToUpper(CIntranetUtils::makeGUID($listName_original));
+		$listName = mb_strtoupper(CIntranetUtils::makeGUID($listName_original));
 
 		$obRes = CIBlockSection::GetList(array('SORT' => 'ASC'), array('XML_ID' => $listName_original));
 		if (!$arSection = $obRes->Fetch())
@@ -612,7 +612,7 @@ class CIntranetCalendarWS extends IWebService
 			}
 			elseif ($arData['_command'] == 'New' || $arData['_command'] == 'Update')
 			{
-				$q = ToLower($arData['Description']);
+				$q = mb_strtolower($arData['Description']);
 				if (($pos = mb_strrpos($q, '</body>')) !== false) $arData['Description'] = mb_substr($arData['Description'], 0, $pos);
 				if (($pos = mb_strpos($q, '<body>')) !== false) $arData['Description'] = mb_substr($arData['Description'], $pos + 6);
 

@@ -44,7 +44,7 @@ class BasketItemFiller
 			'DISCOUNT_PRICE' => 'floatval',
 			'WEIGHT' => 'floatval',
 			'QUANTITY' => 'floatval',
-			'VAT_RATE' => 'floatval',
+			'VAT_RATE' => '?floatval',
 			'PRODUCT_ID' => 'intval',
 			'SORT' => 'intval',
 			'MEASURE_CODE' => 'intval',
@@ -61,11 +61,14 @@ class BasketItemFiller
 			$currentValue = $this->basketItem->getField($name);
 			$isFirstSetValue = is_null($currentValue) && isset($value);
 
-			$typeFn = $types[$name] ?? null;
-			if ($typeFn)
+			$type = $types[$name] ?? null;
+			if ($type)
 			{
-				$value = $typeFn($value);
-				$currentValue = $typeFn($currentValue);
+				$isNullable = ($type[0] === '?');
+				$typeFn = $isNullable ? substr($type, 1) : $type;
+
+				$value = ($isNullable && is_null($value)) ? null : $typeFn($value);
+				$currentValue = ($isNullable && is_null($currentValue)) ? null : $typeFn($currentValue);
 			}
 
 			// convert to string, for correct comparing float values

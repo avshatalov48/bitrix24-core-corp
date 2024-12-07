@@ -1,11 +1,16 @@
-import { TodoEditor, TodoEditorMode } from 'crm.activity.todo-editor';
-import { ajax as Ajax, Tag, Text, Type } from 'main.core';
-import { BaseEvent, EventEmitter } from 'main.core.events';
+import { TodoEditorMode, TodoEditorV2 } from 'crm.activity.todo-editor-v2';
+import { ajax as Ajax, Loc, Tag, Text, Type } from 'main.core';
+import { EventEmitter } from 'main.core.events';
+import type { PopupOptions } from 'main.popup';
 import { Popup } from 'main.popup';
-import { ButtonColor, ButtonSize, ButtonState, CancelButton, SaveButton } from 'ui.buttons';
+import { ButtonColor, ButtonSize, CancelButton, SaveButton } from 'ui.buttons';
 import { UI } from 'ui.notification';
 
 import './adding-popup.css';
+
+type Context = {
+	analytics: Object;
+}
 
 /**
  * @event onSave
@@ -17,23 +22,34 @@ export class AddingPopup
 	#entityTypeId: Number = null;
 	#currentUser: Object = null;
 	#pingSettings: Object = null;
+	#calendarSettings: Object = null;
+	#colorSettings: Object = null;
 	#popup: ?Popup = null;
 	#popupContainer: HTMLElement = null;
-	#todoEditor: ?TodoEditor = null;
+	#popupToDoEditorContainer: HTMLElement = null;
+	#todoEditor: TodoEditorV2 | null = null;
 	#eventEmitter: EventEmitter = null;
+	#context: Context = {};
 
-	constructor(entityTypeId: Number, entityId: Number, currentUser: Object, pingSettings: Object, params: Object)
+	constructor(entityTypeId: Number, entityId: Number, currentUser: Object, settings: Object, params: Object)
 	{
 		this.#entityId = Text.toInteger(entityId);
 		this.#entityTypeId = Text.toInteger(entityTypeId);
 		this.#currentUser = currentUser;
-		this.#pingSettings = pingSettings;
 
-		this.#eventEmitter = new EventEmitter;
+		this.#eventEmitter = new EventEmitter();
 		this.#eventEmitter.setEventNamespace('Crm.Activity.AddingPopup');
+
+		if (Type.isObject(settings))
+		{
+			this.#pingSettings = settings.pingSettings ?? null;
+			this.#calendarSettings = settings.calendarSettings ?? null;
+			this.#colorSettings = settings.colorSettings ?? null;
+		}
 
 		if (!Type.isPlainObject(params))
 		{
+			// eslint-disable-next-line no-param-reassign
 			params = {};
 		}
 
@@ -47,34 +63,25 @@ export class AddingPopup
 				}
 			}
 		}
+
+		if (Type.isPlainObject(params.context))
+		{
+			this.#context = params.context;
+		}
 	}
 
-	show(bindElement: HTMLElement, mode: String = TodoEditorMode.ADD)
+	async show(mode: String = TodoEditorMode.ADD)
 	{
 		const popup = this.#createPopupIfNotExists();
-		popup.setBindElement(bindElement);
+
 		if (popup.isShown())
 		{
 			return;
 		}
 
-		if (!this.#popupContainer.hasChildNodes())
+		if (!this.#popupToDoEditorContainer.hasChildNodes())
 		{
-			// just created, initialize
-			this.#todoEditor = new TodoEditor({
-				container: this.#popupContainer,
-				ownerTypeId: this.#entityTypeId,
-				ownerId: this.#entityId,
-				currentUser: this.#currentUser,
-				pingSettings: this.#pingSettings,
-				events: {
-					onChangeDescription: this.#onChangeEditorDescription.bind(this),
-					onSaveHotkeyPressed: this.#onEditorSaveHotkeyPressed.bind(this),
-					onChangeUploaderContainerSize: this.#onChangeUploaderContainerSize.bind(this),
-					onFocus: this.#onFocus.bind(this),
-				},
-				popupMode: true
-			});
+			await this.#createToDoEditor();
 
 			popup.setButtons([
 				new SaveButton({
@@ -84,7 +91,7 @@ export class AddingPopup
 					round: true,
 					events: {
 						click: this.#saveAndClose.bind(this),
-					}
+					},
 				}),
 				new CancelButton({
 					id: 'cancel',
@@ -92,7 +99,7 @@ export class AddingPopup
 					round: true,
 					events: {
 						click: () => popup.close(),
-					}
+					},
 				}),
 			]);
 
@@ -101,29 +108,24 @@ export class AddingPopup
 				this.#todoEditor.show();
 			});
 			popup.subscribe('onAfterShow', () => {
-				this.#actualizePopupLayout(this.#todoEditor.getDescription());
+				this.#actualizePopupLayout();
 				this.#todoEditor.setFocused();
 			});
 			popup.subscribe('onAfterClose', () => {
-				this.#todoEditor.resetToDefaults().then(()=>{
+				void this.#todoEditor.resetToDefaults().then(() => {
 					this.#eventEmitter.emit('onClose');
 				});
 			});
 			popup.subscribe('onShow', () => {
-				const { mode, activity } = popup.params;
-				if (mode === TodoEditorMode.UPDATE && activity)
+				const { mode: todoEditorMode, activity } = popup.params;
+				if (todoEditorMode === TodoEditorMode.UPDATE && activity)
 				{
 					this.#todoEditor
-						.setMode(mode)
+						.setMode(todoEditorMode)
 						.setActivityId(activity.id)
 						.setDescription(activity.description)
 						.setDeadline(activity.deadline)
 					;
-
-					if (Type.isArrayFilled(activity.storageElementIds))
-					{
-						this.#todoEditor.setStorageElementIds(activity.storageElementIds);
-					}
 				}
 			});
 		}
@@ -131,24 +133,60 @@ export class AddingPopup
 		this.#prepareAndShowPopup(popup, mode);
 	}
 
+	async #createToDoEditor(): TodoEditorV2
+	{
+		// just created, initialize
+		const params = {
+			container: this.#popupToDoEditorContainer,
+			ownerTypeId: this.#entityTypeId,
+			ownerId: this.#entityId,
+			currentUser: this.#currentUser,
+			pingSettings: this.#pingSettings,
+			events: {
+				onSaveHotkeyPressed: this.#onEditorSaveHotkeyPressed.bind(this),
+				onChangeUploaderContainerSize: this.#onChangeUploaderContainerSize.bind(this),
+				onFocus: this.#onFocus.bind(this),
+			},
+			popupMode: true,
+		};
+
+		const analytics = this.#context?.analytics ?? {};
+		const section = analytics.c_section ?? null;
+		const subSection = analytics.c_sub_section ?? null;
+
+		params.calendarSettings = this.#calendarSettings;
+		params.colorSettings = this.#colorSettings;
+		params.defaultDescription = '';
+		params.analytics = {
+			section,
+			subSection,
+		};
+
+		this.#todoEditor = new TodoEditorV2(params);
+	}
+
 	#prepareAndShowPopup(popup: Popup, mode: String = TodoEditorMode.ADD): void
 	{
+		// eslint-disable-next-line no-param-reassign
 		popup.params.mode = mode;
 		if (mode === TodoEditorMode.ADD)
 		{
 			popup.show();
+
 			return;
 		}
 
 		if (mode === TodoEditorMode.UPDATE)
 		{
-			this.#fetchNearActivity().then(data => {
+			void this.#fetchNearActivity().then((data) => {
 				if (data)
 				{
+					// eslint-disable-next-line no-param-reassign
 					popup.params.activity = data;
 					popup.show();
 				}
 			});
+
 			return;
 		}
 
@@ -163,9 +201,9 @@ export class AddingPopup
 		};
 
 		return new Promise((resolve, reject) => {
-			Ajax.runAction('crm.activity.todo.getNearest', {data})
-				.then(({data}) => resolve(data))
-				.catch(response => {
+			Ajax.runAction('crm.activity.todo.getNearest', { data })
+				.then(({ data: responseData }) => resolve(responseData))
+				.catch((response) => {
 					UI.Notification.Center.notify({
 						content: response.errors[0].message,
 						autoHideDelay: 5000,
@@ -179,43 +217,51 @@ export class AddingPopup
 	{
 		if (!this.#popup || this.#popup.isDestroyed())
 		{
-			this.#popupContainer = Tag.render`<div class="crm-activity-adding-popup-container"></div>`;
-			this.#popup = new Popup({
-				id: `kanban_planner_menu_${this.#entityId}`,
-				overlay: {
-					opacity: 0,
-				},
-				content: this.#popupContainer,
-				cacheable: false,
-				isScrollBlock: true,
-				className: 'crm-activity-adding-popup',
-				closeByEsc: true,
-				closeIcon: false,
-				angle: {
-					offset: 27,
-				},
-				padding: 16,
-				minWidth: 500,
-				maxWidth: 550,
-				minHeight: 150,
-				maxHeight: 400,
-			});
+			this.#popupToDoEditorContainer = Tag.render`<div></div>`;
+			this.#popupContainer = Tag.render`
+				<div class="crm-activity-adding-popup-container">
+					${this.#getPopupTitle()}
+					${this.#popupToDoEditorContainer}
+				</div>
+			`;
+
+			this.#popup = new Popup(this.#getPopupParams());
 		}
 
 		return this.#popup;
 	}
 
-	bindPopup(bindElement: HTMLElement): void
+	#getPopupTitle(): ?HTMLDivElement
 	{
-		if (!this.#popup)
-		{
-			return;
-		}
+		return Tag.render`
+			<div class="crm-activity-adding-popup-title">
+				${Loc.getMessage('CRM_ACTIVITY_ADDING_POPUP_TITLE')}
+			</div>
+		`;
+	}
 
-		if (bindElement !== this.#popup.bindElement)
-		{
-			this.#popup.setBindElement(bindElement);
-		}
+	#getPopupParams(): PopupOptions
+	{
+		const { innerWidth } = window;
+
+		return {
+			id: `kanban_planner_menu_${this.#entityId}`,
+			content: this.#popupContainer,
+			cacheable: false,
+			isScrollBlock: true,
+			className: 'crm-activity-adding-popup',
+			closeByEsc: true,
+			closeIcon: false,
+			padding: 16,
+			minWidth: 537,
+			width: Math.round(innerWidth * 0.45),
+			maxWidth: 737,
+			minHeight: 150,
+			maxHeight: 482,
+			overlay: {
+				opacity: 50,
+			},
+		};
 	}
 
 	#saveAndClose(): void
@@ -239,7 +285,8 @@ export class AddingPopup
 		}
 	}
 
-	#actualizePopupLayout(description): void{
+	#actualizePopupLayout(description): void
+	{
 		if (this.#popup && this.#popup.isShown())
 		{
 			this.#eventEmitter.emit('onActualizePopupLayout', { entityId: this.#entityId });
@@ -247,24 +294,7 @@ export class AddingPopup
 			this.#popup.adjustPosition({
 				forceBindPosition: true,
 			});
-
-			const saveButton = this.#popup.getButton('save');
-
-			if (!description.length && saveButton && !saveButton.getState())
-			{
-				saveButton.setState(ButtonState.DISABLED);
-			}
-			else if (description.length && saveButton && saveButton.getState() === ButtonState.DISABLED)
-			{
-				saveButton.setState(null);
-			}
 		}
-	}
-
-	#onChangeEditorDescription(event: BaseEvent)
-	{
-		const {description} = event.getData();
-		this.#actualizePopupLayout(description);
 	}
 
 	#onEditorSaveHotkeyPressed()

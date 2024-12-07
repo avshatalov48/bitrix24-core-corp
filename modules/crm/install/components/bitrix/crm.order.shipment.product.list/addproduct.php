@@ -14,7 +14,6 @@ if (!CModule::IncludeModule('crm') || !CCrmSecurityHelper::IsAuthorized() || !ch
 }
 
 global $APPLICATION;
-CUtil::JSPostUnescape();
 $APPLICATION->RestartBuffer();
 
 if(!isset($_REQUEST['shipmentId']))
@@ -60,7 +59,7 @@ foreach($shipmentItemCollection as $shipmentItem)
 ?><!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="<?=LANGUAGE_ID ?>" lang="<?=LANGUAGE_ID ?>">
 <head>
-	<script type="text/javascript">
+	<script>
 		// Prevent loading page without header and footer
 		if(window === window.top)
 		{

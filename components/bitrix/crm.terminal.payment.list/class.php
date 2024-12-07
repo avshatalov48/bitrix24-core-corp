@@ -63,6 +63,8 @@ class CrmTerminalPaymentList extends \CBitrixComponent implements Main\Engine\Co
 		$this->arResult['ROWS'] = $this->getRows();
 		$this->arResult['ACTION_PANEL'] = $this->getGroupActionPanel();
 		$this->arResult['SHOW_ACTION_PANEL'] = !empty($this->arResult['ACTION_PANEL']);
+		$this->arResult['USE_CHECKBOX_LIST_FOR_SETTINGS_POPUP'] = \Bitrix\Main\ModuleManager::isModuleInstalled('ui');
+		$this->arResult['ENABLE_FIELDS_SEARCH'] = 'Y';
 	}
 
 	private function getGroupActionPanel(): ?array
@@ -231,6 +233,11 @@ class CrmTerminalPaymentList extends \CBitrixComponent implements Main\Engine\Co
 				'FILTER_PRESETS' => [],
 				'ENABLE_LABEL' => true,
 				'THEME' => Bitrix\Main\UI\Filter\Theme::LIGHT,
+				'CONFIG' => [
+					'popupWidth' => 800,
+				],
+				'USE_CHECKBOX_LIST_FOR_SETTINGS_POPUP' => \Bitrix\Main\ModuleManager::isModuleInstalled('ui'),
+				'ENABLE_FIELDS_SEARCH' => 'Y',
 			];
 			UI\Toolbar\Facade\Toolbar::addFilter($filterOptions);
 

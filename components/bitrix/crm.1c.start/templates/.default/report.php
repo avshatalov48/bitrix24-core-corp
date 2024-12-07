@@ -64,7 +64,7 @@ $APPLICATION->SetTitle(Loc::getMessage("CRM_1C_START_REPORT_NAME"));
 		<div class="ui-slider-content-box">
 			<hr class="crm-onec-separator">
 			<div id="b24-integration-active" class="crm-onec-button">
-				<div class="ui-btn ui-btn-primary" onclick="window.open('http://www.1c-bitrix.ru/download/1c/handle/Bitrix24 Export printed forms and reports module installer.epf')">
+				<div class="ui-btn ui-btn-primary" onclick="window.open('https://www.1c-bitrix.ru/download/1c/handle/Bitrix24 Export printed forms and reports module installer.epf')">
 					<?=GetMessage("CRM_1C_START_REPORT_DOWNLOAD")?>
 				</div>
 				<div class="ui-btn ui-btn-default" id="b24-integration-active-button">

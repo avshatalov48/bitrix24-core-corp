@@ -1,5 +1,4 @@
 (() => {
-
 	class ProjectTabs
 	{
 		constructor()
@@ -21,7 +20,6 @@
 		currentUserId: BX.componentParameters.get('currentUserId', 0),
 		item: BX.componentParameters.get('item', {}),
 		guid: BX.componentParameters.get('guid', ''),
-		tabs: tabs,
+		tabs,
 	});
-
 })();

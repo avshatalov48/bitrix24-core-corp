@@ -33,10 +33,12 @@ class Input extends Base\Input
 		if ($this->command === 'receivingMessage')
 		{
 			$this->params = $this->prepareMessageParams($params);
+			$subjectId = (int)$params['imSubject'];
 		}
 		else
 		{
 			$this->params = $params;
+			$subjectId = $this->getSubjectIdFromPreparedMessageParams($params);
 		}
 		$this->data = [$this->params];
 
@@ -45,7 +47,7 @@ class Input extends Base\Input
 		$sender = SmsManager::getSenderById(MessageService\Sender\Sms\Ednaru::ID);
 		if ($sender instanceof MessageService\Sender\Base)
 		{
-			$this->line = $sender->getLineId();
+			$this->line = $sender->getLineId($subjectId);
 		}
 		else
 		{
@@ -140,5 +142,19 @@ class Input extends Base\Input
 	private function getSentTemplateMessage(string $from, string $to): string
 	{
 		return SmsManager::getSenderById(MessageService\Sender\Sms\Ednaru::ID)->getSentTemplateMessage($from, $to);
+	}
+
+	private function getSubjectIdFromPreparedMessageParams(array $params): ?int
+	{
+		if (isset($params['chat']['id']))
+		{
+			$parts = explode('@', $params['chat']['id']);
+			if (isset($parts[1]) && !empty($parts[1]))
+			{
+				return (int)$parts[1];
+			}
+		}
+
+		return null;
 	}
 }

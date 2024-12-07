@@ -6,6 +6,7 @@ jn.define('calendar/event-list-view/day-header', (require, exports, module) => {
 	const { Moment } = require('utils/date');
 	const { dayOfWeekMonth, fullDate } = require('utils/date/formats');
 	const { PureComponent } = require('layout/pure-component');
+	const { Color } = require('tokens');
 
 	/**
 	 * @class DayHeader
@@ -38,7 +39,7 @@ jn.define('calendar/event-list-view/day-header', (require, exports, module) => {
 						paddingRight: 20,
 						paddingTop: 10,
 						paddingBottom: 10,
-						backgroundColor: AppTheme.colors.bgContentPrimary,
+						backgroundColor: Color.bgContentPrimary.toHex(),
 					},
 				},
 				Text(

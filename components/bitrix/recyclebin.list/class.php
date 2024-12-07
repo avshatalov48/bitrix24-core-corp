@@ -12,6 +12,7 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Filter;
 use Bitrix\Main\UI\PageNavigation;
+use Bitrix\Recyclebin\Internals;
 use Bitrix\Recyclebin\Internals\Models\RecyclebinTable;
 use Bitrix\Recyclebin\Internals\UI;
 use Bitrix\Recyclebin\Internals\User;
@@ -24,37 +25,66 @@ CBitrixComponent::includeComponentClass("bitrix:recyclebin.base");
 class RecyclebinListComponent extends RecyclebinBaseComponent implements Errorable, Controllerable
 {
 	private const FILTER_ID = 'RECYCLEBIN_LIST';
-
-	protected array $pageSizes = [
-		["NAME" => "5", "VALUE" => "5"],
-		["NAME" => "10", "VALUE" => "10"],
-		["NAME" => "20", "VALUE" => "20"],
-		["NAME" => "50", "VALUE" => "50"],
-		["NAME" => "100", "VALUE" => "100"],
-	];
+	private ?Internals\Filter\Filter $filter = null;
 
 	public function __construct($component = null)
 	{
 		parent::__construct($component);
+
 		$this->init();
 	}
 
 	private function init(): void
 	{
-		if (!Loader::includeModule('recyclebin'))
+		if (Loader::includeModule('recyclebin'))
 		{
-			return;
+			$this->setTotalCountHtml();
 		}
-		$this->setTotalCountHtml();
+	}
+
+	private function getFilter(): Internals\Filter\Filter
+	{
+		if ($this->filter === null)
+		{
+			$filterId = $this->arParams['GRID_ID'] ?? self::FILTER_ID;
+			$filterParams = [
+				'moduleId' => $this->arParams['MODULE_ID'],
+				'entityType' => $this->arParams['ENTITY_TYPE'] ?? null,
+				'userId' => $this->arParams['USER_ID'],
+				'modulesList' => $this->arParams['MODULES_LIST'] ?? null,
+				'customPresets' => $this->arParams['FILTER_PRESETS'] ?? [],
+				'entityTypes' => $this->arResult['ENTITY_TYPES'] ?? [],
+			];
+
+			$this->filter = new Internals\Filter\Filter($filterId, $filterParams);
+		}
+
+		return $this->filter;
+	}
+
+	private function setTotalCountHtml(): void
+	{
+		$this->arResult['TOTAL_ROWS_COUNT_HTML'] = '
+			<div id="recyclebin_row_count_wrapper" class="recyclebin-list-row-count-wrapper">'
+				. Loc::getMessage('RECYCLEBIN_TOTAL_COUNT') .
+				'<a id="recyclebin_row_count" onclick="BX.Recyclebin.getTotalCount()">'
+				. Loc::getMessage('RECYCLEBIN_SHOW_TOTAL_COUNT') .
+				'</a>
+				<svg class="recyclebin-circle-loader-circular" viewBox="25 25 50 50">
+					<circle class="recyclebin-circle-loader-path" cx="50" cy="50" r="20" fill="none" stroke-width="1" stroke-miterlimit="10">
+					</circle>
+				</svg>
+			</div>
+		';
 	}
 
 	protected function doPreActions()
 	{
 		Loader::includeModule('recyclebin');
 
-		if(!isset($this->arParams['GRID_ID']))
+		if (!isset($this->arParams['GRID_ID']))
 		{
-			$this->arParams['GRID_ID'] = 'RECYCLEBIN_LIST';
+			$this->arParams['GRID_ID'] = self::FILTER_ID;
 		}
 
 		$this->arParams['FILTER_ID'] = $this->arParams['GRID_ID'];
@@ -101,6 +131,8 @@ class RecyclebinListComponent extends RecyclebinBaseComponent implements Errorab
 		$this->arResult['ENTITY_MESSAGES'] = $this->arResult['ENTITY_MESSAGES'] ?? [];
 		$this->arResult['ENTITY_TYPES'] = $this->arResult['ENTITY_TYPES'] ?? [];
 		$this->arResult['ENTITY_ADDITIONAL_DATA'] = $this->arResult['ENTITY_ADDITIONAL_DATA'] ?? [];
+
+		$this->arResult['USE_FOR_ALL_CHECKBOX'] = (($this->arParams['USE_FOR_ALL_CHECKBOX'] ?? 'N') === 'Y');
 	}
 
 	private function getGridHeaders()
@@ -216,10 +248,21 @@ class RecyclebinListComponent extends RecyclebinBaseComponent implements Errorab
 
 		//region NAV
 		$this->arResult['NAV_OBJECT'] = $nav;
-		$this->arResult['PAGE_SIZES'] = $this->pageSizes;
+		$this->arResult['PAGE_SIZES'] = $this->getPageSizes();
 		//endregion
 
 		return $result;
+	}
+
+	private function getPageSizes(): array
+	{
+		return [
+			['NAME' => '5', 'VALUE' => '5'],
+			['NAME' => '10', 'VALUE' => '10'],
+			['NAME' => '20', 'VALUE' => '20'],
+			['NAME' => '50', 'VALUE' => '50'],
+			['NAME' => '100', 'VALUE' => '100'],
+		];
 	}
 
 	private function getPageSize()
@@ -253,248 +296,25 @@ class RecyclebinListComponent extends RecyclebinBaseComponent implements Errorab
 			]
 		);
 
-		$gridSort = $gridSort['sort'];
-
-		return $gridSort;
+		return $gridSort['sort'];
 	}
 
-	private function prepareFilter()
+	private function prepareFilter(): array
 	{
-		static $filter = [];
-
-		if (empty($filter))
-		{
-			if ($this->getFilterFieldData('FIND'))
-			{
-				$filter['*%NAME'] = $this->getFilterFieldData('FIND');
-			}
-
-			if (!empty($this->arParams['MODULE_ID']))
-			{
-				$filter['=MODULE_ID'] = $this->arParams['MODULE_ID'];
-			}
-
-			if (!empty($this->arParams['ENTITY_TYPE']))
-			{
-				$filter['=ENTITY_TYPE'] = $this->arParams['ENTITY_TYPE'];
-			}
-
-			if (!empty($this->arParams['USER_ID']) && !User::isSuper())
-			{
-				$filter['=USER_ID'] = $this->arParams['USER_ID'];
-			}
-			if ($this->getFilterFieldData('FILTER_APPLIED', false) != true)
-			{
-				return $filter;
-			}
-
-			foreach ($this->getFilterFields() as $item)
-			{
-				switch ($item['type'])
-				{
-					default:
-						$field = $this->getFilterFieldData($item['id']);
-						if ($field)
-						{
-							$filter['%'.$item['id']] = $field;
-						}
-						break;
-					case 'date':
-						if ($this->getFilterFieldData($item['id'].'_from'))
-						{
-							$filter['>='.$item['id']] = $this->getFilterFieldData($item['id'].'_from');
-						}
-						if ($this->getFilterFieldData($item['id'].'_to'))
-						{
-							$filter['<='.$item['id']] = $this->getFilterFieldData($item['id'].'_to');
-						}
-						break;
-					case 'number':
-						if ($this->getFilterFieldData($item['id'].'_from'))
-						{
-							$filter['>='.$item['id']] = $this->getFilterFieldData($item['id'].'_from');
-						}
-						if ($this->getFilterFieldData($item['id'].'_to'))
-						{
-							$filter['<='.$item['id']] = $this->getFilterFieldData($item['id'].'_to');
-						}
-
-						if (array_key_exists('>='.$item['id'], $filter) &&
-							array_key_exists('<='.$item['id'], $filter) &&
-							$filter['>='.$item['id']] == $filter['<='.$item['id']])
-						{
-							$filter[$item['id']] = $filter['>='.$item['id']];
-							unset($filter['>='.$item['id']], $filter['<='.$item['id']]);
-						}
-
-						break;
-
-					case 'custom_entity':
-					case 'list':
-						if ($this->getFilterFieldData($item['id']))
-						{
-							$filter[$item['id']] = $this->getFilterFieldData($item['id']);
-						}
-						break;
-				}
-			}
-		}
-
-		return $filter;
-	}
-
-	private function getFilterFieldData($field, $default = null)
-	{
-		static $filterData;
-
-		if (!$filterData)
-		{
-			$filterData = $this->getFilterOptions()->getFilter($this->getFilterFields());
-		}
-
-		return array_key_exists($field, $filterData) ? $filterData[$field] : $default;
+		return $this->getFilter()->getPreparedFields();
 	}
 
 	/**
 	 * @return Filter\Options
 	 */
-	private function getFilterOptions()
+	private function getFilterFields(): array
 	{
-		static $instance = null;
-
-		if (!$instance)
-		{
-			return new Filter\Options($this->arParams['FILTER_ID']);
-		}
-
-		return $instance;
+		return $this->getFilter()->getFields();
 	}
 
-	private function getFilterFields()
+	private function getFilterPresets(): array
 	{
-		$list = [
-			//			'ID'        => array(
-			//				'id'   => 'ID',
-			//				'name' => Loc::getMessage('TASKS_COLUMN_ID'),
-			//				'type' => 'number'
-			//			),
-			'ENTITY_ID' => array(
-				'id'   => 'ENTITY_ID',
-				'name' => Loc::getMessage('RECYCLEBIN_COLUMN_ENTITY_ID'),
-				'type' => 'number'
-			),
-			'NAME'      => array(
-				'id'      => 'NAME',
-				'name'    => Loc::getMessage('RECYCLEBIN_COLUMN_NAME'),
-				'type'    => 'string',
-				'default' => true
-			),
-			'TIMESTAMP' => [
-				'id'      => 'TIMESTAMP',
-				'name'    => Loc::getMessage('RECYCLEBIN_COLUMN_TIMESTAMP'),
-				'type'    => 'date',
-				"exclude" => array(
-					\Bitrix\Main\UI\Filter\DateType::TOMORROW,
-					\Bitrix\Main\UI\Filter\DateType::PREV_DAYS,
-					\Bitrix\Main\UI\Filter\DateType::NEXT_DAYS,
-					\Bitrix\Main\UI\Filter\DateType::NEXT_WEEK,
-					\Bitrix\Main\UI\Filter\DateType::NEXT_MONTH
-				),
-			],
-		];
-
-		if (User::isSuper())
-		{
-			$list['USER_ID'] = [
-				'id'       => 'USER_ID',
-				'name'     => Loc::getMessage('RECYCLEBIN_COLUMN_USER_ID'),
-				'params'   => ['multiple' => 'Y'],
-				'type'     => 'custom_entity',
-				'selector' => array(
-					'TYPE' => 'user',
-					'DATA' => array(
-						'ID'       => 'user',
-						'FIELD_ID' => 'USER_ID'
-					)
-				)
-			];
-		}
-
-		if (!isset($this->arParams['MODULE_ID']))
-		{
-			$list['MODULE_ID'] = [
-				'id'     => 'MODULE_ID',
-				'name'   => Loc::getMessage('RECYCLEBIN_COLUMN_MODULE_ID'),
-				'params' => ['multiple' => 'Y'],
-				'type'   => 'list',
-				'items'  => $this->arResult['MODULES_LIST'] ?? null,
-			];
-		}
-
-		if (!($this->arParams['ENTITY_TYPE'] ?? null))
-		{
-			$list['ENTITY_TYPE'] = [
-				'id'     => 'ENTITY_TYPE',
-				'name'   => Loc::getMessage('RECYCLEBIN_COLUMN_ENTITY_TYPE'),
-				'params' => ['multiple' => 'Y'],
-				'type'   => 'list',
-				'items'  => $this->arResult['ENTITY_TYPES'] ?? [],
-			];
-		}
-
-		return $list;
-	}
-
-	private function getFilterPresets()
-	{
-		$presets = [
-			'preset_today' => [
-				'name'    => Loc::getMessage('RECYCLEBIN_PRESET_CURRENT_DAY'),
-				'default' => false,
-				'fields'  => [
-					"TIMESTAMP_datesel" => \Bitrix\Main\UI\Filter\DateType::CURRENT_DAY
-				]
-			],
-			'preset_week'  => [
-				'name'    => Loc::getMessage('RECYCLEBIN_PRESET_CURRENT_WEEK'),
-				'default' => false,
-				'fields'  => [
-					"TIMESTAMP_datesel" => \Bitrix\Main\UI\Filter\DateType::CURRENT_WEEK
-				]
-			],
-			'preset_month' => [
-				'name'    => Loc::getMessage('RECYCLEBIN_PRESET_CURRENT_MONTH'),
-				'default' => false,
-				'fields'  => [
-					"TIMESTAMP_datesel" => \Bitrix\Main\UI\Filter\DateType::CURRENT_MONTH
-				]
-			],
-		];
-
-		$customPresets = isset($this->arParams['FILTER_PRESETS']) && is_array($this->arParams['FILTER_PRESETS'])
-			? $this->arParams['FILTER_PRESETS'] : [];
-
-		$hasDefault = false;
-		if(!empty($customPresets))
-		{
-			foreach($customPresets as $customPreset)
-			{
-				if(isset($customPreset['default']) && $customPreset['default'] === true)
-				{
-					$hasDefault = true;
-					break;
-				}
-			}
-
-			$presets = array_merge($presets, $customPresets);
-		}
-
-		if(!$hasDefault)
-		{
-			$presets['preset_month']['default'] = true;
-		}
-
-		return $presets;
+		return $this->getFilter()->getPresets();
 	}
 
 	private function prepareUserData(array $row): array
@@ -562,22 +382,6 @@ class RecyclebinListComponent extends RecyclebinBaseComponent implements Errorab
 		$select['USER_EXTERNAL_AUTH_ID'] = 'USER.EXTERNAL_AUTH_ID';
 
 		return $select;
-	}
-
-	private function setTotalCountHtml(): void
-	{
-		$this->arResult['TOTAL_ROWS_COUNT_HTML'] = '
-			<div id="recyclebin_row_count_wrapper" class="recyclebin-list-row-count-wrapper">'
-				. Loc::getMessage('RECYCLEBIN_TOTAL_COUNT') .
-				'<a id="recyclebin_row_count" onclick="BX.Recyclebin.getTotalCount()">'
-				. Loc::getMessage('RECYCLEBIN_SHOW_TOTAL_COUNT') .
-				'</a>
-				<svg class="recyclebin-circle-loader-circular" viewBox="25 25 50 50">
-					<circle class="recyclebin-circle-loader-path" cx="50" cy="50" r="20" fill="none" stroke-width="1" stroke-miterlimit="10">
-					</circle>
-				</svg>
-			</div>
-		';
 	}
 
 	public function getTotalCountAction(): int

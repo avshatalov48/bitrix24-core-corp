@@ -28,7 +28,7 @@ $MESS["TASKS_TASK_DETAIL_TASK_WAS_REMOVED_IN_ANOTHER_PLACE"] = "Задача б�
 $MESS["TASKS_TASK_DETAIL_TASK_PING_NOTIFICATION"] = "Пинг отправлен";
 
 $MESS["TASKS_TASK_DETAIL_DEADLINE_DATE_PICKER"] = "Крайний срок";
-$MESS["TASKS_TASK_DETAIL_TITLE_RESPONSIBLE"] = "Ответственный";
+$MESS["TASKS_TASK_DETAIL_TITLE_RESPONSIBLE_MSGVER_1"] = "Исполнитель";
 $MESS["TASKS_TASK_DETAIL_IMAGE_PICKER_BITRIX24_DISK_MSGVER_1"] = "Битрикс24 Диск";
 $MESS["TASKS_TASK_DETAIL_IMAGE_PICKER_GALLERY"] = "Галерея";
 

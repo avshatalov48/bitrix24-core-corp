@@ -23,12 +23,10 @@ use Bitrix\Crm\Component\EntityList\ActionManager;
 use Bitrix\Crm\UI\NavigationBarPanel;
 use Bitrix\Main\Web\Uri;
 
-CJSCore::Init(array('crm_activity_planner', 'ui.fonts.opensans'));
+CJSCore::Init(array('crm_activity_planner', 'ui.fonts.opensans', 'crm.autorun'));
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/main/utils.js');
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/interface_grid.js');
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/progress_control.js');
-Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/autorun_proc.js');
-Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/js/crm/css/autorun_proc.css');
 
 ?><div id="rebuildMessageWrapper"><?
 
@@ -340,7 +338,7 @@ if ($arResult['IS_AJAX_CALL'])
 	function OnCrmCrmInvoiceListAfterAjaxHandler()
 	{
 		?>
-		<script type="text/javascript">
+		<script>
 			BX.ready(function(){
 				if (typeof(BX.CrmInvoiceStatusManager) === 'function')
 				{
@@ -599,7 +597,7 @@ $APPLICATION->IncludeComponent(
 if (!$arResult['IS_AJAX_CALL'])
 {
 	?>
-	<script type="text/javascript">
+	<script>
 		BX.ready(function ()
 		{
 			if (typeof(BX.CrmInvoiceStatusManager) === 'function')
@@ -612,7 +610,7 @@ if (!$arResult['IS_AJAX_CALL'])
 }
 
 ?>
-<script type="text/javascript">
+<script>
 	BX.ready(function()
 	{
 		BX.CrmLongRunningProcessDialog.messages =
@@ -627,7 +625,7 @@ if (!$arResult['IS_AJAX_CALL'])
 </script><?
 
 if($arResult['NEED_FOR_REBUILD_SEARCH_CONTENT']):?>
-<script type="text/javascript">
+<script>
 	BX.ready(
 		function()
 		{
@@ -659,7 +657,7 @@ endif;
 if($arResult['NEED_FOR_REBUILD_INVOICE_ATTRS'])
 {
 ?>
-<script type="text/javascript">
+<script>
 	BX.ready(
 		function()
 		{
@@ -686,7 +684,7 @@ if($arResult['NEED_FOR_REBUILD_INVOICE_ATTRS'])
 }
 if($arResult['NEED_FOR_TRANSFER_PS_REQUISITES'])
 {
-?><script type="text/javascript">
+?><script>
 	BX.ready(
 		function()
 		{
@@ -764,7 +762,7 @@ if($arResult['NEED_FOR_TRANSFER_PS_REQUISITES'])
 <?
 }
 if($arResult['NEED_FOR_REFRESH_ACCOUNTING']):?>
-	<script type="text/javascript">
+	<script>
 		BX.ready(
 			function()
 			{

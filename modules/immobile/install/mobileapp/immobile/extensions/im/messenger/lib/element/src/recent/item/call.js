@@ -3,7 +3,10 @@
  */
 jn.define('im/messenger/lib/element/recent/item/call', (require, exports, module) => {
 	const { Loc } = require('loc');
-	const AppTheme = require('apptheme');
+	const { Type } = require('type');
+
+	const { Theme } = require('im/lib/theme');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 
 	/**
 	 * @class CallItem
@@ -12,15 +15,18 @@ jn.define('im/messenger/lib/element/recent/item/call', (require, exports, module
 	{
 		constructor(callStatus, call)
 		{
-			let itemConfig;
+			const dialogId = call.associatedEntity.id;
+			const store = serviceLocator.get('core').getStore();
+			const recentItem = store.getters['dialoguesModel/getById'](dialogId);
 
+			let itemConfig;
 			switch (callStatus)
 			{
 				case 'local':
 					itemConfig = {
 						text: Loc.getMessage('IMMOBILE_ELEMENT_RECENT_CALL_STATUS_OPEN'),
-						color: AppTheme.colors.base2,
-						background: AppTheme.colors.accentBrandGreen,
+						color: Theme.colors.baseWhiteFixed,
+						background: Theme.colors.accentMainPrimaryalt,
 						canJoin: true,
 					};
 					break;
@@ -28,8 +34,8 @@ jn.define('im/messenger/lib/element/recent/item/call', (require, exports, module
 				case 'none':
 					itemConfig = {
 						text: Loc.getMessage('IMMOBILE_ELEMENT_RECENT_CALL_STATUS_JOIN'),
-						color: AppTheme.colors.base2,
-						background: AppTheme.colors.accentBrandGreen,
+						color: Theme.colors.baseWhiteFixed,
+						background: Theme.colors.accentMainPrimaryalt,
 						canJoin: true,
 					};
 					break;
@@ -37,8 +43,12 @@ jn.define('im/messenger/lib/element/recent/item/call', (require, exports, module
 				default:
 					itemConfig = {
 						text: Loc.getMessage('IMMOBILE_ELEMENT_RECENT_CALL_STATUS_REMOTE'),
-						color: AppTheme.colors.base1,
-						background: AppTheme.colors.accentSoftGreen2,
+						color: Theme.colors.accentMainPrimaryalt,
+						border: {
+							color: Theme.colors.accentMainPrimaryalt,
+							width: 1,
+						},
+						cornerRadius: 32,
 						canJoin: false,
 					};
 					break;
@@ -50,8 +60,19 @@ jn.define('im/messenger/lib/element/recent/item/call', (require, exports, module
 			this.imageUrl = this.prepareAvatarUrl(call.associatedEntity.avatar);
 			this.useLetterImage = true;
 			this.unselectable = true;
-			this.color = AppTheme.colors.accentSoftGreen2;
+
+			if (recentItem && Type.isStringFilled(recentItem.color))
+			{
+				this.color = recentItem.color;
+			}
+			else
+			{
+				this.color = Theme.colors.accentSoftGreen3;
+			}
 			this.useColor = true;
+
+			this.backgroundColor = Theme.colors.accentSoftBlue2;
+			this.useBackgroundColor = true;
 			this.sectionCode = 'call';
 
 			this.params = {
@@ -92,6 +113,11 @@ jn.define('im/messenger/lib/element/recent/item/call', (require, exports, module
 					},
 				},
 			};
+
+			if (Type.isObject(itemConfig.border))
+			{
+				this.styles.subtitle.border = itemConfig.border;
+			}
 		}
 
 		prepareAvatarUrl(url)

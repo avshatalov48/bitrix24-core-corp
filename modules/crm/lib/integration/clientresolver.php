@@ -5,120 +5,28 @@ use Bitrix\Crm\Integration\Rest\AppPlacement;
 use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Crm\EntityAddressType;
 use Bitrix\Main;
-use Bitrix\Main\Loader;
-use Bitrix\Main\ModuleManager;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Type\Date;
 use Bitrix\Crm;
 use Bitrix\Crm\EntityRequisite;
 use Bitrix\Crm\EntityAddress;
 use Bitrix\Crm\Requisite;
-use Bitrix\Rest\AppTable;
-use Bitrix\Rest\Marketplace;
-use Bitrix\Rest\PlacementTable;
-use Bitrix\Socialservices;
-use CRestUtil;
 
-class ClientResolver
+class ClientResolver extends ResolverBase
 {
-	const TYPE_UNKNOWN = 0;
 	const TYPE_COMPANY = 1;
 	const TYPE_PERSON = 2;
-	const TYPE_BIC = 3;
 	const PROP_ITIN = 'ITIN';    // Individual Taxpayer Identification Number
 	const PROP_SRO = 'SRO';      // State Register of organizations
-	const PROP_BIC = 'BIC';      // Bank identification code
 
 	private $compatibilityMode = false;
 
-	/** @var Socialservices\Properties\Client */
-	private static $client = null;
-	/** @var boolean|null */
-	private static $isOnline = null;
-
 	protected static $allowedCountries = [1, 14];
-	protected static $allowedTypesMap = [1 => ['ITIN', 'BIC'], 14 => ['SRO']];
-
-	public static function getAllowedTypesMap(): array
-	{
-		return static::$allowedTypesMap;
-	}
-
-	protected static function isRestModuleIncluded(): bool
-	{
-		static $result = null;
-
-		if ($result === null)
-		{
-			$result = Loader::includeModule('rest');
-		}
-
-		return $result;
-	}
-
-	protected static function getClient()
-	{
-		Loader::includeModule('socialservices');
-		if(self::$client === null)
-		{
-			self::$client = new Socialservices\Properties\Client();
-		}
-
-		return self::$client;
-	}
-	protected static function cleanStringValue($value)
-	{
-		$result = $value;
-
-		$result = preg_replace('/^[ \t\-]+/'.BX_UTF_PCRE_MODIFIER, '', $result);
-		$result = preg_replace('/ {2,}/'.BX_UTF_PCRE_MODIFIER, ' ', $result);
-		$result = trim($result);
-
-		return $result;
-	}
-	public static function isOnline()
-	{
-		if(self::$isOnline === null)
-		{
-			try
-			{
-				self::$isOnline = self::getClient()->isServiceOnline();
-			}
-			catch(Main\SystemException $ex)
-			{
-				self::$isOnline = false;
-			}
-		}
-		return self::$isOnline;
-	}
-	public static function isEnabled($countryID)
-	{
-		if(!ModuleManager::isModuleInstalled('socialservices'))
-		{
-			return false;
-		}
-
-		if(!is_int($countryID))
-		{
-			$countryID = (int)$countryID;
-		}
-
-		return in_array($countryID, static::$allowedCountries, true) && self::isOnline();
-	}
-
-	public static function isGetByBicAvailable(): bool
-	{
-		return method_exists(self::getClient(), 'getByBic');
-	}
+	protected static $allowedTypesMap = [1 => ['ITIN'], 14 => ['SRO']];
 
 	public function setCompatibilityMode(bool $compatibilityMode): void
 	{
 		$this->compatibilityMode = $compatibilityMode;
-	}
-
-	private static function throwCountryException(int $countryID): void
-	{
-		throw new Main\NotSupportedException("Country ID: '$countryID' is not supported in current context.");
 	}
 
 	public function resolveClient(string $propertyTypeID, string $propertyValue, int $countryID = 1): array
@@ -126,7 +34,7 @@ class ClientResolver
 		if (
 			(
 				$countryID === 1
-				&& ($propertyTypeID === static::PROP_ITIN || $propertyTypeID === static::PROP_BIC)
+				&& $propertyTypeID === static::PROP_ITIN
 				&& !RestrictionManager::isDetailsSearchByInnPermitted()
 			)
 			|| (
@@ -139,21 +47,20 @@ class ClientResolver
 			return [];
 		}
 
-
 		if (
 			!in_array($countryID, static::$allowedCountries, true)
-			|| (($propertyTypeID === self::PROP_ITIN || $propertyTypeID === self::PROP_BIC) && $countryID !== 1)
+			|| ($propertyTypeID === self::PROP_ITIN && $countryID !== 1)
 			|| ($propertyTypeID === self::PROP_SRO && $countryID !== 14)
 		)
 		{
-			self::throwCountryException($countryID);
+			static::throwCountryException($countryID);
 		}
 
 		$fieldTitles = (new EntityRequisite)->getFieldsTitles($countryID);
 
 		$dateFormat = Date::convertFormatToPhp(FORMAT_DATE);
 		$nameFormat = Crm\Format\PersonNameFormatter::LastFirstSecondFormat;
-		$alphaRegex = "/[[:alpha:]]/".BX_UTF_PCRE_MODIFIER;
+		$alphaRegex = "/[[:alpha:]]/u";
 		$results = array();
 
 		Loc::loadMessages(__FILE__);
@@ -518,92 +425,6 @@ class ClientResolver
 				}
 			}
 		}
-		elseif ($propertyTypeID === self::PROP_BIC)
-		{
-			$info = self::getClient()->getByBic($propertyValue);
-			if(is_array($info))
-			{
-				$caption = $info['NAMEP'] ?? '';
-				$title = $caption;
-				$fieldTitles = (new Crm\EntityBankDetail())->getFieldsTitles($countryID);
-				$bic = $info['BIC'] ?? '';
-				$subtitle = ($bic === '' ? '' : $fieldTitles['RQ_BIK'] . ' ' . $bic);
-				$np = '';
-				if (isset($info['NNP']) && is_string($info['NNP']) && $info['NNP'] !== '')
-				{
-					if (isset($info['TNP']) && is_string($info['TNP']) && $info['TNP'] !== '')
-					{
-						$np .= $info['TNP'] . '. ';
-					}
-					$np .= $info['NNP'];
-				}
-				$addrComponents = [$info['IND'] ?? '', $np, $info['ADR'] ?? ''];
-				$n = 0;
-				$bankAddr = '';
-				foreach ($addrComponents as $item)
-				{
-					if (is_string($item) && $item !== '')
-					{
-						$bankAddr .= ($n++ > 0 ? ', ' : '') . $item;
-					}
-				}
-				unset($np, $n, $addrComponents, $item);
-				$corAccNum = '';
-				if (isset($info['ACCOUNTS']) && is_array($info['ACCOUNTS']))
-				{
-					foreach ($info['ACCOUNTS'] as $accInfo)
-					{
-						if (
-							isset(
-								$accInfo['ACCOUNTSTATUS'],
-								$accInfo['REGULATIONACCOUNTTYPE'],
-								$accInfo['ACCOUNT']
-							)
-							&& $accInfo['ACCOUNTSTATUS'] === 'ACAC'
-							&& $accInfo['REGULATIONACCOUNTTYPE'] === 'CRSA'
-							&& is_string($accInfo['ACCOUNT'])
-						)
-						{
-							$corAccNum = $accInfo['ACCOUNT'];
-							break;
-						}
-					}
-					unset($accInfo);
-				}
-				$bicSw = '';
-				if (isset($info['BICSW']) && is_array($info['BICSW']))
-				{
-					foreach ($info['BICSW'] as $bicSwInfo)
-					{
-						if (
-							isset($bicSwInfo['SWBIC'])
-							&& isset($bicSwInfo['DEFAULTSWBIC'])
-							&& $bicSwInfo['DEFAULTSWBIC'] === '1'
-							&& is_string($bicSwInfo['SWBIC'])
-						)
-						{
-							$bicSw = $bicSwInfo['SWBIC'];
-							break;
-						}
-					}
-				}
-				unset($bicSwInfo);
-
-				$results[] = [
-					'caption' => $caption,
-					'title' => $title,
-					'subTitle' => $subtitle,
-					'fields' => [
-						'NAME' => $title,
-						'RQ_BANK_NAME' => $title,
-						'RQ_BIK' => $info['BIC'] ?? '',
-						'RQ_BANK_ADDR' => $bankAddr,
-						'RQ_COR_ACC_NUM' => $corAccNum,
-						'RQ_SWIFT' => $bicSw,
-					]
-				];
-			}
-		}
 		else
 		{
 			throw new Main\ArgumentException('propertyTypeID');
@@ -658,122 +479,23 @@ class ClientResolver
 		return null;
 	}
 
-
-	/**
-	 * @deprecated Use instanced method $this->resolveClient() instead
-	 * @param $propertyTypeID
-	 * @param $propertyValue
-	 * @param int $countryID
-	 * @throws Main\ArgumentOutOfRangeException
-	 * @throws Main\NotSupportedException
-	 * @return array
-	 */
-	public static function resolve($propertyTypeID, $propertyValue, $countryID = 1)
+	public static function getDetailSearchHandlersByCountry(
+		bool $noStaticCache = false,
+		string $placementCode = AppPlacement::REQUISITE_AUTOCOMPLETE
+	): array
 	{
-		$instance = new self();
-		return $instance->resolveClient((string)$propertyTypeID, (string)$propertyValue, (int)$countryID);
+		return parent::getDetailSearchHandlersByCountry($noStaticCache, $placementCode);
 	}
 
-	public static function getDetailSearchHandlersByCountry(bool $noStaticCache = false): array
+	public static function getClientResolverPlacementParams(int $countryId): ?array
 	{
-		static $result = null;
-
-
-		if ($result === null || $noStaticCache)
+		$placementParams = parent::getClientResolverPlacementParams($countryId);
+		if (is_array($placementParams))
 		{
-			$result = [];
-			if (static::isRestModuleIncluded())
-			{
-				$allowedCountriesMap = array_fill_keys(EntityRequisite::getAllowedRqFieldCountries(), true);
-				$handlers = PlacementTable::getHandlersList(AppPlacement::REQUISITE_AUTOCOMPLETE);
-				foreach ($handlers as $hadnlerInfo)
-				{
-					$filteredHandlerInfo = [
-						'ID' => $hadnlerInfo['ID'],
-						'TITLE' => $hadnlerInfo['TITLE'],
-						'OPTIONS' => $hadnlerInfo['OPTIONS'],
-					];
-					$countries = [];
-					if (
-						isset($filteredHandlerInfo['OPTIONS']['countries'])
-						&& is_string($filteredHandlerInfo['OPTIONS']['countries'])
-						&& $filteredHandlerInfo['OPTIONS']['countries'] !== ''
-					)
-					{
-						$optionValue = $filteredHandlerInfo['OPTIONS']['countries'];
-						if (preg_match('/^[1-9][0-9]*(,[1-9][0-9]*)*$/', $optionValue))
-						{
-							$countryList = explode(',', $filteredHandlerInfo['OPTIONS']['countries']);
-							if (is_array($countryList))
-							{
-								foreach ($countryList as $countryId)
-								{
-									$countryId = (int)$countryId;
-									if (isset($allowedCountriesMap[$countryId]))
-									{
-										$countries[$countryId] = true;
-									}
-								}
-								$countries = array_keys($countries);
-							}
-						}
-					}
-					if (empty($countries))
-					{
-						$countries = EntityRequisite::getAllowedRqFieldCountries();
-					}
-					foreach ($countries as $countryId)
-					{
-						if (!is_array($result[$countryId]))
-						{
-							$result[$countryId] = [];
-						}
-						$result[$countryId][] = $filteredHandlerInfo;
-					}
-				}
-			}
+			$placementParams['placementCode'] = AppPlacement::REQUISITE_AUTOCOMPLETE;
 		}
 
-		return $result;
-	}
-
-	/**
-	 * @param int $countryId
-	 * @return array|null
-	 */
-	public static function getClientResolverPropertyWithPlacements(int $countryId)
-	{
-		$result = ClientResolver::getPropertyTypeByCountry($countryId);
-
-		$detailSearchHandlersByCountry = static::getDetailSearchHandlersByCountry();
-		if (isset($detailSearchHandlersByCountry[$countryId]))
-		{
-			if (!is_array($result))
-			{
-				$result = [
-					'COUNTRY_ID' => $countryId,
-					'VALUE' => 'PLACEMENT_' . $detailSearchHandlersByCountry[$countryId][0]['ID'],
-					'TITLE' => $detailSearchHandlersByCountry[$countryId][0]['TITLE'],
-					'IS_PLACEMENT' => 'Y',
-				];
-			}
-			$result['PLACEMENTS'] = $detailSearchHandlersByCountry[$countryId];
-		}
-
-		if (!is_array($result))
-		{
-			$defaultAppInfo = static::getDefaultClientResolverApplicationParams($countryId);
-			if ($defaultAppInfo['code'] !== '')
-			{
-				if (!is_array($result))
-				{
-					$result = ['COUNTRY_ID' => $countryId];
-				}
-				$result['DEFAULT_APP_INFO'] = $defaultAppInfo;
-			}
-		}
-
-		return $result;
+		return $placementParams;
 	}
 
 	protected static function getAppTitle(string $appCode): string
@@ -781,6 +503,14 @@ class ClientResolver
 		// APP_TITLE_INTEGRATIONS24_PORTAL_NALOG_GOV_BY
 		// APP_TITLE_INTEGRATIONS24_MNS_KAZAKHSTAN_POISK_PO_BIN
 		return (string)Loc::getMessage('APP_TITLE_'.mb_strtoupper(preg_replace('/[^0-9a-zA-Z_]/', '_',$appCode)));
+	}
+
+	public static function getClientResolverPropertyWithPlacements(
+		int $countryId,
+		string $placementCode = AppPlacement::REQUISITE_AUTOCOMPLETE
+	)
+	{
+		return parent::getClientResolverPropertyWithPlacements($countryId, $placementCode);
 	}
 
 	protected static function getDefaultClientResolverApplicationCodeByCountryMap()
@@ -798,97 +528,8 @@ class ClientResolver
 		return $map;
 	}
 
-	public static function getDefaultClientResolverApplicationParams(int $countryId)
+	public static function isPlacementCodeAllowed(string $placementCode)
 	{
-		$result = [
-			'code' => '',
-			'title' => '',
-			'isAvailable' => 'N',
-			'isInstalled' => 'N',
-		];
-
-		$map = static::getDefaultClientResolverApplicationCodeByCountryMap();
-
-		$appCode = $map[$countryId] ?? '';
-
-		if ($appCode !== '' && static::isRestModuleIncluded() && CRestUtil::canInstallApplication())
-		{
-			$appTitle = static::getAppTitle($appCode);
-
-			if ($appTitle !== '')
-			{
-				$result['code'] = $appCode;
-				$result['isAvailable'] = 'Y';
-				$result['title'] = $appTitle;
-			}
-		}
-
-		return $result;
-	}
-
-	public static function getClientResolverPlacementParams(int $countryId): ?array
-	{
-		$clientResolverPropertyType = static::getClientResolverPropertyWithPlacements($countryId);
-
-		return (
-			$clientResolverPropertyType
-				? [
-					'isPlacement' => (
-						isset($clientResolverPropertyType['IS_PLACEMENT'])
-						&& $clientResolverPropertyType['IS_PLACEMENT'] === 'Y'
-					),
-					'numberOfPlacements' =>
-						isset($clientResolverPropertyType['PLACEMENTS']) && is_array($clientResolverPropertyType['PLACEMENTS'])
-							? count($clientResolverPropertyType['PLACEMENTS'])
-							: 0
-					,
-					'countryId' => $countryId,
-					'defaultAppInfo' =>
-						$clientResolverPropertyType['DEFAULT_APP_INFO']
-						?? [
-							'code' => '',
-							'title' => '',
-							'isAvailable' => 'N',
-							'isInstalled' => 'N',
-						],
-				]
-				: null
-		);
-	}
-
-	public static function getClientResolverPlaceholderText(int $countryId): string
-	{
-		$clientResolverPropertyType = static::getClientResolverPropertyWithPlacements($countryId);
-		$title =
-			(is_array($clientResolverPropertyType) && isset($clientResolverPropertyType['TITLE']))
-				? $clientResolverPropertyType['TITLE']
-				: ''
-		;
-		if (is_string($title) && $title !== '' && $clientResolverPropertyType['IS_PLACEMENT'] !== 'Y')
-		{
-			$template = Loc::getMessage('CRM_CLIENT_REQUISITE_AUTOCOMPLETE_FILL_IN_01');
-			if (is_string($template) && $template !== '')
-			{
-				$template = mb_strtolower($template);
-				$title = strtr($template, ['#field_name#' => $title]);
-			}
-		}
-
-		return $title;
-	}
-
-	public static function getClientResolverPlaceholderTextByTitle(string $title): string
-	{
-		if (is_string($title) && $title !== '')
-		{
-			$template = Loc::getMessage('CRM_CLIENT_REQUISITE_AUTOCOMPLETE_FILL_IN_01');
-			if (is_string($template) && $template !== '')
-			{
-				$template = mb_strtolower($template);
-				$title = strtr($template, ['#field_name#' => $title]);
-			}
-		}
-
-		return $title;
+		return ($placementCode === AppPlacement::REQUISITE_AUTOCOMPLETE);
 	}
 }

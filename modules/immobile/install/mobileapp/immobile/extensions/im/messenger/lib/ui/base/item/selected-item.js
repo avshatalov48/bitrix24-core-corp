@@ -7,10 +7,10 @@ jn.define('im/messenger/lib/ui/base/item/selected-item', (require, exports, modu
 	const { ItemInfo } = require('im/messenger/lib/ui/base/item/item-info');
 	const { styles: itemStyles, selectedItemStyles } = require('im/messenger/lib/ui/base/item/style');
 	const { Item } = require('im/messenger/lib/ui/base/item/item');
-	const AppTheme = require('apptheme');
+	const { Theme } = require('im/lib/theme');
 
 
-	const selectedIcon = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M9.34211 19.351L2.86523 13.0388L5.13214 10.8295L9.34211 14.9325L18.8677 5.64899L21.1346 7.85827L9.34211 19.351Z" fill="${AppTheme.colors.base4}"/></svg>`;
+	const selectedIcon = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M9.34211 19.351L2.86523 13.0388L5.13214 10.8295L9.34211 14.9325L18.8677 5.64899L21.1346 7.85827L9.34211 19.351Z" fill="${Theme.colors.base4}"/></svg>`;
 
 	class SelectedItem extends Item
 	{
@@ -135,7 +135,7 @@ jn.define('im/messenger/lib/ui/base/item/selected-item', (require, exports, modu
 							alignItems: 'center',
 							flex: 1,
 							borderBottomWidth: 1,
-							borderBottomColor: AppTheme.colors.bgSeparatorPrimary,
+							borderBottomColor: Theme.colors.bgSeparatorPrimary,
 						},
 					},
 					View(
@@ -169,6 +169,7 @@ jn.define('im/messenger/lib/ui/base/item/selected-item', (require, exports, modu
 								uri: this.props.data.avatarUri,
 								color: this.props.data.avatarColor,
 								size: this.props.size,
+								isSuperEllipse: this.props.isSuperEllipseAvatar,
 							}),
 						),
 						View(

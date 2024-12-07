@@ -12,6 +12,20 @@
 jn.define('bbcode/parser', (require, exports, module) => {
 	const {Type} = jn.require('type');
 	const Model = jn.require('bbcode/model');
+	const {BBCodeEncoder} = jn.require('bbcode/encoder');
+	const {AstProcessor} = jn.require('bbcode/ast-processor');
+	const {Linkify} = jn.require('linkify');
+
+	function getByIndex(array, index) {
+	  if (!Type.isArray(array)) {
+	    throw new TypeError('array is not a array');
+	  }
+	  if (!Type.isInteger(index)) {
+	    throw new TypeError('index is not a integer');
+	  }
+	  const preparedIndex = index < 0 ? array.length + index : index;
+	  return array[preparedIndex];
+	}
 
 	class ParserScheme extends Model.BBCodeScheme {
 	  getTagScheme(tagName) {
@@ -27,19 +41,21 @@ jn.define('bbcode/parser', (require, exports, module) => {
 	  }
 	}
 
-	const TAG_REGEX = /\[(\/)?(\w+|\*)(.*?)]/gs;
+	const TAG_REGEX = /\[\/?(?:\w+|\*).*?]/;
+	const TAG_REGEX_GS = /\[(\/)?(\w+|\*)(.*?)]/gs;
 	const isSpecialChar = symbol => {
 	  return ['\n', '\t'].includes(symbol);
 	};
 	const isList = tagName => {
-	  return ['list', 'ul', 'ol'].includes(tagName);
+	  return ['list', 'ul', 'ol'].includes(String(tagName).toLowerCase());
 	};
 	const isListItem = tagName => {
-	  return ['*', 'li'].includes(tagName);
+	  return ['*', 'li'].includes(String(tagName).toLowerCase());
 	};
 	const parserScheme = new ParserScheme();
 	class BBCodeParser {
 	  constructor(options = {}) {
+	    this.allowedLinkify = true;
 	    if (options.scheme) {
 	      this.setScheme(options.scheme);
 	    } else {
@@ -49,6 +65,14 @@ jn.define('bbcode/parser', (require, exports, module) => {
 	      this.setOnUnknown(options.onUnknown);
 	    } else {
 	      this.setOnUnknown(BBCodeParser.defaultOnUnknownHandler);
+	    }
+	    if (options.encoder instanceof BBCodeEncoder) {
+	      this.setEncoder(options.encoder);
+	    } else {
+	      this.setEncoder(new BBCodeEncoder());
+	    }
+	    if (Type.isBoolean(options.linkify)) {
+	      this.setIsAllowedLinkify(options.linkify);
 	    }
 	  }
 	  setScheme(scheme) {
@@ -66,19 +90,52 @@ jn.define('bbcode/parser', (require, exports, module) => {
 	  getOnUnknownHandler() {
 	    return this.onUnknownHandler;
 	  }
+	  setEncoder(encoder) {
+	    if (encoder instanceof BBCodeEncoder) {
+	      this.encoder = encoder;
+	    } else {
+	      throw new TypeError('encoder is not BBCodeEncoder instance');
+	    }
+	  }
+	  getEncoder() {
+	    return this.encoder;
+	  }
+	  setIsAllowedLinkify(value) {
+	    this.allowedLinkify = Boolean(value);
+	  }
+	  isAllowedLinkify() {
+	    return this.allowedLinkify;
+	  }
+	  canBeLinkified(node) {
+	    if (node.getName() === '#text') {
+	      const notAllowedNodeNames = ['url', 'img', 'video', 'code'];
+	      const inNotAllowedNode = notAllowedNodeNames.some(name => {
+	        return Boolean(AstProcessor.findParentNodeByName(node, name));
+	      });
+	      return !inNotAllowedNode;
+	    }
+	    return false;
+	  }
 	  static defaultOnUnknownHandler(node, scheme) {
 	    if (node.getType() === Model.BBCodeNode.ELEMENT_NODE) {
 	      const nodeName = node.getName();
 	      if (['left', 'center', 'right', 'justify'].includes(nodeName)) {
-	        node.replace(scheme.createElement({
-	          name: 'p',
-	          children: node.getChildren()
-	        }));
+	        const newNode = scheme.createElement({
+	          name: 'p'
+	        });
+	        node.replace(newNode);
+	        newNode.setChildren(node.getChildren());
 	      } else if (['background', 'color', 'size'].includes(nodeName)) {
-	        node.replace(scheme.createElement({
-	          name: 'b',
+	        const newNode = scheme.createElement({
+	          name: 'b'
+	        });
+	        node.replace(newNode);
+	        newNode.setChildren(node.getChildren());
+	      } else if (['span', 'font'].includes(nodeName)) {
+	        const fragment = scheme.createFragment({
 	          children: node.getChildren()
-	        }));
+	        });
+	        node.replace(fragment);
 	      } else {
 	        const openingTag = node.getOpeningTag();
 	        const closingTag = node.getClosingTag();
@@ -98,7 +155,7 @@ jn.define('bbcode/parser', (require, exports, module) => {
 	        if (isSpecialChar(symbol)) {
 	          acc.push(symbol);
 	        } else {
-	          const lastItem = acc.at(-1);
+	          const lastItem = getByIndex(acc, -1);
 	          if (isSpecialChar(lastItem) || Type.isNil(lastItem)) {
 	            acc.push(symbol);
 	          } else {
@@ -114,7 +171,7 @@ jn.define('bbcode/parser', (require, exports, module) => {
 	          return parserScheme.createTab();
 	        }
 	        return parserScheme.createText({
-	          content: fragment
+	          content: this.getEncoder().decodeText(fragment)
 	        });
 	      });
 	    }
@@ -122,9 +179,9 @@ jn.define('bbcode/parser', (require, exports, module) => {
 	  }
 	  static findNextTagIndex(bbcode, startIndex = 0) {
 	    const nextContent = bbcode.slice(startIndex);
-	    const [nextTag] = nextContent.match(new RegExp(TAG_REGEX)) || [];
-	    if (nextTag) {
-	      return bbcode.indexOf(nextTag, startIndex);
+	    const matchResult = nextContent.match(new RegExp(TAG_REGEX));
+	    if (matchResult) {
+	      return matchResult.index + startIndex;
 	    }
 	    return -1;
 	  }
@@ -142,12 +199,12 @@ jn.define('bbcode/parser', (require, exports, module) => {
 	    };
 	    if (Type.isStringFilled(sourceAttributes)) {
 	      if (sourceAttributes.startsWith('=')) {
-	        result.value = BBCodeParser.trimQuotes(sourceAttributes.slice(1));
+	        result.value = this.getEncoder().decodeAttribute(BBCodeParser.trimQuotes(sourceAttributes.slice(1)));
 	        return result;
 	      }
 	      return sourceAttributes.trim().split(' ').filter(Boolean).reduce((acc, item) => {
 	        const [key, value = ''] = item.split('=');
-	        acc.attributes.push([BBCodeParser.toLowerCase(key), BBCodeParser.trimQuotes(value)]);
+	        acc.attributes.push([BBCodeParser.toLowerCase(key), this.getEncoder().decodeAttribute(BBCodeParser.trimQuotes(value))]);
 	        return acc;
 	      }, result);
 	    }
@@ -155,24 +212,48 @@ jn.define('bbcode/parser', (require, exports, module) => {
 	  }
 	  parse(bbcode) {
 	    const result = parserScheme.createRoot();
-	    const stack = [];
-	    let current = null;
-	    let level = -1;
 	    const firstTagIndex = BBCodeParser.findNextTagIndex(bbcode);
 	    if (firstTagIndex !== 0) {
 	      const textBeforeFirstTag = firstTagIndex === -1 ? bbcode : bbcode.slice(0, firstTagIndex);
 	      result.appendChild(...this.parseText(textBeforeFirstTag));
 	    }
-	    bbcode.replace(TAG_REGEX, (fullTag, slash, tagName, attrs, index) => {
-	      const isOpenTag = Boolean(slash) === false;
+	    const stack = [result];
+	    const wasOpened = [];
+	    let current = null;
+	    let level = 0;
+	    bbcode.replace(TAG_REGEX_GS, (fullTag, slash, tagName, attrs, index) => {
+	      const isOpeningTag = Boolean(slash) === false;
 	      const startIndex = fullTag.length + index;
 	      const nextContent = bbcode.slice(startIndex);
 	      const attributes = this.parseAttributes(attrs);
 	      const lowerCaseTagName = BBCodeParser.toLowerCase(tagName);
-	      let parent = null;
-	      if (isOpenTag) {
-	        level++;
-	        if (nextContent.includes(`[/${tagName}]`) || isListItem(lowerCaseTagName)) {
+	      let parent = stack[level];
+	      if (isOpeningTag) {
+	        const isPotentiallyVoid = !nextContent.includes(`[/${tagName}]`);
+	        if (isPotentiallyVoid && !isListItem(lowerCaseTagName)) {
+	          const tagScheme = this.getScheme().getTagScheme(lowerCaseTagName);
+	          const isAllowedVoidTag = tagScheme && tagScheme.isVoid();
+	          if (isAllowedVoidTag) {
+	            current = parserScheme.createElement({
+	              name: lowerCaseTagName,
+	              value: attributes.value,
+	              attributes: Object.fromEntries(attributes.attributes)
+	            });
+	            current.setScheme(this.getScheme());
+	            parent.appendChild(current);
+	          } else {
+	            parent.appendChild(parserScheme.createText(fullTag));
+	          }
+	          const nextTagIndex = BBCodeParser.findNextTagIndex(bbcode, startIndex);
+	          if (nextTagIndex !== 0) {
+	            const content = nextTagIndex === -1 ? nextContent : bbcode.slice(startIndex, nextTagIndex);
+	            parent.appendChild(...this.parseText(content));
+	          }
+	        } else {
+	          if (isListItem(lowerCaseTagName) && current && isListItem(current.getName())) {
+	            level--;
+	            parent = stack[level];
+	          }
 	          current = parserScheme.createElement({
 	            name: lowerCaseTagName,
 	            value: attributes.value,
@@ -183,66 +264,33 @@ jn.define('bbcode/parser', (require, exports, module) => {
 	            const content = nextTagIndex === -1 ? nextContent : bbcode.slice(startIndex, nextTagIndex);
 	            current.appendChild(...this.parseText(content));
 	          }
-	        } else {
-	          const tagScheme = this.getScheme().getTagScheme(lowerCaseTagName);
-	          if (tagScheme && tagScheme.isVoid()) {
-	            current = parserScheme.createElement({
-	              name: lowerCaseTagName,
-	              value: attributes.value,
-	              attributes: Object.fromEntries(attributes.attributes)
-	            });
-	            current.setScheme(this.getScheme());
-	          } else {
-	            current = parserScheme.createText(fullTag);
+	          if (!parent) {
+	            level++;
+	            parent = stack[level];
 	          }
-	        }
-	        if (level === 0) {
-	          result.appendChild(current);
-	        }
-	        parent = stack[level - 1];
-	        if (isList(current.getName())) {
-	          if (parent && isList(parent.getName())) {
-	            stack[level].appendChild(current);
-	          } else if (parent) {
-	            parent.appendChild(current);
-	          }
-	        } else if (parent && isList(parent.getName()) && !isListItem(current.getName())) {
-	          const lastItem = parent.getChildren().at(-1);
-	          if (lastItem) {
-	            lastItem.appendChild(current);
-	          }
-	        } else if (parent) {
 	          parent.appendChild(current);
+	          level++;
+	          stack[level] = current;
+	          wasOpened.push(lowerCaseTagName);
 	        }
-	        stack[level] = current;
-	        if (isListItem(lowerCaseTagName) && level > -1) {
+	      } else {
+	        if (wasOpened.includes(lowerCaseTagName)) {
 	          level--;
-	          current = level === -1 ? result : stack[level];
+	          const openedTagIndex = wasOpened.indexOf(lowerCaseTagName);
+	          wasOpened.splice(openedTagIndex, 1);
+	        } else {
+	          stack[level].appendChild(parserScheme.createText(fullTag));
 	        }
-	      }
-	      if (current && current.getName() === '#text') {
-	        level--;
-	      }
-	      if (!isOpenTag && !current) {
-	        parent = level === -1 ? result : stack[level];
-	        parent.appendChild(...this.parseText(fullTag));
-	      } else if (!isOpenTag || current && current.getName() === '#text' || current && current.isVoid()) {
-	        if (level > -1 && current.getName() === lowerCaseTagName) {
+	        if (isList(lowerCaseTagName) && level > 0) {
 	          level--;
-	          current = level === -1 ? result : stack[level];
 	        }
 	        const nextTagIndex = BBCodeParser.findNextTagIndex(bbcode, startIndex);
-	        if (nextTagIndex !== startIndex) {
-	          parent = level === -1 ? result : stack[level];
-	          const content = bbcode.slice(startIndex, nextTagIndex === -1 ? undefined : nextTagIndex);
-	          if (isList(parent.getName())) {
-	            const lastItem = parent.getChildren().at(-1);
-	            if (lastItem) {
-	              lastItem.appendChild(...this.parseText(content));
-	            }
-	          } else {
-	            parent.appendChild(...this.parseText(content));
-	          }
+	        if (nextTagIndex !== 0 && stack[level]) {
+	          const content = nextTagIndex === -1 ? nextContent : bbcode.slice(startIndex, nextTagIndex);
+	          stack[level].appendChild(...this.parseText(content));
+	        }
+	        if (level > 0 && isListItem(stack[level].getName())) {
+	          level--;
 	        }
 	      }
 	    });
@@ -261,11 +309,35 @@ jn.define('bbcode/parser', (require, exports, module) => {
 	      if (node.getName() === '*') {
 	        const finalLinebreaksIndexes = getFinalLineBreaksIndexes(node);
 	        if (finalLinebreaksIndexes.length === 1) {
-	          node.setChildren(node.getChildren().slice(0, finalLinebreaksIndexes.at(0)));
+	          node.setChildren(node.getChildren().slice(0, getByIndex(finalLinebreaksIndexes, 0)));
 	        }
 	        if (finalLinebreaksIndexes.length > 1 && (finalLinebreaksIndexes & 2) === 0) {
-	          node.setChildren(node.getChildren().slice(0, finalLinebreaksIndexes.at(0)));
+	          node.setChildren(node.getChildren().slice(0, getByIndex(finalLinebreaksIndexes, 0)));
 	        }
+	      }
+	      if (this.isAllowedLinkify() && this.canBeLinkified(node)) {
+	        const content = node.toString({
+	          encode: false
+	        });
+	        const tokens = Linkify.tokenize(content);
+	        const nodes = tokens.map(token => {
+	          if (token.t === 'url') {
+	            return parserScheme.createElement({
+	              name: 'url',
+	              value: token.toHref().replace(/^http:\/\//, 'https://'),
+	              children: [parserScheme.createText(token.toString())]
+	            });
+	          }
+	          if (token.t === 'email') {
+	            return parserScheme.createElement({
+	              name: 'url',
+	              value: token.toHref(),
+	              children: [parserScheme.createText(token.toString())]
+	            });
+	          }
+	          return parserScheme.createText(token.toString());
+	        });
+	        node.replace(...nodes);
 	      }
 	    });
 	    result.setScheme(this.getScheme(), this.getOnUnknownHandler());

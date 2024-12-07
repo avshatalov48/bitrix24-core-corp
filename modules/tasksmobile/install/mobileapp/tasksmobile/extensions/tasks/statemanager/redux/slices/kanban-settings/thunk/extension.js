@@ -4,7 +4,7 @@
 jn.define('tasks/statemanager/redux/slices/kanban-settings/thunk', (require, exports, module) => {
 	const { createAsyncThunk } = require('statemanager/redux/toolkit');
 	const { sliceName } = require('tasks/statemanager/redux/slices/kanban-settings/meta');
-	const { getUniqId } = require('tasks/statemanager/redux/slices/kanban-settings/src/tools');
+	const { getUniqId } = require('tasks/statemanager/redux/slices/kanban-settings/tools');
 	const { statusTypes } = require('tasks/statemanager/redux/types');
 	const { stringifyWithKeysSort } = require('tasks/statemanager/redux/utils');
 	const { md5 } = require('utils/hash');

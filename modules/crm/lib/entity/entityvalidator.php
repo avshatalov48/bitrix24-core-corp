@@ -84,6 +84,11 @@ class EntityValidator
 		{
 			return !empty($value);
 		}
+		if (($fieldInfo['TYPE'] ?? '') === 'crm_entity')
+		{
+			return !empty($value);
+		}
+
 		return ($this->entityFields[$fieldName] ?? '') <> '';
 	}
 

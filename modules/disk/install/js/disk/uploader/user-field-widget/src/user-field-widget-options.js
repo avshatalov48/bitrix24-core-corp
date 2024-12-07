@@ -1,3 +1,4 @@
+import type { BaseEvent } from 'main.core.events';
 import type { UploaderFileInfo } from 'ui.uploader.core';
 import type { TileWidgetOptions } from 'ui.uploader.tile-widget';
 
@@ -12,7 +13,6 @@ export type UserFieldWidgetOptions = {
 	photoTemplateFieldName?: string,
 	photoTemplateMode?: 'auto' | 'manual',
 	tileWidgetOptions?: TileWidgetOptions,
-	controlVisibility?: boolean,
-	uploaderPanelVisibility?: boolean,
-	documentPanelVisibility?: boolean,
+	insertIntoText?: boolean,
+	events?: { [eventName: string]: (event: BaseEvent) => void },
 };

@@ -20,25 +20,7 @@ class Format
 
 	public static function onInitialFormatCodeSet(): EventResult
 	{
-		$crmAddressFormatCode = EntityAddressFormatter::getFormatID();
-		$locAddressFormatCode = static::getLocationFormatCode($crmAddressFormatCode);
-
-		if($locAddressFormatCode)
-		{
-			$result = new EventResult(
-				EventResult::SUCCESS,
-				[
-					"formatCode" => $locAddressFormatCode
-				],
-				'location'
-			);
-		}
-		else
-		{
-			$result = new EventResult(EventResult::ERROR);
-		}
-
-		return $result;
+		return (new EventResult(EventResult::ERROR));
 	}
 
 	public static function getLocationFormatCode(string $crmAddressFormatCode): string

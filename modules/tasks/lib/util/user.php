@@ -1,4 +1,4 @@
-<?
+<?php
 /**
  * Bitrix Framework
  * @package bitrix
@@ -427,7 +427,7 @@ final class User
 		return static::getTimeZoneOffset($userId);
 	}
 
-	public static function getTimeZoneOffset($userId = 0, $utc = false)
+	public static function getTimeZoneOffset($userId = 0, $utc = false, bool $force = false)
 	{
 		$userId = intval($userId);
 		// DO NOT set $userId = static::getId() when $userId == 0 here, because some times
@@ -440,7 +440,7 @@ final class User
 			\CTimeZone::enable();
 		}
 
-		$offset = static::getOffset($userId ? $userId : null) + ($utc ? \Bitrix\Tasks\Util::getServerTimeZoneOffset() : 0);
+		$offset = static::getOffset($userId ? $userId : null, $force) + ($utc ? \Bitrix\Tasks\Util::getServerTimeZoneOffset() : 0);
 
 		if($disabled)
 		{
@@ -450,15 +450,15 @@ final class User
 		return intval($offset);
 	}
 
-	public static function setOption($name, $value, $userId = 0)
+	public static function setOption($name, $value, $userId = 0, bool $common = false)
 	{
-		$userId = intval($userId);
+		$userId = (int)$userId;
 		if(!$userId)
 		{
 			$userId = static::getId();
 		}
 
-		return \CUserOptions::setOption('tasks', $name, $value, false, $userId ? $userId : false);
+		return \CUserOptions::setOption('tasks', $name, $value, $common, $userId ? : false);
 	}
 
 	public static function unSetOption($name, $userId = 0)
@@ -531,8 +531,8 @@ final class User
 	 */
 	public static function getAccessLevel($entityName, $levelName)
 	{
-		$entityName = ToLower(trim((string) $entityName));
-		$levelName = ToLower(trim((string) $levelName));
+		$entityName = mb_strtolower(trim((string) $entityName));
+		$levelName = mb_strtolower(trim((string) $levelName));
 
 		$levels = static::getAccessLevelsForEntity($entityName);
 		foreach($levels as $level)
@@ -637,14 +637,14 @@ final class User
 		return static::$accessLevels[$entityName];
 	}
 
-	private static function getOffset($userId)
+	private static function getOffset($userId, bool $force = false)
 	{
 		static $cache = array();
 
 		$key = 'U'.$userId;
-		if (!array_key_exists($key, $cache))
+		if (!array_key_exists($key, $cache) || $force)
 		{
-			$cache[$key] = \CTimeZone::getOffset($userId);
+			$cache[$key] = \CTimeZone::getOffset($userId, $force);
 		}
 		return $cache[$key];
 	}

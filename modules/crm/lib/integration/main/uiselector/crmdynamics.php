@@ -115,12 +115,11 @@ class CrmDynamics extends CrmEntity
 			}
 		}
 
+		$idsLimit = max(count($selectedItemIds), static::ENTITIES_MAX_COUNT);
+
 		$itemIds = array_merge($lastItemIds, $selectedItemIds);
-		if (count($itemIds) > 20)
-		{
-			$itemIds = array_slice($itemIds, 0, 20);
-		}
 		$itemIds = array_unique($itemIds);
+		$itemIds = array_slice($itemIds, 0, $idsLimit);
 
 		$entitiesList = [];
 

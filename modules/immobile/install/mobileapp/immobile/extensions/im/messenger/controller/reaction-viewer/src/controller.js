@@ -9,7 +9,6 @@ jn.define('im/messenger/controller/reaction-viewer/controller', (require, export
 	const { EventType, ComponentCode } = require('im/messenger/const');
 	const { ChatAvatar, ChatTitle } = require('im/messenger/lib/element');
 	const { Haptics } = require('haptics');
-	const { Loc } = require('loc');
 
 	let isWidgetOpen = false;
 	class ReactionViewerController
@@ -18,9 +17,15 @@ jn.define('im/messenger/controller/reaction-viewer/controller', (require, export
 		 *
 		 * @param {number} messageId
 		 * @param {ReactionType} reactionType
+		 * @param {DialogId} dialogId
 		 * @param {LayoutWidget} parentLayout
 		 */
-		static open(messageId, reactionType, parentLayout = null)
+		static open({
+			messageId,
+			reactionType,
+			dialogId,
+			parentLayout = PageManager,
+		})
 		{
 			if (isWidgetOpen)
 			{
@@ -28,16 +33,18 @@ jn.define('im/messenger/controller/reaction-viewer/controller', (require, export
 			}
 			isWidgetOpen = true;
 
-			parentLayout = parentLayout || PageManager;
-
-			const widget = new ReactionViewerController(messageId, reactionType, parentLayout);
-			window.widget = widget;
+			const widget = new ReactionViewerController({
+				messageId,
+				reactionType,
+				dialogId,
+				parentLayout,
+			});
 
 			Haptics.impactMedium();
 			void widget.show();
 		}
 
-		constructor(messageId, reactionType, parentLayout)
+		constructor({ messageId, reactionType, dialogId, parentLayout })
 		{
 			this.store = serviceLocator.get('core').getStore();
 			/** @type {PageManager} */
@@ -51,12 +58,16 @@ jn.define('im/messenger/controller/reaction-viewer/controller', (require, export
 
 			this.currentReaction = 'all';
 			this.messageId = messageId;
+			this.dialogId = dialogId;
 			/** @type {Map<AllReactions, number>} */
 			this.counters = new Map();
+			this.layoutWidget = null;
 		}
 
 		async show()
 		{
+			this.bindMethods();
+			this.subscribeExternalEvents();
 			await this.initUserList(this.currentReaction);
 			this.initCounters();
 
@@ -68,27 +79,45 @@ jn.define('im/messenger/controller/reaction-viewer/controller', (require, export
 					onlyMediumPosition: false,
 					hideNavigationBar: true,
 				},
-				onReady: (layoutWidget) => {
-					layoutWidget.showComponent(new ReactionViewerView({
-						users: this.users,
-						currentReaction: this.currentReaction,
-						counters: this.counters,
-						hasNextPage: this.hasNextPage,
-						onReactionChange: (reactionType) => {
-							return this.onReactionChange(reactionType);
-						},
-						onLoadMore: (reactionType, lastReactionId) => {
-							return this.loadNextPage(reactionType, lastReactionId);
-						},
-						onReactionUserClick: (userId) => {
-							this.openDialog(userId, layoutWidget);
-						},
-					}));
+			});
+
+			this.layoutWidget = layoutWidget;
+
+			layoutWidget.showComponent(new ReactionViewerView({
+				users: this.users,
+				currentReaction: this.currentReaction,
+				counters: this.counters,
+				hasNextPage: this.hasNextPage,
+				onReactionChange: (reactionType) => {
+					return this.onReactionChange(reactionType);
 				},
-			});
-			layoutWidget.on('onViewRemoved', () => {
+				onLoadMore: (reactionType, lastReactionId) => {
+					return this.loadNextPage(reactionType, lastReactionId);
+				},
+				onReactionUserClick: (userId) => {
+					this.openDialog(userId, layoutWidget);
+				},
+			}));
+
+			layoutWidget.on(EventType.view.close, () => {
 				isWidgetOpen = false;
+				this.unsubscribeExternalEvents();
 			});
+		}
+
+		bindMethods()
+		{
+			this.deleteDialogHandler = this.deleteDialogHandler.bind(this);
+		}
+
+		subscribeExternalEvents()
+		{
+			BX.addCustomEvent(EventType.dialog.external.delete, this.deleteDialogHandler);
+		}
+
+		unsubscribeExternalEvents()
+		{
+			BX.removeCustomEvent(EventType.dialog.external.delete, this.deleteDialogHandler);
 		}
 
 		/**
@@ -176,6 +205,16 @@ jn.define('im/messenger/controller/reaction-viewer/controller', (require, export
 					color: imageColor,
 				},
 			}, ComponentCode.imMessenger);
+		}
+
+		deleteDialogHandler({ dialogId })
+		{
+			if (String(this.dialogId) !== String(dialogId))
+			{
+				return;
+			}
+
+			this.layoutWidget.close();
 		}
 	}
 

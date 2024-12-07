@@ -21,6 +21,7 @@ export type CommunicationItem = {
 
 type SelectorEvents = {
 	'Item:onSelect'?: Function,
+	'Item:onDeselect'?: Function,
 	onShow?: Function,
 	onHide?: Function,
 }
@@ -34,17 +35,20 @@ export class ClientSelector
 	items: ItemOptions[] = [];
 	events: SelectorEvents = {};
 	clientSelectorDialog: Dialog;
+	#multiple: boolean = false;
 
 	static createFromCommunications({
 		targetNode,
 		context = null,
 		communications,
+		multiple = false,
 		selected = [],
 		events = {},
 	}): ClientSelector
 	{
 		const instance = new ClientSelector({
 			targetNode,
+			multiple,
 			context,
 			events,
 		});
@@ -59,12 +63,14 @@ export class ClientSelector
 		targetNode,
 		context = null,
 		items,
+		multiple = false,
 		selected = [],
 		events = {},
 	}): ClientSelector
 	{
 		const instance = new ClientSelector({
 			targetNode,
+			multiple,
 			context,
 			events,
 		});
@@ -77,11 +83,13 @@ export class ClientSelector
 
 	constructor({
 		targetNode,
+		multiple = false,
 		context = null,
 		events = {},
 	})
 	{
 		this.targetNode = targetNode;
+		this.#multiple = multiple;
 		this.context = Type.isStringFilled(context) ? context : `crm-client-selector-${Text.getRandom()}`;
 		this.events = Type.isObjectLike(events) ? events : {};
 	}
@@ -90,6 +98,22 @@ export class ClientSelector
 	{
 		// eslint-disable-next-line no-return-assign,no-param-reassign
 		this.items.forEach((item) => item.selected = ids.includes(item.id));
+
+		return this;
+	}
+
+	setSelectedItemByEntityData(entityId: number, entityTypeId: number): ClientSelector
+	{
+		this.items.forEach((item) => {
+			if (
+				item.customData.entityId === entityId
+				&& item.customData.entityTypeId === entityTypeId
+			)
+			{
+				// eslint-disable-next-line no-param-reassign
+				item.selected = true;
+			}
+		});
 
 		return this;
 	}
@@ -183,7 +207,7 @@ export class ClientSelector
 			targetNode,
 			id: 'client-phone-selector-dialog',
 			context,
-			multiple: false,
+			multiple: this.#multiple,
 			dropdownMode: true,
 			showAvatars: true,
 			enableSearch: true,
@@ -199,13 +223,18 @@ export class ClientSelector
 
 	#prepareEvents(): SelectorEvents
 	{
-		const { events: { onSelect, onHide, onShow } } = this;
+		const { events: { onSelect, onDeselect, onHide, onShow } } = this;
 
 		const events = {};
 
 		if (onSelect)
 		{
 			events['Item:onSelect'] = onSelect;
+		}
+
+		if (onDeselect)
+		{
+			events['Item:onDeselect'] = onDeselect;
 		}
 
 		if (onHide)

@@ -2,9 +2,8 @@
  * @module layout/ui/search-bar/preset
  */
 jn.define('layout/ui/search-bar/preset', (require, exports, module) => {
-	const AppTheme = require('apptheme');
+	const { Color } = require('tokens');
 	const { BaseItem } = require('layout/ui/search-bar/base-item');
-	const { CloseIcon, Title } = require('layout/ui/search-bar/ui');
 
 	/**
 	 * @class Preset
@@ -22,20 +21,9 @@ jn.define('layout/ui/search-bar/preset', (require, exports, module) => {
 			};
 		}
 
-		renderContent()
-		{
-			return [
-				Title({
-					text: this.props.name,
-					disabled: this.isDisabled(),
-				}),
-				this.props.active && CloseIcon(`${this.props.id}_cross`),
-			];
-		}
-
 		getSearchButtonBackgroundColor()
 		{
-			return (this.isDefault() ? null : AppTheme.colors.accentBrandBlue);
+			return (this.isDefault() ? null : Color.accentMainPrimary.toHex());
 		}
 
 		getOnClickParams()

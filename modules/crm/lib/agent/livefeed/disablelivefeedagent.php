@@ -14,5 +14,19 @@ class DisableLiveFeedAgent
 		LiveFeedSettings::getCurrent()->enableLiveFeedMerge(false);
 		Livefeed\AvailabilityHelper::setAvailable(false);
 		Livefeed\AvailabilityHelper::deleteUnusedOptions();
+		self::addSonetFeedGarbageCollectorAgent();
+	}
+
+	private static function addSonetFeedGarbageCollectorAgent(): void
+	{
+		/** @see \Bitrix\Socialnetwork\Update\FeedGarbageCollector::execute() */
+		\CAgent::AddAgent(
+			'\Bitrix\Socialnetwork\Update\FeedGarbageCollector::execute();',
+			'socialnetwork',
+			'N',
+			60,
+			'',
+			'Y',
+		);
 	}
 }

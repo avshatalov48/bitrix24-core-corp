@@ -8,6 +8,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 use Bitrix\Crm\Integration\Landing\RequisitesLanding;
 use Bitrix\Intranet\Settings\CommunicationSettings;
 use Bitrix\Intranet\Settings\EmployeeSettings;
+use Bitrix\Intranet\Settings\MainPageSettings;
 use Bitrix\Intranet\Settings\RequisiteSettings;
 use Bitrix\Intranet\Settings\ScheduleSettings;
 use Bitrix\Intranet\Settings\SecuritySettings;
@@ -45,20 +46,32 @@ class SettingsComponent extends CBitrixComponent implements Controllerable, Erro
 
 	private function getProviders(): array
 	{
+		$providerClasses = [
+			ToolsSettings::class,
+			PortalSettings::class,
+			// todo: remove after open Vibe for all
+			// MainPageSettings::class,
+			CommunicationSettings::class,
+			EmployeeSettings::class,
+			RequisiteSettings::class,
+			ScheduleSettings::class,
+			GdprSettings::class,
+			SecuritySettings::class,
+			ConfigurationSettings::class,
+		];
+
+		// todo: remove after open Vibe for all
+		if (
+			Loader::includeModule('landing')
+			&& \Bitrix\Landing\Mainpage\Manager::isAvailable()
+		)
+		{
+			array_splice($providerClasses, 2, 0, MainPageSettings::class);
+		}
+
 		$providers = [];
 		$sort = 0;
-		foreach ([
-				ToolsSettings::class,
-				PortalSettings::class,
-				CommunicationSettings::class,
-				EmployeeSettings::class,
-				RequisiteSettings::class,
-				ScheduleSettings::class,
-				GdprSettings::class,
-				SecuritySettings::class,
-				ConfigurationSettings::class,
-			] as $settingsClass
-		)
+		foreach ($providerClasses as $settingsClass)
 		{
 			/** @var \Bitrix\Intranet\Settings\AbstractSettings $settingsClass */
 			if ($settingsClass::isAvailable())

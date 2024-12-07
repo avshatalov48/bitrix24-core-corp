@@ -2,6 +2,9 @@
  * @module im/messenger/lib/ui/selector/multi-selector
  */
 jn.define('im/messenger/lib/ui/selector/multi-selector', (require, exports, module) => {
+	const { Loc } = require('loc');
+	const { Theme } = require('im/lib/theme');
+	const { Notification } = require('im/messenger/lib/ui/notification');
 	const { Type } = require('type');
 	const { Carousel } = require('im/messenger/lib/ui/base/carousel');
 	const { MultiSelectedList } = require('im/messenger/lib/ui/selector/multi-selected-list');
@@ -23,6 +26,7 @@ jn.define('im/messenger/lib/ui/selector/multi-selector', (require, exports, modu
 		 * @param {Object} [props.listStyle]
 		 * @param {Array} [props.buttons]
 		 * @param {Function} [props.ref]
+		 * @param {boolean} [props.isSuperEllipseAvatar]
 		 */
 		constructor(props)
 		{
@@ -37,6 +41,7 @@ jn.define('im/messenger/lib/ui/selector/multi-selector', (require, exports, modu
 			return [
 				this.createButtonSection(),
 				this.createCarousel(),
+				this.createFakeTabs(),
 				this.createList(),
 			];
 		}
@@ -51,6 +56,7 @@ jn.define('im/messenger/lib/ui/selector/multi-selector', (require, exports, modu
 				onUnselectItem: (itemData) => this.deleteItemInCarousel(itemData),
 				isCarouselEnabled: this.getSelectedItems().length > 0,
 				style: this.props.listStyle,
+				isSuperEllipseAvatar: this.props.isSuperEllipseAvatar,
 				ref: (ref) => {
 					this.listRef = ref;
 
@@ -68,6 +74,7 @@ jn.define('im/messenger/lib/ui/selector/multi-selector', (require, exports, modu
 				isShadow: this.state.isShadow,
 				itemList: this.selectedItems,
 				size: this.props.carouselSize,
+				isSuperEllipseAvatar: this.props.isSuperEllipseAvatar,
 				onItemSelected: (itemData) => this.unselectItemInList(itemData),
 				ref: (ref) => this.carouselRef = ref,
 			});
@@ -76,6 +83,77 @@ jn.define('im/messenger/lib/ui/selector/multi-selector', (require, exports, modu
 		getCarousel()
 		{
 			return this.carouselRef;
+		}
+
+		createFakeTabs()
+		{
+			if (!this.props.isFakeTabsEnabled)
+			{
+				return null;
+			}
+
+			return View(
+				{
+					style: {
+						flexDirection: 'row',
+						paddingTop: 12,
+						paddingBottom: 12,
+						paddingLeft: 18,
+						paddingRight: 18,
+						backgroundColor: Theme.colors.bgNavigation,
+					},
+				},
+				View(
+					{
+						style: {
+							borderColor: Theme.colors.base3,
+							borderWidth: 1.2,
+							borderRadius: 8,
+							alignItems: 'center',
+							paddingRight: 12,
+							paddingBottom: 7.5,
+							paddingTop: 7.5,
+							paddingLeft: 12,
+						},
+					},
+					Text({
+						text: Loc.getMessage('IMMOBILE_DIALOG_CREATOR_PARTICIPANTS_RECENT_TAB_NAME'),
+						style: {
+							fontSize: 16,
+							fontWeight: '500',
+							color: Theme.colors.base1,
+						},
+					}),
+				),
+				View(
+					{
+						style: {
+							marginLeft: 8,
+							borderColor: Theme.colors.bgSeparatorPrimary,
+							borderWidth: 1.2,
+							borderRadius: 8,
+							alignItems: 'center',
+							paddingRight: 12,
+							paddingBottom: 7.5,
+							paddingTop: 7.5,
+							paddingLeft: 12,
+						},
+						onClick: () => {
+							Notification.showComingSoon();
+						},
+					},
+					Text(
+						{
+							text:  Loc.getMessage('IMMOBILE_DIALOG_CREATOR_PARTICIPANTS_DEPARTMENT_TAB_NAME'),
+							style: {
+								fontSize: 16,
+								fontWeight: '400',
+								color: Theme.colors.base3,
+							},
+						},
+					),
+				),
+			);
 		}
 
 		selectItem(itemData)

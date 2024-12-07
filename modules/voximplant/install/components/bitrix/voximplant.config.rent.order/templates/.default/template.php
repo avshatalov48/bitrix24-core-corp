@@ -128,7 +128,7 @@ if (!$statusMessage)
 					</div>
 				</div>
 
-				<script type="text/javascript">
+				<script>
 					BX.ready(function ()
 					{
 						BX.VoxImplant.rentPhoneOrder.init();
@@ -162,7 +162,7 @@ if (!$statusMessage)
 							</div>
 						</div>
 					</div>
-					<script type="text/javascript">
+					<script>
 						BX.ready(function ()
 						{
 							BX.VoxImplant.rentPhoneOrderExtra.init();

@@ -9,7 +9,6 @@ class Settings extends Base
 		return [
 			'isBetaAvailable',
 			'isBetaActive',
-			'isNewChecklistActive',
 		];
 	}
 
@@ -31,20 +30,5 @@ class Settings extends Base
 	public function deactivateBetaAction(): void
 	{
 		\Bitrix\TasksMobile\Settings::getInstance()->deactivateBeta();
-	}
-
-	public function isNewChecklistActiveAction(): bool
-	{
-		return \Bitrix\TasksMobile\Settings::getInstance()->isNewChecklistActive();
-	}
-
-	public function activateNewChecklistAction(): void
-	{
-		\Bitrix\TasksMobile\Settings::getInstance()->activateNewChecklist();
-	}
-
-	public function deactivateNewChecklistAction(): void
-	{
-		\Bitrix\TasksMobile\Settings::getInstance()->deactivateNewChecklist();
 	}
 }

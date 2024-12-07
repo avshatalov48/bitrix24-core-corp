@@ -11,7 +11,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 if (isset($arResult['CLOSE_SLIDER']) && $arResult['CLOSE_SLIDER'] === true)
 {
 	?>
-	<script type="text/javascript">
+	<script>
 		BX.ready(
 			function()
 			{
@@ -309,7 +309,7 @@ $APPLICATION->IncludeComponent(
 ?>
 </div>
 
-<script type="text/javascript">
+<script>
 	BX.ready(
 		function()
 		{
@@ -374,7 +374,7 @@ $APPLICATION->IncludeComponent(
 
 	$isDisplayAvailableShowListHeight = !in_array($eDisplay, $displayAvailablesShowList, true);
 	$display = ($isDisplayAvailableShowListHeight ? 'true' : 'false');
-?><script type="text/javascript">
+?><script>
 	BX.ready(
 			function()
 			{
@@ -399,7 +399,7 @@ $APPLICATION->IncludeComponent(
 </script><?
 endif;
 if(SITE_TEMPLATE_ID === 'bitrix24'):
-?><script type="text/javascript">
+?><script>
 	BX.ready(
 			function()
 			{

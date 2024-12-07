@@ -1,2 +1,0 @@
-<?php
-$MESS["CRM_CONFIG_CATALOG_SETTINGS_VAT_NOT_SELECTED"] = "Nicht ausgewählt";

@@ -2,14 +2,20 @@
 
 namespace Bitrix\Crm\Service\Timeline\Item\Activity;
 
+use Bitrix\Crm\Activity\Analytics\Dictionary;
 use Bitrix\Crm\Activity\Provider;
+use Bitrix\Crm\Activity\ToDo\ColorSettings\ColorSettingsProvider;
 use Bitrix\Crm\Activity\TodoPingSettingsProvider;
 use Bitrix\Crm\Integration\AI\AIManager;
 use Bitrix\Crm\Integration\AI\EventHandler;
+use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Service\Timeline\Context;
 use Bitrix\Crm\Service\Timeline\Item\Activity;
 use Bitrix\Crm\Service\Timeline\Item\Mixin\FileListPreparer;
+use Bitrix\Crm\Service\Timeline\Item\Payload;
 use Bitrix\Crm\Service\Timeline\Layout;
+use Bitrix\Crm\Service\Timeline\Layout\Action\JsEvent;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\ContentBlockFactory;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\ContentBlockWithTitle;
@@ -18,12 +24,15 @@ use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\EditableDescription;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\FileList;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\ItemSelector;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\LineOfTextBlocks;
+use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\PingSelector;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\Text;
 use Bitrix\Crm\Service\Timeline\Layout\Common\Icon;
-use Bitrix\Crm\Service\Timeline\Layout\Menu\MenuItem;
 use Bitrix\Crm\Service\Timeline\Layout\Menu\MenuItemFactory;
-use Bitrix\Crm\Settings\Crm;
+use Bitrix\Main\ArgumentTypeException;
+use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Type\DateTime;
+use Bitrix\Main\Web\Uri;
 use CCrmOwnerType;
 
 class ToDo extends Activity
@@ -35,6 +44,19 @@ class ToDo extends Activity
 		return 'ToDo';
 	}
 
+	public function canUseColorSelector(): bool
+	{
+		return true;
+	}
+
+	final public function getColor(): ?array
+	{
+		$settings = $this->getAssociatedEntityModel()?->get('SETTINGS') ?? [];
+		$color = $settings['COLOR'] ?? ColorSettingsProvider::getDefaultColorId();
+
+		return (new ColorSettingsProvider())->getByColorId($color);
+	}
+
 	public function getIconCode(): ?string
 	{
 		return Icon::CIRCLE_CHECK;
@@ -42,10 +64,19 @@ class ToDo extends Activity
 
 	public function getTitle(): string
 	{
-		return $this->isScheduled()
-			? Loc::getMessage('CRM_TIMELINE_ITEM_TODO_TITLE_SCHEDULED')
-			: Loc::getMessage('CRM_TIMELINE_ITEM_TODO_TITLE_HISTORY_ITEM')
-		;
+		$subject = $this->getAssociatedEntityModel()?->get('SUBJECT');
+
+		if ($subject !== null && $subject !== '')
+		{
+			return $subject;
+		}
+
+		if ($this->isScheduled())
+		{
+			return Loc::getMessage('CRM_TIMELINE_ITEM_TODO_TITLE_SCHEDULED');
+		}
+
+		return Loc::getMessage('CRM_TIMELINE_ITEM_TODO_TITLE_HISTORY_ITEM');
 	}
 
 	public function getLogo(): ?Layout\Body\Logo
@@ -56,23 +87,49 @@ class ToDo extends Activity
 			return null;
 		}
 
-		return (new Layout\Body\CalendarLogo($deadline));
+		$calendarEventId = $this->getCalendarEventId();
+
+		$logo = (new Layout\Body\CalendarLogo($deadline, $calendarEventId));
+
+		$color = $this->getColor();
+		if ($color && $this->isScheduled())
+		{
+			$logo->setBackgroundColor($color['logoBackground']);
+		}
+
+		return $logo;
 	}
 
+	protected function getCalendarEventId(): ?int
+	{
+		$eventId = $this->getModel()->getAssociatedEntityModel()?->get('CALENDAR_EVENT_ID');
+
+		return ($eventId === null ? null : (int)$eventId);
+	}
+
+	/**
+	 * @throws ArgumentTypeException
+	 */
 	public function getContentBlocks(): array
 	{
 		$result = [];
 
+		$calendarEventBlock = $this->buildCalendarEventBlock();
+		if (isset($calendarEventBlock))
+		{
+			$result['calendarEventBlock'] = $calendarEventBlock->setScopeWeb();
+		}
+
 		$deadlineBlock = $this->buildDeadlineBlock();
 		if (isset($deadlineBlock))
 		{
-			$result['deadline'] = $deadlineBlock;
+			$result['deadline'] = $deadlineBlock->setScopeMobile();
 		}
 
-		$webPingSelectorBlock = $this->buildWebPingListBlock();
-		if (isset($webPingSelectorBlock))
+		$webDeadlineAndPingSelectorBlock = $this->buildWebDeadlineAndPingSelectorBlock();
+		if (isset($webDeadlineAndPingSelectorBlock))
 		{
-			$result['webPingSelector'] = $webPingSelectorBlock->setScopeWeb();
+			$result['webDeadlineAndPingSelector'] = $webDeadlineAndPingSelectorBlock->setScopeWeb();
 		}
 
 		$mobilePingSelectorBlock = $this->buildMobilePingListBlock();
@@ -85,6 +142,36 @@ class ToDo extends Activity
 		if (isset($descriptionBlock))
 		{
 			$result['description'] = $descriptionBlock;
+		}
+
+		$locationBlock = $this->buildLocationBlock();
+		if (isset($locationBlock))
+		{
+			$result['location'] = $locationBlock;
+		}
+
+		$usersBlock = $this->buildUsersBlock();
+		if (isset($usersBlock))
+		{
+			$result['users'] = $usersBlock;
+		}
+
+		$clientsBlock = $this->buildClientsBlock();
+		if (isset($clientsBlock))
+		{
+			$result['clients'] = $clientsBlock;
+		}
+
+		$addressBlock = $this->buildAddressBlock();
+		if (isset($addressBlock))
+		{
+			$result['address'] = $addressBlock;
+		}
+
+		$linkBlock = $this->buildLinkBlock();
+		if (isset($linkBlock))
+		{
+			$result['link'] = $linkBlock;
 		}
 
 		$filesBlock = $this->buildFilesBlock();
@@ -107,6 +194,22 @@ class ToDo extends Activity
 		$buttons = [];
 		if (!$this->isScheduled())
 		{
+			$repeatButton = new Layout\Footer\Button(
+				Loc::getMessage('CRM_TIMELINE_ITEM_TODO_REPEAT'),
+				Layout\Footer\Button::TYPE_SECONDARY,
+			);
+			$repeatAction = (new Layout\Action\JsEvent('Activity:ToDo:Repeat'))
+				->addActionParamInt('activityId', $this->getActivityId())
+				->addActionParamInt('ownerTypeId', $this->getContext()->getEntityTypeId())
+				->addActionParamInt('ownerId', $this->getContext()->getEntityId())
+			;
+
+			$buttons['repeat'] = $repeatButton
+				->setAction($repeatAction)
+				->setScopeWeb()
+				->setHideIfReadonly()
+			;
+
 			return $buttons;
 		}
 
@@ -117,15 +220,21 @@ class ToDo extends Activity
 			)
 		)->setAction($this->getCompleteAction())->setHideIfReadonly();
 
-		if ($this->canPostpone())
-		{
-			$buttons['postpone'] = (
-				new Layout\Footer\Button(
-					Loc::getMessage('CRM_TIMELINE_ITEM_TODO_POSTPONE'),
-					Layout\Footer\Button::TYPE_SECONDARY,
-				)
-			)->setAction(new Layout\Action\ShowMenu($this->getPostponeMenu($this->getActivityId())))->setHideIfReadonly();
-		}
+		$updateButton = new Layout\Footer\Button(
+			Loc::getMessage('CRM_TIMELINE_ITEM_TODO_UPDATE'),
+			Layout\Footer\Button::TYPE_SECONDARY,
+		);
+		$updateAction = (new Layout\Action\JsEvent('Activity:ToDo:Update'))
+			->addActionParamInt('activityId', $this->getActivityId())
+			->addActionParamInt('ownerTypeId', $this->getContext()->getEntityTypeId())
+			->addActionParamInt('ownerId', $this->getContext()->getEntityId())
+		;
+
+		$buttons['update'] = $updateButton
+			->setAction($updateAction)
+			->setScopeWeb()
+			->setHideIfReadonly()
+		;
 
 		return $buttons;
 	}
@@ -135,11 +244,12 @@ class ToDo extends Activity
 		$items = parent::getMenuItems();
 		unset($items['view']);
 
+		$identifier = $this->getContext()->getIdentifier();
+		$ownerTypeId = $identifier->getEntityTypeId();
+		$ownerId = $identifier->getEntityId();
+
 		if ($this->isScheduled() && $this->hasUpdatePermission())
 		{
-			$ownerTypeId = $this->getContext()->getIdentifier()->getEntityTypeId();
-			$ownerId = $this->getContext()->getIdentifier()->getEntityId();
-
 			$items['addFile'] = MenuItemFactory::createAddFileMenuItem()
 				->setAction((new Layout\Action\JsEvent('Activity:ToDo:AddFile'))
 					->addActionParamInt('entityTypeId', CCrmOwnerType::Activity)
@@ -155,24 +265,9 @@ class ToDo extends Activity
 					->addActionParamInt('ownerTypeId', $ownerTypeId)
 					->addActionParamInt('ownerId', $ownerId)
 					->addActionParamInt('id', $this->getActivityId())
-					->addActionParamInt('responsibleId', (int)$this->getAssociatedEntityModel()->get('RESPONSIBLE_ID'))
+					->addActionParamInt('responsibleId', (int)$this->getAssociatedEntityModel()?->get('RESPONSIBLE_ID'))
 				)
 			;
-
-			if (Crm::isTimelineToDoCalendarSyncEnabled())
-			{
-				$items['settings'] = (new MenuItem(Loc::getMessage('CRM_TIMELINE_ITEM_TODO_SETTINGS')))
-					->setHideIfReadonly()
-					->setSort(9990)
-					->setAction((new Layout\Action\JsEvent('Activity:ToDo:ShowSettings'))
-						->addActionParamInt('entityTypeId', CCrmOwnerType::Activity)
-						->addActionParamInt('entityId', $this->getActivityId())
-						->addActionParamInt('ownerTypeId', $ownerTypeId)
-						->addActionParamInt('ownerId', $ownerId)
-					)
-					->setScopeWeb()
-				;
-			}
 		}
 
 		return $items;
@@ -183,7 +278,54 @@ class ToDo extends Activity
 		return true;
 	}
 
-	private function buildDeadlineBlock(): ?ContentBlock
+	private function buildCalendarEventBlock(): ?ContentBlockWithTitle
+	{
+		$calendarEvent = $this->getCalendarEvent();
+
+		if ($calendarEvent === null)
+		{
+			return null;
+		}
+
+		$entryDateFrom = \CUtil::JSescape($calendarEvent['DATE_FROM']);
+		$offset = (int)$calendarEvent['TZ_OFFSET_FROM'];
+
+		return (new ContentBlockWithTitle())
+			->setFixedWidth(false)
+			->setAlignItems('center')
+			->setTitle(Loc::getMessage('CRM_TIMELINE_ITEM_TODO_CALENDAR_EVENT'))
+			->setContentBlock(
+				(new ContentBlock\Link())
+					->setValue($calendarEvent['NAME'])
+					->setAction(
+						(new Layout\Action\JsEvent('Activity:ToDo:ShowCalendar'))
+							->addActionParamInt('calendarEventId', $calendarEvent['ID'])
+							->addActionParamString('entryDateFrom', $entryDateFrom)
+							->addActionParamInt('timezoneOffset', $offset)
+					)
+			)
+			->setInline()
+		;
+	}
+
+	private function buildDeadlineBlock(): ?ContentBlockWithTitle
+	{
+		$deadline = $this->getDeadline();
+		if (!isset($deadline))
+		{
+			return null;
+		}
+
+		return (new ContentBlockWithTitle())
+			->setFixedWidth(false)
+			->setAlignItems('center')
+			->setTitle($this->getDeadlineEditableDateTitle())
+			->setContentBlock($this->buildDeadlineEditableDateBlock())
+			->setInline()
+		;
+	}
+
+	private function buildDeadlineEditableDateBlock(): ?EditableDate
 	{
 		$deadline = $this->getDeadline();
 		if (!isset($deadline))
@@ -201,31 +343,152 @@ class ToDo extends Activity
 			;
 		}
 
-		return (new ContentBlockWithTitle())
-			->setFixedWidth(false)
-			->setAlignItems('center')
-			->setTitle(Loc::getMessage('CRM_TIMELINE_ITEM_TODO_COMPLETE_TO'))
-			->setContentBlock(
-				(new EditableDate())
-					->setReadonly(!$this->isScheduled() || !$this->hasUpdatePermission())
-					->setStyle(EditableDate::STYLE_PILL)
-					->setDate($deadline)
-					->setAction($updateDeadlineAction)
-					->setBackgroundColor($this->isScheduled() ? EditableDate::BACKGROUND_COLOR_WARNING : null)
-				)
-			->setInline()
+		return (new EditableDate())
+			->setReadonly(!$this->isScheduled() || !$this->hasUpdatePermission())
+			->setStyle(EditableDate::STYLE_PILL)
+			->setDate($deadline)
+			->setDuration($this->getDeadlineEditableDateDuration())
+			->setAction($updateDeadlineAction)
+			->setBackgroundColor(
+				$this->isScheduled() ?
+					EditableDate::BACKGROUND_COLOR_WARNING
+					: null
+			)
 		;
 	}
 
-	private function buildWebPingListBlock(): ?ContentBlock
+	private function getDeadlineEditableDateTitle(): string
+	{
+		$calendarEvent = $this->getCalendarEvent();
+		if ($calendarEvent)
+		{
+			return Loc::getMessage('CRM_TIMELINE_ITEM_TODO_COMPLETE_TO_WITH_CALENDAR_EVENT');
+		}
+
+		return Loc::getMessage('CRM_TIMELINE_ITEM_TODO_COMPLETE_TO');
+	}
+
+	private function getDeadlineEditableDateDuration(): ?int
+	{
+		$startTime = $this->getAssociatedEntityModel()?->get('START_TIME');
+		$endTime = $this->getAssociatedEntityModel()?->get('END_TIME');
+		if (
+			empty($startTime)
+			|| empty($endTime)
+			|| $startTime === $endTime
+			|| $this->getCalendarEventId() <= 0
+		)
+		{
+			return null;
+		}
+
+		$startDateTime = DateTime::createFromText($startTime);
+		$endDateTime = DateTime::createFromText($endTime);
+
+		return $endDateTime?->getTimestamp() - $startDateTime?->getTimestamp();
+	}
+
+	private function getCalendarEvent(): ?array
+	{
+		if ($this->getCalendarEventId() > 0)
+		{
+			return \Bitrix\Crm\Integration\Calendar::getEvent($this->getCalendarEventId());
+		}
+
+		return null;
+	}
+
+	/**
+	 * @throws ArgumentTypeException
+	 */
+	private function buildWebDeadlineAndPingSelectorBlock(): ?ContentBlock
+	{
+		$deadlineAndPingSelector = new ContentBlock\Activity\DeadlineAndPingSelector();
+		$deadlineBlock = $this->buildDeadlineEditableDateBlock();
+		if ($deadlineBlock)
+		{
+			$deadlineBlock
+				->setBackgroundColor(EditableDate::BACKGROUND_COLOR_NONE)
+				->setStyle(EditableDate::STYLE_PILL_INLINE_GROUP)
+			;
+			$deadlineAndPingSelector
+				->setDeadlineBlock($deadlineBlock)
+				->setDeadlineBlockTitle($this->getDeadlineEditableDateTitle())
+				->setIsScheduled($this->isScheduled())
+			;
+		}
+
+		$pingSelectorBlock = $this->buildWebPingListBlock();
+		if ($pingSelectorBlock)
+		{
+			$deadlineAndPingSelector->setPingSelectorBlock($pingSelectorBlock);
+		}
+
+		if ($this->isScheduled())
+		{
+			$deadlineAndPingSelector->setBackgroundToken(
+				ContentBlock\Activity\DeadlineAndPingSelector::BACKGROUND_ORANGE
+			);
+		}
+		else
+		{
+			$deadlineAndPingSelector->setBackgroundToken(
+				ContentBlock\Activity\DeadlineAndPingSelector::BACKGROUND_GREY
+			);
+		}
+
+		$color = $this->getColor();
+		if ($color)
+		{
+			$deadlineAndPingSelector->setBackgroundColorById($color['id']);
+		}
+
+		return $deadlineAndPingSelector;
+	}
+
+	private function buildWebPingListBlock(): ItemSelector | PingSelector | Text | null
 	{
 		if ($this->isScheduled() && $this->hasUpdatePermission())
 		{
-			return $this->buildChangeablePingSelectorBlock();
+			return $this->buildChangeablePingSelectorItem();
 		}
 
-		$blockText = $this->buildWebPingBlockText();
-		return $this->buildReadonlyPingSelectorBlock($blockText);
+		return $this->buildReadonlyPingSelectorItem();
+	}
+
+	private function buildChangeablePingSelectorItem(): PingSelector
+	{
+		$result = [];
+		foreach (TodoPingSettingsProvider::getDefaultOffsetList() as $item)
+		{
+			$result[$item['id']] = $item;
+		}
+
+		$offsets = $this->getPingOffsets();
+		foreach ($offsets as $item)
+		{
+			$result[$item['id']] = $item;
+		}
+
+		usort($result, static fn($a, $b) => $a['offset'] <=> $b['offset']);
+
+		$identifier = $this->getContext()->getIdentifier();
+
+		return (new PingSelector())
+			->setValue(array_column($offsets, 'offset'))
+			->setValuesList(array_map(
+				static fn($item) => ['id' => (string)$item['offset'], 'title' => $item['title']],
+				array_values($result)
+			))
+			->setAction(
+				(new Layout\Action\RunAjaxAction('crm.activity.ping.updateOffsets'))
+					->addActionParamInt('ownerTypeId', $identifier->getEntityTypeId())
+					->addActionParamInt('ownerId', $identifier->getEntityId())
+					->addActionParamInt('id', $this->getActivityId())
+			)
+			->setIcon('bell')
+			->setDeadline(new DateTime($this->getAssociatedEntityModel()->get('DEADLINE')))
+		;
 	}
 
 	private function buildMobilePingListBlock(): ?ContentBlock
@@ -235,36 +498,57 @@ class ToDo extends Activity
 
 		if ($this->isScheduled() && $this->hasUpdatePermission())
 		{
-			return $this->buildChangeablePingSelectorBlock($emptyStateText, $selectorTitle);
+			return $this->buildChangeablePingSelectorMobileBlock($emptyStateText, $selectorTitle);
 		}
 
-		$blockText = $this->buildMobilePingBlockText($emptyStateText);
-		return $this->buildReadonlyPingSelectorBlock($blockText);
+		return $this->buildReadonlyPingSelectorBlock($this->buildMobilePingBlockText($emptyStateText));
 	}
 
-	private function buildChangeablePingSelectorBlock($emptyStateText = null, $selectorTitle = null): ?ContentBlock
+	private function buildChangeablePingSelectorMobileBlock($emptyStateText = null, $selectorTitle = null): ?ContentBlock
 	{
-		$offsets = $this->getPingOffsets();
 		return (new ContentBlockWithTitle())
 			->setFixedWidth(false)
 			->setTitle(Loc::getMessage('CRM_TIMELINE_ITEM_TODO_PING_OFFSETS_TITLE'))
-			->setContentBlock(
-				(new ItemSelector())
-					->setSelectorTitle($selectorTitle)
-					->setValuesList(array_map(
-						static fn($item) => ['id' => (string)$item['offset'], 'title' => $item['title']],
-						TodoPingSettingsProvider::getDefaultOffsetList()
-					))
-					->setValue(array_column($offsets, 'offset'))
-					->setEmptyState($emptyStateText)
-					->setAction(
-						(new Layout\Action\RunAjaxAction('crm.activity.todo.updatePingOffsets'))
-							->addActionParamInt('ownerTypeId', $this->getContext()->getIdentifier()->getEntityTypeId())
-							->addActionParamInt('ownerId', $this->getContext()->getIdentifier()->getEntityId())
-							->addActionParamInt('id', $this->getActivityId())
-					)
+			->setContentBlock($this->buildChangeableItemSelectorItem($emptyStateText, $selectorTitle))
+			->setInline()
+		;
+	}
+
+	private function buildChangeableItemSelectorItem(
+		$emptyStateText = null,
+		$selectorTitle = null,
+		bool $compactMode = false
+	): ?ItemSelector
+	{
+		$offsets = $this->getPingOffsets();
+		$identifier = $this->getContext()->getIdentifier();
+
+		$selector = (new ItemSelector())
+			->setEmptyState($emptyStateText)
+			->setValue(array_column($offsets, 'offset'))
+			->setValuesList(array_map(
+				static fn($item) => ['id' => (string)$item['offset'], 'title' => $item['title']],
+				TodoPingSettingsProvider::getDefaultOffsetList()
+			))
+			->setAction(
+				(new Layout\Action\RunAjaxAction('crm.activity.ping.updateOffsets'))
+					->addActionParamInt('ownerTypeId', $identifier->getEntityTypeId())
+					->addActionParamInt('ownerId', $identifier->getEntityId())
+					->addActionParamInt('id', $this->getActivityId())
 			)
-			->setInline();
+		;
+
+		if ($compactMode)
+		{
+			$selector->setCompactMode();
+			$selector->setIcon('bell');
+		}
+		else
+		{
+			$selector->setSelectorTitle($selectorTitle);
+		}
+
+		return $selector;
 	}
 
 	private function buildMobilePingBlockText($emptyStateText = null)
@@ -289,18 +573,6 @@ class ToDo extends Activity
 		return $blockText;
 	}
 
-	private function buildWebPingBlockText($emptyStateText = null)
-	{
-		$offsets = $this->getPingOffsets();
-		$blockText = mb_strtolower(implode(', ', array_column($offsets, 'title')));
-		if ($blockText === '')
-		{
-			$blockText = $emptyStateText;
-		}
-
-		return $blockText;
-	}
-
 	private function buildReadonlyPingSelectorBlock($blockText = null): ?ContentBlock
 	{
 		if ((string)$blockText === '')
@@ -315,12 +587,23 @@ class ToDo extends Activity
 			)
 			->addContentBlock(
 				'pingSelectorReadonly',
-				(new Text())
-					->setValue($blockText)
-					->setColor(Text::COLOR_BASE_70)
-					->setFontSize(Text::FONT_SIZE_XS)
-					->setFontWeight(Text::FONT_WEIGHT_MEDIUM)
+				$this->buildReadonlyPingSelectorItem($blockText)
 			);
+	}
+
+	private function buildReadonlyPingSelectorItem($blockText = null): ?Text
+	{
+		if ((string)$blockText === '')
+		{
+			return null;
+		}
+
+		return (new Text())
+			->setValue($blockText)
+			->setColor(Text::COLOR_BASE_70)
+			->setFontSize(Text::FONT_SIZE_XS)
+			->setFontWeight(Text::FONT_WEIGHT_MEDIUM)
+		;
 	}
 
 	private function buildDescriptionBlock(): ?ContentBlock
@@ -332,11 +615,23 @@ class ToDo extends Activity
 		}
 		$description = trim($description);
 
+		// Temporarily removes [p] for mobile compatibility
+		$descriptionType = (int)$this->getAssociatedEntityModel()?->get('DESCRIPTION_TYPE');
+		if ($this->getContext()->getType() === Context::MOBILE && $descriptionType === \CCrmContentType::BBCode)
+		{
+			$description = \Bitrix\Crm\Entity\CommentsHelper::normalizeComment($description);
+		}
+
 		$editableDescriptionBlock = (new EditableDescription())
 			->setText($description)
 			->setEditable(false)
-			->setBackgroundColor(EditableDescription::BG_COLOR_YELLOW)
+			->setUseBBCodeEditor(true)
 		;
+
+		if (!$this->isScheduled() && $this->getContext()->getType() === Context::MOBILE)
+		{
+			$editableDescriptionBlock->setBackgroundColor(EditableDescription::BG_COLOR_YELLOW);
+		}
 
 		if ($this->isScheduled())
 		{
@@ -360,6 +655,273 @@ class ToDo extends Activity
 		}
 
 		return $editableDescriptionBlock;
+	}
+
+	private function buildLocationBlock(): ?ContentBlock
+	{
+		$settings = $this->getAssociatedEntityModel()?->get('SETTINGS');
+		if ($settings === null)
+		{
+			return null;
+		}
+
+		$location = $settings['LOCATION'] ?? null;
+
+		if ($location === null)
+		{
+			return null;
+		}
+
+		if (!Loader::includeModule('calendar'))
+		{
+			return null;
+		}
+
+		$location = \Bitrix\Calendar\Rooms\Util::parseLocation($location);
+		$sectionList = \Bitrix\Calendar\Rooms\Manager::getRoomsList();
+
+		$locationItem = null;
+		foreach($sectionList as $room)
+		{
+			if ((int)$room['ID'] === (int)$location['room_id'])
+			{
+				$locationItem = $room;
+				break;
+			}
+		}
+
+		if (!$locationItem)
+		{
+			return null;
+		}
+
+		return (new ContentBlockWithTitle())
+			->setFixedWidth(false)
+			->setAlignItems('center')
+			->setTitle(Loc::getMessage('CRM_TIMELINE_ITEM_TODO_LOCATION_TITLE'))
+			->setContentBlock(
+				(new ContentBlock\Text())
+					->setValue($locationItem['NAME'])
+					->setColor(Text::COLOR_BASE_90)
+			)
+			->setInline()
+		;
+	}
+
+	private function buildUsersBlock(): ?ContentBlock
+	{
+		$settings = $this->getAssociatedEntityModel()?->get('SETTINGS');
+		if ($settings === null)
+		{
+			return null;
+		}
+
+		$users = $settings['USERS'] ?? null;
+
+		if (!is_array($users))
+		{
+			return null;
+		}
+
+		if ($this->hasOnlyOneClient($users))
+		{
+			return null;
+		}
+
+		$broker = Container::getInstance()->getUserBroker();
+		$userItems = $broker->getBunchByIds($users);
+
+		$lineOfTextBlocks = (new Layout\Body\ContentBlock\LineOfTextBlocks())
+			->setDelimiter(', ')
+		;
+
+		$this->appendUserTextBlocks($lineOfTextBlocks, $userItems);
+
+		return (new ContentBlockWithTitle())
+			->setFixedWidth(false)
+			->setAlignItems('center')
+			->setTitle(Loc::getMessage('CRM_TIMELINE_ITEM_TODO_USERS_TITLE'))
+			->setContentBlock($lineOfTextBlocks)
+			->setInline()
+		;
+	}
+
+	private function hasOnlyOneClient(array $users): bool
+	{
+		return (count($users) === 1 && (int)$users[0] === $this->getContext()->getUserId());
+	}
+
+	private function appendUserTextBlocks(LineOfTextBlocks $lineOfTextBlocks, array $items): void
+	{
+		foreach ($items as $item)
+		{
+			$id = (int) $item['ID'];
+			$userTextBlock = (new ContentBlock\Link())
+				->setValue($item['FORMATTED_NAME'])
+				->setAction(
+					(new JsEvent('Activity:ToDo:User:Click'))
+						->addActionParamInt('userId', $id)
+				)
+			;
+
+			$lineOfTextBlocks->addContentBlock(
+				'user_' . $id,
+				$userTextBlock
+			);
+		}
+	}
+
+	private function buildClientsBlock(): ?ContentBlock
+	{
+		$settings = $this->getAssociatedEntityModel()?->get('SETTINGS');
+		if ($settings === null)
+		{
+			return null;
+		}
+
+		$clients = $settings['CLIENTS'] ?? null;
+
+		if (!is_array($clients))
+		{
+			return null;
+		}
+
+		$lineOfTextBlocks = (new Layout\Body\ContentBlock\LineOfTextBlocks())
+			->setDelimiter(', ')
+		;
+
+		[$contacts, $companies] = $this->getItemIds($clients);
+
+		$this->appendClientTextBlocks($lineOfTextBlocks, \CCrmOwnerType::Contact, $contacts);
+		$this->appendClientTextBlocks($lineOfTextBlocks, \CCrmOwnerType::Company, $companies);
+
+		$title = (
+			$lineOfTextBlocks->getContentBlocksCount() <= 1
+				? Loc::getMessage('CRM_TIMELINE_ITEM_TODO_CLIENT_TITLE')
+				: Loc::getMessage('CRM_TIMELINE_ITEM_TODO_CLIENTS_TITLE')
+		);
+
+		return (new ContentBlockWithTitle())
+			->setFixedWidth(false)
+			->setAlignItems('center')
+			->setTitle($title)
+			->setContentBlock($lineOfTextBlocks)
+			->setInline()
+		;
+	}
+
+	private function buildAddressBlock(): ?ContentBlockWithTitle
+	{
+		$settings = $this->getAssociatedEntityModel()?->get('SETTINGS');
+		if ($settings === null)
+		{
+			return null;
+		}
+
+		$addressFormatted = $settings['ADDRESS_FORMATTED'] ?? null;
+
+		if (!is_string($addressFormatted) || empty($addressFormatted))
+		{
+			return null;
+		}
+
+		return (new ContentBlockWithTitle())
+			->setFixedWidth(false)
+			->setAlignItems('center')
+			->setTitle(Loc::getMessage('CRM_TIMELINE_ITEM_TODO_ADDRESS_TITLE'))
+			->setContentBlock(
+				(new ContentBlock\Address())
+					->setAddressFormatted($addressFormatted)
+			)
+			->setInline()
+		;
+	}
+
+	private function getItemIds(array $clients): array
+	{
+		$contactBroker = Container::getInstance()->getContactBroker();
+		$companyBroker = Container::getInstance()->getCompanyBroker();
+
+		$contactIds = [];
+		$companyIds = [];
+
+		foreach ($clients as $client)
+		{
+			if ((int)$client['ENTITY_TYPE_ID'] === \CCrmOwnerType::Contact)
+			{
+				$contactIds[] = $client['ENTITY_ID'];
+			}
+			else if ((int)$client['ENTITY_TYPE_ID'] === \CCrmOwnerType::Company)
+			{
+				$companyIds[] = $client['ENTITY_ID'];
+			}
+		}
+
+		return [
+			$contactBroker->getBunchByIds($contactIds),
+			$companyBroker->getBunchByIds($companyIds),
+		];
+	}
+
+	private function appendClientTextBlocks(
+		LineOfTextBlocks $lineOfTextBlocks,
+		int $entityTypeId,
+		array $items
+	): void
+	{
+		foreach ($items as $item)
+		{
+			$id = $item->getId();
+			$itemIdentifier = new ItemIdentifier($entityTypeId, $id);
+
+			$lineOfTextBlocks->addContentBlock(
+				\CCrmOwnerType::ResolveName($entityTypeId) . '_' . $id,
+				$this->getClientContentBlock($item->getHeading(), $itemIdentifier)
+			);
+		}
+	}
+
+	private function getClientContentBlock(string $name, ItemIdentifier $item): ContentBlock\Link
+	{
+		return (new ContentBlock\Link())
+			->setValue($name)
+			->setAction(
+				(new JsEvent('Activity:ToDo:Client:Click'))
+					->addActionParamInt('entityTypeId', $item->getEntityTypeId())
+					->addActionParamInt('entityId', $item->getEntityId())
+			)
+		;
+	}
+
+	private function buildLinkBlock(): ?ContentBlock
+	{
+		$settings = $this->getAssociatedEntityModel()?->get('SETTINGS');
+		if ($settings === null)
+		{
+			return null;
+		}
+
+		$link = trim($settings['LINK'] ?? '');
+
+		if (empty($link))
+		{
+			return null;
+		}
+
+		return (new ContentBlockWithTitle())
+			->setFixedWidth(false)
+			->setAlignItems('center')
+			->setTitle(Loc::getMessage('CRM_TIMELINE_ITEM_TODO_LINK_TITLE'))
+			->setContentBlock(
+				(new ContentBlock\Link())
+					->setValue($link)
+					->setAction(
+						(new Layout\Action\Redirect(new Uri($link)))
+							->addActionParamString('target', '_blank')
+					)
+			)
+			->setInline()
+		;
 	}
 
 	private function buildFilesBlock(): ?ContentBlock
@@ -426,12 +988,65 @@ class ToDo extends Activity
 
 	private function getPingOffsets(): array
 	{
-		$offsets = (array)($this->getAssociatedEntityModel()->get('PING_OFFSETS') ?? []);
+		$offsets = (array)($this->getAssociatedEntityModel()?->get('PING_OFFSETS') ?? []);
 		if (empty($offsets))
 		{
-			$offsets = Provider\ToDo::getPingOffsets($this->getActivityId());
+			$offsets = Provider\ToDo\ToDo::getPingOffsets($this->getActivityId());
 		}
 
 		return TodoPingSettingsProvider::getValuesByOffsets($offsets);
+	}
+
+	public function getPayload(): ?Payload
+	{
+		$context = $this->getContext();
+
+		return (new Payload())
+			->addValueInt('ownerTypeId', $context->getEntityTypeId())
+			->addValueInt('ownerId', $context->getEntityId())
+			->addValueInt('id', $this->getActivityId())
+		;
+	}
+
+	protected function getCompleteAction(): Layout\Action\RunAjaxAction
+	{
+		$action = parent::getCompleteAction();
+
+		$entityTypeId = $this->getContext()->getEntityTypeId();
+		$categoryId = $this->getContext()->getEntityCategoryId();
+
+		if ($entityTypeId === CCrmOwnerType::Contact && $categoryId !== 0)
+		{
+			$section = \Bitrix\Crm\Integration\Analytics\Dictionary::SECTION_CATALOG_CONTRACTOR_CONTACT;
+		}
+		else if ($entityTypeId === CCrmOwnerType::Company && $categoryId !== 0)
+		{
+			$section = \Bitrix\Crm\Integration\Analytics\Dictionary::SECTION_CATALOG_CONTRACTOR_COMPANY;
+		}
+		else
+		{
+			$entityTypeName = \Bitrix\Crm\Integration\Analytics\Dictionary::getAnalyticsEntityType($entityTypeId);
+
+			if ($entityTypeName === null)
+			{
+				return $action;
+			}
+
+			$section = $entityTypeName . '_section';
+		}
+
+		$analytics = new Layout\Action\Analytics([
+			'tool' => Dictionary::TOOL,
+			'category' => Dictionary::OPERATIONS_CATEGORY,
+			'event' => Dictionary::COMPLETE_EVENT,
+			'type' => Dictionary::TODO_TYPE,
+			'c_section' => $section,
+			'c_sub_section' => Dictionary::DETAILS_SUB_SECTION,
+			'c_element' => Dictionary::COMPLETE_BUTTON_ELEMENT,
+			'p1' => \Bitrix\Crm\Integration\Analytics\Dictionary::getCrmMode(),
+		]);
+		$action->setAnalytics($analytics);
+
+		return $action;
 	}
 }

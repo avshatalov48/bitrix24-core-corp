@@ -729,7 +729,8 @@ class RequisiteMergingHelper
 				case self::ACTION_REQUISITE_UPDATE:
 					$this->getRequisite()->update(
 						$action['PARAMS']['TARG_REQUISITE_ID'],
-						$action['PARAMS']['FIELDS']
+						$action['PARAMS']['FIELDS'],
+						['DISABLE_USER_FIELD_CHECK' => true]
 					);
 					break;
 				case self::ACTION_REQUISITE_MOVE_DEPENDECIES:
@@ -753,7 +754,8 @@ class RequisiteMergingHelper
 				case self::ACTION_BANK_DETAIL_UPDATE:
 					$this->getBankDetail()->update(
 						$action['PARAMS']['TARG_BANK_DETAIL_ID'],
-						$action['PARAMS']['FIELDS']
+						$action['PARAMS']['FIELDS'],
+						['DISABLE_USER_FIELD_CHECK' => true]
 					);
 					break;
 				case self::ACTION_BANK_DETAIL_MOVE_DEPENDECIES:

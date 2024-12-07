@@ -156,6 +156,9 @@ class Library
 		EVENT_UPDATE_MESSAGE_CUSTOM_CONNECTOR = 'OnUpdateMessageCustom',
 		EVENT_SEND_MESSAGE_CUSTOM_CONNECTOR = 'OnSendMessageCustom',
 
+		EVENT_DIALOG_START = 'OnImConnectorDialogStart',
+		EVENT_DIALOG_FINISH = 'OnImConnectorDialogFinish',
+
 		EVENT_DELETE_LINE = 'OnDeleteLine'
 	;
 
@@ -1096,11 +1099,24 @@ class Library
 	 * Returns the file name from the passed url
 	 *
 	 * @param string $url
+	 * @param bool $notNull
 	 * @return string
 	 */
-	public static function getNameFile($url, $notNull = false)
+	public static function getNameFile(string $url, bool $notNull = false): string
 	{
-		$fileName = Path::getName($url);
+		$parsed = parse_url($url);
+		if ($parsed && !empty($parsed['path']))
+		{
+			$fileName = Path::getName($parsed['path']);
+		}
+		else
+		{
+			$fileName = Path::getName($url);
+		}
+		if (mb_strlen($fileName) > 50)
+		{
+			$fileName = mb_substr($fileName, -50);
+		}
 
 		if ($fileName != '')
 		{
@@ -1176,12 +1192,12 @@ class Library
 	/**
 	 * File download.
 	 *
-	 * @param array $file Description array file.
+	 * @param array{url: string, headers: string[], name: string, type: string, description: string} $file Description array file.
 	 * @return array|bool
 	 */
 	public static function downloadFile(array $file)
 	{
-		if (empty($file['url']))
+		if (empty($file['url']) || !is_string($file['url']))
 		{
 			$file = false;
 		}
@@ -1207,16 +1223,21 @@ class Library
 				}
 			}
 
-			if (self::isEmpty($file['name']))
+			if (empty($file['name']))
 			{
 				$fileName = self::getNameFile($file['url'], true);
 			}
 			else
 			{
-				$fileName = $file['name'];
+				$fileName = Path::getName($file['name']);
+			}
+			if (mb_strlen($fileName) > 50)
+			{
+				$fileName = mb_substr($fileName, -50);
 			}
 
-			$tempFilePath = \CFile::GetTempName('', $fileName);
+			$tempFileName = \Bitrix\Main\Security\Random::getString(10);
+			$tempFilePath = \CFile::GetTempName('', $tempFileName);
 
 			if (
 				$httpClient->download($file['url'], $tempFilePath)
@@ -1232,7 +1253,7 @@ class Library
 					$type = $httpClient->getHeaders()->get('Content-Type');
 				}
 
-				if (self::isEmpty($file['name']) )
+				if (empty($file['name']))
 				{
 					$contentDisposition = $httpClient->getHeaders()->get('Content-Disposition');
 					if (!empty($contentDisposition))
@@ -1243,7 +1264,7 @@ class Library
 							&& is_string($fileNameContentDisposition)
 						)
 						{
-							$fileName = $fileNameContentDisposition;
+							$fileName = Path::getName($fileNameContentDisposition);
 						}
 					}
 					else

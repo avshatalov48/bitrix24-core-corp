@@ -15,24 +15,28 @@ class LogMessageController extends Controller
 	{
 	}
 
-	public function onCreate(array $input, int $typeCategoryId, ?int $authorId = null): void
+	public function onCreate(array $input, int $typeCategoryId, ?int $authorId = null): ?int
 	{
 		if (empty($input))
 		{
-			return;
+			return null;
 		}
 
 		// LEAD or DEAL
 		$entityTypeId = $input['ENTITY_TYPE_ID'] ?? null;
 		$entityId = $input['ENTITY_ID'] ?? null;
+
 		if (!isset($entityTypeId, $entityId))
 		{
-			return;
+			return null;
 		}
+
 		$settings = $input['SETTINGS'] ?? [];
-		$bindings[] = [
-			'ENTITY_TYPE_ID' => $entityTypeId,
-			'ENTITY_ID' => $entityId
+		$bindings = [
+			[
+				'ENTITY_TYPE_ID' => $entityTypeId,
+				'ENTITY_ID' => $entityId,
+			],
 		];
 		$sourceId = '';
 
@@ -94,19 +98,17 @@ class LogMessageController extends Controller
 		{
 			$params['ASSOCIATED_ENTITY_ID'] = $input['ASSOCIATED_ENTITY_ID'];
 		}
-		
+
 		if (isset($input['CREATED']) && $input['CREATED'])
 		{
 			$params['CREATED'] = $input['CREATED'];
 		}
-		
-		$timelineEntryId = $this->getTimelineEntryFacade()->create(
-			Facade::LOG_MESSAGE,
-			$params
-		);
+
+		$timelineEntryId = $this->getTimelineEntryFacade()->create(Facade::LOG_MESSAGE, $params);
+
 		if ($timelineEntryId <= 0)
 		{
-			return;
+			return null;
 		}
 
 		foreach ($bindings as $binding)
@@ -116,6 +118,8 @@ class LogMessageController extends Controller
 				$timelineEntryId
 			);
 		}
+
+		return $timelineEntryId;
 	}
 
 	public function prepareHistoryDataModel(array $data, array $options = null): array

@@ -5,12 +5,26 @@ namespace Bitrix\Tasks\Integration\Bizproc;
 use Bitrix\Main;
 use Bitrix\Main\Application;
 use Bitrix\Socialnetwork\Item\Workgroup;
+use Bitrix\Tasks\Internals\Counter\Event\EventDictionary;
 use Bitrix\Tasks\Internals\Task\EO_Member_Collection;
 use Bitrix\Tasks\Internals\Task\Status;
 use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\TaskLimit;
 
+/**
+ * @method static onTaskAdd($id, array $fields)
+ * @method static onTaskUpdate($id, array $fields, array $previousFields)
+ * @method static onPlanTaskStageUpdate($memberId, $taskId, $stageId)
+ * @method static onTaskDeleteExecute($id)
+ * @method static onTaskExpired($id, array $fields)
+ * @method static onTaskExpiredSoon($id, array $fields)
+ * @method static onTaskFieldChanged($id, array $fields, array $previousFields)
+ */
+
 class Listener
 {
+	public const EVENT_TASK_EXPIRED = EventDictionary::EVENT_TASK_EXPIRED;
+	public const EVENT_TASK_EXPIRED_SOON = EventDictionary::EVENT_TASK_EXPIRED_SOON;
+
 	private const USE_BACKGROUND_KEY = 'tasks_bizproc_background';
 
 	public function __construct()
@@ -342,7 +356,7 @@ class Listener
 	 */
 	private function useBackground(): bool
 	{
-		if (Main\Config\Option::get('tasks', self::USE_BACKGROUND_KEY, 'null', '-') !== 'null')
+		if (Main\Config\Option::get('tasks', self::USE_BACKGROUND_KEY, 'null') !== 'null')
 		{
 			return true;
 		}

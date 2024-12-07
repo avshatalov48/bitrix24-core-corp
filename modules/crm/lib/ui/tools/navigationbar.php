@@ -61,6 +61,12 @@ class NavigationBar
 			$itemUrl = $row['url'] ?? '';
 			if ($itemId === 'automation')
 			{
+				if (!IsModuleInstalled('bizproc'))
+				{
+					// hide "Robots" button if module is not installed
+					continue;
+				}
+
 				$this->automationView = sprintf(
 					'<a class="%s" href="%s">%s</a>',
 					'ui-btn ui-btn-light-border ui-btn-no-caps ui-btn-themes ui-btn-round crm-robot-btn',

@@ -15,7 +15,7 @@ jn.define('im/messenger/model/files', (require, exports, module) => {
 		FileImageType,
 	} = require('im/messenger/const');
 
-	const elementState = {
+	const fileDefaultElement = Object.freeze({
 		id: 0,
 		chatId: 0,
 		dialogId: '0',
@@ -30,6 +30,7 @@ jn.define('im/messenger/model/files', (require, exports, module) => {
 		authorId: 0,
 		authorName: '',
 		urlPreview: '',
+		urlLocalPreview: '',
 		urlShow: '',
 		urlDownload: '',
 		localUrl: '',
@@ -38,8 +39,9 @@ jn.define('im/messenger/model/files', (require, exports, module) => {
 			byteSent: 0,
 			byteTotal: 0,
 		},
-	};
+	});
 
+	/** @type {FilesMessengerModel} */
 	const filesModel = {
 		namespaced: true,
 		state: () => ({
@@ -60,6 +62,26 @@ jn.define('im/messenger/model/files', (require, exports, module) => {
 			 */
 			getById: (state) => (fileId) => {
 				return state.collection[fileId];
+			},
+
+			/**
+			 * @function filesModel/getListByMessageId
+			 * @return {FilesModelState[] || []}
+			 */
+			getListByMessageId: (state, getters, rootState, rootGetters) => (messageId) => {
+				const message = rootGetters['messagesModel/getById'](messageId);
+				if (!message.id)
+				{
+					return [];
+				}
+
+				const fileIdList = message.files;
+				if (!Type.isArrayFilled(fileIdList))
+				{
+					return [];
+				}
+
+				return rootGetters['filesModel/getByIdList'](fileIdList);
 			},
 
 			/**
@@ -99,7 +121,7 @@ jn.define('im/messenger/model/files', (require, exports, module) => {
 						result.templateId = result.id;
 
 						return {
-							...elementState,
+							...fileDefaultElement,
 							...result,
 						};
 					});
@@ -109,7 +131,7 @@ jn.define('im/messenger/model/files', (require, exports, module) => {
 					const result = validate(store, { ...payload });
 					result.templateId = result.id;
 					fileList.push({
-						...elementState,
+						...fileDefaultElement,
 						...result,
 					});
 				}
@@ -129,7 +151,7 @@ jn.define('im/messenger/model/files', (require, exports, module) => {
 
 				if (existingFileList.length > 0)
 				{
-					store.commit('update', {
+					store.commit('update', { // TODO this update will be recovery default fields ( if fields not has)
 						actionName: 'set',
 						data: {
 							fileList: existingFileList,
@@ -158,7 +180,7 @@ jn.define('im/messenger/model/files', (require, exports, module) => {
 						result.templateId = result.id;
 
 						return {
-							...elementState,
+							...fileDefaultElement,
 							...result,
 						};
 					});
@@ -168,7 +190,7 @@ jn.define('im/messenger/model/files', (require, exports, module) => {
 					const result = validate(store, { ...payload });
 					result.templateId = result.id;
 					fileList.push({
-						...elementState,
+						...fileDefaultElement,
 						...result,
 					});
 				}
@@ -237,6 +259,18 @@ jn.define('im/messenger/model/files', (require, exports, module) => {
 					actionName: 'delete',
 					data: {
 						id,
+					},
+				});
+			},
+
+			/** @function filesModel/deleteByChatId */
+			deleteByChatId: (store, payload) => {
+				const { chatId } = payload;
+
+				store.commit('deleteByChatId', {
+					actionName: 'deleteByChatId',
+					data: {
+						chatId,
 					},
 				});
 			},
@@ -322,6 +356,24 @@ jn.define('im/messenger/model/files', (require, exports, module) => {
 
 				delete state.collection[id];
 			},
+
+			/**
+			 * @param state
+			 * @param {MutationPayload<FilesDeleteByChatIdData, FilesDeleteByChatIdActions>} payload
+			 */
+			deleteByChatId: (state, payload) => {
+				logger.log('filesModel: deleteByChatId mutation', payload);
+
+				const { chatId } = payload.data;
+
+				for (const file of Object.values(state.collection))
+				{
+					if (file.chatId === chatId)
+					{
+						delete state.collection[file.id];
+					}
+				}
+			},
 		},
 	};
 
@@ -353,6 +405,11 @@ jn.define('im/messenger/model/files', (require, exports, module) => {
 		if (Type.isNumber(fields.chatId) || Type.isString(fields.chatId))
 		{
 			result.chatId = Number(fields.chatId);
+		}
+
+		if (Type.isString(fields.dialogId))
+		{
+			result.dialogId = fields.dialogId;
 		}
 
 		if (!Type.isUndefined(fields.date))
@@ -524,8 +581,30 @@ jn.define('im/messenger/model/files', (require, exports, module) => {
 			result.uploadData = fields.uploadData;
 		}
 
+		if (isLocalFileByUrl(fields.urlShow))
+		{
+			if (fields.type === FileType.image)
+			{
+				result.urlLocalPreview = fields.urlShow;
+			}
+
+			if (fields.type === FileType.video)
+			{
+				result.urlLocalPreview = fields.urlPreview;
+			}
+		}
+
 		return result;
 	}
 
-	module.exports = { filesModel };
+	/**
+	 * @param {string} url
+	 * @return {boolean}
+	 */
+	function isLocalFileByUrl(url)
+	{
+		return Type.isString(url) && url.startsWith('file');
+	}
+
+	module.exports = { filesModel, fileDefaultElement };
 });

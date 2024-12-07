@@ -29,7 +29,7 @@ class Agent implements AgentInterface
 		self::$processing = true;
 
 		$queue = Queue::getInstance();
-		$rows = $queue->get(CounterController::STEP_LIMIT);
+		$rows = $queue->get(CounterController::getStepLimit());
 
 		if (empty($rows))
 		{

@@ -147,7 +147,7 @@ class CXDIUser
 				b_xdi_user_right UR
 			".$sFilter.$sOrder;
 
-		return $DB->Query($strSql, false, "File: ".__FILE__."<br>Line: ".__LINE__);
+		return $DB->Query($strSql);
 	}
 
 	function GetByID($ID)
@@ -162,7 +162,7 @@ class CXDIUser
 			WHERE SR.ID = ".$ID."
 		";
 
-		return $DB->Query($strSql, false, "File: ".__FILE__."<br>Line: ".__LINE__);
+		return $DB->Query($strSql);
 	}
 
 }

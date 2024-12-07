@@ -17,3 +17,7 @@
 
 .crm-entity-widget-content-block-hidden-title { display: none; }
 .crm-entity-card-container { width:100%!important; }
+
+.crm-order-check-wrapper {
+	padding-bottom: 60px;
+}

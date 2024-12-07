@@ -75,7 +75,7 @@ class Group extends \Bitrix\Tasks\Integration\SocialNetwork
 		$groups = \Bitrix\Socialnetwork\Item\Workgroup::getByFeatureOperation([
 			'feature' 	=> 'tasks',
 			'operation' => $actionCode,
-			'userId' 	=> $userId
+			'userId' 	=> $userId,
 		]);
 
 		$groups = array_column($groups, 'ID');
@@ -203,7 +203,7 @@ class Group extends \Bitrix\Tasks\Integration\SocialNetwork
 	{
 		$res = \Bitrix\Socialnetwork\WorkgroupViewTable::getList(array(
 			'select' => array(
-				'GROUP_ID'
+				'GROUP_ID',
 			),
 			'filter' => array(
 				'USER_ID' => $userId,
@@ -211,8 +211,8 @@ class Group extends \Bitrix\Tasks\Integration\SocialNetwork
 				'=GROUP.CLOSED' => 'N',
 			),
 			'order' => array(
-				'DATE_VIEW' => 'DESC'
-			)
+				'DATE_VIEW' => 'DESC',
+			),
 		));
 		while ($row = $res->fetch())
 		{
@@ -227,20 +227,20 @@ class Group extends \Bitrix\Tasks\Integration\SocialNetwork
 			// get by date activity
 			$res = \CSocNetUserToGroup::GetList(
 				array(
-					'GROUP_DATE_ACTIVITY' => 'DESC'
+					'GROUP_DATE_ACTIVITY' => 'DESC',
 				),
 				array(
 					'USER_ID' => $userId,
 					'!ROLE' => array(
 						SONET_ROLES_BAN,
-						SONET_ROLES_REQUEST
+						SONET_ROLES_REQUEST,
 					),
 					'USER_ACTIVE' => 'Y',
-					'GROUP_ACTIVE' => 'Y'
+					'GROUP_ACTIVE' => 'Y',
 				),
 				false, false,
 				array(
-					'GROUP_ID'
+					'GROUP_ID',
 				)
 			);
 			while ($row = $res->fetch())
@@ -264,7 +264,7 @@ class Group extends \Bitrix\Tasks\Integration\SocialNetwork
 
 		\Bitrix\Socialnetwork\WorkgroupViewTable::set(array(
 			'GROUP_ID' => $groupId,
-			'USER_ID' => $userId
+			'USER_ID' => $userId,
 		));
 	}
 
@@ -454,6 +454,11 @@ class Group extends \Bitrix\Tasks\Integration\SocialNetwork
 		]);
 	}
 
+	public static function isUserMember(int $groupId, int $userId): bool
+	{
+		return self::getUserPermissionsInGroup($groupId, $userId)['UserIsMember'];
+	}
+
 	/**
 	 * @param int $userIdA
 	 * @param int $userIdB
@@ -509,5 +514,46 @@ class Group extends \Bitrix\Tasks\Integration\SocialNetwork
 		{
 			throw new SocialnetworkException($exception->getMessage());
 		}
+	}
+
+	public static function getGroupData(int $groupId): array
+	{
+		if (!$groupId || !static::includeModule())
+		{
+			return [];
+		}
+
+		static $cache = [];
+
+		if (!array_key_exists($groupId, $cache))
+		{
+			$avatarTypes = \Bitrix\Socialnetwork\Helper\Workgroup::getAvatarTypes();
+
+			$groupsData = self::getData([$groupId], ['IMAGE_ID', 'AVATAR_TYPE']);
+			$group = $groupsData[$groupId];
+
+			$imageUrl = '';
+			if (
+				(int) $group['IMAGE_ID'] > 0
+				&& is_array($file = \CFile::GetFileArray($group['IMAGE_ID']))
+			)
+			{
+				$imageUrl = $file['SRC'];
+			}
+			else if (
+				!empty($group['AVATAR_TYPE'])
+				&& isset($avatarTypes[$group['AVATAR_TYPE']])
+			)
+			{
+				$imageUrl = $avatarTypes[$group['AVATAR_TYPE']]['mobileUrl'];
+			}
+
+			$cache[$groupId] = [
+				'NAME' => $group['NAME'],
+				'IMAGE' => $imageUrl,
+			];
+		}
+
+		return $cache[$groupId];
 	}
 }

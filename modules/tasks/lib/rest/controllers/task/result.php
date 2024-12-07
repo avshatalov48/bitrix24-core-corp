@@ -27,11 +27,12 @@ class Result extends Base
 	 * @throws \Bitrix\Main\ObjectPropertyException
 	 * @throws \Bitrix\Main\SystemException
 	 */
-	public function addFromCommentAction(int $commentId)
+	public function addFromCommentAction(int $commentId, array $params = [])
 	{
 		if (!$commentId)
 		{
 			$this->errorCollection->add([new Error('Comment not found.')]);
+
 			return null;
 		}
 
@@ -39,15 +40,14 @@ class Result extends Base
 		if (!$userId)
 		{
 			$this->errorCollection->add([new Error('Access denied.')]);
+
 			return null;
 		}
 
-		if (
-			!Loader::includeModule('tasks')
-			|| !Loader::includeModule('forum')
-		)
+		if (!Loader::includeModule('forum'))
 		{
 			$this->errorCollection->add([new Error('Module not loaded.')]);
+
 			return null;
 		}
 
@@ -55,6 +55,7 @@ class Result extends Base
 		if (!$comment)
 		{
 			$this->errorCollection->add([new Error('Comment not found.')]);
+
 			return null;
 		}
 
@@ -69,6 +70,7 @@ class Result extends Base
 		)
 		{
 			$this->errorCollection->add([new Error('Access denied.')]);
+
 			return null;
 		}
 
@@ -83,11 +85,23 @@ class Result extends Base
 		if ($isExists)
 		{
 			$this->errorCollection->add([new Error('Result already exists.')]);
+
 			return null;
 		}
 
 		$result = (new ResultManager($userId))->createFromComment($commentId, false);
-		return $result->toArray();
+
+		if (!empty($params['WITH_FILE_INFO']) && $params['WITH_FILE_INFO'] == 'Y')
+		{
+			$result->fill([ResultTable::UF_FILE_NAME]);
+			$result = $this->fillWithFileInfo([$result->toArray()])[0];
+		}
+		else
+		{
+			$result = $result->toArray();
+		}
+
+		return $result;
 	}
 
 	/**
@@ -104,6 +118,7 @@ class Result extends Base
 		if (!$commentId)
 		{
 			$this->errorCollection->add([new Error('Comment not found.')]);
+
 			return null;
 		}
 
@@ -111,15 +126,14 @@ class Result extends Base
 		if (!$userId)
 		{
 			$this->errorCollection->add([new Error('Access denied.')]);
+
 			return null;
 		}
 
-		if (
-			!Loader::includeModule('tasks')
-			|| !Loader::includeModule('forum')
-		)
+		if (!Loader::includeModule('forum'))
 		{
 			$this->errorCollection->add([new Error('Module not loaded.')]);
+
 			return null;
 		}
 
@@ -127,6 +141,7 @@ class Result extends Base
 		if (!$comment)
 		{
 			$this->errorCollection->add([new Error('Comment not found.')]);
+
 			return null;
 		}
 
@@ -141,10 +156,12 @@ class Result extends Base
 		)
 		{
 			$this->errorCollection->add([new Error('Access denied.')]);
+
 			return null;
 		}
 
 		(new ResultManager($userId))->deleteByComment($commentId);
+
 		return null;
 	}
 
@@ -161,6 +178,7 @@ class Result extends Base
 		if (!$taskId)
 		{
 			$this->errorCollection->add([new Error('Task not found.')]);
+
 			return null;
 		}
 
@@ -168,18 +186,14 @@ class Result extends Base
 		if (!$userId)
 		{
 			$this->errorCollection->add([new Error('Access denied.')]);
-			return null;
-		}
 
-		if (!Loader::includeModule('tasks'))
-		{
-			$this->errorCollection->add([new Error('Module not loaded.')]);
 			return null;
 		}
 
 		if (!TaskAccessController::can($userId, ActionDictionary::ACTION_TASK_READ, $taskId))
 		{
 			$this->errorCollection->add([new Error('Access denied.')]);
+
 			return null;
 		}
 
@@ -221,11 +235,6 @@ class Result extends Base
 			$list = $this->fillWithParsedText($list);
 		}
 
-		foreach ($list as $key => $result)
-		{
-			$list[$key]['fileInfo'] = $this->convertKeysToCamelCase($result['fileInfo']);
-		}
-
 		return $list;
 	}
 
@@ -234,24 +243,21 @@ class Result extends Base
 		if ($taskId <= 0)
 		{
 			$this->errorCollection->setError(new Error('Task not found.'));
+
 			return null;
 		}
 
 		if ($this->getUserId() <= 0)
 		{
 			$this->errorCollection->setError(new Error('Access denied.'));
-			return null;
-		}
 
-		if (!Loader::includeModule('tasks'))
-		{
-			$this->errorCollection->setError(new Error('Module not loaded.'));
 			return null;
 		}
 
 		if (!TaskAccessController::can($this->getUserId(), ActionDictionary::ACTION_TASK_READ, $taskId))
 		{
 			$this->errorCollection->setError(new Error('Access denied.'));
+
 			return null;
 		}
 
@@ -267,7 +273,8 @@ class Result extends Base
 		}
 		catch (\Exception $exception)
 		{
-			$this->errorCollection->setError(new Error($exception->getMessage()));
+			$this->errorCollection->setError(Error::createFromThrowable($exception));
+
 			return null;
 		}
 
@@ -279,24 +286,21 @@ class Result extends Base
 		if ($taskId <= 0)
 		{
 			$this->errorCollection->setError(new Error('Task not found.'));
+
 			return null;
 		}
 
 		if ($this->getUserId() <= 0)
 		{
 			$this->errorCollection->setError(new Error('Access denied.'));
-			return null;
-		}
 
-		if (!Loader::includeModule('tasks'))
-		{
-			$this->errorCollection->setError(new Error('Module not loaded.'));
 			return null;
 		}
 
 		if (!TaskAccessController::can($this->getUserId(), ActionDictionary::ACTION_TASK_READ, $taskId))
 		{
 			$this->errorCollection->setError(new Error('Access denied.'));
+
 			return null;
 		}
 
@@ -312,11 +316,64 @@ class Result extends Base
 		}
 		catch (\Exception $exception)
 		{
-			$this->errorCollection->setError(new Error($exception->getMessage()));
+			$this->errorCollection->setError(Error::createFromThrowable($exception));
+
 			return null;
 		}
 
 		return ['result' => $resultId];
+	}
+
+	public function getByCommentIdAction(int $taskId, int $commentId, array $params = []): ?array
+	{
+		if ($taskId <= 0)
+		{
+			$this->errorCollection->setError(new Error('Task not found.'));
+
+			return null;
+		}
+
+		if ($this->getUserId() <= 0)
+		{
+			$this->errorCollection->setError(new Error('Access denied.'));
+
+			return null;
+		}
+
+		if (!TaskAccessController::can($this->getUserId(), ActionDictionary::ACTION_TASK_READ, $taskId))
+		{
+			$this->errorCollection->setError(new Error('Access denied.'));
+
+			return null;
+		}
+
+		try
+		{
+			$result = ResultTable::getByCommentId($commentId);
+			if (is_null($result))
+			{
+				return null;
+			}
+
+			if (!empty($params['WITH_FILE_INFO']) && $params['WITH_FILE_INFO'] == 'Y')
+			{
+				$result->fill([ResultTable::UF_FILE_NAME]);
+				$result = $result->toArray();
+				$result = $this->fillWithFileInfo([$result])[0];
+			}
+			else
+			{
+				$result = $result->toArray();
+			}
+		}
+		catch (\Exception $exception)
+		{
+			$this->errorCollection->setError(Error::createFromThrowable($exception));
+
+			return null;
+		}
+
+		return $result;
 	}
 
 	private function fillWithUserInfo(array $results): array
@@ -358,7 +415,7 @@ class Result extends Base
 			{
 				if (array_key_exists($fileId, $attachmentsData))
 				{
-					$results[$key]['fileInfo'][$fileId] = $attachmentsData[$fileId];
+					$results[$key]['fileInfo'][$fileId] = $this->convertKeysToCamelCase($attachmentsData[$fileId]);
 				}
 			}
 		}

@@ -52,7 +52,7 @@ if ($_REQUEST["auth"]=="Y" && $USER->IsAuthorized())
 	LocalRedirect($APPLICATION->GetCurPageParam("", array("login", "logout", "register", "forgot_password", "change_password", "backurl", "auth")));
 
 ?>
-<script type="text/javascript">
+<script>
 	var extSaleGetRemoteFormLocal1 = {"TITLE":"<?= GetMessage("CRM_EXT_SALE_DEJ_TITLE1") ?>"};
 </script>
 <?

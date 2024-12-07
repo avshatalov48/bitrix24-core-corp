@@ -106,7 +106,7 @@ $APPLICATION->IncludeComponent(
 	$component
 );
 ?>
-<script type="text/javascript">
+<script>
 	function crm_currency_delete_grid(title, message, btnTitle, path)
 	{
 		var d =

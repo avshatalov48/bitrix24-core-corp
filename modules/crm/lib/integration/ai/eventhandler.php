@@ -4,12 +4,17 @@ namespace Bitrix\Crm\Integration\AI;
 
 use Bitrix\AI\Context;
 use Bitrix\AI\Engine;
+use Bitrix\AI\Quality;
 use Bitrix\AI\Tuning;
+use Bitrix\Crm\Activity\Provider\Call;
 use Bitrix\Crm\Integration\AI\Model\QueueTable;
 use Bitrix\Crm\Integration\AI\Operation\FillItemFieldsFromCallTranscription;
 use Bitrix\Crm\Integration\AI\Operation\Orchestrator;
 use Bitrix\Crm\Integration\AI\Operation\SummarizeCallTranscription;
 use Bitrix\Crm\Integration\AI\Operation\TranscribeCallRecording;
+use Bitrix\Crm\Integration\Analytics\Builder\AI\CallActivityWithAudioRecordingEvent;
+use Bitrix\Crm\Integration\Analytics\Dictionary;
+use Bitrix\Crm\Integration\VoxImplantManager;
 use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Main\Event;
 use Bitrix\Main\Localization\Loc;
@@ -20,6 +25,8 @@ use CCrmOwnerType;
 final class EventHandler
 {
 	public const SETTINGS_FILL_ITEM_FROM_CALL_ENABLED_CODE = 'crm_copilot_fill_item_from_call_enabled';
+	public const SETTINGS_FILL_ITEM_FROM_CALL_ENGINE_AUDIO_CODE = 'crm_copilot_fill_item_from_call_engine_audio';
+	public const SETTINGS_FILL_ITEM_FROM_CALL_ENGINE_TEXT_CODE = 'crm_copilot_fill_item_from_call_engine_text';
 	public const SETTINGS_FILL_CRM_TEXT_ENABLED_CODE = 'crm_copilot_fill_crm_text_enabled';
 
 	public const ENGINE_CATEGORY = 'text';
@@ -60,11 +67,39 @@ final class EventHandler
 				'type' => Tuning\Type::BOOLEAN,
 				'default' => true,
 			];
+
+			$items[self::SETTINGS_FILL_ITEM_FROM_CALL_ENGINE_AUDIO_CODE] = array_merge(
+				Tuning\Defaults::getProviderSelectFieldParams(Engine::CATEGORIES['audio']),
+				[
+					'group' => self::SETTINGS_GROUP_CODE,
+					'title' => Loc::getMessage('CRM_INTEGRATION_AI_EVENTHANDLER_SETTINGS_ENGINE_AUDIO_TITLE'),
+				],
+			);
+
+			$quality = new Quality([
+				Quality::QUALITIES['fields_highlight'],
+				Quality::QUALITIES['translate'],
+			]);
+			$items[self::SETTINGS_FILL_ITEM_FROM_CALL_ENGINE_TEXT_CODE] = array_merge(
+				Tuning\Defaults::getProviderSelectFieldParams(Engine::CATEGORIES['text'], $quality),
+				[
+					'group' => self::SETTINGS_GROUP_CODE,
+					'title' => Loc::getMessage('CRM_INTEGRATION_AI_EVENTHANDLER_SETTINGS_ENGINE_TEXT_TITLE'),
+				],
+			);
 		}
 
 		$result->modifyFields([
-			'items' => $items,
 			'groups' => $groups,
+			'items' => $items,
+			'itemRelations' => [
+				self::SETTINGS_GROUP_CODE => [
+					self::SETTINGS_FILL_ITEM_FROM_CALL_ENABLED_CODE => [
+						self::SETTINGS_FILL_ITEM_FROM_CALL_ENGINE_AUDIO_CODE,
+						self::SETTINGS_FILL_ITEM_FROM_CALL_ENGINE_TEXT_CODE,
+					],
+				],
+			],
 		]);
 
 		return $result;
@@ -186,6 +221,14 @@ final class EventHandler
 
 	public static function onAfterCallActivityAdd(array $activityFields): void
 	{
+		if (
+			VoxImplantManager::isActivityBelongsToVoximplant($activityFields)
+			&& Call::hasRecordings($activityFields)
+		)
+		{
+			self::registerCallActivityWithAudioRecordingEvent($activityFields);
+		}
+
 		if (!AIManager::isAiCallProcessingEnabled() || !AIManager::isEnabledInGlobalSettings())
 		{
 			return;
@@ -203,8 +246,41 @@ final class EventHandler
 		}
 	}
 
-	public static function onAfterCallActivityUpdate(array $changedFields, array $newFields): void
+	private static function registerCallActivityWithAudioRecordingEvent(array $activityFields): void
 	{
+		$nullSafeInt = fn(array $input, string $key) => (int)($input[$key] ?? null);
+
+		$originId = $activityFields['ORIGIN_ID'] ?? '';
+		$callId = VoxImplantManager::extractCallIdFromOriginId($originId);
+
+		$builder = (new CallActivityWithAudioRecordingEvent())
+			->setActivityOwnerTypeId($nullSafeInt($activityFields, 'OWNER_TYPE_ID'))
+			->setActivityId($nullSafeInt($activityFields, 'ID'))
+			->setActivityDirection($nullSafeInt($activityFields, 'DIRECTION'))
+			->setCallDuration(VoxImplantManager::getCallDuration($callId) ?? 0)
+		;
+		$builder->buildEvent()->send();
+		// send the same analytics only with different TOOL and CATEGORY
+		$builder
+			->setTool(Dictionary::TOOL_CRM)
+			->setCategory(Dictionary::CATEGORY_AI_OPERATIONS)
+			->buildEvent()
+			->send()
+		;
+	}
+
+	public static function onAfterCallActivityUpdate(array $changedFields, array $oldFields, array $newFields): void
+	{
+		if (
+			VoxImplantManager::isActivityBelongsToVoximplant($newFields)
+			// if records were added
+			&& !Call::hasRecordings($oldFields)
+			&& Call::hasRecordings($newFields)
+		)
+		{
+			self::registerCallActivityWithAudioRecordingEvent($newFields);
+		}
+
 		if (!AIManager::isAiCallProcessingEnabled() || !AIManager::isEnabledInGlobalSettings())
 		{
 			return;

@@ -58,7 +58,7 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 	<td class="crm_fm_td_delete"><div class="delete-action" onclick="CrmFMdeleteItem(this, '<?=CUtil::JSEscape($arResult['FM_MNEMONIC'])?>-<?=CUtil::JSEscape($arResult['TYPE_ID'])?>', /<?=CUtil::JSEscape($arResult['FM_MNEMONIC'])?>\[<?=CUtil::JSEscape($arResult['TYPE_ID'])?>\]\[(n)([0-9]*)\]/g, 2);" title="<?=GetMessage('CRM_STATUS_LIST_DELETE')?>"></div></td>
 </tr>
 </table>
-<script type="text/javascript">
+<script>
 	var cnt_new = 0;
 	if(typeof(CrmFMaddNewTableRow) === "undefined")
 	{

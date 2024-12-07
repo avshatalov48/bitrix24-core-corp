@@ -1,0 +1,2 @@
+<?php
+$MESS['INTRANET_SETTINGS_TOOLS_BI_CONSTRUCTOR_MAIN'] = 'BI Конструктор';

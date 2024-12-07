@@ -1,0 +1,23 @@
+<?php
+$MESS["SIGN_CORE_BLOCK_DATE_HINT"] = "Use this field to enter date values (e.g. contract date etc.)";
+$MESS["SIGN_CORE_BLOCK_DATE_TITLE"] = "Date";
+$MESS["SIGN_CORE_BLOCK_MYREQUISITES_HINT"] = "This field contains your company details.";
+$MESS["SIGN_CORE_BLOCK_MYREQUISITES_TITLE"] = "Details";
+$MESS["SIGN_CORE_BLOCK_MYSIGN_BLOCK_HINT"] = "Field containing your signature";
+$MESS["SIGN_CORE_BLOCK_MYSIGN_TITLE"] = "Signature";
+$MESS["SIGN_CORE_BLOCK_MYSTAMP_ERROR_EMPTY"] = "The company stamp block was added but no stamp image exists in the company details.";
+$MESS["SIGN_CORE_BLOCK_MYSTAMP_HINT"] = "Your company stamp.";
+$MESS["SIGN_CORE_BLOCK_MYSTAMP_TITLE"] = "Stamp";
+$MESS["SIGN_CORE_BLOCK_NUMBER_HINT"] = "Use this field to provide the document number. You can enter the number as a static value, or use the auto numbering feature.";
+$MESS["SIGN_CORE_BLOCK_NUMBER_TITLE"] = "Number";
+$MESS["SIGN_CORE_BLOCK_REFERENCE_BLOCK_HINT"] = "This field will be filled with data found in your CRM. If your CRM does not have relevant information and the field remains empty, it can be provided by any of the signing parties, in which case this new information will be saved to your CRM.";
+$MESS["SIGN_CORE_BLOCK_REFERENCE_TITLE"] = "CRM field";
+$MESS["SIGN_CORE_BLOCK_REQUISITES_ERROR_EMPTY"] = "The \"CRM field\" block is not configured.";
+$MESS["SIGN_CORE_BLOCK_REQUISITES_HINT"] = "This field contains the recipient details.";
+$MESS["SIGN_CORE_BLOCK_REQUISITES_TITLE"] = "Details";
+$MESS["SIGN_CORE_BLOCK_SIGN_BLOCK_HINT"] = "Field containing signature of other signing party";
+$MESS["SIGN_CORE_BLOCK_SIGN_TITLE"] = "Signature";
+$MESS["SIGN_CORE_BLOCK_STAMP_HINT"] = "This field contains the recipient's stamp.";
+$MESS["SIGN_CORE_BLOCK_STAMP_TITLE"] = "Stamp";
+$MESS["SIGN_CORE_BLOCK_TEXT_HINT"] = "This field can receive any text information.";
+$MESS["SIGN_CORE_BLOCK_TEXT_TITLE"] = "Text";

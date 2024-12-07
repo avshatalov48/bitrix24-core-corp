@@ -39,7 +39,7 @@ ShowMessage($arResult['ERROR_MESSAGE']);
 					<div class="bx-auth-secure-icon bx-auth-secure-unlock"></div>
 				</span>
 				</noscript>
-<script type="text/javascript">
+<script>
 document.getElementById('bx_auth_secure').style.display = 'inline-block';
 </script>
 <?endif?>
@@ -70,7 +70,7 @@ if ($arParams["NOT_SHOW_LINKS"] != "Y")
 {
 ?><noindex>
 	<?
-	if($arResult["NEW_USER_REGISTRATION"] == "Y" && $arParams["AUTHORIZE_REGISTRATION"] != "Y")
+	if($arResult["NEW_USER_REGISTRATION"] == "Y")
 	{
 		?>
 		<div class="field">
@@ -89,7 +89,7 @@ if ($arParams["NOT_SHOW_LINKS"] != "Y")
 }
 ?>
 </form>
-<script type="text/javascript">
+<script>
 <?
 if ($arResult["LAST_LOGIN"] <> '')
 {

@@ -3,7 +3,7 @@
  */
 jn.define('layout/ui/text-editor', (require, exports, module) => {
 	const { Loc } = require('loc');
-	const { Color } = require('tokens');
+	const AppTheme = require('apptheme');
 	const { Textarea } = require('layout/ui/textarea');
 	const { WidgetHeaderButton } = require('layout/ui/widget-header-button');
 
@@ -24,7 +24,7 @@ jn.define('layout/ui/text-editor', (require, exports, module) => {
 				onlyMediumPosition: true,
 				showOnTop: false,
 				mediumPositionPercent: 70,
-				navigationBarColor: Color.bgSecondary,
+				navigationBarColor: AppTheme.colors.bgSecondary,
 				swipeAllowed: true,
 				swipeContentAllowed: false,
 				horizontalSwipeAllowed: false,
@@ -35,7 +35,7 @@ jn.define('layout/ui/text-editor', (require, exports, module) => {
 					'layout',
 					{
 						modal: true,
-						backgroundColor: Color.bgSecondary,
+						backgroundColor: AppTheme.colors.bgSecondary,
 						backdrop,
 					},
 				).then((widget) => {
@@ -122,7 +122,7 @@ jn.define('layout/ui/text-editor', (require, exports, module) => {
 					style: {
 						flexDirection: 'column',
 						flex: 1,
-						backgroundColor: Color.bgContentPrimary,
+						backgroundColor: AppTheme.colors.bgContentPrimary,
 					},
 					resizableByKeyboard: true,
 				},
@@ -163,6 +163,7 @@ jn.define('layout/ui/text-editor', (require, exports, module) => {
 				},
 				text: this.text,
 				placeholder: this.placeholder,
+				style: this.props.textAreaStyle || {},
 				onChange: (text) => {
 					this.text = text;
 					this.refreshSaveButton();
@@ -207,7 +208,7 @@ jn.define('layout/ui/text-editor', (require, exports, module) => {
 				},
 				Image({
 					svg: {
-						content: `<svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M9 18C13.9706 18 18 13.9706 18 9C18 4.02944 13.9706 0 9 0C4.02944 0 0 4.02944 0 9C0 13.9706 4.02944 18 9 18ZM13 11.8873L10.1127 9L13 6.11272L11.8873 5L9 7.88728L6.11272 5L5 6.11272L7.88728 9L5 11.8873L6.11272 13L9 10.1127L11.8873 13L13 11.8873Z" fill="${Color.base6}"/></svg>`,
+						content: `<svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M9 18C13.9706 18 18 13.9706 18 9C18 4.02944 13.9706 0 9 0C4.02944 0 0 4.02944 0 9C0 13.9706 4.02944 18 9 18ZM13 11.8873L10.1127 9L13 6.11272L11.8873 5L9 7.88728L6.11272 5L5 6.11272L7.88728 9L5 11.8873L6.11272 13L9 10.1127L11.8873 13L13 11.8873Z" fill="${AppTheme.colors.base6}"/></svg>`,
 					},
 					style: {
 						width: 18,

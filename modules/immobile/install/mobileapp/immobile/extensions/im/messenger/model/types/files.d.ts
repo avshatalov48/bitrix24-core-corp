@@ -1,4 +1,5 @@
-import {PayloadData} from "./base";
+import {MessengerModel, PayloadData} from "./base";
+import {MessageId, ReactionsModelState} from "./messages/reactions";
 
 export enum FileType
 {
@@ -18,9 +19,8 @@ export enum FileStatus
 export type FilesModelState = {
 	id: number,
 	chatId: number,
-	dialogId: string,
 	name: string,
-	templateId: number,
+	templateId: string,
 	date: Date,
 	type: FileType,
 	extension: string,
@@ -32,17 +32,24 @@ export type FilesModelState = {
 	authorId: number,
 	authorName: string,
 	urlPreview: string,
+	urlLocalPreview: string,
 	urlShow: string,
 	urlDownload: string,
 	init: boolean,
 	viewerAttrs: Object,
 	localUrl?: string,
 
-	uploadData: {
+	uploadData?: {
 		byteSent?: 0,
 		byteTotal?: 0,
 	},
 };
+
+export type FilesMessengerModel = MessengerModel<FilesModelCollection>;
+
+declare type FilesModelCollection = {
+	collection: Record<number, FilesModelState>
+}
 
 export type FilesModelActions =
 	'filesModel/setState'
@@ -50,6 +57,7 @@ export type FilesModelActions =
 	| 'filesModel/setFromLocalDatabase'
 	| 'filesModel/updateWithId'
 	| 'filesModel/delete'
+	| 'filesModel/deleteByChatId'
 
 export type FilesModelMutation =
 	'filesModel/setState'
@@ -57,6 +65,7 @@ export type FilesModelMutation =
 	| 'filesModel/update'
 	| 'filesModel/updateWithId'
 	| 'filesModel/delete'
+	| 'filesModel/deleteByChatId'
 
 
 export type FilesSetStateActions = 'setState';
@@ -92,4 +101,10 @@ export type FilesDeleteActions = 'delete';
 export interface FilesDeleteData extends PayloadData
 {
 	id: number;
+}
+
+export type FilesDeleteByChatIdActions = 'deleteByChatId';
+export interface FilesDeleteByChatIdData extends PayloadData
+{
+	chatId: number;
 }

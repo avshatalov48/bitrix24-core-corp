@@ -37,9 +37,10 @@ class Access
 
 		$permissionSet[CCrmOwnerType::ContactName] ??= CCrmRole::getDefaultPermissionSet();
 		$permissionSet[CCrmOwnerType::SmartDocumentName] ??= CCrmRole::getDefaultPermissionSet();
+		$permissionSet[CCrmOwnerType::SmartB2eDocumentName] ??= CCrmRole::getDefaultPermissionSet();
 
 		$filter = [
-				'=GROUP_CODE' => RolePermissionService::ROLE_GROUP_CODE,
+			'=GROUP_CODE' => RolePermissionService::ROLE_GROUP_CODE,
 			];
 
 		if ($code)
@@ -87,6 +88,21 @@ class Access
 			->getPermissionEntityTypeForCategory(
 				$smartDocumentCategory->getId()
 			)] = $permissionSet[CCrmOwnerType::SmartDocumentName];
+
+		$smartB2eDocumentFactory = Container::getInstance()
+			->getFactory(CCrmOwnerType::SmartB2eDocument)
+		;
+		$smartB2eDocumentCategory = $smartB2eDocumentFactory?->getDefaultCategory();
+
+		if ($smartB2eDocumentCategory === null)
+		{
+			return '\Bitrix\Crm\Integration\Sign\Access::installDefaultRoles();';
+		}
+
+		$rolePerms[(new PermissionEntityTypeHelper(CCrmOwnerType::SmartB2eDocument))
+			->getPermissionEntityTypeForCategory(
+				$smartB2eDocumentCategory->getId()
+			)] = $permissionSet[CCrmOwnerType::SmartB2eDocumentName];
 
 		$fields = [
 			'RELATION' => $rolePerms,
@@ -158,6 +174,14 @@ class Access
 				'WRITE' => ['-' => CCrmPerms::PERM_ALL],
 				'DELETE' => ['-' => CCrmPerms::PERM_ALL],
 			],
+			CCrmOwnerType::SmartB2eDocumentName => [
+				'READ' => ['-' => CCrmPerms::PERM_SELF],
+				'EXPORT' => ['-' => CCrmPerms::PERM_SELF],
+				'IMPORT' => ['-' => CCrmPerms::PERM_SELF],
+				'ADD' => ['-' => CCrmPerms::PERM_SELF],
+				'WRITE' => ['-' => CCrmPerms::PERM_SELF],
+				'DELETE' => ['-' => CCrmPerms::PERM_SELF],
+			],
 		];
 
 		$result = self::install(
@@ -171,10 +195,19 @@ class Access
 		{
 			return $result;
 		}
+		$chefAccessList = $accessList;
+		$chefAccessList[CCrmOwnerType::SmartB2eDocumentName] = [
+			'READ' => ['-' => CCrmPerms::PERM_SUBDEPARTMENT],
+			'EXPORT' => ['-' => CCrmPerms::PERM_SUBDEPARTMENT],
+			'IMPORT' => ['-' => CCrmPerms::PERM_SUBDEPARTMENT],
+			'ADD' => ['-' => CCrmPerms::PERM_SUBDEPARTMENT],
+			'WRITE' => ['-' => CCrmPerms::PERM_SUBDEPARTMENT],
+			'DELETE' => ['-' => CCrmPerms::PERM_SUBDEPARTMENT],
+		];
 
 		return self::install(
 			Loc::getMessage('CRM_SIGN_ROLE_CHIEF'),
-			$accessList,
+			$chefAccessList,
 			RolePermissionService::ROLE_GROUP_CODE . '_CHIEF',
 			self::getNeededGroupId('DIRECTION')
 		);

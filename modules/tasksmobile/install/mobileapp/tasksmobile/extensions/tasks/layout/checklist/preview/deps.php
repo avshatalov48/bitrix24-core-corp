@@ -2,15 +2,23 @@
 
 return [
 	'extensions' => [
+		'assets/icons',
 		'loc',
-		'apptheme',
-		'utils/random',
+		'tokens',
+		'toast',
+		'ui-system/blocks/icon',
+		'ui-system/typography/text',
 		'utils/validation',
-		'layout/ui/checkbox',
+		'utils/skeleton',
+		'device/connection',
 
-		'tasks:checklist',
+		'layout/ui/menu',
+		'layout/pure-component',
+		'layout/ui/fields/theme/air/elements/add-button',
+		'layout/ui/fields/theme/air/elements/more-button',
 	],
 	'bundle' => [
-		'./src/stub',
+		'./src/title',
+		'./src/item',
 	],
 ];

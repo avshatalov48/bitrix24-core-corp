@@ -2,10 +2,12 @@
 
 namespace Bitrix\BIConnector\Superset\UI;
 
-use Bitrix\Main\Loader;
+use Bitrix\BIConnector\Integration\Pull\PullManager;
 
 final class DashboardManager
 {
+	private const DASHBOARD_NOTIFY_TAG = 'superset_dashboard';
+
 	/**
 	 * Notify client-side that batch of dashboard changed status
 	 *
@@ -14,16 +16,13 @@ final class DashboardManager
 	 */
 	public static function notifyBatchDashboardStatus(array $dashboardList): void
 	{
-		if (Loader::includeModule('pull'))
-		{
-			\CPullWatch::AddToStack('superset_dashboard', [
-				'module_id' => 'biconnector',
-				'command' => 'onDashboardStatusUpdated',
-				'params' => [
-					'dashboardList' => $dashboardList,
-				],
-			]);
-		}
+		PullManager::getNotifyer()->notifyByTag(
+			self::DASHBOARD_NOTIFY_TAG,
+			'onDashboardStatusUpdated',
+			[
+				'dashboardList' => $dashboardList,
+			]
+		);
 	}
 
 	/**
@@ -43,14 +42,14 @@ final class DashboardManager
 		]);
 	}
 
-	public static function notifySupersetUnfreeze(): void
+	public static function notifySupersetStatus(string $status): void
 	{
-		if (Loader::includeModule('pull'))
-		{
-			\CPullWatch::AddToStack('superset_dashboard', [
-				'module_id' => 'biconnector',
-				'command' => 'onSupersetUnfreeze',
-			]);
-		}
+		PullManager::getNotifyer()->notifyByTag(
+			self::DASHBOARD_NOTIFY_TAG,
+			'onSupersetStatusUpdated',
+			[
+				'status' => $status,
+			]
+		);
 	}
 }

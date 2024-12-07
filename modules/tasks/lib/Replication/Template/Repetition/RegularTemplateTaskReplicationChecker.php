@@ -5,6 +5,7 @@ namespace Bitrix\Tasks\Replication\Template\Repetition;
 use Bitrix\Tasks\Provider\TaskList;
 use Bitrix\Tasks\Provider\TaskQuery;
 use Bitrix\Tasks\Replication\CheckerInterface;
+use Bitrix\Tasks\Replication\Replicator\RegularTemplateTaskReplicator;
 use Bitrix\Tasks\Replication\RepositoryInterface;
 use Bitrix\Tasks\Replication\Template\Repetition\Time\Service\ExecutionService;
 use Bitrix\Tasks\Util\User;
@@ -33,9 +34,6 @@ class RegularTemplateTaskReplicationChecker implements CheckerInterface
 			return true;
 		}
 
-		// todo: Gannochenko use first admin if CREATED_BY does not exists. idk why
-
-		// if (User::getAdminId())
 		if (!User::isActive($template->getCreatedBy()))
 		{
 			return true;
@@ -46,13 +44,18 @@ class RegularTemplateTaskReplicationChecker implements CheckerInterface
 
 	public function stopCurrentReplicationByPostpone(): bool
 	{
-		$executionTime = $this->executionService->getTemplateCurrentExecutionTime();
+		$priority = RegularTemplateTaskReplicator::isTimePriorityEnabled()
+			? ExecutionService::PRIORITY_AGENT
+			: ExecutionService::PRIORITY_TEMPLATE;
+
+		$executionTime = $this->executionService->getTemplateCurrentExecutionTime($priority);
 		$executionTimeTS = MakeTimeStamp($executionTime);
 		$currentServerTimeTS = time();
+
 		if (
 			$executionTime
 			&& (
-				$this->isTaskByTemplateAlreadyProduced()
+				$this->isTaskByTemplateAlreadyProduced($priority)
 				|| $currentServerTimeTS < $executionTimeTS
 			)
 		)
@@ -69,7 +72,7 @@ class RegularTemplateTaskReplicationChecker implements CheckerInterface
 		return $this;
 	}
 
-	private function isTaskByTemplateAlreadyProduced(): bool
+	private function isTaskByTemplateAlreadyProduced(int $priority = ExecutionService::PRIORITY_TEMPLATE): bool
 	{
 		try
 		{
@@ -77,8 +80,8 @@ class RegularTemplateTaskReplicationChecker implements CheckerInterface
 			$query
 				->setSelect(['ID'])
 				->setWhere([
-					           'FORKED_BY_TEMPLATE_ID' => $this->repository->getEntity()->getId(),
-					           'CREATED_DATE' => $this->executionService->getTemplateCurrentExecutionTime(),
+					'FORKED_BY_TEMPLATE_ID' => $this->repository->getEntity()->getId(),
+					'CREATED_DATE' => $this->executionService->getTemplateCurrentExecutionTime($priority),
 				])
 				->setLimit(1)
 				->skipAccessCheck();

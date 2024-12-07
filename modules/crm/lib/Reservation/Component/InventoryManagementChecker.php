@@ -4,13 +4,14 @@ namespace Bitrix\Crm\Reservation\Component;
 
 use Bitrix\Main;
 use Bitrix\Crm;
-use Bitrix\Catalog;
-use Bitrix\Crm\Reservation\QuantityCheckerTrait;
 use CCrmOwnerType;
+use Bitrix\Crm\Reservation\QuantityCheckerTrait;
+use Bitrix\Crm\Reservation\AvailabilityServicesCheckerTrait;
 
 final class InventoryManagementChecker
 {
 	use QuantityCheckerTrait;
+	use AvailabilityServicesCheckerTrait;
 
 	/**
 	 * @var Crm\Service\Factory\Deal
@@ -61,7 +62,7 @@ final class InventoryManagementChecker
 					$result->addError(Crm\Reservation\Error\InventoryManagementError::create());
 				}
 
-				$checkResult = self::checkAvailabilityServices(self::filterServices($productRows));
+				$checkResult = self::checkAvailabilityServices($productRows);
 				if (!$checkResult->isSuccess())
 				{
 					$result->addError(Crm\Reservation\Error\AvailabilityServices::create());
@@ -113,7 +114,7 @@ final class InventoryManagementChecker
 					$result->addError(Crm\Reservation\Error\InventoryManagementError::create());
 				}
 
-				$checkResult = self::checkAvailabilityServices(self::filterServices($productRows));
+				$checkResult = self::checkAvailabilityServices($productRows);
 				if (!$checkResult->isSuccess())
 				{
 					$result->addError(Crm\Reservation\Error\AvailabilityServices::create());
@@ -128,38 +129,6 @@ final class InventoryManagementChecker
 
 					$result->setData($entityFields);
 				}
-			}
-		}
-
-		return $result;
-	}
-
-	private static function checkAvailabilityServices(array $products): Main\Result
-	{
-		$result = new Main\Result();
-
-		$productIds = array_column($products, 'PRODUCT_ID');
-		if (!$productIds)
-		{
-			return $result;
-		}
-
-		$productIterator = Catalog\ProductTable::getList([
-			'select' => [
-				'ID',
-				'AVAILABLE',
-			],
-			'filter' => [
-				'=ID' => $productIds,
-			],
-		]);
-		while ($product = $productIterator->fetch())
-		{
-			if ($product['AVAILABLE'] === Catalog\ProductTable::STATUS_NO)
-			{
-				$result->addError(
-					new Main\Error("Product with id {$product['ID']} is not available")
-				);
 			}
 		}
 
@@ -195,14 +164,6 @@ final class InventoryManagementChecker
 		}
 
 		return $entityProducts;
-	}
-
-	private static function filterServices(array $products): array
-	{
-		return array_filter($products, static function ($product) {
-			$type = (int)($product['TYPE'] ?? 0);
-			return $type === Crm\ProductType::TYPE_SERVICE;
-		});
 	}
 
 	private function isProcessInventoryManagementAvailable(): bool

@@ -73,7 +73,7 @@ Loc::loadMessages(__FILE__);
 	</div>
 </div>
 	<?=$arResult['LANG_JS_SETTING'];?>
-	<script type="text/javascript">
+	<script>
 		BX.message({
 			IMCONNECTOR_COMPONENT_SETTINGS_COLLAPSE: '<? echo GetMessageJS('IMCONNECTOR_COMPONENT_SETTINGS_COLLAPSE') ?>',
 			IMCONNECTOR_COMPONENT_SETTINGS_DEPLOY: '<? echo GetMessageJS('IMCONNECTOR_COMPONENT_SETTINGS_DEPLOY') ?>'

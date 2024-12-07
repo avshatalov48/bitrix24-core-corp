@@ -61,9 +61,9 @@ class Operator
 	}
 
 	/**
-	 * @return bool[]|false[]
+	 * @return array{RESULT: bool}
 	 */
-	private function checkAccess()
+	private function checkAccess(): array
 	{
 		if (!$this->moduleLoad)
 		{
@@ -126,8 +126,12 @@ class Operator
 						$lineId = $parsedUserCode['CONFIG_ID'];
 						$fieldData = explode("|", $chat['ENTITY_DATA_1']);
 						if (
-							!\Bitrix\ImOpenLines\Config::canJoin($lineId, ($fieldData[0] == 'Y' ? $fieldData[1] : null),
-								($fieldData[0] == 'Y' ? $fieldData[2] : null))
+							!\Bitrix\ImOpenLines\Config::canJoin(
+								$lineId,
+								($fieldData[0] == 'Y' ? $fieldData[1] : null),
+								($fieldData[0] == 'Y' ? $fieldData[2] : null),
+								$this->userId
+							)
 						)
 						{
 							$this->error = new BasicError(__METHOD__, 'ACCESS_DENIED',
@@ -286,7 +290,7 @@ class Operator
 		return $result;
 	}
 
-	public function pinOperatorDialogs(bool $active = true)
+	public function pinOperatorDialogs(bool $active = true): Result
 	{
 		$sessions = \Bitrix\ImOpenLines\Model\SessionTable::getList([
 			'filter' => [
@@ -317,7 +321,7 @@ class Operator
 	/**
 	 * @return Result
 	 */
-	public function closeDialog()
+	public function closeDialog(): Result
 	{
 		$result = new Result();
 
@@ -327,7 +331,7 @@ class Operator
 			$chat = new Chat($this->chatId);
 			$resultFinishChat = $chat->finish($this->userId, false);
 
-			if(!$resultFinishChat->isSuccess())
+			if (!$resultFinishChat->isSuccess())
 			{
 				$result->addErrors($resultFinishChat->getErrors());
 			}
@@ -343,7 +347,7 @@ class Operator
 	/**
 	 * @return Result
 	 */
-	public function closeDialogOtherOperator()
+	public function closeDialogOtherOperator(): Result
 	{
 		$result = new Result();
 
@@ -353,7 +357,7 @@ class Operator
 			$chat = new Chat($this->chatId);
 			$resultFinishChat = $chat->finish($this->userId, true);
 
-			if(!$resultFinishChat->isSuccess())
+			if (!$resultFinishChat->isSuccess())
 			{
 				$result->addErrors($resultFinishChat->getErrors());
 			}

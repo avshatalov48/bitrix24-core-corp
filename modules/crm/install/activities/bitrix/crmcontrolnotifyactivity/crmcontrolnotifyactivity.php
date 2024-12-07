@@ -307,6 +307,11 @@ class CBPCrmControlNotifyActivity extends CBPActivity
 
 	private function logDebug($users)
 	{
+		if (!$this->workflow->isDebug())
+		{
+			return;
+		}
+
 		$debugInfo = $this->getDebugInfo([
 			'ToUsers' => array_map(
 				fn ($userId) => 'user_' . $userId,

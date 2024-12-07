@@ -61,7 +61,7 @@ Extension::load([
 	'ui.icon-set.main',
 ]);
 
-Asset::getInstance()->addString('<script type="text/javascript" src="' . $arResult['SERVER'] . '/web-apps/apps/api/documents/api.js"></script>');
+Asset::getInstance()->addString('<script src="' . $arResult['SERVER'] . '/web-apps/apps/api/documents/api.js"></script>');
 $containerId = 'editorForm'.$this->randString();
 $headerText = Loc::getMessage('DISK_FILE_EDITOR_ONLYOFFICE_HEADER_MODE_VIEW');
 if ($arResult['EDITOR']['MODE'] === ConfigBuilder::MODE_EDIT)

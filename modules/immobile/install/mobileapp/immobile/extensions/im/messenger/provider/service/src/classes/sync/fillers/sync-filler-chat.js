@@ -3,7 +3,7 @@
  */
 jn.define('im/messenger/provider/service/classes/sync/fillers/sync-filler-chat', (require, exports, module) => {
 	const { SyncFillerBase } = require('im/messenger/provider/service/classes/sync/fillers/sync-filler-base');
-	const { EventType, ComponentCode } = require('im/messenger/const');
+	const { EventType, ComponentCode, WaitingEntity } = require('im/messenger/const');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const { LoggerManager } = require('im/messenger/lib/logger');
 	const logger = LoggerManager.getInstance().getLogger('sync-service');
@@ -39,7 +39,6 @@ jn.define('im/messenger/provider/service/classes/sync/fillers/sync-filler-chat',
 
 			try
 			{
-				await this.updateDatabase(result);
 				await this.updateModels(this.prepareResult(result));
 
 				MessengerEmitter.emit(EventType.sync.requestResultSaved, {
@@ -92,6 +91,11 @@ jn.define('im/messenger/provider/service/classes/sync/fillers/sync-filler-chat',
 			});
 
 			return syncListResult;
+		}
+
+		getUuidPrefix()
+		{
+			return WaitingEntity.sync.filler.chat;
 		}
 	}
 

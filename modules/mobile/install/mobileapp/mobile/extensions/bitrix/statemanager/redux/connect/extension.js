@@ -43,7 +43,10 @@ jn.define('statemanager/redux/connect', (require, exports, module) => {
 
 				componentDidMount()
 				{
-					this.unsubscribe = store.subscribe(this.handleStorageChange.bind(this));
+					if (!this.unsubscribe)
+					{
+						this.unsubscribe = store.subscribe(this.handleStorageChange.bind(this));
+					}
 				}
 
 				handleStorageChange()

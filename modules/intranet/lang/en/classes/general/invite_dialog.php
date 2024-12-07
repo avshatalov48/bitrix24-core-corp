@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["BX24_CLOSE_BUTTON"] = "Close";
 $MESS["BX24_INVITE_BUTTON"] = "Invite";
 $MESS["BX24_INVITE_DIALOG_EMAIL_ERROR"] = "The e-mail addresses are incorrect:<br/>";
@@ -7,6 +7,7 @@ $MESS["BX24_INVITE_DIALOG_ERROR_EMPTY_EMAIL"] = "E-mail address was not specifie
 $MESS["BX24_INVITE_DIALOG_ERROR_EMPTY_EMAIL_LIST"] = "E-mail addresses were not specified.";
 $MESS["BX24_INVITE_DIALOG_ERROR_EMPTY_LAST_NAME"] = "The last name is required.";
 $MESS["BX24_INVITE_DIALOG_ERROR_EMPTY_PASSWORD"] = "Password is not specified.";
+$MESS["BX24_INVITE_DIALOG_ERROR_EMPTY_PHONE_LIST"] = "No phone numbers specified.";
 $MESS["BX24_INVITE_DIALOG_ERROR_EXTRANET_USER_TRANSFER"] = "Could not convert external user";
 $MESS["BX24_INVITE_DIALOG_ERROR_USER_TRANSFER"] = "Cannot convert e-mail user.";
 $MESS["BX24_INVITE_DIALOG_ERROR_WRONG_PASSWORD_CONFIRM"] = "Password does not match the confirm password.";
@@ -24,4 +25,3 @@ $MESS["BX24_INVITE_DIALOG_USER_PHONE_EXIST_ERROR2"] = "User with phone numbers #
 $MESS["BX24_INVITE_TITLE_ADD"] = "Add employee";
 $MESS["BX24_INVITE_TITLE_INVITE"] = "Invite employees";
 $MESS["BX24_LOADING"] = "Loading...";
-?>

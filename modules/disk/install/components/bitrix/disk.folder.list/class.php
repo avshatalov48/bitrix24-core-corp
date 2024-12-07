@@ -39,7 +39,6 @@ use Bitrix\Main\ModuleManager;
 use Bitrix\Main\Search\Content;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\UI\Viewer\ItemAttributes;
-use Bitrix\Main\Web\PostDecodeFilter;
 use Bitrix\Main\Web\Uri;
 use Bitrix\Socialnetwork;
 
@@ -1302,6 +1301,11 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 			)), '/');
 		}
 
+		if (!$object->getParent())
+		{
+			return '';
+		}
+
 		return $this->getUrlManager()->getPathFolderList($object->getParent());
 	}
 
@@ -1975,12 +1979,6 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 		$backupErrorCollection = $this->errorCollection;
 
 		$this->errorCollection = new \Bitrix\Disk\Internals\Error\ErrorCollection();
-
-		if ($this->request->isAjaxRequest())
-		{
-			\CUtil::jSPostUnescape();
-			$this->request->addFilter(new PostDecodeFilter);
-		}
 
 		foreach ($this->request->getPost('rows') as $rowId => $sourceData)
 		{

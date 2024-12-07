@@ -7,7 +7,7 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 if ($_SERVER['REQUEST_METHOD'] == 'POST'):
 	$APPLICATION->RestartBuffer();
 	?>
-	<script type="text/javascript">
+	<script>
 		<?if($arResult['ERROR_MSG'] <> '' ):?>
 			alert("<?=$arResult['ERROR_MSG']?>");
 			BX.closeWait();
@@ -130,7 +130,7 @@ var str = '';
 -<?endif?>
 </table>
 </form>
-<script type="text/javascript">
+<script>
 
 	<?if(CSaleLocation::isLocationProEnabled()):?>
 		BX.locationSelectors['tax-location-selector'].bindEvent('after-target-input-modified', function(){

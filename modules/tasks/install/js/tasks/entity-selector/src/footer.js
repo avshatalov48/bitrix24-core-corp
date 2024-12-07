@@ -6,21 +6,28 @@ export default class Footer extends DefaultFooter
 	constructor(dialog: Dialog, options: { [option: string]: any })
 	{
 		super(dialog, options);
-		this.userId = options.userId
-			? options.userId.toString()
-			: BX.message('USER_ID')
-		;
-		this.taskId = options.taskId
-			? options.taskId.toString()
-			: 0
-		;
-		this.groupId = options.groupId
-			? options.groupId.toString()
-			: 0
-		;
+
+		this.userId = options.userId ? options.userId.toString() : BX.message('USER_ID');
+		this.taskId = options.taskId ? options.taskId.toString() : 0;
+		this.groupId = options.groupId ? options.groupId.toString() : 0;
 	}
 
 	getContent(): HTMLElement | HTMLElement[] | string | null
+	{
+		if (this.#isTaskTemplateFooter())
+		{
+			return this.#renderTasksTemplateFooter();
+		}
+
+		return this.#renderTasksTagFooter();
+	}
+
+	#isTaskTemplateFooter(): boolean
+	{
+		return [...this.dialog.entities.keys()][0] === 'task-template';
+	}
+
+	#renderTasksTagFooter(): HTMLElement
 	{
 		let url = '/company/personal/user/' + this.userId + '/tasks/tags/';
 		const task = this.taskId;
@@ -54,5 +61,19 @@ export default class Footer extends DefaultFooter
 				</div>
 			`;
 		});
+	}
+
+	#renderTasksTemplateFooter(): HTMLElement | null
+	{
+		if (!this.options.canCreateTemplate)
+		{
+			return null;
+		}
+
+		return Tag.render`
+			<a class="ui-selector-footer-link ui-selector-footer-link-add" href="${this.options.templateAddUrl}">
+				${Loc.getMessage('TASKS_ENTITY_SELECTOR_TEMPLATE_FOOTER_CREATE_TEMPLATE')}
+			</a>
+		`;
 	}
 }

@@ -55,7 +55,7 @@ class IntranetContactCenterMenuTop extends \CBitrixComponent
 				'TEXT' => Loc::getMessage('MENU_CONTACT_CENTER'),
 				'URL' => $this->arParams['COMPONENT_BASE_DIR'] . $sliderMode,
 				'ID' => 'menu_contact_center',
-				'IS_ACTIVE' => $this->arParams['SECTION_ACTIVE'] === 'contact_center'
+				'IS_ACTIVE' => isset($this->arParams['SECTION_ACTIVE']) && $this->arParams['SECTION_ACTIVE'] === 'contact_center'
 			]
 		];
 
@@ -68,7 +68,7 @@ class IntranetContactCenterMenuTop extends \CBitrixComponent
 				'TEXT' => Loc::getMessage('MENU_CONTACT_CENTER_IMOL_DETAILED_STATISTICS'),
 				'URL' => $this->arParams['COMPONENT_BASE_DIR'] . 'dialog_list/',
 				'ID' => 'menu_contact_center_detail_statistics',
-				'IS_ACTIVE' => $this->arParams['SECTION_ACTIVE'] === 'dialog_list',
+				'IS_ACTIVE' => isset($this->arParams['SECTION_ACTIVE']) && $this->arParams['SECTION_ACTIVE'] === 'dialog_list',
 				'ON_CLICK' => 'top.location="' . CUtil::JSEscape($this->arParams['COMPONENT_BASE_DIR'] . 'dialog_list/') . '"',
 			];
 
@@ -78,7 +78,7 @@ class IntranetContactCenterMenuTop extends \CBitrixComponent
 					'TEXT' => Loc::getMessage('MENU_CONTACT_CENTER_IMOL_STATISTICS'),
 					'URL' => $this->arParams['COMPONENT_BASE_DIR'] . 'dialog_statistics/',
 					'ID' => 'menu_contact_center_statistics',
-					'IS_ACTIVE' => $this->arParams['SECTION_ACTIVE'] === 'dialog_statistics',
+					'IS_ACTIVE' => isset($this->arParams['SECTION_ACTIVE']) && $this->arParams['SECTION_ACTIVE'] === 'dialog_statistics',
 					'ON_CLICK' => 'top.location="' . CUtil::JSEscape($this->arParams['COMPONENT_BASE_DIR'] . 'dialog_statistics/') . '"',
 				];
 			}

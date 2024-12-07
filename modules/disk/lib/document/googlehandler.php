@@ -131,6 +131,13 @@ class GoogleHandler extends DocumentHandler implements IViewer, FileCreatable, C
 
 	protected function getScopesForRemove(): array
 	{
+		if (ModuleManager::isModuleInstalled('bitrix24'))
+		{
+			return [
+				'https://www.googleapis.com/auth/drive',
+			];
+		}
+
 		return [];
 	}
 
@@ -261,7 +268,6 @@ class GoogleHandler extends DocumentHandler implements IViewer, FileCreatable, C
 
 		$googleMimeType = static::getInternalMimeTypeByExtension(getFileExtension($fileData->getName()));
 		$fileName = getFileNameWithoutExtension($fileData->getName());
-		$fileName = $this->convertToUtf8($fileName);
 
 		if(!$googleMimeType)
 		{

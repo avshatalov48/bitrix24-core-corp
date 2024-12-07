@@ -299,7 +299,7 @@ class CCrmEntityPopupComponent extends CBitrixComponent
 
 		if (!$restriction->hasPermission())
 		{
-			return $restriction->prepareInfoHelperScript();
+			return $restriction->prepareFeaturePromoterScript();
 		}
 
 		return '';
@@ -366,6 +366,11 @@ class CCrmEntityPopupComponent extends CBitrixComponent
 			'stageIdField' => $stageIdField,
 			'finalStages' => $finalStages,
 			'skipPeriod' => (new \Bitrix\Crm\Activity\TodoCreateNotification($this->entityTypeID))->getCurrentSkipPeriod(),
+			'guid' => $this->guid,
+			'analytics' => [
+				'section' => $this->arParams['EXTRAS']['ANALYTICS']['c_section'] ?? '',
+				'subSection' => \Bitrix\Crm\Activity\Analytics\Dictionary::NOTIFICATION_POPUP_SUB_SECTION,
+			],
 		];
 	}
 

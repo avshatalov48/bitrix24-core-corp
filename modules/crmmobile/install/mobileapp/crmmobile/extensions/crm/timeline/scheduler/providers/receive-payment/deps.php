@@ -4,7 +4,7 @@ return [
 	'extensions' => [
 		'loc',
 		'crm:timeline/scheduler/providers/base',
-		'crm:type/id',
+		'crm:type',
 		'crm:receive-payment/mode-selection',
 		'utils/object',
 	],

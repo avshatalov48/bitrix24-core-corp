@@ -31,6 +31,7 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
 use Bitrix\Main\Text\Encoding;
 use Bitrix\Main\Web\Uri;
+use Bitrix\Transformer\Integration\Baas;
 
 class DocumentGeneratorManager
 {
@@ -928,7 +929,7 @@ class DocumentGeneratorManager
 		?string $placeholderForEmptyValue = null
 	): ?string
 	{
-		if (!$this->isEnabled)
+		if (!static::getInstance()->isEnabled())
 		{
 			return null;
 		}
@@ -960,13 +961,14 @@ class DocumentGeneratorManager
 		$document = VirtualDocument::createByTemplate($template, $entityId);
 		if ($document)
 		{
+			Driver::getInstance()->getDefaultNumerator(); // previously setup default numerator
+
 			if ($placeholderForEmptyValue !== null)
 			{
 				$document->setPlaceholderForFieldEmptyValue($placeholderForEmptyValue);
 			}
 
 			$result = $document->getProcessedResult();
-
 			if ($result->isSuccess())
 			{
 				$content = $result->getData()['BODY']->getContent();
@@ -976,5 +978,34 @@ class DocumentGeneratorManager
 		}
 
 		return null;
+	}
+
+	/**
+	 * @internal
+	 */
+	final public function isBaasFastTransformFeatureAvailable(): bool
+	{
+		return (bool)$this->getBaasFastTransformFeature()?->isAvailable();
+	}
+
+	/**
+	 * @internal
+	 */
+	public function isBaasFastTransformFeatureActive(): bool
+	{
+		return (bool)$this->getBaasFastTransformFeature()?->isActive();
+	}
+
+	private function getBaasFastTransformFeature(): ?object
+	{
+		if (
+			!Loader::includeModule('transformer')
+			|| !is_callable('\Bitrix\Transformer\Integration\Baas::getDedicatedControllerFeature')
+		)
+		{
+			return null;
+		}
+
+		return Baas::getDedicatedControllerFeature();
 	}
 }

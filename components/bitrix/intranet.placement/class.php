@@ -4,6 +4,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use Bitrix\Main\Config\Option;
 use Bitrix\Main\Engine\Contract\Controllerable;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Application;
@@ -13,14 +14,16 @@ use Bitrix\Rest\Sqs;
 use Bitrix\Rest\AppTable;
 use Bitrix\Rest\OAuthService;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Type\DateTime;
 
 /**
  * class IntranetPlacementComponent
  */
 class IntranetPlacementComponent extends \CBitrixComponent implements Controllerable
 {
-	private const MAX_OVERTIME_COUNT = 3;
+	private const MAX_OVERTIME_COUNT = 10;
 	private const MAX_LOAD_DELAY = 5000;
+	private const MAX_OVERTIME_RESET_COUNT_OPTION_NAME = 'max_overtime_reset_count_time';
 	private const DEFAULT_PLACEMENT_CODE = \CIntranetRestService::PAGE_BACKGROUND_WORKER_PLACEMENT;
 
 	protected function listKeysSignedParameters()
@@ -118,9 +121,10 @@ class IntranetPlacementComponent extends \CBitrixComponent implements Controller
 		);
 		if ($handler = $res->fetch())
 		{
-			if (!$handler['OPTIONS']['maxTimeCount'])
+			if (!$handler['OPTIONS']['maxTimeCount'] || (int)Option::get('rest', self::MAX_OVERTIME_RESET_COUNT_OPTION_NAME, 0) < time())
 			{
 				$handler['OPTIONS']['maxTimeCount'] = 0;
+				Option::set('rest', self::MAX_OVERTIME_RESET_COUNT_OPTION_NAME, (new DateTime())->add('+1 day')->getTimestamp());
 			}
 			$handler['OPTIONS']['maxTimeCount']++;
 

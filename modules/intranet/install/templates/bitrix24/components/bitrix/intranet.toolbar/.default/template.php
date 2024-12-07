@@ -57,7 +57,7 @@ endif;
 <?
 if ($arParams["AJAX_MODE"]):
 	?>
-	<script type="text/javascript">
+	<script>
 	setTimeout(function() {
 		var obToolbar = document.getElementById('bx_intranet_toolbar');
 		var obToolbarTmp = document.getElementById('bx_intranet_toolbar_tmp');

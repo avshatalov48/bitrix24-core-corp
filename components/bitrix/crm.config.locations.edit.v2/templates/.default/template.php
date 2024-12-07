@@ -10,13 +10,13 @@ Loc::loadMessages(__FILE__);
 <?if(!empty($arResult['ERRORS']['FATAL'])):?>
 
 	<?foreach($arResult['ERRORS']['FATAL'] as $error):?>
-		<?=ShowError($error)?>
+		<? ShowError($error)?>
 	<?endforeach?>
 
 <?else:?>
 
 	<?foreach($arResult['ERRORS']['NONFATAL'] as $error):?>
-		<?=ShowError($error)?>
+		<? ShowError($error)?>
 	<?endforeach?>
 
 	<?

@@ -81,12 +81,28 @@ class FieldMatcher
 	{
 		$entityClassName = static::getEntityClass($entityTypeId);
 
+		$selectFields = array_column($matches, 'CRM_FIELD_CODE');
+		if (
+			(int)$entityTypeId === \CCrmOwnerType::Contact
+			&& in_array('FULL_NAME', $selectFields, true)
+		)
+		{
+			$selectFields = [
+				...$selectFields,
+				'HONORIFIC',
+				'NAME',
+				'SECOND_NAME',
+				'LAST_NAME',
+			];
+		}
+		$selectFields = array_unique($selectFields);
+
 		$dbResult = $entityClassName::GetListEx(
 			[],
 			['=ID' => $entityId, 'CHECK_PERMISSIONS' => 'N'],
 			false,
 			false,
-			['*', 'UF_*']
+			$selectFields,
 		);
 		$fields = $dbResult->Fetch();
 

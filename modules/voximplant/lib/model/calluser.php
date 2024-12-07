@@ -12,9 +12,9 @@ use Bitrix\Main\Type\DateTime;
  *
  * <<< ORMENTITYANNOTATION
  * @method static EO_CallUser_Query query()
- * @method static EO_CallUser_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_CallUser_Result getByPrimary($primary, array $parameters = [])
  * @method static EO_CallUser_Result getById($id)
- * @method static EO_CallUser_Result getList(array $parameters = array())
+ * @method static EO_CallUser_Result getList(array $parameters = [])
  * @method static EO_CallUser_Entity getEntity()
  * @method static \Bitrix\Voximplant\Model\EO_CallUser createObject($setDefaultValues = true)
  * @method static \Bitrix\Voximplant\Model\EO_CallUser_Collection createCollection()

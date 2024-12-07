@@ -14,7 +14,7 @@ $APPLICATION->AddHeadScript('/bitrix/js/crm/interface_form.js');
 ?>
 <div class="bx-interface-form">
 
-<script type="text/javascript">
+<script>
 	var bxForm_<?=$arParams["FORM_ID"]?> = null;
 </script>
 
@@ -377,7 +377,7 @@ foreach($arResult["TABS"] as &$tab):
 								$prefix = mb_strtolower("{$arParams['FORM_ID']}_{$field['id']}");
 								$activityListContainerID = $prefix.'_activity_list_wrapper';
 								?><div id="<?=htmlspecialcharsbx($activityListContainerID)?>"></div>
-								<script type="text/javascript">
+								<script>
 									BX.ready(
 										function()
 										{
@@ -441,7 +441,7 @@ foreach($arResult["TABS"] as &$tab):
 								unset($componentData['params']);
 
 								?><div id="<?=htmlspecialcharsbx($eventViewContainerID)?>"></div>
-								<script type="text/javascript">
+								<script>
 									BX.ready(
 										function()
 										{
@@ -492,7 +492,7 @@ foreach($arResult["TABS"] as &$tab):
 								$prefix = mb_strtolower("{$arParams['FORM_ID']}_{$field['id']}");
 								$dealListContainerID = $prefix.'_deal_list_wrapper';
 								?><div id="<?=htmlspecialcharsbx($dealListContainerID)?>"></div>
-								<script type="text/javascript">
+								<script>
 									BX.ready(
 										function()
 										{
@@ -543,7 +543,7 @@ foreach($arResult["TABS"] as &$tab):
 								$prefix = mb_strtolower("{$arParams['FORM_ID']}_{$field['id']}");
 								$quoteListContainerID = $prefix.'_quote_list_wrapper';
 								?><div id="<?=htmlspecialcharsbx($quoteListContainerID)?>"></div>
-								<script type="text/javascript">
+								<script>
 									BX.ready(
 										function()
 										{
@@ -594,7 +594,7 @@ foreach($arResult["TABS"] as &$tab):
 								$prefix = mb_strtolower("{$arParams['FORM_ID']}_{$field['id']}");
 								$invoiceListContainerID = $prefix.'_invoice_list_wrapper';
 								?><div id="<?=htmlspecialcharsbx($invoiceListContainerID)?>"></div>
-								<script type="text/javascript">
+								<script>
 									BX.ready(
 										function()
 										{
@@ -645,7 +645,7 @@ foreach($arResult["TABS"] as &$tab):
 								$prefix = mb_strtolower("{$arParams['FORM_ID']}_{$field['id']}");
 								$companyListContainerID = $prefix.'_company_list_wrapper';
 								?><div id="<?=htmlspecialcharsbx($companyListContainerID)?>"></div>
-								<script type="text/javascript">
+								<script>
 									BX.ready(
 										function()
 										{
@@ -696,7 +696,7 @@ foreach($arResult["TABS"] as &$tab):
 							$prefix = mb_strtolower("{$arParams['FORM_ID']}_{$field['id']}");
 								$contactListContainerID = $prefix.'_contact_list_wrapper';
 								?><div id="<?=htmlspecialcharsbx($contactListContainerID)?>"></div>
-								<script type="text/javascript">
+								<script>
 									BX.ready(
 										function()
 										{
@@ -746,7 +746,7 @@ foreach($arResult["TABS"] as &$tab):
 							{
 							?>
 								<div id="<?=htmlspecialcharsbx($containerId)?>"></div>
-								<script type="text/javascript">
+								<script>
 									BX.ready(function() {
 										BX.CrmFormTabLazyLoader.create(
 											"<?=CUtil::JSEscape($prefix)?>",
@@ -793,7 +793,7 @@ foreach($arResult["TABS"] as &$tab):
 								$prefix = mb_strtolower("{$arParams['FORM_ID']}_{$field['id']}");
 								$requisiteListContainerID = $prefix.'_requisite_list_wrapper';
 								?><div id="<?=htmlspecialcharsbx($requisiteListContainerID)?>"></div>
-								<script type="text/javascript">
+								<script>
 									BX.ready(
 										function()
 										{
@@ -844,7 +844,7 @@ foreach($arResult["TABS"] as &$tab):
 							$prefix = mb_strtolower("{$arParams['FORM_ID']}_{$field['id']}");
 								$automationContainerID = $prefix.'_crm_automation_wrapper';
 								?><div id="<?= htmlspecialcharsbx($automationContainerID) ?>"></div>
-								<script type="text/javascript">
+								<script>
 									BX.ready(
 										function ()
 										{
@@ -1020,7 +1020,7 @@ $variables = array(
 	"GRID_ID"=>$arParams["THEME_GRID_ID"],
 );
 
-?><script type="text/javascript">
+?><script>
 var formSettingsDialog<?=$arParams["FORM_ID"]?>;
 bxForm_<?=$arParams["FORM_ID"]?> = new BxCrmInterfaceForm('<?=$arParams["FORM_ID"]?>', <?=CUtil::PhpToJsObject(array_keys($arResult["TABS"]))?>);
 bxForm_<?=$arParams["FORM_ID"]?>.vars = <?=CUtil::PhpToJsObject($variables)?>;<?

@@ -95,6 +95,13 @@ class UserFieldDataProvider extends EntityUFDataProvider
 
 	public function prepareListFilter(array &$filter, array $filterFields, array $requestFilter)
 	{
+		/**
+		 * possible subtype values for example:
+		 *   null | employee | string | url | address | money | integer | double | boolean | datetime |
+		 *   date | enumeration | crm_status | iblock_element | iblock_section | crm
+		 * may also take other value
+		 */
+		$filterSubtype = ['money'];
 		$userFields = $this->getUserFields();
 		foreach($filterFields as $filterField)
 		{
@@ -136,6 +143,12 @@ class UserFieldDataProvider extends EntityUFDataProvider
 							$filter['!' . $id] = $requestFilter['!' . $id];
 						}
 					}
+				}
+
+				if (isset($requestFilter[$id]) && isset($filterField['subtype']) && in_array($filterField['subtype'], $filterSubtype, true))
+				{
+					$filter['%' . $id] = $requestFilter[$id];
+					$isProcessed = true;
 				}
 
 				if (!$isProcessed && isset($requestFilter[$id]))

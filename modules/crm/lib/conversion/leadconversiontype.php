@@ -11,17 +11,23 @@ class LeadConversionType
 
 	public static function resolveByEntityID($entityID)
 	{
-		$dbResult = \CCrmLead::GetListEx(
-			array(),
-			array('ID' => $entityID, 'CHECK_PERMISSIONS' => 'N'),
-			false,
-			false,
-			array('ID', 'STATUS_ID', 'IS_RETURN_CUSTOMER')
-		);
+		static $cache = [];
+		$cacheKey = (string)$entityID;
 
-		$fields = $dbResult->Fetch();
-		return is_array($fields) ? self::resolveByEntityFields($fields) : self::UNDEFINED;
+		if (array_key_exists($cacheKey, $cache))
+		{
+			return $cache[$cacheKey];
+		}
+
+		$fields = self::loadLeadDataById($entityID);
+
+		$result = is_array($fields) ? self::resolveByEntityFields($fields) : self::UNDEFINED;
+
+		$cache[$cacheKey] = $result;
+
+		return $result;
 	}
+
 	public static function resolveByEntityFields(array $fields)
 	{
 		$customerType = \CCrmLead::ResolveCustomerType($fields);
@@ -37,5 +43,28 @@ class LeadConversionType
 		}
 
 		return self::GENERAL;
+	}
+
+	public static function loadLeadDataById(int $id): ?array
+	{
+		static $cache = [];
+		$cacheKey = (string)$id;
+
+		if (array_key_exists($cacheKey, $cache))
+		{
+			return $cache[$cacheKey];
+		}
+
+		$dbResult = \CCrmLead::GetListEx(
+			[],
+			['ID' => $id, 'CHECK_PERMISSIONS' => 'N'],
+			false,
+			false,
+			['ID', 'STATUS_ID', 'IS_RETURN_CUSTOMER']
+		);
+
+		$fields = $dbResult->Fetch();
+
+		return is_array($fields) ? $fields : null;
 	}
 }

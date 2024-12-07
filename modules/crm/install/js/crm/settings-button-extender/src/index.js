@@ -1,5 +1,9 @@
-import { SettingsButtonExtender } from './settings-button-extender';
+import { SettingsButtonExtender, type SettingsButtonExtenderParams } from './settings-button-extender';
 
 export {
 	SettingsButtonExtender,
+};
+
+export type {
+	SettingsButtonExtenderParams,
 };

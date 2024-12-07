@@ -5,8 +5,12 @@ jn.define('crm/timeline/scheduler/providers/sharing/settings-menu', (require, ex
 	const { Loc } = require('loc');
 	const { Type } = require('type');
 	const { Type: CrmType } = require('crm/type');
+	const { ContextMenu } = require('layout/ui/context-menu');
 	const { CommunicationSelector } = require('crm/communication/communication-selector');
 	const { SendersSelector } = require('crm/timeline/ui/senders-selector');
+
+	const SENDER_TYPE_PHONE = 'PHONE';
+	const SENDER_TYPE_EMAIL = 'EMAIL';
 
 	class SettingsMenu
 	{
@@ -16,15 +20,17 @@ jn.define('crm/timeline/scheduler/providers/sharing/settings-menu', (require, ex
 			this.parentLayout = props.layout;
 			this.sendersSelector = null;
 
-			this.fromPhoneId = this.props.currentSender.fromPhoneId;
+			this.fromId = this.props.currentSender.fromId;
 			this.currentSender = this.props.currentSender;
-			this.toPhoneId = this.props.currentCommunication.toPhoneId;
-			this.communicationName = this.props.currentCommunication.caption;
-			this.toPhoneValue = this.props.currentCommunication.toPhoneValue;
 
-			this.onContactPhoneSelect = this.onContactPhoneSelect.bind(this);
+			this.toId = this.props.currentCommunication.id;
+			this.toValue = this.props.currentCommunication.value;
+			this.toName = this.props.currentCommunication.name;
+
+			this.onContactSelect = this.onContactSelect.bind(this);
 			this.onChangeSender = this.onChangeSender.bind(this);
-			this.onChangeSenderPhone = this.onChangeSenderPhone.bind(this);
+			this.onDisabledSenderClick = this.onDisabledSenderClick.bind(this);
+			this.onChangeSenderFrom = this.onChangeSenderFrom.bind(this);
 
 			this.menu = new ContextMenu(this.getMenuConfig());
 		}
@@ -56,7 +62,7 @@ jn.define('crm/timeline/scheduler/providers/sharing/settings-menu', (require, ex
 				{
 					id: 'sharing_receiver',
 					title: Loc.getMessage('M_CRM_TIMELINE_SCHEDULER_SHARING_RECEIVER'),
-					subtitle: `${this.communicationName} (${this.toPhoneValue})`,
+					subtitle: `${this.toName} (${this.toValue})`,
 					onClickCallback: () => {
 						this.openContactSelector();
 
@@ -84,26 +90,26 @@ jn.define('crm/timeline/scheduler/providers/sharing/settings-menu', (require, ex
 
 		getCommunicationChannelSubTitle(sender)
 		{
-			let fromPhone = '';
 			const fromList = BX.prop.getArray(sender, 'fromList', []);
-			fromList.map((item) => {
-				if (item.id && item.name && item.id === this.fromPhoneId)
-				{
-					fromPhone = item.name;
-				}
+			const from = fromList.find((item) => item.id === this.fromId);
+
+			return Loc.getMessage('M_CRM_TIMELINE_SCHEDULER_SHARING_CHANNEL_FROM_' + sender.typeId, {
+				'#CHANNEL#': sender.shortName,
+				'#SENDER#': from.name,
 			});
-
-			const translatedPhrase = Loc.getMessage('M_CRM_TIMELINE_SCHEDULER_SHARING_FROM_NUMBER');
-
-			return `${sender.shortName} ${translatedPhrase} ${fromPhone}`;
 		}
 
 		show()
 		{
-			this.menu.show(this.parentLayout);
+			void this.menu.show(this.parentLayout);
 		}
 
-		update({ sender, phoneId, communication })
+		close()
+		{
+			this.menu.close();
+		}
+
+		update({ sender, fromId, communication })
 		{
 			let isNeedToRerender = false;
 
@@ -113,18 +119,18 @@ jn.define('crm/timeline/scheduler/providers/sharing/settings-menu', (require, ex
 				this.currentSender = sender;
 			}
 
-			if (Type.isString(phoneId) || Type.isNumber(phoneId))
+			if (Type.isString(fromId) || Type.isNumber(fromId))
 			{
 				isNeedToRerender = true;
-				this.fromPhoneId = phoneId;
+				this.fromId = fromId;
 			}
 
-			if (Type.isObject(communication) && Type.isString(communication.title))
+			if (Type.isObject(communication) && Type.isString(communication.name))
 			{
 				isNeedToRerender = true;
-				this.communicationName = communication.title;
-				this.toPhoneId = communication.phone.id;
-				this.toPhoneValue = communication.phone.value;
+				this.toName = communication.name;
+				this.toId = communication.id;
+				this.toValue = communication.value;
 			}
 
 			if (isNeedToRerender)
@@ -140,53 +146,108 @@ jn.define('crm/timeline/scheduler/providers/sharing/settings-menu', (require, ex
 				ownerId: this.entity.id,
 				ownerTypeName: CrmType.resolveNameById(this.entity.typeId),
 			};
-			const { communications } = this.props;
 
 			CommunicationSelector.show({
 				layout,
-				communications,
+				communications: this.getCommunications(),
 				ownerInfo,
 				typeId: this.entity.typeId,
-				selectedPhoneId: this.toPhoneId,
-				onPhoneSelectCallback: this.onContactPhoneSelect,
+				selectedId: this.toId,
+				onSelectCallback: this.onContactSelect,
 			});
 		}
 
-		onContactPhoneSelect(communication)
+		getCommunications()
 		{
+			return this.currentSender.contacts.map((contact) => {
+				contact.caption = contact.name;
+
+				const communication = {
+					id: contact.id,
+					type: contact.valueType,
+					typeLabel: contact.valueTypeLabel,
+					value: contact.value,
+					valueFormatted: contact.value,
+				};
+
+				if (this.currentSender.typeId === SENDER_TYPE_EMAIL)
+				{
+					contact.emails = [communication];
+				}
+
+				if (this.currentSender.typeId === SENDER_TYPE_PHONE)
+				{
+					contact.phones = [communication];
+				}
+
+				return contact;
+			});
+		}
+
+		onContactSelect(contact)
+		{
+			const communication = {
+				id: contact.phone.id || contact.email.id,
+				value: contact.phone.value || contact.email.value,
+				name: contact.title,
+			};
+
 			this.update({ communication });
-			this.props.onContactPhoneSelect({ communication });
+			this.props.onContactSelect({ communication });
 		}
 
 		openSenderSelector()
 		{
 			if (!this.sendersSelector)
 			{
-				const { senders, contactCenterUrl } = this.props;
-
-				this.sendersSelector = new SendersSelector({
-					senders,
-					contactCenterUrl,
-					currentPhoneId: this.fromPhoneId,
-					currentSender: this.currentSender,
-					onChangeSenderCallback: this.onChangeSender,
-					onChangePhoneCallback: this.onChangeSenderPhone,
-				});
+				this.sendersSelector = this.createSendersSelector(this.props.senders);
 			}
 
 			this.sendersSelector.show(this.layout);
 		}
 
-		onChangeSender({ sender, phoneId })
+		onChangeSender({ sender, fromId })
 		{
-			this.update({ sender, phoneId });
-			this.props.onChangeSender({ sender, phoneId });
+			const communication = sender.contacts.find((contact) => contact.id === this.toId) ?? sender.contacts[0];
+
+			this.update({ sender, fromId, communication });
+			this.props.onChangeSender({ sender, fromId, communication });
 		}
 
-		onChangeSenderPhone({ phoneId })
+		async onDisabledSenderClick({ sender: disabledSender, layoutWidget })
 		{
-			this.update({ phoneId });
-			this.props.onChangeSenderPhone({ phoneId });
+			if (disabledSender.typeId === SENDER_TYPE_EMAIL)
+			{
+				const senders = await this.props.connectMailbox(layoutWidget);
+
+				const sender = senders.find((it) => it.id === disabledSender.id);
+				const fromId = sender.fromList[0].id;
+
+				this.onChangeSender({ sender, fromId });
+
+				this.sendersSelector.close();
+				this.sendersSelector = this.createSendersSelector(senders);
+			}
+		}
+
+		onChangeSenderFrom({ fromId })
+		{
+			this.update({ fromId });
+			this.props.onChangeSenderFrom({ fromId });
+		}
+
+		createSendersSelector(senders)
+		{
+			return new SendersSelector({
+				senders,
+				contactCenterUrl: this.props.contactCenterUrl,
+				currentFromId: this.fromId,
+				currentSender: this.currentSender,
+				onChangeSenderCallback: this.onChangeSender,
+				onDisabledSenderClickCallback: this.onDisabledSenderClick,
+				onChangeFromCallback: this.onChangeSenderFrom,
+				smsAndMailSenders: true,
+			});
 		}
 	}
 

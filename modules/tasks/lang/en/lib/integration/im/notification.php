@@ -1,4 +1,7 @@
 <?php
+$MESS["TASKS_ADDED_TO_FLOW_WITH_MANUAL_DISTRIBUTION_F"] = "Flow [url=/company/personal/user/#RECEPIENT_ID#/tasks/flow/?apply_filter=Y&ID_numsel=exact&ID_from=#FLOW_ID#]#FLOW_NAME#[/url]: added task #TASK_URL_BEGIN##TASK_TITLE##URL_END#. Select a person to assign the task to.";
+$MESS["TASKS_ADDED_TO_FLOW_WITH_MANUAL_DISTRIBUTION_M"] = "Flow [url=/company/personal/user/#RECEPIENT_ID#/tasks/flow/?apply_filter=Y&ID_numsel=exact&ID_from=#FLOW_ID#]#FLOW_NAME#[/url]: added task #TASK_URL_BEGIN##TASK_TITLE##URL_END#. Select a person to assign the task to.";
+$MESS["TASKS_ADDED_TO_FLOW_WITH_MANUAL_DISTRIBUTION_N"] = "Flow [url=/company/personal/user/#RECEPIENT_ID#/tasks/flow/?apply_filter=Y&ID_numsel=exact&ID_from=#FLOW_ID#]#FLOW_NAME#[/url]: added task #TASK_URL_BEGIN##TASK_TITLE##URL_END#. Select a person to assign the task to.";
 $MESS["TASKS_COMMENT_MESSAGE_ADD_F"] = "added a comment to task #TASK_URL_BEGIN##TASK_TITLE##URL_END#.";
 $MESS["TASKS_COMMENT_MESSAGE_ADD_M"] = "added a comment to task #TASK_URL_BEGIN##TASK_TITLE##URL_END#.";
 $MESS["TASKS_COMMENT_MESSAGE_ADD_N"] = "added a comment to task #TASK_URL_BEGIN##TASK_TITLE##URL_END#.";
@@ -208,6 +211,8 @@ $MESS["TASKS_TASK_STATUS_MESSAGE_2_M"] = "Suspended the task #TASK_URL_BEGIN##TA
 $MESS["TASKS_TASK_STATUS_MESSAGE_2_N"] = "The task #TASK_URL_BEGIN##TASK_TITLE##URL_END# is still pending.";
 $MESS["TASKS_TASK_STATUS_MESSAGE_2_PUSH_F"] = "#USER_NAME# suspended the task #TASK_TITLE#";
 $MESS["TASKS_TASK_STATUS_MESSAGE_2_PUSH_M"] = "#USER_NAME# suspended the task #TASK_TITLE#";
+$MESS["TASKS_TASK_STATUS_MESSAGE_2_V2_F"] = "Task #TASK_URL_BEGIN##TASK_TITLE##URL_END# is pending.";
+$MESS["TASKS_TASK_STATUS_MESSAGE_2_V2_M"] = "Task #TASK_URL_BEGIN##TASK_TITLE##URL_END# is pending.";
 $MESS["TASKS_TASK_STATUS_MESSAGE_3_F"] = "started the task #TASK_URL_BEGIN##TASK_TITLE##URL_END#";
 $MESS["TASKS_TASK_STATUS_MESSAGE_3_M"] = "Started the task #TASK_URL_BEGIN##TASK_TITLE##URL_END#";
 $MESS["TASKS_TASK_STATUS_MESSAGE_3_N"] = "The status of #TASK_URL_BEGIN##TASK_TITLE##URL_END# has been changed to \"In Progress\"";

@@ -96,7 +96,9 @@ class SyncByActivityChange
 		$deletedActivityIsIncomingChannel = $this->activityChange->getOldIsIncomingChannel();
 		$deletedLightTime = $this->activityChange->getOldLightTime();
 
-		if ($deletedLightTime && $deletedLightTime->getTimestamp() <= $existedRecord->minLightTime()->getTimestamp())
+		$minLTTimestamp = $existedRecord->minLightTime()?->getTimestamp() ?? 0;
+
+		if ($deletedLightTime && $deletedLightTime->getTimestamp() <= $minLTTimestamp)
 		{
 			return false;
 		}

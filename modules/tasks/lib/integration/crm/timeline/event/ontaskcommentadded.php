@@ -41,6 +41,7 @@ class OnTaskCommentAdded implements TimeLineEvent
 			'TASK_ID' => $this->task?->getId(),
 			'FROM_USER' => $this->fromUser,
 			'REFRESH_TASK_ACTIVITY' => true,
+			'RUN_IN_BACKGROUND' => true
 		];
 	}
 

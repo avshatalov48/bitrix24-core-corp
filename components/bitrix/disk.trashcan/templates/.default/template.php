@@ -108,7 +108,7 @@ $APPLICATION->IncludeComponent(
 );
 ?>
 </div>
-<script type="text/javascript">
+<script>
 BX(function () {
 	BX.Disk['TrashCanClass_<?= $component->getComponentId() ?>'] = new BX.Disk.TrashCanClass({
 		trashcan: {

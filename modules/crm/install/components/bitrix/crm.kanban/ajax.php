@@ -1,6 +1,9 @@
 <?php
 
-if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 use Bitrix\Crm\Controller\ErrorCode;
 use Bitrix\Crm\Exclusion\Manager;
@@ -28,11 +31,22 @@ class KanbanAjaxController extends \Bitrix\Main\Engine\Controller
 
 			foreach ($entityIds as $entityId)
 			{
-				$recyclebinEntityId = Recyclebin::findId(
-					'crm',
-					RecyclingManager::resolveRecyclableEntityType($entityTypeId),
-					$entityId
-				);
+
+				if (\CCrmOwnerType::isUseDynamicTypeBasedApproach($entityTypeId))
+				{
+					$entityType = \Bitrix\Crm\Integration\Recyclebin\Dynamic::getEntityName($entityTypeId);
+				}
+				else
+				{
+					$entityType = RecyclingManager::resolveRecyclableEntityType($entityTypeId);
+				}
+
+				if ($entityType === '')
+				{
+					continue;
+				}
+
+				$recyclebinEntityId = Recyclebin::findId('crm', $entityType, $entityId);
 
 				$result[$recyclebinEntityId] = Recyclebin::restore($recyclebinEntityId);
 			}

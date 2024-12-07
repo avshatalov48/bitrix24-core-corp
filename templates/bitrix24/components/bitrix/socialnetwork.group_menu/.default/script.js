@@ -79,6 +79,7 @@ this.BX = this.BX || {};
 	      this.avatarType = main_core.Type.isStringFilled(params.avatarType) ? params.avatarType : '';
 	      this.projectTypeCode = main_core.Type.isStringFilled(params.projectTypeCode) ? params.projectTypeCode : '';
 	      this.canModify = main_core.Type.isBoolean(params.canModify) ? params.canModify : false;
+	      this.editFeaturesAllowed = main_core.Type.isBoolean(params.editFeaturesAllowed) ? params.editFeaturesAllowed : true;
 	      this.urls = main_core.Type.isPlainObject(params.urls) ? params.urls : {};
 	      var projectWidgetButton = document.getElementById('project-widget-button');
 	      if (projectWidgetButton) {
@@ -101,7 +102,8 @@ this.BX = this.BX || {};
 	            card: this.urls.Card,
 	            members: this.urls.GroupUsers,
 	            features: this.urls.Features
-	          }
+	          },
+	          editRolesAllowed: this.editFeaturesAllowed
 	        });
 	      }
 	      this.projectWidgetInstance.show(event.target);

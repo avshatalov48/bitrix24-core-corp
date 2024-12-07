@@ -9,4 +9,4 @@ $MESS["BITRIX24_LANG_RU"] = "Russian";
 $MESS["BITRIX24_LANG_UA"] = "Ukrainian";
 $MESS["BITRIX24_MOTTO"] = "Social Intranet";
 $MESS["BITRIX24_TITLE"] = "Bitrix24";
-$MESS["BITRIX24_URL"] = "http://www.bitrix24.com";
+$MESS["BITRIX24_URL"] = "https://www.bitrix24.com";

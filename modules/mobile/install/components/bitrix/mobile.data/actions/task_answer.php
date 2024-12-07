@@ -21,7 +21,7 @@ if ($USER->IsJustAuthorized())
 		CModule::IncludeModule('tasks') && isset($_REQUEST['TASK_ID']) && isset($_REQUEST['MESSAGE'])
 	)
 	{
-		$post = \Bitrix\Main\Text\Encoding::convertEncodingArray($_POST, 'UTF-8', SITE_CHARSET);
+		$post = $_POST;
 
 		try
 		{

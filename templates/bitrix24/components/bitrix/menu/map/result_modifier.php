@@ -32,6 +32,31 @@ $teamWorkIds = array_flip([
 	'menu_all_groups',
 ]);
 
+$expandSubMenu = function($item, $subMenuItems) use (&$arResult, &$expandSubMenu) {
+	foreach ($subMenuItems as $subMenu)
+	{
+		if (isset($subMenu['IS_DELIMITER']))
+		{
+			continue;
+		}
+
+		$subMenuItem = [
+			'DEPTH_LEVEL' => $item['DEPTH_LEVEL'] + 1,
+			'TEXT' => $subMenu['TEXT'],
+			'LINK' => $subMenu['URL'] ?? '',
+			'PERMISSION' => $item['PERMISSION'],
+			'SELECTED' => false,
+		];
+
+		$arResult['MAP_ITEMS'][] = $subMenuItem;
+
+		if (isset($subMenu['ITEMS']) && is_array($subMenu['ITEMS']))
+		{
+			$expandSubMenu($subMenuItem, $subMenu['ITEMS']);
+		}
+	}
+};
+
 $teamworkItems = [];
 foreach ($menuItems as $itemIndex => $item)
 {
@@ -57,6 +82,11 @@ foreach ($menuItems as $itemIndex => $item)
 	else
 	{
 		$arResult['MAP_ITEMS'][] = $item;
+
+		if (isset($item['PARAMS']['sub_menu']) && is_array($item['PARAMS']['sub_menu']))
+		{
+			$expandSubMenu($item, $item['PARAMS']['sub_menu']);
+		}
 	}
 }
 
@@ -77,4 +107,3 @@ if (!empty($teamworkItems))
 
 	$arResult['MAP_ITEMS'] = array_merge($teamworkItems, $arResult['MAP_ITEMS']);
 }
-

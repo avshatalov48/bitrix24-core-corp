@@ -9,6 +9,7 @@ return [
 		'utils/object',
 		'layout/ui/kanban',
 		'require-lazy',
+		'ui-system/blocks/icon',
 
 		'crm:type',
 		'crm:entity-actions/change-crm-mode',
@@ -19,6 +20,7 @@ return [
 		'crm:simple-list/items',
 
 		'statemanager/redux/store',
+		'statemanager/redux/batched-actions',
 		'crm:statemanager/redux/slices/stage-counters',
 		'crm:statemanager/redux/slices/kanban-settings',
 		'crm:statemanager/redux/slices/stage-settings',

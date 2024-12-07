@@ -8,14 +8,15 @@ use CRestUtil;
 
 class Toolbar
 {
-	public static function getInfo($marketAction): array
+	public static function getInfo($marketAction, $searchAction): array
 	{
 		$result = [
 			'CATEGORIES' => Categories::forceGet(),
-			'FAV_NUMBERS' => AppFavoritesTable::getUserFavoritesCount(),
+			'FAV_NUMBERS' => count(AppFavoritesTable::getUserFavorites()),
 			'MENU_INFO' => Menu::getList(),
 			'MARKET_SLIDER' => Status::getSlider(),
 			'MARKET_ACTION' => $marketAction,
+			'SEARCH_ACTION' => $searchAction,
 		];
 
 		if (CRestUtil::isAdmin()) {
@@ -23,5 +24,18 @@ class Toolbar
 		}
 
 		return $result;
+	}
+
+	public static function getTotalAppsInfo(array $totalAppsResponse): array
+	{
+		return [
+			'TOTAL_APPS' => NumberApps::get($totalAppsResponse),
+			'SHOW_MARKET_ICON' => $totalAppsResponse['SHOW_MARKET_ICON'],
+			'ADDITIONAL_CONTENT' => $totalAppsResponse['ADDITIONAL_CONTENT'] ?? '',
+			'ADDITIONAL_MARKET_ACTION' => $totalAppsResponse['ADDITIONAL_MARKET_ACTION'] ?? '',
+			'ADDITIONAL_SEARCH_ACTION' => $totalAppsResponse['ADDITIONAL_SEARCH_ACTION'] ?? '',
+			'ADDITIONAL_HIT_ACTION' => $totalAppsResponse['ADDITIONAL_HIT_ACTION'] ?? '',
+			'SEARCH_FILTERS' => $totalAppsResponse['MARKET_SEARCH_FILTERS'] ?? [],
+		];
 	}
 }

@@ -52,4 +52,9 @@ class ProcessEntity extends BaseBuilder
 			$this->type
 		);
 	}
+
+	public static function getFilePath(): string
+	{
+		return __FILE__;
+	}
 }

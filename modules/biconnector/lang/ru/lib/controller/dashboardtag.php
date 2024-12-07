@@ -1,0 +1,4 @@
+<?php
+$MESS['BICONNECTOR_CONTROLLER_DASHBOARD_TAG_SAVE_ERROR_EMPTY_TAG'] = 'Тег не существует';
+$MESS['BICONNECTOR_CONTROLLER_DASHBOARD_TAG_SAVE_ERROR_HAS_EXIST_TAG'] = 'Такой тег уже существует. Измените название';
+

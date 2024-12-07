@@ -2,10 +2,11 @@
  * @module im/messenger/controller/dialog-creator/recipient-selector/view
  */
 jn.define('im/messenger/controller/dialog-creator/recipient-selector/view', (require, exports, module) => {
-
+	const { Theme } = require('im/lib/theme');
 	const { UserSearchController } = require('im/messenger/controller/search');
 	const { MultiSelector } = require('im/messenger/lib/ui/selector');
 	const { Loc } = require('loc');
+	const { MessengerParams } = require('im/messenger/lib/params');
 
 	class RecipientSelectorView extends LayoutComponent
 	{
@@ -22,6 +23,7 @@ jn.define('im/messenger/controller/dialog-creator/recipient-selector/view', (req
 					onSearchShow: () => this.searchShow(),
 					onSearchClose: () => this.searchClose(),
 					onChangeText: text => this.search(text),
+					isFakeTabsEnabled: Theme.isDesignSystemSupported && MessengerParams.get('HUMAN_RESOURCES_STRUCTURE_AVAILABLE', 'N') === 'Y',
 					ref: ref => this.selectorRef = ref,
 				}
 			);

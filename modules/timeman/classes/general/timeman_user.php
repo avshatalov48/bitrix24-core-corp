@@ -39,7 +39,9 @@ class CTimeManUser
 
 	public function __construct($USER_ID = 0, $site_id = SITE_ID)
 	{
-		$this->USER_ID = $USER_ID > 0 ? $USER_ID : $GLOBALS['USER']->GetID();
+		global $USER;
+
+		$this->USER_ID = (is_numeric($USER_ID) && $USER_ID > 0) ? $USER_ID : (int)$USER?->GetID();
 		$this->SITE_ID = $site_id;
 		$this->bTasksEnabled = CModule::IncludeModule('tasks');
 	}
@@ -110,6 +112,11 @@ class CTimeManUser
 
 		$recordForm = $this->buildEditForm($arParams);
 
+		if (!empty($arParams['RECORD_ID']))
+		{
+			$recordForm->id = (int)$arParams['RECORD_ID'];
+		}
+
 		if ($recordForm->validate())
 		{
 			$result = (new Manage\Edit\Handler())->handle($recordForm);
@@ -144,11 +151,11 @@ class CTimeManUser
 		$recordForm = $this->createWorktimeRecordForm();
 		$recordForm->recordedStartSeconds = $timestamp > 0 ? $timestamp : null;
 		$recordForm->getFirstEventForm()->reason = $report;
-		$recordForm->latitudeOpen = $extraInformation['LAT_OPEN'];
-		$recordForm->longitudeOpen = $extraInformation['LON_OPEN'];
-		$recordForm->ipOpen = $extraInformation['IP_OPEN'];
-		$recordForm->device = $extraInformation['DEVICE'];
-		$recordForm->recordedStartDateFormatted = isset($extraInformation['CUSTOM_DATE']) ? $extraInformation['CUSTOM_DATE'] : null;
+		$recordForm->latitudeOpen = $extraInformation['LAT_OPEN'] ?? null;
+		$recordForm->longitudeOpen = $extraInformation['LON_OPEN'] ?? null;
+		$recordForm->ipOpen = $extraInformation['IP_OPEN'] ?? null;
+		$recordForm->device = $extraInformation['DEVICE'] ?? null;
+		$recordForm->recordedStartDateFormatted = $extraInformation['CUSTOM_DATE'] ?? null;
 
 		if (($lastEntry = $this->_getLastData()) && $lastEntry['TASKS'])
 		{
@@ -166,6 +173,11 @@ class CTimeManUser
 		global $APPLICATION;
 
 		$recordForm = $this->buildStartForm($timestamp, $report, $extraInformation);
+
+		if (!empty($extraInformation['RECORD_ID']))
+		{
+			$recordForm->id = (int)$extraInformation['RECORD_ID'];
+		}
 
 		if ($recordForm->validate())
 		{
@@ -214,11 +226,11 @@ class CTimeManUser
 		$recordForm = $this->createWorktimeRecordForm();
 		$recordForm->recordedStopSeconds = $timestamp > 0 ? $timestamp : null;
 		$recordForm->getFirstEventForm()->reason = $report;
-		$recordForm->latitudeClose = $extraInformation['LAT_CLOSE'];
-		$recordForm->longitudeClose = $extraInformation['LON_CLOSE'];
+		$recordForm->latitudeClose = $extraInformation['LAT_CLOSE'] ?? null;
+		$recordForm->longitudeClose = $extraInformation['LON_CLOSE'] ?? null;
 		$recordForm->ipClose = $_SERVER['REMOTE_ADDR'];
-		$recordForm->device = $extraInformation['DEVICE'];
-		$recordForm->recordedStopDateFormatted = isset($extraInformation['CUSTOM_DATE']) ? $extraInformation['CUSTOM_DATE'] : null;
+		$recordForm->device = $extraInformation['DEVICE'] ?? null;
+		$recordForm->recordedStopDateFormatted = $extraInformation['CUSTOM_DATE'] ?? null;
 		return $recordForm;
 	}
 
@@ -231,6 +243,12 @@ class CTimeManUser
 			return false;
 		}
 		$recordForm = $this->buildStopForm($timestamp, $report, $extraInformation);
+
+		if (!empty($extraInformation['RECORD_ID']))
+		{
+			$recordForm->id = (int)$extraInformation['RECORD_ID'];
+		}
+
 		if ($this->State() == 'EXPIRED')
 		{
 			$recordForm->editedBy = $this->USER_ID;
@@ -288,9 +306,15 @@ class CTimeManUser
 	public function reopenDay($bSkipCheck = false, $site_id = SITE_ID, $extraInformation = [])
 	{
 		global $APPLICATION;
+
 		$lastEntry = $this->_GetLastData(true);
 
 		$recordForm = $this->buildReopenForm($extraInformation);
+
+		if (!empty($extraInformation['RECORD_ID']))
+		{
+			$recordForm->id = (int)$extraInformation['RECORD_ID'];
+		}
 
 		if ($recordForm->validate())
 		{
@@ -374,6 +398,11 @@ class CTimeManUser
 		global $APPLICATION;
 
 		$recordForm = $this->buildPauseForm($extraInformation);
+
+		if (!empty($extraInformation['RECORD_ID']))
+		{
+			$recordForm->id = (int)$extraInformation['RECORD_ID'];
+		}
 
 		if ($recordForm->validate())
 		{
@@ -562,6 +591,11 @@ class CTimeManUser
 
 	public function getDayStartOffset($entry, $bTs = false)
 	{
+		if (!is_array($entry))
+		{
+			return 0;
+		}
+
 		$ts_start = $bTs ? $entry['DATE_START'] : (MakeTimeStamp($entry['DATE_START']) - CTimeZone::GetOffset());
 		$ts_start_day = MakeTimeStamp(ConvertTimeStamp($ts_start, 'SHORT'));
 
@@ -1247,10 +1281,7 @@ class CTimeManUser
 
 	protected function clearFullReportCache()
 	{
-		global $CACHE_MANAGER;
-
-		$cacheId = CUserReportFull::getInfoCacheId($this->USER_ID);
-		$CACHE_MANAGER->Clean($cacheId, 'timeman_report_info');
+		CUserReportFull::clearReportCache($this->USER_ID);
 	}
 
 	public function isSocservEnabledByUser()
@@ -1272,29 +1303,9 @@ class CTimeManUser
 
 	protected function _GetLastData($clear = false)
 	{
-		global $CACHE_MANAGER;
-
-		if ($clear)
+		if (!isset(CTimeManUser::$LAST_ENTRY[$this->USER_ID]) || $clear)
 		{
 			CTimeManUser::$LAST_ENTRY[$this->USER_ID] = CTimeManEntry::GetLast($this->USER_ID);
-			$CACHE_MANAGER->Clean($this->_cacheId(), 'b_timeman_entries');
-		}
-		else
-		{
-			if (!isset(CTimeManUser::$LAST_ENTRY[$this->USER_ID]))
-			{
-				if ($CACHE_MANAGER->Read(86400, $this->_cacheId(), 'b_timeman_entries'))
-				{
-					$DATA = $CACHE_MANAGER->Get($this->_cacheId());
-				}
-				else
-				{
-					$DATA = CTimeManEntry::GetLast($this->USER_ID);
-					$CACHE_MANAGER->Set($this->_cacheId(), $DATA);
-				}
-
-				CTimeManUser::$LAST_ENTRY[$this->USER_ID] = $DATA;
-			}
 		}
 
 		if (!empty(CTimeManUser::$LAST_ENTRY[$this->USER_ID]))

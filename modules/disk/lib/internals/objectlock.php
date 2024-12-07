@@ -123,6 +123,7 @@ final class ObjectLockTable extends DataManager
 			'IS_EXCLUSIVE' => array(
 				'data_type' => 'integer',
 				'default_value' => 1,
+				'values' => array(0, 1),
 			),
 		);
 	}

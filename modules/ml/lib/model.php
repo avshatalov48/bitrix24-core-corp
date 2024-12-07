@@ -9,16 +9,16 @@ use Bitrix\Ml\Entity\ModelTable;
 
 class Model extends EO_Model
 {
-	const TYPE_BINARY = "binary";
-	const TYPE_REGRESSION = "regression";
-	const TYPE_MULTI_CLASS = "multiClass";
+	public const TYPE_BINARY = 'binary';
+	public const TYPE_REGRESSION = 'regression';
+	public const TYPE_MULTI_CLASS = 'multiClass';
 
-	const STATE_NOT_SYNCHRONIZED = "not_synchronized";
-	const STATE_NEW = "new";
-	const STATE_TRAINING = "training";
-	const STATE_EVALUATING = "evaluating";
-	const STATE_ERROR = "error";
-	const STATE_READY = "ready";
+	public const STATE_NOT_SYNCHRONIZED = 'not_synchronized';
+	public const STATE_NEW = 'new';
+	public const STATE_TRAINING = 'training';
+	public const STATE_EVALUATING = 'evaluating';
+	public const STATE_ERROR = 'error';
+	public const STATE_READY = 'ready';
 
 	/**
 	 * Creates new ML model and returns Result object with instance of it.
@@ -29,24 +29,25 @@ class Model extends EO_Model
 	 *
 	 * @return Result
 	 */
-	public static function create($name, $type, array $fields)
+	public static function create(string $name, string $type, array $fields): Result
 	{
 		$result = new Result();
 
 		// checking for existence
 		$instance = static::loadWithName($name);
-		if($instance)
+		if ($instance)
 		{
 			return $result->addError(new Error("Model " . $name . " already exists"));
 		}
 
 		$client = new Client();
 		$apiResult = $client->createModel([
-			"name" => $name,
-			"type" => "binary",
-			"fields" => $fields
+			'name' => $name,
+			'type' => 'binary',
+			'fields' => $fields,
 		]);
-		if(!$apiResult->isSuccess())
+
+		if (!$apiResult->isSuccess())
 		{
 			return $result->addErrors($apiResult->getErrors());
 		}
@@ -59,38 +60,31 @@ class Model extends EO_Model
 		$instance->save();
 
 		$result->setData([
-			'model' => $instance
+			'model' => $instance,
 		]);
 
 		return $result;
 	}
 
-	public static function load($id)
+	public static function load(int $id): ?Model
 	{
 		return ModelTable::getList([
-			"filter" => [
-				"=ID" => $id
+			'filter' => [
+				'=ID' => $id,
 			]
 		])->fetchObject();
 	}
 
-	/**
-	 * @param $name
-	 * @return Model|null
-	 */
-	public static function loadWithName($name)
+	public static function loadWithName(string $name): ?Model
 	{
 		return ModelTable::getList([
-			"filter" => [
-				"=NAME" => $name
+			'filter' => [
+				'=NAME' => $name,
 			]
 		])->fetchObject();
 	}
 
-	/**
-	 * @return Result
-	 */
-	public function deleteCascade()
+	public function deleteCascade(): Result
 	{
 		$result = new Result();
 		$deleteResult = parent::delete();
@@ -98,20 +92,19 @@ class Model extends EO_Model
 		$client = new Client();
 
 		$remoteResult = $client->deleteModel([
-			"modelName" => $this->getName()
+			'modelName' => $this->getName(),
 		]);
 
-		if(!$remoteResult->isSuccess())
+		if (!$remoteResult->isSuccess())
 		{
 			return $result->addErrors($remoteResult->getErrors());
 		}
 
-		if(!$deleteResult->isSuccess())
+		if (!$deleteResult->isSuccess())
 		{
 			return $result->addErrors($deleteResult->getErrors());
 		}
 
 		return $result;
 	}
-
 }

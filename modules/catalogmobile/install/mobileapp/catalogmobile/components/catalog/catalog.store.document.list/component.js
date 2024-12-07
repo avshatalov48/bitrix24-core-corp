@@ -10,6 +10,8 @@
 	const { AnalyticsLabel } = require('analytics-label');
 	const { DocumentType } = require('catalog/store/document-type');
 	const { confirmDestructiveAction } = require('alert');
+	const { Feature } = require('feature');
+	const { ContextMenu } = require('layout/ui/context-menu');
 
 	const COMPONENT_ID = 'CATALOG_STORE_LIST';
 	const PULL_MODULE_ID = 'catalog';
@@ -249,8 +251,10 @@
 				TabView({
 					testId: `${COMPONENT_ID}_TAB`,
 					style: {
-						height: 44,
-						backgroundColor: AppTheme.colors.bgNavigation,
+						height: Feature.isAirStyleSupported() ? 50 : 44,
+						backgroundColor: Feature.isAirStyleSupported()
+							? AppTheme.realColors.bgNavigation
+							: AppTheme.colors.bgNavigation,
 					},
 					params: {
 						styles: {

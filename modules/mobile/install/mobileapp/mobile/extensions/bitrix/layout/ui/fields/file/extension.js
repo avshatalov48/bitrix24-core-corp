@@ -5,15 +5,18 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 	const { Alert } = require('alert');
 	const AppTheme = require('apptheme');
 	const { clip, pen } = require('assets/common');
+	const { Icon } = require('assets/icons');
 	const { Haptics } = require('haptics');
 	const { BaseField } = require('layout/ui/fields/base');
 	const { filePreview } = require('layout/ui/fields/file/file-preview');
 	const { FileAttachment } = require('layout/ui/file-attachment');
 	const { UploaderClient } = require('uploader/client');
 	const { Events } = require('uploader/const');
+	const { uniqBy } = require('utils/array');
 	const { debounce, throttle } = require('utils/function');
 	const { clone, isEqual } = require('utils/object');
 	const { Uuid } = require('utils/uuid');
+	const { Circle } = require('utils/skeleton');
 	const {
 		NativeViewerMediaTypes,
 		getNativeViewerMediaType,
@@ -38,8 +41,9 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 			super(props);
 
 			this.uuid = Uuid.getV4();
-			this.queuedValue = null;
 			this.displayedAlertsSet = new Set();
+
+			this.queuedValue = null;
 
 			/** @type {FileAttachment|null} */
 			this.fileAttachmentRef = null;
@@ -49,6 +53,7 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 
 			this.onUploadDone = this.onUploadDone.bind(this);
 			this.onUploadError = this.onUploadError.bind(this);
+			this.openFilePicker = this.openFilePicker.bind(this);
 
 			if (!this.isReadOnly())
 			{
@@ -59,11 +64,25 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 			this.throttleFileErrorNotification = throttle(() => Haptics.notifyWarning(), 3000, this);
 
 			this.debouncedHandleChange = debounce(() => {
-				if (this.queuedValue !== null)
-				{
-					super.handleChange(this.queuedValue);
-				}
-			}, 50, this);
+				super.handleChange(this.queuedValue);
+			}, 100, this);
+
+			this.isShowImagePickerOpen = false;
+		}
+
+		useDebounceOnChange()
+		{
+			return true;
+		}
+
+		get onFilePreviewMenuClick()
+		{
+			return BX.prop.getFunction(this.props, 'onFilePreviewMenuClick', null);
+		}
+
+		get onFileAttachmentViewHidden()
+		{
+			return BX.prop.getFunction(this.props, 'onFileAttachmentViewHidden', null);
 		}
 
 		componentWillReceiveProps(newProps)
@@ -73,11 +92,6 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 			if (this.queuedValue !== null && isEqual(this.queuedValue, newProps.value))
 			{
 				this.queuedValue = null;
-			}
-
-			if (this.fileAttachmentRef)
-			{
-				this.fileAttachmentRef.onChangeAttachments(this.getFilesInfo(newProps.value));
 			}
 
 			// workaround for Android, componentDidUpdate not working stable
@@ -93,6 +107,8 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 
 		componentDidUpdate(prevProps, prevState)
 		{
+			this.onChangeAttachments(this.getFilesInfo(this.getValue()));
+			this.refreshFileAttachmentWidgetTitle();
 			this.checkLoadingFilesResolvers();
 		}
 
@@ -101,7 +117,7 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 			return BX.prop.getBoolean(
 				this.props,
 				'showFilesName',
-				this.getMediaTypeId(this.getConfig().mediaType) !== 0,
+				true,
 			);
 		}
 
@@ -131,7 +147,13 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 		getConfig()
 		{
 			const config = super.getConfig();
-			const controller = clone(BX.prop.getObject(config, 'controller', {}));
+			let controllerKey = 'controller';
+			if (Object.prototype.hasOwnProperty.call(config, 'uploadController'))
+			{
+				controllerKey = 'uploadController';
+			}
+
+			const controller = BX.prop.getObject(config, controllerKey, {});
 
 			if (!this.isReadOnly())
 			{
@@ -152,11 +174,27 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 			return {
 				...config,
 				controller,
-				fileInfo: BX.prop.getObject(config, 'fileInfo', {}),
+				fileInfo: this.getItems(config),
 				mediaType: BX.prop.getString(config, 'mediaType', NativeViewerMediaTypes.FILE),
 				isEnabledToEdit: BX.prop.getBoolean(config, 'enableToEdit', !this.isReadOnly()),
+				isShimmed: BX.prop.getBoolean(config, 'isShimmed', false),
 				emptyEditableButtonStyle: BX.prop.getObject(config, 'emptyEditableButtonStyle', {}),
 			};
+		}
+
+		/**
+		 * @private
+		 * @param {object} config
+		 * @return {object}
+		 */
+		getItems(config)
+		{
+			if (config.items)
+			{
+				return BX.prop.getObject(config, 'items', {});
+			}
+
+			return BX.prop.getObject(config, 'fileInfo', {});
 		}
 
 		resolveControllerEndPoint(entityId)
@@ -235,6 +273,11 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 			return this.getValue().length;
 		}
 
+		isShimmed()
+		{
+			return this.isReadOnly() && this.getConfig().isShimmed;
+		}
+
 		isEmpty()
 		{
 			return this.getFilesCount() === 0;
@@ -296,6 +339,11 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 
 		renderReadOnlyContent()
 		{
+			if (this.isShimmed())
+			{
+				return this.renderShimmedReadOnlyFilesView();
+			}
+
 			if (this.isEmpty())
 			{
 				return this.renderEmptyContent();
@@ -410,6 +458,35 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 			return filePath;
 		}
 
+		renderShimmedReadOnlyFilesView()
+		{
+			return View(
+				{
+					style: {
+						...this.styles.fieldWrapper,
+					},
+				},
+				View(
+					{
+						style: {
+							flexWrap: 'no-wrap',
+							flexDirection: 'row',
+							borderWidth: 0,
+						},
+					},
+					View(
+						{
+							style: this.styles.filesListWrapper,
+						},
+						...Array.from({ length: 3 }).fill(
+							filePreview({ isShimmed: true }, 0, [], null, true),
+						),
+						this.renderHiddenFilesCounter(0),
+					),
+				),
+			);
+		}
+
 		getFilesView()
 		{
 			const files = this.getFilesInfo(this.getValue());
@@ -503,7 +580,7 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 		}
 
 		/**
-		 * @private
+		 * @public
 		 * @return {string}
 		 */
 		getAddButtonText()
@@ -543,6 +620,7 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 		 */
 		openFilePicker()
 		{
+			this.isShowImagePickerOpen = true;
 			if (this.isReadOnly())
 			{
 				return;
@@ -590,16 +668,35 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 						attachButton: { items },
 					},
 				},
-				(data) => this.removeFocus().then(() => this.onAddFile(data)),
-				() => this.removeFocus(),
+				(data) => {
+					this.isShowImagePickerOpen = false;
+
+					this.removeFocus()
+						.then(() => this.onAddFile(data))
+						.catch(console.error);
+				},
+				() => {
+					this.isShowImagePickerOpen = false;
+
+					this.removeFocus();
+				},
 			);
 		}
 
 		handleChange(...values)
 		{
-			this.queuedValue = Array.isArray(values[0]) ? [...values[0]] : [];
+			const value = Array.isArray(values[0]) ? [...values[0]] : [];
 
-			this.debouncedHandleChange();
+			if (this.useDebounceOnChange())
+			{
+				this.queuedValue = value;
+
+				this.debouncedHandleChange();
+			}
+			else
+			{
+				super.handleChange(value);
+			}
 
 			return Promise.resolve();
 		}
@@ -611,17 +708,42 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 		{
 			if (this.queuedValue)
 			{
+				this.logger.log('FileField: queuedValue', this.queuedValue.length, this.queuedValue);
+
 				return this.queuedValue;
 			}
+
+			this.logger.log('FileField: getValue without queuedValue', super.getValue().length, super.getValue());
 
 			return super.getValue();
 		}
 
-		hasUploadingFiles()
+		hasUploadingFiles(checkUuid = false)
+		{
+			return (
+				this
+					.getValue()
+					.some((file) => {
+						if (BX.type.isPlainObject(file))
+						{
+							if (checkUuid && file.uuid !== this.uuid)
+							{
+								return false;
+							}
+
+							return file.isUploading;
+						}
+
+						return false;
+					})
+			);
+		}
+
+		hasFilesWithErrors()
 		{
 			const files = clone(this.getValue());
 
-			return files.some((file) => BX.type.isPlainObject(file) && file.isUploading);
+			return files.some((file) => BX.type.isPlainObject(file) && file.hasError);
 		}
 
 		getValueWhileReady()
@@ -683,7 +805,6 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 
 			Haptics.impactLight();
 			this.handleChange(files);
-			this.refreshFileAttachmentWidgetTitle();
 		}
 
 		/**
@@ -691,6 +812,16 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 		 */
 		renderHiddenFilesCounter(hiddenFilesCount)
 		{
+			if (this.isShimmed())
+			{
+				return View(
+					{
+						style: this.styles.hiddenFilesCounterWrapper,
+					},
+					Circle(HIDDEN_FILES_COUNTER_WIDTH),
+				);
+			}
+
 			let text = hiddenFilesCount > 99 ? '99+' : `+${hiddenFilesCount}`;
 
 			if (this.props.onPrepareHiddenFilesCounterText)
@@ -705,7 +836,7 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 						this.onOpenAttachmentList();
 					},
 				},
-				this.hasUploadingFiles() ? Loader({
+				this.hasUploadingFiles(true) ? Loader({
 					style: {
 						width: 18,
 						height: 18,
@@ -724,77 +855,92 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 
 		onOpenAttachmentList()
 		{
-			void this.getPageManager().openWidget(
-				'layout',
-				{
-					title: BX.message('FIELDS_FILE_ATTACHMENTS_NAVIGATION_TITLE').replace(
-						'#NUM#',
-						this.getFilesCount(),
-					),
-					modal: false,
-					backdrop: {
-						mediumPositionPercent: 75,
-						horizontalSwipeAllowed: false,
-						swipeContentAllowed: false,
-						navigationBarColor: AppTheme.colors.bgSecondary,
-					},
-					onReady: (layoutWidget) => {
-						this.fileAttachmentWidget = layoutWidget;
-						const imageSize = device.screen.width > 375
-							? FILE_PREVIEW_MEASURE
-							: device.screen.width * FILE_PREVIEW_MEASURE / 375;
+			return new Promise((resolve) => {
+				this.getPageManager().openWidget(
+					'layout',
+					{
+						titleParams: {
+							text: BX.message('FIELDS_FILE_ATTACHMENTS_NAVIGATION_TITLE').replace(
+								'#NUM#',
+								this.getFilesCount(),
+							),
+							type: 'dialog',
+						},
+						modal: false,
+						backdrop: {
+							mediumPositionPercent: this.getFilesCount() > 8 ? 75 : 50,
+							horizontalSwipeAllowed: false,
+							swipeContentAllowed: true,
+							navigationBarColor: AppTheme.colors.bgSecondary,
+						},
+						onReady: (layoutWidget) => {
+							this.fileAttachmentWidget = layoutWidget;
+							const imageSize = device.screen.width > 375
+								? FILE_PREVIEW_MEASURE
+								: device.screen.width * FILE_PREVIEW_MEASURE / 375;
 
-						layoutWidget.enableNavigationBarBorder(false);
+							layoutWidget.enableNavigationBarBorder(false);
 
-						layoutWidget.showComponent(
-							new FileAttachment({
-								ref: (ref) => {
-									if (ref)
-									{
+							layoutWidget.showComponent(
+								new FileAttachment({
+									ref: (ref) => {
 										this.fileAttachmentRef = ref;
-									}
-								},
-								attachments: this.getFilesInfo(this.getValue()),
-								layoutWidget,
-								onDeleteAttachmentItem: !this.isReadOnly() && this.onDeleteFile.bind(this),
-								styles: {
-									wrapper: {
-										marginBottom: 12,
-										marginHorizontal: 3,
-										paddingRight: 9,
+										resolve({ fileAttachmentRef: ref, layoutWidget });
 									},
-									imagePreview: {
-										width: imageSize,
-										height: imageSize,
+									attachments: this.getFilesInfo(this.getValue()),
+									layoutWidget,
+									onDeleteAttachmentItem: !this.isReadOnly() && this.onDeleteFile.bind(this),
+									styles: {
+										wrapper: {
+											marginBottom: 12,
+											marginHorizontal: 3,
+											paddingRight: 9,
+										},
+										imagePreview: {
+											width: imageSize,
+											height: imageSize,
+										},
+										imageOutline: (hasError) => ({
+											width: imageSize,
+											height: imageSize,
+											position: 'absolute',
+											top: 8,
+											right: 9,
+											borderColor: hasError ? AppTheme.colors.accentMainAlert : AppTheme.colors.base1,
+											backgroundColor: hasError ? AppTheme.colors.accentMainAlert : null,
+											borderWidth: 1,
+											opacity: hasError ? 0.5 : 0.08,
+											borderRadius: 6,
+										}),
+										deleteButtonWrapper: this.isReadOnly() ? null : {
+											width: 18,
+											height: 18,
+											right: 0,
+										},
+										menuButtonWrapper: this.isReadOnly() ? null : {
+											width: 18,
+											height: 18,
+											right: 0,
+										},
 									},
-									imageOutline: (hasError) => ({
-										width: imageSize,
-										height: imageSize,
-										position: 'absolute',
-										top: 8,
-										right: 9,
-										borderColor: hasError ? AppTheme.colors.accentMainAlert : AppTheme.colors.base1,
-										backgroundColor: hasError ? AppTheme.colors.accentMainAlert : null,
-										borderWidth: 1,
-										opacity: hasError ? 0.5 : 0.08,
-										borderRadius: 6,
-									}),
-									deleteButtonWrapper: this.isReadOnly() ? null : {
-										width: 18,
-										height: 18,
-										right: 0,
+									showName: this.showFilesName(),
+									showAddButton: !this.isReadOnly(),
+									addButtonText: this.getAddButtonText(),
+									onAddButtonClick: () => this.openFilePicker(),
+									onFilePreviewMenuClick: this.onFilePreviewMenuClick,
+									onViewHidden: () => {
+										if (!this.isShowImagePickerOpen)
+										{
+											this.onFileAttachmentViewHidden?.();
+										}
 									},
-								},
-								showName: this.showFilesName(),
-								showAddButton: !this.isReadOnly(),
-								addButtonText: this.getAddButtonText(),
-								onAddButtonClick: () => this.openFilePicker(),
-							}),
-						);
+								}),
+							);
+						},
+						onError: (error) => console.error(error),
 					},
-					onError: (error) => console.error(error),
-				},
-			);
+				);
+			});
 		}
 
 		/**
@@ -819,17 +965,16 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 
 			Haptics.impactLight();
 			this.handleChange(filesAfterDeletion);
-			this.refreshFileAttachmentWidgetTitle();
 		}
 
 		refreshFileAttachmentWidgetTitle()
 		{
-			if (this.fileAttachmentWidget)
-			{
-				this.fileAttachmentWidget.setTitle({
+			this.fileAttachmentWidget?.setTitle(
+				{
 					text: BX.message('FIELDS_FILE_ATTACHMENTS_NAVIGATION_TITLE').replace('#NUM#', this.getFilesCount()),
-				});
-			}
+				},
+				true,
+			);
 		}
 
 		getDefaultStyles()
@@ -1064,7 +1209,7 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 				return;
 			}
 
-			const files = clone(this.getValue());
+			const files = clone(this.getValue()).filter(Boolean);
 			const uploadedFile = files.find((file) => file.id === currentFile?.params?.id);
 
 			if (uploadedFile)
@@ -1098,6 +1243,7 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 			}
 
 			this.showUploaderErrorAlert(result);
+
 			this.processUploaderErrors(currentFile);
 		}
 
@@ -1209,15 +1355,106 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 				this.onOpenAttachmentList();
 			}
 		}
+
+		onChangeAttachments(value)
+		{
+			this.fileAttachmentRef?.onChangeAttachments(value);
+		}
+
+		getDefaultLeftIcon()
+		{
+			return Icon.ATTACH;
+		}
+
+		getDisplayedValue()
+		{
+			if (this.isEmpty() || (this.isMultiple() && this.getValue().length > 1))
+			{
+				return this.getTitleText();
+			}
+
+			return this.getFilesInfo(this.getValue())[0]?.name;
+		}
 	}
 
 	const svgImages = {
 		file: '<svg width="19" height="18" viewBox="0 0 19 18" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M10.659 0.783569H0.15918V3.1169H12.9925L10.659 0.783569Z" fill="#828B95" /><path d="M18.8258 4.28357H0.15918V17.1169H18.8258V4.28357Z" fill="#828B95" /></svg>',
 	};
 
+	const itemsShape = PropTypes.shape({
+		id: PropTypes.number,
+		name: PropTypes.string,
+		type: PropTypes.string,
+		url: PropTypes.string,
+		width: PropTypes.number,
+		height: PropTypes.number,
+		previewUrl: PropTypes.string,
+		previewWidth: PropTypes.number,
+		previewHeight: PropTypes.number,
+		dataAttributes: PropTypes.object,
+	});
+
+	FileField.propTypes = {
+		...BaseField.propTypes,
+		config: PropTypes.shape({
+			// base field props
+			showAll: PropTypes.bool, // show more button with count if it's multiple
+			styles: PropTypes.shape({
+				externalWrapperBorderColor: PropTypes.string,
+				externalWrapperBorderColorFocused: PropTypes.string,
+				externalWrapperBackgroundColor: PropTypes.string,
+				externalWrapperMarginHorizontal: PropTypes.number,
+			}),
+			deepMergeStyles: PropTypes.object, // override styles
+			parentWidget: PropTypes.object, // parent layout widget
+			copyingOnLongClick: PropTypes.bool,
+			titleIcon: PropTypes.object,
+
+			// file field props
+			controller: PropTypes.shape({
+				entityId: PropTypes.string,
+				endpoint: PropTypes.string,
+				options: PropTypes.object,
+			}),
+			items: PropTypes.oneOfType([
+				PropTypes.object,
+				PropTypes.objectOf(itemsShape),
+			]),
+			/**
+			 * @deprecated // empty array or filled object
+			 */
+			fileInfo: PropTypes.oneOfType([PropTypes.array, PropTypes.objectOf(itemsShape)]),
+			mediaType: PropTypes.oneOf(Object.values(NativeViewerMediaTypes)),
+			enableToEdit: PropTypes.bool, // enable delete file without opening attachment list
+			emptyEditableButtonStyle: PropTypes.object,
+
+			disk: PropTypes.oneOfType([
+				PropTypes.object, PropTypes.shape({
+					isDiskModuleInstalled: PropTypes.bool,
+					isWebDavModuleInstalled: PropTypes.bool,
+					fileAttachPath: PropTypes.string,
+				}),
+			]),
+			onFilePreviewMenuClick: PropTypes.func,
+		}),
+	};
+
+	FileField.defaultProps = {
+		...BaseField.defaultProps,
+		showFilesName: true,
+		showAddButton: true,
+		controller: {},
+		items: {},
+		fileInfo: {},
+		disk: {},
+	};
+
 	module.exports = {
 		FileType: 'file',
+		FileFieldClass: FileField,
 		FileField: (props) => new FileField(props),
 		MediaType: NativeViewerMediaTypes,
+		itemsShape,
+		FILE_TASK_ID_PREFIX,
 	};
 });

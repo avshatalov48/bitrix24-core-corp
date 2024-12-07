@@ -1,0 +1,7 @@
+.sign-b2e-scheme-selector__dropdown {
+	width: 100%
+}
+
+.sign-b2e-scheme-selector__dropdown.--invalid {
+	border: 1px solid var(--ui-color-background-on-alert);
+}

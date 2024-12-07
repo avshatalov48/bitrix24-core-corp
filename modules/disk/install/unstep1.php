@@ -9,7 +9,7 @@ if (isset($disk_installer_errors) && is_array($disk_installer_errors) && (count(
 	{
 		$errors .= htmlspecialcharsbx($e) . '<br>';
 	}
-	echo CAdminMessage::ShowMessage(Array(
+	CAdminMessage::ShowMessage(Array(
 		'TYPE' => 'ERROR',
 		'MESSAGE' => GetMessage('MOD_UNINST_ERR'),
 		'DETAILS' => $errors,
@@ -31,7 +31,7 @@ else
 		<input type="hidden" name="id" value="disk">
 		<input type="hidden" name="uninstall" value="Y">
 		<input type="hidden" name="step" value="2">
-		<? echo CAdminMessage::ShowMessage(GetMessage("MOD_UNINST_WARN"))?>
+		<? CAdminMessage::ShowMessage(GetMessage("MOD_UNINST_WARN"))?>
 		<p><? echo GetMessage("MOD_UNINST_SAVE")?></p>
 
 		<p><input type="checkbox" name="savedata" id="savedata" value="Y" checked><label

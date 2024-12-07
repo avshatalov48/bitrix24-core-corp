@@ -7,18 +7,13 @@ use Bitrix\Disk\Document\Contract\FileCreatable;
 use Bitrix\Disk\Document\DocumentHandler;
 use Bitrix\Disk\Document\FileData;
 use Bitrix\Disk\Document\IViewer;
-use Bitrix\Disk\Driver;
 use Bitrix\Disk\Internals\Error\Error;
 use Bitrix\Main;
-use Bitrix\Main\Application;
-use Bitrix\Main\Config\Option;
 use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Result;
-use Bitrix\Main\Text\Encoding;
 use Bitrix\Main\Web\HttpClient;
 use Bitrix\Main\Web\Json;
 use Bitrix\Main\Web\JWT;
-use Bitrix\Main\Web\Uri;
 
 class OnlyOfficeHandler extends DocumentHandler implements FileCreatable, IViewer
 {
@@ -254,11 +249,6 @@ class OnlyOfficeHandler extends DocumentHandler implements FileCreatable, IViewe
 			'streamTimeout' => 10,
 			'version' => HttpClient::HTTP_1_1,
 		]);
-
-		if (!Application::getInstance()->isUtfMode())
-		{
-			$newName = Encoding::convertEncoding($newName, SITE_CHARSET, 'UTF-8');
-		}
 
 		$postBody = [
 			'c' => self::CMD_META,

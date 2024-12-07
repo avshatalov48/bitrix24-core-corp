@@ -11,8 +11,6 @@ use Bitrix\ImConnector\Provider\Base;
 
 class Input extends Base\Input
 {
-	/** @var int Version of the client module of an exchange */
-	protected $version = 1;
 	protected $type = '';
 
 	/**
@@ -28,16 +26,13 @@ class Input extends Base\Input
 		{
 			$params['DATA'] = unserialize(base64_decode($params['DATA']), ['allowed_classes' => false]);
 			$params = Converter::convertEmptyInStub($params);
-			$params = Encoding::convertEncoding($params, 'UTF-8', SITE_CHARSET);
 			if (!is_array($params['DATA']))
 			{
 				$params['DATA'] = [];
 			}
 
 			$this->params = $params;
-			$this->version = $params['BX_VERSION'];
 			$this->type = $params['BX_TYPE'];
-
 			$this->command = $this->params['BX_COMMAND'];
 			$this->connector = $this->params['CONNECTOR'];
 			$this->line = $this->params['LINE'];

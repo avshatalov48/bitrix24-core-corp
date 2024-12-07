@@ -1,21 +1,56 @@
 <?php
+
 namespace Bitrix\Crm\Integrity;
+
 use Bitrix\Main;
+use Bitrix\Main\Entity\Query;
+use Bitrix\Main\ORM;
 
 class CommunicationDedupeDataSource extends MatchHashDedupeDataSource
 {
 	public function __construct($typeID, DedupeParams $params)
 	{
-		if($typeID !== DuplicateIndexType::COMMUNICATION_PHONE
+		if (
+			$typeID !== DuplicateIndexType::COMMUNICATION_PHONE
 			&& $typeID !== DuplicateIndexType::COMMUNICATION_EMAIL
-			&& $typeID !== DuplicateIndexType::COMMUNICATION_SLUSER)
+			&& $typeID !== DuplicateIndexType::COMMUNICATION_SLUSER
+		)
 		{
-			throw new Main\NotSupportedException("Type(s): '".DuplicateIndexType::resolveName($typeID)."' is not supported in current context");
+			throw new Main\NotSupportedException(
+				"Type(s): '".DuplicateIndexType::resolveName($typeID)."' is not supported in current context"
+			);
 		}
 
 		parent::__construct($typeID, $params);
 	}
-	protected function getCommunicationType()
+
+	final protected function getOrmEntity(): ORM\Entity
+	{
+		return DuplicateCommunicationMatchCodeTable::getEntity();
+	}
+
+	final protected function applyQueryFilterByMatches(Query $query, DuplicateCriterion $criterion): Query
+	{
+		$matches = $criterion->getMatches();
+		$type = $matches['TYPE'] ?? '';
+		if ($type === '')
+		{
+			throw new Main\ArgumentException("Parameter 'TYPE' is required.", 'matches');
+		}
+
+		$value = $matches['VALUE'] ?? '';
+		if ($value === '')
+		{
+			throw new Main\ArgumentException("Parameter 'VALUE' is required.", 'matches');
+		}
+
+		$query->addFilter('=TYPE', $type);
+		$query->addFilter('=VALUE', $value);
+
+		return $query;
+	}
+
+	protected function getCommunicationType(): string
 	{
 		$result = 'PHONE';
 
@@ -34,50 +69,56 @@ class CommunicationDedupeDataSource extends MatchHashDedupeDataSource
 
 		return $result;
 	}
-	/**
-	 * @return Array
-	 */
-	protected function getEntityMatchesByHash($entityTypeID, $entityID, $matchHash)
+
+	protected function getEntityMatchesByHash($entityTypeID, $entityID, $matchHash): ?array
 	{
-		$allMatches = DuplicateCommunicationCriterion::loadEntityMatches($entityTypeID, $entityID, $this->getCommunicationType());
-		foreach($allMatches as $matches)
+		$allMatches = DuplicateCommunicationCriterion::loadEntityMatches(
+			$entityTypeID,
+			$entityID,
+			$this->getCommunicationType()
+		);
+		foreach ($allMatches as $matches)
 		{
-			if(DuplicateCommunicationCriterion::prepareMatchHash($matches) === $matchHash)
+			if (DuplicateCommunicationCriterion::prepareMatchHash($matches) === $matchHash)
 			{
 				return $matches;
 			}
 		}
+
 		return null;
 	}
-	/**
-	 * @return DuplicateCriterion
-	 */
-	protected function createCriterionFromMatches(array $matches)
+
+	protected function createCriterionFromMatches(array $matches): DuplicateCriterion
 	{
 		return DuplicateCommunicationCriterion::createFromMatches($matches);
 	}
-	protected function prepareResult(array &$map, DedupeDataSourceResult $result)
+
+	protected function prepareResult(array &$map, DedupeDataSourceResult $result): void
 	{
 		$entityTypeID = $this->getEntityTypeID();
-		foreach($map as $matchHash => &$entry)
+
+		foreach ($map as $matchHash => &$entry)
 		{
 			$isValidEntry = false;
 			$primaryQty = isset($entry['PRIMARY']) ? count($entry['PRIMARY']) : 0;
-			if($primaryQty > 1)
+			if ($primaryQty > 1)
 			{
 				$matches = $this->getEntityMatchesByHash($entityTypeID, $entry['PRIMARY'][0], $matchHash);
-				if(is_array($matches))
+				if (is_array($matches))
 				{
 					$criterion = $this->createCriterionFromMatches($matches);
 					$dup = new Duplicate($criterion, array());
-					foreach($entry['PRIMARY'] as $entityID)
+
+					foreach ($entry['PRIMARY'] as $entityID)
 					{
 						$dup->addEntity(new DuplicateEntity($entityTypeID, $entityID));
 					}
+
 					$result->addItem($matchHash, $dup);
 					$isValidEntry = true;
 				}
 			}
+
 			if (!$isValidEntry)
 			{
 				$result->addInvalidItem((string)$matchHash);
@@ -85,6 +126,13 @@ class CommunicationDedupeDataSource extends MatchHashDedupeDataSource
 		}
 		unset($entry);
 	}
+
+	/**
+	 * @deprecated
+	 * @see DedupeDataSource::isEmptyEntity()
+	 *
+	 * @noinspection All
+	 */
 	public function calculateEntityCount(DuplicateCriterion $criterion, array $options = null)
 	{
 		$entityTypeID = $this->getEntityTypeID();

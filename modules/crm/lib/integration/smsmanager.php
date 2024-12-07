@@ -9,6 +9,7 @@ use Bitrix\Crm\MessageSender\Channel\Correspondents\From;
 use Bitrix\Crm\MessageSender\ICanSendMessage;
 use Bitrix\Crm\Multifield\Type\Phone;
 use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Settings;
 use Bitrix\Main;
 use Bitrix\MessageService;
 
@@ -126,7 +127,7 @@ class SmsManager implements ICanSendMessage
 			return $result->addError(Channel\ErrorCode::getNotEnoughModulesError());
 		}
 
-		$sender = MessageService\Sender\SmsManager::getSenderById($channel->getId());
+		$sender = self::getSenderById($channel->getId());
 		if (!$sender)
 		{
 			return $result->addError(Channel\ErrorCode::getUnknownChannelError());
@@ -170,7 +171,7 @@ class SmsManager implements ICanSendMessage
 		$list = array();
 		if (static::canUse())
 		{
-			$sender = MessageService\Sender\SmsManager::getSenderById($senderId);
+			$sender = self::getSenderById($senderId);
 			if ($sender)
 			{
 				$defaultFrom = $sender->getDefaultFrom();
@@ -223,17 +224,32 @@ class SmsManager implements ICanSendMessage
 		return $info;
 	}
 
+	public static function getSenderById(string $senderId): ?MessageService\Sender\Base
+	{
+		return static::canUse()
+			? MessageService\Sender\SmsManager::getSenderById($senderId)
+			: null;
+	}
+
+	public static function isEdnaWhatsAppSendingEnabled(string $senderId): bool
+	{
+		return $senderId === 'ednaru'
+			&& Settings\Crm::isWhatsAppScenarioEnabled()
+		;
+	}
+
 	public static function getSenderShortName($senderId)
 	{
 		$name = '';
 		if (static::canUse())
 		{
-			$sender = MessageService\Sender\SmsManager::getSenderById($senderId);
+			$sender = self::getSenderById($senderId);
 			if ($sender)
 			{
 				$name = $sender->getShortName();
 			}
 		}
+
 		return $name;
 	}
 
@@ -242,7 +258,7 @@ class SmsManager implements ICanSendMessage
 		$name = '';
 		if (static::canUse())
 		{
-			$sender = MessageService\Sender\SmsManager::getSenderById($senderId);
+			$sender = self::getSenderById($senderId);
 			if ($sender)
 			{
 				$fromList = $sender->getFromList();

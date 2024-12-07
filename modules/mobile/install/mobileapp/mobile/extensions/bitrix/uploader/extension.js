@@ -120,7 +120,7 @@
 			return new Promise((resolve, reject) => {
 				const readError = (e) => {
 					this.status = Statuses.FAILED;
-					this.callListener(TaskEventConsts.FILE_READ_ERROR, { error: e });
+					this.callListener(TaskEventConsts.FILE_READ_ERROR, { error: e, file: this.fileData });
 					reject();
 				};
 
@@ -326,8 +326,11 @@
 				if (data && !data.file && this.fileEntry)
 				{
 					data.file = {
+						attachToEntityController: this.fileData.attachToEntityController,
 						params: this.fileEntry.params,
 						folderId: this.fileEntry.folderId,
+						controller: this.fileEntry.controller,
+						controllerOptions: this.fileEntry.controllerOptions,
 					};
 				}
 				this.lastEventData = { event, data };

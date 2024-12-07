@@ -38,26 +38,80 @@ BX.namespace('Tasks.Component');
 						flagNode.value = node.checked ? yesValue : noValue;
 					}
 
-					if (
-						flagName === 'TASK_CONTROL'
-						&& flagNode.value === 'Y'
-						&& this.option('taskLimitExceeded')
-					)
+					const limitExceeded = this.isLimitExceeded(flagName);
+					if (limitExceeded)
 					{
-						flagNode.value = noValue;
-						node.checked = false;
+						this.performExceededActions(flagName, flagNode, node);
 
-						BX.UI.InfoHelper.show('limit_tasks_control', {
-							isLimit: true,
-							limitAnalyticsLabels: {
+						this.showLimitDialog(
+							this.getFeatureId(flagName),
+							null,
+							{
 								module: 'tasks',
-								source: 'taskEdit'
-							}
-						});
+								source: 'taskEdit',
+							},
+						);
 					}
 
 					this.fireEvent('toggle', [flagName, flagNode.value == yesValue]);
 				}
+			},
+
+			isLimitExceeded(flagName)
+			{
+				switch (flagName)
+				{
+					case 'TASK_CONTROL':
+						return this.option('taskControlLimitExceeded');
+					case 'MATCH_WORK_TIME':
+						return this.option('taskSkipWeekendsLimitExceeded');
+					default:
+						return false;
+				}
+			},
+
+			performExceededActions(flagName, flagNode, parenNode)
+			{
+				switch (flagName)
+				{
+					case 'TASK_CONTROL':
+					case 'MATCH_WORK_TIME':
+						if (flagNode.value === 'Y')
+						{
+							flagNode.value = 'N';
+							parenNode.checked = false;
+						}
+				}
+			},
+
+			getFeatureId(flagName)
+			{
+				switch (flagName)
+				{
+					case 'TASK_CONTROL':
+						return 'tasks_control';
+					case 'MATCH_WORK_TIME':
+						return 'tasks_skip_weekends';
+					default:
+						return '';
+				}
+			},
+
+			showLimitDialog(featureId, bindElement, limitAnalyticsLabels)
+			{
+				return new Promise((resolve, reject) => {
+					BX.Runtime.loadExtension('tasks.limit').then((exports) => {
+						const { Limit } = exports;
+
+						Limit.showInstance({
+							featureId,
+							bindElement,
+							limitAnalyticsLabels,
+						});
+
+						resolve();
+					});
+				});
 			},
 
 			toggleFlag: function(code, way)

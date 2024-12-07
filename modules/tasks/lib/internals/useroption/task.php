@@ -55,6 +55,7 @@ class Task
 	public static function onTaskAdd(array $fields): void
 	{
 		$taskId = (int)$fields['ID'];
+
 		$usersExceptAuditors = array_unique(
 			array_merge(
 				[$fields['CREATED_BY'], $fields['RESPONSIBLE_ID']],
@@ -62,9 +63,12 @@ class Task
 			)
 		);
 
+		$autoMuteService = Main\DI\ServiceLocator::getInstance()->get('tasks.user.option.automute.service');
+		$disabledAutoMuteUsers = $autoMuteService->getDisabledAutoMuteUsers();
+
 		foreach ($fields['AUDITORS'] as $userId)
 		{
-			if (!in_array($userId, $usersExceptAuditors))
+			if (!in_array($userId, $usersExceptAuditors) && !in_array($userId, $disabledAutoMuteUsers))
 			{
 				UserOption::add($taskId, $userId, Option::MUTED);
 			}
@@ -127,12 +131,16 @@ class Task
 		}
 		$newUsersExceptAuditors = array_unique($newUsersExceptAuditors);
 
+		$autoMuteService = Main\DI\ServiceLocator::getInstance()->get('tasks.user.option.automute.service');
+		$disabledAutoMuteUsers = $autoMuteService->getDisabledAutoMuteUsers();
+
 		// new user for task was added directly to auditors
 		foreach ($addedParticipants as $userId)
 		{
 			if (
 				in_array($userId, $newAuditors)
 				&& !in_array($userId, $newUsersExceptAuditors)
+				&& !in_array($userId, $disabledAutoMuteUsers)
 			)
 			{
 				UserOption::add($taskId, $userId, Option::MUTED);
@@ -151,7 +159,7 @@ class Task
 		{
 			if (in_array($userId, $newUsersExceptAuditors))
 			{
-				UserOption::deleteByTaskIdAndUserId($taskId, $userId);
+				UserOption::deleteOnUserRoleChanged($taskId, $userId);
 			}
 		}
 
@@ -160,7 +168,7 @@ class Task
 		{
 			if (in_array($userId, $newUsersExceptAuditors))
 			{
-				UserOption::deleteByTaskIdAndUserId($taskId, $userId);
+				UserOption::deleteOnUserRoleChanged($taskId, $userId);
 			}
 		}
 	}

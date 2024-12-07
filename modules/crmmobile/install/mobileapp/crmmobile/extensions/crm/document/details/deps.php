@@ -17,7 +17,6 @@ return [
 		'animation/components/fade-view',
 		'animation',
 		'crm:document/edit',
-		'crm:document/pagenav',
 		'crm:document/qr-code',
 		'crm:document/context-menu',
 		'crm:document/share-dialog',

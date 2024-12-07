@@ -4,6 +4,7 @@
 jn.define('layout/ui/file-attachment/grid-view-adapter', (require, exports, module) => {
 	const AppTheme = require('apptheme');
 	const { isEqual } = require('utils/object');
+	const { OptimizedGridView } = require('layout/ui/optimized-grid-view');
 
 	/**
 	 * @typedef {{ id: string|number }} ContainsId
@@ -274,7 +275,9 @@ jn.define('layout/ui/file-attachment/grid-view-adapter', (require, exports, modu
 			const itemIndex = this.state.items.length - 1;
 			const animate = true;
 
-			this.useGridView().then((gridView) => gridView.scrollTo(sectionIndex, itemIndex, animate));
+			this.useGridView()
+				.then((gridView) => gridView.scrollTo(sectionIndex, itemIndex, animate))
+				.catch(console.error);
 		}
 
 		/**
@@ -304,7 +307,7 @@ jn.define('layout/ui/file-attachment/grid-view-adapter', (require, exports, modu
 
 		render()
 		{
-			return GridView({
+			return OptimizedGridView({
 				ref: (ref) => {
 					this.gridViewRef = ref;
 				},

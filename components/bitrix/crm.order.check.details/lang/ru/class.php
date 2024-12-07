@@ -30,3 +30,4 @@ $MESS['CRM_ORDER_CASHBOX_STATUS_E'] = "Ошибка";
 $MESS["CRM_ORDER_CASHBOX_MANUAL_PRINT_ERROR"] = "Ручное добавление чеков недоступно. Чеки печатаются в автоматическом режиме.";
 $MESS["CRM_COLUMN_ORDER_CHECK_ENTITY"] = "ID сущности (#ENTITY_NAME#)";
 $MESS["CRM_ORDER_CHECK_NOT_FOUND"] = "Чек не найден";
+$MESS["CRM_ORDER_CHECK_REPRINT"] = "Напечатать повторно";

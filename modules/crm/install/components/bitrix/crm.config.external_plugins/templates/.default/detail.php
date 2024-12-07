@@ -66,7 +66,7 @@ $APPLICATION->setTitle(Loc::getMessage('CRM_CONFIG_PLG_TITLE_'.mb_strtoupper($ar
 </div><!--crm-config-external-plugins-wrapper-->
 
 
-<script type="text/javascript">
+<script>
 	BX.ready(function(){
 		BX.CrmConfigExternalPlugins.create();
 	});

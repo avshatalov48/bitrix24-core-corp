@@ -47,7 +47,7 @@ class CTaskComments
 	 */
 	public static function onAfterCommentAdd($entityType, $entityId, $arData)
 	{
-		return \Bitrix\Tasks\Integration\Forum\Task\Comment::onAfterAdd($entityType, $entityId, $arData);
+		\Bitrix\Tasks\Integration\Forum\Task\Comment::onAfterAdd($entityType, $entityId, $arData);
 	}
 
 	/**
@@ -58,7 +58,7 @@ class CTaskComments
 	 */
 	public static function onAfterCommentUpdate($entityType, $entityId, $arData)
 	{
-		return \Bitrix\Tasks\Integration\Forum\Task\Comment::onAfterUpdate($entityType, $entityId, $arData);
+		\Bitrix\Tasks\Integration\Forum\Task\Comment::onAfterUpdate($entityType, $entityId, $arData);
 	}
 
 	public static function fireOnAfterCommentAddEvent($commentId, $taskId, $commentText, $arFilesIds, $urlPreviewId)
@@ -923,7 +923,7 @@ class CTaskComments
 			if ($componentName !== null)
 				ForumClearComponentCache($componentName);
 
-			$strURL = (!empty($backPage) ? $backPage : $GLOBALS['APPLICATION']->GetCurPageParam("", array("IFRAME", "MID", "SEF_APPLICATION_CUR_PAGE_URL", BX_AJAX_PARAM_ID, "result")));
+			$strURL = (!empty($backPage) ? $backPage : $GLOBALS['APPLICATION']->GetCurPageParam("", array("IFRAME", "MID", BX_AJAX_PARAM_ID, "result")));
 			$strURL = ForumAddPageParams(
 				$strURL,
 				array(

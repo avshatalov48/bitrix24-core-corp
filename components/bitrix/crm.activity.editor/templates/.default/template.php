@@ -101,7 +101,6 @@ if($curUser)
 }
 
 $mailTemplateData = array();
-$templatesId = \Bitrix\Crm\MailTemplate\MailTemplateAccess::getAllAvailableSharedTemplatesId($USER->getId());
 
 if($curUser && $arResult['OWNER_TYPE_ID'] !== CCrmOwnerType::Undefined)
 {
@@ -255,7 +254,7 @@ if (!$skipVisualComponents):
 <?endif;?>
 <!--Hidden container is used in dialogs-->
 <div id="<?= $editorCfg['callClockID'] ?>" style="display:none;">
-<script type="text/javascript">
+<script>
 	(function()
 		{
 			var id = "bxClock_" + "<?=$editorCfg['callClockInputID']?>";
@@ -277,7 +276,7 @@ if (!$skipVisualComponents):
 ?></div>
 <!--Hidden container is used in dialogs-->
 <div id="<?= $editorCfg['meetingClockID'] ?>" style="display:none;">
-<script type="text/javascript">
+<script>
 	(function()
 		{
 			var id = "bxClock_" + "<?=$editorCfg['meetingClockInputID']?>";
@@ -401,7 +400,7 @@ if (!$skipVisualComponents):
 		array('HIDE_ICONS' => 'Y')
 	);
 endif;
-?><script type="text/javascript">
+?><script>
 	BX.ready(
 		function()
 		{

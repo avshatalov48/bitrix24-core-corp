@@ -9,7 +9,7 @@
 
 .crm-timeline__card-container_info.--inline {
 	flex-direction: row;
-	align-items: center;
+	align-items: baseline;
 }
 
 .crm-timeline__card-container_info-title {

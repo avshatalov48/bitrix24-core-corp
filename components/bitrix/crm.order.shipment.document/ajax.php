@@ -96,7 +96,6 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 	}
 }
 
-CUtil::JSPostUnescape();
 $APPLICATION->RestartBuffer();
 $processor = new AjaxProcessor($_REQUEST);
 $result = $processor->checkConditions();

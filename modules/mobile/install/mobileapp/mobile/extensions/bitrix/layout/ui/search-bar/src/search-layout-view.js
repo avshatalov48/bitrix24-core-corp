@@ -2,10 +2,10 @@
  * @module layout/ui/search-bar/search-layout-view
  */
 jn.define('layout/ui/search-bar/search-layout-view', (require, exports, module) => {
-	const AppTheme = require('apptheme');
 	const { clone } = require('utils/object');
 	const { Preset } = require('layout/ui/search-bar/preset');
 	const { Counter } = require('layout/ui/search-bar/counter');
+	const { Color, Component } = require('tokens');
 	const {
 		MoreButton,
 	} = require('layout/ui/search-bar/ui');
@@ -36,24 +36,22 @@ jn.define('layout/ui/search-bar/search-layout-view', (require, exports, module) 
 					testId: 'search-presets-list-wrapper',
 					style: styles.wrapper,
 				},
-				View(
-					{},
-					ScrollView(
+				ScrollView(
+					{
+						horizontal: true,
+						showsHorizontalScrollIndicator: false,
+						style: styles.presetsScrollView,
+					},
+					View(
 						{
-							horizontal: true,
-							style: styles.presetsScrollView,
+							testId: 'search-presets-list',
+							style: styles.presetsWrapper,
 						},
-						View(
-							{
-								testId: 'search-presets-list',
-								style: styles.presetsWrapper,
-							},
-							this.renderLoader(),
-							...this.renderDefaultPreset(presets),
-							...this.renderCounters(),
-							...this.renderPresets(presets),
-							this.renderMoreButton(),
-						),
+						this.renderLoader(),
+						...this.renderDefaultPreset(presets),
+						...this.renderCounters(),
+						...this.renderPresets(presets),
+						this.renderMoreButton(),
 					),
 				),
 			);
@@ -71,7 +69,7 @@ jn.define('layout/ui/search-bar/search-layout-view', (require, exports, module) 
 					width: 50,
 					height: 50,
 				},
-				tintColor: AppTheme.colors.base3,
+				tintColor: Color.base3.toHex(),
 				animating: true,
 				size: 'small',
 			});
@@ -87,6 +85,11 @@ jn.define('layout/ui/search-bar/search-layout-view', (require, exports, module) 
 		 */
 		renderCounters()
 		{
+			if (!Array.isArray(this.props.counters))
+			{
+				return [];
+			}
+
 			const counters = clone(this.props.counters);
 
 			return counters.map((counter) => new Counter({
@@ -141,7 +144,8 @@ jn.define('layout/ui/search-bar/search-layout-view', (require, exports, module) 
 		 */
 		setPresets(presets = [], counters = [])
 		{
-			this.setState({ presets, counters, presetsLoaded: true });
+			// double setState - hack to render presets with right width
+			this.setState({ presets, counters, presetsLoaded: true }, () => this.setState());
 		}
 
 		/**
@@ -189,7 +193,10 @@ jn.define('layout/ui/search-bar/search-layout-view', (require, exports, module) 
 		wrapper: {
 			height: 44,
 			width: '100%',
-			backgroundColor: AppTheme.colors.bgNavigation,
+			backgroundColor: Color.bgNavigation.toHex(),
+			borderBottomWidth: 1,
+			borderBottomColor: Color.bgSeparatorPrimary.toHex(),
+			paddingTop: Application.getPlatform() === 'ios' ? 3 : 0,
 		},
 		presetsScrollView: {
 			height: 44,
@@ -197,33 +204,10 @@ jn.define('layout/ui/search-bar/search-layout-view', (require, exports, module) 
 		presetsWrapper: {
 			flexDirection: 'row',
 			alignItems: 'center',
+			alignContent: 'center',
 			marginTop: 0,
-			paddingRight: 10,
-		},
-		contentWrapper: {
-			borderTopLeftRadius: 20,
-			borderTopRightRadius: 20,
-		},
-		listWrapper: {
-			width: '100%',
-			height: 600,
-		},
-		emptyResultsWrapper: {
-			justifyContent: 'center',
-			alignItems: 'center',
-			width: '100%',
-			height: '100%',
-		},
-		emptyResultsIcon: {
-			width: 86,
-			height: 86,
-			marginTop: -86,
-		},
-		searchContentTitle: {
-			fontSize: 13,
-			color: AppTheme.colors.baseWhiteFixed,
-			marginBottom: 10,
-			marginLeft: 20,
+			height: 34,
+			paddingHorizontal: Component.paddingLr.toNumber(),
 		},
 	};
 

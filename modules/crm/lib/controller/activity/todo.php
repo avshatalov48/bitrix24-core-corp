@@ -2,35 +2,280 @@
 
 namespace Bitrix\Crm\Controller\Activity;
 
+use Bitrix\Calendar\UserSettings;
 use Bitrix\Crm\Activity\Entity;
-use Bitrix\Crm\Activity\Settings\Manager;
-use Bitrix\Crm\Activity\Settings\Section\Calendar;
+use Bitrix\Crm\Activity\Provider;
+use Bitrix\Crm\Activity\Provider\ToDo\Block\Calendar;
+use Bitrix\Crm\Activity\Provider\ToDo\BlocksManager;
+use Bitrix\Crm\Activity\ToDo\ColorSettings\ColorSettingsProvider;
 use Bitrix\Crm\Activity\TodoCreateNotification;
 use Bitrix\Crm\Activity\TodoPingSettingsProvider;
+use Bitrix\Crm\Company;
+use Bitrix\Crm\Contact;
 use Bitrix\Crm\Controller\Base;
 use Bitrix\Crm\Controller\ErrorCode;
-use Bitrix\Crm\FileUploader\TodoActivityUploaderController;
+use Bitrix\Crm\Entity\MessageBuilder\ProcessToDoActivityResponsible;
 use Bitrix\Crm\Integration\Disk\HiddenStorage;
-use Bitrix\Crm\Integration\UI\FileUploader;
+use Bitrix\Crm\Integration\Im\ProcessEntity\ToDoResponsibleNotification;
+use Bitrix\Crm\Item;
 use Bitrix\Crm\ItemIdentifier;
+use Bitrix\Crm\Multifield\Type\Phone;
 use Bitrix\Crm\Service\Container;
-use Bitrix\Disk\File;
+use Bitrix\Crm\Service\Factory;
+use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Error;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\PhoneNumber\Parser;
 use CCrmOwnerType;
-use CIMNotify;
 
 class ToDo extends Base
 {
-	private const NOTIFY_BECOME_RESPONSIBLE = 1;
-	private const NOTIFY_NO_LONGER_RESPONSIBLE = 2;
+	public function getCalendarConfigAction(ItemIdentifier $itemIdentifier, ?int $activityId = null): ?array
+	{
+		if (!Loader::includeModule('calendar'))
+		{
+			$this->addError(new Error(Loc::getMessage('CRM_ACTIVITY_TODO_CALENDAR_MODULE_NOT_INSTALLED')));
+
+			return null;
+		}
+
+		if (!Container::getInstance()->getUserPermissions()->checkReadPermissions(
+			$itemIdentifier->getEntityTypeId(),
+			$itemIdentifier->getEntityId())
+		)
+		{
+			$this->setAccessDenied();
+
+			return null;
+		}
+
+		$userId = $this->getCurrentUserId();
+		$calendarOwnerId = null;
+		if ($activityId)
+		{
+			$activity = \CCrmActivity::GetByID($activityId);
+
+			if (!$activity)
+			{
+				$this->addError(ErrorCode::getNotFoundError());
+
+				return null;
+			}
+
+			$authorId = $activity['AUTHOR_ID'];
+			$readOnly = $userId !== (int)$authorId;
+			$crmSectionId = \Bitrix\Crm\Integration\Calendar::getCrmSectionId($authorId);
+			$availableSections = \Bitrix\Crm\Integration\Calendar::getSectionListAvailableForUser($authorId);
+
+			$calendarOwnerId = $authorId;
+		}
+		else
+		{
+			$readOnly = false;
+			$crmSectionId = \Bitrix\Crm\Integration\Calendar::getCrmSectionId($userId);
+			$availableSections = \Bitrix\Crm\Integration\Calendar::getSectionListAvailableForUser($userId);
+
+			$calendarOwnerId = $userId;
+		}
+
+		if (empty($availableSections))
+		{
+			$defaultUserCalendar = \Bitrix\Crm\Integration\Calendar::createDefault([
+				'type' => 'user',
+				'ownerId' => $calendarOwnerId,
+			]);
+
+			if ($defaultUserCalendar)
+			{
+				$availableSections[] = $defaultUserCalendar;
+				$crmSectionId = $defaultUserCalendar['ID'];
+			}
+		}
+
+		$trackingUsersList = UserSettings::getTrackingUsers($userId);
+
+		$sections = [];
+		foreach ($availableSections as $section)
+		{
+			$sections[] = [
+				'ID' => (int)$section['ID'],
+				'NAME' => $section['NAME'],
+				'COLOR' => $section['COLOR'],
+				'OWNER_ID' => (int)$section['OWNER_ID'],
+				'CAL_TYPE' => $section['CAL_TYPE'],
+				'PERM' => $section['PERM'],
+				'DEFAULT' => (int)$section['ID'] === $crmSectionId,
+			];
+		}
+
+		return [
+			'sections' => $sections,
+			'trackingUsersList' => $trackingUsersList,
+			'readOnly' => $readOnly,
+		];
+	}
+
+	public function bindClientAction(Factory $factory, Item $entity, int $clientId, int $clientTypeId): ?array
+	{
+		$clientIdentifier = new ItemIdentifier($clientTypeId, $clientId);
+		$clientBinder = Container::getInstance()->getClientBinder();
+		$result = $clientBinder->bind($factory, $entity, $clientIdentifier);
+
+		if ($result->isSuccess())
+		{
+			return $this->getClientConfigAction($entity);
+		}
+
+		$this->addErrors($result->getErrors());
+
+		return null;
+	}
+
+	// @todo refactor this
+	public function getClientConfigAction(Item $entity): ?array
+	{
+		if (!Container::getInstance()->getUserPermissions()->canReadItem($entity))
+		{
+			$this->addError(new Error(Loc::getMessage('CRM_ACCESS_DENIED')));
+
+			return null;
+		}
+
+		$clients = [];
+
+		$this->addContacts($clients, $entity);
+		$this->addCompanies($clients, $entity);
+		$this->addCompany($clients, $entity);
+
+		return [
+			'clients' => $clients,
+		];
+	}
+
+	private function addContacts(array &$clients, Item $entity): void
+	{
+		if (!$entity->hasField(Item::FIELD_NAME_CONTACT_BINDINGS))
+		{
+			return;
+		}
+
+		$contacts = $entity->getContacts();
+		foreach ($contacts as $contact)
+		{
+			$clientEntityTypeId = \CCrmOwnerType::Contact;
+			$clientEntityId = $contact->getId();
+			$canReadClient = Container::getInstance()->getUserPermissions()->checkReadPermissions($clientEntityTypeId, $clientEntityId);
+
+			if (!$canReadClient)
+			{
+				continue;
+			}
+
+			$this->appendClientPhones($clients, \CCrmOwnerType::Contact, $contact);
+		}
+	}
+
+	private function addCompanies(array &$clients, Item $entity): void
+	{
+		if (
+			$entity->getEntityTypeId() !== \CCrmOwnerType::Contact
+			|| !$entity->hasField(Item\Contact::FIELD_NAME_COMPANY_BINDINGS)
+		)
+		{
+			return;
+		}
+
+		/** @var Item\Contact $entity */
+		$companies = $entity->getCompanies();
+		foreach ($companies as $company)
+		{
+			$clientEntityTypeId = \CCrmOwnerType::Company;
+			$clientEntityId = $company->getId();
+			$canReadClient = Container::getInstance()->getUserPermissions()->checkReadPermissions($clientEntityTypeId, $clientEntityId);
+
+			if (!$canReadClient)
+			{
+				continue;
+			}
+
+			$this->appendClientPhones($clients, \CCrmOwnerType::Company, $company);
+		}
+	}
+
+	private function addCompany(&$clients, Item $entity): void
+	{
+		if (!$entity->hasField(Item::FIELD_NAME_COMPANY))
+		{
+			return;
+		}
+
+		$companyId = $entity->getCompanyId();
+		if ($companyId)
+		{
+			$clientEntityTypeId = \CCrmOwnerType::Company;
+			$clientEntityId = $companyId;
+			$canReadCompany = Container::getInstance()
+				->getUserPermissions()
+				->checkReadPermissions($clientEntityTypeId, $clientEntityId)
+			;
+
+			if ($canReadCompany)
+			{
+				$clientTypeName = \CCrmOwnerType::ResolveName($clientEntityTypeId);
+
+				$company = (new \Bitrix\Crm\Service\Broker\Company)->getById($companyId);
+				if ($company)
+				{
+					$this->appendClientPhones($clients, \CCrmOwnerType::Company, $company);
+				}
+			}
+		}
+	}
+
+	private function appendClientPhones(
+		array &$clients,
+		int $entityTypeId,
+		Contact | Company $client
+	): void
+	{
+		$clientId = $client->getId();
+		$clientTypeName = \CCrmOwnerType::ResolveName($entityTypeId);
+		$clientInfo = \CCrmEntitySelectorHelper::PrepareEntityInfo($clientTypeName, $clientId);
+
+		$communication = [
+			'customData' => [
+				'entityId' => $clientId,
+				'entityTypeId' => $entityTypeId,
+			],
+			'id' => $entityTypeId . '-' . $clientId,
+			'title' => $client->getHeading(),
+		];
+
+		if (isset($clientInfo['ADVANCED_INFO']['MULTI_FIELDS']))
+		{
+			$phones = [];
+			foreach ($clientInfo['ADVANCED_INFO']['MULTI_FIELDS'] as $mf)
+			{
+				if ($mf['TYPE_ID'] !== Phone::ID)
+				{
+					continue;
+				}
+
+				$phones[] = Parser::getInstance()->parse($mf['VALUE'])->format();
+			}
+
+			$communication['subtitle'] = implode(', ', $phones);
+		}
+
+		$clients[] = $communication;
+	}
 
 	public function getNearestAction(int $ownerTypeId, int $ownerId): ?array
 	{
 		$itemIdentifier = new ItemIdentifier($ownerTypeId, $ownerId);
 
-		$todo = Entity\ToDo::loadNearest($itemIdentifier);
+		$todo = (new Entity\ToDo($itemIdentifier, new Provider\ToDo\ToDo()))->loadNearest();
 		if (!$todo)
 		{
 			return null;
@@ -52,43 +297,59 @@ class ToDo extends Base
 		int $ownerTypeId,
 		int $ownerId,
 		string $deadline,
+		string $title = '',
 		string $description = '',
 		?int $responsibleId = null,
 		?int $parentActivityId = null,
 		array $fileTokens = [],
 		array $settings = [],
-		array $pingOffsets = []
+		array $pingOffsets = [],
+		?string $colorId = null,
+		bool $isCopy = false,
 	): ?array
 	{
-		$todo = new Entity\ToDo(
-			new ItemIdentifier($ownerTypeId, $ownerId)
-		);
+		$identifier = ItemIdentifier::createFromArray([
+			'ENTITY_TYPE_ID' => $ownerTypeId,
+			'ENTITY_ID' => $ownerId,
+		]);
+		if (!$identifier)
+		{
+			$this->addError(ErrorCode::getNotFoundError());
+			return null;
+		}
+
+		$todo = new Entity\ToDo($identifier, new Provider\ToDo\ToDo());
 
 		$todo = $this->getPreparedEntity(
 			$todo,
+			$title,
 			$description,
 			$deadline,
 			$parentActivityId,
 			$responsibleId,
-			$pingOffsets
+			$pingOffsets,
+			$colorId,
+			$isCopy,
 		);
 		if (!$todo)
 		{
 			return null;
 		}
 
-		/*
-		$settingsManager = Manager::createFromEntity($todo);
-		$todo = $settingsManager->getPreparedEntity($settings);
-		$options = $settingsManager->getEntityOptions($settings);
+		$blocksManager = BlocksManager::createFromEntity($todo);
+		$saveConfig = $blocksManager->preEnrichEntity($settings);
+		$options = $blocksManager->getEntityOptions($settings);
 
-		$result = $this->saveTodo($todo, $options);
-		if ($result === null)
+		if ($saveConfig->isNeedSave())
 		{
-			return null;
+			$result = $this->saveTodo($todo, $options);
+			if ($result === null)
+			{
+				return null;
+			}
 		}
 
-		$settingsManager->saveAll($settings);*/
+		$todo = $blocksManager->enrichEntityWithBlocks($settings, false, false);
 
 		if (!empty($fileTokens))
 		{
@@ -100,23 +361,16 @@ class ToDo extends Base
 			}
 		}
 
-		$result = $this->saveTodo($todo);
+		$result = $this->saveTodo($todo, $options);
 		if ($result === null)
 		{
 			return null;
 		}
 
-		$currentUserId = Container::getInstance()->getContext()->getUserId();
+		$currentUserId = $this->getCurrentUserId();
 		if (isset($responsibleId) && $responsibleId !== $currentUserId)
 		{
-			$this->notifyViaIm(
-				$result['id'],
-				$ownerTypeId,
-				$ownerId,
-				$responsibleId,
-				$currentUserId,
-				self::NOTIFY_BECOME_RESPONSIBLE
-			);
+			$this->notifyResponsibleAboutAdd($todo);
 		}
 
 		return $result;
@@ -127,12 +381,14 @@ class ToDo extends Base
 		int $ownerId,
 		string $deadline,
 		int $id = null,
+		string $title = '',
 		string $description = '',
 		?int $responsibleId = null,
 		?int $parentActivityId = null,
 		array $fileTokens = [],
 		array $settings = [],
-		array $pingOffsets = []
+		array $pingOffsets = [],
+		?string $colorId = null,
 	): ?array
 	{
 		$todo = $this->loadEntity($ownerTypeId, $ownerId, $id);
@@ -147,25 +403,27 @@ class ToDo extends Base
 
 			return null;
 		}
-		
+
 		$prevResponsibleId = $todo->getResponsibleId();
 
 		$todo = $this->getPreparedEntity(
 			$todo,
+			$title,
 			$description,
 			$deadline,
 			$parentActivityId,
 			$responsibleId,
-			$pingOffsets
+			$pingOffsets,
+			$colorId,
 		);
 		if (!$todo)
 		{
 			return null;
 		}
 
-		$currentStorageElementIds = $todo->getStorageElementIds() ?? [];
-		if (!empty($fileTokens) || !empty($currentStorageElementIds))
+		if (!empty($fileTokens))
 		{
+			$currentStorageElementIds = $todo->getStorageElementIds() ?? [];
 			$storageElementIds = $this->saveFilesToStorage(
 				$ownerTypeId,
 				$ownerId,
@@ -177,9 +435,9 @@ class ToDo extends Base
 			$todo->setStorageElementIds($storageElementIds);
 		}
 
-		$settingsManager = Manager::createFromEntity($todo);
-		$todo = $settingsManager->getPreparedEntity($settings);
-		$options = $settingsManager->getEntityOptions($settings);
+		$blocksManager = BlocksManager::createFromEntity($todo);
+		$todo = $blocksManager->enrichEntityWithBlocks($settings);
+		$options = $blocksManager->getEntityOptions($settings);
 
 		$result = $this->saveTodo($todo, $options);
 		if ($result === null)
@@ -187,51 +445,40 @@ class ToDo extends Base
 			return null;
 		}
 
-		$this->tryNotifyWhenUpdate(
-			$id,
-			$ownerTypeId,
-			$ownerId,
-			$responsibleId,
-			$prevResponsibleId
-		);
+		if ($prevResponsibleId !== null && $responsibleId !== $prevResponsibleId)
+		{
+			$this->notifyResponsibleAboutUpdate($todo, $prevResponsibleId);
+		}
 
 		return $result;
 	}
 
-	public function updateSettingsAction(int $ownerTypeId, int $ownerId, int $id, array $settings = []): ?array
-	{
-		$todo = $this->loadEntity($ownerTypeId, $ownerId, $id);
-		if (!$todo)
-		{
-			return null;
-		}
-
-		$settingsManager = Manager::createFromEntity($todo);
-		$todo = $settingsManager->getPreparedEntity($settings);
-		$options = $settingsManager->getEntityOptions($settings);
-
-		return $this->saveTodo($todo, $options);
-	}
-
 	protected function getPreparedEntity(
 		Entity\ToDo $todo,
+		string $title,
 		string $description,
 		string $deadline,
 		?int $parentActivityId,
 		?int $responsibleId = null,
-		?array $pingOffsets = null
+		?array $pingOffsets = null,
+		?string $colorId = null,
+		bool $isCopy = false,
 	): ?Entity\ToDo
 	{
-		$todo->setDescription($description);
+		$todo
+			->setSubject($title)
+			->setDescription($description)
+		;
 
 		$deadline = $this->prepareDatetime($deadline);
 		if (!$deadline)
 		{
 			return null;
 		}
-		$todo->setDeadline($deadline);
-
-		$todo->setParentActivityId($parentActivityId);
+		$todo
+			->setDeadline($deadline)
+			->setParentActivityId($parentActivityId)
+		;
 
 		if ($responsibleId)
 		{
@@ -241,8 +488,19 @@ class ToDo extends Base
 		if (isset($pingOffsets))
 		{
 			$pingOffsets = TodoPingSettingsProvider::filterOffsets($pingOffsets);
-			$todo->setAdditionalFields(['PING_OFFSETS' => $pingOffsets]);
+			$todo->appendAdditionalFields(['PING_OFFSETS' => $pingOffsets]);
 		}
+
+		if (isset($colorId))
+		{
+			$isAvailableColorId = (new ColorSettingsProvider())->isAvailableColorId($colorId);
+			if ($isAvailableColorId)
+			{
+				$todo->setColorId($colorId);
+			}
+		}
+
+		$todo->appendAdditionalFields(['IS_COPY' => $isCopy]);
 
 		return $todo;
 	}
@@ -265,11 +523,29 @@ class ToDo extends Base
 		{
 			return null;
 		}
-		$todo->setDeadline($deadline);
 
-		$todo = (Manager::createFromEntity($todo))->getPreparedEntity([], true);
+		if ($todo->getCalendarEventId() > 0)
+		{
+			$blocksManager = (BlocksManager::createFromEntity($todo));
+			$blocks = $blocksManager->fetchAsPlainArray();
+			foreach ($blocks as &$block)
+			{
+				if ($block['id'] === Calendar::TYPE_NAME)
+				{
+					$block['from'] = $deadline->getTimestamp() * 1000;
+					$block['to'] = $deadline->getTimestamp() * 1000 + $block['duration'];
+				}
+			}
+			unset($block);
 
-		return $this->saveTodo($todo);
+			$todo = $blocksManager->enrichEntityWithBlocks($blocks, true);
+		}
+		else
+		{
+			$todo->setDeadline($deadline);
+		}
+
+		return $this->saveTodo($todo, [], true);
 	}
 
 	public function updateDescriptionAction(
@@ -286,9 +562,10 @@ class ToDo extends Base
 		}
 
 		$todo->setDescription($value);
-		$todo = (Manager::createFromEntity($todo))->getPreparedEntity([], true);
 
-		return $this->saveTodo($todo);
+		$todo = (BlocksManager::createFromEntity($todo))->enrichEntityWithBlocks(null, true);
+
+		return $this->saveTodo($todo, [], true);
 	}
 
 	public function updateFilesAction(
@@ -321,7 +598,9 @@ class ToDo extends Base
 			)
 		);
 
-		return $this->saveTodo($todo);
+		$todo = (BlocksManager::createFromEntity($todo))->enrichEntityWithBlocks(null, true);
+
+		return $this->saveTodo($todo, [], true);
 	}
 
 	public function updateResponsibleUserAction(
@@ -352,28 +631,47 @@ class ToDo extends Base
 		}
 
 		$prevResponsibleId = $todo->getResponsibleId();
-
 		$todo->setResponsibleId($responsibleId);
-		$todo = (Manager::createFromEntity($todo))->getPreparedEntity([], true);
 
-		$result = $this->saveTodo($todo);
+		if ($todo->getCalendarEventId() > 0)
+		{
+			$settings = $todo->getSettings();
+			$users = $settings['USERS'] ?? [];
+			if (!in_array((string)$responsibleId, $users, true))
+			{
+				$settings['USERS'][] = (string)$responsibleId;
+				$todo->setSettings($settings);
+			}
+
+			$blocksManager = (BlocksManager::createFromEntity($todo));
+			$blocks = $blocksManager->fetchAsPlainArray();
+			foreach ($blocks as &$block)
+			{
+				if ($block['id'] === Calendar::TYPE_NAME)
+				{
+					$block['selectedUserIds'] = $settings['USERS'];
+				}
+			}
+			unset($block);
+
+			$todo = $blocksManager->enrichEntityWithBlocks($blocks, true);
+		}
+
+		$result = $this->saveTodo($todo, [], true);
 		if ($result === null)
 		{
 			return null;
 		}
 
-		$this->tryNotifyWhenUpdate(
-			$id,
-			$ownerTypeId,
-			$ownerId,
-			$responsibleId,
-			$prevResponsibleId
-		);
+		if ($prevResponsibleId !== null && $prevResponsibleId !== $responsibleId)
+		{
+			$this->notifyResponsibleAboutUpdate($todo, $prevResponsibleId);
+		}
 
 		return $result;
 	}
 
-	public function updatePingOffsetsAction(int $ownerTypeId, int $ownerId, int $id, array $value = []): ?array
+	public function updateColorAction(int $ownerTypeId, int $ownerId, int $id, string $colorId): ?array
 	{
 		$todo = $this->loadEntity($ownerTypeId, $ownerId, $id);
 		if (!$todo)
@@ -383,28 +681,29 @@ class ToDo extends Base
 
 		if ($todo->isCompleted())
 		{
-			$this->addError(new Error( Loc::getMessage('CRM_ACTIVITY_TODO_UPDATE_PING_OFFSETS_ERROR')));
+			$this->addError(new Error( Loc::getMessage('CRM_ACTIVITY_TODO_UPDATE_COLOR_ERROR')));
 
 			return null;
 		}
 
-		$filteredValue = TodoPingSettingsProvider::filterOffsets($value);
-		if (!empty($value) && empty($filteredValue))
+		if (!(new ColorSettingsProvider())->isAvailableColorId($colorId))
 		{
-			$this->addError(new Error( Loc::getMessage('CRM_ACTIVITY_TODO_WRONG_PING_OFFSETS_FORMAT')));
+			$this->addError(new Error( Loc::getMessage('CRM_ACTIVITY_TODO_WRONG_COLOR')));
 
-			return null; // nothing to do - wrong input
+			return null;
 		}
 
-		$todo->setAdditionalFields(['PING_OFFSETS' => $filteredValue]);
+		$todo->setColorId($colorId);
 
-		return $this->saveTodo($todo);
+		$todo = (BlocksManager::createFromEntity($todo))->enrichEntityWithBlocks(null, true);
+
+		return $this->saveTodo($todo, [], true);
 	}
 
 	protected function loadEntity(int $ownerTypeId, int $ownerId, int $id): ?Entity\ToDo
 	{
 		$itemIdentifier = new ItemIdentifier($ownerTypeId, $ownerId);
-		$todo = Entity\ToDo::load($itemIdentifier, $id);
+		$todo = (new Entity\ToDo($itemIdentifier, new Provider\ToDo\ToDo()))->load($id);
 
 		if (!$todo)
 		{
@@ -432,9 +731,9 @@ class ToDo extends Base
 		return $result->isSuccess();
 	}
 
-	private function saveTodo(Entity\ToDo $todo, array $options = []): ?array
+	private function saveTodo(Entity\ToDo $todo, array $options = [], bool $useCurrentSettings = false): ?array
 	{
-		$saveResult = $todo->save($options);
+		$saveResult = $todo->save($options, $useCurrentSettings);
 		if ($saveResult->isSuccess())
 		{
 			return [
@@ -455,62 +754,26 @@ class ToDo extends Base
 		array $currentStorageElementIds = []
 	): array
 	{
-		if (!Loader::includeModule('disk'))
-		{
-			$this->addError(new Error('"disk" module is required.'));
+		$fileUploader = new Provider\ToDo\FileUploader\Uploader(
+			$fileUploaderIds,
+			$ownerTypeId,
+			$ownerId
+		);
 
-			return [];
+		$result = $fileUploader
+			->setActivityId($activityId)
+			->setCurrentStorageElementIds($currentStorageElementIds)
+			->saveFilesToStorage()
+		;
+
+		if ($result->isSuccess())
+		{
+			return $result->getData()['ids'];
 		}
 
-		$idsOfNewFiles = array_values(
-			array_unique(
-				array_filter(
-					array_map(static function($item) {
-						if (is_numeric($item))
-						{
-							return (int) $item;
-						}
+		$this->addErrors($result->getErrors());
 
-						if (is_string($item))
-						{
-							return $item;
-						}
-					}, $fileUploaderIds)
-				)
-			)
-		);
-		$idsNotChanged = [];
-		$hiddenStorage = (new HiddenStorage())->setSecurityContextOptions([
-			'entityTypeId' => $ownerTypeId,
-			'entityId' => $ownerId,
-		]);
-
-		$currentFileIds = $hiddenStorage->fetchFileIdsByStorageFileIds(
-			$currentStorageElementIds,
-			HiddenStorage::USE_DISK_OBJ_ID_AS_KEY
-		);
-		if (!empty($currentFileIds))
-		{
-			$idsOfNewFiles = array_values(array_diff($fileUploaderIds, $currentFileIds));
-			$idsToRemove = array_diff($currentFileIds, $fileUploaderIds);
-			$idsNotChanged = array_keys(array_diff($currentFileIds, $idsToRemove));
-
-			$hiddenStorage->deleteFiles(array_keys($idsToRemove));
-		}
-
-		$fileUploader = new FileUploader(
-			new TodoActivityUploaderController([
-				'entityTypeId' => $ownerTypeId,
-				'entityId' => $ownerId,
-				'activityId' => $activityId,
-			])
-		);
-		$fileIds = $fileUploader->getPendingFiles($idsOfNewFiles);
-		$hiddenStorageFiles = $hiddenStorage->addFilesToFolder($fileIds, HiddenStorage::FOLDER_CODE_ACTIVITY);
-		$hiddenStorageFileIds = array_map(fn(File $file) => $file->getId(), $hiddenStorageFiles);
-		$fileUploader->makePersistentFiles($idsOfNewFiles);
-
-		return array_values(array_merge($idsNotChanged, $hiddenStorageFileIds));
+		return [];
 	}
 
 	public function fetchSettingsAction(int $ownerTypeId, int $ownerId, int $id): ?array
@@ -522,178 +785,99 @@ class ToDo extends Base
 			return null;
 		}
 
- 		return Manager::createFromEntity($todo)->fetch();
-	}
+		$itemIdentifier = new ItemIdentifier($ownerTypeId, $ownerId);
+		$currentFileIds = $this->getCurrentFileIds($itemIdentifier, $todo->getStorageElementIds());
 
-	private function getSettingsSectionNames(): array
-	{
-		return [
-			Calendar::TYPE_NAME,
+ 		return [
+			 'entityData' => [
+				'id' => $todo->getId(),
+				'title' => $todo->getSubject(),
+				'description' => $todo->getDescription(),
+				'deadline' => $todo->getDeadline(),
+				'currentFileIds' => array_values($currentFileIds),
+				'colorId' => $todo->getSettings()['COLOR'] ?? null,
+				'currentUser' => $this->getTodoCurrentUser($todo->getResponsibleId()),
+				'pingOffsets' => $this->getPingOffsets($todo),
+			 ],
+			 'blocksData' => BlocksManager::createFromEntity($todo)->fetch(),
 		];
 	}
 
-	private function notifyViaIm(int $activityId, int $ownerTypeId, int $ownerId, int $responsibleId, int $authorId, int $options = 0): void
+	private function getPingOffsets(Entity\ToDo $todo): array
 	{
-		if ($options === 0 || !Loader::includeModule('im'))
+		$offsets = (array)($todo->getSettings()['PING_OFFSETS'] ?? []);
+		if (empty($offsets))
 		{
-			return;
+			$offsets = Provider\ToDo\ToDo::getPingOffsets($todo->getId());
 		}
 
-		$todo = $this->loadEntity($ownerTypeId, $ownerId, $activityId);
-		if (!$todo)
-		{
-			return;
-		}
+		return $offsets;
+	}
 
-		[$message, $messageOut] = $this->createNotificationMessages(
-			$activityId,
-			$ownerTypeId,
-			$ownerId,
-			trim($todo->getSubject()),
-			$options
+	public function getTodoCurrentUser(?int $userId): array
+	{
+		$currentUser = Container::getInstance()
+			->getUserBroker()
+			->getById($userId ?? CurrentUser::get()->getId());
+
+		return [
+			'userId' => $currentUser['ID'] ?? 0,
+			'title' => $currentUser['FORMATTED_NAME'] ?? '',
+			'detailUrl' => $currentUser['SHOW_URL'] ?? '',
+			'imageUrl' => $currentUser['PHOTO_URL'] ?? '',
+		];
+	}
+
+	// @todo remove/refactor after move files to block
+	protected function getCurrentFileIds(ItemIdentifier $item, array $storageFileIds): array
+	{
+		return $this->getHiddenStorage($item)->fetchFileIdsByStorageFileIds(
+			$storageFileIds,
+			HiddenStorage::USE_DISK_OBJ_ID_AS_KEY
 		);
-		if (!isset($message, $messageOut))
-		{
-			return;
-		}
+	}
 
-		CIMNotify::Add([
-			'MESSAGE_TYPE' => IM_MESSAGE_SYSTEM,
-			'NOTIFY_TYPE' => IM_NOTIFY_FROM,
-			'NOTIFY_MODULE' => 'crm',
-			'TO_USER_ID' =>$responsibleId,
-			'FROM_USER_ID' => $authorId,
-			'NOTIFY_EVENT' => 'changeAssignedBy',
-			'NOTIFY_TAG' => 'CRM|TODO_ACTIVITY|' . $activityId,
-			"NOTIFY_MESSAGE" => $message,
-			"NOTIFY_MESSAGE_OUT" => $messageOut,
+	// @todo remove/refactor after move files to block
+	protected function getHiddenStorage(ItemIdentifier $item): HiddenStorage
+	{
+		return (new HiddenStorage())->setSecurityContextOptions([
+			'entityTypeId' => $item->getEntityTypeId(),
+			'entityId' => $item->getEntityId(),
 		]);
 	}
 
-	private function tryNotifyWhenUpdate(int $activityId, int $ownerTypeId, int $ownerId, int $responsibleId, int $prevResponsibleId): void
+	private function notifyResponsibleAboutAdd(Entity\ToDo $todo): void
 	{
-		if ($responsibleId === $prevResponsibleId)
-		{
-			return;
-		}
+		$currentUserId = $this->getCurrentUserId();
 
-		$currentUserId = Container::getInstance()->getContext()->getUserId();
-
-		$this->notifyViaIm(
-			$activityId,
-			$ownerTypeId,
-			$ownerId,
-			$prevResponsibleId,
-			$currentUserId,
-			self::NOTIFY_NO_LONGER_RESPONSIBLE
-		);
-
-		$this->notifyViaIm(
-			$activityId,
-			$ownerTypeId,
-			$ownerId,
-			$responsibleId,
-			$currentUserId,
-			self::NOTIFY_BECOME_RESPONSIBLE
-		);
+		$this->getToDoResponsibleNotification($todo)
+			->sendWhenAdd($currentUserId, $todo->getResponsibleId())
+		;
 	}
 
-	private function createNotificationMessages(int $activityId, int $ownerTypeId, int $ownerId, string $subject, int $options): array
+	private function notifyResponsibleAboutUpdate(Entity\ToDo $todo, int $prevResponsibleId): void
 	{
-		$url = Container::getInstance()->getRouter()->getItemDetailUrl($ownerTypeId, $ownerId);
-		if (!isset($url))
-		{
-			return [];
-		}
+		$currentUserId = $this->getCurrentUserId();
 
-		// get phase code by input parameters
-		$phaseCodeSuffix = '';
-		if ($options & self::NOTIFY_BECOME_RESPONSIBLE)
-		{
-			$phaseCodeSuffix = 'BECOME';
-		}
-		elseif ($options & self::NOTIFY_NO_LONGER_RESPONSIBLE)
-		{
-			$phaseCodeSuffix = 'NO_LONGER';
-		}
+		$this->getToDoResponsibleNotification($todo)
+			->sendWhenUpdate(
+				$currentUserId,
+				$todo->getResponsibleId(),
+				$prevResponsibleId,
+			)
+		;
+	}
 
-		if ($subject === '')
-		{
-			// CRM_ACTIVITY_TODO_BECOME_RESPONSIBLE
-			// CRM_ACTIVITY_TODO_NO_LONGER_RESPONSIBLE
-			return [
-				Loc::getMessage('CRM_ACTIVITY_TODO_' . $phaseCodeSuffix . '_RESPONSIBLE', [
-					'#todoId#' =>  '<a href="' . $url . '">' . $activityId . '</a>'
-				]),
-				Loc::getMessage('CRM_ACTIVITY_TODO_' . $phaseCodeSuffix . '_RESPONSIBLE', [
-					'#todoId#' => $activityId
-				])
-			];
-		}
+	private function getToDoResponsibleNotification(Entity\ToDo $todo): ToDoResponsibleNotification
+	{
+		$entityTypeId = $todo->getOwner()->getEntityTypeId();
+		$messageBuilder = new ProcessToDoActivityResponsible($entityTypeId);
 
-		$entityName = '';
-		if (CCrmOwnerType::isUseFactoryBasedApproach($ownerTypeId))
-		{
-			$factory = Container::getInstance()->getFactory($ownerTypeId);
-			if ($factory)
-			{
-				$item = $factory->getItem($ownerId);
-				if ($item)
-				{
-					$entityName = trim($item->getHeading());
-				}
-			}
-		}
-		
-		if ($entityName === '')
-		{
-			// CRM_ACTIVITY_TODO_BECOME_RESPONSIBLE_EX
-			// CRM_ACTIVITY_TODO_NO_LONGER_RESPONSIBLE_EX
-			return [
-				Loc::getMessage('CRM_ACTIVITY_TODO_' . $phaseCodeSuffix . '_RESPONSIBLE_EX', [
-					'#subject#' =>  '<a href="' . $url . '">' . htmlspecialcharsbx($subject) . '</a>'
-				]),
-				Loc::getMessage('CRM_ACTIVITY_TODO_' . $phaseCodeSuffix . '_RESPONSIBLE_EX', [
-					'#subject#' => htmlspecialcharsbx($subject)
-				])
-			];
-		}
+		return new ToDoResponsibleNotification($todo, $messageBuilder);
+	}
 
-		// CRM_ACTIVITY_TODO_BECOME_RESPONSIBLE_LEAD
-		// CRM_ACTIVITY_TODO_BECOME_RESPONSIBLE_DEAL
-		// CRM_ACTIVITY_TODO_BECOME_RESPONSIBLE_CONTACT
-		// CRM_ACTIVITY_TODO_BECOME_RESPONSIBLE_COMPANY
-		// CRM_ACTIVITY_TODO_BECOME_RESPONSIBLE_QUOTE_MSGVER_1
-		// CRM_ACTIVITY_TODO_BECOME_RESPONSIBLE_ORDER
-		// CRM_ACTIVITY_TODO_BECOME_RESPONSIBLE_SMART_INVOICE
-		// CRM_ACTIVITY_TODO_BECOME_RESPONSIBLE_DYNAMIC
-		// CRM_ACTIVITY_TODO_NO_LONGER_RESPONSIBLE_LEAD
-		// CRM_ACTIVITY_TODO_NO_LONGER_RESPONSIBLE_DEAL
-		// CRM_ACTIVITY_TODO_NO_LONGER_RESPONSIBLE_CONTACT
-		// CRM_ACTIVITY_TODO_NO_LONGER_RESPONSIBLE_COMPANY
-		// CRM_ACTIVITY_TODO_NO_LONGER_RESPONSIBLE_QUOTE_MSGVER_1
-		// CRM_ACTIVITY_TODO_NO_LONGER_RESPONSIBLE_ORDER
-		// CRM_ACTIVITY_TODO_NO_LONGER_RESPONSIBLE_SMART_INVOICE
-		// CRM_ACTIVITY_TODO_NO_LONGER_RESPONSIBLE_DYNAMIC
-
-		$phaseCodeEnd = CCrmOwnerType::isPossibleDynamicTypeId($ownerTypeId)
-			? CCrmOwnerType::CommonDynamicName
-			: CCrmOwnerType::ResolveName($ownerTypeId);
-
-		if ($phaseCodeEnd === 'QUOTE')
-		{
-			$phaseCodeEnd = 'QUOTE_MSGVER_1';
-		}
-
-		return [
-			Loc::getMessage('CRM_ACTIVITY_TODO_' . $phaseCodeSuffix . '_RESPONSIBLE_' . $phaseCodeEnd, [
-				'#subject#' => htmlspecialcharsbx($subject),
-				'#entityName#' => '<a href="' . $url . '">' . htmlspecialcharsbx($entityName) . '</a>',
-			]),
-			Loc::getMessage('CRM_ACTIVITY_TODO_' . $phaseCodeSuffix . '_RESPONSIBLE_' . $phaseCodeEnd, [
-				'#subject#' => htmlspecialcharsbx($subject),
-				'#entityName#' => htmlspecialcharsbx($entityName),
-			])
-		];
+	private function getCurrentUserId(): int
+	{
+		return $this->getCurrentUser()?->getId() ?? Container::getInstance()->getContext()->getUserId();
 	}
 }

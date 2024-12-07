@@ -3,8 +3,6 @@
 return [
 	'extensions' => [
 		'calendar:model/section',
-		'calendar/ajax',
-	],
-	'bundle' => [
+		'calendar:ajax',
 	],
 ];

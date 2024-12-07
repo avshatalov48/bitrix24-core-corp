@@ -9,6 +9,7 @@
 namespace Bitrix\Tasks\Access\Rule;
 
 use Bitrix\Main\Loader;
+use Bitrix\Tasks\Access\Model\TaskModel;
 use Bitrix\Tasks\Access\Permission\PermissionDictionary;
 use Bitrix\Tasks\Access\Role\RoleDictionary;
 use Bitrix\Main\Access\AccessibleItem;
@@ -17,6 +18,7 @@ class TaskRemoveRule extends \Bitrix\Main\Access\Rule\AbstractRule
 {
 	public function execute(AccessibleItem $task = null, $params = null): bool
 	{
+		/** @var TaskModel $task */
 		if (!$task)
 		{
 			$this->controller->addError(static::class, 'Incorrect task');
@@ -24,6 +26,15 @@ class TaskRemoveRule extends \Bitrix\Main\Access\Rule\AbstractRule
 		}
 
 		if ($this->user->isAdmin())
+		{
+			return true;
+		}
+
+		// always can delete single person task
+		if (
+			$task->isMember($this->user->getUserId(), RoleDictionary::ROLE_DIRECTOR)
+			&& $task->isMember($this->user->getUserId(), RoleDictionary::ROLE_RESPONSIBLE)
+		)
 		{
 			return true;
 		}

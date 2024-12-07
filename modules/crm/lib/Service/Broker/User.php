@@ -3,9 +3,11 @@
 namespace Bitrix\Crm\Service\Broker;
 
 use Bitrix\Crm\Service\Broker;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Router;
 use Bitrix\Main\Application;
 use Bitrix\Main\UserTable;
+use CUser;
 
 class User extends Broker
 {
@@ -18,7 +20,7 @@ class User extends Broker
 
 	public function __construct()
 	{
-		$this->router = \Bitrix\Crm\Service\Container::getInstance()->getRouter();
+		$this->router = Container::getInstance()->getRouter();
 		$this->nameFormat = Application::getInstance()->getContext()->getCulture()->getNameFormat();
 	}
 
@@ -39,14 +41,48 @@ class User extends Broker
 
 	protected function loadEntry(int $id): ?array
 	{
-		$userRaw = UserTable::getList([
-			'select' => [
-				'ID', 'LOGIN', 'NAME', 'SECOND_NAME', 'LAST_NAME', 'TITLE', 'PERSONAL_PHOTO', 'WORK_POSITION', 'IS_REAL_USER',
-			],
-			'filter' => ['=ID' => $id]
-		])->fetch();
+		if ($id === 0)
+		{
+			return null;
+		}
 
-		if (!is_array($userRaw))
+		$allowedFields = [
+			'ID',
+			'LOGIN',
+			'NAME',
+			'SECOND_NAME',
+			'LAST_NAME',
+			'TITLE',
+			'PERSONAL_PHOTO',
+			'WORK_POSITION',
+			'IS_REAL_USER',
+		];
+
+		$currentUserId = Container::getInstance()->getContext()->getUserId();
+		if ($currentUserId === $id)
+		{
+			$currentUserRaw = CUser::GetByID($id)->Fetch();
+			if (!is_array($currentUserRaw) || empty($currentUserRaw))
+			{
+				return null;
+			}
+
+			$userRaw = array_filter(
+				$currentUserRaw,
+				static fn(string $fieldName) => in_array($fieldName, $allowedFields, true),
+				ARRAY_FILTER_USE_KEY,
+			);
+			$userRaw['IS_REAL_USER'] = 'Y';
+		}
+		else
+		{
+			$userRaw = UserTable::getList([
+				'select' => $allowedFields,
+				'filter' => ['=ID' => $id]
+			])->fetch();
+		}
+
+		if (!is_array($userRaw) || empty($userRaw))
 		{
 			return null;
 		}
@@ -68,7 +104,7 @@ class User extends Broker
 		]);
 
 		$entries = [];
-		while($userRaw = $userList->fetch())
+		while ($userRaw = $userList->fetch())
 		{
 			$user = $this->normalizeUser($userRaw);
 
@@ -81,16 +117,18 @@ class User extends Broker
 	protected function normalizeUser(array $user): array
 	{
 		$user['ID'] = (int)$user['ID'];
-		$user['FORMATTED_NAME'] = \CUser::FormatName($this->nameFormat, $user, false, false);
+		$user['FORMATTED_NAME'] = CUser::FormatName($this->nameFormat, $user, false, false);
 		$user['SHOW_URL'] = $this->router->getUserPersonalUrl($user['ID']);
 		$user['PHOTO_URL'] = null;
-		if($user['PERSONAL_PHOTO'] > 0)
+
+		if ($user['PERSONAL_PHOTO'] > 0)
 		{
 			$photo = \CFile::ResizeImageGet($user['PERSONAL_PHOTO'], [
 				'width' => static::DEFAULT_PERSONAL_PHOTO_SIZE,
 				'height' => static::DEFAULT_PERSONAL_PHOTO_SIZE,
 			], BX_RESIZE_IMAGE_EXACT, true, false, true);
-			if($photo)
+
+			if ($photo)
 			{
 				$user['PHOTO_URL'] = $photo['src'];
 			}

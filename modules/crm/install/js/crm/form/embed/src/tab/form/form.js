@@ -170,7 +170,7 @@ export class Form extends Tab
 				</div>
 				${expertMode ? Tag.render`
 					<div class="ui-slider-heading-rest">
-						<a href="#"
+						<a 
 							class="ui-slider-link crm-form-embed__link --expert-mode --visible"
 							data-roll="data-more-settings"
 							onclick="${expertMode.bind(this)}"

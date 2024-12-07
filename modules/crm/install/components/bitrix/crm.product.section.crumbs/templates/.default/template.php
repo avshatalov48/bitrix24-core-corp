@@ -12,7 +12,7 @@ $containerId = 'crm-product-section-crumbs-'.$component->getComponentId();
 $childrenCrumbs = array();
 ?>
 <div id="<?= $containerId ?>" class="bx-crm-interface-product-section-crumbs ovh"></div>
-<script type="text/javascript">
+<script>
 	BX.namespace("BX.Crm");
 	BX.Crm["ProductSectionCrumbs_<?= $component->getComponentId() ?>"] = new BX.Crm.ProductSectionCrumbsClass({
 		componentId: "<?= $component->getComponentId() ?>",

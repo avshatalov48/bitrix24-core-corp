@@ -29,7 +29,7 @@ $containerId = 'intranet-placement-' . $arParams['PLACEMENT_CODE'];
 $frame = $this->createFrame($containerId)->begin('');
 ?>
 <div id="<?=$containerId?>" style="display: none;"></div>
-<script type="text/javascript">
+<script>
 	BX.ready(function () {
 		var placement = new BX.Intranet.Placement();
 		placement.init(<?=Json::encode(

@@ -12,6 +12,7 @@ use Bitrix\Main\ModuleManager;
 use Bitrix\Rpa\Model\Stage;
 use Bitrix\Rpa\Model\Timeline;
 use Bitrix\Rpa\Model\Type;
+use Bitrix\UI\Util;
 
 class UserPermissions
 {
@@ -651,16 +652,11 @@ class UserPermissions
 		if ($this->isExtranet === null)
 		{
 			$this->isExtranet = false;
-			if (
-				Loader::includeModule('intranet')
-				&& Loader::includeModule('extranet')
-				&& !\CExtranet::IsIntranetUser(SITE_ID, $this->getUserId())
-			)
+			if (Loader::includeModule('intranet') && Loader::includeModule('extranet'))
 			{
-				$this->isExtranet = true;
+				$this->isExtranet = !(\Bitrix\Intranet\Util::isIntranetUser($this->getUserId()));
 			}
 		}
-
 		return $this->isExtranet;
 	}
 

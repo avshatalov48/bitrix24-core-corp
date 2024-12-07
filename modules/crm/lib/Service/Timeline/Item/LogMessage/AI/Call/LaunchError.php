@@ -25,8 +25,16 @@ final class LaunchError extends Base
 			return null;
 		}
 
-		$statusTag = new Tag(Loc::getMessage('CRM_TIMELINE_LOG_LAUNCH_ERROR_TAG'), Tag::TYPE_FAILURE);
+		$statusTagLocCode = 'CRM_TIMELINE_LOG_LAUNCH_ERROR_TAG';
 		$errorText = empty($settings['ERRORS']) ? '' : implode(PHP_EOL, $settings['ERRORS']);
+		$engineId = $settings['ENGINE_ID'] ?? 0;
+		if ($engineId !== 0)
+		{
+			$statusTagLocCode = 'CRM_TIMELINE_LOG_LAUNCH_ERROR_THIRDPARTY_TAG';
+			$errorText = Loc::getMessage('CRM_TIMELINE_LOG_LAUNCH_ERROR_THIRDPARTY_TAG_TOOLTIP');
+		}
+		
+		$statusTag = new Tag(Loc::getMessage($statusTagLocCode), Tag::TYPE_FAILURE);
 		if (!empty($errorText))
 		{
 			$statusTag->setHint($errorText);

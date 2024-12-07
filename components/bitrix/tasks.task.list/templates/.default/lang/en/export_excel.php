@@ -21,6 +21,7 @@ $MESS["TASKS_EXCEL_DATE_START"] = "Start date";
 $MESS["TASKS_EXCEL_DEADLINE"] = "Deadline";
 $MESS["TASKS_EXCEL_DESCRIPTION"] = "Description";
 $MESS["TASKS_EXCEL_END_DATE_PLAN"] = "Planned end date";
+$MESS["TASKS_EXCEL_FLOW"] = "Flow";
 $MESS["TASKS_EXCEL_GROUP_ID"] = "Group";
 $MESS["TASKS_EXCEL_GROUP_NAME"] = "Project";
 $MESS["TASKS_EXCEL_ID"] = "ID";

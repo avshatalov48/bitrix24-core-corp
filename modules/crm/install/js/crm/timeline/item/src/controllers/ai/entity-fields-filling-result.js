@@ -103,7 +103,7 @@ export class EntityFieldsFillingResult extends Base
 				const { showSendFeedbackPopup } = exports;
 
 				/** @see BX.Crm.AI.Feedback.showSendFeedbackPopup */
-				showSendFeedbackPopup(mergeUuid, actionData.ownerTypeId, activityId);
+				showSendFeedbackPopup(mergeUuid, actionData.ownerTypeId, activityId, actionData.activityDirection);
 			})
 			.catch(() => {
 				console.error('Cant load showSendFeedbackPopup extension');

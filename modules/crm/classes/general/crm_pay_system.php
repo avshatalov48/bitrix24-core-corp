@@ -1429,7 +1429,10 @@ class CCrmPaySystem
 				'SORT' => "ASC",
 				'NAME' => 'ASC'
 			],
-			'cache' => ['ttl' => 864000]
+			'cache' => [
+				'ttl' => 864000,
+				'cache_joins' => true
+			]
 		]);
 
 		while ($arPT = $dbRes->fetch())
@@ -1529,7 +1532,7 @@ class CCrmPaySystem
 		{
 			$matches = array();
 			$curPsLocalization = '';
-			if (preg_match('/^(bill)(\w+)*$/i'.BX_UTF_PCRE_MODIFIER, $psaCode, $matches))
+			if (preg_match('/^(bill)(\w+)*$/iu', $psaCode, $matches))
 			{
 				$psType = $matches[1];
 				if (count($matches) === 2)
@@ -1541,7 +1544,7 @@ class CCrmPaySystem
 					$curPsLocalization = mb_substr($matches[2], 0, 2);
 				}
 			}
-			else if (preg_match('/^(quote)(_\w+)*$/i'.BX_UTF_PCRE_MODIFIER, $psaCode, $matches))
+			else if (preg_match('/^(quote)(_\w+)*$/iu', $psaCode, $matches))
 			{
 				$psType = $matches[1];
 				if (count($matches) === 3 && mb_strlen($matches[2]) > 2)
@@ -1768,12 +1771,12 @@ class CCrmPaySystem
 		if (is_array($arPaySystems))
 			foreach ($arPaySystems as $paySystem)
 			{
-				if (preg_match('/quote(_\w+)*$/i'.BX_UTF_PCRE_MODIFIER, $paySystem['~PSA_ACTION_FILE']))
+				if (preg_match('/quote(_\w+)*$/iu', $paySystem['~PSA_ACTION_FILE']))
 					continue;
 
 				if ($fullList
-					|| preg_match('/bill(\w+)*$/i'.BX_UTF_PCRE_MODIFIER, $paySystem['~PSA_ACTION_FILE'])
-					|| preg_match('/document(\w+)*$/i'.BX_UTF_PCRE_MODIFIER, $paySystem['~PSA_ACTION_FILE'])
+					|| preg_match('/bill(\w+)*$/iu', $paySystem['~PSA_ACTION_FILE'])
+					|| preg_match('/document(\w+)*$/iu', $paySystem['~PSA_ACTION_FILE'])
 				)
 				{
 					$arItems[$paySystem['~ID']] = $paySystem['~NAME'];
@@ -2006,7 +2009,7 @@ class CCrmPaySystem
 						&& $isCountryToShow))
 				{
 					$matches = array();
-					if (preg_match('/'.$addressPrefix.'_(\d+)/'.BX_UTF_PCRE_MODIFIER, $fieldName, $matches))
+					if (preg_match('/'.$addressPrefix.'_(\d+)/u', $fieldName, $matches))
 					{
 						$addressType = (int)$matches[1];
 						if (isset($addressTitleList[$addressType]))

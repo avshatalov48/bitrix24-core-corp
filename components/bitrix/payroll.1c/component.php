@@ -18,7 +18,6 @@ if (CModule::IncludeModule('webservice'))
 		return;
 	}
 	$arResult = Array();
-	$isUTF=(ToUpper(SITE_CHARSET) == "UTF-8");
 	$NeedActivation = false;
 	$ID = $USER->GetID();
 	$arActive = CUserOptions::GetOption($this->__name, "ACTIVATION", "N", $ID);
@@ -40,8 +39,8 @@ if (CModule::IncludeModule('webservice'))
 
 		$arPort=(intval($arParams["PR_PORT_".$arOrg]<=0))? 80: intval($arParams["PR_PORT_".$arOrg]);
 		$arTimeout=(intval($arParams["PR_TIMEOUT"]<=0))? 10: intval($arParams["PR_TIMEOUT"]);
-		$arLogin=($isUTF)?$arParams["PR_LOGIN_".$arOrg]:$APPLICATION->ConvertCharset($arParams["PR_LOGIN_".$arOrg],SITE_CHARSET,"UTF-8");
-		$arPassword=($isUTF)?$arParams["PR_PASSWORD_".$arOrg]:$APPLICATION->ConvertCharset($arParams["PR_PASSWORD_".$arOrg],SITE_CHARSET,"UTF-8");
+		$arLogin=$arParams["PR_LOGIN_".$arOrg];
+		$arPassword=$arParams["PR_PASSWORD_".$arOrg];
 		$arWebServiceUrl=$arParams["PR_URL_".$arOrg];
 
 		if($arWebServiceUrl == '')
@@ -50,13 +49,13 @@ if (CModule::IncludeModule('webservice'))
 			return;
 		}
 
-		$arParams["PR_NAMESPACE"]=($arParams["PR_NAMESPACE"]=="")? "http://www.1c-bitrix.ru": $arParams["PR_NAMESPACE"];
+		$arParams["PR_NAMESPACE"]=($arParams["PR_NAMESPACE"]=="")? "https://www.1c-bitrix.ru": $arParams["PR_NAMESPACE"];
 		$arParams["CACHE_TIME"]=(intval($arParams['CACHE_TIME'])<0)? 3600: intval($arParams['CACHE_TIME']);
 		$arSoapParams = Array(
 					GetMessage("SOAP_PORTAL_EMP_ID")=>$USER->GetID(),
 					GetMessage("SOAP_IP") => $_SERVER['REMOTE_ADDR'],
 					GetMessage("SOAP_DATETIME") => date("c"),
-					GetMessage("SOAP_LOGIN") => ($isUTF)?$USER->GetLogin():$APPLICATION->ConvertCharset($USER->GetLogin(),SITE_CHARSET,"UTF-8"),
+					GetMessage("SOAP_LOGIN") => $USER->GetLogin(),
 					GetMessage("SOAP_ADDINFO")=>$_SERVER["HTTP_HOST"]
 				);
 		$arActionType=$_REQUEST["ACTIONTYPE"];
@@ -119,12 +118,6 @@ if (CModule::IncludeModule('webservice'))
 				);
 			$request_body=$arSoapRequest->payload();
 
-			if (!$isUTF)
-			{
-				$request_body=$APPLICATION->ConvertCharset($request_body,SITE_CHARSET,"UTF-8");
-				$arSoapMethod=$APPLICATION->ConvertCharset($arSoapMethod,SITE_CHARSET,"UTF-8");
-			}
-
 			$req=new CHTTP;
 			$arUrl=$req->ParseURL($arWebServiceUrl);
 			$arUrl["port"]= $arPort;
@@ -159,9 +152,6 @@ if (CModule::IncludeModule('webservice'))
 						//removing BOM
 					if(mb_substr($resFormHtml, 0, 3) == pack("CCC", 0xef, 0xbb, 0xbf))
 						$resFormHtml = mb_substr($resFormHtml, 3);
-
-					if (!$isUTF)
-						$resFormHtml=$APPLICATION->ConvertCharset($resFormHtml,"UTF-8",SITE_CHARSET);
 
 					if ($arActionType == "ACTIVATION")
 					{

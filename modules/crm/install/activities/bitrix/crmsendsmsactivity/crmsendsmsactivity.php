@@ -5,6 +5,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use Bitrix\Crm\Automation\ClientCommunications\ClientCommunications;
 use Bitrix\Crm\Integration\SmsManager;
 
 class CBPCrmSendSmsActivity extends CBPActivity
@@ -245,12 +246,16 @@ class CBPCrmSendSmsActivity extends CBPActivity
 			'MessageText' => (string)$arCurrentValues["message_text"],
 			'ProviderId' => (string)$arCurrentValues["provider_id"],
 			'RecipientType' => (string)$arCurrentValues["recipient_type"],
-			'RecipientUser' => CBPHelper::UsersStringToArray($arCurrentValues["recipient_user"], $documentType,
+			'RecipientUser' => CBPHelper::UsersStringToArray(($arCurrentValues["recipient_user"] ?? ''), $documentType,
 				$errors),
 			'PhoneType' => (string)$arCurrentValues["phone_type"],
 		];
 
-		if ($arCurrentValues['provider_id'] === '' && static::isExpression($arCurrentValues['provider_id_text']))
+		if (
+			isset($arCurrentValues['provider_id'])
+			&& $arCurrentValues['provider_id'] === ''
+			&& static::isExpression($arCurrentValues['provider_id_text'])
+		)
 		{
 			$properties['ProviderId'] = $arCurrentValues['provider_id_text'];
 		}
@@ -306,74 +311,16 @@ class CBPCrmSendSmsActivity extends CBPActivity
 
 	private function getEntityPhoneCommunication($typeId, $id, $phoneType = null)
 	{
-		if ($typeId == \CCrmOwnerType::Deal)
+		$communications = [];
+		if ($typeId > 0 && $id > 0)
 		{
-			$communications = $this->getDealCommunications($id);
-		}
-		elseif ($typeId == \CCrmOwnerType::Lead)
-		{
-			$communications = $this->getLeadCommunications($id);
-		}
-		elseif ($typeId == \CCrmOwnerType::Order)
-		{
-			$communications = $this->getOrderCommunications($id);
-		}
-		elseif ($typeId == \CCrmOwnerType::Contact || $typeId == \CCrmOwnerType::Company)
-		{
-			$communications = $this->getCommunicationsFromFM($typeId, $id);
-		}
-		else
-		{
-			$communications = [];
-			$factory = \Bitrix\Crm\Service\Container::getInstance()->getFactory($typeId);
-			if ($factory)
-			{
-				$item = $factory->getItem((int)$id);
-				if ($item)
-				{
-					$communications = $this->getCommunicationsFromItem($item);
-				}
-			}
+			$clientCommunications = new ClientCommunications((int)$typeId, (int)$id, CCrmFieldMulti::PHONE);
+			$communications = $clientCommunications->getFirstFilled(is_string($phoneType) ? $phoneType : null);
 		}
 
-		if ($phoneType && $communications)
-		{
-			$communications = array_filter($communications, function ($value) use ($phoneType) {
-				return ($value['VALUE_TYPE'] === $phoneType);
-			});
-		}
-
-		if (is_array($communications))
-		{
-			$communications = array_slice($communications, 0, 1);
-		}
+		$communications = array_slice($communications, 0, 1);
 
 		return $communications ? $communications[0] : null;
-	}
-
-	private function getCommunicationsFromItem(\Bitrix\Crm\Item $item): array
-	{
-		$contactBindings = $item->getContactBindings();
-		$communications = [];
-		foreach ($contactBindings as $binding)
-		{
-			$contactId = (int)($binding['CONTACT_ID'] ?? 0);
-			if ($contactId > 0)
-			{
-				$communications = $this->getCommunicationsFromFM(CCrmOwnerType::Contact, $contactId);
-				if (!empty($communications))
-				{
-					break;
-				}
-			}
-		}
-
-		if (empty($communications) && $item->getCompanyId() > 0)
-		{
-			$communications = $this->getCommunicationsFromFM(CCrmOwnerType::Company, $item->getCompanyId());
-		}
-
-		return $communications;
 	}
 
 	private function getUserPhoneNumber($user)
@@ -395,141 +342,6 @@ class CBPCrmSendSmsActivity extends CBPActivity
 		}
 
 		return [$phoneNumber, $userId];
-	}
-
-	private function getDealCommunications($id)
-	{
-		$communications = [];
-
-		$entity = CCrmDeal::GetByID($id, false);
-		if (!$entity)
-		{
-			return [];
-		}
-
-		$entityContactID = isset($entity['CONTACT_ID']) ? intval($entity['CONTACT_ID']) : 0;
-		$entityCompanyID = isset($entity['COMPANY_ID']) ? intval($entity['COMPANY_ID']) : 0;
-
-		if ($entityContactID > 0)
-		{
-			$communications = $this->getCommunicationsFromFM(CCrmOwnerType::Contact, $entityContactID);
-		}
-
-		if (empty($communications))
-		{
-			$dealContactIds = \Bitrix\Crm\Binding\DealContactTable::getDealContactIDs($id);
-			if ($dealContactIds)
-			{
-				foreach ($dealContactIds as $contId)
-				{
-					if ($contId !== $entityContactID)
-					{
-						$communications = $this->getCommunicationsFromFM(CCrmOwnerType::Contact, $contId);
-						if ($communications)
-						{
-							break;
-						}
-					}
-				}
-			}
-		}
-
-		if (empty($communications) && $entityCompanyID > 0)
-		{
-			$communications = $this->getCommunicationsFromFM(CCrmOwnerType::Company, $entityCompanyID);
-		}
-
-		return $communications;
-	}
-
-	private function getOrderCommunications($id)
-	{
-		$communications = [];
-
-		$dbRes = \Bitrix\Crm\Order\ContactCompanyCollection::getList([
-			'select' => ['ENTITY_ID', 'ENTITY_TYPE_ID'],
-			'filter' => [
-				'=ORDER_ID' => $id,
-				'@ENTITY_TYPE_ID' => [\CCrmOwnerType::Contact, \CCrmOwnerType::Company],
-				'IS_PRIMARY' => 'Y',
-			],
-			'order' => ['ENTITY_TYPE_ID' => 'ASC'],
-		]);
-		while ($row = $dbRes->fetch())
-		{
-			$communications = $this->getCommunicationsFromFM($row['ENTITY_TYPE_ID'], $row['ENTITY_ID']);
-			if ($communications)
-			{
-				break;
-			}
-		}
-
-		return $communications;
-	}
-
-	private function getLeadCommunications($id)
-	{
-		$communications = $this->getCommunicationsFromFM(CCrmOwnerType::Lead, $id);
-
-		if ($communications)
-		{
-			return $communications;
-		}
-
-		$entity = CCrmLead::GetByID($id, false);
-		if (!$entity)
-		{
-			return [];
-		}
-
-		$entityContactID = isset($entity['CONTACT_ID']) ? intval($entity['CONTACT_ID']) : 0;
-		$entityCompanyID = isset($entity['COMPANY_ID']) ? intval($entity['COMPANY_ID']) : 0;
-
-		if ($entityContactID > 0)
-		{
-			$communications = $this->getCommunicationsFromFM(CCrmOwnerType::Contact, $entityContactID);
-		}
-
-		if (empty($communications) && $entityCompanyID > 0)
-		{
-			$communications = $this->getCommunicationsFromFM(CCrmOwnerType::Company, $entityCompanyID);
-		}
-
-		return $communications;
-	}
-
-	private function getCommunicationsFromFM($entityTypeId, $entityId)
-	{
-		$entityTypeName = CCrmOwnerType::ResolveName($entityTypeId);
-		$communications = [];
-
-		$iterator = CCrmFieldMulti::GetList(
-			['ID' => 'asc'],
-			[
-				'ENTITY_ID' => $entityTypeName,
-				'ELEMENT_ID' => $entityId,
-				'TYPE_ID' => 'PHONE',
-			]
-		);
-
-		while ($row = $iterator->fetch())
-		{
-			if (empty($row['VALUE']))
-			{
-				continue;
-			}
-
-			$communications[] = [
-				'ENTITY_ID' => $entityId,
-				'ENTITY_TYPE_ID' => $entityTypeId,
-				'ENTITY_TYPE' => $entityTypeName,
-				'TYPE' => 'PHONE',
-				'VALUE' => $row['VALUE'],
-				'VALUE_TYPE' => $row['VALUE_TYPE'],
-			];
-		}
-
-		return $communications;
 	}
 
 	private static function getProvidersListOld()
@@ -727,32 +539,37 @@ class CBPCrmSendSmsActivity extends CBPActivity
 			'application_token' => \CRestUtil::getApplicationToken($application),
 		];
 
-		$queryItems = [
-			\Bitrix\Rest\Sqs::queryItem(
-				$provider['APP_ID'],
-				$provider['HANDLER'],
-				[
-					'workflow_id' => $this->getWorkflowInstanceId(),
-					'type' => $provider['TYPE'],
-					'code' => $provider['CODE'],
-					'document_id' => $this->GetDocumentId(),
-					'document_type' => $this->GetDocumentType(),
-					'properties' => [
-						'phone_number' => $phoneNumber,
-						'message_text' => $messageText,
-					],
-					'ts' => time(),
+		$queryItem = \Bitrix\Rest\Sqs::queryItem(
+			$provider['APP_ID'],
+			$provider['HANDLER'],
+			[
+				'workflow_id' => $this->getWorkflowInstanceId(),
+				'type' => $provider['TYPE'],
+				'code' => $provider['CODE'],
+				'document_id' => $this->GetDocumentId(),
+				'document_type' => $this->GetDocumentType(),
+				'properties' => [
+					'phone_number' => $phoneNumber,
+					'message_text' => $messageText,
 				],
-				$auth,
-				[
-					"sendAuth" => true,
-					"sendRefreshToken" => false,
-					"category" => \Bitrix\Rest\Sqs::CATEGORY_BIZPROC,
-				]
-			),
-		];
+				'ts' => time(),
+			],
+			$auth,
+			[
+				"sendAuth" => true,
+				"sendRefreshToken" => false,
+				"category" => \Bitrix\Rest\Sqs::CATEGORY_BIZPROC,
+			],
+		);
 
-		\Bitrix\Rest\OAuthService::getEngine()->getClient()->sendEvent($queryItems);
+		if (is_callable([\Bitrix\Rest\Event\Sender::class, 'queueEvent']))
+		{
+			\Bitrix\Rest\Event\Sender::queueEvent($queryItem);
+		}
+		else
+		{
+			\Bitrix\Rest\OAuthService::getEngine()->getClient()->sendEvent([$queryItem]);
+		}
 
 		return true;
 	}
@@ -766,6 +583,11 @@ class CBPCrmSendSmsActivity extends CBPActivity
 
 	private function logDebug()
 	{
+		if (!$this->workflow->isDebug())
+		{
+			return;
+		}
+
 		$debugInfo = $this->getDebugInfo();
 
 		if ($debugInfo['RecipientType']['TrackValue'] !== static::RECIPIENT_TYPE_USER)

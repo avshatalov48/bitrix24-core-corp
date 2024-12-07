@@ -6,9 +6,14 @@ jn.define('tasks/statemanager/redux/slices/tasks/mapper', (require, exports, mod
 	const { selectGroupById } = require('tasks/statemanager/redux/slices/groups');
 	const store = require('statemanager/redux/store');
 
+	/**
+	 * @param {TaskReduxModel} task
+	 * @returns {object}
+	 */
 	const mapStateToTaskModel = (task) => {
 		return {
 			...task,
+			temporaryId: task.guid,
 			title: task.name,
 			parsedDescription: task.parsedDescription,
 			group: selectGroupById(store.getState(), task.groupId),
@@ -16,7 +21,7 @@ jn.define('tasks/statemanager/redux/slices/tasks/mapper', (require, exports, mod
 			responsible: mapUser(usersSelector.selectById(store.getState(), task.responsible)),
 			accomplicesData: mapUsersCollection(task.accomplices),
 			auditorsData: mapUsersCollection(task.auditors),
-			action: task.actions,
+			action: task.actionsOld,
 			isPinned: task.isPinned ? 'Y' : 'N',
 			isMuted: task.isMuted ? 'Y' : 'N',
 			taskRequireResult: task.isResultRequired ? 'Y' : 'N',

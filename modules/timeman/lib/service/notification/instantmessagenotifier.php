@@ -9,6 +9,7 @@ class InstantMessageNotifier
 		{
 			return false;
 		}
-		return \CIMMessenger::add($notificationParameters->convertFieldsToArray());
+
+		return \CIMNotify::Add($notificationParameters->convertFieldsToArray());
 	}
 }

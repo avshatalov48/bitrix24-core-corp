@@ -1,5 +1,6 @@
 import {Loc} from 'main.core';
 import {Manager} from 'salescenter.manager';
+import { EventEmitter } from 'main.core.events';
 
 export default {
 	data()
@@ -41,9 +42,15 @@ export default {
 		{
 			Manager.openConnectedSite(true);
 		},
-		openConnectedSite()
+		publishConnectedSite()
 		{
-			Manager.openConnectedSite();
+			this.$root.$app.publishShop();
+		},
+		confirmPhoneNumber()
+		{
+			EventEmitter.subscribeOnce('BX.Salescenter.App::onPhoneConfirmed', () => this.$root.$app.publishShop());
+
+			this.$root.$app.confirmPhoneNumber();
 		},
 	},
 	computed: {
@@ -55,19 +62,33 @@ export default {
 		{
 			return this.$root.$app.isOrderPublicUrlExists;
 		},
+		isPhoneConfirmed()
+		{
+			return this.$root.$app.isPhoneConfirmed;
+		},
 	},
 	template: `
 		<div class="salescenter-app-page-content salescenter-app-start-wrapper">
 			<div class="ui-title-1 ui-text-center ui-color-medium" style="margin-bottom: 20px;">
-				${Loc.getMessage('SALESCENTER_INFO_TEXT_TOP_2')}
+				${Loc.getMessage('SALESCENTER_INFO_TEXT_TOP_2_MSGVER_1')}
 			</div>
 			<div class="ui-hr ui-mv-25"></div>
-			<template v-if="isOrderPublicUrlExists">
+			<template v-if="isOrderPublicUrlExists && !isPhoneConfirmed">
+				<div class="salescenter-title-5 ui-title-5 ui-text-center ui-color-medium">
+					${Loc.getMessage('SALESCENTER_PHONE_CONFIRMATION_INFO_TEXT_BOTTOM_PUBLIC')}
+				</div>
+				<div style="padding-top: 5px;" class="ui-text-center">
+					<div class="ui-btn ui-btn-primary ui-btn-lg" @click="confirmPhoneNumber">
+						${Loc.getMessage('SALESCENTER_PHONE_CONFIRMATION_INFO_CONFIRM')}
+					</div>
+				</div>
+			</template>
+			<template v-else-if="isOrderPublicUrlExists">
 				<div class="salescenter-title-5 ui-title-5 ui-text-center ui-color-medium">
 					${Loc.getMessage('SALESCENTER_INFO_TEXT_BOTTOM_PUBLIC')}
 				</div>
 				<div style="padding-top: 5px;" class="ui-text-center">
-					<div class="ui-btn ui-btn-primary ui-btn-lg" @click="openConnectedSite">
+					<div class="ui-btn ui-btn-primary ui-btn-lg" @click="publishConnectedSite">
 						${Loc.getMessage('SALESCENTER_INFO_PUBLIC')}
 					</div>
 				</div>

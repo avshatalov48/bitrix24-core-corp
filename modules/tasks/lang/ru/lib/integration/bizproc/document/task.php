@@ -7,9 +7,9 @@ $MESS["TASKS_BP_DOCUMENT_IS_IMPORTANT"] = "Важная задача";
 $MESS["TASKS_BP_DOCUMENT_STATUS"] = "Статус";
 $MESS["TASKS_BP_DOCUMENT_STATUS_IN_PROGRESS"] = "Выполняется";
 $MESS["TASKS_BP_DOCUMENT_STATUS_DEFERRED"] = "Отложена";
-$MESS["TASKS_BP_DOCUMENT_STATUS_SUPPOSEDLY_COMPLETED"] = "Ждет контроля";
+$MESS["TASKS_BP_DOCUMENT_STATUS_SUPPOSEDLY_COMPLETED"] = "Ждёт контроля";
 $MESS["TASKS_BP_DOCUMENT_STATUS_COMPLETED"] = "Завершена";
-$MESS["TASKS_BP_DOCUMENT_STATUS_PENDING_1"] = "Ждет выполнения";
+$MESS["TASKS_BP_DOCUMENT_STATUS_PENDING_1"] = "Ждёт выполнения";
 $MESS["TASKS_BP_DOCUMENT_RESPONSIBLE_ID"] = "Ответственный";
 $MESS['TASKS_BP_DOCUMENT_ASSIGNEE_ID'] = 'Исполнитель';
 $MESS["TASKS_BP_DOCUMENT_DATE_START"] = "Дата начала";
@@ -57,3 +57,5 @@ $MESS["TASKS_BP_DOCUMENT_COMMENT_RESULT_LAST"] = "Результат (после
 $MESS["TASKS_BP_DOCUMENT_SCRUM_OWNER_ROLE"] = "Владелец продукта";
 $MESS["TASKS_BP_DOCUMENT_SCRUM_MASTER_ROLE"] = "Скрам-мастер";
 $MESS["TASKS_BP_DOCUMENT_SCRUM_TEAM_ROLE"] = "Команда разработки";
+
+$MESS['TASKS_FLOW_NOTIFICATION_MESSAGE_HALF_TIME_BEFORE_EXPIRE_MESSAGE'] = 'Осталась половина срока на выполнение задачи [url=/workgroups/group/{groupId}/tasks/task/view/{taskId}/][#{taskId}] {taskTitle}[/url]. Убедитесь, что успеваете завершить работу вовремя';

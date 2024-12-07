@@ -7,11 +7,13 @@ jn.define('layout/ui/user/avatar/src/redux-avatar', (require, exports, module) =
 	const { connect } = require('statemanager/redux/connect');
 
 	const mapStateToProps = (state, ownProps) => {
-		const { id, fullName, login, avatarSize100 } = usersSelector.selectById(state, Number(ownProps.id)) || {};
+		const { id, name, lastName, avatarSize100 } = usersSelector.selectById(state, Number(ownProps.id)) || {};
+
+		const fullName = name && lastName ? `${name} ${lastName}` : null;
 
 		return {
 			id,
-			name: fullName || login,
+			name: fullName,
 			image: avatarSize100,
 		};
 	};

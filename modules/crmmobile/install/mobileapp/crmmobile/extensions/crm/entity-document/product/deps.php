@@ -4,7 +4,6 @@ return [
 	'extensions' => [
 		'apptheme',
 		'utils/object',
-		'layout/ui/amount',
 		'layout/ui/product-grid',
 		'layout/ui/product-grid/components/inline-sku-tree',
 		'layout/ui/product-grid/components/product-card',

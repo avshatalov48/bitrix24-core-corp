@@ -3,6 +3,7 @@
  */
 jn.define('crm/tunnel-list/item', (require, exports, module) => {
 	const { Loc } = require('loc');
+	const { ContextMenu } = require('layout/ui/context-menu');
 	const { CategorySelectActions } = require('crm/category-list/actions');
 	const { Robot } = require('crm/tunnel-list/item/robot');
 	const { confirmDestructiveAction } = require('alert');

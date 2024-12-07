@@ -56,6 +56,7 @@ final class TasksTaskHitStateStructure extends Structure
 						},
 					],
 					'GROUP_ID' => ['VALUE' => StructureChecker::TYPE_INT_POSITIVE],
+					'FLOW_ID' => ['VALUE' => StructureChecker::TYPE_INT_POSITIVE],
 					'TITLE' => ['VALUE' => StructureChecker::TYPE_STRING],
 					'DESCRIPTION' => ['VALUE' => StructureChecker::TYPE_STRING],
 					Integration\CRM\UserField::getMainSysUFCode() => ['VALUE' => StructureChecker::TYPE_STRING],

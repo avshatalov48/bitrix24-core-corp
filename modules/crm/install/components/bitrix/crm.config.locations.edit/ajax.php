@@ -89,7 +89,6 @@ else
 	$arReturn['ERROR'][] = GetMessage('CRM_LOC_EDT_ERROR_ACCESS_DENIED');
 }
 
-$arReturn = $APPLICATION->ConvertCharsetArray($arReturn, SITE_CHARSET, 'utf-8');
 echo json_encode($arReturn);
 
 require_once($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/include/epilog_after.php");

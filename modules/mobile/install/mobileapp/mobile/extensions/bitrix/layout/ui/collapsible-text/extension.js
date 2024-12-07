@@ -2,8 +2,7 @@
  * @module layout/ui/collapsible-text
  */
 jn.define('layout/ui/collapsible-text', (require, exports, module) => {
-
-	const { Color } = require('tokens');
+	const AppTheme = require('apptheme');
 	const { Loc } = require('loc');
 	const { BBCodeParser } = require('bbcode/parser');
 	const { Type } = require('type');
@@ -16,17 +15,20 @@ jn.define('layout/ui/collapsible-text', (require, exports, module) => {
 	{
 		/**
 		 * @param {Object} props
-		 * @param {Object} props.style
+		 * @param {Object} [props.style]
 		 * @param {string} props.value
+		 * @param {string|undefined} [props.placeholder]
 		 * @param {boolean} [props.bbCodeMode = false]
+		 * @param {boolean} [props.useBBCodeEditor = false]
+		 * @param {boolean} [props.canExpand = true]
 		 * @param {number} [props.maxLettersCount = 180]
 		 * @param {number} [props.maxNewLineCount = 4]
-		 * @param {Object} props.containerStyle
-		 * @param {Function} props.onLongClick
-		 * @param {Function} props.onLinkClick
-		 * @param {onClick} props.onClick
-		 * @param {string} props.testId
-		*/
+		 * @param {Object} [props.containerStyle]
+		 * @param {Function} [props.onLongClick]
+		 * @param {Function} [props.onLinkClick]
+		 * @param {onClick} [props.onClick]
+		 * @param {string} [props.testId]
+		 */
 		constructor(props)
 		{
 			super(props);
@@ -43,12 +45,12 @@ jn.define('layout/ui/collapsible-text', (require, exports, module) => {
 
 		get maxLettersCount()
 		{
-			return this.props.maxLettersCount || 180;
+			return this.props.maxLettersCount ?? 180;
 		}
 
 		get maxNewLineCount()
 		{
-			return this.props.maxNewLineCount || 4;
+			return this.props.maxNewLineCount ?? 4;
 		}
 
 		get bbCodeMode()
@@ -63,35 +65,42 @@ jn.define('layout/ui/collapsible-text', (require, exports, module) => {
 
 		render()
 		{
-			const { style, onLinkClick, testId, containerStyle, onClick } = this.props;
+			const {
+				style,
+				containerStyle,
+				onClick,
+				onLinkClick,
+				testId,
+				useBBCodeEditor = false,
+				canExpand = true,
+			} = this.props;
 
 			return View(
 				{
+					testId: `${testId}_container`,
 					style: {
 						flexDirection: 'row',
 						flexGrow: 1,
 						...containerStyle,
 					},
 					onClick: () => {
-						if (onClick && !this.isExpandable())
+						if (onClick && (useBBCodeEditor || !canExpand || !this.isExpandable()))
 						{
 							onClick();
 						}
-						else
+						else if (canExpand)
 						{
 							this.toggleExpand();
 						}
 					},
 					onLongClick: () => this.handleContentLongClick(),
 				},
-				BBCodeText(
-					{
-						style,
-						value: this.getPreparedText(),
-						onLinkClick: this.bbCodeMode ? onLinkClick : null,
-						testId,
-					},
-				),
+				BBCodeText({
+					style,
+					value: this.getPreparedText(),
+					onLinkClick: this.bbCodeMode ? onLinkClick : null,
+					testId,
+				}),
 			);
 		}
 
@@ -115,11 +124,13 @@ jn.define('layout/ui/collapsible-text', (require, exports, module) => {
 
 		getTextWithButton()
 		{
+			const buttonColor = this.props.moreButtonColor ?? AppTheme.colors.base3;
+
 			const buttonText = this.state.expanded
 				? ` ${Loc.getMessage('COLLAPSIBLE_STRING_VIEW_LESS')}`
 				: ` ${Loc.getMessage('COLLAPSIBLE_STRING_VIEW_MORE')}`;
 
-			const button = `[color=${Color.base3}]${buttonText}[/color]`;
+			const button = `[color=${buttonColor}]${buttonText}[/color]`;
 
 			if (this.state.expanded)
 			{
@@ -213,7 +224,9 @@ jn.define('layout/ui/collapsible-text', (require, exports, module) => {
 	CollapsibleText.propTypes = {
 		style: PropTypes.object,
 		value: PropTypes.string,
+		useBBCodeEditor: PropTypes.bool,
 		bbCodeMode: PropTypes.bool,
+		canExpand: PropTypes.bool,
 		maxLettersCount: PropTypes.number,
 		maxNewLineCount: PropTypes.number,
 		containerStyle: PropTypes.object,
@@ -221,7 +234,6 @@ jn.define('layout/ui/collapsible-text', (require, exports, module) => {
 		onLinkClick: PropTypes.func,
 		onClick: PropTypes.func,
 		testId: PropTypes.string,
-
 	};
 
 	module.exports = {

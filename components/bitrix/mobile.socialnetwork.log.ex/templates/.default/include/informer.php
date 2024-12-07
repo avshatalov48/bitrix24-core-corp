@@ -14,7 +14,7 @@ use Bitrix\Main\Localization\Loc;
 	?></span><?php
 ?></div><?php
 ?><div class="lenta-notifier" id="lenta_notifier_2"><?php
-	?><span class="lenta-notifier-text"><?= Loc::getMessage('MOBILE_LOG_RELOAD_NEEDED2') ?></span><?php
+	?><span class="lenta-notifier-text"><?= Loc::getMessage('MOBILE_LOG_RELOAD_NEEDED3') ?></span><?php
 ?></div><?php
 ?><div class="lenta-notifier" id="lenta_refresh_error"><?php
 	?><span class="lenta-notifier-text"><?= Loc::getMessage('MOBILE_LOG_RELOAD_ERROR') ?></span><?php

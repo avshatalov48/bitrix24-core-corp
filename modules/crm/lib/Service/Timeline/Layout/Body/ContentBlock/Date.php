@@ -12,6 +12,7 @@ class Date extends ContentBlock implements TextPropertiesInterface
 	protected ?DateTime $date = null;
 	private bool $withTime = true;
 	private ?string $format = null;
+	private ?int $duration = null;
 
 	public function isWithTime(): bool
 	{
@@ -54,14 +55,27 @@ class Date extends ContentBlock implements TextPropertiesInterface
 		return $this;
 	}
 
+	public function getDuration(): ?int
+	{
+		return $this->duration;
+	}
+
+	public function setDuration(?int $duration): self
+	{
+		$this->duration = $duration;
+
+		return $this;
+	}
+
 	protected function getProperties(): array
 	{
 		return array_merge(
 			$this->getTextProperties(),
 			[
-				'value' => $this->getDate()->getTimestamp(),
+				'value' => $this->getDate()?->getTimestamp(),
 				'withTime' => $this->isWithTime(),
 				'format' => $this->getFormat(),
+				'duration' => $this->getDuration(),
 			]
 		);
 	}

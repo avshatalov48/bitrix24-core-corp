@@ -315,7 +315,7 @@ class CrmOrders extends CrmBase
 			$subFilter['ID'] = (int)$search;
 			$subFilter['%ACCOUNT_NUMBER'] = $search;
 		}
-		else if (preg_match('/( . *)\[(\d+?)\]/i' . BX_UTF_PCRE_MODIFIER, $search, $matches))
+		else if (preg_match('/( . *)\[(\d+?)\]/iu', $search, $matches))
 		{
 			$subFilter['ID'] = (int)$matches[2];
 			$subFilter['%ACCOUNT_NUMBER'] = trim($matches[1]);

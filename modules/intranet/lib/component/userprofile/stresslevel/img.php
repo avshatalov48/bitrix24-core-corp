@@ -140,20 +140,6 @@ class Img implements \Bitrix\Main\Errorable
 			$textType->setTextAntialias(true);
 			$textType->setFontSize($factor*12);
 
-			$error = "";
-			if (LANG_CHARSET != "UTF-8")
-			{
-				$textTypeValue = \Bitrix\Main\Text\Encoding::convertEncoding($textTypeValue, LANG_CHARSET, "UTF-8", $error);
-				if (
-					!$textTypeValue
-					&& !empty($error)
-				)
-				{
-					$this->errorCollection[] = new Error('CONVERT_CHARSET_ERROR');
-					return null;
-				}
-			}
-
 			$textMetrics = $canvas->queryFontMetrics($textType, $textTypeValue);
 			$rectangleWidth = $textMetrics['textWidth']/$factor + 40;
 			if ($rectangleWidth < 100)
@@ -287,21 +273,6 @@ class Img implements \Bitrix\Main\Errorable
 		$textComment->setTextAntialias(true);
 		$textComment->setFontSize($factor*$fontSize);
 		$textComment->setTextAlignment(\Imagick::ALIGN_LEFT);
-
-		$error = "";
-		if (LANG_CHARSET != "UTF-8")
-		{
-			$text = \Bitrix\Main\Text\Encoding::convertEncoding($text, LANG_CHARSET, "UTF-8", $error);
-			if (
-				!$text
-				&& !empty($error)
-			)
-			{
-				$this->errorCollection[] = new Error('CONVERT_CHARSET_ERROR');
-				return null;
-			}
-		}
-
 
 		list($lines, $lineHeight) = self::wordWrapAnnotation($canvas, $textComment, $text, $factor*154);
 		$linesCount = count($lines);
@@ -565,20 +536,6 @@ class Img implements \Bitrix\Main\Errorable
 			return false;
 		}
 
-		$error = "";
-		if (LANG_CHARSET != "UTF-8")
-		{
-			$caption = \Bitrix\Main\Text\Encoding::convertEncoding($caption, LANG_CHARSET, "UTF-8", $error);
-			if (
-				!$caption
-				&& !empty($error)
-			)
-			{
-				$this->errorCollection[] = new Error('CONVERT_CHARSET_ERROR');
-				return null;
-			}
-		}
-
 		$imageCaption->annotation($center['x'], $center['y']-$factor*13, $caption);
 		$canvas->drawImage($imageCaption);
 
@@ -632,20 +589,6 @@ class Img implements \Bitrix\Main\Errorable
 		$poweredText = Loc::getMessage('INTRANET_USER_PROFILE_STRESSLEVEL_IMG_POWERED2');
 		if ($poweredText <> '')
 		{
-			$error = "";
-			if (LANG_CHARSET != "UTF-8")
-			{
-				$poweredText = \Bitrix\Main\Text\Encoding::convertEncoding($poweredText, LANG_CHARSET, "UTF-8", $error);
-				if (
-					!$poweredText
-					&& !empty($error)
-				)
-				{
-					$this->errorCollection[] = new Error('CONVERT_CHARSET_ERROR');
-					return null;
-				}
-			}
-
 			$poweredText = ' '.$poweredText;
 			$textMetrics = $canvas->queryFontMetrics($imagePowered, $poweredText);
 

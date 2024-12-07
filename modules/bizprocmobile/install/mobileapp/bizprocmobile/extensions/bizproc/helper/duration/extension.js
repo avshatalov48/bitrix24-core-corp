@@ -2,7 +2,20 @@
  * @module bizproc/helper/duration
 */
 jn.define('bizproc/helper/duration', (require, exports, module) => {
-	const { Duration } = require('utils/date/duration');
+	const { Duration } = require('utils/date');
+
+	const DURATION_UNIT = Object.freeze({
+		SECONDS_IN_MINUTE: 60,
+		HALF_SECONDS_IN_MINUTE: 30,
+		MINUTES_IN_HOUR: 60,
+		HALF_MINUTES_IN_HOUR: 30,
+		HOURS_IN_DAY: 24,
+		HALF_HOURS_IN_DAY: 12,
+		DAYS_IN_MONTH: Duration.getLengthFormat().MONTH / Duration.getLengthFormat().DAY, // controversial point: 31 or 30
+		HALF_DAYS_IN_MONTH: 15,
+		MONTHS_IN_YEAR: 12,
+		HALF_MONTHS_IN_YEAR: 6,
+	});
 
 	/**
 	 * @param {number} timeInSeconds
@@ -18,31 +31,46 @@ jn.define('bizproc/helper/duration', (require, exports, module) => {
 		const seconds = duration.getUnitPropertyModByFormat('s');
 
 		let minutes = duration.getUnitPropertyModByFormat('i');
-		if ((minutes !== 0 && seconds >= 30) || (minutes === 0 && seconds === 60))
+		if (
+			(minutes !== 0 && seconds >= DURATION_UNIT.HALF_SECONDS_IN_MINUTE)
+			|| (minutes === 0 && seconds === DURATION_UNIT.SECONDS_IN_MINUTE)
+		)
 		{
 			minutes += 1;
 		}
 
 		let hours = duration.getUnitPropertyModByFormat('H');
-		if ((hours !== 0 && minutes >= 30) || (hours === 0 && minutes === 60))
+		if (
+			(hours !== 0 && minutes >= DURATION_UNIT.HALF_MINUTES_IN_HOUR)
+			|| (hours === 0 && minutes === DURATION_UNIT.MINUTES_IN_HOUR)
+		)
 		{
 			hours += 1;
 		}
 
 		let days = duration.getUnitPropertyModByFormat('d');
-		if ((days !== 0 && hours >= 12) || (days === 0 && hours === 24))
+		if (
+			(days !== 0 && hours >= DURATION_UNIT.HALF_HOURS_IN_DAY)
+			|| (days === 0 && hours === DURATION_UNIT.HOURS_IN_DAY)
+		)
 		{
 			days += 1;
 		}
 
 		let months = duration.getUnitPropertyModByFormat('m');
-		if ((months !== 0 && days >= 15) || (months === 0 && days === 30))
+		if (
+			(months !== 0 && days >= DURATION_UNIT.HALF_DAYS_IN_MONTH)
+			|| (months === 0 && days === DURATION_UNIT.DAYS_IN_MONTH)
+		)
 		{
 			months += 1;
 		}
 
 		let years = duration.getUnitPropertyModByFormat('Y');
-		if ((years !== 0 && months >= 6) || (years === 0 && months === 12))
+		if (
+			(years !== 0 && months >= DURATION_UNIT.HALF_MONTHS_IN_YEAR)
+			|| (years === 0 && months === DURATION_UNIT.MONTHS_IN_YEAR)
+		)
 		{
 			years += 1;
 		}
@@ -125,14 +153,14 @@ jn.define('bizproc/helper/duration', (require, exports, module) => {
 	 */
 	function roundSeconds(timeInSeconds)
 	{
-		const remainder = (timeInSeconds % 60);
+		const remainder = (timeInSeconds % DURATION_UNIT.SECONDS_IN_MINUTE);
 
-		if (remainder < 30)
+		if (remainder < DURATION_UNIT.HALF_SECONDS_IN_MINUTE)
 		{
 			return timeInSeconds - remainder;
 		}
 
-		return timeInSeconds - remainder + 60;
+		return timeInSeconds - remainder + DURATION_UNIT.SECONDS_IN_MINUTE;
 	}
 
 	/**

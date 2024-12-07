@@ -10,17 +10,7 @@ class AuthLink
 	private const INTENT = 'terminal';
 	private const PRESET = 'preset_terminal';
 
-	public static function get(): ?string
-	{
-		if (Main\Loader::includeModule('mobile'))
-		{
-			return Mobile\Deeplink::getAuthLink(self::getIntent(), Main\Engine\CurrentUser::get()->getId());
-		}
-
-		return null;
-	}
-
-	private static function getIntent(): string
+	public static function getIntent(): string
 	{
 		if (self::isInstallMobileApp())
 		{

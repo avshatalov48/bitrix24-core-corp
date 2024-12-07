@@ -13,6 +13,9 @@ final class Sharing extends Dto
 	/** @var bool */
 	public $isRestriction;
 
+	/** @var bool */
+	public $isPromo;
+
 	/** @var string|null */
 	public $shortUrl;
 
@@ -30,6 +33,7 @@ final class Sharing extends Dto
 		return [
 			'isEnabled' => Type::bool(),
 			'isRestriction' => Type::bool(),
+			'isPromo' => Type::bool(),
 			'shortUrl' => Type::string(),
 			'userInfo' => Type::object(UserInfo::class),
 			'settings' => Type::object(Settings::class),

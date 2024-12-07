@@ -174,7 +174,7 @@ final class Order extends Service\Factory
 		throw new InvalidOperationException('Order factory is not ready to work with items yet');
 	}
 
-	public function getItem(int $id): ?Item
+	public function getItem(int $id, array $fieldsToSelect = ['*']): ?Item
 	{
 		throw new InvalidOperationException('Order factory is not ready to work with items yet');
 	}

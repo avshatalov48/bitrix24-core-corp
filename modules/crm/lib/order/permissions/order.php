@@ -1,5 +1,6 @@
 <?
 namespace Bitrix\Crm\Order\Permissions;
+//@codingStandardsIgnoreFile
 
 /**
  * Class Order
@@ -194,31 +195,12 @@ class Order
 		return \CCrmPerms::GetEntityAttr(self::$TYPE_NAME, $ids);
 	}
 
+	/**
+	 * @deprecated Useless method. Will be removed soon.
+	 * @return string
+	 */
 	public static function copyPermsFromInvoices()
 	{
-		//Copy perms from invoices to orders
-		$CCrmRole = new \CCrmRole();
-		$dbRoles = $CCrmRole->GetList();
-
-		while($arRole = $dbRoles->Fetch())
-		{
-			$arPerms = $CCrmRole->GetRolePerms($arRole['ID']);
-
-			if(!isset($arPerms['ORDER']) && is_array($arPerms['INVOICE'] ?? null))
-			{
-				foreach ($arPerms['INVOICE'] as $key => $value)
-				{
-					if(isset($value['-']) && $value['-'] != 'O')
-						$arPerms['ORDER'][$key]['-'] = $value['-'];
-					else
-						$arPerms['ORDER'][$key]['-'] = 'X';
-				}
-			}
-
-			$arFields = array('RELATION' => $arPerms);
-			$CCrmRole->Update($arRole['ID'], $arFields);
-		}
-
 		return '';
 	}
 }

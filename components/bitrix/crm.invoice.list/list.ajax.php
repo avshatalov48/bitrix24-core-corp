@@ -49,7 +49,6 @@ if (isset($_REQUEST['MODE']) && $_REQUEST['MODE'] === 'SEARCH')
 
 	\Bitrix\Main\Localization\Loc::loadMessages(__FILE__);
 
-	CUtil::JSPostUnescape();
 	$APPLICATION->RestartBuffer();
 
 	// Limit count of items to be found
@@ -68,7 +67,7 @@ if (isset($_REQUEST['MODE']) && $_REQUEST['MODE'] === 'SEARCH')
 	$arFilter = array();
 	if (is_numeric($search))
 		$arFilter['ID'] = (int) $search;
-	else if (preg_match('/(.*)\[(\d+?)\]/i'.BX_UTF_PCRE_MODIFIER, $search, $arMatches))
+	else if (preg_match('/(.*)\[(\d+?)\]/iu', $search, $arMatches))
 	{
 		$arFilter['ID'] = (int) $arMatches[2];
 		$searchString = trim($arMatches[1]);
@@ -136,8 +135,6 @@ elseif ($action === 'REBUILD_SEARCH_CONTENT')
 }
 elseif ($action === 'SAVE_PROGRESS' && check_bitrix_sessid())
 {
-	CUtil::JSPostUnescape();
-
 	$errMessage = '';
 	$ID = isset($_REQUEST['ID']) ? intval($_REQUEST['ID']) : 0;
 	$typeName = isset($_REQUEST['TYPE']) ? $_REQUEST['TYPE'] : '';

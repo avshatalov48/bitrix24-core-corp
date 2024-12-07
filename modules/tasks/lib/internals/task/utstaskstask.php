@@ -1,13 +1,10 @@
 <?php
 
 namespace Bitrix\Tasks\Internals\Task;
-use Bitrix\Main\Localization\Loc;
+
 use Bitrix\Main\ORM\Data\DataManager;
-use Bitrix\Main\ORM\Fields\DatetimeField;
-use Bitrix\Main\ORM\Fields\FloatField;
+use Bitrix\Main\ORM\Fields\ArrayField;
 use Bitrix\Main\ORM\Fields\IntegerField;
-use Bitrix\Main\ORM\Fields\TextField;
-use Bitrix\Main\SystemException;
 
 /**
  * Class TasksTaskTable
@@ -40,24 +37,35 @@ class UtsTasksTaskTable extends DataManager
 		return 'b_uts_tasks_task';
 	}
 
-	/**
-	 * @throws SystemException
-	 */
 	public static function getMap(): array
 	{
 		return [
-			new IntegerField(
-				'VALUE_ID',
-				[
-					'primary' => true,
-				]
-			),
-			new TextField(
-				'UF_CRM_TASK'
-			),
-			new TextField(
-				'UF_TASK_WEBDAV_FILES'
-			),
+			(new IntegerField('VALUE_ID'))
+				->configurePrimary(),
+			(new ArrayField('UF_CRM_TASK'))
+				->configureUnserializeCallback(static::getUnSerializeModifier()),
+			(new ArrayField('UF_TASK_WEBDAV_FILES'))
+				->configureUnserializeCallback(static::getUnSerializeModifier()),
 		];
+	}
+
+	private static function getUnSerializeModifier(): callable
+	{
+		return function (mixed $value): array
+		{
+			if (is_array($value))
+			{
+				return $value;
+			}
+
+			if (!is_string($value))
+			{
+				return [];
+			}
+
+			$value = unserialize($value, ['allowed_classes' => false]);
+
+			return is_array($value) ? $value : [];
+		};
 	}
 }

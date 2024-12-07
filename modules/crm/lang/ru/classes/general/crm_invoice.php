@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["CRM_MODULE_SALE_NOT_INSTALLED"] = "Модуль sale не установлен.";
 $MESS["CRM_INVOICE_STATUS_P"] = "Оплачен";
 $MESS["CRM_INVOICE_STATUS_D"] = "Отклонён";
@@ -100,4 +100,4 @@ $MESS["CRM_INVOICE_FIELD_PRICE"] = "Сумма";
 $MESS["CRM_INVOICE_FIELD_DATE_INSERT"] = "Дата создания";
 $MESS["CRM_INVOICE_FIELD_UF_MYCOMPANY_ID"] = "Реквизиты вашей компании";
 $MESS["CRM_CATALOG_OFFERS_TITLE_FORMAT"] = "#CATALOG# (предложения)";
-?>
+$MESS["CRM_INVOICE_NO_PERMISSIONS_TO_DELETE"] = "#INVOICE_NAME#: недостаточно прав для удаления";

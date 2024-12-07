@@ -472,15 +472,6 @@ abstract class DocumentHandler implements IErrorable
 		return true;
 	}
 
-	protected function convertToUtf8($data)
-	{
-		if (Application::getInstance()->isUtfMode())
-		{
-			return $data;
-		}
-		return Encoding::convertEncodingArray($data, SITE_CHARSET, 'UTF-8');
-	}
-
 	protected function retryMethod($method, array $args, $numberOfTimesToRetry = 2)
 	{
 		if($numberOfTimesToRetry <= 0)

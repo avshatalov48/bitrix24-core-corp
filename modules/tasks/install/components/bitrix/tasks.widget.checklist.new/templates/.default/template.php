@@ -70,7 +70,7 @@ $arParams =& $helper->getComponent()->arParams; // make $arParams the same varia
 		<?php endif?>
 	</div>
 
-	<script type="text/javascript">
+	<script>
 		BX.ready(function()
 		{
 			BX.addCustomEvent(window, 'onBXMessageNotFound', function(message) {

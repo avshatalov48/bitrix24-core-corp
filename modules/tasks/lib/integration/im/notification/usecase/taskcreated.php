@@ -3,6 +3,7 @@
 namespace Bitrix\Tasks\Integration\IM\Notification\UseCase;
 
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Tasks\Flow\Provider\OptionProvider;
 use Bitrix\Tasks\Integration\IM\Notification;
 use Bitrix\Tasks\Internals\Notification\Message;
 use Bitrix\Tasks\Internals\Notification\User;
@@ -22,7 +23,19 @@ class TaskCreated
 			return null;
 		}
 
+		// do not send task created notification to the flow distributor
+		$flowManualDistributorId = null;
+		if ($task->onFlow())
+		{
+			$flowManualDistributorId = (new OptionProvider())->getManualDistributorId($task->getFlowId());
+		}
+
 		$recepient = $message->getRecepient();
+		if ($flowManualDistributorId === $recepient->getId())
+		{
+			return null;
+		}
+
 		$responsible = $this->getResponsible($metadata->getTask(), $metadata->getUserRepository());
 
 		$locKey = 'TASKS_NEW_TASK_MESSAGE';
@@ -54,8 +67,8 @@ class TaskCreated
 		if ($task->getDeadline())
 		{
 			// Get unix timestamp for DEADLINE
-			$utsDeadline = $task->getDeadline()->getTimestamp() - $serverTimeZoneOffset;
-			$recepientTimeZoneOffset = $userRepository->getUserTimeZoneOffset($recepient->getId());
+			$utsDeadline = $task->getDeadline()->getTimestamp();
+			$recepientTimeZoneOffset = $userRepository->getUserTimeZoneOffset($recepient->getId(), true);
 
 			// Make bitrix timestamp for given user
 			$bitrixTsDeadline = $utsDeadline + $recepientTimeZoneOffset;

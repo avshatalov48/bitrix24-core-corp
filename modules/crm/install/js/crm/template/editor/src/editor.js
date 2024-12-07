@@ -1,5 +1,5 @@
 import { Dialog } from 'crm.entity-selector';
-import { Dom, Event, Loc, Tag, Text, Type } from 'main.core';
+import { ajax as Ajax, Dom, Event, Loc, Runtime, Tag, Text, Type } from 'main.core';
 import { BaseEvent } from 'main.core.events';
 import { Menu, Popup } from 'main.popup';
 
@@ -8,6 +8,7 @@ import { DialogOptions } from 'ui.entity-selector';
 import type { EditorOptions } from './editor-options';
 import './editor.css';
 import MenuPopup from './menu-popup';
+import PreviewPopup, { PREVIEW_POPUP_CONTENT_STATUS } from './preview-popup';
 import TextPopup from './text-popup';
 import type { FilledPlaceholder } from './types';
 
@@ -27,6 +28,12 @@ export class Editor
 	#categoryId: ?number = null;
 	#canUseFieldsDialog: boolean = true;
 	#canUseFieldValueInput: boolean = true;
+
+	#canUsePreview: boolean = false;
+	#isUsePreviewRequestRunning: boolean = false;
+	#lastPreview: ?string = null;
+	#lastPreviewTemplateHash: ?number = null;
+	#previewPopup: ?PreviewPopup = null;
 	placeholders: string[] = [];
 	filledPlaceholders: FilledPlaceholder[] = [];
 	onSelect = () => {};
@@ -58,6 +65,7 @@ export class Editor
 
 		this.#canUseFieldsDialog = Boolean(params.canUseFieldsDialog ?? true);
 		this.#canUseFieldValueInput = Boolean(params.canUseFieldValueInput ?? true);
+		this.#canUsePreview = Boolean(params.canUsePreview ?? false);
 
 		this.onPlaceholderClick = this.onPlaceholderClick.bind(this);
 		this.onShowInputPopup = this.onShowInputPopup.bind(this);
@@ -71,15 +79,24 @@ export class Editor
 			tagSelectorOptions: {
 				textBoxWidth: '100%',
 			},
-			entities: [{
+		};
+
+		if (this.#canUsePlaceholderProvider(params.usePlaceholderProvider))
+		{
+			this.#placeHoldersDialogDefaultOptions.entities = [{
 				id: 'placeholder',
 				options: {
 					entityTypeId: this.#entityTypeId,
 					entityId: this.#entityId,
-					categoryId: this.#categoryId,
+					categoryId: this.#categoryId ?? null,
 				},
-			}],
-		};
+			}];
+		}
+
+		if (Type.isPlainObject(params.dialogOptions))
+		{
+			this.#placeHoldersDialogDefaultOptions = { ...this.#placeHoldersDialogDefaultOptions, ...params.dialogOptions };
+		}
 
 		this.#createContainer();
 	}
@@ -174,6 +191,18 @@ export class Editor
 		this.#footerContainerEl = Tag.render`<div class="crm-template-editor-footer"></div>`;
 		Dom.append(this.#footerContainerEl, containerEl);
 
+		if (this.#canUsePreview)
+		{
+			const previewLink = Tag.render`
+				<div class="crm-template-editor-preview-link" href="#">
+					${Loc.getMessage('CRM_TEMPLATE_EDITOR_PREVIEW_LINK_TITLE')}
+				</div>
+			`;
+
+			Event.bind(previewLink, 'click', this.#onPreviewTemplate.bind(this));
+			Dom.append(previewLink, containerEl);
+		}
+
 		Dom.clean(this.#target);
 		Dom.append(containerEl, this.#target);
 	}
@@ -187,7 +216,6 @@ export class Editor
 		}
 
 		const container = this.#getInputContainer(input, position);
-		const dlgOptions = this.#placeHoldersDialogDefaultOptions;
 
 		placeholders.forEach((placeholder, key) => {
 			const element = [...container.childNodes].find(
@@ -199,6 +227,7 @@ export class Editor
 				return;
 			}
 
+			const dlgOptions = Runtime.clone(this.#placeHoldersDialogDefaultOptions);
 			this.#prepareDlgOptions(dlgOptions, element, position);
 
 			const dialog = new Dialog(dlgOptions);
@@ -293,6 +322,74 @@ export class Editor
 
 		this.#adjustFilledPlaceholders(params);
 		this.onSelect(params);
+	}
+
+	#onPreviewTemplate(event: BaseEvent): void
+	{
+		if (this.#previewPopup?.isShown())
+		{
+			return;
+		}
+
+		if (this.#isUsePreviewRequestRunning)
+		{
+			this.#previewPopup?.show();
+
+			return;
+		}
+
+		if (this.#entityId <= 0)
+		{
+			this.#previewPopup?.show();
+
+			return;
+		}
+
+		this.#previewPopup?.destroy();
+
+		const currentTemplate = this.placeholders === null
+			? this.getRawData().body
+			: this.getData().body; // TODO: implement header and footer processing
+		const currentTemplateHash = BX.util.hashCode(currentTemplate);
+		if (this.#lastPreviewTemplateHash === currentTemplateHash)
+		{
+			this.#previewPopup = new PreviewPopup(event.target, this.#entityTypeId, this.#entityId);
+			this.#previewPopup.apply(PREVIEW_POPUP_CONTENT_STATUS.SUCCESS, this.#lastPreview);
+			this.#previewPopup.show();
+
+			return;
+		}
+
+		this.#previewPopup = new PreviewPopup(event.target, this.#entityTypeId, this.#entityId);
+		this.#previewPopup.apply(PREVIEW_POPUP_CONTENT_STATUS.LOADING);
+		this.#previewPopup.show();
+		this.#isUsePreviewRequestRunning = true;
+
+		Ajax.runAction(
+			'crm.activity.smsplaceholder.preview',
+			{
+				data: {
+					entityTypeId: this.#entityTypeId,
+					entityId: this.#entityId,
+					message: currentTemplate,
+					entityCategoryId: this.#categoryId,
+				},
+			},
+		).then((response) => {
+			this.#previewPopup.apply(
+				PREVIEW_POPUP_CONTENT_STATUS.SUCCESS,
+				response.data.preview,
+			);
+			this.#isUsePreviewRequestRunning = false;
+			this.#lastPreviewTemplateHash = currentTemplateHash;
+			this.#lastPreview = response.data.preview;
+		}).catch((response) => {
+			this.#previewPopup.apply(
+				PREVIEW_POPUP_CONTENT_STATUS.FAILED,
+				response.errors[0].message ?? 'Unknown error',
+			);
+			this.#isUsePreviewRequestRunning = false;
+		});
 	}
 
 	#getInputContainer(input: string, position: string): ?HTMLElement
@@ -512,7 +609,11 @@ export class Editor
 				}
 				else if (Type.isStringFilled(filledPlaceholder.FIELD_VALUE))
 				{
-					text = text.replace(filledPlaceholder.PLACEHOLDER_ID, filledPlaceholder.FIELD_VALUE);
+					const fieldValue = filledPlaceholder.FIELD_VALUE
+						.replaceAll('{', '&#123;')
+						.replaceAll('}', '&#125;')
+					;
+					text = text.replace(filledPlaceholder.PLACEHOLDER_ID, fieldValue);
 				}
 			});
 		}
@@ -560,19 +661,22 @@ export class Editor
 			throw new Error('BX.Crm.Template.Editor: The "target" argument must be DOM node');
 		}
 
-		if (!BX.CrmEntityType.isDefined(params.entityTypeId))
+		if (
+			this.#canUsePlaceholderProvider(params.usePlaceholderProvider)
+			&& !BX.CrmEntityType.isDefined(params.entityTypeId)
+		)
 		{
 			throw new TypeError('BX.Crm.Template.Editor: The "entityTypeId" argument is not correct');
-		}
-
-		if (!Type.isNumber(params.entityId) || params.entityId <= 0)
-		{
-			throw new TypeError('BX.Crm.Template.Editor: The "entityId" argument is not correct');
 		}
 
 		if (!Type.isFunction(params.onSelect))
 		{
 			throw new TypeError('BX.Crm.Template.Editor: The "onSelect" argument is not correct');
 		}
+	}
+
+	#canUsePlaceholderProvider(value): boolean
+	{
+		return (Type.isNil(value) || value === true);
 	}
 }

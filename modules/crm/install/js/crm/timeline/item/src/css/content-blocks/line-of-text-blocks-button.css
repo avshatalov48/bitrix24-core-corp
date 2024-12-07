@@ -1,0 +1,31 @@
+.right-fixed-button {
+	margin-left: auto;
+}
+
+.crm-timeline__line_of_text_blocks_button {
+	font-weight: var(--ui-font-weight-normal);
+	color: var(--ui-color-link-primary-base);
+	text-decoration: underline !important;
+	text-decoration-color: transparent !important;
+	cursor: pointer;
+	transition: var(--crm-timeline__transition-hover);
+	word-break: break-all;
+}
+
+.crm-timeline__line_of_text_blocks_button_icon {
+	display: inline-block;
+	width: 18px;
+	height: 18px;
+	vertical-align: top;
+	background-position: center;
+	background-repeat: no-repeat;
+	transition: filter 0.3s ease;
+}
+
+.crm-timeline__line_of_text_blocks_button_icon:hover {
+	filter: brightness(0.7);
+}
+
+.crm-timeline__line_of_text_blocks_button_icon.--code-chat {
+	background-image: url(../../images/common/crm-timeline__chat.svg);
+}

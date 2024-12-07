@@ -1,0 +1,2 @@
+<?php
+$MESS["RECYCLEBIN_PROCESS_ACTION_ITEM"] = "Item: #NUMBER#";

@@ -51,8 +51,8 @@ class DoD extends Controller
 
 		$post = $this->request->getPostList()->toArray();
 
-		$groupId = (is_numeric($post['groupId'] ?? null) ? (int) $post['groupId'] : 0);
-		$taskId = (is_numeric($post['taskId'] ?? null) ? (int) $post['taskId'] : 0);
+		$groupId = (is_numeric($post['groupId'] ?? null) ? (int)$post['groupId'] : 0);
+		$taskId = (is_numeric($post['taskId'] ?? null) ? (int)$post['taskId'] : 0);
 		$userId = User::getId();
 
 		if ($taskId && !TaskAccessController::can($userId, ActionDictionary::ACTION_TASK_READ, $taskId))
@@ -88,92 +88,16 @@ class DoD extends Controller
 	 * @param int $groupId Group id.
 	 * @param int $taskId Task id.
 	 * @return bool
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public function isNecessaryAction(int $groupId, int $taskId): bool
 	{
 		$userId = User::getId();
-
 		if (!Group::canReadGroupTasks($userId, $groupId))
 		{
 			return false;
 		}
 
-		$taskService = new TaskService($userId);
-
-		$task = current($taskService->getTasksInfo([$taskId]));
-		if (!$task)
-		{
-			return false;
-		}
-
-		$parentId = (int) $task['PARENT_ID'];
-
-		return $this->isTmpNecessary($groupId, $parentId);
-
-		if ($parentId)
-		{
-			$queryObject = TaskTable::getList([
-				'filter' => [
-					'ID' => $parentId,
-					'GROUP_ID' => $groupId,
-				],
-				'select' => ['ID'],
-			]);
-			if ($queryObject->fetch())
-			{
-				return false;
-			}
-		}
-
-		$type = $this->getItemType($taskId);
-
-		if (!$type->isEmpty())
-		{
-			if ($this->isNecessaryForTask($groupId, $userId, $type))
-			{
-				return true;
-			}
-			else
-			{
-				return false;
-			}
-		}
-
-		if ($this->isNecessaryForScrum($groupId, $userId))
-		{
-			return true;
-		}
-
-		return false;
-	}
-
-	// todo tmp
-	private function isTmpNecessary(int $groupId, int $parentId): bool
-	{
-		if ($parentId)
-		{
-			$queryObject = TaskTable::getList([
-				'filter' => [
-					'ID' => $parentId,
-					'GROUP_ID' => $groupId,
-				],
-				'select' => [ 'ID' ],
-			]);
-
-			if (!$queryObject->fetch())
-			{
-				return true;
-			}
-		}
-		else
-		{
-			return true;
-		}
-
-		return false;
+		return (new DefinitionOfDoneService($userId))->isNecessary($groupId, $taskId);
 	}
 
 	/**
@@ -184,20 +108,11 @@ class DoD extends Controller
 	 */
 	public function getSettingsAction(int $groupId, int $taskId = 0, string $saveRequest = 'Y'): array
 	{
-		$typeService = new TypeService();
-		$backlogService = new BacklogService();
-
-		$backlog = $backlogService->getBacklogByGroupId($groupId);
-
-		$itemType = $this->getItemType($taskId);
+		$definitionOfDoneService = new DefinitionOfDoneService(User::getId());
+		$itemType = $definitionOfDoneService->getItemType($taskId);
 
 		$activeTypeId = 0;
-		$types = [];
-
-		foreach ($typeService->getTypes($backlog->getId()) as $type)
-		{
-			$types[] = $type->toArray();
-		}
+		$types = $definitionOfDoneService->getTypes($groupId);
 
 		if (!$itemType->isEmpty())
 		{
@@ -266,10 +181,10 @@ class DoD extends Controller
 	 * @return string|null
 	 */
 	public function saveSettingsAction(
-		int $typeId,
+		int    $typeId,
 		string $requiredOption,
-		array $items = [],
-		array $participants = []
+		array  $items = [],
+		array  $participants = []
 	): ?array
 	{
 		$userId = User::getId();
@@ -345,23 +260,10 @@ class DoD extends Controller
 		}
 	}
 
-	/**
-	 * Returns the component displaying the dod list for task.
-	 *
-	 * @param int $groupId Group id.
-	 * @param int $taskId Task id.
-	 * @param int $typeId Type id.
-	 * @return Component|null
-	 */
-	public function getListAction(int $groupId, int $taskId, int $typeId): ?Component
+	protected function getListItems(int $groupId, int $taskId, int $typeId): ?array
 	{
 		$userId = User::getId();
-
-		$backlogService = new BacklogService();
-		$itemService = new ItemService();
 		$typeService = new TypeService();
-		$entityService = new EntityService();
-
 		$type = $typeService->getType($typeId);
 		if ($type->isEmpty())
 		{
@@ -375,6 +277,7 @@ class DoD extends Controller
 			return null;
 		}
 
+		$entityService = new EntityService();
 		$entity = $entityService->getEntityById($type->getEntityId());
 		if (!Group::canReadGroupTasks($userId, $entity->getGroupId()))
 		{
@@ -388,8 +291,8 @@ class DoD extends Controller
 			return null;
 		}
 
-		$definitionOfDoneService = new DefinitionOfDoneService($userId);
-
+		$itemService = new ItemService();
+		$backlogService = new BacklogService();
 		$backlog = $backlogService->getBacklogByGroupId($groupId);
 		$item = $itemService->getItemBySourceId($taskId);
 
@@ -400,19 +303,34 @@ class DoD extends Controller
 			return null;
 		}
 
-		if (
-			$this->isItemListEmpty($item->getId(), $userId)
-			|| $item->getTypeId() !== $typeId
-		)
+		if ($this->isItemListEmpty($item->getId(), $userId) || $item->getTypeId() !== $typeId)
 		{
+			$definitionOfDoneService = new DefinitionOfDoneService($userId);
 			$typeItems = $definitionOfDoneService->getTypeItems($typeId);
-
 			$items = $this->convertTypeItems($item->getId(), $typeItems);
 		}
 		else
 		{
 			$items = $this->getItemItems($item->getId(), $userId);
 		}
+
+		return $items;
+	}
+
+	/**
+	 * Returns the component displaying the dod list for task.
+	 *
+	 * @param int $groupId Group id.
+	 * @param int $taskId Task id.
+	 * @param int $typeId Type id.
+	 * @return Component|null
+	 */
+	public function getListAction(int $groupId, int $taskId, int $typeId): ?Component
+	{
+		$items = $this->getListItems($groupId, $taskId, $typeId);
+
+		$definitionOfDoneService = new DefinitionOfDoneService(User::getId());
+		$item = (new ItemService())->getItemBySourceId($taskId);
 
 		return $definitionOfDoneService->getComponent($item->getId(), 'SCRUM_ITEM', $items);
 	}
@@ -508,19 +426,8 @@ class DoD extends Controller
 	 */
 	public function getDodInfoAction(int $groupId): array
 	{
-		$typeService = new TypeService();
-		$backlogService = new BacklogService();
-
-		$backlog = $backlogService->getBacklogByGroupId($groupId);
-
-		$types = [];
-		foreach ($typeService->getTypes($backlog->getId()) as $type)
-		{
-			$types[] = $type->toArray();
-		}
-
 		return [
-			'existsDod' => (!empty($types)),
+			'existsDod' => DefinitionOfDoneService::existsDod($groupId),
 		];
 	}
 
@@ -533,19 +440,21 @@ class DoD extends Controller
 		foreach ($typeItems as $typeItem)
 		{
 			$items[$typeItem['NODE_ID']] = [
+				'COPIED_ID' => $typeItem['COPIED_ID'],
 				'ITEM_ID' => $itemId,
 				'NODE_ID' => $typeItem['NODE_ID'],
+				'PARENT_ID' => $typeItem['PARENT_ID'],
 				'PARENT_NODE_ID' => (
-					isset($typeItems[$typeItem['PARENT_ID']])
-						? $typeItems[$typeItem['PARENT_ID']]['NODE_ID']
-						: 0
+				isset($typeItems[$typeItem['PARENT_ID']])
+					? $typeItems[$typeItem['PARENT_ID']]['NODE_ID']
+					: 0
 				),
 				'TITLE' => $typeItem['TITLE'],
 				'ACTION' => [
 					'MODIFY' => false,
 					'REMOVE' => false,
-					'TOGGLE' => true
-				]
+					'TOGGLE' => true,
+				],
 			];
 		}
 
@@ -617,111 +526,5 @@ class DoD extends Controller
 		$item = $itemService->getItemBySourceId($taskId);
 
 		return $typeService->getType($item->getTypeId());
-	}
-
-	private function isNecessaryForTask(int $groupId, int $userId, TypeForm $type): bool
-	{
-		$participantsIds = [];
-
-		if (!$type->isEmpty())
-		{
-			$participantsIds = $this->getParticipantsIds($groupId, $type->getParticipantsCodes());
-		}
-
-		return in_array($userId, $participantsIds);
-	}
-
-	private function isNecessaryForScrum(int $groupId, int $userId): bool
-	{
-		$typeService = new TypeService();
-		$backlogService = new BacklogService();
-
-		$backlog = $backlogService->getBacklogByGroupId($groupId);
-
-		$participantsCodes = [];
-		foreach ($typeService->getTypes($backlog->getId()) as $type)
-		{
-			$participantsCodes = array_merge($participantsCodes, $type->getParticipantsCodes());
-		}
-
-		$participantsIds = $this->getParticipantsIds($groupId, $participantsCodes);
-
-		return in_array($userId, $participantsIds);
-	}
-
-	private function getParticipantsIds(int $groupId, array $participantsCodes): array
-	{
-		$participantsIds = [];
-
-		$scrumMasterRole = 'M';
-
-		$group = Workgroup::getById($groupId);
-
-		$scrumMasterId = (int) $group->getScrumMaster();
-
-		foreach ($participantsCodes as $code)
-		{
-			if (mb_substr($code, 0, 1) === 'U')
-			{
-				$userId = (int) mb_substr($code, 1);
-				if (!in_array($userId, $participantsIds))
-				{
-					$participantsIds[] = $userId;
-				}
-			}
-			elseif (preg_match('/^SG([0-9]+)_?([AEKM])?$/', $code, $match) && isset($match[2]))
-			{
-				$role = $match[2];
-				if ($role === $scrumMasterRole)
-				{
-					$participantsIds[] = $scrumMasterId;
-				}
-				else
-				{
-					$participantsIds = array_merge(
-						$participantsIds,
-						$this->getSonetUserIds($groupId, $role, $scrumMasterId)
-					);
-				}
-			}
-		}
-
-		return $participantsIds;
-	}
-
-	private function getSonetUserIds(int $groupId, string $role, int $scrumMasterId): array
-	{
-		$userIds = [];
-
-		$queryObject = \CSocNetUserToGroup::getList(
-			['RAND' => 'ASC'],
-			[
-				'GROUP_ID' => $groupId,
-				'=ROLE' => $role,
-				'USER_ACTIVE' => 'Y'
-			],
-			false,
-			false,
-			[
-				'ID',
-				'USER_ID',
-			]
-		);
-
-		if ($queryObject)
-		{
-			while ($userData = $queryObject->fetch())
-			{
-				$userId = (int) $userData['USER_ID'];
-				if ($role === SONET_ROLES_MODERATOR && $userId === $scrumMasterId)
-				{
-					continue;
-				}
-
-				$userIds[] = $userId;
-			}
-		}
-
-		return $userIds;
 	}
 }

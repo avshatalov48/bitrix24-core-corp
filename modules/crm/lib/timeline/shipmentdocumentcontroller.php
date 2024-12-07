@@ -306,7 +306,7 @@ class ShipmentDocumentController extends EntityController
 		{
 			$basketItem = $shipmentItem->getBasketItem();
 
-			$total += $basketItem->getPrice() * $shipmentItem->getQuantity();
+			$total += $basketItem->getPriceWithVat() * $shipmentItem->getQuantity();
 		}
 
 		return $total;

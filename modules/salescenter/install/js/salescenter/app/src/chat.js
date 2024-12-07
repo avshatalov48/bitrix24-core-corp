@@ -6,6 +6,7 @@ import {Loc, Type, Uri} from 'main.core';
 import {MixinTemplatesType} from './components/templates-type-mixin';
 import StageBlocksList from './components/chat-receiving-payment/stage-blocks-list';
 import ComponentMixin from './component-mixin';
+import { ModeDictionary } from './const/mode-dictionary';
 import Product from './product';
 import Start from './start';
 import NoPaymentSystemsBanner from './no-payment-systems';
@@ -37,7 +38,8 @@ export default {
 			ordersCount: null,
 			paymentsCount: null,
 			editedPageId: null,
-			currentPageTitle: null
+			currentPageTitle: null,
+			ModeDictionary,
 		};
 	},
 	components:
@@ -631,6 +633,10 @@ export default {
 
 	computed:
 		{
+			ModeDictionary()
+			{
+				return ModeDictionary
+			},
 			config: () => config,
 			currentPage()
 			{
@@ -878,7 +884,7 @@ export default {
 					<div class="salescenter-btn-action ui-btn ui-btn-link ui-btn-xs ui-btn-icon-edit" @click="editPage">{{localize.SALESCENTER_RIGHT_ACTION_EDIT}}</div>
 				</div>
 				<start
-					v-if="isShowStartInfo"
+					v-if="isShowStartInfo && mode !== ModeDictionary.terminalPayment"
 					@on-successfully-connected="onSuccessfullyConnected"
 				>
 				</start>

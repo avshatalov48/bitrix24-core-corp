@@ -324,6 +324,37 @@ abstract class Queue
 		return $result;
 	}
 
+	public function getAvailableOperators(array $userIds, $currentOperatorId = 0): array
+	{
+		$result = [];
+
+		$freeCountChatOperators = ImOpenLines\Queue::getCountFreeSlotsOperators($userIds, $this->config['ID'], $this->config["MAX_CHAT"], $this->config["TYPE_MAX_CHAT"]);
+
+		foreach($userIds as $userId)
+		{
+			if ($this->isOperatorActive($userId) === true)
+			{
+				if ((int)$userId !== (int)$currentOperatorId)
+				{
+					if (
+						in_array($userId, array_keys($freeCountChatOperators))
+						&& $freeCountChatOperators[$userId] > 0
+					)
+					{
+						$result[] = (int)$userId;
+					}
+				}
+				else
+				{
+					$result[] = (int)$userId;
+				}
+			}
+		}
+
+
+		return $result;
+	}
+
 	abstract public function getOperatorsQueue($currentOperator = 0);
 
 	/**
@@ -838,9 +869,7 @@ abstract class Queue
 			'QUEUE_HISTORY' => [],
 		];
 
-		$operatorList = [];
 		$queueHistory = [];
-		$fullCountOperators = 0;
 
 		$res = ImOpenLines\Queue::getList([
 			'select' => [
@@ -856,17 +885,18 @@ abstract class Queue
 			],
 		]);
 
-		while($queueUser = $res->fetch())
+		$queueUsers = $res->fetchAll();
+		$userIds = array_map(function ($user) {
+			return (int)$user['USER_ID'];
+		}, $queueUsers);
+
+		$operatorList = $this->getAvailableOperators($userIds, $currentOperator);
+		foreach ($operatorList as $userId)
 		{
-			$fullCountOperators++;
-			if($this->isOperatorAvailable($queueUser['USER_ID'], $currentOperator))
-			{
-				$operatorList[] = $queueUser['USER_ID'];
-				$queueHistory[$queueUser['USER_ID']] = true;
-			}
+			$queueHistory[$userId] = true;
 		}
 
-		$this->processingEmptyQueue($this->config['ID'], $fullCountOperators);
+		$this->processingEmptyQueue($this->config['ID'], count($userIds));
 
 		if(!empty($operatorList))
 		{

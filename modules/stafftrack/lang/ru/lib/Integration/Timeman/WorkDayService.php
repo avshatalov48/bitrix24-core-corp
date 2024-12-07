@@ -1,0 +1,3 @@
+<?php
+
+$MESS['STAFFTRACK_INTEGRATION_TIMEMAN_CLOSE_DAY_REASON'] = 'Чекин на работе';

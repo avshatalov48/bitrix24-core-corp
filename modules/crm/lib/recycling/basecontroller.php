@@ -95,13 +95,12 @@ abstract class BaseController
 	 * @return void
 	 */
 	abstract public function moveToBin($entityID, array $params = array());
+
 	/**
 	 * Recover entity from Recycle Bin.
-	 * @param int $entityID Entity ID.
-	 * @param array $params Additional operation parameters.
-	 * @return bool
 	 */
-	abstract public function recover($entityID, array $params = array());
+	abstract public function recover(int $entityID, array $params = []): ?int;
+
 	/**
 	 * Erase entity from Recycle Bin.
 	 * @param int $entityID Entity ID.

@@ -23,8 +23,13 @@ class TasksConfigPermissions extends TasksBaseComponent
 
 	protected static function checkRights(array $arParams, array $arResult, array $auxParams): ?\Bitrix\Tasks\Util\Error
 	{
-		$res = \Bitrix\Tasks\Access\TaskAccessController::can(\Bitrix\Tasks\Util\User::getId(), \Bitrix\Tasks\Access\ActionDictionary::ACTION_TASK_ADMIN)
-			&& \Bitrix\Tasks\Integration\Bitrix24::checkFeatureEnabled(\Bitrix\Tasks\Integration\Bitrix24\FeatureDictionary::TASKS_PERMISSIONS);
+		$res = \Bitrix\Tasks\Access\TaskAccessController::can(
+			\Bitrix\Tasks\Util\User::getId(),
+			\Bitrix\Tasks\Access\ActionDictionary::ACTION_TASK_ADMIN
+			)
+			&& \Bitrix\Tasks\Integration\Bitrix24::checkFeatureEnabled(
+				\Bitrix\Tasks\Integration\Bitrix24\FeatureDictionary::TASK_ACCESS_PERMISSIONS
+			);
 
 		if (!$res)
 		{

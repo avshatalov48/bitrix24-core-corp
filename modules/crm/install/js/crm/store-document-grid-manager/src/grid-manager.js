@@ -36,7 +36,7 @@ export class GridManager
 		}
 
 		MessageBox.confirm(
-			Loc.getMessage('DOCUMENT_GRID_DOCUMENT_DELETE_CONTENT'),
+			Loc.getMessage('DOCUMENT_GRID_DOCUMENT_DELETE_CONTENT_2'),
 			(messageBox, button) => {
 				button.setWaiting();
 				ajax.runAction(
@@ -87,7 +87,7 @@ export class GridManager
 		}
 
 		MessageBox.confirm(
-			Loc.getMessage('DOCUMENT_GRID_DOCUMENT_CONDUCT_CONTENT'),
+			Loc.getMessage('DOCUMENT_GRID_DOCUMENT_CONDUCT_CONTENT_2'),
 			(messageBox, button) => {
 				button.setWaiting();
 				ajax.runAction(
@@ -138,7 +138,7 @@ export class GridManager
 		}
 
 		MessageBox.confirm(
-			Loc.getMessage('DOCUMENT_GRID_DOCUMENT_CANCEL_CONTENT'),
+			Loc.getMessage('DOCUMENT_GRID_DOCUMENT_CANCEL_CONTENT_2'),
 			(messageBox, button) => {
 				button.setWaiting();
 				ajax.runAction(

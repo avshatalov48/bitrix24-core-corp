@@ -11,10 +11,12 @@ export default class PresetDefaultController extends DefaultController
 {
 	isReady: boolean = true;
 	#unavailableToolPopup: ?MessageBox;
+	#mode: string;
 
 	createPopup(mode): Popup
 	{
 		let button;
+		this.#mode = mode;
 		const content = document.querySelector('#left-menu-preset-popup').cloneNode(true);
 		return PopupManager.create(
 			this.constructor.name.toString(), null, {
@@ -53,20 +55,7 @@ export default class PresetDefaultController extends DefaultController
 						return;
 					}
 					button.setWaiting(true);
-
-					let currentPreset = "";
-					if (document.forms["left-menu-preset-form"])
-					{
-						[...document.forms["left-menu-preset-form"]
-							.elements["presetType"]]
-							.forEach((node) => {
-								if (node.checked)
-								{
-									currentPreset = node.value;
-								}
-							})
-						;
-					}
+					const currentPreset = this.getSelectedPreset();
 
 					if (!Options.isAdmin && Options.availablePresetTools && Options.availablePresetTools[currentPreset] === false)
 					{
@@ -105,6 +94,30 @@ export default class PresetDefaultController extends DefaultController
 					} }),
 			]
 		});
+	}
+
+	getMode(): string
+	{
+		return this.#mode;
+	}
+
+	getSelectedPreset()
+	{
+		let currentPreset = '';
+		if (document.forms['left-menu-preset-form'])
+		{
+			[...document.forms['left-menu-preset-form']
+				.elements['presetType']]
+				.forEach((node) => {
+					if (node.checked)
+					{
+						currentPreset = node.value;
+					}
+				})
+			;
+		}
+
+		return currentPreset;
 	}
 
 	showUnavailableToolPopup(): void

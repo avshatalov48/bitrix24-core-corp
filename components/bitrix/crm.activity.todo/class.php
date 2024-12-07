@@ -262,6 +262,13 @@ class CrmActivityTodoComponent extends \CBitrixComponent
 			$activity['DETAIL_EXIST'] = $activity['PROVIDER']::hasPlanner($activity);
 			$activity['IS_INCOMING_CHANNEL'] = ($activity['IS_INCOMING_CHANNEL'] === 'Y');
 
+			if (
+				(int)$activity['TYPE_ID'] === \CCrmActivityType::Provider
+			)
+			{
+				$activity['SUBJECT'] = $activity['PROVIDER']::getActivityTitle($activity);
+			}
+
 			$activities[$activity['ID']] = $activity;
 		}
 

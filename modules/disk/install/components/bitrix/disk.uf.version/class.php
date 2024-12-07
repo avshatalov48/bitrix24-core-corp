@@ -42,6 +42,11 @@ class CDiskUfVersionComponent extends BaseComponent
 		{
 			return array();
 		}
+		if (!$this->getUser())
+		{
+			return [];
+		}
+
 		$userId = $this->getUser()->getId();
 		$values = $this->arParams['PARAMS']['arUserField']['VALUE'];
 		if(!is_array($this->arParams['PARAMS']['arUserField']['VALUE']))

@@ -1,10 +1,13 @@
 <?php
 
 return [
-	'extensions' => [
-		'apptheme',
-	],
 	'components' => [
 		'qrcodeauth',
 	],
+	'extensions' => [
+		'loc',
+	],
+	'bundle' => [
+		'./src/manager'
+	]
 ];

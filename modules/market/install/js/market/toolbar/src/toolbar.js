@@ -1,14 +1,18 @@
-import { MenuManager } from 'main.popup';
+import { MenuManager, Menu } from 'main.popup';
 import { Dom, Tag, Event } from 'main.core';
-import {ratingStore} from "market.rating-store";
+import { RatingStars } from "market.rating-stars";
+import { MarketLinks } from "market.market-links";
 
-import {mapActions} from "ui.vue3.pinia";
+import 'ui.forms';
 import 'ui.design-tokens';
 import "./toolbar.css";
 
 export const Toolbar = {
+	components: {
+		RatingStars,
+	},
 	props: [
-		'categories', 'menuInfo', 'marketAction',
+		'categories', 'searchFilters', 'menuInfo', 'marketAction', 'searchAction',
 	],
 	data() {
 		return {
@@ -22,11 +26,21 @@ export const Toolbar = {
 				notFoundText: '',
 				loader: false,
 				loader2: false,
+				currentFilter: '',
+				order: {
+					currentValue: {},
+					currentName: '',
+					menuItems: [],
+				},
 				currentPage: 1,
 				pages: 1,
+				resultCount: '',
 				foundApps: [],
 			},
-			menuPopup: null,
+			moreMenu: null,
+			searchFilterMenu: null,
+			searchOrderMenu: null,
+			MarketLinks: MarketLinks,
 		}
 	},
 	computed: {
@@ -37,17 +51,30 @@ export const Toolbar = {
 
 			return this.categories.BANNER_INFO.SEARCH_LINK;
 		},
+		getSearchFilterName: function () {
+			for (let i = 0; i < this.searchFilters.LIST.length; i++) {
+				if (this.searchFilters.LIST[i].CODE && this.searchFilters.LIST[i].CODE === this.search.currentFilter) {
+					return this.searchFilters.LIST[i].NAME;
+				}
+			}
+
+			return '';
+		},
+		existOrder: function() {
+			return Object.keys(this.search.order.currentValue).length > 0;
+		}
 	},
 	created: function () {
 		this.onSearch = BX.debounce(this.runSearch, 800, this);
 	},
 	mounted: function () {
 		this.bindEvents();
-		this.createPopupMenu();
+		this.createMoreMenu();
+		this.createSearchFilterMenu();
 	},
 	methods: {
 		bindEvents: function() {
-			this.$Bitrix.eventEmitter.subscribe('market:closeToolbarPopup', this.closeToolbarPopup);
+			this.$Bitrix.eventEmitter.subscribe('market:closeToolbarPopup', this.closeMoreMenu);
 
 			Event.bind(this.$refs.searchAutoScroll, 'scroll', (event) => {
 				if (this.needLoadNextPage(event.currentTarget)) {
@@ -79,16 +106,15 @@ export const Toolbar = {
 				}
 			});
 		},
-		createPopupMenu: function() {
+		createMoreMenu: function() {
 			if (!this.menuInfo || !BX.type.isArray(this.menuInfo)) {
 				return;
 			}
 
 			let menu = [];
-			let menuItem = {};
 
 			this.menuInfo.forEach((item) => {
-				menuItem = {
+				let menuItem = {
 					html: item.NAME,
 					href: item.PATH,
 					className: 'market-toolbar-menu-item',
@@ -119,7 +145,6 @@ export const Toolbar = {
 						if (item.PARAMS.DATASET.IGNORE_AUTOBINDING) {
 							menuItem.dataset.sliderIgnoreAutobinding = item.PARAMS.DATASET.IGNORE_AUTOBINDING;
 						}
-
 					}
 				}
 
@@ -127,7 +152,7 @@ export const Toolbar = {
 			});
 
 			if (menu.length > 0) {
-				this.menuPopup = MenuManager.create(
+				this.moreMenu = MenuManager.create(
 					'toolbar-popup-menu',
 					document.querySelector('.market-toolbar__popup-target'),
 					menu,
@@ -141,8 +166,79 @@ export const Toolbar = {
 			}
 		},
 		showMenu: function () {
-			if (this.menuPopup) {
-				this.menuPopup.toggle();
+			if (this.moreMenu) {
+				this.moreMenu.toggle();
+			}
+		},
+		createSearchFilterMenu: function () {
+			if (
+				!this.searchFilters ||
+				!this.searchFilters.LIST ||
+				!this.searchFilters.CURRENT ||
+				!BX.type.isArray(this.searchFilters.LIST)
+			) {
+				return;
+			}
+
+			let menu = [];
+			this.searchFilters.LIST.forEach((item) => {
+				let menuItem = {
+					id: item.CODE,
+					text: item.NAME,
+					className: item.CLASS,
+					onclick : (event, item) => {
+						if (this.search.loader) {
+							return;
+						}
+
+						if (!BX.hasClass(item.layout.item, "--accept")) {
+							this.closeSearchFilterMenu();
+							this.searchFilterMenu.getMenuItems().forEach((mItem) => {
+								if (BX.hasClass(mItem.layout.item, "--accept")) {
+									BX.removeClass(mItem.layout.item, "--accept");
+								}
+							});
+
+							BX.addClass(item.layout.item, "--accept");
+							this.search.currentFilter = item.id;
+
+							if (this.showSearchResult()) {
+								this.runSearch();
+							}
+						}
+					}
+				};
+
+				if (this.searchFilters.CURRENT === menuItem.id) {
+					this.search.currentFilter = menuItem.id;
+					menuItem.className += " --accept";
+				}
+
+				menu.push(menuItem);
+			});
+
+			if (this.search.currentFilter.length <= 0 && menu[0]) {
+				this.search.currentFilter = menu[0].id;
+				menu[0].className += " --accept";
+			}
+
+			if (menu.length > 0) {
+				this.searchFilterMenu = new Menu({
+					bindElement: this.$refs.marketSearchItem,
+					className: "market-toolbar__search-menu",
+					width: 257,
+					items: menu,
+				});
+			}
+		},
+		showSearchFilterMenu: function () {
+			if (this.searchFilterMenu) {
+				this.searchFilterMenu.show();
+			}
+		},
+		closeSearchFilterMenu: function () {
+			if (this.searchFilterMenu) {
+				this.searchFilterMenu.close();
 			}
 		},
 		needLoadNextPage: function(el) {
@@ -175,9 +271,9 @@ export const Toolbar = {
 			this.search.foundApps = [];
 			this.searchResult = false;
 		},
-		closeToolbarPopup: function () {
-			if (this.menuPopup) {
-				this.menuPopup.close();
+		closeMoreMenu: function () {
+			if (this.moreMenu) {
+				this.moreMenu.close();
 			}
 
 			if (this.dropdownShown) {
@@ -299,6 +395,9 @@ export const Toolbar = {
 		isEmptySearch: function () {
 			return this.searchResult && this.search.foundApps.length <= 0;
 		},
+		showSearchResult: function () {
+			return this.searchResult && !this.search.loader;
+		},
 		runSearch: function () {
 			if (this.search.text.length <= 0) {
 				this.searchResult = false;
@@ -319,6 +418,8 @@ export const Toolbar = {
 				data: {
 					text: searchText,
 					page: this.search.currentPage,
+					area: this.search.currentFilter,
+					order: this.search.order.currentValue,
 				}
 			}).then(
 				response => {
@@ -327,10 +428,29 @@ export const Toolbar = {
 						this.search.currentPage = (response.data.apps.length > 0) ? parseInt(response.data.cur_page, 10) : 1;
 						this.search.pages = (response.data.apps.length > 0) ? parseInt(response.data.pages, 10) : 1;
 
+						if (!append) {
+							this.search.resultCount = (response.data.apps.length > 0) ? parseInt(response.data.result_count, 10) : '';
+						}
+
 						if (append) {
 							this.search.foundApps = this.search.foundApps.concat(response.data.apps);
-						} else {
-							this.search.foundApps = response.data.apps;
+							return;
+						}
+
+						this.search.foundApps = response.data.apps;
+
+						if (response.data.sort_info) {
+							if (this.searchOrderMenu) {
+								this.searchOrderMenu.destroy();
+							}
+
+							this.createSearchOrderMenu(response.data.sort_info);
+						}
+
+						if (this.searchAction.length > 0) {
+							try {
+								eval(this.searchAction.replace('#SEARCH_TEXT#', searchText));
+							} catch (e) {}
 						}
 					}
 				},
@@ -367,7 +487,77 @@ export const Toolbar = {
 
 			top.BX.UI.InfoHelper.show(this.$root.marketSlider);
 		},
-		...mapActions(ratingStore, ['isActiveStar', 'getAppRating',]),
+		createSearchOrderMenu: function(sortInfo) {
+			if (
+				!sortInfo ||
+				!sortInfo.LIST ||
+				!sortInfo.CURRENT ||
+				!BX.type.isArray(sortInfo.LIST)
+			) {
+				return;
+			}
+
+			this.search.order.menuItems = [];
+			sortInfo.LIST.forEach((item) => {
+				let menuItem = {
+					id: item.VALUE,
+					text: item.NAME,
+					className: 'market-toolbar-popup',
+					onclick : (event, item) => {
+						if (!BX.hasClass(item.layout.item, "--check")) {
+							this.closeSearchOrderMenu();
+							this.searchOrderMenu.getMenuItems().forEach((mItem) => {
+								if (BX.hasClass(mItem.layout.item, "--check")) {
+									BX.removeClass(mItem.layout.item, "--check");
+								}
+							});
+
+							BX.addClass(item.layout.item, "--check");
+							this.search.order.currentValue = item.id;
+							this.search.order.currentName = item.text;
+
+							this.runSearch();
+						}
+					}
+				};
+
+				if (Object.keys(sortInfo.CURRENT.VALUE)[0] === Object.keys(menuItem.id)[0]) {
+					this.search.order.currentValue = menuItem.id;
+					this.search.order.currentName = menuItem.text;
+					menuItem.className += " --check";
+				}
+
+				this.search.order.menuItems.push(menuItem);
+			});
+
+			if (!this.existOrder && this.search.order.menuItems[0]) {
+				this.search.order.currentValue = this.search.order.menuItems[0].id;
+				this.search.order.currentName = this.search.order.menuItems[0].text;
+				this.search.order.menuItems[0].className += " --check";
+			}
+
+			this.createOrderMenuObject();
+		},
+		createOrderMenuObject: function() {
+			if (this.search.order.menuItems.length > 0) {
+				this.searchOrderMenu = new Menu({
+					bindElement: this.$refs.resultDropdown,
+					className: "market-search__order-menu",
+					items: this.search.order.menuItems
+				});
+			}
+		},
+		showSearchOrderMenu: function () {
+			this.createOrderMenuObject();
+			if (this.searchOrderMenu) {
+				this.searchOrderMenu.show();
+			}
+		},
+		closeSearchOrderMenu: function () {
+			if (this.searchOrderMenu) {
+				this.searchOrderMenu.close();
+			}
+		},
 	},
 	template: `
 		<div id="market-toolbar-wrapper">
@@ -386,7 +576,7 @@ export const Toolbar = {
 						<span v-if="$root.isMainPage">{{ $Bitrix.Loc.getMessage('MARKET_TOOLBAR_JS_MARKET_TITLE') }}</span>
 						<a class="market-toolbar__logo_link market-link-to-home"
 						   data-slider-ignore-autobinding="true"
-						   :href="$root.getMainUri"
+						   :href="MarketLinks.mainLink()"
 						   v-else
 						   data-load-content="main"
 						   @click.prevent="$root.emitLoadContent"
@@ -403,14 +593,14 @@ export const Toolbar = {
 					<span class="market-toolbar__btn_icon-catalog-text">{{ $Bitrix.Loc.getMessage('MARKET_TOOLBAR_JS_CATALOG_TITLE') }}</span>
 				</button>
 				<div class="ui-ctl ui-ctl-after-icon ui-ctl-round market-toolbar__search">
-					<button class="ui-ctl-after ui-ctl-icon-search"
-							:class="{'--show': !searchFocus, '--hide': searchFocus}"
-							@click="onSearchButtonClick"
-					></button>
-					<button class="ui-ctl-after ui-ctl-icon-clear"
-							:class="{'--hide': !searchFocus, '--show': searchFocus}"
-							@click="onSearchButtonClick"
-					></button>
+					<div ref="marketSearchItem">
+						<div class="market-toolbar__search-item"
+							 v-if="search.currentFilter"
+							 @click="showSearchFilterMenu"
+						>
+							<span class="market-toolbar__search-item-text">{{ getSearchFilterName }}</span>
+						</div>
+					</div>
 					<input type="text"
 						   id="market-search-input"
 						   ref="marketSearchInput"
@@ -423,13 +613,21 @@ export const Toolbar = {
 						   @blur="cleanSearchFocus()"
 						   @input="onSearch"
 					>
+					<button class="ui-ctl-after ui-ctl-icon-search"
+							:class="{'--show': !searchFocus, '--hide': searchFocus}"
+							@click="onSearchButtonClick"
+					></button>
+					<button class="ui-ctl-after ui-ctl-icon-clear"
+							:class="{'--hide': !searchFocus, '--show': searchFocus}"
+							@click="onSearchButtonClick"
+					></button>
 				</div>
 		
 				<div class="market-toolbar__nav">
 					<div class="market-toolbar__nav_item">
 						<a class="market-toolbar__nav_link"
 						   data-slider-ignore-autobinding="true"
-						   :href="$root.getFavoritesUri"
+						   :href="MarketLinks.favoritesLink()"
 						   data-load-content="list"
 						   @click.prevent="$root.emitLoadContent"
 						>
@@ -512,7 +710,7 @@ export const Toolbar = {
 						<div class="market-menu-catalog__nav">
 							<div class="market-menu-catalog__nav-items --topical">
 								<a class="market-menu-catalog__nav-item_link-topical"
-								   :href="$root.getCategoryUri(categoryTop.CODE)"
+								   :href="MarketLinks.categoryLink(categoryTop.CODE)"
 								   v-for="categoryTop in categories.FIX_ITEMS"
 								   data-slider-ignore-autobinding="true"
 								   data-load-content="list"
@@ -526,7 +724,7 @@ export const Toolbar = {
 							<div class="market-menu-catalog__nav-items">
 								<a class="market-menu-catalog__nav-item_link"
 								   :class="{'--active': hoverCategory == index}"
-								   :href="$root.getCategoryUri(category.CODE)"
+								   :href="MarketLinks.categoryLink(category.CODE)"
 								   v-for="(category, index) in categories.ITEMS"
 								   data-slider-ignore-autobinding="true"
 								   data-load-content="list"
@@ -545,10 +743,10 @@ export const Toolbar = {
 							<div class="market-menu-catalog__subnav" v-if="!searchFocus">
 								<template v-for="(category, index) in categories.ITEMS">
 									<div class="market-menu-catalog__subnav-items"
-										 v-if="showSubCategories(index)"
+										 v-if="showSubCategories(index) && category.SUB_ITEMS"
 									>
 										<a class="market-menu-catalog__subnav-item_link"
-										   :href="$root.getCategoryUri(subCategory.CODE)"
+										   :href="MarketLinks.categoryLink(subCategory.CODE)"
 										   v-for="subCategory in category.SUB_ITEMS"
 										   data-slider-ignore-autobinding="true"
 										   data-load-content="list"
@@ -577,7 +775,7 @@ export const Toolbar = {
 									 src="/bitrix/images/market/slider/search.svg"
 									 v-if="search.loader"
 								>
-								<template v-if="searchResult && !search.loader">
+								<template v-if="showSearchResult()">
 									<div class="market-menu-catalog__search-empty" v-if="isEmptySearch()">
 										<svg width="92" height="92" viewBox="0 0 92 92" fill="none" xmlns="http://www.w3.org/2000/svg">
 											<path fill-rule="evenodd" clip-rule="evenodd" d="M56.6536 62.8186C52.8102 65.3422 48.2117 66.8102 43.2703 66.8102C29.7864 66.8102 18.8555 55.8793 18.8555 42.3953C18.8555 28.9114 29.7864 17.9805 43.2703 17.9805C56.7543 17.9805 67.6852 28.9114 67.6852 42.3953C67.6852 47.3367 66.2172 51.9352 63.6936 55.7786L76.3834 68.4684C77.8804 69.9654 77.8804 72.3925 76.3834 73.8895L74.7645 75.5084C73.2675 77.0054 70.8404 77.0054 69.3434 75.5084L56.6536 62.8186ZM60.7095 42.3953C60.7095 52.0267 52.9017 59.8345 43.2703 59.8345C33.6389 59.8345 25.8311 52.0267 25.8311 42.3953C25.8311 32.7639 33.6389 24.9561 43.2703 24.9561C52.9017 24.9561 60.7095 32.7639 60.7095 42.3953Z" fill="#DFE0E3"/>
@@ -588,10 +786,25 @@ export const Toolbar = {
 										<div class="market-menu-catalog__search-text">'{{ search.notFoundText }}'</div>
 									</div>
 									<template v-else>
+										<div class="market-menu-catalog__search-head">
+											<div class="market-menu-catalog__search-result-value">
+												{{ $Bitrix.Loc.getMessage('MARKET_TOOLBAR_JS_SEARCH_RESULT_COUNT', {'#RESULT_COUNT#': search.resultCount}) }}
+											</div>
+											<div
+												ref="resultDropdown"
+												@click="showSearchOrderMenu()"
+												class="ui-ctl ui-ctl-after-icon ui-ctl-dropdown market-menu-catalog__search-result-dropdown"
+												:title="search.order.currentName"
+												v-if="existOrder"
+											>
+												<div class="ui-ctl-after ui-ctl-icon-angle"></div>
+												<div class="ui-ctl-element">{{ search.order.currentName }}</div>
+											</div>
+										</div>
 										<a class="market-menu-catalog__search-item"
 										   v-for="appItem in search.foundApps"
-										   :href="$root.getDetailUri(appItem.CODE, appItem.IS_SITE_TEMPLATE === 'Y', 'search')"
-										   @click="$root.openSiteTemplate($event, appItem.IS_SITE_TEMPLATE === 'Y')"
+										   :href="MarketLinks.appDetail(appItem, {from: 'search', text: search.text})"
+										   @click="MarketLinks.openSiteTemplate($event, appItem.IS_SITE_TEMPLATE === 'Y')"
 										>
 											<div class="market-menu-catalog__search-item_img-block">
 												<img class="market-menu-catalog__search-item_img"
@@ -611,46 +824,12 @@ export const Toolbar = {
 													{{ appItem.APP_SEARCH_TYPE }} &#183; {{ getAppDescription(appItem) }}
 												</div>
 												<div class="market-rating__container">
-													<div class="market-rating__stars" v-if="appItem.IS_SITE_TEMPLATE !== 'Y'">
-														<svg class="market-rating__star" width="16" height="16"
-															 :class="{'--active': isActiveStar(1, getAppRating(appItem.RATING))}" 
-															 viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-															<path
-																d="M7.53505 3.17539C7.70176 2.75395 8.29824 2.75395 8.46495 3.17539L9.55466 5.93021C9.62451 6.1068 9.78837 6.22857 9.97761 6.24452L12.8494 6.4866C13.2857 6.52338 13.4673 7.06336 13.142 7.35636L10.9179 9.35965C10.7833 9.48081 10.7248 9.66523 10.7649 9.84179L11.4379 12.8084C11.5369 13.2448 11.0566 13.5815 10.6801 13.3397L8.27019 11.792C8.10558 11.6863 7.89442 11.6863 7.72981 11.792L5.31993 13.3397C4.94338 13.5815 4.46312 13.2448 4.56213 12.8084L5.23514 9.84179C5.27519 9.66523 5.21667 9.48081 5.08215 9.35965L2.85797 7.35636C2.53266 7.06336 2.71434 6.52338 3.15059 6.4866L6.02239 6.24452C6.21163 6.22857 6.37549 6.1068 6.44534 5.93021L7.53505 3.17539Z"/>
-														</svg>
-
-														<svg class="market-rating__star" width="16" height="16"
-															 :class="{'--active': isActiveStar(2, getAppRating(appItem.RATING))}" 
-															 viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-															<path
-																d="M7.53505 3.17539C7.70176 2.75395 8.29824 2.75395 8.46495 3.17539L9.55466 5.93021C9.62451 6.1068 9.78837 6.22857 9.97761 6.24452L12.8494 6.4866C13.2857 6.52338 13.4673 7.06336 13.142 7.35636L10.9179 9.35965C10.7833 9.48081 10.7248 9.66523 10.7649 9.84179L11.4379 12.8084C11.5369 13.2448 11.0566 13.5815 10.6801 13.3397L8.27019 11.792C8.10558 11.6863 7.89442 11.6863 7.72981 11.792L5.31993 13.3397C4.94338 13.5815 4.46312 13.2448 4.56213 12.8084L5.23514 9.84179C5.27519 9.66523 5.21667 9.48081 5.08215 9.35965L2.85797 7.35636C2.53266 7.06336 2.71434 6.52338 3.15059 6.4866L6.02239 6.24452C6.21163 6.22857 6.37549 6.1068 6.44534 5.93021L7.53505 3.17539Z"/>
-														</svg>
-
-														<svg class="market-rating__star" width="16" height="16"
-															 :class="{'--active': isActiveStar(3, getAppRating(appItem.RATING))}" 
-															 viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-															<path
-																d="M7.53505 3.17539C7.70176 2.75395 8.29824 2.75395 8.46495 3.17539L9.55466 5.93021C9.62451 6.1068 9.78837 6.22857 9.97761 6.24452L12.8494 6.4866C13.2857 6.52338 13.4673 7.06336 13.142 7.35636L10.9179 9.35965C10.7833 9.48081 10.7248 9.66523 10.7649 9.84179L11.4379 12.8084C11.5369 13.2448 11.0566 13.5815 10.6801 13.3397L8.27019 11.792C8.10558 11.6863 7.89442 11.6863 7.72981 11.792L5.31993 13.3397C4.94338 13.5815 4.46312 13.2448 4.56213 12.8084L5.23514 9.84179C5.27519 9.66523 5.21667 9.48081 5.08215 9.35965L2.85797 7.35636C2.53266 7.06336 2.71434 6.52338 3.15059 6.4866L6.02239 6.24452C6.21163 6.22857 6.37549 6.1068 6.44534 5.93021L7.53505 3.17539Z"/>
-														</svg>
-
-														<svg class="market-rating__star" width="16" height="16"
-															 :class="{'--active': isActiveStar(4, getAppRating(appItem.RATING))}" 
-															 viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-															<path
-																d="M7.53505 3.17539C7.70176 2.75395 8.29824 2.75395 8.46495 3.17539L9.55466 5.93021C9.62451 6.1068 9.78837 6.22857 9.97761 6.24452L12.8494 6.4866C13.2857 6.52338 13.4673 7.06336 13.142 7.35636L10.9179 9.35965C10.7833 9.48081 10.7248 9.66523 10.7649 9.84179L11.4379 12.8084C11.5369 13.2448 11.0566 13.5815 10.6801 13.3397L8.27019 11.792C8.10558 11.6863 7.89442 11.6863 7.72981 11.792L5.31993 13.3397C4.94338 13.5815 4.46312 13.2448 4.56213 12.8084L5.23514 9.84179C5.27519 9.66523 5.21667 9.48081 5.08215 9.35965L2.85797 7.35636C2.53266 7.06336 2.71434 6.52338 3.15059 6.4866L6.02239 6.24452C6.21163 6.22857 6.37549 6.1068 6.44534 5.93021L7.53505 3.17539Z"/>
-														</svg>
-
-														<svg class="market-rating__star" width="16" height="16"
-															 :class="{'--active': isActiveStar(5, getAppRating(appItem.RATING))}" 
-															 viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-															<path
-																d="M7.53505 3.17539C7.70176 2.75395 8.29824 2.75395 8.46495 3.17539L9.55466 5.93021C9.62451 6.1068 9.78837 6.22857 9.97761 6.24452L12.8494 6.4866C13.2857 6.52338 13.4673 7.06336 13.142 7.35636L10.9179 9.35965C10.7833 9.48081 10.7248 9.66523 10.7649 9.84179L11.4379 12.8084C11.5369 13.2448 11.0566 13.5815 10.6801 13.3397L8.27019 11.792C8.10558 11.6863 7.89442 11.6863 7.72981 11.792L5.31993 13.3397C4.94338 13.5815 4.46312 13.2448 4.56213 12.8084L5.23514 9.84179C5.27519 9.66523 5.21667 9.48081 5.08215 9.35965L2.85797 7.35636C2.53266 7.06336 2.71434 6.52338 3.15059 6.4866L6.02239 6.24452C6.21163 6.22857 6.37549 6.1068 6.44534 5.93021L7.53505 3.17539Z"/>
-														</svg>
-
-														<span class="market-rating__stars-amount"
-															  v-if="appItem.REVIEWS_NUMBER"
-														>({{ appItem.REVIEWS_NUMBER }})</span>
-													</div>
+													<RatingStars
+														v-if="appItem.IS_SITE_TEMPLATE !== 'Y'"
+														:rating="appItem.RATING"
+														:reviewsNumber="appItem.REVIEWS_NUMBER"
+													/>
+													
 													<div class="market-rating__download">
 														<span class="market-rating__download-icon"></span>
 														<div class="market-rating__download-amount">{{ appItem.NUM_INSTALLS }}</div>

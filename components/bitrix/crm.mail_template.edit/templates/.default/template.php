@@ -181,7 +181,7 @@ else
 		)
 	); ?>
 </form>
-<script type="text/javascript">
+<script>
 BX.ready(function()
 {
 	BX.message(<?=\Bitrix\Main\Web\Json::encode(\Bitrix\Main\Localization\Loc::loadLanguageFile(__FILE__))?>);

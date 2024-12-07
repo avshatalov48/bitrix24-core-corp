@@ -1,7 +1,9 @@
 (() => {
 	const require = (ext) => jn.require(ext);
 	const AppTheme = require('apptheme');
-	const LoadingScreenComponent = require('layout/ui/loading-screen');
+	const { LoadingScreenComponent } = require('layout/ui/loading-screen');
+	const { RunActionExecutor } = require('rest/run-action-executor');
+	const { TrialFeatureActivation } = require('layout/socialnetwork/project/create/trial-feature-activation');
 
 	class ProjectCreate extends LayoutComponent
 	{
@@ -395,7 +397,9 @@
 									Action.inviteMembers(this.state.moderatorsData, items, projectId).then(() => {
 										void Action.setOwner(this.state, projectId);
 									});
-									this.close();
+									Action.turnOnTrial().then((isTrialTurnedOn) => {
+										this.close(isTrialTurnedOn ? TrialFeatureActivation.open : undefined);
+									});
 								},
 								(response) => {
 									Notify.showIndicatorError({
@@ -592,6 +596,16 @@
 				OPENED: isOpened,
 				VISIBLE: isVisible,
 			};
+		}
+
+		static turnOnTrial()
+		{
+			return new Promise((resolve) => {
+				new RunActionExecutor('socialnetwork.api.workgroup.turnOnTrial')
+					.setHandler((response) => resolve(response.data))
+					.call(false)
+				;
+			});
 		}
 	}
 

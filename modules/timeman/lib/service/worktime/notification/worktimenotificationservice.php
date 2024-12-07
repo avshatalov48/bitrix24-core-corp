@@ -210,41 +210,48 @@ class WorktimeNotificationService
 	{
 		$notifyMessage = '';
 		$gender = '_MALE';
-		if ($this->getUser($violation->userId) &&
-			$this->getUser($violation->userId)['PERSONAL_GENDER'] === 'F')
+		if (
+			$this->getUser($violation->userId)
+			&& $this->getUser($violation->userId)['PERSONAL_GENDER'] === 'F'
+		)
 		{
 			$gender = '_FEMALE';
 		}
 		switch ($violation->type)
 		{
 			case WorktimeViolation::TYPE_LATE_START:
-				$notifyMessage = Loc::getMessage(
+				$notifyMessage = fn (?string $languageId = null) => Loc::getMessage(
 					'TM_VIOLATION_WORKTIME_MANAGER_LATE_START' . $gender,
-					['#USER_NAME#' => $this->getUserName($violation->userId)]
+					['#USER_NAME#' => $this->getUserName($violation->userId)],
+					$languageId
 				);
 				break;
 			case WorktimeViolation::TYPE_EARLY_START:
-				$notifyMessage = Loc::getMessage(
+				$notifyMessage = fn (?string $languageId = null) => Loc::getMessage(
 					'TM_VIOLATION_WORKTIME_MANAGER_EARLY_START' . $gender,
-					['#USER_NAME#' => $this->getUserName($violation->userId)]
+					['#USER_NAME#' => $this->getUserName($violation->userId)],
+					$languageId
 				);
 				break;
 			case WorktimeViolation::TYPE_EARLY_ENDING:
-				$notifyMessage = Loc::getMessage(
+				$notifyMessage = fn (?string $languageId = null) => Loc::getMessage(
 					'TM_VIOLATION_WORKTIME_MANAGER_EARLY_END' . $gender,
-					['#USER_NAME#' => $this->getUserName($violation->userId)]
+					['#USER_NAME#' => $this->getUserName($violation->userId)],
+					$languageId
 				);
 				break;
 			case WorktimeViolation::TYPE_LATE_ENDING:
-				$notifyMessage = Loc::getMessage(
+				$notifyMessage = fn (?string $languageId = null) => Loc::getMessage(
 					'TM_VIOLATION_WORKTIME_MANAGER_LATE_END' . $gender,
-					['#USER_NAME#' => $this->getUserName($violation->userId)]
+					['#USER_NAME#' => $this->getUserName($violation->userId)],
+					$languageId
 				);
 				break;
 			case WorktimeViolation::TYPE_MIN_DAY_DURATION:
-				$notifyMessage = Loc::getMessage(
+				$notifyMessage = fn (?string $languageId = null) => Loc::getMessage(
 					'TM_VIOLATION_WORKTIME_MANAGER_MIN_DAY_DURATION' . $gender,
-					['#USER_NAME#' => $this->getUserName($violation->userId)]
+					['#USER_NAME#' => $this->getUserName($violation->userId)],
+					$languageId
 				);
 				break;
 			case WorktimeViolation::TYPE_EDITED_ENDING:
@@ -252,24 +259,26 @@ class WorktimeNotificationService
 			case WorktimeViolation::TYPE_EDITED_BREAK_LENGTH:
 				$culture = \Bitrix\Main\Application::getInstance()->getContext()->getCulture();
 				$dayMonthFormat = $culture->getDayMonthFormat();
-				$date = $this->timeHelper->formatDateTime($worktimeRecord->getRecordedStartTimestamp(), $dayMonthFormat);
 				$href = $this->urlManager->getUriTo('recordReport', ['RECORD_ID' => $worktimeRecord->getId()]);
-				$notifyMessage = Loc::getMessage(
+				$notifyMessage = fn (?string $languageId = null) => Loc::getMessage(
 					'TM_VIOLATION_WORKTIME_MANAGER_EDIT_WITH_URL' . $gender,
 					[
 						'#USER_NAME#' => $this->getUserName($violation->userId),
 						'#URL#' => $href,
-						'#DATE#' => $date,
-					]
+						'#DATE#' => $this->timeHelper->formatDateTime($worktimeRecord->getRecordedStartTimestamp(), $dayMonthFormat, $languageId),
+					],
+					$languageId
 				);
 				break;
 			case WorktimeViolation::TYPE_SHIFT_LATE_START:
-				$notifyMessage = Loc::getMessage(
+				$notifyMessage = fn (?string $languageId = null) => Loc::getMessage(
 					'TM_VIOLATION_WORKTIME_MANAGER_LATE_SHIFT_START' . $gender,
-					['#USER_NAME#' => $this->getUserName($violation->userId)]
+					['#USER_NAME#' => $this->getUserName($violation->userId)],
+					$languageId
 				);
 				break;
 		}
+
 		return $notifyMessage;
 	}
 }

@@ -27,7 +27,7 @@ $ajaxUrl = $this->__component->GetPath() . '/ajax.php?' .
 		)
 	);
 ?>
-<script type="text/javascript">
+<script>
 	BX.message({
 		INTRANET_EMP_HEAD : '<?=GetMessageJS('INTRANET_EMP_HEAD')?>',
 		INTRANET_EMP_WAIT : '<?=GetMessageJS('INTRANET_EMP_WAIT')?>'

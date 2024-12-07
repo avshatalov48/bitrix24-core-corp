@@ -94,7 +94,7 @@ CUtil::InitJSCore();
 	<span class="ui-alert-message"><?=GetMessage('CRM_PERMS_RESTRICTION')?></span>
 </div>
 <?endif;?>
-<script type="text/javascript">
+<script>
 	BX.ready(
 		function()
 		{
@@ -105,7 +105,7 @@ CUtil::InitJSCore();
 		}
 	);
 </script>
-<script type="text/javascript">
+<script>
 var arCrmSelected = <?=CUtil::PhpToJsObject($arResult['RELATION_ENTITY']);?>;
 var arCrmPermSettings = {};
 <?if(isset($arResult['DISABLED_PROVIDERS'])):?>

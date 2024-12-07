@@ -216,7 +216,7 @@ abstract class TasksBaseComponent extends CBitrixComponent
 			global $APPLICATION;
 
 			$errors = new Collection();
-			$request = static::getRequestUnescaped();
+			$request = static::getRequest();
 
 			$arParams = array_merge(static::extractParamsFromRequest($request), $arParams);
 			$arResult = array();
@@ -323,7 +323,7 @@ abstract class TasksBaseComponent extends CBitrixComponent
 
 	public function getSignature()
 	{
-		return preg_replace('#[^a-zA-Z0-9]#', '_', ToLower($this->getName().$this->getTemplateName())).'_'.$this->getInPageNumber();
+		return preg_replace('#[^a-zA-Z0-9]#', '_', mb_strtolower($this->getName().$this->getTemplateName())).'_'.$this->getInPageNumber();
 	}
 
 	protected function processExecutionStart()
@@ -483,7 +483,7 @@ abstract class TasksBaseComponent extends CBitrixComponent
 		}
 		$dispatcher->addRuntimeActions($auxParams['RUNTIME_ACTIONS'] ?? null);
 
-		$className = ToLower(static::getComponentClassName());
+		$className = mb_strtolower(static::getComponentClassName());
 
 		if(is_array($batch))
 		{
@@ -716,14 +716,9 @@ abstract class TasksBaseComponent extends CBitrixComponent
 		return $name;
 	}
 
-	protected static function getRequest($unEscape = false)
+	protected static function getRequest()
 	{
 		$request = Context::getCurrent()->getRequest();
-
-		if($unEscape)
-		{
-			$request->addFilter(new \Bitrix\Main\Web\PostDecodeFilter);
-		}
 
 		return $request->getPostList();
 	}
@@ -989,13 +984,6 @@ abstract class TasksBaseComponent extends CBitrixComponent
 		//unset($data['RESPONSIBLE_LOGIN']);
 		unset($data['RESPONSIBLE_WORK_POSITION']);
 		unset($data['RESPONSIBLE_PHOTO']);
-	}
-
-	protected static function getRequestUnescaped()
-	{
-		CUtil::JSPostUnescape();
-
-		return static::getRequest(true);
 	}
 
 	public static function getAllowedMethods()

@@ -55,7 +55,6 @@ if (isset($_REQUEST['MODE']) && $_REQUEST['MODE'] === 'SEARCH')
 		__CrmDealListEndResponse(array('ERROR' => 'Access denied.'));
 	}
 
-	CUtil::JSPostUnescape();
 	$APPLICATION->RestartBuffer();
 
 	// Limit count of items to be found
@@ -81,7 +80,7 @@ if (isset($_REQUEST['MODE']) && $_REQUEST['MODE'] === 'SEARCH')
 			$arFilter['%TITLE'] = $search;
 			$arFilter['LOGIC'] = 'OR';
 		}
-		else if (preg_match('/(.*)\[(\d+?)\]/i' . BX_UTF_PCRE_MODIFIER, $search, $arMatches))
+		else if (preg_match('/(.*)\[(\d+?)\]/iu', $search, $arMatches))
 		{
 			$arFilter['ID'] = (int)$arMatches[2];
 			$searchString = trim($arMatches[1]);
@@ -282,16 +281,20 @@ elseif ($action === 'SAVE_PROGRESS' && check_bitrix_sessid())
 			$arErrors
 		);
 
-		//Region automation
-		$starter = new \Bitrix\Crm\Automation\Starter(\CCrmOwnerType::Deal, $ID);
-		$starter->setUserIdFromCurrent()->runOnUpdate($arFields, []);
-		//end region
-
 		$dealUpdateAction->after(static function ($processInventoryManagementResult) {
 			__CrmDealListEndResponse([
 				'ERROR' => current($processInventoryManagementResult->getErrorMessages()),
 			]);
 		});
+
+		//Region automation
+		$starter = new \Bitrix\Crm\Automation\Starter(\CCrmOwnerType::Deal, $ID);
+		$starter->setUserIdFromCurrent()->runOnUpdate($arFields, []);
+		//end region
+
+		//Region synchronization
+		(new \Bitrix\Crm\Order\OrderDealSynchronizer)->updateOrderFromDeal($ID);
+		//end region
 
 		__CrmDealListEndResponse(array('TYPE' => CCrmOwnerType::DealName, 'ID' => $ID, 'VALUE' => $stageID));
 	}

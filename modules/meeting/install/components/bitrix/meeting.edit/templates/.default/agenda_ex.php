@@ -18,7 +18,7 @@ if (count($arResult['MEETING']['AGENDA']) > 0):
 	}
 
 ?>
-<script type="text/javascript">
+<script>
 var parentAgenda = {}, parentAgendaInstance = {}, parentAgendaRows = {};
 <?
 	foreach ($arResult['MEETING']['AGENDA'] as $item_id => $arItem):
@@ -153,7 +153,7 @@ function addItems()
 <a class="webform-small-button webform-small-button-accept" href="javascript:void(0)" onclick="addItems()">
 	<span class="webform-small-button-left"></span><span class="webform-small-button-text"><?=GetMessage('ME_MOVE_QUESTIONS_FROM_AGENDA_EX_TO_THE_CURRENT_AGENDA')?></span><span class="webform-small-button-right"></span>
 </a>
-<script type="text/javascript">
+<script>
 function meeting_checkbox_checkall(el, bCheckClass)
 {
 	var i=0, ar = [BX('meeting-new-select-all-<?=$control_id?>'), BX('meeting-new-select-opened-<?=$control_id?>')];

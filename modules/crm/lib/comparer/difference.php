@@ -4,10 +4,10 @@ namespace Bitrix\Crm\Comparer;
 
 class Difference
 {
-	protected $previousValues = [];
-	protected $currentValues = [];
+	protected array $previousValues = [];
+	protected array $currentValues = [];
 
-	protected $isTreatingAbsentCurrentValueAsNotChangedEnabled = false;
+	protected bool $isTreatingAbsentCurrentValueAsNotChangedEnabled = false;
 
 	public function __construct(array $previousValues, array $currentValues)
 	{
@@ -52,9 +52,16 @@ class Difference
 	 *
 	 * @return mixed|null
 	 */
-	public function getPreviousValue(string $fieldName)
+	public function getPreviousValue(string $fieldName): mixed
 	{
 		return ($this->previousValues[$fieldName] ?? null);
+	}
+
+	public function setPreviousValue(string $fieldName, mixed $value): static
+	{
+		$this->previousValues[$fieldName] = $value;
+
+		return $this;
 	}
 
 	/**
@@ -62,9 +69,16 @@ class Difference
 	 *
 	 * @return mixed|null
 	 */
-	public function getCurrentValue(string $fieldName)
+	public function getCurrentValue(string $fieldName): mixed
 	{
 		return ($this->currentValues[$fieldName] ?? null);
+	}
+
+	public function setCurrentValue(string $fieldName, mixed $value): static
+	{
+		$this->currentValues[$fieldName] = $value;
+
+		return $this;
 	}
 
 	/**

@@ -80,8 +80,7 @@ if(isset($_REQUEST['getSample']) && $_REQUEST['getSample'] == 'csv')
 	Header("Content-Transfer-Encoding: binary");
 
 	// add UTF-8 BOM marker
-	if (defined('BX_UTF') && BX_UTF)
-		echo chr(239).chr(187).chr(191);
+	echo chr(239).chr(187).chr(191);
 
 	$typeList = CCrmStatus::GetStatusListEx('DEAL_TYPE');
 	$stageList = CCrmStatus::GetStatusListEx('DEAL_STAGE');
@@ -643,7 +642,6 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 
 					if($fileEncoding !== '' && $fileEncoding !== '_' && $fileEncoding !== mb_strtolower(SITE_CHARSET))
 					{
-						$convertCharsetErrorMsg = '';
 						$fileHandle = fopen($_SESSION['CRM_IMPORT_FILE'], 'rb');
 						$fileContents = fread($fileHandle, filesize($_SESSION['CRM_IMPORT_FILE']));
 						fflush($fileHandle);
@@ -655,7 +653,7 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 							$fileContents = mb_substr($fileContents, 3);
 						}
 
-						$fileContents = CharsetConverter::ConvertCharset($fileContents, $fileEncoding, SITE_CHARSET, $convertCharsetErrorMsg);
+						$fileContents = \Bitrix\Main\Text\Encoding::convertEncoding($fileContents, $fileEncoding, SITE_CHARSET);
 
 						$fileHandle = fopen($_SESSION['CRM_IMPORT_FILE'], 'wb');
 						fwrite($fileHandle, $fileContents);
@@ -772,7 +770,7 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 						<?endforeach;?>
 					</table>
 				</div>
-				<script type="text/javascript">
+				<script>
 					windowSizes = BX.GetWindowSize(document);
 					if (windowSizes.innerWidth > 1024)
 						BX('crm_import_example').style.width = '870px';
@@ -822,7 +820,7 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 						</tbody>
 					</table>
 				</div>
-				<script type="text/javascript">
+				<script>
 					windowSizes = BX.GetWindowSize(document);
 					BX('crm_import_example').style.height = "44px";
 					if (windowSizes.innerWidth > 1024)

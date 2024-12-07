@@ -499,7 +499,7 @@ final class FieldRepository
 	public function getCommentsNormalizer(): callable
 	{
 		return static function ($value): string {
-			return CommentsHelper::normalizeComment($value);
+			return CommentsHelper::normalizeComment($value, ['p']);
 		};
 	}
 

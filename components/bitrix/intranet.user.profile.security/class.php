@@ -148,7 +148,11 @@ class CIntranetUserProfileSecurityComponent extends \CBitrixComponent
 					"ACTIVE" => isset($_GET["page"]) && $_GET["page"] === "mailingAgreement" ? true : false
 				);
 
-				if (class_exists(Sso\Configuration::class) && Sso\Configuration::isSsoAvailable())
+				if (
+					class_exists(Sso\Configuration::class)
+					&& Sso\Configuration::isSsoAvailable()
+					&& \Bitrix\Intranet\Util::isIntranetUser($this->arParams["USER_ID"])
+				)
 				{
 					$menuItems["sso"] = [
 						"NAME" => Loc::getMessage("INTRANET_USER_PROFILE_SSO_TITLE"),
@@ -187,7 +191,11 @@ class CIntranetUserProfileSecurityComponent extends \CBitrixComponent
 
 		$lockedShowLoginHistory = $this->arResult["IS_CLOUD"] && !Feature::isFeatureEnabled('user_login_history');
 
-		if (($isAdminRights || $isOwnProfile) && !$lockedShowLoginHistory)
+		if (
+			($isAdminRights || $isOwnProfile)
+			&& !$lockedShowLoginHistory
+			&& \Bitrix\Intranet\Settings\Tools\ToolsManager::getInstance()->checkAvailabilityByToolId('login_history')
+		)
 		{
 			$menuItems["history"] = [
 				"NAME" => Loc::getMessage("INTRANET_USER_PROFILE_LOGIN_HISTORY_TITLE"),

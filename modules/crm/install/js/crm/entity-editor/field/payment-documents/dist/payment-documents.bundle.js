@@ -1,6 +1,6 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports,main_popup,ui_dialogs_messagebox,main_core,main_core_events,ui_label,currency_currencyCore) {
+(function (exports,main_popup,ui_dialogs_messagebox,catalog_toolAvailabilityManager,main_core,main_core_events,ui_label,currency_currencyCore) {
 	'use strict';
 
 	function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
@@ -82,11 +82,16 @@ this.BX = this.BX || {};
 	}();
 
 	var _templateObject, _templateObject2, _templateObject3, _templateObject4, _templateObject5, _templateObject6, _templateObject7, _templateObject8, _templateObject9, _templateObject10, _templateObject11;
-	var SPECIFIC_REALIZATION_ERROR_CODES = ['REALIZATION_ACCESS_DENIED', 'REALIZATION_CANNOT_DELETE', 'REALIZATION_ALREADY_DEDUCTED', 'REALIZATION_NOT_DEDUCTED', 'REALIZATION_PRODUCT_NOT_FOUND', 'SHIPMENT_ACCESS_DENIED', 'PAYMENT_ACCESS_DENIED', 'CRM_REALIZATION_NOT_ENOUGH_PRODUCTS'];
+	function _classPrivateMethodInitSpec(obj, privateSet) { _checkPrivateRedeclaration(obj, privateSet); privateSet.add(obj); }
+	function _checkPrivateRedeclaration(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	function _classPrivateMethodGet(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+	var SPECIFIC_REALIZATION_ERROR_CODES = ['REALIZATION_ACCESS_DENIED', 'REALIZATION_CANNOT_DELETE', 'REALIZATION_ALREADY_DEDUCTED', 'REALIZATION_NOT_DEDUCTED', 'REALIZATION_PRODUCT_NOT_FOUND', 'SHIPMENT_ACCESS_DENIED', 'PAYMENT_ACCESS_DENIED'];
 	var SPECIFIC_ERROR_CODES = [].concat(SPECIFIC_REALIZATION_ERROR_CODES, ['DEDUCTION_STORE_ERROR1', 'SALE_PROVIDER_SHIPMENT_QUANTITY_NOT_ENOUGH', 'SALE_SHIPMENT_EXIST_SHIPPED', 'SALE_PAYMENT_DELETE_EXIST_PAID', 'DDCT_DEDUCTION_QUANTITY_STORE_ERROR', 'CRM_REALIZATION_NOT_ENOUGH_PRODUCTS', 'BX_ERROR']);
+	var _getAnalyticLabels = /*#__PURE__*/new WeakSet();
 	var EntityEditorPaymentDocuments = /*#__PURE__*/function () {
 	  function EntityEditorPaymentDocuments(options) {
 	    babelHelpers.classCallCheck(this, EntityEditorPaymentDocuments);
+	    _classPrivateMethodInitSpec(this, _getAnalyticLabels);
 	    this._options = options;
 	    this._phrases = {};
 	    if (main_core.Type.isPlainObject(options.PHRASES)) {
@@ -101,8 +106,10 @@ this.BX = this.BX || {};
 	    this._isUsedInventoryManagement = this._options.IS_USED_INVENTORY_MANAGEMENT;
 	    this._salesOrderRights = this._options.SALES_ORDERS_RIGHTS;
 	    this._isInventoryManagementRestricted = this._options.IS_INVENTORY_MANAGEMENT_RESTRICTED;
+	    this._isInventoryManagement1cRestricted = this._options.IS_1C_PLAN_RESTRICTED;
 	    this._isWithOrdersMode = this._options.IS_WITH_ORDERS_MODE;
 	    this._isInventoryManagementToolEnabled = this._options.IS_INVENTORY_MANAGEMENT_TOOL_ENABLED;
+	    this._isOnecMode = this._options.IS_ONEC_MODE;
 	    this._isSalescenterToolEnabled = this._options.IS_SALESCENTER_TOOL_ENABLED;
 	    this._isTerminalToolEnabled = this._options.IS_TERMINAL_TOOL_ENABLED;
 	    this._shouldShowCashboxChecks = this._options.SHOULD_SHOW_CASHBOX_CHECKS;
@@ -231,8 +238,7 @@ this.BX = this.BX || {};
 	    key: "_renderPaymentDocument",
 	    value: function _renderPaymentDocument(doc) {
 	      var _this3 = this;
-	      var title = main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_PAYMENT_DATE_MSGVER_1').replaceAll(/#date#/gi, doc.FORMATTED_DATE).replaceAll(/#account_number#/gi, doc.ACCOUNT_NUMBER);
-	      var sum = main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_PAYMENT_AMOUNT').replaceAll(/#sum#/gi, this._renderMoney(doc.SUM));
+	      var title = main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_PAYMENT_DATE_MSGVER_2').replaceAll(/#date#/gi, doc.FORMATTED_DATE).replaceAll(/#account_number#/gi, doc.ACCOUNT_NUMBER).replaceAll(/#sum#/gi, this._renderMoney(doc.SUM));
 	      var labelOptions = {
 	        text: main_core.Loc.getMessage("CRM_ENTITY_ED_PAYMENT_DOCUMENTS_STAGE_".concat(doc.STAGE)),
 	        customClass: 'crm-entity-widget-payment-label',
@@ -339,7 +345,7 @@ this.BX = this.BX || {};
 	        }
 	        _this3._menus.push(popupMenu);
 	      };
-	      return main_core.Tag.render(_templateObject6 || (_templateObject6 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"crm-entity-widget-payment-detail\">\n\t\t\t\t<a class=\"ui-link\" onclick=\"", "\">", " (", ")</a>\n\t\t\t\t<div class=\"crm-entity-widget-payment-detail-inner\">\n\t\t\t\t\t<div class=\"ui-label ui-label-md ui-label-light crm-entity-widget-payment-action\" onclick=\"", "\">\n\t\t\t\t\t\t<span class=\"ui-label-inner\">", "</span>\n\t\t\t\t\t</div>\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), openSlider, title, sum, openMenu, main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_ACTIONS_MENU'), new ui_label.Label(labelOptions).render());
+	      return main_core.Tag.render(_templateObject6 || (_templateObject6 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"crm-entity-widget-payment-detail\">\n\t\t\t\t<a class=\"ui-link\" onclick=\"", "\">", "</a>\n\t\t\t\t<div class=\"crm-entity-widget-payment-detail-inner\">\n\t\t\t\t\t<div class=\"ui-label ui-label-md ui-label-light crm-entity-widget-payment-action\" onclick=\"", "\">\n\t\t\t\t\t\t<span class=\"ui-label-inner\">", "</span>\n\t\t\t\t\t</div>\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), openSlider, title, openMenu, main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_ACTIONS_MENU'), new ui_label.Label(labelOptions).render());
 	    }
 	  }, {
 	    key: "_renderDeliveryDocument",
@@ -355,8 +361,7 @@ this.BX = this.BX || {};
 	        labelOptions.text = main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_STATUS_DELIVERED');
 	        labelOptions.color = ui_label.LabelColor.LIGHT_GREEN;
 	      }
-	      var title = main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_DELIVERY_DATE_MSGVER_1').replaceAll(/#date#/gi, doc.FORMATTED_DATE).replaceAll(/#account_number#/gi, doc.ACCOUNT_NUMBER);
-	      var sum = main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_PAYMENT_AMOUNT').replaceAll(/#sum#/gi, this._renderMoney(doc.SUM));
+	      var title = main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_DELIVERY_DATE_MSGVER_2').replaceAll(/#date#/gi, doc.FORMATTED_DATE).replaceAll(/#account_number#/gi, doc.ACCOUNT_NUMBER).replaceAll(/#sum#/gi, this._renderMoney(doc.SUM)).replaceAll(/#delivery_name#/gi, doc.DELIVERY_NAME);
 	      var popupMenu;
 	      var menuItems = [{
 	        text: main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_CHANGE_DELIVERY_STATUS'),
@@ -410,7 +415,7 @@ this.BX = this.BX || {};
 	        }
 	        _this4._menus.push(popupMenu);
 	      };
-	      return main_core.Tag.render(_templateObject7 || (_templateObject7 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"crm-entity-widget-payment-detail\">\n\t\t\t\t<a class=\"ui-link\" onclick=\"", "\">\n\t\t\t\t\t", " (", ", ", ")\n\t\t\t\t</a>\n\t\t\t\t<div class=\"crm-entity-widget-payment-detail-inner\">\n\t\t\t\t\t<div class=\"ui-label ui-label-md ui-label-light crm-entity-widget-payment-action\" onclick=\"", "\">\n\t\t\t\t\t\t<span class=\"ui-label-inner\">", "</span>\n\t\t\t\t\t</div>\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), openSlider, title, doc.DELIVERY_NAME, sum, openMenu, main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_ACTIONS_MENU'), new ui_label.Label(labelOptions).render());
+	      return main_core.Tag.render(_templateObject7 || (_templateObject7 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"crm-entity-widget-payment-detail\">\n\t\t\t\t<a class=\"ui-link\" onclick=\"", "\">\n\t\t\t\t\t", "\n\t\t\t\t</a>\n\t\t\t\t<div class=\"crm-entity-widget-payment-detail-inner\">\n\t\t\t\t\t<div class=\"ui-label ui-label-md ui-label-light crm-entity-widget-payment-action\" onclick=\"", "\">\n\t\t\t\t\t\t<span class=\"ui-label-inner\">", "</span>\n\t\t\t\t\t</div>\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), openSlider, title, openMenu, main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_ACTIONS_MENU'), new ui_label.Label(labelOptions).render());
 	    }
 	  }, {
 	    key: "_renderRealizationDocument",
@@ -431,15 +436,14 @@ this.BX = this.BX || {};
 	        labelOptions.text = main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_SHIPMENT_DOCUMENT_STATUS_DRAFT');
 	        labelOptions.color = ui_label.LabelColor.LIGHT;
 	      }
-	      var title = main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_SHIPMENT_DOCUMENT_DATE_MSGVER_1').replaceAll(/#date#/gi, doc.FORMATTED_DATE);
-	      title = title.replaceAll(/#document_id#/gi, doc.ACCOUNT_NUMBER);
+	      var title = main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_SHIPMENT_DOCUMENT_DATE_MSGVER_2').replaceAll(/#date#/gi, doc.FORMATTED_DATE).replaceAll(/#document_id#/gi, doc.ACCOUNT_NUMBER);
 	      title = BX.util.htmlspecialchars(title);
-	      var sum = main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_SHIPMENT_DOCUMENT_AMOUNT').replaceAll(/#sum#/gi, this._renderMoney(doc.SUM));
+	      title = title.replaceAll(/#sum#/gi, this._renderMoney(doc.SUM));
 	      var popupMenu;
 	      var menuItems = [];
 	      if ((_this$_salesOrderRigh2 = this._salesOrderRights) !== null && _this$_salesOrderRigh2 !== void 0 && _this$_salesOrderRigh2.view) {
 	        var _this$_salesOrderRigh3, _this$_salesOrderRigh5, _this$_salesOrderRigh6;
-	        if (doc.DEDUCTED === 'Y' && (_this$_salesOrderRigh3 = this._salesOrderRights) !== null && _this$_salesOrderRigh3 !== void 0 && _this$_salesOrderRigh3.conduct) {
+	        if (doc.DEDUCTED === 'Y' && (_this$_salesOrderRigh3 = this._salesOrderRights) !== null && _this$_salesOrderRigh3 !== void 0 && _this$_salesOrderRigh3.conduct && !this._isOnecMode) {
 	          var _this$_salesOrderRigh4;
 	          if ((_this$_salesOrderRigh4 = this._salesOrderRights) !== null && _this$_salesOrderRigh4 !== void 0 && _this$_salesOrderRigh4.conduct) {
 	            menuItems.push({
@@ -461,7 +465,7 @@ this.BX = this.BX || {};
 	            }
 	          });
 	        }
-	        if ((_this$_salesOrderRigh6 = this._salesOrderRights) !== null && _this$_salesOrderRigh6 !== void 0 && _this$_salesOrderRigh6["delete"]) {
+	        if ((_this$_salesOrderRigh6 = this._salesOrderRights) !== null && _this$_salesOrderRigh6 !== void 0 && _this$_salesOrderRigh6["delete"] && !(this._isOnecMode && doc.DEDUCTED === 'Y')) {
 	          menuItems.push({
 	            text: main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_REMOVE'),
 	            className: doc.DEDUCTED === 'Y' ? 'menu-popup-no-icon crm-entity-widget-realization-menu-item-remove' : '',
@@ -476,6 +480,15 @@ this.BX = this.BX || {};
 	              }, main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_SHIPMENT_DOCUMENT_CONFIRM_REMOVE_BUTTON_CONFIRM'), function (messageBox) {
 	                return messageBox.close();
 	              }, main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_SHIPMENT_DOCUMENT_CONFIRM_REMOVE_BUTTON_BACK'));
+	            }
+	          });
+	        }
+	        if (this._isOnecMode && doc.DEDUCTED === 'Y') {
+	          menuItems.push({
+	            text: main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_OPEN'),
+	            onclick: function onclick() {
+	              popupMenu.close();
+	              _this5._viewRealizationSlider(doc.ID);
 	            }
 	          });
 	        }
@@ -500,7 +513,7 @@ this.BX = this.BX || {};
 	        _this5._menus.push(popupMenu);
 	      };
 	      var actionMenu = menuItems.length > 0 ? main_core.Tag.render(_templateObject8 || (_templateObject8 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"ui-label ui-label-md ui-label-light crm-entity-widget-payment-action\" onclick=\"", "\">\n\t\t\t\t\t<span class=\"ui-label-inner\">", "</span>\n\t\t\t\t</div>\n\t\t\t"])), openMenu, main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_ACTIONS_MENU')) : '';
-	      return main_core.Tag.render(_templateObject9 || (_templateObject9 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"crm-entity-widget-payment-detail\">\n\t\t\t\t<a class=\"ui-link\" onclick=\"", "\">\n\t\t\t\t\t", " (", ")\n\t\t\t\t</a>\n\t\t\t\t<div class=\"crm-entity-widget-payment-detail-inner\">\n\t\t\t\t\t", "\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), openSlider, title, sum, actionMenu, new ui_label.Label(labelOptions).render());
+	      return main_core.Tag.render(_templateObject9 || (_templateObject9 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"crm-entity-widget-payment-detail\">\n\t\t\t\t<a class=\"ui-link\" onclick=\"", "\">\n\t\t\t\t\t", "\n\t\t\t\t</a>\n\t\t\t\t<div class=\"crm-entity-widget-payment-detail-inner\">\n\t\t\t\t\t", "\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), openSlider, title, actionMenu, new ui_label.Label(labelOptions).render());
 	    }
 	  }, {
 	    key: "_renderAddDocument",
@@ -566,7 +579,12 @@ this.BX = this.BX || {};
 	        var menuItem = {
 	          text: text
 	        };
-	        if (this._isInventoryManagementRestricted) {
+	        if (this._isOnecMode && this._isInventoryManagement1cRestricted) {
+	          menuItem.onclick = function () {
+	            catalog_toolAvailabilityManager.OneCPlanRestrictionSlider.show();
+	          };
+	          menuItem.className = 'realization-document-tariff-lock';
+	        } else if (!this._isOnecMode && this._isInventoryManagementRestricted) {
 	          menuItem.onclick = function () {
 	            return top.BX.UI.InfoHelper.show('limit_store_crm_integration');
 	          };
@@ -654,7 +672,7 @@ this.BX = this.BX || {};
 	      };
 	    }
 	    /**
-	     *
+	     * @see #getAnalyticLabels for new analytics, this is for old analytics and will be deprecated in the future
 	     * @param labelMode converting to PascalCase before inserting into label template
 	     * @returns {string} final analytics label
 	     * @private
@@ -691,6 +709,7 @@ this.BX = this.BX || {};
 	      var options = this._defaultCreatePaymentDocumentOptions();
 	      options.mode = 'payment';
 	      options.analyticsLabel = this._generateAnalyticsLabel('create_payment');
+	      options.st = _classPrivateMethodGet(this, _getAnalyticLabels, _getAnalyticLabels2).call(this, 'payment');
 	      options.orderId = orderId;
 	      this._context().startSalescenterApplication(orderId, options);
 	    }
@@ -723,6 +742,7 @@ this.BX = this.BX || {};
 	      var options = this._defaultCreatePaymentDocumentOptions();
 	      options.mode = 'payment_delivery';
 	      options.analyticsLabel = this._generateAnalyticsLabel('create_payment_delivery');
+	      options.st = _classPrivateMethodGet(this, _getAnalyticLabels, _getAnalyticLabels2).call(this, 'delivery_payment');
 	      options.orderId = orderId;
 	      this._context().startSalescenterApplication(orderId, options);
 	    }
@@ -762,6 +782,7 @@ this.BX = this.BX || {};
 	      var options = this._defaultCreatePaymentDocumentOptions();
 	      options.mode = 'terminal_payment';
 	      options.analyticsLabel = this._generateAnalyticsLabel('create_terminal_payment');
+	      options.st = _classPrivateMethodGet(this, _getAnalyticLabels, _getAnalyticLabels2).call(this, 'terminal_payment');
 	      options.orderId = orderId;
 	      this._context().startSalescenterApplication(orderId, options);
 	    }
@@ -1159,6 +1180,17 @@ this.BX = this.BX || {};
 	  }]);
 	  return EntityEditorPaymentDocuments;
 	}();
+	function _getAnalyticLabels2(type) {
+	  var labels = {
+	    tool: 'crm',
+	    category: 'payments',
+	    event: 'payment_create_click',
+	    c_section: 'crm',
+	    c_sub_section: 'web',
+	    type: type
+	  };
+	  return labels;
+	}
 	babelHelpers.defineProperty(EntityEditorPaymentDocuments, "_rootNodeClass", 'crm-entity-widget-inner crm-entity-widget-inner--payment');
 
 	var _templateObject$1, _templateObject2$1, _templateObject3$1, _templateObject4$1, _templateObject5$1, _templateObject6$1, _templateObject7$1, _templateObject8$1, _templateObject9$1, _templateObject10$1, _templateObject11$1, _templateObject12, _templateObject13, _templateObject14;
@@ -1252,11 +1284,11 @@ this.BX = this.BX || {};
 	    key: "_renderPaymentDocument",
 	    value: function _renderPaymentDocument(doc) {
 	      var _this3 = this;
-	      var title = main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_PAYMENT_DATE_MSGVER_1', {
+	      var title = main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_PAYMENT_DATE_MSGVER_2', {
 	        '#DATE#': doc.FORMATTED_DATE,
-	        '#ACCOUNT_NUMBER#': doc.ACCOUNT_NUMBER
+	        '#ACCOUNT_NUMBER#': doc.ACCOUNT_NUMBER,
+	        '#SUM#': this._renderMoney(doc.SUM)
 	      });
-	      var sum = main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_PAYMENT_AMOUNT').replace(/#SUM#/gi, this._renderMoney(doc.SUM));
 	      var labelOptions = {
 	        text: main_core.Loc.getMessage("CRM_ENTITY_ED_PAYMENT_DOCUMENTS_STAGE_".concat(doc.STAGE)),
 	        customClass: 'crm-entity-widget-payment-label',
@@ -1274,7 +1306,7 @@ this.BX = this.BX || {};
 	      var openSlider = function openSlider() {
 	        return _this3._resendPaymentSlider(doc.ORDER_ID, doc.ID);
 	      };
-	      return main_core.Tag.render(_templateObject7$1 || (_templateObject7$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"crm-entity-stream-content-detail-table-row\">\n\t\t\t\t<div class=\"crm-entity-stream-content-document-description\">\n\t\t\t\t\t<a class=\"ui-link\" onclick=\"", "\">", " (", ")</a>\n\t\t\t\t\t<span class=\"crm-entity-stream-content-document-description__label\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</span>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), openSlider, title, sum, new ui_label.Label(labelOptions).render());
+	      return main_core.Tag.render(_templateObject7$1 || (_templateObject7$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"crm-entity-stream-content-detail-table-row\">\n\t\t\t\t<div class=\"crm-entity-stream-content-document-description\">\n\t\t\t\t\t<a class=\"ui-link\" onclick=\"", "\">", "</a>\n\t\t\t\t\t<span class=\"crm-entity-stream-content-document-description__label\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</span>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), openSlider, title, new ui_label.Label(labelOptions).render());
 	    }
 	  }, {
 	    key: "_renderDeliveryDocument",
@@ -1290,15 +1322,16 @@ this.BX = this.BX || {};
 	        labelOptions.text = main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_STATUS_DELIVERED');
 	        labelOptions.color = ui_label.LabelColor.LIGHT_GREEN;
 	      }
-	      var title = main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_DELIVERY_DATE_MSGVER_1', {
+	      var title = main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_DELIVERY_DATE_MSGVER_2', {
 	        '#DATE#': doc.FORMATTED_DATE,
-	        '#ACCOUNT_NUMBER#': doc.ACCOUNT_NUMBER
+	        '#ACCOUNT_NUMBER#': doc.ACCOUNT_NUMBER,
+	        '#SUM#': this._renderMoney(doc.SUM),
+	        '#DELIVERY_NAME#': doc.DELIVERY_NAME
 	      });
-	      var sum = main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_PAYMENT_AMOUNT').replace(/#SUM#/gi, this._renderMoney(doc.SUM));
 	      var openSlider = function openSlider() {
 	        return _this4._viewDeliverySlider(doc.ORDER_ID, doc.ID);
 	      };
-	      return main_core.Tag.render(_templateObject8$1 || (_templateObject8$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"crm-entity-stream-content-detail-table-row\">\n\t\t\t\t<div class=\"crm-entity-stream-content-document-description\">\n\t\t\t\t\t<a class=\"ui-link\" onclick=\"", "\">\n\t\t\t\t\t\t", " (", ", ", ")\n\t\t\t\t\t</a>\n\t\t\t\t\t<span class=\"crm-entity-stream-content-document-description__label\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</span>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), openSlider, title, doc.DELIVERY_NAME, sum, new ui_label.Label(labelOptions).render());
+	      return main_core.Tag.render(_templateObject8$1 || (_templateObject8$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"crm-entity-stream-content-detail-table-row\">\n\t\t\t\t<div class=\"crm-entity-stream-content-document-description\">\n\t\t\t\t\t<a class=\"ui-link\" onclick=\"", "\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</a>\n\t\t\t\t\t<span class=\"crm-entity-stream-content-document-description__label\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</span>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), openSlider, title, new ui_label.Label(labelOptions).render());
 	    }
 	  }, {
 	    key: "_renderRealizationDocument",
@@ -1320,14 +1353,16 @@ this.BX = this.BX || {};
 	          labelOptions.color = ui_label.LabelColor.LIGHT;
 	        }
 	      }
-	      var title = main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_SHIPMENT_DOCUMENT_DATE_MSGVER_1').replace(/#DATE#/gi, doc.FORMATTED_DATE);
-	      title = title.replace(/#DOCUMENT_ID#/gi, doc.ACCOUNT_NUMBER);
+	      var title = main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_SHIPMENT_DOCUMENT_DATE_MSGVER_2', {
+	        '#DATE#': doc.FORMATTED_DATE,
+	        '#DOCUMENT_ID#': doc.ACCOUNT_NUMBER
+	      });
 	      title = BX.util.htmlspecialchars(title);
-	      var sum = main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_SHIPMENT_DOCUMENT_AMOUNT').replace(/#SUM#/gi, this._renderMoney(doc.SUM));
+	      title = title.replaceAll(/#sum#/gi, this._renderMoney(doc.SUM));
 	      var openSlider = function openSlider() {
 	        return _this5._viewRealizationSlider(doc.ID);
 	      };
-	      return main_core.Tag.render(_templateObject9$1 || (_templateObject9$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"crm-entity-stream-content-detail-table-row\">\n\t\t\t\t<div class=\"crm-entity-stream-content-document-description\">\n\t\t\t\t\t<a class=\"ui-link\" onclick=\"", "\">\n\t\t\t\t\t\t", " (", ")\n\t\t\t\t\t</a>\n\t\t\t\t\t<span class=\"crm-entity-stream-content-document-description__label\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</span>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), openSlider, title, sum, new ui_label.Label(labelOptions).render());
+	      return main_core.Tag.render(_templateObject9$1 || (_templateObject9$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"crm-entity-stream-content-detail-table-row\">\n\t\t\t\t<div class=\"crm-entity-stream-content-document-description\">\n\t\t\t\t\t<a class=\"ui-link\" onclick=\"", "\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</a>\n\t\t\t\t\t<span class=\"crm-entity-stream-content-document-description__label\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</span>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), openSlider, title, new ui_label.Label(labelOptions).render());
 	    }
 	  }, {
 	    key: "_renderTotalSum",
@@ -1399,5 +1434,5 @@ this.BX = this.BX || {};
 	exports.EntityEditorPaymentDocuments = EntityEditorPaymentDocuments;
 	exports.TimelineSummaryDocuments = TimelineSummaryDocuments;
 
-}((this.BX.Crm = this.BX.Crm || {}),BX.Main,BX.UI.Dialogs,BX,BX.Event,BX.UI,BX.Currency));
+}((this.BX.Crm = this.BX.Crm || {}),BX.Main,BX.UI.Dialogs,BX.Catalog,BX,BX.Event,BX.UI,BX.Currency));
 //# sourceMappingURL=payment-documents.bundle.js.map

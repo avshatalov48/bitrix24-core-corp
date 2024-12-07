@@ -94,6 +94,11 @@ final class RestrictionManager
 
 	public function registerUsage(string $documentKey, int $userId): void
 	{
+		if ($this->existsSession($documentKey, $userId))
+		{
+			return;
+		}
+
 		$restrictionLog = new RestrictionLog();
 		$restrictionLog
 			->setUserId($userId)
@@ -110,6 +115,9 @@ final class RestrictionManager
 			return;
 		}
 
+		$usersInDocument = $hookData['users'] ?? [];
+		$usersInDocument = array_map('\intval', $usersInDocument);
+
 		$usersWhoFinished = [];
 		$actions = $hookData['actions'] ?? [];
 		foreach ($actions as $action)
@@ -117,7 +125,7 @@ final class RestrictionManager
 			$type = $action['type'] ?? null;
 			$userId = (int)($action['userid'] ?? null);
 
-			if ($type === Enum\UserAction::DISCONNECT)
+			if (($type === Enum\UserAction::DISCONNECT) && !\in_array($userId, $usersInDocument, true))
 			{
 				$usersWhoFinished[] = $userId;
 			}

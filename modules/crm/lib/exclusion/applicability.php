@@ -7,13 +7,15 @@
  */
 namespace Bitrix\Crm\Exclusion;
 
-use Bitrix\Main\NotSupportedException;
-
-use Bitrix\Crm\LeadTable;
-use Bitrix\Crm\DealTable;
-use Bitrix\Crm\QuoteTable;
-use Bitrix\Crm\ContactTable;
 use Bitrix\Crm\CompanyTable;
+use Bitrix\Crm\ContactTable;
+use Bitrix\Crm\DealTable;
+use Bitrix\Crm\LeadTable;
+use Bitrix\Crm\QuoteTable;
+use Bitrix\Main\Error;
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\NotSupportedException;
+use Bitrix\Main\Result;
 
 /**
  * Class Applicability for exclusions
@@ -35,7 +37,32 @@ class Applicability
 		$list = [$entityId];
 		self::filterEntities($entityTypeId, $list);
 
-		return empty($list);
+		return !empty($list);
+	}
+
+	public static function checkApplicability(int $entityTypeId, int $entityId): Result
+	{
+		if (self::isEntityApplicable($entityTypeId, $entityId))
+		{
+			return new Result();
+		}
+
+		$result = new Result();
+
+		if (\CCrmOwnerType::IsClient($entityTypeId))
+		{
+			$result->addError(
+				new Error(Loc::getMessage('CRM_EXCLUSION_APPLICABILITY_ERROR_EMPTY_FM'))
+			);
+		}
+		else
+		{
+			$result->addError(
+				new Error(Loc::getMessage('CRM_EXCLUSION_APPLICABILITY_ERROR_CLIENT_WITH_EMPTY_FM'))
+			);
+		}
+
+		return $result;
 	}
 
 	/**

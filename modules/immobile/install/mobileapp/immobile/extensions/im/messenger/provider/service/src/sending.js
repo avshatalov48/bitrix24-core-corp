@@ -196,17 +196,26 @@ jn.define('im/messenger/provider/service/sending', (require, exports, module) =>
 		/**
 		 * @private
 		 */
-		handlePagination(dialogId)
+		async handlePagination(dialogId)
 		{
 			if (!this.getDialog(dialogId).hasNextPage)
 			{
-				return Promise.resolve();
+				return;
 			}
 
 			Logger.warn('SendingService: sendMessage: there are unread pages, move to chat end');
 
-			// TODO: handle pagination
-			return Promise.resolve();
+			// TODO: refactor this
+			// Unfortunately, there is currently no more correct way to go to the context
+			// because context manager works directly with the dialog widget
+			/**
+			 * @type {ContextManager|null}
+			 */
+			const contextManager = serviceLocator.get(dialogId)?.locator?.get('context-manager');
+			if (contextManager)
+			{
+				await contextManager.goToBottomMessageContext();
+			}
 		}
 
 		/**

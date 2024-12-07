@@ -2,7 +2,9 @@
 
 namespace Bitrix\Crm\Integration;
 
+use Bitrix\Crm\Ml\Scoring;
 use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Timeline\TimelineEntry;
 use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Loader;
@@ -27,6 +29,7 @@ class PullManager
 	protected $isEnabled = false;
 
 	private static $instance;
+	private static array $updatePullEvents = [];
 
 	public static function getInstance(): PullManager
 	{
@@ -95,7 +98,18 @@ class PullManager
 	 */
 	public function sendItemUpdatedEvent(array $item, ?array $params = null): bool
 	{
-		$this->sendItemEvent(self::EVENT_ITEM_UPDATED, $item, $params);
+		$hashParams = $params ?? [];
+		$hashItemData = $item['data'] ?? [];
+		$hash = md5(serialize($hashItemData + [
+			'TYPE' => $hashParams['TYPE'] ?? null,
+			'CATEGORY_ID' => $hashParams['CATEGORY_ID'] ?? null,
+		]));
+
+		if (!in_array($hash, self::$updatePullEvents, true))
+		{
+			self::$updatePullEvents[] = $hash;
+			$this->sendItemEvent(self::EVENT_ITEM_UPDATED, $item, $params);
+		}
 
 		return true;
 	}
@@ -187,7 +201,23 @@ class PullManager
 		{
 			$entityType .= '_' . (int)$params['CATEGORY_ID'];
 		}
+
 		return static::getEventName(static::EVENT_KANBAN_UPDATED, $entityType);
+	}
+
+	public function getAdditionalPullTags(string $entityType, ?array $params = null): array
+	{
+		$categoryId = $params['CATEGORY_ID'] ?? -1;
+		if ($categoryId === -1)
+		{
+			$entityType .= '_' . $categoryId;
+
+			return [
+				static::getEventName(static::EVENT_KANBAN_UPDATED, $entityType),
+			];
+		}
+
+		return [];
 	}
 
 	/**
@@ -288,22 +318,10 @@ class PullManager
 	 */
 	protected function filterUserIdsWhoCanViewItem(array $item, array $userIds, string $eventName): array
 	{
-		$withoutPrefix = str_replace(self::EVENT_KANBAN_UPDATED . '_', '', $eventName);
-		$nameParts = (array)explode('_', $withoutPrefix);
-
-		if ($nameParts[0] === 'DYNAMIC' || $nameParts[0] === 'SMART')
-		{
-			// like 'DYNAMIC_128' or 'SMART_INVOICE'
-			$typeName = $nameParts[0] . '_' . $nameParts[1];
-		}
-		else
-		{
-			$typeName = $nameParts[0];
-		}
-
 		$result = [];
 
-		$entityTypeId = \CCrmOwnerType::ResolveID($typeName);
+		$entityTypeId = $this->getEntityTypeIdByEventName($eventName);
+
 		if (\CCrmOwnerType::IsEntity($entityTypeId))
 		{
 			foreach($userIds as $userId)
@@ -324,6 +342,26 @@ class PullManager
 		}
 
 		return $result;
+	}
+
+	private function getEntityTypeIdByEventName(string $eventName): int
+	{
+		$withoutPrefix = str_replace(self::EVENT_KANBAN_UPDATED . '_', '', $eventName);
+		$nameParts = explode('_', $withoutPrefix);
+		$index = count($nameParts);
+		while ($index > 0)
+		{
+			$typeName = implode('_', $nameParts);
+			$entityTypeId = \CCrmOwnerType::ResolveID($typeName);
+			if (\CCrmOwnerType::IsDefined($entityTypeId))
+			{
+				return $entityTypeId;
+			}
+
+			unset($nameParts[--$index]);
+		}
+
+		return \CCrmOwnerType::Undefined;
 	}
 
 	/**
@@ -384,6 +422,33 @@ class PullManager
 	public function getChannelShared()
 	{
 		return \CPullChannel::GetChannelShared();
+	}
+
+	public function unSubscribeUserPullEvents(int $userId, int $entityTypeId, int $entityId): void
+	{
+		if (!$this->isEnabled())
+		{
+			return;
+		}
+
+		$timelineTagName = TimelineEntry::prepareEntityPushTag($entityTypeId, $entityId);
+		\CPullWatch::Delete($userId, $timelineTagName);
+
+		if (in_array($entityTypeId, [\CCrmOwnerType::Lead, \CCrmOwnerType::Deal], true))
+		{
+			$predictionTagName = Scoring::getPredictionUpdatePullTag($entityTypeId, $entityId);
+			\CPullWatch::Delete($userId, $predictionTagName);
+		}
+
+		$itemUpdateTag = static::getItemEventName(
+			static::EVENT_ITEM_UPDATED,
+			\CCrmOwnerType::ResolveName($entityTypeId),
+			$entityId
+		);
+		if ($itemUpdateTag)
+		{
+			\CPullWatch::Delete($userId, $itemUpdateTag);
+		}
 	}
 
 	public static function isPullChannelActiveByTag(string $tag): bool

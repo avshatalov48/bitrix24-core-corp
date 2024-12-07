@@ -130,6 +130,7 @@ jn.define('im/messenger/controller/sidebar/sidebar-view', (require, exports, mod
 					svg: this.props.headData.svg,
 					color: this.props.headData.imageColor,
 					size: 'XL',
+					isSuperEllipse: this.props.isSuperEllipseAvatar,
 				}),
 				this.renderStatusImage(),
 			);

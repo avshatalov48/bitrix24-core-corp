@@ -69,6 +69,7 @@ jn.define('layout/ui/entity-editor', (require, exports, module) => {
 			this.model = BX.prop.get(this.settings, 'model', null);
 			/** @type {EntityScheme} */
 			this.scheme = BX.prop.get(this.settings, 'scheme', null);
+
 			/** @type {EntityConfig} */
 			this.config = BX.prop.get(this.settings, 'config', null);
 

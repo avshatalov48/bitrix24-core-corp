@@ -2,7 +2,7 @@
 
 namespace Bitrix\Crm\Timeline;
 
-class LogMessageType
+final class LogMessageType
 {
 	public const UNDEFINED = 0;
 	public const CALL_INCOMING = 1;
@@ -26,4 +26,8 @@ class LogMessageType
 	public const AI_CALL_START_FILLING_ENTITY_FIELDS = 19;
 	public const AI_CALL_FINISH_FILLING_ENTITY_FIELDS = 20;
 	public const AI_CALL_LAUNCH_ERROR = 21;
+	public const AI_CALL_AUTOMATION_LAUNCH_ERROR = 22;
+	public const CALL_MOVED = 23;
+	public const OPEN_LINE_MOVED = 24;
+	public const EMAIL_INCOMING_MOVED = 25;
 }

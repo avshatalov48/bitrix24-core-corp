@@ -2,7 +2,6 @@
 namespace Bitrix\Tasks\TourGuide;
 
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Tasks\TourGuide;
 
 Loc::loadMessages(__FILE__);
 

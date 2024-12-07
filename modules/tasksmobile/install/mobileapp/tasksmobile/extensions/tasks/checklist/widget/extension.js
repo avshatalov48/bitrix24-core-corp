@@ -10,16 +10,20 @@ jn.define('tasks/checklist/widget', (require, exports, module) => {
 	const { ChecklistMoreMenu } = require('tasks/checklist/widget/src/more-menu');
 
 	/**
+	 * @typedef {Object} ChecklistWidgetProps
+	 * @property {object} [checklist]
+	 * @property {CheckListFlatTree} [parentWidget]
+	 * @property {boolean} [inLayout]
+	 * @property {number | string} [focusedItemId]
+	 * @property {boolean} [hideCompleted]
+	 * @property {boolean} [hideMoreMenu=false]
+	 *
 	 * @class ChecklistWidget
 	 */
 	class ChecklistWidget
 	{
 		/**
-		 * @param {object} props
-		 * @param {object} [props.checklist]
-		 * @param {CheckListFlatTree} [props.parentWidget]
-		 * @param {boolean} [props.inLayout]
-		 * @param {number | string} [props.focusedItemId]
+		 * @param {ChecklistWidgetProps} props
 		 * @return {Promise}
 		 */
 		static async open(props)
@@ -34,25 +38,35 @@ jn.define('tasks/checklist/widget', (require, exports, module) => {
 			this.props = props;
 			/** @type {ChecklistBaseLayout} */
 			this.openManager = null;
+
 			/** @type {Checklist} */
 			this.checklistComponent = null;
 			this.parentWidget = props.parentWidget;
-			this.handleOnSave = this.handleOnSave.bind(this);
-			this.handleOnClose = this.handleOnClose.bind(this);
-			this.handleOnChange = this.handleOnChange.bind(this);
-			this.onChangeFilter = this.onChangeFilter.bind(this);
-			this.handleOnShowMoreMenu = this.handleOnShowMoreMenu.bind(this);
+			this.menuMore = this.createMoreMenu();
+		}
 
-			this.moreMenuActions = new ChecklistMoreMenu({
-				...props.moreMenuActions,
+		createMoreMenu()
+		{
+			const {
+				hideCompleted,
+				menuMore: {
+					actions,
+					accessRestrictions,
+				},
+			} = this.props;
+
+			return new ChecklistMoreMenu({
+				...actions,
+				accessRestrictions,
+				hideCompleted,
 				onShowOnlyMine: this.onChangeFilter,
-				onHideCompleted: this.onChangeFilter,
+				onHideCompleted: this.onHideCompleted,
 			});
 		}
 
 		async initialOpenPageManager()
 		{
-			const { parentWidget, inLayout } = this.props;
+			const { parentWidget, inLayout, hideCompleted, hideMoreMenu } = this.props;
 
 			const checklistComponent = this.getChecklistComponent();
 			const layoutType = inLayout ? PAGE_LAYOUT : BOTTOM_SHEET;
@@ -65,7 +79,8 @@ jn.define('tasks/checklist/widget', (require, exports, module) => {
 				onSave: this.handleOnSave,
 				onClose: this.handleOnClose,
 				component: checklistComponent,
-				onShowMoreMenu: this.handleOnShowMoreMenu,
+				onShowMoreMenu: hideMoreMenu ? null : this.handleOnShowMoreMenu,
+				highlightMoreButton: hideCompleted,
 			});
 
 			const layoutWidget = await openManager.open();
@@ -78,13 +93,26 @@ jn.define('tasks/checklist/widget', (require, exports, module) => {
 			return openManager;
 		}
 
-		async onChangeFilter(params)
-		{
-			this.checklistComponent.reload(params);
-			const moreMenuParams = await this.moreMenuActions.reload(params);
+		onHideCompleted = (params = {}) => {
+			const { menuMore: menuMoreParams } = this.props;
+			const { onToggleCompletedItems } = menuMoreParams;
 
-			this.openManager.update({ highlightMoreButton: Object.values(moreMenuParams).some((value) => value) });
-		}
+			if (onToggleCompletedItems)
+			{
+				onToggleCompletedItems(params.hideCompleted);
+			}
+
+			void this.onChangeFilter(params);
+		};
+
+		onChangeFilter = async (params) => {
+			this.checklistComponent.reload(params);
+			const moreMenuParams = await this.menuMore.reload(params);
+
+			this.openManager.update({
+				highlightMoreButton: Object.values(moreMenuParams).some((value) => value),
+			});
+		};
 
 		/**
 		 * @private
@@ -99,8 +127,8 @@ jn.define('tasks/checklist/widget', (require, exports, module) => {
 
 		getChecklistProps()
 		{
-			const { moreMenuActions = {}, ...restProps } = this.props;
-			const { onMoveToCheckList } = moreMenuActions;
+			const { menuMore = {}, ...restProps } = this.props;
+			const { onMoveToCheckList } = menuMore.actions;
 
 			return {
 				...restProps,
@@ -132,47 +160,46 @@ jn.define('tasks/checklist/widget', (require, exports, module) => {
 			this.checklistComponent = checklistComponent;
 		}
 
-		handleOnShowMoreMenu()
-		{
+		handleOnShowMoreMenu = () => {
 			Keyboard.dismiss();
-			this.moreMenuActions.show(this.parentWidget);
-		}
+			this.menuMore.show(this.parentWidget);
+		};
 
-		handleOnChange(params)
-		{
-			this.openManager.onChange(params);
-		}
+		handleOnChange = () => {
+			const { onCompletedChanged } = this.props;
 
-		handleOnSave()
-		{
+			if (onCompletedChanged)
+			{
+				onCompletedChanged();
+			}
+
+			this.openManager.onChange();
+		};
+
+		handleOnSave = () => {
 			const { onSave } = this.props;
 
 			if (onSave)
 			{
 				onSave(this.getChecklistId());
 			}
-		}
+		};
 
-		handleOnClose()
-		{
+		handleOnClose = () => {
 			const { onClose } = this.props;
 
 			if (onClose)
 			{
 				onClose(this.getChecklistId());
 			}
-		}
+		};
 	}
 
 	ChecklistWidget.propTypes = {
 		checklist: PropTypes.object,
 		onSave: PropTypes.func,
 		onClose: PropTypes.func,
-		moreMenuActions: PropTypes.shape({
-			onCreateChecklist: PropTypes.func,
-			onRemove: PropTypes.func,
-			onMoveToCheckList: PropTypes.func,
-		}),
+		menuMore: PropTypes.object,
 	};
 
 	module.exports = { ChecklistWidget };

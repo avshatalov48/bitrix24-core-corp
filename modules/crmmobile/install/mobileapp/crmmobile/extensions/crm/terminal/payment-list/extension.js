@@ -16,7 +16,7 @@ jn.define('crm/terminal/payment-list', (require, exports, module) => {
 	const { PaymentService } = require('crm/terminal/services/payment');
 	const { AnalyticsLabel } = require('analytics-label');
 	const { PaymentDocument } = require('crm/entity-document');
-	const { TypeName } = require('crm/type/name');
+	const { TypeName } = require('crm/type');
 	const { magnifierWithMenuAndDot } = require('assets/common');
 	const { SearchBar } = require('layout/ui/search-bar');
 	const { Filter } = require('layout/ui/kanban/filter');
@@ -159,14 +159,14 @@ jn.define('crm/terminal/payment-list', (require, exports, module) => {
 
 		renderEmptyListComponent()
 		{
-			let title = Loc.getMessage('M_CRM_TL_PAYMENT_LIST_EMPTY_SCREEN_TITLE_V2');
+			let title = Loc.getMessage('M_CRM_TL_PAYMENT_LIST_EMPTY_SCREEN_TITLE_V2_MSGVER_1');
 			let description = () => {
 				return View(
 					{
 						style: styles.emptyScreen.description.container,
 					},
 					Text({
-						text: Loc.getMessage('M_CRM_TL_PAYMENT_LIST_EMPTY_SCREEN_DESCRIPTION'),
+						text: Loc.getMessage('M_CRM_TL_PAYMENT_LIST_EMPTY_SCREEN_DESCRIPTION_MSGVER_1'),
 						style: styles.emptyScreen.description.text,
 					}),
 				);
@@ -258,6 +258,8 @@ jn.define('crm/terminal/payment-list', (require, exports, module) => {
 							layout.showComponent(new PaymentPay({
 								layout,
 								payment,
+								isPhoneConfirmed: payment.isPhoneConfirmed,
+								connectedSiteId: payment.connectedSiteId,
 								isStatusVisible: true,
 								...this.getPaymentPayProps(),
 							}));
@@ -319,6 +321,8 @@ jn.define('crm/terminal/payment-list', (require, exports, module) => {
 						defaultCountry: this.defaultCountry,
 						fields: this.createPaymentFields,
 						paymentPayProps: this.getPaymentPayProps(),
+						isPhoneConfirmed: this.isPhoneConfirmed,
+						connectedSiteId: this.connectedSiteId,
 					}));
 				},
 			});
@@ -420,6 +424,8 @@ jn.define('crm/terminal/payment-list', (require, exports, module) => {
 							createPaymentFields,
 							psCreationActionProviders,
 							pullConfig,
+							isPhoneConfirmed,
+							connectedSiteId,
 						} = response.data;
 
 						this.currencyId = currencyId || null;
@@ -427,6 +433,8 @@ jn.define('crm/terminal/payment-list', (require, exports, module) => {
 						this.createPaymentFields = createPaymentFields || [];
 						this.psCreationActionProviders = psCreationActionProviders || {};
 						this.pullConfig = pullConfig || {};
+						this.isPhoneConfirmed = isPhoneConfirmed ?? true;
+						this.connectedSiteId = connectedSiteId ?? 0;
 
 						resolve();
 					}).catch(console.error);

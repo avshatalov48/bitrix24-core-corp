@@ -179,7 +179,7 @@ if ($fieldType !== "checkbox")
 				array("HIDE_ICONS"=>true)
 			);
 			?>
-			<script type="text/javascript">
+			<script>
 				BX.ready(function(){ BX.InterfaceGridFilterPopup.initializeCalendarInterval(document.forms['filter_<?=$arParams["GRID_ID"]?>'].<?=$field["id"]?>_datesel); });
 			</script>
 			<?php
@@ -267,7 +267,7 @@ if (!empty($arResult["FILTER"]))
 </div><?php
 }
 ?>
-<script type="text/javascript">
+<script>
 	BX.ready(
 		function()
 		{

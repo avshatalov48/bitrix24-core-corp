@@ -6,6 +6,7 @@ return [
 		'haptics',
 		'loc',
 		'toast/base',
+		'tokens',
 		'utils/object',
 	],
 ];

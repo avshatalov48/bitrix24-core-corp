@@ -1,5 +1,5 @@
 <?php
-$MESS['CRM_TERMINAL_EMPTY_STATE_COMPONENT_TEMPLATE_TITLE'] = 'Битрикс24.Терминал';
+$MESS['CRM_TERMINAL_EMPTY_STATE_COMPONENT_TEMPLATE_TITLE_MSGVER_1'] = 'Битрикс24.Терминал';
 $MESS['CRM_TERMINAL_EMPTY_STATE_COMPONENT_TEMPLATE_SUB_TITLE'] = 'Принимайте оплату от клиентов прямо в смартфоне';
 $MESS['CRM_TERMINAL_EMPTY_STATE_COMPONENT_TEMPLATE_ITEM_1'] = 'Альтернатива банковскому терминалу';
 $MESS['CRM_TERMINAL_EMPTY_STATE_COMPONENT_TEMPLATE_ITEM_2'] = 'Не нужно покупать терминал каждому курьеру ';

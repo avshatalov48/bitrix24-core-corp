@@ -48,7 +48,7 @@ export class PortalPage extends BaseSettingsPage
 			EventEmitter.GLOBAL_TARGET,
 			this.getEventNamespace() + ':ThemePicker:Change',
 			(baseEvent: BaseEvent) => {
-				this.getAnalytic()?.addEventConfigPortal(AnalyticSettingsEvent.CHANGE_PORTAL_THEME);
+				this.getAnalytic()?.addEventChangeTheme(baseEvent.data?.id);
 			}
 		);
 	}
@@ -223,7 +223,7 @@ export class PortalPage extends BaseSettingsPage
 					inputName: 'name',
 					label: this.getValue('portalSettingsLabels').name,
 					value: this.getValue('portalSettings').name,
-					placeholder: window.document.location.hostname,
+					placeholder: Loc.getMessage('INTRANET_SETTINGS_FIELD_LABEL_COMPANY_TITLE'),
 					inputDefaultWidth: true,
 				})),
 			}),
@@ -236,8 +236,10 @@ export class PortalPage extends BaseSettingsPage
 	#getOwnDomainTabBody(domainSettings): HTMLElement
 	{
 		const copyButton = Tag.render`<div class="ui-icon-set --copy-plates intranet-settings__domain__list_btn"></div>`;
+		const exampleDns = domainSettings.exampleDns.join('<br>');
+
 		BX.clipboard.bindCopyClick(copyButton, {text: () => {
-				return Loc.getMessage('INTRANET_SETTINGS_OWN_DOMAIN_HELP_DNS').replaceAll('<br>', "\n");
+				return exampleDns.replaceAll('<br>', "\n");
 			}});
 
 		const res = Tag.render
@@ -246,7 +248,7 @@ export class PortalPage extends BaseSettingsPage
 							<li class="intranet-settings__domain__list_item">
 								${Loc.getMessage('INTRANET_SETTINGS_OWN_DOMAIN_HELP1')}
 								<div class="intranet-settings__domain_box">
-									${Loc.getMessage('INTRANET_SETTINGS_OWN_DOMAIN_HELP_DNS')}
+									${exampleDns}
 									${copyButton}
 								</div>
 							</li>

@@ -10,7 +10,9 @@ use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\Text;
 
 class LinkCopied extends LogMessage
 {
-	use CalendarSharing;
+	use CalendarSharing\SharingLinkUrlTrait;
+	use CalendarSharing\ModelDataTrait;
+	use CalendarSharing\MessageTrait;
 
 	public function getType(): string
 	{
@@ -30,7 +32,7 @@ class LinkCopied extends LogMessage
 	public function getContentBlocks(): ?array
 	{
 		$linkBlock = null;
-		$linkUrl = $this->getLinkUrl();
+		$linkUrl = $this->getSharingLinkUrl($this->getLinkHash());
 		$contentBlock =
 			ContentBlockFactory::createTitle(
 				$this->getMessage('CRM_TIMELINE_CALENDAR_SHARING_CLIENT_CAN_SET_MEETING')

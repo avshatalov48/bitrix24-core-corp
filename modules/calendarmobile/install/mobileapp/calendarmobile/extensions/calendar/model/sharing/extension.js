@@ -12,11 +12,6 @@ jn.define('calendar/model/sharing', (require, exports, module) => {
 		CALENDAR: 'calendar',
 	};
 
-	const ModelRestrictionStatus = {
-		ENABLE: 'enable',
-		DISABLE: 'disable',
-	};
-
 	const ModelSharingStatus = {
 		ENABLE: 'enable',
 		DISABLE: 'disable',
@@ -26,7 +21,6 @@ jn.define('calendar/model/sharing', (require, exports, module) => {
 	const state = {
 		status: ModelSharingStatus.UNDEFINED,
 		publicShortUrl: withCurrentDomain(),
-		restrictionStatus: ModelRestrictionStatus.DISABLE,
 		context: Context.CALENDAR,
 	};
 
@@ -51,19 +45,15 @@ jn.define('calendar/model/sharing', (require, exports, module) => {
 
 		setFields(props)
 		{
-			const { isEnabled, isRestriction, shortUrl, settings, userInfo, options } = props;
+			const { isEnabled, shortUrl, settings, userInfo, options } = props;
 
 			const status = (isEnabled === true)
 				? ModelSharingStatus.ENABLE
-				: ModelSharingStatus.DISABLE;
-
-			const restrictionStatus = (isRestriction === true)
-				? ModelRestrictionStatus.ENABLE
-				: ModelRestrictionStatus.DISABLE;
+				: ModelSharingStatus.DISABLE
+			;
 
 			this.setStatus(status);
 			this.setPublicShortUrl(shortUrl);
-			this.setRestrictionStatus(restrictionStatus);
 			this.setSettings(new Settings(settings));
 
 			if (options)
@@ -82,6 +72,7 @@ jn.define('calendar/model/sharing', (require, exports, module) => {
 				context: this.context,
 				publicShortUrl: this.publicShortUrl,
 				restrictionStatus: this.restrictionStatus,
+				promoStatus: this.promoStatus,
 				userInfo: this.userInfo,
 				settings: this.settings,
 			};
@@ -104,13 +95,6 @@ jn.define('calendar/model/sharing', (require, exports, module) => {
 			this.context = value && Object.values(Context).includes(value)
 				? value.toString()
 				: state.context;
-		}
-
-		setRestrictionStatus(value)
-		{
-			this.restrictionStatus = value && Object.values(ModelRestrictionStatus).includes(value)
-				? value.toString()
-				: state.restrictionStatus;
 		}
 
 		setPublicShortUrl(value)
@@ -173,6 +157,14 @@ jn.define('calendar/model/sharing', (require, exports, module) => {
 		getRestrictionStatus()
 		{
 			return this.restrictionStatus;
+		}
+
+		/**
+		 * @returns {string}
+		 */
+		getPromoStatus()
+		{
+			return this.promoStatus;
 		}
 
 		/**
@@ -244,6 +236,7 @@ jn.define('calendar/model/sharing', (require, exports, module) => {
 
 		addUserLink(link)
 		{
+			// eslint-disable-next-line no-param-reassign
 			link.members = this.prepareLinkMembers(link.members);
 
 			const memberIds = link.members.map((member) => member.id);
@@ -313,7 +306,7 @@ jn.define('calendar/model/sharing', (require, exports, module) => {
 				members.push(owner);
 			}
 
-			members = [...members].sort((user) => user.id === owner.id ? -1 : 0);
+			members = [...members].sort((user) => (user.id === owner.id ? -1 : 0));
 
 			return members;
 		}
@@ -331,7 +324,7 @@ jn.define('calendar/model/sharing', (require, exports, module) => {
 		setSortByFrequentUse(doSortByFrequentUse)
 		{
 			this.sortJointLinksByFrequentUse = doSortByFrequentUse;
-			void SharingAjax.setSortJointLinksByFrequentUse( { sortByFrequentUse: doSortByFrequentUse ? 'Y' : 'N' });
+			void SharingAjax.setSortJointLinksByFrequentUse({ sortByFrequentUse: doSortByFrequentUse ? 'Y' : 'N' });
 		}
 
 		isSortByFrequentUse()
@@ -343,7 +336,6 @@ jn.define('calendar/model/sharing', (require, exports, module) => {
 	module.exports = {
 		ModelSharing,
 		ModelSharingStatus,
-		ModelRestrictionStatus,
 		SharingContext: Context,
 	};
 });

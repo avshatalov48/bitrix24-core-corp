@@ -216,7 +216,7 @@ class ExtranetWizardTemplate extends CWizardTemplate
 			<p id="noscript">{$noscriptInfo}</p>
 		</noscript>
 
-		<script type="text/javascript">
+		<script>
 		<!--
 
 			function SubmitForm(button)

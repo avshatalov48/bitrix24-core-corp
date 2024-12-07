@@ -30,6 +30,11 @@ class CAllTimeManEntry
 		}
 
 		$query = CTimeManEntry::_GetLastQuery($USER_ID);
+		if ($query === null)
+		{
+			return false;
+		}
+
 		$dbRes = $DB->Query($query);
 		$arRes = $dbRes->Fetch();
 
@@ -186,6 +191,11 @@ class CAllTimeManEntry
 			}
 
 			unset($arFields['TIME_LEAKS_ADD']);
+		}
+
+		if (isset($arFields['DURATION']))
+		{
+			$arFields['DURATION'] = self::correctDuration($arFields['DURATION']);
 		}
 
 		unset($arFields['ID']);
@@ -917,5 +927,17 @@ class CAllTimeManEntry
 		}
 
 		return $res;
+	}
+
+	private static function correctDuration(int $duration): int
+	{
+		$secondsPerDay = 86400;
+
+		if ($duration < 0)
+		{
+			return $duration + $secondsPerDay;
+		}
+
+		return $duration;
 	}
 }

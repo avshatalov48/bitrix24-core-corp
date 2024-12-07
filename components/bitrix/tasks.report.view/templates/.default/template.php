@@ -1,6 +1,7 @@
 <?php
 
 use Bitrix\Main\UI\Extension;
+use Bitrix\Main\Web\Json;
 use Bitrix\Tasks\Helper\RestrictionUrl;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
@@ -68,7 +69,7 @@ $APPLICATION->IncludeComponent(
 </div>
 <?php $this->EndViewTarget();?>
 
-
+<div class="<?= !$arResult['tasksReportEnabled'] ? 'task-report-locked' : '' ?>">
 <?php
 $APPLICATION->IncludeComponent(
 	'bitrix:report.view',
@@ -95,7 +96,9 @@ $status_lang_pseudo = $entity->getField('STATUS_PSEUDO')->getLangCode();
 $priority_lang = $entity->getField('PRIORITY')->getLangCode();
 $mark_lang = $entity->getField('MARK')->getLangCode();
 
+$pathToTasks = (preg_match('#^/\w#', $arResult['pathToTasks']) ? $arResult['pathToTasks']: '/');
 ?>
+</div>
 
 <div id="report-chfilter-examples-custom" style="display: none;">
 
@@ -152,7 +155,7 @@ $mark_lang = $entity->getField('MARK')->getLangCode();
 		<input type="text" size="2" name="value_days"><?=GetMessage('TASKS_REPORT_DURATION_DAYS')?>&nbsp;
 		<input type="text" size="2" name="value_hours"><?=GetMessage('TASKS_REPORT_DURATION_HOURS')?>
 	</span>
-	<script type="text/javascript">
+	<script>
 		function refreshDaysHoursField()
 		{
 			var inp, days = null, hours = null, val;
@@ -210,3 +213,30 @@ $mark_lang = $entity->getField('MARK')->getLangCode();
 		});
 	</script>
 </div>
+
+<script>
+	BX.ready(function() {
+		const tasksReportEnabled = <?= Json::encode($arResult['tasksReportEnabled']) ?>;
+
+		if (!tasksReportEnabled)
+		{
+			BX.addCustomEvent('SidePanel.Slider:onClose', (event) => {
+				if (event.getSlider().getUrl() === 'ui:info_helper')
+				{
+					window.location.href = '<?= CUtil::JSEscape($pathToTasks) ?>';
+				}
+			});
+
+			BX.Runtime.loadExtension('tasks.limit').then((exports) => {
+				const { Limit } = exports;
+				Limit.showInstance({
+					featureId: '<?= $arResult['tasksReportFeatureId'] ?>',
+					limitAnalyticsLabels: {
+						module: 'tasks',
+						source: 'view',
+					},
+				});
+			});
+		}
+	});
+</script>

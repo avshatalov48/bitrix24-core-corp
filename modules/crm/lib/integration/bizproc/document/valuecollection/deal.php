@@ -61,16 +61,7 @@ class Deal extends Base
 		$stageId = $this->document['STAGE_ID'] ?? '';
 		$this->document['STAGE_ID_PRINTABLE'] = Crm\Category\DealCategory::getStageName($stageId, $categoryId);
 
-		if ($this->document['COMPANY_ID'] <= 0)
-		{
-			$this->document['COMPANY_ID'] = null;
-		}
-
-		if ($this->document['CONTACT_ID'] <= 0)
-		{
-			$this->document['CONTACT_ID'] = null;
-		}
-
+		$this->normalizeEntityBindings(['COMPANY_ID', 'CONTACT_ID']);
 		$this->loadUserFieldValues();
 
 		$this->document = Crm\Entity\CommentsHelper::prepareFieldsFromBizProc($this->typeId, $this->id, $this->document);

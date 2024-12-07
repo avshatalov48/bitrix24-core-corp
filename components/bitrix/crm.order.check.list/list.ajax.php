@@ -104,3 +104,22 @@ elseif ($action === 'REFRESH_CHECK')
 
 	__CrmCheckListEndResponse(array('SUCCESS' => true));
 }
+elseif ($action === 'REPRINT_CHECK')
+{
+	\Bitrix\Main\Localization\Loc::loadMessages(__FILE__);
+	if(!CCrmPerms::IsAccessEnabled($userPerms))
+	{
+		__CrmCheckListEndResponse(['ERROR' => 'Access denied.']);
+	}
+
+	$id = isset($_REQUEST['ID']) && !is_array($_REQUEST['ID']) ? (int)$_REQUEST['ID'] : false;
+
+	$reprintResult = \Bitrix\Sale\Cashbox\CheckManager::reprint($id);
+	if (!$reprintResult->isSuccess())
+	{
+		$err = implode('\n', $reprintResult->getErrorMessages());
+		__CrmCheckListEndResponse(['ERROR' => $err]);
+	}
+
+	__CrmCheckListEndResponse(['SUCCESS' => true]);
+}

@@ -2,6 +2,7 @@
  * @module im/messenger/lib/element/recent/item/chat
  */
 jn.define('im/messenger/lib/element/recent/item/chat', (require, exports, module) => {
+	const { Type } = require('type');
 	const { Loc } = require('loc');
 
 	const { RecentItem } = require('im/messenger/lib/element/recent/item/base');
@@ -26,6 +27,12 @@ jn.define('im/messenger/lib/element/recent/item/chat', (require, exports, module
 		createTitleStyle()
 		{
 			const dialog = this.getDialogItem();
+
+			if (!dialog || !Type.isArray(dialog.muteList))
+			{
+				return this;
+			}
+
 			if (dialog.muteList.includes(serviceLocator.get('core').getUserId()))
 			{
 				this.styles.title = merge(this.styles.title, {
@@ -42,9 +49,10 @@ jn.define('im/messenger/lib/element/recent/item/chat', (require, exports, module
 		{
 			const item = this.getModelItem();
 			const message = item.message;
-			if (message.id === 0)
+			const messageText = this.getMessageText(item);
+			if (!Type.isPlainObject(message) || message.id === 0)
 			{
-				this.subtitle = ChatTitle.createFromDialogId(item.id).getDescription();
+				this.subtitle = ChatTitle.createFromDialogId(item.id).getDescription() ?? this.subtitle;
 
 				return this;
 			}
@@ -53,7 +61,7 @@ jn.define('im/messenger/lib/element/recent/item/chat', (require, exports, module
 			const isYourMessage = item.message.senderId === serviceLocator.get('core').getUserId();
 			if (isYourMessage)
 			{
-				this.subtitle = Loc.getMessage('IMMOBILE_ELEMENT_RECENT_YOU_WROTE') + message.text;
+				this.subtitle = Loc.getMessage('IMMOBILE_ELEMENT_RECENT_YOU_WROTE') + messageText;
 
 				return this;
 			}
@@ -61,7 +69,7 @@ jn.define('im/messenger/lib/element/recent/item/chat', (require, exports, module
 			const hasAuthor = item.message.senderId;
 			if (!hasAuthor)
 			{
-				this.subtitle = message.text;
+				this.subtitle = messageText;
 
 				return this;
 			}
@@ -77,7 +85,7 @@ jn.define('im/messenger/lib/element/recent/item/chat', (require, exports, module
 				authorInfo = `${user.name}: `;
 			}
 
-			this.subtitle = authorInfo + message.text;
+			this.subtitle = authorInfo + messageText;
 
 			return this;
 		}

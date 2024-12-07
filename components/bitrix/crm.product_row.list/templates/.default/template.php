@@ -82,6 +82,8 @@ if (!$arResult['USE_ASYNC_ADD_PRODUCT'])
 $showChoiceButton = true;
 $newProductCardEnabled = \Bitrix\Main\Loader::includeModule('catalog')
 	&& \Bitrix\Crm\Settings\LayoutSettings::getCurrent()->isFullCatalogEnabled();
+$isCatalogHidden = \Bitrix\Main\Loader::includeModule('catalog')
+	&& \Bitrix\Catalog\Config\State::isExternalCatalog();
 ?>
 <div id="<?=$containerID?>" class="crm-items-list-wrap<?=$additionalClasses?>" data-tabs="<?=$dataTabs?>"><?
 $choiceProductBtnID = $arResult['PREFIX'].'_select_product_button';
@@ -90,7 +92,7 @@ $modeBtnID = $arResult['PREFIX'].'_edit_rows_button';
 $addRowBtnID = $arResult['PREFIX'].'_add_row_button';
 //$buttonContainerID = $arResult['PREFIX'].'_product_button_container';
 	?><div class="crm-items-table-top-bar"><span id="crm-l-space" class="<?= $arResult['ALLOW_TAX'] ? 'crm-items-table-bar-l' : 'crm-items-table-bar-l-wtax' ?>"><?
-	if ($newProductCardEnabled):
+	if ($newProductCardEnabled && !$isCatalogHidden):
 		if ($showChoiceButton):
 			?><span id="<?=$choiceProductBtnID?>" class="webform-small-button"<?= ($arResult['INVOICE_MODE']) ? ' style="display: none;"' : '' ?>><span class="webform-small-button-left"></span><span class="webform-small-button-text"><?=htmlspecialcharsbx(GetMessage('CRM_FF_CHOISE_3'))?></span><span class="webform-small-button-right"></span></span><?
 		endif;
@@ -101,7 +103,7 @@ $addRowBtnID = $arResult['PREFIX'].'_add_row_button';
 			<?=$arResult['INVOICE_MODE'] ? ' style="display: none;"' : ''?>
 			><?=htmlspecialcharsbx(GetMessage('CRM_FF_ADD_CUSTOM_1'))?></a><?
 		endif;
-	else:
+	elseif (!$isCatalogHidden):
 		?><span id="<?=$choiceProductBtnID?>" class="webform-small-button"<?= ($arResult['INVOICE_MODE']) ? ' style="display: none;"' : '' ?>><span class="webform-small-button-left"></span><span class="webform-small-button-text"><?=htmlspecialcharsbx(GetMessage('CRM_FF_CHOISE_3'))?></span><span class="webform-small-button-right"></span></span><?
 		if ($bCanAddProduct):
 			?><span id="<?=$addProductBtnID?>" class="webform-small-button"<?= ($arResult['INVOICE_MODE']) ? ' style="display: none;"' : '' ?>><span class="webform-small-button-left"></span><span class="webform-small-button-text"><?=htmlspecialcharsbx(GetMessage('CRM_FF_ADD_CUSTOM_1'))?></span><span class="webform-small-button-right"></span></span><?
@@ -736,7 +738,7 @@ $jsEventsManagerId = 'PageEventsManager_'.$arResult['COMPONENT_ID'];
 	<input type="hidden" name="<?=htmlspecialcharsbx($arResult['PRODUCT_DATA_FIELD_NAME'])?>" value="" />
 	<input type="hidden" name="<?=htmlspecialcharsbx($arResult['PRODUCT_DATA_FIELD_NAME'].'_SETTINGS')?>" value="" />
 </div>
-<script type="text/javascript">
+<script>
 BX.CrmProductEditorMessages =
 {
 	editButtonTitle: "<?= GetMessageJS('CRM_EDIT_BTN_TTL')?>",

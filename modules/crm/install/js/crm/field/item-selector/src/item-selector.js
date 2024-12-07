@@ -1,6 +1,6 @@
 import { Dom, Event, Runtime, Tag, Text, Type } from 'main.core';
-import { MenuItem, MenuManager } from 'main.popup';
 import { EventEmitter } from 'main.core.events';
+import { MenuItem, MenuManager } from 'main.popup';
 import { ItemSelectorButton, ItemSelectorButtonState } from './item-selector-button';
 import { ItemSelectorOptions } from './item-selector-options';
 
@@ -15,7 +15,13 @@ type Item = {
 	title: string;
 }
 
+export const CompactIcons = {
+	NONE: null,
+	BELL: 'bell',
+};
+
 export const Events = {
+	EVENT_ITEMSELECTOR_OPEN: 'crm.field.itemselector:open',
 	EVENT_ITEMSELECTOR_VALUE_CHANGE: 'crm.field.itemselector:change',
 };
 
@@ -27,6 +33,10 @@ export class ItemSelector
 	#valuesList: Item[] = [];
 	#selectedValues: Array<string | number> = [];
 	#readonlyMode: boolean = false;
+	#compactMode: boolean = false;
+	#icon: ?string = null;
+	#htmlItemCallback: ?Function = null;
+	#multiple: boolean = true;
 
 	// local
 	#containerEl: ?HTMLElement = null;
@@ -35,6 +45,7 @@ export class ItemSelector
 	#selectedValueWrapperEl: ?HTMLElement = null;
 	#valuesMenuPopup: ?Menu = null;
 	#addButton: ?ItemSelectorButton = null;
+	#addButtonCompact: ?HTMLElement = null;
 
 	constructor(params: ItemSelectorOptions)
 	{
@@ -45,6 +56,15 @@ export class ItemSelector
 		this.#valuesList = Type.isArrayFilled(params.valuesList) ? params.valuesList : [];
 		this.#selectedValues = Type.isArrayFilled(params.selectedValues) ? params.selectedValues : [];
 		this.#readonlyMode = params.readonlyMode === true;
+		this.#compactMode = params.compactMode === true;
+
+		if (Type.isStringFilled(params.icon) && Object.values(CompactIcons).includes(params.icon))
+		{
+			this.#icon = params.icon;
+		}
+
+		this.#htmlItemCallback = Type.isFunction(params.htmlItemCallback) ? params.htmlItemCallback : null;
+		this.#multiple = Boolean(params.multiple ?? true);
 
 		this.#create();
 		this.#bindEvents();
@@ -68,13 +88,18 @@ export class ItemSelector
 
 	addValue(value: mixed, isEmitEvent: boolean = false): void
 	{
-		const rawValue = this.#valuesList.find((element: Item) => element.id.toString() === value.toString());
+		const rawValue = this.#valuesList.find((element: Item) => {
+			return element?.id?.toString() === value?.toString();
+		});
+
 		if (!rawValue)
 		{
 			return;
 		}
 
-		const itemEl: HTMLElement = Tag.render`
+		if (!this.#compactMode)
+		{
+			const itemEl: HTMLElement = Tag.render`
 			<span class="crm-field-item-selector__value">
 				<span class="crm-field-item-selector__value-title">
 					${Text.encode(rawValue.title)}
@@ -82,35 +107,39 @@ export class ItemSelector
 			</span>
 		`;
 
-		if (!this.#readonlyMode)
-		{
-			Dom.append(
-				Tag.render`
+			if (!this.#readonlyMode)
+			{
+				Dom.append(
+					Tag.render`
 					<span class="crm-field-item-selector__value-clear-icon" data-item-selector-id="${rawValue.id}"/>
 					</span>
 				`,
-				itemEl,
-			);
-		}
+					itemEl,
+				);
+			}
 
-		Dom.append(itemEl, this.#selectedValueWrapperEl);
+			Dom.append(itemEl, this.#selectedValueWrapperEl);
 
-		const itemElWidth = itemEl.offsetWidth;
+			const itemElWidth = itemEl.offsetWidth;
 
-		Dom.addClass(itemEl, '--hidden');
+			Dom.addClass(itemEl, '--hidden');
 
-		if (this.#isTargetOverflown(itemElWidth))
-		{
-			this.#selectedHiddenElementList[rawValue.id] = itemEl;
-		}
-		else
-		{
-			this.#animateAdd(itemEl); // add animation
+			if (this.#isTargetOverflown(itemElWidth))
+			{
+				this.#selectedHiddenElementList[rawValue.id] = itemEl;
+			}
+			else
+			{
+				this.#animateAdd(itemEl); // add animation
+			}
+
+			this.#selectedElementList[rawValue.id] = itemEl;
+			this.#applyAddButtonState(itemElWidth);
 		}
 
 		this.#selectedValues.push(rawValue.id);
-		this.#selectedElementList[rawValue.id] = itemEl;
-		this.#applyAddButtonState(itemElWidth);
+
+		this.#adjustAddButtonCompact();
 
 		if (isEmitEvent)
 		{
@@ -120,36 +149,43 @@ export class ItemSelector
 
 	removeValue(value: string | number, isEmitEvent: boolean = false): void
 	{
-		if (this.#selectedElementList[value] && Type.isDomNode(this.#selectedElementList[value]))
+		if (!this.#compactMode)
 		{
-			this.#animateRemove(this.#selectedElementList[value]);
-			Dom.remove(this.#selectedElementList[value]);
-
-			delete this.#selectedElementList[value];
-		}
-
-		this.#selectedValues = this.#selectedValues.filter((item: string | number) => item.toString() !== value.toString());
-
-		const isHiddenElementNeedApply = this.#selectedHiddenElementList[value]
-			&& Type.isDomNode(this.#selectedHiddenElementList[value])
-		;
-
-		if (isHiddenElementNeedApply)
-		{
-			delete this.#selectedHiddenElementList[value];
-		}
-
-		if (!this.#isTargetOverflown() || isHiddenElementNeedApply)
-		{
-			const itemEl = Object.values(this.#selectedHiddenElementList)[0];
-			if (Type.isDomNode(itemEl) && !this.#isTargetOverflown(itemEl.offsetWidth))
+			if (this.#selectedElementList[value] && Type.isDomNode(this.#selectedElementList[value]))
 			{
-				this.#animateAdd(itemEl);
-				delete this.#selectedHiddenElementList[Object.keys(this.#selectedHiddenElementList)[0]];
+				this.#animateRemove(this.#selectedElementList[value]);
+				Dom.remove(this.#selectedElementList[value]);
+
+				delete this.#selectedElementList[value];
 			}
+
+			const isHiddenElementNeedApply = this.#selectedHiddenElementList[value]
+				&& Type.isDomNode(this.#selectedHiddenElementList[value])
+			;
+
+			if (isHiddenElementNeedApply)
+			{
+				delete this.#selectedHiddenElementList[value];
+			}
+
+			if (!this.#isTargetOverflown() || isHiddenElementNeedApply)
+			{
+				const itemEl = Object.values(this.#selectedHiddenElementList)[0];
+				if (Type.isDomNode(itemEl) && !this.#isTargetOverflown(itemEl.offsetWidth))
+				{
+					this.#animateAdd(itemEl);
+					delete this.#selectedHiddenElementList[Object.keys(this.#selectedHiddenElementList)[0]];
+				}
+			}
+
+			this.#applyAddButtonState();
 		}
 
-		this.#applyAddButtonState();
+		this.#selectedValues = this.#selectedValues?.filter((item: string | number) => {
+			return item?.toString() !== value?.toString();
+		});
+
+		this.#adjustAddButtonCompact();
 
 		if (isEmitEvent)
 		{
@@ -169,6 +205,8 @@ export class ItemSelector
 		this.#selectedValues = [];
 		this.#selectedElementList = {};
 		this.#selectedHiddenElementList = {};
+
+		this.#adjustAddButtonCompact();
 	}
 	// endregion
 
@@ -180,24 +218,68 @@ export class ItemSelector
 			return;
 		}
 
-		this.#containerEl = Tag.render`<div class="crm-field-item-selector crm-field-item-selector__scope"></div>`;
-		this.#selectedValueWrapperEl = Tag.render`<span class="crm-field-item-selector__values"></span>`;
+		if (!this.#compactMode)
+		{
+			this.#containerEl = Tag.render`<div class="crm-field-item-selector crm-field-item-selector__scope"></div>`;
+			this.#selectedValueWrapperEl = Tag.render`<span class="crm-field-item-selector__values"></span>`;
 
-		Dom.append(this.#selectedValueWrapperEl, this.#containerEl);
+			Dom.append(this.#selectedValueWrapperEl, this.#containerEl);
+		}
 
 		if (!this.#readonlyMode)
 		{
-			this.#addButton = new ItemSelectorButton();
+			if (this.#compactMode)
+			{
+				this.#addButtonCompact = Tag.render`
+					<span 
+						class="crm-field-item-selector-compact-icon ${Type.isStringFilled(this.#icon) ? `--${this.#icon}` : ''}"
+					></span>
+				`;
 
-			Dom.append(this.#getAddButtonEl(), this.#containerEl);
+				this.#adjustAddButtonCompact();
+			}
+			else
+			{
+				this.#addButton = new ItemSelectorButton();
+
+				Dom.append(this.#getAddButtonEl(), this.#containerEl);
+			}
 		}
 
-		Dom.append(this.#containerEl, this.#target);
+		if (this.#compactMode)
+		{
+			Dom.append(this.#getAddButtonEl(), this.#target);
+		}
+		else
+		{
+			Dom.append(this.#containerEl, this.#target);
+		}
+	}
+
+	#adjustAddButtonCompact(): void
+	{
+		if (!this.#compactMode)
+		{
+			return;
+		}
+
+		if (Type.isArrayFilled(this.#selectedValues))
+		{
+			Dom.removeClass(this.#addButtonCompact, '--empty');
+		}
+		else
+		{
+			Dom.addClass(this.#addButtonCompact, '--empty');
+		}
 	}
 
 	#getAddButtonEl(): ?HTMLElement
 	{
-		return this.#addButton?.getContainer();
+		return (
+			this.#compactMode
+				? this.#addButtonCompact
+				: this.#addButton?.getContainer()
+		);
 	}
 
 	#animateAdd(element: HTMLElement): void
@@ -239,7 +321,11 @@ export class ItemSelector
 	// region Event handlers
 	#bindEvents(): void
 	{
-		if (Type.isDomNode(this.#getAddButtonEl()))
+		if (Type.isDomNode(this.#addButtonCompact))
+		{
+			Event.bind(this.#addButtonCompact, 'click', this.#onShowPopup.bind(this));
+		}
+		else if (Type.isDomNode(this.#getAddButtonEl()))
 		{
 			Event.bind(this.#getAddButtonEl(), 'click', this.#onShowPopup.bind(this));
 		}
@@ -255,25 +341,48 @@ export class ItemSelector
 
 	#onShowPopup(event: Event): void
 	{
-		const menuItems = this.#valuesList.map((item: Item) => {
-			return {
-				id: `item-selector-menu-id-${item.id}`,
-				text: Text.encode(item.title),
-				className: this.#isValueSelected(item.id) ? MENU_ITEM_CLASS_ACTIVE : MENU_ITEM_CLASS_INACTIVE,
-				onclick: this.#onMenuItemClick.bind(this, item.id),
-			};
-		});
+		const menuItems = this.#getPreparedMenuItems();
+
+		// @todo temporary, need other fix
+		const angle = this.#compactMode ? { offset: 29, position: 'top' } : true;
+
 		const menuParams = {
 			closeByEsc: true,
 			autoHide: true,
-			offsetTop: 0,
 			offsetLeft: this.#getAddButtonEl().offsetWidth - 16,
-			angle: true,
+			angle,
 			cacheable: false,
 		};
 
 		this.#valuesMenuPopup = MenuManager.create(this.#id, this.#getAddButtonEl(), menuItems, menuParams);
 		this.#valuesMenuPopup.show();
+
+		EventEmitter.emit(this, Events.EVENT_ITEMSELECTOR_OPEN);
+	}
+
+	#getPreparedMenuItems(): []
+	{
+		return this.#valuesList.map((item: Item) => this.#getPreparedMenuItem(item));
+	}
+
+	#getPreparedMenuItem(item: Item): Object
+	{
+		const menuItem = {
+			id: `item-selector-menu-id-${item.id}`,
+			className: this.#isValueSelected(item.id) ? MENU_ITEM_CLASS_ACTIVE : MENU_ITEM_CLASS_INACTIVE,
+			onclick: this.#onMenuItemClick.bind(this, item.id),
+		};
+
+		if (this.#htmlItemCallback)
+		{
+			menuItem.html = this.#htmlItemCallback(item);
+		}
+		else
+		{
+			menuItem.html = Text.encode(item.title);
+		}
+
+		return menuItem;
 	}
 
 	#onRemoveValue(event: Event): void
@@ -293,6 +402,17 @@ export class ItemSelector
 
 	#onMenuItemClick(value: mixed, event: PointerEvent, item: MenuItem): void
 	{
+		if (!this.#multiple)
+		{
+			this.clearAll();
+
+			this.#valuesMenuPopup.menuItems.forEach((menuItem: MenuItem) => {
+				Dom.removeClass(menuItem.getContainer(), MENU_ITEM_CLASS_ACTIVE);
+			});
+
+			this.#valuesMenuPopup.close();
+		}
+
 		if (this.#isValueSelected(value))
 		{
 			this.removeValue(value, true);
@@ -361,7 +481,7 @@ export class ItemSelector
 
 	#isTargetOverflown(portion: number = 0): boolean
 	{
-		if (this.#readonlyMode)
+		if (this.#readonlyMode || this.#compactMode)
 		{
 			return false;
 		}

@@ -12,6 +12,7 @@ jn.define('alert', (require, exports, module) => {
 	} = require('alert/confirm');
 	const { confirmClosing } = require('alert/src/confirm-closing');
 	const { confirmDestructiveAction } = require('alert/src/confirm-destructive');
+	const { confirmDefaultAction } = require('alert/src/confirm-default');
 
 	/**
 	 * @class Alert
@@ -36,8 +37,10 @@ jn.define('alert', (require, exports, module) => {
 		ButtonType,
 		confirmClosing,
 		confirmDestructiveAction,
+		confirmDefaultAction,
 		makeButton,
 		makeCancelButton,
 		makeDestructiveButton,
+		ConfirmNavigator,
 	};
 });

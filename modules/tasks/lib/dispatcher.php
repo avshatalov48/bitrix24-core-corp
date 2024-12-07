@@ -74,7 +74,7 @@ final class Dispatcher
 			{
 				if(is_callable($callable))
 				{
-					$this->runtimeActions[ToLower($name)] = $callable;
+					$this->runtimeActions[mb_strtolower($name)] = $callable;
 				}
 			}
 		}
@@ -546,7 +546,7 @@ final class Dispatcher
 			{
 				foreach($methods as $method)
 				{
-					$method = ToLower($method);
+					$method = mb_strtolower($method);
 
 					if(!isset($forbiddenMethods[$method]))
 					{
@@ -620,7 +620,7 @@ final class Dispatcher
 		{
 			foreach($arguments as $arg)
 			{
-				$argName = ToLower($arg->getName());
+				$argName = mb_strtolower($arg->getName());
 				$args[] = array(
 					'NAME' => 		$argName,
 					'TYPE' => 		$arg->isArray() ? 'array' : 'string',

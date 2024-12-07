@@ -5,11 +5,11 @@ namespace Bitrix\Crm\Field;
 use Bitrix\Crm\Field;
 use Bitrix\Crm\Item;
 use Bitrix\Crm\Service\Context;
-use Bitrix\Main\Result;
+use Bitrix\Crm\Service\Operation\FieldAfterSaveResult;
 
 class FullName extends Field
 {
-	protected function processLogic(Item $item, Context $context = null): Result
+	public function processAfterSave(Item $itemBeforeSave, Item $item, Context $context = null): FieldAfterSaveResult
 	{
 		$name = $item->hasField(Item::FIELD_NAME_NAME) ? $item->getName() : null;
 		$lastName = $item->hasField(Item::FIELD_NAME_LAST_NAME) ? $item->getLastName() : null;
@@ -29,10 +29,8 @@ class FullName extends Field
 			$fullName = $name;
 		}
 
-		$fullName = trim($fullName);
+		$result = new FieldAfterSaveResult();
 
-		$item->set($this->getName(), $fullName);
-
-		return new Result();
+		return $result->setNewValue($this->getName(), trim($fullName));
 	}
 }

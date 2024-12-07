@@ -155,7 +155,7 @@ function prepareSummaryCounter($counter)
 $rowItem = [
 	"id" => 'summary',
 	'columns' => [
-		'ID' => $row['ID'],
+		'ID' => $row['ID'] ?? null,
 		'NAME' => '<strong>'.GetMessage('TASKS_ROW_SUMMARY').'</strong>',
 
 		'EFFECTIVE' => '<strong>'.round($arResult['SUMMARY']['EFFECTIVE']).'%'.'</strong>',

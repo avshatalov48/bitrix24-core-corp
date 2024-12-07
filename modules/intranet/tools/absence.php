@@ -259,7 +259,7 @@ endif;
 
 					<?CUtil::InitJSCore(array('popup'));?>
 					<a href="javascript:void(0)" onclick="ShowSingleSelector" id="single-user-choice"><?=GetMessage("INTR_USER_CHOOSE")?></a>
-					<script type="text/javascript">// user_selector:
+					<script>// user_selector:
 						var multiPopup, singlePopup;
 						function onSingleSelect(arUser)
 						{
@@ -408,7 +408,7 @@ endif;
 <?
 	}
 ?>
-<script type="text/javascript">
+<script>
 (function(myBX) {
 	if (!myBX || !myBX.AbsenceCalendar)
 	{

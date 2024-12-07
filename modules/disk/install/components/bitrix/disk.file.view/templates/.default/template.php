@@ -339,7 +339,7 @@ $APPLICATION->IncludeComponent(
 	$component,
 	array("HIDE_ICONS" => "Y")
 );?>
-<script type="text/javascript">
+<script>
 BX(function () {
 	BX.Disk['FileViewClass_<?= $component->getComponentId() ?>'] = new BX.Disk.FileViewClass({
 		componentName: '<?= $this->getComponent()->getName() ?>',
@@ -407,7 +407,7 @@ if(
 		<? $APPLICATION->IncludeComponent('bitrix:bitrix24.business.tools.info', '', array()); ?>
 	</div>
 
-	<script type="text/javascript">
+	<script>
 	BX.message({
 		disk_restriction: <?= (!\Bitrix\Disk\Integration\Bitrix24Manager::checkAccessEnabled('disk', $USER->getId())? 'true' : 'false') ?>
 	});

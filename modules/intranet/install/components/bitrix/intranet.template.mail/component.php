@@ -13,6 +13,7 @@ if (
 	$arParams["TEMPLATE_TYPE"] == "USER_INVITATION"
 	|| $arParams["TEMPLATE_TYPE"] == "EXTRANET_INVITATION"
 	|| $arParams["TEMPLATE_TYPE"] == "USER_ADD"
+	|| $arParams["TEMPLATE_TYPE"] == "COLLAB_INVITATION"
 )
 {
 	$arParams["USER_TEXT"] = htmlspecialcharsback($arParams["USER_TEXT"]);
@@ -52,6 +53,11 @@ if (
 if ($arParams["TEMPLATE_TYPE"] == "EXTRANET_INVITATION")
 {
 	$arParams["LINK"] = "https://".$arParams["SERVER_NAME"]."/extranet/confirm/?checkword=".$arParams["CHECKWORD"]."&user_id=".$arParams["USER_ID"];
+}
+
+if ($arParams["TEMPLATE_TYPE"] == "COLLAB_INVITATION")
+{
+	$arParams["LINK"] = "https://".$arParams["SERVER_NAME"]."/extranet/confirm/?checkword=".$arParams["CHECKWORD"]."&user_id=".$arParams["USER_ID"].'&collab_id='.$arParams["COLLAB_ID"];
 }
 
 if ($arParams["TEMPLATE_TYPE"] == "IM_NEW_NOTIFY" || $arParams["TEMPLATE_TYPE"] == "IM_NEW_MESSAGE")

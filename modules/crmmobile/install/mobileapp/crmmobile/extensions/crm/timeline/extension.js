@@ -23,6 +23,7 @@ jn.define('crm/timeline', (require, exports, module) => {
 	const { EventEmitter } = require('event-emitter');
 	const { Loc } = require('loc');
 	const AppTheme = require('apptheme');
+	const { Type } = require('crm/type');
 
 	/**
 	 * @class Timeline
@@ -69,6 +70,7 @@ jn.define('crm/timeline', (require, exports, module) => {
 				timelineScopeEventBus: this.timelineScopeEventBus,
 				isEditable: this.isEditable,
 				onItemAction: (params) => this.onItemAction(params),
+				entityType: Type.resolveNameById(this.props.entity.typeId)?.toLowerCase(),
 			};
 
 			this.pinnedStream = new TimelineStreamPinned(commonSettings);

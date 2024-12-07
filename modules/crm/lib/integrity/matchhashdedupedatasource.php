@@ -1,91 +1,92 @@
 <?php
+
 namespace Bitrix\Crm\Integrity;
+
 use Bitrix\Crm\Integrity\Entity\AutomaticDuplicateIndexTable;
 use Bitrix\Main;
 use Bitrix\Main\ORM\Fields\Relations\Reference;
+use Bitrix\Main\Result;
 
 abstract class MatchHashDedupeDataSource extends DedupeDataSource
 {
+	abstract protected function createCriterionFromMatches(array $matches): DuplicateCriterion;
+	abstract protected function prepareResult(array &$map, DedupeDataSourceResult $result): void;
+
 	public function __construct($typeID, DedupeParams $params)
 	{
 		parent::__construct($typeID, $params);
 	}
-	/**
-	 * @return DuplicateCriterion
-	 */
-	abstract protected function createCriterionFromMatches(array $matches);
-	abstract protected function prepareResult(array &$map, DedupeDataSourceResult $result);
 
-	public function getTotalCount()
+	public function getTotalCount(): int
 	{
-		$subQuery = new Main\Entity\Query(Entity\DuplicateEntityMatchHashTable::getEntity());
-
-		$subQuery->addGroup('MATCH_HASH');
-		$subQuery->registerRuntimeField('', new Main\Entity\ExpressionField('QTY', 'COUNT(*)'));
-		$subQuery->addFilter('>QTY', 1);
-
-		$typeID = $this->typeID;
-		$entityTypeID = $this->getEntityTypeID();
-		$scope = $this->getScope();
-		$enablePermissionCheck = $this->isPermissionCheckEnabled();
-
-		$subQuery->addFilter('=ENTITY_TYPE_ID', $entityTypeID);
-		$subQuery->addFilter('=TYPE_ID', $typeID);
-
-		if ($scope === DuplicateIndexType::DEFAULT_SCOPE)
+		$result = $this->getDuplicateHashesQuery();
+		if (!$result->isSuccess())
 		{
-			$subQuery->addFilter('=SCOPE', DuplicateIndexType::DEFAULT_SCOPE);
-		}
-		else
-		{
-			$subQuery->addFilter('@SCOPE', array(DuplicateIndexType::DEFAULT_SCOPE, $scope));
+			return 0;
 		}
 
-		if($enablePermissionCheck)
-		{
-			$permissionSql = $this->preparePermissionSql();
-			if($permissionSql === false)
-			{
-				//Access denied;
-				return 0;
-			}
-			if($permissionSql !== '')
-			{
-				$subQuery->addFilter('@ENTITY_ID', new Main\DB\SqlExpression($permissionSql));
-			}
-		}
+		$subQuery = $result->getData()['query'];
+		$subQuery->setOrder([]);
 
 		$query = new Main\Entity\Query($subQuery);
-		$query->registerRuntimeField('', new Main\Entity\ExpressionField('QTY', 'COUNT(*)'));
-		$query->addSelect('QTY');
+		$query->registerRuntimeField('', new Main\Entity\ExpressionField('CNT', 'COUNT(*)'));
+		$query->addSelect('CNT');
 
 		$fields = $query->exec()->fetch();
-		return  is_array($fields) && isset($fields['QTY']) ? (int)$fields['QTY'] : 0;
-	}
 
+		return is_array($fields) && isset($fields['CNT']) ? (int)$fields['CNT'] : 0;
+	}
 
 	public function getDuplicateByMatchHash(string $matchHash): ?Duplicate
 	{
-		$result = $this->getListInternal(['=MATCH_HASH' => $matchHash],0, 1);
-		return $result->getItem($matchHash);
+		return $this
+			->getListInternal(['=MATCH_HASH' => $matchHash], 0, 1)
+			->getItem($matchHash)
+		;
 	}
 
-	/**
-	 * @return DedupeDataSourceResult
-	 */
-	public function getList($offset, $limit)
+	public function getList($offset, $limit): DedupeDataSourceResult
 	{
 		return $this->getListInternal([], $offset, $limit);
 	}
-	protected function getListInternal(array $filter, $offset, $limit)
-	{
-		$result = new DedupeDataSourceResult();
 
-		$typeID = $this->typeID;
-		$entityTypeID = $this->getEntityTypeID();
-		$enablePermissionCheck = $this->isPermissionCheckEnabled();
-		$scope = $this->getScope();
-		//$userID = $this->getUserID();
+	public function dropDedupeCache(): void
+	{
+		$this->getDedupeCache()->drop();
+	}
+
+	protected function getPermissionSql(): Result
+	{
+		$result = new Result();
+
+		$permissionSql = '';
+
+		if ($this->isPermissionCheckEnabled())
+		{
+			$permissionSql = $this->preparePermissionSql();
+			if ($permissionSql === false)
+			{
+				// Access denied;
+				$result->addError(new Main\Error('Access denied'));
+
+				return $result;
+			}
+		}
+
+		$result->setData(['permissionSql' => $permissionSql]);
+
+		return $result;
+	}
+
+	protected function getDuplicateHashesOriginalQuery(array $filter = []): Result
+	{
+		$result = new Result();
+
+		$typeId = (int)$this->getTypeID();
+		$entityTypeId = (int)$this->getEntityTypeID();
+		$scope = (string)$this->getScope();
+		$userId = (int)$this->getUserID();
+		$indexDateFilterValue = $this->params->getIndexDateFilterValue();
 
 		$query = Entity\DuplicateEntityMatchHashTable::query();
 
@@ -93,39 +94,41 @@ abstract class MatchHashDedupeDataSource extends DedupeDataSource
 
 		$query->addSelect('MATCH_HASH');
 		$query->addGroup('MATCH_HASH');
-		$query->addOrder('MATCH_HASH', 'ASC');
+		$query->addOrder('MATCH_HASH');
 
 		$query->registerRuntimeField('', new Main\Entity\ExpressionField('QTY', 'COUNT(*)'));
 		$query->addSelect('QTY');
 		$query->addFilter('>QTY', 1);
 
-		$query->addFilter('=ENTITY_TYPE_ID', $entityTypeID);
-		$query->addFilter('=TYPE_ID', $typeID);
+		$query->addFilter('=ENTITY_TYPE_ID', $entityTypeId);
+		$query->addFilter('=TYPE_ID', $typeId);
 
-		if ($this->params->getIndexDate())
+		if ($indexDateFilterValue !== '')
 		{
 			$query->registerRuntimeField('',
 				new Main\Entity\ExpressionField('MAX_HASH_DATE_MODIFY',
 					new Main\DB\SqlExpression('MAX(?#.?#)', $query->getInitAlias(), 'DATE_MODIFY')
 				)
 			);
-			$query->addFilter('>=MAX_HASH_DATE_MODIFY', $this->params->getIndexDate()->format("Y-m-d H:i:s"));
+			$query->addFilter('>=MAX_HASH_DATE_MODIFY', $indexDateFilterValue);
 		}
 
-		$permissionSql = '';
-		if($enablePermissionCheck)
+		$permissionSqlResult = $this->getPermissionSql();
+		if (!$permissionSqlResult->isSuccess())
 		{
-			$permissionSql = $this->preparePermissionSql();
-			if($permissionSql === false)
-			{
-				//Access denied;
-				return $result;
-			}
-			if($permissionSql !== '')
+			$result->addErrors($permissionSqlResult->getErrors());
+
+			return $result;
+		}
+		else
+		{
+			$permissionSql = $permissionSqlResult->getData()['permissionSql'];
+			if ($permissionSql !== '')
 			{
 				$query->addFilter('@ENTITY_ID', new Main\DB\SqlExpression($permissionSql));
 			}
 		}
+
 		// process only dirty items which already existed into automatic index:
 		if ($this->params->limitByDirtyIndexItems())
 		{
@@ -136,9 +139,9 @@ abstract class MatchHashDedupeDataSource extends DedupeDataSource
 					'=this.MATCH_HASH' => 'ref.MATCH_HASH',
 					'=this.ENTITY_TYPE_ID' => 'ref.ENTITY_TYPE_ID',
 					'=this.TYPE_ID' => 'ref.TYPE_ID',
-					'=ref.USER_ID' => new Main\DB\SqlExpression('?i', $this->getUserID()),
-					'=ref.ENTITY_TYPE_ID' => new Main\DB\SqlExpression('?i', $this->getEntityTypeID()),
-					'=ref.SCOPE' => new Main\DB\SqlExpression('?s', $this->getScope()),
+					'=ref.USER_ID' => new Main\DB\SqlExpression('?i', $userId),
+					'=ref.ENTITY_TYPE_ID' => new Main\DB\SqlExpression('?i', $entityTypeId),
+					'=ref.SCOPE' => new Main\DB\SqlExpression('?s', $scope),
 					'=ref.IS_DIRTY' => new Main\DB\SqlExpression('?s', 'Y'),
 				],
 				['join_type' => \Bitrix\Main\ORM\Query\Join::TYPE_INNER]
@@ -156,42 +159,161 @@ abstract class MatchHashDedupeDataSource extends DedupeDataSource
 			$query->addFilter('@SCOPE', array(DuplicateIndexType::DEFAULT_SCOPE, $scope));
 		}
 
-		if(!is_int($offset))
+		$result->setData(['query' => $query]);
+
+		return $result;
+	}
+
+	protected function getDedupeCache(): MatchHashDedupeCache
+	{
+		$contextId = $this->getContextId();
+		$typeId = (int)$this->getTypeID();
+		$entityTypeId = (int)$this->getEntityTypeID();
+		$scope = (string)$this->getScope();
+		$userId = (int)$this->getUserID();
+		$indexDateFilterValue = $this->params->getIndexDateFilterValue();
+
+		return new MatchHashDedupeCache(
+			new MatchHashDedupeQueryParams(
+				$contextId,
+				$typeId,
+				$entityTypeId,
+				$userId,
+				$scope,
+				$this->isPermissionCheckEnabled(),
+				$indexDateFilterValue
+			)
+		);
+	}
+
+	protected function getDuplicateHashesBaseQuery(array $filter = []): Result
+	{
+		$isUsingDedupeCache = (
+			MatchHashDedupeCache::isEnabled()
+			&& $this->getContextId() !== ''
+			&& ($filter === [] || (isset($filter['=MATCH_HASH']) && count($filter) === 1))
+		);
+
+		if ($isUsingDedupeCache)
+		{
+			$dedupeCache = $this->getDedupeCache();
+			if (!$dedupeCache->isExists())
+			{
+				$originalQueryResult = $this->getDuplicateHashesOriginalQuery($filter);
+				if (!$originalQueryResult->isSuccess())
+				{
+					return $originalQueryResult;
+				}
+				/** @var Main\ORM\Query\Query $originalQuery */
+				$originalQuery = $originalQueryResult->getData()['query'];
+				$originalQuery->setOrder([]);
+				$createResult = $dedupeCache->create($originalQuery);
+				if (!$createResult->isSuccess())
+				{
+					return $createResult;
+				}
+			}
+
+			$result = $dedupeCache->getQuery();
+			if ($result->isSuccess())
+			{
+				$resultData = $result->getData();
+				if (is_array($resultData))
+				{
+					$resultData['identifyingColumn'] = 'ID';
+					$result->setData($resultData);
+				}
+
+				return $result;
+			}
+		}
+
+		return  $this->getDuplicateHashesOriginalQuery($filter);
+	}
+
+	protected function getDuplicateHashesQuery(array $filter = [], int $offset = 0, int $limit = 0): Result
+	{
+		$result = new Result();
+
+		$baseQueryResult = $this->getDuplicateHashesBaseQuery($filter);
+		if (!$baseQueryResult->isSuccess())
+		{
+			$result->addErrors($baseQueryResult->getErrors());
+
+			return $result;
+		}
+
+		$resultData = $baseQueryResult->getData();
+
+		/** @var Main\ORM\Query\Query $query */
+		$query = $resultData['query'];
+
+		if (!is_int($offset))
 		{
 			$offset = (int)$offset;
 		}
-		if($offset > 0)
+
+		if (isset($resultData['identifyingColumn']))
 		{
-			$query->setOffset($offset);
+			$query->addFilter('>' . $resultData['identifyingColumn'], $offset);
+			$resultData = ['isUsingOffsetByColumn' => true];
+		}
+		else
+		{
+			if ($offset > 0)
+			{
+				$query->setOffset($offset);
+			}
+
+			$resultData = [];
 		}
 
-		if(!is_int($limit))
-		{
-			$limit = (int)$limit;
-		}
-		if($limit > 0)
+		if ($limit > 0)
 		{
 			$query->setLimit($limit);
 		}
 
+		$resultData['query'] = $query;
+		$result->setData($resultData);
+
+		return $result;
+	}
+
+	protected function getDuplicateHashes(
+		DedupeDataSourceResult $dataSourceResult,
+		array $filter,
+		int $offset,
+		int $limit
+	): Result
+	{
+		$result = $this->getDuplicateHashesQuery($filter, $offset, $limit);
+		if (!$result->isSuccess())
+		{
+			return $result;
+		}
+
+		$query = $result->getData()['query'];
+
+		$result = new Result();
+
 		$dbResult = $query->exec();
 
 		$processedItemCount = 0;
-		$lightHashes = array();
-		$heavyHashes = array();
+		$lightHashes = [];
+		$heavyHashes = [];
 		while($fields = $dbResult->fetch())
 		{
 			$processedItemCount++;
 
-			$quantity = isset($fields['QTY']) ? (int)$fields['QTY'] : 0;
-			$matchHash = isset($fields['MATCH_HASH']) ? $fields['MATCH_HASH'] : '';
-			if($matchHash === '' || $quantity < 2)
+			$quantity = (int)($fields['QTY'] ?? 0);
+			$matchHash = $fields['MATCH_HASH'] ?? '';
+			if ($matchHash === '' || $quantity < 2)
 			{
-				$result->addInvalidItem($matchHash);
+				$dataSourceResult->addInvalidItem($matchHash);
 				continue;
 			}
 
-			if($quantity <= 100)
+			if ($quantity <= 100)
 			{
 				$lightHashes[] = $matchHash;
 			}
@@ -200,9 +322,49 @@ abstract class MatchHashDedupeDataSource extends DedupeDataSource
 				$heavyHashes[] = $matchHash;
 			}
 		}
-		$result->setProcessedItemCount($processedItemCount);
 
-		$map = array();
+		$dataSourceResult->setProcessedItemCount($processedItemCount);
+
+		$result->setData(
+			[
+				'lightHashes' => $lightHashes,
+				'heavyHashes' => $heavyHashes,
+			]
+		);
+
+		return $result;
+	}
+
+	protected function getListInternal(array $filter, $offset, $limit): DedupeDataSourceResult
+	{
+		$result = new DedupeDataSourceResult();
+
+		$typeID = $this->typeID;
+		$entityTypeID = $this->getEntityTypeID();
+		$scope = $this->getScope();
+
+		$permissionSqlResult = $this->getPermissionSql();
+		if (!$permissionSqlResult->isSuccess())
+		{
+			//Access denied;
+			return $result;
+		}
+		else
+		{
+			$permissionSql = $permissionSqlResult->getData()['permissionSql'];
+		}
+
+		$duplicateHashesResult = $this->getDuplicateHashes($result, $filter, $offset, $limit);
+		if (!$duplicateHashesResult->isSuccess())
+		{
+			return $result;
+		}
+
+		$duplicateHashesResult = $duplicateHashesResult->getData();
+		$lightHashes = $duplicateHashesResult['lightHashes'] ?? [];
+		$heavyHashes = $duplicateHashesResult['heavyHashes'] ?? [];
+
+		$map = [];
 		if(!empty($heavyHashes))
 		{
 			foreach($heavyHashes as $matchHash)
@@ -215,7 +377,7 @@ abstract class MatchHashDedupeDataSource extends DedupeDataSource
 				$query->addFilter('=TYPE_ID', $typeID);
 				$query->addFilter('=MATCH_HASH', $matchHash);
 
-				if($enablePermissionCheck && $permissionSql !== '')
+				if ($permissionSql !== '')
 				{
 					$query->addFilter('@ENTITY_ID', new Main\DB\SqlExpression($permissionSql));
 				}
@@ -279,7 +441,7 @@ abstract class MatchHashDedupeDataSource extends DedupeDataSource
 			$query->addFilter('=TYPE_ID', $typeID);
 			$query->addFilter('@MATCH_HASH', $lightHashes);
 
-			if($enablePermissionCheck && $permissionSql !== '')
+			if ($permissionSql !== '')
 			{
 				$query->addFilter('@ENTITY_ID', new Main\DB\SqlExpression($permissionSql));
 			}
@@ -304,7 +466,7 @@ abstract class MatchHashDedupeDataSource extends DedupeDataSource
 					continue;
 				}
 
-				$matchHash = isset($fields['MATCH_HASH']) ? $fields['MATCH_HASH'] : '';
+				$matchHash = $fields['MATCH_HASH'] ?? '';
 				if($matchHash === '')
 				{
 					continue;

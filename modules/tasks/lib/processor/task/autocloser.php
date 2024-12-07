@@ -12,7 +12,7 @@ use Bitrix\Tasks\Internals\Helper\Task\Dependence;
 use Bitrix\Tasks\Internals\RunTime;
 use Bitrix\Tasks\Processor\Task\AutoCloser\Result\Impact;
 
-final class AutoCloser extends \Bitrix\Tasks\Processor
+final class AutoCloser extends \Bitrix\Tasks\Processor\Processor
 {
 	const STATUS_COMPLETE = 5;
 

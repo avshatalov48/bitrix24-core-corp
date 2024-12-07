@@ -83,7 +83,7 @@ $jsData = array(
 	)
 );
 ?>
-<script type="text/javascript">
+<script>
 	BX.CrmOrderCheckDetails.Edit.messages =
 		{
 

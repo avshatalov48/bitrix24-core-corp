@@ -416,8 +416,8 @@ var CrmFormEditor = function(params)
 			templateId = this.templates.field.replace('%type%', 'string');
 		}
 
-		var isPhone = params.is_phone || params.entity_field_name === 'PHONE';
-		var isEmail = params.is_email || params.entity_field_name === 'EMAIL';
+		var isPhone = params.is_phone || params.entity_field_name.includes('PHONE');
+		var isEmail = params.is_email || params.entity_field_name.includes('EMAIL');
 
 		params.entity_field_name = params.entity_field_name || '';
 

@@ -9,7 +9,7 @@ if(!Defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
 <?$jsObjectName = 'O_'.$arResult["NAME"];?>
 
-<script type="text/javascript">
+<script>
 	var <?=$jsObjectName?> = new TasksTask("<?php echo $arResult["NAME"]?>", <?php echo $arParams["MULTIPLE"] == "Y" ? "true" : "false"?>, true);
 	<?=$jsObjectName?>.ajaxUrl = '<?=$this->__component->GetPath()."/ajax.php?lang=".LANGUAGE_ID."&SITE_ID=".$arParams["SITE_ID"]?>';
 	<?=$jsObjectName?>.filter = <?=CUtil::PhpToJSObject($arParams["FILTER"])?>;

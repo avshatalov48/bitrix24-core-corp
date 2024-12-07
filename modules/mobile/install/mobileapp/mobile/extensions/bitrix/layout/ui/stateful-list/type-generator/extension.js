@@ -176,7 +176,7 @@ jn.define('layout/ui/stateful-list/type-generator', (require, exports, module) =
 		 */
 		selectiveGenerator(item, group)
 		{
-			if (!group || !item)
+			if (!group || typeof group !== 'object' || !item)
 			{
 				return;
 			}

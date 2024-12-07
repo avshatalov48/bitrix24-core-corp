@@ -5,6 +5,7 @@
 	const require = (ext) => jn.require(ext);
 
 	const AppTheme = require('apptheme');
+	const { WorkgroupUtil } = require('project/utils');
 
 	class WorkgroupList
 	{
@@ -78,17 +79,13 @@
 						}
 						else
 						{
-							const data = {
+							void WorkgroupUtil.openProject(item, {
+								projectId: item.id,
 								siteId: this.siteId,
 								siteDir: this.siteDir,
-								projectId: item.id,
-								action: 'view',
-								item,
 								newsPathTemplate: this.newsPathTemplate,
 								calendarWebPathTemplate: this.calendarWebPathTemplate,
-							};
-
-							BX.postComponentEvent('projectbackground::project::action', [data], 'background');
+							});
 						}
 					}
 					else if (event === 'onRefresh')

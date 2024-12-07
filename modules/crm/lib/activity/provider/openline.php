@@ -2,10 +2,13 @@
 
 namespace Bitrix\Crm\Activity\Provider;
 
+use Bitrix\Call\Error;
 use Bitrix\Crm\Activity\CommunicationStatistics;
+use Bitrix\Crm\Activity\StatisticsMark;
 use Bitrix\Crm\Badge;
 use Bitrix\Crm\Integration\OpenLineManager;
 use Bitrix\Crm\ItemIdentifier;
+use Bitrix\Crm\Service\Communication\Channel\Event\ChannelEventRegistrar;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Settings\Crm;
 use Bitrix\Crm\Timeline\Entity\TimelineTable;
@@ -13,11 +16,13 @@ use Bitrix\Crm\Timeline\LogMessageEntry;
 use Bitrix\Crm\Timeline\LogMessageType;
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
+use CCrmActivityNotifyType;
+use CCrmActivityType;
 use CCrmOwnerType;
 
 Loc::loadMessages(__FILE__);
 
-class OpenLine extends Base
+class OpenLine extends Base implements EventRegistrarInterface
 {
 	const ACTIVITY_PROVIDER_ID = 'IMOPENLINES_SESSION';
 
@@ -224,7 +229,7 @@ class OpenLine extends Base
 			&& !empty($activityFields['PROVIDER_PARAMS']['USER_CODE'])
 		)
 		{
-			OpenLineManager::closeDialog($activityFields['PROVIDER_PARAMS']['USER_CODE']);
+			OpenLineManager::closeDialog($activityFields['PROVIDER_PARAMS']['USER_CODE'], $params['CURRENT_USER'] ?? 0);
 		}
 	}
 
@@ -268,5 +273,83 @@ class OpenLine extends Base
 	public static function hasPlanner(array $activity): bool
 	{
 		return !Crm::isUniversalActivityScenarioEnabled();
+	}
+
+	public static function getMoveBindingsLogMessageType(): ?string
+	{
+		return LogMessageType::OPEN_LINE_MOVED;
+	}
+
+	public function createActivityFromChannelEvent(ChannelEventRegistrar $eventRegistrar): Main\Result
+	{
+		$result = new Main\Result();
+
+		if (!Main\Loader::includeModule('imopenlines'))
+		{
+			return $result->addError(new Error('Module imopenlines is not installed'));
+		}
+
+		$fields = [
+			'TYPE_ID' => CCrmActivityType::Provider,
+			'PROVIDER_ID' => self::getId(),
+			'NOTIFY_TYPE' => CCrmActivityNotifyType::None,
+			'RESULT_MARK' => StatisticsMark::None,
+			'BINDINGS' => [],
+
+			'COMPLETED' => 'N',
+			'DIRECTION' => \CCrmActivityDirection::Incoming,
+			'RESULT_STATUS' => \Bitrix\Crm\Activity\StatisticsStatus::Unanswered,
+		];
+
+		$resultItemsCollection = $eventRegistrar->getResultItems();
+		if ($resultItemsCollection->count() === 0)
+		{
+			return $result->addError(new Main\Error('Bindings not found'));
+		}
+
+		foreach ($resultItemsCollection as $resultItem)
+		{
+			$fields['BINDINGS'][] = [
+				'OWNER_TYPE_ID' => $resultItem->getEntityTypeId(),
+				'OWNER_ID' => $resultItem->getEntityId(),
+			];
+		}
+
+		$sessionId = null;
+		$channelEventPropertiesCollection = $eventRegistrar->getPropertiesCollection();
+		if ($channelEventPropertiesCollection->has('SESSION_ID'))
+		{
+			$sessionId = $channelEventPropertiesCollection->getByCode('SESSION_ID')->getValue();
+		}
+
+		if (empty($sessionId))
+		{
+			return $result->addError(new Main\Error('SESSION_ID not found'));
+		}
+
+//		// @todo need api to get array of activity fields by $sessionId
+//		$fields['LINE_ID'] =
+//		$fields['USER_CODE'] =
+//		$fields['NAME'] =
+//		$fields['ASSOCIATED_ENTITY_ID'] =
+//		$fields['ORIGIN_ID'] =
+//		$fields['COMPLETED'] =
+//		$fields['DIRECTION'] =
+//		$fields['RESULT_STATUS'] =
+//		$fields['SETTINGS'] =
+//		$fields['AUTHOR_ID'] =
+//		$fields['RESPONSIBLE_ID'] =
+//		$fields['USER_CODE'] =
+//		$fields['CONNECTOR_ID'] =
+//		$fields['COMMUNICATIONS'] =
+//		$fields['IS_INCOMING_CHANNEL'] =
+
+		$options = [
+			'REGISTER_SONET_EVENT' => true,
+		];
+
+		$lineId = $fields['LINE_ID'] ?? null;
+
+		return $this->createActivity($lineId, $fields, $options);
 	}
 }

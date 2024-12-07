@@ -4,6 +4,7 @@ namespace Bitrix\Intranet\Binding;
 use Bitrix\Main\Loader;
 use Bitrix\Intranet\Binding\Map\MapItem;
 use Bitrix\Intranet\Binding\Map\MapSection;
+use Bitrix\Intranet\Settings\Tools\ToolsManager;
 use Bitrix\Landing\Rights;
 use Bitrix\Main\Event;
 use Bitrix\Main\EventResult;
@@ -790,6 +791,14 @@ class Menu
 				$sections = self::SECTIONS;
 				foreach ($sections as $globalSectionCode)
 				{
+					if (
+						$globalSectionCode === 'knowledge'
+						&& !ToolsManager::getInstance()->checkAvailabilityByToolId('knowledge_base')
+					)
+					{
+						continue;
+					}
+
 					if ($globalSectionCode == $sections['other'])
 					{
 						if ($returnItems)

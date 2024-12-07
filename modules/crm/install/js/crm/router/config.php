@@ -8,6 +8,7 @@ return [
 	'js' => '/bitrix/js/crm/router/dist/router.bundle.js',
 	'rel' => [
 		'main.core',
+		'main.popup',
 		'sidepanel',
 	],
 	'skip_core' => false,

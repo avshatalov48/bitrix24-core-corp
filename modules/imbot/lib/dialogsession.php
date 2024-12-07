@@ -1,10 +1,11 @@
-<?php declare(strict_types=1);
+<?php
 
 namespace Bitrix\ImBot;
 
 use Bitrix\Main;
-use Bitrix\ImBot\Model\NetworkSessionTable;
 use Bitrix\Main\Type\DateTime;
+use Bitrix\ImBot\Bot\Network;
+use Bitrix\ImBot\Model\NetworkSessionTable;
 
 class DialogSession
 {
@@ -200,7 +201,10 @@ class DialogSession
 				$this->load();
 			}
 			$this->sessionId = $sessionId;
-			$this->update(['SESSION_ID' => $this->sessionId]);
+			$this->update([
+				'SESSION_ID' => $this->sessionId,
+				'STATUS' => Network::MULTIDIALOG_STATUS_OPEN
+			]);
 		}
 
 		return $this;
@@ -268,6 +272,11 @@ class DialogSession
 		elseif (!empty($this->closeTerm))
 		{
 			$newData['CLOSE_TERM'] = $this->closeTerm;
+		}
+
+		if (!empty($params['STATUS']))
+		{
+			$newData['STATUS'] = $params['STATUS'];
 		}
 
 		if ($this->primaryId)
@@ -361,7 +370,12 @@ class DialogSession
 		{
 			$this->load($params);
 		}
-		$this->update(['DATE_FINISH' => new DateTime()]);
+
+		$this->update([
+			'DATE_FINISH' => new DateTime(),
+			'SESSION_ID' => 0,
+			'STATUS' => Network::MULTIDIALOG_STATUS_CLOSE,
+		]);
 
 		return true;
 	}
@@ -412,6 +426,7 @@ class DialogSession
 		$filter['!=SESSION_ID'] = 0;
 		$days = self::EXPIRES_DAYS;
 		$filter['>DATE_CREATE'] = (new \Bitrix\Main\Type\DateTime())->add("-{$days}D");
+		$filter['=STATUS'] = Network::MULTIDIALOG_STATUS_OPEN;
 
 		return NetworkSessionTable::getCount($filter);
 	}
@@ -511,5 +526,75 @@ class DialogSession
 		}
 
 		return __METHOD__. '();';
+	}
+
+	/**
+	 * Close old sessions.
+	 *
+	 * @return string
+	 */
+	public static function closeSessions(): string
+	{
+		$res = NetworkSessionTable::getList([
+			'select' => ['ID', 'CLOSED'],
+			'filter' => [
+				'!DATE_FINISH' => null,
+				'>CLOSE_TERM' => 0,
+				'=CLOSED' => 1,
+				'!=STATUS' => Network::MULTIDIALOG_STATUS_CLOSE,
+			],
+		]);
+
+		while ($session = $res->fetch())
+		{
+			NetworkSessionTable::update(
+				$session['ID'],
+				[
+					'SESSION_ID' => 0,
+					'STATUS' => Network::MULTIDIALOG_STATUS_CLOSE
+				]
+			);
+		}
+
+		return __METHOD__. '();';
+	}
+
+	/**
+	 * Set sessions statuses.
+	 *
+	 * @return string
+	 */
+	public static function setStatusToSessions(): string
+	{
+		self::closeSessions();
+
+		$res = NetworkSessionTable::getList([
+			'select' => ['ID', 'SESSION_ID', 'DATE_FINISH',  'CLOSED'],
+			'filter' => [
+				'=CLOSED' => 0,
+				'=STATUS' => NULL,
+			],
+		]);
+
+		while ($session = $res->fetch())
+		{
+			if ($session['SESSION_ID'] > 0)
+			{
+				$status = Network::MULTIDIALOG_STATUS_OPEN;
+			}
+			else
+			{
+				$status = Network::MULTIDIALOG_STATUS_NEW;
+			}
+
+			NetworkSessionTable::update(
+				$session['ID'],
+				[
+					'STATUS' => $status
+				]
+			);
+		}
+
+		return '';
 	}
 }

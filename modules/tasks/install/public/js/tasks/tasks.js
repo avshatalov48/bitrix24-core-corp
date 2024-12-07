@@ -345,6 +345,21 @@ BX.mergeEx(BX.Tasks, {
 			},
 		);
 	},
+
+	handleLimitCrmDialog(featureId, bindElement)
+	{
+		return new Promise((resolve, reject) => {
+			BX.Runtime.loadExtension('tasks.limit').then((exports) => {
+				const { Limit } = exports;
+				Limit.showInstance({
+					featureId,
+					bindElement,
+				});
+
+				reject();
+			});
+		});
+	},
 });
 
 if(typeof BX.Tasks.Runtime == 'undefined')

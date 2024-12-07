@@ -4,7 +4,7 @@
  * Bitrix Framework
  * @package bitrix
  * @subpackage main
- * @copyright 2001-2021 Bitrix
+ * @copyright 2001-2024 Bitrix
  */
 
 namespace Bitrix\Main\Config;
@@ -200,6 +200,10 @@ class Option
 			// prevents recursion and cache miss
 			self::$options[$moduleId] = ["-" => []];
 
+			// prevents recursion on early stages with cluster module installed
+			$pool = Main\Application::getInstance()->getConnectionPool();
+			$pool->useMasterOnly(true);
+
 			$query = "
 				SELECT NAME, VALUE
 				FROM b_option
@@ -228,7 +232,11 @@ class Option
 					self::$options[$moduleId][$ar["SITE_ID"]][$ar["NAME"]] = $ar["VALUE"];
 				}
 			}
-			catch(Main\DB\SqlQueryException $e){}
+			catch(Main\DB\SqlQueryException)
+			{
+			}
+
+			$pool->useMasterOnly(false);
 
 			if($cacheTtl !== false)
 			{
@@ -238,7 +246,7 @@ class Option
 			unset(self::$loading[$moduleId]);
 		}
 
-		/*ZDUyZmZYjMwMGFmNTcyOTkyYjU4Y2FmMWYyMzBlZmNkODYwYWE=*/$GLOBALS['____736464453']= array(base64_decode('ZXhwbG9'.'k'.'ZQ=='),base64_decode(''.'cGFj'.'a'.'w='.'='),base64_decode('bWQ1'),base64_decode(''.'Y29uc3Rhb'.'n'.'Q='),base64_decode('aGFzaF9ob'.'WFj'),base64_decode('c3RyY21w'),base64_decode('aXNf'.'b'.'2JqZWN0'),base64_decode('Y'.'2'.'FsbF91c2V'.'yX'.'2Z'.'1bmM'.'='),base64_decode('Y2Fs'.'bF91'.'c2VyX2Z1bmM='),base64_decode('Y'.'2F'.'sb'.'F91'.'c2VyX2Z1bmM'.'='),base64_decode('Y2'.'FsbF'.'91c2VyX2Z1b'.'mM'.'='),base64_decode('Y2F'.'sb'.'F'.'91'.'c2'.'VyX2Z1'.'bmM='));if(!function_exists(__NAMESPACE__.'\\___1525390023')){function ___1525390023($_1730027171){static $_569458965= false; if($_569458965 == false) $_569458965=array('LQ==','bWFp'.'bg==','bWFpb'.'g==','L'.'Q'.'==','b'.'WFpbg'.'==','fl'.'B'.'BUkF'.'NX0'.'1BWF9VU0VSU'.'w==','L'.'Q'.'==',''.'bWFpb'.'g='.'=',''.'flBBUkFN'.'X0'.'1BWF9VU0'.'VSUw==','Lg='.'=','S'.'Co'.'=','Yml0'.'cml'.'4','TElD'.'RU5TRV9LRVk=','c2hhMjU2',''.'LQ==','bWFpbg==',''.'flBB'.'UkF'.'NX01BWF9V'.'U'.'0'.'VSU'.'w'.'='.'=','LQ==','b'.'WFpb'.'g='.'=','UEFSQU1fTUFYX1VTRVJT','VVNFUg==','VVN'.'FUg==','VVNFUg'.'==',''.'SXN'.'B'.'dX'.'Rob'.'3Jp'.'emVk','V'.'V'.'N'.'FUg='.'=','SXNB'.'ZG1pbg='.'=',''.'QVBQTElDQVRJT04=','U'.'m'.'VzdGFydEJ1ZmZlcg==','T'.'G9jY'.'Wx'.'SZWRpc'.'mVjdA='.'=',''.'L2xpY2Vu'.'c2V'.'fcm'.'VzdH'.'Jp'.'Y3Rpb'.'24ucG'.'hw','LQ'.'==','bW'.'Fpbg'.'==','flBB'.'UkFNX01BWF9'.'VU'.'0VSUw==','L'.'Q==','bWFpbg==',''.'U'.'EFSQU1fT'.'UFYX1VTRVJT','XEJp'.'dHJp'.'eFx'.'NYWluXE'.'Nvbm'.'ZpZ1xPcHRpb'.'246OnNldA='.'=',''.'bWFpbg==',''.'UEFSQU1fTUFYX1'.'VTRVJ'.'T');return base64_decode($_569458965[$_1730027171]);}};if(isset(self::$options[___1525390023(0)][___1525390023(1)]) && $moduleId === ___1525390023(2)){ if(isset(self::$options[___1525390023(3)][___1525390023(4)][___1525390023(5)])){ $_1327787515= self::$options[___1525390023(6)][___1525390023(7)][___1525390023(8)]; list($_1708913891, $_1466636977)= $GLOBALS['____736464453'][0](___1525390023(9), $_1327787515); $_1361891835= $GLOBALS['____736464453'][1](___1525390023(10), $_1708913891); $_1866951892= ___1525390023(11).$GLOBALS['____736464453'][2]($GLOBALS['____736464453'][3](___1525390023(12))); $_499452206= $GLOBALS['____736464453'][4](___1525390023(13), $_1466636977, $_1866951892, true); self::$options[___1525390023(14)][___1525390023(15)][___1525390023(16)]= $_1466636977; self::$options[___1525390023(17)][___1525390023(18)][___1525390023(19)]= $_1466636977; if($GLOBALS['____736464453'][5]($_499452206, $_1361891835) !==(1200/2-600)){ if(isset($GLOBALS[___1525390023(20)]) && $GLOBALS['____736464453'][6]($GLOBALS[___1525390023(21)]) && $GLOBALS['____736464453'][7](array($GLOBALS[___1525390023(22)], ___1525390023(23))) &&!$GLOBALS['____736464453'][8](array($GLOBALS[___1525390023(24)], ___1525390023(25)))){ $GLOBALS['____736464453'][9](array($GLOBALS[___1525390023(26)], ___1525390023(27))); $GLOBALS['____736464453'][10](___1525390023(28), ___1525390023(29), true);} return;}} else{ self::$options[___1525390023(30)][___1525390023(31)][___1525390023(32)]= round(0+6+6); self::$options[___1525390023(33)][___1525390023(34)][___1525390023(35)]= round(0+12); $GLOBALS['____736464453'][11](___1525390023(36), ___1525390023(37), ___1525390023(38), round(0+12)); return;}}/**/
+		/*patchvalidationoptions4*/
 	}
 
 	/**
@@ -375,6 +383,7 @@ class Option
 	 * 		name - the name of the option;
 	 * 		site_id - the site ID (can be empty).
 	 * @throws Main\ArgumentNullException
+	 * @throws Main\ArgumentException
 	 */
 	public static function delete($moduleId, array $filter = array())
 	{
@@ -387,27 +396,37 @@ class Option
 		$sqlHelper = $con->getSqlHelper();
 
 		$deleteForSites = true;
-		$sqlWhere = $sqlWhereSite = "";
+		$sqlWhere = '';
+		$sqlWhereSite = '';
 
-		if (isset($filter["name"]))
+		foreach ($filter as $field => $value)
 		{
-			if ($filter["name"] == '')
+			switch ($field)
 			{
-				throw new Main\ArgumentNullException("filter[name]");
+				case "name":
+					if ($value == '')
+					{
+						throw new Main\ArgumentNullException("filter[name]");
+					}
+					$sqlWhere .= " AND NAME = '{$sqlHelper->forSql($value)}'";
+					break;
+
+				case "site_id":
+					if ($value != '')
+					{
+						$sqlWhereSite = " AND SITE_ID = '{$sqlHelper->forSql($value, 2)}'";
+					}
+					else
+					{
+						$deleteForSites = false;
+					}
+					break;
+
+				default:
+					throw new Main\ArgumentException("filter[{$field}]");
 			}
-			$sqlWhere .= " AND NAME = '{$sqlHelper->forSql($filter["name"])}'";
 		}
-		if (isset($filter["site_id"]))
-		{
-			if($filter["site_id"] <> "")
-			{
-				$sqlWhereSite = " AND SITE_ID = '{$sqlHelper->forSql($filter["site_id"], 2)}'";
-			}
-			else
-			{
-				$deleteForSites = false;
-			}
-		}
+
 		if($moduleId == 'main')
 		{
 			$sqlWhere .= "

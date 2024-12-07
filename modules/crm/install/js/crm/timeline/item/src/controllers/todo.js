@@ -1,18 +1,15 @@
+import { FileUploaderPopup } from 'crm.activity.file-uploader-popup';
 import { ajax as Ajax, Type } from 'main.core';
-import { BaseEvent } from "main.core.events";
+import { BaseEvent, EventEmitter } from 'main.core.events';
 import { Dialog } from 'ui.entity-selector';
 import { UI } from 'ui.notification';
-import { FileUploaderPopup } from 'crm.activity.file-uploader-popup';
-import { SettingsPopup as TodoEditorSettingsPopup } from 'crm.activity.settings-popup';
-import { Calendar as SettingsPopupCalendar } from 'crm.activity.settings-popup';
-import { SectionSettings } from 'crm.activity.todo-editor';
-
-import { Base } from './base';
+import { SidePanel } from 'ui.sidepanel';
 import ConfigurableItem from '../configurable-item';
+import type { ActionParams } from './base';
+import { Base } from './base';
 
 export class ToDo extends Base
 {
-	#settingsPopup: ?Popup = null;
 	#responsibleUserSelectorDialog: ?Dialog = null;
 
 	onItemAction(item: ConfigurableItem, actionParams: ActionParams): void
@@ -22,6 +19,11 @@ export class ToDo extends Base
 		if (actionType !== 'jsEvent')
 		{
 			return;
+		}
+
+		if (action === 'ColorSelector:Change' && actionData)
+		{
+			this.#runUpdateColorAction(item, actionData);
 		}
 
 		if (action === 'EditableDescription:StartEdit')
@@ -39,14 +41,34 @@ export class ToDo extends Base
 			this.#showFileUploaderPopup(item, actionData);
 		}
 
-		if (action === 'Activity:ToDo:ShowSettings' && actionData)
-		{
-			this.#showSettingsPopup(item, actionData);
-		}
-
 		if (action === 'Activity:ToDo:ChangeResponsible' && actionData)
 		{
 			this.#showResponsibleUserSelector(item, actionData);
+		}
+
+		if (action === 'Activity:ToDo:Repeat' && actionData)
+		{
+			this.#emitRepeatTodo(item, actionData);
+		}
+
+		if (action === 'Activity:ToDo:Update' && actionData)
+		{
+			this.#emitUpdateTodo(item, actionData);
+		}
+
+		if (action === 'Activity:ToDo:ShowCalendar' && actionData)
+		{
+			this.#showCalendar(item, actionData);
+		}
+
+		if (action === 'Activity:ToDo:Client:Click' && actionData)
+		{
+			this.#openClient(actionData.entityId, actionData.entityTypeId);
+		}
+
+		if (action === 'Activity:ToDo:User:Click' && actionData)
+		{
+			this.#openUser(actionData.userId);
 		}
 	}
 
@@ -79,20 +101,6 @@ export class ToDo extends Base
 	static isItemSupported(item: ConfigurableItem): boolean
 	{
 		return (item.getType() === 'Activity:ToDo');
-	}
-
-	#showSettingsPopup(item, actionData): void
-	{
-		this.#settingsPopup = new TodoEditorSettingsPopup({
-			sections: this.#getSectionSettings(),
-			fetchSettingsPath: 'crm.activity.todo.fetchSettings',
-			ownerTypeId: actionData['ownerTypeId'],
-			ownerId: actionData['ownerId'],
-			id: actionData['entityId'],
-			onSave: this.#onSavePopupSettings.bind(this),
-		});
-
-		this.#settingsPopup.show();
 	}
 
 	#showResponsibleUserSelector(item, actionData): void
@@ -150,18 +158,43 @@ export class ToDo extends Base
 		this.#responsibleUserSelectorDialog.show();
 	}
 
-	#onSavePopupSettings(ownerTypeId: Number, ownerId: Number, id: Number, settings: Array[]): void
+	#emitRepeatTodo(item: Object, actionData: Object): void
 	{
+		EventEmitter.emit('crm:timeline:todo:repeat', actionData);
+	}
+
+	#emitUpdateTodo(item: Object, actionData: Object): void
+	{
+		EventEmitter.emit('crm:timeline:todo:update', actionData);
+	}
+
+	#runUpdateColorAction(item, actionData): void
+	{
+		const { id, ownerTypeId, ownerId } = item.getDataPayload();
+		const { colorId } = actionData;
+
+		const isValidParams = (
+			Type.isNumber(id)
+			&& Type.isNumber(ownerId)
+			&& Type.isNumber(ownerTypeId)
+			&& Type.isStringFilled(colorId)
+		);
+
+		if (!isValidParams)
+		{
+			return;
+		}
+
 		const data = {
 			ownerTypeId,
 			ownerId,
 			id,
-			settings
+			colorId,
 		};
 
 		Ajax
-			.runAction('crm.activity.todo.updateSettings', { data })
-			.catch(response => {
+			.runAction('crm.activity.todo.updateColor', { data })
+			.catch((response) => {
 				UI.Notification.Center.notify({
 					content: response.errors[0].message,
 					autoHideDelay: 5000,
@@ -171,46 +204,26 @@ export class ToDo extends Base
 			});
 	}
 
-	#getSectionSettings(): ReadonlyArray<SectionSettings>
+	#showCalendar(item: Object, actionData: Object): void
 	{
-		const calendar = {
-			id: SettingsPopupCalendar.methods.getId(),
-			component: SettingsPopupCalendar,
-			active: false,
-		};
+		const { calendarEventId, entryDateFrom, timezoneOffset } = actionData;
 
-		if (this.#settingsPopup)
+		if (!window.top.BX.Calendar)
 		{
-			const settings = this.#settingsPopup.getSettings();
-			if (settings.calendar)
+			// eslint-disable-next-line no-console
+			console.warn('BX.Calendar not found');
+
+			return;
+		}
+
+		new window.top.BX.Calendar.SliderLoader(
+			calendarEventId,
 			{
-				const calendarSettings = settings.calendar;
-				calendar.params = {
-					from: calendarSettings.from,
-					to: calendarSettings.to,
-					duration: calendarSettings.duration,
-				}
-				calendar.active = true;
-			}
-		}
-
-		return [
-			calendar,
-		];
-	}
-
-	#getDefaultCalendarParams(): Object
-	{
-		const fromDate = new Date();
-		const from = fromDate.getTime() / 1000;
-		const duration = 3600;
-		const to = from + duration;
-
-		return  {
-			from,
-			duration,
-			to,
-		}
+				entryDateFrom,
+				timezoneOffset,
+				calendarContext: null,
+			},
+		).show();
 	}
 
 	#runResponsibleUserAction(id: Number, ownerId: Number, ownerTypeId: Number, responsibleId: Number): void
@@ -232,5 +245,26 @@ export class ToDo extends Base
 
 				throw response;
 			});
+	}
+
+	#openClient(entityId: Number, entityTypeId: Number): void
+	{
+		if (SidePanel.Instance)
+		{
+			const entityTypeName = BX.CrmEntityType.resolveName(entityTypeId).toLowerCase();
+			const path = `/crm/${entityTypeName}/details/${entityId}/`;
+
+			SidePanel.Instance.open(path);
+		}
+	}
+
+	#openUser(userId: Number): void
+	{
+		if (SidePanel.Instance)
+		{
+			const path = `/company/personal/user/${userId}/`;
+
+			SidePanel.Instance.open(path);
+		}
 	}
 }

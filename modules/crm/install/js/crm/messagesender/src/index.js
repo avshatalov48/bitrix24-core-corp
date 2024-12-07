@@ -1,10 +1,10 @@
-import { ConditionChecker, OpenLineCodes, Types } from './condition-checker';
+import { ConditionChecker } from './condition-checker/checker';
+import { Types } from './condition-checker/common/consent-approver';
 import { Receiver } from './receiver';
 import { ReceiverRepository } from './receiver-repository';
 
 export {
 	ConditionChecker,
-	OpenLineCodes,
 	ReceiverRepository,
 	Receiver,
 	Types,

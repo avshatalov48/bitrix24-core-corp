@@ -98,6 +98,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "initExpandButton",
 	    value: function initExpandButton() {
+	      main_core_events.EventEmitter.subscribe('BX.Forum.Spoiler:toggle', this.onSpoilerToggle.bind(this));
 	      this.contentNode = document.getElementById("tasks-result-list-container-".concat(this.taskId));
 	      this.containerNode = document.getElementById("tasks-result-list-wrapper-".concat(this.taskId));
 	      if (!this.containerNode) {
@@ -113,7 +114,6 @@ this.BX = this.BX || {};
 	      }
 	      this.targetBtnDown.classList.add('--visible');
 	      this.itemsNodes.length === 2 ? this.itemsContentNode.classList.add('--two-results') : this.itemsContentNode.classList.add('--many-results');
-	      main_core_events.EventEmitter.subscribe('BX.Forum.Spoiler:toggle', this.onSpoilerToggle.bind(this));
 	    }
 	  }, {
 	    key: "onSpoilerToggle",

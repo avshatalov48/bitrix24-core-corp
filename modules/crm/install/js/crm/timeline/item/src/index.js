@@ -1,6 +1,4 @@
-import Item from './item';
 import ConfigurableItem from './configurable-item';
-import { StreamType } from './stream-type';
 import ControllerManager from './controller-manager';
 import { Base as BaseController } from './controllers/base';
 import './controller-registry';
@@ -29,6 +27,12 @@ import './css/content-blocks/money-pill.css';
 import './css/content-blocks/value-change-item.css';
 import './css/content-blocks/product-list/styles.css';
 import './css/content-blocks/calendar/sharing.css';
+import './css/content-blocks/line-of-text-blocks.css';
+import './css/content-blocks/line-of-text-blocks-button.css';
+import './css/content-blocks/todo/deadline-and-ping-selector.css';
+import './css/content-blocks/address.css';
+import Item from './item';
+import { StreamType } from './stream-type';
 import './css/main.css';
 
 export {

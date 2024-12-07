@@ -613,7 +613,7 @@ class CCrmEntityListBuilder
 			}
 
 			//Trace('CCrmEntityListBuilder::Prepare, SQL', $sql, 1);
-			$dbRes = $DB->Query($sql, false, 'File: '.__FILE__.'<br/>Line: '.__LINE__);
+			$dbRes = $DB->Query($sql);
 			if($this->ufEntityID !== '')
 			{
 				$dbRes->SetUserFields($GLOBALS['USER_FIELD_MANAGER']->GetUserFields($this->ufEntityID));
@@ -710,7 +710,7 @@ class CCrmEntityListBuilder
 
 		$sql = $this->GetRowCountSql($threshold);
 
-		$dbResult = $DB->Query($sql, false, 'File: '.__FILE__.'<br/>Line: '.__LINE__);
+		$dbResult = $DB->Query($sql);
 		$result = 0;
 		while($ary = $dbResult->Fetch())
 		{
@@ -747,7 +747,7 @@ class CCrmEntityListBuilder
 		{
 			CSqlUtil::PrepareSelectTop($sql, $top, $dbType);
 		}
-		$dbResult = $DB->Query($sql, false, 'File: '.__FILE__.'<br/>Line: '.__LINE__);
+		$dbResult = $DB->Query($sql);
 		return $dbResult;
 	}
 
@@ -792,7 +792,7 @@ class CCrmEntityListBuilder
 		}
 
 		$query = "SELECT COUNT(*) as CNT FROM ($subQuery ORDER BY NULL LIMIT 0, 5000) AS T";
-		$rs = $DB->Query($query, false, 'File: '.__FILE__.'<br/>Line: '.__LINE__);
+		$rs = $DB->Query($query);
 
 		$result = 0;
 		while($ary = $rs->Fetch())

@@ -1,56 +1,67 @@
-<?
+<?php
 //**********************************************************************/
 //**    DO NOT MODIFY THIS FILE                                       **/
 //**    MODIFICATION OF THIS FILE WILL ENTAIL SITE FAILURE            **/
 //**********************************************************************/
-define("US_CALL_TYPE", "KERNEL");
-define("US_BASE_MODULE", "controller");
+define('US_CALL_TYPE', 'KERNEL');
+define('US_BASE_MODULE', 'controller');
 
-$US_LICENSE_KEY = "";
-if (file_exists($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/controller/license_key.php"))
-	include($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/controller/license_key.php");
-if ($US_LICENSE_KEY == "" || mb_strtoupper($US_LICENSE_KEY) == "DEMO")
-	define("US_LICENSE_KEY", "DEMO");
+$US_LICENSE_KEY = '';
+if (file_exists($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/controller/license_key.php'))
+{
+	include $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/controller/license_key.php';
+}
+if ($US_LICENSE_KEY === '' || mb_strtoupper($US_LICENSE_KEY) === 'DEMO')
+{
+	define('US_LICENSE_KEY', 'DEMO');
+}
 else
-	define("US_LICENSE_KEY", $US_LICENSE_KEY);
+{
+	define('US_LICENSE_KEY', $US_LICENSE_KEY);
+}
 
-require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_before.php");
+require_once $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_admin_before.php';
+/** @var CMain $APPLICATION */
+/** @var CDatabase $DB */
+/** @var CUser $USER */
 
-define("US_SHARED_KERNEL_PATH", COption::GetOptionString("controller", "shared_kernel_path", "/bitrix/clients"));
-define("US_SAVE_UPDATERS_DIR", US_SHARED_KERNEL_PATH."/updaters");
+define('US_SHARED_KERNEL_PATH', COption::GetOptionString('controller', 'shared_kernel_path', '/bitrix/clients'));
+define('US_SAVE_UPDATERS_DIR', US_SHARED_KERNEL_PATH . '/updaters');
 
-require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/classes/general/update_client.php");
+require_once $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/classes/general/update_client.php';
 
 @set_time_limit(0);
-ini_set("track_errors", "1");
+ini_set('track_errors', '1');
 ignore_user_abort(true);
 
 IncludeModuleLangFile(__FILE__);
 
-if (!$USER->CanDoOperation("controller_member_updates_run"))
-	$APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+if (!$USER->CanDoOperation('controller_member_updates_run'))
+{
+	$APPLICATION->AuthForm(GetMessage('ACCESS_DENIED'));
+}
 
-$errorMessage = "";
+$errorMessage = '';
 
-$stableVersionsOnly = COption::GetOptionString("controller", "stable_versions_only", "Y");
-CModule::IncludeModule("controller");
+$stableVersionsOnly = COption::GetOptionString('controller', 'stable_versions_only', 'Y');
+CModule::IncludeModule('controller');
 
-$strTitle = GetMessage("SUP_TITLE_BASE");
+$strTitle = GetMessage('SUP_TITLE_BASE');
 $APPLICATION->SetTitle($strTitle);
-$APPLICATION->SetAdditionalCSS("/bitrix/themes/".ADMIN_THEME_ID."/sysupdate.css");
-require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_after.php");
+$APPLICATION->SetAdditionalCSS('/bitrix/themes/' . ADMIN_THEME_ID . '/sysupdate.css');
+require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_admin_after.php';
 
-$arMenu = array(
-	array(
-		"TEXT" => GetMessage("SUP_CHECK_UPDATES"),
-		"LINK" => "/bitrix/admin/controller_update.php?refresh=Y&lang=".LANGUAGE_ID,
-		"ICON"=>"btn_update",
-	),
-	array("SEPARATOR" => "Y"),
-	array(
-		"TEXT" => GetMessage("SUP_SETTINGS"),
-		"LINK" => "/bitrix/admin/settings.php?lang=".LANGUAGE_ID."&mid=controller&back_url_settings=%2Fbitrix%2Fadmin%2Fcontroller_update.php%3Flang%3D".LANGUAGE_ID."",
-	),
+$arMenu = [
+	[
+		'TEXT' => GetMessage('SUP_CHECK_UPDATES'),
+		'LINK' => '/bitrix/admin/controller_update.php?refresh=Y&lang=' . LANGUAGE_ID,
+		'ICON' => 'btn_update',
+	],
+	['SEPARATOR' => 'Y'],
+	[
+		'TEXT' => GetMessage('SUP_SETTINGS'),
+		'LINK' => '/bitrix/admin/settings.php?lang=' . LANGUAGE_ID . '&mid=controller&back_url_settings=%2Fbitrix%2Fadmin%2Fcontroller_update.php%3Flang%3D' . LANGUAGE_ID,
+	],
 	/*
 	array("SEPARATOR" => "Y"),
 	array(
@@ -59,117 +70,137 @@ $arMenu = array(
 		"ICON"=>"btn_update_log",
 	)
 	*/
-);
+];
 
 $context = new CAdminContextMenu($arMenu);
 $context->Show();
 
 if (!$arUpdateList = CUpdateClient::GetUpdatesList($errorMessage, LANG, $stableVersionsOnly))
-	$errorMessage .= "<br>".GetMessage("SUP_CANT_CONNECT").". ";
+{
+	$errorMessage .= '<br>' . GetMessage('SUP_CANT_CONNECT') . '. ';
+}
 
-$strError_tmp = "";
+$strError_tmp = '';
 $arClientModules = CUpdateClient::GetCurrentModules($strError_tmp);
-if ($strError_tmp <> '')
+if ($strError_tmp !== '')
+{
 	$errorMessage .= $strError_tmp;
+}
 
 if ($arUpdateList)
 {
-	if (isset($arUpdateList["ERROR"]))
+	if (isset($arUpdateList['ERROR']))
 	{
-		for ($i = 0, $cnt = count($arUpdateList["ERROR"]); $i < $cnt; $i++)
-			$errorMessage .= "[".$arUpdateList["ERROR"][$i]["@"]["TYPE"]."] ".$arUpdateList["ERROR"][$i]["#"];
+		for ($i = 0, $cnt = count($arUpdateList['ERROR']); $i < $cnt; $i++)
+		{
+			$errorMessage .= '[' . $arUpdateList['ERROR'][$i]['@']['TYPE'] . '] ' . $arUpdateList['ERROR'][$i]['#'];
+		}
 	}
 }
 
-if ($errorMessage <> '')
-	echo CAdminMessage::ShowMessage(Array("DETAILS" => $errorMessage, "TYPE" => "ERROR", "MESSAGE" => GetMessage("SUP_ERROR"), "HTML" => true));
+if ($errorMessage !== '')
+{
+	CAdminMessage::ShowMessage(['DETAILS' => $errorMessage, 'TYPE' => 'ERROR', 'MESSAGE' => GetMessage('SUP_ERROR'), 'HTML' => true]);
+}
 
 ?>
-<form method="POST" action="<?echo $APPLICATION->GetCurPage()?>?" name="form1">
-<input type="hidden" name="lang" value="<?echo LANG ?>">
+<form method="POST" action="<?php echo $APPLICATION->GetCurPage()?>?" name="form1">
+<input type="hidden" name="lang" value="<?php echo LANG ?>">
 <?=bitrix_sessid_post()?>
 
-<?
-$arTabs = array(
-	array(
-		"DIV" => "tab1",
-		"TAB" => GetMessage("SUP_TAB_UPDATES"),
-		"ICON" => "",
-		"TITLE" => GetMessage("SUP_TAB_UPDATES_ALT"),
-	),
-	array(
-		"DIV" => "tab2",
-		"TAB" => GetMessage("SUP_TAB_UPDATES_LIST"),
-		"ICON" => "",
-		"TITLE" => GetMessage("SUP_TAB_UPDATES_LIST_ALT"),
-	),
-	array(
-		"DIV" => "tab3",
-		"TAB" => GetMessage("SUP_TAB_SETTINGS"),
-		"ICON" => "",
-		"TITLE" => GetMessage("SUP_TAB_SETTINGS_ALT"),
-	),
-);
+<?php
+$arTabs = [
+	[
+		'DIV' => 'tab1',
+		'TAB' => GetMessage('SUP_TAB_UPDATES'),
+		'ICON' => '',
+		'TITLE' => GetMessage('SUP_TAB_UPDATES_ALT'),
+	],
+	[
+		'DIV' => 'tab2',
+		'TAB' => GetMessage('SUP_TAB_UPDATES_LIST'),
+		'ICON' => '',
+		'TITLE' => GetMessage('SUP_TAB_UPDATES_LIST_ALT'),
+	],
+	[
+		'DIV' => 'tab3',
+		'TAB' => GetMessage('SUP_TAB_SETTINGS'),
+		'ICON' => '',
+		'TITLE' => GetMessage('SUP_TAB_SETTINGS_ALT'),
+	],
+];
 
-$tabControl = new CAdminTabControl("tabControl", $arTabs);
+$tabControl = new CAdminTabControl('tabControl', $arTabs);
 $tabControl->Begin();
 ?>
 
-<?
+<?php
 $tabControl->BeginNextTab();
 ?>
 
 	<tr>
 		<td colspan="2">
 
-			<?
+			<?php
 			$countModuleUpdates = 0;
 			$countLangUpdatesInst = 0;
 			$countLangUpdatesOther = 0;
 			$countTotalImportantUpdates = 0;
 			$countHelpUpdatesInst = 0;
 			$countHelpUpdatesOther = 0;
-			$bLockControls = False;
+			$bLockControls = false;
 
 			if ($arUpdateList)
 			{
-				if (isset($arUpdateList["MODULES"]) && is_array($arUpdateList["MODULES"]) && is_array($arUpdateList["MODULES"][0]["#"]["MODULE"]))
-					$countModuleUpdates = count($arUpdateList["MODULES"][0]["#"]["MODULE"]);
+				if (isset($arUpdateList['MODULES']) && is_array($arUpdateList['MODULES']) && is_array($arUpdateList['MODULES'][0]['#']['MODULE']))
+				{
+					$countModuleUpdates = count($arUpdateList['MODULES'][0]['#']['MODULE']);
+				}
 
-				if (isset($arUpdateList["LANGS"]) && is_array($arUpdateList["LANGS"]) && is_array($arUpdateList["LANGS"][0]["#"]["INST"]) && is_array($arUpdateList["LANGS"][0]["#"]["INST"][0]["#"]["LANG"]))
-					$countLangUpdatesInst = count($arUpdateList["LANGS"][0]["#"]["INST"][0]["#"]["LANG"]);
+				if (isset($arUpdateList['LANGS']) && is_array($arUpdateList['LANGS']) && is_array($arUpdateList['LANGS'][0]['#']['INST']) && is_array($arUpdateList['LANGS'][0]['#']['INST'][0]['#']['LANG']))
+				{
+					$countLangUpdatesInst = count($arUpdateList['LANGS'][0]['#']['INST'][0]['#']['LANG']);
+				}
 
-				if (isset($arUpdateList["LANGS"]) && is_array($arUpdateList["LANGS"]) && is_array($arUpdateList["LANGS"][0]["#"]["OTHER"]) && is_array($arUpdateList["LANGS"][0]["#"]["OTHER"][0]["#"]["LANG"]))
-					$countLangUpdatesOther = count($arUpdateList["LANGS"][0]["#"]["OTHER"][0]["#"]["LANG"]);
+				if (isset($arUpdateList['LANGS']) && is_array($arUpdateList['LANGS']) && is_array($arUpdateList['LANGS'][0]['#']['OTHER']) && is_array($arUpdateList['LANGS'][0]['#']['OTHER'][0]['#']['LANG']))
+				{
+					$countLangUpdatesOther = count($arUpdateList['LANGS'][0]['#']['OTHER'][0]['#']['LANG']);
+				}
 
 				$countTotalImportantUpdates = $countLangUpdatesInst;
 				if ($countModuleUpdates > 0)
 				{
-					for ($i = 0, $cnt = count($arUpdateList["MODULES"][0]["#"]["MODULE"]); $i < $cnt; $i++)
+					for ($i = 0, $cnt = count($arUpdateList['MODULES'][0]['#']['MODULE']); $i < $cnt; $i++)
 					{
-						$countTotalImportantUpdates += count($arUpdateList["MODULES"][0]["#"]["MODULE"][$i]["#"]["VERSION"]);
-						if (!array_key_exists($arUpdateList["MODULES"][0]["#"]["MODULE"][$i]["@"]["ID"], $arClientModules))
+						$countTotalImportantUpdates += count($arUpdateList['MODULES'][0]['#']['MODULE'][$i]['#']['VERSION']);
+						if (!array_key_exists($arUpdateList['MODULES'][0]['#']['MODULE'][$i]['@']['ID'], $arClientModules))
+						{
 							$countTotalImportantUpdates += 1;
+						}
 					}
 				}
 
 				$countHelpUpdatesInst = 0;
-				if (isset($arUpdateList["HELPS"]) && is_array($arUpdateList["HELPS"]) && is_array($arUpdateList["HELPS"][0]["#"]["INST"]) && is_array($arUpdateList["HELPS"][0]["#"]["INST"][0]["#"]["HELP"]))
-					$countHelpUpdatesInst = count($arUpdateList["HELPS"][0]["#"]["INST"][0]["#"]["HELP"]);
+				if (isset($arUpdateList['HELPS']) && is_array($arUpdateList['HELPS']) && is_array($arUpdateList['HELPS'][0]['#']['INST']) && is_array($arUpdateList['HELPS'][0]['#']['INST'][0]['#']['HELP']))
+				{
+					$countHelpUpdatesInst = count($arUpdateList['HELPS'][0]['#']['INST'][0]['#']['HELP']);
+				}
 
 				$countHelpUpdatesOther = 0;
-				if (isset($arUpdateList["HELPS"]) && is_array($arUpdateList["HELPS"]) && is_array($arUpdateList["HELPS"][0]["#"]["OTHER"]) && is_array($arUpdateList["HELPS"][0]["#"]["OTHER"][0]["#"]["HELP"]))
-					$countHelpUpdatesOther = count($arUpdateList["HELPS"][0]["#"]["OTHER"][0]["#"]["HELP"]);
-
-				$newLicenceSigned = COption::GetOptionString("main", "new_license6_sign", "N");
-				if ($newLicenceSigned != "Y")
+				if (isset($arUpdateList['HELPS']) && is_array($arUpdateList['HELPS']) && is_array($arUpdateList['HELPS'][0]['#']['OTHER']) && is_array($arUpdateList['HELPS'][0]['#']['OTHER'][0]['#']['HELP']))
 				{
-					$bLockControls = True;
+					$countHelpUpdatesOther = count($arUpdateList['HELPS'][0]['#']['OTHER'][0]['#']['HELP']);
+				}
+
+				$newLicenceSigned = COption::GetOptionString('main', 'new_license6_sign', 'N');
+				if ($newLicenceSigned != 'Y')
+				{
+					$bLockControls = true;
 					?>
 					<div id="upd_licence_div">
 						<table border="0" cellspacing="1" cellpadding="3" width="100%" class="internal">
 							<tr class="heading">
-								<td><b><?= GetMessage("SUP_SUBT_LICENCE") ?></b></td>
+								<td><b><?= GetMessage('SUP_SUBT_LICENCE') ?></b></td>
 							</tr>
 							<tr>
 								<td valign="top">
@@ -177,8 +208,8 @@ $tabControl->BeginNextTab();
 										<tr>
 											<td class="icon-new"><div class="icon icon-main"></div></td>
 											<td>
-									<?= GetMessage("SUP_SUBT_LICENCE_HINT") ?><br><br>
-									<input TYPE="button" NAME="agree_licence_btn" value="<?= GetMessage("SUP_SUBT_LICENCE_BUTTON") ?>" onclick="ShowLicence()">
+									<?= GetMessage('SUP_SUBT_LICENCE_HINT') ?><br><br>
+									<input TYPE="button" NAME="agree_licence_btn" value="<?= GetMessage('SUP_SUBT_LICENCE_BUTTON') ?>" onclick="ShowLicence()">
 											</td>
 										</tr>
 									</table>
@@ -187,7 +218,7 @@ $tabControl->BeginNextTab();
 						</table>
 						<br>
 					</div>
-					<SCRIPT LANGUAGE="JavaScript">
+					<SCRIPT>
 					<!--
 					function ShowLicence()
 					{
@@ -205,24 +236,24 @@ $tabControl->BeginNextTab();
 						var txt = '<div class="title">';
 						txt += '<table cellspacing="0" width="100%">';
 						txt += '<tr>';
-						txt += '<td width="100%" class="title-text" onmousedown="jsFloatDiv.StartDrag(arguments[0], document.getElementById(\'licence_float_div\'));"><?= GetMessage("SUP_SUBT_LICENCE") ?></td>';
-						txt += '<td width="0%"><a class="close" href="javascript:CloseLicenceTextWindow();" title="<?= GetMessage("SUP_SULD_CLOSE") ?>"></a></td>';
+						txt += '<td width="100%" class="title-text" onmousedown="jsFloatDiv.StartDrag(arguments[0], document.getElementById(\'licence_float_div\'));"><?= GetMessage('SUP_SUBT_LICENCE') ?></td>';
+						txt += '<td width="0%"><a class="close" href="javascript:CloseLicenceTextWindow();" title="<?= GetMessage('SUP_SULD_CLOSE') ?>"></a></td>';
 						txt += '</tr>';
 						txt += '</table>';
 						txt += '</div>';
 						txt += '<div class="content">';
 						txt += '<form name="license_form">';
-						txt += '<h2><?= GetMessage("SUP_SUBT_LICENCE") ?></h2>';
+						txt += '<h2><?= GetMessage('SUP_SUBT_LICENCE') ?></h2>';
 						txt += '<table cellspacing="0"><tr><td>';
-						txt += '<iframe name="license_text" src="https://www.bitrixsoft.com/license-<?= ((LANGUAGE_ID == "ru") ? "ru" : "en") ?>.htm" style="width:450px; height:250px; display:block;"></iframe>';
+						txt += '<iframe name="license_text" src="https://www.bitrixsoft.com/license-<?= ((LANGUAGE_ID == 'ru') ? 'ru' : 'en') ?>.htm" style="width:450px; height:250px; display:block;"></iframe>';
 						txt += '</td></tr><tr><td>';
 						txt += '<input name="agree_license" type="checkbox" value="Y" id="agree_license_id" onclick="AgreeLicenceCheckbox(this)">';
-						txt += '<label for="agree_license_id"><?= GetMessage("SUP_SUBT_AGREE") ?></label>';
+						txt += '<label for="agree_license_id"><?= GetMessage('SUP_SUBT_AGREE') ?></label>';
 						txt += '</td></tr></table>';
 						txt += '</form>';
 						txt += '</div>';
 						txt += '<div class="buttons">';
-						txt += '<input type="button" value="<?= GetMessage("SUP_APPLY") ?>" disabled id="licence_agree_button" onclick="AgreeLicence()" title="<?= GetMessage("SUP_APPLY") ?>">';
+						txt += '<input type="button" value="<?= GetMessage('SUP_APPLY') ?>" disabled id="licence_agree_button" onclick="AgreeLicence()" title="<?= GetMessage('SUP_APPLY') ?>">';
 						txt += '</div>';
 
 						div.innerHTML = txt;
@@ -256,7 +287,8 @@ $tabControl->BeginNextTab();
 					function AgreeLicenceCheckbox(checkbox)
 					{
 						var lab = document.getElementById("licence_agree_button");
-						lab.disabled=<?if(!$USER->CanDoOperation("controller_member_updates_run")):?>true<?else:?>!checkbox.checked<?endif;?>;
+						lab.disabled=<?php if (!$USER->CanDoOperation('controller_member_updates_run')):
+?>true<?php else:?>!checkbox.checked<?php endif;?>;
 					}
 
 					function AgreeLicence()
@@ -277,7 +309,7 @@ $tabControl->BeginNextTab();
 							}
 							else
 							{
-								alert("<?= GetMessage("SUP_SUBT_ERROR_LICENCE") ?>");
+								alert("<?= GetMessage('SUP_SUBT_ERROR_LICENCE') ?>");
 							}
 						}
 
@@ -292,32 +324,35 @@ $tabControl->BeginNextTab();
 					}
 					//-->
 					</SCRIPT>
-					<?
+					<?php
 				}
 
-				$bLicenseNotFound = False;
-				if ($arUpdateList !== false
-					&& isset($arUpdateList["ERROR"])
-					&& count($arUpdateList["ERROR"]) > 0)
+				$bLicenseNotFound = false;
+				if (
+					$arUpdateList !== false
+					&& isset($arUpdateList['ERROR'])
+					&& count($arUpdateList['ERROR']) > 0
+				)
 				{
-					for ($i = 0; $i < count($arUpdateList["ERROR"]); $i++)
+					$c = count($arUpdateList['ERROR']);
+					for ($i = 0; $i < $c; $i++)
 					{
-						if ($arUpdateList["ERROR"][$i]["@"]["TYPE"] == "LICENSE_NOT_FOUND")
+						if ($arUpdateList['ERROR'][$i]['@']['TYPE'] == 'LICENSE_NOT_FOUND')
 						{
-							$bLicenseNotFound = True;
+							$bLicenseNotFound = true;
 							break;
 						}
 					}
 				}
 				$strLicenseKeyTmp = CUpdateClient::GetLicenseKey();
-				if ($strLicenseKeyTmp == '' || mb_strtolower($strLicenseKeyTmp) == "demo" || $bLicenseNotFound)
+				if ($strLicenseKeyTmp == '' || mb_strtolower($strLicenseKeyTmp) === 'demo' || $bLicenseNotFound)
 				{
-					$bLockControls = True;
+					$bLockControls = true;
 					?>
 					<div id="upd_key_div">
 						<table border="0" cellspacing="1" cellpadding="3" width="100%" class="internal">
 							<tr class="heading">
-								<td><b><?= GetMessage("SUP_SUBK_KEY") ?></b></td>
+								<td><b><?= GetMessage('SUP_SUBK_KEY') ?></b></td>
 							</tr>
 							<tr>
 								<td valign="top">
@@ -325,9 +360,9 @@ $tabControl->BeginNextTab();
 										<tr>
 											<td class="icon-new"><div class="icon icon-licence"></div></td>
 											<td>
-									<?= GetMessage("SUP_SUBK_HINT") ?><br><br>
-									<input TYPE="button" NAME="licence_key_btn" value="<?= GetMessage("SUP_SUBK_BUTTON") ?>" onclick="ShowLicenceKeyForm()"><br><br>
-									<a href="https://<?= ((LANGUAGE_ID == "ru") ? "www.1c-bitrix.ru" : "www.bitrixsoft.com") ?>/bsm_register.php" target="_blank"><?= GetMessage("SUP_SUBK_GET_KEY") ?></a>
+									<?= GetMessage('SUP_SUBK_HINT') ?><br><br>
+									<input TYPE="button" NAME="licence_key_btn" value="<?= GetMessage('SUP_SUBK_BUTTON') ?>" onclick="ShowLicenceKeyForm()"><br><br>
+									<a href="https://<?= ((LANGUAGE_ID == 'ru') ? 'www.1c-bitrix.ru' : 'www.bitrixsoft.com') ?>/bsm_register.php" target="_blank"><?= GetMessage('SUP_SUBK_GET_KEY') ?></a>
 											</td>
 										</tr>
 									</table>
@@ -336,7 +371,7 @@ $tabControl->BeginNextTab();
 						</table>
 						<br>
 					</div>
-					<SCRIPT LANGUAGE="JavaScript">
+					<SCRIPT>
 					<!--
 					function ShowLicenceKeyForm()
 					{
@@ -355,24 +390,24 @@ $tabControl->BeginNextTab();
 						var txt = '<div class="title">';
 						txt += '<table cellspacing="0" width="100%">';
 						txt += '<tr>';
-						txt += '<td width="100%" class="title-text" onmousedown="jsFloatDiv.StartDrag(arguments[0], document.getElementById(\'key_float_div\'));"><?= GetMessage("SUP_SUBK_KEY") ?></td>';
-						txt += '<td width="0%"><a class="close" href="javascript:CloseLicenceWindow();" title="<?= GetMessage("SUP_SULD_CLOSE") ?>"></a></td>';
+						txt += '<td width="100%" class="title-text" onmousedown="jsFloatDiv.StartDrag(arguments[0], document.getElementById(\'key_float_div\'));"><?= GetMessage('SUP_SUBK_KEY') ?></td>';
+						txt += '<td width="0%"><a class="close" href="javascript:CloseLicenceWindow();" title="<?= GetMessage('SUP_SULD_CLOSE') ?>"></a></td>';
 						txt += '</tr>';
 						txt += '</table>';
 						txt += '</div>';
 						txt += '<div class="content">';
 						txt += '<form name="licence_key_form">';
-						txt += '<h2><?= GetMessage("SUP_SUBK_KEY") ?></h2>';
+						txt += '<h2><?= GetMessage('SUP_SUBK_KEY') ?></h2>';
 						txt += '<table cellspacing="0">';
 						txt += '<tr>';
-						txt += '	<td width="50%"><span class="required">*</span><?= GetMessage("SUP_SUBK_PROMT") ?>:</td>';
+						txt += '	<td width="50%"><span class="required">*</span><?= GetMessage('SUP_SUBK_PROMT') ?>:</td>';
 						txt += '	<td width="50%"><input type="text" id="id_new_license_key" name="NEW_LICENSE_KEY" value="" size="30"></td>';
 						txt += '</tr>';
 						txt += '</table>';
 						txt += '</form>';
 						txt += '</div>';
 						txt += '<div class="buttons">';
-						txt += '<input type="button" id="id_licence_key_form_button" value="<?= GetMessage("SUP_SUBK_SAVE") ?>" onclick="LicenceKeyFormSubmit()" title="<?= GetMessage("SUP_SUBK_SAVE") ?>">';
+						txt += '<input type="button" id="id_licence_key_form_button" value="<?= GetMessage('SUP_SUBK_SAVE') ?>" onclick="LicenceKeyFormSubmit()" title="<?= GetMessage('SUP_SUBK_SAVE') ?>">';
 						txt += '</div>';
 
 						div.innerHTML = txt;
@@ -412,7 +447,7 @@ $tabControl->BeginNextTab();
 
 						var error = "";
 						if (document.licence_key_form.NEW_LICENSE_KEY.value.length <= 0)
-							error += "<?= GetMessage("SUP_SUBK_NO_KEY") ?>";
+							error += "<?= GetMessage('SUP_SUBK_NO_KEY') ?>";
 
 						if (error.length > 0)
 						{
@@ -437,7 +472,7 @@ $tabControl->BeginNextTab();
 							else
 							{
 								document.getElementById("id_licence_key_form_button").disabled = false;
-								alert("<?= GetMessage("SUP_SUBK_ERROR") ?>: " + result);
+								alert("<?= GetMessage('SUP_SUBK_ERROR') ?>: " + result);
 							}
 						}
 
@@ -445,18 +480,18 @@ $tabControl->BeginNextTab();
 					}
 					//-->
 					</SCRIPT>
-					<?
+					<?php
 				}
 				else
 				{
-					if (isset($arUpdateList["CLIENT"]) && !isset($arUpdateList["UPDATE_SYSTEM"]) && count($arUpdateList["CLIENT"]) > 0 && $arUpdateList["CLIENT"][0]["@"]["RESERVED"] == "Y")
+					if (isset($arUpdateList['CLIENT']) && !isset($arUpdateList['UPDATE_SYSTEM']) && count($arUpdateList['CLIENT']) > 0 && $arUpdateList['CLIENT'][0]['@']['RESERVED'] == 'Y')
 					{
-						$bLockControls = True;
+						$bLockControls = true;
 						?>
 						<div id="upd_activate_div">
 							<table border="0" cellspacing="1" cellpadding="3" width="100%" class="internal">
 								<tr class="heading">
-									<td><b><?= GetMessage("SUP_SUBA_ACTIVATE") ?></b></td>
+									<td><b><?= GetMessage('SUP_SUBA_ACTIVATE') ?></b></td>
 								</tr>
 								<tr>
 									<td valign="top">
@@ -464,8 +499,8 @@ $tabControl->BeginNextTab();
 										<tr>
 											<td class="icon-new"><div class="icon icon-licence"></div></td>
 											<td>
-										<?= GetMessage("SUP_SUBA_ACTIVATE_HINT") ?><br><br>
-										<input TYPE="button" NAME="activate_key_btn" value="<?= GetMessage("SUP_SUBA_ACTIVATE_BUTTON") ?>" onclick="ShowActivateForm()">
+										<?= GetMessage('SUP_SUBA_ACTIVATE_HINT') ?><br><br>
+										<input TYPE="button" NAME="activate_key_btn" value="<?= GetMessage('SUP_SUBA_ACTIVATE_BUTTON') ?>" onclick="ShowActivateForm()">
 											</td>
 										</tr>
 									</table>
@@ -474,7 +509,7 @@ $tabControl->BeginNextTab();
 							</table>
 							<br>
 						</div>
-						<SCRIPT LANGUAGE="JavaScript">
+						<SCRIPT>
 						<!--
 						function ShowActivateForm()
 						{
@@ -492,103 +527,103 @@ $tabControl->BeginNextTab();
 							var txt = '<div class="title">';
 							txt += '<table cellspacing="0" width="100%">';
 							txt += '<tr>';
-							txt += '<td width="100%" class="title-text" onmousedown="jsFloatDiv.StartDrag(arguments[0], document.getElementById(\'activate_float_div\'));"><?= GetMessage("SUP_SUBA_ACTIVATE") ?></td>';
-							txt += '<td width="0%"><a class="close" href="javascript:CloseActivateWindow();" title="<?= GetMessage("SUP_SULD_CLOSE") ?>"></a></td>';
+							txt += '<td width="100%" class="title-text" onmousedown="jsFloatDiv.StartDrag(arguments[0], document.getElementById(\'activate_float_div\'));"><?= GetMessage('SUP_SUBA_ACTIVATE') ?></td>';
+							txt += '<td width="0%"><a class="close" href="javascript:CloseActivateWindow();" title="<?= GetMessage('SUP_SULD_CLOSE') ?>"></a></td>';
 							txt += '</tr>';
 							txt += '</table>';
 							txt += '</div>';
 							txt += '<div class="content" style="overflow:auto;overflow-y:auto;height:400px;">';
 							txt += '<form name="activate_form">';
-							txt += '<h2><?= GetMessage("SUP_SUBA_ACTIVATE") ?></h2>';
+							txt += '<h2><?= GetMessage('SUP_SUBA_ACTIVATE') ?></h2>';
 							txt += '<table cellspacing="0">';
-							txt += '<tr class="heading"><td colspan="2"><b><?= GetMessage("SUP_SUBA_REGINFO") ?></b></td></tr>';
+							txt += '<tr class="heading"><td colspan="2"><b><?= GetMessage('SUP_SUBA_REGINFO') ?></b></td></tr>';
 							txt += '<tr>';
-							txt += '	<td width="50%"><span class="required">*</span><?= GetMessage("SUP_SUBA_RI_NAME") ?>:</td>';
+							txt += '	<td width="50%"><span class="required">*</span><?= GetMessage('SUP_SUBA_RI_NAME') ?>:</td>';
 							txt += '	<td width="50%"><input type="text" id="id_activate_name" name="NAME" value="" size="30"></td>';
 							txt += '</tr>';
 							//txt += '<tr>';
-							//txt += '	<td colspan="2"><small><?= GetMessage("SUP_SUBA_RI_NAME1") ?></small></td>';
+							//txt += '	<td colspan="2"><small><?= GetMessage('SUP_SUBA_RI_NAME1') ?></small></td>';
 							//txt += '</tr>';
 							txt += '<tr>';
-							txt += '	<td width="50%"><span class="required">*</span><?= GetMessage("SUP_SUBA_RI_URI") ?>:</td>';
+							txt += '	<td width="50%"><span class="required">*</span><?= GetMessage('SUP_SUBA_RI_URI') ?>:</td>';
 							txt += '	<td width="50%"><input type="text" name="SITE_URL" value="" size="30"></td>';
 							txt += '</tr>';
 							//txt += '<tr>';
-							//txt += '	<td colspan="2"><small><?= GetMessage("SUP_SUBA_RI_URI1") ?></small></td>';
+							//txt += '	<td colspan="2"><small><?= GetMessage('SUP_SUBA_RI_URI1') ?></small></td>';
 							//txt += '</tr>';
 							txt += '<tr>';
-							txt += '	<td width="50%"><span class="required">*</span><?= GetMessage("SUP_SUBA_RI_PHONE") ?>:</td>';
+							txt += '	<td width="50%"><span class="required">*</span><?= GetMessage('SUP_SUBA_RI_PHONE') ?>:</td>';
 							txt += '	<td width="50%"><input type="text" name="PHONE" value="" size="30"></td>';
 							txt += '</tr>';
 							//txt += '<tr>';
-							//txt += '	<td colspan="2"><small><?= GetMessage("SUP_SUBA_RI_PHONE1") ?></small></td>';
+							//txt += '	<td colspan="2"><small><?= GetMessage('SUP_SUBA_RI_PHONE1') ?></small></td>';
 							//txt += '</tr>';
 							txt += '<tr>';
-							txt += '	<td width="50%"><span class="required">*</span><?= GetMessage("SUP_SUBA_RI_EMAIL") ?>:</td>';
+							txt += '	<td width="50%"><span class="required">*</span><?= GetMessage('SUP_SUBA_RI_EMAIL') ?>:</td>';
 							txt += '	<td width="50%"><input type="text" name="EMAIL" value="" size="30"></td>';
 							txt += '</tr>';
 							//txt += '<tr>';
-							//txt += '	<td colspan="2"><small><?= GetMessage("SUP_SUBA_RI_EMAIL1") ?></small></td>';
+							//txt += '	<td colspan="2"><small><?= GetMessage('SUP_SUBA_RI_EMAIL1') ?></small></td>';
 							//txt += '</tr>';
 							txt += '<tr>';
-							txt += '	<td width="50%"><span class="required">*</span><?= GetMessage("SUP_SUBA_RI_CONTACT_PERSON") ?>:</td>';
+							txt += '	<td width="50%"><span class="required">*</span><?= GetMessage('SUP_SUBA_RI_CONTACT_PERSON') ?>:</td>';
 							txt += '	<td width="50%"><input type="text" name="CONTACT_PERSON" value="" size="30"></td>';
 							txt += '</tr>';
 							//txt += '<tr>';
-							//txt += '	<td colspan="2"><small><?= GetMessage("SUP_SUBA_RI_CONTACT_PERSON1") ?></small></td>';
+							//txt += '	<td colspan="2"><small><?= GetMessage('SUP_SUBA_RI_CONTACT_PERSON1') ?></small></td>';
 							//txt += '</tr>';
 							txt += '<tr>';
-							txt += '	<td width="50%"><span class="required">*</span><?= GetMessage("SUP_SUBA_RI_CONTACT_EMAIL") ?>:</td>';
+							txt += '	<td width="50%"><span class="required">*</span><?= GetMessage('SUP_SUBA_RI_CONTACT_EMAIL') ?>:</td>';
 							txt += '	<td width="50%"><input type="text" name="CONTACT_EMAIL" value="" size="30"></td>';
 							txt += '</tr>';
 							//txt += '<tr>';
-							//txt += '	<td colspan="2"><small><?= GetMessage("SUP_SUBA_RI_CONTACT_EMAIL1") ?></small></td>';
+							//txt += '	<td colspan="2"><small><?= GetMessage('SUP_SUBA_RI_CONTACT_EMAIL1') ?></small></td>';
 							//txt += '</tr>';
 							txt += '<tr>';
-							txt += '	<td width="50%"><span class="required">*</span><?= GetMessage("SUP_SUBA_RI_CONTACT_PHONE") ?>:</td>';
+							txt += '	<td width="50%"><span class="required">*</span><?= GetMessage('SUP_SUBA_RI_CONTACT_PHONE') ?>:</td>';
 							txt += '	<td width="50%"><input type="text" name="CONTACT_PHONE" value="" size="30"></td>';
 							txt += '</tr>';
 							//txt += '<tr>';
-							//txt += '	<td colspan="2"><small><?= GetMessage("SUP_SUBA_RI_CONTACT_PHONE1") ?></small></td>';
+							//txt += '	<td colspan="2"><small><?= GetMessage('SUP_SUBA_RI_CONTACT_PHONE1') ?></small></td>';
 							//txt += '</tr>';
 							txt += '<tr>';
-							txt += '	<td width="50%"><?= GetMessage("SUP_SUBA_RI_CONTACT") ?>:</td>';
+							txt += '	<td width="50%"><?= GetMessage('SUP_SUBA_RI_CONTACT') ?>:</td>';
 							txt += '	<td width="50%"><input type="text" name="CONTACT_INFO" value="" size="30"></td>';
 							txt += '</tr>';
 							//txt += '<tr>';
-							//txt += '	<td colspan="2"><small><?= GetMessage("SUP_SUBA_RI_CONTACT1") ?></small></td>';
+							//txt += '	<td colspan="2"><small><?= GetMessage('SUP_SUBA_RI_CONTACT1') ?></small></td>';
 							//txt += '</tr>';
-							txt += '<tr class="heading"><td colspan="2"><b><?= GetMessage("SUP_SUBA_USERINFO") ?></b></td></tr>';
-							txt += '<tr><td colspan="2"><?= GetMessage("SUP_SUBA_UI_HINT") ?></td></tr>';
+							txt += '<tr class="heading"><td colspan="2"><b><?= GetMessage('SUP_SUBA_USERINFO') ?></b></td></tr>';
+							txt += '<tr><td colspan="2"><?= GetMessage('SUP_SUBA_UI_HINT') ?></td></tr>';
 							txt += '<tr>';
-							txt += '	<td width="50%"><?= GetMessage("SUP_SUBA_UI_CREATE") ?>:</td>';
+							txt += '	<td width="50%"><?= GetMessage('SUP_SUBA_UI_CREATE') ?>:</td>';
 							txt += '	<td width="50%"><input name="GENERATE_USER" type="checkbox" onclick="ActivateEnableDisableUser(this)" value="Y" checked></td>';
 							txt += '</tr>';
 							txt += '<tr id="tr_USER_NAME">';
-							txt += '	<td width="50%"><span class="required">*</span><?= GetMessage("SUP_SUBA__UI_NAME") ?>:</td>';
+							txt += '	<td width="50%"><span class="required">*</span><?= GetMessage('SUP_SUBA__UI_NAME') ?>:</td>';
 							txt += '	<td width="50%"><input type="text" name="USER_NAME" value="" size="30"></td>';
 							txt += '</tr>';
 							txt += '<tr id="tr_USER_LAST_NAME">';
-							txt += '	<td width="50%"><span class="required">*</span><?= GetMessage("SUP_SUBA_UI_LASTNAME") ?>:</td>';
+							txt += '	<td width="50%"><span class="required">*</span><?= GetMessage('SUP_SUBA_UI_LASTNAME') ?>:</td>';
 							txt += '	<td width="50%"><input type="text" name="USER_LAST_NAME" value="" size="30"></td>';
 							txt += '</tr>';
 							txt += '<tr id="tr_USER_LOGIN">';
-							txt += '	<td width="50%"><span class="required">*</span><?= GetMessage("SUP_SUBA_UI_LOGIN") ?>:</td>';
+							txt += '	<td width="50%"><span class="required">*</span><?= GetMessage('SUP_SUBA_UI_LOGIN') ?>:</td>';
 							txt += '	<td width="50%"><input type="text" name="USER_LOGIN" value="" size="30"></td>';
 							txt += '</tr>';
 							txt += '<tr id="tr_USER_PASSWORD">';
-							txt += '	<td width="50%"><span class="required">*</span><?= GetMessage("SUP_SUBA_UI_PASSWORD") ?>:</td>';
+							txt += '	<td width="50%"><span class="required">*</span><?= GetMessage('SUP_SUBA_UI_PASSWORD') ?>:</td>';
 							txt += '	<td width="50%"><input type="password" name="USER_PASSWORD" value="" size="30"></td>';
 							txt += '</tr>';
 							txt += '<tr id="tr_USER_PASSWORD_CONFIRM">';
-							txt += '	<td width="50%"><span class="required">*</span><?= GetMessage("SUP_SUBA_UI_PASSWORD_CONF") ?>:</td>';
+							txt += '	<td width="50%"><span class="required">*</span><?= GetMessage('SUP_SUBA_UI_PASSWORD_CONF') ?>:</td>';
 							txt += '	<td width="50%"><input type="password" name="USER_PASSWORD_CONFIRM" value="" size="30"></td>';
 							txt += '</tr>';
 							txt += '</table>';
 							txt += '</form>';
 							txt += '</div>';
 							txt += '<div class="buttons">';
-							txt += '<input type="button" id="id_activate_form_button" value="<?= GetMessage("SUP_SUBA_ACTIVATE_BUTTON") ?>" onclick="ActivateFormSubmit()" title="<?= GetMessage("SUP_SUBA_ACTIVATE_BUTTON") ?>">';
+							txt += '<input type="button" id="id_activate_form_button" value="<?= GetMessage('SUP_SUBA_ACTIVATE_BUTTON') ?>" onclick="ActivateFormSubmit()" title="<?= GetMessage('SUP_SUBA_ACTIVATE_BUTTON') ?>">';
 							txt += '</div>';
 
 							div.innerHTML = txt;
@@ -645,43 +680,43 @@ $tabControl->BeginNextTab();
 
 							var error = "";
 							if (document.activate_form.NAME.value.length <= 0)
-								error += "<?= GetMessage("SUP_SUBA_FE_NAME") ?>, ";
+								error += "<?= GetMessage('SUP_SUBA_FE_NAME') ?>, ";
 							if (document.activate_form.EMAIL.value.length <= 0)
-								error += "<?= GetMessage("SUP_SUBA_FE_EMAIL") ?>, ";
+								error += "<?= GetMessage('SUP_SUBA_FE_EMAIL') ?>, ";
 							if (document.activate_form.CONTACT_INFO.value.length <= 0)
-								error += "<?= GetMessage("SUP_SUBA_FE_CONTACT") ?>, ";
+								error += "<?= GetMessage('SUP_SUBA_FE_CONTACT') ?>, ";
 							if (document.activate_form.SITE_URL.value.length <= 0)
-								error += "<?= GetMessage("SUP_SUBA_FE_URI") ?>, ";
+								error += "<?= GetMessage('SUP_SUBA_FE_URI') ?>, ";
 							if (document.activate_form.PHONE.value.length <= 0)
-								error += "<?= GetMessage("SUP_SUBA_FE_PHONE") ?>, ";
+								error += "<?= GetMessage('SUP_SUBA_FE_PHONE') ?>, ";
 							if (document.activate_form.CONTACT_PERSON.value.length <= 0)
-								error += "<?= GetMessage("SUP_SUBA_FE_CONTACT_PERSON") ?>, ";
+								error += "<?= GetMessage('SUP_SUBA_FE_CONTACT_PERSON') ?>, ";
 							if (document.activate_form.CONTACT_EMAIL.value.length <= 0)
-								error += "<?= GetMessage("SUP_SUBA_FE_CONTACT_EMAIL") ?>, ";
+								error += "<?= GetMessage('SUP_SUBA_FE_CONTACT_EMAIL') ?>, ";
 							if (document.activate_form.CONTACT_PHONE.value.length <= 0)
-								error += "<?= GetMessage("SUP_SUBA_FE_CONTACT_PHONE") ?>, ";
+								error += "<?= GetMessage('SUP_SUBA_FE_CONTACT_PHONE') ?>, ";
 							if (document.activate_form.GENERATE_USER.checked)
 							{
 								generateUser = "Y";
 								if (document.activate_form.USER_NAME.value.length <= 0)
-									error += "<?= GetMessage("SUP_SUBA_FE_FNAME") ?>, ";
+									error += "<?= GetMessage('SUP_SUBA_FE_FNAME') ?>, ";
 								if (document.activate_form.USER_LAST_NAME.value.length <= 0)
-									error += "<?= GetMessage("SUP_SUBA_FE_LNAME") ?>, ";
+									error += "<?= GetMessage('SUP_SUBA_FE_LNAME') ?>, ";
 								if (document.activate_form.USER_LOGIN.value.length <= 0)
-									error += "<?= GetMessage("SUP_SUBA_FE_LOGIN") ?>, ";
+									error += "<?= GetMessage('SUP_SUBA_FE_LOGIN') ?>, ";
 								if (document.activate_form.USER_PASSWORD.value.length <= 0)
-									error += "<?= GetMessage("SUP_SUBA_FE_PASSWORD") ?>, ";
+									error += "<?= GetMessage('SUP_SUBA_FE_PASSWORD') ?>, ";
 								if (document.activate_form.USER_PASSWORD_CONFIRM.value.length <= 0)
-									error += "<?= GetMessage("SUP_SUBA_FE_PASSWORD_CONF") ?>, ";
+									error += "<?= GetMessage('SUP_SUBA_FE_PASSWORD_CONF') ?>, ";
 								if (document.activate_form.USER_PASSWORD.value != document.activate_form.USER_PASSWORD_CONFIRM.value)
-									error += "<?= GetMessage("SUP_SUBA_FE_CONF_ERR") ?>, ";
+									error += "<?= GetMessage('SUP_SUBA_FE_CONF_ERR') ?>, ";
 							}
 
 							if (error.length > 0)
 							{
 								document.getElementById("id_activate_form_button").disabled = false;
 								CloseWaitWindow();
-								alert("<?= GetMessage("SUP_SUBA_FE_PROMT") ?>: " + error.substring(0, error.length - 2));
+								alert("<?= GetMessage('SUP_SUBA_FE_PROMT') ?>: " + error.substring(0, error.length - 2));
 								return false;
 							}
 
@@ -715,7 +750,7 @@ $tabControl->BeginNextTab();
 								else
 								{
 									document.getElementById("id_activate_form_button").disabled = false;
-									alert("<?= GetMessage("SUP_SUBA_FE_ERRGEN") ?>: " + result);
+									alert("<?= GetMessage('SUP_SUBA_FE_ERRGEN') ?>: " + result);
 								}
 							}
 
@@ -730,18 +765,18 @@ $tabControl->BeginNextTab();
 						}
 						//-->
 						</SCRIPT>
-						<?
+						<?php
 					}
 					else
 					{
-						if ($arUpdateList !== false && isset($arUpdateList["UPDATE_SYSTEM"]))
+						if ($arUpdateList !== false && isset($arUpdateList['UPDATE_SYSTEM']))
 						{
-							$bLockControls = True;
+							$bLockControls = true;
 							?>
 							<div id="upd_updateupdate_div">
 								<table border="0" cellspacing="1" cellpadding="3" width="100%" class="internal">
 									<tr class="heading">
-										<td><b><?= GetMessage("SUP_SUBU_UPDATE") ?></b></td>
+										<td><b><?= GetMessage('SUP_SUBU_UPDATE') ?></b></td>
 									</tr>
 									<tr>
 										<td valign="top">
@@ -749,8 +784,8 @@ $tabControl->BeginNextTab();
 										<tr>
 											<td class="icon-new"><div class="icon icon-update"></div></td>
 											<td>
-											<?= GetMessage("SUP_SUBU_HINT") ?><br><br>
-											<input TYPE="button" id="id_updateupdate_btn" NAME="updateupdate_btn" value="<?= GetMessage("SUP_SUBU_BUTTON") ?>" onclick="UpdateUpdate()">
+											<?= GetMessage('SUP_SUBU_HINT') ?><br><br>
+											<input TYPE="button" id="id_updateupdate_btn" NAME="updateupdate_btn" value="<?= GetMessage('SUP_SUBU_BUTTON') ?>" onclick="UpdateUpdate()">
 											</td>
 										</tr>
 									</table>
@@ -759,7 +794,7 @@ $tabControl->BeginNextTab();
 								</table>
 								<br>
 							</div>
-							<SCRIPT LANGUAGE="JavaScript">
+							<SCRIPT>
 							<!--
 							function UpdateUpdate()
 							{
@@ -778,7 +813,7 @@ $tabControl->BeginNextTab();
 									}
 									else
 									{
-										alert("<?= GetMessage("SUP_SUBU_ERROR") ?>: " + result);
+										alert("<?= GetMessage('SUP_SUBU_ERROR') ?>: " + result);
 										document.getElementById("id_updateupdate_btn").disabled = false;
 									}
 								}
@@ -787,19 +822,28 @@ $tabControl->BeginNextTab();
 							}
 							//-->
 							</SCRIPT>
-							<?
+							<?php
 						}
 					}
 				}
 
-				if ($arUpdateList !== false && defined("DEMO") && DEMO == "Y" && isset($arUpdateList["CLIENT"]) && !isset($arUpdateList["UPDATE_SYSTEM"])
-					&& ($arUpdateList["CLIENT"][0]["@"]["ENC_TYPE"] == "F" || $arUpdateList["CLIENT"][0]["@"]["ENC_TYPE"] == "E"))
+				if (
+					$arUpdateList !== false
+					&& defined('DEMO')
+					&& constant('DEMO') === 'Y'
+					&& isset($arUpdateList['CLIENT'])
+					&& !isset($arUpdateList['UPDATE_SYSTEM'])
+					&& (
+						$arUpdateList['CLIENT'][0]['@']['ENC_TYPE'] == 'F'
+						|| $arUpdateList['CLIENT'][0]['@']['ENC_TYPE'] == 'E'
+					)
+				)
 				{
 					?>
 					<div id="upd_register_div">
 						<table border="0" cellspacing="1" cellpadding="3" width="100%" class="internal">
 							<tr class="heading">
-								<td><b><?= GetMessage("SUP_SUBR_REG") ?></b></td>
+								<td><b><?= GetMessage('SUP_SUBR_REG') ?></b></td>
 							</tr>
 							<tr>
 								<td valign="top">
@@ -807,8 +851,8 @@ $tabControl->BeginNextTab();
 										<tr>
 											<td class="icon-new"><div class="icon icon-licence"></div></td>
 											<td>
-									<?= GetMessage("SUP_SUBR_HINT") ?><br><br>
-									<input TYPE="button"<?= ($bLockControls ? " disabled" : "")?> id="id_register_btn" NAME="register_btn" value="<?= GetMessage("SUP_SUBR_BUTTON") ?>" onclick="RegisterSystem()">
+									<?= GetMessage('SUP_SUBR_HINT') ?><br><br>
+									<input TYPE="button"<?= ($bLockControls ? ' disabled' : '')?> id="id_register_btn" NAME="register_btn" value="<?= GetMessage('SUP_SUBR_BUTTON') ?>" onclick="RegisterSystem()">
 											</td>
 										</tr>
 									</table>
@@ -817,7 +861,7 @@ $tabControl->BeginNextTab();
 						</table>
 						<br>
 					</div>
-					<SCRIPT LANGUAGE="JavaScript">
+					<SCRIPT>
 					<!--
 					function RegisterSystem()
 					{
@@ -836,7 +880,7 @@ $tabControl->BeginNextTab();
 							}
 							else
 							{
-								alert("<?= GetMessage("SUP_SUBR_ERR") ?>: " + result);
+								alert("<?= GetMessage('SUP_SUBR_ERR') ?>: " + result);
 							}
 						}
 
@@ -844,16 +888,23 @@ $tabControl->BeginNextTab();
 					}
 					//-->
 					</SCRIPT>
-					<?
+					<?php
 				}
 
-				if ($arUpdateList !== false && defined("ENCODE") && ENCODE=="Y" && isset($arUpdateList["CLIENT"]) && !isset($arUpdateList["UPDATE_SYSTEM"]) && ($arUpdateList["CLIENT"][0]["@"]["ENC_TYPE"] == "F"))
+				if (
+					$arUpdateList !== false
+					&& defined('ENCODE')
+					&& constant('ENCODE') === 'Y'
+					&& isset($arUpdateList['CLIENT'])
+					&& !isset($arUpdateList['UPDATE_SYSTEM'])
+					&& ($arUpdateList['CLIENT'][0]['@']['ENC_TYPE'] == 'F')
+				)
 				{
 					?>
 					<div id="upd_source_div">
 						<table border="0" cellspacing="1" cellpadding="3" width="100%" class="internal">
 							<tr class="heading">
-								<td><b><?= GetMessage("SUP_SUBS_SOURCES") ?></b></td>
+								<td><b><?= GetMessage('SUP_SUBS_SOURCES') ?></b></td>
 							</tr>
 							<tr>
 								<td valign="top">
@@ -861,8 +912,8 @@ $tabControl->BeginNextTab();
 										<tr>
 											<td class="icon-new"><div class="icon icon-sources"></div></td>
 											<td>
-									<?= GetMessage("SUP_SUBS_HINT") ?><br><br>
-									<input TYPE="button" NAME="source_btn"<?= (($bLockControls || $countModuleUpdates > 0) ? " disabled" : "") ?> value="<?= GetMessage("SUP_SUBS_BUTTON") ?>" onclick="LoadSources()">
+									<?= GetMessage('SUP_SUBS_HINT') ?><br><br>
+									<input TYPE="button" NAME="source_btn"<?= (($bLockControls || $countModuleUpdates > 0) ? ' disabled' : '') ?> value="<?= GetMessage('SUP_SUBS_BUTTON') ?>" onclick="LoadSources()">
 											</td>
 										</tr>
 									</table>
@@ -871,20 +922,22 @@ $tabControl->BeginNextTab();
 						</table>
 						<br>
 					</div>
-					<SCRIPT LANGUAGE="JavaScript">
+					<SCRIPT>
 					<!--
 					var modulesList = new Array();
-					<?
+					<?php
 					$i = 0;
 					foreach ($arClientModules as $key => $value)
-						echo "modulesList[".($i++)."] = \"".$key."\";";
+					{
+						echo 'modulesList[' . ($i++) . '] = "' . $key . '";';
+					}
 					?>
 
 					function LoadSources()
 					{
 						globalQuantity = <?= count($arClientModules) ?>;
 
-						SetProgressHint("<?= GetMessage("SUP_INITIAL") ?>");
+						SetProgressHint("<?= GetMessage('SUP_INITIAL') ?>");
 
 						__LoadSources();
 						SetProgressD();
@@ -930,7 +983,7 @@ $tabControl->BeginNextTab();
 							updSuccessDiv.style["display"] = "block";
 
 							var updSuccessDivText = document.getElementById("upd_success_div_text");
-							updSuccessDivText.innerHTML = "<?= GetMessage("SUP_SUBS_SUCCESS") ?>";
+							updSuccessDivText.innerHTML = "<?= GetMessage('SUP_SUBS_SUCCESS') ?>";
 						}
 						else
 						{
@@ -945,7 +998,7 @@ $tabControl->BeginNextTab();
 									if (arData.length > 1)
 									{
 										loadedModule = arData[1];
-										SetProgressHint("<?= GetMessage("SUP_SUBS_MED") ?> " + arData[1]);
+										SetProgressHint("<?= GetMessage('SUP_SUBS_MED') ?> " + arData[1]);
 									}
 
 									var modulesListTmp = Array();
@@ -977,14 +1030,14 @@ $tabControl->BeginNextTab();
 					}
 					//-->
 					</SCRIPT>
-					<?
+					<?php
 				}
 				?>
 
 				<div id="upd_success_div" style="display:none">
 					<table border="0" cellspacing="1" cellpadding="3" width="100%" class="internal">
 						<tr class="heading">
-							<td><B><?= GetMessage("SUP_SUB_SUCCESS") ?></B></td>
+							<td><B><?= GetMessage('SUP_SUB_SUCCESS') ?></B></td>
 						</tr>
 						<tr>
 							<td valign="top"><div id="upd_success_div_text"></div></td>
@@ -995,7 +1048,7 @@ $tabControl->BeginNextTab();
 				<div id="upd_error_div" style="display:none">
 					<table border="0" cellspacing="1" cellpadding="3" width="100%" class="internal">
 						<tr class="heading">
-							<td><B><?= GetMessage("SUP_SUB_ERROR") ?></B></td>
+							<td><B><?= GetMessage('SUP_SUB_ERROR') ?></B></td>
 						</tr>
 						<tr>
 							<td valign="top"><div id="upd_error_div_text"></td>
@@ -1006,7 +1059,7 @@ $tabControl->BeginNextTab();
 				<div id="upd_install_div" style="display:none">
 					<table border="0" cellspacing="1" cellpadding="3" width="100%" class="internal">
 						<tr class="heading">
-							<td><B><?= GetMessage("SUP_SUB_PROGRESS") ?></B></td>
+							<td><B><?= GetMessage('SUP_SUB_PROGRESS') ?></B></td>
 						</tr>
 						<tr>
 							<td valign="top">
@@ -1028,7 +1081,7 @@ $tabControl->BeginNextTab();
 											<div id="install_progress_hint"></div>
 										</td>
 										<td valign="top" align="right">
-											<input TYPE="button" NAME="stop_updates" id="id_stop_updates" value="<?= GetMessage("SUP_SUB_STOP") ?>" onclick="StopUpdates()">
+											<input TYPE="button" NAME="stop_updates" id="id_stop_updates" value="<?= GetMessage('SUP_SUB_STOP') ?>" onclick="StopUpdates()">
 										</td>
 									</tr>
 								</table>
@@ -1040,7 +1093,7 @@ $tabControl->BeginNextTab();
 				<div id="upd_select_div" style="display:block">
 					<table border="0" cellspacing="1" cellpadding="3" width="100%" class="internal">
 						<tr class="heading">
-							<td><B><?= ($countModuleUpdates > 0 || $countLangUpdatesInst > 0) ? GetMessage("SUP_SU_TITLE1") : GetMessage("SUP_SU_TITLE2") ?></B></td>
+							<td><B><?= ($countModuleUpdates > 0 || $countLangUpdatesInst > 0) ? GetMessage('SUP_SU_TITLE1') : GetMessage('SUP_SU_TITLE2') ?></B></td>
 						</tr>
 						<tr>
 							<td valign="top">
@@ -1048,55 +1101,65 @@ $tabControl->BeginNextTab();
 										<tr>
 											<td class="icon-new"><div class="icon icon-main"></div></td>
 											<td>
-								<b><?= GetMessage("SUP_SU_RECOMEND") ?>:</b>
-								<?
-								$bComma = False;
+								<b><?= GetMessage('SUP_SU_RECOMEND') ?>:</b>
+								<?php
+								$bComma = false;
 								if ($countModuleUpdates > 0)
 								{
-									echo str_replace("#NUM#", $countModuleUpdates, GetMessage("SUP_SU_RECOMEND_MOD"));
-									$bComma = True;
+									echo str_replace('#NUM#', $countModuleUpdates, GetMessage('SUP_SU_RECOMEND_MOD'));
+									$bComma = true;
 								}
 								if ($countLangUpdatesInst > 0)
 								{
 									if ($bComma)
-										echo ", ";
-									echo str_replace("#NUM#", $countLangUpdatesInst, GetMessage("SUP_SU_RECOMEND_LAN"));
-									$bComma = True;
+									{
+										echo ', ';
+									}
+									echo str_replace('#NUM#', $countLangUpdatesInst, GetMessage('SUP_SU_RECOMEND_LAN'));
+									$bComma = true;
 								}
 								if ($countModuleUpdates <= 0 && $countLangUpdatesInst <= 0)
-									echo GetMessage("SUP_SU_RECOMEND_NO");
+								{
+									echo GetMessage('SUP_SU_RECOMEND_NO');
+								}
 
 								if ($countLangUpdatesOther > 0 || $countHelpUpdatesOther > 0 || $countHelpUpdatesInst > 0)
 								{
-									echo "<br>";
-									echo "<b>".GetMessage("SUP_SU_OPTION").":</b> ";
-									$bComma = False;
+									echo '<br>';
+									echo '<b>' . GetMessage('SUP_SU_OPTION') . ':</b> ';
+									$bComma = false;
 									if ($countLangUpdatesOther > 0)
 									{
-										echo str_replace("#NUM#", $countLangUpdatesOther, GetMessage("SUP_SU_OPTION_LAN"));
-										$bComma = True;
+										echo str_replace('#NUM#', $countLangUpdatesOther, GetMessage('SUP_SU_OPTION_LAN'));
+										$bComma = true;
 									}
 									if ($countHelpUpdatesOther > 0 || $countHelpUpdatesInst > 0)
 									{
 										if ($bComma)
-											echo ", ";
-										echo str_replace("#NUM#", $countHelpUpdatesOther + $countHelpUpdatesInst, GetMessage("SUP_SU_OPTION_HELP"));
+										{
+											echo ', ';
+										}
+										echo str_replace('#NUM#', $countHelpUpdatesOther + $countHelpUpdatesInst, GetMessage('SUP_SU_OPTION_HELP'));
 									}
 								}
 								?>
 								<br><br>
-								<input TYPE="button" ID="install_updates_button" NAME="install_updates"<?= (($countModuleUpdates <= 0 && $countLangUpdatesInst <= 0 || $bLockControls) ? " disabled" : "") ?> value="<?= GetMessage("SUP_SU_UPD_BUTTON") ?>" onclick="InstallUpdates()">
+								<input TYPE="button" ID="install_updates_button" NAME="install_updates"<?= (($countModuleUpdates <= 0 && $countLangUpdatesInst <= 0 || $bLockControls) ? ' disabled' : '') ?> value="<?= GetMessage('SUP_SU_UPD_BUTTON') ?>" onclick="InstallUpdates()">
 								<br><br>
-								<span id="id_view_updates_list_span"><a id="id_view_updates_list" href="javascript:tabControl.SelectTab('tab2');"><?= GetMessage("SUP_SU_UPD_VIEW") ?></a></span>
+								<span id="id_view_updates_list_span"><a id="id_view_updates_list" href="javascript:tabControl.SelectTab('tab2');"><?= GetMessage('SUP_SU_UPD_VIEW') ?></a></span>
 								<br><br>
-								<?
-								if ($stableVersionsOnly == "N")
-									echo GetMessage("SUP_STABLE_OFF_PROMT");
+								<?php
+								if ($stableVersionsOnly == 'N')
+								{
+									echo GetMessage('SUP_STABLE_OFF_PROMT');
+								}
 								else
-									echo GetMessage("SUP_STABLE_ON_PROMT");
+								{
+									echo GetMessage('SUP_STABLE_ON_PROMT');
+								}
 								?>
 								<br><br>
-								<?= GetMessage("SUP_SU_UPD_HINT") ?>
+								<?= GetMessage('SUP_SU_UPD_HINT') ?>
 											</td>
 										</tr>
 									</table>
@@ -1105,7 +1168,7 @@ $tabControl->BeginNextTab();
 					</table>
 				</div>
 
-				<script language="JavaScript">
+				<script>
 				<!--
 				var updSelectDiv = document.getElementById("upd_select_div");
 				var updInstallDiv = document.getElementById("upd_install_div");
@@ -1122,8 +1185,8 @@ $tabControl->BeginNextTab();
 				var globalQuantityD = 100;
 				var globalCounterD = 0;
 
-				var cycleModules = <?= ($countModuleUpdates > 0) ? "true" : "false" ?>;
-				var cycleLangs = <?= ($countLangUpdatesInst > 0) ? "true" : "false" ?>;
+				var cycleModules = <?= ($countModuleUpdates > 0) ? 'true' : 'false' ?>;
+				var cycleLangs = <?= ($countLangUpdatesInst > 0) ? 'true' : 'false' ?>;
 				var cycleHelps = false;
 
 				var bStopUpdates = false;
@@ -1186,7 +1249,7 @@ $tabControl->BeginNextTab();
 
 				function InstallUpdates()
 				{
-					SetProgressHint("<?= GetMessage("SUP_INITIAL") ?>");
+					SetProgressHint("<?= GetMessage('SUP_INITIAL') ?>");
 
 					__InstallUpdates();
 					SetProgressD();
@@ -1232,7 +1295,7 @@ $tabControl->BeginNextTab();
 						arData = data.split("|");
 						globalCounter += parseInt(arData[0]);
 						if (arData.length > 1)
-							SetProgressHint("<?= GetMessage("SUP_SU_UPD_INSMED") ?> " + arData[1]);
+							SetProgressHint("<?= GetMessage('SUP_SU_UPD_INSMED') ?> " + arData[1]);
 						if (globalCounter > globalQuantity)
 							globalCounter = 0;
 						SetProgress(globalCounter * 100 / globalQuantity);
@@ -1288,7 +1351,7 @@ $tabControl->BeginNextTab();
 							DisableUpdatesTable();
 
 							var updSuccessDivText = document.getElementById("upd_success_div_text");
-							updSuccessDivText.innerHTML = "<?= GetMessage("SUP_SU_UPD_INSSUC") ?>: " + globalCounter;
+							updSuccessDivText.innerHTML = "<?= GetMessage('SUP_SU_UPD_INSSUC') ?>: " + globalCounter;
 						}
 					}
 					else
@@ -1318,7 +1381,7 @@ $tabControl->BeginNextTab();
 				}
 				//-->
 				</script>
-				<?
+				<?php
 			}
 			?>
 
@@ -1329,7 +1392,7 @@ $tabControl->BeginNextTab();
 			<br>
 					<table border="0" cellspacing="1" cellpadding="3" width="100%" class="internal">
 						<tr class="heading">
-							<td><b><?echo GetMessage("SUP_SERVER_ANSWER")?></b></td>
+							<td><b><?php echo GetMessage('SUP_SERVER_ANSWER')?></b></td>
 						</tr>
 						<tr>
 							<td valign="top">
@@ -1341,49 +1404,49 @@ $tabControl->BeginNextTab();
 			<table border="0" cellspacing="1" cellpadding="3">
 				<tr>
 					<td valign="top">
-						<?= GetMessage("SUP_SUBI_CHECK") ?>:&nbsp;&nbsp;
+						<?= GetMessage('SUP_SUBI_CHECK') ?>:&nbsp;&nbsp;
 					</td>
 					<td valign="top">
-						<?= COption::GetOptionString(US_BASE_MODULE, "update_system_check", "-") ?>
+						<?= COption::GetOptionString(US_BASE_MODULE, 'update_system_check', '-') ?>
 					</td>
 				</tr>
 				<tr>
 					<td valign="top">
-						<?= GetMessage("SUP_SUBI_UPD") ?>:&nbsp;&nbsp;
+						<?= GetMessage('SUP_SUBI_UPD') ?>:&nbsp;&nbsp;
 					</td>
 					<td valign="top">
-						<?= COption::GetOptionString(US_BASE_MODULE, "update_system_update", "-") ?>
+						<?= COption::GetOptionString(US_BASE_MODULE, 'update_system_update', '-') ?>
 					</td>
 				</tr>
-				<?if (is_array($arUpdateList) && array_key_exists("CLIENT", $arUpdateList)):?>
+				<?php if (is_array($arUpdateList) && array_key_exists('CLIENT', $arUpdateList)):?>
 					<tr>
-						<td><?echo GetMessage("SUP_REGISTERED")?>&nbsp;&nbsp;</td>
-						<td><?echo htmlspecialchars($arUpdateList["CLIENT"][0]["@"]["NAME"])?></td>
+						<td><?php echo GetMessage('SUP_REGISTERED')?>&nbsp;&nbsp;</td>
+						<td><?php echo htmlspecialcharsEx($arUpdateList['CLIENT'][0]['@']['NAME'])?></td>
 					</tr>
-				<?endif;?>
+				<?php endif;?>
 				<tr>
-					<td><?= GetMessage("SUP_LICENSE_KEY") ?>:&nbsp;&nbsp;</td>
-					<td><?echo ($USER->CanDoOperation("controller_member_updates_run")? CUpdateClient::GetLicenseKey() : "XXX-XX-XXXXXXXXXXX")?></td>
+					<td><?= GetMessage('SUP_LICENSE_KEY') ?>:&nbsp;&nbsp;</td>
+					<td><?php echo ($USER->CanDoOperation('controller_member_updates_run') ? CUpdateClient::GetLicenseKey() : 'XXX-XX-XXXXXXXXXXX')?></td>
 				</tr>
-				<?if (is_array($arUpdateList) && array_key_exists("CLIENT", $arUpdateList)):?>
+				<?php if (is_array($arUpdateList) && array_key_exists('CLIENT', $arUpdateList)):?>
 					<tr>
-						<td><?echo GetMessage("SUP_EDITION")?>&nbsp;&nbsp;</td>
-						<td><?echo $arUpdateList["CLIENT"][0]["@"]["LICENSE"]?></td>
+						<td><?php echo GetMessage('SUP_EDITION')?>&nbsp;&nbsp;</td>
+						<td><?php echo $arUpdateList['CLIENT'][0]['@']['LICENSE']?></td>
 					</tr>
 					<tr>
-						<td><?echo GetMessage("SUP_ACTIVE")?>&nbsp;&nbsp;</td>
-						<td><?echo GetMessage("SUP_ACTIVE_PERIOD", array("#DATE_TO#"=>(($arUpdateList["CLIENT"][0]["@"]["DATE_TO"] <> '') ? $arUpdateList["CLIENT"][0]["@"]["DATE_TO"] : "<i>N/A</i>"), "#DATE_FROM#" => (($arUpdateList["CLIENT"]["@"]["DATE_FROM"] <> '') ? $arUpdateList["CLIENT"][0]["@"]["DATE_FROM"] : "<i>N/A</i>")));?></td>
+						<td><?php echo GetMessage('SUP_ACTIVE')?>&nbsp;&nbsp;</td>
+						<td><?php echo GetMessage('SUP_ACTIVE_PERIOD', ['#DATE_TO#' => (($arUpdateList['CLIENT'][0]['@']['DATE_TO'] <> '') ? $arUpdateList['CLIENT'][0]['@']['DATE_TO'] : '<i>N/A</i>'), '#DATE_FROM#' => (($arUpdateList['CLIENT']['@']['DATE_FROM'] <> '') ? $arUpdateList['CLIENT'][0]['@']['DATE_FROM'] : '<i>N/A</i>')]);?></td>
 					</tr>
 					<tr>
-						<td><?echo GetMessage("SUP_SERVER")?>&nbsp;&nbsp;</td>
-						<td><?echo $arUpdateList["CLIENT"][0]["@"]["HTTP_HOST"]?></td>
+						<td><?php echo GetMessage('SUP_SERVER')?>&nbsp;&nbsp;</td>
+						<td><?php echo $arUpdateList['CLIENT'][0]['@']['HTTP_HOST']?></td>
 					</tr>
-				<?else:?>
+				<?php else:?>
 					<tr>
-						<td><?echo GetMessage("SUP_SERVER")?>&nbsp;&nbsp;</td>
-						<td><?echo (($s=COption::GetOptionString("main", "update_site"))==""? "-":$s)?></td>
+						<td><?php echo GetMessage('SUP_SERVER')?>&nbsp;&nbsp;</td>
+						<td><?php echo COption::GetOptionString('main', 'update_site' , '-')?></td>
 					</tr>
-				<?endif;?>
+				<?php endif;?>
 			</table>
 
 											</td>
@@ -1396,7 +1459,7 @@ $tabControl->BeginNextTab();
 		</td>
 	</tr>
 
-<?
+<?php
 $tabControl->EndTab();
 $tabControl->BeginNextTab();
 ?>
@@ -1407,181 +1470,191 @@ $tabControl->BeginNextTab();
 			<table border="0" cellspacing="1" cellpadding="3" width="100%">
 				<tr>
 					<td>
-						<?= GetMessage("SUP_SULL_CNT") ?>: <?= $countModuleUpdates + $countLangUpdatesInst + $countLangUpdatesOther + $countHelpUpdatesOther + $countHelpUpdatesInst ?><BR><BR>
-						<input TYPE="button" ID="install_updates_sel_button" NAME="install_updates"<?= (($countModuleUpdates <= 0 && $countLangUpdatesInst <= 0) ? " disabled" : "") ?> value="<?= GetMessage("SUP_SULL_BUTTON") ?>" onclick="InstallUpdatesSel()">
+						<?= GetMessage('SUP_SULL_CNT') ?>: <?= $countModuleUpdates + $countLangUpdatesInst + $countLangUpdatesOther + $countHelpUpdatesOther + $countHelpUpdatesInst ?><BR><BR>
+						<input TYPE="button" ID="install_updates_sel_button" NAME="install_updates"<?= (($countModuleUpdates <= 0 && $countLangUpdatesInst <= 0) ? ' disabled' : '') ?> value="<?= GetMessage('SUP_SULL_BUTTON') ?>" onclick="InstallUpdatesSel()">
 					</td>
 				</tr>
 			</table>
 			<br>
 
-			<?
+			<?php
 			if ($arUpdateList)
 			{
 				?>
 				<table border="0" cellspacing="1" cellpadding="3" width="100%" class="internal" id="table_updates_sel_list">
 					<tr>
-						<td class="heading"><INPUT TYPE="checkbox" NAME="select_all" id="id_select_all" title="<?= GetMessage("SUP_SULL_CBT") ?>" onClick="SelectAllRows(this);"></td>
-						<td class="heading"><B><?= GetMessage("SUP_SULL_NAME") ?></B></td>
-						<td class="heading"><B><?= GetMessage("SUP_SULL_TYPE") ?></B></td>
-						<td class="heading"><B><?= GetMessage("SUP_SULL_REL") ?></B></td>
-						<td class="heading"><B><?= GetMessage("SUP_SULL_NOTE") ?></B></td>
+						<td class="heading"><INPUT TYPE="checkbox" NAME="select_all" id="id_select_all" title="<?= GetMessage('SUP_SULL_CBT') ?>" onClick="SelectAllRows(this);"></td>
+						<td class="heading"><B><?= GetMessage('SUP_SULL_NAME') ?></B></td>
+						<td class="heading"><B><?= GetMessage('SUP_SULL_TYPE') ?></B></td>
+						<td class="heading"><B><?= GetMessage('SUP_SULL_REL') ?></B></td>
+						<td class="heading"><B><?= GetMessage('SUP_SULL_NOTE') ?></B></td>
 					</tr>
-					<?
-					if (isset($arUpdateList["MODULES"][0]["#"]["MODULE"]) || isset($arUpdateList["LANGS"][0]["#"]["INST"]))
+					<?php
+					if (isset($arUpdateList['MODULES'][0]['#']['MODULE']) || isset($arUpdateList['LANGS'][0]['#']['INST']))
 					{
 						?>
 						<tr>
-							<td colspan="5"><?= GetMessage("SUP_SU_RECOMEND") ?></td>
+							<td colspan="5"><?= GetMessage('SUP_SU_RECOMEND') ?></td>
 						</tr>
-						<?
+						<?php
 					}
-					if (isset($arUpdateList["MODULES"][0]["#"]["MODULE"]))
+					if (isset($arUpdateList['MODULES'][0]['#']['MODULE']))
 					{
-						for ($i = 0, $cnt = count($arUpdateList["MODULES"][0]["#"]["MODULE"]); $i < $cnt; $i++)
+						for ($i = 0, $cnt = count($arUpdateList['MODULES'][0]['#']['MODULE']); $i < $cnt; $i++)
 						{
-							$arModuleTmp = $arUpdateList["MODULES"][0]["#"]["MODULE"][$i];
+							$arModuleTmp = $arUpdateList['MODULES'][0]['#']['MODULE'][$i];
 
-							$strTitleTmp = $arModuleTmp["@"]["NAME"]." (".$arModuleTmp["@"]["ID"].")\n".$arModuleTmp["@"]["DESCRIPTION"]."\n";
-							for ($j = 0, $cntj = count($arModuleTmp["#"]["VERSION"]); $j < $cntj; $j++)
-								$strTitleTmp .= str_replace("#VER#", $arModuleTmp["#"]["VERSION"][$j]["@"]["ID"], GetMessage("SUP_SULL_VERSION"))."\n".$arModuleTmp["#"]["VERSION"][$j]["#"]["DESCRIPTION"][0]["#"]."\n";
-							$strTitleTmp = htmlspecialcharsbx(preg_replace("/<.+?>/i" . BX_UTF_PCRE_MODIFIER, "", $strTitleTmp));
+							$strTitleTmp = $arModuleTmp['@']['NAME'] . ' (' . $arModuleTmp['@']['ID'] . ")\n" . $arModuleTmp['@']['DESCRIPTION'] . "\n";
+							for ($j = 0, $cntj = count($arModuleTmp['#']['VERSION']); $j < $cntj; $j++)
+							{
+								$strTitleTmp .= str_replace('#VER#', $arModuleTmp['#']['VERSION'][$j]['@']['ID'], GetMessage('SUP_SULL_VERSION')) . "\n" . $arModuleTmp['#']['VERSION'][$j]['#']['DESCRIPTION'][0]['#'] . "\n";
+							}
+							$strTitleTmp = htmlspecialcharsbx(preg_replace('/<.+?>/iu', '', $strTitleTmp));
 							?>
-							<tr title="<?= $strTitleTmp ?>" ondblclick="ShowDescription('<?= htmlspecialcharsbx($arModuleTmp["@"]["ID"]) ?>')">
-								<td><INPUT TYPE="checkbox" NAME="select_module_<?= htmlspecialcharsbx($arModuleTmp["@"]["ID"]) ?>" value="Y" onClick="EnableInstallButton(this);" checked></td>
-								<td><?= str_replace("#NAME#", htmlspecialcharsbx($arModuleTmp["@"]["NAME"]), GetMessage("SUP_SULL_MODULE")) ?></td>
-								<td><?= (array_key_exists($arUpdateList["MODULES"][0]["#"]["MODULE"][$i]["@"]["ID"], $arClientModules) ? GetMessage("SUP_SULL_REF_O") : GetMessage("SUP_SULL_REF_N")) ?></td>
-								<td><?= (isset($arModuleTmp["#"]["VERSION"]) ? $arModuleTmp["#"]["VERSION"][count($arModuleTmp["#"]["VERSION"]) - 1]["@"]["ID"] : "") ?></td>
-								<td><a href="javascript:ShowDescription('<?= htmlspecialcharsbx($arModuleTmp["@"]["ID"]) ?>')"><?= GetMessage("SUP_SULL_NOTE_D") ?></a></td>
+							<tr title="<?= $strTitleTmp ?>" ondblclick="ShowDescription('<?= htmlspecialcharsbx($arModuleTmp['@']['ID']) ?>')">
+								<td><INPUT TYPE="checkbox" NAME="select_module_<?= htmlspecialcharsbx($arModuleTmp['@']['ID']) ?>" value="Y" onClick="EnableInstallButton(this);" checked></td>
+								<td><?= str_replace('#NAME#', htmlspecialcharsbx($arModuleTmp['@']['NAME']), GetMessage('SUP_SULL_MODULE')) ?></td>
+								<td><?= (array_key_exists($arUpdateList['MODULES'][0]['#']['MODULE'][$i]['@']['ID'], $arClientModules) ? GetMessage('SUP_SULL_REF_O') : GetMessage('SUP_SULL_REF_N')) ?></td>
+								<td><?= (isset($arModuleTmp['#']['VERSION']) ? $arModuleTmp['#']['VERSION'][count($arModuleTmp['#']['VERSION']) - 1]['@']['ID'] : '') ?></td>
+								<td><a href="javascript:ShowDescription('<?= htmlspecialcharsbx($arModuleTmp['@']['ID']) ?>')"><?= GetMessage('SUP_SULL_NOTE_D') ?></a></td>
 							</tr>
-							<?
+							<?php
 						}
 					}
-					if (isset($arUpdateList["LANGS"][0]["#"]["INST"]))
+					if (isset($arUpdateList['LANGS'][0]['#']['INST']))
 					{
-						for ($i = 0, $cnt = count($arUpdateList["LANGS"][0]["#"]["INST"][0]["#"]["LANG"]); $i < $cnt; $i++)
+						for ($i = 0, $cnt = count($arUpdateList['LANGS'][0]['#']['INST'][0]['#']['LANG']); $i < $cnt; $i++)
 						{
-							$arLangTmp = $arUpdateList["LANGS"][0]["#"]["INST"][0]["#"]["LANG"][$i];
+							$arLangTmp = $arUpdateList['LANGS'][0]['#']['INST'][0]['#']['LANG'][$i];
 							?>
 							<tr>
-								<td><INPUT TYPE="checkbox" NAME="select_lang_<?= htmlspecialcharsbx($arLangTmp["@"]["ID"]) ?>" value="Y" onClick="EnableInstallButton(this);" checked></td>
-								<td><?= str_replace("#NAME#", htmlspecialcharsbx($arLangTmp["@"]["NAME"]), GetMessage("SUP_SULL_LANG")) ?></td>
-								<td><?= GetMessage("SUP_SULL_REF_O") ?></td>
-								<td><?= $arLangTmp["@"]["DATE"] ?></td>
+								<td><INPUT TYPE="checkbox" NAME="select_lang_<?= htmlspecialcharsbx($arLangTmp['@']['ID']) ?>" value="Y" onClick="EnableInstallButton(this);" checked></td>
+								<td><?= str_replace('#NAME#', htmlspecialcharsbx($arLangTmp['@']['NAME']), GetMessage('SUP_SULL_LANG')) ?></td>
+								<td><?= GetMessage('SUP_SULL_REF_O') ?></td>
+								<td><?= $arLangTmp['@']['DATE'] ?></td>
 								<td>&nbsp;</td>
 							</tr>
-							<?
+							<?php
 						}
 					}
-					if (isset($arUpdateList["LANGS"][0]["#"]["OTHER"]) || isset($arUpdateList["HELPS"][0]["#"]["OTHER"]) || isset($arUpdateList["HELPS"][0]["#"]["INST"]))
+					if (isset($arUpdateList['LANGS'][0]['#']['OTHER']) || isset($arUpdateList['HELPS'][0]['#']['OTHER']) || isset($arUpdateList['HELPS'][0]['#']['INST']))
 					{
 						?>
 						<tr>
-							<td colspan="5"><?= GetMessage("SUP_SU_OPTION") ?></td>
+							<td colspan="5"><?= GetMessage('SUP_SU_OPTION') ?></td>
 						</tr>
-						<?
+						<?php
 					}
-					if (isset($arUpdateList["HELPS"][0]["#"]["INST"]))
+					if (isset($arUpdateList['HELPS'][0]['#']['INST']))
 					{
-						for ($i = 0, $cnt = count($arUpdateList["HELPS"][0]["#"]["INST"][0]["#"]["HELP"]); $i < $cnt; $i++)
+						for ($i = 0, $cnt = count($arUpdateList['HELPS'][0]['#']['INST'][0]['#']['HELP']); $i < $cnt; $i++)
 						{
-							$arHelpTmp = $arUpdateList["HELPS"][0]["#"]["INST"][0]["#"]["HELP"][$i];
+							$arHelpTmp = $arUpdateList['HELPS'][0]['#']['INST'][0]['#']['HELP'][$i];
 							?>
 							<tr>
-								<td><INPUT TYPE="checkbox" NAME="select_help_<?= htmlspecialcharsbx($arHelpTmp["@"]["ID"]) ?>" value="Y" onClick="EnableInstallButton(this);"></td>
-								<td><?= str_replace("#NAME#", htmlspecialcharsbx($arHelpTmp["@"]["NAME"]), GetMessage("SUP_SULL_HELP")) ?></td>
-								<td><?= GetMessage("SUP_SULL_REF_O") ?></td>
-								<td><?= $arHelpTmp["@"]["DATE"] ?></td>
+								<td><INPUT TYPE="checkbox" NAME="select_help_<?= htmlspecialcharsbx($arHelpTmp['@']['ID']) ?>" value="Y" onClick="EnableInstallButton(this);"></td>
+								<td><?= str_replace('#NAME#', htmlspecialcharsbx($arHelpTmp['@']['NAME']), GetMessage('SUP_SULL_HELP')) ?></td>
+								<td><?= GetMessage('SUP_SULL_REF_O') ?></td>
+								<td><?= $arHelpTmp['@']['DATE'] ?></td>
 								<td>&nbsp;</td>
 							</tr>
-							<?
+							<?php
 						}
 					}
-					if (isset($arUpdateList["LANGS"][0]["#"]["OTHER"]))
+					if (isset($arUpdateList['LANGS'][0]['#']['OTHER']))
 					{
-						for ($i = 0, $cnt = count($arUpdateList["LANGS"][0]["#"]["OTHER"][0]["#"]["LANG"]); $i < $cnt; $i++)
+						for ($i = 0, $cnt = count($arUpdateList['LANGS'][0]['#']['OTHER'][0]['#']['LANG']); $i < $cnt; $i++)
 						{
-							$arLangTmp = $arUpdateList["LANGS"][0]["#"]["OTHER"][0]["#"]["LANG"][$i];
+							$arLangTmp = $arUpdateList['LANGS'][0]['#']['OTHER'][0]['#']['LANG'][$i];
 							?>
 							<tr>
-								<td><INPUT TYPE="checkbox" NAME="select_lang_<?= htmlspecialcharsbx($arLangTmp["@"]["ID"]) ?>" value="Y" onClick="EnableInstallButton(this);"></td>
-								<td><?= str_replace("#NAME#", htmlspecialcharsbx($arLangTmp["@"]["NAME"]), GetMessage("SUP_SULL_LANG")) ?></td>
-								<td><?= GetMessage("SUP_SULL_ADD") ?></td>
-								<td><?= $arLangTmp["@"]["DATE"] ?></td>
+								<td><INPUT TYPE="checkbox" NAME="select_lang_<?= htmlspecialcharsbx($arLangTmp['@']['ID']) ?>" value="Y" onClick="EnableInstallButton(this);"></td>
+								<td><?= str_replace('#NAME#', htmlspecialcharsbx($arLangTmp['@']['NAME']), GetMessage('SUP_SULL_LANG')) ?></td>
+								<td><?= GetMessage('SUP_SULL_ADD') ?></td>
+								<td><?= $arLangTmp['@']['DATE'] ?></td>
 								<td>&nbsp;</td>
 							</tr>
-							<?
+							<?php
 						}
 					}
-					if (isset($arUpdateList["HELPS"][0]["#"]["OTHER"]))
+					if (isset($arUpdateList['HELPS'][0]['#']['OTHER']))
 					{
-						for ($i = 0, $cnt = count($arUpdateList["HELPS"][0]["#"]["OTHER"][0]["#"]["HELP"]); $i < $cnt; $i++)
+						for ($i = 0, $cnt = count($arUpdateList['HELPS'][0]['#']['OTHER'][0]['#']['HELP']); $i < $cnt; $i++)
 						{
-							$arHelpTmp = $arUpdateList["HELPS"][0]["#"]["OTHER"][0]["#"]["HELP"][$i];
+							$arHelpTmp = $arUpdateList['HELPS'][0]['#']['OTHER'][0]['#']['HELP'][$i];
 							?>
 							<tr>
-								<td><INPUT TYPE="checkbox" NAME="select_help_<?= htmlspecialcharsbx($arHelpTmp["@"]["ID"]) ?>" value="Y" onClick="EnableInstallButton(this);"></td>
-								<td><?= str_replace("#NAME#", htmlspecialcharsbx($arHelpTmp["@"]["NAME"]), GetMessage("SUP_SULL_HELP")) ?></td>
-								<td><?= GetMessage("SUP_SULL_ADD1") ?></td>
-								<td><?= $arHelpTmp["@"]["DATE"] ?></td>
+								<td><INPUT TYPE="checkbox" NAME="select_help_<?= htmlspecialcharsbx($arHelpTmp['@']['ID']) ?>" value="Y" onClick="EnableInstallButton(this);"></td>
+								<td><?= str_replace('#NAME#', htmlspecialcharsbx($arHelpTmp['@']['NAME']), GetMessage('SUP_SULL_HELP')) ?></td>
+								<td><?= GetMessage('SUP_SULL_ADD1') ?></td>
+								<td><?= $arHelpTmp['@']['DATE'] ?></td>
 								<td>&nbsp;</td>
 							</tr>
-							<?
+							<?php
 						}
 					}
 					?>
 				</table>
-				<SCRIPT LANGUAGE="JavaScript">
+				<SCRIPT>
 				<!--
-					var arModuleUpdatesDescr = {<?
-					if (isset($arUpdateList["MODULES"][0]["#"]["MODULE"]))
+					var arModuleUpdatesDescr = {<?php
+					if (isset($arUpdateList['MODULES'][0]['#']['MODULE']))
 					{
-						for ($i = 0, $cnt = count($arUpdateList["MODULES"][0]["#"]["MODULE"]); $i < $cnt; $i++)
+						for ($i = 0, $cnt = count($arUpdateList['MODULES'][0]['#']['MODULE']); $i < $cnt; $i++)
 						{
-							$arModuleTmp = $arUpdateList["MODULES"][0]["#"]["MODULE"][$i];
+							$arModuleTmp = $arUpdateList['MODULES'][0]['#']['MODULE'][$i];
 
 							$strTitleTmp  = '<div class="title"><table cellspacing="0" width="100%"><tr>';
-							$strTitleTmp .= '<td width="100%" class="title-text" onmousedown="jsFloatDiv.StartDrag(arguments[0], document.getElementById(\'updates_float_div\'));">'.GetMessage("SUP_SULD_DESC").'</td>';
-							$strTitleTmp .= '<td width="0%"><a class="close" href="javascript:CloseDescription();" title="'.GetMessage("SUP_SULD_CLOSE").'"></a></td>';
+							$strTitleTmp .= '<td width="100%" class="title-text" onmousedown="jsFloatDiv.StartDrag(arguments[0], document.getElementById(\'updates_float_div\'));">' . GetMessage('SUP_SULD_DESC') . '</td>';
+							$strTitleTmp .= '<td width="0%"><a class="close" href="javascript:CloseDescription();" title="' . GetMessage('SUP_SULD_CLOSE') . '"></a></td>';
 							$strTitleTmp .= '</tr></table></div>';
 							$strTitleTmp .= '<div class="content" style="overflow:auto;overflow-y:auto;height:400px;">';
-							$strTitleTmp .= '<h2>'.$arModuleTmp["@"]["NAME"].' ('.$arModuleTmp["@"]["ID"].')'.'</h2>';
-							$strTitleTmp .= '<table cellspacing="0"><tr><td>'.$arModuleTmp["@"]["DESCRIPTION"].'</td></tr></table><br>';
+							$strTitleTmp .= '<h2>' . $arModuleTmp['@']['NAME'] . ' (' . $arModuleTmp['@']['ID'] . ')' . '</h2>';
+							$strTitleTmp .= '<table cellspacing="0"><tr><td>' . $arModuleTmp['@']['DESCRIPTION'] . '</td></tr></table><br>';
 
-							if (isset($arModuleTmp["#"]["VERSION"]))
+							if (isset($arModuleTmp['#']['VERSION']))
 							{
 								$strTitleTmp .= '<table cellspacing="0">';
-								for ($j = count($arModuleTmp["#"]["VERSION"]) - 1; $j >= 0; $j--)
+								for ($j = count($arModuleTmp['#']['VERSION']) - 1; $j >= 0; $j--)
 								{
 									$strTitleTmp .= '<tr><td><b>';
-									$strTitleTmp .= str_replace("#VER#", $arModuleTmp["#"]["VERSION"][$j]["@"]["ID"], GetMessage("SUP_SULL_VERSION"));
+									$strTitleTmp .= str_replace('#VER#', $arModuleTmp['#']['VERSION'][$j]['@']['ID'], GetMessage('SUP_SULL_VERSION'));
 									$strTitleTmp .= '</b></td></tr>';
 									$strTitleTmp .= '<tr><td>';
-									$strTitleTmp .= $arModuleTmp["#"]["VERSION"][$j]["#"]["DESCRIPTION"][0]["#"];
+									$strTitleTmp .= $arModuleTmp['#']['VERSION'][$j]['#']['DESCRIPTION'][0]['#'];
 									$strTitleTmp .= '</td></tr>';
 								}
 								$strTitleTmp .= '</table>';
 							}
 
-							$strTitleTmp = addslashes(preg_replace("/\r?\n/i", "<br>", $strTitleTmp));
+							$strTitleTmp = addslashes(preg_replace("/\r?\n/i", '<br>', $strTitleTmp));
 							if ($i > 0)
+							{
 								echo ",\n";
-							echo "\"".htmlspecialcharsbx($arModuleTmp["@"]["ID"])."\" : \"".$strTitleTmp."\"";
+							}
+							echo '"' . htmlspecialcharsbx($arModuleTmp['@']['ID']) . '" : "' . $strTitleTmp . '"';
 						}
 					}
 					?>};
 
-					var arModuleUpdatesCnt = {<?
+					var arModuleUpdatesCnt = {<?php
 					if ($countModuleUpdates > 0)
 					{
-						for ($i = 0, $cnt = count($arUpdateList["MODULES"][0]["#"]["MODULE"]); $i < $cnt; $i++)
+						for ($i = 0, $cnt = count($arUpdateList['MODULES'][0]['#']['MODULE']); $i < $cnt; $i++)
 						{
 							if ($i > 0)
-								echo ", ";
-							echo "\"".$arUpdateList["MODULES"][0]["#"]["MODULE"][$i]["@"]["ID"]."\" : ";
-							if (!array_key_exists($arUpdateList["MODULES"][0]["#"]["MODULE"][$i]["@"]["ID"], $arClientModules))
-								echo count($arUpdateList["MODULES"][0]["#"]["MODULE"][$i]["#"]["VERSION"]) + 1;
+							{
+								echo ', ';
+							}
+							echo '"' . $arUpdateList['MODULES'][0]['#']['MODULE'][$i]['@']['ID'] . '" : ';
+							if (!array_key_exists($arUpdateList['MODULES'][0]['#']['MODULE'][$i]['@']['ID'], $arClientModules))
+							{
+								echo count($arUpdateList['MODULES'][0]['#']['MODULE'][$i]['#']['VERSION']) + 1;
+							}
 							else
-								echo count($arUpdateList["MODULES"][0]["#"]["MODULE"][$i]["#"]["VERSION"]);
+							{
+								echo count($arUpdateList['MODULES'][0]['#']['MODULE'][$i]['#']['VERSION']);
+							}
 						}
 					}
 					?>};
@@ -1643,7 +1716,7 @@ $tabControl->BeginNextTab();
 
 					function InstallUpdatesSel()
 					{
-						SetProgressHint("<?= GetMessage("SUP_INITIAL") ?>");
+						SetProgressHint("<?= GetMessage('SUP_INITIAL') ?>");
 
 						var moduleList = "";
 						var langList = "";
@@ -1773,7 +1846,7 @@ $tabControl->BeginNextTab();
 						tabControl.DisableTab('tab2');
 						tabControl.DisableTab('tab3');
 						document.getElementById("install_updates_button").disabled = true;
-						document.getElementById("id_view_updates_list_span").innerHTML = "<u><?= GetMessage("SUP_SU_UPD_VIEW") ?></u>";
+						document.getElementById("id_view_updates_list_span").innerHTML = "<u><?= GetMessage('SUP_SU_UPD_VIEW') ?></u>";
 						document.getElementById("id_view_updates_list_span").disabled = true;
 					}
 
@@ -1782,9 +1855,9 @@ $tabControl->BeginNextTab();
 						tabControl.EnableTab('tab1');
 						tabControl.EnableTab('tab2');
 						tabControl.EnableTab('tab3');
-						document.getElementById("install_updates_button").disabled = <?= (($countModuleUpdates <= 0 && $countLangUpdatesInst <= 0) ? "true" : "false") ?>;
+						document.getElementById("install_updates_button").disabled = <?= (($countModuleUpdates <= 0 && $countLangUpdatesInst <= 0) ? 'true' : 'false') ?>;
 						document.getElementById("id_view_updates_list_span").disabled = false;
-						document.getElementById("id_view_updates_list_span").innerHTML = '<a id="id_view_updates_list" href="javascript:tabControl.SelectTab(\'tab2\');"><?= GetMessage("SUP_SU_UPD_VIEW") ?></a>';
+						document.getElementById("id_view_updates_list_span").innerHTML = '<a id="id_view_updates_list" href="javascript:tabControl.SelectTab(\'tab2\');"><?= GetMessage('SUP_SU_UPD_VIEW') ?></a>';
 
 						var cnt = document.getElementById("id_register_btn");
 						if (cnt != null)
@@ -1792,13 +1865,13 @@ $tabControl->BeginNextTab();
 					}
 				//-->
 				</SCRIPT>
-				<?
+				<?php
 			}
 			?>
 		</td>
 	</tr>
 
-<?
+<?php
 $tabControl->EndTab();
 $tabControl->BeginNextTab();
 ?>
@@ -1809,7 +1882,7 @@ $tabControl->BeginNextTab();
 			<div id="upd_add_coupon_div">
 				<table border="0" cellspacing="1" cellpadding="3" width="100%" class="internal">
 					<tr class="heading">
-						<td><B><?= GetMessage("SUP_SUAC_COUP") ?></B></td>
+						<td><B><?= GetMessage('SUP_SUAC_COUP') ?></B></td>
 					</tr>
 					<tr>
 						<td>
@@ -1817,13 +1890,13 @@ $tabControl->BeginNextTab();
 										<tr>
 											<td class="icon-new"><div class="icon icon-licence"></div></td>
 											<td>
-							<?= str_replace("#NUM#", $arUpdateList["CLIENT"][0]["@"]["MAX_SITES"], GetMessage("SUP_SUAC_LIMIT")) ?>
+							<?= str_replace('#NUM#', $arUpdateList['CLIENT'][0]['@']['MAX_SITES'], GetMessage('SUP_SUAC_LIMIT')) ?>
 							<br><br>
-							<?= GetMessage("SUP_SUAC_HINT") ?>
+							<?= GetMessage('SUP_SUAC_HINT') ?>
 							<br><br>
-							<?= GetMessage("SUP_SUAC_PROMT") ?>:<br>
+							<?= GetMessage('SUP_SUAC_PROMT') ?>:<br>
 							<INPUT TYPE="text" ID="id_coupon" NAME="COUPON" value="" size="35">
-							<input TYPE="button" ID="id_coupon_btn" NAME="coupon_btn" value="<?= GetMessage("SUP_SUAC_BUTTON") ?>" onclick="ActivateCoupon()">
+							<input TYPE="button" ID="id_coupon_btn" NAME="coupon_btn" value="<?= GetMessage('SUP_SUAC_BUTTON') ?>" onclick="ActivateCoupon()">
 											</td>
 										</tr>
 									</table>
@@ -1831,7 +1904,7 @@ $tabControl->BeginNextTab();
 					</tr>
 				</table>
 			</div>
-			<SCRIPT LANGUAGE="JavaScript">
+			<SCRIPT>
 			<!--
 			function ActivateCoupon()
 			{
@@ -1844,12 +1917,12 @@ $tabControl->BeginNextTab();
 					result = result.replace(/^\s+|\s+$/, '');
 					if (result == "Y")
 					{
-						alert("<?= GetMessage("SUP_SUAC_SUCCESS") ?>");
+						alert("<?= GetMessage('SUP_SUAC_SUCCESS') ?>");
 						window.location.href = "controller_update.php?lang=<?= LANG ?>";
 					}
 					else
 					{
-						alert("<?= GetMessage("SUP_SUAC_ERROR") ?>: " + result);
+						alert("<?= GetMessage('SUP_SUAC_ERROR') ?>: " + result);
 						document.getElementById("id_coupon_btn").disabled = false;
 					}
 				}
@@ -1864,7 +1937,7 @@ $tabControl->BeginNextTab();
 				{
 					document.getElementById("id_coupon_btn").disabled = false;
 					CloseWaitWindow();
-					alert("<?= GetMessage("SUP_SUAC_NO_COUP") ?>");
+					alert("<?= GetMessage('SUP_SUAC_NO_COUP') ?>");
 				}
 			}
 			//-->
@@ -1875,7 +1948,7 @@ $tabControl->BeginNextTab();
 			<div id="upd_stability_div">
 				<table border="0" cellspacing="1" cellpadding="3" width="100%" class="internal">
 					<tr class="heading">
-						<td><B><?= GetMessage("SUP_SUBV_BETA") ?></B></td>
+						<td><B><?= GetMessage('SUP_SUBV_BETA') ?></B></td>
 					</tr>
 					<tr>
 						<td>
@@ -1883,15 +1956,19 @@ $tabControl->BeginNextTab();
 										<tr>
 											<td class="icon-new"><div class="icon icon-beta"></div></td>
 											<td>
-							<?
-							if ($stableVersionsOnly == "N")
-								echo GetMessage("SUP_STABLE_OFF_PROMT");
+							<?php
+							if ($stableVersionsOnly == 'N')
+							{
+								echo GetMessage('SUP_STABLE_OFF_PROMT');
+							}
 							else
-								echo GetMessage("SUP_STABLE_ON_PROMT");
+							{
+								echo GetMessage('SUP_STABLE_ON_PROMT');
+							}
 							?>
 							<br><br>
-							<?= GetMessage("SUP_SUBV_HINT") ?><br><br>
-							<input TYPE="button" ID="id_stable_btn" NAME="stable_btn" value="<?= (($stableVersionsOnly == "N") ? GetMessage("SUP_SUBV_STABB") : GetMessage("SUP_SUBV_BETB")) ?>" onclick="SwithStability()">
+							<?= GetMessage('SUP_SUBV_HINT') ?><br><br>
+							<input TYPE="button" ID="id_stable_btn" NAME="stable_btn" value="<?= (($stableVersionsOnly == 'N') ? GetMessage('SUP_SUBV_STABB') : GetMessage('SUP_SUBV_BETB')) ?>" onclick="SwithStability()">
 											</td>
 										</tr>
 									</table>
@@ -1899,7 +1976,7 @@ $tabControl->BeginNextTab();
 					</tr>
 				</table>
 			</div>
-			<SCRIPT LANGUAGE="JavaScript">
+			<SCRIPT>
 			<!--
 			function SwithStability()
 			{
@@ -1916,7 +1993,7 @@ $tabControl->BeginNextTab();
 					else
 					{
 						CloseWaitWindow();
-						alert("<?= GetMessage("SUP_SUBV_ERROR") ?>: " + result);
+						alert("<?= GetMessage('SUP_SUBV_ERROR') ?>: " + result);
 						document.getElementById("id_stable_btn").disabled = false;
 					}
 				}
@@ -1931,7 +2008,7 @@ $tabControl->BeginNextTab();
 			<div id="upd_mail_div">
 				<table border="0" cellspacing="1" cellpadding="3" width="100%" class="internal">
 					<tr class="heading">
-						<td><B><?= GetMessage("SUP_SUSU_TITLE") ?></B></td>
+						<td><B><?= GetMessage('SUP_SUSU_TITLE') ?></B></td>
 					</tr>
 					<tr>
 						<td>
@@ -1939,11 +2016,11 @@ $tabControl->BeginNextTab();
 										<tr>
 											<td class="icon-new"><div class="icon icon-subscribe"></div></td>
 											<td>
-							<?= GetMessage("SUP_SUSU_HINT") ?>
+							<?= GetMessage('SUP_SUSU_HINT') ?>
 							<br><br>
-							<?= GetMessage("SUP_SUSU_EMAIL") ?>: <br>
+							<?= GetMessage('SUP_SUSU_EMAIL') ?>: <br>
 							<INPUT TYPE="text" ID="id_email" NAME="EMAIL" value="" size="35">
-							<input TYPE="button" ID="id_email_btn" NAME="email_btn" value="<?= GetMessage("SUP_SUSU_BUTTON") ?>" onclick="SubscribeMail()">
+							<input TYPE="button" ID="id_email_btn" NAME="email_btn" value="<?= GetMessage('SUP_SUSU_BUTTON') ?>" onclick="SubscribeMail()">
 											</td>
 										</tr>
 									</table>
@@ -1951,7 +2028,7 @@ $tabControl->BeginNextTab();
 					</tr>
 				</table>
 			</div>
-			<SCRIPT LANGUAGE="JavaScript">
+			<SCRIPT>
 			<!--
 			function SubscribeMail()
 			{
@@ -1965,11 +2042,11 @@ $tabControl->BeginNextTab();
 					document.getElementById("id_email_btn").disabled = false;
 					if (result == "Y")
 					{
-						alert("<?= GetMessage("SUP_SUSU_SUCCESS") ?>");
+						alert("<?= GetMessage('SUP_SUSU_SUCCESS') ?>");
 					}
 					else
 					{
-						alert("<?= GetMessage("SUP_SUSU_ERROR") ?>: " + result);
+						alert("<?= GetMessage('SUP_SUSU_ERROR') ?>: " + result);
 					}
 				}
 
@@ -1983,7 +2060,7 @@ $tabControl->BeginNextTab();
 				{
 					CloseWaitWindow();
 					document.getElementById("id_email_btn").disabled = false;
-					alert("<?= GetMessage("SUP_SUSU_NO_EMAIL") ?>");
+					alert("<?= GetMessage('SUP_SUSU_NO_EMAIL') ?>");
 				}
 			}
 			//-->
@@ -1992,29 +2069,30 @@ $tabControl->BeginNextTab();
 		</td>
 	</tr>
 
-<?
+<?php
 $tabControl->EndTab();
 $tabControl->End();
 ?>
 
-<SCRIPT LANGUAGE="JavaScript">
+<SCRIPT>
 <!--
-	<?
+	<?php
 	if ($bLockControls)
-		echo "LockControls();";
+	{
+		echo 'LockControls();';
+	}
 	?>
 //-->
 </SCRIPT>
 
 </form>
 
-<?echo BeginNote();?>
-<?= GetMessage("SUP_SUG_NOTES") ?><br><br>
-<?= GetMessage("SUP_SUG_NOTES1") ?>
-<?echo EndNote(); ?>
+<?php echo BeginNote();?>
+<?= GetMessage('SUP_SUG_NOTES') ?><br><br>
+<?= GetMessage('SUP_SUG_NOTES1') ?>
+<?php echo EndNote(); ?>
 
-<?
-COption::SetOptionString(US_BASE_MODULE, "update_system_check", Date($DB->DateFormatToPHP(CSite::GetDateFormat("FULL")), time()));
+<?php
+COption::SetOptionString(US_BASE_MODULE, 'update_system_check', date(CDatabase::DateFormatToPHP(CSite::GetDateFormat('FULL')), time()));
 
-require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/epilog_admin.php");
-?>
+require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/epilog_admin.php';

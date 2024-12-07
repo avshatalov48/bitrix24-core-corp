@@ -33,6 +33,8 @@ class Tracker
 	public const ERROR_IMOL_TRACKER_NO_REQUIRED_PARAMETERS = 'ERROR IMOPENLINES TRACKER NO REQUIRED PARAMETERS';
 
 	protected const EXPECTATION_LIVE_TIME = '30 days';
+	protected const ALIAS_CODE_ATTEMPTS = 3;
+	protected const ALIAS_CODE_LENGTH = 10;
 
 	/** The prefix for trckerId. */
 	public const PREFIX = 'btrx';
@@ -147,9 +149,36 @@ class Tracker
 	{
 		Loader::includeModule('imconnector');
 
+		$aliasCode = null;
 		$trackId  = $this->getExpectationTrackId($crmEntities);
+		if ($connectorId == \Bitrix\ImConnector\Library::ID_NOTIFICATIONS_CONNECTOR)
+		{
+			Loader::includeModule('notifications');
 
-		return Connector::getImMessengerUrl($lineId, $connectorId, $trackId);
+			for ($i = 0; $i < self::ALIAS_CODE_ATTEMPTS; $i++)
+			{
+				$result = \Bitrix\Notifications\Alias::createForScenario(\Bitrix\Notifications\Settings::SCENARIO_VIRTUAL_WHATSAPP);
+				if ($result->isSuccess())
+				{
+					$aliasCode = $result->getData()['CODE'];
+					break;
+				}
+			}
+
+			if (!$aliasCode)
+			{
+				return [];
+			}
+
+			if ($track = $this->findExpectationByTrackId($trackId))
+			{
+				$trackId = $track['ID'];
+			}
+		}
+
+		$compositeCode = trim($aliasCode . $trackId);
+
+		return Connector::getImMessengerUrl($lineId, $connectorId, $compositeCode);
 	}
 
 	/**
@@ -223,7 +252,7 @@ class Tracker
 			return $row['TRACK_ID'];
 		}
 
-		$trackId = self::PREFIX . Random::getString(10);
+		$trackId = self::PREFIX . Random::getString(self::ALIAS_CODE_LENGTH);
 
 		$add['ACTION'] = self::ACTION_EXPECT;
 		$add['TRACK_ID'] = $trackId;
@@ -244,11 +273,15 @@ class Tracker
 	public function findExpectationByTrackId(string $trackId): ?array
 	{
 		$filter = [
-			'=TRACK_ID' => $trackId,
+			[
+				'LOGIC' => 'OR',
+				'=TRACK_ID' => $trackId,
+				'=ID' => $trackId,
+			],
 			'=ACTION' => self::ACTION_EXPECT,
 			'>DATE_CREATE' => (new DateTime())->add('-'.self::EXPECTATION_LIVE_TIME),
 		];
-		$select = [];
+		$select = ['ID'];
 		foreach (TrackerTable::getMap() as $field => $fieldParam)
 		{
 			if (strpos($field, 'CRM_') === 0)

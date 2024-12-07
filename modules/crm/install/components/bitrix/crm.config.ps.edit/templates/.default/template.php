@@ -340,7 +340,7 @@ $checkboxValuesTmpl = '<select name="TYPE_#FIELD_ID#" id="TYPE_#FIELD_ID#" style
 					'<input type="checkbox" name="VALUE1_#FIELD_ID#" id="VALUE1_#FIELD_ID#" value="Y"></select>';
 ?>
 
-<script type="text/javascript">
+<script>
 
 	BX.message({
 		CRM_PS_SHOW_FIELDS: "<?=GetMessage("CRM_PS_SHOW_FIELDS")?>",

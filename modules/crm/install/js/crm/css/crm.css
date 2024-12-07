@@ -83,7 +83,7 @@
 .crm-box-layout.crm-single-column .crm-block-cont-left{ padding:0 4px 0 4px;}
 table.field_crm { margin-bottom: 3px }
 table.field_crm .field_crm_empty_entity_title{ opacity: 0.5; padding-left: 3px; text-transform: lowercase; }
-table.field_crm td.field_crm_entity_type {	vertical-align: top; border-left: 1px solid #c7c7c7; padding-left: 11px;	padding-right: 7px;	text-align: right;	font-weight: var(--ui-font-weight-bold);	background: none; padding-bottom: 2px;	word-break: initial;}
+table.field_crm td.field_crm_entity_type {vertical-align: top; border-left: 1px solid #c7c7c7; padding-left: 11px;	padding-right: 7px;	text-align: right;	font-weight: var(--ui-font-weight-bold);	background: none; padding-bottom: 2px;	word-break: initial; overflow: hidden; text-overflow: ellipsis; max-width: 260px;}
 table.field_crm td.field_crm_entity {background: none; padding-bottom: 2px; display:flex; flex-wrap: wrap; margin-left: -3px;}
 table.field_crm td.field_crm_entity .field-item{margin-bottom: 0; margin-left: 3px;}
 .crm-button-open a { border-bottom: 1px dashed #0069C4; outline: medium none; text-decoration: none;}
@@ -798,6 +798,10 @@ table.crm-list-stage-bar-table {
 	width:100%;
 }
 
+.crm-list-stage-bar-part.--disabled{
+	opacity: .6;
+}
+
 div.bx-crm-view-form table.crm-list-stage-bar-table td.crm-list-stage-bar-part,
 div.bx-crm-interface-form table.crm-list-stage-bar-table td.crm-list-stage-bar-part,
 div.feed-post-text-block table.crm-list-stage-bar-table td.crm-list-stage-bar-part,
@@ -822,6 +826,8 @@ table.crm-list-stage-bar-table td.crm-list-stage-bar-part div.crm-list-stage-bar
 	min-width:5px;
 	position:relative;
 }
+
+table.crm-list-stage-bar-table td.crm-list-stage-bar-part.--disabled div.crm-list-stage-bar-block { cursor: not-allowed; }
 
 table.crm-list-stage-bar-table td.crm-list-stage-bar-part:first-child div.crm-list-stage-bar-block {
 	border-radius: 1px 0 0 1px;
@@ -883,6 +889,8 @@ table.crm-list-stage-bar-table td.crm-list-stage-bar-part div.crm-list-stage-bar
 table.crm-list-stage-bar-table td.crm-list-stage-bar-part:first-child div.crm-list-stage-bar-btn {left:-3px;}
 
 table.crm-list-stage-bar-table td.crm-list-stage-bar-part div.crm-list-stage-bar-block:hover .crm-list-stage-bar-btn {display:block;}
+
+table.crm-list-stage-bar-table td.crm-list-stage-bar-part.--disabled div.crm-list-stage-bar-block:hover .crm-list-stage-bar-btn {display:none;}
 
 div.crm-list-stage-end-good table.crm-list-stage-bar-table td.crm-list-stage-bar-part div.crm-list-stage-bar-block {
 	background:#b0d63a;
@@ -2365,6 +2373,35 @@ div.crm-list-stage-end-bad table.crm-list-stage-bar-table td.crm-list-stage-bar-
 
 .crm-list-end-deal-buttons-block .webform-small-button-decline {margin:0;}
 
+.crm-list-end-deal-buttons-block .webform-small-button.--disabled,
+.crm-list-end-deal-buttons-block .webform-small-button-separate-wrap.--disabled{
+	opacity: .6;
+	pointer-events: auto;
+	cursor: not-allowed;
+}
+
+.crm-list-end-deal-buttons-block .webform-small-button.--disabled .webform-small-button-text,
+.crm-list-end-deal-buttons-block .webform-small-button-separate-wrap.--disabled .webform-small-button,
+.crm-list-end-deal-buttons-block .webform-small-button-separate-wrap.--disabled .webform-small-button-right-part{
+	cursor: not-allowed;
+}
+
+
+
+.crm-list-end-deal-buttons-block .webform-small-button-accept.--disabled:hover,
+.crm-list-end-deal-buttons-block .webform-small-button-accept.--disabled:active{
+	background: #bbed21;
+	box-shadow: none;
+	color: #535c69;
+}
+
+.crm-list-end-deal-buttons-block .webform-small-button-decline.--disabled:hover,
+.crm-list-end-deal-buttons-block .webform-small-button-decline.--disabled:active{
+	background: #f1361b;
+	box-shadow: none;
+	color: #fff;
+}
+
 .crm-list-end-deal-buttons-block .webform-small-button-text {
 	text-overflow: ellipsis;
 	overflow: hidden;
@@ -2440,6 +2477,17 @@ div.crm-list-stage-end-bad table.crm-list-stage-bar-table td.crm-list-stage-bar-
 .crm-list-end-deal-button-wrapper{
 	margin: 0 0 8px 0;
 }
+
+.crm-list-end-deal-button-wrapper.--disabled {
+	opacity: .6;
+	pointer-events: auto;
+}
+
+.crm-list-end-deal-button-wrapper.--disabled input,
+.crm-list-end-deal-button-wrapper.--disabled label {
+	cursor: not-allowed;
+}
+
 
 .crm-list-fail-deal .popup-window-top-row .popup-window-left-column,
 .crm-list-fail-deal .popup-window-top-row .popup-window-right-column,
@@ -6277,6 +6325,7 @@ div.crm-client-summary-wrapper .crm-client-photo-wrapper {
 
 .ui-icon.crm-client-summary-photo > i{
 	background-size: cover;
+	background-color: var(--ui-color-palette-gray-35);
 }
 
 .crm-client-def-pic {

@@ -10,10 +10,7 @@ Header('Content-Disposition: attachment; filename="users.xls"');
 Header('Content-Type: application/force-download; name="users.xls"');
 
 // add UTF-8 BOM marker
-if (defined('BX_UTF') && BX_UTF)
-{
-	echo chr(239).chr(187).chr(191);
-}
+echo chr(239).chr(187).chr(191);
 
 $headersList = array();
 foreach ($arResult['HEADERS'] as $header)

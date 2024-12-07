@@ -41,7 +41,7 @@ $canEdit = $arResult['CAN_EDIT'];
 	<?php endif ?>
 <?php endif?>
 
-<script type="text/javascript">
+<script>
 	function TasksShowTagsPopup(e)
 	{
 		if (!e)

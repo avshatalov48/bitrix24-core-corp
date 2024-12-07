@@ -1,10 +1,10 @@
 /**
- * @module im:messenger/controller/participant-manager
+ * @module im/messenger/controller/participant-manager
  */
-jn.define('im:messenger/controller/participant-manager', (require, exports, module) => {
+jn.define('im/messenger/controller/participant-manager', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const { Logger } = require('im/messenger/lib/logger');
-	const { menuIcons } = require('im/messenger/assets/common');
+	const { UIMenu } = require('layout/ui/menu');
 
 	/**
 	 * @desc This class provider calling context menu with custom action items
@@ -15,26 +15,26 @@ jn.define('im:messenger/controller/participant-manager', (require, exports, modu
 		 * @desc Open widget without instance
 		 * @static
 		 * @param {object} options
-		 * @param {Array<string>} options.actions - ['remove', ...]
-		 * @param {Array<Function>} options.callbacks
+		 * @param {Array<ActionItem>} options.actionsItems
+		 * @param {LayoutComponent} options.ref
 		 */
-		static open(options = {})
+		static open({ actionsItems = [], ref })
 		{
-			const instanceManger = new ParticipantManager(options);
+			const instanceManger = new ParticipantManager({ actionsItems, ref });
 			instanceManger.open();
 		}
 
 		/**
 		 * @constructor
 		 * @param {object} options
-		 * @param {Array<string>} options.actions - ['remove', ...]
-		 * @param {Array<Function>} options.callbacks
+		 * @param {Array<ActionItem>} options.actionsItems
+		 * @param {LayoutComponent} options.ref
 		 */
-		constructor(options = {})
+		constructor({ actionsItems = [], ref })
 		{
-			this.actionsName = options.actions;
-			this.callbacks = options.callbacks;
+			this.actionsItems = actionsItems;
 			this.actionsData = [];
+			this.ref = ref;
 			this.menu = {};
 
 			this.createMenu();
@@ -43,16 +43,15 @@ jn.define('im:messenger/controller/participant-manager', (require, exports, modu
 		createMenu()
 		{
 			this.prepareActionsData();
-			this.menu = new ContextMenu({
-				actions: this.actionsData,
-			});
+			this.menu = new UIMenu(this.actionsData);
 		}
 
 		open()
 		{
-			Logger.log('ParticipantManager.open');
+			Logger.log(`${this.constructor.name}.open, actionsItems:`, this.actionsItems);
 			this.prepareActionsData();
-			this.menu.show().catch((err) => Logger.error('ParticipantManager.open', err));
+
+			this.menu.show({ target: this.ref });
 		}
 
 		/**
@@ -60,27 +59,16 @@ jn.define('im:messenger/controller/participant-manager', (require, exports, modu
 		 * @return void
 		 */
 		prepareActionsData() {
-			this.actionsName.forEach((actionName) => {
+			this.actionsItems.forEach((action) => {
 				this.actionsData.push({
-					id: actionName,
-					title: Loc.getMessage(`IMMOBILE_PARTICIPANTS_MANAGER_ITEM_LIST_${actionName.toUpperCase()}`),
-					data: {
-						svgIcon: menuIcons[actionName](),
-					},
-					onClickCallback: this.getCallbackByAction(actionName),
-					testId: `SIDEBAR_USER_CONTEXT_MENU_${actionName.toUpperCase()}`,
+					id: action.actionName,
+					title: Loc.getMessage(`IMMOBILE_PARTICIPANTS_MANAGER_ITEM_LIST_${action.actionName.toUpperCase()}`),
+					onItemSelected: action.callback,
+					showIcon: Boolean(action.icon),
+					iconName: action.icon,
+					testId: `SIDEBAR_USER_CONTEXT_MENU_${action.actionName.toUpperCase()}`,
 				});
 			});
-		}
-
-		/**
-		 * @desc Returns callback by string name action
-		 * @param {string} actionName
-		 * @return {Function}
-		 */
-		getCallbackByAction(actionName)
-		{
-			return this.callbacks[actionName];
 		}
 	}
 

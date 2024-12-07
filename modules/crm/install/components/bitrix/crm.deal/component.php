@@ -8,6 +8,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 use Bitrix\Crm;
 use Bitrix\Crm\Restriction\AvailabilityManager;
 use Bitrix\Crm\Restriction\RestrictionManager;
+use Bitrix\Crm\Service\Container;
 
 if (!CModule::IncludeModule('crm'))
 {
@@ -432,6 +433,21 @@ if ($componentPage !== 'details')
 	{
 		$componentPage = 'restrictions';
 	}
+}
+
+$categoryID = $categoryID ?? null;
+$router = Container::getInstance()->getRouter();
+if ($componentPage === 'kanban')
+{
+	$router->checkAndUpdateCurrentListView($router::LIST_VIEW_KANBAN, \CCrmOwnerType::Deal, $categoryID);
+}
+elseif ($componentPage === 'list')
+{
+	$router->checkAndUpdateCurrentListView($router::LIST_VIEW_LIST, \CCrmOwnerType::Deal, $categoryID);
+}
+elseif ($componentPage === 'calendar')
+{
+	$router->checkAndUpdateCurrentListView($router::LIST_VIEW_CALENDAR, \CCrmOwnerType::Deal, $categoryID);
 }
 
 $this->IncludeComponentTemplate($componentPage);

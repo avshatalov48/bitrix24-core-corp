@@ -5,6 +5,7 @@ return [
 		'apptheme',
 		'loc',
 		'bottom-sheet',
+		'tokens',
 	],
 	'bundle' => [
 		'./select-field',

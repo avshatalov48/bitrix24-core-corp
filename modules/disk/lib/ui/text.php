@@ -62,8 +62,8 @@ final class Text
 			mb_strlen($string) < 17 ||
 			mb_substr($string, -16, 1) !== 'i' ||
 			!(
-				preg_match('%i[0-9a-z]{0,4}[0-9]{10,12}i$%iU' . BX_UTF_PCRE_MODIFIER, $string) ||
-				preg_match('%i[0-9]{11}[a-z]{3}i$%iU' . BX_UTF_PCRE_MODIFIER, $string) //our cp old version
+				preg_match('%i[0-9a-z]{0,4}[0-9]{10,12}i$%iUu', $string) ||
+				preg_match('%i[0-9]{11}[a-z]{3}i$%iUu', $string) //our cp old version
 			)
 		)
 		{
@@ -93,9 +93,9 @@ final class Text
 		$text = strip_tags($text);
 		return preg_replace(
 			array(
-				"/\<(\/?)(quote|code|font|color|video)([^\>]*)\>/is".BX_UTF_PCRE_MODIFIER,
-				"/\[(\/?)(b|u|i|s|list|code|quote|font|color|url|img|video)([^\]]*)\]/is".BX_UTF_PCRE_MODIFIER,
-				"/\[[0-9a-zA-Z\W\=]+\]/iUs".BX_UTF_PCRE_MODIFIER,
+				"/\<(\/?)(quote|code|font|color|video)([^\>]*)\>/isu",
+				"/\[(\/?)(b|u|i|s|list|code|quote|font|color|url|img|video)([^\]]*)\]/isu",
+				"/\[[0-9a-zA-Z\W\=]+\]/iUsu",
 			),
 			"",
 			$text);

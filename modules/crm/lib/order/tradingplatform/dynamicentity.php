@@ -2,8 +2,8 @@
 
 namespace Bitrix\Crm\Order\TradingPlatform;
 
-use Bitrix\Main;
 use Bitrix\Crm;
+use Bitrix\Main;
 use Bitrix\Sale;
 
 class DynamicEntity
@@ -97,6 +97,8 @@ class DynamicEntity
 	{
 		/** @var Crm\Model\Dynamic\Type $object */
 		$object = $event->getParameter('object');
+
+		$object->fill(Main\ORM\Fields\FieldTypeMask::FLAT);
 
 		$platform = static::getInstanceByCode(static::getCodeByEntityTypeId($object->getEntityTypeId()));
 		if (!$platform->isInstalled())

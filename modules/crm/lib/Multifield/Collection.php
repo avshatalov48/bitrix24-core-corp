@@ -155,10 +155,7 @@ final class Collection implements Arrayable, \Iterator, \Countable
 		return Assembler::arrayByCollection($this);
 	}
 
-	/**
-	 * @return Value|false
-	 */
-	public function current()
+	public function current(): Value|false
 	{
 		return current($this->values);
 	}
@@ -168,7 +165,7 @@ final class Collection implements Arrayable, \Iterator, \Countable
 		next($this->values);
 	}
 
-	public function key()
+	public function key(): ?int
 	{
 		return key($this->values);
 	}

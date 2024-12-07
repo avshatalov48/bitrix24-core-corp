@@ -47,7 +47,7 @@ jn.define('im/messenger/lib/ui/base/checkbox', (require, exports, module) => {
 						justifyContent: this.style.justifyContent,
 					},
 					onClick: () => {
-						if (!this.state.disabled)
+						if (!this.state.disabled && !this.props.readOnly)
 						{
 							this.setState({checked: !this.state.checked});
 						}

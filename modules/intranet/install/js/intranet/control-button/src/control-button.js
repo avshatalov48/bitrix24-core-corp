@@ -1,7 +1,7 @@
-import {Type, Tag, Loc, Dom, Text, ajax, Reflection} from 'main.core';
-import {Menu, Popup} from 'main.popup';
-import {Messenger} from 'im.public.iframe';
-import "pull.client";
+import { Type, Tag, Loc, Dom, Text, ajax, Reflection } from 'main.core';
+import { Menu, Popup } from 'main.popup';
+import { Messenger } from 'im.public.iframe';
+import 'pull.client';
 
 export class ControlButton
 {
@@ -29,21 +29,29 @@ export class ControlButton
 
 		if (this.items.length === 0)
 		{
-			if (this.entityType === 'task')
+			switch (this.entityType)
 			{
-				this.items = ['chat', 'videocall', 'blog_post', 'calendar_event'];
-			}
-			else if (this.entityType === 'calendar_event')
-			{
-				this.items = ['chat', 'videocall', 'blog_post', 'task'];
-			}
-			else if (this.entityType === 'workgroup')
-			{
-				this.items = ['chat', 'videocall'];
-			}
-			else
-			{
-				this.items = ['chat', 'videocall', 'blog_post', 'task', 'calendar_event'];
+				case 'task': {
+					this.items = ['chat', 'videocall', 'blog_post', 'calendar_event'];
+
+					break;
+				}
+
+				case 'calendar_event': {
+					this.items = ['chat', 'videocall', 'blog_post', 'task'];
+
+					break;
+				}
+
+				case 'workgroup': {
+					this.items = ['chat', 'videocall'];
+
+					break;
+				}
+
+				default: {
+					this.items = ['chat', 'videocall', 'blog_post', 'task', 'calendar_event'];
+				}
 			}
 		}
 
@@ -60,8 +68,14 @@ export class ControlButton
 
 		this.analyticsLabel = {
 			entity: this.entityType,
-			...analyticsLabelParam
+			...analyticsLabelParam,
 		};
+
+		this.analytics = params.analytics || {};
+		if (!Type.isPlainObject(this.analytics))
+		{
+			this.analytics = {};
+		}
 
 		this.buttonClassName = params.buttonClassName || '';
 
@@ -93,7 +107,7 @@ export class ControlButton
 					postEntityType: this.entityType.toUpperCase(),
 					sourceEntityType: this.entityType.toUpperCase(),
 					sourceEntityId: this.entityId,
-					sourceEntityData : this.entityData,
+					sourceEntityData: this.entityData,
 					entityType: 'CALENDAR_EVENT',
 					entityId: data.responseData.entryId,
 				};
@@ -105,7 +119,7 @@ export class ControlButton
 
 	onPostSave(event)
 	{
-		const [ sliderEvent ] = event.getCompatData();
+		const [sliderEvent] = event.getCompatData();
 
 		if (sliderEvent.getEventId() === 'Socialnetwork.PostForm:onAdd')
 		{
@@ -116,10 +130,10 @@ export class ControlButton
 					postEntityType: this.entityType.toUpperCase(),
 					sourceEntityType: this.entityType.toUpperCase(),
 					sourceEntityId: this.entityId,
-					sourceEntityData : this.entityData,
+					sourceEntityData: this.entityData,
 					entityType: 'BLOG_POST',
 					entityId: data.successPostId,
-				}
+				};
 
 				this.addEntityComment(params);
 			}
@@ -130,7 +144,7 @@ export class ControlButton
 	{
 		const isChatButton = (!this.isVideoCallEnabled || this.mainItem === 'chat');
 		const onClickValue = (isChatButton ? this.openChat.bind(this) : this.startVideoCall.bind(this));
-		const buttonTitle = (isChatButton ? Loc.getMessage('INTRANET_JS_CONTROL_BUTTON_CHAT') : Loc.getMessage('INTRANET_JS_CONTROL_BUTTON_NAME'));
+		const buttonTitle = (isChatButton ? Loc.getMessage('INTRANET_JS_CONTROL_BUTTON_CHAT') : Loc.getMessage('INTRANET_JS_CONTROL_BUTTON_NAME_MSG_1'));
 		const buttonClass = `${isChatButton ? 'ui-btn-icon-chat-blue' : 'ui-btn-icon-camera-blue'} intranet-control-btn ui-btn-light-border ui-btn-icon-inline ${this.buttonClassName}`;
 
 		this.button = (
@@ -160,18 +174,18 @@ export class ControlButton
 	getAvailableItems()
 	{
 		return new Promise((resolve, reject) => {
-
-			let availableItems = window.sessionStorage.getItem('b24-controlbutton-available-items');
+			const availableItems = window.sessionStorage.getItem('b24-controlbutton-available-items');
 			if (availableItems)
 			{
 				resolve(availableItems);
+
 				return;
 			}
 
 			this.showLoader();
 
 			ajax.runAction('intranet.controlbutton.getAvailableItems', {
-				data: {}
+				data: {},
 			}).then((response) => {
 				window.sessionStorage.setItem('b24-controlbutton-available-items', response.data);
 				this.hideLoader();
@@ -183,14 +197,14 @@ export class ControlButton
 	showMenu()
 	{
 		this.getAvailableItems().then((availableItems) => {
-
-			this.items = this.items.filter(item => {
-				return (item && (availableItems.indexOf(item) !== -1));
+			this.items = this.items.filter((item) => {
+				return (item && (availableItems.includes(item)));
 			});
 
-			let menuItems = [];
+			const menuItems = [];
 
 			this.items.forEach((item) => {
+				// eslint-disable-next-line default-case
 				switch (item)
 				{
 					case 'videocall':
@@ -268,24 +282,17 @@ export class ControlButton
 	{
 		this.showLoader();
 
-		ajax.runAction('intranet.controlbutton.getChat', {
-			data: {
-				entityType: this.entityType,
-				entityId: this.entityId,
-				entityData: this.entityData,
-			},
-			analyticsLabel: this.analyticsLabel
-		}).then((response) => {
+		const analytics = this.analytics.openChat || {};
 
+		ajax.runAction('intranet.controlbutton.getChat', this.getAjaxConfig(analytics)).then((response) => {
 			if (response.data)
 			{
-				Messenger.openChat('chat' + parseInt(response.data));
+				Messenger.openChat(`chat${parseInt(response.data, 10)}`);
 			}
 
 			this.chatLockCounter = 0;
 			this.hideLoader();
 		}, (response) => {
-
 			if (response.errors[0].code === 'lock_error' && this.chatLockCounter < 4)
 			{
 				this.chatLockCounter++;
@@ -299,28 +306,29 @@ export class ControlButton
 		});
 	}
 
-	startVideoCall()
+	startVideoCall(videoCallContext = null)
 	{
 		this.showLoader();
 
-		ajax.runAction('intranet.controlbutton.getVideoCallChat', {
-			data: {
-				entityType: this.entityType,
-				entityId: this.entityId,
-				entityData: this.entityData,
-			},
-			analyticsLabel: this.analyticsLabel
-		}).then((response) => {
+		const analytics = this.analytics.startVideoCall || {};
+		if (
+			Type.isPlainObject(analytics)
+			&& Type.isStringFilled(analytics.c_sub_section)
+			&& videoCallContext
+		)
+		{
+			analytics.c_sub_section = videoCallContext;
+		}
 
+		ajax.runAction('intranet.controlbutton.getVideoCallChat', this.getAjaxConfig(analytics)).then((response) => {
 			if (response.data)
 			{
-				Messenger.startVideoCall('chat' + response.data, true);
+				Messenger.startVideoCall(`chat${response.data}`, true);
 			}
 
 			this.chatLockCounter = 0;
 			this.hideLoader();
 		}, (response) => {
-
 			if (response.errors[0].code === 'lock_error' && this.chatLockCounter < 4)
 			{
 				this.chatLockCounter++;
@@ -338,8 +346,8 @@ export class ControlButton
 	{
 		ajax.runAction('socialnetwork.api.livefeed.createEntityComment', {
 			data: {
-				params: params
-			}
+				params,
+			},
 		});
 	}
 
@@ -347,20 +355,15 @@ export class ControlButton
 	{
 		this.showLoader();
 
-		ajax.runAction('intranet.controlbutton.getCalendarLink', {
-			data: {
-				entityType: this.entityType,
-				entityId: this.entityId
-			},
-			analyticsLabel: this.analyticsLabel
-		}).then((response) => {
+		const analytics = this.analytics.openCalendarSlider || {};
 
+		ajax.runAction('intranet.controlbutton.getCalendarLink', this.getAjaxConfig(analytics)).then((response) => {
 			let users = [];
 
 			if (Type.isArrayLike(response.data.userIds))
 			{
 				users = response.data.userIds.map((userId) => {
-					return {id: parseInt(userId), entityId: 'user'};
+					return { id: parseInt(userId, 10), entityId: 'user' };
 				});
 			}
 
@@ -371,7 +374,7 @@ export class ControlButton
 					participantsEntityList: users,
 					entryName: response.data.name,
 					entryDescription: response.data.desc,
-				}
+				},
 			).show();
 
 			this.hideLoader();
@@ -382,15 +385,9 @@ export class ControlButton
 	{
 		this.showLoader();
 
-		ajax.runAction('intranet.controlbutton.getTaskLink', {
-			data: {
-				entityType: this.entityType,
-				entityId: this.entityId,
-				entityData: this.entityData,
-			},
-			analyticsLabel: this.analyticsLabel
-		}).then((response) => {
+		const analytics = this.analytics.openTaskSlider || {};
 
+		ajax.runAction('intranet.controlbutton.getTaskLink', this.getAjaxConfig(analytics)).then((response) => {
 			BX.SidePanel.Instance.open(response.data.link, {
 				requestMethod: 'post',
 				requestParams: response.data,
@@ -403,15 +400,9 @@ export class ControlButton
 	{
 		this.showLoader();
 
-		ajax.runAction('intranet.controlbutton.getPostLink', {
-			data: {
-				entityType: this.entityType,
-				entityId: this.entityId,
-				entityData: this.entityData,
-			},
-			analyticsLabel: this.analyticsLabel
-		}).then((response) => {
+		const analytics = this.analytics.openPostSlider || {};
 
+		ajax.runAction('intranet.controlbutton.getPostLink', this.getAjaxConfig(analytics)).then((response) => {
 			BX.SidePanel.Instance.open(
 				response.data.link,
 				{
@@ -423,11 +414,37 @@ export class ControlButton
 					},
 					data: {
 						sliderId: this.sliderId,
-					}
-				}
+					},
+				},
 			);
 			this.hideLoader();
 		});
+	}
+
+	getAjaxConfig(analytics): Object
+	{
+		const config = {
+			data: {
+				entityType: this.entityType,
+				entityId: this.entityId,
+				entityData: this.entityData,
+			},
+		};
+
+		if (
+			Type.isPlainObject(analytics)
+			&& Type.isStringFilled(analytics.event)
+			&& Type.isStringFilled(analytics.tool)
+		)
+		{
+			config.analytics = analytics;
+		}
+		else
+		{
+			config.analyticsLabel = this.analyticsLabel;
+		}
+
+		return config;
 	}
 
 	showHintPopup(message)
@@ -437,7 +454,7 @@ export class ControlButton
 			return;
 		}
 
-		new Popup('inviteHint' + Text.getRandom(8), this.button, {
+		new Popup(`inviteHint${Text.getRandom(8)}`, this.button, {
 			content: message,
 			zIndex: 15000,
 			angle: true,
@@ -449,12 +466,12 @@ export class ControlButton
 			overlay: false,
 			maxWidth: 400,
 			events: {
-				onAfterPopupShow: function () {
-					setTimeout(function () {
+				onAfterPopupShow() {
+					setTimeout(() => {
 						this.close();
-					}.bind(this), 5000);
-				}
-			}
+					}, 5000);
+				},
+			},
 		}).show();
 	}
 }

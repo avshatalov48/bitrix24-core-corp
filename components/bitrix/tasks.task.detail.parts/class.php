@@ -17,7 +17,7 @@ class TasksTaskDetailPartsComponent extends TasksBaseComponent
 		{
 			if(array_key_exists('BLOCK', $this->arParams))
 			{
-				$blockName = preg_replace('#[^a-z0-9_-]*#', '', ToLower(trim((string) $this->arParams['BLOCK'])));
+				$blockName = preg_replace('#[^a-z0-9_-]*#', '', mb_strtolower(trim((string) $this->arParams['BLOCK'])));
 				if($blockName == '')
 				{
 					ShowError('No block specified');

@@ -2,9 +2,9 @@
  * @module calendar/event-list-view/search
  */
 jn.define('calendar/event-list-view/search', (require, exports, module) => {
-	const AppTheme = require('apptheme');
 	const { debounce } = require('utils/function');
 	const { Preset } = require('calendar/event-list-view/search/preset');
+	const { Color } = require('tokens');
 
 	const MINIMAL_SEARCH_LENGTH = 3;
 	const PRESET_LIST_LAYOUT_HEIGHT = 46;
@@ -280,7 +280,7 @@ jn.define('calendar/event-list-view/search', (require, exports, module) => {
 				zIndex: 10,
 				height: visible ? PRESET_LIST_LAYOUT_HEIGHT : 0,
 				width: '100%',
-				backgroundColor: AppTheme.colors.bgNavigation,
+				backgroundColor: Color.bgNavigation.toHex(),
 			};
 		},
 		presetsScrollView: {

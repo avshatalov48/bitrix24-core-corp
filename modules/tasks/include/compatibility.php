@@ -27,4 +27,12 @@ class_alias('\\Bitrix\\Tasks\\Internals\\Task\\Template\\CheckListTable', 'Bitri
 
 class_alias('\\Bitrix\\Tasks\\Internals\\Notification\\Task\\ThrottleTable', 'Bitrix\\Tasks\\Notification\\ThrottleTable');
 
-class_alias('\\Bitrix\\Tasks\\UI', 'Bitrix\\Tasks\\Util\\UI');
+class_alias('\\Bitrix\\Tasks\\Internals\\Log\\LogFacade', '\\Bitrix\\Tasks\\Internals\\Log\\Logger');
+
+class_alias('\\Bitrix\\Tasks\\Kanban\\ProjectsTable', '\\Bitrix\\Tasks\\ProjectsTable');
+
+class_alias('\\Bitrix\\Tasks\\Integration\\Integration', '\\Bitrix\\Tasks\\Integration');
+
+class_alias('\\Bitrix\\Tasks\\Util\\Util', '\\Bitrix\\Tasks\\Util');
+
+class_alias('\\Bitrix\\Tasks\\Util\\UI', '\\Bitrix\\Tasks\\UI');

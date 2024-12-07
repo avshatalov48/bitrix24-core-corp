@@ -160,7 +160,7 @@ $isFormInline = $defaultTemplateContainerId == $templateContainerId;
 
 </div>
 
-<script type="text/javascript">
+<script>
 	BX.ready(function(){
 		(new CrmWebFormEditScript({
 			context: BX('<?=$templateContainerId?>')

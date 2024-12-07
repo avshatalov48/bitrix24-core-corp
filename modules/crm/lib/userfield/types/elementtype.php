@@ -10,7 +10,6 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Text\StringHelper;
 use Bitrix\Main\UserField\Types\StringType;
 use CCrmOwnerType;
-use CCrmPerms;
 use CUserTypeManager;
 
 Loc::loadMessages(__FILE__);
@@ -110,23 +109,39 @@ class ElementType extends StringType
 	public static function checkPermission(array $userField, $userId = false): bool
 	{
 		//permission check is disabled
-		if(!$userId)
+		if (!$userId)
 		{
 			return true;
 		}
 
-		if(!Loader::includeModule('crm'))
+		if (!Loader::includeModule('crm'))
 		{
 			return false;
 		}
 
-		$userPerms = (
-			$userId > 0
-			? CCrmPerms::GetUserPermissions($userId)
-			: CCrmPerms::GetCurrentUserPermissions()
-		);
+		if ($userId <= 0)
+		{
+			$userId = Container::getInstance()->getContext()->getUserId();
+		}
 
-		return CCrmPerms::IsAccessEnabled($userPerms);
+		$permissions = Container::getInstance()->getUserPermissions($userId);
+
+		$settings = $userField['SETTINGS'] ?? [];
+		foreach ($settings as $settingName => $settingValue)
+		{
+			if ($settingValue !== 'Y')
+			{
+				continue;
+			}
+
+			$entityTypeId = \CCrmOwnerType::ResolveID($settingName);
+			if (\CCrmOwnerType::IsDefined($entityTypeId) && $permissions->canReadType($entityTypeId))
+			{
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	/**

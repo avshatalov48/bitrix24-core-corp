@@ -2,6 +2,8 @@
 
 namespace Bitrix\Crm\Integration\UI\EntitySelector;
 
+use CCrmOwnerType;
+
 class SmartDocument extends DynamicProvider
 {
 	protected function getEntityTypeName(): string
@@ -11,10 +13,10 @@ class SmartDocument extends DynamicProvider
 
 	protected function getEntityTypeId(): int
 	{
-		return \CCrmOwnerType::SmartDocument;
+		return CCrmOwnerType::SmartDocument;
 	}
 
-	protected function getEntityTypeNameForMakeItemMethod()
+	protected function getEntityTypeNameForMakeItemMethod(): string
 	{
 		return $this->getEntityTypeName();
 	}

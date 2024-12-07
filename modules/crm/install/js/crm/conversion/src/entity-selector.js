@@ -100,6 +100,9 @@ export class EntitySelector
 					'justify-content': 'center',
 				},
 			},
+			tagSelectorOptions: {
+				textBoxWidth: 565, // same as default dialog width
+			},
 		});
 
 		this.#dialogProp.subscribe('Item:onSelect', this.#handleItemSelect.bind(this));

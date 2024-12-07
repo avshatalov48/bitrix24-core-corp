@@ -1,7 +1,6 @@
-/* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Disk = this.BX.Disk || {};
-(function (exports,ui_uploader_vue,ui_uploader_tileWidget,main_core_events,ui_uploader_core,disk_googleDrivePicker,main_core,main_popup) {
+(function (exports,ui_uploader_vue,ui_uploader_tileWidget,main_core_events,ui_buttons,ui_uploader_core,ui_infoHelper,main_core,main_popup) {
 	'use strict';
 
 	var _form = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("form");
@@ -65,10 +64,10 @@ this.BX.Disk = this.BX.Disk || {};
 	  getHtmlEditor() {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _form)[_form].getHtmlEditor();
 	  }
-	  insertFile(item) {
-	    const bbDelimiter = item.isImage ? '\n' : ' ';
-	    const htmlDelimiter = item.isImage ? '<br>' : '&nbsp;';
-	    main_core_events.EventEmitter.emit(this.getHtmlEditor(), 'OnInsertContent', [bbDelimiter + this.createItemBBCode(item) + bbDelimiter, htmlDelimiter + this.createItemHtml(item) + htmlDelimiter]);
+	  insertFile(file) {
+	    const bbDelimiter = file.isImage() ? '\n' : ' ';
+	    const htmlDelimiter = file.isImage() ? '<br>' : '&nbsp;';
+	    main_core_events.EventEmitter.emit(this.getHtmlEditor(), 'OnInsertContent', [bbDelimiter + this.createItemBBCode(file) + bbDelimiter, htmlDelimiter + this.createItemHtml(file) + htmlDelimiter]);
 	    this.syncHighlights();
 	  }
 	  removeFile(item) {
@@ -101,11 +100,11 @@ this.BX.Disk = this.BX.Disk || {};
 	    }
 	    this.syncHighlights();
 	  }
-	  selectItem(item) {
-	    item.tileWidgetData.selected = true;
+	  selectItem(file) {
+	    file.setCustomData('tileSelected', true);
 	  }
-	  deselectItem(item) {
-	    item.tileWidgetData.selected = false;
+	  deselectItem(file) {
+	    file.setCustomData('tileSelected', false);
 	  }
 	  syncHighlights() {
 	    const doc = this.getHtmlEditor().GetIframeDoc();
@@ -117,30 +116,30 @@ this.BX.Disk = this.BX.Disk || {};
 	      }
 	    });
 	    let hasInsertedItems = false;
-	    const items = babelHelpers.classPrivateFieldLooseBase(this, _form)[_form].getUserFieldControl().getItems();
-	    items.forEach(item => {
-	      if (inserted.has(item.serverFileId)) {
+	    const files = babelHelpers.classPrivateFieldLooseBase(this, _form)[_form].getUserFieldControl().getFiles();
+	    files.forEach(file => {
+	      if (inserted.has(file.getServerFileId())) {
 	        hasInsertedItems = true;
-	        this.selectItem(item);
+	        this.selectItem(file);
 	      } else {
-	        this.deselectItem(item);
+	        this.deselectItem(file);
 	      }
 	    });
 	    if (babelHelpers.classPrivateFieldLooseBase(this, _form)[_form].getUserFieldControl().getPhotoTemplateMode() === 'auto') {
 	      babelHelpers.classPrivateFieldLooseBase(this, _form)[_form].getUserFieldControl().setPhotoTemplate(hasInsertedItems ? 'gallery' : 'grid');
 	    }
 	  }
-	  createItemHtml(item, id) {
+	  createItemHtml(file, id) {
 	    const tagId = this.getHtmlEditor().SetBxTag(false, {
 	      tag: babelHelpers.classPrivateFieldLooseBase(this, _parserId)[_parserId],
-	      serverFileId: item.serverFileId,
+	      serverFileId: file.getServerFileId(),
 	      hideContextMenu: true,
-	      fileId: item.serverFileId
+	      fileId: file.getServerFileId()
 	    });
-	    if (item.isImage) {
-	      const imageSrc = this.getHtmlEditor().bbCode ? item.previewUrl : item.serverPreviewUrl;
-	      const previewWidth = this.getHtmlEditor().bbCode ? item.previewWidth : item.serverPreviewWidth;
-	      const previewHeight = this.getHtmlEditor().bbCode ? item.previewHeight : item.serverPreviewHeight;
+	    if (file.isImage()) {
+	      const imageSrc = this.getHtmlEditor().bbCode ? file.getPreviewUrl() : file.getServerPreviewUrl();
+	      const previewWidth = this.getHtmlEditor().bbCode ? file.getPreviewWidth() : file.getServerPreviewWidth();
+	      const previewHeight = this.getHtmlEditor().bbCode ? file.getPreviewHeight() : file.getServerPreviewHeight();
 	      const renderWidth = 600; // half size of imagePreviewWidth
 	      const renderHeight = 600; // half size of imagePreviewHeight
 	      const ratioWidth = renderWidth / previewWidth;
@@ -149,14 +148,14 @@ this.BX.Disk = this.BX.Disk || {};
 	      const useOriginalSize = ratio > 1; // image is too small
 	      const width = useOriginalSize ? previewWidth : previewWidth * ratio;
 	      const height = useOriginalSize ? previewHeight : previewHeight * ratio;
-	      return `<img style="max-width: 90%;" width="${width}" height="${height}" data-bx-file-id="${main_core.Text.encode(item.serverFileId)}" id="${tagId}" src="${imageSrc}" title="${main_core.Text.encode(item.name)}" data-bx-paste-check="Y" />`;
-	    } else if (item.customData.fileType === 'player') {
-	      return `<img contenteditable="false" class="bxhtmled-player-surrogate" data-bx-file-id="${main_core.Text.encode(item.serverFileId)}" id="${tagId}" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-bx-paste-check="Y" />`;
+	      return `<img style="max-width: 90%;" width="${width}" height="${height}" data-bx-file-id="${main_core.Text.encode(file.getServerFileId())}" id="${tagId}" src="${imageSrc}" title="${main_core.Text.encode(file.getName())}" data-bx-paste-check="Y" />`;
+	    } else if (file.getCustomData('fileType') === 'player') {
+	      return `<img contenteditable="false" class="bxhtmled-player-surrogate" data-bx-file-id="${main_core.Text.encode(file.getServerFileId())}" id="${tagId}" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" data-bx-paste-check="Y" />`;
 	    }
-	    return `<span contenteditable="false" data-bx-file-id="${main_core.Text.encode(item.serverFileId)}" id="${tagId}" style="color: #2067B0; border-bottom: 1px dashed #2067B0; margin:0 2px;">${main_core.Text.encode(item.name)}</span>`;
+	    return `<span contenteditable="false" data-bx-file-id="${main_core.Text.encode(file.getServerFileId())}" id="${tagId}" style="color: #2067B0; border-bottom: 1px dashed #2067B0; margin:0 2px;">${main_core.Text.encode(file.getName())}</span>`;
 	  }
-	  createItemBBCode(item) {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _tag)[_tag].replace('#id#', item.serverFileId);
+	  createItemBBCode(file) {
+	    return babelHelpers.classPrivateFieldLooseBase(this, _tag)[_tag].replace('#id#', file.getServerFileId());
 	  }
 	}
 	function _init2(htmlEditor) {
@@ -172,13 +171,13 @@ this.BX.Disk = this.BX.Disk || {};
 	      objectId,
 	      attachedId
 	    } = babelHelpers.classPrivateFieldLooseBase(this, _getIds)[_getIds](id);
-	    const items = babelHelpers.classPrivateFieldLooseBase(this, _form)[_form].getUserFieldControl().getItems();
-	    const item = items.find(item => {
-	      return item.serverFileId === attachedId || item.customData.objectId === objectId;
+	    const files = babelHelpers.classPrivateFieldLooseBase(this, _form)[_form].getUserFieldControl().getFiles();
+	    const insertedFile = files.find(file => {
+	      return file.getServerFileId() === attachedId || file.getCustomData('objectId') === objectId;
 	    });
-	    if (item) {
-	      this.selectItem(item);
-	      return this.createItemHtml(item, id);
+	    if (insertedFile) {
+	      this.selectItem(insertedFile);
+	      return this.createItemHtml(insertedFile, id);
 	    }
 	    return str;
 	  });
@@ -187,12 +186,12 @@ this.BX.Disk = this.BX.Disk || {};
 	  const {
 	    serverFileId
 	  } = bxTag;
-	  const items = babelHelpers.classPrivateFieldLooseBase(this, _form)[_form].getUserFieldControl().getItems();
-	  const item = items.find(item => {
-	    return item.serverFileId === serverFileId;
+	  const files = babelHelpers.classPrivateFieldLooseBase(this, _form)[_form].getUserFieldControl().getFiles();
+	  const uploaderFile = files.find(file => {
+	    return file.getServerFileId() === serverFileId;
 	  });
-	  if (item) {
-	    return this.createItemBBCode(item);
+	  if (uploaderFile) {
+	    return this.createItemBBCode(uploaderFile);
 	  }
 	  return '';
 	}
@@ -227,9 +226,17 @@ this.BX.Disk = this.BX.Disk || {};
 	var _handleReinitializeBefore = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleReinitializeBefore");
 	var _addCreateDocumentButton = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("addCreateDocumentButton");
 	var _handleButtonClick = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleButtonClick");
+	var _handleUploaderPanelToggle = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleUploaderPanelToggle");
+	var _handleDocumentPanelToggle = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("handleDocumentPanelToggle");
 	class MainPostForm extends main_core_events.EventEmitter {
 	  constructor(userFieldControl, options) {
 	    super();
+	    Object.defineProperty(this, _handleDocumentPanelToggle, {
+	      value: _handleDocumentPanelToggle2
+	    });
+	    Object.defineProperty(this, _handleUploaderPanelToggle, {
+	      value: _handleUploaderPanelToggle2
+	    });
 	    Object.defineProperty(this, _handleButtonClick, {
 	      value: _handleButtonClick2
 	    });
@@ -291,6 +298,8 @@ this.BX.Disk = this.BX.Disk || {};
 	        babelHelpers.classPrivateFieldLooseBase(this, _addCreateDocumentButton)[_addCreateDocumentButton]();
 	      }
 	    });
+	    babelHelpers.classPrivateFieldLooseBase(this, _userFieldControl)[_userFieldControl].subscribe('onUploaderPanelToggle', babelHelpers.classPrivateFieldLooseBase(this, _handleUploaderPanelToggle)[_handleUploaderPanelToggle].bind(this));
+	    babelHelpers.classPrivateFieldLooseBase(this, _userFieldControl)[_userFieldControl].subscribe('onDocumentPanelToggle', babelHelpers.classPrivateFieldLooseBase(this, _handleDocumentPanelToggle)[_handleDocumentPanelToggle].bind(this));
 	    main_core.Event.ready(babelHelpers.classPrivateFieldLooseBase(this, _handleDocumentReady)[_handleDocumentReady].bind(this));
 	  }
 	  getUserFieldControl() {
@@ -341,6 +350,10 @@ this.BX.Disk = this.BX.Disk || {};
 	        container.removeAttribute('data-bx-button-status');
 	      }
 	    }
+	  }
+	  insertIntoText(item) {
+	    const file = babelHelpers.classPrivateFieldLooseBase(this, _userFieldControl)[_userFieldControl].getFile(item.id);
+	    babelHelpers.classPrivateFieldLooseBase(this, _htmlParser)[_htmlParser].insertFile(file);
 	  }
 	}
 	function _handleDocumentReady2() {
@@ -403,12 +416,9 @@ this.BX.Disk = this.BX.Disk || {};
 	                // }
 	              },
 	              [ui_uploader_core.FileEvent.UPLOAD_COMPLETE]: event => {
-	                const file = event.getTarget();
-	                const item = this.getUserFieldControl().getItem(file.getId());
-	                if (item) {
-	                  this.getUserFieldControl().showUploaderPanel();
-	                  this.getParser().insertFile(item);
-	                }
+	                const uploadedFile = event.getTarget();
+	                this.getUserFieldControl().showUploaderPanel();
+	                this.getParser().insertFile(uploadedFile);
 	              }
 	            }
 	          });
@@ -503,11 +513,8 @@ this.BX.Disk = this.BX.Disk || {};
 	      events: {
 	        [ui_uploader_core.FileEvent.UPLOAD_COMPLETE]: event => {
 	          const file = event.getTarget();
-	          const item = this.getUserFieldControl().getItem(file.getId());
-	          if (item) {
-	            this.getUserFieldControl().showUploaderPanel();
-	            this.getParser().insertFile(item);
-	          }
+	          this.getUserFieldControl().showUploaderPanel();
+	          this.getParser().insertFile(file);
 	        }
 	      }
 	    });
@@ -538,7 +545,7 @@ this.BX.Disk = this.BX.Disk || {};
 	                  width: file.getPreviewWidth(),
 	                  height: file.getPreviewHeight()
 	                },
-	                html: this.getParser().createItemHtml(item)
+	                html: this.getParser().createItemHtml(file)
 	              });
 	            } else {
 	              reject(new ui_uploader_core.UploaderError('WRONG_FILE_SOURCE'));
@@ -666,6 +673,22 @@ this.BX.Disk = this.BX.Disk || {};
 	    this.getUserFieldControl().showDocumentPanel();
 	  }
 	}
+	function _handleUploaderPanelToggle2(event) {
+	  const isOpen = event.getData().isOpen;
+	  if (isOpen) {
+	    this.selectFileButton();
+	  } else {
+	    this.deselectFileButton();
+	  }
+	}
+	function _handleDocumentPanelToggle2(event) {
+	  const isOpen = event.getData().isOpen;
+	  if (isOpen) {
+	    this.selectCreateDocumentButton();
+	  } else {
+	    this.deselectCreateDocumentButton();
+	  }
+	}
 
 	let _$1 = t => t,
 	  _t$1,
@@ -720,13 +743,25 @@ this.BX.Disk = this.BX.Disk || {};
 	    const options = main_core.Type.isPlainObject(widgetComponent.widgetOptions) ? widgetComponent.widgetOptions : {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _photoTemplateFieldName)[_photoTemplateFieldName] = main_core.Type.isStringFilled(options.photoTemplateFieldName) ? options.photoTemplateFieldName : null;
 	    babelHelpers.classPrivateFieldLooseBase(this, _allowDocumentFieldName)[_allowDocumentFieldName] = main_core.Type.isStringFilled(options.allowDocumentFieldName) ? options.allowDocumentFieldName : null;
+	    babelHelpers.classPrivateFieldLooseBase(this, _adapter)[_adapter].subscribe('Item:onAdd', event => {
+	      const item = event.getData().item;
+	      this.emit('Item:onAdd', {
+	        item
+	      });
+	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _adapter)[_adapter].subscribe('Item:onComplete', event => {
 	      const item = event.getData().item;
 	      this.setDocumentEdit(item);
+	      this.emit('Item:onComplete', {
+	        item
+	      });
 	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _adapter)[_adapter].subscribe('Item:onRemove', event => {
 	      const item = event.getData().item;
 	      this.removeAllowDocumentEditInput(item);
+	      this.emit('Item:onRemove', {
+	        item
+	      });
 	    });
 	    if (options.disableLocalEdit) {
 	      // it would be better to load disk.document on demand
@@ -734,15 +769,20 @@ this.BX.Disk = this.BX.Disk || {};
 	    }
 	    if (babelHelpers.classPrivateFieldLooseBase(this, _photoTemplateFieldName)[_photoTemplateFieldName] !== null && this.getUploader().getHiddenFieldsContainer() !== null) {
 	      babelHelpers.classPrivateFieldLooseBase(this, _photoTemplateInput)[_photoTemplateInput] = main_core.Tag.render(_t$1 || (_t$1 = _$1`
-					<input 
-						name="${0}" 
-						value="${0}"
-						type="hidden" 
-					/>
-				`), babelHelpers.classPrivateFieldLooseBase(this, _photoTemplateFieldName)[_photoTemplateFieldName], main_core.Type.isStringFilled(options.photoTemplate) ? options.photoTemplate : 'grid');
+				<input 
+					name="${0}" 
+					value="${0}"
+					type="hidden" 
+				/>
+			`), babelHelpers.classPrivateFieldLooseBase(this, _photoTemplateFieldName)[_photoTemplateFieldName], main_core.Type.isStringFilled(options.photoTemplate) ? options.photoTemplate : 'grid');
 	      this.setPhotoTemplateMode(options.photoTemplateMode);
 	      main_core.Dom.append(babelHelpers.classPrivateFieldLooseBase(this, _photoTemplateInput)[_photoTemplateInput], this.getUploader().getHiddenFieldsContainer());
 	    }
+	    if (this.getUploader().getHiddenFieldsContainer() === null && (babelHelpers.classPrivateFieldLooseBase(this, _photoTemplateFieldName)[_photoTemplateFieldName] !== null || babelHelpers.classPrivateFieldLooseBase(this, _allowDocumentFieldName)[_allowDocumentFieldName] !== null)) {
+	      // eslint-disable-next-line no-console
+	      console.warn('DiskUserField: to use "photoTemplateFieldName" or "allowDocumentFieldName" options ' + 'you have to set "hiddenFieldsContainer" in the uploader options.');
+	    }
+	    this.subscribeFromOptions(options.events);
 	    const eventObject = main_core.Type.isElementNode(options.eventObject) ? options.eventObject : null;
 	    if (eventObject) {
 	      babelHelpers.classPrivateFieldLooseBase(this, _mainPostForm)[_mainPostForm] = new MainPostForm(this, {
@@ -798,47 +838,35 @@ this.BX.Disk = this.BX.Disk || {};
 	  nextTick() {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _widgetComponent)[_widgetComponent].$nextTick();
 	  }
-	  show() {
-	    babelHelpers.classPrivateFieldLooseBase(this, _widgetComponent)[_widgetComponent].show(true);
-	  }
 	  hide() {
-	    babelHelpers.classPrivateFieldLooseBase(this, _widgetComponent)[_widgetComponent].hide(true);
-	    this.hideUploaderPanel();
-	    this.hideDocumentPanel();
+	    babelHelpers.classPrivateFieldLooseBase(this, _widgetComponent)[_widgetComponent].priorityVisibility = 'hidden';
+	    this.emit('onUploaderPanelToggle', {
+	      isOpen: false
+	    });
+	    this.emit('onDocumentPanelToggle', {
+	      isOpen: false
+	    });
 	  }
 	  showUploaderPanel() {
-	    this.show();
-	    this.hideDocumentPanel();
-	    babelHelpers.classPrivateFieldLooseBase(this, _widgetComponent)[_widgetComponent].showUploaderPanel();
-	    if (this.getMainPostForm()) {
-	      this.getMainPostForm().selectFileButton();
-	    }
-	  }
-	  hideUploaderPanel() {
-	    babelHelpers.classPrivateFieldLooseBase(this, _widgetComponent)[_widgetComponent].hideUploaderPanel();
-	    if (this.getMainPostForm()) {
-	      this.getMainPostForm().deselectFileButton();
-	    }
+	    babelHelpers.classPrivateFieldLooseBase(this, _widgetComponent)[_widgetComponent].priorityVisibility = 'uploader';
+	    this.emit('onUploaderPanelToggle', {
+	      isOpen: true
+	    });
+	    this.emit('onDocumentPanelToggle', {
+	      isOpen: false
+	    });
 	  }
 	  showDocumentPanel() {
 	    if (!this.canCreateDocuments()) {
 	      return;
 	    }
-	    this.show();
-	    this.hideUploaderPanel();
-	    babelHelpers.classPrivateFieldLooseBase(this, _widgetComponent)[_widgetComponent].showDocumentPanel();
-	    if (this.getMainPostForm()) {
-	      this.getMainPostForm().selectCreateDocumentButton();
-	    }
-	  }
-	  hideDocumentPanel() {
-	    if (!this.canCreateDocuments()) {
-	      return;
-	    }
-	    babelHelpers.classPrivateFieldLooseBase(this, _widgetComponent)[_widgetComponent].hideDocumentPanel();
-	    if (this.getMainPostForm()) {
-	      this.getMainPostForm().deselectCreateDocumentButton();
-	    }
+	    babelHelpers.classPrivateFieldLooseBase(this, _widgetComponent)[_widgetComponent].priorityVisibility = 'documents';
+	    this.emit('onUploaderPanelToggle', {
+	      isOpen: false
+	    });
+	    this.emit('onDocumentPanelToggle', {
+	      isOpen: true
+	    });
 	  }
 	  clear() {
 	    this.getUploader().removeFiles({
@@ -852,7 +880,7 @@ this.BX.Disk = this.BX.Disk || {};
 	    return babelHelpers.classPrivateFieldLooseBase(this, _allowDocumentFieldName)[_allowDocumentFieldName] !== null && this.getUploader().getHiddenFieldsContainer() !== null;
 	  }
 	  canItemAllowEdit(item) {
-	    return this.canAllowDocumentEdit() && item.customData['isEditable'] === true && item.customData['canUpdate'] === true;
+	    return this.canAllowDocumentEdit() && item.customData.isEditable === true && item.customData.canUpdate === true;
 	  }
 	  getAllowDocumentEditInput(item) {
 	    const selector = `input[name='${babelHelpers.classPrivateFieldLooseBase(this, _allowDocumentFieldName)[_allowDocumentFieldName]}[${item.serverFileId}]']`;
@@ -876,13 +904,13 @@ this.BX.Disk = this.BX.Disk || {};
 	      input = main_core.Tag.render(_t2 || (_t2 = _$1`<input name="${0}[${0}]" type="hidden" />`), babelHelpers.classPrivateFieldLooseBase(this, _allowDocumentFieldName)[_allowDocumentFieldName], item.serverFileId);
 	      main_core.Dom.append(input, this.getUploader().getHiddenFieldsContainer());
 	    }
-	    allowEdit = allowEdit === null ? item.customData['allowEdit'] === true : allowEdit;
+	    allowEdit = allowEdit === null ? item.customData.allowEdit === true : allowEdit;
 	    input.value = allowEdit ? 1 : 0;
 	    const file = this.getFile(item.id);
 	    file.setCustomData('allowEdit', allowEdit);
 	  }
 	  canChangePhotoTemplate() {
-	    return babelHelpers.classPrivateFieldLooseBase(this, _photoTemplateFieldName)[_photoTemplateFieldName] !== null;
+	    return babelHelpers.classPrivateFieldLooseBase(this, _photoTemplateInput)[_photoTemplateInput] !== null;
 	  }
 	  setPhotoTemplate(name) {
 	    if (main_core.Type.isStringFilled(name) && babelHelpers.classPrivateFieldLooseBase(this, _photoTemplateInput)[_photoTemplateInput] !== null) {
@@ -924,6 +952,14 @@ this.BX.Disk = this.BX.Disk || {};
 	      return importHandlers;
 	    }
 	    return {};
+	  }
+	  canUseImportService() {
+	    const settings = main_core.Extension.getSettings('disk.uploader.user-field-widget');
+	    return settings.get('canUseImport', true);
+	  }
+	  getImportFeatureId() {
+	    const settings = main_core.Extension.getSettings('disk.uploader.user-field-widget');
+	    return settings.get('importFeatureId', '');
 	  }
 	}
 
@@ -984,40 +1020,17 @@ this.BX.Disk = this.BX.Disk || {};
 	    babelHelpers.classPrivateFieldLooseBase(this, _folderDialogId)[_folderDialogId] = `folder-dialog-${main_core.Text.getRandom(5)}`;
 	  }
 	  build() {
-	    var _babelHelpers$classPr, _babelHelpers$classPr2;
-	    const firstItemId = (_babelHelpers$classPr = (_babelHelpers$classPr2 = babelHelpers.classPrivateFieldLooseBase(this, _menu)[_menu].getMenuItems()[0]) == null ? void 0 : _babelHelpers$classPr2.id) != null ? _babelHelpers$classPr : '';
 	    babelHelpers.classPrivateFieldLooseBase(this, _menu)[_menu].getPopupWindow().setMaxWidth(500);
-	    babelHelpers.classPrivateFieldLooseBase(this, _menu)[_menu].addMenuItem({
-	      id: 'filesize',
-	      text: main_core.Loc.getMessage('DISK_UF_WIDGET_FILE_SIZE', {
-	        '#filesize#': babelHelpers.classPrivateFieldLooseBase(this, _item)[_item].sizeFormatted
-	      }),
-	      disabled: true
-	    }, firstItemId);
-	    babelHelpers.classPrivateFieldLooseBase(this, _menu)[_menu].addMenuItem({
-	      delimiter: true
-	    }, firstItemId);
-	    const postForm = babelHelpers.classPrivateFieldLooseBase(this, _userFieldControl$1)[_userFieldControl$1].getMainPostForm();
-	    if (postForm) {
-	      babelHelpers.classPrivateFieldLooseBase(this, _menu)[_menu].addMenuItem({
-	        id: 'insert-into-text',
-	        text: main_core.Loc.getMessage('DISK_UF_WIDGET_INSERT_INTO_THE_TEXT'),
-	        onclick: () => {
-	          babelHelpers.classPrivateFieldLooseBase(this, _menu)[_menu].close();
-	          postForm.getParser().insertFile(babelHelpers.classPrivateFieldLooseBase(this, _item)[_item]);
-	        }
-	      }, firstItemId);
-	    }
 	    if (babelHelpers.classPrivateFieldLooseBase(this, _userFieldControl$1)[_userFieldControl$1].canItemAllowEdit(babelHelpers.classPrivateFieldLooseBase(this, _item)[_item])) {
 	      babelHelpers.classPrivateFieldLooseBase(this, _menu)[_menu].addMenuItem({
 	        delimiter: true
 	      });
 	      babelHelpers.classPrivateFieldLooseBase(this, _menu)[_menu].addMenuItem({
 	        id: 'allow-edit',
-	        className: babelHelpers.classPrivateFieldLooseBase(this, _item)[_item].customData['allowEdit'] === true ? 'disk-user-field-item-checked' : '',
+	        className: babelHelpers.classPrivateFieldLooseBase(this, _item)[_item].customData.allowEdit === true ? 'disk-user-field-item-checked' : '',
 	        text: main_core.Loc.getMessage('DISK_UF_WIDGET_ALLOW_DOCUMENT_EDIT'),
 	        onclick: (event, menuItem) => {
-	          if (babelHelpers.classPrivateFieldLooseBase(this, _item)[_item].customData['allowEdit'] === true) {
+	          if (babelHelpers.classPrivateFieldLooseBase(this, _item)[_item].customData.allowEdit === true) {
 	            babelHelpers.classPrivateFieldLooseBase(this, _userFieldControl$1)[_userFieldControl$1].setDocumentEdit(babelHelpers.classPrivateFieldLooseBase(this, _item)[_item], false);
 	          } else {
 	            babelHelpers.classPrivateFieldLooseBase(this, _userFieldControl$1)[_userFieldControl$1].setDocumentEdit(babelHelpers.classPrivateFieldLooseBase(this, _item)[_item], true);
@@ -1026,7 +1039,7 @@ this.BX.Disk = this.BX.Disk || {};
 	        }
 	      });
 	    }
-	    if (babelHelpers.classPrivateFieldLooseBase(this, _item)[_item].customData['canRename']) {
+	    if (babelHelpers.classPrivateFieldLooseBase(this, _item)[_item].customData.canRename) {
 	      babelHelpers.classPrivateFieldLooseBase(this, _menu)[_menu].addMenuItem({
 	        delimiter: true
 	      });
@@ -1046,26 +1059,26 @@ this.BX.Disk = this.BX.Disk || {};
 	        }]
 	      });
 	    }
-	    if (main_core.Type.isStringFilled(babelHelpers.classPrivateFieldLooseBase(this, _item)[_item].customData['storage'])) {
+	    if (main_core.Type.isStringFilled(babelHelpers.classPrivateFieldLooseBase(this, _item)[_item].customData.storage)) {
 	      babelHelpers.classPrivateFieldLooseBase(this, _menu)[_menu].addMenuItem({
 	        delimiter: true
-	        //text: Loc.getMessage('DISK_UF_WIDGET_SAVED_IN_DISK_FOLDER'),
+	        // text: Loc.getMessage('DISK_UF_WIDGET_SAVED_IN_DISK_FOLDER'),
 	      });
 
-	      if (babelHelpers.classPrivateFieldLooseBase(this, _item)[_item].customData['canMove']) {
+	      if (babelHelpers.classPrivateFieldLooseBase(this, _item)[_item].customData.canMove) {
 	        babelHelpers.classPrivateFieldLooseBase(this, _menu)[_menu].addMenuItem({
 	          id: 'storage',
-	          text: babelHelpers.classPrivateFieldLooseBase(this, _item)[_item].customData['storage'] + '&mldr;',
+	          text: `${babelHelpers.classPrivateFieldLooseBase(this, _item)[_item].customData.storage}&mldr;`,
 	          onclick: () => {
 	            this.openFolderDialog();
 	            babelHelpers.classPrivateFieldLooseBase(this, _menu)[_menu].close();
 	          },
-	          disabled: babelHelpers.classPrivateFieldLooseBase(this, _item)[_item].tileWidgetData.selected === true
+	          disabled: babelHelpers.classPrivateFieldLooseBase(this, _item)[_item].customData.tileSelected === true
 	        });
 	      } else {
 	        babelHelpers.classPrivateFieldLooseBase(this, _menu)[_menu].addMenuItem({
 	          id: 'storage',
-	          text: babelHelpers.classPrivateFieldLooseBase(this, _item)[_item].customData['storage'],
+	          text: babelHelpers.classPrivateFieldLooseBase(this, _item)[_item].customData.storage,
 	          disabled: true
 	        });
 	      }
@@ -1075,8 +1088,8 @@ this.BX.Disk = this.BX.Disk || {};
 	    return new Promise((resolve, reject) => {
 	      main_core.ajax.runAction('disk.api.commonActions.rename', {
 	        data: {
-	          objectId: babelHelpers.classPrivateFieldLooseBase(this, _item)[_item].customData['objectId'],
-	          newName: newName,
+	          objectId: babelHelpers.classPrivateFieldLooseBase(this, _item)[_item].customData.objectId,
+	          newName,
 	          autoCorrect: true,
 	          generateUniqueName: true
 	        }
@@ -1107,7 +1120,7 @@ this.BX.Disk = this.BX.Disk || {};
 	          const folderId = selectedItem.id === 'root' ? tab.rootObjectId : selectedItem.id;
 	          main_core.ajax.runAction('disk.api.commonActions.move', {
 	            data: {
-	              objectId: babelHelpers.classPrivateFieldLooseBase(this, _item)[_item].customData['objectId'],
+	              objectId: babelHelpers.classPrivateFieldLooseBase(this, _item)[_item].customData.objectId,
 	              toFolderId: folderId
 	            }
 	          }).then(response => {
@@ -1131,6 +1144,8 @@ this.BX.Disk = this.BX.Disk || {};
 	      if (BX.DiskFileDialog.popupWindow === null) {
 	        BX.DiskFileDialog.openDialog(babelHelpers.classPrivateFieldLooseBase(this, _folderDialogId)[_folderDialogId]);
 	      }
+	    }).catch(() => {
+	      // just ignore
 	    });
 	  }
 	}
@@ -1430,19 +1445,14 @@ this.BX.Disk = this.BX.Disk || {};
 	        dataType: 'json',
 	        onsuccess(data) {
 	          if (data.authUrl) {
-	            BX.util.popup(data.authUrl, 1030, 700);
-	            main_core.Event.bind(window, 'hashchange', () => {
-	              const matches = document.location.hash.match(/external-auth-(\w+)/);
-	              if (!matches) {
-	                return;
-	              }
-	              BX.DiskFileDialog.sendRequest = false;
-	              openCloudFileDialog(options);
-	            });
-	          } else {
-	            const picker = new disk_googleDrivePicker.GoogleDrivePicker(data.clientId, data.appId, data.apiKey, data.accessToken, BX.DiskFileDialog.obCallback[dialogId]);
-	            picker.loadAndOpenPicker();
+	            openAuthPopup(data.authUrl, options);
+	            return;
 	          }
+	          initGooglePicker(data, dialogId).then(picker => {
+	            picker.loadAndShowPicker();
+	          }).catch(error => {
+	            console.error(error);
+	          });
 	        },
 	        onfailure(data) {
 	          BX.DiskFileDialog.sendRequest = false;
@@ -1453,6 +1463,24 @@ this.BX.Disk = this.BX.Disk || {};
 	    if (BX.DiskFileDialog.popupWindow === null) {
 	      BX.DiskFileDialog.openDialog(dialogId);
 	    }
+	  });
+	};
+	const openAuthPopup = function (authUrl, dialogOptions) {
+	  BX.util.popup(authUrl, 1030, 700);
+	  main_core.Event.bind(window, 'hashchange', () => {
+	    const matches = document.location.hash.match(/external-auth-(\w+)/);
+	    if (!matches) {
+	      return;
+	    }
+	    BX.DiskFileDialog.sendRequest = false;
+	    openCloudFileDialog(dialogOptions);
+	  });
+	};
+	const initGooglePicker = async function (data, dialogId) {
+	  return main_core.Runtime.loadExtension('disk.google-drive-picker').then(({
+	    GoogleDrivePicker
+	  }) => {
+	    return new GoogleDrivePicker(data.clientId, data.appId, data.apiKey, data.accessToken, BX.DiskFileDialog.obCallback[dialogId]);
 	  });
 	};
 
@@ -1500,7 +1528,7 @@ this.BX.Disk = this.BX.Disk || {};
 	      this.loader = null;
 	    }
 	  },
-	  template: `<span ref="container"></span>`
+	  template: '<span ref="container"></span>'
 	};
 
 	const ControlPanel = {
@@ -1518,6 +1546,8 @@ this.BX.Disk = this.BX.Disk || {};
 	    this.fileDialogId = `file-dialog-${main_core.Text.getRandom(5)}`;
 	    this.cloudDialogId = `cloud-dialog-${main_core.Text.getRandom(5)}`;
 	    this.importServices = this.userFieldControl.getImportServices();
+	    this.canUseImportService = this.userFieldControl.canUseImportService();
+	    this.importFeatureId = this.userFieldControl.getImportFeatureId();
 	  },
 	  mounted() {
 	    this.uploader.assignBrowse(this.$refs.upload);
@@ -1540,6 +1570,12 @@ this.BX.Disk = this.BX.Disk || {};
 	      });
 	    },
 	    openCloudFileDialog(serviceId) {
+	      if (!this.canUseImportService) {
+	        ui_infoHelper.FeaturePromotersRegistry.getPromoter({
+	          featureId: this.importFeatureId
+	        }).show();
+	        return;
+	      }
 	      if (this.showCloudDialogLoader) {
 	        return;
 	      }
@@ -1560,72 +1596,72 @@ this.BX.Disk = this.BX.Disk || {};
 	  },
 	  // language=Vue
 	  template: `
-	<div class="disk-user-field-panel">
-		<div class="disk-user-field-panel-file-wrap">
-			<div class="disk-user-field-panel-card-box disk-user-field-panel-card-file" ref="upload">
-				<div class="disk-user-field-panel-card disk-user-field-panel-card-icon--upload">
-					<div class="disk-user-field-panel-card-content">
-						<div class="disk-user-field-panel-card-icon"></div>
-						<div class="disk-user-field-panel-card-btn"></div>
-						<div class="disk-user-field-panel-card-name">{{ getMessage('DISK_UF_WIDGET_UPLOAD_FILES') }}</div>
+		<div class="disk-user-field-panel">
+			<div class="disk-user-field-panel-file-wrap">
+				<div class="disk-user-field-panel-card-box disk-user-field-panel-card-file" ref="upload">
+					<div class="disk-user-field-panel-card disk-user-field-panel-card-icon--upload">
+						<div class="disk-user-field-panel-card-content">
+							<div class="disk-user-field-panel-card-icon"></div>
+							<div class="disk-user-field-panel-card-btn"></div>
+							<div class="disk-user-field-panel-card-name">{{ getMessage('DISK_UF_WIDGET_UPLOAD_FILES') }}</div>
+						</div>
 					</div>
 				</div>
-			</div>
-			<div class="disk-user-field-panel-card-box disk-user-field-panel-card-file" @click="openDiskFileDialog">
-				<div class="disk-user-field-panel-card disk-user-field-panel-card-icon--b24">
-					<div class="disk-user-field-panel-card-content">
-						<Loader v-if="showDialogLoader" :offset="{ top: '-7px' }" />
-						<div class="disk-user-field-panel-card-icon"></div>
-						<div class="disk-user-field-panel-card-btn"></div>
-						<div class="disk-user-field-panel-card-name">{{ getMessage('DISK_UF_WIDGET_MY_DRIVE') }}</div>
+				<div class="disk-user-field-panel-card-box disk-user-field-panel-card-file" @click="openDiskFileDialog">
+					<div class="disk-user-field-panel-card disk-user-field-panel-card-icon--b24">
+						<div class="disk-user-field-panel-card-content">
+							<Loader v-if="showDialogLoader" :offset="{ top: '-7px' }" />
+							<div class="disk-user-field-panel-card-icon"></div>
+							<div class="disk-user-field-panel-card-btn"></div>
+							<div class="disk-user-field-panel-card-name">{{ getMessage('DISK_UF_WIDGET_MY_DRIVE') }}</div>
+						</div>
 					</div>
 				</div>
-			</div>
-			<div class="disk-user-field-panel-card-divider"></div>
-			<div 
-				class="disk-user-field-panel-card-box disk-user-field-panel-card-file"
-				v-if="importServices['gdrive']"
-				@click="openCloudFileDialog('gdrive')"
-			>
-				<div class="disk-user-field-panel-card disk-user-field-panel-card-icon--google-docs">
-					<div class="disk-user-field-panel-card-content">
-						<Loader v-if="showCloudDialogLoader && currentServiceId === 'gdrive'" :offset="{ top: '-7px' }" />
-						<div class="disk-user-field-panel-card-icon"></div>
-						<div class="disk-user-field-panel-card-btn"></div>
-						<div class="disk-user-field-panel-card-name">{{ importServices['gdrive']['name'] }}</div>
+				<div class="disk-user-field-panel-card-divider"></div>
+				<div 
+					class="disk-user-field-panel-card-box disk-user-field-panel-card-file"
+					v-if="importServices['gdrive']"
+					@click="openCloudFileDialog('gdrive')"
+				>
+					<div class="disk-user-field-panel-card disk-user-field-panel-card-icon--google-docs">
+						<div class="disk-user-field-panel-card-content">
+							<Loader v-if="showCloudDialogLoader && currentServiceId === 'gdrive'" :offset="{ top: '-7px' }" />
+							<div class="disk-user-field-panel-card-icon"></div>
+							<div class="disk-user-field-panel-card-btn"></div>
+							<div class="disk-user-field-panel-card-name">{{ importServices['gdrive']['name'] }}</div>
+						</div>
 					</div>
 				</div>
-			</div>
-			<div 
-				class="disk-user-field-panel-card-box disk-user-field-panel-card-file"
-				v-if="importServices['office365']"
-				@click="openCloudFileDialog('office365')"
-			>
-				<div class="disk-user-field-panel-card disk-user-field-panel-card-icon--office365">
-					<div class="disk-user-field-panel-card-content">
-						<Loader v-if="showCloudDialogLoader && currentServiceId === 'office365'" :offset="{ top: '-7px' }" />
-						<div class="disk-user-field-panel-card-icon"></div>
-						<div class="disk-user-field-panel-card-btn"></div>
-						<div class="disk-user-field-panel-card-name">{{ importServices['office365']['name'] }}</div>
+				<div 
+					class="disk-user-field-panel-card-box disk-user-field-panel-card-file"
+					v-if="importServices['office365']"
+					@click="openCloudFileDialog('office365')"
+				>
+					<div class="disk-user-field-panel-card disk-user-field-panel-card-icon--office365">
+						<div class="disk-user-field-panel-card-content">
+							<Loader v-if="showCloudDialogLoader && currentServiceId === 'office365'" :offset="{ top: '-7px' }" />
+							<div class="disk-user-field-panel-card-icon"></div>
+							<div class="disk-user-field-panel-card-btn"></div>
+							<div class="disk-user-field-panel-card-name">{{ importServices['office365']['name'] }}</div>
+						</div>
 					</div>
 				</div>
-			</div>
-			<div 
-				class="disk-user-field-panel-card-box disk-user-field-panel-card-file"
-				v-if="importServices['dropbox']"
-				@click="openCloudFileDialog('dropbox')"
-			>
-				<div class="disk-user-field-panel-card disk-user-field-panel-card-icon--dropbox">
-					<div class="disk-user-field-panel-card-content">
-						<Loader v-if="showCloudDialogLoader && currentServiceId === 'dropbox'" :offset="{ top: '-7px' }" />
-						<div class="disk-user-field-panel-card-icon"></div>
-						<div class="disk-user-field-panel-card-btn"></div>
-						<div class="disk-user-field-panel-card-name">{{ importServices['dropbox']['name'] }}</div>
+				<div 
+					class="disk-user-field-panel-card-box disk-user-field-panel-card-file"
+					v-if="importServices['dropbox']"
+					@click="openCloudFileDialog('dropbox')"
+				>
+					<div class="disk-user-field-panel-card disk-user-field-panel-card-icon--dropbox">
+						<div class="disk-user-field-panel-card-content">
+							<Loader v-if="showCloudDialogLoader && currentServiceId === 'dropbox'" :offset="{ top: '-7px' }" />
+							<div class="disk-user-field-panel-card-icon"></div>
+							<div class="disk-user-field-panel-card-btn"></div>
+							<div class="disk-user-field-panel-card-name">{{ importServices['dropbox']['name'] }}</div>
+						</div>
 					</div>
 				</div>
 			</div>
 		</div>
-	</div>
 	`
 	};
 
@@ -1661,7 +1697,8 @@ this.BX.Disk = this.BX.Disk || {};
 					<span>${0}</span>
 					${0}
 					<span>${0}</span>
-				</span>`), preText, this.currentServiceNode, postText);
+				</span>
+			`), preText, this.currentServiceNode, postText);
 	      main_core.Dom.append(label, this.$refs['document-services']);
 	    }
 	  },
@@ -1777,75 +1814,6 @@ this.BX.Disk = this.BX.Disk || {};
 	`
 	};
 
-	const InsertIntoTextButton = {
-	  name: 'InsertIntoTextButton',
-	  inject: ['uploader', 'postForm'],
-	  props: {
-	    item: {
-	      type: Object,
-	      default: {}
-	    }
-	  },
-	  methods: {
-	    click() {
-	      this.postForm.getParser().insertFile(this.item);
-	    },
-	    handleMouseEnter(event) {
-	      if (this.hintPopup) {
-	        return;
-	      }
-	      const targetNode = event.currentTarget;
-	      const targetNodeWidth = targetNode.offsetWidth;
-	      this.hintPopup = new main_popup.Popup({
-	        content: main_core.Loc.getMessage('DISK_UF_WIDGET_INSERT_INTO_THE_TEXT'),
-	        cacheable: false,
-	        animation: 'fading-slide',
-	        bindElement: targetNode,
-	        offsetTop: 0,
-	        bindOptions: {
-	          position: 'top'
-	        },
-	        darkMode: true,
-	        events: {
-	          onClose: () => {
-	            this.hintPopup.destroy();
-	            this.hintPopup = null;
-	          },
-	          onShow: event => {
-	            const popup = event.getTarget();
-	            const popupWidth = popup.getPopupContainer().offsetWidth;
-	            const offsetLeft = targetNodeWidth / 2 - popupWidth / 2;
-	            const angleShift = main_popup.Popup.getOption('angleLeftOffset') - main_popup.Popup.getOption('angleMinTop');
-	            popup.setAngle({
-	              offset: popupWidth / 2 - angleShift
-	            });
-	            popup.setOffset({
-	              offsetLeft: offsetLeft + main_popup.Popup.getOption('angleLeftOffset')
-	            });
-	          }
-	        }
-	      });
-	      this.hintPopup.show();
-	    },
-	    handleMouseLeave(event) {
-	      if (this.hintPopup) {
-	        this.hintPopup.close();
-	        this.hintPopup = null;
-	      }
-	    }
-	  },
-	  // language=Vue
-	  template: `
-		<div 
-			class="disk-user-field-insert-into-text-button"
-			:class="[{ '--inserted': item.tileWidgetData.selected }]"
-			@mouseenter="handleMouseEnter" 
-			@mouseleave="handleMouseLeave" 
-			@click="click"
-		></div>
-	`
-	};
-
 	/**
 	 * @memberof BX.Disk.Uploader
 	 */
@@ -1861,12 +1829,19 @@ this.BX.Disk = this.BX.Disk || {};
 	      customUploaderOptions: UserFieldWidget.getDefaultUploaderOptions()
 	    };
 	  },
+	  props: {
+	    visibility: {
+	      type: String,
+	      default(rawProps) {
+	        const mainPostFormContext = main_core.Type.isElementNode(rawProps.widgetOptions.eventObject);
+	        return mainPostFormContext ? 'hidden' : 'both';
+	      }
+	    }
+	  },
 	  data() {
-	    const options = this.widgetOptions;
 	    return {
-	      controlVisibility: main_core.Type.isBoolean(options.controlVisibility) ? options.controlVisibility : true,
-	      uploaderPanelVisibility: main_core.Type.isBoolean(options.uploaderPanelVisibility) ? options.uploaderPanelVisibility : true,
-	      documentPanelVisibility: main_core.Type.isBoolean(options.documentPanelVisibility) ? options.documentPanelVisibility : false
+	      documentsCollapsed: this.visibility === 'both',
+	      priorityVisibility: null
 	    };
 	  },
 	  provide() {
@@ -1883,56 +1858,43 @@ this.BX.Disk = this.BX.Disk || {};
 	    getMessage(code, replacements) {
 	      return main_core.Loc.getMessage(code, replacements);
 	    },
-	    show(forceUpdate = false) {
-	      if (forceUpdate) {
-	        this.$refs.container.style.display = 'block';
-	      }
-	      this.controlVisibility = true;
-	    },
-	    hide(forceUpdate = false) {
-	      if (forceUpdate) {
-	        this.$refs.container.style.display = 'none';
-	      }
-	      this.controlVisibility = false;
-	    },
-	    showUploaderPanel() {
-	      this.uploaderPanelVisibility = true;
-	    },
-	    hideUploaderPanel() {
-	      this.uploaderPanelVisibility = false;
-	    },
-	    showDocumentPanel() {
-	      this.documentPanelVisibility = true;
-	    },
-	    hideDocumentPanel() {
-	      this.documentPanelVisibility = false;
-	    },
 	    enableAutoCollapse() {
 	      this.$refs.tileWidget.enableAutoCollapse();
 	    },
 	    getUploaderOptions() {
 	      return UserFieldWidget.prepareUploaderOptions(this.uploaderOptions);
+	    },
+	    getUserFieldControl() {
+	      return this.userFieldControl;
 	    }
 	  },
 	  computed: {
 	    tileWidgetOptions() {
-	      const tileWidgetOptions = main_core.Type.isPlainObject(this.widgetOptions.tileWidgetOptions) ? Object.assign({}, this.widgetOptions.tileWidgetOptions) : {};
+	      const widgetOptions = this.widgetOptions;
+	      const tileWidgetOptions = main_core.Type.isPlainObject(widgetOptions.tileWidgetOptions) ? {
+	        ...widgetOptions.tileWidgetOptions
+	      } : {};
 	      tileWidgetOptions.slots = main_core.Type.isPlainObject(tileWidgetOptions.slots) ? tileWidgetOptions.slots : {};
 	      tileWidgetOptions.slots[ui_uploader_tileWidget.TileWidgetSlot.AFTER_TILE_LIST] = ControlPanel;
-	      if (this.userFieldControl.getMainPostForm()) {
-	        tileWidgetOptions.slots[ui_uploader_tileWidget.TileWidgetSlot.ITEM_EXTRA_ACTION] = InsertIntoTextButton;
-	      }
+	      tileWidgetOptions.insertIntoText = main_core.Type.isBoolean(widgetOptions.insertIntoText) ? widgetOptions.insertIntoText : this.userFieldControl.getMainPostForm() !== null;
 	      tileWidgetOptions.showItemMenuButton = true;
-	      tileWidgetOptions.events = {
-	        'TileItem:onMenuCreate': event => {
-	          const {
-	            item,
-	            menu
-	          } = event.getData();
-	          const itemMenu = new ItemMenu(this.userFieldControl, item, menu);
-	          itemMenu.build();
-	        }
+	      tileWidgetOptions.events = tileWidgetOptions.events || {};
+	      tileWidgetOptions.events['TileItem:onMenuCreate'] = event => {
+	        const {
+	          item,
+	          menu
+	        } = event.getData();
+	        const itemMenu = new ItemMenu(this.userFieldControl, item, menu);
+	        itemMenu.build();
 	      };
+	      if (this.userFieldControl.getMainPostForm() !== null) {
+	        tileWidgetOptions.events.onInsertIntoText = event => {
+	          const {
+	            item
+	          } = event.getData();
+	          this.userFieldControl.getMainPostForm().insertIntoText(item);
+	        };
+	      }
 	      const settingsMenu = new SettingsMenu(this.userFieldControl);
 	      if (settingsMenu.hasItems()) {
 	        tileWidgetOptions.showSettingsButton = true;
@@ -1944,6 +1906,18 @@ this.BX.Disk = this.BX.Disk || {};
 	        };
 	      }
 	      return tileWidgetOptions;
+	    },
+	    shouldShowCreateDocumentLink() {
+	      return this.userFieldControl.canCreateDocuments() && this.documentsCollapsed && this.finalVisibility === 'both';
+	    },
+	    shouldShowDocuments() {
+	      return this.userFieldControl.canCreateDocuments() && (this.finalVisibility === 'documents' || this.finalVisibility === 'both' && !this.documentsCollapsed);
+	    },
+	    finalVisibility() {
+	      if (this.priorityVisibility !== null) {
+	        return this.priorityVisibility;
+	      }
+	      return this.visibility;
 	    }
 	  },
 	  // language=Vue
@@ -1951,12 +1925,12 @@ this.BX.Disk = this.BX.Disk || {};
 		<div 
 			class="disk-user-field-control" 
 			:class="[{ '--has-files': this.items.length > 0 }]"
-			:style="{ display: controlVisibility ? 'block' : 'none' }"
+			:style="{ display: finalVisibility === 'hidden' ? 'none' : 'block' }"
 			ref="container"
 		>
 			<div 
 				class="disk-user-field-uploader-panel"
-				:class="[{ '--hidden': !uploaderPanelVisibility }]"
+				:class="[{ '--hidden': finalVisibility !== 'uploader' && finalVisibility !== 'both' }]"
 				ref="uploader-container"
 			>
 				<TileWidgetComponent
@@ -1968,20 +1942,20 @@ this.BX.Disk = this.BX.Disk || {};
 
 			<div 
 				class="disk-user-field-create-document"
-				v-if="this.userFieldControl.canCreateDocuments() && !this.userFieldControl.getMainPostForm() && !documentPanelVisibility"
-				@click="documentPanelVisibility = true"
+				v-if="shouldShowCreateDocumentLink"
+				@click="documentsCollapsed = false"
 			>{{ getMessage('DISK_UF_WIDGET_CREATE_DOCUMENT') }}</div>
 
 			<div 
 				class="disk-user-field-document-panel"
-				:class="{ '--single': this.userFieldControl.getMainPostForm() !== null }"
+				:class="{ '--single': finalVisibility !== 'both' }"
 				ref="document-container"
-				v-if="this.userFieldControl.canCreateDocuments() && documentPanelVisibility"
+				v-if="shouldShowDocuments"
 			>
 				<DocumentPanel />
 			</div>
 		</div>
-		`
+	`
 	};
 
 	/**
@@ -1989,14 +1963,19 @@ this.BX.Disk = this.BX.Disk || {};
 	 */
 	class UserFieldWidget extends ui_uploader_vue.VueUploaderWidget {
 	  constructor(uploaderOptions, options) {
-	    const widgetOptions = main_core.Type.isPlainObject(options) ? Object.assign({}, options) : {};
+	    const widgetOptions = main_core.Type.isPlainObject(options) ? {
+	      ...options
+	    } : {};
 	    super(UserFieldWidget.prepareUploaderOptions(uploaderOptions), widgetOptions);
 	  }
 	  defineComponent() {
 	    return UserFieldWidgetComponent;
 	  }
 	  static prepareUploaderOptions(uploaderOptions) {
-	    return Object.assign({}, UserFieldWidget.getDefaultUploaderOptions(), main_core.Type.isPlainObject(uploaderOptions) ? uploaderOptions : {});
+	    return {
+	      ...UserFieldWidget.getDefaultUploaderOptions(),
+	      ...(main_core.Type.isPlainObject(uploaderOptions) ? uploaderOptions : {})
+	    };
 	  }
 	  static getDefaultUploaderOptions() {
 	    return {
@@ -2014,5 +1993,5 @@ this.BX.Disk = this.BX.Disk || {};
 	exports.openDiskFileDialog = openDiskFileDialog;
 	exports.openCloudFileDialog = openCloudFileDialog;
 
-}((this.BX.Disk.Uploader = this.BX.Disk.Uploader || {}),BX.UI.Uploader,BX.UI.Uploader,BX.Event,BX.UI.Uploader,BX.Disk,BX,BX.Main));
+}((this.BX.Disk.Uploader = this.BX.Disk.Uploader || {}),BX.UI.Uploader,BX.UI.Uploader,BX.Event,BX.UI,BX.UI.Uploader,BX.UI,BX,BX.Main));
 //# sourceMappingURL=disk.uploader.uf-file.bundle.js.map

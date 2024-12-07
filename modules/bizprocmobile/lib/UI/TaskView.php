@@ -21,6 +21,34 @@ class TaskView implements \JsonSerializable
 	private function prepareTask(): void
 	{
 		$this->replaceFileLinks();
+
+		$description = $this->task['DESCRIPTION'] ?? null;
+		if (is_string($description))
+		{
+			$parser = new \CTextParser();
+			$bbDescription = $parser->convertHTMLToBB(
+				$description,
+				[
+					'ANCHOR' => 'Y',
+					'BIU' => 'Y',
+					'FONT' => 'Y',
+					'LIST' => 'Y',
+					'NL2BR' => 'Y',
+					'IMG' => 'Y',
+
+					'HTML' => 'N',
+					'QUOTE' => 'N',
+					'CODE' => 'N',
+					'SMILES' => 'N',
+					'VIDEO' => 'N',
+					'TABLE' => 'N',
+					'ALIGN' => 'N',
+					'P' => 'N',
+				]
+			);
+
+			$this->task['DESCRIPTION'] = $bbDescription;
+		}
 	}
 
 	private function replaceFileLinks(): void

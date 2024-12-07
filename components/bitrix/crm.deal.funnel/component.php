@@ -294,7 +294,7 @@ foreach ($arFilter as $k => $v)
 			'%VALUE' => $v // Compare by 'LIKE'
 		);
 	}
-	elseif (preg_match('/(.*)_from$/i'.BX_UTF_PCRE_MODIFIER, $k, $arMatch))
+	elseif (preg_match('/(.*)_from$/iu', $k, $arMatch))
 	{
 		if($v !== '')
 		{
@@ -302,12 +302,12 @@ foreach ($arFilter as $k => $v)
 		}
 		unset($arFilter[$k]);
 	}
-	else if (preg_match('/(.*)_to$/i'.BX_UTF_PCRE_MODIFIER, $k, $arMatch))
+	else if (preg_match('/(.*)_to$/iu', $k, $arMatch))
 	{
 		if($v !== '')
 		{
 			$fieldName = $arMatch[1];
-			if (($fieldName == 'DATE_CREATE' || $fieldName == 'DATE_MODIFY' || $fieldName == 'BEGINDATE' || $fieldName == 'CLOSEDATE') && !preg_match('/\d{1,2}:\d{1,2}(:\d{1,2})?$/'.BX_UTF_PCRE_MODIFIER, $v))
+			if (($fieldName == 'DATE_CREATE' || $fieldName == 'DATE_MODIFY' || $fieldName == 'BEGINDATE' || $fieldName == 'CLOSEDATE') && !preg_match('/\d{1,2}:\d{1,2}(:\d{1,2})?$/u', $v))
 				$v = CCrmDateTimeHelper::SetMaxDayTime($v);
 
 			$arFilter['<='.$arMatch[1]] = $v;

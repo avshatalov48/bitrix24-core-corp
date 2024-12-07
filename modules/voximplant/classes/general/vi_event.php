@@ -2,6 +2,7 @@
 
 IncludeModuleLangFile(__FILE__);
 
+use Bitrix\Main\DB\SqlQueryException;
 use Bitrix\Voximplant as VI;
 use Bitrix\Main\Localization\Loc;
 
@@ -227,10 +228,20 @@ class CVoxImplantEvent
 					}
 					elseif ($phone <> '')
 					{
-						$res = VI\PhoneTable::add(Array('USER_ID' => (int)$arFields['ID'], 'PHONE_NUMBER' => $phone, 'PHONE_MNEMONIC' => $mnemonic));
-						if (!$res->isSuccess())
+						try {
+							$res = VI\PhoneTable::add(Array('USER_ID' => (int)$arFields['ID'], 'PHONE_NUMBER' => $phone, 'PHONE_MNEMONIC' => $mnemonic));
+							if (!$res->isSuccess())
+							{
+								$error = true;
+							}
+						}
+						catch (SqlQueryException $exception) // todo: Replace with \Bitrix\Main\DB\DuplicateEntryException
 						{
-							$error = true;
+							// Ignoring key duplication
+							if (!str_contains($exception->getMessage(), 'Duplicate entry'))
+							{
+								throw $exception;
+							}
 						}
 					}
 					if ($error)
@@ -315,7 +326,7 @@ class CVoxImplantEvent
 					"DISABLED" => [],
 				],
 				"status_notifications" => [
-					"NAME" => Loc::getMessage('VI_EVENTS_SIP_STATUS_NOTIFICATIONS_V2'),
+					"NAME" => Loc::getMessage('VI_EVENTS_SIP_STATUS_NOTIFICATIONS_V3'),
 					"SITE" => "Y",
 					"MAIL" => "Y",
 					"XMPP" => "N",

@@ -89,8 +89,12 @@ class Action
 		return $actions;
 	}
 
-	public static function getJsAppData($appData, $checkHash = false, $installHash = false): array
+	public static function getInstallJsInfo($appData, $checkHash = false, $installHash = false): array
 	{
+		$installedMessageCode = self::isRestOnlyApp($appData) ?
+			'MARKET_POPUP_INSTALL_JS_APP_WORKS_AUTOMATICALLY' :
+			'MARKET_POPUP_INSTALL_JS_INSTALLED_APP_LOCATED_APP_TAB';
+
 		return [
 			'CODE' => $appData['CODE'],
 			'ACTIVE' => isset($appData['ACTIVE']) && $appData['ACTIVE'] === 'Y',
@@ -99,6 +103,15 @@ class Action
 			'INSTALL_HASH' => $installHash,
 			'SILENT_INSTALL' => isset($appData['SILENT_INSTALL']) && $appData['SILENT_INSTALL'] === 'Y',
 			'REDIRECT_PRIORITY' => false,
+			'INSTALLED_TITLE_CODE' => 'MARKET_POPUP_INSTALL_JS_APPLICATION',
+			'INSTALLED_MESSAGE_CODE' => $installedMessageCode,
+			'INSTALLED_IMAGE_SHOW' => 'Y',
+			'PLACEMENT_OPTIONS' => [],
 		];
+	}
+
+	private static function isRestOnlyApp($appData): bool
+	{
+		return $appData['OPEN_API'] == 'Y';
 	}
 }

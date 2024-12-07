@@ -12,6 +12,7 @@ $MESS["CSPL_MENU"] = "Menu";
 $MESS["CSPL_MENU_ADD_NEW_PRODUCT_TITLE"] = "New product";
 $MESS["CSPL_MENU_CHOOSE_FROM_DB"] = "Pick from catalog";
 $MESS["CSPL_MENU_CHOOSE_FROM_DB_2"] = "Find or create";
+$MESS["CSPL_MENU_CHOOSE_FROM_DB_WITHOUT_CREATION"] = "Find product";
 $MESS["CSPL_MENU_CREATE_ARTNUMBER"] = "Create product with S/N";
 $MESS["CSPL_MENU_CREATE_BARCODE"] = "Create product with barcode";
 $MESS["CSPL_MENU_CREATE_PRODUCT"] = "Create product";

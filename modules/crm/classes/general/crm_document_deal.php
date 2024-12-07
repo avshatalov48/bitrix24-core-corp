@@ -561,7 +561,7 @@ class CCrmDocumentDeal extends CCrmDocument implements IBPWorkflowDocument
 			[
 				'DISABLE_USER_FIELD_CHECK' => true,
 				'REGISTER_SONET_EVENT' => true,
-				'CURRENT_USER' => $modifiedById ?? static::getSystemUserId()
+				'CURRENT_USER' => $modifiedById ?? static::getSystemUserId(),
 			]
 		);
 
@@ -728,7 +728,7 @@ class CCrmDocumentDeal extends CCrmDocument implements IBPWorkflowDocument
 				$fields[$key] = \CBPHelper::makeArrayFlat($fields[$key]);
 			}
 
-			if (!$documentFields[$key]['Multiple'] && is_array($fields[$key]))
+			if (!($documentFields[$key]['Multiple'] ?? false) && is_array($fields[$key]))
 			{
 				if (count($fields[$key]) > 0)
 				{

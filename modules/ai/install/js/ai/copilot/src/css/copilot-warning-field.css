@@ -1,0 +1,43 @@
+
+.ai__copilot_waning-field {
+	box-sizing: border-box;
+	height: 0;
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	/*border-top: var(--ui-border-width-thin) solid transparent;*/
+	font-size: var(--ui-font-size-sm);
+	line-height: var(--ui-font-line-height-sm);
+	color: var(--ui-color-base-50);
+	overflow: hidden;
+}
+
+.ai__copilot_waning-field.--expanded {
+	height: auto;
+}
+
+.ai__copilot_waning-field-icon {
+	width: 22px;
+	height: 22px;
+	margin-bottom: -2px;
+}
+
+.ai__copilot_waning-field-text {
+	margin-left: 2px;
+}
+
+.ai__copilot_waning-field-link {
+	margin-left: 4px;
+	color: inherit;
+	cursor: pointer;
+	transition: 0.25s ease-in-out color;
+	text-decoration: underline;
+	text-decoration-color: var(--ui-color-base-40);
+	text-underline-position: under;
+	text-decoration-thickness: 1px;
+}
+
+.ai__copilot_waning-field-link:hover {
+	transition-duration: 0s;
+	text-decoration-color: var(--ui-color-base-50);
+}

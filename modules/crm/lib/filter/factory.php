@@ -3,6 +3,7 @@
 namespace Bitrix\Crm\Filter;
 
 use Bitrix\Crm;
+use Bitrix\Crm\Component\EntityList\GridId;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Tracking;
 use Bitrix\Main;
@@ -293,12 +294,22 @@ class Factory
 	protected static function extractSettingsParamsFromGridId(int $entityTypeId, string $gridId): array
 	{
 		$parameters = [];
-		if ($entityTypeId === \CCrmOwnerType::Deal && mb_strpos($gridId, 'CRM_DEAL_RECUR') === 0)
+
+		if ($entityTypeId === \CCrmOwnerType::Deal && str_starts_with($gridId, 'CRM_DEAL_RECUR'))
 		{
 			$parameters['IS_RECURRING'] = 'Y';
 		}
+
+		if (
+			$entityTypeId === \CCrmOwnerType::Company
+			&& str_starts_with($gridId, GridId::DEFAULT_GRID_ID_PREFIX . GridId::DEFAULT_GRID_MY_COMPANY_SUFFIX)
+		)
+		{
+			$parameters['MYCOMPANY_MODE'] = true;
+		}
+
 		$factory = Crm\Service\Container::getInstance()->getFactory($entityTypeId);
-		if ($factory && $factory->isCategoriesEnabled())
+		if ($factory && $factory->isCategoriesSupported())
 		{
 			if (in_array($entityTypeId, [\CCrmOwnerType::Contact, \CCrmOwnerType::Company]))
 				// category = 0 should be used by default in contacts and companies only
@@ -318,5 +329,102 @@ class Factory
 		}
 
 		return $parameters;
+	}
+
+	/**
+	 * Returns ORM-compatible filter value for specified user
+	 */
+	public function getFilterValue(Filter $filter, ?int $userId = null): array
+	{
+		$settings = $filter->getEntityDataProvider()?->getSettings();
+		if (!($settings instanceof EntitySettings))
+		{
+			return $filter->getValue();
+		}
+
+		$preset = $this->getPresetBySettings($settings, $userId) ;
+		if (!$preset)
+		{
+			return $filter->getValue();
+		}
+
+		$preset->setDefaultValues($filter->getDefaultFieldIDs());
+
+		$options = new UiFilterOptions($filter->getID(), $preset->getDefaultPresets());
+
+		return $filter->getValue(
+			$options->getFilter() + $options->getFilterLogic($filter->getFieldArrays())
+		);
+	}
+
+	private function getPresetBySettings(EntitySettings $settings, ?int $userId = null): ?Crm\Filter\Preset\Base
+	{
+		$preset = $this->getPreset($settings->getEntityTypeID());
+		if (!$preset)
+		{
+			return null;
+		}
+
+		if ($userId !== null)
+		{
+			$preset->setUserId($userId);
+			$preset->setUserName(Container::getInstance()->getUserBroker()->getName($userId));
+		}
+
+		if ($settings instanceof ISettingsSupportsCategory)
+		{
+			$preset->setCategoryId($settings->getCategoryId());
+		}
+
+		if (\CCrmOwnerType::isUseFactoryBasedApproach($settings->getEntityTypeID()))
+		{
+			$factory = Container::getInstance()->getFactory($settings->getEntityTypeID());
+			if ($factory)
+			{
+				$preset->setStagesEnabled($factory->isStagesEnabled());
+			}
+		}
+
+		return $preset;
+	}
+
+	private function getPreset(int $entityTypeId): ?Crm\Filter\Preset\Base
+	{
+		if ($entityTypeId === \CCrmOwnerType::Lead)
+		{
+			return new Crm\Filter\Preset\Lead();
+		}
+		elseif ($entityTypeId === \CCrmOwnerType::Deal)
+		{
+			return new Crm\Filter\Preset\Deal();
+		}
+		elseif ($entityTypeId === \CCrmOwnerType::Contact)
+		{
+			return new Crm\Filter\Preset\Contact();
+		}
+		elseif ($entityTypeId === \CCrmOwnerType::Company)
+		{
+			return new Crm\Filter\Preset\Company();
+		}
+		elseif ($entityTypeId === \CCrmOwnerType::Activity)
+		{
+			return new Crm\Filter\Preset\Activity();
+		}
+		elseif ($entityTypeId === \CCrmOwnerType::Quote)
+		{
+			return new Crm\Filter\Preset\Quote();
+		}
+		elseif ($entityTypeId === \CCrmOwnerType::SmartInvoice)
+		{
+			return new Crm\Filter\Preset\SmartInvoice();
+		}
+		elseif (\CCrmOwnerType::isPossibleDynamicTypeId($entityTypeId))
+		{
+			return new Crm\Filter\Preset\Dynamic();
+		}
+		else
+		{
+			return null;
+		}
 	}
 }

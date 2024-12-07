@@ -1,0 +1,196 @@
+.ai__picker_image-loader-container {
+	display: inline-flex;
+	flex-direction: column;
+	justify-content: flex-start;
+	align-items: center;
+	--ai__picker-image-loader-accent-color: #3CC3D4;
+}
+
+.ai__picker_image-loader-text-container {
+	margin-top: -12px;
+}
+.ai__picker_image-loader-text {
+	font-size: var(--ui-font-size-2xl);
+	line-height: var(--ui-font-line-height-3xs);
+	color: var(--ui-color-base-30);
+}
+
+.ai__picker_image-loader {
+	width: 125px;
+	height: 125px;
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: center;
+	position: relative;
+}
+
+.ai__picker_image-loader-container.--animating .ai__picker_image-loader-star {
+	background-color: var(--ai__picker-image-loader-accent-color);
+	animation-iteration-count: infinite;
+}
+
+.ai__picker_image-loader-container.--animating .ai__picker_image-loader-square-loader-line {
+	animation-iteration-count: infinite;
+}
+
+.ai__picker_image-loader-container.--animating .ai__picker_image-loader-square {
+	background-color: var(--ui-color-base-10);
+}
+
+.ai__picker_image-loader-container.--animating .ai__picker_image-loader-square-star {
+	background-color: var(--ai__picker-image-loader-accent-color);
+}
+
+
+.ai__picker_image-loader-star {
+	width: 12px;
+	height: 12px;
+	mask-image: url("../../../images/ai__picker_image-loader-star.svg");
+	mask-size: contain;
+	mask-position: center center;
+	background-color: var(--ui-color-base-05);
+	mask-repeat: no-repeat;
+	animation-iteration-count: 0;
+	animation-direction: alternate;
+	animation-timing-function: ease-in-out;
+}
+
+.ai__picker_image-loader-left-star-container {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 52px;
+	height: 52px;
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: center;
+	background-color: var(--ai__picker-image-loader-font-color);
+	border-radius: 50%;
+	z-index: 5;
+}
+
+.ai__picker_image-loader-left-star {
+	width: 34px;
+	height: 34px;
+	z-index: 5;
+	animation-duration: 2s;
+	animation-name: left-star-pulse;
+}
+
+.ai__picker_image-loader-right-star {
+	position: absolute;
+	left: 58px;
+	top: 7px;
+	width: 12px;
+	height: 12px;
+	animation-duration: 1s;
+	animation-name: right-star-pulse;
+}
+
+.ai__picker_image-loader-square {
+	position: relative;
+	width: 72px;
+	height: 72px;
+	border-radius: 8px;
+	background-color: var(--ui-color-base-05);
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: flex-end;
+	overflow: hidden;
+}
+
+.ai__picker_image-loader-square-image {
+	width: 55px;
+	height: 30px;
+	margin-bottom: 8px;
+	background-color: var(--ai__picker-image-loader-font-color);
+	mask-image: url("../../../images/ai__image-loader-icon.svg");
+	mask-size: contain;
+	mask-repeat: no-repeat;
+	mask-position: center center;
+	z-index: 3;
+}
+
+.ai__picker_image-loader-square-star {
+	position: absolute;
+	top: 12px;
+	right: 9px;
+	width: 20px;
+	height: 20px;
+	z-index: 2;
+	mix-blend-mode: normal;
+	animation-duration: 1.5s;
+	animation-name: image-star-pulse;
+	background-color: var(--ai__picker-image-loader-font-color);
+}
+
+.ai__picker_image-loader-square-loader-line {
+	position: absolute;
+	width: 100%;
+	height: 8px;
+	background-color: var(--ai__picker-image-loader-accent-color);
+	top: -8px;
+	left: 0;
+	transform: translateY(0px);
+	z-index: 1;
+	animation: snicking 1s ease-out;
+	animation-fill-mode: backwards;
+	animation-direction: alternate-reverse;
+	animation-iteration-count: 0;
+}
+
+@keyframes snicking {
+	0% {
+		transform: translateY(-20px);
+	}
+
+	100% {
+		transform: translateY(92px);
+	}
+}
+
+@keyframes left-star-pulse {
+	0% {
+		transform: scale(0.95);
+	}
+	50% {
+		transform: scale(1.2);
+	}
+	75% {
+		transform: scale(1);
+	}
+	100% {
+		transform: scale(1);
+	}
+}
+
+@keyframes right-star-pulse {
+	0% {
+		transform: scale(0.8);
+	}
+	50% {
+		transform: scale(1.2);
+	}
+	75% {
+		transform: scale(1);
+	}
+}
+
+@keyframes image-star-pulse {
+	0% {
+		transform: scale(0.95);
+	}
+	50% {
+		transform: scale(1.2);
+	}
+	75% {
+		transform: scale(1);
+	}
+	100% {
+		transform: scale(1);
+	}
+}
+

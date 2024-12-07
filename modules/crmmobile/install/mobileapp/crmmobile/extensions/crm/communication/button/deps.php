@@ -11,7 +11,5 @@ return [
 		'haptics',
 		'utils/object',
 		'imconnector:connectors/telegram',
-
-		'crm:type',
 	],
 ];

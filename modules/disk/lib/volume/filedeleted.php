@@ -19,7 +19,7 @@ class FileDeleted extends Volume\File
 	 */
 	public function measure(array $collectData = [self::DISK_FILE]): self
 	{
-		$this->addFilter('!DELETED_TYPE', ObjectTable::DELETED_TYPE_NONE);
+		$this->addFilter('!=DELETED_TYPE', ObjectTable::DELETED_TYPE_NONE);
 
 		parent::measure($collectData);
 
@@ -33,7 +33,7 @@ class FileDeleted extends Volume\File
 	 */
 	public function getMeasurementResult(array $collectedData = [self::DISK_FILE, self::ATTACHED_OBJECT, self::EXTERNAL_LINK, self::UNNECESSARY_VERSION]): DB\Result
 	{
-		$this->addFilter('!DELETED_TYPE', ObjectTable::DELETED_TYPE_NONE);
+		$this->addFilter('!=DELETED_TYPE', ObjectTable::DELETED_TYPE_NONE);
 		$this->unsetFilter('PARENT_ID');
 		$this->unsetFilter('FILES_LEFT');
 

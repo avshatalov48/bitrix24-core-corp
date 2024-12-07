@@ -1,0 +1,68 @@
+.bx-crm-perms-edit-desk {
+	width: 100%;
+	padding: 0;
+	border-spacing: 0;
+	margin: 20px 0 0;
+	min-width: 1140px;
+}
+
+.bx-crm-perms-edit-desk__head {
+	background-color: #f4f0d2;
+	border: 1px solid #ece8cb;
+	font-weight: bold;
+	text-align: center;
+}
+
+.bx-crm-perms-edit-desk__head .bx-crm-perms-desk-row-item:first-child {
+	width: 139px;
+	border-top-left-radius: var(--ui-border-radius-md);
+	text-align: left;
+}
+
+.bx-crm-perms-edit-desk__head .bx-crm-perms-desk-row-item:last-child {
+	width: 130px;
+	border-top-right-radius: var(--ui-border-radius-md);
+}
+
+.bx-crm-perms-desk-row-item {
+	padding: 2px 10px;
+	border-bottom: 0;
+	border-left: 0;
+	border-top: 0;
+	height: 35px;
+	vertical-align: middle;
+	text-align: center;
+	width: 100px;
+}
+
+.bx-crm-perms-edit-desk__body .bx-crm-perms-desk-row-item {
+	border-left: 1px solid #e3e3e3;
+}
+
+.bx-crm-perms-edit-desk__body .bx-crm-perms-desk-row-item:first-child {
+	text-align: left;
+}
+
+.bx-crm-perms-edit-desk__body .bx-crm-perms-desk-row-item:last-child {
+	border-right: 1px solid #e3e3e3;
+}
+
+
+.bx-crm-perms-edit-desk__footer {
+	height: 41px;
+}
+
+.bx-crm-perms-edit-desk__footer .bx-crm-perms-desk-row-item:first-child {
+	text-align: left;
+	border: 1px solid #e3e3e3;
+	border-bottom-left-radius: var(--ui-border-radius-md);
+}
+
+.bx-crm-perms-edit-desk__footer .bx-crm-perms-desk-row-item:last-child {
+	border: 1px solid #e3e3e3;
+	border-bottom-right-radius: var(--ui-border-radius-md);
+}
+
+.bx-crm-perms-desk-row-item > .stage-row {
+	padding-left: 30px;
+}

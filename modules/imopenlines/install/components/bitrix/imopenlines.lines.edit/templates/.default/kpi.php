@@ -1,8 +1,17 @@
-<?
+<?php
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
+
+/**
+ * @var array $arParams
+ * @var array $arResult
+ * @global \CMain $APPLICATION
+ * @global \CUser $USER
+ * @global \CDatabase $DB
+ * @var \CBitrixComponentTemplate $this
+ * @var \CBitrixComponent $component
+ */
+
 use \Bitrix\Main\Localization\Loc;
-use \Bitrix\Main\UI\Extension;
-use \Bitrix\Imopenlines\Limit;
 
 \Bitrix\Main\UI\Extension::load([
 	'ui.design-tokens',

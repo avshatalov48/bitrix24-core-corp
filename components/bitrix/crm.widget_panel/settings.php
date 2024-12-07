@@ -30,21 +30,18 @@ if($USER->IsAuthorized() && check_bitrix_sessid())
 	if($action == 'saveconfig')
 	{
 		$options = CUserOptions::GetOption('crm.widget_panel', $guid, array());
-		CUtil::decodeURIComponent($_POST);
 		$options['rows'] = $_POST['rows'];
 		CUserOptions::SetOption('crm.widget_panel', $guid, $options);
 	}
 	elseif($action == 'enabledemo')
 	{
 		$options = CUserOptions::GetOption('crm.widget_panel', $guid, array());
-		CUtil::decodeURIComponent($_POST);
 		$options['enableDemoMode'] = isset($_POST['enable']) && mb_strtoupper($_POST['enable']) === 'Y' ? 'Y' : 'N';
 		CUserOptions::SetOption('crm.widget_panel', $guid, $options);
 	}
 	elseif($action == 'savelayout' && isset($_POST['layout']))
 	{
 		$options = CUserOptions::GetOption('crm.widget_panel', $guid, array());
-		CUtil::decodeURIComponent($_POST);
 		$layout = $_POST['layout'];
 		if(in_array($value, array('L70R30', 'L50R50', 'L30R70'), true))
 		{

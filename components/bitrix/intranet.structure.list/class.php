@@ -314,10 +314,10 @@ class CIntranetStructureListComponent extends CBitrixComponent
 			$this->arFilter[] = array(
 				'LOGIC' => 'OR',
 				array(
-					'><F_LAST_NAME' => array(toUpper($startLetterRange), toUpper($endLetterRange)),
+					'><F_LAST_NAME' => array(mb_strtoupper($startLetterRange), mb_strtoupper($endLetterRange)),
 				),
 				array(
-					'><F_LAST_NAME' => array(toLower($startLetterRange), toLower($endLetterRange)),
+					'><F_LAST_NAME' => array(mb_strtolower($startLetterRange), mb_strtolower($endLetterRange)),
 				),
 			);
 			unset($this->arFilter['LAST_NAME_RANGE']);
@@ -739,7 +739,7 @@ class CIntranetStructureListComponent extends CBitrixComponent
 
 		if($startTime === null)
 		{
-			$startTime = getmicrotime();
+			$startTime = microtime(true);
 		}
 
 		//photo for current user not resized. Do it!
@@ -756,7 +756,7 @@ class CIntranetStructureListComponent extends CBitrixComponent
 			}
 
 			//if not run resize photo or we resize photo long time and we want stop it
-			if (round(getmicrotime()-$startTime, 3) > static::MAX_EXEC_RESIZE_TIME)
+			if (round(microtime(true)-$startTime, 3) > static::MAX_EXEC_RESIZE_TIME)
 			{
 				$arUser['PERSONAL_PHOTO']         = CFile::ShowImage($arUser['PERSONAL_PHOTO_SOURCE'], 9999, 100);
 				$arUser['PERSONAL_PHOTO_RESIZED'] = false;

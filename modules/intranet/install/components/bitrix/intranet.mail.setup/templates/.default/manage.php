@@ -116,7 +116,7 @@ $hasOptions2 = isModuleInstalled('crm');
 	<input type="submit" style="visibility: hidden; ">
 </form>
 
-<script type="text/javascript">
+<script>
 
 	BX.bind(BX('seve_btn'), 'click', function(e)
 	{
@@ -242,7 +242,7 @@ $APPLICATION->IncludeComponent(
 
 ?>
 
-<script type="text/javascript">
+<script>
 
 	var domains = {};
 	var services = {};

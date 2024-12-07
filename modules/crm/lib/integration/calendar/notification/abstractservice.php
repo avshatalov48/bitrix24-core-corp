@@ -12,8 +12,8 @@ use Bitrix\Crm\MessageSender\Channel\Correspondents\To;
 
 abstract class AbstractService
 {
-	/** @var CrmDealLink $crmDealLink */
-	protected CrmDealLink $crmDealLink;
+	/** @var ?CrmDealLink $crmDealLink */
+	protected ?CrmDealLink $crmDealLink;
 	/** @var Event $event */
 	protected Event $event;
 	/** @var EventLink $eventLink */

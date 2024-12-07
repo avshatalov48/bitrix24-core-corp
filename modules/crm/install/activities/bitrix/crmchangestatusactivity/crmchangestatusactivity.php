@@ -101,11 +101,14 @@ class CBPCrmChangeStatusActivity extends CBPActivity
 				}
 		}
 
-		$debugFields = [
-			'TargetStatus' => $this->TargetStatus,
-			'ModifiedBy' => $this->ModifiedBy,
-		];
-		$this->writeDebugInfo($this->getDebugInfo($debugFields));
+		if ($this->workflow->isDebug())
+		{
+			$debugFields = [
+				'TargetStatus' => $this->TargetStatus,
+				'ModifiedBy' => $this->ModifiedBy,
+			];
+			$this->writeDebugInfo($this->getDebugInfo($debugFields));
+		}
 
 		if ($stages && !in_array($targetStatus, $stages, true))
 		{

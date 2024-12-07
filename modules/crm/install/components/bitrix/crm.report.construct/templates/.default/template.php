@@ -46,7 +46,7 @@ $APPLICATION->SetAdditionalCSS('/bitrix/js/report/css/report.css');
 	<a class="webform-button-link webform-button-link-cancel" href="<?=htmlspecialcharsbx($arParams['PATH_TO_REPORT_REPORT'])?>"><?= htmlspecialcharsbx(GetMessage('CRM_REPORT_CONSTRUCT_BUTTON_CANCEL')) ?></a>
 </div>
 </form>
-<script type="text/javascript">
+<script>
 	BX.ready(
 		function()
 		{
@@ -64,7 +64,7 @@ $APPLICATION->SetAdditionalCSS('/bitrix/js/report/css/report.css');
 </script><?
 return;
 else:
-?><script type="text/javascript">
+?><script>
 	BX.ready(
 		function()
 		{
@@ -643,7 +643,7 @@ endif;
 	}
 	?>
 
-	<script type="text/javascript">
+	<script>
 		var crmCompanyElements = <? echo CUtil::PhpToJsObject($arCompanies); ?>;
 		var crmContactElements = <? echo CUtil::PhpToJsObject($arContacts); ?>;
 		var crmLeadElements = <? echo CUtil::PhpToJsObject($arLeads); ?>;

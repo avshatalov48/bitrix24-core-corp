@@ -109,6 +109,8 @@ export class FilterHandler
 					entity.appendItemToList(item);
 					entity.setItem(item);
 
+					this.planBuilder.clearLoadItemsRepeatCounter();
+
 					entity.setActiveLoadItems(false);
 					entity.bindItemsLoader();
 				}

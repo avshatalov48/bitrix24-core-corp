@@ -1,0 +1,9 @@
+<?php
+$MESS["SIGN_CMP_START_PAR_URL_DOCUMENT"] = "Document URL";
+$MESS["SIGN_CMP_START_PAR_URL_EDIT"] = "Document editor URL";
+$MESS["SIGN_CMP_START_PAR_URL_KANBAN"] = "Kanban URL";
+$MESS["SIGN_CMP_START_PAR_URL_LIST"] = "List URL";
+$MESS["SIGN_CMP_START_PAR_URL_MAIN_PAGE"] = "Section index page URL";
+$MESS["SIGN_CMP_START_PAR_URL_MYSAFE"] = "My vault page URL";
+$MESS["SIGN_CMP_START_PAR_VAR_DOC_ID"] = "Document ID parameter";
+$MESS["SIGN_CMP_START_PAR_VAR_PAGE"] = "Page ID parameter";

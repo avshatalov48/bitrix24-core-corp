@@ -25,13 +25,14 @@ jn.define('lists/element-details', (require, exports, module) => {
 				titleParams: {
 					text: props.title || Loc.getMessage('M_LISTS_ELEMENT_DETAILS_WIDGET_TITLE'),
 					textColor: AppTheme.colors.base1,
+					type: 'dialog',
 				},
 				backgroundColor: AppTheme.colors.bgSecondary,
 				backdrop: {
 					mediumPositionPercent: 90,
 					onlyMediumPosition: true,
 					swipeAllowed: true,
-					swipeContentAllowed: false,
+					swipeContentAllowed: true,
 					horizontalSwipeAllowed: false,
 					hideNavigationBar: false,
 					navigationBarColor: AppTheme.colors.bgSecondary,
@@ -165,6 +166,7 @@ jn.define('lists/element-details', (require, exports, module) => {
 
 					this.layout.setTitle({
 						text: this.state.iBlockName || Loc.getMessage('M_LISTS_ELEMENT_DETAILS_WIDGET_TITLE'),
+						type: 'dialog',
 					});
 				})
 				.catch((response) => {

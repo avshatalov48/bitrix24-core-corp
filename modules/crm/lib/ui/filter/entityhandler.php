@@ -170,7 +170,14 @@ class EntityHandler
 				$entityData = [];
 				foreach($filter[$fieldID] as $item)
 				{
-					$parsedData = \CUtil::JsObjectToPhp($item);
+					try
+					{
+						$parsedData = \Bitrix\Main\Web\Json::decode($item);
+					}
+					catch (\Bitrix\Main\ArgumentException $e)
+					{
+						$parsedData = [];
+					}
 					if(!(is_array($parsedData) && !empty($parsedData)))
 					{
 						continue;
@@ -180,7 +187,14 @@ class EntityHandler
 			}
 			else
 			{
-				$entityData = \CUtil::JsObjectToPhp($filter[$fieldID]);
+				try
+				{
+					$entityData = \Bitrix\Main\Web\Json::decode($filter[$fieldID]);
+				}
+				catch (\Bitrix\Main\ArgumentException $e)
+				{
+					$entityData = [];
+				}
 			}
 			unset($filter[$fieldID]);
 

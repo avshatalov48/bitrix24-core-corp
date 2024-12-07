@@ -50,6 +50,7 @@ $MESS["OL_STATS_HEADER_CONFIG_NAME"] = "Kommunikationskanäle";
 $MESS["OL_STATS_HEADER_CRM"] = "CRM";
 $MESS["OL_STATS_HEADER_CRM_LINK"] = "Link im CRM";
 $MESS["OL_STATS_HEADER_CRM_TEXT"] = "CRM-Eintrag";
+$MESS["OL_STATS_HEADER_CRM_URL_REFERER"] = "Website-Seite";
 $MESS["OL_STATS_HEADER_DATE_CLOSE"] = "Geschlossen am";
 $MESS["OL_STATS_HEADER_DATE_CREATE"] = "Erstellt am";
 $MESS["OL_STATS_HEADER_DATE_FIRST_ANSWER_NEW"] = "Mitarbeiter hat geantwortet am";

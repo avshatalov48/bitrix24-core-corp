@@ -22,6 +22,7 @@ class Model
 	private ?HistoryItemModel $historyItemModel = null;
 
 	private ?NoteModel $note  = null;
+	private array $restAppLayoutBlocksModels = [];
 
 	public static function createFromScheduledActivityArray(array $data): self
 	{
@@ -39,6 +40,7 @@ class Model
 			->setDate($createdDate)
 			->setAssociatedEntityModel(AssociatedEntityModel::createFromArray($data))
 			->setNote(self::createNote($data))
+			->setRestAppLayoutBlocksModels(self::createRestAppLayoutBlocks($data))
 		;
 	}
 
@@ -61,6 +63,7 @@ class Model
 			->setTypeId((int)($data['TYPE_ID'] ?? 0))
 			->setTypeCategoryId((int)($data['TYPE_CATEGORY_ID'] ?? 0))
 			->setNote(self::createNote($data))
+			->setRestAppLayoutBlocksModels(self::createRestAppLayoutBlocks($data))
 		;
 	}
 
@@ -89,6 +92,21 @@ class Model
 	private static function createNote(array $data): ?NoteModel
 	{
 		return isset($data['NOTE']) ? NoteModel::createFromArray($data['NOTE']) : null;
+	}
+
+	/**
+	 * @param array $data
+	 * @return RestAppLayoutBlocksModel[]
+	 */
+	private static function createRestAppLayoutBlocks(array $data): array
+	{
+		$restAppLayoutBlockModels = [];
+		foreach ($data['REST_APP_LAYOUT_BLOCKS'] ?? [] as $restAppLayoutBlocks)
+		{
+			$restAppLayoutBlockModels[] = RestAppLayoutBlocksModel::createFromArray($restAppLayoutBlocks);
+		}
+
+		return $restAppLayoutBlockModels;
 	}
 
 	public function isScheduled(): bool
@@ -256,5 +274,24 @@ class Model
 	public function getNote(): ?NoteModel
 	{
 		return $this->note;
+	}
+
+	/**
+	 * @param RestAppLayoutBlocksModel[] $restAppLayoutBlockModels
+	 * @return $this
+	 */
+	public function setRestAppLayoutBlocksModels(array $restAppLayoutBlockModels): self
+	{
+		$this->restAppLayoutBlocksModels = $restAppLayoutBlockModels;
+
+		return $this;
+	}
+
+	/**
+	 * @return RestAppLayoutBlocksModel[]
+	 */
+	public function getRestAppLayoutBlocksModels() : array
+	{
+		return $this->restAppLayoutBlocksModels;
 	}
 }

@@ -1,6 +1,7 @@
 <?php
 
 $MESS['SE_CHAT_TITLE'] = 'Чаты';
+$MESS['SE_MESSENGER_TITLE'] = 'Мессенджер';
 $MESS['SE_CHAT_DESC'] = 'Настройки из данной категории будут применены после повторного открытия диалога.';
 $MESS['SE_CHAT_ENABLE_TITLE'] = 'Включить новый чат';
 $MESS['SE_CHAT_HISTORY_TITLE'] = 'История чата';

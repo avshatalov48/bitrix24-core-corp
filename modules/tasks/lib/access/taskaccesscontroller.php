@@ -8,15 +8,15 @@
 
 namespace Bitrix\Tasks\Access;
 
-use Bitrix\Main\Access\User\AccessibleUser;
 use Bitrix\Main\Access\BaseAccessController;
 use Bitrix\Tasks\Access\Model\TaskModel;
-use Bitrix\Tasks\Access\Model\UserModel;
 use Bitrix\Main\Access\AccessibleItem;
 
 class TaskAccessController extends BaseAccessController
 	implements AccessErrorable
 {
+
+	use AccessUserTrait;
 	use AccessErrorTrait;
 
 	public static $cache = [];
@@ -55,16 +55,6 @@ class TaskAccessController extends BaseAccessController
 		if (!array_key_exists($key, static::$cache))
 		{
 			static::$cache[$key] = TaskModel::createFromId($itemId);
-		}
-		return static::$cache[$key];
-	}
-
-	protected function loadUser(int $userId): AccessibleUser
-	{
-		$key = 'USER_'.$userId;
-		if (!array_key_exists($key, static::$cache))
-		{
-			static::$cache[$key] = UserModel::createFromId($userId);
 		}
 		return static::$cache[$key];
 	}

@@ -42,6 +42,8 @@ class CrmKanbanComponent extends \CBitrixComponent
 	protected $componentParams = [];
 	protected bool $needPrepareColumns = false;
 
+	protected ?\Bitrix\Crm\Service\Context $operationContext = null;
+
 	public function onPrepareComponentParams($arParams): array
 	{
 		if (!Loader::includeModule('crm'))
@@ -204,6 +206,7 @@ class CrmKanbanComponent extends \CBitrixComponent
 		$params['ONLY_ITEMS'] = $this->arParams['ONLY_ITEMS'];
 		$params['FORCE_FILTER'] = $this->arParams['FORCE_FILTER'];
 		$params['VIEW_MODE'] = ($this->arParams['VIEW_MODE'] ?? \Bitrix\Crm\Kanban\ViewMode::MODE_STAGES);
+
 		return $this->getKanban()->getColumns($clear, $withoutCache, $params);
 	}
 
@@ -385,6 +388,7 @@ class CrmKanbanComponent extends \CBitrixComponent
 		$this->arResult['SKIP_COLUMN_COUNT_CHECK'] = $this->isSkipColumnCountCheck();
 		$this->arResult['USE_ITEM_PLANNER'] = ($this->arParams['USE_ITEM_PLANNER'] ?? 'N') === 'Y';
 		$this->arResult['USE_PUSH_CRM'] = ($this->arParams['USE_PUSH_CRM'] ?? 'Y') === 'Y';
+		$this->arResult['PERFORMANCE'] = $this->arParams['PERFORMANCE'] ?? [];
 
 		$context = Application::getInstance()->getContext();
 		$request = $context->getRequest();
@@ -493,7 +497,7 @@ class CrmKanbanComponent extends \CBitrixComponent
 
 			if ($this->getEntity()->isCategoriesSupported())
 			{
-				$this->arResult['CATEGORIES'] = $this->getEntity()->getCategories($userPermissions);
+				$this->arResult['CATEGORIES'] = $this->getEntity()->getCategoriesWithAddPermissions($userPermissions);
 			}
 		}
 
@@ -644,29 +648,6 @@ class CrmKanbanComponent extends \CBitrixComponent
 	}
 
 	/**
-	 * Convert charset from utf-8 to site.
-	 * @param mixed $data
-	 * @param bool $fromUtf Direction - from (true) or to (false).
-	 * @return mixed
-	 */
-	protected function convertUtf($data, $fromUtf)
-	{
-		if (SITE_CHARSET === 'UTF-8')
-		{
-			return $data;
-		}
-
-		$from = ($fromUtf ? 'UTF-8' : SITE_CHARSET);
-		$to = (!$fromUtf ? 'UTF-8' : SITE_CHARSET);
-
-		return (
-			is_array($data)
-				? $this->application->ConvertCharsetArray($data, $from, $to)
-				: $this->application->ConvertCharset($data, $from, $to)
-		);
-	}
-
-	/**
 	 * Notify admin for get access.
 	 * @return array
 	 */
@@ -679,15 +660,21 @@ class CrmKanbanComponent extends \CBitrixComponent
 			if (isset($admins[$userId]))
 			{
 				$pathColumnEdit = '/crm/configs/status/?ACTIVE_TAB=status_tab_' . $this->getKanban()->getEntity()->getStatusEntityId();
+				$notifyMessageCallback = static fn (?string $languageId = null) =>
+					Loc::getMessage(
+						'CRM_ACCESS_NOTIFY_MESSAGE',
+						[ '#URL#' => $pathColumnEdit ],
+						$languageId,
+					)
+				;
+
 				\CIMNotify::Add([
 					'TO_USER_ID' => $userId,
 					'FROM_USER_ID' => $this->currentUserID,
 					'NOTIFY_TYPE' => IM_NOTIFY_FROM,
 					'NOTIFY_MODULE' => 'crm',
 					'NOTIFY_TAG' => 'CRM|NOTIFY_ADMIN|' . $userId . '|' . $this->currentUserID,
-					'NOTIFY_MESSAGE' => Loc::getMessage('CRM_ACCESS_NOTIFY_MESSAGE', [
-						'#URL#' => $pathColumnEdit,
-					]),
+					'NOTIFY_MESSAGE' => $notifyMessageCallback,
 				]);
 			}
 		}
@@ -722,6 +709,8 @@ class CrmKanbanComponent extends \CBitrixComponent
 		$afterColumnId = $this->request('afterColumnId');
 
 		$sort = 0;
+		$semanticId = null;
+
 		if ($afterColumnId !== null && (string)$afterColumnId === '0')
 		{
 			$sort = 0;
@@ -729,6 +718,10 @@ class CrmKanbanComponent extends \CBitrixComponent
 		elseif (isset($stages[$afterColumnId]))
 		{
 			$sort = $stages[$afterColumnId]['real_sort'];
+			if (($stages[$afterColumnId]['type'] ?? '') == 'LOOSE')
+			{
+				$semanticId = \Bitrix\Crm\PhaseSemantics::FAILURE;
+			}
 		}
 		elseif (isset($stages[$columnId]))
 		{
@@ -737,13 +730,17 @@ class CrmKanbanComponent extends \CBitrixComponent
 
 		if ($columnName)
 		{
-			$columnName = $this->convertUtf($this->request('columnName'), true);
+			$columnName = $this->request('columnName');
 		}
 
 		$fields = [
 			'ENTITY_ID' => $this->getEntity()->getStatusEntityId(),
 			'SORT' => ++$sort,
 		];
+		if ($semanticId)
+		{
+			$fields['SEMANTICS'] = $semanticId;
+		}
 
 		if ($columnName)
 		{
@@ -1103,7 +1100,7 @@ class CrmKanbanComponent extends \CBitrixComponent
 	protected function actionSaveFields(): array
 	{
 		$type = (string) $this->request('type');
-		$fields = $this->convertUtf($this->request('fields'), true);
+		$fields = $this->request('fields');
 
 		return $this->getEntity()->saveAdditionalFields($fields, $type, $this->getKanban()->canEditSettings());
 	}
@@ -1118,7 +1115,7 @@ class CrmKanbanComponent extends \CBitrixComponent
 		$ids = ($ids ?: $this->request('id'));
 		$ids = (array)$ids;
 
-		if(empty($ids))
+		if (empty($ids))
 		{
 			return [];
 		}
@@ -1131,7 +1128,7 @@ class CrmKanbanComponent extends \CBitrixComponent
 
 		try
 		{
-			$this->getEntity()->deleteItems($ids, $ignore, $this->getKanban()->getCurrentUserPermissions(), $params);
+			$result = $this->getEntity()->deleteItemsV2($ids, $ignore, $this->getKanban()->getCurrentUserPermissions(), $params);
 		}
 		catch (\Exception $exception)
 		{
@@ -1140,7 +1137,18 @@ class CrmKanbanComponent extends \CBitrixComponent
 			];
 		}
 
-		return [];
+		$data = array_merge($result->getData(), ['errors' => []]);
+
+		/** @var Error $error */
+		foreach ($result->getErrorCollection() as $error)
+		{
+			$data['errors'][] = [
+				'message' => $error->getMessage(),
+				'data' => $error->getCustomData(),
+			];
+		}
+
+		return $data;
 	}
 
 	/**
@@ -1197,15 +1205,27 @@ class CrmKanbanComponent extends \CBitrixComponent
 		$ajaxParamsName = ((int) $request->getPost('version') === 2) ? 'ajaxParams' : 'status_params';
 		$newStateParams = (array)$request->getPost($ajaxParamsName);
 
+		$eventId = $request->getPost('eventId');
+		if ($eventId)
+		{
+			$newStateParams['eventId'] = $eventId;
+		}
+
 		$result = $this->getEntity()->updateItemStage(
 			$id,
 			$status,
-			$this->convertUtf($newStateParams, true),
+			$newStateParams,
 			$statuses
 		);
 		if(!$result->isSuccess())
 		{
 			return $result;
+		}
+
+		// order synchronization
+		if ($this->getEntity()->getTypeId() === \CCrmOwnerType::Deal)
+		{
+			(new \Bitrix\Crm\Order\OrderDealSynchronizer)->updateOrderFromDeal($id);
 		}
 
 		$this->needPrepareColumns = true;
@@ -1293,7 +1313,16 @@ class CrmKanbanComponent extends \CBitrixComponent
 		}
 		$categoryId = (int)$this->request('category');
 		$userPermissions = $this->getKanban()->getCurrentUserPermissions();
-		$this->getEntity()->updateItemsCategory($ids, $categoryId, $userPermissions);
+		$result = $this->getEntity()->updateItemsCategory($ids, $categoryId, $userPermissions);
+
+		if (!$result->isSuccess())
+		{
+			$errorMessages = $result->getErrorMessages();
+
+			return [
+				'ERROR' => reset($errorMessages),
+			];
+		}
 
 		return [];
 	}

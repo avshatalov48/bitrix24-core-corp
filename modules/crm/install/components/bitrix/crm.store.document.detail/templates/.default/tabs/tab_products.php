@@ -21,6 +21,7 @@ $APPLICATION->IncludeComponent(
 	'.default',
 	[
 		'ALLOW_EDIT' => $allowEdit  ? 'Y' : 'N',
+		'IS_DISPLAY_TOTAL_SUM_DETAILS' => true,
 		'CATALOG_ID' => \Bitrix\Crm\Product\Catalog::getDefaultId(),
 		'CURRENCY' => $arResult['ENTITY_DATA']['CURRENCY'] ?? null,
 		'BUILDER_CONTEXT' => \Bitrix\Catalog\Url\InventoryBuilder::TYPE_ID,
@@ -33,18 +34,18 @@ $APPLICATION->IncludeComponent(
 		'PRODUCTS' => $arResult['COMPONENT_PRODUCTS'],
 		'EXTERNAL_DOCUMENT' => [
 			'TYPE' => \Bitrix\Catalog\StoreDocumentTable::TYPE_SALES_ORDERS,
-			'TOTAL_CALCULATION_FIELD' => 'BASE_PRICE',
+			'TOTAL_CALCULATION_FIELD' => 'PRICE',
 			'DEFAULT_COLUMNS' =>
 				$allowEdit ?
 					[
 						'MAIN_INFO', 'BARCODE_INFO', 'STORE_FROM_INFO',
 						'STORE_FROM_AVAILABLE_AMOUNT', 'STORE_FROM_AMOUNT', 'AMOUNT',
-						'BASE_PRICE', 'PURCHASING_PRICE', 'TOTAL_PRICE',
+						'BASE_PRICE', 'TAX_RATE', 'TAX_INCLUDED', 'PURCHASING_PRICE', 'TOTAL_PRICE',
 					]
 					: [
 						'MAIN_INFO', 'STORE_FROM_INFO',
 						'STORE_FROM_AVAILABLE_AMOUNT', 'STORE_FROM_AMOUNT', 'AMOUNT',
-						'BASE_PRICE', 'PURCHASING_PRICE', 'BARCODE_INFO', 'TOTAL_PRICE',
+						'BASE_PRICE', 'TAX_RATE', 'TAX_INCLUDED', 'PURCHASING_PRICE', 'BARCODE_INFO', 'TOTAL_PRICE',
 					],
 			'CUSTOM_COLUMN_NAMES' => [
 				'PURCHASING_PRICE' => Loc::getMessage('CRM_STORE_DOCUMENT_DETAIL_COLUMN_PURCHASING_PRICE'),

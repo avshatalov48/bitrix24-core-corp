@@ -61,7 +61,7 @@ jn.define('crm/mail/mailbox/connector/steps/services-list', (require, exports, m
 		},
 		other: {
 			key: 'other',
-			name: Loc.getMessage('MAILBOX_CONNECTOR_SERVICE_NAME_IMAP'),
+			name: Loc.getMessage('MAILBOX_CONNECTOR_SERVICE_NAME_IMAP_MSGVER_1'),
 			svgContent: '<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M15.9373 15.1656L8.02631 9.41211H23.8483L15.9373 15.1656ZM25.2866 11.1465V10.8505L25.2866 11.1464L25.2866 11.1465ZM25.2866 11.1465L15.9373 18.4475L6.58789 11.1464V21.8307C6.58789 22.5197 7.19014 23.0766 7.93251 23.0766H23.942C24.6861 23.0766 25.2866 22.5189 25.2866 21.8307V11.1465Z" fill="#8E52EC"/></svg>',
 		},
 	};

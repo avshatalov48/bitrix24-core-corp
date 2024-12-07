@@ -1,143 +1,145 @@
-<?
-require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_before.php");
-/** @global CMain $APPLICATION */
-/** @global CDatabase $DB */
-/** @global CUser $USER */
+<?php
+require_once $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_admin_before.php';
+/** @var CMain $APPLICATION */
+/** @var CDatabase $DB */
+/** @var CUser $USER */
 
-if (!$USER->CanDoOperation("controller_counter_view") || !CModule::IncludeModule("controller"))
+if (!$USER->CanDoOperation('controller_counter_view') || !CModule::IncludeModule('controller'))
 {
-	$APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+	$APPLICATION->AuthForm(GetMessage('ACCESS_DENIED'));
 }
-require_once($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/controller/prolog.php");
+require_once $_SERVER['DOCUMENT_ROOT'] . BX_ROOT . '/modules/controller/prolog.php';
 
 IncludeModuleLangFile(__FILE__);
 
-$sTableID = "t_controller_counter_history";
+$sTableID = 't_controller_counter_history';
 $lAdmin = new CAdminUiList($sTableID);
 
 $arID = $lAdmin->GroupAction();
-if ($arID && $USER->CanDoOperation("controller_counters_manage"))
+if ($arID && $USER->CanDoOperation('controller_counters_manage'))
 {
 	foreach ($arID as $ID)
 	{
 		if ($ID == '')
+		{
 			continue;
+		}
 		$ID = intval($ID);
 
-		switch ($_REQUEST['action'])
+		if ($_REQUEST['action'] === 'restore')
 		{
-		case "restore":
-			$rsHistory = CControllerCounter::GetHistory(array("=ID" => $ID));
+			$rsHistory = CControllerCounter::GetHistory(['=ID' => $ID]);
 			$historyRecord = $rsHistory->Fetch();
 			if ($historyRecord)
 			{
-				$rs = CControllerCounter::GetList(array(), array("=ID" => $historyRecord["COUNTER_ID"]));
+				$rs = CControllerCounter::GetList([], ['=ID' => $historyRecord['COUNTER_ID']]);
 				if ($rs->Fetch())
 				{
-					CControllerCounter::Update($historyRecord["COUNTER_ID"], array(
-						"NAME" => $historyRecord["NAME"],
-						"COMMAND" => $historyRecord["COMMAND_FROM"],
-					));
+					CControllerCounter::Update($historyRecord['COUNTER_ID'], [
+						'NAME' => $historyRecord['NAME'],
+						'COMMAND' => $historyRecord['COMMAND_FROM'],
+					]);
 				}
 				else
 				{
-					CAgent::RemoveAgent("CControllerCounter::DeleteValuesAgent(".$historyRecord["COUNTER_ID"].");", "controller");
-					CControllerCounter::Add(array(
-						"ID" => $historyRecord["COUNTER_ID"],
-						"NAME" => $historyRecord["NAME"],
-						"COMMAND" => $historyRecord["COMMAND_FROM"],
-					));
+					CAgent::RemoveAgent('CControllerCounter::DeleteValuesAgent(' . $historyRecord['COUNTER_ID'] . ');', 'controller');
+					CControllerCounter::Add([
+						'ID' => $historyRecord['COUNTER_ID'],
+						'NAME' => $historyRecord['NAME'],
+						'COMMAND' => $historyRecord['COMMAND_FROM'],
+					]);
 				}
 			}
-			break;
 		}
 	}
 }
 
-$filterFields = array(
-	array(
-		"id" => "COUNTER_ID",
-		"name" => GetMessage("CTRL_COUNTER_HIST_COUNTER_ID"),
-		"filterable" => "=",
-		"default" => true,
-	),
-	array(
-		"id" => "NAME",
-		"name" => GetMessage("CTRL_COUNTER_HIST_NAME"),
-		"filterable" => "%",
-		"default" => true,
-	),
-	array(
-		"id" => "COMMAND",
-		"name" => GetMessage("CTRL_COUNTER_HIST_COMMAND"),
-		"filterable" => "%",
-		"default" => true,
-	),
-);
+$filterFields = [
+	[
+		'id' => 'COUNTER_ID',
+		'name' => GetMessage('CTRL_COUNTER_HIST_COUNTER_ID'),
+		'filterable' => '=',
+		'default' => true,
+	],
+	[
+		'id' => 'NAME',
+		'name' => GetMessage('CTRL_COUNTER_HIST_NAME'),
+		'filterable' => '%',
+		'default' => true,
+	],
+	[
+		'id' => 'COMMAND',
+		'name' => GetMessage('CTRL_COUNTER_HIST_COMMAND'),
+		'filterable' => '%',
+		'default' => true,
+	],
+];
 
-$arFilter = array();
+$arFilter = [];
 $lAdmin->AddFilter($filterFields, $arFilter);
 foreach ($arFilter as $k => $v)
 {
 	if ($v == '')
+	{
 		unset($arFilter[$k]);
+	}
 }
 
-if (isset($arFilter["%COMMAND"]))
+if (isset($arFilter['%COMMAND']))
 {
-	$arFilter[] = array(
-		"LOGIC" => "OR",
-		"%COMMAND_FROM" => $arFilter["%COMMAND"],
-		"%COMMAND_TO" => $arFilter["%COMMAND"],
-	);
-	unset($arFilter["%COMMAND"]);
+	$arFilter[] = [
+		'LOGIC' => 'OR',
+		'%COMMAND_FROM' => $arFilter['%COMMAND'],
+		'%COMMAND_TO' => $arFilter['%COMMAND'],
+	];
+	unset($arFilter['%COMMAND']);
 }
 
-$arHeaders = array(
-	array(
-		"id" => "COUNTER_ID",
-		"content" => GetMessage("CTRL_COUNTER_HIST_COUNTER_ID"),
-		"default" => true,
-	),
-	array(
-		"id" => "TIMESTAMP_X",
-		"content" => GetMessage("CTRL_COUNTER_HIST_TIMESTAMP_X"),
-		"default" => true,
-	),
-	array(
-		"id" => "USER_ID",
-		"content" => GetMessage("CTRL_COUNTER_HIST_USER_ID"),
-		"default" => true,
-	),
-	array(
-		"id" => "NAME",
-		"content" => GetMessage("CTRL_COUNTER_HIST_NAME"),
-		"default" => true,
-	),
-	array(
-		"id" => "COMMAND",
-		"content" => GetMessage("CTRL_COUNTER_HIST_COMMAND"),
-		"default" => true,
-	),
-	array(
-		"id" => "COMMAND_FROM",
-		"content" => GetMessage("CTRL_COUNTER_HIST_COMMAND_FROM"),
-		"default" => false,
-	),
-	array(
-		"id" => "COMMAND_TO",
-		"content" => GetMessage("CTRL_COUNTER_HIST_COMMAND_TO"),
-		"default" => false,
-	),
-);
+$arHeaders = [
+	[
+		'id' => 'COUNTER_ID',
+		'content' => GetMessage('CTRL_COUNTER_HIST_COUNTER_ID'),
+		'default' => true,
+	],
+	[
+		'id' => 'TIMESTAMP_X',
+		'content' => GetMessage('CTRL_COUNTER_HIST_TIMESTAMP_X'),
+		'default' => true,
+	],
+	[
+		'id' => 'USER_ID',
+		'content' => GetMessage('CTRL_COUNTER_HIST_USER_ID'),
+		'default' => true,
+	],
+	[
+		'id' => 'NAME',
+		'content' => GetMessage('CTRL_COUNTER_HIST_NAME'),
+		'default' => true,
+	],
+	[
+		'id' => 'COMMAND',
+		'content' => GetMessage('CTRL_COUNTER_HIST_COMMAND'),
+		'default' => true,
+	],
+	[
+		'id' => 'COMMAND_FROM',
+		'content' => GetMessage('CTRL_COUNTER_HIST_COMMAND_FROM'),
+		'default' => false,
+	],
+	[
+		'id' => 'COMMAND_TO',
+		'content' => GetMessage('CTRL_COUNTER_HIST_COMMAND_TO'),
+		'default' => false,
+	],
+];
 
 $lAdmin->AddHeaders($arHeaders);
 
-$allCounters = array();
+$allCounters = [];
 $rsData = CControllerCounter::GetList();
 while ($arCounter = $rsData->Fetch())
 {
-	$allCounters[$arCounter["ID"]] = $arCounter;
+	$allCounters[$arCounter['ID']] = $arCounter;
 }
 
 $rsData = CControllerCounter::GetHistory($arFilter);
@@ -150,47 +152,47 @@ while ($arRes = $rsData->Fetch())
 {
 	$row =& $lAdmin->AddRow($arRes['ID'], $arRes);
 
-	$row->AddViewField("TIMESTAMP_X", htmlspecialcharsEx($arRes['TIMESTAMP_X']));
-	adminListAddUserLink($row, "USER_ID", $arRes['USER_ID'], $arRes['USER_ID_USER']);
+	$row->AddViewField('TIMESTAMP_X', htmlspecialcharsEx($arRes['TIMESTAMP_X']));
+	adminListAddUserLink($row, 'USER_ID', $arRes['USER_ID'], $arRes['USER_ID_USER']);
 
-	if (isset($allCounters[$arRes["COUNTER_ID"]]))
+	if (isset($allCounters[$arRes['COUNTER_ID']]))
 	{
-		$row->AddViewField("COUNTER_ID", '<a href="controller_counter_edit.php?ID='.intval($arRes['COUNTER_ID']).'&amp;lang='.LANGUAGE_ID.'">'.intval($arRes['COUNTER_ID']).'</a>');
+		$row->AddViewField('COUNTER_ID', '<a href="controller_counter_edit.php?ID=' . intval($arRes['COUNTER_ID']) . '&amp;lang=' . LANGUAGE_ID . '">' . intval($arRes['COUNTER_ID']) . '</a>');
 	}
 
 	if (!$arRes['COMMAND_FROM'])
 	{
-		$row->AddViewField("COMMAND", '<pre>'.htmlspecialcharsEx($arRes['COMMAND_TO']).'</pre>');
-		$row->AddViewField("NAME", '<span class="command-code-add">'.htmlspecialcharsEx($arRes['NAME']).'</span>');
+		$row->AddViewField('COMMAND', '<pre>' . htmlspecialcharsEx($arRes['COMMAND_TO']) . '</pre>');
+		$row->AddViewField('NAME', '<span class="command-code-add">' . htmlspecialcharsEx($arRes['NAME']) . '</span>');
 	}
 	elseif (!$arRes['COMMAND_TO'])
 	{
-		$row->AddViewField("COMMAND", '<pre>'.htmlspecialcharsEx($arRes['COMMAND_FROM']).'</pre>');
-		$row->AddViewField("NAME", '<span class="command-code-del">'.htmlspecialcharsEx($arRes['NAME']).'</span>');
+		$row->AddViewField('COMMAND', '<pre>' . htmlspecialcharsEx($arRes['COMMAND_FROM']) . '</pre>');
+		$row->AddViewField('NAME', '<span class="command-code-del">' . htmlspecialcharsEx($arRes['NAME']) . '</span>');
 	}
 	else
 	{
 		$cmd_from = htmlspecialcharsEx($arRes['COMMAND_FROM']);
 		$cmd_to = htmlspecialcharsEx($arRes['COMMAND_TO']);
 		$cmd_diff = getCounterCommandDiff($cmd_from, $cmd_to);
-		$cmd_html = str_replace("\n", "<br>", $cmd_diff);
-		$cmd_html = str_replace("\t", "&nbsp;&nbsp;&nbsp;&nbsp;", $cmd_html);
-		$row->AddViewField("COMMAND", '<span class="command-code">'.$cmd_html.'</span>');
+		$cmd_html = str_replace("\n", '<br>', $cmd_diff);
+		$cmd_html = str_replace("\t", '&nbsp;&nbsp;&nbsp;&nbsp;', $cmd_html);
+		$row->AddViewField('COMMAND', '<span class="command-code">' . $cmd_html . '</span>');
 	}
-	$row->AddViewField("COMMAND_FROM", '<pre>'.htmlspecialcharsEx($arRes['COMMAND_FROM']).'</pre>');
-	$row->AddViewField("COMMAND_TO", '<pre>'.htmlspecialcharsEx($arRes['COMMAND_TO']).'</pre>');
+	$row->AddViewField('COMMAND_FROM', '<pre>' . htmlspecialcharsEx($arRes['COMMAND_FROM']) . '</pre>');
+	$row->AddViewField('COMMAND_TO', '<pre>' . htmlspecialcharsEx($arRes['COMMAND_TO']) . '</pre>');
 
-	if ($USER->CanDoOperation("controller_counters_manage"))
+	if ($USER->CanDoOperation('controller_counters_manage'))
 	{
-		$arActions = array();
+		$arActions = [];
 		if ($arRes['COMMAND_FROM'])
 		{
-			$arActions[] = array(
-				"ICON" => "edit",
-				"DEFAULT" => "N",
-				"TEXT" => GetMessage("CTRL_COUNTER_HIST_MENU_RESTORE"),
-				"ACTION" => "if(confirm('".GetMessage("CTRL_COUNTER_HIST_MENU_RESTORE_ALERT")."')) ".$lAdmin->ActionDoGroup($arRes["ID"], "restore"),
-			);
+			$arActions[] = [
+				'ICON' => 'edit',
+				'DEFAULT' => 'N',
+				'TEXT' => GetMessage('CTRL_COUNTER_HIST_MENU_RESTORE'),
+				'ACTION' => "if(confirm('" . GetMessage('CTRL_COUNTER_HIST_MENU_RESTORE_ALERT') . "')) " . $lAdmin->ActionDoGroup($arRes['ID'], 'restore'),
+			];
 		}
 
 		if ($arActions)
@@ -201,27 +203,27 @@ while ($arRes = $rsData->Fetch())
 }
 
 $lAdmin->AddFooter(
-	array(
-		array("title" => GetMessage("MAIN_ADMIN_LIST_SELECTED"), "value" => $rsData->SelectedRowsCount()),
-	)
+	[
+		['title' => GetMessage('MAIN_ADMIN_LIST_SELECTED'), 'value' => $rsData->SelectedRowsCount()],
+	]
 );
 
-$aContext = array(
-	array(
-		"TEXT" => GetMessage("CTRL_COUNTER_HIST_BACK"),
-		"LINK" => "controller_counter_edit.php?ID=".intval($adminFilter['find_id'])."&lang=".LANGUAGE_ID,
-		"TITLE" => GetMessage("CTRL_COUNTER_HIST_BACK_TITLE"),
-		"ICON" => "btn_edit",
-	),
-);
+$aContext = [
+	[
+		'TEXT' => GetMessage('CTRL_COUNTER_HIST_BACK'),
+		'LINK' => 'controller_counter_edit.php?ID=' . intval($_REQUEST['COUNTER_ID']) . '&lang=' . LANGUAGE_ID,
+		'TITLE' => GetMessage('CTRL_COUNTER_HIST_BACK_TITLE'),
+		'ICON' => 'btn_edit',
+	],
+];
 
 $lAdmin->AddAdminContextMenu($aContext);
 
 $lAdmin->CheckListMode();
 
-$APPLICATION->SetTitle(GetMessage("CTRL_COUNTER_HIST_TITLE"));
+$APPLICATION->SetTitle(GetMessage('CTRL_COUNTER_HIST_TITLE'));
 
-require($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/include/prolog_admin_after.php");
+require $_SERVER['DOCUMENT_ROOT'] . BX_ROOT . '/modules/main/include/prolog_admin_after.php';
 
 $lAdmin->DisplayFilter($filterFields);
 $lAdmin->DisplayList();
@@ -233,13 +235,13 @@ function ch_LongestCommonSubsequence($X, $Y)
 //	m_start := 1
 	$m_start = 0;
 //	m_end := m
-	$m_end = count($X)-1;
+	$m_end = count($X) - 1;
 //	n_start := 1
 	$n_start = 0;
 //	n_end := n
-	$n_end = count($Y)-1;
+	$n_end = count($Y) - 1;
 //	C = array(m_start-1..m_end, n_start-1..n_end)
-	$C = array();
+	$C = [];
 //	for($i = $m_start-1; $i <= $m_end; $i++)
 //	{
 //		$C[$i] = array();
@@ -249,45 +251,55 @@ function ch_LongestCommonSubsequence($X, $Y)
 //		}
 //	}
 //	for i := m_start..m_end
-	for($i = $m_start; $i <= $m_end; $i++)
+	for ($i = $m_start; $i <= $m_end; $i++)
 	{
 //		for j := n_start..n_end
-		for($j = $n_start; $j <= $n_end; $j++)
+		for ($j = $n_start; $j <= $n_end; $j++)
 		{
 //			if X[i] = Y[j]
-			if($X[$i] == $Y[$j])
+			if ($X[$i] == $Y[$j])
 			{
 //				C[i,j] := C[i-1,j-1] + 1
-				$C[$i][$j] = $C[($i-1)][($j-1)] + 1;
+				$C[$i][$j] = $C[($i - 1)][($j - 1)] + 1;
 			}
 //			else:
 			else
 			{
-				$k = max($C[$i][($j-1)], $C[($i-1)][$j]);
+				$k = max($C[$i][($j - 1)], $C[($i - 1)][$j]);
 //				C[i,j] := max(C[i,j-1], C[i-1,j])
-				if($k != 0)
+				if ($k != 0)
 				{
 					$C[$i][$j] = $k;
 					//Clean up to the left
-					if($C[$i][$j-1] < $k)
-						for($jj = $j-1;$jj >= $n_start;$jj--)
-							if(is_array($C[$i]) && array_key_exists($jj, $C[$i]))
+					if ($C[$i][$j - 1] < $k)
+					{
+						for ($jj = $j - 1; $jj >= $n_start; $jj--)
+						{
+							if (is_array($C[$i]) && array_key_exists($jj, $C[$i]))
+							{
 								unset($C[$i][$jj]);
+							}
 							else
+							{
 								break;
+							}
+						}
+					}
 				}
 			}
 		}
 		//Clean up to the up
-		if($i > $m_start)
+		if ($i > $m_start)
 		{
 			$ii = $i - 1;
-			if(is_array($C[$ii]))
+			if (is_array($C[$ii]))
 			{
-				for($j = $n_end; $j > $n_start && array_key_exists($j, $C[$ii]); $j--)
+				for ($j = $n_end; $j > $n_start && array_key_exists($j, $C[$ii]); $j--)
 				{
-					if($C[$i][$j] > $C[$ii][$j])
+					if ($C[$i][$j] > $C[$ii][$j])
+					{
 						unset($C[$ii][$j]);
+					}
 				}
 			}
 		}
@@ -310,22 +322,22 @@ function ch_LongestCommonSubsequence($X, $Y)
 
 function computeCounterCommandDiff($C, $X, $Y, $Xt, $Yt, $i, $j)
 {
-	$a = array();
-	while($i >= 0 || $j >= 0)
+	$a = [];
+	while ($i >= 0 || $j >= 0)
 	{
-		if( ($i >= 0) && ($j >= 0) && ($Xt[$i] == $Yt[$j]) )
+		if ( ($i >= 0) && ($j >= 0) && ($Xt[$i] == $Yt[$j]) )
 		{
 			array_unshift($a, $X[$i]);
 			$i--; $j--;
 		}
-		elseif( ($j >= 0) && ($i <= 0 || ($C[$i][($j-1)] >= $C[($i-1)][$j])) )
+		elseif ( ($j >= 0) && ($i <= 0 || ($C[$i][($j - 1)] >= $C[($i - 1)][$j])) )
 		{
-			array_unshift($a, '<span class="command-code-add">'.$Y[$j]."</span>");
+			array_unshift($a, '<span class="command-code-add">' . $Y[$j] . '</span>');
 			$j--;
 		}
-		elseif( ($i >= 0) && ($j <= 0 || ($C[$i][($j-1)] < $C[($i-1)][$j])) )
+		elseif ( ($i >= 0) && ($j <= 0 || ($C[$i][($j - 1)] < $C[($i - 1)][$j])) )
 		{
-			array_unshift($a, '<span class="command-code-del">'.$X[$i]."</span>");
+			array_unshift($a, '<span class="command-code-del">' . $X[$i] . '</span>');
 			$i--;
 		}
 	}
@@ -338,21 +350,21 @@ function getCounterCommandDiff($X, $Y)
 	$Ymatch = explode("\n", $Y);
 
 	//Determine common beginning
-	$sCodeStart = "";
-	while( count($Xmatch) && count($Ymatch) && (trim($Xmatch[0], " \t\n\r") == trim($Ymatch[0], " \t\n\r")) )
+	$sCodeStart = '';
+	while ( count($Xmatch) && count($Ymatch) && (trim($Xmatch[0], " \t\n\r") === trim($Ymatch[0], " \t\n\r")) )
 	{
-		$sCodeStart .= "\n".$Xmatch[0];
+		$sCodeStart .= "\n" . $Xmatch[0];
 		array_shift($Xmatch);
 		array_shift($Ymatch);
 	}
 
 	//Find common ending
-	$X_end = count($Xmatch)-1;
-	$Y_end = count($Ymatch)-1;
-	$sCodeEnd = "";
-	while( ($X_end >= 0) && ($Y_end >= 0) && (trim($Xmatch[$X_end], " \t\n\r") == trim($Ymatch[$Y_end], " \t\n\r")) )
+	$X_end = count($Xmatch) - 1;
+	$Y_end = count($Ymatch) - 1;
+	$sCodeEnd = '';
+	while ( ($X_end >= 0) && ($Y_end >= 0) && (trim($Xmatch[$X_end], " \t\n\r") === trim($Ymatch[$Y_end], " \t\n\r")) )
 	{
-		$sCodeEnd = $Xmatch[$X_end]."\n".$sCodeEnd;
+		$sCodeEnd = $Xmatch[$X_end] . "\n" . $sCodeEnd;
 		unset($Xmatch[$X_end]);
 		unset($Ymatch[$Y_end]);
 		$X_end--;
@@ -360,14 +372,14 @@ function getCounterCommandDiff($X, $Y)
 	}
 
 	//What will actually diff
-	$Xmatch_trimmed = array();
-	foreach($Xmatch as $i => $match)
+	$Xmatch_trimmed = [];
+	foreach ($Xmatch as $match)
 	{
 		$Xmatch_trimmed[] = trim($match, " \t\n\r");
 	}
 
-	$Ymatch_trimmed = array();
-	foreach($Ymatch as $i => $match)
+	$Ymatch_trimmed = [];
+	foreach ($Ymatch as $match)
 	{
 		$Ymatch_trimmed[] = trim($match, " \t\n\r");
 	}
@@ -378,12 +390,12 @@ function getCounterCommandDiff($X, $Y)
 		$Ymatch,
 		$Xmatch_trimmed,
 		$Ymatch_trimmed,
-		count($Xmatch_trimmed)-1,
-		count($Ymatch_trimmed)-1
+		count($Xmatch_trimmed) - 1,
+		count($Ymatch_trimmed) - 1
 	);
 	$sCode = implode("\n", $diff);
 
-	return trim($sCodeStart."\n".$sCode."\n".$sCodeEnd, "\n");
+	return trim($sCodeStart . "\n" . $sCode . "\n" . $sCodeEnd, "\n");
 }
 
-require($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/include/epilog_admin.php");
+require $_SERVER['DOCUMENT_ROOT'] . BX_ROOT . '/modules/main/include/epilog_admin.php';

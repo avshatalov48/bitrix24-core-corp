@@ -16,6 +16,7 @@ jn.define('crm/mail/chain', (require, exports, module) => {
 	const { MessageBody } = require('crm/mail/message/tools/messagebody');
 	const { MailOpener } = require('crm/mail/opener');
 	const { NotifyManager } = require('notify-manager');
+	const { ContextMenu } = require('layout/ui/context-menu');
 
 	const titles = {
 		fields: {

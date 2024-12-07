@@ -693,4 +693,13 @@ class Order extends Entity
 			]
 		);
 	}
+
+	protected function getHideSumForStagePermissionType(string $stageId, \CCrmPerms $userPermissions): ?string
+	{
+		return $userPermissions->GetPermType(
+			$this->getTypeName(),
+			'HIDE_SUM',
+			["STAGE_ID{$stageId}"]
+		);
+	}
 }

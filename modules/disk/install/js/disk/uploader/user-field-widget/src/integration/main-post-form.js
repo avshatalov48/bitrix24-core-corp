@@ -36,6 +36,9 @@ export default class MainPostForm extends EventEmitter
 			}
 		});
 
+		this.#userFieldControl.subscribe('onUploaderPanelToggle', this.#handleUploaderPanelToggle.bind(this));
+		this.#userFieldControl.subscribe('onDocumentPanelToggle', this.#handleDocumentPanelToggle.bind(this));
+
 		Event.ready(this.#handleDocumentReady.bind(this));
 	}
 
@@ -195,13 +198,9 @@ export default class MainPostForm extends EventEmitter
 										// }
 									},
 									[FileEvent.UPLOAD_COMPLETE]: (event: BaseEvent): void => {
-										const file: UploaderFile = event.getTarget();
-										const item: TileWidgetItem = this.getUserFieldControl().getItem(file.getId());
-										if (item)
-										{
-											this.getUserFieldControl().showUploaderPanel();
-											this.getParser().insertFile(item);
-										}
+										const uploadedFile: UploaderFile = event.getTarget();
+										this.getUserFieldControl().showUploaderPanel();
+										this.getParser().insertFile(uploadedFile);
 									},
 								},
 							});
@@ -321,12 +320,8 @@ export default class MainPostForm extends EventEmitter
 				events: {
 					[FileEvent.UPLOAD_COMPLETE]: (event: BaseEvent): void => {
 						const file: UploaderFile = event.getTarget();
-						const item: TileWidgetItem = this.getUserFieldControl().getItem(file.getId());
-						if (item)
-						{
-							this.getUserFieldControl().showUploaderPanel();
-							this.getParser().insertFile(item);
-						}
+						this.getUserFieldControl().showUploaderPanel();
+						this.getParser().insertFile(file);
 					},
 				},
 			});
@@ -360,7 +355,7 @@ export default class MainPostForm extends EventEmitter
 										width: file.getPreviewWidth(),
 										height: file.getPreviewHeight(),
 									},
-									html: this.getParser().createItemHtml(item),
+									html: this.getParser().createItemHtml(file),
 								});
 							}
 							else
@@ -546,6 +541,38 @@ export default class MainPostForm extends EventEmitter
 		else
 		{
 			this.getUserFieldControl().showDocumentPanel();
+		}
+	}
+
+	insertIntoText(item: TileWidgetItem): void
+	{
+		const file: UploaderFile = this.#userFieldControl.getFile(item.id);
+		this.#htmlParser.insertFile(file);
+	}
+
+	#handleUploaderPanelToggle(event: BaseEvent): void
+	{
+		const isOpen: boolean = event.getData().isOpen;
+		if (isOpen)
+		{
+			this.selectFileButton();
+		}
+		else
+		{
+			this.deselectFileButton();
+		}
+	}
+
+	#handleDocumentPanelToggle(event: BaseEvent): void
+	{
+		const isOpen: boolean = event.getData().isOpen;
+		if (isOpen)
+		{
+			this.selectCreateDocumentButton();
+		}
+		else
+		{
+			this.deselectCreateDocumentButton();
 		}
 	}
 }

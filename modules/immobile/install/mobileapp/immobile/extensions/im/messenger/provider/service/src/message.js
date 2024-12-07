@@ -42,6 +42,56 @@ jn.define('im/messenger/provider/service/message', (require, exports, module) =>
 			return this.loadService.loadHistory();
 		}
 
+		/**
+		 * @param {number} messageId
+		 * @return {Promise<{result: MessageRepositoryContext, isCompleteContext: boolean}>}
+		 */
+		loadLocalStorageContext(messageId)
+		{
+			return this.loadService.loadLocalStorageContext(messageId);
+		}
+
+		/**
+		 * @description Enables flags that the current dialog has pages up and down
+		 * @return {Promise<*>}
+		 */
+		enablePageNavigation()
+		{
+			return this.loadService.updatePageNavigationFields({
+				hasPrevPage: true,
+				hasNextPage: true,
+			});
+		}
+
+		updateModelByLocalStorageContextResult(messageId)
+		{
+			return this.loadService.updateModelByLocalStorageContextResult(messageId);
+		}
+
+		loadContext(messageId)
+		{
+			return this.loadService.loadContext(messageId);
+		}
+
+		/**
+		 * @param commentChatId
+		 * @return {Promise<{result: object, contextMessageId: number}>}
+		 */
+		loadContextByCommentChatId(commentChatId)
+		{
+			return this.loadService.loadContextByCommentChatId(commentChatId);
+		}
+
+		loadFirstPage()
+		{
+			return this.loadService.loadFirstPage();
+		}
+
+		updateModelByContextResult(result)
+		{
+			return this.loadService.updateModelByContextResult(result);
+		}
+
 		hasPreparedUnreadMessages()
 		{
 			return this.loadService.hasPreparedUnreadMessages();

@@ -22,7 +22,7 @@ class TagConverter implements AgentInterface
 
 	public static function isProceed(): bool
 	{
-		return Option::get('tasks', self::OPTION_KEY, 'null', '-') !== 'null';
+		return Option::get('tasks', self::OPTION_KEY, 'null') !== 'null';
 	}
 
 	public static function execute(): string
@@ -108,7 +108,7 @@ class TagConverter implements AgentInterface
 			return '';
 		}
 
-		Option::set('tasks', self::OPTION_KEY, 'process', '-');
+		Option::set('tasks', self::OPTION_KEY, 'process');
 
 		return static::getAgentName();
 	}

@@ -112,7 +112,7 @@ $APPLICATION->IncludeComponent(
 	)
 );
 ?>
-<script type="text/javascript">
+<script>
 
 	window.CrmProductRowSetLocation = function(){ BX.onCustomEvent('CrmProductRowSetLocation', ['LOC_CITY']); };
 
@@ -200,7 +200,7 @@ $APPLICATION->IncludeComponent(
 </script>
 <?
 if($arResult['CONVERSION_PERMITTED'] && $arResult['CAN_CONVERT'] && isset($arResult['CONVERSION_CONFIG'])):?>
-	<script type="text/javascript">
+	<script>
 		BX.ready(
 			function()
 			{

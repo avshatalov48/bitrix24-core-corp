@@ -2316,13 +2316,11 @@ class EntityAddress
 		return false;
 	}
 
+	/**
+	 * @deprecated Does nothing.
+	 */
 	public static function prepareJsonValue($data)
 	{
-		if (!Main\Application::isUtfMode() && is_string($data) && $data !== '')
-		{
-			$data = Encoding::convertEncoding($data, SITE_CHARSET, "UTF-8");
-		}
-
 		return $data;
 	}
 

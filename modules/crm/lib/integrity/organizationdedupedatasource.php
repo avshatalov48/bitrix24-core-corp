@@ -1,6 +1,10 @@
 <?php
+
 namespace Bitrix\Crm\Integrity;
+
 use Bitrix\Main;
+use Bitrix\Main\Entity\Query;
+use Bitrix\Main\ORM;
 
 class OrganizationDedupeDataSource extends MatchHashDedupeDataSource
 {
@@ -8,44 +12,70 @@ class OrganizationDedupeDataSource extends MatchHashDedupeDataSource
 	{
 		parent::__construct(DuplicateIndexType::ORGANIZATION, $params);
 	}
-	/**
-	 * @return Array
-	 */
-	protected function getEntityMatchesByHash($entityTypeID, $entityID, $matchHash)
+
+	final protected function getOrmEntity(): ORM\Entity
+	{
+		return DuplicateOrganizationMatchCodeTable::getEntity();
+	}
+
+	final protected function applyQueryFilterByMatches(Query $query, DuplicateCriterion $criterion): Query
+	{
+		$matches = $criterion->getMatches();
+		$title = $matches['TITLE'] ?? '';
+		if ($title === '')
+		{
+			throw new Main\ArgumentException("Parameter 'TITLE' is required.", 'matches');
+		}
+		$query->addFilter('=TITLE', $title);
+
+		return $query;
+	}
+
+	protected function getEntityMatchesByHash($entityTypeID, $entityID, $matchHash): ?array
 	{
 		$matches = DuplicateOrganizationCriterion::loadEntityMatches($entityTypeID, $entityID);
+
 		return (is_array($matches) && DuplicateOrganizationCriterion::prepareMatchHash($matches) === $matchHash)
-			? $matches : null;
+			? $matches
+			: null
+		;
 	}
-	/**
-	 * @return DuplicateCriterion
-	 */
-	protected function createCriterionFromMatches(array $matches)
+
+	protected function createCriterionFromMatches(array $matches): DuplicateCriterion
 	{
 		return DuplicateOrganizationCriterion::createFromMatches($matches);
 	}
-	protected function prepareResult(array &$map, DedupeDataSourceResult $result)
+
+	protected function prepareResult(array &$map, DedupeDataSourceResult $result): void
 	{
 		$entityTypeID = $this->getEntityTypeID();
-		foreach($map as $matchHash => &$entry)
+
+		foreach ($map as $matchHash => &$entry)
 		{
 			$isValidEntry = false;
+
 			$primaryQty = isset($entry['PRIMARY']) ? count($entry['PRIMARY']) : 0;
-			if($primaryQty > 1)
+			if ($primaryQty > 1)
 			{
-				$matches = $this->getEntityMatchesByHash($entityTypeID, $entry['PRIMARY'][0], $matchHash);
-				if(is_array($matches))
+				$matches = $this->getEntityMatchesByHash(
+					$entityTypeID,
+					$entry['PRIMARY'][0],
+					$matchHash
+				);
+				if (is_array($matches))
 				{
 					$criterion = $this->createCriterionFromMatches($matches);
 					$dup = new Duplicate($criterion, array());
-					foreach($entry['PRIMARY'] as $entityID)
+					foreach ($entry['PRIMARY'] as $entityID)
 					{
 						$dup->addEntity(new DuplicateEntity($entityTypeID, $entityID));
 					}
 					$result->addItem($matchHash, $dup);
+
 					$isValidEntry = true;
 				}
 			}
+
 			if (!$isValidEntry)
 			{
 				$result->addInvalidItem((string)$matchHash);
@@ -53,6 +83,13 @@ class OrganizationDedupeDataSource extends MatchHashDedupeDataSource
 		}
 		unset($entry);
 	}
+
+	/**
+	 * @deprecated
+	 * @see DedupeDataSource::isEmptyEntity()
+	 * 
+	 * @noinspection All
+	 */
 	public function calculateEntityCount(DuplicateCriterion $criterion, array $options = null)
 	{
 		$entityTypeID = $this->getEntityTypeID();

@@ -33,7 +33,7 @@ endforeach;
 		</table>
 	</div>
 </div>
-<script type="text/javascript">
+<script>
 var meetingSearchTimer, meetingSearchInput;
 function meetingSearch(m)
 {

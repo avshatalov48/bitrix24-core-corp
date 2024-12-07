@@ -5,6 +5,7 @@ jn.define('layout/ui/fields/menu-select', (require, exports, module) => {
 	const AppTheme = require('apptheme');
 	const { BaseSelectField } = require('layout/ui/fields/base-select');
 	const { chevronDown } = require('assets/common');
+	const { ContextMenu } = require('layout/ui/context-menu');
 
 	/**
 	 * @class MenuSelectField
@@ -320,6 +321,8 @@ jn.define('layout/ui/fields/menu-select', (require, exports, module) => {
 					),
 				);
 			}
+
+			return null;
 		}
 
 		getDefaultStyles()
@@ -406,8 +409,70 @@ jn.define('layout/ui/fields/menu-select', (require, exports, module) => {
 		}
 	}
 
+	const itemShape = PropTypes.shape({
+		id: PropTypes.number,
+		title: PropTypes.string,
+		subtitle: PropTypes.string,
+		isSelected: PropTypes.bool,
+		isDisabled: PropTypes.bool,
+		icon: PropTypes.string,
+		img: PropTypes.string,
+		sectionCode: PropTypes.string,
+	});
+
+	MenuSelectField.propTypes = {
+		...BaseSelectField.propTypes,
+		config: PropTypes.shape({
+			showAll: PropTypes.bool, // show more button with count if it's multiple
+			styles: PropTypes.shape({
+				externalWrapperBorderColor: PropTypes.string,
+				externalWrapperBorderColorFocused: PropTypes.string,
+				externalWrapperBackgroundColor: PropTypes.string,
+				externalWrapperMarginHorizontal: PropTypes.number,
+			}),
+			deepMergeStyles: PropTypes.object, // override styles
+			parentWidget: PropTypes.object, // parent layout widget
+			copyingOnLongClick: PropTypes.bool,
+			titleIcon: PropTypes.object,
+
+			items: PropTypes.oneOfType([
+				PropTypes.arrayOf(itemShape),
+				PropTypes.array,
+			]),
+			/**
+			 * @deprecated - same as items, but with different prop name
+			 */
+			menuItems: PropTypes.oneOfType([
+				PropTypes.arrayOf(itemShape),
+				PropTypes.array,
+			]),
+
+			showIcon: PropTypes.bool,
+			partiallyHidden: PropTypes.bool,
+			emptyValueIcon: PropTypes.string, // svg
+
+			// context menu props
+			menuTitle: PropTypes.string,
+			defaultSectionCode: PropTypes.string,
+			shouldResizeContent: PropTypes.bool,
+			isCustomIconColor: PropTypes.bool,
+			showCancelButton: PropTypes.bool,
+		}),
+	};
+
+	MenuSelectField.defaultProps = {
+		...BaseSelectField.defaultProps,
+		config: {
+			...BaseSelectField.defaultProps.config,
+			showIcon: false,
+			partiallyHidden: false,
+			defaultSectionCode: 'default',
+		},
+	};
+
 	module.exports = {
 		MenuSelectType: 'menu-select',
+		MenuSelectFieldClass: MenuSelectField,
 		MenuSelectField: (props) => new MenuSelectField(props),
 	};
 });

@@ -17,9 +17,9 @@ IncludeModuleLangFile(__FILE__);
 
 class CCrmEntitySelectorHelper
 {
-	protected const CACHE_PATH_PREFIX = '/crm/entityselectorhelper/';
+	protected const CACHE_PATH_PREFIX = '/crm/esh/';    // entityselectorhelper
 	protected const CACHE_TTL = 86400;
-	protected const CACHE_PREFIX_PREPARE_REQUISITE_DATA = 'prepareRequisiteData';
+	protected const CACHE_PREFIX_PREPARE_REQUISITE_DATA = 'prd';    // prepareRequisiteData
 
 	public static function getIdWithEntityPrefix($id, string $entityName): string
 	{

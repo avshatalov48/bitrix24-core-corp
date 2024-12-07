@@ -264,7 +264,7 @@ class CVoxImplantPhone
 					'CATEGORIES' => $categories
 				);
 
-				$accountLang = ToUpper($viAccount->GetAccountLang());
+				$accountLang = mb_strtoupper($viAccount->GetAccountLang());
 				uasort($arResult, function($a, $b) use ($accountLang)
 				{
 					if($a['CODE'] == $accountLang)
@@ -726,7 +726,7 @@ class CVoxImplantPhone
 	 */
 	public static function createConfig($configName, $arPhones)
 	{
-		$melodyLang = ToUpper(LANGUAGE_ID);
+		$melodyLang = mb_strtoupper(LANGUAGE_ID);
 		if($melodyLang === 'KZ')
 		{
 			$melodyLang = 'RU';
@@ -764,7 +764,7 @@ class CVoxImplantPhone
 	{
 		foreach ($arPhones as $phone => $phoneObj)
 		{
-			$insertResult = VI\Model\NumberTable::add([
+			VI\Model\NumberTable::add([
 				'NUMBER' => $phone,
 				'NAME' => $phone,
 				'VERIFIED' => $phoneObj['VERIFICATION_STATUS'] === 'VERIFIED'? 'Y': 'N',

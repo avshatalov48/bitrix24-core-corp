@@ -83,8 +83,8 @@ final class MailManager implements ICanSendMessage
 			[
 				'id' => self::getSenderCode(),
 				'isDefault' => true,
-				'name' => 'Mail',
-				'shortName' => 'Mail',
+				'name' => Loc::getMessage('CRM_INTEGRATION_MAIL_MANAGER_NAME'),
+				'shortName' => Loc::getMessage('CRM_INTEGRATION_MAIL_MANAGER_NAME'),
 			],
 			self::getFromList($userId),
 			$toListByType[\Bitrix\Crm\Multifield\Type\Email::ID] ?? [],
@@ -96,26 +96,35 @@ final class MailManager implements ICanSendMessage
 
 	private static function getFromList(int $userId): array
 	{
-		$mailboxes = \Bitrix\Main\Mail\Sender::prepareUserMailboxes($userId);
+		$userData = \Bitrix\Main\UserTable::getList([
+			'select' => ['ID', 'TITLE', 'NAME', 'SECOND_NAME', 'LAST_NAME', 'LOGIN', 'EMAIL'],
+			'filter' => array('=ID' => $userId),
+		])->fetch();
 
-		$mailboxes = array_filter(
-			$mailboxes,
-			fn(array $info) => isset($info['id']) && is_numeric($info['id']) && !empty($info['formated'])
-		);
+		$userNameFormatted = \CUser::formatName(\CSite::getNameFormat(), $userData, true, false);
 
-		$result = [];
-		foreach ($mailboxes as $info)
+		$fromList = [];
+		foreach (\Bitrix\Mail\MailboxTable::getUserMailboxes($userId) as $mailbox)
 		{
-			$result[] =
-				new Channel\Correspondents\From(
-					id: (string)$info['id'],
-					name: (string)$info['formated'],
-					isAvailable: \Bitrix\Mail\Helper\LicenseManager::checkTheMailboxForSyncAvailability((int)$info['id']),
-				)
-			;
+			if (empty($mailbox['EMAIL']))
+			{
+				continue;
+			}
+
+			$mailboxName = trim($mailbox['USERNAME']) ?: $userNameFormatted;
+
+			$id = (int)$mailbox['ID'];
+			$email = (string)$mailbox['EMAIL'];
+			$name = $mailboxName ? "$mailboxName <$email>" : $email;
+
+			$fromList[] = new Channel\Correspondents\From(
+				id: (string)$id,
+				name: $name,
+				isAvailable: \Bitrix\Mail\Helper\LicenseManager::checkTheMailboxForSyncAvailability($id),
+			);
 		}
 
-		return $result;
+		return $fromList;
 	}
 
 	public static function canSendMessageViaChannel(Channel $channel): Result
@@ -219,7 +228,7 @@ final class MailManager implements ICanSendMessage
 		$bodyContentType = (int)($options['MESSAGE_BODY_CONTENT_TYPE'] ?? \CCrmContentType::Html);
 		$bodyContentType = \CCrmContentType::IsDefined($bodyContentType) ? $bodyContentType : \CCrmContentType::Html;
 
-		if (!empty($body))
+		if (!empty($body) && ($options['ADD_EMAIL_SIGNATURE'] ?? true))
 		{
 			\CCrmActivity::AddEmailSignature($body, $bodyContentType);
 		}
@@ -303,9 +312,9 @@ final class MailManager implements ICanSendMessage
 		{
 			$attachmentsStorageTypeId = $options['ATTACHMENTS_STORAGE_TYPE_ID'];
 
-			foreach ($options['ATTACHMENTS_IDS'] as $bFileId)
+			foreach ($options['ATTACHMENTS_IDS'] as $fileId)
 			{
-				$file = \CFile::MakeFileArray($bFileId);
+				$file = \CFile::MakeFileArray($fileId);
 				if (is_array($file))
 				{
 					// each db row should reference its own b_file row. create new rows with same files for the activity

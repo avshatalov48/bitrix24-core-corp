@@ -77,7 +77,7 @@ if($arResult['PROMPT_OLD_TEMPLATE']): ?>
 </div>
 <? endif;?>
 
-<script type="text/javascript">
+<script>
 	BX(function () {
 		new BX.Disk.Component.BizprocList({
 			layout: {

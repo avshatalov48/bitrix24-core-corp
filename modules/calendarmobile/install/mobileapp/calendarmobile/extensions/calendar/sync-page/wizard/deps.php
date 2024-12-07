@@ -6,6 +6,7 @@ return [
 		'pull/client/events',
 		'loc',
 		'animation',
+		'tokens',
 	],
 	'bundle' => [
 		'./factory',

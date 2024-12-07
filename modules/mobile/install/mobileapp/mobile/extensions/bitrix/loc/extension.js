@@ -35,6 +35,33 @@ jn.define('loc', (require, exports, module) => {
 		}
 
 		/**
+		 * Returns last version of message if exists.
+		 * @param {string} messageId
+		 * @param {object} [replacements]
+		 * @param {number} [versionLimit=1]
+		 * @return {?string|null}
+		 */
+		static getLastMessageVer(messageId, replacements = null, versionLimit = 1)
+		{
+			const messageWithVerText = `${messageId}_MSGVER_`;
+
+			for (let ver = versionLimit; ver >= 1; ver--)
+			{
+				if (Loc.hasMessage(messageWithVerText + ver.toString()))
+				{
+					return Loc.getMessage(messageWithVerText + ver.toString(), replacements);
+				}
+			}
+
+			if (Loc.hasMessage(messageId))
+			{
+				return Loc.getMessage(messageId, replacements);
+			}
+
+			return null;
+		}
+
+		/**
 		 * Checks if message exist
 		 * @param {string} messageId
 		 * @return {boolean}
@@ -72,6 +99,24 @@ jn.define('loc', (require, exports, module) => {
 			const messageCode = `${code}_PLURAL_${pluralForm}`;
 
 			return Loc.getMessage(messageCode, replacements);
+		}
+
+		/**
+		 * Returns translation by message code with plural form.
+		 * @param {string} code
+		 * @param {number} value
+		 * @param {object} [replacements]
+		 * @param {?string} [languageId]
+		 * @param {number} [versionLimit=1]
+		 * @returns {string|null}
+		 */
+		static getLastMessageVerPlural(code, value, replacements = {}, languageId = null, versionLimit = 1)
+		{
+			const pluralForm = Loc.getPluralForm(value, languageId);
+
+			const messageCode = `${code}_PLURAL_${pluralForm}`;
+
+			return Loc.getLastMessageVer(messageCode, replacements, versionLimit);
 		}
 
 		/**

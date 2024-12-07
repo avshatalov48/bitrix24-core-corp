@@ -31,7 +31,7 @@ $arComponentParameters = array(
 		"PR_NAMESPACE" => Array(
 			"NAME"=>GetMessage("PAYROLL_NAMESPACE"), 
 			"PARENT" => "BASE",
-			"DEFAULT" => "http://www.1c-bitrix.ru", 
+			"DEFAULT" => "https://www.1c-bitrix.ru",
 			"COLS"=>25
 		),
 		"CACHE_TIME" => Array("DEFAULT"=>"3600"),

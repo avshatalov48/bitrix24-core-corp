@@ -95,7 +95,7 @@ jn.define('crm/entity-detail/opener', (require, exports, module) => {
 			return new AnalyticsEvent(analytics)
 				.setTool('crm')
 				.setCategory('entity_operations')
-				.setType(Type.getCommonEntityTypeName(entityTypeId))
+				.setType(Type.getTypeForAnalytics(entityTypeId))
 				.setP1(`crmMode_${CrmMode.getCrmModeFromCache().toLowerCase()}`);
 		}
 
@@ -118,18 +118,6 @@ jn.define('crm/entity-detail/opener', (require, exports, module) => {
 					},
 				],
 			};
-		}
-
-		/**
-		 * @internal
-		 */
-		static init()
-		{
-			if (this.cacheExpired())
-			{
-				// fake timeout to avoid affecting core queries
-				setTimeout(() => this.loadEntities(), 100);
-			}
 		}
 
 		/**
@@ -420,8 +408,6 @@ jn.define('crm/entity-detail/opener', (require, exports, module) => {
 			}
 		}
 	}
-
-	EntityDetailOpener.init();
 
 	module.exports = { EntityDetailOpener };
 });

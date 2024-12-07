@@ -61,7 +61,7 @@ $APPLICATION->setTitle(Loc::getMessage('DISK_FILE_VIEW_FILE_TITLE_USERFIELDS', [
 </form>
 
 
-<script type="text/javascript">
+<script>
 	BX(function () {
 		var submitForm = function(e){
 			if(BX.hasClass(BX('bx-disk-submit-uf-file-edit-form'), 'clock'))

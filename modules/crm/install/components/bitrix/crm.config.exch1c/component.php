@@ -23,7 +23,6 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['CRM_EXCH1C_ENABLE']) &&
 	$APPLICATION->RestartBuffer();
 	header('Content-type: application/x-www-form-urlencoded; charset=UTF-8');
 	$errNumber = 0;
-	CUtil::JSPostUnescape();
 	$exch1cEnabled = ($_POST['CRM_EXCH1C_ENABLE'] === 'Y');
 	COption::SetOptionString('crm', 'crm_exch1c_enable', ($exch1cEnabled) ? 'Y' : 'N');
 	$result = array('ERROR' => $errNumber);

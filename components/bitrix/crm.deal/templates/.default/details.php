@@ -1,5 +1,7 @@
 <?php
 
+use Bitrix\Crm\Integration\Analytics\Dictionary;
+
 if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
 /** @global CMain $APPLICATION */
 /** @var array $arParams */
@@ -16,8 +18,12 @@ if (isset($_REQUEST['IFRAME']) && $_REQUEST['IFRAME'] === 'Y')
 			'ENTITY_ID' => $arResult['VARIABLES']['deal_id'],
 			'ENABLE_TITLE_EDIT' => true,
 			'EXTRAS' => [
-				'DEAL_CATEGORY_ID' => $arResult['VARIABLES']['category_id'] ?? -1
-			]
+				'DEAL_CATEGORY_ID' => $arResult['VARIABLES']['category_id'] ?? -1,
+				'ANALYTICS' => [
+					'c_section' => Dictionary::SECTION_DEAL,
+					'c_sub_section' => Dictionary::SUB_SECTION_DETAILS,
+				],
+			],
 		]
 	);
 }

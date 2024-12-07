@@ -11,7 +11,7 @@ export const DocumentPanel: BitrixVueComponentProps = {
 	props: {
 		item: {
 			type: Object,
-			default: {}
+			default: {},
 		},
 	},
 	created(): void
@@ -40,8 +40,8 @@ export const DocumentPanel: BitrixVueComponentProps = {
 					<span>${preText}</span>
 					${this.currentServiceNode}
 					<span>${postText}</span>
-				</span>`
-			;
+				</span>
+			`;
 
 			Dom.append(label, this.$refs['document-services']);
 		}
@@ -68,8 +68,8 @@ export const DocumentPanel: BitrixVueComponentProps = {
 							`n${response.object.id}`,
 							{
 								name: response.object.name,
-								preload: true
-							}
+								preload: true,
+							},
 						);
 
 						this.userFieldControl.showUploaderPanel();
@@ -95,12 +95,12 @@ export const DocumentPanel: BitrixVueComponentProps = {
 									name: response.object.name,
 									size: response.object.size,
 									preload: true,
-								}
+								},
 							);
 
 							this.userFieldControl.showUploaderPanel();
 						}
-					}
+					},
 				});
 
 				createProcess.start();
@@ -138,7 +138,10 @@ export const DocumentPanel: BitrixVueComponentProps = {
 		{
 			const items = [];
 			const currentServiceCode = this.userFieldControl.getCurrentDocumentService()?.code;
-			const services: Array<{ name: string, code: string }> = Object.values(this.userFieldControl.getDocumentServices());
+			const services: Array<{ name: string, code: string }> = Object.values(
+				this.userFieldControl.getDocumentServices(),
+			);
+
 			services.forEach((service: { name: string, code: string }): void => {
 				items.push({
 					text: service.name,
@@ -182,5 +185,5 @@ export const DocumentPanel: BitrixVueComponentProps = {
 			</div>
 			<div class="disk-user-field-create-document-by-service" @click="openMenu" ref="document-services"></div>
 		</div>
-	`
+	`,
 };

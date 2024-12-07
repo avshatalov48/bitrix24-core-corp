@@ -18,7 +18,7 @@ if (!empty($arResult['BUTTONS']))
 
 ?>
 
-<script type="text/javascript">
+<script>
 	function ps_delete(title, message, btnTitle, path)
 	{
 		var d;

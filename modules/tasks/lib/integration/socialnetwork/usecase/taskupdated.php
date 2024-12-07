@@ -197,13 +197,16 @@ class TaskUpdated extends BaseCase
 	private function fieldsToNames(array $arFields): array
 	{
 		$arFields = array_unique(array_filter($arFields));
+		$locMap = [
+			'NEW_FILES' => 'FILES',
+			'DELETED_FILES' => 'FILES',
+			'START_DATE_PLAN' => 'START_DATE_PLAN',
+			'END_DATE_PLAN' => 'END_DATE_PLAN',
+		];
 		$arNames = [];
 		foreach($arFields as $field)
 		{
-			if ($field === 'NEW_FILES' || $field === 'DELETED_FILES')
-			{
-				$field = 'FILES';
-			}
+			$field = $locMap[$field] ?? $field;
 			$arNames[] = Loc::getMessage('TASKS_SONET_LOG_' . $field);
 		}
 

@@ -23,7 +23,9 @@ use Exception;
 class RegularTemplateTaskRepeater implements RepeaterInterface
 {
 	private const MAX_ITERATION_COUNT = 10000;
-	private const PERIOD_MINIMUM = 60; // if $pPERIOD less than that value we probably get an error
+	private const PERIOD_MINIMUM = 1; // if $pPERIOD less than that value we probably get an error
+
+	private int $recalculateCounter = 0;
 
 	private TemplateHistoryService $templateHistoryService;
 	private AbstractParameter $replicateParameter;
@@ -54,7 +56,9 @@ class RegularTemplateTaskRepeater implements RepeaterInterface
 		}
 
 		$this->nextExecutionTimeTS = $this->currentResult->getData()['time'];
-		$this->checkInterpretedPeriod();
+
+		$this->recalculateNextTimeIfPeriodCorrupted();
+
 		$this->updateTemplate();
 		$this->updateAgentPeriod();
 		$this->writeToTemplateHistoryNextExecutionTime();
@@ -83,7 +87,7 @@ class RegularTemplateTaskRepeater implements RepeaterInterface
 		try
 		{
 			$handler->update($template->getId(), [
-				'REPLICATE_PARAMS' => serialize($updatedReplicateParams)
+				'REPLICATE_PARAMS' => serialize($updatedReplicateParams),
 			]);
 		}
 		catch (Exception $exception)
@@ -97,7 +101,7 @@ class RegularTemplateTaskRepeater implements RepeaterInterface
 
 	public function isDebug(): bool
 	{
-		if (Option::get('tasks', RegularTemplateTaskReplicator::DEBUG_KEY, 'N', '-') === 'Y')
+		if (Option::get('tasks', RegularTemplateTaskReplicator::DEBUG_KEY, 'N') === 'Y')
 		{
 			return true;
 		}
@@ -156,26 +160,16 @@ class RegularTemplateTaskRepeater implements RepeaterInterface
 		}
 	}
 
-	private function writeToLogInterruptedPeriod(string $marker = 'TASKS_REPLICATOR_PERIOD'): void
+	private function writeToLogInterruptedPeriod(int $period, string $marker): void
 	{
-		global $pPERIOD;
 		$data = [
 			'message' => 'Period may be less than zero, ' . $marker,
-			'period' => $pPERIOD,
+			'period' => $period,
 			'data' => $this->repository->getEntity()->toArray(),
 			'nextTime' => $this->executionService->getTemplateCurrentExecutionTime(),
 		];
 
 		(new Log($marker))->collect($data);
-	}
-
-	private function checkInterpretedPeriod(): void
-	{
-		$period = $this->nextExecutionTimeTS - time();
-		if ($period <= static::PERIOD_MINIMUM)
-		{
-			$this->writeToLogInterruptedPeriod('TASKS_REPLICATOR_PERIOD_BEFORE');
-		}
 	}
 
 	private function writeToLogLoopError(string $nextExecutionTime, string $lastExecutionTime, int $iterationCount): void
@@ -192,9 +186,9 @@ class RegularTemplateTaskRepeater implements RepeaterInterface
 			$eDebug = [
 				$createdBy,
 				time(),
-				User::getTimeZoneOffsetCurrentUser(),
 				User::getTimeZoneOffset($createdBy),
 				$this->replicateParameter->get('TIME'),
+				// deprecated, TIMEZONE_OFFSET parameter is always 0 in new templates
 				$this->replicateParameter->get('TIMEZONE_OFFSET'),
 				$iterationCount,
 			];
@@ -220,19 +214,14 @@ class RegularTemplateTaskRepeater implements RepeaterInterface
 		// "why ' - time()'?" you may ask. see CAgent::ExecuteAgents(), in the last sql we got:
 		// NEXT_EXEC=DATE_ADD(".($arAgent["IS_PERIOD"]=="Y"? "NEXT_EXEC" : "now()").", INTERVAL ".$pPERIOD." SECOND),
 		$pPERIOD = $this->nextExecutionTimeTS - time();
-		if ($pPERIOD <= static::PERIOD_MINIMUM)
-		{
-			$this->writeToLogInterruptedPeriod('TASKS_REPLICATOR_PERIOD_AFTER');
-		}
 	}
 
-	private function calculateNextReplicationTimeTS(): Result
+	private function calculateNextReplicationTimeTS(int $currentExecutionTimePriority = ExecutionService::PRIORITY_TEMPLATE): Result
 	{
 		$result = new Result();
 
 		$iterationCount = 0;
-		$currentExecutionTime = $this->executionService->getTemplateCurrentExecutionTime();
-		$currentUserTimezoneTS = User::getTimeZoneOffsetCurrentUser();
+		$currentExecutionTime = $this->executionService->getTemplateCurrentExecutionTime($currentExecutionTimePriority);
 		$lastExecutionTime = $currentExecutionTime;
 		do
 		{
@@ -270,16 +259,16 @@ class RegularTemplateTaskRepeater implements RepeaterInterface
 			}
 
 			$lastExecutionTime = $nextExecutionTime;
-			$currentUserTimeTS = time() + $currentUserTimezoneTS;
+			$currentServerTimeTS = time();
 
 			$iterationCount++;
 		}
 		while (
 			($nextExecutionTimeResult->isSuccess() && $nextExecutionTime)
-			&& $nextExecutionTimeTS < $currentUserTimeTS
+			&& $nextExecutionTimeTS < $currentServerTimeTS
 		);
 
-		$result->setData(['time' => $nextExecutionTimeTS - $currentUserTimezoneTS]);
+		$result->setData(['time' => $nextExecutionTimeTS]);
 		return $result;
 	}
 
@@ -307,5 +296,42 @@ class RegularTemplateTaskRepeater implements RepeaterInterface
 	public function setAdditionalData($data): void
 	{
 		$this->additionalData = $data;
+	}
+
+	private function recalculateNextTimeIfPeriodCorrupted(): void
+	{
+		if (!RegularTemplateTaskReplicator::isRecalculationEnabled() || !$this->isPeriodCorrupted())
+		{
+			return;
+		}
+
+		++$this->recalculateCounter;
+
+		$this->writeToLogInterruptedPeriod(
+			$this->getPeriod(),
+			'TASKS_REPLICATOR_CORRUPTED_PERIOD_BEFORE_RECALCULATE_' . $this->recalculateCounter
+		);
+
+		$this->currentResult = $this->calculateNextReplicationTimeTS(ExecutionService::PRIORITY_AGENT);
+		$this->nextExecutionTimeTS = $this->currentResult->getData()['time'];
+
+		$marker = $this->isPeriodCorrupted()
+			? 'TASKS_REPLICATOR_CORRUPTED_PERIOD_AFTER_RECALCULATE_' . $this->recalculateCounter
+			: 'TASKS_REPLICATOR_RESTORED_PERIOD_AFTER_RECALCULATE_' . $this->recalculateCounter;
+
+		$this->writeToLogInterruptedPeriod(
+			$this->getPeriod(),
+			$marker
+		);
+	}
+
+	private function isPeriodCorrupted(): bool
+	{
+		return $this->getPeriod() <= static::PERIOD_MINIMUM;
+	}
+
+	private function getPeriod(): int
+	{
+		return $this->nextExecutionTimeTS - time();
 	}
 }

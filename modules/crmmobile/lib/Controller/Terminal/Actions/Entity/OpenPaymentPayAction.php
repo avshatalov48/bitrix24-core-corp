@@ -10,7 +10,9 @@ use Bitrix\CrmMobile\Controller\Terminal\Actions\Mixin\ProvidesPullConfig;
 use Bitrix\CrmMobile\Integration\Sale\Payment\GetPaymentQuery;
 use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Crm\Order\Permissions;
+use Bitrix\Main\Loader;
 use Bitrix\Sale\Repository\PaymentRepository;
+use Bitrix\SalesCenter\Integration\LandingManager;
 
 class OpenPaymentPayAction extends Action
 {
@@ -24,9 +26,19 @@ class OpenPaymentPayAction extends Action
 			return null;
 		}
 
+		if (Loader::includeModule('salescenter'))
+		{
+			$connectedSiteId = LandingManager::getInstance()->getConnectedSiteId();
+			$isPhoneConfirmed = LandingManager::getInstance()->isPhoneConfirmed();
+		}
+
 		return array_merge(
 			[
 				'payment' => (new GetPaymentQuery(PaymentRepository::getInstance()->getById($id)))->execute(),
+			],
+			[
+				'isPhoneConfirmed' => $isPhoneConfirmed ?? true,
+				'connectedSiteId' => $connectedSiteId ?? 0,
 			],
 			self::getPsCreationActionProviders(),
 			self::getPullConfig(),

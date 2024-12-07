@@ -77,6 +77,14 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 			ShowError($sError.'<br>');
 		else
 		{
+			if (isset($_POST['ENABLE_CREATE_CALENDAR_EVENT_FOR_CALL']))
+			{
+				Settings\ActivitySettings::setValue(
+					Settings\ActivitySettings::ENABLE_CREATE_CALENDAR_EVENT_FOR_CALL,
+					mb_strtoupper($_POST['ENABLE_CREATE_CALENDAR_EVENT_FOR_CALL']) === 'Y',
+				);
+			}
+
 			if(isset($_POST['CALENDAR_DISPLAY_COMPLETED_CALLS']))
 			{
 				Settings\ActivitySettings::setValue(
@@ -375,6 +383,13 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 				\Bitrix\Crm\MessageSender\SettingsManager::setValue($_POST['NOTIFICATIONS_SENDER']);
 			}
 
+			if (isset($_POST['REMOVE_ENTITY_BADGES_INTERVAL_DAYS']))
+			{
+				\Bitrix\Crm\Settings\ActivitySettings::getCurrent()->setRemoveEntityBadgesIntervalDays(
+					(int)$_POST['REMOVE_ENTITY_BADGES_INTERVAL_DAYS']
+				);
+			}
+
 			if (isset($_POST['ENABLE_EXPORT_EVENT']))
 			{
 				\Bitrix\Crm\Settings\HistorySettings::getCurrent()->enableExportEvent(
@@ -537,7 +552,7 @@ $arResult['FIELDS']['tab_main'][] = array(
 	'type' => 'section'
 );
 
-if (!\Bitrix\Crm\Settings\LayoutSettings::getCurrent()->isSliderEnabled() || COption::GetOptionString('crm', 'allow_old_detail_page', 'N') === 'Y')
+if (!\Bitrix\Crm\Settings\LayoutSettings::getCurrent()->isSliderEnabled() || \Bitrix\Crm\Feature::enabled(\Bitrix\Crm\Feature\ReturnToOldDetailPage::class))
 {
 	$arResult['FIELDS']['tab_main'][] = [
 		'id' => 'ENABLE_SLIDER',
@@ -619,7 +634,7 @@ $arResult['FIELDS']['tab_main'][] = array(
 
 $arResult['FIELDS']['tab_main'][] = array(
 	'id' => 'LEAD_DEFAULT_LIST_VIEW',
-	'name' => GetMessage('CRM_FIELD_LEAD_DEFAULT_LIST_VIEW'),
+	'name' => GetMessage('CRM_FIELD_LEAD_DEFAULT_LIST_VIEW_MSGVER_1'),
 	'items' => \Bitrix\Crm\Settings\LeadSettings::getViewDescriptions(),
 	'type' => 'list',
 	'value' => \Bitrix\Crm\Settings\LeadSettings::getCurrent()->getDefaultListViewID(),
@@ -749,7 +764,7 @@ $arResult['FIELDS']['tab_main'][] = array(
 
 $arResult['FIELDS']['tab_main'][] = array(
 	'id' => 'INVOICE_DEFAULT_LIST_VIEW',
-	'name' => GetMessage('CRM_FIELD_INVOICE_DEFAULT_LIST_VIEW'),
+	'name' => GetMessage('CRM_FIELD_INVOICE_DEFAULT_LIST_VIEW_MSGVER_1'),
 	'items' => \Bitrix\Crm\Settings\InvoiceSettings::getViewDescriptions(),
 	'type' => 'list',
 	'value' => \Bitrix\Crm\Settings\InvoiceSettings::getCurrent()->getDefaultListViewID(),
@@ -854,21 +869,32 @@ $arResult['FIELDS']['tab_activity_config'][] = array(
 	'type' => 'section'
 );
 
-$arResult['FIELDS']['tab_activity_config'][] = array(
-	'id' => 'CALENDAR_DISPLAY_COMPLETED_CALLS',
-	'name' => GetMessage('CRM_FIELD_DISPLAY_COMPLETED_CALLS_IN_CALENDAR'),
-	'type' => 'checkbox',
-	'value' => Settings\ActivitySettings::getValue(Settings\ActivitySettings::KEEP_COMPLETED_CALLS),
-	'required' => false
-);
+if (Settings\ActivitySettings::getValue(Settings\ActivitySettings::ENABLE_CALENDAR_EVENTS_SETTINGS))
+{
+	$arResult['FIELDS']['tab_activity_config'][] = [
+		'id' => 'ENABLE_CREATE_CALENDAR_EVENT_FOR_CALL',
+		'name' => Loc::getMessage('CRM_FIELD_ENABLE_CREATE_CALENDAR_EVENT_FOR_CALL'),
+		'type' => 'checkbox',
+		'value' => Settings\ActivitySettings::getValue(Settings\ActivitySettings::ENABLE_CREATE_CALENDAR_EVENT_FOR_CALL),
+		'required' => false,
+	];
 
-$arResult['FIELDS']['tab_activity_config'][] = array(
-	'id' => 'CALENDAR_DISPLAY_COMPLETED_MEETINGS',
-	'name' => GetMessage('CRM_FIELD_DISPLAY_COMPLETED_MEETINGS_IN_CALENDAR'),
-	'type' => 'checkbox',
-	'value' => Settings\ActivitySettings::getValue(Settings\ActivitySettings::KEEP_COMPLETED_MEETINGS),
-	'required' => false
-);
+	$arResult['FIELDS']['tab_activity_config'][] = array(
+		'id' => 'CALENDAR_DISPLAY_COMPLETED_CALLS',
+		'name' => GetMessage('CRM_FIELD_DISPLAY_COMPLETED_CALLS_IN_CALENDAR_MSGVER_1'),
+		'type' => 'checkbox',
+		'value' => Settings\ActivitySettings::getValue(Settings\ActivitySettings::KEEP_COMPLETED_CALLS),
+		'required' => false
+	);
+
+	$arResult['FIELDS']['tab_activity_config'][] = array(
+		'id' => 'CALENDAR_DISPLAY_COMPLETED_MEETINGS',
+		'name' => GetMessage('CRM_FIELD_DISPLAY_COMPLETED_MEETINGS_IN_CALENDAR'),
+		'type' => 'checkbox',
+		'value' => Settings\ActivitySettings::getValue(Settings\ActivitySettings::KEEP_COMPLETED_MEETINGS),
+		'required' => false
+	);
+}
 
 $arResult['FIELDS']['tab_activity_config'][] = array(
 	'id' => 'CALENDAR_KEEP_REASSIGNED_CALLS',
@@ -967,6 +993,33 @@ $arResult['FIELDS']['tab_activity_config'][] = array(
 	'items' => \Bitrix\Crm\Settings\ActivitySettings::getViewDescriptions(),
 	'type' => 'list',
 	'value' => \Bitrix\Crm\Settings\ActivitySettings::getCurrent()->getDefaultListViewID(),
+	'required' => false
+);
+
+$removeEntityBadgesIntervalDaysHint = GetMessage('CRM_FIELD_REMOVE_ENTITY_BADGES_INTERVAL_DAYS_HINT');
+
+$removeEntityBadgesIntervalDays = Settings\ActivitySettings::getCurrent()->getRemoveEntityBadgesIntervalDays();
+
+$removeEntityBadgesIntervalDaysOptions = '';
+foreach (Settings\ActivitySettings::getBadgeTtlValues() as $option => $value)
+{
+	$selected = $option === $removeEntityBadgesIntervalDays ? 'selected' : '';
+	$removeEntityBadgesIntervalDaysOptions .= '<option value="' . $option . '" ' . $selected . '>' . $value .'</option>';
+}
+$removeEntityBadgesIntervalDaysHtml = <<<HTML
+<div>
+	<select name="REMOVE_ENTITY_BADGES_INTERVAL_DAYS">
+		$removeEntityBadgesIntervalDaysOptions
+	</select>
+	<span data-hint-html data-hint="$removeEntityBadgesIntervalDaysHint" class="ui-hint"></span>
+</div>
+HTML;
+
+$arResult['FIELDS']['tab_activity_config'][] = array(
+	'id' => 'REMOVE_ENTITY_BADGES_INTERVAL_DAYS',
+	'name' => GetMessage('CRM_FIELD_REMOVE_ENTITY_BADGES_INTERVAL_DAYS'),
+	'type' => 'custom',
+	'value' => $removeEntityBadgesIntervalDaysHtml,
 	'required' => false
 );
 

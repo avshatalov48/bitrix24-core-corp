@@ -19,21 +19,25 @@ $arParameters = Array(
 $arParameters["USER_PARAMETERS"]["NUM_USERS"]["DEFAULT"] = 5;
 
 $arDepartments = Array();
-$arUserFields = $GLOBALS['USER_FIELD_MANAGER']->GetUserFields('USER', 0, LANGUAGE_ID);
-if($arUserFields["UF_DEPARTMENT"]["SETTINGS"]["IBLOCK_ID"]>0)
+
+$departmentRepository = \Bitrix\Intranet\Service\ServiceContainer::getInstance()->departmentRepository();
+$departments = $departmentRepository->getAllTree(
+	null,
+	\Bitrix\Intranet\Enum\DepthLevel::FULL,
+	\Bitrix\Intranet\Enum\DepartmentActiveFilter::ONLY_ACTIVE
+);
+$arDepartments["-"] = GetMessage("GD_ABSENT_P_ALL");
+
+foreach ($departments as $department)
 {
-	$dbRes = CIBlockSection::GetTreeList(Array("IBLOCK_ID"=>$arUserFields["UF_DEPARTMENT"]["SETTINGS"]["IBLOCK_ID"], "GLOBAL_ACTIVE"=>"Y"));
-
-	$arDepartments["-"] = GetMessage("GD_NEW_EMPLOYEES_P_ALL");
-	while($arRes = $dbRes->GetNext())
-		$arDepartments[$arRes["ID"]] = str_repeat(". ", $arRes["DEPTH_LEVEL"]).$arRes["NAME"];
-
-	$arParameters["USER_PARAMETERS"]["DEPARTMENT"] = Array(
-				"NAME" => GetMessage("GD_NEW_EMPLOYEES_P_DEP"),
-				"TYPE" => "LIST",
-				"VALUES" => $arDepartments,
-				"MULTIPLE" => "N",
-				"DEFAULT" => "",
-			);
+	$arDepartments[$department->getId()] = str_repeat('. ', $department->getDepth()).$department->getName();
 }
+$arParameters["USER_PARAMETERS"]["DEPARTMENT"] = Array(
+	"NAME" => GetMessage("GD_NEW_EMPLOYEES_P_DEP"),
+	"TYPE" => "LIST",
+	"VALUES" => $arDepartments,
+	"MULTIPLE" => "N",
+	"DEFAULT" => "",
+);
+
 ?>

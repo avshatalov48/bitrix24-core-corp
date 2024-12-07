@@ -25,6 +25,7 @@ class Tasks extends Social
 			'menu_marketing',
 			'menu_sites',
 			'menu_shop',
+			'menu_bi_constructor',
 			'menu_company',
 			'menu_bizproc_sect',
 			'menu_automation',

@@ -37,12 +37,12 @@ jn.define('crm/timeline/scheduler/providers/go-to-chat/providers-selector', (req
 				const currentPhoneId = currentSender.fromList[0]?.id;
 
 				this.sendersSelector = new SendersSelector({
-					currentPhoneId,
+					currentFromId: currentPhoneId,
 					currentSender,
 					senders,
 					contactCenterUrl,
 					onChangeSenderCallback,
-					onChangePhoneCallback,
+					onChangeFromCallback: onChangePhoneCallback,
 				});
 			}
 

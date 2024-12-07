@@ -30,32 +30,14 @@ final class IntranetConfigsComponent extends CBitrixComponent
 		if ($rootDepartmentId === null)
 		{
 			$rootDepartmentId = COption::GetOptionString("main", "wizard_departament", false, SITE_DIR, true);
-			if (
-				empty($rootDepartmentId)
-				&& Loader::includeModule('iblock')
-			)
+			if (empty($rootDepartmentId))
 			{
-				$iblockId = COption::GetOptionInt('intranet', 'iblock_structure', false);
-				if ($iblockId > 0)
+				$depapartmentRepository = Intranet\Service\ServiceContainer::getInstance()
+					->departmentRepository();
+				$rootDepartment = $depapartmentRepository->getRootDepartment();
+				if ($rootDepartment)
 				{
-					$res = \CIBlockSection::getList(
-						array(
-							'LEFT_MARGIN' => 'ASC',
-						),
-						array(
-							'IBLOCK_ID' => $iblockId,
-							'ACTIVE' => 'Y',
-						),
-						false,
-						array('ID')
-					);
-					if (
-						!empty($res)
-						&& ($rootSection = $res->fetch())
-					)
-					{
-						$rootDepartmentId = $rootSection['ID'];
-					}
+					$rootDepartmentId = $rootDepartment->getId();
 				}
 			}
 		}
@@ -306,14 +288,15 @@ final class IntranetConfigsComponent extends CBitrixComponent
 			{
 				Intranet\Portal::getInstance()->getSettings()->setName($_REQUEST["logo_name"]);
 				$iblockID = COption::GetOptionInt("intranet", "iblock_structure");
-				$db_up_department = CIBlockSection::GetList(Array(), Array("SECTION_ID"=>0, "IBLOCK_ID"=>$iblockID));
-				if ($ar_up_department = $db_up_department->Fetch())
+				$departmentRepository = Intranet\Service\ServiceContainer::getInstance()->departmentRepository();
+				$rootDepartment = $departmentRepository->getRootDepartment();
+				if ($rootDepartment)
 				{
-					$up_dep_id = $ar_up_department['ID'];
-					if (CIBlockRights::UserHasRightTo($iblockID, $up_dep_id, 'section_edit'))
+					//TODO: need check form the "humanresource" module
+					if (CIBlockRights::UserHasRightTo($iblockID, $rootDepartment->getId(), 'section_edit'))
 					{
-						$section = new CIBlockSection;
-						$res = $section->Update($up_dep_id, array("NAME" => $_REQUEST["logo_name"]));
+						$rootDepartment->setName($_REQUEST["logo_name"]);
+						$departmentRepository->save($rootDepartment);
 					}
 				}
 			}
@@ -607,38 +590,12 @@ final class IntranetConfigsComponent extends CBitrixComponent
 		//im chat
 		if (CModule::IncludeModule('im'))
 		{
-			if (COption::GetOptionString("im", "im_general_chat_new_rights") !== 'Y')
+			if (isset($_POST["general_chat_can_post"]))
 			{
-				if (isset($_POST["allow_general_chat_toall"]))
-				{
-					$valuesToSave = [];
-					if (is_array($_POST["imchat_toall_rights"]))
-					{
-						foreach($_POST["imchat_toall_rights"] as $key => $value)
-						{
-							$valuesToSave[] = ($value == 'UA' ? 'AU' : $value);
-						}
-					}
+				$generalChat = \Bitrix\Im\V2\Chat\ChatFactory::getInstance()->getGeneralChat();
 
-					if (in_array('AU', $valuesToSave) || empty($valuesToSave))
-					{
-						CIMChat::SetAccessToGeneralChat(true);
-					}
-					else
-					{
-						CIMChat::SetAccessToGeneralChat(false, $valuesToSave);
-					}
-				}
-				else
+				if ($generalChat)
 				{
-					CIMChat::SetAccessToGeneralChat(false);
-				}
-			}
-			else
-			{
-				if (isset($_POST["general_chat_can_post"]))
-				{
-					$generalChat = \Bitrix\Im\V2\Chat\ChatFactory::getInstance()->getGeneralChat();
 					$generalChat->setCanPost($_POST["general_chat_can_post"]);
 					if ($_POST["general_chat_can_post"] === \Bitrix\Im\V2\Chat::MANAGE_RIGHTS_MANAGERS)
 					{

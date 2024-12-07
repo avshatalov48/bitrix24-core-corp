@@ -1,0 +1,14 @@
+drop table if exists b_sign_blank;
+drop table if exists b_sign_document;
+drop table if exists b_sign_member;
+drop table if exists b_sign_block;
+drop table if exists b_sign_integration_form;
+drop table if exists b_sign_documentgenerator_blank;
+drop table if exists b_sign_permission;
+drop table if exists b_sign_service_user;
+drop table if exists b_sign_file;
+drop table if exists b_sign_blank_resource;
+drop table if exists b_sign_legal_log;
+drop table if exists b_sign_document_required_field;
+drop table if exists b_sign_document_chat;
+drop table if exists b_sign_document_template;

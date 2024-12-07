@@ -83,7 +83,18 @@ class CrmControlPanel extends CBitrixComponent
 				'ID' => ControlPanelMenuMapper::MENU_ID_CRM_CATALOGUE,
 				'TEXT' => Loc::getMessage('CRM_CTRL_PANEL_ITEM_CATALOGUE_STORE_DOCS'),
 				'IS_DISABLED' => $this->isCatalogSectionDisabled(),
-				'SUB_ITEMS' => $this->getCatalogSubItems(),
+				'SUB_ITEMS' => [
+					['ID' => 'CATALOGUE'],
+					...(
+						Catalog\Restriction\ToolAvailabilityManager::getInstance()->checkInventoryManagementAvailability()
+						? [
+							['ID' => 'STORE_DOCUMENTS']
+						]
+						: []
+					),
+					['ID' => 'STORE_MENU_CATALOG_PERMISSIONS'],
+					['ID' => 'CATALOG_SETTINGS'],
+				],
 			],
 			[
 				'ID' => ControlPanelMenuMapper:: MENU_ID_CRM_CLIENT,
@@ -107,24 +118,7 @@ class CrmControlPanel extends CBitrixComponent
 					['ID' => 'TERMINAL'],
 				],
 			],
-			[
-				'ID' => ControlPanelMenuMapper::MENU_ID_CRM_BI,
-				'TEXT' => Loc::getMessage('CRM_CTRL_PANEL_ITEM_BI'),
-				'URL' => '',
-				'SUB_ITEMS' => [
-					['ID' => 'BI_REPORT_DEALS'],
-					['ID' => 'BI_REPORT_LEADS'],
-					['ID' => 'BI_REPORT_SALES'],
-					['ID' => 'BI_REPORT_SALES_STRUCT'],
-					['ID' => 'BI_REPORT_TELEPHONY'],
-					['IS_DELIMITER' => true],
-					['ID' => 'BI_REPORT_LIST'],
-					['IS_DELIMITER' => true],
-					['ID' => 'BI_REPORT_MARKET'],
-					['ID' => 'BI_REPORT_ORDER'],
-					['ID' => 'BI_REPORT_SETTINGS'],
-				],
-			],
+			['ID' => 'BIC_DASHBOARDS'],
 			[
 				'ID' => ControlPanelMenuMapper::MENU_ID_CRM_ANALYTICS,
 				'TEXT' => Loc::getMessage('CRM_CTRL_PANEL_ITEM_ANALYTICS'),
@@ -609,25 +603,5 @@ class CrmControlPanel extends CBitrixComponent
 		}
 
 		return $result;
-	}
-
-	private function getCatalogSubItems(): array
-	{
-		$items = [
-			['ID' => 'CATALOGUE'],
-		];
-
-		if (Loader::includeModule('catalog'))
-		{
-			$isInventoryManagementEnabled = Catalog\Restriction\ToolAvailabilityManager::getInstance()
-				->checkInventoryManagementAvailability()
-			;
-			if ($isInventoryManagementEnabled)
-			{
-				$items[] = ['ID' => 'STORE_DOCUMENTS'];
-			}
-		}
-
-		return $items;
 	}
 }

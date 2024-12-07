@@ -1,0 +1,5 @@
+<?php
+$MESS["HUMAN_RESOURCES_CORE_INSTALL_TITLE"] = "HR Module Installation";
+$MESS["HUMAN_RESOURCES_CORE_MODULE_DESCRIPTION"] = "HR and company structure management module.";
+$MESS["HUMAN_RESOURCES_CORE_MODULE_NAME"] = "HR";
+$MESS["HUMAN_RESOURCES_CORE_UNINSTALL_TITLE"] = "HR Module Uninstallation";

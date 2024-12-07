@@ -530,7 +530,7 @@ class DealCategory
 			{
 				continue;
 			}
-			$roleRelation = \CCrmRole::GetRolePerms($roleID);
+			$roleRelation = \CCrmRole::getRolePermissionsAndSettings($roleID);
 			if(isset($roleRelation[$permissionEntity]))
 			{
 				continue;
@@ -538,7 +538,7 @@ class DealCategory
 
 			if(!isset($roleRelation[$permissionEntity]))
 			{
-				$roleRelation[$permissionEntity] = \CCrmRole::GetDefaultPermissionSet();
+				$roleRelation[$permissionEntity] = \CCrmRole::getDefaultPermissionSetForEntity(new \Bitrix\Crm\CategoryIdentifier(\CCrmOwnerType::Deal, $ID));
 			}
 			$fields = array('RELATION' => $roleRelation);
 			$role->Update($roleID, $fields);
@@ -878,9 +878,7 @@ class DealCategory
 			$infos = \CCrmStatus::GetStatus(self::convertToStatusEntityID($ID));
 		}
 
-		$infos = PhaseColorScheme::fillDefaultColors($infos);
-
-		return $infos;
+		return PhaseColorScheme::fillDefaultColors($infos);
 	}
 
 	/**
@@ -1160,6 +1158,7 @@ class DealCategory
 
 	/**
 	 * Sets permission for all roles
+	 * @deprecated Possible can damage existed permissions. Do not use!
 	 * @param int $id
 	 * @param string $permission
 	 * @return Main\Result

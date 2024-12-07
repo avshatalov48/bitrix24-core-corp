@@ -4,6 +4,8 @@ namespace Bitrix\Crm\Entity;
 
 use Bitrix\Crm\Field;
 use Bitrix\Crm\Format\TextHelper;
+use Bitrix\Crm\Integration\AI\AIManager;
+use Bitrix\Crm\Integration\AI\EventHandler;
 use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Model\FieldContentTypeTable;
 use Bitrix\Crm\Service\Container;
@@ -19,7 +21,7 @@ final class CommentsHelper
 	{
 	}
 
-	public static function normalizeComment($commentContent): string
+	public static function normalizeComment($commentContent, array $extraWhiteList = []): string
 	{
 		// current html editor sends ' symbol as html entity to backend
 		// convert it back for consistency with other html special symbols
@@ -28,6 +30,7 @@ final class CommentsHelper
 		$result = TextHelper::sanitizeBbCode(
 			TextHelper::convertHtmlToBbCode($commentContent),
 			['user', 'disk file id'],
+			$extraWhiteList,
 		);
 
 		// special handling of [ and ] html entities
@@ -86,7 +89,16 @@ final class CommentsHelper
 
 			if ($contentTypeId === \CCrmContentType::BBCode)
 			{
-				$row[$singleField] = TextHelper::sanitizeHtml(TextHelper::convertBbCodeToHtml($rawValue));
+				$hasParagraph = preg_match('/\[p]/i', $rawValue) === 1;
+				$useTypography = $hasParagraph;
+
+				$content = TextHelper::sanitizeHtml(TextHelper::convertBbCodeToHtml($rawValue, $useTypography));
+				if ($useTypography)
+				{
+					$content = "<div class='crm-bbcode-container'>{$content}</div>";
+				}
+
+				$row[$singleField] = $content;
 			}
 			else
 			{
@@ -98,15 +110,38 @@ final class CommentsHelper
 	}
 
 	//region Entity Editor
-	public static function compileFieldDescriptionForDetails(int $entityTypeId, string $field): array
+	public static function compileFieldDescriptionForDetails(int $entityTypeId, string $field, int $entityId): array
 	{
 		$factory = Container::getInstance()->getFactory($entityTypeId);
+		$copilotOptions = [];
+		$isCopilotEnabled = AIManager::isEnabledInGlobalSettings(EventHandler::SETTINGS_FILL_CRM_TEXT_ENABLED_CODE);
+		if ($isCopilotEnabled)
+		{
+			$entityName = $factory ? strtolower($factory->getEntityName()) : '';
+			$fieldId = strtolower($field);
+			$contextId = "crm_editor-{$entityName}-{$entityId}-{$fieldId}";
+			$copilotOptions = [
+				'copilotOptions' => [
+					'moduleId' => 'crm',
+					'contextId' => $contextId,
+					'category' => 'crm_comment_field',
+					'autoHide' => true,
+				],
+				'triggerBySpace' => true,
+			];
+		}
 
 		return [
 			'name' => $field,
 			'title' => $factory ? $factory->getFieldCaption($field) : $field,
-			'type' => 'bb',
+			'type' => 'bbcode',
 			'editable' => true,
+			'data' => [
+				'editorOptions' => [
+					'copilot' => $copilotOptions,
+					'paragraphPlaceholder' => 'auto',
+				],
+			],
 		];
 	}
 
@@ -129,7 +164,7 @@ final class CommentsHelper
 
 			if ($contentTypeId === \CCrmContentType::BBCode)
 			{
-				$bb = $fields[$fieldName];
+				$bb = htmlspecialcharsback($fields[$fieldName]);
 				$html = TextHelper::convertBbCodeToHtml($fields[$fieldName]);
 			}
 			else
@@ -154,6 +189,8 @@ final class CommentsHelper
 				continue;
 			}
 
+			$fields[$fieldName] = htmlspecialcharsback($fields[$fieldName]);
+
 			/*
 			 * EditorAdapter fetches comments from Item, and Item always returns bb code
 			 */
@@ -164,11 +201,51 @@ final class CommentsHelper
 	}
 	//endregion
 
-	public static function prepareFieldsFromCompatibleRestToRead(int $entityTypeId, int $entityId, array $fields): array
-	{
-		$contentTypes = FieldContentTypeTable::loadForItem(new ItemIdentifier($entityTypeId, $entityId));
 
-		foreach (self::getFieldsWithFlexibleContentType($entityTypeId) as $fieldName)
+	public static function prepareFieldsFromCompatibleRestToReadInList(int $entityTypeId, array $entityMap): array
+	{
+		$entityIds = array_keys($entityMap);
+		if (empty($entityIds))
+		{
+			return $entityMap;
+		}
+
+		$contentTypesMap = FieldContentTypeTable::loadForMultipleItems($entityTypeId, $entityIds);
+		foreach ($entityMap as $entityId => &$fields)
+		{
+			$fields = self::prepareFieldsFromCompatibleRestToRead(
+				$entityTypeId,
+				$entityId,
+				$fields,
+				$contentTypesMap[$entityId] ?? [],
+			);
+		}
+
+		return $entityMap;
+	}
+
+	public static function prepareFieldsFromCompatibleRestToRead(
+		int $entityTypeId,
+		int $entityId,
+		array $fields,
+		?array $preloadedContentTypes = null
+	): array
+	{
+		$flexibleFields = self::getFieldsWithFlexibleContentType($entityTypeId);
+		if (empty($flexibleFields))
+		{
+			return $fields;
+		}
+
+		$isFlexibleFieldsInFields = array_intersect_key($fields, array_flip($flexibleFields));
+		if (!$isFlexibleFieldsInFields)
+		{
+			return $fields;
+		}
+
+		$contentTypes = $preloadedContentTypes ?? FieldContentTypeTable::loadForItem(new ItemIdentifier($entityTypeId, $entityId));
+
+		foreach ($flexibleFields as $fieldName)
 		{
 			if (empty($fields[$fieldName]))
 			{

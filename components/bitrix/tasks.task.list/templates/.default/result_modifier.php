@@ -16,7 +16,7 @@ use Bitrix\Main;
 use Bitrix\Main\Grid;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Extension;
-use Bitrix\Main\UI\Filter\Options;
+use Bitrix\Tasks\Flow\FlowFeature;
 use Bitrix\Tasks\Grid\Task;
 use Bitrix\Tasks\Integration\SocialNetwork;
 use Bitrix\Tasks\UI;
@@ -119,8 +119,20 @@ if (!function_exists('formatDateFieldsForOutput'))
 	}
 }
 
+$request = Bitrix\Main\Context::getCurrent()?->getRequest();
+if ($request->get('my_tasks_column') === 'Y')
+{
+	$arParams['FLOW_MY_TASKS'] = 'Y';
+	$arParams['demoSuffix'] = FlowFeature::isFeatureEnabledByTrial() ? 'Y' : 'N';
+}
+
+if ($request->get('show_counters_toolbar') === 'N')
+{
+	$arParams['SHOW_COUNTERS_TOOLBAR'] = 'N';
+}
+
 $grid = (new Bitrix\Tasks\Grid\Task\Grid($arResult['LIST'], $arParams))
-	->setScopeStrategy($arParams['CONTEXT'] ?? null);
+	->setScope($arParams['CONTEXT'] ?? null);
 
 $arResult['HEADERS'] = $grid->prepareHeaders();
 $arResult['TEMPLATE_DATA'] = [

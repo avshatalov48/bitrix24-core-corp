@@ -2,9 +2,10 @@
 
 return [
 	'extensions' => [
+		'utils/object',
 		'analytics-label',
 		'layout/ui/detail-card/floating-button/menu',
 		'layout/ui/floating-button',
-		'utils/object',
+		'ui-system/form/buttons/floating-action-button',
 	],
 ];

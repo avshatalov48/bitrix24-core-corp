@@ -1,0 +1,41 @@
+.ai__copilot-context-menu_loader-popup {
+	border: var(--ui-border-width-thin) solid var(--ui-color-base-30);
+	font-size: var(--ui-font-size-md);
+	line-height: 1;
+}
+
+.ai__copilot-context-menu_loader-popup .popup-window-content {
+	overflow: initial;
+	display: flex;
+	width: 100%;
+}
+
+.ai__copilot-context-menu-loader-content {
+	width: 100%;
+	min-height: 26px;
+	padding-right: 4px;
+	padding-left: 4px;
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: space-between;
+}
+
+.ai__copilot-context-menu-loader-text-with-dots {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+}
+
+.ai__copilot-context-menu-loader_dots {
+	width: 30px;
+}
+
+.ai__copilot-context-menu-loader-icon {
+	margin-right: 8px;
+}
+
+.ai__copilot-context-menu-loader-content .ai__copilot_loader-cancel-btn {
+	margin-left: 8px;
+	margin-top: 3px;
+}

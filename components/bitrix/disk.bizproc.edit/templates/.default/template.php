@@ -190,6 +190,11 @@ function BCPSaveTemplate(save)
 			JSToPHP(arWorkflowConstants, 'arWorkflowConstants') + '&' +
 			JSToPHP(arWorkflowTemplate, 'arWorkflowTemplate');
 
+	if (window.workflowTemplateTrackOn)
+	{
+		data += '&workflowTemplateTrackOn=' + encodeURIComponent(workflowTemplateTrackOn);
+	}
+
 	jsExtLoader.onajaxfinish = BCPSaveTemplateComplete;
 	// TODO: add sessid
 	jsExtLoader.startPost('<?=CUtil::JSEscape($v)?><?if(mb_strpos($v, "?")):?>&<?else:?>?<?endif?><?=bitrix_sessid_get()?>&action=saveAjax'+
@@ -215,6 +220,7 @@ function BCPShowParams()
 	'content_post': 'workflowTemplateName=' 		+ encodeURIComponent(workflowTemplateName) + '&' +
 			'workflowTemplateDescription=' 	+ encodeURIComponent(workflowTemplateDescription) + '&' +
 			'workflowTemplateAutostart=' 	+ encodeURIComponent(workflowTemplateAutostart) + '&' +
+			'workflowTemplateId=' + encodeURIComponent(BPTemplateId || 0) + '&' +
 			'document_type=' 				+ encodeURIComponent(document_type) + '&' +
 			'<?= bitrix_sessid_get() ?>' + '&' +
 			JSToPHP(arWorkflowParameters, 'arWorkflowParameters')  + '&' +
@@ -413,6 +419,7 @@ var MODULE_ID = <?=CUtil::PhpToJSObject($arResult['MODULE_ID'])?>;
 var ENTITY = <?=CUtil::PhpToJSObject($arResult['ENTITY'])?>;
 var BPMESS = <?=CUtil::PhpToJSObject($JSMESS)?>;
 var BPDesignerUseJson = true;
+var BPTemplateId = <?= (int)$arResult['ID'] ?>;
 
 var CURRENT_SITE_ID = <?=CUtil::PhpToJSObject(SITE_ID)?>;
 

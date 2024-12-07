@@ -30,6 +30,7 @@ class CatalogStore implements Tabable {
 			&& AccessController::getCurrent()->check(ActionDictionary::ACTION_CATALOG_READ)
 			&& AccessController::getCurrent()->check(ActionDictionary::ACTION_INVENTORY_MANAGEMENT_ACCESS)
 			&& ToolAvailabilityManager::getInstance()->checkInventoryManagementAvailability()
+			&& !\Bitrix\Catalog\Store\EnableWizard\Manager::isOnecMode()
 		);
 	}
 

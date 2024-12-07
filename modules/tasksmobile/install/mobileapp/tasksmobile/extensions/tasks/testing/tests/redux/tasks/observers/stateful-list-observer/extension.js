@@ -10,11 +10,23 @@
 		const taskModels = {};
 
 		Object.values(tasks).forEach((task) => {
-			taskModels[task.id] = TaskModel.prepareReduxTaskFromServerTask(task);
+			const taskId = task.id;
+
+			taskModels[taskId] = TaskModel.prepareReduxTaskFromServerTask(task);
+
+			if (Type.isString(taskId))
+			{
+				taskModels[taskId].id = taskId;
+			}
+
+			if (!Type.isUndefined(task.guid))
+			{
+				taskModels[taskId].guid = task.guid;
+			}
 
 			if (!Type.isNil(task.isRemoved))
 			{
-				taskModels[task.id].isRemoved = task.isRemoved;
+				taskModels[taskId].isRemoved = task.isRemoved;
 			}
 		});
 
@@ -31,6 +43,7 @@
 				moved: [],
 				removed: [],
 				added: [],
+				created: [],
 			});
 		});
 
@@ -43,6 +56,7 @@
 				moved: [],
 				removed: [],
 				added: [],
+				created: [],
 			});
 		});
 
@@ -56,6 +70,7 @@
 				moved: [],
 				removed: [],
 				added: [nextTasks[1]],
+				created: [],
 			});
 		});
 
@@ -69,6 +84,7 @@
 				moved: [],
 				removed: [],
 				added: [nextTasks[1], nextTasks[2]],
+				created: [],
 			});
 		});
 
@@ -82,6 +98,7 @@
 				moved: [],
 				removed: [],
 				added: [nextTasks[1], nextTasks[2]],
+				created: [],
 			});
 		});
 
@@ -95,6 +112,29 @@
 				moved: [],
 				removed: [],
 				added: [nextTasks[2]],
+				created: [],
+			});
+		});
+
+		test('should correctly identify created tasks', () => {
+			const prevTasks = prepareTaskModels({
+				1: { id: 1, guid: 'aaa' },
+				bbb: { id: 'bbb', guid: 'bbb' },
+				ccc: { id: 'ccc', guid: 'ccc' },
+			});
+			const nextTasks = prepareTaskModels({
+				1: { id: 1, guid: 'aaa' },
+				2: { id: 2, guid: 'bbb' },
+				ccc: { id: 'ccc', guid: 'ccc' },
+			});
+
+			const diff = getDiffForTasksObserver(prevTasks, nextTasks);
+
+			expect(diff).toEqual({
+				moved: [],
+				removed: [],
+				added: [],
+				created: [nextTasks[2]],
 			});
 		});
 
@@ -108,6 +148,7 @@
 				moved: [nextTasks[1]],
 				removed: [],
 				added: [],
+				created: [],
 			});
 		});
 
@@ -121,6 +162,7 @@
 				moved: [],
 				removed: [prevTasks[2]],
 				added: [],
+				created: [],
 			});
 			expect(diff.moved).toEqual([]);
 			expect(diff.removed).toEqual([prevTasks[2]]);
@@ -137,6 +179,7 @@
 				moved: [],
 				removed: [nextTasks[2]],
 				added: [],
+				created: [],
 			});
 		});
 
@@ -150,6 +193,7 @@
 				moved: [],
 				removed: [nextTasks[1]],
 				added: [],
+				created: [],
 			});
 		});
 
@@ -163,6 +207,7 @@
 				moved: [nextTasks[1]],
 				removed: [],
 				added: [],
+				created: [],
 			});
 		});
 
@@ -176,6 +221,7 @@
 				moved: [],
 				removed: [],
 				added: [],
+				created: [],
 			});
 		});
 
@@ -189,6 +235,7 @@
 				moved: [],
 				removed: [],
 				added: [],
+				created: [],
 			});
 		});
 	});

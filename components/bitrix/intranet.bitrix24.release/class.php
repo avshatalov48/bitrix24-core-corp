@@ -11,30 +11,30 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 
 class IntranetReleaseComponent extends \CBitrixComponent implements \Bitrix\Main\Engine\Contract\Controllerable
 {
-	protected string $id = 'vega';
+	protected string $id = 'orion';
 	protected array $releaseMap = [
-		'ru' => ['https://vega.bitrix24.tech/slider/', '17.11.2023 10:00'],
-		'by' => ['https://vega.bitrix24promo.by/slider/', '17.11.2023 10:00'],
-		'kz' => ['https://vega.bitrix24kz.works/slider/', '17.11.2023 10:00'],
+		'ru' => ['https://orion.bitrix24.tech/slider/', '15.05.2024 10:00'],
+		'by' => ['https://orion.bitrix24promo.by/slider/', '15.05.2024 10:00'],
+		'kz' => ['https://orion.bitrix24kz.works/slider/', '15.05.2024 10:00'],
 
-		'uk' => ['https://www.bitrix24.uk/promo/fall-2023-release-slider/', '29.11.2023 13:00'],
-		'in' => ['https://www.bitrix24.in/promo/fall-2023-release-slider/', '29.11.2023 11:00'],
-		'eu' => ['https://www.bitrix24.eu/promo/fall-2023-release-slider/', '29.11.2023 13:00'],
-		'br' => ['https://www.bitrix24.com.br/promo/fall-2023-release-slider/', '29.11.2023 17:00'],
-		'la' => ['https://www.bitrix24.es/promo/fall-2023-release-slider/', '29.11.2023 14:00'],
-		'mx' => ['https://www.bitrix24.mx/promo/fall-2023-release-slider/', '29.11.2023 18:00'],
-		'co' => ['https://www.bitrix24.co/promo/fall-2023-release-slider/', '29.11.2023 18:00'],
-		'tr' => ['https://www.bitrix24.com.tr/promo/fall-2023-release-slider/', '29.11.2023 12:00'],
-		'fr' => ['https://www.bitrix24.fr/promo/fall-2023-release-slider/', '29.11.2023 12:00'],
-		'it' => ['https://www.bitrix24.it/promo/fall-2023-release-slider/', '29.11.2023 16:00'],
-		'pl' => ['https://www.bitrix24.pl/promo/fall-2023-release-slider/', '29.11.2023 16:00'],
-		'de' => ['https://www.bitrix24.de/promo/fall-2023-release-slider/', '29.11.2023 15:00'],
+		'uk' => ['https://www.bitrix24.uk/promo/spring-2024-release-slider/', '30.05.2024 13:00'],
+		'in' => ['https://www.bitrix24.in/promo/spring-2024-release-slider/', '30.05.2024 11:00'],
+		'eu' => ['https://www.bitrix24.eu/promo/spring-2024-release-slider/', '30.05.2024 13:00'],
+		'br' => ['https://www.bitrix24.com.br/promo/spring-2024-release-slider/', '30.05.2024 17:00'],
+		'la' => ['https://www.bitrix24.es/promo/spring-2024-release-slider/', '30.05.2024 14:00'],
+		'mx' => ['https://www.bitrix24.mx/promo/spring-2024-release-slider/', '30.05.2024 18:00'],
+		'co' => ['https://www.bitrix24.co/promo/spring-2024-release-slider/', '30.05.2024 18:00'],
+		'tr' => ['https://www.bitrix24.com.tr/promo/spring-2024-release-slider/', '30.05.2024 12:00'],
+		'fr' => ['https://www.bitrix24.fr/promo/spring-2024-release-slider/', '30.05.2024 12:00'],
+		'it' => ['https://www.bitrix24.it/promo/spring-2024-release-slider/', '30.05.2024 16:00'],
+		'pl' => ['https://www.bitrix24.pl/promo/spring-2024-release-slider/', '30.05.2024 16:00'],
+		'de' => ['https://www.bitrix24.de/promo/spring-2024-release-slider/', '30.05.2024 15:00'],
 
-		'en' => ['https://www.bitrix24.com/promo/fall-2023-release-slider/', '29.11.2023 13:00'],
-		'cn' => ['https://www.bitrix24.com/promo/fall-2023-release-slider/', '29.11.2023 11:00'],
-		'vn' => ['https://www.bitrix24.com/promo/fall-2023-release-slider/', '29.11.2023 11:00'],
-		'jp' => ['https://www.bitrix24.com/promo/fall-2023-release-slider/', '29.11.2023 11:00'],
-		'id' => ['https://www.bitrix24.com/promo/fall-2023-release-slider/', '29.11.2023 11:00'],
+		'en' => ['https://www.bitrix24.com/promo/spring-2024-release-slider/', '30.05.2024 13:00'],
+		'cn' => ['https://www.bitrix24.com/promo/spring-2024-release-slider/', '30.05.2024 11:00'],
+		'vn' => ['https://www.bitrix24.com/promo/spring-2024-release-slider/', '30.05.2024 11:00'],
+		'jp' => ['https://www.bitrix24.com/promo/spring-2024-release-slider/', '30.05.2024 11:00'],
+		'id' => ['https://www.bitrix24.com/promo/spring-2024-release-slider/', '30.05.2024 11:00'],
 	];
 
 	public function __construct($component = null)
@@ -297,8 +297,8 @@ class IntranetReleaseComponent extends \CBitrixComponent implements \Bitrix\Main
 
 		$newDefaultThemeId = (
 			in_array($this->getZone(), ['ru', 'kz', 'by'])
-				? 'light:video-jupiter'
-				: 'light:orbital-symphony'
+				? 'light:video-orion'
+				: 'light:contrast-horizon'
 		);
 
 		$theme = new \Bitrix\Intranet\Integration\Templates\Bitrix24\ThemePicker('bitrix24', 's1');

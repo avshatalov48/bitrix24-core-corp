@@ -23,8 +23,13 @@ class DbHelper
 		string $pgsqlQuery
 	): string
 	{
+		return self::isPgSqlDb() ? $pgsqlQuery : $mysqlQuery;
+	}
+
+	public static function isPgSqlDb(): bool
+	{
 		$connection = Application::getConnection();
 
-		return $connection instanceof PgsqlConnection ? $pgsqlQuery : $mysqlQuery;
+		return ($connection instanceof PgsqlConnection);
 	}
 }

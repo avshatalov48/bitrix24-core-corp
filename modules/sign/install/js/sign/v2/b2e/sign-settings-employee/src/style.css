@@ -1,0 +1,17 @@
+.sign-settings.--employee .sign-settings__sidebar {
+	margin-right: 0;
+}
+
+.sign-settings__head_title-help {
+	border-bottom: 1px solid var(--ui-color-palette-gray-90);
+	cursor: pointer;
+}
+
+.sign-settings__head_title-help:hover {
+	border: none;
+}
+
+.sign-settings__head_title-help,
+.sign-settings__head_title-help:hover {
+	color: inherit;
+}

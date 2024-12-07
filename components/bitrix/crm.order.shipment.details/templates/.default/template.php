@@ -64,7 +64,7 @@ $APPLICATION->IncludeComponent(
 	$component
 );
 
-?><script type="text/javascript">
+?><script>
 		BX.ready(
 			function()
 			{
@@ -155,7 +155,7 @@ $APPLICATION->IncludeComponent(
 	)
 );
 ?>
-<script type="text/javascript">
+<script>
 	var crmOrderShipment_<?=$jsGuid?>;
 
 	BX.ready(

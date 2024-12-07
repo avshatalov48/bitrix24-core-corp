@@ -88,7 +88,7 @@ if (!empty($arResult['NEED_META_RESTRICTION_NOTE']) && !$arResult['ACTIVE_STATUS
 		<input type="hidden" name="<?=$arResult['CONNECTOR']?>_del" value="Y">
 		<?=bitrix_sessid_post()?>
 	</form>
-	<script type="text/javascript">
+	<script>
 		BX.message({
 			'IMCONNECTOR_COMPONENT_FBINSTAGRAMDIRECT_CONFIRM_TITLE': '<?=GetMessageJS('IMCONNECTOR_COMPONENT_FBINSTAGRAMDIRECT_CONFIRM_TITLE')?>',
 			'IMCONNECTOR_COMPONENT_FBINSTAGRAMDIRECT_CONFIRM_DESCRIPTION': '<?=GetMessageJS('IMCONNECTOR_COMPONENT_FBINSTAGRAMDIRECT_CONFIRM_DESCRIPTION')?>',

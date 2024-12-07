@@ -17,7 +17,7 @@
 		<td class="log-bottom-cell"><span class="log-bottom-cap"></span></td>
 	</tr>
 </table>
-<script type="text/javascript">
+<script>
 	BX.ready(function(){
 		var lang_toggle = BX('language-box');
 		BX.bind(lang_toggle, 'click', function(){

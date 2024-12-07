@@ -87,12 +87,14 @@ class WorktimeRecordReportComponent extends Timeman\Component\BaseComponent
 			);
 			if (!$record)
 			{
-				return $this->showError(Loc::getMessage('TM_RECORD_NOT_FOUND'));
+				$this->showError(Loc::getMessage('TM_RECORD_NOT_FOUND'));
+				return;
 			}
 		}
 		if (!$this->userPermissionsManager->canReadWorktime($record->getUserId()))
 		{
-			return $this->showError(Loc::getMessage('TM_RECORD_READ_ACCESS_DENIED'));
+			$this->showError(Loc::getMessage('TM_RECORD_READ_ACCESS_DENIED'));
+			return;
 		}
 		$this->arResult['canUpdateWorktime'] = $this->userPermissionsManager->canUpdateWorktime($record->getUserId());
 		$this->arResult['useEmployeesTimezone'] = $this->useEmployeesTimezone();

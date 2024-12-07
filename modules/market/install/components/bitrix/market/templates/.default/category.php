@@ -22,6 +22,7 @@ $APPLICATION->includeComponent(
 	'',
 	[
 		'CATEGORY' => $arResult["VARIABLES"]["category"],
+		'CURRENT_PAGE' => $arResult['CURRENT_PAGE'],
 		'IS_CATEGORY' => 'Y',
 	]
 );

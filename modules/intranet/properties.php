@@ -423,8 +423,8 @@ class CIBlockPropertyEmployee extends CIEmployeeProperty
 		<span id="<?echo $controlID?>_name" style="margin-left:15px"><?=htmlspecialcharsex($UF_HeadName)?></span>
 		<span id="structure-department-head<?echo $controlID?>" class="structure-department-head" <?if ($UF_HeadName != ""):?>style="visibility:visible"<?endif;?> onclick='BX("<?echo $controlID?>").value = ""; BX("<?echo $controlID?>_name").innerHTML = ""; BX("structure-department-head<?echo $controlID?>").style.visibility="hidden";'></span><br>
 		<?CUtil::InitJSCore(array('popup'));?>
-		<script type="text/javascript" src="/bitrix/components/bitrix/intranet.user.selector.new/templates/.default/users.js"></script>
-		<script type="text/javascript">BX.loadCSS('/bitrix/components/bitrix/intranet.user.selector.new/templates/.default/style.css');</script>
+		<script src="/bitrix/components/bitrix/intranet.user.selector.new/templates/.default/users.js"></script>
+		<script>BX.loadCSS('/bitrix/components/bitrix/intranet.user.selector.new/templates/.default/style.css');</script>
 		<script>// user_selector:
 		var multiPopup<?echo $controlID?>;
 		var singlePopup<?echo $controlID?>;
@@ -537,8 +537,8 @@ class CIBlockPropertyEmployee extends CIEmployeeProperty
 		?></span>
 		<span id="structure-department-head<?echo $controlID?>" class="structure-department-head" <?if ($UF_HeadName != ""):?>style="visibility:visible"<?endif;?> onclick='BX("<?echo $controlID?>").value = ""; BX("<?echo $controlID?>_name").innerHTML = ""; BX("structure-department-head<?echo $controlID?>").style.visibility="hidden";'></span><br>
 		<?CUtil::InitJSCore(array('popup'));?>
-		<script type="text/javascript" src="/bitrix/components/bitrix/intranet.user.selector.new/templates/.default/users.js"></script>
-		<script type="text/javascript">BX.loadCSS('/bitrix/components/bitrix/intranet.user.selector.new/templates/.default/style.css');</script>
+		<script src="/bitrix/components/bitrix/intranet.user.selector.new/templates/.default/users.js"></script>
+		<script>BX.loadCSS('/bitrix/components/bitrix/intranet.user.selector.new/templates/.default/style.css');</script>
 		<script>// user_selector:
 		var multiPopup<?echo $controlID?>;
 		var singlePopup<?echo $controlID?>;
@@ -644,8 +644,8 @@ class CIBlockPropertyEmployee extends CIEmployeeProperty
 		<div id="<?echo $controlID?>_res"></div>
 		<a href="javascript:void(0)" id="single-user-choice<?echo $controlID?>"><?=GetMessage("INTR_PROP_EMP_SU")?></a><br>
 		<?CUtil::InitJSCore(array('popup'));?>
-		<script type="text/javascript" src="/bitrix/components/bitrix/intranet.user.selector.new/templates/.default/users.js"></script>
-		<script type="text/javascript">BX.loadCSS('/bitrix/components/bitrix/intranet.user.selector.new/templates/.default/style.css');</script>
+		<script src="/bitrix/components/bitrix/intranet.user.selector.new/templates/.default/users.js"></script>
+		<script>BX.loadCSS('/bitrix/components/bitrix/intranet.user.selector.new/templates/.default/style.css');</script>
 		<script>// user_selector:
 		var multiPopup<?echo $controlID?>;
 		var singlePopup<?echo $controlID?>;

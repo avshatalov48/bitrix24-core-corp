@@ -22,8 +22,6 @@ if ($USER->IsJustAuthorized())
 		CModule::IncludeModule('im') && isset($_REQUEST['RECIPIENT_ID']) && isset($_REQUEST['MESSAGE'])
 	)
 	{
-		$_POST = \Bitrix\Main\Text\Encoding::convertEncodingArray($_POST, 'UTF-8', SITE_CHARSET);
-
 		$arParams = false;
 		$userId = intval($USER->GetID());
 

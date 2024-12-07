@@ -4,7 +4,15 @@
 jn.define('crm/in-app-url/routes', (require, exports, module) => {
 	const { openEntityDetail, openEntityList } = require('crm/in-app-url/routes/open-actions');
 	const { Type } = require('crm/type');
-	const { DocumentCardManager } = require('catalog/store/document-card/manager');
+	let DocumentCardManager = null;
+	try
+	{
+		DocumentCardManager = require('catalog/store/document-card/manager').DocumentCardManager;
+	}
+	catch (e)
+	{
+		console.warn('Cannot get DocumentCardManager extension', e);
+	}
 
 	/**
 	 * @param {InAppUrl} inAppUrl
@@ -63,11 +71,14 @@ jn.define('crm/in-app-url/routes', (require, exports, module) => {
 			});
 		}).name('crm:entityList');
 
-		inAppUrl.register('/shop/documents/details/sales_order/:id/', ({ id }, { context }) => {
-			DocumentCardManager.open({
-				id,
-				title: context.linkText,
-			});
-		}).name('crm:storeDocumentDetail');
+		if (DocumentCardManager)
+		{
+			inAppUrl.register('/shop/documents/details/sales_order/:id/', ({ id }, { context }) => {
+				DocumentCardManager.open({
+					id,
+					title: context.linkText,
+				});
+			}).name('crm:storeDocumentDetail');
+		}
 	};
 });

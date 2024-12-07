@@ -1101,7 +1101,7 @@ class CAllIntranetSharepoint
 
 	public static function AddToUpdateLog($arFields)
 	{
-		return CIntranetSharepointLog::Add($arFields);
+		CIntranetSharepointLog::Add($arFields);
 	}
 
 	public static function IsQueue($IBLOCK_ID = false)

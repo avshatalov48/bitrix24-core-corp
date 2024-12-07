@@ -2,7 +2,6 @@
 
 if($_SERVER["REQUEST_METHOD"]=="POST" && $_POST["action"] <> '' && check_bitrix_sessid())
 {
-	CUtil::JSPostUnescape();
 	$ajaxResult = array();
 	switch ($_POST["action"])
 	{

@@ -149,6 +149,6 @@ class StringField extends Base
 
 	protected function removeSpaces(string $value): string
 	{
-		return preg_replace("/[ ]+/".BX_UTF_PCRE_MODIFIER, " ", $value);
+		return preg_replace("/[ ]+/u", " ", $value);
 	}
 }

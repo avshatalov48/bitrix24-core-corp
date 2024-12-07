@@ -25,6 +25,7 @@ final class MessageData implements \JsonSerializable, Arrayable
 	protected ?string $provider = null;
 	protected ?string $sesUsername = null;
 	protected ?string $sesSign = null;
+	protected ?string $providerName = null;
 
 	protected function __construct(Signer $recipient, Channel $channel)
 	{
@@ -76,6 +77,10 @@ final class MessageData implements \JsonSerializable, Arrayable
 		if (!empty($data['provider']['ses']['sign']))
 		{
 			$messageData->setSesSign($data['provider']['ses']['sign']);
+		}
+		if (!empty($data['provider']['name']))
+		{
+			$messageData->setProviderName($data['provider']['name']);
 		}
 		if (isset($data['error']) && $data['error'])
 		{
@@ -190,6 +195,7 @@ final class MessageData implements \JsonSerializable, Arrayable
 				'customData' => $this->error?->getCustomData() ?? [],
 			],
 			'provider' => [
+				'name' => $this->getProviderName(),
 				'goskey' => [
 					'orderId' => $this->getGoskeyOrderId(),
 				],
@@ -288,6 +294,18 @@ final class MessageData implements \JsonSerializable, Arrayable
 	public function getSesSign(): ?string
 	{
 		return $this->sesSign;
+	}
+
+	public function setProviderName(?string $providerName): MessageData
+	{
+		$this->providerName = $providerName;
+
+		return $this;
+	}
+
+	public function getProviderName(): ?string
+	{
+		return $this->providerName;
 	}
 
 	public function jsonSerialize(): array

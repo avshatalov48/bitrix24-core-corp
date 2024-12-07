@@ -139,32 +139,33 @@ abstract class Badge
 
 	public function bind(ItemIdentifier $itemIdentifier, SourceIdentifier $sourceItemIdentifier): Result
 	{
-		$data = [
-			'TYPE' => $this->getType(),
-			'VALUE' => $this->getValue(),
-			'ENTITY_TYPE_ID' => $itemIdentifier->getEntityTypeId(),
-			'ENTITY_ID' => $itemIdentifier->getEntityId(),
-			'SOURCE_PROVIDER_ID' => $sourceItemIdentifier->getProviderId(),
-			'SOURCE_ENTITY_TYPE_ID' => $sourceItemIdentifier->getEntityTypeId(),
-			'SOURCE_ENTITY_ID' => $sourceItemIdentifier->getEntityId(),
-		];
+		if ($this->isBound($itemIdentifier, $sourceItemIdentifier))
+		{
+			return new Result();
+		}
 
-		$query =
-			BadgeTable::query()
-				->setSelect(['ID'])
-				->setLimit(1)
+		return BadgeTable::add(
+			$this->prepareBadgeTableData(
+				$itemIdentifier,
+				$sourceItemIdentifier,
+			),
+		);
+	}
+
+	public function isBound(ItemIdentifier $itemIdentifier, SourceIdentifier $sourceItemIdentifier): bool
+	{
+		$query = BadgeTable::query()
+			->setSelect(['ID'])
+			->setLimit(1)
 		;
+
+		$data = $this->prepareBadgeTableData($itemIdentifier,$sourceItemIdentifier);
 		foreach ($data as $column => $value)
 		{
 			$query->where($column, $value);
 		}
 
-		if ($query->exec()->fetch())
-		{
-			return new Result();
-		}
-
-		return BadgeTable::add($data);
+		return (bool)$query->exec()->fetch();
 	}
 
 	public function upsert(ItemIdentifier $itemIdentifier, SourceIdentifier $sourceItemIdentifier): void
@@ -238,6 +239,19 @@ abstract class Badge
 
 			$row->save();
 		}
+	}
+
+	protected function prepareBadgeTableData(ItemIdentifier $itemIdentifier, SourceIdentifier $sourceIdentifier): array
+	{
+		return [
+			'TYPE' => $this->getType(),
+			'VALUE' => $this->getValue(),
+			'ENTITY_TYPE_ID' => $itemIdentifier->getEntityTypeId(),
+			'ENTITY_ID' => $itemIdentifier->getEntityId(),
+			'SOURCE_PROVIDER_ID' => $sourceIdentifier->getProviderId(),
+			'SOURCE_ENTITY_TYPE_ID' => $sourceIdentifier->getEntityTypeId(),
+			'SOURCE_ENTITY_ID' => $sourceIdentifier->getEntityId(),
+		];
 	}
 
 	/**

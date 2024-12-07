@@ -49,7 +49,7 @@ $photoTemplateMode = $newEntityCreation ? 'auto' : 'manual';
 
 $isMainPostForm = isset($arParams['MAIN_POST_FORM']) && $arParams['MAIN_POST_FORM'] === true;
 $mainPostFormId = $arParams['MAIN_POST_FORM_ID'] ?? '';
-$controlVisibility = !$isMainPostForm;
+$multiple = !isset($arParams['arUserField']['MULTIPLE']) || $arParams['arUserField']['MULTIPLE'] === 'Y';
 ?>
 
 <?
@@ -74,6 +74,7 @@ $controlVisibility = !$isMainPostForm;
 			imagePreviewQuality: 0.85,
 			treatOversizeImageAsFile: true,
 			ignoreUnknownImageTypes: true,
+			multiple: <?= Json::encode($multiple)?>,
 			events: {
 				'onError': function(event) {
 					console.error('File Uploader onError', event.getData().error);
@@ -93,7 +94,6 @@ $controlVisibility = !$isMainPostForm;
 			photoTemplate: <?= Json::encode($photoTemplate)?>,
 			photoTemplateFieldName: <?= Json::encode($photoTemplateFieldName)?>,
 			photoTemplateMode: <?= Json::encode($photoTemplateMode)?>,
-			controlVisibility: <?= Json::encode($controlVisibility)?>,
 		}
 	);
 

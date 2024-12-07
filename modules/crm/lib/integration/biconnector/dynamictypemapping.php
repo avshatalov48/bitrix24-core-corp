@@ -31,6 +31,27 @@ class DynamicTypeMapping
 					'FIELD_NAME' => 'RIGHT(DT.TABLE_NAME, LENGTH(DT.TABLE_NAME) - 2)',
 					'FIELD_TYPE' => 'string',
 				],
+				'AUTOMATED_SOLUTION_DATASET_NAME' => [
+					'IS_METRIC' => 'N', // 'Y'
+					'FIELD_NAME' => 'if(DT.CUSTOM_SECTION_ID is null, "crm_smart_proc", concat_ws(\'\', "crm_automated_solution_", DT.CUSTOM_SECTION_ID))',
+					'FIELD_TYPE' => 'string',
+				],
+				'CUSTOM_SECTION_ID' => [
+					'IS_METRIC' => 'N', // 'Y'
+					'FIELD_NAME' => 'DT.CUSTOM_SECTION_ID',
+					'FIELD_TYPE' => 'int',
+				],
+				'CUSTOM_SECTION_TITLE' => [
+					'IS_METRIC' => 'N', // 'Y'
+					'FIELD_NAME' => 'if(DT.CUSTOM_SECTION_ID is null, "CRM", CS.TITLE)',
+					'FIELD_TYPE' => 'string',
+					'TABLE_ALIAS' => 'CS',
+					'LEFT_JOIN' => 'LEFT JOIN b_crm_automated_solution CS ON CS.ID = DT.CUSTOM_SECTION_ID',
+				],
+				'PRODUCT_DATASET_NAME' => [
+					'FIELD_NAME' => 'concat_ws(\'\', "crm_dynamic_items_prod_", DT.ENTITY_TYPE_ID)',
+					'FIELD_TYPE' => 'string',
+				]
 				//  `CREATED_BY` int unsigned NOT NULL,
 				//  `IS_CATEGORIES_ENABLED` char(1) NOT NULL DEFAULT 'N',
 				//  `IS_STAGES_ENABLED` char(1) NOT NULL DEFAULT 'N',

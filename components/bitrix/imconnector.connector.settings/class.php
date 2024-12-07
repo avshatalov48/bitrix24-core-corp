@@ -225,7 +225,7 @@ class ImConnectorConnectorSettings extends \CBitrixComponent
 					'nameValue' => 'disablesPopupDepartment'
 				],
 				'valueDisables' => false,
-				'titleOption' => GetMessageJS('IMCONNECTOR_COMPONENT_CONNECTOR_DISABLES_POPUP_HEAD_DEPARTMENT_EXCLUDED_QUEUE_TITLE')
+				'titleOption' => GetMessage('IMCONNECTOR_COMPONENT_CONNECTOR_DISABLES_POPUP_HEAD_DEPARTMENT_EXCLUDED_QUEUE_TITLE')
 			],
 		];
 

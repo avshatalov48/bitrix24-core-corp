@@ -25,6 +25,9 @@ import { TranscriptResult } from './controllers/ai/transcript-result';
 import { TranscriptSummaryResult } from './controllers/ai/transcript-summary-result';
 import { EntityFieldsFillingResult } from './controllers/ai/entity-fields-filling-result';
 import { Visit } from './controllers/visit';
+import { Zoom } from './controllers/zoom';
+import { Sms } from './controllers/sms';
+import { WhatsApp } from './controllers/whatsapp';
 
 ControllerManager.registerController(Activity);
 ControllerManager.registerController(CommonContentBlocks);
@@ -51,3 +54,6 @@ ControllerManager.registerController(TranscriptSummaryResult);
 ControllerManager.registerController(EntityFieldsFillingResult);
 ControllerManager.registerController(SignB2eDocument);
 ControllerManager.registerController(Visit);
+ControllerManager.registerController(Zoom);
+ControllerManager.registerController(Sms);
+ControllerManager.registerController(WhatsApp);

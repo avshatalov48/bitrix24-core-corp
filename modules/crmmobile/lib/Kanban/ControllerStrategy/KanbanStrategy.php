@@ -129,20 +129,10 @@ final class KanbanStrategy extends Base
 
 	protected function prepareItemsResult(array &$items, Kanban $kanban): void
 	{
-		if ($this->entityTypeId !== \CCrmOwnerType::Lead)
-		{
-			return;
-		}
-
 		$kanban->getEntity()->appendMultiFieldData($items, $kanban->getAllowedFmTypes());
 
 		foreach ($items as &$item)
 		{
-			if (!empty($item['client']))
-			{
-				continue;
-			}
-
 			$contactTypes = ['phone', 'email', 'im'];
 			$hasContacts = false;
 			foreach ($contactTypes as $contactType)
@@ -156,7 +146,7 @@ final class KanbanStrategy extends Base
 
 			if (!$hasContacts)
 			{
-				return;
+				continue;
 			}
 
 			$data = [
@@ -178,23 +168,47 @@ final class KanbanStrategy extends Base
 
 				if (is_array($item[$contactType]))
 				{
-					foreach ($item[$contactType] as $contactItem)
+					foreach ($item[$contactType] as $contactItemKey => $contactItemValue)
 					{
-						$title = (
-						OpenLineManager::isImOpenLinesValue($contactItem['value'])
-							? OpenLineManager::getOpenLineTitle($contactItem['value'])
-							: ''
-						);
-						$data[$contactType][] = [
-							'value' => $contactItem['value'],
-							'complexName' => $contactItem['title'],
-							'title' => $title,
-						];
+						if (!isset($item['client']) || array_keys($item['client']) === ['hidden'])
+						{
+							$title = '';
+							if (is_string($contactItemValue['value']) && OpenLineManager::isImOpenLinesValue($contactItemValue['value']))
+							{
+								$title = OpenLineManager::getOpenLineTitle($contactItemValue['value']);
+							}
+
+							$data[$contactType][] = [
+								'value' => $contactItemValue['value'],
+								'complexName' => $contactItemValue['title'],
+								'title' => $title,
+							];
+						}
+
+						// hidden contacts
+						if (isset($item['client']) && \CCrmOwnerTypeAbbr::ResolveByTypeName($contactItemKey))
+						{
+							foreach ($contactItemValue as $key => $communicationData)
+							{
+								if (
+									!isset($item['client'][$contactItemKey][0][$contactType][$key])
+									&& is_array($communicationData)
+								)
+								{
+									$item['client'][$contactItemKey][0][$contactType][$key] =
+										[
+											'value' => $communicationData['value'],
+											'complexName' => $communicationData['title'],
+											'title' => '',
+										];
+								}
+							}
+						}
 					}
 				}
 			}
 
-			$item['client']['lead'] = [$data];
+			$item['client'][$kanban->getEntity()->getTypeName()] = [$data];
 		}
 
 		unset($item);

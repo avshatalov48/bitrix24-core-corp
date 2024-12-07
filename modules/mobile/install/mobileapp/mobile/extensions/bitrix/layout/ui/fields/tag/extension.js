@@ -4,6 +4,7 @@
 jn.define('layout/ui/fields/tag', (require, exports, module) => {
 	const AppTheme = require('apptheme');
 	const { EntitySelectorFieldClass } = require('layout/ui/fields/entity-selector');
+	const { Icon } = require('assets/icons');
 
 	/**
 	 * @class TagField
@@ -87,11 +88,9 @@ jn.define('layout/ui/fields/tag', (require, exports, module) => {
 			};
 		}
 
-		getLeftIcon()
+		getDefaultLeftIcon()
 		{
-			return {
-				icon: 'tag',
-			};
+			return Icon.TAG;
 		}
 
 		getAddButtonText()

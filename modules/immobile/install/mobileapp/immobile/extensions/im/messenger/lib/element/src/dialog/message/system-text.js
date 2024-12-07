@@ -22,6 +22,8 @@ jn.define('im/messenger/lib/element/dialog/message/system-text', (require, expor
 			this.setIsBackgroundOn(true);
 			this.setBackgroundColor('#525C6966');
 			this.setFontColor('#FFFFFF');
+			this.setShowAvatarForce(false);
+			this.setAvatarUri(null);
 		}
 
 		getType()

@@ -54,12 +54,20 @@ class DepartmentRepository
 
 	public function getAllChildDepartmentsIds($depId)
 	{
-		$departments = (array)\CIntranetUtils::getSubDepartments($depId);
+		$departments = (array) \CIntranetUtils::getSubDepartments($depId);
+		$departments = array_filter($departments, 'is_numeric');
+
+		$allDepartments = $departments;
+
 		foreach ($departments as $childId)
 		{
-			$departments = array_merge($departments, $this->getAllChildDepartmentsIds($childId));
+			$childDepartments = $this->getAllChildDepartmentsIds($childId);
+			$allDepartments = array_merge($allDepartments, $childDepartments);
 		}
-		return array_map('intval', $departments);
+
+		$allDepartments = array_unique($allDepartments);
+
+		return array_map('intval', $allDepartments);
 	}
 
 	public function getDirectParentIdsByDepartmentId($departmentId)
@@ -134,8 +142,27 @@ class DepartmentRepository
 
 	public function getUsersOfDepartment($depId)
 	{
+		if (!is_string($depId) && !is_int($depId))
+		{
+			return [];
+		}
+
 		$structure = \CIntranetUtils::getStructure();
-		$employees = array_map('intval', (array) ($structure['DATA'][$depId]['EMPLOYEES'] ?? null));
+		if (
+			!is_array($structure)
+			|| !isset($structure['DATA'])
+			|| !is_array($structure['DATA'])
+			|| !isset($structure['DATA'][$depId]['EMPLOYEES'])
+		)
+		{
+			return [];
+		}
+
+		$employeesData = (array) $structure['DATA'][$depId]['EMPLOYEES'];
+		$filteredEmployeesData = array_filter($employeesData, 'is_numeric');
+
+		$employees = array_map('intval', $filteredEmployeesData);
+
 		return empty($employees) ? [] : $employees;
 	}
 

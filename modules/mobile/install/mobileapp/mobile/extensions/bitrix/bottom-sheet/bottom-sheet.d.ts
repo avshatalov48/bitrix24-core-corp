@@ -3,10 +3,27 @@
  */
 interface BottomSheetWidgetOptions {
 	modal: boolean;
-	title: string;
+	// deprecated - title: string;
+	titleParams: Partial<TitleParams>;
 	enableNavigationBarBorder: boolean;
 	backgroundColor: string;
-	backdrop: BottomSheetBackdropOptions;
+	backdrop: Partial<BottomSheetBackdropOptions>;
+}
+
+/**
+ * Options object for configuring a navigation title.
+ */
+interface TitleParams {
+	type: 'section' | 'entity' | 'wizard' | 'dialog' | 'common';
+	text: string;
+	textColor: string;
+	detailText: string;
+	detailTextColor: string;
+	useLargeTitleMode: boolean;
+	useProgress: boolean;
+	svg: object;
+	isRounded: boolean;
+	tintColor: string;
 }
 
 /**
@@ -26,4 +43,6 @@ interface BottomSheetBackdropOptions {
 	forceDismissOnSwipeDown: boolean;
 	shouldResizeContent: boolean;
 	helpUrl: string;
+	bounceEnable: boolean;
+	adoptHeightByKeyboard: boolean;
 }

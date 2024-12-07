@@ -68,7 +68,7 @@ jn.define('layout/ui/fields/client/elements', (require, exports, module) => {
 
 		renderRightAction()
 		{
-			if (!this.props.showClientInfo || !this.props.actionParams)
+			if (!this.props.actionParams)
 			{
 				return null;
 			}

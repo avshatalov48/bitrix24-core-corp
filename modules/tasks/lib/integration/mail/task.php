@@ -14,6 +14,7 @@ use \Bitrix\Main\Event;
 use \Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Loader;
 use Bitrix\Tasks\Internals\Log\LogFacade;
+use Exception;
 
 Loc::loadMessages(__FILE__);
 
@@ -48,7 +49,7 @@ final class Task extends \Bitrix\Tasks\Integration\Mail
 			return false;
 		}
 
-		list($message, $files) = static::processAttachments($message, $attachments, $userId);
+		[$message, $files] = static::processAttachments($message, $attachments, $userId);
 
 		try
 		{
@@ -121,17 +122,9 @@ final class Task extends \Bitrix\Tasks\Integration\Mail
 				['SPAWNED_BY_AGENT' => true]
 			);
 		}
-		catch(\TasksException $e) // todo: get rid of this annoying catch by making \Bitrix\Tasks\*Exception classes inherited from TasksException (dont forget about code)
+		catch(Exception)
 		{
-			if (
-				$e->checkOfType(\TasksException::TE_TASK_NOT_FOUND_OR_NOT_ACCESSIBLE)
-				|| $e->checkOfType(\TasksException::TE_ACCESS_DENIED)
-			)
-			{
-				return false;
-			}
-
-			LogFacade::logThrowable($e);
+			return false;
 		}
 
 		return $task?->getId(); // required, dont remove
@@ -147,7 +140,7 @@ final class Task extends \Bitrix\Tasks\Integration\Mail
 		$res = static::getLinks($userId, $taskId, $postUrl, $siteId, $backUrl);
 		if (is_array($res))
 		{
-			list($replyTo, $newBackUrl) = $res;
+			[$replyTo, $newBackUrl] = $res;
 			return (string) $replyTo;
 		}
 
@@ -159,7 +152,7 @@ final class Task extends \Bitrix\Tasks\Integration\Mail
 		$res = static::getLinks($userId, $taskId, $postUrl, $siteId, $backUrl);
 		if (is_array($res))
 		{
-			list($replyTo, $newBackUrl) = $res;
+			[$replyTo, $newBackUrl] = $res;
 			return (string) $newBackUrl;
 		}
 

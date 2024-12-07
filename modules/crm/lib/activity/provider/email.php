@@ -7,6 +7,7 @@ use Bitrix\Crm\Activity;
 use Bitrix\Crm\Activity\CommunicationStatistics;
 use Bitrix\Crm\Automation\Trigger\EmailSentTrigger;
 use Bitrix\Crm\Service\Timeline;
+use Bitrix\Crm\Timeline\LogMessageType;
 use Bitrix\Mail\Message;
 use Bitrix\Main\Config;
 use Bitrix\Main\Loader;
@@ -14,7 +15,6 @@ use Bitrix\Main\Localization\Loc;
 
 class Email extends Activity\Provider\Base
 {
-
 	/**
 	 * Size of html description can cause long sanitizing
 	 */
@@ -180,14 +180,16 @@ class Email extends Activity\Provider\Base
 
 		if ($direction === \CCrmActivityDirection::Outgoing)
 		{
-			$badge = Crm\Service\Container::getInstance()->getBadge(
-				Crm\Badge\Badge::MAIL_MESSAGE_DELIVERY_STATUS_TYPE,
-				Crm\Badge\Type\MailMessageDeliveryStatus::MAIL_MESSAGE_DELIVERY_ERROR_VALUE,
-			);
-
-			$itemIdentifier = new Crm\ItemIdentifier((int)$activityFields['OWNER_TYPE_ID'], (int)$activityFields['OWNER_ID']);
-			$badge->deleteByEntity($itemIdentifier, $badge->getType(), $badge->getValue());
-			Timeline\Monitor::getInstance()->onBadgesSync($itemIdentifier);
+			$itemIdentifier = Crm\ItemIdentifier::createFromArray($activityFields);
+			if ($itemIdentifier)
+			{
+				$badge = Crm\Service\Container::getInstance()->getBadge(
+					Crm\Badge\Badge::MAIL_MESSAGE_DELIVERY_STATUS_TYPE,
+					Crm\Badge\Type\MailMessageDeliveryStatus::MAIL_MESSAGE_DELIVERY_ERROR_VALUE,
+				);
+				$badge->deleteByEntity($itemIdentifier, $badge->getType(), $badge->getValue());
+				Timeline\Monitor::getInstance()->onBadgesSync($itemIdentifier);
+			}
 		}
 	}
 
@@ -431,7 +433,7 @@ class Email extends Activity\Provider\Base
 		{
 			\CCrmContentType::BBCode => (new \CTextParser())->convertText($description),
 			\CCrmContentType::Html => ($needSanitize) ? static::sanitizeBody($description) : $description,
-			default => preg_replace('/[\r\n]+/' . BX_UTF_PCRE_MODIFIER,
+			default => preg_replace('/[\r\n]+/u',
 				'<br>',
 				htmlspecialcharsbx($description)
 			),
@@ -486,4 +488,8 @@ class Email extends Activity\Provider\Base
 		return preg_replace('/(\s*(\r\n|\n|\r))+/', '<br>', htmlspecialcharsbx($textLikeTextBody));
 	}
 
+	public static function getMoveBindingsLogMessageType(): ?string
+	{
+		return LogMessageType::EMAIL_INCOMING_MOVED;
+	}
 }

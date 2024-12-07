@@ -20,8 +20,6 @@ if (!CModule::IncludeModule('iblock'))
 	die();
 }
 
-CUtil::JSPostUnescape();
-
 $iblock_id = intval($_REQUEST["IBLOCK_ID"]);
 
 $CrmPerms = new CCrmPerms($USER->GetID());

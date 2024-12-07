@@ -9,6 +9,7 @@ use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Main\Loader;
 use Bitrix\Recyclebin\Internals\Models\RecyclebinDataTable;
 use Bitrix\Recyclebin\Internals\Models\RecyclebinTable;
+use Bitrix\Tasks\Flow\Internal\FlowTaskTable;
 use Bitrix\Tasks\Integration\Recyclebin\Manager;
 use Bitrix\Tasks\Internals\Task\FavoriteTable;
 use Bitrix\Tasks\Internals\Task\MemberTable;
@@ -99,6 +100,14 @@ class TaskRegistry
 		)
 		{
 			$this->fillDepartments([$taskId]);
+		}
+
+		if (
+			$withRelations
+			&& !isset($this->storage[$taskId]['FLOW_ID'])
+		)
+		{
+			$this->fillFlowId([$taskId]);
 		}
 
 		return $this->storage[$taskId];
@@ -193,6 +202,7 @@ class TaskRegistry
 			$this->fillFavorites($foundIds);
 			$this->fillMembers($foundIds);
 			$this->fillDepartments($foundIds);
+			$this->fillFlowId($foundIds);
 		}
 
 		return $this;
@@ -211,7 +221,7 @@ class TaskRegistry
 		$res = RecyclebinTable::query()
 			->setSelect([
 				'TASK_ID' => 'ENTITY_ID',
-				'DATA' => 'RD.DATA'
+				'DATA' => 'RD.DATA',
 			])
 			->registerRuntimeField(
 				'RD',
@@ -333,7 +343,7 @@ class TaskRegistry
 			$this->storage[$member['TASK_ID']]['MEMBER_LIST'][] = [
 				'TASK_ID' => (int) $member['TASK_ID'],
 				'USER_ID' => (int) $member['USER_ID'],
-				'TYPE' => $member['TYPE']
+				'TYPE' => $member['TYPE'],
 			];
 		}
 	}
@@ -354,8 +364,8 @@ class TaskRegistry
 		$res = FavoriteTable::getList([
 			'select' => ['TASK_ID', 'USER_ID'],
 			'filter' => [
-				'@TASK_ID' => $taskIds
-			]
+				'@TASK_ID' => $taskIds,
+			],
 		]);
 
 		while ($row = $res->fetch())
@@ -403,7 +413,7 @@ class TaskRegistry
 				'filter' => [
 					'@ID' => new SqlExpression($userIds),
 				],
-				'select' => ['ID', 'UF_DEPARTMENT']
+				'select' => ['ID', 'UF_DEPARTMENT'],
 			]
 		);
 
@@ -432,6 +442,25 @@ class TaskRegistry
 				}
 				$this->storage[$taskId]['DEPARTMENTS'][$row['TYPE']] = array_merge($this->storage[$taskId]['DEPARTMENTS'][$row['TYPE']], $deps[$row['USER_ID']]);
 			}
+		}
+	}
+
+	private function fillFlowId(array $taskIds): void
+	{
+		foreach ($taskIds as $taskId)
+		{
+			$this->storage[$taskId]['FLOW_ID'] = 0;
+		}
+
+		$relations = FlowTaskTable::query()
+			->setSelect(['ID', 'FLOW_ID', 'TASK_ID'])
+			->whereIn('TASK_ID', $taskIds)
+			->exec()
+			->fetchCollection();
+
+		foreach ($relations as $relation)
+		{
+			$this->storage[$relation->getTaskId()]['FLOW_ID'] = $relation->getFlowId();
 		}
 	}
 

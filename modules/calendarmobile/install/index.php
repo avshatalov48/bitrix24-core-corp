@@ -45,6 +45,14 @@ class CalendarMobile extends CModule
 			'getPath'
 		);
 
+		$eventManager->registerEventHandler(
+			'mobile',
+			'onTariffRestrictionsCollect',
+			$this->MODULE_ID,
+			\Bitrix\CalendarMobile\Provider\TariffPlanRestrictionProvider::class,
+			'getTariffPlanRestrictions',
+		);
+
 		return true;
 	}
 
@@ -58,6 +66,14 @@ class CalendarMobile extends CModule
 			$this->MODULE_ID,
 			$this->workspaceClass,
 			'getPath'
+		);
+
+		$eventManager->unRegisterEventHandler(
+			'mobile',
+			'onTariffRestrictionsCollect',
+			$this->MODULE_ID,
+			\Bitrix\CalendarMobile\Provider\TariffPlanRestrictionProvider::class,
+			'getTariffPlanRestrictions',
 		);
 
 		ModuleManager::unRegisterModule($this->MODULE_ID);
@@ -87,6 +103,11 @@ class CalendarMobile extends CModule
 		);
 
 		return true;
+	}
+
+	public function uninstallFiles(): void
+	{
+		DeleteDirFilesEx('/bitrix/mobileapp/' . $this->MODULE_ID);
 	}
 
 	private function installDependencies()

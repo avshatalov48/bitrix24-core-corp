@@ -1,5 +1,5 @@
-import {Tag, Type, Text, Event, Dom} from 'main.core';
-import {EventEmitter} from 'main.core.events';
+import { Tag, Type, Text, Event } from 'main.core';
+import { EventEmitter } from 'main.core.events';
 
 export type ResponsibleType = {
 	id: number,
@@ -10,7 +10,7 @@ export type ResponsibleType = {
 	}
 }
 
-export class Responsible  extends EventEmitter
+export class Responsible extends EventEmitter
 {
 	constructor(responsible: ResponsibleType)
 	{
@@ -21,8 +21,13 @@ export class Responsible  extends EventEmitter
 		this.responsible = (Type.isPlainObject(responsible) ? responsible : null);
 	}
 
-	render(): HTMLElement
+	render(): ?HTMLElement
 	{
+		if (this.responsible === null)
+		{
+			return '';
+		}
+
 		const uiClasses = 'ui-icon ui-icon-common-user';
 
 		const name = Text.encode(this.responsible.name);

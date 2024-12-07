@@ -35,19 +35,22 @@ class CBPCrmExcludeActivity extends CBPActivity
 				['COMMENT' => GetMessage('CRM_EXA_COMMENT')]
 			);
 
-			$map = $this->getDebugInfo(
-				[
-					'ExcludedId' => $entityId
-				],
-				[
-					'ExcludedId' => [
-						'Name' => \Bitrix\Main\Localization\Loc::getMessage('CRM_EXA_DEBUG_MESSAGE'),
-						'Type' => 'text',
-						'Required' => true,
-					]
-				],
-			);
-			$this->writeDebugInfo($map);
+			if ($this->workflow->isDebug())
+			{
+				$map = $this->getDebugInfo(
+					[
+						'ExcludedId' => $entityId
+					],
+					[
+						'ExcludedId' => [
+							'Name' => \Bitrix\Main\Localization\Loc::getMessage('CRM_EXA_DEBUG_MESSAGE'),
+							'Type' => 'text',
+							'Required' => true,
+						]
+					],
+				);
+				$this->writeDebugInfo($map);
+			}
 		}
 		catch(\Bitrix\Main\SystemException $ex)
 		{

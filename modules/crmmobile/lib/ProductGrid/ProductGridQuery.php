@@ -4,6 +4,8 @@ declare(strict_types = 1);
 
 namespace Bitrix\CrmMobile\ProductGrid;
 
+use Bitrix\Catalog\Config\State;
+use Bitrix\Catalog\Store\EnableWizard;
 use Bitrix\Crm\Item;
 use Bitrix\Crm\Service\Accounting;
 use Bitrix\Crm\Service\Container;
@@ -61,7 +63,10 @@ class ProductGridQuery extends Query
 			'inventoryControl' => [
 				'isAllowedReservation' => $this->isAllowedReservation(),
 				'isReservationRestrictedByPlan' => $this->isReservationRestrictedByPlan(),
+				'mode' => EnableWizard\Manager::getCurrentMode(),
+				'isOnecRestrictedByPlan' => EnableWizard\TariffChecker::isOnecInventoryManagementRestricted(),
 				'defaultDateReserveEnd' => ReservationService::getInstance()->getDefaultDateReserveEnd()->getTimestamp(),
+				'isCatalogHidden' => State::isExternalCatalog(),
 			],
 			'measures' => array_values(MeasureRepository::findAll()),
 			'taxes' => [
@@ -168,7 +173,11 @@ class ProductGridQuery extends Query
 
 	private function isReservationRestrictedByPlan(): bool
 	{
-		return !RestrictionManager::getInventoryControlIntegrationRestriction()->hasPermission();
+		return
+			EnableWizard\Manager::isOnecMode()
+				? EnableWizard\TariffChecker::isOnecInventoryManagementRestricted()
+				: !RestrictionManager::getInventoryControlIntegrationRestriction()->hasPermission()
+		;
 	}
 
 	private function isProductRowTaxUniform(): bool

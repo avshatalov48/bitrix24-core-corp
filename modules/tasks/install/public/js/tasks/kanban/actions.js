@@ -47,15 +47,16 @@
 		 */
 		simpleAction: function(grid, params, disableNotify)
 		{
-			params["groupAction"] = "Y";
-			params["taskId"] = this.getMapKeys(grid.getSelectedItems());
-			grid.ajax(
-				params,
-				function(data)
-				{
-					var gridData = grid.getData();
+			const action = params.action;
+			params.groupAction = "Y";
+			params.taskId = this.getMapKeys(grid.getSelectedItems());
 
-					if (data && !data.error)
+			grid.ajax(action, params).then(
+				(response) => {
+					const data = response.data;
+					const error = response.errors.pop();
+
+					if (data && !error)
 					{
 						if (!disableNotify)
 						{
@@ -67,15 +68,14 @@
 							params
 						);
 					}
-					else if (data)
+					else if (error)
 					{
-						BX.Kanban.Utils.showErrorDialog(data.error, data.fatal);
+						BX.Kanban.Utils.showErrorDialog(error.message, true);
 					}
-				}.bind(this),
-				function(error)
-				{
-					BX.Kanban.Utils.showErrorDialog("Error: " + error, true);
-				}.bind(this)
+				},
+				(response) => {
+					BX.Kanban.Utils.showErrorDialog("Error: " + response.errors[0].message, true);
+				}
 			);
 		},
 

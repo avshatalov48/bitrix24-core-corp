@@ -8,6 +8,7 @@ use Bitrix\Main\Engine\AutoWire\ExactParameter;
 use Bitrix\Main\Error;
 use Bitrix\Main\Loader;
 use Bitrix\Sale\Registry;
+use Bitrix\SalesCenter\Integration\Bitrix24Manager;
 use Bitrix\SalesCenter\Integration\LandingManager;
 use Bitrix\Sale;
 
@@ -74,12 +75,7 @@ class Payment extends Base
 		return true;
 	}
 
-	/**
-	 * @param Sale\Payment $payment
-	 * @param array $options
-	 * @return array[]|false
-	 */
-	public function getPublicUrlAction(Sale\Payment $payment, array $options = [])
+	public function getPublicUrlAction(Sale\Payment $payment, array $options = []): ?array
 	{
 		if (LandingManager::getInstance()->isOrderPublicUrlAvailable())
 		{
@@ -91,13 +87,26 @@ class Payment extends Base
 			if (is_array($urlInfo) === false)
 			{
 				$this->addError(new Error('Error retrieving url info'));
-				return false;
+
+				return null;
 			}
 		}
 		else
 		{
+			if (
+				LandingManager::getInstance()->getConnectedSiteId() > 0
+				&& !LandingManager::getInstance()->isPhoneConfirmed()
+			)
+			{
+				return [
+					'connectedSiteId' => LandingManager::getInstance()->getConnectedSiteId(),
+					'isPhoneConfirmed' => LandingManager::getInstance()->isPhoneConfirmed(),
+				];
+			}
+
 			$this->addError(new Error('Public url is not available'));
-			return false;
+
+			return null;
 		}
 
 		return [

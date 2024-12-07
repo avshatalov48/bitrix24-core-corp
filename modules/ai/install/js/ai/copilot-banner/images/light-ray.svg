@@ -1,0 +1,40 @@
+<svg
+        width="403"
+        height="251"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+>
+    <rect x="112" y="0" width="400" height="150" fill="url(#paint0_linear_71_19997)">
+        <animateTransform
+                attributeName="transform"
+                type="rotate"
+                from="-100 112 0"
+                to="260 112 0"
+                dur="4s"
+                repeatCount="indefinite"
+        />
+    </rect>
+    <defs>
+        <linearGradient
+                id="paint0_linear_71_19997"
+                x1="400"
+                y1="0"
+                x2="400"
+                y2="150"
+                gradientUnits="userSpaceOnUse"
+            >
+            <stop stop-color="white" stop-opacity="0"/>
+            <stop offset="0.5" stop-color="white"/>
+            <stop offset="1" stop-color="white" stop-opacity="0"/>
+
+<!--            <animateTransform-->
+<!--                    attributeName="transform"-->
+<!--                    type="rotate"-->
+<!--                    from="-90 112 -75"-->
+<!--                    to="270 112 -75"-->
+<!--                    dur="9s"-->
+<!--                    repeatCount="indefinite"-->
+<!--            />-->
+        </linearGradient>
+    </defs>
+</svg>

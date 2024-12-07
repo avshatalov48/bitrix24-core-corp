@@ -15,8 +15,8 @@ final class Encryption
 		$res = '';
 		while ($str)
 		{
-			$m = mb_substr($str, 0, 16, 'ASCII');
-			$str = mb_substr($str, 16, mb_strlen($str, 'ASCII') - 16, 'ASCII');
+			$m = substr($str, 0, 16);
+			$str = substr($str, 16, strlen($str) - 16);
 			$res .= self::byteXor($m, $key1, 16);
 			$key1 = self::binMd5($key . $key1 . $m);
 		}
@@ -31,8 +31,8 @@ final class Encryption
 		$res = '';
 		while ($str)
 		{
-			$m = mb_substr($str, 0, 16, 'ASCII');
-			$str = mb_substr($str, 16, mb_strlen($str, 'ASCII') - 16, 'ASCII');
+			$m = substr($str, 0, 16);
+			$str = substr($str, 16, strlen($str) - 16);
 
 			$m = self::byteXor($m, $key1, 16);
 			$res .= $m;

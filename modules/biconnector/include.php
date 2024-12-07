@@ -1,5 +1,7 @@
 <?php
 
+include __DIR__ . '/compatibility.php';
+
 CModule::AddAutoloadClasses(
 	'biconnector',
 	[

@@ -6,6 +6,7 @@ use Bitrix\Intranet\Settings\Tools\Crm;
 use Bitrix\Intranet\Settings\Tools\Sites;
 use Bitrix\Intranet\Settings\Tools\Tasks;
 use Bitrix\Intranet\Settings\Tools\TeamWork;
+use Bitrix\Intranet\Portal\FirstPage;
 use Bitrix\Main\Error;
 use Bitrix\Main\EventManager;
 use Bitrix\Main\Event;
@@ -31,6 +32,8 @@ class LeftMenu extends \Bitrix\Main\Engine\Controller
 			global $CACHE_MANAGER;
 			$CACHE_MANAGER->ClearByTag('bitrix24_left_menu');
 		}
+
+		FirstPage::getInstance()->clearCache();
 
 		return true;
 	}
@@ -65,10 +68,7 @@ class LeftMenu extends \Bitrix\Main\Engine\Controller
 					'VALUE' => $value === 'Y' ? 'Y' : 'N'
 				));
 			}
-			catch (Exception $e)
-			{
-
-			}
+			catch (\Exception $e) {}
 		}
 	}
 
@@ -772,11 +772,12 @@ class LeftMenu extends \Bitrix\Main\Engine\Controller
 			return null;
 		}
 
-		if (isset($_POST['userApply']) && $_POST['userApply'] == 'currentUser')
+		if (isset($_POST['userApply']) && $_POST['userApply'] === 'currentUser')
 		{
 			\CUserOptions::DeleteOptionsByName('intranet', 'left_menu_sorted_items_' . SITE_ID);
 			\CUserOptions::DeleteOptionsByName('intranet', 'left_menu_preset_' . SITE_ID);
 			\CUserOptions::DeleteOptionsByName('intranet', 'left_menu_first_page_' . SITE_ID);
+			FirstPage::getInstance()->clearCacheForAll();
 		}
 
 		if (isset($_POST['itemsSort']))

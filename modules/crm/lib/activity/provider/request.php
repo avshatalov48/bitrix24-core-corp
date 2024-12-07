@@ -72,26 +72,43 @@ class Request extends Base
 		static::notify($activityFields);
 	}
 
-	public static function notify($activityFields)
+	public static function notify($activityFields): void
 	{
-		if(!Main\Loader::includeModule('im'))
+		if (!Main\Loader::includeModule('im'))
+		{
 			return;
+		}
+
+		$subject = $activityFields['SUBJECT'] ?? '';
+		$url = \CCrmOwnerType::GetEntityShowPath(\CCrmOwnerType::Activity, $activityFields['ID'] ?? 0);
+
+		$notifyMessageCallback = static fn (?string $languageId = null) =>
+			Loc::getMessage(
+				'CRM_ACTIVITY_PROVIDER_REQUEST_NOTIFY',
+				[ '#title#' =>  '<a href="'. $url .'">'. htmlspecialcharsbx($subject) .'</a>' ],
+				$languageId,
+			)
+		;
+
+		$notifyMessageOutCallback = static fn (?string $languageId = null) =>
+			Loc::getMessage(
+				'CRM_ACTIVITY_PROVIDER_REQUEST_NOTIFY',
+				[ '#title#' => htmlspecialcharsbx($subject) ],
+				$languageId,
+			)
+		;
 
 		$notification = array(
 			"MESSAGE_TYPE" => IM_MESSAGE_SYSTEM,
-			"TO_USER_ID" => (int)$activityFields['RESPONSIBLE_ID'],
-			"FROM_USER_ID" => (int)$activityFields['AUTHOR_ID'],
+			"TO_USER_ID" => (int)($activityFields['RESPONSIBLE_ID'] ?? 0),
+			"FROM_USER_ID" => (int)($activityFields['AUTHOR_ID'] ?? 0),
 			"NOTIFY_TYPE" => IM_NOTIFY_FROM,
 			"NOTIFY_MODULE" => "crm",
 			//"NOTIFY_EVENT" => "requestCreated",
 			"NOTIFY_EVENT" => "changeAssignedBy",
-			"NOTIFY_TAG" => "CRM|CRM_REQUEST|".$activityFields['ID'],
-			"NOTIFY_MESSAGE" => Loc::getMessage('CRM_ACTIVITY_PROVIDER_REQUEST_NOTIFY', array(
-				'#title#' =>  '<a href="'.\CCrmOwnerType::GetEntityShowPath(\CCrmOwnerType::Activity, $activityFields['ID']).'">'.$activityFields['SUBJECT'].'</a>'
-			)),
-			"NOTIFY_MESSAGE_OUT" => Loc::getMessage('CRM_ACTIVITY_PROVIDER_REQUEST_NOTIFY', array(
-				'#title#' => $activityFields['SUBJECT']
-			)),
+			"NOTIFY_TAG" => "CRM|CRM_REQUEST|" . ($activityFields['ID'] ?? 0),
+			"NOTIFY_MESSAGE" => $notifyMessageCallback,
+			"NOTIFY_MESSAGE_OUT" => $notifyMessageOutCallback,
 		);
 
 		if ($notification['TO_USER_ID'] === $notification['FROM_USER_ID'])

@@ -18,5 +18,6 @@ return [
 		'./src/promotion',
 		'./src/user',
 		'./src/openlines',
+		'./src/copilot',
 	],
 ];

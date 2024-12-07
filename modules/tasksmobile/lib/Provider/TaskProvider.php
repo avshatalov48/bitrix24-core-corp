@@ -2,21 +2,31 @@
 
 namespace Bitrix\TasksMobile\Provider;
 
+use Bitrix\Crm\Integration\UI\EntitySelector\DynamicMultipleProvider;
 use Bitrix\Crm\Service\Display;
 use Bitrix\Crm\Service\Display\Field;
 use Bitrix\Main\ArgumentException;
+use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Entity\ExpressionField;
-use Bitrix\Main\Entity\Query;
-use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Main\Loader;
+use Bitrix\Tasks\Util\User;
 use Bitrix\Main\ObjectPropertyException;
-use Bitrix\Main\ORM\Query\Join;
 use Bitrix\Main\SystemException;
 use Bitrix\Main\UI\Filter\Options;
 use Bitrix\Main\UI\PageNavigation;
 use Bitrix\Mobile\Provider\UserRepository;
-use Bitrix\Socialnetwork\Helper\Workgroup;
+use Bitrix\Socialnetwork\Item\UserContentView;
+use Bitrix\Tasks\Integration\SocialNetwork\Group;
+use Bitrix\Socialnetwork\Item\Workgroup;
+use Bitrix\Tasks\Access\ActionDictionary;
+use Bitrix\Tasks\Access\Model\TaskModel;
+use Bitrix\Tasks\Access\Role\RoleDictionary;
+use Bitrix\Tasks\Access\TaskAccessController;
+use Bitrix\Tasks\CheckList\CheckListFacade;
+use Bitrix\Tasks\CheckList\Task\TaskCheckListFacade;
 use Bitrix\Tasks\Comments\Task\CommentPoster;
+use Bitrix\Tasks\Control\Exception\TaskAddException;
+use Bitrix\Tasks\FileUploader\TaskController;
 use Bitrix\Tasks\Helper\Filter;
 use Bitrix\Tasks\Integration\CRM;
 use Bitrix\Tasks\Integration\Disk;
@@ -24,23 +34,37 @@ use Bitrix\Tasks\Integration\SocialNetwork;
 use Bitrix\Tasks\Integration\TasksMobile\TextFragmentParser;
 use Bitrix\Tasks\Internals\Counter\Deadline;
 use Bitrix\Tasks\Internals\Counter\Template\TaskCounter;
+use Bitrix\Tasks\Internals\Log\LogFacade;
 use Bitrix\Tasks\Internals\SearchIndex;
-use Bitrix\Tasks\Internals\Task\CheckListTable;
-use Bitrix\Tasks\Internals\Task\CheckListTreeTable;
 use Bitrix\Tasks\Internals\Task\LabelTable;
 use Bitrix\Tasks\Internals\Task\ParameterTable;
 use Bitrix\Tasks\Internals\Task\Result\ResultManager;
 use Bitrix\Tasks\Internals\Task\Result\ResultTable;
+use Bitrix\Tasks\Internals\Task\ScenarioTable;
 use Bitrix\Tasks\Internals\Task\Status;
 use Bitrix\Tasks\Internals\Task\ViewedTable;
+use Bitrix\Tasks\Internals\TaskObject;
 use Bitrix\Tasks\Internals\UserOption;
 use Bitrix\Tasks\Kanban\StagesTable;
+use Bitrix\Tasks\Kanban\TaskStageTable;
 use Bitrix\Tasks\Manager;
+use Bitrix\Tasks\Provider\Exception\TaskListException;
+use Bitrix\Tasks\Scrum\Service\DefinitionOfDoneService;
 use Bitrix\Tasks\Scrum\Service\TaskService;
 use Bitrix\Tasks\UI;
 use Bitrix\Tasks\Util\Type\DateTime;
+use Bitrix\TasksMobile\Dto\DiskFileDto;
 use Bitrix\TasksMobile\Dto\TaskDto;
 use Bitrix\TasksMobile\Dto\TaskRequestFilter;
+use Bitrix\UI\FileUploader\Uploader;
+use CTaskAssertException;
+use CTaskDependence;
+use TasksException;
+use Bitrix\Tasks\Control\Exception\TaskUpdateException;
+use Bitrix\Tasks\Control\Task;
+use Bitrix\Tasks\Provider\TaskQuery;
+use Bitrix\Tasks\Provider\TaskList;
+use Bitrix\Main\Type\Collection;
 
 final class TaskProvider
 {
@@ -65,7 +89,7 @@ final class TaskProvider
 	 * @param TaskRequestFilter|null $searchParams
 	 * @param PageNavigation|null $pageNavigation
 	 */
-	function __construct(
+	public function __construct(
 		int $userId,
 		string $order = TaskProvider::ORDER_ACTIVITY,
 		array $extra = [],
@@ -137,12 +161,18 @@ final class TaskProvider
 		return [
 			'items' => $this->prepareItems($tasks),
 			'users' => $this->getUsersData($tasks),
-			'groups' => $this->getGroupsData($tasks, $params),
+			'groups' => $this->getGroupsData($tasks, $projectId),
+			'flows' => $this->getFlowsData($tasks),
 			'tasks_stages' => $this->getStagesData($tasks, $workMode, $stageId, $projectId),
 		];
 	}
 
-	private function getStagesData(array $tasks, ?string $workMode = null, ?int $stageId = null, ?int $projectId = null): array
+	private function getStagesData(
+		array $tasks,
+		?string $workMode = null,
+		?int $stageId = null,
+		?int $projectId = null
+	): array
 	{
 		if (!$workMode)
 		{
@@ -163,6 +193,8 @@ final class TaskProvider
 			'STATUS',
 			'REAL_STATUS',
 			'GROUP_ID',
+			'FLOW_ID',
+			'PARENT_ID',
 			'PRIORITY',
 			'IS_MUTED',
 			'IS_PINNED',
@@ -189,9 +221,12 @@ final class TaskProvider
 			'TIME_SPENT_IN_LOGS',
 			'TIME_ESTIMATE',
 			'MATCH_WORK_TIME',
+			'TASK_CONTROL',
+			'ALLOW_CHANGE_DEADLINE',
+			'ALLOW_TIME_TRACKING',
 
 			Disk\UserField::getMainSysUFCode(),
-			'UF_CRM_TASK',
+			CRM\UserField::getMainSysUFCode(),
 		];
 	}
 
@@ -208,6 +243,7 @@ final class TaskProvider
 			'ZOMBIE' => 'N',
 		];
 		$filter = $this->addProjectToFilter($filter, $projectId);
+		$filter = $this->addFlowToFilter($filter, $this->searchParams->flowId);
 		$filter = $this->addMemberToFilter($filter, $this->searchParams->ownerId, $projectId, $workMode);
 		$filter = $this->addSearchStringToFilter($filter);
 		$filter = $this->addCounterToFilter($filter, $projectId);
@@ -221,6 +257,16 @@ final class TaskProvider
 				'presetId' => ($this->searchParams->presetId ?? TaskProvider::PRESET_NONE),
 			],
 		);
+
+		return $filter;
+	}
+
+	private function addFlowToFilter(array $filter, ?int $flowId): array
+	{
+		if ($flowId)
+		{
+			$filter['FLOW'] = $flowId;
+		}
 
 		return $filter;
 	}
@@ -379,6 +425,11 @@ final class TaskProvider
 			$filterInstance = Filter::getInstance($presetConfig['userId'], $presetConfig['projectId']);
 		}
 
+		if (method_exists(Filter::class, 'setRolePresetsEnabledForMobile'))
+		{
+			Filter::setRolePresetsEnabledForMobile(true);
+		}
+
 		$filterValues = [];
 		if (array_key_exists($presetConfig['presetId'], $filterInstance->getAllPresets()))
 		{
@@ -459,42 +510,217 @@ final class TaskProvider
 		$listResult = Manager\Task::getList($this->userId, $getListParams, $params);
 
 		$tasks = $listResult['DATA'];
-
-		$tasks = $this->fillCountersData($tasks);
-		$tasks = $this->fillResultData($tasks);
-		$tasks = $this->fillTimerData($tasks);
-		$tasks = $this->fillStatusData($tasks);
-		$tasks = $this->fillChecklistData($tasks);
-		$tasks = $this->fillTagsData($tasks);
-		$tasks = $this->fillCrmData($tasks);
-		$tasks = $this->fillDiskFilesData($tasks);
-		$tasks = $this->fillFormattedDescription($tasks);
-		$tasks = $this->formatDateFieldsForOutput($tasks);
+		$tasks = $this->fillDataForTasks($tasks);
 
 		return $tasks;
 	}
 
-	public function getTask(int $taskId): array|TaskDto
+	public function getTask(int $taskId): TaskDto
+	{
+		$task = $this->getTaskData($taskId);
+
+		return $this->prepareItems([$task])[0];
+	}
+
+	public function getFullTask(int $taskId, string $workMode, ?int $kanbanOwnerId): array
+	{
+		$task = $this->getTaskData($taskId, true);
+
+		$projectId = !empty($task['GROUP_ID']) ? (int)$task['GROUP_ID'] : 0;
+		$relatedTaskIds = $this->getRelatedTaskIds($taskId);
+		$allTasks = $this->getTaskHierarchy($relatedTaskIds, $taskId, (int)$task['PARENT_ID']);
+
+		$taskStage = [];
+		$kanban = [];
+		if ($kanbanOwnerId)
+		{
+			$taskStageProvider = new TasksStagesProvider($workMode, null, $projectId, $kanbanOwnerId);
+			$taskStage = $taskStageProvider->getStages([$taskId => $task]);
+
+			$searchParams = new TaskRequestFilter();
+			$searchParams->ownerId = $kanbanOwnerId;
+
+			$stageProvider = new StageProvider($this->userId, $searchParams);
+			$kanban = $stageProvider->getKanbanInfoByWorkMode($projectId, $taskId, $workMode)->getData();
+		}
+
+		$allTasks[] = $task;
+
+		return [
+			'tasks' => $this->prepareItems($allTasks),
+			'users' => $this->getUsersData($allTasks),
+			'groups' => $this->getGroupsData($allTasks),
+			'flows' => $this->getFlowsData($allTasks),
+			'relatedTaskIds' => $relatedTaskIds,
+			'taskStage' => $taskStage,
+			'kanban' => $kanban,
+		];
+	}
+
+	public function areAllScrumSubtasksCompleted(int $parentTaskId, int $groupId, int $excludeSubtaskId = 0): bool
+	{
+		if ($parentTaskId === 0 || $groupId === 0)
+		{
+			return false;
+		}
+
+		$group = WorkGroup::getById($groupId);
+		$isScrumProject = $group && $group->isScrumProject();
+		if (!$isScrumProject)
+		{
+			return false;
+		}
+
+		$query = new TaskQuery($this->userId);
+		$query->setSelect([
+			'ID',
+			'STATUS',
+		]);
+
+		if ($excludeSubtaskId > 0)
+		{
+			$query->setWhere([
+				'::LOGIC' => 'AND',
+				['=PARENT_ID' => $parentTaskId],
+				['!=ID' => $excludeSubtaskId]
+			]);
+		}
+		else
+		{
+			$query->setWhere([
+				['=PARENT_ID' => $parentTaskId],
+			]);
+		}
+
+		$tasks = (new TaskList())->getList($query);
+
+		foreach ($tasks as $task)
+		{
+			if ((int)$task['STATUS'] !== Status::COMPLETED)
+			{
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	private function getRelatedTaskIds(int $taskId): array
+	{
+		try
+		{
+			$relatedTaskIdsResult = CTaskDependence::getList([], ['TASK_ID' => $taskId]);
+		}
+		catch (\Exception $exception)
+		{
+			return [];
+		}
+
+		$relatedTaskIds = [];
+		while ($task = $relatedTaskIdsResult->fetch())
+		{
+			$relatedTaskIds[] = (int)$task['DEPENDS_ON_ID'];
+		}
+
+		(new \Bitrix\Tasks\Access\AccessCacheLoader())->preload($this->userId, $relatedTaskIds);
+
+		$preparedRelatedTasks = [];
+		foreach ($relatedTaskIds as $relatedTaskId)
+		{
+			if (TaskAccessController::can($this->userId, ActionDictionary::ACTION_TASK_READ, $relatedTaskId))
+			{
+				$preparedRelatedTasks[] = $relatedTaskId;
+			}
+		}
+
+		return $preparedRelatedTasks;
+	}
+
+	// get parent task, sub tasks, related tasks
+	private function getTaskHierarchy(array $relatedTaskIds, int $taskId, int $parentId): array
+	{
+		$select = $this->getSelect();
+		$query = new TaskQuery($this->userId);
+		$query->setSelect($select);
+
+		$shouldFillDodData = false;
+		$taskIds = $relatedTaskIds;
+		if ($parentId > 0 && !in_array($parentId, $relatedTaskIds, false))
+		{
+			$taskIds[] = $parentId;
+			$shouldFillDodData = true;
+		}
+
+		if (!empty($taskIds))
+		{
+			$query->setWhere([
+				'::LOGIC' => 'OR',
+				['=PARENT_ID' => $taskId],
+				['ID' => $taskIds],
+			]);
+		}
+		else
+		{
+			$query->setWhere(['=PARENT_ID' => $taskId]);
+		}
+
+		try
+		{
+			$tasks = (new TaskList())->getList($query);
+		}
+		catch (TaskListException $exception)
+		{
+			return [];
+		}
+
+		$tasks = array_column($tasks, null, 'ID');
+
+		return $this->fillDataForTasks($tasks, false, $shouldFillDodData);
+	}
+
+	private function getTaskData(int $taskId, bool $isFullData = false): array|TaskDto
 	{
 		$taskItem = new \CTaskItem($taskId, $this->userId);
 		$task = $taskItem->getData(false, ['select' => $this->getSelect()]);
-		$tasks = [$task['ID'] => $task];
 
+		$tasks = [$task['ID'] => $task];
+		$tasks = $this->fillDataForTasks($tasks, $isFullData);
+
+		return $tasks[$task['ID']];
+	}
+
+	private function fillDataForTasks(array $tasks, bool $isFullData = false, bool $shouldFillDodData = true): array
+	{
 		$tasks = $this->fillCountersData($tasks);
 		$tasks = $this->fillResultData($tasks);
 		$tasks = $this->fillTimerData($tasks);
 		$tasks = $this->fillStatusData($tasks);
-		$tasks = $this->fillChecklistData($tasks);
 		$tasks = $this->fillTagsData($tasks);
 		$tasks = $this->fillCrmData($tasks);
 		$tasks = $this->fillDiskFilesData($tasks);
 		$tasks = $this->fillFormattedDescription($tasks);
 		$tasks = $this->fillActionData($tasks);
+
+		if ($shouldFillDodData)
+		{
+			$tasks = $this->fillDodData($tasks);
+		}
+
+		//		$tasks = $this->fillViewsCount($tasks);
+
+		if ($isFullData)
+		{
+			$tasks = $this->fillChecklistFullData($tasks);
+			// todo: relatedTasks, subTasks, parentTask
+		}
+		else
+		{
+			$tasks = $this->fillChecklistCommonData($tasks);
+		}
+
 		$tasks = $this->formatDateFieldsForOutput($tasks);
 
-		// todo: relatedTasks, subTasks, parentTask
-
-		return $this->prepareItems($tasks)[0];
+		return $tasks;
 	}
 
 	private function getNavParams(PageNavigation $pageNavigation): array
@@ -517,9 +743,9 @@ final class TaskProvider
 
 			$tasks[$id]['COUNTER'] = $counterResult;
 			$tasks[$id]['NEW_COMMENTS_COUNT'] = (
-				$counters['new_comments']
-					?: $counters['muted_new_comments']
-					?: $counters['project_new_comments']
+			$counters['new_comments']
+				?: $counters['muted_new_comments']
+				?: $counters['project_new_comments']
 			);
 		}
 
@@ -540,11 +766,13 @@ final class TaskProvider
 			$tasks[$id]['TASK_REQUIRE_RESULT'] = 'N';
 			$tasks[$id]['TASK_HAS_RESULT'] = 'N';
 			$tasks[$id]['TASK_HAS_OPEN_RESULT'] = 'N';
+			$tasks[$id]['RESULTS_COUNT'] = 0;
 		}
 
 		$query = (new \Bitrix\Main\ORM\Query\Query(ResultTable::getEntity()))
 			->addSelect('TASK_ID')
-			->addSelect(new ExpressionField('RES_ID', 'MAX(%s)', 'ID'))
+			->addSelect(new ExpressionField('LAST_RESULT_ID', 'MAX(%s)', 'ID'))
+			->addSelect(new ExpressionField('RESULTS_COUNT', 'COUNT(%s)', 'ID'))
 			->whereIn('TASK_ID', $taskIds)
 			->addGroup('TASK_ID')
 		;
@@ -552,21 +780,22 @@ final class TaskProvider
 
 		if (!empty($lastResults))
 		{
-			$lastResults = array_column($lastResults, 'RES_ID');
+			foreach ($lastResults as $lastResult)
+			{
+				$tasks[$lastResult['TASK_ID']]['RESULTS_COUNT'] = (int)$lastResult['RESULTS_COUNT'];
+			}
+
 			$results = ResultTable::GetList([
 				'select' => ['TASK_ID', 'STATUS'],
-				'filter' => ['@ID' => $lastResults],
+				'filter' => ['@ID' => array_column($lastResults, 'LAST_RESULT_ID')],
 			])->fetchAll();
 
 			foreach ($results as $row)
 			{
 				$taskId = $row['TASK_ID'];
+				$status = (int)$row['STATUS'];
 				$tasks[$taskId]['TASK_HAS_RESULT'] = 'Y';
-
-				if ((int)$row['STATUS'] === ResultTable::STATUS_OPENED)
-				{
-					$tasks[$taskId]['TASK_HAS_OPEN_RESULT'] = 'Y';
-				}
+				$tasks[$taskId]['TASK_HAS_OPEN_RESULT'] = ($status === ResultTable::STATUS_OPENED ? 'Y' : 'N');
 			}
 		}
 
@@ -601,6 +830,7 @@ final class TaskProvider
 		foreach ($tasks as $id => $task)
 		{
 			$tasks[$id]['TIMER_IS_RUNNING_FOR_CURRENT_USER'] = 'N';
+			$tasks[$id]['TIMER_RUN_TIME'] = 0;
 
 			if (
 				is_array($runningTaskData)
@@ -609,6 +839,7 @@ final class TaskProvider
 			)
 			{
 				$tasks[$id]['TIMER_IS_RUNNING_FOR_CURRENT_USER'] = 'Y';
+				$tasks[$id]['TIMER_RUN_TIME'] = (int)$runningTaskData['RUN_TIME'];
 			}
 		}
 
@@ -631,46 +862,24 @@ final class TaskProvider
 		return $tasks;
 	}
 
-	private function fillChecklistData(array $tasks): array
+	private function fillChecklistFullData(array $tasks): array
 	{
 		if (empty($tasks))
 		{
 			return [];
 		}
 
-		$taskIds = array_keys($tasks);
+		return (new ChecklistProvider())->fillFullDataForTasks($tasks);
+	}
 
-		foreach ($taskIds as $taskId)
+	private function fillChecklistCommonData(array $tasks): array
+	{
+		if (empty($tasks))
 		{
-			$tasks[$taskId]['CHECKLIST'] = [
-				'COMPLETED' => 0,
-				'UNCOMPLETED' => 0,
-			];
+			return [];
 		}
 
-		$query = new Query(CheckListTable::getEntity());
-		$query
-			->setSelect(['TASK_ID', 'IS_COMPLETE', new ExpressionField('CNT', 'COUNT(TASK_ID)')])
-			->setFilter(['TASK_ID' => $taskIds])
-			->setGroup(['TASK_ID', 'IS_COMPLETE'])
-			->registerRuntimeField(
-				'',
-				new ReferenceField(
-					'IT',
-					CheckListTreeTable::class,
-					Join::on('this.ID', 'ref.CHILD_ID')->where('ref.LEVEL', 1),
-					['join_type' => 'INNER']
-				)
-			)
-		;
-		$result = $query->exec();
-		while ($row = $result->fetch())
-		{
-			$completedKey = ($row['IS_COMPLETE'] == 'Y' ? 'COMPLETED' : 'UNCOMPLETED');
-			$tasks[$row['TASK_ID']]['CHECKLIST'][$completedKey] = (int)$row['CNT'];
-		}
-
-		return $tasks;
+		return (new ChecklistProvider())->fillCommonDataForTasks($tasks);
 	}
 
 	private function fillTagsData(array $tasks): array
@@ -682,6 +891,7 @@ final class TaskProvider
 
 		$tasks = array_map(function ($task) {
 			$task['TAGS'] = [];
+
 			return $task;
 		}, $tasks);
 
@@ -734,7 +944,7 @@ final class TaskProvider
 		{
 			$tasks[$id]['CRM'] = [];
 
-			if (!is_array($task[$ufCrmTaskCode]) || empty($task[$ufCrmTaskCode]))
+			if (empty($task[$ufCrmTaskCode]) || !is_array($task[$ufCrmTaskCode]))
 			{
 				continue;
 			}
@@ -780,7 +990,8 @@ final class TaskProvider
 			return $tasks;
 		}
 
-		$attachmentsData = Disk::getAttachmentData($fileIds);
+		$attachmentsData = (new DiskFileProvider())->getDiskFileAttachments($fileIds);
+
 		foreach ($tasks as $id => $task)
 		{
 			foreach ($task[Disk\UserField::getMainSysUFCode()] as $fileId)
@@ -837,12 +1048,90 @@ final class TaskProvider
 
 		foreach ($tasks as $id => $data)
 		{
-			$tasks[$id]['ACTION'] = $this->translateAllowedActionNames(
+			$request = [
+				ActionDictionary::ACTION_TASK_READ => 'CAN_READ',
+				ActionDictionary::ACTION_TASK_EDIT => 'CAN_UPDATE',
+				ActionDictionary::ACTION_TASK_DEADLINE => 'CAN_UPDATE_DEADLINE',
+				ActionDictionary::ACTION_TASK_CHANGE_DIRECTOR => 'CAN_UPDATE_CREATOR',
+				ActionDictionary::ACTION_TASK_CHANGE_RESPONSIBLE => 'CAN_UPDATE_RESPONSIBLE',
+				ActionDictionary::ACTION_TASK_CHANGE_ACCOMPLICES => 'CAN_UPDATE_ACCOMPLICES',
+				ActionDictionary::ACTION_TASK_DELEGATE => 'CAN_DELEGATE',
+				ActionDictionary::ACTION_TASK_RATE => 'CAN_UPDATE_MARK',
+				ActionDictionary::ACTION_TASK_REMINDER => 'CAN_UPDATE_REMINDER',
+				ActionDictionary::ACTION_TASK_ELAPSED_TIME => 'CAN_UPDATE_ELAPSED_TIME',
+				ActionDictionary::ACTION_CHECKLIST_ADD => 'CAN_ADD_CHECKLIST',
+				ActionDictionary::ACTION_CHECKLIST_EDIT => 'CAN_UPDATE_CHECKLIST',
+				ActionDictionary::ACTION_TASK_REMOVE => 'CAN_REMOVE',
+				ActionDictionary::ACTION_TASK_TIME_TRACKING => 'CAN_USE_TIMER',
+				ActionDictionary::ACTION_TASK_START => 'CAN_START',
+				ActionDictionary::ACTION_TASK_PAUSE => 'CAN_PAUSE',
+				ActionDictionary::ACTION_TASK_COMPLETE => 'CAN_COMPLETE',
+				ActionDictionary::ACTION_TASK_RENEW => 'CAN_RENEW',
+				ActionDictionary::ACTION_TASK_APPROVE => 'CAN_APPROVE',
+				ActionDictionary::ACTION_TASK_DISAPPROVE => 'CAN_DISAPPROVE',
+				ActionDictionary::ACTION_TASK_DEFER => 'CAN_DEFER',
+			];
+			$taskModel = TaskModel::createFromId($id);
+			$accessController = new TaskAccessController($this->userId);
+			$rights = $accessController->batchCheck(array_map(fn(string $key) => $taskModel, $request), $taskModel);
+
+			$tasks[$id]['ACTION'] = array_combine($request, $rights);
+			$tasks[$id]['ACTION_OLD'] = $this->translateAllowedActionNames(
 				\CTaskItem::getAllowedActionsArray($this->userId, $data, true)
 			);
 		}
 
 		return $tasks;
+	}
+
+	private function fillDodData(array $tasks): array
+	{
+		if (empty($tasks))
+		{
+			return [];
+		}
+
+		foreach ($tasks as $id => $task)
+		{
+			if ($task["PARENT_ID"] > 0)
+			{
+				continue;
+			}
+
+			$isDodNecessary = $this->isDodNecessary($task['ID'], $task['GROUP_ID']);
+			if ($isDodNecessary)
+			{
+				$tasks[$id]['DOD'] = $this->getDodTypes($task['ID'], $task['GROUP_ID']);
+			}
+
+			$tasks[$id]['DOD']['IS_NECESSARY'] = $isDodNecessary;
+		}
+
+		return $tasks;
+	}
+
+	private function isDodNecessary(int $taskId, int $groupId): bool
+	{
+		$userId = User::getId();
+		if (!Group::canReadGroupTasks($userId, $groupId))
+		{
+			return false;
+		}
+
+		return (new DefinitionOfDoneService($userId))->isNecessary($groupId, $taskId);
+	}
+
+	private function getDodTypes(int $taskId, int $groupId): array
+	{
+		$definitionOfDoneService = new DefinitionOfDoneService(User::getId());
+		$dodTypes = $definitionOfDoneService->getTypes($groupId);
+		$itemType = $definitionOfDoneService->getItemType($taskId);
+		$activeTypeId = $itemType->isEmpty() ? $dodTypes[0]['id'] : $itemType->getId();
+
+		return [
+			'TYPES' => $dodTypes,
+			'ACTIVE_TYPE_ID' => (int)$activeTypeId,
+		];
 	}
 
 	/**
@@ -893,6 +1182,202 @@ final class TaskProvider
 		}
 
 		return $translatedActions;
+	}
+
+	private function fillViewsCount(array $tasks): array
+	{
+		if (empty($tasks))
+		{
+			return [];
+		}
+
+		if (!Loader::includeModule('socialnetwork'))
+		{
+			return $tasks;
+		}
+
+		$contentIds = [];
+		foreach ($tasks as $id => $data)
+		{
+			$contentIds[] = 'TASK-' . $id;
+		}
+
+		$contentViews = UserContentView::getViewData([
+			'contentId' => $contentIds,
+		]);
+
+		foreach ($tasks as $id => $data)
+		{
+			$contentId = 'TASK-' . $id;
+			if (!empty($contentViews[$contentId]))
+			{
+				$tasks[$id]['VIEWS_COUNT'] = (int)$contentViews[$contentId]['CNT'];
+			}
+			else
+			{
+				$tasks[$id]['VIEWS_COUNT'] = 0;
+			}
+		}
+
+		return $tasks;
+	}
+
+	public function updateParentIdToTaskIds(
+		int $parentId,
+		?array $newSubTasks = [],
+		?array $deletedSubTasks = []
+	): array
+	{
+		Collection::normalizeArrayValuesByInt($newSubTasks, false);
+		Collection::normalizeArrayValuesByInt($deletedSubTasks, false);
+
+		$updatedNewSubTasks = [];
+		$updatedDeletedSubTasks = [];
+
+		(new \Bitrix\Tasks\Access\AccessCacheLoader())->preload($this->userId, [...$newSubTasks, ...$deletedSubTasks]);
+
+		foreach ($newSubTasks as $taskId)
+		{
+			$handler = new Task($this->userId);
+			try
+			{
+				if (TaskAccessController::can($this->userId, ActionDictionary::ACTION_TASK_EDIT, $taskId))
+				{
+					$result = $handler->update($taskId, ['PARENT_ID' => $parentId]);
+					if (!$result)
+					{
+						throw new TaskUpdateException($handler->getErrors());
+					}
+					$updatedNewSubTasks[] = (int)$taskId;
+				}
+
+			}
+			catch (TaskUpdateException $e)
+			{
+
+			}
+		}
+
+		if (!empty($updatedNewSubTasks))
+		{
+			$updatedNewSubTasksQuery = (new TaskQuery($this->userId))
+				->setSelect($this->getSelect())
+				->setWhere(['ID' => $updatedNewSubTasks])
+			;
+
+			$updatedNewSubTasksData = $this->getTasksByQuery($updatedNewSubTasksQuery);
+		}
+		else
+		{
+			$updatedNewSubTasksData = [];
+		}
+
+		foreach ($deletedSubTasks as $taskId)
+		{
+			$handler = new Task($this->userId);
+			try
+			{
+				if (TaskAccessController::can($this->userId, ActionDictionary::ACTION_TASK_EDIT, $taskId))
+				{
+					$result = $handler->update($taskId, ['PARENT_ID' => 0]);
+					if (!$result)
+					{
+						throw new TaskUpdateException($handler->getErrors());
+					}
+					$updatedDeletedSubTasks[] = (int)$taskId;
+				}
+			}
+			catch (TaskUpdateException $e)
+			{
+				// Handle exception if needed
+			}
+		}
+
+		return [
+			'updatedNewSubTasks' => $updatedNewSubTasksData,
+			'updatedDeletedSubTasks' => $updatedDeletedSubTasks,
+		];
+	}
+
+	public function updateRelatedTasks(
+		int $taskId,
+		?array $newRelatedTasks = [],
+		?array $deletedRelatedTasks = []
+	): array
+	{
+		Collection::normalizeArrayValuesByInt($newRelatedTasks, false);
+		Collection::normalizeArrayValuesByInt($deletedRelatedTasks, false);
+
+		$updatedNewRelatedTasks = [];
+		$updatedDeletedRelatedTasks = [];
+		$taskDependence = new \CTaskDependence();
+		foreach ($newRelatedTasks as $relatedTaskId)
+		{
+			$relatedTaskId = (int)$relatedTaskId;
+			if ($relatedTaskId > 0)
+			{
+				$result = $taskDependence->add([
+					'TASK_ID' => $taskId,
+					'DEPENDS_ON_ID' => $relatedTaskId,
+				]);
+				if ($result !== false)
+				{
+					$updatedNewRelatedTasks[] = $relatedTaskId;
+				}
+			}
+		}
+
+		$updatedNewRelatedTasksData = [];
+
+		if (!empty($updatedNewRelatedTasks) && is_array($updatedNewRelatedTasks))
+		{
+			$newTasksQuery = (new TaskQuery($this->userId))
+				->setSelect($this->getSelect())
+				->setWhere(['ID' => $updatedNewRelatedTasks])
+			;
+			$updatedNewRelatedTasksData = $this->getTasksByQuery($newTasksQuery);
+		}
+
+		foreach ($deletedRelatedTasks as $relatedTaskId)
+		{
+			$relatedTaskId = (int)$relatedTaskId;
+			if ($relatedTaskId > 0)
+			{
+				$result = $taskDependence->delete($taskId, $relatedTaskId);
+				if ($result !== false)
+				{
+					$updatedDeletedRelatedTasks[] = $relatedTaskId;
+				}
+			}
+		}
+
+		return [
+			'updatedNewRelatedTasks' => $updatedNewRelatedTasksData,
+			'updatedDeletedRelatedTasks' => $updatedDeletedRelatedTasks,
+		];
+	}
+
+	/**
+	 * @param \Bitrix\Tasks\Provider\TaskQuery $query
+	 * @param int|null $projectId
+	 * @return array
+	 */
+	private function getTasksByQuery(TaskQuery $query): array
+	{
+		try
+		{
+			$tasks = (new TaskList())->getList($query);
+		}
+		catch (TaskListException $exception)
+		{
+			return [];
+		}
+
+		return [
+			'items' => $this->prepareItems($tasks),
+			'users' => $this->getUsersData($tasks),
+			'groups' => $this->getGroupsData($tasks),
+		];
 	}
 
 	/**
@@ -982,7 +1467,7 @@ final class TaskProvider
 	{
 		return array_filter(
 			\CTasks::getFieldsInfo($getUf),
-			static fn ($item) => ($item['type'] === 'datetime'),
+			static fn($item) => ($item['type'] === 'datetime'),
 		);
 	}
 
@@ -1010,14 +1495,17 @@ final class TaskProvider
 			TaskDto::make([
 				'id' => $task['ID'],
 				'name' => $task['TITLE'],
-				'description' => $task['DESCRIPTION'],
+				'description' => htmlspecialchars_decode($task['DESCRIPTION'], ENT_QUOTES),
 				'parsedDescription' => $task['PARSED_DESCRIPTION'],
 				'groupId' => $task['GROUP_ID'],
-				'timeElapsed' => $task['TIME_SPENT_IN_LOGS'],
+				'flowId' => $task['FLOW_ID'] ?? 0,
+				'timeElapsed' => $task['TIME_SPENT_IN_LOGS'] + $task['TIMER_RUN_TIME'],
 				'timeEstimate' => $task['TIME_ESTIMATE'],
 				'commentsCount' => $task['COMMENTS_COUNT'],
 				'serviceCommentsCount' => $task['SERVICE_COMMENTS_COUNT'],
 				'newCommentsCount' => $task['NEW_COMMENTS_COUNT'],
+				'viewsCount' => $task['VIEWS_COUNT'] ?? 0,
+				'resultsCount' => $task['RESULTS_COUNT'],
 				'parentId' => $task['PARENT_ID'] ?? 0,
 
 				'status' => $task['STATUS'],
@@ -1027,16 +1515,23 @@ final class TaskProvider
 
 				'creator' => $task['CREATED_BY'],
 				'responsible' => $task['RESPONSIBLE_ID'],
-				'accomplices' => array_map('intval', $task['ACCOMPLICES']),
-				'auditors' => array_map('intval', $task['AUDITORS']),
+				'accomplices' => is_array($task['ACCOMPLICES'])
+					? array_map('intval', $task['ACCOMPLICES'])
+					: [],
+				'auditors' => is_array($task['AUDITORS'])
+					? array_map('intval', $task['AUDITORS'])
+					: [],
 
 				// 'relatedTasks' => $task['RELATED_TASKS'] ?? [],
 				// 'subTasks' => $task['SUB_TASKS'] ?? [],
 
 				'crm' => $task['CRM'] ?? [],
+				'dodTypes' => $task['DOD']['TYPES'] ?? [],
+				'activeDodTypeId' => $task['DOD']['ACTIVE_TYPE_ID'] ?? [],
 				'tags' => $task['TAGS'] ?? [],
 				'files' => $task['FILES'] ?? [],
 
+				'isDodNecessary' => $task['DOD']['IS_NECESSARY'],
 				'isMuted' => ($task['IS_MUTED'] === 'Y'),
 				'isPinned' => ($task['IS_PINNED'] === 'Y'),
 				'isInFavorites' => ($task['FAVORITE'] === 'Y'),
@@ -1057,9 +1552,11 @@ final class TaskProvider
 				'endDate' => strtotime($task['CLOSED_DATE']) ?: null,
 
 				'checklist' => $task['CHECKLIST'] ?? null,
+				'checklistDetails' => $task['CHECKLIST_DETAILS'] ?? null,
 				'counter' => $task['COUNTER'] ?? null,
 
 				'actions' => $task['ACTION'] ?? [],
+				'actionsOld' => $task['ACTION_OLD'] ?? [],
 			])
 			),
 			$tasks,
@@ -1093,73 +1590,443 @@ final class TaskProvider
 		return UserRepository::getByIds($userIds);
 	}
 
-	private function getGroupsData(array $tasks, array $params = []): array
+	private function getGroupsData(array $tasks, ?int $projectId = null): array
 	{
-		static $groupsData = [];
-
-		$groupIds = array_column($tasks, 'GROUP_ID');
-		$groupIds[] = $params['PROJECT_ID'];
-		$groupIds = array_unique(array_filter(array_map('intval', $groupIds)));
-		$groupIds = array_diff($groupIds, array_keys($groupsData));
-
-		if (empty($groupIds))
+		if (!empty($tasks))
 		{
-			return $groupsData;
+			$groupIds = array_column($tasks, 'GROUP_ID');
+
+			return GroupProvider::loadByIds($groupIds);
 		}
 
-		$avatarTypes = (Loader::includeModule('socialnetwork') ? Workgroup::getAvatarTypes() : []);
-		$newGroupsData = SocialNetwork\Group::getData($groupIds, ['IMAGE_ID', 'AVATAR_TYPE'], $params);
-		foreach ($newGroupsData as $id => $group)
+		if ($projectId && SocialNetwork\Group::canReadGroupTasks($this->userId, $projectId))
 		{
-			$imageUrl = '';
-			if (
-				(int)$group['IMAGE_ID'] > 0
-				&& is_array($file = \CFile::GetFileArray($group['IMAGE_ID']))
-			)
-			{
-				$imageUrl = $file['SRC'];
-			}
-			elseif (
-				!empty($group['AVATAR_TYPE'])
-				&& isset($avatarTypes[$group['AVATAR_TYPE']])
-			)
-			{
-				$imageUrl = $avatarTypes[$group['AVATAR_TYPE']]['mobileUrl'];
-			}
-
-			$groupsData[$id] = [
-				'ID' => $group['ID'],
-				'NAME' => $group['NAME'],
-				'IMAGE' => $imageUrl,
-				'ADDITIONAL_DATA' => ($group['ADDITIONAL_DATA'] ?? []),
-			];
+			return GroupProvider::loadByIds([$projectId]);
 		}
 
-		return array_values($groupsData);
+		return [];
+	}
+
+	private function getFlowsData(array $tasks): array
+	{
+		$flowIds = array_column($tasks, 'FLOW_ID');
+		$flowIds = array_unique(array_filter(array_map('intval', $flowIds)));
+		if (empty($flowIds))
+		{
+			return [];
+		}
+
+		return (new FlowProvider($this->userId))->getFlowsById($flowIds);
+	}
+
+	private function filterAllowedFields(array $fields): array
+	{
+		return array_intersect_key(
+			$fields,
+			array_flip([
+				'TITLE',
+				'DESCRIPTION',
+				'DEADLINE',
+				'GROUP_ID',
+				'FLOW_ID',
+				'PARENT_ID',
+				'PRIORITY',
+				'CREATED_BY',
+				'RESPONSIBLE_ID',
+				'ACCOMPLICES',
+				'AUDITORS',
+				Disk\UserField::getMainSysUFCode(),
+				'UPLOADED_FILES',
+				'STAGE_ID',
+				'CRM',
+				'START_DATE_PLAN',
+				'END_DATE_PLAN',
+				'TIME_ESTIMATE',
+				'TAGS',
+				'MARK',
+				'MATCH_WORK_TIME',
+				'ALLOW_CHANGE_DEADLINE',
+				'ALLOW_TIME_TRACKING',
+				'TASK_CONTROL',
+				'SE_PARAMETER',
+				'CHECKLIST',
+				'IM_CHAT_ID',
+				'IM_MESSAGE_ID',
+			]),
+		);
+	}
+
+	private function processFiles(array $fields = [], int $taskId = 0): array
+	{
+		$filesUfCode = Disk\UserField::getMainSysUFCode();
+
+		if (!isset($fields[$filesUfCode]) || !is_array($fields[$filesUfCode]))
+		{
+			return $fields;
+		}
+
+		$prevFileIds = TaskObject::wakeUpObject(['ID' => $taskId])->fillUtsData()?->getUfTaskWebdavFiles() ?? [];
+		if (!is_array($prevFileIds))
+		{
+			$prevFileIds = [];
+		}
+
+		$prevFilesCount = count($prevFileIds);
+
+		$nextFileIds = $fields[$filesUfCode];
+		$nextFilesCount = count($nextFileIds);
+
+		// process removed files
+		if ($nextFilesCount < $prevFilesCount)
+		{
+			return $fields;
+		}
+
+		// process new disk files
+		foreach ($nextFileIds as $nextFileId)
+		{
+			if (str_starts_with($nextFileId, 'n'))
+			{
+				return $fields;
+			}
+		}
+
+		// files attached via uploader will be processed in background
+		unset($fields[$filesUfCode]);
+
+		return $fields;
+	}
+
+	private function processUploadedFiles(array $fields = [], int $taskId = 0): array
+	{
+		$filesUfCode = Disk\UserField::getMainSysUFCode();
+
+		if (isset($fields[$filesUfCode]) && $fields[$filesUfCode] === '')
+		{
+			$fields[$filesUfCode] = [];
+		}
+
+		if (empty($fields['UPLOADED_FILES']) || !is_array($fields['UPLOADED_FILES']))
+		{
+			unset($fields['UPLOADED_FILES']);
+
+			return $fields;
+		}
+
+		if (!is_array($fields[$filesUfCode]))
+		{
+			$fields[$filesUfCode] = [];
+		}
+
+		$controller = new TaskController(['taskId' => $taskId]);
+		$uploader = new Uploader($controller);
+		$pendingFiles = $uploader->getPendingFiles($fields['UPLOADED_FILES']);
+
+		foreach ($pendingFiles->getFileIds() as $fileId)
+		{
+			$addingResult = Disk::addFile($fileId);
+			if ($addingResult->isSuccess())
+			{
+				$fields[$filesUfCode][] = $addingResult->getData()['ATTACHMENT_ID'];
+			}
+		}
+
+		$pendingFiles->makePersistent();
+
+		return $fields;
+	}
+
+	private function processCrmElements(array $fields): array
+	{
+		if (
+			!array_key_exists('CRM', $fields)
+			|| !Loader::includeModule('crm')
+		)
+		{
+			return $fields;
+		}
+
+		$crmUfCode = CRM\UserField::getMainSysUFCode();
+		if (!is_array($fields[$crmUfCode] ?? null))
+		{
+			$fields[$crmUfCode] = [];
+		}
+
+		if (!is_array($fields['CRM']) || empty($fields['CRM']))
+		{
+			return $fields;
+		}
+
+		foreach ($fields['CRM'] as $item)
+		{
+			$entityTypeName = $item['type'];
+			$entityId = $item['id'];
+
+			if ($entityTypeName === DynamicMultipleProvider::DYNAMIC_MULTIPLE_ID)
+			{
+				[$entityTypeId, $entityId] = DynamicMultipleProvider::parseId($entityId);
+				$entityTypeAbbr = \CCrmOwnerTypeAbbr::ResolveByTypeID($entityTypeId);
+			}
+			else
+			{
+				$entityTypeAbbr = \CCrmOwnerTypeAbbr::ResolveByTypeName($entityTypeName);
+			}
+
+			if ($entityTypeAbbr)
+			{
+				$fields[$crmUfCode][] = "{$entityTypeAbbr}_{$entityId}";
+			}
+		}
+
+		return $fields;
+	}
+
+	private function processScenario(array $fields): array
+	{
+		$fields['SCENARIO_NAME'] = [ScenarioTable::SCENARIO_MOBILE];
+
+		if (!empty($fields[CRM\UserField::getMainSysUFCode()]))
+		{
+			$fields['SCENARIO_NAME'][] = ScenarioTable::SCENARIO_CRM;
+		}
+
+		return $fields;
+	}
+
+	private function updateStage(\CTaskItem $task, int $stageId): void
+	{
+		$taskId = $task->getId();
+
+		if (!$taskId || !$stageId)
+		{
+			return;
+		}
+
+		$stage = StagesTable::getList([
+			'select' => ['ID', 'ENTITY_ID', 'ENTITY_TYPE'],
+			'filter' => ['ID' => $stageId],
+		])->fetch();
+
+		if (!$stage)
+		{
+			return;
+		}
+
+		if ($stage['ENTITY_TYPE'] === StagesTable::WORK_MODE_GROUP)
+		{
+			$task->update(['STAGE_ID' => $stageId]);
+		}
+		else if ($stage['ENTITY_TYPE'] === StagesTable::WORK_MODE_USER)
+		{
+			$taskStage = TaskStageTable::getList([
+				'filter' => [
+					'TASK_ID' => $taskId,
+					'=STAGE.ENTITY_TYPE' => StagesTable::WORK_MODE_USER,
+					'STAGE.ENTITY_ID' => $stage['ENTITY_ID'],
+				],
+			]);
+			try
+			{
+				while ($row = $taskStage->fetch())
+				{
+					if ((int)$row['STAGE_ID'] !== $stageId)
+					{
+						TaskStageTable::update($row['ID'], ['STAGE_ID' => $stageId]);
+					}
+				}
+			}
+			catch (\Exception $exception)
+			{
+				LogFacade::logThrowable($exception);
+			}
+		}
+	}
+
+	/**
+	 * @param array $fields
+	 * @return int
+	 * @throws CTaskAssertException
+	 * @throws TasksException
+	 */
+	public function add(array $fields): int
+	{
+		$fields = $this->filterAllowedFields($fields);
+		if ($this->hasFlowTaskCreationRestrictions($fields))
+		{
+			throw new TaskAddException('Tariff restrictions', 1);
+		}
+		$fields = $this->formatDateFieldsForInput($fields);
+		$fields = $this->processUploadedFiles($fields);
+		$fields = $this->processCrmElements($fields);
+		$fields = $this->processScenario($fields);
+		$fields = $this->processMembers($fields);
+
+		$stageId = ($fields['STAGE_ID'] ?? 0);
+		unset($fields['STAGE_ID']);
+
+		$task = \CTaskItem::add($fields, $this->userId, ['CLONE_DISK_FILE_ATTACHMENT' => true]);
+
+		$this->updateStage($task, $stageId);
+		$this->saveChecklist($task, $fields);
+
+		return $task->getId();
+	}
+
+	private function hasFlowTaskCreationRestrictions(array $fields): bool
+	{
+		$flowId = (int)($fields['FLOW_ID'] ?? 0);
+		if (!$flowId)
+		{
+			return false;
+		}
+
+		return TariffPlanRestrictionProvider::isFlowRestricted();
+	}
+
+	private function processMembers(array $fields): array
+	{
+		$auditors = array_map('intval', $fields['AUDITORS'] ?? []);
+		$accomplices = array_map('intval', $fields['ACCOMPLICES'] ?? []);
+
+		$checklistItems = $fields['CHECKLIST'] ?? [];
+		$findByRole = fn(array $members, string $role) => array_keys(
+			array_filter($members, fn($member) => $member['TYPE'] === $role)
+		);
+
+		foreach ($checklistItems as $item)
+		{
+			$members = $item['MEMBERS'] ?? [];
+			$auditors = array_merge(
+				$auditors,
+				$findByRole($members, RoleDictionary::ROLE_AUDITOR)
+			);
+			$accomplices = array_merge(
+				$accomplices,
+				$findByRole($members, RoleDictionary::ROLE_ACCOMPLICE)
+			);
+		}
+
+		$fields['AUDITORS'] = array_unique($auditors);
+		$fields['ACCOMPLICES'] = array_unique($accomplices);
+
+		return $fields;
+	}
+
+	private function saveChecklist(\CTaskItem $task, array $fields): void
+	{
+		$taskId = $task->getId();
+		if ($taskId && is_array($fields['CHECKLIST']))
+		{
+			$userId = CurrentUser::get()->getId();
+			$items = $fields['CHECKLIST'];
+
+			if (!TaskAccessController::can($userId, ActionDictionary::ACTION_CHECKLIST_SAVE, $taskId, $items))
+			{
+				return;
+			}
+
+			foreach ($items as $id => $item)
+			{
+				$item['ID'] = ((int)($item['ID'] ?? null) === 0 ? null : (int)$item['ID']);
+
+				$item['IS_COMPLETE'] = (
+					($item['IS_COMPLETE'] === true)
+					|| ((int)$item['IS_COMPLETE'] > 0)
+				);
+				$item['IS_IMPORTANT'] = (
+					($item['IS_IMPORTANT'] === true)
+					|| ((int)$item['IS_IMPORTANT'] > 0)
+				);
+
+				$items[$item['NODE_ID']] = $item;
+
+				unset($items[$id]);
+			}
+
+			TaskCheckListFacade::merge($taskId, $this->userId, $items, [
+				'context' => CheckListFacade::TASK_ADD_CONTEXT,
+			]);
+		}
 	}
 
 	/**
 	 * @param int $taskId
 	 * @param array $fields
 	 * @return bool
-	 * @throws \CTaskAssertException
-	 * @throws \TasksException
+	 * @throws CTaskAssertException
+	 * @throws TasksException
 	 */
 	public function update(int $taskId, array $fields): bool
 	{
+		$fields = $this->filterAllowedFields($fields);
 		$fields = $this->formatDateFieldsForInput($fields);
+		$fields = $this->processUploadedFiles($fields, $taskId);
+		$fields = $this->processFiles($fields, $taskId);
+		$fields = $this->processCrmElements($fields);
 
-		$task = new \CTaskItem($taskId, $this->userId);
-		$task->update($fields);
+		if (!empty($fields))
+		{
+			$task = new \CTaskItem($taskId, $this->userId);
+			$task->update($fields);
+		}
 
 		return true;
 	}
 
 	/**
 	 * @param int $taskId
+	 * @param string $fileId
+	 * @return ?DiskFileDto
+	 * @throws CTaskAssertException
+	 * @throws TaskUpdateException
+	 */
+	public function attachUploadedFiles(int $taskId, string $fileId): ?DiskFileDto
+	{
+		$prevFileIds = TaskObject::wakeUpObject(['ID' => $taskId])->fillUtsData()?->getUfTaskWebdavFiles() ?? [];
+		$fields = [
+			'UF_TASK_WEBDAV_FILES' => $prevFileIds,
+			'UPLOADED_FILES' => [$fileId],
+		];
+
+		$fields = $this->processUploadedFiles($fields, $taskId);
+		$handler = new Task($this->userId);
+		try
+		{
+			$result = $handler->update($taskId, $fields);
+		}
+		catch (TaskUpdateException $e)
+		{
+			return null;
+		}
+
+		if ($result === false)
+		{
+			return null;
+		}
+
+		$nextFileIds = TaskObject::wakeUpObject(['ID' => $taskId])->fillUtsData()?->getUfTaskWebdavFiles();
+		$diffFiles = array_diff($nextFileIds, $prevFileIds);
+		$newFileId = reset($diffFiles);
+
+		if (!empty($newFileId))
+		{
+			$diskAttachment = (new DiskFileProvider())->getDiskFileAttachments([$newFileId]);
+
+			if (!empty($diskAttachment[$newFileId]))
+			{
+				return DiskFileDto::make($diskAttachment[$newFileId]);
+			}
+
+		}
+
+		return null;
+	}
+
+	/**
+	 * @param int $taskId
 	 * @return bool
-	 * @throws \CTaskAssertException
-	 * @throws \TasksException
+	 * @throws CTaskAssertException
+	 * @throws TasksException
 	 */
 	public function remove(int $taskId): bool
 	{
@@ -1172,8 +2039,22 @@ final class TaskProvider
 	/**
 	 * @param int $taskId
 	 * @return bool
-	 * @throws \CTaskAssertException
-	 * @throws \TasksException
+	 * @throws CTaskAssertException
+	 * @throws TasksException
+	 */
+	public function follow(int $taskId): bool
+	{
+		$task = new \CTaskItem($taskId, $this->userId);
+		$task->startWatch();
+
+		return true;
+	}
+
+	/**
+	 * @param int $taskId
+	 * @return bool
+	 * @throws CTaskAssertException
+	 * @throws TasksException
 	 */
 	public function unfollow(int $taskId): bool
 	{
@@ -1186,16 +2067,70 @@ final class TaskProvider
 	/**
 	 * @param int $taskId
 	 * @return bool
+	 */
+	public function startTimer(int $taskId): bool
+	{
+		$timer = \CTaskTimerManager::getInstance($this->userId);
+
+		return ($timer->start($taskId) !== false);
+	}
+
+	/**
+	 * @param int $taskId
+	 * @return bool
+	 */
+	public function pauseTimer(int $taskId): bool
+	{
+		$timer = \CTaskTimerManager::getInstance($this->userId);
+
+		return ($timer->stop($taskId) !== false);
+	}
+
+	/**
+	 * @param int $taskId
+	 * @return bool
+	 * @throws CTaskAssertException
+	 * @throws TasksException
+	 */
+	public function start(int $taskId): bool
+	{
+		$task = new \CTaskItem($taskId, $this->userId);
+		$task->startExecution();
+
+		return true;
+	}
+
+	/**
+	 * @param int $taskId
+	 * @return bool
+	 * @throws CTaskAssertException
+	 * @throws TasksException
+	 */
+	public function pause(int $taskId): bool
+	{
+		$task = new \CTaskItem($taskId, $this->userId);
+		$task->pauseExecution();
+
+		return true;
+	}
+
+	/**
+	 * @param int $taskId
+	 * @return bool
 	 * @throws ArgumentException
 	 * @throws ObjectPropertyException
 	 * @throws SystemException
-	 * @throws \CTaskAssertException
-	 * @throws \TasksException
+	 * @throws CTaskAssertException
+	 * @throws TasksException
 	 */
 	public function complete(int $taskId): bool
 	{
+		$creator = TaskObject::wakeUpObject(['ID' => $taskId])->fillCreator();
+		$isCreator = $creator->getId() === $this->userId;
+
 		if (
-			!ResultManager::requireResult($taskId)
+			$isCreator
+			|| !ResultManager::requireResult($taskId)
 			|| (
 				($lastResult = ResultManager::getLastResult($taskId))
 				&& (int)$lastResult['STATUS'] === ResultTable::STATUS_OPENED
@@ -1214,8 +2149,8 @@ final class TaskProvider
 	/**
 	 * @param int $taskId
 	 * @return bool
-	 * @throws \CTaskAssertException
-	 * @throws \TasksException
+	 * @throws CTaskAssertException
+	 * @throws TasksException
 	 */
 	public function renew(int $taskId): bool
 	{
@@ -1228,8 +2163,37 @@ final class TaskProvider
 	/**
 	 * @param int $taskId
 	 * @return bool
-	 * @throws \CTaskAssertException
-	 * @throws \TasksException
+	 * @throws CTaskAssertException
+	 * @throws TasksException
+	 */
+	public function defer(int $taskId): bool
+	{
+		$task = new \CTaskItem($taskId, $this->userId);
+		$task->defer();
+
+		return true;
+	}
+
+	/**
+	 * @param int $taskId
+	 * @param int $userId
+	 * @return bool
+	 * @throws CTaskAssertException
+	 * @throws TasksException
+	 */
+	public function delegate(int $taskId, int $userId): bool
+	{
+		$task = new \CTaskItem($taskId, $this->userId);
+		$task->delegate($userId);
+
+		return true;
+	}
+
+	/**
+	 * @param int $taskId
+	 * @return bool
+	 * @throws CTaskAssertException
+	 * @throws TasksException
 	 */
 	public function approve(int $taskId): bool
 	{
@@ -1242,8 +2206,8 @@ final class TaskProvider
 	/**
 	 * @param int $taskId
 	 * @return bool
-	 * @throws \CTaskAssertException
-	 * @throws \TasksException
+	 * @throws CTaskAssertException
+	 * @throws TasksException
 	 */
 	public function disapprove(int $taskId): bool
 	{
@@ -1256,8 +2220,8 @@ final class TaskProvider
 	/**
 	 * @param int $taskId
 	 * @return bool
-	 * @throws \CTaskAssertException
-	 * @throws \TasksException
+	 * @throws CTaskAssertException
+	 * @throws TasksException
 	 */
 	public function ping(int $taskId): bool
 	{

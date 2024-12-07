@@ -126,6 +126,20 @@ class EntityConverter
 			throw new SourceItemNotFoundException($this->sourceFactory->getEntityTypeId(), $this->entityID);
 		}
 
+		if (
+			$this->sourceItem->getEntityTypeId() === \CCrmOwnerType::Lead
+			&& $this->config->isPermissionCheckEnabled()
+			&& !$this->canTransitionItemToFinalStage($this->sourceFactory, $this->sourceItem)
+		)
+		{
+			throw new EntityConversionException(
+				\CCrmOwnerType::Lead,
+				\CCrmOwnerType::Undefined,
+				EntityConversionException::TARG_SRC,
+				EntityConversionException::UPDATE_DENIED
+			);
+		}
+
 		$this->isInitialized = true;
 
 		//user permissions check is performed in operation, if needed
@@ -994,6 +1008,33 @@ class EntityConverter
 		/** @var \CCrmPerms $permissions */
 		$permissions = $this->getUserPermissions();
 
+		if ($entityTypeName === \CCrmOwnerType::LeadName)
+		{
+			if (!\CCrmAuthorizationHelper::CheckUpdatePermission($entityTypeName, $entityID, $permissions))
+			{
+				return false;
+			}
+
+			$factory = Container::getInstance()->getFactory(\CCrmOwnerType::Lead);
+			if (!$factory)
+			{
+				return false;
+			}
+
+			$items = $factory->getItems([
+				'select' => [Item::FIELD_NAME_STAGE_ID, Item::FIELD_NAME_ID],
+				'filter' => ['=ID' => $entityID],
+				'limit' => 1,
+			]);
+
+			$item = array_shift($items);
+			if (!$item)
+			{
+				return false;
+			}
+
+			return $this->canTransitionItemToFinalStage($factory, $item);
+		}
 		if($entityTypeName === \CCrmOwnerType::CompanyName)
 		{
 			return \CCrmCompany::CheckUpdatePermission($entityID, $permissions);
@@ -1016,6 +1057,21 @@ class EntityConverter
 		}
 
 		return \CCrmAuthorizationHelper::CheckUpdatePermission($entityTypeName, $entityID, $permissions);
+	}
+
+	private function canTransitionItemToFinalStage(Crm\Service\Factory $factory, Crm\Item $item): bool
+	{
+		$successfulStageId = $factory->getSuccessfulStage()?->getStatusId();
+		if (!$successfulStageId)
+		{
+			return false;
+		}
+
+		return Crm\Service\Container::getInstance()->getUserPermissions($this->getUserPermissions()->GetUserID())->isStageTransitionAllowed(
+			$item->getStageId(),
+			$successfulStageId,
+			Crm\ItemIdentifier::createByItem($item),
+		);
 	}
 	//endregion
 	/**
@@ -1050,12 +1106,15 @@ class EntityConverter
 
 		if ($controller)
 		{
-			$controller->onConvert(
-				$this->getEntityID(),
-				[
-					'ENTITIES' => $this->resultData,
-				]
-			);
+			$params = [
+				'ENTITIES' => $this->resultData,
+			];
+			if (isset($this->contextData['USER_ID']))
+			{
+				$params['USER_ID'] = $this->contextData['USER_ID'];
+			}
+
+			$controller->onConvert($this->getEntityID(), $params);
 		}
 	}
 

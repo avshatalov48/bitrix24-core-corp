@@ -13,6 +13,7 @@ this.BX = this.BX || {};
 	var _isBitrix = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isBitrix24");
 	var _isAdmin = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isAdmin");
 	var _isRequisite = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isRequisite");
+	var _isMainPageAvailable = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isMainPageAvailable");
 	var _getWidgetPopup = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getWidgetPopup");
 	var _load = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("load");
 	class SettingsWidgetLoader {
@@ -39,9 +40,14 @@ this.BX = this.BX || {};
 	      writable: true,
 	      value: false
 	    });
+	    Object.defineProperty(this, _isMainPageAvailable, {
+	      writable: true,
+	      value: false
+	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _isBitrix)[_isBitrix] = params['isBitrix24'];
 	    babelHelpers.classPrivateFieldLooseBase(this, _isAdmin)[_isAdmin] = params['isAdmin'];
 	    babelHelpers.classPrivateFieldLooseBase(this, _isRequisite)[_isRequisite] = params['isRequisite'];
+	    babelHelpers.classPrivateFieldLooseBase(this, _isMainPageAvailable)[_isMainPageAvailable] = params['isMainPageAvailable'];
 	  }
 	  showOnce(node) {
 	    const popup = babelHelpers.classPrivateFieldLooseBase(this, _getWidgetPopup)[_getWidgetPopup]().getPopup();
@@ -119,6 +125,9 @@ this.BX = this.BX || {};
 	  main_core.Dom.addClass(container, 'intranet-widget-skeleton__wrap');
 	  main_core.Dom.append(this.getHeaderSkeleton(), container);
 	  if (babelHelpers.classPrivateFieldLooseBase(this, _isRequisite)[_isRequisite]) {
+	    main_core.Dom.append(this.getItemSkeleton(), container);
+	  }
+	  if (babelHelpers.classPrivateFieldLooseBase(this, _isMainPageAvailable)[_isMainPageAvailable]) {
 	    main_core.Dom.append(this.getItemSkeleton(), container);
 	  }
 	  if (babelHelpers.classPrivateFieldLooseBase(this, _isAdmin)[_isAdmin]) {

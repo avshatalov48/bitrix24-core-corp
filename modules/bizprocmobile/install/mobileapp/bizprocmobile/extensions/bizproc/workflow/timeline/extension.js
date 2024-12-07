@@ -51,7 +51,8 @@ jn.define('bizproc/workflow/timeline', (require, exports, module) => {
 			layout.openWidget('layout', {
 				modal: true,
 				titleParams: {
-					text: Loc.getMessage('BPMOBILE_WORKFLOW_TIMELINE_TITLE'),
+					text: Loc.getMessage('BPMOBILE_WORKFLOW_TIMELINE_TITLE_MSGVER_1'),
+					type: 'dialog',
 				},
 				backgroundColor: AppTheme.colors.bgContentPrimary,
 				backdrop: {
@@ -59,7 +60,7 @@ jn.define('bizproc/workflow/timeline', (require, exports, module) => {
 					mediumPositionPercent: 90,
 					navigationBarColor: AppTheme.colors.bgSecondary,
 					swipeAllowed: true,
-					swipeContentAllowed: false,
+					swipeContentAllowed: true,
 					horizontalSwipeAllowed: false,
 				},
 				onReady: (readyLayout) => {
@@ -68,6 +69,7 @@ jn.define('bizproc/workflow/timeline', (require, exports, module) => {
 						layout: readyLayout,
 						workflowId: props.workflowId,
 						taskId: props.taskId,
+						readOnly: props.readOnly || false,
 					}));
 				},
 			});
@@ -523,8 +525,12 @@ jn.define('bizproc/workflow/timeline', (require, exports, module) => {
 							testId: `${this.testId}TaskButton_${task.id}`,
 							text: Loc.getMessage('BPMOBILE_WORKFLOW_TIMELINE_TASK_START'),
 							onclick: () => {
-								this.openTaskDetails(task.id).catch((err) => console.error(err));
+								if (!this.props.readOnly)
+								{
+									this.openTaskDetails(task.id).catch((err) => console.error(err));
+								}
 							},
+							readOnly: this.props.readOnly,
 						};
 					}
 

@@ -153,7 +153,7 @@ foreach ($arResult['PROPERTY_VALUES'] as $productID => $arProperties)
 				}
 
 				$ownerPrefixList = array('L', 'C', 'CO', 'D');
-				$regExp = '/('.implode('|', $ownerPrefixList).')_(\d+)/'.BX_UTF_PCRE_MODIFIER;
+				$regExp = '/('.implode('|', $ownerPrefixList).')_(\d+)/u';
 				foreach ($propValue as $valueKey => $value)
 				{
 					$matches = [];

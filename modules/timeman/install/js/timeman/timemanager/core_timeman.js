@@ -488,6 +488,11 @@ BX.CTimeMan.prototype.Query = function(action, data, callback, bForce)
 		BX.timeman.showWait(this.WND.DIV || this.DIV);
 	}
 
+	if (this.DATA && this.DATA.ID)
+	{
+		data.recordId = this.DATA.ID;
+	}
+
 	BX.timeman_query(action, data, callback, bForce);
 }
 
@@ -617,6 +622,15 @@ BX.CTimeMan.prototype._showCalendarField = function(calendars)
 
 BX.CTimeMan.prototype.Open = function()
 {
+	if (BX.type.isFunction(BX.UI?.Analytics?.sendData))
+	{
+		BX.UI.Analytics.sendData({
+			tool: 'timeman',
+			category: 'workday',
+			event: 'popup_open',
+		});
+	}
+
 	if (this.WND.isShown())
 	{
 		this.WND.Hide();
@@ -834,6 +848,7 @@ BX.CTimeMan.prototype.OpenDay = function(e)
 	this.Query('open', data, BX.proxy(this._Update, this));
 	this.setTimestamp(0);
 	this.setReport('');
+	BX.onCustomEvent('onTimeManDayOpen');
 	return BX.PreventDefault(e);
 }
 
@@ -1107,6 +1122,16 @@ BX.CTimeManWindow.prototype.Create = function(DATA)
 	}
 
 	BX.onCustomEvent(this, 'onTimeManWindowBuild', [this, this.LAYOUT, DATA])
+
+	if (!this.stafftrackDisplayed)
+	{
+		BX.Runtime.loadExtension('timeman.stafftrack-check-in').then(({ StafftrackCheckIn }) => {
+			new StafftrackCheckIn({
+				container: BX('timeman_main'),
+			});
+		})
+		this.stafftrackDisplayed = true;
+	}
 
 	if (!this.isPwtAlertDisplayed)
 	{
@@ -1495,7 +1520,6 @@ BX.CTimeManWindow.prototype.addPwtAlert = function()
 			icon: BX.UI.Alert.Icon.INFO,
 			color: BX.UI.Alert.Color.SUCCESS,
 			text: BX.message("JS_CORE_TM_MONITOR_ENABLED"),
-			customClass: 'ui-alert-text-center'
 		}).getContainer()
 	);
 }
@@ -2057,13 +2081,13 @@ BX.CTimeManWindow.prototype.CreateTasks = function(DATA)
 				children:
 				[
 					BX.create('SPAN', {props: {className: 'tm-popup-task-icon'}}),
-					BX.create('SPAN', {
+					BX.create('a', {
 						props: {
+							href: DATA.TASKS[i].URL,
 							className: 'tm-popup-task-name',
 							BXPOPUPBIND: this.TASKS.firstChild
 						},
 						text: DATA.TASKS[i].TITLE,
-						events: {click: BX.proxy(this.showTask, this)}
 					}),
 					BX.create('SPAN', {
 						props: {className: 'tm-popup-task-delete'},
@@ -2202,16 +2226,21 @@ BX.CTimeManWindow.prototype.removeTask = function(e)
 
 BX.CTimeManWindow.prototype.showTask = function(e)
 {
-	var task_id = BX.proxy_context.parentNode.bx_task_id;
-
-	var tasks = (this.data && this.data.INFO) ? this.data.INFO.TASKS : this.DATA.TASKS,
-		arTasks = [];
+	const task_id = BX.proxy_context.parentNode.bx_task_id;
+	const tasks = (this.data && this.data.INFO) ? this.data.INFO.TASKS : this.DATA.TASKS;
 	if (tasks.length > 0)
 	{
-		for(var i=0; i<tasks.length; i++)
-			arTasks.push(tasks[i].ID);
-		taskIFramePopup.tasksList = arTasks;
-		taskIFramePopup.view(task_id);
+		let taskViewUrl = '';
+		tasks.forEach((task) => {
+			if (parseInt(task.ID) === parseInt(task_id))
+			{
+				taskViewUrl = task.URL;
+			}
+		});
+		if (taskViewUrl !== '')
+		{
+			BX.SidePanel.Instance.open(taskViewUrl);
+		}
 	}
 
 	return false;
@@ -2220,14 +2249,16 @@ BX.CTimeManWindow.prototype.showTask = function(e)
 BX.CTimeManWindow.prototype.ShowClock = function(error_string, start_time)
 {
 	if (!BX.type.isString(error_string))
+	{
 		error_string = null;
+	}
 
 	if (null == this.CLOCKWND)
 	{
 		this.CLOCKWND = new BX.CTimeManTimeSelector(this, {
 			node: this.MAIN_BUTTON,
 			error: error_string,
-			start_time: start_time || (this.DATA.STATE == 'EXPIRED' && this.DATA.EXPIRED_DATE ? this.DATA.EXPIRED_DATE : null),
+			start_time: start_time || (this.DATA.STATE === 'EXPIRED' && this.DATA.EXPIRED_DATE ? this.DATA.EXPIRED_DATE : null),
 			free_mode: this.PARENT.FREE_MODE
 		});
 	}
@@ -2237,8 +2268,10 @@ BX.CTimeManWindow.prototype.ShowClock = function(error_string, start_time)
 		this.CLOCKWND.setError(error_string);
 		this.CLOCKWND.setNode(this.MAIN_BUTTON);
 
-		if (this.DATA.STATE == 'EXPIRED' && this.DATA.EXPIRED_DATE)
+		if (this.DATA.STATE === 'EXPIRED' && this.DATA.EXPIRED_DATE)
+		{
 			this.CLOCKWND.setTime(this.DATA.EXPIRED_DATE);
+		}
 	}
 
 	this.CLOCKWND.Show();
@@ -4838,15 +4871,15 @@ BX.CTimeManReportFormWeekly.prototype.addTask = function(task_data)
 					},
 					attrs: {type: 'checkbox'}
 				})),
-				BX.create('SPAN', {
+				BX.create('a', {
 					props: {
+						href: task_data.URL,
 						className: 'tm-popup-task-name',
 						BXPOPUPBIND: this.tdTasks.firstChild,
 						BXPOPUPPARENT: this.listTasks,
 						BXPOPUPANGLEOFFSET: 44
 					},
 					text: task_data.TITLE,
-					events: {click: BX.proxy(this.parent.WND.showTask, this)}
 				}),
 				(inpTime = this.mode == 'admin' ? null : BX.create('INPUT', {
 					props: {value: taskTime},
@@ -4960,7 +4993,7 @@ BX.CTimeManReportFormWeekly.prototype.GetContentTasks = function(tdTasks, tasks_
 					},
 					children:
 					[
-						(inp = this.mode == 'admin' ? null : BX.create('INPUT', {
+						(inp = this.mode === 'admin' ? null : BX.create('INPUT', {
 							props: {
 								className: 'tm-report-popup-include-checkbox',
 								value: this.data.INFO.TASKS[i].ID,
@@ -4970,15 +5003,15 @@ BX.CTimeManReportFormWeekly.prototype.GetContentTasks = function(tdTasks, tasks_
 							},
 							attrs: {type: 'checkbox'}
 						})),
-						BX.create('SPAN', {
+						BX.create('a', {
 							props: {
+								href: this.data.INFO.TASKS[i].URL,
 								className: 'tm-popup-task-name',
 								BXPOPUPBIND: tdTasks.firstChild,
 								BXPOPUPPARENT: this.listTasks,
 								BXPOPUPANGLEOFFSET: 44
 							},
 							text: this.data.INFO.TASKS[i].TITLE,
-							events: {click: BX.proxy(this.parent.WND.showTask, this)}
 						}),
 						(inpTime = this.mode == 'admin' ? null : BX.create('INPUT', {
 							props: {value: taskTime},
@@ -5214,7 +5247,7 @@ BX.CTimeManReportFormWeekly.prototype.GetButtons = function()
 }
 
 
-BX.CTimeManReportFormWeekly.prototype.ActionEdit = function()
+BX.CTimeManReportFormWeekly.prototype.ActionEdit = function(action)
 {
 	BX.timeman.showWait(this.popup.popupContainer,0);
 	if (this.post == true)
@@ -5233,7 +5266,8 @@ BX.CTimeManReportFormWeekly.prototype.ActionEdit = function()
 		TASKS_TIME:[],
 		EVENTS:[],
 		ACTIVE: this.ACTIVE,
-		DELAY:this.DELAY
+		DELAY:this.DELAY,
+		ACTION:action,
 	};
 
 	if (this.data.INFO.EVENTS)
@@ -5270,7 +5304,7 @@ BX.CTimeManReportFormWeekly.prototype.ActionSave = function(e)
 		this.ACTIVE = "N";
 		this.DELAY = "N";
 		this.closeAfterPost = false;
-		this.ActionEdit();
+		this.ActionEdit('save');
 }
 
 BX.CTimeManReportFormWeekly.prototype.ActionSend = function(e)
@@ -5278,7 +5312,7 @@ BX.CTimeManReportFormWeekly.prototype.ActionSend = function(e)
 		this.ACTIVE = "Y";
 		this.DELAY = "Y";
 		this.closeAfterPost = true;
-		this.ActionEdit();
+		this.ActionEdit('send');
 }
 
 BX.CTimeManReportFormWeekly.prototype.ActionDelay = function(e)
@@ -5286,7 +5320,7 @@ BX.CTimeManReportFormWeekly.prototype.ActionDelay = function(e)
 	this.ACTIVE = "N";
 	this.DELAY = "Y";
 	this.closeAfterPost = true;
-	this.ActionEdit();
+	this.ActionEdit('delay');
 }
 
 BX.CTimeManReportFormWeekly.prototype._ActionEdit = function(report_id)
@@ -5970,7 +6004,7 @@ BX.CTimeManReportForm.prototype.GetContentTasks = function(tdTasks, tasks_unchec
 		tdTasks.appendChild(BX.create('DIV', {
 			props: {className: 'tm-popup-tasks' + (this.data.INFO.TASKS.length > 10 ? ' tm-popup-tasks-tens' : '')},
 			children: [
-				this.mode == 'admin' ? null : BX.create('DIV', {
+				this.mode === 'admin' ? null : BX.create('DIV', {
 					props: {className: 'tm-report-popup-inlude-tasks'},
 					html: '<span class="tm-report-popup-inlude-arrow"></span><span class="tm-report-popup-inlude-hint">' + BX.message('JS_CORE_TMR_REPORT_INC') + '</span>'
 				}),
@@ -5996,7 +6030,7 @@ BX.CTimeManReportForm.prototype.GetContentTasks = function(tdTasks, tasks_unchec
 					},
 					children:
 					[
-						(inp = this.mode == 'admin' ? null : BX.create('INPUT', {
+						(inp = this.mode === 'admin' ? null : BX.create('INPUT', {
 							props: {
 								className: 'tm-report-popup-include-checkbox',
 								value: this.data.INFO.TASKS[i].ID,
@@ -6006,15 +6040,15 @@ BX.CTimeManReportForm.prototype.GetContentTasks = function(tdTasks, tasks_unchec
 							},
 							attrs: {type: 'checkbox'}
 						})),
-						BX.create('SPAN', {
+						BX.create('a', {
 							props: {
+								href: this.data.INFO.TASKS[i].URL,
 								className: 'tm-popup-task-name',
 								BXPOPUPBIND: tdTasks.firstChild,
 								BXPOPUPPARENT: this.listTasks,
 								BXPOPUPANGLEOFFSET: 44
 							},
 							text: this.data.INFO.TASKS[i].TITLE,
-							events: {click: BX.proxy(BX.CTimeManWindow.prototype.showTask, this)}
 						}),
 						(inpTime = this.mode == 'admin' ? null : BX.create('INPUT', {
 							props: {value: taskTime},
@@ -6046,7 +6080,7 @@ BX.CTimeManReportForm.prototype.GetContentTasks = function(tdTasks, tasks_unchec
 		}
 	}
 
-	if (this.mode == 'edit')
+	if (this.mode === 'edit')
 	{
 		this.tasksForm = tdTasks.appendChild(this.parent.WND.CreateTasksForm(BX.proxy(this.taskEntryAdd, this)));
 		if (!this.data.INFO.TASKS || this.data.INFO.TASKS.length <= 0)
@@ -7123,12 +7157,12 @@ BX.JSTimeManReportFullForm.prototype.GetTasks = function(tdTasks, tasks_unchecke
 					},
 					children:
 					[
-						BX.create('SPAN', {
+						BX.create('a', {
 							props: {
+								href: this.data.INFO.TASKS[i].URL,
 								className: 'tm-popup-task-name'
 							},
 							text: this.data.INFO.TASKS[i].TITLE,
-							events: {click: BX.proxy(this.WND.showTask, this)}
 						}),
 						BX.create('SPAN', {
 							props: {

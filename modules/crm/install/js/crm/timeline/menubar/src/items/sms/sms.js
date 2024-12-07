@@ -1,7 +1,7 @@
 /* eslint-disable */
 
 import { Editor, FilledPlaceholder } from 'crm.template.editor';
-import { Dom, Loc, Tag, Text, Type } from 'main.core';
+import { ajax as Ajax, Dom, Loc, Tag, Text, Type } from 'main.core';
 import { BaseEvent, EventEmitter } from 'main.core.events';
 import WithEditor from './../witheditor';
 
@@ -12,13 +12,15 @@ export default class Sms extends WithEditor
 	placeholders: string[];
 	filledPlaceholders: FilledPlaceholder[];
 
+	isFetchedConfig: boolean = false;
+	fetchConfigPromise: ?Promise = null;
+
+	/**
+	 * @override
+	 * */
 	createLayout(): HTMLElement
 	{
-		const canSend = this.getSetting('canSendMessage', false);
-
-		return Tag.render`<div class="crm-entity-stream-content-new-detail --focus --hidden">
-			${canSend ? this.#renderEditor() : this.#renderSetupText()}
-		</div>`;
+		return Tag.render`<div class="crm-entity-stream-content-new-detail crm-entity-stream-content-sms --skeleton --hidden"></div>`;
 	}
 
 	#renderEditor(): HTMLElement
@@ -837,6 +839,14 @@ export default class Sms extends WithEditor
 
 	getSendData(): ?Object
 	{
+		if (!this.isFetchedConfig)
+		{
+			return {
+				text: '',
+				templateId: null,
+			};
+		}
+
 		let text = '';
 		let templateId = null;
 
@@ -948,6 +958,14 @@ export default class Sms extends WithEditor
 				ownerTypeId: this._ownerTypeId,
 				ownerId: this._ownerId,
 				mode: this._ownerTypeId === BX.CrmEntityType.enumeration.deal ? 'payment_delivery' : 'payment',
+				st: {
+					tool: 'crm',
+					category: 'payments',
+					event: 'payment_create_click',
+					c_section: 'crm_sms',
+					c_sub_section: 'web',
+					type: 'delivery_payment',
+				}
 			}).then(function(result)
 			{
 				if(result && result.get('action'))
@@ -1513,7 +1531,7 @@ export default class Sms extends WithEditor
 				data: {
 					placeholderId: id,
 					fieldName: Type.isStringFilled(value) ? value : null,
-					entityType: Type.isStringFilled(value) ? entityType : null,
+					entityType: Type.isStringFilled(entityType) ? entityType : null,
 					fieldValue:  Type.isStringFilled(text) ? text : null,
 					...this.getCommonPlaceholderData(),
 				},
@@ -1543,13 +1561,120 @@ export default class Sms extends WithEditor
 		}
 	}
 
+	/**
+	 * @override
+	 * */
 	activate()
 	{
 		super.activate();
 
-		if (this.isCurrentSenderIsTemplatesBased() && !this.getSelectedSender().templates)
+		// fetch config
+		if (this.isFetchedConfig || !this.getEntityId())
 		{
-			this.onTemplateSelectClick();
+			return;
+		}
+
+		this.isFetchedConfig = false;
+		this.fetchConfigPromise = new Promise((resolve) => {
+			Ajax.runAction('crm.api.timeline.sms.getConfig', {
+				json: {
+					entityTypeId: this.getEntityTypeId(),
+					entityId: this.getEntityId(),
+				},
+			}).then(({ data }) => {
+				this.isFetchedConfig = true;
+				this.setSettings(data);
+
+				setTimeout(() => {
+					const canSend = this.getSetting('canSendMessage', false);
+
+					this.setContainer(Tag.render`
+						<div class="crm-entity-stream-content-new-detail --focus">
+							${canSend ? this.#renderEditor() : this.#renderSetupText()}
+						</div>
+					`);
+
+					if (this.isCurrentSenderIsTemplatesBased() && !this.getSelectedSender().templates)
+					{
+						this.onTemplateSelectClick();
+					}
+
+					resolve();
+				}, 50);
+			}).catch(() => {
+				this.showNotify(Loc.getMessage('CRM_TIMELINE_GOTOCHAT_CONFIG_ERROR'));
+
+				setTimeout(() => this.cancel(), 50);
+			});
+		});
+	}
+
+	tryToResend(senderId: string, fromId: string, clientData: Object, rawDescription: ?string): void
+	{
+		if (this.isFetchedConfig)
+		{
+			this.#prepareToResend(senderId, fromId, clientData, rawDescription);
+		}
+		else
+		{
+			// eslint-disable-next-line promise/catch-or-return
+			this.fetchConfigPromise.then(() => this.#prepareToResend(senderId, fromId, clientData, rawDescription));
+		}
+	}
+
+	#prepareToResend(senderId: string, fromId: string, clientData: Object, rawDescription: ?string): void
+	{
+		const sender = this._senders.find((sender: Object) => sender.id === senderId);
+		if (sender?.canUse && Type.isArrayFilled(sender?.fromList))
+		{
+			this.setSender(sender);
+
+			const from = sender.fromList.find((from: Object) => String(from.id) === fromId);
+			if (from)
+			{
+				this.setFrom(from);
+			}
+			else
+			{
+				console.warn('Unable to resend SMS with selected from');
+			}
+		}
+		else
+		{
+			console.warn('Unable to resend SMS with sender ID "' + senderId + '"');
+		}
+
+		const client = this._communications
+			.find((communication: Object) => communication.entityId === clientData.entityId
+				&& communication.entityTypeId === clientData.entityTypeId
+			)
+		;
+		if (client)
+		{
+			this.setClient(client);
+
+			const to = client.phones.find((phone: Object) => phone.value === clientData.value);
+			if (to)
+			{
+				this.setTo(to);
+			}
+		}
+		else
+		{
+			console.warn('Unable to resend SMS with selected client');
+		}
+
+		if (Type.isStringFilled(rawDescription))
+		{
+			this._input.value = rawDescription;
+			this.setMessageLengthCounter();
+
+			setTimeout(this.resizeForm.bind(this), 0);
+		}
+
+		if (this._smsDetail.classList.contains('hidden'))
+		{
+			setTimeout(() => this._smsDetailSwitcher.click(), 50);
 		}
 	}
 

@@ -9,10 +9,10 @@ return [
 	'css' => 'dist/toolbar-component.bundle.css',
 	'js' => 'dist/toolbar-component.bundle.js',
 	'rel' => [
-		'main.core.events',
-		'ui.buttons',
 		'crm.router',
+		'main.core.events',
 		'main.popup',
+		'ui.buttons',
 		'ui.tour',
 		'ui.hint',
 		'main.core',

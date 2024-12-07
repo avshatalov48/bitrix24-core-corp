@@ -4,7 +4,6 @@ import { Uploader } from 'ui.uploader.core';
 import { loadDiskFileDialog } from './load-disk-file-dialog';
 import CloudLoadController from './cloud-load-controller';
 import CloudUploadController from './cloud-upload-controller';
-import { GoogleDrivePicker } from 'disk.google-drive-picker';
 
 const loadingDialogs: Set<string> = new Set();
 
@@ -78,28 +77,16 @@ export const openCloudFileDialog = (options): void => {
 				{
 					if (data.authUrl)
 					{
-						BX.util.popup(data.authUrl, 1030, 700);
-						Event.bind(window, 'hashchange', () => {
-							const matches = document.location.hash.match(/external-auth-(\w+)/);
-							if (!matches)
-							{
-								return;
-							}
-							BX.DiskFileDialog.sendRequest = false;
-							openCloudFileDialog(options);
-						});
+						openAuthPopup(data.authUrl, options);
+
+						return;
 					}
-					else
-					{
-						const picker = new GoogleDrivePicker(
-							data.clientId,
-							data.appId,
-							data.apiKey,
-							data.accessToken,
-							BX.DiskFileDialog.obCallback[dialogId],
-						);
-						picker.loadAndOpenPicker();
-					}
+
+					initGooglePicker(data, dialogId).then((picker) => {
+						picker.loadAndShowPicker();
+					}).catch((error) => {
+						console.error(error);
+					});
 				},
 				onfailure(data)
 				{
@@ -114,5 +101,30 @@ export const openCloudFileDialog = (options): void => {
 		{
 			BX.DiskFileDialog.openDialog(dialogId);
 		}
+	});
+};
+
+const openAuthPopup = function(authUrl: string, dialogOptions: any): void {
+	BX.util.popup(authUrl, 1030, 700);
+	Event.bind(window, 'hashchange', () => {
+		const matches = document.location.hash.match(/external-auth-(\w+)/);
+		if (!matches)
+		{
+			return;
+		}
+		BX.DiskFileDialog.sendRequest = false;
+		openCloudFileDialog(dialogOptions);
+	});
+};
+
+const initGooglePicker = async function(data: any, dialogId: string): Promise {
+	return Runtime.loadExtension('disk.google-drive-picker').then(({ GoogleDrivePicker }) => {
+		return new GoogleDrivePicker(
+			data.clientId,
+			data.appId,
+			data.apiKey,
+			data.accessToken,
+			BX.DiskFileDialog.obCallback[dialogId],
+		);
 	});
 };

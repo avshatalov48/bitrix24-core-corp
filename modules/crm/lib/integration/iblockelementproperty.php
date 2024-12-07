@@ -428,9 +428,16 @@ class IBlockElementProperty
 	 */
 	public static function convertFromDB($property, $value)
 	{
-		$unserialize = unserialize($value['VALUE'], ['allowed_classes' => false]);
+		$unserialize = false;
+		if (isset($value['VALUE']) && is_string($value['VALUE']) && $value['VALUE'] !== '')
+		{
+			$unserialize = unserialize($value['VALUE'], ['allowed_classes' => false]);
+		}
 		if($unserialize !== false)
+		{
 			$value['VALUE'] = $unserialize;
+		}
+
 		return $value;
 	}
 

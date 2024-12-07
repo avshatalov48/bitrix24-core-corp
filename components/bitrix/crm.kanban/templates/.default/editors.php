@@ -61,7 +61,7 @@ if (\Bitrix\Main\Loader::includeModule('socialnetwork'))
 	$departmentRelation = $structure['department_relation'];
 	$departmentRelationHead = $structure['department_relation_head'];
 	?>
-	<script type="text/javascript">
+	<script>
 		BX.ready(
 			function()
 			{

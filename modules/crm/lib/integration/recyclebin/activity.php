@@ -2,9 +2,9 @@
 
 namespace Bitrix\Crm\Integration\Recyclebin;
 
+use Bitrix\Crm;
 use Bitrix\Crm\Settings\ActivitySettings;
 use Bitrix\Main;
-use Bitrix\Crm;
 use Bitrix\Recyclebin;
 
 Main\Localization\Loc::loadMessages(__FILE__);
@@ -28,11 +28,9 @@ class Activity extends RecyclableEntity
 
 	/**
 	 * Recover entity from Recycle Bin.
+	 *
 	 * @param Recyclebin\Internals\Entity $entity
-	 * @return boolean
-	 * @throws Main\ArgumentException
-	 * @throws Main\ObjectNotFoundException
-	 * @throws Main\SystemException
+	 * @return Main\Result | bool | int | null
 	 */
 	public static function moveFromRecyclebin(Recyclebin\Internals\Entity $entity)
 	{
@@ -47,16 +45,23 @@ class Activity extends RecyclableEntity
 			return false;
 		}
 
-		return Crm\Recycling\ActivityController::getInstance()->recover(
-			$entityID,
-			array(
-				'ID' => $entity->getId(),
-				'ENTITY' => $entity,
-				'SLOTS' => self::prepareDataSlots($entity),
-				'SLOT_MAP' => self::prepareDataSlotMap($entity),
-				'FILES' => $entity->getFiles()
-			)
-		);
+		try
+		{
+			return Crm\Recycling\ActivityController::getInstance()->recover(
+				$entityID,
+				[
+					'ID' => $entity->getId(),
+					'ENTITY' => $entity,
+					'SLOTS' => self::prepareDataSlots($entity),
+					'SLOT_MAP' => self::prepareDataSlotMap($entity),
+					'FILES' => $entity->getFiles(),
+				]
+			);
+		}
+		catch (Main\InvalidOperationException $exception)
+		{
+			return (new Main\Result())->addError(new Main\Error($exception->getMessage()));
+		}
 	}
 
 	/**

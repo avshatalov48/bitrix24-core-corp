@@ -194,6 +194,12 @@ class CCrmCompanyDetailsComponent
 		}
 
 		$this->arResult['CATEGORY_ID'] = $this->getCategoryId();
+		$this->arResult['ANALYTICS'] = $this->arParams['EXTRAS']['ANALYTICS'] ?? [];
+		$this->arResult['ANALYTICS']['c_sub_section'] = Crm\Integration\Analytics\Dictionary::SUB_SECTION_DETAILS;
+		$this->arResult['ANALYTICS']['c_section'] = $this->isMyCompany() ?
+			Crm\Integration\Analytics\Dictionary::SECTION_MYCOMPANY :
+			Crm\Integration\Analytics\Dictionary::SECTION_COMPANY
+		;
 
 		//region Permissions check
 		$this->initializeMode();
@@ -309,7 +315,7 @@ class CCrmCompanyDetailsComponent
 									'ADD_EVENT_NAME' => 'CrmCreateDealFromCompany',
 									'ANALYTICS' => [
 										// we dont know where from this component was opened from - it could be anywhere on portal
-										// 'c_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SECTION_COMPANY,
+										'c_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SECTION_COMPANY,
 										'c_sub_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SUB_SECTION_DETAILS,
 									],
 								], 'crm.deal.list')
@@ -351,7 +357,7 @@ class CCrmCompanyDetailsComponent
 									'ADD_EVENT_NAME' => 'CrmCreateQuoteFromCompany',
 									'ANALYTICS' => [
 										// we dont know where from this component was opened from - it could be anywhere on portal
-										// 'c_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SECTION_COMPANY,
+										'c_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SECTION_COMPANY,
 										'c_sub_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SUB_SECTION_DETAILS,
 									],
 								], 'crm.quote.list'),
@@ -404,7 +410,7 @@ class CCrmCompanyDetailsComponent
 									'ADD_EVENT_NAME' => 'CrmCreateInvoiceFromCompany',
 									'ANALYTICS' => [
 										// we dont know where from this component was opened from - it could be anywhere on portal
-										// 'c_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SECTION_COMPANY,
+										'c_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SECTION_COMPANY,
 										'c_sub_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SUB_SECTION_DETAILS,
 									],
 								], 'crm.invoice.list'),
@@ -455,7 +461,7 @@ class CCrmCompanyDetailsComponent
 									'BUILDER_CONTEXT' => Crm\Product\Url\ProductBuilder::TYPE_ID,
 									'ANALYTICS' => [
 										// we dont know where from this component was opened from - it could be anywhere on portal
-										// 'c_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SECTION_COMPANY,
+										'c_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SECTION_COMPANY,
 										'c_sub_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SUB_SECTION_DETAILS,
 									],
 								], 'crm.order.list')
@@ -536,28 +542,6 @@ class CCrmCompanyDetailsComponent
 				);
 				$this->arResult['TABS'][] = $this->getEventTabParams();
 
-				if (!$this->arResult['CATEGORY_ID'])
-				{
-					$this->arResult['TABS'][] = [
-						'id' => 'tab_portrait',
-						'name' => Loc::getMessage('CRM_COMPANY_TAB_PORTRAIT'),
-						'loader' => [
-							'serviceUrl' =>
-								'/bitrix/components/bitrix/crm.client.portrait/lazyload.ajax.php?&site='
-								. SITE_ID . '&' . bitrix_sessid_get()
-							,
-							'componentData' => [
-								'template' => '.default',
-								'signedParameters' => \CCrmInstantEditorHelper::signComponentParams([
-									'ELEMENT_ID' => $this->entityID,
-									'ELEMENT_TYPE' => CCrmOwnerType::Company,
-									'IS_FRAME' => 'Y'
-								], 'crm.client.portrait')
-							]
-						]
-					];
-				}
-
 				if (CModule::IncludeModule('lists') && !$this->arResult['CATEGORY_ID'])
 				{
 					$listIblock = CLists::getIblockAttachedCrm(CCrmOwnerType::CompanyName);
@@ -619,14 +603,7 @@ class CCrmCompanyDetailsComponent
 				);
 			}
 			$this->arResult['TABS'][] = $this->getEventTabParams();
-			if (!$this->arResult['CATEGORY_ID'])
-			{
-				$this->arResult['TABS'][] = [
-					'id' => 'tab_portrait',
-					'name' => Loc::getMessage('CRM_COMPANY_TAB_PORTRAIT'),
-					'enabled' => false
-				];
-			}
+
 			if (CModule::IncludeModule('lists') && !$this->arResult['CATEGORY_ID'])
 			{
 				$listIblock = CLists::getIblockAttachedCrm(CCrmOwnerType::CompanyName);
@@ -973,7 +950,11 @@ class CCrmCompanyDetailsComponent
 					"formattedWithCurrency" => "FORMATTED_REVENUE_WITH_CURRENCY"
 				)
 			),
-			Crm\Entity\CommentsHelper::compileFieldDescriptionForDetails(\CCrmOwnerType::Company, 'COMMENTS'),
+			Crm\Entity\CommentsHelper::compileFieldDescriptionForDetails(
+				\CCrmOwnerType::Company,
+				'COMMENTS',
+				$this->entityID,
+			),
 			array(
 				'name' => 'OPENED',
 				'title' => Loc::getMessage('CRM_COMPANY_FIELD_OPENED'),
@@ -1030,14 +1011,18 @@ class CCrmCompanyDetailsComponent
 					),
 				)
 			),
-			array(
+			[
 				'name' => 'REQUISITES',
 				'title' => Loc::getMessage('CRM_COMPANY_FIELD_REQUISITES'),
 				'type' => 'requisite',
 				'editable' => true,
-				'data' => CCrmComponentHelper::getFieldInfoData(CCrmOwnerType::Company,'requisite'),
-				'enableAttributes' => false
-			)
+				'data' => CCrmComponentHelper::getFieldInfoData(
+					CCrmOwnerType::Company,
+					'requisite',
+					['IS_EDIT_MODE' => $this->isRequisiteEditMode()]
+				),
+				'enableAttributes' => false,
+			]
 		);
 
 		$category = $this->getCategory();

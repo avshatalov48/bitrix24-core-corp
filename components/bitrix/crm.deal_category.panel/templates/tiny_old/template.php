@@ -37,7 +37,7 @@ $layoutWrapClassName = isset($arParams['LAYOUT_WRAP_CLASSNAME']) ? $arParams['LA
         }
         ?></button>
 </div>
-<script type="text/javascript">
+<script>
 	BX.ready(
 		function()
 		{

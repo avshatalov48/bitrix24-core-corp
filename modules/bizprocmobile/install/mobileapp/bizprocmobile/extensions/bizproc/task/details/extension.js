@@ -4,51 +4,66 @@
 jn.define('bizproc/task/details', (require, exports, module) => {
 	const AppTheme = require('apptheme');
 	const { Alert, confirmClosing } = require('alert');
-	const { PureComponent } = require('layout/pure-component');
-	const { openNativeViewer } = require('utils/file');
-	const { throttle } = require('utils/function');
-	const { Loc } = require('loc');
-	const { TaskButtons } = require('bizproc/task/buttons');
-	const { TaskFields } = require('bizproc/task/fields');
-	const { ContextMenu } = require('layout/ui/context-menu');
-	const { EntitySelectorFactory } = require('selector/widget/factory');
-	const { Skeleton } = require('bizproc/task/details/skeleton');
-	const { NotifyManager } = require('notify-manager');
-	const { FocusManager } = require('layout/ui/fields/focus-manager');
+	const { EventEmitter } = require('event-emitter');
 	const { Feature } = require('feature');
 	const { Haptics } = require('haptics');
-	const { EventEmitter } = require('event-emitter');
 	const { inAppUrl } = require('in-app-url');
-	const { CollapsibleText } = require('layout/ui/collapsible-text');
+	const { Loc } = require('loc');
+	const { Type } = require('type');
+	const { showToast } = require('toast');
+
+	const { openNativeViewer } = require('utils/file');
+	const { throttle } = require('utils/function');
+
+	const { PureComponent } = require('layout/pure-component');
+	const { ContextMenu } = require('layout/ui/context-menu');
+	const { FocusManager } = require('layout/ui/fields/focus-manager');
+
+	const { EntitySelectorFactory } = require('selector/widget/factory');
+
+	const { TaskUserStatus } = require('bizproc/task/task-constants');
+	const { TaskFields } = require('bizproc/task/fields');
+	const { Skeleton } = require('bizproc/task/details/skeleton');
 	const { WorkflowComments } = require('bizproc/workflow/comments');
+	const { TaskDetailsButtons } = require('bizproc/task/details/buttons');
 
 	class TaskDetails extends PureComponent
 	{
 		static open(layout = PageManager, props = {})
 		{
-			layout.openWidget('layout', {
-				modal: true,
-				titleParams: {
-					text: props.title || Loc.getMessage('BPMOBILE_TASK_DETAILS_TITLE'),
+			layout.openWidget(
+				'layout',
+				{
+					modal: true,
+					titleParams: {
+						text: Type.isString(props.title) ? props.title : Loc.getMessage('BPMOBILE_TASK_DETAILS_TITLE'),
+						type: 'dialog',
+					},
+					backgroundColor: AppTheme.colors.bgSecondary,
+					backdrop: {
+						onlyMediumPosition: false,
+						mediumPositionPercent: 90,
+						navigationBarColor: AppTheme.colors.bgSecondary,
+						swipeAllowed: true,
+						swipeContentAllowed: true,
+						horizontalSwipeAllowed: false,
+					},
+					onReady: (readyLayout) => {
+						readyLayout.showComponent(new TaskDetails({
+							uid: props.uid,
+							ref: props.ref,
+							parentLayout: layout,
+							layout: readyLayout,
+							taskId: props.taskId,
+							workflowId: props.workflowId || null,
+							targetUserId: props.targetUserId || null,
+							readOnlyTimeline: props.readOnlyTimeline || false,
+							showNotifications: props.showNotifications,
+						}));
+					},
 				},
-				backgroundColor: AppTheme.colors.bgSecondary,
-				backdrop: {
-					onlyMediumPosition: false,
-					mediumPositionPercent: 90,
-					navigationBarColor: AppTheme.colors.bgSecondary,
-					swipeAllowed: true,
-					swipeContentAllowed: false,
-					horizontalSwipeAllowed: false,
-				},
-				onReady: (readyLayout) => {
-					readyLayout.showComponent(new TaskDetails({
-						parentLayout: layout,
-						layout: readyLayout,
-						taskId: props.taskId,
-						targetUserId: props.targetUserId || null,
-					}));
-				},
-			});
+				layout,
+			);
 		}
 
 		constructor(props)
@@ -63,6 +78,7 @@ jn.define('bizproc/task/details', (require, exports, module) => {
 				rights: {
 					delegate: false,
 				},
+				commentCounter: null,
 			};
 
 			this.fieldList = null;
@@ -84,8 +100,8 @@ jn.define('bizproc/task/details', (require, exports, module) => {
 		{
 			if (Feature.isPreventBottomSheetDismissSupported())
 			{
-				this.props.layout.preventBottomSheetDismiss(true);
-				this.props.layout.on('preventDismiss', this.handleExitFromTask);
+				this.layout.preventBottomSheetDismiss(true);
+				this.layout.on('preventDismiss', this.handleExitFromTask);
 			}
 
 			this.customEventEmitter.on('TaskFields:onChangeFieldValue', this.handleChangeFields);
@@ -97,8 +113,8 @@ jn.define('bizproc/task/details', (require, exports, module) => {
 		{
 			if (Feature.isPreventBottomSheetDismissSupported())
 			{
-				this.props.layout.preventBottomSheetDismiss(false);
-				this.props.layout.off('preventDismiss', this.handleExitFromTask);
+				this.layout.preventBottomSheetDismiss(false);
+				this.layout.off('preventDismiss', this.handleExitFromTask);
 			}
 
 			this.customEventEmitter.off('TaskFields:onChangeFieldValue', this.handleChangeFields);
@@ -142,10 +158,9 @@ jn.define('bizproc/task/details', (require, exports, module) => {
 		{
 			this.isClosing = true;
 
-			if (this.props.layout)
+			if (this.layout)
 			{
-				this.props.layout.back();
-				this.props.layout.close();
+				this.layout.close();
 			}
 		}
 
@@ -161,7 +176,7 @@ jn.define('bizproc/task/details', (require, exports, module) => {
 
 		get isTaskCompleted()
 		{
-			return (this.task.status > 0 || this.task.userStatus > 0);
+			return (this.task.status > 0 || this.task.userStatus > TaskUserStatus.WAITING);
 		}
 
 		get isMyTask()
@@ -172,6 +187,11 @@ jn.define('bizproc/task/details', (require, exports, module) => {
 		get files()
 		{
 			return (this.state.taskInfo && this.state.taskInfo.files) || {};
+		}
+
+		get layout()
+		{
+			return this.props.layout;
 		}
 
 		render()
@@ -189,7 +209,7 @@ jn.define('bizproc/task/details', (require, exports, module) => {
 					redirectUrl: this.task.documentUrl,
 					showHint: true,
 					hintText: Loc.getMessage('BPMOBILE_TASK_DETAILS_RPA'),
-					parentWidget: this.props.layout,
+					parentWidget: this.layout,
 				});
 			}
 
@@ -248,21 +268,18 @@ jn.define('bizproc/task/details', (require, exports, module) => {
 							),
 							this.renderTaskButtons(),
 						),
-						this.renderComments(),
+						View({ style: { height: 100 } }),
 					),
 				),
+				this.renderComments(),
 			);
 		}
 
 		renderDescription()
 		{
-			const description = this.task.description && new CollapsibleText({
-				bbCodeMode: true,
+			return this.task.description && BBCodeText({
 				value: jnComponent.convertHtmlEntities(this.task.description),
 				style: styles.taskDescription,
-				containerStyle: {
-					flexGrow: 0,
-				},
 				onLinkClick: ({ url }) => {
 					if (this.files.hasOwnProperty(url))
 					{
@@ -280,13 +297,6 @@ jn.define('bizproc/task/details', (require, exports, module) => {
 					inAppUrl.open(url);
 				},
 			});
-
-			if (description && !this.canRenderTaskFields())
-			{
-				description.toggleExpand();
-			}
-
-			return description;
 		}
 
 		loadTask()
@@ -296,28 +306,39 @@ jn.define('bizproc/task/details', (require, exports, module) => {
 				{ data: { taskId: this.props.taskId, targetUserId: this.props.targetUserId } },
 			)
 				.then(({ data }) => {
+					this.layout.setRightButtons([
+						{
+							type: 'more',
+							callback: this.showContextMenu,
+						},
+					]);
+
+					this.customEventEmitter.emit(
+						'TaskDetails:onLoadSuccess',
+						[{ taskId: this.props.taskId, layout: this.layout }],
+					);
+
 					this.setState({
 						taskInfo: data.task.data,
 						allCount: data.allCount,
 						editor: data.editor,
 						taskResponsibleMessage: data.taskResponsibleMessage,
 						rights: Object.assign(this.state.rights, (data.rights || {})),
+						commentCounter: data.commentCounter,
 					});
-
-					this.props.layout.setRightButtons([
-						{
-							type: 'more',
-							callback: this.showContextMenu,
-						},
-					]);
 				})
 				.catch(({ errors }) => {
+					this.customEventEmitter.emit(
+						'TaskDetails:onLoadFailed',
+						[{ errors, taskId: this.props.taskId, workflowId: this.props.workflowId }],
+					);
+
 					if (Array.isArray(errors) && errors.length > 0)
 					{
 						Alert.alert(errors[0].message, '', () => {
-							if (this.props.layout)
+							if (this.layout)
 							{
-								this.props.layout.close();
+								this.layout.close();
 							}
 						});
 					}
@@ -332,7 +353,7 @@ jn.define('bizproc/task/details', (require, exports, module) => {
 				return new TaskFields({
 					uid: this.uid,
 					editor: this.state.editor,
-					layout: this.props.layout,
+					layout: this.layout,
 					onScrollToInvalidField: (fieldView) => {
 						if (this.scrollViewRef && fieldView)
 						{
@@ -393,103 +414,29 @@ jn.define('bizproc/task/details', (require, exports, module) => {
 
 		renderTaskButtons()
 		{
-			const task = this.task;
-
-			const showTaskButtons = this.isMyTask && !this.isTaskCompleted && task.buttons && task.buttons.length > 0;
-			const showDelegateButton = !this.isMyTask && !this.isTaskCompleted && this.state.rights.delegate;
-			const showTimelineButton = this.isMyTask;
-
-			return ScrollView(
-				{
-					style: {
-						height: 64,
-					},
-					horizontal: true,
-				},
-				View(
-					{
-						style: {
-							paddingTop: 16,
-							paddingBottom: 12,
-							flexDirection: 'row',
-							alignContent: 'center',
-							alignItems: 'center',
-							paddingHorizontal: 11,
-						},
-					},
-					showTaskButtons && View(
-						{
-							style: {
-								maxWidth: (device.screen.width) * 0.69,
-							},
-						},
-						new TaskButtons({
-							testId: 'TASK_DETAILS_BUTTONS',
-							task,
-							onBeforeAction: this.handleBeforeButtonAction.bind(this),
-							onComplete: () => {
-								NotifyManager.hideLoadingIndicatorWithoutFallback();
-								// eslint-disable-next-line no-undef
-								Notify.showIndicatorSuccess({ hideAfter: 300 });
-								if (this.props.layout)
-								{
-									setTimeout(() => this.props.layout.close(), 250);
-								}
-							},
-							onFail: (errors) => {
-								NotifyManager.hideLoadingIndicator(false);
-
-								const firstError = errors[0];
-								if (firstError.code === 'TASK_NOT_FOUND_ERROR')
-								{
-									// eslint-disable-next-line no-undef
-									InAppNotifier.showNotification({
-										backgroundColor: AppTheme.colors.baseBlackFixed,
-										message: firstError.message,
-										code: 'bp-workflow-details-buttons-task-not-found',
-										time: 3,
-									});
-
-									if (this.props.layout)
-									{
-										this.props.layout.close();
-									}
-
-									return;
-								}
-
-								Alert.alert(firstError.message);
-							},
-						}),
-					),
-					showDelegateButton && this.renderDelegateButton(),
-					(showTaskButtons || showDelegateButton) && showTimelineButton && View(
-						{
-							style: {
-								marginLeft: 12,
-								width: 1,
-								height: 19,
-								backgroundColor: AppTheme.colors.base6,
-							},
-						},
-					),
-					showTimelineButton && this.renderTimelineButton(),
-				),
-			);
+			return new TaskDetailsButtons({
+				isMyTask: this.isMyTask,
+				isTaskCompleted: this.isTaskCompleted,
+				canDelegate: this.state.rights.delegate,
+				task: this.task,
+				uid: this.uid,
+				onDelegateButtonClick: this.openDelegationSelector.bind(this),
+				onTimelineButtonClick: this.openTimeline.bind(this),
+				allTaskCount: this.state.allCount,
+				layout: this.layout,
+				showNotifications: BX.prop.getBoolean(this.props, 'showNotifications', true),
+				detailsRef: this,
+			});
 		}
 
-		async handleBeforeButtonAction(task, button)
+		async getFieldValues(button)
 		{
-			await NotifyManager.showLoadingIndicator();
-
 			if (!this.fieldList)
 			{
 				return Promise.resolve(null);
 			}
 
-			// cancel === 4
-			const isValid = button.TARGET_USER_STATUS === 4 ? true : this.fieldList.isValid();
-
+			const isValid = button.TARGET_USER_STATUS === TaskUserStatus.CANCEL ? true : this.fieldList.isValid();
 			if (isValid)
 			{
 				let errors = null;
@@ -503,113 +450,7 @@ jn.define('bizproc/task/details', (require, exports, module) => {
 				}
 			}
 
-			NotifyManager.hideLoadingIndicator(false);
-
 			return Promise.reject();
-		}
-
-		renderTimelineButton()
-		{
-			return View(
-				{
-					style: {
-						paddingLeft: 12,
-						height: 64,
-						flexDirection: 'row',
-						alignItems: 'center',
-					},
-				},
-				View(
-					{
-						style: {
-							justifyContent: 'center',
-							height: 36,
-							borderRadius: 8,
-							borderWidth: 1,
-							borderColor: AppTheme.colors.base5,
-							padding: 8,
-							paddingHorizontal: 10,
-							marginRight: 12,
-							maxWidth: 157,
-						},
-						// testId: `${this.testId}_BUTTON_${type.toUpperCase()}`,
-						onClick: () => {
-							this.openTimeline();
-						},
-					},
-					Text({
-						style: {
-							fontWeight: '500',
-							fontSize: 14,
-							color: AppTheme.colors.base2,
-						},
-						text: Loc.getMessage('BPMOBILE_TASK_DETAILS_TIMELINE'),
-					}),
-				),
-				this.renderTimelineCounter(),
-			);
-		}
-
-		renderTimelineCounter()
-		{
-			let value = this.state.allCount;
-
-			if (!this.isTaskCompleted)
-			{
-				value -= 1;
-			}
-
-			if (value <= 0)
-			{
-				return null;
-			}
-
-			return Text(
-				{
-					style: {
-						position: 'absolute',
-						top: 10,
-						left: 7,
-						width: 18,
-						height: 18,
-						borderRadius: 9,
-						backgroundColor: AppTheme.colors.accentMainAlert,
-						textAlign: 'center',
-						color: AppTheme.colors.baseWhiteFixed,
-						fontSize: 12,
-						fontWeight: '500',
-					},
-					text: String(value),
-				},
-			);
-		}
-
-		renderDelegateButton()
-		{
-			return View(
-				{
-					style: {
-						justifyContent: 'center',
-						height: 36,
-						borderRadius: 8,
-						borderWidth: 1,
-						borderColor: AppTheme.colors.base5,
-						paddingVertical: 8,
-						paddingHorizontal: 10,
-					},
-					onClick: () => {
-						this.openDelegationSelector();
-					},
-				},
-				Text({
-					style: {
-						fontWeight: '500',
-						fontSize: 14,
-						color: AppTheme.colors.base2,
-					},
-					text: Loc.getMessage('BPMOBILE_TASK_DETAILS_ACTION_DELEGATE'),
-				}),
-			);
 		}
 
 		showContextMenu()
@@ -623,7 +464,7 @@ jn.define('bizproc/task/details', (require, exports, module) => {
 				actions: [
 					{
 						id: 'timeline',
-						title: Loc.getMessage('BPMOBILE_TASK_DETAILS_TIMELINE'),
+						title: Loc.getMessage('BPMOBILE_TASK_DETAILS_TIMELINE_MSGVER_1'),
 						onClickCallback: (action, itemId, { parentWidget, parent }) => {
 							parentWidget.close(() => this.openTimeline());
 						},
@@ -645,22 +486,32 @@ jn.define('bizproc/task/details', (require, exports, module) => {
 				testId: 'taskDetailsContextMenu',
 			});
 
-			void contextMenu.show(this.props.layout);
+			void contextMenu.show(this.layout);
 		}
 
 		openTimeline()
 		{
 			const openTimeline = () => {
 				void requireLazy('bizproc:workflow/timeline').then(({ WorkflowTimeline }) => {
-					void this.props.layout.close(() => {
+					const open = () => {
 						void WorkflowTimeline.open(
 							this.props.parentLayout,
 							{
 								workflowId: this.task.workflowId,
 								taskId: this.task.id,
+								readOnly: this.props.readOnlyTimeline,
 							},
 						);
-					});
+					};
+
+					if (this.props.readOnlyTimeline === true)
+					{
+						open();
+
+						return;
+					}
+
+					void this.layout.close(open);
 				});
 			};
 
@@ -692,24 +543,37 @@ jn.define('bizproc/task/details', (require, exports, module) => {
 							return;
 						}
 
-						BX.ajax.runAction('bizproc.task.delegate', {
-							data: {
-								taskIds: [this.task.id],
-								toUserId: selectedUsers.pop().id,
-								fromUserId: this.props.targetUserId ?? env.userId,
-							},
-						})
+						const delegateRequest = {
+							taskIds: [this.task.id],
+							toUserId: selectedUsers.pop().id,
+							fromUserId: this.props.targetUserId ?? env.userId,
+						};
+
+						BX.ajax.runAction('bizproc.task.delegate', { data: delegateRequest })
 							.then(({ data }) => {
-								if (data && data.message)
+								this.customEventEmitter.emit(
+									'TaskDetails:onTaskDelegated',
+									[{ response: data, request: delegateRequest, task: this.task }],
+								);
+
+								if (
+									data
+									&& data.message
+									&& BX.prop.getBoolean(this.props, 'showNotifications', true) === true
+								)
 								{
-									// eslint-disable-next-line no-undef
-									InAppNotifier.showNotification({
-										message: data.message,
-										code: 'bp-task-delegate',
-										time: 3,
-									});
+									showToast({ message: data.message }, this.props.parentLayout);
 								}
-								this.props.layout.close();
+
+								if (this.layout)
+								{
+									setTimeout(
+										() => {
+											this.layout.close();
+										},
+										250,
+									);
+								}
 							})
 							.catch(({ errors }) => Alert.alert(errors.pop().message))
 						;
@@ -717,22 +581,21 @@ jn.define('bizproc/task/details', (require, exports, module) => {
 				},
 				widgetParams: {
 					title: Loc.getMessage('BPMOBILE_WORKFLOW_LIST_ITEM_MENU_DELEGATE'),
-					// backgroundColor: '#eef2f4',
 					backdrop: {
 						mediumPositionPercent: 70,
 						horizontalSwipeAllowed: false,
-						// navigationBarColor: '#eef2f4',
 					},
 				},
 			});
 
-			return selector.show({}, this.props.layout);
+			return selector.show({}, this.layout);
 		}
 
 		renderComments()
 		{
 			return new WorkflowComments({
 				workflowId: this.task.workflowId,
+				commentCounter: this.state.commentCounter,
 			});
 		}
 	}
@@ -746,7 +609,6 @@ jn.define('bizproc/task/details', (require, exports, module) => {
 			marginHorizontal: 11,
 			marginTop: 7,
 			marginBottom: 12,
-			// paddingVertical: 12,
 		},
 		taskDescription: {
 			marginHorizontal: 11,

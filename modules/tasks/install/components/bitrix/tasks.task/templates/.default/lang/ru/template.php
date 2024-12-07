@@ -10,7 +10,7 @@ $MESS["TASKS_TASK_COMPONENT_TEMPLATE_DELETE"] = "Удалить";
 $MESS["TASKS_TASK_COMPONENT_TEMPLATE_ORIGINATOR"] = "Постановщик";
 $MESS["TASKS_TASK_COMPONENT_TEMPLATE_RESPONSIBLE"] = "Ответственный";
 $MESS['TASKS_TASK_COMPONENT_TEMPLATE_ASSIGNEE'] = 'Исполнитель';
-$MESS["TASKS_TASK_COMPONENT_TEMPLATE_ALLOW_CHANGE_DEADLINE"] = "Разрешить ответственному менять сроки задачи";
+$MESS["TASKS_TASK_COMPONENT_TEMPLATE_ALLOW_CHANGE_DEADLINE"] = "Разрешить ответственному менять сроки задачи1";
 $MESS['TASKS_TASK_COMPONENT_TEMPLATE_ALLOW_CHANGE_DEADLINE_ASSIGNEE'] = 'Разрешить исполнителю менять сроки задачи';
 $MESS["TASKS_TASK_COMPONENT_TEMPLATE_CHECKLIST"] = "Чек-лист";
 $MESS["TASKS_TASK_COMPONENT_TEMPLATE_TO_CHECKLIST"] = "в чек-лист";
@@ -117,3 +117,12 @@ $MESS["TASKS_TASK_COMPONENT_TEMPLATE_SAVE_AS_TEMPLATE"] = "Сохранить к
 $MESS["TASKS_TASK_COMPONENT_TEMPLATE_NO_WORK_DAYS_ERROR"] = "Все дни на Вашем портале отмечены как выходные";
 $MESS["TASKS_TASK_COMPONENT_TEMPLATE_BLOCK_TITLE_SE_REQUIRE_RESULT"] = "Результат задачи";
 $MESS["TASKS_TASK_COMPONENT_TEMPLATE_BLOCK_LABEL_SE_REQUIRE_RESULT"] = "Обязательный отчет при завершении задачи";
+
+$MESS["TASKS_TASK_FLOW_SELECTOR_CREATE_BUTTON"] = "Создать поток";
+$MESS["TASKS_TASK_FLOW_CHANGE_TITLE"] = "Выбрать поток?";
+$MESS["TASKS_TASK_FLOW_CHANGE_MESSAGE"] = "Описание задачи не сохранится. Скопируйте его и добавьте после выбора потока";
+$MESS["TASKS_TASK_FLOW_CHANGE_OK_CAPTION"] = "Выбрать";
+$MESS["TASKS_TASK_FLOW_CHANGE_CANCEL_CAPTION"] = "Отмена";
+
+$MESS["TASKS_NOTIFY_TASK_CREATED"] = "Задача успешно добавлена";
+$MESS["TASKS_NOTIFY_TASK_DO_VIEW"] = "Просмотреть";

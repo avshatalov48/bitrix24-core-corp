@@ -25,8 +25,6 @@ use Bitrix\Main\Security\Sign\BadSignatureException;
 use Bitrix\Main\Security\Sign\Signer;
 use Bitrix\Main\Web\Json;
 
-CUtil::JSPostUnescape();
-
 if(!function_exists('__CrmContactStExportEndResponse'))
 {
 	function __CrmContactStExportEndResponse($result)
@@ -52,10 +50,7 @@ if(!function_exists('__CrmExportWriteDataToFile'))
 			if($fileSize <= 0)
 			{
 				// add UTF-8 BOM marker
-				if (defined('BX_UTF') && BX_UTF)
-				{
-					fwrite($file, chr(239).chr(187).chr(191));
-				}
+				fwrite($file, chr(239).chr(187).chr(191));
 			}
 			fwrite($file, $data);
 			fclose($file);

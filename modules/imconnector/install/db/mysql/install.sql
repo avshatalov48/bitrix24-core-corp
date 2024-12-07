@@ -9,7 +9,8 @@ CREATE TABLE IF NOT EXISTS `b_imconnectors_status` (
   `REGISTER` varchar(1) NOT NULL,
   `DATA` longtext,
   PRIMARY KEY (`ID`),
-  INDEX `CONNECTOR_LINE` (`CONNECTOR`(30), `LINE`)
+  INDEX `CONNECTOR_LINE` (`CONNECTOR`(30), `LINE`),
+  INDEX `IX_IMCONNECTOR_LINE` (`LINE`)
 );
 
 CREATE TABLE IF NOT EXISTS `b_imconnectors_custom_connectors` (

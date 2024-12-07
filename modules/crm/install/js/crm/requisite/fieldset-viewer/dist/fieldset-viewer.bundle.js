@@ -42,14 +42,16 @@ this.BX.Crm = this.BX.Crm || {};
 	      const {
 	        entityTypeId,
 	        entityId,
-	        fieldListEditorOptions
+	        fieldListEditorOptions,
+	        documentUid
 	      } = this.getOptions();
 	      const presetId = (_fieldListEditorOptio = fieldListEditorOptions == null ? void 0 : (_fieldListEditorOptio2 = fieldListEditorOptions.fieldsPanelOptions) == null ? void 0 : _fieldListEditorOptio2.presetId) != null ? _fieldListEditorOptio : null;
 	      BX.ajax.runAction(this.endpoint, {
 	        json: {
 	          entityTypeId,
 	          entityId,
-	          presetId
+	          presetId,
+	          documentUid
 	        }
 	      }).then(result => {
 	        resolve(result.data);
@@ -137,9 +139,11 @@ this.BX.Crm = this.BX.Crm || {};
 	    const description = (() => {
 	      let text = main_core.Loc.getMessage('CRM_REQUISITE_FIELDSET_VIEWER_BANNER_DESCRIPTION');
 	      if (main_core.Type.isStringFilled(data == null ? void 0 : data.more)) {
-	        text += ` <a class="ui-link" href="${main_core.Text.encode(data == null ? void 0 : data.more)}">
-						${main_core.Loc.getMessage('CRM_REQUISITE_FIELDSET_VIEWER_BANNER_MORE_LINK_LABEL')}
-					</a>`;
+	        text += `
+					<a class="ui-link" href="${main_core.Text.encode(data == null ? void 0 : data.more)}">
+										${main_core.Loc.getMessage('CRM_REQUISITE_FIELDSET_VIEWER_BANNER_MORE_LINK_LABEL')}
+									</a>
+				`;
 	      }
 	      return text;
 	    })();
@@ -177,18 +181,85 @@ this.BX.Crm = this.BX.Crm || {};
 	    const editButton = (() => {
 	      var _options$editing;
 	      if (main_core.Type.isStringFilled(options == null ? void 0 : (_options$editing = options.editing) == null ? void 0 : _options$editing.url)) {
-	        const onEditButtonClick = () => {
-	          var _options$editing2;
-	          BX.SidePanel.Instance.open(options == null ? void 0 : (_options$editing2 = options.editing) == null ? void 0 : _options$editing2.url, {
-	            cacheable: false,
-	            events: {
-	              onClose: () => {
-	                this.show();
+	        var _options$editing2;
+	        // eslint-disable-next-line init-declarations
+	        let onEditButtonClick;
+	        if ((options == null ? void 0 : (_options$editing2 = options.editing) == null ? void 0 : _options$editing2.entityTypeId) === 8) {
+	          var _options$editing3;
+	          const postData = {
+	            permissionToken: options == null ? void 0 : (_options$editing3 = options.editing) == null ? void 0 : _options$editing3.permissionToken
+	          };
+	          onEditButtonClick = () => {
+	            var _options$editing4;
+	            BX.SidePanel.Instance.open(options == null ? void 0 : (_options$editing4 = options.editing) == null ? void 0 : _options$editing4.url, {
+	              cacheable: false,
+	              requestMethod: 'post',
+	              requestParams: postData,
+	              events: {
+	                onClose: () => {
+	                  this.show();
+	                }
 	              }
-	            }
-	          });
-	          this.setIsChanged(true);
-	        };
+	            });
+	            this.setIsChanged(true);
+	          };
+	        } else if (['COMPANY_PHONE', 'COMPANY_EMAIL'].includes(options == null ? void 0 : options.name)) {
+	          onEditButtonClick = () => {
+	            // eslint-disable-next-line promise/catch-or-return
+	            main_core.Runtime.loadExtension('sign.v2.company-editor').then(exports => {
+	              var _options$editing5, _options$editing6, _options$editing7, _options$editing8;
+	              // eslint-disable-next-line no-shadow
+	              const {
+	                CompanyEditor,
+	                CompanyEditorMode,
+	                DocumentEntityTypeId,
+	                EditorTypeGuid
+	              } = exports;
+	              CompanyEditor.openSlider({
+	                mode: CompanyEditorMode.Edit,
+	                documentEntityId: options == null ? void 0 : (_options$editing5 = options.editing) == null ? void 0 : _options$editing5.documentEntityId,
+	                companyId: options == null ? void 0 : (_options$editing6 = options.editing) == null ? void 0 : _options$editing6.entityId,
+	                layoutTitle: main_core.Loc.getMessage('CRM_REQUISITE_FIELDSET_VIEWER__SET_FORM_TITLE'),
+	                entityTypeId: options == null ? void 0 : (_options$editing7 = options.editing) == null ? void 0 : _options$editing7.documentEntityTypeId,
+	                showOnlyCompany: true,
+	                guid: (options == null ? void 0 : (_options$editing8 = options.editing) == null ? void 0 : _options$editing8.documentEntityTypeId) === DocumentEntityTypeId.B2b ? EditorTypeGuid.B2b : EditorTypeGuid.B2e,
+	                params: {
+	                  enableSingleSectionCombining: 'Y'
+	                }
+	              }, {
+	                onCloseHandler: () => this.show()
+	              });
+	            }).catch(error => {
+	              console.error(error);
+	              console.log('you should update sign service');
+	              onEditButtonClick = () => {
+	                var _options$editing9;
+	                BX.SidePanel.Instance.open(options == null ? void 0 : (_options$editing9 = options.editing) == null ? void 0 : _options$editing9.url, {
+	                  cacheable: false,
+	                  events: {
+	                    onClose: () => {
+	                      this.show();
+	                    }
+	                  }
+	                });
+	                this.setIsChanged(true);
+	              };
+	            });
+	          };
+	        } else {
+	          onEditButtonClick = () => {
+	            var _options$editing10;
+	            BX.SidePanel.Instance.open(options == null ? void 0 : (_options$editing10 = options.editing) == null ? void 0 : _options$editing10.url, {
+	              cacheable: false,
+	              events: {
+	                onClose: () => {
+	                  this.show();
+	                }
+	              }
+	            });
+	            this.setIsChanged(true);
+	          };
+	        }
 	        return main_core.Tag.render(_t5 || (_t5 = _`
 					<span 
 						class="ui-btn ui-btn-link" 

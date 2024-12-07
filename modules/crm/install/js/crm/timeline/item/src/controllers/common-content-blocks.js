@@ -1,35 +1,42 @@
-import { Base } from './base';
-import ConfigurableItem from '../configurable-item';
-import { Type } from "main.core";
-
-import TextBlock from '../components/content-blocks/text';
-import LinkBlock from '../components/content-blocks/link';
-import DateBlock from '../components/content-blocks/date';
-import WithTitle from '../components/content-blocks/with-title';
-import LineOfTextBlocks from '../components/content-blocks/line-of-text-blocks';
-import { TimelineAudio } from '../components/content-blocks/timeline-audio';
+import { Type } from 'main.core';
+import AddressBlock from '../components/content-blocks/address';
 import { ClientMark } from '../components/content-blocks/client-mark';
-import Money from '../components/content-blocks/money';
-import EditableText from '../components/content-blocks/editable-text';
-import { EditableDescription } from '../components/content-blocks/editable-description';
-import EditableDate from '../components/content-blocks/editable-date';
-import { PlayerAlert } from '../components/content-blocks/player-alert';
-import { Note } from '../components/content-blocks/note';
-import DatePill from '../components/content-blocks/date-pill';
-import { MoneyPill } from '../components/content-blocks/money-pill';
-import { InfoGroup } from '../components/content-blocks/info-group';
-import { FileList } from '../components/content-blocks/file-list';
-import { SmsMessage } from '../components/content-blocks/sms-message';
 import CommentContent from '../components/content-blocks/comment-content';
+import DateBlock from '../components/content-blocks/date';
+import DatePill from '../components/content-blocks/date-pill';
+import EditableDate from '../components/content-blocks/editable-date';
+import { EditableDescription } from '../components/content-blocks/editable-description';
+import EditableText from '../components/content-blocks/editable-text';
+import { FileList } from '../components/content-blocks/file-list';
+import { InfoGroup } from '../components/content-blocks/info-group';
 import ItemSelector from '../components/content-blocks/item-selector';
+import LineOfTextBlocks from '../components/content-blocks/line-of-text-blocks';
+import LinkBlock from '../components/content-blocks/link';
+import LineOfTextBlocksButton from '../components/content-blocks/line-of-text-blocks-button';
+import Money from '../components/content-blocks/money';
+import { MoneyPill } from '../components/content-blocks/money-pill';
+import { Note } from '../components/content-blocks/note';
+import { PlayerAlert } from '../components/content-blocks/player-alert';
+import { RestAppLayoutBlocks } from '../components/content-blocks/rest-app-layout-blocks';
+import { SmsMessage } from '../components/content-blocks/sms-message';
+import TextBlock from '../components/content-blocks/text';
+import { TimelineAudio } from '../components/content-blocks/timeline-audio';
+
+import DeadlineAndPingSelector from '../components/content-blocks/todo/deadline-and-ping-selector';
+import PingSelector from '../components/content-blocks/todo/ping-selector';
+import WithTitle from '../components/content-blocks/with-title';
+import ConfigurableItem from '../configurable-item';
+import { Base } from './base';
 
 export class CommonContentBlocks extends Base
 {
 	getContentBlockComponents(Item: ConfigurableItem): Object
 	{
 		return {
+			AddressBlock,
 			TextBlock,
 			LinkBlock,
+			LineOfTextBlocksButton,
 			DateBlock,
 			WithTitle,
 			LineOfTextBlocks,
@@ -40,6 +47,7 @@ export class CommonContentBlocks extends Base
 			EditableDescription,
 			EditableDate,
 			PlayerAlert,
+			RestAppLayoutBlocks,
 			DatePill,
 			Note,
 			FileList,
@@ -48,6 +56,8 @@ export class CommonContentBlocks extends Base
 			SmsMessage,
 			CommentContent,
 			ItemSelector,
+			PingSelector,
+			DeadlineAndPingSelector,
 		};
 	}
 

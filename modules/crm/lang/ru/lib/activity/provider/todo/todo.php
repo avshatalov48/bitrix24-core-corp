@@ -1,0 +1,5 @@
+<?php
+
+$MESS['CRM_ACTIVITY_TODO_NAME'] = 'Дело';
+$MESS['CRM_ACTIVITY_TODO_UNCOMPLETED_EMPTY_SUBJECT'] = 'Запланировано дело';
+$MESS['CRM_ACTIVITY_TODO_EMPTY_SUBJECT'] = 'Выполнено дело';

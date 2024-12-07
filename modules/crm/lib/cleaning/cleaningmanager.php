@@ -1,6 +1,7 @@
 <?php
 namespace Bitrix\Crm\Cleaning;
 
+use Bitrix\Crm\Agent\Routine\CleaningAgent;
 use Bitrix\Crm\Cleaning\Cleaner\Options;
 use Bitrix\Crm\EntityAddress;
 use Bitrix\Crm\EntityAddressType;
@@ -11,16 +12,26 @@ use Bitrix\Crm\Integration\Catalog\Contractor;
 
 class CleaningManager
 {
-	public static function register($entityTypeID, $entityID)
+	public static function register($entityTypeID, $entityID, ?int $forceUserId = null): void
 	{
-		if(!\Bitrix\Crm\Agent\Routine\CleaningAgent::isActive())
+		if(!CleaningAgent::isActive())
 		{
-			\Bitrix\Crm\Agent\Routine\CleaningAgent::activate();
+			CleaningAgent::activate();
 		}
 
 		[$entityTypeID, $entityID] = static::normalizeIds($entityTypeID, $entityID);
 
-		Entity\CleaningTable::upsert(['ENTITY_TYPE_ID' => $entityTypeID, 'ENTITY_ID' => $entityID]);
+		$upsertData = [
+			'ENTITY_TYPE_ID' => $entityTypeID,
+			'ENTITY_ID' => $entityID,
+		];
+
+		if ($forceUserId !== null)
+		{
+			$upsertData['FORCE_USER_ID'] = $forceUserId;
+		}
+
+		Entity\CleaningTable::upsert($upsertData);
 	}
 
 	public static function unregister($entityTypeID, $entityID)
@@ -59,7 +70,7 @@ class CleaningManager
 
 		$dbResult = Entity\CleaningTable::getList(
 			[
-				'select' => ['ENTITY_TYPE_ID', 'ENTITY_ID'],
+				'select' => ['ENTITY_TYPE_ID', 'ENTITY_ID', 'FORCE_USER_ID'],
 				'order' => ['CREATED_TIME' => 'ASC'],
 				'limit' => $limit
 			]
@@ -141,20 +152,6 @@ class CleaningManager
 							\Bitrix\Crm\Binding\ContactCompanyTable::unbindAllCompanies($options->getEntityId());
 							\Bitrix\Crm\Binding\QuoteContactTable::unbindAllQuotes($options->getEntityId());
 							\Bitrix\Crm\Binding\EntityContactTable::deleteByContact($options->getEntityId());
-
-							return new Result();
-						}
-					}
-				)
-				->addJob(
-					new class extends Cleaner\Job {
-						public function run(Options $options): Result
-						{
-							$identifier = new ItemIdentifier($options->getEntityTypeId(), $options->getEntityId());
-
-							\CCrmLiveFeed::deleteUserCrmConnection(
-								\Bitrix\Crm\UserField\Types\ElementType::getValueByIdentifier($identifier),
-							);
 
 							return new Result();
 						}

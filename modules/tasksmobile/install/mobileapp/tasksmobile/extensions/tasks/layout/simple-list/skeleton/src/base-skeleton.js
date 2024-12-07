@@ -2,11 +2,12 @@
  * @module tasks/layout/simple-list/skeleton/src/base-skeleton
  */
 jn.define('tasks/layout/simple-list/skeleton/src/base-skeleton', (require, exports, module) => {
-	const AppTheme = require('apptheme');
+	const { Color } = require('tokens');
 
 	class TaskBaseItemSkeleton extends LayoutComponent
 	{
-		constructor(props) {
+		constructor(props)
+		{
 			super(props);
 
 			this.visible = !this.props.fullScreen;
@@ -18,7 +19,8 @@ jn.define('tasks/layout/simple-list/skeleton/src/base-skeleton', (require, expor
 			return 10;
 		}
 
-		componentDidMount() {
+		componentDidMount()
+		{
 			setTimeout(() => {
 				if (!this.visible && this.visibilityContainer)
 				{
@@ -32,12 +34,13 @@ jn.define('tasks/layout/simple-list/skeleton/src/base-skeleton', (require, expor
 			}, 100);
 		}
 
-		render() {
+		render()
+		{
 			return View(
 				{
 					style: {
 						opacity: this.visible ? 1 : 0,
-						backgroundColor: AppTheme.colors.bgContentPrimary,
+						backgroundColor: Color.bgContentPrimary.toHex(),
 					},
 					ref: (ref) => {
 						this.visibilityContainer = ref;
@@ -47,7 +50,8 @@ jn.define('tasks/layout/simple-list/skeleton/src/base-skeleton', (require, expor
 			);
 		}
 
-		renderItems() {
+		renderItems()
+		{
 			const count = this.props.length > 0 || this.getDefaultItemsCount();
 
 			return Array.from({ length: count }).map((element, index) => this.renderItem(index, count));
@@ -67,7 +71,7 @@ jn.define('tasks/layout/simple-list/skeleton/src/base-skeleton', (require, expor
 					{
 						style: {
 							borderBottomWidth: isLast ? 0 : 1,
-							borderBottomColor: AppTheme.colors.bgSeparatorPrimary,
+							borderBottomColor: Color.bgSeparatorPrimary.toHex(),
 							paddingTop: 17,
 							paddingBottom: 16,
 						},
@@ -75,7 +79,7 @@ jn.define('tasks/layout/simple-list/skeleton/src/base-skeleton', (require, expor
 					View(
 						{
 							style: {
-								backgroundColor: AppTheme.colors.bgContentPrimary,
+								backgroundColor: Color.bgContentPrimary.toHex(),
 								flexGrow: 1,
 								flexDirection: 'column',
 							},

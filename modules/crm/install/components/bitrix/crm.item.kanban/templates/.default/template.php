@@ -1,9 +1,9 @@
 <?php
 
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
-
-use Bitrix\Crm\Service\Container;
-use Bitrix\Main\Localization\Loc;
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 \Bitrix\Main\UI\Extension::load(
 	[
@@ -58,9 +58,12 @@ $APPLICATION->IncludeComponent(
 		'SHOW_ACTIVITY' => $arResult['isCountersEnabled'] ? 'Y' : 'N',
 		'EXTRA' => [
 			'CATEGORY_ID' => $arResult['categoryId'],
-			'ADD_ITEM_PERMITTED_BY_TARIFF' => $arResult['addItemPermittedByTariff']
+			'ADD_ITEM_PERMITTED_BY_TARIFF' => $arResult['addItemPermittedByTariff'],
+			'ANALYTICS' => $arResult['analytics'] ?? [],
 		],
 		'HEADERS_SECTIONS' => $headerSections,
+		'PERFORMANCE' => $arResult['performance'],
+		'PATH_TO_MERGE' => $arResult['pathToMerge'],
 	],
 	$component
 );

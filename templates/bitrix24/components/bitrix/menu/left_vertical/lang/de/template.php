@@ -62,6 +62,7 @@ $MESS["MENU_MY_WORKGROUPS"] = "Meine Gruppen";
 $MESS["MENU_MY_WORKGROUPS_EXTRANET"] = "Extranet";
 $MESS["MENU_MY_WORKGROUPS_FAVORITES"] = "Lesezeichen";
 $MESS["MENU_OPEN_IN_NEW_PAGE"] = "Im neuen Tab öffnen";
+$MESS["MENU_OPEN_SETTINGS_MAIN_PAGE"] = "Einstellungen der Startseite bearbeiten";
 $MESS["MENU_PRESET_CRM_DESC1"] = "Automatisierung der Vertriebsprozesse";
 $MESS["MENU_PRESET_CRM_DESC2"] = "Kundenbetreuung verbessern, Verkaufszahlen erhöhen";
 $MESS["MENU_PRESET_CRM_DESC11"] = "Vertrieb automatisieren";

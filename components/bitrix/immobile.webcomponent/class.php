@@ -345,10 +345,6 @@ class MobileWebComponent extends \CBitrixComponent
 		$componentMessages = Localization\Loc::loadLanguageFile(Application::getDocumentRoot() . $this->componentPath . "/component.php");
 		if (!empty($componentMessages))
 		{
-			if (!\Bitrix\Main\Application::getInstance()->isUtfMode())
-			{
-				$componentMessages = \Bitrix\Main\Text\Encoding::convertEncoding($componentMessages, SITE_CHARSET, 'UTF-8');
-			}
 			$contentWithInjection = str_replace
 			(
 				array_map(function ($message)

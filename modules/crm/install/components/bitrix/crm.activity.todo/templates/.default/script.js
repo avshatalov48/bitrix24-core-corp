@@ -13,7 +13,7 @@ if (typeof(BX.CrmActivityTodo) === 'undefined')
 		this._dialogId = 'activity_todo_dialog';
 		this._popup = null;
 		this._activityId = 0;
-		
+
 		//bind click on activity title
 		var activityLink = BX.findChild(BX(this._ccontainer), { class: this._clink }, true, true);
 		if (activityLink)
@@ -95,7 +95,7 @@ if (typeof(BX.CrmActivityTodo) === 'undefined')
 						});
 					}*/
 				}
-				
+
 				_this._popup.setButtons([
 					new BX.PopupWindowButtonLink({
 						text : BX.message('CRM_ACTIVITY_TODO_CLOSE'),
@@ -107,32 +107,51 @@ if (typeof(BX.CrmActivityTodo) === 'undefined')
 				]);
 			});
 		},
-		_completeActivity: function (context, parent)
+		_completeActivity(context, parent)
 		{
-			BX.ajax.loadJSON(this._ajaxPath, {
+			const id = BX.Dom.attr(parent, 'data-id');
+			const ownerId = BX.Dom.attr(parent, 'data-ownerid');
+			const ownerTypeId = BX.Dom.attr(parent, 'data-ownertypeid');
+			const providerId = BX.Dom.attr(parent, 'data-providerid');
+
+			const params = {
 				action: 'complete',
-				id: BX.data(parent, 'id'),
-				ownerid: BX.data(parent, 'ownerid'),
-				ownertypeid: BX.data(parent, 'ownertypeid'),
-				completed: 1
-			}, function(data) {
-				if (0&&data.error)
-				{
-					alert(data.error);
-					context.checked = false;
-				}
-				else
-				{
-					BX.onCustomEvent('onCrmActivityTodoChecked', [
-						BX.data(parent, 'id'),
-						BX.data(parent, 'ownerid'),
-						BX.data(parent, 'ownertypeid'),
-						parseInt(BX.data(parent, 'deadlined')) === 1
-					]);
+				id,
+				ownerid: ownerId,
+				ownertypeid: ownerTypeId,
+				completed: 1,
+				providerId,
+			};
+
+			void BX.ajax.loadJSON(
+				this._ajaxPath,
+				params,
+				(data) => {
+					if (data.error)
+					{
+						BX.UI.Notification.Center.notify({
+							content: data.error,
+							autoHideDelay: 5000,
+						});
+
+						context.checked = false;
+
+						return;
+					}
+
+					const eventParams = [
+						id,
+						ownerId,
+						ownerTypeId,
+						parseInt(BX.Dom.attr(parent, 'deadlined'), 10) === 1,
+					];
+
+					BX.onCustomEvent('onCrmActivityTodoChecked', eventParams);
+
 					context.disabled = true;
-					BX.addClass(parent, 'crm-activity-todo-item-completed');
-				}
-			});
+					BX.Dom.addClass(parent, 'crm-activity-todo-item-completed');
+				},
+			);
 		},
 		_getNodeByRole: function(container, name)
 		{
@@ -156,7 +175,7 @@ if (typeof(BX.CrmActivityTodo) === 'undefined')
 								BX.message('CRM_ACTIVITY_TODO_VIEW_TITLE'),
 								{
 									onAfterPopupShow: BX.delegate(
-											this._loadActivity, 
+											this._loadActivity,
 											this
 										),
 									onPopupClose: BX.delegate(
@@ -164,7 +183,7 @@ if (typeof(BX.CrmActivityTodo) === 'undefined')
 												// clean popupId
 												this._popup.destroy();
 												this._popup = null;
-											}, 
+											},
 											this
 										)
 								});

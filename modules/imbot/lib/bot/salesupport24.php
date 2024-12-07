@@ -11,8 +11,11 @@ use Bitrix\ImBot\DialogSession;
 
 class SaleSupport24 extends Network implements SupportBot
 {
+	use Mixin\NetworkMenuBot;
+
 	public const
 		BOT_CODE = 'support24sale',
+		COMMAND_START_DIALOG = 'startDialog',
 
 		OPTION_BOT_ID = 'support24_sale_bot_id',
 		OPTION_BOT_CODE = 'support24_sale_code',
@@ -199,7 +202,27 @@ class SaleSupport24 extends Network implements SupportBot
 
 		unset($commandList[self::COMMAND_UNREGISTER]);
 
-		return $commandList;
+		return array_merge(
+			$commandList,
+			[
+				self::COMMAND_START_DIALOG => [
+					'command' => self::COMMAND_START_DIALOG,
+					'handler' => 'onCommandAdd',/** @see SaleSupport24::onCommandAdd */
+					'visible' => false,
+					'context' => [
+						[
+							'COMMAND_CONTEXT' => 'KEYBOARD',
+							'CHAT_ENTITY_TYPE' => ImBot\Service\Notifier::CHAT_ENTITY_TYPE,
+						],
+						[
+							'COMMAND_CONTEXT' => 'KEYBOARD',
+							'MESSAGE_TYPE' => \IM_MESSAGE_CHAT,
+							'CHAT_ENTITY_TYPE' => self::CHAT_ENTITY_TYPE,
+						],
+					],
+				],
+			]
+		);
 	}
 
 	/**
@@ -860,5 +883,56 @@ class SaleSupport24 extends Network implements SupportBot
 		}
 
 		return true;
+	}
+
+	public static function onCommandAdd($messageId, $messageFields): bool
+	{
+		$command = static::getCommandByMessage($messageFields);
+		if (!$command)
+		{
+			return false;
+		}
+
+		if ($messageFields['COMMAND'] === self::COMMAND_START_DIALOG)
+		{
+			$message = (new \CIMChat(self::getBotId()))->getMessage($messageId);
+
+			// duplicate message
+			self::operatorMessageAdd(0, [
+				'BOT_ID' => self::getBotId(),
+				'BOT_CODE' => self::getBotCode(),
+				'DIALOG_ID' => self::getCurrentUser()->getId(),
+				'MESSAGE' => $message['MESSAGE'],
+				'PARAMS' => [
+					self::MESSAGE_PARAM_ALLOW_QUOTE => 'Y',
+					Mixin\MESSAGE_PARAM_MENU_ACTION => 'SKIP:MENU',
+				],
+			]);
+
+			$userGender = Im\User::getInstance(self::getCurrentUser()->getId())->getGender();
+			$forward = self::getMessage('START_DIALOG_'. ($userGender == 'F' ? 'F' : 'M'));
+			if (!$forward)
+			{
+				$forward = Loc::getMessage('SALE_SUPPORT24_START_DIALOG_'. ($userGender == 'F' ? 'F' : 'M'));
+			}
+
+			\CIMMessenger::add([
+				'MESSAGE_TYPE' => \IM_MESSAGE_CHAT,
+				'SYSTEM' => 'Y',
+				'FROM_USER_ID' => self::getBotId(),
+				'TO_CHAT_ID' => $message['CHAT_ID'],
+				'MESSAGE' => self::replacePlaceholders($forward, self::getCurrentUser()->getId()),
+			]);
+
+			// Send push command to chat switch
+			Im\Bot::sendPullOpenDialog(self::getBotId());
+
+			self::disableMessageButtons($messageId);
+
+			return true;
+		}
+
+
+		return parent::onCommandAdd($messageId, $messageFields);
 	}
 }

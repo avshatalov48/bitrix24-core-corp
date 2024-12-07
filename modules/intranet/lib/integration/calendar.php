@@ -29,7 +29,7 @@ final class Calendar
 	 */
 	public static function OnCalendarEventDelete($eventId, $entry): void
 	{
-		self::rejectAccessToMailMessages($eventId);
+		self::rejectAccessToMailMessages($eventId, $entry);
 	}
 
 	/**
@@ -44,12 +44,13 @@ final class Calendar
 	 * @throws \Bitrix\Main\ObjectPropertyException
 	 * @throws \Bitrix\Main\SystemException
 	 */
-	private static function rejectAccessToMailMessages(int $eventId): void
+	private static function rejectAccessToMailMessages(int $eventId, $entry): void
 	{
 		if (Loader::includeModule('mail'))
 		{
+			$userParams = [];
 			$list = MessageAccessTable::getList([
-				'select' => ['TOKEN'],
+				'select' => ['ENTITY_ID', 'MESSAGE_ID', 'TOKEN'],
 				'filter' => [
 					'=ENTITY_TYPE' => Message::ENTITY_TYPE_CALENDAR_EVENT,
 					'=ENTITY_ID' => $eventId,
@@ -58,7 +59,23 @@ final class Calendar
 			foreach ($list as $row)
 			{
 				MessageAccessTable::delete($row['TOKEN']);
+				$messageAccess = array_filter($list, static fn($msgAccess) => (int)$msgAccess['ENTITY_ID'] === $eventId);
+				if ($messageAccess)
+				{
+					$messageId = (int)$messageAccess[0]['MESSAGE_ID'];
+					$userParams[(int)$entry['OWNER_ID']] = compact('messageId');
+				}
 			}
+
+			\Bitrix\Pull\Event::add(array_keys($userParams), [
+					'module_id' => 'mail',
+					'command' => 'unbindItem',
+					'params' => [
+						'type' => 'meeting',
+					],
+					'user_params' => $userParams,
+				]
+			);
 		}
 	}
 

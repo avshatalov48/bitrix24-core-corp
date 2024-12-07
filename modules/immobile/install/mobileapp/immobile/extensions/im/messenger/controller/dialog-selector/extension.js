@@ -74,7 +74,7 @@ jn.define('im/messenger/controller/dialog-selector', (require, exports, module) 
 				context: 'IM_CHAT_SEARCH',
 				ui: this.view,
 				providerOptions: {
-					minSearchSize: MessengerParams.get('MIN_SEARCH_SIZE', 3),
+					minSearchSize: MessengerParams.get('SEARCH_MIN_SIZE', 3),
 				},
 				entities: this.entities,
 				isNetworkSearchAvailable: MessengerParams.get('IS_NETWORK_SEARCH_AVAILABLE', false),

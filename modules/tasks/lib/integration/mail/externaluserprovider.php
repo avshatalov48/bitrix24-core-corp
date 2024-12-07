@@ -8,10 +8,13 @@
 
 namespace Bitrix\Tasks\Integration\Mail;
 
+use Bitrix\Main\Mail\Address;
+use Bitrix\Tasks\Integration\Mail;
 use Bitrix\Tasks\Internals\Notification\EntityCode;
 use Bitrix\Tasks\Internals\Notification\EntityOperation;
 use Bitrix\Tasks\Internals\Notification\Message;
 use Bitrix\Tasks\Internals\Notification\ProviderInterface;
+use Bitrix\Tasks\Util\Type;
 
 class ExternalUserProvider implements ProviderInterface
 {
@@ -25,7 +28,7 @@ class ExternalUserProvider implements ProviderInterface
 
 	public function pushMessages(): void
 	{
-		if (!\Bitrix\Tasks\Integration\Mail::isInstalled())
+		if (!Mail::isInstalled())
 		{
 			return;
 		}
@@ -96,16 +99,16 @@ class ExternalUserProvider implements ProviderInterface
 
 		$subjPrefix = '';
 		$eventId = 'TASKS_TASK_' . $entityOperation . '_EMAIL';
-		$threadMessageId = \Bitrix\Tasks\Integration\Mail::formatThreadId('TASK_'.$task->getId(), $siteId);
+		$threadMessageId = Mail::formatThreadId('TASK_'.$task->getId(), $siteId);
 
 		if($entityOperation === EntityOperation::UPDATE)
 		{
-			$threadMessageId = \Bitrix\Tasks\Integration\Mail::formatThreadId(
+			$threadMessageId = Mail::formatThreadId(
 				sprintf('TASK_UPDATE_%u_%x%x', $task->getId(), time(), rand(0, 0xffffff)),
 				$siteId
 			);
 
-			$subjPrefix = \Bitrix\Tasks\Integration\Mail::getSubjectPrefix();
+			$subjPrefix = Mail::getSubjectPrefix();
 		}
 
 		$this->sendEmail(
@@ -127,8 +130,8 @@ class ExternalUserProvider implements ProviderInterface
 				return;
 			}
 
-			$threadMessageId = \Bitrix\Tasks\Integration\Mail::formatThreadId('TASK_COMMENT_' . $commentId, $siteId);
-			$subjPrefix = \Bitrix\Tasks\Integration\Mail::getSubjectPrefix();
+			$threadMessageId = Mail::formatThreadId('TASK_COMMENT_' . $commentId, $siteId);
+			$subjPrefix = Mail::getSubjectPrefix();
 
 			$this->sendEmail(
 				$message,
@@ -178,16 +181,20 @@ class ExternalUserProvider implements ProviderInterface
 				return;
 			}
 
-			$e = [
-				"=Reply-To" => $authorName.' <'.$replyTo.'>',
+			$replyTo = new Address($authorName.' <'.$replyTo.'>');
+			$emailTo =  new Address(!empty($nameFormatted) ? ''.$nameFormatted.' <'.$email.'>' : $email);
+			$emailFrom = new Address($authorName.' <'. Mail::getDefaultEmailFrom($siteId).'>');
+
+			$emailData = [
+				"=Reply-To" => $replyTo->getEncoded(),
 				"=Message-Id" => $threadMessageId,
-				"EMAIL_FROM" => $authorName.' <'.\Bitrix\Tasks\Integration\Mail::getDefaultEmailFrom($siteId).'>',
-				"EMAIL_TO" => (!empty($nameFormatted) ? ''.$nameFormatted.' <'.$email.'>' : $email),
+				"EMAIL_FROM" => $emailFrom->getEncoded(),
+				"EMAIL_TO" => $emailTo->getEncoded(),
 
 				"TASK_ID" => $task->getId(),
 				"TASK_COMMENT_ID" => $metadata->getCommentId(),
 				"TASK_TITLE" => trim($task->getTitle()),
-				"TASK_PREVIOUS_FIELDS" => \Bitrix\Tasks\Util\Type::serializeArray($metadata->getPreviousFields()),
+				"TASK_PREVIOUS_FIELDS" => Type::serializeArray($metadata->getPreviousFields()),
 
 				"RECIPIENT_ID" => $userId,
 				"USER_ID" => \Bitrix\Tasks\Util\User::getAdminId(),
@@ -198,13 +205,13 @@ class ExternalUserProvider implements ProviderInterface
 
 			if (!(EntityCode::CODE_TASK === $entityCode && EntityOperation::ADD === $entityOperation))
 			{
-				$e['=In-Reply-To'] = \Bitrix\Tasks\Integration\Mail::formatThreadId('TASK_'.$task->getId(), $siteId);
+				$emailData['=In-Reply-To'] = Mail::formatThreadId('TASK_'.$task->getId(), $siteId);
 			}
 
 			\CEvent::Send(
 				$eventId,
 				$siteId,
-				$e
+				$emailData
 			);
 		}
 	}

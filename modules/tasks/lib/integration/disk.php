@@ -174,16 +174,18 @@ abstract class Disk extends \Bitrix\Tasks\Integration
 		{
 			$fileId = (int)$file['ID'];
 			$fileArray = $file;
+			$fileName = $fileArray['FILE_NAME'];
 		}
 		else
 		{
 			$fileId = (int)$file;
 			$fileArray = \CFile::getFileArray($fileId);
+			$fileName = $fileArray['ORIGINAL_NAME'];
 		}
 
 		$addedFile = $folder->addFile(
 			[
-				'NAME' => Ui\Text::correctFilename($fileArray['FILE_NAME']),
+				'NAME' => Ui\Text::correctFilename($fileName),
 				'FILE_ID' => $fileId,
 				'CONTENT_PROVIDER' => null,
 				'SIZE' => $fileArray['FILE_SIZE'],

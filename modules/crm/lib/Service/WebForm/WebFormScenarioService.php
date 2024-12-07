@@ -684,12 +684,28 @@ class WebFormScenarioService
 			->addAgreements(true)
 			->addCaptcha(true)
 			->addRecaptcha()
-			->addFields([
-				['name' => 'CONTACT_NAME', 'autocomplete' => true, 'required'=> true],
-				['name' => 'CONTACT_PHONE', 'autocomplete' => true, 'required'=> true],
-				['name' => 'CONTACT_EMAIL','autocomplete' => true, 'required'=> false ],
-				['type' => 'product', 'bigPic' => $bigPic,],
-			])
+			->addFields(
+				[
+					['name' => 'CONTACT_NAME', 'autocomplete' => true, 'required' => true],
+					[
+						'name' => 'CONTACT_PHONE',
+						'autocomplete' => true,
+						'required' => true,
+						'editing' => [
+							'editable' => ['valueType' => 'WORK',],
+						],
+					],
+					[
+						'name' => 'CONTACT_EMAIL',
+						'autocomplete' => true,
+						'required' => false,
+						'editing' => [
+							'editable' => ['valueType' => 'WORK',],
+						],
+					],
+					['type' => 'product', 'bigPic' => $bigPic,],
+				]
+			)
 			->usePayment($usePayment)
 			->addDocumentScheme($schema)
 		;

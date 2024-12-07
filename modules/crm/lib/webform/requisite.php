@@ -497,7 +497,10 @@ class Requisite
 			$requisite['ENTITY_ID'] = $entityId;
 			$requisite['PRESET_ID'] = $presetId;
 			$requisite['NAME'] = Loc::getMessage('CRM_WEBFORM_REQUISITE_DEFAULT_NAME');
-			$result = EntityRequisite::getSingleInstance()->add($requisite);
+			$result = EntityRequisite::getSingleInstance()->add(
+				$requisite,
+				['DISABLE_REQUIRED_USER_FIELD_CHECK' => true]
+			);
 			if ($result->isSuccess() && $result instanceof Main\ORM\Data\Result)
 			{
 				$id = $result->getId();
@@ -505,7 +508,11 @@ class Requisite
 		}
 		else
 		{
-			$result = EntityRequisite::getSingleInstance()->update($id, $requisite);
+			$result = EntityRequisite::getSingleInstance()->update(
+				$id,
+				$requisite,
+				['DISABLE_REQUIRED_USER_FIELD_CHECK' => true]
+			);
 		}
 
 		if (!$result->isSuccess())
@@ -536,14 +543,21 @@ class Requisite
 		])->fetch()['ID'] ?? 0);
 		if ($accountId)
 		{
-			$result = EntityBankDetail::getSingleInstance()->update($accountId, $account);
+			$result = EntityBankDetail::getSingleInstance()->update(
+				$accountId,
+				$account,
+				['DISABLE_REQUIRED_USER_FIELD_CHECK' => true]
+			);
 		}
 		else
 		{
 			$account['ENTITY_TYPE_ID'] = \CCrmOwnerType::Requisite;
 			$account['ENTITY_ID'] = $id;
 			$account['NAME'] = 'Default name';
-			$result = EntityBankDetail::getSingleInstance()->add($account);
+			$result = EntityBankDetail::getSingleInstance()->add(
+				$account,
+				['DISABLE_REQUIRED_USER_FIELD_CHECK' => true]
+			);
 		}
 
 		return $result;

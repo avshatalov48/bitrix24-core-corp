@@ -2,6 +2,7 @@
 namespace Bitrix\Crm\Automation\Target;
 
 use Bitrix\Crm\PhaseSemantics;
+use Bitrix\Crm\InvoiceTable;
 
 class InvoiceTarget extends BaseTarget
 {
@@ -12,70 +13,63 @@ class InvoiceTarget extends BaseTarget
 		return \CCrmOwnerType::Invoice;
 	}
 
-	public function getEntityId()
+	protected function getEntityIdByDocumentId(string $documentId): int
 	{
-		$entity = $this->getEntity();
-		return isset($entity['ID']) ? (int)$entity['ID'] : 0;
+		return (int)str_replace('INVOICE_', '', $documentId);
+	}
+
+	protected function getEntityFields(array $select): array
+	{
+		$id = $this->getEntityId();
+		if (empty($id))
+		{
+			return [];
+		}
+
+		return InvoiceTable::query()
+			->setSelect($select)
+			->where('ID', $id)
+			->fetch() ?: [];
 	}
 
 	public function getResponsibleId()
 	{
-		$entity = $this->getEntity();
-		return isset($entity['RESPONSIBLE_ID']) ? (int)$entity['RESPONSIBLE_ID'] : 0;
-	}
+		$entity = $this->getEntityFields(['RESPONSIBLE_ID']);
 
-	public function setEntityById($id)
-	{
-		$id = (int)$id;
-		if ($id > 0)
-		{
-			//TODO: use new API
-			$entity = \CCrmInvoice::GetByID($id, false);
-			if ($entity)
-			{
-				$this->setEntity($entity);
-				$this->setDocumentId('INVOICE_'.$id);
-			}
-		}
-	}
-
-	public function getEntity()
-	{
-		if ($this->entity === null && $id = $this->getDocumentId())
-		{
-			$id = (int) str_replace('INVOICE_', '', $id);
-			$this->setEntityById($id);
-		}
-
-		return parent::getEntity();
+		return (int)$entity['RESPONSIBLE_ID'];
 	}
 
 	public function getEntityStatus()
 	{
-		$entity = $this->getEntity();
-		return isset($entity['STATUS_ID']) ? $entity['STATUS_ID'] : '';
+		$entity = $this->getEntityFields(['STATUS_ID']);
+
+		return $entity['STATUS_ID'] ?? '';
 	}
 
 	public function setEntityStatus($statusId, $executeBy = null)
 	{
 		$id = $this->getEntityId();
+		if (empty($id))
+		{
+			return false;
+		}
 
 		//TODO: use new API
 		$fields = array('STATUS_ID' => $statusId);
 		$CCrmInvoice = new \CCrmInvoice(false);
-		$CCrmInvoice->Update($id, $fields, array(
+		$result = $CCrmInvoice->Update($id, $fields, array(
 			'DISABLE_USER_FIELD_CHECK' => true,
 			'REGISTER_SONET_EVENT' => true
 		));
 
-		$this->setEntityField('STATUS_ID', $statusId);
+		return $result;
 	}
 
 	public function getEntityStatuses()
 	{
 		if ($this->entityStatuses === null)
 		{
-			$this->entityStatuses = array_keys(static::getStatusInfos());
+			$this->entityStatuses = array_keys($this->getStatusInfos());
 		}
 
 		return $this->entityStatuses;
@@ -87,8 +81,12 @@ class InvoiceTarget extends BaseTarget
 		$successColor = \CCrmViewHelper::SUCCESS_COLOR;
 		$failureColor = \CCrmViewHelper::FAILURE_COLOR;
 
-		//TODO: use new API
-		$statuses = \CCrmViewHelper::GetInvoiceStatusInfos();
+		$statuses = [];
+		$result = \Bitrix\Crm\Invoice\InvoiceStatus::getList();
+		while ($row = $result->fetch())
+		{
+			$statuses[$row['STATUS_ID']] = $row;
+		}
 
 		foreach ($statuses as $id => $statusInfo)
 		{

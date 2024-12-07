@@ -126,8 +126,24 @@ final class FileAttributes extends ItemAttributes
 		return $type;
 	}
 
+	/**
+	 * @internal Should be deleted after main module will be updated.
+	 * @return bool
+	 */
+	protected static function isFakeFileData(array $fileData): bool
+	{
+		return
+			($fileData['ID'] === -1) && ($fileData['CONTENT_TYPE'] === 'application/octet-stream')
+		;
+	}
+
 	protected static function refineType($type, $fileArray)
 	{
+		if (static::isFakeFileData($fileArray))
+		{
+			return $type;
+		}
+
 		if (
 			$type === Renderer\Stub::getJsType() &&
 			!empty($fileArray['ORIGINAL_NAME']) &&

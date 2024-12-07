@@ -1,0 +1,17 @@
+<?php
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
+
+return [
+	'css' => 'dist/banner-dispatcher.bundle.css',
+	'js' => 'dist/banner-dispatcher.bundle.js',
+	'rel' => [
+		'ui.banner-dispatcher',
+		'ui.auto-launch',
+		'main.core',
+	],
+	'skip_core' => false,
+];

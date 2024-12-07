@@ -34,7 +34,7 @@ this.BX = this.BX || {};
 	        });
 	      });
 	      var userId = Number(main_core.Loc.getMessage('USER_ID'));
-	      var actionList = ['EFFICIENCY', 'DEADLINE', 'DEADLINE_CHANGE', 'TASK_APPROVE', 'TASK_DISAPPROVE', 'TASK_COMPLETE'];
+	      var actionList = ['EFFICIENCY', 'DEADLINE', 'DEADLINE_CHANGE', 'TASK_APPROVE', 'TASK_DISAPPROVE', 'TASK_COMPLETE', 'TASK_CHANGE_RESPONSIBLE'];
 	      actionList.forEach(function (action) {
 	        var start = "#".concat(action, "_START#");
 	        var end = "#".concat(action, "_END#");
@@ -67,6 +67,7 @@ this.BX = this.BX || {};
 	          case 'TASK_APPROVE':
 	          case 'TASK_DISAPPROVE':
 	          case 'TASK_COMPLETE':
+	          case 'TASK_CHANGE_RESPONSIBLE':
 	            if (!main_core.Type.isUndefined(liveData.TASK_ID) && Number(liveData.TASK_ID) > 0 && Object.keys(liveData.RIGHTS[action]).map(function (id) {
 	              return Number(id);
 	            }).includes(userId) && liveData.RIGHTS[action][userId]) {
@@ -96,7 +97,8 @@ this.BX = this.BX || {};
 	        DEADLINE_CHANGE: 'deadlineChange',
 	        TASK_APPROVE: 'taskApprove',
 	        TASK_DISAPPROVE: 'taskDisapprove',
-	        TASK_COMPLETE: 'taskComplete'
+	        TASK_COMPLETE: 'taskComplete',
+	        TASK_CHANGE_RESPONSIBLE: 'taskChangeResponsible'
 	      };
 	      var link = main_core.Loc.getMessage('SONET_RENDERPARTS_TASK_PATH');
 	      link = link.replace('#user_id#', main_core.Loc.getMessage('USER_ID')).replace('#task_id#', params.taskId);

@@ -23,6 +23,7 @@ class MyCompany
 			\CCrmOwnerType::Company,
 			\CCrmOwnerType::SmartInvoice,
 			\CCrmOwnerType::SmartDocument,
+			\CCrmOwnerType::SmartB2eDocument,
 		];
 
 		foreach ($baseEntityTypeIds as $baseEntityTypeId)
@@ -58,9 +59,9 @@ class MyCompany
 
 	public function canAddByOwnerEntity(int $ownerEntityTypeId, ?int $ownerEntityId = null): bool
 	{
-		if ($ownerEntityTypeId === \CCrmOwnerType::SmartDocument)
+		if (in_array($ownerEntityTypeId, [\CCrmOwnerType::SmartDocument, \CCrmOwnerType::SmartB2eDocument], true))
 		{
-			return $this->userPermissions->checkAddPermissions(\CCrmOwnerType::SmartDocument);
+			return $this->userPermissions->checkAddPermissions($ownerEntityTypeId);
 		}
 
 		return $this->canAdd();
@@ -68,7 +69,7 @@ class MyCompany
 
 	public function canUpdateByOwnerEntity(int $ownerEntityTypeId, ?int $ownerEntityId = null): bool
 	{
-		if ($ownerEntityTypeId === \CCrmOwnerType::SmartDocument)
+		if (in_array($ownerEntityTypeId, [\CCrmOwnerType::SmartDocument, \CCrmOwnerType::SmartB2eDocument], true))
 		{
 			return $this->userPermissions->checkUpdatePermissions($ownerEntityTypeId, $ownerEntityId);
 		}

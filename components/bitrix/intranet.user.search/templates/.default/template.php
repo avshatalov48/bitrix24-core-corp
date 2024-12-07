@@ -17,7 +17,7 @@ $arParams['INPUT_NAME'] = CUtil::JSEscape($arParams['INPUT_NAME']);
 <input type="button" onclick="<?=$name_x; ?>.Show()" value="<?=(!empty($arParams['BUTTON_CAPTION']) ? htmlspecialcharsex($arParams['BUTTON_CAPTION']) : '...'); ?>" />
 <? } ?>
 
-<script type="text/javascript">
+<script>
 
 if (window.top != window.self)
 {

@@ -13,6 +13,7 @@ return [
 		'notify-manager',
 		'pull/client/events',
 		'rest',
+		'rest/run-action-executor',
 		'statemanager/redux/store',
 		'tasks:checklist',
 		'tasks:layout/task/actionMenu',

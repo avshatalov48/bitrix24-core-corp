@@ -162,6 +162,11 @@ $prefix = $arResult['GRID_ID'];
 					->getItemCategoryId($arResult['ENTITY_ID'])
 				;
 			}
+			if (\Bitrix\Crm\Settings\LayoutSettings::getCurrent()->isSliderEnabled() && $showAddEventButton)
+			{
+				$showAddEventButton = (\Bitrix\Main\Config\Option::get('crm', 'enable_add_event_btn', 'N') === 'Y');
+			}
+
 			if ($showAddEventButton)
 			{
 				$toolbarButtons[] = [
@@ -237,7 +242,7 @@ if ($arResult['EVENT_HINT_MESSAGE'] == 'Y' && COption::GetOptionString('crm', 'm
 <div class="crm_notice_message"><?=GetMessage('CRM_IMPORT_EVENT', Array('%EMAIL%' => COption::GetOptionString('crm', 'mail', '')));?></div>
 <?endif;?>
 
-<script type="text/javascript">
+<script>
 	BX.ready(
 		function()
 		{

@@ -256,7 +256,7 @@
 		this.downloadPopup = this.createDownloadPopup();
 
 		this.downloadPopup.show();
-		this.setDownloadProgress(currentRecord, recordsCount);
+		this.setProgressLine(currentRecord, recordsCount);
 
 		this.recordDownloading = true;
 		this.downloadVoxRecordsSequentially(historyId, records, currentRecord, recordsCount);
@@ -279,7 +279,7 @@
 		this.downloadRecordByHistoryId(historyId).then(function()
 		{
 			currentRecord++;
-			this.setDownloadProgress(currentRecord, recordsCount);
+			this.setProgressLine(currentRecord, recordsCount);
 
 			if (currentRecord === recordsCount)
 			{
@@ -389,7 +389,7 @@
 		return downloadPopup;
 	};
 
-	BX.VoximplantStatisticDetail.prototype.setDownloadProgress = function(current, total)
+	BX.VoximplantStatisticDetail.prototype.setProgressLine = function(current, total)
 	{
 		var progressInPercent = Math.round(current / total * 100).toPrecision(2);
 
@@ -406,6 +406,178 @@
 
 			BX("download_records").appendChild(hint);
 		}
+	};
+
+	//endregion
+
+	//region: Delete Records
+
+	BX.VoximplantStatisticDetail.prototype.deleteSelectedVoxRecords = function()
+	{
+		const selectedIds = this.grid.getRows().getSelectedIds();
+		const records = selectedIds.map(historyId => ({ historyId }));
+
+		this.deleteProgressPopup = this.createDeleteProgressPopup();
+
+		this.deleteProgressPopup.show();
+		this.setProgressLine(0, records.length);
+
+		this.deleteVoxRecords(records);
+	};
+
+	BX.VoximplantStatisticDetail.prototype.deleteVoxRecords = function(records)
+	{
+		const recordsCount = records.length;
+		const currentRecord = 0;
+		const historyId = records[currentRecord].historyId;
+
+		this.deleteVoxRecordsSequentially(historyId, records, currentRecord, recordsCount);
+	};
+
+	BX.VoximplantStatisticDetail.prototype.deleteVoxRecordsSequentially = function (historyId, records, currentRecord, recordsCount)
+	{
+		this.deleteRecordByHistoryId(historyId).then(function()
+		{
+			currentRecord++;
+			if (this.deleteProgressPopup)
+			{
+				this.setProgressLine(currentRecord, recordsCount);
+			}
+
+			if (currentRecord === recordsCount)
+			{
+				setTimeout(function()
+				{
+					if (this.deleteProgressPopup)
+					{
+						this.deleteProgressPopup?.destroy();
+						BX.Voximplant.alert(
+							BX.message('TEL_STAT_RECORDS_ALREADY_DELETED_TITLE'),
+							BX.message('TEL_STAT_RECORDS_DELETED_AVAILABLE')
+						);
+					}
+
+					this.grid.reloadTable('GET', {
+						apply_filter: 'Y',
+						clear_nav: 'Y'
+					});
+				}.bind(this), 300);
+
+				return;
+			}
+
+			historyId = records[currentRecord].historyId;
+			this.deleteVoxRecordsSequentially(historyId, records, currentRecord, recordsCount);
+		}.bind(this));
+	};
+
+	BX.VoximplantStatisticDetail.prototype.deleteRecordByHistoryId = function (historyId)
+	{
+		return new Promise(function (resolve, reject)
+		{
+			BX.ajax.runComponentAction("bitrix:voximplant.statistic.detail", "deleteRecord", {
+				mode: "class",
+				data: {
+					'historyId': historyId
+				}
+			}).then(function()
+			{
+				resolve();
+			}.bind(this)).catch(function(e)
+			{
+				resolve();
+			}.bind(this));
+		});
+	};
+
+	BX.VoximplantStatisticDetail.prototype.openDeleteConfirm = function (isMultipleDelete, records)
+	{
+		const messageDescription = BX.message('TEL_STAT_RECORDS_DELETE_CONFIRM');
+
+		const buttons = [];
+
+		buttons.push(new BX.PopupWindowCustomButton({
+				text: BX.message('TEL_STAT_ACTION_CONFIRM_DELETE_RECORD'),
+				className: 'ui-btn ui-btn-success',
+				events: {
+					click: (e) => {
+						confirmDeletePopup.destroy();
+						isMultipleDelete ? this.deleteSelectedVoxRecords() : this.deleteVoxRecords(records);
+					}
+				}
+			})
+		)
+
+		buttons.push(new BX.PopupWindowCustomButton({
+			text: BX.message('TEL_STAT_ACTION_CANCEL_DELETE_RECORD'),
+			className: 'ui-btn ui-btn-link',
+			events: {
+				click: (e) => {
+					confirmDeletePopup.destroy();
+				}
+			}})
+		);
+
+		const confirmDeletePopup = new BX.PopupWindow('bx-voximplant-statistic-delete-confirm-popup', null, {
+			titleBar: BX.message('TEL_STAT_RECORDS_DELETE_CONFIRM_TITLE'),
+			content: messageDescription,
+			buttons: buttons,
+			overlay: true,
+			closeByEsc: true
+		});
+
+		confirmDeletePopup.show();
+	};
+
+	BX.VoximplantStatisticDetail.prototype.createDeleteProgressPopup = function()
+	{
+		const progressBarTextBefore = BX.create("div", {
+			props: { className: "ui-progressbar-text-before" },
+			text:  BX.message('TEL_STAT_RECORDS_DELETE_PROGRESS')
+		});
+
+		const progressBarLine = BX.create("div", {
+			props: { className: "ui-progressbar-bar" }
+		});
+
+		const progressBarTrack = BX.create("div", {
+			props: { className: "ui-progressbar-track" },
+			children: [
+				progressBarLine
+			]
+		});
+
+		const progressBarTextAfter = BX.create("div", {
+			props: { className: "ui-progressbar-text-after" }
+		});
+
+		const progressBar = BX.create("div", {
+			props: { className: "ui-progressbar" },
+			children: [
+				progressBarTextBefore,
+				progressBarTrack,
+				progressBarTextAfter
+			]
+		});
+
+		const progressBarContainer = BX.create("div", {
+			props: { className: "tel-stat-delete-progress-container" },
+			children: [
+				progressBar
+			]
+		});
+
+		this.progressBar = progressBar;
+		this.progressBarLine = progressBarLine;
+		this.progressBarText = progressBarTextAfter;
+
+		return new BX.PopupWindow('bx-voximplant-statistic-detail-download-popup', null, {
+			titleBar: BX.message('TEL_STAT_RECORDS_ALREADY_DELETED_TITLE'),
+			content: progressBarContainer,
+			buttons: [],
+			overlay: true,
+			closeByEsc: false
+		});
 	};
 
 	//endregion

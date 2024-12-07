@@ -143,3 +143,18 @@
 .feed-add-destination-link:hover {
 	border-bottom: 1px solid;
 }
+
+.rpa-item-detail .ui-entity-editor-header-title {
+	width: calc(100% - 60px);
+}
+
+.rpa-item-detail .ui-entity-editor-header-title-text {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	max-width: 90%;
+}
+
+.rpa-item-detail input.ui-entity-editor-header-title-text {
+	width: 90%;
+}

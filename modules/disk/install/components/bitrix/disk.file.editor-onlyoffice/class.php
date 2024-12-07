@@ -293,14 +293,7 @@ class CDiskFileEditorOnlyOfficeComponent extends BaseComponent implements Contro
 		$editorConfigData = $editorJsonConfigResult->getData();
 		$this->arResult['SERVER'] = $this->getServerByEditorConfig($editorConfigData);
 
-		if (Application::getInstance()->isUtfMode())
-		{
-			$this->arResult['EDITOR_JSON'] = Json::encode($editorConfigData);
-		}
-		else
-		{
-			$this->arResult['EDITOR_JSON'] = \CUtil::PhpToJSObject($editorConfigData);
-		}
+		$this->arResult['EDITOR_JSON'] = Json::encode($editorConfigData);
 
 		$this->arResult['SHARING_CONTROL_TYPE'] = $this->getSharingControlType($documentSession);
 		$this->arResult['PULL_CONFIG'] = null;

@@ -3,6 +3,7 @@
 namespace Bitrix\Tasks\Replication\Repository;
 
 use Bitrix\Main\SystemException;
+use Bitrix\Tasks\Internals\Log\LogFacade;
 use Bitrix\Tasks\Internals\Task\Template\TemplateObject;
 use Bitrix\Tasks\Internals\Task\TemplateTable;
 use Bitrix\Tasks\Internals\TaskObject;
@@ -32,9 +33,9 @@ class TemplateRepository implements RepositoryInterface
 
 			$this->template = $query->exec()->fetchObject();
 		}
-		catch (SystemException)
+		catch (SystemException $exception)
 		{
-			//todo: log there
+			LogFacade::logThrowable($exception);
 			return null;
 		}
 

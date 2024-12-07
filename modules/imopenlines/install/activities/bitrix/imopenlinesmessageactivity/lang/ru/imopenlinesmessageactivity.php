@@ -7,8 +7,8 @@ $MESS["IMOL_MA_UNSUPPORTED_DOCUMENT"] = "Действие не может раб
 $MESS["IMOL_MA_NO_SESSION_CODE"] = "Клиент с подключенной Открытой линией не найден";
 $MESS["IMOL_MA_NO_CHAT"] = "Чат с клиентом не найден";
 $MESS["IMOL_MA_TIMELINE_ERROR"] = "Сообщение не отправлено. #ERROR_TEXT#";
-$MESS["IMOL_MA_ATTACHMENT_TYPE"] = "Тип вложений";
-$MESS["IMOL_MA_ATTACHMENT"] = "Вложения";
-$MESS["IMOL_MA_ATTACHMENT_FILE_1"] = "Файлы документа";
+$MESS["IMOL_MA_ATTACHMENT_TYPE_1"] = "Расположение";
+$MESS["IMOL_MA_ATTACHMENT_1"] = "Файлы";
+$MESS["IMOL_MA_ATTACHMENT_FILE_2"] = "Поля элемента";
 $MESS["IMOL_MA_ATTACHMENT_DISK"] = "Диск";
 ?>

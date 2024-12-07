@@ -18,6 +18,7 @@ $MESS["INTRANET_USER_PROFILE_FIELD_UF_PHONE_INNER"] = "Внутренний те
 $MESS["INTRANET_USER_PROFILE_FIELD_UF_ZOOM"] = "Zoom";
 $MESS["INTRANET_USER_PROFILE_FIELD_PERSONAL_CITY"] = "Город";
 $MESS["INTRANET_USER_PROFILE_FIELD_EMAIL"] = "Контактный Email";
+$MESS["INTRANET_USER_PROFILE_FIELD_EMAIL_MSG_1"] = "Контактный e-mail";
 $MESS["INTRANET_USER_PROFILE_FIELD_AUTO_TIME_ZONE"] = "Автоматически определять часовой пояс";
 $MESS["INTRANET_USER_PROFILE_FIELD_TIME_ZONE"] = "Часовой пояс";
 $MESS["INTRANET_USER_PROFILE_FIELD_AUTO_TIME_ZONE_DEF"] = "(по умолчанию)";
@@ -42,3 +43,4 @@ $MESS["INTRANET_USER_PROFILE_FIELD_PERSONAL_PROFESSION"] = "Специально
 $MESS["INTRANET_USER_PROFILE_FIELD_WORK_NOTES"] = "Дополнительные заметки";
 $MESS["INTRANET_USER_PROFILE_FIELD_WORK_PROFILE"] = "Направления деятельности";
 $MESS["INTRANET_USER_PROFILE_FIELD_LANGUAGE_ID"] = "Язык для уведомлений";
+$MESS["INTRANET_USER_PROFILE_FIELD_HELP_PASSWORD_TAB"] = 'Изменить почту, которую вы используете для авторизации в Битрикс24, можно в разделе <span class="--underline"><a target="_blank" href="#HELP_LINK#">Пароли</a></span>';

@@ -4,7 +4,7 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
 $formName = 'FILTER_'.$arParams['FILTER_NAME'].'_'.rand(0, 1000);
 ?>
 <?if ($arResult['CURRENT_USER']['DEPARTMENT_TOP']):?>
-<script type="text/javascript">
+<script>
 function bx_ChangeFilterTop(ob)
 {
 	if (ob.checked) 

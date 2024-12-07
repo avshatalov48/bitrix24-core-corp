@@ -35,7 +35,13 @@ BX.Tasks.QuickForm = function(formContainerId, parameters)
 	this.messages = this.parameters.messages || {};
 	this.canManageTask = this.parameters.canManageTask !== false;
 	this.canAddMailUsers = this.parameters.canAddMailUsers === true;
-	this.personalContext = Boolean(this.parameters.personalContext)
+	this.personalContext = Boolean(this.parameters.personalContext);
+	this.isProjectEnabled = Boolean(this.parameters.isProjectEnabled);
+	this.projectFeatureId = (
+		BX.type.isNotEmptyString(this.parameters.projectFeatureId)
+			? this.parameters.projectFeatureId
+			: ''
+	);
 	if (this.canManageTask)
 	{
 		BX.bind(this.layout.title, "keypress", BX.proxy(this.fireEnterKey, this));
@@ -126,7 +132,9 @@ BX.Tasks.QuickForm.prototype.submit = function()
 		}.bind(this),
 		function(response)
 		{
-			return this.showError("Could not process this operation.");
+			return this.showError(
+				response.errors[0]?.message ?  response.errors[0].message : "Could not process this operation."
+			);
 		}.bind(this)
 	);
 };
@@ -532,6 +540,13 @@ BX.Tasks.QuickForm.ProjectSelector = function(id, form)
 	this.projectName = this.form.layout.projectLink.innerHTML;
 	this.projectId = parseInt(this.form.layout.projectId.value, 10);
 
+	this.isProjectEnabled = Boolean(this.form.isProjectEnabled);
+	this.projectFeatureId = (
+		BX.type.isNotEmptyString(this.form.projectFeatureId)
+			? this.form.projectFeatureId
+			: ''
+	);
+
 	BX.bind(this.form.layout.projectLink, "click", BX.proxy(this.openDialog, this));
 	BX.bind(this.form.layout.projectClearing, "click", BX.proxy(this.clearProject, this));
 
@@ -560,12 +575,32 @@ BX.Tasks.QuickForm.ProjectSelector = function(id, form)
 
 BX.Tasks.QuickForm.ProjectSelector.prototype.openDialog = function(event)
 {
-	this.projectDialog.show();
+	if (this.isProjectEnabled)
+	{
+		this.projectDialog.show();
+	}
+	else
+	{
+		this.showProjectLimit();
+	}
 
 	if (event)
 	{
 		BX.PreventDefault(event);
 	}
+};
+
+BX.Tasks.QuickForm.ProjectSelector.prototype.showProjectLimit = function() {
+	BX.Runtime.loadExtension('tasks.limit').then((exports) => {
+		const { Limit } = exports;
+		Limit.showInstance({
+			featureId: this.projectFeatureId,
+			limitAnalyticsLabels: {
+				module: 'tasks',
+				source: 'quickForm',
+			},
+		});
+	});
 };
 
 BX.Tasks.QuickForm.ProjectSelector.prototype.onSelect = function(item)
@@ -710,6 +745,11 @@ BX.Tasks.QuickForm.UserSelector.prototype.onSelect = function(item, type, search
 
 BX.Tasks.QuickForm.UserSelector.prototype.setCurrentUser = function(userData)
 {
+	if (!userData)
+	{
+		return;
+	}
+
 	this.userId = userData.id;
 	this.userNameFormatted = userData.fullName;
 	this.form.layout.responsible.value = this.userNameFormatted;
@@ -718,6 +758,7 @@ BX.Tasks.QuickForm.UserSelector.prototype.setCurrentUser = function(userData)
 	{
 		return;
 	}
+
 	var currentUser = this.userDialog.getItem({
 		id: this.userId,
 		entityId: 'user',

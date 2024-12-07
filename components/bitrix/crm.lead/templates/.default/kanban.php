@@ -20,6 +20,7 @@ $asset = Bitrix\Main\Page\Asset::getInstance();
 $asset->addJs('/bitrix/js/crm/common.js');
 
 // some common langs
+use Bitrix\Crm\Integration\Analytics\Dictionary;
 use Bitrix\Crm\Kanban\ViewMode;
 use Bitrix\Crm\UI\NavigationBarPanel;
 use Bitrix\Main\Localization\Loc;
@@ -52,10 +53,15 @@ if (in_array($request->get('type'), array('csv', 'excel')))
 }
 
 $kanbanViewMode = $arResult['KANBAN_VIEW_MODE'] ?? null;
+$subSection = (
+	$kanbanViewMode === ViewMode::MODE_ACTIVITIES
+		? Dictionary::SUB_SECTION_ACTIVITIES
+		: Dictionary::SUB_SECTION_KANBAN
+);
 
 $analytics = [
-	'c_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SECTION_LEAD,
-	'c_sub_section' => $kanbanViewMode === \Bitrix\Crm\Kanban\ViewMode::MODE_ACTIVITIES ? \Bitrix\Crm\Integration\Analytics\Dictionary::SUB_SECTION_ACTIVITIES : \Bitrix\Crm\Integration\Analytics\Dictionary::SUB_SECTION_KANBAN,
+	'c_section' => Dictionary::SECTION_LEAD,
+	'c_sub_section' => $subSection,
 ];
 
 // main menu
@@ -172,12 +178,14 @@ else
 
 	\Bitrix\Crm\Service\Container::getInstance()->getLocalization()->loadMessages();
 
+	$viewMode = ($kanbanViewMode ?? ViewMode::MODE_STAGES);
+
 	$APPLICATION->IncludeComponent(
 		'bitrix:crm.kanban',
 		'',
 		[
 			'ENTITY_TYPE' => $entityType,
-			'VIEW_MODE' => $kanbanViewMode ?? ViewMode::MODE_STAGES,
+			'VIEW_MODE' => $viewMode,
 			'USE_ITEM_PLANNER' => ($kanbanViewMode === ViewMode::MODE_ACTIVITIES ? 'Y' : 'N'),
 			'SHOW_ACTIVITY' => 'Y',
 			'PATH_TO_IMPORT' => $arResult['PATH_TO_LEAD_IMPORT'],
@@ -188,6 +196,12 @@ else
 					'name' => Loc::getMessage('CRM_COMMON_LEAD'),
 					'default' => true,
 					'selected' => true,
+				],
+			],
+			'EXTRA' => [
+				'ANALYTICS' => [
+					'c_section' => Dictionary::SECTION_LEAD,
+					'c_sub_section' => $subSection,
 				],
 			],
 		],

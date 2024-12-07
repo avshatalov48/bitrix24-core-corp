@@ -71,7 +71,8 @@ class CrmAutomationPubQrComponent extends \CBitrixComponent implements
 
 		if ($this->arParams['VIEW'] === 'code')
 		{
-			return $this->showCode($qrCode);
+			$this->showCode($qrCode);
+			return;
 		}
 
 		$this->arResult['QR'] = $qrCode->collectValues();

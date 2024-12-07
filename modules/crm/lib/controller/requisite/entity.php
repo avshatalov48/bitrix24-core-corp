@@ -2,6 +2,7 @@
 namespace Bitrix\Crm\Controller\Requisite;
 
 use Bitrix\Crm\EntityRequisite;
+use Bitrix\Crm\Integration\BankDetailResolver;
 use Bitrix\Crm\Integration\ClientResolver;
 use Bitrix\Main\Engine\Controller;
 
@@ -14,6 +15,9 @@ class Entity extends Controller
 		$requisiteEntity = new EntityRequisite();
 		$countryId = (int)$requisiteEntity->getCountryIdByPresetId((int)$presetId);
 
+		$defaultResolverClass = 'ClientResolver';
+		$resolverNamespace = 'Bitrix\\Crm\\Integration\\';
+		$resolverClass = '';
 		$typeId = '';
 		$isTypeIdSet = false;
 		if (
@@ -22,21 +26,28 @@ class Entity extends Controller
 			&& $options['typeId'] !== ''
 		)
 		{
-			$allowedTypesMap = ClientResolver::getAllowedTypesMap();
-			if (
-				isset($allowedTypesMap[$countryId])
-				&& is_array($allowedTypesMap[$countryId])
-				&& in_array($options['typeId'], $allowedTypesMap[$countryId], true)
-			)
+			foreach (['ClientResolver', 'BankDetailResolver'] as $resolverClass)
 			{
-				$typeId = $options['typeId'];
-				$isTypeIdSet = true;
+				$resolverClass = $resolverNamespace . $resolverClass;
+				/** @var ClientResolver|BankDetailResolver $resolverClass */
+				$allowedTypesMap = $resolverClass::getAllowedTypesMap();
+				if (
+					isset($allowedTypesMap[$countryId])
+					&& is_array($allowedTypesMap[$countryId])
+					&& in_array($options['typeId'], $allowedTypesMap[$countryId], true)
+				)
+				{
+					$typeId = $options['typeId'];
+					$isTypeIdSet = true;
+					break;
+				}
 			}
 		}
 
 		if (!$isTypeIdSet)
 		{
-			$type = ($countryId ? ClientResolver::getPropertyTypeByCountry($countryId) : []);
+			$resolverClass = $resolverNamespace . $defaultResolverClass;
+			$type = ($countryId ? $resolverClass::getPropertyTypeByCountry($countryId) : []);
 			$typeId = empty($type) ? null : (string)$type['VALUE'];
 		}
 
@@ -45,7 +56,7 @@ class Entity extends Controller
 		{
 			$preparedSearchQuery = $matches[0];
 		}
-		elseif ($typeId == ClientResolver::PROP_BIC && preg_match('/[0-9]{9}/', $searchQuery, $matches))
+		elseif ($typeId == BankDetailResolver::PROP_BIC && preg_match('/[0-9]{9}/', $searchQuery, $matches))
 		{
 			$preparedSearchQuery = $matches[0];
 		}
@@ -61,7 +72,7 @@ class Entity extends Controller
 			];
 		}
 
-		$result = (new ClientResolver())->resolveClient(
+		$result = (new $resolverClass)->resolveClient(
 			$typeId,
 			$preparedSearchQuery,
 			$countryId

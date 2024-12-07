@@ -4,6 +4,6 @@ return [
 	'extensions' => [
 		'loc',
 		'type',
-		'apptheme'
+		'im:lib/theme'
 	],
 ];

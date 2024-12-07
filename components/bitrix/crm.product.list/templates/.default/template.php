@@ -26,7 +26,7 @@ if (SITE_TEMPLATE_ID === 'bitrix24')
 }
 
 ?>
-<script type="text/javascript">
+<script>
 function crm_product_delete_grid(title, message, btnTitle, path)
 {
 	var d =
@@ -470,7 +470,7 @@ if(!isset($extMgrId[0]))
 	</form>
 	<?php
 }?>
-<script type="text/javascript">
+<script>
 	<?php
 	if(!isset($extMgrId[0]))
 	{?>

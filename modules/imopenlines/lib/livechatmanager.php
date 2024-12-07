@@ -538,27 +538,20 @@ class LiveChatManager
 
 		// change BX.Vue => BX.WidgetVue to use the new features of the library,
 		// we need to replace default export to another variable
-		$scriptContent = str_replace(
-			[
-				'BX.BitrixVue',
-				'ui_vue.BitrixVue',
-				'exports.BitrixVue',
-				'ui_vue_vuex.Vue',
-				'ui_vue.Vue',
-				'exports.Vue',
-				'BX.Vue',
-			],
-			[
-				'BX.WidgetBitrixVue',
-				'ui_vue.WidgetBitrixVue',
-				'exports.WidgetBitrixVue',
-				'ui_vue_vuex.WidgetVue',
-				'ui_vue.WidgetVue',
-				'exports.WidgetVue',
-				'BX.WidgetVue',
-			],
-			$scriptContent
-		);
+		$replacePairs = [
+			'BX.BitrixVue' => 'BX.WidgetBitrixVue',
+			'ui_vue.BitrixVue' => 'ui_vue.WidgetBitrixVue',
+			'exports.BitrixVue' => 'exports.WidgetBitrixVue',
+			'ui_vue_vuex.Vue' => 'ui_vue_vuex.WidgetVue',
+			'ui_vue.Vue' => 'ui_vue.WidgetVue',
+			'exports.Vue' => 'exports.WidgetVue',
+			'BX.Vue' => 'BX.WidgetVue',
+			'BX.PULL' => 'BX.WidgetPULL',
+			'pull_client.PULL' => 'pull_client.WidgetPULL',
+			'BX.PullClient' => 'BX.WidgetPullClient',
+			'pull_client.PullClient' => 'pull_client.WidgetPullClient',
+		];
+		$scriptContent = strtr($scriptContent, $replacePairs);
 
 		Main\IO\File::putFileContents(Application::getDocumentRoot().self::WIDGET_PATH_SCRIPT, $scriptContent);
 		Main\IO\File::putFileContents(Application::getDocumentRoot().self::WIDGET_PATH_EXTENTION_LIST, implode("\n", $resources['resolved_extension']));

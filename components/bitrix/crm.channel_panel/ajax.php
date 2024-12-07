@@ -42,7 +42,6 @@ if(!function_exists('__CrmChannelPanelEndJsonResonse'))
 	}
 }
 
-CUtil::JSPostUnescape();
 $action = isset($_POST['ACTION']) ? $_POST['ACTION'] : '';
 if($action === '')
 {

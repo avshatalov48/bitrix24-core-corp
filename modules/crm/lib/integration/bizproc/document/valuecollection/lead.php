@@ -43,16 +43,7 @@ class Lead extends Base
 
 		$this->document = array_merge($this->document, $result->fetch() ?: []);
 
-		if ($this->document['COMPANY_ID'] <= 0)
-		{
-			$this->document['COMPANY_ID'] = null;
-		}
-
-		if ($this->document['CONTACT_ID'] <= 0)
-		{
-			$this->document['CONTACT_ID'] = null;
-		}
-
+		$this->normalizeEntityBindings(['COMPANY_ID', 'CONTACT_ID']);
 		$this->appendDefaultUserPrefixes();
 		$this->appendCustomerFields();
 

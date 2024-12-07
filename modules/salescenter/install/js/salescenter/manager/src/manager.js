@@ -869,6 +869,26 @@ export class Manager
 		}
 	}
 
+	static openLimitShopNumberInfoHelper()
+	{
+		BX.UI.InfoHelper.show('limit_shop_number');
+	}
+
+	static openFreeTarifInfoHelper()
+	{
+		BX.UI.InfoHelper.show('limit_sites_free');
+	}
+
+	static openFreeDomenInfoHelper()
+	{
+		BX.UI.InfoHelper.show('limit_free_domen');
+	}
+
+	static openConfirmEmailInfoHelper()
+	{
+		BX.UI.InfoHelper.show('limit_sites_confirm_email');
+	}
+
 	static openHowItWorks(event)
 	{
 		Manager.openHelper(event, 'redirect=detail&code=9289135', 'chat_connect');

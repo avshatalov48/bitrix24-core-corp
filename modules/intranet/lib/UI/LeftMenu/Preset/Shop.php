@@ -25,6 +25,7 @@ class Shop extends Social
 				'menu_all_groups',
 				'menu_all_spaces',
 			],
+			'menu_bi_constructor',
 			'menu_company',
 			'menu_bizproc_sect',
 			'menu_automation',

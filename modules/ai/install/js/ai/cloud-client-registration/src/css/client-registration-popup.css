@@ -1,0 +1,20 @@
+.ai__cloud-client-registration-form {
+	padding-top: 20px;
+}
+
+.ai__cloud-client-registration-form_servers-select-wrapper {
+	overflow: hidden;
+}
+
+.ai__cloud-client-registration-form_servers-select-wrapper .ui-ctl-icon-loader {
+	display: none;
+}
+
+.ai__cloud-client-registration-form_servers-select-wrapper.--loading .ui-ctl-icon-loader {
+	display: inline-block;
+}
+
+.ai__cloud-client-registration-form_servers-select-wrapper.--loading .ui-ctl-icon-angle {
+	display: none;
+}
+

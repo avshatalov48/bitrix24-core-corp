@@ -5,6 +5,7 @@ jn.define('calendar/sync-page/wizard/sync-wizard', (require, exports, module) =>
 	const AppTheme = require('apptheme');
 	const { SyncWizardStage } = require('calendar/sync-page/wizard/stage');
 	const { Loc } = require('loc');
+	const { Color } = require('tokens');
 
 	const MIN_UPDATE_STATE_DELAY = 2000;
 	const FIRST_STAGE_CODE = 'connection_created';
@@ -220,9 +221,9 @@ jn.define('calendar/sync-page/wizard/sync-wizard', (require, exports, module) =>
 			return View(
 				{
 					style: {
-						backgroundColor: AppTheme.colors.bgContentPrimary,
+						backgroundColor: Color.bgContentPrimary.toHex(),
 					},
-					testId: `sync_page_wizard_container`,
+					testId: 'sync_page_wizard_container',
 				},
 				this.renderTitle(),
 				!this.state.errorState && this.renderStages(),
@@ -243,7 +244,7 @@ jn.define('calendar/sync-page/wizard/sync-wizard', (require, exports, module) =>
 						borderBottomWidth: 0.5,
 						borderBottomColor: AppTheme.colors.base6,
 					},
-					testId: `sync_page_wizard_title_container`,
+					testId: 'sync_page_wizard_title_container',
 				},
 				this.renderIcon(),
 				this.renderConnectionInfo(),
@@ -303,7 +304,7 @@ jn.define('calendar/sync-page/wizard/sync-wizard', (require, exports, module) =>
 						},
 						ellipsize: 'end',
 						numberOfLines: 1,
-						testId: `sync_page_wizard_title`,
+						testId: 'sync_page_wizard_title',
 					},
 				),
 				Text(

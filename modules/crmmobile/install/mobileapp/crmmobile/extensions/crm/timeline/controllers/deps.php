@@ -2,6 +2,7 @@
 
 return [
 	'extensions' => [
+		'require-lazy',
 		'alert',
 		'crm:type',
 		'type',
@@ -12,6 +13,8 @@ return [
 		'utils/copy',
 		'utils/string',
 		'haptics',
+		'user/profile',
+		'analytics',
 	],
 	'bundle' => [
 		'./base',

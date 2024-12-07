@@ -41,6 +41,7 @@ class DateFieldAssembler extends FieldAssembler
 	data-hint="{$fullDate}" 
 	data-hint-no-icon
 	data-hint-interactivity
+	data-hint-center
 >
 	$readableDate
 </span>

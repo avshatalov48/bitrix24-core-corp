@@ -4,8 +4,10 @@
 jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, module) => {
 	const { Type } = require('type');
 	const { Loc } = require('loc');
+	const AppTheme = require('apptheme');
+	const { Theme } = require('im/lib/theme');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
-	const { OwnMessageStatus } = require('im/messenger/const');
+	const { OwnMessageStatus, BotCode, DialogType } = require('im/messenger/const');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { DateFormatter } = require('im/messenger/lib/date-formatter');
 	const { parser } = require('im/messenger/lib/parser');
@@ -14,6 +16,11 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 	const { ReactionType } = require('im/messenger/const');
 	const { Feature } = require('im/messenger/lib/feature');
 	const { DeveloperSettings } = require('im/messenger/lib/dev/settings');
+	const { Attach } = require('im/messenger/lib/element/dialog/message/element/attach/attach');
+	const { Keyboard } = require('im/messenger/lib/element/dialog/message/element/keyboard/keyboard');
+	const { CommentInfo } = require('im/messenger/lib/element/dialog/message/element/comment-info/comment-info');
+
+	const { ChatTitle } = require('im/messenger/lib/element/chat-title');
 
 	const MessageAlign = Object.freeze({
 		center: 'center',
@@ -62,9 +69,13 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 			this.reactions = [];
 			/** @deprecated */
 			this.ownReactions = []; // TODO delete after the new format is supported on iOS
+			this.showAvatarsInReaction = true;
 
 			/** @type {MessageRichLink || null} */
 			this.richLink = null;
+
+			this.attach = [];
+			this.keyboard = [];
 
 			this.showUsername = true;
 			// TODO change user color for message
@@ -72,11 +83,13 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 			this.isAuthorBottomMessage = false;
 			this.isAuthorTopMessage = false;
 
+			this.commentInfo = null;
+
 			this
 				.setId(modelMessage.id)
 				.setTestId(modelMessage.id)
 				.setUsername(modelMessage.authorId)
-				.setAvatar(modelMessage.authorId)
+				.setAvatar(modelMessage.authorId, modelMessage.chatId, modelMessage.id)
 				.setUserColor(modelMessage.authorId)
 				.setMe(modelMessage.authorId)
 				.setTime(modelMessage.date)
@@ -85,6 +98,7 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 				.setForwardText(modelMessage)
 				.setLikes(modelMessage.reactions)
 				.setReactions(modelMessage.reactions)
+				.setShowAvatarsInReaction(String(modelMessage.id), options)
 				.setShowUsername(modelMessage, options.showUsername)
 				.setShowAvatar(modelMessage, options.showAvatar)
 				.setFontColor(options.fontColor)
@@ -95,6 +109,9 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 				.setMarginTop(options.marginTop)
 				.setMarginBottom(options.marginBottom)
 				.setRichLink(modelMessage)
+				.setAttach(modelMessage)
+				.setKeyboard(modelMessage)
+				.setCommentInfo(modelMessage, Boolean(options.showCommentInfo))
 			;
 		}
 
@@ -105,6 +122,14 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 		getType()
 		{
 			throw new Error('Message: getType() must be override in subclass.');
+		}
+
+		/**
+		 * @return {MessagesModelState}
+		 */
+		getModelMessage()
+		{
+			return serviceLocator.get('core').getStore().getters['messagesModel/getById'](this.id);
 		}
 
 		setId(id)
@@ -220,7 +245,7 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 				&& attach.BLOCKS[0].RICH_LINK,
 			);
 
-			if (attach && !attachWithOnlyRichLink)
+			if (attach && !attachWithOnlyRichLink && !Feature.isMessageAttachSupported)
 			{
 				if (Type.isStringFilled(text))
 				{
@@ -246,7 +271,11 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 			)
 			{
 				const messageId = modelMessage.id || modelMessage.templateId;
-				messageText += `\n\n[[b]ID:[/b] ${messageId}]`;
+				const previousId = modelMessage.previousId;
+				const nextId = modelMessage.nextId;
+				messageText += `\n\n[[b]previousId:[/b] ${previousId}]`;
+				messageText += `\n[[b]id:[/b] ${messageId}]`;
+				messageText += `\n[[b]nextId:[/b] ${nextId}]`;
 			}
 
 			const message = parser.decodeMessageFromText(messageText, options);
@@ -375,11 +404,57 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 
 		/**
 		 *
+		 * @param {string} messageId
+		 * @param {CreateMessageOptions} options
+		 * @return {Message}
+		 */
+		setShowAvatarsInReaction(messageId, options)
+		{
+			if (Type.isBoolean(options.showAvatarsInReaction))
+			{
+				this.showAvatarsInReaction = options.showAvatarsInReaction;
+			}
+
+			if (options.initialPostMessageId === messageId)
+			{
+				this.showAvatarsInReaction = false;
+			}
+
+			return this;
+		}
+
+		/**
+		 * @param {MessagesModelState} modelMessage
+		 * @param {boolean} showCommentInfo
+		 */
+		setCommentInfo(modelMessage, showCommentInfo)
+		{
+			if (!showCommentInfo)
+			{
+				return this;
+			}
+
+			this.commentInfo = CommentInfo.createByMessagesModel({
+				messageId: modelMessage.id,
+				channelId: modelMessage.chatId,
+			}).toMessageFormat()
+			;
+
+			return this;
+		}
+
+		/**
+		 * @deprecated
 		 * @param {MessagesModelState} messageModel
 		 * @return {Message}
 		 */
 		setRichLink(messageModel)
 		{
+			if (Feature.isMessageAttachSupported)
+			{
+				return this;
+			}
+
 			const urlId = messageModel.richLinkId;
 
 			if (!urlId)
@@ -387,7 +462,6 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 				return this;
 			}
 
-			/** @type {AttachConfig || undefined} */
 			const attach = messageModel.attach.find((attachConfig) => {
 				return Number(attachConfig.id) === urlId;
 			});
@@ -426,6 +500,42 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 						width: richLink?.previewSize?.width ?? 0,
 					},
 				};
+			}
+
+			return this;
+		}
+
+		setAttach(modelMessage)
+		{
+			if (!Feature.isMessageAttachSupported)
+			{
+				return this;
+			}
+
+			if (Type.isArrayFilled(modelMessage.attach))
+			{
+				this.attach = Attach
+					.createByMessagesModelAttach(modelMessage.attach)
+					.toMessageFormat()
+				;
+			}
+
+			return this;
+		}
+
+		setKeyboard(modelMessage)
+		{
+			if (!Feature.isMessageKeyboardSupported)
+			{
+				return this;
+			}
+
+			if (Type.isArrayFilled(modelMessage.keyboard))
+			{
+				this.keyboard = Keyboard
+					.createByMessagesModelKeyboard(modelMessage.keyboard)
+					.toMessageFormat()
+				;
 			}
 
 			return this;
@@ -674,25 +784,57 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 			return this;
 		}
 
+		/**
+		 *
+		 * @param {MessagesModelState} modelMessage
+		 * @return {Message}
+		 */
 		setForwardText(modelMessage)
 		{
 			const { forward } = modelMessage;
-			if (forward && forward.id)
+
+			if (!forward || !forward.id)
 			{
-				if (forward.userId)
-				{
-					const authorId = forward.userId;
-					const user = serviceLocator.get('core').getStore().getters['usersModel/getById'](authorId);
-					if (user)
-					{
-						this.forwardText = `${Loc.getMessage('IMMOBILE_ELEMENT_DIALOG_MESSAGE_FORWARD')} ${user.name || user.lastName || user.firstName}`;
-					}
-				}
-				else
-				{
-					this.forwardText = Loc.getMessage('IMMOBILE_ELEMENT_DIALOG_MESSAGE_FORWARD_SYSTEM');
-				}
+				return this;
 			}
+
+			const authorId = forward.userId;
+			const user = serviceLocator.get('core').getStore().getters['usersModel/getById'](authorId);
+
+			if (!forward.userId || !user)
+			{
+				// forward system message
+				this.forwardText = Loc.getMessage('IMMOBILE_ELEMENT_DIALOG_MESSAGE_FORWARD_SYSTEM');
+
+				return this;
+			}
+
+			const userName = user.name || user.lastName || user.firstName;
+
+			if ([DialogType.openChannel, DialogType.generalChannel].includes(forward.chatType))
+			{
+				this.forwardText = Loc.getMessage('IMMOBILE_ELEMENT_DIALOG_MESSAGE_FORWARD_CHANNEL')
+					.replace('#USER_NAME#', userName)
+					.replace('#CHANNEL_NAME#', forward.chatTitle)
+				;
+
+				return this;
+			}
+
+			if (forward.chatType === DialogType.channel)
+			{
+				const channelDescription = ChatTitle.getChatDescriptionByDialogType(forward.chatType);
+				this.forwardText = Loc.getMessage('IMMOBILE_ELEMENT_DIALOG_MESSAGE_FORWARD_CHANNEL')
+					.replace('#USER_NAME#', userName)
+					.replace('#CHANNEL_NAME#', channelDescription)
+				;
+
+				return this;
+			}
+
+			this.forwardText = Loc.getMessage('IMMOBILE_ELEMENT_DIALOG_MESSAGE_FORWARD_MSGVER_1')
+				.replace('#USER_NAME#', userName)
+			;
 
 			return this;
 		}
@@ -740,6 +882,18 @@ jn.define('im/messenger/lib/element/dialog/message/base', (require, exports, mod
 		setAuthorTopMessage(value)
 		{
 			this.isAuthorTopMessage = value;
+		}
+
+		setUserNameColor(authorId)
+		{
+			this.style.userNameColor = AppTheme.colors.chatMyPrimary1;
+
+			const user = serviceLocator.get('core').getStore().getters['usersModel/getById'](authorId);
+			const isCopilot = user.bot && user.botData?.code === BotCode.copilot;
+			if (isCopilot)
+			{
+				this.style.userNameColor = AppTheme.colors.accentMainCopilot;
+			}
 		}
 	}
 

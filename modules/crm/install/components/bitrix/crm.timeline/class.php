@@ -205,6 +205,12 @@ class CCrmTimelineComponent extends CBitrixComponent
 			$this->extras['CATEGORY_ID'] ?? 0
 		))->fetchForJsComponent();
 		$this->arResult['CURRENCIES'] = $this->getCurrency();
+		$this->arResult['CALENDAR_SETTINGS'] = (new Crm\Activity\ToDo\CalendarSettings\CalendarSettingsProvider())
+			->fetchForJsComponent()
+		;
+		$this->arResult['COLOR_SETTINGS'] = (new Crm\Activity\ToDo\ColorSettings\ColorSettingsProvider())
+			->fetchForJsComponent()
+		;
 
 		$this->prepareScheduleItems();
 		$this->prepareHistoryFilter();

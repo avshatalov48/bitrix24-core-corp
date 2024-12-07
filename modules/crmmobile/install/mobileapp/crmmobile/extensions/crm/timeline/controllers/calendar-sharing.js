@@ -22,6 +22,8 @@ jn.define('crm/timeline/controllers/calendar-sharing', (require, exports, module
 	const SupportedActions = {
 		OPEN_PUBLIC_PAGE: 'CalendarSharingLinkCopied:OpenPublicPageInNewTab',
 		START_VIDEOCONFERENCE: 'Activity:CalendarSharing:StartVideoconference',
+		SHOW_MEMBERS: 'CalendarSharingInvitationSent:ShowMembers',
+		SHOW_MEMBERS_ACTIVITY: 'Activity:CalendarSharing:ShowMembers',
 	};
 
 	/**
@@ -42,6 +44,9 @@ jn.define('crm/timeline/controllers/calendar-sharing', (require, exports, module
 					return this.openPublicPageInNewTab(actionParams);
 				case SupportedActions.START_VIDEOCONFERENCE:
 					return this.startVideoconference(actionParams);
+				case SupportedActions.SHOW_MEMBERS:
+				case SupportedActions.SHOW_MEMBERS_ACTIVITY:
+					return this.showMembers(actionParams);
 			}
 		}
 
@@ -59,32 +64,70 @@ jn.define('crm/timeline/controllers/calendar-sharing', (require, exports, module
 			const eventId = actionParams.eventId;
 			const ownerId = actionParams.ownerId;
 			const ownerTypeId = actionParams.ownerTypeId;
-			if (imOpener && eventId)
+			if (!imOpener || !eventId)
 			{
-				const action = 'crm.timeline.calendar.sharing.getConferenceChatId';
-
-				const data = {
-					eventId,
-					ownerId,
-					ownerTypeId,
-				};
-
-				BX.ajax.runAction(action, { data })
-					.then((response) => {
-						const chatId = response.data.chatId;
-						if (chatId)
-						{
-							const dialogParams = {
-								dialogId: `chat${chatId}`,
-							};
-
-							return imOpener.open(dialogParams);
-						}
-					})
-					.catch((response) => {
-						console.error(response);
-					});
+				return;
 			}
+
+			const action = 'crm.timeline.calendar.sharing.getConferenceChatId';
+
+			const data = {
+				eventId,
+				ownerId,
+				ownerTypeId,
+			};
+
+			BX.ajax.runAction(action, { data })
+				.then((response) => {
+					const chatId = response.data.chatId;
+					if (chatId)
+					{
+						const dialogParams = {
+							dialogId: `chat${chatId}`,
+						};
+
+						return imOpener.open(dialogParams);
+					}
+				})
+				.catch((response) => console.error(response))
+			;
+		}
+
+		showMembers({ members, title })
+		{
+			let parentWidget = PageManager;
+
+			PageManager.openWidget('list', {
+				backdrop: {
+					showOnTop: true,
+				},
+				title,
+				onReady: (list) => {
+					list.setItems(Object.values(members).map(this.prepareMemberItem));
+
+					list.on('onItemSelected', async (user) => {
+						const { openUserProfile } = await requireLazy('user/profile');
+
+						void openUserProfile({ userId: user.id, parentWidget });
+					});
+				},
+				onError: console.error,
+			}).then((widget) => {
+				parentWidget = widget;
+			});
+		}
+
+		prepareMemberItem(member)
+		{
+			return {
+				id: String(member.ID),
+				title: member.FORMATTED_NAME,
+				subtitle: (member.WORK_POSITION || ''),
+				imageUrl: (member.PHOTO_URL || ''),
+				useLetterImage: true,
+				sectionCode: 'members',
+				type: 'info',
+			};
 		}
 	}
 

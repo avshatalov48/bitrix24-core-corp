@@ -2,6 +2,7 @@
 
 namespace Bitrix\Crm;
 
+use Bitrix\Crm\Attribute\FieldAttributeManager;
 use Bitrix\Crm\Order\Matcher\BaseEntityMatcher;
 use Bitrix\Crm\Order\Matcher\Internals\OrderPropsMatchTable;
 use Bitrix\Main;
@@ -100,9 +101,11 @@ class EntityPreset
 
 			if (self::$countryCodes === null)
 			{
+				//@codingStandardsIgnoreStart
 				include($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/countries.php");
 				/** @var array $arCounries */
 				self::$countryCodes = array_flip($arCounries);
+				//@codingStandardsIgnoreEnd
 			}
 
 			foreach (self::getCountryList() as $id => $title)
@@ -148,9 +151,11 @@ class EntityPreset
 
 		if (self::$countryCodes === null)
 		{
+			//@codingStandardsIgnoreStart
 			include($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/countries.php");
 			/** @var array $arCounries */
 			self::$countryCodes = array_flip($arCounries);
+			//@codingStandardsIgnoreEnd
 		}
 
 		if(isset(self::$countryCodes[$countryId]))
@@ -167,15 +172,13 @@ class EntityPreset
 		return isset($types[$entityTypeId]['CODE']) ? $types[$entityTypeId]['CODE'] : '';
 	}
 
+	/**
+	 * @deprecated
+	 * @return true
+	 */
 	public static function isUTFMode()
 	{
-		if (Option::get('crm', 'entity_preset_force_utf_mode', 'N') === 'Y')
-			return true;
-
-		if (defined('BX_UTF') && BX_UTF)
-			return true;
-
-		return false;
+		return true;
 	}
 
 	public function getFields()
@@ -521,7 +524,14 @@ class EntityPreset
 		$this->clearCache();
 		CCrmEntitySelectorHelper::clearPrepareRequisiteDataCacheByPreset($id);
 
-		return PresetTable::update($id, $fields);
+		$result = PresetTable::update($id, $fields);
+
+		if ($result->isSuccess() && $fields['SETTINGS'])
+		{
+			$this->syncFieldAttributes($id, $fields['SETTINGS']);
+		}
+
+		return $result;
 	}
 
 	public function delete($id, $options = array())
@@ -577,7 +587,13 @@ class EntityPreset
 		$this->clearCache();
 		CCrmEntitySelectorHelper::clearPrepareRequisiteDataCacheByPreset($id);
 
-		return PresetTable::delete($id);
+		$result = PresetTable::delete($id);
+		if ($result->isSuccess())
+		{
+			FieldAttributeManager::deleteByScopePrefix("preset_$id");
+		}
+
+		return $result;
 	}
 
 	public function extractFieldNames(array $settings)
@@ -591,6 +607,25 @@ class EntityPreset
 			}
 		}
 		return $results;
+	}
+
+	protected function syncFieldAttributes(int $presetId, array $settings)
+	{
+		if ($presetId <= 0)
+		{
+			return;
+		}
+
+		$fieldMap = array_fill_keys(array_keys(EntityRequisite::getBasicFieldsInfo()), true);
+		$fieldInfos = $this->settingsGetFields($settings);
+		foreach($fieldInfos as $fieldInfo)
+		{
+			if(($fieldInfo['FIELD_NAME'] ?? '') !== '')
+			{
+				$fieldMap[$fieldInfo['FIELD_NAME']] = true;
+			}
+		}
+		FieldAttributeManager::deleteByScope("preset_$presetId", array_keys($fieldMap));
 	}
 
 	public function settingsGetFields(array $settings)
@@ -826,6 +861,14 @@ class EntityPreset
 
 	public function getSettingsFieldsOfPresets($entityTypeId, $type = 'all', $options = array())
 	{
+		static $cache = [];
+		$cacheKey = hash('crc32b', $entityTypeId . '_' . $type . '_' . serialize($options));
+
+		if (isset($cache[$cacheKey]))
+		{
+			return $cache[$cacheKey];
+		}
+
 		$result = array();
 
 		if (!is_array($options))
@@ -976,6 +1019,8 @@ class EntityPreset
 			}
 			unset($iResult);
 		}
+
+		$cache[$cacheKey] = $result;
 
 		return $result;
 	}
@@ -1221,6 +1266,7 @@ class EntityPreset
 									$delResult = PresetTable::delete($id);
 									if ($delResult->isSuccess())
 									{
+										FieldAttributeManager::deleteByScopePrefix("preset_$id");
 										$deleted = 'Y';
 									}
 								}

@@ -18,7 +18,7 @@ $formPressetChoiseName = str_replace('filter_', 'filters_', $formPressetName);
 	</div>
 </div>
 
-<script type="text/javascript">
+<script>
 	function CRM_set<?=$fieldName?>(el, bOpen)
 	{
 		var subIdName = '';

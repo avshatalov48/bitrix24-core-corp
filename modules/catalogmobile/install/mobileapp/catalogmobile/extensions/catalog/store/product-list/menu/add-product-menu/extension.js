@@ -3,6 +3,7 @@
  */
 jn.define('catalog/store/product-list/menu/add-product-menu', (require, exports, module) => {
 	const { AnalyticsLabel } = require('analytics-label');
+	const { ContextMenu } = require('layout/ui/context-menu');
 
 	/**
 	 * @class StoreDocumentAddProductMenu
@@ -24,17 +25,23 @@ jn.define('catalog/store/product-list/menu/add-product-menu', (require, exports,
 
 		buildItems()
 		{
-			return [
+			const chooseFromDbText = this.props.enableCreation ? BX.message('CSPL_MENU_CHOOSE_FROM_DB_2') : BX.message('CSPL_MENU_CHOOSE_FROM_DB_WITHOUT_CREATION');
+
+			const items = [
 				{
 					id: 'db',
-					title: BX.message('CSPL_MENU_CHOOSE_FROM_DB_2'),
+					title: chooseFromDbText,
 					subTitle: '',
 					data: {
 						svgIcon: SvgIcons.db.content,
 					},
 					onClickCallback: this.callback.bind(this, 'onChooseDb'),
 				},
-				{
+			];
+
+			if (this.props.enableCreation)
+			{
+				items.push({
 					id: 'barcodescanner',
 					title: BX.message('CSPL_MENU_SEARCH_PRODUCT_BY_BARCODE_2'),
 					subTitle: '',
@@ -42,8 +49,10 @@ jn.define('catalog/store/product-list/menu/add-product-menu', (require, exports,
 						svgIcon: SvgIcons.barcode.content,
 					},
 					onClickCallback: this.callback.bind(this, 'onChooseBarcode'),
-				},
-			];
+				});
+			}
+
+			return items;
 		}
 
 		callback(eventName)

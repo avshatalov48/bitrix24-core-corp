@@ -108,6 +108,8 @@ final class Activity extends Broker
 				[
 					'STORAGE_TYPE_ID',
 					'STORAGE_ELEMENT_IDS',
+					'CALENDAR_EVENT_ID',
+					'START_TIME',
 				],
 			),
 		);

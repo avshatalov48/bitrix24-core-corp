@@ -124,7 +124,7 @@ class TaskProvider
 			->makeAccessSql()
 			->makeGroupBy();
 
-		$res = $this->db->Query($this->buildCountQuery(), $this->bIgnoreDbErrors, "File: ".__FILE__."<br>Line: ".__LINE__);
+		$res = $this->db->Query($this->buildCountQuery(), $this->bIgnoreDbErrors);
 
 		if ($res === false)
 		{
@@ -139,7 +139,7 @@ class TaskProvider
 	 */
 	private function useOrm(): bool
 	{
-		if (Option::get('tasks', self::USE_LEGACY_KEY, 'null', '-') !== 'null')
+		if (Option::get('tasks', self::USE_LEGACY_KEY, 'null') !== 'null')
 		{
 			return false;
 		}
@@ -227,6 +227,7 @@ class TaskProvider
 		$navNum = null;
 		$cnt = null;
 
+		// backward compatability starts, I am so sorry
 		// this is a query for subtasks on the task view page
 		if ($this->isLimitQuery())
 		{
@@ -286,6 +287,11 @@ class TaskProvider
 		$result->NavPageSize = $pageSize;
 		$result->NavPageCount = ($pageSize > 0 && !is_null($cnt)) ? ceil($cnt / $pageSize) : null;
 		$result->NavNum = is_null($navNum) ? null : $navNum + 1;
+
+		// InitFromArray increased global $NavNum, which is responsible FOR ALL page navigation.
+		// let's decrease it back
+		global $NavNum;
+		$NavNum--;
 
 		return $result;
 	}
@@ -432,7 +438,7 @@ class TaskProvider
 			OFFSET " . ($page - 1) * $pageSize . "
 		";
 
-		$res = $this->db->Query($sql, $this->bIgnoreErrors, "File: " . __FILE__ . "<br>Line: " . __LINE__);
+		$res = $this->db->Query($sql, $this->bIgnoreErrors);
 		if ($res === false)
 		{
 			throw new \TasksException('', \TasksException::TE_SQL_ERROR);
@@ -469,7 +475,7 @@ class TaskProvider
 
 	private function executeNonLimitQuery(): \CDBResult
 	{
-		$res = $this->db->Query($this->buildQuery(), $this->bIgnoreErrors, "File: " . __FILE__ . "<br>Line: " . __LINE__);
+		$res = $this->db->Query($this->buildQuery(), $this->bIgnoreErrors);
 
 		if ($res === false)
 		{
@@ -484,7 +490,7 @@ class TaskProvider
 	{
 		$nTopCount += $this->getPlusOne;
 		$strSql = $this->db->TopSql($this->buildQuery(), $nTopCount);
-		$res = $this->db->Query($strSql, $this->bIgnoreErrors, "File: " . __FILE__ . "<br>Line: " . __LINE__);
+		$res = $this->db->Query($strSql, $this->bIgnoreErrors);
 		if ($res === false)
 		{
 			throw new \TasksException('', \TasksException::TE_SQL_ERROR);
@@ -1175,6 +1181,7 @@ class TaskProvider
 			",
 			"SCENARIO_NAME" => "SCR.SCENARIO",
 			'IS_REGULAR' => 'IS_REGULAR',
+			'FLOW_ID' => 'FLOW_ID',
 		];
 
 		if ($this->userId)

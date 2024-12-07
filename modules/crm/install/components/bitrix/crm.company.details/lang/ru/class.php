@@ -23,7 +23,6 @@ $MESS["CRM_COMPANY_TAB_QUOTE_MSGVER_1"] = "Предложения";
 $MESS["CRM_COMPANY_TAB_DEAL"] = "Сделки";
 $MESS["CRM_COMPANY_TAB_ORDERS"] = "Заказы";
 $MESS["CRM_COMPANY_TAB_BIZPROC"] = "Бизнес-процессы";
-$MESS["CRM_COMPANY_TAB_PORTRAIT"] = "Портрет";
 $MESS["CRM_COMPANY_TAB_TREE"] = "Связи";
 $MESS["CRM_COMPANY_COPY_PAGE_TITLE"] = "Копирование компании";
 $MESS["CRM_COMPANY_DUP_CTRL_TTL_SUMMARY_TITLE"] = "по названию";

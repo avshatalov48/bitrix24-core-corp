@@ -644,7 +644,7 @@ class CheckListItem extends CompositeTreeItem
 				if (data.avatar)
 				{
 					image = Tag.render`
-						<img class="tasks-checklist-notification-balloon-avatar-img" src="${data.avatar}" alt=""/>
+						<img class="tasks-checklist-notification-balloon-avatar-img" src="${encodeURI(data.avatar)}" alt=""/>
 					`;
 				}
 				content = Tag.render`

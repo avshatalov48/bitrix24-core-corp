@@ -1,0 +1,46 @@
+.sign-wizard__preparing {
+	padding-bottom: 20px;
+}
+
+.sign-wizard__first-party_responsible {
+	border-radius: var(--border-radius-md);
+	background: rgb(249, 250, 251);
+	padding: 0 15px 15px;
+	margin-bottom: 15px;
+}
+
+.sign-wizard__first-party_responsible-title {
+	display: inline-block;
+	color: var(--ui-color-palette-blue-50);
+	font: 20px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	padding: 11px 0;
+}
+
+.sign-wizard__first-party_responsible-name {
+	width: 100%;
+}
+
+.sign-wizard__requisites {
+	min-height: 150px;
+	position: relative;
+}
+
+.sign-wizard__requisites form {
+	margin-bottom: 0;
+}
+
+.sign-wizard__requisites .ui-entity-editor-header-title-text {
+	color: #2fc6f6;
+	font-size: 20px;
+	font-weight: normal;
+	text-transform: none;
+}
+
+.sign-wizard__requisites .ui-entity-editor-section-edit {
+	background-color: rgb(249, 250, 251);
+}
+
+.sign-wizard__requisites .ui-entity-editor-section-edit:last-child {
+	background: none;
+	margin-bottom: 0;
+}

@@ -2,17 +2,22 @@
  * @module layout/ui/fields/phone
  */
 jn.define('layout/ui/fields/phone', (require, exports, module) => {
+	const { Loc } = require('loc');
 	const AppTheme = require('apptheme');
 	const { StringFieldClass } = require('layout/ui/fields/string');
 	const { phoneUtils } = require('native/phonenumber');
-	const { getCountryCode } = require('utils/phone');
+	const {
+		getCountryCode,
+		showCountryPicker,
+		getFlagImageByCountryCode,
+		getGlobalCountryCode,
+	} = require('utils/phone');
 	const { stringify } = require('utils/string');
 	const { BaseField } = require('layout/ui/fields/base');
 	const { chevronDown } = require('assets/common');
-	const { Loc } = require('loc');
+	const { PropTypes } = require('utils/validation');
 
 	const DEFAULT = 'default';
-	const GLOBAL_COUNTRY_CODE = 'XX';
 
 	/**
 	 * @class PhoneField
@@ -23,7 +28,7 @@ jn.define('layout/ui/fields/phone', (require, exports, module) => {
 		{
 			super(props);
 
-			this.onChangePhone = this.onChangePhone.bind(this);
+			this.globalCountryCode = getGlobalCountryCode();
 		}
 
 		shouldShowDefaultIcon()
@@ -45,10 +50,8 @@ jn.define('layout/ui/fields/phone', (require, exports, module) => {
 
 			if (phoneNumber && !phoneUtils.getCountryCode(phoneNumber))
 			{
-				countryCode = GLOBAL_COUNTRY_CODE;
+				countryCode = this.globalCountryCode;
 			}
-			console.log('getCountryCodeByPhoneNumber');
-			console.log(countryCode);
 
 			return getCountryCode(phoneNumber, countryCode);
 		}
@@ -68,9 +71,9 @@ jn.define('layout/ui/fields/phone', (require, exports, module) => {
 
 		isEmptyValue(value)
 		{
-			const { phoneNumber = '', countryCode = GLOBAL_COUNTRY_CODE } = value;
+			const { phoneNumber = '', countryCode = this.globalCountryCode } = value;
 
-			if (countryCode !== GLOBAL_COUNTRY_CODE)
+			if (countryCode !== this.globalCountryCode)
 			{
 				const phoneCode = phoneUtils.getPhoneCode(this.getFieldCountryCode());
 				if (phoneNumber === `+${phoneCode}`)
@@ -87,42 +90,16 @@ jn.define('layout/ui/fields/phone', (require, exports, module) => {
 			return super.isEmptyValue(phoneNumber || '');
 		}
 
-		handleOnImageClick()
-		{
+		handleOnImageClick = async () => {
 			if (this.isReadOnly())
 			{
 				return;
 			}
 
-			dialogs.showCountryPicker({ useRecent: true })
-				.then(({ phoneCode }) => {
-					const newPhoneNumber = this.changePhoneNumberCode(phoneCode);
-					this.onChangePhone(newPhoneNumber);
-				})
-				.catch(console.error);
-		}
+			const { phoneNumber } = await showCountryPicker({ phoneNumber: this.getValuePhoneNumber() });
 
-		changePhoneNumberCode(phoneCode)
-		{
-			const phoneNumber = this.getValuePhoneNumber();
-			if (phoneNumber === '')
-			{
-				return phoneCode;
-			}
-
-			const currentCountryPhoneCode = phoneUtils.getPhoneCode(phoneNumber);
-
-			if (currentCountryPhoneCode)
-			{
-				const countryPhoneCode = `+${currentCountryPhoneCode}`;
-
-				return phoneNumber.startsWith(countryPhoneCode)
-					? phoneNumber.replace(countryPhoneCode, phoneCode)
-					: `${phoneCode}${phoneNumber}`;
-			}
-
-			return `${phoneCode}${phoneNumber}`;
-		}
+			this.handleOnChangePhone(phoneNumber);
+		};
 
 		renderEditableContent()
 		{
@@ -137,9 +114,9 @@ jn.define('layout/ui/fields/phone', (require, exports, module) => {
 
 		renderFlag()
 		{
-			const { image } = this.state;
 			this.styles = this.getStyles();
-			const imageUri = image || this.getImage() || this.getDefaultImage();
+
+			const imageUri = this.getFlagImageUri();
 
 			if (!imageUri)
 			{
@@ -149,29 +126,47 @@ jn.define('layout/ui/fields/phone', (require, exports, module) => {
 			return View(
 				{
 					style: this.styles.leftIconWrapper,
-					onClick: this.handleOnImageClick.bind(this),
+					onClick: this.handleOnImageClick,
 				},
-				Image({
+				this.renderFlagImage({
 					style: this.styles.flagIcon,
-					uri: imageUri,
-					resizeMode: 'contain',
-					onFailure: () => {
-						this.setState({
-							image: this.getDefaultImage(),
-						});
-					},
+					imageUri,
 				}),
-				!this.isReadOnly() && Image(
-					{
-						style: {
-							height: 5,
-							width: 7,
-						},
-						svg: {
-							content: chevronDown(),
-						},
+				this.renderChevronDown(),
+			);
+		}
+
+		renderFlagImage({ style = {}, imageUri })
+		{
+			if (!imageUri)
+			{
+				return null;
+			}
+
+			return Image({
+				style,
+				uri: imageUri,
+				resizeMode: 'contain',
+				onFailure: () => {
+					this.setState({
+						image: this.getDefaultImage(),
+					});
+				},
+			});
+		}
+
+		renderChevronDown()
+		{
+			return !this.isReadOnly() && Image(
+				{
+					style: {
+						height: 5,
+						width: 7,
 					},
-				),
+					svg: {
+						content: chevronDown(),
+					},
+				},
 			);
 		}
 
@@ -206,32 +201,30 @@ jn.define('layout/ui/fields/phone', (require, exports, module) => {
 			return {
 				...super.getFieldInputProps(),
 				value: this.getValuePhoneNumber(),
-				onChangeText: this.onChangePhone,
+				onChangeText: this.handleOnChangePhone,
 				enable: !this.isReadOnly(),
 				style: this.styles.phoneField,
 				keyboardType: 'phone-pad',
 			};
 		}
 
-		onChangePhone(phoneNumber)
-		{
+		handleOnChangePhone = (phoneNumber) => {
 			const { countryCode } = this.getValue();
 			this.fieldValue = { phoneNumber, countryCode };
-			console.log(countryCode);
 
 			this.handleChange({
 				VALUE: phoneNumber,
 				phoneNumber,
-				countryCode: phoneNumber ? this.getCountryCodeByPhoneNumber(phoneNumber) : GLOBAL_COUNTRY_CODE,
+				countryCode: phoneNumber ? this.getCountryCodeByPhoneNumber(phoneNumber) : this.globalCountryCode,
 			});
-		}
+		};
 
-		getImage()
+		getFlagImageUri()
 		{
+			const { image } = this.state;
 			const countryCode = this.getFieldCountryCode();
-			const flagImage = countryCode && sharedBundle.getImage(`flags/${countryCode}.png`);
 
-			return flagImage || this.getDefaultImage();
+			return image || getFlagImageByCountryCode(countryCode) || this.getDefaultImage();
 		}
 
 		getDefaultImage()
@@ -290,8 +283,17 @@ jn.define('layout/ui/fields/phone', (require, exports, module) => {
 		}
 	}
 
+	PhoneField.propTypes = {
+		...StringFieldClass.propTypes,
+		value: PropTypes.oneOfType([PropTypes.string, PropTypes.shape({
+			countryCode: PropTypes.string,
+			phoneNumber: PropTypes.string,
+		})]),
+	};
+
 	module.exports = {
 		PhoneType: 'phone',
+		PhoneFieldClass: PhoneField,
 		PhoneField: (props) => new PhoneField(props),
 	};
 });

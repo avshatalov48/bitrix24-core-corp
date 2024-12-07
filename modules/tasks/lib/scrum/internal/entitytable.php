@@ -2,6 +2,7 @@
 namespace Bitrix\Tasks\Scrum\Internal;
 
 use Bitrix\Main\Application;
+use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentTypeException;
 use Bitrix\Main\Entity;
 use Bitrix\Main\Entity\Query\Join;
@@ -9,6 +10,7 @@ use Bitrix\Main\ORM\Fields;
 use Bitrix\Main\ORM\Fields\Relations\OneToMany;
 use Bitrix\Main\ORM\Fields\Validators;
 use Bitrix\Main\SystemException;
+use Bitrix\Main\Text\Emoji;
 use Bitrix\Main\Web\Json;
 use Bitrix\Tasks\Scrum\Form\EntityForm;
 use Bitrix\Tasks\Scrum\Form\EntityInfo;
@@ -90,14 +92,38 @@ class EntityTable extends Entity\DataManager
 		$info->configureObjectClass(EntityInfo::class);
 		$info->configureSerializeCallback(function (?EntityInfo $entityInfo)
 		{
-			return $entityInfo ? Json::encode($entityInfo->getInfoData()) : [];
+			if (!$entityInfo)
+			{
+				return [];
+			}
+
+			try
+			{
+				$data = $entityInfo->getInfoData();
+				$data[$entityInfo->getSprintGoalKey()] = Emoji::encode($data[$entityInfo->getSprintGoalKey()]);
+
+				return Json::encode($data);
+			}
+			catch(ArgumentException $e)
+			{
+				return [];
+			}
 		});
 		$info->configureUnserializeCallback(function ($value)
 		{
-			$data = (is_string($value) && !empty($value) ? Json::decode($value) : []);
-
 			$entityInfo = new EntityInfo();
-			$entityInfo->setInfoData($data);
+
+			try
+			{
+				$data = (is_string($value) && !empty($value) ? Json::decode($value) : []);
+				if (isset($data[$entityInfo->getSprintGoalKey()]))
+				{
+					$data[$entityInfo->getSprintGoalKey()] = Emoji::decode($data[$entityInfo->getSprintGoalKey()]);
+				}
+
+				$entityInfo->setInfoData($data);
+			}
+			catch(ArgumentException $e) {}
 
 			return $entityInfo;
 		});

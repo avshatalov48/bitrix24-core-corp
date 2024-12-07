@@ -179,22 +179,21 @@
 		{
 			const buttons = [];
 
-			buttons.push({
-				type: 'search', callback: () => this.list.search.show(),
-			});
-
-			const isRestrictions = this.sharing.isRestriction();
-
-			buttons.push({
-				svg: {
-					content: this.sharing.isOn() && isRestrictions === false
-						? icons.menuCalendarColor
-						: icons.menuCalendarGray,
+			buttons.push(
+				{
+					type: 'search', callback: () => this.list.search.show(),
 				},
-				type: 'options',
-				badgeCode: 'sharing_categories_selector',
-				callback: () => this.sharingDialog(),
-			});
+				{
+					svg: {
+						content: this.sharing.isOn()
+							? icons.menuCalendarColor
+							: icons.menuCalendarGray,
+					},
+					type: 'options',
+					badgeCode: 'sharing_categories_selector',
+					callback: () => this.sharingDialog(),
+				},
+			);
 
 			// eslint-disable-next-line no-undef
 			list.setRightButtons(buttons);
@@ -216,30 +215,21 @@
 
 		sharingDialog()
 		{
-			const isRestrictions = this.sharing.isRestriction();
+			const component = (layoutWidget) => new DialogSharing({
+				layoutWidget,
+				sharing: this.sharing,
+				onSharing: (fields) => {
+					this.sharing.getModel().setFields(fields);
+					this.initRightMenu();
+				},
+			});
 
-			if (isRestrictions)
-			{
-				PlanRestriction.open({ title: Loc.getMessage('MC_PLAN_RESTRICTION_SHARING_SLOTS_FREE') });
-			}
-			else
-			{
-				const component = new DialogSharing({
-					sharing: this.sharing,
-					onSharing: (fields) => {
-						this.sharing.getModel().setFields(fields);
-						this.initRightMenu();
-					},
-				});
-
-				// eslint-disable-next-line promise/catch-or-return
-				new BottomSheet({ component })
-					.setBackgroundColor(AppTheme.colors.bgNavigation)
-					.setMediumPositionPercent(80)
-					.disableContentSwipe()
-					.open()
-					.then((widget) => component.setLayoutWidget(widget));
-			}
+			void new BottomSheet({ component })
+				.setBackgroundColor(AppTheme.colors.bgNavigation)
+				.setMediumPositionPercent(80)
+				.disableContentSwipe()
+				.open()
+			;
 		}
 
 		closeEditForm()

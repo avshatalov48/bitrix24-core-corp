@@ -6,6 +6,7 @@ jn.define('toast/offline', (require, exports, module) => {
 	const { Haptics } = require('haptics');
 	const { Loc } = require('loc');
 	const { showToast } = require('toast/base');
+	const { Color } = require('tokens');
 	const { mergeImmutable } = require('utils/object');
 
 	const pathToIcon = `${currentDomain}/bitrix/mobileapp/mobile/extensions/bitrix/toast/offline/icons/offline.svg`;
@@ -19,7 +20,7 @@ jn.define('toast/offline', (require, exports, module) => {
 	{
 		Haptics.notifyFailure();
 
-		showToast(
+		return showToast(
 			mergeImmutable(defaultParams, params),
 			layoutWidget,
 		);
@@ -27,6 +28,7 @@ jn.define('toast/offline', (require, exports, module) => {
 
 	const defaultParams = {
 		message: Loc.getMessage('MOBILE_TOAST_OFFLINE_MESSAGE'),
+		backgroundColor: Color.accentMainAlert.toHex(),
 		svg: {
 			url: pathToIcon,
 		},

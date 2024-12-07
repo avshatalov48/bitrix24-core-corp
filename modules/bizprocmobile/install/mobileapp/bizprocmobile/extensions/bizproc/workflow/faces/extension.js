@@ -79,7 +79,7 @@ jn.define('bizproc/workflow/faces', (require, exports, module) => {
 			}
 
 			return new WorkflowFacesColumn({
-				label: Loc.getMessage('BPMOBILE_WORKFLOW_FACES_COMPLETED'),
+				label: Loc.getMessage('BPMOBILE_WORKFLOW_FACES_COMPLETED_MSGVER_1'),
 				avatars: this.faces.completed,
 				status: this.faces.completedSuccess ? 'accept' : 'decline',
 				time: this.getFormattedTime(this.getDurations().completed),
@@ -114,7 +114,7 @@ jn.define('bizproc/workflow/faces', (require, exports, module) => {
 		renderDoneColumn()
 		{
 			return new WorkflowFacesColumn({
-				label: Loc.getMessage('BPMOBILE_WORKFLOW_FACES_COMPLETED_DONE'),
+				label: Loc.getMessage('BPMOBILE_WORKFLOW_FACES_COMPLETED_DONE_MSGVER_1'),
 				avatars: Type.isArrayFilled(this.faces.done) ? this.faces.done : null,
 				status: (
 					Type.isArrayFilled(this.faces.done)

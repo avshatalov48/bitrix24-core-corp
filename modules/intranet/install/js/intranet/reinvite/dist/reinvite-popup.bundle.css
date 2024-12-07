@@ -1,0 +1,61 @@
+.intranet-reinvite-popup-wrapper {
+
+}
+
+.intranet-reinvite-popup-title {
+	font-size: var(--ui-font-size-md);
+	font-weight: 400;
+	color: var(--ui-color-base-90);
+	line-height: 18px;
+}
+
+.intranet-reinvite-popup-field-row {
+	margin-top: 13px;
+}
+
+.intranet-reinvite-popup-field-label {
+	font-size: var(--ui-font-size-sm);
+	font-weight: 400;
+	color: var(--ui-color-base-50);
+	line-height: 15.5px;
+	margin: 0 0 5px 0;
+}
+
+.intranet-reinvite-popup-button-bar {
+	/*margin-top: 24px;*/
+}
+
+.intranet-reinvite-popup-container .popup-window-buttons,
+.reinvite-popup-container .popup-window-buttons {
+	text-align: left;
+}
+
+.intranet-reinvite-popup-link {
+	display: inline-block;
+	border-bottom: 1px dashed rgba(var(--ui-color-link-primary-base-rgb), var(--ui-opacity-40));
+	color: var(--ui-color-link-primary-base);
+	transition: border-bottom .3s;
+	cursor: pointer;
+}
+
+.intranet-reinvite-popup-link:hover {
+	border-bottom: 1px dashed var(--ui-color-background-transparent);
+}
+
+.intranet-reinvite-popup-field-row .ui-ctl-before.--flag {
+	margin: 7px 0 0 9px;
+}
+
+.intranet-reinvite-popup-field-row.ui-ctl-before-icon .ui-ctl-element {
+	padding-left: 38px !important;
+}
+
+.reinvite-popup-container .popup-window-buttons {
+	padding-top: 23px;
+}
+
+#intranet_reinvite_phone_flag.bx-flag-24
+{
+	width: 24px !important;
+	height: 24px !important;
+}

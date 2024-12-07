@@ -1,4 +1,7 @@
 <?php
+
+use Bitrix\Main\Localization\Loc;
+
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
 /** @var array $arParams */
@@ -27,6 +30,7 @@ $primaryEditorWrapperID = "{$prefix}_primary_wrapper";
 $primaryEditorSwitchName = "{$prefix}_primary_switch";
 $secondaryEditorContainerID = "{$prefix}_secondary_container";
 $secondaryEditorHeaderContainerID = "{$prefix}_secondary_header_container";
+$resultTitle = $arResult['RESULT_TITLE'] ?? Loc::getMessage("CRM_ENTITY_MERGER_RESULT_TITLE");
 
 $bodyClass = $APPLICATION->GetPageProperty('BodyClass');
 $APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass.' ' : '').'no-background');
@@ -38,7 +42,9 @@ $APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass.' ' : '').'n
 		<div class="crm-entity-merger-sidebar-inner">
 			<div class="crm-entity-merger-sidebar-warning-box">
 				<div class="crm-entity-merger-sidebar-warning-icon"></div>
-				<h5 class="crm-entity-merger-sidebar-warning-title"><?=GetMessage("CRM_ENTITY_MERGER_RESULT_TITLE")?></h5>
+				<h5 class="crm-entity-merger-sidebar-warning-title">
+					<?= htmlspecialcharsbx($resultTitle) ?>
+				</h5>
 				<div class="crm-entity-merger-sidebar-warning-text">
 					<?=htmlspecialcharsbx($arResult['RESULT_LEGEND'])?>
 				</div>
@@ -54,7 +60,7 @@ $APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass.' ' : '').'n
 			</div>
 			<div id="<?=htmlspecialcharsbx($secondaryEditorContainerID)?>" class="crm-entity-merger-column-container">
 			</div>
-			<script type="text/javascript">
+			<script>
 				BX.ready(
 					function ()
 					{
@@ -91,7 +97,8 @@ $APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass.' ' : '').'n
 								previouslyProcessedCount: <?=(isset($arResult['PROCESSED_COUNT']) ? (int)$arResult['PROCESSED_COUNT'] : 0)?>,
 								entityEditorUrl: "<?=CUtil::JSEscape($arResult['PATH_TO_EDITOR'])?>",
 								externalContextId: "<?=CUtil::JSEscape($arResult['EXTERNAL_CONTEXT_ID'])?>",
-								headerTitleTemplate: "<?=CUtil::JSEscape($arResult['HEADER_TEMPLATE'])?>"
+								headerTitleTemplate: "<?=CUtil::JSEscape($arResult['HEADER_TEMPLATE'])?>",
+								isReceiveEntityEditorFromController: <?= $arResult['IS_RECEIVE_ENTITY_EDITOR_FROM_CONTROLLER'] ? 'true' : 'false' ?>,
 							}
 						);
 					}

@@ -182,7 +182,7 @@ if($arResult['INNER_FORM_MODE'] === 'Y')
 {
 	?></div><?
 }
-?><script type="text/javascript">
+?><script>
 	BX.ready(function()
 	{
 		BX.Crm.ExternalRequisiteDialog.messages =
@@ -213,7 +213,7 @@ if($arResult['POPUP_MODE'] === 'Y' && $arResult['DUPLICATE_CONTROL']['ENABLED'] 
 {
 	$entityTypeCategories = CCrmOwnerType::GetAllCategoryCaptions();
 
-	?><script type="text/javascript">
+	?><script>
 	BX.ready(function()
 	{
 		var formId = "form_" + "<?=CUtil::JSEscape($arResult['FORM_ID'])?>";

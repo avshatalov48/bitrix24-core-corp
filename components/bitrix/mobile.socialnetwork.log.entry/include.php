@@ -457,7 +457,7 @@ if (!function_exists('__SLMGetLogRecord'))
 			);
 
 		if (strcasecmp(LANGUAGE_ID, 'EN') !== 0 && strcasecmp(LANGUAGE_ID, 'DE') !== 0)
-			$dateTimeFormated = ToLower($dateTimeFormated);
+			$dateTimeFormated = mb_strtolower($dateTimeFormated);
 
 		// strip current year
 		if (
@@ -565,7 +565,7 @@ if (!function_exists('__SLMGetLogRecord'))
 		if ($arParams["USE_FOLLOW"] == "Y")
 		{
 			$arEvent["FIELDS_FORMATTED"]["EVENT"]["FOLLOW"] = $arParams["EVENT"]["FOLLOW"];
-			$arEvent["FIELDS_FORMATTED"]["EVENT"]["DATE_FOLLOW_X1"] = $arParams["EVENT"]["DATE_FOLLOW_X1"];
+			$arEvent["FIELDS_FORMATTED"]["EVENT"]["DATE_FOLLOW_X1"] = $arParams["EVENT"]["DATE_FOLLOW_X1"] ?? null;
 			$arEvent["FIELDS_FORMATTED"]["EVENT"]["DATE_FOLLOW"] = $arParams["EVENT"]["DATE_FOLLOW"];
 		}
 
@@ -669,8 +669,8 @@ if (!function_exists('__SLMGetLogCommentRecord'))
 			&& strcasecmp(LANGUAGE_ID, 'DE') !== 0
 		)
 		{
-			$dateFormated = ToLower($dateFormated);
-			$dateTimeFormated = ToLower($dateTimeFormated);
+			$dateFormated = mb_strtolower($dateFormated);
+			$dateTimeFormated = mb_strtolower($dateTimeFormated);
 		}
 		// strip current year
 		if (
@@ -869,8 +869,8 @@ if (!function_exists('__SLMAjaxGetComment'))
 			);
 			if (strcasecmp(LANGUAGE_ID, 'EN') !== 0 && strcasecmp(LANGUAGE_ID, 'DE') !== 0)
 			{
-				$dateFormated = ToLower($dateFormated);
-				$dateTimeFormated = ToLower($dateTimeFormated);
+				$dateFormated = mb_strtolower($dateFormated);
+				$dateTimeFormated = mb_strtolower($dateTimeFormated);
 			}
 			// strip current year
 			if (!empty($arParams['DATE_TIME_FORMAT']) && ($arParams['DATE_TIME_FORMAT'] == 'j F Y G:i' || $arParams['DATE_TIME_FORMAT'] == 'j F Y g:i a'))

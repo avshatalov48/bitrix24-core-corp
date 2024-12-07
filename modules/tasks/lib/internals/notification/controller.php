@@ -3,6 +3,7 @@
 namespace Bitrix\Tasks\Internals\Notification;
 
 use Bitrix\Main\Config\Option;
+use Bitrix\Tasks\Flow\Internal\Entity\FlowEntity;
 use Bitrix\Tasks\Integration\CRM\TimeLineManager;
 use Bitrix\Tasks\Integration\IM;
 use Bitrix\Tasks\Integration\Mail;
@@ -52,6 +53,18 @@ class Controller
 				new SocialNetwork\NotificationProvider(),
 			])),
 		))->execute($params);
+
+		return $this;
+	}
+
+	public function onTaskAddedToFlowWithManualDistribution(TaskObject $task, FlowEntity $flow): self
+	{
+		(new Notification\UseCase\Flow\TaskAddedToFlowWithManualDistribution(
+			$task,
+			$this->buffer,
+			$this->userRepository,
+			new ProviderCollection(...$this->getDefaultNotificationProviders()),
+		))->execute($flow);
 
 		return $this;
 	}

@@ -13,6 +13,10 @@ use Bitrix\Crm\Service\ParentFieldManager;
 use Bitrix\Crm\StatusTable;
 use Bitrix\Crm\UI\EntitySelector;
 use Bitrix\Crm\UtmTable;
+use Bitrix\Main\Grid\Column\Editable\Config;
+use Bitrix\Main\Grid\Column\Editable\ListConfig;
+use Bitrix\Main\Grid\Editor;
+use Bitrix\Main\InvalidOperationException;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Text\StringHelper;
@@ -85,6 +89,7 @@ class ItemDataProvider extends EntityDataProvider
 				'displayFilter' => true,
 				'defaultGrid' => true,
 				'defaultFilter' => !$isSmartInvoice,
+				'editable' => new Config(Item::FIELD_NAME_TITLE, Editor\Types::TEXT),
 			],
 		];
 		if ($isSmartInvoice)
@@ -144,6 +149,7 @@ class ItemDataProvider extends EntityDataProvider
 				'displayFilter' => true,
 				'defaultGrid' => false,
 				'defaultFilter' => true,
+				'editable' => new Config(Item::FIELD_NAME_OPPORTUNITY, Editor\Types::NUMBER)
 			];
 			$fields[Item::FIELD_NAME_CURRENCY_ID] = [
 				'type' => static::TYPE_LIST,
@@ -152,6 +158,7 @@ class ItemDataProvider extends EntityDataProvider
 				'defaultGrid' => false,
 				'defaultFilter' => false,
 				'filterOptionPreset' => static::PRESET_LIST,
+				'editable' => new ListConfig(Item::FIELD_NAME_CURRENCY_ID, Currency::getCurrencyList())
 			];
 		}
 
@@ -285,6 +292,7 @@ class ItemDataProvider extends EntityDataProvider
 				'defaultGrid' => $isSmartInvoice,
 				'defaultFilter' => $isSmartInvoice,
 				'filterOptionPreset' => static::PRESET_DATE,
+				'editable' => new Config(Item::FIELD_NAME_BEGIN_DATE, Editor\Types::DATE),
 			];
 			$fields[Item::FIELD_NAME_CLOSE_DATE] = [
 				'type' => static::TYPE_DATE,
@@ -293,6 +301,7 @@ class ItemDataProvider extends EntityDataProvider
 				'defaultGrid' => $isSmartInvoice,
 				'defaultFilter' => $isSmartInvoice,
 				'filterOptionPreset' => static::PRESET_DATE,
+				'editable' => new Config(Item::FIELD_NAME_CLOSE_DATE, Editor\Types::DATE),
 			];
 		}
 
@@ -335,10 +344,15 @@ class ItemDataProvider extends EntityDataProvider
 					Item::FIELD_NAME_STAGE_ID => [
 						'type' => static::TYPE_LIST,
 						'displayGrid' => true,
-						'displayFilter' => $this->settings->getCategoryId() > 0,
+						'displayFilter' => !$this->isAllItemsCategory(),
 						'defaultGrid' => true,
 						'defaultFilter' => false,
 						'filterOptionPreset' => static::PRESET_LIST,
+						'editable' =>
+							$this->isAllItemsCategory()
+								? null
+								: new ListConfig(Item::FIELD_NAME_STAGE_ID, $this->getStageListForEditableColumn())
+						,
 					],
 				]
 			);
@@ -346,7 +360,7 @@ class ItemDataProvider extends EntityDataProvider
 			$fields[Item::FIELD_NAME_PREVIOUS_STAGE_ID] = [
 				'type' => static::TYPE_LIST,
 				'displayGrid' => true,
-				'displayFilter' => $this->settings->getCategoryId() > 0,
+				'displayFilter' => !$this->isAllItemsCategory(),
 				'defaultGrid' => false,
 				'defaultFilter' => false,
 				'filterOptionPreset' => static::PRESET_LIST,
@@ -396,6 +410,10 @@ class ItemDataProvider extends EntityDataProvider
 				'defaultGrid' => false,
 				'defaultFilter' => false,
 				'filterOptionPreset' => static::PRESET_LIST,
+				'editable' => new ListConfig(
+					Item::FIELD_NAME_SOURCE_ID,
+					StatusTable::getStatusesList(StatusTable::ENTITY_ID_SOURCE),
+				),
 			];
 			$fields[Item::FIELD_NAME_SOURCE_DESCRIPTION] = [
 				'type' => static::TYPE_TEXT,
@@ -440,6 +458,16 @@ class ItemDataProvider extends EntityDataProvider
 				'customCaption' => Loc::getMessage('CRM_FILTER_ITEMDATAPROVIDER_ACTIVITY_RESPONSIBLE_IDS')
 			];
 		}
+
+		$fields['ACTIVITY_BLOCK'] = [
+			'type' => static::TYPE_STRING,
+			'displayGrid' => true,
+			'displayFilter' => false,
+			'defaultGrid' => false,
+			'defaultFilter' => false,
+			'sortField' => null,
+			'customCaption' => Loc::getMessage('CRM_FILTER_ITEMDATAPROVIDER_ACTIVITY_BLOCK'),
+		];
 
 		$this->addParentFieldsInfo($fields);
 
@@ -526,11 +554,19 @@ class ItemDataProvider extends EntityDataProvider
 			{
 				$sort = $fieldParams['sortField'];
 			}
+
+			$editable = $fieldParams['editable'] ?? null;
+			if ($editable instanceof Config)
+			{
+				$editable = $editable->toArray();
+			}
+
 			$columns[] = [
 				'id' => $field,
 				'name' => $this->getFieldName($field),
 				'default' => $fieldParams['defaultGrid'],
 				'sort' => $sort,
+				'editable' => $editable,
 			];
 		}
 		if ($this->factory->isCrmTrackingEnabled())
@@ -741,8 +777,8 @@ class ItemDataProvider extends EntityDataProvider
 			&& $fieldID !== Item::FIELD_NAME_WEBFORM_ID
 		)
 		{
-			$factory = \Bitrix\Crm\Service\Container::getInstance()->getFactory($this->getEntityTypeId());
-			$referenceClass = ($factory ? $factory->getDataClass() : null);
+			$factory = Container::getInstance()->getFactory($this->getEntityTypeId());
+			$referenceClass = $factory?->getDataClass();
 
 			$params = [
 				'fieldName' => $fieldID,
@@ -919,6 +955,16 @@ class ItemDataProvider extends EntityDataProvider
 		$listFilter->prepareListFilter($filter, $requestFilter);
 	}
 
+	public function prepareFilterValue(array $rawFilterValue): array
+	{
+		$result = parent::prepareFilterValue($rawFilterValue);
+
+		static::processStageSemanticFilter($rawFilterValue, $result);
+		unset($result[static::FIELD_STAGE_SEMANTIC]);
+
+		return $result;
+	}
+
 	public function getFieldNamesByType(string $type, string $whereToDisplay = self::DISPLAY_ANYWHERE): array
 	{
 		$fields = $this->getFieldsToDisplay($whereToDisplay);
@@ -947,5 +993,26 @@ class ItemDataProvider extends EntityDataProvider
 		{
 			$filterFields['=CATEGORY_ID'] = $categoryId;
 		}
+	}
+
+	private function getStageListForEditableColumn(): array
+	{
+		if (!$this->factory->isStagesSupported() || $this->isAllItemsCategory())
+		{
+			throw new InvalidOperationException();
+		}
+
+		$list = [];
+		foreach ($this->factory->getStages($this->settings->getCategoryId()) as $stage)
+		{
+			$list[$stage->getStatusId()] = $stage->getName();
+		}
+
+		return $list;
+	}
+
+	private function isAllItemsCategory(): bool
+	{
+		return $this->settings->getCategoryId() <= 0;
 	}
 }

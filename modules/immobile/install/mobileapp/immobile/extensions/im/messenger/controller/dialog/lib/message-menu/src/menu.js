@@ -5,23 +5,32 @@
 jn.define('im/messenger/controller/dialog/lib/message-menu/message-menu', (require, exports, module) => {
 	include('InAppNotifier');
 	const { Filesystem, utils } = require('native/filesystem');
+	const { MessageParams } = require('im/messenger/const');
 
 	const { Type } = require('type');
 	const { Loc } = require('loc');
 	const { Haptics } = require('haptics');
 	const { NotifyManager } = require('notify-manager');
 	const { withCurrentDomain } = require('utils/url');
+	const { Icon } = require('assets/icons');
+	const { Theme } = require('im/lib/theme');
 
 	const {
 		EventType,
 		FileType,
 	} = require('im/messenger/const');
 	const { LoggerManager } = require('im/messenger/lib/logger');
+	const { isOnline } = require('device/connection');
 	const { Feature } = require('im/messenger/lib/feature');
-	const { Notification } = require('im/messenger/lib/ui/notification');
+	const { Notification, ToastType } = require('im/messenger/lib/ui/notification');
+	const { showDeleteChannelPostAlert } = require('im/messenger/lib/ui/alert');
+	const { ChatPermission } = require('im/messenger/lib/permission-manager');
 	const { UserProfile } = require('im/messenger/controller/user-profile');
 	const { ForwardSelector } = require('im/messenger/controller/forward-selector');
 	const { DialogTextHelper } = require('im/messenger/controller/dialog/lib/helper/text');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
+	const { DialogHelper } = require('im/messenger/lib/helper');
+	const { AnalyticsService } = require('im/messenger/provider/service');
 
 	const {
 		LikeReaction,
@@ -34,19 +43,26 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message-menu', (requi
 	} = require('im/messenger/controller/dialog/lib/message-menu/reaction');
 	const {
 		CopyAction,
+		CopyLinkAction,
 		PinAction,
 		UnpinAction,
 		ForwardAction,
+		CreateAction,
 		ReplyAction,
 		ProfileAction,
 		EditAction,
 		DeleteAction,
 		DownloadToDeviceAction,
 		DownloadToDiskAction,
+		FeedbackAction,
+		SubscribeAction,
+		UnsubscribeAction,
 	} = require('im/messenger/controller/dialog/lib/message-menu/action');
 	const { ActionType } = require('im/messenger/controller/dialog/lib/message-menu/action-type');
 	const { MessageMenuMessage } = require('im/messenger/controller/dialog/lib/message-menu/message');
 	const { MessageMenuView } = require('im/messenger/controller/dialog/lib/message-menu/view');
+	const { MessageCreateMenu } = require('im/messenger/controller/dialog/lib/message-create-menu');
+	const { MessageHelper } = require('im/messenger/lib/helper');
 
 	const logger = LoggerManager.getInstance().getLogger('dialog--message-menu');
 
@@ -97,9 +113,13 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message-menu', (requi
 				ActionType.reaction,
 				ActionType.reply,
 				ActionType.copy,
+				ActionType.copyLink,
+				ActionType.subscribe,
+				ActionType.unsubscribe,
 				ActionType.pin,
 				ActionType.unpin,
 				ActionType.forward,
+				ActionType.create,
 				ActionType.downloadToDevice,
 				ActionType.downloadToDisk,
 				ActionType.profile,
@@ -120,6 +140,15 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message-menu', (requi
 
 			if (!isRealMessage)
 			{
+				Haptics.notifyFailure();
+
+				return;
+			}
+
+			if (!ChatPermission.isCanOpenMessageMenu(this.dialogId))
+			{
+				Haptics.notifyFailure();
+
 				return;
 			}
 
@@ -127,11 +156,34 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message-menu', (requi
 
 			if (!messageModel || !('id' in messageModel))
 			{
+				Haptics.notifyFailure();
+
 				return;
 			}
+
+			if (this.isMenuNotAvailableByComponentId(messageModel))
+			{
+				Haptics.notifyFailure();
+
+				return;
+			}
+
 			const fileModel = this.store.getters['filesModel/getById'](messageModel.files[0]);
 			const dialogModel = this.store.getters['dialoguesModel/getById'](this.dialogId);
 			const userModel = this.store.getters['usersModel/getById'](messageModel.authorId);
+			const commentInfo = this.store.getters['commentModel/getByMessageId'](messageModel.id);
+
+			let isUserSubscribed = false;
+
+			if (commentInfo)
+			{
+				isUserSubscribed = commentInfo.isUserSubscribed;
+			}
+
+			if (!commentInfo && messageModel.authorId === serviceLocator.get('core').getUserId())
+			{
+				isUserSubscribed = true;
+			}
 
 			const contextMenuMessage = new MessageMenuMessage({
 				messageModel,
@@ -139,6 +191,7 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message-menu', (requi
 				dialogModel,
 				userModel,
 				isPinned: this.store.getters['messagesModel/pinModel/isPinned'](messageModel.id),
+				isUserSubscribed,
 			});
 
 			const menu = new MessageMenuView();
@@ -182,15 +235,20 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message-menu', (requi
 			this.actions = {
 				[ActionType.reaction]: this.addReactionAction.bind(this),
 				[ActionType.copy]: this.addCopyAction.bind(this),
+				[ActionType.copyLink]: this.addCopyLinkAction.bind(this),
 				[ActionType.pin]: this.addPinAction.bind(this),
 				[ActionType.unpin]: this.addUnpinAction.bind(this),
+				[ActionType.subscribe]: this.addSubscribeAction.bind(this),
+				[ActionType.unsubscribe]: this.addUnsubscribeAction.bind(this),
 				[ActionType.forward]: this.addForwardAction.bind(this),
+				[ActionType.create]: this.addCreateAction.bind(this),
 				[ActionType.reply]: this.addReplyAction.bind(this),
 				[ActionType.profile]: this.addProfileAction.bind(this),
 				[ActionType.edit]: this.addEditAction.bind(this),
 				[ActionType.delete]: this.addDeleteAction.bind(this),
 				[ActionType.downloadToDevice]: this.addDownloadToDeviceAction.bind(this),
 				[ActionType.downloadToDisk]: this.addDownloadToDiskAction.bind(this),
+				[ActionType.feedback]: this.addFeedbackAction.bind(this),
 			};
 		}
 
@@ -198,15 +256,20 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message-menu', (requi
 		{
 			this.handlers = {
 				[ActionType.copy]: this.onCopy.bind(this),
+				[ActionType.copyLink]: this.onCopyLink.bind(this),
 				[ActionType.reply]: this.onReply.bind(this),
 				[ActionType.pin]: this.onPin.bind(this),
 				[ActionType.unpin]: this.onUnpin.bind(this),
+				[ActionType.subscribe]: this.onSubscribe.bind(this),
+				[ActionType.unsubscribe]: this.onUnsubscribe.bind(this),
 				[ActionType.forward]: this.onForward.bind(this),
+				[ActionType.create]: this.onCreate.bind(this),
 				[ActionType.profile]: this.onProfile.bind(this),
 				[ActionType.edit]: this.onEdit.bind(this),
 				[ActionType.delete]: this.onDelete.bind(this),
 				[ActionType.downloadToDevice]: this.onDownloadToDevice.bind(this),
 				[ActionType.downloadToDisk]: this.onDownloadToDisk.bind(this),
+				[ActionType.feedback]: this.onFeedback.bind(this),
 			};
 		}
 
@@ -246,6 +309,18 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message-menu', (requi
 		 * @param {MessageMenuView} menu
 		 * @param {MessageMenuMessage} message
 		 */
+		addCopyLinkAction(menu, message)
+		{
+			if (Feature.isMessageMenuAirIconSupported && message.isPossibleCopyLink())
+			{
+				menu.addAction(CopyLinkAction);
+			}
+		}
+
+		/**
+		 * @param {MessageMenuView} menu
+		 * @param {MessageMenuMessage} message
+		 */
 		addPinAction(menu, message)
 		{
 			if (message.isPossiblePin())
@@ -260,9 +335,33 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message-menu', (requi
 		 */
 		addUnpinAction(menu, message)
 		{
-			if (!message.isPossiblePin())
+			if (message.isPossibleUnpin())
 			{
 				menu.addAction(UnpinAction);
+			}
+		}
+
+		/**
+		 * @param {MessageMenuView} menu
+		 * @param {MessageMenuMessage} message
+		 */
+		addSubscribeAction(menu, message)
+		{
+			if (message.isPossibleSubscribe())
+			{
+				menu.addAction(SubscribeAction);
+			}
+		}
+
+		/**
+		 * @param {MessageMenuView} menu
+		 * @param {MessageMenuMessage} message
+		 */
+		addUnsubscribeAction(menu, message)
+		{
+			if (message.isPossibleUnsubscribe())
+			{
+				menu.addAction(UnsubscribeAction);
 			}
 		}
 
@@ -275,6 +374,18 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message-menu', (requi
 			if (message.isPossibleForward())
 			{
 				menu.addAction(ForwardAction);
+			}
+		}
+
+		/**
+		 * @param {MessageMenuView} menu
+		 * @param {MessageMenuMessage} message
+		 */
+		addCreateAction(menu, message)
+		{
+			if (message.isPossibleCreate() && MessageCreateMenu.hasActions())
+			{
+				menu.addAction(CreateAction);
 			}
 		}
 
@@ -320,6 +431,13 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message-menu', (requi
 		 */
 		addDeleteAction(menu, message)
 		{
+			if (message.isPossibleDelete() && message.isDialogCopilot() && menu.actionList.length === 0)
+			{
+				menu.addAction(DeleteAction);
+
+				return;
+			}
+
 			if (message.isPossibleDelete())
 			{
 				menu.addSeparator();
@@ -352,13 +470,51 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message-menu', (requi
 		}
 
 		/**
+		 * @param {MessageMenuView} menu
+		 * @param {MessageMenuMessage} message
+		 */
+		addFeedbackAction(menu, message)
+		{
+			if (message.isPossibleCallFeedback())
+			{
+				menu.addAction(FeedbackAction);
+			}
+		}
+
+		/**
 		 * @param {Message} message
 		 */
 		onCopy(message)
 		{
 			const modelMessage = this.store.getters['messagesModel/getById'](message.id);
 
-			DialogTextHelper.copyToClipboard(modelMessage);
+			DialogTextHelper.copyToClipboard(
+				modelMessage.text,
+				{
+					parentWidget: this.locator.get('view').ui,
+				},
+			);
+		}
+
+		/**
+		 * @param {Message} message
+		 */
+		onCopyLink(message)
+		{
+			const link = MessageHelper.createById(message.id)?.getLinkToMessage();
+			if (!Type.isStringFilled(link))
+			{
+				return;
+			}
+
+			DialogTextHelper.copyToClipboard(
+				link,
+				{
+					notificationText: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_MESSAGE_MENU_COPY_LINK_SUCCESS'),
+					notificationIcon: Icon.LINK,
+					parentWidget: this.locator.get('view').ui,
+				},
+			);
 		}
 
 		/**
@@ -366,6 +522,13 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message-menu', (requi
 		 */
 		onReply(message)
 		{
+			if (!isOnline())
+			{
+				Notification.showOfflineToast();
+
+				return;
+			}
+
 			const replyManager = this.locator.get('reply-manager');
 
 			if (
@@ -387,6 +550,13 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message-menu', (requi
 			if (!Feature.isMessagePinSupported)
 			{
 				Notification.showComingSoon();
+
+				return;
+			}
+
+			if (!isOnline())
+			{
+				Notification.showOfflineToast();
 
 				return;
 			}
@@ -414,6 +584,13 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message-menu', (requi
 				return;
 			}
 
+			if (!isOnline())
+			{
+				Notification.showOfflineToast();
+
+				return;
+			}
+
 			const messageModel = this.store.getters['messagesModel/getById'](message.id);
 			if (!messageModel.id)
 			{
@@ -425,6 +602,34 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message-menu', (requi
 			;
 		}
 
+		onSubscribe(message)
+		{
+			if (!isOnline())
+			{
+				Notification.showOfflineToast();
+
+				return;
+			}
+
+			Notification.showToast(ToastType.subscribeToComments, this.locator.get('view').ui);
+			const modelMessage = this.store.getters['messagesModel/getById'](message.id);
+			this.locator.get('chat-service').subscribeToCommentsByPostId(modelMessage.id);
+		}
+
+		onUnsubscribe(message)
+		{
+			if (!isOnline())
+			{
+				Notification.showOfflineToast();
+
+				return;
+			}
+
+			Notification.showToast(ToastType.unsubscribeFromComments, this.locator.get('view').ui);
+			const modelMessage = this.store.getters['messagesModel/getById'](message.id);
+			this.locator.get('chat-service').unsubscribeFromCommentsByPostId(modelMessage.id);
+		}
+
 		/**
 		 * @param {Message} message
 		 */
@@ -433,6 +638,13 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message-menu', (requi
 			if (!Feature.isMessageForwardSupported)
 			{
 				Notification.showComingSoon();
+
+				return;
+			}
+
+			if (!isOnline())
+			{
+				Notification.showOfflineToast();
 
 				return;
 			}
@@ -448,6 +660,27 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message-menu', (requi
 		/**
 		 * @param {Message} message
 		 */
+		onCreate(message)
+		{
+			if (!isOnline())
+			{
+				Notification.showOfflineToast();
+
+				return;
+			}
+
+			const messageModel = this.store.getters['messagesModel/getById'](message.id);
+			if (!messageModel)
+			{
+				return;
+			}
+
+			MessageCreateMenu.open(messageModel, this.locator);
+		}
+
+		/**
+		 * @param {Message} message
+		 */
 		onProfile(message)
 		{
 			const messageModel = this.store.getters['messagesModel/getById'](message.id);
@@ -456,7 +689,10 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message-menu', (requi
 				return;
 			}
 
-			UserProfile.show(messageModel.authorId, { backdrop: true });
+			UserProfile.show(messageModel.authorId, {
+				backdrop: true,
+				openingDialogId: this.dialogId,
+			});
 		}
 
 		/**
@@ -480,6 +716,32 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message-menu', (requi
 				return;
 			}
 
+			AnalyticsService.getInstance().sendMessageDeleteActionClicked({
+				messageId: messageModel.id,
+				dialogId: this.dialogId,
+			});
+
+			const helper = DialogHelper.createByDialogId(this.dialogId);
+
+			if (helper?.isChannel)
+			{
+				showDeleteChannelPostAlert({
+					deleteCallback: () => {
+						this.locator.get('message-service')
+							.delete(messageModel, this.dialogId)
+						;
+					},
+					cancelCallback: () => {
+						AnalyticsService.getInstance().sendMessageDeletingCanceled({
+							messageId: messageModel.id,
+							dialogId: this.dialogId,
+						});
+					},
+				});
+
+				return;
+			}
+
 			this.locator.get('message-service')
 				.delete(messageModel, this.dialogId)
 			;
@@ -490,6 +752,13 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message-menu', (requi
 		 */
 		onDownloadToDevice(message)
 		{
+			if (!isOnline())
+			{
+				Notification.showOfflineToast();
+
+				return;
+			}
+
 			const messageModel = this.store.getters['messagesModel/getById'](message.id);
 			if (!messageModel.id)
 			{
@@ -504,24 +773,52 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message-menu', (requi
 			void NotifyManager.showLoadingIndicator();
 			Filesystem.downloadFile(withCurrentDomain(file.urlDownload))
 				.then((localPath) => {
-					utils.saveToLibrary(localPath)
-						.then(() => {
-							const successMessage = isImageMessage
-								? Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_MESSAGE_MENU_DOWNLOAD_PHOTO_TO_GALLERY_SUCCESS')
-								: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_MESSAGE_MENU_DOWNLOAD_VIDEO_TO_GALLERY_SUCCESS')
-							;
-
-							InAppNotifier.showNotification({
-								title: successMessage,
-								time: 3,
-								backgroundColor: '#E6000000',
-							});
-						})
-						.finally(() => {
-							NotifyManager.hideLoadingIndicatorWithoutFallback();
-						});
+					this.#saveToLibrary(localPath, isImageMessage);
 				})
-			;
+				.catch((error) => {
+					logger.error(`${this.constructor.name}.onDownloadToDevice.downloadFile.catch:`, error);
+				});
+		}
+
+		/**
+		 * @param {String} localPath
+		 * @param {Boolean} isImageMessage
+		 */
+		#saveToLibrary(localPath, isImageMessage)
+		{
+			return utils.saveToLibrary(localPath)
+				.then(() => {
+					const successMessage = isImageMessage
+						? Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_MESSAGE_MENU_DOWNLOAD_PHOTO_TO_GALLERY_SUCCESS')
+						: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_MESSAGE_MENU_DOWNLOAD_VIDEO_TO_GALLERY_SUCCESS')
+					;
+
+					Notification.showToastWithParams({ message: successMessage, svgType: 'image' }, this.locator.get('view').ui);
+				})
+				.finally(() => {
+					NotifyManager.hideLoadingIndicatorWithoutFallback();
+				})
+				.catch((error) => {
+					logger.error(`${this.constructor.name}.saveToLibrary.catch:`, error);
+					const locDescMessage = Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_MESSAGE_MENU_DOWNLOAD_TO_GALLERY_FAILURE');
+					const locSettingsMessage = Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_MESSAGE_MENU_DOWNLOAD_TO_GALLERY_FAILURE_SETTINGS');
+					const locNoMessage = Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_MESSAGE_MENU_DOWNLOAD_TO_GALLERY_FAILURE_NO');
+
+					navigator.notification.confirm(
+						'',
+						(buttonId) => {
+							if (buttonId === 2)
+							{
+								Application.openSettings();
+							}
+						},
+						locDescMessage,
+						[
+							locNoMessage,
+							locSettingsMessage,
+						],
+					);
+				});
 		}
 
 		/**
@@ -529,6 +826,13 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message-menu', (requi
 		 */
 		onDownloadToDisk(message)
 		{
+			if (!isOnline())
+			{
+				Notification.showOfflineToast();
+
+				return;
+			}
+
 			const messageModel = this.store.getters['messagesModel/getById'](message.id);
 			if (!messageModel.id)
 			{
@@ -547,16 +851,42 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message-menu', (requi
 						: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_MESSAGE_MENU_DOWNLOAD_VIDEO_TO_DISK_SUCCESS')
 					;
 
-					InAppNotifier.showNotification({
-						title: successMessage,
-						time: 3,
-						backgroundColor: '#E6000000',
-					});
+					Notification.showToastWithParams({ message: successMessage, svgType: 'catalogueSuccess' }, this.locator.get('view').ui);
 				})
 				.catch((error) => {
-					logger.error('MessageMenu onDownloadToDisk error', error);
+					logger.error(`${this.constructor.name}.onDownloadToDisk.catch`, error);
+					const errorMessage = Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_MESSAGE_MENU_DOWNLOAD_TO_DISK_FAILURE');
+					Notification.showToastWithParams(
+						{ message: errorMessage, svgType: 'catalogue', backgroundColor: Theme.colors.accentMainAlert },
+						this.locator.get('view').ui,
+					);
 				})
 			;
+		}
+
+		/**
+		 * @param {Message} message
+		 */
+		onFeedback(message)
+		{
+			const { openFeedbackForm } = require('layout/ui/feedback-form-opener');
+			openFeedbackForm('copilotRoles');
+		}
+
+		/**
+		 * @param {MessagesModelState} message
+		 * @return {Boolean}
+		 */
+		isMenuNotAvailableByComponentId(message)
+		{
+			const componentId = message.params?.componentId;
+			const componentIds = [
+				MessageParams.ComponentId.SignMessage,
+				MessageParams.ComponentId.CallMessage,
+			];
+			const isCreateBannerMessage = componentId?.includes('CreationMessage');
+
+			return componentId && (isCreateBannerMessage || componentIds.includes(componentId));
 		}
 	}
 

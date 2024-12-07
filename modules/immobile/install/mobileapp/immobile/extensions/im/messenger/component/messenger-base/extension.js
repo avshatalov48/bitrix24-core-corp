@@ -12,7 +12,11 @@ jn.define('im/messenger/component/messenger-base', async (require, exports, modu
 		QueueService,
 	} = require('im/messenger/provider/service');
 	const { EntityReady } = require('entity-ready');
-	const { AppStatus } = require('im/messenger/const');
+	const {
+		AppStatus,
+		EventType,
+		MessengerInitRestMethod,
+	} = require('im/messenger/const');
 
 	class MessengerBase
 	{
@@ -81,8 +85,8 @@ jn.define('im/messenger/component/messenger-base', async (require, exports, modu
 			/** @type {RecentSelector || DialogSelector} */
 			this.searchSelector = null;
 			this.chatCreator = null;
+			/** @type {DialogCreator || null} */
 			this.dialogCreator = null;
-			this.sidebar = null;
 			this.visibilityManager = VisibilityManager.getInstance();
 
 			/**
@@ -102,22 +106,29 @@ jn.define('im/messenger/component/messenger-base', async (require, exports, modu
 			this.initRequests();
 
 			BX.onViewLoaded(async () => {
-				await this.initComponents();
-				this.subscribeEvents();
-				this.initPullHandlers();
-				this.initServices();
-				await this.initCurrentUser();
-				await this.initQueueRequests();
+				try
+				{
+					await this.initComponents();
+					this.subscribeEvents();
+					this.initPullHandlers();
+					this.initServices();
+					await this.initCurrentUser();
+					await this.initQueueRequests();
 
-				this.connectionService.updateStatus();
+					this.connectionService.updateStatus();
 
-				EntityReady.wait('im.navigation')
-					.then(() => this.executeStoredPullEvents())
-					.catch((error) => Logger.error(error))
-				;
+					EntityReady.wait('im.navigation')
+						.then(() => this.executeStoredPullEvents())
+						.catch((error) => Logger.error(error))
+					;
 
-				this.checkChatV2Support();
-				await this.refresh();
+					this.checkChatV2Support();
+					await this.refresh();
+				}
+				catch (error)
+				{
+					Logger.error(`${this.constructor.name} init error:`, error);
+				}
 			});
 		}
 
@@ -173,6 +184,11 @@ jn.define('im/messenger/component/messenger-base', async (require, exports, modu
 			this.storeManager.off('applicationModel/setStatus', this.onApplicationSetStatus);
 		}
 
+		unsubscribeExternalEvents()
+		{
+			Logger.info('MessengerBase.unsubscribeExternalEvents method is not override');
+		}
+
 		initPullHandlers()
 		{
 			Logger.info('MessengerBase.initPullHandlers method is not override');
@@ -187,6 +203,9 @@ jn.define('im/messenger/component/messenger-base', async (require, exports, modu
 			this.initCustomServices();
 		}
 
+		/**
+		 * @protected
+		 */
 		initCustomServices()
 		{
 			Logger.info('MessengerBase.initCustomServices method is not override');
@@ -303,6 +322,21 @@ jn.define('im/messenger/component/messenger-base', async (require, exports, modu
 		destructor()
 		{
 			Logger.info('MessengerBase.destructor method is not override');
+		}
+
+		/**
+		 * @return {string[]}
+		 */
+		getBaseInitRestMethods()
+		{
+			return [
+				MessengerInitRestMethod.portalCounters,
+				MessengerInitRestMethod.recentList,
+				MessengerInitRestMethod.imCounters,
+				MessengerInitRestMethod.mobileRevision,
+				MessengerInitRestMethod.serverTime,
+				MessengerInitRestMethod.desktopStatus,
+			];
 		}
 	}
 

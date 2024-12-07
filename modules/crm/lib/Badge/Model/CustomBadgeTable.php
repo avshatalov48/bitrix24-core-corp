@@ -114,7 +114,7 @@ class CustomBadgeTable extends \Bitrix\Main\Entity\DataManager
 	private static function getSaveDataModification(): Closure
 	{
 		return static fn() => [
-			fn($value) => \Bitrix\Main\Web\Json::encode($value),
+			fn($value) => \Bitrix\Main\Web\Json::encode($value, 0),
 		];
 	}
 

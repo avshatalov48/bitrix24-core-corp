@@ -1,0 +1,98 @@
+.communication-rule-block-wrapper {
+	background-color: #fff;
+	padding: 10px;
+	border-radius: 4px;
+	border: 1px solid #ddd;
+}
+
+.communication-rule-block-wrapper + .communication-rule-block-wrapper
+{
+	margin-top: 10px;
+}
+
+.communication-rule-title {
+	border-bottom: 1px solid #eeeff0;
+	margin-bottom: 14px;
+	padding: 10px 20px;
+}
+
+.communication-rule-title-text {
+	color: #333;
+	font: 15px/20px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: 700;
+}
+
+.communication-rule-add-rule-property {
+	cursor: pointer;
+	margin: 10px 0;
+	border-bottom: 1px dashed;
+	color: #0e64ea;
+}
+
+.communication-rule-rule-value-remove,
+.communication-rule-rule-value-add {
+	margin-left: 10px;
+	cursor: pointer;
+	border-bottom: 1px dashed;
+	font-size: 12px;
+	color: rgb(82, 92, 105);
+}
+
+.communication-rule-rule-value-add-wrapper {
+	justify-content: end;
+	display: flex;
+}
+
+.communication-rule-property-container {
+	margin-bottom: 10px;
+}
+
+.communication-rule-property-container+.communication-rule-property-container {
+	margin: 10px 0;
+}
+
+.communication-rule-property-wrapper,
+.communication-rule-action-wrapper {
+	border: 1px solid #eeeff0;
+	border-radius: 10px;
+	padding: 10px;
+	position: relative;
+}
+
+.communication-rule-action-wrapper {
+	margin: 10px 0;
+}
+
+.communication-rule-property-close {
+	position: absolute;
+	right: 5px;
+	top: 5px;
+	font-size: 12px;
+	color: rgb(82, 92, 105);
+	cursor: pointer;
+}
+
+.communication-rule-label-or {
+	margin-right: 5px;
+	font-size: 12px;
+	color: rgb(82, 92, 105);
+}
+
+.communication-rule-property-logic-selector-container {
+	display: flex;
+}
+
+.communication-rule-property-logic-selector {
+	margin: 0 5px;
+	color: rgb(82, 92, 105);
+	cursor: pointer;
+}
+
+.communication-rule-property-logic-selector.--active {
+	font-weight: 700;
+	color: #333;
+}
+
+.communication-queue-checkbox-block-wrapper {
+	width: 100%;
+}

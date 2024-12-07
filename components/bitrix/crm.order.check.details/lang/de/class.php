@@ -19,6 +19,7 @@ $MESS["CRM_ORDER_CASHBOX_STATUS_Y"] = "Wurde gedruckt";
 $MESS["CRM_ORDER_CHECK_ADD_TITLE"] = "Neuen Kassenzettel hinzufügen";
 $MESS["CRM_ORDER_CHECK_LINK"] = "Link zum Kassenzettel";
 $MESS["CRM_ORDER_CHECK_NOT_FOUND"] = "Kassenbon wurde nicht gefunden";
+$MESS["CRM_ORDER_CHECK_REPRINT"] = "Erneut drucken";
 $MESS["CRM_ORDER_CHECK_TITLE"] = "Kassenzettel ##ID# vom #DATE_CREATE#";
 $MESS["CRM_ORDER_COPY_PAGE_TITLE"] = "Kassenzettel kopieren";
 $MESS["CRM_ORDER_NOT_FOUND"] = "Bestellung wurde nicht gefunden.";

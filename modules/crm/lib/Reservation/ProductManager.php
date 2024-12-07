@@ -75,6 +75,8 @@ class ProductManager extends Crm\Order\ProductManager
 					'MEASURE_NAME' => $productData['MEASURE_NAME'],
 					'PRODUCT_PROVIDER_CLASS' => '\\' . Catalog\Product\CatalogProvider::class,
 					'TYPE' => $productData['TYPE'] ?? null,
+					'VAT_RATE' => $productData['VAT_RATE'] ?? null,
+					'VAT_INCLUDED' => $productData['VAT_INCLUDED'] ?? 'N',
 				];
 
 				$setFieldsResult = $basketItem->setFields($basketItemFields);

@@ -12,12 +12,6 @@
 	opacity: 0;
 }
 
-.crm-entity-stream-content-new-detail-gotochat-guide-link{
-	color: var(--ui-color-link-primary-base, #2066b0);
-	font-size: 16px;
-	border-bottom-style: dashed !important;
-}
-
 .crm-entity-stream-content-gotochat-settings-container{
 	display: flex;
 	flex-direction: row;
@@ -60,7 +54,7 @@
 
 .crm-entity-stream-content-gotochat-button{
 	width: 100%;
-	max-width: 82%;
+	max-width: 65%;
 	margin-bottom: 12px;
 }
 
@@ -108,6 +102,26 @@
 .crm-entity-stream-content-new-detail-gotochat_button.--disabled {
 	pointer-events: none;
 	cursor: default;
+}
+
+.crm-entity-stream-content-new-detail-gotochat_button.--whatsapp {
+	--ui-color-background-primary: #FFF;
+	--crm-entity-stream-content-new-detail-gotochat_button-color: #25D366;
+}
+
+.crm-entity-stream-content-new-detail-gotochat_button.--whatsapp.--disabled {
+	--crm-entity-stream-content-new-detail-gotochat_button-color: var(--ui-color-base-04);
+	background-color: var(--crm-entity-stream-content-new-detail-gotochat_button-color);
+	color: rgba(var(--ui-color-text-secondary-rgb), 0.3);
+}
+
+.crm-entity-stream-content-new-detail-gotochat_button.--whatsapp.--ready {
+	--ui-color-background-primary: #25D366;
+	--crm-entity-stream-content-new-detail-gotochat_button-color: #25D366;
+}
+
+.crm-entity-stream-content-new-detail-gotochat_button.--whatsapp .ui-icon-set {
+	--ui-icon-set__icon-color: #60D66A;
 }
 
 .crm-entity-stream-content-new-detail-gotochat_button-icon {

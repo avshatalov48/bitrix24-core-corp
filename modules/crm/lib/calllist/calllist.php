@@ -31,7 +31,7 @@ final class CallList
 	protected $webformId;
 	protected $entityTypeId = \CCrmOwnerType::Undefined;
 	protected static $statusList = null;
-	
+
 	/** @var Item[] */
 	protected $items = array();
 	protected $itemsLoaded = false;
@@ -341,7 +341,7 @@ final class CallList
 	{
 		$this->entityTypeId = $entityTypeId;
 	}
-	
+
 	public function addItem(Item $item)
 	{
 		$this->items[$item->getElementId()] = $item;
@@ -436,7 +436,7 @@ final class CallList
 		$item = $this->getItem($elementId);
 		if($item === false)
 			return false;
-		
+
 		$item->setCallId($callId);
 		return true;
 	}
@@ -528,7 +528,7 @@ final class CallList
 			'COMPLETED' => true
 		));
 	}
-	
+
 	public static function getStatusList(): array
 	{
 		return array_values(\CCrmStatus::GetStatus('CALL_LIST'));
@@ -582,7 +582,7 @@ final class CallList
 	}
 
 	/**
-	 * Creates new Activity, associatied with the current call list. 
+	 * Creates new Activity, associatied with the current call list.
 	 * @param string $subject Subject of the activity.
 	 * @param string $description Description of the activity.
 	 * @return Result
@@ -649,7 +649,7 @@ final class CallList
 			));
 		}
 	}
-	
+
 	protected function setFromArray(array $fields)
 	{
 		$this->id = $fields['ID'];
@@ -884,137 +884,29 @@ final class CallList
 
 		$gridFilter['CHECK_PERMISSIONS'] = 'Y';
 
-		$arImmutableFilters = array(
-			'FM', 'ID', 'CURRENCY_ID', 'ASSOCIATED_CONTACT_ID',
-			'ASSIGNED_BY_ID', 'CREATED_BY_ID', 'MODIFY_BY_ID',
-			'COMPANY_TYPE', 'INDUSTRY', 'EMPLOYEES', 'WEBFORM_ID',
-			'HAS_PHONE', 'HAS_EMAIL', 'IS_MY_COMPANY', '!IS_MY_COMPANY', 'RQ',
-			'SEARCH_CONTENT', 'TRACKING_SOURCE_ID', 'TRACKING_CHANNEL_CODE',
-			'FILTER_ID', 'FILTER_APPLIED', 'PRESET_ID', 'CHECK_PERMISSIONS',
-		);
-
-		foreach ($gridFilter as $k => $v)
-		{
-			if(in_array($k, $arImmutableFilters, true))
-			{
-				continue;
-			}
-
-			$arMatch = array();
-
-			if($k === 'ORIGINATOR_ID')
-			{
-				// HACK: build filter by internal entities
-				$gridFilter['=ORIGINATOR_ID'] = $v !== '__INTERNAL' ? $v : null;
-				unset($gridFilter[$k]);
-			}
-			elseif($k === 'ADDRESS'
-				|| $k === 'ADDRESS_2'
-				|| $k === 'ADDRESS_CITY'
-				|| $k === 'ADDRESS_REGION'
-				|| $k === 'ADDRESS_PROVINCE'
-				|| $k === 'ADDRESS_POSTAL_CODE'
-				|| $k === 'ADDRESS_COUNTRY'
-				|| $k === 'ADDRESS_LEGAL'
-				|| $k === 'REG_ADDRESS_2'
-				|| $k === 'REG_ADDRESS_CITY'
-				|| $k === 'REG_ADDRESS_REGION'
-				|| $k === 'REG_ADDRESS_PROVINCE'
-				|| $k === 'REG_ADDRESS_POSTAL_CODE'
-				|| $k === 'REG_ADDRESS_COUNTRY')
-			{
-				$v = trim($v);
-				if($v === '')
-				{
-					continue;
-				}
-
-				if(!isset($gridFilter['ADDRESSES']))
-				{
-					$gridFilter['ADDRESSES'] = array();
-				}
-
-				$addressAliases = array('ADDRESS_LEGAL' => 'REG_ADDRESS');
-				$addressTypeID = CompanyAddress::resolveEntityFieldTypeID($k, $addressAliases);
-
-				if(!isset($gridFilter['ADDRESSES'][$addressTypeID]))
-				{
-					$gridFilter['ADDRESSES'][$addressTypeID] = array();
-				}
-
-				$n = CompanyAddress::mapEntityField($k, $addressTypeID, $addressAliases);
-				$gridFilter['ADDRESSES'][$addressTypeID][$n] = "{$v}%";
-
-				unset($gridFilter[$k]);
-			}
-			elseif (preg_match('/(.*)_from$/i'.BX_UTF_PCRE_MODIFIER, $k, $arMatch))
-			{
-				\Bitrix\Crm\UI\Filter\Range::prepareFrom($gridFilter, $arMatch[1], $v);
-			}
-			elseif (preg_match('/(.*)_to$/i'.BX_UTF_PCRE_MODIFIER, $k, $arMatch))
-			{
-				if ($v != '' && ($arMatch[1] == 'DATE_CREATE' || $arMatch[1] == 'DATE_MODIFY') && !preg_match('/\d{1,2}:\d{1,2}(:\d{1,2})?$/'.BX_UTF_PCRE_MODIFIER, $v))
-				{
-					$v = \CCrmDateTimeHelper::SetMaxDayTime($v);
-				}
-				\Bitrix\Crm\UI\Filter\Range::prepareTo($gridFilter, $arMatch[1], $v);
-			}
-			elseif($k === 'COMMUNICATION_TYPE')
-			{
-				if(!is_array($v))
-				{
-					$v = array($v);
-				}
-				foreach($v as $commTypeID)
-				{
-					if($commTypeID === \CCrmFieldMulti::PHONE)
-					{
-						$gridFilter['=HAS_PHONE'] = 'Y';
-					}
-					elseif($commTypeID === \CCrmFieldMulti::EMAIL)
-					{
-						$gridFilter['=HAS_EMAIL'] = 'Y';
-					}
-				}
-				unset($gridFilter['COMMUNICATION_TYPE']);
-			}
-			elseif ($k != 'ID' && $k != 'LOGIC' && $k != '__INNER_FILTER' && $k != '__JOINS' && $k != '__CONDITIONS' && mb_strpos($k, 'UF_') !== 0 && preg_match('/^[^\=\%\?\>\<\@]{1}/', $k) === 1)
-			{
-				$gridFilter['%'.$k] = $v;
-				unset($gridFilter[$k]);
-			}
-		}
-		//endregion
-
 		$cursor = null;
 		if($entityType === \CCrmOwnerType::LeadName)
 		{
-			\CCrmLead::prepareFilter($gridFilter);
 			$cursor = \CCrmLead::getListEx(array(), $gridFilter, false, false, array('ID'));
 		}
 		elseif($entityType === \CCrmOwnerType::CompanyName)
 		{
-			\CCrmCompany::prepareFilter($gridFilter);
 			$cursor = \CCrmCompany::getListEx(array(), $gridFilter, false, false, array('ID'));
 		}
 		elseif($entityType === \CCrmOwnerType::ContactName)
 		{
-			\CCrmContact::prepareFilter($gridFilter);
 			$cursor = \CCrmContact::getListEx(array(), $gridFilter, false, false, array('ID'));
 		}
 		elseif($entityType === \CCrmOwnerType::DealName)
 		{
-			\CCrmDeal::prepareFilter($gridFilter);
 			$cursor = \CCrmDeal::getListEx(array(), $gridFilter, false, false, array('ID'));
 		}
 		elseif($entityType === \CCrmOwnerType::QuoteName)
 		{
-			\CCrmQuote::prepareFilter($gridFilter);
 			$cursor = \CCrmQuote::getList(array(), $gridFilter, false, false, array('ID'));
 		}
 		elseif($entityType === \CCrmOwnerType::InvoiceName)
 		{
-			\CCrmInvoice::prepareFilter($gridFilter);
 			$cursor = \CCrmInvoice::getList(array(), $gridFilter, false, false, array('ID'));
 		}
 
@@ -1039,9 +931,13 @@ final class CallList
 
 	protected static function getGridFilter($gridId, int $entityTypeId = 0)
 	{
-		return \Bitrix\Crm\Filter\Factory::createEntityFilter(
+		$filterFactory = Container::getInstance()->getFilterFactory();
+
+		$filter = $filterFactory->getFilter(
 			\Bitrix\Crm\Filter\Factory::getSettingsByGridId($entityTypeId, (string)$gridId)
-		)->getValue();
+		);
+
+		return $filterFactory->getFilterValue($filter);
 	}
 
 	/**
@@ -1279,5 +1175,19 @@ final class CallList
 			"DELETE FROM b_crm_call_list_item WHERE ENTITY_TYPE = '{$entityTypeName}' AND ELEMENT_ID = {$entityId}"
 		);
 		*/
+	}
+
+	final public static function isEntityTypeSupported(int $entityTypeId): bool
+	{
+		static $supportedEntityTypes = [
+			\CCrmOwnerType::Lead,
+			\CCrmOwnerType::Contact,
+			\CCrmOwnerType::Company,
+			\CCrmOwnerType::Deal,
+			\CCrmOwnerType::Quote,
+			\CCrmOwnerType::Invoice,
+		];
+
+		return in_array($entityTypeId, $supportedEntityTypes, true);
 	}
 }

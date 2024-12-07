@@ -31,7 +31,14 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 
 		if (!empty($this->request['ORDER_PAYMENT_DATA']))
 		{
-			$paymentData = current(\CUtil::JsObjectToPhp($this->request['ORDER_PAYMENT_DATA']));
+			try
+			{
+				$paymentData = current(\Bitrix\Main\Web\Json::decode($this->request['ORDER_PAYMENT_DATA']));
+			}
+			catch (\Bitrix\Main\ArgumentException $e)
+			{
+				$paymentData = [];
+			}
 			if (!is_array($paymentData))
 			{
 				$paymentData = [];
@@ -423,7 +430,6 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 	}
 }
 
-CUtil::JSPostUnescape();
 $APPLICATION->RestartBuffer();
 $processor = new AjaxProcessor($_REQUEST);
 $result = $processor->checkConditions();

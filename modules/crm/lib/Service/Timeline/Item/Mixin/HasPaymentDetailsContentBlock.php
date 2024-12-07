@@ -23,19 +23,23 @@ trait HasPaymentDetailsContentBlock
 {
 	public function getPaymentDetailsContentBlock(): ContentBlock\LineOfTextBlocks
 	{
-		$result = new ContentBlock\LineOfTextBlocks();
 		if ($this->getModel()->getAssociatedEntityTypeId() !== \CCrmOwnerType::OrderPayment)
 		{
-			return $result;
+			return new ContentBlock\LineOfTextBlocks();
 		}
 
 		$title = Loc::getMessage(
-			'CRM_TIMELINE_ECOMMERCE_PAYMENT_ENTITY_TITLE',
+			'CRM_TIMELINE_ECOMMERCE_PAYMENT_ENTITY_TITLE_MSGVER_1',
 			[
 				'#NUMBER#' => $this->getAssociatedEntityModel()->get('ACCOUNT_NUMBER'),
 				'#DATE#' => $this->getAssociatedEntityModel()->get('DATE'),
 			]
 		);
+
+		$pregMatchResult = null;
+		preg_match('/\<a\>(.*)\<\/a\>/', $title, $pregMatchResult);
+		[$linkNumberAndDate, $numberAndDate] = $pregMatchResult;
+		$title = str_replace($linkNumberAndDate, '#NUMBER_AND_DATE#', $title);
 
 		$entityNameLocPhrase =
 			$this->isTerminalPayment()
@@ -54,53 +58,35 @@ trait HasPaymentDetailsContentBlock
 				->setFontSize(ContentBlock\Text::FONT_SIZE_SM)
 				->setColor(ContentBlock\Text::COLOR_BASE_70)
 			;
-			$titleBlock = (new ContentBlock\Link())
-				->setValue($title)
+			$numberAndDateBlock = (new ContentBlock\Link())
+				->setValue($numberAndDate)
 				->setAction($action)
 			;
 		}
 		else
 		{
 			$entityNameBlock->setColor(ContentBlock\Text::COLOR_BASE_90);
-			$titleBlock = (new ContentBlock\Text())
-				->setValue($title)
+			$numberAndDateBlock = (new ContentBlock\Text())
+				->setValue($numberAndDate)
 				->setColor(ContentBlock\Text::COLOR_BASE_90)
 			;
 		}
-		$result
-			->addContentBlock('entityName', $entityNameBlock)
-			->addContentBlock('title', $titleBlock)
-		;
 
 		$sum = $this->getAssociatedEntityModel()->get('RAW_SUM');
 		$currency = $this->getAssociatedEntityModel()->get('RAW_CURRENCY');
-		if ($sum && $currency)
-		{
-			$amountBlocks = ContentBlockFactory::getBlocksFromTemplate(
-				Loc::getMessage('CRM_TIMELINE_ECOMMERCE_FOR_AMOUNT'),
-				[
-					'#AMOUNT#' => (new ContentBlock\Money())
-						->setOpportunity((float)$sum)
-						->setCurrencyId((string)$currency)
-					,
-				]
-			);
+		$amountBlock = (new ContentBlock\Money())
+			->setOpportunity((float)$sum)
+			->setCurrencyId((string)$currency)
+		;
 
-			foreach ($amountBlocks as $index => $amountBlock)
-			{
-				if (!$amountBlock instanceof ContentBlock\TextPropertiesInterface)
-				{
-					continue;
-				}
-
-				$result->addContentBlock(
-					'amountBlock' . $index,
-					$amountBlock->setColor(ContentBlock\Text::COLOR_BASE_90)
-				);
-			}
-		}
-
-		return $result;
+		return ContentBlockFactory::createLineOfTextFromTemplate(
+			$title,
+			[
+				'#NAME#' => $entityNameBlock,
+				'#NUMBER_AND_DATE#' => $numberAndDateBlock,
+				'#AMOUNT#' => $amountBlock,
+			],
+		);
 	}
 
 	abstract public function getModel(): Model;

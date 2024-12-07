@@ -127,6 +127,12 @@
 	font-size: 14px;
 }
 
+.task-top-panel-leftmiddle .tasks-tariff-lock {
+	display: inline-flex !important;
+	padding-right: 0 !important;
+	cursor: pointer;
+}
+
 .task-top-panel-leftmiddle .task-top-panel-tab {
 	border-bottom: 1px dashed #535c69;
 	color: #535c69;
@@ -134,6 +140,7 @@
 	line-height: 18px;
 	display: inline-block;
 	cursor: pointer;
+	white-space: nowrap;
 }
 
 .task-top-panel-leftmiddle .task-top-panel-tab:hover {

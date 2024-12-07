@@ -19,8 +19,6 @@ if ($USER->IsAuthorized() && check_bitrix_sessid())
 	$actionEnable = ($_REQUEST['action'] === 'enable');
 	if($actionSaveSettings || $actionEnable)
 	{
-		CUtil::decodeURIComponent($_REQUEST);
-
 		$presetId = 0;
 		if (isset($_REQUEST['FORM_ID']))
 		{

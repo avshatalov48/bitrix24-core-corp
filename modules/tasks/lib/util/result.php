@@ -68,7 +68,7 @@ class Result
 		$code = $e->getCode();
 		if($code)
 		{
-			$code = ToUpper($code);
+			$code = mb_strtoupper($code);
 		}
 		else
 		{

@@ -32,8 +32,6 @@ if (!$curUser || !$curUser->IsAuthorized() || !check_bitrix_sessid() || $_SERVER
 	die();
 }
 
-CUtil::JSPostUnescape();
-
 $action = !empty($_REQUEST['ajax_action']) ? $_REQUEST['ajax_action'] : null;
 
 if (empty($action))

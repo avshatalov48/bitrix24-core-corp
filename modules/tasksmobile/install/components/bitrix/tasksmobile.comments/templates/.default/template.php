@@ -27,6 +27,25 @@ Extension::load([
 	'ui.alerts',
 ]);
 
+$taskId = (int)$arResult['TASK_ID'];
+?>
+
+<script>
+	BX.ready(
+		function()
+		{
+			BXMobileApp.addCustomEvent('tasks-view-new:onTaskForbidden', (event) => {
+				if (Number(event.taskId) === <?= $taskId ?>)
+				{
+					app.closeController({ drop: true });
+				}
+			});
+			BXMobileApp.Events.postToComponent('tasks.task.comments:onComponentReady', []);
+		}
+	);
+</script>
+
+<?php
 if (is_array($arResult['ERRORS']) && !empty($arResult['ERRORS']))
 {
 	$isUiIncluded = Loader::includeModule('ui');
@@ -46,10 +65,9 @@ if (is_array($arResult['ERRORS']) && !empty($arResult['ERRORS']))
 			ShowError($message);
 		}
 	}
+
 	return;
 }
-
-$taskId = (int)$arResult['TASK']['ID'];
 ?>
 
 <div style="display: none">
@@ -71,7 +89,15 @@ $taskId = (int)$arResult['TASK']['ID'];
 </div>
 
 <div id="task-comments-block">
-	<?php $APPLICATION->IncludeComponent(
+	<?php
+	$analytics = [
+		'data-analytics' => [
+			'c_section' => 'comment',
+			'c_element' => 'title_click',
+		],
+	];
+
+	$APPLICATION->IncludeComponent(
 		'bitrix:forum.comments',
 		'',
 		[
@@ -91,6 +117,10 @@ $taskId = (int)$arResult['TASK']['ID'];
 			'PERMISSION' => 'M',
 			'NAME_TEMPLATE' => $arResult['NAME_TEMPLATE'],
 			'SKIP_USER_READ' => 'Y',
+			'ATTRIBUTES' => [
+				'ANCHOR' => $analytics,
+				'TEXT_ANCHOR' => $analytics,
+			],
 		],
 		null,
 		['HIDE_ICONS' => 'Y']
@@ -112,7 +142,7 @@ $taskId = (int)$arResult['TASK']['ID'];
 	</div>
 </div>
 
-<script type="text/javascript">
+<script>
 	BX.ready(
 		function()
 		{

@@ -19,6 +19,7 @@ use Bitrix\Recyclebin\Internals\Contracts\Recyclebinable;
 use Bitrix\Recyclebin\Internals\Models\RecyclebinTable;
 use Bitrix\Tasks\CheckList\Task\TaskCheckListFacade;
 use Bitrix\Tasks\Control\Tag;
+use Bitrix\Tasks\Flow\Internal\FlowTaskTable;
 use Bitrix\Tasks\Integration;
 use Bitrix\Tasks\Integration\Bitrix24;
 use Bitrix\Tasks\Integration\Bitrix24\FeatureDictionary;
@@ -109,7 +110,7 @@ class Task implements Recyclebinable
 		$task = TaskTable::getByPrimary(
 			$taskId,
 			[
-				'select' => ['*', 'UF_*'],
+				'select' => ['*', 'UF_*', 'FLOW_TASK.FLOW_ID'],
 			]
 		);
 
@@ -126,11 +127,11 @@ class Task implements Recyclebinable
 			return (int)$el['TAG_ID'];
 		}, $tags);
 
-		$res = $task->fetchObject();
+		$task = $task->fetchObject();
 
-		if ($res)
+		if ($task)
 		{
-			$data['TASK'] = $res->toArray();
+			$data['TASK'] = $task->toArray();
 			$data['TAGS'] = $tagIds;
 		}
 
@@ -208,6 +209,11 @@ class Task implements Recyclebinable
 		if ($data['TASK']['IS_REGULAR'] && !is_null($regularParams))
 		{
 			$data['REGULAR_PARAMS'] = $regularParams->getRegularParameters();
+		}
+
+		if ($task?->getFlowId() > 0)
+		{
+			$data['FLOW'] = ['ID' => $task->getFlowId()];
 		}
 
 		if (Loader::includeModule('crm'))
@@ -517,6 +523,9 @@ class Task implements Recyclebinable
 				case 'REGULAR_PARAMS':
 					(new RegularityService(new TaskRepository($taskId)))->setRegularity($data);
 					break;
+
+				case 'FLOW':
+					FlowTaskTable::insertIgnore($data['ID'], $taskId);
 			}
 		}
 		catch (Exception $e)
@@ -636,8 +645,8 @@ class Task implements Recyclebinable
 		return [
 			'LIMIT_DATA' => [
 				'RESTORE' => [
-					'DISABLE' => TaskLimit::isLimitExceeded()
-						|| !Bitrix24::checkFeatureEnabled(FeatureDictionary::TASKS_RECYCLEBIN),
+					'DISABLE' => !Bitrix24::checkFeatureEnabled(FeatureDictionary::TASK_RECYCLE_BIN_RESTORE),
+					'FEATURE_ID' => FeatureDictionary::TASK_RECYCLE_BIN_RESTORE,
 					'SLIDER_CODE' => 'limit_tasks_recycle_bin_restore',
 				],
 			],

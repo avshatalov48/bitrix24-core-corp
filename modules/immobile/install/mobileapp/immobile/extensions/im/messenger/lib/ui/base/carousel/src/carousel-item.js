@@ -3,12 +3,11 @@
  */
 jn.define('im/messenger/lib/ui/base/carousel/carousel-item', (require, exports, module) => {
 	const { Avatar } = require('im/messenger/lib/ui/base/avatar');
+	const { Theme } = require('im/lib/theme');
 
-	const AppTheme = require('apptheme');
-
-	const crossColor = AppTheme.colors.baseWhiteFixed;
-	const crossFillColor = AppTheme.colors.base5;
-	const crossStrokeColor = AppTheme.colors.base8;
+	const crossColor = Theme.colors.baseWhiteFixed;
+	const crossFillColor = Theme.colors.base5;
+	const crossStrokeColor = Theme.colors.base8;
 	const cross = `<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="8" cy="8" r="7.5" fill="${crossFillColor}" stroke="${crossStrokeColor}"/><path fill-rule="evenodd" clip-rule="evenodd" d="M9 8L11 10L10 11L8 9L6 11L5 10L7 8L5 6L6 5L8 7L10 5L11 6L9 8Z" fill="${crossColor}"/></svg>`;
 	class CarouselItem extends LayoutComponent
 	{
@@ -45,6 +44,7 @@ jn.define('im/messenger/lib/ui/base/carousel/carousel-item', (require, exports, 
 					text: this.props.data.title,
 					size: this.props.size,
 					color: this.props.data.avatarColor,
+					isSuperEllipse: this.props.isSuperEllipseAvatar,
 				}),
 				Image(
 					{
@@ -70,7 +70,7 @@ jn.define('im/messenger/lib/ui/base/carousel/carousel-item', (require, exports, 
 					Text({
 						style: {
 							fontSize: 13,
-							color: AppTheme.colors.base1,
+							color: Theme.colors.base1,
 						},
 						text: this.props.data.title.split(' ')[0],
 						ellipsize: 'end',

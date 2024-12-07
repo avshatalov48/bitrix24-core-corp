@@ -2,6 +2,7 @@
 
 return [
 	'extensions' => [
+		'type',
 		'im:messenger/controller/recent/lib',
 		'utils/object',
 		'im:messenger/const',

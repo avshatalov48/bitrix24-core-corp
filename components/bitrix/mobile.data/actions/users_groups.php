@@ -67,11 +67,6 @@ if ($action && in_array($action, array("get_user_list", "get_usergroup_list")))
 			"bubble_text_color" => "#54901E",
 		);
 
-		if (SITE_CHARSET != "utf-8")
-		{
-			$tmpData = $APPLICATION->ConvertCharsetArray($tmpData, SITE_CHARSET, "utf-8");
-		}
-
 		$data = Array(
 			$tmpData
 		);
@@ -219,10 +214,6 @@ if ($action && in_array($action, array("get_user_list", "get_usergroup_list")))
 					$tmpData['WORK_DEPARTMENTS'] = $arUserDepartments;
 				}
 
-				if (SITE_CHARSET != "utf-8")
-				{
-					$tmpData = $APPLICATION->ConvertCharsetArray($tmpData, SITE_CHARSET, "utf-8");
-				}
 				$data[] = $tmpData;
 			}
 		}
@@ -289,10 +280,6 @@ if (in_array($action, array("get_group_list", "get_usergroup_list")))
 					"bubble_text_color" => "#B54827",
 				);
 
-				if (ToUpper(SITE_CHARSET) != "UTF-8")
-				{
-					$tmpData = $APPLICATION->ConvertCharsetArray($tmpData, SITE_CHARSET, "utf-8");
-				}
 				$data[] = $tmpData;
 			}
 

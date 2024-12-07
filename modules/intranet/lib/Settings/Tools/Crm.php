@@ -11,6 +11,7 @@ use Bitrix\Main\ModuleManager;
 
 class Crm extends Tool
 {
+	private ?bool $isBiAnalyticsAvailable = null;
 	private const CRM_SUBGROUPS_ID = [
 		'crm' => 'menu_crm_favorite',
 		'marketing' => 'menu_marketing',
@@ -29,7 +30,6 @@ class Crm extends Tool
 		'bi_analytics_google' => 'crm_google_datastudio',
 		'bi_analytics_yandex' => 'crm_yandex_datalens',
 		'report_construct' => 'REPORT',
-		'bi_constructor' => 'crm_bi',
 	];
 
 	private function isInvoicesAvailable(): bool
@@ -44,7 +44,9 @@ class Crm extends Tool
 
 	private function isBiAnalyticsAvailable(): bool
 	{
-		return !Loader::includeModule('bitrix24') || Feature::isFeatureEnabled('biconnector');
+		$this->isBiAnalyticsAvailable ??= !Loader::includeModule('bitrix24') || Feature::isFeatureEnabled('biconnector');
+
+		return $this->isBiAnalyticsAvailable;
 	}
 
 	public function getSettingsPath(): ?string
@@ -76,7 +78,6 @@ class Crm extends Tool
 			'bi_analytics_google' => $this->isBiAnalyticsAvailable() ? '/report/analytics/?analyticBoardKey=crm_google_datastudio' : null,
 			'bi_analytics_yandex' => $this->isBiAnalyticsAvailable() ? '/report/analytics/?analyticBoardKey=crm_yandex_datalens' : null,
 			'report_construct' => '/crm/reports/report/',
-			'bi_constructor' => '/bi/dashboard/',
 		];
 	}
 
@@ -122,12 +123,8 @@ class Crm extends Tool
 
 		if (!ModuleManager::isModuleInstalled('biconnector'))
 		{
-			$biConnectorSubgroups = ['bi_analytics', 'bi_analytics_microsoft', 'bi_analytics_google', 'bi_analytics_yandex', 'bi_constructor'];
+			$biConnectorSubgroups = ['bi_analytics', 'bi_analytics_microsoft', 'bi_analytics_google', 'bi_analytics_yandex'];
 			$subgroupsId = array_diff_key($subgroupsId, array_flip($biConnectorSubgroups));
-		}
-		elseif (Option::get('biconnector', 'release_bi_superset', 'N') !== 'Y')
-		{
-			unset($subgroupsId['bi_constructor']);
 		}
 
 		return $subgroupsId;

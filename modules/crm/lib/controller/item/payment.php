@@ -2,24 +2,21 @@
 
 namespace Bitrix\Crm\Controller\Item;
 
+use Bitrix\Crm\Rest\TypeCast\OrmTypeCast;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Main;
+use Bitrix\Main\Context;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Crm;
 use Bitrix\Crm\Order\EventsHandler;
 use Bitrix\Sale;
 use Bitrix\Salescenter;
+use Bitrix\Sale\PaySystem\Manager;
 
 final class Payment extends Crm\Controller\Base
 {
 	private bool $previousSynchronizationStatus = true;
 
-	/**
-	 * @param int $entityId
-	 * @param int $entityTypeId
-	 * @param array $filter
-	 * @param array $order
-	 * @return array|null
-	 */
 	public function listAction(
 		int $entityId,
 		int $entityTypeId,
@@ -30,9 +27,13 @@ final class Payment extends Crm\Controller\Base
 		/** @var Crm\Entity\PaymentDocumentsRepository $repository */
 		$repository = Main\DI\ServiceLocator::getInstance()->get('crm.entity.paymentDocumentsRepository');
 
-		if (!$repository->checkPermission($entityTypeId, $entityId))
+		$hasEntityPermission = Container::getInstance()->getUserPermissions()->checkReadPermissions(
+			$entityTypeId,
+			$entityId
+		);
+		if (!$hasEntityPermission)
 		{
-			$this->addError(new Main\Error(Loc::getMessage('CRM_CONTROLLER_ITEM_PAYMENT_NO_PERMISSION')));
+			$this->setAccessDenied();
 
 			return null;
 		}
@@ -49,6 +50,11 @@ final class Payment extends Crm\Controller\Base
 			$preparedOrder
 		);
 
+		foreach ($result as $index => $resultItem)
+		{
+			$result[$index] = $this->castSelectFields($resultItem);
+		}
+
 		return $this->convertKeysToCamelCase($result);
 	}
 
@@ -59,9 +65,20 @@ final class Payment extends Crm\Controller\Base
 	public function getAction(int $id): ?array
 	{
 		$payment = Sale\Repository\PaymentRepository::getInstance()->getById($id);
-		if (!$payment || !$this->hasPermissionForPayment($payment))
+		if (!$payment)
 		{
-			$this->addError(new Main\Error(Loc::getMessage('CRM_CONTROLLER_ITEM_PAYMENT_NO_PERMISSION')));
+			$this->addError(new Main\Error('Payment has not been found'));
+
+			return null;
+		}
+
+		$hasPermission = Container::getInstance()->getUserPermissions()->checkReadPermissions(
+			\CCrmOwnerType::Order,
+			$payment->getOrderId()
+		);
+		if (!$hasPermission)
+		{
+			$this->setAccessDenied();
 
 			return null;
 		}
@@ -78,13 +95,27 @@ final class Payment extends Crm\Controller\Base
 			ARRAY_FILTER_USE_KEY
 		);
 
-		return $this->convertKeysToCamelCase($filteredFields);
+		return $this->convertKeysToCamelCase(
+			$this->castSelectFields($filteredFields)
+		);
+	}
+
+	private function castSelectFields(array $fields): array
+	{
+		return OrmTypeCast::getInstance()
+			->setBoolCaster(new Crm\Dto\Caster\BoolYNCaster())
+			->castRecord(
+				Sale\Internals\PaymentTable::class,
+				$fields
+			);
 	}
 
 	public function addAction(int $entityId, int $entityTypeId, array $fields = []): ?int
 	{
 		if (!$this->canAddPayment($entityId, $entityTypeId))
 		{
+			$this->setAccessDenied();
+
 			return null;
 		}
 
@@ -110,6 +141,8 @@ final class Payment extends Crm\Controller\Base
 		$payment = $this->getNewPayment($order);
 		if (!$payment)
 		{
+			$this->addError(new Main\Error('Payment not found'));
+
 			return null;
 		}
 
@@ -153,7 +186,9 @@ final class Payment extends Crm\Controller\Base
 
 		if (!$fields)
 		{
-			return false;
+			$this->addError(new Main\Error('Empty fields'));
+
+			return null;
 		}
 
 		return $this->updateInternal($id, $fields);
@@ -163,80 +198,102 @@ final class Payment extends Crm\Controller\Base
 	{
 		$payment = Sale\Repository\PaymentRepository::getInstance()->getById($id);
 
-		if (!$payment || !$this->hasPermissionForPayment($payment))
+		if (!$payment)
 		{
-			$this->addError(new Main\Error(Loc::getMessage('CRM_CONTROLLER_ITEM_PAYMENT_NO_PERMISSION')));
+			$this->addError(new Main\Error('Payment has not been found'));
 
 			return null;
 		}
 
-		$payment = Sale\Repository\PaymentRepository::getInstance()->getById($id);
+		$hasPermission = Container::getInstance()->getUserPermissions()->checkUpdatePermissions(
+			\CCrmOwnerType::Order,
+			$payment->getOrderId()
+		);
+		if (!$hasPermission)
+		{
+			$this->setAccessDenied();
+
+			return null;
+		}
+
+		if (isset($fields['PAY_SYSTEM_ID']))
+		{
+			$paymentSystem = Manager::getObjectById((int)$fields['PAY_SYSTEM_ID']);
+			if (!$paymentSystem)
+			{
+				$this->addError(new Main\Error('Payment system has not been found'));
+
+				return null;
+			}
+
+			$fields['PAY_SYSTEM_NAME'] = $paymentSystem->getField('NAME');
+		}
 
 		$result = $payment->setFields($fields);
-		if ($result->isSuccess())
-		{
-			$result = $payment->getOrder()->save();
-			if ($result->isSuccess())
-			{
-				return true;
-			}
-		}
-
-		$this->addErrors($result->getErrors());
-
-		return null;
-	}
-
-	/**
-	 * @param int $id
-	 * @return bool
-	 * @throws Main\ArgumentException
-	 * @throws Main\ArgumentNullException
-	 * @throws Main\ArgumentOutOfRangeException
-	 * @throws Main\ObjectNotFoundException
-	 */
-	public function deleteAction(int $id): bool
-	{
-		$payment = Sale\Repository\PaymentRepository::getInstance()->getById($id);
-
-		if (!$payment || !$this->hasPermissionForPayment($payment))
-		{
-			$this->addError(new Main\Error(Loc::getMessage('CRM_CONTROLLER_ITEM_PAYMENT_NO_PERMISSION')));
-
-			return false;
-		}
-
-		$result = $payment->delete();
-		if ($result->isSuccess())
-		{
-			$result = $payment->getOrder()->save();
-			if ($result->isSuccess())
-			{
-				return true;
-			}
-		}
-
 		if (!$result->isSuccess())
 		{
 			$this->addErrors($result->getErrors());
+
+			return null;
 		}
 
-		return false;
+		$result = $payment->getOrder()->save();
+		if (!$result->isSuccess())
+		{
+			$this->addErrors($result->getErrors());
+
+			return null;
+		}
+
+		return true;
 	}
 
-	/**
-	 * @param int $id
-	 * @return bool|null
-	 */
+	public function deleteAction(int $id): ?bool
+	{
+		$payment = Sale\Repository\PaymentRepository::getInstance()->getById($id);
+
+		if (!$payment)
+		{
+			$this->addError(new Main\Error('Payment has not been found'));
+
+			return null;
+		}
+
+		$hasPermission = Container::getInstance()->getUserPermissions()->checkUpdatePermissions(
+			\CCrmOwnerType::Order,
+			$payment->getOrderId()
+		);
+		if (!$hasPermission)
+		{
+			$this->setAccessDenied();
+
+			return null;
+		}
+
+		$result = $payment->delete();
+		if (!$result->isSuccess())
+		{
+			$this->addErrors($result->getErrors());
+
+			return null;
+		}
+
+		$result = $payment->getOrder()->save();
+		if (!$result->isSuccess())
+		{
+			$this->addErrors($result->getErrors());
+
+			return null;
+		}
+
+		return true;
+	}
+
 	public function payAction(int $id): ?bool
 	{
 		return $this->updateInternal($id, ['PAID' => 'Y']);
 	}
 
-	/**
-	 * @param int $id
-	 * @return bool|null
-	 */
 	public function unpayAction(int $id): ?bool
 	{
 		return $this->updateInternal($id, ['PAID' => 'N']);
@@ -253,11 +310,13 @@ final class Payment extends Crm\Controller\Base
 			return false;
 		}
 
-		$repository = Main\DI\ServiceLocator::getInstance()->get('crm.entity.paymentDocumentsRepository');
-
-		if (!$repository->checkPermission($entityTypeId, $entityId))
+		$hasPermission = Container::getInstance()->getUserPermissions()->checkUpdatePermissions(
+			$entityTypeId,
+			$entityId
+		);
+		if (!$hasPermission)
 		{
-			$this->addError(new Main\Error(Loc::getMessage('CRM_CONTROLLER_ITEM_PAYMENT_NO_PERMISSION')));
+			$this->setAccessDenied();
 
 			return false;
 		}
@@ -290,14 +349,6 @@ final class Payment extends Crm\Controller\Base
 		}
 
 		return true;
-	}
-
-	private function hasPermissionForPayment(Sale\Payment $payment) : bool
-	{
-		/** @var Crm\Entity\PaymentDocumentsRepository $repository */
-		$repository = Main\DI\ServiceLocator::getInstance()->get('crm.entity.paymentDocumentsRepository');
-
-		return $repository->checkPaymentPermission($payment);
 	}
 
 	private function getFieldsOnAddForBuilder(int $entityId, int $entityTypeId, array $fields) : array

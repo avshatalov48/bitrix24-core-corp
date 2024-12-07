@@ -143,7 +143,7 @@ class CCrmPerms
 		return $this->arUserPerms;
 	}
 
-	public function HavePerm($permEntity, $permAttr, $permType = 'READ')
+	public function HavePerm($permEntity, $permAttr, $permType = 'READ'): bool
 	{
 		// HACK: only for product and currency support
 		$permType = mb_strtoupper($permType);
@@ -161,29 +161,52 @@ class CCrmPerms
 			return $permAttr != self::PERM_NONE;
 		}
 
-		if (!isset($this->arUserPerms[$permEntity][$permType]))
-			return $permAttr == self::PERM_NONE;
+		// Change config right also grant right to change robots.
+		if (
+			$permType === 'AUTOMATION'
+			&& $permAttr == BX_CRM_PERM_ALL
+			&& self::HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE')
+		)
+		{
+			return true;
+		}
 
-		$icnt = count($this->arUserPerms[$permEntity][$permType]);
-		if ($icnt > 1 && $this->arUserPerms[$permEntity][$permType]['-'] == self::PERM_NONE)
+		if (!isset($this->arUserPerms[$permEntity][$permType]))
+		{
+			return $permAttr == self::PERM_NONE;
+		}
+		$entityTypePerm = $this->arUserPerms[$permEntity][$permType]['-'] ?? self::PERM_NONE;
+
+		if ($entityTypePerm == self::PERM_NONE)
 		{
 			foreach ($this->arUserPerms[$permEntity][$permType] as $sField => $arFieldValue)
 			{
 				if ($sField == '-')
+				{
 					continue ;
-				$sPrevPerm = $permAttr;
-				foreach ($arFieldValue as $fieldValue => $sAttr)
+				}
+
+				foreach ($arFieldValue as $sAttr)
+				{
 					if ($sAttr > $permAttr)
+					{
 						return $sAttr == self::PERM_NONE;
+					}
+				}
+
 				return $permAttr == self::PERM_NONE;
 			}
 		}
 
 		if ($permAttr == self::PERM_NONE)
-			return $this->arUserPerms[$permEntity][$permType]['-'] == self::PERM_NONE;
+		{
+			return $entityTypePerm == self::PERM_NONE;
+		}
 
-		if ($this->arUserPerms[$permEntity][$permType]['-'] >= $permAttr)
+		if ($entityTypePerm >= $permAttr)
+		{
 			return true;
+		}
 
 		return false;
 	}
@@ -193,8 +216,19 @@ class CCrmPerms
 		if (self::IsAdmin($this->userId))
 			return self::PERM_ALL;
 
+		// Change config right also grant right to change robots.
+		if (
+			$permType === 'AUTOMATION'
+			&& self::HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE')
+		)
+		{
+			return BX_CRM_PERM_ALL;
+		}
+
 		if (!isset($this->arUserPerms[$permEntity][$permType]))
+		{
 			return self::PERM_NONE;
+		}
 
 		if($permType === 'READ'
 			&& (in_array(self::ATTR_READ_ALL, $arEntityAttr, true)
@@ -205,26 +239,28 @@ class CCrmPerms
 			return self::PERM_ALL;
 		}
 
-		$icnt = count($this->arUserPerms[$permEntity][$permType]);
-
-		if ($icnt == 1 && isset($this->arUserPerms[$permEntity][$permType]['-']))
-			return $this->arUserPerms[$permEntity][$permType]['-'];
-		else if ($icnt > 1)
+		if (empty($arEntityAttr))
 		{
-			foreach ($this->arUserPerms[$permEntity][$permType] as $sField => $arFieldValue)
+			return $this->arUserPerms[$permEntity][$permType]['-'] ?? self::PERM_NONE;
+		}
+
+		foreach ($this->arUserPerms[$permEntity][$permType] as $sField => $arFieldValue)
+		{
+			if ($sField == '-')
 			{
-				if ($sField == '-')
-					continue ;
-				foreach ($arFieldValue as $fieldValue => $sAttr)
+				continue ;
+			}
+
+			foreach ($arFieldValue as $fieldValue => $sAttr)
+			{
+				if (in_array($sField.$fieldValue, $arEntityAttr))
 				{
-					if (in_array($sField.$fieldValue, $arEntityAttr))
-						return $sAttr;
+					return $sAttr;
 				}
 			}
-			return $this->arUserPerms[$permEntity][$permType]['-'];
 		}
-		else
-			return self::PERM_NONE;
+
+		return $this->arUserPerms[$permEntity][$permType]['-'] ?? self::PERM_NONE;
 	}
 
 	public static function GetEntityGroup($permEntity, $permAttr = self::PERM_NONE, $permType = 'READ')
@@ -237,7 +273,7 @@ class CCrmPerms
 		if (!empty($arRole))
 		{
 			$sSql = 'SELECT RELATION FROM b_crm_role_relation WHERE RELATION LIKE \'G%\' AND ROLE_ID IN ('.implode(',', $arRole).')';
-			$res = $DB->Query($sSql, false, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
+			$res = $DB->Query($sSql);
 			while($row = $res->Fetch())
 				$arResult[] = mb_substr($row['RELATION'], 1);
 		}
@@ -254,7 +290,7 @@ class CCrmPerms
 		if (!empty($arRole))
 		{
 			$sSql = 'SELECT RELATION FROM b_crm_role_relation WHERE ROLE_ID IN ('.implode(',', $arRole).')';
-			$res = $DB->Query($sSql, false, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
+			$res = $DB->Query($sSql);
 			while($row = $res->Fetch())
 				$arResult[] = $row['RELATION'];
 		}

@@ -3,6 +3,9 @@
 namespace Bitrix\Crm\Service\Timeline\Item\Activity;
 
 use Bitrix\Crm\Activity\StatisticsMark;
+use Bitrix\Crm\Badge\Badge;
+use Bitrix\Crm\Badge\SourceIdentifier;
+use Bitrix\Crm\Badge\Type\AiCallFieldsFillingResult;
 use Bitrix\Crm\Format\Duration;
 use Bitrix\Crm\Integration\AI\AIManager;
 use Bitrix\Crm\Integration\AI\Operation\Orchestrator;
@@ -28,7 +31,6 @@ use Bitrix\Crm\Service\Timeline\Layout\Footer\IconButton;
 use Bitrix\Crm\Service\Timeline\Layout\Header\Tag;
 use Bitrix\Crm\Service\Timeline\Layout\Menu;
 use Bitrix\Crm\Service\Timeline\Layout\Menu\MenuItemFactory;
-use Bitrix\Crm\Settings\WorkTime;
 use Bitrix\Crm\Tour\CopilotInCall;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\PhoneNumber;
@@ -284,20 +286,10 @@ class Call extends Activity
 
 	public function getButtons(): array
 	{
-		$communication = $this->getAssociatedEntityModel()?->get('COMMUNICATION') ?? [];
-
-		$nearestWorkday = (new WorkTime())->detectNearestWorkDateTime(3, 1);
-		$scheduleButton = (new Button(Loc::getMessage('CRM_TIMELINE_BUTTON_CALL_SCHEDULE'), Button::TYPE_SECONDARY))
-			->setAction((new JsEvent('Call:Schedule'))
-				->addActionParamInt('activityId', $this->getActivityId())
-				->addActionParamString('scheduleDate', $nearestWorkday->toString())
-				->addActionParamInt('scheduleTs', $nearestWorkday->getTimestamp())
-			)
-		;
-		$doneButton = (new Button(Loc::getMessage('CRM_TIMELINE_BUTTON_CALL_COMPLETE'), Button::TYPE_PRIMARY))
-			->setAction($this->getCompleteAction())
-		;
+		$doneButton = (new Button(Loc::getMessage('CRM_TIMELINE_BUTTON_CALL_COMPLETE'), Button::TYPE_PRIMARY))->setAction($this->getCompleteAction());
+		$scheduleButton = $this->getScheduleButton('Call:Schedule');
 		$aiButton = $this->getAIButton();
+		$communication = $this->getAssociatedEntityModel()?->get('COMMUNICATION') ?? [];
 
 		switch ($this->fetchDirection())
 		{
@@ -432,9 +424,19 @@ class Call extends Activity
 			);
 		}
 
-		$entityTypeId = $this->getContext()->getIdentifier()->getEntityTypeId();
-		if (AIManager::isLaunchOperationsSuccess(
-				$entityTypeId,
+		return array_merge($tags, $this->getAiTags());
+	}
+
+	/**
+	 * @return Tag[]
+	 */
+	private function getAiTags(): array
+	{
+		$tags = [];
+
+		if (
+			AIManager::isLaunchOperationsSuccess(
+				$this->getContext()->getIdentifier()->getEntityTypeId(),
 				$this->getContext()->getIdentifier()->getEntityId(),
 				$this->getActivityId()
 			)
@@ -443,6 +445,28 @@ class Call extends Activity
 			$tags['copilotDone'] = new Tag(
 				Loc::getMessage('CRM_TIMELINE_TAG_COPILOT_DONE'),
 				Tag::TYPE_LAVENDER
+			);
+
+			return $tags;
+		}
+
+		$limitExceededBadge = Container::getInstance()->getBadge(
+			Badge::AI_CALL_FIELDS_FILLING_RESULT,
+			AiCallFieldsFillingResult::ERROR_LIMIT_EXCEEDED,
+		);
+
+		$itemIdentifier = $this->getContext()->getIdentifier();
+		$sourceIdentifier = new SourceIdentifier(
+			SourceIdentifier::CRM_OWNER_TYPE_PROVIDER,
+			CCrmOwnerType::Activity,
+			$this->getActivityId(),
+		);
+
+		if ($limitExceededBadge->isBound($itemIdentifier, $sourceIdentifier))
+		{
+			$tags['copilotLimitExceeded'] = new Tag(
+				AiCallFieldsFillingResult::getLimitExceededTextValue(),
+				Tag::TYPE_FAILURE,
 			);
 		}
 
@@ -463,17 +487,22 @@ class Call extends Activity
 			return null;
 		}
 
-		$isCopilotTourCanShow = (CopilotInCall::getInstance())
+		$isWelcomeTourEnabled = (CopilotInCall::getInstance())
 			->setEntityTypeId($this->getContext()->getIdentifier()->getEntityTypeId())
-			->isCopilotTourCanShow()
+			->isWelcomeTourEnabled()
 		;
 
 		return (new Payload())
 			->addValueBoolean(
-				'isCopilotTourCanShow',
-				$isCopilotTourCanShow
+				'isWelcomeTourEnabled',
+				$isWelcomeTourEnabled
 			)
 		;
+	}
+
+	protected function canMoveTo(): bool
+	{
+		return $this->isScheduled() && $this->isVoxImplant($this->fetchOriginId());
 	}
 
 	protected function getDeleteConfirmationText(): string
@@ -706,7 +735,6 @@ class Call extends Activity
 			&& $this->hasUpdatePermission()
 			&& in_array($ownerTypeId, AIManager::SUPPORTED_ENTITY_TYPE_IDS, true)
 			&& count($this->fetchAudioRecordList()) > 0
-			&& !$this->getContext()->isClosedEntity()
 			&& (new Orchestrator())->findPossibleFillFieldsTarget($activityId)?->getHash() === $this->getContext()->getIdentifier()->getHash()
 		;
 
@@ -715,26 +743,40 @@ class Call extends Activity
 			return null;
 		}
 
+		$buttonProps = [
+			'data-activity-id' => $activityId,
+		];
+		$jsEventAction = (new JsEvent('Call:LaunchCallRecordingTranscription'))
+			->addActionParamInt('activityId', $activityId)
+			->addActionParamInt('ownerTypeId', $ownerTypeId)
+			->addActionParamInt('ownerId', $ownerId)
+			->addActionParamBoolean('isCopilotBannerNeedShow', $this->isCopilotBannerNeedShow())
+		;
+
 		$button = (new Button(Loc::getMessage('CRM_COMMON_COPILOT'), Button::TYPE_AI))
 			->setIcon(Button::TYPE_AI)
-			->setAction(
-				(new JsEvent('Call:LaunchCallRecordingTranscription'))
-					->addActionParamInt('activityId', $activityId)
-					->addActionParamInt('ownerTypeId', $ownerTypeId)
-					->addActionParamInt('ownerId', $ownerId)
-					->addActionParamBoolean('isCopilotBannerNeedShow', $this->isCopilotBannerNeedShow())
-			)
 			->setScopeWeb()
 		;
 
-		if (
-			!AIManager::isAiLicenceExceededAccepted() &&
-			!$this->getContext()->getUserPermissions()->isAdmin()
-		)
+		if (!AIManager::isAILicenceAccepted($this->getContext()->getUserId()))
 		{
-			$button->setProps([
-				'data-bitrix24-license-feature' => AIManager::AI_LICENCE_FEATURE_NAME,
-			]);
+			if (\Bitrix\Crm\Settings\Crm::isBox())
+			{
+				$jsEventAction->addActionParamBoolean('isCopilotAgreementNeedShow', true);
+			}
+			else if (!$this->getContext()->getUserPermissions()->isAdmin())
+			{
+				$buttonProps = [
+					'data-bitrix24-license-feature' => AIManager::AI_LICENCE_FEATURE_NAME,
+				];
+			}
+		}
+
+		$button->setAction($jsEventAction);
+
+		if (!empty($buttonProps))
+		{
+			$button->setProps($buttonProps);
 		}
 
 		if (AIManager::isLaunchOperationsPending($ownerTypeId, $ownerId, $activityId))
@@ -876,7 +918,7 @@ class Call extends Activity
 
 	private function isVoxImplant(?string $originId): bool
 	{
-		return isset($originId) && str_contains($originId, 'VI_');
+		return isset($originId) && VoxImplantManager::isVoxImplantOriginId($originId);
 	}
 
 	private function isTranscribed(array $input): bool

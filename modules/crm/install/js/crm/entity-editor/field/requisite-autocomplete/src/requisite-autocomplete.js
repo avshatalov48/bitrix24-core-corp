@@ -1,4 +1,4 @@
-import {EventEmitter} from "main.core.events";
+﻿import {EventEmitter} from "main.core.events";
 import {Dom, Tag, Type} from "main.core";
 import {RequisiteAutocompleteField} from "crm.entity-editor.field.requisite.autocomplete";
 
@@ -305,15 +305,16 @@ export class EntityEditorRequisiteAutocomplete extends BX.UI.EntityEditorField
 		{
 			result.presetId = control.getValue();
 		}
-		else if (this._parent?._editor)
+		else
 		{
-			const schemeData = this._schemeElement.getData();
+			const editorContext = this._editor.getContext();
 			if (
-				Object.hasOwn(schemeData, "clientResolverProperty")
-				&& Type.isPlainObject(schemeData["clientResolverProperty"])
+				Object.hasOwn(editorContext, "resolverProperty")
+				&& Type.isPlainObject(editorContext["resolverProperty"])
 			)
 			{
-				const property = schemeData["clientResolverProperty"];
+				const property = editorContext["resolverProperty"];
+				const schemeData = this._schemeElement.getData();
 				if (
 					Object.hasOwn(property, "VALUE")
 					&& Type.isStringFilled(property["VALUE"])

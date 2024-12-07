@@ -196,7 +196,7 @@ $APPLICATION->IncludeComponent(
 	<input type="hidden" name="COUNTRY_ID" value="">
 	<input type="hidden" name="action" value="">
 </form>
-<script type="text/javascript">
+<script>
 	BX.namespace("BX.Crm");
 	var presetListManagerId = "<?= CUtil::JSEscape($presetListManagerId) ?>";
 	BX.Crm[presetListManagerId] = new BX.Crm.PresetListManagerClass({
@@ -248,7 +248,7 @@ $messageBoxParams = [
 		'hideMessageText' => Loc::getMessage('CRM_PRESET_LIST_CHANGE_CURRENT_COUNTRY_MSG_HIDE_TEXT'),
 	],
 ];
-?><script type="text/javascript">
+?><script>
 BX.ready(
 	function()
 	{

@@ -408,6 +408,8 @@ class Output extends Base\Output
 				'OPERATOR_ID' => $data['OPERATOR_ID'],
 				'MESSAGE_ID' => $data['MESSAGE_ID'],
 				'QUOTED_MESSAGE' => $data['QUOTED_MESSAGE'],
+				'MESSAGE_TEXT' => $data['MESSAGE_TEXT'] ?? $data['QUOTED_MESSAGE'],
+				'MESSAGE_AUTHOR' => $data['MESSAGE_AUTHOR'] ?? 0,
 				'SESSION_ID' => $data['SESSION_ID'],
 			]);
 		}

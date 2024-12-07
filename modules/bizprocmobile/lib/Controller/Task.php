@@ -4,9 +4,11 @@ namespace Bitrix\BizprocMobile\Controller;
 
 use Bitrix\BizprocMobile\EntityEditor\Converter;
 use Bitrix\BizprocMobile\EntityEditor\TaskProvider;
+use Bitrix\BizprocMobile\UI\CommentCounterView;
 use Bitrix\BizprocMobile\Workflow\Task\Fields;
 use Bitrix\BizprocMobile\UI\TaskView;
 use Bitrix\Main\Engine\ActionFilter;
+use Bitrix\Main\Engine\Response\AjaxJson;
 use Bitrix\Main\Error;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
@@ -27,7 +29,7 @@ class Task extends BaseController
 
 	public function loadDetailsAction(int $taskId, int $targetUserId = null)
 	{
-		$currentUserId = (int)($this->getCurrentUser()->getId());
+		$currentUserId = (int)($this->getCurrentUser()?->getId());
 		$targetUserId = $targetUserId !== null && $targetUserId > 0 ? $targetUserId : $currentUserId;
 
 		$taskService = new Bizproc\Api\Service\TaskService(
@@ -65,6 +67,8 @@ class Task extends BaseController
 			$provider = new TaskProvider((int)$task['ID'], $converter->toMobile()->getConvertedProperties());
 		}
 
+		$commentCounter = new CommentCounterView($task['WORKFLOW_ID'], $currentUserId);
+
 		return [
 			'task' => new TaskView($task),
 			'allCount' => $this->countParallelTasks($task['WORKFLOW_ID'], $targetUserId),
@@ -76,6 +80,7 @@ class Task extends BaseController
 			'rights' => [
 				'delegate' => ((int)$task['DELEGATION_TYPE'] !== \CBPTaskDelegationType::None) || $this->isCurrentUserAdmin(),
 			],
+			'commentCounter' => $commentCounter,
 		];
 	}
 
@@ -88,7 +93,56 @@ class Task extends BaseController
 		]);
 	}
 
-	public function doAction(int $taskId, array $taskRequest)
+	public function doCollectionAction(): ?AjaxJson
+	{
+		$createInternalError = static fn (string $reason) => new Error('', 0, ['reason' => $reason]);
+
+		if (!$this->request->isJson())
+		{
+			$this->addError($createInternalError('Wrong request format. Expected json in request body.'));
+
+			return null;
+		}
+
+		$taskIds = $this->request->getJsonList()->get('taskIds');
+		$taskRequest = $this->request->getJsonList()->get('taskRequest');
+
+		if (!is_array($taskIds))
+		{
+			$this->addError(
+				$createInternalError('Wrong request format. Expected taskIds array in request json body.')
+			);
+
+			return null;
+		}
+		if (!is_array($taskRequest))
+		{
+			$this->addError(
+				$createInternalError('Wrong request format. Expected taskRequest in request json body.')
+			);
+
+			return null;
+		}
+
+		$results = [];
+		foreach ($taskIds as $id)
+		{
+			if (is_int($id))
+			{
+				$results[] = $this->doAction($id, $taskRequest) ?? false;
+			}
+			else
+			{
+				$results[] = false;
+			}
+		}
+
+		$this->errorCollection->clear();
+
+		return AjaxJson::createSuccess($results);
+	}
+
+	public function doAction(int $taskId, array $taskRequest): ?bool
 	{
 		$currentUserId = $this->getCurrentUser()->getId();
 
@@ -116,22 +170,7 @@ class Task extends BaseController
 		$getTasksResult = $taskService->doTask($request);
 		if (!$getTasksResult->isSuccess())
 		{
-			foreach ($getTasksResult->getErrors() as $error)
-			{
-				if ($error->getCode() === 'TASK_NOT_FOUND_ERROR')
-				{
-					$this->addError(
-						new Error(
-							Loc::getMessage('M_BP_LIB_CONTROLLER_TASK_ERROR_TASK_NOT_FOUND'),
-							'TASK_NOT_FOUND_ERROR'
-						)
-					);
-				}
-				else
-				{
-					$this->addError($error);
-				}
-			}
+			$this->addErrors($getTasksResult->getErrors());
 
 			return null;
 		}

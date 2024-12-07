@@ -1,18 +1,18 @@
-<?
-require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_before.php");
-/** @global CMain $APPLICATION */
-/** @global CDatabase $DB */
-/** @global CUser $USER */
-/** @global CUserTypeManager $USER_FIELD_MANAGER */
+<?php
+require_once $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_admin_before.php';
+/** @var CMain $APPLICATION */
+/** @var CDatabase $DB */
+/** @var CUser $USER */
+/** @var CUserTypeManager $USER_FIELD_MANAGER */
 $member_id = intval($_REQUEST['member']);
 
-if (!CModule::IncludeModule("controller"))
+if (!CModule::IncludeModule('controller'))
 {
-	$APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+	$APPLICATION->AuthForm(GetMessage('ACCESS_DENIED'));
 }
 
 $bCanRunCommand = false;
-if ($USER->CanDoOperation("controller_run_command"))
+if ($USER->CanDoOperation('controller_run_command'))
 {
 	$bCanRunCommand = true;
 }
@@ -20,7 +20,7 @@ else
 {
 	foreach (\Bitrix\Controller\AuthGrantTable::getControllerMemberScopes($member_id, $USER->GetID(), $USER->GetUserGroupArray()) as $grant )
 	{
-		if ($grant["SCOPE"] === "php")
+		if ($grant['SCOPE'] === 'php')
 		{
 			$bCanRunCommand = true;
 		}
@@ -29,112 +29,125 @@ else
 
 if (!$bCanRunCommand)
 {
-	$APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+	$APPLICATION->AuthForm(GetMessage('ACCESS_DENIED'));
 }
 
-require_once($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/controller/prolog.php");
+require_once $_SERVER['DOCUMENT_ROOT'] . BX_ROOT . '/modules/controller/prolog.php';
 
 IncludeModuleLangFile(__FILE__);
 
 $remove = 0;
-if (isset($_REQUEST["remove"]) && preg_match('/^tab(\d+)$/', $_REQUEST["remove"], $match) && check_bitrix_sessid())
+if (isset($_REQUEST['remove']) && preg_match('/^tab(\d+)$/', $_REQUEST['remove'], $match) && check_bitrix_sessid())
 {
 	$remove = $match[1];
 }
 
-if (isset($_REQUEST["query_count"]) && $_REQUEST["query_count"] > 1 && check_bitrix_sessid())
+if (isset($_REQUEST['query_count']) && $_REQUEST['query_count'] > 1 && check_bitrix_sessid())
 {
-	$query_count = intval($_REQUEST["query_count"]);
-	CUserOptions::SetOption("controller_run_command", "count", $query_count);
+	$query_count = intval($_REQUEST['query_count']);
+	CUserOptions::SetOption('controller_run_command', 'count', $query_count);
 }
-$query_count = CUserOptions::GetOption("controller_run_command", "count", 1);
+$query_count = CUserOptions::GetOption('controller_run_command', 'count', 1);
 if ($query_count <= 1)
-	$remove = 0;
-
-if (isset($_REQUEST["save"]) && check_bitrix_sessid())
 {
-	CUtil::JSPostUnescape();
-	require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_js.php");
+	$remove = 0;
+}
+
+if (isset($_REQUEST['save']) && check_bitrix_sessid())
+{
+	require_once $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_admin_js.php';
 	$i = 1;
-	while (isset($_POST["query".$i]))
+	while (isset($_POST['query' . $i]))
 	{
-		$saved = CUserOptions::GetOption("controller_run_command", "query".$i, '');
-		if ($saved !== $_POST["query".$i])
+		$saved = CUserOptions::GetOption('controller_run_command', 'query' . $i, '');
+		if ($saved !== $_POST['query' . $i])
 		{
-			CUserOptions::SetOption("controller_run_command", "query".$i, $_POST["query".$i]);
+			CUserOptions::SetOption('controller_run_command', 'query' . $i, $_POST['query' . $i]);
 		}
 		$i++;
 	}
-	while(CUserOptions::GetOption("controller_run_command", "query".$i, '') <> '')
+	while (CUserOptions::GetOption('controller_run_command', 'query' . $i, '') <> '')
 	{
-		CUserOptions::DeleteOption("controller_run_command", "query".$i);
+		CUserOptions::DeleteOption('controller_run_command', 'query' . $i);
 		$i++;
 	}
-	echo "saved";
-	require($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/include/epilog_admin_js.php");
+	echo 'saved';
+	require $_SERVER['DOCUMENT_ROOT'] . BX_ROOT . '/modules/main/include/epilog_admin_js.php';
 	die();
 }
 
-$maxSafeCount = (isset($_REQUEST["force"]) && $_REQUEST["force"] == "Y"? false: COption::GetOptionString("controller", "safe_count"));
+$maxSafeCount = (isset($_REQUEST['force']) && $_REQUEST['force'] == 'Y' ? false : COption::GetOptionString('controller', 'safe_count'));
 $cnt = 0;
-$sTableID = "tbl_controller_run";
+$sTableID = 'tbl_controller_run';
 
 if (
-	$query <> ""
+	isset($_REQUEST['query'])
+	&& $_REQUEST['query'] !== ''
 	&& check_bitrix_sessid()
-	&& !isset($_POST["add"])
+	&& !isset($_POST['add'])
 	&& !$remove
 )
 {
-	CUtil::JSPostUnescape();
-	require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_js.php");
+	require_once $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_admin_js.php';
 
-	$arFilter = array(
-		"DISCONNECTED" => "N",
-		"CONTROLLER_GROUP_ID" => $_REQUEST['controller_group_id'],
-	);
+	$arFilter = [
+		'DISCONNECTED' => 'N',
+		'CONTROLLER_GROUP_ID' => $_REQUEST['controller_group_id'],
+	];
 
 	if ($member_id > 0)
 	{
-		$arFilter["=ID"] = $member_id;
+		$arFilter['=ID'] = $member_id;
 	}
-	elseif (isset($_REQUEST['controller_member_id']) && trim($_REQUEST['controller_member_id']) != "")
+	elseif (isset($_REQUEST['controller_member_id']) && !empty($_REQUEST['controller_member_id']))
 	{
 		if (!is_array($_REQUEST['controller_member_id']))
-			$IDs = array_map("trim", explode(" ", $_REQUEST['controller_member_id']));
+		{
+			$IDs = array_map('trim', explode(' ', $_REQUEST['controller_member_id']));
+		}
 		else
-			$IDs = array_map("trim", $_REQUEST['controller_member_id']);
+		{
+			$IDs = array_map('trim', $_REQUEST['controller_member_id']);
+		}
 
-		$arFilterID = array();
-		$arFilterNAME = array();
+		$arFilterID = [];
+		$arFilterNAME = [];
 
 		foreach ($IDs as $id)
 		{
 			if (is_numeric($id))
+			{
 				$arFilterID[] = $id;
+			}
 			else
+			{
 				$arFilterNAME[] = mb_strtoupper($id);
+			}
 		}
 
 		if (!empty($arFilterID) || !empty($arFilterNAME))
 		{
-			$arFilter[0] = array("LOGIC" => "OR");
+			$arFilter[0] = ['LOGIC' => 'OR'];
 			if (!empty($arFilterID))
-				$arFilter[0]["=ID"] = $arFilterID;
+			{
+				$arFilter[0]['=ID'] = $arFilterID;
+			}
 			if (!empty($arFilterNAME))
-				$arFilter[0]["NAME"] = $arFilterNAME;
+			{
+				$arFilter[0]['NAME'] = $arFilterNAME;
+			}
 		}
 	}
 
-	$runQueue = array();
-	$dbr_members = CControllerMember::GetList(Array("ID" => "ASC"), $arFilter);
+	$runQueue = [];
+	$dbr_members = CControllerMember::GetList(['ID' => 'ASC'], $arFilter);
 	while ($ar_member = $dbr_members->Fetch())
 	{
-		$runQueue[$ar_member["ID"]] = $ar_member["NAME"];
+		$runQueue[$ar_member['ID']] = $ar_member['NAME'];
 		$cnt++;
 		if ($maxSafeCount !== false && $cnt > $maxSafeCount)
 		{
-			$runQueue = array();
+			$runQueue = [];
 			break;
 		}
 	}
@@ -142,13 +155,13 @@ if (
 	$cnt_ok = 0;
 	foreach ($runQueue as $memberId => $memberName)
 	{
-		if ($_REQUEST['add_task'] == "Y")
+		if ($_REQUEST['add_task'] == 'Y')
 		{
-			if (CControllerTask::Add(array(
-				"TASK_ID" => "REMOTE_COMMAND",
-				"CONTROLLER_MEMBER_ID" => $memberId,
-				"INIT_EXECUTE" => $query,
-			))
+			if (CControllerTask::Add([
+				'TASK_ID' => 'REMOTE_COMMAND',
+				'CONTROLLER_MEMBER_ID' => $memberId,
+				'INIT_EXECUTE' => $_REQUEST['query'],
+			])
 			)
 			{
 				$cnt_ok++;
@@ -157,12 +170,12 @@ if (
 		else
 		{
 			echo BeginNote();
-			echo "<b>".htmlspecialcharsEx($memberName).":</b><br>";
-			$result = CControllerMember::RunCommandWithLog($memberId, $query);
+			echo '<b>' . htmlspecialcharsEx($memberName) . ':</b><br>';
+			$result = CControllerMember::RunCommandWithLog($memberId, $_REQUEST['query']);
 			if ($result === false)
 			{
 				$e = $APPLICATION->GetException();
-				echo "Error: ".$e->GetString();
+				echo 'Error: ' . $e->GetString();
 			}
 			else
 			{
@@ -175,67 +188,69 @@ if (
 	if ($maxSafeCount !== false && $cnt > $maxSafeCount)
 	{
 		echo BeginNote();
-		echo GetMessage("CTRLR_RUN_ERR_TOO_MANY_SELECTED");
+		echo GetMessage('CTRLR_RUN_ERR_TOO_MANY_SELECTED');
 		echo EndNote();
 		?>
-		<script>top.document.getElementById('tr_force').style.display = '';</script><?
+		<script>top.document.getElementById('tr_force').style.display = '';</script><?php
 	}
 	else
 	{
 		if ($cnt <= 0)
 		{
 			echo BeginNote();
-			echo GetMessage("CTRLR_RUN_ERR_NSELECTED");
+			echo GetMessage('CTRLR_RUN_ERR_NSELECTED');
 			echo EndNote();
 		}
 
-		if ($_REQUEST['add_task'] == "Y")
+		if ($_REQUEST['add_task'] == 'Y')
 		{
 			echo BeginNote();
-			echo GetMessage("CTRLR_RUN_SUCCESS", array(
-				"#SUCCESS_CNT#" => $cnt_ok,
-				"#CNT#" => $cnt,
-				"#LANG#" => LANGUAGE_ID,
-			));
+			echo GetMessage('CTRLR_RUN_SUCCESS', [
+				'#SUCCESS_CNT#' => $cnt_ok,
+				'#CNT#' => $cnt,
+				'#LANG#' => LANGUAGE_ID,
+			]);
 			echo EndNote();
 		}
 	}
 
-	require($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/include/epilog_admin_js.php");
+	require $_SERVER['DOCUMENT_ROOT'] . BX_ROOT . '/modules/main/include/epilog_admin_js.php';
 	die();
 }
 
-$APPLICATION->SetTitle(GetMessage("CTRLR_RUN_TITLE"));
+$APPLICATION->SetTitle(GetMessage('CTRLR_RUN_TITLE'));
 
-if(
+if (
 	$_SERVER['REQUEST_METHOD'] == 'POST'
-	&& $_POST["ajax"] === "y"
-	&& (isset($_POST["add"]) || $remove)
+	&& $_POST['ajax'] === 'y'
+	&& (isset($_POST['add']) || isset($_POST['remove']))
 )
 {
-	CUtil::JSPostUnescape();
-	require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_js.php");
+	require_once $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_admin_js.php';
 }
 else
 {
-	require($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/include/prolog_admin_after.php");
+	require $_SERVER['DOCUMENT_ROOT'] . BX_ROOT . '/modules/main/include/prolog_admin_after.php';
 }
 
-$aTabs = array();
-for ($i = 1; $i <= $query_count - ($remove? 1: 0); $i++)
+$controller_member_id = isset($_REQUEST['controller_member_id']) && !is_array($_REQUEST['controller_member_id']) ? intval($_REQUEST['controller_member_id']) : 0;
+$controller_group_id = isset($_REQUEST['controller_group_id']) && !is_array($_REQUEST['controller_group_id']) ? intval($_REQUEST['controller_group_id']) : 0;
+
+$aTabs = [];
+for ($i = 1; $i <= $query_count - ($remove ? 1 : 0); $i++)
 {
-	$aTabs[] = array(
-		"DIV" => "tab".$i,
-		"TAB" => GetMessage("CTRLR_RUN_COMMAND_FIELD")." (".$i.")",
-		"TITLE" => GetMessage("CTRLR_RUN_COMMAND_TAB_TITLE"),
-	);
+	$aTabs[] = [
+		'DIV' => 'tab' . $i,
+		'TAB' => GetMessage('CTRLR_RUN_COMMAND_FIELD') . ' (' . $i . ')',
+		'TITLE' => GetMessage('CTRLR_RUN_COMMAND_TAB_TITLE'),
+	];
 }
-$aTabs[] = array(
-	"DIV" => "tab_plus",
-	"TAB" => '',
-	"ONSELECT" => "AddNewTab();",
-);
-$editTab = new CAdminTabControl("editTab", $aTabs);
+$aTabs[] = [
+	'DIV' => 'tab_plus',
+	'TAB' => '',
+	'ONSELECT' => 'AddNewTab();',
+];
+$editTab = new CAdminTabControl('editTab', $aTabs);
 
 ?>
 	<script>
@@ -380,7 +395,7 @@ $editTab = new CAdminTabControl("editTab", $aTabs);
 		);
 		function __FPHPSubmit()
 		{
-			if (confirm('<?echo GetMessage("CTRLR_RUN_CONFIRM")?>'))
+			if (confirm('<?php echo GetMessage('CTRLR_RUN_CONFIRM')?>'))
 			{
 				var selectedTab = BX('editTab_active_tab');
 				var m = selectedTab.value.match(/^tab(\d+)$/);
@@ -430,113 +445,113 @@ $editTab = new CAdminTabControl("editTab", $aTabs);
 		}
 	</script>
 	<div id="whole_form">
-	<?
-	if(
+	<?php
+	if (
 		$_SERVER['REQUEST_METHOD'] == 'POST'
-		&& $_POST["ajax"] === "y"
-		&& (isset($_POST["add"]) || $remove)
+		&& $_POST['ajax'] === 'y'
+		&& (isset($_POST['add']) || $remove)
 	)
 	{
 		$APPLICATION->RestartBuffer();
 		?>
 		<script>window.editTab = null;</script>
-		<?
+		<?php
 	}
 	?>
-	<form name="form1" action="<? echo $APPLICATION->GetCurPage() ?>" method="POST">
-		<input type="hidden" name="lang" value="<?=LANG?>">
-		<?
+	<form name="form1" action="<?php echo $APPLICATION->GetCurPage() ?>" method="POST">
+		<input type="hidden" name="lang" value="<?=LANGUAGE_ID?>">
+		<?php
 		if ($member_id > 0)
 		{
-			echo GetMessage("CTRLR_RUN_FILTER_SITE").': #'.$member_id."<br><br>";
+			echo GetMessage('CTRLR_RUN_FILTER_SITE') . ': #' . $member_id . '<br><br>';
 		}
 		else
 		{
-			$arGroups = Array();
-			$dbr_groups = CControllerGroup::GetList(Array("SORT" => "ASC", "NAME" => "ASC", "ID" => "ASC"));
+			$arGroups = [];
+			$dbr_groups = CControllerGroup::GetList(['SORT' => 'ASC', 'NAME' => 'ASC', 'ID' => 'ASC']);
 			while ($ar_groups = $dbr_groups->GetNext())
 			{
-				$arGroups[$ar_groups["ID"]] = $ar_groups["NAME"];
+				$arGroups[$ar_groups['ID']] = $ar_groups['NAME'];
 			}
 
 			$filter = new CAdminFilter(
-				$sTableID."_filter_id",
-				Array(GetMessage("CTRLR_RUN_FILTER_GROUP"))
+				$sTableID . '_filter_id',
+				[GetMessage('CTRLR_RUN_FILTER_GROUP')]
 			);
 
 			$filter->Begin();
 			?>
 			<tr>
 				<td nowrap><label
-						for="controller_member_id"><?= GetMessage("CTRLR_RUN_FILTER_SITE") ?></label>:
+						for="controller_member_id"><?= GetMessage('CTRLR_RUN_FILTER_SITE') ?></label>:
 				</td>
 				<td nowrap>
-					<?
-					$dbr_members = CControllerMember::GetList(array(
-						"SORT" => "ASC",
-						"NAME" => "ASC",
-						"ID" => "ASC",
-					), array(
-						"DISCONNECTED" => "N",
-					), array(
-						"ID",
-						"NAME",
-					), array(
-					), array(
-						"nTopCount" => $maxSafeCount+1,
-					));
-					$arMembers = array();
+					<?php
+					$dbr_members = CControllerMember::GetList([
+						'SORT' => 'ASC',
+						'NAME' => 'ASC',
+						'ID' => 'ASC',
+					], [
+						'DISCONNECTED' => 'N',
+					], [
+						'ID',
+						'NAME',
+					], [
+					], [
+						'nTopCount' => $maxSafeCount + 1,
+					]);
+					$arMembers = [];
 					$c = 0;
 					while ($ar_member = $dbr_members->Fetch())
 					{
-						$arMembers[$ar_member["ID"]] = $ar_member["NAME"];
+						$arMembers[$ar_member['ID']] = $ar_member['NAME'];
 						$c++;
 						if ($maxSafeCount !== false && $c > $maxSafeCount)
 						{
-							$arMembers = array();
+							$arMembers = [];
 							break;
 						}
 					}
 
 					if ($arMembers):?>
 						<select name="controller_member_id" id="controller_member_id">
-							<option value=""><? echo GetMessage("CTRLR_RUN_FILTER_SITE_ALL") ?></option>
-							<? foreach ($arMembers as $ID => $NAME): ?>
+							<option value=""><?php echo GetMessage('CTRLR_RUN_FILTER_SITE_ALL') ?></option>
+							<?php foreach ($arMembers as $ID => $NAME): ?>
 								<option
-									value="<? echo htmlspecialcharsbx($ID) ?>"
-									<? if ($controller_member_id == $ID) echo ' selected'; ?>
-								><? echo htmlspecialcharsEx($NAME." [".$ID."]") ?></option>
-							<? endforeach ?>
+									value="<?php echo htmlspecialcharsbx($ID) ?>"
+									<?php echo ($controller_member_id == $ID) ? ' selected' : ''?>
+								><?php echo htmlspecialcharsEx($NAME . ' [' . $ID . ']') ?></option>
+							<?php endforeach ?>
 						</select>
-						<?
+						<?php
 					else:?>
 						<input
 							type="text"
 							name="controller_member_id"
 							id="controller_member_id"
-							value="<? echo htmlspecialcharsbx($controller_member_id) ?>"
+							value="<?php echo htmlspecialcharsbx($controller_member_id) ?>"
 							size="47"
 						/>
-					<? endif ?>
+					<?php endif ?>
 				</td>
 			</tr>
 			<tr>
 				<td nowrap>
-					<label for="controller_group_id"><? echo htmlspecialcharsEx(GetMessage("CTRLR_RUN_FILTER_GROUP")) ?></label>:
+					<label for="controller_group_id"><?php echo htmlspecialcharsEx(GetMessage('CTRLR_RUN_FILTER_GROUP')) ?></label>:
 				</td>
-				<td nowrap><? echo htmlspecialcharsEx($controller_group_id) ?>
+				<td nowrap><?php echo htmlspecialcharsEx($controller_group_id) ?>
 					<select name="controller_group_id" id="controller_group_id">
-						<option value=""><? echo GetMessage("CTRLR_RUN_FILTER_GROUP_ANY") ?></option>
-						<? foreach ($arGroups as $group_id => $group_name): ?>
+						<option value=""><?php echo GetMessage('CTRLR_RUN_FILTER_GROUP_ANY') ?></option>
+						<?php foreach ($arGroups as $group_id => $group_name): ?>
 							<option
 								value="<?= $group_id ?>"
-								<? if ($group_id == $controller_group_id) echo "selected" ?>
+								<?php echo ($group_id == $controller_group_id) ? 'selected' : ''?>
 							><?= $group_name ?></option>
-						<? endforeach; ?>
+						<?php endforeach; ?>
 					</select>
 				</td>
 			</tr>
-			<?
+			<?php
 			$filter->Buttons();
 			$filter->End();
 		}
@@ -544,30 +559,34 @@ $editTab = new CAdminTabControl("editTab", $aTabs);
 
 
 		<?=bitrix_sessid_post()?>
-		<?
+		<?php
 		$editTab->Begin();
-		for ($i = 1; $i <= $query_count - ($remove? 1: 0); $i++)
+		for ($i = 1; $i <= $query_count - ($remove ? 1 : 0); $i++)
 		{
-			$index = $remove? ($i >= $remove? $i + 1: $i): $i;
-			if (isset($_REQUEST['query'.$index]))
-				$query = $_REQUEST['query'.$index];
+			$index = $remove ? ($i >= $remove ? $i + 1 : $i) : $i;
+			if (isset($_REQUEST['query' . $index]))
+			{
+				$query = $_REQUEST['query' . $index];
+			}
 			else
-				$query = CUserOptions::GetOption("controller_run_command", "query".$index, '');
-			
+			{
+				$query = CUserOptions::GetOption('controller_run_command', 'query' . $index, '');
+			}
+
 			$editTab->BeginNextTab();
 			?>
 			<tr>
 				<td>
-					<input type="hidden" name="lang" value="<?=LANG?>">
-					<textarea name="query<?echo $i?>" id="query<?echo $i?>" rows="15" style="width:100%;" title=""><? echo htmlspecialcharsbx($query); ?></textarea>
-					<?
-					if (COption::GetOptionString('fileman', "use_code_editor", "Y") == "Y" && CModule::IncludeModule('fileman'))
+					<input type="hidden" name="lang" value="<?=LANGUAGE_ID?>">
+					<textarea name="query<?php echo $i?>" id="query<?php echo $i?>" rows="15" style="width:100%;" title=""><?php echo htmlspecialcharsbx($query); ?></textarea>
+					<?php
+					if (COption::GetOptionString('fileman', 'use_code_editor', 'Y') == 'Y' && CModule::IncludeModule('fileman'))
 					{
-						CCodeEditor::Show(array(
-							'textareaId' => 'query'.$i,
+						CCodeEditor::Show([
+							'textareaId' => 'query' . $i,
 							'height' => 350,
 							'forceSyntax' => 'php',
-						));
+						]);
 					}
 					?>
 				</td>
@@ -576,17 +595,17 @@ $editTab = new CAdminTabControl("editTab", $aTabs);
 				<td><br>
 					<div class="adm-list">
 						<div class="adm-list-item">
-							<div class="adm-list-control"><input type="checkbox" id="add_task<?echo $i?>" name="add_task<?echo $i?>" title="<? echo GetMessage("CTRLR_RUN_ADD_TASK_LABEL") ?>" value="Y"></div>
-							<div class="adm-list-label"><label for="add_task<?echo $i?>" title="<?echo GetMessage("CTRLR_RUN_ADD_TASK_LABEL")?>"><?echo GetMessage("CTRLR_RUN_ADD_TASK")?></label></div>
+							<div class="adm-list-control"><input type="checkbox" id="add_task<?php echo $i?>" name="add_task<?php echo $i?>" title="<?php echo GetMessage('CTRLR_RUN_ADD_TASK_LABEL') ?>" value="Y"></div>
+							<div class="adm-list-label"><label for="add_task<?php echo $i?>" title="<?php echo GetMessage('CTRLR_RUN_ADD_TASK_LABEL')?>"><?php echo GetMessage('CTRLR_RUN_ADD_TASK')?></label></div>
 						</div>
 						<div class="adm-list-item" style="display:none" id="tr_force">
 							<div class="adm-list-control"><input type="checkbox" id="force" name="force" value="Y"></div>
-							<div class="adm-list-label"><label for="force"><? echo GetMessage("CTRLR_RUN_FORCE_RUN") ?></label></div>
+							<div class="adm-list-label"><label for="force"><?php echo GetMessage('CTRLR_RUN_FORCE_RUN') ?></label></div>
 						</div>
 					</div>
 				</td>
 			</tr>
-		<?
+		<?php
 		}
 		$editTab->Buttons();
 		?>
@@ -594,34 +613,34 @@ $editTab = new CAdminTabControl("editTab", $aTabs);
 			type="button"
 			accesskey="x"
 			name="execute"
-			value="<? echo GetMessage("CTRLR_RUN_BUTT_RUN") ?>"
+			value="<?php echo GetMessage('CTRLR_RUN_BUTT_RUN') ?>"
 			onclick="return __FPHPSubmit();"
 			class="adm-btn-save"
-			<? if (!$bCanRunCommand) echo 'disabled="disabled"' ?>
+			<?php echo (!$bCanRunCommand) ? 'disabled="disabled"' : ''?>
 		>
-		<?
+		<?php
 		$editTab->End();
 		?>
 	</form>
 	</div>
-<?
-if(
+<?php
+if (
 	$_SERVER['REQUEST_METHOD'] == 'POST'
-	&& $_POST["ajax"] === "y"
-	&& (isset($_POST["add"]) || $remove)
+	&& $_POST['ajax'] === 'y'
+	&& (isset($_POST['add']) || $remove)
 )
 {
 	if ($remove)
 	{
-		CUserOptions::SetOption("controller_run_command", "count", $query_count - 1);
+		CUserOptions::SetOption('controller_run_command', 'count', $query_count - 1);
 	}
-	?><script>adjustTabTitles();</script><?
+	?><script>adjustTabTitles();</script><?php
 
-	require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/epilog_admin_js.php");
+	require_once $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/epilog_admin_js.php';
 }
 else
 {
-	?><div id="result_div"></div><?
+	?><div id="result_div"></div><?php
 }
 
-require($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/include/epilog_admin.php");
+require $_SERVER['DOCUMENT_ROOT'] . BX_ROOT . '/modules/main/include/epilog_admin.php';

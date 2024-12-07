@@ -192,7 +192,7 @@ $APPLICATION->IncludeComponent(
 <?php endif;
 
 if($arResult['ENABLE_ACTIVITY_ADD']): ?>
-	<script type="text/javascript">
+	<script>
 		BX.ready(
 			function()
 			{

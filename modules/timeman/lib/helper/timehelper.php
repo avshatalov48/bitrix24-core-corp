@@ -81,7 +81,7 @@ class TimeHelper
 				}
 			}
 
-			$value = abs($hour * 3600 + $min * 60);
+			$value = abs(((int) $hour) * 3600 + ((int) $min) * 60);
 			if ($value >= 86400)
 			{
 				return 86399;
@@ -451,9 +451,10 @@ class TimeHelper
 	/**
 	 * @param \DateTime|int $dateTime
 	 * @param $format
+	 * @param string|null $languageId
 	 * @return string
 	 */
-	public function formatDateTime($dateTime, $format)
+	public function formatDateTime($dateTime, $format, ?string $languageId = null)
 	{
 		if ($dateTime instanceof \DateTime || $dateTime instanceof Type\Date)
 		{
@@ -464,7 +465,7 @@ class TimeHelper
 			$timestamp = $dateTime;
 		}
 
-		return \formatDate($format, $timestamp);
+		return \formatDate($format, $timestamp, false, $languageId);
 	}
 
 	/**

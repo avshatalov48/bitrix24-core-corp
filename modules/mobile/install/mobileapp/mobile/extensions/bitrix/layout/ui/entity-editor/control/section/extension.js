@@ -4,6 +4,7 @@
 jn.define('layout/ui/entity-editor/control/section', (require, exports, module) => {
 	const AppTheme = require('apptheme');
 	const { transition } = require('animation');
+	const { ContextMenu } = require('layout/ui/context-menu');
 	const { FocusManager } = require('layout/ui/fields/focus-manager');
 	const { ToggleButton } = require('layout/ui/entity-editor/control/section/toggle-button');
 	const { EntityEditorBaseControl } = require('layout/ui/entity-editor/control/base');

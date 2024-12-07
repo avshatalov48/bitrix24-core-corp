@@ -70,6 +70,11 @@ jn.define('crm/stage-list-view', (require, exports, module) => {
 			return BX.prop.getInteger(this.props, 'activeStageId', null);
 		}
 
+		getDisabledStageIdsByCategory()
+		{
+			return BX.prop.getArray(this.props, 'disabledStageIds', []);
+		}
+
 		componentDidMount()
 		{
 			if (this.stageIdsBySemantics.processStages.length === 0 && this.categoryId)

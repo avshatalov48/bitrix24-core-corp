@@ -30,6 +30,11 @@ class Entry extends TimelineEntry
 	public const TYPE_CATEGORY_MEMBER_SIGNING_EXPIRED = 16; // log
 	public const TYPE_CATEGORY_MEMBER_SIGNING_ERROR = 17; // log
 	public const TYPE_CATEGORY_MEMBER_SNILS_ERROR = 18; // log
+	public const TYPE_CATEGORY_MEMBER_STOPPED_BY_ASSIGNEE = 19; // log
+	public const TYPE_CATEGORY_MEMBER_STOPPED_BY_REVIEWER = 20; // log
+	public const TYPE_CATEGORY_MEMBER_STOPPED_BY_EDITOR = 21; // log
+	public const TYPE_CATEGORY_MEMBER_SIGNED_DELIVERED  = 22; // log
+	public const TYPE_CATEGORY_CONFIGURATION_ERROR = 23; // log
 
 	public static function create(array $params): ?int
 	{

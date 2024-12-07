@@ -25,7 +25,7 @@ $helper = new \Bitrix\Tasks\UI\Component\TemplateHelper('TasksWidgetMemberSelect
 			$user['VALUE'] = $user['ID'];
 			$user['DISPLAY'] = User::formatName($user, false, $arParams['NAME_TEMPLATE']);
 
-			$user['AVATAR'] = UI::getAvatar($user['PERSONAL_PHOTO'], 100, 100);
+			$user['AVATAR'] = UI::getAvatar($user['PERSONAL_PHOTO'] ?? null, 100, 100);
 			$user['AVATAR_CSS'] =
 				$user['AVATAR'] ?
 					"background: url('".Uri::urnEncode($user['AVATAR'])."') center no-repeat; background-size: 35px;" :
@@ -45,7 +45,7 @@ $helper = new \Bitrix\Tasks\UI\Component\TemplateHelper('TasksWidgetMemberSelect
 			{
 				$userType = 'extranet';
 			}
-			elseif($user['IS_NETWORK_USER'])
+			elseif($user['IS_NETWORK_USER'] ?? null)
 			{
 				$userType = 'network';
 			}

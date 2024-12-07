@@ -4,7 +4,7 @@
 jn.define('layout/ui/entity-editor/control/address', (require, exports, module) => {
 
 	const { EntityEditorField } = require('layout/ui/entity-editor/control/field');
-	const { AddressValueConverter } = require('layout/ui/fields/address/value-converter');
+	const { AddressValueConverter } = require('layout/ui/fields/address');
 
 	/**
 	 * @class EntityEditorAddressField

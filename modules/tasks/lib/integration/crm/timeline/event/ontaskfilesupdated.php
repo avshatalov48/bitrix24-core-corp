@@ -23,8 +23,8 @@ class OnTaskFilesUpdated implements TimeLineEvent
 	{
 		return [
 			'AUTHOR_ID' => $this->userId,
-			'TASK_ID' => $this->task->getId(),
-			'TASK_FILE_IDS' => $this->getFiles($this->task->getId(), Task::class),
+			'TASK_ID' => $this->task?->getId(),
+			'TASK_FILE_IDS' => $this->getFiles($this->task?->getId(), Task::class),
 			'REFRESH_TASK_ACTIVITY' => true,
 		];
 	}

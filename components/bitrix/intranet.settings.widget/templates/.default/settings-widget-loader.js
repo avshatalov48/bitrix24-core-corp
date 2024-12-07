@@ -8,12 +8,14 @@ export class SettingsWidgetLoader
 	#isBitrix24: boolean = false;
 	#isAdmin: boolean = false;
 	#isRequisite: boolean = false;
+	#isMainPageAvailable: boolean = false;
 
 	constructor(params)
 	{
 		this.#isBitrix24 = params['isBitrix24'];
 		this.#isAdmin = params['isAdmin'];
 		this.#isRequisite = params['isRequisite'];
+		this.#isMainPageAvailable = params['isMainPageAvailable'];
 	}
 
 	showOnce(node)
@@ -58,6 +60,11 @@ export class SettingsWidgetLoader
 		Dom.append(this.getHeaderSkeleton(), container);
 
 		if (this.#isRequisite)
+		{
+			Dom.append(this.getItemSkeleton(), container);
+		}
+
+		if (this.#isMainPageAvailable)
 		{
 			Dom.append(this.getItemSkeleton(), container);
 		}

@@ -20,6 +20,17 @@ jn.define('crm/timeline/item/ui/icon', (require, exports, module) => {
 		},
 	};
 
+	const LogoTintColor = {
+		default: AppTheme.colors.accentSoftBlue2,
+		failure: AppTheme.colors.accentSoftRed2,
+		orange: AppTheme.colors.accentSoftOrange2,
+
+		get(code)
+		{
+			return this[code] ?? AppTheme.colors.accentSoftRed2;
+		},
+	};
+
 	class TimelineItemIcon extends LayoutComponent
 	{
 		constructor(props)
@@ -112,9 +123,9 @@ jn.define('crm/timeline/item/ui/icon', (require, exports, module) => {
 
 		getIconTintedColor()
 		{
-			const iconType = get(this.props, 'logo.iconType', null);
+			const iconType = get(this.props, 'logo.iconType', 'default');
 
-			return iconType ? AppTheme.colors.accentSoftRed2 : AppTheme.colors.accentSoftBlue2;
+			return LogoTintColor.get(iconType);
 		}
 
 		renderIcon()

@@ -2,6 +2,7 @@
 
 return [
 	'extensions' => [
+		//'im:messenger/lib/dev/action-timer',
 		'im:messenger/component/messenger-base',
 		'type',
 		'loc',
@@ -31,7 +32,9 @@ return [
 		'im:messenger/view/dialog',
 		'im:messenger/provider/pull/chat',
 		'im:messenger/provider/pull/copilot',
+		'im:messenger/provider/pull/plan-limits',
 		'im:messenger/provider/service',
+		'im:messenger/provider/data',
 		'im:messenger/lib/rest-manager',
 		'im:messenger/lib/integration/mobile/communication',
 		'im:messenger/lib/promotion',

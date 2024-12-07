@@ -89,13 +89,11 @@ class Payment extends Activity
 				]
 			);
 
-			$result['paymentMethod'] = (new ContentBlockWithTitle())
-				->setInline()
-				->setTitle(Loc::getMessage('CRM_TIMELINE_ECOMMERCE_PAYMENT_METHOD'))
-				->setContentBlock(
+			$result['paymentMethod'] = (
 					(new ContentBlock\Text())
-						->setValue((string)$paymentMethodValue)
-						->setColor(ContentBlock\Text::COLOR_BASE_90)
+						->setValue(Loc::getMessage('CRM_TIMELINE_ECOMMERCE_PAYMENT_METHOD_MSGVER_1', ['#PAYMENT_METHOD#' => (string)$paymentMethodValue]))
+						->setFontSize(ContentBlock\Text::FONT_SIZE_SM)
+						->setColor(ContentBlock\Text::COLOR_BASE_70)
 				)
 			;
 		}
@@ -169,12 +167,10 @@ class Payment extends Activity
 	{
 		$fields = $this->getAssociatedEntityModelFields();
 
-		$contentBlock = new LineOfTextBlocks();
-
 		$dateBillTimestamp = $this->getPaymentDateBillTimestamp($payment, $fields);
 
 		$title = Loc::getMessage(
-			'CRM_TIMELINE_ECOMMERCE_PAYMENT_ENTITY_TITLE',
+			'CRM_TIMELINE_ECOMMERCE_PAYMENT_ENTITY_TITLE_WITHOUT_NAME',
 			[
 				'#NUMBER#' => $this->getPaymentAccountNumber($payment, $fields),
 				'#DATE#' =>
@@ -188,51 +184,42 @@ class Payment extends Activity
 			]
 		);
 
+		$pregMatchResult = null;
+		preg_match('/<a>(.*)<\/a>/', $title, $pregMatchResult);
+		$linkNumberAndDate = $pregMatchResult[0] ?? '';
+		$numberAndDate = $pregMatchResult[1] ?? '';
+		$title = str_replace($linkNumberAndDate, '#NUMBER_AND_DATE#', $title);
+
 		$openPaymentAction = $this->getOpenPaymentAction();
 		if ($openPaymentAction)
 		{
-			$titleBlock = (new ContentBlock\Link())
-				->setValue($title)
+			$numberAndDateBlock = (new ContentBlock\Link())
+				->setValue($numberAndDate)
 				->setAction($openPaymentAction)
 			;
 		}
 		else
 		{
-			$titleBlock = (new ContentBlock\Text())
-				->setValue($title)
+			$numberAndDateBlock = (new ContentBlock\Text())
+				->setValue($numberAndDate)
 				->setColor(ContentBlock\Text::COLOR_BASE_90)
 			;
 		}
-		$contentBlock->addContentBlock('title', $titleBlock);
 
 		$sum = $this->getPaymentSum($payment, $fields);
 		$currency = $this->getPaymentCurrency($payment, $fields);
-		if ($sum && $currency)
-		{
-			$amountBlocks = ContentBlockFactory::getBlocksFromTemplate(
-				Loc::getMessage('CRM_TIMELINE_ECOMMERCE_FOR_AMOUNT'),
-				[
-					'#AMOUNT#' =>
-						(new Money())
-							->setOpportunity((float)$sum)
-							->setCurrencyId((string)$currency)
-							->setColor(ContentBlock\Text::COLOR_BASE_90)
-					,
-				]
-			);
-			foreach ($amountBlocks as $index => $amountBlock)
-			{
-				if (!$amountBlock instanceof ContentBlock\TextPropertiesInterface)
-				{
-					continue;
-				}
-
-				$contentBlock->addContentBlock(
-					'amountBlock' . $index,
-					$amountBlock->setColor(ContentBlock\Text::COLOR_BASE_90)
-				);
-			}
-		}
+		$amountBlock = (new Money())
+			->setOpportunity((float)$sum)
+			->setCurrencyId((string)$currency)
+			->setColor(ContentBlock\Text::COLOR_BASE_90)
+		;
+		$contentBlock = ContentBlockFactory::createLineOfTextFromTemplate(
+			$title,
+			[
+				'#NUMBER_AND_DATE#' => $numberAndDateBlock,
+				'#AMOUNT#' => $amountBlock,
+			],
+		);
 
 		return
 			(new ContentBlockWithTitle())
@@ -288,11 +275,11 @@ class Payment extends Activity
 					->addActionParamString('mode', $mode)
 					->addActionParamInt(
 						'orderId',
-						$this->getAssociatedEntityModel()->get('OWNER_ID')
+						$payment->getOrder()->getId()
 					)
 					->addActionParamInt(
 						'paymentId',
-						$this->getAssociatedEntityModel()->get('ASSOCIATED_ENTITY_ID')
+						$payment->getId()
 					)
 					->addActionParamInt(
 						'ownerTypeId',

@@ -273,7 +273,7 @@ $communicationsData = htmlspecialcharsbx(\Bitrix\Main\Web\Json::encode($arResult
 		</div><!--crm-activity-popup-container-->
 	</form>
 </div><!--crm-popup-wrapper-->
-<script type="text/javascript">
+<script>
 	BX.ready(function()
 	{
 		var planner = BX.Crm.Activity.Planner.Manager.getLast();

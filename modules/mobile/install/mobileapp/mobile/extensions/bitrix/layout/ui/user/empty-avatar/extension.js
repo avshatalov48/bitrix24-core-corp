@@ -2,8 +2,10 @@
  * @module layout/ui/user/empty-avatar
  */
 jn.define('layout/ui/user/empty-avatar', (require, exports, module) => {
-	const AppTheme = require('apptheme');
+	const { Color } = require('tokens');
 	const { lighten } = require('utils/color');
+	const { Type } = require('type');
+	const { makeLibraryImagePath } = require('asset-manager');
 
 	const COLORS = [
 		'#df532d',
@@ -29,13 +31,19 @@ jn.define('layout/ui/user/empty-avatar', (require, exports, module) => {
 		return COLORS[id % COLORS.length];
 	};
 
-	const SPECIAL_SYMBOLS_PATTERN = /[!"#$%&'()*,./:;<>?@[\\\]^`{|}~-]/;
+	const ALLOWED_CHARACTERS_PATTERN = /^[\dA-Za-z\u00C0-\u024F\u0400-\u04FF]+$/;
 
 	/**
 	 * @param {string} name
 	 * @return {string}
 	 */
 	const getFirstLetters = (name) => {
+
+		if (!Type.isStringFilled(name))
+		{
+			return '';
+		}
+
 		let initials = '';
 
 		const words = name.split(/[\s,]/);
@@ -48,7 +56,7 @@ jn.define('layout/ui/user/empty-avatar', (require, exports, module) => {
 
 			for (const letter of word)
 			{
-				if (!SPECIAL_SYMBOLS_PATTERN.test(letter))
+				if (ALLOWED_CHARACTERS_PATTERN.test(letter))
 				{
 					initials += letter;
 					break;
@@ -59,28 +67,20 @@ jn.define('layout/ui/user/empty-avatar', (require, exports, module) => {
 		return initials;
 	};
 
-	const isGradientWithTextSupported = Application.getPlatform() === 'android' || Application.getApiVersion() >= 52;
-
 	const getBackgroundColorStyles = (id) => {
 		const backgroundColor = getColor(id);
+		const startColor = lighten(backgroundColor, 0.4);
+		const middleColor = lighten(backgroundColor, 0.2);
 
-		if (isGradientWithTextSupported)
-		{
-			const startColor = lighten(backgroundColor, 0.4);
-			const middleColor = lighten(backgroundColor, 0.2);
-
-			return {
-				backgroundColor,
-				backgroundColorGradient: {
-					start: startColor,
-					middle: middleColor,
-					end: backgroundColor,
-					angle: 90,
-				},
-			};
-		}
-
-		return { backgroundColor };
+		return {
+			backgroundColor,
+			backgroundColorGradient: {
+				start: startColor,
+				middle: middleColor,
+				end: backgroundColor,
+				angle: 90,
+			},
+		};
 	};
 
 	/**
@@ -91,7 +91,6 @@ jn.define('layout/ui/user/empty-avatar', (require, exports, module) => {
 	 * @param {object} [additionalStyles]
 	 * @param {function} [onClick]
 	 * @param {string} [testId]
-	 * @return {View}
 	 */
 	const EmptyAvatar = ({
 		id,
@@ -100,29 +99,86 @@ jn.define('layout/ui/user/empty-avatar', (require, exports, module) => {
 		additionalStyles = {},
 		onClick,
 		testId,
-	}) => View(
+	}) => {
+		const imageUri = makeLibraryImagePath('person.svg', 'empty-avatar');
+
+		if (Type.isNil(name))
 		{
-			onClick,
+			return View(
+				{
+					onClick,
+					testId,
+					style: {
+						width: size,
+						height: size,
+						borderRadius: size / 2,
+						alignContent: 'center',
+						justifyContent: 'center',
+						...additionalStyles,
+					},
+				},
+				Image({
+					style: {
+						flex: 1,
+					},
+					svg: {
+						uri: imageUri,
+					},
+				}),
+			);
+		}
+
+		return UserLetters({
+			id,
+			size,
+			name,
 			testId,
+			onClick,
 			style: {
-				...getBackgroundColorStyles(id),
+				...additionalStyles,
 				width: size,
 				height: size,
 				borderRadius: size / 2,
-				alignContent: 'center',
-				justifyContent: 'center',
-				...additionalStyles,
 			},
-		},
-		Text({
-			style: {
-				fontSize: size / 2,
-				alignSelf: 'center',
-				color: AppTheme.colors.base8,
-			},
-			text: getFirstLetters(name).toLocaleUpperCase(env.languageId),
-		}),
-	);
+		});
+	};
 
-	module.exports = { EmptyAvatar, getColor };
+	/**
+	 * @function UserLetters;
+	 * @param {string} id
+	 * @param {string} size
+	 * @param {string} name
+	 * @param {Object} [style]
+	 * @param {Object} restProps
+	 */
+	const UserLetters = ({ id, size, name, style, ...restProps }) => {
+		const firstLetters = getFirstLetters(name).toLocaleUpperCase(env.languageId);
+
+		if (!firstLetters)
+		{
+			return null;
+		}
+
+		return View(
+			{
+				...restProps,
+				style: {
+					alignContent: 'center',
+					justifyContent: 'center',
+					...getBackgroundColorStyles(id),
+					...style,
+				},
+			},
+			Text({
+				style: {
+					fontSize: size / 2,
+					alignSelf: 'center',
+					color: Color.baseWhiteFixed.toHex(),
+				},
+				text: firstLetters,
+			}),
+		);
+	};
+
+	module.exports = { EmptyAvatar, UserLetters, getColor, getBackgroundColorStyles };
 });

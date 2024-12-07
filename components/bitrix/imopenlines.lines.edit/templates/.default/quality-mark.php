@@ -1,5 +1,6 @@
-<?
+<?php
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
+
 use \Bitrix\Main\Localization\Loc;
 use \Bitrix\Imopenlines\Limit;
 
@@ -9,7 +10,6 @@ use \Bitrix\Imopenlines\Limit;
 ]);
 
 ?>
-
 <div class="imopenlines-form-settings-section">
 	<?if(!empty($arResult['ERROR'])):?>
 		<div class="ui-alert ui-alert-danger">
@@ -32,7 +32,7 @@ use \Bitrix\Imopenlines\Limit;
 			<?=Loc::getMessage('IMOL_CONFIG_EDIT_VOTE_MESSAGE_NEW')?>
 			<?if(!Limit::canUseVoteClient()):?>
 				<span class="tariff-lock"></span>
-				<script type="text/javascript">
+				<script>
 					BX.bind(BX('imol_vote_message'), 'change', function(e){
 						BX('imol_vote_message').checked = false;
 						window.BX.imolTrialHandler.openPopupQueueVote();

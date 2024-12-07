@@ -1,5 +1,16 @@
-<?
+<?php
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
+
+/**
+ * @var array $arParams
+ * @var array $arResult
+ * @global \CMain $APPLICATION
+ * @global \CUser $USER
+ * @global \CDatabase $DB
+ * @var \CBitrixComponentTemplate $this
+ * @var \CBitrixComponent $component
+ */
+
 use Bitrix\Imopenlines\Limit;
 use Bitrix\Main\Localization\Loc;
 
@@ -9,7 +20,6 @@ use Bitrix\Main\Localization\Loc;
 ]);
 
 ?>
-
 <div class="imopenlines-form-settings-section">
 	<?if(!empty($arResult['ERROR'])):?>
 		<div class="ui-alert ui-alert-danger">
@@ -38,7 +48,7 @@ use Bitrix\Main\Localization\Loc;
 						<?=Loc::getMessage('IMOL_CONFIG_EDIT_WORKTIME_ENABLE')?>
 						<?if(!Limit::canWorkHourSettings()):?>
 							<span class="tariff-lock"></span>
-							<script type="text/javascript">
+							<script>
 								BX.bind(BX('imol_worktime_checkbox'), 'change', function(e){
 									BX('imol_worktime_checkbox').checked = false;
 									window.BX.imolTrialHandler.openPopupWorkTime();

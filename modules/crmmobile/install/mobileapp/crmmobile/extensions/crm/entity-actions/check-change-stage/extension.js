@@ -7,6 +7,7 @@ jn.define('crm/entity-actions/check-change-stage', (require, exports, module) =>
 	const { Alert, ButtonType } = require('alert');
 	const { EventEmitter } = require('event-emitter');
 	const { getActionToConversion } = require('crm/entity-actions/conversion');
+	const { AnalyticsEvent } = require('analytics');
 
 	const actionCheckChangeStage = (props) => new Promise((resolve, reject) => {
 		const {
@@ -48,6 +49,11 @@ jn.define('crm/entity-actions/check-change-stage', (require, exports, module) =>
 		return resolve();
 	});
 
+	const getAnalytics = (props) => {
+		return new AnalyticsEvent(props.analytics ?? {})
+			.setEvent('entity_convert');
+	};
+
 	const showConversion = async (props) => {
 		const { uid, entityTypeId, entityId } = props;
 		const customEventEmitter = EventEmitter.createWithUid(uid);
@@ -66,6 +72,7 @@ jn.define('crm/entity-actions/check-change-stage', (require, exports, module) =>
 
 				return Promise.resolve();
 			},
+			analytics: getAnalytics(props),
 		});
 
 		return conversionAction();

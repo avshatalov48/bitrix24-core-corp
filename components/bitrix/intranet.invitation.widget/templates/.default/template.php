@@ -13,6 +13,7 @@ $frame = $this->createFrame()->begin();
 ?>
 
 <button data-id='invitationButton' class="ui-btn ui-btn-round license-btn license-btn-primary">
+	<span class="invitation-widget-counter"></span>
 	<?= Loc::getMessage('INTRANET_INVITATION_WIDGET_INVITE') ?>
 </button>
 
@@ -27,6 +28,8 @@ $frame = $this->createFrame()->begin();
 			isInvitationAvailable: <?= $arResult['isInvitationAvailable'] ? 'true' : 'false' ?>,
 			structureLink: '<?= CUtil::JSEscape($arResult['structureLink']) ?>',
 			invitationLink: '<?= CUtil::JSEscape($arResult['invitationLink']) ?>',
+			invitationCounter: <?= $arResult['invitationCounter'] ?? 0 ?>,
+			counterId: '<?= $arResult['counterId'] ?? '' ?>',
 		});
 	});
 </script>
@@ -34,6 +37,7 @@ $frame = $this->createFrame()->begin();
 <?php $frame->beginStub(); ?>
 
 <button data-id='invitationButton' class="ui-btn ui-btn-round license-btn license-btn-primary">
+	<span class="invitation-widget-counter"></span>
 	<?=Loc::getMessage('INTRANET_INVITATION_WIDGET_INVITE')?>
 </button>
 

@@ -68,7 +68,7 @@ class CVoxImplantSip
 			}
 		}
 
-		$melodyLang = ToUpper(LANGUAGE_ID);
+		$melodyLang = mb_strtoupper(LANGUAGE_ID);
 		if($melodyLang === 'KZ')
 		{
 			$melodyLang = 'RU';
@@ -156,6 +156,7 @@ class CVoxImplantSip
 			if ($currentConfig['SEARCH_ID'] == CVoxImplantConfig::GetPortalNumber())
 			{
 				COption::SetOptionString("voximplant", "portal_number", $arUpdate['SEARCH_ID']);
+				CVoxImplantConfig::clearUserCache($arUpdate['SEARCH_ID'], true);
 			}
 
 			VI\ConfigTable::update($configId, Array(
@@ -564,15 +565,15 @@ class CVoxImplantSip
 			case 'by':
 				return 'https://www.1c-bitrix.by/buy/products/b24.php#tab-section-3';
 			case 'de':
-				return 'https://www.bitrix24.de/prices/self-hosted-telephony.php';
+				return 'https://store.bitrix24.de/profile/license-keys.php';
 			default:
 				if($account->GetAccountCurrency() === 'USD')
 				{
-					return 'https://www.bitrix24.com/prices/self-hosted-telephony.php';
+					return 'https://store.bitrix24.com/profile/license-keys.php';
 				}
 				if($account->GetAccountCurrency() === 'EUR')
 				{
-					return 'https://www.bitrix24.eu/prices/self-hosted-telephony.php';
+					return 'https://store.bitrix24.com/profile/license-keys.php';
 				}
 		}
 		return '';

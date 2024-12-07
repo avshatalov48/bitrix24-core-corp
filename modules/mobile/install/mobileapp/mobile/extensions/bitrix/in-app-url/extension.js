@@ -11,10 +11,12 @@ jn.define('in-app-url', (require, exports, module) => {
 	 * and don't forget to add them into deps.php
 	 */
 	const routes = [
+		'sign/in-app-url/routes',
 		'crm/in-app-url/routes',
 		'tasks/in-app-url/routes',
 		'im/in-app-url/routes',
 		'calendar/in-app-url/routes',
+		'stafftrack/in-app-url/routes',
 		'lists/in-app-url/routes',
 		'bizproc/in-app-url/routes',
 		'in-app-url/routes',

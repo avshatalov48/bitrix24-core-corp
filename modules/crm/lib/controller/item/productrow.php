@@ -11,7 +11,6 @@ use Bitrix\Crm\Order\OrderDealSynchronizer\Products;
 use Bitrix\Crm\ProductRowTable;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Factory;
-use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Engine\AutoWire\ExactParameter;
 use Bitrix\Main\Engine\Response\Converter;
 use Bitrix\Main\Engine\Response\DataType\Page;
@@ -385,7 +384,7 @@ class ProductRow extends Base
 	{
 		$isErrorProneOperation = static function(string $key): bool {
 			return (
-				preg_match('/([<>])/' . BX_UTF_PCRE_MODIFIER, $key)
+				preg_match('/([<>])/u', $key)
 				&& mb_strpos($key, '><') === false
 			);
 		};
@@ -620,21 +619,26 @@ class ProductRow extends Base
 		return $result;
 	}
 
-	/**
-	 * @param int $ownerId
-	 * @param string $ownerType
-	 * @return array[]|null
-	 */
 	public function getAvailableForPaymentAction(int $ownerId, string $ownerType): ?array
 	{
-		$repository = ServiceLocator::getInstance()->get('crm.entity.paymentDocumentsRepository');
+		/** @var Factory $factory */
+		/** @var Item $item */
+		[$factory, $item] = $this->getFactoryAndItem($ownerType, $ownerId);
+		if (!isset($factory) || !isset($item))
+		{
+			return null;
+		}
+
+		if (!Container::getInstance()->getUserPermissions()->canReadItem($item))
+		{
+			$this->addError(
+				ErrorCode::getAccessDeniedError()
+			);
+
+			return null;
+		}
 
 		$ownerTypeId = \CCrmOwnerTypeAbbr::ResolveTypeID($ownerType);
-
-		if (!$repository->checkPermission($ownerTypeId, $ownerId))
-		{
-			return ['productRows' => []];
-		}
 
 		$orderIds = OrderEntityTable::getOrderIdsByOwner($ownerId, $ownerTypeId);
 		if (count($orderIds) > 1)
@@ -660,11 +664,11 @@ class ProductRow extends Base
 
 		$idToQuantityMap = [];
 
-		foreach ($manager->getPayableItems() as $item)
+		foreach ($manager->getPayableItems() as $payableItem)
 		{
-			$rowId = Products\BasketXmlId::getRowIdFromXmlId($item['XML_ID']);
+			$rowId = Products\BasketXmlId::getRowIdFromXmlId($payableItem['XML_ID']);
 
-			$idToQuantityMap[$rowId] = $item['QUANTITY'];
+			$idToQuantityMap[$rowId] = $payableItem['QUANTITY'];
 		}
 
 		if (!$idToQuantityMap)
@@ -672,20 +676,15 @@ class ProductRow extends Base
 			return ['productRows' => []];
 		}
 
-		$parameters = [
-			'filter' => [
-				'=ID' => array_keys($idToQuantityMap)
-			]
-		];
-
 		$result = [];
-
-		$dbRes = $this->dataManager::getList($parameters);
-		while ($product = $dbRes->fetch())
+		foreach ($item->getProductRows() as $productRow)
 		{
-			$product['QUANTITY'] = $idToQuantityMap[$product['ID']];
+			if (!isset($idToQuantityMap[$productRow['ID']]))
+			{
+				continue;
+			}
 
-			$result[] = $this->convertKeysToCamelCase($product);
+			$result[] = $productRow->setQuantity($idToQuantityMap[$productRow['ID']]);
 		}
 
 		return ['productRows' => $result];

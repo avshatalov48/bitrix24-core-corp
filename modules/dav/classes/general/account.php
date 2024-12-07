@@ -10,16 +10,20 @@ class CDavAccount
 	public static function GetAccountByName($name)
 	{
 		if ($name == '')
+		{
 			throw new Exception("name");
+		}
 
 		$arResult = null;
 
 		if (!strncasecmp("group-", $name, 6) && CModule::IncludeModule("socialnetwork"))
 		{
-			$groupId = intval(mb_substr($name, 6));
+			$groupId = (int)mb_substr($name, 6);
 
 			if (array_key_exists($groupId, self::$accountsCache["groups"]))
+			{
 				return self::$accountsCache["groups"][$groupId];
+			}
 
 			$dbGroup = CSocNetGroup::GetList(array(), array("ID" => $groupId, "ACTIVE" => "Y"), false, false, array("ID", "SITE_ID", "NAME", "OWNER_ID", "OWNER_EMAIL"));
 			if ($arGroup = $dbGroup->Fetch())
@@ -32,7 +36,9 @@ class CDavAccount
 		}
 
 		if (array_key_exists($name, self::$accountsCacheMap))
+		{
 			return self::$accountsCache["users"][self::$accountsCacheMap[$name]];
+		}
 
 
 		$dbUsers = \Bitrix\Main\UserTable::getList([
@@ -64,7 +70,7 @@ class CDavAccount
 
 	private static function ExtractAccountFromUser($arUser)
 	{
-		return array(
+		return [
 			"ID" => $arUser["ID"],
 			"TYPE" => "user",
 			"CODE" => $arUser["LOGIN"],
@@ -72,18 +78,22 @@ class CDavAccount
 			"EMAIL" => $arUser["EMAIL"],
 			"FIRST_NAME" => $arUser["NAME"],
 			"LAST_NAME" => $arUser["LAST_NAME"],
-		);
+		];
 	}
 
 	private static function FormatUserName($arUser)
 	{
 		$r = $arUser["NAME"];
 		if ($r <> '' && $arUser["LAST_NAME"] <> '')
+		{
 			$r .= " ";
+		}
 		$r .= $arUser["LAST_NAME"];
 
 		if ($r == '')
+		{
 			$r = $arUser["LOGIN"];
+		}
 
 		return $r;
 	}
@@ -91,16 +101,20 @@ class CDavAccount
 	public static function GetAccountById($account)
 	{
 		if (!is_array($account) || count($account) != 2)
+		{
 			throw new Exception("account");
+		}
 
 		$arResult = null;
 
-		if ($account[0] == "group")
+		if ($account[0] === "group")
 		{
 			if (CModule::IncludeModule("socialnetwork"))
 			{
 				if (array_key_exists($account[1], self::$accountsCache["groups"]))
+				{
 					return self::$accountsCache["groups"][$account[1]];
+				}
 
 				$dbGroup = CSocNetGroup::GetList(array(), array("ID" => $account[1], "ACTIVE" => "Y"));
 				if ($arGroup = $dbGroup->Fetch())
@@ -114,7 +128,9 @@ class CDavAccount
 		}
 
 		if (array_key_exists($account[1], self::$accountsCache["users"]))
+		{
 			return self::$accountsCache["users"][$account[1]];
+		}
 
 		$params = array(
 			'filter' => array("ID" => $account[1], "=ACTIVE" => "Y"),
@@ -131,25 +147,42 @@ class CDavAccount
 		return $arResult;
 	}
 
-	public static function GetAccountsList($type, $arOrder = array(), $arFilter = array())
+	public static function GetAccountsList($type, $siteId, $arOrder = array(), $arFilter = array())
 	{
 		$arResult = array();
+		$isExtranet = (CModule::IncludeModule('extranet') && (CExtranet::IsExtranetSite($siteId) || !CExtranet::IsIntranetUser($siteId)));
 
-		if ($type == "group")
+		if ($type === "group")
 		{
-			if (CModule::IncludeModule("socialnetwork"))
+			if (\Bitrix\Main\Loader::includeModule("socialnetwork"))
 			{
 				$arFilter = array_merge($arFilter, array("ACTIVE" => "Y", "VISIBLE" => "Y"));
+				if ($isExtranet)
+				{
+					$arFilter['SITE_ID'] = $siteId;
+				}
 
 				$dbGroup = CSocNetGroup::GetList($arOrder, $arFilter);
 				if ($arGroup = $dbGroup->Fetch())
+				{
 					$arResult[] = self::ExtractAccountFromGroup($arGroup);
-
-				return $arResult;
+				}
 			}
+
+			return $arResult;
 		}
 
-		$arFilter = array_merge($arFilter, array("=ACTIVE" => "Y"));
+		if ($isExtranet)
+		{
+			$extranet_site = isModuleInstalled('extranet')
+				? COption::getOptionString('extranet', 'extranet_site')
+				: (isModuleInstalled('bitrix24') ? 'ex' : false);
+			$arFilter['XML_ID'] = [
+				'feed-'.$extranet_site,
+				'task-'.$extranet_site,
+			];
+		}
+		$arFilter = array_merge($arFilter, ["=ACTIVE" => "Y"]);
 
 		$dbUsers = \Bitrix\Main\UserTable::getList(array(
 			'filter' => $arFilter,
@@ -159,11 +192,12 @@ class CDavAccount
 			)
 		));
 		while ($arUser = $dbUsers->fetch())
+		{
 			$arResult[] = self::ExtractAccountFromUser($arUser);
+		}
 
 		return $arResult;
 	}
-
 
 
 	private static function GetAddressbookExtranetUserFilter($siteId, $arFilter = array())
@@ -187,16 +221,16 @@ class CDavAccount
 						$extranet_site = isModuleInstalled('extranet')
 							? COption::getOptionString('extranet', 'extranet_site')
 							: (isModuleInstalled('bitrix24') ? 'ex' : false);
-						$arFilter['XML_ID'] = array(
+						$arFilter['XML_ID'] = [
 							'feed-'.$extranet_site,
 							'task-'.$extranet_site,
-						);
+						];
 					}
 
 					if (count($arIDs) <= 0)
+					{
 						$arFilter['ID'] = 0;
-
-
+					}
 				}
 			}
 		}
@@ -215,7 +249,9 @@ class CDavAccount
 		$arFilter = self::GetAddressbookExtranetUserFilter($siteId);
 
 		if (!empty($arFilter['XML_ID']))
+		{
 			unset($arFilter['XML_ID']);
+		}
 
 		$dbUsers = \Bitrix\Main\UserTable::getList(array(
 			'filter' => $arFilter,
@@ -226,13 +262,15 @@ class CDavAccount
 			'limit' => 1
 		));
 		if ($arUser = $dbUsers->fetch())
+		{
 			return $arUser["TIMESTAMP_X"];
+		}
 		return "";
 	}
 
 	public static function GetAddressbookContactsList($collectionId, $arFilter = array())
 	{
-		list($siteId) = $collectionId;
+		[$siteId] = $collectionId;
 		$arFilter = self::GetAddressbookExtranetUserFilter($siteId, $arFilter);
 		$arFilter["ACTIVE"] = "Y";
 		$arResult = array();
@@ -248,9 +286,13 @@ class CDavAccount
 			$cache_dir = '/dav/address_book';
 
 			if(defined("BX_COMP_MANAGED_CACHE"))
+			{
 				$cache_ttl = 2592000;
+			}
 			else
+			{
 				$cache_ttl = 1200;
+			}
 
 			if($obDavCache->InitCache($cache_ttl, $cache_id, $cache_dir))
 			{
@@ -263,7 +305,9 @@ class CDavAccount
 		{
 			$xmlIds = array();
 			if (!empty($arFilter['XML_ID']))
-				$xmlIds = (array) $arFilter['XML_ID'];
+			{
+				$xmlIds = (array)$arFilter['XML_ID'];
+			}
 
 			if (empty($xmlIds) || !empty($arFilter['ID']))
 			{
@@ -297,7 +341,9 @@ class CDavAccount
 				}
 
 				if ($obDavCache->startDataCache())
+				{
 					$obDavCache->endDataCache($arResult);
+				}
 			}
 		}
 
@@ -323,10 +369,11 @@ class CDavAccount
 				$siteName = !empty($arSite['SITE_NAME'])? $arSite['SITE_NAME'] : mb_strtoupper($arSite['LID']);
 				if (empty($xmlIds) || in_array($xmlId, $xmlIds) and isModuleInstalled('blog'))
 				{
+					$forwardToPost = Bitrix\Mail\User::getForwardTo($arSite['LID'], $USER->getId(), 'BLOG_POST');
 					$arResult[] = array(
 						'ID'             => $xmlId,
 						'LAST_NAME'      => getMessage('DAV_BLOG_POST_CONTACT_NAME') . '(' .  $siteName . ')',
-						'EMAIL'          => reset(Bitrix\Mail\User::getForwardTo($arSite['LID'], $USER->getId(), 'BLOG_POST')),
+						'EMAIL'          => reset($forwardToPost),
 						'WORK_WWW'       => $server_name,
 						'TIMESTAMP_X'    => $timestampX,
 						'PERSONAL_PHOTO' => array('src' => '/bitrix/modules/dav/images/addressbook/feed.png')
@@ -336,10 +383,11 @@ class CDavAccount
 				$xmlId = 'task-'.$arSite['LID'];
 				if (empty($xmlIds) || in_array($xmlId, $xmlIds) and isModuleInstalled('tasks'))
 				{
+					$forwardToTask = Bitrix\Mail\User::getForwardTo($arSite['LID'], $USER->getId(), 'TASKS_TASK');
 					$arResult[] = array(
 						'ID'             => $xmlId,
 						'LAST_NAME'      => getMessage('DAV_TASK_CONTACT_NAME') . '(' .  $siteName . ')',
-						'EMAIL'          => reset(Bitrix\Mail\User::getForwardTo($arSite['LID'], $USER->getId(), 'TASKS_TASK')),
+						'EMAIL'          => reset($forwardToTask),
 						'WORK_WWW'       => $server_name,
 						'TIMESTAMP_X'    => $timestampX,
 						'PERSONAL_PHOTO' => array('src' => '/bitrix/modules/dav/images/addressbook/task.png')

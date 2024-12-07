@@ -1,4 +1,4 @@
-import { Dom, Type, Event } from 'main.core';
+import { Dom, Type, Event, Uri } from 'main.core';
 import type { LoaderOption } from './loader-option';
 import { Switchboard } from './switchboard';
 
@@ -14,12 +14,14 @@ export class ApacheSupersetEmbeddedLoader
 	};
 
 	#options: LoaderOption;
-
+	#switchboard: ?Switchboard;
 	communicationsChannel: MessageChannel;
+
 	constructor(options: LoaderOption): void
 	{
 		this.#options = options;
 		this.communicationsChannel = new MessageChannel();
+		this.#switchboard = null;
 	}
 
 	async embedDashboard(): Promise
@@ -31,20 +33,23 @@ export class ApacheSupersetEmbeddedLoader
 			this.mountIframe(),
 		]);
 
-		const ourPort = result;
+		this.#switchboard = result;
 
-		ourPort.emit('guestToken', { guestToken });
-
+		this.#switchboard.emit('guestToken', { guestToken });
 		this.log('sent guest token');
 
-		const getScrollSize = () => ourPort.get('getScrollSize');
-		const getDashboardPermalink = (anchor: string) => ourPort.get('getDashboardPermalink', { anchor });
-		const getActiveTabs = () => ourPort.get('getActiveTabs');
+		const getScrollSize = () => this.#switchboard.get('getScrollSize');
+		const getDashboardPermalink = (anchor: string) => this.#switchboard.get('getDashboardPermalink', { anchor });
+		const getActiveTabs = () => this.#switchboard.get('getActiveTabs');
+		const getScreenshot = () => this.#switchboard.get('getScreenshot');
+		const getPdf = () => this.#switchboard.get('getPdf');
 
 		return {
 			getScrollSize,
 			getDashboardPermalink,
 			getActiveTabs,
+			getScreenshot,
+			getPdf,
 		};
 	}
 
@@ -109,7 +114,7 @@ export class ApacheSupersetEmbeddedLoader
 			// iframe.sandbox.add("allow-top-navigation");
 
 			Event.bind(iframe, 'load', () => {
-				const commsChannel = new MessageChannel();
+				const commsChannel = this.communicationsChannel;
 				const ourPort = commsChannel.port1;
 				const theirPort = commsChannel.port2;
 
@@ -131,7 +136,10 @@ export class ApacheSupersetEmbeddedLoader
 				resolve(new Switchboard({ port: ourPort, name: 'superset-embedded-sdk', debug }));
 			});
 
-			iframe.src = `${supersetDomain}/embedded/${id}${dashboardConfig}${filterConfigUrlParams}`;
+			iframe.src = Uri.addParam(
+				`${supersetDomain}/embedded/${id}${dashboardConfig}${filterConfigUrlParams}`,
+				this.#options.dashboardUiConfig?.urlParams ?? {}
+			);
 
 			if (Type.isDomNode(this.#options.mountPoint))
 			{
@@ -139,6 +147,19 @@ export class ApacheSupersetEmbeddedLoader
 			}
 
 			this.log('placed the iframe');
+		});
+	}
+
+	// Need patched superset with getScreenshot and getPdf actions - superset-frontend/src/embedded/api.tsx:61
+	getScreenshot(): Promise
+	{
+		return this.#switchboard.get('getScreenshot');
+	}
+
+	getPdf(dashboardTitle: string): Promise
+	{
+		return this.#switchboard.get('getPdf', {
+			dashboardTitle,
 		});
 	}
 

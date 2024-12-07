@@ -7,6 +7,8 @@ namespace Bitrix\Crm\Order\OrderDealSynchronizer\Products;
  */
 class BasketXmlId
 {
+	public const PREFIX = 'crm_pr_';
+
 	/**
 	 * Get ROW_ID from the XML_ID of the basket item.
 	 *
@@ -21,7 +23,7 @@ class BasketXmlId
 			return null;
 		}
 
-		$re = '/^crm_pr_(\d+)/';
+		$re = '/^'.self::PREFIX.'(\d+)/';
 		if (preg_match($re, $xmlId, $m))
 		{
 			return (int)$m[1];
@@ -42,6 +44,6 @@ class BasketXmlId
 		{
 			return null;
 		}
-		return "crm_pr_{$rowId}";
+		return self::PREFIX.$rowId;
 	}
 }

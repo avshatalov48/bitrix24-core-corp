@@ -37,11 +37,12 @@ Extension::load([
 	'ui.notification',
 	'main.popup',
 	'ui.dialogs.messagebox',
+	'ui.buttons.icons',
 ]);
 ?>
 
 <div class="salescenter-paysystem-wrapper" id="salescenter-paysystem-wrapper">
-	<form id="salescenter-main-settings-form">
+	<form id="salescenter-main-settings-form" oninput="BX.SalecenterPaySystem.change();">
 		<input type="hidden" name="ID" id="ID" value="<?=htmlspecialcharsbx($arResult['PAYSYSTEM_ID'])?>">
 		<input type="hidden" name="SORT" id="SORT" value="<?=htmlspecialcharsbx($arResult['PAYSYSTEM']['SORT'])?>">
 		<input type="hidden" name="XML_ID" value="<?=htmlspecialcharsbx($arResult['PAYSYSTEM']['XML_ID'])?>">
@@ -50,7 +51,7 @@ Extension::load([
 		<input id="salescenter-form-is-saved" type="hidden" value="n">
 
 		<div class="ui-slider-section ui-slider-section-icon">
-		    <span class="ui-icon ui-slider-icon">
+			<span class="ui-icon ui-slider-icon">
 				<?php
 				$imageName = $imagePsModeName = $arResult['PAYSYSTEM_HANDLER'];
 				if ($arResult['PAYSYSTEM_PS_MODE'])
@@ -65,12 +66,12 @@ Extension::load([
 				<?php else: ?>
 					<div class="salescenter-default-icon ui-icon"><i></i></div>
 				<?php endif; ?>
-		    </span>
+			</span>
 			<div class="ui-slider-content-box">
 				<?php
 				$title =
 					$arResult['PAYSYSTEM']['HANDLER_DESCRIPTION']['FULL_NAME']
-                    ?: $arResult['PAYSYSTEM_HANDLER_FULL']
+					?: $arResult['PAYSYSTEM_HANDLER_FULL']
 					?: $arResult['PAYSYSTEM_HANDLER'];
 				?>
 				<div style="display: flex; align-items: center" class="ui-slider-heading-4">
@@ -123,7 +124,7 @@ Extension::load([
 									<a target="_top" data-bx-salescenter-auth-link="" data-bx-salescenter-auth-name="" class="salescenter-auth-popup-social-user-link" title=""></a>
 								</div>
 								<div class="salescenter-auth-popup-social-shutoff">
-									<span data-bx-salescenter-auth-logout="" class="salescenter-auth-popup-social-shutoff-link"><?=Loc::getMessage('SALESCENTER_SP_YANDEX_LOGOUT')?></span>
+									<span data-bx-salescenter-auth-logout="" class="salescenter-auth-popup-social-shutoff-link"><?=Loc::getMessage('SALESCENTER_SP_YANDEX_LOGOUT_MSGVER_1')?></span>
 								</div>
 							</div>
 						</div>
@@ -189,7 +190,7 @@ Extension::load([
 					: $arResult['PAYSYSTEM']['HANDLER_DESCRIPTION']['NAME'];
 			}
 
-			$description = $arResult['PAYSYSTEM']['HANDLER_DESCRIPTION']['PUBLIC_DESCRIPTION'];
+			$description = $arResult['PAYSYSTEM']['DESCRIPTION'] ?? $arResult['PAYSYSTEM']['HANDLER_DESCRIPTION']['PUBLIC_DESCRIPTION'];
 
 			$sanitizer = new CBXSanitizer();
 			$sanitizer->SetLevel(\CBXSanitizer::SECURE_LEVEL_LOW);
@@ -205,11 +206,14 @@ Extension::load([
 								type="checkbox"
 								name="ACTIVE"
 								id="ACTIVE"
-								class="ui-ctl-element"
+								class="ui-ctl-element salescenter-paysystem-checkbox-input"
 								value="Y"
 								<?= ($arResult['PAYSYSTEM']['ACTIVE'] === 'Y') ? ' checked' : '' ?>
 							>
-							<label for="ACTIVE" class="ui-ctl-label-text"><?=Loc::getMessage('SALESCENTER_SP_PARAMS_FORM_ACTIVE')?></label>
+							<div class="ui-ctl-block ui-ctl-column">
+								<label for="ACTIVE" class="ui-ctl-label-text"><?=Loc::getMessage('SALESCENTER_SP_PARAMS_FORM_ACTIVE')?></label>
+								<label for="ACTIVE" class="ui-ctl-label-text salescenter-paysystem-checkbox-desc"><?=Loc::getMessage('SALESCENTER_SP_PARAMS_FORM_ACTIVE_DESC')?></label>
+							</div>
 						</div>
 					<?php endif ?>
 
@@ -250,7 +254,7 @@ Extension::load([
 						</div>
 
 						<?php
-						if ($isCanPrintCheckSelf && $paySystemId > 0)
+						if ($isCanPrintCheckSelf)
 						{
 							$cashboxCode = $arResult['CASHBOX']['code'];
 							$cashboxTitle = Loc::getMessage('SALESCENTER_SP_CASHBOX_PAYSYSTEM_'.$cashboxCode.'_TITLE');
@@ -461,19 +465,18 @@ Extension::load([
 				'URL' => $arParams['SALESCENTER_DIR'],
 			],
 		];
-		if ($arResult['PAYSYSTEM_ID'] > 0)
-		{
-			$buttons[] = [
-				'TYPE' => 'remove',
-				'ONCLICK' => 'BX.SalecenterPaySystem.remove(event);',
-			];
-		}
+
+		$hideButtonPanel = $arResult['PAYSYSTEM_ID'] > 0 || ($arResult['AUTH']['CAN_AUTH'] && !$arResult['AUTH']['HAS_AUTH']);
+
+		$buttonPanelId = 'salesenter-paysystem-button-panel';
 		$APPLICATION->IncludeComponent(
 			'bitrix:ui.button.panel',
 			"",
 			[
 				'BUTTONS' => $buttons,
-				'ALIGN' => "center"
+				'ALIGN' => 'center',
+				'ID' => $buttonPanelId,
+				'HIDE' => $hideButtonPanel,
 			],
 			false
 		);
@@ -498,6 +501,7 @@ Extension::load([
 			isExistsSettings: <?=CUtil::PhpToJSObject($arResult['PAY_SYSTEM_ROBOKASSA_SETTINGS']['IS_SETTINGS_EXISTS'] ?? false)?>,
 			isExistsOnlyCommonSettings: <?=CUtil::PhpToJSObject($arResult['PAY_SYSTEM_ROBOKASSA_SETTINGS']['IS_ONLY_COMMON_SETTINGS_EXISTS'] ?? false)?>,
 			settingsMenuId: 'settings-menu',
+			buttonPanelId: '<?=CUtil::JSEscape($buttonPanelId)?>',
 		})
 
 		BX.SalecenterPaySystemCashbox.init({

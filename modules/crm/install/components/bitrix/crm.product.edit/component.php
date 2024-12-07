@@ -93,12 +93,6 @@ if (check_bitrix_sessid())
 			|| isset($_POST['apply'])
 		))
 	{
-		if ($bAjax || $bAjaxSubmit)
-		{
-			CUtil::JSPostUnescape();
-			CUtil::decodeURIComponent($_FILES);
-		}
-
 		$errors = array();
 		$postProductID = isset($_POST['product_id']) ? intval($_POST['product_id']) : 0;
 		$srcProductFields = [];

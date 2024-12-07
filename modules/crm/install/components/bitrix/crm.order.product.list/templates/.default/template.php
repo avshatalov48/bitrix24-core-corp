@@ -642,7 +642,7 @@ if(is_array($arResult['COUPONS_LIST']))
 //region PRODUCTS LIST SCRIPTS
 ?>
 
-<script type="text/javascript">
+<script>
 		BX.ready(function ()
 		{
 			<?=$jsObjName?> = BX.Crm.Order.Product.List.create(

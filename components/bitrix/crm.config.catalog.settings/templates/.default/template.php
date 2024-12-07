@@ -1,31 +1,14 @@
-<?if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
+<?php
 
-use Bitrix\Main\UI\Extension;
+if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
-Extension::load([
-	'ui.vue',
-	'ui.buttons',
-	'ui.buttons.icons',
-	'ui.icons',
-	'ui.common',
-	'ui.forms',
-	'ui.alerts',
-	'ui.pinner',
-	'ui.button.panel',
-	'ui.progressbar',
-	'ui.hint',
-	'ui.sidepanel-content',
-	'crm.config.catalog',
-]);
+global $APPLICATION;
 
-?>
-<div id="catalogConfig"></div>
-<script>
-	BX.ready(function() {
-		(new BX.Crm.Config.Catalog.App({propsData: {
-			initData: <?=CUtil::PhpToJSObject($arResult)?>
-		}})).$mount(
-			document.getElementById('catalogConfig')
-		);
-	});
-</script>
+$APPLICATION->IncludeComponent(
+	'bitrix:catalog.config.settings',
+	'',
+	[]
+);

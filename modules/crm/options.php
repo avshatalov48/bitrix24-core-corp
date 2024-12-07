@@ -2,7 +2,7 @@
 ##############################################
 # Bitrix: SiteManager                        #
 # Copyright (c) 2002-2010 Bitrix             #
-# http://www.bitrixsoft.com                  #
+# https://www.bitrixsoft.com                  #
 # mailto:admin@bitrixsoft.com                #
 ##############################################
 
@@ -126,14 +126,14 @@ if($MOD_RIGHT>='R'):
 
 if($MOD_RIGHT>='Y' || $USER->IsAdmin()):
 
-	if ($REQUEST_METHOD=='GET' && $RestoreDefaults <> '' && check_bitrix_sessid())
+	if ($_SERVER['REQUEST_METHOD']=='GET' && $RestoreDefaults <> '' && check_bitrix_sessid())
 	{
 		$defaultCatalogId = Main\Config\Option::get('crm', 'default_product_catalog_id');
 		COption::RemoveOption($module_id);
 		Main\Config\Option::set('crm', 'default_product_catalog_id', $defaultCatalogId);
 	}
 
-	if($REQUEST_METHOD=='POST' && $Update <> '' && check_bitrix_sessid())
+	if($_SERVER['REQUEST_METHOD']=='POST' && $Update <> '' && check_bitrix_sessid())
 	{
 		$arOptions = $arAllOptions;
 		foreach($arOptions as $option)
@@ -147,6 +147,17 @@ if($MOD_RIGHT>='Y' || $USER->IsAdmin()):
 				$val = 'N';
 			if($option[3][0] == 'multiselectbox')
 				$val = @implode(',', $val);
+			if ($option[3][0] == "password")
+			{
+				if (isset($_REQUEST[$name . '_delete']) && $_REQUEST[$name . '_delete'] == "Y")
+				{
+					$val = '';
+				}
+				elseif ($val == '')
+				{
+					continue;
+				}
+			}
 			if($name == 'sale_deal_assigned_by_id_tmp')
 			{
 				$name = 'sale_deal_assigned_by_id';
@@ -185,7 +196,7 @@ $tabControl = new CAdminTabControl('tabControl', $aTabs);
 <?//$tabControl->BeginNextTab();?>
 <?//require_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/admin/group_rights.php');?>
 <?$tabControl->Buttons();?>
-<script language="JavaScript">
+<script>
 function RestoreDefaults()
 {
 	if(confirm('<?echo AddSlashes(Loc::getMessage('MAIN_HINT_RESTORE_DEFAULTS_WARNING'))?>'))

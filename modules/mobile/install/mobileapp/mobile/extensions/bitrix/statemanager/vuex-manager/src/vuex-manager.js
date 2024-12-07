@@ -252,10 +252,17 @@ jn.define('statemanager/vuex-manager/vuex-manager', (require, exports, module) =
 		 * Sets a mutation handler and subscribes to mutations from other JS-contexts
 		 * if the multi context mode is enabled.
 		 *
+		 * @param {MutationManager} [mutationManager]
+		 *
 		 * @return {Promise}
 		 */
-		async buildAsync()
+		async buildAsync(mutationManager)
 		{
+			if (mutationManager && !(mutationManager instanceof MutationManager))
+			{
+				throw new TypeError('VuexManager: mutationManager must be an instance of MutationManager.');
+			}
+
 			if (this.multiContextOptions.stateStorageSaveStrategy === StateStorageSaveStrategy.whenNewStoreInit)
 			{
 				if (this.multiContextOptions.isMainManager)
@@ -268,12 +275,16 @@ jn.define('statemanager/vuex-manager/vuex-manager', (require, exports, module) =
 				}
 			}
 
-			return this.#build();
+			return this.#build(mutationManager);
 		}
 
-		#build()
+		/**
+		 * @param {MutationManager} mutationManager
+		 * @return {VuexManager}
+		 */
+		#build(mutationManager = new MutationManager())
 		{
-			this.mutation = new MutationManager();
+			this.mutation = mutationManager;
 
 			if (!this.isMultiContextMode)
 			{
@@ -398,7 +409,7 @@ jn.define('statemanager/vuex-manager/vuex-manager', (require, exports, module) =
 		 */
 		getMultiContextMutationHandler()
 		{
-			return (mutation, state) => {
+			return async (mutation, state) => {
 				const moduleName = mutation.type.split('/')[0];
 				const sharedState = this.createSharedState(state);
 
@@ -422,7 +433,7 @@ jn.define('statemanager/vuex-manager/vuex-manager', (require, exports, module) =
 					this.postMutation(mutation, this.multiContextOptions.shareState ? sharedState : {});
 				}
 
-				this.mutation._handle(mutation, this.multiContextOptions.shareState ? sharedState : {});
+				await this.mutation.handle(mutation, this.multiContextOptions.shareState ? sharedState : {});
 			};
 		}
 

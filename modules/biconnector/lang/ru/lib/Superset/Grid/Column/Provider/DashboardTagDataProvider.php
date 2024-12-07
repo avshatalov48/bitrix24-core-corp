@@ -1,0 +1,5 @@
+<?php
+
+$MESS['BICONNECTOR_SUPERSET_TAG_GRID_COLUMN_TITLE_NAME'] = 'Название тега';
+$MESS['BICONNECTOR_SUPERSET_TAG_GRID_COLUMN_DASHBOARD_COUNT_NAME'] = 'Количество отчётов с этим тегом';
+

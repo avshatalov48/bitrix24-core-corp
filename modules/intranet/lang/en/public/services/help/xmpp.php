@@ -37,7 +37,7 @@ enjoy voice and video chatting - all with your favorite mobile or messaging soft
         <br />
        <img height='63' width='130' src='#SITE#images/en/docs/cp/m.jpg' />
         <br /><br />
-        <a href='http://www.bitrixsoft.com/download/Miranda_IM.zip'>Download Miranda!</a>
+        <a href='https://www.bitrixsoft.com/download/Miranda_IM.zip'>Download Miranda!</a>
         <br />
 
         <br />
@@ -104,8 +104,8 @@ communication interchange point!
 				server will always store the conversation history! Open &quot;My Messages&quot; in your profile, and you
 				will see the full message log.<br />
 				<h2>Which Messenger Should I Choose?</h2>
-				What is the messaging client that works best? Any that support XMPP protocol. We tested several messengers and can recommend you to try <a href='http://www.bitrixsoft.com/download/Miranda_IM.zip'>Miranda IM</a>. You will find the messenger configuration
-				instructions at the <a href='http://www.bitrixsoft.com/support/training/course/lesson.php?COURSE_ID=27&ID=1641'>Intranet Portal Course for
+				What is the messaging client that works best? Any that support XMPP protocol. We tested several messengers and can recommend you to try <a href='https://www.bitrixsoft.com/download/Miranda_IM.zip'>Miranda IM</a>. You will find the messenger configuration
+				instructions at the <a href='https://www.bitrixsoft.com/support/training/course/lesson.php?COURSE_ID=27&ID=1641'>Intranet Portal Course for
 Beginners</a>.<i>
 
           <br />

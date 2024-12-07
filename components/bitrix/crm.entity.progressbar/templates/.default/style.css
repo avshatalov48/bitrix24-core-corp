@@ -60,7 +60,7 @@
 	height: 32px;
 	border-width: 3px 10px 3px 3px;
 	border-style: solid;
-	border-image: url(images/bar.svg) 3 10 3 3 fill repeat;
+	border-image: url(images/bar.svg) 3 10 3 3 fill stretch;
 	vertical-align: middle;
 	text-overflow: ellipsis;
 	white-space: nowrap;
@@ -68,4 +68,14 @@
 	font-weight: var(--ui-font-weight-semi-bold, 600);
 	cursor: pointer;
 	transition: all 250ms ease;
+}
+
+.crm-entity-section-status-step.--disabled{
+	opacity: .6;
+	pointer-events: auto;
+	cursor: not-allowed;
+}
+
+.crm-entity-section-status-step.--disabled .crm-entity-section-status-step-item-text{
+	cursor: not-allowed;
 }

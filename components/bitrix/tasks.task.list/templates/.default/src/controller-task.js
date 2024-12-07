@@ -6,6 +6,40 @@ import {Action} from "./controller-task-action";
 
 class ControllerTask
 {
+	static getRepository(items, context): Promise
+	{
+		const taskRepository = new ControllerTaskRepository();
+
+		const taskIds = [];
+		items.forEach((item) => {
+			taskIds.push(item.data.id);
+		});
+
+		return new Promise((resolve, reject) => {
+			// eslint-disable-next-line promise/catch-or-return
+			taskRepository.callByFilter(
+				{
+					id: taskIds,
+					returnAccess: 'Y',
+					siftThroughFilter: {
+						userId: context.ownerId,
+						groupId: context.groupId,
+					},
+				},
+				{
+					arParams: context.arParams,
+					navigation: {
+						pageNumber: context.getPageNumber(),
+						pageSize: context.getPageSize(),
+					},
+				},
+			)
+				.then(() => {
+					resolve(taskRepository.get());
+				});
+		});
+	}
+
 	static getRepositoryByCollectionPushEventsAsync(items, context)
 	{
 		const taskRepository = new ControllerTaskRepository();

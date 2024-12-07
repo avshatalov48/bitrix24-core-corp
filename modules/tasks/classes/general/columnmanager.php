@@ -602,7 +602,7 @@ class CTaskColumnPresetManager
 		$strUpdate = $DB->PrepareUpdate("b_tasks_columns", $arFields, "tasks");
 		$strSql = "UPDATE b_tasks_columns SET " . $strUpdate
 			. " WHERE ID=" . $presetId . " AND USER_ID = " . $this->userId . " AND CONTEXT_ID = " . $this->contextId;
-		$DB->Query($strSql, false, "File: ".__FILE__."<br>Line: ".__LINE__);
+		$DB->Query($strSql);
 	}
 
 
@@ -630,7 +630,7 @@ class CTaskColumnPresetManager
 		$strUpdate = $DB->PrepareUpdate("b_tasks_columns", $arFields, "tasks");
 		$strSql = "UPDATE b_tasks_columns SET " . $strUpdate
 			. " WHERE ID=" . $presetId . " AND USER_ID = " . $this->userId . " AND CONTEXT_ID = " . $this->contextId;
-		$DB->QueryBind($strSql, $arBinds, false, "File: ".__FILE__."<br>Line: ".__LINE__);
+		$DB->QueryBind($strSql, $arBinds);
 	}
 
 

@@ -2,103 +2,39 @@
 
 namespace Bitrix\Crm\Activity;
 
+use Bitrix\Crm\Activity\Ping\PingSettingsProvider;
 use Bitrix\Main\Localization\Loc;
 use CCrmOwnerType;
 use CUserOptions;
 
-final class TodoPingSettingsProvider
+final class TodoPingSettingsProvider extends PingSettingsProvider
 {
-	public const DEFAULT_OFFSETS = [0, 15];
 	private const OPTION_NAME_PREFIX = 'todo_ping_settings';
-
-	private int $entityTypeId;
-	private int $categoryId;
-
-	public function __construct(int $entityTypeId, int $categoryId = 0)
-	{
-		$this->entityTypeId = $entityTypeId;
-		$this->categoryId = $categoryId;
-	}
 
 	public static function getDefaultOffsetList(): array
 	{
-		return [
+		return array_merge(
+			parent::getDefaultOffsetList(),
 			[
-				'id' => 'at_the_time_of_the_onset',
-				'title' => Loc::getMessage('CRM_ACTIVITY_TODO_PING_OFFSET_0_MIN'),
-				'offset' => 0,
-			],
-			[
-				'id' => 'in_15_minutes',
-				'title' => Loc::getMessage('CRM_ACTIVITY_TODO_PING_OFFSET_15_MIN'),
-				'offset' => 15,
-			],
-			[
-				'id' => 'in_30_minutes',
-				'title' => Loc::getMessage('CRM_ACTIVITY_TODO_PING_OFFSET_30_MIN'),
-				'offset' => 30,
-			],
-			[
-				'id' => 'in_1_hour',
-				'title' => Loc::getMessage('CRM_ACTIVITY_TODO_PING_OFFSET_1_HOUR'),
-				'offset' => 60,
-			],
-			[
-				'id' => 'in_2_hours',
-				'title' => Loc::getMessage('CRM_ACTIVITY_TODO_PING_OFFSET_2_HOURS'),
-				'offset' => 120,
-			],
-			[
-				'id' => 'in_1_day',
-				'title' => Loc::getMessage('CRM_ACTIVITY_TODO_PING_OFFSET_1_DAY'),
-				'offset' => 1440,
-			],
-		];
-	}
+				[
+					'id' => 'in_1_day',
+					'title' => Loc::getMessage('CRM_TODO_ACTIVITY_PING_OFFSET_1_DAY'),
+					'offset' => 1440,
+				],
 
-	public static function filterOffsets(array $offsets): array
-	{
-		$allowedOffsets = array_column(self::getDefaultOffsetList(), 'offset');
-
-		return array_unique(array_intersect($offsets, $allowedOffsets));
-	}
-
-	public static function getValuesByOffsets(array $offsets): array
-	{
-		if (empty($offsets))
-		{
-			return [];
-		}
-
-		return array_values(
-			array_filter(
-				self::getDefaultOffsetList(),
-				static fn($row) => in_array($row['offset'], $offsets)
-			)
+			],
 		);
 	}
 
-	public static function getOffsetsByValues(array $values): array
+	private function isAllCategoriesSelected(): bool
 	{
-		if (empty($values))
-		{
-			return [];
-		}
-
-		$filtered = array_filter(
-			self::getDefaultOffsetList(),
-			static fn($row) => in_array($row['id'], $values)
-		);
-
-		return array_column($filtered, 'offset');
+		return $this->categoryId === -1
+			|| (CCrmOwnerType::isPossibleDynamicTypeId($this->entityTypeId) && $this->categoryId === 0);
 	}
 
 	public function fetchAll(): array
 	{
-		$isAllCategoriesSelected = $this->categoryId === -1
-			|| (CCrmOwnerType::isPossibleDynamicTypeId($this->entityTypeId) && $this->categoryId === 0);
-
-		if ($isAllCategoriesSelected)
+		if ($this->isAllCategoriesSelected())
 		{
 			return [];
 		}
@@ -110,8 +46,18 @@ final class TodoPingSettingsProvider
 		];
 	}
 
+	public function fetchSelectedValues(): array
+	{
+		if ($this->isAllCategoriesSelected())
+		{
+			return [];
+		}
+
+		return $this->getCurrentOffsets();
+	}
+
 	/**
-	 * Get data for crm.field.item-selector component
+	 * Get data for crm.field.ping-selector component
 	 *
 	 * @return array
 	 */

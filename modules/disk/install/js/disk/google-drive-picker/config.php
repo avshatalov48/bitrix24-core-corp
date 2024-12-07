@@ -11,6 +11,7 @@ Loader::requireModule('disk');
 
 return [
 	'js' => 'dist/google-drive-picker.bundle.js',
+	'css' => 'dist/google-drive-picker.bundle.css',
 	'rel' => [
 		'main.core',
 	],

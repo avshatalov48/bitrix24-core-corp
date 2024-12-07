@@ -13,4 +13,5 @@ $MESS['IMBOT_GIPHY_COMMAND_GIPHY_RETRY'] = 'Еще!';
 $MESS['IMBOT_GIPHY_ICON_BROWSE_TITLE'] = 'Выбор GIF-картинок';
 $MESS['IMBOT_GIPHY_ICON_BROWSE_DESCRIPTION'] = 'Выбор подходящих по смыслу GIF-картинок';
 $MESS['IMBOT_GIPHY_ICON_COPYRIGHT'] = 'Giphy.com';
+$MESS['IMBOT_GIPHY_REGION_ERROR'] = 'Сервис недоступен в данном регионе';
 ?>

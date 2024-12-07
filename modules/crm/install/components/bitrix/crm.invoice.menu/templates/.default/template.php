@@ -36,7 +36,7 @@ if (!empty($arResult['BUTTONS']))
 			]
 		);
 
-		?><script type="text/javascript">
+		?><script>
 		BX.ready(function() {
 			var intranetBindingBtn = document.querySelector('.intranet-binding-menu-btn');
 			var invoiceToolbar = BX('crm_invoice_toolbar');
@@ -63,7 +63,7 @@ if (is_array($arResult['EXPORT_CSV_PARAMS']))
 {
 	\Bitrix\Main\UI\Extension::load('ui.stepprocessing');
 	?>
-	<script type="text/javascript">
+	<script>
 		BX.ready(
 			function()
 			{

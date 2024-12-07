@@ -72,7 +72,7 @@ if ($arResult['NEED_FOR_REBUILD_INVOICE_ATTRS']):
 endif;
 
 $APPLICATION->IncludeComponent(
-	'bitrix:crm.config.perms.role.edit',
+	'bitrix:crm.config.perms.role.edit.v2',
 	'',
 	[
 		'ROLE_ID' => $arResult['VARIABLES']['role_id'] ?? null,
@@ -90,7 +90,7 @@ if (
 	|| $arResult['NEED_FOR_REBUILD_QUOTE_ATTRS']
 	|| $arResult['NEED_FOR_REBUILD_INVOICE_ATTRS']
 ):
-?><script type="text/javascript">
+?><script>
 BX.ready(
 	function()
 	{

@@ -3,7 +3,9 @@
 namespace Bitrix\ImBot\Bot;
 
 use Bitrix\ImBot\Error;
+use Bitrix\ImBot\Model\NetworkSessionTable;
 use Bitrix\Main;
+use Bitrix\Main\Data\Cache;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Application;
 use Bitrix\Main\Config\Option;
@@ -11,6 +13,7 @@ use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Im;
 use Bitrix\Im\Bot\Keyboard;
+use Bitrix\Im\V2\Message\CounterService;
 use Bitrix\ImBot;
 use Bitrix\ImBot\Log;
 use Bitrix\ImBot\DialogSession;
@@ -61,13 +64,22 @@ class Network extends Base implements NetworkBot
 		SUPPORT_LEVEL_NONE = 'none',
 		SUPPORT_LEVEL_FREE = 'free',
 		SUPPORT_LEVEL_PAID = 'paid',
-		SUPPORT_LEVEL_PARTNER = 'partner';
+		SUPPORT_LEVEL_PARTNER = 'partner',
+
+		MULTIDIALOG_STATUS_NEW = 'NEW',
+		MULTIDIALOG_STATUS_OPEN = 'OPEN',
+		MULTIDIALOG_STATUS_CLOSE = 'CLOSE';
 
 	protected const
 		USER_LEVEL_ADMIN = 'ADMIN',
 		USER_LEVEL_INTEGRATOR = 'INTEGRATOR',
 		USER_LEVEL_BUSINESS = 'BUSINESS',
 		USER_LEVEL_REGULAR = 'USER';
+
+	protected const CACHE_TIME_IMBOT_MULTIDIALOG = 86400;
+	protected const CACHE_DIR_IMBOT_MULTIDIALOG = '/imbot/multidialog/';
+	protected const CACHE_KEY_IMBOT_MULTIDIALOG_CHATS = 'multidialog_chats_';
+	protected const CACHE_KEY_IMBOT_MULTIDIALOG_BOT = 'multidialog_bot_';
 
 	/** @var \Bitrix\ImBot\Http */
 	protected static $httpClient;
@@ -83,6 +95,8 @@ class Network extends Base implements NetworkBot
 		'8' => "ae8cf733b2725127f755f8e75650a07a",
 		'9' => "239e498332e63b5ee62b9e9fb0ff5a8d",
 	];
+
+	protected static $multidialogs = [];
 
 	//region Bot commands
 
@@ -1235,7 +1249,7 @@ class Network extends Base implements NetworkBot
 	 */
 	public static function clientMessageAdd(array $fields)
 	{
-		$user = self::getUserInfo((int)$fields['USER_ID']);
+		$user = static::getUserInfo((int)$fields['USER_ID'], $fields);
 
 		$portalTariff = 'box';
 		$portalTariffLevel = 'paid';
@@ -1361,7 +1375,7 @@ class Network extends Base implements NetworkBot
 			}
 		}
 
-		$user = self::getUserInfo((int)($messageFields['FROM_USER_ID'] ?? $messageFields['AUTHOR_ID']));
+		$user = static::getUserInfo((int)($messageFields['FROM_USER_ID'] ?? $messageFields['AUTHOR_ID']), $messageFields);
 
 		$http = self::instanceHttpClient();
 		$response = $http->query(
@@ -1389,7 +1403,7 @@ class Network extends Base implements NetworkBot
 	 */
 	protected static function clientMessageDelete($messageId, $messageFields)
 	{
-		$user = self::getUserInfo((int)($messageFields['FROM_USER_ID'] ?? $messageFields['AUTHOR_ID']));
+		$user = static::getUserInfo((int)($messageFields['FROM_USER_ID'] ?? $messageFields['AUTHOR_ID']), $messageFields);
 
 		$http = self::instanceHttpClient();
 		$response = $http->query(
@@ -1750,6 +1764,14 @@ class Network extends Base implements NetworkBot
 				if ((int)$messageFields['LINE']['MAX_DIALOGS_COUNT'] != self::getQuestionLimit((int)$messageFields['BOT_ID']))
 				{
 					self::setQuestionLimit((int)$messageFields['LINE']['MAX_DIALOGS_COUNT'], (int)$messageFields['BOT_ID']);
+					if (!empty($messageFields['USER']))
+					{
+						ImBot\Pull::changeActiveSessionsLimit(
+							(int)$messageFields['LINE']['MAX_DIALOGS_COUNT'],
+							(int)$messageFields['USER']['ID'],
+							(int)$messageFields['BOT_ID']
+						);
+					}
 				}
 			}
 
@@ -2172,6 +2194,13 @@ class Network extends Base implements NetworkBot
 		{
 			self::instanceDialogSession((int)$params['BOT_ID'], $params['DIALOG_ID'])
 				->setSessionId((int)$params['SESSION_ID']);
+
+			ImBot\Pull::changeMultidialogStatus(
+				$params['DIALOG_ID'],
+				ImBot\Bot\Network::MULTIDIALOG_STATUS_OPEN,
+				(int)$params['SESSION_ID'],
+				$params['BOT_ID']
+			);
 		}
 
 		return true;
@@ -2197,7 +2226,6 @@ class Network extends Base implements NetworkBot
 			($bot = $botData[$joinFields['BOT_ID']])
 			&& $bot["TEXT_PRIVATE_WELCOME_MESSAGE"] <> ''
 			&& $joinFields['CHAT_TYPE'] == \IM_MESSAGE_PRIVATE
-			&& $joinFields['FROM_USER_ID'] != $joinFields['BOT_ID']
 		)
 		{
 			$messageFields = [
@@ -2917,19 +2945,211 @@ class Network extends Base implements NetworkBot
 		return $chatId;
 	}
 
+	public static function getQuestionList(array $params): array
+	{
+		$botId = (int)$params['BOT_ID'];
+
+		$result = [
+			'chats' => [],
+			'users' => (new \Bitrix\Im\V2\Entity\User\UserCollection([$botId]))->toRestFormat(),
+			'multidialogs' => [],
+		];
+
+		$questions = self::getQuestions($params);
+
+		$chats = [];
+		foreach ($questions as $question)
+		{
+			$chat = \Bitrix\Im\V2\Chat::getInstance((int)$question['id']);
+			$chats[] = $chat;
+		}
+
+		\Bitrix\Im\V2\Chat::fillSelfRelations($chats);
+
+		$sessions = NetworkSessionTable::getList([
+			'select' => [
+				'DIALOG_ID',
+				'SESSION_ID',
+				'STATUS',
+			],
+			'filter' => [
+				'=BOT_ID' => $botId,
+			]
+		])->fetchAll();
+
+		$activeChats = [];
+		$botData = self::getBotSessionData($botId);
+
+		$chats[] = \Bitrix\Im\V2\Chat::getInstance($botData['chatId']);
+		$botData['statusSort'] = ($botData['status'] == mb_strtolower(self::MULTIDIALOG_STATUS_CLOSE)) ? 0 : 1;
+		foreach ($sessions as $session)
+		{
+			if ($session['DIALOG_ID'] == static::getCurrentUser()->getId())
+			{
+				$botData['status'] = mb_strtolower($session['STATUS']);
+				$botData['statusSort'] = ($session['STATUS'] == self::MULTIDIALOG_STATUS_CLOSE) ? 0 : 1;
+			}
+			else
+			{
+				$activeChats[$session['DIALOG_ID']] = $session;
+			}
+		}
+		$result['multidialogs'][] = $botData;
+
+		foreach ($chats as $key => $chat)
+		{
+			$chats[$key] = $chats[$key]->toRestFormat(['CHAT_SHORT_FORMAT' => true]);
+			$chats[$key]['dateMessage'] = $questions[$chat->getChatId()]['lastMessageDate'];
+			$chats[$key]['status'] = $activeChats[$chat->getDialogId()]['STATUS'] ?? self::MULTIDIALOG_STATUS_CLOSE;
+			$chats[$key]['statusSort'] = ($chats[$key]['status'] == self::MULTIDIALOG_STATUS_CLOSE) ? 0 : 1;
+		}
+
+		foreach ($chats as $chat)
+		{
+			$multidialog = [
+				'status' => mb_strtolower($chat['status']),
+				'statusSort' => $chat['statusSort'],
+				'botId' => $botId,
+				'chatId' => $chat['id'],
+				'dialogId' => $chat['dialogId'],
+				'dateMessage' => $chat['dateMessage'],
+			];
+
+			$result['multidialogs'][] = $multidialog;
+
+			unset($chat['status']);
+			unset($chat['statusSort']);
+			unset($chat['dateMessage']);
+
+			$result['chats'][$chat['id']] = $chat;
+		}
+
+		array_multisort(
+			array_column($result['multidialogs'], 'statusSort'), SORT_DESC,
+			array_column($result['multidialogs'], 'dateMessage'), SORT_DESC,
+			$result['multidialogs']
+		);
+
+		foreach ($result['multidialogs'] as $key => $value)
+		{
+			unset($result['multidialogs'][(int)$key]['statusSort']);
+		}
+
+		if (isset($params['LIMIT']) && (int)$params['LIMIT'] > 0)
+		{
+			$offset = $params['OFFSET'] ? (int)$params['OFFSET'] : 0;
+			$result['multidialogs'] = array_slice($result['multidialogs'], $offset, (int)$params['LIMIT']);
+
+			$chatIds = array_map(function ($dialog) {return $dialog['chatId'];}, $result['multidialogs']);
+			foreach ($result['chats'] as $chatId => $chat)
+			{
+				if (!in_array($chatId, $chatIds, true))
+				{
+					unset($result['chats'][(int)$chatId]);
+				}
+			}
+
+			$result['chats'] = array_values($result['chats']);
+		}
+
+		return $result;
+	}
+
+	public static function getMultidialog(int $chatId, ?int $botId = null, ?int $userId = null): ?array
+	{
+		if (!in_array($chatId, static::getAllQuestions($botId, $userId), true))
+		{
+			return null;
+		}
+
+		$chat = \Bitrix\Im\V2\Chat::getInstance($chatId);
+
+		$session = null;
+
+		$multidialogs = self::getOpenNetworkSessions($botId);
+		foreach ($multidialogs as $multidialog)
+		{
+			if (
+				$multidialog['SESSION_ID'] > 0
+				&& $multidialog['BOT_ID'] == $botId
+				&& $multidialog['DIALOG_ID'] == $chat->getDialogId()
+				&& $multidialog['CLOSED'] == 0
+			)
+			{
+				$session = $multidialog;
+			}
+		}
+
+		$lastMessageId = $chat->getLastMessageId();
+		$lastMessage = $lastMessageId ? $chat->getMessage($lastMessageId) : null;
+		$dateLastMessage = $lastMessage ? $lastMessage->getDateCreate() : $chat->getDateCreate();
+
+		if ($dateLastMessage === null)
+		{
+			$dateLastMessage = new \DateTime();
+		}
+
+		return [
+			'status' => $session ? mb_strtolower($session['STATUS']) : mb_strtolower(self::MULTIDIALOG_STATUS_CLOSE),
+			'botId' => $botId,
+			'chatId' => $chat->getChatId(),
+			'dialogId' => $chat->getDialogId(),
+			'dateMessage' => $dateLastMessage->format('c'),
+		];
+	}
+
+	private static function getOpenNetworkSessions(int $botId): array
+	{
+		if (isset(self::$multidialogs[$botId]) && count(self::$multidialogs[$botId]) > 0)
+		{
+			return self::$multidialogs[$botId];
+		}
+
+		self::$multidialogs[$botId] = NetworkSessionTable::getList([
+			'filter' => [
+				'>SESSION_ID' => 0,
+				'=BOT_ID' => $botId,
+				'=CLOSED' => 0,
+			]
+		])->fetchAll();
+
+		return self::$multidialogs[$botId];
+	}
+
+	public static function getBotAsMultidialog(int $botId, int $userId)
+	{
+		$multidialog = self::getBotSessionData($botId, $userId);
+		$session = NetworkSessionTable::getRow([
+			'select' => [
+				'SESSION_ID',
+				'STATUS',
+			],
+			'filter' => [
+				'=BOT_ID' => $botId,
+				'=DIALOG_ID' => $userId,
+				'=CLOSED' => 0,
+			]
+		]);
+
+		if (isset($session['SESSION_ID']))
+		{
+			$multidialog['status'] = mb_strtolower($session['STATUS']);
+		}
+
+		return $multidialog;
+	}
+
 	/**
 	 * Returns the question dialog list and perfoms searching by question dialog title.
 	 * @param array $params Query parameters.
 	 * <pre>
 	 * [
 	 * 	(string) searchQuery - String to search by title.
-	 * 	(int) limit - Number rows to select.
-	 * 	(int) offset - Set starting offset.
 	 * ]
 	 * </pre>
 	 * @return array{id: int, title: string}
 	 */
-	public static function getQuestionList(array $params): array
+	private static function getQuestions(array $params): array
 	{
 		if (!static::isUserAdmin(static::getCurrentUser()->getId()))
 		{
@@ -2965,25 +3185,219 @@ class Network extends Base implements NetworkBot
 					Im\Model\RelationTable::class,
 					Main\ORM\Query\Join::on('ref.CHAT_ID', '=', 'this.ID')->where('ref.USER_ID', '=', static::getCurrentUser()->getId()),
 					['join_type' => 'INNER']
+				),
+				new Main\ORM\Fields\Relations\Reference(
+					'MESSAGE',
+					Im\Model\MessageTable::class,
+					Main\ORM\Query\Join::on('ref.ID', '=', 'this.LAST_MESSAGE_ID'),
+					['join_type' => 'INNER']
 				)
 			],
-			'select' => ['ID', 'TITLE'],
+			'select' => ['ID', 'TITLE', 'TYPE', 'LAST_MESSAGE_DATE' => 'MESSAGE.DATE_CREATE'],
 			'filter' => $filter,
 			'order' => ['ID' => 'DESC'],
-			'limit' => $params['LIMIT'] ? (int)$params['LIMIT'] : 25,
-			'offset' => $params['OFFSET'] ? (int)$params['OFFSET'] : 0,
 		]);
 
 		$questions = [];
 		while ($chat = $chatRes->fetch())
 		{
-			$questions[] = [
+			$questions[(int)$chat['ID']] = [
 				'id' => (int)$chat['ID'],
+				'dialogId' => 'chat' . $chat['ID'],
 				'title' => $chat['TITLE'],
+				'lastMessageDate' => $chat['LAST_MESSAGE_DATE'],
 			];
 		}
 
 		return $questions;
+	}
+
+	private static function getBotSessionData(?int $botId = null, ?int $userId = null): array
+	{
+		if (!$botId)
+		{
+			$botId = static::getBotId();
+		}
+
+		if (!$userId)
+		{
+			$userId = static::getCurrentUser()->getId();
+		}
+
+		$result = [
+			'status' => mb_strtolower(self::MULTIDIALOG_STATUS_CLOSE),
+			'botId' => $botId,
+			'chatId' => null,
+			'dialogId' => (string)$botId,
+			'dateMessage' => null,
+		];
+
+		$chatWithBot = static::getChatWithBot($botId, $userId);
+
+		if ($chatWithBot)
+		{
+			$result['chatId'] = (int)$chatWithBot['ID'];
+
+			$chat = \Bitrix\Im\V2\Chat::getInstance($chatWithBot['ID']);
+			$lastMessageResult = Im\Model\MessageTable::getById($chat->getLastMessageId())->fetch();
+			$result['dateMessage'] = $lastMessageResult['DATE_CREATE'];
+		}
+
+		return $result;
+	}
+
+	public static function getAllQuestions(?int $botId = null, ?int $userId = null): array
+	{
+		if (!$userId)
+		{
+			$userId = static::getCurrentUser()->getId();
+		}
+
+		if (!static::isUserAdmin($userId))
+		{
+			static::addError(new Error(
+				__METHOD__,
+				'ACCESS_DENIED',
+				'You do not have access to create specified dialog'
+			));
+		}
+
+		if (!$botId)
+		{
+			$botId = static::getBotId();
+		}
+
+		$questions = [];
+		$cache = Cache::createInstance();
+		 if ($cache->initCache(self::CACHE_TIME_IMBOT_MULTIDIALOG, self::CACHE_KEY_IMBOT_MULTIDIALOG_CHATS . $botId, self::CACHE_DIR_IMBOT_MULTIDIALOG))
+		 {
+		 	$questions = $cache->getVars();
+		 }
+		 elseif ($cache->startDataCache())
+		 {
+			$filter = [
+				'=TYPE' => \IM_MESSAGE_CHAT,
+				'=ENTITY_TYPE' => static::CHAT_ENTITY_TYPE,
+				'=AUTHOR_ID' => $botId,
+			];
+
+			$chatRes = Im\Model\ChatTable::getList([
+				'runtime' => [
+					new Main\ORM\Fields\Relations\Reference(
+						'RELATION',
+						Im\Model\RelationTable::class,
+						Main\ORM\Query\Join::on('ref.CHAT_ID', '=', 'this.ID')->where('ref.USER_ID', '=', $userId),
+						['join_type' => 'INNER']
+					)
+				],
+				'select' => ['ID'],
+				'filter' => $filter,
+			]);
+
+			while ($chat = $chatRes->fetch())
+			{
+				$questions[] = (int)$chat['ID'];
+			}
+
+		 	$cache->endDataCache($questions);
+		 }
+
+		return $questions;
+	}
+
+	public static function getChatWithBot(?int $botId = null, ?int $userId = null): ?array
+	{
+		$chat = null;
+
+		if (!$userId)
+		{
+			$userId = static::getCurrentUser()->getId();
+		}
+
+		$cache = Cache::createInstance();
+		if ($cache->initCache(
+			self::CACHE_TIME_IMBOT_MULTIDIALOG,
+			self::CACHE_KEY_IMBOT_MULTIDIALOG_BOT . $botId . '_' . $userId,
+			self::CACHE_DIR_IMBOT_MULTIDIALOG
+		))
+		{
+			$chat = $cache->getVars();
+		}
+		elseif ($cache->startDataCache())
+		{
+			$chatResult = Im\V2\Chat\PrivateChat::find([
+				'FROM_USER_ID' => $botId,
+				'TO_USER_ID' => $userId,
+			]);
+
+			if ($chatResult->isSuccess())
+			{
+				$chat = $chatResult->getResult();
+				$cache->endDataCache($chat);
+			}
+		}
+
+		return $chat;
+	}
+
+	public static function getQuestionsWithUnreadMessages(?int $botId = null): array
+	{
+		$questions = static::getAllQuestions($botId);
+
+		$counterService = new CounterService(static::getCurrentUser()->getId());
+		$counters = $counterService->getForEachChat($questions);
+
+		$result = [];
+		foreach ($questions as $chatId)
+		{
+			if (isset($counters[$chatId]))
+			{
+				$result[] = $chatId;
+			}
+		}
+
+		$botChatId = static::getBotUnreadMessagesChatId($botId);
+		if ($botChatId)
+		{
+			$result[] = $botChatId;
+		}
+
+		return $result;
+	}
+
+	private static function getBotUnreadMessagesChatId(?int $botId = null): ?int
+	{
+		$botChat = static::getChatWithBot($botId);
+
+		$counterService = new CounterService(static::getCurrentUser()->getId());
+		$counter = $counterService->getByChat((int)$botChat['ID']);
+
+		if ($counter > 0)
+		{
+			return (int)$botChat['ID'];
+		}
+
+		return null;
+	}
+
+	public static function getQuestionsCount(?int $botId = null, ?int $userId = null): int
+	{
+		$questions = static::getAllQuestions($botId, $userId);
+
+		return count($questions) + (static::getChatWithBot($botId, $userId) ? 1 : 0);
+	}
+
+	public static function cleanQuestionsCountCache(?int $botId = null): void
+	{
+		if (!$botId)
+		{
+			$botId = static::getBotId();
+		}
+
+		$cache = Cache::createInstance();
+
+		$cache->initCache(self::CACHE_TIME_IMBOT_MULTIDIALOG, self::CACHE_KEY_IMBOT_MULTIDIALOG_CHATS . $botId, self::CACHE_DIR_IMBOT_MULTIDIALOG);
+		$cache->clean(self::CACHE_KEY_IMBOT_MULTIDIALOG_CHATS . $botId, self::CACHE_DIR_IMBOT_MULTIDIALOG);
 	}
 
 	//endregion
@@ -3058,7 +3472,7 @@ class Network extends Base implements NetworkBot
 	 * ]
 	 * </pre>.
 	 */
-	protected static function getUserInfo(int $userId): array
+	protected static function getUserInfo(int $userId, array $params = []): array
 	{
 		$result = [];
 
@@ -3130,7 +3544,7 @@ class Network extends Base implements NetworkBot
 		}
 
 		$result = $countryCode.($countryName? ' / '.$countryName: '').($cityName? ' / '.$cityName: '');
-		
+
 		Main\Application::getInstance()->getKernelSession()['IMBOT']['GEO_DATA'] = $result;
 
 		return $result;
@@ -3319,6 +3733,11 @@ class Network extends Base implements NetworkBot
 		$keyboard = null;
 		if (!empty($messageFields['KEYBOARD']))
 		{
+			if (!is_array($messageFields['KEYBOARD']))
+			{
+				$messageFields['KEYBOARD'] = \CUtil::JsObjectToPhp($messageFields['KEYBOARD']);
+			}
+
 			$keyboardData = [];
 			if (!isset($messageFields['KEYBOARD']['BUTTONS']))
 			{
@@ -4016,7 +4435,16 @@ class Network extends Base implements NetworkBot
 		$session = self::instanceDialogSession((int)$params['BOT_ID'], $params['DIALOG_ID']);
 		if ($session->getSessionId() == (int)$params['SESSION_ID'])
 		{
-			return $session->finish($params);
+			ImBot\Pull::changeMultidialogStatus(
+				$params['DIALOG_ID'],
+				ImBot\Bot\Network::MULTIDIALOG_STATUS_CLOSE,
+				(int)$params['SESSION_ID'],
+				(int)$params['BOT_ID']
+			);
+
+			$session->finish($params);
+
+			return true;
 		}
 
 		return false;
@@ -4223,6 +4651,8 @@ class Network extends Base implements NetworkBot
 				'SESSION_ID' => -1
 			]);
 		}
+
+		static::cleanQuestionsCountCache($botId);
 
 		return $chatId;
 	}

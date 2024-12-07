@@ -95,7 +95,7 @@ $APPLICATION->IncludeComponent(
 	),
 	$component
 );
-?><script type="text/javascript">
+?><script>
 	BX.ready(
 		function()
 		{

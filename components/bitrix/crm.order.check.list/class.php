@@ -290,7 +290,7 @@ class CCrmOrderCheckListComponent extends \CBitrixComponent
 			}
 
 			$check['CHECK_STATUS'] = Loc::getMessage('CRM_ORDER_CASHBOX_STATUS_'.$check['STATUS']);
-			if (isset($check['ERROR_MESSAGE']))
+			if (isset($check['ERROR_MESSAGE']) && $check['STATUS'] === 'E')
 			{
 				$check['CHECK_STATUS'] .= ' (' . $check['ERROR_MESSAGE'] . ')';
 			}

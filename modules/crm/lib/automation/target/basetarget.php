@@ -5,11 +5,9 @@ namespace Bitrix\Crm\Automation\Target;
 use Bitrix\Bizproc\Automation\Engine\ConditionGroup;
 use Bitrix\Crm\Automation\Engine\TemplatesScheme;
 use Bitrix\Crm\Automation\Trigger\Entity\EO_Trigger;
-use Bitrix\Main\InvalidOperationException;
 use Bitrix\Main\Loader;
 use Bitrix\Crm\Automation\Factory;
 use Bitrix\Crm\Automation\Trigger\Entity\TriggerTable;
-use Bitrix\Main\Result;
 
 if (!Loader::includeModule('bizproc'))
 {
@@ -18,49 +16,43 @@ if (!Loader::includeModule('bizproc'))
 
 abstract class BaseTarget extends \Bitrix\Bizproc\Automation\Target\BaseTarget
 {
-	protected $entity;
+	protected $entityId;
 
 	/**
-	 * @param $entity
+	 * @param $entityId
 	 * @return $this
 	 */
-	public function setEntity($entity)
+	public function setEntityId($entityId)
 	{
-		$this->entity = $entity;
+		$this->entityId = (int)$entityId;
+
 		return $this;
 	}
 
-	public function setEntityField($field, $value)
-	{
-		if ($this->entity === null)
-		{
-			throw new InvalidOperationException('Entity must be set by setEntity method.');
-		}
+	abstract protected function getEntityIdByDocumentId(string $documentId): int;
 
-		$this->entity[$field] = $value;
-	}
-
-	/**
-	 * @return mixed
-	 */
-	public function getEntity()
-	{
-		if ($this->entity === null)
-		{
-			return [];
-		}
-
-		return $this->entity;
-	}
+	abstract protected function getEntityFields(array $select): array;
 
 	public function getEntityTypeId()
 	{
 		return \CCrmOwnerType::Undefined;
 	}
 
-	abstract public function getEntityId();
+	public function getEntityId(): int
+	{
+		if ($this->entityId)
+		{
+			return $this->entityId;
+		}
 
-	abstract public function setEntityById($id);
+		$documentId = $this->getDocumentId();
+		if (empty($this->entityId) && $documentId)
+		{
+			return $this->getEntityIdByDocumentId($documentId);
+		}
+
+		return 0;
+	}
 
 	public function getResponsibleId()
 	{
@@ -235,7 +227,7 @@ abstract class BaseTarget extends \Bitrix\Bizproc\Automation\Target\BaseTarget
 			if (isset($rules[$key]))
 			{
 				$condition = new ConditionGroup($rules[$key]);
-				$docType = self::getConditionDocumentType($key);
+				$docType = $this->getConditionDocumentType($key);
 				if ($external)
 				{
 					$condition->externalizeValues($docType);

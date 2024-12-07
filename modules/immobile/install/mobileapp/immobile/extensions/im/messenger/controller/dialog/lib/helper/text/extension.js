@@ -2,25 +2,45 @@
  * @module im/messenger/controller/dialog/lib/helper/text
  */
 jn.define('im/messenger/controller/dialog/lib/helper/text', (require, exports, module) => {
-	include('InAppNotifier');
-
 	const { Loc } = require('loc');
+	const { Type } = require('type');
+	const { Icon } = require('assets/icons');
+
 	const { parser } = require('im/messenger/lib/parser');
+	const { Notification } = require('im/messenger/lib/ui/notification');
 
 	/**
 	 * @class DialogTextHelper
 	 */
 	class DialogTextHelper
 	{
-		static copyToClipboard(modelMessage)
+		/**
+		 * @param {string} clipboardText
+		 * @param {?object} options
+		 * @param {?string} options.notificationText
+		 * @param {?Icon} options.notificationIcon
+		 * @param {?PageManager} options.parentWidget
+		 */
+		static copyToClipboard(
+			clipboardText,
+			{
+				notificationText = null,
+				notificationIcon = null,
+				parentWidget = PageManager,
+			},
+		)
 		{
-			Application.copyToClipboard(parser.prepareCopy(modelMessage));
+			const text = Type.isStringFilled(clipboardText) ? clipboardText : '';
+			Application.copyToClipboard(parser.prepareCopy({ text }));
 
-			InAppNotifier.showNotification({
-				title: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_HELPER_TEXT_MESSAGE_COPIED'),
-				time: 1,
-				backgroundColor: '#E6000000',
-			});
+			const title = notificationText ?? Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_HELPER_TEXT_MESSAGE_COPIED');
+			const icon = notificationIcon instanceof Icon ? notificationIcon : Icon.COPY;
+			const toastParams = {
+				message: title,
+				icon,
+			};
+
+			return Notification.showToastWithParams(toastParams, parentWidget);
 		}
 	}
 

@@ -151,6 +151,8 @@ if ($fileName && $filePart)
 }
 //endregion
 
+$analyticsRegistrar = \Bitrix\Main\DI\ServiceLocator::getInstance()->get('transformer.integration.analytics.registrar');
+
 //region error
 $error = $httpRequest->getPost('error');
 $errorCode = intval($httpRequest->getPost('errorCode'));
@@ -179,6 +181,9 @@ if ($error || $errorCode)
 		}
 	}
 	$command->updateStatus(Command::STATUS_ERROR, $error, $errorCode);
+
+	$analyticsRegistrar->registerCommandFinish($command);
+
 	$command->callback(['error' => $error]);
 	echo Json::encode([
 		'success' => 'error received'
@@ -195,7 +200,25 @@ if ($finish)
 {
 	/** @var File[] $files */
 	$files = [];
-	$command->updateStatus(Command::STATUS_UPLOAD);
+	$updateStatusResult = $command->updateStatus(Command::STATUS_UPLOAD);
+	if (!$updateStatusResult->isSuccess())
+	{
+		\Bitrix\Transformer\Log::logger()->critical(
+			'Cant mark command as uploaded: {errors}',
+			['errors' => $updateStatusResult->getErrorMessages(), 'guid' => $id],
+		);
+
+		echo Json::encode([
+			'error' => 'Could not mark command as uploaded',
+		]);
+
+		$connection->unlock($lockName);
+
+		return;
+	}
+
+	$analyticsRegistrar->registerCommandFinish($command);
+
 	$result = $httpRequest->getPost('result');
 	if (!is_array($result))
 	{

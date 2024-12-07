@@ -1079,7 +1079,7 @@ else
 
 				$GLOBALS['APPLICATION']->RestartBuffer();
 				?>
-				<script type="text/javascript">
+				<script>
 					var response = null;
 					response = <?=CUtil::PhpToJSObject($arResponse)?>;
 					top.<?=CUtil::JSEscape($arResult['FORM_ID'].'_ajax_response')?> = response;

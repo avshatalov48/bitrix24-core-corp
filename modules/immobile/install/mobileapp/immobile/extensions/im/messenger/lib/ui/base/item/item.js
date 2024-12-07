@@ -16,14 +16,6 @@ jn.define('im/messenger/lib/ui/base/item/item', (require, exports, module) => {
 	 */
 	class Item extends LayoutComponent
 	{
-		/**
-		 * @param {MessengerItemProps} props
-		 */
-		constructor(props)
-		{
-			super(props);
-		}
-
 		getStyleBySize()
 		{
 			if (this.props.isCustomStyle)
@@ -53,9 +45,15 @@ jn.define('im/messenger/lib/ui/base/item/item', (require, exports, module) => {
 
 			return View(
 				{
+					ref: (ref) => {
+						if (ref)
+						{
+							this.viewRef = ref;
+						}
+					},
 					style: {
 						flexDirection: 'column',
-						backgroundColor: this.props.isPressed
+						backgroundColor: this.props.isWithPressed
 							? withPressed(style.parentView.backgroundColor)
 							: style.parentView.backgroundColor,
 					},
@@ -79,7 +77,7 @@ jn.define('im/messenger/lib/ui/base/item/item', (require, exports, module) => {
 					onLongClick: () => {
 						if (this.props.onLongClick)
 						{
-							this.props.onLongClick(this.props.data);
+							this.props.onLongClick(this.props.data, this.viewRef);
 						}
 					},
 				},
@@ -99,6 +97,7 @@ jn.define('im/messenger/lib/ui/base/item/item', (require, exports, module) => {
 							uri: this.props.data.avatarUri,
 							color: this.props.data.avatarColor,
 							size: this.props.size,
+							isSuperEllipse: this.props.isSuperEllipseAvatar,
 						}),
 						this.renderStatusInAvatar(),
 					),
@@ -173,6 +172,11 @@ jn.define('im/messenger/lib/ui/base/item/item', (require, exports, module) => {
 			if (!this.props.additionalComponent)
 			{
 				return null;
+			}
+
+			if (Object.prototype.hasOwnProperty.call(this.props.additionalComponent, 'create'))
+			{
+				return this.props.additionalComponent.create();
 			}
 
 			return this.props.additionalComponent;

@@ -2,24 +2,28 @@
 
 return [
 	'extensions' => [
-		'apptheme',
 		'layout/pure-component',
 		'layout/ui/counter-view',
 		'layout/ui/fields/file',
 		'layout/ui/safe-image',
 		'layout/ui/simple-list/items/extended',
-		'loc',
+		'statemanager/redux/connect',
+		'statemanager/redux/slices/users',
+		'tokens',
+		'ui-system/blocks/icon',
+		'ui-system/typography/text',
 		'utils/color',
 		'utils/date',
 		'utils/date/formats',
 		'utils/object',
 		'utils/skeleton',
 		'utils/url',
-		'statemanager/redux/connect',
-		'statemanager/redux/slices/users',
+
+		'tasks:enum',
+		'tasks:loc',
 		'tasks:layout/deadline-pill',
 		'tasks:layout/stage-selector',
-		'tasks/layout/task/fields/crm',
+		'tasks:layout/task/fields/crm',
 		'tasks:layout/task/fields/mark',
 		'tasks:layout/task/fields/project',
 		'tasks:layout/task/fields/tags',
@@ -30,7 +34,8 @@ return [
 		'tasks:statemanager/redux/slices/stage-settings',
 		'tasks:statemanager/redux/slices/tasks-stages',
 		'tasks:statemanager/redux/slices/kanban-settings',
-		'tasks:enum',
+
+		'tasks:utils/stages',
 	],
 	'bundle' => [
 		'./src/field',

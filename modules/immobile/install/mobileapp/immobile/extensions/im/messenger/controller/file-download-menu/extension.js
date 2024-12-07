@@ -4,11 +4,13 @@
 jn.define('im/messenger/controller/file-download-menu', (require, exports, module) => {
 	const { Filesystem, utils } = require('native/filesystem');
 
+	const { ContextMenu } = require('layout/ui/context-menu');
 	const { Loc } = require('loc');
 	const { withCurrentDomain } = require('utils/url');
 	const { NotifyManager } = require('notify-manager');
 	include('InAppNotifier');
 
+	const { EventType } = require('im/messenger/const');
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 	const { Logger } = require('im/messenger/lib/logger');
 	const { FileDownloadMenuSvg } = require('im/messenger/assets/file-download-menu');
@@ -19,15 +21,19 @@ jn.define('im/messenger/controller/file-download-menu', (require, exports, modul
 	 */
 	class FileDownloadMenu
 	{
-		static createByFileId(fileId, options = {})
+		static createByFileId(props)
 		{
-			return new this(fileId, options);
+			return new this(props);
 		}
 
-		constructor(fileId, options)
+		/**
+		 * @constructor
+		 * @param {FileDownloadMenuProps} props
+		 */
+		constructor(props)
 		{
-			this.fileId = fileId;
-			this.options = options;
+			this.fileId = props.fileId;
+			this.dialogId = props.dialogId;
 			this.store = serviceLocator.get('core').getStore();
 			this.diskService = new DiskService();
 
@@ -35,7 +41,7 @@ jn.define('im/messenger/controller/file-download-menu', (require, exports, modul
 				actions: this.createActions(),
 			});
 
-			Logger.log('FileDownloadMenu: created for file: ', this.fileId);
+			Logger.log(`${this.constructor.name} created for file: `, this.fileId);
 		}
 
 		createActions()
@@ -68,9 +74,15 @@ jn.define('im/messenger/controller/file-download-menu', (require, exports, modul
 			];
 		}
 
-		open()
+		async open()
 		{
-			this.menu.show();
+			this.bindMethods();
+			this.subscribeExternalEvents();
+
+			this.layoutWidget = await this.menu.show();
+			this.layoutWidget.on(EventType.view.close, () => {
+				this.unsubscribeExternalEvents();
+			});
 		}
 
 		downloadFileToDevice()
@@ -81,7 +93,7 @@ jn.define('im/messenger/controller/file-download-menu', (require, exports, modul
 				return;
 			}
 
-			Logger.log('FileDownloadMenu.downloadFileToDevice', file);
+			Logger.log(`${this.constructor.name}.downloadFileToDevice`, file);
 			const fileDownloadUrl = withCurrentDomain(file.urlDownload);
 
 			NotifyManager.showLoadingIndicator();
@@ -91,7 +103,7 @@ jn.define('im/messenger/controller/file-download-menu', (require, exports, modul
 					utils.saveFile(localPath);
 				})
 				.catch((error) => {
-					Logger.error('FileDownloadMenu.downloadFileToDevice error:', error);
+					Logger.error(`${this.constructor.name}.downloadFileToDevice:`, error);
 				})
 			;
 		}
@@ -104,7 +116,7 @@ jn.define('im/messenger/controller/file-download-menu', (require, exports, modul
 				return;
 			}
 
-			Logger.log('FileDownloadMenu.downloadFileToDisk', file);
+			Logger.log(`${this.constructor.name}.downloadFileToDisk`, file);
 
 			this.diskService.save(file.id)
 				.then(() => {
@@ -114,7 +126,7 @@ jn.define('im/messenger/controller/file-download-menu', (require, exports, modul
 					});
 				})
 				.catch((error) => {
-					Logger.error('FileDownloadMenu.downloadFileToDisk error:', error);
+					Logger.error(`${this.constructor.name}.downloadFileToDisk`, error);
 				})
 			;
 		}
@@ -122,6 +134,31 @@ jn.define('im/messenger/controller/file-download-menu', (require, exports, modul
 		getFile()
 		{
 			return this.store.getters['filesModel/getById'](this.fileId) || {};
+		}
+
+		bindMethods()
+		{
+			this.deleteDialogHandler = this.deleteDialogHandler.bind(this);
+		}
+
+		subscribeExternalEvents()
+		{
+			BX.addCustomEvent(EventType.dialog.external.delete, this.deleteDialogHandler);
+		}
+
+		unsubscribeExternalEvents()
+		{
+			BX.removeCustomEvent(EventType.dialog.external.delete, this.deleteDialogHandler);
+		}
+
+		deleteDialogHandler({ dialogId })
+		{
+			if (String(this.dialogId) !== String(dialogId))
+			{
+				return;
+			}
+
+			this.menu.close(() => {});
 		}
 	}
 

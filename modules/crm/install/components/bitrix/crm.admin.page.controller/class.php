@@ -16,6 +16,7 @@ use Bitrix\Main\Engine\Contract\Controllerable;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Extension;
+use Bitrix\Catalog\Store\EnableWizard\Manager;
 
 /**
  * Bitrix vars
@@ -380,11 +381,18 @@ class CCrmAdminPageController extends \CBitrixComponent implements Controllerabl
 				{
 					if ($menuItemId === 'menu_catalog_store')
 					{
-
 						$this->listMenuItems[$menuItemId]['PARENT_ID'] = 'menu_sale_goods_and_documents';
 						$this->listMenuItems[$menuItemId]['SORT'] = 100;
 						$this->listMenuItems[$menuItemId]['URL'] = '/shop/documents/';
-						$this->listMenuItems[$menuItemId]['ON_CLICK'] = 'event.preventDefault();BX.SidePanel.Instance.open("/shop/documents/?inventoryManagementSource=shop", {cacheable: false, customLeftBoundary: 0});';
+						if (Manager::isOnecMode())
+						{
+							\Bitrix\Main\UI\Extension::load('catalog.external-catalog-stub');
+							$this->listMenuItems[$menuItemId]['ON_CLICK'] = 'event.preventDefault();BX.Catalog.ExternalCatalogStub.showDocsStub();';
+						}
+						else
+						{
+							$this->listMenuItems[$menuItemId]['ON_CLICK'] = 'event.preventDefault();BX.SidePanel.Instance.open("/shop/documents/?inventoryManagementSource=shop", {cacheable: false, customLeftBoundary: 0});';
+						}
 					}
 
 					if ($this->listMenuItems[$menuItemId]['PARENT_ID'] === 'menu_catalog_store')
@@ -424,15 +432,71 @@ class CCrmAdminPageController extends \CBitrixComponent implements Controllerabl
 				$this->urlBuilder->setIblockId(Crm\Product\Catalog::getDefaultId());
 				$url = $this->urlBuilder->getElementListUrl(-1);
 
+				$newCatalogItemFields = [
+					'PARENT_ID' => 'menu_sale_goods_and_documents',
+					'SORT' => 50,
+					'TEXT' => Loc::getMessage('SHOP_MENU_CATALOG_GOODS'),
+					'URL' => $url,
+				];
+
+				if (Catalog\Config\State::isExternalCatalog())
+				{
+					\Bitrix\Main\UI\Extension::load('catalog.external-catalog-stub');
+					$newCatalogItemFields['ON_CLICK'] = 'event.preventDefault();BX.Catalog.ExternalCatalogStub.showCatalogStub();';
+				}
+
 				$this->listMenuItems[$menuItemId] = array_merge(
 					$menuItem,
-					[
-						'PARENT_ID' => 'menu_sale_goods_and_documents',
-						'SORT' => 50,
-						'TEXT' => Loc::getMessage('SHOP_MENU_CATALOG_GOODS'),
-						'URL' => $url,
-					]
+					$newCatalogItemFields,
 				);
+			}
+
+			if (Manager::isOnecMode())
+			{
+				$catalogRights = null;
+				if (Catalog\Config\Feature::isAccessControllerCheckingEnabled())
+				{
+					$catalogRightsUrl = '/shop/settings/permissions/';
+					$catalogRights = [
+						'ID' => 'menu_catalog_permissions',
+						'PARENT_ID' => 'menu_sale_goods_and_documents',
+						'SORT' => 150,
+						'TEXT' => Loc::getMessage('SHOP_MENU_CATALOG_PERMISSIONS'),
+						'URL' => $catalogRightsUrl,
+						'ON_CLICK' => 'BX.SidePanel.Instance.open("' . CUtil::JSEscape($catalogRightsUrl) . '"); return false;'
+					];
+				}
+				else
+				{
+					$helpLink = Catalog\Config\Feature::getAccessControllerHelpLink();
+					if (!empty($helpLink))
+					{
+						$catalogRights = [
+							'ID' => 'menu_catalog_permissions',
+							'PARENT_ID' => 'menu_sale_goods_and_documents',
+							'SORT' => 150,
+							'TEXT' => Loc::getMessage('SHOP_MENU_CATALOG_PERMISSIONS'),
+							'URL' => '',
+							'ON_CLICK' => $helpLink['LINK'],
+							'IS_LOCKED' => true,
+						];
+					}
+				}
+
+				if ($catalogRights)
+				{
+					$this->listMenuItems['menu_catalog_permissions'] = $catalogRights;
+				}
+
+				\Bitrix\Main\UI\Extension::load(['catalog.config.settings']);
+
+				$this->listMenuItems['menu_catalog_settings'] = [
+					'ID' => 'menu_catalog_settings',
+					'PARENT_ID' => 'menu_sale_goods_and_documents',
+					'SORT' => 250,
+					'TEXT' => Loc::getMessage('SHOP_MENU_CATALOG_SETTINGS'),
+					'ON_CLICK' => 'BX.Catalog.Config.Slider.open("crm");',
+				];
 			}
 
 			/**
@@ -865,7 +929,7 @@ class CCrmAdminPageController extends \CBitrixComponent implements Controllerabl
 		}
 		else
 		{
-			Extension::load(['crm.config.catalog']);
+			Extension::load(['catalog.config.settings']);
 
 			$result[] = [
 				"parent_menu" => "menu_sale_settings",
@@ -873,7 +937,7 @@ class CCrmAdminPageController extends \CBitrixComponent implements Controllerabl
 				"text" => GetMessage("SHOP_MENU_SETTINGS_CATALOG_SETTINGS"),
 				"title" => GetMessage("SHOP_MENU_SETTINGS_CATALOG_SETTINGS"),
 				"additional" => "Y",
-				'on_click' => 'BX.Crm.Config.Catalog.Slider.open(\'shop\'); return false;',
+				'on_click' => 'BX.Catalog.Config.Slider.open(\'shop\'); return false;',
 				"items_id" => "csc_catalog_settings",
 			];
 		}
@@ -1414,8 +1478,16 @@ class CCrmAdminPageController extends \CBitrixComponent implements Controllerabl
 			if (!empty($inputOptions["params"]))
 			{
 				$ajaxOptions["data"] = $inputOptions["params"];
-				$ajaxOptions["data"]["selfFolder"] = $this->getSignedParameters() ?
-					$this->arParams["SEF_FOLDER"] : $inputOptions["params"]["selfFolder"];
+				if ($this->getSignedParameters())
+				{
+					$ajaxOptions["data"]["selfFolder"] = $this->arParams["SEF_FOLDER"] ?? '';
+				}
+				else
+				{
+					$ajaxOptions["data"]["selfFolder"] = $inputOptions["params"]["selfFolder"] ?? '';
+				}
+/*				$ajaxOptions["data"]["selfFolder"] = $this->getSignedParameters() ?
+					$this->arParams["SEF_FOLDER"] : $inputOptions["params"]["selfFolder"]; */
 			}
 		}
 

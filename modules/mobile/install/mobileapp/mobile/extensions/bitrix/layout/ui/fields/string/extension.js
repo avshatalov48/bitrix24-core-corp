@@ -10,9 +10,8 @@ jn.define('layout/ui/fields/string', (require, exports, module) => {
 	const { isEqual } = require('utils/object');
 	const { stringify } = require('utils/string');
 	const { Type } = require('type');
+	const { PropTypes } = require('utils/validation');
 	const { CollapsibleText } = require('layout/ui/collapsible-text');
-
-	const isIosPlatform = Application.getPlatform() === 'ios';
 
 	const ReadOnlyElementType = {
 		BB_CODE_TEXT: 'BBCodeText',
@@ -32,8 +31,14 @@ jn.define('layout/ui/fields/string', (require, exports, module) => {
 			this.fieldValue = null;
 
 			this.inputRef = null;
+			this.bindInputRef = this.bindInputRef.bind(this);
 
+			/**
+			 * @public
+			 */
 			this.debouncedChangeText = debounce((text) => this.changeText(text), 50, this);
+
+			this.onBlur = this.onBlur.bind(this);
 		}
 
 		getConfig()
@@ -50,6 +55,7 @@ jn.define('layout/ui/fields/string', (require, exports, module) => {
 				readOnlyElementType: BX.prop.getString(config, 'readOnlyElementType', ReadOnlyElementType.TEXT),
 				onLinkClick: BX.prop.getFunction(config, 'onLinkClick'),
 				onSubmitEditing: BX.prop.getFunction(config, 'onSubmitEditing', null),
+				onCursorPositionChange: BX.prop.getFunction(config, 'onCursorPositionChange', null),
 			};
 		}
 
@@ -228,9 +234,7 @@ jn.define('layout/ui/fields/string', (require, exports, module) => {
 			const { focus } = this.state;
 
 			return {
-				ref: (ref) => {
-					this.inputRef = ref;
-				},
+				ref: this.bindInputRef,
 				style: this.styles.editableValue,
 				value: this.getValue(),
 				forcedValue: this.getForcedValue(),
@@ -241,19 +245,41 @@ jn.define('layout/ui/fields/string', (require, exports, module) => {
 				placeholder: this.getPlaceholder(),
 				placeholderTextColor: this.styles.textPlaceholder?.color || AppTheme.colors.base4,
 				onFocus: () => this.setFocus(),
-				onBlur: () => this.removeFocus(),
+				onBlur: this.onBlur,
 				onChangeText: this.debouncedChangeText,
 				onSubmitEditing: () => FocusManager.blurFocusedFieldIfHas(),
+				onCursorPositionChange: this.getOnCursorPositionChange(),
 				onLinkClick: this.getOnLinkClick(),
 				isPassword: this.isPassword(),
 			};
 		}
 
+		/**
+		 * @public
+		 */
+		onBlur()
+		{
+			this.removeFocus();
+		}
+
+		bindInputRef(ref)
+		{
+			this.inputRef = ref;
+		}
+
+		/**
+		 * @public
+		 * @return {string}
+		 */
 		getForcedValue()
 		{
 			return (Type.isNil(this.props.forcedValue) ? undefined : this.prepareValue(this.props.forcedValue));
 		}
 
+		/**
+		 * @public
+		 * @return {string}
+		 */
 		getPlaceholder()
 		{
 			return this.props.placeholder || BX.message('FIELDS_INLINE_FIELD_EMPTY_STRING_PLACEHOLDER');
@@ -264,6 +290,10 @@ jn.define('layout/ui/fields/string', (require, exports, module) => {
 			return this.props.isPassword || false;
 		}
 
+		/**
+		 * @public
+		 * @return {function}
+		 */
 		getOnLinkClick()
 		{
 			const defaultOnLinkClick = ({ url }) => inAppUrl.open(url);
@@ -271,10 +301,27 @@ jn.define('layout/ui/fields/string', (require, exports, module) => {
 			return BX.prop.getFunction(this.getConfig(), 'onLinkClick', defaultOnLinkClick);
 		}
 
+		getOnCursorPositionChange()
+		{
+			const defaultFunction = () => {};
+
+			return (this.getConfig().onCursorPositionChange || defaultFunction);
+		}
+
 		changeText(currentText)
 		{
 			this.fieldValue = currentText;
 			this.handleChange(currentText);
+		}
+
+		getValue()
+		{
+			if (this.fieldValue !== null)
+			{
+				return this.fieldValue;
+			}
+
+			return super.getValue();
 		}
 
 		/**
@@ -326,6 +373,41 @@ jn.define('layout/ui/fields/string', (require, exports, module) => {
 			return this.isReadOnly();
 		}
 	}
+
+	StringField.propTypes = {
+		...BaseField.propTypes,
+		value: PropTypes.string,
+		forcedValue: PropTypes.string,
+		placeholder: PropTypes.any,
+		isPassword: PropTypes.bool,
+		config: PropTypes.shape({
+			showAll: PropTypes.bool, // show more button with count if it's multiple
+			styles: PropTypes.shape({
+				externalWrapperBorderColor: PropTypes.string,
+				externalWrapperBorderColorFocused: PropTypes.string,
+				externalWrapperBackgroundColor: PropTypes.string,
+				externalWrapperMarginHorizontal: PropTypes.number,
+			}),
+			deepMergeStyles: PropTypes.object,
+			parentWidget: PropTypes.object,
+			copyingOnLongClick: PropTypes.bool,
+			titleIcon: PropTypes.object,
+			keyboardType: PropTypes.string,
+			autoCapitalize: PropTypes.string,
+			enableKeyboardHide: PropTypes.bool,
+			selectionOnFocus: PropTypes.bool,
+			ellipsize: PropTypes.bool,
+			readOnlyElementType: PropTypes.oneOf(Object.values(ReadOnlyElementType)),
+			onLinkClick: PropTypes.func,
+			onSubmitEditing: PropTypes.func,
+		}),
+	};
+
+	StringField.defaultProps = {
+		...BaseField.defaultProps,
+		placeholder: '',
+		isPassword: false,
+	};
 
 	module.exports = {
 		StringFieldClass: StringField,

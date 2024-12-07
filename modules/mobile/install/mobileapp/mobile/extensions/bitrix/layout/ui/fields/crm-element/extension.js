@@ -8,6 +8,7 @@ jn.define('layout/ui/fields/crm-element', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const AppTheme = require('apptheme');
 	const { EntitySelectorFactory } = require('selector/widget/factory');
+	const { Icon } = require('assets/icons');
 
 	const DEFAULT_AVATAR = '/bitrix/mobileapp/mobile/extensions/bitrix/layout/ui/fields/crm-element/images/default-avatar.png';
 
@@ -276,18 +277,29 @@ jn.define('layout/ui/fields/crm-element', (require, exports, module) => {
 				},
 			};
 		}
+
+		getAddButtonText()
+		{
+			return BX.message('FIELDS_CRM_ELEMENT_EMPTY');
+		}
+
+		getDefaultLeftIcon()
+		{
+			return Icon.CRM;
+		}
 	}
 
 	CrmElementField.propTypes = {
-		...EntitySelectorField.propTypes,
+		...EntitySelectorFieldClass.propTypes,
 	};
 
 	CrmElementField.defaultProps = {
-		...EntitySelectorField.defaultProps,
+		...EntitySelectorFieldClass.defaultProps,
 	};
 
 	module.exports = {
 		CrmElementType: 'crm',
+		CrmElementFieldClass: CrmElementField,
 		CrmElementField: (props) => new CrmElementField(props),
 	};
 });

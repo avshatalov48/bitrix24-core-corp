@@ -25,6 +25,8 @@ class EntityEditor
 		'crm_contact' => true,
 		'crm_quote' => true,
 		'enumeration' => true,
+		'iblock_element' => true,
+		'iblock_section' => true,
 	);
 	protected static $multiFields = null;
 
@@ -193,7 +195,7 @@ class EntityEditor
 				return false;
 			}
 		}
-		elseif($typeName === 'integer' || $typeName === 'user' || $typeName === 'enumeration')
+		elseif($typeName === 'integer' || $typeName === 'user' || $typeName === 'enumeration' || $typeName === 'iblock_element' || $typeName === 'iblock_section')
 		{
 			$value = (int)$value;
 		}

@@ -2,9 +2,9 @@
 $MESS["TASKS_LIST_ITEMS_YES"] = "Да";
 $MESS["TASKS_LIST_ITEMS_NO"] = "Нет";
 $MESS["TASKS_LIST_ITEMS_STATUS_1"] = "Новая";
-$MESS["TASKS_LIST_ITEMS_STATUS_2"] = "Ждет выполнения";
+$MESS["TASKS_LIST_ITEMS_STATUS_2"] = "Ждёт выполнения";
 $MESS["TASKS_LIST_ITEMS_STATUS_3"] = "Выполняется";
-$MESS["TASKS_LIST_ITEMS_STATUS_4"] = "Ждет контроля";
+$MESS["TASKS_LIST_ITEMS_STATUS_4"] = "Ждёт контроля";
 $MESS["TASKS_LIST_ITEMS_STATUS_5"] = "Завершена";
 $MESS["TASKS_LIST_ITEMS_STATUS_6"] = "Отложена";
 $MESS["TASKS_LIST_ITEMS_STATUS_7"] = "Отклонена";

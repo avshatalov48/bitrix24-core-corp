@@ -92,7 +92,7 @@ export class Desktop
 		if (Type.isStringFilled(jsContent))
 		{
 			jsContent =
-				`<script type="text/javascript">
+				`<script>
 					BX.ready(function() {
 						${jsContent}
 					});
@@ -103,7 +103,7 @@ export class Desktop
 		if (initImJs)
 		{
 			initJs = `
-				<script type="text/javascript">
+				<script>
 					BX.ready(function() {
 							const backgroundWorker = new BX.Voximplant.BackgroundWorker();
 							

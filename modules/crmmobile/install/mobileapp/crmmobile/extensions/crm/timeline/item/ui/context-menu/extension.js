@@ -4,6 +4,7 @@
 jn.define('crm/timeline/item/ui/context-menu', (require, exports, module) => {
 	const { TimelineButtonVisibilityFilter, TimelineButtonSorter } = require('crm/timeline/item/ui/styles');
 	const { clone } = require('utils/object');
+	const { ContextMenu } = require('layout/ui/context-menu');
 
 	const nothing = () => {};
 

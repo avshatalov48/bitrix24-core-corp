@@ -80,7 +80,7 @@ else
 
 if (isset($arParams['EXTERNAL']))
 {
-	$arParams['EXTERNAL'] = ToUpper($arParams['EXTERNAL']);
+	$arParams['EXTERNAL'] = mb_strtoupper($arParams['EXTERNAL']);
 	if (!in_array($arParams['EXTERNAL'], array('I', 'E', 'EA', 'A')))
 		$arParams['EXTERNAL'] = 'I';
 	if ($arParams['EXTERNAL'] == 'A' && (!CModule::IncludeModule('extranet') || !CExtranet::IsExtranetSite()))

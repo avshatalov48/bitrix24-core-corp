@@ -197,7 +197,7 @@ final class AjaxProcessor extends Crm\Order\AjaxProcessor
 
 	protected function saveAction(): void
 	{
-		if (!\Bitrix\Catalog\Config\Feature::isInventoryManagementEnabled())
+		if (!\Bitrix\Catalog\Config\Feature::checkInventoryManagementFeatureByCurrentMode())
 		{
 			$this->addError(Loc::getMessage('CRM_STORE_DOCUMENT_SD_NO_INVENTORY_MANAGEMENT_ENABLED'));
 			return;
@@ -210,7 +210,7 @@ final class AjaxProcessor extends Crm\Order\AjaxProcessor
 
 	protected function saveAndDeductAction(): void
 	{
-		if (!\Bitrix\Catalog\Config\Feature::isInventoryManagementEnabled())
+		if (!\Bitrix\Catalog\Config\Feature::checkInventoryManagementFeatureByCurrentMode())
 		{
 			$this->addError(Loc::getMessage('CRM_STORE_DOCUMENT_SD_NO_INVENTORY_MANAGEMENT_ENABLED'));
 			return;
@@ -300,14 +300,15 @@ final class AjaxProcessor extends Crm\Order\AjaxProcessor
 		if (!empty($this->request['ORDER_SHIPMENT_PRODUCT_DATA']))
 		{
 			$productData = Main\Context::getCurrent()->getRequest()->getPostList()->getRaw('ORDER_SHIPMENT_PRODUCT_DATA');
-			if (!defined('BX_UTF'))
+			try
 			{
-				$productData = Main\Text\Encoding::convertEncoding(
-					$productData, 'UTF-8', SITE_CHARSET
-				);
+				$productData = current(\Bitrix\Main\Web\Json::decode($productData));
+			}
+			catch (\Bitrix\Main\ArgumentException $e)
+			{
+				$productData = [];
 			}
 
-			$productData = current(\CUtil::JsObjectToPhp($productData));
 			$contextParams = $productData['PARAMS'] ?? [];
 
 			$productData = array_merge(
@@ -414,9 +415,7 @@ final class AjaxProcessor extends Crm\Order\AjaxProcessor
 		{
 			try
 			{
-				$clientData = Main\Web\Json::decode(
-					Main\Text\Encoding::convertEncoding($this->request['CLIENT'], LANG_CHARSET, 'UTF-8')
-				);
+				$clientData = Main\Web\Json::decode($this->request['CLIENT']);
 			}
 			catch (Main\SystemException $e)
 			{
@@ -642,7 +641,7 @@ final class AjaxProcessor extends Crm\Order\AjaxProcessor
 
 	protected function deductAction(): void
 	{
-		if (!\Bitrix\Catalog\Config\Feature::isInventoryManagementEnabled())
+		if (!\Bitrix\Catalog\Config\Feature::checkInventoryManagementFeatureByCurrentMode())
 		{
 			$this->addError(Loc::getMessage('CRM_STORE_DOCUMENT_SD_NO_INVENTORY_MANAGEMENT_ENABLED'));
 			return;
@@ -670,7 +669,7 @@ final class AjaxProcessor extends Crm\Order\AjaxProcessor
 
 	protected function cancelDeductAction(): void
 	{
-		if (!\Bitrix\Catalog\Config\Feature::isInventoryManagementEnabled())
+		if (!\Bitrix\Catalog\Config\Feature::checkInventoryManagementFeatureByCurrentMode())
 		{
 			$this->addError(Loc::getMessage('CRM_STORE_DOCUMENT_SD_NO_INVENTORY_MANAGEMENT_ENABLED'));
 			return;
@@ -967,9 +966,7 @@ final class AjaxProcessor extends Crm\Order\AjaxProcessor
 		{
 			try
 			{
-				$clientData = Main\Web\Json::decode(
-					Main\Text\Encoding::convertEncoding($this->request['CLIENT'], LANG_CHARSET, 'UTF-8')
-				);
+				$clientData = Main\Web\Json::decode($this->request['CLIENT']);
 			}
 			catch (Main\SystemException $e)
 			{
@@ -1113,8 +1110,10 @@ final class AjaxProcessor extends Crm\Order\AjaxProcessor
 				'BASKET_CODE' => $basketCode,
 				'PRODUCT_ID' => $productId,
 				'OFFER_ID' => $productId,
-				'BASE_PRICE' => $product['BASE_PRICE'],
+				'BASE_PRICE' => ($product['TAX_INCLUDED'] === 'Y') ? $product['PRICE_BRUTTO'] : $product['PRICE_NETTO'],
 				'PRICE' => $product['BASE_PRICE'],
+				'VAT_RATE' => is_numeric($product['TAX_RATE']) ? (float)$product['TAX_RATE'] / 100 : null,
+				'VAT_INCLUDED' => $product['TAX_INCLUDED'],
 				'CUSTOM_PRICE' => 'Y',
 				'TYPE' => $productType ? Sale\Internals\Catalog\ProductTypeMapper::getType($productType) : null,
 				'DISCOUNT_PRICE' => 0,
@@ -1228,7 +1227,7 @@ final class AjaxProcessor extends Crm\Order\AjaxProcessor
 
 	protected function deleteAction(): void
 	{
-		if (!\Bitrix\Catalog\Config\Feature::isInventoryManagementEnabled())
+		if (!\Bitrix\Catalog\Config\Feature::checkInventoryManagementFeatureByCurrentMode())
 		{
 			$this->addError(Loc::getMessage('CRM_STORE_DOCUMENT_SD_NO_INVENTORY_MANAGEMENT_ENABLED'));
 			return;
@@ -1329,6 +1328,8 @@ final class AjaxProcessor extends Crm\Order\AjaxProcessor
 						->setQuantity((float)$product['QUANTITY'])
 						->setMeasureCode((int)$product['MEASURE_CODE'])
 						->setMeasureName($product['MEASURE_NAME'])
+						->setTaxIncluded($product['VAT_INCLUDED'])
+						->setTaxRate(($product['VAT_RATE'] !== null) ? $product['VAT_RATE'] * 100 : null)
 					;
 
 					$basketItems[] = $item->getFields();
@@ -1564,7 +1565,6 @@ final class AjaxProcessor extends Crm\Order\AjaxProcessor
 	}
 }
 
-CUtil::JSPostUnescape();
 $APPLICATION->RestartBuffer();
 $processor = new AjaxProcessor($_REQUEST);
 $result = $processor->checkConditions();

@@ -1,0 +1,17 @@
+.bx-crm-perms-edit-entity_control-text {
+	border-bottom: var(--ui-border-width-thin) var(--ui-text-decoration-style-dashed) var(--ui-color-palette-gray-60);
+	color: var(--ui-color-palette-black-base);
+	cursor: pointer;
+	display: inline;
+	padding: 0 1px;
+}
+
+.bx-crm-perms-edit-entity_control-text.--readonly {
+	color: var(--ui-color-palette-gray-70);
+	border-bottom: 0;
+	cursor: default;
+}
+
+.bx-crm-perms-edit-entity_control-text.--inherited {
+	color: var(--ui-color-palette-gray-70);
+}

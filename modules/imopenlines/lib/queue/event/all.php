@@ -2,8 +2,7 @@
 
 namespace Bitrix\ImOpenLines\Queue\Event;
 
-use Bitrix\Main\Config\Option,
-	Bitrix\ImOpenLines,
+use Bitrix\ImOpenLines,
 	Bitrix\ImOpenLines\Session,
 	Bitrix\ImOpenLines\Model\SessionTable,
 	Bitrix\ImOpenLines\Model\SessionCheckTable;
@@ -35,9 +34,9 @@ class All extends Queue
 			]
 		]);
 
-		while($queueUser = $res->fetch())
+		while ($queueUser = $res->fetch())
 		{
-			if($this->isOperatorActive($queueUser['USER_ID']) === true)
+			if ($this->isOperatorActive($queueUser['USER_ID']) === true)
 			{
 				$result += ImOpenLines\Queue::getCountFreeSlotOperator($queueUser['USER_ID'], $this->configLine['ID']);
 			}
@@ -55,18 +54,16 @@ class All extends Queue
 	 */
 	public function returnUserToQueue(array $userIds): void
 	{
-		$sessionList = SessionCheckTable::getList(
-			[
-				'select' => ['SESSION_ID'],
-				'filter' => [
-					'=SESSION.CONFIG_ID' => $this->configLine['ID'],
-					'<SESSION.STATUS' => Session::STATUS_ANSWER,
-					'!=SESSION.OPERATOR_FROM_CRM' => 'Y'
-				]
+		$sessionList = SessionCheckTable::getList([
+			'select' => ['SESSION_ID'],
+			'filter' => [
+				'=SESSION.CONFIG_ID' => $this->configLine['ID'],
+				'<SESSION.STATUS' => Session::STATUS_ANSWER,
+				'!=SESSION.OPERATOR_FROM_CRM' => 'Y'
 			]
-		)->fetchAll();
+		]);
 
-		foreach ($sessionList as $session)
+		while ($session = $sessionList->fetch())
 		{
 			ImOpenLines\Queue::returnSessionToQueue($session['SESSION_ID']);
 		}

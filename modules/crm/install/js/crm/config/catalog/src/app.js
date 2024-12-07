@@ -592,8 +592,8 @@ export default Vue.extend({
 		},
 		getReservationSettingsHint()
 		{
-			return this.getHintContentWrapped(
-				Loc.getMessage('CRM_CFG_C_SETTINGS_RESERVATION_SETTINGS_HINT'),
+			return this.getHintContent(
+				'CRM_CFG_C_SETTINGS_RESERVATION_SETTINGS_HINT_MSGVER_1',
 				HELP_ARTICLE_ID,
 				'reservation',
 			);
@@ -601,7 +601,7 @@ export default Vue.extend({
 		getProductsSettingsHint()
 		{
 			return this.getHintContent(
-				Loc.getMessage('CRM_CFG_C_SETTINGS_PRODUCTS_SETTINGS_HINT'),
+				'CRM_CFG_C_SETTINGS_PRODUCTS_SETTINGS_HINT_MSGVER_1',
 				HELP_ARTICLE_ID,
 				'products',
 			);
@@ -609,14 +609,14 @@ export default Vue.extend({
 		getCostPriceCalculationHint()
 		{
 			return this.getHintContent(
-				Loc.getMessage('CRM_CFG_C_SETTINGS_COST_PRICE_CALCULATION_MODE_HINT'),
+				'CRM_CFG_C_SETTINGS_COST_PRICE_CALCULATION_MODE_HINT_MSGVER_1',
 				HELP_COST_CALCULATION_MODE_ARTICLE_ID,
 			);
 		},
 		getCanBuyZeroHint()
 		{
 			return this.getHintContent(
-				Loc.getMessage('CRM_CFG_C_SETTINGS_CAN_BUY_ZERO_HINT'),
+				'CRM_CFG_C_SETTINGS_CAN_BUY_ZERO_HINT_MSGVER_1',
 				HELP_ARTICLE_ID,
 				'products',
 			);
@@ -624,7 +624,7 @@ export default Vue.extend({
 		getDefaultVatHint()
 		{
 			return this.getHintContent(
-				Loc.getMessage('CRM_CFG_C_SETTINGS_PRODUCTS_SETTINGS_DEFAULT_VAT_HINT'),
+				'CRM_CFG_C_SETTINGS_PRODUCTS_SETTINGS_DEFAULT_VAT_HINT_MSGVER_1',
 				HELP_ARTICLE_ID,
 				'products',
 			);
@@ -632,29 +632,23 @@ export default Vue.extend({
 		getCanBuyZeroInDocsHint()
 		{
 			return this.getHintContent(
-				`
-					${Loc.getMessage('CRM_CFG_C_SETTINGS_CAN_BUY_ZERO_IN_DOCS_HINT')}
-					<br/><br/>
-					${Loc.getMessage('CRM_CFG_C_SETTINGS_CAN_BUY_ZERO_IN_DOCS_HINT_DOC_TYPE_RESTRICTIONS')}
-					<br/>
-				`,
+				'CRM_CFG_C_SETTINGS_CAN_BUY_ZERO_IN_DOCS_HINT_MSGVER_1',
 				HELP_ARTICLE_ID,
 				'products',
 			);
 		},
-		getHintContent(content, article, anchor)
+		getHintContent(contentPhraseKey, article, anchor)
 		{
+			const { linkStart, linkEnd } = this.getDocumentationLink(article, anchor);
+
 			return `
-				${content}
-				<br/>
-				${this.getDocumentationLink(Loc.getMessage('CRM_CFG_C_SETTINGS_DETAILS'), article, anchor)}
+				${Loc.getMessage(contentPhraseKey, {
+					'#LINK_START#': linkStart,
+					'#LINK_END#': linkEnd,
+				})}
 			`;
 		},
-		getHintContentWrapped(text, article, anchor)
-		{
-			return this.getDocumentationLink(text, article, anchor);
-		},
-		getDocumentationLink(text, article, anchor)
+		getDocumentationLink(article, anchor)
 		{
 			let link = `redirect=detail&code=${article}`;
 			if (!Type.isNil(anchor))
@@ -662,15 +656,14 @@ export default Vue.extend({
 				link += `#${anchor}`;
 			}
 
-			return `
-				<a href="javascript:void(0);" onclick="if (top.BX.Helper){top.BX.Helper.show('${link}');}" class="catalog-settings-helper-link">
-					${text}
-				</a>
-			`;
+			return {
+				linkStart: `<a href="javascript:void(0);" onclick="if (top.BX.Helper){top.BX.Helper.show('${link}');}" class="catalog-settings-helper-link">`,
+				linkEnd: '</a>',
+			};
 		},
-		getDocumentationProductBatchLink(): string
+		getDocumentationProductBatchLink(phraseKey): string
 		{
-			return this.getDocumentationLink(Loc.getMessage('CRM_CFG_C_SETTINGS_DETAILS'), HELP_COST_CALCULATION_MODE_ARTICLE_ID);
+			return this.getHintContent(phraseKey, HELP_COST_CALCULATION_MODE_ARTICLE_ID);
 		},
 		changeCalculationMode()
 		{
@@ -812,14 +805,12 @@ export default Vue.extend({
 								</div>
 								<div v-if="!isEmptyCostPriceCalculationMethod" class="ui-alert ui-alert-primary ui-alert-icon-info">
 									<span class="ui-alert-message">
-										{{loc.CRM_CFG_C_SETTINGS_COST_PRICE_CHANGE_MODE_INFO_MSGVER_1}}
-										<span v-html='getDocumentationProductBatchLink()'></span>
-									</span>									
+										<span v-html='getDocumentationProductBatchLink("CRM_CFG_C_SETTINGS_COST_PRICE_CHANGE_MODE_INFO_MSGVER_2")'></span>
+									</span>
 								</div>
 								<div v-if="!isHiddenCostPriceCalculationMethodChangeWarning" class="ui-alert ui-alert-warning ui-alert-icon-warning">
 									<span class="ui-alert-message">
-										{{loc.CRM_CFG_C_SETTINGS_COST_PRICE_CHANGE_MODE_WARNING_MSGVER_1}}
-										<span v-html='getDocumentationProductBatchLink()'></span>
+										<span v-html='getDocumentationProductBatchLink("CRM_CFG_C_SETTINGS_COST_PRICE_CHANGE_MODE_WARNING_MSGVER_2")'></span>
 									</span>
 								</div>
 								<div 

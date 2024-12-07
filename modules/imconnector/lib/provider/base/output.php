@@ -246,7 +246,23 @@ class Output
 	 */
 	protected function sessionStart(array $data): Result
 	{
-		return $this->result;
+		$result = clone $this->result;
+
+		if ($result->isSuccess())
+		{
+			$event = new Event(
+				Library::MODULE_ID,
+				Library::EVENT_DIALOG_START,
+				[
+					'CONNECTOR' => $this->connector,
+					'LINE' => $this->line,
+					'DATA' => $data
+				]
+			);
+			$event->send();
+		}
+
+		return $result;
 	}
 
 	/**
@@ -256,7 +272,23 @@ class Output
 	 */
 	protected function sessionFinish(array $data): Result
 	{
-		return $this->result;
+		$result = clone $this->result;
+
+		if ($result->isSuccess())
+		{
+			$event = new Event(
+				Library::MODULE_ID,
+				Library::EVENT_DIALOG_FINISH,
+				[
+					'CONNECTOR' => $this->connector,
+					'LINE' => $this->line,
+					'DATA' => $data
+				]
+			);
+			$event->send();
+		}
+
+		return $result;
 	}
 
 	/**

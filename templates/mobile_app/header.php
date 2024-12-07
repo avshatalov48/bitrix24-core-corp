@@ -41,6 +41,11 @@ $APPLICATION->IncludeComponent("bitrix:mobile.data", "", array(
 <head>
 	<meta http-equiv="Content-Type" content="text/html;charset=<?= SITE_CHARSET ?>"/>
 	<meta name="format-detection" content="telephone=no">
+	<script>
+		if (typeof Application["getThemeId"] === "function") {
+			document.documentElement.className = Application.getThemeId();
+		}
+	</script>
 	<?
 	$APPLICATION->ShowHead();
 	$APPLICATION->SetAdditionalCSS(SITE_TEMPLATE_PATH . (defined('MOBILE_TEMPLATE_CSS') ? MOBILE_TEMPLATE_CSS : "/themes.css"));

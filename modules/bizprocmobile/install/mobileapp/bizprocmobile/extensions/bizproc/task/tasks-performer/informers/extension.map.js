@@ -1,0 +1,1 @@
+{"version":3,"file":"extension.map.js","names":["jn","define","require","exports","module","SimilarTasksInformer","TaskListInformer"],"sources":["extension.js"],"mappings":"AAGAA,GAAGC,OAAO,0CAA0C,CAACC,EAASC,EAASC,KACtE,MAAMC,qBAAEA,GAAyBH,EAAQ,iEACzC,MAAMI,iBAAEA,GAAqBJ,EAAQ,6DAErCE,EAAOD,QAAU,CAAEE,uBAAsBC,mBAAkB"}

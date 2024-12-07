@@ -7,3 +7,6 @@ $MESS["INTRANET_USER_LIST_ACTION_DEACTIVATE_INVITED_CONFIRM"] = "Вы не мо�
 
 Хотите уволить?";
 $MESS["INTRANET_USER_LIST_STEPPER_TITLE"] = "Переиндексация пользователей";
+$MESS["INTRANET_USER_LIST_COUNTER_PANEL_TITLE"] = "Приглашения:";
+$MESS["INTRANET_USER_LIST_COUNTER_INVITED_TITLE"] = "Приглашены";
+$MESS["INTRANET_USER_LIST_COUNTER_WAITING_CONFIRMATION_TITLE"] = "Ждут подтверждения";

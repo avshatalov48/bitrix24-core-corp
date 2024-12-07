@@ -338,22 +338,22 @@ if (
 	}
 
 	$arResult["UserRelationId"] = false;
-	$res = \Bitrix\Socialnetwork\UserToGroupTable::getList(array(
-		'filter' => array(
-			'USER_ID' => $USER->getId(),
-			'GROUP_ID' => $arResult["Group"]["ID"]
-		),
-		'select' => array('ID')
-	));
+	$res = \Bitrix\Socialnetwork\UserToGroupTable::query()
+		->setSelect(['ID'])
+		->where('USER_ID', $USER->getId())
+		->where('GROUP_ID', $arResult["Group"]["ID"])
+		->setLimit(1)
+		->exec()
+	;
+
 	if ($relation = $res->fetch())
 	{
 		$arResult["UserRelationId"] = $relation['ID'];
 	}
 
-	if (empty($arParams["PATH_TO_USER_REQUESTS"]))
-	{
-		$arParams["PATH_TO_USER_REQUESTS"] = \Bitrix\Socialnetwork\ComponentHelper::getUserSEFUrl().'user/#user_id#/requests/';
-	}
+	$arParams["PATH_TO_USER_REQUESTS"] = $arParams["PATH_TO_USER_REQUESTS"]
+		?? \Bitrix\Socialnetwork\ComponentHelper::getUserSEFUrl().'user/#user_id#/requests/'
+	;
 
 	$arResult["Urls"]["UserRequests"] = CComponentEngine::MakePathFromTemplate($arParams["PATH_TO_USER_REQUESTS"], array("user_id" => $USER->getId()));
 }

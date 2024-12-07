@@ -119,6 +119,17 @@ final class TerminalPaysystemManager
 				'MATCH' => \Bitrix\Sale\BusinessValue::MATCH_EXACT
 			]
 		);
+		if (empty($shopId))
+		{
+			$shopId = \Bitrix\Sale\BusinessValue::getMapping(
+				'YANDEX_CHECKOUT_SHOP_ID',
+				"PAYSYSTEM_".$id,
+				null,
+				[
+					'MATCH' => \Bitrix\Sale\BusinessValue::MATCH_COMMON
+				]
+			);
+		}
 
 		return !(isset($shopId['PROVIDER_VALUE']) && $shopId['PROVIDER_VALUE']);
 	}
@@ -196,15 +207,18 @@ final class TerminalPaysystemManager
 
 	public function isAnyPaysystemActive(): bool
 	{
-		$filter = [
-			'ACTIVE' => 'Y',
-			'!=ACTION_FILE' => [
-				'inner',
-				'cash',
-			],
+		$params = [
+			'select' => ['ID'],
+			'filter' => [
+				'=ACTIVE' => 'Y',
+				'!=ACTION_FILE' => [
+					'inner',
+					'cash',
+				],
+			]
 		];
 
-		return (Sale\Internals\PaySystemActionTable::getCount($filter) > 0);
+		return (bool)Sale\Internals\PaySystemActionTable::getRow($params);
 	}
 
 	private function getSbpPaySystem(): array

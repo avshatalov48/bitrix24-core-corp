@@ -9,6 +9,7 @@ use Bitrix\Crm\MessageSender\Channel;
 use Bitrix\Crm\MessageSender\Channel\ChannelRepository;
 use Bitrix\ImConnector\Connector;
 use Bitrix\ImConnector\Status;
+use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Error;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
@@ -20,10 +21,12 @@ class GoToChat
 	public const NOTIFICATIONS_MESSAGE_CODE = 'GOTO_CHAT';
 
 	private const TELEGRAM_BOT_CONNECTOR_ID = 'telegrambot';
+	private const WHATS_APP_CONNECTOR_ID = 'notifications';
 
 	private string $senderType;
 	private string $senderChannelId;
 	private ?ItemIdentifier $owner;
+	private string $connectorId = self::TELEGRAM_BOT_CONNECTOR_ID;
 
 	public static function isActive(): bool
 	{
@@ -32,7 +35,7 @@ class GoToChat
 			&& Loader::includeModule('imconnector')
 			&& class_exists(\Bitrix\ImOpenLines\Tracker::class)
 			&& method_exists(\Bitrix\ImOpenLines\Tracker::class, 'getMessengerLink')
-			;
+		;
 	}
 
 	public function __construct(
@@ -44,9 +47,26 @@ class GoToChat
 		$this->senderChannelId = $senderChannelId;
 	}
 
-	public function setOwner(ItemIdentifier $owner): self
+	public function setOwner(ItemIdentifier $owner): GoToChat
 	{
 		$this->owner = $owner;
+
+		return $this;
+	}
+
+	public function setConnectorId(string $connectorId): GoToChat
+	{
+		$availableConnectors = [
+			self::TELEGRAM_BOT_CONNECTOR_ID,
+			self::WHATS_APP_CONNECTOR_ID,
+		];
+
+		if (!in_array($connectorId, $availableConnectors, true))
+		{
+			throw new ArgumentException('Unknown connectorId: ' . $connectorId, 'CONNECTOR_ID');
+		}
+
+		$this->connectorId = $connectorId;
 
 		return $this;
 	}
@@ -68,7 +88,7 @@ class GoToChat
 
 		$this->checkOwner();
 
-		if ($lineId === null)
+		if ($lineId <= 0)
 		{
 			$lineId = $this->getFirstAvailableLineId();
 		}
@@ -122,7 +142,7 @@ class GoToChat
 			return null;
 		}
 
-		$statuses = Status::getInstanceAllLine(self::TELEGRAM_BOT_CONNECTOR_ID);
+		$statuses = Status::getInstanceAllLine($this->connectorId);
 
 		foreach ($statuses as $lineId => $status)
 		{
@@ -144,7 +164,7 @@ class GoToChat
 
 		$connectorData = Connector::infoConnectorsLine($lineId);
 
-		return isset($connectorData[self::TELEGRAM_BOT_CONNECTOR_ID]);
+		return isset($connectorData[$this->connectorId]);
 	}
 
 	private function createChannel(): ?Channel
@@ -240,7 +260,7 @@ class GoToChat
 
 		return $tracker->getMessengerLink(
 			$lineId,
-			self::TELEGRAM_BOT_CONNECTOR_ID,
+			$this->connectorId,
 			$bindings
 		)['web'];
 	}

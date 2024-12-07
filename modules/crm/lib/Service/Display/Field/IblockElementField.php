@@ -74,7 +74,7 @@ class IblockElementField extends BaseLinkedEntitiesField
 				$detailUrl = str_replace(
 					['#section_id#', '#element_id#'],
 					[
-						(int)$linkedEntitiesValue['IBLOCK_SECTION_ID'],
+						(int)($linkedEntitiesValue['IBLOCK_SECTION_ID'] ?? 0),
 						(int)$linkedEntitiesValue['ID']
 					],
 					$urlTemplate

@@ -141,6 +141,25 @@ jn.define('tasks/layout/dashboard/base-view', (require, exports, module) => {
 			return Promise.resolve();
 		}
 
+		replaceItems(items)
+		{
+			const existingItems = items.filter((item) => this.hasItem(item.guid));
+			if (existingItems.length === 0)
+			{
+				return Promise.resolve();
+			}
+
+			if (this.viewComponent)
+			{
+				return this.viewComponent.replaceItems(existingItems.map((item) => ({
+					...item,
+					idToReplace: item.guid,
+				})));
+			}
+
+			return Promise.resolve();
+		}
+
 		removeItems(items)
 		{
 			const existingItems = items.filter((item) => this.hasItem(item.id));
@@ -173,7 +192,7 @@ jn.define('tasks/layout/dashboard/base-view', (require, exports, module) => {
 			return Promise.resolve();
 		}
 
-		restoreItems(items)
+		addItemsWithoutServerRequest(items)
 		{
 			const nonExistingItems = items.filter((item) => !this.hasItem(item.id));
 			if (nonExistingItems.length === 0)
@@ -187,6 +206,39 @@ jn.define('tasks/layout/dashboard/base-view', (require, exports, module) => {
 			}
 
 			return Promise.resolve();
+		}
+
+		restoreItems(items)
+		{
+			this.addItemsWithoutServerRequest(items);
+		}
+
+		async addCreatingItems(items)
+		{
+			await this.addItemsWithoutServerRequest(items);
+
+			const itemIds = items.map((item) => item.id);
+			await this.scrollToTopItem(itemIds, true, true);
+		}
+
+		async scrollToTopItem(itemIds, animated = true, blink = false)
+		{
+			await this.viewComponent?.scrollToTopItem(itemIds, animated, blink);
+		}
+
+		getItemRef(itemId)
+		{
+			return this.viewComponent?.getItemRef(itemId);
+		}
+
+		getItemRootViewRef(itemId)
+		{
+			return this.viewComponent?.getItemRootViewRef(itemId);
+		}
+
+		getItemMenuViewRef(itemId)
+		{
+			return this.viewComponent?.getItemMenuViewRef(itemId);
 		}
 	}
 

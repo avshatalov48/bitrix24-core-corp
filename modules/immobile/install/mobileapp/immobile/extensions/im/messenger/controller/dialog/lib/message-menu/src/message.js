@@ -1,14 +1,15 @@
 /**
  * @module im/messenger/controller/dialog/lib/message-menu/message
  */
+
 jn.define('im/messenger/controller/dialog/lib/message-menu/message', (require, exports, module) => {
-	const { Type } = require('type');
-	const { MessengerParams } = require('im/messenger/lib/params');
 	const {
-		FileType,
 		DialogType,
 		FeatureFlag,
 	} = require('im/messenger/const');
+	const { ChatPermission } = require('im/messenger/lib/permission-manager');
+	const { MessageHelper, DialogHelper } = require('im/messenger/lib/helper');
+
 	/**
 	 * @class MessageMenuMessage
 	 */
@@ -21,38 +22,115 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message', (require, e
 		 * @param {DialoguesModelState} dialogModel
 		 * @param {UsersModelState} userModel
 		 * @param {boolean} isPinned
+		 * @param {boolean} isUserSubscribed
 		 */
-		constructor({ messageModel, fileModel, dialogModel, userModel, isPinned })
+		constructor({
+			messageModel,
+			fileModel,
+			dialogModel,
+			userModel,
+			isPinned,
+			isUserSubscribed,
+		})
 		{
 			this.message = messageModel;
 			this.file = fileModel;
 			this.dialog = dialogModel;
 			this.user = userModel;
 			this.isPinned = isPinned;
+			this.isUserSubscribed = isUserSubscribed;
+			this.messageHelper = MessageHelper.createByModel(messageModel, fileModel ?? []);
+			this.dialogHelper = DialogHelper.createByModel(dialogModel);
 		}
 
 		isPossibleReact()
 		{
-			return this.dialog.type !== DialogType.copilot;
+			// return this.dialog.type !== DialogType.copilot; TODO experimental solution
+			return true;
 		}
 
 		isPossibleReply()
 		{
-			return this.dialog.type !== DialogType.copilot;
+			if (this.isChannel() || this.dialog.type === DialogType.copilot)
+			{
+				return false;
+			}
+
+			if (Number(this.dialog.parentMessageId) === Number(this.message.id))
+			{
+				return false;
+			}
+
+			return ChatPermission.isCanReply(this.dialog);
 		}
 
 		isPossibleCopy()
 		{
+			if (this.isDialogCopilot())
+			{
+				return this.isText() && !this.isDeleted();
+			}
+
 			return this.isText();
+		}
+
+		isPossibleCopyLink()
+		{
+			if (this.isDialogCopilot() || this.isComment())
+			{
+				return false;
+			}
+
+			return true;
 		}
 
 		isPossiblePin()
 		{
+			if (this.dialog.type === DialogType.comment)
+			{
+				return false;
+			}
+
+			if (!ChatPermission.isCanPost(this.dialog))
+			{
+				return false;
+			}
+
 			return !this.isPinned;
+		}
+
+		isPossibleUnpin()
+		{
+			if (this.dialog.type === DialogType.comment)
+			{
+				return false;
+			}
+
+			if (!ChatPermission.isCanPost(this.dialog))
+			{
+				return false;
+			}
+
+			return this.isPinned;
 		}
 
 		isPossibleForward()
 		{
+			if (this.dialog.type === DialogType.comment)
+			{
+				return false;
+			}
+
+			return true;
+		}
+
+		isPossibleCreate()
+		{
+			if (this.isChannel())
+			{
+				return false;
+			}
+
 			return true;
 		}
 
@@ -60,6 +138,7 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message', (require, e
 		{
 			return (this.isImage() || this.isVideo())
 				&& !this.isDeleted()
+				&& !this.isGallery()
 				&& FeatureFlag.native.utilsSaveToLibrarySupported
 			;
 		}
@@ -69,49 +148,85 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message', (require, e
 			return !this.isYour() && !this.isSystem() && !this.isDialogCopilot() && !this.isBot();
 		}
 
+		isPossibleCallFeedback()
+		{
+			return !this.isYour() && !this.isSystem() && this.isDialogCopilot();
+		}
+
 		isPossibleEdit()
 		{
+			if (this.isDialogCopilot())
+			{
+				return this.isYour() && !this.isDeleted() && !this.isSystem() && !this.isForward()
+				&& !this.isMessageToCopilot();
+			}
+
 			return this.isYour() && !this.isDeleted() && !this.isSystem() && !this.isForward();
 		}
 
 		isPossibleDelete()
 		{
-			return this.isYour() && !this.isDeleted() && !this.isSystem();
+			if (this.isYour())
+			{
+				return !this.isDeleted();
+			}
+
+			if (ChatPermission.isCanDeleteOtherMessage(this.dialog))
+			{
+				return !this.isDeleted();
+			}
+
+			return false;
+		}
+
+		isPossibleSubscribe()
+		{
+			return this.isChannel() && !this.isUserSubscribed && !this.isSystem() && !this.isEmojiOrSmileOnly();
+		}
+
+		isPossibleUnsubscribe()
+		{
+			return this.isChannel() && this.isUserSubscribed && !this.isSystem() && !this.isEmojiOrSmileOnly();
 		}
 
 		isDeleted()
 		{
-			return this.message.params.IS_DELETED === 'Y';
+			return this.messageHelper.isDeleted;
 		}
 
 		isForward()
 		{
-			return !Type.isUndefined(this.message?.forward.id);
+			return this.messageHelper.isForward;
+		}
+
+		isGallery()
+		{
+			return this.messageHelper.isGallery;
 		}
 
 		isVideo()
 		{
-			return this.file?.type === FileType.video;
+			return this.messageHelper.isVideo;
 		}
 
 		isImage()
 		{
-			return this.file?.type === FileType.image;
+			return this.messageHelper.isImage;
 		}
 
 		isSystem()
 		{
-			return this.message.authorId === 0;
+			return this.messageHelper.isSystem;
 		}
 
 		isText()
 		{
-			return this.message.text !== '';
+			return this.messageHelper.isText;
 		}
 
 		isYour()
 		{
-			return this.message.authorId === MessengerParams.getUserId();
+			return this.messageHelper.isYour;
 		}
 
 		isDialogCopilot()
@@ -122,6 +237,31 @@ jn.define('im/messenger/controller/dialog/lib/message-menu/message', (require, e
 		isBot()
 		{
 			return this.user.bot;
+		}
+
+		isMessageToCopilot()
+		{
+			return !(this.message.text.includes('[USER') || this.message.text.includes('[user'));
+		}
+
+		isAdmin()
+		{
+			return this.dialogHelper.isCurrentUserOwner;
+		}
+
+		isChannel()
+		{
+			return this.dialogHelper.isChannel;
+		}
+
+		isComment()
+		{
+			return this.dialogHelper.isComment;
+		}
+
+		isEmojiOrSmileOnly()
+		{
+			return this.messageHelper.isEmojiOnly || this.messageHelper.isSmileOnly;
 		}
 	}
 

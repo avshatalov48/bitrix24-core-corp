@@ -1,7 +1,7 @@
 <?
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/header.php");
 
-$APPLICATION->IncludeComponent("bitrix:im.conference.center", ".default", array(
+$APPLICATION->IncludeComponent("bitrix:call.conference.center", ".default", array(
 	'SEF_FOLDER' => '/conference/',
 ));
 

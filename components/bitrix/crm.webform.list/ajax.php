@@ -158,6 +158,14 @@ class CrmWebFormListAjaxController extends \Bitrix\Crm\WebForm\ComponentControll
 
 	protected function checkPermissionsWrite()
 	{
+		if (Loader::includeModule('bitrix24'))
+		{
+			if (!\Bitrix\Bitrix24\Feature::isFeatureEnabled('crm_webform_edit'))
+			{
+				return false;
+			}
+		}
+
 		/**@var $USER \CUSER*/
 		global $USER;
 		$CrmPerms = new CCrmPerms($USER->GetID());

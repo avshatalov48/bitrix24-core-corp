@@ -15,4 +15,13 @@ $MESS["MARKET_RATING_JS_ADD_REVIEW_TEXT_ERROR"] = "Введите текст о�
 $MESS["MARKET_RATING_JS_ADD_REVIEW_STARS_ERROR"] = "Укажите рейтинг у отзыва";
 $MESS["MARKET_RATING_JS_ADD_REVIEW_SUCCESS"] = "Отзыв успешно добавлен";
 $MESS["MARKET_RATING_JS_REVIEWS_TOTAL"] = "Всего отзывов: #NUMBER#";
-$MESS["MARKET_RATING_JS_ADD_REVIEW_POLICY"] = "Отправляя свой отзыв, вы соглашаетесь <br> с <a href='#POLICY_URL#' target='_blank'>политикой обработки данных</a>";
+$MESS["MARKET_RATING_JS_ADD_REVIEW_POLICY"] = "Отправляя свой отзыв, вы соглашаетесь с <a href='#POLICY_URL#' target='_blank'>политикой обработки данных</a>";
+$MESS["MARKET_RATING_JS_ADD_REVIEW_POSTING_GUIDELINES"] = "Отправляя свой отзыв, вы соглашаетесь с <a href='#RULES_URL#' target='_blank'>правилами публикации отзывов</a>";
+$MESS["MARKET_RATING_JS_ADD_REVIEW_TITLE"] = "Оцените <span>#APP_NAME#</span>";
+$MESS["MARKET_RATING_JS_ADD_REVIEW_FEEDBACK_TEXT"] = "Поделитесь впечатлениями о работе приложения, это поможет нам сделать его удобнее";
+$MESS["MARKET_RATING_JS_SENT_TO_DEVELOPER"] = "Отправлено разработчику";
+$MESS["MARKET_RATING_JS_PUBLISHED"] = "Опубликовано";
+$MESS["MARKET_RATING_JS_NO_PUBLISHED"] = "Не опубликован";
+$MESS["MARKET_RATING_JS_REVIEW_ANSWER"] = "Ответ разработчика";
+$MESS["MARKET_RATING_JS_REVIEW_MORE"] = "ещё";
+$MESS["MARKET_RATING_JS_EMPTY_TEXT"] = "Нет комментария";

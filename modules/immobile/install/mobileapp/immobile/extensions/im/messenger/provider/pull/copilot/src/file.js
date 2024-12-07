@@ -2,7 +2,7 @@
  * @module im/messenger/provider/pull/copilot/file
  */
 jn.define('im/messenger/provider/pull/copilot/file', (require, exports, module) => {
-	const { BasePullHandler } = require('im/messenger/provider/pull/lib');
+	const { BasePullHandler } = require('im/messenger/provider/pull/base');
 	const { LoggerManager } = require('im/messenger/lib/logger');
 	const logger = LoggerManager.getInstance().getLogger('pull-handler--copilot-file');
 

@@ -2,144 +2,165 @@
  * @module layout/ui/detail-card/floating-button/menu/recent/grid-view
  */
 jn.define('layout/ui/detail-card/floating-button/menu/recent/grid-view', (require, exports, module) => {
+	const { Color, Indent, Corner } = require('tokens');
 	const { EventEmitter } = require('event-emitter');
 	const { withPressed } = require('utils/color');
-	const { changeFillColor } = require('utils/svg');
-	const { AppTheme } = require('apptheme/extended');
-
-	const TINT_COLOR = AppTheme.colors.accentMainPrimaryalt;
+	const { ScrollView } = require('layout/ui/scroll-view');
+	const { Text5 } = require('ui-system/typography');
+	const { IconView } = require('ui-system/blocks/icon');
 
 	/**
-	 * @constructor
-	 * @param {DetailCardComponent} detailCard
-	 * @param {FloatingMenuItem[]} items
+	 * @typedef {Object} RecentGridViewProps
+	 * @property {DetailCardComponent} detailCard
+	 * @property {FloatingMenuItem[]} items
+	 *
+	 * @class RecentGridView
+	 * @param {RecentGridViewProps} props
 	 * @return {View|null}
 	 */
-	function RecentGridView(detailCard, items)
+	class RecentGridView extends LayoutComponent
 	{
-		items = items.map((item) => ({
-			key: `${item.getId()}/${item.getTabId()}`,
-			actionId: item.getId(),
-			tabId: item.getTabId(),
-			title: item.getShortTitle() || item.getTitle(),
-			svgIcon: item.getIcon(),
-			uid: detailCard.uid,
-			type: 'default',
-			section: 0,
-		}));
-
-		return GridView({
-			style: {
-				flex: 1,
-				marginTop: 22,
-				paddingLeft: 2,
-				paddingRight: 2,
-				backgroundColor: AppTheme.colors.bgSecondary,
-			},
-			data: [{ items }],
-			params: {
-				orientation: 'horizontal',
-				rows: 1,
-			},
-			renderItem: RecentGridViewItem,
-		});
-	}
-
-	/**
-	 * @constructor
-	 * @param {string} title
-	 * @param {string} uid
-	 * @param {string} key
-	 * @param {string} svgIcon
-	 * @param {string} actionId
-	 * @param {?string} tabId
-	 * @return {View}
-	 */
-	function RecentGridViewItem({ title, uid, key, svgIcon, actionId, tabId })
-	{
-		const emitter = EventEmitter.createWithUid(uid);
-		const eventArgs = [{ actionId, tabId }];
-
-		if (Application.getPlatform() === 'android')
+		/**
+		 * @returns {number}
+		 */
+		static getHeight()
 		{
-			svgIcon = changeFillColor(svgIcon, TINT_COLOR);
+			return 96;
 		}
 
-		const onClick = () => emitter.emit('DetailCard.FloatingMenu.Item::onRecentAction', eventArgs);
+		render()
+		{
+			const items = this.#getItems();
 
-		return View(
-			{
-				testId: `recent-item-${tabId || 'root'}-${actionId}`,
-				onClick,
-			},
-			View(
-				{
-					style: {
-						width: 90,
-						paddingHorizontal: 4,
-					},
-				},
-				Shadow(
+			return View(
+				{},
+				View(
 					{
 						style: {
-							borderRadius: 12,
-							width: 60,
-							height: 60,
-							justifyContent: 'center',
-							alignSelf: 'center',
-						},
-						color: AppTheme.colors.shadowPrimary,
-						radius: 1,
-						offset: {
-							y: 1,
-						},
-						inset: {
-							left: 1,
-							right: 1,
+							paddingTop: Indent.M.toNumber(),
+							paddingBottom: Indent.L.toNumber(),
+							paddingHorizontal: Indent.XL.toNumber(),
 						},
 					},
-					View(
+					ScrollView(
 						{
+							horizontal: true,
+							showsHorizontalScrollIndicator: false,
 							style: {
-								backgroundColor: withPressed(AppTheme.colors.bgContentPrimary),
-								borderRadius: 12,
-								width: 60,
-								height: 60,
-								justifyContent: 'center',
-								alignSelf: 'center',
+								height: RecentGridView.getHeight() - Indent.M.toNumber() - Indent.L.toNumber(),
+								backgroundColor: Color.bgSecondary.toHex(),
 							},
-							onClick,
 						},
-						Image({
-							style: {
-								alignSelf: 'center',
-								width: 38,
-								height: 38,
-							},
-							tintColor: TINT_COLOR,
-							resizeMode: 'contain',
-							svg: {
-								content: svgIcon,
-							},
-						}),
+						...items.map((item) => this.#renderItem(item)),
 					),
 				),
-				Text({
+				View({
 					style: {
+						height: 4,
+						backgroundColor: Color.bgSeparatorSecondary.toHex(),
 						width: '100%',
-						color: AppTheme.colors.base1,
-						fontSize: 11,
-						textAlign: 'center',
-						marginTop: 5,
-						marginLeft: 1,
 					},
-					numberOfLines: 1,
-					ellipsize: 'end',
-					text: title,
 				}),
-			),
-		);
+			);
+		}
+
+		#getItems()
+		{
+			const { items, detailCard } = this.props;
+
+			return items.map((item, index) => ({
+				index,
+				key: `${item.getId()}/${item.getTabId()}`,
+				actionId: item.getId(),
+				tabId: item.getTabId(),
+				title: item.getShortTitle() || item.getTitle(),
+				icon: item.getIcon(),
+				uid: detailCard?.uid,
+				type: 'default',
+				section: 0,
+			}));
+		}
+
+		/**
+		 * @param {number} index
+		 * @param {string} title
+		 * @param {string} uid
+		 * @param {string} key
+		 * @param {Icon} icon
+		 * @param {string} actionId
+		 * @param {?string} tabId
+		 * @return {View}
+		 */
+		#renderItem = ({ index, title, uid, icon, actionId, tabId }) => {
+			const { items } = this.props;
+			const isShowDivider = index !== items.length - 1;
+
+			return View(
+				{
+					style: {
+						flexDirection: 'row',
+					},
+					onClick: this.#handleOnClick({ uid, actionId, tabId }),
+				},
+				View(
+					{
+						testId: `recent-item-${tabId || 'root'}-${actionId}`,
+						style: {
+							width: 80,
+							borderRadius: Corner.M.getValue(),
+							alignItems: 'center',
+							padding: Indent.XS.toNumber(),
+							backgroundColor: withPressed(Color.bgSecondary.toHex()),
+						},
+					},
+					icon && IconView({
+						icon,
+						size: 30,
+						color: Color.base0,
+					}),
+					Text5({
+						style: {
+							marginTop: Indent.XS.toNumber(),
+							textAlign: 'center',
+						},
+						color: Color.base1,
+						numberOfLines: 2,
+						ellipsize: 'end',
+						text: title,
+					}),
+				),
+				isShowDivider && this.#renderDivider(),
+			);
+		};
+
+		#handleOnClick = ({ uid, actionId, tabId }) => () => {
+			const emitter = EventEmitter.createWithUid(uid);
+			const eventArgs = [{ actionId, tabId }];
+
+			emitter.emit('DetailCard.FloatingMenu.Item::onRecentAction', eventArgs);
+		};
+
+		#renderDivider()
+		{
+			return View(
+				{
+					style: {
+						alignSelf: 'center',
+						paddingHorizontal: Indent.L.toNumber(),
+					},
+				},
+				View({
+					style: {
+						width: 1,
+						height: 60,
+						backgroundColor: Color.bgSeparatorSecondary.toHex(),
+					},
+				}),
+			);
+		}
 	}
 
-	module.exports = { RecentGridView };
+	module.exports = {
+		RecentGridView,
+	};
 });

@@ -4,7 +4,6 @@ namespace Bitrix\Crm\Ml;
 
 use Bitrix\Crm\Ml\Internals\EO_PredictionQueue;
 use Bitrix\Crm\Ml\Internals\PredictionQueueTable;
-use Bitrix\Main\ORM\Query\Query;
 use Bitrix\Main\Type\DateTime;
 
 class PredictionQueue extends EO_PredictionQueue
@@ -22,6 +21,11 @@ class PredictionQueue extends EO_PredictionQueue
 	 */
 	public static function processQueue()
 	{
+		if (!Scoring::isScoringAvailable())
+		{
+			return '';
+		}
+
 		$started = microtime(true);
 		$timeElapsed = 0;
 

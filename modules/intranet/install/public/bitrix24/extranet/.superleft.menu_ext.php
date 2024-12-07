@@ -20,7 +20,7 @@ $diskEnabled = \Bitrix\Main\Config\Option::get('disk', 'successfully_converted',
 
 $arMenu = array(
 	array(
-		GetMessage("MENU_LIVE_FEED2"),
+		GetMessage("MENU_LIVE_FEED3"),
 		"/extranet/index.php",
 		array(),
 		array("name" => "live_feed", "counter_id" => "live-feed", "menu_item_id"=>"menu_live_feed"),

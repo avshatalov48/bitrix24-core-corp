@@ -3,6 +3,10 @@ namespace Bitrix\Intranet\Component;
 
 use Bitrix\Bitrix24\Feature;
 use Bitrix\Intranet\CurrentUser;
+use Bitrix\Intranet\Invitation;
+use Bitrix\Intranet\User;
+use Bitrix\Intranet\Util;
+use Bitrix\Main\DB\Connection;
 use Bitrix\Main\Engine\ActionFilter;
 use Bitrix\Main\Engine\Contract\Controllerable;
 use Bitrix\Main\Errorable;
@@ -14,6 +18,7 @@ use Bitrix\Main\Error;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\UserTable;
 use Bitrix\Main\Web\Uri;
+use Bitrix\Up\Application;
 
 class UserList extends \CBitrixComponent implements Controllerable, Errorable
 {
@@ -230,6 +235,9 @@ class UserList extends \CBitrixComponent implements Controllerable, Errorable
 
 		static $constantAllowed = null;
 
+		$invitation = $params['USER_FIELDS']->getInvitation();
+		$refUserId = (int)($invitation?->getOriginatorId());
+
 		$userFields = (isset($params['USER_FIELDS']) ? $params['USER_FIELDS'] : []);
 		$currentUserId = $USER->getId();
 		$isCloud = ModuleManager::isModuleInstalled('bitrix24');
@@ -254,6 +262,9 @@ class UserList extends \CBitrixComponent implements Controllerable, Errorable
 					ModuleManager::isModuleInstalled('bitrix24')
 					&& $USER->canDoOperation('bitrix24_invite')
 				)
+				||
+				(int)$USER->GetID() === $refUserId
+
 			);
 			$constantAllowed['EDIT_ALL'] = $USER->canDoOperation('edit_all_users');
 			$constantAllowed['EDIT_SUBORDINATE'] = $USER->canDoOperation('edit_subordinate_users');
@@ -298,7 +309,8 @@ class UserList extends \CBitrixComponent implements Controllerable, Errorable
 		}
 
 		if (
-			$constantAllowed['INVITE']
+			$userFields["ACTIVE"] == 'Y'
+			&& $constantAllowed['INVITE']
 			&& !empty($userFields['CONFIRM_CODE'])
 		)
 		{
@@ -308,7 +320,7 @@ class UserList extends \CBitrixComponent implements Controllerable, Errorable
 		if (
 			(int)$currentUserId !== $userFields["ID"]
 			&& !in_array($userFields['USER_TYPE'], ['bot', 'imconnector'])
-			&& CurrentUser::get()->isAdmin()
+			&& (CurrentUser::get()->isAdmin() || (int)$USER->getId() === $refUserId)
 			&& !(
 				Loader::includeModule('bitrix24')
 				&& \Bitrix\Bitrix24\Integrator::isIntegrator($USER->getId())
@@ -316,7 +328,11 @@ class UserList extends \CBitrixComponent implements Controllerable, Errorable
 			)
 		)
 		{
-			if ($userFields["ACTIVE"] != 'Y')
+			if ($userFields["ACTIVE"] === false && !empty($userFields['CONFIRM_CODE']))
+			{
+				$result[] = 'need_confirm';
+			}
+			elseif ($userFields["ACTIVE"] != 'Y')
 			{
 				$result[] = 'restore';
 			}
@@ -358,6 +374,11 @@ class UserList extends \CBitrixComponent implements Controllerable, Errorable
 
 		$userId = (!empty($params['userId']) ? intval($params['userId']) : 0);
 		$action = (!empty($params['action']) ? trim($params['action']) : '');
+		$ownUser = null;
+		if ($userId > 0)
+		{
+			$ownUser = (new User($userId))?->fetchOriginatorUser();
+		}
 
 		if (
 			$userId <= 0
@@ -367,6 +388,19 @@ class UserList extends \CBitrixComponent implements Controllerable, Errorable
 		{
 			return $result;
 		}
+
+		$res = UserTable::getList([
+			'filter' => [
+				'=ID' => $userId
+			],
+			'select' => [
+				'EMAIL',
+				'CONFIRM_CODE',
+				'PHONE' => 'PHONE_AUTH.PHONE_NUMBER',
+			]
+		]);
+		$userData = $res->fetch();
+		$canDelete = $ownUser?->getId() === (int)$USER->getId() && !empty($userData['CONFIRM_CODE']);
 
 		$canEdit = (
 			$USER->canDoOperation('edit_own_profile')
@@ -379,6 +413,37 @@ class UserList extends \CBitrixComponent implements Controllerable, Errorable
 		);
 
 		if (
+			$action === 'delete'
+			&& ($currentUserPerms["Operations"]["modifyuser_main"]
+				&& $canEdit
+				|| $canDelete)
+			&& $userId != $USER->getId()
+			&& self::checkIntegratorActionRestriction([
+				'userId' => $userId
+			])
+		)
+		{
+			$user = new \CUser;
+			$result = $user->delete($userId);
+			if (!$result)
+			{
+				if (!empty($user->LAST_ERROR))
+				{
+					$error = $user->LAST_ERROR;
+				}
+				else
+				{
+					$ex = $APPLICATION->getException();
+					$error = $ex->getString();
+				}
+				$this->addError(new Error($error));
+
+				return false;
+			}
+		}
+
+
+		if (
 			$currentUserPerms["Operations"]["modifyuser_main"]
 			&& $canEdit
 			&& $userId != $USER->getId()
@@ -389,38 +454,30 @@ class UserList extends \CBitrixComponent implements Controllerable, Errorable
 		{
 			switch ($action)
 			{
-				case 'delete':
-					$user = new \CUser;
-					$result = $user->delete($userId);
-					if (!$result)
+				case 'restore':
+					$result = Util::activateUser([
+						'userId' => $userId,
+						'currentUserId' => $USER->getId(),
+						'isCurrentUserAdmin' => $USER->isAdmin()
+					]);
+					if ($result && $userId > 0)
 					{
-						if (!empty($user->LAST_ERROR))
-						{
-							$error = $user->LAST_ERROR;
-						}
-						else
-						{
-							$ex = $APPLICATION->getException();
-							$error = $ex->getString();
-						}
-						$this->addError(new Error($error));
-
-						return false;
+						$deactivateUser = new User($userId);
+						Invitation::fullSyncCounterByUser($deactivateUser->fetchOriginatorUser());
 					}
 					break;
-				case 'restore':
 				case 'deactivate':
 				case 'deactivateInvited':
-					if (
-						$action === "setActivity"
-						&& Loader::includeModule("bitrix24")
-						&& !Feature::isFeatureEnabled("user_dismissal")
-						&& !\Bitrix\Bitrix24\Integrator::isIntegrator($userId)
-					)
+					$result = Util::deactivateUser([
+						'userId' => $userId,
+						'currentUserId' => $USER->getId(),
+						'isCurrentUserAdmin' => $USER->isAdmin()
+					]);
+					if ($result && $userId > 0)
 					{
-						return false;
+						$deactivateUser = new User($userId);
+						Invitation::fullSyncCounterByUser($deactivateUser->fetchOriginatorUser());
 					}
-					$result = $USER->update($userId, ['ACTIVE' => ($action == 'restore' ? 'Y' : 'N')]);
 					break;
 			}
 		}
@@ -587,4 +644,3 @@ class UserList extends \CBitrixComponent implements Controllerable, Errorable
 		return \Bitrix\Intranet\Util::checkIntegratorActionRestriction($params);
 	}
 }
-?>

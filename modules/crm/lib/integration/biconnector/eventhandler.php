@@ -2,8 +2,8 @@
 
 namespace Bitrix\Crm\Integration\BiConnector;
 
+use Bitrix\BIConnector\DB\MysqliConnection;
 use Bitrix\Main\Event;
-use Bitrix\Main\Localization\Loc;
 
 class EventHandler
 {
@@ -20,26 +20,42 @@ class EventHandler
 	{
 		$params = $event->getParameters();
 		$result = &$params[1];
+		$languageId = $params[2];
 
-		$result['crm_dynamic_type'] = DynamicTypeMapping::getMapping();
+		/** @var MysqliConnection $connection */
+		$connection = $params[0]->getDatabaseConnection();
+		$helper = $connection->getSqlHelper();
 
-		self::addDescriptions(['crm_dynamic_type'], $result, $params[2]);
+		$result['crm_smart_proc'] = DynamicTypeMapping::getMapping();
+		$result['crm_stages'] = StagesMapping::getMapping($helper, $languageId);
+		$result['crm_entity_relation'] = EntityRelationMapping::getMapping();
+		$result['crm_quote'] = QuoteMapping::getMapping();
+		$result['crm_quote_product_row'] = QuoteProductMapping::getMapping($helper);
+		$result = array_merge(
+			$result,
+			AutomatedSolutionMapping::getMapping($languageId),
+			DynamicItemsProductMapping::getMapping($helper, $languageId),
+		);
+
+		self::addDescriptions([
+			'crm_smart_proc',
+			'crm_stages',
+			'crm_entity_relation',
+			'crm_quote',
+			'crm_quote_product_row',
+		], $result, $languageId);
 	}
 
 	private static function addDescriptions(array $keys, array &$mapping, ?string $languageId): void
 	{
-		$messages = Loc::loadLanguageFile(__FILE__, $languageId);
-
-		foreach ($keys as $key) {
+		foreach ($keys as $key)
+		{
 			$entityName = strtoupper($key);
-			$mapping[$key]['TABLE_DESCRIPTION'] = $messages[$entityName . '_TABLE'] ?: $key;
-			foreach ($mapping[$key]['FIELDS'] as $fieldCode => &$fieldInfo) {
-				$fieldInfo['FIELD_DESCRIPTION'] = $messages[$entityName . '_FIELD_' . $fieldCode];
-				if (!$fieldInfo['FIELD_DESCRIPTION']) {
-					$fieldInfo['FIELD_DESCRIPTION'] = $fieldCode;
-				}
-
-				$fieldInfo['FIELD_DESCRIPTION_FULL'] = $messages[$entityName . '_FIELD_' . $fieldCode . '_FULL'] ?? '';
+			$mapping[$key]['TABLE_DESCRIPTION'] = Localization::getMessage($entityName . '_TABLE', $languageId) ?: $key;
+			foreach ($mapping[$key]['FIELDS'] as $fieldCode => &$fieldInfo)
+			{
+				$fieldInfo['FIELD_DESCRIPTION'] =  Localization::getMessage($entityName . '_FIELD_' . $fieldCode, $languageId) ?: $fieldCode;
+				$fieldInfo['FIELD_DESCRIPTION_FULL'] = Localization::getMessage($entityName . '_FIELD_' . $fieldCode . '_FULL', $languageId) ?? '';
 			}
 			unset($fieldInfo);
 		}

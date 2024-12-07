@@ -373,14 +373,22 @@ class InfoConnectors
 	 */
 	public static function getInfoConnectorsList(array $filter = [])
 	{
-		$result = [];
-		$infoConnectors = self::getInfoConnectors($filter);
-		while ($info = $infoConnectors->fetch())
+		static $cache = [];
+		$cacheKey = md5(serialize($filter));
+
+		if (!isset($cache[$cacheKey]))
 		{
-			$result[$info['LINE_ID']] = $info;
+			$result = [];
+			$infoConnectors = self::getInfoConnectors($filter);
+			while ($info = $infoConnectors->fetch())
+			{
+				$result[$info['LINE_ID']] = $info;
+			}
+
+			$cache[$cacheKey] = $result;
 		}
 
-		return $result;
+		return $cache[$cacheKey];
 	}
 
 	/**

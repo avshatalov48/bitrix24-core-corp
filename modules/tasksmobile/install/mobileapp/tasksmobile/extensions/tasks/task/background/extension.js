@@ -1,4 +1,8 @@
 (() => {
+
+	const require = (ext) => jn.require(ext);
+	const { removeTask } = require('tasks/task/remove');
+
 	class TaskBackgroundAction
 	{
 		static bindEvents()
@@ -18,8 +22,10 @@
 			BX.addCustomEvent('taskbackground::efficiency::open', async (data) => {
 				const { Entry } = await requireLazy('tasks:entry');
 
-				Entry.openEfficiency(data);
+				Entry.openEfficiency(data, { isBackground: true });
 			});
+
+			BX.addCustomEvent('taskbackground::removeTask', (taskId) => removeTask(taskId));
 		}
 
 		constructor()

@@ -1,0 +1,110 @@
+.ai__prompt-master-editor-wrapper {
+	max-height: 100%;
+	display: flex;
+	flex-direction: column;
+	flex-grow: 1;
+	position: relative;
+}
+
+.ai__prompt-master-editor-inner {
+	--ai__prompt-master-editor-inner-padding: 12px;
+	display: flex;
+	flex-direction: column;
+	max-height: 100%;
+	flex-grow: 1;
+	position: relative;
+	padding: 12px 12px 12px 12px;
+	overflow: hidden;
+	border: var(--ui-border-width-thin) solid rgba(var(--ui-color-copilot-primary-rgb), 0.6);
+	border-radius: 12px;
+}
+
+.ai__prompt-master-editor {
+	height: 100%;
+	pointer-events: visiblePainted;
+	overflow: auto;
+	font-size: var(--ui-font-size-lg);
+	line-height: var(--ui-font-line-height-2xs);
+	color: var(--ui-color-text-primary);
+	white-space: pre-wrap;
+}
+
+.ai__prompt-master-editor:focus {
+	outline: none;
+}
+
+.ai__prompt-master-editor-inner_placeholder {
+	display: none;
+	position: absolute;
+	top: var(--ai__prompt-master-editor-inner-padding);
+	left: var(--ai__prompt-master-editor-inner-padding);
+	font-size: var(--ui-font-size-lg);
+	line-height: var(--ui-font-line-height-2xs);
+	color: var(--ui-color-base-40);
+	pointer-events: none;
+}
+
+.ai__prompt-master-editor:empty + .ai__prompt-master-editor-inner_placeholder {
+	display: inline-block;
+}
+
+.ai__prompt-master-editor_symbols-counter {
+	align-self: flex-end;
+	margin-top: 5px;
+	font-size: var(--ui-font-size-4xs);
+	color: var(--ui-color-base-60);
+}
+
+.ai__prompt-master-editor_symbols-counter.--error {
+	color: var(--ui-color-text-alert);
+}
+
+.ai__prompt-master-editor_clarification-btn {
+	margin-top: 12px;
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: flex-start;
+	font-size: var(--ui-font-size-md);
+	color: var(--ui-color-copilot-primary);
+	transition: 0.2s ease-in-out border-bottom-color;
+	cursor: pointer;
+}
+
+.ai__prompt-master-editor_clarification-btn.--disabled {
+	opacity: 0.7;
+	pointer-events: none;
+}
+
+.ai__prompt-master-editor_clarification-btn-icon {
+	display: inline-block;
+	width: 27px;
+	height: 17px;
+	margin-right: 8px;
+	background-image: url("../../images/insert-text-icon.svg");
+}
+
+.ai__prompt-master-editor_clarification-btn-text {
+	cursor: pointer;
+	border-bottom: var(--ui-border-width-thin) dashed rgba(var(--ui-color-copilot-primary-rgb), 0.6);
+}
+
+.ai__prompt-master-editor_clarification-btn:hover .ai__prompt-master-editor_clarification-btn-text {
+	transition-duration: 0s;
+	border-bottom-color: rgba(var(--ui-color-copilot-primary-rgb), 1);
+}
+
+.ai__prompt-master-editor strong {
+	font-weight: var(--ui-font-weight-normal);
+	color: var(--ui-color-copilot-primary);
+	background-color: rgba(var(--ui-color-copilot-primary-rgb), 0.16);
+}
+
+.ai__prompt-master-editor strong strong {
+	background-color: transparent;
+}
+
+.ai__prompt-master-editor * {
+	margin: 0;
+	padding: 0;
+}

@@ -8,10 +8,10 @@ use Bitrix\Crm\Ml\Controller\Details;
 use Bitrix\Crm\Ml\Internals\ModelTrainingTable;
 use Bitrix\Crm\Ml\Internals\PredictionHistoryTable;
 use Bitrix\Crm\Ml\Internals\PredictionQueueTable;
-use Bitrix\Crm\Ml\Model;
 use Bitrix\Crm\Settings\LeadSettings;
 use Bitrix\Crm\Timeline\ScoringController;
 use Bitrix\Main\Application;
+use Bitrix\Main\Config\Option;
 use Bitrix\Main\Error;
 use Bitrix\Main\Event;
 use Bitrix\Main\Loader;
@@ -41,6 +41,21 @@ class Scoring
 	private const ERROR_MODEL_ALREADY_EXISTS = 'model_already_exists';
 	private const ERROR_NOT_ENOUGH_DATA = 'not_enough_data';
 	private const ERROR_TOO_SOON = 'too_soon';
+
+	public static function isScoringAvailable(): bool
+	{
+		return time() < self::getScoringAvailableDate();
+	}
+
+	public static function getScoringAvailableDate(): int
+	{
+		return (int)Option::get('crm', 'crm_scoring_available_date_ts', 1725494400); // default '5 September 2024'
+	}
+
+	public static function setScoringAvailableDate(int $value): void
+	{
+		Option::set('crm', 'crm_scoring_available_date_ts', $value);
+	}
 
 	public static function getMinimalTrainingSetSize()
 	{
@@ -623,6 +638,21 @@ class Scoring
 			],
 			'limit' => 1
 		])->fetch();
+	}
+
+	public static function isTrainingUsed(): bool
+	{
+		$result = ModelTrainingTable::getList([
+			'select' => [
+				'ID',
+			],
+			'order' => [
+				'ID' => 'desc'
+			],
+			'limit' => 1
+		])->fetch();
+
+		return is_array($result) && isset($result['ID']);
 	}
 
 	/**

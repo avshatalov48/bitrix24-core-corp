@@ -2,7 +2,6 @@
 namespace Bitrix\Tasks;
 
 use Bitrix\Tasks\Grid\Scope\ScopeStrategyFactory;
-use Bitrix\Tasks\Grid\ScopeStrategyInterface;
 
 /**
  * Class Grid
@@ -14,7 +13,6 @@ abstract class Grid
 	protected array $rows = [];
 	protected array $parameters = [];
 	protected array $headers = [];
-	protected ?ScopeStrategyInterface $scopeStrategy = null;
 
 	public function __construct(array $rows = [], array $parameters = [])
 	{
@@ -51,24 +49,21 @@ abstract class Grid
 		$this->parameters = $parameters;
 	}
 
-	public function setScopeStrategy(?string $scopeStrategy): static
+	public function setScope(?string $scope): static
 	{
-		$this->scopeStrategy = ScopeStrategyFactory::getStrategy((string)$scopeStrategy);
+		$this->parameters['SCOPE'] = (string)$scope;
+
 		return $this;
 	}
 
-	protected function applyScopeStrategy(): static
+	protected function applyStrategies(): static
 	{
-		if ($this->isInScope())
+		$strategies = ScopeStrategyFactory::getStrategies($this->parameters);
+		foreach ($strategies as $strategy)
 		{
-			$this->headers = $this->scopeStrategy->apply($this->headers);
+			$strategy->apply($this->headers, $this->parameters);
 		}
 
 		return $this;
-	}
-
-	private function isInScope(): bool
-	{
-		return !is_null($this->scopeStrategy);
 	}
 }

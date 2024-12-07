@@ -49,7 +49,7 @@ class CAllIntranetSharepointQueue
 			if (!($query = CIntranetSharepointQueue::_LimitQuery($strWhere, $cnt)))
 				return false;
 
-			$dbRes = $DB->Query($query, false, "FILE: ".__FILE__."<br> LINE:".__LINE__);
+			$dbRes = $DB->Query($query);
 
 			while ($arRes = $dbRes->Fetch())
 			{
@@ -96,7 +96,7 @@ class CAllIntranetSharepointQueue
 
 	public static function Delete($ID)
 	{
-		return $GLOBALS['DB']->Query("DELETE FROM b_intranet_sharepoint_queue WHERE ID='".intval($ID)."'", false, "FILE: ".__FILE__."<br> LINE:".__LINE__);
+		return $GLOBALS['DB']->Query("DELETE FROM b_intranet_sharepoint_queue WHERE ID='".intval($ID)."'");
 	}
 
 	public static function Clear($IBLOCK_ID = false)
@@ -109,7 +109,7 @@ class CAllIntranetSharepointQueue
 			if ($IBLOCK_ID)
 				$query .= ' AND IBLOCK_ID='.intval($IBLOCK_ID);
 
-			$GLOBALS['DB']->Query($query, false, "FILE: ".__FILE__."<br> LINE:".__LINE__);
+			$GLOBALS['DB']->Query($query);
 			self::SetMinID(0);
 
 			return true;
@@ -162,7 +162,7 @@ class CAllIntranetSharepointQueue
 		$strWhere = $IBLOCK_ID > 0 ? 'WHERE ISPQ.IBLOCK_ID='.intval($IBLOCK_ID) : '';
 		$query = CIntranetSharepointQueue::_LimitQuery($strWhere, 1);
 
-		$dbRes = $DB->Query($query, false, "FILE: ".__FILE__."<br> LINE:".__LINE__);
+		$dbRes = $DB->Query($query);
 
 		return ($dbRes->Fetch() ? true : false);
 	}

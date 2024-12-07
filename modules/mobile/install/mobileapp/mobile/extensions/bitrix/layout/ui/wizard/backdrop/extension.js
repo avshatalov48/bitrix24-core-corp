@@ -2,10 +2,9 @@
  * @module layout/ui/wizard/backdrop
  */
 jn.define('layout/ui/wizard/backdrop', (require, exports, module) => {
-	const AppTheme = require('apptheme');
-
+	const { Color } = require('tokens');
 	const MEDIUM_POSITION_PERCENT = 65;
-	const BACKGROUND_COLOR = AppTheme.colors.bgSecondary;
+	const BACKGROUND_COLOR = Color.bgSecondary.toHex();
 
 	const { Wizard } = require('layout/ui/wizard');
 

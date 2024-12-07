@@ -2,6 +2,7 @@
  * @module catalog/store/product-list/menu/product-context-menu
  */
 jn.define('catalog/store/product-list/menu/product-context-menu', (require, exports, module) => {
+	const { ContextMenu } = require('layout/ui/context-menu');
 	/**
 	 * @class StoreDocumentProductContextMenu
 	 */

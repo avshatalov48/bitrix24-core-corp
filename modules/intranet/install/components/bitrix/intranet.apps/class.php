@@ -36,12 +36,8 @@ class IntranetApps extends \CBitrixComponent
 
 		$currentUserId = $USER->getId();
 
-		$this->arResult = [
-			'APP_WINDOWS_INSTALLED' => \CUserOptions::getOption('im', 'WindowsLastActivityDate', '', $currentUserId),
-			'APP_MAC_INSTALLED' => \CUserOptions::getOption('im', 'MacLastActivityDate', '', $currentUserId),
-			'APP_IOS_INSTALLED' => \CUserOptions::getOption('mobile', 'iOsLastActivityDate', '', $currentUserId),
-			'APP_ANDROID_INSTALLED' => \CUserOptions::getOption('mobile', 'AndroidLastActivityDate', '', $currentUserId),
-		];
+		$this->arResult = \Bitrix\Intranet\Util::getAppsInstallationConfig($currentUserId);
+		$this->arResult['DESKTOP_DOWNLOAD_LINKS'] = \Bitrix\Intranet\Portal::getInstance()->getSettings()->getDesktopDownloadLinks();
 
 		$this->arResult['PERSONAL_MOBILE'] = '';
 		if ($this->arParams['USER_ID'] > 0)

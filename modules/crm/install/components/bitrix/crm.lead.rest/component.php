@@ -11,7 +11,6 @@ Header('Content-Type: application/json; charset=utf-8');
 
 // check data
 $arData = $_SERVER['REQUEST_METHOD'] == 'POST' ? $_POST : $_GET;
-$arData = $APPLICATION->ConvertCharsetArray($arData, 'UTF-8', LANG_CHARSET);
 
 if(is_array($_FILES))
 {
@@ -27,7 +26,7 @@ if(is_array($_FILES))
 if (empty($arData))
 {
 	$APPLICATION->RestartBuffer();
-	echo CUtil::PhpToJSObject(array('error' => 400, 'error_message' => $APPLICATION->ConvertCharset(GetMessage('CRM_REST_ERROR_BAD_REQUEST'), LANG_CHARSET, 'UTF-8')));
+	echo CUtil::PhpToJSObject(array('error' => 400, 'error_message' => GetMessage('CRM_REST_ERROR_BAD_REQUEST')));
 	exit();
 }
 
@@ -39,7 +38,7 @@ if (isset($arData['LOGIN']) && isset($arData['PASSWORD']))
 	if (($error = $USER->Login($arData['LOGIN'], $arData['PASSWORD'])) !== true)
 	{
 		$APPLICATION->RestartBuffer();
-		echo CUtil::PhpToJSObject(array('error' => 403, 'error_message' => $error === false ? "OTP required" : $APPLICATION->ConvertCharset(strip_tags(nl2br($error['MESSAGE'])), LANG_CHARSET, 'UTF-8')));
+		echo CUtil::PhpToJSObject(array('error' => 403, 'error_message' => $error === false ? "OTP required" : strip_tags(nl2br($error['MESSAGE']))));
 		exit();
 	}
 
@@ -50,14 +49,14 @@ elseif ($arData['AUTH'])
 	if (!CCRMLeadRest::CheckAuthHash($arData))
 	{
 		$APPLICATION->RestartBuffer();
-		echo CUtil::PhpToJSObject(array('error' => 403, 'error_message' => $APPLICATION->ConvertCharset(GetMessage('CRM_PERMISSION_DENIED'), LANG_CHARSET, 'UTF-8')));
+		echo CUtil::PhpToJSObject(array('error' => 403, 'error_message' => GetMessage('CRM_PERMISSION_DENIED')));
 		exit();
 	}
 }
 else
 {
 	$APPLICATION->RestartBuffer();
-	echo CUtil::PhpToJSObject(array('error' => 403, 'error_message' => $APPLICATION->ConvertCharset(GetMessage('CRM_REST_ERROR_BAD_AUTH'), LANG_CHARSET, 'UTF-8')));
+	echo CUtil::PhpToJSObject(array('error' => 403, 'error_message' => GetMessage('CRM_REST_ERROR_BAD_AUTH')));
 	exit();
 }
 
@@ -66,7 +65,7 @@ $CCrmLead = new CCrmLead();
 if ($CCrmLead->cPerms->HavePerm('LEAD', BX_CRM_PERM_NONE, 'ADD'))
 {
 	$APPLICATION->RestartBuffer();
-	echo CUtil::PhpToJSObject(array('error' => 403, 'error_message' => $APPLICATION->ConvertCharset(GetMessage('CRM_PERMISSION_DENIED'), LANG_CHARSET, 'UTF-8')));
+	echo CUtil::PhpToJSObject(array('error' => 403, 'error_message' => GetMessage('CRM_PERMISSION_DENIED')));
 	exit();
 }
 
@@ -95,9 +94,8 @@ switch ($METHOD)
 	break;
 	default:
 		$APPLICATION->RestartBuffer();
-		echo CUtil::PhpToJSObject(array('error' => 400, 'error_message' => $APPLICATION->ConvertCharset(GetMessage('CRM_REST_ERROR_BAD_REQUEST'), LANG_CHARSET, 'UTF-8')));
+		echo CUtil::PhpToJSObject(array('error' => 400, 'error_message' => GetMessage('CRM_REST_ERROR_BAD_REQUEST')));
 }
 
 CMain::FinalActions();
 exit();
-?>

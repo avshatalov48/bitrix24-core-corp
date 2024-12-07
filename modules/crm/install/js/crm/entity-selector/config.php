@@ -5,7 +5,9 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use Bitrix\Crm\Integration\UI\EntitySelector\CopilotLanguageProvider;
 use Bitrix\Crm\Integration\UI\EntitySelector\CountryProvider;
+use Bitrix\Crm\Integration\UI\EntitySelector\MessageTemplateProvider;
 use Bitrix\Crm\Integration\UI\EntitySelector\PlaceholderProvider;
 use Bitrix\Main\Loader;
 
@@ -24,6 +26,12 @@ return [
 	'settings' => [
 		'entities' => [
 			[
+				'id' => CopilotLanguageProvider::ENTITY_ID,
+				'options' => [
+					'dynamicLoad' => true,
+				],
+			],
+			[
 				'id' => CountryProvider::ENTITY_ID,
 				'options' => [
 					'dynamicLoad' => true,
@@ -37,6 +45,12 @@ return [
 							'avatar' => CountryProvider::getIconByCode(CountryProvider::GLOBAL_COUNTRY_CODE),
 						],
 					],
+				],
+			],
+			[
+				'id' => MessageTemplateProvider::ENTITY_ID,
+				'options' => [
+					'dynamicLoad' => true,
 				],
 			],
 			[

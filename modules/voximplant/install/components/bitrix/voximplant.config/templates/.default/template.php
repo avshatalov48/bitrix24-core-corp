@@ -153,7 +153,7 @@ CJSCore::Init(["voximplant.common"]);
 	</div>
 </div>
 
-<script type="text/javascript">
+<script>
 	var setPost = {
 		corner : BX('tel-set-corner'),
 		anim_block : null,

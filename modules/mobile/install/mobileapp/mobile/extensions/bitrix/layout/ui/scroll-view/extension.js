@@ -5,7 +5,14 @@ jn.define('layout/ui/scroll-view', (require, exports, module) => {
 	const toArray = (children) => (Array.isArray(children) ? children : [children]);
 
 	/**
-	 * @return {ScrollViewMethods}
+	 * @function UIScrollView
+	 * @param {Object} props
+	 * @param {boolean} [props.horizontal]
+	 * @param {boolean} [props.bounces]
+	 * @param {function} [props.onScroll]
+	 * @param {Array<View>} [props.children]
+	 * @param {Array<View>} [restChildren]
+	 * @returns {ScrollViewMethods}
 	 */
 	const UIScrollView = (props, ...restChildren) => {
 		const { children, ...rest } = props;
@@ -31,5 +38,8 @@ jn.define('layout/ui/scroll-view', (require, exports, module) => {
 		);
 	};
 
-	module.exports = { UIScrollView };
+	module.exports = {
+		ScrollView: UIScrollView,
+		UIScrollView,
+	};
 });

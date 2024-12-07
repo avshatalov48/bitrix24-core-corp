@@ -29,9 +29,9 @@ Loc::loadMessages(__FILE__);
  *
  * <<< ORMENTITYANNOTATION
  * @method static EO_Sip_Query query()
- * @method static EO_Sip_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_Sip_Result getByPrimary($primary, array $parameters = [])
  * @method static EO_Sip_Result getById($id)
- * @method static EO_Sip_Result getList(array $parameters = array())
+ * @method static EO_Sip_Result getList(array $parameters = [])
  * @method static EO_Sip_Entity getEntity()
  * @method static \Bitrix\Voximplant\EO_Sip createObject($setDefaultValues = true)
  * @method static \Bitrix\Voximplant\EO_Sip_Collection createCollection()

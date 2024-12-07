@@ -1,3 +1,4 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 (function (exports,main_core) {
 	'use strict';
@@ -13,25 +14,19 @@ this.BX = this.BX || {};
 	    this.enabled = this.init();
 	    MobileCommentsRatingLike.setInstance(likeId, this);
 	  }
-
 	  babelHelpers.createClass(MobileCommentsRatingLike, [{
 	    key: "init",
 	    value: function init() {
 	      var _this = this;
-
 	      this.box = BX('bx-ilike-button-' + this.likeId);
-
 	      if (!this.box) {
 	        return false;
 	      }
-
 	      BXMobileApp.addCustomEvent('onPull-main', function (data) {
 	        if (data.command !== 'rating_vote') {
 	          return;
 	        }
-
 	        var p = data.params;
-
 	        if (p.USER_ID + '' != BX.message('USER_ID') + '' && _this.entityTypeId == p.ENTITY_TYPE_ID && _this.entityId == p.ENTITY_ID) {
 	          _this.someoneVote(p.TYPE == 'ADD', p.TOTAL_POSITIVE_VOTES);
 	        }
@@ -48,9 +43,8 @@ this.BX = this.BX || {};
 	      clearTimeout(this.likeTimeout);
 	      if (BX.type.isBoolean(e) && this.voted == e) return false;
 	      var counterValue = BX.type.isNotEmptyString(this.countText.innerHTML) ? parseInt(this.countText.innerHTML) : 0,
-	          newValue;
+	        newValue;
 	      newValue = this.voted = BX.type.isBoolean(e) ? e : !this.voted;
-
 	      if (this.voted) {
 	        this.countText.innerHTML = counterValue + 1;
 	        BX.addClass(this.box, 'post-comment-likes-liked');
@@ -123,7 +117,6 @@ this.BX = this.BX || {};
 	        BX.addClass(this.box, 'post-comment-likes');
 	        BX.removeClass(this.box, 'post-comment-likes-liked');
 	      }
-
 	      if (BX.type.isBoolean(e)) {
 	        return false;
 	      } else {
@@ -164,7 +157,6 @@ this.BX = this.BX || {};
 	    key: "someoneVote",
 	    value: function someoneVote(vote, votes) {
 	      this.countText.innerHTML = votes;
-
 	      if (votes > 1 || votes == 1 && !this.voted) {
 	        BX.addClass(this.box, 'post-comment-liked');
 	      } else {
@@ -187,7 +179,6 @@ this.BX = this.BX || {};
 	          cancelname: BX.message('RVCListBack')
 	        });
 	      }
-
 	      return BX.PreventDefault(e);
 	    }
 	  }], [{
@@ -210,11 +201,9 @@ this.BX = this.BX || {};
 	    key: "List",
 	    value: function List(likeId) {
 	      var instance = this.getInstance(likeId);
-
 	      if (!instance) {
 	        return;
 	      }
-
 	      instance.list();
 	    }
 	  }]);
@@ -225,16 +214,12 @@ this.BX = this.BX || {};
 	if (main_core.Type.isUndefined(window.BXRLC)) {
 	  window.BXRLC = {};
 	}
-
 	window.RatingLikeComments = MobileCommentsRatingLike;
-
 	if (!main_core.Type.isUndefined(window.RatingLikeCommentsQueue) && window.RatingLikeCommentsQueue.length > 0) {
 	  var f;
-
 	  while ((f = window.RatingLikeCommentsQueue.pop()) && f) {
 	    f();
 	  }
-
 	  delete window.RatingLikeCommentsQueue;
 	}
 

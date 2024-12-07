@@ -10,10 +10,10 @@ use Bitrix\Main\ORM\Query\Query;
 final class RawQueryResult implements ResultOption
 {
 	public function __construct(
-		private ?string $order = null,
-		private ?int $limit = null,
-		private bool $useDistinct = false,
-		private string $identityColumnName = 'ID',
+		private readonly ?string $order = null,
+		private readonly ?int $limit = null,
+		private readonly bool $useDistinct = false,
+		private readonly string $identityColumnName = 'ID',
 	)
 	{
 	}

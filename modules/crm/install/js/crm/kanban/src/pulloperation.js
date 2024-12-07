@@ -1,5 +1,6 @@
 import { Sorter } from 'crm.kanban.sort';
 import { Type } from 'main.core';
+import { ViewMode } from './viewmode';
 
 export default class PullOperation
 {
@@ -86,6 +87,16 @@ export default class PullOperation
 			return;
 		}
 
+		const { viewMode } = this.grid.getData();
+		if ([ViewMode.MODE_ACTIVITIES, ViewMode.MODE_DEADLINES].includes(viewMode))
+		{
+			item.useAnimation = false;
+
+			this.grid.insertItem(item);
+
+			return;
+		}
+
 		const insertItemParams = {};
 		const { lastActivity, columnId: newColumnId, price } = paramsItem.data;
 		if (Type.isObjectLike(lastActivity) && lastActivity.timestamp !== item.data.lastActivity.timestamp)
@@ -140,9 +151,14 @@ export default class PullOperation
 			return;
 		}
 
-		const oldColumn = this.grid.getColumn(oldColumnId);
-		oldColumn.decPrice(oldPrice);
-		oldColumn.renderSubTitle();
+		const groupIds = this.grid.itemMoving?.dropEvent?.groupIds ?? [];
+		if (!groupIds.includes(item.id))
+		{
+			const oldColumn = this.grid.getColumn(oldColumnId);
+			oldColumn.decPrice(oldPrice);
+			oldColumn.renderSubTitle();
+		}
+
 		if (newColumn)
 		{
 			newColumn.incPrice(newPrice);

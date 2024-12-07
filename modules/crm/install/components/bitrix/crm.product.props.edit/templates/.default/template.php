@@ -41,7 +41,7 @@ $APPLICATION->IncludeComponent(
 );
 
 ?>
-<script type="text/javascript">
+<script>
 	function reloadForm()
 	{
 		var _form = BX('form_' + '<?=CUtil::JSEscape($arResult['FORM_ID'])?>');

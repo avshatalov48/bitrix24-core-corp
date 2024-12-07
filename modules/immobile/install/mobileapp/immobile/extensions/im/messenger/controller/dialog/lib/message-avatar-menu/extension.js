@@ -3,10 +3,14 @@
  */
 jn.define('im/messenger/controller/dialog/lib/message-avatar-menu', (require, exports, module) => {
 	const { Loc } = require('loc');
+	const { Icon } = require('assets/icons');
 
 	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
-	const { EventType, BBCode, ComponentCode } = require('im/messenger/const');
-	const { menuIcons } = require('im/messenger/assets/common');
+	const {
+		EventType,
+		BBCode,
+		ComponentCode,
+	} = require('im/messenger/const');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const { UserProfile } = require('im/messenger/controller/user-profile');
 	const { Logger } = require('im/messenger/lib/logger');
@@ -49,20 +53,21 @@ jn.define('im/messenger/controller/dialog/lib/message-avatar-menu', (require, ex
 				{
 					id: 'write-message',
 					title: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_MESSAGE_AVATAR_MENU_WRITE_MESSAGE'),
-					data: {
-						svgIcon: menuIcons.send(),
-					},
+					icon: Icon.MESSAGE,
 					onClickCallback: openDialogWithUserHandler,
 				},
-				{
+
+			];
+
+			if (this.options.isCanMention)
+			{
+				actions.push({
 					id: 'mention',
 					title: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_MESSAGE_AVATAR_MENU_MENTION'),
-					data: {
-						svgIcon: menuIcons.mention(),
-					},
+					icon: Icon.MENTION,
 					onClickCallback: mentionUserHandler,
-				},
-			];
+				});
+			}
 
 			if (!this.options.isBot)
 			{
@@ -74,9 +79,7 @@ jn.define('im/messenger/controller/dialog/lib/message-avatar-menu', (require, ex
 					{
 						id: 'show-profile',
 						title: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_MESSAGE_AVATAR_MENU_PROFILE'),
-						data: {
-							svgIcon: menuIcons.profile(),
-						},
+						icon: Icon.PERSON,
 						onClickCallback: showUserProfileHandler,
 					},
 				);
@@ -85,14 +88,23 @@ jn.define('im/messenger/controller/dialog/lib/message-avatar-menu', (require, ex
 			return actions;
 		}
 
-		open()
+		async open()
 		{
-			this.menu.show();
+			this.bindMethods();
+			this.subscribeExternalEvents();
+
+			this.layoutWidget = await this.menu.show();
+			this.layoutWidget.on(EventType.view.close, () => {
+				this.unsubscribeExternalEvents();
+			});
 		}
 
 		showUserProfile()
 		{
-			UserProfile.show(this.authorId, { backdrop: true });
+			UserProfile.show(this.authorId, {
+				backdrop: true,
+				openingDialogId: this.options.dialogId,
+			});
 		}
 
 		openDialogWithUser()
@@ -104,7 +116,32 @@ jn.define('im/messenger/controller/dialog/lib/message-avatar-menu', (require, ex
 
 		mentionUser()
 		{
-			BX.onCustomEvent(EventType.dialog.external.mention, [this.authorId, BBCode.user]);
+			BX.onCustomEvent(EventType.dialog.external.mention, [this.authorId, BBCode.user, this.options.dialogId]);
+		}
+
+		bindMethods()
+		{
+			this.deleteDialogHandler = this.deleteDialogHandler.bind(this);
+		}
+
+		subscribeExternalEvents()
+		{
+			BX.addCustomEvent(EventType.dialog.external.delete, this.deleteDialogHandler);
+		}
+
+		unsubscribeExternalEvents()
+		{
+			BX.removeCustomEvent(EventType.dialog.external.delete, this.deleteDialogHandler);
+		}
+
+		deleteDialogHandler({ dialogId })
+		{
+			if (String(this.options.dialogId) !== String(dialogId))
+			{
+				return;
+			}
+
+			this.menu.close(() => {});
 		}
 	}
 

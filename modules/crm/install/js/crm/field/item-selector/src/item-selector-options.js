@@ -3,5 +3,9 @@ export type ItemSelectorOptions = {
 	target: HTMLElement,
 	valuesList: Array,
 	selectedValues: Array,
-	readonlyMode?: boolean
+	readonlyMode?: boolean,
+	compactMode?: boolean,
+	icon?: string,
+	htmlItemCallback?: Function,
+	multiple?: boolean,
 };

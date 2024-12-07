@@ -380,13 +380,7 @@ class Base
 			&& !Library::isEmpty($message['message']['text'])
 		)
 		{
-			if (Application::isUtfMode())
-			{
-				$message['message']['text'] = Emoji::decode($message['message']['text']);
-			} else
-			{
-				$message['message']['text'] = preg_replace('/:([A-F0-9]{8}):/i', '(emoji)', $message['message']['text']);
-			}
+			$message['message']['text'] = Emoji::decode($message['message']['text']);
 		}
 
 		if (
@@ -978,6 +972,7 @@ class Base
 		if (
 			!empty($file)
 			&& is_array($file)
+			&& !empty($file['url'])
 		)
 		{
 			$file = Library::downloadFile($file);

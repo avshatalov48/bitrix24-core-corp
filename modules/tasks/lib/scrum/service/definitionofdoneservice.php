@@ -1,4 +1,5 @@
 <?php
+
 namespace Bitrix\Tasks\Scrum\Service;
 
 use Bitrix\Main\Engine\Response\Component;
@@ -8,7 +9,9 @@ use Bitrix\Main\ErrorCollection;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Type\RandomSequence;
 use Bitrix\Tasks\CheckList\CheckListFacade;
+use Bitrix\Tasks\Internals\TaskTable;
 use Bitrix\Tasks\Scrum\Checklist\TypeChecklistFacade;
+use Bitrix\Tasks\Scrum\Form\TypeForm;
 use Bitrix\Tasks\Util\Result;
 
 class DefinitionOfDoneService implements Errorable
@@ -26,15 +29,31 @@ class DefinitionOfDoneService implements Errorable
 		$this->errorCollection = new ErrorCollection;
 	}
 
+	public static function existsDod(int $groupId): bool
+	{
+		$types = (new DefinitionOfDoneService())->getTypes($groupId);
+
+		return (!empty($types));
+	}
+
 	public function mergeList(string $facade, int $entityId, array $items): Result
 	{
 		$result = new Result();
 
 		foreach ($items as $id => $item)
 		{
-			$item['ID'] = ((int) ($item['ID'] ?? null) === 0 ? null : (int) $item['ID']);
-			$item['IS_COMPLETE'] = ($item['IS_COMPLETE'] === "true");
-			$item['IS_IMPORTANT'] = ($item['IS_IMPORTANT'] === "true");
+			$item['ID'] = ((int)($item['ID'] ?? null) === 0 ? null : (int)$item['ID']);
+
+			$item['IS_COMPLETE'] = (
+				($item['IS_COMPLETE'] === true)
+				|| ((int)$item['IS_COMPLETE'] > 0)
+				|| ($item['IS_COMPLETE'] === "true")
+			);
+			$item['IS_IMPORTANT'] = (
+				($item['IS_IMPORTANT'] === true)
+				|| ((int)$item['IS_IMPORTANT'] > 0)
+				|| ($item['IS_IMPORTANT'] === "true")
+			);
 
 			$items[$item['NODE_ID']] = $item;
 			unset($items[$id]);
@@ -49,7 +68,7 @@ class DefinitionOfDoneService implements Errorable
 		$facade::deleteByEntityId($entityId, $this->executiveUserId);
 	}
 
-	public function getComponent(int $entityId, string $entityType, array $items): Component
+	public function getComponent(int $entityId, string $entityType, ?array $items): Component
 	{
 		$randomGenerator = new RandomSequence(rand());
 
@@ -93,16 +112,16 @@ class DefinitionOfDoneService implements Errorable
 			$result = TypeChecklistFacade::add($entityId, $this->executiveUserId, [
 				'TITLE' => Loc::getMessage('TASKS_SCRUM_DEFINITION_OF_DONE_NEW_0'),
 				'IS_COMPLETE' => 'N',
-				'PARENT_ID' => 0
+				'PARENT_ID' => 0,
 			]);
 			$newItem = $result->getData()['ITEM'];
 			$newItemId = $newItem->getFields()['ID'];
 			for ($i = 1; $i <= 3; $i++)
 			{
 				TypeChecklistFacade::add($entityId, $this->executiveUserId, [
-					'TITLE' => Loc::getMessage('TASKS_SCRUM_DEFINITION_OF_DONE_NEW_'.$i),
+					'TITLE' => Loc::getMessage('TASKS_SCRUM_DEFINITION_OF_DONE_NEW_' . $i),
 					'IS_COMPLETE' => 'N',
-					'PARENT_ID' => $newItemId
+					'PARENT_ID' => $newItemId,
 				]);
 			}
 		}
@@ -129,6 +148,67 @@ class DefinitionOfDoneService implements Errorable
 				)
 			);
 		}
+	}
+
+	public function isNecessary(int $groupId, int $taskId): bool
+	{
+		$taskService = new TaskService($this->executiveUserId);
+
+		$task = current($taskService->getTasksInfo([$taskId]));
+		if (!$task)
+		{
+			return false;
+		}
+
+		$parentId = (int)$task['PARENT_ID'];
+
+		if ($parentId)
+		{
+			$queryObject = TaskTable::getList([
+				'filter' => [
+					'ID' => $parentId,
+					'GROUP_ID' => $groupId,
+				],
+				'select' => ['ID'],
+			]);
+			if ($queryObject->fetch())
+			{
+				return false;
+			}
+		}
+
+		if (self::existsDod($groupId))
+		{
+			return true;
+		}
+
+		return false;
+	}
+
+	public function getTypes(int $groupId): array
+	{
+		$typeService = new TypeService();
+		$backlogService = new BacklogService();
+
+		$backlog = $backlogService->getBacklogByGroupId($groupId);
+
+		$types = [];
+		foreach ($typeService->getTypes($backlog->getId()) as $type)
+		{
+			$types[] = $type->toArray();
+		}
+
+		return $types;
+	}
+
+	public function getItemType(int $taskId): TypeForm
+	{
+		$itemService = new ItemService();
+		$typeService = new TypeService();
+
+		$item = $itemService->getItemBySourceId($taskId);
+
+		return $typeService->getType($item->getTypeId());
 	}
 
 	public function getErrors()

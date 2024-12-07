@@ -126,7 +126,19 @@ abstract class Manager
 					$params = $resultFromQueue['PARAMS'];
 					if (is_array($params))
 					{
-						self::writeToStatistics($statisticNameKey, $params);
+						if (is_array($resultFromQueue['PARAMS']['OPERATOR_ID']))
+						{
+							$savedParams = $params;
+							foreach ($resultFromQueue['PARAMS']['OPERATOR_ID'] as $operatorId)
+							{
+								$savedParams['OPERATOR_ID'] = $operatorId;
+								self::writeToStatistics($statisticNameKey, $savedParams);
+							}
+						}
+						else
+						{
+							self::writeToStatistics($statisticNameKey, $params);
+						}
 					}
 					self::removeFromQueue($id);
 				}

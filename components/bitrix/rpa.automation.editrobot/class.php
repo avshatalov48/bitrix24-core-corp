@@ -32,7 +32,8 @@ class RpaAutomationEditRobotComponent extends Rpa\Components\Base
 	{
 		if (!Bitrix\Rpa\Integration\Bizproc\Automation\Factory::canUseAutomation())
 		{
-			return $this->showError('Service is unavailable');
+			$this->showError('Service is unavailable');
+			return;
 		}
 		parent::init();
 
@@ -42,7 +43,8 @@ class RpaAutomationEditRobotComponent extends Rpa\Components\Base
 
 		if (!$this->checkPermissions($this->arResult['DOCUMENT_TYPE']))
 		{
-			return $this->showError(Loc::getMessage('RPA_MODIFY_TYPE_ACCESS_DENIED'));
+			$this->showError(Loc::getMessage('RPA_MODIFY_TYPE_ACCESS_DENIED'));
+			return;
 		}
 
 		$this->arResult['DOCUMENT_STATUS'] = $this->arParams['stage'];
@@ -52,7 +54,8 @@ class RpaAutomationEditRobotComponent extends Rpa\Components\Base
 
 		if (!$robotData)
 		{
-			return $this->showError("Empty robot data.");
+			$this->showError("Empty robot data.");
+			return;
 		}
 
 		$robotName = $this->getRobotName();
@@ -72,7 +75,8 @@ class RpaAutomationEditRobotComponent extends Rpa\Components\Base
 
 		if (!($dialog instanceof \Bitrix\Bizproc\Activity\PropertiesDialog))
 		{
-			return $this->showError('Robot dialog not supported in current context.');
+			$this->showError('Robot dialog not supported in current context.');
+			return;
 		}
 
 		if (isset($this->arParams['~CONTEXT']) && is_array($this->arParams['~CONTEXT']))

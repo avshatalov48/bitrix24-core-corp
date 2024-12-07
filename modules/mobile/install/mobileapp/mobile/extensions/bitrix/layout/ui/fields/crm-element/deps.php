@@ -7,5 +7,6 @@ return [
 		'layout/ui/fields/entity-selector',
 		'utils/object',
 		'utils/string',
+		'assets/icons',
 	],
 ];

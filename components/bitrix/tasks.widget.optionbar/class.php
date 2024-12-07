@@ -16,7 +16,15 @@ class TasksWidgetOptionBarComponent extends TasksBaseComponent
 			$this->arParams['OPTIONS'] = [];
 		}
 
-		$this->arResult['TASK_LIMIT_EXCEEDED'] = static::tryParseBooleanParameter($this->arParams['TASK_LIMIT_EXCEEDED']);
+		$this->arResult['TASK_LIMIT_EXCEEDED'] = static::tryParseBooleanParameter(
+			$this->arParams['TASK_LIMIT_EXCEEDED']
+		);
+		$this->arResult['TASK_CONTROL_LIMIT_EXCEEDED'] = static::tryParseBooleanParameter(
+			$this->arParams['TASK_CONTROL_LIMIT_EXCEEDED']
+		);
+		$this->arResult['TASK_SKIP_WEEKENDS_LIMIT_EXCEEDED'] = static::tryParseBooleanParameter(
+			$this->arParams['TASK_SKIP_WEEKENDS_LIMIT_EXCEEDED']
+		);
 
 		return $this->errors->checkNoFatals();
 	}

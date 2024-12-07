@@ -51,6 +51,7 @@ export class CommentRenderer
 			'TASK_APPROVE',
 			'TASK_DISAPPROVE',
 			'TASK_COMPLETE',
+			'TASK_CHANGE_RESPONSIBLE',
 		];
 		actionList.forEach((action) => {
 			const start = `#${action}_START#`;
@@ -88,6 +89,7 @@ export class CommentRenderer
 						if (timestamp)
 						{
 							timestamp = this.removeAnchors(timestamp, start, end);
+
 							return BX.date.format(liveData.DATE_FORMAT, Number(timestamp));
 						}
 					});
@@ -98,10 +100,11 @@ export class CommentRenderer
 				case 'TASK_APPROVE':
 				case 'TASK_DISAPPROVE':
 				case 'TASK_COMPLETE':
+				case 'TASK_CHANGE_RESPONSIBLE':
 					if (
 						!Type.isUndefined(liveData.TASK_ID)
 						&& Number(liveData.TASK_ID) > 0
-						&& Object.keys(liveData.RIGHTS[action]).map(id => Number(id)).includes(userId)
+						&& Object.keys(liveData.RIGHTS[action]).map((id) => Number(id)).includes(userId)
 						&& liveData.RIGHTS[action][userId]
 					)
 					{
@@ -136,6 +139,7 @@ export class CommentRenderer
 			TASK_APPROVE: 'taskApprove',
 			TASK_DISAPPROVE: 'taskDisapprove',
 			TASK_COMPLETE: 'taskComplete',
+			TASK_CHANGE_RESPONSIBLE: 'taskChangeResponsible',
 		};
 
 		let link = Loc.getMessage('SONET_RENDERPARTS_TASK_PATH');
@@ -143,11 +147,11 @@ export class CommentRenderer
 			.replace('#user_id#', Loc.getMessage('USER_ID'))
 			.replace('#task_id#', params.taskId)
 		;
-		link = Uri.addParam(link, {commentAction: actionMap[params.action]});
+		link = Uri.addParam(link, { commentAction: actionMap[params.action] });
 
 		if (params.action === 'DEADLINE_CHANGE' && params.deadline)
 		{
-			link = Uri.addParam(link, {deadline: params.deadline});
+			link = Uri.addParam(link, { deadline: params.deadline });
 		}
 
 		return link;

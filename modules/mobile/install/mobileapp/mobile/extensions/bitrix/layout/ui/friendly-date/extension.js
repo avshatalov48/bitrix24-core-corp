@@ -68,7 +68,7 @@ jn.define('layout/ui/friendly-date', (require, exports, module) => {
 		{
 			if (moment.isYesterday)
 			{
-				return this.getMessage('MOBILE_UI_FRIENDLY_DATE_YESTERDAY', moment);
+				return this.getMessage('MOBILE_UI_FRIENDLY_DATE_YESTERDAY_MSGVER_1', moment);
 			}
 
 			if (moment.isToday)
@@ -78,12 +78,12 @@ jn.define('layout/ui/friendly-date', (require, exports, module) => {
 					return this.timeAgoTextBuilder.format(moment);
 				}
 
-				return this.getMessage('MOBILE_UI_FRIENDLY_DATE_TODAY', moment);
+				return this.getMessage('MOBILE_UI_FRIENDLY_DATE_TODAY_MSGVER_1', moment);
 			}
 
 			if (moment.isTomorrow)
 			{
-				return this.getMessage('MOBILE_UI_FRIENDLY_DATE_TOMORROW', moment);
+				return this.getMessage('MOBILE_UI_FRIENDLY_DATE_TOMORROW_MSGVER_1', moment);
 			}
 
 			return this.formatDefault(moment);

@@ -11,6 +11,7 @@ final class User
 		public string $firstName,
 		public string $lastName,
 		public ?string $clientId = null,
+		public ?string $permissionHash = null,
 	)
 	{}
 }

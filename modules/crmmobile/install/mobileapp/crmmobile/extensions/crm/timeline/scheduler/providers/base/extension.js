@@ -3,8 +3,9 @@
  */
 jn.define('crm/timeline/scheduler/providers/base', (require, exports, module) => {
 	const AppTheme = require('apptheme');
-	const { Type } = require('type');
 	const { PureComponent } = require('layout/pure-component');
+	const { Loc } = require('loc');
+	const { Type } = require('type');
 
 	/**
 	 * @abstract
@@ -77,7 +78,7 @@ jn.define('crm/timeline/scheduler/providers/base', (require, exports, module) =>
 
 		/**
 		 * @abstract
-		 * @return {string}
+		 * @return {Icon}
 		 */
 		static getMenuIcon()
 		{}
@@ -114,7 +115,52 @@ jn.define('crm/timeline/scheduler/providers/base', (require, exports, module) =>
 		 */
 		static getMenuBadges()
 		{
+			if (this.shouldShowIsNewBadge())
+			{
+				return this.getIsNewBadge();
+			}
+
 			return [];
+		}
+
+		/**
+		 * Returns true if the "New" badge should be shown.
+		 * @return {boolean}
+		 */
+		static shouldShowIsNewBadge()
+		{
+			const isNewBadgeTimeEnd = this.getIsNewBadgeTimeEnd();
+			if (isNewBadgeTimeEnd !== null)
+			{
+				return Date.now() < isNewBadgeTimeEnd.getTime();
+			}
+
+			return false;
+		}
+
+		/**
+		 * Returns time in milliseconds when the "New" badge should be hidden.
+		 * Override this method to enable "New" badge logic.
+		 * @return {Date|null}
+		 */
+		static getIsNewBadgeTimeEnd()
+		{
+			return null;
+		}
+
+		/**
+		 * Returns "New" badge data.
+		 * @return {[{backgroundColor: *, color: *, title: ?string}]}
+		 */
+		static getIsNewBadge()
+		{
+			return [
+				{
+					title: Loc.getMessage('M_CRM_TIMELINE_SCHEDULER_BADGE_NEW_TITLE'),
+					backgroundColor: AppTheme.colors.accentBrandBlue,
+					color: AppTheme.colors.baseWhiteFixed,
+				},
+			];
 		}
 
 		/**
@@ -206,9 +252,9 @@ jn.define('crm/timeline/scheduler/providers/base', (require, exports, module) =>
 			});
 		}
 
-		close()
+		close(callback = () => {})
 		{
-			this.layout.close();
+			this.layout.close(callback);
 		}
 
 		onActivityCreate(data)

@@ -14,21 +14,21 @@ jn.define('layout/ui/simple-list/items', (require, exports, module) => {
 
 	class ListItemsFactory
 	{
-		static create(type, data)
+		static create(type, props)
 		{
 			if (type === ListItemType.BASE)
 			{
-				return new Base(data);
+				return new Base(props);
 			}
 
 			if (type === ListItemType.EXTENDED)
 			{
-				return new Extended(data);
+				return new Extended(props);
 			}
 
 			if (type === ListItemType.EMPTY_SPACE)
 			{
-				return new EmptySpace(data);
+				return new EmptySpace(props);
 			}
 
 			return null;

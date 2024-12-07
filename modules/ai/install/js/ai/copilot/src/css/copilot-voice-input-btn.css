@@ -1,0 +1,102 @@
+.ai__copilot-voice-input-btn-container {
+	position: relative;
+	display: flex;
+	width: 24px;
+	min-width: 24px;
+	height: 24px;
+}
+
+.ai__copilot-voice-input-btn-container.--recording::before {
+	content: '';
+	position: absolute;
+	width: 24px;
+	height: 24px;
+	background-color: #DED0F4;
+	z-index: -1;
+	border-radius: 50%;
+	animation: pulse 1s ease-out;
+	animation-iteration-count: infinite;
+}
+
+@keyframes pulse {
+	0% {
+		transform: scale(1.2);
+	}
+
+	50% {
+		transform: scale(1.35);
+	}
+
+	100% {
+		transform: scale(1.2);
+	}
+}
+
+.ai__copilot-voice-input-btn {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 24px;
+	min-width: 24px;
+	height: 24px;
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: center;
+	padding: 0;
+	margin: 0;
+	border: none;
+	outline: none;
+	background-color: transparent;
+	cursor: pointer;
+	transition: 0.15s ease-in-out opacity;
+}
+
+.ai__copilot-voice-input-btn.--start .ui-icon-set {
+	--ui-icon-set__icon-color: #8E52EC;
+}
+.ai__copilot-voice-input-btn.--start:hover .ui-icon-set {
+	--ui-icon-set__icon-color: #A977FA;
+}
+
+.ai__copilot-voice-input-btn.--start:active .ui-icon-set {
+	--ui-icon-set__icon-color: #8447E4;
+}
+
+.ai__copilot-voice-input-btn[disabled] {
+	opacity: 0.5;
+	cursor: default;
+	pointer-events: none;
+}
+
+.ai__copilot-voice-input-btn.--stop {
+	opacity: 0;
+	z-index: -1;
+	border-radius: var(--ui-border-radius-circle);
+	background-color: #8E52EC;
+	transition: 0.2s ease-out background-color;
+}
+
+.ai__copilot-voice-input-btn.--stop .ui-icon-set {
+	position: relative;
+	left: -0.4px;
+	top: -0.6px
+}
+
+.ai__copilot-voice-input-btn.--stop:hover {
+	background-color: #A977FA;
+}
+
+.ai__copilot-voice-input-btn.--stop:active {
+	background-color: #8447E4;
+}
+
+.ai__copilot-voice-input-btn-container.--recording .ai__copilot-voice-input-btn.--stop {
+	opacity: 1;
+	z-index: 1;
+}
+
+.ai__copilot-voice-input-btn-container.--recording .ai__copilot-voice-input-btn.--start {
+	opacity: 0;
+	z-index: -1;
+}

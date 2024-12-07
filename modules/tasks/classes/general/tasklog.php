@@ -48,6 +48,7 @@ class CTaskLog
 		'TASK_CONTROL' => 'bool',
 		'ALLOW_TIME_TRACKING' => 'bool',
 		'ALLOW_CHANGE_DEADLINE' => 'bool',
+		'FLOW_ID' => 'integer',
 	);
 
 	public static function getTrackedFields()
@@ -219,7 +220,7 @@ class CTaskLog
 
 		$strSql .= $strSqlOrder;
 
-		return $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
+		return $DB->Query($strSql);
 	}
 
 

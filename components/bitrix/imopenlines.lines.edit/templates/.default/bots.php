@@ -1,5 +1,6 @@
-<?
+<?php
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
+
 use \Bitrix\Main\Localization\Loc;
 
 \Bitrix\Main\UI\Extension::load([
@@ -114,7 +115,7 @@ use \Bitrix\Main\Localization\Loc;
 	</div>
 </div>
 
-<script type="text/javascript">
+<script>
 	BX.ready(function () {
 		BX.bind(BX('imol_welcome_bot'), 'change', function(e){
 			<?

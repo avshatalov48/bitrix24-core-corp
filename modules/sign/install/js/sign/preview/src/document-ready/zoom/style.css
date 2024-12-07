@@ -1,0 +1,58 @@
+.sign-preview__zoom {
+	display: inline-flex;
+	align-items: center;
+	white-space: nowrap;
+}
+
+.sign-preview__zoom-value {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 31px;
+	white-space: nowrap;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-open-sans));
+	font-size: var(--ui-typography-text-xs-font-size, 12px);
+	font-weight: var(--ui-font-weight-semi-bold, 600);
+	color: var(--ui-color-text-subtle, #828b95);
+}
+
+.sign-preview__zoom-value:after {
+	content: '%';
+}
+
+.sign-preview__zoom-control {
+	display: inline-flex;
+	width: 30px;
+	height: 40px;
+	cursor: pointer;
+}
+
+.sign-preview__zoom-control.--lock {
+	opacity: .5;
+	cursor: not-allowed;
+}
+
+.sign-preview__zoom-control.--lock i {
+	pointer-events: none;
+}
+
+.sign-preview__zoom-control i {
+	flex: 1;
+	border-radius: 50%;
+	background: center no-repeat;
+	opacity: .7;
+	transition: .2s;
+}
+
+.sign-preview__zoom-control i:hover {
+	opacity: 1;
+	transition: none;
+}
+
+.sign-preview__zoom-control.--plus i {
+	background-image: url(../images/sign-preview-zoom-plus.svg);
+}
+
+.sign-preview__zoom-control.--minus i {
+	background-image: url(../images/sign-preview-zoom-minus.svg);
+}

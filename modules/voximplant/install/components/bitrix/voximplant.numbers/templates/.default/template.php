@@ -123,7 +123,7 @@ $APPLICATION->IncludeComponent(
 );
 ?>
 
-<script type="text/javascript">
+<script>
 	BX.message({
 		VI_NUMBERS_CREATE_TITLE : '<?=GetMessageJS("VI_NUMBERS_CREATE_TITLE")?>',
 		VI_NUMBERS_ERR_AJAX : '<?=GetMessageJS("VI_NUMBERS_ERR_AJAX")?>',

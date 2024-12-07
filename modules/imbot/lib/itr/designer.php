@@ -16,6 +16,7 @@ class Designer
 
 	private $currentMenu = 0;
 	private $skipShowMenu = false;
+	private $userData = null;
 
 	public function __construct($portalId, $dialogId, $botId, $userId)
 	{

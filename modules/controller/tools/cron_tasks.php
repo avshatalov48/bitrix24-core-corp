@@ -1,5 +1,5 @@
 <?php
-$DOCUMENT_ROOT = $_SERVER["DOCUMENT_ROOT"] = realpath(__DIR__."/../../../..");
+$DOCUMENT_ROOT = $_SERVER['DOCUMENT_ROOT'] = realpath(__DIR__ . '/../../../..');
 
 //select status,count(*) from b_controller_task group by status
 //update b_controller_task set status='L' where status='F' and task_id='REMOTE_COMMAND'
@@ -10,17 +10,17 @@ $show_eta = false;
 $c = count($argv);
 for ($i = 1; $i < $c; $i++)
 {
-	if (preg_match("/^--limit=([0-9]+)\$/", $argv[$i], $match))
+	if (preg_match('/^--limit=(\d+)$/', $argv[$i], $match))
 	{
 		$limit = intval($match[1]);
 	}
-	elseif (preg_match("/^--show-eta=([yYnN])\$/", $argv[$i], $match))
+	elseif (preg_match('/^--show-eta=([yYnN])$/', $argv[$i], $match))
 	{
-		$show_eta = $match[1] === "y" || $match[1] === "Y";
+		$show_eta = $match[1] === 'y' || $match[1] === 'Y';
 	}
-	elseif (preg_match("/^--document-root=(.+)\$/", $argv[$i], $match) && is_dir($match[1]))
+	elseif (preg_match('/^--document-root=(.+)$/', $argv[$i], $match) && is_dir($match[1]))
 	{
-		$DOCUMENT_ROOT = $_SERVER["DOCUMENT_ROOT"] = $match[1];
+		$DOCUMENT_ROOT = $_SERVER['DOCUMENT_ROOT'] = $match[1];
 	}
 	else
 	{
@@ -30,17 +30,17 @@ for ($i = 1; $i < $c; $i++)
 }
 
 /*Bitrix init starts here*/
-define("NO_KEEP_STATISTIC", true);
-define("NOT_CHECK_PERMISSIONS",true);
-define("BX_CRONTAB", true);
+define('NO_KEEP_STATISTIC', true);
+define('NOT_CHECK_PERMISSIONS',true);
+define('BX_CRONTAB', true);
 
-require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_before.php");
+require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_before.php';
 @set_time_limit (0);
 @ignore_user_abort(true);
 @session_destroy();
-while(@ob_end_clean());
+while (@ob_end_clean());
 
-if (CModule::IncludeModule("controller"))
+if (CModule::IncludeModule('controller'))
 {
 	if (!$show_eta)
 	{
@@ -54,14 +54,14 @@ if (CModule::IncludeModule("controller"))
 		do
 		{
 			$stime = microtime(true);
-			$rs = CControllerTask::GetList(array(), array(
-				"=STATUS" => array('P', 'N', 'L'),
-			), true);
-			$current_count = $rs->Fetch()["C"];
+			$rs = CControllerTask::GetList([], [
+				'=STATUS' => ['P', 'N', 'L'],
+			], true);
+			$current_count = $rs->Fetch()['C'];
 			if ($last_count === false)
 			{
 				echo sprintf("%s tasks remains: %d\n"
-					,date("Y-m-d H:i:s")
+					,date('Y-m-d H:i:s')
 					,$current_count
 				);
 			}
@@ -80,18 +80,18 @@ if (CModule::IncludeModule("controller"))
 					$seconds_remains = intval($seconds_remains);
 
 					echo sprintf("%s tasks remains: %d; done: %d; per second: %0.2f; todo: %02d:%02d:%02d; eta: %s\n"
-						,date("Y-m-d H:i:s")
+						,date('Y-m-d H:i:s')
 						,$current_count
 						,$tasks_done
 						,$tasks_per_second
 						,$hours_remains, $minutes_remains, $seconds_remains
-						,date("Y-m-d H:i:s", $eta)
+						,date('Y-m-d H:i:s', $eta)
 					);
 				}
 				else
 				{
 					echo sprintf("%s tasks remains: %d;  done: %d\n"
-						,date("Y-m-d H:i:s")
+						,date('Y-m-d H:i:s')
 						,$current_count
 						,$tasks_done
 					);

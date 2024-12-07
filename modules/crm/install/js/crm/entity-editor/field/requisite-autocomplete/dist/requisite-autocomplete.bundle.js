@@ -225,7 +225,6 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "getAutocompleteContext",
 	    value: function getAutocompleteContext() {
-	      var _this$_parent;
 	      var result = {
 	        'typeId': 'ITIN',
 	        'presetId': 0
@@ -233,10 +232,11 @@ this.BX = this.BX || {};
 	      var control = this._editor.getControlById('PRESET_ID');
 	      if (control) {
 	        result.presetId = control.getValue();
-	      } else if ((_this$_parent = this._parent) !== null && _this$_parent !== void 0 && _this$_parent._editor) {
-	        var schemeData = this._schemeElement.getData();
-	        if (Object.hasOwn(schemeData, "clientResolverProperty") && main_core.Type.isPlainObject(schemeData["clientResolverProperty"])) {
-	          var property = schemeData["clientResolverProperty"];
+	      } else {
+	        var editorContext = this._editor.getContext();
+	        if (Object.hasOwn(editorContext, "resolverProperty") && main_core.Type.isPlainObject(editorContext["resolverProperty"])) {
+	          var property = editorContext["resolverProperty"];
+	          var schemeData = this._schemeElement.getData();
 	          if (Object.hasOwn(property, "VALUE") && main_core.Type.isStringFilled(property["VALUE"]) && Object.hasOwn(schemeData, "presetId")) {
 	            var presetId = parseInt(schemeData["presetId"]);
 	            if (!isNaN(presetId)) {

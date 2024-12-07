@@ -132,7 +132,7 @@ if ($arResult['CAN_EDIT'] || $arResult['MEETING']['PROTOCOL_TEXT'] <> ''):
 		$editor_id = "MEProto";
 
 ?>
-<script type="text/javascript">
+<script>
 BX.addCustomEvent(window, 'LHE_OnInit', function(ed) {
 	if (ed.id == '<?=$editor_id?>')
 	{
@@ -177,7 +177,7 @@ endif;
 <?
 if (is_array($arResult['MEETING']['AGENDA'])):
 ?>
-<script type="text/javascript">BX.ready(function(){
+<script>BX.ready(function(){
 <?
 	foreach ($arResult['MEETING']['AGENDA'] as $item_id => $arItem):
 		if (MakeTimeStamp($arItem['DEADLINE'])<=0)
@@ -192,7 +192,7 @@ addRow(<?=CUtil::PhpToJsObject($arItem, false, true)?>, null);
 <?
 endif;
 ?>
-<script type="text/javascript">
+<script>
 function _onUpdateIndexes(all_cnt, cnt, ix)
 {
 	if (this.BXINSTANCEKEY && document.forms.meeting_edit['AGENDA_SORT['+this.BXINSTANCEKEY+']'])

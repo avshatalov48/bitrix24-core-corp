@@ -261,6 +261,7 @@ jn.define('im/messenger/controller/sidebar/sidebar-controller', (require, export
 					onClickInfoBLock: () => this.onClickInfoBLock(),
 				},
 				restService: this.sidebarRestService,
+				isSuperEllipseAvatar: this.isSuperEllipseAvatar(),
 			};
 		}
 
@@ -609,6 +610,11 @@ jn.define('im/messenger/controller/sidebar/sidebar-controller', (require, export
 			const percentOffsetHeightRow = percentOffsetHeightDevice * refPercentAttitude;
 
 			return refHeightRow - (percentOffsetHeightRow * refHeightRow / 100);
+		}
+
+		isSuperEllipseAvatar()
+		{
+			return false;
 		}
 
 		/**

@@ -88,7 +88,7 @@ final class Task extends Base
 
 	public function delete(int $activityId): void
 	{
-		CCrmActivity::Delete($activityId, true, true, ['MOVED_TO_RECYCLE_BIN' => true]);
+		CCrmActivity::Delete($activityId, false, true, ['MOVED_TO_RECYCLE_BIN' => true]);
 		TimelineEntry::deleteByAssociatedEntity(CCrmOwnerType::Activity, $activityId);
 
 		static::invalidateAll();

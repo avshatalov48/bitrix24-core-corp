@@ -169,7 +169,7 @@ if ($can_edit):
 endif; // $can_edit
 ?>
 </span>
-		<script type="text/javascript">
+		<script>
 			new BX.IntranetVSBlock({
 				section_id: <?=intval($arEntry['ID'])?>,
 				section_level: <?=intval($arEntry['DEPTH_LEVEL'])?>,
@@ -191,7 +191,7 @@ endif; // $can_edit
 		$r = RandString(8);
 		?>
 		<div class="structure-sorter<?=!$beforeId ? ' structure-sorter-last' : ''?>" id="vis_sorter_<?=$r?>"><div class="structure-sorter-inner"></div></div>
-		<script type="text/javascript">
+		<script>
 			new BX.IntranetVSSorter({
 				node: 'vis_sorter_<?=$r?>',
 				afterId: <?=$afterId ? $afterId : 'null'?>,
@@ -222,7 +222,7 @@ if (($arResult['__SKIP_ROOT'] ?? null) != 'Y'):
 	endif; // UNDO_ID
 	?>
 
-	<script type="text/javascript">
+	<script>
 		BX.message({
 			confirm_move_department: '<?=CUtil::JSEscape(GetMessage('ISV_confirm_move_department'))?>',
 			confirm_delete_department: '<?=CUtil::JSEscape(GetMessage('ISV_confirm_delete_department'))?>',

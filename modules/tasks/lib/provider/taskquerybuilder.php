@@ -19,8 +19,10 @@ use Bitrix\Main\SystemException;
 use Bitrix\Main\UserTable;
 use Bitrix\Tasks\Access\Model\UserModel;
 use Bitrix\Tasks\Access\Permission\PermissionDictionary;
-use Bitrix\Tasks\Access\Permission\TasksPermissionTable;
+use Bitrix\Tasks\Access\Permission\PermissionRegistry;
 use Bitrix\Tasks\Access\Role\RoleDictionary;
+use Bitrix\Tasks\Flow\Internal\FlowTable;
+use Bitrix\Tasks\Flow\Internal\FlowTaskTable;
 use Bitrix\Tasks\Integration\Intranet\Department;
 use Bitrix\Tasks\Integration\Intranet\Internals\Runtime\UtmUserTable;
 use Bitrix\Tasks\Integration\SocialNetwork\Group;
@@ -41,7 +43,6 @@ use Bitrix\Tasks\Internals\TaskTable;
 use Bitrix\Tasks\Internals\UserOption\Option;
 use Bitrix\Tasks\Kanban\TaskStageTable;
 use Bitrix\Tasks\Provider\Exception\InvalidSelectException;
-use Bitrix\Tasks\Provider\Exception\UnexpectedTableException;
 use Bitrix\Tasks\Internals\Task\MemberTable;
 use Bitrix\Tasks\Scrum\Form\EntityForm;
 use Bitrix\Tasks\Scrum\Internal\EntityTable;
@@ -67,6 +68,8 @@ class TaskQueryBuilder implements QueryBuilderInterface
 	public const ALIAS_TASK_STAGES = 'STG';
 	public const ALIAS_FORUM_MESSAGE = 'FM';
 	public const ALIAS_TASK_TAG = 'TG';
+	public const ALIAS_TASK_FLOW_ID = 'TFI';
+	public const ALIAS_TASK_FLOW = 'TF';
 	public const ALIAS_TASK_OPTION = 'TUO';
 	public const ALIAS_TASK_ELAPSED_TIME = 'TE';
 	public const ALIAS_CHAT_TASK = 'CTT';
@@ -83,7 +86,6 @@ class TaskQueryBuilder implements QueryBuilderInterface
 	public const ALIAS_TASK_SCENARIO = 'SCR';
 	public const ALIAS_TASK_REGULAR = 'REG';
 
-	private const DEFAULT_LIMIT = 50;
 	private TaskQuery $taskQuery;
 	private ?UserModel $user;
 	private Query $query;
@@ -92,7 +94,7 @@ class TaskQueryBuilder implements QueryBuilderInterface
 	private ?array $departmentMembers;
 	private array $runtimeFields = [];
 	private ?array $roles;
-	private ?array $permissions;
+	private ?array $permissions = null;
 	private static string $lastBuiltSql;
 
 	/**
@@ -309,28 +311,14 @@ class TaskQueryBuilder implements QueryBuilderInterface
 	 */
 	private function getPermissions(): array
 	{
-		if (!isset($this->permissions))
+		if (is_array($this->permissions))
 		{
-			$roles = $this->getUserRoles();
-			if (empty($roles))
-			{
-				return [];
-			}
-
-			$res = TasksPermissionTable::getList([
-				'select' => ['PERMISSION_ID'],
-				'filter' => [
-					'@ROLE_ID' => $roles,
-					'=VALUE' => PermissionDictionary::VALUE_YES
-				]
-			]);
-
-			$this->permissions = [];
-			foreach ($res as $row)
-			{
-				$this->permissions[$row['PERMISSION_ID']] = $row['PERMISSION_ID'];
-			}
+			return $this->permissions;
 		}
+
+		$roles = $this->getUserRoles();
+
+		$this->permissions = PermissionRegistry::getInstance()->getPermissions($roles);
 
 		return $this->permissions;
 	}
@@ -379,7 +367,8 @@ class TaskQueryBuilder implements QueryBuilderInterface
 	 */
 	private function buildLimit(): self
 	{
-		$limit = $this->taskQuery->getLimit() ?? self::DEFAULT_LIMIT;
+		$limit = $this->taskQuery->getLimit();
+		$limit = 0 === $limit ? null : $limit; // compatability with orm query
 		$offset = $this->taskQuery->getOffset();
 
 		$this->query
@@ -607,6 +596,16 @@ class TaskQueryBuilder implements QueryBuilderInterface
 					break;
 				}
 
+				$isExpression = !empty(array_filter(
+					$this->taskQuery->getSelect(),
+					static fn($field): bool => $field instanceof ExpressionField && $field->getName() === $column
+				));
+
+				if ($isExpression) // it is an expression in select, that's ok
+				{
+					$this->query->addOrder($column, $order);
+					break;
+				}
 		}
 	}
 
@@ -959,6 +958,32 @@ class TaskQueryBuilder implements QueryBuilderInterface
 				);
 				break;
 
+			case self::ALIAS_TASK_FLOW_ID:
+				$this->query->registerRuntimeField(
+					$alias,
+					(new ReferenceField(
+						$alias,
+						FlowTaskTable::getEntity(),
+						Join::on('this.ID', 'ref.TASK_ID')
+					))->configureJoinType(Join::TYPE_LEFT)
+				);
+				break;
+
+			case self::ALIAS_TASK_FLOW:
+				$this->query->addSelect(self::ALIAS_TASK_FLOW_ID . '.FLOW_ID', 'FLOW_ID');
+
+				$this->joinByAlias(self::ALIAS_TASK_FLOW_ID);
+
+				$this->query->registerRuntimeField(
+					$alias,
+					(new ReferenceField(
+						$alias,
+						FlowTable::getEntity(),
+						Join::on('this.' . self::ALIAS_TASK_FLOW_ID . '.FLOW_ID', 'ref.ID')
+					))->configureJoinType(Join::TYPE_LEFT)
+				);
+				break;
+
 			case self::ALIAS_CHAT_TASK:
 				if (!Loader::includeModule('im'))
 				{
@@ -995,6 +1020,12 @@ class TaskQueryBuilder implements QueryBuilderInterface
 
 		foreach ($select as $key)
 		{
+			if ($key instanceof ExpressionField)
+			{
+				$this->query->addSelect($key);
+				continue;
+			}
+
 			if (
 				preg_match('/^UF_/', $key)
 				&& array_key_exists($key, $entityFields)
@@ -1278,6 +1309,8 @@ class TaskQueryBuilder implements QueryBuilderInterface
 			),
 			"SCENARIO_NAME" => self::ALIAS_TASK_SCENARIO.".SCENARIO",
 			'IS_REGULAR' => 'IS_REGULAR',
+			'FLOW_ID' => self::ALIAS_TASK_FLOW_ID . '.FLOW_ID',
+			'FLOW' => self::ALIAS_TASK_FLOW . '.NAME',
 		];
 	}
 

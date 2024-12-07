@@ -63,7 +63,7 @@ use Bitrix\Main\Localization\Loc;
 			)
 		];
 		?>
-		<a href="https://dl.bitrix24.com/b24/bitrix24_desktop.exe"
+		<a href="<?= htmlspecialcharsbx($arResult['DESKTOP_DOWNLOAD_LINKS']['windows']) ?>"
 		   target="_blank"
 		   class="<?= implode(' ', $classList) ?>"></a><?php
 
@@ -77,7 +77,7 @@ use Bitrix\Main\Localization\Loc;
 			)
 		];
 		?>
-		<a href="https://dl.bitrix24.com/b24/bitrix24_desktop.dmg"
+		<a href="<?= htmlspecialcharsbx($arResult['DESKTOP_DOWNLOAD_LINKS']['macos']) ?>"
 		   target="_blank"
 		   class="<?= implode(' ', $classList) ?>"></a>
 	</div>

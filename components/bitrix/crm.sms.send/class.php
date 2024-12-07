@@ -71,6 +71,7 @@ class CCrmSmsSendComponent extends CBitrixComponent
 	private function getConfig(): array
 	{
 		$config = SmsManager::getEditorConfig($this->entityTypeId, $this->entityId);
+		$config['selectedProviderId'] = $this->getProviderId();
 
 		if ($this->getProviderId() === NotificationsManager::getSenderCode())
 		{

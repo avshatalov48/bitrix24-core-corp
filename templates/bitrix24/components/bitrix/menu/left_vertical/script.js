@@ -1,6 +1,6 @@
 /* eslint-disable */
 this.BX = this.BX || {};
-(function (exports,ui_buttons,main_core_event,im_v2_lib_desktopApi,main_core,main_popup,main_core_events,ui_dialogs_messagebox) {
+(function (exports,ui_buttons,main_core_event,im_v2_lib_desktopApi,main_core,main_popup,main_core_events,ui_dialogs_messagebox,ui_bannerDispatcher,ui_analytics) {
 	'use strict';
 
 	var Options = /*#__PURE__*/function () {
@@ -21,6 +21,7 @@ this.BX = this.BX || {};
 	babelHelpers.defineProperty(Options, "isAdmin", false);
 	babelHelpers.defineProperty(Options, "isCustomPresetRestricted", false);
 	babelHelpers.defineProperty(Options, "settingsPath", null);
+	babelHelpers.defineProperty(Options, "isMainPageEnabled", false);
 	babelHelpers.defineProperty(Options, "availablePresetTools", null);
 
 	function _classPrivateFieldInitSpec(obj, privateMap, value) { _checkPrivateRedeclaration(obj, privateMap); privateMap.set(obj, value); }
@@ -294,6 +295,7 @@ this.BX = this.BX || {};
 	function _classPrivateFieldInitSpec$1(obj, privateMap, value) { _checkPrivateRedeclaration$1(obj, privateMap); privateMap.set(obj, value); }
 	function _checkPrivateRedeclaration$1(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 	var _unavailableToolPopup = /*#__PURE__*/new WeakMap();
+	var _mode = /*#__PURE__*/new WeakMap();
 	var PresetDefaultController = /*#__PURE__*/function (_DefaultController) {
 	  babelHelpers.inherits(PresetDefaultController, _DefaultController);
 	  function PresetDefaultController() {
@@ -309,6 +311,10 @@ this.BX = this.BX || {};
 	      writable: true,
 	      value: void 0
 	    });
+	    _classPrivateFieldInitSpec$1(babelHelpers.assertThisInitialized(_this), _mode, {
+	      writable: true,
+	      value: void 0
+	    });
 	    return _this;
 	  }
 	  babelHelpers.createClass(PresetDefaultController, [{
@@ -316,6 +322,7 @@ this.BX = this.BX || {};
 	    value: function createPopup(mode) {
 	      var _this2 = this;
 	      var button;
+	      babelHelpers.classPrivateFieldSet(this, _mode, mode);
 	      var content = document.querySelector('#left-menu-preset-popup').cloneNode(true);
 	      return main_popup.PopupManager.create(this.constructor.name.toString(), null, {
 	        overlay: true,
@@ -349,14 +356,7 @@ this.BX = this.BX || {};
 	              return;
 	            }
 	            button.setWaiting(true);
-	            var currentPreset = "";
-	            if (document.forms["left-menu-preset-form"]) {
-	              babelHelpers.toConsumableArray(document.forms["left-menu-preset-form"].elements["presetType"]).forEach(function (node) {
-	                if (node.checked) {
-	                  currentPreset = node.value;
-	                }
-	              });
-	            }
+	            var currentPreset = _this2.getSelectedPreset();
 	            if (!Options.isAdmin && Options.availablePresetTools && Options.availablePresetTools[currentPreset] === false) {
 	              button.setWaiting(false);
 	              _this2.showUnavailableToolPopup();
@@ -387,6 +387,24 @@ this.BX = this.BX || {};
 	          }
 	        })]
 	      });
+	    }
+	  }, {
+	    key: "getMode",
+	    value: function getMode() {
+	      return babelHelpers.classPrivateFieldGet(this, _mode);
+	    }
+	  }, {
+	    key: "getSelectedPreset",
+	    value: function getSelectedPreset() {
+	      var currentPreset = '';
+	      if (document.forms['left-menu-preset-form']) {
+	        babelHelpers.toConsumableArray(document.forms['left-menu-preset-form'].elements['presetType']).forEach(function (node) {
+	          if (node.checked) {
+	            currentPreset = node.value;
+	          }
+	        });
+	      }
+	      return currentPreset;
 	    }
 	  }, {
 	    key: "showUnavailableToolPopup",
@@ -1665,6 +1683,27 @@ this.BX = this.BX || {};
 	}(Item);
 	babelHelpers.defineProperty(ItemAdminCustom, "code", 'custom');
 
+	var ItemMainPage = /*#__PURE__*/function (_Item) {
+	  babelHelpers.inherits(ItemMainPage, _Item);
+	  function ItemMainPage() {
+	    babelHelpers.classCallCheck(this, ItemMainPage);
+	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(ItemMainPage).apply(this, arguments));
+	  }
+	  babelHelpers.createClass(ItemMainPage, [{
+	    key: "canDelete",
+	    value: function canDelete() {
+	      return false;
+	    }
+	  }, {
+	    key: "openSettings",
+	    value: function openSettings() {
+	      BX.SidePanel.Instance.open('/settings/configs/?analyticContext=left_menu&page=mainpage');
+	    }
+	  }]);
+	  return ItemMainPage;
+	}(Item);
+	babelHelpers.defineProperty(ItemMainPage, "code", 'main');
+
 	var ItemSystem = /*#__PURE__*/function (_Item) {
 	  babelHelpers.inherits(ItemSystem, _Item);
 	  function ItemSystem() {
@@ -1895,7 +1934,7 @@ this.BX = this.BX || {};
 	}(ItemGroup);
 	babelHelpers.defineProperty(ItemGroupSystem, "code", 'system_group');
 
-	var itemMappings = [Item, ItemAdminShared, ItemUserFavorites, ItemAdminCustom, ItemUserSelf, ItemSystem, ItemGroup, ItemGroupSystem];
+	var itemMappings = [Item, ItemAdminShared, ItemUserFavorites, ItemAdminCustom, ItemUserSelf, ItemSystem, ItemGroup, ItemGroupSystem, ItemMainPage];
 	function getItem(itemData) {
 	  var itemClassName = Item;
 	  itemMappings.forEach(function (itemClass) {
@@ -2126,11 +2165,14 @@ this.BX = this.BX || {};
 	  babelHelpers.createClass(ItemsController, [{
 	    key: "registerItem",
 	    value: function registerItem(node) {
-	      var _this2 = this;
+	      var _this2 = this,
+	        _item$container$query;
 	      var itemClass = getItem(node);
 	      var item = new itemClass(this.container, node);
 	      this.items.set(item.getId(), item);
-	      _classPrivateMethodGet(this, _registerDND, _registerDND2).call(this, item);
+	      if (!(item instanceof ItemMainPage)) {
+	        _classPrivateMethodGet(this, _registerDND, _registerDND2).call(this, item);
+	      }
 	      if (babelHelpers.classPrivateFieldGet(this, _activeItem).checkAndSet(item, item.getSimilarToUrl(Utils.getCurUri())) === true) {
 	        var parentItem = _classPrivateMethodGet(this, _getParentItemFor, _getParentItemFor2).call(this, item);
 	        while (parentItem) {
@@ -2155,7 +2197,7 @@ this.BX = this.BX || {};
 	          }
 	        }, true);
 	      });
-	      item.container.querySelector('[data-role="item-edit-control"]').addEventListener('click', function (event) {
+	      (_item$container$query = item.container.querySelector('[data-role="item-edit-control"]')) === null || _item$container$query === void 0 ? void 0 : _item$container$query.addEventListener('click', function (event) {
 	        _this2.openItemMenu(item, event.target);
 	      });
 	      return item;
@@ -2477,7 +2519,15 @@ this.BX = this.BX || {};
 	      }
 	      var contextMenuItems = [];
 	      // region hide/show item
-	      if (item.container.getAttribute("data-status") === "show") {
+
+	      if (item instanceof ItemMainPage) {
+	        contextMenuItems.push({
+	          text: main_core.Loc.getMessage('MENU_OPEN_SETTINGS_MAIN_PAGE'),
+	          onclick: function onclick() {
+	            item.openSettings();
+	          }
+	        });
+	      } else if (item.container.getAttribute("data-status") === "show") {
 	        contextMenuItems.push({
 	          text: main_core.Loc.getMessage("hide_item"),
 	          onclick: function onclick() {
@@ -2495,7 +2545,7 @@ this.BX = this.BX || {};
 	      //endregion
 
 	      //region set as main page
-	      if (!Options.isExtranet && !(item instanceof ItemUserSelf) && !(item instanceof ItemGroup) && this.container.querySelector('li.menu-item-block[data-role="item"]') !== item.container) {
+	      if (!Options.isExtranet && !Options.isMainPageEnabled && !(item instanceof ItemUserSelf) && !(item instanceof ItemGroup) && this.container.querySelector('li.menu-item-block[data-role="item"]') !== item.container) {
 	        contextMenuItems.push({
 	          text: main_core.Loc.getMessage("MENU_SET_MAIN_PAGE"),
 	          onclick: function onclick() {
@@ -2508,12 +2558,14 @@ this.BX = this.BX || {};
 	      item.getDropDownActions().forEach(function (actionItem) {
 	        contextMenuItems.push(actionItem);
 	      });
-	      contextMenuItems.push({
-	        text: babelHelpers.classPrivateFieldGet(this, _isEditMode) ? main_core.Loc.getMessage("MENU_EDIT_READY_FULL") : main_core.Loc.getMessage("MENU_SETTINGS_MODE"),
-	        onclick: function onclick() {
-	          babelHelpers.classPrivateFieldGet(_this7, _isEditMode) ? _this7.switchToViewMode() : _this7.switchToEditMode();
-	        }
-	      });
+	      if (!(item instanceof ItemMainPage)) {
+	        contextMenuItems.push({
+	          text: babelHelpers.classPrivateFieldGet(this, _isEditMode) ? main_core.Loc.getMessage("MENU_EDIT_READY_FULL") : main_core.Loc.getMessage("MENU_SETTINGS_MODE"),
+	          onclick: function onclick() {
+	            babelHelpers.classPrivateFieldGet(_this7, _isEditMode) ? _this7.switchToViewMode() : _this7.switchToEditMode();
+	          }
+	        });
+	      }
 	      contextMenuItems.forEach(function (item) {
 	        var _item$className;
 	        item['className'] = ["menu-popup-no-icon", (_item$className = item['className']) !== null && _item$className !== void 0 ? _item$className : ''].join(' ');
@@ -2948,6 +3000,7 @@ this.BX = this.BX || {};
 	}
 	function _menuItemDragStop2() {
 	  var item = this.dnd.item;
+	  console.log(item);
 	  var oldParent = this.dnd.oldParent;
 	  var dragElement = item.container;
 	  main_core.Dom.removeClass(this.dnd.container, "menu-drag-mode");
@@ -3078,8 +3131,88 @@ this.BX = this.BX || {};
 	}(DefaultController);
 
 	function _classPrivateFieldInitSpec$5(obj, privateMap, value) { _checkPrivateRedeclaration$5(obj, privateMap); privateMap.set(obj, value); }
-	function _classPrivateMethodInitSpec$1(obj, privateSet) { _checkPrivateRedeclaration$5(obj, privateSet); privateSet.add(obj); }
 	function _checkPrivateRedeclaration$5(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	var _isAdmin = /*#__PURE__*/new WeakMap();
+	var Analytics = /*#__PURE__*/function () {
+	  function Analytics(isAdmin) {
+	    babelHelpers.classCallCheck(this, Analytics);
+	    _classPrivateFieldInitSpec$5(this, _isAdmin, {
+	      writable: true,
+	      value: void 0
+	    });
+	    babelHelpers.classPrivateFieldSet(this, _isAdmin, isAdmin ? AnalyticUserRole.ADMIN : AnalyticUserRole.NOT_ADMIN);
+	  }
+	  babelHelpers.createClass(Analytics, [{
+	    key: "sendSetCustomPreset",
+	    value: function sendSetCustomPreset() {
+	      ui_analytics.sendData({
+	        tool: AnalyticTool,
+	        category: AnalyticCategory.MENU,
+	        event: AnalyticEvent.SET,
+	        type: 'custom',
+	        c_section: AnalyticSection.MENU,
+	        p1: babelHelpers.classPrivateFieldGet(this, _isAdmin)
+	      });
+	    }
+	  }, {
+	    key: "sendSetPreset",
+	    value: function sendSetPreset(presetId, isPersonal, action) {
+	      ui_analytics.sendData({
+	        type: presetId,
+	        event: isPersonal ? AnalyticEvent.CHANGE : AnalyticEvent.SELECT,
+	        tool: AnalyticTool,
+	        category: isPersonal ? AnalyticCategory.MENU : AnalyticCategory.TOOL,
+	        c_section: isPersonal ? AnalyticSection.MENU : AnalyticSection.POPUP,
+	        c_element: action,
+	        p1: babelHelpers.classPrivateFieldGet(this, _isAdmin)
+	      });
+	    }
+	  }, {
+	    key: "sendClose",
+	    value: function sendClose() {
+	      ui_analytics.sendData({
+	        event: AnalyticEvent.SHOW,
+	        tool: AnalyticTool,
+	        category: AnalyticCategory.TOOL,
+	        c_section: AnalyticSection.POPUP
+	      });
+	    }
+	  }]);
+	  return Analytics;
+	}();
+	var AnalyticCategory = {
+	  TOOL: 'main_tool',
+	  MENU: 'main_menu'
+	};
+	var AnalyticEvent = {
+	  SHOW: 'window_show',
+	  SELECT: 'select',
+	  CHANGE: 'change',
+	  SET: 'menu_set'
+	};
+	var AnalyticUserRole = {
+	  ADMIN: 'isAdmin_Y',
+	  NOT_ADMIN: 'isAdmin_N'
+	};
+	var AnalyticSection = {
+	  POPUP: 'menu_popup',
+	  PRESET: 'preset',
+	  QUALIFICATION: 'qualification',
+	  SETTINGS: 'settings',
+	  MENU: 'main_menu'
+	};
+	var AnalyticActions = {
+	  CONFIRM: 'confirm',
+	  LATER: 'later',
+	  CLOSE: 'close',
+	  SAVE: 'save',
+	  SKIP: 'skip'
+	};
+	var AnalyticTool = 'intranet';
+
+	function _classPrivateFieldInitSpec$6(obj, privateMap, value) { _checkPrivateRedeclaration$6(obj, privateMap); privateMap.set(obj, value); }
+	function _classPrivateMethodInitSpec$1(obj, privateSet) { _checkPrivateRedeclaration$6(obj, privateSet); privateSet.add(obj); }
+	function _checkPrivateRedeclaration$6(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 	function _classPrivateMethodGet$1(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 	var _getLeftMenuItemByTopMenuItem = /*#__PURE__*/new WeakSet();
 	var _isLogoMaskNeeded = /*#__PURE__*/new WeakSet();
@@ -3109,7 +3242,7 @@ this.BX = this.BX || {};
 	    babelHelpers.defineProperty(this, "isMenuMouseLeaveBlocked", []);
 	    babelHelpers.defineProperty(this, "isCollapsedMode", false);
 	    babelHelpers.defineProperty(this, "workgroupsCounterData", {});
-	    _classPrivateFieldInitSpec$5(this, _specialLiveFeedDecrement, {
+	    _classPrivateFieldInitSpec$6(this, _specialLiveFeedDecrement, {
 	      writable: true,
 	      value: 0
 	    });
@@ -3120,12 +3253,14 @@ this.BX = this.BX || {};
 	    }
 	    params = babelHelpers["typeof"](params) === "object" ? params : {};
 	    Options.isExtranet = params.isExtranet === 'Y';
+	    Options.isMainPageEnabled = params.isMainPageEnabled === 'Y';
 	    Options.isAdmin = params.isAdmin;
 	    Options.isCustomPresetRestricted = params.isCustomPresetAvailable !== 'Y';
 	    Options.availablePresetTools = params.availablePresetTools;
 	    Options.settingsPath = params.settingsPath;
 	    this.isCollapsedMode = params.isCollapsedMode;
 	    this.workgroupsCounterData = params.workgroupsCounterData;
+	    this.analytics = new Analytics(params.isAdmin);
 	    this.initAndBindNodes();
 	    this.bindEvents();
 	    this.getItemsController();
@@ -3264,6 +3399,9 @@ this.BX = this.BX || {};
 	                saveSortItems = _this5$getItemsContro.saveSortItems,
 	                firstItemLink = _this5$getItemsContro.firstItemLink,
 	                customItems = _this5$getItemsContro.customItems;
+	              if (!data) {
+	                _this5.analytics.sendSetCustomPreset();
+	              }
 	              return Backend.setCustomPreset(data, saveSortItems, customItems, firstItemLink);
 	            },
 	            onShow: function onShow() {
@@ -3280,20 +3418,33 @@ this.BX = this.BX || {};
 	    key: "getDefaultPresetController",
 	    value: function getDefaultPresetController() {
 	      var _this6 = this;
+	      var shouldSendCloseEvent = true;
 	      return this.cache.remember('defaultPresetController', function () {
-	        return new PresetDefaultController(_this6.menuContainer, {
+	        var presetController = new PresetDefaultController(_this6.menuContainer, {
 	          events: {
 	            onPresetIsSet: function onPresetIsSet(_ref5) {
 	              var _ref5$data = _ref5.data,
 	                mode = _ref5$data.mode,
 	                presetId = _ref5$data.presetId;
+	              _this6.analytics.sendSetPreset(presetId, mode === 'personal', AnalyticActions.CONFIRM);
+	              shouldSendCloseEvent = false;
 	              return Backend.setSystemPreset(mode, presetId);
 	            },
 	            onPresetIsPostponed: function onPresetIsPostponed(_ref6) {
 	              var mode = _ref6.data.mode;
+	              _this6.analytics.sendSetPreset(presetController.getSelectedPreset(), mode === 'personal', AnalyticActions.LATER);
+	              shouldSendCloseEvent = false;
 	              var result = Backend.postponeSystemPreset(mode);
 	              main_core_events.EventEmitter.emit(_this6, Options.eventName('onPresetIsPostponed'));
 	              return result;
+	            },
+	            onShow: function onShow() {
+	              _this6.analytics.sendClose();
+	            },
+	            onClose: function onClose() {
+	              if (shouldSendCloseEvent) {
+	                _this6.analytics.sendSetPreset(presetController.getSelectedPreset(), presetController.getMode() === 'personal', AnalyticActions.CLOSE);
+	              }
 	            }
 	            /*
 	            						onShow: () => { this.isMenuMouseLeaveBlocked.push('presets-default'); },
@@ -3301,6 +3452,8 @@ this.BX = this.BX || {};
 	            */
 	          }
 	        });
+
+	        return presetController;
 	      });
 	    } //endregion
 	  }, {
@@ -3457,7 +3610,14 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "showGlobalPreset",
 	    value: function showGlobalPreset() {
-	      this.getDefaultPresetController().show('global');
+	      var _this8 = this;
+	      ui_bannerDispatcher.BannerDispatcher.high.toQueue(function (onDone) {
+	        var presetController = _this8.getDefaultPresetController();
+	        presetController.show('global');
+	        presetController.getPopup().subscribe('onAfterClose', function (event) {
+	          onDone();
+	        });
+	      });
 	    }
 	  }, {
 	    key: "handleShowHiddenClick",
@@ -3513,7 +3673,7 @@ this.BX = this.BX || {};
 	    key: "onGettingSettingMenuItems",
 	    // region Events servicing functions
 	    value: function onGettingSettingMenuItems() {
-	      var _this8 = this;
+	      var _this9 = this;
 	      var topPoint = ItemUserFavorites.getActiveTopMenuItem();
 	      var menuItemWithAddingToFavorites = null;
 	      if (topPoint) {
@@ -3522,7 +3682,7 @@ this.BX = this.BX || {};
 	          menuItemWithAddingToFavorites = {
 	            text: main_core.Loc.getMessage("MENU_ADD_TO_LEFT_MENU"),
 	            onclick: function onclick(event, item) {
-	              _this8.getItemDirector().saveStandardPage(topPoint);
+	              _this9.getItemDirector().saveStandardPage(topPoint);
 	              item.getMenuWindow().destroy();
 	            }
 	          };
@@ -3530,7 +3690,7 @@ this.BX = this.BX || {};
 	          menuItemWithAddingToFavorites = {
 	            text: main_core.Loc.getMessage("MENU_DELETE_FROM_LEFT_MENU"),
 	            onclick: function onclick(event, item) {
-	              _this8.getItemDirector().deleteStandardPage(topPoint);
+	              _this9.getItemDirector().deleteStandardPage(topPoint);
 	              item.getMenuWindow().destroy();
 	            }
 	          };
@@ -3545,23 +3705,23 @@ this.BX = this.BX || {};
 	      var menuItems = [{
 	        text: main_core.Loc.getMessage('SORT_ITEMS'),
 	        onclick: function onclick() {
-	          _this8.getItemsController().switchToEditMode();
+	          _this9.getItemsController().switchToEditMode();
 	        }
 	      }, {
 	        text: this.isCollapsed() ? main_core.Loc.getMessage('MENU_EXPAND') : main_core.Loc.getMessage('MENU_COLLAPSE'),
 	        onclick: function onclick(event, item) {
-	          _this8.toggle();
+	          _this9.toggle();
 	          item.getMenuWindow().destroy();
 	        }
 	      }, menuItemWithAddingToFavorites, {
 	        text: main_core.Loc.getMessage('MENU_ADD_SELF_PAGE'),
 	        onclick: function onclick(event, item) {
-	          _this8.getItemDirector().showAddToSelf(_this8.getSettingsController().getContainer());
+	          _this9.getItemDirector().showAddToSelf(_this9.getSettingsController().getContainer());
 	        }
 	      }, Options.isExtranet ? null : {
 	        text: main_core.Loc.getMessage('MENU_SET_DEFAULT2'),
 	        onclick: function onclick() {
-	          _this8.getDefaultPresetController().show('personal');
+	          _this9.getDefaultPresetController().show('personal');
 	        }
 	      }, Options.isExtranet ? null : {
 	        text: main_core.Loc.getMessage('MENU_SET_DEFAULT'),
@@ -3580,7 +3740,7 @@ this.BX = this.BX || {};
 	            if (Options.isCustomPresetRestricted) {
 	              BX.UI.InfoHelper.show('limit_office_menu_to_all');
 	            } else {
-	              _this8.getCustomPresetController().show();
+	              _this9.getCustomPresetController().show();
 	            }
 	          }
 	        });
@@ -4092,12 +4252,12 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "getStructureForHelper",
 	    value: function getStructureForHelper() {
-	      var _this9 = this;
+	      var _this10 = this;
 	      var items = {
 	        menu: {}
 	      };
 	      ["show", "hide"].forEach(function (state) {
-	        Array.from(_this9.menuContainer.querySelectorAll("[data-status=\"".concat(state, "\"][data-type=\"").concat(ItemSystem.code, "\"]"))).forEach(function (node) {
+	        Array.from(_this10.menuContainer.querySelectorAll("[data-status=\"".concat(state, "\"][data-type=\"").concat(ItemSystem.code, "\"]"))).forEach(function (node) {
 	          items[state] = items[state] || [];
 	          items[state].push(node.getAttribute("data-id"));
 	        });
@@ -4194,23 +4354,23 @@ this.BX = this.BX || {};
 	  return (_item = item) !== null && _item !== void 0 ? _item : null;
 	}
 	function _isLogoMaskNeeded2() {
-	  var _this10 = this;
+	  var _this11 = this;
 	  return this.cache.remember('isLogoMaskNeeded', function () {
-	    var menuHeaderLogo = _this10.menuHeader.querySelector(".logo");
+	    var menuHeaderLogo = _this11.menuHeader.querySelector(".logo");
 	    var result = false;
 	    if (menuHeaderLogo && !menuHeaderLogo.querySelector(".logo-image-container")) {
-	      var widthMeasure = menuHeaderLogo.offsetWidth === 0 ? _this10.header.querySelector(".logo") ? _this10.header.querySelector(".logo").offsetWidth : 0 : menuHeaderLogo.offsetWidth;
+	      var widthMeasure = menuHeaderLogo.offsetWidth === 0 ? _this11.header.querySelector(".logo") ? _this11.header.querySelector(".logo").offsetWidth : 0 : menuHeaderLogo.offsetWidth;
 	      result = widthMeasure > 200;
 	    }
 	    return result;
 	  });
 	}
 	function _adjustAdminPanel2() {
-	  var _this11 = this;
+	  var _this12 = this;
 	  if (!this['menuAdjustAdminPanel']) {
 	    this['menuAdjustAdminPanel'] = function (_ref16) {
 	      var data = _ref16.data;
-	      _this11.menuContainer.style.top = [data, 'px'].join('');
+	      _this12.menuContainer.style.top = [data, 'px'].join('');
 	    };
 	    main_core_events.EventEmitter.subscribe(Utils.adminPanel, Options.eventName('onPanelHasChanged'), this['menuAdjustAdminPanel']);
 	  }
@@ -4219,5 +4379,5 @@ this.BX = this.BX || {};
 
 	exports.Menu = Menu;
 
-}((this.BX.Intranet = this.BX.Intranet || {}),BX.UI,BX,BX.Messenger.v2.Lib,BX,BX.Main,BX.Event,BX.UI.Dialogs));
+}((this.BX.Intranet = this.BX.Intranet || {}),BX.UI,BX,BX.Messenger.v2.Lib,BX,BX.Main,BX.Event,BX.UI.Dialogs,BX.UI,BX.UI.Analytics));
 //# sourceMappingURL=script.js.map

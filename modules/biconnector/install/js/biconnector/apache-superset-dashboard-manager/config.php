@@ -14,6 +14,7 @@ return [
 		'ui.buttons',
 		'main.core.events',
 		'sidepanel',
+		'biconnector.dashboard-export-master',
 	],
 	'skip_core' => false,
 ];

@@ -1,8 +1,10 @@
+import { Dom, Runtime, Type } from 'main.core';
 import { Label } from 'ui.label';
-import { Dom, Type } from 'main.core';
 
 import { Action } from '../../../action';
 import { TagType } from '../../enums/tag-type';
+
+import 'ui.hint';
 
 export const Tag = {
 	props: {
@@ -28,13 +30,14 @@ export const Tag = {
 		},
 		state: String,
 	},
-	computed: {
+	computed:
+	{
 		className(): Object
 		{
 			return {
 				'crm-timeline__card-status': true,
-				'--clickable': !!this.action,
-				'--hint': !!this.hint,
+				'--clickable': Boolean(this.action),
+				'--hint': Boolean(this.hint),
 			};
 		},
 
@@ -55,9 +58,9 @@ export const Tag = {
 			return this.$refs.tag;
 		},
 	},
-	methods: {
-
-		getLabelColorFromTagType(tagType)
+	methods:
+	{
+		getLabelColorFromTagType(tagType): String
 		{
 			const lowerCaseTagType = tagType ? tagType.toLowerCase() : '';
 			const labelColor = this.tagTypeToLabelColorDict[lowerCaseTagType];
@@ -96,6 +99,36 @@ export const Tag = {
 			const action = new Action(this.action);
 			action.execute(this);
 		},
+
+		showTooltip(): void
+		{
+			if (this.hint === '')
+			{
+				return;
+			}
+
+			Runtime.debounce(
+				() => {
+					BX.UI.Hint.show(
+						this.$el,
+						this.hint,
+						true,
+					);
+				},
+				50,
+				this,
+			)();
+		},
+
+		hideTooltip(): void
+		{
+			if (this.hint === '')
+			{
+				return;
+			}
+
+			BX.UI.Hint.hide(this.$el);
+		},
 	},
 
 	mounted(): void
@@ -109,6 +142,12 @@ export const Tag = {
 	},
 
 	template: `
-		<div ref="tag" :title="hint" :class="className" @click="executeAction"></div>
+		<div
+			ref="tag"
+			:class="className"
+			@mouseover="showTooltip"
+			@mouseleave="hideTooltip"
+			@click="executeAction"
+		></div>
 	`,
 };

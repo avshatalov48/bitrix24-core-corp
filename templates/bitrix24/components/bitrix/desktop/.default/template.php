@@ -13,7 +13,7 @@ $APPLICATION->SetAdditionalCSS('/bitrix/themes/.default/pubstyles.css');
 if(!defined("BX_GADGET_DEFAULT"))
 {
 	define("BX_GADGET_DEFAULT", true);
-	?><script type="text/javascript">
+	?><script>
 		var updateURL = '<?=CUtil::JSEscape(htmlspecialcharsback($arResult['UPD_URL']))?>';
 		var bxsessid = '<?=CUtil::JSEscape(bitrix_sessid())?>';
 		var langGDError1 = '<?=CUtil::JSEscape(GetMessage("CMDESKTOP_TDEF_ERR1"))?>';
@@ -26,7 +26,7 @@ if(!defined("BX_GADGET_DEFAULT"))
 	</script><?
 	if($arResult["PERMISSION"]>"R")
 	{
-		?><script type="text/javascript" src="/bitrix/components/bitrix/desktop/script.js?v=<?=filemtime($_SERVER['DOCUMENT_ROOT'].'/bitrix/components/bitrix/desktop/script.js');?>"></script><?
+		?><script src="/bitrix/components/bitrix/desktop/script.js?v=<?=filemtime($_SERVER['DOCUMENT_ROOT'].'/bitrix/components/bitrix/desktop/script.js');?>"></script><?
 	}
 }
 
@@ -45,7 +45,7 @@ if($arResult["PERMISSION"]>"R")
 			);
 	}
 
-	?><script type="text/javascript">
+	?><script>
 		arGDGroups = <?=CUtil::PhpToJSObject($arResult["GROUPS"])?>;
 		BX.ready(function() {
 			new BXGadget('<?=$arResult["ID"]?>', <?=CUtil::PhpToJSObject($allGD)?>);
@@ -97,7 +97,7 @@ if ($arResult["PERMISSION"] > "W")
 	<div class="gdcontent" id="dgddesktop-actions">'.$gadgetButtons.'</div>
 	</div>';
 
-	$gadgetButtons .= '<script type="text/javascript">
+	$gadgetButtons .= '<script>
 		BX.ready(function() {
 			new BXGadget(\'desktop-actions\', {});
 		});

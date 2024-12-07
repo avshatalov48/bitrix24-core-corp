@@ -2,6 +2,7 @@ import { Runtime, Type } from 'main.core';
 import { Loader } from 'main.loader';
 import { BitrixVue } from 'ui.vue3';
 import { CommentEditor } from 'crm.timeline.editors.comment-editor';
+
 import { Action } from '../../action';
 import { EditableDescription } from './editable-description';
 import { ButtonState } from '../enums/button-state';
@@ -9,6 +10,9 @@ import { ButtonState } from '../enums/button-state';
 const TYPE_LOAD_FILES_BLOCK = 1;
 const TYPE_LOAD_TEXT_CONTENT = 2;
 
+/**
+ * @extends EditableDescription
+ */
 export default BitrixVue.cloneComponent(EditableDescription, {
 	props: {
 		filesCount: {
@@ -31,6 +35,8 @@ export default BitrixVue.cloneComponent(EditableDescription, {
 	data(): Object {
 		return {
 			...this.parentData(),
+			value: this.text,
+			oldValue: this.text,
 			isTextLoaded: false,
 			isTextChanged: false,
 			isMoving: false,
@@ -50,7 +56,7 @@ export default BitrixVue.cloneComponent(EditableDescription, {
 					'--is-editor-loaded': this.isEdit,
 				},
 			];
-		}
+		},
 	},
 
 	methods: {
@@ -78,7 +84,7 @@ export default BitrixVue.cloneComponent(EditableDescription, {
 
 			if (this.filesHtmlBlock)
 			{
-				Runtime.html(this.$refs.files, this.filesHtmlBlock).then(() => {
+				void Runtime.html(this.$refs.files, this.filesHtmlBlock).then(() => {
 					this.registerImages(this.$refs.files);
 					BX.LazyLoad.showImages();
 
@@ -119,7 +125,7 @@ export default BitrixVue.cloneComponent(EditableDescription, {
 				: this.$refs.rootWrapperElement;
 
 			const parentComputedStyles = window.getComputedStyle(root);
-			const parentHeight = root?.offsetHeight
+			const parentHeight = root.offsetHeight
 				- parseFloat(parentComputedStyles.paddingTop)
 				- parseFloat(parentComputedStyles.paddingBottom)
 			;
@@ -149,10 +155,10 @@ export default BitrixVue.cloneComponent(EditableDescription, {
 
 			const htmlContent = this.editor.getHtmlContent();
 			const attachmentList = this.editor.getAttachments();
-
+			const attachmentAllowEditOptions = this.editor.getAttachmentsAllowEditOptions(attachmentList);
 			this.isSaving = true;
 
-			this.executeSaveAction(content, attachmentList).then(() => {
+			void this.executeSaveAction(content, attachmentList, attachmentAllowEditOptions).then(() => {
 				this.isEdit = false;
 
 				if (!this.isTextChanged)
@@ -172,7 +178,7 @@ export default BitrixVue.cloneComponent(EditableDescription, {
 			});
 		},
 
-		executeSaveAction(content: String, attachmentList: Array): Promise
+		executeSaveAction(content: String, attachmentList: Array, attachmentAllowEditOptions: Object): Promise
 		{
 			// to avoid unintended props mutation
 			const actionDescription = Runtime.clone(this.saveAction);
@@ -180,9 +186,14 @@ export default BitrixVue.cloneComponent(EditableDescription, {
 			actionDescription.actionParams ??= {};
 			actionDescription.actionParams.id = actionDescription.actionParams.commentId;
 			actionDescription.actionParams.fields = {
-				'COMMENT': content,
-				'ATTACHMENTS': attachmentList
+				COMMENT: content,
+				ATTACHMENTS: attachmentList,
 			};
+
+			if (Object.keys(attachmentAllowEditOptions).length > 0)
+			{
+				actionDescription.actionParams.CRM_TIMELINE_DISK_ATTACHED_OBJECT_ALLOW_EDIT = attachmentAllowEditOptions;
+			}
 
 			const action = new Action(actionDescription);
 
@@ -211,7 +222,7 @@ export default BitrixVue.cloneComponent(EditableDescription, {
 
 			this.showLoader(true);
 
-			action.execute(this).then(response => {
+			action.execute(this).then((response) => {
 				if (type === TYPE_LOAD_FILES_BLOCK)
 				{
 					this.filesHtmlBlock = response.data.html;
@@ -221,7 +232,7 @@ export default BitrixVue.cloneComponent(EditableDescription, {
 					this.isTextLoaded = true;
 				}
 
-				Runtime.html(node, response.data.html).then(() => {
+				void Runtime.html(node, response.data.html).then(() => {
 					this.registerImages(node);
 					BX.LazyLoad.showImages();
 
@@ -243,7 +254,7 @@ export default BitrixVue.cloneComponent(EditableDescription, {
 
 		registerImages(node: HTMLElement): void
 		{
-			if (!Type.isDomNode(node) )
+			if (!Type.isDomNode(node))
 			{
 				return;
 			}
@@ -264,11 +275,11 @@ export default BitrixVue.cloneComponent(EditableDescription, {
 
 				if (idsList.length > 0)
 				{
-					BX.LazyLoad.registerImages(idsList, null, {dataSrcName: "thumbSrc"});
+					BX.LazyLoad.registerImages(idsList, null, { dataSrcName: 'thumbSrc' });
 				}
 			}
 
-			BX.LazyLoad.registerImages(idsList, null, {dataSrcName: "thumbSrc"});
+			BX.LazyLoad.registerImages(idsList, null, { dataSrcName: 'thumbSrc' });
 		},
 
 		showLoader(showLoader: boolean): void
@@ -277,23 +288,23 @@ export default BitrixVue.cloneComponent(EditableDescription, {
 			{
 				if (!this.loader)
 				{
-					this.loader =  new Loader({size: 20, mode: 'inline'});
+					this.loader = new Loader({
+						size: 20,
+						mode: 'inline',
+					});
 				}
 
 				this.loader.show(this.$refs.files);
 			}
-			else
+			else if (this.loader)
 			{
-				if (this.loader)
-				{
-					this.loader.hide();
-				}
+				this.loader.hide();
 			}
 		},
 
 		createEditor(): void
 		{
-			this.editor = new CommentEditor(this.loadAction.actionParams.commentId,);
+			this.editor = new CommentEditor(this.loadAction.actionParams.commentId);
 		},
 
 		setIsMoving(flag: boolean = true): void
@@ -307,12 +318,12 @@ export default BitrixVue.cloneComponent(EditableDescription, {
 
 			if (this.filesHtmlBlock)
 			{
-				Runtime.html(this.$refs.files, this.filesHtmlBlock).then(() => {
+				void Runtime.html(this.$refs.files, this.filesHtmlBlock).then(() => {
 					this.registerImages(this.$refs.files);
 					BX.LazyLoad.showImages();
 				});
 			}
-		}
+		},
 	},
 
 	watch: {
@@ -330,7 +341,8 @@ export default BitrixVue.cloneComponent(EditableDescription, {
 
 		value(newValue: String): void
 		{
-			if (!this.isEdit) {
+			if (!this.isEdit)
+			{
 				return;
 			}
 
@@ -350,7 +362,7 @@ export default BitrixVue.cloneComponent(EditableDescription, {
 			this.$nextTick((): void => {
 				this.executeLoadAction(TYPE_LOAD_FILES_BLOCK, this.$refs.files);
 			});
-		}
+		},
 	},
 
 	mounted() {
@@ -367,7 +379,7 @@ export default BitrixVue.cloneComponent(EditableDescription, {
 	},
 
 	template: `
-		<div ref="rootWrapperElement" class="crm-timeline__editable-text_wrapper">
+		<div ref="rootWrapperElement" class="crm-timeline__editable-text_wrapper --comment">
 			<div ref="rootElement" :class="className">
 				<button
 					v-if="isLongText && !isEdit && isEditable && isEditButtonVisible"
@@ -435,5 +447,5 @@ export default BitrixVue.cloneComponent(EditableDescription, {
 			>
 			</div>
 		</div>
-	`
+	`,
 });

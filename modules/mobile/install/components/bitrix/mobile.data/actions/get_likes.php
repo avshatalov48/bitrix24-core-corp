@@ -107,9 +107,6 @@ if ($bFound)
 		if (count($arTags) > 0)
 			$tmpData["TAGS"] = implode(",", $arTags);
 
-		if (SITE_CHARSET != "utf-8")
-			$tmpData = $GLOBALS["APPLICATION"]->ConvertCharsetArray($tmpData, SITE_CHARSET, "utf-8");
-
 		$arResultData[] = $tmpData;
 	}
 

@@ -4,19 +4,24 @@
 namespace Bitrix\Crm\Merger\ConflictResolver;
 
 
+use Bitrix\Crm\Service\Container;
+use Bitrix\Main\ArgumentNullException;
+use Bitrix\Main\NotSupportedException;
+
 class OpportunityField extends Base
 {
-	protected $entityTypeId = \CCrmOwnerType::Undefined;
-
-	public function setEntityTypeId($entityTypeId): void
+	public function __construct(
+		string $fieldId,
+		protected int $entityTypeId = \CCrmOwnerType::Undefined,
+	)
 	{
-		if(!\CCrmOwnerType::IsDefined($entityTypeId))
-		{
-			throw new \Bitrix\Main\ArgumentException('Is not defined', 'entityTypeId');
-		}
-		$this->entityTypeId = $entityTypeId;
+		parent::__construct($fieldId);
 	}
 
+	/**
+	 * @throws ArgumentNullException
+	 * @throws NotSupportedException
+	 */
 	public function resolveByValue(&$seedOpportunity, &$targetOpportunity): bool
 	{
 		if (parent::resolveByValue($seedOpportunity, $targetOpportunity))
@@ -30,26 +35,13 @@ class OpportunityField extends Base
 		$seedId = isset($seed['ID']) ? (int)$seed['ID'] : 0;
 		$targetId = isset($target['ID']) ? (int)$target['ID'] : 0;
 
-		$dataSourceClassName = '';
-		switch ($this->entityTypeId)
-		{
-			case \CCrmOwnerType::Lead:
-				$dataSourceClassName = '\CCrmLead';
-				break;
-			case \CCrmOwnerType::Deal:
-				$dataSourceClassName = '\CCrmDeal';
-				break;
-			default:
-				throw new \Bitrix\Main\NotSupportedException(\CCrmOwnerType::ResolveName($this->entityTypeId).' is not supported');
-		}
-
 		if (isset($seed['PRODUCT_ROWS']) && is_array($seed['PRODUCT_ROWS']))
 		{
 			$seedProductRows = $seed['PRODUCT_ROWS'];
 		}
 		else
 		{
-			$seedProductRows = $dataSourceClassName::LoadProductRows($seedId);
+			$seedProductRows = $this->getProductRowData($seedId);
 			$seed['PRODUCT_ROWS'] = $seedProductRows;
 			$this->setNewSeedValue($seedProductRows, 'PRODUCT_ROWS');
 		}
@@ -60,7 +52,7 @@ class OpportunityField extends Base
 		}
 		else
 		{
-			$targProductRows = $dataSourceClassName::LoadProductRows($targetId);
+			$targProductRows = $this->getProductRowData($targetId);
 			$target['PRODUCT_ROWS'] = $targProductRows;
 			$this->setNewTargetValue($seedProductRows, 'PRODUCT_ROWS');
 		}
@@ -78,6 +70,24 @@ class OpportunityField extends Base
 		}
 
 		return false;
+	}
+
+	protected function getProductRowData(int $entityId): array
+	{
+		$factory = Container::getInstance()->getFactory($this->entityTypeId);
+		if (!$factory || !$factory->isLinkWithProductsEnabled())
+		{
+			$entityName = \CCrmOwnerType::ResolveName($this->entityTypeId);
+			throw new NotSupportedException("{$entityName} is not supported");
+		}
+
+		$item = $factory->getItem($entityId);
+		if ($item === null)
+		{
+			return [];
+		}
+
+		return $item->getProductRows()?->toArray() ?? [];
 	}
 
 	protected function getSeedValue(): float

@@ -39,7 +39,12 @@ export const ChangeStreamButton = {
 			this.isComplete = true;
 
 			const action = new Action(this.action);
-			action.execute(this);
+			action.execute(this)
+				.then(() => {})
+				.catch(() => {
+					this.isComplete = false;
+				})
+			;
 		},
 		onClick(): void
 		{

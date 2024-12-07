@@ -1,7 +1,6 @@
 <?php
 return [
 	'extensions' => [
-		'apptheme',
 		'layout/ui/user/empty-avatar',
 		'loc',
 		'selector/providers/base',

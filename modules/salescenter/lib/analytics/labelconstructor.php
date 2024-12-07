@@ -3,8 +3,13 @@
 namespace Bitrix\Salescenter\Analytics;
 
 use Bitrix\Crm\Order;
-use Bitrix\Main;
+use Bitrix\Crm\Service\Container;
+use Bitrix\Main\Analytics\AnalyticsEvent;
+use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Sale;
+use Bitrix\Sale\Label\EntityLabelService;
+use Bitrix\Salescenter\Analytics\Dictionary\SectionDictionary;
+use Bitrix\Salescenter\Analytics\Dictionary\SubSectionDictionary;
 
 /**
  * Class LabelConstructor
@@ -12,16 +17,60 @@ use Bitrix\Sale;
  */
 class LabelConstructor
 {
+	public function getAnalyticsEventForPayment(string $event, Sale\Payment $payment): AnalyticsEvent
+	{
+		$analyticsEvent = new AnalyticsEvent($event, 'crm', 'payments');
+		$sectionLabel = $this->getSectionLabelForPayment($payment);
+		$analyticsEvent->setSection($sectionLabel);
+		$subSectionLabel = $this->getSubSectionLabelForPayment($payment);
+		$analyticsEvent->setSubSection($subSectionLabel);
+		$typeLabel = $this->getTypeLabelForPayment($payment);
+		$analyticsEvent->setType($typeLabel);
+
+		return $analyticsEvent;
+	}
+
+	public function getSectionLabelForPayment(Sale\Payment $payment): string
+	{
+		/** @var EntityLabelService $entityLabelService */
+		$entityLabelService = ServiceLocator::getInstance()->get('sale.entityLabel');
+		$label = $entityLabelService->getLabelForEntity($payment, 'section');
+
+		return $label ? $label->getValue() : SectionDictionary::CRM->value;
+	}
+
+	public function getSubSectionLabelForPayment(Sale\Payment $payment): string
+	{
+		/** @var EntityLabelService $entityLabelService */
+		$entityLabelService = ServiceLocator::getInstance()->get('sale.entityLabel');
+		$label = $entityLabelService->getLabelForEntity($payment, 'subSection');
+
+		return $label ? $label->getValue() : SubSectionDictionary::WEB->value;
+	}
+
+	public function getTypeLabelForPayment(Sale\Payment $payment): string
+	{
+		$isTerminal = Container::getInstance()->getTerminalPaymentService()->isTerminalPayment($payment->getId());
+		if ($isTerminal)
+		{
+			return 'terminal_payment';
+		}
+
+		$shipments = $payment->getPayableItemCollection()->getShipments();
+		if ($shipments->count() > 0)
+		{
+			return 'delivery_payment';
+		}
+
+		return 'payment';
+	}
+
 	/**
 	 * @param Sale\Order $order
 	 * @return string
-	 * @throws Main\ArgumentException
-	 * @throws Main\ArgumentNullException
-	 * @throws Main\ArgumentTypeException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
+	 * @deprecated for old analytics
 	 */
-	public function getContextLabel(Sale\Order $order) : string
+	public function getContextLabel(Sale\Order $order): string
 	{
 		/** @var Sale\TradeBindingEntity $item */
 		foreach ($order->getTradeBindingCollection() as $item)
@@ -48,7 +97,7 @@ class LabelConstructor
 	 * @param Sale\Payment $payment
 	 * @return string
 	 */
-	public function getPaySystemTag(Sale\Payment $payment) : string
+	public function getPaySystemTag(Sale\Payment $payment): string
 	{
 		$service = $payment->getPaySystem();
 
@@ -69,11 +118,9 @@ class LabelConstructor
 	/**
 	 * @param Order\Order $order
 	 * @return string
-	 * @throws Main\ArgumentException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
+	 * @deprecated for old analytics
 	 */
-	public function getChannelLabel(Order\Order $order) : string
+	public function getChannelLabel(Order\Order $order): string
 	{
 		$manager = new Order\SendingChannels\Manager();
 		$data = $manager->getChannelList($order);
@@ -84,11 +131,8 @@ class LabelConstructor
 	/**
 	 * @param Order\Order $order
 	 * @return string
-	 * @throws Main\ArgumentException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
 	 */
-	public function getChannelNameLabel(Order\Order $order) : string
+	public function getChannelNameLabel(Order\Order $order): string
 	{
 		$manager = new Order\SendingChannels\Manager();
 		$data = $manager->getChannelList($order);

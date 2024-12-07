@@ -1,9 +1,0 @@
-<?
-$MESS["CRM_ACTIVITY_SMS_SENDER_ROBOT"] = "Nachricht wurde von einem SMS-Roboter gesendet";
-$MESS["CRM_ACTIVITY_SMS_PHONE_NUMBER"] = "Senden an Nummer";
-$MESS["CRM_ACTIVITY_SMS_DESCRIPTION"] = "Nachrichtentext";
-$MESS["CRM_ACTIVITY_SMS_MESSAGE_STATUS"] = "Nachrichtenstatus";
-$MESS["CRM_ACTIVITY_SMS_RECIPIENT_NAME"] = "Empfänger";
-$MESS["CRM_ACTIVITY_SMS_RECIPIENT_CLIENT"] = "Kunde";
-$MESS["CRM_ACTIVITY_SMS_RECIPIENT_USER"] = "Mitarbeiter";
-?>

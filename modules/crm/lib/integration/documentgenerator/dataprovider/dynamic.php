@@ -42,6 +42,8 @@ abstract class Dynamic extends ProductsDataProvider implements Filterable
 			return $this->fields;
 		}
 
+		$this->fields['TITLE']['VALUE'] = [$this, 'getDefaultTitle'];
+
 		if ($factory->isCategoriesSupported())
 		{
 			$this->fields['CATEGORY'] = [
@@ -158,6 +160,12 @@ abstract class Dynamic extends ProductsDataProvider implements Filterable
 		parent::fetchData();
 
 		$this->getFields();
+
+		if ($this->data['TITLE'] === '')
+		{
+			unset($this->data['TITLE']);
+		}
+
 		foreach ($this->userFieldDescriptions as $name => $description)
 		{
 			// we should purge values or they will not be processed in self::getUserFieldValue()
@@ -440,5 +448,13 @@ abstract class Dynamic extends ProductsDataProvider implements Filterable
 		}
 
 		return null;
+	}
+
+	public function getDefaultTitle(): ?string
+	{
+		$typeTitle = $this->getFactory()->getEntityDescription();
+		$id = $this->data['ID'];
+
+		return $typeTitle . ' #' . $id;
 	}
 }

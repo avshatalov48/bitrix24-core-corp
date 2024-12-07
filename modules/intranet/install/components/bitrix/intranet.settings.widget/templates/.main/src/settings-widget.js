@@ -1,9 +1,11 @@
-import {ajax, Cache, Dom, Event, Loc, Tag, Text, Type} from 'main.core';
+import {ajax, Dom, Event, Loc, Tag, Text, Type} from 'main.core';
 import {PopupComponentsMaker, PopupComponentsMakerItem} from 'ui.popupcomponentsmaker';
+import type {SettingsWidgetOptions, SettingsWidgetHoldingOptions, MainPageConfiguration} from './types/options';
+import {Label, LabelSize} from 'ui.label';
 import {BaseEvent, EventEmitter} from 'main.core.events';
-import type {SettingsWidgetOptions, SettingsWidgetHoldingOptions} from './types/options';
 import {MenuItem, Popup} from 'main.popup';
 import { sendData } from 'ui.analytics';
+import { RequisiteSection } from './requisite-section';
 import 'ui.icon-set.actions';
 import 'ui.icon-set.main';
 import 'ui.icons.b24';
@@ -13,8 +15,6 @@ import 'ui.buttons';
 export class SettingsWidget extends EventEmitter
 {
 	#widgetPopup: PopupComponentsMaker;
-	#requisitesPopup:? PopupComponentsMaker;
-	#copyLinkPopup:? Popup;
 	#target: Element;
 
 	#otp;
@@ -27,8 +27,10 @@ export class SettingsWidget extends EventEmitter
 	#isFreeLicense:? boolean = false;
 	#isAdmin:? boolean;
 	#requisite:? Object;
+	#requisiteSection: RequisiteSection;
 	#settingsUrl: string;
 	#isRenameable:? boolean;
+	#mainPage: MainPageConfiguration;
 
 	constructor(options: SettingsWidgetOptions)
 	{
@@ -41,18 +43,10 @@ export class SettingsWidget extends EventEmitter
 		this.#requisite = options.requisite;
 		this.#settingsUrl = options.settingsPath;
 		this.#isRenameable = options.isRenameable;
+		this.#mainPage = options.mainPage;
+		this.#requisiteSection = new RequisiteSection(options.requisite);
 
 		this.#setOptions(options);
-
-		top.BX.addCustomEvent('onLocalStorageSet', (params) => {
-			const eventName = params?.key ?? null;
-			if (eventName === 'onCrmEntityUpdate' || eventName === 'onCrmEntityCreate')
-			{
-				this.#getRequisites().then(() => {
-					this.#drawItemsList();
-				});
-			}
-		});
 	}
 
 	#setOptions(options)
@@ -90,7 +84,7 @@ export class SettingsWidget extends EventEmitter
 		this.#widgetPopup = widgetPopup;
 
 		this.#widgetPopup.getPopup().subscribe('onClose', () => {
-			Event.unbindAll(this.#getWidget().getPopup().getPopupContainer(), 'click');
+			Event.unbindAll(this.getWidget().getPopup().getPopupContainer(), 'click');
 		});
 
 		this.#getItemsList()
@@ -143,9 +137,19 @@ export class SettingsWidget extends EventEmitter
 		return this.#instance;
 	}
 
+	static close(): void
+	{
+		const instance = this.getInstance();
+
+		if (instance)
+		{
+			instance.getWidget().close();
+		}
+	}
+
 	toggle(targetNode)
 	{
-		const popup = this.#getWidget().getPopup();
+		const popup = this.getWidget().getPopup();
 		if (popup.isShown())
 		{
 			popup.close();
@@ -158,7 +162,7 @@ export class SettingsWidget extends EventEmitter
 
 	show(targetNode): void
 	{
-		const popup = this.#getWidget().getPopup();
+		const popup = this.getWidget().getPopup();
 
 		popup.setBindElement(targetNode);
 		popup.show();
@@ -171,7 +175,7 @@ export class SettingsWidget extends EventEmitter
 		this.setTarget(targetNode);
 	}
 
-	#getWidget(): PopupComponentsMaker
+	getWidget(): PopupComponentsMaker
 	{
 		return this.#widgetPopup;
 	}
@@ -180,7 +184,7 @@ export class SettingsWidget extends EventEmitter
 	{
 		if (reload === true || typeof this.#theme === 'undefined')
 		{
-			return new Promise((resolve, reject) => {
+			return new Promise((resolve) => {
 				ajax.runComponentAction('bitrix:intranet.settings.widget', 'getData', { mode: 'class' })
 					.then(({ data: { theme, otp, holding } }) => {
 						this.#theme = theme;
@@ -195,25 +199,16 @@ export class SettingsWidget extends EventEmitter
 		return Promise.resolve();
 	}
 
-	#getRequisites()
-	{
-		return new Promise((resolve, reject) => {
-			ajax.runComponentAction('bitrix:intranet.settings.widget', 'getRequisites', { mode: 'class' })
-				.then(({ data: { requisite } }) => {
-					this.#requisite = requisite;
-				})
-		});
-	}
-
 	#drawItemsList(): void
 	{
-		const container = this.#getWidget().getPopup().getPopupContainer();
+		const container = this.getWidget().getPopup().getPopupContainer();
 		Dom.clean(container);
 
 		Dom.append(this.#getHeader(), container);
 
 		const content = [
 			this.#requisite && this.#isAdmin ? this.#getRequisitesElement() : null,
+			this.#mainPage.isAvailable ? this.#getMainPageElement() : null,
 			this.#isAdmin ? this.#getSecurityAndSettingsElement() : null,
 			this.#isBitrix24 ? this.#getHoldingsElement() : null,
 			this.#getMigrateElement(),
@@ -245,7 +240,7 @@ export class SettingsWidget extends EventEmitter
 	#getEditHeaderIcon(): HTMLElement
 	{
 		const onclickEditLink = () => {
-			this.#getWidget().close();
+			this.getWidget().close();
 			BX.SidePanel.Instance.open(this.#settingsUrl + '?analyticContext=widget_settings_settings&page=portal&option=subDomainName');
 		};
 
@@ -294,7 +289,7 @@ export class SettingsWidget extends EventEmitter
 	#getFooter(): HTMLElement
 	{
 		const onclickOpenPartnerOrder = () => {
-			this.#getWidget().close();
+			this.getWidget().close();
 			BX.UI.InfoHelper.show('info_implementation_request');
 		};
 
@@ -307,7 +302,7 @@ export class SettingsWidget extends EventEmitter
 		const onclickWhereToBegin = () => {
 			if (top.BX.Helper)
 			{
-				this.#getWidget().close();
+				this.getWidget().close();
 				top.BX.Helper.show('redirect=detail&code=18371844');
 			}
 		};
@@ -315,7 +310,7 @@ export class SettingsWidget extends EventEmitter
 		const onclickSupport = () => {
 			if (top.BX.Helper)
 			{
-				this.#getWidget().close();
+				this.getWidget().close();
 				if (this.#isFreeLicense)
 				{
 					BX.UI.InfoHelper.show('limit_support_bitrix');
@@ -342,221 +337,58 @@ export class SettingsWidget extends EventEmitter
 
 	#prepareElement(element): HTMLElement
 	{
-		const item = this.#getWidget().getItem({ html: element });
+		const item = this.getWidget().getItem({ html: element });
 		const node = item.getContainer();
 		Dom.addClass(node, '--widget-item');
 
 		return node;
 	}
 
-	#getRequisitesElement(): HTMLDivElement
+	#getMainPageElement(): HTMLDivElement
 	{
-		const onclickOpenRequisite = (event) => {
-			window.open(this.#requisite.publicUrl, '_blank');
-			this.#getWidget().close();
-		}
-
-		const onclickCopyLink = (event) => {
-			if (BX.clipboard.copy(this.#requisite.publicUrl))
-			{
-				BX.UI.Notification.Center.notify({
-					content: Loc.getMessage('INTRANET_SETTINGS_WIDGET_COPIED_POPUP'),
-					position: 'top-left',
-					autoHideDelay: 3000,
-				});
-			}
-		};
-
-		const onclickCreateLanding = () => {
-			requisiteButton.setWaiting(true);
-			this.#createLanding().then(() => {
-				this.#requisitesPopup = null;
-				this.#drawItemsList();
-
-				if (!this.#requisite.isPublic)
-				{
-					const errorPopup = new Popup('public-landing-error',
-						this.#getWidget().getPopup().getPopupContainer().querySelector('[data-role="requisite-widget-title"]'),
-						{
-							autoHide: true,
-							closeByEsc: true,
-							angle: true,
-							darkMode: true,
-							content: Loc.getMessage('INTRANET_SETTINGS_WIDGET_CREATE_LANDING_ERROR'),
-							events: {
-								onShow: () => {
-									setTimeout(() => {
-										Event.bindOnce(this.#getWidget().getPopup().getPopupContainer(), 'click', () => {
-											errorPopup.close();
-										});
-									}, 0);
-								},
-								onClose: () => {
-									errorPopup.destroy();
-								},
-							}
-						}
-					);
-					errorPopup.show();
-				}
+		const onclick = () => {
+			this.getWidget().close();
+			BX.SidePanel.Instance.open(this.#mainPage.settingsPath);
+			BX.UI.Analytics.sendData({
+				tool: 'landing',
+				category: 'vibe',
+				event: 'open_settings_main',
+				c_sub_section: 'from_widget_vibe_point',
 			});
 		};
-
-		const onclickCreateCompany = (event) => {
-			this.#getWidget().close();
-			BX.SidePanel.Instance.open('/crm/company/details/0/?mycompany=y');
-		};
-
-		const requisiteButton = new BX.UI.Button({
-			id: 'requisite-btn',
-			text: this.#requisite.isConnected
-				? Loc.getMessage('INTRANET_SETTINGS_WIDGET_REDIRECT_TO_REQUISITE_BUTTON')
-				: this.#requisite.isCompanyCreated
-					? Loc.getMessage('INTRANET_SETTINGS_WIDGET_CREATE_LANDING')
-					: Loc.getMessage('INTRANET_SETTINGS_CONFIGURE_REQUISITE_BUTTON'),
-			noCaps: true,
-			onclick: this.#requisite.isConnected
-				? onclickOpenRequisite
-				: this.#requisite.isCompanyCreated
-					? onclickCreateLanding
-					: onclickCreateCompany,
-			className: 'ui-btn ui-btn-light-border ui-btn-round ui-btn-xs ui-btn-no-caps intranet-setting__btn-light',
-		});
-
-		const onclickRequisitesSettings = (event) => {
-			if (!this.#requisitesPopup)
-			{
-				const onclickConfigureSite = () => {
-					window.open(this.#requisite.editUrl, '_blank');
-					this.#requisitesPopup.close();
-					this.#getWidget().close();
-				};
-
-				let copyLinkButton = null;
-				if (this.#requisite.publicUrl)
-				{
-					copyLinkButton = {
-						html: `
-							<div class="intranet-settings-widget__popup-item">
-								<div class="ui-icon-set --link-3"></div> 
-								<div class="intranet-settings-widget__popup-name">${Loc.getMessage('INTRANET_SETTINGS_WIDGET_COPY_LINK_BUTTON')}</div>
-							</div>
-						`,
-						onclick: onclickCopyLink,
-					};
-				}
-
-				let configureSiteButton = null;
-				if (this.#requisite.editUrl)
-				{
-					configureSiteButton = {
-						html: `
-							<div class="intranet-settings-widget__popup-item">
-								<div class="ui-icon-set --paint-1"></div> 
-								<div class="intranet-settings-widget__popup-name">${Loc.getMessage('INTRANET_SETTINGS_CONFIGURE_CUTAWAY_SITE_BUTTON')}</div>
-							</div>
-						`,
-						onclick: onclickConfigureSite,
-					};
-				}
-
-				const onclickConfigureRequisites = () => {
-					if (this.#requisitesPopup)
-					{
-						this.#requisitesPopup.close();
-					}
-
-					this.#getWidget().close();
-					BX.SidePanel.Instance.open(this.#settingsUrl + '?page=requisite&analyticContext=widget_settings_settings');
-				};
-
-				const configureRequisiteButton = {
-					html: `
-						<div class="intranet-settings-widget__popup-item">
-							<div class="ui-icon-set --pencil-40"></div>
-							<div class="intranet-settings-widget__popup-name">${Loc.getMessage('INTRANET_SETTINGS_CONFIGURE_REQUISITE_BUTTON')}</div>
-						</div>
-					`,
-					onclick: onclickConfigureRequisites,
-				};
-
-				const popupWidth = 240;
-
-				this.#requisitesPopup = BX.PopupMenu.create(
-					'requisites-settings',
-					event.currentTarget,
-					[copyLinkButton, configureRequisiteButton, configureSiteButton],
-					{
-						closeByEsc: true,
-						autoHide: true,
-						width: popupWidth,
-						offsetLeft: -72,
-						angle: {
-							offset: popupWidth / 2 - 15,
-						},
-						events: {
-							onShow: () => {
-								setTimeout(() => {
-									Event.bindOnce(this.#getWidget().getPopup().getPopupContainer(), 'click', () => {
-										this.#requisitesPopup.close();
-									});
-								}, 0);
-							},
-						}
-					},
-				);
-			}
-
-			this.#requisitesPopup.show();
-		};
-
-		const requisiteSettingsButton = this.#requisite.isCompanyCreated
-			? Tag.render`
-				<span onclick="${onclickRequisitesSettings}" class="intranet-settings-widget__requisite-btn">
-					<i class='ui-icon-set --more-information'></i>
-				</span>
-			`
-			: ``;
+		const label = new Label({
+			text: Loc.getMessage('INTRANET_SETTINGS_WIDGET_LABEL_NEW'),
+			customClass: 'ui-label-new',
+			size: LabelSize.SM,
+			fill: true,
+		})
+		const labelWrapper = Tag.render`
+			<div class="intranet-settings-widget__label-new">
+				${label.render()}
+			</div>
+		`;
 
 		const element = Tag.render`
-			<div class="intranet-settings-widget__business-card intranet-settings-widget_box">
-				<div class="intranet-settings-widget__business-card_head intranet-settings-widget_inner">
-					<div class="intranet-settings-widget_icon-box --gray">
-						<div class="ui-icon-set --customer-card-1"></div>
+			<div onclick="${onclick}" class="intranet-settings-widget_box --clickable">
+				<div class="intranet-settings-widget_inner">
+					<div class="intranet-settings-widget_icon-box --green">
+						<div class="ui-icon-set --home-page"></div>
 					</div>
-					<div class="intranet-settings-widget__title" data-role="requisite-widget-title">
-						${
-							this.#requisite.isConnected
-							? Loc.getMessage('INTRANET_SETTINGS_WIDGET_SECTION_REQUISITE_SITE_TITLE')
-							: Loc.getMessage('INTRANET_SETTINGS_WIDGET_SECTION_REQUISITE_TITLE')
-						}
+					<div class="intranet-settings-widget__title">
+						${Loc.getMessage('INTRANET_SETTINGS_WIDGET_MAIN_PAGE_TITLE')}
 					</div>
-					<i class="ui-icon-set --help" onclick="BX.Helper.show('redirect=detail&code=18213326')"></i>
 				</div>
-
-				<div class="intranet-settings-widget__business-card_footer">
-					${requisiteButton.getContainer()}
-					${requisiteSettingsButton}
-				</div>
+				<div class="intranet-settings-widget__arrow-btn ui-icon-set --arrow-right"></div>
+				${this.#mainPage.isNew ? labelWrapper : null}
 			</div>
 		`;
 
 		return this.#prepareElement(element);
 	}
 
-	#createLanding()
+	#getRequisitesElement(): HTMLDivElement
 	{
-		return new Promise((resolve, reject) => {
-			ajax.runComponentAction('bitrix:intranet.settings.widget', 'createRequisiteLanding', { mode: 'class' })
-				.then(({ data: { isConnected, isPublic, publicUrl, editUrl } }) => {
-					this.#requisite.isConnected = isConnected;
-					this.#requisite.isPublic = isPublic;
-					this.#requisite.publicUrl = publicUrl;
-					this.#requisite.editUrl = editUrl;
-					resolve();
-				})
-			;
-		});
+		return this.#prepareElement(this.#requisiteSection.getElement());
 	}
 
 	#getHoldingsElement(): ?HTMLDivElement
@@ -573,7 +405,7 @@ export class SettingsWidget extends EventEmitter
 
 		const affiliate = this.#holding.affiliate;
 		const onclickOpen = () => {
-			this.#getWidget().close();
+			this.getWidget().close();
 			this.#getHoldingWidget().show(this.#target);
 		};
 
@@ -647,7 +479,7 @@ export class SettingsWidget extends EventEmitter
 		;
 
 		const onclickOpen = () => {
-			this.#getWidget().close();
+			this.getWidget().close();
 			if (this.#holding.canBeHolding)
 			{
 				this.#getHoldingWidget().show(this.#target);
@@ -694,8 +526,8 @@ export class SettingsWidget extends EventEmitter
 
 	#getSecurityElement(): HTMLElement
 	{
-		const onclick = (event) => {
-			this.#getWidget().close();
+		const onclick = () => {
+			this.getWidget().close();
 			BX.SidePanel.Instance.open(this.#settingsUrl + '?page=security&analyticContext=widget_settings_settings');
 		};
 
@@ -718,8 +550,8 @@ export class SettingsWidget extends EventEmitter
 
 	#getGeneralSettingsElement(): HTMLElement
 	{
-		const onclick = (event) => {
-			this.#getWidget().close();
+		const onclick = () => {
+			this.getWidget().close();
 			BX.SidePanel.Instance.open(this.#settingsUrl + '?analyticContext=widget_settings_settings');
 		};
 
@@ -742,8 +574,8 @@ export class SettingsWidget extends EventEmitter
 
 	#getMigrateElement(): HTMLDivElement
 	{
-		const onclick = (event) => {
-			this.#getWidget().close();
+		const onclick = () => {
+			this.getWidget().close();
 			BX.SidePanel.Instance.open(`${this.#marketUrl}category/migration/`);
 		};
 

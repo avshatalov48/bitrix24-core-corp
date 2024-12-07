@@ -183,6 +183,7 @@ jn.define('im/messenger/controller/sidebar/tabs/participants/participants-view',
 							this.onClickItem(item.userId);
 						},
 						additionalComponent: this.isEllipsis(item) ? this.getEllipsisButton(item) : null,
+						isSuperEllipseAvatar: item.isSuperEllipseAvatar,
 					});
 				},
 				onLoadMore: platform === 'ios' ? this.iosOnLoadMore.bind(this) : this.androidOnLoadMore.bind(this),
@@ -230,6 +231,7 @@ jn.define('im/messenger/controller/sidebar/tabs/participants/participants-view',
 				avatarColor: item.imageColor,
 				status: item.statusSvg,
 				crownStatus: item.crownStatus,
+				isSuperEllipseAvatar: item.isSuperEllipseAvatar,
 
 				style: {
 					parentView: {

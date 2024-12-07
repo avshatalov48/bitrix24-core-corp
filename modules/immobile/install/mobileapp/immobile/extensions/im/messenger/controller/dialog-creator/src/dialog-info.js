@@ -7,11 +7,13 @@ jn.define('im/messenger/controller/dialog-creator/dialog-info', (require, export
 
 	const { Loc } = require('loc');
 	const { MessengerEmitter } = require('im/messenger/lib/emitter');
-	const { EventType, ComponentCode } = require('im/messenger/const');
+	const { EventType, ComponentCode, OpenDialogContextType } = require('im/messenger/const');
 	const { getFile } = require('files/entry');
 	const { FileConverter } = require('files/converter');
 	const { DialogInfoView } = require('im/messenger/controller/dialog-creator/dialog-info/view');
-	const AppTheme = require('apptheme');
+	const { Theme } = require('im/lib/theme');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
+	const { runAction } = require('im/messenger/lib/rest');
 
 	class DialogInfo
 	{
@@ -73,7 +75,7 @@ jn.define('im/messenger/controller/dialog-creator/dialog-info', (require, export
 					callback: () => {
 						this.createChat();
 					},
-					color: AppTheme.colors.accentMainLinks,
+					color: Theme.isDesignSystemSupported ? Theme.colors.accentMainLink : Theme.colors.accentMainLinks,
 				},
 			]);
 		}
@@ -178,6 +180,7 @@ jn.define('im/messenger/controller/dialog-creator/dialog-info', (require, export
 			BX.rest.callMethod('im.chat.add', config)
 				.then((result) => {
 					const chatId = parseInt(result.data());
+
 					if (chatId > 0)
 					{
 						this.openDialog(`chat${chatId}`);
@@ -212,23 +215,28 @@ jn.define('im/messenger/controller/dialog-creator/dialog-info', (require, export
 
 		openDialog(dialogId)
 		{
-			BX.rest.callMethod('im.dialog.get', { DIALOG_ID: dialogId })
+			runAction('im.v2.Chat.get', {
+				data: { dialogId },
+			})
 				.then((result) => {
-					const chatData = result.data();
+					const { chat } = result;
+					serviceLocator.get('core').getStore().dispatch('dialoguesModel/set', chat)
+
 					MessengerEmitter.emit(
 						EventType.messenger.openDialog,
 						{
 							dialogId,
 							dialogTitleParams: {
-								name: chatData.name,
+								name: chat.name,
 								description: this.dialogDTO.getType() === 'CHAT' ? Loc.getMessage('IMMOBILE_DIALOG_CREATOR_CHAT_NEW') : Loc.getMessage('IMMOBILE_DIALOG_CREATOR_CHANNEL_NEW'),
-								avatar: chatData.avatar,
-								color: chatData.color,
+								avatar: chat.avatar,
+								color: chat.color,
 							},
+							context: OpenDialogContextType.chatCreation,
 						},
 						ComponentCode.imMessenger,
 					);
-				});
+				}).catch((err) => console.error(err));
 		}
 	}
 

@@ -323,7 +323,7 @@ class CCrmContactDetailsComponent
 								'ADD_EVENT_NAME' => 'CrmCreateDealFromContact',
 								'ANALYTICS' => [
 									// we dont know where from this component was opened from - it could be anywhere on portal
-									// 'c_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SECTION_CONTACT,
+									'c_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SECTION_CONTACT,
 									'c_sub_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SUB_SECTION_DETAILS,
 								],
 							], 'crm.deal.list')
@@ -355,7 +355,7 @@ class CCrmContactDetailsComponent
 								'ADD_EVENT_NAME' => 'CrmCreateQuoteFromContact',
 								'ANALYTICS' => [
 									// we dont know where from this component was opened from - it could be anywhere on portal
-									// 'c_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SECTION_CONTACT,
+									'c_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SECTION_CONTACT,
 									'c_sub_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SUB_SECTION_DETAILS,
 								],
 							], 'crm.quote.list'),
@@ -407,7 +407,7 @@ class CCrmContactDetailsComponent
 								'ADD_EVENT_NAME' => 'CrmCreateInvoiceFromContact',
 								'ANALYTICS' => [
 									// we dont know where from this component was opened from - it could be anywhere on portal
-									// 'c_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SECTION_CONTACT,
+									'c_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SECTION_CONTACT,
 									'c_sub_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SUB_SECTION_DETAILS,
 								],
 							], 'crm.invoice.list'),
@@ -458,7 +458,7 @@ class CCrmContactDetailsComponent
 								'BUILDER_CONTEXT' => Crm\Product\Url\ProductBuilder::TYPE_ID,
 								'ANALYTICS' => [
 									// we dont know where from this component was opened from - it could be anywhere on portal
-									// 'c_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SECTION_CONTACT,
+									'c_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SECTION_CONTACT,
 									'c_sub_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SUB_SECTION_DETAILS,
 								],
 							], 'crm.order.list')
@@ -535,27 +535,7 @@ class CCrmContactDetailsComponent
 				)
 			);
 			$this->arResult['TABS'][] = $this->getEventTabParams();
-			if (!$this->arResult['CATEGORY_ID'])
-			{
-				$this->arResult['TABS'][] = [
-					'id' => 'tab_portrait',
-					'name' => Loc::getMessage('CRM_CONTACT_TAB_PORTRAIT'),
-					'loader' => [
-						'serviceUrl' => '/bitrix/components/bitrix/crm.client.portrait/lazyload.ajax.php?&site='
-							. SITE_ID
-							. '&'
-							. bitrix_sessid_get(),
-						'componentData' => [
-							'template' => '.default',
-							'signedParameters' => \CCrmInstantEditorHelper::signComponentParams([
-								'ELEMENT_ID' => $this->entityID,
-								'ELEMENT_TYPE' => CCrmOwnerType::Contact,
-								'IS_FRAME' => 'Y'
-							], 'crm.client.portrait'),
-						]
-					]
-				];
-			}
+
 			if (CModule::IncludeModule('lists') && !$this->arResult['CATEGORY_ID'])
 			{
 				$listIblock = CLists::getIblockAttachedCrm(CCrmOwnerType::ContactName);
@@ -610,14 +590,6 @@ class CCrmContactDetailsComponent
 			}
 			$this->arResult['TABS'][] = $this->getEventTabParams();
 
-			if (!$this->arResult['CATEGORY_ID'])
-			{
-				$this->arResult['TABS'][] = [
-					'id' => 'tab_portrait',
-					'name' => Loc::getMessage('CRM_CONTACT_TAB_PORTRAIT'),
-					'enabled' => false
-				];
-			}
 			if (CModule::IncludeModule('lists') && !$this->arResult['CATEGORY_ID'])
 			{
 				$listIblock = CLists::getIblockAttachedCrm(CCrmOwnerType::ContactName);
@@ -915,7 +887,11 @@ class CCrmContactDetailsComponent
 				'type' => 'text',
 				'editable' => true
 			),
-			Crm\Entity\CommentsHelper::compileFieldDescriptionForDetails(\CCrmOwnerType::Contact, 'COMMENTS'),
+			Crm\Entity\CommentsHelper::compileFieldDescriptionForDetails(
+				\CCrmOwnerType::Contact,
+				'COMMENTS',
+				$this->entityID,
+			),
 			array(
 				'name' => 'ASSIGNED_BY_ID',
 				'title' => Loc::getMessage('CRM_CONTACT_FIELD_ASSIGNED_BY_ID'),
@@ -1049,14 +1025,18 @@ class CCrmContactDetailsComponent
 					),
 				)
 			),
-			array(
+			[
 				'name' => 'REQUISITES',
 				'title' => Loc::getMessage('CRM_CONTACT_FIELD_REQUISITES'),
 				'type' => 'requisite',
 				'editable' => true,
-				'data' => \CCrmComponentHelper::getFieldInfoData(CCrmOwnerType::Contact,'requisite'),
-				'enableAttributes' => false
-			)
+				'data' => \CCrmComponentHelper::getFieldInfoData(
+					CCrmOwnerType::Contact,
+					'requisite',
+					['IS_EDIT_MODE' => $this->isRequisiteEditMode()]
+				),
+				'enableAttributes' => false,
+			]
 		);
 
 		$category = $this->getCategory();

@@ -31,7 +31,7 @@ if (is_array($arResult['EXPORT_CSV_PARAMS']))
 {
 	\Bitrix\Main\UI\Extension::load('ui.stepprocessing');
 	?>
-	<script type="text/javascript">
+	<script>
 		BX.ready(
 			function()
 			{

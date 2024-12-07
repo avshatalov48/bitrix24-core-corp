@@ -3,6 +3,7 @@
 namespace Bitrix\Crm\Integration\UI\EntitySelector;
 
 use Bitrix\Crm\Service\Container;
+use CCrmOwnerType;
 
 class DynamicProvider extends EntityProvider
 {
@@ -23,9 +24,9 @@ class DynamicProvider extends EntityProvider
 		return $this->getOption('dynamicTypeId');
 	}
 
-	protected function getEntityTypeNameForMakeItemMethod()
+	protected function getEntityTypeNameForMakeItemMethod(): string
 	{
-		return mb_strtolower(\CCrmOwnerType::ResolveName($this->getEntityTypeId()));
+		return mb_strtolower(CCrmOwnerType::ResolveName($this->getEntityTypeId()));
 	}
 
 	protected function fetchEntryIds(array $filter): array

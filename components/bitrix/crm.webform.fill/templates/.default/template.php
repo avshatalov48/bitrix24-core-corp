@@ -547,7 +547,7 @@ if($arResult['FORM']['YANDEX_METRIC_ID']):
 	$yaMetricId = (int) $arResult['FORM']['YANDEX_METRIC_ID'];
 ?>
 	<!-- Yandex.Metrika counter -->
-	<script type="text/javascript">
+	<script>
 		(function (d, w, c) {
 			(w[c] = w[c] || []).push(function() {
 				try {

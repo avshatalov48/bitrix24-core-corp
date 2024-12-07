@@ -1,5 +1,6 @@
 <?php
 
+use Bitrix\Main\Web\Uri;
 use Bitrix\Market\Categories;
 use Bitrix\Market\PageRules;
 
@@ -90,11 +91,14 @@ if ($componentPage === 'install_version' || $componentPage === 'install_hash')
 	$componentPage = 'install';
 }
 
+$uri = new Uri($APPLICATION->GetCurPageParam());
+
 $arResult = [
 	"FOLDER" => $SEF_FOLDER,
 	"URL_TEMPLATES" => $arUrlTemplates,
 	"VARIABLES" => $arVariables,
-	"ALIASES" => $arVariableAliases
+	"ALIASES" => $arVariableAliases,
+	"CURRENT_PAGE" => $uri->toAbsolute()->getLocator(),
 ];
 
 $arParams["COMPONENT_PAGE"] = $componentPage;

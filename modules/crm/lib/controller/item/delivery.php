@@ -2,7 +2,10 @@
 
 namespace Bitrix\Crm\Controller\Item;
 
+use Bitrix\Crm\Rest\TypeCast\OrmTypeCast;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Main;
+use Bitrix\Main\Context;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Crm;
 use Bitrix\Sale;
@@ -11,13 +14,6 @@ final class Delivery extends Crm\Controller\Base
 {
 	private bool $previousSynchronizationStatus = true;
 
-	/**
-	 * @param int $entityId
-	 * @param int $entityTypeId
-	 * @param array $filter
-	 * @param array $order
-	 * @return array|null
-	 */
 	public function listAction(
 		int $entityId,
 		int $entityTypeId,
@@ -28,9 +24,13 @@ final class Delivery extends Crm\Controller\Base
 		/** @var Crm\Entity\PaymentDocumentsRepository $repository */
 		$repository = Main\DI\ServiceLocator::getInstance()->get('crm.entity.paymentDocumentsRepository');
 
-		if (!$repository->checkPermission($entityTypeId, $entityId))
+		$hasEntityPermission = Container::getInstance()->getUserPermissions()->checkReadPermissions(
+			$entityTypeId,
+			$entityId
+		);
+		if (!$hasEntityPermission)
 		{
-			$this->addError(new Main\Error(Loc::getMessage('CRM_CONTROLLER_ITEM_SHIPMENT_NO_PERMISSION')));
+			$this->setAccessDenied();
 
 			return null;
 		}
@@ -47,19 +47,31 @@ final class Delivery extends Crm\Controller\Base
 			$preparedOrder
 		);
 
+		foreach ($result as $index => $resultItem)
+		{
+			$result[$index] = $this->castSelectFields($resultItem);
+		}
+
 		return $this->convertKeysToCamelCase($result);
 	}
 
-	/**
-	 * @param int $id
-	 * @return array|null
-	 */
 	public function getAction(int $id): ?array
 	{
 		$shipment = Sale\Repository\ShipmentRepository::getInstance()->getById($id);
-		if (!$shipment || !$this->hasPermissionForShipment($shipment))
+		if (!$shipment)
 		{
-			$this->addError(new Main\Error(Loc::getMessage('CRM_CONTROLLER_ITEM_SHIPMENT_NO_PERMISSION')));
+			$this->addError(new Main\Error('Delivery has not been found'));
+
+			return null;
+		}
+
+		$hasPermission = Container::getInstance()->getUserPermissions()->checkReadPermissions(
+			\CCrmOwnerType::Order,
+			$shipment->getOrder()->getId()
+		);
+		if (!$hasPermission)
+		{
+			$this->setAccessDenied();
 
 			return null;
 		}
@@ -76,15 +88,19 @@ final class Delivery extends Crm\Controller\Base
 			ARRAY_FILTER_USE_KEY
 		);
 
-		return $this->convertKeysToCamelCase($filteredFields);
+		return $this->convertKeysToCamelCase(
+			$this->castSelectFields($filteredFields)
+		);
 	}
 
-	private function hasPermissionForShipment(Sale\Shipment $shipment) : bool
+	private function castSelectFields(array $fields): array
 	{
-		/** @var Crm\Entity\PaymentDocumentsRepository $repository */
-		$repository = Main\DI\ServiceLocator::getInstance()->get('crm.entity.paymentDocumentsRepository');
-
-		return $repository->checkShipmentPermission($shipment);
+		return OrmTypeCast::getInstance()
+			->setBoolCaster(new Crm\Dto\Caster\BoolYNCaster())
+			->castRecord(
+				Sale\Internals\ShipmentTable::class,
+				$fields
+			);
 	}
 
 	private function getFieldsOnSelect() : array

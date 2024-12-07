@@ -5,7 +5,6 @@ use Bitrix\Main\Web\Json;
 
 Bitrix\Main\UI\Extension::load("ui.buttons");
 Bitrix\Main\UI\Extension::load("ui.notification");
-Bitrix\Main\UI\Extension::load("catalog.store-use");
 
 $settings = $arResult["SETTINGS"];
 $pageSettings = $arResult["PAGE_SETTINGS"];

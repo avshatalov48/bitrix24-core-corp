@@ -4,10 +4,10 @@ namespace Bitrix\Crm\Service\Timeline\Item\LogMessage;
 
 use Bitrix\Crm\Model\ActivityPingOffsetsTable;
 use Bitrix\Crm\Service\Timeline\Item\AssociatedEntityModel;
-use Bitrix\Crm\Service\Timeline\Layout\Common\Icon;
 use Bitrix\Crm\Service\Timeline\Item\LogMessage;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\ContentBlockFactory;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\EditableDescription;
+use Bitrix\Crm\Service\Timeline\Layout\Common\Icon;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Type\DateTime;
 
@@ -82,7 +82,19 @@ class Ping extends LogMessage
 		$pingText = (string)$this->entityModel->get('DESCRIPTION');
 		if ($pingText === '')
 		{
-			$pingText = (string)$this->entityModel->get('SUBJECT');
+			$providerId = $this->entityModel->get('PROVIDER_ID');
+			if ($providerId)
+			{
+				$provider = \CCrmActivity::GetProviderById($providerId);
+				$pingText = $provider::getActivityTitle([
+					'SUBJECT' => (string)$this->entityModel->get('SUBJECT'),
+					'COMPLETED' => 'N',
+				]);
+			}
+			else
+			{
+				$pingText = (string)$this->entityModel->get('SUBJECT');
+			}
 		}
 
 		return [
@@ -99,17 +111,104 @@ class Ping extends LogMessage
 		{
 			return Loc::getMessage('CRM_TIMELINE_LOG_PING_ACTIVITY_STARTED_NEW');
 		}
-		$hours = (int)($pingOffset / 60);
-		$minutes = $pingOffset % 60;
-		if (!$hours)
+
+		$minutesInHour = 60;
+
+		$daysString = null;
+		$days = floor($pingOffset / ($minutesInHour * 24));
+		if ($days > 0)
 		{
-			return Loc::getMessagePlural('CRM_TIMELINE_LOG_PING_ACTIVITY_START_NEW', $minutes, ['#OFFSET#' => $minutes]);
-		}
-		if (!$minutes)
-		{
-			return Loc::getMessagePlural('CRM_TIMELINE_LOG_PING_ACTIVITY_START_NEW_HOURS', $hours, ['#HOURS#' => $hours]);
+			$daysString = Loc::getMessagePlural(
+				'CRM_TIMELINE_LOG_PING_ACTIVITY_START_DAY',
+				$days,
+				[
+					'#COUNT#' => $days,
+				]
+			);
 		}
 
-		return Loc::getMessagePlural('CRM_TIMELINE_LOG_PING_ACTIVITY_START_NEW_HOURS_MINS', $hours, ['#HOURS#' => $hours, '#MINUTES#' => $minutes]);
+		$hoursString = null;
+		$hours = floor(($pingOffset % ($minutesInHour * 24)) / $minutesInHour);
+		if ($hours > 0)
+		{
+			$hoursString = Loc::getMessagePlural(
+				'CRM_TIMELINE_LOG_PING_ACTIVITY_START_HOUR',
+				$hours,
+				[
+					'#COUNT#' => $hours,
+				]
+			);
+		}
+
+		$minutesString = null;
+		$minutes = floor($pingOffset % $minutesInHour);
+		if ($minutes > 0)
+		{
+			$minutesString = Loc::getMessagePlural(
+				'CRM_TIMELINE_LOG_PING_ACTIVITY_START_MINUTE',
+				$minutes,
+				[
+					'#COUNT#' => $minutes,
+				]
+			);
+		}
+
+		$replace = [
+			'#DAYS#' => $daysString,
+			'#HOURS#' => $hoursString,
+			'#MINUTES#' => $minutesString,
+		];
+
+		if ($days > 0)
+		{
+			if ($hours > 0 && $minutes > 0)
+			{
+				$code = 'CRM_TIMELINE_LOG_PING_ACTIVITY_START_FORMAT_DAY_HOUR_MINUTE_TITLE';
+			}
+			elseif ($hours > 0)
+			{
+				$code = 'CRM_TIMELINE_LOG_PING_ACTIVITY_START_FORMAT_DAY_HOUR_TITLE';
+			}
+			elseif ($minutes > 0)
+			{
+				$code = 'CRM_TIMELINE_LOG_PING_ACTIVITY_START_FORMAT_DAY_MINUTE_TITLE';
+			}
+			else
+			{
+				$code = 'CRM_TIMELINE_LOG_PING_ACTIVITY_START_FORMAT_DAY_TITLE';
+			}
+
+			if ($days === 1)
+			{
+				$code .= '_SINGLE';
+			}
+		}
+		elseif ($hours > 0)
+		{
+			if ($minutes > 0)
+			{
+				$code = 'CRM_TIMELINE_LOG_PING_ACTIVITY_START_FORMAT_HOUR_MINUTE_TITLE';
+			}
+			else
+			{
+				$code = 'CRM_TIMELINE_LOG_PING_ACTIVITY_START_FORMAT_HOUR_TITLE';
+			}
+
+			if ($hours === 1)
+			{
+				$code .= '_SINGLE';
+			}
+		}
+		else
+		{
+			$code = 'CRM_TIMELINE_LOG_PING_ACTIVITY_START_FORMAT_MINUTE_TITLE';
+
+			if ($minutes === 1)
+			{
+				$code .= '_SINGLE';
+			}
+		}
+
+		return Loc::getMessage($code, $replace);
 	}
 }

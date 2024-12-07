@@ -280,10 +280,21 @@ export default {
 		const getEntityInfo: EntityInfo = getters.getEntityInfo;
 		const ownerType: string = getEntityInfo.entityTypeName;
 		const activityId: number = getters.activityId;
+		const activityDirection: string = getters.activityDirection;
 
 		sendData(
 			Builder.AI.CallParsingEvent.createDefault(ownerType, activityId, Dictionary.STATUS_SUCCESS)
 				.setElement(element)
+				.setActivityDirection(activityDirection)
+				.buildData(),
+		);
+
+		sendData(
+			Builder.AI.CallParsingEvent.createDefault(ownerType, activityId, Dictionary.STATUS_SUCCESS)
+				.setTool(Dictionary.TOOL_CRM)
+				.setCategory(Dictionary.CATEGORY_AI_OPERATIONS)
+				.setElement(element)
+				.setActivityDirection(activityDirection)
 				.buildData(),
 		);
 	},

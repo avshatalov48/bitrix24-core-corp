@@ -2,18 +2,17 @@
 
 return [
 	'extensions' => [
+		'tokens',
 		'utils/object',
 		'utils/date/formats',
 		'utils/date',
 		'layout/pure-component',
 		'helpers/component',
-		'layout/ui/plan-restriction',
 		'loc',
 		'type',
 		'pull/client/events',
 		'calendar:layout/dialog/dialog-sharing',
 		'calendar:sharing',
-		'calendar:filter',
 		'calendar:event-manager',
 		'calendar:section-manager',
 		'calendar:location-manager',
@@ -24,6 +23,7 @@ return [
 		'calendar:calendar-grid',
 		'bottom-sheet',
 		'layout/ui/floating-button',
+		'tariff-plan-restriction',
 	],
 	'bundle' => [
 		'./filter',

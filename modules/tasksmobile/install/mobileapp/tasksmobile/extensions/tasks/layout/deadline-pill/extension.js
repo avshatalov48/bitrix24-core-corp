@@ -2,8 +2,8 @@
  * @module tasks/layout/deadline-pill
  */
 jn.define('tasks/layout/deadline-pill', (require, exports, module) => {
-	const AppTheme = require('apptheme');
-	const { Loc } = require('loc');
+	const { Color, Typography } = require('tokens');
+	const { Loc } = require('tasks/loc');
 	const { connect } = require('statemanager/redux/connect');
 	const { DeadlinePicker } = require('tasks/deadline-picker');
 	const { DeadlineFriendlyDate } = require('tasks/layout/deadline-friendly-date');
@@ -13,13 +13,15 @@ jn.define('tasks/layout/deadline-pill', (require, exports, module) => {
 	const { PropTypes } = require('utils/validation');
 	const { showToast } = require('toast');
 	const { Haptics } = require('haptics');
+	const { Icon } = require('assets/icons');
 	const {
-		selectById,
+		selectByTaskIdOrGuid,
 		selectIsCompleted,
 		selectActions,
 		updateDeadline,
 	} = require('tasks/statemanager/redux/slices/tasks');
 	const { TaskStatus } = require('tasks/enum');
+	const { Text5 } = require('ui-system/typography/text');
 
 	/**
 	 * @class DeadlinePillView
@@ -32,6 +34,11 @@ jn.define('tasks/layout/deadline-pill', (require, exports, module) => {
 			this.init(props);
 
 			this.onDeadlineClick = this.onDeadlineClick.bind(this);
+		}
+
+		get isReadOnly()
+		{
+			return BX.prop.getBoolean(this.props, 'readOnly', false);
 		}
 
 		componentWillReceiveProps(props)
@@ -49,16 +56,21 @@ jn.define('tasks/layout/deadline-pill', (require, exports, module) => {
 
 		render()
 		{
-			const style = Styles.wrapper(this.props.isExpired, this.props.isCompleted, this.props.backgroundColor);
+			const style = Styles.wrapper(
+				this.props.isExpired,
+				this.props.isCompleted,
+				this.props.backgroundColor,
+				this.isReadOnly,
+			);
 
 			return View(
 				{
 					style,
 					testId: this.props.testId,
-					onClick: this.onDeadlineClick,
+					onClick: !this.isReadOnly && this.onDeadlineClick,
 				},
 				this.renderDeadlineText(),
-				this.renderChevron(),
+				!this.isReadOnly && this.renderChevron(),
 			);
 		}
 
@@ -66,7 +78,7 @@ jn.define('tasks/layout/deadline-pill', (require, exports, module) => {
 		{
 			if (this.props.status === TaskStatus.DEFERRED)
 			{
-				return Text({
+				return Text5({
 					text: Loc.getMessage('TASKSMOBILE_DEADLINE_PILL_DEFERRED'),
 					style: Styles.deadlineText(false, this.props.isCompleted),
 				});
@@ -74,7 +86,7 @@ jn.define('tasks/layout/deadline-pill', (require, exports, module) => {
 
 			if (this.props.status === TaskStatus.SUPPOSEDLY_COMPLETED)
 			{
-				return Text({
+				return Text5({
 					text: Loc.getMessage('TASKSMOBILE_DEADLINE_PILL_SUPPOSEDLY_COMPLETED'),
 					style: Styles.deadlineText(false, false),
 				});
@@ -84,11 +96,14 @@ jn.define('tasks/layout/deadline-pill', (require, exports, module) => {
 			{
 				return new DeadlineFriendlyDate({
 					moment: this.moment,
-					style: Styles.deadlineText(this.props.isExpired, this.props.isCompleted),
+					style: {
+						...Typography.text5.getStyle(),
+						...Styles.deadlineText(this.props.isExpired, this.props.isCompleted),
+					},
 				});
 			}
 
-			return Text({
+			return Text5({
 				text: Loc.getMessage('TASKSMOBILE_DEADLINE_PILL_NO_DEADLINE'),
 				style: Styles.deadlineText(false, this.props.isCompleted),
 			});
@@ -120,16 +135,20 @@ jn.define('tasks/layout/deadline-pill', (require, exports, module) => {
 			if (!this.props.canChange)
 			{
 				Haptics.notifyWarning();
-				showToast({ message: Loc.getMessage('TASKSMOBILE_DEADLINE_PILL_CANT_CHANGE') }, layout);
+				showToast({
+					message: Loc.getMessage('M_TASKS_DENIED_UPDATEDEADLINE'),
+					iconName: Icon.LOCK.getIconName(),
+				}, layout);
 
 				return;
 			}
 
 			const currentDeadline = (this.props.deadline ? this.props.deadline * 1000 : null);
 
-			(new DeadlinePicker()).show(currentDeadline)
+			(new DeadlinePicker({ canSetNoDeadline: true }))
+				.show(currentDeadline)
 				.then((deadline) => {
-					if (deadline > 0 && deadline !== currentDeadline)
+					if (deadline !== currentDeadline)
 					{
 						executeIfOnline(() => {
 							this.props.updateDeadline({ deadline, taskId: this.props.id });
@@ -146,7 +165,7 @@ jn.define('tasks/layout/deadline-pill', (require, exports, module) => {
 	}
 
 	DeadlinePillView.propTypes = {
-		id: PropTypes.number,
+		id: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
 		testId: PropTypes.string,
 		backgroundColor: PropTypes.string,
 		deadline: PropTypes.number,
@@ -156,49 +175,60 @@ jn.define('tasks/layout/deadline-pill', (require, exports, module) => {
 	};
 
 	const Styles = {
-		wrapper: (isExpired, isCompleted, defaultBackgroundColor) => {
+		wrapper: (isExpired, isCompleted, defaultBackgroundColor, isReadOnly) => {
 			return {
 				borderWidth: 1,
 				borderColor: isExpired && !isCompleted
-					? transparent(AppTheme.colors.accentMainAlert, 0.3)
-					: AppTheme.colors.bgSeparatorPrimary,
-				backgroundColor: isExpired && !isCompleted
-					? {
-						default: defaultBackgroundColor,
-						pressed: AppTheme.colors.accentSoftRed1,
-					}
-					: withPressed(defaultBackgroundColor),
+					? transparent(Color.accentMainAlert.toHex(), 0.3)
+					: Color.bgSeparatorPrimary.toHex(),
+				backgroundColor: getWrapperBackgroundColor(isExpired, isCompleted, defaultBackgroundColor, isReadOnly),
 				flexDirection: 'row',
 				alignItems: 'center',
 				justifyContent: 'center',
 				borderRadius: 14,
 				marginLeft: 10,
-				paddingHorizontal: 8,
+				paddingHorizontal: 10,
 				paddingVertical: 1,
 			};
 		},
 		deadlineText: (isExpired, isCompleted) => {
 			return {
 				color: Styles.deadlineTextColor(isExpired, isCompleted),
-				fontSize: 12,
 				marginVertical: 3,
 			};
 		},
 		deadlineTextColor: (isExpired, isCompleted) => {
-			let color = AppTheme.colors.base6;
+			let color = Color.base6.toHex();
 
 			if (!isCompleted)
 			{
-				color = isExpired ? AppTheme.colors.accentMainAlert : AppTheme.colors.base3;
+				color = isExpired ? Color.accentMainAlert.toHex() : Color.base3.toHex();
 			}
 
 			return color;
 		},
 	};
 
+	const getWrapperBackgroundColor = (isExpired, isCompleted, defaultBackgroundColor, isReadOnly) => {
+		if (isReadOnly)
+		{
+			return defaultBackgroundColor;
+		}
+
+		if (isExpired && !isCompleted)
+		{
+			return {
+				default: defaultBackgroundColor,
+				pressed: Color.accentSoftRed1.toHex(),
+			};
+		}
+
+		return withPressed(defaultBackgroundColor);
+	};
+
 	const mapStateToProps = (state, ownProps) => {
-		const taskId = Number(ownProps.id);
-		const task = selectById(state, taskId);
+		const taskId = ownProps.id;
+		const task = selectByTaskIdOrGuid(state, taskId);
 
 		if (!task)
 		{

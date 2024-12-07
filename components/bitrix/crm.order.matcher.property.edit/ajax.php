@@ -27,7 +27,6 @@ catch (\Bitrix\Main\Security\Sign\BadSignatureException $e)
 	die();
 }
 
-$request->addFilter(new \Bitrix\Main\Web\PostDecodeFilter);
 $request->set(
 	\Bitrix\Sale\Internals\Input\File::getPostWithFiles(
 		$request->toArray(),

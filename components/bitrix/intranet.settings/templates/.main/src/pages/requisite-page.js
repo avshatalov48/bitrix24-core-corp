@@ -18,7 +18,7 @@ export class RequisitePage extends BaseSettingsPage
 
 		top.BX.addCustomEvent('onLocalStorageSet', (params) => {
 			let eventName = params?.key ?? null;
-			if (eventName === 'onCrmEntityUpdate' || eventName === 'onCrmEntityCreate')
+			if (eventName === 'onCrmEntityUpdate' || eventName === 'onCrmEntityCreate' || eventName === 'BX.Crm.RequisiteSliderDetails:onSave')
 			{
 				this.reload();
 			}

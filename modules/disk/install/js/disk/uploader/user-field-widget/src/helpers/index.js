@@ -6,4 +6,4 @@ export {
 	loadDiskFileDialog,
 	openDiskFileDialog,
 	openCloudFileDialog,
-}
+};

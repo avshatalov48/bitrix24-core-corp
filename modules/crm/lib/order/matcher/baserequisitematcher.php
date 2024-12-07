@@ -90,7 +90,10 @@ abstract class BaseRequisiteMatcher
 
 	protected function addEntity($entityFields)
 	{
-		$result = $this->getEntity()->add($entityFields);
+		$result = $this->getEntity()->add(
+			$entityFields,
+			['DISABLE_REQUIRED_USER_FIELD_CHECK' => true]
+		);
 
 		if ($result->isSuccess())
 		{
@@ -102,7 +105,11 @@ abstract class BaseRequisiteMatcher
 
 	protected function updateEntity($requisite, $existingEntity)
 	{
-		$result = $this->getEntity()->update($existingEntity['ID'], $requisite);
+		$result = $this->getEntity()->update(
+			$existingEntity['ID'],
+			$requisite,
+			['DISABLE_REQUIRED_USER_FIELD_CHECK' => true]
+		);
 
 		if ($result->isSuccess())
 		{

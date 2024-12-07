@@ -4,6 +4,7 @@
  */
 jn.define('crm/statemanager/redux/slices/stage-counters', (require, exports, module) => {
 	const { ReducerRegistry } = require('statemanager/redux/reducer-registry');
+	const { StateCache } = require('statemanager/redux/state-cache');
 	const {
 		createAsyncThunk,
 		createEntityAdapter,
@@ -20,8 +21,7 @@ jn.define('crm/statemanager/redux/slices/stage-counters', (require, exports, mod
 
 	const reducerName = 'crm:stageCounters';
 	const adapter = createEntityAdapter({});
-	const initialState = adapter.getInitialState();
-	const filledState = adapter.upsertMany(initialState, []);
+	const initialState = StateCache.getReducerState(reducerName, adapter.getInitialState());
 
 	const fetchStageCounters = createAsyncThunk(
 		`${reducerName}/fetchStageCounters`,
@@ -39,24 +39,27 @@ jn.define('crm/statemanager/redux/slices/stage-counters', (require, exports, mod
 			};
 		},
 		{
-			condition: ({ entityTypeId, categoryId }, { getState }) => {
+			condition: ({ entityTypeId, categoryId, params = {}, forceFetch = false }, { getState }) => {
 				const state = getState()[reducerName];
 				const status = state.status;
 				const stateEntityTypeId = state.entityTypeId;
-				const stateCategoryId = state.categoryId;
+				const stateKanbanSettingsId = state.kanbanSettingsId;
+
+				const newFilter = JSON.stringify(params?.filter);
 
 				return !(
-					status === statusTypes.pending
+					(status === statusTypes.pending || status === statusTypes.success)
 					&& stateEntityTypeId === entityTypeId
-					&& stateCategoryId === categoryId
-				);
+					&& stateKanbanSettingsId === categoryId
+					&& newFilter === state.filter
+				) || forceFetch;
 			},
 		},
 	);
 
 	const slice = createSlice({
 		name: reducerName,
-		initialState: filledState,
+		initialState,
 		reducers: {
 			counterIncremented: (state, action) => {
 				const {
@@ -92,7 +95,8 @@ jn.define('crm/statemanager/redux/slices/stage-counters', (require, exports, mod
 				.addCase(fetchStageCounters.pending, (state, action) => {
 					state.status = statusTypes.pending;
 					state.entityTypeId = action.meta.arg.entityTypeId;
-					state.categoryId = action.meta.arg.categoryId;
+					state.kanbanSettingsId = action.meta.arg.categoryId;
+					state.filter = JSON.stringify(action.meta.arg?.params?.filter);
 				})
 				.addCase(fetchStageCounters.fulfilled, (state, action) => {
 					state.status = statusTypes.success;
@@ -100,22 +104,15 @@ jn.define('crm/statemanager/redux/slices/stage-counters', (require, exports, mod
 					const {
 						entityTypeId,
 						kanbanSettingsId,
-						data,
+						data = [],
 					} = action.payload;
-					const totalCounter = data.reduce((acc, item) => {
-						return {
-							id: `${entityTypeId}_${kanbanSettingsId}`,
-							currency: item.currency,
-							dropzone: false,
-							count: acc.count + item.count,
-							total: acc.total + item.total,
-						};
-					}, { id: '', currency: '', dropzone: '', count: 0, total: 0 });
+					const newData = data.map((item) => ({
+						...item,
+						entityTypeId,
+						kanbanSettingsId,
+					}));
 
-					adapter.upsertMany(state, {
-						...data,
-						totalCounter,
-					});
+					adapter.upsertMany(state, newData);
 				})
 				.addCase(fetchStageCounters.rejected, (state) => {
 					state.status = statusTypes.failure;
@@ -147,7 +144,39 @@ jn.define('crm/statemanager/redux/slices/stage-counters', (require, exports, mod
 	const {
 		selectById,
 		selectEntities,
+		selectAll,
 	} = adapter.getSelectors((state) => state[reducerName]);
+
+	const selectByIdOrByEntityAndKanban = createDraftSafeSelector(
+		(state, id) => {
+			if (Number.isFinite(id))
+			{
+				return selectById(state, id);
+			}
+
+			if (typeof id === 'string')
+			{
+				const [entityTypeId, kanbanSettingsId] = id.split('_').map(Number);
+				if (Number.isFinite(entityTypeId) && Number.isFinite(kanbanSettingsId))
+				{
+					const counters = selectAll(state).filter((counter) => {
+						return counter.entityTypeId === entityTypeId && counter.kanbanSettingsId === kanbanSettingsId;
+					});
+
+					return {
+						id,
+						count: counters.reduce((acc, counter) => acc + counter.count, 0),
+						total: counters.reduce((acc, counter) => acc + counter.total, 0),
+						dropzone: false,
+						currency: counters[0]?.currency,
+					};
+				}
+			}
+
+			return {};
+		},
+		(counter) => counter,
+	);
 
 	const {
 		counterIncremented,
@@ -163,7 +192,7 @@ jn.define('crm/statemanager/redux/slices/stage-counters', (require, exports, mod
 		counterIncremented,
 		counterDecremented,
 
-		selectById,
+		selectById: selectByIdOrByEntityAndKanban,
 		selectEntities,
 		selectStatus,
 	};

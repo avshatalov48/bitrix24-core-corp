@@ -1,4 +1,4 @@
-<?if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+<?php if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 /** @var CBitrixComponentTemplate $this */
 /** @var array $arParams */
 /** @var array $arResult */
@@ -7,6 +7,7 @@
 /** @global CMain $APPLICATION */
 $component = $this->getComponent();
 
+use Bitrix\Intranet\CurrentUser;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ModuleManager;
 use Bitrix\UI\Toolbar\Facade\Toolbar;
@@ -20,32 +21,36 @@ CUtil::InitJSCore(['popup']);
 	"ui.buttons",
 	"ui.buttons.icons",
 	"ui.fonts.opensans",
+	'ui.counterpanel',
+	'intranet.invitation-counter',
+	'pull.client',
+	'main.pagination.lazyloadtotalcount',
 ]);
 
 
 $toolbarId = mb_strtolower($arResult['GRID_ID']).'_toolbar';
 
-Toolbar::addFilter([
-	'GRID_ID' => $arResult['GRID_ID'],
-	'FILTER_ID' => $arResult['FILTER_ID'],
-	'FILTER' => $arResult['FILTER'],
-	'FILTER_PRESETS' => $arResult['FILTER_PRESETS'],
-	'ENABLE_LIVE_SEARCH' => true,
-	'ENABLE_LABEL' => true,
-	'LAZY_LOAD' => [
-		'CONTROLLER' => [
-			'getList' => 'main.filter.user.getlist',
-			'getField' => 'main.filter.user.getfield',
-			'componentName' => 'intranet.user.list',
-			'signedParameters' => \Bitrix\Main\Component\ParameterSigner::signParameters('intranet.user.list', [
-				'USER_PROPERTY_LIST' => $arParams['USER_PROPERTY_LIST']
-			])
-		]
-	],
-	'CONFIG' => [
-		'AUTOFOCUS' => false,
-	],
-]);
+Toolbar::addFilter(\Bitrix\Main\Filter\Component\ComponentParams::get($arResult['GRID_FILTER'],
+	[
+		'GRID_ID' => $arResult['FILTER_ID'],
+		'FILTER_PRESETS' => $arResult['FILTER_PRESETS'],
+		'ENABLE_LIVE_SEARCH' => true,
+		'ENABLE_LABEL' => true,
+		'LAZY_LOAD' => [
+			'CONTROLLER' => [
+				'getList' => 'main.filter.user.getlist',
+				'getField' => 'main.filter.user.getfield',
+				'componentName' => 'intranet.user.list',
+				'signedParameters' => \Bitrix\Main\Component\ParameterSigner::signParameters('intranet.user.list', [
+					'USER_PROPERTY_LIST' => $arParams['USER_PROPERTY_LIST']
+				])
+			]
+		],
+		'CONFIG' => [
+			'AUTOFOCUS' => false,
+		],
+	])
+);
 
 if (
 	isset($_REQUEST['IFRAME'])
@@ -59,34 +64,26 @@ $buttonID = "{$toolbarId}_button";
 
 if(!empty($arResult['TOOLBAR_MENU']))
 {
-	$menuButton = new \Bitrix\UI\Buttons\Button([
-		"color" => \Bitrix\UI\Buttons\Color::LIGHT_BORDER,
-		"icon" => \Bitrix\UI\Buttons\Icon::SETTING,
-	]);
-	$menuButton->addAttribute('id', $buttonID);
-	Toolbar::addButton($menuButton);
+	Toolbar::addButton($arResult['TOOLBAR_MENU']);
 }
 
 if(!empty($arResult['TOOLBAR_BUTTONS']))
 {
 	foreach($arResult['TOOLBAR_BUTTONS'] as $button)
 	{
-		switch($button['TYPE'])
-		{
-			case 'ADD':
-				$icon = \Bitrix\UI\Buttons\Icon::ADD;
-				break;
-			default:
-				$icon = '';
-		}
+		$icon = match ($button['TYPE'] ?? '') {
+			'ADD' => \Bitrix\UI\Buttons\Icon::ADD,
+			default => '',
+		};
 
 		Toolbar::addButton([
-			"link" => $button['LINK'] ?? null,
-			"color" => \Bitrix\UI\Buttons\Color::PRIMARY,
-			"icon" => $icon,
-			"text" => $button['TITLE'],
-			"click" => $button['CLICK']
-		]);
+			'dropdown' => false,
+			'link' => $button['LINK'] ?? null,
+			'color' => \Bitrix\UI\Buttons\Color::SUCCESS,
+			'icon' => $icon,
+			'text' => $button['TITLE'],
+			'click' => $button['CLICK'] ?? null
+		], \Bitrix\UI\Toolbar\ButtonLocation::AFTER_TITLE);
 	}
 }
 
@@ -110,31 +107,35 @@ if (
 }
 
 $gridContainerId = 'bx-iul-'.$arResult['GRID_ID'].'-container';
-$currentPage = ($arResult['NAV_OBJECT'] instanceof \Bitrix\Main\UI\PageNavigation) ?
-	$arResult['NAV_OBJECT']->getCurrentPage() :
-	null;
 
-?><span id="<?=htmlspecialcharsbx($gridContainerId)?>"><?
-	$APPLICATION->IncludeComponent(
-		'bitrix:main.ui.grid',
-		'',
-		[
-			'GRID_ID' => $arResult['GRID_ID'],
-			'HEADERS' => $arResult['HEADERS'],
-			'ROWS' => $arResult['ROWS'],
-			'NAV_OBJECT' => $arResult['NAV_OBJECT'],
-			'CURRENT_PAGE' => $currentPage,
-			'TOTAL_ROWS_COUNT' => $arResult['ROWS_COUNT'],
-			'ACTION_ALL_ROWS' => false,
-			'AJAX_OPTION_HISTORY' => 'N',
-			'AJAX_MODE' => 'Y',
-			'SHOW_ROW_CHECKBOXES' => false,
-			'SHOW_SELECTED_COUNTER' => false,
-			'EDITABLE' => false
-		],
-		$component
-	);
-?></span><?
+$intranetUser = new \Bitrix\Intranet\User();
+if (
+	$intranetUser->isAdmin()
+	|| (
+		$intranetUser->getInvitationCounterValue() > 0
+		&& $arResult['INVITE_FILTER_AVAILABLE']
+	)
+):
+
+$bodyClass = $APPLICATION->GetPageProperty('BodyClass');
+$APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass.' ' : '').'crm-pagetitle-view');
+
+$this->SetViewTarget('below_pagetitle', 1000);
+?>
+	<div id="invitation-employee-counter_panel" class="intranet-user-list-counter-panel"></div>
+<?php
+$this->EndViewTarget();
+endif;
+
+
+?><span class="intranet-user-list-grid-container" id="<?=htmlspecialcharsbx($gridContainerId)?>"><?php
+$APPLICATION->IncludeComponent(
+	'bitrix:main.ui.grid',
+	'',
+	$arResult['GRID_PARAMS'],
+	$component
+);
+?></span><?php
 
 ?><script>
 	BX.ready(function () {
@@ -148,25 +149,127 @@ $currentPage = ($arResult['NAV_OBJECT'] instanceof \Bitrix\Main\UI\PageNavigatio
 		});
 
 		jsBXIUL = new BX.Intranet.UserList.Manager({
-			componentName: '<?=$component->getName() ?>',
-			signedParameters: '<?=$component->getSignedParameters()?>',
-			gridId: '<?=\CUtil::JSEscape($arResult['GRID_ID'])?>',
-			filterId: '<?=\CUtil::JSEscape($arResult['FILTER_ID'])?>',
-			gridContainerId: '<?=\CUtil::JSEscape($gridContainerId)?>',
-			toolbar: {
-				id: '<?=CUtil::JSEscape($toolbarId)?>',
-				menuButtonId: '<?=\CUtil::JSEscape($buttonID)?>',
-				menuItems: <?=CUtil::PhpToJSObject($arResult['TOOLBAR_MENU'])?>
-			},
+			gridId: '<?= \CUtil::JSEscape($arResult['GRID_ID'])?>',
 			invitationLink: '<?=UrlManager::getInstance()->create('getSliderContent', [
 				'c' => 'bitrix:intranet.invitation',
 				'mode' => Router::COMPONENT_MODE_AJAX,
 				'analyticsLabel[source]' => 'userList',
-			]);?>'
+				'analyticsLabel[tool]' => 'Invitation',
+				'analyticsLabel[category]' => 'invitation',
+				'analyticsLabel[event]' => 'drawer_open',
+				'analyticsLabel[c_section]' => 'userList',
+			]);?>',
 		});
 
+		const filterId = '<?=\CUtil::JSEscape($arResult['FILTER_ID'])?>';
+		const counterId = '<?=\Bitrix\Intranet\Invitation::getInvitedCounterId()?>';
+		const waitConfirmationCounterId = '<?=\Bitrix\Intranet\Invitation::getWaitConfirmationCounterId()?>';
+		const presetId = 'invited';
+		const waitConfirmationPresetId = 'wait_confirmation';
+		const filter = BX.Main.filterManager.getById(filterId);
+		<?php if(
+			$intranetUser->isAdmin()
+			|| (
+				$intranetUser->getInvitationCounterValue() > 0
+				&& $arResult['INVITE_FILTER_AVAILABLE']
+			)
+		): ?>
+		const counter = new BX.Intranet.InvitationCounter({
+			target: BX('invitation-employee-counter_panel'),
+			title: '<?=Loc::getMessage('INTRANET_USER_LIST_COUNTER_PANEL_TITLE')?>',
+			items: [
+				<?php if($arResult['WAITING_FILTER_AVAILABLE']): ?>
+				{
+					id: waitConfirmationCounterId,
+					separator: true,
+					title: '<?=Loc::getMessage('INTRANET_USER_LIST_COUNTER_WAITING_CONFIRMATION_TITLE')?>',
+					value: <?=$intranetUser->getWaitConfirmationCounterValue()?>,
+					isActive: filter.getPreset().getCurrentPresetId() === waitConfirmationPresetId,
+					eventsForActive: {
+						click: () => {
+							if (filter !== null)
+							{
+								const preset = filter.getPreset();
+								preset.applyPinnedPreset();
+							}
+						}
+					},
+					eventsForUnActive: {
+						click: () => {
+							if (filter !== null)
+							{
+								const preset = filter.getPreset();
+								preset.deactivateAllPresets();
+								preset.activatePreset(waitConfirmationPresetId);
+								preset.applyPreset(waitConfirmationPresetId);
+								filter.applyFilter(null, true);
+							}
+						}
+					},
+				},
+				<?php endif; ?>
+				<?php if($arResult['INVITE_FILTER_AVAILABLE']): ?>
+				{
+					id: counterId,
+					separator: false,
+					title: '<?=Loc::getMessage('INTRANET_USER_LIST_COUNTER_INVITED_TITLE')?>',
+					value: <?=$intranetUser->getInvitationCounterValue()?>,
+					isActive: filter.getPreset().getCurrentPresetId() === presetId,
+					eventsForActive: {
+						click: () => {
+							if (filter !== null)
+							{
+								const preset = filter.getPreset();
+								preset.applyPinnedPreset();
+							}
+						}
+					},
+					eventsForUnActive: {
+						click: () => {
+							if (filter !== null)
+							{
+								const preset = filter.getPreset();
+								preset.deactivateAllPresets();
+								preset.activatePreset(presetId);
+								preset.applyPreset(presetId);
+								filter.applyFilter(null, true);
+							}
+						}
+					},
+				}
+				<?php endif; ?>
+			],
+			filterEvents: {
+				apply: (event) => {
+					const [filterId, action, filter] = event.data;
+					const counterItem = counter.getCounterPanel().getItemById(counterId);
+					const waitConfirmationCounterItem = counter.getCounterPanel().getItemById(waitConfirmationCounterId);
+
+					if (filter.getPreset().getCurrentPresetId() === presetId)
+					{
+						counterItem?.activate(false);
+					}
+					else
+					{
+						counterItem?.deactivate(false);
+					}
+
+					if (filter.getPreset().getCurrentPresetId() === waitConfirmationPresetId)
+					{
+						waitConfirmationCounterItem?.activate(false);
+					}
+					else
+					{
+						waitConfirmationCounterItem?.deactivate(false);
+					}
+				},
+			},
+		});
+		counter.show();
+		<?php endif;?>
+		(new BX.Main.Pagination.Lazyloadtotalcount()).register();
 	});
-</script><?
+</script><?php
 if (
 	SITE_TEMPLATE_ID == 'bitrix24'
 	&& !empty($arParams['SLIDER_PROFILE_USER_ID'])
@@ -213,7 +316,7 @@ if (
 			}
 		);
 	});
-</script><?
+</script><?php
 }
 else if (
 	\Bitrix\Intranet\CurrentUser::get()->isAdmin() &&

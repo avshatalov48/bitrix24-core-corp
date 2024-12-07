@@ -26,8 +26,6 @@ CUtil::InitJSCore(array('window', 'popup', 'tooltip'));
 //require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_js.php");
 //require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/interface/prolog_jspopup_admin.php");
 
-CUtil::JSPostUnescape();
-
 if (!CModule::IncludeModule('crm'))
 	die();
 
@@ -37,7 +35,7 @@ function __ExtSaleWizardShowError($text)
 {
 	ShowError($text);
 
-	echo '<script type="text/javascript">';
+	echo '<script>';
 	echo 'BX.WindowManager.Get().SetButtons([BX.WindowManager.Get().btnClose]);';
 	echo 'BX.WindowManager.Get().AdjustShadow();';
 	echo '</script>';
@@ -494,7 +492,7 @@ if ($processActions && !empty($errorMessage))
 				<td class="bx-popup-label"><?= GetMessage("BPWC_WNCW_SHPROB") ?>:</td>
 				<td valign="top"><input type="text" name="IMPORT_PROBABILITY" value="<?= $arFields["IMPORT_PROBABILITY"] ?>" size="10"></td>
 			</tr>
-			<script type="text/javascript">
+			<script>
 			function __BXOnImportResponsibleChange()
 			{
 				var ddd = document.getElementById("id_IMPORT_RESPONSIBLE_TXT");
@@ -579,7 +577,7 @@ if ($processActions && !empty($errorMessage))
 				</td>
 			</tr>
 		</table>
-		<script type="text/javascript">
+		<script>
 			var extSaleSyncStep = 0;
 			var statLoadDeal = 0;
 			var statLoadContact = 0;
@@ -768,7 +766,7 @@ if ($processActions && !empty($errorMessage))
 				<td class="bx-popup-label"><?= GetMessage("BPWC_WNCW_SHPROB") ?>:</td>
 				<td valign="top"><input type="text" name="IMPORT_PROBABILITY" value="<?= $arFields["IMPORT_PROBABILITY"] ?>" size="10"></td>
 			</tr>
-			<script type="text/javascript">
+			<script>
 			function __BXOnImportResponsibleChange()
 			{
 				var ddd = document.getElementById("id_IMPORT_RESPONSIBLE_TXT");
@@ -820,7 +818,7 @@ if ($processActions && !empty($errorMessage))
 				<td class="bx-popup-label"><?= GetMessage("BPWC_WNCW_SHPUBLIC") ?>:</td>
 				<td><input type="checkbox" name="IMPORT_PUBLIC" value="Y"<?= $arFields["IMPORT_PUBLIC"] == "Y" ? " checked" : "" ?>></td>
 			</tr>
-			<script type="text/javascript">
+			<script>
 			function __BXOnImportGroupChange()
 			{
 				var ddd = document.getElementById("id_GROUP_TXT");

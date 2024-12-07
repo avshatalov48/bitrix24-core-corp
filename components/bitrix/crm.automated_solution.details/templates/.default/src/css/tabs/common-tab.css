@@ -1,0 +1,43 @@
+.crm-automated-solution-details .crm-automated-solution-details-form-label-xs .ui-form-label {
+	margin-bottom: 9px;
+	font-size: 13px;
+}
+
+.crm-automated-solution-details .crm-automated-solution-details-form-label-xs .ui-ctl-label-text {
+	font-size: 13px;
+	opacity: .5;
+}
+
+.crm-automated-solution-details-form-label-xs .ui-ctl-element {
+	font-size: 14px;
+}
+
+.crm-automated-solution-details-form-label-xs .ui-ctl-element::-webkit-input-placeholder {
+	color: rgba(51,51,51,.3);
+}
+.crm-automated-solution-details-form-label-xs .ui-ctl-element::-moz-placeholder {
+	color: rgba(51,51,51,.3);
+}
+.crm-automated-solution-details-form-label-xs .ui-ctl-element:-ms-input-placeholder {
+	color: rgba(51,51,51,.3);
+}
+.crm-automated-solution-details-form-label-xs .ui-ctl-element:-moz-placeholder {
+	color: rgba(51,51,51,.3);
+}
+
+.crm-automated-solution-details .ui-ctl-label-text {
+	font-size: 14px;
+	font-weight: 400;
+}
+
+.crm-automated-solution-details [data-tab="common"] .ui-form-row {
+	margin-bottom: 10px;
+}
+
+[data-tab="common"] .ui-form-row > [class*='ui-ctl'] {
+	padding: 14px 0 7px 0;
+}
+
+[data-tab="common"] .ui-form-content .ui-ctl {
+	margin-bottom: 22px;
+}

@@ -9,4 +9,5 @@ $MESS['INTL_IBLOCK'] = "Инфоблок переговорных";
 $MESS['INTL_IBLOCK_TYPE_V'] = "Тип инфоблока видеопереговорных";
 $MESS['INTL_IBLOCK_V'] = "Инфоблок видеопереговорных";
 $MESS['M_MEETINGS_COUNT'] = "Количество собраний на страницу";
+$MESS['M_NAME_TEMPLATE'] = "Отображение имени";
 ?>

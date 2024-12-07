@@ -945,7 +945,10 @@ abstract class Base implements Volume\IVolumeIndicator, IErrorable
 			$filterToFileList['=IS_REAL_OBJECT'] = 1;
 		}
 
-		if (!isset($additionalFilter['!DELETED_TYPE']))
+		if (
+			!isset($additionalFilter['!DELETED_TYPE'])
+			&& !isset($additionalFilter['!=DELETED_TYPE'])
+		)
 		{
 			$filterToFileList['=DELETED_TYPE'] = Disk\Internals\ObjectTable::DELETED_TYPE_NONE;
 		}
@@ -1002,7 +1005,10 @@ abstract class Base implements Volume\IVolumeIndicator, IErrorable
 			$filterToFolderList['=IS_REAL_OBJECT'] = 1;
 		}
 
-		if (!isset($additionalFilter['!DELETED_TYPE']))
+		if (
+			!isset($additionalFilter['!DELETED_TYPE'])
+			&& !isset($additionalFilter['!=DELETED_TYPE'])
+		)
 		{
 			$filterToFolderList['=DELETED_TYPE'] = Disk\Internals\ObjectTable::DELETED_TYPE_NONE;
 		}

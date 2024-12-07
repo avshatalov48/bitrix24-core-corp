@@ -4,8 +4,9 @@ namespace Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit;
 use Bitrix\Main\Loader;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
+use Bitrix\Socialnetwork\Helper\Feature;
 use Bitrix\Socialnetwork\WorkgroupTable;
-use Bitrix\Tasks\Integration\Bitrix24\FeatureDictionary;
+use Bitrix\Tasks\Integration\Bitrix24;
 use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit;
 
 /**
@@ -15,9 +16,7 @@ use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit;
  */
 class ScrumLimit extends Limit
 {
-	protected static $variableName = FeatureDictionary::VARIABLE_SCRUM_LIMIT;
-
-	private static $maxCount = 21;
+	protected static $variableName = Bitrix24\FeatureDictionary::VARIABLE_SCRUM_CREATE_LIMIT;
 
 	/**
 	 * Checks if limit exceeded
@@ -38,7 +37,14 @@ class ScrumLimit extends Limit
 
 		if ($limit === 0)
 		{
-			return true;
+			if (self::isNewFeaturesPoliticEnabled())
+			{
+				return true;
+			}
+			else
+			{
+				return (static::getCurrentValue() >= 5);
+			}
 		}
 
 		return (static::getCurrentValue() >= $limit);
@@ -46,19 +52,7 @@ class ScrumLimit extends Limit
 
 	public static function getSidePanelId(int $limit = 0): string
 	{
-		$sidePanelId = 'limit_tasks_scrum';
-
-		if (Loader::includeModule('bitrix24'))
-		{
-			$limit = ($limit > 0 ? $limit : static::getLimit());
-
-			if ($limit === 0)
-			{
-				$sidePanelId = 'limit_tasks_scrum_restriction';
-			}
-		}
-
-		return $sidePanelId;
+		return 'limit_' . Feature::SCRUM_CREATE;
 	}
 
 	/**
@@ -70,8 +64,6 @@ class ScrumLimit extends Limit
 	 */
 	protected static function getCurrentValue(): int
 	{
-		$count = self::$maxCount;
-
 		if (Loader::includeModule('socialnetwork'))
 		{
 			$query = WorkgroupTable::query();
@@ -84,9 +76,55 @@ class ScrumLimit extends Limit
 
 			$result = $query->exec();
 
-			$count = $result->getCount();
+			return $result->getCount();
 		}
 
-		return $count;
+		return 0;
+	}
+
+	public static function isFeatureEnabled()
+	{
+		if (!Loader::includeModule('socialnetwork'))
+		{
+			return true;
+		}
+
+		if (Feature::isFeatureEnabled(Feature::SCRUM_CREATE))
+		{
+			return true;
+		}
+
+
+		return false;
+	}
+
+	public static function canTurnOnTrial(): bool
+	{
+		if (!Loader::includeModule('socialnetwork'))
+		{
+			return false;
+		}
+
+		return Feature::canTurnOnTrial(Feature::SCRUM_CREATE);
+	}
+
+	public static function turnOnTrial(): void
+	{
+		Feature::turnOnTrial(Feature::SCRUM_CREATE);
+	}
+
+	public static function getFeatureId(): string
+	{
+		return Feature::SCRUM_CREATE;
+	}
+
+	public static function getLimitCode(): string
+	{
+		return self::getSidePanelId();
+	}
+
+	private static function isNewFeaturesPoliticEnabled(): bool
+	{
+		return \Bitrix\Main\Config\Option::get('bitrix24', 'new-features-politic-2024', 'N', '-') === 'Y';
 	}
 }

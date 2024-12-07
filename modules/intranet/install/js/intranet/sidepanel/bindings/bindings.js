@@ -134,6 +134,26 @@
 			},
 			{
 				condition: [
+					'/company/personal/user/\\d+/tasks/flow/\\?apply_filter=Y&ID_numsel=exact&ID_from=\\d+&editFormFlowId=(\\d+)',
+				],
+				handler: (event, link) => {
+					top.BX.Runtime.loadExtension('tasks.flow.edit-form')
+						.then((exports) => {
+							const flowId = link.matches[1];
+							const editForm = exports?.EditForm.createInstance({
+								flowId,
+							});
+							editForm?.openInSlider();
+						})
+					;
+					event.preventDefault();
+				},
+				options: {
+					cacheable: false,
+				},
+			},
+			{
+				condition: [
 					'/company/personal/user/\\d+/tasks/flow/\\?apply_filter=Y&ID_numsel=exact&ID_from=(\\d+)',
 				],
 				loader: 'default-loader',
@@ -196,6 +216,13 @@
 			{
 				condition: ['/crm/button/edit/(\\d+)/'],
 				loader: 'intranet:crm-button-view-loader'
+			},
+			{
+				condition: ['/marketplace/einvoice/'],
+				options: {
+					width: 575,
+					allowChangeHistory: false,
+				},
 			},
 			{
 				condition: [
@@ -350,7 +377,52 @@
 			},
 			{
 				condition: [
-					/\?(IM_DIALOG|IM_HISTORY|IM_LINES)=([^&]+)/i
+					/(FEATURE_PROMOTER)=([^&]+)/
+				],
+				handler: function(event, link)
+				{
+					const code = link.matches[2];
+
+					if (BX.UI.FeaturePromotersRegistry && code)
+					{
+						BX.UI.FeaturePromotersRegistry.getPromoter({ code: code }).show();
+					}
+
+					event.preventDefault();
+				},
+			},
+			{
+				condition: [
+					/(AI_UX_TRIGGER)=([^&]+)/,
+				],
+				handler: function(event, link)
+				{
+					const code = link.matches[2];
+					if (code === 'box_agreement')
+					{
+						BX.Runtime.loadExtension('ai.copilot-agreement').then((exports) => {
+							const CopilotAgreementClass = exports['CopilotAgreement'];
+							if (CopilotAgreementClass)
+							{
+								const optionsCopilotAgreement = {
+									moduleId: 'im',
+									contextId: 'chat',
+									events: {
+										onAccept: () => {},
+										onCancel: () => {},
+									},
+								};
+								(new CopilotAgreementClass(optionsCopilotAgreement)).checkAgreement();
+							}
+						});
+
+						event.preventDefault();
+					}
+				},
+			},
+			{
+				condition: [
+					/\?(IM_DIALOG|IM_HISTORY|IM_LINES|IM_COPILOT)=([^&]+)(&IM_MESSAGE=([^&]+))?/i
 				],
 				handler: function(event, link)
 				{
@@ -361,6 +433,7 @@
 
 					var type = link.matches[1];
 					var dialogId = decodeURI(link.matches[2]);
+					const messageId = link.matches[4] ? Number(link.matches[4]) : 0;
 
 					if (type === "IM_HISTORY")
 					{
@@ -370,9 +443,13 @@
 					{
 						BX.Messenger.Public.openLines(dialogId);
 					}
+					else if (type === 'IM_COPILOT')
+					{
+						BX.Messenger.Public.openCopilot(dialogId);
+					}
 					else
 					{
-						BX.Messenger.Public.openChat(dialogId);
+						BX.Messenger.Public.openChat(dialogId, messageId);
 					}
 
 					event.preventDefault();
@@ -431,6 +508,9 @@
 						return true;
 					}
 
+					event.preventDefault();
+					event.stopPropagation();
+
 					var articleId = link.matches[3];
 					if (articleId.substr(0,5).toLowerCase() === 'code_' )
 					{
@@ -441,7 +521,6 @@
 					{
 						BX.Helper.show("redirect=detail&HD_ID=" + articleId);
 					}
-					event.preventDefault();
 				}
 			},
 			{
@@ -489,9 +568,7 @@
 					new RegExp("/shop/documents-catalog/(\\d+)/product/", "i")
 				],
 				options: {
-					loader: "intranet:crm-entity-details-loader",
 					cacheable: false,
-					customLeftBoundary: 0,
 				}
 			},
 			{
@@ -500,7 +577,6 @@
 				],
 				options: {
 					cacheable: false,
-					customLeftBoundary: 0,
 				}
 			},
 			{
@@ -509,7 +585,6 @@
 				],
 				options: {
 					cacheable: false,
-					customLeftBoundary: 0,
 				}
 			},
 			{
@@ -811,11 +886,19 @@
 			},
 			{
 				condition: [
-					'^' + siteDir + 'mail/(config|message)'
+					'^' + siteDir + 'mail/message'
 				],
 				options: {
 					width: 1080
 				}
+			},
+			{
+				condition: [
+					'^' + siteDir + 'mail/config',
+				],
+				options: {
+					width: 820,
+				},
 			},
 			{
 				condition: [
@@ -1037,13 +1120,6 @@
 				}
 			},
 			{
-				condition: ['/einvoice/install/'],
-				options: {
-					width: 575,
-					allowChangeHistory: false,
-				},
-			},
-			{
 				condition: [
 					new RegExp('/sign/link/member/(\\d+)/', 'i'),
 				],
@@ -1054,19 +1130,13 @@
 				},
 				handler(event, link)
 				{
-					let newWindowLink = link.url;
-					if (!link.url.startsWith(document.location.origin))
-					{
-						newWindowLink = document.location.origin + link.url;
-					}
-
 					BX.SidePanel.Instance.open('sign:stub:sign-link', {
 						width: 900,
 						cacheable: false,
 						allowCrossOrigin: true,
 						allowCrossDomain: true,
 						allowChangeHistory: false,
-						newWindowUrl: newWindowLink,
+						newWindowUrl: link.url,
 						copyLinkLabel: true,
 						newWindowLabel: true,
 						loader: '/bitrix/js/intranet/sidepanel/bindings/images/sign_mask.svg',
@@ -1075,14 +1145,62 @@
 							bgColor: '#C48300',
 						},
 						async contentCallback(slider) {
-							return BX.Runtime.loadExtension('sign.v2.b2e.sign-link').then(() => {
-								return (new BX.Sign.V2.B2e.SignLink({ memberId: link.matches[1], slider }))
+							return BX.Runtime.loadExtension('sign.v2.b2e.sign-link').then((exports) => {
+								return (new exports.SignLink({ memberId: link.matches[1], slider }))
 									.render()
 								;
 							});
 						},
 					});
 
+					event.preventDefault();
+				},
+			},
+			{
+				condition: [ '/bitrix/components/bitrix/bitrix24.license.scan/' ],
+				options: {
+					cacheable: false,
+					allowChangeHistory: false,
+					width: 1195,
+				}
+			},
+			{
+				condition: [ new RegExp("/company/personal/user/[0-9]+/common_security/\\?page=auth") ],
+				options: {
+					width: 1100,
+				}
+			},
+			{
+				condition: [ new RegExp("/check-in/statistics/") ],
+				options: {
+					cacheable: false,
+					allowChangeHistory: false,
+				},
+				handler: function(event, link)
+				{
+					event.preventDefault();
+					BX.Runtime.loadExtension('stafftrack.user-statistics-link').then((exports) => {
+						const userStatisticsLink = exports.UserStatisticsLink;
+						if (userStatisticsLink)
+						{
+							return (new userStatisticsLink()).show();
+						}
+					})
+				},
+			},
+			{
+				condition: [
+					/^\/bitrix\/components\/bitrix\/sign.document.list\/slider.php\?type=document&entity_id=\d+&apply_filter=Y/,
+				],
+				options: {
+					cacheable: false,
+					width: 900,
+					allowChangeHistory: false,
+				},
+				handler(event, link)
+				{
+					BX.SidePanel.Instance.open(link.url);
+					event.stopPropagation();
 					event.preventDefault();
 				},
 			},

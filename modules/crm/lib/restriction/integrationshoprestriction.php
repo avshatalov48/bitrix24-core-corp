@@ -18,7 +18,7 @@ class IntegrationShopRestriction extends Bitrix24QuantityRestriction
 			$limit = -1;
 		}
 		$restrictionSliderInfo = [
-			'ID' => 'limit_crm_integration_shop_bitrix',
+			'ID' => 'limit_crm_bitrix_shop_integration',
 		];
 		parent::__construct($restrictionName, $limit, null, $restrictionSliderInfo);
 		$this->load();

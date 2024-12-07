@@ -67,7 +67,6 @@ if ($_REQUEST['MODE'] == 'EMPLOYEES' && (!CModule::IncludeModule('extranet') || 
 }
 elseif ($_REQUEST['MODE'] == 'SEARCH')
 {
-	CUtil::JSPostUnescape();
 	$APPLICATION->RestartBuffer();
 	$search = $_REQUEST['SEARCH_STRING'];
 	$arUsers = array();

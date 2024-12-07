@@ -2,12 +2,10 @@
  * @module tasks/layout/checklist/list/src/buttons/button-remove
  */
 jn.define('tasks/layout/checklist/list/src/buttons/button-remove', (require, exports, module) => {
-	const AppTheme = require('apptheme');
 	const { animate } = require('animation');
-	const { outline: { trashCan } } = require('assets/icons');
 	const { PropTypes } = require('utils/validation');
-
-	const ERASE_SIZE = 20;
+	const { Color } = require('tokens');
+	const { IconView, Icon } = require('ui-system/blocks/icon');
 
 	/**
 	 * @class ButtonRemove
@@ -54,6 +52,10 @@ jn.define('tasks/layout/checklist/list/src/buttons/button-remove', (require, exp
 					testId: 'bin_block',
 					style: {
 						padding: 4,
+						opacity: 0,
+					},
+					ref: (ref) => {
+						this.buttonRef = ref;
 					},
 					onClick: () => {
 						if (this.isShow && onClick)
@@ -62,20 +64,9 @@ jn.define('tasks/layout/checklist/list/src/buttons/button-remove', (require, exp
 						}
 					},
 				},
-				Image({
-					ref: (ref) => {
-						this.buttonRef = ref;
-					},
-					tintColor: AppTheme.colors.base5,
-					style: {
-						opacity: 0,
-						width: ERASE_SIZE,
-						height: ERASE_SIZE,
-
-					},
-					svg: {
-						content: trashCan(),
-					},
+				IconView({
+					icon: Icon.TRASHCAN,
+					color: Color.base5,
 				}),
 			);
 		}

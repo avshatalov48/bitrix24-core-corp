@@ -57,10 +57,10 @@ class GroupStepper extends Stepper
 			$executiveUserId = ($queueOption["executiveUserId"] ?? 0);
 			$groupId = ($queueOption["groupId"] ?? 0);
 			$copiedGroupId = ($queueOption["copiedGroupId"] ?? 0);
-			$errorOffset = ($queueOption["errorOffset"] ?? 0);
+			$queueOption["errorOffset"] = ($queueOption["errorOffset"] ?? 0);
 
 			$limit = 3;
-			$offset = $this->getOffset($executiveUserId, $copiedGroupId) + $errorOffset;
+			$offset = $this->getOffset($executiveUserId, $copiedGroupId) + $queueOption["errorOffset"];
 
 			$tasksIds = $this->getTasksIdsByGroupId($executiveUserId, $groupId);
 			$count = count($tasksIds);
@@ -92,6 +92,7 @@ class GroupStepper extends Stepper
 				$result = $taskCopyManager->startCopy();
 				if (!$result->isSuccess())
 				{
+					$queueOption["errorOffset"] += $this->getErrorOffset($taskCopyManager);
 					$queueOption["errorOffset"] += $this->getErrorOffset($taskCopyManager);
 				}
 
@@ -144,7 +145,7 @@ class GroupStepper extends Stepper
 						$task = new \CTaskItem($taskIdTo, $executiveUserId);
 						$task->addProjectDependence($taskIdFrom, $dependence["TYPE"]);
 					}
-					catch (\Exception $exception) {}
+					catch (\Throwable $exception) {}
 				}
 			}
 		}

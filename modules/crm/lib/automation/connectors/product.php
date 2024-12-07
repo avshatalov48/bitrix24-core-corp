@@ -17,7 +17,7 @@ use Bitrix\Main\Text\StringHelper;
  * @method int getOwnerId()
  * @method string getOwnerType()
  * @method int getProductId()
- * @method string getProductName()
+ * @method ?string getProductName()
  * @method string | null getCpProductName()
  * @method float getPrice()
  * @method float getPriceAccount()
@@ -269,5 +269,10 @@ class Product
 			'Required' => true,
 			'Default' => ProductType::TYPE_PRODUCT,
 		];
+	}
+
+	private function getProductName(): ?string
+	{
+		return $this->product->getProductName() ?: $this->product->getCpProductName();
 	}
 }

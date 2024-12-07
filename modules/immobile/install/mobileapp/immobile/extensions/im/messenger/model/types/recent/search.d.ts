@@ -1,4 +1,5 @@
-import {PayloadData} from "../base";
+import {MessengerModel, PayloadData} from "../base";
+import {DialogId} from "../../../types/common";
 
 export type RecentSearchModelState = {
 	id: string| number,
@@ -26,3 +27,9 @@ export interface RecentSearchClearData extends PayloadData
 {
 	// void object
 }
+
+export type RecentSearchModelCollection = {
+	collection: Record<DialogId, RecentSearchModelState>
+}
+
+export type RecentSearchMessengerModel = MessengerModel<RecentSearchModelCollection>;

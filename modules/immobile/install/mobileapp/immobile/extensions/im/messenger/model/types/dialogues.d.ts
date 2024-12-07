@@ -1,5 +1,6 @@
 import {DialogId} from "../../types/common";
-import {PayloadData} from "./base";
+import {MessengerModel, PayloadData} from "./base";
+import {CommentModelCollection} from "./comment";
 
 export enum DialogType {
 	user = 'user',
@@ -18,6 +19,10 @@ export enum DialogType {
 	thread = 'thread',
 	mail = 'mail',
 	copilot = 'copilot',
+	channel = 'channel',
+	openChannel = 'openChannel',
+	comment = 'comment',
+	generalChannel = 'generalChannel',
 }
 
 export type DialoguesModelState = {
@@ -39,7 +44,7 @@ export type DialoguesModelState = {
 	lastMessageViews: LastMessageViews,
 	savedPositionMessageId: number,
 	managerList: Array<any>, //todo concrete type
-	readList: Array<any>, //todo concrete type
+	readList: Array<any>, // FIXME remove this field from model and table
 	writingList: Array<WritingUserData>,
 	muteList: Array<any>, //todo concrete type
 	textareaMessage: string,
@@ -56,9 +61,13 @@ export type DialoguesModelState = {
 	loading: boolean,
 	hasPrevPage: boolean,
 	hasNextPage: boolean,
+	tariffRestrictions: TariffRestrictions
 	role: string,
 	permissions: DialogPermissions,
 	aiProvider: string,
+	parentChatId: number,
+	parentMessageId: number,
+	messageCount: number,
 };
 
 export type LastMessageViews = {
@@ -80,29 +89,49 @@ export type WritingUserData = {
 }
 
 export type DialogPermissions = {
-	manageUsersAdd: string,
-	manageUsersDelete: string,
-	manageUi: string,
-	manageSettings: string,
-	canPost: string,
+	manageUsersAdd: PermissionRoles,
+	manageUsersDelete: PermissionRoles,
+	manageUi: PermissionRoles,
+	manageSettings: PermissionRoles,
+	canPost?: PermissionRoles,
+	manageMessages: PermissionRoles,
 }
+
+export type TariffRestrictions = {
+	isHistoryLimitExceeded: boolean,
+}
+
+declare type PermissionRoles = 'guest' | 'member' | 'manager' | 'owner' | 'none';
+
+declare type DialoguesModelCollection = {
+	collection: Record<DialogId, DialoguesModelState>,
+};
+
+export type DialoguesMessengerModel = MessengerModel<DialoguesModelCollection>;
 
 
 export type DialoguesModelActions =
 	'dialoguesModel/setState'
 	| 'dialoguesModel/set'
 	| 'dialoguesModel/setFromLocalDatabase'
+	| 'dialoguesModel/setCollectionFromLocalDatabase'
 	| 'dialoguesModel/add'
 	| 'dialoguesModel/update'
 	| 'dialoguesModel/delete'
+	| 'dialoguesModel/deleteFromModel'
 	| 'dialoguesModel/updateWritingList'
+	| 'dialoguesModel/decreaseCounter'
+	| 'dialoguesModel/updateUserCounter'
+	| 'dialoguesModel/updateManagerList'
+	| 'dialoguesModel/updateTariffRestrictions'
 	| 'dialoguesModel/clearLastMessageViews'
 	| 'dialoguesModel/incrementLastMessageViews'
 	| 'dialoguesModel/setLastMessageViews'
-	| 'dialoguesModel/decreaseCounter'
 	| 'dialoguesModel/clearAllCounters'
 	| 'dialoguesModel/addParticipants'
 	| 'dialoguesModel/removeParticipants'
+	| 'dialoguesModel/unmute'
+	| 'dialoguesModel/mute'
 
 export type DialoguesModelMutation =
 	'dialoguesModel/add'
@@ -119,6 +148,7 @@ export interface DialoguesSetStateData extends PayloadData
 export type DialoguesAddActions =
 	'set'
 	| 'add'
+	| 'addCollection'
 ;
 export interface DialoguesAddData extends PayloadData
 {
@@ -129,6 +159,7 @@ export interface DialoguesAddData extends PayloadData
 export type DialoguesUpdateActions =
 	'set'
 	| 'update'
+	| 'updateCollection'
 	| 'updateWritingList'
 	| 'decreaseCounter'
 	| 'updateUserCounter'
@@ -147,8 +178,31 @@ export interface DialoguesUpdateData extends PayloadData
 	fields: Partial<DialoguesModelState>,
 }
 
-export type DialoguesDeleteActions = 'delete';
+export interface DialoguesUpdateCollectionData extends PayloadData
+{
+	updateItems: Array<DialogPayloadDataItem>
+}
+
+export interface DialoguesAddCollectionData extends PayloadData
+{
+	addItems: Array<DialogPayloadDataItem>
+}
+
+export type DialoguesDeleteActions = 'delete' | 'deleteFromModel';
 export interface DialoguesDeleteData extends PayloadData
 {
 	dialogId: DialogId,
+}
+
+export interface DialogPayloadDataItem
+{
+	dialogId: DialogId,
+	fields: Partial<DialoguesModelState>,
+}
+
+export interface DialogUpdateTariffRestrictionsPayload
+{
+	dialogId: DialogId,
+	tariffRestrictions: TariffRestrictions,
+	isForceUpdate?: boolean,
 }

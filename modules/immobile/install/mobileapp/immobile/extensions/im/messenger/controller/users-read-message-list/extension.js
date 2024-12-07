@@ -12,10 +12,11 @@ jn.define('im/messenger/controller/users-read-message-list', (require, exports, 
 	const { atomIcons } = require('im/messenger/assets/common');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { FriendlyDate } = require('layout/ui/friendly-date');
-	const AppTheme = require('apptheme');
+	const { Theme } = require('im/lib/theme');
 	const { runAction } = require('im/messenger/lib/rest');
 	const { EventType } = require('im/messenger/const');
 	const { ChatTitle } = require('im/messenger/lib/element');
+	const { serviceLocator } = require('im/messenger/lib/di/service-locator');
 
 	/**
 	 * @desc This class provider calling backdrop widget with users of list who read message
@@ -47,8 +48,12 @@ jn.define('im/messenger/controller/users-read-message-list', (require, exports, 
 			this.items = [];
 			this.cache = cache;
 			this.setCache = setCache;
-			this.onItemClick = this.onItemClick.bind(this);
-			this.onClose = this.onClose.bind(this);
+			this.bindMethods();
+
+			const messageData = serviceLocator.get('core').getStore().getters['messagesModel/getById'](messageId);
+
+			const { dialogId } = serviceLocator.get('core').getStore().getters['dialoguesModel/getByChatId'](messageData.chatId);
+			this.dialogId = dialogId;
 		}
 
 		open()
@@ -62,7 +67,7 @@ jn.define('im/messenger/controller/users-read-message-list', (require, exports, 
 			PageManager.openWidget(
 				'layout',
 				{
-					backgroundColor: AppTheme.colors.bgContentPrimary,
+					backgroundColor: Theme.colors.bgContentPrimary,
 					title: Loc.getMessage('IMMOBILE_MESSENGER_WIDGET_USERS_READ_MESSAGE_LIST_TITLE'),
 					backdrop: {
 						mediumPositionPercent: 60,
@@ -85,16 +90,19 @@ jn.define('im/messenger/controller/users-read-message-list', (require, exports, 
 			this.subscribeExternalEvents();
 			this.createView();
 			this.widget.showComponent(this.view);
+			this.widget.on(EventType.view.close, this.closeHandler);
 		}
 
 		subscribeExternalEvents()
 		{
-			BX.addCustomEvent(EventType.messenger.openDialog, this.onClose);
+			BX.addCustomEvent(EventType.messenger.openDialog, this.openDialogHandler);
+			BX.addCustomEvent(EventType.dialog.external.delete, this.deleteDialogHandler);
 		}
 
 		unsubscribeExternalEvents()
 		{
-			BX.removeCustomEvent(EventType.messenger.openDialog, this.onClose);
+			BX.removeCustomEvent(EventType.messenger.openDialog, this.openDialogHandler);
+			BX.removeCustomEvent(EventType.dialog.external.delete, this.deleteDialogHandler);
 		}
 
 		checkCache()
@@ -140,7 +148,7 @@ jn.define('im/messenger/controller/users-read-message-list', (require, exports, 
 		{
 			this.view = new UsersReadMessageListView({
 				itemList: this.items,
-				callbacks: { onItemClick: this.onItemClick },
+				callbacks: { onItemClick: this.itemClickHandler },
 			});
 		}
 
@@ -205,7 +213,7 @@ jn.define('im/messenger/controller/users-read-message-list', (require, exports, 
 
 					style: {
 						parentView: {
-							backgroundColor: AppTheme.colors.bgContentPrimary,
+							backgroundColor: Theme.colors.bgContentPrimary,
 						},
 						itemContainer: {
 							flexDirection: 'row',
@@ -220,7 +228,7 @@ jn.define('im/messenger/controller/users-read-message-list', (require, exports, 
 						itemInfoContainer: {
 							flexDirection: 'row',
 							borderBottomWidth: 1,
-							borderBottomColor: AppTheme.colors.bgSeparatorSecondary,
+							borderBottomColor: Theme.colors.bgSeparatorSecondary,
 							flex: 1,
 							alignItems: 'center',
 							marginBottom: 6,
@@ -239,7 +247,7 @@ jn.define('im/messenger/controller/users-read-message-list', (require, exports, 
 								color: ChatTitle.createFromDialogId(userData.id).getTitleColor(),
 							},
 							subtitle: {
-								color: AppTheme.colors.base3,
+								color: Theme.colors.base3,
 								fontSize: 14,
 								fontWeight: 400,
 								textStyle: 'normal',
@@ -272,7 +280,7 @@ jn.define('im/messenger/controller/users-read-message-list', (require, exports, 
 		 * @param {Object} event
 		 * @return void
 		 */
-		onItemClick(event)
+		itemClickHandler(event)
 		{
 			if (event.dialogTitleParams.key)
 			{
@@ -280,14 +288,41 @@ jn.define('im/messenger/controller/users-read-message-list', (require, exports, 
 			}
 		}
 
+		openDialogHandler()
+		{
+			this.close();
+		}
+
 		/**
 		 * @desc Handler is close widget
 		 * @return void
 		 */
-		onClose()
+		closeHandler()
 		{
 			this.unsubscribeExternalEvents();
+		}
+
+		close()
+		{
 			this.widget.close();
+		}
+
+		bindMethods()
+		{
+			this.itemClickHandler = this.itemClickHandler.bind(this);
+			this.closeHandler = this.closeHandler.bind(this);
+			this.deleteDialogHandler = this.deleteDialogHandler.bind(this);
+			this.openDialogHandler = this.openDialogHandler.bind(this);
+		}
+
+		deleteDialogHandler({ dialogId })
+		{
+			if (String(this.dialogId) !== String(dialogId))
+			{
+				return;
+			}
+
+			this.close();
 		}
 
 		/**
@@ -297,7 +332,11 @@ jn.define('im/messenger/controller/users-read-message-list', (require, exports, 
 		 */
 		openUserProfile(userId)
 		{
-			UserProfile.show(userId, { backdrop: true, parentWidget: this.widget });
+			UserProfile.show(userId, {
+				openingDialogId: this.dialogId,
+				backdrop: true,
+				parentWidget: this.widget,
+			});
 		}
 	}
 

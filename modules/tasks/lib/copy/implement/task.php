@@ -439,6 +439,7 @@ class Task extends Base
 		}
 
 		$topicId = $dictionary['FORUM_TOPIC_ID'];
+		$copiedTopicId = 0;
 
 		$queryObject = TaskTable::getList([
 			'filter' => ['ID' => $copiedTaskId],
@@ -446,9 +447,18 @@ class Task extends Base
 		]);
 		if ($taskData = $queryObject->fetch())
 		{
-			$copiedTopicId = $taskData['FORUM_TOPIC_ID'];
+			$copiedTopicId = (int)$taskData['FORUM_TOPIC_ID'];
+			if (!$copiedTopicId)
+			{
+				$copiedTopicId = $this->createTopicForComments($topicId, $copiedTaskId);
+				if ($copiedTopicId)
+				{
+					$this->update($copiedTaskId, ['FORUM_TOPIC_ID' => $copiedTopicId]);
+				}
+			}
 		}
-		else
+
+		if (!$copiedTopicId)
 		{
 			return new Result();
 		}
@@ -489,6 +499,37 @@ class Task extends Base
 		}
 
 		return $result;
+	}
+
+	private function createTopicForComments(int $topicId, int $copiedTaskId): int
+	{
+		if (!$this->topicCopier)
+		{
+			return 0;
+		}
+
+		$dictionary = new Dictionary(['XML_ID' => 'TASK_' . $copiedTaskId]);
+
+		$containerCollection = new ContainerCollection();
+
+		$container = new Container($topicId);
+		$container->setDictionary($dictionary);
+
+		$containerCollection[] = $container;
+
+		$result = $this->topicCopier->copy($containerCollection);
+		if ($result->getErrors())
+		{
+			return 0;
+		}
+
+		$mapIdsCopiedTopics = $this->topicCopier->getMapIdsCopiedEntity();
+		if (!array_key_exists($topicId, $mapIdsCopiedTopics))
+		{
+			return 0;
+		}
+
+		return $mapIdsCopiedTopics[$topicId];
 	}
 
 	protected function copyReplica(Container $parentContainer, int $taskId, int $copiedTaskId)

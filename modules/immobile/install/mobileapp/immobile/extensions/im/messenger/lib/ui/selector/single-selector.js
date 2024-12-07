@@ -6,7 +6,7 @@ jn.define('im/messenger/lib/ui/selector/single-selector', (require, exports, mod
 	const { FullScreenShadow } = require('im/messenger/lib/ui/base/full-screen-shadow');
 	const { SearchInput } = require('im/messenger/lib/ui/search/input');
 	const { List } = require('im/messenger/lib/ui/base/list');
-	const AppTheme = require('apptheme');
+	const { Theme } = require('im/lib/theme');
 
 	/**
 	 * @class SingleSelector
@@ -123,7 +123,7 @@ jn.define('im/messenger/lib/ui/selector/single-selector', (require, exports, mod
 			return View(
 				{
 					style: {
-						backgroundColor: AppTheme.colors.bgContentTertiary,
+						backgroundColor: Theme.isDesignSystemSupported ? Theme.colors.bgContentPrimary : Theme.colors.bgContentTertiary,
 						padding: 10,
 					},
 				},

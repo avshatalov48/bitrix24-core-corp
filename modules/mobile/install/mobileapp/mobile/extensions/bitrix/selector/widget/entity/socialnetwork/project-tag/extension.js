@@ -16,7 +16,7 @@
 
 		static getStartTypingText()
 		{
-			return BX.message('SELECTOR_COMPONENT_START_TYPING_TO_SEARCH_PROJECT_TAG');
+			return BX.message('SELECTOR_COMPONENT_START_TYPING_TO_SEARCH_PROJECT_TAG_MSGVER_1');
 		}
 
 		static isCreationEnabled()
@@ -41,7 +41,7 @@
 					resolve({
 						id: text.toLowerCase(),
 						entityId: this.getEntityId(),
-						title: text.toLowerCase()
+						title: text.toLowerCase(),
 					});
 				});
 			};
@@ -52,6 +52,6 @@
 			return BX.message('SELECTOR_COMPONENT_PICK_PROJECT_TAG_2');
 		}
 	}
-	
+
 	this.ProjectTagSelector = ProjectTagSelector;
 })();

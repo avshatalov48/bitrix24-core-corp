@@ -238,4 +238,16 @@ class CrmSmartInvoiceDetailsComponent extends FactoryBased
 	{
 		return $this->item->isNew();
 	}
+
+	protected function getExtras(): array
+	{
+		$extras = parent::getExtras();
+
+		$extras['ANALYTICS'] = [
+			'c_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SECTION_SMART_INVOICE,
+			'c_sub_section' => \Bitrix\Crm\Integration\Analytics\Dictionary::SUB_SECTION_DETAILS,
+		];
+
+		return $extras;
+	}
 }

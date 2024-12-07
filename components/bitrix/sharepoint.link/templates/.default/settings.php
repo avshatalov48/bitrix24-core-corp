@@ -51,9 +51,9 @@ __IncludeLang($_SERVER['DOCUMENT_ROOT'].$this->GetFolder().'/lang/'.LANGUAGE_ID.
 	endforeach;
 ?>
 </table>
-<script type="text/javascript">
+<script>
 </script>
-<script type="text/javascript">
+<script>
 var wnd = BX.WindowManager.Get();
 wnd.btnEdit = new BX.CWindowButton({
 	title: '<?=CUtil::JSEscape(GetMessage('SL_SETTINGS_BTN_CAPTION_EDIT'))?>',

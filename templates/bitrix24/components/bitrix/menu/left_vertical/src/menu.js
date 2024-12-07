@@ -13,6 +13,8 @@ import ItemSystem from "./items/item-system";
 import Utils from './utils';
 import ItemUserFavorites from "./items/item-user-favorites";
 import {MessageBox, MessageBoxButtons} from 'ui.dialogs.messagebox';
+import { BannerDispatcher } from 'ui.banner-dispatcher';
+import { Analytics, AnalyticActions } from './analytics';
 
 export default class Menu
 {
@@ -54,6 +56,7 @@ export default class Menu
 		params = typeof params === "object" ? params : {};
 
 		Options.isExtranet = params.isExtranet === 'Y';
+		Options.isMainPageEnabled = params.isMainPageEnabled === 'Y';
 		Options.isAdmin = params.isAdmin;
 		Options.isCustomPresetRestricted = params.isCustomPresetAvailable !== 'Y';
 		Options.availablePresetTools = params.availablePresetTools;
@@ -61,6 +64,7 @@ export default class Menu
 
 		this.isCollapsedMode = params.isCollapsedMode;
 		this.workgroupsCounterData = params.workgroupsCounterData;
+		this.analytics = new Analytics(params.isAdmin);
 
 		this.initAndBindNodes();
 		this.bindEvents();
@@ -205,8 +209,14 @@ export default class Menu
 				this.menuContainer,
 				{
 					events: {
-						onPresetIsSet: ({data}) => {
-							const {saveSortItems, firstItemLink, customItems} = this.getItemsController().export();
+						onPresetIsSet: ({ data }) => {
+							const { saveSortItems, firstItemLink, customItems } = this.getItemsController().export();
+
+							if (!data)
+							{
+								this.analytics.sendSetCustomPreset();
+							}
+
 							return Backend.setCustomPreset(data, saveSortItems, customItems, firstItemLink)
 						},
 						onShow: () => { this.isMenuMouseLeaveBlocked.push('presets'); },
@@ -219,19 +229,49 @@ export default class Menu
 
 	getDefaultPresetController(): PresetDefaultController
 	{
+		let shouldSendCloseEvent = true;
+
 		return this.cache.remember('defaultPresetController', () => {
-			return new PresetDefaultController(
+			const presetController = new PresetDefaultController(
 				this.menuContainer,
 				{
 					events: {
-						onPresetIsSet: ({data: {mode, presetId}}) => {
+						onPresetIsSet: ({ data: { mode, presetId } }) => {
+							this.analytics.sendSetPreset(
+								presetId,
+								mode === 'personal',
+								AnalyticActions.CONFIRM,
+							);
+							shouldSendCloseEvent = false;
+
 							return Backend.setSystemPreset(mode, presetId);
 						},
-						onPresetIsPostponed: ({data: {mode}}) => {
-							const result =  Backend.postponeSystemPreset(mode);
+						onPresetIsPostponed: ({ data: { mode } }) => {
+							this.analytics.sendSetPreset(
+								presetController.getSelectedPreset(),
+								mode === 'personal',
+								AnalyticActions.LATER,
+							);
+							shouldSendCloseEvent = false;
+
+							const result = Backend.postponeSystemPreset(mode);
 							EventEmitter.emit(this, Options.eventName('onPresetIsPostponed'));
+
 							return result;
-						}
+						},
+						onShow: () => {
+							this.analytics.sendClose();
+						},
+						onClose: () => {
+							if (shouldSendCloseEvent)
+							{
+								this.analytics.sendSetPreset(
+									presetController.getSelectedPreset(),
+									presetController.getMode() === 'personal',
+									AnalyticActions.CLOSE,
+								);
+							}
+						},
 /*
 						onShow: () => { this.isMenuMouseLeaveBlocked.push('presets-default'); },
 						onClose: () => { this.isMenuMouseLeaveBlocked.pop(); },
@@ -239,6 +279,8 @@ export default class Menu
 					}
 				}
 			);
+
+			return presetController;
 		});
 	}
 	//endregion
@@ -415,7 +457,13 @@ export default class Menu
 
 	showGlobalPreset()
 	{
-		this.getDefaultPresetController().show('global');
+		BannerDispatcher.high.toQueue((onDone) => {
+			const presetController = this.getDefaultPresetController();
+			presetController.show('global');
+			presetController.getPopup().subscribe('onAfterClose', (event) => {
+				onDone();
+			});
+		});
 	}
 
 	handleShowHiddenClick()

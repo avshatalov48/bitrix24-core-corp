@@ -71,9 +71,6 @@ class ContactCompanyCollection extends Sale\Internals\EntityCollection
 	/**
 	 * @param Order $order
 	 * @return ContactCompanyCollection
-	 * @throws Main\ArgumentException
-	 * @throws Main\ArgumentTypeException
-	 * @throws Main\SystemException
 	 */
 	public static function load(Order $order)
 	{
@@ -88,7 +85,7 @@ class ContactCompanyCollection extends Sale\Internals\EntityCollection
 			foreach ($contactList as $contact)
 			{
 				$contact->setCollection($collection);
-				$collection->addItem($contact);
+				$collection->bindItem($contact);
 			}
 
 			$companyClassName = static::getCompanyClassName();
@@ -97,7 +94,7 @@ class ContactCompanyCollection extends Sale\Internals\EntityCollection
 			foreach ($companyList as $company)
 			{
 				$company->setCollection($collection);
-				$collection->addItem($company);
+				$collection->bindItem($company);
 			}
 		}
 
@@ -141,10 +138,20 @@ class ContactCompanyCollection extends Sale\Internals\EntityCollection
 	/**
 	 * @param CollectableEntity $item
 	 * @return CollectableEntity
-	 * @throws Main\ArgumentTypeException
-	 * @throws Main\SystemException
 	 */
 	public function addItem(CollectableEntity $item)
+	{
+		return parent::addItem($item);
+	}
+
+	/**
+	 * @param CollectableEntity $item
+	 * @return CollectableEntity
+	 * @throws Main\NotImplementedException
+	 * @throws Main\NotSupportedException
+	 * @throws Main\SystemException
+	 */
+	protected function bindItem(CollectableEntity $item): CollectableEntity
 	{
 		if (!($item instanceof ContactCompanyEntity))
 		{
@@ -166,10 +173,10 @@ class ContactCompanyCollection extends Sale\Internals\EntityCollection
 			&& $this->isPrimaryItemExists($item::getEntityType())
 		)
 		{
-			throw new Main\SystemException('Primary '.ToLower($item::getEntityTypeName()).' has already existed');
+			throw new Main\SystemException('Primary '.mb_strtolower($item::getEntityTypeName()).' has already existed');
 		}
 
-		return parent::addItem($item);
+		return parent::bindItem($item);
 	}
 
 	/**

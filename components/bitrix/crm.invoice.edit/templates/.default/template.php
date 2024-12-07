@@ -111,7 +111,7 @@ $APPLICATION->IncludeComponent(
 );
 ?>
 </div>
-<script type="text/javascript">
+<script>
 
 	window.CrmProductRowSetLocation = function(){ BX.onCustomEvent('CrmProductRowSetLocation', ['LOC_CITY']); };
 
@@ -393,7 +393,7 @@ $APPLICATION->IncludeComponent(
 </script><?php
 // ---------------------- processing of status change ---------------------->
 ?>
-<script type="text/javascript">
+<script>
 
 	function onCrmInvoiceEditStatusChange()
 	{
@@ -457,7 +457,7 @@ $APPLICATION->IncludeComponent(
 <?php
 // <---------------------- processing of status change ----------------------
 // ---------------------- processing of pay system select ---------------------->
-?><script type="text/javascript">
+?><script>
 	BX.ready(function () {
 		var companyId = <?= CUtil::JSEscape(intval($arResult['ELEMENT']['UF_COMPANY_ID'])) ?>;
 		var contactId = <?= CUtil::JSEscape(intval($arResult['ELEMENT']['UF_CONTACT_ID'])) ?>;

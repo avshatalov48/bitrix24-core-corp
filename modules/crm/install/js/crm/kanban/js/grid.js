@@ -19,6 +19,7 @@ BX.CRM.Kanban.Grid = function(options)
 
 	BX.addCustomEvent(this, "Kanban.DropZone:onBeforeItemCaptured", BX.delegate(this.onBeforeItemCaptured, this));
 	BX.addCustomEvent(this, "Kanban.DropZone:onBeforeItemRestored", BX.delegate(this.onBeforeItemRestored, this));
+	BX.addCustomEvent(this, "Kanban.DropZone:onItemCaptured", BX.delegate(this.onItemCaptured, this));
 
 	BX.addCustomEvent(this, "Kanban.Grid:onBeforeItemMoved", BX.delegate(this.onBeforeItemMoved, this));
 	//BX.addCustomEvent(this, "Kanban.Grid:onItemMoved", BX.delegate(this.onItemMoved, this));
@@ -266,13 +267,19 @@ BX.CRM.Kanban.Grid.prototype = {
 				this.isItKanban(el.target) ? this.currentNode = el.target : this.currentNode = null;
 
 				if(
-					!BX.findParent(el.target, {'className': 'main-kanban-item'})
-					&& !BX.findParent(el.target, {'className': 'ui-action-panel'})
-					&& !BX.findParent(el.target, {'className': 'ui-action-panel-item-popup-menu'})
+					!BX.findParent(el.target, {className: 'main-kanban-item'})
+					&& !BX.findParent(el.target, {className: 'ui-action-panel'})
+					&& !BX.findParent(el.target, {className: 'ui-action-panel-item-popup-menu'})
+					&& !BX.findParent(el.target, {className: 'bx-finder-popup'})
 				)
 				{
-					this.unSetKanbanDragMode();
-					this.resetMultiSelectMode();
+					const popup = BX.PopupWindowManager.getCurrentPopup();
+
+					if (!popup || !popup.isShown())
+					{
+						this.unSetKanbanDragMode();
+						this.resetMultiSelectMode();
+					}
 				}
 			}.bind(this));
 
@@ -896,131 +903,14 @@ BX.CRM.Kanban.Grid.prototype = {
 
 		beforeItem = (beforeItem ? this.getItem(beforeItem) : (targetColumn.items[0] || null));
 		var currentColumn = item.getColumn();
-		var targetColumnId = targetColumn.getId();
-		var gridData = this.getData();
-		var targetColumnData = targetColumn.getData();
 
 		if (this.getChecked().length > 1)
 		{
-			// check required fields
-			var error = false;
-			var checked = this.getChecked();
-
-			for (var i = 0, c = checked.length; i < c; i++)
-			{
-				var itemData = checked[i].getData();
-				var currentColumnId = checked[i].getColumn().getId();
-
-				// some final columns
-				if (this.getTypeInfoParam('hasRestictionToMoveToWinColumn') && targetColumnData.type === "WIN")
-				{
-					error = true;
-					// this.unCheckItem(checked[i]);
-					if(checked.length === i + 1)
-					{
-						this.resetMultiSelectMode()
-					}
-				}
-				// first checking if targetColumn require some fields
-				else if (
-					itemData.required &&
-					itemData.required[targetColumnId] &&
-					itemData.required[targetColumnId].length > 0 &&
-					targetColumnId !== currentColumnId
-				)
-				{
-					// check required fm fields
-					if (itemData.required_fm)
-					{
-						var newRequired = [];
-						for (var j = 0, cc = itemData.required[targetColumnId].length; j < cc; j++)
-						{
-							var key = itemData.required[targetColumnId][j];
-							if (
-								typeof itemData.required_fm[key] === "undefined" ||
-								itemData.required_fm[key] === true
-							)
-							{
-								newRequired.push(itemData.required[targetColumnId][j]);
-							}
-						}
-						itemData.required[targetColumnId] = newRequired;
-					}
-					if (itemData.required[targetColumnId].length > 0)
-					{
-						error = true;
-						// this.unCheckItem(checked[i]);
-
-						if(checked.length === i + 1)
-						{
-							this.resetMultiSelectMode()
-						}
-					}
-				}
-				else if (itemData['updateRestrictionCallback'])
-				{
-					try
-					{
-						eval(itemData['updateRestrictionCallback']);
-					}
-					catch (e)
-					{
-						console.log('update action restricted');
-					}
-					this.resetMultiSelectMode();
-
-					if (usePromise)
-					{
-						return Promise.resolve();
-					}
-					return;
-				}
-			}
-
-			if (error)
-			{
-				this.showNotCompletedPopup(gridData);
-			}
-
-			var itemsChecked = this.getChecked();
-
-			var removePromises = [];
-			for (var i = 0; i < itemsChecked.length; i++)
-			{
-				if(itemsChecked[i] !== item && itemsChecked[i].getColumn() !== targetColumn)
-				{
-					itemsChecked[i].getColumn().layout.total.textContent = +itemsChecked[i].getColumn().layout.total.innerHTML - 1;
-				}
-
-				removePromises.push(currentColumn.removeItem(itemsChecked[i]));
-			}
-
-			var checked = this.getChecked();
-
-			if (usePromise)
-			{
-				return Promise.all(removePromises).then(function ()
-				{
-					checked.forEach(function(item){
-						item.useAnimation = false;
-						item.layout.container.style.opacity = 1;
-					});
-					targetColumn.addItems(checked, beforeItem);
-
-					this.resetMultiSelectMode();
-					this.stopActionPanel();
-				}.bind(this));
-			}
-
-			targetColumn.addItems(checked, beforeItem);
-			this.resetMultiSelectMode();
-			this.stopActionPanel();
-
-			return;
+			return this.moveManyItems(item, targetColumn, beforeItem, usePromise);
 		}
 
 		item.beforeItem = beforeItem;
-		currentColumn.removeItem(item).then(function (){
+		currentColumn.removeItem(item).then(() => {
 			targetColumn.addItem(item, item.beforeItem);
 		});
 
@@ -1034,6 +924,127 @@ BX.CRM.Kanban.Grid.prototype = {
 		}
 
 		return true;
+	},
+
+	moveManyItems(primaryItem, targetColumn, beforeItem, usePromise)
+	{
+		// check required fields
+		let error = false;
+
+		const targetColumnId = targetColumn.getId();
+		const targetColumnData = targetColumn.getData();
+
+		const items = this.getChecked();
+		for (let i = 0, itemsCount = items.length; i < itemsCount; i++)
+		{
+			const itemData = items[i].getData();
+			const currentColumnId = items[i].getColumn().getId();
+
+			// some final columns
+			if (
+				this.getTypeInfoParam('hasRestictionToMoveToWinColumn')
+				&& targetColumnData.type === 'WIN'
+			)
+			{
+				error = true;
+				if (itemsCount === i + 1)
+				{
+					this.resetMultiSelectMode()
+				}
+			}
+			// first checking if targetColumn require some fields
+			else if (
+				BX.Type.isArrayFilled(itemData?.required?.[targetColumnId])
+				&& targetColumnId !== currentColumnId
+			)
+			{
+				// check required fm fields
+				if (itemData.required_fm)
+				{
+					const newRequired = [];
+					for (let j = 0, cc = itemData.required[targetColumnId].length; j < cc; j++)
+					{
+						const requiredName = itemData.required[targetColumnId][j];
+						const requiredValue = itemData.required_fm?.[requiredName];
+						if (BX.Type.isUndefined(requiredValue) || requiredValue === true)
+						{
+							newRequired.push(requiredName);
+						}
+					}
+					itemData.required[targetColumnId] = newRequired;
+				}
+
+				if (BX.Type.isArrayFilled(itemData.required[targetColumnId]))
+				{
+					error = true;
+
+					if (itemsCount === i + 1)
+					{
+						this.resetMultiSelectMode()
+					}
+				}
+			}
+			else if (itemData['updateRestrictionCallback'])
+			{
+				try
+				{
+					eval(itemData['updateRestrictionCallback']);
+				}
+				catch (e)
+				{
+					console.log('update action restricted');
+				}
+				this.resetMultiSelectMode();
+
+				if (usePromise)
+				{
+					return Promise.resolve();
+				}
+
+				return;
+			}
+		}
+
+		if (error)
+		{
+			const gridData = this.getData();
+			this.showNotCompletedPopup(gridData);
+		}
+
+		const removePromises = [];
+		const currentColumns = new Map();
+
+		for (let i = 0; i < items.length; i++)
+		{
+			const currentColumn = items[i].getColumn();
+			if (items[i] !== primaryItem && currentColumn !== targetColumn)
+			{
+				currentColumn.layout.total.textContent = +currentColumn.layout.total.innerHTML - 1;
+			}
+
+			items[i].useAnimation = false;
+			removePromises.push(currentColumn.removeItem(items[i]));
+			currentColumns.set(items[i].getId(), currentColumn);
+		}
+
+		if (usePromise)
+		{
+			return Promise.all(removePromises).then(() => {
+				items.forEach((item) => {
+					item.useAnimation = false;
+					item.layout.container.style.opacity = 1;
+				});
+				targetColumn.addItems(items, beforeItem);
+
+				this.resetMultiSelectMode();
+				this.stopActionPanel();
+			});
+		}
+
+		targetColumn.addItems(items, beforeItem);
+
+		this.resetMultiSelectMode();
+		this.stopActionPanel();
 	},
 
 	/**
@@ -1267,9 +1278,7 @@ BX.CRM.Kanban.Grid.prototype = {
 	},
 
 	/**
-	 * Hook on item drag start.
-	 * @param {BX.Kanban.Item} item
-	 * @returns {void}
+	 * @param {BX.CRM.Kanban.Item} item
 	 */
 	onItemDragStartHandler: function(item)
 	{
@@ -1308,7 +1317,7 @@ BX.CRM.Kanban.Grid.prototype = {
 
 	/**
 	 * Hook on item drop to junk's.
-	 * @param {BX.Kanban.DropZoneEvent} dropEvent
+	 * @param {BX.CRM.Kanban.DropZoneEvent} dropEvent
 	 * @returns {void}
 	 */
 	onBeforeItemCaptured: function(dropEvent)
@@ -1321,28 +1330,49 @@ BX.CRM.Kanban.Grid.prototype = {
 			var column = item.getColumn();
 			var drop = dropEvent.getDropZone();
 
+			const groupIds = this.getItemsForAction();
 			this.itemMoving = {
-				item: item,
+				item,
 				price: parseFloat(item.getData().price),
 				oldColumn: column,
 				oldNextSiblingId: column.getNextItemSibling(item),
 				newColumn: null,
 				newNextSibling: null,
-				dropEvent: dropEvent,
-				groupIds: this.getItemsForAction()
+				dropEvent,
+				groupIds,
 			};
 
-			this.onItemMoved(item, drop, null, true);
+			dropEvent.groupIds = groupIds;
 
-			if (drop.getId() === "DELETED")
+			this.onItemMoved(item, drop, null, true);
+		}
+	},
+
+	onItemCaptured: function(item, dropZone, ids)
+	{
+		if (dropZone.getId() === 'DELETED')
+		{
+			if (BX.Type.isArray(ids) && ids.length === 0)
 			{
-				var ids = this.getItemsForAction();
-				BX.CRM.Kanban.Actions.delete(
-					this,
-					ids.length ? ids : parseInt(item.getId(), 10),
-					drop
-				);
+				ids = parseInt(item.getId(), 10);
 			}
+
+			ids = ids ?? grid.getCheckedId();
+
+			if (!BX.Type.isArray(ids))
+			{
+				ids = [ids];
+			}
+
+			const params = {
+				ids,
+				showNotify: false,
+			};
+
+			(new BX.CRM.Kanban.Actions.DeleteAction(this, params))
+				.setDropZone(dropZone)
+				.execute()
+			;
 		}
 	},
 
@@ -1353,12 +1383,19 @@ BX.CRM.Kanban.Grid.prototype = {
 	 */
 	onBeforeItemRestored: function(event)
 	{
-		var item = event.getItem();
-		var column = item.getColumn();
-		var price = parseFloat(item.getData().price);
+		const item = event.getItem();
+		const column = item.getColumn();
+		const price = parseFloat(item.getData().price);
 
-		// change price in column and move item
 		column.incPrice(price);
+
+		const ids = this.itemMoving.groupIds ? this.itemMoving.groupIds.toString() : item.getId();
+
+		const analyticsData = this.getDefaultAnalyticsCloseEvent(item, column.getData().type, ids);
+		analyticsData.c_sub_section = BX.Crm.Integration.Analytics.Dictionary.SUB_SECTION_KANBAN_DROPZONE;
+		analyticsData.c_element = BX.Crm.Integration.Analytics.Dictionary.ELEMENT_CANCEL_BUTTON;
+		this.registerAnalyticsCloseEvent(analyticsData, BX.Crm.Integration.Analytics.Dictionary.STATUS_CANCEL);
+
 		this.onItemMoved(item, column);
 	},
 
@@ -1586,7 +1623,6 @@ BX.CRM.Kanban.Grid.prototype = {
 		// some vars
 		var afterItemId = 0;
 		var itemId = item.getId();
-		var targetColumnId = targetColumn ? targetColumn.getId() : 0;
 
 		// set sort
 		if (targetColumn instanceof BX.Kanban.DropZone)
@@ -1607,69 +1643,100 @@ BX.CRM.Kanban.Grid.prototype = {
 			"main-kanban-item-waiting"
 		);
 
-		if(this.itemMoving.groupIds && this.itemMoving.groupIds.length === 0)
-		{
-			this.itemMoving.groupIds.push(itemId)
-		}
-
-		// ajax
-		if (!item.isChangedInPullRequest())
-		{
-			this.checkItemStatusAfterMoved(item, afterItemId, targetColumnId);
-		}
-
 		if (item.isChangedInPullRequest())
 		{
 			this.clearItemMoving();
 			item.dropChangedInPullRequest();
+		}
+		else
+		{
+			const { groupIds } = this.itemMoving;
+			if (BX.Type.isArray(groupIds) && !BX.Type.isArrayFilled(groupIds))
+			{
+				groupIds.push(itemId);
+			}
+
+			this.checkItemStatusAfterMoved(item, afterItemId, targetColumn);
 		}
 	},
 
 	/**
 	 * @param {BX.CRM.Kanban.Item} item
 	 * @param {number} afterItemId
-	 * @param {string} targetColumnId
+	 * @param {BX.Kanban.Column|BX.Kanban.DropZone} targetColumn
 	 */
-	checkItemStatusAfterMoved: function(item, afterItemId, targetColumnId)
+	checkItemStatusAfterMoved: function(item, afterItemId, targetColumn)
 	{
 		const itemId = item.getId();
+		const targetColumnId = targetColumn ? targetColumn.getId() : 0;
 		const params = {
 			action: 'status',
-			entity_id: this.itemMoving.groupIds ?? itemId,
+			entity_id: this.itemMoving?.groupIds ?? itemId,
 			prev_entity_id: afterItemId,
 			status: targetColumnId,
+			eventId: BX.Pull.QueueManager.registerRandomEventId(),
 		};
+		const ids = this.itemMoving?.groupIds ? this.itemMoving?.groupIds.toString() : itemId;
+
+		const analyticsData = this.getDefaultAnalyticsCloseEvent(item, targetColumn.getData().type, ids);
+
+		this.registerAnalyticsCloseEvent(analyticsData, BX.Crm.Integration.Analytics.Dictionary.STATUS_ATTEMPT);
 
 		this.ajax(
 			params,
 			(data) => {
 				if (!data)
 				{
+					this.registerAnalyticsCloseEvent(analyticsData, BX.Crm.Integration.Analytics.Dictionary.STATUS_ERROR);
+
 					return;
 				}
 
-				if (data.error)
+				if (this.hasResponseError(data))
 				{
-					BX.Kanban.Utils.showErrorDialog(data.error, true);
+					this.rollbackItemsMovement([item.id], targetColumnId);
+
+					this.showResponseError(data);
+
+					this.registerAnalyticsCloseEvent(analyticsData, BX.Crm.Integration.Analytics.Dictionary.STATUS_ERROR);
 
 					return;
 				}
+
+				this.registerAnalyticsCloseEvent(analyticsData, BX.Crm.Integration.Analytics.Dictionary.STATUS_SUCCESS);
 
 				if (
 					this.getData().useItemPlanner
-					&& !this.itemMoving.groupIds
+					&& !this.itemMoving?.groupIds
 					&& BX.CRM.Kanban.Restriction.Instance.isTodoActivityCreateAvailable()
 				)
 				{
 					setTimeout(() => this.showItemPlannerMenu(item), 500);
 				}
 
-				const { items, isShouldUpdateCard } = data;
-				if (Array.isArray(items) && items.length > 0)
+				const { items } = data;
+				let { isShouldUpdateCard } = data;
+				if (BX.Type.isArrayFilled(items))
 				{
 					this.updateItem(itemId, items[0]);
 
 					return;
+				}
+
+				const prevColumnId = item.getLastPosition()?.columnId;
+				if (prevColumnId)
+				{
+					const prevColumn = this.getColumn(prevColumnId);
+					const currentColumn = item.getColumn();
+
+					if (prevColumn?.isHiddenTotalSum() !== currentColumn?.isHiddenTotalSum())
+					{
+						isShouldUpdateCard = true;
+					}
+				}
+				else
+				{
+					isShouldUpdateCard = true;
 				}
 
 				item.setDataKey('columnId', targetColumnId);
@@ -1679,8 +1746,133 @@ BX.CRM.Kanban.Grid.prototype = {
 					void this.loadNew(itemId, false, true, true, true);
 				}
 			},
-			(error) => BX.Kanban.Utils.showErrorDialog(`Error: ${error}`, true),
+			(error) => {
+				this.registerAnalyticsCloseEvent(analyticsData, BX.Crm.Integration.Analytics.Dictionary.STATUS_ERROR);
+
+				BX.Kanban.Utils.showErrorDialog(`Error: ${error}`, true);
+			},
 		);
+	},
+
+	/**
+	 * @param {BX.CRM.Kanban.Item} item
+	 * @param {string} type
+	 * @param {string} ids
+	 */
+	getDefaultAnalyticsCloseEvent(item, type, ids)
+	{
+		let element = type;
+
+		if (element === 'WIN')
+		{
+			element = 'won';
+		}
+		else if (element === 'LOOSE')
+		{
+			element = 'lose';
+		} else
+		{
+			element = 'progress';
+		}
+
+		let subSection = BX.Crm.Integration.Analytics.Dictionary.SUB_SECTION_KANBAN;
+
+		if (this.dropZonesShow) {
+			subSection = BX.Crm.Integration.Analytics.Dictionary.SUB_SECTION_KANBAN_DROPZONE;
+		}
+
+		return BX.Crm.Integration.Analytics.Builder.Entity.CloseEvent.createDefault(item.getGridData().entityType, ids)
+			.setSubSection(subSection)
+			.setElement(element)
+			.buildData();
+	},
+
+	registerAnalyticsCloseEvent(analyticsData, status)
+	{
+		if (!analyticsData || (analyticsData.c_element === 'progress' && status !== BX.Crm.Integration.Analytics.Dictionary.STATUS_CANCEL))
+		{
+			return;
+		}
+
+		analyticsData.status = status;
+
+		BX.UI.Analytics.sendData(analyticsData);
+	},
+
+	/**
+	 * @param {number[]} itemIds
+	 * @param {string} targetColumnId
+	 */
+	rollbackItemsMovement(itemIds, targetColumnId)
+	{
+		this.clearItemMoving();
+
+		itemIds.forEach((itemId) => {
+			const item = this.getItem(itemId);
+			if (item === null)
+			{
+				return;
+			}
+
+			const currentColumn = this.getColumn(targetColumnId);
+			if (currentColumn === null)
+			{
+				return;
+			}
+
+			const targetColumn = this.getColumn(item.options.columnId);
+			if (targetColumn === null)
+			{
+				return;
+			}
+
+			const beforeItem = this.getItem(item.lastPosition.targetId);
+
+			currentColumn.removeItem(item).then(() => {
+				const { price } = item.data;
+				this.moveItemPriceBetweenColumns(currentColumn, targetColumn, price);
+
+				targetColumn.addItem(item, beforeItem);
+			});
+		});
+	},
+
+	/**
+	 * @param {BX.CRM.Kanban.Column} donor
+	 * @param {BX.CRM.Kanban.Column} acceptor
+	 * @param {Number} price
+	 */
+	moveItemPriceBetweenColumns(donor, acceptor, price)
+	{
+		if (BX.Type.isNumber(price))
+		{
+			donor.decPrice(price);
+			donor.renderSubTitle();
+			acceptor.incPrice(price);
+			acceptor.renderSubTitle();
+		}
+	},
+
+	hasResponseError(response)
+	{
+		return BX.Type.isString(response.error);
+	},
+
+	showResponseError(response)
+	{
+		const errorText = response.error;
+
+		if (response.fatal)
+		{
+			BX.Kanban.Utils.showErrorDialog(errorText, true);
+		}
+		else
+		{
+			BX.UI.Notification.Center.notify({
+				content: errorText,
+				autoHideDelay: 5000,
+			});
+		}
 	},
 
 	showItemPlannerMenu: function(item)
@@ -1820,6 +2012,7 @@ BX.CRM.Kanban.Grid.prototype = {
 				}
 				this.setData(gridData);
 				this.destroyFieldsSelectPopup();
+				this.destroyHideColumnSumPopups();
 
 				// remove all columns
 				var exist = [], id = null;
@@ -2121,6 +2314,23 @@ BX.CRM.Kanban.Grid.prototype = {
 	 */
 	unhideItem: function(item)
 	{
+		const result = this.unhideItemWithoutColumnRender(item);
+
+		if (result)
+		{
+			item.getColumn().render();
+		}
+
+		return result;
+	},
+
+	/**
+	 *
+	 * @param {BX.Kanban.Item|string|number} item
+	 * @returns {boolean}
+	 */
+	unhideItemWithoutColumnRender: function(item)
+	{
 		item = this.getItem(item);
 		if (!item || item.isVisible())
 		{
@@ -2129,17 +2339,18 @@ BX.CRM.Kanban.Grid.prototype = {
 
 		item.setOptions({ visible: true });
 
-		if(item.layout.container && item.layout.container.classList.contains("main-kanban-item-disabled"))
+		if (
+			item.layout.container
+			&& BX.Dom.hasClass(item.layout.container, 'main-kanban-item-disabled')
+		)
 		{
-			BX.removeClass(item.layout.container, "main-kanban-item-disabled");
+			BX.Dom.removeClass(item.layout.container, 'main-kanban-item-disabled');
 		}
 
 		if (item.isCountable())
 		{
 			item.getColumn().incrementTotal();
 		}
-
-		item.getColumn().render();
 
 		return true;
 	},
@@ -2504,6 +2715,13 @@ BX.CRM.Kanban.Grid.prototype = {
 		}
 	},
 
+	destroyHideColumnSumPopups()
+	{
+		this.getColumns().forEach((column) => {
+			BX.PopupWindowManager.getPopupById(column.getHideColumnSumPopupId())?.destroy();
+		});
+	},
+
 	/**
 	 * Handler partial editor close.
 	 * @param {BX.Crm.PartialEditorDialog} sender
@@ -2673,6 +2891,11 @@ BX.CRM.Kanban.Grid.prototype = {
 			// );
 			if (!stilError)
 			{
+				if (this.itemMoving?.oldColumn?.id)
+				{
+					this.itemMoving.item.columnId = this.itemMoving.oldColumn.id;
+				}
+
 				this.moveItem(
 					this.itemMoving.item,
 					this.itemMoving.newColumn,
@@ -2746,23 +2969,26 @@ BX.CRM.Kanban.Grid.prototype = {
 	 */
 	onCrmActivityTodoChecked: function(activityId, ownerId, ownerTypeId, deadlined)
 	{
-		var item = this.getItem(ownerId);
-		if (item)
+		const item = this.getItem(ownerId);
+		if (!item)
 		{
-			// deadlined counters
-			if (deadlined)
-			{
-				var activityErrorTotal = item.getDataKey("activityErrorTotal");
-				activityErrorTotal--;
-				item.setDataKey("activityErrorTotal", activityErrorTotal);
-			}
-			// common counters
-			var activityProgress = item.getDataKey("activityProgress");
-			activityProgress--;
-			item.setDataKey("activityProgress", activityProgress);
-			// render
-			item.switchPlanner();
+			return;
 		}
+
+		// deadlined counters
+		if (deadlined)
+		{
+			let activityErrorTotal = item.getDataKey('activityErrorTotal');
+			activityErrorTotal--;
+			item.setDataKey('activityErrorTotal', activityErrorTotal);
+		}
+
+		// common counters
+		let activityProgress = item.getDataKey('activityProgress');
+		activityProgress--;
+		item.setDataKey('activityProgress', activityProgress);
+
+		item.switchPlanner();
 	},
 
 	/**
@@ -2876,6 +3102,11 @@ BX.CRM.Kanban.Grid.prototype = {
 	{
 		const kanbanColumnClassname = 'main-kanban-column';
 		let kanbanColumnElem = popupWindow.bindElement;
+		const isTourPopup = BX.hasClass(popupWindow.popupContainer, 'popup-window-ui-tour');
+		if (isTourPopup)
+		{
+			return false;
+		}
 
 		while (kanbanColumnElem && !BX.Dom.hasClass(kanbanColumnElem, kanbanColumnClassname)) {
 			kanbanColumnElem = kanbanColumnElem.parentNode;
@@ -2933,12 +3164,9 @@ BX.CRM.Kanban.Grid.prototype = {
 			id: "kanban_delete",
 			text: BX.message("CRM_KANBAN_PANEL_DELETE"),
 			icon: "/bitrix/js/crm/kanban/images/crm-kanban-actionpanel-delete.svg",
-			onclick: function()
-			{
-				BX.CRM.Kanban.Actions.deleteAll(
-					this
-				);
-			}.bind(this)
+			onclick: () => {
+				BX.CRM.Kanban.Actions.deleteAll(this);
+			}
 		});
 
 		// ignore
@@ -2948,12 +3176,9 @@ BX.CRM.Kanban.Grid.prototype = {
 				id: "kanban_ignore",
 				text: BX.message("CRM_KANBAN_PANEL_IGNORE"),
 				icon: "/bitrix/js/crm/kanban/images/crm-kanban-actionpanel-ignore.svg",
-				onclick: function()
-				{
-					BX.CRM.Kanban.Actions.ignore(
-						this
-					);
-				}.bind(this)
+				onclick: () => {
+					BX.CRM.Kanban.Actions.ignore(this);
+				}
 			});
 		}
 
@@ -2968,6 +3193,7 @@ BX.CRM.Kanban.Grid.prototype = {
 				id: columns[i].id,
 				name: columns[i].name,
 				blockedIncomingMoving: this.isBlockedIncomingMoving(columns[i]),
+				type: columns[i].data.type,
 			});
 		}
 		for (var i = 0, c = drops.length; i < c; i++)
@@ -2989,6 +3215,7 @@ BX.CRM.Kanban.Grid.prototype = {
 					id: drops[i].id,
 					name: drops[i].name,
 					blockedIncomingMoving: this.isBlockedIncomingMoving(columns[i]),
+					type: drops[i].data.type,
 				});
 			}
 		}
@@ -3023,69 +3250,8 @@ BX.CRM.Kanban.Grid.prototype = {
 		});
 		/* endregion */
 
-		// change category
-		if (gridData.categories && gridData.categories.length)
-		{
-			var items = [], categories = gridData.categories;
-			for (var i = 0, c = categories.length; i < c; i++)
-			{
-				items.push({
-					id: "kanban_category_" + categories[i].ID,
-					category: categories[i],
-					text: BX.util.htmlspecialchars(categories[i].NAME),
-					onclick: function(i, item)
-					{
-						item.menuWindow.close();
-						BX.CRM.Kanban.Actions.changeCategory(
-							this,
-							item.category
-						);
-					}.bind(this)
-				});
-			}
-			this.actionPanel.appendItem({
-				id: "kanban_category",
-				text: BX.message("CRM_KANBAN_PANEL_CATEGORY2"),
-				icon: "/bitrix/js/crm/kanban/images/crm-kanban-actionpanel-fulling.svg",
-				items: items
-			});
-		}
-
-		// assigned to
-		if (typeof(BX.Crm.EntityEditorUserSelector) !== "undefined")
-		{
-			this.actionPanel.appendItem({
-				id: "kanban_assigned",
-				text: BX.message("CRM_KANBAN_PANEL_ASSIGNED"),
-				icon: "/bitrix/js/crm/kanban/images/crm-kanban-actionpanel-responsible.svg",
-				onclick: function(e, item)
-				{
-					setTimeout(function()
-					{
-						var userSelector = BX.Crm.EntityEditorUserSelector.create(
-							"selector_assigned",
-							{
-								callback: function(selector, item)
-								{
-									BX.CRM.Kanban.Actions.setAssigned(
-										this,
-										item
-									);
-									userSelector.close();
-								}.bind(this)
-							}
-						);
-
-						var target = (
-							item.layout.container === undefined
-								? item.actionPanel.layout.more
-								: item.layout.container
-						);
-						userSelector.open(target);
-					}.bind(this), 100);
-				}.bind(this)
-			});
-		}
+		this.appendChangeCategoryItem();
+		this.appendAssignedItem();
 
 		// create task
 		if (this.getTypeInfoParam('canUseCreateTaskInPanel'))
@@ -3204,6 +3370,75 @@ BX.CRM.Kanban.Grid.prototype = {
 				}.bind(this)
 			});
 		}*/
+	},
+
+	appendChangeCategoryItem: function()
+	{
+		const gridData = this.getData();
+
+		if (!BX.type.isArrayFilled(gridData?.categories))
+		{
+			return;
+		}
+
+		const items = [];
+		gridData.categories.forEach((category) => {
+			items.push({
+				id: `kanban_category_${category.ID}`,
+				category,
+				text: BX.Text.encode(category.NAME),
+				onclick: (i, item) => {
+					item.menuWindow.close();
+					BX.CRM.Kanban.Actions.changeCategory(this, item.category);
+				},
+			});
+		})
+
+		if (items.length <= 1)
+		{
+			return;
+		}
+
+		this.actionPanel.appendItem({
+			id: 'kanban_category',
+			text: BX.Loc.getMessage('CRM_KANBAN_PANEL_CATEGORY2'),
+			icon: '/bitrix/js/crm/kanban/images/crm-kanban-actionpanel-fulling.svg',
+			items,
+		});
+	},
+
+	appendAssignedItem: function()
+	{
+		if (BX.type.isUndefined(BX.UI.EntityEditorUserSelector))
+		{
+			return;
+		}
+
+		this.actionPanel.appendItem({
+			id: 'kanban_assigned',
+			text: BX.Loc.getMessage('CRM_KANBAN_PANEL_ASSIGNED'),
+			icon: '/bitrix/js/crm/kanban/images/crm-kanban-actionpanel-responsible.svg',
+			onclick: (event, item) => {
+				setTimeout(() => {
+					const userSelector = BX.UI.EntityEditorUserSelector.create(
+						'selector_assigned',
+						{
+							callback: (selector, item) => {
+								BX.CRM.Kanban.Actions.setAssigned(this, item);
+								userSelector.close();
+							},
+						}
+					);
+
+					const target = (
+						BX.type.isUndefined(item.layout.container)
+							? item.actionPanel.layout.more
+							: item.layout.container
+					);
+					userSelector.open(target);
+				}, 100);
+			},
+		});
 	},
 
 	isBlockedIncomingMoving: function(column)

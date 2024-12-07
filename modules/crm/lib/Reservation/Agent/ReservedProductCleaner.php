@@ -5,11 +5,14 @@ namespace Bitrix\Crm\Reservation\Agent;
 use Bitrix\Crm\Item\Deal;
 use Bitrix\Crm\Order\OrderDealSynchronizer;
 use Bitrix\Crm\ProductRow;
+use Bitrix\Crm\ProductRowCollection;
 use Bitrix\Crm\Reservation\Internals\ProductRowReservationTable;
 use Bitrix\Crm\Reservation\ProductRowReservation;
 use Bitrix\Crm\Reservation\Strategy\Reserve\ReservationResult;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Application;
+use Bitrix\Main\ArgumentException;
+use Bitrix\Main\DB\SqlQueryException;
 use Bitrix\Main\Diag\Logger;
 use Bitrix\Main\Result;
 use Bitrix\Main\Type\DateTime;
@@ -87,158 +90,145 @@ class ReservedProductCleaner extends Stepper implements LoggerAwareInterface
 			return $processedRecords;
 		}
 
-		$dealReserves = [];
-		$rows = ProductRowReservationTable::getList([
-			'select' => [
-				'ID',
-				'RESERVE_QUANTITY',
-				'PRODUCT_ROW_ID' => 'PRODUCT_ROW.ID',
-				'PRODUCT_ROW_OWNER_ID' => 'PRODUCT_ROW.OWNER_ID',
-			],
-			'filter' => [
-				'>RESERVE_QUANTITY' => 0,
-				'<=DATE_RESERVE_END' => new DateTime(),
-				'!=PRODUCT_ROW.DEAL_OWNER.CLOSED' => 'Y',
-			],
-			'limit' => self::RECORD_LIMIT,
-		]);
-		foreach ($rows as $row)
-		{
-			$rowId = (int)$row['PRODUCT_ROW_ID'];
-			$ownerId = (int)$row['PRODUCT_ROW_OWNER_ID'];
-
-			$validRecord = $rowId > 0 && $ownerId > 0;
-			if (!$validRecord)
-			{
-				continue;
-			}
-
-			$dealReserves[$ownerId] ??= [];
-			$dealReserves[$ownerId][$rowId] = [
-				'ID' => $row['ID'],
-				'RESERVE_QUANTITY' => $row['RESERVE_QUANTITY'],
-			];
-
-			$processedRecords++;
-		}
+		$dealReserves = $this->getDealReserves($processedRecords);
 
 		if (empty($dealReserves))
 		{
 			return 0;
 		}
 
-		/**
-		 * @var Deal[] $deals
-		 */
-		$deals = $factory->getItems([
-			'select' => [
-				'*',
-				Deal::FIELD_NAME_PRODUCTS,
-			],
-			'filter' => [
-				'=ID' => array_keys($dealReserves),
-			],
-		]);
+		$dealIds = array_keys($dealReserves);
+		$deals = $this->getDeals($factory, $dealIds);
 		foreach ($deals as $deal)
 		{
-			/**
-			 * @var ProductRow[] $productRows
-			 */
-			$productRows = $deal->getProductRows();
-			if (empty($productRows))
+			$productRowIds = array_keys($dealReserves[$deal->getId()]);
+			if ($this->releaseProductRowReserves($deal, $productRowIds))
 			{
-				continue;
-			}
-
-			$dealId = $deal->getId();
-			foreach ($productRows as $productRow)
-			{
-				$rowId = $productRow->getId();
-				if (!isset($dealReserves[$dealId][$rowId]))
-				{
-					continue;
-				}
-
-				/**
-				 * @var ProductRowReservation $reservation
-				 */
-				$reservation = $productRow->getProductRowReservation();
-				if ($reservation)
-				{
-					$reservation->setReserveQuantity(0);
-					$reservation->setDateReserveEnd(null);
-				}
-			}
-
-			$operation = $factory->getUpdateOperation($deal);
-			$result = $operation->launch();
-			$this->logResult("update deal '{$dealId}'", $result);
-
-			if ($result->isSuccess())
-			{
-				unset($dealReserves[$dealId]);
+				$this->updateDeal($factory, $deal);
 			}
 		}
-
-		$this->forceDeleteReserves($dealReserves);
 
 		return $processedRecords;
 	}
 
 	/**
-	 * Delete reserves without deal saving.
-	 *
-	 * @param array $dealReserves
-	 *
-	 * @return void
+	 * @param int $processedRecords
+	 * @return array
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
 	 */
-	private function forceDeleteReserves(array $dealReserves): void
+	private function getDealReserves(int &$processedRecords): array
 	{
-		$db = Application::getConnection();
-		$syncronizer = new OrderDealSynchronizer();
+		$productReservationRows = ProductRowReservationTable::getList(
+			[
+				'select' => [
+					'ID',
+					'RESERVE_QUANTITY',
+					'PRODUCT_ROW_ID' => 'PRODUCT_ROW.ID',
+					'PRODUCT_ROW_OWNER_ID' => 'PRODUCT_ROW.OWNER_ID',
+				],
+				'filter' => [
+					'=PRODUCT_ROW.OWNER_TYPE' => CCrmOwnerType::Deal,
+					'>RESERVE_QUANTITY' => 0,
+					'<=DATE_RESERVE_END' => new DateTime(),
+					'!=PRODUCT_ROW.DEAL_OWNER.CLOSED' => 'Y',
+				],
+				'limit' => self::RECORD_LIMIT,
+			]
+		);
 
-		foreach ($dealReserves as $dealId => $rows)
-		{
-			if (empty($rows))
-			{
+		$dealReserves = [];
+		foreach ($productReservationRows as $productReservation) {
+			$productRowId = (int)$productReservation['PRODUCT_ROW_ID'];
+			$dealId = (int)$productReservation['PRODUCT_ROW_OWNER_ID'];
+
+			$validRecord = $productRowId > 0 && $dealId > 0;
+			if (!$validRecord) {
 				continue;
 			}
 
-			$reservationResult = new ReservationResult();
-			foreach ($rows as $rowId => $reserve)
+			$dealReserves[$dealId] ??= [];
+			$dealReserves[$dealId][$productRowId] = [
+				'ID' => $productReservation['ID'],
+				'RESERVE_QUANTITY' => $productReservation['RESERVE_QUANTITY'],
+			];
+
+			$processedRecords++;
+		}
+
+		return $dealReserves;
+	}
+
+	/**
+	 * @param \Bitrix\Crm\Service\Factory\Deal $factory
+	 * @param array $dealIds
+	 * @return Deal[]
+	 */
+	private function getDeals(\Bitrix\Crm\Service\Factory\Deal $factory, array $dealIds): array
+	{
+		/**
+		 * @var Deal[] $deals
+		 */
+		$deals = $factory->getItems(
+			[
+				'select' => [
+					'*',
+					Deal::FIELD_NAME_PRODUCTS,
+				],
+				'filter' => [
+					'=ID' => $dealIds,
+				],
+			]
+		);
+
+		return $deals;
+	}
+
+	/**
+	 * @param Deal $deal
+	 * @param array $productRowIds
+	 * @return bool isReleased
+	 */
+	private function releaseProductRowReserves(Deal $deal, array $productRowIds): bool
+	{
+		$isReleased = false;
+
+		/**
+		 * @var ProductRowCollection $productRows
+		 */
+		$productRows = $deal->getProductRows();
+		if (empty($productRows))
+		{
+			return false;
+		}
+
+		foreach ($productRowIds as $productRowId)
+		{
+			$productRow = $productRows->getByPrimary($productRowId);
+			$reservation = $productRow->getProductRowReservation();
+
+			if ($reservation)
 			{
-				$reserveQuantity = (float)$reserve['RESERVE_QUANTITY'];
-				$reservationResult->addReserveInfo(
-					$rowId,
-					0,
-					-$reserveQuantity
-				);
-			}
-
-			try
-			{
-				$db->startTransaction();
-
-				ProductRowReservationTable::deleteByFilter([
-					'=ROW_ID' => array_keys($rows),
-				]);
-
-				$syncronizer->syncOrderReservesFromDeal($dealId, $reservationResult);
-
-				$db->commitTransaction();
-			}
-			catch (Throwable $e)
-			{
-				$db->rollbackTransaction();
-
-				throw $e;
-			}
-
-			if (isset($this->logger))
-			{
-				$this->logger->info('Force delete reserves for deal: ' . $dealId);
+				$reservation->setReserveQuantity(0);
+				$isReleased = true;
 			}
 		}
+
+		return $isReleased;
+	}
+
+	/**
+	 * @param \Bitrix\Crm\Service\Factory\Deal $factory
+	 * @param Deal $deal
+	 * @return void
+	 */
+	private function updateDeal(\Bitrix\Crm\Service\Factory\Deal $factory, Deal $deal): void
+	{
+		$operation = $factory->getUpdateOperation($deal);
+		$operation->disableAllChecks();
+		$result = $operation->launch();
+		$this->logResult("update deal '{$deal->getId()}'", $result);
 	}
 
 	/**

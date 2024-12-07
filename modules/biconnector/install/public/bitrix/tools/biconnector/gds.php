@@ -1,10 +1,12 @@
 <?php
+
 define('NOT_CHECK_PERMISSIONS', true);
 define('NO_KEEP_STATISTIC', true);
 define('BX_SECURITY_SESSION_VIRTUAL', true);
 define('SKIP_DISK_QUOTA_CHECK', true);
 define('CACHED_b_file', false);
 define('BX_PUBLIC_TOOLS', true);
+
 require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_before.php';
 
 /** @var CUser $USER */
@@ -25,6 +27,45 @@ $input = $inputJSON ? Bitrix\Main\Web\Json::decode($inputJSON) : [];
 
 if (\Bitrix\Main\Loader::includeModule('biconnector'))
 {
+	if (isset($_GET['superset_verify']))
+	{
+		if (\Bitrix\BIConnector\Superset\Config\ConfigContainer::getConfigContainer()->isPortalIdVerified())
+		{
+			echo Bitrix\Main\Web\Json::encode(['error' => 'ALREADY_VERIFIED']);
+			echo "\n";
+
+			\Bitrix\Main\Application::getInstance()->terminate();
+		}
+
+		if (!isset($input['message']))
+		{
+			echo Bitrix\Main\Web\Json::encode(['error' => 'NO_MESSAGE']);
+			echo "\n";
+
+			\Bitrix\Main\Application::getInstance()->terminate();
+		}
+
+		$message = $input['message'];
+		$secretManager = Bitrix\BIConnector\Superset\Config\SecretManager::getManager();
+		$encryptResult = $secretManager->encryptMessage($message);
+
+		$result = [];
+
+		if ($encryptResult->isSuccess())
+		{
+			$result = $encryptResult->getData();
+		}
+		else
+		{
+			$result = ['error' => $encryptResult->getErrors()[0]->getCode()];
+		}
+
+		echo Bitrix\Main\Web\Json::encode($result);
+		echo "\n";
+
+		\Bitrix\Main\Application::getInstance()->terminate();
+	}
+
 	$supersetKey = $input['superset_key'] ?? '';
 	unset($input['superset_key']);
 
@@ -52,6 +93,13 @@ if (\Bitrix\Main\Loader::includeModule('biconnector'))
 	if ($supersetKey)
 	{
 		$limitManager->setSupersetKey($supersetKey);
+	}
+	else if (
+		!\Bitrix\Main\Loader::includeModule('bitrix24')
+		&& $accessKey === \Bitrix\BIConnector\Superset\KeyManager::getAccessKey()
+	)
+	{
+		$limitManager->setIsSuperset();
 	}
 
 	if (!$manager->checkAccessKey($accessKey))
@@ -83,7 +131,7 @@ if (\Bitrix\Main\Loader::includeModule('biconnector'))
 			ob_start();
 			\Bitrix\BIConnector\PrettyPrinter::printRowsArray($tableFields);
 			$c = ob_get_clean();
-			echo \Bitrix\Main\Text\Encoding::convertEncoding($c, SITE_CHARSET, 'UTF-8');
+			echo $c;
 		}
 		else
 		{

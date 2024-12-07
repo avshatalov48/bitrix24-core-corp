@@ -141,7 +141,6 @@ BX.namespace('Tasks.Component');
 			},
 
 			filterOwnerInit: function() {
-				// debugger
 				var customFields = this.option('customFields');
 				for (var key in customFields)
 				{

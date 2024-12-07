@@ -2,6 +2,7 @@
  * @module imconnector/lib/ui/buttons/qr
  */
 jn.define('imconnector/lib/ui/buttons/qr', (require, exports, module) => {
+	const AppTheme = require('apptheme');
 	const { Loc } = require('loc');
 	const { Type } = require('type');
 	const { withPressed } = require('utils/color');
@@ -24,8 +25,8 @@ jn.define('imconnector/lib/ui/buttons/qr', (require, exports, module) => {
 					flexDirection: 'row',
 					alignItems: 'center',
 					justifyContent: 'center',
-					backgroundColor: withPressed('#FFFFFF'),
-					borderColor: '#A8ADB4',
+					backgroundColor: withPressed(AppTheme.colors.bgContentPrimary),
+					borderColor: AppTheme.colors.base4,
 					borderWidth: 1,
 					borderRadius,
 					paddingVertical: 4,
@@ -75,7 +76,7 @@ jn.define('imconnector/lib/ui/buttons/qr', (require, exports, module) => {
 			}),
 			Text({
 				style: {
-					color: '#333333',
+					color: AppTheme.colors.base1,
 					fontSize: 16,
 					fontWeight: 400,
 					numberOfLines: 1,

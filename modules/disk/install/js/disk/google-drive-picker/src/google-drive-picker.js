@@ -1,10 +1,38 @@
 import { Dom, Extension, Loc } from 'main.core';
+
+import './style.css';
+
+type DocType = {
+	modifyDateInt: number,
+	sizeInt: number,
+	modifyBy: string,
+	size: number,
+	modifyDate: string,
+	provider: string,
+	name: string,
+	id: string,
+	type: string
+}
+
+type PickerData = {
+	action: string,
+	docs: GoogleDocType[]
+}
+
+type GoogleDocType = {
+	id: string;
+	name: string;
+	type: string;
+	lastEditedUtc: string;
+	sizeBytes: number;
+}
+
 export class GoogleDrivePicker
 {
 	scopes = Extension.getSettings('disk.google-drive-picker').get('scopes');
 	provider = 'gdrive';
 
-	constructor(clientId, appId, apiKey, oauthToken, saveCallback)
+	constructor(clientId: string, appId: string, apiKey: string, oauthToken: string, saveCallback: string)
 	{
 		this.clientId = clientId;
 		this.appId = appId;
@@ -13,7 +41,7 @@ export class GoogleDrivePicker
 		this.oauthToken = oauthToken;
 	}
 
-	async loadAndOpenPicker()
+	async loadAndShowPicker(): Promise<void>
 	{
 		if (!this.oauthToken)
 		{
@@ -22,9 +50,9 @@ export class GoogleDrivePicker
 
 		try
 		{
-			await this.loadGis();
-			await this.verifyGoogleOAuthToken(this.oauthToken);
-			this.createPicker();
+			await this.#loadGis();
+			await this.#verifyGoogleOAuthToken(this.oauthToken);
+			this.#createPicker();
 		}
 		catch (error)
 		{
@@ -33,17 +61,19 @@ export class GoogleDrivePicker
 		}
 	}
 
-	async loadGis() {
+	async #loadGis(): Promise<void>
+	{
 		const scripts = [
 			'https://apis.google.com/js/api.js',
 			'https://accounts.google.com/gsi/client',
 		];
 
-		await Promise.all(scripts.map((script) => this.loadScript(script)));
+		await Promise.all(scripts.map((script) => this.#loadScript(script)));
 	}
 
-	loadScript(url) {
-		return new Promise((resolve, reject) => {
+	#loadScript(url: string): Promise<void>
+	{
+		return new Promise((resolve, reject): void => {
 			const script = document.createElement('script');
 			script.src = url;
 			script.onload = () => resolve(url);
@@ -52,12 +82,12 @@ export class GoogleDrivePicker
 		});
 	}
 
-	createPicker()
+	#createPicker(): void
 	{
-		window.gapi.load('client:auth2:picker', this.showPicker);
+		window.gapi.load('client:auth2:picker', this.#showPicker);
 	}
 
-	showPicker = () => {
+	#showPicker = (): void => {
 		if (this.oauthToken)
 		{
 			const googleViewId = window.google.picker.ViewId.DOCS;
@@ -73,7 +103,7 @@ export class GoogleDrivePicker
 				.setOAuthToken(this.oauthToken)
 				.setDeveloperKey(this.apiKey)
 				.setAppId(this.appId)
-				.setCallback((data) => this.pickerCallback(data))
+				.setCallback((data) => this.#pickerCallback(data))
 				.enableFeature(window.google.picker.Feature.MULTISELECT_ENABLED)
 				.build();
 
@@ -81,16 +111,27 @@ export class GoogleDrivePicker
 		}
 	};
 
-	pickerCallback(data)
+	#pickerCallback(data: PickerData): void
 	{
 		if (data.action === window.google.picker.Action.PICKED)
 		{
-			const documents = data.docs.map((doc) => this.convertItem(doc));
+			const documents = data.docs.map((doc): DocType => this.#convertItem(doc));
 			this.saveCallback.saveButton(this.provider, '/', documents);
+		}
+
+		switch (data.action)
+		{
+			case 'loaded':
+				document.body.style.setProperty('overflow', 'hidden');
+				break;
+			case 'cancel':
+			case 'picked':
+				document.body.style.removeProperty('overflow');
+				break;
 		}
 	}
 
-	convertItem(document)
+	#convertItem(document: GoogleDocType): DocType
 	{
 		const modifyDate = new Date(document.lastEditedUtc);
 
@@ -101,18 +142,18 @@ export class GoogleDrivePicker
 			size: document.sizeBytes,
 			sizeInt: document.sizeBytes,
 			modifyBy: '',
-			modifyDate: this.formatDate(modifyDate),
+			modifyDate: this.#formatDate(modifyDate),
 			modifyDateInt: modifyDate.getTime(),
 			provider: this.provider,
 		};
 	}
 
-	formatDate(date)
+	#formatDate(date: Date): string
 	{
 		return `${date.getDay()}.${date.getMonth()}.${date.getFullYear()}`;
 	}
 
-	async verifyGoogleOAuthToken(token)
+	async #verifyGoogleOAuthToken(token: string): Promise<any>
 	{
 		try
 		{
@@ -121,7 +162,7 @@ export class GoogleDrivePicker
 
 			if (!response.ok)
 			{
-				throw new Error(`Error verifying token: ${response.statusText}`);
+				new Error(`Error verifying token: ${response.statusText}`);
 			}
 
 			return await response.json();

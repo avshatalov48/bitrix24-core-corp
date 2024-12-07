@@ -288,6 +288,42 @@ class Bitrix24Manager
 
 		return $script;
 	}
+
+	public static function prepareLicenseFeaturePromoterScript(array $params): string
+	{
+		$script = '';
+
+		$code = \CUtil::JSEscape($params['ID'] ?? '');
+
+		if (
+			is_string($code)
+			&& $code !== ''
+			&& Loader::includeModule('bitrix24')
+			&& Loader::includeModule('ui')
+		)
+		{
+			\Bitrix\Main\UI\Extension::load('ui.info-helper');
+
+			$script = <<<JS
+				const params = {
+					code: "{$code}"
+				}
+				if (
+					BX.Type.isObject(event)
+					&& event?.type === 'click' 
+					&& BX.Type.isDomNode(event.target)
+				)
+				{
+					params.bindElement = event.target;
+				}
+
+				top?.BX?.UI?.FeaturePromotersRegistry.getPromoter(params).show();
+JS;
+		}
+
+		return $script;
+	}
+
 	/**
 	 * Prepare HTML for license purchase information.
 	 * @param array $params Popup params.
@@ -324,7 +360,7 @@ class Bitrix24Manager
 			$serviceUrl = \CUtil::JSEscape(\CBitrix24::PATH_COUNTER);
 			$hostName = \CUtil::JSEscape(BX24_HOST_NAME);
 			return "{$content}
-				<script type='text/javascript'>
+				<script>
 					BX.ready(
 						function()
 						{

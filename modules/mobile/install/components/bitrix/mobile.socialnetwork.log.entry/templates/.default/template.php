@@ -18,13 +18,13 @@ use Bitrix\Main\Web\Json;
 
 $targetHtml = '';
 
-if ($arResult["FatalError"] <> '')
+if (!empty($arResult["FatalError"]))
 {
 	?><span class='errortext'><?=$arResult["FatalError"]?></span><br /><br /><?php
 }
 else
 {
-	if ($arResult["ErrorMessage"] <> '')
+	if (!empty($arResult["ErrorMessage"]))
 	{
 		?><span class='errortext'><?=$arResult["ErrorMessage"]?></span><br /><br /><?php
 	}
@@ -94,8 +94,8 @@ else
 			$strTopic .= (
 				array_key_exists("TITLE_24", $arEvent["EVENT_FORMATTED"])
 				&& $arEvent["EVENT_FORMATTED"]["TITLE_24"] <> ''
-					? '<div class="post-item-top-text'.($arEvent["EVENT_FORMATTED"]["STYLE"] <> '' ? ' post-item-'.$arEvent["EVENT_FORMATTED"]["STYLE"] : '').'">'.$arEvent["EVENT_FORMATTED"]["TITLE_24"].'</div>'
-					: '<div class="post-item-top-text'.($arEvent["EVENT_FORMATTED"]["STYLE"] <> '' ? ' post-item-'.$arEvent["EVENT_FORMATTED"]["STYLE"] : '').'">'.$arEvent["EVENT_FORMATTED"]["TITLE"].'</div>'
+					? '<div class="post-item-top-text'.(!empty($arEvent["EVENT_FORMATTED"]["STYLE"]) ? ' post-item-'.$arEvent["EVENT_FORMATTED"]["STYLE"] : '').'">'.$arEvent["EVENT_FORMATTED"]["TITLE_24"].'</div>'
+					: '<div class="post-item-top-text'.(!empty($arEvent["EVENT_FORMATTED"]["STYLE"]) ? ' post-item-'.$arEvent["EVENT_FORMATTED"]["STYLE"] : '').'">'.$arEvent["EVENT_FORMATTED"]["TITLE"].'</div>'
 			);
 		}
 
@@ -316,7 +316,7 @@ else
 				?><div class="post-item-top" id="post_item_top_<?=$arEvent["EVENT"]["ID"]?>"><?php
 
 					$avatarClassList = [ 'avatar' ];
-					if ($arEvent['EVENT_FORMATTED']['AVATAR_STYLE'] <> '')
+					if (!empty($arEvent['EVENT_FORMATTED']['AVATAR_STYLE']))
 					{
 						$avatarClassList[] = $arEvent['EVENT_FORMATTED']['AVATAR_STYLE'];
 					}
@@ -1142,7 +1142,7 @@ else
 					app.setPageID('LOG_ENTRY_<?=$arEvent["EVENT"]["ID"]?>');
 				</script><?php
 
-				if ($_REQUEST["empty_get_comments"] === "Y")
+				if (isset($_REQUEST["empty_get_comments"]) && $_REQUEST["empty_get_comments"] === "Y")
 				{
 					$APPLICATION->RestartBuffer();
 					ob_start();

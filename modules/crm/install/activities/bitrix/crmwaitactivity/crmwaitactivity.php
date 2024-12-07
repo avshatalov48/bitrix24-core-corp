@@ -341,6 +341,11 @@ class CBPCrmWaitActivity extends CBPActivity
 
 	private function logDebugDescription($description)
 	{
+		if (!$this->workflow->isDebug())
+		{
+			return;
+		}
+
 		$this->writeDebugTrack(
 			$this->getWorkflowInstanceId(),
 			$this->getName(),
@@ -353,6 +358,11 @@ class CBPCrmWaitActivity extends CBPActivity
 
 	private function logDebugComment($comment)
 	{
+		if (!$this->workflow->isDebug())
+		{
+			return;
+		}
+
 		$debugInfo = $this->getDebugInfo(
 			['WaitDescription' => $comment],
 			['WaitDescription' => GetMessage('CRM_WAIT_ACTIVITY_WAIT_DESCRIPTION')],

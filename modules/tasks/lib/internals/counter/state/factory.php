@@ -54,7 +54,7 @@ class Factory
 	{
 		return true;
 
-		if (Option::get('tasks', 'tasks_use_in_memory_counter_state', 'null', '-') !== 'null')
+		if (Option::get('tasks', 'tasks_use_in_memory_counter_state', 'null') !== 'null')
 		{
 			return true;
 		}

@@ -13,3 +13,4 @@ $MESS['CRM_INTEGRATION_MAIL_MANAGER_ERROR_TOO_BIG_ATTACHMENT'] = 'Превыше
 $MESS['CRM_INTEGRATION_MAIL_MANAGER_ERROR_FROM_MAILBOX_RESTRICTED'] =
 	'Почтовый ящик, с которого вы пытаетесь отправить письмо, заблокирован в связи с тарифными ограничениями'
 ;
+$MESS['CRM_INTEGRATION_MAIL_MANAGER_NAME'] = 'Почта';

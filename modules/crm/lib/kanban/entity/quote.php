@@ -169,6 +169,7 @@ class Quote extends Entity
 				'canUseCallListInPanel' => true,
 				'showPersonalSetStatusNotCompletedText' => true,
 				'kanbanItemClassName' => 'crm-kanban-item',
+				'canUseMergeInPanel' => true,
 			]
 		);
 	}
@@ -222,5 +223,14 @@ class Quote extends Entity
 		}
 
 		return $fields;
+	}
+
+	protected function getHideSumForStagePermissionType(string $stageId, \CCrmPerms $userPermissions): ?string
+	{
+		return $userPermissions->GetPermType(
+			$this->getTypeName(),
+			'HIDE_SUM',
+			["STAGE_ID{$stageId}"]
+		);
 	}
 }

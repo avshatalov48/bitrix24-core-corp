@@ -1,3 +1,4 @@
+/* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
 (function (exports,main_popup,main_core,main_core_events,ui_analytics,tasks_viewed) {
@@ -265,11 +266,11 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "counterTypes",
 	    get: function get() {
 	      return {
-	        my: ['expired', 'my_expired', 'originator_expired', 'accomplices_expired', 'auditor_expired', 'new_comments', 'my_new_comments', 'originator_new_comments', 'accomplices_new_comments', 'auditor_new_comments', 'projects_total_expired', 'projects_total_comments', 'sonet_total_expired', 'sonet_total_comments', 'groups_total_expired', 'groups_total_comments', 'scrum_total_comments'],
+	        my: ['expired', 'my_expired', 'originator_expired', 'accomplices_expired', 'auditor_expired', 'new_comments', 'my_new_comments', 'originator_new_comments', 'accomplices_new_comments', 'auditor_new_comments', 'projects_total_expired', 'projects_total_comments', 'sonet_total_expired', 'sonet_total_comments', 'groups_total_expired', 'groups_total_comments', 'scrum_total_comments', 'flow_total_expired', 'flow_total_comments'],
 	        other: ['project_expired', 'project_comments', 'projects_foreign_expired', 'projects_foreign_comments', 'groups_foreign_expired', 'groups_foreign_comments', 'sonet_foreign_expired', 'sonet_foreign_comments', 'scrum_foreign_comments'],
 	        additional: ['muted_new_comments'],
-	        expired: ['expired', 'my_expired', 'originator_expired', 'accomplices_expired', 'auditor_expired', 'project_expired', 'projects_total_expired', 'projects_foreign_expired', 'groups_total_expired', 'groups_foreign_expired', 'sonet_total_expired', 'sonet_foreign_expired'],
-	        comment: ['new_comments', 'my_new_comments', 'originator_new_comments', 'accomplices_new_comments', 'auditor_new_comments', 'muted_new_comments', 'project_comments', 'projects_total_comments', 'projects_foreign_comments', 'groups_total_comments', 'groups_foreign_comments', 'sonet_total_comments', 'sonet_foreign_comments', 'scrum_total_comments', 'scrum_foreign_comments'],
+	        expired: ['expired', 'my_expired', 'originator_expired', 'accomplices_expired', 'auditor_expired', 'project_expired', 'projects_total_expired', 'projects_foreign_expired', 'groups_total_expired', 'groups_foreign_expired', 'sonet_total_expired', 'sonet_foreign_expired', 'flow_total_expired'],
+	        comment: ['new_comments', 'my_new_comments', 'originator_new_comments', 'accomplices_new_comments', 'auditor_new_comments', 'muted_new_comments', 'project_comments', 'projects_total_comments', 'projects_foreign_comments', 'groups_total_comments', 'groups_foreign_comments', 'sonet_total_comments', 'sonet_foreign_comments', 'scrum_total_comments', 'scrum_foreign_comments', 'flow_total_comments'],
 	        project: ['project_expired', 'projects_total_expired', 'projects_foreign_expired', 'groups_total_expired', 'groups_foreign_expired', 'sonet_total_expired', 'sonet_foreign_expired', 'project_comments', 'projects_total_comments', 'projects_foreign_comments', 'groups_total_comments', 'groups_foreign_comments', 'sonet_total_comments', 'sonet_foreign_comments'],
 	        scrum: ['scrum_total_comments', 'scrum_foreign_comments']
 	      };
@@ -356,7 +357,8 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    value: function processPullEvent(data) {
 	      var eventHandlers = {
 	        user_counter: this.onUserCounter.bind(this),
-	        project_counter: this.onProjectCounter.bind(this)
+	        project_counter: this.onProjectCounter.bind(this),
+	        comment_read_all: this.onCommentReadAll.bind(this)
 	      };
 	      var has = Object.prototype.hasOwnProperty;
 	      var command = data.command,
@@ -431,11 +433,18 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      this.role = this.filter.isFilteredByField('ROLEID') ? this.filter.fields.ROLEID : 'view_all';
 	    }
 	  }, {
+	    key: "onCommentReadAll",
+	    value: function onCommentReadAll(data) {
+	      this.updateCountersData();
+	    }
+	  }, {
 	    key: "onUserCounter",
 	    value: function onUserCounter(data) {
 	      var _this5 = this;
 	      var has = Object.prototype.hasOwnProperty;
 	      if (!this.isUserTaskList() || !this.isMyTaskList() || !has.call(data, this.groupId) || this.userId !== Number(data.userId)) {
+	        // most likely project counters were updated, but due to 'isSonetEnable' flag only user counters are comming
+	        this.updateCountersData();
 	        return;
 	      }
 	      var newCommentsCount = 0;
@@ -454,6 +463,9 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      });
 	      if (newCommentsCount > 0) {
 	        this.$readAllInner.classList.remove('--fade');
+	      }
+	      if (data.isSonetEnabled !== undefined && data.isSonetEnabled === false) {
+	        this.updateCountersData();
 	      }
 	    }
 	  }, {

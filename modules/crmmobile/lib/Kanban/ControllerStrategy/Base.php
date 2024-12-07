@@ -57,11 +57,16 @@ abstract class Base implements StrategyInterface
 		}
 		elseif ($presetId === self::TMP_FILTER_PRESET_ID)
 		{
-			$tmpFilter = ($this->params['filter']['tmpFields'] ?? []);
 			$fields = [];
-			foreach ($tmpFilter as $fieldName => $field)
+
+			$currentFilter = $this->getCurrentFilter();
+			if ($currentFilter)
 			{
-				$fields[$fieldName] = $field;
+				$tmpFilter = $currentFilter['tmpFields'] ?? [];
+				foreach ($tmpFilter as $fieldName => $field)
+				{
+					$fields[$fieldName] = $field;
+				}
 			}
 
 			$data = [
@@ -166,6 +171,6 @@ abstract class Base implements StrategyInterface
 
 	public function getCurrentFilter()
 	{
-		return $this->params['filter'];
+		return $this->params['filter'] ?? null;
 	}
 }

@@ -74,7 +74,7 @@ export const SmsProviderSelect = {
 	// language=Vue
 	template: `
 		<div style="display: inline-block; vertical-align: top; position: relative;">
-			<span class="sms-provider-selector" @click.stop="switchVisibility">{{ $Bitrix.Loc.getMessage('CRM_CFG_TERMINAL_SETTINGS_SECTION_SMS_CHANGE') }}</span>
+			<span class="sms-provider-selector" @click.stop="switchVisibility">{{ $Bitrix.Loc.getMessage('CRM_CFG_TERMINAL_SETTINGS_SECTION_SMS_CHANGE_MSGVER_1') }}</span>
 			<ul :class="getListClassname" @click.stop>
 				<li v-for="provider in getActiveSmsServices()" @click="switchService(provider['ID'])" v-show="provider['ID'] !== getSelectedService['ID']">{{ provider['NAME'] }}</li>
 				<li @click="openSmsServicesSlider">{{ $Bitrix.Loc.getMessage('CRM_CFG_TERMINAL_SETTINGS_SECTION_SMS_SERVICE_PROVIDER_CONNECT_MORE') }}</li>

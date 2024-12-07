@@ -1,4 +1,4 @@
-import History from "./history";
+import History from './history';
 
 /** @memberof BX.Crm.Timeline.Actions */
 export default class Scoring extends History
@@ -10,43 +10,47 @@ export default class Scoring extends History
 
 	prepareContent()
 	{
-		const outerWrapper = BX.create("DIV", {
+		const isScoringAvailable = BX.prop.getBoolean(this._data, 'SCORING_IS_AVAILABLE', true);
+
+		const outerWrapper = BX.create('DIV', {
 			attrs: {
-				className: "crm-entity-stream-section crm-entity-stream-section-history crm-entity-stream-section-scoring"
+				className: 'crm-entity-stream-section crm-entity-stream-section-history crm-entity-stream-section-scoring',
 			},
-			events: {
-				click: function () {
-					let url = "/crm/ml/#entity#/#id#/detail";
-					const ownerTypeId = this.getOwnerTypeId();
-					const ownerId = this.getOwnerId();
+			events: isScoringAvailable
+				? {
+					click: function() {
+						let url = '/crm/ml/#entity#/#id#/detail';
+						const ownerTypeId = this.getOwnerTypeId();
+						const ownerId = this.getOwnerId();
 
-					let ownerType;
-					if (ownerTypeId === 1)
-					{
-						ownerType = "lead";
-					}
-					else if (ownerTypeId === 2)
-					{
-						ownerType = "deal";
-					}
-					else
-					{
-						return;
-					}
+						let ownerType = '';
+						if (ownerTypeId === 1)
+						{
+							ownerType = 'lead';
+						}
+						else if (ownerTypeId === 2)
+						{
+							ownerType = 'deal';
+						}
+						else
+						{
+							return;
+						}
 
-					url = url.replace("#entity#", ownerType);
-					url = url.replace("#id#", ownerId);
+						url = url.replace('#entity#', ownerType);
+						url = url.replace('#id#', ownerId);
 
-					if (BX.SidePanel)
-					{
-						BX.SidePanel.Instance.open(url, {width: 840});
-					}
-					else
-					{
-						top.location.href = url;
-					}
-				}.bind(this)
-			}
+						if (BX.SidePanel)
+						{
+							BX.SidePanel.Instance.open(url, {width: 840});
+						}
+						else
+						{
+							top.location.href = url;
+						}
+					}.bind(this),
+				}
+				: null,
 		});
 
 		const scoringInfo = BX.prop.getObject(this._data, "SCORING_INFO", null);

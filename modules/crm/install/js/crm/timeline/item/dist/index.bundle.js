@@ -1,213 +1,15 @@
 /* eslint-disable */
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
-(function (exports,ui_cnt,rest_client,ui_label,main_popup,ui_hint,crm_audioPlayer,crm_ai_copilotTextarea,ui_alerts,ui_textcrop,currency_currencyCore,ui_icons_generator,ui_iconSet_api_vue,ui_iconSet_main,ui_iconSet_actions,main_loader,ui_vue3,crm_timeline_editors_commentEditor,crm_field_itemSelector,main_date,crm_timeline_tools,ui_infoHelper,ai_engine,crm_integration_analytics,ui_analytics,ui_buttons,ui_feedback_form,ui_entitySelector,crm_activity_fileUploaderPopup,crm_activity_settingsPopup,crm_activity_todoEditor,ui_designTokens,main_core_events,crm_entityEditor_field_paymentDocuments,pull_client,crm_timeline_item,calendar_util,crm_router,calendar_sharing_interface,ui_notification,ui_dialogs_messagebox,crm_ai_call,main_core) {
+(function (exports,rest_client,ui_analytics,crm_field_colorSelector,ui_vue3_directives_hint,ui_label,ui_hint,ui_cnt,location_core,main_loader,crm_timeline_editors_commentEditor,ui_textEditor,ui_bbcode_formatter_htmlFormatter,ui_vue3,ui_icons_generator,crm_audioPlayer,ui_iconSet_api_vue,ui_iconSet_main,ui_iconSet_actions,crm_field_itemSelector,currency_currencyCore,ui_textcrop,ui_alerts,crm_field_pingSelector,im_public,main_date,crm_timeline_tools,ui_infoHelper,ai_engine,ui_buttons,ui_feedback_form,crm_activity_fileUploaderPopup,ui_entitySelector,ui_sidepanel,ui_designTokens,main_core_events,crm_entityEditor_field_paymentDocuments,pull_client,crm_timeline_item,calendar_util,main_popup,crm_router,calendar_sharing_interface,crm_ai_call,ui_notification,main_core,ui_dialogs_messagebox) {
 	'use strict';
 
 	var crm_timeline_item__default = 'default' in crm_timeline_item ? crm_timeline_item['default'] : crm_timeline_item;
 
-	let Item = /*#__PURE__*/function () {
-	  function Item() {
-	    babelHelpers.classCallCheck(this, Item);
-	    this._id = '';
-	    this._isTerminated = false;
-	    this._wrapper = null;
-	  }
-	  babelHelpers.createClass(Item, [{
-	    key: "getId",
-	    value: function getId() {
-	      return this._id;
-	    }
-	  }, {
-	    key: "_setId",
-	    value: function _setId(id) {
-	      this._id = BX.type.isNotEmptyString(id) ? id : BX.util.getRandomString(4);
-	    }
-	    /**
-	     * @abstract
-	     */
-	  }, {
-	    key: "setData",
-	    value: function setData(data) {
-	      throw new Error('Item.setData() must be overridden');
-	    }
-	    /**
-	     * @abstract
-	     */
-	  }, {
-	    key: "layout",
-	    value: function layout(options) {
-	      throw new Error('Item.layout() must be overridden');
-	    }
-	  }, {
-	    key: "refreshLayout",
-	    value: function refreshLayout() {
-	      const anchor = this._wrapper.previousSibling;
-	      this.clearLayout();
-	      this.layout({
-	        anchor: anchor
-	      });
-	    }
-	  }, {
-	    key: "clearLayout",
-	    value: function clearLayout() {
-	      main_core.Dom.remove(this._wrapper);
-	      this._wrapper = undefined;
-	    }
-	  }, {
-	    key: "destroy",
-	    value: function destroy() {
-	      this.clearLayout();
-	    }
-	  }, {
-	    key: "getWrapper",
-	    value: function getWrapper() {
-	      return this._wrapper;
-	    }
-	  }, {
-	    key: "setWrapper",
-	    value: function setWrapper(wrapper) {
-	      this._wrapper = wrapper;
-	    }
-	  }, {
-	    key: "addWrapperClass",
-	    value: function addWrapperClass(className, timeout) {
-	      if (!this._wrapper) {
-	        return;
-	      }
-	      main_core.Dom.addClass(this._wrapper, className);
-	      if (main_core.Type.isNumber(timeout) && timeout >= 0) {
-	        window.setTimeout(this.removeWrapperClass.bind(this, className), timeout);
-	      }
-	    }
-	  }, {
-	    key: "removeWrapperClass",
-	    value: function removeWrapperClass(className, timeout) {
-	      if (!this._wrapper) {
-	        return;
-	      }
-	      main_core.Dom.removeClass(this._wrapper, className);
-	      if (main_core.Type.isNumber(timeout) && timeout >= 0) {
-	        window.setTimeout(this.addWrapperClass.bind(this, className), timeout);
-	      }
-	    }
-	  }, {
-	    key: "isTerminated",
-	    value: function isTerminated() {
-	      return this._isTerminated;
-	    }
-	  }, {
-	    key: "markAsTerminated",
-	    value: function markAsTerminated(terminated) {
-	      terminated = !!terminated;
-	      if (this._isTerminated === terminated) {
-	        return;
-	      }
-	      this._isTerminated = terminated;
-	      if (!this._wrapper) {
-	        return;
-	      }
-	      if (terminated) {
-	        main_core.Dom.addClass(this._wrapper, 'crm-entity-stream-section-last');
-	      } else {
-	        main_core.Dom.removeClass(this._wrapper, 'crm-entity-stream-section-last');
-	      }
-	    }
-	  }, {
-	    key: "getAssociatedEntityTypeId",
-	    value: function getAssociatedEntityTypeId() {
-	      return null;
-	    }
-	  }, {
-	    key: "getAssociatedEntityId",
-	    value: function getAssociatedEntityId() {
-	      return null;
-	    }
-	  }]);
-	  return Item;
-	}();
-
-	let IconBackgroundColor = function IconBackgroundColor() {
-	  babelHelpers.classCallCheck(this, IconBackgroundColor);
-	};
-	babelHelpers.defineProperty(IconBackgroundColor, "PRIMARY", 'primary');
-	babelHelpers.defineProperty(IconBackgroundColor, "PRIMARY_ALT", 'primary_alt');
-	babelHelpers.defineProperty(IconBackgroundColor, "FAILURE", 'failure');
-
-	const Icon = {
-	  props: {
-	    code: {
-	      type: String,
-	      required: false,
-	      default: 'none'
-	    },
-	    counterType: {
-	      type: String,
-	      required: false,
-	      default: ''
-	    },
-	    backgroundColorToken: {
-	      type: String,
-	      required: false,
-	      default: IconBackgroundColor.PRIMARY
-	    },
-	    backgroundUri: String
-	  },
-	  inject: ['isLogMessage'],
-	  computed: {
-	    className() {
-	      return {
-	        'crm-timeline__card_icon': true,
-	        [`--bg-${this.backgroundColorToken}`]: !!this.backgroundColorToken,
-	        [`--code-${this.code}`]: !!this.code && !this.backgroundUri,
-	        [`--custom-bg`]: !!this.backgroundUri,
-	        ['--muted']: this.isLogMessage
-	      };
-	    },
-	    counterNodeContainer() {
-	      return this.$refs.counter;
-	    },
-	    styles() {
-	      if (!this.backgroundUri) {
-	        return {};
-	      }
-	      return {
-	        backgroundImage: "url('" + encodeURI(main_core.Text.encode(this.backgroundUri)) + "')"
-	      };
-	    }
-	  },
-	  methods: {
-	    renderCounter() {
-	      if (!this.counterType) {
-	        return;
-	      }
-	      main_core.Dom.clean(this.counterNodeContainer);
-	      const counter = new ui_cnt.Counter({
-	        value: 1,
-	        border: true,
-	        color: ui_cnt.Counter.Color[this.counterType.toUpperCase()]
-	      });
-	      counter.renderTo(this.counterNodeContainer);
-	    }
-	  },
-	  mounted() {
-	    this.renderCounter();
-	  },
-	  watch: {
-	    counterType(newCounterType)
-	    // update if counter state changed
-	    {
-	      this.$nextTick(() => {
-	        this.renderCounter();
-	      });
-	    }
-	  },
-	  template: `
-		<div :class="className">
-			<i :style="styles"></i>
-			<div ref="counter" v-show="!!counterType" class="crm-timeline__card_icon_counter"></div>
-		</div>
-	`
+	const StreamType = {
+	  history: 0,
+	  scheduled: 1,
+	  pinned: 2
 	};
 
 	function _classPrivateFieldInitSpec(obj, privateMap, value) { _checkPrivateRedeclaration(obj, privateMap); privateMap.set(obj, value); }
@@ -655,6 +457,827 @@ this.BX.Crm = this.BX.Crm || {};
 	  }
 	}
 
+	const Logo = {
+	  props: {
+	    type: String,
+	    addIcon: String,
+	    addIconType: String,
+	    icon: String,
+	    iconType: String,
+	    backgroundUrl: String,
+	    backgroundSize: Number,
+	    inCircle: {
+	      type: Boolean,
+	      required: false,
+	      default: false
+	    },
+	    action: Object
+	  },
+	  data() {
+	    return {
+	      currentIcon: this.icon
+	    };
+	  },
+	  computed: {
+	    className() {
+	      return ['crm-timeline__card-logo', `--${this.type}`, {
+	        '--clickable': this.action
+	      }];
+	    },
+	    iconClassname() {
+	      return ['crm-timeline__card-logo_icon', `--${this.currentIcon}`, {
+	        '--in-circle': this.inCircle,
+	        [`--type-${this.iconType}`]: !!this.iconType && !this.backgroundUrl,
+	        '--custom-bg': !!this.backgroundUrl
+	      }];
+	    },
+	    addIconClassname() {
+	      return ['crm-timeline__card-logo_add-icon', `--type-${this.addIconType}`, `--icon-${this.addIcon}`];
+	    },
+	    iconInteriorStyle() {
+	      const result = {};
+	      if (this.backgroundUrl) {
+	        result.backgroundImage = 'url(' + encodeURI(main_core.Text.encode(this.backgroundUrl)) + ')';
+	      }
+	      if (this.backgroundSize) {
+	        result.backgroundSize = parseInt(this.backgroundSize) + 'px';
+	      }
+	      return result;
+	    }
+	  },
+	  watch: {
+	    icon(newIcon) {
+	      this.currentIcon = newIcon;
+	    }
+	  },
+	  methods: {
+	    executeAction() {
+	      if (!this.action) {
+	        return;
+	      }
+	      const action = new Action(this.action);
+	      action.execute(this);
+	    },
+	    setIcon(icon) {
+	      this.currentIcon = icon;
+	    }
+	  },
+	  template: `
+		<div :class="className" @click="executeAction">
+			<div class="crm-timeline__card-logo_content">
+				<div :class="iconClassname">
+					<i :style="iconInteriorStyle"></i>
+				</div>
+				<div :class="addIconClassname" v-if="addIcon">
+					<i></i>
+				</div>
+			</div>
+		</div>
+	`
+	};
+
+	const CalendarIcon = {
+	  props: {
+	    timestamp: {
+	      type: Number,
+	      required: true,
+	      default: 0
+	    },
+	    calendarEventId: {
+	      type: Number,
+	      required: false,
+	      default: null
+	    }
+	  },
+	  computed: {
+	    date() {
+	      return this.formatUserTime('d');
+	    },
+	    month() {
+	      return this.formatUserTime('F');
+	    },
+	    dayWeek() {
+	      return this.formatUserTime('D');
+	    },
+	    time() {
+	      return this.getDateTimeConverter().toTimeString();
+	    },
+	    userTime() {
+	      return this.getDateTimeConverter().getValue();
+	    },
+	    hasCalendarEventId() {
+	      return this.calendarEventId > 0;
+	    }
+	  },
+	  methods: {
+	    getDateTimeConverter() {
+	      return crm_timeline_tools.DatetimeConverter.createFromServerTimestamp(this.timestamp).toUserTime();
+	    },
+	    formatUserTime(format) {
+	      return main_date.DateTimeFormat.format(format, this.userTime);
+	    }
+	  },
+	  template: `
+		<div class="crm-timeline__calendar-icon-container">
+			<div v-if="hasCalendarEventId" class="crm-timeline__calendar-icon_event_icon"></div>
+			<div class="crm-timeline__calendar-icon">
+				<header class="crm-timeline__calendar-icon_top">
+					<div class="crm-timeline__calendar-icon_bullets">
+						<div class="crm-timeline__calendar-icon_bullet"></div>
+						<div class="crm-timeline__calendar-icon_bullet"></div>
+					</div>
+				</header>
+				<main class="crm-timeline__calendar-icon_content">
+					<div class="crm-timeline__calendar-icon_day">{{ date }}</div>
+					<div class="crm-timeline__calendar-icon_month">{{ month }}</div>
+					<div class="crm-timeline__calendar-icon_date">
+						<span class="crm-timeline__calendar-icon_day-week">{{ dayWeek }}</span>
+						<span class="crm-timeline__calendar-icon_time">{{ time }}</span>
+					</div>
+				</main>
+			</div>
+		</div>
+	`
+	};
+
+	const LogoCalendar = ui_vue3.BitrixVue.cloneComponent(Logo, {
+	  components: {
+	    CalendarIcon
+	  },
+	  props: {
+	    timestamp: {
+	      type: Number,
+	      required: false,
+	      default: 0
+	    },
+	    addIcon: String,
+	    addIconType: String,
+	    calendarEventId: {
+	      type: Number,
+	      required: false,
+	      default: null
+	    },
+	    backgroundColor: {
+	      type: String,
+	      required: false,
+	      default: null
+	    }
+	  },
+	  computed: {
+	    addIconClassname() {
+	      return ['crm-timeline__card-logo_add-icon', `--type-${this.addIconType}`, `--icon-${this.addIcon}`];
+	    },
+	    logoStyle() {
+	      if (main_core.Type.isStringFilled(this.backgroundColor)) {
+	        return {
+	          '--crm-timeline__logo-background': main_core.Text.encode(this.backgroundColor)
+	        };
+	      }
+	      return {};
+	    }
+	  },
+	  template: `
+		<div 
+			:class="className"
+			:style="logoStyle"
+			@click="executeAction"
+		>
+			<div class="crm-timeline__card-logo_content">
+				<CalendarIcon :timestamp="timestamp" :calendar-event-id="calendarEventId" />
+				<div :class="addIconClassname" v-if="addIcon">
+					<i></i>
+				</div>
+			</div>
+		</div>
+	`
+	});
+
+	const Body = {
+	  components: {
+	    Logo,
+	    LogoCalendar
+	  },
+	  props: {
+	    logo: Object,
+	    blocks: Object
+	  },
+	  data() {
+	    return {
+	      blockRefs: {}
+	    };
+	  },
+	  mounted() {
+	    const blocks = this.$refs.blocks;
+	    if (!blocks || !this.visibleBlocks) {
+	      return;
+	    }
+	    this.visibleBlocks.forEach((block, index) => {
+	      if (main_core.Type.isDomNode(blocks[index].$el)) {
+	        blocks[index].$el.setAttribute('data-id', block.id);
+	      } else {
+	        throw new Error('Vue component "' + block.rendererName + '" was not found');
+	      }
+	    });
+	  },
+	  beforeUpdate() {
+	    this.blockRefs = {};
+	  },
+	  computed: {
+	    visibleBlocks() {
+	      if (!main_core.Type.isPlainObject(this.blocks)) {
+	        return [];
+	      }
+	      return Object.keys(this.blocks).map(id => ({
+	        id,
+	        ...this.blocks[id]
+	      })).filter(item => item.scope !== 'mobile').sort((a, b) => {
+	        let aSort = a.sort === undefined ? 0 : a.sort;
+	        let bSort = b.sort === undefined ? 0 : b.sort;
+	        if (aSort < bSort) {
+	          return -1;
+	        }
+	        if (aSort > bSort) {
+	          return 1;
+	        }
+	        return 0;
+	      });
+	    },
+	    contentContainerClassname() {
+	      return ['crm-timeline__card-container', {
+	        '--without-logo': !this.logo
+	      }];
+	    }
+	  },
+	  methods: {
+	    getContentBlockById(blockId) {
+	      var _this$blockRefs$block;
+	      return (_this$blockRefs$block = this.blockRefs[blockId]) !== null && _this$blockRefs$block !== void 0 ? _this$blockRefs$block : null;
+	    },
+	    getLogo() {
+	      return this.$refs.logo;
+	    },
+	    saveRef(ref, id) {
+	      this.blockRefs[id] = ref;
+	    }
+	  },
+	  template: `
+		<div class="crm-timeline__card-body">
+			<div v-if="logo" class="crm-timeline__card-logo_container">
+				<LogoCalendar v-if="logo.icon === 'calendar'" v-bind="logo"></LogoCalendar>
+				<Logo v-else v-bind="logo" ref="logo"></Logo>
+			</div>
+			<div :class="contentContainerClassname">
+				<div
+					v-for="block in visibleBlocks"
+					:key="block.id"
+					class="crm-timeline__card-container_block"
+				>
+					<component
+						:is="block.rendererName"
+						v-bind="block.properties"
+						:ref="(el) => this.saveRef(el, block.id)"
+					/>
+				</div>
+			</div>
+		</div>
+	`
+	};
+
+	let ButtonScope = function ButtonScope() {
+	  babelHelpers.classCallCheck(this, ButtonScope);
+	};
+	babelHelpers.defineProperty(ButtonScope, "MOBILE", 'mobile');
+
+	let ButtonState = function ButtonState() {
+	  babelHelpers.classCallCheck(this, ButtonState);
+	};
+	babelHelpers.defineProperty(ButtonState, "DEFAULT", '');
+	babelHelpers.defineProperty(ButtonState, "LOADING", 'loading');
+	babelHelpers.defineProperty(ButtonState, "DISABLED", 'disabled');
+	babelHelpers.defineProperty(ButtonState, "HIDDEN", 'hidden');
+	babelHelpers.defineProperty(ButtonState, "AI_LOADING", 'ai-loading');
+
+	let ButtonType = function ButtonType() {
+	  babelHelpers.classCallCheck(this, ButtonType);
+	};
+	babelHelpers.defineProperty(ButtonType, "ICON", 'icon');
+	babelHelpers.defineProperty(ButtonType, "PRIMARY", 'primary');
+	babelHelpers.defineProperty(ButtonType, "SECONDARY", 'secondary');
+	babelHelpers.defineProperty(ButtonType, "LIGHT", 'light');
+	babelHelpers.defineProperty(ButtonType, "AI", 'ai');
+
+	const BaseButton = {
+	  props: {
+	    id: {
+	      type: String,
+	      required: false,
+	      default: ''
+	    },
+	    title: {
+	      type: String,
+	      required: false,
+	      default: ''
+	    },
+	    tooltip: {
+	      type: String,
+	      required: false,
+	      default: ''
+	    },
+	    state: {
+	      type: String,
+	      required: false,
+	      default: ButtonState.DEFAULT
+	    },
+	    props: Object,
+	    action: Object
+	  },
+	  data() {
+	    return {
+	      currentState: this.state
+	    };
+	  },
+	  computed: {
+	    itemStateToButtonStateDict() {
+	      return {
+	        [ButtonState.LOADING]: ui_buttons.Button.State.WAITING,
+	        [ButtonState.DISABLED]: ui_buttons.Button.State.DISABLED,
+	        [ButtonState.AI_LOADING]: ui_buttons.Button.State.AI_WAITING
+	      };
+	    }
+	  },
+	  methods: {
+	    setDisabled(disabled) {
+	      if (disabled) {
+	        this.setButtonState(ButtonState.DISABLED);
+	      } else {
+	        this.setButtonState(ButtonState.DEFAULT);
+	      }
+	    },
+	    setLoading(loading) {
+	      if (loading) {
+	        this.setButtonState(ButtonState.LOADING);
+	      } else {
+	        this.setButtonState(ButtonState.DEFAULT);
+	      }
+	    },
+	    setButtonState(state) {
+	      if (this.currentState !== state) {
+	        this.currentState = state;
+	      }
+	    },
+	    onLayoutUpdated() {
+	      this.setButtonState(this.state);
+	    },
+	    executeAction() {
+	      if (this.action && this.currentState !== ButtonState.DISABLED && this.currentState !== ButtonState.LOADING && this.currentState !== ButtonState.AI_LOADING) {
+	        const action = new Action(this.action);
+	        action.execute(this);
+	      }
+	    }
+	  },
+	  created() {
+	    this.$Bitrix.eventEmitter.subscribe('layout:updated', this.onLayoutUpdated);
+	  },
+	  beforeUnmount() {
+	    this.$Bitrix.eventEmitter.unsubscribe('layout:updated', this.onLayoutUpdated);
+	  },
+	  template: `<button></button>`
+	};
+
+	const Button = ui_vue3.BitrixVue.cloneComponent(BaseButton, {
+	  props: {
+	    type: {
+	      type: String,
+	      required: false,
+	      default: ButtonType.SECONDARY
+	    },
+	    iconName: {
+	      type: String,
+	      required: false,
+	      default: ''
+	    },
+	    size: {
+	      type: String,
+	      required: false,
+	      default: 'extra_small'
+	    }
+	  },
+	  data() {
+	    return {
+	      popup: null,
+	      uiButton: Object.freeze(null),
+	      timerSecondsRemaining: 0,
+	      currentState: this.state,
+	      hintText: main_core.Type.isStringFilled(this.tooltip) ? main_core.Text.encode(this.tooltip) : ''
+	    };
+	  },
+	  computed: {
+	    itemTypeToButtonColorDict() {
+	      return {
+	        [ButtonType.PRIMARY]: ui_buttons.Button.Color.PRIMARY,
+	        [ButtonType.SECONDARY]: ui_buttons.Button.Color.LIGHT_BORDER,
+	        [ButtonType.LIGHT]: ui_buttons.Button.Color.LIGHT,
+	        [ButtonType.ICON]: ui_buttons.Button.Color.LINK,
+	        [ButtonType.AI]: ui_buttons.Button.Color.AI
+	      };
+	    },
+	    buttonContainerRef() {
+	      return this.$refs.buttonContainer;
+	    }
+	  },
+	  methods: {
+	    getButtonOptions() {
+	      const upperCaseIconName = main_core.Type.isString(this.iconName) ? this.iconName.toUpperCase() : '';
+	      const upperCaseButtonSize = main_core.Type.isString(this.size) ? this.size.toUpperCase() : 'extra_small';
+	      const btnColor = this.itemTypeToButtonColorDict[this.type] || ui_buttons.Button.Color.LIGHT_BORDER;
+	      const titleText = this.type === ButtonType.ICON ? '' : this.title;
+	      return {
+	        id: this.id,
+	        round: true,
+	        dependOnTheme: false,
+	        size: ui_buttons.Button.Size[upperCaseButtonSize],
+	        text: titleText,
+	        color: btnColor,
+	        state: this.itemStateToButtonStateDict[this.currentState],
+	        icon: ui_buttons.Button.Icon[upperCaseIconName],
+	        props: main_core.Type.isPlainObject(this.props) ? this.props : {}
+	      };
+	    },
+	    getUiButton() {
+	      return this.uiButton;
+	    },
+	    disableWithTimer(sec) {
+	      this.setButtonState(ButtonState.DISABLED);
+	      const btn = this.getUiButton();
+	      let remainingSeconds = sec;
+	      btn.setText(this.formatSeconds(remainingSeconds));
+	      const timer = setInterval(() => {
+	        if (remainingSeconds < 1) {
+	          clearInterval(timer);
+	          btn.setText(this.title);
+	          this.setButtonState(ButtonState.DEFAULT);
+	          return;
+	        }
+	        remainingSeconds--;
+	        btn.setText(this.formatSeconds(remainingSeconds));
+	      }, 1000);
+	    },
+	    formatSeconds(sec) {
+	      const minutes = Math.floor(sec / 60);
+	      const seconds = sec % 60;
+	      const formatMinutes = this.formatNumber(minutes);
+	      const formatSeconds = this.formatNumber(seconds);
+	      return `${formatMinutes}:${formatSeconds}`;
+	    },
+	    formatNumber(num) {
+	      return num < 10 ? `0${num}` : num;
+	    },
+	    setButtonState(state) {
+	      var _this$getUiButton, _this$itemStateToButt;
+	      this.parentSetButtonState(state);
+	      (_this$getUiButton = this.getUiButton()) === null || _this$getUiButton === void 0 ? void 0 : _this$getUiButton.setState((_this$itemStateToButt = this.itemStateToButtonStateDict[this.currentState]) !== null && _this$itemStateToButt !== void 0 ? _this$itemStateToButt : null);
+	    },
+	    renderButton() {
+	      if (!this.buttonContainerRef) {
+	        return;
+	      }
+	      this.buttonContainerRef.innerHTML = '';
+	      const button = new ui_buttons.Button(this.getButtonOptions());
+	      button.renderTo(this.buttonContainerRef);
+	      this.uiButton = button;
+	    },
+	    setTooltip(tooltip) {
+	      this.hintText = tooltip;
+	    },
+	    showTooltip() {
+	      if (this.hintText === '') {
+	        return;
+	      }
+	      BX.UI.Hint.show(this.$el, this.hintText, true);
+	    },
+	    hideTooltip() {
+	      if (this.hintText === '') {
+	        return;
+	      }
+	      BX.UI.Hint.hide(this.$el);
+	    },
+	    isInViewport() {
+	      const rect = this.$el.getBoundingClientRect();
+	      return rect.top >= 0 && rect.left >= 0 && rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) && rect.right <= (window.innerWidth || document.documentElement.clientWidth);
+	    },
+	    isPropEqual(propName, value) {
+	      return this.getButtonOptions().props[propName] === value;
+	    }
+	  },
+	  watch: {
+	    state(newValue) {
+	      this.setButtonState(newValue);
+	    },
+	    tooltip(newValue) {
+	      this.hintText = main_core.Type.isStringFilled(newValue) ? main_core.Text.encode(newValue) : '';
+	    }
+	  },
+	  mounted() {
+	    this.renderButton();
+	  },
+	  updated() {
+	    this.renderButton();
+	  },
+	  template: `
+		<div
+			:class="$attrs.class"
+			ref="buttonContainer"
+			@click="executeAction"
+			@mouseover="showTooltip"
+			@mouseleave="hideTooltip"
+		>
+		</div>
+	`
+	});
+
+	const AdditionalButtonIcon = Object.freeze({
+	  NOTE: 'note',
+	  SCRIPT: 'script',
+	  PRINT: 'print',
+	  DOTS: 'dots'
+	});
+	const AdditionalButtonColor = Object.freeze({
+	  DEFAULT: 'default',
+	  PRIMARY: 'primary'
+	});
+	const AdditionalButton = ui_vue3.BitrixVue.cloneComponent(BaseButton, {
+	  props: {
+	    iconName: {
+	      type: String,
+	      required: false,
+	      default: '',
+	      validator(value) {
+	        return Object.values(AdditionalButtonIcon).indexOf(value) > -1;
+	      }
+	    },
+	    color: {
+	      type: String,
+	      required: false,
+	      default: AdditionalButtonColor.DEFAULT,
+	      validator(value) {
+	        return Object.values(AdditionalButtonColor).indexOf(value) > -1;
+	      }
+	    }
+	  },
+	  computed: {
+	    className() {
+	      return ['crm-timeline__card_add-button', {
+	        [`--icon-${this.iconName}`]: this.iconName,
+	        [`--color-${this.color}`]: this.color,
+	        [`--state-${this.currentState}`]: this.currentState
+	      }];
+	    },
+	    ButtonState() {
+	      return ButtonState;
+	    },
+	    loaderHtml() {
+	      const loader = new main_loader.Loader({
+	        mode: 'inline',
+	        size: 20
+	      });
+	      loader.show();
+	      return loader.layout.outerHTML;
+	    }
+	  },
+	  template: `
+		<transition name="crm-timeline__card_add-button-fade" mode="out-in">
+			<div
+				v-if="currentState === ButtonState.LOADING"
+				v-html="loaderHtml"
+				class="crm-timeline__card_add-button"
+			></div>
+			<div
+				v-else
+				:title="title"
+				@click="executeAction"
+				:class="className">
+			</div>
+		</transition>
+	`
+	});
+
+	const Buttons = {
+	  components: {
+	    Button
+	  },
+	  props: {
+	    items: {
+	      type: Array,
+	      required: false,
+	      default: () => []
+	    }
+	  },
+	  methods: {
+	    getButtonById(buttonId) {
+	      const buttons = this.$refs.buttons;
+	      return this.items.reduce((found, button, index) => {
+	        if (found) {
+	          return found;
+	        }
+	        if (button.id === buttonId) {
+	          return buttons[index];
+	        }
+	        return null;
+	      }, null);
+	    }
+	  },
+	  template: `
+			<div class="crm-timeline__card-action_buttons">
+				<Button class="crm-timeline__card-action-btn" v-for="item in items" v-bind="item" ref="buttons" />
+			</div>
+		`
+	};
+
+	const MenuId = 'timeline-more-button-menu';
+	const Menu$1 = {
+	  components: {
+	    AdditionalButton
+	  },
+	  props: {
+	    buttons: Array,
+	    // buttons that didn't fit into footer
+	    items: Object // real menu items
+	  },
+
+	  inject: ['isReadOnly'],
+	  computed: {
+	    isMenuFilled() {
+	      const menuItems = this.menuItems;
+	      return menuItems.length > 0;
+	    },
+	    itemsArray() {
+	      if (!this.items) {
+	        return [];
+	      }
+	      return Object.values(this.items).filter(item => item.state !== 'hidden' && item.scope !== 'mobile' && (!this.isReadOnly || !item.hideIfReadonly)).sort((a, b) => a.sort - b.sort);
+	    },
+	    menuItems() {
+	      let result = this.buttons;
+	      if (this.buttons.length && this.itemsArray.length) {
+	        result.push({
+	          delimiter: true
+	        });
+	      }
+	      result = [...result, ...this.itemsArray];
+	      return result;
+	    },
+	    buttonProps() {
+	      return {
+	        color: AdditionalButtonColor.DEFAULT,
+	        icon: AdditionalButtonIcon.DOTS
+	      };
+	    }
+	  },
+	  beforeUnmount() {
+	    const menu = main_popup.MenuManager.getMenuById(MenuId);
+	    if (menu) {
+	      menu.destroy();
+	    }
+	  },
+	  methods: {
+	    showMenu() {
+	      Menu.showMenu(this, this.menuItems, {
+	        id: MenuId,
+	        className: 'crm-timeline__card_more-menu',
+	        width: 230,
+	        angle: false,
+	        cacheable: false,
+	        bindElement: this.$el
+	      });
+	    }
+	  },
+	  // language=Vue
+	  template: `
+		<div v-if="isMenuFilled" class="crm-timeline__card-action_menu-item" @click="showMenu">
+			<AdditionalButton iconName="dots" color="default"></AdditionalButton>
+		</div>
+	`
+	};
+
+	const Footer = {
+	  components: {
+	    Buttons,
+	    Menu: Menu$1,
+	    Button,
+	    AdditionalButton
+	  },
+	  props: {
+	    buttons: Object,
+	    menu: Object,
+	    additionalButtons: {
+	      type: Object,
+	      required: false,
+	      default: () => ({})
+	    },
+	    maxBaseButtonsCount: {
+	      type: Number,
+	      required: false,
+	      default: 3
+	    }
+	  },
+	  inject: ['isReadOnly'],
+	  computed: {
+	    containerClassname() {
+	      return ['crm-timeline__card-action', {
+	        '--no-margin-top': this.baseButtons.length < 1
+	      }];
+	    },
+	    baseButtons() {
+	      return this.visibleAndSortedButtons.slice(0, this.maxBaseButtonsCount);
+	    },
+	    moreButtons() {
+	      return this.visibleAndSortedButtons.slice(this.maxBaseButtonsCount);
+	    },
+	    visibleAndSortedButtons() {
+	      return this.visibleButtons.sort(this.buttonsSorter);
+	    },
+	    visibleAndSortedAdditionalButtons() {
+	      return this.visibleAdditionalButtons.sort(this.buttonsSorter);
+	    },
+	    visibleButtons() {
+	      if (!main_core.Type.isPlainObject(this.buttons)) {
+	        return [];
+	      }
+	      return this.buttons ? Object.keys(this.buttons).map(id => ({
+	        id,
+	        ...this.buttons[id]
+	      })).filter(this.visibleButtonsFilter) : [];
+	    },
+	    visibleAdditionalButtons() {
+	      return this.additionalButtonsArray ? Object.values(this.additionalButtonsArray).filter(this.visibleButtonsFilter) : [];
+	    },
+	    additionalButtonsArray() {
+	      return Object.entries(this.additionalButtons).map(([id, button]) => {
+	        return {
+	          id,
+	          type: ButtonType.ICON,
+	          ...button
+	        };
+	      });
+	    },
+	    hasMenu() {
+	      return this.moreButtons.length || main_core.Type.isPlainObject(this.menu) && Object.keys(this.menu).length;
+	    }
+	  },
+	  methods: {
+	    visibleButtonsFilter(buttonItem) {
+	      return buttonItem.state !== ButtonState.HIDDEN && buttonItem.scope !== ButtonScope.MOBILE && (!this.isReadOnly || !buttonItem.hideIfReadonly);
+	    },
+	    buttonsSorter(buttonA, buttonB) {
+	      return (buttonA === null || buttonA === void 0 ? void 0 : buttonA.sort) - (buttonB === null || buttonB === void 0 ? void 0 : buttonB.sort);
+	    },
+	    getButtonById(buttonId) {
+	      if (this.$refs.buttons) {
+	        const foundButton = this.$refs.buttons.getButtonById(buttonId);
+	        if (foundButton) {
+	          return foundButton;
+	        }
+	      }
+	      if (this.$refs.additionalButtons) {
+	        return this.visibleAndSortedAdditionalButtons.reduce((found, button, index) => {
+	          if (found) {
+	            return found;
+	          }
+	          if (button.id === buttonId) {
+	            return buttons[index];
+	          }
+	          return null;
+	        }, null);
+	      }
+	      return null;
+	    },
+	    getMenu() {
+	      if (this.$refs.menu) {
+	        return this.$refs.menu;
+	      }
+	      return null;
+	    }
+	  },
+	  template: `
+		<div :class="containerClassname">
+			<div class="crm-timeline__card-action_menu">
+				<div
+					v-for="button in visibleAndSortedAdditionalButtons"
+					:key="button.id"
+					class="crm-timeline__card-action_menu-item"
+				>
+					<additional-button
+						v-bind="button"
+					>
+					</additional-button>
+				</div>
+				<Menu v-if="hasMenu" :buttons="moreButtons" v-bind="menu" ref="menu"/>
+			</div>
+			<Buttons ref="buttons" :items="baseButtons" />
+		</div>
+	`
+	};
+
 	const ChangeStreamButton = {
 	  props: {
 	    disableIfReadonly: Boolean,
@@ -687,7 +1310,9 @@ this.BX.Crm = this.BX.Crm || {};
 	      }
 	      this.isComplete = true;
 	      const action = new Action(this.action);
-	      action.execute(this);
+	      action.execute(this).then(() => {}).catch(() => {
+	        this.isComplete = false;
+	      });
 	    },
 	    onClick() {
 	      if (this.action) {
@@ -733,191 +1358,95 @@ this.BX.Crm = this.BX.Crm || {};
 	`
 	};
 
-	const Title = {
+	const ColorSelector = {
+	  directives: {
+	    hint: ui_vue3_directives_hint.hint
+	  },
 	  props: {
-	    title: String,
-	    action: Object
-	  },
-	  inject: ['isLogMessage'],
-	  computed: {
-	    className() {
-	      return ['crm-timeline__card-title', {
-	        '--light': this.isLogMessage,
-	        '--action': !!this.action
-	      }];
-	    },
-	    href() {
-	      if (!this.action) {
-	        return null;
-	      }
-	      const action = new Action(this.action);
-	      if (action.isRedirect()) {
-	        return action.getValue();
-	      }
-	      return null;
-	    }
-	  },
-	  methods: {
-	    executeAction() {
-	      if (!this.action) {
-	        return;
-	      }
-	      const action = new Action(this.action);
-	      action.execute(this);
-	    }
-	  },
-	  template: `
-		<a
-			v-if="href"
-			:href="href"
-			:class="className"
-			tabindex="0"
-			:title="title"
-		>
-			{{title}}
-		</a>
-		<span
-			v-else
-			@click="executeAction"
-			:class="className"
-			tabindex="0"
-			:title="title"
-		>
-			{{title}}
-		</span>`
-	};
-
-	let TagType = function TagType() {
-	  babelHelpers.classCallCheck(this, TagType);
-	};
-	babelHelpers.defineProperty(TagType, "PRIMARY", 'primary');
-	babelHelpers.defineProperty(TagType, "SECONDARY", 'secondary');
-	babelHelpers.defineProperty(TagType, "SUCCESS", 'success');
-	babelHelpers.defineProperty(TagType, "WARNING", 'warning');
-	babelHelpers.defineProperty(TagType, "FAILURE", 'failure');
-	babelHelpers.defineProperty(TagType, "LAVENDER", 'lavender');
-
-	const Tag = {
-	  props: {
-	    title: {
-	      type: String,
-	      required: false,
-	      default: ''
-	    },
-	    hint: {
-	      type: String,
-	      required: false,
-	      default: ''
-	    },
-	    action: {
+	    valuesList: {
 	      type: Object,
-	      required: false,
-	      default: null
+	      required: true
 	    },
-	    type: {
+	    selectedValueId: {
 	      type: String,
+	      default: 'default'
+	    },
+	    readOnlyMode: {
+	      type: Boolean,
 	      required: false,
-	      default: TagType.SECONDARY
-	    },
-	    state: String
-	  },
-	  computed: {
-	    className() {
-	      return {
-	        'crm-timeline__card-status': true,
-	        '--clickable': !!this.action,
-	        '--hint': !!this.hint
-	      };
-	    },
-	    tagTypeToLabelColorDict() {
-	      return {
-	        [TagType.PRIMARY]: ui_label.Label.Color.LIGHT_BLUE,
-	        [TagType.SECONDARY]: ui_label.Label.Color.LIGHT,
-	        [TagType.LAVENDER]: ui_label.Label.Color.LAVENDER,
-	        [TagType.SUCCESS]: ui_label.Label.Color.LIGHT_GREEN,
-	        [TagType.WARNING]: ui_label.Label.Color.LIGHT_YELLOW,
-	        [TagType.FAILURE]: ui_label.Label.Color.LIGHT_RED
-	      };
-	    },
-	    tagContainerRef() {
-	      return this.$refs.tag;
+	      default: false
 	    }
 	  },
+	  data() {
+	    return {
+	      currentValueId: this.selectedValueId
+	    };
+	  },
 	  methods: {
-	    getLabelColorFromTagType(tagType) {
-	      const lowerCaseTagType = tagType ? tagType.toLowerCase() : '';
-	      const labelColor = this.tagTypeToLabelColorDict[lowerCaseTagType];
-	      return labelColor || ui_label.Label.Color.LIGHT;
+	    getValue() {
+	      return this.currentValueId;
 	    },
-	    // eslint-disable-next-line consistent-return
-	    renderTag(tagOptions) {
-	      if (!tagOptions || !this.tagContainerRef) {
-	        return null;
+	    setValue(value) {
+	      this.currentValueId = value;
+	      if (this.itemSelector) {
+	        this.itemSelector.setValue(value);
 	      }
-	      const {
-	        title,
-	        type
-	      } = tagOptions;
-	      const uppercaseTitle = title && main_core.Type.isString(title) ? title.toUpperCase() : '';
-	      const label = new ui_label.Label({
-	        text: uppercaseTitle,
-	        color: this.getLabelColorFromTagType(type),
-	        fill: true
+	    },
+	    onItemSelectorValueChange({
+	      data
+	    }) {
+	      const valueId = data.value;
+	      if (this.currentValueId !== valueId) {
+	        this.currentValueId = valueId;
+	        this.emitEvent('ColorSelector:Change', {
+	          colorId: valueId
+	        });
+	      }
+	    },
+	    emitEvent(eventName, actionParams) {
+	      const action = new Action({
+	        type: 'jsEvent',
+	        value: eventName,
+	        actionParams
 	      });
-	      main_core.Dom.clean(this.tagContainerRef);
-	      main_core.Dom.append(label.render(), this.tagContainerRef);
-	    },
-	    executeAction() {
-	      if (!this.action) {
-	        return;
-	      }
-	      const action = new Action(this.action);
 	      action.execute(this);
 	    }
 	  },
 	  mounted() {
-	    this.renderTag({
-	      title: this.title,
-	      type: this.type
+	    void this.$nextTick(() => {
+	      this.itemSelector = new crm_field_colorSelector.ColorSelector({
+	        target: this.$refs.itemSelectorRef,
+	        colorList: this.valuesList,
+	        selectedColorId: this.currentValueId,
+	        readOnlyMode: this.readOnlyMode
+	      });
+	      if (!this.readOnlyMode) {
+	        main_core_events.EventEmitter.subscribe(this.itemSelector, crm_field_colorSelector.ColorSelectorEvents.EVENT_COLORSELECTOR_VALUE_CHANGE, this.onItemSelectorValueChange);
+	      }
 	    });
 	  },
-	  updated() {
-	    this.renderTag({
-	      title: this.title,
-	      type: this.type
-	    });
-	  },
-	  template: `
-		<div ref="tag" :title="hint" :class="className" @click="executeAction"></div>
-	`
-	};
-
-	const User = {
-	  props: {
-	    title: String,
-	    detailUrl: String,
-	    imageUrl: String
-	  },
-	  inject: ['isLogMessage'],
 	  computed: {
-	    styles() {
-	      if (!this.imageUrl) {
-	        return {};
+	    hint() {
+	      if (this.readOnlyMode) {
+	        return null;
 	      }
 	      return {
-	        backgroundImage: "url('" + encodeURI(main_core.Text.encode(this.imageUrl)) + "')",
-	        backgroundSize: '21px'
+	        text: this.$Bitrix.Loc.getMessage('CRM_ACTIVITY_TODO_COLOR_SELECTOR_HINT'),
+	        popupOptions: {
+	          angle: {
+	            offset: 30,
+	            position: 'top'
+	          },
+	          offsetTop: 2
+	        }
 	      };
-	    },
-	    className() {
-	      return ['ui-icon', 'ui-icon-common-user', 'crm-timeline__user-icon', {
-	        '--muted': this.isLogMessage
-	      }];
 	    }
 	  },
-	  // language=Vue
-	  template: `<a :class="className" :href="detailUrl"
-				  target="_blank" :title="title"><i :style="styles"></i></a>`
+	  template: `
+		<div class="crm-activity__todo-editor-v2_color-selector">
+			<div ref="itemSelectorRef" v-hint="hint"></div>
+		</div>
+	`
 	};
 
 	const FormatDate = {
@@ -1157,8 +1686,216 @@ this.BX.Crm = this.BX.Crm || {};
 	`
 	};
 
+	let TagType = function TagType() {
+	  babelHelpers.classCallCheck(this, TagType);
+	};
+	babelHelpers.defineProperty(TagType, "PRIMARY", 'primary');
+	babelHelpers.defineProperty(TagType, "SECONDARY", 'secondary');
+	babelHelpers.defineProperty(TagType, "SUCCESS", 'success');
+	babelHelpers.defineProperty(TagType, "WARNING", 'warning');
+	babelHelpers.defineProperty(TagType, "FAILURE", 'failure');
+	babelHelpers.defineProperty(TagType, "LAVENDER", 'lavender');
+
+	const Tag = {
+	  props: {
+	    title: {
+	      type: String,
+	      required: false,
+	      default: ''
+	    },
+	    hint: {
+	      type: String,
+	      required: false,
+	      default: ''
+	    },
+	    action: {
+	      type: Object,
+	      required: false,
+	      default: null
+	    },
+	    type: {
+	      type: String,
+	      required: false,
+	      default: TagType.SECONDARY
+	    },
+	    state: String
+	  },
+	  computed: {
+	    className() {
+	      return {
+	        'crm-timeline__card-status': true,
+	        '--clickable': Boolean(this.action),
+	        '--hint': Boolean(this.hint)
+	      };
+	    },
+	    tagTypeToLabelColorDict() {
+	      return {
+	        [TagType.PRIMARY]: ui_label.Label.Color.LIGHT_BLUE,
+	        [TagType.SECONDARY]: ui_label.Label.Color.LIGHT,
+	        [TagType.LAVENDER]: ui_label.Label.Color.LAVENDER,
+	        [TagType.SUCCESS]: ui_label.Label.Color.LIGHT_GREEN,
+	        [TagType.WARNING]: ui_label.Label.Color.LIGHT_YELLOW,
+	        [TagType.FAILURE]: ui_label.Label.Color.LIGHT_RED
+	      };
+	    },
+	    tagContainerRef() {
+	      return this.$refs.tag;
+	    }
+	  },
+	  methods: {
+	    getLabelColorFromTagType(tagType) {
+	      const lowerCaseTagType = tagType ? tagType.toLowerCase() : '';
+	      const labelColor = this.tagTypeToLabelColorDict[lowerCaseTagType];
+	      return labelColor || ui_label.Label.Color.LIGHT;
+	    },
+	    // eslint-disable-next-line consistent-return
+	    renderTag(tagOptions) {
+	      if (!tagOptions || !this.tagContainerRef) {
+	        return null;
+	      }
+	      const {
+	        title,
+	        type
+	      } = tagOptions;
+	      const uppercaseTitle = title && main_core.Type.isString(title) ? title.toUpperCase() : '';
+	      const label = new ui_label.Label({
+	        text: uppercaseTitle,
+	        color: this.getLabelColorFromTagType(type),
+	        fill: true
+	      });
+	      main_core.Dom.clean(this.tagContainerRef);
+	      main_core.Dom.append(label.render(), this.tagContainerRef);
+	    },
+	    executeAction() {
+	      if (!this.action) {
+	        return;
+	      }
+	      const action = new Action(this.action);
+	      action.execute(this);
+	    },
+	    showTooltip() {
+	      if (this.hint === '') {
+	        return;
+	      }
+	      main_core.Runtime.debounce(() => {
+	        BX.UI.Hint.show(this.$el, this.hint, true);
+	      }, 50, this)();
+	    },
+	    hideTooltip() {
+	      if (this.hint === '') {
+	        return;
+	      }
+	      BX.UI.Hint.hide(this.$el);
+	    }
+	  },
+	  mounted() {
+	    this.renderTag({
+	      title: this.title,
+	      type: this.type
+	    });
+	  },
+	  updated() {
+	    this.renderTag({
+	      title: this.title,
+	      type: this.type
+	    });
+	  },
+	  template: `
+		<div
+			ref="tag"
+			:class="className"
+			@mouseover="showTooltip"
+			@mouseleave="hideTooltip"
+			@click="executeAction"
+		></div>
+	`
+	};
+
+	const Title = {
+	  props: {
+	    title: String,
+	    action: Object
+	  },
+	  inject: ['isLogMessage'],
+	  computed: {
+	    className() {
+	      return ['crm-timeline__card-title', {
+	        '--light': this.isLogMessage,
+	        '--action': !!this.action
+	      }];
+	    },
+	    href() {
+	      if (!this.action) {
+	        return null;
+	      }
+	      const action = new Action(this.action);
+	      if (action.isRedirect()) {
+	        return action.getValue();
+	      }
+	      return null;
+	    }
+	  },
+	  methods: {
+	    executeAction() {
+	      if (!this.action) {
+	        return;
+	      }
+	      const action = new Action(this.action);
+	      action.execute(this);
+	    }
+	  },
+	  template: `
+		<a
+			v-if="href"
+			:href="href"
+			:class="className"
+			tabindex="0"
+			:title="title"
+		>
+			{{title}}
+		</a>
+		<span
+			v-else
+			@click="executeAction"
+			:class="className"
+			tabindex="0"
+			:title="title"
+		>
+			{{title}}
+		</span>`
+	};
+
+	const User = {
+	  props: {
+	    title: String,
+	    detailUrl: String,
+	    imageUrl: String
+	  },
+	  inject: ['isLogMessage'],
+	  computed: {
+	    styles() {
+	      if (!this.imageUrl) {
+	        return {};
+	      }
+	      return {
+	        backgroundImage: "url('" + encodeURI(main_core.Text.encode(this.imageUrl)) + "')",
+	        backgroundSize: '21px'
+	      };
+	    },
+	    className() {
+	      return ['ui-icon', 'ui-icon-common-user', 'crm-timeline__user-icon', {
+	        '--muted': this.isLogMessage
+	      }];
+	    }
+	  },
+	  // language=Vue
+	  template: `<a :class="className" :href="detailUrl"
+				  target="_blank" :title="title"><i :style="styles"></i></a>`
+	};
+
 	const Header = {
 	  components: {
+	    ColorSelector,
 	    ChangeStreamButton,
 	    Title,
 	    Tag,
@@ -1175,7 +1912,12 @@ this.BX.Crm = this.BX.Crm || {};
 	    changeStreamButton: Object | null,
 	    tags: Object,
 	    user: Object,
-	    infoHelper: Object
+	    infoHelper: Object,
+	    colorSettings: {
+	      type: Object,
+	      required: false,
+	      default: null
+	    }
 	  },
 	  inject: ['isReadOnly', 'isLogMessage'],
 	  computed: {
@@ -1183,7 +1925,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      if (!main_core.Type.isPlainObject(this.tags)) {
 	        return [];
 	      }
-	      return this.tags ? Object.values(this.tags).filter(this.isVisibleTagFilter) : [];
+	      return this.tags ? Object.values(this.tags).filter(element => this.isVisibleTagFilter(element)) : [];
 	    },
 	    visibleAndAscSortedTags() {
 	      const tagsCopy = main_core.Runtime.clone(this.visibleTags);
@@ -1209,11 +1951,22 @@ this.BX.Crm = this.BX.Crm || {};
 	      return this.$refs.changeStreamButton;
 	    }
 	  },
+	  created() {
+	    this.$watch('colorSettings', newColorSettings => {
+	      this.$refs.colorSelector.setValue(newColorSettings.selectedValueId);
+	    }, {
+	      deep: true
+	    });
+	  },
 	  template: `
 		<div :class="className">
 			<div class="crm-timeline__card-top_info">
 				<div class="crm-timeline__card-top_info_left">
-					<ChangeStreamButton v-if="changeStreamButton" v-bind="changeStreamButton" ref="changeStreamButton"></ChangeStreamButton>
+					<ChangeStreamButton 
+						v-if="changeStreamButton" 
+						v-bind="changeStreamButton" 
+						ref="changeStreamButton"
+					/>
 					<Title :title="title" :action="titleAction"></Title>
 					<Hint v-if="infoHelper" v-bind="infoHelper"></Hint>
 				</div>
@@ -1232,786 +1985,112 @@ this.BX.Crm = this.BX.Crm || {};
 					/>
 				</div>
 			</div>
-			<div class="crm-timeline__card-top_user">
+			<div class="crm-timeline__card-top_components-container">
+				<ColorSelector
+					v-if="colorSettings"
+					ref="colorSelector"
+					:valuesList="colorSettings.valuesList"
+					:selectedValueId="colorSettings.selectedValueId"
+					:readOnlyMode="colorSettings.readOnlyMode"
+				/>
 				<User v-bind="user"></User>
 			</div>
 		</div>
 	`
 	};
 
-	const Logo = {
+	let IconBackgroundColor = function IconBackgroundColor() {
+	  babelHelpers.classCallCheck(this, IconBackgroundColor);
+	};
+	babelHelpers.defineProperty(IconBackgroundColor, "PRIMARY", 'primary');
+	babelHelpers.defineProperty(IconBackgroundColor, "PRIMARY_ALT", 'primary_alt');
+	babelHelpers.defineProperty(IconBackgroundColor, "FAILURE", 'failure');
+
+	const Icon = {
 	  props: {
-	    type: String,
-	    addIcon: String,
-	    addIconType: String,
-	    icon: String,
-	    iconType: String,
-	    backgroundUrl: String,
-	    backgroundSize: Number,
-	    inCircle: {
-	      type: Boolean,
+	    code: {
+	      type: String,
 	      required: false,
-	      default: false
+	      default: 'none'
 	    },
-	    action: Object
+	    counterType: {
+	      type: String,
+	      required: false,
+	      default: ''
+	    },
+	    backgroundColorToken: {
+	      type: String,
+	      required: false,
+	      default: IconBackgroundColor.PRIMARY
+	    },
+	    backgroundUri: String,
+	    backgroundColor: {
+	      type: String,
+	      required: false,
+	      default: null
+	    }
 	  },
-	  data() {
-	    return {
-	      currentIcon: this.icon
-	    };
-	  },
+	  inject: ['isLogMessage'],
 	  computed: {
 	    className() {
-	      return ['crm-timeline__card-logo', `--${this.type}`, {
-	        '--clickable': this.action
-	      }];
-	    },
-	    iconClassname() {
-	      return ['crm-timeline__card-logo_icon', `--${this.currentIcon}`, {
-	        '--in-circle': this.inCircle,
-	        [`--type-${this.iconType}`]: !!this.iconType && !this.backgroundUrl,
-	        '--custom-bg': !!this.backgroundUrl
-	      }];
-	    },
-	    addIconClassname() {
-	      return ['crm-timeline__card-logo_add-icon', `--type-${this.addIconType}`, `--icon-${this.addIcon}`];
-	    },
-	    iconInteriorStyle() {
-	      const result = {};
-	      if (this.backgroundUrl) {
-	        result.backgroundImage = 'url(' + encodeURI(main_core.Text.encode(this.backgroundUrl)) + ')';
-	      }
-	      if (this.backgroundSize) {
-	        result.backgroundSize = parseInt(this.backgroundSize) + 'px';
-	      }
-	      return result;
-	    }
-	  },
-	  watch: {
-	    icon(newIcon) {
-	      this.currentIcon = newIcon;
-	    }
-	  },
-	  methods: {
-	    executeAction() {
-	      if (!this.action) {
-	        return;
-	      }
-	      const action = new Action(this.action);
-	      action.execute(this);
-	    },
-	    setIcon(icon) {
-	      this.currentIcon = icon;
-	    }
-	  },
-	  template: `
-		<div :class="className" @click="executeAction">
-			<div class="crm-timeline__card-logo_content">
-				<div :class="iconClassname">
-					<i :style="iconInteriorStyle"></i>
-				</div>
-				<div :class="addIconClassname" v-if="addIcon">
-					<i></i>
-				</div>
-			</div>
-		</div>
-	`
-	};
-
-	const CalendarIcon = {
-	  props: {
-	    timestamp: {
-	      type: Number,
-	      required: true,
-	      default: 0
-	    }
-	  },
-	  computed: {
-	    userTime() {
-	      return crm_timeline_tools.DatetimeConverter.createFromServerTimestamp(this.timestamp).toUserTime().getValue();
-	    },
-	    date() {
-	      return main_date.DateTimeFormat.format('d', this.userTime);
-	    },
-	    month() {
-	      return main_date.DateTimeFormat.format('F', this.userTime);
-	    },
-	    dayWeek() {
-	      return main_date.DateTimeFormat.format('D', this.userTime);
-	    },
-	    time() {
-	      return crm_timeline_tools.DatetimeConverter.createFromServerTimestamp(this.timestamp).toUserTime().toTimeString();
-	    }
-	  },
-	  template: `
-		<div class="crm-timeline__calendar-icon">
-			<header class="crm-timeline__calendar-icon_top">
-				<div class="crm-timeline__calendar-icon_bullets">
-					<div class="crm-timeline__calendar-icon_bullet"></div>
-					<div class="crm-timeline__calendar-icon_bullet"></div>
-				</div>
-			</header>
-			<main class="crm-timeline__calendar-icon_content">
-				<div class="crm-timeline__calendar-icon_day">{{ date }}</div>
-				<div class="crm-timeline__calendar-icon_month">{{ month }}</div>
-				<div class="crm-timeline__calendar-icon_date">
-					<span class="crm-timeline__calendar-icon_day-week">{{ dayWeek }}</span>
-					<span class="crm-timeline__calendar-icon_time">{{ time }}</span>
-				</div>
-			</main>
-		</div>
-	`
-	};
-
-	const LogoCalendar = ui_vue3.BitrixVue.cloneComponent(Logo, {
-	  components: {
-	    CalendarIcon
-	  },
-	  props: {
-	    timestamp: {
-	      type: Number,
-	      required: false,
-	      default: 0
-	    },
-	    addIcon: String,
-	    addIconType: String
-	  },
-	  computed: {
-	    addIconClassname() {
-	      return ['crm-timeline__card-logo_add-icon', `--type-${this.addIconType}`, `--icon-${this.addIcon}`];
-	    }
-	  },
-	  template: `
-		<div :class="className" @click="executeAction">
-			<div class="crm-timeline__card-logo_content">
-				<CalendarIcon :timestamp="timestamp" />
-				<div :class="addIconClassname" v-if="addIcon">
-					<i></i>
-				</div>
-			</div>
-		</div>
-	`
-	});
-
-	const Body = {
-	  components: {
-	    Logo,
-	    LogoCalendar
-	  },
-	  props: {
-	    logo: Object,
-	    blocks: Object
-	  },
-	  data() {
-	    return {
-	      blockRefs: {}
-	    };
-	  },
-	  mounted() {
-	    const blocks = this.$refs.blocks;
-	    if (!blocks || !this.visibleBlocks) {
-	      return;
-	    }
-	    this.visibleBlocks.forEach((block, index) => {
-	      if (main_core.Type.isDomNode(blocks[index].$el)) {
-	        blocks[index].$el.setAttribute('data-id', block.id);
-	      } else {
-	        throw new Error('Vue component "' + block.rendererName + '" was not found');
-	      }
-	    });
-	  },
-	  beforeUpdate() {
-	    this.blockRefs = {};
-	  },
-	  computed: {
-	    visibleBlocks() {
-	      if (!main_core.Type.isPlainObject(this.blocks)) {
-	        return [];
-	      }
-	      return Object.keys(this.blocks).map(id => ({
-	        id,
-	        ...this.blocks[id]
-	      })).filter(item => item.scope !== 'mobile').sort((a, b) => {
-	        let aSort = a.sort === undefined ? 0 : a.sort;
-	        let bSort = b.sort === undefined ? 0 : b.sort;
-	        if (aSort < bSort) {
-	          return -1;
-	        }
-	        if (aSort > bSort) {
-	          return 1;
-	        }
-	        return 0;
-	      });
-	    },
-	    contentContainerClassname() {
-	      return ['crm-timeline__card-container', {
-	        '--without-logo': !this.logo
-	      }];
-	    }
-	  },
-	  methods: {
-	    getContentBlockById(blockId) {
-	      var _this$blockRefs$block;
-	      return (_this$blockRefs$block = this.blockRefs[blockId]) !== null && _this$blockRefs$block !== void 0 ? _this$blockRefs$block : null;
-	    },
-	    getLogo() {
-	      return this.$refs.logo;
-	    },
-	    saveRef(ref, id) {
-	      this.blockRefs[id] = ref;
-	    }
-	  },
-	  template: `
-		<div class="crm-timeline__card-body">
-			<div v-if="logo" class="crm-timeline__card-logo_container">
-				<LogoCalendar v-if="logo.icon === 'calendar'" v-bind="logo"></LogoCalendar>
-				<Logo v-else v-bind="logo" ref="logo"></Logo>
-			</div>
-			<div :class="contentContainerClassname">
-				<div
-					v-for="block in visibleBlocks"
-					:key="block.id"
-					class="crm-timeline__card-container_block"
-				>
-					<component
-						:is="block.rendererName"
-						v-bind="block.properties"
-						:ref="(el) => this.saveRef(el, block.id)"
-					/>
-				</div>
-			</div>
-		</div>
-	`
-	};
-
-	let ButtonState = function ButtonState() {
-	  babelHelpers.classCallCheck(this, ButtonState);
-	};
-	babelHelpers.defineProperty(ButtonState, "DEFAULT", '');
-	babelHelpers.defineProperty(ButtonState, "LOADING", 'loading');
-	babelHelpers.defineProperty(ButtonState, "DISABLED", 'disabled');
-	babelHelpers.defineProperty(ButtonState, "HIDDEN", 'hidden');
-	babelHelpers.defineProperty(ButtonState, "AI_LOADING", 'ai-loading');
-
-	const BaseButton = {
-	  props: {
-	    id: {
-	      type: String,
-	      required: false,
-	      default: ''
-	    },
-	    title: {
-	      type: String,
-	      required: false,
-	      default: ''
-	    },
-	    tooltip: {
-	      type: String,
-	      required: false,
-	      default: ''
-	    },
-	    state: {
-	      type: String,
-	      required: false,
-	      default: ButtonState.DEFAULT
-	    },
-	    props: Object,
-	    action: Object
-	  },
-	  data() {
-	    return {
-	      currentState: this.state
-	    };
-	  },
-	  computed: {
-	    itemStateToButtonStateDict() {
 	      return {
-	        [ButtonState.LOADING]: ui_buttons.Button.State.WAITING,
-	        [ButtonState.DISABLED]: ui_buttons.Button.State.DISABLED,
-	        [ButtonState.AI_LOADING]: ui_buttons.Button.State.AI_WAITING
-	      };
-	    }
-	  },
-	  methods: {
-	    setDisabled(disabled) {
-	      if (disabled) {
-	        this.setButtonState(ButtonState.DISABLED);
-	      } else {
-	        this.setButtonState(ButtonState.DEFAULT);
-	      }
-	    },
-	    setLoading(loading) {
-	      if (loading) {
-	        this.setButtonState(ButtonState.LOADING);
-	      } else {
-	        this.setButtonState(ButtonState.DEFAULT);
-	      }
-	    },
-	    setButtonState(state) {
-	      if (this.currentState !== state) {
-	        this.currentState = state;
-	      }
-	    },
-	    onLayoutUpdated() {
-	      this.setButtonState(this.state);
-	    },
-	    executeAction() {
-	      if (this.action && this.currentState !== ButtonState.DISABLED && this.currentState !== ButtonState.LOADING && this.currentState !== ButtonState.AI_LOADING) {
-	        const action = new Action(this.action);
-	        action.execute(this);
-	      }
-	    }
-	  },
-	  created() {
-	    this.$Bitrix.eventEmitter.subscribe('layout:updated', this.onLayoutUpdated);
-	  },
-	  beforeDestroy() {
-	    this.$Bitrix.eventEmitter.unsubscribe('layout:updated', this.onLayoutUpdated);
-	  },
-	  template: `<button></button>`
-	};
-
-	const AdditionalButtonIcon = Object.freeze({
-	  NOTE: 'note',
-	  SCRIPT: 'script',
-	  PRINT: 'print',
-	  DOTS: 'dots'
-	});
-	const AdditionalButtonColor = Object.freeze({
-	  DEFAULT: 'default',
-	  PRIMARY: 'primary'
-	});
-	const AdditionalButton = ui_vue3.BitrixVue.cloneComponent(BaseButton, {
-	  props: {
-	    iconName: {
-	      type: String,
-	      required: false,
-	      default: '',
-	      validator(value) {
-	        return Object.values(AdditionalButtonIcon).indexOf(value) > -1;
-	      }
-	    },
-	    color: {
-	      type: String,
-	      required: false,
-	      default: AdditionalButtonColor.DEFAULT,
-	      validator(value) {
-	        return Object.values(AdditionalButtonColor).indexOf(value) > -1;
-	      }
-	    }
-	  },
-	  computed: {
-	    className() {
-	      return ['crm-timeline__card_add-button', {
-	        [`--icon-${this.iconName}`]: this.iconName,
-	        [`--color-${this.color}`]: this.color,
-	        [`--state-${this.currentState}`]: this.currentState
-	      }];
-	    },
-	    ButtonState() {
-	      return ButtonState;
-	    },
-	    loaderHtml() {
-	      const loader = new main_loader.Loader({
-	        mode: 'inline',
-	        size: 20
-	      });
-	      loader.show();
-	      return loader.layout.outerHTML;
-	    }
-	  },
-	  template: `
-		<transition name="crm-timeline__card_add-button-fade" mode="out-in">
-			<div
-				v-if="currentState === ButtonState.LOADING"
-				v-html="loaderHtml"
-				class="crm-timeline__card_add-button"
-			></div>
-			<div
-				v-else
-				:title="title"
-				@click="executeAction"
-				:class="className">
-			</div>
-		</transition>
-	`
-	});
-
-	const MenuId = 'timeline-more-button-menu';
-	const Menu$1 = {
-	  components: {
-	    AdditionalButton
-	  },
-	  props: {
-	    buttons: Array,
-	    // buttons that didn't fit into footer
-	    items: Object // real menu items
-	  },
-
-	  inject: ['isReadOnly'],
-	  computed: {
-	    isMenuFilled() {
-	      const menuItems = this.menuItems;
-	      return menuItems.length > 0;
-	    },
-	    itemsArray() {
-	      if (!this.items) {
-	        return [];
-	      }
-	      return Object.values(this.items).filter(item => item.state !== 'hidden' && item.scope !== 'mobile' && (!this.isReadOnly || !item.hideIfReadonly)).sort((a, b) => a.sort - b.sort);
-	    },
-	    menuItems() {
-	      let result = this.buttons;
-	      if (this.buttons.length && this.itemsArray.length) {
-	        result.push({
-	          delimiter: true
-	        });
-	      }
-	      result = [...result, ...this.itemsArray];
-	      return result;
-	    },
-	    buttonProps() {
-	      return {
-	        color: AdditionalButtonColor.DEFAULT,
-	        icon: AdditionalButtonIcon.DOTS
-	      };
-	    }
-	  },
-	  beforeUnmount() {
-	    const menu = main_popup.MenuManager.getMenuById(MenuId);
-	    if (menu) {
-	      menu.destroy();
-	    }
-	  },
-	  methods: {
-	    showMenu() {
-	      Menu.showMenu(this, this.menuItems, {
-	        id: MenuId,
-	        className: 'crm-timeline__card_more-menu',
-	        width: 230,
-	        angle: false,
-	        cacheable: false,
-	        bindElement: this.$el
-	      });
-	    }
-	  },
-	  // language=Vue
-	  template: `
-		<div v-if="isMenuFilled" class="crm-timeline__card-action_menu-item" @click="showMenu">
-			<AdditionalButton iconName="dots" color="default"></AdditionalButton>
-		</div>
-	`
-	};
-
-	let ButtonType = function ButtonType() {
-	  babelHelpers.classCallCheck(this, ButtonType);
-	};
-	babelHelpers.defineProperty(ButtonType, "ICON", 'icon');
-	babelHelpers.defineProperty(ButtonType, "PRIMARY", 'primary');
-	babelHelpers.defineProperty(ButtonType, "SECONDARY", 'secondary');
-	babelHelpers.defineProperty(ButtonType, "LIGHT", 'light');
-	babelHelpers.defineProperty(ButtonType, "AI", 'ai');
-
-	const Button = ui_vue3.BitrixVue.cloneComponent(BaseButton, {
-	  props: {
-	    type: {
-	      type: String,
-	      required: false,
-	      default: ButtonType.SECONDARY
-	    },
-	    iconName: {
-	      type: String,
-	      required: false,
-	      default: ''
-	    },
-	    size: {
-	      type: String,
-	      required: false,
-	      default: 'extra_small'
-	    }
-	  },
-	  data() {
-	    return {
-	      popup: null,
-	      uiButton: Object.freeze(null),
-	      timerSecondsRemaining: 0,
-	      currentState: this.state,
-	      hintText: main_core.Type.isStringFilled(this.tooltip) ? main_core.Text.encode(this.tooltip) : ''
-	    };
-	  },
-	  computed: {
-	    itemTypeToButtonColorDict() {
-	      return {
-	        [ButtonType.PRIMARY]: ui_buttons.Button.Color.PRIMARY,
-	        [ButtonType.SECONDARY]: ui_buttons.Button.Color.LIGHT_BORDER,
-	        [ButtonType.LIGHT]: ui_buttons.Button.Color.LIGHT,
-	        [ButtonType.ICON]: ui_buttons.Button.Color.LINK,
-	        [ButtonType.AI]: ui_buttons.Button.Color.AI
+	        'crm-timeline__card_icon': true,
+	        [`--bg-${this.backgroundColorToken}`]: Boolean(this.backgroundColorToken),
+	        [`--code-${this.code}`]: Boolean(this.code) && !this.backgroundUri,
+	        '--custom-bg': Boolean(this.backgroundUri),
+	        '--muted': this.isLogMessage
 	      };
 	    },
-	    buttonContainerRef() {
-	      return this.$refs.buttonContainer;
-	    }
-	  },
-	  methods: {
-	    getButtonOptions() {
-	      const upperCaseIconName = main_core.Type.isString(this.iconName) ? this.iconName.toUpperCase() : '';
-	      const upperCaseButtonSize = main_core.Type.isString(this.size) ? this.size.toUpperCase() : 'extra_small';
-	      const btnColor = this.itemTypeToButtonColorDict[this.type] || ui_buttons.Button.Color.LIGHT_BORDER;
-	      const titleText = this.type === ButtonType.ICON ? '' : this.title;
+	    counterNodeContainer() {
+	      return this.$refs.counter;
+	    },
+	    styles() {
+	      if (!this.backgroundUri) {
+	        return {};
+	      }
 	      return {
-	        id: this.id,
-	        round: true,
-	        dependOnTheme: false,
-	        size: ui_buttons.Button.Size[upperCaseButtonSize],
-	        text: titleText,
-	        color: btnColor,
-	        state: this.itemStateToButtonStateDict[this.currentState],
-	        icon: ui_buttons.Button.Icon[upperCaseIconName],
-	        props: main_core.Type.isPlainObject(this.props) ? this.props : {}
+	        backgroundImage: `url('${encodeURI(main_core.Text.encode(this.backgroundUri))}')`
 	      };
 	    },
-	    getUiButton() {
-	      return this.uiButton;
-	    },
-	    disableWithTimer(sec) {
-	      this.setButtonState(ButtonState.DISABLED);
-	      const btn = this.getUiButton();
-	      let remainingSeconds = sec;
-	      btn.setText(this.formatSeconds(remainingSeconds));
-	      const timer = setInterval(() => {
-	        if (remainingSeconds < 1) {
-	          clearInterval(timer);
-	          btn.setText(this.title);
-	          this.setButtonState(ButtonState.DEFAULT);
-	          return;
-	        }
-	        remainingSeconds--;
-	        btn.setText(this.formatSeconds(remainingSeconds));
-	      }, 1000);
-	    },
-	    formatSeconds(sec) {
-	      const minutes = Math.floor(sec / 60);
-	      const seconds = sec % 60;
-	      const formatMinutes = this.formatNumber(minutes);
-	      const formatSeconds = this.formatNumber(seconds);
-	      return `${formatMinutes}:${formatSeconds}`;
-	    },
-	    formatNumber(num) {
-	      return num < 10 ? `0${num}` : num;
-	    },
-	    setButtonState(state) {
-	      var _this$getUiButton, _this$itemStateToButt;
-	      this.parentSetButtonState(state);
-	      (_this$getUiButton = this.getUiButton()) === null || _this$getUiButton === void 0 ? void 0 : _this$getUiButton.setState((_this$itemStateToButt = this.itemStateToButtonStateDict[this.currentState]) !== null && _this$itemStateToButt !== void 0 ? _this$itemStateToButt : null);
-	    },
-	    renderButton() {
-	      if (!this.buttonContainerRef) {
-	        return;
-	      }
-	      this.buttonContainerRef.innerHTML = '';
-	      const button = new ui_buttons.Button(this.getButtonOptions());
-	      button.renderTo(this.buttonContainerRef);
-	      this.uiButton = button;
-	    },
-	    setTooltip(tooltip) {
-	      this.hintText = tooltip;
-	    },
-	    showTooltip() {
-	      if (this.hintText === '') {
-	        return;
-	      }
-	      BX.UI.Hint.show(this.$el, this.hintText, true);
-	    },
-	    hideTooltip() {
-	      if (this.hintText === '') {
-	        return;
-	      }
-	      BX.UI.Hint.hide(this.$el);
-	    },
-	    isInViewport() {
-	      const rect = this.$el.getBoundingClientRect();
-	      return rect.top >= 0 && rect.left >= 0 && rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) && rect.right <= (window.innerWidth || document.documentElement.clientWidth);
-	    }
-	  },
-	  watch: {
-	    state(newValue) {
-	      this.setButtonState(newValue);
-	    },
-	    tooltip(newValue) {
-	      this.hintText = main_core.Type.isStringFilled(newValue) ? main_core.Text.encode(newValue) : '';
-	    }
-	  },
-	  mounted() {
-	    this.renderButton();
-	  },
-	  updated() {
-	    this.renderButton();
-	  },
-	  template: `
-		<div
-			:class="$attrs.class"
-			ref="buttonContainer"
-			@click="executeAction"
-			@mouseover="showTooltip"
-			@mouseleave="hideTooltip"
-		>
-		</div>
-	`
-	});
-
-	const Buttons = {
-	  components: {
-	    Button
-	  },
-	  props: {
-	    items: {
-	      type: Array,
-	      required: false,
-	      default: () => []
-	    }
-	  },
-	  methods: {
-	    getButtonById(buttonId) {
-	      const buttons = this.$refs.buttons;
-	      return this.items.reduce((found, button, index) => {
-	        if (found) {
-	          return found;
-	        }
-	        if (button.id === buttonId) {
-	          return buttons[index];
-	        }
-	        return null;
-	      }, null);
-	    }
-	  },
-	  template: `
-			<div class="crm-timeline__card-action_buttons">
-				<Button class="crm-timeline__card-action-btn" v-for="item in items" v-bind="item" ref="buttons" />
-			</div>
-		`
-	};
-
-	let ButtonScope = function ButtonScope() {
-	  babelHelpers.classCallCheck(this, ButtonScope);
-	};
-	babelHelpers.defineProperty(ButtonScope, "MOBILE", 'mobile');
-
-	const Footer = {
-	  components: {
-	    Buttons,
-	    Menu: Menu$1,
-	    Button,
-	    AdditionalButton
-	  },
-	  props: {
-	    buttons: Object,
-	    menu: Object,
-	    additionalButtons: {
-	      type: Object,
-	      required: false,
-	      default: () => ({})
-	    },
-	    maxBaseButtonsCount: {
-	      type: Number,
-	      required: false,
-	      default: 3
-	    }
-	  },
-	  inject: ['isReadOnly'],
-	  computed: {
-	    containerClassname() {
-	      return ['crm-timeline__card-action', {
-	        '--no-margin-top': this.baseButtons.length < 1
-	      }];
-	    },
-	    baseButtons() {
-	      return this.visibleAndSortedButtons.slice(0, this.maxBaseButtonsCount);
-	    },
-	    moreButtons() {
-	      return this.visibleAndSortedButtons.slice(this.maxBaseButtonsCount);
-	    },
-	    visibleAndSortedButtons() {
-	      return this.visibleButtons.sort(this.buttonsSorter);
-	    },
-	    visibleAndSortedAdditionalButtons() {
-	      return this.visibleAdditionalButtons.sort(this.buttonsSorter);
-	    },
-	    visibleButtons() {
-	      if (!main_core.Type.isPlainObject(this.buttons)) {
-	        return [];
-	      }
-	      return this.buttons ? Object.keys(this.buttons).map(id => ({
-	        id,
-	        ...this.buttons[id]
-	      })).filter(this.visibleButtonsFilter) : [];
-	    },
-	    visibleAdditionalButtons() {
-	      return this.additionalButtonsArray ? Object.values(this.additionalButtonsArray).filter(this.visibleButtonsFilter) : [];
-	    },
-	    additionalButtonsArray() {
-	      return Object.entries(this.additionalButtons).map(([id, button]) => {
+	    iconStyle() {
+	      if (main_core.Type.isStringFilled(this.backgroundColor)) {
 	        return {
-	          id,
-	          type: ButtonType.ICON,
-	          ...button
+	          '--crm-timeline-card-icon-background': main_core.Text.encode(this.backgroundColor)
 	        };
-	      });
-	    },
-	    hasMenu() {
-	      return this.moreButtons.length || main_core.Type.isPlainObject(this.menu) && Object.keys(this.menu).length;
+	      }
+	      return {};
 	    }
 	  },
 	  methods: {
-	    visibleButtonsFilter(buttonItem) {
-	      return buttonItem.state !== ButtonState.HIDDEN && buttonItem.scope !== ButtonScope.MOBILE && (!this.isReadOnly || !buttonItem.hideIfReadonly);
-	    },
-	    buttonsSorter(buttonA, buttonB) {
-	      return (buttonA === null || buttonA === void 0 ? void 0 : buttonA.sort) - (buttonB === null || buttonB === void 0 ? void 0 : buttonB.sort);
-	    },
-	    getButtonById(buttonId) {
-	      if (this.$refs.buttons) {
-	        const foundButton = this.$refs.buttons.getButtonById(buttonId);
-	        if (foundButton) {
-	          return foundButton;
-	        }
+	    renderCounter() {
+	      if (!this.counterType) {
+	        return;
 	      }
-	      if (this.$refs.additionalButtons) {
-	        return this.visibleAndSortedAdditionalButtons.reduce((found, button, index) => {
-	          if (found) {
-	            return found;
-	          }
-	          if (button.id === buttonId) {
-	            return buttons[index];
-	          }
-	          return null;
-	        }, null);
-	      }
-	      return null;
-	    },
-	    getMenu() {
-	      if (this.$refs.menu) {
-	        return this.$refs.menu;
-	      }
-	      return null;
+	      main_core.Dom.clean(this.counterNodeContainer);
+	      const counter = new ui_cnt.Counter({
+	        value: 1,
+	        border: true,
+	        color: ui_cnt.Counter.Color[this.counterType.toUpperCase()]
+	      });
+	      counter.renderTo(this.counterNodeContainer);
+	    }
+	  },
+	  mounted() {
+	    this.renderCounter();
+	  },
+	  watch: {
+	    counterType(newCounterType)
+	    // update if counter state changed
+	    {
+	      void this.$nextTick(() => {
+	        this.renderCounter();
+	      });
 	    }
 	  },
 	  template: `
-		<div :class="containerClassname">
-			<Buttons ref="buttons" :items="baseButtons" />
-			<div class="crm-timeline__card-action_menu">
-				<div
-					v-for="button in visibleAndSortedAdditionalButtons"
-					:key="button.id"
-					class="crm-timeline__card-action_menu-item"
-				>
-					<additional-button
-						v-bind="button"
-					>
-					</additional-button>
-				</div>
-				<Menu v-if="hasMenu" :buttons="moreButtons" v-bind="menu" ref="menu"/>
-			</div>
+		<div :class="className" :style="iconStyle">
+			<i :style="styles"></i>
+			<div ref="counter" v-show="!!counterType" class="crm-timeline__card_icon_counter"></div>
 		</div>
 	`
 	};
@@ -2080,13 +2159,7 @@ this.BX.Crm = this.BX.Crm || {};
 	`
 	};
 
-	const StreamType = {
-	  history: 0,
-	  scheduled: 1,
-	  pinned: 2
-	};
-
-	const Item$1 = {
+	const Item = {
 	  components: {
 	    Icon,
 	    Header,
@@ -2103,6 +2176,11 @@ this.BX.Crm = this.BX.Crm || {};
 	    isReadOnly: Boolean,
 	    currentUser: Object | null,
 	    onAction: Function,
+	    initialColor: {
+	      type: Object,
+	      required: false,
+	      default: null
+	    },
 	    streamType: {
 	      type: Number,
 	      required: false,
@@ -2112,6 +2190,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  data() {
 	    return {
 	      layout: this.initialLayout,
+	      color: this.initialColor,
 	      isFaded: false,
 	      loader: Object.freeze(null)
 	    };
@@ -2119,7 +2198,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  provide() {
 	    var _this$initialLayout;
 	    return {
-	      isLogMessage: !!((_this$initialLayout = this.initialLayout) !== null && _this$initialLayout !== void 0 && _this$initialLayout.isLogMessage),
+	      isLogMessage: Boolean((_this$initialLayout = this.initialLayout) === null || _this$initialLayout === void 0 ? void 0 : _this$initialLayout.isLogMessage),
 	      isReadOnly: this.isReadOnly,
 	      currentUser: this.currentUser
 	    };
@@ -2127,7 +2206,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  created() {
 	    this.$Bitrix.eventEmitter.subscribe('crm:timeline:item:action', this.onActionEvent);
 	  },
-	  beforeDestroy() {
+	  beforeUnmount() {
 	    this.$Bitrix.eventEmitter.unsubscribe('crm:timeline:item:action', this.onActionEvent);
 	  },
 	  methods: {
@@ -2139,6 +2218,9 @@ this.BX.Crm = this.BX.Crm || {};
 	      this.layout = newLayout;
 	      this.isFaded = false;
 	      this.$Bitrix.eventEmitter.emit('layout:updated');
+	    },
+	    setColor(newColor) {
+	      this.color = newColor;
 	    },
 	    setFaded(faded) {
 	      this.isFaded = faded;
@@ -2212,8 +2294,16 @@ this.BX.Crm = this.BX.Crm || {};
 	        '--stream-type-history': this.streamType === StreamType.history,
 	        '--stream-type-scheduled': this.streamType === StreamType.scheduled,
 	        '--stream-type-pinned': this.streamType === StreamType.pinned,
-	        '--log-message': !!this.layout.isLogMessage
+	        '--log-message': this.isLogMessage
 	      };
+	    },
+	    timelineCardStyle() {
+	      if (main_core.Type.isPlainObject(this.color) && this.streamType === StreamType.scheduled) {
+	        return {
+	          '--crm-timeline__card-color-background': main_core.Text.encode(this.color.itemBackground)
+	        };
+	      }
+	      return {};
 	    }
 	  },
 	  template: `
@@ -2221,9 +2311,19 @@ this.BX.Crm = this.BX.Crm || {};
 			<div class="crm-timeline__card_icon_container">
 				<Icon v-bind="layout.icon"></Icon>
 			</div>
-			<div :data-id="id" ref="timelineCard" :class="timelineCardClassname">
+			<div 
+				:data-id="id" 
+				ref="timelineCard" 
+				:class="timelineCardClassname"
+				:style="timelineCardStyle"
+			>
 				<div class="crm-timeline__card_fade" v-if="isFaded"></div>
-				<Header v-if="layout.header" v-bind="layout.header" :use-short-time-format="useShortTimeFormat" ref="header"></Header>
+				<Header 
+					v-if="layout.header"
+					v-bind="layout.header"
+					:use-short-time-format="useShortTimeFormat"
+					ref="header"
+				/>
 				<Body v-if="layout.body" v-bind="layout.body" ref="body"></Body>
 				<Footer v-if="layout.footer" v-bind="layout.footer" ref="footer"></Footer>
 				<MarketPanel v-if="layout.marketPanel" v-bind="layout.marketPanel"></MarketPanel>
@@ -2234,39 +2334,62 @@ this.BX.Crm = this.BX.Crm || {};
 
 	function _classPrivateFieldInitSpec$2(obj, privateMap, value) { _checkPrivateRedeclaration$2(obj, privateMap); privateMap.set(obj, value); }
 	function _checkPrivateRedeclaration$2(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
-	var _layout = /*#__PURE__*/new WeakMap();
-	let Layout = /*#__PURE__*/function () {
-	  function Layout(layout) {
-	    babelHelpers.classCallCheck(this, Layout);
-	    _classPrivateFieldInitSpec$2(this, _layout, {
+	function _classStaticPrivateFieldSpecGet(receiver, classConstructor, descriptor) { _classCheckPrivateStaticAccess(receiver, classConstructor); _classCheckPrivateStaticFieldDescriptor(descriptor, "get"); return _classApplyDescriptorGet(receiver, descriptor); }
+	function _classCheckPrivateStaticFieldDescriptor(descriptor, action) { if (descriptor === undefined) { throw new TypeError("attempted to " + action + " private static field before its declaration"); } }
+	function _classCheckPrivateStaticAccess(receiver, classConstructor) { if (receiver !== classConstructor) { throw new TypeError("Private static access of wrong provenance"); } }
+	function _classApplyDescriptorGet(receiver, descriptor) { if (descriptor.get) { return descriptor.get.call(receiver); } return descriptor.value; }
+	var _id = /*#__PURE__*/new WeakMap();
+	let ControllerManager = /*#__PURE__*/function () {
+	  function ControllerManager(id) {
+	    babelHelpers.classCallCheck(this, ControllerManager);
+	    _classPrivateFieldInitSpec$2(this, _id, {
 	      writable: true,
 	      value: null
 	    });
-	    babelHelpers.classPrivateFieldSet(this, _layout, layout);
+	    babelHelpers.classPrivateFieldSet(this, _id, id);
 	  }
-	  babelHelpers.createClass(Layout, [{
-	    key: "asPlainObject",
-	    value: function asPlainObject() {
-	      return main_core.Runtime.clone(babelHelpers.classPrivateFieldGet(this, _layout));
+	  babelHelpers.createClass(ControllerManager, [{
+	    key: "getItemControllers",
+	    value: function getItemControllers(item) {
+	      const foundControllers = [];
+	      for (const controller of ControllerManager.getRegisteredControllers()) {
+	        if (controller.isItemSupported(item)) {
+	          const controllerInstance = new controller();
+	          controllerInstance.onInitialize(item);
+	          foundControllers.push(controllerInstance);
+	        }
+	      }
+	      return foundControllers;
+	    }
+	  }], [{
+	    key: "getInstance",
+	    value: function getInstance(timelineId) {
+	      if (!_classStaticPrivateFieldSpecGet(this, ControllerManager, _instances).hasOwnProperty(timelineId)) {
+	        _classStaticPrivateFieldSpecGet(this, ControllerManager, _instances)[timelineId] = new ControllerManager(timelineId);
+	      }
+	      return _classStaticPrivateFieldSpecGet(this, ControllerManager, _instances)[timelineId];
 	    }
 	  }, {
-	    key: "getFooterMenuItemById",
-	    value: function getFooterMenuItemById(id) {
-	      var _babelHelpers$classPr, _babelHelpers$classPr2, _babelHelpers$classPr3, _babelHelpers$classPr4;
-	      const items = (_babelHelpers$classPr = (_babelHelpers$classPr2 = babelHelpers.classPrivateFieldGet(this, _layout)) === null || _babelHelpers$classPr2 === void 0 ? void 0 : (_babelHelpers$classPr3 = _babelHelpers$classPr2.footer) === null || _babelHelpers$classPr3 === void 0 ? void 0 : (_babelHelpers$classPr4 = _babelHelpers$classPr3.menu) === null || _babelHelpers$classPr4 === void 0 ? void 0 : _babelHelpers$classPr4.items) !== null && _babelHelpers$classPr !== void 0 ? _babelHelpers$classPr : {};
-	      return items.hasOwnProperty(id) ? items.id : null;
+	    key: "registerController",
+	    value: function registerController(controller) {
+	      _classStaticPrivateFieldSpecGet(this, ControllerManager, _availableControllers).push(controller);
 	    }
 	  }, {
-	    key: "addFooterMenuItem",
-	    value: function addFooterMenuItem(menuItem) {
-	      babelHelpers.classPrivateFieldGet(this, _layout).footer = babelHelpers.classPrivateFieldGet(this, _layout).footer || {};
-	      babelHelpers.classPrivateFieldGet(this, _layout).footer.menu = babelHelpers.classPrivateFieldGet(this, _layout).footer.menu || {};
-	      babelHelpers.classPrivateFieldGet(this, _layout).footer.menu.items = babelHelpers.classPrivateFieldGet(this, _layout).footer.menu.items || {};
-	      babelHelpers.classPrivateFieldGet(this, _layout).footer.menu.items[menuItem.id] = menuItem;
+	    key: "getRegisteredControllers",
+	    value: function getRegisteredControllers() {
+	      return _classStaticPrivateFieldSpecGet(this, ControllerManager, _availableControllers);
 	    }
 	  }]);
-	  return Layout;
+	  return ControllerManager;
 	}();
+	var _instances = {
+	  writable: true,
+	  value: {}
+	};
+	var _availableControllers = {
+	  writable: true,
+	  value: []
+	};
 
 	let Base = /*#__PURE__*/function () {
 	  function Base() {
@@ -2346,6 +2469,27 @@ this.BX.Crm = this.BX.Crm || {};
 	        return true;
 	      });
 	    }
+	    /**
+	     * Schedule TODO activity action
+	     *
+	     * @param activityId Activity ID
+	     * @param scheduleDate Date to use in editor
+	     *
+	     * @protected
+	     */
+	  }, {
+	    key: "runScheduleAction",
+	    value: function runScheduleAction(activityId, scheduleDate) {
+	      var _BX$Crm, _BX$Crm$Timeline, _BX$Crm$Timeline$Menu;
+	      const menuBar = (_BX$Crm = BX.Crm) === null || _BX$Crm === void 0 ? void 0 : (_BX$Crm$Timeline = _BX$Crm.Timeline) === null || _BX$Crm$Timeline === void 0 ? void 0 : (_BX$Crm$Timeline$Menu = _BX$Crm$Timeline.MenuBar) === null || _BX$Crm$Timeline$Menu === void 0 ? void 0 : _BX$Crm$Timeline$Menu.getDefault();
+	      if (menuBar) {
+	        menuBar.setActiveItemById('todo');
+	        const todoEditor = menuBar.getItemById('todo');
+	        todoEditor.focus();
+	        todoEditor.setParentActivityId(activityId);
+	        todoEditor.setDeadLine(scheduleDate);
+	      }
+	    }
 	  }], [{
 	    key: "isItemSupported",
 	    value: function isItemSupported(item) {
@@ -2355,64 +2499,162 @@ this.BX.Crm = this.BX.Crm || {};
 	  return Base;
 	}();
 
+	let Item$1 = /*#__PURE__*/function () {
+	  function Item() {
+	    babelHelpers.classCallCheck(this, Item);
+	    this._id = '';
+	    this._isTerminated = false;
+	    this._wrapper = null;
+	  }
+	  babelHelpers.createClass(Item, [{
+	    key: "getId",
+	    value: function getId() {
+	      return this._id;
+	    }
+	  }, {
+	    key: "_setId",
+	    value: function _setId(id) {
+	      this._id = BX.type.isNotEmptyString(id) ? id : BX.util.getRandomString(4);
+	    }
+	    /**
+	     * @abstract
+	     */
+	  }, {
+	    key: "setData",
+	    value: function setData(data) {
+	      throw new Error('Item.setData() must be overridden');
+	    }
+	    /**
+	     * @abstract
+	     */
+	  }, {
+	    key: "layout",
+	    value: function layout(options) {
+	      throw new Error('Item.layout() must be overridden');
+	    }
+	  }, {
+	    key: "refreshLayout",
+	    value: function refreshLayout() {
+	      const anchor = this._wrapper.previousSibling;
+	      this.clearLayout();
+	      this.layout({
+	        anchor: anchor
+	      });
+	    }
+	  }, {
+	    key: "clearLayout",
+	    value: function clearLayout() {
+	      main_core.Dom.remove(this._wrapper);
+	      this._wrapper = undefined;
+	    }
+	  }, {
+	    key: "destroy",
+	    value: function destroy() {
+	      this.clearLayout();
+	    }
+	  }, {
+	    key: "getWrapper",
+	    value: function getWrapper() {
+	      return this._wrapper;
+	    }
+	  }, {
+	    key: "setWrapper",
+	    value: function setWrapper(wrapper) {
+	      this._wrapper = wrapper;
+	    }
+	  }, {
+	    key: "addWrapperClass",
+	    value: function addWrapperClass(className, timeout) {
+	      if (!this._wrapper) {
+	        return;
+	      }
+	      main_core.Dom.addClass(this._wrapper, className);
+	      if (main_core.Type.isNumber(timeout) && timeout >= 0) {
+	        window.setTimeout(this.removeWrapperClass.bind(this, className), timeout);
+	      }
+	    }
+	  }, {
+	    key: "removeWrapperClass",
+	    value: function removeWrapperClass(className, timeout) {
+	      if (!this._wrapper) {
+	        return;
+	      }
+	      main_core.Dom.removeClass(this._wrapper, className);
+	      if (main_core.Type.isNumber(timeout) && timeout >= 0) {
+	        window.setTimeout(this.addWrapperClass.bind(this, className), timeout);
+	      }
+	    }
+	  }, {
+	    key: "isTerminated",
+	    value: function isTerminated() {
+	      return this._isTerminated;
+	    }
+	  }, {
+	    key: "markAsTerminated",
+	    value: function markAsTerminated(terminated) {
+	      terminated = !!terminated;
+	      if (this._isTerminated === terminated) {
+	        return;
+	      }
+	      this._isTerminated = terminated;
+	      if (!this._wrapper) {
+	        return;
+	      }
+	      if (terminated) {
+	        main_core.Dom.addClass(this._wrapper, 'crm-entity-stream-section-last');
+	      } else {
+	        main_core.Dom.removeClass(this._wrapper, 'crm-entity-stream-section-last');
+	      }
+	    }
+	  }, {
+	    key: "getAssociatedEntityTypeId",
+	    value: function getAssociatedEntityTypeId() {
+	      return null;
+	    }
+	  }, {
+	    key: "getAssociatedEntityId",
+	    value: function getAssociatedEntityId() {
+	      return null;
+	    }
+	  }]);
+	  return Item;
+	}();
+
 	function _classPrivateFieldInitSpec$3(obj, privateMap, value) { _checkPrivateRedeclaration$3(obj, privateMap); privateMap.set(obj, value); }
 	function _checkPrivateRedeclaration$3(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
-	function _classStaticPrivateFieldSpecGet(receiver, classConstructor, descriptor) { _classCheckPrivateStaticAccess(receiver, classConstructor); _classCheckPrivateStaticFieldDescriptor(descriptor, "get"); return _classApplyDescriptorGet(receiver, descriptor); }
-	function _classCheckPrivateStaticFieldDescriptor(descriptor, action) { if (descriptor === undefined) { throw new TypeError("attempted to " + action + " private static field before its declaration"); } }
-	function _classCheckPrivateStaticAccess(receiver, classConstructor) { if (receiver !== classConstructor) { throw new TypeError("Private static access of wrong provenance"); } }
-	function _classApplyDescriptorGet(receiver, descriptor) { if (descriptor.get) { return descriptor.get.call(receiver); } return descriptor.value; }
-	var _id = /*#__PURE__*/new WeakMap();
-	let ControllerManager = /*#__PURE__*/function () {
-	  function ControllerManager(id) {
-	    babelHelpers.classCallCheck(this, ControllerManager);
-	    _classPrivateFieldInitSpec$3(this, _id, {
+	var _layout = /*#__PURE__*/new WeakMap();
+	let Layout = /*#__PURE__*/function () {
+	  function Layout(layout) {
+	    babelHelpers.classCallCheck(this, Layout);
+	    _classPrivateFieldInitSpec$3(this, _layout, {
 	      writable: true,
 	      value: null
 	    });
-	    babelHelpers.classPrivateFieldSet(this, _id, id);
+	    babelHelpers.classPrivateFieldSet(this, _layout, layout);
 	  }
-	  babelHelpers.createClass(ControllerManager, [{
-	    key: "getItemControllers",
-	    value: function getItemControllers(item) {
-	      const foundControllers = [];
-	      for (const controller of ControllerManager.getRegisteredControllers()) {
-	        if (controller.isItemSupported(item)) {
-	          const controllerInstance = new controller();
-	          controllerInstance.onInitialize(item);
-	          foundControllers.push(controllerInstance);
-	        }
-	      }
-	      return foundControllers;
-	    }
-	  }], [{
-	    key: "getInstance",
-	    value: function getInstance(timelineId) {
-	      if (!_classStaticPrivateFieldSpecGet(this, ControllerManager, _instances).hasOwnProperty(timelineId)) {
-	        _classStaticPrivateFieldSpecGet(this, ControllerManager, _instances)[timelineId] = new ControllerManager(timelineId);
-	      }
-	      return _classStaticPrivateFieldSpecGet(this, ControllerManager, _instances)[timelineId];
+	  babelHelpers.createClass(Layout, [{
+	    key: "asPlainObject",
+	    value: function asPlainObject() {
+	      return main_core.Runtime.clone(babelHelpers.classPrivateFieldGet(this, _layout));
 	    }
 	  }, {
-	    key: "registerController",
-	    value: function registerController(controller) {
-	      _classStaticPrivateFieldSpecGet(this, ControllerManager, _availableControllers).push(controller);
+	    key: "getFooterMenuItemById",
+	    value: function getFooterMenuItemById(id) {
+	      var _babelHelpers$classPr, _babelHelpers$classPr2, _babelHelpers$classPr3, _babelHelpers$classPr4;
+	      const items = (_babelHelpers$classPr = (_babelHelpers$classPr2 = babelHelpers.classPrivateFieldGet(this, _layout)) === null || _babelHelpers$classPr2 === void 0 ? void 0 : (_babelHelpers$classPr3 = _babelHelpers$classPr2.footer) === null || _babelHelpers$classPr3 === void 0 ? void 0 : (_babelHelpers$classPr4 = _babelHelpers$classPr3.menu) === null || _babelHelpers$classPr4 === void 0 ? void 0 : _babelHelpers$classPr4.items) !== null && _babelHelpers$classPr !== void 0 ? _babelHelpers$classPr : {};
+	      return items.hasOwnProperty(id) ? items.id : null;
 	    }
 	  }, {
-	    key: "getRegisteredControllers",
-	    value: function getRegisteredControllers() {
-	      return _classStaticPrivateFieldSpecGet(this, ControllerManager, _availableControllers);
+	    key: "addFooterMenuItem",
+	    value: function addFooterMenuItem(menuItem) {
+	      babelHelpers.classPrivateFieldGet(this, _layout).footer = babelHelpers.classPrivateFieldGet(this, _layout).footer || {};
+	      babelHelpers.classPrivateFieldGet(this, _layout).footer.menu = babelHelpers.classPrivateFieldGet(this, _layout).footer.menu || {};
+	      babelHelpers.classPrivateFieldGet(this, _layout).footer.menu.items = babelHelpers.classPrivateFieldGet(this, _layout).footer.menu.items || {};
+	      babelHelpers.classPrivateFieldGet(this, _layout).footer.menu.items[menuItem.id] = menuItem;
 	    }
 	  }]);
-	  return ControllerManager;
+	  return Layout;
 	}();
-	var _instances = {
-	  writable: true,
-	  value: {}
-	};
-	var _availableControllers = {
-	  writable: true,
-	  value: []
-	};
 
 	function _classPrivateMethodInitSpec$1(obj, privateSet) { _checkPrivateRedeclaration$4(obj, privateSet); privateSet.add(obj); }
 	function _classPrivateFieldInitSpec$4(obj, privateMap, value) { _checkPrivateRedeclaration$4(obj, privateMap); privateMap.set(obj, value); }
@@ -2435,6 +2677,7 @@ this.BX.Crm = this.BX.Crm || {};
 	var _layoutApp = /*#__PURE__*/new WeakMap();
 	var _layout$1 = /*#__PURE__*/new WeakMap();
 	var _streamType = /*#__PURE__*/new WeakMap();
+	var _color = /*#__PURE__*/new WeakMap();
 	var _useAnchorNextSibling = /*#__PURE__*/new WeakSet();
 	var _initLayoutApp = /*#__PURE__*/new WeakSet();
 	var _getLayoutAppProps = /*#__PURE__*/new WeakSet();
@@ -2519,6 +2762,10 @@ this.BX.Crm = this.BX.Crm || {};
 	      writable: true,
 	      value: null
 	    });
+	    _classPrivateFieldInitSpec$4(babelHelpers.assertThisInitialized(_this), _color, {
+	      writable: true,
+	      value: null
+	    });
 	    return _this;
 	  }
 	  babelHelpers.createClass(ConfigurableItem, [{
@@ -2543,11 +2790,18 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "setData",
 	    value: function setData(data) {
+	      var _data$color;
 	      babelHelpers.classPrivateFieldSet(this, _type$1, data.type || null);
 	      babelHelpers.classPrivateFieldSet(this, _timestamp, data.timestamp || null);
 	      babelHelpers.classPrivateFieldSet(this, _sort, data.sort || []);
 	      babelHelpers.classPrivateFieldSet(this, _layout$1, new Layout(data.layout || {}));
 	      babelHelpers.classPrivateFieldSet(this, _dataPayload, data.payload || {});
+	      babelHelpers.classPrivateFieldSet(this, _color, (_data$color = data.color) !== null && _data$color !== void 0 ? _data$color : null);
+	    }
+	  }, {
+	    key: "getColor",
+	    value: function getColor() {
+	      return babelHelpers.classPrivateFieldGet(this, _color);
 	    }
 	  }, {
 	    key: "getLayout",
@@ -2625,6 +2879,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    value: function refreshLayout() {
 	      // try to refresh layout via vue reactivity, if possible:
 	      if (babelHelpers.classPrivateFieldGet(this, _layoutComponent)) {
+	        babelHelpers.classPrivateFieldGet(this, _layoutComponent).setColor(this.getColor());
 	        babelHelpers.classPrivateFieldGet(this, _layoutComponent).setLayout(this.getLayout().asPlainObject());
 	        for (const controller of babelHelpers.classPrivateFieldGet(this, _controllers)) {
 	          controller.onAfterItemRefreshLayout(this);
@@ -2653,32 +2908,38 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "getLayoutContentBlockById",
 	    value: function getLayoutContentBlockById(id) {
-	      return babelHelpers.classPrivateFieldGet(this, _layoutComponent).getContentBlockById(id);
+	      var _babelHelpers$classPr;
+	      return (_babelHelpers$classPr = babelHelpers.classPrivateFieldGet(this, _layoutComponent)) === null || _babelHelpers$classPr === void 0 ? void 0 : _babelHelpers$classPr.getContentBlockById(id);
 	    }
 	  }, {
 	    key: "getLogo",
 	    value: function getLogo() {
-	      return babelHelpers.classPrivateFieldGet(this, _layoutComponent).getLogo();
+	      var _babelHelpers$classPr2;
+	      return (_babelHelpers$classPr2 = babelHelpers.classPrivateFieldGet(this, _layoutComponent)) === null || _babelHelpers$classPr2 === void 0 ? void 0 : _babelHelpers$classPr2.getLogo();
 	    }
 	  }, {
 	    key: "getLayoutFooterButtonById",
 	    value: function getLayoutFooterButtonById(id) {
-	      return babelHelpers.classPrivateFieldGet(this, _layoutComponent).getFooterButtonById(id);
+	      var _babelHelpers$classPr3;
+	      return (_babelHelpers$classPr3 = babelHelpers.classPrivateFieldGet(this, _layoutComponent)) === null || _babelHelpers$classPr3 === void 0 ? void 0 : _babelHelpers$classPr3.getFooterButtonById(id);
 	    }
 	  }, {
 	    key: "getLayoutFooterMenu",
 	    value: function getLayoutFooterMenu() {
-	      return babelHelpers.classPrivateFieldGet(this, _layoutComponent).getFooterMenu();
+	      var _babelHelpers$classPr4;
+	      return (_babelHelpers$classPr4 = babelHelpers.classPrivateFieldGet(this, _layoutComponent)) === null || _babelHelpers$classPr4 === void 0 ? void 0 : _babelHelpers$classPr4.getFooterMenu();
 	    }
 	  }, {
 	    key: "getLayoutHeaderChangeStreamButton",
 	    value: function getLayoutHeaderChangeStreamButton() {
-	      return babelHelpers.classPrivateFieldGet(this, _layoutComponent).getHeaderChangeStreamButton();
+	      var _babelHelpers$classPr5;
+	      return (_babelHelpers$classPr5 = babelHelpers.classPrivateFieldGet(this, _layoutComponent)) === null || _babelHelpers$classPr5 === void 0 ? void 0 : _babelHelpers$classPr5.getHeaderChangeStreamButton();
 	    }
 	  }, {
 	    key: "highlightContentBlockById",
 	    value: function highlightContentBlockById(blockId, isHighlighted) {
-	      babelHelpers.classPrivateFieldGet(this, _layoutComponent).highlightContentBlockById(blockId, isHighlighted);
+	      var _babelHelpers$classPr6;
+	      (_babelHelpers$classPr6 = babelHelpers.classPrivateFieldGet(this, _layoutComponent)) === null || _babelHelpers$classPr6 === void 0 ? void 0 : _babelHelpers$classPr6.highlightContentBlockById(blockId, isHighlighted);
 	    }
 	  }, {
 	    key: "clearLayout",
@@ -2801,7 +3062,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    }
 	  }]);
 	  return ConfigurableItem;
-	}(Item);
+	}(Item$1);
 	function _useAnchorNextSibling2(options) {
 	  if (main_core.Type.isPlainObject(options)) {
 	    return main_core.Type.isBoolean(options['useAnchorNextSibling']) ? options['useAnchorNextSibling'] : true;
@@ -2810,7 +3071,7 @@ this.BX.Crm = this.BX.Crm || {};
 	}
 	function _initLayoutApp2() {
 	  if (!babelHelpers.classPrivateFieldGet(this, _layoutApp)) {
-	    babelHelpers.classPrivateFieldSet(this, _layoutApp, ui_vue3.BitrixVue.createApp(Item$1, _classPrivateMethodGet$1(this, _getLayoutAppProps, _getLayoutAppProps2).call(this)));
+	    babelHelpers.classPrivateFieldSet(this, _layoutApp, ui_vue3.BitrixVue.createApp(Item, _classPrivateMethodGet$1(this, _getLayoutAppProps, _getLayoutAppProps2).call(this)));
 	    const contentBlockComponents = _classPrivateMethodGet$1(this, _getContentBlockComponents, _getContentBlockComponents2).call(this);
 	    for (const componentName in contentBlockComponents) {
 	      babelHelpers.classPrivateFieldGet(this, _layoutApp).component(componentName, contentBlockComponents[componentName]);
@@ -2821,6 +3082,7 @@ this.BX.Crm = this.BX.Crm || {};
 	function _getLayoutAppProps2() {
 	  return {
 	    initialLayout: this.getLayout().asPlainObject(),
+	    initialColor: babelHelpers.classPrivateFieldGet(this, _streamType) === crm_timeline_item.StreamType.scheduled ? babelHelpers.classPrivateFieldGet(this, _color) : null,
 	    id: String(this.getId()),
 	    useShortTimeFormat: babelHelpers.classPrivateFieldGet(this, _useShortTimeFormat),
 	    isReadOnly: this.isReadOnly(),
@@ -2843,20 +3105,33 @@ this.BX.Crm = this.BX.Crm || {};
 	}
 
 	function _classPrivateMethodInitSpec$2(obj, privateSet) { _checkPrivateRedeclaration$5(obj, privateSet); privateSet.add(obj); }
+	function _classPrivateFieldInitSpec$5(obj, privateMap, value) { _checkPrivateRedeclaration$5(obj, privateMap); privateMap.set(obj, value); }
 	function _checkPrivateRedeclaration$5(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 	function _classPrivateMethodGet$2(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+	const ALLOWED_MOVE_TO_ITEM_TYPES = ['Activity:Call', 'Activity:Email', 'Activity:OpenLine'];
+	var _moveToSelectorDialog = /*#__PURE__*/new WeakMap();
 	var _viewActivity = /*#__PURE__*/new WeakSet();
 	var _editActivity = /*#__PURE__*/new WeakSet();
+	var _showMoveToSelectorDialog = /*#__PURE__*/new WeakSet();
 	var _getActivityEditor = /*#__PURE__*/new WeakSet();
+	var _createSelectorDialog = /*#__PURE__*/new WeakSet();
+	var _runMoveAction = /*#__PURE__*/new WeakSet();
 	let Activity = /*#__PURE__*/function (_Base) {
 	  babelHelpers.inherits(Activity, _Base);
 	  function Activity(...args) {
 	    var _this;
 	    babelHelpers.classCallCheck(this, Activity);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Activity).call(this, ...args));
+	    _classPrivateMethodInitSpec$2(babelHelpers.assertThisInitialized(_this), _runMoveAction);
+	    _classPrivateMethodInitSpec$2(babelHelpers.assertThisInitialized(_this), _createSelectorDialog);
 	    _classPrivateMethodInitSpec$2(babelHelpers.assertThisInitialized(_this), _getActivityEditor);
+	    _classPrivateMethodInitSpec$2(babelHelpers.assertThisInitialized(_this), _showMoveToSelectorDialog);
 	    _classPrivateMethodInitSpec$2(babelHelpers.assertThisInitialized(_this), _editActivity);
 	    _classPrivateMethodInitSpec$2(babelHelpers.assertThisInitialized(_this), _viewActivity);
+	    _classPrivateFieldInitSpec$5(babelHelpers.assertThisInitialized(_this), _moveToSelectorDialog, {
+	      writable: true,
+	      value: null
+	    });
 	    return _this;
 	  }
 	  babelHelpers.createClass(Activity, [{
@@ -2865,13 +3140,18 @@ this.BX.Crm = this.BX.Crm || {};
 	      return 'crm.timeline.activity.delete';
 	    }
 	  }, {
+	    key: "getMoveActionMethod",
+	    value: function getMoveActionMethod() {
+	      return 'crm.activity.binding.move';
+	    }
+	  }, {
 	    key: "getDeleteActionCfg",
 	    value: function getDeleteActionCfg(recordId, ownerTypeId, ownerId) {
 	      return {
 	        data: {
 	          activityId: recordId,
-	          ownerTypeId: ownerTypeId,
-	          ownerId: ownerId
+	          ownerTypeId,
+	          ownerId
 	        }
 	      };
 	    }
@@ -2889,6 +3169,9 @@ this.BX.Crm = this.BX.Crm || {};
 	      }
 	      if (action === 'Activity:Edit' && actionData && actionData.activityId) {
 	        _classPrivateMethodGet$2(this, _editActivity, _editActivity2).call(this, actionData.activityId);
+	      }
+	      if (action === 'Activity:MoveTo' && main_core.Type.isPlainObject(actionData)) {
+	        _classPrivateMethodGet$2(this, _showMoveToSelectorDialog, _showMoveToSelectorDialog2).call(this, item, actionData);
 	      }
 	      if (action === 'Activity:View' && actionData && actionData.activityId) {
 	        _classPrivateMethodGet$2(this, _viewActivity, _viewActivity2).call(this, actionData.activityId);
@@ -2936,307 +3219,177 @@ this.BX.Crm = this.BX.Crm || {};
 	    editor.editActivity(id);
 	  }
 	}
+	function _showMoveToSelectorDialog2(itemElement, actionData) {
+	  if (!ALLOWED_MOVE_TO_ITEM_TYPES.includes(itemElement.getType())) {
+	    // eslint-disable-next-line no-console
+	    console.warn('Move to action provided only for following item types:', ALLOWED_MOVE_TO_ITEM_TYPES);
+	    return;
+	  }
+	  const isValidParams = main_core.Type.isNumber(actionData.activityId) && main_core.Type.isNumber(actionData.ownerId) && main_core.Type.isNumber(actionData.ownerTypeId);
+	  if (!isValidParams) {
+	    throw new TypeError('Invalid actionData parameters');
+	  }
+	  const element = itemElement.getLayoutFooterMenu().$el;
+	  if (!main_core.Type.isDomNode(element)) {
+	    throw new ReferenceError('Selector dialog target element must be a DOM node');
+	  }
+	  if (!babelHelpers.classPrivateFieldGet(this, _moveToSelectorDialog)) {
+	    _classPrivateMethodGet$2(this, _createSelectorDialog, _createSelectorDialog2).call(this, element, actionData);
+	  }
+	  babelHelpers.classPrivateFieldGet(this, _moveToSelectorDialog).show();
+	}
 	function _getActivityEditor2() {
 	  return BX.CrmActivityEditor.getDefault();
 	}
+	function _createSelectorDialog2(dialogTargetElement, actionData) {
+	  const applyButton = new ui_buttons.ApplyButton({
+	    color: ui_buttons.ButtonColor.PRIMARY,
+	    size: ui_buttons.ButtonSize.SMALL,
+	    round: true,
+	    onclick: () => {
+	      _classPrivateMethodGet$2(this, _runMoveAction, _runMoveAction2).call(this, actionData.activityId, actionData.ownerTypeId, actionData.ownerId, targetItem);
+	      babelHelpers.classPrivateFieldGet(this, _moveToSelectorDialog).hide();
+	    }
+	  });
+	  const cancelButton = new ui_buttons.CancelButton({
+	    size: ui_buttons.ButtonSize.SMALL,
+	    round: true,
+	    onclick: () => {
+	      targetItem = null;
+	      babelHelpers.classPrivateFieldGet(this, _moveToSelectorDialog).deselectAll();
+	      babelHelpers.classPrivateFieldGet(this, _moveToSelectorDialog).hide();
+	    }
+	  });
+	  let targetItem = null;
+	  let dialogEntityId = BX.CrmEntityType.resolveName(actionData.ownerTypeId);
+	  if (BX.CrmEntityType.isDynamicTypeByTypeId(actionData.ownerTypeId)) {
+	    dialogEntityId = BX.CrmEntityType.names.dynamic;
+	  }
+	  babelHelpers.classPrivateFieldSet(this, _moveToSelectorDialog, new ui_entitySelector.Dialog({
+	    targetNode: dialogTargetElement,
+	    enableSearch: true,
+	    context: `CRM-TIMELINE-MOVE-ACTIVITY-ENTITY-SELECTOR-${actionData.ownerTypeId}`,
+	    tagSelectorOptions: {
+	      textBoxWidth: '50%'
+	    },
+	    entities: [{
+	      id: dialogEntityId,
+	      dynamicLoad: true,
+	      dynamicSearch: true,
+	      options: {
+	        ownerId: actionData.ownerId,
+	        categoryId: actionData.categoryId,
+	        showEntityTypeNameInHeader: true,
+	        hideClosedItems: true,
+	        excludeMyCompany: true,
+	        entityTypeId: actionData.ownerTypeId // for 'dynamic' types
+	      }
+	    }],
 
-	let TextColor = function TextColor() {
-	  babelHelpers.classCallCheck(this, TextColor);
-	};
-	babelHelpers.defineProperty(TextColor, "GREEN", 'green');
-	babelHelpers.defineProperty(TextColor, "BASE_50", 'base-50');
-	babelHelpers.defineProperty(TextColor, "BASE_60", 'base-60');
-	babelHelpers.defineProperty(TextColor, "BASE_70", 'base-70');
-	babelHelpers.defineProperty(TextColor, "BASE_90", 'base-90');
+	    events: {
+	      'Item:onSelect': event => {
+	        const {
+	          item
+	        } = event.getData();
+	        if (item) {
+	          targetItem = item;
+	          babelHelpers.classPrivateFieldGet(this, _moveToSelectorDialog).getSelectedItems().forEach(row => {
+	            if (row.getEntityId() === targetItem.getEntityId() && main_core.Text.toInteger(row.getId()) !== main_core.Text.toInteger(targetItem.getId())) {
+	              row.deselect();
+	            }
+	          });
+	          applyButton.setDisabled(false);
+	        }
+	      },
+	      'Item:onDeselect': () => applyButton.setDisabled(true)
+	    },
+	    footer: [applyButton.setDisabled(true).render(), cancelButton.render()],
+	    footerOptions: {
+	      containerStyles: {
+	        display: 'flex',
+	        'justify-content': 'center'
+	      }
+	    }
+	  }));
+	}
+	function _runMoveAction2(activityId, sourceEntityTypeId, sourceEntityId, targetItem) {
+	  if (!targetItem) {
+	    throw new ReferenceError('Target item is not defined');
+	  }
+	  const targetEntityTypeId = BX.CrmEntityType.resolveId(targetItem.getEntityId());
+	  const targetEntityId = targetItem.getId();
+	  if (targetEntityTypeId <= 0 || targetEntityId <= 0) {
+	    throw new Error('Target entity in not valid');
+	  }
+	  if (main_core.Text.toInteger(targetEntityTypeId) !== main_core.Text.toInteger(sourceEntityTypeId)) {
+	    throw new Error('Source and target entity types are not equal');
+	  }
+	  const data = {
+	    activityId,
+	    sourceEntityTypeId,
+	    sourceEntityId,
+	    targetEntityTypeId,
+	    targetEntityId
+	  };
+	  main_core.ajax.runAction(this.getMoveActionMethod(), {
+	    data
+	  }).catch(response => {
+	    ui_notification.UI.Notification.Center.notify({
+	      content: response.errors[0].message,
+	      autoHideDelay: 5000
+	    });
+	    throw response;
+	  });
+	}
 
-	let TextWeight = function TextWeight() {
-	  babelHelpers.classCallCheck(this, TextWeight);
-	};
-	babelHelpers.defineProperty(TextWeight, "NORMAL", 'normal');
-	babelHelpers.defineProperty(TextWeight, "MEDIUM", 'medium');
-	babelHelpers.defineProperty(TextWeight, "BOLD", 'bold');
-
-	let TextSize = function TextSize() {
-	  babelHelpers.classCallCheck(this, TextSize);
-	};
-	babelHelpers.defineProperty(TextSize, "XS", 'xs');
-	babelHelpers.defineProperty(TextSize, "SM", 'sm');
-	babelHelpers.defineProperty(TextSize, "MD", 'md');
-
-	var Text = {
+	var AddressBlock = {
 	  props: {
-	    value: String | Number,
-	    title: {
-	      type: String,
-	      required: false,
-	      default: ''
-	    },
-	    color: {
-	      type: String,
-	      required: false,
-	      default: ''
-	    },
-	    weight: {
-	      type: String,
-	      required: false,
-	      default: 'normal'
-	    },
-	    size: {
-	      type: String,
-	      required: false,
-	      default: 'md'
-	    },
-	    multiline: {
-	      type: Boolean,
-	      required: false,
-	      default: false
-	    }
-	  },
-	  computed: {
-	    className() {
-	      return ['crm-timeline__text-block', this.colorClassname, this.weightClassname, this.sizeClassname];
-	    },
-	    colorClassname() {
-	      const upperCaseColorProp = this.color ? this.color.toUpperCase() : '';
-	      const color = TextColor[upperCaseColorProp] ? TextColor[upperCaseColorProp] : '';
-	      return `--color-${color}`;
-	    },
-	    weightClassname() {
-	      const upperCaseWeightProp = this.weight ? this.weight.toUpperCase() : '';
-	      const weight = TextWeight[upperCaseWeightProp] ? TextWeight[upperCaseWeightProp] : TextWeight.NORMAL;
-	      return `--weight-${weight}`;
-	    },
-	    sizeClassname() {
-	      const upperCaseWeightProp = this.size ? this.size.toUpperCase() : '';
-	      const size = TextSize[upperCaseWeightProp] ? TextSize[upperCaseWeightProp] : TextSize.SM;
-	      return `--size-${size}`;
-	    },
-	    encodedText() {
-	      let text = main_core.Text.encode(this.value);
-	      if (this.multiline) {
-	        text = text.replace(/\n/g, '<br />');
-	      }
-	      return text;
-	    }
-	  },
-	  template: `
-		<span
-			:title="title"
-			:class="className"
-			v-html="encodedText"
-		></span>`
-	};
-
-	var Link = {
-	  props: {
-	    text: String,
-	    action: Object,
-	    title: {
-	      type: String,
-	      required: false,
-	      default: ''
-	    },
-	    bold: {
-	      type: Boolean,
-	      required: false,
-	      default: false
-	    }
-	  },
-	  computed: {
-	    href() {
-	      if (!this.action) {
-	        return null;
-	      }
-	      const action = new Action(this.action);
-	      if (action.isRedirect()) {
-	        return action.getValue();
-	      }
-	      return null;
-	    },
-	    linkAttrs() {
-	      if (!this.action) {
-	        return {};
-	      }
-	      const action = new Action(this.action);
-	      if (!action.isRedirect()) {
-	        return {};
-	      }
-	      const attrs = {
-	        'href': action.getValue()
-	      };
-	      const target = action.getActionParam('target');
-	      if (target) {
-	        attrs.target = target;
-	      }
-	      return attrs;
-	    },
-	    className() {
-	      return {
-	        'crm-timeline__card_link': true,
-	        '--bold': this.bold
-	      };
-	    }
-	  },
-	  methods: {
-	    executeAction() {
-	      if (this.action) {
-	        const action = new Action(this.action);
-	        action.execute(this);
-	      }
-	    }
-	  },
-	  template: `
-			<a
-				v-if="href"
-				v-bind="linkAttrs"
-				:class="className"
-				:title="title"
-			>
-			{{text}}
-			</a>
-			<span
-				v-else
-				@click="executeAction"
-				:class="className"
-				:title="title"
-			>
-				{{text}}
-			</span>
-		`
-	};
-
-	var DateBlock = {
-	  props: {
-	    withTime: {
-	      type: Boolean,
-	      required: false,
-	      default: true
-	    },
-	    format: {
-	      type: String,
-	      required: false,
-	      default: null
-	    }
-	  },
-	  extends: Text,
-	  computed: {
-	    encodedText() {
-	      const dateInUserTimezone = crm_timeline_tools.DatetimeConverter.createFromServerTimestamp(this.value).toUserTime();
-	      return main_core.Text.encode(this.format ? dateInUserTimezone.toFormatString(this.format) : this.withTime ? dateInUserTimezone.toDatetimeString({
-	        delimiter: ', '
-	      }) : dateInUserTimezone.toDateString());
-	    }
-	  },
-	  template: Text.template
-	};
-
-	var WithTitle = {
-	  props: {
-	    title: String,
-	    inline: Boolean,
-	    wordWrap: Boolean,
-	    fixedWidth: Boolean,
-	    contentBlock: Object
-	  },
-	  computed: {
-	    className() {
-	      return {
-	        'crm-timeline__card-container_info': true,
-	        '--inline': this.inline,
-	        '--word-wrap': this.wordWrap,
-	        '--fixed-width': this.fixedWidth
-	      };
-	    }
-	  },
-	  methods: {
-	    isTitleCropped() {
-	      const titleElem = this.$refs.title;
-	      return titleElem.scrollWidth > titleElem.clientWidth;
-	    }
+	    addressFormatted: String
 	  },
 	  mounted() {
-	    this.$nextTick(() => {
-	      if (this.isTitleCropped()) {
-	        main_core.Dom.attr(this.$refs.title, 'title', this.title);
-	      }
+	    void this.$nextTick(() => {
+	      this.renderAddressWidget();
 	    });
 	  },
+	  methods: {
+	    renderAddressWidget() {
+	      const settings = main_core.Extension.getSettings('crm.timeline.item');
+	      if (!settings.hasLocationModule) {
+	        return;
+	      }
+	      const widgetFactory = new BX.Location.Widget.Factory();
+	      const format = new location_core.Format(JSON.parse(main_core.Loc.getMessage('CRM_ACTIVITY_TODO_ADDRESS_FORMAT')));
+	      const address = new location_core.Address({
+	        languageId: format.languageId
+	      });
+	      address.setFieldValue(format.fieldForUnRecognized, this.addressFormatted);
+	      const addressWidget = widgetFactory.createAddressWidget({
+	        address,
+	        mode: location_core.ControlMode.view
+	      });
+	      const addressWidgetParams = {
+	        mode: location_core.ControlMode.view,
+	        mapBindElement: this.$refs.mapBindElement,
+	        controlWrapper: this.$refs.controlWrapper
+	      };
+	      addressWidget.render(addressWidgetParams);
+	    }
+	  },
 	  template: `
-			<div :class="className">
-				<div ref="title" class="crm-timeline__card-container_info-title">{{ title }}</div>
-				<div class="crm-timeline__card-container_info-value">
-					<component :is="contentBlock.rendererName" v-bind="contentBlock.properties"></component>
+		<div class="crm-timeline__text-block crm-timeline__address-block">
+			<div ref="mapBindElement">
+				<div ref="controlWrapper" class="crm-timeline__address-block-address-wrapper">
+					<span 
+						:title="addressFormatted"
+						class="ui-link ui-link-dark ui-link-dotted"
+					>
+						{{addressFormatted}}
+					</span>
 				</div>
 			</div>
-		`
+		</div>
+	`
 	};
-
-	var LineOfTextBlocks = {
-	  props: {
-	    blocks: Object
-	  },
-	  mounted() {
-	    const blocks = this.$refs.blocks;
-	    this.visibleBlocks.forEach((block, index) => {
-	      if (main_core.Type.isDomNode(blocks[index].$el)) {
-	        blocks[index].$el.setAttribute('data-id', block.id);
-	      } else {
-	        throw new Error('Vue component "' + block.rendererName + '" was not found');
-	      }
-	    });
-	  },
-	  computed: {
-	    visibleBlocks() {
-	      return Object.keys(this.blocks).map(id => ({
-	        id,
-	        ...this.blocks[id]
-	      })).filter(item => item.scope !== 'mobile');
-	    }
-	  },
-	  // language=Vue
-	  template: `
-		<span class="crm-timeline-block-line-of-texts">
-			<span
-				v-for="(block) in visibleBlocks"
-				:key="block.id"
-			>
-				<component :is="block.rendererName"
-						   v-bind="block.properties"
-						   ref="blocks"/>
-			<span>&nbsp;</span>
-			</span>
-		</span>`
-	};
-
-	let LogoType = function LogoType() {
-	  babelHelpers.classCallCheck(this, LogoType);
-	};
-	babelHelpers.defineProperty(LogoType, "CALL_AUDIO_PLAY", 'call-play-record');
-	babelHelpers.defineProperty(LogoType, "CALL_AUDIO_PAUSE", 'call-pause-record');
-
-	const TimelineAudio = crm_audioPlayer.AudioPlayer.getComponent({
-	  methods: {
-	    changeLogoIcon(icon) {
-	      if (!this.$parent || !this.$parent.getLogo) {
-	        return;
-	      }
-	      const logo = this.$parent.getLogo();
-	      if (!logo) {
-	        return;
-	      }
-	      logo.setIcon(icon);
-	    },
-	    audioEventRouterWrapper(eventName, event) {
-	      this.audioEventRouter(eventName, event);
-	      if (eventName === 'play') {
-	        this.changeLogoIcon(LogoType.CALL_AUDIO_PAUSE);
-	      }
-	      if (eventName === 'pause') {
-	        this.changeLogoIcon(LogoType.CALL_AUDIO_PLAY);
-	      }
-	    }
-	  }
-	});
 
 	let ClientMark = function ClientMark() {
 	  babelHelpers.classCallCheck(this, ClientMark);
@@ -3286,104 +3439,6 @@ this.BX.Crm = this.BX.Crm || {};
 	`
 	};
 
-	var Money = {
-	  props: {
-	    opportunity: Number,
-	    currencyId: String
-	  },
-	  computed: {
-	    encodedText() {
-	      if (!main_core.Type.isNumber(this.opportunity) || !main_core.Type.isStringFilled(this.currencyId)) {
-	        return null;
-	      }
-	      return currency_currencyCore.CurrencyCore.currencyFormat(this.opportunity, this.currencyId, true);
-	    }
-	  },
-	  extends: Text,
-	  template: `
-		<span
-			v-if="encodedText"
-			:class="className"
-			v-html="encodedText"
-		></span>`
-	};
-
-	var EditableText = ui_vue3.BitrixVue.cloneComponent(Text, {
-	  components: {
-	    Text
-	  },
-	  props: {
-	    action: Object
-	  },
-	  data() {
-	    return {
-	      isEdit: false,
-	      currentValue: this.value,
-	      initialValue: this.value,
-	      actionTimeoutId: null
-	    };
-	  },
-	  computed: {
-	    textProps() {
-	      return {
-	        ...this.$props,
-	        value: this.currentValue
-	      };
-	    }
-	  },
-	  methods: {
-	    enableEdit() {
-	      this.cancelScheduledActionExecution();
-	      this.isEdit = true;
-	      this.$nextTick(() => {
-	        this.$refs.input.focus();
-	      });
-	    },
-	    disableEdit() {
-	      this.isEdit = false;
-	      this.scheduleActionExecution();
-	    },
-	    scheduleActionExecution() {
-	      this.cancelScheduledActionExecution();
-	      this.actionTimeoutId = setTimeout(this.executeAction.bind(this), 3 * 1000);
-	    },
-	    cancelScheduledActionExecution() {
-	      if (this.actionTimeoutId) {
-	        clearTimeout(this.actionTimeoutId);
-	        this.actionTimeoutId = null;
-	      }
-	    },
-	    executeAction() {
-	      var _actionDescription$ac;
-	      if (!this.action || this.currentValue === this.initialValue) {
-	        return;
-	      }
-
-	      // to avoid unintended props mutation
-	      const actionDescription = main_core.Runtime.clone(this.action);
-	      (_actionDescription$ac = actionDescription.actionParams) !== null && _actionDescription$ac !== void 0 ? _actionDescription$ac : actionDescription.actionParams = {};
-	      actionDescription.actionParams.value = this.currentValue;
-	      const action = new Action(actionDescription);
-	      action.execute(this);
-	      this.initialValue = this.currentValue;
-	    }
-	  },
-	  template: `
-			<input
-				v-if="isEdit"
-				ref="input"
-				type="text"
-				v-model.trim="currentValue"
-				@focusout="disableEdit"
-			>
-			<Text
-				v-else
-				v-bind="textProps"
-				@click="enableEdit"
-			/>
-		`
-	});
-
 	let EditableDescriptionHeight = function EditableDescriptionHeight() {
 	  babelHelpers.classCallCheck(this, EditableDescriptionHeight);
 	};
@@ -3398,7 +3453,9 @@ this.BX.Crm = this.BX.Crm || {};
 
 	const EditableDescription = {
 	  components: {
-	    Button
+	    Button,
+	    TextEditorComponent: ui_textEditor.TextEditorComponent,
+	    HtmlFormatterComponent: ui_bbcode_formatter_htmlFormatter.HtmlFormatterComponent
 	  },
 	  props: {
 	    text: {
@@ -3416,6 +3473,11 @@ this.BX.Crm = this.BX.Crm || {};
 	      required: false,
 	      default: true
 	    },
+	    copied: {
+	      type: Boolean,
+	      required: false,
+	      default: false
+	    },
 	    height: {
 	      type: String,
 	      required: false,
@@ -3427,21 +3489,22 @@ this.BX.Crm = this.BX.Crm || {};
 	      default: ''
 	    },
 	    copilotSettings: {
-	      type: Array,
+	      type: Object,
 	      required: false,
 	      default: []
 	    }
 	  },
+	  beforeCreate() {
+	    this.textEditor = null;
+	  },
 	  data() {
 	    return {
-	      value: this.text,
-	      oldValue: this.text,
 	      isEdit: false,
 	      isSaving: false,
 	      isLongText: false,
 	      isCollapsed: false,
-	      isCopilotEnabled: main_core.Type.isPlainObject(this.copilotSettings),
-	      placeholderText: main_core.Loc.getMessage(main_core.Type.isPlainObject(this.copilotSettings) ? 'CRM_TIMELINE_ITEM_EDITABLE_DESCRIPTION_PLACEHOLDER_WITH_COPILOT' : 'CRM_TIMELINE_ITEM_EDITABLE_DESCRIPTION_PLACEHOLDER')
+	      bbcode: this.text,
+	      isContentEmpty: main_core.Type.isString(this.text) && this.text.trim() === ''
 	    };
 	  },
 	  inject: ['isReadOnly', 'isLogMessage'],
@@ -3477,6 +3540,9 @@ this.BX.Crm = this.BX.Crm || {};
 	    isEditable() {
 	      return this.editable && this.saveAction && !this.isReadOnly;
 	    },
+	    isCopied() {
+	      return !this.isEdit && this.copied;
+	    },
 	    saveTextButtonProps() {
 	      return {
 	        state: this.saveTextButtonState,
@@ -3492,8 +3558,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      };
 	    },
 	    saveTextButtonState() {
-	      const trimValue = this.value.trim();
-	      if (trimValue.length === 0) {
+	      if (this.isContentEmpty) {
 	        return ButtonState.DISABLED;
 	      }
 	      if (this.isSaving) {
@@ -3510,14 +3575,12 @@ this.BX.Crm = this.BX.Crm || {};
 	  },
 	  methods: {
 	    startEditing() {
-	      this.destroyCopilot();
 	      this.isEdit = true;
 	      this.isCollapsed = true;
 	      this.$nextTick(() => {
-	        const textarea = this.$refs.textarea;
-	        this.createCopilot(textarea);
-	        this.adjustHeight(textarea);
-	        textarea.focus();
+	        this.getTextEditor().focus(null, {
+	          defaultSelection: 'rootEnd'
+	        });
 	      });
 	      this.emitEvent('EditableDescription:StartEdit');
 	    },
@@ -3532,27 +3595,22 @@ this.BX.Crm = this.BX.Crm || {};
 	      elem.style.height = 0;
 	      elem.style.height = `${elem.scrollHeight}px`;
 	    },
-	    onPressEnter(event) {
-	      if (event.ctrlKey === true || main_core.Browser.isMac() && (event.metaKey === true || event.altKey === true)) {
-	        this.saveText();
-	      }
-	    },
 	    saveText() {
 	      if (this.saveTextButtonState === ButtonState.DISABLED || this.saveTextButtonState === ButtonState.LOADING || !this.isEdit) {
 	        return;
 	      }
-	      if (this.value.trim() === this.oldValue) {
+	      const encodedTrimText = this.getTextEditor().getText().trim();
+	      if (encodedTrimText === this.bbcode) {
 	        this.isEdit = false;
 	        this.emitEvent('EditableDescription:FinishEdit');
+	        return;
 	      }
 	      this.isSaving = true;
-	      const encodedTrimText = this.value.trim();
 
 	      // eslint-disable-next-line promise/catch-or-return
 	      this.executeSaveAction(encodedTrimText).then(() => {
 	        this.isEdit = false;
-	        this.oldValue = encodedTrimText;
-	        this.value = encodedTrimText;
+	        this.bbcode = encodedTrimText;
 	        this.$nextTick(() => {
 	          this.isLongText = this.checkIsLongText();
 	        });
@@ -3564,9 +3622,6 @@ this.BX.Crm = this.BX.Crm || {};
 	    executeSaveAction(text) {
 	      var _actionDescription$ac;
 	      if (!this.saveAction) {
-	        return;
-	      }
-	      if (!this.value) {
 	        return;
 	      }
 
@@ -3583,7 +3638,6 @@ this.BX.Crm = this.BX.Crm || {};
 	      if (!this.isEdit || this.isSaving) {
 	        return;
 	      }
-	      this.value = this.oldValue;
 	      this.isEdit = false;
 	      this.emitEvent('EditableDescription:FinishEdit');
 	    },
@@ -3591,8 +3645,41 @@ this.BX.Crm = this.BX.Crm || {};
 	      if (this.isSaving) {
 	        return;
 	      }
-	      this.value = '';
-	      this.$refs.textarea.focus();
+	      this.getTextEditor().clear();
+	      this.getTextEditor().focus(null, {
+	        defaultSelection: 'rootEnd'
+	      });
+	    },
+	    copyText() {
+	      const selection = window.getSelection();
+	      selection.removeAllRanges();
+	      const range = document.createRange();
+	      const referenceNode = this.$refs.text;
+	      range.selectNodeContents(referenceNode);
+	      selection.addRange(range);
+	      let isSuccess = false;
+	      try {
+	        isSuccess = document.execCommand('copy');
+	      } catch (err) {
+	        // just in case
+	      }
+	      selection.removeAllRanges();
+	      if (isSuccess) {
+	        new main_popup.Popup({
+	          id: `copyTextHint_${main_core.Text.getRandom(8)}`,
+	          content: main_core.Loc.getMessage('CRM_TIMELINE_ITEM_TEXT_IS_COPIED'),
+	          bindElement: this.$refs.copyTextBtn,
+	          darkMode: true,
+	          autoHide: true,
+	          events: {
+	            onAfterPopupShow() {
+	              setTimeout(() => {
+	                this.close();
+	              }, 2000);
+	            }
+	          }
+	        }).show();
+	      }
 	    },
 	    toggleIsCollapsed() {
 	      this.isCollapsed = !this.isCollapsed;
@@ -3615,45 +3702,47 @@ this.BX.Crm = this.BX.Crm || {};
 	      const rect = this.$el.getBoundingClientRect();
 	      return rect.top >= 0 && rect.left >= 0 && rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) && rect.right <= (window.innerWidth || document.documentElement.clientWidth);
 	    },
-	    onCopilotTextareaValueChange(event) {
-	      const copilotId = this.isCopilotEnabled ? this.copilotTextarea.getId() : '';
-	      const id = event.getData().id;
-	      if (this.isEdit && copilotId === id) {
-	        this.value = event.getData().value;
+	    getTextEditor() {
+	      if (this.textEditor !== null) {
+	        return this.textEditor;
 	      }
-	    },
-	    createCopilot(textarea) {
-	      if (this.isCopilotEnabled) {
-	        this.copilotTextarea = new crm_ai_copilotTextarea.CopilotTextarea({
-	          id: main_core.Text.getRandom(),
-	          target: textarea,
-	          copilotParams: this.copilotSettings
-	        });
-	        main_core_events.EventEmitter.subscribe(crm_ai_copilotTextarea.Events.EVENT_VALUE_CHANGE, this.onCopilotTextareaValueChange);
-	      }
-	    },
-	    destroyCopilot() {
-	      if (this.isCopilotEnabled) {
-	        main_core_events.EventEmitter.unsubscribe(crm_ai_copilotTextarea.Events.EVENT_VALUE_CHANGE, this.onCopilotTextareaValueChange);
-	        delete this.copilotTextarea;
-	      }
+	      this.textEditor = new ui_textEditor.BasicEditor({
+	        removePlugins: ['BlockToolbar'],
+	        maxHeight: 600,
+	        content: this.bbcode,
+	        paragraphPlaceholder: main_core.Loc.getMessage(main_core.Type.isPlainObject(this.copilotSettings) ? 'CRM_TIMELINE_ITEM_EDITABLE_DESCRIPTION_PLACEHOLDER_WITH_COPILOT' : null),
+	        toolbar: [],
+	        floatingToolbar: ['bold', 'italic', 'underline', 'strikethrough', '|', 'link', 'copilot'],
+	        visualOptions: {
+	          colorBackground: 'transparent',
+	          borderWidth: '0px',
+	          blockSpaceInline: '0px',
+	          blockSpaceStack: '0px'
+	        },
+	        copilot: {
+	          copilotOptions: main_core.Type.isPlainObject(this.copilotSettings) ? this.copilotSettings : null,
+	          triggerBySpace: true
+	        },
+	        events: {
+	          onMetaEnter: () => {
+	            this.saveText();
+	          },
+	          onEscape: () => {
+	            this.cancelEditing();
+	          },
+	          onEmptyContentToggle: event => {
+	            this.isContentEmpty = event.getData().isEmpty;
+	          }
+	        }
+	      });
+	      return this.textEditor;
 	    }
 	  },
 	  watch: {
 	    text(newTextValue) {
-	      // update text from push
-	      this.value = newTextValue;
-	      this.oldValue = newTextValue;
+	      this.bbcode = newTextValue;
 	      this.$nextTick(() => {
 	        this.isLongText = this.checkIsLongText();
-	      });
-	    },
-	    value() {
-	      if (!this.isEdit) {
-	        return;
-	      }
-	      this.$nextTick(() => {
-	        this.adjustHeight(this.$refs.textarea);
 	      });
 	    },
 	    isCollapsed(isCollapsed) {
@@ -3665,6 +3754,19 @@ this.BX.Crm = this.BX.Crm || {};
 	          });
 	        });
 	      }
+	    },
+	    isSaving(value) {
+	      if (this.textEditor !== null)
+	        // CommentContent uses this method as well
+	        {
+	          this.getTextEditor().setEditable(!value);
+	        }
+	    },
+	    isEdit(value) {
+	      if (value === false && this.textEditor !== null) {
+	        this.textEditor.destroy();
+	        this.textEditor = null;
+	      }
 	    }
 	  },
 	  mounted() {
@@ -3672,22 +3774,27 @@ this.BX.Crm = this.BX.Crm || {};
 	      this.isLongText = this.checkIsLongText();
 	    });
 	  },
-	  beforeUnmount() {
-	    this.destroyCopilot();
-	  },
 	  template: `
 		<div class="crm-timeline__editable-text_wrapper">
 			<div ref="rootElement" :class="className">
+				<button
+					v-if="this.isCopied"
+					ref="copyTextBtn"
+					@click="copyText"
+					class="crm-timeline__text_copy-btn"
+				>
+					<i class="crm-timeline__editable-text_fixed-icon --copy"></i>
+				</button>
 				<button
 					v-if="isEdit && isEditable"
 					:disabled="isSaving"
 					@click="clearText"
 					class="crm-timeline__editable-text_clear-btn"
 				>
-					<i class="crm-timeline__editable-text_clear-icon"></i>
+					<i class="crm-timeline__editable-text_fixed-icon --clear"></i>
 				</button>
 				<button
-					v-if="isLongText && !isEdit && isEditable && isEditButtonVisible"
+					v-if="!isEdit && isEditable && isEditButtonVisible"
 					:disabled="isSaving"
 					@click="startEditing"
 					class="crm-timeline__editable-text_edit-btn"
@@ -3696,29 +3803,16 @@ this.BX.Crm = this.BX.Crm || {};
 				</button>
 				<div class="crm-timeline__editable-text_inner">
 					<div class="crm-timeline__editable-text_content">
-						<textarea
+						<TextEditorComponent
 							v-if="isEdit"
-							ref="textarea"
-							v-model="value"
-							:disabled="!isEdit || isSaving"
-							:placeholder="placeholderText"
-							@keydown.esc="cancelEditing"
-							@keydown.enter="onPressEnter"
-							class="crm-timeline__editable-text_text"
-						></textarea>
+							:editor-instance="this.getTextEditor()"
+						/>
 						<span
 							v-else
 							ref="text"
 							class="crm-timeline__editable-text_text"
 						>
-							{{value}}
-						</span>
-						<span
-							v-if="!isEdit && !isLongText && isEditable && isEditButtonVisible"
-							@click="startEditing"
-							class="crm-timeline__editable-text_text-edit-icon"
-						>
-							<span class="crm-timeline__editable-text_edit-icon"></span>
+							<HtmlFormatterComponent :bbcode="bbcode" />
 						</span>
 					</div>
 					<div
@@ -3749,6 +3843,750 @@ this.BX.Crm = this.BX.Crm || {};
 			</div>
 		</div>
 	`
+	};
+
+	const TYPE_LOAD_FILES_BLOCK = 1;
+	const TYPE_LOAD_TEXT_CONTENT = 2;
+
+	/**
+	 * @extends EditableDescription
+	 */
+	var CommentContent = ui_vue3.BitrixVue.cloneComponent(EditableDescription, {
+	  props: {
+	    filesCount: {
+	      type: Number,
+	      required: false,
+	      default: 0
+	    },
+	    hasInlineFiles: {
+	      type: Boolean,
+	      required: false,
+	      default: false
+	    },
+	    loadAction: {
+	      type: Object,
+	      required: false,
+	      default: () => ({})
+	    }
+	  },
+	  data() {
+	    return {
+	      ...this.parentData(),
+	      value: this.text,
+	      oldValue: this.text,
+	      isTextLoaded: false,
+	      isTextChanged: false,
+	      isMoving: false,
+	      isFilesBlockDisplayed: this.filesCount > 0,
+	      filesHtmlBlock: null,
+	      loader: Object.freeze(null),
+	      editor: Object.freeze(null)
+	    };
+	  },
+	  computed: {
+	    textWrapperClassName() {
+	      return ['crm-timeline__editable-text_content', {
+	        '--is-editor-loaded': this.isEdit
+	      }];
+	    }
+	  },
+	  methods: {
+	    startEditing() {
+	      this.isEdit = true;
+	      this.isCollapsed = true;
+	      this.$nextTick(() => {
+	        this.editor.show(this.$refs.editor);
+	      });
+	      this.emitEvent('Comment:StartEdit');
+	    },
+	    cancelEditing() {
+	      if (!this.isEdit || this.isSaving) {
+	        return;
+	      }
+	      this.value = this.oldValue;
+	      this.isEdit = false;
+	      if (this.filesHtmlBlock) {
+	        void main_core.Runtime.html(this.$refs.files, this.filesHtmlBlock).then(() => {
+	          this.registerImages(this.$refs.files);
+	          BX.LazyLoad.showImages();
+	          this.emitEvent('Comment:FinishEdit');
+	        });
+	      } else {
+	        this.emitEvent('Comment:FinishEdit');
+	      }
+	    },
+	    toggleIsCollapsed() {
+	      this.parentToggleIsCollapsed();
+	      if (!this.isTextLoaded) {
+	        this.executeLoadAction(TYPE_LOAD_TEXT_CONTENT, this.$refs.text);
+	      }
+	    },
+	    checkIsLongText() {
+	      const textBlock = this.$refs.text;
+	      if (!textBlock) {
+	        return false;
+	      }
+	      const textBlockMaxHeightStyle = window.getComputedStyle(textBlock).getPropertyValue('--crm-timeline__editable-text_max-height');
+	      const textBlockMaxHeight = parseFloat(textBlockMaxHeightStyle.slice(0, -2));
+	      const root = this.filesCount > 0 ? this.$refs.rootElement : this.$refs.rootWrapperElement;
+	      const parentComputedStyles = window.getComputedStyle(root);
+	      const parentHeight = root.offsetHeight - parseFloat(parentComputedStyles.paddingTop) - parseFloat(parentComputedStyles.paddingBottom);
+	      const isLongText = parentHeight > textBlockMaxHeight;
+	      return isLongText || this.hasInlineFiles;
+	    },
+	    saveContent() {
+	      const isSaveDisabled = this.saveTextButtonState === ButtonState.LOADING || !this.isEdit || !this.saveAction;
+	      if (isSaveDisabled) {
+	        return;
+	      }
+	      const content = this.editor.getContent();
+	      if (!main_core.Type.isStringFilled(content)) {
+	        return;
+	      }
+	      const htmlContent = this.editor.getHtmlContent();
+	      const attachmentList = this.editor.getAttachments();
+	      const attachmentAllowEditOptions = this.editor.getAttachmentsAllowEditOptions(attachmentList);
+	      this.isSaving = true;
+	      void this.executeSaveAction(content, attachmentList, attachmentAllowEditOptions).then(() => {
+	        this.isEdit = false;
+	        if (!this.isTextChanged) {
+	          this.oldValue = htmlContent;
+	          this.value = htmlContent;
+	        }
+	        this.$nextTick(() => {
+	          this.isLongText = this.checkIsLongText();
+	          this.executeLoadAction(TYPE_LOAD_FILES_BLOCK, this.$refs.files);
+	        });
+	        this.emitEvent('Comment:FinishEdit');
+	      }).finally(() => {
+	        this.isSaving = false;
+	      });
+	    },
+	    executeSaveAction(content, attachmentList, attachmentAllowEditOptions) {
+	      var _actionDescription$ac;
+	      // to avoid unintended props mutation
+	      const actionDescription = main_core.Runtime.clone(this.saveAction);
+	      (_actionDescription$ac = actionDescription.actionParams) !== null && _actionDescription$ac !== void 0 ? _actionDescription$ac : actionDescription.actionParams = {};
+	      actionDescription.actionParams.id = actionDescription.actionParams.commentId;
+	      actionDescription.actionParams.fields = {
+	        COMMENT: content,
+	        ATTACHMENTS: attachmentList
+	      };
+	      if (Object.keys(attachmentAllowEditOptions).length > 0) {
+	        actionDescription.actionParams.CRM_TIMELINE_DISK_ATTACHED_OBJECT_ALLOW_EDIT = attachmentAllowEditOptions;
+	      }
+	      const action = new Action(actionDescription);
+	      return action.execute(this);
+	    },
+	    executeLoadAction(type, node) {
+	      var _actionDescription$ac2;
+	      if (this.filesCount === 0) {
+	        this.filesHtmlBlock = null;
+	        return;
+	      }
+	      if (!main_core.Type.isDomNode(node) || !this.loadAction) {
+	        return;
+	      }
+	      const actionDescription = main_core.Runtime.clone(this.loadAction);
+	      (_actionDescription$ac2 = actionDescription.actionParams) !== null && _actionDescription$ac2 !== void 0 ? _actionDescription$ac2 : actionDescription.actionParams = {};
+	      actionDescription.actionParams.options = type;
+	      const action = new Action(actionDescription);
+	      this.showLoader(true);
+	      action.execute(this).then(response => {
+	        if (type === TYPE_LOAD_FILES_BLOCK) {
+	          this.filesHtmlBlock = response.data.html;
+	        } else if (type === TYPE_LOAD_TEXT_CONTENT) {
+	          this.isTextLoaded = true;
+	        }
+	        void main_core.Runtime.html(node, response.data.html).then(() => {
+	          this.registerImages(node);
+	          BX.LazyLoad.showImages();
+	          this.showLoader(false);
+	        });
+	      }).catch(() => {
+	        if (type === TYPE_LOAD_FILES_BLOCK) {
+	          this.filesHtmlBlock = null;
+	        } else if (type === TYPE_LOAD_TEXT_CONTENT) {
+	          this.isTextLoaded = false;
+	        }
+	        this.showLoader(false);
+	      });
+	    },
+	    registerImages(node) {
+	      if (!main_core.Type.isDomNode(node)) {
+	        return;
+	      }
+	      const idsList = [];
+	      const commentImages = node.querySelectorAll('[data-viewer-type="image"]');
+	      const commentImagesLength = commentImages.length;
+	      if (commentImagesLength > 0) {
+	        for (let i = 0; i < commentImagesLength; ++i) {
+	          if (main_core.Type.isDomNode(commentImages[i])) {
+	            commentImages[i].id += BX.util.getRandomString(4);
+	            idsList.push(commentImages[i].id);
+	          }
+	        }
+	        if (idsList.length > 0) {
+	          BX.LazyLoad.registerImages(idsList, null, {
+	            dataSrcName: 'thumbSrc'
+	          });
+	        }
+	      }
+	      BX.LazyLoad.registerImages(idsList, null, {
+	        dataSrcName: 'thumbSrc'
+	      });
+	    },
+	    showLoader(showLoader) {
+	      if (showLoader) {
+	        if (!this.loader) {
+	          this.loader = new main_loader.Loader({
+	            size: 20,
+	            mode: 'inline'
+	          });
+	        }
+	        this.loader.show(this.$refs.files);
+	      } else if (this.loader) {
+	        this.loader.hide();
+	      }
+	    },
+	    createEditor() {
+	      this.editor = new crm_timeline_editors_commentEditor.CommentEditor(this.loadAction.actionParams.commentId);
+	    },
+	    setIsMoving(flag = true) {
+	      this.isMoving = flag;
+	    },
+	    setIsFilesBlockDisplayed(flag = true) {
+	      this.isFilesBlockDisplayed = flag;
+	      if (this.filesHtmlBlock) {
+	        void main_core.Runtime.html(this.$refs.files, this.filesHtmlBlock).then(() => {
+	          this.registerImages(this.$refs.files);
+	          BX.LazyLoad.showImages();
+	        });
+	      }
+	    }
+	  },
+	  watch: {
+	    text(newValue) {
+	      this.value = newValue;
+	      this.oldValue = newValue;
+	      this.isTextChanged = true;
+	      this.$nextTick(() => {
+	        this.isLongText = this.checkIsLongText();
+	        this.executeLoadAction(TYPE_LOAD_FILES_BLOCK, this.$refs.files);
+	      });
+	    },
+	    value(newValue) {
+	      if (!this.isEdit) {
+	        return;
+	      }
+	      this.value = newValue;
+	      this.oldValue = newValue;
+	    },
+	    filesCount(newValue) {
+	      if (this.isMoving) {
+	        return;
+	      }
+	      this.isFilesBlockDisplayed = newValue > 0;
+	      this.$nextTick(() => {
+	        this.executeLoadAction(TYPE_LOAD_FILES_BLOCK, this.$refs.files);
+	      });
+	    }
+	  },
+	  mounted() {
+	    this.createEditor();
+	    this.$nextTick(() => {
+	      this.isLongText = this.checkIsLongText();
+	      this.executeLoadAction(TYPE_LOAD_FILES_BLOCK, this.$refs.files);
+	    });
+	  },
+	  updated() {
+	    this.createEditor();
+	  },
+	  template: `
+		<div ref="rootWrapperElement" class="crm-timeline__editable-text_wrapper --comment">
+			<div ref="rootElement" :class="className">
+				<button
+					v-if="isLongText && !isEdit && isEditable && isEditButtonVisible"
+					:disabled="isSaving"
+					@click="startEditing"
+					class="crm-timeline__editable-text_edit-btn"
+				>
+					<i class="crm-timeline__editable-text_edit-icon"></i>
+				</button>
+				<div class="crm-timeline__editable-text_inner">
+					<div :class="textWrapperClassName">
+						<div
+							v-if="isEdit"
+							ref="editor"
+							:disabled="!isEdit || isSaving"
+							class="crm-timeline__editable-text_editor"
+						></div>
+						<span 
+							v-else
+							ref="text"
+							class="crm-timeline__editable-text_text"
+							v-html="value"
+						>
+						</span>
+						<span
+							v-if="!isEdit && !isLongText && isEditable && isEditButtonVisible"
+							@click="startEditing"
+							class="crm-timeline__editable-text_text-edit-icon"
+						>
+							<span class="crm-timeline__editable-text_edit-icon"></span>
+						</span>
+					</div>
+					<div
+						v-if="isEdit"
+						class="crm-timeline__editable-text_actions"
+					>
+						<div class="crm-timeline__editable-text_action">
+							<Button
+								v-bind="saveTextButtonProps"
+								@click="saveContent"
+							/>
+						</div>
+						<div class="crm-timeline__editable-text_action">
+							<Button
+								v-bind="cancelEditingButtonProps"
+								@click="cancelEditing"
+							/>
+						</div>
+					</div>
+				</div>
+				<button
+					v-if="isLongText && !isEdit"
+					@click="toggleIsCollapsed"
+					class="crm-timeline__editable-text_collapse-btn"
+				>
+					{{ expandButtonText }}
+				</button>
+			</div>
+			<div
+				v-if="!isEdit && isFilesBlockDisplayed"
+				ref="files"
+				class="crm-timeline__comment_files_wrapper"
+				:class="{'--long-comment': isLongText}"
+				v-html="filesHtmlBlock"
+			>
+			</div>
+		</div>
+	`
+	});
+
+	let TextColor = function TextColor() {
+	  babelHelpers.classCallCheck(this, TextColor);
+	};
+	babelHelpers.defineProperty(TextColor, "GREEN", 'green');
+	babelHelpers.defineProperty(TextColor, "BASE_50", 'base-50');
+	babelHelpers.defineProperty(TextColor, "BASE_60", 'base-60');
+	babelHelpers.defineProperty(TextColor, "BASE_70", 'base-70');
+	babelHelpers.defineProperty(TextColor, "BASE_90", 'base-90');
+
+	let TextWeight = function TextWeight() {
+	  babelHelpers.classCallCheck(this, TextWeight);
+	};
+	babelHelpers.defineProperty(TextWeight, "NORMAL", 'normal');
+	babelHelpers.defineProperty(TextWeight, "MEDIUM", 'medium');
+	babelHelpers.defineProperty(TextWeight, "BOLD", 'bold');
+
+	let TextSize = function TextSize() {
+	  babelHelpers.classCallCheck(this, TextSize);
+	};
+	babelHelpers.defineProperty(TextSize, "XS", 'xs');
+	babelHelpers.defineProperty(TextSize, "SM", 'sm');
+	babelHelpers.defineProperty(TextSize, "MD", 'md');
+
+	let TextDecoration = function TextDecoration() {
+	  babelHelpers.classCallCheck(this, TextDecoration);
+	};
+	babelHelpers.defineProperty(TextDecoration, "NONE", 'none');
+	babelHelpers.defineProperty(TextDecoration, "UNDERLINE", 'underline');
+	babelHelpers.defineProperty(TextDecoration, "DOTTED", 'dotted');
+	babelHelpers.defineProperty(TextDecoration, "DASHED", 'dashed');
+
+	var Text = {
+	  props: {
+	    value: String | Number,
+	    title: {
+	      type: String,
+	      required: false,
+	      default: ''
+	    },
+	    color: {
+	      type: String,
+	      required: false,
+	      default: ''
+	    },
+	    weight: {
+	      type: String,
+	      required: false,
+	      default: 'normal'
+	    },
+	    size: {
+	      type: String,
+	      required: false,
+	      default: 'md'
+	    },
+	    multiline: {
+	      type: Boolean,
+	      required: false,
+	      default: false
+	    },
+	    decoration: {
+	      type: String,
+	      required: false,
+	      default: ''
+	    }
+	  },
+	  computed: {
+	    className() {
+	      return ['crm-timeline__text-block', this.colorClassname, this.weightClassname, this.sizeClassname, this.decorationClassname];
+	    },
+	    colorClassname() {
+	      var _TextColor$upperCaseC;
+	      const upperCaseColorProp = this.color ? this.color.toUpperCase() : '';
+	      const color = (_TextColor$upperCaseC = TextColor[upperCaseColorProp]) !== null && _TextColor$upperCaseC !== void 0 ? _TextColor$upperCaseC : '';
+	      return `--color-${color}`;
+	    },
+	    weightClassname() {
+	      var _TextWeight$upperCase;
+	      const upperCaseWeightProp = this.weight ? this.weight.toUpperCase() : '';
+	      const weight = (_TextWeight$upperCase = TextWeight[upperCaseWeightProp]) !== null && _TextWeight$upperCase !== void 0 ? _TextWeight$upperCase : TextWeight.NORMAL;
+	      return `--weight-${weight}`;
+	    },
+	    sizeClassname() {
+	      var _TextSize$upperCaseSi;
+	      const upperCaseSizeProp = this.size ? this.size.toUpperCase() : '';
+	      const size = (_TextSize$upperCaseSi = TextSize[upperCaseSizeProp]) !== null && _TextSize$upperCaseSi !== void 0 ? _TextSize$upperCaseSi : TextSize.SM;
+	      return `--size-${size}`;
+	    },
+	    decorationClassname() {
+	      var _TextDecoration$upper;
+	      const upperCaseDecorationProp = this.decoration ? this.decoration.toUpperCase() : '';
+	      if (!upperCaseDecorationProp) {
+	        return '';
+	      }
+	      const decoration = (_TextDecoration$upper = TextDecoration[upperCaseDecorationProp]) !== null && _TextDecoration$upper !== void 0 ? _TextDecoration$upper : TextDecoration.NONE;
+	      return `--decoration-${decoration}`;
+	    },
+	    encodedText() {
+	      let text = main_core.Text.encode(this.value);
+	      if (this.multiline) {
+	        text = text.replace(/\n/g, '<br />');
+	      }
+	      return text;
+	    }
+	  },
+	  template: `
+		<span
+			:title="title"
+			:class="className"
+			v-html="encodedText"
+		></span>
+	`
+	};
+
+	var DateBlock = {
+	  props: {
+	    withTime: {
+	      type: Boolean,
+	      required: false,
+	      default: true
+	    },
+	    format: {
+	      type: String,
+	      required: false,
+	      default: null
+	    },
+	    duration: {
+	      type: Number,
+	      required: false,
+	      default: null
+	    }
+	  },
+	  extends: Text,
+	  methods: {
+	    getFormattedDate() {
+	      const datetimeConverter = this.getDatetimeConverter();
+	      if (this.format) {
+	        return datetimeConverter.toFormatString(this.format);
+	      }
+	      const options = {
+	        delimiter: ', ',
+	        withDayOfWeek: true,
+	        withFullMonth: true
+	      };
+	      return this.withTime ? datetimeConverter.toDatetimeString(options) : datetimeConverter.toDateString();
+	    },
+	    getDatetimeConverter() {
+	      return crm_timeline_tools.DatetimeConverter.createFromServerTimestamp(this.value).toUserTime();
+	    },
+	    getDatetimeConverterWithDuration() {
+	      return crm_timeline_tools.DatetimeConverter.createFromServerTimestamp(this.value + this.duration).toUserTime();
+	    }
+	  },
+	  computed: {
+	    encodedText() {
+	      const formattedDate = this.getFormattedDate();
+	      if (!main_core.Type.isNumber(this.duration)) {
+	        return main_core.Text.encode(formattedDate);
+	      }
+	      const converterWithDuration = this.getDatetimeConverterWithDuration();
+	      return main_core.Text.encode(`${formattedDate}-${converterWithDuration.toTimeString()}`);
+	    }
+	  },
+	  template: Text.template
+	};
+
+	const DatePillColor = Object.freeze({
+	  DEFAULT: 'default',
+	  WARNING: 'warning',
+	  NONE: 'none'
+	});
+	const PillStyle = Object.freeze({
+	  DEFAULT: 'pill',
+	  INLINE_GROUP: 'pill-inline-group'
+	});
+	var DatePill = {
+	  props: {
+	    value: Number,
+	    withTime: Boolean,
+	    duration: {
+	      type: Number,
+	      required: false,
+	      default: null
+	    },
+	    backgroundColor: {
+	      type: String,
+	      required: false,
+	      default: DatePillColor.DEFAULT,
+	      validator(value) {
+	        return Object.values(DatePillColor).includes(value);
+	      }
+	    },
+	    action: Object | null,
+	    styleValue: String
+	  },
+	  inject: ['isReadOnly'],
+	  data() {
+	    return {
+	      currentTimestamp: this.value,
+	      initialTimestamp: this.value
+	    };
+	  },
+	  computed: {
+	    className() {
+	      return ['crm-timeline__date-pill', `--color-${this.backgroundColor}`, {
+	        '--readonly': this.isPillReadonly
+	      }, {
+	        '--inline-group': this.styleValue === PillStyle.INLINE_GROUP
+	      }];
+	    },
+	    formattedDate() {
+	      if (!this.currentTimestamp) {
+	        return null;
+	      }
+	      const converter = this.getDatetimeConverter();
+	      let result = converter.toDatetimeString({
+	        withDayOfWeek: true,
+	        withFullMonth: true,
+	        delimiter: ', '
+	      });
+	      if (main_core.Type.isNumber(this.duration)) {
+	        const converterWithDuration = this.getDatetimeConverterWithDuration();
+	        result = `${result}-${converterWithDuration.toTimeString()}`;
+	      }
+	      return result;
+	    },
+	    currentDateInSiteFormat() {
+	      return main_date.DateTimeFormat.format(this.withTime ? crm_timeline_tools.DatetimeConverter.getSiteDateTimeFormat() : crm_timeline_tools.DatetimeConverter.getSiteDateFormat(), this.getDatetimeConverter().getValue());
+	    },
+	    calendarParams() {
+	      return {
+	        value: this.currentDateInSiteFormat,
+	        bTime: this.withTime,
+	        bHideTime: !this.withTime,
+	        bSetFocus: false
+	      };
+	    },
+	    isPillReadonly() {
+	      return this.isReadOnly || !this.action;
+	    }
+	  },
+	  watch: {
+	    value(newDate)
+	    // update date from push
+	    {
+	      this.initialTimestamp = newDate;
+	      this.currentTimestamp = newDate;
+	    }
+	  },
+	  methods: {
+	    openCalendar(event) {
+	      if (this.isPillReadonly) {
+	        return;
+	      }
+
+	      // eslint-disable-next-line @bitrix24/bitrix24-rules/no-bx
+	      BX.calendar({
+	        node: event.target,
+	        callback_after: newDate => {
+	          // we assume that user selected time in his timezone
+	          this.currentTimestamp = main_date.Timezone.UserTime.toUTCTimestamp(newDate);
+	          this.executeAction();
+	        },
+	        ...this.calendarParams
+	      });
+	    },
+	    executeAction() {
+	      var _actionDescription$ac;
+	      if (!this.action) {
+	        return;
+	      }
+	      if (this.currentTimestamp === this.initialTimestamp) {
+	        return;
+	      }
+
+	      // to avoid unintended props mutation
+	      const actionDescription = main_core.Runtime.clone(this.action);
+	      (_actionDescription$ac = actionDescription.actionParams) !== null && _actionDescription$ac !== void 0 ? _actionDescription$ac : actionDescription.actionParams = {};
+	      actionDescription.actionParams.value = this.currentDateInSiteFormat;
+	      actionDescription.actionParams.valueTs = this.currentTimestamp;
+	      const action = new Action(actionDescription);
+	      action.execute(this);
+	      this.initialTimestamp = this.currentTimestamp;
+	      this.$emit('onChange', this.initialTimestamp);
+	    },
+	    getDatetimeConverter() {
+	      return crm_timeline_tools.DatetimeConverter.createFromServerTimestamp(this.currentTimestamp).toUserTime();
+	    },
+	    getDatetimeConverterWithDuration() {
+	      return crm_timeline_tools.DatetimeConverter.createFromServerTimestamp(this.currentTimestamp + this.duration).toUserTime();
+	    }
+	  },
+	  template: `
+		<span
+			:class="className"
+			@click="openCalendar"
+		>
+			<span>
+				{{ formattedDate }}
+			</span>
+			<span class="crm-timeline__date-pill_caret"></span>
+		</span>`
+	};
+
+	var Link = {
+	  props: {
+	    text: String,
+	    action: Object,
+	    title: {
+	      type: String,
+	      required: false,
+	      default: ''
+	    },
+	    color: {
+	      type: String,
+	      required: false,
+	      default: ''
+	    },
+	    bold: {
+	      type: Boolean,
+	      required: false,
+	      default: false
+	    },
+	    decoration: {
+	      type: String,
+	      required: false,
+	      default: ''
+	    },
+	    icon: {
+	      type: String,
+	      required: false,
+	      default: ''
+	    }
+	  },
+	  computed: {
+	    href() {
+	      if (!this.action) {
+	        return null;
+	      }
+	      const action = new Action(this.action);
+	      if (action.isRedirect()) {
+	        return action.getValue();
+	      }
+	      return null;
+	    },
+	    linkAttrs() {
+	      if (!this.action) {
+	        return {};
+	      }
+	      const action = new Action(this.action);
+	      if (!action.isRedirect()) {
+	        return {};
+	      }
+	      const attrs = {
+	        href: action.getValue()
+	      };
+	      const target = action.getActionParam('target');
+	      if (target) {
+	        attrs.target = target;
+	      }
+	      return attrs;
+	    },
+	    className() {
+	      return ['crm-timeline__card_link', this.colorClassName, this.boldClassName, this.decorationClassName];
+	    },
+	    colorClassName() {
+	      var _TextColor$upperCaseC;
+	      const upperCaseColorProp = this.color ? this.color.toUpperCase() : '';
+	      const color = (_TextColor$upperCaseC = TextColor[upperCaseColorProp]) !== null && _TextColor$upperCaseC !== void 0 ? _TextColor$upperCaseC : '';
+	      return `--color-${color}`;
+	    },
+	    boldClassName() {
+	      return this.bold ? '--bold' : '';
+	    },
+	    decorationClassName() {
+	      var _TextDecoration$upper;
+	      const upperCaseDecorationProp = this.decoration ? this.decoration.toUpperCase() : '';
+	      if (!upperCaseDecorationProp) {
+	        return '';
+	      }
+	      const decoration = (_TextDecoration$upper = TextDecoration[upperCaseDecorationProp]) !== null && _TextDecoration$upper !== void 0 ? _TextDecoration$upper : TextDecoration.NONE;
+	      return `--decoration-${decoration}`;
+	    },
+	    iconClassName() {
+	      if (!this.icon) {
+	        return [];
+	      }
+	      return ['crm-timeline__card_link_icon', `--code-${this.icon}`];
+	    }
+	  },
+	  methods: {
+	    executeAction() {
+	      if (this.action) {
+	        const action = new Action(this.action);
+	        action.execute(this);
+	      }
+	    }
+	  },
+	  template: `
+			<a
+				v-if="href"
+				v-bind="linkAttrs"
+				:class="className"
+				:title="title"
+			>{{text}}<span v-if="icon" :class="iconClassName"></span>
+			</a>
+			<span
+				v-else
+				@click="executeAction"
+				:class="className"
+				:title="title"
+			>{{text}}<span v-if="icon" :class="iconClassName"></span>
+			</span>
+		`
 	};
 
 	var EditableDate = {
@@ -3831,37 +4669,616 @@ this.BX.Crm = this.BX.Crm || {};
 	  template: `<Link @click="openCalendar" v-bind="textProps"></Link>`
 	};
 
-	const PlayerAlert = {
+	var EditableText = ui_vue3.BitrixVue.cloneComponent(Text, {
 	  components: {
-	    LineOfTextBlocks
+	    Text
 	  },
+	  props: {
+	    action: Object
+	  },
+	  data() {
+	    return {
+	      isEdit: false,
+	      currentValue: this.value,
+	      initialValue: this.value,
+	      actionTimeoutId: null
+	    };
+	  },
+	  computed: {
+	    textProps() {
+	      return {
+	        ...this.$props,
+	        value: this.currentValue
+	      };
+	    }
+	  },
+	  methods: {
+	    enableEdit() {
+	      this.cancelScheduledActionExecution();
+	      this.isEdit = true;
+	      this.$nextTick(() => {
+	        this.$refs.input.focus();
+	      });
+	    },
+	    disableEdit() {
+	      this.isEdit = false;
+	      this.scheduleActionExecution();
+	    },
+	    scheduleActionExecution() {
+	      this.cancelScheduledActionExecution();
+	      this.actionTimeoutId = setTimeout(this.executeAction.bind(this), 3 * 1000);
+	    },
+	    cancelScheduledActionExecution() {
+	      if (this.actionTimeoutId) {
+	        clearTimeout(this.actionTimeoutId);
+	        this.actionTimeoutId = null;
+	      }
+	    },
+	    executeAction() {
+	      var _actionDescription$ac;
+	      if (!this.action || this.currentValue === this.initialValue) {
+	        return;
+	      }
+
+	      // to avoid unintended props mutation
+	      const actionDescription = main_core.Runtime.clone(this.action);
+	      (_actionDescription$ac = actionDescription.actionParams) !== null && _actionDescription$ac !== void 0 ? _actionDescription$ac : actionDescription.actionParams = {};
+	      actionDescription.actionParams.value = this.currentValue;
+	      const action = new Action(actionDescription);
+	      action.execute(this);
+	      this.initialValue = this.currentValue;
+	    }
+	  },
+	  template: `
+			<input
+				v-if="isEdit"
+				ref="input"
+				type="text"
+				v-model.trim="currentValue"
+				@focusout="disableEdit"
+			>
+			<Text
+				v-else
+				v-bind="textProps"
+				@click="enableEdit"
+			/>
+		`
+	});
+
+	let LogoType = function LogoType() {
+	  babelHelpers.classCallCheck(this, LogoType);
+	};
+	babelHelpers.defineProperty(LogoType, "CALL_AUDIO_PLAY", 'call-play-record');
+	babelHelpers.defineProperty(LogoType, "CALL_AUDIO_PAUSE", 'call-pause-record');
+
+	const TimelineAudio = crm_audioPlayer.AudioPlayer.getComponent({
+	  methods: {
+	    changeLogoIcon(icon) {
+	      if (!this.$parent || !this.$parent.getLogo) {
+	        return;
+	      }
+	      const logo = this.$parent.getLogo();
+	      if (!logo) {
+	        return;
+	      }
+	      logo.setIcon(icon);
+	    },
+	    audioEventRouterWrapper(eventName, event) {
+	      this.audioEventRouter(eventName, event);
+	      if (eventName === 'play') {
+	        this.changeLogoIcon(LogoType.CALL_AUDIO_PAUSE);
+	      }
+	      if (eventName === 'pause') {
+	        this.changeLogoIcon(LogoType.CALL_AUDIO_PLAY);
+	      }
+	    }
+	  }
+	});
+
+	var File = {
+	  components: {
+	    TimelineAudio
+	  },
+	  props: {
+	    id: Number,
+	    text: String,
+	    href: String,
+	    size: Number,
+	    attributes: Object,
+	    hasAudioPlayer: {
+	      type: Boolean,
+	      required: false,
+	      default: false
+	    }
+	  },
+	  computed: {
+	    fileExtension() {
+	      return this.text.split('.').slice(-1)[0] || '';
+	    },
+	    titleFirstPart() {
+	      return this.text.slice(0, -this.titleLastPartSize);
+	    },
+	    titleLastPart() {
+	      return this.text.slice(-this.titleLastPartSize);
+	    },
+	    titleLastPartSize() {
+	      return 10;
+	    }
+	  },
+	  mounted() {
+	    const fileIcon = new ui_icons_generator.FileIcon({
+	      name: this.fileExtension
+	    });
+	    fileIcon.renderTo(this.$refs.icon);
+	  },
+	  template: `
+		<div class="crm-timeline__file">
+			<div ref="icon" class="crm-timeline__file_icon"></div>
+			<a
+				target="_blank"
+				class="crm-timeline__file_title crm-timeline__card_link"
+				v-if="href"
+				:title="text"
+				:href="href"
+				v-bind="attributes"
+				ref="title"
+			>
+				<span>{{ titleFirstPart }}</span>
+				<span>{{ titleLastPart }}</span>
+			</a>
+			<div class="crm-timeline__file_audio-player" v-if="this.hasAudioPlayer">
+				<TimelineAudio :id="id" :mini="true" :src="href"></TimelineAudio>
+			</div>
+		</div>
+		`
+	};
+
+	const FileList = {
+	  components: {
+	    File,
+	    BIcon: ui_iconSet_api_vue.BIcon
+	  },
+	  props: {
+	    title: {
+	      type: String,
+	      required: false,
+	      default: ''
+	    },
+	    numberOfFiles: {
+	      type: Number,
+	      required: false,
+	      default: 0
+	    },
+	    files: {
+	      type: Array,
+	      required: true,
+	      default: []
+	    },
+	    updateParams: {
+	      type: Object,
+	      required: false,
+	      default: {}
+	    },
+	    visibleFilesNumber: {
+	      type: Number,
+	      required: false,
+	      default: 5
+	    }
+	  },
+	  inject: ['isReadOnly'],
+	  data() {
+	    return {
+	      visibleFilesAmount: this.visibleFilesNumber
+	    };
+	  },
+	  computed: {
+	    isEditable() {
+	      return Object.keys(this.updateParams).length > 0 && !this.isReadOnly;
+	    },
+	    visibleFiles() {
+	      return this.files.slice(0, this.visibleFilesAmount);
+	    },
+	    editFilesBtnClassname() {
+	      return ['crm-timeline__file-list-btn', {
+	        '--disabled': !this.isEditable
+	      }];
+	    },
+	    expandFileListBtnTitle() {
+	      return this.isAllFilesVisible ? this.$Bitrix.Loc.getMessage('CRM_TIMELINE_ITEM_FILE_LIST_COLLAPSE') : this.$Bitrix.Loc.getMessage('CRM_TIMELINE_ITEM_FILE_LIST_EXPAND');
+	    },
+	    editFilesBtnIcon() {
+	      return ui_iconSet_api_vue.Set.PENCIL_40;
+	    },
+	    addVisibleFilesBtnIcon() {
+	      return ui_iconSet_api_vue.Set.CHEVRON_DOWN;
+	    },
+	    isAllFilesVisible() {
+	      return this.visibleFilesAmount === this.numberOfFiles;
+	    },
+	    isShowExpandFileListBtn() {
+	      return this.numberOfFiles > this.visibleFilesNumber;
+	    },
+	    expandBtnIconClassname() {
+	      return ['crm-timeline__file-list-btn-icon', {
+	        '--upended': this.isAllFilesVisible
+	      }];
+	    }
+	  },
+	  methods: {
+	    fileProps(file) {
+	      return {
+	        id: file.id,
+	        text: file.name,
+	        href: file.viewUrl,
+	        size: file.size,
+	        attributes: file.attributes,
+	        hasAudioPlayer: file.hasAudioPlayer
+	      };
+	    },
+	    showFileUploaderPopup() {
+	      if (!this.isEditable) {
+	        return;
+	      }
+	      const popup = new crm_activity_fileUploaderPopup.FileUploaderPopup(this.updateParams);
+	      popup.show();
+	    },
+	    handleShowFilesBtnClick() {
+	      if (this.isAllFilesVisible) {
+	        this.collapseFileList();
+	      } else {
+	        this.expandFileList();
+	      }
+	    },
+	    expandFileList() {
+	      this.visibleFilesAmount = this.numberOfFiles;
+	    },
+	    collapseFileList() {
+	      this.visibleFilesAmount = this.visibleFilesNumber;
+	    }
+	  },
+	  template: `
+			<div class="crm-timeline__file-list-wrapper">
+				<div class="crm-timeline__file-list-container">
+					<div
+						class="crm-timeline__file-container"
+						v-for="file in visibleFiles"
+					>
+						<File :key="file.id" v-bind="fileProps(file)"></File>
+					</div>
+				</div>
+				<footer class="crm-timeline__file-list-footer">
+					<div
+						v-if="isShowExpandFileListBtn"
+						class="crm-timeline__file-list-btn-container"
+					>
+						<button
+							class="crm-timeline__file-list-btn"
+							@click="handleShowFilesBtnClick"
+						>
+							<span class="crm-timeline__file-list-btn-text">{{expandFileListBtnTitle}}</span>
+							<i :class="expandBtnIconClassname">
+								<BIcon :name="addVisibleFilesBtnIcon" :size="18"></BIcon>
+							</i>
+						</button>
+					</div>
+					<div
+						v-if="isEditable"
+						class="crm-timeline__file-list-btn-container"
+					>
+						<button
+							v-if="title !== '' || numberOfFiles > 0"
+							@click="showFileUploaderPopup"
+							:class="editFilesBtnClassname"
+						>
+							<span class="crm-timeline__file-list-btn-text">{{ title }}</span>
+							<i class="crm-timeline__file-list-btn-icon">
+								<BIcon :name="editFilesBtnIcon" :size="18"></BIcon>
+							</i>
+							<i ref="edit-icon" class="crm-timeline__file-list-btn-icon"></i>
+					</button>
+					</div>
+				</footer>
+			</div>
+		`
+	};
+
+	const InfoGroup = {
 	  props: {
 	    blocks: {
 	      type: Object,
 	      required: false,
 	      default: () => ({})
-	    },
-	    color: {
-	      type: String,
-	      required: false,
-	      default: ui_alerts.AlertColor.DEFAULT
-	    },
-	    icon: {
-	      type: String,
-	      required: false,
-	      default: ui_alerts.AlertIcon.NONE
-	    }
-	  },
-	  computed: {
-	    containerClassname() {
-	      return ['crm-timeline__player-alert', 'ui-alert', 'ui-alert-xs', 'ui-alert-text-center', this.color, this.icon];
 	    }
 	  },
 	  template: `
-		<div :class="containerClassname">
-			<div class="ui-alert-message">
-				<LineOfTextBlocks :blocks="blocks"></LineOfTextBlocks>
-			</div>
+		<table class="crm-timeline__info-group">
+			<tbody>
+				<tr
+					v-for="({title, block}, id) in blocks"
+					:key="id"
+					class="crm-timeline__info-group_block"
+				>
+					<td
+						:title="title"
+						class="crm-timeline__info-group_block-title"
+					>
+						{{title}}
+					</td>
+					<td class="crm-timeline__info-group_block-content">
+						<component
+							:is="block.rendererName"
+							v-bind="block.properties"
+						/>
+					</td>
+				</tr>
+			</tbody>
+		</table>
+	`
+	};
+
+	const SAVE_OFFSETS_REQUEST_DELAY = 1000;
+	var ItemSelector = {
+	  props: {
+	    valuesList: {
+	      type: Array,
+	      required: true,
+	      default: []
+	    },
+	    value: {
+	      type: Array,
+	      default: []
+	    },
+	    saveAction: {
+	      type: Object,
+	      required: true
+	    },
+	    compactMode: {
+	      type: Boolean,
+	      default: false
+	    },
+	    icon: {
+	      type: String,
+	      default: null,
+	      required: false
+	    }
+	  },
+	  methods: {
+	    onItemSelectorValueChange(event) {
+	      main_core.Runtime.debounce(() => {
+	        const data = event.getData();
+	        if (data) {
+	          this.executeSaveAction(data.value);
+	        }
+	      }, SAVE_OFFSETS_REQUEST_DELAY, this)();
+	    },
+	    executeSaveAction(items) {
+	      var _actionDescription$ac;
+	      if (!this.saveAction) {
+	        return;
+	      }
+	      if (this.value.sort().toString() === items.sort().toString()) {
+	        return;
+	      }
+
+	      // to avoid unintended props mutation
+	      const actionDescription = main_core.Runtime.clone(this.saveAction);
+	      (_actionDescription$ac = actionDescription.actionParams) !== null && _actionDescription$ac !== void 0 ? _actionDescription$ac : actionDescription.actionParams = {};
+	      actionDescription.actionParams.value = items;
+	      const action = new Action(actionDescription);
+	      void action.execute(this);
+	    }
+	  },
+	  mounted() {
+	    var _this$compactMode;
+	    this.itemSelector = new crm_field_itemSelector.ItemSelector({
+	      target: this.$el,
+	      valuesList: this.valuesList,
+	      selectedValues: this.value,
+	      compactMode: (_this$compactMode = this.compactMode) !== null && _this$compactMode !== void 0 ? _this$compactMode : false,
+	      icon: main_core.Type.isStringFilled(this.icon) ? this.icon : null
+	    });
+	    main_core_events.EventEmitter.subscribe(this.itemSelector, crm_field_itemSelector.Events.EVENT_ITEMSELECTOR_VALUE_CHANGE, this.onItemSelectorValueChange);
+	  },
+	  beforeUnmount() {
+	    main_core_events.EventEmitter.unsubscribe(this.itemSelector, crm_field_itemSelector.Events.EVENT_ITEMSELECTOR_VALUE_CHANGE, this.onItemSelectorValueChange);
+	  },
+	  computed: {
+	    styles() {
+	      if (this.compactMode) {
+	        return {};
+	      }
+	      return {
+	        width: '100%'
+	      };
+	    }
+	  },
+	  template: '<div :style="styles"></div>'
+	};
+
+	var LineOfTextBlocks = {
+	  props: {
+	    blocks: Object,
+	    delimiter: String,
+	    button: Object
+	  },
+	  mounted() {
+	    const blocks = this.$refs.blocks;
+	    this.visibleBlocks.forEach((block, index) => {
+	      if (main_core.Type.isDomNode(blocks[index].$el)) {
+	        blocks[index].$el.setAttribute('data-id', block.id);
+	      } else {
+	        throw new Error(`Vue component "${block.rendererName}" was not found`);
+	      }
+	    });
+	  },
+	  methods: {
+	    isShowDelimiter(index, length) {
+	      return main_core.Type.isString(this.delimiter) && !this.isLastElement(index, length);
+	    },
+	    isLastElement(index, length) {
+	      return index === length - 1;
+	    }
+	  },
+	  computed: {
+	    visibleBlocks() {
+	      if (!main_core.Type.isObject(this.blocks)) {
+	        return [];
+	      }
+	      const blocks = Object.keys(this.blocks).map(id => ({
+	        id,
+	        ...this.blocks[id]
+	      })).filter(item => item.scope !== 'mobile');
+	      if (main_core.Type.isObject(this.button)) {
+	        blocks.push({
+	          id: 'button',
+	          ...this.button
+	        });
+	      }
+	      return blocks;
+	    },
+	    formattedDelimiter() {
+	      return main_core.Text.encode(this.delimiter).replace(' ', '&nbsp;');
+	    }
+	  },
+	  // language=Vue
+	  template: `
+		<span class="crm-timeline-block-line-of-texts">
+			<span
+				v-for="(block, index) in visibleBlocks"
+				:key="block.id"
+			>
+				<component 
+					:is="block.rendererName"
+					v-bind="block.properties"
+					ref="blocks"
+				/>
+				<span v-if="isShowDelimiter(index, visibleBlocks.length)" v-html="formattedDelimiter"></span>
+				<span v-else-if="!isLastElement(index, visibleBlocks.length)">&nbsp;</span>
+			</span>
+		</span>
+	`
+	};
+
+	var LineOfTextBlocksButton = {
+	  props: {
+	    action: Object,
+	    icon: {
+	      type: String,
+	      required: false,
+	      default: ''
+	    },
+	    title: String
+	  },
+	  computed: {
+	    href() {
+	      if (!this.action) {
+	        return null;
+	      }
+	      const action = new Action(this.action);
+	      if (action.isRedirect()) {
+	        return action.getValue();
+	      }
+	      return null;
+	    },
+	    linkAttrs() {
+	      if (!this.action) {
+	        return {};
+	      }
+	      const action = new Action(this.action);
+	      if (!action.isRedirect()) {
+	        return {};
+	      }
+	      const attrs = {
+	        href: action.getValue()
+	      };
+	      const target = action.getActionParam('target');
+	      if (target) {
+	        attrs.target = target;
+	      }
+	      return attrs;
+	    },
+	    className() {
+	      return ['crm-timeline__line_of_text_blocks_button'];
+	    },
+	    iconClassName() {
+	      if (!this.icon) {
+	        return [];
+	      }
+	      return ['crm-timeline__line_of_text_blocks_button_icon', `--code-${this.icon}`];
+	    }
+	  },
+	  methods: {
+	    executeAction() {
+	      if (this.action) {
+	        const action = new Action(this.action);
+	        action.execute(this);
+	      }
+	    },
+	    addAlignRightClass() {
+	      this.$el.parentElement.classList.add('right-fixed-button');
+	    }
+	  },
+	  mounted() {
+	    this.addAlignRightClass();
+	  },
+	  template: `
+			<a
+				v-if="href"
+				v-bind="linkAttrs"
+				:class="className"
+				:title="title"
+			>{{text}}<span v-if="icon" :class="iconClassName"></span>
+			</a>
+			<span
+				v-else
+				@click="executeAction"
+				:class="className"
+				:title="title"
+			>{{text}}<span v-if="icon" :class="iconClassName"></span>
+			</span>
+		`
+	};
+
+	var Money = {
+	  props: {
+	    opportunity: Number,
+	    currencyId: String
+	  },
+	  computed: {
+	    encodedText() {
+	      if (!main_core.Type.isNumber(this.opportunity) || !main_core.Type.isStringFilled(this.currencyId)) {
+	        return null;
+	      }
+	      return currency_currencyCore.CurrencyCore.currencyFormat(this.opportunity, this.currencyId, true);
+	    }
+	  },
+	  extends: Text,
+	  template: `
+		<span
+			v-if="encodedText"
+			:class="className"
+			v-html="encodedText"
+		></span>`
+	};
+
+	const MoneyPill = {
+	  props: {
+	    opportunity: Number,
+	    currencyId: String
+	  },
+	  computed: {
+	    moneyHtml() {
+	      if (!main_core.Type.isNumber(this.opportunity) || !main_core.Type.isStringFilled(this.currencyId)) {
+	        return null;
+	      }
+	      return currency_currencyCore.CurrencyCore.currencyFormat(this.opportunity, this.currencyId, true);
+	    }
+	  },
+	  template: `
+		<div class="crm-timeline-card__money-pill">
+			<span class="crm-timeline-card__money-pill_amount">
+				<span v-if="moneyHtml" v-html="moneyHtml"></span>
+			</span>
 		</div>
 	`
 	};
@@ -4221,393 +5638,72 @@ this.BX.Crm = this.BX.Crm || {};
 	`
 	};
 
-	const DatePillColor = Object.freeze({
-	  DEFAULT: 'default',
-	  WARNING: 'warning'
-	});
-	var DatePill = {
-	  props: {
-	    value: Number,
-	    withTime: Boolean,
-	    backgroundColor: {
-	      type: String,
-	      required: false,
-	      default: DatePillColor.DEFAULT,
-	      validator(value) {
-	        return Object.values(DatePillColor).includes(value);
-	      }
-	    },
-	    action: Object | null
+	const PlayerAlert = {
+	  components: {
+	    LineOfTextBlocks
 	  },
-	  inject: ['isReadOnly'],
-	  data() {
-	    return {
-	      // in server timezone
-	      currentTimestamp: this.value,
-	      // in server timezone
-	      initialTimestamp: this.value,
-	      actionTimeoutId: null
-	    };
-	  },
-	  computed: {
-	    className() {
-	      return ['crm-timeline__date-pill', `--color-${this.backgroundColor}`, {
-	        '--readonly': this.isPillReadonly
-	      }];
-	    },
-	    formattedDate() {
-	      if (!this.currentTimestamp) {
-	        return null;
-	      }
-	      return crm_timeline_tools.DatetimeConverter.createFromServerTimestamp(this.currentTimestamp).toUserTime().toDatetimeString({
-	        withDayOfWeek: true,
-	        delimiter: ', '
-	      });
-	    },
-	    currentDateInSiteFormat() {
-	      return main_date.DateTimeFormat.format(this.withTime ? crm_timeline_tools.DatetimeConverter.getSiteDateTimeFormat() : crm_timeline_tools.DatetimeConverter.getSiteDateFormat(), crm_timeline_tools.DatetimeConverter.createFromServerTimestamp(this.currentTimestamp).toUserTime().getValue());
-	    },
-	    calendarParams() {
-	      return {
-	        value: this.currentDateInSiteFormat,
-	        bTime: this.withTime,
-	        bHideTime: !this.withTime,
-	        bSetFocus: false
-	      };
-	    },
-	    isPillReadonly() {
-	      return this.isReadOnly || !this.action;
-	    },
-	    // todo remove after fixing main
-	    browserToUserOffset() {
-	      const userToUTCOffset = BX.Main.Timezone.Offset.SERVER_TO_UTC + BX.Main.Timezone.Offset.USER_TO_SERVER;
-	      return userToUTCOffset + main_core.Text.toInteger(new Date().getTimezoneOffset() * 60);
-	    }
-	  },
-	  watch: {
-	    value(newDate)
-	    // update date from push
-	    {
-	      this.initialTimestamp = newDate;
-	      this.currentTimestamp = newDate;
-	    }
-	  },
-	  methods: {
-	    openCalendar(event) {
-	      if (this.isPillReadonly) {
-	        return;
-	      }
-	      this.cancelScheduledActionExecution();
-
-	      // eslint-disable-next-line @bitrix24/bitrix24-rules/no-bx
-	      BX.calendar({
-	        node: event.target,
-	        callback_after: newDate => {
-	          // we assume that user selected time in his timezone
-	          this.currentTimestamp = Math.floor(newDate.getTime() / 1000) - this.browserToUserOffset;
-	          this.executeAction();
-	        },
-	        ...this.calendarParams
-	      });
-	    },
-	    cancelScheduledActionExecution() {
-	      if (this.actionTimeoutId) {
-	        clearTimeout(this.actionTimeoutId);
-	        this.actionTimeoutId = null;
-	      }
-	    },
-	    executeAction() {
-	      var _actionDescription$ac;
-	      if (!this.action) {
-	        return;
-	      }
-	      if (this.currentTimestamp === this.initialTimestamp) {
-	        return;
-	      }
-
-	      // to avoid unintended props mutation
-	      const actionDescription = main_core.Runtime.clone(this.action);
-	      (_actionDescription$ac = actionDescription.actionParams) !== null && _actionDescription$ac !== void 0 ? _actionDescription$ac : actionDescription.actionParams = {};
-	      actionDescription.actionParams.value = this.currentDateInSiteFormat;
-	      actionDescription.actionParams.valueTs = this.currentTimestamp;
-	      const action = new Action(actionDescription);
-	      action.execute(this);
-	      this.initialTimestamp = this.currentTimestamp;
-	    }
-	  },
-	  template: `
-		<span
-			:class="className"
-			@click="openCalendar"
-		>
-			<span>
-				{{ formattedDate }}
-			</span>
-			<span class="crm-timeline__date-pill_caret"></span>
-		</span>`
-	};
-
-	const MoneyPill = {
-	  props: {
-	    opportunity: Number,
-	    currencyId: String
-	  },
-	  computed: {
-	    moneyHtml() {
-	      if (!main_core.Type.isNumber(this.opportunity) || !main_core.Type.isStringFilled(this.currencyId)) {
-	        return null;
-	      }
-	      return currency_currencyCore.CurrencyCore.currencyFormat(this.opportunity, this.currencyId, true);
-	    }
-	  },
-	  template: `
-		<div class="crm-timeline-card__money-pill">
-			<span class="crm-timeline-card__money-pill_amount">
-				<span v-if="moneyHtml" v-html="moneyHtml"></span>
-			</span>
-		</div>
-	`
-	};
-
-	const InfoGroup = {
 	  props: {
 	    blocks: {
 	      type: Object,
 	      required: false,
 	      default: () => ({})
+	    },
+	    color: {
+	      type: String,
+	      required: false,
+	      default: ui_alerts.AlertColor.DEFAULT
+	    },
+	    icon: {
+	      type: String,
+	      required: false,
+	      default: ui_alerts.AlertIcon.NONE
+	    }
+	  },
+	  computed: {
+	    containerClassname() {
+	      return ['crm-timeline__player-alert', 'ui-alert', 'ui-alert-xs', 'ui-alert-text-center', this.color, this.icon];
 	    }
 	  },
 	  template: `
-		<table class="crm-timeline__info-group">
-			<tbody>
-				<tr
-					v-for="({title, block}, id) in blocks"
-					:key="id"
-					class="crm-timeline__info-group_block"
-				>
-					<td
-						:title="title"
-						class="crm-timeline__info-group_block-title"
-					>
-						{{title}}
-					</td>
-					<td class="crm-timeline__info-group_block-content">
-						<component
-							:is="block.rendererName"
-							v-bind="block.properties"
-						/>
-					</td>
-				</tr>
-			</tbody>
-		</table>
+		<div :class="containerClassname">
+			<div class="ui-alert-message">
+				<LineOfTextBlocks :blocks="blocks"></LineOfTextBlocks>
+			</div>
+		</div>
 	`
 	};
 
-	var File = {
-	  components: {
-	    TimelineAudio
-	  },
+	const RestAppLayoutBlocks = {
 	  props: {
-	    id: Number,
-	    text: String,
-	    href: String,
-	    size: Number,
-	    attributes: Object,
-	    hasAudioPlayer: {
-	      type: Boolean,
-	      required: false,
-	      default: false
+	    itemTypeId: {
+	      type: Number
+	    },
+	    itemId: {
+	      type: Number
+	    },
+	    restAppInfo: {
+	      title: String,
+	      clientId: String
+	    },
+	    contentBlocks: {
+	      type: Object
 	    }
 	  },
 	  computed: {
-	    fileExtension() {
-	      return this.text.split('.').slice(-1)[0] || '';
+	    restAppTitle() {
+	      return main_core.Text.encode(this.restAppInfo.title);
 	    },
-	    titleFirstPart() {
-	      return this.text.slice(0, -this.titleLastPartSize);
-	    },
-	    titleLastPart() {
-	      return this.text.slice(-this.titleLastPartSize);
-	    },
-	    titleLastPartSize() {
-	      return 10;
+	    clientId() {
+	      return main_core.Text.encode(this.restAppInfo.clientId);
 	    }
 	  },
-	  mounted() {
-	    const fileIcon = new ui_icons_generator.FileIcon({
-	      name: this.fileExtension
-	    });
-	    fileIcon.renderTo(this.$refs.icon);
-	  },
 	  template: `
-		<div class="crm-timeline__file">
-			<div ref="icon" class="crm-timeline__file_icon"></div>
-			<a
-				target="_blank"
-				class="crm-timeline__file_title crm-timeline__card_link"
-				v-if="href"
-				:title="text"
-				:href="href"
-				v-bind="attributes"
-				ref="title"
-			>
-				<span>{{ titleFirstPart }}</span>
-				<span>{{ titleLastPart }}</span>
-			</a>
-			<div class="crm-timeline__file_audio-player" v-if="this.hasAudioPlayer">
-				<TimelineAudio :id="id" :mini="true" :src="href"></TimelineAudio>
+		<div class="crm_timeline__rest_app_layout_blocks" :data-app-name="restAppTitle" :data-rest-client-id="clientId">
+			<div class="crm-timeline__card-container_block" v-for="contentBlock in contentBlocks">
+				<component :is="contentBlock.rendererName" v-bind="contentBlock.properties" ref="contentBlocks" />
 			</div>
 		</div>
-		`
-	};
-
-	const FileList = {
-	  components: {
-	    File,
-	    BIcon: ui_iconSet_api_vue.BIcon
-	  },
-	  props: {
-	    title: {
-	      type: String,
-	      required: false,
-	      default: ''
-	    },
-	    numberOfFiles: {
-	      type: Number,
-	      required: false,
-	      default: 0
-	    },
-	    files: {
-	      type: Array,
-	      required: true,
-	      default: []
-	    },
-	    updateParams: {
-	      type: Object,
-	      required: false,
-	      default: {}
-	    },
-	    visibleFilesNumber: {
-	      type: Number,
-	      required: false,
-	      default: 5
-	    }
-	  },
-	  inject: ['isReadOnly'],
-	  data() {
-	    return {
-	      visibleFilesAmount: this.visibleFilesNumber
-	    };
-	  },
-	  computed: {
-	    isEditable() {
-	      return Object.keys(this.updateParams).length > 0 && !this.isReadOnly;
-	    },
-	    visibleFiles() {
-	      return this.files.slice(0, this.visibleFilesAmount);
-	    },
-	    editFilesBtnClassname() {
-	      return ['crm-timeline__file-list-btn', {
-	        '--disabled': !this.isEditable
-	      }];
-	    },
-	    expandFileListBtnTitle() {
-	      return this.isAllFilesVisible ? this.$Bitrix.Loc.getMessage('CRM_TIMELINE_ITEM_FILE_LIST_COLLAPSE') : this.$Bitrix.Loc.getMessage('CRM_TIMELINE_ITEM_FILE_LIST_EXPAND');
-	    },
-	    editFilesBtnIcon() {
-	      return ui_iconSet_api_vue.Set.PENCIL_40;
-	    },
-	    addVisibleFilesBtnIcon() {
-	      return ui_iconSet_api_vue.Set.CHEVRON_DOWN;
-	    },
-	    isAllFilesVisible() {
-	      return this.visibleFilesAmount === this.numberOfFiles;
-	    },
-	    isShowExpandFileListBtn() {
-	      return this.numberOfFiles > this.visibleFilesNumber;
-	    },
-	    expandBtnIconClassname() {
-	      return ['crm-timeline__file-list-btn-icon', {
-	        '--upended': this.isAllFilesVisible
-	      }];
-	    }
-	  },
-	  methods: {
-	    fileProps(file) {
-	      return {
-	        id: file.id,
-	        text: file.name,
-	        href: file.viewUrl,
-	        size: file.size,
-	        attributes: file.attributes,
-	        hasAudioPlayer: file.hasAudioPlayer
-	      };
-	    },
-	    showFileUploaderPopup() {
-	      if (!this.isEditable) {
-	        return;
-	      }
-	      const popup = new crm_activity_fileUploaderPopup.FileUploaderPopup(this.updateParams);
-	      popup.show();
-	    },
-	    handleShowFilesBtnClick() {
-	      if (this.isAllFilesVisible) {
-	        this.collapseFileList();
-	      } else {
-	        this.expandFileList();
-	      }
-	    },
-	    expandFileList() {
-	      this.visibleFilesAmount = this.numberOfFiles;
-	    },
-	    collapseFileList() {
-	      this.visibleFilesAmount = this.visibleFilesNumber;
-	    }
-	  },
-	  template: `
-			<div class="crm-timeline__file-list-wrapper">
-				<div class="crm-timeline__file-list-container">
-					<div
-						class="crm-timeline__file-container"
-						v-for="file in visibleFiles"
-					>
-						<File :key="file.id" v-bind="fileProps(file)"></File>
-					</div>
-				</div>
-				<footer class="crm-timeline__file-list-footer">
-					<div
-						v-if="isShowExpandFileListBtn"
-						class="crm-timeline__file-list-btn-container"
-					>
-						<button
-							class="crm-timeline__file-list-btn"
-							@click="handleShowFilesBtnClick"
-						>
-							<span class="crm-timeline__file-list-btn-text">{{expandFileListBtnTitle}}</span>
-							<i :class="expandBtnIconClassname">
-								<BIcon :name="addVisibleFilesBtnIcon" :size="18"></BIcon>
-							</i>
-						</button>
-					</div>
-					<div
-						v-if="isEditable"
-						class="crm-timeline__file-list-btn-container"
-					>
-						<button
-							v-if="title !== '' || numberOfFiles > 0"
-							@click="showFileUploaderPopup"
-							:class="editFilesBtnClassname"
-						>
-							<span class="crm-timeline__file-list-btn-text">{{ title }}</span>
-							<i class="crm-timeline__file-list-btn-icon">
-								<BIcon :name="editFilesBtnIcon" :size="18"></BIcon>
-							</i>
-							<i ref="edit-icon" class="crm-timeline__file-list-btn-icon"></i>
-					</button>
-					</div>
-				</footer>
-			</div>
-		`
+	`
 	};
 
 	const SmsMessage = {
@@ -4631,329 +5727,100 @@ this.BX.Crm = this.BX.Crm || {};
 	`
 	};
 
-	const TYPE_LOAD_FILES_BLOCK = 1;
-	const TYPE_LOAD_TEXT_CONTENT = 2;
-	var CommentContent = ui_vue3.BitrixVue.cloneComponent(EditableDescription, {
+	let DeadlineAndPingSelectorBackgroundColor = function DeadlineAndPingSelectorBackgroundColor() {
+	  babelHelpers.classCallCheck(this, DeadlineAndPingSelectorBackgroundColor);
+	};
+	babelHelpers.defineProperty(DeadlineAndPingSelectorBackgroundColor, "ORANGE", 'orange');
+	babelHelpers.defineProperty(DeadlineAndPingSelectorBackgroundColor, "GRAY", 'gray');
+
+	var DeadlineAndPingSelector = {
 	  props: {
-	    filesCount: {
-	      type: Number,
+	    isScheduled: Boolean,
+	    deadlineBlock: Object,
+	    pingSelectorBlock: Object,
+	    deadlineBlockTitle: String,
+	    backgroundToken: String,
+	    backgroundColor: {
+	      type: String,
 	      required: false,
-	      default: 0
-	    },
-	    hasInlineFiles: {
-	      type: Boolean,
-	      required: false,
-	      default: false
-	    },
-	    loadAction: {
-	      type: Object,
-	      required: false,
-	      default: () => ({})
+	      default: null
 	    }
 	  },
 	  data() {
 	    return {
-	      ...this.parentData(),
-	      isTextLoaded: false,
-	      isTextChanged: false,
-	      isMoving: false,
-	      isFilesBlockDisplayed: this.filesCount > 0,
-	      filesHtmlBlock: null,
-	      loader: Object.freeze(null),
-	      editor: Object.freeze(null)
+	      deadlineBlockData: this.deadlineBlock,
+	      pingSelectorBlockData: this.pingSelectorBlock
 	    };
 	  },
 	  computed: {
-	    textWrapperClassName() {
-	      return ['crm-timeline__editable-text_content', {
-	        '--is-editor-loaded': this.isEdit
-	      }];
+	    className() {
+	      return {
+	        'crm-timeline__card-container_info': true,
+	        '--inline': true,
+	        'crm-timeline-block-deadline-and-ping-selector-deadline-wrapper': true,
+	        '--orange': this.backgroundToken === DeadlineAndPingSelectorBackgroundColor.ORANGE,
+	        '--gray': this.backgroundToken === DeadlineAndPingSelectorBackgroundColor.GRAY
+	      };
+	    },
+	    deadlineBlockStyle() {
+	      if (this.isScheduled && main_core.Type.isStringFilled(this.backgroundColor)) {
+	        return {
+	          '--crm-timeline-block-deadline-and-ping-selector-deadline_bg-color': main_core.Text.encode(this.backgroundColor)
+	        };
+	      }
+	      return {};
 	    }
 	  },
 	  methods: {
-	    startEditing() {
-	      this.isEdit = true;
-	      this.isCollapsed = true;
-	      this.$nextTick(() => {
-	        this.editor.show(this.$refs.editor);
-	      });
-	      this.emitEvent('Comment:StartEdit');
-	    },
-	    cancelEditing() {
-	      if (!this.isEdit || this.isSaving) {
-	        return;
-	      }
-	      this.value = this.oldValue;
-	      this.isEdit = false;
-	      if (this.filesHtmlBlock) {
-	        main_core.Runtime.html(this.$refs.files, this.filesHtmlBlock).then(() => {
-	          this.registerImages(this.$refs.files);
-	          BX.LazyLoad.showImages();
-	          this.emitEvent('Comment:FinishEdit');
-	        });
-	      } else {
-	        this.emitEvent('Comment:FinishEdit');
-	      }
-	    },
-	    toggleIsCollapsed() {
-	      this.parentToggleIsCollapsed();
-	      if (!this.isTextLoaded) {
-	        this.executeLoadAction(TYPE_LOAD_TEXT_CONTENT, this.$refs.text);
-	      }
-	    },
-	    checkIsLongText() {
-	      const textBlock = this.$refs.text;
-	      if (!textBlock) {
-	        return false;
-	      }
-	      const textBlockMaxHeightStyle = window.getComputedStyle(textBlock).getPropertyValue('--crm-timeline__editable-text_max-height');
-	      const textBlockMaxHeight = parseFloat(textBlockMaxHeightStyle.slice(0, -2));
-	      const root = this.filesCount > 0 ? this.$refs.rootElement : this.$refs.rootWrapperElement;
-	      const parentComputedStyles = window.getComputedStyle(root);
-	      const parentHeight = (root === null || root === void 0 ? void 0 : root.offsetHeight) - parseFloat(parentComputedStyles.paddingTop) - parseFloat(parentComputedStyles.paddingBottom);
-	      const isLongText = parentHeight > textBlockMaxHeight;
-	      return isLongText || this.hasInlineFiles;
-	    },
-	    saveContent() {
-	      const isSaveDisabled = this.saveTextButtonState === ButtonState.LOADING || !this.isEdit || !this.saveAction;
-	      if (isSaveDisabled) {
-	        return;
-	      }
-	      const content = this.editor.getContent();
-	      if (!main_core.Type.isStringFilled(content)) {
-	        return;
-	      }
-	      const htmlContent = this.editor.getHtmlContent();
-	      const attachmentList = this.editor.getAttachments();
-	      this.isSaving = true;
-	      this.executeSaveAction(content, attachmentList).then(() => {
-	        this.isEdit = false;
-	        if (!this.isTextChanged) {
-	          this.oldValue = htmlContent;
-	          this.value = htmlContent;
-	        }
-	        this.$nextTick(() => {
-	          this.isLongText = this.checkIsLongText();
-	          this.executeLoadAction(TYPE_LOAD_FILES_BLOCK, this.$refs.files);
-	        });
-	        this.emitEvent('Comment:FinishEdit');
-	      }).finally(() => {
-	        this.isSaving = false;
-	      });
-	    },
-	    executeSaveAction(content, attachmentList) {
-	      var _actionDescription$ac;
-	      // to avoid unintended props mutation
-	      const actionDescription = main_core.Runtime.clone(this.saveAction);
-	      (_actionDescription$ac = actionDescription.actionParams) !== null && _actionDescription$ac !== void 0 ? _actionDescription$ac : actionDescription.actionParams = {};
-	      actionDescription.actionParams.id = actionDescription.actionParams.commentId;
-	      actionDescription.actionParams.fields = {
-	        'COMMENT': content,
-	        'ATTACHMENTS': attachmentList
-	      };
-	      const action = new Action(actionDescription);
-	      return action.execute(this);
-	    },
-	    executeLoadAction(type, node) {
-	      var _actionDescription$ac2;
-	      if (this.filesCount === 0) {
-	        this.filesHtmlBlock = null;
-	        return;
-	      }
-	      if (!main_core.Type.isDomNode(node) || !this.loadAction) {
-	        return;
-	      }
-	      const actionDescription = main_core.Runtime.clone(this.loadAction);
-	      (_actionDescription$ac2 = actionDescription.actionParams) !== null && _actionDescription$ac2 !== void 0 ? _actionDescription$ac2 : actionDescription.actionParams = {};
-	      actionDescription.actionParams.options = type;
-	      const action = new Action(actionDescription);
-	      this.showLoader(true);
-	      action.execute(this).then(response => {
-	        if (type === TYPE_LOAD_FILES_BLOCK) {
-	          this.filesHtmlBlock = response.data.html;
-	        } else if (type === TYPE_LOAD_TEXT_CONTENT) {
-	          this.isTextLoaded = true;
-	        }
-	        main_core.Runtime.html(node, response.data.html).then(() => {
-	          this.registerImages(node);
-	          BX.LazyLoad.showImages();
-	          this.showLoader(false);
-	        });
-	      }).catch(() => {
-	        if (type === TYPE_LOAD_FILES_BLOCK) {
-	          this.filesHtmlBlock = null;
-	        } else if (type === TYPE_LOAD_TEXT_CONTENT) {
-	          this.isTextLoaded = false;
-	        }
-	        this.showLoader(false);
-	      });
-	    },
-	    registerImages(node) {
-	      if (!main_core.Type.isDomNode(node)) {
-	        return;
-	      }
-	      const idsList = [];
-	      const commentImages = node.querySelectorAll('[data-viewer-type="image"]');
-	      const commentImagesLength = commentImages.length;
-	      if (commentImagesLength > 0) {
-	        for (let i = 0; i < commentImagesLength; ++i) {
-	          if (main_core.Type.isDomNode(commentImages[i])) {
-	            commentImages[i].id += BX.util.getRandomString(4);
-	            idsList.push(commentImages[i].id);
-	          }
-	        }
-	        if (idsList.length > 0) {
-	          BX.LazyLoad.registerImages(idsList, null, {
-	            dataSrcName: "thumbSrc"
-	          });
-	        }
-	      }
-	      BX.LazyLoad.registerImages(idsList, null, {
-	        dataSrcName: "thumbSrc"
-	      });
-	    },
-	    showLoader(showLoader) {
-	      if (showLoader) {
-	        if (!this.loader) {
-	          this.loader = new main_loader.Loader({
-	            size: 20,
-	            mode: 'inline'
-	          });
-	        }
-	        this.loader.show(this.$refs.files);
-	      } else {
-	        if (this.loader) {
-	          this.loader.hide();
-	        }
-	      }
-	    },
-	    createEditor() {
-	      this.editor = new crm_timeline_editors_commentEditor.CommentEditor(this.loadAction.actionParams.commentId);
-	    },
-	    setIsMoving(flag = true) {
-	      this.isMoving = flag;
-	    },
-	    setIsFilesBlockDisplayed(flag = true) {
-	      this.isFilesBlockDisplayed = flag;
-	      if (this.filesHtmlBlock) {
-	        main_core.Runtime.html(this.$refs.files, this.filesHtmlBlock).then(() => {
-	          this.registerImages(this.$refs.files);
-	          BX.LazyLoad.showImages();
-	        });
-	      }
+	    onDeadlineChange(deadline) {
+	      this.deadlineBlockData.properties.value = deadline;
+	      this.pingSelectorBlockData.properties.deadline = deadline;
+	      this.$refs.pingSelectorBlock.setDeadline(deadline);
 	    }
 	  },
-	  watch: {
-	    text(newValue) {
-	      this.value = newValue;
-	      this.oldValue = newValue;
-	      this.isTextChanged = true;
-	      this.$nextTick(() => {
-	        this.isLongText = this.checkIsLongText();
-	        this.executeLoadAction(TYPE_LOAD_FILES_BLOCK, this.$refs.files);
-	      });
-	    },
-	    value(newValue) {
-	      if (!this.isEdit) {
-	        return;
-	      }
-	      this.value = newValue;
-	      this.oldValue = newValue;
-	    },
-	    filesCount(newValue) {
-	      if (this.isMoving) {
-	        return;
-	      }
-	      this.isFilesBlockDisplayed = newValue > 0;
-	      this.$nextTick(() => {
-	        this.executeLoadAction(TYPE_LOAD_FILES_BLOCK, this.$refs.files);
-	      });
-	    }
-	  },
-	  mounted() {
-	    this.createEditor();
-	    this.$nextTick(() => {
-	      this.isLongText = this.checkIsLongText();
-	      this.executeLoadAction(TYPE_LOAD_FILES_BLOCK, this.$refs.files);
+	  created() {
+	    this.$watch('deadlineBlock', deadlineBlock => {
+	      this.deadlineBlockData = deadlineBlock;
+	    }, {
+	      deep: true
+	    });
+	    this.$watch('pingSelectorBlock', pingSelectorBlock => {
+	      this.pingSelectorBlockData = pingSelectorBlock;
+	    }, {
+	      deep: true
 	    });
 	  },
-	  updated() {
-	    this.createEditor();
-	  },
+	  // language=Vue
 	  template: `
-		<div ref="rootWrapperElement" class="crm-timeline__editable-text_wrapper">
-			<div ref="rootElement" :class="className">
-				<button
-					v-if="isLongText && !isEdit && isEditable && isEditButtonVisible"
-					:disabled="isSaving"
-					@click="startEditing"
-					class="crm-timeline__editable-text_edit-btn"
-				>
-					<i class="crm-timeline__editable-text_edit-icon"></i>
-				</button>
-				<div class="crm-timeline__editable-text_inner">
-					<div :class="textWrapperClassName">
-						<div
-							v-if="isEdit"
-							ref="editor"
-							:disabled="!isEdit || isSaving"
-							class="crm-timeline__editable-text_editor"
-						></div>
-						<span 
-							v-else
-							ref="text"
-							class="crm-timeline__editable-text_text"
-							v-html="value"
-						>
-						</span>
-						<span
-							v-if="!isEdit && !isLongText && isEditable && isEditButtonVisible"
-							@click="startEditing"
-							class="crm-timeline__editable-text_text-edit-icon"
-						>
-							<span class="crm-timeline__editable-text_edit-icon"></span>
-						</span>
-					</div>
-					<div
-						v-if="isEdit"
-						class="crm-timeline__editable-text_actions"
-					>
-						<div class="crm-timeline__editable-text_action">
-							<Button
-								v-bind="saveTextButtonProps"
-								@click="saveContent"
-							/>
-						</div>
-						<div class="crm-timeline__editable-text_action">
-							<Button
-								v-bind="cancelEditingButtonProps"
-								@click="cancelEditing"
-							/>
-						</div>
-					</div>
-				</div>
-				<button
-					v-if="isLongText && !isEdit"
-					@click="toggleIsCollapsed"
-					class="crm-timeline__editable-text_collapse-btn"
-				>
-					{{ expandButtonText }}
-				</button>
-			</div>
-			<div
-				v-if="!isEdit && isFilesBlockDisplayed"
-				ref="files"
-				class="crm-timeline__comment_files_wrapper"
-				:class="{'--long-comment': isLongText}"
-				v-html="filesHtmlBlock"
+		<span class="crm-timeline-block-deadline-and-ping-selector">
+			<div 
+				:class="className" 
+				ref="deadlineBlock" 
+				v-if="deadlineBlock"
+				:style="deadlineBlockStyle"
 			>
+				<div class="crm-timeline__card-container_info-title" v-if="deadlineBlockTitle">
+					{{deadlineBlockTitle}}&nbsp;
+				</div>
+				<component
+					:is="deadlineBlock.rendererName"
+					v-bind="deadlineBlockData.properties"
+					@onChange="onDeadlineChange"
+				/>
 			</div>
-		</div>
+	
+			<component
+				v-if="pingSelectorBlock"
+				:is="pingSelectorBlock.rendererName"
+				v-bind="pingSelectorBlockData.properties"
+				ref="pingSelectorBlock"
+			/>
+		</span>	
 	`
-	});
+	};
 
-	const SAVE_OFFSETS_REQUEST_DELAY = 1000;
-	var ItemSelector = {
+	const SAVE_OFFSETS_REQUEST_DELAY$1 = 1000;
+	var PingSelector = {
 	  props: {
 	    valuesList: {
 	      type: Array,
@@ -4964,10 +5831,34 @@ this.BX.Crm = this.BX.Crm || {};
 	      type: Array,
 	      default: []
 	    },
+	    deadline: {
+	      type: Number
+	    },
 	    saveAction: {
 	      type: Object,
 	      required: true
+	    },
+	    icon: {
+	      type: String,
+	      default: null,
+	      required: false
 	    }
+	  },
+	  data() {
+	    return {
+	      deadlineData: this.deadline
+	    };
+	  },
+	  watch: {
+	    deadline(deadline) {
+	      this.deadlineData = deadline;
+	    }
+	  },
+	  mounted() {
+	    this.initPingSelector();
+	  },
+	  beforeUnmount() {
+	    main_core_events.EventEmitter.unsubscribe(this.pingSelector, crm_field_pingSelector.PingSelectorEvents.EVENT_PINGSELECTOR_VALUE_CHANGE, this.onItemSelectorValueChange);
 	  },
 	  methods: {
 	    onItemSelectorValueChange(event) {
@@ -4976,7 +5867,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        if (data) {
 	          this.executeSaveAction(data.value);
 	        }
-	      }, SAVE_OFFSETS_REQUEST_DELAY, this)();
+	      }, SAVE_OFFSETS_REQUEST_DELAY$1, this)();
 	    },
 	    executeSaveAction(items) {
 	      var _actionDescription$ac;
@@ -4993,20 +5884,103 @@ this.BX.Crm = this.BX.Crm || {};
 	      actionDescription.actionParams.value = items;
 	      const action = new Action(actionDescription);
 	      void action.execute(this);
+	    },
+	    initPingSelector() {
+	      const deadlineDate = this.createDateFromDeadline();
+	      const deadlineTime = deadlineDate === null || deadlineDate === void 0 ? void 0 : deadlineDate.getTime();
+	      const currentTime = Date.now();
+	      const deadline = deadlineTime > currentTime ? deadlineDate : new Date();
+	      this.pingSelector = new crm_field_pingSelector.PingSelector({
+	        target: this.$el,
+	        valuesList: this.valuesList,
+	        selectedValues: this.value,
+	        icon: main_core.Type.isStringFilled(this.icon) ? this.icon : null,
+	        deadline
+	      });
+	      main_core_events.EventEmitter.subscribe(this.pingSelector, crm_field_pingSelector.PingSelectorEvents.EVENT_PINGSELECTOR_VALUE_CHANGE, this.onItemSelectorValueChange);
+	    },
+	    createDateFromDeadline() {
+	      if (!main_core.Type.isNumber(this.deadlineData)) {
+	        return null;
+	      }
+	      return crm_timeline_tools.DatetimeConverter.createFromServerTimestamp(this.deadlineData).getValue();
+	    },
+	    setDeadline(deadline) {
+	      const date = main_date.Timezone.UserTime.getDate(deadline);
+	      this.deadlineData = date.getTime() / 1000;
+	      this.pingSelector.setDeadline(date);
+	    }
+	  },
+	  template: '<div></div>'
+	};
+
+	var WithTitle = {
+	  props: {
+	    title: String,
+	    inline: Boolean,
+	    wordWrap: Boolean,
+	    fixedWidth: Boolean,
+	    titleBottomPadding: {
+	      type: Number,
+	      required: false,
+	      default: 0
+	    },
+	    contentBlock: Object
+	  },
+	  computed: {
+	    className() {
+	      return {
+	        'crm-timeline__card-container_info': true,
+	        '--inline': this.inline,
+	        '--word-wrap': this.wordWrap,
+	        '--fixed-width': this.fixedWidth
+	      };
+	    },
+	    valueClassName() {
+	      return {
+	        'crm-timeline__card-container_info-value': true
+	      };
+	    }
+	  },
+	  methods: {
+	    isTitleCropped() {
+	      const titleElem = this.$refs.title;
+	      return titleElem.scrollWidth > titleElem.clientWidth;
 	    }
 	  },
 	  mounted() {
-	    this.itemSelector = new crm_field_itemSelector.ItemSelector({
-	      target: this.$el,
-	      valuesList: this.valuesList,
-	      selectedValues: this.value
+	    void this.$nextTick(() => {
+	      if (!this.$refs.title) {
+	        return;
+	      }
+	      if (this.isTitleCropped()) {
+	        main_core.Dom.attr(this.$refs.title, 'title', this.title);
+	      }
+	      if (this.titleBottomPadding > 0) {
+	        main_core.Dom.style(this.$refs.title, 'padding-bottom', `${this.titleBottomPadding}px`);
+	      }
 	    });
-	    main_core_events.EventEmitter.subscribe(this.itemSelector, crm_field_itemSelector.Events.EVENT_ITEMSELECTOR_VALUE_CHANGE, this.onItemSelectorValueChange);
 	  },
-	  beforeUnmount() {
-	    main_core_events.EventEmitter.unsubscribe(this.itemSelector, crm_field_itemSelector.Events.EVENT_ITEMSELECTOR_VALUE_CHANGE, this.onItemSelectorValueChange);
-	  },
-	  template: `<div style="width: 100%;"></div>`
+	  template: `
+		<div
+			:class="className"
+		>
+			<div
+				ref="title" 
+				class="crm-timeline__card-container_info-title"
+			>
+				{{ title }}
+			</div>
+			<div 
+				:class="valueClassName"
+			>
+				<component 
+					:is="contentBlock.rendererName"
+					v-bind="contentBlock.properties"
+				/>
+			</div>
+		</div>
+	`
 	};
 
 	function _classPrivateMethodInitSpec$3(obj, privateSet) { _checkPrivateRedeclaration$6(obj, privateSet); privateSet.add(obj); }
@@ -5030,8 +6004,10 @@ this.BX.Crm = this.BX.Crm || {};
 	    key: "getContentBlockComponents",
 	    value: function getContentBlockComponents(Item) {
 	      return {
+	        AddressBlock,
 	        TextBlock: Text,
 	        LinkBlock: Link,
+	        LineOfTextBlocksButton,
 	        DateBlock,
 	        WithTitle,
 	        LineOfTextBlocks,
@@ -5042,6 +6018,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        EditableDescription,
 	        EditableDate,
 	        PlayerAlert,
+	        RestAppLayoutBlocks,
 	        DatePill,
 	        Note,
 	        FileList,
@@ -5049,7 +6026,9 @@ this.BX.Crm = this.BX.Crm || {};
 	        MoneyPill,
 	        SmsMessage,
 	        CommentContent,
-	        ItemSelector
+	        ItemSelector,
+	        PingSelector,
+	        DeadlineAndPingSelector
 	      };
 	    }
 	    /**
@@ -5279,14 +6258,30 @@ this.BX.Crm = this.BX.Crm || {};
 	}(Base);
 
 	function _classPrivateMethodInitSpec$5(obj, privateSet) { _checkPrivateRedeclaration$8(obj, privateSet); privateSet.add(obj); }
-	function _classPrivateFieldInitSpec$5(obj, privateMap, value) { _checkPrivateRedeclaration$8(obj, privateMap); privateMap.set(obj, value); }
+	function _classPrivateFieldInitSpec$6(obj, privateMap, value) { _checkPrivateRedeclaration$8(obj, privateMap); privateMap.set(obj, value); }
 	function _checkPrivateRedeclaration$8(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 	function _classPrivateMethodGet$5(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+	let featureResolver = null;
+	let api = null;
+	main_core.Runtime.loadExtension(['sign.v2.api', 'sign.feature-resolver']).then(async exports => {
+	  if (exports !== null && exports !== void 0 && exports.Api && exports !== null && exports !== void 0 && exports.FeatureResolver) {
+	    featureResolver = exports === null || exports === void 0 ? void 0 : exports.FeatureResolver.instance();
+	    api = new exports.Api();
+	  }
+	}).catch(errors => {
+	  ui_notification.UI.Notification.Center.notify({
+	    content: errors[0].message,
+	    autoHideDelay: 5000
+	  });
+	});
 	var _isCancellationInProgress = /*#__PURE__*/new WeakMap();
+	var _cancelWithConfirm = /*#__PURE__*/new WeakSet();
 	var _cancelSigningProcess = /*#__PURE__*/new WeakSet();
 	var _deleteEntry = /*#__PURE__*/new WeakSet();
 	var _showSigningProcess = /*#__PURE__*/new WeakSet();
 	var _modifyDocument = /*#__PURE__*/new WeakSet();
+	var _previewDocument = /*#__PURE__*/new WeakSet();
+	var _createDocumentChat = /*#__PURE__*/new WeakSet();
 	var _resendDocument = /*#__PURE__*/new WeakSet();
 	var _touchSigner = /*#__PURE__*/new WeakSet();
 	var _download = /*#__PURE__*/new WeakSet();
@@ -5299,13 +6294,16 @@ this.BX.Crm = this.BX.Crm || {};
 	    _classPrivateMethodInitSpec$5(babelHelpers.assertThisInitialized(_this), _download);
 	    _classPrivateMethodInitSpec$5(babelHelpers.assertThisInitialized(_this), _touchSigner);
 	    _classPrivateMethodInitSpec$5(babelHelpers.assertThisInitialized(_this), _resendDocument);
+	    _classPrivateMethodInitSpec$5(babelHelpers.assertThisInitialized(_this), _createDocumentChat);
+	    _classPrivateMethodInitSpec$5(babelHelpers.assertThisInitialized(_this), _previewDocument);
 	    _classPrivateMethodInitSpec$5(babelHelpers.assertThisInitialized(_this), _modifyDocument);
 	    _classPrivateMethodInitSpec$5(babelHelpers.assertThisInitialized(_this), _showSigningProcess);
 	    _classPrivateMethodInitSpec$5(babelHelpers.assertThisInitialized(_this), _deleteEntry);
 	    _classPrivateMethodInitSpec$5(babelHelpers.assertThisInitialized(_this), _cancelSigningProcess);
-	    _classPrivateFieldInitSpec$5(babelHelpers.assertThisInitialized(_this), _isCancellationInProgress, {
+	    _classPrivateMethodInitSpec$5(babelHelpers.assertThisInitialized(_this), _cancelWithConfirm);
+	    _classPrivateFieldInitSpec$6(babelHelpers.assertThisInitialized(_this), _isCancellationInProgress, {
 	      writable: true,
-	      value: void 0
+	      value: false
 	    });
 	    return _this;
 	  }
@@ -5325,42 +6323,15 @@ this.BX.Crm = this.BX.Crm || {};
 	      const processUri = actionData === null || actionData === void 0 ? void 0 : actionData.processUri;
 	      const documentHash = (actionData === null || actionData === void 0 ? void 0 : actionData.documentHash) || '';
 	      if (action === 'Activity:SignB2eDocument:ShowSigningCancel') {
-	        if (babelHelpers.classPrivateFieldGet(this, _isCancellationInProgress)) {
-	          return;
-	        }
-	        const documentUid = actionData === null || actionData === void 0 ? void 0 : actionData.documentUid;
-	        const signingCancelationDialog = new ui_dialogs_messagebox.MessageBox({
-	          title: main_core.Loc.getMessage('CRM_TIMELINE_ITEM_SIGNING_CANCEL_DIALOG_TITLE'),
-	          message: main_core.Loc.getMessage('CRM_TIMELINE_ITEM_SIGNING_CANCEL_DIALOG_TEXT'),
-	          modal: true
-	        });
-	        const cancellationButton = item.getLayoutFooterButtonById(actionData.buttonId);
-	        const cancellationButtonUI = cancellationButton.getUiButton();
-	        signingCancelationDialog.setButtons([new BX.UI.Button({
-	          text: main_core.Loc.getMessage('CRM_TIMELINE_ITEM_SIGNING_CANCEL_DIALOG_YES_BUTTON_TEXT'),
-	          color: BX.UI.Button.Color.DANGER,
-	          onclick: event => {
-	            babelHelpers.classPrivateFieldSet(this, _isCancellationInProgress, true);
-	            cancellationButtonUI.setState(ui_buttons.ButtonState.WAITING);
-	            signingCancelationDialog.close();
-	            _classPrivateMethodGet$5(this, _cancelSigningProcess, _cancelSigningProcess2).call(this, documentUid).then(() => {
-	              main_core.Dom.hide(cancellationButton.buttonContainerRef);
-	            }).catch(() => {
-	              cancellationButtonUI.setState(null);
-	            }).finally(() => {
-	              babelHelpers.classPrivateFieldSet(this, _isCancellationInProgress, false);
-	            });
-	          }
-	        }), new BX.UI.Button({
-	          text: main_core.Loc.getMessage('CRM_TIMELINE_ITEM_SIGNING_CANCEL_DIALOG_NO_BUTTON_TEXT'),
-	          color: BX.UI.Button.Color.LIGHT_BORDER,
-	          onclick: () => {
-	            signingCancelationDialog.close();
-	          }
-	        })]);
-	        signingCancelationDialog.show();
+	        _classPrivateMethodGet$5(this, _cancelWithConfirm, _cancelWithConfirm2).call(this, actionData === null || actionData === void 0 ? void 0 : actionData.documentUid);
 	      } else if ((action === 'SignB2eDocument:ShowSigningProcess' || action === 'Activity:SignB2eDocument:ShowSigningProcess') && processUri.length > 0) {
 	        _classPrivateMethodGet$5(this, _showSigningProcess, _showSigningProcess2).call(this, processUri);
+	      } else if ((action === 'SignB2eDocument:Preview' || action === 'Activity:SignB2eDocument:Preview') && documentId > 0) {
+	        _classPrivateMethodGet$5(this, _previewDocument, _previewDocument2).call(this, actionData);
+	      } else if ((action === 'SignB2eDocument:CreateDocumentChat' || action === 'Activity:SignB2eDocument:CreateDocumentChat') && documentId > 0) {
+	        if (featureResolver && featureResolver.released('createDocumentChat')) {
+	          _classPrivateMethodGet$5(this, _createDocumentChat, _createDocumentChat2).call(this, actionData);
+	        }
 	      } else if ((action === 'SignB2eDocument:Modify' || action === 'Activity:SignB2eDocument:Modify') && documentId > 0) {
 	        _classPrivateMethodGet$5(this, _modifyDocument, _modifyDocument2).call(this, actionData);
 	      } else if (action === 'SignB2eDocument:Resend' && documentId > 0 && actionData !== null && actionData !== void 0 && actionData.recipientHash) {
@@ -5397,6 +6368,34 @@ this.BX.Crm = this.BX.Crm || {};
 	  }]);
 	  return SignB2eDocument;
 	}(Base);
+	function _cancelWithConfirm2(documentUid) {
+	  if (babelHelpers.classPrivateFieldGet(this, _isCancellationInProgress)) {
+	    return;
+	  }
+	  const signingCancelationDialog = new ui_dialogs_messagebox.MessageBox({
+	    title: main_core.Loc.getMessage('CRM_TIMELINE_ITEM_SIGNING_CANCEL_DIALOG_TITLE'),
+	    message: main_core.Loc.getMessage('CRM_TIMELINE_ITEM_SIGNING_CANCEL_DIALOG_TEXT'),
+	    modal: true
+	  });
+	  signingCancelationDialog.setButtons([new BX.UI.Button({
+	    text: main_core.Loc.getMessage('CRM_TIMELINE_ITEM_SIGNING_CANCEL_DIALOG_YES_BUTTON_TEXT'),
+	    color: BX.UI.Button.Color.DANGER,
+	    onclick: () => {
+	      babelHelpers.classPrivateFieldSet(this, _isCancellationInProgress, true);
+	      signingCancelationDialog.close();
+	      _classPrivateMethodGet$5(this, _cancelSigningProcess, _cancelSigningProcess2).call(this, documentUid).finally(() => {
+	        babelHelpers.classPrivateFieldSet(this, _isCancellationInProgress, false);
+	      });
+	    }
+	  }), new BX.UI.Button({
+	    text: main_core.Loc.getMessage('CRM_TIMELINE_ITEM_SIGNING_CANCEL_DIALOG_NO_BUTTON_TEXT'),
+	    color: BX.UI.Button.Color.LIGHT_BORDER,
+	    onclick: () => {
+	      signingCancelationDialog.close();
+	    }
+	  })]);
+	  signingCancelationDialog.show();
+	}
 	function _cancelSigningProcess2(documentUid) {
 	  return new Promise((resolve, reject) => {
 	    main_core.ajax.runAction('sign.api_v1.document.signing.stop', {
@@ -5437,6 +6436,20 @@ this.BX.Crm = this.BX.Crm || {};
 	  documentId
 	}) {
 	  return crm_router.Router.openSlider(`/sign/b2e/doc/0/?docId=${documentId}&stepId=changePartner&noRedirect=Y`);
+	}
+	function _previewDocument2({
+	  documentId
+	}) {
+	  return crm_router.Router.openSlider(`/sign/b2e/preview/0/?docId=${documentId}&noRedirect=Y`);
+	}
+	async function _createDocumentChat2({
+	  chatType,
+	  documentId
+	}) {
+	  if (api && featureResolver && featureResolver.released('createDocumentChat')) {
+	    const chatId = (await api.createDocumentChat(chatType, documentId, false)).chatId;
+	    im_public.Messenger.openChat(`chat${chatId}`);
+	  }
 	}
 	function _resendDocument2({
 	  documentId,
@@ -5673,7 +6686,7 @@ this.BX.Crm = this.BX.Crm || {};
 	let _ = t => t,
 	  _t;
 	function _classPrivateMethodInitSpec$7(obj, privateSet) { _checkPrivateRedeclaration$a(obj, privateSet); privateSet.add(obj); }
-	function _classPrivateFieldInitSpec$6(obj, privateMap, value) { _checkPrivateRedeclaration$a(obj, privateMap); privateMap.set(obj, value); }
+	function _classPrivateFieldInitSpec$7(obj, privateMap, value) { _checkPrivateRedeclaration$a(obj, privateMap); privateMap.set(obj, value); }
 	function _checkPrivateRedeclaration$a(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 	function _classStaticPrivateFieldSpecSet(receiver, classConstructor, descriptor, value) { _classCheckPrivateStaticAccess$1(receiver, classConstructor); _classCheckPrivateStaticFieldDescriptor$1(descriptor, "set"); _classApplyDescriptorSet(receiver, descriptor, value); return value; }
 	function _classApplyDescriptorSet(receiver, descriptor, value) { if (descriptor.set) { descriptor.set.call(receiver, value); } else { if (!descriptor.writable) { throw new TypeError("attempted to set read only private field"); } descriptor.value = value; } }
@@ -5718,7 +6731,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    _classPrivateMethodInitSpec$7(babelHelpers.assertThisInitialized(_this), _copyPublicLink);
 	    _classPrivateMethodInitSpec$7(babelHelpers.assertThisInitialized(_this), _openDocument$1);
 	    _classPrivateMethodInitSpec$7(babelHelpers.assertThisInitialized(_this), _onJsEvent);
-	    _classPrivateFieldInitSpec$6(babelHelpers.assertThisInitialized(_this), _popupConfirm, {
+	    _classPrivateFieldInitSpec$7(babelHelpers.assertThisInitialized(_this), _popupConfirm, {
 	      writable: true,
 	      value: void 0
 	    });
@@ -6079,26 +7092,27 @@ this.BX.Crm = this.BX.Crm || {};
 	};
 
 	function _classPrivateMethodInitSpec$8(obj, privateSet) { _checkPrivateRedeclaration$b(obj, privateSet); privateSet.add(obj); }
-	function _classPrivateFieldInitSpec$7(obj, privateMap, value) { _checkPrivateRedeclaration$b(obj, privateMap); privateMap.set(obj, value); }
+	function _classPrivateFieldInitSpec$8(obj, privateMap, value) { _checkPrivateRedeclaration$b(obj, privateMap); privateMap.set(obj, value); }
 	function _checkPrivateRedeclaration$b(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 	function _classPrivateMethodGet$8(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 	const COPILOT_BUTTON_DISABLE_DELAY = 5000;
+	const COPILOT_BUTTON_NUMBER_OF_MANUAL_STARTS_WITHOUT_BOOST_LIMIT = 2;
+	const COPILOT_BUTTON_NUMBER_OF_MANUAL_STARTS_WITH_BOOST_LIMIT = 5;
 	const COPILOT_HELPDESK_CODE = 18799442;
-	var _isCopilotTourShown = /*#__PURE__*/new WeakMap();
+	var _isCopilotWelcomeTourShown = /*#__PURE__*/new WeakMap();
 	var _isCopilotBannerShown = /*#__PURE__*/new WeakMap();
 	var _makeCall = /*#__PURE__*/new WeakSet();
-	var _scheduleCall = /*#__PURE__*/new WeakSet();
 	var _openTranscript = /*#__PURE__*/new WeakSet();
 	var _changePlayerState = /*#__PURE__*/new WeakSet();
 	var _downloadRecord = /*#__PURE__*/new WeakSet();
 	var _launchCallRecordingTranscription = /*#__PURE__*/new WeakSet();
 	var _showAdditionalInfo = /*#__PURE__*/new WeakSet();
-	var _showCopilotTourIfNeeded = /*#__PURE__*/new WeakSet();
+	var _showCopilotWelcomeTour = /*#__PURE__*/new WeakSet();
+	var _bindAdditionalCopilotActions = /*#__PURE__*/new WeakSet();
 	var _showMarketMessageBox = /*#__PURE__*/new WeakSet();
 	var _showFeedbackMessageBox = /*#__PURE__*/new WeakSet();
 	var _showCopilotBanner = /*#__PURE__*/new WeakSet();
 	var _emitTimelineCopilotTourEvent = /*#__PURE__*/new WeakSet();
-	var _sendAiCallParsingData = /*#__PURE__*/new WeakSet();
 	var _isSliderCodeExist = /*#__PURE__*/new WeakSet();
 	var _isAiMarketplaceAppsExist = /*#__PURE__*/new WeakSet();
 	let Call = /*#__PURE__*/function (_Base) {
@@ -6109,24 +7123,23 @@ this.BX.Crm = this.BX.Crm || {};
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Call).call(this, ...args));
 	    _classPrivateMethodInitSpec$8(babelHelpers.assertThisInitialized(_this), _isAiMarketplaceAppsExist);
 	    _classPrivateMethodInitSpec$8(babelHelpers.assertThisInitialized(_this), _isSliderCodeExist);
-	    _classPrivateMethodInitSpec$8(babelHelpers.assertThisInitialized(_this), _sendAiCallParsingData);
 	    _classPrivateMethodInitSpec$8(babelHelpers.assertThisInitialized(_this), _emitTimelineCopilotTourEvent);
 	    _classPrivateMethodInitSpec$8(babelHelpers.assertThisInitialized(_this), _showCopilotBanner);
 	    _classPrivateMethodInitSpec$8(babelHelpers.assertThisInitialized(_this), _showFeedbackMessageBox);
 	    _classPrivateMethodInitSpec$8(babelHelpers.assertThisInitialized(_this), _showMarketMessageBox);
-	    _classPrivateMethodInitSpec$8(babelHelpers.assertThisInitialized(_this), _showCopilotTourIfNeeded);
+	    _classPrivateMethodInitSpec$8(babelHelpers.assertThisInitialized(_this), _bindAdditionalCopilotActions);
+	    _classPrivateMethodInitSpec$8(babelHelpers.assertThisInitialized(_this), _showCopilotWelcomeTour);
 	    _classPrivateMethodInitSpec$8(babelHelpers.assertThisInitialized(_this), _showAdditionalInfo);
 	    _classPrivateMethodInitSpec$8(babelHelpers.assertThisInitialized(_this), _launchCallRecordingTranscription);
 	    _classPrivateMethodInitSpec$8(babelHelpers.assertThisInitialized(_this), _downloadRecord);
 	    _classPrivateMethodInitSpec$8(babelHelpers.assertThisInitialized(_this), _changePlayerState);
 	    _classPrivateMethodInitSpec$8(babelHelpers.assertThisInitialized(_this), _openTranscript);
-	    _classPrivateMethodInitSpec$8(babelHelpers.assertThisInitialized(_this), _scheduleCall);
 	    _classPrivateMethodInitSpec$8(babelHelpers.assertThisInitialized(_this), _makeCall);
-	    _classPrivateFieldInitSpec$7(babelHelpers.assertThisInitialized(_this), _isCopilotTourShown, {
+	    _classPrivateFieldInitSpec$8(babelHelpers.assertThisInitialized(_this), _isCopilotWelcomeTourShown, {
 	      writable: true,
 	      value: false
 	    });
-	    _classPrivateFieldInitSpec$7(babelHelpers.assertThisInitialized(_this), _isCopilotBannerShown, {
+	    _classPrivateFieldInitSpec$8(babelHelpers.assertThisInitialized(_this), _isCopilotBannerShown, {
 	      writable: true,
 	      value: false
 	    });
@@ -6135,7 +7148,8 @@ this.BX.Crm = this.BX.Crm || {};
 	  babelHelpers.createClass(Call, [{
 	    key: "onInitialize",
 	    value: function onInitialize(item) {
-	      _classPrivateMethodGet$8(this, _showCopilotTourIfNeeded, _showCopilotTourIfNeeded2).call(this, item);
+	      _classPrivateMethodGet$8(this, _showCopilotWelcomeTour, _showCopilotWelcomeTour2).call(this, item);
+	      _classPrivateMethodGet$8(this, _bindAdditionalCopilotActions, _bindAdditionalCopilotActions2).call(this, item);
 	    }
 	  }, {
 	    key: "onItemAction",
@@ -6152,7 +7166,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        _classPrivateMethodGet$8(this, _makeCall, _makeCall2).call(this, actionData);
 	      }
 	      if (action === 'Call:Schedule' && actionData) {
-	        _classPrivateMethodGet$8(this, _scheduleCall, _scheduleCall2).call(this, actionData.activityId, actionData.scheduleDate);
+	        this.runScheduleAction(actionData.activityId, actionData.scheduleDate);
 	      }
 	      if (action === 'Call:OpenTranscript' && actionData && actionData.callId) {
 	        _classPrivateMethodGet$8(this, _openTranscript, _openTranscript2).call(this, actionData.callId);
@@ -6164,7 +7178,29 @@ this.BX.Crm = this.BX.Crm || {};
 	        _classPrivateMethodGet$8(this, _downloadRecord, _downloadRecord2).call(this, actionData.url);
 	      }
 	      if (action === 'Call:LaunchCallRecordingTranscription' && actionData) {
-	        _classPrivateMethodGet$8(this, _launchCallRecordingTranscription, _launchCallRecordingTranscription2).call(this, item, actionData);
+	        const isCopilotAgreementNeedShow = actionData.isCopilotAgreementNeedShow || false;
+	        if (isCopilotAgreementNeedShow) {
+	          main_core.Runtime.loadExtension('ai.copilot-agreement').then(({
+	            CopilotAgreement
+	          }) => {
+	            const copilotAgreementPopup = new CopilotAgreement({
+	              moduleId: 'crm',
+	              contextId: 'audio',
+	              events: {
+	                onAccept: () => _classPrivateMethodGet$8(this, _launchCallRecordingTranscription, _launchCallRecordingTranscription2).call(this, item, actionData)
+	              }
+	            });
+	            void copilotAgreementPopup.checkAgreement()
+	            // eslint-disable-next-line promise/no-nesting
+	            .then(isAgreementAccepted => {
+	              if (isAgreementAccepted) {
+	                _classPrivateMethodGet$8(this, _launchCallRecordingTranscription, _launchCallRecordingTranscription2).call(this, item, actionData);
+	              }
+	            });
+	          }).catch(() => console.error('Cant load "ai.copilot-agreement" extension'));
+	        } else {
+	          _classPrivateMethodGet$8(this, _launchCallRecordingTranscription, _launchCallRecordingTranscription2).call(this, item, actionData);
+	        }
 	      }
 	    }
 	  }], [{
@@ -6194,17 +7230,6 @@ this.BX.Crm = this.BX.Crm || {};
 	    params.SRC_ACTIVITY_ID = actionData.activityId;
 	  }
 	  window.top['BXIM'].phoneTo(actionData.phone, params);
-	}
-	function _scheduleCall2(activityId, scheduleDate) {
-	  var _BX$Crm, _BX$Crm$Timeline, _BX$Crm$Timeline$Menu;
-	  const menuBar = (_BX$Crm = BX.Crm) === null || _BX$Crm === void 0 ? void 0 : (_BX$Crm$Timeline = _BX$Crm.Timeline) === null || _BX$Crm$Timeline === void 0 ? void 0 : (_BX$Crm$Timeline$Menu = _BX$Crm$Timeline.MenuBar) === null || _BX$Crm$Timeline$Menu === void 0 ? void 0 : _BX$Crm$Timeline$Menu.getDefault();
-	  if (menuBar) {
-	    menuBar.setActiveItemById('todo');
-	    const todoEditor = menuBar.getItemById('todo');
-	    todoEditor.focus();
-	    todoEditor.setParentActivityId(activityId);
-	    todoEditor.setDeadLine(scheduleDate);
-	  }
 	}
 	function _openTranscript2(callId) {
 	  if (BX.Voximplant && BX.Voximplant.Transcript) {
@@ -6240,26 +7265,31 @@ this.BX.Crm = this.BX.Crm || {};
 	    throw new Error('"CoPilot" button is not found in layout');
 	  }
 	  const aiCopilotBtnUI = aiCopilotBtn.getUiButton();
-	  const data = {
-	    activityId: actionData.activityId,
-	    ownerTypeId: actionData.ownerTypeId,
-	    ownerId: actionData.ownerId
-	  };
 
 	  // start call record transcription
 	  aiCopilotBtnUI.setState(ui_buttons.ButtonState.AI_WAITING);
 	  main_core.ajax.runAction('crm.timeline.ai.launchRecordingTranscription', {
-	    data
-	  }).then(() => {
-	    _classPrivateMethodGet$8(this, _sendAiCallParsingData, _sendAiCallParsingData2).call(this, data.ownerTypeId, data.activityId, 'success');
+	    data: {
+	      activityId: actionData.activityId,
+	      ownerTypeId: actionData.ownerTypeId,
+	      ownerId: actionData.ownerId
+	    }
+	  }).then(response => {
+	    if ((response === null || response === void 0 ? void 0 : response.status) === 'success') {
+	      var _response$data;
+	      const numberOfManualStarts = response === null || response === void 0 ? void 0 : (_response$data = response.data) === null || _response$data === void 0 ? void 0 : _response$data.numberOfManualStarts;
+	      if (numberOfManualStarts >= COPILOT_BUTTON_NUMBER_OF_MANUAL_STARTS_WITHOUT_BOOST_LIMIT) {
+	        _classPrivateMethodGet$8(this, _emitTimelineCopilotTourEvent, _emitTimelineCopilotTourEvent2).call(this, aiCopilotBtnUI.getContainer(), 'BX.Crm.Timeline.Call:onShowTourWhenNeedBuyBoost', 'copilot-in-call-buying-boost', 500);
+	      } else if (numberOfManualStarts >= COPILOT_BUTTON_NUMBER_OF_MANUAL_STARTS_WITH_BOOST_LIMIT) {
+	        _classPrivateMethodGet$8(this, _emitTimelineCopilotTourEvent, _emitTimelineCopilotTourEvent2).call(this, aiCopilotBtnUI.getContainer(), 'BX.Crm.Timeline.Call:onShowTourWhenManualStartTooMuch', 'copilot-in-call-automatically', 500);
+	      }
+	    }
 	  }).catch(response => {
-	    let errorType = 'error';
 	    const customData = response.errors[0].customData;
 	    if (customData) {
 	      customData.isCopilotBannerNeedShow = actionData.isCopilotBannerNeedShow || false;
 	      _classPrivateMethodGet$8(this, _showAdditionalInfo, _showAdditionalInfo2).call(this, customData, item, actionData);
 	      aiCopilotBtnUI.setState(ui_buttons.ButtonState.ACTIVE);
-	      errorType = 'error_no_limits';
 	    } else {
 	      aiCopilotBtnUI.setState(ui_buttons.ButtonState.DISABLED);
 	      ui_notification.UI.Notification.Center.notify({
@@ -6269,15 +7299,39 @@ this.BX.Crm = this.BX.Crm || {};
 	      setTimeout(() => {
 	        aiCopilotBtnUI.setState(ui_buttons.ButtonState.ACTIVE);
 	      }, COPILOT_BUTTON_DISABLE_DELAY);
-	      errorType = 'error_b24';
 	    }
-	    _classPrivateMethodGet$8(this, _sendAiCallParsingData, _sendAiCallParsingData2).call(this, data.ownerTypeId, data.activityId, errorType);
 	    throw response;
 	  });
 	}
 	function _showAdditionalInfo2(data, item, actionData) {
 	  if (_classPrivateMethodGet$8(this, _isSliderCodeExist, _isSliderCodeExist2).call(this, data)) {
-	    BX.UI.InfoHelper.show(data.sliderCode);
+	    if (data.sliderCode === 'limit_boost_copilot') {
+	      main_core.Runtime.loadExtension('baas.store').then(({
+	        ServiceWidget,
+	        Analytics
+	      }) => {
+	        var _item$getLayoutFooter, _item$getLayoutFooter2;
+	        if (!ServiceWidget) {
+	          var _BX, _BX$UI;
+	          (_BX = BX) === null || _BX === void 0 ? void 0 : (_BX$UI = _BX.UI) === null || _BX$UI === void 0 ? void 0 : _BX$UI.InfoHelper.show('limit_boost_copilot');
+	          console.error('Cant load "baas.store" extension');
+	        }
+	        const serviceWidget = ServiceWidget === null || ServiceWidget === void 0 ? void 0 : ServiceWidget.getInstanceByCode('ai_copilot_token');
+	        const bindElement = (_item$getLayoutFooter = item.getLayoutFooterButtonById('aiButton')) === null || _item$getLayoutFooter === void 0 ? void 0 : (_item$getLayoutFooter2 = _item$getLayoutFooter.getUiButton()) === null || _item$getLayoutFooter2 === void 0 ? void 0 : _item$getLayoutFooter2.getContainer();
+	        serviceWidget.bind(bindElement, Analytics.CONTEXT_CRM);
+	        serviceWidget.getPopup().adjustPosition({
+	          forceTop: true
+	        });
+	        serviceWidget.show();
+	      }).catch(() => {
+	        var _BX2, _BX2$UI;
+	        (_BX2 = BX) === null || _BX2 === void 0 ? void 0 : (_BX2$UI = _BX2.UI) === null || _BX2$UI === void 0 ? void 0 : _BX2$UI.InfoHelper.show('limit_boost_copilot');
+	        console.error('Cant load "baas.store" extension');
+	      });
+	    } else {
+	      var _BX3, _BX3$UI;
+	      (_BX3 = BX) === null || _BX3 === void 0 ? void 0 : (_BX3$UI = _BX3.UI) === null || _BX3$UI === void 0 ? void 0 : _BX3$UI.InfoHelper.show(data.sliderCode);
+	    }
 	  } else if (_classPrivateMethodGet$8(this, _isAiMarketplaceAppsExist, _isAiMarketplaceAppsExist2).call(this, data)) {
 	    if (!babelHelpers.classPrivateFieldGet(this, _isCopilotBannerShown) && data.isCopilotBannerNeedShow) {
 	      _classPrivateMethodGet$8(this, _showCopilotBanner, _showCopilotBanner2).call(this, item, actionData);
@@ -6288,39 +7342,58 @@ this.BX.Crm = this.BX.Crm || {};
 	    _classPrivateMethodGet$8(this, _showFeedbackMessageBox, _showFeedbackMessageBox2).call(this);
 	  }
 	}
-	function _showCopilotTourIfNeeded2(item) {
+	function _showCopilotWelcomeTour2(item) {
 	  if (!item) {
 	    return;
 	  }
-	  if (babelHelpers.classPrivateFieldGet(this, _isCopilotTourShown)) {
+	  if (babelHelpers.classPrivateFieldGet(this, _isCopilotWelcomeTourShown)) {
 	    return;
 	  }
 	  const payload = main_core.Type.isPlainObject(item.getDataPayload()) ? item.getDataPayload() : {};
-	  if (!payload.isCopilotTourCanShow) {
+	  if (!payload.isWelcomeTourEnabled) {
 	    return;
 	  }
 	  setTimeout(() => {
 	    const aiCopilotBtn = item.getLayoutFooterButtonById('aiButton');
-	    if (!aiCopilotBtn) {
-	      return;
-	    }
-	    const aiCopilotUIBtn = aiCopilotBtn.getUiButton();
+	    const aiCopilotUIBtn = aiCopilotBtn === null || aiCopilotBtn === void 0 ? void 0 : aiCopilotBtn.getUiButton();
 	    if (!aiCopilotUIBtn || aiCopilotUIBtn.getState() === ui_buttons.ButtonState.DISABLED) {
 	      return;
 	    }
-	    if (aiCopilotBtn.isInViewport()) {
-	      _classPrivateMethodGet$8(this, _emitTimelineCopilotTourEvent, _emitTimelineCopilotTourEvent2).call(this, aiCopilotUIBtn.getContainer());
-	    } else {
-	      const showCopilotTourOnScroll = () => {
-	        if (aiCopilotBtn.isInViewport()) {
-	          _classPrivateMethodGet$8(this, _emitTimelineCopilotTourEvent, _emitTimelineCopilotTourEvent2).call(this, aiCopilotUIBtn.getContainer());
-	          babelHelpers.classPrivateFieldSet(this, _isCopilotTourShown, true);
-	          main_core.Event.unbind(window, 'scroll', showCopilotTourOnScroll);
-	        }
-	      };
-	      main_core.Event.bind(window, 'scroll', showCopilotTourOnScroll);
+	    if (aiCopilotBtn !== null && aiCopilotBtn !== void 0 && aiCopilotBtn.isInViewport()) {
+	      _classPrivateMethodGet$8(this, _emitTimelineCopilotTourEvent, _emitTimelineCopilotTourEvent2).call(this, aiCopilotUIBtn.getContainer(), 'BX.Crm.Timeline.Call:onShowCopilotTour', 'copilot-button-in-call');
+	      return;
 	    }
+	    const showCopilotTourOnScroll = () => {
+	      if (aiCopilotBtn !== null && aiCopilotBtn !== void 0 && aiCopilotBtn.isInViewport()) {
+	        _classPrivateMethodGet$8(this, _emitTimelineCopilotTourEvent, _emitTimelineCopilotTourEvent2).call(this, aiCopilotUIBtn.getContainer(), 'BX.Crm.Timeline.Call:onShowCopilotTour', 'copilot-button-in-call');
+	        babelHelpers.classPrivateFieldSet(this, _isCopilotWelcomeTourShown, true);
+	        main_core.Event.unbind(window, 'scroll', showCopilotTourOnScroll);
+	      }
+	    };
+	    main_core.Event.bind(window, 'scroll', showCopilotTourOnScroll);
 	  }, 50);
+	}
+	function _bindAdditionalCopilotActions2(item) {
+	  if (!item) {
+	    return;
+	  }
+	  setTimeout(() => {
+	    const player = item === null || item === void 0 ? void 0 : item.getLayoutContentBlockById('audio');
+	    if (!player) {
+	      return;
+	    }
+	    main_core_events.EventEmitter.subscribe('ui:audioplayer:pause', event => {
+	      const {
+	        initiator
+	      } = event.getData();
+	      const aiCopilotBtn = item.getLayoutFooterButtonById('aiButton');
+	      const aiCopilotUIBtn = aiCopilotBtn === null || aiCopilotBtn === void 0 ? void 0 : aiCopilotBtn.getUiButton();
+	      if (!aiCopilotUIBtn || aiCopilotUIBtn.getState() === ui_buttons.ButtonState.DISABLED || !(aiCopilotBtn !== null && aiCopilotBtn !== void 0 && aiCopilotBtn.isPropEqual('data-activity-id', initiator))) {
+	        return;
+	      }
+	      _classPrivateMethodGet$8(this, _emitTimelineCopilotTourEvent, _emitTimelineCopilotTourEvent2).call(this, aiCopilotUIBtn.getContainer(), 'BX.Crm.Timeline.Call:onShowCopilotTour', 'copilot-button-in-call', 500);
+	    });
+	  }, 75);
 	}
 	function _showMarketMessageBox2() {
 	  ui_dialogs_messagebox.MessageBox.show({
@@ -6374,7 +7447,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    }
 	  });
 	}
-	async function _showCopilotBanner2(item, actionData) {
+	async function _showCopilotBanner2() {
 	  const {
 	    AppsInstallerBanner,
 	    AppsInstallerBannerEvents
@@ -6405,15 +7478,12 @@ this.BX.Crm = this.BX.Crm || {};
 	    }, 500);
 	  });
 	}
-	function _emitTimelineCopilotTourEvent2(container) {
-	  main_core_events.EventEmitter.emit('BX.Crm.Timeline.Call:onShowCopilotTour', {
-	    target: container,
-	    stepId: 'copilot-button-in-call',
-	    delay: 1500
+	function _emitTimelineCopilotTourEvent2(target, eventName, stepId, delay = 1500) {
+	  main_core_events.EventEmitter.emit(this, eventName, {
+	    target,
+	    stepId,
+	    delay
 	  });
-	}
-	function _sendAiCallParsingData2(ownerType, activityId, result) {
-	  ui_analytics.sendData(crm_integration_analytics.Builder.AI.CallParsingEvent.createDefault(ownerType, activityId, result).setElement(crm_integration_analytics.Dictionary.ELEMENT_COPILOT_BUTTON).buildData());
 	}
 	function _isSliderCodeExist2(data) {
 	  return Object.hasOwn(data, 'sliderCode') && main_core.Type.isStringFilled(data.sliderCode);
@@ -6423,36 +7493,35 @@ this.BX.Crm = this.BX.Crm || {};
 	}
 
 	function _classPrivateMethodInitSpec$9(obj, privateSet) { _checkPrivateRedeclaration$c(obj, privateSet); privateSet.add(obj); }
-	function _classPrivateFieldInitSpec$8(obj, privateMap, value) { _checkPrivateRedeclaration$c(obj, privateMap); privateMap.set(obj, value); }
+	function _classPrivateFieldInitSpec$9(obj, privateMap, value) { _checkPrivateRedeclaration$c(obj, privateMap); privateMap.set(obj, value); }
 	function _checkPrivateRedeclaration$c(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 	function _classPrivateMethodGet$9(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
-	var _settingsPopup = /*#__PURE__*/new WeakMap();
 	var _responsibleUserSelectorDialog = /*#__PURE__*/new WeakMap();
 	var _showFileUploaderPopup = /*#__PURE__*/new WeakSet();
-	var _showSettingsPopup = /*#__PURE__*/new WeakSet();
 	var _showResponsibleUserSelector = /*#__PURE__*/new WeakSet();
-	var _onSavePopupSettings = /*#__PURE__*/new WeakSet();
-	var _getSectionSettings = /*#__PURE__*/new WeakSet();
-	var _getDefaultCalendarParams = /*#__PURE__*/new WeakSet();
+	var _emitRepeatTodo = /*#__PURE__*/new WeakSet();
+	var _emitUpdateTodo = /*#__PURE__*/new WeakSet();
+	var _runUpdateColorAction = /*#__PURE__*/new WeakSet();
+	var _showCalendar = /*#__PURE__*/new WeakSet();
 	var _runResponsibleUserAction = /*#__PURE__*/new WeakSet();
+	var _openClient = /*#__PURE__*/new WeakSet();
+	var _openUser = /*#__PURE__*/new WeakSet();
 	let ToDo = /*#__PURE__*/function (_Base) {
 	  babelHelpers.inherits(ToDo, _Base);
 	  function ToDo(...args) {
 	    var _this;
 	    babelHelpers.classCallCheck(this, ToDo);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(ToDo).call(this, ...args));
+	    _classPrivateMethodInitSpec$9(babelHelpers.assertThisInitialized(_this), _openUser);
+	    _classPrivateMethodInitSpec$9(babelHelpers.assertThisInitialized(_this), _openClient);
 	    _classPrivateMethodInitSpec$9(babelHelpers.assertThisInitialized(_this), _runResponsibleUserAction);
-	    _classPrivateMethodInitSpec$9(babelHelpers.assertThisInitialized(_this), _getDefaultCalendarParams);
-	    _classPrivateMethodInitSpec$9(babelHelpers.assertThisInitialized(_this), _getSectionSettings);
-	    _classPrivateMethodInitSpec$9(babelHelpers.assertThisInitialized(_this), _onSavePopupSettings);
+	    _classPrivateMethodInitSpec$9(babelHelpers.assertThisInitialized(_this), _showCalendar);
+	    _classPrivateMethodInitSpec$9(babelHelpers.assertThisInitialized(_this), _runUpdateColorAction);
+	    _classPrivateMethodInitSpec$9(babelHelpers.assertThisInitialized(_this), _emitUpdateTodo);
+	    _classPrivateMethodInitSpec$9(babelHelpers.assertThisInitialized(_this), _emitRepeatTodo);
 	    _classPrivateMethodInitSpec$9(babelHelpers.assertThisInitialized(_this), _showResponsibleUserSelector);
-	    _classPrivateMethodInitSpec$9(babelHelpers.assertThisInitialized(_this), _showSettingsPopup);
 	    _classPrivateMethodInitSpec$9(babelHelpers.assertThisInitialized(_this), _showFileUploaderPopup);
-	    _classPrivateFieldInitSpec$8(babelHelpers.assertThisInitialized(_this), _settingsPopup, {
-	      writable: true,
-	      value: null
-	    });
-	    _classPrivateFieldInitSpec$8(babelHelpers.assertThisInitialized(_this), _responsibleUserSelectorDialog, {
+	    _classPrivateFieldInitSpec$9(babelHelpers.assertThisInitialized(_this), _responsibleUserSelectorDialog, {
 	      writable: true,
 	      value: null
 	    });
@@ -6469,6 +7538,9 @@ this.BX.Crm = this.BX.Crm || {};
 	      if (actionType !== 'jsEvent') {
 	        return;
 	      }
+	      if (action === 'ColorSelector:Change' && actionData) {
+	        _classPrivateMethodGet$9(this, _runUpdateColorAction, _runUpdateColorAction2).call(this, item, actionData);
+	      }
 	      if (action === 'EditableDescription:StartEdit') {
 	        item.highlightContentBlockById('description', true);
 	      }
@@ -6478,11 +7550,23 @@ this.BX.Crm = this.BX.Crm || {};
 	      if (action === 'Activity:ToDo:AddFile' && actionData) {
 	        _classPrivateMethodGet$9(this, _showFileUploaderPopup, _showFileUploaderPopup2).call(this, item, actionData);
 	      }
-	      if (action === 'Activity:ToDo:ShowSettings' && actionData) {
-	        _classPrivateMethodGet$9(this, _showSettingsPopup, _showSettingsPopup2).call(this, item, actionData);
-	      }
 	      if (action === 'Activity:ToDo:ChangeResponsible' && actionData) {
 	        _classPrivateMethodGet$9(this, _showResponsibleUserSelector, _showResponsibleUserSelector2).call(this, item, actionData);
+	      }
+	      if (action === 'Activity:ToDo:Repeat' && actionData) {
+	        _classPrivateMethodGet$9(this, _emitRepeatTodo, _emitRepeatTodo2).call(this, item, actionData);
+	      }
+	      if (action === 'Activity:ToDo:Update' && actionData) {
+	        _classPrivateMethodGet$9(this, _emitUpdateTodo, _emitUpdateTodo2).call(this, item, actionData);
+	      }
+	      if (action === 'Activity:ToDo:ShowCalendar' && actionData) {
+	        _classPrivateMethodGet$9(this, _showCalendar, _showCalendar2).call(this, item, actionData);
+	      }
+	      if (action === 'Activity:ToDo:Client:Click' && actionData) {
+	        _classPrivateMethodGet$9(this, _openClient, _openClient2).call(this, actionData.entityId, actionData.entityTypeId);
+	      }
+	      if (action === 'Activity:ToDo:User:Click' && actionData) {
+	        _classPrivateMethodGet$9(this, _openUser, _openUser2).call(this, actionData.userId);
 	      }
 	    }
 	  }], [{
@@ -6506,17 +7590,6 @@ this.BX.Crm = this.BX.Crm || {};
 	    const popup = new crm_activity_fileUploaderPopup.FileUploaderPopup(actionData);
 	    popup.show();
 	  }
-	}
-	function _showSettingsPopup2(item, actionData) {
-	  babelHelpers.classPrivateFieldSet(this, _settingsPopup, new crm_activity_settingsPopup.SettingsPopup({
-	    sections: _classPrivateMethodGet$9(this, _getSectionSettings, _getSectionSettings2).call(this),
-	    fetchSettingsPath: 'crm.activity.todo.fetchSettings',
-	    ownerTypeId: actionData['ownerTypeId'],
-	    ownerId: actionData['ownerId'],
-	    id: actionData['entityId'],
-	    onSave: _classPrivateMethodGet$9(this, _onSavePopupSettings, _onSavePopupSettings2).bind(this)
-	  }));
-	  babelHelpers.classPrivateFieldGet(this, _settingsPopup).show();
 	}
 	function _showResponsibleUserSelector2(item, actionData) {
 	  const isValidParams = main_core.Type.isNumber(actionData.id) && main_core.Type.isNumber(actionData.ownerId) && main_core.Type.isNumber(actionData.ownerTypeId) && main_core.Type.isNumber(actionData.responsibleId);
@@ -6557,14 +7630,32 @@ this.BX.Crm = this.BX.Crm || {};
 	  }));
 	  babelHelpers.classPrivateFieldGet(this, _responsibleUserSelectorDialog).show();
 	}
-	function _onSavePopupSettings2(ownerTypeId, ownerId, id, settings) {
+	function _emitRepeatTodo2(item, actionData) {
+	  main_core_events.EventEmitter.emit('crm:timeline:todo:repeat', actionData);
+	}
+	function _emitUpdateTodo2(item, actionData) {
+	  main_core_events.EventEmitter.emit('crm:timeline:todo:update', actionData);
+	}
+	function _runUpdateColorAction2(item, actionData) {
+	  const {
+	    id,
+	    ownerTypeId,
+	    ownerId
+	  } = item.getDataPayload();
+	  const {
+	    colorId
+	  } = actionData;
+	  const isValidParams = main_core.Type.isNumber(id) && main_core.Type.isNumber(ownerId) && main_core.Type.isNumber(ownerTypeId) && main_core.Type.isStringFilled(colorId);
+	  if (!isValidParams) {
+	    return;
+	  }
 	  const data = {
 	    ownerTypeId,
 	    ownerId,
 	    id,
-	    settings
+	    colorId
 	  };
-	  main_core.ajax.runAction('crm.activity.todo.updateSettings', {
+	  main_core.ajax.runAction('crm.activity.todo.updateColor', {
 	    data
 	  }).catch(response => {
 	    ui_notification.UI.Notification.Center.notify({
@@ -6574,25 +7665,22 @@ this.BX.Crm = this.BX.Crm || {};
 	    throw response;
 	  });
 	}
-	function _getSectionSettings2() {
-	  const calendar = {
-	    id: crm_activity_settingsPopup.Calendar.methods.getId(),
-	    component: crm_activity_settingsPopup.Calendar,
-	    active: false
-	  };
-	  if (babelHelpers.classPrivateFieldGet(this, _settingsPopup)) {
-	    const settings = babelHelpers.classPrivateFieldGet(this, _settingsPopup).getSettings();
-	    if (settings.calendar) {
-	      const calendarSettings = settings.calendar;
-	      calendar.params = {
-	        from: calendarSettings.from,
-	        to: calendarSettings.to,
-	        duration: calendarSettings.duration
-	      };
-	      calendar.active = true;
-	    }
+	function _showCalendar2(item, actionData) {
+	  const {
+	    calendarEventId,
+	    entryDateFrom,
+	    timezoneOffset
+	  } = actionData;
+	  if (!window.top.BX.Calendar) {
+	    // eslint-disable-next-line no-console
+	    console.warn('BX.Calendar not found');
+	    return;
 	  }
-	  return [calendar];
+	  new window.top.BX.Calendar.SliderLoader(calendarEventId, {
+	    entryDateFrom,
+	    timezoneOffset,
+	    calendarContext: null
+	  }).show();
 	}
 	function _runResponsibleUserAction2(id, ownerId, ownerTypeId, responsibleId) {
 	  const data = {
@@ -6610,6 +7698,19 @@ this.BX.Crm = this.BX.Crm || {};
 	    });
 	    throw response;
 	  });
+	}
+	function _openClient2(entityId, entityTypeId) {
+	  if (ui_sidepanel.SidePanel.Instance) {
+	    const entityTypeName = BX.CrmEntityType.resolveName(entityTypeId).toLowerCase();
+	    const path = `/crm/${entityTypeName}/details/${entityId}/`;
+	    ui_sidepanel.SidePanel.Instance.open(path);
+	  }
+	}
+	function _openUser2(userId) {
+	  if (ui_sidepanel.SidePanel.Instance) {
+	    const path = `/company/personal/user/${userId}/`;
+	    ui_sidepanel.SidePanel.Instance.open(path);
+	  }
 	}
 
 	function _classPrivateMethodInitSpec$a(obj, privateSet) { _checkPrivateRedeclaration$d(obj, privateSet); privateSet.add(obj); }
@@ -6837,9 +7938,6 @@ this.BX.Crm = this.BX.Crm || {};
 	  computed: {
 	    isShowMoreVisible() {
 	      return this.isShortList && this.listItems.length > this.shortListItemsCnt;
-	    },
-	    cnt() {
-	      return this.listItems.length;
 	    }
 	  },
 	  // language=Vue
@@ -6862,14 +7960,14 @@ this.BX.Crm = this.BX.Crm || {};
 				class="crm-entity-stream-advice-link"
 				href="#"
 			>
-				{{showMoreText}} ({{cnt}})
+				{{showMoreText}}
 			</a>
 		</div>
 	`
 	};
 
 	function _classPrivateMethodInitSpec$c(obj, privateSet) { _checkPrivateRedeclaration$f(obj, privateSet); privateSet.add(obj); }
-	function _classPrivateFieldInitSpec$9(obj, privateMap, value) { _checkPrivateRedeclaration$f(obj, privateMap); privateMap.set(obj, value); }
+	function _classPrivateFieldInitSpec$a(obj, privateMap, value) { _checkPrivateRedeclaration$f(obj, privateMap); privateMap.set(obj, value); }
 	function _checkPrivateRedeclaration$f(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 	function _classPrivateMethodGet$c(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 	var _item = /*#__PURE__*/new WeakMap();
@@ -6882,11 +7980,11 @@ this.BX.Crm = this.BX.Crm || {};
 	    babelHelpers.classCallCheck(this, DealProductList);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(DealProductList).call(this, ...args));
 	    _classPrivateMethodInitSpec$c(babelHelpers.assertThisInitialized(_this), _addProductToDeal);
-	    _classPrivateFieldInitSpec$9(babelHelpers.assertThisInitialized(_this), _item, {
+	    _classPrivateFieldInitSpec$a(babelHelpers.assertThisInitialized(_this), _item, {
 	      writable: true,
 	      value: null
 	    });
-	    _classPrivateFieldInitSpec$9(babelHelpers.assertThisInitialized(_this), _productsGrid, {
+	    _classPrivateFieldInitSpec$a(babelHelpers.assertThisInitialized(_this), _productsGrid, {
 	      writable: true,
 	      value: null
 	    });
@@ -6946,47 +8044,23 @@ this.BX.Crm = this.BX.Crm || {};
 	  return DealProductList;
 	}(Base);
 	function _addProductToDeal2(actionData, animationCallbacks) {
-	  if (!(actionData && actionData.dealId && actionData.productId)) {
+	  if (!(actionData && actionData.productId)) {
 	    return;
 	  }
 	  if (animationCallbacks.onStart) {
 	    animationCallbacks.onStart();
 	  }
-	  main_core.ajax.runAction('crm.timeline.dealproduct.addtodeal', {
-	    data: {
-	      dealId: actionData.dealId,
-	      productId: actionData.productId,
-	      options: actionData.options || {}
-	    }
-	  }).then(() => {
-	    BX.Crm.EntityEditor.getDefault().reload();
-	    if (babelHelpers.classPrivateFieldGet(this, _productsGrid)) {
-	      babelHelpers.classPrivateFieldGet(this, _productsGrid).reloadGrid(false);
-	    }
-	    ui_notification.UI.Notification.Center.notify({
-	      content: main_core.Loc.getMessage('CRM_TIMELINE_ENCOURAGE_BUY_PRODUCTS_PRODUCTS_ADDED_TO_DEAL'),
-	      actions: [{
-	        title: main_core.Loc.getMessage('CRM_TIMELINE_ENCOURAGE_BUY_PRODUCTS_EDIT_PRODUCTS'),
-	        events: {
-	          click: (event, balloon, action) => {
-	            BX.onCustomEvent(window, 'OpenEntityDetailTab', ['tab_products']);
-	            balloon.close();
-	          }
-	        }
-	      }],
-	      autoHideDelay: 5000
-	    });
-	    babelHelpers.classPrivateFieldGet(this, _item).reloadFromServer().then(() => {
-	      if (animationCallbacks.onStop) {
-	        animationCallbacks.onStop();
-	      }
-	    });
-	  }, response => {
-	    if (animationCallbacks.onStop) {
-	      animationCallbacks.onStop();
-	    }
-	    return true;
+	  BX.onCustomEvent('onAddViewedProductToDeal', [actionData.productId]);
+	  setTimeout(() => {
+	    BX.onCustomEvent('OpenEntityDetailTab', ['tab_products']);
+	  }, 500);
+	  ui_notification.UI.Notification.Center.notify({
+	    content: main_core.Loc.getMessage('CRM_TIMELINE_ENCOURAGE_BUY_PRODUCTS_PRODUCTS_ADDED_TO_DEAL'),
+	    autoHideDelay: 5000
 	  });
+	  if (animationCallbacks.onStop) {
+	    animationCallbacks.onStop();
+	  }
 	}
 
 	var ContactList = {
@@ -7007,7 +8081,6 @@ this.BX.Crm = this.BX.Crm || {};
 	function _classPrivateMethodGet$d(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 	var _viewActivity$1 = /*#__PURE__*/new WeakSet();
 	var _getActivityEditor$1 = /*#__PURE__*/new WeakSet();
-	var _schedule = /*#__PURE__*/new WeakSet();
 	var _openMessage = /*#__PURE__*/new WeakSet();
 	let Email = /*#__PURE__*/function (_Base) {
 	  babelHelpers.inherits(Email, _Base);
@@ -7016,7 +8089,6 @@ this.BX.Crm = this.BX.Crm || {};
 	    babelHelpers.classCallCheck(this, Email);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Email).call(this, ...args));
 	    _classPrivateMethodInitSpec$d(babelHelpers.assertThisInitialized(_this), _openMessage);
-	    _classPrivateMethodInitSpec$d(babelHelpers.assertThisInitialized(_this), _schedule);
 	    _classPrivateMethodInitSpec$d(babelHelpers.assertThisInitialized(_this), _getActivityEditor$1);
 	    _classPrivateMethodInitSpec$d(babelHelpers.assertThisInitialized(_this), _viewActivity$1);
 	    return _this;
@@ -7036,7 +8108,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        _classPrivateMethodGet$d(this, _openMessage, _openMessage2).call(this, actionData);
 	      }
 	      if (action === 'Email::Schedule' && actionData) {
-	        _classPrivateMethodGet$d(this, _schedule, _schedule2).call(this, actionData.activityId, actionData.scheduleDate);
+	        this.runScheduleAction(actionData.activityId, actionData.scheduleDate);
 	      }
 	    }
 	  }, {
@@ -7067,17 +8139,6 @@ this.BX.Crm = this.BX.Crm || {};
 	function _getActivityEditor2$1() {
 	  return BX.CrmActivityEditor.getDefault();
 	}
-	function _schedule2(activityId, scheduleDate) {
-	  var _BX$Crm, _BX$Crm$Timeline, _BX$Crm$Timeline$Menu;
-	  const menuBar = (_BX$Crm = BX.Crm) === null || _BX$Crm === void 0 ? void 0 : (_BX$Crm$Timeline = _BX$Crm.Timeline) === null || _BX$Crm$Timeline === void 0 ? void 0 : (_BX$Crm$Timeline$Menu = _BX$Crm$Timeline.MenuBar) === null || _BX$Crm$Timeline$Menu === void 0 ? void 0 : _BX$Crm$Timeline$Menu.getDefault();
-	  if (menuBar) {
-	    menuBar.setActiveItemById('todo');
-	    const todoEditor = menuBar.getItemById('todo');
-	    todoEditor.focus();
-	    todoEditor.setParentActivityId(activityId);
-	    todoEditor.setDeadLine(scheduleDate);
-	  }
-	}
 	function _openMessage2(actionData) {
 	  if (!main_core.Type.isNumber(actionData.threadId)) {
 	    return;
@@ -7107,12 +8168,23 @@ this.BX.Crm = this.BX.Crm || {};
 	          width: 500,
 	          cacheable: false
 	        });
+	      } else if (action === 'OrderCheck:ReprintCheck' && actionData && actionData.checkId) {
+	        main_core.ajax.runAction('crm.ordercheck.reprint', {
+	          data: {
+	            checkId: actionData.checkId
+	          }
+	        }).catch(response => {
+	          ui_notification.UI.Notification.Center.notify({
+	            content: response.errors[0].message,
+	            autoHideDelay: 5000
+	          });
+	        });
 	      }
 	    }
 	  }], [{
 	    key: "isItemSupported",
 	    value: function isItemSupported(item) {
-	      return item.getType() === 'OrderCheckPrinted' || item.getType() === 'OrderCheckNotPrinted' || item.getType() === 'OrderCheckSent';
+	      return item.getType() === 'OrderCheckPrinted' || item.getType() === 'OrderCheckNotPrinted' || item.getType() === 'OrderCheckSent' || item.getType() === 'OrderCheckPrinting';
 	    }
 	  }]);
 	  return OrderCheck;
@@ -7256,7 +8328,7 @@ this.BX.Crm = this.BX.Crm || {};
 	}
 
 	function _classPrivateMethodInitSpec$f(obj, privateSet) { _checkPrivateRedeclaration$i(obj, privateSet); privateSet.add(obj); }
-	function _classPrivateFieldInitSpec$a(obj, privateMap, value) { _checkPrivateRedeclaration$i(obj, privateMap); privateMap.set(obj, value); }
+	function _classPrivateFieldInitSpec$b(obj, privateMap, value) { _checkPrivateRedeclaration$i(obj, privateMap); privateMap.set(obj, value); }
 	function _checkPrivateRedeclaration$i(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 	function _classPrivateMethodGet$f(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 	var _needCheckRequestStatus = /*#__PURE__*/new WeakMap();
@@ -7288,15 +8360,15 @@ this.BX.Crm = this.BX.Crm || {};
 	    _classPrivateMethodInitSpec$f(babelHelpers.assertThisInitialized(_this), _subscribeShipmentEvents);
 	    _classPrivateMethodInitSpec$f(babelHelpers.assertThisInitialized(_this), _subscribePullEvents);
 	    _classPrivateMethodInitSpec$f(babelHelpers.assertThisInitialized(_this), _makeCall$1);
-	    _classPrivateFieldInitSpec$a(babelHelpers.assertThisInitialized(_this), _needCheckRequestStatus, {
+	    _classPrivateFieldInitSpec$b(babelHelpers.assertThisInitialized(_this), _needCheckRequestStatus, {
 	      writable: true,
 	      value: null
 	    });
-	    _classPrivateFieldInitSpec$a(babelHelpers.assertThisInitialized(_this), _checkRequestStatusTimeout, {
+	    _classPrivateFieldInitSpec$b(babelHelpers.assertThisInitialized(_this), _checkRequestStatusTimeout, {
 	      writable: true,
 	      value: null
 	    });
-	    _classPrivateFieldInitSpec$a(babelHelpers.assertThisInitialized(_this), _isPullSubscribed, {
+	    _classPrivateFieldInitSpec$b(babelHelpers.assertThisInitialized(_this), _isPullSubscribed, {
 	      writable: true,
 	      value: false
 	    });
@@ -7589,82 +8661,125 @@ this.BX.Crm = this.BX.Crm || {};
 	  return main_core.Type.isNumber(params.commentId) && main_core.Type.isNumber(params.ownerId) && main_core.Type.isNumber(params.ownerTypeId);
 	}
 
-	var sharingSlotsListItem = {
-	  props: {
-	    isEditable: Boolean,
-	    rule: {
-	      from: Number,
-	      to: Number,
-	      weekdays: Array,
-	      slotSize: Number
-	    },
-	    durationFormatted: String,
-	    weekdaysFormatted: String
-	  },
-	  computed: {
-	    itemClassName() {
-	      return 'crm-timeline-calendar-sharing-item-' + (this.isEditable ? 'editable' : 'non-editable');
-	    }
-	  },
-	  methods: {
-	    createItemText() {
-	      return main_core.Loc.getMessage('CRM_TIMELINE_ITEM_CALENDAR_SHARING_SLOTS_RANGE_V2', {
-	        '#WEEKDAYS#': this.weekdaysFormatted,
-	        '#FROM_TIME#': this.formatMinutes(this.rule.from),
-	        '#TO_TIME#': this.formatMinutes(this.rule.to),
-	        '#DURATION#': this.durationFormatted
-	      });
-	    },
-	    formatMinutes(minutes) {
-	      const date = new Date(calendar_util.Util.parseDate('01.01.2000').getTime() + minutes * 60 * 1000);
-	      return calendar_util.Util.formatTime(date);
-	    }
-	  },
-	  template: `
-		<div :class="[itemClassName]">
-			<span :title="createItemText()">{{createItemText()}}</span>
-		</div>
-	`
-	};
-
+	let _$1 = t => t,
+	  _t$1,
+	  _t2,
+	  _t3;
 	var SharingSlotsList = {
+	  data() {
+	    return {
+	      popup: null,
+	      moreLinkRef: null
+	    };
+	  },
 	  props: {
 	    listItems: {
 	      type: Array,
 	      required: true,
 	      default: []
-	    },
-	    isEditable: {
-	      type: Boolean,
-	      required: true,
-	      default: false
 	    }
 	  },
-	  components: {
-	    sharingSlotsListItem
+	  mounted() {
+	    const moreLink = this.$el.querySelector('[data-anchor="more-link"]');
+	    if (!moreLink) {
+	      return;
+	    }
+	    this.moreLinkRef = moreLink;
+	    main_core.Event.bind(this.moreLinkRef, 'click', () => this.openPopup());
+	    main_core.Dom.append(main_core.Tag.render(_t$1 || (_t$1 = _$1`<i/>`)), this.moreLinkRef);
+	  },
+	  computed: {
+	    items() {
+	      return this.listItems.map(item => item.properties);
+	    },
+	    formattedRules() {
+	      return this.items.map(item => this.createItemText(item));
+	    },
+	    firstFormattedRule() {
+	      var _this$formattedRules$;
+	      if (this.doShowMoreLink) {
+	        return main_core.Loc.getMessage('CRM_TIMELINE_ITEM_CALENDAR_SHARING_SLOTS_RANGE_WITH_MORE', {
+	          '#RANGE#': this.formattedRules[0],
+	          '#MORE_LINK_CLASS#': 'crm-timeline-calendar-sharing-slots-more',
+	          '#AMOUNT#': this.items.length - 1
+	        });
+	      }
+	      return (_this$formattedRules$ = this.formattedRules[0]) !== null && _this$formattedRules$ !== void 0 ? _this$formattedRules$ : '';
+	    },
+	    formattedDuration() {
+	      return main_core.Loc.getMessage('CRM_TIMELINE_ITEM_CALENDAR_SHARING_SLOTS_DURATION', {
+	        '#DURATION#': this.items[0].durationFormatted
+	      });
+	    },
+	    doShowMoreLink() {
+	      return this.items.length > 1;
+	    }
+	  },
+	  methods: {
+	    createItemText(item) {
+	      return main_core.Loc.getMessage('CRM_TIMELINE_ITEM_CALENDAR_SHARING_SLOTS_RANGE_V3', {
+	        '#WEEKDAYS#': main_core.Text.encode(item.weekdaysFormatted),
+	        '#FROM_TIME#': this.formatMinutes(item.rule.from),
+	        '#TO_TIME#': this.formatMinutes(item.rule.to)
+	      });
+	    },
+	    formatMinutes(minutes) {
+	      const date = new Date(calendar_util.Util.parseDate('01.01.2000').getTime() + minutes * 60 * 1000);
+	      return calendar_util.Util.formatTime(date);
+	    },
+	    openPopup() {
+	      var _this$popup;
+	      if (!this.moreLinkRef || (_this$popup = this.popup) !== null && _this$popup !== void 0 && _this$popup.isShown()) {
+	        return;
+	      }
+	      this.popup = new main_popup.Popup(this.getPopupOptions());
+	      this.popup.show();
+	    },
+	    getPopupOptions() {
+	      return {
+	        content: this.getPopupContent(),
+	        autoHide: true,
+	        cacheable: false,
+	        animation: 'fading-slide',
+	        bindElement: this.moreLinkRef,
+	        closeByEsc: true
+	      };
+	    },
+	    getPopupContent() {
+	      const root = main_core.Tag.render(_t2 || (_t2 = _$1`<div></div>`));
+	      this.formattedRules.forEach(item => {
+	        main_core.Dom.append(main_core.Tag.render(_t3 || (_t3 = _$1`<div class="crm-timeline-calendar-sharing-slots-more-popup-item">${0}</div>`), item), root);
+	      });
+	      return root;
+	    }
 	  },
 	  template: `
-		<div>
-			<sharingSlotsListItem
-				v-for="item in listItems"
-				v-bind="item.properties"
-				:is-editable="isEditable"
-			/>
+		<div class="crm-timeline-calendar-sharing-slots">
+			<div class="crm-timeline-calendar-sharing-slots-block" v-html="firstFormattedRule"/>
+			<div class="crm-timeline-calendar-sharing-slots-block">
+				{{formattedDuration}}
+			</div>
 		</div>
 	`
 	};
 
+	let _$2 = t => t,
+	  _t$2;
 	function _classPrivateMethodInitSpec$i(obj, privateSet) { _checkPrivateRedeclaration$l(obj, privateSet); privateSet.add(obj); }
 	function _checkPrivateRedeclaration$l(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 	function _classPrivateMethodGet$i(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 	var _openCalendarEvent = /*#__PURE__*/new WeakSet();
 	var _startVideoconference = /*#__PURE__*/new WeakSet();
+	var _openMembersPopup = /*#__PURE__*/new WeakSet();
+	var _renderMemberMenuItem = /*#__PURE__*/new WeakSet();
 	let Sharing = /*#__PURE__*/function (_Base) {
 	  babelHelpers.inherits(Sharing, _Base);
 	  function Sharing(...args) {
 	    var _this;
 	    babelHelpers.classCallCheck(this, Sharing);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Sharing).call(this, ...args));
+	    _classPrivateMethodInitSpec$i(babelHelpers.assertThisInitialized(_this), _renderMemberMenuItem);
+	    _classPrivateMethodInitSpec$i(babelHelpers.assertThisInitialized(_this), _openMembersPopup);
 	    _classPrivateMethodInitSpec$i(babelHelpers.assertThisInitialized(_this), _startVideoconference);
 	    _classPrivateMethodInitSpec$i(babelHelpers.assertThisInitialized(_this), _openCalendarEvent);
 	    return _this;
@@ -7680,6 +8795,9 @@ this.BX.Crm = this.BX.Crm || {};
 	      if (actionType !== 'jsEvent') {
 	        return;
 	      }
+	      if (action === 'CalendarSharingInvitationSent:ShowMembers' || action === 'Activity:CalendarSharing:ShowMembers') {
+	        _classPrivateMethodGet$i(this, _openMembersPopup, _openMembersPopup2).call(this, item, Object.values(actionData.members));
+	      }
 	      if (action === 'Activity:CalendarSharing:OpenCalendarEvent') {
 	        _classPrivateMethodGet$i(this, _openCalendarEvent, _openCalendarEvent2).call(this, item, actionData);
 	      }
@@ -7692,9 +8810,18 @@ this.BX.Crm = this.BX.Crm || {};
 	      if (action === 'CalendarSharingInvitationSent:ShowQr') {
 	        const dialogQr = new calendar_sharing_interface.DialogQr({
 	          sharingUrl: actionData.url,
-	          context: "crm"
+	          context: 'crm'
 	        });
 	        dialogQr.show();
+	      }
+	      if (action === 'Activity:CalendarSharing:CopyLink') {
+	        const isSuccess = BX.clipboard.copy(actionData.url);
+	        if (isSuccess) {
+	          ui_notification.UI.Notification.Center.notify({
+	            content: main_core.Loc.getMessage('CRM_TIMELINE_ITEM_LINK_IS_COPIED_SHORT'),
+	            autoHideDelay: 5000
+	          });
+	        }
 	      }
 	    }
 	  }, {
@@ -7716,7 +8843,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  return crm_router.Router.Instance.openCalendarEventSlider(actionData.eventId, actionData.isSharing);
 	}
 	async function _startVideoconference2(item, actionData) {
-	  let response;
+	  let response = null;
 	  try {
 	    response = await main_core.ajax.runAction('crm.timeline.calendar.sharing.getConferenceChatId', {
 	      data: {
@@ -7731,8 +8858,52 @@ this.BX.Crm = this.BX.Crm || {};
 	  }
 	  const chatId = response.data.chatId;
 	  if (top.window.BXIM && chatId) {
-	    top.window.BXIM.openMessenger('chat' + parseInt(chatId));
+	    top.window.BXIM.openMessenger(`chat${parseInt(chatId, 10)}`);
 	  }
+	}
+	function _openMembersPopup2(item, members) {
+	  const moreButton = item.getContainer().querySelector('[data-id="sharing_member_more_button"]');
+	  if (!moreButton) {
+	    return;
+	  }
+	  const existingPopup = main_popup.PopupManager.getPopupById(`sharing_members_popup_${item.getId()}`);
+	  if (existingPopup) {
+	    return;
+	  }
+	  const menu = main_popup.MenuManager.create({
+	    id: `sharing_members_popup_${item.getId()}`,
+	    bindElement: moreButton,
+	    cacheable: false,
+	    className: 'crm-timeline-sharing-members-popup',
+	    maxHeight: 500,
+	    maxWidth: 300,
+	    animation: 'fading-slide',
+	    closeByEsc: true,
+	    items: members.map(member => ({
+	      html: _classPrivateMethodGet$i(this, _renderMemberMenuItem, _renderMemberMenuItem2).call(this, member),
+	      onclick: () => menu.close()
+	    }))
+	  });
+	  menu.show();
+	}
+	function _renderMemberMenuItem2(member) {
+	  const {
+	    root,
+	    icon
+	  } = main_core.Tag.render(_t$2 || (_t$2 = _$2`
+			<a class="crm-timeline-sharing-members-popup-item" href="${0}" target="_blank">
+				<div class="ui-icon ui-icon-common-user crm-timeline-sharing-members-popup-item-image">
+					<i ref="icon"></i>
+				</div>
+				<span class="crm-timeline-sharing-members-popup-item-title">
+					${0}
+				</span>
+			</a>
+		`), member.SHOW_URL, main_core.Text.encode(member.FORMATTED_NAME));
+	  if (main_core.Type.isStringFilled(member.PHOTO_URL)) {
+	    main_core.Dom.style(icon, 'background-image', `url('${encodeURI(main_core.Text.encode(member.PHOTO_URL))}')`);
+	  }
+	  return root;
 	}
 
 	let Task = /*#__PURE__*/function (_Base) {
@@ -7954,7 +9125,8 @@ this.BX.Crm = this.BX.Crm || {};
 	  const transcription = new crm_ai_call.Call.Transcription({
 	    activityId: actionData.activityId,
 	    ownerTypeId: actionData.ownerTypeId,
-	    ownerId: actionData.ownerId
+	    ownerId: actionData.ownerId,
+	    languageTitle: actionData.languageTitle
 	  });
 	  transcription.open();
 	}
@@ -8002,7 +9174,8 @@ this.BX.Crm = this.BX.Crm || {};
 	  const summary = new crm_ai_call.Call.Summary({
 	    activityId: actionData.activityId,
 	    ownerTypeId: actionData.ownerTypeId,
-	    ownerId: actionData.ownerId
+	    ownerId: actionData.ownerId,
+	    languageTitle: actionData.languageTitle
 	  });
 	  summary.open();
 	}
@@ -8124,7 +9297,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    } = exports;
 
 	    /** @see BX.Crm.AI.Feedback.showSendFeedbackPopup */
-	    showSendFeedbackPopup(mergeUuid, actionData.ownerTypeId, activityId);
+	    showSendFeedbackPopup(mergeUuid, actionData.ownerTypeId, activityId, actionData.activityDirection);
 	  }).catch(() => {
 	    console.error('Cant load showSendFeedbackPopup extension');
 	  }).finally(() => {
@@ -8137,14 +9310,12 @@ this.BX.Crm = this.BX.Crm || {};
 	function _checkPrivateRedeclaration$p(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 	function _classPrivateMethodGet$m(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 	var _changePlayerState$1 = /*#__PURE__*/new WeakSet();
-	var _scheduleCall$1 = /*#__PURE__*/new WeakSet();
 	let Visit = /*#__PURE__*/function (_Base) {
 	  babelHelpers.inherits(Visit, _Base);
 	  function Visit(...args) {
 	    var _this;
 	    babelHelpers.classCallCheck(this, Visit);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Visit).call(this, ...args));
-	    _classPrivateMethodInitSpec$m(babelHelpers.assertThisInitialized(_this), _scheduleCall$1);
 	    _classPrivateMethodInitSpec$m(babelHelpers.assertThisInitialized(_this), _changePlayerState$1);
 	    return _this;
 	  }
@@ -8163,7 +9334,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        _classPrivateMethodGet$m(this, _changePlayerState$1, _changePlayerState2$1).call(this, item, actionData.recordId);
 	      }
 	      if (action === 'Activity:Visit:Schedule' && actionData) {
-	        _classPrivateMethodGet$m(this, _scheduleCall$1, _scheduleCall2$1).call(this, actionData.activityId, actionData.scheduleDate);
+	        this.runScheduleAction(actionData.activityId, actionData.scheduleDate);
 	      }
 	    }
 	  }], [{
@@ -8188,15 +9359,226 @@ this.BX.Crm = this.BX.Crm || {};
 	    player.play();
 	  }
 	}
-	function _scheduleCall2$1(activityId, scheduleDate) {
+
+	function _classPrivateMethodInitSpec$n(obj, privateSet) { _checkPrivateRedeclaration$q(obj, privateSet); privateSet.add(obj); }
+	function _checkPrivateRedeclaration$q(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	function _classPrivateMethodGet$n(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+	const DOWNLOAD_DELAY = 300;
+	var _copyToClipboard = /*#__PURE__*/new WeakSet();
+	var _downloadAllRecords = /*#__PURE__*/new WeakSet();
+	let Zoom = /*#__PURE__*/function (_Base) {
+	  babelHelpers.inherits(Zoom, _Base);
+	  function Zoom(...args) {
+	    var _this;
+	    babelHelpers.classCallCheck(this, Zoom);
+	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Zoom).call(this, ...args));
+	    _classPrivateMethodInitSpec$n(babelHelpers.assertThisInitialized(_this), _downloadAllRecords);
+	    _classPrivateMethodInitSpec$n(babelHelpers.assertThisInitialized(_this), _copyToClipboard);
+	    return _this;
+	  }
+	  babelHelpers.createClass(Zoom, [{
+	    key: "onItemAction",
+	    value: function onItemAction(item, actionParams) {
+	      const {
+	        action,
+	        actionType,
+	        actionData
+	      } = actionParams;
+	      if (actionType !== 'jsEvent' || !actionData) {
+	        return;
+	      }
+	      if (action === 'Activity:Zoom:CopyInviteUrl') {
+	        _classPrivateMethodGet$n(this, _copyToClipboard, _copyToClipboard2).call(this, actionData.url);
+	      }
+	      if (action === 'Activity:Zoom:Schedule') {
+	        this.runScheduleAction(actionData.activityId, actionData.scheduleDate);
+	      }
+	      if (action === 'Activity:Zoom:CopyPassword') {
+	        _classPrivateMethodGet$n(this, _copyToClipboard, _copyToClipboard2).call(this, actionData.password);
+	      }
+	      if (action === 'Activity:Zoom:DownloadAllRecords' && main_core.Type.isArray(actionData.urlList)) {
+	        _classPrivateMethodGet$n(this, _downloadAllRecords, _downloadAllRecords2).call(this, actionData.urlList);
+	      }
+	    }
+	  }], [{
+	    key: "isItemSupported",
+	    value: function isItemSupported(item) {
+	      return item.getType() === 'Activity:Zoom';
+	    }
+	  }]);
+	  return Zoom;
+	}(Base);
+	function _copyToClipboard2(input) {
+	  if (main_core.Type.isStringFilled(input)) {
+	    const isSuccess = BX.clipboard.copy(input);
+	    if (isSuccess) {
+	      ui_notification.UI.Notification.Center.notify({
+	        content: main_core.Loc.getMessage('CRM_COMMON_ACTION_COPY_TO_CLIPBOARD_SUCCESS'),
+	        autoHideDelay: 2000
+	      });
+	    }
+	  }
+	}
+	function _downloadAllRecords2(urlList) {
+	  const download = urls => {
+	    const url = urls.pop();
+	    const a = document.createElement('a');
+	    a.setAttribute('href', url);
+	    if ('download' in a) {
+	      a.setAttribute('download', `zoom_record_file_${main_core.Text.getRandom(5)}.m4a`);
+	    }
+	    a.setAttribute('target', '_blank');
+	    a.click();
+	    if (urls.length === 0) {
+	      clearInterval(interval);
+	    }
+	  };
+	  const interval = setInterval(download, DOWNLOAD_DELAY, urlList);
+	}
+
+	function _classPrivateMethodInitSpec$o(obj, privateSet) { _checkPrivateRedeclaration$r(obj, privateSet); privateSet.add(obj); }
+	function _checkPrivateRedeclaration$r(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	function _classPrivateMethodGet$o(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+	var _resendSms = /*#__PURE__*/new WeakSet();
+	let Sms = /*#__PURE__*/function (_Base) {
+	  babelHelpers.inherits(Sms, _Base);
+	  function Sms(...args) {
+	    var _this;
+	    babelHelpers.classCallCheck(this, Sms);
+	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Sms).call(this, ...args));
+	    _classPrivateMethodInitSpec$o(babelHelpers.assertThisInitialized(_this), _resendSms);
+	    return _this;
+	  }
+	  babelHelpers.createClass(Sms, [{
+	    key: "onItemAction",
+	    value: function onItemAction(item, actionParams) {
+	      const {
+	        action,
+	        actionType,
+	        actionData
+	      } = actionParams;
+	      if (actionType !== 'jsEvent') {
+	        return;
+	      }
+	      if (action === 'Activity:Sms:Resend' && main_core.Type.isPlainObject(actionData.params)) {
+	        _classPrivateMethodGet$o(this, _resendSms, _resendSms2).call(this, actionData.params);
+	      }
+	    }
+	  }], [{
+	    key: "isItemSupported",
+	    value: function isItemSupported(item) {
+	      return item.getType() === 'Activity:Sms';
+	    }
+	  }]);
+	  return Sms;
+	}(Base);
+	function _resendSms2(params) {
 	  var _BX$Crm, _BX$Crm$Timeline, _BX$Crm$Timeline$Menu;
 	  const menuBar = (_BX$Crm = BX.Crm) === null || _BX$Crm === void 0 ? void 0 : (_BX$Crm$Timeline = _BX$Crm.Timeline) === null || _BX$Crm$Timeline === void 0 ? void 0 : (_BX$Crm$Timeline$Menu = _BX$Crm$Timeline.MenuBar) === null || _BX$Crm$Timeline$Menu === void 0 ? void 0 : _BX$Crm$Timeline$Menu.getDefault();
-	  if (menuBar) {
-	    menuBar.setActiveItemById('todo');
-	    const todoEditor = menuBar.getItemById('todo');
-	    todoEditor.focus();
-	    todoEditor.setParentActivityId(activityId);
-	    todoEditor.setDeadLine(scheduleDate);
+	  if (!menuBar) {
+	    throw new Error('"BX.Crm?.Timeline.MenuBar" component not found');
+	  }
+	  const smsItem = menuBar.getItemById('sms');
+	  if (!smsItem) {
+	    throw new Error('"BX.Crm.Timeline.MenuBar.Sms" component not found');
+	  }
+	  const goToEditor = () => {
+	    menuBar.scrollIntoView();
+	    menuBar.setActiveItemById('sms');
+	    smsItem.tryToResend(params.senderId, params.from, params.client, params.text);
+	  };
+	  const {
+	    text,
+	    templateId
+	  } = smsItem.getSendData();
+	  if (main_core.Type.isStringFilled(text) || templateId !== null) {
+	    ui_dialogs_messagebox.MessageBox.show({
+	      modal: true,
+	      title: main_core.Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_SMS_RESEND_CONFIRM_DIALOG_TITLE'),
+	      message: main_core.Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_SMS_RESEND_CONFIRM_DIALOG_MESSAGE'),
+	      buttons: ui_dialogs_messagebox.MessageBoxButtons.OK_CANCEL,
+	      okCaption: main_core.Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_SMS_RESEND_CONFIRM_DIALOG_OK_BTN'),
+	      onOk: messageBox => {
+	        messageBox.close();
+	        goToEditor();
+	      },
+	      onCancel: messageBox => messageBox.close()
+	    });
+	  } else {
+	    goToEditor();
+	  }
+	}
+
+	function _classPrivateMethodInitSpec$p(obj, privateSet) { _checkPrivateRedeclaration$s(obj, privateSet); privateSet.add(obj); }
+	function _checkPrivateRedeclaration$s(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	function _classPrivateMethodGet$p(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+	var _resendWhatsApp = /*#__PURE__*/new WeakSet();
+	let WhatsApp = /*#__PURE__*/function (_Base) {
+	  babelHelpers.inherits(WhatsApp, _Base);
+	  function WhatsApp(...args) {
+	    var _this;
+	    babelHelpers.classCallCheck(this, WhatsApp);
+	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(WhatsApp).call(this, ...args));
+	    _classPrivateMethodInitSpec$p(babelHelpers.assertThisInitialized(_this), _resendWhatsApp);
+	    return _this;
+	  }
+	  babelHelpers.createClass(WhatsApp, [{
+	    key: "onItemAction",
+	    value: function onItemAction(item, actionParams) {
+	      const {
+	        action,
+	        actionType,
+	        actionData
+	      } = actionParams;
+	      if (actionType !== 'jsEvent') {
+	        return;
+	      }
+	      if (action === 'Activity:Whatsapp:Resend' && main_core.Type.isPlainObject(actionData.params)) {
+	        _classPrivateMethodGet$p(this, _resendWhatsApp, _resendWhatsApp2).call(this, actionData.params);
+	      }
+	    }
+	  }], [{
+	    key: "isItemSupported",
+	    value: function isItemSupported(item) {
+	      return item.getType() === 'Activity:Whatsapp';
+	    }
+	  }]);
+	  return WhatsApp;
+	}(Base);
+	function _resendWhatsApp2(params) {
+	  var _BX$Crm, _BX$Crm$Timeline, _BX$Crm$Timeline$Menu, _params$template, _params$template$FILL, _params$template2, _whatsAppItem$getTemp, _whatsAppItem$getTemp2, _whatsAppItem$getTemp3;
+	  const menuBar = (_BX$Crm = BX.Crm) === null || _BX$Crm === void 0 ? void 0 : (_BX$Crm$Timeline = _BX$Crm.Timeline) === null || _BX$Crm$Timeline === void 0 ? void 0 : (_BX$Crm$Timeline$Menu = _BX$Crm$Timeline.MenuBar) === null || _BX$Crm$Timeline$Menu === void 0 ? void 0 : _BX$Crm$Timeline$Menu.getDefault();
+	  if (!menuBar) {
+	    throw new Error('"BX.Crm?.Timeline.MenuBar" component not found');
+	  }
+	  const whatsAppItem = menuBar.getItemById('whatsapp');
+	  if (!whatsAppItem) {
+	    throw new Error('"BX.Crm.Timeline.MenuBar.WhatsApp" component not found');
+	  }
+	  const goToEditor = () => {
+	    menuBar.scrollIntoView();
+	    menuBar.setActiveItemById('whatsapp');
+	    whatsAppItem.tryToResend(params.template, params.from, params.client);
+	  };
+	  const templateId = (_params$template = params.template) === null || _params$template === void 0 ? void 0 : _params$template.ORIGINAL_ID;
+	  const filledPlaceholders = (_params$template$FILL = (_params$template2 = params.template) === null || _params$template2 === void 0 ? void 0 : _params$template2.FILLED_PLACEHOLDERS) !== null && _params$template$FILL !== void 0 ? _params$template$FILL : [];
+	  const currentTemplateId = (_whatsAppItem$getTemp = whatsAppItem.getTemplate()) === null || _whatsAppItem$getTemp === void 0 ? void 0 : _whatsAppItem$getTemp.ORIGINAL_ID;
+	  const currentFilledPlaceholders = (_whatsAppItem$getTemp2 = (_whatsAppItem$getTemp3 = whatsAppItem.getTemplate()) === null || _whatsAppItem$getTemp3 === void 0 ? void 0 : _whatsAppItem$getTemp3.FILLED_PLACEHOLDERS) !== null && _whatsAppItem$getTemp2 !== void 0 ? _whatsAppItem$getTemp2 : [];
+	  if (main_core.Type.isNumber(templateId) && templateId > 0 && main_core.Type.isNumber(currentTemplateId) && currentTemplateId > 0 && (templateId !== currentTemplateId || JSON.stringify(filledPlaceholders) !== JSON.stringify(currentFilledPlaceholders))) {
+	    ui_dialogs_messagebox.MessageBox.show({
+	      modal: true,
+	      title: main_core.Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_WHATSAPP_RESEND_CONFIRM_DIALOG_TITLE'),
+	      message: main_core.Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_WHATSAPP_RESEND_CONFIRM_DIALOG_MESSAGE'),
+	      buttons: ui_dialogs_messagebox.MessageBoxButtons.OK_CANCEL,
+	      okCaption: main_core.Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_SMS_RESEND_CONFIRM_DIALOG_OK_BTN'),
+	      onOk: messageBox => {
+	        messageBox.close();
+	        goToEditor();
+	      },
+	      onCancel: messageBox => messageBox.close()
+	    });
+	  } else {
+	    goToEditor();
 	  }
 	}
 
@@ -8225,12 +9607,15 @@ this.BX.Crm = this.BX.Crm || {};
 	ControllerManager.registerController(EntityFieldsFillingResult);
 	ControllerManager.registerController(SignB2eDocument);
 	ControllerManager.registerController(Visit);
+	ControllerManager.registerController(Zoom);
+	ControllerManager.registerController(Sms);
+	ControllerManager.registerController(WhatsApp);
 
-	exports.Item = Item;
+	exports.Item = Item$1;
 	exports.ConfigurableItem = ConfigurableItem;
 	exports.StreamType = StreamType;
 	exports.ControllerManager = ControllerManager;
 	exports.BaseController = Base;
 
-}((this.BX.Crm.Timeline = this.BX.Crm.Timeline || {}),BX.UI,BX,BX.UI,BX.Main,BX,BX.Crm,BX.Crm.AI,BX.UI,BX.UI,BX.Currency,BX.UI.Icons.Generator,BX.UI.IconSet,BX,BX,BX,BX.Vue3,BX.Crm.Timeline.Editors,BX.Crm.Field,BX.Main,BX.Crm.Timeline,BX.UI,BX.AI,BX.Crm.Integration.Analytics,BX.UI.Analytics,BX.UI,BX,BX.UI.EntitySelector,BX.Crm.Activity,BX.Crm.Activity,BX.Crm.Activity,BX,BX.Event,BX.Crm,BX,BX.Crm.Timeline,BX.Calendar,BX.Crm,BX.Calendar.Sharing,BX,BX.UI.Dialogs,BX.Crm.AI,BX));
+}((this.BX.Crm.Timeline = this.BX.Crm.Timeline || {}),BX,BX.UI.Analytics,BX.Crm.Field,BX.Vue3.Directives,BX.UI,BX,BX.UI,BX.Location.Core,BX,BX.Crm.Timeline.Editors,BX.UI.TextEditor,BX.UI.BBCode.Formatter,BX.Vue3,BX.UI.Icons.Generator,BX.Crm,BX.UI.IconSet,BX,BX,BX.Crm.Field,BX.Currency,BX.UI,BX.UI,BX.Crm.Field,BX.Messenger.v2.Lib,BX.Main,BX.Crm.Timeline,BX.UI,BX.AI,BX.UI,BX.UI.Feedback,BX.Crm.Activity,BX.UI.EntitySelector,BX,BX,BX.Event,BX.Crm,BX,BX.Crm.Timeline,BX.Calendar,BX.Main,BX.Crm,BX.Calendar.Sharing,BX.Crm.AI,BX,BX,BX.UI.Dialogs));
 //# sourceMappingURL=index.bundle.js.map

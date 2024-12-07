@@ -1,6 +1,7 @@
 const ViewMode = {
 	MODE_STAGES: 'STAGES',
 	MODE_ACTIVITIES: 'ACTIVITIES',
+	MODE_DEADLINES: 'DEADLINES',
 
 	getDefault(): string
 	{
@@ -12,6 +13,7 @@ const ViewMode = {
 		return [
 			this.MODE_STAGES,
 			this.MODE_ACTIVITIES,
+			this.MODE_DEADLINES,
 		];
 	},
 

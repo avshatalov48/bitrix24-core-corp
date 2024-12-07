@@ -8,6 +8,8 @@ use Bitrix\Main\ArgumentTypeException;
 class LineOfTextBlocks extends ContentBlock
 {
 	protected array $blocks = [];
+	protected ?string $delimiter = null;
+	protected ?LineOfTextBlocksButton $button = null;
 
 	public function getRendererName(): string
 	{
@@ -22,28 +24,26 @@ class LineOfTextBlocks extends ContentBlock
 		return $this->blocks;
 	}
 
+	public function getContentBlocksCount(): int
+	{
+		return count($this->blocks);
+	}
+
 	public function isEmpty(): bool
 	{
 		return empty($this->blocks);
 	}
 
-	/**
-	 * @param string $id Block ID
-	 * @param ContentBlock $textContentBlock Block type [ConText|Link|Date|Money|ItemSelector allowed]
-	 *
-	 * @return $this
-	 *
-	 * @throws ArgumentTypeException
-	 */
+	public function setDelimiter(?string $delimiter): self
+	{
+		$this->delimiter = $delimiter;
+
+		return $this;
+	}
+
 	public function addContentBlock(string $id, ContentBlock $textContentBlock): self
 	{
-		if (
-			!($textContentBlock instanceof Text)
-			&& !($textContentBlock instanceof Link)
-			&& !($textContentBlock instanceof Date)
-			&& !($textContentBlock instanceof Money)
-			&& !($textContentBlock instanceof ItemSelector)
-		)
+		if (!$this->isAvailableContentBlock($textContentBlock))
 		{
 			throw new ArgumentTypeException(
 				'textContentBlock',
@@ -59,6 +59,17 @@ class LineOfTextBlocks extends ContentBlock
 		$this->blocks[$id] = $textContentBlock;
 
 		return $this;
+	}
+
+	private function isAvailableContentBlock(ContentBlock $textContentBlock): bool
+	{
+		return
+			($textContentBlock instanceof Text)
+			|| ($textContentBlock instanceof Link)
+			|| ($textContentBlock instanceof Date)
+			|| ($textContentBlock instanceof Money)
+			|| ($textContentBlock instanceof ItemSelector)
+		;
 	}
 
 	/**
@@ -99,10 +110,19 @@ class LineOfTextBlocks extends ContentBlock
 		return $this;
 	}
 
+	public function setButton(?LineOfTextBlocksButton $button): self
+	{
+		$this->button = $button;
+
+		return $this;
+	}
+
 	protected function getProperties(): array
 	{
 		return [
 			'blocks' => $this->getContentBlocks(),
+			'delimiter' => $this->delimiter,
+			'button' => $this->button,
 		];
 	}
 }

@@ -9,13 +9,18 @@ Loc::loadMessages(__FILE__);
 
 $helper = $arResult['HELPER'];
 
-Extension::load(['ui.entity-selector']);
+Extension::load(['ui.entity-selector', 'ui.icon-set.main',]);
 ?>
 
 <?$helper->displayFatals();?>
 <?if(!$helper->checkHasFatals()):?>
 
-	<div id="<?=$helper->getScopeId()?>" class="tasks task-form-field <?=$arParams['DISPLAY']?> <?=($arParams['READ_ONLY'] ? 'readonly' : '')?>" <?if($arParams['MAX_WIDTH'] > 0):?>style="max-width: <?=$arParams['MAX_WIDTH']?>px"<?endif?>>
+	<div
+		id="<?=$helper->getScopeId()?>"
+		class="tasks task-form-field <?=$arParams['DISPLAY']?> <?=($arParams['READ_ONLY'] ? 'readonly' : '')?> <?=
+		($arParams['IS_FLOW_FORM'] ? 'flow' : '')?>" <?if($arParams['MAX_WIDTH'] > 0):?>
+		style="max-width: <?=$arParams['MAX_WIDTH']?>px"<?endif?>
+	>
 
 		<?$helper->displayWarnings();?>
 
@@ -31,20 +36,57 @@ Extension::load(['ui.entity-selector']);
 		<span class="js-id-tdp-mem-sel-is-items tasks-h-invisible">
 		    <script type="text/html" data-bx-id="tdp-mem-sel-is-item">
 			    <?ob_start();?>
-				<span class="js-id-tdp-mem-sel-is-item js-id-tdp-mem-sel-is-item-{{VALUE}} task-form-field-item {{ITEM_SET_INVISIBLE}}"
-					  data-item-value="{{VALUE}}" data-bx-type="{{TYPE_SET}}">
-					<a class="task-form-field-item-text task-options-destination-text" href="{{URL}}">
-						{{DISPLAY}}
-					</a>
-					<span class="js-id-tdp-mem-sel-is-item-delete task-form-field-item-delete" title="<?=Loc::getMessage('TASKS_COMMON_CANCEL_SELECT')?>"></span>
 
-				    <?if(!$arResult['JS_DATA']['inputSpecial']):?>
-						<?// being usually embedded into a form, this control can produce some inputs ?>
-						<?foreach($arParams['ATTRIBUTE_PASS'] as $to):?>
-							<input type="hidden" name="<?=htmlspecialcharsbx($arParams["INPUT_PREFIX"])?>[{{VALUE}}][<?=htmlspecialcharsbx($to)?>]" value="{{<?=htmlspecialcharsbx($to)?>}}" />
-						<?endforeach?>
-					<?endif?>
-				</span>
+				<?php if ($arParams['IS_FLOW_FORM']): ?>
+					<div class="js-id-tdp-mem-sel-is-item task-form-field-item">
+						<div class="task-form-field-item-text task-options-destination-text">
+							<? if (isset($arParams['TYPES']['PROJECT'])): ?>
+								<span class="task-form-field-project-icon ui-icon-common-user-group ui-icon"><i style="background-image: url('{{DISPLAY_ICON}}');"></i></span>
+							<? endif; ?>
+							<span class="task-form-field-item-text-ellipsis">
+								{{DISPLAY}}
+							</span>
+						</div>
+						<span class="task-form-field-item-flow"></span>
+						<?if(!$arResult['JS_DATA']['inputSpecial']):?>
+							<?// being usually embedded into a form, this control can produce some inputs ?>
+							<?foreach($arParams['ATTRIBUTE_PASS'] as $to):?>
+								<input
+									type="hidden"
+									name="<?=htmlspecialcharsbx($arParams["INPUT_PREFIX"])?>[{{VALUE}}][<?=htmlspecialcharsbx($to)?>]"
+									value="{{<?=htmlspecialcharsbx($to)?>}}"
+								>
+							<?endforeach?>
+						<?endif?>
+					</div>
+				<?php else: ?>
+					<span
+						class="js-id-tdp-mem-sel-is-item js-id-tdp-mem-sel-is-item-{{VALUE}} task-form-field-item {{ITEM_SET_INVISIBLE}}"
+						data-item-value="{{VALUE}}"
+						data-bx-type="{{TYPE_SET}}"
+					>
+						<a class="task-form-field-item-text task-options-destination-text" href="{{URL}}">
+							{{DISPLAY}}
+						</a>
+
+						<span
+							class="js-id-tdp-mem-sel-is-item-delete task-form-field-item-delete"
+							title="<?=Loc::getMessage('TASKS_COMMON_CANCEL_SELECT')?>"
+						></span>
+
+						<?if(!$arResult['JS_DATA']['inputSpecial']):?>
+							<?// being usually embedded into a form, this control can produce some inputs ?>
+							<?foreach($arParams['ATTRIBUTE_PASS'] as $to):?>
+								<input
+									type="hidden"
+									name="<?=htmlspecialcharsbx($arParams["INPUT_PREFIX"])?>[{{VALUE}}][<?=htmlspecialcharsbx($to)?>]"
+									value="{{<?=htmlspecialcharsbx($to)?>}}"
+								>
+							<?endforeach?>
+						<?endif?>
+					</span>
+				<?php endif; ?>
+
 				<?$template = trim(ob_get_flush());?>
 		    </script>
 			<?

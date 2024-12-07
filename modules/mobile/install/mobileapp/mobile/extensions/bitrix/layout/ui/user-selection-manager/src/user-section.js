@@ -62,7 +62,7 @@ jn.define('layout/ui/user-selection-manager/src/user-section', (require, exports
 				},
 				Text({
 					style: {
-						color: Color.base4,
+						color: Color.base4.toHex(),
 					},
 					text: this.props.sectionTitle,
 					ellipsize: 'end',
@@ -126,7 +126,7 @@ jn.define('layout/ui/user-selection-manager/src/user-section', (require, exports
 							flexDirection: 'row',
 							alignItems: 'center',
 							paddingLeft: 18,
-							backgroundColor: withPressed(Color.bgContentPrimary),
+							backgroundColor: withPressed(Color.bgContentPrimary.toHex()),
 						},
 						testId: testIdPrefix,
 						onClick: () => this.props.onAddUser(),
@@ -143,7 +143,7 @@ jn.define('layout/ui/user-selection-manager/src/user-section', (require, exports
 							height: ROW_HEIGHT,
 							marginLeft: 12,
 							borderTopWidth: (isFirstInSection ? 0 : 1),
-							borderTopColor: Color.bgSeparatorSecondary,
+							borderTopColor: Color.bgSeparatorSecondary.toHex(),
 							fontSize: 16,
 							fontWeight: '400',
 						},
@@ -178,7 +178,7 @@ jn.define('layout/ui/user-selection-manager/src/user-section', (require, exports
 				},
 				IconView({
 					icon: OutlineIconTypes.edit,
-					iconColor: Color.base4,
+					color: Color.base4,
 				}),
 			);
 		}
@@ -201,16 +201,16 @@ jn.define('layout/ui/user-selection-manager/src/user-section', (require, exports
 						height: '100%',
 						paddingHorizontal: 12,
 						justifyContent: 'center',
-						backgroundColor: withPressed(Color.bgContentPrimary),
+						backgroundColor: withPressed(Color.bgContentPrimary.toHex()),
 						borderTopWidth: (isWithoutBorder ? 0 : 1),
-						borderTopColor: Color.bgSeparatorSecondary,
+						borderTopColor: Color.bgSeparatorSecondary.toHex(),
 					},
 					testId: `${testIdPrefix}_remove`,
 					onClick: () => onRemoveUser({ userId, sectionId }),
 				},
 				IconView({
 					icon: OutlineIconTypes.cross,
-					iconColor: Color.base4,
+					color: Color.base4,
 				}),
 			);
 		}
@@ -222,7 +222,7 @@ jn.define('layout/ui/user-selection-manager/src/user-section', (require, exports
 					style: {
 						height: ROW_HEIGHT,
 						paddingLeft: 18,
-						backgroundColor: withPressed(Color.bgContentPrimary),
+						backgroundColor: withPressed(Color.bgContentPrimary.toHex()),
 						justifyContent: 'center',
 						alignItems: 'flex-start',
 					},
@@ -233,7 +233,7 @@ jn.define('layout/ui/user-selection-manager/src/user-section', (require, exports
 					style: {
 						fontSize: 14,
 						fontWeight: '500',
-						color: Color.accentMainPrimary,
+						color: Color.accentMainPrimary.toHex(),
 					},
 					text: (
 						this.state.isExpanded
@@ -256,21 +256,21 @@ jn.define('layout/ui/user-selection-manager/src/user-section', (require, exports
 						flexDirection: 'row',
 						alignItems: 'center',
 						paddingLeft: 18,
-						backgroundColor: withPressed(Color.bgContentPrimary),
+						backgroundColor: withPressed(Color.bgContentPrimary.toHex()),
 					},
 					testId: `section_${this.props.sectionId}_add`,
 					onClick: () => this.props.onAddUser(),
 				},
 				IconView({
 					icon: OutlineIconTypes.plus,
-					iconSize: 28,
-					iconColor: Color.base4,
+					size: 28,
+					color: Color.base4,
 				}),
 				Text({
 					style: {
 						marginLeft: 12,
 						fontSize: 16,
-						color: Color.base4,
+						color: Color.base4.toHex(),
 					},
 					ellipsize: 'end',
 					numberOfLines: 1,

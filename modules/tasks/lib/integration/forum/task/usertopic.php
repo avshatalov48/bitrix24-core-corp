@@ -32,7 +32,7 @@ class UserTopic extends Forum
 	 * @throws ObjectPropertyException
 	 * @throws SystemException
 	 * @throws Exception
-	 */
+ */
 	public static function updateLastVisit(int $taskId, int $userId, DateTime $lastVisit = null): void
 	{
 		$task = CTaskItem::getInstance($taskId, $userId);
@@ -72,7 +72,16 @@ class UserTopic extends Forum
 		}
 		else
 		{
-			UserTopicTable::add($primary + $fields);
+			$sqlHelper = Application::getConnection()->getSqlHelper();
+
+			$escapedLastVisit = $sqlHelper->convertToDbDateTime($fields['LAST_VISIT']);
+			$sql = $sqlHelper->getInsertIgnore(
+				'b_forum_user_topic',
+				' (TOPIC_ID, USER_ID, FORUM_ID, LAST_VISIT)',
+				" VALUES({$primary['TOPIC_ID']}, {$primary['USER_ID']}, {$fields['FORUM_ID']}, {$escapedLastVisit})",
+			);
+
+			Application::getConnection()->query($sql);
 		}
 	}
 

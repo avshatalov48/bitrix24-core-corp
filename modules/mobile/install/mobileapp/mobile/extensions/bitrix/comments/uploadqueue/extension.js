@@ -1,5 +1,4 @@
-(() =>
-{
+(() => {
 	class CommentsUploadQueue
 	{
 		/**
@@ -8,6 +7,7 @@
 		constructor(params = {})
 		{
 			this.queue = {};
+			this.analyticsData = {};
 			this.init();
 		}
 
@@ -17,24 +17,30 @@
 			BX.addCustomEvent('onFileUploadStatusChanged', this.onFileUploadStatusChanged.bind(this));
 		}
 
-		setItem(data)
+		setItem(data = {})
 		{
-			const formId = (data.formId ? data.formId : null);
-			const formUniqueId = (data.formUniqueId ? data.formUniqueId : null);
-			const entityId = (data.entityId ? data.entityId : null);
-			const entityXmlId = (data.entityXmlId ? data.entityXmlId : null);
-			const commentVirtualId = (data.commentVirtualId ? data.commentVirtualId : null);
+			const {
+				formId = null,
+				formUniqueId = null,
+				entityId = null,
+				commentVirtualId = null,
+				taskIdList,
+				analyticsData = null,
+			} = data;
+
+			this.analyticsData = analyticsData;
 
 			if (
-				typeof data.taskIdList == 'undefined'
-				|| data.taskIdList.length <= 0
+				typeof taskIdList === 'undefined'
+				|| taskIdList.length <= 0
 			)
 			{
 				BX.postWebEvent('Comments.UploadQueue::ready', {
 					commentData: data,
-					formId: formId,
-					entityId: entityId,
-					formUniqueId: formUniqueId
+					formId,
+					entityId,
+					formUniqueId,
+					analyticsData: this.analyticsData,
 				});
 			}
 			else
@@ -69,25 +75,25 @@
 				return;
 			}
 
-			if (eventName == 'onerrorfilecreate')
+			if (eventName === 'onerrorfilecreate')
 			{
 				this.handleFileUploadError({
-					commentVirtualId: commentVirtualId,
-					errorText: BX.message('MOBILEAPP_EXT_COMMENTS_FILE_UPLOAD_ERROR')
+					commentVirtualId,
+					errorText: BX.message('MOBILEAPP_EXT_COMMENTS_FILE_UPLOAD_ERROR'),
 				});
 			}
-			else if (eventName == 'onfilecreated')
+			else if (eventName === 'onfilecreated')
 			{
-				if (eventData.result.status == 'error')
+				if (eventData.result.status === 'error')
 				{
 					this.handleFileUploadError({
-						commentVirtualId: commentVirtualId,
-						errorText: BX.message('MOBILEAPP_EXT_COMMENTS_FILE_UPLOAD_ERROR')
+						commentVirtualId,
+						errorText: BX.message('MOBILEAPP_EXT_COMMENTS_FILE_UPLOAD_ERROR'),
 					});
 				}
 				else
 				{
-					let commentData = this.queue[commentVirtualId];
+					const commentData = this.queue[commentVirtualId];
 
 					if (
 						BX.type.isArray(commentData.taskIdList) // uploadTasks
@@ -101,7 +107,7 @@
 								delete commentData.taskIdList[key];
 								commentData.taskIdList = commentData.taskIdList.filter(function(value) { return value; });
 
-								if (typeof commentData.attachments == 'undefined')
+								if (typeof commentData.attachments === 'undefined')
 								{
 									commentData.attachments = [];
 								}
@@ -110,17 +116,17 @@
 								commentData.attachments.push({
 									dataAttributes: {
 										ID: file.id,
-										IMAGE: typeof file.extra.imagePreviewUri != 'undefined' ? file.extra.imagePreviewUri : '',
+										IMAGE: typeof file.extra.imagePreviewUri !== 'undefined' ? file.extra.imagePreviewUri : '',
 										NAME: file.name,
 										URL: {
-											URL: typeof file.extra.downloadUri != 'undefined' ? file.extra.downloadUri : '',
+											URL: typeof file.extra.downloadUri !== 'undefined' ? file.extra.downloadUri : '',
 											EXTERNAL: 'YES',
-											PREVIEW: typeof file.extra.imagePreviewUri != 'undefined' ? file.extra.imagePreviewUri : ''
+											PREVIEW: typeof file.extra.imagePreviewUri !== 'undefined' ? file.extra.imagePreviewUri : '',
 										},
-										VALUE: 'n' + eventData.result.data.file.id
+										VALUE: `n${eventData.result.data.file.id}`,
 									},
 									disk: true,
-									name: file.name
+									name: file.name,
 								});
 							}
 						});
@@ -132,10 +138,11 @@
 					)
 					{
 						BX.postWebEvent('Comments.UploadQueue::ready', {
-							commentData: commentData,
+							commentData,
 							formId: commentData.formId,
 							entityId: commentData.entityId,
-							formUniqueId: commentData.formUniqueId
+							formUniqueId: commentData.formUniqueId,
+							analyticsData: this.analyticsData,
 						});
 
 						delete this.queue[commentVirtualId];
@@ -161,10 +168,11 @@
 			const commentData = this.queue[commentVirtualId];
 
 			BX.postWebEvent('Comments.UploadQueue::error', {
-				commentData: commentData,
-				errorText: errorText,
+				commentData,
+				errorText,
 				formId: commentData.formId,
 				entityId: commentData.entityId,
+				analyticsData: this.analyticsData ? { ...this.analyticsData, status: 'error' } : null,
 			});
 
 			delete this.queue[commentVirtualId];

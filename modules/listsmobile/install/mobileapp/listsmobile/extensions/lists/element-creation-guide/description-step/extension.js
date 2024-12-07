@@ -53,6 +53,7 @@ jn.define('lists/element-creation-guide/description-step', (require, exports, mo
 				'DescriptionStepComponent:onAfterLoadDescription',
 				({ description, hasFieldsToRender, sign, isConstantsTuned, hasErrors }) => {
 					this.description = description;
+					this.startTime = this.getCurrentTime();
 					if (this.prevDescription === null)
 					{
 						this.prevDescription = this.description;
@@ -61,7 +62,10 @@ jn.define('lists/element-creation-guide/description-step', (require, exports, mo
 					this.isConstantsTuned = isConstantsTuned;
 					this.sign = sign;
 
-					this.customEventEmitter.emit('DescriptionStep:onAfterLoadDescription');
+					this.customEventEmitter.emit(
+						'DescriptionStep:onAfterLoadDescription',
+						[this.startTime],
+					);
 					this.stepAvailabilityChangeCallback(!hasErrors);
 
 					if (hasErrors)
@@ -146,7 +150,7 @@ jn.define('lists/element-creation-guide/description-step', (require, exports, mo
 						data: {
 							sign: this.sign,
 							fields: { IBLOCK_ID: this.iBlockId },
-							timeToStart: this.startTime === undefined ? null : this.getCurrentTime() - this.startTime,
+							timeToStart: this.getCurrentTime() - this.startTime,
 						},
 					},
 				)
@@ -179,7 +183,6 @@ jn.define('lists/element-creation-guide/description-step', (require, exports, mo
 			this.iBlockId = props.iBlockId === undefined ? this.iBlockId : props.iBlockId;
 			this.name = props.name === undefined ? this.name : props.name;
 			this.formattedTime = props.formattedTime === undefined ? this.formattedTime : props.formattedTime;
-			this.startTime = props.startTime === undefined ? this.startTime : props.startTime;
 		}
 
 		renderNumberBlock()

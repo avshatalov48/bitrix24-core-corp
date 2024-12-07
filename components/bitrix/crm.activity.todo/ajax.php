@@ -5,6 +5,12 @@ define('NO_AGENT_CHECK', true);
 define('PUBLIC_AJAX_MODE', true);
 define('DisableEventsCheck', true);
 
+use Bitrix\Crm\Activity\Analytics\Dictionary;
+use Bitrix\Crm\Service\Container;
+use Bitrix\Main\Analytics\AnalyticsEvent;
+use Bitrix\Main\Application;
+use Bitrix\Main\Localization\Loc;
+
 require_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/prolog_before.php');
 
 if (!\Bitrix\Main\Loader::includeModule('crm'))
@@ -12,12 +18,15 @@ if (!\Bitrix\Main\Loader::includeModule('crm'))
 	die();
 }
 
-$context = \Bitrix\Main\Application::getInstance()->getContext();
+Container::getInstance()->getLocalization()->loadMessages();
+
+$context = Application::getInstance()->getContext();
 $request = $context->getRequest();
 $action = $request->get('action');
 $id = $request->get('id');
 $ownerId = $request->get('ownerid');
 $ownerTypeId = $request->get('ownertypeid');
+$providerId = $request->get('providerId');
 $result = array();
 
 if (!\Bitrix\Main\Loader::includeModule('crm'))
@@ -57,7 +66,7 @@ elseif ($action == 'complete' && !empty($id) && !empty($ownerId))
 		$userPermissions = \CCrmPerms::GetCurrentUserPermissions();
 		if (!\CCrmActivity::CheckCompletePermission($ownerTypeId, $ownerId, $userPermissions, array('FIELDS' => $activity)))
 		{
-			$result = array('ERROR' => 'Access denied');
+			$result = array('ERROR' => Loc::getMessage('CRM_COMMON_ERROR_ACCESS_DENIED'));
 		}
 		else
 		{
@@ -65,6 +74,7 @@ elseif ($action == 'complete' && !empty($id) && !empty($ownerId))
 			if (\CCrmActivity::Complete($id, $completed, array('REGISTER_SONET_EVENT' => true)))
 			{
 				$result = array('SUCCESS' => 1);
+				sendAnalyticsEvent($providerId, $ownerTypeId);
 			}
 			else
 			{
@@ -90,10 +100,6 @@ else
 if (is_array($result) && (isset($result['SUCCESS']) || isset($result['ERROR'])))
 {
 	$GLOBALS['APPLICATION']->RestartBuffer();
-	if (SITE_CHARSET != 'UTF-8')
-	{
-		$result = $GLOBALS['APPLICATION']->ConvertCharsetArray($result, SITE_CHARSET, 'UTF-8');
-	}
 
 	header('Content-Type: application/json');
 
@@ -107,5 +113,34 @@ if (is_array($result) && (isset($result['SUCCESS']) || isset($result['ERROR'])))
 	}
 }
 
+function sendAnalyticsEvent(string $providerId, int $ownerTypeId): void
+{
+	if ($providerId !== \Bitrix\Crm\Activity\Provider\ToDo\ToDo::PROVIDER_ID)
+	{
+		return;
+	}
+
+	$entityType = \Bitrix\Crm\Integration\Analytics\Dictionary::getAnalyticsEntityType($ownerTypeId);
+	if ($entityType === null)
+	{
+		return;
+	}
+
+	$section = $entityType . '_section';
+
+	$event = new AnalyticsEvent(
+		Dictionary::COMPLETE_EVENT,
+		Dictionary::TOOL,
+		Dictionary::OPERATIONS_CATEGORY
+	);
+	$event
+		->setType(Dictionary::TODO_TYPE)
+		->setSection($section)
+		->setSubSection(Dictionary::KANBAN_SUB_SECTION)
+		->setElement(Dictionary::CHECKBOX_ELEMENT)
+		->setP1(\Bitrix\Crm\Integration\Analytics\Dictionary::getCrmMode())
+		->send()
+	;
+}
 
 require_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/epilog_after.php');

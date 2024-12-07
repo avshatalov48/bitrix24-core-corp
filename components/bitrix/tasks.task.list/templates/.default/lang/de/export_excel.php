@@ -21,6 +21,7 @@ $MESS["TASKS_EXCEL_DATE_START"] = "Startdatum";
 $MESS["TASKS_EXCEL_DEADLINE"] = "Frist";
 $MESS["TASKS_EXCEL_DESCRIPTION"] = "Beschreibung";
 $MESS["TASKS_EXCEL_END_DATE_PLAN"] = "Geplantes Abschlussdatum";
+$MESS["TASKS_EXCEL_FLOW"] = "Flow";
 $MESS["TASKS_EXCEL_GROUP_ID"] = "Gruppe";
 $MESS["TASKS_EXCEL_GROUP_NAME"] = "Projekt";
 $MESS["TASKS_EXCEL_ID"] = "ID";

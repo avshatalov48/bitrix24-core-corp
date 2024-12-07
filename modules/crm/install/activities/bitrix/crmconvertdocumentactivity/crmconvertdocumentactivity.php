@@ -166,7 +166,7 @@ class CBPCrmConvertDocumentActivity extends CBPActivity
 		)
 		{
 			$this->workflow->Terminate();
-			throw new Exception('TerminateActivity');
+			throw new \Bitrix\Main\SystemException('TerminateActivity');
 		}
 	}
 
@@ -391,16 +391,22 @@ class CBPCrmConvertDocumentActivity extends CBPActivity
 
 	private function logDebug()
 	{
-		$debugInfo = $this->getDebugInfo();
-		$this->writeDebugInfo($debugInfo);
+		if ($this->workflow->isDebug())
+		{
+			$debugInfo = $this->getDebugInfo();
+			$this->writeDebugInfo($debugInfo);
+		}
 	}
 
 	private function logDebugResult($fieldId, $entityTypeId, $entityId)
 	{
-		$debugInfo = $this->getDebugInfo(
-			[$fieldId => $entityId],
-			[$fieldId => \CCrmOwnerType::GetDescription($entityTypeId)]
-		);
-		$this->writeDebugInfo($debugInfo);
+		if ($this->workflow->isDebug())
+		{
+			$debugInfo = $this->getDebugInfo(
+				[$fieldId => $entityId],
+				[$fieldId => \CCrmOwnerType::GetDescription($entityTypeId)]
+			);
+			$this->writeDebugInfo($debugInfo);
+		}
 	}
 }

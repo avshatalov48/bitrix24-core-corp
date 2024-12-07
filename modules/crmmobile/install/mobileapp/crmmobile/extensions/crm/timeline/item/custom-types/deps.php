@@ -1,10 +1,14 @@
 <?php
 
 return [
+	'extensions' => [
+		'analytics',
+	],
 	'bundle' => [
 		'./call-activity',
 		'./modification',
 		'./openline-chat',
-		'./visit-activity'
+		'./visit-activity',
+		'./task-activity',
 	],
 ];

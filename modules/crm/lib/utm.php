@@ -31,6 +31,8 @@ Loc::loadMessages(__FILE__);
  */
 class UtmTable extends Entity\DataManager
 {
+	private static array $entityUtmCache = [];
+
 	public const ENUM_CODE_UTM_SOURCE = 'UTM_SOURCE';
 	public const ENUM_CODE_UTM_MEDIUM = 'UTM_MEDIUM';
 	public const ENUM_CODE_UTM_CAMPAIGN = 'UTM_CAMPAIGN';
@@ -120,13 +122,31 @@ class UtmTable extends Entity\DataManager
 
 			if ($isAdd)
 			{
-				$addFields = $primary;
-				$addFields['VALUE'] = $fields[$code];
-				$resultDb = static::add($addFields);
+				try
+				{
+					if (static::getRowById($primary))
+					{
+						$resultDb = static::update($primary, ['VALUE' => $fields[$code]]);
+					}
+					else
+					{
+						$addFields = $primary;
+						$addFields['VALUE'] = $fields[$code];
+						$resultDb = static::add($addFields);
+					}
+				}
+				catch (\Exception)
+				{
+				}
 			}
 
-			$resultDb->isSuccess();
+			if (isset($resultDb))
+			{
+				$resultDb->isSuccess();
+			}
 		}
+
+		self::invalidateEntityUtmCache($entityTypeId, $entityId);
 	}
 
 	public static function addEntityUtmFromFields($entityTypeId, $entityId, $fields)
@@ -141,6 +161,13 @@ class UtmTable extends Entity\DataManager
 
 	public static function getEntityUtm(int $entityTypeId, int $entityId): array
 	{
+		$cacheKay = $entityTypeId . '_' . $entityId;
+
+		if (isset(static::$entityUtmCache[$cacheKay]))
+		{
+			return static::$entityUtmCache[$cacheKay];
+		}
+
 		$dbResult = static::getList([
 			'filter' => [
 				'=ENTITY_TYPE_ID' => $entityTypeId,
@@ -153,6 +180,8 @@ class UtmTable extends Entity\DataManager
 		{
 			$utm[$row['CODE']] = $row['VALUE'];
 		}
+
+		self::$entityUtmCache[$cacheKay] = $utm;
 
 		return $utm;
 	}
@@ -206,6 +235,9 @@ class UtmTable extends Entity\DataManager
 		Main\Application::getConnection()->queryExecute(
 			"UPDATE b_crm_utm SET ENTITY_TYPE_ID = {$newEntityTypeID}, ENTITY_ID = {$newEntityID} WHERE ENTITY_TYPE_ID = {$oldEntityTypeID} AND ENTITY_ID = {$oldEntityID}"
 		);
+
+		self::invalidateEntityUtmCache($oldEntityTypeID, $oldEntityID);
+		self::invalidateEntityUtmCache($newEntityTypeID, $newEntityID);
 	}
 	public static function getUtmFieldsInfo()
 	{
@@ -243,5 +275,11 @@ class UtmTable extends Entity\DataManager
 		}
 
 		return $resultList;
+	}
+
+	private static function invalidateEntityUtmCache(int $entityTypeId, int $entityId): void
+	{
+		$cacheKay = $entityTypeId . '_' . $entityId;
+		unset(static::$entityUtmCache[$cacheKay]);
 	}
 }

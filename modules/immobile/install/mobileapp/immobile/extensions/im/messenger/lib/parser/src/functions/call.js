@@ -1,26 +1,35 @@
 /* eslint-disable flowtype/require-return-type */
-/* eslint-disable bitrix-rules/no-bx */
-/* eslint-disable bitrix-rules/no-pseudo-private */
 
 /**
  * @module im/messenger/lib/parser/functions/call
  */
 jn.define('im/messenger/lib/parser/functions/call', (require, exports, module) => {
-
 	const parserCall = {
 		simplify(text)
 		{
-			text = text.replace(
-				/\[CALL(?:=([-+\d()./# ]+))?](.+?)\[\/CALL]/ig,
-				(whole, number, text) => text ? text : number
+			let simplifiedText = text.replaceAll(
+				/\[call(?:=([\d #()+./-]+))?](.+?)\[\/call]/gi,
+				(whole, number, tagText) => tagText || number,
 			);
 
-			text = text.replace(
-				/\[PCH=([0-9]+)](.*?)\[\/PCH]/ig,
-				(whole, historyId, text) => text
-			);
+			simplifiedText = this.simplifyPch(simplifiedText);
 
-			return text;
+			return simplifiedText;
+		},
+
+		simplifyPch(text)
+		{
+			return text.replaceAll(
+				/\[pch=(\d+)](.*?)\[\/pch]/gi,
+				(whole, historyId, tagText) => '',
+			);
+		},
+
+		decode(text)
+		{
+			return text.replaceAll(/\[call=([^\]]+)]\[\/call]/gi, (match, phoneNumber) => {
+				return `[call=${phoneNumber}]${phoneNumber}[/call]`;
+			});
 		},
 	};
 

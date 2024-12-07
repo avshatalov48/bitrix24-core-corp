@@ -68,7 +68,7 @@ jn.define('im/messenger/db/repository/user', (require, exports, module) => {
 			const userListToAdd = [];
 
 			userList.forEach((user) => {
-				const userToAdd = this.validateRestUser(user);
+				const userToAdd = this.userTable.validate(this.validateRestUser(user));
 
 				userListToAdd.push(userToAdd);
 			});
@@ -95,9 +95,19 @@ jn.define('im/messenger/db/repository/user', (require, exports, module) => {
 				result.firstName = ChatUtils.htmlspecialcharsback(user.first_name);
 			}
 
+			if (Type.isStringFilled(user.firstName))
+			{
+				result.firstName = ChatUtils.htmlspecialcharsback(user.firstName);
+			}
+
 			if (Type.isStringFilled(user.last_name))
 			{
 				result.lastName = ChatUtils.htmlspecialcharsback(user.last_name);
+			}
+
+			if (Type.isStringFilled(user.lastName))
+			{
+				result.lastName = ChatUtils.htmlspecialcharsback(user.lastName);
 			}
 
 			if (Type.isStringFilled(user.gender))
@@ -125,8 +135,6 @@ jn.define('im/messenger/db/repository/user', (require, exports, module) => {
 						result.departments.push(departmentId);
 					}
 				});
-
-				result.departments = JSON.stringify(result.departments);
 			}
 
 			if (Type.isStringFilled(user.work_position))
@@ -136,16 +144,16 @@ jn.define('im/messenger/db/repository/user', (require, exports, module) => {
 
 			if (Type.isPlainObject(user.phones))
 			{
-				result.phones = JSON.stringify(user.phones);
+				result.phones = user.phones;
 			}
 			else
 			{
-				result.phones = JSON.stringify({
+				result.phones = {
 					workPhone: '',
 					personalMobile: '',
 					personalPhone: '',
 					innerPhone: '',
-				});
+				};
 			}
 
 			if (Type.isStringFilled(user.external_auth_id))
@@ -168,6 +176,16 @@ jn.define('im/messenger/db/repository/user', (require, exports, module) => {
 				result.bot = user.bot;
 			}
 
+			if (Type.isStringFilled(user.birthday))
+			{
+				result.birthday = user.birthday;
+			}
+
+			if (Type.isStringFilled(user.absent))
+			{
+				result.absent = user.absent;
+			}
+
 			if (Type.isObject(user.bot_data))
 			{
 				result.botData = {
@@ -183,11 +201,6 @@ jn.define('im/messenger/db/repository/user', (require, exports, module) => {
 				result.botData = {};
 			}
 
-			if (result.botData)
-			{
-				result.botData = JSON.stringify(result.botData);
-			}
-
 			if (Type.isBoolean(user.connector))
 			{
 				result.connector = user.connector;
@@ -195,21 +208,35 @@ jn.define('im/messenger/db/repository/user', (require, exports, module) => {
 
 			if (Type.isStringFilled(user.last_activity_date))
 			{
-				result.lastActivityDate = DateHelper.cast(user.last_activity_date).toISOString();
+				result.lastActivityDate = DateHelper.cast(user.last_activity_date);
 			}
 			else if (Type.isDate(user.last_activity_date))
 			{
-				result.lastActivityDate = user.last_activity_date.toISOString();
+				result.lastActivityDate = user.last_activity_date;
+			}
+			else if (Type.isStringFilled(user.lastActivityDate))
+			{
+				result.lastActivityDate = DateHelper.cast(user.lastActivityDate);
 			}
 
 			if (Type.isStringFilled(user.mobile_last_date))
 			{
-				result.mobileLastDate = DateHelper.cast(user.mobile_last_date).toISOString();
+				result.mobileLastDate = DateHelper.cast(user.mobile_last_date);
+			}
+			else if (Type.isStringFilled(user.mobileLastDate))
+			{
+				result.mobileLastDate = DateHelper.cast(user.mobileLastDate);
 			}
 			else if (Type.isDate(user.mobile_last_date))
 			{
-				result.mobileLastDate = user.mobile_last_date.toISOString();
+				result.mobileLastDate = user.mobile_last_date;
 			}
+			else if (Type.isDate(user.mobileLastDate))
+			{
+				result.mobileLastDate = user.mobileLastDate;
+			}
+
+			result.isCompleteInfo = true; // for data from the server, trust the full complete info
 
 			return result;
 		}

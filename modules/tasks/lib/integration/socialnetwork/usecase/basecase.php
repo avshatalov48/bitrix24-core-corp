@@ -14,6 +14,8 @@ class BaseCase
 	protected array $siteIds = [];
 	protected $dateFormat = null;
 
+	private static $cache = [];
+
 	protected function getSonetLogFilter(int $taskId, bool $isCrm): array
 	{
 		// TODO: this code was moved from classes/tasksnotifications propably needs reraftoring
@@ -25,31 +27,38 @@ class BaseCase
 				'EVENT_ID' => 'tasks',
 				'SOURCE_ID' => $taskId
 			];
+
+			return $filter;
 		}
-		elseif (Loader::includeModule("crm"))
+
+		if (array_key_exists($taskId, self::$cache))
 		{
-			$res = CCrmActivity::getList(
-				[],
-				[
-					'TYPE_ID' => CCrmActivityType::Task,
-					'ASSOCIATED_ENTITY_ID' => $taskId,
-					'CHECK_PERMISSIONS' => 'N'
-				],
-				false,
-				false,
-				['ID']
-			);
-
-			if ($activity = $res->fetch())
-			{
-				$filter = [
-					'EVENT_ID' => 'crm_activity_add',
-					'ENTITY_ID' => $activity
-				];
-			}
+			return self::$cache[$taskId];
 		}
 
-		return $filter;
+		$res = CCrmActivity::getList(
+			[],
+			[
+				'TYPE_ID' => CCrmActivityType::Task,
+				'ASSOCIATED_ENTITY_ID' => $taskId,
+				'CHECK_PERMISSIONS' => 'N'
+			],
+			false,
+			false,
+			['ID']
+		);
+
+		if ($activity = $res->fetch())
+		{
+			$filter = [
+				'EVENT_ID' => 'crm_activity_add',
+				'ENTITY_ID' => $activity
+			];
+		}
+
+		self::$cache[$taskId] = $filter;
+
+		return self::$cache[$taskId];
 	}
 
 	protected function getSiteIds(): array
